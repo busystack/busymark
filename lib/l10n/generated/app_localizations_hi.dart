@@ -11,6 +11,230 @@ class AppLocalizationsHi extends AppLocalizations {
   AppLocalizationsHi([String locale = 'hi']) : super(locale);
 
   @override
+  String get tocTopicFromTemplate => 'टेम्पलेट से विषय...';
+
+  @override
+  String get tocSaveAsTemplate => 'टेम्पलेट के रूप में सहेजें';
+
+  @override
+  String get tocTemplateDialog => 'टेम्पलेट से विषय बनाएँ';
+
+  @override
+  String get tocTemplatesEditor => 'फ़ाइल और कोड टेम्पलेट';
+
+  @override
+  String get tocEditTemplates => 'टेम्पलेट संपादित करें...';
+
+  @override
+  String get tocCreateCustomTemplate => 'कस्टम टेम्पलेट बनाएँ...';
+
+  @override
+  String get tocTemplateCreated => 'टेम्पलेट बनाया गया';
+
+  @override
+  String get tocTemplateDefault => 'डिफ़ॉल्ट';
+
+  @override
+  String get tocTemplateCustom => 'कस्टम';
+
+  @override
+  String get tocTemplateFilename => 'फ़ाइल का नाम:';
+
+  @override
+  String get tocTemplateMarkdown => 'Markdown (.md)';
+
+  @override
+  String get tocTemplateXml => 'XML (.topic)';
+
+  @override
+  String get tocTemplatesInternal => 'आंतरिक';
+
+  @override
+  String get tocTemplateUnnamed => 'बिना नाम';
+
+  @override
+  String get tocTemplateNew => 'नया टेम्पलेट...';
+
+  @override
+  String get tocTemplateName => 'नाम:';
+
+  @override
+  String get tocTemplateExtension => 'एक्सटेंशन:';
+
+  @override
+  String get tocTemplateLoadError =>
+      'टेम्पलेट लोड नहीं हो सके। मौजूदा टेम्पलेट बदले नहीं गए हैं।';
+
+  @override
+  String get tocTemplateSaveError =>
+      'टेम्पलेट सहेजे नहीं जा सके। आपके संपादन अभी भी यहाँ उपलब्ध हैं।';
+
+  @override
+  String get tocTemplateConflict =>
+      'टेम्पलेट दूसरी विंडो में बदल गए हैं। रद्द करें और संपादक फिर से खोलें।';
+
+  @override
+  String get tocTemplateDuplicateName =>
+      'इस नाम और एक्सटेंशन वाला टेम्पलेट पहले से मौजूद है।';
+
+  @override
+  String get tocTemplateFormat => 'प्रारूप:';
+
+  @override
+  String get tocTemplateReset => 'रीसेट करें';
+
+  @override
+  String get tocTemplateRetry => 'फिर से कोशिश करें';
+
+  @override
+  String tocRemoveElementsDialog(int count) {
+    return 'विषय-सूची के $count तत्व हटाएँ';
+  }
+
+  @override
+  String get tocRemoveElementsRetainFiles =>
+      'इन विषय-सूची तत्वों से जुड़ी स्रोत फ़ाइलें नहीं हटाई जाएँगी।';
+
+  @override
+  String get tocOk => 'ठीक है';
+
+  @override
+  String get tocSelectExistingTopic =>
+      'वर्तमान इंस्टेंस में जोड़ने के लिए विषय चुनें';
+
+  @override
+  String get tocGroupName => 'समूह का नाम';
+
+  @override
+  String get tocMoveLineUp => 'पंक्ति ऊपर ले जाएँ';
+
+  @override
+  String get tocMoveLineDown => 'पंक्ति नीचे ले जाएँ';
+
+  @override
+  String get tocEmptyMdTopic => 'खाली MD विषय';
+
+  @override
+  String get tocEmptyXmlTopic => 'खाली XML विषय';
+
+  @override
+  String get tocCopySpecial => 'विशेष कॉपी';
+
+  @override
+  String tocCopyFileName(String name) {
+    return 'विषय फ़ाइल का नाम \'$name\'';
+  }
+
+  @override
+  String get tocCopyFilePath => 'विषय फ़ाइल का पथ';
+
+  @override
+  String tocCopyTopicTitle(String title) {
+    return 'विषय का शीर्षक \'$title\'';
+  }
+
+  @override
+  String tocCopyElementId(String id) {
+    return 'विषय-सूची तत्व की ID \'$id\'';
+  }
+
+  @override
+  String get tocCopyFileNameUnavailable => 'विषय फ़ाइल का नाम';
+
+  @override
+  String get tocCopyTopicTitleUnavailable => 'विषय का शीर्षक';
+
+  @override
+  String get tocCopyElementIdUnavailable => 'विषय-सूची तत्व की ID';
+
+  @override
+  String get tocEditTitleAction => 'शीर्षक संपादित करें...';
+
+  @override
+  String get tocEditTitleDialog => 'शीर्षक संपादित करें';
+
+  @override
+  String get tocRemoveElementAction => 'विषय-सूची तत्व हटाएँ...';
+
+  @override
+  String get tocSetHomePage => 'मुखपृष्ठ के रूप में सेट करें';
+
+  @override
+  String tocGoToElement(String fileName) {
+    return '\'$fileName\' में विषय-सूची तत्व पर जाएँ';
+  }
+
+  @override
+  String get tocSynchronize => 'विषय-सूची और संपादक सिंक्रनाइज़ करें';
+
+  @override
+  String get tocEmptyGroupAction => 'खाली समूह';
+
+  @override
+  String get tocNewEmptyGroup => 'नया खाली समूह';
+
+  @override
+  String get tocGroupAction => 'समूह बनाएँ';
+
+  @override
+  String get tocNewGroup => 'नया समूह';
+
+  @override
+  String get tocSortChildren => 'उपविषयों को वर्णानुक्रम में क्रमबद्ध करें';
+
+  @override
+  String get tocLinkTopicFiles => 'विषय फ़ाइलों को विषय-सूची से लिंक करें...';
+
+  @override
+  String get addLocalMarkdownFiles => 'स्थानीय Markdown फ़ाइलें जोड़ें';
+
+  @override
+  String get tocTitleField => 'विषय-सूची का शीर्षक:';
+
+  @override
+  String get tocTopicTitleField => 'विषय का शीर्षक:';
+
+  @override
+  String get tocAdvancedSettings => 'उन्नत सेटिंग्स';
+
+  @override
+  String tocInstanceTitleField(String instanceId) {
+    return '\'$instanceId\' के लिए शीर्षक:';
+  }
+
+  @override
+  String get tocOnlyTitleField => 'केवल विषय-सूची का शीर्षक:';
+
+  @override
+  String get tocInstanceTitleExplanation =>
+      'केवल वर्तमान इंस्टेंस के लिए उपयोग होता है। डिफ़ॉल्ट रूप से विषय के शीर्षक से प्राप्त होता है।';
+
+  @override
+  String get tocOnlyTitleExplanation =>
+      'केवल विषय-सूची में उपयोग होता है। डिफ़ॉल्ट रूप से विषय के शीर्षक या, यदि सेट हो, इंस्टेंस-विशिष्ट शीर्षक से प्राप्त होता है। शीर्षकों का विवरण पढ़ें:';
+
+  @override
+  String get tocTitleDocumentationLink => 'यहाँ';
+
+  @override
+  String get tocFindUsages => 'खोजें';
+
+  @override
+  String get tocRefactorMenu => 'रिफ़ैक्टर';
+
+  @override
+  String get tocSafeDelete => 'सुरक्षित रूप से हटाएँ';
+
+  @override
+  String get tocDuplicate => 'प्रतिलिपि बनाएँ';
+
+  @override
+  String get tocDuplicateFilename => 'विषय फ़ाइल का नाम:';
+
+  @override
+  String get tocDuplicateDialog => 'विषय की प्रतिलिपि बनाएँ';
+
+  @override
   String get pdfTitlePage => 'शीर्षक पृष्ठ';
 
   @override
@@ -1156,7 +1380,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get files => 'फ़ाइलें';
 
   @override
-  String get toc => 'विषय';
+  String get toc => 'विषय-सूची';
 
   @override
   String get tocActions => 'विषय-सूची संबंधी कार्रवाइयाँ';
@@ -1194,7 +1418,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get newChildTopic => 'नया उप-विषय';
 
   @override
-  String get newSiblingTopic => 'समान स्तर पर नया विषय';
+  String get newSiblingTopic => 'नया विषय';
 
   @override
   String get renameTopicFile => 'विषय फ़ाइल का नाम बदलें';
@@ -1256,7 +1480,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String topicRemovalSummary(String topic) {
-    return '“$topic” को चुने गए इंस्टेंस से हटाएँ। विषय फ़ाइल रखी जाएगी।';
+    return 'विषय-सूची से “$topic” तत्व हटाएँ? विषय-सूची से जुड़ी स्रोत फ़ाइल नहीं हटाई जाएगी।';
   }
 
   @override
@@ -1281,7 +1505,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String topicUsagesCount(int count) {
-    return 'उपयोग ($count)';
+    return '$count उपयोग मिले।';
   }
 
   @override
@@ -1329,7 +1553,7 @@ class AppLocalizationsHi extends AppLocalizations {
       'इस रीफ़ैक्टरिंग से पहले कुछ उपयोगों को मैन्युअल रूप से बदलना होगा।';
 
   @override
-  String get setRedirectTo => 'इस पर रीडायरेक्ट करें';
+  String get setRedirectTo => 'इस पर रीडायरेक्ट करें:';
 
   @override
   String get noRedirectDescription =>
@@ -1355,6 +1579,30 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get doRefactor => 'रीफ़ैक्टर करें';
+
+  @override
+  String get preview => 'पूर्वावलोकन';
+
+  @override
+  String get topicRenamePreviewTitle => 'नाम बदलने का पूर्वावलोकन';
+
+  @override
+  String topicRenamePathChange(String oldPath, String newPath) {
+    return 'पथ: $oldPath → $newPath';
+  }
+
+  @override
+  String topicRenameIdChange(String oldId, String newId) {
+    return 'विषय ID: $oldId → $newId';
+  }
+
+  @override
+  String topicRenameUrlChange(String instance, String oldName, String newName) {
+    return 'इंस्टेंस $instance: $oldName → $newName';
+  }
+
+  @override
+  String get topicRenameAffectedFiles => 'प्रभावित फ़ाइलें';
 
   @override
   String get orphanTopicTitle => 'विषय फ़ाइल अब उपयोग में नहीं है';
@@ -1916,6 +2164,23 @@ class AppLocalizationsHi extends AppLocalizations {
   }
 
   @override
+  String errorWritersideTopicRenameIncompleteProjectIndex(
+    String module,
+    String count,
+    String paths,
+  ) {
+    return 'नाम बदलने से प्रोजेक्ट के सभी संदर्भ सुरक्षित रूप से अपडेट नहीं किए जा सकते क्योंकि मॉड्यूल $module में $count विषय फ़ाइल पार्स नहीं हुईं: $paths';
+  }
+
+  @override
+  String get errorWritersideTopicRenameProjectBuffersDirty =>
+      'Writerside प्रोजेक्ट फ़ाइलों में सहेजे न गए बदलाव हैं। उन्हें हल करें और नाम बदलने का नया पूर्वावलोकन तैयार करें।';
+
+  @override
+  String get errorWritersideTopicRenameProjectInventoryChanged =>
+      'Writerside प्रोजेक्ट का मॉड्यूल सेट बदल गया है। रीफ़ैक्टर करने से पहले नाम बदलने का नया पूर्वावलोकन तैयार करें।';
+
+  @override
   String get errorTopicsRootUnsafe =>
       'विषय रूट सुरक्षित सापेक्ष डायरेक्टरी होना चाहिए।';
 
@@ -2187,6 +2452,25 @@ class AppLocalizationsHi extends AppLocalizations {
   @override
   String diagnosticWritersideTopicDuplicateId(String id) {
     return 'एलिमेंट id \"$id\" एक से अधिक बार दिखाई देता है।';
+  }
+
+  @override
+  String diagnosticWritersideWebFileNameInvalid(
+    String instanceId,
+    String webFileName,
+    String topic,
+  ) {
+    return 'इंस्टेंस \"$instanceId\" विषय \"$topic\" के लिए अमान्य वेब फ़ाइल नाम \"$webFileName\" प्रकाशित करता है।';
+  }
+
+  @override
+  String diagnosticWritersideWebFileNameCollision(
+    String instanceId,
+    String webFileName,
+    String firstTopic,
+    String secondTopic,
+  ) {
+    return 'इंस्टेंस \"$instanceId\" \"$firstTopic\" और \"$secondTopic\" दोनों को \"$webFileName\" के रूप में प्रकाशित करता है।';
   }
 
   @override
@@ -3677,25 +3961,6 @@ class AppLocalizationsHi extends AppLocalizations {
   String get aiDraftWithAi => 'AI से मसौदा बनाएँ';
 
   @override
-  String get generateOrUpdateMarkdownToc => 'विषय-सूची बनाएँ/अपडेट करें';
-
-  @override
-  String get markdownTocTitle => 'विषय-सूची';
-
-  @override
-  String markdownTocUpdated(int count) {
-    return 'विषय-सूची $count प्रविष्टियों के साथ अपडेट हुई।';
-  }
-
-  @override
-  String get markdownTocNoHeadings =>
-      'विषय-सूची बनाने से पहले कम-से-कम एक अनुभाग शीर्षक जोड़ें।';
-
-  @override
-  String get markdownTocMalformedMarkers =>
-      'BusyMark विषय-सूची मार्कर अनुपस्थित, डुप्लिकेट या गलत क्रम में हैं।';
-
-  @override
   String diagnosticMarkdownHeadingSkippedLevel(int level, int previousLevel) {
     return 'स्तर $level का शीर्षक स्तर $previousLevel के बाद है; अनुभागों का नेस्टिंग जाँचें।';
   }
@@ -3731,6 +3996,10 @@ class AppLocalizationsHi extends AppLocalizations {
   @override
   String get cannotRenameSymbol =>
       'प्रतीक का नाम सुरक्षित रूप से नहीं बदला जा सकता। नाम जाँचें और दोबारा प्रयास करने से पहले संदर्भ रीफ़्रेश करें।';
+
+  @override
+  String get renameTopicFileInstead =>
+      'विषय ID उनके फ़ाइल नामों से बनते हैं। विषय-सूची या फ़ाइलें साइडबार में ‘विषय फ़ाइल का नाम बदलें’ का उपयोग करें।';
 
   @override
   String get keyboardLayout => 'कीबोर्ड लेआउट';

@@ -1,4 +1,72 @@
 {
+  "tocTopicFromTemplate": "Тема з шаблону...",
+  "tocSaveAsTemplate": "Зберегти як шаблон",
+  "tocTemplateDialog": "Створити тему з шаблону",
+  "tocTemplatesEditor": "Шаблони файлів і коду",
+  "tocEditTemplates": "Редагувати шаблони...",
+  "tocCreateCustomTemplate": "Створити власний шаблон...",
+  "tocTemplateCreated": "Шаблон створено",
+  "tocTemplateDefault": "Стандартні",
+  "tocTemplateCustom": "Власні",
+  "tocTemplateFilename": "Ім’я файлу:",
+  "tocTemplateMarkdown": "Markdown (.md)",
+  "tocTemplateXml": "XML (.topic)",
+  "tocTemplatesInternal": "Внутрішні",
+  "tocTemplateUnnamed": "Без назви",
+  "tocTemplateNew": "Новий шаблон...",
+  "tocTemplateName": "Назва:",
+  "tocTemplateExtension": "Розширення:",
+  "tocTemplateLoadError": "Не вдалося завантажити шаблони. Наявні шаблони не змінено.",
+  "tocTemplateSaveError": "Не вдалося зберегти шаблони. Ваші зміни залишилися в редакторі.",
+  "tocTemplateConflict": "Шаблони змінено в іншому вікні. Скасуйте та знову відкрийте редактор.",
+  "tocTemplateDuplicateName": "Шаблон із такою назвою та розширенням уже існує.",
+  "tocTemplateFormat": "Формат:",
+  "tocTemplateReset": "Скинути",
+  "tocTemplateRetry": "Повторити",
+  "tocRemoveElementsDialog": "Вилучити {count} елементів змісту",
+  "tocRemoveElementsRetainFiles": "Вихідні файли, пов’язані з цими елементами змісту, не буде видалено.",
+  "tocOk": "OK",
+  "tocSelectExistingTopic": "Виберіть тему для додавання до поточного екземпляра",
+  "tocGroupName": "Назва групи",
+  "tocMoveLineUp": "Перемістити рядок угору",
+  "tocMoveLineDown": "Перемістити рядок униз",
+  "tocEmptyMdTopic": "Порожня тема MD",
+  "tocEmptyXmlTopic": "Порожня тема XML",
+  "tocCopySpecial": "Спеціальне копіювання",
+  "tocCopyFileName": "Назва файлу теми '{name}'",
+  "tocCopyFilePath": "Шлях до файлу теми",
+  "tocCopyTopicTitle": "Заголовок теми '{title}'",
+  "tocCopyElementId": "ID елемента змісту '{id}'",
+  "tocCopyFileNameUnavailable": "Назва файлу теми",
+  "tocCopyTopicTitleUnavailable": "Заголовок теми",
+  "tocCopyElementIdUnavailable": "ID елемента змісту",
+  "tocEditTitleAction": "Редагувати заголовок...",
+  "tocEditTitleDialog": "Редагувати заголовок",
+  "tocRemoveElementAction": "Вилучити елемент змісту...",
+  "tocSetHomePage": "Зробити домашньою сторінкою",
+  "tocGoToElement": "Перейти до елемента змісту в «{fileName}»",
+  "tocSynchronize": "Синхронізувати зміст і редактор",
+  "tocEmptyGroupAction": "Порожня група",
+  "tocNewEmptyGroup": "Нова порожня група",
+  "tocGroupAction": "Згрупувати",
+  "tocNewGroup": "Нова група",
+  "tocSortChildren": "Сортувати дочірні теми за абеткою",
+  "tocLinkTopicFiles": "Пов’язати файли тем зі змістом...",
+  "addLocalMarkdownFiles": "Додати локальні файли Markdown",
+  "tocTitleField": "Заголовок у змісті:",
+  "tocTopicTitleField": "Заголовок теми:",
+  "tocAdvancedSettings": "Додаткові налаштування",
+  "tocInstanceTitleField": "Заголовок для «{instanceId}»:",
+  "tocOnlyTitleField": "Заголовок лише для змісту:",
+  "tocInstanceTitleExplanation": "Використовується лише для поточного екземпляра. За замовчуванням успадковується від заголовка теми.",
+  "tocOnlyTitleExplanation": "Використовується лише у змісті. За замовчуванням успадковується від заголовка теми або заголовка екземпляра, якщо його задано. Пояснення заголовків наведено",
+  "tocTitleDocumentationLink": "тут",
+  "tocFindUsages": "Пошук",
+  "tocRefactorMenu": "Рефакторинг",
+  "tocSafeDelete": "Безпечне видалення",
+  "tocDuplicate": "Дублювати",
+  "tocDuplicateFilename": "Назва файлу теми:",
+  "tocDuplicateDialog": "Дублювати тему",
   "pdfTitlePage": "Титульна сторінка",
   "pdfIncludeTitlePage": "Додати титульну сторінку",
   "pdfTitlePageNote": "На цій сторінці немає колонтитулів і видимого номера сторінки.",
@@ -1221,7 +1289,7 @@
   "@files": {
     "description": "Files sidebar tab label."
   },
-  "toc": "Теми",
+  "toc": "Зміст",
   "@toc": {
     "description": "Writerside Topics sidebar tab label."
   },
@@ -1265,7 +1333,7 @@
   "@newChildTopic": {
     "description": "Create new child Writerside topic action label."
   },
-  "newSiblingTopic": "Нова тема на тому самому рівні",
+  "newSiblingTopic": "Нова тема",
   "@newSiblingTopic": {
     "description": "Create new sibling Writerside topic action label."
   },
@@ -1771,6 +1839,23 @@
         "type": "String"
       }
     }
+  },
+  "errorWritersideTopicRenameIncompleteProjectIndex": "Перейменування не може безпечно оновити всі посилання проєкту, оскільки в модулі {module} не розібрано файлів тем: {count}. Файли: {paths}",
+  "@errorWritersideTopicRenameIncompleteProjectIndex": {
+    "description": "Error shown when topic rename cannot prove complete project-wide semantic coverage.",
+    "placeholders": {
+      "module": {"type": "String"},
+      "count": {"type": "String"},
+      "paths": {"type": "String"}
+    }
+  },
+  "errorWritersideTopicRenameProjectBuffersDirty": "У файлах проєкту Writerside є незбережені зміни. Розв’яжіть їх і підготуйте новий попередній перегляд перейменування.",
+  "@errorWritersideTopicRenameProjectBuffersDirty": {
+    "description": "Error shown when a topic rename or reviewed rename plan is blocked by a dirty Writerside project buffer."
+  },
+  "errorWritersideTopicRenameProjectInventoryChanged": "Набір модулів проєкту Writerside змінився. Перед рефакторингом підготуйте новий попередній перегляд перейменування.",
+  "@errorWritersideTopicRenameProjectInventoryChanged": {
+    "description": "Error shown when module discovery differs from a prepared topic rename plan."
   },
   "errorTopicsRootUnsafe": "Кореневий каталог тем має бути допустимим відносним каталогом.",
   "@errorTopicsRootUnsafe": {
@@ -2537,7 +2622,7 @@
   "@removeAction": {
     "description": "Generic remove action label."
   },
-  "topicRemovalSummary": "Вилучити «{topic}» із вибраного екземпляра. Файл теми буде збережено.",
+  "topicRemovalSummary": "Вилучити елемент змісту «{topic}»? Пов’язаний зі змістом вихідний файл не буде видалено.",
   "@topicRemovalSummary": {
     "description": "Summary of removing a topic from one TOC while keeping its file.",
     "placeholders": {
@@ -2568,7 +2653,7 @@
   "@topicIsStartPageRemovalWarning": {
     "description": "Warning shown when the topic is used as an instance start page."
   },
-  "topicUsagesCount": "Використання ({count})",
+  "topicUsagesCount": "Знайдено використань: {count}.",
   "@topicUsagesCount": {
     "description": "Number of discovered topic usages.",
     "placeholders": {
@@ -2626,7 +2711,7 @@
   "@manualUsageUpdatesRequired": {
     "description": "Message shown when usages require manual updates."
   },
-  "setRedirectTo": "Переспрямувати на",
+  "setRedirectTo": "Переспрямувати на:",
   "@setRedirectTo": {
     "description": "Option to redirect the removed topic URL to another topic."
   },
@@ -3065,11 +3150,6 @@
   "aiDraftCommitMessage": "Створити чернетку повідомлення коміту",
   "aiDrafting": "Створення чернетки…",
   "aiDraftWithAi": "Створити чернетку за допомогою ШІ",
-  "generateOrUpdateMarkdownToc": "Створити/оновити зміст",
-  "markdownTocTitle": "Зміст",
-  "markdownTocUpdated": "Зміст оновлено, записів: {count}.",
-  "markdownTocNoHeadings": "Додайте принаймні один заголовок розділу перед створенням змісту.",
-  "markdownTocMalformedMarkers": "Маркери змісту BusyMark відсутні, повторюються або розташовані в неправильному порядку.",
   "diagnosticMarkdownHeadingSkippedLevel": "Після заголовка рівня {previousLevel} іде рівень {level}; перевірте вкладеність розділів.",
   "diagnosticMarkdownLinkEmptyText": "Текст посилання порожній; укажіть доступну назву, що описує його призначення.",
   "diagnosticMarkdownLinkReviewText": "Перевірте, чи описує текст посилання «{text}» його призначення в контексті.",
@@ -3266,5 +3346,14 @@
   "settingsHistoryExcludedPathsHint": "Один абсолютний шлях на рядок",
   "settingsSecondsValue": "{value} секунди",
   "settingsDaysValue": "{value} дні",
-  "settingsMebibytesValue": "{value} MiB"
+  "settingsMebibytesValue": "{value} MiB",
+  "preview": "Попередній перегляд",
+  "topicRenamePreviewTitle": "Попередній перегляд перейменування",
+  "topicRenamePathChange": "Шлях: {oldPath} → {newPath}",
+  "topicRenameIdChange": "ID теми: {oldId} → {newId}",
+  "topicRenameUrlChange": "Екземпляр {instance}: {oldName} → {newName}",
+  "topicRenameAffectedFiles": "Змінені файли",
+  "renameTopicFileInstead": "ID тем визначаються іменами їхніх файлів. Скористайтеся командою «Перейменувати файл теми» у змісті або на бічній панелі «Файли».",
+  "diagnosticWritersideWebFileNameInvalid": "Екземпляр \"{instanceId}\" публікує неприпустиме ім’я вебфайлу \"{webFileName}\" для теми \"{topic}\".",
+  "diagnosticWritersideWebFileNameCollision": "Екземпляр \"{instanceId}\" публікує теми \"{firstTopic}\" і \"{secondTopic}\" під одним іменем \"{webFileName}\"."
 }

@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:busymark/src/markdown/markdown_parser.dart';
 
 import 'package:busymark/src/app/app_settings.dart';
+import 'package:busymark/src/core/busymark_exception.dart';
 import 'package:busymark/src/core/source_span.dart';
 import 'package:busymark/src/local_history/local_history_controller.dart';
 import 'package:busymark/src/local_history/local_history_models.dart';
@@ -19,7 +20,11 @@ import 'package:busymark/src/workspace/workspace_message.dart';
 import 'package:busymark/src/workspace/workspace_model.dart';
 import 'package:busymark/src/workspace/workspace_service.dart';
 import 'package:busymark/src/writerside/writerside_project_creator.dart';
+import 'package:busymark/src/writerside/writerside_instance_service.dart';
+import 'package:busymark/src/writerside/writerside_model.dart';
 import 'package:busymark/src/writerside/writerside_topic_creator.dart';
+import 'package:busymark/src/writerside/writerside_topic_file_editor.dart';
+import 'package:busymark/src/writerside/writerside_topic_removal_service.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -27,6 +32,260 @@ import 'package:path/path.dart' as p;
 import 'package:xml/xml.dart';
 
 void main() {
+  test(
+    'Safe Delete closes the topic buffer, selects a survivor, and records history',
+    () async {
+      final root = await Directory.systemTemp.createTemp(
+        'busymark-topic-removal-lifecycle-',
+      );
+      addTearDown(() => root.delete(recursive: true));
+      await Directory(p.join(root.path, 'topics')).create();
+      await File(p.join(root.path, 'writerside.cfg')).writeAsString(
+        '<ihp><topics dir="topics"/><instance src="guide.tree"/></ihp>',
+      );
+      await File(p.join(root.path, 'guide.tree')).writeAsString('''
+<instance-profile id="guide" start-page="survivor.md">
+  <toc-element topic="survivor.md"/>
+  <toc-element topic="doomed.md"/>
+</instance-profile>
+''');
+      final survivor = File(p.join(root.path, 'topics', 'survivor.md'));
+      final doomed = File(p.join(root.path, 'topics', 'doomed.md'));
+      await survivor.writeAsString('# Survivor\n');
+      await doomed.writeAsString('# Doomed\n');
+      final history = MemoryLocalHistoryStore();
+      final harness = await _createControllerHarness(
+        localHistoryStore: history,
+      );
+      final controller = harness.controller._notifier;
+      await controller.openPath(root.path);
+      await controller.openActiveFile(survivor.path);
+      await controller.openActiveFile(doomed.path);
+      final analysis = await controller.analyzeWritersideTopicRemoval(
+        topicPath: doomed.path,
+        mode: WritersideTopicRemovalMode.safeDeleteFile,
+      );
+
+      final result = await controller.applyWritersideTopicRemoval(
+        WritersideTopicRemovalRequest(analysis: analysis!),
+      );
+
+      expect(result?.deletedFile, isTrue);
+      expect(doomed.existsSync(), isFalse);
+      expect(
+        controller.state.documentBuffers.map((buffer) => buffer.filePath),
+        isNot(contains(doomed.path)),
+      );
+      expect(
+        controller.state.workspace?.openFilePaths,
+        isNot(contains(doomed.path)),
+      );
+      expect(controller.state.workspace?.activeFilePath, survivor.path);
+      final historySnapshot = await history.load();
+      final deletedDocument = historySnapshot.documents.singleWhere(
+        (document) => document.historicalPaths.contains(doomed.path),
+      );
+      expect(deletedDocument.deleted, isTrue);
+    },
+  );
+
+  test(
+    'TOC writes reject an inactive dirty tree without discarding either buffer',
+    () async {
+      final root = await Directory.systemTemp.createTemp('busymark-toc-dirty-');
+      addTearDown(() => root.delete(recursive: true));
+      await Directory(p.join(root.path, 'topics')).create();
+      await File(p.join(root.path, 'writerside.cfg')).writeAsString(
+        '<ihp><topics dir="topics"/><instance src="g.tree"/></ihp>',
+      );
+      final tree = File(p.join(root.path, 'g.tree'));
+      const original =
+          '<instance-profile id="g" name="Guide" start-page="a.md"><toc-element topic="a.md"/></instance-profile>';
+      await tree.writeAsString(original);
+      final topic = File(p.join(root.path, 'topics/a.md'));
+      await topic.writeAsString('# Original\n');
+      final harness = await _createControllerHarness(
+        fileMonitor: _ControlledFileMonitor(),
+      );
+      await harness.settingsController.setAutoSave(false);
+      final controller = harness.controller._notifier;
+      await controller.openPath(root.path);
+      await controller.openActiveFile(tree.path);
+      controller.updateActiveText('$original\n<!-- unsaved -->');
+      await controller.openActiveFile(topic.path);
+      final result = await controller.createWritersideTopic(
+        const WritersideTopicCreateRequest(
+          title: 'Blocked',
+          fileName: 'blocked.md',
+          format: WritersideTopicFormat.markdown,
+        ),
+        instanceTreePath: tree.path,
+      );
+      expect(result, isFalse);
+      expect(await tree.readAsString(), original);
+      expect(
+        await File(p.join(root.path, 'topics/blocked.md')).exists(),
+        isFalse,
+      );
+      expect(
+        harness.controller.state.bufferForPath(tree.path)!.text,
+        contains('unsaved'),
+      );
+      expect(
+        harness.controller.state.bufferForPath(tree.path)!.isDirty,
+        isTrue,
+      );
+      expect(harness.controller.state.activeBuffer?.filePath, topic.path);
+    },
+  );
+
+  test(
+    'TOC creation defers its monitor events until the new document is open',
+    () async {
+      final root = await Directory.systemTemp.createTemp(
+        'busymark-toc-monitor-',
+      );
+      addTearDown(() => root.delete(recursive: true));
+      await Directory(p.join(root.path, 'topics')).create();
+      await File(p.join(root.path, 'writerside.cfg')).writeAsString(
+        '<ihp><topics dir="topics"/><instance src="g.tree"/></ihp>',
+      );
+      await File(p.join(root.path, 'g.tree')).writeAsString(
+        '<instance-profile id="g" name="Guide" start-page="a.md"><toc-element topic="a.md"/></instance-profile>',
+      );
+      await File(
+        p.join(root.path, 'topics/a.md'),
+      ).writeAsString('# Original\n');
+      final monitor = _ControlledFileMonitor();
+      final service = _TocCreationMonitorService(monitor);
+      final harness = await _createControllerHarness(
+        service: service,
+        fileMonitor: monitor,
+      );
+      await harness.controller.openPath(root.path);
+      final result = await harness.controller.createWritersideTopic(
+        const WritersideTopicCreateRequest(
+          title: 'Created',
+          fileName: 'created.md',
+          format: WritersideTopicFormat.markdown,
+        ),
+      );
+      expect(result, isTrue);
+      expect(
+        harness.controller.state.activeBuffer?.filePath,
+        p.join(root.path, 'topics/created.md'),
+      );
+      expect(
+        harness.controller.state.documentBuffers.map(
+          (buffer) => p.basename(buffer.filePath!),
+        ),
+        containsAll(['a.md', 'created.md']),
+      );
+      await Future<void>.delayed(const Duration(milliseconds: 400));
+      expect(
+        harness.controller.state.activeBuffer?.filePath,
+        p.join(root.path, 'topics/created.md'),
+      );
+    },
+  );
+
+  test(
+    'Markdown topic import opens its first topic in an editable buffer',
+    () async {
+      final root = await Directory.systemTemp.createTemp(
+        'busymark-controller-topic-import-',
+      );
+      final source = await Directory.systemTemp.createTemp(
+        'busymark-controller-topic-source-',
+      );
+      addTearDown(() => root.delete(recursive: true));
+      addTearDown(() => source.delete(recursive: true));
+      Directory(p.join(root.path, 'topics')).createSync();
+      File(p.join(root.path, 'writerside.cfg')).writeAsStringSync(
+        '<ihp><topics dir="topics"/><instance src="g.tree"/></ihp>',
+      );
+      final tree = File(p.join(root.path, 'g.tree'))
+        ..writeAsStringSync(
+          '<instance-profile id="g" name="Guide" start-page="a.md">'
+          '<toc-element topic="a.md"/></instance-profile>',
+        );
+      final original = File(p.join(root.path, 'topics', 'a.md'))
+        ..writeAsStringSync('# Original\n');
+      final imported = File(p.join(source.path, 'imported.md'))
+        ..writeAsStringSync('# Imported\n');
+      final harness = await _createControllerHarness();
+      final controller = harness.controller._notifier;
+      await controller.openPath(root.path);
+      await controller.openActiveFile(original.path);
+
+      final succeeded = await controller.addWritersideMarkdownTopics(
+        WritersideMarkdownTopicImportRequest(
+          sourceRootPath: source.path,
+          selectedMarkdownPaths: [imported.path],
+          treePath: tree.path,
+          placement: WritersideTopicCreatePlacement.root,
+        ),
+      );
+
+      final target = p.join(root.path, 'topics', 'imported.md');
+      expect(succeeded, true);
+      expect(controller.state.workspace?.activeFilePath, target);
+      expect(controller.state.workspace?.openFilePaths, contains(target));
+      expect(controller.state.activeBuffer?.filePath, target);
+      expect(
+        controller.state.activeBuffer?.editorState.mode,
+        isNot(DocumentViewModePreference.preview),
+      );
+    },
+  );
+
+  test(
+    'failed Markdown import preserves the active document and workspace',
+    () async {
+      final root = await Directory.systemTemp.createTemp(
+        'busymark-controller-topic-import-fail-',
+      );
+      final source = await Directory.systemTemp.createTemp(
+        'busymark-controller-topic-source-',
+      );
+      addTearDown(() => root.delete(recursive: true));
+      addTearDown(() => source.delete(recursive: true));
+      Directory(p.join(root.path, 'topics')).createSync();
+      File(p.join(root.path, 'writerside.cfg')).writeAsStringSync(
+        '<ihp><topics dir="topics"/><instance src="g.tree"/></ihp>',
+      );
+      final tree = File(p.join(root.path, 'g.tree'))
+        ..writeAsStringSync(
+          '<instance-profile id="g" name="Guide" start-page="a.md">'
+          '<toc-element topic="a.md"/></instance-profile>',
+        );
+      final original = File(p.join(root.path, 'topics', 'a.md'))
+        ..writeAsStringSync('# Original\n');
+      final conflict = File(p.join(source.path, 'a.md'))
+        ..writeAsStringSync('# Conflict\n');
+      final harness = await _createControllerHarness();
+      final controller = harness.controller._notifier;
+      await controller.openPath(root.path);
+      await controller.openActiveFile(original.path);
+      final originalTree = tree.readAsStringSync();
+
+      final succeeded = await controller.addWritersideMarkdownTopics(
+        WritersideMarkdownTopicImportRequest(
+          sourceRootPath: source.path,
+          selectedMarkdownPaths: [conflict.path],
+          treePath: tree.path,
+          placement: WritersideTopicCreatePlacement.root,
+        ),
+      );
+
+      expect(succeeded, false);
+      expect(controller.state.workspace?.activeFilePath, original.path);
+      expect(controller.state.activeBuffer?.filePath, original.path);
+      expect(original.readAsStringSync(), '# Original\n');
+      expect(tree.readAsStringSync(), originalTree);
+    },
+  );
+
   test('Validate publishes a valid table containing an escaped pipe', () async {
     final root = await Directory.systemTemp.createTemp(
       'busymark-table-validation-',
@@ -611,10 +870,18 @@ void main() {
       expect(first.childElements.single.getAttribute('topic'), 'secondary.md');
       expect(controller.state.workspace?.activeFilePath, startPath);
 
-      expect(
-        await controller.renameWritersideTopicFile(secondaryPath, 'renamed.md'),
-        isTrue,
+      final renamePlan = await controller.prepareWritersideTopicRename(
+        secondaryPath,
+        'renamed.md',
+        topicModuleRoot: rootPath,
       );
+      expect(renamePlan, isNotNull);
+      expect(File(secondaryPath).existsSync(), isTrue);
+      expect(
+        File(p.join(rootPath, 'topics', 'renamed.md')).existsSync(),
+        isFalse,
+      );
+      expect(await controller.applyWritersideTopicRename(renamePlan!), isTrue);
       final renamedPath = p.join(rootPath, 'topics', 'renamed.md');
       tree = XmlDocument.parse(File(treePath).readAsStringSync());
       first = tree.rootElement.childElements
@@ -645,6 +912,56 @@ void main() {
       controller.dispose();
       settingsController.dispose();
       await parent.delete(recursive: true);
+    },
+  );
+
+  test(
+    'reviewed topic rename is rejected after a project buffer becomes dirty',
+    () async {
+      final root = await Directory.systemTemp.createTemp(
+        'busymark-controller-stale-topic-preview-',
+      );
+      addTearDown(() => root.delete(recursive: true));
+      await Directory(p.join(root.path, 'topics')).create();
+      await File(p.join(root.path, 'writerside.cfg')).writeAsString(
+        '<ihp><topics dir="topics"/><instance src="guide.tree"/></ihp>',
+      );
+      final tree = File(p.join(root.path, 'guide.tree'));
+      const treeSource =
+          '<instance-profile id="guide" start-page="guide.md"><toc-element topic="guide.md"/><toc-element topic="notes.md"/></instance-profile>';
+      await tree.writeAsString(treeSource);
+      final guide = File(p.join(root.path, 'topics', 'guide.md'));
+      final notes = File(p.join(root.path, 'topics', 'notes.md'));
+      await guide.writeAsString('# Guide\n');
+      await notes.writeAsString('# Notes\n');
+      final harness = await _createControllerHarness(
+        fileMonitor: _ControlledFileMonitor(),
+      );
+      await harness.settingsController.setAutoSave(false);
+      final controller = harness.controller._notifier;
+      await controller.openPath(root.path);
+      final plan = await controller.prepareWritersideTopicRename(
+        guide.path,
+        'setup.md',
+        topicModuleRoot: root.path,
+      );
+      expect(plan, isNotNull);
+      await controller.openActiveFile(notes.path);
+      controller.updateActiveText('# Notes\n\nNew unsaved project content.\n');
+
+      expect(await controller.applyWritersideTopicRename(plan!), isFalse);
+
+      expect(await guide.readAsString(), '# Guide\n');
+      expect(await notes.readAsString(), '# Notes\n');
+      expect(await tree.readAsString(), treeSource);
+      expect(
+        await File(p.join(root.path, 'topics', 'setup.md')).exists(),
+        isFalse,
+      );
+      expect(
+        (harness.controller.state.message!.error as BusyMarkException).code,
+        'writerside.topic-file.project-buffers-dirty',
+      );
     },
   );
 
@@ -1171,6 +1488,88 @@ void main() {
     controller.dispose();
     settingsController.dispose();
   });
+
+  test(
+    'Save All can be scoped without saving unrelated dirty buffers',
+    () async {
+      final directory = await Directory.systemTemp.createTemp(
+        'busymark-save-selected-',
+      );
+      addTearDown(() => directory.delete(recursive: true));
+      final first = File(p.join(directory.path, 'a.md'))
+        ..writeAsStringSync('# A\n');
+      final second = File(p.join(directory.path, 'b.md'))
+        ..writeAsStringSync('# B\n');
+      final unrelated = File(p.join(directory.path, 'outside.md'))
+        ..writeAsStringSync('# Outside\n');
+      final harness = await _createControllerHarness();
+      final settingsController = harness.settingsController;
+      final controller = harness.controller;
+
+      await controller.openPath(directory.path);
+      controller.updateActiveText('# Edited A\n');
+      expect(await controller.openActiveFile(second.path), isTrue);
+      controller.updateActiveText('# Edited B\n');
+      expect(await controller.openActiveFile(unrelated.path), isTrue);
+      controller.updateActiveText('# Edited outside\n');
+      final selectedIds = controller.state.documentBuffers
+          .where(
+            (buffer) =>
+                buffer.filePath == first.path || buffer.filePath == second.path,
+          )
+          .map((buffer) => buffer.id)
+          .toList();
+
+      final result = await controller.saveAll(bufferIds: selectedIds);
+
+      expect(result.savedBufferIds, unorderedEquals(selectedIds));
+      expect(first.readAsStringSync(), '# Edited A\n');
+      expect(second.readAsStringSync(), '# Edited B\n');
+      expect(unrelated.readAsStringSync(), '# Outside\n');
+      expect(controller.state.dirtyBuffers.map((buffer) => buffer.filePath), [
+        unrelated.path,
+      ]);
+
+      controller.dispose();
+      settingsController.dispose();
+    },
+  );
+
+  test(
+    'selected dirty buffers can be discarded without changing tabs',
+    () async {
+      final directory = await Directory.systemTemp.createTemp(
+        'busymark-discard-selected-',
+      );
+      addTearDown(() => directory.delete(recursive: true));
+      final first = File(p.join(directory.path, 'a.md'))
+        ..writeAsStringSync('# A\n');
+      final second = File(p.join(directory.path, 'b.md'))
+        ..writeAsStringSync('# B\n');
+      final harness = await _createControllerHarness();
+      final settingsController = harness.settingsController;
+      final controller = harness.controller;
+
+      await controller.openPath(directory.path);
+      controller.updateActiveText('# Edited A\n');
+      expect(await controller.openActiveFile(second.path), isTrue);
+      controller.updateActiveText('# Edited B\n');
+      final dirtyIds = controller.state.dirtyBuffers
+          .map((buffer) => buffer.id)
+          .toList();
+
+      expect(await controller.discardDocumentBuffers(dirtyIds), isTrue);
+
+      expect(controller.state.workspace?.activeFilePath, second.path);
+      expect(controller.state.dirtyBuffers, isEmpty);
+      expect(first.readAsStringSync(), '# A\n');
+      expect(second.readAsStringSync(), '# B\n');
+      expect(controller.state.activeText, '# B\n');
+
+      controller.dispose();
+      settingsController.dispose();
+    },
+  );
 
   test('closing active file tabs selects a neighboring tab', () async {
     final harness = await _createControllerHarness();
@@ -3148,6 +3547,19 @@ class _WorkspaceControllerDriver {
     String newFileName,
   ) => _notifier.renameWritersideTopicFile(topicPath, newFileName);
 
+  Future<WritersideTopicRenamePlan?> prepareWritersideTopicRename(
+    String topicPath,
+    String newFileName, {
+    required String topicModuleRoot,
+  }) => _notifier.prepareWritersideTopicRename(
+    topicPath,
+    newFileName,
+    topicModuleRoot: topicModuleRoot,
+  );
+
+  Future<bool> applyWritersideTopicRename(WritersideTopicRenamePlan plan) =>
+      _notifier.applyWritersideTopicRename(plan);
+
   Future<bool> deleteWritersideTopicFile(String topicPath) =>
       _notifier.deleteWritersideTopicFile(topicPath);
 
@@ -3226,7 +3638,11 @@ class _WorkspaceControllerDriver {
   Future<bool> saveActiveAs(String path, {bool overwriteExisting = false}) =>
       _notifier.saveActiveAs(path, overwriteExisting: overwriteExisting);
 
-  Future<SaveAllResult> saveAll() => _notifier.saveAll();
+  Future<SaveAllResult> saveAll({Iterable<String>? bufferIds}) =>
+      _notifier.saveAll(bufferIds: bufferIds);
+
+  Future<bool> discardDocumentBuffers(Iterable<String> bufferIds) =>
+      _notifier.discardDocumentBuffers(bufferIds);
 
   Future<bool> autoSaveActiveIfNeeded() => _notifier.autoSaveActiveIfNeeded();
 
@@ -3683,6 +4099,37 @@ class _ControlledFileMonitor extends WorkspaceFileMonitor {
   void updateOpenFilePaths(Iterable<String> paths) {}
   @override
   Future<void> dispose() => _events.close();
+}
+
+class _TocCreationMonitorService extends WorkspaceService {
+  _TocCreationMonitorService(this.monitor);
+  final _ControlledFileMonitor monitor;
+  @override
+  Future<Workspace> createWritersideTopic(
+    Workspace workspace,
+    WritersideTopicCreateRequest request, {
+    String? instanceTreePath,
+    String? initialSource,
+    Future<void> Function()? validateBeforePublish,
+  }) async {
+    final result = await super.createWritersideTopic(
+      workspace,
+      request,
+      instanceTreePath: instanceTreePath,
+      validateBeforePublish: validateBeforePublish,
+      initialSource: initialSource,
+    );
+    monitor.emit(workspace.rootPath);
+    return result;
+  }
+
+  @override
+  Future<WorkspaceFileLoad> loadTextWithSnapshot(String path) async {
+    if (path.endsWith('/created.md')) {
+      await Future<void>.delayed(const Duration(milliseconds: 400));
+    }
+    return super.loadTextWithSnapshot(path);
+  }
 }
 
 class _GatedRefreshWorkspaceService extends WorkspaceService {

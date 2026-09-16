@@ -1006,7 +1006,7 @@ void showLegacyBusyMarkKeyboardShortcutsDialog(BuildContext context) {
               ),
               BusyMarkActionRow(
                 title: context.l10n.localHistoryEllipsis,
-                leading: const Icon(BusyMarkGlyphs.documentHistory),
+                leading: const Icon(BusyMarkGlyphs.sidebarLocalHistory),
                 trailing: const _KeyboardShortcutBadge(
                   BusyMarkSidebarShortcutLabels.localHistory,
                 ),

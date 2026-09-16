@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:busymark/src/core/busymark_exception.dart';
+import 'package:busymark/src/core/path_utils.dart';
 import 'package:busymark/src/writerside/writerside_instance_service.dart';
 import 'package:busymark/src/writerside/writerside_model.dart';
 import 'package:busymark/src/writerside/writerside_module_service.dart';
@@ -101,7 +102,7 @@ void main() {
     Directory(
       p.join(source.path, 'guide', 'images'),
     ).createSync(recursive: true);
-    final first = File(p.join(source.path, 'guide', 'intro.md'))
+    final first = File(p.join(source.path, 'guide', 'imported-intro.md'))
       ..writeAsStringSync('''# Imported intro
 
 ![Logo](images/logo.png)
@@ -124,7 +125,7 @@ void main() {
 
     final candidates = await instanceService.discoverMarkdownFiles(source.path);
     expect(candidates.map((candidate) => candidate.relativePath), [
-      'guide/intro.md',
+      'guide/imported-intro.md',
       'guide/other.md',
     ]);
     expect(candidates.first.title, 'Imported intro');
@@ -143,7 +144,7 @@ void main() {
 
     expect(
       result.firstTopicPath,
-      p.join(root.path, 'topics', 'guide', 'intro.md'),
+      p.join(root.path, 'topics', 'guide', 'imported-intro.md'),
     );
     expect(
       File(result.firstTopicPath!).readAsStringSync(),
@@ -174,10 +175,13 @@ void main() {
     final tree = XmlDocument.parse(
       File(p.join(root.path, 'imported.tree')).readAsStringSync(),
     );
-    expect(tree.rootElement.getAttribute('start-page'), 'guide/intro.md');
+    expect(
+      tree.rootElement.getAttribute('start-page'),
+      'guide/imported-intro.md',
+    );
     expect(
       tree.rootElement.childElements.single.getAttribute('topic'),
-      'guide/intro.md',
+      'guide/imported-intro.md',
     );
   });
 
@@ -393,6 +397,670 @@ Text {instance="!guide,other"}
       expect(config.readAsStringSync(), contains('concurrent'));
     },
   );
+
+  group('existing-instance Markdown topic import', () {
+    test(
+      'copies selected topics, media, and inserts root entries in order',
+      () async {
+        final root = await _project();
+        final source = await Directory.systemTemp.createTemp(
+          'busymark-topic-import-',
+        );
+        addTearDown(() => root.deleteSync(recursive: true));
+        addTearDown(() => source.deleteSync(recursive: true));
+        Directory(
+          p.join(source.path, 'nested', 'media'),
+        ).createSync(recursive: true);
+        final one = File(p.join(source.path, 'one.md'))
+          ..writeAsStringSync('# One\n\n![shared](nested/media/shared.png)\n');
+        File(p.join(source.path, 'skip.md')).writeAsStringSync('# Skip\n');
+        final two = File(p.join(source.path, 'nested', 'two.md'))
+          ..writeAsStringSync('''# Two
+
+<video src="media/video.mp4" preview-src="media/shared.png"/>
+''');
+        File(
+          p.join(source.path, 'nested', 'media', 'shared.png'),
+        ).writeAsBytesSync([1, 2, 3]);
+        File(
+          p.join(source.path, 'nested', 'media', 'video.mp4'),
+        ).writeAsBytesSync([4, 5, 6]);
+
+        final result = await instanceService.addMarkdownTopics(
+          module: await moduleService.load(root.path),
+          request: WritersideMarkdownTopicImportRequest(
+            sourceRootPath: source.path,
+            selectedMarkdownPaths: [one.path, two.path],
+            treePath: p.join(root.path, 'guide.tree'),
+            placement: WritersideTopicCreatePlacement.root,
+          ),
+        );
+
+        expect(result.importedTopicPaths, [
+          p.join(root.path, 'topics', 'one.md'),
+          p.join(root.path, 'topics', 'nested', 'two.md'),
+        ]);
+        expect(result.firstTopicPath, result.importedTopicPaths.first);
+        expect(
+          File(result.importedTopicPaths[0]).readAsBytesSync(),
+          one.readAsBytesSync(),
+        );
+        expect(
+          File(result.importedTopicPaths[1]).readAsBytesSync(),
+          two.readAsBytesSync(),
+        );
+        expect(
+          File(p.join(root.path, 'topics', 'skip.md')).existsSync(),
+          isFalse,
+        );
+        expect(
+          File(
+            p.join(root.path, 'topics', 'nested', 'media', 'shared.png'),
+          ).readAsBytesSync(),
+          [1, 2, 3],
+        );
+        expect(
+          File(
+            p.join(root.path, 'topics', 'nested', 'media', 'video.mp4'),
+          ).readAsBytesSync(),
+          [4, 5, 6],
+        );
+        final updatedTree = XmlDocument.parse(
+          File(result.treePath).readAsStringSync(),
+        );
+        final topics = updatedTree.rootElement.childElements
+            .where((element) => element.name.local == 'toc-element')
+            .map((element) => element.getAttribute('topic'));
+        expect(topics, ['intro.md', 'one.md', 'nested/two.md']);
+        expect(updatedTree.rootElement.getAttribute('start-page'), 'intro.md');
+      },
+    );
+
+    test(
+      'inserts several siblings after the exact reference in list order',
+      () async {
+        final root = await _project();
+        final source = await Directory.systemTemp.createTemp(
+          'busymark-topic-import-',
+        );
+        addTearDown(() => root.deleteSync(recursive: true));
+        addTearDown(() => source.deleteSync(recursive: true));
+        final tree = File(p.join(root.path, 'guide.tree'))
+          ..writeAsStringSync('''
+<instance-profile id="guide" name="Guide" start-page="a.md">
+  <toc-element id="a" topic="a.md"/>
+  <toc-element id="b" topic="b.md"/>
+  <toc-element id="c" topic="c.md"/>
+</instance-profile>
+''');
+        final paths = <String>[];
+        for (final name in ['one', 'two', 'three']) {
+          paths.add(
+            (File(
+              p.join(source.path, '$name.md'),
+            )..writeAsStringSync('# $name\n')).path,
+          );
+        }
+
+        await instanceService.addMarkdownTopics(
+          module: await moduleService.load(root.path),
+          request: WritersideMarkdownTopicImportRequest(
+            sourceRootPath: source.path,
+            selectedMarkdownPaths: paths,
+            treePath: tree.path,
+            placement: WritersideTopicCreatePlacement.sibling,
+            referenceTocPath: const [1],
+            referenceTocIdentity: const WritersideTocNodeIdentity(
+              id: 'b',
+              topicFileName: 'b.md',
+              hidden: false,
+            ),
+          ),
+        );
+
+        expect(
+          XmlDocument.parse(tree.readAsStringSync()).rootElement.childElements
+              .map((element) => element.getAttribute('topic')),
+          ['a.md', 'b.md', 'one.md', 'two.md', 'three.md', 'c.md'],
+        );
+      },
+    );
+
+    test(
+      'initializes only the first imported topic as the start page',
+      () async {
+        final root = await _project();
+        final source = await Directory.systemTemp.createTemp(
+          'busymark-topic-import-',
+        );
+        addTearDown(() => root.deleteSync(recursive: true));
+        addTearDown(() => source.deleteSync(recursive: true));
+        final tree = File(p.join(root.path, 'guide.tree'))
+          ..writeAsStringSync('<instance-profile id="guide" name="Guide"/>\n');
+        final one = File(p.join(source.path, 'one.md'))
+          ..writeAsStringSync('# One\n');
+        final two = File(p.join(source.path, 'two.md'))
+          ..writeAsStringSync('# Two\n');
+
+        await instanceService.addMarkdownTopics(
+          module: await moduleService.load(root.path),
+          request: WritersideMarkdownTopicImportRequest(
+            sourceRootPath: source.path,
+            selectedMarkdownPaths: [one.path, two.path],
+            treePath: tree.path,
+            placement: WritersideTopicCreatePlacement.root,
+          ),
+        );
+
+        expect(
+          XmlDocument.parse(
+            tree.readAsStringSync(),
+          ).rootElement.getAttribute('start-page'),
+          'one.md',
+        );
+      },
+    );
+
+    test(
+      'rejects batch, existing-ID, target, and invalid-name conflicts',
+      () async {
+        Future<void> verify(
+          Future<void> Function(Directory root, Directory source) action,
+        ) async {
+          final root = await _project();
+          final source = await Directory.systemTemp.createTemp(
+            'busymark-topic-import-',
+          );
+          addTearDown(() => root.deleteSync(recursive: true));
+          addTearDown(() => source.deleteSync(recursive: true));
+          final tree = File(p.join(root.path, 'guide.tree'));
+          final originalTree = tree.readAsStringSync();
+          await action(root, source);
+          expect(tree.readAsStringSync(), originalTree);
+        }
+
+        await verify((root, source) async {
+          Directory(p.join(source.path, 'a')).createSync();
+          Directory(p.join(source.path, 'b')).createSync();
+          final first = File(p.join(source.path, 'a', 'guide.md'))
+            ..writeAsStringSync('# A\n');
+          final second = File(p.join(source.path, 'b', 'guide.md'))
+            ..writeAsStringSync('# B\n');
+          await expectLater(
+            instanceService.addMarkdownTopics(
+              module: await moduleService.load(root.path),
+              request: WritersideMarkdownTopicImportRequest(
+                sourceRootPath: source.path,
+                selectedMarkdownPaths: [first.path, second.path],
+                treePath: p.join(root.path, 'guide.tree'),
+                placement: WritersideTopicCreatePlacement.root,
+              ),
+            ),
+            throwsA(
+              isA<BusyMarkException>().having(
+                (error) => error.code,
+                'code',
+                'writerside.topic.id-exists',
+              ),
+            ),
+          );
+          expect(
+            File(p.join(root.path, 'topics', 'a', 'guide.md')).existsSync(),
+            false,
+          );
+        });
+
+        await verify((root, source) async {
+          File(
+            p.join(root.path, 'topics', 'guide.topic'),
+          ).writeAsStringSync('<topic id="guide" title="Guide"/>');
+          final imported = File(p.join(source.path, 'guide.md'))
+            ..writeAsStringSync('# Guide\n');
+          await expectLater(
+            instanceService.addMarkdownTopics(
+              module: await moduleService.load(root.path),
+              request: WritersideMarkdownTopicImportRequest(
+                sourceRootPath: source.path,
+                selectedMarkdownPaths: [imported.path],
+                treePath: p.join(root.path, 'guide.tree'),
+                placement: WritersideTopicCreatePlacement.root,
+              ),
+            ),
+            throwsA(
+              isA<BusyMarkException>().having(
+                (error) => error.code,
+                'code',
+                'writerside.topic.id-exists',
+              ),
+            ),
+          );
+        });
+
+        await verify((root, source) async {
+          final imported = File(p.join(source.path, 'intro.md'))
+            ..writeAsStringSync('# Replacement\n');
+          await expectLater(
+            instanceService.addMarkdownTopics(
+              module: await moduleService.load(root.path),
+              request: WritersideMarkdownTopicImportRequest(
+                sourceRootPath: source.path,
+                selectedMarkdownPaths: [imported.path],
+                treePath: p.join(root.path, 'guide.tree'),
+                placement: WritersideTopicCreatePlacement.root,
+              ),
+            ),
+            throwsA(isA<BusyMarkException>()),
+          );
+          expect(
+            File(p.join(root.path, 'topics', 'intro.md')).readAsStringSync(),
+            '# Intro\n',
+          );
+        });
+
+        await verify((root, source) async {
+          final imported = File(p.join(source.path, 'bad name.md'))
+            ..writeAsStringSync('# Bad\n');
+          await expectLater(
+            instanceService.addMarkdownTopics(
+              module: await moduleService.load(root.path),
+              request: WritersideMarkdownTopicImportRequest(
+                sourceRootPath: source.path,
+                selectedMarkdownPaths: [imported.path],
+                treePath: p.join(root.path, 'guide.tree'),
+                placement: WritersideTopicCreatePlacement.root,
+              ),
+            ),
+            throwsA(
+              isA<BusyMarkException>().having(
+                (error) => error.args['path'],
+                'source path',
+                imported.path,
+              ),
+            ),
+          );
+        });
+      },
+    );
+
+    test('accepts a Unicode topic filename', () async {
+      final root = await _project();
+      final source = await Directory.systemTemp.createTemp(
+        'busymark-topic-import-',
+      );
+      addTearDown(() => root.deleteSync(recursive: true));
+      addTearDown(() => source.deleteSync(recursive: true));
+      final imported = File(p.join(source.path, '開始.md'))
+        ..writeAsStringSync('# 開始\n');
+
+      await instanceService.addMarkdownTopics(
+        module: await moduleService.load(root.path),
+        request: WritersideMarkdownTopicImportRequest(
+          sourceRootPath: source.path,
+          selectedMarkdownPaths: [imported.path],
+          treePath: p.join(root.path, 'guide.tree'),
+          placement: WritersideTopicCreatePlacement.root,
+        ),
+      );
+
+      expect(File(p.join(root.path, 'topics', '開始.md')).existsSync(), true);
+    });
+
+    test(
+      'rejects a stale reference identity without publishing files',
+      () async {
+        final root = await _project();
+        final source = await Directory.systemTemp.createTemp(
+          'busymark-topic-import-',
+        );
+        addTearDown(() => root.deleteSync(recursive: true));
+        addTearDown(() => source.deleteSync(recursive: true));
+        final imported = File(p.join(source.path, 'one.md'))
+          ..writeAsStringSync('# One\n');
+        final tree = File(p.join(root.path, 'guide.tree'));
+        final originalTree = tree.readAsStringSync();
+
+        await expectLater(
+          instanceService.addMarkdownTopics(
+            module: await moduleService.load(root.path),
+            request: WritersideMarkdownTopicImportRequest(
+              sourceRootPath: source.path,
+              selectedMarkdownPaths: [imported.path],
+              treePath: tree.path,
+              placement: WritersideTopicCreatePlacement.sibling,
+              referenceTocPath: const [0],
+              referenceTocIdentity: const WritersideTocNodeIdentity(
+                topicFileName: 'different.md',
+                hidden: false,
+              ),
+            ),
+          ),
+          throwsA(
+            isA<BusyMarkException>().having(
+              (error) => error.code,
+              'code',
+              'writerside.topic.reference-missing',
+            ),
+          ),
+        );
+        expect(File(p.join(root.path, 'topics', 'one.md')).existsSync(), false);
+        expect(tree.readAsStringSync(), originalTree);
+      },
+    );
+
+    test('discovered-but-unparsed topic basename blocks import', () async {
+      final root = await _project();
+      final source = await Directory.systemTemp.createTemp(
+        'busymark-topic-import-',
+      );
+      addTearDown(() => root.deleteSync(recursive: true));
+      addTearDown(() => source.deleteSync(recursive: true));
+      File(p.join(root.path, 'topics', 'guide.topic')).writeAsStringSync(
+        '<topic id="guide" title="Guide">${'<p>x</p>' * 200}</topic>',
+      );
+      final imported = File(p.join(source.path, 'guide.md'))
+        ..writeAsStringSync('# Guide\n');
+      const limitedModuleService = WritersideModuleService(
+        scanOptions: WorkspaceScanOptions(maxParsedDocuments: 0),
+      );
+      const limitedService = WritersideInstanceService(
+        moduleService: limitedModuleService,
+      );
+      final module = await limitedModuleService.load(root.path);
+      expect(module.unparsedTopicReferences, contains('guide.topic'));
+
+      await expectLater(
+        limitedService.addMarkdownTopics(
+          module: module,
+          request: WritersideMarkdownTopicImportRequest(
+            sourceRootPath: source.path,
+            selectedMarkdownPaths: [imported.path],
+            treePath: p.join(root.path, 'guide.tree'),
+            placement: WritersideTopicCreatePlacement.root,
+          ),
+        ),
+        throwsA(
+          isA<BusyMarkException>().having(
+            (error) => error.code,
+            'code',
+            'writerside.topic.id-exists',
+          ),
+        ),
+      );
+    });
+
+    test('fails closed when semantic topic discovery is incomplete', () async {
+      final root = await _project();
+      final source = await Directory.systemTemp.createTemp(
+        'busymark-topic-import-',
+      );
+      addTearDown(() => root.deleteSync(recursive: true));
+      addTearDown(() => source.deleteSync(recursive: true));
+      final imported = File(p.join(source.path, 'one.md'))
+        ..writeAsStringSync('# One\n');
+      const limitedModuleService = WritersideModuleService(
+        scanOptions: WorkspaceScanOptions(maxTreeEntries: 1),
+      );
+      const limitedService = WritersideInstanceService(
+        moduleService: limitedModuleService,
+      );
+
+      await expectLater(
+        limitedService.addMarkdownTopics(
+          module: await limitedModuleService.load(root.path),
+          request: WritersideMarkdownTopicImportRequest(
+            sourceRootPath: source.path,
+            selectedMarkdownPaths: [imported.path],
+            treePath: p.join(root.path, 'guide.tree'),
+            placement: WritersideTopicCreatePlacement.root,
+          ),
+        ),
+        throwsA(
+          isA<BusyMarkException>().having(
+            (error) => error.code,
+            'code',
+            'writerside.topic.discovery-incomplete',
+          ),
+        ),
+      );
+      expect(File(p.join(root.path, 'topics', 'one.md')).existsSync(), false);
+    });
+
+    test(
+      'revalidates IDs before publishing and leaves no partial import',
+      () async {
+        final root = await _project();
+        final source = await Directory.systemTemp.createTemp(
+          'busymark-topic-import-',
+        );
+        addTearDown(() => root.deleteSync(recursive: true));
+        addTearDown(() => source.deleteSync(recursive: true));
+        final imported = File(p.join(source.path, 'guide.md'))
+          ..writeAsStringSync('# Guide\n\n![x](image.png)\n');
+        File(p.join(source.path, 'image.png')).writeAsBytesSync([1]);
+        final tree = File(p.join(root.path, 'guide.tree'));
+        final originalTree = tree.readAsStringSync();
+        final concurrent = File(p.join(root.path, 'topics', 'guide.topic'));
+        final service = WritersideInstanceService(
+          beforePublish: () async => concurrent.writeAsString(
+            '<topic id="guide" title="Concurrent"/>',
+          ),
+        );
+
+        await expectLater(
+          service.addMarkdownTopics(
+            module: await moduleService.load(root.path),
+            request: WritersideMarkdownTopicImportRequest(
+              sourceRootPath: source.path,
+              selectedMarkdownPaths: [imported.path],
+              treePath: tree.path,
+              placement: WritersideTopicCreatePlacement.root,
+            ),
+          ),
+          throwsA(
+            isA<BusyMarkException>().having(
+              (error) => error.code,
+              'code',
+              'writerside.topic.id-exists',
+            ),
+          ),
+        );
+        expect(concurrent.existsSync(), true);
+        expect(
+          File(p.join(root.path, 'topics', 'guide.md')).existsSync(),
+          false,
+        );
+        expect(
+          File(p.join(root.path, 'topics', 'image.png')).existsSync(),
+          false,
+        );
+        expect(tree.readAsStringSync(), originalTree);
+      },
+    );
+
+    test('allows an unrelated topic created before publication', () async {
+      final root = await _project();
+      final source = await Directory.systemTemp.createTemp(
+        'busymark-topic-import-',
+      );
+      addTearDown(() => root.deleteSync(recursive: true));
+      addTearDown(() => source.deleteSync(recursive: true));
+      final imported = File(p.join(source.path, 'guide.md'))
+        ..writeAsStringSync('# Guide\n');
+      final unrelated = File(p.join(root.path, 'topics', 'unrelated.topic'));
+      final service = WritersideInstanceService(
+        beforePublish: () async => unrelated.writeAsString(
+          '<topic id="unrelated" title="Unrelated"/>',
+        ),
+      );
+
+      final result = await service.addMarkdownTopics(
+        module: await moduleService.load(root.path),
+        request: WritersideMarkdownTopicImportRequest(
+          sourceRootPath: source.path,
+          selectedMarkdownPaths: [imported.path],
+          treePath: p.join(root.path, 'guide.tree'),
+          placement: WritersideTopicCreatePlacement.root,
+        ),
+      );
+
+      expect(File(result.firstTopicPath).existsSync(), true);
+      expect(unrelated.existsSync(), true);
+    });
+  });
+
+  test(
+    'new-instance import rejects existing and selected-batch topic IDs',
+    () async {
+      final root = await _project();
+      final source = await Directory.systemTemp.createTemp(
+        'busymark-instance-import-',
+      );
+      addTearDown(() => root.deleteSync(recursive: true));
+      addTearDown(() => source.deleteSync(recursive: true));
+      File(
+        p.join(root.path, 'topics', 'guide.topic'),
+      ).writeAsStringSync('<topic id="guide" title="Guide"/>');
+      final imported = File(p.join(source.path, 'guide.md'))
+        ..writeAsStringSync('# Guide\n');
+      final config = File(p.join(root.path, 'writerside.cfg'));
+      final originalConfig = config.readAsStringSync();
+
+      await expectLater(
+        instanceService.create(
+          module: await moduleService.load(root.path),
+          request: WritersideInstanceCreateRequest(
+            settings: const WritersideInstanceSettings(
+              name: 'Imported',
+              id: 'imported',
+            ),
+            importRootPath: source.path,
+            importedMarkdownPaths: [imported.path],
+          ),
+        ),
+        throwsA(
+          isA<BusyMarkException>().having(
+            (error) => error.code,
+            'code',
+            'writerside.topic.id-exists',
+          ),
+        ),
+      );
+      expect(config.readAsStringSync(), originalConfig);
+      expect(File(p.join(root.path, 'imported.tree')).existsSync(), false);
+      expect(File(p.join(root.path, 'topics', 'guide.md')).existsSync(), false);
+
+      Directory(p.join(source.path, 'a')).createSync();
+      Directory(p.join(source.path, 'b')).createSync();
+      final first = File(p.join(source.path, 'a', 'same.md'))
+        ..writeAsStringSync('# A\n');
+      final second = File(p.join(source.path, 'b', 'same.md'))
+        ..writeAsStringSync('# B\n');
+      await expectLater(
+        instanceService.create(
+          module: await moduleService.load(root.path),
+          request: WritersideInstanceCreateRequest(
+            settings: const WritersideInstanceSettings(
+              name: 'Imported',
+              id: 'imported',
+            ),
+            importRootPath: source.path,
+            importedMarkdownPaths: [first.path, second.path],
+          ),
+        ),
+        throwsA(
+          isA<BusyMarkException>().having(
+            (error) => error.code,
+            'code',
+            'writerside.topic.id-exists',
+          ),
+        ),
+      );
+    },
+  );
+
+  test('new-instance import rejects an invalid topic filename', () async {
+    final root = await _project();
+    final source = await Directory.systemTemp.createTemp(
+      'busymark-instance-import-',
+    );
+    addTearDown(() => root.deleteSync(recursive: true));
+    addTearDown(() => source.deleteSync(recursive: true));
+    final imported = File(p.join(source.path, 'bad name.md'))
+      ..writeAsStringSync('# Invalid\n');
+    final config = File(p.join(root.path, 'writerside.cfg'));
+    final originalConfig = config.readAsStringSync();
+
+    await expectLater(
+      instanceService.create(
+        module: await moduleService.load(root.path),
+        request: WritersideInstanceCreateRequest(
+          settings: const WritersideInstanceSettings(
+            name: 'Invalid import',
+            id: 'invalid-import',
+          ),
+          importRootPath: source.path,
+          importedMarkdownPaths: [imported.path],
+        ),
+      ),
+      throwsA(
+        isA<BusyMarkException>()
+            .having(
+              (error) => error.code,
+              'code',
+              'writerside.topic-file.file-name-invalid',
+            )
+            .having((error) => error.args['path'], 'path', imported.path),
+      ),
+    );
+    expect(config.readAsStringSync(), originalConfig);
+    expect(File(p.join(root.path, 'invalid-import.tree')).existsSync(), false);
+  });
+
+  test('new-instance import fails closed on incomplete discovery', () async {
+    final root = await _project();
+    final source = await Directory.systemTemp.createTemp(
+      'busymark-instance-import-',
+    );
+    addTearDown(() => root.deleteSync(recursive: true));
+    addTearDown(() => source.deleteSync(recursive: true));
+    final imported = File(p.join(source.path, 'fresh.md'))
+      ..writeAsStringSync('# Fresh\n');
+    const limitedModuleService = WritersideModuleService(
+      scanOptions: WorkspaceScanOptions(maxTreeEntries: 1),
+    );
+    const limitedService = WritersideInstanceService(
+      moduleService: limitedModuleService,
+    );
+    final config = File(p.join(root.path, 'writerside.cfg'));
+    final originalConfig = config.readAsStringSync();
+
+    await expectLater(
+      limitedService.create(
+        module: await limitedModuleService.load(root.path),
+        request: WritersideInstanceCreateRequest(
+          settings: const WritersideInstanceSettings(
+            name: 'Incomplete import',
+            id: 'incomplete-import',
+          ),
+          importRootPath: source.path,
+          importedMarkdownPaths: [imported.path],
+        ),
+      ),
+      throwsA(
+        isA<BusyMarkException>().having(
+          (error) => error.code,
+          'code',
+          'writerside.topic.discovery-incomplete',
+        ),
+      ),
+    );
+    expect(config.readAsStringSync(), originalConfig);
+    expect(
+      File(p.join(root.path, 'incomplete-import.tree')).existsSync(),
+      false,
+    );
+    expect(File(p.join(root.path, 'topics', 'fresh.md')).existsSync(), false);
+  });
 }
 
 Future<Directory> _project() async {

@@ -6,6 +6,7 @@ import 'package:busymark/src/core/path_utils.dart';
 import 'package:busymark/src/markdown/preview_model.dart';
 import 'package:busymark/src/workspace/workspace_model.dart';
 import 'package:busymark/src/workspace/workspace_service.dart';
+import 'package:busymark/src/writerside/writerside_document.dart';
 import 'package:busymark/src/writerside/writerside_module_service.dart';
 import 'package:busymark/src/writerside/writerside_model.dart';
 import 'package:busymark/src/writerside/writerside_parsers.dart';
@@ -160,6 +161,75 @@ void main() {
     expect(xmlTopic.titleOverrides.single.instance, 'admin-guide');
     expect(xmlTopic.titleOverrides.single.title, 'Admin Install');
     expect(xmlTopic.webFileName, 'install-page.html');
+  });
+
+  test('Markdown web filename metadata ignores literal examples', () {
+    const parser = WritersideTopicParser();
+    final real = parser.parseMarkdown(
+      filePath: '/tmp/topics/real.md',
+      topicsRoot: '/tmp/topics',
+      source: '''
+# Real
+
+<web-file-name instance="linux">linux-guide.html</web-file-name>
+<web-file-name instance="windows">windows-guide.html</web-file-name>
+''',
+    );
+    final fenced = parser.parseMarkdown(
+      filePath: '/tmp/topics/fenced.md',
+      topicsRoot: '/tmp/topics',
+      source: r'''
+# Fenced
+
+```xml
+<web-file-name>example.html</web-file-name>
+```
+''',
+    );
+    final literal = parser.parseMarkdown(
+      filePath: '/tmp/topics/literal.md',
+      topicsRoot: '/tmp/topics',
+      source: '''
+# Literal
+
+<!-- <web-file-name>comment.html</web-file-name> -->
+
+`<web-file-name>inline.html</web-file-name>`
+''',
+    );
+
+    expect(
+      real.document.nodes
+          .whereType<WritersideElementNode>()
+          .where((element) => element.name == 'web-file-name')
+          .map((element) => element.attributes['instance']),
+      ['linux', 'windows'],
+    );
+    expect(real.webFileName, isNull);
+    expect(fenced.webFileName, isNull);
+    expect(literal.webFileName, isNull);
+  });
+
+  test('XML topic metadata is scoped to direct topic children', () {
+    final topic = const WritersideTopicParser().parseXml(
+      filePath: '/tmp/topics/guide.topic',
+      topicsRoot: '/tmp/topics',
+      source: '''
+<topic id="guide" title="Guide">
+  <title instance="desktop">Desktop Guide</title>
+  <web-file-name>guide-exact.html</web-file-name>
+  <chapter id="install" title="Install">
+    <title instance="linux">Install on Linux</title>
+    <web-file-name>nested-metadata.html</web-file-name>
+  </chapter>
+</topic>
+''',
+    );
+
+    expect(topic.titleOverrides, hasLength(1));
+    expect(topic.titleOverrides.single.instance, 'desktop');
+    expect(topic.titleOverrides.single.title, 'Desktop Guide');
+    expect(topic.webFileName, 'guide-exact.html');
   });
 
   test('parses .tree metadata and TOC hierarchy', () {
@@ -800,6 +870,82 @@ void main() {
     expect(snippet.entries.single, isA<TocNode>());
     expect(instance.diagnostics.where(isError), isEmpty);
   });
+
+  test('rejects redirect-source attributes on empty TOC groups', () {
+    final instance = treeParser.parse('/project/guide.tree', '''
+<instance-profile id="guide" start-page="first.md">
+  <toc-element toc-title="First group" accepts-web-file-names="old.html">
+    <toc-element topic="first.md"/>
+  </toc-element>
+  <toc-element toc-title="Second group" accepts-web-file-names-ref="legacy">
+    <toc-element topic="second.md"/>
+  </toc-element>
+</instance-profile>
+''');
+
+    final diagnostics = instance.diagnostics
+        .where(
+          (diagnostic) =>
+              diagnostic.code ==
+              'writerside.tree.invalid-empty-group-attribute',
+        )
+        .toList();
+    expect(diagnostics, hasLength(2));
+    expect(diagnostics.every(isError), isTrue);
+    expect(diagnostics.map((diagnostic) => diagnostic.args['attribute']), [
+      'accepts-web-file-names',
+      'accepts-web-file-names-ref',
+    ]);
+  });
+
+  test(
+    'module service retains empty-group redirect-source diagnostics',
+    () async {
+      final root = await Directory.systemTemp.createTemp(
+        'busymark-empty-group-redirect-source-',
+      );
+      addTearDown(() => root.deleteSync(recursive: true));
+      Directory(p.join(root.path, 'topics')).createSync();
+      File(p.join(root.path, 'writerside.cfg')).writeAsStringSync('''
+<ihp version="2.0">
+  <topics dir="topics"/>
+  <instance src="guide.tree"/>
+</ihp>
+''');
+      File(p.join(root.path, 'guide.tree')).writeAsStringSync('''
+<instance-profile id="guide" start-page="first.md">
+  <toc-element toc-title="First group" accepts-web-file-names="old.html">
+    <toc-element topic="first.md"/>
+  </toc-element>
+  <toc-element toc-title="Second group" accepts-web-file-names-ref="legacy">
+    <toc-element topic="second.md"/>
+  </toc-element>
+</instance-profile>
+''');
+      File(
+        p.join(root.path, 'topics', 'first.md'),
+      ).writeAsStringSync('# First\n');
+      File(
+        p.join(root.path, 'topics', 'second.md'),
+      ).writeAsStringSync('# Second\n');
+
+      final module = await moduleService.load(root.path);
+      final diagnostics = module.diagnostics
+          .where(
+            (diagnostic) =>
+                diagnostic.code ==
+                'writerside.tree.invalid-empty-group-attribute',
+          )
+          .toList();
+
+      expect(diagnostics, hasLength(2));
+      expect(diagnostics.every(isError), isTrue);
+      expect(diagnostics.map((diagnostic) => diagnostic.args['attribute']), [
+        'accepts-web-file-names',
+        'accepts-web-file-names-ref',
+      ]);
+    },
+  );
 
   test(
     'resolves registered TOC libraries, filters, groups, and cross-instance refs',

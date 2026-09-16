@@ -1,4 +1,72 @@
 {
+  "tocTopicFromTemplate": "从模板创建主题...",
+  "tocSaveAsTemplate": "保存为模板",
+  "tocTemplateDialog": "从模板创建主题",
+  "tocTemplatesEditor": "文件和代码模板",
+  "tocEditTemplates": "编辑模板...",
+  "tocCreateCustomTemplate": "创建自定义模板...",
+  "tocTemplateCreated": "已创建模板",
+  "tocTemplateDefault": "默认",
+  "tocTemplateCustom": "自定义",
+  "tocTemplateFilename": "文件名：",
+  "tocTemplateMarkdown": "Markdown (.md)",
+  "tocTemplateXml": "XML (.topic)",
+  "tocTemplatesInternal": "内部",
+  "tocTemplateUnnamed": "未命名",
+  "tocTemplateNew": "新建模板...",
+  "tocTemplateName": "名称：",
+  "tocTemplateExtension": "扩展名：",
+  "tocTemplateLoadError": "无法加载模板。现有模板未更改。",
+  "tocTemplateSaveError": "无法保存模板。您的编辑内容仍保留在此处。",
+  "tocTemplateConflict": "模板已在其他窗口中更改。请取消并重新打开编辑器。",
+  "tocTemplateDuplicateName": "已存在相同名称和扩展名的模板。",
+  "tocTemplateFormat": "格式：",
+  "tocTemplateReset": "重置",
+  "tocTemplateRetry": "重试",
+  "tocRemoveElementsDialog": "移除 {count} 个目录元素",
+  "tocRemoveElementsRetainFiles": "不会删除与这些目录元素关联的源文件。",
+  "tocOk": "确定",
+  "tocSelectExistingTopic": "选择要添加到当前实例的主题",
+  "tocGroupName": "组名",
+  "tocMoveLineUp": "上移行",
+  "tocMoveLineDown": "下移行",
+  "tocEmptyMdTopic": "空 MD 主题",
+  "tocEmptyXmlTopic": "空 XML 主题",
+  "tocCopySpecial": "特殊复制",
+  "tocCopyFileName": "主题文件名 '{name}'",
+  "tocCopyFilePath": "主题文件路径",
+  "tocCopyTopicTitle": "主题标题 '{title}'",
+  "tocCopyElementId": "目录元素 ID '{id}'",
+  "tocCopyFileNameUnavailable": "主题文件名",
+  "tocCopyTopicTitleUnavailable": "主题标题",
+  "tocCopyElementIdUnavailable": "目录元素 ID",
+  "tocEditTitleAction": "编辑标题...",
+  "tocEditTitleDialog": "编辑标题",
+  "tocRemoveElementAction": "移除目录元素...",
+  "tocSetHomePage": "设为主页",
+  "tocGoToElement": "转到“{fileName}”中的目录元素",
+  "tocSynchronize": "同步目录与编辑器",
+  "tocEmptyGroupAction": "空组",
+  "tocNewEmptyGroup": "新建空组",
+  "tocGroupAction": "分组",
+  "tocNewGroup": "新建组",
+  "tocSortChildren": "按字母顺序排列子主题",
+  "tocLinkTopicFiles": "将主题文件链接到目录...",
+  "addLocalMarkdownFiles": "添加本地 Markdown 文件",
+  "tocTitleField": "目录标题:",
+  "tocTopicTitleField": "主题标题:",
+  "tocAdvancedSettings": "高级设置",
+  "tocInstanceTitleField": "“{instanceId}”的标题:",
+  "tocOnlyTitleField": "仅用于目录的标题:",
+  "tocInstanceTitleExplanation": "仅用于当前实例。默认继承主题标题。",
+  "tocOnlyTitleExplanation": "仅用于目录。默认继承主题标题；如果设置了实例专用标题，则继承该标题。标题的说明见",
+  "tocTitleDocumentationLink": "此处",
+  "tocFindUsages": "查找",
+  "tocRefactorMenu": "重构",
+  "tocSafeDelete": "安全删除",
+  "tocDuplicate": "创建副本",
+  "tocDuplicateFilename": "主题文件名:",
+  "tocDuplicateDialog": "创建主题副本",
   "pdfTitlePage": "标题页",
   "pdfIncludeTitlePage": "包含标题页",
   "pdfTitlePageNote": "此页不显示页眉、页脚或页码。",
@@ -1397,7 +1465,7 @@
   "@files": {
     "description": "Files sidebar tab label."
   },
-  "toc": "主题",
+  "toc": "目录",
   "@toc": {
     "description": "Writerside Topics sidebar tab label."
   },
@@ -1445,7 +1513,7 @@
   "@newChildTopic": {
     "description": "Create new child Writerside topic action label."
   },
-  "newSiblingTopic": "新建同级主题",
+  "newSiblingTopic": "新建主题",
   "@newSiblingTopic": {
     "description": "Create new sibling Writerside topic action label."
   },
@@ -1531,7 +1599,7 @@
   "@removeAction": {
     "description": "Short action label for removing an item without deleting its source file."
   },
-  "topicRemovalSummary": "从选中的实例中移除“{topic}”。主题文件将被保留。",
+  "topicRemovalSummary": "移除目录元素“{topic}”？与目录关联的源文件不会被删除。",
   "@topicRemovalSummary": {
     "description": "Summary in the dialog for removing a topic from one Writerside instance.",
     "placeholders": {
@@ -1562,7 +1630,7 @@
   "@topicIsStartPageRemovalWarning": {
     "description": "Warning that blocks deletion of a Writerside start-page topic."
   },
-  "topicUsagesCount": "使用情况（{count}）",
+  "topicUsagesCount": "找到 {count} 处使用。",
   "@topicUsagesCount": {
     "description": "Heading with the number of Writerside topic usages.",
     "placeholders": {
@@ -1620,7 +1688,7 @@
   "@manualUsageUpdatesRequired": {
     "description": "Message when some Writerside usages cannot be updated automatically."
   },
-  "setRedirectTo": "设置重定向到",
+  "setRedirectTo": "设置重定向到：",
   "@setRedirectTo": {
     "description": "Option to redirect an old Writerside page to another topic."
   },
@@ -2427,6 +2495,23 @@
         "type": "String"
       }
     }
+  },
+  "errorWritersideTopicRenameIncompleteProjectIndex": "无法安全地重命名并更新所有项目引用，因为模块 {module} 中有 {count} 个主题文件尚未解析：{paths}",
+  "@errorWritersideTopicRenameIncompleteProjectIndex": {
+    "description": "Error shown when topic rename cannot prove complete project-wide semantic coverage.",
+    "placeholders": {
+      "module": {"type": "String"},
+      "count": {"type": "String"},
+      "paths": {"type": "String"}
+    }
+  },
+  "errorWritersideTopicRenameProjectBuffersDirty": "Writerside 项目文件有未保存的更改。请先处理这些更改，再准备新的重命名预览。",
+  "@errorWritersideTopicRenameProjectBuffersDirty": {
+    "description": "Error shown when a topic rename or reviewed rename plan is blocked by a dirty Writerside project buffer."
+  },
+  "errorWritersideTopicRenameProjectInventoryChanged": "Writerside 项目的模块集合已更改。请在重构前准备新的重命名预览。",
+  "@errorWritersideTopicRenameProjectInventoryChanged": {
+    "description": "Error shown when module discovery differs from a prepared topic rename plan."
   },
   "errorTopicsRootUnsafe": "主题根目录必须是安全的相对目录。",
   "@errorTopicsRootUnsafe": {
@@ -4589,31 +4674,6 @@
   "@aiDraftWithAi": {
     "description": "Action that drafts a Git commit message with AI."
   },
-  "generateOrUpdateMarkdownToc": "生成/更新目录",
-  "@generateOrUpdateMarkdownToc": {
-    "description": "Deterministic action that creates or refreshes a Markdown table of contents."
-  },
-  "markdownTocTitle": "目录",
-  "@markdownTocTitle": {
-    "description": "Heading inserted above a generated Markdown table of contents."
-  },
-  "markdownTocUpdated": "目录已更新，包含 {count} 个条目。",
-  "@markdownTocUpdated": {
-    "description": "Confirmation after generating a Markdown table of contents.",
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "markdownTocNoHeadings": "请先添加至少一个节标题，再生成目录。",
-  "@markdownTocNoHeadings": {
-    "description": "Message when a Markdown document has no section headings for a generated table of contents."
-  },
-  "markdownTocMalformedMarkers": "BusyMark 目录标记缺失、重复或顺序错误。",
-  "@markdownTocMalformedMarkers": {
-    "description": "Message when a generated Markdown table-of-contents region cannot be safely updated."
-  },
   "diagnosticMarkdownHeadingSkippedLevel": "标题级别 {level} 跟在级别 {previousLevel} 之后；请检查节的嵌套结构。",
   "@diagnosticMarkdownHeadingSkippedLevel": {
     "description": "Accessibility diagnostic for a skipped Markdown heading level.",
@@ -4799,5 +4859,14 @@
   "settingsHistoryExcludedPathsHint": "每行一个绝对路径",
   "settingsSecondsValue": "{value} 秒",
   "settingsDaysValue": "{value} 天",
-  "settingsMebibytesValue": "{value} MiB"
+  "settingsMebibytesValue": "{value} MiB",
+  "preview": "预览",
+  "topicRenamePreviewTitle": "重命名预览",
+  "topicRenamePathChange": "路径：{oldPath} → {newPath}",
+  "topicRenameIdChange": "主题 ID：{oldId} → {newId}",
+  "topicRenameUrlChange": "实例 {instance}：{oldName} → {newName}",
+  "topicRenameAffectedFiles": "受影响的文件",
+  "renameTopicFileInstead": "主题 ID 来自其文件名。请在目录或“文件”侧边栏中使用“重命名主题文件”。",
+  "diagnosticWritersideWebFileNameInvalid": "实例 \"{instanceId}\" 为主题 \"{topic}\" 发布了无效的 Web 文件名 \"{webFileName}\"。",
+  "diagnosticWritersideWebFileNameCollision": "实例 \"{instanceId}\" 将 \"{firstTopic}\" 和 \"{secondTopic}\" 都发布为 \"{webFileName}\"。"
 }

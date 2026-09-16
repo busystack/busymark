@@ -267,6 +267,7 @@ class TocNode extends WritersideTreeEntry {
     this.entries = const [],
     this.sourceTreePath,
     this.sourceTocPath,
+    this.sourceXmlPath,
     this.included = false,
     this.includeFrom,
     this.includeElementId,
@@ -294,6 +295,10 @@ class TocNode extends WritersideTreeEntry {
   final List<WritersideTreeEntry> entries;
   final String? sourceTreePath;
   final List<int>? sourceTocPath;
+
+  /// Exact XML-element child indexes, including snippet ancestors. Navigation
+  /// only: this does not grant structural mutation rights to included nodes.
+  final List<int>? sourceXmlPath;
   final bool included;
   final String? includeFrom;
   final String? includeElementId;
@@ -481,6 +486,9 @@ class WritersideTopic {
   final List<WritersideInclude> includes;
   final WritersideDocument document;
   final List<Diagnostic> diagnostics;
+
+  /// A direct, authored topic-level value when one is unconditionally
+  /// available. This is not an instance-effective publication filename.
   final String? webFileName;
   final ParsedMarkdownDocument? markdown;
   final List<WritersideTopicTitleOverride> titleOverrides;
@@ -518,7 +526,7 @@ class WritersideCategory {
 }
 
 class WritersideModule {
-  const WritersideModule({
+  WritersideModule({
     required this.rootPath,
     required this.config,
     required this.instances,
@@ -533,9 +541,11 @@ class WritersideModule {
     this.sourceFiles = const {},
     this.referenceData = const WritersideReferenceData(),
     this.semanticDiagnostics = const [],
-    this.unparsedTopicReferences = const {},
+    Set<String> unparsedTopicReferences = const {},
+    this.topicDiscoveryComplete = true,
     this.variablesAvailable = true,
-  }) : structuralDiagnostics = diagnostics;
+  }) : structuralDiagnostics = diagnostics,
+       unparsedTopicReferences = Set.unmodifiable(unparsedTopicReferences);
 
   final String rootPath;
   final WritersideConfig config;
@@ -548,7 +558,17 @@ class WritersideModule {
   /// are replaced separately whenever the project dependency snapshot changes.
   final List<Diagnostic> structuralDiagnostics;
   final List<Diagnostic> semanticDiagnostics;
+
+  /// Discovered topic sources excluded from the semantic model because they
+  /// could not be parsed within the configured scan limits.
   final Set<String> unparsedTopicReferences;
+
+  /// Whether every configured topic root was traversed exhaustively.
+  ///
+  /// This is separate from [unparsedTopicReferences], whose entries were
+  /// discovered but could not be parsed. An incomplete traversal cannot name
+  /// the topic sources it never reached.
+  final bool topicDiscoveryComplete;
   final bool variablesAvailable;
   List<Diagnostic> get diagnostics =>
       sortDiagnostics([...structuralDiagnostics, ...semanticDiagnostics]);
@@ -580,6 +600,7 @@ class WritersideModule {
       diagnostics: diagnostics ?? structuralDiagnostics,
       semanticDiagnostics: semanticDiagnostics ?? this.semanticDiagnostics,
       unparsedTopicReferences: unparsedTopicReferences,
+      topicDiscoveryComplete: topicDiscoveryComplete,
       variablesAvailable: variablesAvailable,
       validatedImageDirs: validatedImageDirs,
       buildProfiles: buildProfiles,
@@ -606,6 +627,14 @@ class WritersideModule {
   Map<String, WritersideTopic> get topicsById => {
     for (final topic in topics) topic.id: topic,
   };
+
+  /// Every topic ID whose basename is already reserved in this help module,
+  /// including discovered sources that were not parsed successfully.
+  Set<String> get reservedTopicIds => Set.unmodifiable({
+    for (final topic in topics) topic.id,
+    for (final reference in unparsedTopicReferences)
+      p.basenameWithoutExtension(reference),
+  });
 
   WritersideTopic? topicByReference(
     String reference, {

@@ -6,6 +6,7 @@ import '../markdown/busymark_document.dart';
 import '../writerside/writerside_model.dart';
 import '../writerside/writerside_document_resolver.dart';
 import '../writerside/writerside_document_renderer.dart';
+import '../writerside/writerside_web_file_name.dart';
 import 'html_export_models.dart';
 
 class HtmlPage {
@@ -109,17 +110,15 @@ class HtmlPublicationPlan {
         ),
       );
       final title = resolved.title ?? topic.title ?? topic.id;
-      final customName =
-          resolved.document.elements
-              .where((e) => e.name == 'web-file-name')
-              .firstOrNull
-              ?.plainText
-              .trim() ??
-          topic.webFileName;
-      final filename =
-          customName ??
-          '${p.basenameWithoutExtension(topic.fileName).toLowerCase().replaceAll(RegExp(r'[^\p{L}\p{N}-]', unicode: true), '-')}.html';
-      if (!validFilename(filename)) {
+      final filename = const WritersideWebFileNameResolver()
+          .resolve(
+            module: origin,
+            topic: topic,
+            instance: instance,
+            modulesByOrigin: modulesByOrigin,
+          )
+          .value;
+      if (!WritersideWebFileNameResolver.isValid(filename)) {
         throw HtmlExportException(
           'Invalid web filename "$filename" in ${topic.filePath}.',
         );
@@ -240,12 +239,7 @@ class HtmlPublicationPlan {
   }
 
   static bool validFilename(String name) =>
-      name.isNotEmpty &&
-      utf8.encode(name).length <= 240 &&
-      name.toLowerCase().endsWith('.html') &&
-      !name.startsWith('.') &&
-      !RegExp(r'[/\\\x00-\x1f\x7f?#:%]').hasMatch(name) &&
-      p.basename(name) == name;
+      WritersideWebFileNameResolver.isValid(name);
 
   HtmlPage? pageForSource(String source) =>
       pages.where((page) => p.equals(page.sourcePath, source)).firstOrNull;

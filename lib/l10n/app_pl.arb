@@ -1,4 +1,72 @@
 {
+  "tocTopicFromTemplate": "Temat z szablonu...",
+  "tocSaveAsTemplate": "Zapisz jako szablon",
+  "tocTemplateDialog": "Utwórz temat z szablonu",
+  "tocTemplatesEditor": "Szablony plików i kodu",
+  "tocEditTemplates": "Edytuj szablony...",
+  "tocCreateCustomTemplate": "Utwórz własny szablon...",
+  "tocTemplateCreated": "Utworzono szablon",
+  "tocTemplateDefault": "Domyślne",
+  "tocTemplateCustom": "Własne",
+  "tocTemplateFilename": "Nazwa pliku:",
+  "tocTemplateMarkdown": "Markdown (.md)",
+  "tocTemplateXml": "XML (.topic)",
+  "tocTemplatesInternal": "Wewnętrzne",
+  "tocTemplateUnnamed": "Bez nazwy",
+  "tocTemplateNew": "Nowy szablon...",
+  "tocTemplateName": "Nazwa:",
+  "tocTemplateExtension": "Rozszerzenie:",
+  "tocTemplateLoadError": "Nie można wczytać szablonów. Istniejące szablony nie zostały zmienione.",
+  "tocTemplateSaveError": "Nie można zapisać szablonów. Twoje zmiany są nadal dostępne tutaj.",
+  "tocTemplateConflict": "Szablony zmieniono w innym oknie. Anuluj i ponownie otwórz edytor.",
+  "tocTemplateDuplicateName": "Szablon o tej nazwie i rozszerzeniu już istnieje.",
+  "tocTemplateFormat": "Format:",
+  "tocTemplateReset": "Przywróć",
+  "tocTemplateRetry": "Ponów",
+  "tocRemoveElementsDialog": "Usuń {count} elementów spisu treści",
+  "tocRemoveElementsRetainFiles": "Pliki źródłowe powiązane z tymi elementami spisu treści nie zostaną usunięte.",
+  "tocOk": "OK",
+  "tocSelectExistingTopic": "Wybierz temat do dodania do bieżącej instancji",
+  "tocGroupName": "Nazwa grupy",
+  "tocMoveLineUp": "Przenieś wiersz w górę",
+  "tocMoveLineDown": "Przenieś wiersz w dół",
+  "tocEmptyMdTopic": "Pusty temat MD",
+  "tocEmptyXmlTopic": "Pusty temat XML",
+  "tocCopySpecial": "Kopiowanie specjalne",
+  "tocCopyFileName": "Nazwa pliku tematu '{name}'",
+  "tocCopyFilePath": "Ścieżka pliku tematu",
+  "tocCopyTopicTitle": "Tytuł tematu '{title}'",
+  "tocCopyElementId": "ID elementu spisu treści '{id}'",
+  "tocCopyFileNameUnavailable": "Nazwa pliku tematu",
+  "tocCopyTopicTitleUnavailable": "Tytuł tematu",
+  "tocCopyElementIdUnavailable": "ID elementu spisu treści",
+  "tocEditTitleAction": "Edytuj tytuł...",
+  "tocEditTitleDialog": "Edytuj tytuł",
+  "tocRemoveElementAction": "Usuń element spisu treści...",
+  "tocSetHomePage": "Ustaw jako stronę główną",
+  "tocGoToElement": "Przejdź do elementu spisu treści w „{fileName}”",
+  "tocSynchronize": "Synchronizuj spis treści i edytor",
+  "tocEmptyGroupAction": "Pusta grupa",
+  "tocNewEmptyGroup": "Nowa pusta grupa",
+  "tocGroupAction": "Grupuj",
+  "tocNewGroup": "Nowa grupa",
+  "tocSortChildren": "Sortuj tematy podrzędne alfabetycznie",
+  "tocLinkTopicFiles": "Połącz pliki tematów ze spisem treści...",
+  "addLocalMarkdownFiles": "Dodaj lokalne pliki Markdown",
+  "tocTitleField": "Tytuł w spisie treści:",
+  "tocTopicTitleField": "Tytuł tematu:",
+  "tocAdvancedSettings": "Ustawienia zaawansowane",
+  "tocInstanceTitleField": "Tytuł dla „{instanceId}”:",
+  "tocOnlyTitleField": "Tytuł tylko w spisie treści:",
+  "tocInstanceTitleExplanation": "Używany tylko w bieżącej instancji. Domyślnie dziedziczony z tytułu tematu.",
+  "tocOnlyTitleExplanation": "Używany tylko w spisie treści. Domyślnie dziedziczony z tytułu tematu lub tytułu instancji, jeśli został ustawiony. Objaśnienia tytułów znajdziesz",
+  "tocTitleDocumentationLink": "tutaj",
+  "tocFindUsages": "Znajdź",
+  "tocRefactorMenu": "Refaktoryzacja",
+  "tocSafeDelete": "Bezpieczne usuwanie",
+  "tocDuplicate": "Duplikuj",
+  "tocDuplicateFilename": "Nazwa pliku tematu:",
+  "tocDuplicateDialog": "Duplikuj temat",
   "pdfTitlePage": "Strona tytułowa",
   "pdfIncludeTitlePage": "Dołącz stronę tytułową",
   "pdfTitlePageNote": "Ta strona nie zawiera nagłówka, stopki ani widocznego numeru strony.",
@@ -1221,7 +1289,7 @@
   "@files": {
     "description": "Files sidebar tab label."
   },
-  "toc": "Tematy",
+  "toc": "Spis treści",
   "@toc": {
     "description": "Writerside Topics sidebar tab label."
   },
@@ -1265,7 +1333,7 @@
   "@newChildTopic": {
     "description": "Create new child Writerside topic action label."
   },
-  "newSiblingTopic": "Nowy temat równorzędny",
+  "newSiblingTopic": "Nowy temat",
   "@newSiblingTopic": {
     "description": "Create new sibling Writerside topic action label."
   },
@@ -1771,6 +1839,23 @@
         "type": "String"
       }
     }
+  },
+  "errorWritersideTopicRenameIncompleteProjectIndex": "Zmiana nazwy nie może bezpiecznie zaktualizować wszystkich odwołań w projekcie, ponieważ nie przeanalizowano {count} plików tematów w module {module}: {paths}",
+  "@errorWritersideTopicRenameIncompleteProjectIndex": {
+    "description": "Error shown when topic rename cannot prove complete project-wide semantic coverage.",
+    "placeholders": {
+      "module": {"type": "String"},
+      "count": {"type": "String"},
+      "paths": {"type": "String"}
+    }
+  },
+  "errorWritersideTopicRenameProjectBuffersDirty": "Pliki projektu Writerside zawierają niezapisane zmiany. Rozwiąż je i przygotuj nowy podgląd zmiany nazwy.",
+  "@errorWritersideTopicRenameProjectBuffersDirty": {
+    "description": "Error shown when a topic rename or reviewed rename plan is blocked by a dirty Writerside project buffer."
+  },
+  "errorWritersideTopicRenameProjectInventoryChanged": "Zestaw modułów projektu Writerside uległ zmianie. Przed refaktoryzacją przygotuj nowy podgląd zmiany nazwy.",
+  "@errorWritersideTopicRenameProjectInventoryChanged": {
+    "description": "Error shown when module discovery differs from a prepared topic rename plan."
   },
   "errorTopicsRootUnsafe": "Katalog główny tematów musi być bezpiecznym katalogiem względnym.",
   "@errorTopicsRootUnsafe": {
@@ -2537,7 +2622,7 @@
   "@removeAction": {
     "description": "Generic remove action label."
   },
-  "topicRemovalSummary": "Usuń „{topic}” z wybranej instancji. Plik tematu zostanie zachowany.",
+  "topicRemovalSummary": "Usunąć element spisu treści „{topic}”? Plik źródłowy powiązany ze spisem treści nie zostanie usunięty.",
   "@topicRemovalSummary": {
     "description": "Summary of removing a topic from one TOC while keeping its file.",
     "placeholders": {
@@ -2568,7 +2653,7 @@
   "@topicIsStartPageRemovalWarning": {
     "description": "Warning shown when the topic is used as an instance start page."
   },
-  "topicUsagesCount": "Użycia ({count})",
+  "topicUsagesCount": "Znalezione użycia: {count}.",
   "@topicUsagesCount": {
     "description": "Number of discovered topic usages.",
     "placeholders": {
@@ -2626,7 +2711,7 @@
   "@manualUsageUpdatesRequired": {
     "description": "Message shown when usages require manual updates."
   },
-  "setRedirectTo": "Ustaw przekierowanie do",
+  "setRedirectTo": "Ustaw przekierowanie do:",
   "@setRedirectTo": {
     "description": "Option to redirect the removed topic URL to another topic."
   },
@@ -3065,11 +3150,6 @@
   "aiDraftCommitMessage": "Utwórz wersję roboczą komunikatu commita",
   "aiDrafting": "Tworzenie wersji roboczej…",
   "aiDraftWithAi": "Utwórz wersję roboczą z SI",
-  "generateOrUpdateMarkdownToc": "Wygeneruj/zaktualizuj spis treści",
-  "markdownTocTitle": "Spis treści",
-  "markdownTocUpdated": "Zaktualizowano spis treści zawierający {count} pozycji.",
-  "markdownTocNoHeadings": "Przed wygenerowaniem spisu treści dodaj co najmniej jeden nagłówek sekcji.",
-  "markdownTocMalformedMarkers": "Znaczniki spisu treści BusyMark są nieobecne, powielone lub ułożone w niewłaściwej kolejności.",
   "diagnosticMarkdownHeadingSkippedLevel": "Nagłówek poziomu {level} występuje po poziomie {previousLevel}; sprawdź zagnieżdżenie sekcji.",
   "diagnosticMarkdownLinkEmptyText": "Tekst odnośnika jest pusty; podaj dostępną nazwę opisującą jego cel.",
   "diagnosticMarkdownLinkReviewText": "Sprawdź, czy tekst odnośnika „{text}” opisuje jego cel w kontekście.",
@@ -3266,5 +3346,14 @@
   "settingsHistoryExcludedPathsHint": "Jedna absolutna ścieżka na linię",
   "settingsSecondsValue": "{value} sekundy",
   "settingsDaysValue": "{value} dni",
-  "settingsMebibytesValue": "{value} MiB"
+  "settingsMebibytesValue": "{value} MiB",
+  "preview": "Podgląd",
+  "topicRenamePreviewTitle": "Podgląd zmiany nazwy",
+  "topicRenamePathChange": "Ścieżka: {oldPath} → {newPath}",
+  "topicRenameIdChange": "Identyfikator tematu: {oldId} → {newId}",
+  "topicRenameUrlChange": "Instancja {instance}: {oldName} → {newName}",
+  "topicRenameAffectedFiles": "Pliki objęte zmianą",
+  "renameTopicFileInstead": "Identyfikatory tematów pochodzą z nazw ich plików. Użyj polecenia Zmień nazwę pliku tematu w spisie treści lub na pasku bocznym Pliki.",
+  "diagnosticWritersideWebFileNameInvalid": "Instancja \"{instanceId}\" publikuje nieprawidłową nazwę pliku internetowego \"{webFileName}\" dla tematu \"{topic}\".",
+  "diagnosticWritersideWebFileNameCollision": "Instancja \"{instanceId}\" publikuje zarówno \"{firstTopic}\", jak i \"{secondTopic}\" jako \"{webFileName}\"."
 }

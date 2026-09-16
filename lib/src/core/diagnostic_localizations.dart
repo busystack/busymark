@@ -116,6 +116,12 @@ String localizeDiagnostic(BuildContext context, Diagnostic diagnostic) {
       l10n.diagnosticWritersideTreeInvalidCrossInstanceReference,
     'writerside.tree.conflicting-toc-targets' =>
       l10n.diagnosticWritersideTreeConflictingTargets,
+    'writerside.tree.invalid-empty-group-attribute' =>
+      l10n.diagnosticWritersideSchema(
+        value('element'),
+        value('attribute'),
+        value('reason'),
+      ),
     'writerside.tree.duplicate-element-id' =>
       l10n.diagnosticWritersideTreeDuplicateElementId(value('id')),
     'writerside.instance-groups.invalid-root' =>
@@ -233,6 +239,19 @@ String localizeDiagnostic(BuildContext context, Diagnostic diagnostic) {
             ),
     'writerside.topic.duplicate-id' =>
       l10n.diagnosticWritersideTopicDuplicateId(value('id')),
+    'writerside.web-file-name.invalid' =>
+      l10n.diagnosticWritersideWebFileNameInvalid(
+        value('instanceId'),
+        value('webFileName'),
+        value('topic'),
+      ),
+    'writerside.web-file-name.collision' =>
+      l10n.diagnosticWritersideWebFileNameCollision(
+        value('instanceId'),
+        value('webFileName'),
+        value('firstTopic'),
+        value('secondTopic'),
+      ),
     'writerside.tree.missing-topic' =>
       l10n.diagnosticWritersideTreeMissingTopic(value('topic')),
     'writerside.tree.invalid-href' => l10n.diagnosticWritersideTreeInvalidHref(

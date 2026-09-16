@@ -1,4 +1,72 @@
 {
+  "tocTopicFromTemplate": "Argomento da modello...",
+  "tocSaveAsTemplate": "Salva come modello",
+  "tocTemplateDialog": "Crea argomento da modello",
+  "tocTemplatesEditor": "Modelli di file e codice",
+  "tocEditTemplates": "Modifica modelli...",
+  "tocCreateCustomTemplate": "Crea modello personalizzato...",
+  "tocTemplateCreated": "Modello creato",
+  "tocTemplateDefault": "Predefiniti",
+  "tocTemplateCustom": "Personalizzati",
+  "tocTemplateFilename": "Nome file:",
+  "tocTemplateMarkdown": "Markdown (.md)",
+  "tocTemplateXml": "XML (.topic)",
+  "tocTemplatesInternal": "Interni",
+  "tocTemplateUnnamed": "Senza nome",
+  "tocTemplateNew": "Nuovo modello...",
+  "tocTemplateName": "Nome:",
+  "tocTemplateExtension": "Estensione:",
+  "tocTemplateLoadError": "Impossibile caricare i modelli. I modelli esistenti non sono stati modificati.",
+  "tocTemplateSaveError": "Impossibile salvare i modelli. Le modifiche sono ancora disponibili qui.",
+  "tocTemplateConflict": "I modelli sono cambiati in un’altra finestra. Annulla e riapri l’editor.",
+  "tocTemplateDuplicateName": "Esiste già un modello con questo nome ed estensione.",
+  "tocTemplateFormat": "Formato:",
+  "tocTemplateReset": "Ripristina",
+  "tocTemplateRetry": "Riprova",
+  "tocRemoveElementsDialog": "Rimuovi {count} elementi dell’indice",
+  "tocRemoveElementsRetainFiles": "I file sorgente associati a questi elementi dell’indice non verranno eliminati.",
+  "tocOk": "OK",
+  "tocSelectExistingTopic": "Seleziona un argomento da aggiungere all’istanza corrente",
+  "tocGroupName": "Nome del gruppo",
+  "tocMoveLineUp": "Sposta riga in alto",
+  "tocMoveLineDown": "Sposta riga in basso",
+  "tocEmptyMdTopic": "Argomento MD vuoto",
+  "tocEmptyXmlTopic": "Argomento XML vuoto",
+  "tocCopySpecial": "Copia speciale",
+  "tocCopyFileName": "Nome del file dell’argomento '{name}'",
+  "tocCopyFilePath": "Percorso del file dell’argomento",
+  "tocCopyTopicTitle": "Titolo dell’argomento '{title}'",
+  "tocCopyElementId": "ID dell’elemento del sommario '{id}'",
+  "tocCopyFileNameUnavailable": "Nome del file dell’argomento",
+  "tocCopyTopicTitleUnavailable": "Titolo dell’argomento",
+  "tocCopyElementIdUnavailable": "ID dell’elemento del sommario",
+  "tocEditTitleAction": "Modifica titolo...",
+  "tocEditTitleDialog": "Modifica titolo",
+  "tocRemoveElementAction": "Rimuovi elemento del sommario...",
+  "tocSetHomePage": "Imposta come pagina iniziale",
+  "tocGoToElement": "Vai all’elemento del sommario in '{fileName}'",
+  "tocSynchronize": "Sincronizza sommario ed editor",
+  "tocEmptyGroupAction": "Gruppo vuoto",
+  "tocNewEmptyGroup": "Nuovo gruppo vuoto",
+  "tocGroupAction": "Raggruppa",
+  "tocNewGroup": "Nuovo gruppo",
+  "tocSortChildren": "Ordina alfabeticamente gli argomenti secondari",
+  "tocLinkTopicFiles": "Collega file di argomenti al sommario...",
+  "addLocalMarkdownFiles": "Aggiungi file Markdown locali",
+  "tocTitleField": "Titolo nel sommario:",
+  "tocTopicTitleField": "Titolo dell’argomento:",
+  "tocAdvancedSettings": "Impostazioni avanzate",
+  "tocInstanceTitleField": "Titolo per '{instanceId}':",
+  "tocOnlyTitleField": "Titolo solo nel sommario:",
+  "tocInstanceTitleExplanation": "Usato solo per l’istanza corrente. Per impostazione predefinita, viene ereditato dal titolo dell’argomento.",
+  "tocOnlyTitleExplanation": "Usato solo nel sommario. Per impostazione predefinita, viene ereditato dal titolo dell’argomento o da quello specifico dell’istanza, se impostato. I titoli sono spiegati",
+  "tocTitleDocumentationLink": "qui",
+  "tocFindUsages": "Trova",
+  "tocRefactorMenu": "Refactoring",
+  "tocSafeDelete": "Eliminazione sicura",
+  "tocDuplicate": "Duplica",
+  "tocDuplicateFilename": "Nome del file dell’argomento:",
+  "tocDuplicateDialog": "Duplica argomento",
   "pdfTitlePage": "Frontespizio",
   "pdfIncludeTitlePage": "Includi frontespizio",
   "pdfTitlePageNote": "Questa pagina non ha intestazione, piè di pagina o numero di pagina visibile.",
@@ -1221,7 +1289,7 @@
   "@files": {
     "description": "Files sidebar tab label."
   },
-  "toc": "Argomenti",
+  "toc": "Sommario",
   "@toc": {
     "description": "Writerside Topics sidebar tab label."
   },
@@ -1265,7 +1333,7 @@
   "@newChildTopic": {
     "description": "Create new child Writerside topic action label."
   },
-  "newSiblingTopic": "Nuovo argomento allo stesso livello",
+  "newSiblingTopic": "Nuovo argomento",
   "@newSiblingTopic": {
     "description": "Create new sibling Writerside topic action label."
   },
@@ -1771,6 +1839,23 @@
         "type": "String"
       }
     }
+  },
+  "errorWritersideTopicRenameIncompleteProjectIndex": "La ridenominazione non può aggiornare in modo sicuro tutti i riferimenti del progetto perché {count} file di argomento nel modulo {module} non sono stati analizzati: {paths}",
+  "@errorWritersideTopicRenameIncompleteProjectIndex": {
+    "description": "Error shown when topic rename cannot prove complete project-wide semantic coverage.",
+    "placeholders": {
+      "module": {"type": "String"},
+      "count": {"type": "String"},
+      "paths": {"type": "String"}
+    }
+  },
+  "errorWritersideTopicRenameProjectBuffersDirty": "I file del progetto Writerside contengono modifiche non salvate. Risolvile e prepara una nuova anteprima della ridenominazione.",
+  "@errorWritersideTopicRenameProjectBuffersDirty": {
+    "description": "Error shown when a topic rename or reviewed rename plan is blocked by a dirty Writerside project buffer."
+  },
+  "errorWritersideTopicRenameProjectInventoryChanged": "L’insieme dei moduli del progetto Writerside è cambiato. Prepara una nuova anteprima della ridenominazione prima del refactoring.",
+  "@errorWritersideTopicRenameProjectInventoryChanged": {
+    "description": "Error shown when module discovery differs from a prepared topic rename plan."
   },
   "errorTopicsRootUnsafe": "La radice degli argomenti deve essere una directory relativa sicura.",
   "@errorTopicsRootUnsafe": {
@@ -2511,7 +2596,7 @@
   "@removeAction": {
     "description": "Generic remove action label."
   },
-  "topicRemovalSummary": "Rimuovi «{topic}» dall’istanza selezionata. Il file dell’argomento verrà conservato.",
+  "topicRemovalSummary": "Rimuovere l’elemento «{topic}» dal sommario? Il file sorgente associato al sommario non verrà eliminato.",
   "@topicRemovalSummary": {
     "description": "Summary of removing a topic from one TOC while keeping its file.",
     "placeholders": {
@@ -2542,7 +2627,7 @@
   "@topicIsStartPageRemovalWarning": {
     "description": "Warning shown when the topic is used as an instance start page."
   },
-  "topicUsagesCount": "Utilizzi ({count})",
+  "topicUsagesCount": "{count} utilizzi trovati.",
   "@topicUsagesCount": {
     "description": "Number of discovered topic usages.",
     "placeholders": {
@@ -2600,7 +2685,7 @@
   "@manualUsageUpdatesRequired": {
     "description": "Message shown when usages require manual updates."
   },
-  "setRedirectTo": "Reindirizza a",
+  "setRedirectTo": "Reindirizza a:",
   "@setRedirectTo": {
     "description": "Option to redirect the removed topic URL to another topic."
   },
@@ -3039,11 +3124,6 @@
   "aiDraftCommitMessage": "Crea una bozza del messaggio di commit",
   "aiDrafting": "Creazione bozza…",
   "aiDraftWithAi": "Crea bozza con IA",
-  "generateOrUpdateMarkdownToc": "Genera/aggiorna indice",
-  "markdownTocTitle": "Indice",
-  "markdownTocUpdated": "Indice aggiornato con {count} voci.",
-  "markdownTocNoHeadings": "Aggiungi almeno un titolo di sezione prima di generare un indice.",
-  "markdownTocMalformedMarkers": "I marcatori dell’indice di BusyMark sono mancanti, duplicati o fuori ordine.",
   "diagnosticMarkdownHeadingSkippedLevel": "Il titolo di livello {level} segue il livello {previousLevel}; verifica la struttura delle sezioni.",
   "diagnosticMarkdownLinkEmptyText": "Il testo del collegamento è vuoto; fornisci un nome accessibile che ne descriva lo scopo.",
   "diagnosticMarkdownLinkReviewText": "Verifica se il testo del collegamento “{text}” ne descrive lo scopo nel contesto.",
@@ -3240,5 +3320,14 @@
   "settingsHistoryExcludedPathsHint": "Un percorso assoluto per riga",
   "settingsSecondsValue": "{value} secondi",
   "settingsDaysValue": "{value} giorni",
-  "settingsMebibytesValue": "{value} MiB"
+  "settingsMebibytesValue": "{value} MiB",
+  "preview": "Anteprima",
+  "topicRenamePreviewTitle": "Anteprima della ridenominazione",
+  "topicRenamePathChange": "Percorso: {oldPath} → {newPath}",
+  "topicRenameIdChange": "ID argomento: {oldId} → {newId}",
+  "topicRenameUrlChange": "Istanza {instance}: {oldName} → {newName}",
+  "topicRenameAffectedFiles": "File interessati",
+  "renameTopicFileInstead": "Gli ID degli argomenti derivano dai nomi dei file. Usa Rinomina file argomento nel sommario o nella barra laterale File.",
+  "diagnosticWritersideWebFileNameInvalid": "L’istanza \"{instanceId}\" pubblica il nome file web non valido \"{webFileName}\" per l’argomento \"{topic}\".",
+  "diagnosticWritersideWebFileNameCollision": "L’istanza \"{instanceId}\" pubblica sia \"{firstTopic}\" sia \"{secondTopic}\" come \"{webFileName}\"."
 }

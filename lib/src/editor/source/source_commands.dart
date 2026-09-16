@@ -22,6 +22,99 @@ abstract final class SourceCommands {
 
   static const int defaultIndentWidth = 2;
 
+  /// Moves complete physical lines in full-source coordinates. Line separators
+  /// belong to their positions, retaining CRLF and a missing final newline.
+  static TextEditingValue moveLines(
+    TextEditingValue value, {
+    required bool down,
+  }) {
+    final selection = value.selection.isValid
+        ? TextSelection(
+            baseOffset: value.selection.baseOffset.clamp(0, value.text.length),
+            extentOffset: value.selection.extentOffset.clamp(
+              0,
+              value.text.length,
+            ),
+            affinity: value.selection.affinity,
+            isDirectional: value.selection.isDirectional,
+          )
+        : TextSelection.collapsed(offset: value.text.length);
+    final text = value.text;
+    final starts = [0, for (final match in '\n'.allMatches(text)) match.end];
+    int lineAt(int offset) {
+      for (var i = starts.length - 1; i >= 0; i--) {
+        if (offset >= starts[i]) return i;
+      }
+      return 0;
+    }
+
+    final first = lineAt(selection.start);
+    final last = lineAt(
+      selection.isCollapsed
+          ? selection.end
+          : math.max(selection.start, selection.end - 1),
+    );
+    if ((!down && first == 0) || (down && last == starts.length - 1)) {
+      return value;
+    }
+    final contents = <String>[];
+    final endings = <String>[];
+    for (var i = 0; i < starts.length; i++) {
+      final end = i + 1 < starts.length ? starts[i + 1] : text.length;
+      final raw = text.substring(starts[i], end);
+      final ending = raw.endsWith('\r\n')
+          ? '\r\n'
+          : raw.endsWith('\n')
+          ? '\n'
+          : '';
+      contents.add(raw.substring(0, raw.length - ending.length));
+      endings.add(ending);
+    }
+    final order = List<int>.generate(contents.length, (index) => index);
+    if (down) {
+      final next = order.removeAt(last + 1);
+      order.insert(first, next);
+    } else {
+      final previous = order.removeAt(first - 1);
+      order.insert(last, previous);
+    }
+    final result = StringBuffer();
+    final newStarts = <int, int>{};
+    for (var i = 0; i < order.length; i++) {
+      newStarts[order[i]] = result.length;
+      result.write(contents[order[i]]);
+      result.write(endings[i]);
+    }
+    int shifted(int offset) {
+      final originalLine = lineAt(offset);
+      // A selection ending at the next line start remains a line selection.
+      if (!selection.isCollapsed &&
+          offset == selection.end &&
+          offset == starts[originalLine] &&
+          originalLine > last) {
+        final destination = order.indexOf(last);
+        return newStarts[last]! +
+            contents[last].length +
+            endings[destination].length;
+      }
+      return newStarts[originalLine]! +
+          math.min(
+            offset - starts[originalLine],
+            contents[originalLine].length,
+          );
+    }
+
+    return TextEditingValue(
+      text: result.toString(),
+      selection: TextSelection(
+        baseOffset: shifted(selection.baseOffset),
+        extentOffset: shifted(selection.extentOffset),
+        affinity: selection.affinity,
+        isDirectional: selection.isDirectional,
+      ),
+    );
+  }
+
   static TextEditingValue insertTab(
     TextEditingValue value, {
     int indentWidth = defaultIndentWidth,

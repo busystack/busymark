@@ -1,0 +1,4 @@
+<instance-profile id="api" name="API Reference" start-page="reused.md">
+  <toc-element topic="reused.md"/>
+  <toc-element topic="details.topic"/>
+</instance-profile>

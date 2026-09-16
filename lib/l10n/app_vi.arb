@@ -1,4 +1,72 @@
 {
+  "tocTopicFromTemplate": "Chủ đề từ mẫu...",
+  "tocSaveAsTemplate": "Lưu thành mẫu",
+  "tocTemplateDialog": "Tạo chủ đề từ mẫu",
+  "tocTemplatesEditor": "Mẫu tệp và mã",
+  "tocEditTemplates": "Chỉnh sửa mẫu...",
+  "tocCreateCustomTemplate": "Tạo mẫu tùy chỉnh...",
+  "tocTemplateCreated": "Đã tạo mẫu",
+  "tocTemplateDefault": "Mặc định",
+  "tocTemplateCustom": "Tùy chỉnh",
+  "tocTemplateFilename": "Tên tệp:",
+  "tocTemplateMarkdown": "Markdown (.md)",
+  "tocTemplateXml": "XML (.topic)",
+  "tocTemplatesInternal": "Nội bộ",
+  "tocTemplateUnnamed": "Chưa đặt tên",
+  "tocTemplateNew": "Mẫu mới...",
+  "tocTemplateName": "Tên:",
+  "tocTemplateExtension": "Phần mở rộng:",
+  "tocTemplateLoadError": "Không thể tải mẫu. Các mẫu hiện có không bị thay đổi.",
+  "tocTemplateSaveError": "Không thể lưu mẫu. Các chỉnh sửa của bạn vẫn còn ở đây.",
+  "tocTemplateConflict": "Mẫu đã thay đổi trong cửa sổ khác. Hãy hủy và mở lại trình chỉnh sửa.",
+  "tocTemplateDuplicateName": "Đã có mẫu với tên và phần mở rộng này.",
+  "tocTemplateFormat": "Định dạng:",
+  "tocTemplateReset": "Đặt lại",
+  "tocTemplateRetry": "Thử lại",
+  "tocRemoveElementsDialog": "Xóa {count} phần tử mục lục",
+  "tocRemoveElementsRetainFiles": "Các tệp nguồn liên kết với những phần tử mục lục này sẽ không bị xóa.",
+  "tocOk": "OK",
+  "tocSelectExistingTopic": "Chọn chủ đề để thêm vào phiên bản hiện tại",
+  "tocGroupName": "Tên nhóm",
+  "tocMoveLineUp": "Di chuyển dòng lên",
+  "tocMoveLineDown": "Di chuyển dòng xuống",
+  "tocEmptyMdTopic": "Chủ đề MD trống",
+  "tocEmptyXmlTopic": "Chủ đề XML trống",
+  "tocCopySpecial": "Sao chép đặc biệt",
+  "tocCopyFileName": "Tên tệp chủ đề '{name}'",
+  "tocCopyFilePath": "Đường dẫn tệp chủ đề",
+  "tocCopyTopicTitle": "Tiêu đề chủ đề '{title}'",
+  "tocCopyElementId": "ID phần tử mục lục '{id}'",
+  "tocCopyFileNameUnavailable": "Tên tệp chủ đề",
+  "tocCopyTopicTitleUnavailable": "Tiêu đề chủ đề",
+  "tocCopyElementIdUnavailable": "ID phần tử mục lục",
+  "tocEditTitleAction": "Sửa tiêu đề...",
+  "tocEditTitleDialog": "Sửa tiêu đề",
+  "tocRemoveElementAction": "Xóa phần tử mục lục...",
+  "tocSetHomePage": "Đặt làm trang chủ",
+  "tocGoToElement": "Đi đến phần tử mục lục trong '{fileName}'",
+  "tocSynchronize": "Đồng bộ mục lục và trình soạn thảo",
+  "tocEmptyGroupAction": "Nhóm trống",
+  "tocNewEmptyGroup": "Nhóm trống mới",
+  "tocGroupAction": "Nhóm lại",
+  "tocNewGroup": "Nhóm mới",
+  "tocSortChildren": "Sắp xếp chủ đề con theo bảng chữ cái",
+  "tocLinkTopicFiles": "Liên kết tệp chủ đề với mục lục...",
+  "addLocalMarkdownFiles": "Thêm tệp Markdown cục bộ",
+  "tocTitleField": "Tiêu đề mục lục:",
+  "tocTopicTitleField": "Tiêu đề chủ đề:",
+  "tocAdvancedSettings": "Cài đặt nâng cao",
+  "tocInstanceTitleField": "Tiêu đề cho '{instanceId}':",
+  "tocOnlyTitleField": "Tiêu đề chỉ dành cho mục lục:",
+  "tocInstanceTitleExplanation": "Chỉ dùng cho thực thể hiện tại. Theo mặc định, kế thừa từ tiêu đề chủ đề.",
+  "tocOnlyTitleExplanation": "Chỉ dùng trong mục lục. Theo mặc định, kế thừa từ tiêu đề chủ đề hoặc tiêu đề riêng của thực thể nếu đã đặt. Phần giải thích về tiêu đề có",
+  "tocTitleDocumentationLink": "tại đây",
+  "tocFindUsages": "Tìm",
+  "tocRefactorMenu": "Tái cấu trúc",
+  "tocSafeDelete": "Xóa an toàn",
+  "tocDuplicate": "Nhân bản",
+  "tocDuplicateFilename": "Tên tệp chủ đề:",
+  "tocDuplicateDialog": "Nhân bản chủ đề",
   "pdfTitlePage": "Trang tiêu đề",
   "pdfIncludeTitlePage": "Bao gồm trang tiêu đề",
   "pdfTitlePageNote": "Trang này không có đầu trang, chân trang hoặc số trang hiển thị.",
@@ -1397,7 +1465,7 @@
   "@files": {
     "description": "Files sidebar tab label."
   },
-  "toc": "Chủ đề",
+  "toc": "Mục lục",
   "@toc": {
     "description": "Writerside Topics sidebar tab label."
   },
@@ -1445,7 +1513,7 @@
   "@newChildTopic": {
     "description": "Create new child Writerside topic action label."
   },
-  "newSiblingTopic": "Chủ đề cùng cấp mới",
+  "newSiblingTopic": "Chủ đề mới",
   "@newSiblingTopic": {
     "description": "Create new sibling Writerside topic action label."
   },
@@ -1531,7 +1599,7 @@
   "@removeAction": {
     "description": "Short action label for removing an item without deleting its source file."
   },
-  "topicRemovalSummary": "Xóa “{topic}” khỏi thực thể đã chọn. Tệp chủ đề sẽ được giữ lại.",
+  "topicRemovalSummary": "Xóa phần tử mục lục “{topic}”? Tệp nguồn được liên kết với mục lục sẽ không bị xóa.",
   "@topicRemovalSummary": {
     "description": "Summary in the dialog for removing a topic from one Writerside instance.",
     "placeholders": {
@@ -1562,7 +1630,7 @@
   "@topicIsStartPageRemovalWarning": {
     "description": "Warning that blocks deletion of a Writerside start-page topic."
   },
-  "topicUsagesCount": "Các tham chiếu ({count})",
+  "topicUsagesCount": "Tìm thấy {count} lượt sử dụng.",
   "@topicUsagesCount": {
     "description": "Heading with the number of Writerside topic usages.",
     "placeholders": {
@@ -1620,7 +1688,7 @@
   "@manualUsageUpdatesRequired": {
     "description": "Message when some Writerside usages cannot be updated automatically."
   },
-  "setRedirectTo": "Đặt chuyển hướng đến",
+  "setRedirectTo": "Đặt chuyển hướng đến:",
   "@setRedirectTo": {
     "description": "Option to redirect an old Writerside page to another topic."
   },
@@ -2427,6 +2495,23 @@
         "type": "String"
       }
     }
+  },
+  "errorWritersideTopicRenameIncompleteProjectIndex": "Không thể đổi tên và cập nhật an toàn mọi tham chiếu trong dự án vì {count} tệp chủ đề trong mô-đun {module} chưa được phân tích: {paths}",
+  "@errorWritersideTopicRenameIncompleteProjectIndex": {
+    "description": "Error shown when topic rename cannot prove complete project-wide semantic coverage.",
+    "placeholders": {
+      "module": {"type": "String"},
+      "count": {"type": "String"},
+      "paths": {"type": "String"}
+    }
+  },
+  "errorWritersideTopicRenameProjectBuffersDirty": "Các tệp dự án Writerside có thay đổi chưa lưu. Hãy xử lý chúng và chuẩn bị bản xem trước đổi tên mới.",
+  "@errorWritersideTopicRenameProjectBuffersDirty": {
+    "description": "Error shown when a topic rename or reviewed rename plan is blocked by a dirty Writerside project buffer."
+  },
+  "errorWritersideTopicRenameProjectInventoryChanged": "Tập hợp mô-đun của dự án Writerside đã thay đổi. Hãy chuẩn bị bản xem trước đổi tên mới trước khi tái cấu trúc.",
+  "@errorWritersideTopicRenameProjectInventoryChanged": {
+    "description": "Error shown when module discovery differs from a prepared topic rename plan."
   },
   "errorTopicsRootUnsafe": "Gốc chủ đề phải là một thư mục tương đối an toàn.",
   "@errorTopicsRootUnsafe": {
@@ -4589,31 +4674,6 @@
   "@aiDraftWithAi": {
     "description": "Action that drafts a Git commit message with AI."
   },
-  "generateOrUpdateMarkdownToc": "Tạo/cập nhật mục lục",
-  "@generateOrUpdateMarkdownToc": {
-    "description": "Deterministic action that creates or refreshes a Markdown table of contents."
-  },
-  "markdownTocTitle": "Mục lục",
-  "@markdownTocTitle": {
-    "description": "Heading inserted above a generated Markdown table of contents."
-  },
-  "markdownTocUpdated": "Đã cập nhật mục lục với {count} mục.",
-  "@markdownTocUpdated": {
-    "description": "Confirmation after generating a Markdown table of contents.",
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "markdownTocNoHeadings": "Thêm ít nhất một tiêu đề phần trước khi tạo mục lục.",
-  "@markdownTocNoHeadings": {
-    "description": "Message when a Markdown document has no section headings for a generated table of contents."
-  },
-  "markdownTocMalformedMarkers": "Các dấu đánh dấu mục lục BusyMark bị thiếu, trùng lặp hoặc không đúng thứ tự.",
-  "@markdownTocMalformedMarkers": {
-    "description": "Message when a generated Markdown table-of-contents region cannot be safely updated."
-  },
   "diagnosticMarkdownHeadingSkippedLevel": "Tiêu đề cấp {level} theo sau cấp {previousLevel}; hãy xem lại cấu trúc lồng ghép của các phần.",
   "@diagnosticMarkdownHeadingSkippedLevel": {
     "description": "Accessibility diagnostic for a skipped Markdown heading level.",
@@ -4799,5 +4859,14 @@
   "settingsHistoryExcludedPathsHint": "Một đường dẫn tuyệt đối trên mỗi dòng",
   "settingsSecondsValue": "{value} giây",
   "settingsDaysValue": "{value} ngày",
-  "settingsMebibytesValue": "{value} MiB"
+  "settingsMebibytesValue": "{value} MiB",
+  "preview": "Xem trước",
+  "topicRenamePreviewTitle": "Xem trước việc đổi tên",
+  "topicRenamePathChange": "Đường dẫn: {oldPath} → {newPath}",
+  "topicRenameIdChange": "ID chủ đề: {oldId} → {newId}",
+  "topicRenameUrlChange": "Phiên bản {instance}: {oldName} → {newName}",
+  "topicRenameAffectedFiles": "Các tệp bị ảnh hưởng",
+  "renameTopicFileInstead": "ID chủ đề được tạo từ tên tệp. Hãy dùng Đổi tên tệp chủ đề trong mục lục hoặc thanh bên Tệp.",
+  "diagnosticWritersideWebFileNameInvalid": "Phiên bản \"{instanceId}\" xuất bản tên tệp web không hợp lệ \"{webFileName}\" cho chủ đề \"{topic}\".",
+  "diagnosticWritersideWebFileNameCollision": "Phiên bản \"{instanceId}\" xuất bản cả \"{firstTopic}\" và \"{secondTopic}\" dưới tên \"{webFileName}\"."
 }

@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:busymark/src/core/diagnostic.dart';
 import 'package:busymark/src/core/local_image_resolver.dart';
 import 'package:busymark/src/core/path_utils.dart';
 import 'package:busymark/src/markdown/busymark_document.dart';
@@ -52,6 +53,31 @@ void main() {
     );
 
     expect(parsed.title, 'Front Matter Title');
+  });
+
+  test('Writerside Markdown title comes from H1, not front matter', () {
+    final parsed = parser.parse(
+      filePath: 'guide.md',
+      source: '---\ntitle: Front Matter\n---\n\n# Writerside H1\n',
+      mode: MarkdownMode.writersideMarkdown,
+    );
+
+    expect(parsed.title, 'Writerside H1');
+    expect(parsed.busyDocument.frontMatter['title'], 'Front Matter');
+  });
+
+  test('Writerside front matter title does not satisfy missing H1', () {
+    final parsed = parser.parse(
+      filePath: 'guide.md',
+      source: '---\ntitle: Front Matter\n---\n',
+      mode: MarkdownMode.writersideMarkdown,
+    );
+
+    expect(parsed.title, isNull);
+    expect(
+      parsed.diagnostics.map((diagnostic) => diagnostic.code),
+      contains('writerside.topic.missing-title'),
+    );
   });
 
   test('parseAsync handles documents above the background threshold', () async {
@@ -673,5 +699,58 @@ void main() {
       containsAll(['var', 'tabs']),
     );
     expect(parsed.variables.map((item) => item.name), contains('product'));
+  });
+
+  test('emits deterministic Markdown accessibility diagnostics', () {
+    final parsed = parser.parse(
+      filePath: 'accessibility.md',
+      source: '''# Guide
+
+### Skipped level
+
+[](empty.md)
+
+[Click here](details.md)
+
+| Name | |
+| --- | --- |
+| BusyMark | Editor |
+''',
+      mode: MarkdownMode.gfm,
+      validateLocalReferences: false,
+    );
+    final byCode = {for (final item in parsed.diagnostics) item.code: item};
+
+    expect(byCode, contains('markdown.heading.skipped-level'));
+    expect(byCode, contains('markdown.link.empty-text'));
+    expect(byCode, contains('markdown.link.review-text'));
+    expect(
+      byCode['markdown.link.review-text']?.severity,
+      DiagnosticSeverity.hint,
+    );
+    expect(byCode, contains('markdown.table.empty-header'));
+    expect(byCode['markdown.table.empty-header']?.sourceSpan?.startLine, 9);
+  });
+
+  test('does not report populated table headers as empty', () {
+    final parsed = parser.parse(
+      filePath: 'table.md',
+      source: '''# Formatting
+
+| Formatting | Markdown | Result |
+| --- | --- | --- |
+| Bold text | `**text**` | **text** |
+| Italic text | `*text*` | *text* |
+''',
+      mode: MarkdownMode.gfm,
+      validateLocalReferences: false,
+    );
+
+    expect(
+      parsed.diagnostics.where(
+        (diagnostic) => diagnostic.code == 'markdown.table.empty-header',
+      ),
+      isEmpty,
+    );
   });
 }

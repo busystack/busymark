@@ -14,8 +14,11 @@ import '../markdown/busymark_document.dart';
 import '../markdown/markdown_model.dart';
 import '../markdown/markdown_parser.dart';
 import 'writerside_model.dart';
+import 'writerside_module_service.dart';
 import 'writerside_parsers.dart';
 import 'writerside_project_creator.dart';
+import 'writerside_topic_creator.dart';
+import 'writerside_topic_file_name.dart';
 
 enum WritersideInstanceStatus { release, eap, deprecated }
 
@@ -90,6 +93,41 @@ class WritersideInstanceUpdateRequest {
   final WritersideInstanceSettings settings;
 }
 
+class WritersideMarkdownTopicImportRequest {
+  WritersideMarkdownTopicImportRequest({
+    required this.sourceRootPath,
+    required List<String> selectedMarkdownPaths,
+    required this.treePath,
+    required this.placement,
+    List<int>? referenceTocPath,
+    this.referenceTocIdentity,
+    this.copyReferencedMedia = true,
+  }) : selectedMarkdownPaths = List.unmodifiable(selectedMarkdownPaths),
+       referenceTocPath = referenceTocPath == null
+           ? null
+           : List.unmodifiable(referenceTocPath);
+
+  final String sourceRootPath;
+  final List<String> selectedMarkdownPaths;
+  final String treePath;
+  final WritersideTopicCreatePlacement placement;
+  final List<int>? referenceTocPath;
+  final WritersideTocNodeIdentity? referenceTocIdentity;
+  final bool copyReferencedMedia;
+}
+
+class WritersideMarkdownTopicImportResult {
+  WritersideMarkdownTopicImportResult({
+    required List<String> importedTopicPaths,
+    required this.treePath,
+    required this.firstTopicPath,
+  }) : importedTopicPaths = List.unmodifiable(importedTopicPaths);
+
+  final List<String> importedTopicPaths;
+  final String treePath;
+  final String firstTopicPath;
+}
+
 class WritersideInstanceMutationResult {
   const WritersideInstanceMutationResult({
     required this.treePath,
@@ -111,11 +149,13 @@ class WritersideInstanceService {
   const WritersideInstanceService({
     this.markdownParser = const MarkdownParser(),
     this.buildProfilesParser = const WritersideBuildProfilesParser(),
+    this.moduleService = const WritersideModuleService(),
     Future<void> Function()? beforePublish,
   }) : _beforePublish = beforePublish;
 
   final MarkdownParser markdownParser;
   final WritersideBuildProfilesParser buildProfilesParser;
+  final WritersideModuleService moduleService;
   final Future<void> Function()? _beforePublish;
 
   Future<List<WritersideMarkdownImportCandidate>> discoverMarkdownFiles(
@@ -170,7 +210,14 @@ class WritersideInstanceService {
   Future<WritersideInstanceMutationResult> create({
     required WritersideModule module,
     required WritersideInstanceCreateRequest request,
+    Future<WritersideModule> Function()? reloadModule,
   }) async {
+    final loadModule =
+        reloadModule ?? () => moduleService.load(module.rootPath);
+    if (request.importsMarkdown) {
+      module = await loadModule();
+      _requireCompleteTopicDiscovery(module);
+    }
     final settings = _validatedSettings(request.settings);
     if (request.isLibrary && request.importsMarkdown) {
       throw const BusyMarkException(
@@ -204,7 +251,13 @@ class WritersideInstanceService {
     writes[configPath] = _DesiredFile.text(_xml(configDocument));
 
     final imported = request.importsMarkdown
-        ? await _prepareImport(rootAnchor, module, request)
+        ? await _prepareMarkdownImport(
+            rootAnchor: rootAnchor,
+            module: module,
+            sourceRootPath: request.importRootPath,
+            selectedMarkdownPaths: request.importedMarkdownPaths,
+            copyReferencedMedia: request.copyReferencedMedia,
+          )
         : const _PreparedImport.empty();
     for (final entry in imported.files.entries) {
       writes[entry.key] = entry.value;
@@ -231,7 +284,16 @@ class WritersideInstanceService {
     await _MutationTransaction(
       anchor: rootAnchor,
       desired: writes,
-      beforePublish: _beforePublish,
+      sourceSnapshots: imported.sourceSnapshots,
+      beforePublish: () async {
+        await _beforePublish?.call();
+        if (request.importsMarkdown) {
+          await _validateImportedTopicIds(
+            await loadModule(),
+            imported.topicIds,
+          );
+        }
+      },
     ).commit();
     return WritersideInstanceMutationResult(
       treePath: treePath,
@@ -354,6 +416,71 @@ class WritersideInstanceService {
     );
   }
 
+  Future<WritersideMarkdownTopicImportResult> addMarkdownTopics({
+    required WritersideModule module,
+    required WritersideMarkdownTopicImportRequest request,
+    Future<WritersideModule> Function()? reloadModule,
+    Future<void> Function()? validateBeforePublish,
+  }) async {
+    final loadModule =
+        reloadModule ?? () => moduleService.load(module.rootPath);
+    module = await loadModule();
+    _requireCompleteTopicDiscovery(module);
+    final instance = module.instances
+        .where(
+          (candidate) => p.equals(candidate.sourceTreePath, request.treePath),
+        )
+        .singleOrNull;
+    if (instance == null) {
+      throw const BusyMarkException('writerside.instance.not-found');
+    }
+    if (request.placement == WritersideTopicCreatePlacement.child) {
+      throw const BusyMarkException('writerside.topic.reference-missing');
+    }
+
+    final rootAnchor = await _moduleAnchor(module.rootPath);
+    final prepared = await _prepareMarkdownImport(
+      rootAnchor: rootAnchor,
+      module: module,
+      sourceRootPath: request.sourceRootPath,
+      selectedMarkdownPaths: request.selectedMarkdownPaths,
+      copyReferencedMedia: request.copyReferencedMedia,
+    );
+    final treePath = await _existingFilePath(
+      rootAnchor,
+      instance.sourceTreePath,
+      errorCode: 'writerside.instance.tree-missing',
+    );
+    final treeSource = await File(treePath).readAsString();
+    final updatedTree = insertWritersideTopicReferences(
+      treePath: treePath,
+      source: treeSource,
+      topicReferences: prepared.topicReferences,
+      placement: request.placement,
+      referenceTocPath: request.referenceTocPath,
+      referenceTocIdentity: request.referenceTocIdentity,
+    );
+    final desired = <String, _DesiredFile>{
+      ...prepared.files,
+      treePath: _DesiredFile.text(updatedTree),
+    };
+    await _MutationTransaction(
+      anchor: rootAnchor,
+      desired: desired,
+      sourceSnapshots: prepared.sourceSnapshots,
+      beforePublish: () async {
+        await _beforePublish?.call();
+        await _validateImportedTopicIds(await loadModule(), prepared.topicIds);
+        await validateBeforePublish?.call();
+      },
+    ).commit();
+    return WritersideMarkdownTopicImportResult(
+      importedTopicPaths: prepared.topicPaths,
+      treePath: treePath,
+      firstTopicPath: prepared.firstTopicPath!,
+    );
+  }
+
   WritersideInstanceSettings _validatedSettings(
     WritersideInstanceSettings settings,
   ) {
@@ -399,12 +526,15 @@ class WritersideInstanceService {
     }
   }
 
-  Future<_PreparedImport> _prepareImport(
-    CanonicalPathAnchor rootAnchor,
-    WritersideModule module,
-    WritersideInstanceCreateRequest request,
-  ) async {
-    final importRoot = request.importRootPath;
+  Future<_PreparedImport> _prepareMarkdownImport({
+    required CanonicalPathAnchor rootAnchor,
+    required WritersideModule module,
+    required String? sourceRootPath,
+    required List<String> selectedMarkdownPaths,
+    required bool copyReferencedMedia,
+  }) async {
+    _requireCompleteTopicDiscovery(module);
+    final importRoot = sourceRootPath;
     if (importRoot == null || importRoot.trim().isEmpty) {
       throw const BusyMarkException(
         'writerside.instance.import-source-missing',
@@ -422,8 +552,17 @@ class WritersideInstanceService {
     )).path;
     final files = <String, _DesiredFile>{};
     final topicReferences = <String>[];
+    final topicPaths = <String>[];
+    final topicIds = <String>{};
+    final selectedTopics = <_ResolvedImportTopic>[];
+    final sourceSnapshots = <String, Uint8List>{};
     String? firstTopicPath;
-    for (final requestedPath in request.importedMarkdownPaths) {
+    if (selectedMarkdownPaths.isEmpty) {
+      throw const BusyMarkException(
+        'writerside.instance.import-selection-required',
+      );
+    }
+    for (final requestedPath in selectedMarkdownPaths) {
       final source = await _resolve(
         sourceAnchor,
         requestedPath,
@@ -436,6 +575,22 @@ class WritersideInstanceService {
           args: {'path': source.path},
         );
       }
+      final sourceFileName = p.basename(source.path);
+      try {
+        validateWritersideTopicFileName(sourceFileName);
+      } on BusyMarkException catch (error) {
+        throw BusyMarkException(
+          error.code,
+          args: {...error.args, 'path': source.path},
+        );
+      }
+      final topicId = p.basenameWithoutExtension(sourceFileName);
+      if (!topicIds.add(topicId)) {
+        throw BusyMarkException(
+          'writerside.topic.id-exists',
+          args: {'topicId': topicId, 'path': source.path},
+        );
+      }
       final relative = normalizedRelative(sourceAnchor.rootPath, source.path);
       final target = (await _resolve(
         rootAnchor,
@@ -444,18 +599,37 @@ class WritersideInstanceService {
         allowMissingAncestors: true,
       )).path;
       await _ensureTargetMissing(target);
-      final bytes = await File(source.path).readAsBytes();
-      files[target] = _DesiredFile(
-        bytes: Uint8List.fromList(bytes),
-        sourceMode: (await File(source.path).stat()).mode,
+      if (module.reservedTopicIds.contains(topicId)) {
+        throw BusyMarkException(
+          'writerside.topic.id-exists',
+          args: {'topicId': topicId, 'path': source.path},
+        );
+      }
+      selectedTopics.add(
+        _ResolvedImportTopic(
+          sourcePath: source.path,
+          relativePath: relative,
+          targetPath: target,
+        ),
       );
-      topicReferences.add(relative);
-      firstTopicPath ??= target;
+    }
 
-      if (request.copyReferencedMedia) {
+    for (final selected in selectedTopics) {
+      final sourceFile = File(selected.sourcePath);
+      final bytes = await sourceFile.readAsBytes();
+      sourceSnapshots[selected.sourcePath] = Uint8List.fromList(bytes);
+      files[selected.targetPath] = _DesiredFile(
+        bytes: Uint8List.fromList(bytes),
+        sourceMode: (await sourceFile.stat()).mode,
+      );
+      topicReferences.add(selected.relativePath);
+      topicPaths.add(selected.targetPath);
+      firstTopicPath ??= selected.targetPath;
+
+      if (copyReferencedMedia) {
         final sourceText = utf8.decode(bytes);
         final parsed = markdownParser.parse(
-          filePath: source.path,
+          filePath: selected.sourcePath,
           source: sourceText,
           mode: MarkdownMode.writersideMarkdown,
           validateLocalReferences: false,
@@ -463,7 +637,7 @@ class WritersideInstanceService {
         for (final mediaPath in _referencedMediaPaths(parsed)) {
           final media = await _resolveReferencedMedia(
             sourceAnchor,
-            source.path,
+            selected.sourcePath,
             mediaPath,
           );
           if (media == null) {
@@ -483,8 +657,10 @@ class WritersideInstanceService {
             continue;
           }
           await _ensureTargetMissing(mediaTarget);
+          final mediaBytes = await File(media.path).readAsBytes();
+          sourceSnapshots[media.path] = Uint8List.fromList(mediaBytes);
           files[mediaTarget] = _DesiredFile(
-            bytes: Uint8List.fromList(await File(media.path).readAsBytes()),
+            bytes: Uint8List.fromList(mediaBytes),
             sourceMode: (await File(media.path).stat()).mode,
           );
         }
@@ -498,8 +674,32 @@ class WritersideInstanceService {
     return _PreparedImport(
       files: files,
       topicReferences: topicReferences,
+      topicPaths: topicPaths,
+      topicIds: topicIds,
+      sourceSnapshots: sourceSnapshots,
       firstTopicPath: firstTopicPath,
     );
+  }
+
+  void _requireCompleteTopicDiscovery(WritersideModule module) {
+    if (!module.topicDiscoveryComplete) {
+      throw const BusyMarkException('writerside.topic.discovery-incomplete');
+    }
+  }
+
+  Future<void> _validateImportedTopicIds(
+    WritersideModule module,
+    Set<String> topicIds,
+  ) async {
+    _requireCompleteTopicDiscovery(module);
+    for (final topicId in topicIds) {
+      if (module.reservedTopicIds.contains(topicId)) {
+        throw BusyMarkException(
+          'writerside.topic.id-exists',
+          args: {'topicId': topicId},
+        );
+      }
+    }
   }
 
   Iterable<String> _referencedMediaPaths(
@@ -1166,17 +1366,38 @@ class _PreparedImport {
   const _PreparedImport({
     required this.files,
     required this.topicReferences,
+    required this.topicPaths,
+    required this.topicIds,
+    required this.sourceSnapshots,
     required this.firstTopicPath,
   });
 
   const _PreparedImport.empty()
     : files = const {},
       topicReferences = const [],
+      topicPaths = const [],
+      topicIds = const {},
+      sourceSnapshots = const {},
       firstTopicPath = null;
 
   final Map<String, _DesiredFile> files;
   final List<String> topicReferences;
+  final List<String> topicPaths;
+  final Set<String> topicIds;
+  final Map<String, Uint8List> sourceSnapshots;
   final String? firstTopicPath;
+}
+
+class _ResolvedImportTopic {
+  const _ResolvedImportTopic({
+    required this.sourcePath,
+    required this.relativePath,
+    required this.targetPath,
+  });
+
+  final String sourcePath;
+  final String relativePath;
+  final String targetPath;
 }
 
 class _DesiredFile {
@@ -1202,11 +1423,13 @@ class _MutationTransaction {
   const _MutationTransaction({
     required this.anchor,
     required this.desired,
+    this.sourceSnapshots = const {},
     this.beforePublish,
   });
 
   final CanonicalPathAnchor anchor;
   final Map<String, _DesiredFile> desired;
+  final Map<String, Uint8List> sourceSnapshots;
   final Future<void> Function()? beforePublish;
 
   Future<void> commit() async {
@@ -1251,6 +1474,16 @@ class _MutationTransaction {
       }
 
       await beforePublish?.call();
+      for (final entry in sourceSnapshots.entries) {
+        final type = await FileSystemEntity.type(entry.key, followLinks: false);
+        if (type != FileSystemEntityType.file ||
+            !_sameBytes(await File(entry.key).readAsBytes(), entry.value)) {
+          throw BusyMarkException(
+            'writerside.instance.files-changed',
+            args: {'path': entry.key},
+          );
+        }
+      }
       for (final entry in originals.entries) {
         await _verifyOriginal(entry.key, entry.value);
       }

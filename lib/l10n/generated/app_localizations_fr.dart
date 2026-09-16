@@ -11,6 +11,235 @@ class AppLocalizationsFr extends AppLocalizations {
   AppLocalizationsFr([String locale = 'fr']) : super(locale);
 
   @override
+  String get tocTopicFromTemplate => 'Sujet à partir d’un modèle...';
+
+  @override
+  String get tocSaveAsTemplate => 'Enregistrer comme modèle';
+
+  @override
+  String get tocTemplateDialog => 'Créer un sujet à partir d’un modèle';
+
+  @override
+  String get tocTemplatesEditor => 'Modèles de fichiers et de code';
+
+  @override
+  String get tocEditTemplates => 'Modifier les modèles...';
+
+  @override
+  String get tocCreateCustomTemplate => 'Créer un modèle personnalisé...';
+
+  @override
+  String get tocTemplateCreated => 'Modèle créé';
+
+  @override
+  String get tocTemplateDefault => 'Par défaut';
+
+  @override
+  String get tocTemplateCustom => 'Personnalisés';
+
+  @override
+  String get tocTemplateFilename => 'Nom du fichier :';
+
+  @override
+  String get tocTemplateMarkdown => 'Markdown (.md)';
+
+  @override
+  String get tocTemplateXml => 'XML (.topic)';
+
+  @override
+  String get tocTemplatesInternal => 'Internes';
+
+  @override
+  String get tocTemplateUnnamed => 'Sans nom';
+
+  @override
+  String get tocTemplateNew => 'Nouveau modèle...';
+
+  @override
+  String get tocTemplateName => 'Nom :';
+
+  @override
+  String get tocTemplateExtension => 'Extension :';
+
+  @override
+  String get tocTemplateLoadError =>
+      'Impossible de charger les modèles. Les modèles existants n’ont pas été modifiés.';
+
+  @override
+  String get tocTemplateSaveError =>
+      'Impossible d’enregistrer les modèles. Vos modifications sont toujours disponibles ici.';
+
+  @override
+  String get tocTemplateConflict =>
+      'Les modèles ont changé dans une autre fenêtre. Annulez et rouvrez l’éditeur.';
+
+  @override
+  String get tocTemplateDuplicateName =>
+      'Un modèle portant ce nom et cette extension existe déjà.';
+
+  @override
+  String get tocTemplateFormat => 'Format :';
+
+  @override
+  String get tocTemplateReset => 'Réinitialiser';
+
+  @override
+  String get tocTemplateRetry => 'Réessayer';
+
+  @override
+  String tocRemoveElementsDialog(int count) {
+    return 'Retirer $count éléments de la table des matières';
+  }
+
+  @override
+  String get tocRemoveElementsRetainFiles =>
+      'Les fichiers source associés à ces éléments de la table des matières ne seront pas supprimés.';
+
+  @override
+  String get tocOk => 'OK';
+
+  @override
+  String get tocSelectExistingTopic =>
+      'Sélectionner un sujet à ajouter à l’instance actuelle';
+
+  @override
+  String get tocGroupName => 'Nom du groupe';
+
+  @override
+  String get tocMoveLineUp => 'Déplacer la ligne vers le haut';
+
+  @override
+  String get tocMoveLineDown => 'Déplacer la ligne vers le bas';
+
+  @override
+  String get tocEmptyMdTopic => 'Sujet MD vide';
+
+  @override
+  String get tocEmptyXmlTopic => 'Sujet XML vide';
+
+  @override
+  String get tocCopySpecial => 'Copie spéciale';
+
+  @override
+  String tocCopyFileName(String name) {
+    return 'Nom du fichier du sujet \'$name\'';
+  }
+
+  @override
+  String get tocCopyFilePath => 'Chemin du fichier du sujet';
+
+  @override
+  String tocCopyTopicTitle(String title) {
+    return 'Titre du sujet \'$title\'';
+  }
+
+  @override
+  String tocCopyElementId(String id) {
+    return 'ID de l’élément de la table des matières \'$id\'';
+  }
+
+  @override
+  String get tocCopyFileNameUnavailable => 'Nom du fichier du sujet';
+
+  @override
+  String get tocCopyTopicTitleUnavailable => 'Titre du sujet';
+
+  @override
+  String get tocCopyElementIdUnavailable =>
+      'ID de l’élément de la table des matières';
+
+  @override
+  String get tocEditTitleAction => 'Modifier le titre...';
+
+  @override
+  String get tocEditTitleDialog => 'Modifier le titre';
+
+  @override
+  String get tocRemoveElementAction =>
+      'Retirer l’élément de la table des matières...';
+
+  @override
+  String get tocSetHomePage => 'Définir comme page d’accueil';
+
+  @override
+  String tocGoToElement(String fileName) {
+    return 'Accéder à l’élément de la table des matières dans « $fileName »';
+  }
+
+  @override
+  String get tocSynchronize =>
+      'Synchroniser la table des matières et l’éditeur';
+
+  @override
+  String get tocEmptyGroupAction => 'Groupe vide';
+
+  @override
+  String get tocNewEmptyGroup => 'Nouveau groupe vide';
+
+  @override
+  String get tocGroupAction => 'Grouper';
+
+  @override
+  String get tocNewGroup => 'Nouveau groupe';
+
+  @override
+  String get tocSortChildren =>
+      'Trier les sujets enfants par ordre alphabétique';
+
+  @override
+  String get tocLinkTopicFiles =>
+      'Lier des fichiers de sujets à la table des matières...';
+
+  @override
+  String get addLocalMarkdownFiles => 'Ajouter des fichiers Markdown locaux';
+
+  @override
+  String get tocTitleField => 'Titre dans la table des matières:';
+
+  @override
+  String get tocTopicTitleField => 'Titre du sujet:';
+
+  @override
+  String get tocAdvancedSettings => 'Paramètres avancés';
+
+  @override
+  String tocInstanceTitleField(String instanceId) {
+    return 'Titre pour « $instanceId »:';
+  }
+
+  @override
+  String get tocOnlyTitleField => 'Titre propre à la table des matières:';
+
+  @override
+  String get tocInstanceTitleExplanation =>
+      'Utilisé uniquement pour l’instance actuelle. Hérité par défaut du titre du sujet.';
+
+  @override
+  String get tocOnlyTitleExplanation =>
+      'Utilisé uniquement dans la table des matières. Hérité par défaut du titre du sujet ou du titre propre à l’instance, s’il est défini. Les titres sont expliqués';
+
+  @override
+  String get tocTitleDocumentationLink => 'ici';
+
+  @override
+  String get tocFindUsages => 'Rechercher';
+
+  @override
+  String get tocRefactorMenu => 'Refactoriser';
+
+  @override
+  String get tocSafeDelete => 'Suppression sécurisée';
+
+  @override
+  String get tocDuplicate => 'Dupliquer';
+
+  @override
+  String get tocDuplicateFilename => 'Nom du fichier du sujet:';
+
+  @override
+  String get tocDuplicateDialog => 'Dupliquer le sujet';
+
+  @override
   String get pdfTitlePage => 'Page de titre';
 
   @override
@@ -1174,7 +1403,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get files => 'Fichiers';
 
   @override
-  String get toc => 'Sujets';
+  String get toc => 'Table des matières';
 
   @override
   String get tocActions => 'Actions sur la table des matières';
@@ -1212,7 +1441,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get newChildTopic => 'Nouveau sous-sujet';
 
   @override
-  String get newSiblingTopic => 'Nouveau sujet de même niveau';
+  String get newSiblingTopic => 'Nouveau sujet';
 
   @override
   String get renameTopicFile => 'Renommer le fichier du sujet';
@@ -1276,7 +1505,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String topicRemovalSummary(String topic) {
-    return 'Retirez « $topic » de l’instance sélectionnée. Le fichier du sujet sera conservé.';
+    return 'Supprimer l’élément « $topic » de la table des matières ? Le fichier source associé ne sera pas supprimé.';
   }
 
   @override
@@ -1301,7 +1530,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String topicUsagesCount(int count) {
-    return 'Utilisations ($count)';
+    return '$count utilisations trouvées.';
   }
 
   @override
@@ -1351,7 +1580,7 @@ class AppLocalizationsFr extends AppLocalizations {
       'Certaines utilisations nécessitent des modifications manuelles avant cette refactorisation.';
 
   @override
-  String get setRedirectTo => 'Rediriger vers';
+  String get setRedirectTo => 'Rediriger vers :';
 
   @override
   String get noRedirectDescription =>
@@ -1377,6 +1606,30 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get doRefactor => 'Refactoriser';
+
+  @override
+  String get preview => 'Aperçu';
+
+  @override
+  String get topicRenamePreviewTitle => 'Aperçu du renommage';
+
+  @override
+  String topicRenamePathChange(String oldPath, String newPath) {
+    return 'Chemin : $oldPath → $newPath';
+  }
+
+  @override
+  String topicRenameIdChange(String oldId, String newId) {
+    return 'ID du sujet : $oldId → $newId';
+  }
+
+  @override
+  String topicRenameUrlChange(String instance, String oldName, String newName) {
+    return 'Instance $instance : $oldName → $newName';
+  }
+
+  @override
+  String get topicRenameAffectedFiles => 'Fichiers concernés';
 
   @override
   String get orphanTopicTitle => 'Le fichier du sujet n’est plus utilisé';
@@ -1945,6 +2198,23 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
+  String errorWritersideTopicRenameIncompleteProjectIndex(
+    String module,
+    String count,
+    String paths,
+  ) {
+    return 'Le renommage ne peut pas mettre à jour toutes les références du projet en toute sécurité, car $count fichier(s) de rubrique du module $module n’ont pas été analysés : $paths';
+  }
+
+  @override
+  String get errorWritersideTopicRenameProjectBuffersDirty =>
+      'Des fichiers du projet Writerside contiennent des modifications non enregistrées. Résolvez-les et préparez un nouvel aperçu du renommage.';
+
+  @override
+  String get errorWritersideTopicRenameProjectInventoryChanged =>
+      'L’ensemble des modules du projet Writerside a changé. Préparez un nouvel aperçu du renommage avant la refactorisation.';
+
+  @override
   String get errorTopicsRootUnsafe =>
       'La racine des sujets doit être un répertoire relatif valide.';
 
@@ -2216,6 +2486,25 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String diagnosticWritersideTopicDuplicateId(String id) {
     return 'L’ID d’élément « $id » apparaît plusieurs fois.';
+  }
+
+  @override
+  String diagnosticWritersideWebFileNameInvalid(
+    String instanceId,
+    String webFileName,
+    String topic,
+  ) {
+    return 'L’instance \"$instanceId\" publie le nom de fichier web non valide \"$webFileName\" pour le sujet \"$topic\".';
+  }
+
+  @override
+  String diagnosticWritersideWebFileNameCollision(
+    String instanceId,
+    String webFileName,
+    String firstTopic,
+    String secondTopic,
+  ) {
+    return 'L’instance \"$instanceId\" publie \"$firstTopic\" et \"$secondTopic\" sous le nom \"$webFileName\".';
   }
 
   @override
@@ -3162,7 +3451,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get editInstance => 'Modifier l’instance';
 
   @override
-  String get openTocFile => 'Ouvrir le fichier de sommaire';
+  String get openTocFile => 'Ouvrir le fichier de table des matières';
 
   @override
   String get createInstance => 'Créer une instance';
@@ -3715,26 +4004,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get aiDraftWithAi => 'Rédiger avec l’IA';
 
   @override
-  String get generateOrUpdateMarkdownToc =>
-      'Générer/actualiser la table des matières';
-
-  @override
-  String get markdownTocTitle => 'Table des matières';
-
-  @override
-  String markdownTocUpdated(int count) {
-    return 'Table des matières actualisée avec $count entrées.';
-  }
-
-  @override
-  String get markdownTocNoHeadings =>
-      'Ajoutez au moins un titre de section avant de générer une table des matières.';
-
-  @override
-  String get markdownTocMalformedMarkers =>
-      'Les marqueurs de table des matières BusyMark sont absents, en double ou dans le mauvais ordre.';
-
-  @override
   String diagnosticMarkdownHeadingSkippedLevel(int level, int previousLevel) {
     return 'Le titre de niveau $level suit le niveau $previousLevel ; vérifiez l’imbrication des sections.';
   }
@@ -3771,6 +4040,10 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get cannotRenameSymbol =>
       'Impossible de renommer ce symbole en toute sécurité. Vérifiez son nom et actualisez la référence avant de réessayer.';
+
+  @override
+  String get renameTopicFileInstead =>
+      'Les ID de sujet proviennent de leur nom de fichier. Utilisez « Renommer le fichier de sujet » dans la table des matières ou la barre latérale Fichiers.';
 
   @override
   String get keyboardLayout => 'Disposition du clavier';

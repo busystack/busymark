@@ -7,8 +7,183 @@ import '../core/anchored_path_guard.dart';
 import '../core/busymark_exception.dart';
 import '../core/path_utils.dart';
 import 'writerside_model.dart';
+import 'writerside_topic_file_name.dart';
 
 enum WritersideTopicCreatePlacement { root, sibling, child }
+
+/// Applies one guarded TOC placement to an already-loaded tree document.
+///
+/// This helper deliberately performs no I/O. Callers retain ownership of the
+/// tree snapshot and publish the returned source with their existing atomic
+/// mutation boundary.
+String insertWritersideTopicReferences({
+  required String treePath,
+  required String source,
+  required List<String> topicReferences,
+  required WritersideTopicCreatePlacement placement,
+  String? referenceTopic,
+  List<int>? referenceTocPath,
+  WritersideTocNodeIdentity? referenceTocIdentity,
+}) {
+  final document = XmlDocument.parse(source);
+  final root = document.rootElement;
+  if (root.name.local != 'instance-profile') {
+    throw FormatException('.tree root must be <instance-profile>.', treePath);
+  }
+  if (topicReferences.isEmpty) {
+    return source;
+  }
+  initializeWritersideFirstTopicHomePage(root, topicReferences.first);
+  final elements = [
+    for (final topicReference in topicReferences)
+      XmlElement(XmlName.parts('toc-element'), [
+        XmlAttribute(XmlName.parts('topic'), topicReference),
+      ]),
+  ];
+  if (placement == WritersideTopicCreatePlacement.root) {
+    root.children.addAll(elements);
+    return _writersideTreeXml(document);
+  }
+
+  if (referenceTocPath != null) {
+    final reference = _writersideTocElementAtPath(root, referenceTocPath);
+    if (reference == null ||
+        !(referenceTocIdentity?.matches(reference) ?? true)) {
+      throw BusyMarkException(
+        'writerside.topic.reference-missing',
+        args: {'topic': referenceTocPath.join('/')},
+      );
+    }
+    switch (placement) {
+      case WritersideTopicCreatePlacement.child:
+        reference.children.addAll(elements);
+      case WritersideTopicCreatePlacement.sibling:
+        _insertWritersideElementsAfter(reference, elements);
+      case WritersideTopicCreatePlacement.root:
+        break;
+    }
+    return _writersideTreeXml(document);
+  }
+
+  final topic = referenceTopic?.trim();
+  if (topic == null || topic.isEmpty) {
+    throw const BusyMarkException(
+      'writerside.topic.reference-missing',
+      args: {'topic': ''},
+    );
+  }
+  final inserted = switch (placement) {
+    WritersideTopicCreatePlacement.child => _appendWritersideTopics(
+      root,
+      topic,
+      elements,
+    ),
+    WritersideTopicCreatePlacement.sibling => _insertWritersideTopicsAfter(
+      root,
+      topic,
+      elements,
+    ),
+    WritersideTopicCreatePlacement.root => true,
+  };
+  if (!inserted) {
+    throw BusyMarkException(
+      'writerside.topic.reference-missing',
+      args: {'topic': topic},
+    );
+  }
+  return _writersideTreeXml(document);
+}
+
+XmlElement? _writersideTocElementAtPath(XmlElement root, List<int> path) {
+  if (path.isEmpty || path.any((index) => index < 0)) return null;
+  var parent = root;
+  for (final index in path) {
+    final children = parent.childElements
+        .where((element) => element.name.local == 'toc-element')
+        .toList();
+    if (index >= children.length) return null;
+    parent = children[index];
+  }
+  return parent;
+}
+
+void _insertWritersideElementsAfter(
+  XmlElement reference,
+  List<XmlElement> elements,
+) {
+  final parent = reference.parent;
+  if (parent is! XmlElement) {
+    throw const BusyMarkException(
+      'writerside.topic.reference-missing',
+      args: {'topic': ''},
+    );
+  }
+  final index = parent.children.indexOf(reference);
+  if (index < 0) {
+    throw const BusyMarkException(
+      'writerside.topic.reference-missing',
+      args: {'topic': ''},
+    );
+  }
+  parent.children.insertAll(index + 1, elements);
+}
+
+bool _appendWritersideTopics(
+  XmlElement current,
+  String referenceTopic,
+  List<XmlElement> elements,
+) {
+  for (final child in current.childElements) {
+    if (child.name.local == 'toc-element' &&
+        child.getAttribute('topic') == referenceTopic) {
+      child.children.addAll(elements);
+      return true;
+    }
+    if (_appendWritersideTopics(child, referenceTopic, elements)) return true;
+  }
+  return false;
+}
+
+bool _insertWritersideTopicsAfter(
+  XmlElement current,
+  String referenceTopic,
+  List<XmlElement> elements,
+) {
+  for (var index = 0; index < current.children.length; index++) {
+    final child = current.children[index];
+    if (child is! XmlElement) continue;
+    if (child.name.local == 'toc-element' &&
+        child.getAttribute('topic') == referenceTopic) {
+      current.children.insertAll(index + 1, elements);
+      return true;
+    }
+    if (_insertWritersideTopicsAfter(child, referenceTopic, elements)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+String _writersideTreeXml(XmlDocument document) =>
+    '${document.toXmlString(pretty: true, indent: '  ')}\n';
+
+/// Shared by creation and linking, before inserting the first topic into a
+/// guarded tree snapshot. Empty groups do not count as existing topics.
+void initializeWritersideFirstTopicHomePage(
+  XmlElement root,
+  String topicReference,
+) {
+  final isFirstTopic = !root.descendants.whereType<XmlElement>().any(
+    (element) =>
+        element.name.local == 'toc-element' &&
+        element.getAttribute('topic')?.trim().isNotEmpty == true,
+  );
+  if (isFirstTopic &&
+      root.getAttribute('start-page') == null &&
+      root.getAttribute('is-library') != 'true') {
+    root.setAttribute('start-page', topicReference);
+  }
+}
 
 /// Semantic identity of a TOC subtree captured when the user selects it.
 ///
@@ -73,22 +248,30 @@ class WritersideTocNodeIdentity {
   final bool workInProgress;
   final List<WritersideTocNodeIdentity> children;
 
-  bool matches(XmlElement element) {
+  bool matches(XmlElement element, {bool normalizedText = false}) {
+    // Editor buffers normalize CRLF/CR to LF; raw disk mutations keep exact
+    // identity matching. Snapshot checks still protect the original bytes.
+    String? value(String? text) => normalizedText
+        ? text?.replaceAll('\r\n', '\n').replaceAll('\r', '\n')
+        : text;
+    bool attribute(String name, String? expected) =>
+        value(element.getAttribute(name)) == value(expected);
     if (element.name.local != 'toc-element' ||
-        element.getAttribute('topic') != topicFileName ||
-        element.getAttribute('ref') != referenceTopicFileName ||
-        element.getAttribute('in') != referenceInstanceId ||
-        element.getAttribute('href') != href ||
-        element.getAttribute('toc-title') != tocTitle ||
-        element.getAttribute('id') != id ||
-        element.getAttribute('accepts-web-file-names') != acceptsWebFileNames ||
-        element.getAttribute('accepts-web-file-names-ref') !=
-            acceptsWebFileNamesRef ||
-        element.getAttribute('target-for-accept-web-file-names') !=
-            targetForAcceptWebFileNames ||
-        element.getAttribute('instance') != instanceCondition ||
-        element.getAttribute('filter') != customFilter ||
-        element.getAttribute('origin') != origin ||
+        !attribute('topic', topicFileName) ||
+        !attribute('ref', referenceTopicFileName) ||
+        !attribute('in', referenceInstanceId) ||
+        !attribute('href', href) ||
+        !attribute('toc-title', tocTitle) ||
+        !attribute('id', id) ||
+        !attribute('accepts-web-file-names', acceptsWebFileNames) ||
+        !attribute('accepts-web-file-names-ref', acceptsWebFileNamesRef) ||
+        !attribute(
+          'target-for-accept-web-file-names',
+          targetForAcceptWebFileNames,
+        ) ||
+        !attribute('instance', instanceCondition) ||
+        !attribute('filter', customFilter) ||
+        !attribute('origin', origin) ||
         (element.getAttribute('wip') == 'true') != workInProgress ||
         (element.getAttribute('hidden') == 'true') != hidden) {
       return false;
@@ -100,7 +283,10 @@ class WritersideTocNodeIdentity {
       return false;
     }
     for (var index = 0; index < children.length; index += 1) {
-      if (!children[index].matches(elementChildren[index])) {
+      if (!children[index].matches(
+        elementChildren[index],
+        normalizedText: normalizedText,
+      )) {
         return false;
       }
     }
@@ -142,12 +328,14 @@ class WritersideTopicCreateTarget {
     required this.treePath,
     required this.topicsRootDir,
     required this.existingTopicIds,
+    this.topicDiscoveryComplete = true,
   });
 
   final String rootPath;
   final String treePath;
   final String topicsRootDir;
   final Set<String> existingTopicIds;
+  final bool topicDiscoveryComplete;
 }
 
 class WritersideTopicCreateResult {
@@ -160,6 +348,16 @@ class WritersideTopicCreateResult {
   final String topicPath;
   final String treePath;
   final String topicFileName;
+}
+
+class WritersideTopicIdentityValidation {
+  const WritersideTopicIdentityValidation({
+    required this.topicId,
+    required this.candidateTopicPath,
+  });
+
+  final String topicId;
+  final String candidateTopicPath;
 }
 
 class WritersideTopicCreator {
@@ -177,8 +375,15 @@ class WritersideTopicCreator {
 
   Future<WritersideTopicCreateResult> create(
     WritersideTopicCreateTarget target,
-    WritersideTopicCreateRequest request,
-  ) async {
+    WritersideTopicCreateRequest request, {
+    String? initialSource,
+    Future<void> Function()? validateBeforePublish,
+    Future<void> Function(WritersideTopicIdentityValidation validation)?
+    validateTopicIdentityBeforePublish,
+  }) async {
+    if (!target.topicDiscoveryComplete) {
+      throw const BusyMarkException('writerside.topic.discovery-incomplete');
+    }
     final rootPath = normalizePath(target.rootPath);
     final CanonicalPathAnchor rootAnchor;
     try {
@@ -225,6 +430,11 @@ class WritersideTopicCreator {
     if (title.isEmpty) {
       throw const BusyMarkException('writerside.topic.title-required');
     }
+    final topicSource =
+        initialSource ?? _topicSource(request.format, topicId, title);
+    if (request.format == WritersideTopicFormat.xml) {
+      _validateXmlTopicSource(topicSource, expectedId: topicId);
+    }
 
     final topicResolution = await _topicTargetPath(
       rootAnchor,
@@ -257,9 +467,9 @@ class WritersideTopicCreator {
     if (createdTopicsRoot.type != FileSystemEntityType.directory) {
       throw const BusyMarkException('writerside.topic.topics-root-unsafe');
     }
-    final topicSource = _topicSource(request.format, topicId, title);
     var topicCreated = false;
     try {
+      await validateBeforePublish?.call();
       await _writeNewFile(rootAnchor, topicPath, topicSource);
       topicCreated = true;
       await _replaceTreeAtomically(
@@ -267,6 +477,16 @@ class WritersideTopicCreator {
         treePath,
         updatedTree,
         expectedCurrentSource: treeSource,
+        validateBeforePublish: validateBeforePublish,
+        validateTopicIdentityBeforePublish:
+            validateTopicIdentityBeforePublish == null
+            ? null
+            : () => validateTopicIdentityBeforePublish(
+                WritersideTopicIdentityValidation(
+                  topicId: topicId,
+                  candidateTopicPath: topicPath,
+                ),
+              ),
       );
     } on Object {
       if (topicCreated) {
@@ -280,6 +500,29 @@ class WritersideTopicCreator {
       treePath: treePath,
       topicFileName: topicFileName,
     );
+  }
+
+  void _validateXmlTopicSource(String source, {required String expectedId}) {
+    final XmlElement root;
+    try {
+      final document = XmlDocument.parse(source);
+      root = document.rootElement;
+      if (root.name.local != 'topic') {
+        throw const FormatException('Expected a topic root');
+      }
+    } on Object {
+      throw const BusyMarkException('writerside.toc.path-invalid');
+    }
+    final id = root.getAttribute('id');
+    if (id == null || id.isEmpty) {
+      throw const BusyMarkException('writerside.topic-file.missing-root-id');
+    }
+    if (id != expectedId) {
+      throw BusyMarkException(
+        'writerside.topic-file.root-id-mismatch',
+        args: {'id': id, 'expectedId': expectedId},
+      );
+    }
   }
 
   Future<AnchoredPathResolution> _treePath(
@@ -342,158 +585,15 @@ class WritersideTopicCreator {
     required String topicFileName,
     required WritersideTopicCreateRequest request,
   }) {
-    final document = XmlDocument.parse(source);
-    final root = document.rootElement;
-    if (root.name.local != 'instance-profile') {
-      throw FormatException('.tree root must be <instance-profile>.', treePath);
-    }
-    final element = XmlElement(XmlName.parts('toc-element'), [
-      XmlAttribute(XmlName.parts('topic'), topicFileName),
-    ]);
-    final isFirstTopic = !root.descendants.whereType<XmlElement>().any(
-      (element) =>
-          element.name.local == 'toc-element' &&
-          element.getAttribute('topic')?.trim().isNotEmpty == true,
+    return insertWritersideTopicReferences(
+      treePath: treePath,
+      source: source,
+      topicReferences: [topicFileName],
+      placement: request.placement,
+      referenceTopic: request.referenceTopic,
+      referenceTocPath: request.referenceTocPath,
+      referenceTocIdentity: request.referenceTocIdentity,
     );
-    if (isFirstTopic &&
-        root.getAttribute('start-page') == null &&
-        root.getAttribute('is-library') != 'true') {
-      root.setAttribute('start-page', topicFileName);
-    }
-    if (request.placement == WritersideTopicCreatePlacement.root) {
-      root.children.add(element);
-      return _treeXml(document);
-    }
-
-    final referencePath = request.referenceTocPath;
-    if (referencePath != null) {
-      final referenceElement = _tocElementAtPath(root, referencePath);
-      if (referenceElement == null ||
-          !(request.referenceTocIdentity?.matches(referenceElement) ?? true)) {
-        throw BusyMarkException(
-          'writerside.topic.reference-missing',
-          args: {'topic': _tocPathLabel(referencePath)},
-        );
-      }
-      switch (request.placement) {
-        case WritersideTopicCreatePlacement.child:
-          referenceElement.children.add(element);
-        case WritersideTopicCreatePlacement.sibling:
-          _insertAfterElement(referenceElement, element);
-        case WritersideTopicCreatePlacement.root:
-          break;
-      }
-      return _treeXml(document);
-    }
-
-    final referenceTopic = request.referenceTopic?.trim();
-    if (referenceTopic == null || referenceTopic.isEmpty) {
-      throw const BusyMarkException(
-        'writerside.topic.reference-missing',
-        args: {'topic': ''},
-      );
-    }
-    final inserted = switch (request.placement) {
-      WritersideTopicCreatePlacement.child => _appendToTopic(
-        root,
-        referenceTopic,
-        element,
-      ),
-      WritersideTopicCreatePlacement.sibling => _insertAfterTopic(
-        root,
-        referenceTopic,
-        element,
-      ),
-      WritersideTopicCreatePlacement.root => true,
-    };
-    if (!inserted) {
-      throw BusyMarkException(
-        'writerside.topic.reference-missing',
-        args: {'topic': referenceTopic},
-      );
-    }
-    return _treeXml(document);
-  }
-
-  XmlElement? _tocElementAtPath(XmlElement root, List<int> path) {
-    if (path.isEmpty || path.any((index) => index < 0)) {
-      return null;
-    }
-    var parent = root;
-    for (var depth = 0; depth < path.length; depth += 1) {
-      final children = parent.childElements
-          .where((element) => element.name.local == 'toc-element')
-          .toList();
-      final index = path[depth];
-      if (index >= children.length) {
-        return null;
-      }
-      parent = children[index];
-    }
-    return parent;
-  }
-
-  void _insertAfterElement(XmlElement reference, XmlElement element) {
-    final parent = reference.parent;
-    if (parent is! XmlElement) {
-      throw const BusyMarkException(
-        'writerside.topic.reference-missing',
-        args: {'topic': ''},
-      );
-    }
-    final index = parent.children.indexOf(reference);
-    if (index < 0) {
-      throw const BusyMarkException(
-        'writerside.topic.reference-missing',
-        args: {'topic': ''},
-      );
-    }
-    parent.children.insert(index + 1, element);
-  }
-
-  String _tocPathLabel(List<int> path) => path.join('/');
-
-  bool _appendToTopic(
-    XmlElement current,
-    String referenceTopic,
-    XmlElement element,
-  ) {
-    for (final child in current.childElements) {
-      if (child.name.local == 'toc-element' &&
-          child.getAttribute('topic') == referenceTopic) {
-        child.children.add(element);
-        return true;
-      }
-      if (_appendToTopic(child, referenceTopic, element)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  bool _insertAfterTopic(
-    XmlElement current,
-    String referenceTopic,
-    XmlElement element,
-  ) {
-    for (var index = 0; index < current.children.length; index++) {
-      final child = current.children[index];
-      if (child is XmlElement) {
-        if (child.name.local == 'toc-element' &&
-            child.getAttribute('topic') == referenceTopic) {
-          current.children.insert(index + 1, element);
-          return true;
-        }
-        if (_insertAfterTopic(child, referenceTopic, element)) {
-          return true;
-        }
-      }
-    }
-    return false;
-  }
-
-  String _treeXml(XmlDocument document) {
-    return '${document.toXmlString(pretty: true, indent: '  ')}\n';
   }
 
   Future<void> _writeNewFile(
@@ -534,6 +634,8 @@ class WritersideTopicCreator {
     String path,
     String source, {
     required String expectedCurrentSource,
+    Future<void> Function()? validateBeforePublish,
+    Future<void> Function()? validateTopicIdentityBeforePublish,
   }) async {
     final tree = await _treePath(anchor, path);
     await _ensureTreeUnchanged(tree, expectedCurrentSource);
@@ -543,6 +645,8 @@ class WritersideTopicCreator {
       await temporary.writeAsString(source, flush: true);
       await _copyFileMode(targetStat, temporary);
       await _beforeTreePublish?.call(tree.path);
+      await validateTopicIdentityBeforePublish?.call();
+      await validateBeforePublish?.call();
 
       final publishTarget = await _treePath(anchor, path);
       await _ensureTreeUnchanged(publishTarget, expectedCurrentSource);
@@ -637,32 +741,19 @@ class WritersideTopicCreator {
 
   String _topicFileName(String value, WritersideTopicFormat format) {
     final trimmed = value.trim();
-    if (trimmed.isEmpty ||
-        trimmed == '.' ||
-        trimmed == '..' ||
-        p.isAbsolute(trimmed) ||
-        trimmed.contains('/') ||
-        trimmed.contains(r'\') ||
-        trimmed.contains('..')) {
-      throw const BusyMarkException('writerside.topic.file-name-unsafe');
-    }
     final expectedExtension = switch (format) {
       WritersideTopicFormat.markdown => '.md',
       WritersideTopicFormat.xml => '.topic',
     };
     final extension = p.extension(trimmed).toLowerCase();
     final fileName = extension.isEmpty ? '$trimmed$expectedExtension' : trimmed;
-    if (p.extension(fileName).toLowerCase() != expectedExtension) {
-      throw BusyMarkException(
-        'writerside.topic.file-extension-mismatch',
-        args: {'extension': expectedExtension},
-      );
-    }
-    final id = p.basenameWithoutExtension(fileName);
-    if (!RegExp(r'^[A-Za-z0-9_-]+$').hasMatch(id)) {
-      throw const BusyMarkException('writerside.topic.file-name-invalid');
-    }
-    return fileName;
+    return validateWritersideTopicFileName(
+      fileName,
+      requiredExtension: expectedExtension,
+      unsafeCode: 'writerside.topic.file-name-unsafe',
+      invalidCode: 'writerside.topic.file-name-invalid',
+      extensionCode: 'writerside.topic.file-extension-mismatch',
+    );
   }
 
   String _topicSource(WritersideTopicFormat format, String id, String title) {

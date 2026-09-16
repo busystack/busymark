@@ -11,6 +11,7 @@ import 'writerside_model.dart';
 import 'writerside_module_service.dart';
 import 'writerside_schema.dart';
 import 'writerside_source_loader.dart';
+import 'writerside_web_file_name.dart';
 
 enum WritersideSymbolKind {
   module,
@@ -765,6 +766,12 @@ class WritersideProjectIndex {
     WritersideSymbol symbol,
     String newName,
   ) {
+    // A topic declaration is the filename-derived identity. It must only be
+    // changed by the atomic topic-file refactoring, which also renames the
+    // file and every semantic reference.
+    if (symbol.kind == WritersideSymbolKind.topic) {
+      return const [];
+    }
     final normalized = newName.trim();
     if (normalized.isEmpty ||
         !RegExp(r'^[A-Za-z_][A-Za-z0-9_.-]*$').hasMatch(normalized) ||
@@ -854,6 +861,8 @@ class WritersideProject {
     required this.activeInstanceId,
     required this.index,
     required this.diagnostics,
+    this.moduleDiscoveryComplete = true,
+    this.moduleDiscoveryDiagnostics = const [],
   });
 
   final String rootPath;
@@ -862,6 +871,8 @@ class WritersideProject {
   final String? activeInstanceId;
   final WritersideProjectIndex index;
   final List<Diagnostic> diagnostics;
+  final bool moduleDiscoveryComplete;
+  final List<Diagnostic> moduleDiscoveryDiagnostics;
 
   WritersideModule? get activeModule {
     for (final module in modules) {
@@ -891,6 +902,60 @@ class WritersideProject {
     for (final module in modules) _moduleId(module): module,
   };
 
+  /// Returns the module that semantically owns a Writerside topic source.
+  ///
+  /// Parsed topic identity wins. Discovered-but-unparsed topic candidates are
+  /// recognized by their extension and configured topic root. Nested modules
+  /// are resolved to the most-specific containing module root.
+  WritersideModule? topicOwnerForPath(String filePath) {
+    final path = normalizePath(filePath);
+    final exact = modules
+        .where(
+          (module) => module.topics.any(
+            (topic) => p.equals(normalizePath(topic.filePath), path),
+          ),
+        )
+        .toList();
+    if (exact.isNotEmpty) {
+      exact.sort((a, b) => b.rootPath.length.compareTo(a.rootPath.length));
+      return exact.first;
+    }
+    if (!isWritersideTopicSourcePath(path)) return null;
+    final candidates = modules.where((module) {
+      return module.config.topicRoots.any((configured) {
+        final root = normalizePath(p.join(module.rootPath, configured.dir));
+        return p.isWithin(root, path);
+      });
+    }).toList();
+    candidates.sort((a, b) => b.rootPath.length.compareTo(a.rootPath.length));
+    return candidates.firstOrNull;
+  }
+
+  bool isTopicPath(String filePath) => topicOwnerForPath(filePath) != null;
+
+  /// Whether deleting [path] would directly or recursively remove a topic
+  /// source or a configured topic root anywhere in the project.
+  bool deletionTouchesTopics(String path, {required bool isDirectory}) {
+    final candidate = normalizePath(path);
+    if (!isDirectory) return isTopicPath(candidate);
+    for (final module in modules) {
+      for (final configured in module.config.topicRoots) {
+        final root = normalizePath(p.join(module.rootPath, configured.dir));
+        if (p.equals(candidate, root) ||
+            p.isWithin(candidate, root) ||
+            p.isWithin(root, candidate)) {
+          return true;
+        }
+      }
+      if (module.topics.any(
+        (topic) => p.isWithin(candidate, normalizePath(topic.filePath)),
+      )) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   WritersideProject withSelection({
     required String moduleId,
     String? instanceId,
@@ -902,6 +967,8 @@ class WritersideProject {
       activeInstanceId: instanceId,
       index: index,
       diagnostics: diagnostics,
+      moduleDiscoveryComplete: moduleDiscoveryComplete,
+      moduleDiscoveryDiagnostics: moduleDiscoveryDiagnostics,
     );
   }
 
@@ -958,21 +1025,51 @@ class WritersideProject {
       diagnostics: sortDiagnostics([
         for (final candidate in nextModules) ...candidate.diagnostics,
         ...nextIndex.diagnostics,
+        ...writersideWebFileNameDiagnostics(nextModules),
+        ...moduleDiscoveryDiagnostics,
       ]),
+      moduleDiscoveryComplete: moduleDiscoveryComplete,
+      moduleDiscoveryDiagnostics: moduleDiscoveryDiagnostics,
     );
   }
+}
+
+bool isWritersideTopicSourcePath(String path) {
+  final extension = p.extension(path).toLowerCase();
+  return extension == '.md' ||
+      extension == '.markdown' ||
+      extension == '.topic';
+}
+
+class WritersideModuleDiscoveryResult {
+  WritersideModuleDiscoveryResult({
+    required Iterable<String> roots,
+    required Iterable<Diagnostic> diagnostics,
+    required this.complete,
+  }) : roots = List.unmodifiable(
+         roots.map(normalizePath).toSet().toList()..sort(),
+       ),
+       diagnostics = List.unmodifiable(sortDiagnostics(diagnostics));
+
+  final List<String> roots;
+  final List<Diagnostic> diagnostics;
+  final bool complete;
 }
 
 class WritersideProjectService {
   const WritersideProjectService({
     this.moduleService = const WritersideModuleService(),
     this.scanOptions = const WorkspaceScanOptions(),
+    this.moduleDirectoryLister,
   });
 
   final WritersideModuleService moduleService;
   final WorkspaceScanOptions scanOptions;
+  final WorkspaceDirectoryLister? moduleDirectoryLister;
 
-  Future<List<String>> discoverModuleRoots(String projectRoot) async {
+  Future<WritersideModuleDiscoveryResult> discoverModuleRoots(
+    String projectRoot,
+  ) async {
     final root = normalizePath(projectRoot);
     final direct = [
       p.join(root, 'writerside.cfg'),
@@ -981,6 +1078,9 @@ class WritersideProjectService {
     final roots = <String>{for (final file in direct) p.dirname(file.path)};
     final scan = await scanWorkspaceEntities(
       root,
+      // Directory names ignored by generic workspace browsing remain
+      // semantically valid as Writerside module containers. Explicit VCS
+      // metadata remains excluded by the scanner itself.
       options: WorkspaceScanOptions(
         maxParsedFileBytes: scanOptions.maxParsedFileBytes,
         maxParsedDocuments: scanOptions.maxParsedDocuments,
@@ -988,25 +1088,30 @@ class WritersideProjectService {
         followLinks: false,
         includeUnsupportedFiles: true,
         includeDirectories: false,
-        includeHiddenDirectories: false,
-        includeExcludedDirectories: false,
+        includeHiddenDirectories: true,
+        includeExcludedDirectories: true,
       ),
+      directoryLister: moduleDirectoryLister,
     );
     for (final file in scan.entities.whereType<File>()) {
       if ({'writerside.cfg', 'project.ihp'}.contains(p.basename(file.path))) {
         roots.add(p.dirname(file.path));
       }
     }
-    return roots.toList()..sort();
+    return WritersideModuleDiscoveryResult(
+      roots: roots,
+      diagnostics: scan.diagnostics,
+      complete: scan.traversalComplete,
+    );
   }
 
   Future<WritersideProject> load(
     String projectRoot, {
     String? preferredModuleRoot,
   }) async {
-    final roots = await discoverModuleRoots(projectRoot);
+    final discovery = await discoverModuleRoots(projectRoot);
     var modules = <WritersideModule>[];
-    for (final root in roots) {
+    for (final root in discovery.roots) {
       modules.add(await moduleService.load(root, options: scanOptions));
     }
     modules = _resolveProjectModules(modules);
@@ -1033,7 +1138,11 @@ class WritersideProjectService {
       diagnostics: sortDiagnostics([
         for (final module in modules) ...module.diagnostics,
         ...index.diagnostics,
+        ...writersideWebFileNameDiagnostics(modules),
+        ...discovery.diagnostics,
       ]),
+      moduleDiscoveryComplete: discovery.complete,
+      moduleDiscoveryDiagnostics: discovery.diagnostics,
     );
   }
 
@@ -1062,7 +1171,11 @@ class WritersideProjectService {
       diagnostics: sortDiagnostics([
         for (final candidate in replaced.modules) ...candidate.diagnostics,
         ...index.diagnostics,
+        ...writersideWebFileNameDiagnostics(replaced.modules),
+        ...replaced.moduleDiscoveryDiagnostics,
       ]),
+      moduleDiscoveryComplete: replaced.moduleDiscoveryComplete,
+      moduleDiscoveryDiagnostics: replaced.moduleDiscoveryDiagnostics,
     );
   }
 

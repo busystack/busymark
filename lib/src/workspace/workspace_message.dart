@@ -140,6 +140,8 @@ String _localizeWorkspaceError(BuildContext context, Object? error) {
       'writerside.topic.file-extension-mismatch' =>
         l10n.errorTopicFileExtensionMismatch(value('extension')),
       'writerside.topic.file-name-invalid' => l10n.errorTopicFileNameInvalid,
+      'writerside.topic.discovery-incomplete' =>
+        l10n.diagnosticWorkspaceScanSkipped,
       'writerside.topic.tree-changed' =>
         l10n.workspaceErrorSaveBlockedFileChangedOnDisk,
       'writerside.toc.destination-required' =>
@@ -170,6 +172,26 @@ String _localizeWorkspaceError(BuildContext context, Object? error) {
         l10n.errorTopicFileExtensionMismatch(value('extension')),
       'writerside.topic-file.file-name-invalid' =>
         l10n.errorTopicFileNameInvalid,
+      'writerside.topic-file.missing-root-id' =>
+        l10n.diagnosticWritersideTopicMissingRootId,
+      'writerside.topic-file.root-id-mismatch' =>
+        l10n.diagnosticWritersideTopicRootIdMismatch(
+          value('id'),
+          value('expectedId'),
+        ),
+      'writerside.topic-file.web-file-name-invalid' =>
+        l10n.diagnosticWritersideWebFileNameInvalid(
+          value('instanceId'),
+          value('webFileName'),
+          value('topic'),
+        ),
+      'writerside.topic-file.web-file-name-collision' =>
+        l10n.diagnosticWritersideWebFileNameCollision(
+          value('instanceId'),
+          value('webFileName'),
+          value('firstTopic'),
+          value('secondTopic'),
+        ),
       'writerside.topic-file.path-unsafe' => l10n.errorFileOperationOutsideRoot,
       'writerside.topic-file.source-unsafe' =>
         l10n.errorFileOperationOutsideRoot,
@@ -183,6 +205,19 @@ String _localizeWorkspaceError(BuildContext context, Object? error) {
         l10n.workspaceErrorSaveBlockedFileChangedOnDisk,
       'writerside.topic-file.topic-inventory-changed' =>
         l10n.workspaceErrorSaveBlockedFileChangedOnDisk,
+      'writerside.topic-file.incomplete-project-index' =>
+        l10n.errorWritersideTopicRenameIncompleteProjectIndex(
+          value('module'),
+          value('count'),
+          value('paths'),
+        ),
+      'writerside.topic-file.topic-discovery-incomplete' ||
+      'writerside.topic-file.project-discovery-incomplete' =>
+        l10n.diagnosticWorkspaceScanSkipped,
+      'writerside.topic-file.project-buffers-dirty' =>
+        l10n.errorWritersideTopicRenameProjectBuffersDirty,
+      'writerside.topic-file.project-inventory-changed' =>
+        l10n.errorWritersideTopicRenameProjectInventoryChanged,
       'writerside.topic-removal.safe-delete-required' =>
         l10n.errorWritersideSafeDeleteRequired,
       'writerside.topic-removal.scan-failed' =>

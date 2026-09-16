@@ -1,8 +1,13 @@
 import 'dart:io';
 
 import 'package:busymark/src/core/busymark_exception.dart';
+import 'package:busymark/src/core/path_utils.dart';
+import 'package:busymark/src/markdown/busymark_document.dart';
+import 'package:busymark/src/writerside/writerside_document_renderer.dart';
+import 'package:busymark/src/writerside/writerside_document_resolver.dart';
 import 'package:busymark/src/writerside/writerside_model.dart';
 import 'package:busymark/src/writerside/writerside_module_service.dart';
+import 'package:busymark/src/writerside/writerside_project.dart';
 import 'package:busymark/src/writerside/writerside_topic_file_editor.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
@@ -10,6 +15,364 @@ import 'package:xml/xml.dart';
 
 void main() {
   const editor = WritersideTopicFileEditor();
+
+  test('rename planning rejects a topic skipped by file-size limits', () async {
+    final fixture = await _fixture(
+      trees: {
+        'guide.tree': '''
+<instance-profile id="guide" start-page="guide.md">
+  <toc-element topic="guide.md"/>
+</instance-profile>
+''',
+      },
+      topics: {
+        'guide.md': '# Guide\n',
+        'huge.md': '# Huge\n\n[Guide](guide.md)\n${'content ' * 80}',
+      },
+      scanOptions: const WorkspaceScanOptions(maxParsedFileBytes: 256),
+    );
+    final guide = _topic(fixture.module, 'guide.md');
+    final original = File(guide.filePath).readAsStringSync();
+
+    await expectLater(
+      editor.prepareRename(
+        module: fixture.module,
+        topic: guide,
+        newFileName: 'setup.md',
+      ),
+      throwsA(
+        isA<BusyMarkException>().having(
+          (error) => error.code,
+          'code',
+          'writerside.topic-file.incomplete-project-index',
+        ),
+      ),
+    );
+
+    expect(File(guide.filePath).readAsStringSync(), original);
+    expect(
+      File(p.join(fixture.root.path, 'topics', 'setup.md')).existsSync(),
+      isFalse,
+    );
+  });
+
+  test('rename planning rejects a topic skipped by document limits', () async {
+    final fixture = await _fixture(
+      trees: {
+        'guide.tree': '''
+<instance-profile id="guide" start-page="guide.md">
+  <toc-element topic="guide.md"/>
+</instance-profile>
+''',
+      },
+      topics: {
+        'guide.md': '# Guide\n',
+        'huge.md': '# Huge\n\n[Guide](guide.md)\n',
+      },
+      scanOptions: const WorkspaceScanOptions(maxParsedDocuments: 1),
+    );
+
+    await expectLater(
+      editor.prepareRename(
+        module: fixture.module,
+        topic: _topic(fixture.module, 'guide.md'),
+        newFileName: 'setup.md',
+      ),
+      throwsA(
+        isA<BusyMarkException>().having(
+          (error) => error.code,
+          'code',
+          'writerside.topic-file.incomplete-project-index',
+        ),
+      ),
+    );
+    expect(
+      File(p.join(fixture.root.path, 'topics', 'setup.md')).existsSync(),
+      isFalse,
+    );
+  });
+
+  test(
+    'rename planning rejects topic discovery truncated by tree limits',
+    () async {
+      final fixture = await _fixture(
+        trees: {
+          'guide.tree': '''
+<instance-profile id="guide" start-page="guide.md">
+  <toc-element topic="guide.md"/>
+</instance-profile>
+''',
+        },
+        topics: {
+          'guide.md': '# Guide\n',
+          'deep/reference.md': '# Reference\n\n[Guide](../guide.md)\n',
+        },
+      );
+      final topicsRoot = p.join(fixture.root.path, 'topics');
+      final guidePath = p.join(topicsRoot, 'guide.md');
+      final deepPath = p.join(topicsRoot, 'deep');
+
+      Stream<FileSystemEntity> deterministicListing(
+        Directory directory, {
+        required bool followLinks,
+      }) async* {
+        if (p.equals(directory.path, topicsRoot)) {
+          yield File(guidePath);
+          yield Directory(deepPath);
+          return;
+        }
+        yield File(p.join(deepPath, 'reference.md'));
+      }
+
+      final limitedModule =
+          await WritersideModuleService(
+            topicDirectoryLister: deterministicListing,
+          ).load(
+            fixture.root.path,
+            options: const WorkspaceScanOptions(maxTreeEntries: 2),
+          );
+
+      expect(limitedModule.topicDiscoveryComplete, isFalse);
+      expect(limitedModule.unparsedTopicReferences, isEmpty);
+      await expectLater(
+        editor.prepareRename(
+          module: limitedModule,
+          topic: _topic(limitedModule, 'guide.md'),
+          newFileName: 'setup.md',
+        ),
+        throwsA(
+          isA<BusyMarkException>().having(
+            (error) => error.code,
+            'code',
+            'writerside.topic-file.topic-discovery-incomplete',
+          ),
+        ),
+      );
+      expect(File(guidePath).existsSync(), isTrue);
+      expect(File(p.join(topicsRoot, 'setup.md')).existsSync(), isFalse);
+    },
+  );
+
+  test(
+    'rename planning rejects a topic-root directory listing failure',
+    () async {
+      final fixture = await _fixture(
+        trees: {
+          'guide.tree': '''
+<instance-profile id="guide" start-page="guide.md">
+  <toc-element topic="guide.md"/>
+</instance-profile>
+''',
+        },
+        topics: {
+          'guide.md': '# Guide\n',
+          'deep/reference.md': '# Reference\n\n[Guide](../guide.md)\n',
+        },
+      );
+      final topicsRoot = p.join(fixture.root.path, 'topics');
+      final deepPath = p.join(topicsRoot, 'deep');
+
+      Stream<FileSystemEntity> failingListing(
+        Directory directory, {
+        required bool followLinks,
+      }) async* {
+        if (p.equals(directory.path, deepPath)) {
+          throw FileSystemException('listing failed', directory.path);
+        }
+        yield File(p.join(topicsRoot, 'guide.md'));
+        yield Directory(deepPath);
+      }
+
+      final incompleteModule = await WritersideModuleService(
+        topicDirectoryLister: failingListing,
+      ).load(fixture.root.path);
+
+      expect(incompleteModule.topicDiscoveryComplete, isFalse);
+      expect(incompleteModule.unparsedTopicReferences, isEmpty);
+      await expectLater(
+        editor.prepareRename(
+          module: incompleteModule,
+          topic: _topic(incompleteModule, 'guide.md'),
+          newFileName: 'setup.md',
+        ),
+        throwsA(
+          isA<BusyMarkException>().having(
+            (error) => error.code,
+            'code',
+            'writerside.topic-file.topic-discovery-incomplete',
+          ),
+        ),
+      );
+    },
+  );
+
+  test(
+    'topic discovery traverses excluded and hidden directories but not VCS metadata',
+    () async {
+      final fixture = await _fixture(
+        trees: {
+          'guide.tree': '''
+<instance-profile id="guide" start-page="guide.md">
+  <toc-element topic="guide.md"/>
+</instance-profile>
+''',
+        },
+        topics: {
+          'guide.md': '# Guide\n',
+          'build/reference.md': '# Build reference\n',
+          '.internal/architecture.topic':
+              '<topic id="architecture" title="Architecture"/>\n',
+          '.git/fake.md': '# Git fake\n',
+          '.hg/fake.md': '# Mercurial fake\n',
+          '.svn/fake.md': '# Subversion fake\n',
+        },
+      );
+
+      expect(fixture.module.topicDiscoveryComplete, isTrue);
+      expect(
+        fixture.module.topics.map((topic) => topic.fileName),
+        containsAll([
+          'guide.md',
+          'build/reference.md',
+          '.internal/architecture.topic',
+        ]),
+      );
+      expect(
+        fixture.module.topics.map((topic) => topic.fileName),
+        isNot(
+          anyOf(
+            contains('.git/fake.md'),
+            contains('.hg/fake.md'),
+            contains('.svn/fake.md'),
+          ),
+        ),
+      );
+    },
+  );
+
+  test(
+    'rename updates and resolves a Markdown reference under build',
+    () async {
+      final fixture = await _fixture(
+        trees: {
+          'guide.tree': '''
+<instance-profile id="guide" start-page="guide.md">
+  <toc-element topic="guide.md"/>
+</instance-profile>
+''',
+        },
+        topics: {
+          'guide.md': '# Guide\n',
+          'build/reference.md': '# Reference\n\n[Guide](../guide.md)\n',
+        },
+      );
+
+      await editor.rename(
+        module: fixture.module,
+        topic: _topic(fixture.module, 'guide.md'),
+        newFileName: 'setup.md',
+      );
+
+      final referencePath = p.join(
+        fixture.root.path,
+        'topics',
+        'build',
+        'reference.md',
+      );
+      expect(
+        File(referencePath).readAsStringSync(),
+        '# Reference\n\n[Guide](../setup.md)\n',
+      );
+      final reloaded = await const WritersideModuleService().load(
+        fixture.root.path,
+      );
+      expect(_resolvedLinkDestinations(reloaded, 'build/reference.md'), [
+        p.join(fixture.root.path, 'topics', 'setup.md'),
+      ]);
+    },
+  );
+
+  test(
+    'rename updates and resolves an XML reference under a hidden directory',
+    () async {
+      final fixture = await _fixture(
+        trees: {
+          'guide.tree': '''
+<instance-profile id="guide" start-page="guide.md">
+  <toc-element topic="guide.md"/>
+</instance-profile>
+''',
+        },
+        topics: {
+          'guide.md': '# Guide\n',
+          '.internal/reference.topic': '''
+<topic id="reference" title="Reference">
+  <a href="../guide.md">Guide</a>
+</topic>
+''',
+        },
+      );
+
+      await editor.rename(
+        module: fixture.module,
+        topic: _topic(fixture.module, 'guide.md'),
+        newFileName: 'setup.md',
+      );
+
+      final referencePath = p.join(
+        fixture.root.path,
+        'topics',
+        '.internal',
+        'reference.topic',
+      );
+      expect(
+        File(referencePath).readAsStringSync(),
+        contains('<a href="../setup.md">Guide</a>'),
+      );
+      final reloaded = await const WritersideModuleService().load(
+        fixture.root.path,
+      );
+      expect(_resolvedLinkDestinations(reloaded, '.internal/reference.topic'), [
+        p.join(fixture.root.path, 'topics', 'setup.md'),
+      ]);
+    },
+  );
+
+  test(
+    'rename planning rejects a discovered unreadable topic source',
+    () async {
+      final fixture = await _fixture(
+        trees: {
+          'guide.tree': '''
+<instance-profile id="guide" start-page="guide.md">
+  <toc-element topic="guide.md"/>
+</instance-profile>
+''',
+        },
+        topics: {'guide.md': '# Guide\n', 'invalid.md': '# Placeholder\n'},
+        beforeLoad: (root) {
+          File(
+            p.join(root.path, 'topics', 'invalid.md'),
+          ).writeAsBytesSync([0xff, 0xfe]);
+        },
+      );
+
+      await expectLater(
+        editor.prepareRename(
+          module: fixture.module,
+          topic: _topic(fixture.module, 'guide.md'),
+          newFileName: 'setup.md',
+        ),
+        throwsA(
+          isA<BusyMarkException>().having(
+            (error) => error.code,
+            'code',
+            'writerside.topic-file.incomplete-project-index',
+          ),
+        ),
+      );
+    },
+  );
 
   test(
     'rename updates topic and start-page references in every tree',
@@ -68,6 +431,906 @@ void main() {
     },
   );
 
+  test(
+    'rename refactors links, includes, ref entries, and leaves unrelated text',
+    () async {
+      final fixture = await _fixture(
+        trees: {
+          'guide.tree': '''
+<instance-profile id="guide" start-page="guide.md">
+  <toc-element topic="guide.md"/>
+</instance-profile>
+''',
+          'other.tree': '''
+<instance-profile id="other" start-page="other.topic">
+  <toc-element ref="guide.md" in="guide"/>
+  <toc-element topic="other.topic"
+               target-for-accept-web-filenames="guide.md"
+               target-for-accept-web-file-names="https://example.com/guide.md"/>
+</instance-profile>
+''',
+        },
+        topics: {
+          'guide.md': '# Guide\n\n<a id="part"/>\n',
+          'other.md': '# Other\n',
+          'links.md': '''
+# Links
+
+Example: `[sample](guide.md)`; guide.md appears before [guide.md](guide.md), [again](guide.md), and [part](guide.md#part).
+
+[Other](other.md "[example](guide.md)") and [Guide](guide.md).
+
+[not a link](guide.md unexpected) and [Guide](guide.md).
+
+Comment: <!-- [fake](guide.md) --> and [Guide again](guide.md).
+
+Literal guide.md must stay literal.
+''',
+          'other.topic': '''
+<topic id="other" title="Other">
+  <include from="guide.md" element-id="part"/>
+  <a href="guide.md#part">Guide</a>
+  <p instance="guide">Same-named instance</p>
+</topic>
+''',
+        },
+      );
+      final topic = _topic(fixture.module, 'guide.md');
+
+      await editor.rename(
+        module: fixture.module,
+        topic: topic,
+        newFileName: 'setup.md',
+      );
+
+      final links = File(
+        p.join(fixture.root.path, 'topics', 'links.md'),
+      ).readAsStringSync();
+      expect(
+        links,
+        contains(
+          'Example: `[sample](guide.md)`; guide.md appears before '
+          '[guide.md](setup.md), '
+          '[again](setup.md), and [part](setup.md#part).',
+        ),
+      );
+      expect(links, contains('[part](setup.md#part)'));
+      expect(
+        links,
+        contains(
+          '[Other](other.md "[example](guide.md)") and '
+          '[Guide](setup.md).',
+        ),
+      );
+      expect(
+        links,
+        contains('[not a link](guide.md unexpected) and [Guide](setup.md).'),
+      );
+      expect(
+        links,
+        contains(
+          'Comment: <!-- [fake](guide.md) --> and [Guide again](setup.md).',
+        ),
+      );
+      expect(links, contains('Literal guide.md must stay literal.'));
+      final other = File(
+        p.join(fixture.root.path, 'topics', 'other.topic'),
+      ).readAsStringSync();
+      expect(other, contains('from="setup.md"'));
+      expect(other, contains('element-id="part"'));
+      expect(other, contains('href="setup.md#part"'));
+      expect(other, contains('instance="guide"'));
+      final otherTree = _tree(fixture.root, 'other.tree');
+      expect(
+        otherTree.findAllElements('toc-element').first.getAttribute('ref'),
+        'setup.md',
+      );
+      final externalRedirect = otherTree.findAllElements('toc-element').last;
+      expect(
+        externalRedirect.getAttribute('target-for-accept-web-filenames'),
+        'guide.md',
+      );
+      expect(
+        externalRedirect.getAttribute('target-for-accept-web-file-names'),
+        'https://example.com/guide.md',
+      );
+    },
+  );
+
+  test(
+    'rename ignores link-shaped text in image titles and HTML attributes',
+    () async {
+      final fixture = await _fixture(
+        trees: {
+          'guide.tree': '''
+<instance-profile id="guide" start-page="guide.md">
+  <toc-element topic="guide.md"/>
+</instance-profile>
+''',
+        },
+        topics: {
+          'guide.md': '# Guide\n',
+          'links.md': '''
+# Links
+
+![Screenshot](image.png "[example](guide.md)") and [Guide](guide.md).
+
+Text <span title="[example](guide.md)">label</span> and [Guide](guide.md).
+''',
+        },
+      );
+
+      await editor.rename(
+        module: fixture.module,
+        topic: _topic(fixture.module, 'guide.md'),
+        newFileName: 'setup.md',
+      );
+
+      final linksPath = p.join(fixture.root.path, 'topics', 'links.md');
+      expect(File(linksPath).readAsStringSync(), '''
+# Links
+
+![Screenshot](image.png "[example](guide.md)") and [Guide](setup.md).
+
+Text <span title="[example](guide.md)">label</span> and [Guide](setup.md).
+''');
+      final reloaded = await const WritersideModuleService().load(
+        fixture.root.path,
+      );
+      expect(
+        _topic(reloaded, 'links.md').links.map((link) => link.destination),
+        ['setup.md', 'setup.md'],
+      );
+    },
+  );
+
+  test(
+    'rename binds reference links outside image titles and HTML attributes',
+    () async {
+      final fixture = await _fixture(
+        trees: {
+          'guide.tree': '''
+<instance-profile id="guide" start-page="guide.md">
+  <toc-element topic="guide.md"/>
+</instance-profile>
+''',
+        },
+        topics: {
+          'guide.md': '# Guide\n',
+          'image-links.md': '''
+# Image links
+
+![Screenshot](image.png "[example][fake]") and [Guide][real].
+
+[fake]: guide.md
+[real]: guide.md
+''',
+          'html-links.md': '''
+# HTML links
+
+Text <span title="[example][fake]">label</span> and [Guide][real].
+
+[fake]: guide.md
+[real]: guide.md
+''',
+        },
+      );
+
+      await editor.rename(
+        module: fixture.module,
+        topic: _topic(fixture.module, 'guide.md'),
+        newFileName: 'setup.md',
+      );
+
+      final imageLinks = File(
+        p.join(fixture.root.path, 'topics', 'image-links.md'),
+      ).readAsStringSync();
+      expect(imageLinks, '''
+# Image links
+
+![Screenshot](image.png "[example][fake]") and [Guide][real].
+
+[fake]: guide.md
+[real]: setup.md
+''');
+      final htmlLinks = File(
+        p.join(fixture.root.path, 'topics', 'html-links.md'),
+      ).readAsStringSync();
+      expect(htmlLinks, '''
+# HTML links
+
+Text <span title="[example][fake]">label</span> and [Guide][real].
+
+[fake]: guide.md
+[real]: setup.md
+''');
+
+      final reloaded = await const WritersideModuleService().load(
+        fixture.root.path,
+      );
+      expect(
+        _topic(reloaded, 'image-links.md').links.single.destination,
+        'setup.md',
+      );
+      expect(
+        _topic(reloaded, 'html-links.md').links.single.destination,
+        'setup.md',
+      );
+    },
+  );
+
+  test(
+    'rename binds exact HTML hrefs outside Markdown link and image titles',
+    () async {
+      final fixture = await _fixture(
+        trees: {
+          'guide.tree': '''
+<instance-profile id="guide" start-page="guide.md">
+  <toc-element topic="guide.md"/>
+</instance-profile>
+''',
+        },
+        topics: {
+          'guide.md': '# Guide\n',
+          'links.md': '''
+# Links
+
+![Screenshot](image.png "<a href='guide.md'>Example</a>") and [Guide](guide.md).
+
+[Other](other.md "<a href='guide.md'>Example</a>") and [Guide](guide.md).
+
+Text <a data-href="keep.md" href="guide.md">Guide</a>.
+
+Text <a title="A > B" href="guide.md">Guide</a>.
+
+Text <a href='guide.md' title='A > B'>Guide</a>.
+
+Text <a href=guide.md data-note=keep>Guide</a>.
+
+Text <a HREF="guide.md" DATA-HREF="keep.md">Guide</a>.
+
+Text <a title="A&nbsp;B" href="guide.md">Guide</a>.
+''',
+        },
+      );
+
+      await editor.rename(
+        module: fixture.module,
+        topic: _topic(fixture.module, 'guide.md'),
+        newFileName: 'setup.md',
+      );
+
+      final linksPath = p.join(fixture.root.path, 'topics', 'links.md');
+      expect(File(linksPath).readAsStringSync(), '''
+# Links
+
+![Screenshot](image.png "<a href='guide.md'>Example</a>") and [Guide](setup.md).
+
+[Other](other.md "<a href='guide.md'>Example</a>") and [Guide](setup.md).
+
+Text <a data-href="keep.md" href="setup.md">Guide</a>.
+
+Text <a title="A > B" href="setup.md">Guide</a>.
+
+Text <a href='setup.md' title='A > B'>Guide</a>.
+
+Text <a href=setup.md data-note=keep>Guide</a>.
+
+Text <a HREF="setup.md" DATA-HREF="keep.md">Guide</a>.
+
+Text <a title="A&nbsp;B" href="setup.md">Guide</a>.
+''');
+      final reloaded = await const WritersideModuleService().load(
+        fixture.root.path,
+      );
+      expect(
+        _topic(reloaded, 'links.md').links.map((link) => link.destination),
+        [
+          'setup.md',
+          'other.md',
+          'setup.md',
+          'setup.md',
+          'setup.md',
+          'setup.md',
+          'setup.md',
+          'setup.md',
+          'setup.md',
+        ],
+      );
+    },
+  );
+
+  test(
+    'rename follows origin across modules without touching a local namesake',
+    () async {
+      final root = await Directory.systemTemp.createTemp(
+        'busymark-topic-file-project-',
+      );
+      addTearDown(() => root.delete(recursive: true));
+      Future<WritersideModule> writeModule({
+        required String directory,
+        required String moduleName,
+        required String tree,
+        required Map<String, String> topics,
+      }) async {
+        final moduleRoot = await Directory(
+          p.join(root.path, directory),
+        ).create();
+        final topicRoot = await Directory(
+          p.join(moduleRoot.path, 'topics'),
+        ).create();
+        await File(p.join(moduleRoot.path, 'writerside.cfg')).writeAsString('''
+<ihp><module name="$moduleName"/><topics dir="topics"/><instance src="guide.tree"/></ihp>
+''');
+        await File(p.join(moduleRoot.path, 'guide.tree')).writeAsString(tree);
+        for (final entry in topics.entries) {
+          await File(
+            p.join(topicRoot.path, entry.key),
+          ).writeAsString(entry.value);
+        }
+        return const WritersideModuleService().load(moduleRoot.path);
+      }
+
+      final main = await writeModule(
+        directory: 'main',
+        moduleName: 'main',
+        tree: '''
+<instance-profile id="guide" start-page="guide.md">
+  <toc-element topic="guide.md"/>
+  <toc-element topic="guide.md" origin="shared"/>
+</instance-profile>
+''',
+        topics: {
+          'guide.md': '# Local namesake\n',
+          'links.md': '''
+# Links
+
+Text <a title="A > B" href="guide.md" origin="shared">Shared</a>.
+''',
+        },
+      );
+      final shared = await writeModule(
+        directory: 'shared',
+        moduleName: 'shared',
+        tree: '''
+<instance-profile id="guide" start-page="guide.md"><toc-element topic="guide.md"/></instance-profile>
+''',
+        topics: {'guide.md': '# Shared guide\n'},
+      );
+
+      await editor.rename(
+        module: shared,
+        topic: _topic(shared, 'guide.md'),
+        newFileName: 'setup.md',
+        projectModules: [main, shared],
+      );
+
+      expect(
+        File(p.join(main.rootPath, 'topics', 'guide.md')).readAsStringSync(),
+        '# Local namesake\n',
+      );
+      expect(
+        File(p.join(main.rootPath, 'topics', 'links.md')).readAsStringSync(),
+        contains('title="A > B" href="setup.md" origin="shared"'),
+      );
+      final reloadedMain = await const WritersideModuleService().load(
+        main.rootPath,
+      );
+      expect(
+        _topic(reloadedMain, 'links.md').links.single.destination,
+        'setup.md',
+      );
+      final mainTree = XmlDocument.parse(
+        File(p.join(main.rootPath, 'guide.tree')).readAsStringSync(),
+      );
+      expect(
+        mainTree
+            .findAllElements('toc-element')
+            .map((element) => element.getAttribute('topic')),
+        ['guide.md', 'setup.md'],
+      );
+      expect(
+        File(p.join(shared.rootPath, 'topics', 'guide.md')).existsSync(),
+        isFalse,
+      );
+      expect(
+        File(p.join(shared.rootPath, 'topics', 'setup.md')).existsSync(),
+        isTrue,
+      );
+    },
+  );
+
+  test(
+    'project-wide rename includes an origin reference in a build module',
+    () async {
+      final root = await Directory.systemTemp.createTemp(
+        'busymark-topic-file-build-module-',
+      );
+      addTearDown(() => root.delete(recursive: true));
+
+      Future<void> writeModule({
+        required String directory,
+        required String moduleName,
+        required String topicName,
+        required String tree,
+        required String source,
+      }) async {
+        final moduleRoot = await Directory(
+          p.join(root.path, directory),
+        ).create();
+        final topicsRoot = await Directory(
+          p.join(moduleRoot.path, 'topics'),
+        ).create();
+        await File(p.join(moduleRoot.path, 'writerside.cfg')).writeAsString('''
+<ihp><module name="$moduleName"/><topics dir="topics"/><instance src="guide.tree"/></ihp>
+''');
+        await File(p.join(moduleRoot.path, 'guide.tree')).writeAsString(tree);
+        await File(p.join(topicsRoot.path, topicName)).writeAsString(source);
+      }
+
+      await writeModule(
+        directory: 'main',
+        moduleName: 'main',
+        topicName: 'guide.md',
+        tree: '''
+<instance-profile id="guide" start-page="guide.md">
+  <toc-element topic="guide.md"/>
+</instance-profile>
+''',
+        source: '# Guide\n',
+      );
+      await writeModule(
+        directory: 'build',
+        moduleName: 'build-docs',
+        topicName: 'reference.topic',
+        tree: '''
+<instance-profile id="guide" start-page="reference.topic">
+  <toc-element topic="reference.topic"/>
+  <toc-element topic="guide.md" origin="main"/>
+</instance-profile>
+''',
+        source: '''
+<topic id="reference" title="Reference">
+  <a href="guide.md" origin="main">Guide</a>
+</topic>
+''',
+      );
+      final project = await const WritersideProjectService().load(root.path);
+      final main = project.modulesByOrigin['main']!;
+      final build = project.modulesByOrigin['build-docs']!;
+      final referencePath = p.join(build.rootPath, 'topics', 'reference.topic');
+
+      final plan = await editor.prepareRename(
+        module: main,
+        topic: _topic(main, 'guide.md'),
+        newFileName: 'setup.md',
+        projectModules: project.modules,
+      );
+
+      expect(
+        plan.changedFiles.map((change) => change.path),
+        contains(referencePath),
+      );
+      await editor.applyRename(plan);
+      expect(
+        File(referencePath).readAsStringSync(),
+        contains('href="setup.md" origin="main"'),
+      );
+
+      final reloaded = await const WritersideProjectService().load(root.path);
+      final reloadedBuild = reloaded.modulesByOrigin['build-docs']!;
+      expect(
+        _resolvedLinkDestinations(
+          reloadedBuild,
+          'reference.topic',
+          modulesByOrigin: reloaded.modulesByOrigin,
+        ),
+        [
+          p.join(
+            reloaded.modulesByOrigin['main']!.rootPath,
+            'topics',
+            'setup.md',
+          ),
+        ],
+      );
+    },
+  );
+
+  test(
+    'renaming a local namesake preserves origin-qualified Markdown XML links',
+    () async {
+      final root = await Directory.systemTemp.createTemp(
+        'busymark-topic-file-project-reverse-',
+      );
+      addTearDown(() => root.delete(recursive: true));
+      Future<WritersideModule> writeModule({
+        required String directory,
+        required String moduleName,
+        required String tree,
+        required Map<String, String> topics,
+      }) async {
+        final moduleRoot = await Directory(
+          p.join(root.path, directory),
+        ).create();
+        final topicRoot = await Directory(
+          p.join(moduleRoot.path, 'topics'),
+        ).create();
+        await File(p.join(moduleRoot.path, 'writerside.cfg')).writeAsString('''
+<ihp><module name="$moduleName"/><topics dir="topics"/><instance src="guide.tree"/></ihp>
+''');
+        await File(p.join(moduleRoot.path, 'guide.tree')).writeAsString(tree);
+        for (final entry in topics.entries) {
+          await File(
+            p.join(topicRoot.path, entry.key),
+          ).writeAsString(entry.value);
+        }
+        return const WritersideModuleService().load(moduleRoot.path);
+      }
+
+      final main = await writeModule(
+        directory: 'main',
+        moduleName: 'main',
+        tree: '''
+<instance-profile id="guide" start-page="guide.md">
+  <toc-element topic="guide.md"/>
+  <toc-element topic="guide.md" origin="shared"/>
+</instance-profile>
+''',
+        topics: {
+          'guide.md': '# Local guide\n',
+          'links.md': '''
+# Links
+
+Shared: <a href="guide.md" origin="shared">Shared</a>; local: [Local](guide.md).
+
+<include from="guide.md" element-id="part"/>
+''',
+        },
+      );
+      final shared = await writeModule(
+        directory: 'shared',
+        moduleName: 'shared',
+        tree: '''
+<instance-profile id="guide" start-page="guide.md"><toc-element topic="guide.md"/></instance-profile>
+''',
+        topics: {'guide.md': '# Shared guide\n'},
+      );
+
+      await editor.rename(
+        module: main,
+        topic: _topic(main, 'guide.md'),
+        newFileName: 'setup.md',
+        projectModules: [main, shared],
+      );
+
+      final links = File(
+        p.join(main.rootPath, 'topics', 'links.md'),
+      ).readAsStringSync();
+      expect(
+        links,
+        contains(
+          'href="guide.md" origin="shared">Shared</a>; '
+          'local: [Local](setup.md)',
+        ),
+      );
+      expect(links, contains('from="setup.md" element-id="part"'));
+      final mainTree = XmlDocument.parse(
+        File(p.join(main.rootPath, 'guide.tree')).readAsStringSync(),
+      );
+      expect(
+        mainTree
+            .findAllElements('toc-element')
+            .map((element) => element.getAttribute('topic')),
+        ['setup.md', 'guide.md'],
+      );
+      expect(
+        File(p.join(shared.rootPath, 'topics', 'guide.md')).readAsStringSync(),
+        '# Shared guide\n',
+      );
+    },
+  );
+
+  test('rename supports unquoted origin-qualified raw HTML links', () async {
+    final root = await Directory.systemTemp.createTemp(
+      'busymark-topic-file-project-unbound-origin-',
+    );
+    addTearDown(() => root.delete(recursive: true));
+    Future<WritersideModule> writeModule({
+      required String directory,
+      required String moduleName,
+      required String tree,
+      required Map<String, String> topics,
+    }) async {
+      final moduleRoot = await Directory(p.join(root.path, directory)).create();
+      final topicRoot = await Directory(
+        p.join(moduleRoot.path, 'topics'),
+      ).create();
+      await File(p.join(moduleRoot.path, 'writerside.cfg')).writeAsString('''
+<ihp><module name="$moduleName"/><topics dir="topics"/><instance src="guide.tree"/></ihp>
+''');
+      await File(p.join(moduleRoot.path, 'guide.tree')).writeAsString(tree);
+      for (final entry in topics.entries) {
+        await File(
+          p.join(topicRoot.path, entry.key),
+        ).writeAsString(entry.value);
+      }
+      return const WritersideModuleService().load(moduleRoot.path);
+    }
+
+    final main = await writeModule(
+      directory: 'main',
+      moduleName: 'main',
+      tree: '''
+<instance-profile id="guide" start-page="links.md">
+  <toc-element topic="links.md"/>
+  <toc-element topic="guide.md" origin="shared"/>
+</instance-profile>
+''',
+      topics: {
+        'links.md': '''
+# Links
+
+Text <a href=guide.md origin=shared>Shared guide</a>.
+''',
+      },
+    );
+    final shared = await writeModule(
+      directory: 'shared',
+      moduleName: 'shared',
+      tree: '''
+<instance-profile id="guide" start-page="guide.md">
+  <toc-element topic="guide.md"/>
+</instance-profile>
+''',
+      topics: {'guide.md': '# Shared guide\n'},
+    );
+    await editor.rename(
+      module: shared,
+      topic: _topic(shared, 'guide.md'),
+      newFileName: 'setup.md',
+      projectModules: [main, shared],
+    );
+
+    final linkPath = p.join(main.rootPath, 'topics', 'links.md');
+    expect(File(linkPath).readAsStringSync(), '''
+# Links
+
+Text <a href=setup.md origin=shared>Shared guide</a>.
+''');
+    expect(
+      File(p.join(shared.rootPath, 'topics', 'guide.md')).existsSync(),
+      isFalse,
+    );
+    expect(
+      File(p.join(shared.rootPath, 'topics', 'setup.md')).existsSync(),
+      isTrue,
+    );
+    final reloadedMain = await const WritersideModuleService().load(
+      main.rootPath,
+    );
+    expect(
+      _topic(reloadedMain, 'links.md').links.single.destination,
+      'setup.md',
+    );
+  });
+
+  test('rename keeps decoded whitespace safe in unquoted HTML hrefs', () async {
+    final fixture = await _fixture(
+      trees: {
+        'guide.tree': '''
+<instance-profile id="guide" start-page="api tools/guide.md">
+  <toc-element topic="api tools/guide.md"/>
+</instance-profile>
+''',
+      },
+      topics: {
+        'api tools/guide.md': '# Guide\n',
+        'links.md': '''
+# Links
+
+Decimal: <a href=api&#32;tools/guide.md>Guide</a>.
+
+Hexadecimal: <a href=api&#x20;tools/guide.md>Guide</a>.
+''',
+      },
+    );
+
+    await editor.rename(
+      module: fixture.module,
+      topic: _topic(fixture.module, 'api tools/guide.md'),
+      newFileName: 'setup.md',
+    );
+
+    final linksPath = p.join(fixture.root.path, 'topics', 'links.md');
+    expect(File(linksPath).readAsStringSync(), '''
+# Links
+
+Decimal: <a href=api&#32;tools/setup.md>Guide</a>.
+
+Hexadecimal: <a href=api&#32;tools/setup.md>Guide</a>.
+''');
+    final reloaded = await const WritersideModuleService().load(
+      fixture.root.path,
+    );
+    expect(_topic(reloaded, 'links.md').links.map((link) => link.destination), [
+      'api tools/setup.md',
+      'api tools/setup.md',
+    ]);
+    expect(reloaded.topicByReference('api tools/setup.md')?.title, 'Guide');
+  });
+
+  test('rename updates shared Markdown reference definitions once', () async {
+    final fixture = await _fixture(
+      trees: {
+        'guide.tree': '''
+<instance-profile id="guide" start-page="guide.md">
+  <toc-element topic="guide.md"/>
+</instance-profile>
+''',
+      },
+      topics: {
+        'guide.md': '# Guide\n',
+        'references.md': '''
+# References
+
+Full [Guide][g] and repeated [again][g].
+Collapsed [Guide][] and shortcut [Guide].
+Inline code label: [`Guide`](guide.md).
+Following-line destination: [Guide][next].
+
+[g]: guide.md
+[guide]: guide.md
+[next]:
+  guide.md
+''',
+      },
+    );
+
+    await editor.rename(
+      module: fixture.module,
+      topic: _topic(fixture.module, 'guide.md'),
+      newFileName: 'setup.md',
+    );
+
+    final references = File(
+      p.join(fixture.root.path, 'topics', 'references.md'),
+    ).readAsStringSync();
+    expect(references, contains('Full [Guide][g] and repeated [again][g].'));
+    expect(references, contains('Collapsed [Guide][] and shortcut [Guide].'));
+    expect(references, contains('Inline code label: [`Guide`](setup.md).'));
+    expect(references, contains('Following-line destination: [Guide][next].'));
+    expect(
+      RegExp(r'^\[g\]: setup\.md$', multiLine: true).allMatches(references),
+      hasLength(1),
+    );
+    expect(
+      RegExp(r'^\[guide\]: setup\.md$', multiLine: true).allMatches(references),
+      hasLength(1),
+    );
+    expect(references, contains('[next]:\n  setup.md'));
+    expect(references, isNot(contains(']: guide.md')));
+  });
+
+  test('rename preserves escapes required by a Markdown destination', () async {
+    final fixture = await _fixture(
+      trees: {
+        'guide.tree': '''
+<instance-profile id="guide" start-page="api(tools/guide.md">
+  <toc-element topic="api(tools/guide.md"/>
+</instance-profile>
+''',
+      },
+      topics: {
+        'api(tools/guide.md': '# Guide\n',
+        'links.md': '''
+# Links
+
+[Guide](api\\(tools/guide.md)
+''',
+      },
+    );
+
+    await editor.rename(
+      module: fixture.module,
+      topic: _topic(fixture.module, 'api(tools/guide.md'),
+      newFileName: 'setup.md',
+    );
+
+    final linksPath = p.join(fixture.root.path, 'topics', 'links.md');
+    expect(
+      File(linksPath).readAsStringSync(),
+      contains(r'[Guide](api\(tools/setup.md)'),
+    );
+    final reloaded = await const WritersideModuleService().load(
+      fixture.root.path,
+    );
+    expect(
+      _topic(reloaded, 'links.md').links.single.destination,
+      'api(tools/setup.md',
+    );
+  });
+
+  test('rename rewrites an XML-encoded topic destination', () async {
+    final fixture = await _fixture(
+      trees: {
+        'guide.tree': '''
+<instance-profile id="guide" start-page="guide.md">
+  <toc-element topic="guide.md"/>
+</instance-profile>
+''',
+      },
+      topics: {
+        'guide.md': '# Guide\n',
+        'links.topic': '''
+<topic id="links" title="Links">
+  <a href="guide&#46;md">Guide</a>
+</topic>
+''',
+      },
+    );
+
+    await editor.rename(
+      module: fixture.module,
+      topic: _topic(fixture.module, 'guide.md'),
+      newFileName: 'setup.md',
+    );
+
+    final linksPath = p.join(fixture.root.path, 'topics', 'links.topic');
+    final linksSource = File(linksPath).readAsStringSync();
+    expect(linksSource, contains('href="setup.md"'));
+    expect(
+      XmlDocument.parse(
+        linksSource,
+      ).findAllElements('a').single.getAttribute('href'),
+      'setup.md',
+    );
+  });
+
+  test('rename escapes decoded XML attribute replacements', () async {
+    final fixture = await _fixture(
+      trees: {
+        'guide.tree': '''
+<instance-profile id="guide" start-page="api&amp;tools/guide.md">
+  <toc-element topic="api&amp;tools/guide.md"/>
+</instance-profile>
+''',
+      },
+      topics: {
+        'api&tools/guide.md': '# Guide\n',
+        'links.topic': '''
+<topic id="links" title="Links">
+  <a href="api&amp;tools/guide.md">Guide</a>
+</topic>
+''',
+      },
+    );
+
+    final result = await editor.rename(
+      module: fixture.module,
+      topic: _topic(fixture.module, 'api&tools/guide.md'),
+      newFileName: 'setup.md',
+    );
+
+    expect(
+      p.normalize(result.newTopicPath),
+      p.normalize(p.join(fixture.root.path, 'topics', 'api&tools', 'setup.md')),
+    );
+    final linksSource = File(
+      p.join(fixture.root.path, 'topics', 'links.topic'),
+    ).readAsStringSync();
+    expect(linksSource, contains('href="api&amp;tools/setup.md"'));
+    expect(
+      XmlDocument.parse(
+        linksSource,
+      ).findAllElements('a').single.getAttribute('href'),
+      'api&tools/setup.md',
+    );
+    expect(
+      _tree(fixture.root, 'guide.tree').rootElement.getAttribute('start-page'),
+      'api&tools/setup.md',
+    );
+  });
+
   test('rename updates a matching XML topic root id', () async {
     final fixture = await _fixture(
       trees: {
@@ -104,6 +1367,313 @@ void main() {
       'intro.md',
       'setup.topic',
     ]);
+  });
+
+  test('missing or mismatched XML root IDs block rename atomically', () async {
+    for (final source in [
+      '<topic title="Guide"><p>Missing.</p></topic>\n',
+      '<topic id="wrong" title="Guide"><p>Mismatch.</p></topic>\n',
+    ]) {
+      final fixture = await _fixture(
+        trees: {
+          'guide.tree': '''
+<instance-profile id="guide" start-page="guide.topic">
+  <toc-element topic="guide.topic"/>
+</instance-profile>
+''',
+        },
+        topics: {'guide.topic': source},
+      );
+      final treePath = p.join(fixture.root.path, 'guide.tree');
+      final originalTree = File(treePath).readAsStringSync();
+
+      await expectLater(
+        editor.prepareRename(
+          module: fixture.module,
+          topic: _topic(fixture.module, 'guide.topic'),
+          newFileName: 'renamed.topic',
+        ),
+        throwsA(
+          isA<BusyMarkException>().having(
+            (error) => error.code,
+            'code',
+            source.contains('wrong')
+                ? 'writerside.topic-file.root-id-mismatch'
+                : 'writerside.topic-file.missing-root-id',
+          ),
+        ),
+      );
+
+      expect(File(treePath).readAsStringSync(), originalTree);
+      expect(
+        File(
+          p.join(fixture.root.path, 'topics', 'guide.topic'),
+        ).readAsStringSync(),
+        source,
+      );
+      expect(
+        File(p.join(fixture.root.path, 'topics', 'renamed.topic')).existsSync(),
+        isFalse,
+      );
+    }
+  });
+
+  test(
+    'prepared rename is read-only and applies its exact captured changes',
+    () async {
+      final fixture = await _fixture(
+        trees: {
+          'guide.tree': '''
+<instance-profile id="guide" start-page="guide.topic">
+  <toc-element topic="guide.topic"/>
+  <toc-element topic="links.md"/>
+</instance-profile>
+''',
+        },
+        topics: {
+          'guide.topic': '<topic id="guide" title="Guide"/>\n',
+          'links.md': '# Links\n\n[Guide](guide.topic)\n',
+        },
+      );
+      final topic = _topic(fixture.module, 'guide.topic');
+      final treePath = p.join(fixture.root.path, 'guide.tree');
+      final linksPath = p.join(fixture.root.path, 'topics', 'links.md');
+      final originalTree = File(treePath).readAsStringSync();
+      final originalTopic = File(topic.filePath).readAsStringSync();
+      final originalLinks = File(linksPath).readAsStringSync();
+
+      final plan = await editor.prepareRename(
+        module: fixture.module,
+        topic: topic,
+        newFileName: 'setup.topic',
+      );
+
+      expect(File(topic.filePath).readAsStringSync(), originalTopic);
+      expect(File(treePath).readAsStringSync(), originalTree);
+      expect(File(linksPath).readAsStringSync(), originalLinks);
+      expect(File(plan.newTopicPath).existsSync(), isFalse);
+      expect(plan.oldTopicReference, 'guide.topic');
+      expect(plan.newTopicReference, 'setup.topic');
+      expect(plan.oldTopicId, 'guide');
+      expect(plan.newTopicId, 'setup');
+      expect(plan.updatesXmlTopicId, isTrue);
+      expect(
+        plan.changedFiles.map((change) => change.path),
+        containsAll([treePath, linksPath]),
+      );
+
+      await editor.applyRename(plan);
+
+      expect(File(topic.filePath).existsSync(), isFalse);
+      expect(
+        File(plan.newTopicPath).readAsStringSync(),
+        contains('id="setup"'),
+      );
+      expect(
+        File(treePath).readAsStringSync(),
+        contains('topic="setup.topic"'),
+      );
+      expect(File(linksPath).readAsStringSync(), contains('(setup.topic)'));
+    },
+  );
+
+  test('stale prepared rename fails before any partial write', () async {
+    final fixture = await _fixture(
+      trees: {
+        'guide.tree': '''
+<instance-profile id="guide" start-page="guide.md">
+  <toc-element topic="guide.md"/>
+  <toc-element topic="links.md"/>
+</instance-profile>
+''',
+      },
+      topics: {
+        'guide.md': '# Guide\n',
+        'links.md': '# Links\n\n[Guide](guide.md)\n',
+      },
+    );
+    final topic = _topic(fixture.module, 'guide.md');
+    final treePath = p.join(fixture.root.path, 'guide.tree');
+    final linksPath = p.join(fixture.root.path, 'topics', 'links.md');
+    final originalTree = File(treePath).readAsStringSync();
+    final plan = await editor.prepareRename(
+      module: fixture.module,
+      topic: topic,
+      newFileName: 'setup.md',
+    );
+    const externallyChanged = '# Externally changed\n\n[Guide](guide.md)\n';
+    File(linksPath).writeAsStringSync(externallyChanged);
+
+    await expectLater(
+      editor.applyRename(plan),
+      throwsA(isA<BusyMarkException>()),
+    );
+
+    expect(File(topic.filePath).readAsStringSync(), '# Guide\n');
+    expect(File(plan.newTopicPath).existsSync(), isFalse);
+    expect(File(treePath).readAsStringSync(), originalTree);
+    expect(File(linksPath).readAsStringSync(), externallyChanged);
+  });
+
+  test('rename preflights collisions only in publishing instances', () async {
+    final colliding = await _fixture(
+      trees: {
+        'guide.tree': '''
+<instance-profile id="guide">
+  <toc-element topic="guide.md"/>
+  <toc-element topic="custom.topic"/>
+</instance-profile>
+''',
+      },
+      topics: {
+        'guide.md': '# Guide\n',
+        'custom.topic': '''
+<topic id="custom" title="Custom"><web-file-name>setup.html</web-file-name></topic>
+''',
+      },
+    );
+
+    await expectLater(
+      editor.prepareRename(
+        module: colliding.module,
+        topic: _topic(colliding.module, 'guide.md'),
+        newFileName: 'setup.md',
+      ),
+      throwsA(
+        isA<BusyMarkException>().having(
+          (error) => error.code,
+          'code',
+          'writerside.topic-file.web-file-name-collision',
+        ),
+      ),
+    );
+    expect(
+      File(p.join(colliding.root.path, 'topics', 'setup.md')).existsSync(),
+      isFalse,
+    );
+
+    final disjoint = await _fixture(
+      trees: {
+        'guide.tree': _instanceTree('guide', ['guide.md']),
+        'other.tree': _instanceTree('other', ['custom.topic']),
+      },
+      topics: {
+        'guide.md': '# Guide\n',
+        'custom.topic': '''
+<topic id="custom" title="Custom"><web-file-name>setup.html</web-file-name></topic>
+''',
+      },
+    );
+    final result = await editor.rename(
+      module: disjoint.module,
+      topic: _topic(disjoint.module, 'guide.md'),
+      newFileName: 'setup.md',
+    );
+    expect(File(result.newTopicPath).existsSync(), isTrue);
+  });
+
+  test(
+    'origin topic collisions block a project-wide prepared rename',
+    () async {
+      final project = await Directory.systemTemp.createTemp(
+        'busymark-topic-rename-origin-',
+      );
+      addTearDown(() async {
+        if (await project.exists()) await project.delete(recursive: true);
+      });
+      final mainRoot = Directory(p.join(project.path, 'main'))..createSync();
+      final sharedRoot = Directory(p.join(project.path, 'shared'))
+        ..createSync();
+      Directory(p.join(mainRoot.path, 'topics')).createSync();
+      Directory(p.join(sharedRoot.path, 'topics')).createSync();
+      File(p.join(mainRoot.path, 'writerside.cfg')).writeAsStringSync('''
+<ihp><module name="main"/><topics dir="topics"/><instance src="guide.tree"/></ihp>
+''');
+      File(p.join(mainRoot.path, 'guide.tree')).writeAsStringSync('''
+<instance-profile id="guide">
+  <toc-element topic="guide.md"/>
+  <toc-element topic="shared.topic" origin="shared"/>
+</instance-profile>
+''');
+      File(
+        p.join(mainRoot.path, 'topics', 'guide.md'),
+      ).writeAsStringSync('# Guide\n');
+      File(p.join(sharedRoot.path, 'writerside.cfg')).writeAsStringSync('''
+<ihp><module name="shared"/><topics dir="topics"/><instance src="lib.tree"/></ihp>
+''');
+      File(p.join(sharedRoot.path, 'lib.tree')).writeAsStringSync('''
+<instance-profile id="lib" is-library="true">
+  <toc-element topic="shared.topic"/>
+</instance-profile>
+''');
+      File(p.join(sharedRoot.path, 'topics', 'shared.topic')).writeAsStringSync(
+        '''
+<topic id="shared" title="Shared"><web-file-name>setup.html</web-file-name></topic>
+''',
+      );
+      final main = await const WritersideModuleService().load(mainRoot.path);
+      final shared = await const WritersideModuleService().load(
+        sharedRoot.path,
+      );
+
+      await expectLater(
+        editor.prepareRename(
+          module: main,
+          topic: _topic(main, 'guide.md'),
+          newFileName: 'setup.md',
+          projectModules: [main, shared],
+        ),
+        throwsA(
+          isA<BusyMarkException>().having(
+            (error) => error.code,
+            'code',
+            'writerside.topic-file.web-file-name-collision',
+          ),
+        ),
+      );
+      expect(
+        File(p.join(mainRoot.path, 'topics', 'guide.md')).existsSync(),
+        isTrue,
+      );
+      expect(
+        File(p.join(mainRoot.path, 'topics', 'setup.md')).existsSync(),
+        isFalse,
+      );
+    },
+  );
+
+  test('Unicode Markdown and XML topic filenames rename safely', () async {
+    final fixture = await _fixture(
+      trees: {
+        'guide.tree': _instanceTree('guide', ['Начало.md', '開始.topic']),
+      },
+      topics: {
+        'Начало.md': '# Начало\n',
+        '開始.topic': '<topic id="開始" title="開始"/>\n',
+      },
+    );
+
+    final markdown = await editor.rename(
+      module: fixture.module,
+      topic: _topic(fixture.module, 'Начало.md'),
+      newFileName: 'Руководство.md',
+    );
+    final reloaded = await const WritersideModuleService().load(
+      fixture.root.path,
+    );
+    final xml = await editor.rename(
+      module: reloaded,
+      topic: _topic(reloaded, '開始.topic'),
+      newFileName: '指南.topic',
+    );
+
+    expect(File(markdown.newTopicPath).existsSync(), isTrue);
+    expect(
+      XmlDocument.parse(
+        File(xml.newTopicPath).readAsStringSync(),
+      ).rootElement.getAttribute('id'),
+      '指南',
+    );
   });
 
   test('rename supports Writerside .markdown topics', () async {
@@ -499,6 +2069,129 @@ void main() {
     },
   );
 
+  test(
+    'cross-module rollback retains a target after another module changes',
+    () async {
+      final projectRoot = await Directory.systemTemp.createTemp(
+        'busymark-topic-file-cross-module-rollback-',
+      );
+      addTearDown(() async {
+        if (await projectRoot.exists()) {
+          await projectRoot.delete(recursive: true);
+        }
+      });
+
+      Future<WritersideModule> createModule({
+        required String directory,
+        required String moduleName,
+        required String topicName,
+        required String topicSource,
+      }) async {
+        final root = await Directory(
+          p.join(projectRoot.path, directory),
+        ).create();
+        await Directory(p.join(root.path, 'topics')).create();
+        await File(p.join(root.path, 'writerside.cfg')).writeAsString('''
+<ihp><module name="$moduleName"/><topics dir="topics"/><instance src="guide.tree"/></ihp>
+''');
+        await File(p.join(root.path, 'guide.tree')).writeAsString('''
+<instance-profile id="guide" start-page="$topicName">
+  <toc-element topic="$topicName"/>
+</instance-profile>
+''');
+        await File(
+          p.join(root.path, 'topics', topicName),
+        ).writeAsString(topicSource);
+        return const WritersideModuleService().load(root.path);
+      }
+
+      final main = await createModule(
+        directory: 'main',
+        moduleName: 'main',
+        topicName: 'guide.md',
+        topicSource: '# Guide\n',
+      );
+      final shared = await createModule(
+        directory: 'shared',
+        moduleName: 'shared',
+        topicName: 'watch.md',
+        topicSource: '# Watch\n',
+      );
+      final mainTree = File(p.join(main.rootPath, 'guide.tree'));
+      final originalMainTree = await mainTree.readAsString();
+      final concurrent = File(p.join(shared.rootPath, 'topics', 'watch.md'));
+      const concurrentSource =
+          '# Watch\n\n<a href="setup.md" origin="main">Setup</a>\n';
+      var changed = false;
+      final racingEditor = WritersideTopicFileEditor(
+        beforeTreePublish: (_) async {
+          if (!changed) {
+            changed = true;
+            await concurrent.writeAsString(concurrentSource, flush: true);
+          }
+        },
+      );
+
+      await expectLater(
+        racingEditor.rename(
+          module: main,
+          topic: _topic(main, 'guide.md'),
+          newFileName: 'setup.md',
+          projectModules: [main, shared],
+        ),
+        throwsA(isA<BusyMarkException>()),
+      );
+
+      expect(await mainTree.readAsString(), originalMainTree);
+      expect(
+        File(p.join(main.rootPath, 'topics', 'guide.md')).existsSync(),
+        isTrue,
+      );
+      expect(
+        File(p.join(main.rootPath, 'topics', 'setup.md')).readAsStringSync(),
+        '# Guide\n',
+      );
+      expect(await concurrent.readAsString(), concurrentSource);
+    },
+  );
+
+  test('clean rollback removes the harmless newly created target', () async {
+    final fixture = await _fixture(
+      trees: {
+        'guide.tree': '''
+<instance-profile id="guide" start-page="guide.md">
+  <toc-element topic="guide.md"/>
+</instance-profile>
+''',
+      },
+      topics: {'guide.md': '# Guide\n'},
+    );
+    final tree = File(p.join(fixture.root.path, 'guide.tree'));
+    final originalTree = await tree.readAsString();
+    final racingEditor = WritersideTopicFileEditor(
+      beforeTreePublish: (_) async => throw StateError('stop publication'),
+    );
+
+    await expectLater(
+      racingEditor.rename(
+        module: fixture.module,
+        topic: _topic(fixture.module, 'guide.md'),
+        newFileName: 'setup.md',
+      ),
+      throwsStateError,
+    );
+
+    expect(await tree.readAsString(), originalTree);
+    expect(
+      File(p.join(fixture.root.path, 'topics', 'guide.md')).existsSync(),
+      isTrue,
+    );
+    expect(
+      File(p.join(fixture.root.path, 'topics', 'setup.md')).existsSync(),
+      isFalse,
+    );
+  });
+
   test('rename preserves topic and instance tree file modes', () async {
     final fixture = await _fixture(
       trees: {
@@ -718,6 +2411,8 @@ void main() {
 Future<({Directory root, WritersideModule module})> _fixture({
   required Map<String, String> trees,
   required Map<String, String> topics,
+  WorkspaceScanOptions scanOptions = const WorkspaceScanOptions(),
+  void Function(Directory root)? beforeLoad,
 }) async {
   final root = await Directory.systemTemp.createTemp(
     'busymark-topic-file-editor-',
@@ -745,14 +2440,57 @@ Future<({Directory root, WritersideModule module})> _fixture({
     file.parent.createSync(recursive: true);
     file.writeAsStringSync(entry.value);
   }
+  beforeLoad?.call(root);
   return (
     root: Directory(await root.resolveSymbolicLinks()),
-    module: await const WritersideModuleService().load(root.path),
+    module: await const WritersideModuleService().load(
+      root.path,
+      options: scanOptions,
+    ),
   );
 }
 
 WritersideTopic _topic(WritersideModule module, String fileName) {
   return module.topics.singleWhere((topic) => topic.fileName == fileName);
+}
+
+List<String?> _resolvedLinkDestinations(
+  WritersideModule module,
+  String fileName, {
+  Map<String, WritersideModule> modulesByOrigin = const {},
+}) {
+  final topic = _topic(module, fileName);
+  final resolved = const WritersideDocumentResolver().resolve(
+    topic.document,
+    WritersideResolveContext(
+      module: module,
+      topic: topic,
+      instance: module.instances.isEmpty ? null : module.instances.first,
+      modulesByOrigin: modulesByOrigin,
+    ),
+  );
+  final rendered = const WritersideDocumentRenderer().toBusyDocument(
+    resolved.document,
+  );
+  return _busyBlocks(rendered.blocks)
+      .expand((block) => _busyInlines(block.inlines))
+      .where((inline) => inline.kind == BusyInlineKind.link)
+      .map((inline) => inline.destination)
+      .toList();
+}
+
+Iterable<BusyBlock> _busyBlocks(Iterable<BusyBlock> blocks) sync* {
+  for (final block in blocks) {
+    yield block;
+    yield* _busyBlocks(block.children);
+  }
+}
+
+Iterable<BusyInline> _busyInlines(Iterable<BusyInline> inlines) sync* {
+  for (final inline in inlines) {
+    yield inline;
+    yield* _busyInlines(inline.children);
+  }
 }
 
 XmlDocument _tree(Directory root, String fileName) {
@@ -774,3 +2512,10 @@ List<String> _directTopicReferences(XmlElement element) {
       if (child.name.local == 'toc-element') child.getAttribute('topic')!,
   ];
 }
+
+String _instanceTree(String id, List<String> topics) =>
+    '''
+<instance-profile id="$id">
+${[for (final topic in topics) '  <toc-element topic="$topic"/>'].join('\n')}
+</instance-profile>
+''';

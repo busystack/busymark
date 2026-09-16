@@ -11,6 +11,224 @@ class AppLocalizationsKo extends AppLocalizations {
   AppLocalizationsKo([String locale = 'ko']) : super(locale);
 
   @override
+  String get tocTopicFromTemplate => '템플릿에서 토픽...';
+
+  @override
+  String get tocSaveAsTemplate => '템플릿으로 저장';
+
+  @override
+  String get tocTemplateDialog => '템플릿에서 토픽 만들기';
+
+  @override
+  String get tocTemplatesEditor => '파일 및 코드 템플릿';
+
+  @override
+  String get tocEditTemplates => '템플릿 편집...';
+
+  @override
+  String get tocCreateCustomTemplate => '사용자 지정 템플릿 만들기...';
+
+  @override
+  String get tocTemplateCreated => '템플릿 생성됨';
+
+  @override
+  String get tocTemplateDefault => '기본';
+
+  @override
+  String get tocTemplateCustom => '사용자 지정';
+
+  @override
+  String get tocTemplateFilename => '파일 이름:';
+
+  @override
+  String get tocTemplateMarkdown => 'Markdown (.md)';
+
+  @override
+  String get tocTemplateXml => 'XML (.topic)';
+
+  @override
+  String get tocTemplatesInternal => '내부';
+
+  @override
+  String get tocTemplateUnnamed => '이름 없음';
+
+  @override
+  String get tocTemplateNew => '새 템플릿...';
+
+  @override
+  String get tocTemplateName => '이름:';
+
+  @override
+  String get tocTemplateExtension => '확장자:';
+
+  @override
+  String get tocTemplateLoadError => '템플릿을 불러올 수 없습니다. 기존 템플릿은 변경되지 않았습니다.';
+
+  @override
+  String get tocTemplateSaveError => '템플릿을 저장할 수 없습니다. 편집 내용은 여기에 유지됩니다.';
+
+  @override
+  String get tocTemplateConflict => '다른 창에서 템플릿이 변경되었습니다. 취소하고 편집기를 다시 여세요.';
+
+  @override
+  String get tocTemplateDuplicateName => '이 이름과 확장자를 가진 템플릿이 이미 있습니다.';
+
+  @override
+  String get tocTemplateFormat => '형식:';
+
+  @override
+  String get tocTemplateReset => '초기화';
+
+  @override
+  String get tocTemplateRetry => '다시 시도';
+
+  @override
+  String tocRemoveElementsDialog(int count) {
+    return '목차 요소 $count개 제거';
+  }
+
+  @override
+  String get tocRemoveElementsRetainFiles => '이 목차 요소와 연결된 소스 파일은 삭제되지 않습니다.';
+
+  @override
+  String get tocOk => '확인';
+
+  @override
+  String get tocSelectExistingTopic => '현재 인스턴스에 추가할 토픽 선택';
+
+  @override
+  String get tocGroupName => '그룹 이름';
+
+  @override
+  String get tocMoveLineUp => '줄 위로 이동';
+
+  @override
+  String get tocMoveLineDown => '줄 아래로 이동';
+
+  @override
+  String get tocEmptyMdTopic => '빈 MD 토픽';
+
+  @override
+  String get tocEmptyXmlTopic => '빈 XML 토픽';
+
+  @override
+  String get tocCopySpecial => '특수 복사';
+
+  @override
+  String tocCopyFileName(String name) {
+    return '토픽 파일 이름 \'$name\'';
+  }
+
+  @override
+  String get tocCopyFilePath => '토픽 파일 경로';
+
+  @override
+  String tocCopyTopicTitle(String title) {
+    return '토픽 제목 \'$title\'';
+  }
+
+  @override
+  String tocCopyElementId(String id) {
+    return '목차 요소 ID \'$id\'';
+  }
+
+  @override
+  String get tocCopyFileNameUnavailable => '토픽 파일 이름';
+
+  @override
+  String get tocCopyTopicTitleUnavailable => '토픽 제목';
+
+  @override
+  String get tocCopyElementIdUnavailable => '목차 요소 ID';
+
+  @override
+  String get tocEditTitleAction => '제목 편집...';
+
+  @override
+  String get tocEditTitleDialog => '제목 편집';
+
+  @override
+  String get tocRemoveElementAction => '목차 요소 제거...';
+
+  @override
+  String get tocSetHomePage => '홈 페이지로 설정';
+
+  @override
+  String tocGoToElement(String fileName) {
+    return '\'$fileName\'의 목차 요소로 이동';
+  }
+
+  @override
+  String get tocSynchronize => '목차와 편집기 동기화';
+
+  @override
+  String get tocEmptyGroupAction => '빈 그룹';
+
+  @override
+  String get tocNewEmptyGroup => '새 빈 그룹';
+
+  @override
+  String get tocGroupAction => '그룹화';
+
+  @override
+  String get tocNewGroup => '새 그룹';
+
+  @override
+  String get tocSortChildren => '하위 토픽을 알파벳순으로 정렬';
+
+  @override
+  String get tocLinkTopicFiles => '토픽 파일을 목차에 연결...';
+
+  @override
+  String get addLocalMarkdownFiles => '로컬 Markdown 파일 추가';
+
+  @override
+  String get tocTitleField => '목차 제목:';
+
+  @override
+  String get tocTopicTitleField => '토픽 제목:';
+
+  @override
+  String get tocAdvancedSettings => '고급 설정';
+
+  @override
+  String tocInstanceTitleField(String instanceId) {
+    return '\'$instanceId\'의 제목:';
+  }
+
+  @override
+  String get tocOnlyTitleField => '목차 전용 제목:';
+
+  @override
+  String get tocInstanceTitleExplanation =>
+      '현재 인스턴스에만 사용됩니다. 기본적으로 토픽 제목을 상속합니다.';
+
+  @override
+  String get tocOnlyTitleExplanation =>
+      '목차에만 사용됩니다. 기본적으로 토픽 제목 또는 설정된 인스턴스별 제목을 상속합니다. 제목에 대한 설명:';
+
+  @override
+  String get tocTitleDocumentationLink => '여기';
+
+  @override
+  String get tocFindUsages => '찾기';
+
+  @override
+  String get tocRefactorMenu => '리팩터링';
+
+  @override
+  String get tocSafeDelete => '안전하게 삭제';
+
+  @override
+  String get tocDuplicate => '복제';
+
+  @override
+  String get tocDuplicateFilename => '토픽 파일 이름:';
+
+  @override
+  String get tocDuplicateDialog => '토픽 복제';
+
+  @override
   String get pdfTitlePage => '제목 페이지';
 
   @override
@@ -1118,7 +1336,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get files => '파일';
 
   @override
-  String get toc => '토픽';
+  String get toc => '목차';
 
   @override
   String get tocActions => '목차 작업';
@@ -1156,7 +1374,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get newChildTopic => '새 하위 토픽';
 
   @override
-  String get newSiblingTopic => '새 형제 토픽';
+  String get newSiblingTopic => '새 토픽';
 
   @override
   String get renameTopicFile => '토픽 파일 이름 바꾸기';
@@ -1218,7 +1436,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String topicRemovalSummary(String topic) {
-    return '선택한 인스턴스에서 “$topic”을(를) 제거합니다. 토픽 파일은 유지됩니다.';
+    return '목차 요소 “$topic”을(를) 제거하시겠습니까? 목차에 연결된 소스 파일은 삭제되지 않습니다.';
   }
 
   @override
@@ -1243,7 +1461,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String topicUsagesCount(int count) {
-    return '사용처 ($count)';
+    return '사용처 $count개를 찾았습니다.';
   }
 
   @override
@@ -1289,7 +1507,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get manualUsageUpdatesRequired => '일부 사용처는 이 리팩터링 전에 수동으로 변경해야 합니다.';
 
   @override
-  String get setRedirectTo => '다음으로 리디렉션 설정';
+  String get setRedirectTo => '다음으로 리디렉션 설정:';
 
   @override
   String get noRedirectDescription => '이전에 게시된 페이지를 리디렉션하지 마세요.';
@@ -1314,6 +1532,30 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get doRefactor => '리팩토링 수행';
+
+  @override
+  String get preview => '미리 보기';
+
+  @override
+  String get topicRenamePreviewTitle => '이름 바꾸기 미리 보기';
+
+  @override
+  String topicRenamePathChange(String oldPath, String newPath) {
+    return '경로: $oldPath → $newPath';
+  }
+
+  @override
+  String topicRenameIdChange(String oldId, String newId) {
+    return '토픽 ID: $oldId → $newId';
+  }
+
+  @override
+  String topicRenameUrlChange(String instance, String oldName, String newName) {
+    return '인스턴스 $instance: $oldName → $newName';
+  }
+
+  @override
+  String get topicRenameAffectedFiles => '영향을 받는 파일';
 
   @override
   String get orphanTopicTitle => '토픽 파일이 더 이상 사용되지 않습니다.';
@@ -1855,6 +2097,23 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
+  String errorWritersideTopicRenameIncompleteProjectIndex(
+    String module,
+    String count,
+    String paths,
+  ) {
+    return '모듈 $module의 토픽 파일 $count개가 구문 분석되지 않아 이름 바꾸기로 모든 프로젝트 참조를 안전하게 업데이트할 수 없습니다: $paths';
+  }
+
+  @override
+  String get errorWritersideTopicRenameProjectBuffersDirty =>
+      'Writerside 프로젝트 파일에 저장되지 않은 변경 사항이 있습니다. 이를 해결하고 새 이름 바꾸기 미리보기를 준비하세요.';
+
+  @override
+  String get errorWritersideTopicRenameProjectInventoryChanged =>
+      'Writerside 프로젝트의 모듈 집합이 변경되었습니다. 리팩터링하기 전에 새 이름 바꾸기 미리보기를 준비하세요.';
+
+  @override
   String get errorTopicsRootUnsafe => '토픽 루트는 안전한 상대 디렉터리여야 합니다.';
 
   @override
@@ -2118,6 +2377,25 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String diagnosticWritersideTopicDuplicateId(String id) {
     return '요소 ID \"$id\"이(가) 두 번 이상 나타납니다.';
+  }
+
+  @override
+  String diagnosticWritersideWebFileNameInvalid(
+    String instanceId,
+    String webFileName,
+    String topic,
+  ) {
+    return '인스턴스 \"$instanceId\"에서 토픽 \"$topic\"의 웹 파일 이름 \"$webFileName\"이 올바르지 않습니다.';
+  }
+
+  @override
+  String diagnosticWritersideWebFileNameCollision(
+    String instanceId,
+    String webFileName,
+    String firstTopic,
+    String secondTopic,
+  ) {
+    return '인스턴스 \"$instanceId\"에서 \"$firstTopic\"과 \"$secondTopic\"이 모두 \"$webFileName\"으로 게시됩니다.';
   }
 
   @override
@@ -3576,24 +3854,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get aiDraftWithAi => 'AI를 활용한 초안';
 
   @override
-  String get generateOrUpdateMarkdownToc => '목차 생성/업데이트';
-
-  @override
-  String get markdownTocTitle => '목차';
-
-  @override
-  String markdownTocUpdated(int count) {
-    return '$count개의 항목으로 목차가 업데이트되었습니다.';
-  }
-
-  @override
-  String get markdownTocNoHeadings => '목차를 생성하기 전에 하나 이상의 섹션 제목을 추가하세요.';
-
-  @override
-  String get markdownTocMalformedMarkers =>
-      'BusyMark 목차 표시가 없거나 중복되었거나 순서가 잘못되었습니다.';
-
-  @override
   String diagnosticMarkdownHeadingSkippedLevel(int level, int previousLevel) {
     return '제목 수준 $level은(는) $previousLevel 수준을 따릅니다. 섹션 중첩을 검토하세요.';
   }
@@ -3629,6 +3889,10 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get cannotRenameSymbol =>
       '기호 이름을 안전하게 바꿀 수 없습니다. 이름을 확인하고 참조를 새로 고친 후 다시 시도하세요.';
+
+  @override
+  String get renameTopicFileInstead =>
+      '토픽 ID는 파일 이름에서 생성됩니다. 목차 또는 파일 사이드바에서 토픽 파일 이름 바꾸기를 사용하세요.';
 
   @override
   String get keyboardLayout => '키보드 배열';

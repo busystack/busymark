@@ -11,6 +11,230 @@ class AppLocalizationsUk extends AppLocalizations {
   AppLocalizationsUk([String locale = 'uk']) : super(locale);
 
   @override
+  String get tocTopicFromTemplate => 'Тема з шаблону...';
+
+  @override
+  String get tocSaveAsTemplate => 'Зберегти як шаблон';
+
+  @override
+  String get tocTemplateDialog => 'Створити тему з шаблону';
+
+  @override
+  String get tocTemplatesEditor => 'Шаблони файлів і коду';
+
+  @override
+  String get tocEditTemplates => 'Редагувати шаблони...';
+
+  @override
+  String get tocCreateCustomTemplate => 'Створити власний шаблон...';
+
+  @override
+  String get tocTemplateCreated => 'Шаблон створено';
+
+  @override
+  String get tocTemplateDefault => 'Стандартні';
+
+  @override
+  String get tocTemplateCustom => 'Власні';
+
+  @override
+  String get tocTemplateFilename => 'Ім’я файлу:';
+
+  @override
+  String get tocTemplateMarkdown => 'Markdown (.md)';
+
+  @override
+  String get tocTemplateXml => 'XML (.topic)';
+
+  @override
+  String get tocTemplatesInternal => 'Внутрішні';
+
+  @override
+  String get tocTemplateUnnamed => 'Без назви';
+
+  @override
+  String get tocTemplateNew => 'Новий шаблон...';
+
+  @override
+  String get tocTemplateName => 'Назва:';
+
+  @override
+  String get tocTemplateExtension => 'Розширення:';
+
+  @override
+  String get tocTemplateLoadError =>
+      'Не вдалося завантажити шаблони. Наявні шаблони не змінено.';
+
+  @override
+  String get tocTemplateSaveError =>
+      'Не вдалося зберегти шаблони. Ваші зміни залишилися в редакторі.';
+
+  @override
+  String get tocTemplateConflict =>
+      'Шаблони змінено в іншому вікні. Скасуйте та знову відкрийте редактор.';
+
+  @override
+  String get tocTemplateDuplicateName =>
+      'Шаблон із такою назвою та розширенням уже існує.';
+
+  @override
+  String get tocTemplateFormat => 'Формат:';
+
+  @override
+  String get tocTemplateReset => 'Скинути';
+
+  @override
+  String get tocTemplateRetry => 'Повторити';
+
+  @override
+  String tocRemoveElementsDialog(int count) {
+    return 'Вилучити $count елементів змісту';
+  }
+
+  @override
+  String get tocRemoveElementsRetainFiles =>
+      'Вихідні файли, пов’язані з цими елементами змісту, не буде видалено.';
+
+  @override
+  String get tocOk => 'OK';
+
+  @override
+  String get tocSelectExistingTopic =>
+      'Виберіть тему для додавання до поточного екземпляра';
+
+  @override
+  String get tocGroupName => 'Назва групи';
+
+  @override
+  String get tocMoveLineUp => 'Перемістити рядок угору';
+
+  @override
+  String get tocMoveLineDown => 'Перемістити рядок униз';
+
+  @override
+  String get tocEmptyMdTopic => 'Порожня тема MD';
+
+  @override
+  String get tocEmptyXmlTopic => 'Порожня тема XML';
+
+  @override
+  String get tocCopySpecial => 'Спеціальне копіювання';
+
+  @override
+  String tocCopyFileName(String name) {
+    return 'Назва файлу теми \'$name\'';
+  }
+
+  @override
+  String get tocCopyFilePath => 'Шлях до файлу теми';
+
+  @override
+  String tocCopyTopicTitle(String title) {
+    return 'Заголовок теми \'$title\'';
+  }
+
+  @override
+  String tocCopyElementId(String id) {
+    return 'ID елемента змісту \'$id\'';
+  }
+
+  @override
+  String get tocCopyFileNameUnavailable => 'Назва файлу теми';
+
+  @override
+  String get tocCopyTopicTitleUnavailable => 'Заголовок теми';
+
+  @override
+  String get tocCopyElementIdUnavailable => 'ID елемента змісту';
+
+  @override
+  String get tocEditTitleAction => 'Редагувати заголовок...';
+
+  @override
+  String get tocEditTitleDialog => 'Редагувати заголовок';
+
+  @override
+  String get tocRemoveElementAction => 'Вилучити елемент змісту...';
+
+  @override
+  String get tocSetHomePage => 'Зробити домашньою сторінкою';
+
+  @override
+  String tocGoToElement(String fileName) {
+    return 'Перейти до елемента змісту в «$fileName»';
+  }
+
+  @override
+  String get tocSynchronize => 'Синхронізувати зміст і редактор';
+
+  @override
+  String get tocEmptyGroupAction => 'Порожня група';
+
+  @override
+  String get tocNewEmptyGroup => 'Нова порожня група';
+
+  @override
+  String get tocGroupAction => 'Згрупувати';
+
+  @override
+  String get tocNewGroup => 'Нова група';
+
+  @override
+  String get tocSortChildren => 'Сортувати дочірні теми за абеткою';
+
+  @override
+  String get tocLinkTopicFiles => 'Пов’язати файли тем зі змістом...';
+
+  @override
+  String get addLocalMarkdownFiles => 'Додати локальні файли Markdown';
+
+  @override
+  String get tocTitleField => 'Заголовок у змісті:';
+
+  @override
+  String get tocTopicTitleField => 'Заголовок теми:';
+
+  @override
+  String get tocAdvancedSettings => 'Додаткові налаштування';
+
+  @override
+  String tocInstanceTitleField(String instanceId) {
+    return 'Заголовок для «$instanceId»:';
+  }
+
+  @override
+  String get tocOnlyTitleField => 'Заголовок лише для змісту:';
+
+  @override
+  String get tocInstanceTitleExplanation =>
+      'Використовується лише для поточного екземпляра. За замовчуванням успадковується від заголовка теми.';
+
+  @override
+  String get tocOnlyTitleExplanation =>
+      'Використовується лише у змісті. За замовчуванням успадковується від заголовка теми або заголовка екземпляра, якщо його задано. Пояснення заголовків наведено';
+
+  @override
+  String get tocTitleDocumentationLink => 'тут';
+
+  @override
+  String get tocFindUsages => 'Пошук';
+
+  @override
+  String get tocRefactorMenu => 'Рефакторинг';
+
+  @override
+  String get tocSafeDelete => 'Безпечне видалення';
+
+  @override
+  String get tocDuplicate => 'Дублювати';
+
+  @override
+  String get tocDuplicateFilename => 'Назва файлу теми:';
+
+  @override
+  String get tocDuplicateDialog => 'Дублювати тему';
+
+  @override
   String get pdfTitlePage => 'Титульна сторінка';
 
   @override
@@ -1183,7 +1407,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get files => 'Файли';
 
   @override
-  String get toc => 'Теми';
+  String get toc => 'Зміст';
 
   @override
   String get tocActions => 'Дії зі змістом';
@@ -1223,7 +1447,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get newChildTopic => 'Нова дочірня тема';
 
   @override
-  String get newSiblingTopic => 'Нова тема на тому самому рівні';
+  String get newSiblingTopic => 'Нова тема';
 
   @override
   String get renameTopicFile => 'Перейменувати файл теми';
@@ -1285,7 +1509,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String topicRemovalSummary(String topic) {
-    return 'Вилучити «$topic» із вибраного екземпляра. Файл теми буде збережено.';
+    return 'Вилучити елемент змісту «$topic»? Пов’язаний зі змістом вихідний файл не буде видалено.';
   }
 
   @override
@@ -1312,7 +1536,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String topicUsagesCount(int count) {
-    return 'Використання ($count)';
+    return 'Знайдено використань: $count.';
   }
 
   @override
@@ -1363,7 +1587,7 @@ class AppLocalizationsUk extends AppLocalizations {
       'Деякі використання потрібно змінити вручну перед цим рефакторингом.';
 
   @override
-  String get setRedirectTo => 'Переспрямувати на';
+  String get setRedirectTo => 'Переспрямувати на:';
 
   @override
   String get noRedirectDescription =>
@@ -1389,6 +1613,30 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get doRefactor => 'Виконати рефакторинг';
+
+  @override
+  String get preview => 'Попередній перегляд';
+
+  @override
+  String get topicRenamePreviewTitle => 'Попередній перегляд перейменування';
+
+  @override
+  String topicRenamePathChange(String oldPath, String newPath) {
+    return 'Шлях: $oldPath → $newPath';
+  }
+
+  @override
+  String topicRenameIdChange(String oldId, String newId) {
+    return 'ID теми: $oldId → $newId';
+  }
+
+  @override
+  String topicRenameUrlChange(String instance, String oldName, String newName) {
+    return 'Екземпляр $instance: $oldName → $newName';
+  }
+
+  @override
+  String get topicRenameAffectedFiles => 'Змінені файли';
 
   @override
   String get orphanTopicTitle => 'Файл теми більше не використовується';
@@ -1960,6 +2208,23 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
+  String errorWritersideTopicRenameIncompleteProjectIndex(
+    String module,
+    String count,
+    String paths,
+  ) {
+    return 'Перейменування не може безпечно оновити всі посилання проєкту, оскільки в модулі $module не розібрано файлів тем: $count. Файли: $paths';
+  }
+
+  @override
+  String get errorWritersideTopicRenameProjectBuffersDirty =>
+      'У файлах проєкту Writerside є незбережені зміни. Розв’яжіть їх і підготуйте новий попередній перегляд перейменування.';
+
+  @override
+  String get errorWritersideTopicRenameProjectInventoryChanged =>
+      'Набір модулів проєкту Writerside змінився. Перед рефакторингом підготуйте новий попередній перегляд перейменування.';
+
+  @override
   String get errorTopicsRootUnsafe =>
       'Кореневий каталог тем має бути допустимим відносним каталогом.';
 
@@ -2231,6 +2496,25 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String diagnosticWritersideTopicDuplicateId(String id) {
     return 'Ідентифікатор елемента «$id» з’являється більше одного разу.';
+  }
+
+  @override
+  String diagnosticWritersideWebFileNameInvalid(
+    String instanceId,
+    String webFileName,
+    String topic,
+  ) {
+    return 'Екземпляр \"$instanceId\" публікує неприпустиме ім’я вебфайлу \"$webFileName\" для теми \"$topic\".';
+  }
+
+  @override
+  String diagnosticWritersideWebFileNameCollision(
+    String instanceId,
+    String webFileName,
+    String firstTopic,
+    String secondTopic,
+  ) {
+    return 'Екземпляр \"$instanceId\" публікує теми \"$firstTopic\" і \"$secondTopic\" під одним іменем \"$webFileName\".';
   }
 
   @override
@@ -3745,25 +4029,6 @@ class AppLocalizationsUk extends AppLocalizations {
   String get aiDraftWithAi => 'Створити чернетку за допомогою ШІ';
 
   @override
-  String get generateOrUpdateMarkdownToc => 'Створити/оновити зміст';
-
-  @override
-  String get markdownTocTitle => 'Зміст';
-
-  @override
-  String markdownTocUpdated(int count) {
-    return 'Зміст оновлено, записів: $count.';
-  }
-
-  @override
-  String get markdownTocNoHeadings =>
-      'Додайте принаймні один заголовок розділу перед створенням змісту.';
-
-  @override
-  String get markdownTocMalformedMarkers =>
-      'Маркери змісту BusyMark відсутні, повторюються або розташовані в неправильному порядку.';
-
-  @override
   String diagnosticMarkdownHeadingSkippedLevel(int level, int previousLevel) {
     return 'Після заголовка рівня $previousLevel іде рівень $level; перевірте вкладеність розділів.';
   }
@@ -3799,6 +4064,10 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get cannotRenameSymbol =>
       'Неможливо безпечно перейменувати символ. Перевірте назву й оновіть посилання перед повторною спробою.';
+
+  @override
+  String get renameTopicFileInstead =>
+      'ID тем визначаються іменами їхніх файлів. Скористайтеся командою «Перейменувати файл теми» у змісті або на бічній панелі «Файли».';
 
   @override
   String get keyboardLayout => 'Розкладка клавіатури';

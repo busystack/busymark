@@ -1,0 +1,3 @@
+<instance-profile id="library" name="Reusable navigation" is-library="true">
+  <snippet id="shared"><toc-element topic="shared.md" id="shared-topic"/></snippet>
+</instance-profile>

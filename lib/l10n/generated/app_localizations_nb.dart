@@ -11,6 +11,231 @@ class AppLocalizationsNb extends AppLocalizations {
   AppLocalizationsNb([String locale = 'nb']) : super(locale);
 
   @override
+  String get tocTopicFromTemplate => 'Emne fra mal...';
+
+  @override
+  String get tocSaveAsTemplate => 'Lagre som mal';
+
+  @override
+  String get tocTemplateDialog => 'Opprett emne fra mal';
+
+  @override
+  String get tocTemplatesEditor => 'Fil- og kodemaler';
+
+  @override
+  String get tocEditTemplates => 'Rediger maler...';
+
+  @override
+  String get tocCreateCustomTemplate => 'Opprett egendefinert mal...';
+
+  @override
+  String get tocTemplateCreated => 'Mal opprettet';
+
+  @override
+  String get tocTemplateDefault => 'Standard';
+
+  @override
+  String get tocTemplateCustom => 'Egendefinerte';
+
+  @override
+  String get tocTemplateFilename => 'Filnavn:';
+
+  @override
+  String get tocTemplateMarkdown => 'Markdown (.md)';
+
+  @override
+  String get tocTemplateXml => 'XML (.topic)';
+
+  @override
+  String get tocTemplatesInternal => 'Interne';
+
+  @override
+  String get tocTemplateUnnamed => 'Uten navn';
+
+  @override
+  String get tocTemplateNew => 'Ny mal...';
+
+  @override
+  String get tocTemplateName => 'Navn:';
+
+  @override
+  String get tocTemplateExtension => 'Filtype:';
+
+  @override
+  String get tocTemplateLoadError =>
+      'Kunne ikke laste maler. Eksisterende maler er ikke endret.';
+
+  @override
+  String get tocTemplateSaveError =>
+      'Kunne ikke lagre maler. Endringene dine er fortsatt tilgjengelige her.';
+
+  @override
+  String get tocTemplateConflict =>
+      'Malene ble endret i et annet vindu. Avbryt og åpne redigereren på nytt.';
+
+  @override
+  String get tocTemplateDuplicateName =>
+      'En mal med dette navnet og denne filtypen finnes allerede.';
+
+  @override
+  String get tocTemplateFormat => 'Format:';
+
+  @override
+  String get tocTemplateReset => 'Tilbakestill';
+
+  @override
+  String get tocTemplateRetry => 'Prøv igjen';
+
+  @override
+  String tocRemoveElementsDialog(int count) {
+    return 'Fjern $count innholdsfortegnelseselementer';
+  }
+
+  @override
+  String get tocRemoveElementsRetainFiles =>
+      'Kildefilene som er knyttet til disse innholdsfortegnelseselementene, blir ikke slettet.';
+
+  @override
+  String get tocOk => 'OK';
+
+  @override
+  String get tocSelectExistingTopic =>
+      'Velg emne som skal legges til i gjeldende instans';
+
+  @override
+  String get tocGroupName => 'Gruppenavn';
+
+  @override
+  String get tocMoveLineUp => 'Flytt linje opp';
+
+  @override
+  String get tocMoveLineDown => 'Flytt linje ned';
+
+  @override
+  String get tocEmptyMdTopic => 'Tomt MD-emne';
+
+  @override
+  String get tocEmptyXmlTopic => 'Tomt XML-emne';
+
+  @override
+  String get tocCopySpecial => 'Spesiell kopiering';
+
+  @override
+  String tocCopyFileName(String name) {
+    return 'Emnefilnavn \'$name\'';
+  }
+
+  @override
+  String get tocCopyFilePath => 'Emnefilbane';
+
+  @override
+  String tocCopyTopicTitle(String title) {
+    return 'Emnetittel \'$title\'';
+  }
+
+  @override
+  String tocCopyElementId(String id) {
+    return 'ID for innholdsfortegnelseselement \'$id\'';
+  }
+
+  @override
+  String get tocCopyFileNameUnavailable => 'Emnefilnavn';
+
+  @override
+  String get tocCopyTopicTitleUnavailable => 'Emnetittel';
+
+  @override
+  String get tocCopyElementIdUnavailable =>
+      'ID for innholdsfortegnelseselement';
+
+  @override
+  String get tocEditTitleAction => 'Rediger tittel...';
+
+  @override
+  String get tocEditTitleDialog => 'Rediger tittel';
+
+  @override
+  String get tocRemoveElementAction => 'Fjern innholdsfortegnelseselement...';
+
+  @override
+  String get tocSetHomePage => 'Angi som startside';
+
+  @override
+  String tocGoToElement(String fileName) {
+    return 'Gå til innholdsfortegnelseselement i \'$fileName\'';
+  }
+
+  @override
+  String get tocSynchronize => 'Synkroniser innholdsfortegnelse og redigering';
+
+  @override
+  String get tocEmptyGroupAction => 'Tom gruppe';
+
+  @override
+  String get tocNewEmptyGroup => 'Ny tom gruppe';
+
+  @override
+  String get tocGroupAction => 'Grupper';
+
+  @override
+  String get tocNewGroup => 'Ny gruppe';
+
+  @override
+  String get tocSortChildren => 'Sorter underemner alfabetisk';
+
+  @override
+  String get tocLinkTopicFiles => 'Koble emnefiler til innholdsfortegnelsen...';
+
+  @override
+  String get addLocalMarkdownFiles => 'Legg til lokale Markdown-filer';
+
+  @override
+  String get tocTitleField => 'Tittel i innholdsfortegnelsen:';
+
+  @override
+  String get tocTopicTitleField => 'Emnetittel:';
+
+  @override
+  String get tocAdvancedSettings => 'Avanserte innstillinger';
+
+  @override
+  String tocInstanceTitleField(String instanceId) {
+    return 'Tittel for \'$instanceId\':';
+  }
+
+  @override
+  String get tocOnlyTitleField => 'Tittel kun for innholdsfortegnelsen:';
+
+  @override
+  String get tocInstanceTitleExplanation =>
+      'Brukes bare for den gjeldende instansen. Arves som standard fra emnetittelen.';
+
+  @override
+  String get tocOnlyTitleExplanation =>
+      'Brukes bare i innholdsfortegnelsen. Arves som standard fra emnetittelen eller den instansspesifikke tittelen hvis den er angitt. Titler er forklart';
+
+  @override
+  String get tocTitleDocumentationLink => 'her';
+
+  @override
+  String get tocFindUsages => 'Finn';
+
+  @override
+  String get tocRefactorMenu => 'Refaktorer';
+
+  @override
+  String get tocSafeDelete => 'Sikker sletting';
+
+  @override
+  String get tocDuplicate => 'Dupliser';
+
+  @override
+  String get tocDuplicateFilename => 'Emnefilnavn:';
+
+  @override
+  String get tocDuplicateDialog => 'Dupliser emne';
+
+  @override
   String get pdfTitlePage => 'Tittelside';
 
   @override
@@ -1162,7 +1387,7 @@ class AppLocalizationsNb extends AppLocalizations {
   String get files => 'Filer';
 
   @override
-  String get toc => 'Emner';
+  String get toc => 'Innholdsfortegnelse';
 
   @override
   String get tocActions => 'Handlinger for innholdsfortegnelsen';
@@ -1200,7 +1425,7 @@ class AppLocalizationsNb extends AppLocalizations {
   String get newChildTopic => 'Nytt underemne';
 
   @override
-  String get newSiblingTopic => 'Nytt emne på samme nivå';
+  String get newSiblingTopic => 'Nytt emne';
 
   @override
   String get renameTopicFile => 'Gi emnefilen nytt navn';
@@ -1262,7 +1487,7 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String topicRemovalSummary(String topic) {
-    return 'Fjern «$topic» fra den valgte instansen. Emnefilen beholdes.';
+    return 'Fjerne innholdsfortegnelseselementet «$topic»? Den tilknyttede kildefilen blir ikke slettet.';
   }
 
   @override
@@ -1287,7 +1512,7 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String topicUsagesCount(int count) {
-    return 'Bruk ($count)';
+    return '$count brukssteder funnet.';
   }
 
   @override
@@ -1336,7 +1561,7 @@ class AppLocalizationsNb extends AppLocalizations {
       'Noe bruk må endres manuelt før denne refaktoreringen.';
 
   @override
-  String get setRedirectTo => 'Omdiriger til';
+  String get setRedirectTo => 'Omdiriger til:';
 
   @override
   String get noRedirectDescription =>
@@ -1362,6 +1587,30 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String get doRefactor => 'Utfør refaktorering';
+
+  @override
+  String get preview => 'Forhåndsvisning';
+
+  @override
+  String get topicRenamePreviewTitle => 'Forhåndsvisning av navneendring';
+
+  @override
+  String topicRenamePathChange(String oldPath, String newPath) {
+    return 'Sti: $oldPath → $newPath';
+  }
+
+  @override
+  String topicRenameIdChange(String oldId, String newId) {
+    return 'Emne-ID: $oldId → $newId';
+  }
+
+  @override
+  String topicRenameUrlChange(String instance, String oldName, String newName) {
+    return 'Instans $instance: $oldName → $newName';
+  }
+
+  @override
+  String get topicRenameAffectedFiles => 'Berørte filer';
 
   @override
   String get orphanTopicTitle => 'Emnefilen brukes ikke lenger';
@@ -1923,6 +2172,23 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
+  String errorWritersideTopicRenameIncompleteProjectIndex(
+    String module,
+    String count,
+    String paths,
+  ) {
+    return 'Navneendringen kan ikke oppdatere alle prosjektreferanser trygt fordi $count emnefil(er) i modulen $module ikke ble analysert: $paths';
+  }
+
+  @override
+  String get errorWritersideTopicRenameProjectBuffersDirty =>
+      'Writerside-prosjektfiler har ulagrede endringer. Løs dem og klargjør en ny forhåndsvisning av navneendringen.';
+
+  @override
+  String get errorWritersideTopicRenameProjectInventoryChanged =>
+      'Modulsettet i Writerside-prosjektet er endret. Klargjør en ny forhåndsvisning av navneendringen før refaktorering.';
+
+  @override
   String get errorTopicsRootUnsafe =>
       'Emneroten må være en sikker relativ mappe.';
 
@@ -2192,6 +2458,25 @@ class AppLocalizationsNb extends AppLocalizations {
   @override
   String diagnosticWritersideTopicDuplicateId(String id) {
     return 'Element-ID-en «$id» vises mer enn én gang.';
+  }
+
+  @override
+  String diagnosticWritersideWebFileNameInvalid(
+    String instanceId,
+    String webFileName,
+    String topic,
+  ) {
+    return 'Instansen \"$instanceId\" publiserer det ugyldige nettfilnavnet \"$webFileName\" for emnet \"$topic\".';
+  }
+
+  @override
+  String diagnosticWritersideWebFileNameCollision(
+    String instanceId,
+    String webFileName,
+    String firstTopic,
+    String secondTopic,
+  ) {
+    return 'Instansen \"$instanceId\" publiserer både \"$firstTopic\" og \"$secondTopic\" som \"$webFileName\".';
   }
 
   @override
@@ -3682,26 +3967,6 @@ class AppLocalizationsNb extends AppLocalizations {
   String get aiDraftWithAi => 'Lag utkast med KI';
 
   @override
-  String get generateOrUpdateMarkdownToc =>
-      'Generer/oppdater innholdsfortegnelse';
-
-  @override
-  String get markdownTocTitle => 'Innholdsfortegnelse';
-
-  @override
-  String markdownTocUpdated(int count) {
-    return 'Innholdsfortegnelsen ble oppdatert med $count oppføringer.';
-  }
-
-  @override
-  String get markdownTocNoHeadings =>
-      'Legg til minst én seksjonsoverskrift før du genererer en innholdsfortegnelse.';
-
-  @override
-  String get markdownTocMalformedMarkers =>
-      'BusyMark-markørene for innholdsfortegnelsen mangler, er duplisert eller står i feil rekkefølge.';
-
-  @override
   String diagnosticMarkdownHeadingSkippedLevel(int level, int previousLevel) {
     return 'Overskrift på nivå $level følger nivå $previousLevel; kontroller seksjonsnestingen.';
   }
@@ -3738,6 +4003,10 @@ class AppLocalizationsNb extends AppLocalizations {
   @override
   String get cannotRenameSymbol =>
       'Symbolet kan ikke gis nytt navn trygt. Kontroller navnet og oppdater referansen før du prøver igjen.';
+
+  @override
+  String get renameTopicFileInstead =>
+      'Emne-ID-er kommer fra filnavnene. Bruk Gi nytt navn til emnefil i innholdsfortegnelsen eller sidepanelet Filer.';
 
   @override
   String get keyboardLayout => 'Tastaturoppsett';

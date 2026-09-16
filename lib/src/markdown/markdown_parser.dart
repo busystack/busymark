@@ -118,7 +118,12 @@ class MarkdownParser {
     final xmlBlocks = <MarkdownXmlBlock>[];
     final variables = <MarkdownVariableToken>[];
     const astAdapter = MarkdownAstAdapter();
-    var title = _frontMatterTitle(filePath, source, diagnostics);
+    // Writerside defines a Markdown topic title exclusively as its H1. Keep
+    // front matter in the document model, but never let its `title` metadata
+    // shadow (or substitute for) the authored Writerside heading.
+    var title = mode == MarkdownMode.writersideMarkdown
+        ? null
+        : _frontMatterTitle(filePath, source, diagnostics);
     void inspectScannedHeadingAttributes({
       required String? attrText,
       required int startOffset,

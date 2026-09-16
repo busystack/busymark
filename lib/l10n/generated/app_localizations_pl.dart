@@ -11,6 +11,230 @@ class AppLocalizationsPl extends AppLocalizations {
   AppLocalizationsPl([String locale = 'pl']) : super(locale);
 
   @override
+  String get tocTopicFromTemplate => 'Temat z szablonu...';
+
+  @override
+  String get tocSaveAsTemplate => 'Zapisz jako szablon';
+
+  @override
+  String get tocTemplateDialog => 'Utwórz temat z szablonu';
+
+  @override
+  String get tocTemplatesEditor => 'Szablony plików i kodu';
+
+  @override
+  String get tocEditTemplates => 'Edytuj szablony...';
+
+  @override
+  String get tocCreateCustomTemplate => 'Utwórz własny szablon...';
+
+  @override
+  String get tocTemplateCreated => 'Utworzono szablon';
+
+  @override
+  String get tocTemplateDefault => 'Domyślne';
+
+  @override
+  String get tocTemplateCustom => 'Własne';
+
+  @override
+  String get tocTemplateFilename => 'Nazwa pliku:';
+
+  @override
+  String get tocTemplateMarkdown => 'Markdown (.md)';
+
+  @override
+  String get tocTemplateXml => 'XML (.topic)';
+
+  @override
+  String get tocTemplatesInternal => 'Wewnętrzne';
+
+  @override
+  String get tocTemplateUnnamed => 'Bez nazwy';
+
+  @override
+  String get tocTemplateNew => 'Nowy szablon...';
+
+  @override
+  String get tocTemplateName => 'Nazwa:';
+
+  @override
+  String get tocTemplateExtension => 'Rozszerzenie:';
+
+  @override
+  String get tocTemplateLoadError =>
+      'Nie można wczytać szablonów. Istniejące szablony nie zostały zmienione.';
+
+  @override
+  String get tocTemplateSaveError =>
+      'Nie można zapisać szablonów. Twoje zmiany są nadal dostępne tutaj.';
+
+  @override
+  String get tocTemplateConflict =>
+      'Szablony zmieniono w innym oknie. Anuluj i ponownie otwórz edytor.';
+
+  @override
+  String get tocTemplateDuplicateName =>
+      'Szablon o tej nazwie i rozszerzeniu już istnieje.';
+
+  @override
+  String get tocTemplateFormat => 'Format:';
+
+  @override
+  String get tocTemplateReset => 'Przywróć';
+
+  @override
+  String get tocTemplateRetry => 'Ponów';
+
+  @override
+  String tocRemoveElementsDialog(int count) {
+    return 'Usuń $count elementów spisu treści';
+  }
+
+  @override
+  String get tocRemoveElementsRetainFiles =>
+      'Pliki źródłowe powiązane z tymi elementami spisu treści nie zostaną usunięte.';
+
+  @override
+  String get tocOk => 'OK';
+
+  @override
+  String get tocSelectExistingTopic =>
+      'Wybierz temat do dodania do bieżącej instancji';
+
+  @override
+  String get tocGroupName => 'Nazwa grupy';
+
+  @override
+  String get tocMoveLineUp => 'Przenieś wiersz w górę';
+
+  @override
+  String get tocMoveLineDown => 'Przenieś wiersz w dół';
+
+  @override
+  String get tocEmptyMdTopic => 'Pusty temat MD';
+
+  @override
+  String get tocEmptyXmlTopic => 'Pusty temat XML';
+
+  @override
+  String get tocCopySpecial => 'Kopiowanie specjalne';
+
+  @override
+  String tocCopyFileName(String name) {
+    return 'Nazwa pliku tematu \'$name\'';
+  }
+
+  @override
+  String get tocCopyFilePath => 'Ścieżka pliku tematu';
+
+  @override
+  String tocCopyTopicTitle(String title) {
+    return 'Tytuł tematu \'$title\'';
+  }
+
+  @override
+  String tocCopyElementId(String id) {
+    return 'ID elementu spisu treści \'$id\'';
+  }
+
+  @override
+  String get tocCopyFileNameUnavailable => 'Nazwa pliku tematu';
+
+  @override
+  String get tocCopyTopicTitleUnavailable => 'Tytuł tematu';
+
+  @override
+  String get tocCopyElementIdUnavailable => 'ID elementu spisu treści';
+
+  @override
+  String get tocEditTitleAction => 'Edytuj tytuł...';
+
+  @override
+  String get tocEditTitleDialog => 'Edytuj tytuł';
+
+  @override
+  String get tocRemoveElementAction => 'Usuń element spisu treści...';
+
+  @override
+  String get tocSetHomePage => 'Ustaw jako stronę główną';
+
+  @override
+  String tocGoToElement(String fileName) {
+    return 'Przejdź do elementu spisu treści w „$fileName”';
+  }
+
+  @override
+  String get tocSynchronize => 'Synchronizuj spis treści i edytor';
+
+  @override
+  String get tocEmptyGroupAction => 'Pusta grupa';
+
+  @override
+  String get tocNewEmptyGroup => 'Nowa pusta grupa';
+
+  @override
+  String get tocGroupAction => 'Grupuj';
+
+  @override
+  String get tocNewGroup => 'Nowa grupa';
+
+  @override
+  String get tocSortChildren => 'Sortuj tematy podrzędne alfabetycznie';
+
+  @override
+  String get tocLinkTopicFiles => 'Połącz pliki tematów ze spisem treści...';
+
+  @override
+  String get addLocalMarkdownFiles => 'Dodaj lokalne pliki Markdown';
+
+  @override
+  String get tocTitleField => 'Tytuł w spisie treści:';
+
+  @override
+  String get tocTopicTitleField => 'Tytuł tematu:';
+
+  @override
+  String get tocAdvancedSettings => 'Ustawienia zaawansowane';
+
+  @override
+  String tocInstanceTitleField(String instanceId) {
+    return 'Tytuł dla „$instanceId”:';
+  }
+
+  @override
+  String get tocOnlyTitleField => 'Tytuł tylko w spisie treści:';
+
+  @override
+  String get tocInstanceTitleExplanation =>
+      'Używany tylko w bieżącej instancji. Domyślnie dziedziczony z tytułu tematu.';
+
+  @override
+  String get tocOnlyTitleExplanation =>
+      'Używany tylko w spisie treści. Domyślnie dziedziczony z tytułu tematu lub tytułu instancji, jeśli został ustawiony. Objaśnienia tytułów znajdziesz';
+
+  @override
+  String get tocTitleDocumentationLink => 'tutaj';
+
+  @override
+  String get tocFindUsages => 'Znajdź';
+
+  @override
+  String get tocRefactorMenu => 'Refaktoryzacja';
+
+  @override
+  String get tocSafeDelete => 'Bezpieczne usuwanie';
+
+  @override
+  String get tocDuplicate => 'Duplikuj';
+
+  @override
+  String get tocDuplicateFilename => 'Nazwa pliku tematu:';
+
+  @override
+  String get tocDuplicateDialog => 'Duplikuj temat';
+
+  @override
   String get pdfTitlePage => 'Strona tytułowa';
 
   @override
@@ -1178,7 +1402,7 @@ class AppLocalizationsPl extends AppLocalizations {
   String get files => 'Pliki';
 
   @override
-  String get toc => 'Tematy';
+  String get toc => 'Spis treści';
 
   @override
   String get tocActions => 'Działania dotyczące spisu treści';
@@ -1219,7 +1443,7 @@ class AppLocalizationsPl extends AppLocalizations {
   String get newChildTopic => 'Nowy temat podrzędny';
 
   @override
-  String get newSiblingTopic => 'Nowy temat równorzędny';
+  String get newSiblingTopic => 'Nowy temat';
 
   @override
   String get renameTopicFile => 'Zmień nazwę pliku tematu';
@@ -1281,7 +1505,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String topicRemovalSummary(String topic) {
-    return 'Usuń „$topic” z wybranej instancji. Plik tematu zostanie zachowany.';
+    return 'Usunąć element spisu treści „$topic”? Plik źródłowy powiązany ze spisem treści nie zostanie usunięty.';
   }
 
   @override
@@ -1309,7 +1533,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String topicUsagesCount(int count) {
-    return 'Użycia ($count)';
+    return 'Znalezione użycia: $count.';
   }
 
   @override
@@ -1360,7 +1584,7 @@ class AppLocalizationsPl extends AppLocalizations {
       'Niektóre użycia wymagają ręcznych zmian przed tą refaktoryzacją.';
 
   @override
-  String get setRedirectTo => 'Ustaw przekierowanie do';
+  String get setRedirectTo => 'Ustaw przekierowanie do:';
 
   @override
   String get noRedirectDescription =>
@@ -1386,6 +1610,30 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get doRefactor => 'Wykonaj refaktoryzację';
+
+  @override
+  String get preview => 'Podgląd';
+
+  @override
+  String get topicRenamePreviewTitle => 'Podgląd zmiany nazwy';
+
+  @override
+  String topicRenamePathChange(String oldPath, String newPath) {
+    return 'Ścieżka: $oldPath → $newPath';
+  }
+
+  @override
+  String topicRenameIdChange(String oldId, String newId) {
+    return 'Identyfikator tematu: $oldId → $newId';
+  }
+
+  @override
+  String topicRenameUrlChange(String instance, String oldName, String newName) {
+    return 'Instancja $instance: $oldName → $newName';
+  }
+
+  @override
+  String get topicRenameAffectedFiles => 'Pliki objęte zmianą';
 
   @override
   String get orphanTopicTitle => 'Plik tematu nie jest już używany';
@@ -1956,6 +2204,23 @@ class AppLocalizationsPl extends AppLocalizations {
   }
 
   @override
+  String errorWritersideTopicRenameIncompleteProjectIndex(
+    String module,
+    String count,
+    String paths,
+  ) {
+    return 'Zmiana nazwy nie może bezpiecznie zaktualizować wszystkich odwołań w projekcie, ponieważ nie przeanalizowano $count plików tematów w module $module: $paths';
+  }
+
+  @override
+  String get errorWritersideTopicRenameProjectBuffersDirty =>
+      'Pliki projektu Writerside zawierają niezapisane zmiany. Rozwiąż je i przygotuj nowy podgląd zmiany nazwy.';
+
+  @override
+  String get errorWritersideTopicRenameProjectInventoryChanged =>
+      'Zestaw modułów projektu Writerside uległ zmianie. Przed refaktoryzacją przygotuj nowy podgląd zmiany nazwy.';
+
+  @override
   String get errorTopicsRootUnsafe =>
       'Katalog główny tematów musi być bezpiecznym katalogiem względnym.';
 
@@ -2227,6 +2492,25 @@ class AppLocalizationsPl extends AppLocalizations {
   @override
   String diagnosticWritersideTopicDuplicateId(String id) {
     return 'Identyfikator elementu „$id” pojawia się więcej niż raz.';
+  }
+
+  @override
+  String diagnosticWritersideWebFileNameInvalid(
+    String instanceId,
+    String webFileName,
+    String topic,
+  ) {
+    return 'Instancja \"$instanceId\" publikuje nieprawidłową nazwę pliku internetowego \"$webFileName\" dla tematu \"$topic\".';
+  }
+
+  @override
+  String diagnosticWritersideWebFileNameCollision(
+    String instanceId,
+    String webFileName,
+    String firstTopic,
+    String secondTopic,
+  ) {
+    return 'Instancja \"$instanceId\" publikuje zarówno \"$firstTopic\", jak i \"$secondTopic\" jako \"$webFileName\".';
   }
 
   @override
@@ -3734,25 +4018,6 @@ class AppLocalizationsPl extends AppLocalizations {
   String get aiDraftWithAi => 'Utwórz wersję roboczą z SI';
 
   @override
-  String get generateOrUpdateMarkdownToc => 'Wygeneruj/zaktualizuj spis treści';
-
-  @override
-  String get markdownTocTitle => 'Spis treści';
-
-  @override
-  String markdownTocUpdated(int count) {
-    return 'Zaktualizowano spis treści zawierający $count pozycji.';
-  }
-
-  @override
-  String get markdownTocNoHeadings =>
-      'Przed wygenerowaniem spisu treści dodaj co najmniej jeden nagłówek sekcji.';
-
-  @override
-  String get markdownTocMalformedMarkers =>
-      'Znaczniki spisu treści BusyMark są nieobecne, powielone lub ułożone w niewłaściwej kolejności.';
-
-  @override
   String diagnosticMarkdownHeadingSkippedLevel(int level, int previousLevel) {
     return 'Nagłówek poziomu $level występuje po poziomie $previousLevel; sprawdź zagnieżdżenie sekcji.';
   }
@@ -3789,6 +4054,10 @@ class AppLocalizationsPl extends AppLocalizations {
   @override
   String get cannotRenameSymbol =>
       'Nie można bezpiecznie zmienić nazwy symbolu. Sprawdź nazwę i odśwież odwołanie przed ponowną próbą.';
+
+  @override
+  String get renameTopicFileInstead =>
+      'Identyfikatory tematów pochodzą z nazw ich plików. Użyj polecenia Zmień nazwę pliku tematu w spisie treści lub na pasku bocznym Pliki.';
 
   @override
   String get keyboardLayout => 'Układ klawiatury';

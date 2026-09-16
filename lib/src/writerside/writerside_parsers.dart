@@ -660,7 +660,19 @@ class WritersideTreeParser {
     XmlElement parent, {
     required List<int>? tocParentPath,
     required List<Diagnostic> diagnostics,
+    Map<XmlElement, SourceSpan>? sourceSpans,
   }) {
+    if (sourceSpans == null) {
+      final authored = [parent, ...parent.descendants.whereType<XmlElement>()];
+      final semantic = const WritersideDocumentParser()
+          .parseXml(filePath: filePath, source: source)
+          .elements
+          .toList();
+      sourceSpans = {
+        for (var i = 0; i < authored.length && i < semantic.length; i++)
+          authored[i]: semantic[i].span,
+      };
+    }
     final result = <WritersideTreeEntry>[];
     var tocIndex = 0;
     for (final child in parent.childElements) {
@@ -676,13 +688,16 @@ class WritersideTreeParser {
               child,
               tocPath: tocPath,
               diagnostics: diagnostics,
+              sourceSpans: sourceSpans,
             ),
           );
           tocIndex++;
         case 'include':
           final from = _trimmedAttribute(child, 'from');
           final elementId = _trimmedAttribute(child, 'element-id');
-          final span = _elementSpan(filePath, source, 'include', elementId);
+          final span =
+              sourceSpans[child] ??
+              _elementSpan(filePath, source, 'include', elementId);
           if (from == null || elementId == null) {
             diagnostics.add(
               Diagnostic(
@@ -706,7 +721,9 @@ class WritersideTreeParser {
           );
         case 'snippet':
           final id = _trimmedAttribute(child, 'id');
-          final span = _elementSpan(filePath, source, 'snippet', id);
+          final span =
+              sourceSpans[child] ??
+              _elementSpan(filePath, source, 'snippet', id);
           if (id == null) {
             diagnostics.add(
               Diagnostic(
@@ -729,6 +746,7 @@ class WritersideTreeParser {
                 child,
                 tocParentPath: null,
                 diagnostics: diagnostics,
+                sourceSpans: sourceSpans,
               ),
               span: span,
             ),
@@ -744,6 +762,7 @@ class WritersideTreeParser {
     XmlElement element, {
     required List<int>? tocPath,
     required List<Diagnostic> diagnostics,
+    required Map<XmlElement, SourceSpan> sourceSpans,
   }) {
     final topic = _trimmedAttribute(element, 'topic');
     final reference = _trimmedAttribute(element, 'ref');
@@ -753,12 +772,9 @@ class WritersideTreeParser {
       element,
       'target-for-accept-web-file-names',
     );
-    final span = _elementSpan(
-      filePath,
-      source,
-      'toc-element',
-      topic ?? reference,
-    );
+    final span =
+        sourceSpans[element] ??
+        _elementSpan(filePath, source, 'toc-element', topic ?? reference);
     if ((reference == null) != (referenceInstance == null)) {
       diagnostics.add(
         Diagnostic(
@@ -785,13 +801,42 @@ class WritersideTreeParser {
         ),
       );
     }
+    if (primaryTargets == 0) {
+      for (final attributeName in const [
+        'accepts-web-file-names',
+        'accepts-web-file-names-ref',
+      ]) {
+        if (element.getAttribute(attributeName) == null) continue;
+        diagnostics.add(
+          Diagnostic(
+            code: 'writerside.tree.invalid-empty-group-attribute',
+            severity: DiagnosticSeverity.error,
+            filePath: filePath,
+            args: {
+              'element': 'toc-element',
+              'attribute': attributeName,
+              'reason': 'The attribute is not allowed on an empty TOC element.',
+            },
+            sourceSpan: span,
+          ),
+        );
+      }
+    }
     final entries = _treeEntries(
       filePath,
       source,
       element,
       tocParentPath: tocPath,
       diagnostics: diagnostics,
+      sourceSpans: sourceSpans,
     );
+    final xmlPath = <int>[];
+    var current = element;
+    while (current.parent is XmlElement) {
+      final parent = current.parent! as XmlElement;
+      xmlPath.insert(0, parent.childElements.toList().indexOf(current));
+      current = parent;
+    }
     return TocNode(
       topicFileName: topic,
       referenceTopicFileName: reference,
@@ -814,6 +859,7 @@ class WritersideTreeParser {
       children: entries.whereType<TocNode>().toList(),
       sourceTreePath: filePath,
       sourceTocPath: tocPath,
+      sourceXmlPath: List.unmodifiable(xmlPath),
       span: span,
     );
   }
@@ -1095,7 +1141,7 @@ class WritersideTopicParser {
             span: element.span,
           ),
     ];
-    final titleOverrides = _topicTitleOverrides(source);
+    final titleOverrides = _topicTitleOverrides(document);
     final videos = <WritersideVideo>[];
     void collectVideos(Iterable<BusyBlock> blocks) {
       for (final block in blocks) {
@@ -1144,7 +1190,9 @@ class WritersideTopicParser {
       includes: includes,
       document: document,
       diagnostics: sortDiagnostics(topicDiagnostics),
-      webFileName: _webFileName(source),
+      // Authored convenience metadata only. Instance-effective publication
+      // names are resolved by WritersideWebFileNameResolver.
+      webFileName: _topicWebFileName(document),
       markdown: parsed,
       titleOverrides: titleOverrides,
       semanticElementNames: document.elements
@@ -1258,6 +1306,28 @@ class WritersideTopicParser {
           ),
         );
       }
+      final directTopicChildren = root.children.whereType<XmlElement>();
+      for (final element in directTopicChildren) {
+        switch (element.name.local) {
+          case 'title':
+            final instance = element.getAttribute('instance');
+            if (instance != null && instance.isNotEmpty) {
+              titleOverrides.add(
+                WritersideTopicTitleOverride(
+                  instance: instance,
+                  title: element.innerText.trim(),
+                ),
+              );
+            }
+          case 'web-file-name':
+            if (!element.attributes.any(
+              (attribute) =>
+                  {'instance', 'filter'}.contains(attribute.name.local),
+            )) {
+              webFileName ??= _trimmedOrNull(element.innerText);
+            }
+        }
+      }
       final seenIds = <String, SourceSpan>{};
       for (final element in document.descendants.whereType<XmlElement>()) {
         final semanticElement = nextSemanticElement(element);
@@ -1283,18 +1353,6 @@ class WritersideTopicParser {
           seenIds[elementId] = span;
         }
         switch (element.name.local) {
-          case 'title':
-            final instance = element.getAttribute('instance');
-            if (instance != null && instance.isNotEmpty) {
-              titleOverrides.add(
-                WritersideTopicTitleOverride(
-                  instance: instance,
-                  title: element.innerText.trim(),
-                ),
-              );
-            }
-          case 'web-file-name':
-            webFileName = element.innerText.trim();
           case 'a':
             final href =
                 element.getAttribute('href') ??
@@ -1430,27 +1488,32 @@ List<Diagnostic> _writersideMarkdownDiagnostics(List<Diagnostic> diagnostics) {
   ];
 }
 
-List<WritersideTopicTitleOverride> _topicTitleOverrides(String source) {
+List<WritersideTopicTitleOverride> _topicTitleOverrides(
+  WritersideDocument document,
+) {
   return [
-    for (final match in RegExp(
-      r'<title\b(?=[^>]*\binstance="([^"]+)")[^>]*>(.*?)</title>',
-      dotAll: true,
-    ).allMatches(source))
-      WritersideTopicTitleOverride(
-        instance: match.group(1)!.trim(),
-        title: match.group(2)!.trim(),
-      ),
+    // Only authored top-level semantic titles are overrides. Their text is
+    // already XML-decoded; fenced examples remain Markdown blocks.
+    for (final element in document.nodes.whereType<WritersideElementNode>())
+      if (element.name == 'title')
+        if (_trimmedOrNull(element.attributes['instance']) case final instance?)
+          WritersideTopicTitleOverride(
+            instance: instance,
+            title: element.plainText.trim(),
+          ),
   ];
 }
 
-String? _webFileName(String source) {
-  final match = RegExp(
-    r'<web-file-name>\s*(.*?)\s*</web-file-name>',
-    dotAll: true,
-  ).firstMatch(source);
-  final value = match?.group(1)?.trim();
-  return value == null || value.isEmpty ? null : value;
-}
+String? _topicWebFileName(WritersideDocument document) => document.nodes
+    .whereType<WritersideElementNode>()
+    .where(
+      (element) =>
+          element.name == 'web-file-name' &&
+          !element.attributes.keys.any({'instance', 'filter'}.contains),
+    )
+    .map((element) => _trimmedOrNull(element.plainText))
+    .whereType<String>()
+    .firstOrNull;
 
 String? _trimmedOrNull(String? value) {
   final trimmed = value?.trim();

@@ -11,6 +11,230 @@ class AppLocalizationsEt extends AppLocalizations {
   AppLocalizationsEt([String locale = 'et']) : super(locale);
 
   @override
+  String get tocTopicFromTemplate => 'Teema mallist...';
+
+  @override
+  String get tocSaveAsTemplate => 'Salvesta mallina';
+
+  @override
+  String get tocTemplateDialog => 'Loo teema mallist';
+
+  @override
+  String get tocTemplatesEditor => 'Faili- ja koodimallid';
+
+  @override
+  String get tocEditTemplates => 'Muuda malle...';
+
+  @override
+  String get tocCreateCustomTemplate => 'Loo kohandatud mall...';
+
+  @override
+  String get tocTemplateCreated => 'Mall loodud';
+
+  @override
+  String get tocTemplateDefault => 'Vaikimisi';
+
+  @override
+  String get tocTemplateCustom => 'Kohandatud';
+
+  @override
+  String get tocTemplateFilename => 'Failinimi:';
+
+  @override
+  String get tocTemplateMarkdown => 'Markdown (.md)';
+
+  @override
+  String get tocTemplateXml => 'XML (.topic)';
+
+  @override
+  String get tocTemplatesInternal => 'Sisemised';
+
+  @override
+  String get tocTemplateUnnamed => 'Nimetu';
+
+  @override
+  String get tocTemplateNew => 'Uus mall...';
+
+  @override
+  String get tocTemplateName => 'Nimi:';
+
+  @override
+  String get tocTemplateExtension => 'Laiend:';
+
+  @override
+  String get tocTemplateLoadError =>
+      'Malle ei saanud laadida. Olemasolevaid malle pole muudetud.';
+
+  @override
+  String get tocTemplateSaveError =>
+      'Malle ei saanud salvestada. Muudatused on siin endiselt alles.';
+
+  @override
+  String get tocTemplateConflict =>
+      'Malle muudeti teises aknas. Tühista ja ava redaktor uuesti.';
+
+  @override
+  String get tocTemplateDuplicateName =>
+      'Selle nime ja laiendiga mall on juba olemas.';
+
+  @override
+  String get tocTemplateFormat => 'Vorming:';
+
+  @override
+  String get tocTemplateReset => 'Lähtesta';
+
+  @override
+  String get tocTemplateRetry => 'Proovi uuesti';
+
+  @override
+  String tocRemoveElementsDialog(int count) {
+    return 'Eemalda $count sisukorraelementi';
+  }
+
+  @override
+  String get tocRemoveElementsRetainFiles =>
+      'Nende sisukorraelementidega seotud lähtefaile ei kustutata.';
+
+  @override
+  String get tocOk => 'OK';
+
+  @override
+  String get tocSelectExistingTopic =>
+      'Vali praegusesse eksemplari lisatav teema';
+
+  @override
+  String get tocGroupName => 'Rühma nimi';
+
+  @override
+  String get tocMoveLineUp => 'Liiguta rida üles';
+
+  @override
+  String get tocMoveLineDown => 'Liiguta rida alla';
+
+  @override
+  String get tocEmptyMdTopic => 'Tühi MD-teema';
+
+  @override
+  String get tocEmptyXmlTopic => 'Tühi XML-teema';
+
+  @override
+  String get tocCopySpecial => 'Erikopeerimine';
+
+  @override
+  String tocCopyFileName(String name) {
+    return 'Teemafaili nimi \'$name\'';
+  }
+
+  @override
+  String get tocCopyFilePath => 'Teemafaili tee';
+
+  @override
+  String tocCopyTopicTitle(String title) {
+    return 'Teema pealkiri \'$title\'';
+  }
+
+  @override
+  String tocCopyElementId(String id) {
+    return 'Sisukorra elemendi ID \'$id\'';
+  }
+
+  @override
+  String get tocCopyFileNameUnavailable => 'Teemafaili nimi';
+
+  @override
+  String get tocCopyTopicTitleUnavailable => 'Teema pealkiri';
+
+  @override
+  String get tocCopyElementIdUnavailable => 'Sisukorra elemendi ID';
+
+  @override
+  String get tocEditTitleAction => 'Muuda pealkirja...';
+
+  @override
+  String get tocEditTitleDialog => 'Muuda pealkirja';
+
+  @override
+  String get tocRemoveElementAction => 'Eemalda sisukorra element...';
+
+  @override
+  String get tocSetHomePage => 'Määra avaleheks';
+
+  @override
+  String tocGoToElement(String fileName) {
+    return 'Mine sisukorra elemendi juurde failis \'$fileName\'';
+  }
+
+  @override
+  String get tocSynchronize => 'Sünkrooni sisukord ja redaktor';
+
+  @override
+  String get tocEmptyGroupAction => 'Tühi rühm';
+
+  @override
+  String get tocNewEmptyGroup => 'Uus tühi rühm';
+
+  @override
+  String get tocGroupAction => 'Rühmita';
+
+  @override
+  String get tocNewGroup => 'Uus rühm';
+
+  @override
+  String get tocSortChildren => 'Sordi alamteemad tähestikuliselt';
+
+  @override
+  String get tocLinkTopicFiles => 'Lingi teemafailid sisukorraga...';
+
+  @override
+  String get addLocalMarkdownFiles => 'Lisa kohalikud Markdown-failid';
+
+  @override
+  String get tocTitleField => 'Sisukorra pealkiri:';
+
+  @override
+  String get tocTopicTitleField => 'Teema pealkiri:';
+
+  @override
+  String get tocAdvancedSettings => 'Täpsemad seaded';
+
+  @override
+  String tocInstanceTitleField(String instanceId) {
+    return 'Pealkiri eksemplarile \'$instanceId\':';
+  }
+
+  @override
+  String get tocOnlyTitleField => 'Ainult sisukorra pealkiri:';
+
+  @override
+  String get tocInstanceTitleExplanation =>
+      'Kasutatakse ainult praeguse eksemplari jaoks. Vaikimisi päritakse teema pealkirjast.';
+
+  @override
+  String get tocOnlyTitleExplanation =>
+      'Kasutatakse ainult sisukorras. Vaikimisi päritakse teema pealkirjast või eksemplaripõhisest pealkirjast, kui see on määratud. Pealkirjade selgitused leiate';
+
+  @override
+  String get tocTitleDocumentationLink => 'siit';
+
+  @override
+  String get tocFindUsages => 'Otsi';
+
+  @override
+  String get tocRefactorMenu => 'Refaktoreeri';
+
+  @override
+  String get tocSafeDelete => 'Turvaline kustutamine';
+
+  @override
+  String get tocDuplicate => 'Dubleeri';
+
+  @override
+  String get tocDuplicateFilename => 'Teemafaili nimi:';
+
+  @override
+  String get tocDuplicateDialog => 'Dubleeri teema';
+
+  @override
   String get pdfTitlePage => 'Tiitelleht';
 
   @override
@@ -1160,7 +1384,7 @@ class AppLocalizationsEt extends AppLocalizations {
   String get files => 'Failid';
 
   @override
-  String get toc => 'Teemad';
+  String get toc => 'Sisukord';
 
   @override
   String get tocActions => 'Sisukorra toimingud';
@@ -1198,7 +1422,7 @@ class AppLocalizationsEt extends AppLocalizations {
   String get newChildTopic => 'Uus alamteema';
 
   @override
-  String get newSiblingTopic => 'Uus samatasemeline teema';
+  String get newSiblingTopic => 'Uus teema';
 
   @override
   String get renameTopicFile => 'Nimeta teemafail ümber';
@@ -1260,7 +1484,7 @@ class AppLocalizationsEt extends AppLocalizations {
 
   @override
   String topicRemovalSummary(String topic) {
-    return 'Eemalda „$topic” valitud eksemplarist. Teemafail säilitatakse.';
+    return 'Kas eemaldada sisukorra element „$topic”? Sisukorraga seotud lähtefaili ei kustutata.';
   }
 
   @override
@@ -1285,7 +1509,7 @@ class AppLocalizationsEt extends AppLocalizations {
 
   @override
   String topicUsagesCount(int count) {
-    return 'Kasutuskohad ($count)';
+    return 'Leiti $count kasutuskohta.';
   }
 
   @override
@@ -1334,7 +1558,7 @@ class AppLocalizationsEt extends AppLocalizations {
       'Mõnda kasutuskohta tuleb enne refaktoreerimist käsitsi muuta.';
 
   @override
-  String get setRedirectTo => 'Määra ümbersuunamine';
+  String get setRedirectTo => 'Määra ümbersuunamine:';
 
   @override
   String get noRedirectDescription => 'Ära suuna vana avaldatud lehte ümber.';
@@ -1359,6 +1583,30 @@ class AppLocalizationsEt extends AppLocalizations {
 
   @override
   String get doRefactor => 'Refaktoreeri';
+
+  @override
+  String get preview => 'Eelvaade';
+
+  @override
+  String get topicRenamePreviewTitle => 'Ümbernimetamise eelvaade';
+
+  @override
+  String topicRenamePathChange(String oldPath, String newPath) {
+    return 'Tee: $oldPath → $newPath';
+  }
+
+  @override
+  String topicRenameIdChange(String oldId, String newId) {
+    return 'Teema ID: $oldId → $newId';
+  }
+
+  @override
+  String topicRenameUrlChange(String instance, String oldName, String newName) {
+    return 'Eksemplar $instance: $oldName → $newName';
+  }
+
+  @override
+  String get topicRenameAffectedFiles => 'Mõjutatud failid';
 
   @override
   String get orphanTopicTitle => 'Teemafaili ei kasutata enam';
@@ -1919,6 +2167,23 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
+  String errorWritersideTopicRenameIncompleteProjectIndex(
+    String module,
+    String count,
+    String paths,
+  ) {
+    return 'Ümbernimetamine ei saa kõiki projektiviiteid ohutult uuendada, sest moodulis $module jäi sõelumata $count teemafaili: $paths';
+  }
+
+  @override
+  String get errorWritersideTopicRenameProjectBuffersDirty =>
+      'Writerside’i projektifailides on salvestamata muudatusi. Lahenda need ja koosta uus ümbernimetamise eelvaade.';
+
+  @override
+  String get errorWritersideTopicRenameProjectInventoryChanged =>
+      'Writerside’i projekti moodulite komplekt muutus. Koosta enne refaktoreerimist uus ümbernimetamise eelvaade.';
+
+  @override
   String get errorTopicsRootUnsafe =>
       'Teemade juurkaust peab olema ohutu suhteline kataloog.';
 
@@ -2190,6 +2455,25 @@ class AppLocalizationsEt extends AppLocalizations {
   @override
   String diagnosticWritersideTopicDuplicateId(String id) {
     return 'Elemendi ID „$id” esineb mitu korda.';
+  }
+
+  @override
+  String diagnosticWritersideWebFileNameInvalid(
+    String instanceId,
+    String webFileName,
+    String topic,
+  ) {
+    return 'Eksemplar \"$instanceId\" avaldab teema \"$topic\" jaoks sobimatu veebifailinime \"$webFileName\".';
+  }
+
+  @override
+  String diagnosticWritersideWebFileNameCollision(
+    String instanceId,
+    String webFileName,
+    String firstTopic,
+    String secondTopic,
+  ) {
+    return 'Eksemplar \"$instanceId\" avaldab nii \"$firstTopic\" kui ka \"$secondTopic\" nimega \"$webFileName\".';
   }
 
   @override
@@ -3682,25 +3966,6 @@ class AppLocalizationsEt extends AppLocalizations {
   String get aiDraftWithAi => 'Koosta TI-ga mustand';
 
   @override
-  String get generateOrUpdateMarkdownToc => 'Loo/värskenda sisukord';
-
-  @override
-  String get markdownTocTitle => 'Sisukord';
-
-  @override
-  String markdownTocUpdated(int count) {
-    return 'Sisukord värskendati $count kirjega.';
-  }
-
-  @override
-  String get markdownTocNoHeadings =>
-      'Lisa enne sisukorra loomist vähemalt üks jaotise pealkiri.';
-
-  @override
-  String get markdownTocMalformedMarkers =>
-      'BusyMarki sisukorra tähised puuduvad, korduvad või on vales järjekorras.';
-
-  @override
   String diagnosticMarkdownHeadingSkippedLevel(int level, int previousLevel) {
     return 'Taseme $level pealkiri järgneb tasemele $previousLevel; kontrolli jaotiste pesastust.';
   }
@@ -3736,6 +4001,10 @@ class AppLocalizationsEt extends AppLocalizations {
   @override
   String get cannotRenameSymbol =>
       'Sümbolit ei saa turvaliselt ümber nimetada. Kontrolli nime ja värskenda viidet enne uuesti proovimist.';
+
+  @override
+  String get renameTopicFileInstead =>
+      'Teema ID-d tuletatakse failinimedest. Kasuta sisukorras või failide külgribal käsku „Nimeta teemafail ümber“.';
 
   @override
   String get keyboardLayout => 'Klaviatuuripaigutus';

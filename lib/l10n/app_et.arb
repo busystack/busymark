@@ -1,4 +1,72 @@
 {
+  "tocTopicFromTemplate": "Teema mallist...",
+  "tocSaveAsTemplate": "Salvesta mallina",
+  "tocTemplateDialog": "Loo teema mallist",
+  "tocTemplatesEditor": "Faili- ja koodimallid",
+  "tocEditTemplates": "Muuda malle...",
+  "tocCreateCustomTemplate": "Loo kohandatud mall...",
+  "tocTemplateCreated": "Mall loodud",
+  "tocTemplateDefault": "Vaikimisi",
+  "tocTemplateCustom": "Kohandatud",
+  "tocTemplateFilename": "Failinimi:",
+  "tocTemplateMarkdown": "Markdown (.md)",
+  "tocTemplateXml": "XML (.topic)",
+  "tocTemplatesInternal": "Sisemised",
+  "tocTemplateUnnamed": "Nimetu",
+  "tocTemplateNew": "Uus mall...",
+  "tocTemplateName": "Nimi:",
+  "tocTemplateExtension": "Laiend:",
+  "tocTemplateLoadError": "Malle ei saanud laadida. Olemasolevaid malle pole muudetud.",
+  "tocTemplateSaveError": "Malle ei saanud salvestada. Muudatused on siin endiselt alles.",
+  "tocTemplateConflict": "Malle muudeti teises aknas. Tühista ja ava redaktor uuesti.",
+  "tocTemplateDuplicateName": "Selle nime ja laiendiga mall on juba olemas.",
+  "tocTemplateFormat": "Vorming:",
+  "tocTemplateReset": "Lähtesta",
+  "tocTemplateRetry": "Proovi uuesti",
+  "tocRemoveElementsDialog": "Eemalda {count} sisukorraelementi",
+  "tocRemoveElementsRetainFiles": "Nende sisukorraelementidega seotud lähtefaile ei kustutata.",
+  "tocOk": "OK",
+  "tocSelectExistingTopic": "Vali praegusesse eksemplari lisatav teema",
+  "tocGroupName": "Rühma nimi",
+  "tocMoveLineUp": "Liiguta rida üles",
+  "tocMoveLineDown": "Liiguta rida alla",
+  "tocEmptyMdTopic": "Tühi MD-teema",
+  "tocEmptyXmlTopic": "Tühi XML-teema",
+  "tocCopySpecial": "Erikopeerimine",
+  "tocCopyFileName": "Teemafaili nimi '{name}'",
+  "tocCopyFilePath": "Teemafaili tee",
+  "tocCopyTopicTitle": "Teema pealkiri '{title}'",
+  "tocCopyElementId": "Sisukorra elemendi ID '{id}'",
+  "tocCopyFileNameUnavailable": "Teemafaili nimi",
+  "tocCopyTopicTitleUnavailable": "Teema pealkiri",
+  "tocCopyElementIdUnavailable": "Sisukorra elemendi ID",
+  "tocEditTitleAction": "Muuda pealkirja...",
+  "tocEditTitleDialog": "Muuda pealkirja",
+  "tocRemoveElementAction": "Eemalda sisukorra element...",
+  "tocSetHomePage": "Määra avaleheks",
+  "tocGoToElement": "Mine sisukorra elemendi juurde failis '{fileName}'",
+  "tocSynchronize": "Sünkrooni sisukord ja redaktor",
+  "tocEmptyGroupAction": "Tühi rühm",
+  "tocNewEmptyGroup": "Uus tühi rühm",
+  "tocGroupAction": "Rühmita",
+  "tocNewGroup": "Uus rühm",
+  "tocSortChildren": "Sordi alamteemad tähestikuliselt",
+  "tocLinkTopicFiles": "Lingi teemafailid sisukorraga...",
+  "addLocalMarkdownFiles": "Lisa kohalikud Markdown-failid",
+  "tocTitleField": "Sisukorra pealkiri:",
+  "tocTopicTitleField": "Teema pealkiri:",
+  "tocAdvancedSettings": "Täpsemad seaded",
+  "tocInstanceTitleField": "Pealkiri eksemplarile '{instanceId}':",
+  "tocOnlyTitleField": "Ainult sisukorra pealkiri:",
+  "tocInstanceTitleExplanation": "Kasutatakse ainult praeguse eksemplari jaoks. Vaikimisi päritakse teema pealkirjast.",
+  "tocOnlyTitleExplanation": "Kasutatakse ainult sisukorras. Vaikimisi päritakse teema pealkirjast või eksemplaripõhisest pealkirjast, kui see on määratud. Pealkirjade selgitused leiate",
+  "tocTitleDocumentationLink": "siit",
+  "tocFindUsages": "Otsi",
+  "tocRefactorMenu": "Refaktoreeri",
+  "tocSafeDelete": "Turvaline kustutamine",
+  "tocDuplicate": "Dubleeri",
+  "tocDuplicateFilename": "Teemafaili nimi:",
+  "tocDuplicateDialog": "Dubleeri teema",
   "pdfTitlePage": "Tiitelleht",
   "pdfIncludeTitlePage": "Lisa tiitelleht",
   "pdfTitlePageNote": "Sellel lehel pole päist, jalust ega nähtavat leheküljenumbrit.",
@@ -1309,7 +1377,7 @@
   "@files": {
     "description": "Files sidebar tab label."
   },
-  "toc": "Teemad",
+  "toc": "Sisukord",
   "@toc": {
     "description": "Writerside Topics sidebar tab label."
   },
@@ -1357,7 +1425,7 @@
   "@newChildTopic": {
     "description": "Create new child Writerside topic action label."
   },
-  "newSiblingTopic": "Uus samatasemeline teema",
+  "newSiblingTopic": "Uus teema",
   "@newSiblingTopic": {
     "description": "Create new sibling Writerside topic action label."
   },
@@ -1443,7 +1511,7 @@
   "@removeAction": {
     "description": "Short action label for removing an item without deleting its source file."
   },
-  "topicRemovalSummary": "Eemalda „{topic}” valitud eksemplarist. Teemafail säilitatakse.",
+  "topicRemovalSummary": "Kas eemaldada sisukorra element „{topic}”? Sisukorraga seotud lähtefaili ei kustutata.",
   "@topicRemovalSummary": {
     "description": "Summary in the dialog for removing a topic from one Writerside instance.",
     "placeholders": {
@@ -1474,7 +1542,7 @@
   "@topicIsStartPageRemovalWarning": {
     "description": "Warning that blocks deletion of a Writerside start-page topic."
   },
-  "topicUsagesCount": "Kasutuskohad ({count})",
+  "topicUsagesCount": "Leiti {count} kasutuskohta.",
   "@topicUsagesCount": {
     "description": "Heading with the number of Writerside topic usages.",
     "placeholders": {
@@ -1532,7 +1600,7 @@
   "@manualUsageUpdatesRequired": {
     "description": "Message when some Writerside usages cannot be updated automatically."
   },
-  "setRedirectTo": "Määra ümbersuunamine",
+  "setRedirectTo": "Määra ümbersuunamine:",
   "@setRedirectTo": {
     "description": "Option to redirect an old Writerside page to another topic."
   },
@@ -2132,6 +2200,23 @@
         "type": "String"
       }
     }
+  },
+  "errorWritersideTopicRenameIncompleteProjectIndex": "Ümbernimetamine ei saa kõiki projektiviiteid ohutult uuendada, sest moodulis {module} jäi sõelumata {count} teemafaili: {paths}",
+  "@errorWritersideTopicRenameIncompleteProjectIndex": {
+    "description": "Error shown when topic rename cannot prove complete project-wide semantic coverage.",
+    "placeholders": {
+      "module": {"type": "String"},
+      "count": {"type": "String"},
+      "paths": {"type": "String"}
+    }
+  },
+  "errorWritersideTopicRenameProjectBuffersDirty": "Writerside’i projektifailides on salvestamata muudatusi. Lahenda need ja koosta uus ümbernimetamise eelvaade.",
+  "@errorWritersideTopicRenameProjectBuffersDirty": {
+    "description": "Error shown when a topic rename or reviewed rename plan is blocked by a dirty Writerside project buffer."
+  },
+  "errorWritersideTopicRenameProjectInventoryChanged": "Writerside’i projekti moodulite komplekt muutus. Koosta enne refaktoreerimist uus ümbernimetamise eelvaade.",
+  "@errorWritersideTopicRenameProjectInventoryChanged": {
+    "description": "Error shown when module discovery differs from a prepared topic rename plan."
   },
   "errorTopicsRootUnsafe": "Teemade juurkaust peab olema ohutu suhteline kataloog.",
   "@errorTopicsRootUnsafe": {
@@ -3499,11 +3584,6 @@
   "aiDraftCommitMessage": "Koosta sissekande sõnumi mustand",
   "aiDrafting": "Mustandi koostamine…",
   "aiDraftWithAi": "Koosta TI-ga mustand",
-  "generateOrUpdateMarkdownToc": "Loo/värskenda sisukord",
-  "markdownTocTitle": "Sisukord",
-  "markdownTocUpdated": "Sisukord värskendati {count} kirjega.",
-  "markdownTocNoHeadings": "Lisa enne sisukorra loomist vähemalt üks jaotise pealkiri.",
-  "markdownTocMalformedMarkers": "BusyMarki sisukorra tähised puuduvad, korduvad või on vales järjekorras.",
   "diagnosticMarkdownHeadingSkippedLevel": "Taseme {level} pealkiri järgneb tasemele {previousLevel}; kontrolli jaotiste pesastust.",
   "diagnosticMarkdownLinkEmptyText": "Lingi tekst on tühi; lisa ligipääsetav nimi, mis kirjeldab selle otstarvet.",
   "diagnosticMarkdownLinkReviewText": "Kontrolli, kas lingi tekst „{text}” kirjeldab kontekstis selle otstarvet.",
@@ -3700,5 +3780,14 @@
   "settingsHistoryExcludedPathsHint": "Üks absoluutne tee per rida",
   "settingsSecondsValue": "{value} sekundid",
   "settingsDaysValue": "{value} päevad",
-  "settingsMebibytesValue": "{value} MiB"
+  "settingsMebibytesValue": "{value} MiB",
+  "preview": "Eelvaade",
+  "topicRenamePreviewTitle": "Ümbernimetamise eelvaade",
+  "topicRenamePathChange": "Tee: {oldPath} → {newPath}",
+  "topicRenameIdChange": "Teema ID: {oldId} → {newId}",
+  "topicRenameUrlChange": "Eksemplar {instance}: {oldName} → {newName}",
+  "topicRenameAffectedFiles": "Mõjutatud failid",
+  "renameTopicFileInstead": "Teema ID-d tuletatakse failinimedest. Kasuta sisukorras või failide külgribal käsku „Nimeta teemafail ümber“.",
+  "diagnosticWritersideWebFileNameInvalid": "Eksemplar \"{instanceId}\" avaldab teema \"{topic}\" jaoks sobimatu veebifailinime \"{webFileName}\".",
+  "diagnosticWritersideWebFileNameCollision": "Eksemplar \"{instanceId}\" avaldab nii \"{firstTopic}\" kui ka \"{secondTopic}\" nimega \"{webFileName}\"."
 }

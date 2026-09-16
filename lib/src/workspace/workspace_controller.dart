@@ -9,6 +9,7 @@ import 'package:path/path.dart' as p;
 import '../app/app_settings.dart';
 import '../comparison/source_comparison.dart';
 import '../core/debug_log.dart';
+import '../core/busymark_exception.dart';
 import '../core/diagnostic.dart';
 import '../core/source_span.dart';
 import '../core/path_utils.dart' show isTextDocumentationPath;
@@ -22,7 +23,9 @@ import '../writerside/writerside_project.dart';
 import '../writerside/writerside_instance_service.dart';
 import '../writerside/writerside_topic_removal_service.dart';
 import '../writerside/writerside_topic_creator.dart';
+import '../writerside/writerside_topic_file_editor.dart';
 import '../writerside/writerside_toc_editor.dart';
+import '../writerside/writerside_title_editor.dart';
 import 'document_buffer.dart';
 import 'recovery_persistence.dart';
 import 'session_persistence.dart';
@@ -214,6 +217,8 @@ class WorkspaceController extends Notifier<WorkspaceState> {
   var _editRevision = 0;
   var _activeDocumentRevision = 0;
   var _workspaceRefreshRevision = 0;
+  var _workspaceFileOperationDepth = 0;
+  final _deferredFileMonitorEvents = <WorkspaceFileMonitorEvent>[];
   var _untitledSequence = 0;
   final _intentionallyRemovedPaths = <String>{};
   late Future<RecoverySnapshot> _recoveryStart;
@@ -703,6 +708,10 @@ class WorkspaceController extends Notifier<WorkspaceState> {
 
   Future<void> _handleFileMonitorEvent(WorkspaceFileMonitorEvent event) async {
     if (!ref.mounted) return;
+    if (_workspaceFileOperationDepth > 0) {
+      _deferredFileMonitorEvents.add(event);
+      return;
+    }
     final matching = state.documentBuffers.where((buffer) {
       final path = buffer.filePath;
       return path != null &&
@@ -729,7 +738,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       if (!ref.mounted) return;
       // Our own filesystem writes also emit notifications. A background
       // refresh must not invalidate an operation already loading its result.
-      if (state.isLoading) {
+      if (state.isLoading || _workspaceFileOperationDepth > 0) {
         _scheduleMonitoredWorkspaceRefresh();
         return;
       }
@@ -1327,90 +1336,24 @@ class WorkspaceController extends Notifier<WorkspaceState> {
   Future<bool> createWritersideTopic(
     WritersideTopicCreateRequest request, {
     String? instanceTreePath,
-  }) async {
-    final workspace = state.workspace;
-    if (workspace == null) {
-      return false;
-    }
-    _cancelPendingDerivedRefresh();
-    _cancelAllAutoSaves();
-    final operationRevision = _invalidateActiveDocumentOperations();
-    _resetSaveTracking();
-    state = state.copyWith(isLoading: true, clearMessage: true);
-    try {
-      final nextWorkspace = await _service.createWritersideTopic(
-        workspace,
-        request,
-        instanceTreePath: instanceTreePath,
-      );
-      final active = nextWorkspace.activeFilePath;
-      final load = active == null
-          ? null
-          : await _service.loadTextWithSnapshot(active);
-      final text = load?.text ?? '';
-      final loadedWorkspace = load == null
-          ? nextWorkspace
-          : nextWorkspace.copyWith(activeFileSnapshot: load.snapshot);
-      final openFilePaths = _retainedOpenFileTabPaths(
-        current: workspace,
-        refreshed: loadedWorkspace,
-        activeFilePath: active,
-      );
-      final tabbedWorkspace = loadedWorkspace.copyWith(
-        openFilePaths: openFilePaths,
-      );
-      if (!_isCurrentActiveDocumentOperation(operationRevision)) {
-        return false;
-      }
-      final existing = active == null ? null : state.bufferForPath(active);
-      final buffer =
-          existing ??
-          (load == null || active == null
-              ? null
-              : _fileBuffer(
-                  active,
-                  load,
-                  mode: _settingsController.state.documentViewMode,
-                ));
-      final buffers = buffer == null
-          ? state.documentBuffers
-          : existing != null
-          ? state.documentBuffers
-          : [...state.documentBuffers, buffer];
-      state = WorkspaceState(
-        workspace: tabbedWorkspace,
-        activeText: text,
-        preview: _safePreview(tabbedWorkspace, text),
-        documentBuffers: buffers,
-        activeBufferId: buffer?.id,
-      );
-      if (buffer != null && existing == null) {
-        unawaited(_localHistory.observeOpened(buffer));
-      }
-      _recordActivePreviewRevision();
-      await _startMonitoring(tabbedWorkspace);
-      _schedulePersistence();
-      _resetSaveTracking();
-      return true;
-    } on Object catch (error, stackTrace) {
-      busyMarkDebugLogError(
-        '[BusyMark] Create Writerside topic failed',
-        error,
-        stackTrace,
-        context: {'title': request.title, 'file name': request.fileName},
-      );
-      if (_isCurrentActiveDocumentOperation(operationRevision)) {
-        state = state.copyWith(
-          isLoading: false,
-          message: WorkspaceMessage(
-            WorkspaceMessageCode.createWritersideTopicFailed,
-            error: error,
-          ),
-        );
-      }
-      return false;
-    }
-  }
+    String? initialSource,
+  }) => _runWorkspaceFileOperation((workspace) async {
+    final paths = instanceTreePath == null
+        ? workspace.writersideModule!.instances
+              .map((instance) => instance.sourceTreePath)
+              .toList()
+        : [instanceTreePath];
+    _requireCleanAffectedFiles(workspace, paths);
+    final created = await _service.createWritersideTopic(
+      workspace,
+      request,
+      instanceTreePath: instanceTreePath,
+      initialSource: initialSource,
+      validateBeforePublish: () async =>
+          _requireCleanAffectedFiles(workspace, paths),
+    );
+    return created.activeFilePath;
+  }, openForEditing: true);
 
   Future<List<WritersideMarkdownImportCandidate>?>
   discoverWritersideMarkdownImport(String sourceDirectoryPath) async {
@@ -1435,6 +1378,19 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       return null;
     }
   }
+
+  Future<bool> addWritersideMarkdownTopics(
+    WritersideMarkdownTopicImportRequest request,
+  ) => _runWorkspaceFileOperation((workspace) async {
+    _requireCleanWritersideProject(workspace);
+    final updated = await _service.addWritersideMarkdownTopics(
+      workspace,
+      request,
+      validateBeforePublish: () async =>
+          _requireCleanWritersideProject(workspace),
+    );
+    return updated.activeFilePath;
+  }, openForEditing: true);
 
   Future<WritersideInstanceMutationResult?> createWritersideInstance(
     WritersideInstanceCreateRequest request,
@@ -1670,6 +1626,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     WritersideTocNodeIdentity? referenceIdentity,
   }) {
     return _runWorkspaceFileOperation((workspace) async {
+      _requireCleanAffectedFiles(workspace, [treePath]);
       await _service.moveWritersideTocEntry(
         workspace,
         treePath: treePath,
@@ -1678,9 +1635,222 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         referencePath: referencePath,
         sourceIdentity: sourceIdentity,
         referenceIdentity: referenceIdentity,
+        validateBeforePublish: () async =>
+            _requireCleanAffectedFiles(workspace, [treePath]),
       );
       return null;
     });
+  }
+
+  void _requireCleanAffectedFiles(Workspace workspace, Iterable<String> paths) {
+    if (state.workspace?.id != workspace.id ||
+        paths.any(
+          (path) => state.dirtyBuffers.any(
+            (buffer) =>
+                buffer.filePath != null && p.equals(path, buffer.filePath!),
+          ),
+        )) {
+      throw const BusyMarkException('writerside.toc.tree-changed');
+    }
+  }
+
+  void _requireCleanWritersideProject(Workspace workspace) {
+    if (state.workspace?.id != workspace.id ||
+        state.dirtyBuffers.any(
+          (buffer) =>
+              buffer.filePath != null &&
+              isWritersideProjectPath(workspace, buffer.filePath!),
+        )) {
+      throw const BusyMarkException(
+        'writerside.topic-file.project-buffers-dirty',
+      );
+    }
+  }
+
+  Future<WritersideTitleEditSession?> prepareWritersideTitleEdit({
+    required String treePath,
+    required List<int> tocPath,
+    required WritersideTocNodeIdentity identity,
+    required String topicModuleRoot,
+    required String topicPath,
+  }) async {
+    final workspace = state.workspace;
+    if (workspace == null) return null;
+    try {
+      return await _service.prepareWritersideTitleEdit(
+        workspace,
+        treePath: treePath,
+        tocPath: tocPath,
+        identity: identity,
+        topicModuleRoot: topicModuleRoot,
+        topicPath: topicPath,
+      );
+    } on Object catch (error) {
+      state = state.copyWith(
+        message: WorkspaceMessage(
+          WorkspaceMessageCode.fileOperationFailed,
+          error: error,
+        ),
+      );
+      return null;
+    }
+  }
+
+  Future<bool> duplicateWritersideTopic({
+    required String treePath,
+    required List<int> tocPath,
+    required WritersideTocNodeIdentity identity,
+    required String topicPath,
+    required String expectedSource,
+    required String newName,
+  }) => _runWorkspaceFileOperation((workspace) async {
+    _requireCleanAffectedFiles(workspace, [treePath, topicPath]);
+    return _service.duplicateWritersideTopic(
+      workspace,
+      treePath: treePath,
+      tocPath: tocPath,
+      identity: identity,
+      topicPath: topicPath,
+      expectedSource: expectedSource,
+      newName: newName,
+      validateBeforePublish: () async =>
+          _requireCleanAffectedFiles(workspace, [treePath, topicPath]),
+    );
+  });
+
+  Future<bool> editWritersideTitles(
+    WritersideTitleEditSession session,
+    WritersideTitleEdit edit,
+  ) => _runWorkspaceFileOperation((workspace) async {
+    void validate() => _requireCleanAffectedFiles(workspace, [
+      session.topic.filePath,
+      session.treePath,
+    ]);
+    validate();
+    await _service.editWritersideTitles(
+      session,
+      edit,
+      validateBeforeCommit: validate,
+      onCommitted: (writes, snapshots) {
+        state = state.copyWith(
+          documentBuffers: [
+            for (final buffer in state.documentBuffers)
+              if (writes[buffer.filePath] case final write?)
+                buffer.copyWith(
+                  text: write.text,
+                  lastSavedText: write.text,
+                  dirty: false,
+                  diskSnapshot: snapshots[buffer.filePath],
+                  revision: buffer.revision + 1,
+                )
+              else
+                buffer,
+          ],
+        );
+      },
+    );
+    return null;
+  });
+
+  Future<WritersideTocMutationResult?> insertWritersideTocElement({
+    required String treePath,
+    required WritersideTocInsertRequest request,
+    String? expectedTopicPath,
+    String? expectedTopicSource,
+  }) async {
+    WritersideTocMutationResult? result;
+    final succeeded = await _runWorkspaceFileOperation((workspace) async {
+      _requireCleanAffectedFiles(workspace, [treePath]);
+      result = await _service.insertWritersideTocElement(
+        workspace,
+        treePath: treePath,
+        request: request,
+        expectedTopicPath: expectedTopicPath,
+        expectedTopicSource: expectedTopicSource,
+        validateBeforePublish: () async =>
+            _requireCleanAffectedFiles(workspace, [treePath]),
+      );
+      return null;
+    });
+    return succeeded ? result : null;
+  }
+
+  Future<WritersideTocMutationResult?> groupWritersideTocElements({
+    required String treePath,
+    required List<WritersideTocMoveEntry> entries,
+    required String title,
+  }) async {
+    WritersideTocMutationResult? result;
+    final succeeded = await _runWorkspaceFileOperation((workspace) async {
+      _requireCleanAffectedFiles(workspace, [treePath]);
+      result = await _service.groupWritersideTocElements(
+        workspace,
+        treePath: treePath,
+        entries: entries,
+        title: title,
+        validateBeforePublish: () async =>
+            _requireCleanAffectedFiles(workspace, [treePath]),
+      );
+      return null;
+    });
+    return succeeded ? result : null;
+  }
+
+  Future<WritersideTocMutationResult?> sortWritersideTocChildren({
+    required String treePath,
+    required List<int> nodePath,
+    required WritersideTocNodeIdentity identity,
+  }) async {
+    WritersideTocMutationResult? result;
+    final succeeded = await _runWorkspaceFileOperation((workspace) async {
+      _requireCleanAffectedFiles(workspace, [treePath]);
+      result = await _service.sortWritersideTocChildren(
+        workspace,
+        treePath: treePath,
+        nodePath: nodePath,
+        identity: identity,
+        validateBeforePublish: () async =>
+            _requireCleanAffectedFiles(workspace, [treePath]),
+      );
+      return null;
+    });
+    return succeeded ? result : null;
+  }
+
+  Future<bool> setWritersideHomePage({
+    required String treePath,
+    required List<int> nodePath,
+    required WritersideTocNodeIdentity expectedIdentity,
+  }) => _runWorkspaceFileOperation((workspace) async {
+    _requireCleanAffectedFiles(workspace, [treePath]);
+    await _service.setWritersideHomePage(
+      workspace,
+      treePath: treePath,
+      nodePath: nodePath,
+      expectedIdentity: expectedIdentity,
+      validateBeforePublish: () async =>
+          _requireCleanAffectedFiles(workspace, [treePath]),
+    );
+    return null;
+  });
+
+  Future<WritersideTocMutationResult?> dragWritersideTocEntries({
+    required String treePath,
+    required WritersideTocBatchMoveRequest request,
+  }) async {
+    WritersideTocMutationResult? result;
+    final success = await _runWorkspaceFileOperation((workspace) async {
+      _requireCleanAffectedFiles(workspace, [treePath]);
+      result = await _service.dragWritersideTocEntries(
+        workspace,
+        treePath: treePath,
+        request: request,
+        validateBeforePublish: () async =>
+            _requireCleanAffectedFiles(workspace, [treePath]),
+      );
+      return null;
+    });
+    return success ? result : null;
   }
 
   Future<bool> moveWritersideTocEntries({
@@ -1691,6 +1861,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     WritersideTocNodeIdentity? referenceIdentity,
   }) {
     return _runWorkspaceFileOperation((workspace) async {
+      _requireCleanAffectedFiles(workspace, [treePath]);
       await _service.moveWritersideTocEntries(
         workspace,
         treePath: treePath,
@@ -1698,6 +1869,8 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         placement: placement,
         referencePath: referencePath,
         referenceIdentity: referenceIdentity,
+        validateBeforePublish: () async =>
+            _requireCleanAffectedFiles(workspace, [treePath]),
       );
       return null;
     });
@@ -1709,11 +1882,14 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     WritersideTocNodeIdentity? expectedIdentity,
   }) {
     return _runWorkspaceFileOperation((workspace) async {
+      _requireCleanAffectedFiles(workspace, [treePath]);
       await _service.removeWritersideTocEntry(
         workspace,
         treePath: treePath,
         nodePath: nodePath,
         expectedIdentity: expectedIdentity,
+        validateBeforePublish: () async =>
+            _requireCleanAffectedFiles(workspace, [treePath]),
       );
       return null;
     });
@@ -1724,30 +1900,88 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     required List<WritersideTocRemovalRequest> requests,
   }) {
     return _runWorkspaceFileOperation((workspace) async {
+      _requireCleanAffectedFiles(workspace, [treePath]);
       await _service.removeWritersideTocEntries(
         workspace,
         treePath: treePath,
         requests: requests,
+        validateBeforePublish: () async =>
+            _requireCleanAffectedFiles(workspace, [treePath]),
       );
       return null;
     });
   }
 
-  Future<bool> renameWritersideTopicFile(String topicPath, String newFileName) {
+  Future<bool> renameWritersideTopicFile(
+    String topicPath,
+    String newFileName, {
+    String? topicModuleRoot,
+  }) async {
+    final workspace = state.workspace;
+    if (workspace == null) return false;
+    final ownerRoot = topicModuleRoot ?? workspace.writersideModule?.rootPath;
+    if (ownerRoot == null) return false;
+    final plan = await prepareWritersideTopicRename(
+      topicPath,
+      newFileName,
+      topicModuleRoot: ownerRoot,
+    );
+    return plan == null ? false : await applyWritersideTopicRename(plan);
+  }
+
+  Future<WritersideTopicRenamePlan?> prepareWritersideTopicRename(
+    String topicPath,
+    String newFileName, {
+    required String topicModuleRoot,
+  }) async {
+    final workspace = state.workspace;
+    if (workspace == null) return null;
+    try {
+      final plan = await _service.prepareWritersideTopicRename(
+        workspace,
+        topicPath: topicPath,
+        newFileName: newFileName,
+        topicModuleRoot: topicModuleRoot,
+      );
+      return plan;
+    } on Object catch (error, stackTrace) {
+      busyMarkDebugLogError(
+        '[BusyMark] Prepare topic rename failed',
+        error,
+        stackTrace,
+        context: {'root': busyMarkLogPath(workspace.rootPath)},
+      );
+      state = state.copyWith(
+        message: WorkspaceMessage(
+          WorkspaceMessageCode.fileOperationFailed,
+          error: error,
+        ),
+      );
+      return null;
+    }
+  }
+
+  Future<bool> applyWritersideTopicRename(WritersideTopicRenamePlan plan) {
     final activeFilePath = state.workspace?.activeFilePath;
     return _runWorkspaceFileOperation((workspace) async {
-      final target = await _service.renameWritersideTopicFile(
-        workspace,
-        topicPath,
-        newFileName,
+      void validate(Iterable<String> _) =>
+          _requireCleanWritersideProject(workspace);
+      validate(plan.affectedPaths);
+      final result = await _service.applyWritersideTopicRename(
+        plan,
+        validateBeforePublish: validate,
       );
-      final transitions = _beginLocalHistoryPathTransitions(topicPath, target);
+      final target = result.newTopicPath;
+      final transitions = _beginLocalHistoryPathTransitions(
+        plan.oldTopicPath,
+        target,
+      );
       var committed = false;
       try {
-        await _localHistory.remapPath(topicPath, target);
-        _remapOpenWorkspacePaths(workspace, topicPath, target);
+        await _localHistory.remapPath(plan.oldTopicPath, target);
+        _remapOpenWorkspacePaths(workspace, plan.oldTopicPath, target);
         committed = true;
-        return _remapMovedPath(activeFilePath, topicPath, target);
+        return _remapMovedPath(activeFilePath, plan.oldTopicPath, target);
       } finally {
         await _finishLocalHistoryPathTransitions(
           transitions,
@@ -1803,34 +2037,32 @@ class WorkspaceController extends Notifier<WorkspaceState> {
   Future<WritersideTopicRemovalResult?> applyWritersideTopicRemoval(
     WritersideTopicRemovalRequest request,
   ) async {
-    final workspace = state.workspace;
-    if (workspace == null) {
+    final deleting =
+        request.analysis.mode == WritersideTopicRemovalMode.safeDeleteFile;
+    final deletedPath = p.normalize(request.analysis.topicPath);
+    if (deleting && !await _protectWorkspaceEntityBeforeDelete(deletedPath)) {
       return null;
     }
+    WritersideTopicRemovalResult? result;
+    if (deleting) _intentionallyRemovedPaths.add(deletedPath);
     try {
-      final result = await _service.applyWritersideTopicRemoval(
-        workspace,
-        request,
-      );
-      if (!await refreshWorkspaceFromDiskPreservingOpenTabs()) {
+      final success = await _runWorkspaceFileOperation((workspace) async {
+        void validate(Iterable<String> _) =>
+            _requireCleanWritersideProject(workspace);
+        validate(const []);
+        result = await _service.applyWritersideTopicRemoval(
+          workspace,
+          request,
+          validateBeforeCommit: validate,
+        );
+        if (result?.deletedFile == true) {
+          await _localHistory.markDeleted(deletedPath, recursive: false);
+        }
         return null;
-      }
-      return result;
-    } on Object catch (error, stackTrace) {
-      busyMarkDebugLogError(
-        '[BusyMark] Writerside topic removal failed',
-        error,
-        stackTrace,
-        context: {'root': busyMarkLogPath(workspace.rootPath)},
-      );
-      state = state.copyWith(
-        isLoading: false,
-        message: WorkspaceMessage(
-          WorkspaceMessageCode.fileOperationFailed,
-          error: error,
-        ),
-      );
-      return null;
+      });
+      return success ? result : null;
+    } finally {
+      if (deleting) _intentionallyRemovedPaths.remove(deletedPath);
     }
   }
 
@@ -3141,6 +3373,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
   }
 
   Future<SaveAllResult> saveAll({
+    Iterable<String>? bufferIds,
     Map<String, LineEndingNormalization> mixedLineEndingNormalizations =
         const {},
   }) async {
@@ -3149,9 +3382,14 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     final failed = <String>[];
     final conflicts = <String>[];
     final normalizationRequired = <String>[];
+    final includedBufferIds = bufferIds?.toSet();
     final targets = [
       for (final buffer in state.documentBuffers)
-        if (buffer.isDirty && buffer.filePath != null) buffer,
+        if (buffer.isDirty &&
+            buffer.filePath != null &&
+            (includedBufferIds == null ||
+                includedBufferIds.contains(buffer.id)))
+          buffer,
     ];
     final writes = <({String id, Future<_BufferWriteResult> result})>[];
     for (final target in targets) {
@@ -3516,6 +3754,41 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       operationTarget.bufferId,
       () => _discardBufferChangesNow(operationTarget),
     );
+  }
+
+  /// Discards the selected buffers without changing the active document.
+  ///
+  /// Project-wide refactoring safety uses this to resolve several inactive
+  /// Writerside buffers without unmounting the UI that owns the confirmation
+  /// workflow between files.
+  Future<bool> discardDocumentBuffers(Iterable<String> bufferIds) async {
+    final workspace = state.workspace;
+    if (workspace == null) return false;
+    for (final bufferId in bufferIds.toSet()) {
+      final buffer = state.documentBuffers
+          .where((candidate) => candidate.id == bufferId)
+          .firstOrNull;
+      if (buffer == null || !buffer.isDirty) continue;
+      final target = ActiveDocumentSaveTarget._(
+        workspaceId: workspace.id,
+        bufferId: buffer.id,
+        path: buffer.filePath,
+        documentRevision: _activeDocumentRevision,
+        editRevision: buffer.revision,
+        snapshot: buffer.diskSnapshot,
+        text: buffer.text,
+        workspaceKind: workspace.kind,
+        format: buffer.format,
+      );
+      _cancelAutoSave(buffer.id);
+      _cancelPendingDerivedRefresh();
+      final discarded = await _enqueueBufferWrite(
+        buffer.id,
+        () => _discardBufferChangesNow(target),
+      );
+      if (!discarded) return false;
+    }
+    return true;
   }
 
   Future<bool> restoreLocalHistoryRevision({
@@ -4301,12 +4574,14 @@ class WorkspaceController extends Notifier<WorkspaceState> {
   }
 
   Future<bool> _runWorkspaceFileOperation(
-    Future<String?> Function(Workspace workspace) operation,
-  ) async {
+    Future<String?> Function(Workspace workspace) operation, {
+    bool openForEditing = false,
+  }) async {
     final workspace = state.workspace;
     if (workspace == null) {
       return false;
     }
+    _workspaceFileOperationDepth++;
     try {
       final preferredActivePath = await operation(workspace);
       final refreshed = await refreshWorkspaceFromDiskPreservingOpenTabs();
@@ -4314,7 +4589,17 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         return false;
       }
       if (preferredActivePath != null) {
-        return await _openActiveFile(preferredActivePath);
+        final opened = await _openActiveFile(preferredActivePath);
+        if (opened &&
+            openForEditing &&
+            state.activeBuffer?.filePath == preferredActivePath &&
+            state.activeBuffer?.editorState.mode ==
+                DocumentViewModePreference.preview) {
+          // Creation opens an editable document without changing the global
+          // preference or the view modes of any other open buffers.
+          updateActiveEditorMode(DocumentViewModePreference.source);
+        }
+        return opened;
       }
       return true;
     } on Object catch (error, stackTrace) {
@@ -4332,6 +4617,22 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         ),
       );
       return false;
+    } finally {
+      _workspaceFileOperationDepth--;
+      if (_workspaceFileOperationDepth == 0 && ref.mounted) {
+        final pending = List<WorkspaceFileMonitorEvent>.of(
+          _deferredFileMonitorEvents,
+        );
+        _deferredFileMonitorEvents.clear();
+        // Observe notifications only after reconciliation/opening completes.
+        // Own writes then match the refreshed snapshots, while unrelated
+        // external changes retain their normal monitoring behavior.
+        unawaited(() async {
+          for (final event in pending) {
+            await _handleFileMonitorEvent(event);
+          }
+        }());
+      }
     }
   }
 
@@ -5024,24 +5325,6 @@ bool _supportsOpenFileTabs(Workspace workspace) {
     WorkspaceKind.writersideModule => true,
     WorkspaceKind.untitledMarkdown => false,
   };
-}
-
-List<String> _retainedOpenFileTabPaths({
-  required Workspace current,
-  required Workspace refreshed,
-  required String? activeFilePath,
-}) {
-  final availablePaths = {
-    for (final file in refreshed.files) file.absolutePath,
-  };
-  final retained = [
-    for (final path in current.openFilePaths)
-      if (availablePaths.contains(path)) path,
-  ];
-  if (activeFilePath == null || retained.contains(activeFilePath)) {
-    return retained;
-  }
-  return [...retained, activeFilePath];
 }
 
 String? _remapMovedPath(String? path, String source, String target) {

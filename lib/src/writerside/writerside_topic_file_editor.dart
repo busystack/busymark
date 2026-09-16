@@ -6,8 +6,100 @@ import 'package:xml/xml.dart';
 import '../core/anchored_path_guard.dart';
 import '../core/busymark_exception.dart';
 import '../core/path_utils.dart';
+import '../core/source_span.dart';
+import '../markdown/busymark_document.dart';
+import '../markdown/markdown_ast_adapter.dart';
+import '../markdown/markdown_model.dart';
+import '../markdown/markdown_parser.dart';
+import 'writerside_html_reference_scanner.dart';
 import 'writerside_model.dart';
 import 'writerside_module_service.dart';
+import 'writerside_project.dart';
+import 'writerside_schema.dart';
+import 'writerside_topic_file_name.dart';
+import 'writerside_web_file_name.dart';
+
+class WritersideTopicRenameFileChange {
+  const WritersideTopicRenameFileChange({
+    required this.path,
+    required this.originalSource,
+    required this.resultingSource,
+  });
+
+  final String path;
+  final String originalSource;
+  final String resultingSource;
+}
+
+class WritersideTopicRenameUrlChange {
+  const WritersideTopicRenameUrlChange({
+    required this.moduleRoot,
+    required this.instanceId,
+    required this.oldWebFileName,
+    required this.newWebFileName,
+  });
+
+  final String moduleRoot;
+  final String instanceId;
+  final String oldWebFileName;
+  final String newWebFileName;
+
+  bool get changed => oldWebFileName != newWebFileName;
+}
+
+/// An immutable, fully calculated topic-file refactoring. Applying this object
+/// never recalculates reference edits; every participating source is checked
+/// against the captured snapshots before the first write.
+class WritersideTopicRenamePlan {
+  WritersideTopicRenamePlan._({
+    required this.owningModule,
+    required this.oldTopicPath,
+    required this.newTopicPath,
+    required this.oldTopicReference,
+    required this.newTopicReference,
+    required this.oldTopicId,
+    required this.newTopicId,
+    required this.format,
+    required this.originalTargetSource,
+    required this.resultingTargetSource,
+    required List<WritersideTopicRenameFileChange> changedFiles,
+    required this.createsNewTopicFile,
+    required this.deletesOldTopicFile,
+    required this.updatesXmlTopicId,
+    required Set<String> affectedPaths,
+    required List<WritersideTopicRenameUrlChange> webFileNameChanges,
+    String? projectRoot,
+    List<String> projectModuleRoots = const [],
+    required _PreparedTopicRename prepared,
+  }) : changedFiles = List.unmodifiable(changedFiles),
+       affectedPaths = Set.unmodifiable(affectedPaths),
+       webFileNameChanges = List.unmodifiable(webFileNameChanges),
+       projectRoot = projectRoot == null ? null : normalizePath(projectRoot),
+       projectModuleRoots = List.unmodifiable(
+         projectModuleRoots.map(normalizePath).toSet().toList()..sort(),
+       ),
+       _prepared = prepared;
+
+  final WritersideModule owningModule;
+  final String oldTopicPath;
+  final String newTopicPath;
+  final String oldTopicReference;
+  final String newTopicReference;
+  final String oldTopicId;
+  final String newTopicId;
+  final WritersideTopicFormat format;
+  final String originalTargetSource;
+  final String resultingTargetSource;
+  final List<WritersideTopicRenameFileChange> changedFiles;
+  final bool createsNewTopicFile;
+  final bool deletesOldTopicFile;
+  final bool updatesXmlTopicId;
+  final Set<String> affectedPaths;
+  final List<WritersideTopicRenameUrlChange> webFileNameChanges;
+  final String? projectRoot;
+  final List<String> projectModuleRoots;
+  final _PreparedTopicRename _prepared;
+}
 
 class WritersideTopicFileRenameResult {
   const WritersideTopicFileRenameResult({
@@ -39,7 +131,8 @@ class WritersideTopicFileDeleteResult {
   final int removedTocEntries;
 }
 
-/// Mutates a resolved Writerside topic file and all configured instance trees.
+/// Mutates a resolved Writerside topic file and every semantically resolved
+/// project reference supplied to the rename transaction.
 ///
 /// Topic files and instance trees must be regular files below the module's
 /// canonical root. Symlinked path components and paths outside that root are
@@ -60,9 +153,37 @@ class WritersideTopicFileEditor {
     required WritersideModule module,
     required WritersideTopic topic,
     required String newFileName,
+    List<WritersideModule>? projectModules,
+    void Function(Iterable<String>)? validateBeforePublish,
   }) async {
+    final plan = await prepareRename(
+      module: module,
+      topic: topic,
+      newFileName: newFileName,
+      projectModules: projectModules,
+    );
+    return applyRename(plan, validateBeforePublish: validateBeforePublish);
+  }
+
+  Future<WritersideTopicRenamePlan> prepareRename({
+    required WritersideModule module,
+    required WritersideTopic topic,
+    required String newFileName,
+    List<WritersideModule>? projectModules,
+    String? projectRoot,
+    List<String> projectModuleRoots = const [],
+  }) async {
+    _validateSuppliedSemanticCoverage([module, ...?projectModules]);
     final snapshot = await _currentModuleSnapshot(module, topic);
     final context = await _mutationContext(snapshot);
+    final referenceContexts = <_ReferenceModuleContext>[
+      _ReferenceModuleContext.fromMutation(context),
+    ];
+    for (final candidate in projectModules ?? const <WritersideModule>[]) {
+      if (p.equals(candidate.rootPath, context.module.rootPath)) continue;
+      referenceContexts.add(await _referenceModuleContext(candidate));
+    }
+    _validateCompleteSemanticCoverage(referenceContexts);
     final safeFileName = _safeRenamedFileName(
       newFileName,
       oldPath: context.topicPath,
@@ -73,13 +194,31 @@ class WritersideTopicFileEditor {
       safeFileName,
     );
     if (p.equals(targetPath, context.topicPath)) {
-      return WritersideTopicFileRenameResult(
+      return WritersideTopicRenamePlan._(
+        owningModule: context.module,
         oldTopicPath: context.topicPath,
         newTopicPath: context.topicPath,
-        oldTopicFileName: context.topic.fileName,
-        newTopicFileName: context.topic.fileName,
-        updatedTreePaths: const [],
-        updatedXmlTopicId: false,
+        oldTopicReference: context.topic.fileName,
+        newTopicReference: context.topic.fileName,
+        oldTopicId: context.topic.id,
+        newTopicId: context.topic.id,
+        format: context.topic.format,
+        originalTargetSource: context.topicSource,
+        resultingTargetSource: context.topicSource,
+        changedFiles: const [],
+        createsNewTopicFile: false,
+        deletesOldTopicFile: false,
+        updatesXmlTopicId: false,
+        affectedPaths: {context.topicPath},
+        webFileNameChanges: const [],
+        projectRoot: projectRoot,
+        projectModuleRoots: projectModuleRoots,
+        prepared: _PreparedTopicRename(
+          target: context,
+          referenceContexts: referenceContexts,
+          targetSource: context.topicSource,
+          publishedEdits: const [],
+        ),
       );
     }
 
@@ -89,35 +228,157 @@ class WritersideTopicFileEditor {
       newTopicFileName: newTopicFileName,
       newFileName: safeFileName,
     );
-    final treeEdits = await _renameTreeEdits(
-      context,
+    final referenceEdits = _renameProjectReferenceEdits(
+      referenceContexts,
+      target: context,
       newTopicFileName: newTopicFileName,
       newFileName: safeFileName,
     );
+    final targetReferenceEdit = referenceEdits
+        .where((edit) => p.equals(edit.path, context.topicPath))
+        .singleOrNull;
     final topicEdit = _renamedTopicSource(
       path: context.topicPath,
-      source: context.topicSource,
+      source: targetReferenceEdit?.updatedSource ?? context.topicSource,
       newFileName: safeFileName,
     );
+    final publishedEdits = referenceEdits
+        .where((edit) => !p.equals(edit.path, context.topicPath))
+        .toList();
+
+    _validateGeneratedXmlRenameSources(
+      referenceContexts,
+      target: context,
+      targetSource: topicEdit.source,
+      publishedEdits: publishedEdits,
+    );
+
+    final webFileNameChanges = _validateProspectiveWebFileNames(
+      referenceContexts,
+      target: context,
+      newTopicFileName: newTopicFileName,
+    );
+
+    final affectedPaths = <String>{
+      context.topicPath,
+      targetPath,
+      for (final edit in publishedEdits) edit.path,
+    };
+    return WritersideTopicRenamePlan._(
+      owningModule: context.module,
+      oldTopicPath: context.topicPath,
+      newTopicPath: targetPath,
+      oldTopicReference: context.topic.fileName,
+      newTopicReference: newTopicFileName,
+      oldTopicId: p.basenameWithoutExtension(context.topic.fileName),
+      newTopicId: p.basenameWithoutExtension(newTopicFileName),
+      format: context.topic.format,
+      originalTargetSource: context.topicSource,
+      resultingTargetSource: topicEdit.source,
+      changedFiles: [
+        for (final edit in publishedEdits)
+          WritersideTopicRenameFileChange(
+            path: edit.path,
+            originalSource: edit.originalSource,
+            resultingSource: edit.updatedSource,
+          ),
+      ],
+      createsNewTopicFile: true,
+      deletesOldTopicFile: true,
+      updatesXmlTopicId: topicEdit.updatedXmlTopicId,
+      affectedPaths: affectedPaths,
+      webFileNameChanges: webFileNameChanges,
+      projectRoot: projectRoot,
+      projectModuleRoots: projectModuleRoots,
+      prepared: _PreparedTopicRename(
+        target: context,
+        referenceContexts: referenceContexts,
+        targetSource: topicEdit.source,
+        publishedEdits: publishedEdits,
+      ),
+    );
+  }
+
+  void _validateCompleteSemanticCoverage(
+    List<_ReferenceModuleContext> contexts,
+  ) {
+    for (final context in contexts) {
+      _validateModuleSemanticCoverage(context.module);
+    }
+  }
+
+  void _validateSuppliedSemanticCoverage(List<WritersideModule> modules) {
+    final seenRoots = <String>{};
+    for (final module in modules) {
+      if (seenRoots.add(normalizePath(module.rootPath))) {
+        _validateModuleSemanticCoverage(module);
+      }
+    }
+  }
+
+  void _validateModuleSemanticCoverage(WritersideModule module) {
+    if (!module.topicDiscoveryComplete) {
+      throw BusyMarkException(
+        'writerside.topic-file.topic-discovery-incomplete',
+        args: {'module': module.config.moduleName ?? module.rootPath},
+      );
+    }
+    final skipped = module.unparsedTopicReferences.toList()..sort();
+    if (skipped.isEmpty) return;
+    throw BusyMarkException(
+      'writerside.topic-file.incomplete-project-index',
+      args: {
+        'module': module.config.moduleName ?? module.rootPath,
+        'paths': skipped.join(', '),
+        'count': '${skipped.length}',
+      },
+    );
+  }
+
+  Future<WritersideTopicFileRenameResult> applyRename(
+    WritersideTopicRenamePlan plan, {
+    void Function(Iterable<String>)? validateBeforePublish,
+  }) async {
+    final prepared = plan._prepared;
+    final context = prepared.target;
+    final referenceContexts = prepared.referenceContexts;
+    final publishedEdits = prepared.publishedEdits;
+    if (!plan.createsNewTopicFile) {
+      return WritersideTopicFileRenameResult(
+        oldTopicPath: plan.oldTopicPath,
+        newTopicPath: plan.newTopicPath,
+        oldTopicFileName: plan.oldTopicReference,
+        newTopicFileName: plan.newTopicReference,
+        updatedTreePaths: const [],
+        updatedXmlTopicId: false,
+      );
+    }
+
+    validateBeforePublish?.call(plan.affectedPaths);
+    await _ensurePreparedPlanUnchanged(plan);
+    validateBeforePublish?.call(plan.affectedPaths);
 
     await _writeNewFile(
       context.anchor,
-      targetPath,
-      topicEdit.source,
+      plan.newTopicPath,
+      prepared.targetSource,
       sourceStat: context.topicStat,
     );
     final appliedTreeEdits = <_TreeEdit>[];
     try {
+      validateBeforePublish?.call(plan.affectedPaths);
       await _applyTreeEdits(
         context.anchor,
-        treeEdits,
+        publishedEdits,
         applied: appliedTreeEdits,
       );
-      await _ensureTreesAtExpectedSources(context, treeEdits);
-      await _ensureConfigurationUnchanged(context);
-      await _ensureTopicSourcesUnchanged(
-        context,
-        additionalSources: {targetPath: topicEdit.source},
+      validateBeforePublish?.call(plan.affectedPaths);
+      await _ensureReferenceContextsUnchanged(
+        referenceContexts,
+        publishedEdits,
+        targetPath: plan.newTopicPath,
+        targetSource: prepared.targetSource,
+        targetModuleRoot: context.module.rootPath,
       );
       await _deleteUnchangedTopicSource(context);
     } on Object {
@@ -128,29 +389,31 @@ class WritersideTopicFileEditor {
       final safeToCleanUp =
           restored &&
           await _renameTargetIsSafeToCleanUp(
-            context,
-            targetPath: targetPath,
-            targetSource: topicEdit.source,
+            referenceContexts,
+            targetPath: plan.newTopicPath,
+            targetSource: prepared.targetSource,
+            targetModuleRoot: context.module.rootPath,
           );
       if (safeToCleanUp) {
         await _deleteCreatedFileBestEffort(
           context.anchor,
-          targetPath,
-          topicEdit.source,
+          plan.newTopicPath,
+          prepared.targetSource,
         );
       }
       rethrow;
     }
 
     return WritersideTopicFileRenameResult(
-      oldTopicPath: context.topicPath,
-      newTopicPath: targetPath,
-      oldTopicFileName: context.topic.fileName,
-      newTopicFileName: newTopicFileName,
+      oldTopicPath: plan.oldTopicPath,
+      newTopicPath: plan.newTopicPath,
+      oldTopicFileName: plan.oldTopicReference,
+      newTopicFileName: plan.newTopicReference,
       updatedTreePaths: List.unmodifiable([
-        for (final edit in treeEdits) edit.path,
+        for (final edit in publishedEdits)
+          if (_isTreePath(edit.path)) edit.path,
       ]),
-      updatedXmlTopicId: topicEdit.updatedXmlTopicId,
+      updatedXmlTopicId: plan.updatesXmlTopicId,
     );
   }
 
@@ -389,6 +652,35 @@ class WritersideTopicFileEditor {
     );
   }
 
+  Future<_ReferenceModuleContext> _referenceModuleContext(
+    WritersideModule suppliedModule,
+  ) async {
+    final anchor = await _moduleAnchor(suppliedModule.rootPath);
+    final configurationBefore = await _configurationSources(
+      suppliedModule.rootPath,
+    );
+    final initiallyLoaded = await moduleService.load(suppliedModule.rootPath);
+    final topicSourcesBefore = await _topicSources(anchor, initiallyLoaded);
+    final module = await moduleService.load(suppliedModule.rootPath);
+    final topicSources = await _topicSources(anchor, module);
+    final configurationSources = await _configurationSources(module.rootPath);
+    if (!_sameStringMap(configurationBefore, configurationSources) ||
+        !_sameStringMap(topicSourcesBefore, topicSources) ||
+        module.instances.length != module.config.instanceSources.length) {
+      throw BusyMarkException(
+        'writerside.topic-file.tree-changed',
+        args: {'path': module.config.filePath},
+      );
+    }
+    return _ReferenceModuleContext(
+      anchor: anchor,
+      module: module,
+      configurationSources: configurationSources,
+      topicSources: topicSources,
+      trees: await _loadTrees(anchor, module),
+    );
+  }
+
   Future<CanonicalPathAnchor> _moduleAnchor(String rootPath) async {
     try {
       final anchor = await captureCanonicalDirectoryAnchor(
@@ -485,57 +777,1178 @@ class WritersideTopicFileEditor {
     }
   }
 
-  Future<List<_TreeEdit>> _renameTreeEdits(
-    _MutationContext context, {
+  List<WritersideTopicRenameUrlChange> _validateProspectiveWebFileNames(
+    List<_ReferenceModuleContext> contexts, {
+    required _MutationContext target,
     required String newTopicFileName,
-    required String newFileName,
-  }) async {
-    final edits = <_TreeEdit>[];
-    for (final tree in context.trees) {
-      var changed = false;
-      final root = tree.document.rootElement;
-      final startPage = root.getAttribute('start-page');
-      if (startPage != null &&
-          _referenceTargetsTopic(context, startPage, tree.path)) {
-        root.setAttribute(
-          'start-page',
-          _renamedReference(
-            startPage,
-            oldTopicFileName: context.topic.fileName,
-            newTopicFileName: newTopicFileName,
-            newFileName: newFileName,
-          ),
+  }) {
+    final modules = [for (final context in contexts) context.module];
+    final origins = <String, WritersideModule>{
+      for (final module in modules)
+        (module.config.moduleName?.trim().isNotEmpty == true
+                ? module.config.moduleName!.trim()
+                : p.basename(module.rootPath)):
+            module,
+    };
+    const resolver = WritersideWebFileNameResolver();
+    final result = <WritersideTopicRenameUrlChange>[];
+    for (final host in modules) {
+      for (final instance in host.instances.where(
+        (value) => !value.isLibrary,
+      )) {
+        final published = writersidePublishedTopicsForInstance(
+          hostModule: host,
+          instance: instance,
+          modulesByOrigin: origins,
         );
-        changed = true;
-      }
-      for (final element in tree.document.findAllElements('toc-element')) {
-        final reference = element.getAttribute('topic');
-        if (reference == null ||
-            !_referenceTargetsTopic(context, reference, tree.path)) {
-          continue;
+        final publishesTarget = published.any(
+          (item) =>
+              p.equals(item.sourceModule.rootPath, target.module.rootPath) &&
+              p.equals(item.topic.filePath, target.topicPath),
+        );
+        if (!publishesTarget) continue;
+        final oldEffective = resolver.resolve(
+          module: target.module,
+          topic: target.topic,
+          instance: instance,
+          modulesByOrigin: origins,
+        );
+        final newEffective = resolver.resolve(
+          module: target.module,
+          topic: target.topic,
+          instance: instance,
+          modulesByOrigin: origins,
+          topicFileName: newTopicFileName,
+        );
+        if (!newEffective.isValid) {
+          throw BusyMarkException(
+            'writerside.topic-file.web-file-name-invalid',
+            args: {
+              'instanceId': instance.id,
+              'webFileName': newEffective.value,
+              'topic': newTopicFileName,
+            },
+          );
         }
-        element.setAttribute(
-          'topic',
-          _renamedReference(
-            reference,
-            oldTopicFileName: context.topic.fileName,
-            newTopicFileName: newTopicFileName,
-            newFileName: newFileName,
-          ),
-        );
-        changed = true;
-      }
-      if (changed) {
-        edits.add(
-          _TreeEdit(
-            path: tree.path,
-            originalSource: tree.source,
-            updatedSource: _xmlSource(tree.document),
+        for (final other in published) {
+          if (p.equals(other.sourceModule.rootPath, target.module.rootPath) &&
+              p.equals(other.topic.filePath, target.topicPath)) {
+            continue;
+          }
+          final otherEffective = resolver.resolve(
+            module: other.sourceModule,
+            topic: other.topic,
+            instance: instance,
+            modulesByOrigin: origins,
+          );
+          if (otherEffective.isValid &&
+              otherEffective.value.toLowerCase() ==
+                  newEffective.value.toLowerCase()) {
+            throw BusyMarkException(
+              'writerside.topic-file.web-file-name-collision',
+              args: {
+                'instanceId': instance.id,
+                'webFileName': newEffective.value,
+                'firstTopic': newTopicFileName,
+                'secondTopic': other.topic.fileName,
+              },
+            );
+          }
+        }
+        result.add(
+          WritersideTopicRenameUrlChange(
+            moduleRoot: host.rootPath,
+            instanceId: instance.id,
+            oldWebFileName: oldEffective.value,
+            newWebFileName: newEffective.value,
           ),
         );
       }
     }
+    return List.unmodifiable(result);
+  }
+
+  List<_TreeEdit> _renameProjectReferenceEdits(
+    List<_ReferenceModuleContext> contexts, {
+    required _MutationContext target,
+    required String newTopicFileName,
+    required String newFileName,
+  }) {
+    final modules = [for (final context in contexts) context.module];
+    final index = WritersideProjectIndex.build(modules);
+    final topicsByPath = <String, WritersideTopic>{
+      for (final context in contexts)
+        for (final topic in context.module.topics)
+          normalizePath(topic.filePath): topic,
+    };
+    final usages = <String, WritersideReference>{};
+    final xmlAttributeSpans = <String>{};
+    final htmlAttributeQuotes = <String, WritersideHtmlAttributeQuote>{};
+    final markdownDestinationSpans = <String>{};
+    final markdownAngleDestinationSpans = <String>{};
+    for (final usage in index.references) {
+      if (usage.kind != WritersideSymbolKind.topic) continue;
+      final containingTopic = topicsByPath[normalizePath(usage.filePath)];
+      if (containingTopic == null) continue;
+      final writable = _indexedWritableTopicReference(containingTopic, usage);
+      if (writable == null) continue;
+      final writableUsage = writable.reference;
+      final topicPart = usage.value.split('#').first;
+      if (topicPart.isEmpty ||
+          !index
+              .definitions(
+                topicPart,
+                moduleId: usage.moduleId,
+                origin: usage.origin,
+                kind: WritersideSymbolKind.topic,
+                filePath: usage.filePath,
+                referenceOffset: usage.span.startOffset,
+              )
+              .any((symbol) => p.equals(symbol.filePath, target.topicPath))) {
+        continue;
+      }
+      final key =
+          '${writableUsage.filePath}:${writableUsage.span.startOffset}:'
+          '${writableUsage.span.endOffset}:'
+          '${writableUsage.sourceValue ?? writableUsage.value}';
+      usages[key] = writableUsage;
+      if (writable.xmlAttribute) {
+        xmlAttributeSpans.add(_referenceSpanKey(writableUsage));
+      }
+    }
+    // The Markdown AST may assign several inline links one broad source span.
+    // The general project index intentionally coalesces such semantic entries;
+    // rename still needs every concrete destination occurrence.
+    for (final context in contexts) {
+      final moduleId = index.modulesById.entries
+          .where(
+            (entry) => p.equals(entry.value.rootPath, context.module.rootPath),
+          )
+          .map((entry) => entry.key)
+          .single;
+      for (final topic in context.module.topics) {
+        if (topic.format != WritersideTopicFormat.markdown) continue;
+        final projection = _authoredMarkdownTopicReferences(topic);
+        for (final unbound in projection.unboundLinks) {
+          final topicPart = unbound.destination.split('#').first;
+          final resolvesInRecordedScope =
+              topicPart.isNotEmpty &&
+              index
+                  .definitions(
+                    topicPart,
+                    moduleId: moduleId,
+                    origin: unbound.origin,
+                    kind: WritersideSymbolKind.topic,
+                    filePath: topic.filePath,
+                    referenceOffset: unbound.span.startOffset,
+                  )
+                  .any((symbol) => p.equals(symbol.filePath, target.topicPath));
+          final resolvesConservativelyToTarget =
+              topicPart.isNotEmpty &&
+              unbound.origin == null &&
+              target.module
+                  .topicsMatchingReference(topicPart)
+                  .any(
+                    (candidate) =>
+                        p.equals(candidate.filePath, target.topicPath),
+                  );
+          if (resolvesInRecordedScope || resolvesConservativelyToTarget) {
+            throw BusyMarkException(
+              'writerside.topic-file.ambiguous-reference',
+              args: {
+                'reference': unbound.destination,
+                'treePath': topic.filePath,
+              },
+            );
+          }
+        }
+        for (final reference in projection.references) {
+          final topicPart = reference.destination.split('#').first;
+          if (topicPart.isEmpty ||
+              !index
+                  .definitions(
+                    topicPart,
+                    moduleId: moduleId,
+                    origin: reference.origin,
+                    kind: WritersideSymbolKind.topic,
+                    filePath: topic.filePath,
+                    referenceOffset: reference.occurrenceOffset,
+                  )
+                  .any(
+                    (symbol) => p.equals(symbol.filePath, target.topicPath),
+                  )) {
+            continue;
+          }
+          final usage = WritersideReference(
+            value: reference.destination,
+            kind: WritersideSymbolKind.topic,
+            moduleId: moduleId,
+            filePath: topic.filePath,
+            span: reference.destinationSpan,
+            origin: reference.origin,
+            sourceValue: reference.rawDestination,
+          );
+          final key =
+              '${usage.filePath}:${usage.span.startOffset}:'
+              '${usage.span.endOffset}:${usage.sourceValue}';
+          usages[key] = usage;
+          final spanKey = _referenceSpanKey(usage);
+          if (reference.htmlAttributeQuote case final quote?) {
+            htmlAttributeQuotes[spanKey] = quote;
+          } else if (reference.xmlAttribute) {
+            xmlAttributeSpans.add(spanKey);
+          } else {
+            markdownDestinationSpans.add(spanKey);
+            if (reference.angleDestination) {
+              markdownAngleDestinationSpans.add(spanKey);
+            }
+          }
+        }
+      }
+    }
+
+    final edits = <_TreeEdit>[];
+    for (final context in contexts) {
+      for (final sourceEntry in context.topicSources.entries) {
+        final references =
+            usages.values
+                .where((usage) => p.equals(usage.filePath, sourceEntry.key))
+                .toList()
+              ..sort(
+                (left, right) =>
+                    right.span.startOffset.compareTo(left.span.startOffset),
+              );
+        if (references.isEmpty) continue;
+        var updated = sourceEntry.value;
+        var lastStart = updated.length + 1;
+        for (final reference in references) {
+          if (reference.span.startOffset < 0 ||
+              reference.span.endOffset > updated.length ||
+              reference.span.startOffset >= lastStart) {
+            throw BusyMarkException(
+              'writerside.topic-file.ambiguous-reference',
+              args: {
+                'reference': reference.value,
+                'treePath': reference.filePath,
+              },
+            );
+          }
+          final expected = reference.sourceValue ?? reference.value;
+          final actual = updated.substring(
+            reference.span.startOffset,
+            reference.span.endOffset,
+          );
+          if (actual != expected) {
+            throw BusyMarkException(
+              'writerside.topic-file.tree-changed',
+              args: {'path': reference.filePath},
+            );
+          }
+          var replacement = _renamedDocumentReference(
+            reference.value,
+            oldTopic: target.topic,
+            newTopicFileName: newTopicFileName,
+            newFileName: newFileName,
+          );
+          final spanKey = _referenceSpanKey(reference);
+          if (htmlAttributeQuotes[spanKey] case final quote?) {
+            replacement = _escapeHtmlAttributeValue(replacement, quote);
+          } else if (xmlAttributeSpans.contains(spanKey)) {
+            replacement = _escapeXmlAttributeValue(replacement);
+          } else if (markdownDestinationSpans.contains(spanKey)) {
+            replacement = _renamedMarkdownReferenceSource(
+              decodedOriginal: reference.value,
+              rawOriginal: expected,
+              decodedReplacement: replacement,
+              angleDestination: markdownAngleDestinationSpans.contains(spanKey),
+            );
+          }
+          updated = updated.replaceRange(
+            reference.span.startOffset,
+            reference.span.endOffset,
+            replacement,
+          );
+          lastStart = reference.span.startOffset;
+        }
+        if (updated != sourceEntry.value) {
+          edits.add(
+            _TreeEdit(
+              anchor: context.anchor,
+              path: sourceEntry.key,
+              originalSource: sourceEntry.value,
+              updatedSource: updated,
+            ),
+          );
+        }
+      }
+
+      final moduleId = index.modulesById.entries
+          .where(
+            (entry) => p.equals(entry.value.rootPath, context.module.rootPath),
+          )
+          .map((entry) => entry.key)
+          .single;
+      for (final tree in context.trees) {
+        var changed = false;
+        final root = tree.document.rootElement;
+        final startPage = root.getAttribute('start-page');
+        if (startPage != null &&
+            _projectReferenceTargetsTopic(
+              index,
+              target,
+              startPage,
+              moduleId: moduleId,
+              filePath: tree.path,
+            )) {
+          root.setAttribute(
+            'start-page',
+            _renamedDocumentReference(
+              startPage,
+              oldTopic: target.topic,
+              newTopicFileName: newTopicFileName,
+              newFileName: newFileName,
+            ),
+          );
+          changed = true;
+        }
+        for (final element in tree.document.findAllElements('toc-element')) {
+          for (final attributeName in const ['topic', 'ref']) {
+            final reference = element.getAttribute(attributeName);
+            if (reference == null ||
+                !_projectReferenceTargetsTopic(
+                  index,
+                  target,
+                  reference,
+                  moduleId: moduleId,
+                  origin: element.getAttribute('origin'),
+                  filePath: tree.path,
+                )) {
+              continue;
+            }
+            element.setAttribute(
+              attributeName,
+              _renamedDocumentReference(
+                reference,
+                oldTopic: target.topic,
+                newTopicFileName: newTopicFileName,
+                newFileName: newFileName,
+              ),
+            );
+            changed = true;
+          }
+        }
+        if (changed) {
+          edits.add(
+            _TreeEdit(
+              anchor: context.anchor,
+              path: tree.path,
+              originalSource: tree.source,
+              updatedSource: _xmlSource(tree.document),
+            ),
+          );
+        }
+      }
+    }
     return edits;
+  }
+
+  ({WritersideReference reference, bool xmlAttribute})?
+  _indexedWritableTopicReference(
+    WritersideTopic topic,
+    WritersideReference reference,
+  ) {
+    final source = topic.document.source;
+    final span = reference.span;
+    if (span.startOffset < 0 ||
+        span.endOffset > source.length ||
+        span.startOffset > span.endOffset) {
+      return null;
+    }
+    if (topic.format == WritersideTopicFormat.markdown) {
+      final isTypedAttribute = topic.document.elements.any((element) {
+        final attributeName = switch (element.semanticKind) {
+          WritersideSemanticKind.include => 'from',
+          WritersideSemanticKind.link || WritersideSemanticKind.card => 'href',
+          _ => null,
+        };
+        if (attributeName == null ||
+            element.attributes[attributeName] != reference.value) {
+          return false;
+        }
+        final attributeSpan = element.attributeSpans[attributeName];
+        return attributeSpan != null && _sameSpan(attributeSpan, span);
+      });
+      if (!isTypedAttribute) return null;
+    }
+    return (
+      reference: WritersideReference(
+        value: reference.value,
+        kind: reference.kind,
+        moduleId: reference.moduleId,
+        filePath: reference.filePath,
+        span: span,
+        origin: reference.origin,
+        sourceValue: source.substring(span.startOffset, span.endOffset),
+        scopeReference: reference.scopeReference,
+        nullable: reference.nullable,
+      ),
+      xmlAttribute: true,
+    );
+  }
+
+  _AuthoredMarkdownProjection _authoredMarkdownTopicReferences(
+    WritersideTopic topic,
+  ) {
+    final protected = writersideMarkdownLiteralMask(
+      source: topic.document.source,
+      protectedRanges:
+          topic.markdown?.codeBlocks.map((block) => block.span) ?? const [],
+    );
+    final definitions = _markdownReferenceDefinitions(topic, protected);
+    final authored =
+        <_AuthoredMarkdownTopicReference>[
+          ..._markdownLinkOccurrences(topic, protected, definitions),
+          ..._markdownHtmlLinkOccurrences(topic, protected),
+        ]..sort(
+          (left, right) =>
+              left.occurrenceOffset.compareTo(right.occurrenceOffset),
+        );
+    final bound = <_AuthoredMarkdownTopicReference>[];
+    final unbound = <_UnboundMarkdownTopicReference>[];
+    final consumed = <int>{};
+    final referenceOccurrenceValidity = <int, bool>{};
+    final linkOrigins = _markdownLinkOriginsInParseOrder(topic);
+    for (var linkIndex = 0; linkIndex < topic.links.length; linkIndex++) {
+      final link = topic.links[linkIndex];
+      int? selected;
+      for (var index = 0; index < authored.length; index++) {
+        if (consumed.contains(index)) continue;
+        final candidate = authored[index];
+        if (candidate.destination != link.destination) continue;
+        final belongsToParsedLink =
+            (candidate.occurrenceOffset >= link.span.startOffset &&
+                candidate.occurrenceOffset < link.span.endOffset) ||
+            (candidate.destinationSpan.startOffset >= link.span.startOffset &&
+                candidate.destinationSpan.endOffset <= link.span.endOffset);
+        if (!belongsToParsedLink) continue;
+        if ((candidate.inlineMarkdownDestination || candidate.xmlAttribute) &&
+            !_markdownDestinationBelongsToParsedLink(topic, link, candidate)) {
+          continue;
+        }
+        if (candidate.referenceLabelSpan != null &&
+            !(referenceOccurrenceValidity[index] ??=
+                _referenceMarkdownOccurrenceBelongsToParsedLink(
+                  topic,
+                  candidate,
+                ))) {
+          continue;
+        }
+        selected = index;
+        break;
+      }
+      if (selected != null) {
+        consumed.add(selected);
+        bound.add(authored[selected]);
+      } else {
+        unbound.add(
+          _UnboundMarkdownTopicReference(
+            link: link,
+            origin: linkIndex < linkOrigins.length
+                ? linkOrigins[linkIndex]
+                : null,
+          ),
+        );
+      }
+    }
+    return _AuthoredMarkdownProjection(
+      references: List.unmodifiable(bound),
+      unboundLinks: List.unmodifiable(unbound),
+    );
+  }
+
+  List<String?> _markdownLinkOriginsInParseOrder(WritersideTopic topic) {
+    final origins = <String?>[];
+
+    void visitInline(BusyInline inline) {
+      if (inline.kind == BusyInlineKind.link &&
+          inline.destination?.trim().isNotEmpty == true) {
+        final origin = inline.attributes['origin']?.trim();
+        origins.add(origin?.isEmpty == true ? null : origin);
+      }
+      for (final child in inline.children) {
+        visitInline(child);
+      }
+    }
+
+    void visitBlock(BusyBlock block) {
+      for (final inline in block.inlines) {
+        visitInline(inline);
+      }
+      for (final child in block.children) {
+        visitBlock(child);
+      }
+    }
+
+    for (final block in topic.markdown?.busyDocument.blocks ?? const []) {
+      visitBlock(block);
+    }
+    return origins;
+  }
+
+  bool _markdownDestinationBelongsToParsedLink(
+    WritersideTopic topic,
+    MarkdownLink link,
+    _AuthoredMarkdownTopicReference candidate,
+  ) {
+    final source = topic.document.source;
+    final contextStart = link.span.startOffset;
+    final contextEnd = link.span.endOffset;
+    final destinationStart = candidate.destinationSpan.startOffset;
+    final destinationEnd = candidate.destinationSpan.endOffset;
+    if (contextStart < 0 ||
+        contextEnd > source.length ||
+        contextStart >= contextEnd ||
+        destinationStart < contextStart ||
+        destinationEnd > contextEnd ||
+        destinationStart >= destinationEnd) {
+      return false;
+    }
+
+    var probe = 'busymark-rename-probe-$destinationStart.invalid';
+    while (source.contains(probe)) {
+      probe = 'x$probe';
+    }
+    final context = source.substring(contextStart, contextEnd);
+    final probed = context.replaceRange(
+      destinationStart - contextStart,
+      destinationEnd - contextStart,
+      probe,
+    );
+    final parsed = const MarkdownAstAdapter().parseInlineFragment(
+      source: probed,
+      mode: MarkdownMode.writersideMarkdown,
+    );
+
+    bool containsProbe(Iterable<BusyInline> inlines) {
+      for (final inline in inlines) {
+        if (inline.kind == BusyInlineKind.link && inline.destination == probe) {
+          return true;
+        }
+        if (containsProbe(inline.children)) return true;
+      }
+      return false;
+    }
+
+    return containsProbe(parsed);
+  }
+
+  bool _referenceMarkdownOccurrenceBelongsToParsedLink(
+    WritersideTopic topic,
+    _AuthoredMarkdownTopicReference candidate,
+  ) {
+    final source = topic.document.source;
+    final referenceLabelSpan = candidate.referenceLabelSpan;
+    final definitionLabelSpan = candidate.definitionLabelSpan;
+    if (referenceLabelSpan == null || definitionLabelSpan == null) {
+      return false;
+    }
+    final spans = [
+      referenceLabelSpan,
+      definitionLabelSpan,
+      candidate.destinationSpan,
+    ];
+    if (spans.any(
+      (span) =>
+          span.startOffset < 0 ||
+          span.endOffset > source.length ||
+          span.startOffset >= span.endOffset,
+    )) {
+      return false;
+    }
+
+    var probeLabel = 'busymark-rename-reference-${candidate.occurrenceOffset}';
+    while (source.toLowerCase().contains(probeLabel.toLowerCase())) {
+      probeLabel = 'x$probeLabel';
+    }
+    var probeDestination =
+        'busymark-rename-destination-${candidate.occurrenceOffset}.invalid';
+    while (source.contains(probeDestination) ||
+        probeDestination == candidate.destination ||
+        topic.links.any((link) => link.destination == probeDestination)) {
+      probeDestination = 'x$probeDestination';
+    }
+
+    final replacements =
+        <({SourceSpan span, String value})>[
+          (span: referenceLabelSpan, value: probeLabel),
+          (span: definitionLabelSpan, value: probeLabel),
+          (span: candidate.destinationSpan, value: probeDestination),
+        ]..sort(
+          (left, right) =>
+              right.span.startOffset.compareTo(left.span.startOffset),
+        );
+    var probed = source;
+    for (final replacement in replacements) {
+      probed = probed.replaceRange(
+        replacement.span.startOffset,
+        replacement.span.endOffset,
+        replacement.value,
+      );
+    }
+    final parsed = const MarkdownParser().parse(
+      filePath: topic.filePath,
+      source: probed,
+      mode: MarkdownMode.writersideMarkdown,
+      validateLocalReferences: false,
+    );
+    return parsed.links
+            .where((link) => link.destination == probeDestination)
+            .length ==
+        1;
+  }
+
+  Map<String, _MarkdownReferenceDefinition> _markdownReferenceDefinitions(
+    WritersideTopic topic,
+    List<bool> protected,
+  ) {
+    final source = topic.document.source;
+    final definitions = <String, _MarkdownReferenceDefinition>{};
+    final pattern = RegExp(
+      r'''^([ \t]{0,3}\[([^\]\r\n]+)\]:[ \t]*(?:\r?\n[ \t]+)?)(?:<([^>\r\n]+)>|([^\s\r\n]+))''',
+      multiLine: true,
+    );
+    for (final match in pattern.allMatches(source)) {
+      if (_rangeIsProtected(protected, match.start, match.end)) continue;
+      final rawDestination = match.group(3) ?? match.group(4)!;
+      final definitionPrefix = match.group(1)!;
+      final rawLabel = match.group(2)!;
+      final definitionLabelStart =
+          match.start + definitionPrefix.indexOf('[') + 1;
+      final destinationStart =
+          match.start +
+          definitionPrefix.length +
+          (match.group(3) == null ? 0 : 1);
+      final definition = _MarkdownReferenceDefinition(
+        destination: _decodeMarkdownDestination(rawDestination),
+        rawDestination: rawDestination,
+        labelSpan: SourceSpan.fromOffsets(
+          filePath: topic.filePath,
+          source: source,
+          startOffset: definitionLabelStart,
+          endOffset: definitionLabelStart + rawLabel.length,
+        ),
+        destinationSpan: SourceSpan.fromOffsets(
+          filePath: topic.filePath,
+          source: source,
+          startOffset: destinationStart,
+          endOffset: destinationStart + rawDestination.length,
+        ),
+        angleDestination: match.group(3) != null,
+      );
+      definitions.putIfAbsent(
+        _normalizedMarkdownLabel(match.group(2)!),
+        () => definition,
+      );
+      final lineEnd = source.indexOf('\n', match.end);
+      final protectedEnd = lineEnd < 0 ? source.length : lineEnd;
+      for (var index = match.start; index < protectedEnd; index++) {
+        protected[index] = true;
+      }
+    }
+    return definitions;
+  }
+
+  List<_AuthoredMarkdownTopicReference> _markdownLinkOccurrences(
+    WritersideTopic topic,
+    List<bool> protected,
+    Map<String, _MarkdownReferenceDefinition> definitions,
+  ) {
+    final source = topic.document.source;
+    final occurrences = <_AuthoredMarkdownTopicReference>[];
+    var cursor = 0;
+    while (cursor < source.length) {
+      final labelStart = source.indexOf('[', cursor);
+      if (labelStart < 0) break;
+      cursor = labelStart + 1;
+      if (protected[labelStart] ||
+          _isEscapedMarkdownCharacter(source, labelStart) ||
+          (labelStart > 0 &&
+              source[labelStart - 1] == '!' &&
+              !_isEscapedMarkdownCharacter(source, labelStart - 1))) {
+        continue;
+      }
+      final labelEnd = _closingMarkdownBracket(source, labelStart, protected);
+      if (labelEnd == null) continue;
+      final label = source.substring(labelStart + 1, labelEnd);
+      final afterLabel = labelEnd + 1;
+      if (afterLabel < source.length && source[afterLabel] == '(') {
+        final destination = _inlineMarkdownDestination(
+          topic,
+          labelStart,
+          afterLabel,
+          protected,
+        );
+        if (destination != null) {
+          occurrences.add(
+            _AuthoredMarkdownTopicReference(
+              occurrenceOffset: labelStart,
+              destination: destination.destination,
+              rawDestination: destination.rawDestination,
+              destinationSpan: destination.destinationSpan,
+              angleDestination: destination.angleDestination,
+              inlineMarkdownDestination: true,
+            ),
+          );
+          cursor = destination.linkEndOffset;
+        }
+        continue;
+      }
+
+      String? referenceLabel;
+      SourceSpan? referenceLabelSpan;
+      var referenceEnd = afterLabel;
+      if (afterLabel < source.length && source[afterLabel] == '[') {
+        final closing = _closingMarkdownBracket(source, afterLabel, protected);
+        if (closing == null) continue;
+        final explicit = source.substring(afterLabel + 1, closing);
+        referenceLabel = explicit.isEmpty ? label : explicit;
+        referenceLabelSpan = SourceSpan.fromOffsets(
+          filePath: topic.filePath,
+          source: source,
+          startOffset: explicit.isEmpty ? labelStart + 1 : afterLabel + 1,
+          endOffset: explicit.isEmpty ? labelEnd : closing,
+        );
+        referenceEnd = closing + 1;
+      } else {
+        referenceLabel = label;
+        referenceLabelSpan = SourceSpan.fromOffsets(
+          filePath: topic.filePath,
+          source: source,
+          startOffset: labelStart + 1,
+          endOffset: labelEnd,
+        );
+      }
+      final definition = definitions[_normalizedMarkdownLabel(referenceLabel)];
+      if (definition == null) continue;
+      occurrences.add(
+        _AuthoredMarkdownTopicReference(
+          occurrenceOffset: labelStart,
+          destination: definition.destination,
+          rawDestination: definition.rawDestination,
+          destinationSpan: definition.destinationSpan,
+          angleDestination: definition.angleDestination,
+          referenceLabelSpan: referenceLabelSpan,
+          definitionLabelSpan: definition.labelSpan,
+        ),
+      );
+      cursor = referenceEnd;
+    }
+    return occurrences;
+  }
+
+  List<_AuthoredMarkdownTopicReference> _markdownHtmlLinkOccurrences(
+    WritersideTopic topic,
+    List<bool> protected,
+  ) {
+    final source = topic.document.source;
+    return [
+      for (final reference
+          in const WritersideAuthoredHtmlReferenceScanner().scanMarkdownAnchors(
+            filePath: topic.filePath,
+            source: source,
+            protectedSource: protected,
+          ))
+        _AuthoredMarkdownTopicReference(
+          occurrenceOffset: reference.startTagSpan.startOffset,
+          destination: reference.href,
+          rawDestination: reference.authoredHref,
+          destinationSpan: reference.hrefSpan,
+          origin: reference.origin,
+          xmlAttribute: true,
+          htmlAttributeQuote: reference.quote,
+        ),
+    ];
+  }
+
+  _InlineMarkdownDestination? _inlineMarkdownDestination(
+    WritersideTopic topic,
+    int linkStart,
+    int openingParenthesis,
+    List<bool> protected,
+  ) {
+    final source = topic.document.source;
+    var start = openingParenthesis + 1;
+    while (start < source.length &&
+        _isMarkdownWhitespace(source.codeUnitAt(start))) {
+      start++;
+    }
+    if (start >= source.length || protected[start]) return null;
+    var end = start;
+    final angleDestination = source[start] == '<';
+    if (angleDestination) {
+      start++;
+      end = start;
+      while (end < source.length &&
+          !protected[end] &&
+          (source[end] != '>' || _isEscapedMarkdownCharacter(source, end))) {
+        end++;
+      }
+      if (end >= source.length || protected[end]) return null;
+    } else {
+      var nestedParentheses = 0;
+      while (end < source.length && !protected[end]) {
+        final character = source[end];
+        if (_isEscapedMarkdownCharacter(source, end)) {
+          end++;
+          continue;
+        }
+        if (character == '(') {
+          nestedParentheses++;
+        } else if (character == ')') {
+          if (nestedParentheses == 0) break;
+          nestedParentheses--;
+        } else if (_isMarkdownWhitespace(source.codeUnitAt(end))) {
+          break;
+        }
+        end++;
+      }
+    }
+    if (end <= start) return null;
+    final linkEnd = _inlineMarkdownLinkEnd(
+      source,
+      openingParenthesis,
+      protected,
+    );
+    if (linkEnd == null) return null;
+    final rawDestination = source.substring(start, end);
+    final decodedDestination = _decodeMarkdownDestination(rawDestination);
+    final parsed = const MarkdownAstAdapter().parseInlineFragment(
+      source: source.substring(linkStart, linkEnd),
+      mode: MarkdownMode.writersideMarkdown,
+    );
+    if (parsed.length != 1 ||
+        parsed.single.kind != BusyInlineKind.link ||
+        parsed.single.destination != decodedDestination) {
+      return null;
+    }
+    return _InlineMarkdownDestination(
+      destination: decodedDestination,
+      rawDestination: rawDestination,
+      destinationSpan: SourceSpan.fromOffsets(
+        filePath: topic.filePath,
+        source: source,
+        startOffset: start,
+        endOffset: end,
+      ),
+      angleDestination: angleDestination,
+      linkEndOffset: linkEnd,
+    );
+  }
+
+  int? _inlineMarkdownLinkEnd(
+    String source,
+    int openingParenthesis,
+    List<bool> protected,
+  ) {
+    var nestedParentheses = 0;
+    String? quote;
+    for (var index = openingParenthesis + 1; index < source.length; index++) {
+      if (protected[index] || _isEscapedMarkdownCharacter(source, index)) {
+        continue;
+      }
+      final character = source[index];
+      if (quote != null) {
+        if (character == quote) quote = null;
+        continue;
+      }
+      if (character == '"' || character == "'") {
+        quote = character;
+      } else if (character == '(') {
+        nestedParentheses++;
+      } else if (character == ')') {
+        if (nestedParentheses == 0) return index + 1;
+        nestedParentheses--;
+      }
+    }
+    return null;
+  }
+
+  int? _closingMarkdownBracket(
+    String source,
+    int opening,
+    List<bool> protected,
+  ) {
+    var depth = 1;
+    for (var index = opening + 1; index < source.length; index++) {
+      if (protected[index]) continue;
+      if (_isEscapedMarkdownCharacter(source, index)) continue;
+      if (source[index] == '[') {
+        depth++;
+      } else if (source[index] == ']') {
+        depth--;
+        if (depth == 0) return index;
+      }
+    }
+    return null;
+  }
+
+  bool _rangeIsProtected(List<bool> protected, int start, int end) {
+    for (var index = start; index < end; index++) {
+      if (protected[index]) return true;
+    }
+    return false;
+  }
+
+  String _normalizedMarkdownLabel(String value) =>
+      value.trim().replaceAll(RegExp(r'\s+'), ' ').toLowerCase();
+
+  String _decodeMarkdownDestination(String value) {
+    var decoded = value.replaceAllMapped(
+      RegExp(r'''\\([!"#\$%&'()*+,\-./:;<=>?@\[\\\]^_`{|}~])'''),
+      (match) => match.group(1)!,
+    );
+    try {
+      decoded = XmlDocument.parse(
+        '<value>$decoded</value>',
+      ).rootElement.innerText;
+    } on XmlParserException {
+      // The Markdown parser remains authoritative for unusual destinations;
+      // binding below discards source candidates that do not match it.
+    }
+    return decoded;
+  }
+
+  String _referenceSpanKey(WritersideReference reference) =>
+      '${normalizePath(reference.filePath)}:'
+      '${reference.span.startOffset}:${reference.span.endOffset}';
+
+  String _escapeXmlAttributeValue(String value) => value
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;')
+      .replaceAll("'", '&apos;');
+
+  String _escapeHtmlAttributeValue(
+    String value,
+    WritersideHtmlAttributeQuote quote,
+  ) {
+    if (quote != WritersideHtmlAttributeQuote.unquoted) {
+      return _escapeXmlAttributeValue(value);
+    }
+    final escaped = StringBuffer();
+    for (final rune in value.runes) {
+      escaped.write(switch (rune) {
+        0x09 => '&#9;',
+        0x0A => '&#10;',
+        0x0C => '&#12;',
+        0x0D => '&#13;',
+        0x20 => '&#32;',
+        0x22 => '&quot;',
+        0x26 => '&amp;',
+        0x27 => '&#39;',
+        0x3C => '&lt;',
+        0x3D => '&#61;',
+        0x3E => '&gt;',
+        0x60 => '&#96;',
+        _ => String.fromCharCode(rune),
+      });
+    }
+    return escaped.toString();
+  }
+
+  String _renamedMarkdownReferenceSource({
+    required String decodedOriginal,
+    required String rawOriginal,
+    required String decodedReplacement,
+    required bool angleDestination,
+  }) {
+    if (decodedReplacement == decodedOriginal) return rawOriginal;
+    final decodedHash = decodedOriginal.indexOf('#');
+    final decodedPath = decodedHash < 0
+        ? decodedOriginal
+        : decodedOriginal.substring(0, decodedHash);
+    final decodedSuffix = decodedHash < 0
+        ? ''
+        : decodedOriginal.substring(decodedHash);
+    final replacementHash = decodedReplacement.indexOf('#');
+    final replacementPath = replacementHash < 0
+        ? decodedReplacement
+        : decodedReplacement.substring(0, replacementHash);
+    final replacementSuffix = replacementHash < 0
+        ? ''
+        : decodedReplacement.substring(replacementHash);
+    final rawHash = rawOriginal.indexOf('#');
+    final rawPath = rawHash < 0
+        ? rawOriginal
+        : rawOriginal.substring(0, rawHash);
+    final rawSuffix = rawHash < 0 ? '' : rawOriginal.substring(rawHash);
+
+    final decodedSlash = decodedPath.lastIndexOf('/');
+    final replacementSlash = replacementPath.lastIndexOf('/');
+    final rawSlash = rawPath.lastIndexOf('/');
+    final decodedPrefix = decodedSlash < 0
+        ? ''
+        : decodedPath.substring(0, decodedSlash + 1);
+    final replacementPrefix = replacementSlash < 0
+        ? ''
+        : replacementPath.substring(0, replacementSlash + 1);
+    final rawPrefix = rawSlash < 0 ? '' : rawPath.substring(0, rawSlash + 1);
+    final canPreserveAuthoredPrefix =
+        decodedPrefix == replacementPrefix &&
+        _decodeMarkdownDestination(rawPrefix) == decodedPrefix;
+    final canPreserveAuthoredSuffix =
+        decodedSuffix == replacementSuffix &&
+        _decodeMarkdownDestination(rawSuffix) == decodedSuffix;
+    final replacementName = replacementSlash < 0
+        ? replacementPath
+        : replacementPath.substring(replacementSlash + 1);
+    return '${canPreserveAuthoredPrefix ? rawPrefix : _escapeMarkdownDestination(replacementPrefix, angleDestination: angleDestination)}'
+        '${_escapeMarkdownDestination(replacementName, angleDestination: angleDestination)}'
+        '${canPreserveAuthoredSuffix ? rawSuffix : _escapeMarkdownDestination(replacementSuffix, angleDestination: angleDestination)}';
+  }
+
+  String _escapeMarkdownDestination(
+    String value, {
+    required bool angleDestination,
+  }) {
+    final result = StringBuffer();
+    for (final rune in value.runes) {
+      final character = String.fromCharCode(rune);
+      final escape =
+          character == '\\' ||
+          (angleDestination
+              ? character == '>'
+              : character == '(' || character == ')');
+      if (escape) result.write('\\');
+      result.write(character);
+    }
+    return '$result';
+  }
+
+  void _validateGeneratedXmlRenameSources(
+    List<_ReferenceModuleContext> contexts, {
+    required _MutationContext target,
+    required String targetSource,
+    required List<_TreeEdit> publishedEdits,
+  }) {
+    if (target.topic.format == WritersideTopicFormat.xml) {
+      _validateGeneratedXmlTopic(target.topicPath, targetSource);
+    }
+    final xmlTopicPaths = <String>{
+      for (final context in contexts)
+        for (final topic in context.module.topics)
+          if (topic.format == WritersideTopicFormat.xml)
+            normalizePath(topic.filePath),
+    };
+    for (final edit in publishedEdits) {
+      if (_isTreePath(edit.path)) {
+        _validateGeneratedTree(edit.path, edit.updatedSource);
+      } else if (xmlTopicPaths.contains(normalizePath(edit.path))) {
+        _validateGeneratedXmlTopic(edit.path, edit.updatedSource);
+      }
+    }
+  }
+
+  void _validateGeneratedXmlTopic(String path, String source) {
+    try {
+      final document = XmlDocument.parse(source);
+      if (document.rootElement.name.local != 'topic') {
+        throw const FormatException('Expected a topic root element.');
+      }
+    } on Object catch (error) {
+      throw BusyMarkException(
+        'writerside.topic-file.topic-invalid',
+        args: {'path': path, 'error': '$error'},
+      );
+    }
+  }
+
+  void _validateGeneratedTree(String path, String source) {
+    try {
+      final document = XmlDocument.parse(source);
+      if (document.rootElement.name.local != 'instance-profile') {
+        throw const FormatException(
+          'Expected an instance-profile root element.',
+        );
+      }
+    } on Object catch (error) {
+      throw BusyMarkException(
+        'writerside.topic-file.tree-invalid',
+        args: {'path': path, 'error': '$error'},
+      );
+    }
+  }
+
+  bool _sameSpan(SourceSpan left, SourceSpan right) =>
+      left.startOffset == right.startOffset &&
+      left.endOffset == right.endOffset;
+
+  bool _isEscapedMarkdownCharacter(String source, int offset) {
+    var slashCount = 0;
+    for (var index = offset - 1; index >= 0 && source[index] == '\\'; index--) {
+      slashCount++;
+    }
+    return slashCount.isOdd;
+  }
+
+  bool _isMarkdownWhitespace(int codeUnit) =>
+      codeUnit == 0x20 ||
+      codeUnit == 0x09 ||
+      codeUnit == 0x0a ||
+      codeUnit == 0x0d;
+
+  bool _projectReferenceTargetsTopic(
+    WritersideProjectIndex index,
+    _MutationContext target,
+    String reference, {
+    required String moduleId,
+    required String filePath,
+    String? origin,
+  }) {
+    return index
+        .definitions(
+          reference.split('#').first,
+          moduleId: moduleId,
+          origin: origin,
+          kind: WritersideSymbolKind.topic,
+          filePath: filePath,
+        )
+        .any((symbol) => p.equals(symbol.filePath, target.topicPath));
+  }
+
+  String _renamedDocumentReference(
+    String reference, {
+    required WritersideTopic oldTopic,
+    required String newTopicFileName,
+    required String newFileName,
+  }) {
+    final hash = reference.indexOf('#');
+    final pathPart = hash < 0 ? reference : reference.substring(0, hash);
+    final suffix = hash < 0 ? '' : reference.substring(hash);
+    if (pathPart.isEmpty) return reference;
+    final normalized = _normalizedReference(pathPart);
+    final directory = p.dirname(normalized);
+    final oldId = oldTopic.id;
+    final usesId =
+        p.extension(normalized).isEmpty && p.basename(normalized) == oldId;
+    if (usesId &&
+        oldId !=
+            p.basenameWithoutExtension(
+              _normalizedReference(oldTopic.fileName),
+            )) {
+      return reference;
+    }
+    final replacementName = usesId
+        ? p.basenameWithoutExtension(newFileName)
+        : newFileName;
+    if (normalized == _normalizedReference(oldTopic.fileName)) {
+      return '$newTopicFileName$suffix';
+    }
+    final replacement = directory == '.'
+        ? replacementName
+        : p.join(directory, replacementName).replaceAll(r'\', '/');
+    return '$replacement$suffix';
   }
 
   Future<_DeleteTreeMutation> _deleteTreeEdits(_MutationContext context) async {
@@ -671,8 +2084,18 @@ class WritersideTopicFileEditor {
       );
     }
     final oldId = p.basenameWithoutExtension(path);
-    if (root.getAttribute('id') != oldId) {
-      return _RenamedTopicSource(source: source, updatedXmlTopicId: false);
+    final currentId = root.getAttribute('id');
+    if (currentId == null || currentId.isEmpty) {
+      throw BusyMarkException(
+        'writerside.topic-file.missing-root-id',
+        args: {'path': path},
+      );
+    }
+    if (currentId != oldId) {
+      throw BusyMarkException(
+        'writerside.topic-file.root-id-mismatch',
+        args: {'path': path, 'id': currentId, 'expectedId': oldId},
+      );
     }
     root.setAttribute('id', p.basenameWithoutExtension(newFileName));
     return _RenamedTopicSource(
@@ -688,7 +2111,7 @@ class WritersideTopicFileEditor {
   }) async {
     for (final edit in edits) {
       await _replaceFileAtomically(
-        anchor,
+        edit.anchor ?? anchor,
         edit.path,
         edit.updatedSource,
         expectedCurrentSource: edit.originalSource,
@@ -705,7 +2128,7 @@ class WritersideTopicFileEditor {
     for (final edit in edits.reversed) {
       try {
         await _replaceFileAtomically(
-          anchor,
+          edit.anchor ?? anchor,
           edit.path,
           edit.originalSource,
           expectedCurrentSource: edit.updatedSource,
@@ -893,18 +2316,144 @@ class WritersideTopicFileEditor {
     }
   }
 
-  Future<bool> _renameTargetIsSafeToCleanUp(
-    _MutationContext context, {
+  Future<void> _ensureReferenceContextsUnchanged(
+    List<_ReferenceModuleContext> contexts,
+    List<_TreeEdit> edits, {
     required String targetPath,
     required String targetSource,
+    required String targetModuleRoot,
+  }) async {
+    final updatedSources = {
+      for (final edit in edits) normalizePath(edit.path): edit.updatedSource,
+    };
+    for (final context in contexts) {
+      final configuration = await _configurationSources(
+        context.module.rootPath,
+      );
+      if (!_sameStringMap(configuration, context.configurationSources)) {
+        throw BusyMarkException(
+          'writerside.topic-file.tree-changed',
+          args: {'path': context.module.config.filePath},
+        );
+      }
+      for (final tree in context.trees) {
+        final expected = updatedSources[tree.path] ?? tree.source;
+        final resolved = await _resolvePath(
+          context.anchor,
+          tree.path,
+          allowRoot: false,
+        );
+        if (resolved.type != FileSystemEntityType.file ||
+            await File(resolved.path).readAsString() != expected) {
+          throw BusyMarkException(
+            'writerside.topic-file.tree-changed',
+            args: {'path': resolved.path},
+          );
+        }
+      }
+      final expectedTopics = <String, String>{
+        ...context.topicSources,
+        for (final entry in updatedSources.entries)
+          if (context.topicSources.containsKey(entry.key))
+            entry.key: entry.value,
+        if (p.equals(context.module.rootPath, targetModuleRoot))
+          normalizePath(targetPath): targetSource,
+      };
+      final currentTopics = await _topicSources(context.anchor, context.module);
+      if (!_sameStringMap(currentTopics, expectedTopics)) {
+        throw BusyMarkException(
+          'writerside.topic-file.topic-inventory-changed',
+          args: {'path': context.module.rootPath},
+        );
+      }
+    }
+  }
+
+  Future<void> _ensurePreparedPlanUnchanged(
+    WritersideTopicRenamePlan plan,
+  ) async {
+    final prepared = plan._prepared;
+    for (final context in prepared.referenceContexts) {
+      final configuration = await _configurationSources(
+        context.module.rootPath,
+      );
+      if (!_sameStringMap(configuration, context.configurationSources)) {
+        throw BusyMarkException(
+          'writerside.topic-file.tree-changed',
+          args: {'path': context.module.config.filePath},
+        );
+      }
+      for (final tree in context.trees) {
+        final resolved = await _resolvePath(
+          context.anchor,
+          tree.path,
+          allowRoot: false,
+        );
+        if (resolved.type != FileSystemEntityType.file ||
+            await File(resolved.path).readAsString() != tree.source) {
+          throw BusyMarkException(
+            'writerside.topic-file.tree-changed',
+            args: {'path': tree.path},
+          );
+        }
+      }
+      final currentTopics = await _topicSources(context.anchor, context.module);
+      if (!_sameStringMap(currentTopics, context.topicSources)) {
+        throw BusyMarkException(
+          'writerside.topic-file.topic-inventory-changed',
+          args: {'path': context.module.rootPath},
+        );
+      }
+    }
+    final destination = await _resolvePath(
+      prepared.target.anchor,
+      plan.newTopicPath,
+      allowRoot: false,
+    );
+    if (destination.type != FileSystemEntityType.notFound) {
+      throw BusyMarkException(
+        'writerside.topic-file.target-exists',
+        args: {'path': destination.path},
+      );
+    }
+  }
+
+  Future<bool> _renameTargetIsSafeToCleanUp(
+    List<_ReferenceModuleContext> contexts, {
+    required String targetPath,
+    required String targetSource,
+    required String targetModuleRoot,
   }) async {
     try {
-      await _ensureConfigurationUnchanged(context);
-      await _ensureTreesAtExpectedSources(context, const []);
-      await _ensureTopicSourcesUnchanged(
-        context,
-        additionalSources: {targetPath: targetSource},
-      );
+      for (final context in contexts) {
+        final configuration = await _configurationSources(
+          context.module.rootPath,
+        );
+        if (!_sameStringMap(configuration, context.configurationSources)) {
+          return false;
+        }
+        for (final tree in context.trees) {
+          final resolved = await _resolvePath(
+            context.anchor,
+            tree.path,
+            allowRoot: false,
+          );
+          if (resolved.type != FileSystemEntityType.file ||
+              await File(resolved.path).readAsString() != tree.source) {
+            return false;
+          }
+        }
+        final expectedTopics = <String, String>{
+          ...context.topicSources,
+          if (p.equals(context.module.rootPath, targetModuleRoot))
+            normalizePath(targetPath): targetSource,
+        };
+        final currentTopics = await _topicSources(
+          context.anchor,
+          context.module,
+        );
+        if (!_sameStringMap(currentTopics, expectedTopics)) return false;
+      }
       return true;
     } on Object {
       // A concurrent edit may now reference the new path. Retaining a harmless
@@ -965,29 +2514,11 @@ class WritersideTopicFileEditor {
   }
 
   String _safeRenamedFileName(String value, {required String oldPath}) {
-    final fileName = value.trim();
-    if (fileName.isEmpty ||
-        fileName == '.' ||
-        fileName == '..' ||
-        p.isAbsolute(fileName) ||
-        fileName.contains('/') ||
-        fileName.contains(r'\') ||
-        fileName.contains('..')) {
-      throw const BusyMarkException('writerside.topic-file.file-name-unsafe');
-    }
     final oldExtension = p.extension(oldPath).toLowerCase();
-    if (!{'.md', '.markdown', '.topic'}.contains(oldExtension) ||
-        p.extension(fileName).toLowerCase() != oldExtension) {
-      throw BusyMarkException(
-        'writerside.topic-file.file-extension-mismatch',
-        args: {'extension': oldExtension},
-      );
-    }
-    final id = p.basenameWithoutExtension(fileName);
-    if (!RegExp(r'^[A-Za-z0-9_-]+$').hasMatch(id)) {
-      throw const BusyMarkException('writerside.topic-file.file-name-invalid');
-    }
-    return fileName;
+    return validateWritersideTopicFileName(
+      value,
+      requiredExtension: oldExtension,
+    );
   }
 
   String _renamedTopicFileName(String oldFileName, String newFileName) {
@@ -997,19 +2528,6 @@ class WritersideTopicFileEditor {
         : p.join(directory, newFileName).replaceAll(r'\', '/');
   }
 
-  String _renamedReference(
-    String reference, {
-    required String oldTopicFileName,
-    required String newTopicFileName,
-    required String newFileName,
-  }) {
-    final normalized = _normalizedReference(reference);
-    if (normalized == _normalizedReference(oldTopicFileName)) {
-      return newTopicFileName;
-    }
-    return newFileName;
-  }
-
   String _normalizedReference(String value) {
     return p.normalize(value.trim()).replaceAll(r'\', '/');
   }
@@ -1017,6 +2535,82 @@ class WritersideTopicFileEditor {
   String _xmlSource(XmlDocument document) {
     return '${document.toXmlString(pretty: true, indent: '  ')}\n';
   }
+}
+
+class _AuthoredMarkdownTopicReference {
+  const _AuthoredMarkdownTopicReference({
+    required this.occurrenceOffset,
+    required this.destination,
+    required this.rawDestination,
+    required this.destinationSpan,
+    this.origin,
+    this.xmlAttribute = false,
+    this.htmlAttributeQuote,
+    this.angleDestination = false,
+    this.inlineMarkdownDestination = false,
+    this.referenceLabelSpan,
+    this.definitionLabelSpan,
+  });
+
+  final int occurrenceOffset;
+  final String destination;
+  final String rawDestination;
+  final SourceSpan destinationSpan;
+  final String? origin;
+  final bool xmlAttribute;
+  final WritersideHtmlAttributeQuote? htmlAttributeQuote;
+  final bool angleDestination;
+  final bool inlineMarkdownDestination;
+  final SourceSpan? referenceLabelSpan;
+  final SourceSpan? definitionLabelSpan;
+}
+
+class _AuthoredMarkdownProjection {
+  const _AuthoredMarkdownProjection({
+    required this.references,
+    required this.unboundLinks,
+  });
+
+  final List<_AuthoredMarkdownTopicReference> references;
+  final List<_UnboundMarkdownTopicReference> unboundLinks;
+}
+
+class _UnboundMarkdownTopicReference {
+  const _UnboundMarkdownTopicReference({required this.link, this.origin});
+
+  final MarkdownLink link;
+  final String? origin;
+
+  String get destination => link.destination;
+  SourceSpan get span => link.span;
+}
+
+class _MarkdownReferenceDefinition {
+  const _MarkdownReferenceDefinition({
+    required this.destination,
+    required this.rawDestination,
+    required this.destinationSpan,
+    this.labelSpan,
+    this.angleDestination = false,
+  });
+
+  final String destination;
+  final String rawDestination;
+  final SourceSpan? labelSpan;
+  final SourceSpan destinationSpan;
+  final bool angleDestination;
+}
+
+class _InlineMarkdownDestination extends _MarkdownReferenceDefinition {
+  const _InlineMarkdownDestination({
+    required super.destination,
+    required super.rawDestination,
+    required super.destinationSpan,
+    required super.angleDestination,
+    required this.linkEndOffset,
+  });
+
+  final int linkEndOffset;
 }
 
 class _MutationContext {
@@ -1057,6 +2651,32 @@ class _CurrentModuleSnapshot {
   final Map<String, String> topicSources;
 }
 
+class _ReferenceModuleContext {
+  const _ReferenceModuleContext({
+    required this.anchor,
+    required this.module,
+    required this.configurationSources,
+    required this.topicSources,
+    required this.trees,
+  });
+
+  factory _ReferenceModuleContext.fromMutation(_MutationContext context) {
+    return _ReferenceModuleContext(
+      anchor: context.anchor,
+      module: context.module,
+      configurationSources: context.configurationSources,
+      topicSources: context.topicSources,
+      trees: context.trees,
+    );
+  }
+
+  final CanonicalPathAnchor anchor;
+  final WritersideModule module;
+  final Map<String, String?> configurationSources;
+  final Map<String, String> topicSources;
+  final List<_LoadedTree> trees;
+}
+
 class _LoadedTree {
   const _LoadedTree({
     required this.path,
@@ -1071,11 +2691,13 @@ class _LoadedTree {
 
 class _TreeEdit {
   const _TreeEdit({
+    this.anchor,
     required this.path,
     required this.originalSource,
     required this.updatedSource,
   });
 
+  final CanonicalPathAnchor? anchor;
   final String path;
   final String originalSource;
   final String updatedSource;
@@ -1101,6 +2723,20 @@ class _RenamedTopicSource {
   final bool updatedXmlTopicId;
 }
 
+class _PreparedTopicRename {
+  const _PreparedTopicRename({
+    required this.target,
+    required this.referenceContexts,
+    required this.targetSource,
+    required this.publishedEdits,
+  });
+
+  final _MutationContext target;
+  final List<_ReferenceModuleContext> referenceContexts;
+  final String targetSource;
+  final List<_TreeEdit> publishedEdits;
+}
+
 bool _sameStringMap(Map<String, String?> first, Map<String, String?> second) {
   if (first.length != second.length) {
     return false;
@@ -1112,3 +2748,5 @@ bool _sameStringMap(Map<String, String?> first, Map<String, String?> second) {
   }
   return true;
 }
+
+bool _isTreePath(String path) => p.extension(path).toLowerCase() == '.tree';

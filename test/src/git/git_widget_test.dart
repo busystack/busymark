@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:busymark/l10n/generated/app_localizations.dart';
 import 'package:busymark/l10n/generated/app_localizations_de.dart';
 import 'package:busymark/l10n/generated/app_localizations_en.dart';
@@ -437,12 +439,12 @@ void main() {
     expect(find.text(l10n.gitStagedFileCount(2)), findsOneWidget);
     expect(find.text(l10n.gitUnsavedChangesBanner), findsOneWidget);
     expect(find.text(l10n.gitOutsideWorkspace), findsOneWidget);
+    expect(_commitMessageEntry, findsOneWidget);
   });
 
-  testWidgets('AI commit draft is an icon immediately before Commit', (
+  testWidgets('commit message uses the grouped multiline form surface', (
     tester,
   ) async {
-    var draftCalls = 0;
     await tester.pumpWidget(
       _localized(
         GitCommitActions(
@@ -459,29 +461,149 @@ void main() {
               onSelectFile: (_) {},
               onOpenFile: (_) {},
               onConfirmDiscard: (_) async => true,
-              onDraftCommitMessage: () async {
-                draftCalls += 1;
-                return null;
-              },
             ),
           ),
         ),
       ),
     );
 
-    final draftButton = find.byTooltip(l10n.aiDraftWithAi);
-    final commitButton = find.text(l10n.gitCommit);
-    expect(draftButton, findsOneWidget);
-    expect(find.text(l10n.aiDraftWithAi), findsNothing);
-    expect(find.byIcon(BusyMarkGlyphs.ai), findsOneWidget);
+    expect(find.byType(BusyMarkGroupedTextEntry), findsOneWidget);
+    expect(_commitMessageEntry, findsOneWidget);
+    final entry = tester.widget<BusyMarkGroupedTextEntry>(_commitMessageEntry);
+    expect(entry.label, l10n.gitCommitMessage);
+    expect(entry.minLines, 3);
+    expect(entry.maxLines, 5);
+    expect(entry.textInputAction, TextInputAction.newline);
+    final groupedList = find.ancestor(
+      of: _commitMessageEntry,
+      matching: find.byType(BusyMarkGroupedList),
+    );
+    expect(groupedList, findsOneWidget);
+    expect(tester.widget<BusyMarkGroupedList>(groupedList).filled, isTrue);
     expect(
-      tester.getCenter(draftButton).dx,
-      lessThan(tester.getCenter(commitButton).dx),
+      find.descendant(
+        of: _commitMessageEntry,
+        matching: find.byType(TextFormField),
+      ),
+      findsOneWidget,
+    );
+    final editable = tester.widget<TextField>(_commitMessageEditable);
+    expect(editable.decoration?.filled, isFalse);
+    expect(editable.decoration?.fillColor, Colors.transparent);
+    expect(editable.decoration?.border, InputBorder.none);
+    expect(editable.decoration?.enabledBorder, InputBorder.none);
+    expect(editable.decoration?.focusedBorder, InputBorder.none);
+  });
+
+  testWidgets(
+    'AI commit draft is a secondary button immediately before Commit',
+    (tester) async {
+      var draftCalls = 0;
+      await tester.pumpWidget(
+        _localized(
+          GitCommitActions(
+            commit: (_) async => true,
+            child: GitFileActions(
+              select: (_) {},
+              unselect: (_) {},
+              rollback: (_) {},
+              deleteUntracked: (_) {},
+              child: GitChangesView(
+                state: _state(
+                  files: [_file('README.md', staged: true, unstaged: false)],
+                ),
+                onSelectFile: (_) {},
+                onOpenFile: (_) {},
+                onConfirmDiscard: (_) async => true,
+                onDraftCommitMessage: () async {
+                  draftCalls += 1;
+                  return null;
+                },
+              ),
+            ),
+          ),
+        ),
+      );
+
+      final draftLabel = find.text(l10n.aiDraftWithAi);
+      final draftButton = find.ancestor(
+        of: draftLabel,
+        matching: find.byWidgetPredicate((widget) => widget is FilledButton),
+      );
+      final commitButton = find.text(l10n.gitCommit);
+      final stagedCount = find.text(l10n.gitStagedFileCount(1));
+      expect(draftLabel, findsOneWidget);
+      expect(draftButton, findsOneWidget);
+      expect(
+        find.ancestor(
+          of: draftLabel,
+          matching: find.byType(BusyMarkCompactIconButton),
+        ),
+        findsNothing,
+      );
+      expect(
+        find.ancestor(
+          of: draftLabel,
+          matching: find.byType(BusyMarkHeaderIconButton),
+        ),
+        findsNothing,
+      );
+      expect(find.byIcon(BusyMarkGlyphs.ai), findsNothing);
+      expect(
+        tester.getBottomLeft(stagedCount).dy,
+        lessThan(tester.getTopLeft(draftButton).dy),
+      );
+      expect(
+        tester.getCenter(draftButton).dx,
+        lessThan(tester.getCenter(commitButton).dx),
+      );
+
+      await tester.tap(draftButton);
+      await tester.pumpAndSettle();
+      expect(draftCalls, 1);
+    },
+  );
+
+  testWidgets('AI commit draft replaces text, trims it, and moves the cursor', (
+    tester,
+  ) async {
+    const proposal = '  Subject\n\nBody  ';
+    const expected = 'Subject\n\nBody';
+    await tester.pumpWidget(
+      _localized(
+        GitCommitActions(
+          commit: (_) async => true,
+          child: GitFileActions(
+            select: (_) {},
+            unselect: (_) {},
+            rollback: (_) {},
+            deleteUntracked: (_) {},
+            child: GitChangesView(
+              state: _state(
+                files: [_file('README.md', staged: true, unstaged: false)],
+              ),
+              onSelectFile: (_) {},
+              onOpenFile: (_) {},
+              onConfirmDiscard: (_) async => true,
+              onDraftCommitMessage: () async => proposal,
+            ),
+          ),
+        ),
+      ),
     );
 
-    await tester.tap(draftButton);
+    await tester.enterText(_commitMessageEditable, 'Existing draft');
+    await tester.tap(find.text(l10n.aiDraftWithAi));
     await tester.pumpAndSettle();
-    expect(draftCalls, 1);
+
+    final controller = tester
+        .widget<TextField>(_commitMessageEditable)
+        .controller!;
+    expect(controller.text, expected);
+    expect(
+      controller.selection,
+      const TextSelection.collapsed(offset: expected.length),
+    );
   });
 
   testWidgets('file history requires an active Markdown file', (tester) async {
@@ -691,19 +813,107 @@ void main() {
       ),
     );
 
-    expect(find.text(l10n.gitCommitMessage), findsOneWidget);
-    final commitField = tester.widget<TextField>(find.byType(TextField));
-    expect(commitField.decoration?.border, isNull);
-    expect(commitField.decoration?.filled, isNull);
+    final commitButton = find.ancestor(
+      of: find.text(l10n.gitCommit),
+      matching: find.byType(ElevatedButton),
+    );
+    expect(tester.widget<ElevatedButton>(commitButton).onPressed, isNull);
     await tester.tap(find.text(l10n.gitCommit));
     await tester.pump();
     expect(committedMessage, isNull);
-    await tester.enterText(find.byType(TextField), 'Docs');
+    await tester.enterText(_commitMessageEditable, '   ');
     await tester.pump();
+    expect(tester.widget<ElevatedButton>(commitButton).onPressed, isNull);
+    await tester.enterText(_commitMessageEditable, 'Docs');
+    await tester.pump();
+    expect(tester.widget<ElevatedButton>(commitButton).onPressed, isNotNull);
     await tester.tap(find.text(l10n.gitCommit));
     await tester.pumpAndSettle();
     expect(committedMessage, 'Docs');
-    expect(find.text('Docs'), findsNothing);
+    expect(
+      tester.widget<TextField>(_commitMessageEditable).controller?.text,
+      isEmpty,
+    );
+  });
+
+  testWidgets('commit remains disabled without staged files', (tester) async {
+    var commitCalls = 0;
+    await tester.pumpWidget(
+      _localized(
+        GitCommitActions(
+          commit: (_) async {
+            commitCalls += 1;
+            return true;
+          },
+          child: GitFileActions(
+            select: (_) {},
+            unselect: (_) {},
+            rollback: (_) {},
+            deleteUntracked: (_) {},
+            child: GitChangesView(
+              state: _state(files: [_file('README.md')]),
+              onSelectFile: (_) {},
+              onOpenFile: (_) {},
+              onConfirmDiscard: (_) async => true,
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.enterText(_commitMessageEditable, 'Docs');
+    await tester.pump();
+    final commitButton = find.ancestor(
+      of: find.text(l10n.gitCommit),
+      matching: find.byType(ElevatedButton),
+    );
+    expect(tester.widget<ElevatedButton>(commitButton).onPressed, isNull);
+    await tester.tap(find.text(l10n.gitCommit));
+    await tester.pump();
+    expect(commitCalls, 0);
+  });
+
+  testWidgets('multiline commit message is retained and committed verbatim', (
+    tester,
+  ) async {
+    String? committedMessage;
+    await tester.pumpWidget(
+      _localized(
+        GitCommitActions(
+          commit: (message) async {
+            committedMessage = message;
+            return true;
+          },
+          child: GitFileActions(
+            select: (_) {},
+            unselect: (_) {},
+            rollback: (_) {},
+            deleteUntracked: (_) {},
+            child: GitChangesView(
+              state: _state(
+                files: [_file('README.md', staged: true, unstaged: false)],
+              ),
+              onSelectFile: (_) {},
+              onOpenFile: (_) {},
+              onConfirmDiscard: (_) async => true,
+            ),
+          ),
+        ),
+      ),
+    );
+
+    const message = 'Subject\n\nBody';
+    await tester.enterText(_commitMessageEditable, message);
+    await tester.pump();
+    expect(
+      tester.widget<TextField>(_commitMessageEditable).controller?.text,
+      message,
+    );
+    expect(committedMessage, isNull);
+
+    await tester.tap(find.text(l10n.gitCommit));
+    await tester.pumpAndSettle();
+    expect(committedMessage, message);
   });
 
   testWidgets('failed commit preserves the commit message', (tester) async {
@@ -729,11 +939,69 @@ void main() {
       ),
     );
 
-    await tester.enterText(find.byType(TextField), 'Keep this message');
+    await tester.enterText(_commitMessageEditable, 'Keep this message');
     await tester.tap(find.text(l10n.gitCommit));
     await tester.pumpAndSettle();
 
-    expect(find.text('Keep this message'), findsOneWidget);
+    expect(
+      tester.widget<TextField>(_commitMessageEditable).controller?.text,
+      'Keep this message',
+    );
+  });
+
+  testWidgets('committing disables actions and retains text until success', (
+    tester,
+  ) async {
+    final commitResult = Completer<bool>();
+    await tester.pumpWidget(
+      _localized(
+        GitCommitActions(
+          commit: (_) => commitResult.future,
+          child: GitFileActions(
+            select: (_) {},
+            unselect: (_) {},
+            rollback: (_) {},
+            deleteUntracked: (_) {},
+            child: GitChangesView(
+              state: _state(
+                files: [_file('README.md', staged: true, unstaged: false)],
+              ),
+              onSelectFile: (_) {},
+              onOpenFile: (_) {},
+              onConfirmDiscard: (_) async => true,
+              onDraftCommitMessage: () async => 'Drafted message',
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.enterText(_commitMessageEditable, 'Pending message');
+    await tester.pump();
+    await tester.tap(find.text(l10n.gitCommit));
+    await tester.pump();
+
+    final commitButton = find.ancestor(
+      of: find.text(l10n.gitCommit),
+      matching: find.byType(ElevatedButton),
+    );
+    expect(tester.widget<ElevatedButton>(commitButton).onPressed, isNull);
+    final draftButton = find.ancestor(
+      of: find.text(l10n.aiDraftWithAi),
+      matching: find.byWidgetPredicate((widget) => widget is FilledButton),
+    );
+    expect(tester.widget<FilledButton>(draftButton).onPressed, isNull);
+    expect(
+      tester.widget<TextField>(_commitMessageEditable).controller?.text,
+      'Pending message',
+    );
+
+    commitResult.complete(true);
+    await tester.pumpAndSettle();
+    expect(
+      tester.widget<TextField>(_commitMessageEditable).controller?.text,
+      isEmpty,
+    );
   });
 
   testWidgets('commit message clears when repository or workspace changes', (
@@ -766,7 +1034,7 @@ void main() {
     await tester.pumpWidget(
       changesView(_state(files: staged, workspace: firstWorkspace)),
     );
-    await tester.enterText(find.byType(TextField), 'Repository message');
+    await tester.enterText(_commitMessageEditable, 'Repository message');
     await tester.pumpWidget(
       changesView(
         _state(files: staged, repo: otherRepository, workspace: firstWorkspace),
@@ -774,7 +1042,7 @@ void main() {
     );
     expect(find.text('Repository message'), findsNothing);
 
-    await tester.enterText(find.byType(TextField), 'Workspace message');
+    await tester.enterText(_commitMessageEditable, 'Workspace message');
     await tester.pumpWidget(
       changesView(
         _state(
@@ -1763,6 +2031,12 @@ void main() {
     );
   });
 }
+
+Finder get _commitMessageEntry =>
+    find.byKey(const ValueKey('git-commit-message'));
+
+Finder get _commitMessageEditable =>
+    find.descendant(of: _commitMessageEntry, matching: find.byType(TextField));
 
 Widget _localized(Widget child, {Locale? locale}) {
   return MaterialApp(

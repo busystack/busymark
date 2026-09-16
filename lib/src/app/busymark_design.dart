@@ -1321,7 +1321,8 @@ final class BusyMarkMenuSession {
   }
 }
 
-/// Presents a menu through GTK on Linux and a themed Flutter route elsewhere.
+/// Presents menus, including nested submenus, through the desktop toolkit.
+/// A themed fallback is only used when no native host is available.
 Future<T?> showBusyMarkMenu<T>({
   required BuildContext context,
   required List<PopupMenuEntry<T>> items,
@@ -1358,6 +1359,7 @@ Future<T?> showBusyMarkMenu<T>({
       entries: nativeEntries,
       focusFirst: focusFirst,
       preferAbove: preferAbove,
+      textDirection: Directionality.of(context),
     );
     if (presentation.dismissed) {
       return null;
@@ -1368,6 +1370,40 @@ Future<T?> showBusyMarkMenu<T>({
   }
   if (!context.mounted) {
     return null;
+  }
+  if (itemSnapshot.any((item) => item is BusyMarkSubmenuItem<T>)) {
+    final navigator = Navigator.of(context, rootNavigator: true);
+    if (!navigator.mounted || navigator.overlay?.mounted != true) return null;
+    final previousFocus = FocusManager.instance.primaryFocus;
+    final overlay = navigator.overlay?.context.findRenderObject();
+    final localAnchor = overlay is RenderBox
+        ? Rect.fromPoints(
+            overlay.globalToLocal(anchor.topLeft),
+            overlay.globalToLocal(anchor.bottomRight),
+          )
+        : anchor;
+    final route = _BusyMarkNestedMenuRoute<T>(
+      anchor: localAnchor,
+      items: itemSnapshot,
+      themes: InheritedTheme.capture(from: context, to: navigator.context),
+      direction: Directionality.of(context),
+      focusFirst: focusFirst,
+      routeKey: presentation._fallbackRouteKey,
+      dismissLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
+    );
+    final result = navigator.push<T>(route);
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => presentation._captureFallbackRoute(),
+    );
+    try {
+      final value = await result;
+      return presentation.dismissed ? null : value;
+    } finally {
+      presentation._releaseFallbackRoute();
+      if (previousFocus?.context?.mounted == true) {
+        previousFocus!.requestFocus();
+      }
+    }
   }
   final selection = await _showBusyMarkFallbackMenu<T>(
     context: context,
@@ -1407,6 +1443,16 @@ List<NativeMenuEntry>? _busyMarkNativeMenuEntries<T>(
           selected: item.trailingCheck && item.checked,
         ),
       );
+    } else if (item is BusyMarkSubmenuItem<T>) {
+      final children = _busyMarkNativeMenuEntries(item.items);
+      if (children == null) return null;
+      entries.add(
+        NativeMenuEntry.submenu(
+          label: item.label,
+          enabled: item.enabled,
+          children: children,
+        ),
+      );
     } else if (item is PopupMenuDivider) {
       entries.add(const NativeMenuEntry.separator());
     } else {
@@ -1417,14 +1463,27 @@ List<NativeMenuEntry>? _busyMarkNativeMenuEntries<T>(
 }
 
 T? _busyMarkMenuValueAt<T>(List<PopupMenuEntry<T>> items, int? index) {
-  if (index == null || index < 0 || index >= items.length) {
+  if (index == null || index < 0) return null;
+  // GTK and Dart use the same preorder, including headings and separators.
+  // Only enabled leaves (with enabled ancestors) can return an action.
+  var position = 0;
+  T? visit(List<PopupMenuEntry<T>> entries, bool ancestorsEnabled) {
+    for (final item in entries) {
+      final current = position++;
+      if (item is BusyMarkSubmenuItem<T>) {
+        final value = visit(item.items, ancestorsEnabled && item.enabled);
+        if (value != null) return value;
+      } else if (current == index &&
+          ancestorsEnabled &&
+          item is BusyMarkPopupMenuItem<T> &&
+          item.enabled) {
+        return item.menuValue;
+      }
+    }
     return null;
   }
-  final item = items[index];
-  if (item is! BusyMarkPopupMenuItem<T> || !item.enabled) {
-    return null;
-  }
-  return item.menuValue;
+
+  return visit(items, true);
 }
 
 Future<T?> _showBusyMarkFallbackMenu<T>({
@@ -1520,6 +1579,155 @@ Future<T?> showBusyMarkContextMenu<T>(
     anchorPoint: globalPosition,
     items: items,
     width: width,
+  );
+}
+
+/// A real nested menu; its label is never a selectable command.
+class BusyMarkSubmenuItem<T> extends PopupMenuEntry<T> {
+  const BusyMarkSubmenuItem({
+    super.key,
+    required this.label,
+    required this.items,
+    this.enabled = true,
+  });
+  final String label;
+  final List<PopupMenuEntry<T>> items;
+  final bool enabled;
+  @override
+  double get height => kMinInteractiveDimension;
+  @override
+  bool represents(T? value) => false;
+  @override
+  State<BusyMarkSubmenuItem<T>> createState() => _BusyMarkSubmenuItemState<T>();
+}
+
+class _BusyMarkSubmenuItemState<T> extends State<BusyMarkSubmenuItem<T>> {
+  @override
+  Widget build(BuildContext context) => Text(widget.label);
+}
+
+class _BusyMarkNestedMenuRoute<T> extends PopupRoute<T> {
+  _BusyMarkNestedMenuRoute({
+    required this.anchor,
+    required this.items,
+    required this.themes,
+    required this.direction,
+    required this.routeKey,
+    required this.dismissLabel,
+    required this.focusFirst,
+  });
+  final bool focusFirst;
+  final Rect anchor;
+  final List<PopupMenuEntry<T>> items;
+  final CapturedThemes themes;
+  final TextDirection direction;
+  final GlobalKey routeKey;
+  final String dismissLabel;
+  @override
+  Color? get barrierColor => null;
+  @override
+  bool get barrierDismissible => true;
+  @override
+  String? get barrierLabel => dismissLabel;
+  @override
+  Duration get transitionDuration => Duration.zero;
+  @override
+  Widget buildPage(
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+  ) => themes.wrap(
+    Directionality(
+      textDirection: direction,
+      child: _BusyMarkNestedMenu<T>(route: this),
+    ),
+  );
+}
+
+class _BusyMarkNestedMenu<T> extends StatefulWidget {
+  const _BusyMarkNestedMenu({required this.route});
+  final _BusyMarkNestedMenuRoute<T> route;
+  @override
+  State<_BusyMarkNestedMenu<T>> createState() => _BusyMarkNestedMenuState<T>();
+}
+
+class _BusyMarkNestedMenuState<T> extends State<_BusyMarkNestedMenu<T>> {
+  final _controller = MenuController();
+  final _firstFocus = FocusNode(debugLabel: 'First nested menu item');
+  bool _selected = false;
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _controller.open();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && widget.route.focusFirst) _firstFocus.requestFocus();
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _firstFocus.dispose();
+    super.dispose();
+  }
+
+  List<Widget> _children(
+    List<PopupMenuEntry<T>> items, {
+    bool root = false,
+  }) => [
+    for (final item in items)
+      if (item is BusyMarkSubmenuItem<T>)
+        SubmenuButton(
+          focusNode: root && identical(item, items.first) ? _firstFocus : null,
+          menuChildren: item.enabled ? _children(item.items) : const [],
+          child: Text(item.label),
+        )
+      else if (item is BusyMarkPopupMenuItem<T>)
+        MenuItemButton(
+          focusNode: root && identical(item, items.first) ? _firstFocus : null,
+          closeOnActivate: false,
+          onPressed: item.enabled
+              ? () {
+                  _selected = true;
+                  Navigator.of(context).pop(item.menuValue);
+                }
+              : null,
+          leadingIcon: item.icon == null
+              ? null
+              : Icon(
+                  item.icon,
+                  size: BusyMarkSizes.iconSm,
+                  color: item.iconColor,
+                ),
+          trailingIcon: item.shortcut == null ? null : Text(item.shortcut!),
+          child: Text(item.label),
+        )
+      else if (item is PopupMenuDivider)
+        const Divider(height: BusyMarkSpacing.sm),
+  ];
+
+  @override
+  Widget build(BuildContext context) => Stack(
+    children: [
+      Positioned(
+        left: widget.route.anchor.left,
+        top: widget.route.anchor.bottom,
+        child: MenuAnchor(
+          key: widget.route.routeKey,
+          controller: _controller,
+          consumeOutsideTap: true,
+          onClose: () {
+            if (!_selected && mounted && widget.route.isCurrent) {
+              Navigator.of(context).pop();
+            }
+          },
+          menuChildren: _children(widget.route.items, root: true),
+          child: const SizedBox.shrink(),
+        ),
+      ),
+    ],
   );
 }
 
@@ -2034,6 +2242,7 @@ class BusyMarkGroupedTextEntry extends StatefulWidget {
     this.errorText,
     this.hintText,
     this.enabled = true,
+    this.readOnly = false,
     this.autofocus = false,
     this.focusNode,
     this.keyboardType,
@@ -2060,6 +2269,7 @@ class BusyMarkGroupedTextEntry extends StatefulWidget {
   final String? errorText;
   final String? hintText;
   final bool enabled;
+  final bool readOnly;
   final bool autofocus;
   final FocusNode? focusNode;
   final TextInputType? keyboardType;
@@ -2110,6 +2320,7 @@ class _BusyMarkGroupedTextEntryState extends State<BusyMarkGroupedTextEntry> {
         controller: widget.controller,
         initialValue: widget.initialValue,
         enabled: widget.enabled,
+        readOnly: widget.readOnly,
         autofocus: widget.autofocus,
         focusNode: widget.focusNode,
         keyboardType: widget.keyboardType,
@@ -2301,17 +2512,24 @@ class BusyMarkGroupedSurface extends StatelessWidget {
     super.key,
     required this.child,
     this.clipBehavior = Clip.antiAlias,
+    this.focused = false,
   });
 
   final Widget child;
   final Clip clipBehavior;
+  final bool focused;
 
   @override
   Widget build(BuildContext context) {
     final highContrast = MediaQuery.highContrastOf(context);
     return BusyMarkSurface(
       color: busyMarkGroupedSurfaceColor(context),
-      side: highContrast
+      side: focused
+          ? BorderSide(
+              color: Theme.of(context).colorScheme.primary,
+              width: BusyMarkStroke.focus,
+            )
+          : highContrast
           ? BorderSide(color: Theme.of(context).colorScheme.outline)
           : null,
       clipBehavior: clipBehavior,

@@ -177,7 +177,9 @@ class BusyMarkCommandRegistry {
 
   bool _isContextual(BusyMarkCommand command) {
     return command.scope == BusyMarkCommandScope.editor ||
-        command.scope == BusyMarkCommandScope.textEditing;
+        command.scope == BusyMarkCommandScope.textEditing ||
+        command.id == BusyMarkCommandIds.treeMoveLineUp ||
+        command.id == BusyMarkCommandIds.treeMoveLineDown;
   }
 
   bool shortcutAccepts(String id, KeyEvent event, HardwareKeyboard keyboard) {
@@ -280,6 +282,8 @@ abstract final class BusyMarkCommandIds {
   static const localHistory = 'history.local';
   static const findLocalHistory = 'history.findLocal';
   static const treeDeleteSelection = 'tree.deleteSelection';
+  static const treeMoveLineUp = 'tree.moveLineUp';
+  static const treeMoveLineDown = 'tree.moveLineDown';
 }
 
 abstract final class BusyMarkCommandCatalog {
@@ -300,7 +304,9 @@ abstract final class BusyMarkCommandCatalog {
     }) {
       final contextual =
           scope == BusyMarkCommandScope.editor ||
-          scope == BusyMarkCommandScope.textEditing;
+          scope == BusyMarkCommandScope.textEditing ||
+          id == BusyMarkCommandIds.treeMoveLineUp ||
+          id == BusyMarkCommandIds.treeMoveLineDown;
       return BusyMarkCommand(
         id: id,
         label: label,
@@ -357,6 +363,34 @@ abstract final class BusyMarkCommandCatalog {
           shortcut: BusyMarkTextEditingShortcuts.definitions[action],
           description: (context) => _textDescription(context, action),
         ),
+      command(
+        id: BusyMarkCommandIds.treeMoveLineUp,
+        label: (context) => context.l10n.tocMoveLineUp,
+        category: (context) => context.l10n.toc,
+        scope: BusyMarkCommandScope.tree,
+        shortcut: const BusyMarkShortcutDefinition(
+          label: 'Ctrl+Shift+Home',
+          activator: SingleActivator(
+            LogicalKeyboardKey.home,
+            control: true,
+            shift: true,
+          ),
+        ),
+      ),
+      command(
+        id: BusyMarkCommandIds.treeMoveLineDown,
+        label: (context) => context.l10n.tocMoveLineDown,
+        category: (context) => context.l10n.toc,
+        scope: BusyMarkCommandScope.tree,
+        shortcut: const BusyMarkShortcutDefinition(
+          label: 'Ctrl+Shift+End',
+          activator: SingleActivator(
+            LogicalKeyboardKey.end,
+            control: true,
+            shift: true,
+          ),
+        ),
+      ),
       for (final action in BusyMarkEditorShortcutAction.values)
         command(
           id: 'editor.${action.name}',

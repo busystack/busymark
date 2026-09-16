@@ -11,6 +11,231 @@ class AppLocalizationsIt extends AppLocalizations {
   AppLocalizationsIt([String locale = 'it']) : super(locale);
 
   @override
+  String get tocTopicFromTemplate => 'Argomento da modello...';
+
+  @override
+  String get tocSaveAsTemplate => 'Salva come modello';
+
+  @override
+  String get tocTemplateDialog => 'Crea argomento da modello';
+
+  @override
+  String get tocTemplatesEditor => 'Modelli di file e codice';
+
+  @override
+  String get tocEditTemplates => 'Modifica modelli...';
+
+  @override
+  String get tocCreateCustomTemplate => 'Crea modello personalizzato...';
+
+  @override
+  String get tocTemplateCreated => 'Modello creato';
+
+  @override
+  String get tocTemplateDefault => 'Predefiniti';
+
+  @override
+  String get tocTemplateCustom => 'Personalizzati';
+
+  @override
+  String get tocTemplateFilename => 'Nome file:';
+
+  @override
+  String get tocTemplateMarkdown => 'Markdown (.md)';
+
+  @override
+  String get tocTemplateXml => 'XML (.topic)';
+
+  @override
+  String get tocTemplatesInternal => 'Interni';
+
+  @override
+  String get tocTemplateUnnamed => 'Senza nome';
+
+  @override
+  String get tocTemplateNew => 'Nuovo modello...';
+
+  @override
+  String get tocTemplateName => 'Nome:';
+
+  @override
+  String get tocTemplateExtension => 'Estensione:';
+
+  @override
+  String get tocTemplateLoadError =>
+      'Impossibile caricare i modelli. I modelli esistenti non sono stati modificati.';
+
+  @override
+  String get tocTemplateSaveError =>
+      'Impossibile salvare i modelli. Le modifiche sono ancora disponibili qui.';
+
+  @override
+  String get tocTemplateConflict =>
+      'I modelli sono cambiati in un’altra finestra. Annulla e riapri l’editor.';
+
+  @override
+  String get tocTemplateDuplicateName =>
+      'Esiste già un modello con questo nome ed estensione.';
+
+  @override
+  String get tocTemplateFormat => 'Formato:';
+
+  @override
+  String get tocTemplateReset => 'Ripristina';
+
+  @override
+  String get tocTemplateRetry => 'Riprova';
+
+  @override
+  String tocRemoveElementsDialog(int count) {
+    return 'Rimuovi $count elementi dell’indice';
+  }
+
+  @override
+  String get tocRemoveElementsRetainFiles =>
+      'I file sorgente associati a questi elementi dell’indice non verranno eliminati.';
+
+  @override
+  String get tocOk => 'OK';
+
+  @override
+  String get tocSelectExistingTopic =>
+      'Seleziona un argomento da aggiungere all’istanza corrente';
+
+  @override
+  String get tocGroupName => 'Nome del gruppo';
+
+  @override
+  String get tocMoveLineUp => 'Sposta riga in alto';
+
+  @override
+  String get tocMoveLineDown => 'Sposta riga in basso';
+
+  @override
+  String get tocEmptyMdTopic => 'Argomento MD vuoto';
+
+  @override
+  String get tocEmptyXmlTopic => 'Argomento XML vuoto';
+
+  @override
+  String get tocCopySpecial => 'Copia speciale';
+
+  @override
+  String tocCopyFileName(String name) {
+    return 'Nome del file dell’argomento \'$name\'';
+  }
+
+  @override
+  String get tocCopyFilePath => 'Percorso del file dell’argomento';
+
+  @override
+  String tocCopyTopicTitle(String title) {
+    return 'Titolo dell’argomento \'$title\'';
+  }
+
+  @override
+  String tocCopyElementId(String id) {
+    return 'ID dell’elemento del sommario \'$id\'';
+  }
+
+  @override
+  String get tocCopyFileNameUnavailable => 'Nome del file dell’argomento';
+
+  @override
+  String get tocCopyTopicTitleUnavailable => 'Titolo dell’argomento';
+
+  @override
+  String get tocCopyElementIdUnavailable => 'ID dell’elemento del sommario';
+
+  @override
+  String get tocEditTitleAction => 'Modifica titolo...';
+
+  @override
+  String get tocEditTitleDialog => 'Modifica titolo';
+
+  @override
+  String get tocRemoveElementAction => 'Rimuovi elemento del sommario...';
+
+  @override
+  String get tocSetHomePage => 'Imposta come pagina iniziale';
+
+  @override
+  String tocGoToElement(String fileName) {
+    return 'Vai all’elemento del sommario in \'$fileName\'';
+  }
+
+  @override
+  String get tocSynchronize => 'Sincronizza sommario ed editor';
+
+  @override
+  String get tocEmptyGroupAction => 'Gruppo vuoto';
+
+  @override
+  String get tocNewEmptyGroup => 'Nuovo gruppo vuoto';
+
+  @override
+  String get tocGroupAction => 'Raggruppa';
+
+  @override
+  String get tocNewGroup => 'Nuovo gruppo';
+
+  @override
+  String get tocSortChildren =>
+      'Ordina alfabeticamente gli argomenti secondari';
+
+  @override
+  String get tocLinkTopicFiles => 'Collega file di argomenti al sommario...';
+
+  @override
+  String get addLocalMarkdownFiles => 'Aggiungi file Markdown locali';
+
+  @override
+  String get tocTitleField => 'Titolo nel sommario:';
+
+  @override
+  String get tocTopicTitleField => 'Titolo dell’argomento:';
+
+  @override
+  String get tocAdvancedSettings => 'Impostazioni avanzate';
+
+  @override
+  String tocInstanceTitleField(String instanceId) {
+    return 'Titolo per \'$instanceId\':';
+  }
+
+  @override
+  String get tocOnlyTitleField => 'Titolo solo nel sommario:';
+
+  @override
+  String get tocInstanceTitleExplanation =>
+      'Usato solo per l’istanza corrente. Per impostazione predefinita, viene ereditato dal titolo dell’argomento.';
+
+  @override
+  String get tocOnlyTitleExplanation =>
+      'Usato solo nel sommario. Per impostazione predefinita, viene ereditato dal titolo dell’argomento o da quello specifico dell’istanza, se impostato. I titoli sono spiegati';
+
+  @override
+  String get tocTitleDocumentationLink => 'qui';
+
+  @override
+  String get tocFindUsages => 'Trova';
+
+  @override
+  String get tocRefactorMenu => 'Refactoring';
+
+  @override
+  String get tocSafeDelete => 'Eliminazione sicura';
+
+  @override
+  String get tocDuplicate => 'Duplica';
+
+  @override
+  String get tocDuplicateFilename => 'Nome del file dell’argomento:';
+
+  @override
+  String get tocDuplicateDialog => 'Duplica argomento';
+
+  @override
   String get pdfTitlePage => 'Frontespizio';
 
   @override
@@ -1171,7 +1396,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get files => 'File';
 
   @override
-  String get toc => 'Argomenti';
+  String get toc => 'Sommario';
 
   @override
   String get tocActions => 'Azioni dell\'indice';
@@ -1209,7 +1434,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get newChildTopic => 'Nuovo sottoargomento';
 
   @override
-  String get newSiblingTopic => 'Nuovo argomento allo stesso livello';
+  String get newSiblingTopic => 'Nuovo argomento';
 
   @override
   String get renameTopicFile => 'Rinomina il file dell\'argomento';
@@ -1272,7 +1497,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String topicRemovalSummary(String topic) {
-    return 'Rimuovi «$topic» dall’istanza selezionata. Il file dell’argomento verrà conservato.';
+    return 'Rimuovere l’elemento «$topic» dal sommario? Il file sorgente associato al sommario non verrà eliminato.';
   }
 
   @override
@@ -1298,7 +1523,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String topicUsagesCount(int count) {
-    return 'Utilizzi ($count)';
+    return '$count utilizzi trovati.';
   }
 
   @override
@@ -1348,7 +1573,7 @@ class AppLocalizationsIt extends AppLocalizations {
       'Alcuni utilizzi richiedono modifiche manuali prima di questo refactoring.';
 
   @override
-  String get setRedirectTo => 'Reindirizza a';
+  String get setRedirectTo => 'Reindirizza a:';
 
   @override
   String get noRedirectDescription =>
@@ -1374,6 +1599,30 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get doRefactor => 'Esegui refactoring';
+
+  @override
+  String get preview => 'Anteprima';
+
+  @override
+  String get topicRenamePreviewTitle => 'Anteprima della ridenominazione';
+
+  @override
+  String topicRenamePathChange(String oldPath, String newPath) {
+    return 'Percorso: $oldPath → $newPath';
+  }
+
+  @override
+  String topicRenameIdChange(String oldId, String newId) {
+    return 'ID argomento: $oldId → $newId';
+  }
+
+  @override
+  String topicRenameUrlChange(String instance, String oldName, String newName) {
+    return 'Istanza $instance: $oldName → $newName';
+  }
+
+  @override
+  String get topicRenameAffectedFiles => 'File interessati';
 
   @override
   String get orphanTopicTitle => 'Il file dell’argomento non è più utilizzato';
@@ -1941,6 +2190,23 @@ class AppLocalizationsIt extends AppLocalizations {
   }
 
   @override
+  String errorWritersideTopicRenameIncompleteProjectIndex(
+    String module,
+    String count,
+    String paths,
+  ) {
+    return 'La ridenominazione non può aggiornare in modo sicuro tutti i riferimenti del progetto perché $count file di argomento nel modulo $module non sono stati analizzati: $paths';
+  }
+
+  @override
+  String get errorWritersideTopicRenameProjectBuffersDirty =>
+      'I file del progetto Writerside contengono modifiche non salvate. Risolvile e prepara una nuova anteprima della ridenominazione.';
+
+  @override
+  String get errorWritersideTopicRenameProjectInventoryChanged =>
+      'L’insieme dei moduli del progetto Writerside è cambiato. Prepara una nuova anteprima della ridenominazione prima del refactoring.';
+
+  @override
   String get errorTopicsRootUnsafe =>
       'La radice degli argomenti deve essere una directory relativa sicura.';
 
@@ -2212,6 +2478,25 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String diagnosticWritersideTopicDuplicateId(String id) {
     return 'L\'ID dell\'elemento \"$id\" compare più di una volta.';
+  }
+
+  @override
+  String diagnosticWritersideWebFileNameInvalid(
+    String instanceId,
+    String webFileName,
+    String topic,
+  ) {
+    return 'L’istanza \"$instanceId\" pubblica il nome file web non valido \"$webFileName\" per l’argomento \"$topic\".';
+  }
+
+  @override
+  String diagnosticWritersideWebFileNameCollision(
+    String instanceId,
+    String webFileName,
+    String firstTopic,
+    String secondTopic,
+  ) {
+    return 'L’istanza \"$instanceId\" pubblica sia \"$firstTopic\" sia \"$secondTopic\" come \"$webFileName\".';
   }
 
   @override
@@ -3712,25 +3997,6 @@ class AppLocalizationsIt extends AppLocalizations {
   String get aiDraftWithAi => 'Crea bozza con IA';
 
   @override
-  String get generateOrUpdateMarkdownToc => 'Genera/aggiorna indice';
-
-  @override
-  String get markdownTocTitle => 'Indice';
-
-  @override
-  String markdownTocUpdated(int count) {
-    return 'Indice aggiornato con $count voci.';
-  }
-
-  @override
-  String get markdownTocNoHeadings =>
-      'Aggiungi almeno un titolo di sezione prima di generare un indice.';
-
-  @override
-  String get markdownTocMalformedMarkers =>
-      'I marcatori dell’indice di BusyMark sono mancanti, duplicati o fuori ordine.';
-
-  @override
   String diagnosticMarkdownHeadingSkippedLevel(int level, int previousLevel) {
     return 'Il titolo di livello $level segue il livello $previousLevel; verifica la struttura delle sezioni.';
   }
@@ -3767,6 +4033,10 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get cannotRenameSymbol =>
       'Impossibile rinominare il simbolo in sicurezza. Verifica il nome e aggiorna il riferimento prima di riprovare.';
+
+  @override
+  String get renameTopicFileInstead =>
+      'Gli ID degli argomenti derivano dai nomi dei file. Usa Rinomina file argomento nel sommario o nella barra laterale File.';
 
   @override
   String get keyboardLayout => 'Disposizione della tastiera';

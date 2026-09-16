@@ -35,6 +35,7 @@ void main() {
 
       expect(yieldedEntries, 3);
       expect(result.entities, isEmpty);
+      expect(result.traversalComplete, isFalse);
       expect(
         result.diagnostics.map((diagnostic) => diagnostic.code),
         contains('workspace.scan.skipped'),
@@ -60,9 +61,37 @@ void main() {
     );
 
     expect(result.entities, isEmpty);
+    expect(result.traversalComplete, isFalse);
     expect(
       result.diagnostics.map((diagnostic) => diagnostic.code),
       contains('workspace.scan.skipped'),
+    );
+  });
+
+  test('directory listing failure marks traversal incomplete', () async {
+    final root = await Directory.systemTemp.createTemp('busymark-scan-fail-');
+    addTearDown(() async {
+      if (await root.exists()) {
+        await root.delete(recursive: true);
+      }
+    });
+
+    Stream<FileSystemEntity> failListing(
+      Directory directory, {
+      required bool followLinks,
+    }) async* {
+      throw FileSystemException('listing failed', directory.path);
+    }
+
+    final result = await scanWorkspaceEntities(
+      root.path,
+      directoryLister: failListing,
+    );
+
+    expect(result.traversalComplete, isFalse);
+    expect(
+      result.diagnostics.map((diagnostic) => diagnostic.code),
+      contains('workspace.scan.inspect-failed'),
     );
   });
 

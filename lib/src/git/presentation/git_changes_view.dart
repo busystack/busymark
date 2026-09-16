@@ -231,9 +231,18 @@ class _CommitPanel extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(
-              context.l10n.gitCommitMessage,
-              style: busyMarkSectionHeaderStyle(context),
+            BusyMarkGroupedList(
+              filled: true,
+              children: [
+                BusyMarkGroupedTextEntry(
+                  key: const ValueKey('git-commit-message'),
+                  label: context.l10n.gitCommitMessage,
+                  controller: controller,
+                  minLines: 3,
+                  maxLines: 5,
+                  textInputAction: TextInputAction.newline,
+                ),
+              ],
             ),
             if (hasUnsavedEditorChanges) ...[
               const SizedBox(height: BusyMarkSpacing.sm),
@@ -243,45 +252,32 @@ class _CommitPanel extends StatelessWidget {
               ),
             ],
             const SizedBox(height: BusyMarkSpacing.sm),
-            TextField(
-              controller: controller,
-              minLines: 3,
-              maxLines: 5,
-              textInputAction: TextInputAction.newline,
-              decoration: const InputDecoration(
-                isDense: true,
-                contentPadding: EdgeInsets.all(BusyMarkSpacing.sm),
-              ),
-              style: Theme.of(context).textTheme.bodyMedium,
+            Text(
+              context.l10n.gitStagedFileCount(stagedFiles.length),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(
+                context,
+              ).textTheme.labelSmall?.copyWith(color: colors.mutedForeground),
             ),
             const SizedBox(height: BusyMarkSpacing.sm),
-            Row(
+            Wrap(
+              alignment: WrapAlignment.end,
+              spacing: BusyMarkSpacing.sm,
+              runSpacing: BusyMarkSpacing.sm,
               children: [
-                Expanded(
-                  child: Text(
-                    context.l10n.gitStagedFileCount(stagedFiles.length),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: colors.mutedForeground,
+                if (onDraftCommitMessage != null)
+                  BusyMarkPushButton.standard(
+                    child: Text(
+                      drafting
+                          ? context.l10n.aiDrafting
+                          : context.l10n.aiDraftWithAi,
                     ),
-                  ),
-                ),
-                const SizedBox(width: BusyMarkSpacing.sm),
-                if (onDraftCommitMessage != null) ...[
-                  BusyMarkHeaderIconButton(
-                    tooltip: drafting
-                        ? context.l10n.aiDrafting
-                        : context.l10n.aiDraftWithAi,
-                    icon: BusyMarkGlyphs.ai,
-                    transparent: false,
                     onPressed:
                         !committing && !drafting && stagedFiles.isNotEmpty
                         ? () => onDraftCommitMessage!()
                         : null,
                   ),
-                  const SizedBox(width: BusyMarkSpacing.sm),
-                ],
                 BusyMarkPushButton.suggested(
                   onPressed: canCommit ? () => onCommit() : null,
                   child: Text(context.l10n.gitCommit),

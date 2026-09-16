@@ -535,9 +535,6 @@ void main() {
 
     for (final localeEntry in locales.entries) {
       final l10n = localeEntry.value;
-      expect(l10n.markdownTocUpdated(0), 'Sumário atualizado com 0 entradas.');
-      expect(l10n.markdownTocUpdated(1), 'Sumário atualizado com 1 entrada.');
-      expect(l10n.markdownTocUpdated(2), 'Sumário atualizado com 2 entradas.');
       expect(
         l10n.aiGenerationVerified('BusyAI', 0),
         'Geração verificada com BusyAI. Há 0 modelos compatíveis disponíveis.',
@@ -1258,6 +1255,9 @@ const _nativeGtkUserFacingPatterns = <_LiteralPattern>[
 ];
 
 const _sharedEnglishMatches = <String>{
+  'tocTemplateMarkdown', // Format names and literal file extensions.
+  'tocTemplateXml',
+  'tocOk', // Standard confirmation caption in the reviewed locales.
   // Standard field labels also used verbatim in French and German.
   'pdfTitlePageVersion',
   'pdfTitlePageDate',
@@ -1310,6 +1310,8 @@ const _sharedEnglishMatches = <String>{
 
 const _localeSpecificEnglishMatches = <String, Set<String>>{
   'de': {
+    'tocTemplateName', // Name and Format are also German words.
+    'tocTemplateFormat',
     'exportLayout',
     'aboutWebsite',
     'editor',
@@ -1361,8 +1363,14 @@ const _localeSpecificEnglishMatches = <String, Set<String>>{
     'foldKindTag',
     'gitCommit',
   },
-  'nb': {'systemTheme', 'systemLanguage', 'gitCommit', 'instanceStatus'},
-  'pl': {'folder', 'foldKindTag', 'aiModel'},
+  'nb': {
+    'systemTheme',
+    'systemLanguage',
+    'gitCommit',
+    'instanceStatus',
+    'tocTemplateFormat',
+  },
+  'pl': {'folder', 'foldKindTag', 'aiModel', 'tocTemplateFormat'},
   'pt_BR': {
     'exportLayout',
     'editor',
@@ -1379,6 +1387,8 @@ const _localeSpecificEnglishMatches = <String, Set<String>>{
   'ja': {'gitFetch', 'gitCommit', 'pdfPageSizeLetter'},
   'ko': {'gitDiff', 'gitFetch', 'gitCommit', 'pdfPageSizeLetter'},
   'id': {
+    'tocTemplatesInternal', // Reviewed Indonesian technical terms.
+    'tocTemplateFormat',
     'editor',
     'file',
     'folder',

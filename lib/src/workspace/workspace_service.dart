@@ -28,6 +28,31 @@ import '../writerside/writerside_topic_file_editor.dart';
 import '../writerside/writerside_topic_removal_service.dart';
 import 'workspace_model.dart';
 import 'text_format_metadata.dart';
+import '../writerside/writerside_toc_presentation.dart';
+import '../writerside/writerside_title_editor.dart';
+import '../writerside/writerside_parsers.dart';
+import '../writerside/writerside_document_parser.dart';
+
+class WritersideTitleEditSession {
+  const WritersideTitleEditSession({
+    required this.topic,
+    required this.topicModuleRoot,
+    required this.instanceId,
+    required this.treePath,
+    required this.tocPath,
+    required this.identity,
+    required this.topicLoad,
+    required this.treeLoad,
+  });
+  final WritersideTopic topic;
+  final String topicModuleRoot;
+  final String instanceId;
+  final String treePath;
+  final List<int> tocPath;
+  final WritersideTocNodeIdentity identity;
+  final WorkspaceFileLoad topicLoad;
+  final WorkspaceFileLoad treeLoad;
+}
 
 class WorkspaceBatchTextWrite {
   const WorkspaceBatchTextWrite({
@@ -69,6 +94,14 @@ class WorkspaceBatchPartialApplicationConflict implements Exception {
 
   final List<WorkspaceBatchPartialApplicationFile> files;
   final Object cause;
+}
+
+bool _sameStringList(List<String> first, List<String> second) {
+  if (first.length != second.length) return false;
+  for (var index = 0; index < first.length; index += 1) {
+    if (first[index] != second[index]) return false;
+  }
+  return true;
 }
 
 class WorkspaceService {
@@ -148,13 +181,13 @@ class WorkspaceService {
         File(p.join(canonicalPath, 'project.ihp')).existsSync()) {
       return _openWriterside(canonicalPath, preferredModuleRoot: canonicalPath);
     }
-    final moduleRoots = await _writersideProjectService.discoverModuleRoots(
+    final moduleDiscovery = await _writersideProjectService.discoverModuleRoots(
       canonicalPath,
     );
-    if (moduleRoots.isNotEmpty) {
+    if (moduleDiscovery.roots.isNotEmpty) {
       return _openWriterside(
         canonicalPath,
-        preferredModuleRoot: moduleRoots.first,
+        preferredModuleRoot: moduleDiscovery.roots.first,
       );
     }
     return _openMarkdownFolder(canonicalPath);
@@ -199,6 +232,8 @@ class WorkspaceService {
     Workspace workspace,
     WritersideTopicCreateRequest request, {
     String? instanceTreePath,
+    String? initialSource,
+    Future<void> Function()? validateBeforePublish,
   }) async {
     if (workspace.kind != WorkspaceKind.writersideModule ||
         workspace.writersideModule == null) {
@@ -227,9 +262,14 @@ class WorkspaceService {
         rootPath: module.rootPath,
         treePath: instance.sourceTreePath,
         topicsRootDir: topicsRootDir,
-        existingTopicIds: {for (final topic in module.topics) topic.id},
+        existingTopicIds: module.reservedTopicIds,
+        topicDiscoveryComplete: module.topicDiscoveryComplete,
       ),
       request,
+      initialSource: initialSource,
+      validateBeforePublish: validateBeforePublish,
+      validateTopicIdentityBeforePublish: (validation) =>
+          _validateCreatedTopicIdentity(module.rootPath, validation),
     );
     return _openWriterside(module.rootPath, activeFilePath: result.topicPath);
   }
@@ -244,7 +284,29 @@ class WorkspaceService {
     WritersideInstanceCreateRequest request,
   ) async {
     final module = await _currentWritersideModule(workspace);
-    return writersideInstanceService.create(module: module, request: request);
+    return writersideInstanceService.create(
+      module: module,
+      request: request,
+      reloadModule: () => _loadWritersideModule(module.rootPath),
+    );
+  }
+
+  Future<Workspace> addWritersideMarkdownTopics(
+    Workspace workspace,
+    WritersideMarkdownTopicImportRequest request, {
+    Future<void> Function()? validateBeforePublish,
+  }) async {
+    final module = await _currentWritersideModule(workspace);
+    final result = await writersideInstanceService.addMarkdownTopics(
+      module: module,
+      request: request,
+      reloadModule: () => _loadWritersideModule(module.rootPath),
+      validateBeforePublish: validateBeforePublish,
+    );
+    return _openWriterside(
+      module.rootPath,
+      activeFilePath: result.firstTopicPath,
+    );
   }
 
   Future<WritersideInstanceMutationResult> updateWritersideInstance(
@@ -263,6 +325,7 @@ class WorkspaceService {
     required List<int>? referencePath,
     WritersideTocNodeIdentity? sourceIdentity,
     WritersideTocNodeIdentity? referenceIdentity,
+    Future<void> Function()? validateBeforePublish,
   }) async {
     final module = await _currentWritersideModule(workspace);
     final instance = _writersideInstanceForTree(module, treePath);
@@ -278,6 +341,399 @@ class WorkspaceService {
         sourceIdentity: sourceIdentity,
         referenceIdentity: referenceIdentity,
       ),
+      validateBeforePublish: validateBeforePublish,
+    );
+  }
+
+  Future<void> setWritersideHomePage(
+    Workspace workspace, {
+    required String treePath,
+    required List<int> nodePath,
+    required WritersideTocNodeIdentity expectedIdentity,
+    Future<void> Function()? validateBeforePublish,
+  }) async {
+    final module = await _currentWritersideModule(workspace);
+    final instance = _writersideInstanceForTree(module, treePath);
+    final reference = expectedIdentity.topicFileName;
+    final topic = reference == null ? null : module.topicByReference(reference);
+    if (instance.isLibrary ||
+        topic == null ||
+        !await File(topic.filePath).exists()) {
+      throw const BusyMarkException('writerside.toc.path-invalid');
+    }
+    await writersideTocEditor.setHomePage(
+      WritersideTocEditTarget(
+        rootPath: module.rootPath,
+        treePath: instance.sourceTreePath,
+      ),
+      nodePath: nodePath,
+      expectedIdentity: expectedIdentity,
+      topicReference: reference!,
+      validateBeforePublish: () async {
+        await validateBeforePublish?.call();
+        if (!await File(topic.filePath).exists()) {
+          throw const BusyMarkException('writerside.toc.path-invalid');
+        }
+      },
+    );
+  }
+
+  Future<WritersideTitleEditSession> prepareWritersideTitleEdit(
+    Workspace workspace, {
+    required String treePath,
+    required List<int> tocPath,
+    required WritersideTocNodeIdentity identity,
+    required String topicModuleRoot,
+    required String topicPath,
+  }) async {
+    final module = await _currentWritersideModule(workspace);
+    final instance = _writersideInstanceForTree(module, treePath);
+    final projectModule = workspace.writersideProject?.modules
+        .where((candidate) => p.equals(candidate.rootPath, topicModuleRoot))
+        .singleOrNull;
+    if (identity.topicFileName == null || projectModule == null) {
+      throw const BusyMarkException('writerside.toc.path-invalid');
+    }
+    final owningModule = p.equals(module.rootPath, topicModuleRoot)
+        ? module
+        : await _loadWritersideModule(topicModuleRoot);
+    final topic = owningModule.topics
+        .where((candidate) => p.equals(candidate.filePath, topicPath))
+        .singleOrNull;
+    if (topic == null) {
+      throw const BusyMarkException('writerside.toc.path-invalid');
+    }
+    final topicLoad = await loadTextWithSnapshot(topic.filePath);
+    final treeLoad = await loadTextWithSnapshot(treePath);
+    final parsed = topic.format == WritersideTopicFormat.xml
+        ? const WritersideTopicParser().parseXml(
+            filePath: topic.filePath,
+            source: topicLoad.text,
+            topicsRoot: topic.topicRoot,
+          )
+        : const WritersideTopicParser().parseMarkdown(
+            filePath: topic.filePath,
+            source: topicLoad.text,
+            topicsRoot: topic.topicRoot,
+          );
+    return WritersideTitleEditSession(
+      topic: parsed,
+      topicModuleRoot: owningModule.rootPath,
+      instanceId: instance.id,
+      treePath: treePath,
+      tocPath: List.unmodifiable(tocPath),
+      identity: identity,
+      topicLoad: topicLoad,
+      treeLoad: treeLoad,
+    );
+  }
+
+  Future<String> duplicateWritersideTopic(
+    Workspace workspace, {
+    required String treePath,
+    required List<int> tocPath,
+    required WritersideTocNodeIdentity identity,
+    required String topicPath,
+    required String expectedSource,
+    required String newName,
+    required Future<void> Function() validateBeforePublish,
+  }) async {
+    final module = await _currentWritersideModule(workspace);
+    final instance = _writersideInstanceForTree(module, treePath);
+    final topic = module.topics
+        .where((topic) => p.equals(topic.filePath, topicPath))
+        .singleOrNull;
+    if (topic == null || topic.document.source != expectedSource) {
+      throw const BusyMarkException('writerside.toc.tree-changed');
+    }
+    var source = expectedSource;
+    if (topic.format == WritersideTopicFormat.xml) {
+      final root = const WritersideDocumentParser()
+          .parseXml(filePath: topicPath, source: source)
+          .rootElement;
+      final idSpan = root?.attributeSpans['id'];
+      if (idSpan == null) {
+        throw const BusyMarkException('writerside.toc.path-invalid');
+      }
+      source = source.replaceRange(
+        idSpan.startOffset,
+        idSpan.endOffset,
+        p.basenameWithoutExtension(newName),
+      );
+    }
+    final anchor = await captureCanonicalDirectoryAnchor(module.rootPath);
+    Future<void> validate() async {
+      await validateBeforePublish();
+      final original = await resolveAnchoredPath(
+        anchor,
+        topicPath,
+        allowRoot: false,
+      );
+      if (original.type != FileSystemEntityType.file ||
+          await File(original.path).readAsString() != expectedSource) {
+        throw const BusyMarkException('writerside.toc.tree-changed');
+      }
+    }
+
+    final result = await writersideTopicCreator.create(
+      WritersideTopicCreateTarget(
+        rootPath: module.rootPath,
+        treePath: instance.sourceTreePath,
+        topicsRootDir: p.relative(p.dirname(topicPath), from: module.rootPath),
+        existingTopicIds: module.reservedTopicIds,
+        topicDiscoveryComplete: module.topicDiscoveryComplete,
+      ),
+      WritersideTopicCreateRequest(
+        title: topic.title ?? topic.id,
+        fileName: newName,
+        format: topic.format,
+        placement: WritersideTopicCreatePlacement.sibling,
+        referenceTocPath: tocPath,
+        referenceTocIdentity: identity,
+      ),
+      initialSource: source,
+      validateBeforePublish: validate,
+      validateTopicIdentityBeforePublish: (validation) =>
+          _validateCreatedTopicIdentity(module.rootPath, validation),
+    );
+    return result.topicPath;
+  }
+
+  Future<Map<String, WorkspaceBatchTextWrite>> editWritersideTitles(
+    WritersideTitleEditSession session,
+    WritersideTitleEdit edit, {
+    required void Function() validateBeforeCommit,
+    required void Function(
+      Map<String, WorkspaceBatchTextWrite>,
+      Map<String, WorkspaceFileSnapshot>,
+    )
+    onCommitted,
+  }) async {
+    final currentOwner = await _loadWritersideModule(session.topicModuleRoot);
+    final currentTopic = currentOwner.topics
+        .where(
+          (candidate) => p.equals(candidate.filePath, session.topic.filePath),
+        )
+        .singleOrNull;
+    if (currentTopic == null) {
+      throw const BusyMarkException('writerside.toc.tree-changed');
+    }
+    final result = const WritersideTitleEditor().prepare(
+      topic: session.topic,
+      instanceId: session.instanceId,
+      treePath: session.treePath,
+      treeSource: session.treeLoad.text,
+      tocPath: session.tocPath,
+      tocIdentity: session.identity,
+      edit: edit,
+    );
+    // Both inputs are checked even if only one field/file changes.
+    for (final entry in {
+      session.topic.filePath: session.topicLoad,
+      session.treePath: session.treeLoad,
+    }.entries) {
+      if ((await fileSnapshot(entry.key)).differsFrom(entry.value.snapshot)) {
+        throw WorkspaceBatchWriteConflict(entry.key);
+      }
+    }
+    final writes = <String, WorkspaceBatchTextWrite>{
+      if (result.topicSource != session.topicLoad.text)
+        session.topic.filePath: WorkspaceBatchTextWrite(
+          path: session.topic.filePath,
+          text: result.topicSource,
+          expectedSnapshot: session.topicLoad.snapshot,
+          format: session.topicLoad.format,
+        ),
+      if (result.treeSource != session.treeLoad.text)
+        session.treePath: WorkspaceBatchTextWrite(
+          path: session.treePath,
+          text: result.treeSource,
+          expectedSnapshot: session.treeLoad.snapshot,
+          format: session.treeLoad.format,
+        ),
+    };
+    await saveFormattedTextBatch(
+      writes.values.toList(),
+      validateBeforeCommit: () {
+        validateBeforeCommit();
+        for (final entry in {
+          session.topic.filePath: session.topicLoad,
+          session.treePath: session.treeLoad,
+        }.entries) {
+          if (!writes.containsKey(entry.key)) {
+            final file = File(entry.key);
+            if (_snapshotFromBytes(
+              file.statSync(),
+              file.readAsBytesSync(),
+            ).differsFrom(entry.value.snapshot)) {
+              throw WorkspaceBatchWriteConflict(entry.key);
+            }
+          }
+        }
+      },
+      onCommitted: (snapshots) => onCommitted(writes, snapshots),
+    );
+    return writes;
+  }
+
+  Future<WritersideTocMutationResult> insertWritersideTocElement(
+    Workspace workspace, {
+    required String treePath,
+    required WritersideTocInsertRequest request,
+    String? expectedTopicPath,
+    String? expectedTopicSource,
+    Future<void> Function()? validateBeforePublish,
+  }) async {
+    final module = await _currentWritersideModule(workspace);
+    final instance = _writersideInstanceForTree(module, treePath);
+    Future<void> validate() async {
+      await validateBeforePublish?.call();
+      if (request.topicReference != null) {
+        final latest = await _currentWritersideModule(workspace);
+        final currentInstance = _writersideInstanceForTree(latest, treePath);
+        final topic = latest.topicByReference(request.topicReference!);
+        final presenter = WritersideTocPresenter(
+          module: latest,
+          instance: currentInstance,
+          modulesByOrigin:
+              workspace.writersideProject?.modulesByOrigin ?? const {},
+        );
+        if (topic == null ||
+            expectedTopicPath == null ||
+            !p.equals(topic.filePath, expectedTopicPath) ||
+            topic.document.source != expectedTopicSource ||
+            !await File(topic.filePath).exists() ||
+            currentInstance.navigationTocRoots
+                .expand((node) => node.flatten())
+                .any(
+                  (node) =>
+                      presenter.present(node).topic?.filePath == topic.filePath,
+                )) {
+          throw const BusyMarkException('writerside.toc.tree-changed');
+        }
+      }
+    }
+
+    await validate();
+    return writersideTocEditor.insertElement(
+      WritersideTocEditTarget(
+        rootPath: module.rootPath,
+        treePath: instance.sourceTreePath,
+      ),
+      request,
+      validateBeforePublish: validate,
+    );
+  }
+
+  Future<WritersideTocMutationResult> groupWritersideTocElements(
+    Workspace workspace, {
+    required String treePath,
+    required List<WritersideTocMoveEntry> entries,
+    required String title,
+    Future<void> Function()? validateBeforePublish,
+  }) async {
+    final module = await _currentWritersideModule(workspace);
+    final instance = _writersideInstanceForTree(module, treePath);
+    return writersideTocEditor.groupElements(
+      WritersideTocEditTarget(
+        rootPath: module.rootPath,
+        treePath: instance.sourceTreePath,
+      ),
+      entries: entries,
+      title: title,
+      validateBeforePublish: validateBeforePublish,
+    );
+  }
+
+  Future<WritersideTocMutationResult> sortWritersideTocChildren(
+    Workspace workspace, {
+    required String treePath,
+    required List<int> nodePath,
+    required WritersideTocNodeIdentity identity,
+    Future<void> Function()? validateBeforePublish,
+  }) async {
+    final module = await _currentWritersideModule(workspace);
+    final instance = _writersideInstanceForTree(module, treePath);
+    var children = instance.tocRoots;
+    TocNode? node;
+    for (final index in nodePath) {
+      if (index < 0 || index >= children.length) {
+        throw const BusyMarkException('writerside.toc.path-invalid');
+      }
+      node = children[index];
+      children = node.children;
+    }
+    if (node == null) {
+      throw const BusyMarkException('writerside.toc.path-invalid');
+    }
+    final presenter = WritersideTocPresenter(
+      module: module,
+      instance: instance,
+      modulesByOrigin: workspace.writersideProject?.modulesByOrigin ?? const {},
+    );
+    final labels = [
+      for (final child in children) presenter.present(child).label,
+    ];
+    final permutation = List<int>.generate(children.length, (index) => index)
+      ..sort((a, b) {
+        final comparison = labels[a].compareTo(labels[b]);
+        return comparison == 0 ? a.compareTo(b) : comparison;
+      });
+    Future<void> validate() async {
+      await validateBeforePublish?.call();
+      final current = await _currentWritersideModule(workspace);
+      final currentInstance = _writersideInstanceForTree(current, treePath);
+      var currentChildren = currentInstance.tocRoots;
+      for (final index in nodePath) {
+        if (index < 0 || index >= currentChildren.length) {
+          throw const BusyMarkException('writerside.toc.tree-changed');
+        }
+        currentChildren = currentChildren[index].children;
+      }
+      final currentPresenter = WritersideTocPresenter(
+        module: current,
+        instance: currentInstance,
+        modulesByOrigin:
+            workspace.writersideProject?.modulesByOrigin ?? const {},
+      );
+      if (currentChildren.length != labels.length ||
+          List.generate(labels.length, (index) => index).any(
+            (index) =>
+                currentPresenter.present(currentChildren[index]).label !=
+                labels[index],
+          )) {
+        throw const BusyMarkException('writerside.toc.tree-changed');
+      }
+      await validateBeforePublish?.call();
+    }
+
+    return writersideTocEditor.reorderChildren(
+      WritersideTocEditTarget(
+        rootPath: module.rootPath,
+        treePath: instance.sourceTreePath,
+      ),
+      nodePath: nodePath,
+      identity: identity,
+      permutation: permutation,
+      validateBeforePublish: validate,
+    );
+  }
+
+  Future<WritersideTocMutationResult> dragWritersideTocEntries(
+    Workspace workspace, {
+    required String treePath,
+    required WritersideTocBatchMoveRequest request,
+    required Future<void> Function() validateBeforePublish,
+  }) async {
+    final module = await _currentWritersideModule(workspace);
+    final instance = _writersideInstanceForTree(module, treePath);
+    return writersideTocEditor.moveSubtrees(
+      WritersideTocEditTarget(
+        rootPath: module.rootPath,
+        treePath: instance.sourceTreePath,
+      ),
+      request,
+      validateBeforePublish: validateBeforePublish,
     );
   }
 
@@ -288,6 +744,7 @@ class WorkspaceService {
     required WritersideTopicCreatePlacement placement,
     required List<int>? referencePath,
     WritersideTocNodeIdentity? referenceIdentity,
+    Future<void> Function()? validateBeforePublish,
   }) async {
     final module = await _currentWritersideModule(workspace);
     final instance = _writersideInstanceForTree(module, treePath);
@@ -302,6 +759,7 @@ class WorkspaceService {
         referencePath: referencePath,
         referenceIdentity: referenceIdentity,
       ),
+      validateBeforePublish: validateBeforePublish,
     );
   }
 
@@ -310,6 +768,7 @@ class WorkspaceService {
     required String treePath,
     required List<int> nodePath,
     WritersideTocNodeIdentity? expectedIdentity,
+    Future<void> Function()? validateBeforePublish,
   }) async {
     final module = await _currentWritersideModule(workspace);
     final instance = _writersideInstanceForTree(module, treePath);
@@ -320,6 +779,7 @@ class WorkspaceService {
       ),
       nodePath,
       expectedIdentity: expectedIdentity,
+      validateBeforePublish: validateBeforePublish,
     );
   }
 
@@ -327,6 +787,7 @@ class WorkspaceService {
     Workspace workspace, {
     required String treePath,
     required List<WritersideTocRemovalRequest> requests,
+    Future<void> Function()? validateBeforePublish,
   }) async {
     final module = await _currentWritersideModule(workspace);
     final instance = _writersideInstanceForTree(module, treePath);
@@ -336,32 +797,174 @@ class WorkspaceService {
         treePath: instance.sourceTreePath,
       ),
       requests,
+      validateBeforePublish: validateBeforePublish,
     );
   }
 
   Future<String> renameWritersideTopicFile(
     Workspace workspace,
     String topicPath,
-    String newFileName,
-  ) async {
-    final module = await _currentWritersideModule(workspace);
+    String newFileName, {
+    String? topicModuleRoot,
+    void Function(Iterable<String>)? validateBeforePublish,
+  }) async {
+    final plan = await prepareWritersideTopicRename(
+      workspace,
+      topicPath: topicPath,
+      newFileName: newFileName,
+      topicModuleRoot:
+          topicModuleRoot ?? workspace.writersideModule?.rootPath ?? '',
+    );
+    final result = await applyWritersideTopicRename(
+      plan,
+      validateBeforePublish: validateBeforePublish,
+    );
+    return result.newTopicPath;
+  }
+
+  Future<WritersideTopicRenamePlan> prepareWritersideTopicRename(
+    Workspace workspace, {
+    required String topicPath,
+    required String newFileName,
+    required String topicModuleRoot,
+  }) async {
+    final ownerRoot = topicModuleRoot.isEmpty
+        ? workspace.writersideModule?.rootPath
+        : topicModuleRoot;
+    if (ownerRoot == null) {
+      throw const BusyMarkException('writerside.topic.module-not-open');
+    }
+    final project = await _writersideProjectService.load(
+      workspace.rootPath,
+      preferredModuleRoot: ownerRoot,
+    );
+    if (!project.moduleDiscoveryComplete) {
+      throw BusyMarkException(
+        'writerside.topic-file.project-discovery-incomplete',
+        args: {'path': project.rootPath},
+      );
+    }
+    final module = project.modules
+        .where((candidate) => p.equals(candidate.rootPath, ownerRoot))
+        .singleOrNull;
+    if (module == null) {
+      throw const BusyMarkException('writerside.topic.module-not-open');
+    }
     final topic = _writersideTopicForPath(module, topicPath);
-    final result = await writersideTopicFileEditor.rename(
+    return writersideTopicFileEditor.prepareRename(
       module: module,
       topic: topic,
       newFileName: newFileName,
+      projectModules: project.modules,
+      projectRoot: project.rootPath,
+      projectModuleRoots: project.modules
+          .map((module) => module.rootPath)
+          .toList(),
     );
-    return result.newTopicPath;
+  }
+
+  Future<WritersideTopicFileRenameResult> applyWritersideTopicRename(
+    WritersideTopicRenamePlan plan, {
+    void Function(Iterable<String>)? validateBeforePublish,
+  }) async {
+    final projectRoot = plan.projectRoot;
+    if (projectRoot != null) {
+      final discovery = await _writersideProjectService.discoverModuleRoots(
+        projectRoot,
+      );
+      if (!discovery.complete) {
+        throw BusyMarkException(
+          'writerside.topic-file.project-discovery-incomplete',
+          args: {'path': projectRoot},
+        );
+      }
+      final normalizedCurrent =
+          discovery.roots.map(normalizePath).toSet().toList()..sort();
+      if (!_sameStringList(normalizedCurrent, plan.projectModuleRoots)) {
+        throw BusyMarkException(
+          'writerside.topic-file.project-inventory-changed',
+          args: {'path': projectRoot},
+        );
+      }
+    }
+    return writersideTopicFileEditor.applyRename(
+      plan,
+      validateBeforePublish: validateBeforePublish,
+    );
+  }
+
+  Future<List<String>> writersideTopicRenameAffectedPaths(
+    Workspace workspace, {
+    required String topicPath,
+    required String topicModuleRoot,
+  }) async {
+    final project = await _writersideProjectService.load(
+      workspace.rootPath,
+      preferredModuleRoot: topicModuleRoot,
+    );
+    final module = project.modules
+        .where((candidate) => p.equals(candidate.rootPath, topicModuleRoot))
+        .singleOrNull;
+    if (module == null) {
+      throw const BusyMarkException('writerside.topic.module-not-open');
+    }
+    final topic = _writersideTopicForPath(module, topicPath);
+    final paths = <String>{topic.filePath};
+    for (final usage in project.index.references) {
+      final topicPart = usage.value.split('#').first;
+      if (topicPart.isNotEmpty &&
+          project.index
+              .definitions(
+                topicPart,
+                moduleId: usage.moduleId,
+                origin: usage.origin,
+                kind: WritersideSymbolKind.topic,
+                filePath: usage.filePath,
+                referenceOffset: usage.span.startOffset,
+              )
+              .any((symbol) => p.equals(symbol.filePath, topic.filePath))) {
+        paths.add(usage.filePath);
+      }
+    }
+    for (final candidate in project.modules) {
+      final moduleId = project.index.modulesById.entries
+          .where((entry) => p.equals(entry.value.rootPath, candidate.rootPath))
+          .map((entry) => entry.key)
+          .single;
+      for (final instance in candidate.instances) {
+        final startPage = instance.startPage;
+        if (startPage != null &&
+            project.index
+                .definitions(
+                  startPage,
+                  moduleId: moduleId,
+                  kind: WritersideSymbolKind.topic,
+                  filePath: instance.sourceTreePath,
+                )
+                .any((symbol) => p.equals(symbol.filePath, topic.filePath))) {
+          paths.add(instance.sourceTreePath);
+        }
+      }
+    }
+    return paths.toList()..sort();
   }
 
   Future<void> deleteWritersideTopicFile(
     Workspace workspace,
     String topicPath,
   ) async {
-    final module = await _currentWritersideModule(workspace);
+    final project = await _writersideProjectService.load(
+      workspace.rootPath,
+      preferredModuleRoot: workspace.writersideModule?.rootPath,
+    );
+    final module = project.topicOwnerForPath(topicPath);
+    if (module == null) {
+      throw const BusyMarkException('writerside.topic.module-not-open');
+    }
     final topic = _writersideTopicForPath(module, topicPath);
     final analysis = await writersideTopicRemovalService.analyze(
-      module: module,
+      project: project,
+      projectRoot: workspace.rootPath,
       topicPath: topic.filePath,
       mode: WritersideTopicRemovalMode.safeDeleteFile,
     );
@@ -380,10 +983,18 @@ class WorkspaceService {
     String? treePath,
     List<int>? nodePath,
   }) async {
-    final module = await _currentWritersideModule(workspace);
+    final project = await _writersideProjectService.load(
+      workspace.rootPath,
+      preferredModuleRoot: workspace.writersideModule?.rootPath,
+    );
+    final module = project.topicOwnerForPath(topicPath);
+    if (module == null) {
+      throw const BusyMarkException('writerside.topic.module-not-open');
+    }
     final topic = _writersideTopicForPath(module, topicPath);
     return writersideTopicRemovalService.analyze(
-      module: module,
+      project: project,
+      projectRoot: workspace.rootPath,
       topicPath: topic.filePath,
       mode: mode,
       selectedTreePath: treePath,
@@ -393,13 +1004,22 @@ class WorkspaceService {
 
   Future<WritersideTopicRemovalResult> applyWritersideTopicRemoval(
     Workspace workspace,
-    WritersideTopicRemovalRequest request,
-  ) async {
-    final module = await _currentWritersideModule(workspace);
-    if (!p.equals(module.rootPath, request.analysis.moduleRoot)) {
+    WritersideTopicRemovalRequest request, {
+    void Function(Iterable<String>)? validateBeforeCommit,
+  }) async {
+    final project = await _writersideProjectService.load(
+      workspace.rootPath,
+      preferredModuleRoot: request.analysis.targetModuleRoot,
+    );
+    final module = project.topicOwnerForPath(request.analysis.topicPath);
+    if (module == null ||
+        !p.equals(module.rootPath, request.analysis.targetModuleRoot)) {
       throw const BusyMarkException('writerside.topic.module-not-open');
     }
-    return writersideTopicRemovalService.apply(request);
+    return writersideTopicRemovalService.apply(
+      request,
+      validateBeforeCommit: validateBeforeCommit,
+    );
   }
 
   WritersideModule _writersideModule(Workspace workspace) {
@@ -460,6 +1080,32 @@ class WorkspaceService {
   Future<WritersideModule> _currentWritersideModule(Workspace workspace) async {
     final openedModule = _writersideModule(workspace);
     return _loadWritersideModule(openedModule.rootPath);
+  }
+
+  Future<void> _validateCreatedTopicIdentity(
+    String moduleRoot,
+    WritersideTopicIdentityValidation validation,
+  ) async {
+    final current = await _loadWritersideModule(moduleRoot);
+    if (!current.topicDiscoveryComplete) {
+      throw const BusyMarkException('writerside.topic.discovery-incomplete');
+    }
+    final candidatePath = p.normalize(validation.candidateTopicPath);
+    final matchingTopics = current.topics
+        .where((topic) => topic.id == validation.topicId)
+        .toList();
+    final unparsedConflict = current.unparsedTopicReferences.any(
+      (reference) =>
+          p.basenameWithoutExtension(reference) == validation.topicId,
+    );
+    if (unparsedConflict ||
+        matchingTopics.length != 1 ||
+        !p.equals(matchingTopics.single.filePath, candidatePath)) {
+      throw BusyMarkException(
+        'writerside.topic.id-exists',
+        args: {'topicId': validation.topicId},
+      );
+    }
   }
 
   Future<WritersideModule> _loadWritersideModule(String rootPath) {
@@ -695,8 +1341,10 @@ class WorkspaceService {
   /// files are atomically exchanged with their targets; if a later exchange
   /// fails, already-exchanged files are rolled back.
   Future<Map<String, WorkspaceFileSnapshot>> saveFormattedTextBatch(
-    List<WorkspaceBatchTextWrite> writes,
-  ) async {
+    List<WorkspaceBatchTextWrite> writes, {
+    void Function()? validateBeforeCommit,
+    void Function(Map<String, WorkspaceFileSnapshot>)? onCommitted,
+  }) async {
     if (writes.isEmpty) {
       return const {};
     }
@@ -755,6 +1403,7 @@ class WorkspaceService {
         }
       }
       for (final write in staged) {
+        validateBeforeCommit?.call();
         final error = LinuxAtomicFileApi.instance.exchange(
           write.stagedFile.absolute.path,
           write.target.absolute.path,
@@ -784,14 +1433,18 @@ class WorkspaceService {
         }
         committed.add(write);
         await _afterBatchFileCommit?.call(write.target.path, committed.length);
+        validateBeforeCommit?.call();
       }
-      return {
+      final snapshots = {
         for (final write in staged)
           write.requestPath: _snapshotFromBytes(
             await write.target.stat(),
             write.bytes,
           ),
       };
+      validateBeforeCommit?.call();
+      onCommitted?.call(snapshots);
+      return snapshots;
     } on Object catch (error, stackTrace) {
       final conflicts = <WorkspaceBatchPartialApplicationFile>[
         if (error case WorkspaceBatchPartialApplicationConflict partial)
@@ -1001,35 +1654,22 @@ class WorkspaceService {
     String sourcePath,
     FileSystemEntityType type,
   ) async {
-    final module = await _currentWritersideModule(workspace);
-    for (final configuredRoot in module.config.topicRoots) {
-      final topicRoot = p.normalize(
-        p.join(module.rootPath, configuredRoot.dir),
-      );
-      if (type == FileSystemEntityType.directory &&
-          (p.equals(sourcePath, topicRoot) ||
-              p.isWithin(topicRoot, sourcePath) ||
-              p.isWithin(sourcePath, topicRoot))) {
-        return true;
-      }
-      final extension = p.extension(sourcePath).toLowerCase();
-      if (type == FileSystemEntityType.file &&
-          p.isWithin(topicRoot, sourcePath) &&
-          (extension == '.md' ||
-              extension == '.markdown' ||
-              extension == '.topic')) {
-        return true;
-      }
+    final project = await _writersideProjectService.load(
+      workspace.rootPath,
+      preferredModuleRoot: workspace.writersideModule?.rootPath,
+    );
+    if (!project.moduleDiscoveryComplete &&
+        (type == FileSystemEntityType.directory ||
+            isWritersideTopicSourcePath(sourcePath))) {
+      // An incomplete module inventory cannot prove that a Markdown/XML topic
+      // (or a recursively deleted directory) belongs only to ordinary files.
+      // Keep the operation on the Safe Delete side of the guard.
+      return true;
     }
-    for (final topic in module.topics) {
-      final topicPath = p.normalize(topic.filePath);
-      if (p.equals(topicPath, sourcePath) ||
-          (type == FileSystemEntityType.directory &&
-              p.isWithin(sourcePath, topicPath))) {
-        return true;
-      }
-    }
-    return false;
+    return project.deletionTouchesTopics(
+      sourcePath,
+      isDirectory: type == FileSystemEntityType.directory,
+    );
   }
 
   Future<CanonicalPathAnchor> _workspacePathAnchor(Workspace workspace) async {

@@ -13,6 +13,7 @@ add_executable(${BINARY_NAME}
   "secure_credential_host.cc"
   "video_player_host.cc"
   "web_render_host.cc"
+  "writerside_dialog_host.cc"
   "${FLUTTER_MANAGED_DIR}/generated_plugin_registrant.cc"
 )
 

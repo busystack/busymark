@@ -263,26 +263,21 @@ void main() {
     ).readAsStringSync();
     final createTopicDialog = RegExp(
       r'class _CreateWritersideTopicDialogState[\s\S]*?'
-      r'  String _dialogTitle',
+      r'  String\? _titleError',
     ).firstMatch(workspace)!.group(0)!;
 
     expect(workspace, contains('BusyMarkPushButton.standardIcon('));
     expect(workspace, isNot(contains('FilledButton.icon(')));
-    expect(createTopicDialog, contains('BusyMarkModalEditorScaffold('));
-    expect(
-      RegExp(
-        r'BusyMarkGroupedTextEntry\(',
-      ).allMatches(createTopicDialog).length,
-      2,
-    );
+    expect(createTopicDialog, contains('BusyMarkDialogShell('));
+    expect(RegExp(r'TextField\(').allMatches(createTopicDialog).length, 2);
     expect(
       RegExp(r'BusyMarkComboRow<').allMatches(createTopicDialog).length,
-      2,
+      0,
     );
-    expect(createTopicDialog, isNot(contains('BusyMarkDialogShell(')));
+    expect(createTopicDialog, contains('context.l10n.newTopic'));
     expect(createTopicDialog, isNot(contains('SegmentedButton<')));
     expect(createTopicDialog, isNot(contains('BusyMarkFloatingTextEntry')));
-    expect(createTopicDialog, isNot(contains('InputDecoration(')));
+    expect(createTopicDialog, contains('InputDecoration('));
   });
 
   test('shared row hover delegates to Yaru interaction state', () {
@@ -904,7 +899,7 @@ void main() {
     expect(workspace, contains('BusyMarkHeaderPopupMenuButton<_SidebarTab>'));
     expect(workspace, contains('BusyMarkPopupMenuItem('));
     expect(workspace, contains('tooltip: context.l10n.sidebarViewMenu'));
-    expect(workspace, contains('icon: _sidebarTabIcon('));
+    expect(workspace, contains('icon: selectedTabMenuItem.icon!'));
     expect(workspace, contains('transparent: true'));
     expect(
       workspace,
@@ -912,11 +907,7 @@ void main() {
     );
     expect(
       workspace,
-      matches(
-        RegExp(
-          r'icon: _sidebarTabIcon\(\s*tab,\s*Directionality\.of\(context\),?\s*\)',
-        ),
-      ),
+      matches(RegExp(r'icon: _sidebarTabIcon\(tab, direction\)')),
     );
     expect(workspace, contains('shortcut: _sidebarTabShortcut(context, tab)'));
     expect(
@@ -935,6 +926,13 @@ void main() {
     );
     expect(workspace, contains('_SidebarTab.outline => BusyMarkGlyphs.indent'));
     expect(workspace, contains('_SidebarTab.git => BusyMarkGlyphs.branch'));
+    expect(
+      workspace,
+      contains(
+        '_SidebarTab.localHistory => BusyMarkGlyphs.sidebarLocalHistory',
+      ),
+    );
+    expect(workspace, contains('itemBuilder: (context) => tabMenuItems'));
     expect(workspace, isNot(contains('_SidebarTab.gitFileHistory')));
     expect(workspace, isNot(contains('_SidebarTab.gitProjectHistory')));
     expect(workspace, contains('checked: tab == selectedTab'));
@@ -1014,6 +1012,15 @@ void main() {
     final gitSidebar = File(
       'lib/src/git/presentation/git_sidebar_tab.dart',
     ).readAsStringSync();
+    final outlineMenu = RegExp(
+      r'enum _OutlineDocumentAction[\s\S]*?'
+      r'Future<_PathMenuAction\?> _showSidebarPathMenu',
+    ).firstMatch(workspace)!.group(0)!;
+    final outlineHeader = RegExp(
+      r'class _SidebarHeader extends StatelessWidget[\s\S]*?'
+      r'class _SidebarHeaderRow',
+    ).firstMatch(workspace)!.group(0)!;
+    final outlineActions = '$outlineMenu\n$outlineHeader';
 
     expect(workspace, contains('BusyMarkHeaderPopupMenuButton<_SidebarTab>'));
     expect(
@@ -1117,12 +1124,17 @@ void main() {
       contains("ValueKey('workspace-sidebar-outline-file-menu')"),
     );
     expect(workspace, contains('_outlineDocumentMenuItems('));
-    expect(workspace, contains('label: context.l10n.copyFileName'));
-    expect(
-      workspace,
-      contains('label: context.l10n.generateOrUpdateMarkdownToc'),
-    );
-    expect(workspace, contains('label: context.l10n.export'));
+    expect(outlineActions, contains('_OutlineDocumentAction.copyName'));
+    expect(outlineActions, contains('_OutlineDocumentAction.copyPath'));
+    expect(outlineActions, contains('_OutlineDocumentAction.openInFiles'));
+    expect(outlineActions, contains('_OutlineDocumentAction.refineWithAi'));
+    expect(outlineActions, contains('label: context.l10n.copyFileName'));
+    expect(outlineActions, isNot(contains('_OutlineDocumentAction.export')));
+    expect(outlineActions, isNot(contains('label: context.l10n.export')));
+    expect(outlineActions, isNot(contains('BusyMarkGlyphs.exportPdf')));
+    expect(outlineActions, isNot(contains('showExport')));
+    expect(outlineActions, isNot(contains('canExport')));
+    expect(outlineActions, isNot(contains('onExport()')));
     expect(workspace, contains('tooltip: context.l10n.actions'));
     expect(workspace, isNot(contains('tooltip: context.l10n.openInFiles')));
     expect(workspace, contains('icon: WorkspaceGlyphs.branch'));
@@ -1167,6 +1179,9 @@ void main() {
     final gitFileStatusColors = File(
       'lib/src/git/presentation/git_file_status_colors.dart',
     ).readAsStringSync();
+    final commitPanel = RegExp(
+      r'class _CommitPanel[\s\S]*?class GitCommitActions',
+    ).firstMatch(gitChanges)!.group(0)!;
 
     expect(gitChanges, contains('class _CommitPanel'));
     expect(gitChanges, contains('context.l10n.gitCommitMessage'));
@@ -1199,6 +1214,19 @@ void main() {
     expect(gitChanges, isNot(contains('FilledButton.icon')));
     expect(gitChanges, isNot(contains('showDialog<void>')));
     expect(gitChanges, isNot(contains('GitCommitDialog')));
+    expect(commitPanel, contains('BusyMarkGroupedList('));
+    expect(commitPanel, contains('BusyMarkGroupedTextEntry('));
+    expect(commitPanel, contains('context.l10n.gitCommitMessage'));
+    expect(commitPanel, contains('BusyMarkPushButton.standard('));
+    expect(commitPanel, contains('context.l10n.aiDraftWithAi'));
+    expect(commitPanel, isNot(contains('BusyMarkPushButton.standardIcon(')));
+    expect(commitPanel, isNot(contains('BusyMarkGlyphs.ai')));
+    expect(commitPanel, contains('BusyMarkPushButton.suggested('));
+    expect(commitPanel, contains('BusyMarkStatusBox('));
+    expect(commitPanel, isNot(contains('TextField(')));
+    expect(commitPanel, isNot(contains('TextFormField(')));
+    expect(commitPanel, isNot(contains('BusyMarkCompactIconButton(')));
+    expect(commitPanel, isNot(contains('BusyMarkHeaderIconButton(')));
   });
 
   test('Git sidebar actions use the shared semantic button adapter', () {
@@ -1242,7 +1270,7 @@ void main() {
     );
     expect(
       workspace,
-      contains('BusyMarkComboRow<WritersideTopicCreatePlacement>'),
+      isNot(contains('BusyMarkComboRow<WritersideTopicCreatePlacement>')),
     );
     final selector = RegExp(
       r'class BusyMarkPopupSelector<T>[\s\S]*?'
@@ -1336,7 +1364,7 @@ void main() {
     expect(welcome, contains('BusyMarkModalEditorScaffold('));
     expect(RegExp(r'BusyMarkGroupedTextEntry\(').allMatches(welcome).length, 5);
     expect(workspace, contains('showBusyMarkModalEditorDialog<String>('));
-    expect(workspace, contains('showBusyMarkModalEditorDialog<void>('));
+    expect(workspace, contains('showBusyMarkModalDialog<void>('));
     expect(editor, contains('showBusyMarkModalEditorDialog<T>('));
     expect(welcome, isNot(contains('BusyMarkFloatingTextEntry')));
     expect(workspace, isNot(contains('BusyMarkFloatingTextEntry')));
@@ -1348,10 +1376,51 @@ void main() {
     );
   });
 
+  test('Writerside template workflow uses BusyMark and Yaru presentation', () {
+    final templates = File(
+      'lib/src/workspace/presentation/writerside_template_dialogs.dart',
+    ).readAsStringSync();
+
+    for (final constructor in [
+      'ExpansionTile',
+      'ListTile',
+      'TextButton',
+      'LinearProgressIndicator',
+    ]) {
+      expect(
+        RegExp(
+          '(^|[^A-Za-z0-9_])$constructor\\s*\\(',
+          multiLine: true,
+        ).hasMatch(templates),
+        isFalse,
+        reason: '$constructor must not be directly constructed here',
+      );
+    }
+    expect(templates, contains('BusyMarkSearchField('));
+    expect(templates, contains('BusyMarkSidebarSurface('));
+    expect(templates, contains('YaruExpandable('));
+    expect(templates, contains('YaruMasterTile('));
+    expect(templates, contains('BusyMarkGroupedTextEntry('));
+    expect(templates, contains('BusyMarkActionRow('));
+    expect(templates, contains('YaruLinearProgressIndicator('));
+  });
+
   test('sidebar trees share the expandable Yaru-style row', () {
     final workspace = File(
       'lib/src/workspace/presentation/workspace_screen.dart',
     ).readAsStringSync();
+    final fileTreeMenu = RegExp(
+      r'Future<_FileTreeAction\?> _showFileTreeMenu[\s\S]*?'
+      r'Future<T\?> _showSidebarTreeMenu',
+    ).firstMatch(workspace)!.group(0)!;
+    final tocTreeAction = RegExp(
+      r'enum _TocTreeAction[\s\S]*?'
+      r'Future<_TocTreeAction\?> _showTocTreeMenu',
+    ).firstMatch(workspace)!.group(0)!;
+    final tocTreeMenu = RegExp(
+      r'Future<_TocTreeAction\?> _showTocTreeMenu[\s\S]*?'
+      r'bool _canPasteTocTreeEntry',
+    ).firstMatch(workspace)!.group(0)!;
 
     expect(workspace, contains('class _SidebarTreeRow'));
     expect(workspace, contains('class _FileTreeNode'));
@@ -1415,14 +1484,18 @@ void main() {
     expect(workspace, contains('class _WritersideTopicUsagesSidebar'));
     expect(workspace, contains('analyzeWritersideTopicRemoval('));
     expect(workspace, contains('applyWritersideTopicRemoval('));
-    expect(workspace, contains('context.l10n.safeDeleteTopicFile'));
+    expect(workspace, contains('context.l10n.tocSafeDelete'));
     expect(workspace, contains('context.l10n.removeTocElement'));
     expect(workspace, contains('label: context.l10n.newFile'));
     expect(workspace, contains('label: context.l10n.rename'));
     expect(workspace, contains('label: context.l10n.cut'));
     expect(workspace, contains('label: context.l10n.paste'));
     expect(workspace, contains('label: context.l10n.delete'));
-    expect(workspace, contains('label: context.l10n.addToGit'));
+    expect(fileTreeMenu, contains('_FileTreeAction.addToGit'));
+    expect(fileTreeMenu, contains('label: context.l10n.addToGit'));
+    expect(tocTreeAction, isNot(contains('addToGit')));
+    expect(tocTreeMenu, isNot(contains('_TocTreeAction.addToGit')));
+    expect(tocTreeMenu, isNot(contains('label: context.l10n.addToGit')));
     expect(workspace, contains('createWorkspaceFile('));
     expect(workspace, contains('renameWorkspaceEntity('));
     expect(workspace, contains('moveWorkspaceEntity('));
@@ -1441,6 +1514,10 @@ void main() {
     final tocHeader = RegExp(
       r'class _TocHeader[\s\S]*?class _CreateWritersideTopicDialog',
     ).firstMatch(workspace)!.group(0)!;
+    expect(
+      tocHeader,
+      contains('BusyMarkHeaderPopupMenuButton<_TocCreationChoice>'),
+    );
     expect(
       tocHeader,
       contains('BusyMarkHeaderPopupMenuButton<_TocHeaderAction>'),
@@ -1466,12 +1543,42 @@ void main() {
         ),
       ),
     );
+    expect(tocHeader, contains("ValueKey('workspace-sidebar-new-topic-menu')"));
     expect(tocHeader, contains("ValueKey('workspace-sidebar-toc-menu')"));
     expect(tocHeader, contains('tooltip: context.l10n.tocActions'));
     expect(tocHeader, contains('icon: BusyMarkGlyphs.menuVertical'));
     expect(tocHeader, contains('highlightWhenOpen: false'));
-    expect(tocHeader, contains('label: context.l10n.newTopic'));
-    expect(tocHeader, isNot(contains('BusyMarkHeaderIconButton')));
+    expect(tocHeader, contains('tooltip: context.l10n.newTopic'));
+    expect(tocHeader, contains('_TocHeaderAction.synchronize'));
+    expect(tocHeader, contains('_TocHeaderAction.newInstance'));
+    expect(tocHeader, contains('_TocHeaderAction.newLibrary'));
+    expect(tocHeader, contains('_TocHeaderAction.editInstance'));
+    expect(tocHeader, contains('_TocHeaderAction.openTocFile'));
+    expect(tocHeader, contains('label: context.l10n.tocSynchronize'));
+    expect(tocHeader, contains('label: context.l10n.newInstance'));
+    expect(tocHeader, contains('label: context.l10n.newTocLibrary'));
+    expect(tocHeader, contains('label: context.l10n.editInstance'));
+    expect(tocHeader, contains('label: context.l10n.openTocFile'));
+    expect(tocHeader, contains('icon: BusyMarkGlyphs.refresh'));
+    expect(workspace, isNot(contains('_TocHeaderAction.export')));
+    expect(tocHeader, isNot(contains('context.l10n.export')));
+    expect(tocHeader, isNot(contains('BusyMarkGlyphs.exportPdf')));
+    expect(tocHeader, isNot(contains('canExport')));
+    expect(tocHeader, isNot(contains('onExport')));
+    expect(
+      tocHeader,
+      contains(
+        'case _TocHeaderAction.synchronize:\n                        onSynchronize();',
+      ),
+    );
+    expect(
+      RegExp(
+        r'BusyMarkCompactIconButton\s*\(\s*tooltip:\s*context\.l10n\.tocSynchronize',
+      ).hasMatch(tocHeader),
+      isFalse,
+    );
+    expect(tocHeader, contains('label: context.l10n.tocEmptyMdTopic'));
+    expect(tocHeader, contains('label: context.l10n.tocEmptyXmlTopic'));
     expect(tocHeader, isNot(contains('context.l10n.newChildTopic')));
     expect(tocHeader, isNot(contains('onCreateChildTopic')));
     expect(workspace, contains('_TocTreeAction.newChildTopic'));

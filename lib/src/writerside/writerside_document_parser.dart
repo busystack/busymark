@@ -411,6 +411,7 @@ Map<String, SourceSpan> _attributeSpans({
   final result = <String, SourceSpan>{};
   final matches = RegExp(
     r'''([A-Za-z_][A-Za-z0-9_.:-]*)\s*=\s*(["'])(.*?)\2''',
+    dotAll: true,
   ).allMatches(openingSource);
   for (final match in matches) {
     final quoteOffset = openingSource.indexOf(

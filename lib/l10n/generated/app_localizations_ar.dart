@@ -11,6 +11,230 @@ class AppLocalizationsAr extends AppLocalizations {
   AppLocalizationsAr([String locale = 'ar']) : super(locale);
 
   @override
+  String get tocTopicFromTemplate => 'موضوع من قالب...';
+
+  @override
+  String get tocSaveAsTemplate => 'حفظ كقالب';
+
+  @override
+  String get tocTemplateDialog => 'إنشاء موضوع من قالب';
+
+  @override
+  String get tocTemplatesEditor => 'قوالب الملفات والشيفرة';
+
+  @override
+  String get tocEditTemplates => 'تحرير القوالب...';
+
+  @override
+  String get tocCreateCustomTemplate => 'إنشاء قالب مخصص...';
+
+  @override
+  String get tocTemplateCreated => 'تم إنشاء القالب';
+
+  @override
+  String get tocTemplateDefault => 'افتراضي';
+
+  @override
+  String get tocTemplateCustom => 'مخصص';
+
+  @override
+  String get tocTemplateFilename => 'اسم الملف:';
+
+  @override
+  String get tocTemplateMarkdown => 'Markdown (.md)';
+
+  @override
+  String get tocTemplateXml => 'XML (.topic)';
+
+  @override
+  String get tocTemplatesInternal => 'داخلي';
+
+  @override
+  String get tocTemplateUnnamed => 'بلا اسم';
+
+  @override
+  String get tocTemplateNew => 'قالب جديد...';
+
+  @override
+  String get tocTemplateName => 'الاسم:';
+
+  @override
+  String get tocTemplateExtension => 'الامتداد:';
+
+  @override
+  String get tocTemplateLoadError =>
+      'تعذر تحميل القوالب. لم تتغير القوالب الموجودة.';
+
+  @override
+  String get tocTemplateSaveError =>
+      'تعذر حفظ القوالب. لا تزال تعديلاتك متاحة هنا.';
+
+  @override
+  String get tocTemplateConflict =>
+      'تغيرت القوالب في نافذة أخرى. ألغِ وأعد فتح المحرر.';
+
+  @override
+  String get tocTemplateDuplicateName =>
+      'يوجد بالفعل قالب بهذا الاسم والامتداد.';
+
+  @override
+  String get tocTemplateFormat => 'التنسيق:';
+
+  @override
+  String get tocTemplateReset => 'إعادة تعيين';
+
+  @override
+  String get tocTemplateRetry => 'إعادة المحاولة';
+
+  @override
+  String tocRemoveElementsDialog(int count) {
+    return 'إزالة $count من عناصر جدول المحتويات';
+  }
+
+  @override
+  String get tocRemoveElementsRetainFiles =>
+      'لن تُحذف ملفات المصدر المرتبطة بعناصر جدول المحتويات هذه.';
+
+  @override
+  String get tocOk => 'موافق';
+
+  @override
+  String get tocSelectExistingTopic =>
+      'اختر موضوعًا لإضافته إلى النسخة الحالية';
+
+  @override
+  String get tocGroupName => 'اسم المجموعة';
+
+  @override
+  String get tocMoveLineUp => 'نقل السطر لأعلى';
+
+  @override
+  String get tocMoveLineDown => 'نقل السطر لأسفل';
+
+  @override
+  String get tocEmptyMdTopic => 'موضوع MD فارغ';
+
+  @override
+  String get tocEmptyXmlTopic => 'موضوع XML فارغ';
+
+  @override
+  String get tocCopySpecial => 'نسخ خاص';
+
+  @override
+  String tocCopyFileName(String name) {
+    return 'اسم ملف الموضوع \'$name\'';
+  }
+
+  @override
+  String get tocCopyFilePath => 'مسار ملف الموضوع';
+
+  @override
+  String tocCopyTopicTitle(String title) {
+    return 'عنوان الموضوع \'$title\'';
+  }
+
+  @override
+  String tocCopyElementId(String id) {
+    return 'معرّف عنصر جدول المحتويات \'$id\'';
+  }
+
+  @override
+  String get tocCopyFileNameUnavailable => 'اسم ملف الموضوع';
+
+  @override
+  String get tocCopyTopicTitleUnavailable => 'عنوان الموضوع';
+
+  @override
+  String get tocCopyElementIdUnavailable => 'معرّف عنصر جدول المحتويات';
+
+  @override
+  String get tocEditTitleAction => 'تحرير العنوان...';
+
+  @override
+  String get tocEditTitleDialog => 'تحرير العنوان';
+
+  @override
+  String get tocRemoveElementAction => 'إزالة عنصر جدول المحتويات...';
+
+  @override
+  String get tocSetHomePage => 'تعيين كصفحة رئيسية';
+
+  @override
+  String tocGoToElement(String fileName) {
+    return 'الانتقال إلى عنصر جدول المحتويات في \'$fileName\'';
+  }
+
+  @override
+  String get tocSynchronize => 'مزامنة جدول المحتويات والمحرر';
+
+  @override
+  String get tocEmptyGroupAction => 'مجموعة فارغة';
+
+  @override
+  String get tocNewEmptyGroup => 'مجموعة فارغة جديدة';
+
+  @override
+  String get tocGroupAction => 'تجميع';
+
+  @override
+  String get tocNewGroup => 'مجموعة جديدة';
+
+  @override
+  String get tocSortChildren => 'ترتيب المواضيع الفرعية أبجديًا';
+
+  @override
+  String get tocLinkTopicFiles => 'ربط ملفات المواضيع بجدول المحتويات...';
+
+  @override
+  String get addLocalMarkdownFiles => 'إضافة ملفات Markdown محلية';
+
+  @override
+  String get tocTitleField => 'عنوان جدول المحتويات:';
+
+  @override
+  String get tocTopicTitleField => 'عنوان الموضوع:';
+
+  @override
+  String get tocAdvancedSettings => 'إعدادات متقدمة';
+
+  @override
+  String tocInstanceTitleField(String instanceId) {
+    return 'عنوان \'$instanceId\':';
+  }
+
+  @override
+  String get tocOnlyTitleField => 'عنوان خاص بجدول المحتويات:';
+
+  @override
+  String get tocInstanceTitleExplanation =>
+      'يُستخدم للمثيل الحالي فقط. يُورث من عنوان الموضوع افتراضيًا.';
+
+  @override
+  String get tocOnlyTitleExplanation =>
+      'يُستخدم في جدول المحتويات فقط. يُورث افتراضيًا من عنوان الموضوع أو من العنوان الخاص بالمثيل إن وُجد. تجد شرحًا للعناوين';
+
+  @override
+  String get tocTitleDocumentationLink => 'هنا';
+
+  @override
+  String get tocFindUsages => 'بحث';
+
+  @override
+  String get tocRefactorMenu => 'إعادة الهيكلة';
+
+  @override
+  String get tocSafeDelete => 'حذف آمن';
+
+  @override
+  String get tocDuplicate => 'تكرار';
+
+  @override
+  String get tocDuplicateFilename => 'اسم ملف الموضوع:';
+
+  @override
+  String get tocDuplicateDialog => 'تكرار الموضوع';
+
+  @override
   String get pdfTitlePage => 'صفحة العنوان';
 
   @override
@@ -1157,7 +1381,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get files => 'ملفات';
 
   @override
-  String get toc => 'موضوعات';
+  String get toc => 'جدول المحتويات';
 
   @override
   String get tocActions => 'إجراءات جدول المحتويات';
@@ -1199,7 +1423,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get newChildTopic => 'موضوع فرعي جديد';
 
   @override
-  String get newSiblingTopic => 'موضوع جديد على المستوى نفسه';
+  String get newSiblingTopic => 'موضوع جديد';
 
   @override
   String get renameTopicFile => 'إعادة تسمية ملف الموضوع';
@@ -1261,7 +1485,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String topicRemovalSummary(String topic) {
-    return 'أزِل «⁨$topic⁩» من المثيل المحدد. سيُحتفظ بملف الموضوع.';
+    return 'هل تريد إزالة عنصر جدول المحتويات «⁨$topic⁩»؟ لن يُحذف الملف المصدر المرتبط بجدول المحتويات.';
   }
 
   @override
@@ -1290,7 +1514,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String topicUsagesCount(int count) {
-    return 'الاستخدامات ($count)';
+    return 'تم العثور على $count من مواضع الاستخدام.';
   }
 
   @override
@@ -1342,7 +1566,7 @@ class AppLocalizationsAr extends AppLocalizations {
       'تتطلب بعض الاستخدامات تغييرات يدوية قبل إعادة الهيكلة هذه.';
 
   @override
-  String get setRedirectTo => 'تعيين إعادة التوجيه إلى';
+  String get setRedirectTo => 'تعيين إعادة التوجيه إلى:';
 
   @override
   String get noRedirectDescription =>
@@ -1368,6 +1592,30 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get doRefactor => 'تنفيذ إعادة الهيكلة';
+
+  @override
+  String get preview => 'معاينة';
+
+  @override
+  String get topicRenamePreviewTitle => 'معاينة إعادة التسمية';
+
+  @override
+  String topicRenamePathChange(String oldPath, String newPath) {
+    return 'المسار: $oldPath → $newPath';
+  }
+
+  @override
+  String topicRenameIdChange(String oldId, String newId) {
+    return 'معرّف الموضوع: $oldId → $newId';
+  }
+
+  @override
+  String topicRenameUrlChange(String instance, String oldName, String newName) {
+    return 'المثيل $instance: $oldName → $newName';
+  }
+
+  @override
+  String get topicRenameAffectedFiles => 'الملفات المتأثرة';
 
   @override
   String get orphanTopicTitle => 'لم يعد ملف الموضوع مستخدمًا';
@@ -1939,6 +2187,23 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
+  String errorWritersideTopicRenameIncompleteProjectIndex(
+    String module,
+    String count,
+    String paths,
+  ) {
+    return 'لا يمكن لإعادة التسمية تحديث كل مراجع المشروع بأمان لأن $count من ملفات المواضيع في الوحدة $module لم تُحلَّل: $paths';
+  }
+
+  @override
+  String get errorWritersideTopicRenameProjectBuffersDirty =>
+      'تحتوي ملفات مشروع Writerside على تغييرات غير محفوظة. عالجها وأنشئ معاينة جديدة لإعادة التسمية.';
+
+  @override
+  String get errorWritersideTopicRenameProjectInventoryChanged =>
+      'تغيّرت مجموعة وحدات مشروع Writerside. أنشئ معاينة جديدة لإعادة التسمية قبل إعادة الهيكلة.';
+
+  @override
   String get errorTopicsRootUnsafe =>
       'يجب أن يكون جذر المواضيع دليلاً نسبيًا آمنًا.';
 
@@ -2209,6 +2474,25 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String diagnosticWritersideTopicDuplicateId(String id) {
     return 'يظهر معرّف العنصر \"⁨$id⁩\" أكثر من مرة.';
+  }
+
+  @override
+  String diagnosticWritersideWebFileNameInvalid(
+    String instanceId,
+    String webFileName,
+    String topic,
+  ) {
+    return 'ينشر المثيل \"$instanceId\" اسم ملف ويب غير صالح \"$webFileName\" للموضوع \"$topic\".';
+  }
+
+  @override
+  String diagnosticWritersideWebFileNameCollision(
+    String instanceId,
+    String webFileName,
+    String firstTopic,
+    String secondTopic,
+  ) {
+    return 'ينشر المثيل \"$instanceId\" الموضوعين \"$firstTopic\" و\"$secondTopic\" باسم \"$webFileName\".';
   }
 
   @override
@@ -3721,25 +4005,6 @@ class AppLocalizationsAr extends AppLocalizations {
   String get aiDraftWithAi => 'إعداد مسودة بالذكاء الاصطناعي';
 
   @override
-  String get generateOrUpdateMarkdownToc => 'إنشاء/تحديث جدول المحتويات';
-
-  @override
-  String get markdownTocTitle => 'جدول المحتويات';
-
-  @override
-  String markdownTocUpdated(int count) {
-    return 'حُدّث جدول المحتويات وأصبح يضم ⁨$count⁩ من الإدخالات.';
-  }
-
-  @override
-  String get markdownTocNoHeadings =>
-      'أضف عنوان قسم واحدًا على الأقل قبل إنشاء جدول المحتويات.';
-
-  @override
-  String get markdownTocMalformedMarkers =>
-      'علامات جدول محتويات BusyMark مفقودة أو مكررة أو بترتيب غير صحيح.';
-
-  @override
   String diagnosticMarkdownHeadingSkippedLevel(int level, int previousLevel) {
     return 'يلي عنوان المستوى ⁨$previousLevel⁩ عنوان من المستوى ⁨$level⁩؛ راجع تداخل الأقسام.';
   }
@@ -3775,6 +4040,10 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get cannotRenameSymbol =>
       'لا يمكن إعادة تسمية الرمز بأمان. تحقق من الاسم وحدّث المرجع قبل المحاولة مجددًا.';
+
+  @override
+  String get renameTopicFileInstead =>
+      'تُشتق معرّفات الموضوعات من أسماء ملفاتها. استخدم «إعادة تسمية ملف الموضوع» في جدول المحتويات أو الشريط الجانبي للملفات.';
 
   @override
   String get keyboardLayout => 'تخطيط لوحة المفاتيح';

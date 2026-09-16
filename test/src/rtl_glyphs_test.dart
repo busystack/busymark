@@ -54,6 +54,14 @@ void main() {
       BusyMarkGlyphs.nativeMenuIconName(BusyMarkGlyphs.add),
       'list-add-symbolic',
     );
+    expect(
+      BusyMarkGlyphs.nativeMenuIconName(BusyMarkGlyphs.branch),
+      'busymark-git-branch-symbolic',
+    );
+    expect(
+      BusyMarkGlyphs.nativeMenuIconName(BusyMarkGlyphs.sidebarLocalHistory),
+      'document-open-recent-symbolic',
+    );
   });
 
   test('Arabic and Persian font fallbacks are available in the snap', () {

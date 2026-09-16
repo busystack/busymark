@@ -1,4 +1,72 @@
 {
+  "tocTopicFromTemplate": "템플릿에서 토픽...",
+  "tocSaveAsTemplate": "템플릿으로 저장",
+  "tocTemplateDialog": "템플릿에서 토픽 만들기",
+  "tocTemplatesEditor": "파일 및 코드 템플릿",
+  "tocEditTemplates": "템플릿 편집...",
+  "tocCreateCustomTemplate": "사용자 지정 템플릿 만들기...",
+  "tocTemplateCreated": "템플릿 생성됨",
+  "tocTemplateDefault": "기본",
+  "tocTemplateCustom": "사용자 지정",
+  "tocTemplateFilename": "파일 이름:",
+  "tocTemplateMarkdown": "Markdown (.md)",
+  "tocTemplateXml": "XML (.topic)",
+  "tocTemplatesInternal": "내부",
+  "tocTemplateUnnamed": "이름 없음",
+  "tocTemplateNew": "새 템플릿...",
+  "tocTemplateName": "이름:",
+  "tocTemplateExtension": "확장자:",
+  "tocTemplateLoadError": "템플릿을 불러올 수 없습니다. 기존 템플릿은 변경되지 않았습니다.",
+  "tocTemplateSaveError": "템플릿을 저장할 수 없습니다. 편집 내용은 여기에 유지됩니다.",
+  "tocTemplateConflict": "다른 창에서 템플릿이 변경되었습니다. 취소하고 편집기를 다시 여세요.",
+  "tocTemplateDuplicateName": "이 이름과 확장자를 가진 템플릿이 이미 있습니다.",
+  "tocTemplateFormat": "형식:",
+  "tocTemplateReset": "초기화",
+  "tocTemplateRetry": "다시 시도",
+  "tocRemoveElementsDialog": "목차 요소 {count}개 제거",
+  "tocRemoveElementsRetainFiles": "이 목차 요소와 연결된 소스 파일은 삭제되지 않습니다.",
+  "tocOk": "확인",
+  "tocSelectExistingTopic": "현재 인스턴스에 추가할 토픽 선택",
+  "tocGroupName": "그룹 이름",
+  "tocMoveLineUp": "줄 위로 이동",
+  "tocMoveLineDown": "줄 아래로 이동",
+  "tocEmptyMdTopic": "빈 MD 토픽",
+  "tocEmptyXmlTopic": "빈 XML 토픽",
+  "tocCopySpecial": "특수 복사",
+  "tocCopyFileName": "토픽 파일 이름 '{name}'",
+  "tocCopyFilePath": "토픽 파일 경로",
+  "tocCopyTopicTitle": "토픽 제목 '{title}'",
+  "tocCopyElementId": "목차 요소 ID '{id}'",
+  "tocCopyFileNameUnavailable": "토픽 파일 이름",
+  "tocCopyTopicTitleUnavailable": "토픽 제목",
+  "tocCopyElementIdUnavailable": "목차 요소 ID",
+  "tocEditTitleAction": "제목 편집...",
+  "tocEditTitleDialog": "제목 편집",
+  "tocRemoveElementAction": "목차 요소 제거...",
+  "tocSetHomePage": "홈 페이지로 설정",
+  "tocGoToElement": "'{fileName}'의 목차 요소로 이동",
+  "tocSynchronize": "목차와 편집기 동기화",
+  "tocEmptyGroupAction": "빈 그룹",
+  "tocNewEmptyGroup": "새 빈 그룹",
+  "tocGroupAction": "그룹화",
+  "tocNewGroup": "새 그룹",
+  "tocSortChildren": "하위 토픽을 알파벳순으로 정렬",
+  "tocLinkTopicFiles": "토픽 파일을 목차에 연결...",
+  "addLocalMarkdownFiles": "로컬 Markdown 파일 추가",
+  "tocTitleField": "목차 제목:",
+  "tocTopicTitleField": "토픽 제목:",
+  "tocAdvancedSettings": "고급 설정",
+  "tocInstanceTitleField": "'{instanceId}'의 제목:",
+  "tocOnlyTitleField": "목차 전용 제목:",
+  "tocInstanceTitleExplanation": "현재 인스턴스에만 사용됩니다. 기본적으로 토픽 제목을 상속합니다.",
+  "tocOnlyTitleExplanation": "목차에만 사용됩니다. 기본적으로 토픽 제목 또는 설정된 인스턴스별 제목을 상속합니다. 제목에 대한 설명:",
+  "tocTitleDocumentationLink": "여기",
+  "tocFindUsages": "찾기",
+  "tocRefactorMenu": "리팩터링",
+  "tocSafeDelete": "안전하게 삭제",
+  "tocDuplicate": "복제",
+  "tocDuplicateFilename": "토픽 파일 이름:",
+  "tocDuplicateDialog": "토픽 복제",
   "pdfTitlePage": "제목 페이지",
   "pdfIncludeTitlePage": "제목 페이지 포함",
   "pdfTitlePageNote": "이 페이지에는 머리글, 바닥글 또는 페이지 번호가 표시되지 않습니다.",
@@ -1397,7 +1465,7 @@
   "@files": {
     "description": "Files sidebar tab label."
   },
-  "toc": "토픽",
+  "toc": "목차",
   "@toc": {
     "description": "Writerside Topics sidebar tab label."
   },
@@ -1445,7 +1513,7 @@
   "@newChildTopic": {
     "description": "Create new child Writerside topic action label."
   },
-  "newSiblingTopic": "새 형제 토픽",
+  "newSiblingTopic": "새 토픽",
   "@newSiblingTopic": {
     "description": "Create new sibling Writerside topic action label."
   },
@@ -1531,7 +1599,7 @@
   "@removeAction": {
     "description": "Short action label for removing an item without deleting its source file."
   },
-  "topicRemovalSummary": "선택한 인스턴스에서 “{topic}”을(를) 제거합니다. 토픽 파일은 유지됩니다.",
+  "topicRemovalSummary": "목차 요소 “{topic}”을(를) 제거하시겠습니까? 목차에 연결된 소스 파일은 삭제되지 않습니다.",
   "@topicRemovalSummary": {
     "description": "Summary in the dialog for removing a topic from one Writerside instance.",
     "placeholders": {
@@ -1562,7 +1630,7 @@
   "@topicIsStartPageRemovalWarning": {
     "description": "Warning that blocks deletion of a Writerside start-page topic."
   },
-  "topicUsagesCount": "사용처 ({count})",
+  "topicUsagesCount": "사용처 {count}개를 찾았습니다.",
   "@topicUsagesCount": {
     "description": "Heading with the number of Writerside topic usages.",
     "placeholders": {
@@ -1620,7 +1688,7 @@
   "@manualUsageUpdatesRequired": {
     "description": "Message when some Writerside usages cannot be updated automatically."
   },
-  "setRedirectTo": "다음으로 리디렉션 설정",
+  "setRedirectTo": "다음으로 리디렉션 설정:",
   "@setRedirectTo": {
     "description": "Option to redirect an old Writerside page to another topic."
   },
@@ -2427,6 +2495,23 @@
         "type": "String"
       }
     }
+  },
+  "errorWritersideTopicRenameIncompleteProjectIndex": "모듈 {module}의 토픽 파일 {count}개가 구문 분석되지 않아 이름 바꾸기로 모든 프로젝트 참조를 안전하게 업데이트할 수 없습니다: {paths}",
+  "@errorWritersideTopicRenameIncompleteProjectIndex": {
+    "description": "Error shown when topic rename cannot prove complete project-wide semantic coverage.",
+    "placeholders": {
+      "module": {"type": "String"},
+      "count": {"type": "String"},
+      "paths": {"type": "String"}
+    }
+  },
+  "errorWritersideTopicRenameProjectBuffersDirty": "Writerside 프로젝트 파일에 저장되지 않은 변경 사항이 있습니다. 이를 해결하고 새 이름 바꾸기 미리보기를 준비하세요.",
+  "@errorWritersideTopicRenameProjectBuffersDirty": {
+    "description": "Error shown when a topic rename or reviewed rename plan is blocked by a dirty Writerside project buffer."
+  },
+  "errorWritersideTopicRenameProjectInventoryChanged": "Writerside 프로젝트의 모듈 집합이 변경되었습니다. 리팩터링하기 전에 새 이름 바꾸기 미리보기를 준비하세요.",
+  "@errorWritersideTopicRenameProjectInventoryChanged": {
+    "description": "Error shown when module discovery differs from a prepared topic rename plan."
   },
   "errorTopicsRootUnsafe": "토픽 루트는 안전한 상대 디렉터리여야 합니다.",
   "@errorTopicsRootUnsafe": {
@@ -4589,31 +4674,6 @@
   "@aiDraftWithAi": {
     "description": "Action that drafts a Git commit message with AI."
   },
-  "generateOrUpdateMarkdownToc": "목차 생성/업데이트",
-  "@generateOrUpdateMarkdownToc": {
-    "description": "Deterministic action that creates or refreshes a Markdown table of contents."
-  },
-  "markdownTocTitle": "목차",
-  "@markdownTocTitle": {
-    "description": "Heading inserted above a generated Markdown table of contents."
-  },
-  "markdownTocUpdated": "{count}개의 항목으로 목차가 업데이트되었습니다.",
-  "@markdownTocUpdated": {
-    "description": "Confirmation after generating a Markdown table of contents.",
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "markdownTocNoHeadings": "목차를 생성하기 전에 하나 이상의 섹션 제목을 추가하세요.",
-  "@markdownTocNoHeadings": {
-    "description": "Message when a Markdown document has no section headings for a generated table of contents."
-  },
-  "markdownTocMalformedMarkers": "BusyMark 목차 표시가 없거나 중복되었거나 순서가 잘못되었습니다.",
-  "@markdownTocMalformedMarkers": {
-    "description": "Message when a generated Markdown table-of-contents region cannot be safely updated."
-  },
   "diagnosticMarkdownHeadingSkippedLevel": "제목 수준 {level}은(는) {previousLevel} 수준을 따릅니다. 섹션 중첩을 검토하세요.",
   "@diagnosticMarkdownHeadingSkippedLevel": {
     "description": "Accessibility diagnostic for a skipped Markdown heading level.",
@@ -4799,5 +4859,14 @@
   "settingsHistoryExcludedPathsHint": "한 줄에 하나의 절대 경로",
   "settingsSecondsValue": "{value} 초",
   "settingsDaysValue": "{value} 일",
-  "settingsMebibytesValue": "{value} MiB"
+  "settingsMebibytesValue": "{value} MiB",
+  "preview": "미리 보기",
+  "topicRenamePreviewTitle": "이름 바꾸기 미리 보기",
+  "topicRenamePathChange": "경로: {oldPath} → {newPath}",
+  "topicRenameIdChange": "토픽 ID: {oldId} → {newId}",
+  "topicRenameUrlChange": "인스턴스 {instance}: {oldName} → {newName}",
+  "topicRenameAffectedFiles": "영향을 받는 파일",
+  "renameTopicFileInstead": "토픽 ID는 파일 이름에서 생성됩니다. 목차 또는 파일 사이드바에서 토픽 파일 이름 바꾸기를 사용하세요.",
+  "diagnosticWritersideWebFileNameInvalid": "인스턴스 \"{instanceId}\"에서 토픽 \"{topic}\"의 웹 파일 이름 \"{webFileName}\"이 올바르지 않습니다.",
+  "diagnosticWritersideWebFileNameCollision": "인스턴스 \"{instanceId}\"에서 \"{firstTopic}\"과 \"{secondTopic}\"이 모두 \"{webFileName}\"으로 게시됩니다."
 }
