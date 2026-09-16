@@ -43,8 +43,9 @@ void main() {
     WidgetTester tester,
     Widget dialog, {
     TextDirection direction = TextDirection.ltr,
+    Size size = const Size(1300, 1000),
   }) async {
-    tester.view.physicalSize = const Size(1300, 1000);
+    tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
@@ -124,6 +125,15 @@ void main() {
               ? lessThan(formCenter)
               : greaterThan(formCenter),
         );
+        expect(
+          tester.getCenter(find.byKey(const ValueKey('template-format-md'))).dy,
+          closeTo(
+            tester
+                .getCenter(find.byKey(const ValueKey('template-format-topic')))
+                .dy,
+            1,
+          ),
+        );
         await tester.tap(find.text('XML (.topic)'));
         await tester.enterText(editableUnderKey('template-title'), 'A & B');
         await tester.enterText(
@@ -165,6 +175,7 @@ void main() {
             Text('${template.id}:$title:$filename'),
         onCreate: (_, _, _) async => null,
       ),
+      size: const Size(650, 900),
     );
 
     expect(find.byType(BusyMarkSearchField), findsOneWidget);
@@ -174,6 +185,17 @@ void main() {
     expect(find.byType(BusyMarkActionRow), findsOneWidget);
     expect(find.byType(YaruRadioButton<String>), findsNWidgets(2));
     expect(find.byType(BusyMarkSidebarSurface), findsOneWidget);
+    final formatTile = tester.widget<YaruListTile>(
+      find.byKey(const ValueKey('template-format')),
+    );
+    expect(formatTile.trailing, isNull);
+    expect(formatTile.title, isA<Wrap>());
+    expect(
+      tester.getCenter(find.byKey(const ValueKey('template-format-topic'))).dy,
+      greaterThan(
+        tester.getCenter(find.byKey(const ValueKey('template-format-md'))).dy,
+      ),
+    );
 
     await tester.enterText(editableUnderKey('template-search'), 'Overview');
     await tester.pumpAndSettle();
@@ -297,6 +319,58 @@ void main() {
     expect(stored.source, '# \${TITLE}\nCustom body');
     expect(find.text('File and Code Templates'), findsNothing);
   });
+
+  testWidgets('source surface exposes its label and focus boundary', (
+    tester,
+  ) async {
+    final semantics = tester.ensureSemantics();
+    await show(tester, const WritersideTemplatesEditor(createNew: true));
+
+    final source = find.byKey(const ValueKey('template-editor-source'));
+    final surface = find.byKey(
+      const ValueKey('template-editor-source-surface'),
+    );
+    expect(tester.widget<BusyMarkGroupedSurface>(surface).focused, isFalse);
+    expect(tester.getSemantics(source).label, contains('Source'));
+    final field = tester.widget<TextField>(source);
+    expect(field.decoration?.border, InputBorder.none);
+    expect(field.decoration?.focusedBorder, InputBorder.none);
+
+    await tester.tap(source);
+    await tester.pumpAndSettle();
+    expect(tester.widget<BusyMarkGroupedSurface>(surface).focused, isTrue);
+    semantics.dispose();
+  });
+
+  testWidgets(
+    'New toolbar command stages an editable draft and Cancel drops it',
+    (tester) async {
+      await show(tester, const WritersideTemplatesEditor());
+      expect(
+        find.byKey(const ValueKey('template-editor-source')),
+        findsNothing,
+      );
+
+      await tester.tap(
+        find.widgetWithText(BusyMarkDialogButton, 'New template...'),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Unnamed.md'), findsOneWidget);
+      final nameEntry = tester.widget<BusyMarkGroupedTextEntry>(
+        find.byKey(const ValueKey('template-editor-name')),
+      );
+      expect(nameEntry.readOnly, isFalse);
+      await tester.enterText(editableUnderKey('template-editor-name'), 'Draft');
+      await tester.enterText(
+        find.byKey(const ValueKey('template-editor-source')),
+        '# Draft',
+      );
+
+      await tester.tap(find.widgetWithText(BusyMarkDialogButton, 'Cancel'));
+      await settle(tester);
+      expect((await tester.runAsync(service.read))!.entries, isEmpty);
+    },
+  );
 
   testWidgets('custom XML template cannot publish a mismatching root ID', (
     tester,

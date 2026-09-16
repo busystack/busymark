@@ -319,42 +319,50 @@ class _TemplateDialogState extends ConsumerState<WritersideTemplateDialog> {
                                   onSubmitted: (_) => _create(),
                                 ),
                                 YaruListTile.square(
-                                  title: Text(context.l10n.tocTemplateFormat),
-                                  trailing: Wrap(
+                                  key: const ValueKey('template-format'),
+                                  title: Wrap(
                                     spacing: BusyMarkSpacing.md,
                                     runSpacing: BusyMarkSpacing.xs,
+                                    crossAxisAlignment:
+                                        WrapCrossAlignment.center,
                                     children: [
+                                      Text(context.l10n.tocTemplateFormat),
                                       for (final extension in ['md', 'topic'])
-                                        YaruRadioButton<String>(
-                                          value: extension,
-                                          groupValue: selected.extension,
-                                          title: Text(
-                                            extension == 'md'
-                                                ? context
-                                                      .l10n
-                                                      .tocTemplateMarkdown
-                                                : context.l10n.tocTemplateXml,
+                                        IntrinsicWidth(
+                                          child: YaruRadioButton<String>(
+                                            key: ValueKey(
+                                              'template-format-$extension',
+                                            ),
+                                            value: extension,
+                                            groupValue: selected.extension,
+                                            title: Text(
+                                              extension == 'md'
+                                                  ? context
+                                                        .l10n
+                                                        .tocTemplateMarkdown
+                                                  : context.l10n.tocTemplateXml,
+                                            ),
+                                            onChanged:
+                                                !_templates!.any(
+                                                  (entry) =>
+                                                      entry.groupKey ==
+                                                          selected.groupKey &&
+                                                      entry.extension ==
+                                                          extension,
+                                                )
+                                                ? null
+                                                : (value) => setState(() {
+                                                    _selected = _templates!
+                                                        .firstWhere(
+                                                          (entry) =>
+                                                              entry.groupKey ==
+                                                                  selected
+                                                                      .groupKey &&
+                                                              entry.extension ==
+                                                                  value,
+                                                        );
+                                                  }),
                                           ),
-                                          onChanged:
-                                              !_templates!.any(
-                                                (entry) =>
-                                                    entry.groupKey ==
-                                                        selected.groupKey &&
-                                                    entry.extension ==
-                                                        extension,
-                                              )
-                                              ? null
-                                              : (value) => setState(() {
-                                                  _selected = _templates!
-                                                      .firstWhere(
-                                                        (entry) =>
-                                                            entry.groupKey ==
-                                                                selected
-                                                                    .groupKey &&
-                                                            entry.extension ==
-                                                                value,
-                                                      );
-                                                }),
                                         ),
                                     ],
                                   ),
@@ -754,7 +762,7 @@ class _TemplatesEditorState extends ConsumerState<WritersideTemplatesEditor>
   );
 }
 
-class _TemplateSourceEntry extends StatelessWidget {
+class _TemplateSourceEntry extends StatefulWidget {
   const _TemplateSourceEntry({
     required this.label,
     required this.controller,
@@ -766,9 +774,34 @@ class _TemplateSourceEntry extends StatelessWidget {
   final ValueChanged<String> onChanged;
 
   @override
+  State<_TemplateSourceEntry> createState() => _TemplateSourceEntryState();
+}
+
+class _TemplateSourceEntryState extends State<_TemplateSourceEntry> {
+  final _focusNode = FocusNode(debugLabel: 'Writerside template source');
+
+  @override
+  void initState() {
+    super.initState();
+    _focusNode.addListener(_handleFocusChanged);
+  }
+
+  @override
+  void dispose() {
+    _focusNode
+      ..removeListener(_handleFocusChanged)
+      ..dispose();
+    super.dispose();
+  }
+
+  void _handleFocusChanged() => setState(() {});
+
+  @override
   Widget build(BuildContext context) {
     final colors = BusyMarkSurfaceColors.of(context);
     return BusyMarkGroupedSurface(
+      key: const ValueKey('template-editor-source-surface'),
+      focused: _focusNode.hasFocus,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -779,7 +812,10 @@ class _TemplateSourceEntry extends StatelessWidget {
               BusyMarkSpacing.md,
               BusyMarkSpacing.sm,
             ),
-            child: Text(label, style: busyMarkSectionHeaderStyle(context)),
+            child: Text(
+              widget.label,
+              style: busyMarkSectionHeaderStyle(context),
+            ),
           ),
           Divider(height: 1, thickness: 1, color: colors.cardShade),
           Expanded(
@@ -790,23 +826,28 @@ class _TemplateSourceEntry extends StatelessWidget {
                 BusyMarkSpacing.md,
                 BusyMarkSpacing.md,
               ),
-              child: TextField(
-                key: const ValueKey('template-editor-source'),
-                controller: controller,
-                expands: true,
-                minLines: null,
-                maxLines: null,
-                textAlignVertical: TextAlignVertical.top,
-                textDirection: TextDirection.ltr,
-                style: const TextStyle(fontFamily: 'monospace', fontSize: 13),
-                decoration: const InputDecoration(
-                  border: InputBorder.none,
-                  enabledBorder: InputBorder.none,
-                  focusedBorder: InputBorder.none,
-                  filled: false,
-                  contentPadding: EdgeInsets.zero,
+              child: Semantics(
+                label: widget.label,
+                textField: true,
+                child: TextField(
+                  key: const ValueKey('template-editor-source'),
+                  controller: widget.controller,
+                  focusNode: _focusNode,
+                  expands: true,
+                  minLines: null,
+                  maxLines: null,
+                  textAlignVertical: TextAlignVertical.top,
+                  textDirection: TextDirection.ltr,
+                  style: const TextStyle(fontFamily: 'monospace', fontSize: 13),
+                  decoration: const InputDecoration(
+                    border: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    focusedBorder: InputBorder.none,
+                    filled: false,
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                  onChanged: widget.onChanged,
                 ),
-                onChanged: onChanged,
               ),
             ),
           ),

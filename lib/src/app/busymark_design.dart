@@ -2512,17 +2512,24 @@ class BusyMarkGroupedSurface extends StatelessWidget {
     super.key,
     required this.child,
     this.clipBehavior = Clip.antiAlias,
+    this.focused = false,
   });
 
   final Widget child;
   final Clip clipBehavior;
+  final bool focused;
 
   @override
   Widget build(BuildContext context) {
     final highContrast = MediaQuery.highContrastOf(context);
     return BusyMarkSurface(
       color: busyMarkGroupedSurfaceColor(context),
-      side: highContrast
+      side: focused
+          ? BorderSide(
+              color: Theme.of(context).colorScheme.primary,
+              width: BusyMarkStroke.focus,
+            )
+          : highContrast
           ? BorderSide(color: Theme.of(context).colorScheme.outline)
           : null,
       clipBehavior: clipBehavior,
