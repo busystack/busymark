@@ -495,57 +495,74 @@ void main() {
     expect(editable.decoration?.focusedBorder, InputBorder.none);
   });
 
-  testWidgets('AI commit draft is an icon immediately before Commit', (
-    tester,
-  ) async {
-    var draftCalls = 0;
-    await tester.pumpWidget(
-      _localized(
-        GitCommitActions(
-          commit: (_) async => true,
-          child: GitFileActions(
-            select: (_) {},
-            unselect: (_) {},
-            rollback: (_) {},
-            deleteUntracked: (_) {},
-            child: GitChangesView(
-              state: _state(
-                files: [_file('README.md', staged: true, unstaged: false)],
+  testWidgets(
+    'AI commit draft is a secondary button immediately before Commit',
+    (tester) async {
+      var draftCalls = 0;
+      await tester.pumpWidget(
+        _localized(
+          GitCommitActions(
+            commit: (_) async => true,
+            child: GitFileActions(
+              select: (_) {},
+              unselect: (_) {},
+              rollback: (_) {},
+              deleteUntracked: (_) {},
+              child: GitChangesView(
+                state: _state(
+                  files: [_file('README.md', staged: true, unstaged: false)],
+                ),
+                onSelectFile: (_) {},
+                onOpenFile: (_) {},
+                onConfirmDiscard: (_) async => true,
+                onDraftCommitMessage: () async {
+                  draftCalls += 1;
+                  return null;
+                },
               ),
-              onSelectFile: (_) {},
-              onOpenFile: (_) {},
-              onConfirmDiscard: (_) async => true,
-              onDraftCommitMessage: () async {
-                draftCalls += 1;
-                return null;
-              },
             ),
           ),
         ),
-      ),
-    );
+      );
 
-    final draftButton = find.byTooltip(l10n.aiDraftWithAi);
-    final commitButton = find.text(l10n.gitCommit);
-    expect(draftButton, findsOneWidget);
-    expect(
-      find.ancestor(
-        of: draftButton,
-        matching: find.byType(BusyMarkHeaderIconButton),
-      ),
-      findsOneWidget,
-    );
-    expect(find.text(l10n.aiDraftWithAi), findsNothing);
-    expect(find.byIcon(BusyMarkGlyphs.ai), findsOneWidget);
-    expect(
-      tester.getCenter(draftButton).dx,
-      lessThan(tester.getCenter(commitButton).dx),
-    );
+      final draftLabel = find.text(l10n.aiDraftWithAi);
+      final draftButton = find.ancestor(
+        of: draftLabel,
+        matching: find.byWidgetPredicate((widget) => widget is FilledButton),
+      );
+      final commitButton = find.text(l10n.gitCommit);
+      final stagedCount = find.text(l10n.gitStagedFileCount(1));
+      expect(draftLabel, findsOneWidget);
+      expect(draftButton, findsOneWidget);
+      expect(
+        find.ancestor(
+          of: draftLabel,
+          matching: find.byType(BusyMarkCompactIconButton),
+        ),
+        findsNothing,
+      );
+      expect(
+        find.ancestor(
+          of: draftLabel,
+          matching: find.byType(BusyMarkHeaderIconButton),
+        ),
+        findsNothing,
+      );
+      expect(find.byIcon(BusyMarkGlyphs.ai), findsNothing);
+      expect(
+        tester.getBottomLeft(stagedCount).dy,
+        lessThan(tester.getTopLeft(draftButton).dy),
+      );
+      expect(
+        tester.getCenter(draftButton).dx,
+        lessThan(tester.getCenter(commitButton).dx),
+      );
 
-    await tester.tap(draftButton);
-    await tester.pumpAndSettle();
-    expect(draftCalls, 1);
-  });
+      await tester.tap(draftButton);
+      await tester.pumpAndSettle();
+      expect(draftCalls, 1);
+    },
+  );
 
   testWidgets('AI commit draft replaces text, trims it, and moves the cursor', (
     tester,
@@ -576,7 +593,7 @@ void main() {
     );
 
     await tester.enterText(_commitMessageEditable, 'Existing draft');
-    await tester.tap(find.byTooltip(l10n.aiDraftWithAi));
+    await tester.tap(find.text(l10n.aiDraftWithAi));
     await tester.pumpAndSettle();
 
     final controller = tester
@@ -970,13 +987,10 @@ void main() {
     );
     expect(tester.widget<ElevatedButton>(commitButton).onPressed, isNull);
     final draftButton = find.ancestor(
-      of: find.byTooltip(l10n.aiDraftWithAi),
-      matching: find.byType(BusyMarkHeaderIconButton),
+      of: find.text(l10n.aiDraftWithAi),
+      matching: find.byWidgetPredicate((widget) => widget is FilledButton),
     );
-    expect(
-      tester.widget<BusyMarkHeaderIconButton>(draftButton).onPressed,
-      isNull,
-    );
+    expect(tester.widget<FilledButton>(draftButton).onPressed, isNull);
     expect(
       tester.widget<TextField>(_commitMessageEditable).controller?.text,
       'Pending message',

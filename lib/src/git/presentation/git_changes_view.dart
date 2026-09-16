@@ -252,33 +252,32 @@ class _CommitPanel extends StatelessWidget {
               ),
             ],
             const SizedBox(height: BusyMarkSpacing.sm),
-            Row(
+            Text(
+              context.l10n.gitStagedFileCount(stagedFiles.length),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(
+                context,
+              ).textTheme.labelSmall?.copyWith(color: colors.mutedForeground),
+            ),
+            const SizedBox(height: BusyMarkSpacing.sm),
+            Wrap(
+              alignment: WrapAlignment.end,
+              spacing: BusyMarkSpacing.sm,
+              runSpacing: BusyMarkSpacing.sm,
               children: [
-                Expanded(
-                  child: Text(
-                    context.l10n.gitStagedFileCount(stagedFiles.length),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: colors.mutedForeground,
+                if (onDraftCommitMessage != null)
+                  BusyMarkPushButton.standard(
+                    child: Text(
+                      drafting
+                          ? context.l10n.aiDrafting
+                          : context.l10n.aiDraftWithAi,
                     ),
-                  ),
-                ),
-                const SizedBox(width: BusyMarkSpacing.sm),
-                if (onDraftCommitMessage != null) ...[
-                  BusyMarkHeaderIconButton(
-                    tooltip: drafting
-                        ? context.l10n.aiDrafting
-                        : context.l10n.aiDraftWithAi,
-                    icon: BusyMarkGlyphs.ai,
-                    transparent: false,
                     onPressed:
                         !committing && !drafting && stagedFiles.isNotEmpty
                         ? () => onDraftCommitMessage!()
                         : null,
                   ),
-                  const SizedBox(width: BusyMarkSpacing.sm),
-                ],
                 BusyMarkPushButton.suggested(
                   onPressed: canCommit ? () => onCommit() : null,
                   child: Text(context.l10n.gitCommit),
