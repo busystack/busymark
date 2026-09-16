@@ -96,6 +96,14 @@ class WorkspaceBatchPartialApplicationConflict implements Exception {
   final Object cause;
 }
 
+bool _sameStringList(List<String> first, List<String> second) {
+  if (first.length != second.length) return false;
+  for (var index = 0; index < first.length; index += 1) {
+    if (first[index] != second[index]) return false;
+  }
+  return true;
+}
+
 class WorkspaceService {
   const WorkspaceService({
     this.markdownParser = const MarkdownParser(),
@@ -814,13 +822,31 @@ class WorkspaceService {
       topic: topic,
       newFileName: newFileName,
       projectModules: project.modules,
+      projectRoot: project.rootPath,
+      projectModuleRoots: project.modules
+          .map((module) => module.rootPath)
+          .toList(),
     );
   }
 
   Future<WritersideTopicFileRenameResult> applyWritersideTopicRename(
     WritersideTopicRenamePlan plan, {
     void Function(Iterable<String>)? validateBeforePublish,
-  }) {
+  }) async {
+    final projectRoot = plan.projectRoot;
+    if (projectRoot != null) {
+      final currentRoots = await _writersideProjectService.discoverModuleRoots(
+        projectRoot,
+      );
+      final normalizedCurrent = currentRoots.map(normalizePath).toSet().toList()
+        ..sort();
+      if (!_sameStringList(normalizedCurrent, plan.projectModuleRoots)) {
+        throw BusyMarkException(
+          'writerside.topic-file.project-inventory-changed',
+          args: {'path': projectRoot},
+        );
+      }
+    }
     return writersideTopicFileEditor.applyRename(
       plan,
       validateBeforePublish: validateBeforePublish,

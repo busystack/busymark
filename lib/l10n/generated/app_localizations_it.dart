@@ -2190,6 +2190,23 @@ class AppLocalizationsIt extends AppLocalizations {
   }
 
   @override
+  String errorWritersideTopicRenameIncompleteProjectIndex(
+    String module,
+    String count,
+    String paths,
+  ) {
+    return 'La ridenominazione non può aggiornare in modo sicuro tutti i riferimenti del progetto perché $count file di argomento nel modulo $module non sono stati analizzati: $paths';
+  }
+
+  @override
+  String get errorWritersideTopicRenameProjectBuffersDirty =>
+      'I file del progetto Writerside contengono modifiche non salvate. Risolvile e prepara una nuova anteprima della ridenominazione.';
+
+  @override
+  String get errorWritersideTopicRenameProjectInventoryChanged =>
+      'L’insieme dei moduli del progetto Writerside è cambiato. Prepara una nuova anteprima della ridenominazione prima del refactoring.';
+
+  @override
   String get errorTopicsRootUnsafe =>
       'La radice degli argomenti deve essere una directory relativa sicura.';
 

@@ -2168,6 +2168,23 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
+  String errorWritersideTopicRenameIncompleteProjectIndex(
+    String module,
+    String count,
+    String paths,
+  ) {
+    return 'Yeniden adlandırma, $module modülündeki $count konu dosyası ayrıştırılmadığından tüm proje başvurularını güvenle güncelleyemiyor: $paths';
+  }
+
+  @override
+  String get errorWritersideTopicRenameProjectBuffersDirty =>
+      'Writerside proje dosyalarında kaydedilmemiş değişiklikler var. Bunları çözün ve yeni bir yeniden adlandırma önizlemesi hazırlayın.';
+
+  @override
+  String get errorWritersideTopicRenameProjectInventoryChanged =>
+      'Writerside projesinin modül kümesi değişti. Yeniden düzenlemeden önce yeni bir yeniden adlandırma önizlemesi hazırlayın.';
+
+  @override
   String get errorTopicsRootUnsafe =>
       'Konu kökü güvenli bir göreli dizin olmalıdır.';
 

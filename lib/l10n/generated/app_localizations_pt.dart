@@ -2183,6 +2183,23 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
+  String errorWritersideTopicRenameIncompleteProjectIndex(
+    String module,
+    String count,
+    String paths,
+  ) {
+    return 'A mudança de nome não pode atualizar com segurança todas as referências do projeto porque $count ficheiro(s) de tópico no módulo $module não foram analisados: $paths';
+  }
+
+  @override
+  String get errorWritersideTopicRenameProjectBuffersDirty =>
+      'Os ficheiros do projeto Writerside têm alterações não guardadas. Resolva-as e prepare uma nova pré-visualização da mudança de nome.';
+
+  @override
+  String get errorWritersideTopicRenameProjectInventoryChanged =>
+      'O conjunto de módulos do projeto Writerside foi alterado. Prepare uma nova pré-visualização da mudança de nome antes da refatoração.';
+
+  @override
   String get errorTopicsRootUnsafe =>
       'A raiz dos tópicos deve ser um diretório relativo seguro.';
 
@@ -6737,6 +6754,23 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   String errorWritersideRollbackFailed(String paths) {
     return 'Não foi possível reverter completamente a remoção do tópico. Revise estes caminhos antes de continuar: $paths';
   }
+
+  @override
+  String errorWritersideTopicRenameIncompleteProjectIndex(
+    String module,
+    String count,
+    String paths,
+  ) {
+    return 'A renomeação não pode atualizar com segurança todas as referências do projeto porque $count arquivo(s) de tópico no módulo $module não foram analisados: $paths';
+  }
+
+  @override
+  String get errorWritersideTopicRenameProjectBuffersDirty =>
+      'Os arquivos do projeto Writerside têm alterações não salvas. Resolva-as e prepare uma nova visualização da renomeação.';
+
+  @override
+  String get errorWritersideTopicRenameProjectInventoryChanged =>
+      'O conjunto de módulos do projeto Writerside mudou. Prepare uma nova visualização da renomeação antes da refatoração.';
 
   @override
   String get errorTopicsRootUnsafe =>

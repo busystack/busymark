@@ -2208,6 +2208,23 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
+  String errorWritersideTopicRenameIncompleteProjectIndex(
+    String module,
+    String count,
+    String paths,
+  ) {
+    return 'Перейменування не може безпечно оновити всі посилання проєкту, оскільки в модулі $module не розібрано файлів тем: $count. Файли: $paths';
+  }
+
+  @override
+  String get errorWritersideTopicRenameProjectBuffersDirty =>
+      'У файлах проєкту Writerside є незбережені зміни. Розв’яжіть їх і підготуйте новий попередній перегляд перейменування.';
+
+  @override
+  String get errorWritersideTopicRenameProjectInventoryChanged =>
+      'Набір модулів проєкту Writerside змінився. Перед рефакторингом підготуйте новий попередній перегляд перейменування.';
+
+  @override
   String get errorTopicsRootUnsafe =>
       'Кореневий каталог тем має бути допустимим відносним каталогом.';
 

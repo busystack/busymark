@@ -2496,6 +2496,23 @@
       }
     }
   },
+  "errorWritersideTopicRenameIncompleteProjectIndex": "Không thể đổi tên và cập nhật an toàn mọi tham chiếu trong dự án vì {count} tệp chủ đề trong mô-đun {module} chưa được phân tích: {paths}",
+  "@errorWritersideTopicRenameIncompleteProjectIndex": {
+    "description": "Error shown when topic rename cannot prove complete project-wide semantic coverage.",
+    "placeholders": {
+      "module": {"type": "String"},
+      "count": {"type": "String"},
+      "paths": {"type": "String"}
+    }
+  },
+  "errorWritersideTopicRenameProjectBuffersDirty": "Các tệp dự án Writerside có thay đổi chưa lưu. Hãy xử lý chúng và chuẩn bị bản xem trước đổi tên mới.",
+  "@errorWritersideTopicRenameProjectBuffersDirty": {
+    "description": "Error shown when a topic rename or reviewed rename plan is blocked by a dirty Writerside project buffer."
+  },
+  "errorWritersideTopicRenameProjectInventoryChanged": "Tập hợp mô-đun của dự án Writerside đã thay đổi. Hãy chuẩn bị bản xem trước đổi tên mới trước khi tái cấu trúc.",
+  "@errorWritersideTopicRenameProjectInventoryChanged": {
+    "description": "Error shown when module discovery differs from a prepared topic rename plan."
+  },
   "errorTopicsRootUnsafe": "Gốc chủ đề phải là một thư mục tương đối an toàn.",
   "@errorTopicsRootUnsafe": {
     "description": "Detail for an unsafe topics root directory."

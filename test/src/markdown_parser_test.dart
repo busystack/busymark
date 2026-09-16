@@ -54,6 +54,31 @@ void main() {
     expect(parsed.title, 'Front Matter Title');
   });
 
+  test('Writerside Markdown title comes from H1, not front matter', () {
+    final parsed = parser.parse(
+      filePath: 'guide.md',
+      source: '---\ntitle: Front Matter\n---\n\n# Writerside H1\n',
+      mode: MarkdownMode.writersideMarkdown,
+    );
+
+    expect(parsed.title, 'Writerside H1');
+    expect(parsed.busyDocument.frontMatter['title'], 'Front Matter');
+  });
+
+  test('Writerside front matter title does not satisfy missing H1', () {
+    final parsed = parser.parse(
+      filePath: 'guide.md',
+      source: '---\ntitle: Front Matter\n---\n',
+      mode: MarkdownMode.writersideMarkdown,
+    );
+
+    expect(parsed.title, isNull);
+    expect(
+      parsed.diagnostics.map((diagnostic) => diagnostic.code),
+      contains('writerside.topic.missing-title'),
+    );
+  });
+
   test('parseAsync handles documents above the background threshold', () async {
     final source = List.generate(
       1800,

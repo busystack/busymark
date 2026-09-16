@@ -84,16 +84,6 @@ class WritersideTitleEditor {
           ));
         }
       } else {
-        // Front-matter titles are a BusyMark Markdown extension, not the
-        // Writerside H1 representation edited by this action. Do not change an
-        // H1 while leaving a higher-precedence authored title unchanged.
-        if (document.nodes.whereType<WritersideMarkdownBlockNode>().any(
-          (node) =>
-              node.block.kind == BusyBlockKind.frontMatter &&
-              node.block.attributes.containsKey('title'),
-        )) {
-          throw const BusyMarkException('writerside.toc.path-invalid');
-        }
         final heading = document.nodes
             .whereType<WritersideMarkdownBlockNode>()
             .where(

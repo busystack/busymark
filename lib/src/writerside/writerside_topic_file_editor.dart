@@ -74,10 +74,16 @@ class WritersideTopicRenamePlan {
     required this.updatesXmlTopicId,
     required Set<String> affectedPaths,
     required List<WritersideTopicRenameUrlChange> webFileNameChanges,
+    String? projectRoot,
+    List<String> projectModuleRoots = const [],
     required _PreparedTopicRename prepared,
   }) : changedFiles = List.unmodifiable(changedFiles),
        affectedPaths = Set.unmodifiable(affectedPaths),
        webFileNameChanges = List.unmodifiable(webFileNameChanges),
+       projectRoot = projectRoot == null ? null : normalizePath(projectRoot),
+       projectModuleRoots = List.unmodifiable(
+         projectModuleRoots.map(normalizePath).toSet().toList()..sort(),
+       ),
        _prepared = prepared;
 
   final WritersideModule owningModule;
@@ -96,6 +102,8 @@ class WritersideTopicRenamePlan {
   final bool updatesXmlTopicId;
   final Set<String> affectedPaths;
   final List<WritersideTopicRenameUrlChange> webFileNameChanges;
+  final String? projectRoot;
+  final List<String> projectModuleRoots;
   final _PreparedTopicRename _prepared;
 }
 
@@ -168,7 +176,10 @@ class WritersideTopicFileEditor {
     required WritersideTopic topic,
     required String newFileName,
     List<WritersideModule>? projectModules,
+    String? projectRoot,
+    List<String> projectModuleRoots = const [],
   }) async {
+    _validateSuppliedSemanticCoverage([module, ...?projectModules]);
     final snapshot = await _currentModuleSnapshot(module, topic);
     final context = await _mutationContext(snapshot);
     final referenceContexts = <_ReferenceModuleContext>[
@@ -178,6 +189,7 @@ class WritersideTopicFileEditor {
       if (p.equals(candidate.rootPath, context.module.rootPath)) continue;
       referenceContexts.add(await _referenceModuleContext(candidate));
     }
+    _validateCompleteSemanticCoverage(referenceContexts);
     final safeFileName = _safeRenamedFileName(
       newFileName,
       oldPath: context.topicPath,
@@ -205,6 +217,8 @@ class WritersideTopicFileEditor {
         updatesXmlTopicId: false,
         affectedPaths: {context.topicPath},
         webFileNameChanges: const [],
+        projectRoot: projectRoot,
+        projectModuleRoots: projectModuleRoots,
         prepared: _PreparedTopicRename(
           target: context,
           referenceContexts: referenceContexts,
@@ -280,12 +294,44 @@ class WritersideTopicFileEditor {
       updatesXmlTopicId: topicEdit.updatedXmlTopicId,
       affectedPaths: affectedPaths,
       webFileNameChanges: webFileNameChanges,
+      projectRoot: projectRoot,
+      projectModuleRoots: projectModuleRoots,
       prepared: _PreparedTopicRename(
         target: context,
         referenceContexts: referenceContexts,
         targetSource: topicEdit.source,
         publishedEdits: publishedEdits,
       ),
+    );
+  }
+
+  void _validateCompleteSemanticCoverage(
+    List<_ReferenceModuleContext> contexts,
+  ) {
+    for (final context in contexts) {
+      _validateModuleSemanticCoverage(context.module);
+    }
+  }
+
+  void _validateSuppliedSemanticCoverage(List<WritersideModule> modules) {
+    final seenRoots = <String>{};
+    for (final module in modules) {
+      if (seenRoots.add(normalizePath(module.rootPath))) {
+        _validateModuleSemanticCoverage(module);
+      }
+    }
+  }
+
+  void _validateModuleSemanticCoverage(WritersideModule module) {
+    final skipped = module.unparsedTopicReferences.toList()..sort();
+    if (skipped.isEmpty) return;
+    throw BusyMarkException(
+      'writerside.topic-file.incomplete-project-index',
+      args: {
+        'module': module.config.moduleName ?? module.rootPath,
+        'paths': skipped.join(', '),
+        'count': '${skipped.length}',
+      },
     );
   }
 
@@ -343,9 +389,10 @@ class WritersideTopicFileEditor {
       final safeToCleanUp =
           restored &&
           await _renameTargetIsSafeToCleanUp(
-            context,
+            referenceContexts,
             targetPath: plan.newTopicPath,
             targetSource: prepared.targetSource,
+            targetModuleRoot: context.module.rootPath,
           );
       if (safeToCleanUp) {
         await _deleteCreatedFileBestEffort(
@@ -2462,17 +2509,41 @@ class WritersideTopicFileEditor {
   }
 
   Future<bool> _renameTargetIsSafeToCleanUp(
-    _MutationContext context, {
+    List<_ReferenceModuleContext> contexts, {
     required String targetPath,
     required String targetSource,
+    required String targetModuleRoot,
   }) async {
     try {
-      await _ensureConfigurationUnchanged(context);
-      await _ensureTreesAtExpectedSources(context, const []);
-      await _ensureTopicSourcesUnchanged(
-        context,
-        additionalSources: {targetPath: targetSource},
-      );
+      for (final context in contexts) {
+        final configuration = await _configurationSources(
+          context.module.rootPath,
+        );
+        if (!_sameStringMap(configuration, context.configurationSources)) {
+          return false;
+        }
+        for (final tree in context.trees) {
+          final resolved = await _resolvePath(
+            context.anchor,
+            tree.path,
+            allowRoot: false,
+          );
+          if (resolved.type != FileSystemEntityType.file ||
+              await File(resolved.path).readAsString() != tree.source) {
+            return false;
+          }
+        }
+        final expectedTopics = <String, String>{
+          ...context.topicSources,
+          if (p.equals(context.module.rootPath, targetModuleRoot))
+            normalizePath(targetPath): targetSource,
+        };
+        final currentTopics = await _topicSources(
+          context.anchor,
+          context.module,
+        );
+        if (!_sameStringMap(currentTopics, expectedTopics)) return false;
+      }
       return true;
     } on Object {
       // A concurrent edit may now reference the new path. Retaining a harmless

@@ -109,6 +109,114 @@ void main() {
     );
   });
 
+  test(
+    'rejects custom XML source without a root ID before publication',
+    () async {
+      final root = await tempModule();
+      final tree = File(p.join(root.path, 'ug.tree'));
+      final originalTree = tree.readAsStringSync();
+
+      await expectLater(
+        creator.create(
+          WritersideTopicCreateTarget(
+            rootPath: root.path,
+            treePath: tree.path,
+            topicsRootDir: 'custom-topics',
+            existingTopicIds: const {'intro'},
+          ),
+          const WritersideTopicCreateRequest(
+            title: 'Setup',
+            fileName: 'setup.topic',
+            format: WritersideTopicFormat.xml,
+          ),
+          initialSource: '<topic title="Setup"/>',
+        ),
+        throwsA(
+          isA<BusyMarkException>().having(
+            (error) => error.code,
+            'code',
+            'writerside.topic-file.missing-root-id',
+          ),
+        ),
+      );
+
+      expect(
+        Directory(p.join(root.path, 'custom-topics')).existsSync(),
+        isFalse,
+      );
+      expect(tree.readAsStringSync(), originalTree);
+    },
+  );
+
+  test(
+    'rejects custom XML source whose root ID differs from filename',
+    () async {
+      final root = await tempModule();
+      final tree = File(p.join(root.path, 'ug.tree'));
+      final originalTree = tree.readAsStringSync();
+
+      await expectLater(
+        creator.create(
+          WritersideTopicCreateTarget(
+            rootPath: root.path,
+            treePath: tree.path,
+            topicsRootDir: 'custom-topics',
+            existingTopicIds: const {'intro'},
+          ),
+          const WritersideTopicCreateRequest(
+            title: 'Setup',
+            fileName: 'setup.topic',
+            format: WritersideTopicFormat.xml,
+          ),
+          initialSource: '<topic id="wrong" title="Setup"/>',
+        ),
+        throwsA(
+          isA<BusyMarkException>()
+              .having(
+                (error) => error.code,
+                'code',
+                'writerside.topic-file.root-id-mismatch',
+              )
+              .having(
+                (error) => error.args['expectedId'],
+                'expected ID',
+                'setup',
+              ),
+        ),
+      );
+
+      expect(
+        Directory(p.join(root.path, 'custom-topics')).existsSync(),
+        isFalse,
+      );
+      expect(tree.readAsStringSync(), originalTree);
+    },
+  );
+
+  test('accepts custom XML source whose root ID matches filename', () async {
+    final root = await tempModule();
+    final result = await creator.create(
+      WritersideTopicCreateTarget(
+        rootPath: root.path,
+        treePath: p.join(root.path, 'ug.tree'),
+        topicsRootDir: 'topics',
+        existingTopicIds: const {'intro'},
+      ),
+      const WritersideTopicCreateRequest(
+        title: 'Setup',
+        fileName: 'setup.topic',
+        format: WritersideTopicFormat.xml,
+      ),
+      initialSource: '<topic id="setup" title="Setup"/>',
+    );
+
+    expect(File(result.topicPath).readAsStringSync(), contains('id="setup"'));
+    expect(
+      File(p.join(root.path, 'ug.tree')).readAsStringSync(),
+      contains('setup.topic'),
+    );
+  });
+
   test('requires a reference for every non-root placement', () async {
     final root = await tempModule();
 

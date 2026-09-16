@@ -1840,6 +1840,23 @@
       }
     }
   },
+  "errorWritersideTopicRenameIncompleteProjectIndex": "Переименование не может безопасно обновить все ссылки проекта, поскольку в модуле {module} не разобрано файлов тем: {count}. Файлы: {paths}",
+  "@errorWritersideTopicRenameIncompleteProjectIndex": {
+    "description": "Error shown when topic rename cannot prove complete project-wide semantic coverage.",
+    "placeholders": {
+      "module": {"type": "String"},
+      "count": {"type": "String"},
+      "paths": {"type": "String"}
+    }
+  },
+  "errorWritersideTopicRenameProjectBuffersDirty": "В файлах проекта Writerside есть несохранённые изменения. Разрешите их и подготовьте новый предварительный просмотр переименования.",
+  "@errorWritersideTopicRenameProjectBuffersDirty": {
+    "description": "Error shown when a topic rename or reviewed rename plan is blocked by a dirty Writerside project buffer."
+  },
+  "errorWritersideTopicRenameProjectInventoryChanged": "Набор модулей проекта Writerside изменился. Перед рефакторингом подготовьте новый предварительный просмотр переименования.",
+  "@errorWritersideTopicRenameProjectInventoryChanged": {
+    "description": "Error shown when module discovery differs from a prepared topic rename plan."
+  },
   "errorTopicsRootUnsafe": "Корневой каталог тем должен быть допустимым относительным каталогом.",
   "@errorTopicsRootUnsafe": {
     "description": "Detail for an unsafe topics root directory."

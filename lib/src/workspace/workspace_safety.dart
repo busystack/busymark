@@ -11,6 +11,7 @@ import '../app/localization.dart';
 import '../platform/linux_header_bar_service.dart';
 import 'workspace_controller.dart';
 import 'workspace_message.dart';
+import 'workspace_model.dart';
 import 'text_format_metadata.dart';
 
 enum _UnsavedChangesAction { cancel, discard, save }
@@ -54,6 +55,39 @@ Future<bool> confirmSafeToChangeWorkspaceFiles(
   );
 }
 
+bool hasDirtyWritersideProjectBuffers(WidgetRef ref) {
+  final state = ref.read(workspaceControllerProvider);
+  final workspace = state.workspace;
+  if (workspace == null) return false;
+  return state.dirtyBuffers.any(
+    (buffer) =>
+        buffer.filePath != null &&
+        isWritersideProjectPath(workspace, buffer.filePath!),
+  );
+}
+
+/// Resolves every dirty buffer in every discovered module before a
+/// project-wide semantic refactoring is planned.
+Future<bool> confirmSafeToRefactorWritersideProject(
+  BuildContext context,
+  WidgetRef ref,
+) {
+  final state = ref.read(workspaceControllerProvider);
+  final workspace = state.workspace;
+  if (workspace == null) return Future.value(false);
+  return _confirmUnsavedChanges(
+    context,
+    ref,
+    withoutActivatingBuffers: true,
+    dirtyBufferIds: [
+      for (final buffer in state.dirtyBuffers)
+        if (buffer.filePath != null &&
+            isWritersideProjectPath(workspace, buffer.filePath!))
+          buffer.id,
+    ],
+  );
+}
+
 Future<bool> confirmSafeToCloseActiveDocument(
   BuildContext context,
   WidgetRef ref,
@@ -69,6 +103,7 @@ Future<bool> _confirmUnsavedChanges(
   BuildContext context,
   WidgetRef ref, {
   required List<String> dirtyBufferIds,
+  bool withoutActivatingBuffers = false,
 }) async {
   final initialState = ref.read(workspaceControllerProvider);
   final dirtyBuffers = [
@@ -159,15 +194,67 @@ Future<bool> _confirmUnsavedChanges(
   }
 
   if (action == _UnsavedChangesAction.discard) {
+    if (withoutActivatingBuffers) {
+      return ref
+          .read(workspaceControllerProvider.notifier)
+          .discardDocumentBuffers(dirtyBufferIds);
+    }
     return _discardDirtyDocuments(ref, dirtyBufferIds);
   }
   if (action == _UnsavedChangesAction.save) {
     if (!context.mounted) {
       return false;
     }
-    return _saveDirtyDocuments(context, ref, dirtyBufferIds);
+    return withoutActivatingBuffers
+        ? _saveDirtyDocumentsWithoutActivation(context, ref, dirtyBufferIds)
+        : _saveDirtyDocuments(context, ref, dirtyBufferIds);
   }
   return false;
+}
+
+Future<bool> _saveDirtyDocumentsWithoutActivation(
+  BuildContext context,
+  WidgetRef ref,
+  List<String> bufferIds,
+) async {
+  final controller = ref.read(workspaceControllerProvider.notifier);
+  final firstResult = await controller.saveAll(bufferIds: bufferIds);
+  if (firstResult.failedBufferIds.isNotEmpty ||
+      firstResult.conflictBufferIds.isNotEmpty) {
+    return false;
+  }
+  if (firstResult.normalizationRequiredBufferIds.isNotEmpty) {
+    final normalizations = <String, LineEndingNormalization>{};
+    for (final bufferId in firstResult.normalizationRequiredBufferIds) {
+      if (!context.mounted) return false;
+      final buffer = ref
+          .read(workspaceControllerProvider)
+          .documentBuffers
+          .where((candidate) => candidate.id == bufferId)
+          .firstOrNull;
+      if (buffer == null || !buffer.isDirty) continue;
+      final normalization = await _chooseMixedLineEndingNormalizationForFormat(
+        context,
+        ref,
+        buffer.format,
+      );
+      if (normalization == null) return false;
+      normalizations[bufferId] = normalization;
+    }
+    final normalizedResult = await controller.saveAll(
+      bufferIds: firstResult.normalizationRequiredBufferIds,
+      mixedLineEndingNormalizations: normalizations,
+    );
+    if (!normalizedResult.succeeded) return false;
+  }
+  return bufferIds.every((id) {
+    final buffer = ref
+        .read(workspaceControllerProvider)
+        .documentBuffers
+        .where((candidate) => candidate.id == id)
+        .firstOrNull;
+    return buffer == null || !buffer.isDirty;
+  });
 }
 
 Future<bool> _saveDirtyDocuments(
@@ -413,8 +500,14 @@ Future<LineEndingNormalization?> _chooseMixedLineEndingNormalization(
   BuildContext context,
   WidgetRef ref,
   ActiveDocumentSaveTarget target,
+) => _chooseMixedLineEndingNormalizationForFormat(context, ref, target.format);
+
+Future<LineEndingNormalization?> _chooseMixedLineEndingNormalizationForFormat(
+  BuildContext context,
+  WidgetRef ref,
+  TextFormatMetadata format,
 ) async {
-  if (!target.format.hasMixedLineEndings) {
+  if (!format.hasMixedLineEndings) {
     return null;
   }
   final headerBar = ref.read(linuxHeaderBarServiceProvider);

@@ -257,25 +257,10 @@ class WritersideTopicCreator {
     if (title.isEmpty) {
       throw const BusyMarkException('writerside.topic.title-required');
     }
-    if (initialSource != null && request.format == WritersideTopicFormat.xml) {
-      // A customized template is untrusted authoring input. Validate it before
-      // any directory/file publication, just like the filename and TOC identity.
-      XmlDocument templateDocument;
-      try {
-        templateDocument = XmlDocument.parse(initialSource);
-        if (templateDocument.rootElement.name.local != 'topic') {
-          throw const FormatException('Expected a topic root');
-        }
-      } on Object {
-        throw const BusyMarkException('writerside.toc.path-invalid');
-      }
-      final sourceId = templateDocument.rootElement.getAttribute('id');
-      if (sourceId != null && target.existingTopicIds.contains(sourceId)) {
-        throw BusyMarkException(
-          'writerside.topic.id-exists',
-          args: {'topicId': sourceId},
-        );
-      }
+    final topicSource =
+        initialSource ?? _topicSource(request.format, topicId, title);
+    if (request.format == WritersideTopicFormat.xml) {
+      _validateXmlTopicSource(topicSource, expectedId: topicId);
     }
 
     final topicResolution = await _topicTargetPath(
@@ -309,8 +294,6 @@ class WritersideTopicCreator {
     if (createdTopicsRoot.type != FileSystemEntityType.directory) {
       throw const BusyMarkException('writerside.topic.topics-root-unsafe');
     }
-    final topicSource =
-        initialSource ?? _topicSource(request.format, topicId, title);
     var topicCreated = false;
     try {
       await validateBeforePublish?.call();
@@ -335,6 +318,29 @@ class WritersideTopicCreator {
       treePath: treePath,
       topicFileName: topicFileName,
     );
+  }
+
+  void _validateXmlTopicSource(String source, {required String expectedId}) {
+    final XmlElement root;
+    try {
+      final document = XmlDocument.parse(source);
+      root = document.rootElement;
+      if (root.name.local != 'topic') {
+        throw const FormatException('Expected a topic root');
+      }
+    } on Object {
+      throw const BusyMarkException('writerside.toc.path-invalid');
+    }
+    final id = root.getAttribute('id');
+    if (id == null || id.isEmpty) {
+      throw const BusyMarkException('writerside.topic-file.missing-root-id');
+    }
+    if (id != expectedId) {
+      throw BusyMarkException(
+        'writerside.topic-file.root-id-mismatch',
+        args: {'id': id, 'expectedId': expectedId},
+      );
+    }
   }
 
   Future<AnchoredPathResolution> _treePath(

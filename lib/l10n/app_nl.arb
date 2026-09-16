@@ -2496,6 +2496,23 @@
       }
     }
   },
+  "errorWritersideTopicRenameIncompleteProjectIndex": "Niet alle projectverwijzingen kunnen veilig worden bijgewerkt omdat {count} topicbestand(en) in module {module} niet zijn geparseerd: {paths}",
+  "@errorWritersideTopicRenameIncompleteProjectIndex": {
+    "description": "Error shown when topic rename cannot prove complete project-wide semantic coverage.",
+    "placeholders": {
+      "module": {"type": "String"},
+      "count": {"type": "String"},
+      "paths": {"type": "String"}
+    }
+  },
+  "errorWritersideTopicRenameProjectBuffersDirty": "Writerside-projectbestanden bevatten niet-opgeslagen wijzigingen. Los deze op en maak een nieuw voorbeeld van de naamswijziging.",
+  "@errorWritersideTopicRenameProjectBuffersDirty": {
+    "description": "Error shown when a topic rename or reviewed rename plan is blocked by a dirty Writerside project buffer."
+  },
+  "errorWritersideTopicRenameProjectInventoryChanged": "De moduleset van het Writerside-project is gewijzigd. Maak vóór het refactoren een nieuw voorbeeld van de naamswijziging.",
+  "@errorWritersideTopicRenameProjectInventoryChanged": {
+    "description": "Error shown when module discovery differs from a prepared topic rename plan."
+  },
   "errorTopicsRootUnsafe": "De hoofdmap van Onderwerpen moet een veilige relatieve map zijn.",
   "@errorTopicsRootUnsafe": {
     "description": "Detail for an unsafe topics root directory."

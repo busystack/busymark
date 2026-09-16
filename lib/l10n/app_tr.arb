@@ -2496,6 +2496,23 @@
       }
     }
   },
+  "errorWritersideTopicRenameIncompleteProjectIndex": "Yeniden adlandırma, {module} modülündeki {count} konu dosyası ayrıştırılmadığından tüm proje başvurularını güvenle güncelleyemiyor: {paths}",
+  "@errorWritersideTopicRenameIncompleteProjectIndex": {
+    "description": "Error shown when topic rename cannot prove complete project-wide semantic coverage.",
+    "placeholders": {
+      "module": {"type": "String"},
+      "count": {"type": "String"},
+      "paths": {"type": "String"}
+    }
+  },
+  "errorWritersideTopicRenameProjectBuffersDirty": "Writerside proje dosyalarında kaydedilmemiş değişiklikler var. Bunları çözün ve yeni bir yeniden adlandırma önizlemesi hazırlayın.",
+  "@errorWritersideTopicRenameProjectBuffersDirty": {
+    "description": "Error shown when a topic rename or reviewed rename plan is blocked by a dirty Writerside project buffer."
+  },
+  "errorWritersideTopicRenameProjectInventoryChanged": "Writerside projesinin modül kümesi değişti. Yeniden düzenlemeden önce yeni bir yeniden adlandırma önizlemesi hazırlayın.",
+  "@errorWritersideTopicRenameProjectInventoryChanged": {
+    "description": "Error shown when module discovery differs from a prepared topic rename plan."
+  },
   "errorTopicsRootUnsafe": "Konu kökü güvenli bir göreli dizin olmalıdır.",
   "@errorTopicsRootUnsafe": {
     "description": "Detail for an unsafe topics root directory."

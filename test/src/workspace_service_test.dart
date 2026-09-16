@@ -414,6 +414,80 @@ void main() {
     },
   );
 
+  test(
+    'prepared topic rename is stale when a new module is discovered',
+    () async {
+      final fixture = await _createTopicRenameWorkspace();
+      final plan = await service.prepareWritersideTopicRename(
+        fixture.workspace,
+        topicPath: fixture.guidePath,
+        newFileName: 'setup.md',
+        topicModuleRoot: fixture.mainRoot.path,
+      );
+      final shared = await Directory(
+        p.join(fixture.projectRoot.path, 'shared'),
+      ).create();
+      await Directory(p.join(shared.path, 'topics')).create();
+      await File(p.join(shared.path, 'writerside.cfg')).writeAsString('''
+<ihp><module name="shared"/><topics dir="topics"/><instance src="shared.tree"/></ihp>
+''');
+      await File(p.join(shared.path, 'shared.tree')).writeAsString('''
+<instance-profile id="shared" start-page="shared.md">
+  <toc-element topic="shared.md"/>
+</instance-profile>
+''');
+      await File(
+        p.join(shared.path, 'topics', 'shared.md'),
+      ).writeAsString('# Shared\n');
+
+      await expectLater(
+        service.applyWritersideTopicRename(plan),
+        throwsA(
+          isA<BusyMarkException>().having(
+            (error) => error.code,
+            'code',
+            'writerside.topic-file.project-inventory-changed',
+          ),
+        ),
+      );
+
+      expect(File(fixture.guidePath).existsSync(), isTrue);
+      expect(
+        File(p.join(fixture.mainRoot.path, 'topics', 'setup.md')).existsSync(),
+        isFalse,
+      );
+      expect(
+        await File(p.join(fixture.mainRoot.path, 'guide.tree')).readAsString(),
+        contains('guide.md'),
+      );
+    },
+  );
+
+  test(
+    'ordinary directory creation does not stale a prepared rename',
+    () async {
+      final fixture = await _createTopicRenameWorkspace();
+      final plan = await service.prepareWritersideTopicRename(
+        fixture.workspace,
+        topicPath: fixture.guidePath,
+        newFileName: 'setup.md',
+        topicModuleRoot: fixture.mainRoot.path,
+      );
+      await Directory(
+        p.join(fixture.projectRoot.path, 'ordinary-directory'),
+      ).create();
+
+      final result = await service.applyWritersideTopicRename(plan);
+
+      expect(
+        result.newTopicPath,
+        p.join(fixture.mainRoot.path, 'topics', 'setup.md'),
+      );
+      expect(File(fixture.guidePath).existsSync(), isFalse);
+      expect(File(result.newTopicPath).existsSync(), isTrue);
+    },
+  );
+
   test('normalizes portal-style document paths as filesystem paths', () {
     const path = '/run/user/1000/doc/abcdef/smoke.md';
 
@@ -1106,6 +1180,48 @@ void main() {
       isNot(contains('writerside.tree.missing-topic')),
     );
   });
+}
+
+Future<
+  ({
+    Directory projectRoot,
+    Directory mainRoot,
+    String guidePath,
+    Workspace workspace,
+  })
+>
+_createTopicRenameWorkspace() async {
+  final projectRoot = await Directory.systemTemp.createTemp(
+    'busymark-workspace-rename-inventory-',
+  );
+  addTearDown(() async {
+    if (await projectRoot.exists()) {
+      await projectRoot.delete(recursive: true);
+    }
+  });
+  final mainRoot = await Directory(p.join(projectRoot.path, 'main')).create();
+  await Directory(p.join(mainRoot.path, 'topics')).create();
+  await File(p.join(mainRoot.path, 'writerside.cfg')).writeAsString('''
+<ihp><module name="main"/><topics dir="topics"/><instance src="guide.tree"/></ihp>
+''');
+  await File(p.join(mainRoot.path, 'guide.tree')).writeAsString('''
+<instance-profile id="guide" start-page="guide.md">
+  <toc-element topic="guide.md"/>
+</instance-profile>
+''');
+  final guidePath = p.join(mainRoot.path, 'topics', 'guide.md');
+  await File(guidePath).writeAsString('# Guide\n');
+  final canonicalProject = Directory(await projectRoot.resolveSymbolicLinks());
+  final canonicalMain = Directory(await mainRoot.resolveSymbolicLinks());
+  final workspace = await const WorkspaceService().openPath(
+    canonicalProject.path,
+  );
+  return (
+    projectRoot: canonicalProject,
+    mainRoot: canonicalMain,
+    guidePath: p.join(canonicalMain.path, 'topics', 'guide.md'),
+    workspace: workspace,
+  );
 }
 
 Future<_WorkspaceSymlinkFixture> _createWorkspaceSymlinkFixture() async {

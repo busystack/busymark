@@ -2170,6 +2170,23 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String errorWritersideTopicRenameIncompleteProjectIndex(
+    String module,
+    String count,
+    String paths,
+  ) {
+    return 'Rename cannot safely update every project reference because $count topic file(s) in module $module were not parsed: $paths';
+  }
+
+  @override
+  String get errorWritersideTopicRenameProjectBuffersDirty =>
+      'Writerside project files have unsaved changes. Resolve them and prepare a new rename preview.';
+
+  @override
+  String get errorWritersideTopicRenameProjectInventoryChanged =>
+      'The Writerside project module set changed. Prepare a new rename preview before refactoring.';
+
+  @override
   String get errorTopicsRootUnsafe =>
       'Topics root must be a safe relative directory.';
 

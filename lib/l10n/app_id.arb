@@ -2496,6 +2496,23 @@
       }
     }
   },
+  "errorWritersideTopicRenameIncompleteProjectIndex": "Penggantian nama tidak dapat memperbarui setiap referensi proyek dengan aman karena {count} file topik di modul {module} tidak diurai: {paths}",
+  "@errorWritersideTopicRenameIncompleteProjectIndex": {
+    "description": "Error shown when topic rename cannot prove complete project-wide semantic coverage.",
+    "placeholders": {
+      "module": {"type": "String"},
+      "count": {"type": "String"},
+      "paths": {"type": "String"}
+    }
+  },
+  "errorWritersideTopicRenameProjectBuffersDirty": "File proyek Writerside memiliki perubahan yang belum disimpan. Selesaikan perubahan tersebut dan siapkan pratinjau penggantian nama baru.",
+  "@errorWritersideTopicRenameProjectBuffersDirty": {
+    "description": "Error shown when a topic rename or reviewed rename plan is blocked by a dirty Writerside project buffer."
+  },
+  "errorWritersideTopicRenameProjectInventoryChanged": "Kumpulan modul proyek Writerside berubah. Siapkan pratinjau penggantian nama baru sebelum melakukan refaktor.",
+  "@errorWritersideTopicRenameProjectInventoryChanged": {
+    "description": "Error shown when module discovery differs from a prepared topic rename plan."
+  },
   "errorTopicsRootUnsafe": "Akar topik harus berupa direktori relatif yang aman.",
   "@errorTopicsRootUnsafe": {
     "description": "Detail for an unsafe topics root directory."

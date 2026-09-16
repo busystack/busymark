@@ -399,7 +399,13 @@ void main() {
         topicsRootDir: 'topics',
         existingTopicIds: {'occupied'},
       );
-      for (final source in ['<topic', '<chapter/>', '<topic id="occupied"/>']) {
+      for (final source in [
+        '<topic',
+        '<chapter/>',
+        '<topic title="New"/>',
+        '<topic id="wrong" title="New"/>',
+        '<topic id="occupied"/>',
+      ]) {
         await expectLater(
           const WritersideTopicCreator().create(
             target,

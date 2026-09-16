@@ -3841,6 +3841,28 @@ abstract class AppLocalizations {
   /// **'Topic removal could not be fully rolled back. Review these paths before continuing: {paths}'**
   String errorWritersideRollbackFailed(String paths);
 
+  /// Error shown when topic rename cannot prove complete project-wide semantic coverage.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename cannot safely update every project reference because {count} topic file(s) in module {module} were not parsed: {paths}'**
+  String errorWritersideTopicRenameIncompleteProjectIndex(
+    String module,
+    String count,
+    String paths,
+  );
+
+  /// Error shown when a topic rename or reviewed rename plan is blocked by a dirty Writerside project buffer.
+  ///
+  /// In en, this message translates to:
+  /// **'Writerside project files have unsaved changes. Resolve them and prepare a new rename preview.'**
+  String get errorWritersideTopicRenameProjectBuffersDirty;
+
+  /// Error shown when module discovery differs from a prepared topic rename plan.
+  ///
+  /// In en, this message translates to:
+  /// **'The Writerside project module set changed. Prepare a new rename preview before refactoring.'**
+  String get errorWritersideTopicRenameProjectInventoryChanged;
+
   /// Detail for an unsafe topics root directory.
   ///
   /// In en, this message translates to:

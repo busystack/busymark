@@ -2201,6 +2201,23 @@
       }
     }
   },
+  "errorWritersideTopicRenameIncompleteProjectIndex": "Ümbernimetamine ei saa kõiki projektiviiteid ohutult uuendada, sest moodulis {module} jäi sõelumata {count} teemafaili: {paths}",
+  "@errorWritersideTopicRenameIncompleteProjectIndex": {
+    "description": "Error shown when topic rename cannot prove complete project-wide semantic coverage.",
+    "placeholders": {
+      "module": {"type": "String"},
+      "count": {"type": "String"},
+      "paths": {"type": "String"}
+    }
+  },
+  "errorWritersideTopicRenameProjectBuffersDirty": "Writerside’i projektifailides on salvestamata muudatusi. Lahenda need ja koosta uus ümbernimetamise eelvaade.",
+  "@errorWritersideTopicRenameProjectBuffersDirty": {
+    "description": "Error shown when a topic rename or reviewed rename plan is blocked by a dirty Writerside project buffer."
+  },
+  "errorWritersideTopicRenameProjectInventoryChanged": "Writerside’i projekti moodulite komplekt muutus. Koosta enne refaktoreerimist uus ümbernimetamise eelvaade.",
+  "@errorWritersideTopicRenameProjectInventoryChanged": {
+    "description": "Error shown when module discovery differs from a prepared topic rename plan."
+  },
   "errorTopicsRootUnsafe": "Teemade juurkaust peab olema ohutu suhteline kataloog.",
   "@errorTopicsRootUnsafe": {
     "description": "Detail for an unsafe topics root directory."

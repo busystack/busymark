@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:busymark/src/markdown/markdown_parser.dart';
 
 import 'package:busymark/src/app/app_settings.dart';
+import 'package:busymark/src/core/busymark_exception.dart';
 import 'package:busymark/src/core/source_span.dart';
 import 'package:busymark/src/local_history/local_history_controller.dart';
 import 'package:busymark/src/local_history/local_history_models.dart';
@@ -758,6 +759,56 @@ void main() {
     },
   );
 
+  test(
+    'reviewed topic rename is rejected after a project buffer becomes dirty',
+    () async {
+      final root = await Directory.systemTemp.createTemp(
+        'busymark-controller-stale-topic-preview-',
+      );
+      addTearDown(() => root.delete(recursive: true));
+      await Directory(p.join(root.path, 'topics')).create();
+      await File(p.join(root.path, 'writerside.cfg')).writeAsString(
+        '<ihp><topics dir="topics"/><instance src="guide.tree"/></ihp>',
+      );
+      final tree = File(p.join(root.path, 'guide.tree'));
+      const treeSource =
+          '<instance-profile id="guide" start-page="guide.md"><toc-element topic="guide.md"/><toc-element topic="notes.md"/></instance-profile>';
+      await tree.writeAsString(treeSource);
+      final guide = File(p.join(root.path, 'topics', 'guide.md'));
+      final notes = File(p.join(root.path, 'topics', 'notes.md'));
+      await guide.writeAsString('# Guide\n');
+      await notes.writeAsString('# Notes\n');
+      final harness = await _createControllerHarness(
+        fileMonitor: _ControlledFileMonitor(),
+      );
+      await harness.settingsController.setAutoSave(false);
+      final controller = harness.controller._notifier;
+      await controller.openPath(root.path);
+      final plan = await controller.prepareWritersideTopicRename(
+        guide.path,
+        'setup.md',
+        topicModuleRoot: root.path,
+      );
+      expect(plan, isNotNull);
+      await controller.openActiveFile(notes.path);
+      controller.updateActiveText('# Notes\n\nNew unsaved project content.\n');
+
+      expect(await controller.applyWritersideTopicRename(plan!), isFalse);
+
+      expect(await guide.readAsString(), '# Guide\n');
+      expect(await notes.readAsString(), '# Notes\n');
+      expect(await tree.readAsString(), treeSource);
+      expect(
+        await File(p.join(root.path, 'topics', 'setup.md')).exists(),
+        isFalse,
+      );
+      expect(
+        (harness.controller.state.message!.error as BusyMarkException).code,
+        'writerside.topic-file.project-buffers-dirty',
+      );
+    },
+  );
+
   test('save as writes a new Markdown file and records it as recent', () async {
     final directory = await Directory.systemTemp.createTemp(
       'busymark-save-as-',
@@ -1281,6 +1332,88 @@ void main() {
     controller.dispose();
     settingsController.dispose();
   });
+
+  test(
+    'Save All can be scoped without saving unrelated dirty buffers',
+    () async {
+      final directory = await Directory.systemTemp.createTemp(
+        'busymark-save-selected-',
+      );
+      addTearDown(() => directory.delete(recursive: true));
+      final first = File(p.join(directory.path, 'a.md'))
+        ..writeAsStringSync('# A\n');
+      final second = File(p.join(directory.path, 'b.md'))
+        ..writeAsStringSync('# B\n');
+      final unrelated = File(p.join(directory.path, 'outside.md'))
+        ..writeAsStringSync('# Outside\n');
+      final harness = await _createControllerHarness();
+      final settingsController = harness.settingsController;
+      final controller = harness.controller;
+
+      await controller.openPath(directory.path);
+      controller.updateActiveText('# Edited A\n');
+      expect(await controller.openActiveFile(second.path), isTrue);
+      controller.updateActiveText('# Edited B\n');
+      expect(await controller.openActiveFile(unrelated.path), isTrue);
+      controller.updateActiveText('# Edited outside\n');
+      final selectedIds = controller.state.documentBuffers
+          .where(
+            (buffer) =>
+                buffer.filePath == first.path || buffer.filePath == second.path,
+          )
+          .map((buffer) => buffer.id)
+          .toList();
+
+      final result = await controller.saveAll(bufferIds: selectedIds);
+
+      expect(result.savedBufferIds, unorderedEquals(selectedIds));
+      expect(first.readAsStringSync(), '# Edited A\n');
+      expect(second.readAsStringSync(), '# Edited B\n');
+      expect(unrelated.readAsStringSync(), '# Outside\n');
+      expect(controller.state.dirtyBuffers.map((buffer) => buffer.filePath), [
+        unrelated.path,
+      ]);
+
+      controller.dispose();
+      settingsController.dispose();
+    },
+  );
+
+  test(
+    'selected dirty buffers can be discarded without changing tabs',
+    () async {
+      final directory = await Directory.systemTemp.createTemp(
+        'busymark-discard-selected-',
+      );
+      addTearDown(() => directory.delete(recursive: true));
+      final first = File(p.join(directory.path, 'a.md'))
+        ..writeAsStringSync('# A\n');
+      final second = File(p.join(directory.path, 'b.md'))
+        ..writeAsStringSync('# B\n');
+      final harness = await _createControllerHarness();
+      final settingsController = harness.settingsController;
+      final controller = harness.controller;
+
+      await controller.openPath(directory.path);
+      controller.updateActiveText('# Edited A\n');
+      expect(await controller.openActiveFile(second.path), isTrue);
+      controller.updateActiveText('# Edited B\n');
+      final dirtyIds = controller.state.dirtyBuffers
+          .map((buffer) => buffer.id)
+          .toList();
+
+      expect(await controller.discardDocumentBuffers(dirtyIds), isTrue);
+
+      expect(controller.state.workspace?.activeFilePath, second.path);
+      expect(controller.state.dirtyBuffers, isEmpty);
+      expect(first.readAsStringSync(), '# A\n');
+      expect(second.readAsStringSync(), '# B\n');
+      expect(controller.state.activeText, '# B\n');
+
+      controller.dispose();
+      settingsController.dispose();
+    },
+  );
 
   test('closing active file tabs selects a neighboring tab', () async {
     final harness = await _createControllerHarness();
@@ -3349,7 +3482,11 @@ class _WorkspaceControllerDriver {
   Future<bool> saveActiveAs(String path, {bool overwriteExisting = false}) =>
       _notifier.saveActiveAs(path, overwriteExisting: overwriteExisting);
 
-  Future<SaveAllResult> saveAll() => _notifier.saveAll();
+  Future<SaveAllResult> saveAll({Iterable<String>? bufferIds}) =>
+      _notifier.saveAll(bufferIds: bufferIds);
+
+  Future<bool> discardDocumentBuffers(Iterable<String> bufferIds) =>
+      _notifier.discardDocumentBuffers(bufferIds);
 
   Future<bool> autoSaveActiveIfNeeded() => _notifier.autoSaveActiveIfNeeded();
 

@@ -1840,6 +1840,23 @@
       }
     }
   },
+  "errorWritersideTopicRenameIncompleteProjectIndex": "Zmiana nazwy nie może bezpiecznie zaktualizować wszystkich odwołań w projekcie, ponieważ nie przeanalizowano {count} plików tematów w module {module}: {paths}",
+  "@errorWritersideTopicRenameIncompleteProjectIndex": {
+    "description": "Error shown when topic rename cannot prove complete project-wide semantic coverage.",
+    "placeholders": {
+      "module": {"type": "String"},
+      "count": {"type": "String"},
+      "paths": {"type": "String"}
+    }
+  },
+  "errorWritersideTopicRenameProjectBuffersDirty": "Pliki projektu Writerside zawierają niezapisane zmiany. Rozwiąż je i przygotuj nowy podgląd zmiany nazwy.",
+  "@errorWritersideTopicRenameProjectBuffersDirty": {
+    "description": "Error shown when a topic rename or reviewed rename plan is blocked by a dirty Writerside project buffer."
+  },
+  "errorWritersideTopicRenameProjectInventoryChanged": "Zestaw modułów projektu Writerside uległ zmianie. Przed refaktoryzacją przygotuj nowy podgląd zmiany nazwy.",
+  "@errorWritersideTopicRenameProjectInventoryChanged": {
+    "description": "Error shown when module discovery differs from a prepared topic rename plan."
+  },
   "errorTopicsRootUnsafe": "Katalog główny tematów musi być bezpiecznym katalogiem względnym.",
   "@errorTopicsRootUnsafe": {
     "description": "Detail for an unsafe topics root directory."

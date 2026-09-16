@@ -2167,6 +2167,23 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
+  String errorWritersideTopicRenameIncompleteProjectIndex(
+    String module,
+    String count,
+    String paths,
+  ) {
+    return 'Ümbernimetamine ei saa kõiki projektiviiteid ohutult uuendada, sest moodulis $module jäi sõelumata $count teemafaili: $paths';
+  }
+
+  @override
+  String get errorWritersideTopicRenameProjectBuffersDirty =>
+      'Writerside’i projektifailides on salvestamata muudatusi. Lahenda need ja koosta uus ümbernimetamise eelvaade.';
+
+  @override
+  String get errorWritersideTopicRenameProjectInventoryChanged =>
+      'Writerside’i projekti moodulite komplekt muutus. Koosta enne refaktoreerimist uus ümbernimetamise eelvaade.';
+
+  @override
   String get errorTopicsRootUnsafe =>
       'Teemade juurkaust peab olema ohutu suhteline kataloog.';
 

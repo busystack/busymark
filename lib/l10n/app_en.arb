@@ -1399,6 +1399,23 @@
     "description": "Error shown when safe-delete recovery leaves files requiring manual review.",
     "placeholders": {"paths": {"type": "String"}}
   },
+  "errorWritersideTopicRenameIncompleteProjectIndex": "Rename cannot safely update every project reference because {count} topic file(s) in module {module} were not parsed: {paths}",
+  "@errorWritersideTopicRenameIncompleteProjectIndex": {
+    "description": "Error shown when topic rename cannot prove complete project-wide semantic coverage.",
+    "placeholders": {
+      "module": {"type": "String"},
+      "count": {"type": "String"},
+      "paths": {"type": "String"}
+    }
+  },
+  "errorWritersideTopicRenameProjectBuffersDirty": "Writerside project files have unsaved changes. Resolve them and prepare a new rename preview.",
+  "@errorWritersideTopicRenameProjectBuffersDirty": {
+    "description": "Error shown when a topic rename or reviewed rename plan is blocked by a dirty Writerside project buffer."
+  },
+  "errorWritersideTopicRenameProjectInventoryChanged": "The Writerside project module set changed. Prepare a new rename preview before refactoring.",
+  "@errorWritersideTopicRenameProjectInventoryChanged": {
+    "description": "Error shown when module discovery differs from a prepared topic rename plan."
+  },
   "errorTopicsRootUnsafe": "Topics root must be a safe relative directory.",
   "@errorTopicsRootUnsafe": {"description": "Detail for an unsafe topics root directory."},
   "errorTopicFileNameUnsafe": "Topic file name must be a single safe path segment.",

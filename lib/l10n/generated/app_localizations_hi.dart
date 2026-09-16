@@ -2164,6 +2164,23 @@ class AppLocalizationsHi extends AppLocalizations {
   }
 
   @override
+  String errorWritersideTopicRenameIncompleteProjectIndex(
+    String module,
+    String count,
+    String paths,
+  ) {
+    return 'नाम बदलने से प्रोजेक्ट के सभी संदर्भ सुरक्षित रूप से अपडेट नहीं किए जा सकते क्योंकि मॉड्यूल $module में $count विषय फ़ाइल पार्स नहीं हुईं: $paths';
+  }
+
+  @override
+  String get errorWritersideTopicRenameProjectBuffersDirty =>
+      'Writerside प्रोजेक्ट फ़ाइलों में सहेजे न गए बदलाव हैं। उन्हें हल करें और नाम बदलने का नया पूर्वावलोकन तैयार करें।';
+
+  @override
+  String get errorWritersideTopicRenameProjectInventoryChanged =>
+      'Writerside प्रोजेक्ट का मॉड्यूल सेट बदल गया है। रीफ़ैक्टर करने से पहले नाम बदलने का नया पूर्वावलोकन तैयार करें।';
+
+  @override
   String get errorTopicsRootUnsafe =>
       'विषय रूट सुरक्षित सापेक्ष डायरेक्टरी होना चाहिए।';
 

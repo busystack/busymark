@@ -8,6 +8,7 @@ import '../../app/busymark_design.dart';
 import '../../app/busymark_dialogs.dart';
 import '../../app/localization.dart';
 import '../../writerside/writerside_template_service.dart';
+import '../../writerside/writerside_topic_file_name.dart';
 
 typedef WritersideTemplatePreviewBuilder =
     Widget Function(
@@ -101,7 +102,7 @@ class _TemplateDialogState extends ConsumerState<WritersideTemplateDialog> {
   String? get _filenameError {
     final value = _filename.text.trim();
     if (value.isEmpty) return context.l10n.fileNameRequired;
-    if (!RegExp(r'^[A-Za-z0-9_-]+$').hasMatch(value)) {
+    if (!isValidWritersideTopicId(value)) {
       return context.l10n.useIdentifierCharacters;
     }
     if (widget.existingIds.contains(value)) {

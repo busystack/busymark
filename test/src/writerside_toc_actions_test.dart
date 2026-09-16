@@ -141,23 +141,32 @@ void main() {
     },
   );
 
-  test('front-matter title cannot be silently shadowed by an H1 edit', () {
+  test('Markdown title edit changes H1 and preserves front matter title', () {
     final topic = parser.parseMarkdown(
       filePath: '/topics/topic.md',
-      source: '---\ntitle: Front matter\n---\n# Heading\n',
+      source: '---\ntitle: Metadata\n---\n\n# Old\n',
       topicsRoot: '/topics',
     );
+    final result = titleEditor.prepare(
+      topic: topic,
+      instanceId: 'guide',
+      treePath: '/guide.tree',
+      treeSource: tree,
+      tocPath: [1],
+      tocIdentity: identity,
+      edit: const WritersideTitleEdit(title: 'New'),
+    );
+
+    expect(result.topicSource, '---\ntitle: Metadata\n---\n\n# New\n');
     expect(
-      () => titleEditor.prepare(
-        topic: topic,
-        instanceId: 'guide',
-        treePath: '/guide.tree',
-        treeSource: tree,
-        tocPath: [1],
-        tocIdentity: identity,
-        edit: const WritersideTitleEdit(title: 'New'),
-      ),
-      throwsA(isA<BusyMarkException>()),
+      parser
+          .parseMarkdown(
+            filePath: '/topics/topic.md',
+            source: result.topicSource,
+            topicsRoot: '/topics',
+          )
+          .title,
+      'New',
     );
   });
 

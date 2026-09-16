@@ -1840,6 +1840,23 @@
       }
     }
   },
+  "errorWritersideTopicRenameIncompleteProjectIndex": "नाम बदलने से प्रोजेक्ट के सभी संदर्भ सुरक्षित रूप से अपडेट नहीं किए जा सकते क्योंकि मॉड्यूल {module} में {count} विषय फ़ाइल पार्स नहीं हुईं: {paths}",
+  "@errorWritersideTopicRenameIncompleteProjectIndex": {
+    "description": "Error shown when topic rename cannot prove complete project-wide semantic coverage.",
+    "placeholders": {
+      "module": {"type": "String"},
+      "count": {"type": "String"},
+      "paths": {"type": "String"}
+    }
+  },
+  "errorWritersideTopicRenameProjectBuffersDirty": "Writerside प्रोजेक्ट फ़ाइलों में सहेजे न गए बदलाव हैं। उन्हें हल करें और नाम बदलने का नया पूर्वावलोकन तैयार करें।",
+  "@errorWritersideTopicRenameProjectBuffersDirty": {
+    "description": "Error shown when a topic rename or reviewed rename plan is blocked by a dirty Writerside project buffer."
+  },
+  "errorWritersideTopicRenameProjectInventoryChanged": "Writerside प्रोजेक्ट का मॉड्यूल सेट बदल गया है। रीफ़ैक्टर करने से पहले नाम बदलने का नया पूर्वावलोकन तैयार करें।",
+  "@errorWritersideTopicRenameProjectInventoryChanged": {
+    "description": "Error shown when module discovery differs from a prepared topic rename plan."
+  },
   "errorTopicsRootUnsafe": "विषय रूट सुरक्षित सापेक्ष डायरेक्टरी होना चाहिए।",
   "@errorTopicsRootUnsafe": {
     "description": "Detail for an unsafe topics root directory."

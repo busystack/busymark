@@ -2208,6 +2208,23 @@ class AppLocalizationsFa extends AppLocalizations {
   }
 
   @override
+  String errorWritersideTopicRenameIncompleteProjectIndex(
+    String module,
+    String count,
+    String paths,
+  ) {
+    return 'تغییر نام نمی‌تواند همهٔ ارجاع‌های پروژه را با اطمینان به‌روزرسانی کند، زیرا $count فایل موضوع در ماژول $module تجزیه نشده است: $paths';
+  }
+
+  @override
+  String get errorWritersideTopicRenameProjectBuffersDirty =>
+      'فایل‌های پروژهٔ Writerside تغییرات ذخیره‌نشده دارند. آن‌ها را برطرف کنید و پیش‌نمایش تازه‌ای برای تغییر نام آماده کنید.';
+
+  @override
+  String get errorWritersideTopicRenameProjectInventoryChanged =>
+      'مجموعهٔ ماژول‌های پروژهٔ Writerside تغییر کرده است. پیش از بازآرایی، پیش‌نمایش تازه‌ای برای تغییر نام آماده کنید.';
+
+  @override
   String get errorTopicsRootUnsafe =>
       'ریشهٔ موضوع‌ها باید یک پوشهٔ نسبی مجاز باشد.';
 

@@ -2459,34 +2459,20 @@ class _SidebarState extends ConsumerState<_Sidebar> {
             currentFileName: p.basename(topicPath),
           ),
         );
-    if (decision == null || !mounted || !context.mounted) return false;
+    if (decision == null || !mounted) return false;
+    // Use the sidebar State's context rather than the row/menu context that
+    // launched the workflow; transient menu entries may already be unmounted.
+    if (!await confirmSafeToRefactorWritersideProject(this.context, ref) ||
+        !mounted) {
+      return false;
+    }
     final controller = ref.read(workspaceControllerProvider.notifier);
-    var plan = await controller.prepareWritersideTopicRename(
+    final plan = await controller.prepareWritersideTopicRename(
       topicPath,
       decision.fileName,
       topicModuleRoot: owner.rootPath,
     );
-    if (plan == null || !mounted || !context.mounted) {
-      if (mounted) _showLatestWorkspaceMessage(this.context);
-      return false;
-    }
-    if (!await confirmSafeToChangeWorkspaceFiles(
-          context,
-          ref,
-          plan.affectedPaths,
-        ) ||
-        !mounted ||
-        !context.mounted) {
-      return false;
-    }
-    // Saving dirty participants invalidates the first snapshot. Build the one
-    // the user will actually review or commit after all buffers are clean.
-    plan = await controller.prepareWritersideTopicRename(
-      topicPath,
-      decision.fileName,
-      topicModuleRoot: owner.rootPath,
-    );
-    if (plan == null || !mounted || !context.mounted) {
+    if (plan == null || !mounted) {
       if (mounted) _showLatestWorkspaceMessage(this.context);
       return false;
     }
@@ -2498,7 +2484,7 @@ class _SidebarState extends ConsumerState<_Sidebar> {
       return true;
     }
     final applied = await controller.applyWritersideTopicRename(plan);
-    if (!mounted || !context.mounted) return applied;
+    if (!mounted) return applied;
     if (!applied) _showLatestWorkspaceMessage(this.context);
     return applied;
   }
@@ -2506,6 +2492,10 @@ class _SidebarState extends ConsumerState<_Sidebar> {
   Future<void> _applyReviewedTopicRename(BuildContext context) async {
     final plan = _topicRenameReview;
     if (plan == null) return;
+    final becameDirty = hasDirtyWritersideProjectBuffers(ref);
+    if (becameDirty && mounted) {
+      setState(() => _topicRenameReview = null);
+    }
     final applied = await ref
         .read(workspaceControllerProvider.notifier)
         .applyWritersideTopicRename(plan);

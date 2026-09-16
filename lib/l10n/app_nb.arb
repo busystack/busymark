@@ -1840,6 +1840,23 @@
       }
     }
   },
+  "errorWritersideTopicRenameIncompleteProjectIndex": "Navneendringen kan ikke oppdatere alle prosjektreferanser trygt fordi {count} emnefil(er) i modulen {module} ikke ble analysert: {paths}",
+  "@errorWritersideTopicRenameIncompleteProjectIndex": {
+    "description": "Error shown when topic rename cannot prove complete project-wide semantic coverage.",
+    "placeholders": {
+      "module": {"type": "String"},
+      "count": {"type": "String"},
+      "paths": {"type": "String"}
+    }
+  },
+  "errorWritersideTopicRenameProjectBuffersDirty": "Writerside-prosjektfiler har ulagrede endringer. Løs dem og klargjør en ny forhåndsvisning av navneendringen.",
+  "@errorWritersideTopicRenameProjectBuffersDirty": {
+    "description": "Error shown when a topic rename or reviewed rename plan is blocked by a dirty Writerside project buffer."
+  },
+  "errorWritersideTopicRenameProjectInventoryChanged": "Modulsettet i Writerside-prosjektet er endret. Klargjør en ny forhåndsvisning av navneendringen før refaktorering.",
+  "@errorWritersideTopicRenameProjectInventoryChanged": {
+    "description": "Error shown when module discovery differs from a prepared topic rename plan."
+  },
   "errorTopicsRootUnsafe": "Emneroten må være en sikker relativ mappe.",
   "@errorTopicsRootUnsafe": {
     "description": "Detail for an unsafe topics root directory."

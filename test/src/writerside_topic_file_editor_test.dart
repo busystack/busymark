@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:busymark/src/core/busymark_exception.dart';
+import 'package:busymark/src/core/path_utils.dart';
 import 'package:busymark/src/writerside/writerside_model.dart';
 import 'package:busymark/src/writerside/writerside_module_service.dart';
 import 'package:busymark/src/writerside/writerside_topic_file_editor.dart';
@@ -10,6 +11,118 @@ import 'package:xml/xml.dart';
 
 void main() {
   const editor = WritersideTopicFileEditor();
+
+  test('rename planning rejects a topic skipped by file-size limits', () async {
+    final fixture = await _fixture(
+      trees: {
+        'guide.tree': '''
+<instance-profile id="guide" start-page="guide.md">
+  <toc-element topic="guide.md"/>
+</instance-profile>
+''',
+      },
+      topics: {
+        'guide.md': '# Guide\n',
+        'huge.md': '# Huge\n\n[Guide](guide.md)\n${'content ' * 80}',
+      },
+      scanOptions: const WorkspaceScanOptions(maxParsedFileBytes: 256),
+    );
+    final guide = _topic(fixture.module, 'guide.md');
+    final original = File(guide.filePath).readAsStringSync();
+
+    await expectLater(
+      editor.prepareRename(
+        module: fixture.module,
+        topic: guide,
+        newFileName: 'setup.md',
+      ),
+      throwsA(
+        isA<BusyMarkException>().having(
+          (error) => error.code,
+          'code',
+          'writerside.topic-file.incomplete-project-index',
+        ),
+      ),
+    );
+
+    expect(File(guide.filePath).readAsStringSync(), original);
+    expect(
+      File(p.join(fixture.root.path, 'topics', 'setup.md')).existsSync(),
+      isFalse,
+    );
+  });
+
+  test('rename planning rejects a topic skipped by document limits', () async {
+    final fixture = await _fixture(
+      trees: {
+        'guide.tree': '''
+<instance-profile id="guide" start-page="guide.md">
+  <toc-element topic="guide.md"/>
+</instance-profile>
+''',
+      },
+      topics: {
+        'guide.md': '# Guide\n',
+        'huge.md': '# Huge\n\n[Guide](guide.md)\n',
+      },
+      scanOptions: const WorkspaceScanOptions(maxParsedDocuments: 1),
+    );
+
+    await expectLater(
+      editor.prepareRename(
+        module: fixture.module,
+        topic: _topic(fixture.module, 'guide.md'),
+        newFileName: 'setup.md',
+      ),
+      throwsA(
+        isA<BusyMarkException>().having(
+          (error) => error.code,
+          'code',
+          'writerside.topic-file.incomplete-project-index',
+        ),
+      ),
+    );
+    expect(
+      File(p.join(fixture.root.path, 'topics', 'setup.md')).existsSync(),
+      isFalse,
+    );
+  });
+
+  test(
+    'rename planning rejects a discovered unreadable topic source',
+    () async {
+      final fixture = await _fixture(
+        trees: {
+          'guide.tree': '''
+<instance-profile id="guide" start-page="guide.md">
+  <toc-element topic="guide.md"/>
+</instance-profile>
+''',
+        },
+        topics: {'guide.md': '# Guide\n', 'invalid.md': '# Placeholder\n'},
+        beforeLoad: (root) {
+          File(
+            p.join(root.path, 'topics', 'invalid.md'),
+          ).writeAsBytesSync([0xff, 0xfe]);
+        },
+      );
+
+      await expectLater(
+        editor.prepareRename(
+          module: fixture.module,
+          topic: _topic(fixture.module, 'guide.md'),
+          newFileName: 'setup.md',
+        ),
+        throwsA(
+          isA<BusyMarkException>().having(
+            (error) => error.code,
+            'code',
+            'writerside.topic-file.incomplete-project-index',
+          ),
+        ),
+      );
+    },
+  );
 
   test(
     'rename updates topic and start-page references in every tree',
@@ -1610,6 +1723,129 @@ Following-line destination: [Guide][next].
     },
   );
 
+  test(
+    'cross-module rollback retains a target after another module changes',
+    () async {
+      final projectRoot = await Directory.systemTemp.createTemp(
+        'busymark-topic-file-cross-module-rollback-',
+      );
+      addTearDown(() async {
+        if (await projectRoot.exists()) {
+          await projectRoot.delete(recursive: true);
+        }
+      });
+
+      Future<WritersideModule> createModule({
+        required String directory,
+        required String moduleName,
+        required String topicName,
+        required String topicSource,
+      }) async {
+        final root = await Directory(
+          p.join(projectRoot.path, directory),
+        ).create();
+        await Directory(p.join(root.path, 'topics')).create();
+        await File(p.join(root.path, 'writerside.cfg')).writeAsString('''
+<ihp><module name="$moduleName"/><topics dir="topics"/><instance src="guide.tree"/></ihp>
+''');
+        await File(p.join(root.path, 'guide.tree')).writeAsString('''
+<instance-profile id="guide" start-page="$topicName">
+  <toc-element topic="$topicName"/>
+</instance-profile>
+''');
+        await File(
+          p.join(root.path, 'topics', topicName),
+        ).writeAsString(topicSource);
+        return const WritersideModuleService().load(root.path);
+      }
+
+      final main = await createModule(
+        directory: 'main',
+        moduleName: 'main',
+        topicName: 'guide.md',
+        topicSource: '# Guide\n',
+      );
+      final shared = await createModule(
+        directory: 'shared',
+        moduleName: 'shared',
+        topicName: 'watch.md',
+        topicSource: '# Watch\n',
+      );
+      final mainTree = File(p.join(main.rootPath, 'guide.tree'));
+      final originalMainTree = await mainTree.readAsString();
+      final concurrent = File(p.join(shared.rootPath, 'topics', 'watch.md'));
+      const concurrentSource =
+          '# Watch\n\n<a href="setup.md" origin="main">Setup</a>\n';
+      var changed = false;
+      final racingEditor = WritersideTopicFileEditor(
+        beforeTreePublish: (_) async {
+          if (!changed) {
+            changed = true;
+            await concurrent.writeAsString(concurrentSource, flush: true);
+          }
+        },
+      );
+
+      await expectLater(
+        racingEditor.rename(
+          module: main,
+          topic: _topic(main, 'guide.md'),
+          newFileName: 'setup.md',
+          projectModules: [main, shared],
+        ),
+        throwsA(isA<BusyMarkException>()),
+      );
+
+      expect(await mainTree.readAsString(), originalMainTree);
+      expect(
+        File(p.join(main.rootPath, 'topics', 'guide.md')).existsSync(),
+        isTrue,
+      );
+      expect(
+        File(p.join(main.rootPath, 'topics', 'setup.md')).readAsStringSync(),
+        '# Guide\n',
+      );
+      expect(await concurrent.readAsString(), concurrentSource);
+    },
+  );
+
+  test('clean rollback removes the harmless newly created target', () async {
+    final fixture = await _fixture(
+      trees: {
+        'guide.tree': '''
+<instance-profile id="guide" start-page="guide.md">
+  <toc-element topic="guide.md"/>
+</instance-profile>
+''',
+      },
+      topics: {'guide.md': '# Guide\n'},
+    );
+    final tree = File(p.join(fixture.root.path, 'guide.tree'));
+    final originalTree = await tree.readAsString();
+    final racingEditor = WritersideTopicFileEditor(
+      beforeTreePublish: (_) async => throw StateError('stop publication'),
+    );
+
+    await expectLater(
+      racingEditor.rename(
+        module: fixture.module,
+        topic: _topic(fixture.module, 'guide.md'),
+        newFileName: 'setup.md',
+      ),
+      throwsStateError,
+    );
+
+    expect(await tree.readAsString(), originalTree);
+    expect(
+      File(p.join(fixture.root.path, 'topics', 'guide.md')).existsSync(),
+      isTrue,
+    );
+    expect(
+      File(p.join(fixture.root.path, 'topics', 'setup.md')).existsSync(),
+      isFalse,
+    );
+  });
+
   test('rename preserves topic and instance tree file modes', () async {
     final fixture = await _fixture(
       trees: {
@@ -1829,6 +2065,8 @@ Following-line destination: [Guide][next].
 Future<({Directory root, WritersideModule module})> _fixture({
   required Map<String, String> trees,
   required Map<String, String> topics,
+  WorkspaceScanOptions scanOptions = const WorkspaceScanOptions(),
+  void Function(Directory root)? beforeLoad,
 }) async {
   final root = await Directory.systemTemp.createTemp(
     'busymark-topic-file-editor-',
@@ -1856,9 +2094,13 @@ Future<({Directory root, WritersideModule module})> _fixture({
     file.parent.createSync(recursive: true);
     file.writeAsStringSync(entry.value);
   }
+  beforeLoad?.call(root);
   return (
     root: Directory(await root.resolveSymbolicLinks()),
-    module: await const WritersideModuleService().load(root.path),
+    module: await const WritersideModuleService().load(
+      root.path,
+      options: scanOptions,
+    ),
   );
 }
 

@@ -2187,6 +2187,23 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
+  String errorWritersideTopicRenameIncompleteProjectIndex(
+    String module,
+    String count,
+    String paths,
+  ) {
+    return 'لا يمكن لإعادة التسمية تحديث كل مراجع المشروع بأمان لأن $count من ملفات المواضيع في الوحدة $module لم تُحلَّل: $paths';
+  }
+
+  @override
+  String get errorWritersideTopicRenameProjectBuffersDirty =>
+      'تحتوي ملفات مشروع Writerside على تغييرات غير محفوظة. عالجها وأنشئ معاينة جديدة لإعادة التسمية.';
+
+  @override
+  String get errorWritersideTopicRenameProjectInventoryChanged =>
+      'تغيّرت مجموعة وحدات مشروع Writerside. أنشئ معاينة جديدة لإعادة التسمية قبل إعادة الهيكلة.';
+
+  @override
   String get errorTopicsRootUnsafe =>
       'يجب أن يكون جذر المواضيع دليلاً نسبيًا آمنًا.';
 

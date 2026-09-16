@@ -2101,6 +2101,23 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
+  String errorWritersideTopicRenameIncompleteProjectIndex(
+    String module,
+    String count,
+    String paths,
+  ) {
+    return 'モジュール $module の $count 個のトピックファイルが解析されていないため、名前変更ですべてのプロジェクト参照を安全に更新できません: $paths';
+  }
+
+  @override
+  String get errorWritersideTopicRenameProjectBuffersDirty =>
+      'Writerside プロジェクトファイルに未保存の変更があります。変更を解決して、新しい名前変更プレビューを準備してください。';
+
+  @override
+  String get errorWritersideTopicRenameProjectInventoryChanged =>
+      'Writerside プロジェクトのモジュール構成が変更されました。リファクタリングの前に新しい名前変更プレビューを準備してください。';
+
+  @override
   String get errorTopicsRootUnsafe => 'トピックのルートは安全な相対ディレクトリである必要があります。';
 
   @override

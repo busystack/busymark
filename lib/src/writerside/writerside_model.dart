@@ -526,7 +526,7 @@ class WritersideCategory {
 }
 
 class WritersideModule {
-  const WritersideModule({
+  WritersideModule({
     required this.rootPath,
     required this.config,
     required this.instances,
@@ -541,9 +541,10 @@ class WritersideModule {
     this.sourceFiles = const {},
     this.referenceData = const WritersideReferenceData(),
     this.semanticDiagnostics = const [],
-    this.unparsedTopicReferences = const {},
+    Set<String> unparsedTopicReferences = const {},
     this.variablesAvailable = true,
-  }) : structuralDiagnostics = diagnostics;
+  }) : structuralDiagnostics = diagnostics,
+       unparsedTopicReferences = Set.unmodifiable(unparsedTopicReferences);
 
   final String rootPath;
   final WritersideConfig config;
@@ -556,6 +557,9 @@ class WritersideModule {
   /// are replaced separately whenever the project dependency snapshot changes.
   final List<Diagnostic> structuralDiagnostics;
   final List<Diagnostic> semanticDiagnostics;
+
+  /// Discovered topic sources excluded from the semantic model because they
+  /// could not be parsed within the configured scan limits.
   final Set<String> unparsedTopicReferences;
   final bool variablesAvailable;
   List<Diagnostic> get diagnostics =>

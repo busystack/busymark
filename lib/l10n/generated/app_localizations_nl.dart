@@ -2183,6 +2183,23 @@ class AppLocalizationsNl extends AppLocalizations {
   }
 
   @override
+  String errorWritersideTopicRenameIncompleteProjectIndex(
+    String module,
+    String count,
+    String paths,
+  ) {
+    return 'Niet alle projectverwijzingen kunnen veilig worden bijgewerkt omdat $count topicbestand(en) in module $module niet zijn geparseerd: $paths';
+  }
+
+  @override
+  String get errorWritersideTopicRenameProjectBuffersDirty =>
+      'Writerside-projectbestanden bevatten niet-opgeslagen wijzigingen. Los deze op en maak een nieuw voorbeeld van de naamswijziging.';
+
+  @override
+  String get errorWritersideTopicRenameProjectInventoryChanged =>
+      'De moduleset van het Writerside-project is gewijzigd. Maak vóór het refactoren een nieuw voorbeeld van de naamswijziging.';
+
+  @override
   String get errorTopicsRootUnsafe =>
       'De hoofdmap van Onderwerpen moet een veilige relatieve map zijn.';
 

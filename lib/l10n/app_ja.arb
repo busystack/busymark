@@ -2496,6 +2496,23 @@
       }
     }
   },
+  "errorWritersideTopicRenameIncompleteProjectIndex": "モジュール {module} の {count} 個のトピックファイルが解析されていないため、名前変更ですべてのプロジェクト参照を安全に更新できません: {paths}",
+  "@errorWritersideTopicRenameIncompleteProjectIndex": {
+    "description": "Error shown when topic rename cannot prove complete project-wide semantic coverage.",
+    "placeholders": {
+      "module": {"type": "String"},
+      "count": {"type": "String"},
+      "paths": {"type": "String"}
+    }
+  },
+  "errorWritersideTopicRenameProjectBuffersDirty": "Writerside プロジェクトファイルに未保存の変更があります。変更を解決して、新しい名前変更プレビューを準備してください。",
+  "@errorWritersideTopicRenameProjectBuffersDirty": {
+    "description": "Error shown when a topic rename or reviewed rename plan is blocked by a dirty Writerside project buffer."
+  },
+  "errorWritersideTopicRenameProjectInventoryChanged": "Writerside プロジェクトのモジュール構成が変更されました。リファクタリングの前に新しい名前変更プレビューを準備してください。",
+  "@errorWritersideTopicRenameProjectInventoryChanged": {
+    "description": "Error shown when module discovery differs from a prepared topic rename plan."
+  },
   "errorTopicsRootUnsafe": "トピックのルートは安全な相対ディレクトリである必要があります。",
   "@errorTopicsRootUnsafe": {
     "description": "Detail for an unsafe topics root directory."

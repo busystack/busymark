@@ -2097,6 +2097,23 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
+  String errorWritersideTopicRenameIncompleteProjectIndex(
+    String module,
+    String count,
+    String paths,
+  ) {
+    return '모듈 $module의 토픽 파일 $count개가 구문 분석되지 않아 이름 바꾸기로 모든 프로젝트 참조를 안전하게 업데이트할 수 없습니다: $paths';
+  }
+
+  @override
+  String get errorWritersideTopicRenameProjectBuffersDirty =>
+      'Writerside 프로젝트 파일에 저장되지 않은 변경 사항이 있습니다. 이를 해결하고 새 이름 바꾸기 미리보기를 준비하세요.';
+
+  @override
+  String get errorWritersideTopicRenameProjectInventoryChanged =>
+      'Writerside 프로젝트의 모듈 집합이 변경되었습니다. 리팩터링하기 전에 새 이름 바꾸기 미리보기를 준비하세요.';
+
+  @override
   String get errorTopicsRootUnsafe => '토픽 루트는 안전한 상대 디렉터리여야 합니다.';
 
   @override

@@ -1840,6 +1840,23 @@
       }
     }
   },
+  "errorWritersideTopicRenameIncompleteProjectIndex": "لا يمكن لإعادة التسمية تحديث كل مراجع المشروع بأمان لأن {count} من ملفات المواضيع في الوحدة {module} لم تُحلَّل: {paths}",
+  "@errorWritersideTopicRenameIncompleteProjectIndex": {
+    "description": "Error shown when topic rename cannot prove complete project-wide semantic coverage.",
+    "placeholders": {
+      "module": {"type": "String"},
+      "count": {"type": "String"},
+      "paths": {"type": "String"}
+    }
+  },
+  "errorWritersideTopicRenameProjectBuffersDirty": "تحتوي ملفات مشروع Writerside على تغييرات غير محفوظة. عالجها وأنشئ معاينة جديدة لإعادة التسمية.",
+  "@errorWritersideTopicRenameProjectBuffersDirty": {
+    "description": "Error shown when a topic rename or reviewed rename plan is blocked by a dirty Writerside project buffer."
+  },
+  "errorWritersideTopicRenameProjectInventoryChanged": "تغيّرت مجموعة وحدات مشروع Writerside. أنشئ معاينة جديدة لإعادة التسمية قبل إعادة الهيكلة.",
+  "@errorWritersideTopicRenameProjectInventoryChanged": {
+    "description": "Error shown when module discovery differs from a prepared topic rename plan."
+  },
   "errorTopicsRootUnsafe": "يجب أن يكون جذر المواضيع دليلاً نسبيًا آمنًا.",
   "@errorTopicsRootUnsafe": {
     "description": "Detail for an unsafe topics root directory."

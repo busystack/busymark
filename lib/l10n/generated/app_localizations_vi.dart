@@ -2164,6 +2164,23 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
+  String errorWritersideTopicRenameIncompleteProjectIndex(
+    String module,
+    String count,
+    String paths,
+  ) {
+    return 'Không thể đổi tên và cập nhật an toàn mọi tham chiếu trong dự án vì $count tệp chủ đề trong mô-đun $module chưa được phân tích: $paths';
+  }
+
+  @override
+  String get errorWritersideTopicRenameProjectBuffersDirty =>
+      'Các tệp dự án Writerside có thay đổi chưa lưu. Hãy xử lý chúng và chuẩn bị bản xem trước đổi tên mới.';
+
+  @override
+  String get errorWritersideTopicRenameProjectInventoryChanged =>
+      'Tập hợp mô-đun của dự án Writerside đã thay đổi. Hãy chuẩn bị bản xem trước đổi tên mới trước khi tái cấu trúc.';
+
+  @override
   String get errorTopicsRootUnsafe =>
       'Gốc chủ đề phải là một thư mục tương đối an toàn.';
 

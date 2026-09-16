@@ -2192,6 +2192,23 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
+  String errorWritersideTopicRenameIncompleteProjectIndex(
+    String module,
+    String count,
+    String paths,
+  ) {
+    return 'No se pueden actualizar de forma segura todas las referencias del proyecto porque no se analizaron $count archivo(s) de tema del módulo $module: $paths';
+  }
+
+  @override
+  String get errorWritersideTopicRenameProjectBuffersDirty =>
+      'Los archivos del proyecto de Writerside tienen cambios sin guardar. Resuélvalos y prepare una nueva vista previa del cambio de nombre.';
+
+  @override
+  String get errorWritersideTopicRenameProjectInventoryChanged =>
+      'El conjunto de módulos del proyecto de Writerside cambió. Prepare una nueva vista previa del cambio de nombre antes de refactorizar.';
+
+  @override
   String get errorTopicsRootUnsafe =>
       'La raíz de temas debe ser un directorio relativo seguro.';
 

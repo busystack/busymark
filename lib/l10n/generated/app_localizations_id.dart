@@ -2170,6 +2170,23 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
+  String errorWritersideTopicRenameIncompleteProjectIndex(
+    String module,
+    String count,
+    String paths,
+  ) {
+    return 'Penggantian nama tidak dapat memperbarui setiap referensi proyek dengan aman karena $count file topik di modul $module tidak diurai: $paths';
+  }
+
+  @override
+  String get errorWritersideTopicRenameProjectBuffersDirty =>
+      'File proyek Writerside memiliki perubahan yang belum disimpan. Selesaikan perubahan tersebut dan siapkan pratinjau penggantian nama baru.';
+
+  @override
+  String get errorWritersideTopicRenameProjectInventoryChanged =>
+      'Kumpulan modul proyek Writerside berubah. Siapkan pratinjau penggantian nama baru sebelum melakukan refaktor.';
+
+  @override
   String get errorTopicsRootUnsafe =>
       'Akar topik harus berupa direktori relatif yang aman.';
 

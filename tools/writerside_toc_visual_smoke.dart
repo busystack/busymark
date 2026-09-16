@@ -651,6 +651,61 @@ class _HarnessState extends ConsumerState<_Harness> {
             !renamedTreeSource.contains('native-child.topic'),
         'Do Refactor changes the TOC reference with the filename',
       );
+      await _tapLabel('Native new XML');
+      _keyData(
+        PhysicalKeyboardKey.shiftLeft,
+        LogicalKeyboardKey.shiftLeft,
+        ui.KeyEventType.down,
+      );
+      await _key(PhysicalKeyboardKey.f6, LogicalKeyboardKey.f6);
+      _keyData(
+        PhysicalKeyboardKey.shiftLeft,
+        LogicalKeyboardKey.shiftLeft,
+        ui.KeyEventType.up,
+      );
+      await _until(
+        () => _elements(
+          (widget) =>
+              widget.runtimeType.toString() == 'WritersideTopicRenameDialog',
+        ).isNotEmpty,
+        'Second Shift+F6 opens the topic rename dialog',
+      );
+      await _fill('File name', 'native-child-stale.topic');
+      await _tapLabel('Preview');
+      await _until(
+        () => _elements(
+          (widget) => widget is Text && widget.data == 'Rename Preview',
+        ).isNotEmpty,
+        'Second topic rename preview opens',
+      );
+      controller.updateActiveText(
+        '${ref.read(workspaceControllerProvider).activeText}\n'
+        '<!-- dirty after rename preview -->\n',
+      );
+      await _pause();
+      final staleTarget = File(
+        p.join(widget.root.path, 'topics/native-child-stale.topic'),
+      );
+      await _tapLabel('Do Refactor');
+      await _until(
+        () =>
+            _elements(
+              (widget) => widget is Text && widget.data == 'Rename Preview',
+            ).isEmpty &&
+            !ref.read(workspaceControllerProvider).isLoading,
+        'Dirty project buffer invalidates the rename preview',
+      );
+      _check(
+        renamedChild.existsSync() &&
+            !staleTarget.existsSync() &&
+            ref.read(workspaceControllerProvider).activeBuffer?.isDirty == true,
+        'Dirty-after-Preview refuses Do Refactor without changing files',
+      );
+      await _capture('22-topic-rename-stale');
+      _check(
+        await controller.discardActiveChanges(),
+        'Stale-preview smoke edit can be discarded safely',
+      );
       await _menu('Native new Markdown');
       await _tapLabel('New Topic');
       await _tapLabel('Link Topic Files to TOC...');

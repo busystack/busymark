@@ -1,4 +1,7 @@
+import 'package:path/path.dart' as p;
+
 import '../core/diagnostic.dart';
+import '../core/path_utils.dart';
 import '../markdown/document_outline.dart';
 import '../markdown/markdown_model.dart';
 import '../markdown/preview_model.dart';
@@ -185,6 +188,27 @@ class Workspace {
       writersideProject: nextWritersideProject,
     );
   }
+}
+
+/// Whether [path] is part of the currently discovered Writerside project.
+/// Module roots cover newly opened project files, while the explicit source
+/// inventory also handles any configured source whose canonical path is known.
+bool isWritersideProjectPath(Workspace workspace, String path) {
+  final project = workspace.writersideProject;
+  if (project == null || path.isEmpty) return false;
+  final candidate = normalizePath(path);
+  for (final module in project.modules) {
+    final root = normalizePath(module.rootPath);
+    if (p.equals(candidate, root) || p.isWithin(root, candidate)) return true;
+    final knownPaths = <String>{
+      module.config.filePath,
+      for (final instance in module.instances) instance.sourceTreePath,
+      for (final topic in module.topics) topic.filePath,
+      ...module.sourceFiles.keys,
+    };
+    if (knownPaths.any((known) => p.equals(candidate, known))) return true;
+  }
+  return false;
 }
 
 List<String> _normalizedOpenFilePaths(

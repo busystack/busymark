@@ -203,6 +203,16 @@ String _localizeWorkspaceError(BuildContext context, Object? error) {
         l10n.workspaceErrorSaveBlockedFileChangedOnDisk,
       'writerside.topic-file.topic-inventory-changed' =>
         l10n.workspaceErrorSaveBlockedFileChangedOnDisk,
+      'writerside.topic-file.incomplete-project-index' =>
+        l10n.errorWritersideTopicRenameIncompleteProjectIndex(
+          value('module'),
+          value('count'),
+          value('paths'),
+        ),
+      'writerside.topic-file.project-buffers-dirty' =>
+        l10n.errorWritersideTopicRenameProjectBuffersDirty,
+      'writerside.topic-file.project-inventory-changed' =>
+        l10n.errorWritersideTopicRenameProjectInventoryChanged,
       'writerside.topic-removal.safe-delete-required' =>
         l10n.errorWritersideSafeDeleteRequired,
       'writerside.topic-removal.scan-failed' =>

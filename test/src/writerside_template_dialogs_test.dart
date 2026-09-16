@@ -1,8 +1,11 @@
 import 'dart:io';
 
 import 'package:busymark/l10n/generated/app_localizations.dart';
+import 'package:busymark/src/core/busymark_exception.dart';
 import 'package:busymark/src/workspace/presentation/writerside_template_dialogs.dart';
+import 'package:busymark/src/writerside/writerside_model.dart';
 import 'package:busymark/src/writerside/writerside_template_service.dart';
+import 'package:busymark/src/writerside/writerside_topic_creator.dart';
 import 'package:busymark/src/writerside/writerside_parsers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -175,6 +178,84 @@ void main() {
     expect(stored.name, 'My template');
     expect(stored.source, '# \${TITLE}\nCustom body');
     expect(find.text('File and Code Templates'), findsNothing);
+  });
+
+  testWidgets('custom XML template cannot publish a mismatching root ID', (
+    tester,
+  ) async {
+    const invalidTemplate = WritersideTemplate(
+      id: 'custom-invalid-xml-id',
+      name: 'Broken XML ID',
+      category: 'custom',
+      extension: 'topic',
+      source: '<topic id="fixed-wrong-id" title="\${TITLE}"/>',
+    );
+    await tester.runAsync(
+      () async => service.save(await service.read(), [invalidTemplate]),
+    );
+    final project = Directory(p.join(root.path, 'project'))..createSync();
+    final tree = File(p.join(project.path, 'guide.tree'));
+    const originalTree = '<instance-profile id="guide"/>\n';
+    tree.writeAsStringSync(originalTree);
+    var createAttempts = 0;
+
+    await show(
+      tester,
+      WritersideTemplateDialog(
+        existingIds: const {},
+        previewBuilder: (_, template, title, filename) => Text(
+          WritersideTemplateService.generate(
+            template,
+            title: title,
+            id: filename,
+          ),
+        ),
+        onCreate: (template, title, filename) async {
+          createAttempts++;
+          try {
+            await const WritersideTopicCreator().create(
+              WritersideTopicCreateTarget(
+                rootPath: project.path,
+                treePath: tree.path,
+                topicsRootDir: 'topics',
+                existingTopicIds: const {},
+              ),
+              WritersideTopicCreateRequest(
+                title: title,
+                fileName: '$filename.topic',
+                format: WritersideTopicFormat.xml,
+              ),
+              initialSource: WritersideTemplateService.generate(
+                template,
+                title: title,
+                id: filename,
+              ),
+            );
+            return null;
+          } on BusyMarkException catch (error) {
+            return error.code;
+          }
+        },
+      ),
+    );
+    await tester.tap(find.text('Broken XML ID'));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const ValueKey('template-filename')),
+      'setup',
+    );
+    await tester.tap(find.text('Create'));
+    await settle(tester);
+
+    expect(createAttempts, 1);
+    expect(find.text('writerside.topic-file.root-id-mismatch'), findsOneWidget);
+    expect(find.text('Create Topic from Template'), findsOneWidget);
+    expect(
+      File(p.join(project.path, 'topics', 'setup.topic')).existsSync(),
+      isFalse,
+    );
+    expect(Directory(p.join(project.path, 'topics')).existsSync(), isFalse);
+    expect(tree.readAsStringSync(), originalTree);
   });
 
   testWidgets(

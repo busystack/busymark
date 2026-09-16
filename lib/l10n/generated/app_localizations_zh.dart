@@ -2066,6 +2066,23 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String errorWritersideTopicRenameIncompleteProjectIndex(
+    String module,
+    String count,
+    String paths,
+  ) {
+    return '无法安全地重命名并更新所有项目引用，因为模块 $module 中有 $count 个主题文件尚未解析：$paths';
+  }
+
+  @override
+  String get errorWritersideTopicRenameProjectBuffersDirty =>
+      'Writerside 项目文件有未保存的更改。请先处理这些更改，再准备新的重命名预览。';
+
+  @override
+  String get errorWritersideTopicRenameProjectInventoryChanged =>
+      'Writerside 项目的模块集合已更改。请在重构前准备新的重命名预览。';
+
+  @override
   String get errorTopicsRootUnsafe => '主题根目录必须是安全的相对目录。';
 
   @override
@@ -6358,6 +6375,23 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String errorWritersideRollbackFailed(String paths) {
     return '无法完全回滚主题移除。请在继续前查看这些路径：$paths';
   }
+
+  @override
+  String errorWritersideTopicRenameIncompleteProjectIndex(
+    String module,
+    String count,
+    String paths,
+  ) {
+    return '无法安全地重命名并更新所有项目引用，因为模块 $module 中有 $count 个主题文件尚未解析：$paths';
+  }
+
+  @override
+  String get errorWritersideTopicRenameProjectBuffersDirty =>
+      'Writerside 项目文件有未保存的更改。请先处理这些更改，再准备新的重命名预览。';
+
+  @override
+  String get errorWritersideTopicRenameProjectInventoryChanged =>
+      'Writerside 项目的模块集合已更改。请在重构前准备新的重命名预览。';
 
   @override
   String get errorTopicsRootUnsafe => '主题根目录必须是安全的相对目录。';

@@ -2172,6 +2172,23 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
+  String errorWritersideTopicRenameIncompleteProjectIndex(
+    String module,
+    String count,
+    String paths,
+  ) {
+    return 'Navneendringen kan ikke oppdatere alle prosjektreferanser trygt fordi $count emnefil(er) i modulen $module ikke ble analysert: $paths';
+  }
+
+  @override
+  String get errorWritersideTopicRenameProjectBuffersDirty =>
+      'Writerside-prosjektfiler har ulagrede endringer. Løs dem og klargjør en ny forhåndsvisning av navneendringen.';
+
+  @override
+  String get errorWritersideTopicRenameProjectInventoryChanged =>
+      'Modulsettet i Writerside-prosjektet er endret. Klargjør en ny forhåndsvisning av navneendringen før refaktorering.';
+
+  @override
   String get errorTopicsRootUnsafe =>
       'Emneroten må være en sikker relativ mappe.';
 

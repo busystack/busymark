@@ -1641,6 +1641,19 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     }
   }
 
+  void _requireCleanWritersideProject(Workspace workspace) {
+    if (state.workspace?.id != workspace.id ||
+        state.dirtyBuffers.any(
+          (buffer) =>
+              buffer.filePath != null &&
+              isWritersideProjectPath(workspace, buffer.filePath!),
+        )) {
+      throw const BusyMarkException(
+        'writerside.topic-file.project-buffers-dirty',
+      );
+    }
+  }
+
   Future<WritersideTitleEditSession?> prepareWritersideTitleEdit({
     required String treePath,
     required List<int> tocPath,
@@ -1938,8 +1951,8 @@ class WorkspaceController extends Notifier<WorkspaceState> {
   Future<bool> applyWritersideTopicRename(WritersideTopicRenamePlan plan) {
     final activeFilePath = state.workspace?.activeFilePath;
     return _runWorkspaceFileOperation((workspace) async {
-      void validate(Iterable<String> paths) =>
-          _requireCleanAffectedFiles(workspace, paths);
+      void validate(Iterable<String> _) =>
+          _requireCleanWritersideProject(workspace);
       validate(plan.affectedPaths);
       final result = await _service.applyWritersideTopicRename(
         plan,
@@ -3331,6 +3344,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
   }
 
   Future<SaveAllResult> saveAll({
+    Iterable<String>? bufferIds,
     Map<String, LineEndingNormalization> mixedLineEndingNormalizations =
         const {},
   }) async {
@@ -3339,9 +3353,14 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     final failed = <String>[];
     final conflicts = <String>[];
     final normalizationRequired = <String>[];
+    final includedBufferIds = bufferIds?.toSet();
     final targets = [
       for (final buffer in state.documentBuffers)
-        if (buffer.isDirty && buffer.filePath != null) buffer,
+        if (buffer.isDirty &&
+            buffer.filePath != null &&
+            (includedBufferIds == null ||
+                includedBufferIds.contains(buffer.id)))
+          buffer,
     ];
     final writes = <({String id, Future<_BufferWriteResult> result})>[];
     for (final target in targets) {
@@ -3706,6 +3725,41 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       operationTarget.bufferId,
       () => _discardBufferChangesNow(operationTarget),
     );
+  }
+
+  /// Discards the selected buffers without changing the active document.
+  ///
+  /// Project-wide refactoring safety uses this to resolve several inactive
+  /// Writerside buffers without unmounting the UI that owns the confirmation
+  /// workflow between files.
+  Future<bool> discardDocumentBuffers(Iterable<String> bufferIds) async {
+    final workspace = state.workspace;
+    if (workspace == null) return false;
+    for (final bufferId in bufferIds.toSet()) {
+      final buffer = state.documentBuffers
+          .where((candidate) => candidate.id == bufferId)
+          .firstOrNull;
+      if (buffer == null || !buffer.isDirty) continue;
+      final target = ActiveDocumentSaveTarget._(
+        workspaceId: workspace.id,
+        bufferId: buffer.id,
+        path: buffer.filePath,
+        documentRevision: _activeDocumentRevision,
+        editRevision: buffer.revision,
+        snapshot: buffer.diskSnapshot,
+        text: buffer.text,
+        workspaceKind: workspace.kind,
+        format: buffer.format,
+      );
+      _cancelAutoSave(buffer.id);
+      _cancelPendingDerivedRefresh();
+      final discarded = await _enqueueBufferWrite(
+        buffer.id,
+        () => _discardBufferChangesNow(target),
+      );
+      if (!discarded) return false;
+    }
+    return true;
   }
 
   Future<bool> restoreLocalHistoryRevision({
