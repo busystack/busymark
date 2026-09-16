@@ -1,5 +1,6 @@
 import 'package:busymark/l10n/generated/app_localizations.dart';
 import 'package:busymark/src/app/app_theme.dart';
+import 'package:busymark/src/app/busymark_design.dart';
 import 'package:busymark/src/app/busymark_toast.dart';
 import 'package:busymark/src/git/application/git_controller.dart';
 import 'package:busymark/src/git/domain/git_models.dart';
@@ -41,7 +42,10 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Git Author Identity'), findsOneWidget);
 
-    final fields = find.byType(TextFormField);
+    final fields = find.descendant(
+      of: find.byType(BusyMarkModalEditorScaffold),
+      matching: find.byType(TextFormField),
+    );
     await tester.enterText(fields.at(0), 'Albert Gee');
     await tester.sendKeyEvent(LogicalKeyboardKey.enter);
     await tester.enterText(fields.at(1), 'albert@example.com');
@@ -91,14 +95,21 @@ void main() {
         ),
       ),
     );
-    await tester.enterText(find.byType(TextField), 'Document strict Git');
+    final commitField = find.descendant(
+      of: find.byKey(const ValueKey('git-commit-message')),
+      matching: find.byType(TextField),
+    );
+    await tester.enterText(commitField, 'Document strict Git');
     await tester.pump();
     await tester.tap(find.text('Commit'));
     await tester.pumpAndSettle();
     expect(controller.commitMessages, ['Document strict Git']);
     expect(find.text('Git Author Identity'), findsOneWidget);
 
-    final fields = find.byType(TextFormField);
+    final fields = find.descendant(
+      of: find.byType(BusyMarkModalEditorScaffold),
+      matching: find.byType(TextFormField),
+    );
     await tester.enterText(fields.at(0), 'Albert Gee');
     await tester.enterText(fields.at(1), 'albert@example.com');
     await tester.pump();

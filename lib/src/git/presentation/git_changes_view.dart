@@ -231,9 +231,18 @@ class _CommitPanel extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(
-              context.l10n.gitCommitMessage,
-              style: busyMarkSectionHeaderStyle(context),
+            BusyMarkGroupedList(
+              filled: true,
+              children: [
+                BusyMarkGroupedTextEntry(
+                  key: const ValueKey('git-commit-message'),
+                  label: context.l10n.gitCommitMessage,
+                  controller: controller,
+                  minLines: 3,
+                  maxLines: 5,
+                  textInputAction: TextInputAction.newline,
+                ),
+              ],
             ),
             if (hasUnsavedEditorChanges) ...[
               const SizedBox(height: BusyMarkSpacing.sm),
@@ -242,18 +251,6 @@ class _CommitPanel extends StatelessWidget {
                 kind: BusyMarkStatusKind.warning,
               ),
             ],
-            const SizedBox(height: BusyMarkSpacing.sm),
-            TextField(
-              controller: controller,
-              minLines: 3,
-              maxLines: 5,
-              textInputAction: TextInputAction.newline,
-              decoration: const InputDecoration(
-                isDense: true,
-                contentPadding: EdgeInsets.all(BusyMarkSpacing.sm),
-              ),
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
             const SizedBox(height: BusyMarkSpacing.sm),
             Row(
               children: [
@@ -269,12 +266,11 @@ class _CommitPanel extends StatelessWidget {
                 ),
                 const SizedBox(width: BusyMarkSpacing.sm),
                 if (onDraftCommitMessage != null) ...[
-                  BusyMarkHeaderIconButton(
+                  BusyMarkCompactIconButton(
                     tooltip: drafting
                         ? context.l10n.aiDrafting
                         : context.l10n.aiDraftWithAi,
                     icon: BusyMarkGlyphs.ai,
-                    transparent: false,
                     onPressed:
                         !committing && !drafting && stagedFiles.isNotEmpty
                         ? () => onDraftCommitMessage!()

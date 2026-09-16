@@ -1161,6 +1161,9 @@ void main() {
     final gitFileStatusColors = File(
       'lib/src/git/presentation/git_file_status_colors.dart',
     ).readAsStringSync();
+    final commitPanel = RegExp(
+      r'class _CommitPanel[\s\S]*?class GitCommitActions',
+    ).firstMatch(gitChanges)!.group(0)!;
 
     expect(gitChanges, contains('class _CommitPanel'));
     expect(gitChanges, contains('context.l10n.gitCommitMessage'));
@@ -1193,6 +1196,16 @@ void main() {
     expect(gitChanges, isNot(contains('FilledButton.icon')));
     expect(gitChanges, isNot(contains('showDialog<void>')));
     expect(gitChanges, isNot(contains('GitCommitDialog')));
+    expect(commitPanel, contains('BusyMarkGroupedList('));
+    expect(commitPanel, contains('BusyMarkGroupedTextEntry('));
+    expect(commitPanel, contains('context.l10n.gitCommitMessage'));
+    expect(commitPanel, contains('BusyMarkCompactIconButton('));
+    expect(commitPanel, contains('BusyMarkGlyphs.ai'));
+    expect(commitPanel, contains('BusyMarkPushButton.suggested('));
+    expect(commitPanel, contains('BusyMarkStatusBox('));
+    expect(commitPanel, isNot(contains('TextField(')));
+    expect(commitPanel, isNot(contains('TextFormField(')));
+    expect(commitPanel, isNot(contains('BusyMarkHeaderIconButton(')));
   });
 
   test('Git sidebar actions use the shared semantic button adapter', () {
