@@ -1376,6 +1376,18 @@ void main() {
     final workspace = File(
       'lib/src/workspace/presentation/workspace_screen.dart',
     ).readAsStringSync();
+    final fileTreeMenu = RegExp(
+      r'Future<_FileTreeAction\?> _showFileTreeMenu[\s\S]*?'
+      r'Future<T\?> _showSidebarTreeMenu',
+    ).firstMatch(workspace)!.group(0)!;
+    final tocTreeAction = RegExp(
+      r'enum _TocTreeAction[\s\S]*?'
+      r'Future<_TocTreeAction\?> _showTocTreeMenu',
+    ).firstMatch(workspace)!.group(0)!;
+    final tocTreeMenu = RegExp(
+      r'Future<_TocTreeAction\?> _showTocTreeMenu[\s\S]*?'
+      r'bool _canPasteTocTreeEntry',
+    ).firstMatch(workspace)!.group(0)!;
 
     expect(workspace, contains('class _SidebarTreeRow'));
     expect(workspace, contains('class _FileTreeNode'));
@@ -1446,7 +1458,11 @@ void main() {
     expect(workspace, contains('label: context.l10n.cut'));
     expect(workspace, contains('label: context.l10n.paste'));
     expect(workspace, contains('label: context.l10n.delete'));
-    expect(workspace, contains('label: context.l10n.addToGit'));
+    expect(fileTreeMenu, contains('_FileTreeAction.addToGit'));
+    expect(fileTreeMenu, contains('label: context.l10n.addToGit'));
+    expect(tocTreeAction, isNot(contains('addToGit')));
+    expect(tocTreeMenu, isNot(contains('_TocTreeAction.addToGit')));
+    expect(tocTreeMenu, isNot(contains('label: context.l10n.addToGit')));
     expect(workspace, contains('createWorkspaceFile('));
     expect(workspace, contains('renameWorkspaceEntity('));
     expect(workspace, contains('moveWorkspaceEntity('));

@@ -2369,14 +2369,22 @@ void main() {
         l10n.copyName,
         l10n.copyPath,
         l10n.openInFiles,
-        l10n.addToGit,
         l10n.fileHistory,
       ]) {
         expect(popupMenuItem(label), findsOneWidget);
       }
+      expect(popupMenuItem(l10n.addToGit), findsNothing);
       expect(popupMenuItem(l10n.safeDeleteTopicFile), findsNothing);
       expect(popupMenuItem(l10n.delete), findsNothing);
       expect(popupMenuItem('Preview Topic'), findsNothing);
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pumpAndSettle();
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.contextMenu);
+      await tester.pumpAndSettle();
+      expect(popupMenuItem(l10n.openInFiles), findsOneWidget);
+      expect(popupMenuItem(l10n.addToGit), findsNothing);
+      expect(popupMenuItem(l10n.fileHistory), findsOneWidget);
       await tester.sendKeyEvent(LogicalKeyboardKey.escape);
       await tester.pumpAndSettle();
 

@@ -7164,13 +7164,6 @@ class _TocTabState extends ConsumerState<_TocTab> {
           instanceTreePath: instanceTreePath,
           entry: entry,
         );
-      case _TocTreeAction.addToGit:
-        final relativePath = gitRelativePath;
-        if (relativePath != null) {
-          await ref.read(gitControllerProvider.notifier).stageFiles([
-            relativePath,
-          ]);
-        }
       case _TocTreeAction.copyName:
         await _copyToClipboard(topic == null ? rawLabel : topic.baseName);
       case _TocTreeAction.copyPath:
@@ -7870,7 +7863,6 @@ enum _TocTreeAction {
   pasteAfter,
   pasteAsChild,
   removeFromToc,
-  addToGit,
   copyName,
   copyPath,
   openInFiles,
@@ -8129,12 +8121,6 @@ Future<_TocTreeAction?> _showTocTreeMenu(
           label: context.l10n.openInFiles,
           icon: BusyMarkGlyphs.folderOpen,
           enabled: hasTopicFile,
-        ),
-        BusyMarkPopupMenuItem(
-          value: _TocTreeAction.addToGit,
-          label: context.l10n.addToGit,
-          icon: BusyMarkGlyphs.branch,
-          enabled: enableGitActions,
         ),
         if (showHistory) const PopupMenuDivider(height: BusyMarkSpacing.sm),
         if (showHistory)
