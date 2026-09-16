@@ -91,7 +91,7 @@
   "@tocEditTitleAction": {"description":"Writerside Table of Contents command or dialog text."},
   "tocEditTitleDialog": "Edit Title",
   "@tocEditTitleDialog": {"description":"Writerside Table of Contents command or dialog text."},
-  "tocRemoveElementAction": "Remove TOC Element...",
+  "tocRemoveElementAction": "Remove TOC Element",
   "@tocRemoveElementAction": {"description":"Writerside Table of Contents command or dialog text."},
   "tocSetHomePage": "Set as Home Page",
   "@tocSetHomePage": {"description":"Writerside Table of Contents command or dialog text."},

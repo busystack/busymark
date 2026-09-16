@@ -105,10 +105,10 @@ screenshot comparison.
 | S2, P | Context: **Copy Special** → **Topic File Name '{name}'**, **Topic File Path**, **Topic Title '{title}'**, **TOC Element ID '{id}'** | `WS._showTocTreeMenu`, `_showTopicContextMenu` | App: all four Copy Special clipboard payloads in RTL, including base versus navigation title; M nested keyboard/focus/RTL | Native menu captured. Payloads are raw topic reference, canonical path, base title, explicit ID; unavailable values are disabled. No claim that contextual TOC title is copied. |
 | S2, S14 | Context: **Preview Topic** | `WS._showTopicContextMenu` preview case, existing view-mode/preview controller | Existing preview/view-mode suites; native selected-topic assertion | Native selected-topic preview passed and was captured. Uses BusyMark renderer, not the Writerside website renderer. |
 | S2, S4–S7, P | Context: **Edit Title...**; dialog **Edit Title** with **Topic title:**, **Advanced Settings**, **Title for '{id}':**, **TOC-only title:**, **Cancel**, **OK** | `Dialogs.WritersideTitleDialog`, `WritersideTitleEditor.prepare`, `WorkspaceService.editWritersideTitles` | A: XML/Markdown escaping, independent overrides, inherited values, clearing, repeated occurrence; W: rollback on second-file guard | Native dialog/advanced fields captured and inspected. Front-matter title editing is rejected rather than silently changing a shadowed H1; edit that BusyMark extension in source. |
-| S11–S12, P | Context: **Remove TOC Element...**; dialog **Remove TOC Element** | `WS._runWritersideTopicRemoval`, `WritersideTopicRemovalService` | R: references, redirect, malformed source, races, file retained/deleted; W: dirty guard rollback | Native ordinary removal and Find transition captured. Redirect precedes automatic-update checkbox; automatic update defaults on when analysis permits. Safety diagnostics are BusyMark-specific. |
+| S11–S12, P | Context: **Remove TOC Element**; dialog **Remove TOC Element** | `WS._runWritersideTopicRemoval`, `WritersideTopicRemovalService` | R: project-wide references, `topic`/`ref`/`origin`, redirects, malformed or incomplete semantic discovery, races, file retained/deleted; W: project-wide dirty guard and rollback | The approved sidebar Review Usages flow is instance-aware; Do Refactor reanalyzes and completes directly when all blocking usages are resolved. |
 | S1, P | Multi-selection: **Remove TOC Elements...**; compact **Remove {count} TOC Elements** | `WS._removeTocEntries`, guarded batch structural removal | E: source identities and direct-child promotion; App: multi-selection route | Existing direct-child promotion is preserved, as required by handoff. Installed descendant-inclusive count/removal is not cloned; selected-entry count is shown. |
 | S11, user decision | Existing sidebar: **Find**, **Do Refactor** | `_WritersideTopicUsageReviewPanel`, usage navigation/reanalysis orchestration | R and controller stale-analysis tests; native review transition | Native surface captured and inspected. Sidebar placement is explicitly user-approved; this is not a general JetBrains tool-window clone. |
-| S11 | Files context: **Refactor** → **Safe Delete**; dialog **Delete**, **Safe Delete**, **OK** | Files nested menu, same topic-removal analyzer/apply service | R: generic delete bypass prohibited, usage checks, orphan choices; W: rollback | Native Files → Refactor → Safe Delete passed; Delete dialog captured and inspected. Unchecking Safe Delete does not bypass BusyMark reference safety checks. |
+| S11 | Files context: **Refactor** → **Safe Delete**; dialog **Delete**, mandatory checked **Safe Delete**, **OK** | Files nested menu, same topic-removal analyzer/apply service | R: project-wide generic-delete bypass prohibited (including unparsed/non-active-module topics), usage checks, orphan choices; W: rollback | Safe Delete is deliberately non-toggleable for Writerside topic files. |
 | S2, S15, P | Context: **Set as Home Page** | `WritersideTocEditor.setHomePage`, controller/service | W: root attributes and other instance unchanged; C: first-topic initialization retained | Native reassignment passed and marker inspected. No home action for groups, URLs or library instances; included structural mutation remains restricted. |
 | S1, P | Multi-selection after Duplicate: **Group**; **New Group**, **Group Name**, Enter | `WritersideTocEditor.groupElements`, `Dialogs.WritersideTocTextDialog` | A: source order, full nodes, cross-parent rejection; E guards | Native Group/Enter passed, wrapping the two selected source subtrees. Same-parent selections only, preserving complete XML subtrees. |
 | S1, P | Context after source navigation: **Sort Child Topics Alphabetically** | `WorkspaceService.sortWritersideTocChildren`, `WritersideTocEditor.reorderChildren` | W: concurrent resolved-title dependency change rejected; native expected order | Native shallow contextual-title order passed. Deliberately rejects mixed XML child entries instead of reproducing the installed action's loss of includes/non-TOC tags. |
@@ -129,10 +129,32 @@ New mutations validate raw source identities and expected content, use guarded
 publication, and inspect inactive affected buffers as well as the active document.
 Title changes are prepared before a multi-file transaction; dirty-buffer and disk
 guards are rechecked at publication, with rollback on partial failure. Topic
-deletion uses the existing analyzer and rollback machinery. Clean tabs refresh;
-unrelated dirty tabs remain untouched. File-monitor events are deferred during
-foreground file operations so an own-write event cannot invalidate the subsequent
-open-new-document step.
+removal uses the complete `WritersideProject`: ownership is chosen by exact parsed
+topic path or the most-specific configured topic root, so non-active and nested
+modules cannot bypass Safe Delete. The reviewed snapshot includes the sorted module
+inventory, module inputs, every parsed topic, variables and instance groups, all
+semantic `.tree` files, and redirect rules. Hidden, `build`, `target`, `dist`, and
+`out` directories participate in semantic discovery; `.git`, `.hg`, and `.svn`
+remain hard exclusions. Incomplete module/topic/tree discovery, unparsed topics,
+or a changed snapshot fails closed before publication.
+
+Removal combines indexed links, includes, cards and other semantic references with
+an exhaustive tree/start-page pass. `topic`, `ref`, `in`, and `origin` resolve
+through the owning host and target modules. Current-instance relevance comes from
+the resolved navigation tree and resolved topic documents, including filters and
+instance conditions; Safe Delete remains project-wide. Unsupported but resolved
+references appear in the approved Review Usages sidebar as manual blockers. Orphan
+status is asserted only when the complete post-refactor project has no remaining
+usage.
+
+Redirect plans retain each host instance's effective web filename plus direct and
+rule-based accepted aliases, and validate the resolved instance namespace before
+writing. Do Refactor resolves dirty project buffers, reanalyzes from disk, preserves
+the reviewed options, and applies immediately when blockers are gone. Cross-module
+writes use guarded atomic replacement and rollback, with the topic file deleted
+last. Clean tabs refresh; unrelated dirty tabs remain untouched. File-monitor
+events are deferred during foreground file operations so an own-write event cannot
+invalidate the subsequent open-new-document step.
 
 Structural serialization remains the existing XML pretty-printer: semantic
 preservation, not byte-for-byte formatting preservation. Included nodes remain
@@ -196,30 +218,30 @@ The existing main application menu remains flat.
 
 ## Verification log
 
-Final verification, including templates and native menus:
+Final verification, including topic removal, templates, and native menus:
 
-- `flutter gen-l10n`: exit 0, all 23 ARBs regenerated.
-- Formatting checks: exit 0, 22 changed and 13 new non-generated Dart files.
+- `flutter gen-l10n`: exit 0; generated localization sources are current.
+- Changed Dart sources and tests were formatted with `dart format`.
 - `flutter analyze --no-pub`: exit 0, no issues.
-- Full `flutter test --no-pub --file-reporter json:/tmp/busymark-final-tests.json`:
-  exit 0, **1,905 passed, 58 skipped**.
-- Documented focused Writerside/source/controller/export suite: exit 0,
-  **400 passed, 1 skipped**, report `/tmp/busymark-gtk-focused-verified.json`.
+- Full `flutter test --no-pub`: exit 0, **2,038 passed, 58 skipped**.
+- Required focused removal/project/workspace/controller/TOC/UI suites: exit 0,
+  **302 passed**.
 - `bash tools/validate_writerside_conformance.sh`: exit 0, **181 checks passed**.
   This uses the pinned builder 2026.08.0328, distinct from the selected UI plugin
   2026.07.8925. It checks the semantic fixture, not website or menu parity.
-- Linux interaction harness: exit 0, **35 checks passed**, **20 captures**.
+- Linux interaction harness: result artifact reports no failure and **48 checks
+  passed**.
   Includes real GTK two-level keyboard traversal in LTR/RTL, disabled headings,
   Escape, focus return, session-scoped dismissal, existing flat radio selectors,
-  and the core TOC/template workflows in the action matrix.
+  the reviewed removal flow, mandatory Safe Delete, and the core TOC/template
+  workflows in the action matrix.
 - Normal `flutter build linux --debug --no-pub --target lib/main.dart`: exit 0;
   the bundle is restored to the normal application, not the acceptance harness.
 - `git diff --check`: exit 0.
 
 The 58 full-suite skips are optional Typst/PDF/Poppler and D2 integrations that
-require explicit tool-path environment configuration. The focused skip is a
-Typst integration. No unavailable optional integration is counted as a passing
-TOC or native-menu check.
+require explicit tool-path environment configuration. No unavailable optional
+integration is counted as a passing TOC or native-menu check.
 
 The first template full run exposed three test-contract problems: reviewed
 technical strings in localization audits, the Chinese locale inheritance

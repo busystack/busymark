@@ -406,7 +406,7 @@ abstract class AppLocalizations {
   /// Writerside Table of Contents command or dialog text.
   ///
   /// In en, this message translates to:
-  /// **'Remove TOC Element...'**
+  /// **'Remove TOC Element'**
   String get tocRemoveElementAction;
 
   /// Writerside Table of Contents command or dialog text.

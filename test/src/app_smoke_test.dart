@@ -1907,6 +1907,8 @@ void main() {
   </toc-element>
   <toc-element topic="loose.md"/>
   <toc-element topic="target.md"/>
+  <toc-element ref="loose.md" in="guide" toc-title="Ref entry"/>
+  <toc-element topic="shared.md" origin="shared-docs" toc-title="Origin entry"/>
 </instance-profile>
 ''');
       File(p.join(root.path, 'api.tree')).writeAsStringSync('''
@@ -1928,11 +1930,10 @@ void main() {
       ).writeAsStringSync('# Target\n');
       File(p.join(root.path, 'topics', 'api.md')).writeAsStringSync('# API\n');
       final sharedModule = Directory(p.join(root.path, 'shared'))..createSync();
-      Directory(p.join(sharedModule.path, 'topics')).createSync();
       File(p.join(sharedModule.path, 'writerside.cfg')).writeAsStringSync('''
 <ihp version="2.0">
   <module name="shared-docs"/>
-  <topics dir="topics"/>
+  <topics dir="."/>
   <instance src="shared.tree"/>
 </ihp>
 ''');
@@ -1942,7 +1943,7 @@ void main() {
 </instance-profile>
 ''');
       File(
-        p.join(sharedModule.path, 'topics', 'shared.md'),
+        p.join(sharedModule.path, 'shared.md'),
       ).writeAsStringSync('# Shared\n');
       final workspace = (await tester.runAsync(
         () => const WorkspaceService().openPath(root.path),
@@ -2008,8 +2009,24 @@ void main() {
         WritersideTopicRemovalMode.safeDeleteFile,
       );
       expect(find.text(l10n.delete), findsOneWidget);
+      expect(find.text(l10n.tocSafeDelete), findsOneWidget);
+      final mandatorySafeDelete = tester.widget<CheckboxListTile>(
+        find.widgetWithText(CheckboxListTile, l10n.tocSafeDelete),
+      );
+      expect(mandatorySafeDelete.value, isTrue);
+      expect(mandatorySafeDelete.onChanged, isNull);
+      expect(find.text(l10n.updateUsagesAutomatically), findsOneWidget);
+      expect(find.text(l10n.reviewUsages), findsOneWidget);
       await tester.tap(find.text(l10n.cancel));
       await tester.pump(const Duration(milliseconds: 200));
+
+      await openPopup(find.text('target.md'), buttons: kSecondaryButton);
+      expect(popupMenuItem(l10n.tocRefactorMenu), findsOneWidget);
+      await tester.tap(popupMenuItem(l10n.tocRefactorMenu));
+      await tester.pumpAndSettle();
+      expect(popupMenuItem(l10n.tocSafeDelete), findsOneWidget);
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pumpAndSettle();
 
       await openPopup(find.byTooltip(l10n.sidebarViewMenu));
       await tester.tap(find.text(l10n.toc));
@@ -2301,8 +2318,33 @@ void main() {
         WritersideTopicRemovalMode.removeFromInstance,
       );
       expect(find.text(l10n.removeTocElement), findsOneWidget);
-      await tester.tap(find.text(l10n.cancel));
-      await tester.pump(const Duration(milliseconds: 200));
+      expect(find.text(l10n.setRedirectTo), findsOneWidget);
+      expect(find.text(l10n.updateUsagesAutomatically), findsOneWidget);
+      expect(find.text(l10n.topicUsagesCount(1)), findsOneWidget);
+      expect(find.text(l10n.reviewUsages), findsOneWidget);
+      expect(find.text(l10n.removeAction), findsOneWidget);
+      await tester.tap(find.text(l10n.reviewUsages));
+      await tester.pumpAndSettle();
+      expect(find.text(l10n.doRefactor), findsOneWidget);
+      await tester.tap(find.text(l10n.doRefactor));
+      await tester.pumpAndSettle();
+      expect(controller.appliedTopicRemovalCount, 1);
+      expect(find.text(l10n.removeTocElement), findsNothing);
+
+      for (final label in ['Ref entry', 'Origin entry']) {
+        await tester.tap(find.text(label));
+        await tester.pump(const Duration(milliseconds: 200));
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.delete);
+        await tester.pumpAndSettle();
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.delete);
+        expect(
+          controller.analyzedRemovalMode,
+          WritersideTopicRemovalMode.removeFromInstance,
+        );
+        expect(find.text(l10n.removeTocElement), findsOneWidget);
+        await tester.tap(find.text(l10n.cancel));
+        await tester.pumpAndSettle();
+      }
 
       await tester.pumpAndSettle();
       await openPopup(find.text('Nested entry'), buttons: kSecondaryButton);
@@ -11086,6 +11128,7 @@ class _MutableWorkspaceController extends WorkspaceController {
   List<int>? movedTopicSourcePath;
   List<int>? movedTopicReferencePath;
   WritersideTopicRemovalMode? analyzedRemovalMode;
+  var appliedTopicRemovalCount = 0;
   String? selectedWritersideModuleId;
   String? selectedWritersideInstanceId;
   String? openedFilePath;
@@ -11412,12 +11455,36 @@ class _MutableWorkspaceController extends WorkspaceController {
     List<int>? nodePath,
   }) async {
     analyzedRemovalMode = mode;
-    final topic = state.workspace!.writersideModule!.topics.singleWhere(
+    final workspace = state.workspace!;
+    final owner =
+        workspace.writersideProject?.topicOwnerForPath(topicPath) ??
+        workspace.writersideModule;
+    final topic = owner!.topics.singleWhere(
       (candidate) => p.equals(candidate.filePath, topicPath),
     );
+    final usagePath =
+        workspace.writersideProject?.modules
+            .where((module) => !p.equals(module.rootPath, owner.rootPath))
+            .expand((module) => module.topics)
+            .firstOrNull
+            ?.filePath ??
+        topicPath;
     return WritersideTopicRemovalAnalysis(
       mode: mode,
-      moduleRoot: state.workspace!.rootPath,
+      projectRoot: workspace.rootPath,
+      targetModuleRoot: owner.rootPath,
+      hostModuleRoot: treePath == null
+          ? owner.rootPath
+          : workspace.writersideProject?.modules
+                    .where(
+                      (module) => module.instances.any(
+                        (instance) =>
+                            p.equals(instance.sourceTreePath, treePath),
+                      ),
+                    )
+                    .firstOrNull
+                    ?.rootPath ??
+                owner.rootPath,
       topicPath: topicPath,
       topicFileName: topic.fileName,
       topicTitle: topic.title,
@@ -11426,9 +11493,39 @@ class _MutableWorkspaceController extends WorkspaceController {
       selectedNodePath: nodePath,
       childCount: 0,
       isStartPage: false,
-      usages: const [],
+      usages: [
+        WritersideTopicUsage(
+          kind: WritersideTopicUsageKind.topicLink,
+          filePath: usagePath,
+          line: 1,
+          column: 1,
+          reference: topic.fileName,
+          relevant: true,
+          canUpdateAutomatically: true,
+          moduleRoot: p.dirname(p.dirname(usagePath)),
+        ),
+      ],
       redirectTargets: const [],
       fingerprint: 'widget-test',
+      projectModuleRoots: [
+        for (final module in workspace.writersideProject?.modules ?? [owner])
+          module.rootPath,
+      ],
+    );
+  }
+
+  @override
+  Future<WritersideTopicRemovalResult?> applyWritersideTopicRemoval(
+    WritersideTopicRemovalRequest request,
+  ) async {
+    appliedTopicRemovalCount++;
+    return WritersideTopicRemovalResult(
+      deletedFile:
+          request.analysis.mode == WritersideTopicRemovalMode.safeDeleteFile,
+      orphaned: false,
+      promotedChildren: 0,
+      redirectAdded: false,
+      updatedUsageFiles: const [],
     );
   }
 

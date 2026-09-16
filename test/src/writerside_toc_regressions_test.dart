@@ -241,12 +241,15 @@ void main() {
         buttons: kSecondaryMouseButton,
       );
       await tester.pumpAndSettle();
-      await tester.runAsync(
-        () => tester.tap(find.text('Remove TOC Element...')),
-      );
+      await tester.runAsync(() => tester.tap(find.text('Remove TOC Element')));
       await _settle(
         tester,
-        until: () => find.text('Remove TOC Element').evaluate().isNotEmpty,
+        until: () => find
+            .text(
+              "Remove TOC element 'Other topic'? The source file associated with the TOC won't be deleted.",
+            )
+            .evaluate()
+            .isNotEmpty,
       );
       expect(
         find.text(

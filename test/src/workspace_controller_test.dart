@@ -23,6 +23,7 @@ import 'package:busymark/src/writerside/writerside_project_creator.dart';
 import 'package:busymark/src/writerside/writerside_model.dart';
 import 'package:busymark/src/writerside/writerside_topic_creator.dart';
 import 'package:busymark/src/writerside/writerside_topic_file_editor.dart';
+import 'package:busymark/src/writerside/writerside_topic_removal_service.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -30,6 +31,63 @@ import 'package:path/path.dart' as p;
 import 'package:xml/xml.dart';
 
 void main() {
+  test(
+    'Safe Delete closes the topic buffer, selects a survivor, and records history',
+    () async {
+      final root = await Directory.systemTemp.createTemp(
+        'busymark-topic-removal-lifecycle-',
+      );
+      addTearDown(() => root.delete(recursive: true));
+      await Directory(p.join(root.path, 'topics')).create();
+      await File(p.join(root.path, 'writerside.cfg')).writeAsString(
+        '<ihp><topics dir="topics"/><instance src="guide.tree"/></ihp>',
+      );
+      await File(p.join(root.path, 'guide.tree')).writeAsString('''
+<instance-profile id="guide" start-page="survivor.md">
+  <toc-element topic="survivor.md"/>
+  <toc-element topic="doomed.md"/>
+</instance-profile>
+''');
+      final survivor = File(p.join(root.path, 'topics', 'survivor.md'));
+      final doomed = File(p.join(root.path, 'topics', 'doomed.md'));
+      await survivor.writeAsString('# Survivor\n');
+      await doomed.writeAsString('# Doomed\n');
+      final history = MemoryLocalHistoryStore();
+      final harness = await _createControllerHarness(
+        localHistoryStore: history,
+      );
+      final controller = harness.controller._notifier;
+      await controller.openPath(root.path);
+      await controller.openActiveFile(survivor.path);
+      await controller.openActiveFile(doomed.path);
+      final analysis = await controller.analyzeWritersideTopicRemoval(
+        topicPath: doomed.path,
+        mode: WritersideTopicRemovalMode.safeDeleteFile,
+      );
+
+      final result = await controller.applyWritersideTopicRemoval(
+        WritersideTopicRemovalRequest(analysis: analysis!),
+      );
+
+      expect(result?.deletedFile, isTrue);
+      expect(doomed.existsSync(), isFalse);
+      expect(
+        controller.state.documentBuffers.map((buffer) => buffer.filePath),
+        isNot(contains(doomed.path)),
+      );
+      expect(
+        controller.state.workspace?.openFilePaths,
+        isNot(contains(doomed.path)),
+      );
+      expect(controller.state.workspace?.activeFilePath, survivor.path);
+      final historySnapshot = await history.load();
+      final deletedDocument = historySnapshot.documents.singleWhere(
+        (document) => document.historicalPaths.contains(doomed.path),
+      );
+      expect(deletedDocument.deleted, isTrue);
+    },
+  );
+
   test(
     'TOC writes reject an inactive dirty tree without discarding either buffer',
     () async {

@@ -540,17 +540,31 @@ class _HarnessState extends ConsumerState<_Harness> {
       );
       await _pause();
       await _menu('Usage review');
-      await _tapLabel('Remove TOC Element...');
+      await _tapLabel('Remove TOC Element');
       await _capture('06-removal');
       if (_elements(
         (widget) => widget is Text && widget.data == 'Review Usages',
       ).isNotEmpty) {
         await _tapLabel('Review Usages');
         await _capture('07-find-review');
-        await _tap(
+        await _tapLabel('Do Refactor');
+        await _until(
+          () => _elements(
+            (widget) =>
+                widget is Text && widget.data == 'Topic file is no longer used',
+          ).isNotEmpty,
+          'Do Refactor completes without reopening the removal dialog',
+        );
+        _check(
           _elements(
-            (widget) => widget is Tooltip && widget.message == 'Back',
-          ).last,
+            (widget) => widget is Text && widget.data == 'Remove TOC Element',
+          ).isEmpty,
+          'Do Refactor does not reopen Remove TOC Element',
+        );
+        await _tapLabel('Keep Topic File');
+        _check(
+          await File(p.join(widget.root.path, 'topics/review.md')).exists(),
+          'Keeping an orphan retains its topic source',
         );
       } else {
         await _tapLabel('Cancel');
@@ -1041,6 +1055,15 @@ class _HarnessState extends ConsumerState<_Harness> {
       await _tapLabel('Refactor');
       await _tapLabel('Safe Delete');
       await _capture('12-safe-delete');
+      _check(
+        _elements(
+          (widget) =>
+              widget is Checkbox &&
+              widget.value == true &&
+              widget.onChanged == null,
+        ).isNotEmpty,
+        'Safe Delete remains selected and mandatory',
+      );
       await _tapLabel('OK');
       await _until(() => !duplicate.existsSync(), 'Safe Delete completes');
       _check(

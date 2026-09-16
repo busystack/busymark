@@ -440,6 +440,7 @@ class _SourceNavigationTarget {
   const _SourceNavigationTarget({
     required this.filePath,
     required this.line,
+    this.sourceOffset,
     this.tocPath,
     this.tocIdentity,
     this.xmlChildren = false,
@@ -447,6 +448,7 @@ class _SourceNavigationTarget {
 
   final String filePath;
   final int line;
+  final int? sourceOffset;
   final List<int>? tocPath;
   final WritersideTocNodeIdentity? tocIdentity;
   final bool xmlChildren;
@@ -2515,10 +2517,7 @@ class _SidebarState extends ConsumerState<_Sidebar> {
     String? redirectTopicPath,
     bool applyIfUnused = false,
   }) async {
-    if (!await confirmSafeToChangeWorkspaceFiles(context, ref, [
-          target.topicPath,
-          if (target.treePath != null) target.treePath!,
-        ]) ||
+    if (!await confirmSafeToRefactorWritersideProject(context, ref) ||
         !mounted ||
         !context.mounted) {
       return null;
@@ -2575,18 +2574,8 @@ class _SidebarState extends ConsumerState<_Sidebar> {
       });
       return null;
     }
-    final affectedPaths = <String>{
-      target.topicPath,
-      if (target.treePath != null) target.treePath!,
-      if (decision.redirectTarget != null) decision.redirectTarget!.treePath,
-      for (final usage in analysis.usages)
-        if (usage.relevant) usage.filePath,
-    };
-    final dirtyInputs = ref
-        .read(workspaceControllerProvider)
-        .dirtyBuffers
-        .any((buffer) => affectedPaths.contains(buffer.filePath));
-    if (!await confirmSafeToChangeWorkspaceFiles(context, ref, affectedPaths) ||
+    final dirtyInputs = hasDirtyWritersideProjectBuffers(ref);
+    if (!await confirmSafeToRefactorWritersideProject(context, ref) ||
         !mounted ||
         !context.mounted) {
       return null;
@@ -2646,16 +2635,85 @@ class _SidebarState extends ConsumerState<_Sidebar> {
 
   Future<void> _resumeWritersideTopicRemoval(BuildContext context) async {
     final review = _topicUsageReview;
-    if (review == null) {
+    if (review == null) return;
+    if (!await confirmSafeToRefactorWritersideProject(context, ref) ||
+        !mounted ||
+        !context.mounted) {
+      return;
+    }
+    final controller = ref.read(workspaceControllerProvider.notifier);
+    final analysis = await controller.analyzeWritersideTopicRemoval(
+      topicPath: review.target.topicPath,
+      mode: review.target.mode,
+      treePath: review.target.treePath,
+      nodePath: review.target.nodePath,
+    );
+    if (!mounted || !context.mounted) return;
+    if (analysis == null) {
+      _showLatestWorkspaceMessage(context);
+      return;
+    }
+    final redirect = review.redirectTopicPath == null
+        ? null
+        : analysis.redirectTargets
+              .where(
+                (candidate) =>
+                    p.equals(candidate.topicPath, review.redirectTopicPath!),
+              )
+              .firstOrNull;
+    if (review.redirectTopicPath != null && redirect == null) {
+      BusyMarkToastOverlay.show(
+        context,
+        message: context.l10n.errorWritersideRedirectInvalid,
+      );
+      return;
+    }
+    if (analysis.blockingUsages.any(
+      (usage) =>
+          !review.updateUsagesAutomatically || !usage.canUpdateAutomatically,
+    )) {
+      setState(() {
+        _topicUsageReview = _WritersideTopicUsageReview(
+          target: review.target,
+          analysis: analysis,
+          updateUsagesAutomatically: review.updateUsagesAutomatically,
+          redirectTopicPath: review.redirectTopicPath,
+        );
+      });
+      return;
+    }
+    final result = await controller.applyWritersideTopicRemoval(
+      WritersideTopicRemovalRequest(
+        analysis: analysis,
+        updateUsagesAutomatically: review.updateUsagesAutomatically,
+        redirectTarget: redirect,
+      ),
+    );
+    if (!mounted || !context.mounted) return;
+    if (result == null) {
+      _showLatestWorkspaceMessage(context);
       return;
     }
     setState(() => _topicUsageReview = null);
-    await _runWritersideTopicRemoval(
-      context,
-      review.target,
-      updateUsagesAutomatically: review.updateUsagesAutomatically,
-      redirectTopicPath: review.redirectTopicPath,
-    );
+    _clearGitDetailSelection(ref);
+    if (review.target.mode == WritersideTopicRemovalMode.removeFromInstance &&
+        result.orphaned &&
+        !result.deletedFile) {
+      final deleteOrphan = await _confirmDeleteOrphanTopicFile(
+        context,
+        analysis.topicFileName,
+      );
+      if (deleteOrphan && mounted && context.mounted) {
+        await _runWritersideTopicRemoval(
+          context,
+          _WritersideTopicRemovalTarget(
+            mode: WritersideTopicRemovalMode.safeDeleteFile,
+            topicPath: review.target.topicPath,
+          ),
+          applyIfUnused: true,
+        );
+      }
+    }
   }
 
   Future<void> _openWritersideTopicUsage(
@@ -2671,7 +2729,11 @@ class _SidebarState extends ConsumerState<_Sidebar> {
     ref
         .read(_sourceNavigationTargetProvider.notifier)
         .set(
-          _SourceNavigationTarget(filePath: usage.filePath, line: usage.line),
+          _SourceNavigationTarget(
+            filePath: usage.filePath,
+            line: usage.line,
+            sourceOffset: usage.span?.startOffset,
+          ),
         );
     _clearGitDetailSelection(ref);
   }
@@ -3731,7 +3793,6 @@ class _WritersideTopicRemovalDialog extends StatefulWidget {
 class _WritersideTopicRemovalDialogState
     extends State<_WritersideTopicRemovalDialog> {
   late bool _updateUsagesAutomatically;
-  bool _safeDelete = true;
   WritersideTopicRedirectTarget? _redirectTarget;
 
   WritersideTopicRemovalAnalysis get _analysis => widget.analysis;
@@ -3740,9 +3801,7 @@ class _WritersideTopicRemovalDialogState
     if (_analysis.blockingUsages.isEmpty) {
       return true;
     }
-    return _safeDelete &&
-        _updateUsagesAutomatically &&
-        _analysis.canUpdateUsagesAutomatically;
+    return _updateUsagesAutomatically && _analysis.canUpdateUsagesAutomatically;
   }
 
   @override
@@ -3862,38 +3921,31 @@ class _WritersideTopicRemovalDialogState
             contentPadding: EdgeInsets.zero,
             controlAffinity: ListTileControlAffinity.leading,
             title: Text(context.l10n.tocSafeDelete),
-            value: _safeDelete,
-            onChanged: (value) => setState(() {
-              _safeDelete = value ?? true;
-              if (!_safeDelete) {
-                _updateUsagesAutomatically = false;
-                _redirectTarget = null;
-              }
-            }),
+            value: true,
+            onChanged: null,
           ),
-        if (removeFromInstance || _safeDelete)
-          Row(
-            children: [
-              Checkbox(
-                value: _updateUsagesAutomatically,
-                onChanged: _analysis.canUpdateUsagesAutomatically
-                    ? (value) => setState(
-                        () => _updateUsagesAutomatically = value ?? false,
-                      )
-                    : null,
-              ),
-              Flexible(child: Text(context.l10n.updateUsagesAutomatically)),
-              const SizedBox(width: BusyMarkSpacing.md),
-              Flexible(
-                child: Text(
-                  context.l10n.topicUsagesCount(relevantUsages.length),
-                  style: TextStyle(
-                    color: BusyMarkSurfaceColors.of(context).mutedForeground,
-                  ),
+        Row(
+          children: [
+            Checkbox(
+              value: _updateUsagesAutomatically,
+              onChanged: _analysis.canUpdateUsagesAutomatically
+                  ? (value) => setState(
+                      () => _updateUsagesAutomatically = value ?? false,
+                    )
+                  : null,
+            ),
+            Flexible(child: Text(context.l10n.updateUsagesAutomatically)),
+            const SizedBox(width: BusyMarkSpacing.md),
+            Flexible(
+              child: Text(
+                context.l10n.topicUsagesCount(relevantUsages.length),
+                style: TextStyle(
+                  color: BusyMarkSurfaceColors.of(context).mutedForeground,
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
+        ),
         if (!_canApply) ...[
           const SizedBox(height: BusyMarkSpacing.md),
           BusyMarkStatusBox(
@@ -4005,7 +4057,7 @@ class _WritersideTopicUsagesSidebar extends StatelessWidget {
                           _SidebarNavigationResultRow(
                             title: usage.reference,
                             subtitle:
-                                '${busyMarkLtrIsolateFor(context, '${p.basename(usage.filePath)}:${usage.line}:${usage.column}')}'
+                                '${busyMarkLtrIsolateFor(context, '${p.relative(usage.filePath, from: analysis.projectRoot)}:${usage.line}:${usage.column}')}'
                                 '${usage.relevant ? '' : ' · ${context.l10n.outsideSelectedInstance}'}',
                             icon: _writersideTopicUsageKindIcon(kind),
                             onOpen: () => onOpenUsage(usage),
@@ -4215,6 +4267,8 @@ String _writersideTopicUsageKindLabel(
     WritersideTopicUsageKind.startPage => context.l10n.topicUsageStartPages,
     WritersideTopicUsageKind.topicLink => context.l10n.topicUsageTopicLinks,
     WritersideTopicUsageKind.include => context.l10n.topicUsageIncludes,
+    WritersideTopicUsageKind.otherTopicReference =>
+      context.l10n.topicUsageTopicLinks,
   };
 }
 
@@ -4224,6 +4278,7 @@ IconData _writersideTopicUsageKindIcon(WritersideTopicUsageKind kind) {
     WritersideTopicUsageKind.startPage => BusyMarkGlyphs.startTopic,
     WritersideTopicUsageKind.topicLink => BusyMarkGlyphs.link,
     WritersideTopicUsageKind.include => BusyMarkGlyphs.insertObject,
+    WritersideTopicUsageKind.otherTopicReference => BusyMarkGlyphs.link,
   };
 }
 
@@ -4735,7 +4790,8 @@ bool _isWritersideTopicFile(Workspace workspace, DocumentFile? file) {
       file.kind == DocumentKind.writersideXmlTopic) {
     return true;
   }
-  return workspace.writersideModule?.topics.any(
+  return workspace.writersideProject?.isTopicPath(file.absolutePath) ??
+      workspace.writersideModule?.topics.any(
         (topic) => p.equals(topic.filePath, file.absolutePath),
       ) ??
       false;
@@ -6340,9 +6396,14 @@ class _TocTabState extends ConsumerState<_TocTab> {
     if (rawNode == null) {
       return;
     }
+    final topicOwner = entry.node.origin == null
+        ? widget.workspace.writersideModule
+        : widget.workspace.writersideProject?.modulesByOrigin[entry
+              .node
+              .origin];
     final topic = reference == null
         ? null
-        : widget.workspace.writersideModule?.topicByReference(reference);
+        : topicOwner?.topicByReference(reference);
     if (topic != null) {
       final result = await widget.onRequestTopicRemoval(
         _WritersideTopicRemovalTarget(
@@ -11915,6 +11976,8 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
           );
           if (span == null) return;
           editor.scrollToOffset(span.startOffset);
+        } else if (sourceTarget.sourceOffset case final offset?) {
+          editor.scrollToOffset(offset);
         } else {
           editor.scrollToLine(sourceTarget.line);
         }

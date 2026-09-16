@@ -927,10 +927,18 @@ class WorkspaceService {
     Workspace workspace,
     String topicPath,
   ) async {
-    final module = await _currentWritersideModule(workspace);
+    final project = await _writersideProjectService.load(
+      workspace.rootPath,
+      preferredModuleRoot: workspace.writersideModule?.rootPath,
+    );
+    final module = project.topicOwnerForPath(topicPath);
+    if (module == null) {
+      throw const BusyMarkException('writerside.topic.module-not-open');
+    }
     final topic = _writersideTopicForPath(module, topicPath);
     final analysis = await writersideTopicRemovalService.analyze(
-      module: module,
+      project: project,
+      projectRoot: workspace.rootPath,
       topicPath: topic.filePath,
       mode: WritersideTopicRemovalMode.safeDeleteFile,
     );
@@ -949,10 +957,18 @@ class WorkspaceService {
     String? treePath,
     List<int>? nodePath,
   }) async {
-    final module = await _currentWritersideModule(workspace);
+    final project = await _writersideProjectService.load(
+      workspace.rootPath,
+      preferredModuleRoot: workspace.writersideModule?.rootPath,
+    );
+    final module = project.topicOwnerForPath(topicPath);
+    if (module == null) {
+      throw const BusyMarkException('writerside.topic.module-not-open');
+    }
     final topic = _writersideTopicForPath(module, topicPath);
     return writersideTopicRemovalService.analyze(
-      module: module,
+      project: project,
+      projectRoot: workspace.rootPath,
       topicPath: topic.filePath,
       mode: mode,
       selectedTreePath: treePath,
@@ -965,8 +981,13 @@ class WorkspaceService {
     WritersideTopicRemovalRequest request, {
     void Function(Iterable<String>)? validateBeforeCommit,
   }) async {
-    final module = await _currentWritersideModule(workspace);
-    if (!p.equals(module.rootPath, request.analysis.moduleRoot)) {
+    final project = await _writersideProjectService.load(
+      workspace.rootPath,
+      preferredModuleRoot: request.analysis.targetModuleRoot,
+    );
+    final module = project.topicOwnerForPath(request.analysis.topicPath);
+    if (module == null ||
+        !p.equals(module.rootPath, request.analysis.targetModuleRoot)) {
       throw const BusyMarkException('writerside.topic.module-not-open');
     }
     return writersideTopicRemovalService.apply(
@@ -1581,35 +1602,22 @@ class WorkspaceService {
     String sourcePath,
     FileSystemEntityType type,
   ) async {
-    final module = await _currentWritersideModule(workspace);
-    for (final configuredRoot in module.config.topicRoots) {
-      final topicRoot = p.normalize(
-        p.join(module.rootPath, configuredRoot.dir),
-      );
-      if (type == FileSystemEntityType.directory &&
-          (p.equals(sourcePath, topicRoot) ||
-              p.isWithin(topicRoot, sourcePath) ||
-              p.isWithin(sourcePath, topicRoot))) {
-        return true;
-      }
-      final extension = p.extension(sourcePath).toLowerCase();
-      if (type == FileSystemEntityType.file &&
-          p.isWithin(topicRoot, sourcePath) &&
-          (extension == '.md' ||
-              extension == '.markdown' ||
-              extension == '.topic')) {
-        return true;
-      }
+    final project = await _writersideProjectService.load(
+      workspace.rootPath,
+      preferredModuleRoot: workspace.writersideModule?.rootPath,
+    );
+    if (!project.moduleDiscoveryComplete &&
+        (type == FileSystemEntityType.directory ||
+            isWritersideTopicSourcePath(sourcePath))) {
+      // An incomplete module inventory cannot prove that a Markdown/XML topic
+      // (or a recursively deleted directory) belongs only to ordinary files.
+      // Keep the operation on the Safe Delete side of the guard.
+      return true;
     }
-    for (final topic in module.topics) {
-      final topicPath = p.normalize(topic.filePath);
-      if (p.equals(topicPath, sourcePath) ||
-          (type == FileSystemEntityType.directory &&
-              p.isWithin(sourcePath, topicPath))) {
-        return true;
-      }
-    }
-    return false;
+    return project.deletionTouchesTopics(
+      sourcePath,
+      isDirectory: type == FileSystemEntityType.directory,
+    );
   }
 
   Future<CanonicalPathAnchor> _workspacePathAnchor(Workspace workspace) async {

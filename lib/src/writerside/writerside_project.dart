@@ -902,6 +902,60 @@ class WritersideProject {
     for (final module in modules) _moduleId(module): module,
   };
 
+  /// Returns the module that semantically owns a Writerside topic source.
+  ///
+  /// Parsed topic identity wins. Discovered-but-unparsed topic candidates are
+  /// recognized by their extension and configured topic root. Nested modules
+  /// are resolved to the most-specific containing module root.
+  WritersideModule? topicOwnerForPath(String filePath) {
+    final path = normalizePath(filePath);
+    final exact = modules
+        .where(
+          (module) => module.topics.any(
+            (topic) => p.equals(normalizePath(topic.filePath), path),
+          ),
+        )
+        .toList();
+    if (exact.isNotEmpty) {
+      exact.sort((a, b) => b.rootPath.length.compareTo(a.rootPath.length));
+      return exact.first;
+    }
+    if (!isWritersideTopicSourcePath(path)) return null;
+    final candidates = modules.where((module) {
+      return module.config.topicRoots.any((configured) {
+        final root = normalizePath(p.join(module.rootPath, configured.dir));
+        return p.isWithin(root, path);
+      });
+    }).toList();
+    candidates.sort((a, b) => b.rootPath.length.compareTo(a.rootPath.length));
+    return candidates.firstOrNull;
+  }
+
+  bool isTopicPath(String filePath) => topicOwnerForPath(filePath) != null;
+
+  /// Whether deleting [path] would directly or recursively remove a topic
+  /// source or a configured topic root anywhere in the project.
+  bool deletionTouchesTopics(String path, {required bool isDirectory}) {
+    final candidate = normalizePath(path);
+    if (!isDirectory) return isTopicPath(candidate);
+    for (final module in modules) {
+      for (final configured in module.config.topicRoots) {
+        final root = normalizePath(p.join(module.rootPath, configured.dir));
+        if (p.equals(candidate, root) ||
+            p.isWithin(candidate, root) ||
+            p.isWithin(root, candidate)) {
+          return true;
+        }
+      }
+      if (module.topics.any(
+        (topic) => p.isWithin(candidate, normalizePath(topic.filePath)),
+      )) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   WritersideProject withSelection({
     required String moduleId,
     String? instanceId,
@@ -978,6 +1032,13 @@ class WritersideProject {
       moduleDiscoveryDiagnostics: moduleDiscoveryDiagnostics,
     );
   }
+}
+
+bool isWritersideTopicSourcePath(String path) {
+  final extension = p.extension(path).toLowerCase();
+  return extension == '.md' ||
+      extension == '.markdown' ||
+      extension == '.topic';
 }
 
 class WritersideModuleDiscoveryResult {

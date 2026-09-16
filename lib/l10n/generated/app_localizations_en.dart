@@ -157,7 +157,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tocEditTitleDialog => 'Edit Title';
 
   @override
-  String get tocRemoveElementAction => 'Remove TOC Element...';
+  String get tocRemoveElementAction => 'Remove TOC Element';
 
   @override
   String get tocSetHomePage => 'Set as Home Page';

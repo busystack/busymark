@@ -1126,6 +1126,59 @@ void main() {
     skip: Platform.isWindows ? 'POSIX symlink behavior only.' : false,
   );
 
+  test(
+    'generic deletion rejects topics and containing folders in a non-active module',
+    () async {
+      final fixture = await _createTopicRenameWorkspace();
+      final sharedRoot = await Directory(
+        p.join(fixture.projectRoot.path, 'shared'),
+      ).create();
+      final topicsRoot = await Directory(
+        p.join(sharedRoot.path, 'topics'),
+      ).create();
+      await File(p.join(sharedRoot.path, 'writerside.cfg')).writeAsString('''
+<ihp><module name="shared"/><topics dir="topics"/><instance src="shared.tree"/></ihp>
+''');
+      await File(p.join(sharedRoot.path, 'shared.tree')).writeAsString('''
+<instance-profile id="shared"><toc-element topic="reference.md"/></instance-profile>
+''');
+      final reference = File(p.join(topicsRoot.path, 'reference.md'));
+      await reference.writeAsString('# Reference\n');
+
+      for (final path in [reference.path, sharedRoot.path]) {
+        await expectLater(
+          service.deleteEntity(fixture.workspace, path),
+          throwsA(
+            isA<BusyMarkException>().having(
+              (error) => error.code,
+              'code',
+              'writerside.topic-removal.safe-delete-required',
+            ),
+          ),
+        );
+      }
+      expect(reference.existsSync(), isTrue);
+      expect(sharedRoot.existsSync(), isTrue);
+    },
+  );
+
+  test('an unparsed topic cannot bypass generic deletion', () async {
+    final fixture = await _createWorkspaceWithUnparsedGuide();
+    final unparsed = p.join(fixture.root.path, 'topics', 'guide.topic');
+
+    await expectLater(
+      fixture.service.deleteEntity(fixture.workspace, unparsed),
+      throwsA(
+        isA<BusyMarkException>().having(
+          (error) => error.code,
+          'code',
+          'writerside.topic-removal.safe-delete-required',
+        ),
+      ),
+    );
+    expect(File(unparsed).existsSync(), isTrue);
+  });
+
   test('missing nested mutation paths keep domain-specific errors', () async {
     final root = await Directory.systemTemp.createTemp(
       'busymark-workspace-missing-path-',

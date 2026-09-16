@@ -143,6 +143,42 @@ void main() {
   });
 
   test(
+    'topic ownership is project-wide and prefers the nested module',
+    () async {
+      final root = await Directory.systemTemp.createTemp(
+        'busymark-writerside-topic-owner-',
+      );
+      addTearDown(() => root.delete(recursive: true));
+      final parent = await _writeDiscoveryModule(root, 'docs', 'parent');
+      final nested = await _writeDiscoveryModule(
+        root,
+        p.join('docs', 'topics', 'nested'),
+        'nested',
+      );
+      final project = await const WritersideProjectService().load(root.path);
+      final unparsedCandidate = p.join(
+        nested.path,
+        'topics',
+        'future.markdown',
+      );
+
+      expect(
+        project.topicOwnerForPath(unparsedCandidate)?.rootPath,
+        nested.path,
+      );
+      expect(project.isTopicPath(unparsedCandidate), isTrue);
+      expect(
+        project.deletionTouchesTopics(nested.path, isDirectory: true),
+        isTrue,
+      );
+      expect(
+        project.topicOwnerForPath(p.join(parent.path, 'README.md')),
+        isNull,
+      );
+    },
+  );
+
+  test(
     'workspace promotes a parent directory to a multi-module project',
     () async {
       final fixture = await _ProjectFixture.create();

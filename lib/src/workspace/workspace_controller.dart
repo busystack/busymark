@@ -2024,17 +2024,33 @@ class WorkspaceController extends Notifier<WorkspaceState> {
   Future<WritersideTopicRemovalResult?> applyWritersideTopicRemoval(
     WritersideTopicRemovalRequest request,
   ) async {
-    WritersideTopicRemovalResult? result;
-    final success = await _runWorkspaceFileOperation((workspace) async {
-      result = await _service.applyWritersideTopicRemoval(
-        workspace,
-        request,
-        validateBeforeCommit: (paths) =>
-            _requireCleanAffectedFiles(workspace, paths),
-      );
+    final deleting =
+        request.analysis.mode == WritersideTopicRemovalMode.safeDeleteFile;
+    final deletedPath = p.normalize(request.analysis.topicPath);
+    if (deleting && !await _protectWorkspaceEntityBeforeDelete(deletedPath)) {
       return null;
-    });
-    return success ? result : null;
+    }
+    WritersideTopicRemovalResult? result;
+    if (deleting) _intentionallyRemovedPaths.add(deletedPath);
+    try {
+      final success = await _runWorkspaceFileOperation((workspace) async {
+        void validate(Iterable<String> _) =>
+            _requireCleanWritersideProject(workspace);
+        validate(const []);
+        result = await _service.applyWritersideTopicRemoval(
+          workspace,
+          request,
+          validateBeforeCommit: validate,
+        );
+        if (result?.deletedFile == true) {
+          await _localHistory.markDeleted(deletedPath, recursive: false);
+        }
+        return null;
+      });
+      return success ? result : null;
+    } finally {
+      if (deleting) _intentionallyRemovedPaths.remove(deletedPath);
+    }
   }
 
   Future<bool> closeOpenFileTab(String path) => _closeOpenFileTabNow(path);
