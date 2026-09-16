@@ -53,6 +53,7 @@
   "tocNewGroup": "新建组",
   "tocSortChildren": "按字母顺序排列子主题",
   "tocLinkTopicFiles": "将主题文件链接到目录...",
+  "addLocalMarkdownFiles": "添加本地 Markdown 文件",
   "tocTitleField": "目录标题:",
   "tocTopicTitleField": "主题标题:",
   "tocAdvancedSettings": "高级设置",

@@ -53,6 +53,7 @@
   "tocNewGroup": "Новая группа",
   "tocSortChildren": "Сортировать дочерние темы по алфавиту",
   "tocLinkTopicFiles": "Связать файлы тем с оглавлением...",
+  "addLocalMarkdownFiles": "Добавить локальные файлы Markdown",
   "tocTitleField": "Заголовок в оглавлении:",
   "tocTopicTitleField": "Заголовок темы:",
   "tocAdvancedSettings": "Дополнительные настройки",

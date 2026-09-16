@@ -191,6 +191,9 @@ class AppLocalizationsNl extends AppLocalizations {
       'Onderwerpbestanden aan inhoudsopgave koppelen...';
 
   @override
+  String get addLocalMarkdownFiles => 'Lokale Markdown-bestanden toevoegen';
+
+  @override
   String get tocTitleField => 'Titel in inhoudsopgave:';
 
   @override

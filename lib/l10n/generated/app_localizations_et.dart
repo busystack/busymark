@@ -189,6 +189,9 @@ class AppLocalizationsEt extends AppLocalizations {
   String get tocLinkTopicFiles => 'Lingi teemafailid sisukorraga...';
 
   @override
+  String get addLocalMarkdownFiles => 'Lisa kohalikud Markdown-failid';
+
+  @override
   String get tocTitleField => 'Sisukorra pealkiri:';
 
   @override

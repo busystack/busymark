@@ -53,6 +53,7 @@
   "tocNewGroup": "Nuevo grupo",
   "tocSortChildren": "Ordenar temas secundarios alfabéticamente",
   "tocLinkTopicFiles": "Vincular archivos de temas al índice...",
+  "addLocalMarkdownFiles": "Añadir archivos Markdown locales",
   "tocTitleField": "Título del índice:",
   "tocTopicTitleField": "Título del tema:",
   "tocAdvancedSettings": "Configuración avanzada",

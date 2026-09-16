@@ -53,6 +53,7 @@
   "tocNewGroup": "Nouveau groupe",
   "tocSortChildren": "Trier les sujets enfants par ordre alphabétique",
   "tocLinkTopicFiles": "Lier des fichiers de sujets à la table des matières...",
+  "addLocalMarkdownFiles": "Ajouter des fichiers Markdown locaux",
   "tocTitleField": "Titre dans la table des matières:",
   "tocTopicTitleField": "Titre du sujet:",
   "tocAdvancedSettings": "Paramètres avancés",

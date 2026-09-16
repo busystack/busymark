@@ -53,6 +53,7 @@
   "tocNewGroup": "नया समूह",
   "tocSortChildren": "उपविषयों को वर्णानुक्रम में क्रमबद्ध करें",
   "tocLinkTopicFiles": "विषय फ़ाइलों को विषय-सूची से लिंक करें...",
+  "addLocalMarkdownFiles": "स्थानीय Markdown फ़ाइलें जोड़ें",
   "tocTitleField": "विषय-सूची का शीर्षक:",
   "tocTopicTitleField": "विषय का शीर्षक:",
   "tocAdvancedSettings": "उन्नत सेटिंग्स",

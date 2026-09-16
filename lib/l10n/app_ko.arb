@@ -53,6 +53,7 @@
   "tocNewGroup": "새 그룹",
   "tocSortChildren": "하위 토픽을 알파벳순으로 정렬",
   "tocLinkTopicFiles": "토픽 파일을 목차에 연결...",
+  "addLocalMarkdownFiles": "로컬 Markdown 파일 추가",
   "tocTitleField": "목차 제목:",
   "tocTopicTitleField": "토픽 제목:",
   "tocAdvancedSettings": "고급 설정",

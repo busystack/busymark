@@ -53,6 +53,7 @@
   "tocNewGroup": "Uus rühm",
   "tocSortChildren": "Sordi alamteemad tähestikuliselt",
   "tocLinkTopicFiles": "Lingi teemafailid sisukorraga...",
+  "addLocalMarkdownFiles": "Lisa kohalikud Markdown-failid",
   "tocTitleField": "Sisukorra pealkiri:",
   "tocTopicTitleField": "Teema pealkiri:",
   "tocAdvancedSettings": "Täpsemad seaded",

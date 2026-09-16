@@ -53,6 +53,7 @@
   "tocNewGroup": "Nuovo gruppo",
   "tocSortChildren": "Ordina alfabeticamente gli argomenti secondari",
   "tocLinkTopicFiles": "Collega file di argomenti al sommario...",
+  "addLocalMarkdownFiles": "Aggiungi file Markdown locali",
   "tocTitleField": "Titolo nel sommario:",
   "tocTopicTitleField": "Titolo dell’argomento:",
   "tocAdvancedSettings": "Impostazioni avanzate",

@@ -20,6 +20,7 @@ import 'package:busymark/src/workspace/workspace_message.dart';
 import 'package:busymark/src/workspace/workspace_model.dart';
 import 'package:busymark/src/workspace/workspace_service.dart';
 import 'package:busymark/src/writerside/writerside_project_creator.dart';
+import 'package:busymark/src/writerside/writerside_instance_service.dart';
 import 'package:busymark/src/writerside/writerside_model.dart';
 import 'package:busymark/src/writerside/writerside_topic_creator.dart';
 import 'package:busymark/src/writerside/writerside_topic_file_editor.dart';
@@ -185,6 +186,103 @@ void main() {
         harness.controller.state.activeBuffer?.filePath,
         p.join(root.path, 'topics/created.md'),
       );
+    },
+  );
+
+  test(
+    'Markdown topic import opens its first topic in an editable buffer',
+    () async {
+      final root = await Directory.systemTemp.createTemp(
+        'busymark-controller-topic-import-',
+      );
+      final source = await Directory.systemTemp.createTemp(
+        'busymark-controller-topic-source-',
+      );
+      addTearDown(() => root.delete(recursive: true));
+      addTearDown(() => source.delete(recursive: true));
+      Directory(p.join(root.path, 'topics')).createSync();
+      File(p.join(root.path, 'writerside.cfg')).writeAsStringSync(
+        '<ihp><topics dir="topics"/><instance src="g.tree"/></ihp>',
+      );
+      final tree = File(p.join(root.path, 'g.tree'))
+        ..writeAsStringSync(
+          '<instance-profile id="g" name="Guide" start-page="a.md">'
+          '<toc-element topic="a.md"/></instance-profile>',
+        );
+      final original = File(p.join(root.path, 'topics', 'a.md'))
+        ..writeAsStringSync('# Original\n');
+      final imported = File(p.join(source.path, 'imported.md'))
+        ..writeAsStringSync('# Imported\n');
+      final harness = await _createControllerHarness();
+      final controller = harness.controller._notifier;
+      await controller.openPath(root.path);
+      await controller.openActiveFile(original.path);
+
+      final succeeded = await controller.addWritersideMarkdownTopics(
+        WritersideMarkdownTopicImportRequest(
+          sourceRootPath: source.path,
+          selectedMarkdownPaths: [imported.path],
+          treePath: tree.path,
+          placement: WritersideTopicCreatePlacement.root,
+        ),
+      );
+
+      final target = p.join(root.path, 'topics', 'imported.md');
+      expect(succeeded, true);
+      expect(controller.state.workspace?.activeFilePath, target);
+      expect(controller.state.workspace?.openFilePaths, contains(target));
+      expect(controller.state.activeBuffer?.filePath, target);
+      expect(
+        controller.state.activeBuffer?.editorState.mode,
+        isNot(DocumentViewModePreference.preview),
+      );
+    },
+  );
+
+  test(
+    'failed Markdown import preserves the active document and workspace',
+    () async {
+      final root = await Directory.systemTemp.createTemp(
+        'busymark-controller-topic-import-fail-',
+      );
+      final source = await Directory.systemTemp.createTemp(
+        'busymark-controller-topic-source-',
+      );
+      addTearDown(() => root.delete(recursive: true));
+      addTearDown(() => source.delete(recursive: true));
+      Directory(p.join(root.path, 'topics')).createSync();
+      File(p.join(root.path, 'writerside.cfg')).writeAsStringSync(
+        '<ihp><topics dir="topics"/><instance src="g.tree"/></ihp>',
+      );
+      final tree = File(p.join(root.path, 'g.tree'))
+        ..writeAsStringSync(
+          '<instance-profile id="g" name="Guide" start-page="a.md">'
+          '<toc-element topic="a.md"/></instance-profile>',
+        );
+      final original = File(p.join(root.path, 'topics', 'a.md'))
+        ..writeAsStringSync('# Original\n');
+      final conflict = File(p.join(source.path, 'a.md'))
+        ..writeAsStringSync('# Conflict\n');
+      final harness = await _createControllerHarness();
+      final controller = harness.controller._notifier;
+      await controller.openPath(root.path);
+      await controller.openActiveFile(original.path);
+      final originalTree = tree.readAsStringSync();
+
+      final succeeded = await controller.addWritersideMarkdownTopics(
+        WritersideMarkdownTopicImportRequest(
+          sourceRootPath: source.path,
+          selectedMarkdownPaths: [conflict.path],
+          treePath: tree.path,
+          placement: WritersideTopicCreatePlacement.root,
+        ),
+      );
+
+      expect(succeeded, false);
+      expect(controller.state.workspace?.activeFilePath, original.path);
+      expect(controller.state.activeBuffer?.filePath, original.path);
+      expect(original.readAsStringSync(), '# Original\n');
+      expect(tree.readAsStringSync(), originalTree);
     },
   );
 

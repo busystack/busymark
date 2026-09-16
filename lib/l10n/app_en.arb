@@ -111,6 +111,8 @@
   "@tocSortChildren": {"description":"Writerside Table of Contents command or dialog text."},
   "tocLinkTopicFiles": "Link Topic Files to TOC...",
   "@tocLinkTopicFiles": {"description":"Writerside Table of Contents command or dialog text."},
+  "addLocalMarkdownFiles": "Add Local Markdown Files",
+  "@addLocalMarkdownFiles": {"description":"Action and dialog title for importing selected Markdown files as topics into an existing Writerside instance."},
   "tocTitleField": "TOC title:",
   "@tocTitleField": {"description":"Writerside Table of Contents command or dialog text."},
   "tocTopicTitleField": "Topic title:",

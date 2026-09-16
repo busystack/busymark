@@ -189,6 +189,9 @@ class AppLocalizationsVi extends AppLocalizations {
   String get tocLinkTopicFiles => 'Liên kết tệp chủ đề với mục lục...';
 
   @override
+  String get addLocalMarkdownFiles => 'Thêm tệp Markdown cục bộ';
+
+  @override
   String get tocTitleField => 'Tiêu đề mục lục:';
 
   @override

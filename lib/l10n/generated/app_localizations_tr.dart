@@ -188,6 +188,9 @@ class AppLocalizationsTr extends AppLocalizations {
   String get tocLinkTopicFiles => 'Konu dosyalarını içindekilere bağla...';
 
   @override
+  String get addLocalMarkdownFiles => 'Yerel Markdown Dosyaları Ekle';
+
+  @override
   String get tocTitleField => 'İçindekiler başlığı:';
 
   @override

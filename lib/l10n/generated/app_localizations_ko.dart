@@ -183,6 +183,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get tocLinkTopicFiles => '토픽 파일을 목차에 연결...';
 
   @override
+  String get addLocalMarkdownFiles => '로컬 Markdown 파일 추가';
+
+  @override
   String get tocTitleField => '목차 제목:';
 
   @override

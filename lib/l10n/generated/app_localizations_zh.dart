@@ -183,6 +183,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get tocLinkTopicFiles => '将主题文件链接到目录...';
 
   @override
+  String get addLocalMarkdownFiles => '添加本地 Markdown 文件';
+
+  @override
   String get tocTitleField => '目录标题:';
 
   @override
@@ -4492,6 +4495,9 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get tocLinkTopicFiles => '将主题文件链接到目录...';
+
+  @override
+  String get addLocalMarkdownFiles => '添加本地 Markdown 文件';
 
   @override
   String get tocTitleField => '目录标题:';

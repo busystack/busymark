@@ -53,6 +53,7 @@
   "tocNewGroup": "مجموعة جديدة",
   "tocSortChildren": "ترتيب المواضيع الفرعية أبجديًا",
   "tocLinkTopicFiles": "ربط ملفات المواضيع بجدول المحتويات...",
+  "addLocalMarkdownFiles": "إضافة ملفات Markdown محلية",
   "tocTitleField": "عنوان جدول المحتويات:",
   "tocTopicTitleField": "عنوان الموضوع:",
   "tocAdvancedSettings": "إعدادات متقدمة",

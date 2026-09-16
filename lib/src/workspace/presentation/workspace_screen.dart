@@ -11,6 +11,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
+import 'package:file_selector/file_selector.dart';
 import 'package:go_router/go_router.dart';
 import 'package:path/path.dart' as p;
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
@@ -104,6 +105,7 @@ import '../workspace_safety.dart';
 import '../workspace_tabs.dart';
 import 'welcome_screen.dart';
 import 'writerside_instance_dialog.dart';
+import 'writerside_markdown_import_dialog.dart';
 import 'writerside_toc_dialogs.dart';
 import 'writerside_template_dialogs.dart';
 import '../../writerside/writerside_template_service.dart';
@@ -6041,20 +6043,8 @@ class _TocTabState extends ConsumerState<_TocTab> {
                   onCreateTopic: (choice) => _createTocItem(
                     context,
                     instanceTreePath: instance.sourceTreePath,
-                    placement:
-                        selectedEntry?.canEditStructureIn(
-                              instance.sourceTreePath,
-                            ) ==
-                            true
-                        ? WritersideTopicCreatePlacement.sibling
-                        : WritersideTopicCreatePlacement.root,
-                    referenceEntry:
-                        selectedEntry?.canEditStructureIn(
-                              instance.sourceTreePath,
-                            ) ==
-                            true
-                        ? selectedEntry
-                        : null,
+                    placement: WritersideTopicCreatePlacement.root,
+                    referenceEntry: null,
                     choice: choice,
                   ),
                   onSynchronize: () =>
@@ -6902,6 +6892,7 @@ class _TocTabState extends ConsumerState<_TocTab> {
             );
       case _TocTreeAction.emptyGroup:
       case _TocTreeAction.emptyChildGroup:
+      case _TocTreeAction.importMarkdownTopics:
       case _TocTreeAction.linkTopics:
       case _TocTreeAction.linkChildTopics:
         await _createTocItem(
@@ -6917,6 +6908,8 @@ class _TocTabState extends ConsumerState<_TocTab> {
               action == _TocTreeAction.emptyGroup ||
                   action == _TocTreeAction.emptyChildGroup
               ? _TocCreationChoice.emptyGroup
+              : action == _TocTreeAction.importMarkdownTopics
+              ? _TocCreationChoice.importMarkdown
               : _TocCreationChoice.link,
         );
       case _TocTreeAction.group:
@@ -7633,6 +7626,46 @@ class _TocTabState extends ConsumerState<_TocTab> {
     final identity = raw == null
         ? null
         : WritersideTocNodeIdentity.fromNode(raw);
+    if (choice == _TocCreationChoice.importMarkdown) {
+      final sourcePath = await getDirectoryPath(
+        initialDirectory: widget.workspace.rootPath,
+        confirmButtonText: context.l10n.open,
+        canCreateDirectories: false,
+      );
+      if (sourcePath == null || !mounted || !context.mounted) return;
+      final candidates = await ref
+          .read(workspaceControllerProvider.notifier)
+          .discoverWritersideMarkdownImport(sourcePath);
+      if (candidates == null || !mounted || !context.mounted) {
+        return;
+      }
+      if (!await confirmSafeToRefactorWritersideProject(context, ref) ||
+          !mounted ||
+          !context.mounted) {
+        return;
+      }
+      final imported = await showBusyMarkModalDialog<bool>(
+        context,
+        barrierDismissible: false,
+        builder: (_) => WritersideMarkdownImportDialog(
+          sourceRootPath: sourcePath,
+          candidates: candidates,
+          treePath: instanceTreePath,
+          placement: placement,
+          referenceTocPath: referenceEntry?.editPath,
+          referenceTocIdentity: identity,
+        ),
+      );
+      if (imported == true && mounted) {
+        setState(() {
+          _cutEntries = [];
+          _selectedNodePathKey = null;
+          _selectedNodePathKeys = {};
+          _selectionAnchorPathKey = null;
+        });
+      }
+      return;
+    }
     if (choice == _TocCreationChoice.template) {
       final module = widget.workspace.writersideModule!;
       final instance = _tocInstanceForTreePath(module, instanceTreePath)!;
@@ -7846,6 +7879,7 @@ enum _TocTreeAction {
   editTitle,
   emptyGroup,
   emptyChildGroup,
+  importMarkdownTopics,
   linkTopics,
   linkChildTopics,
   group,
@@ -7912,6 +7946,10 @@ Future<_TocTreeAction?> _showTocTreeMenu(
               label: context.l10n.tocTopicFromTemplate,
             ),
             const PopupMenuDivider(),
+            BusyMarkPopupMenuItem(
+              value: _TocTreeAction.importMarkdownTopics,
+              label: context.l10n.addLocalMarkdownFiles,
+            ),
             BusyMarkPopupMenuItem(
               value: _TocTreeAction.linkTopics,
               label: context.l10n.tocLinkTopicFiles,
@@ -8449,7 +8487,14 @@ enum _TocHeaderAction {
   export,
 }
 
-enum _TocCreationChoice { markdown, xml, emptyGroup, template, link }
+enum _TocCreationChoice {
+  markdown,
+  xml,
+  emptyGroup,
+  template,
+  importMarkdown,
+  link,
+}
 
 class _TocHeader extends StatelessWidget {
   const _TocHeader({
@@ -8572,6 +8617,10 @@ class _TocHeader extends StatelessWidget {
                       label: context.l10n.tocTopicFromTemplate,
                     ),
                     const PopupMenuDivider(),
+                    BusyMarkPopupMenuItem(
+                      value: _TocCreationChoice.importMarkdown,
+                      label: context.l10n.addLocalMarkdownFiles,
+                    ),
                     BusyMarkPopupMenuItem(
                       value: _TocCreationChoice.link,
                       label: context.l10n.tocLinkTopicFiles,

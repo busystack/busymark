@@ -34,6 +34,7 @@ The handoff's source identifiers are retained:
 | S4 | [Topics and titles](https://www.jetbrains.com/help/writerside/topics.html) |
 | S5–S7 | [Basic title dialog](https://resources.jetbrains.com/help/img/writerside/edit-title-action.png), [instance title](https://resources.jetbrains.com/help/img/writerside/edit_title_instance_specific.png), [TOC title](https://resources.jetbrains.com/help/img/writerside/edit_title_toc_title.png) |
 | S8 | [Add topics](https://www.jetbrains.com/help/writerside/add-a-topic.html) |
+| S8a | [Import from Markdown](https://www.jetbrains.com/help/writerside/import-markdown.html) |
 | S9–S10 | [Reuse topics](https://www.jetbrains.com/help/writerside/reuse-topics.html), [creation menu](https://resources.jetbrains.com/help/img/writerside/reuse-from-another.png) |
 | S11–S12 | [Remove topics](https://www.jetbrains.com/help/writerside/delete-a-topic.html), [removal dialog](https://resources.jetbrains.com/help/img/writerside/remove_topic_dialog.png) |
 | S13 | [Save topic as template](https://www.jetbrains.com/help/writerside/save-as-template.html) |
@@ -101,6 +102,7 @@ screenshot comparison.
 | S8, P | Either creation menu: **Empty MD Topic**, **Empty XML Topic**; dialog **New Topic** | `WS._CreateWritersideTopicDialog`, `WritersideTopicCreator.create` | C: formats, roots, collisions, races, first home page; controller monitor-race and dirty inactive-tree tests | Native both formats passed; new documents opened with other tabs retained. Existing BusyMark empty-body content retained; not a claim of identical installed template bytes. |
 | S1, P | Creation menu: **Empty Group**; dialog **New Empty Group**, **TOC title:**, **Cancel**, **OK** | `Dialogs.WritersideTocTextDialog`, `WritersideTocEditor.insertElement` | E/A structural paths; guarded insertion service | Native creation passed: a titled element without a topic reference. |
 | S9–S10, P | Creation menu after separator: **Link Topic Files to TOC...**; picker **Select Topic to Add to the Current Instance** | `Dialogs.WritersideExistingTopicPicker`, `WorkspaceService.insertWritersideTocElement` | M: filter/arrows/submit/cancel; W: unchanged bytes and stale eligibility | Native linking passed, including unchanged source bytes. Candidates use canonical resolved membership, including includes. |
+| S8, S8a | **New Topic** and header Add: **Add Local Markdown Files**; dialog **Add Local Markdown Files** | Existing Markdown discovery and `WritersideInstanceService.addMarkdownTopics`; focused selection dialog | Instance service: selected-only/root/sibling ordering, relative layout, media, first home page, ID and concurrency failures; workspace/controller/dialog/menu suites | Context imports are siblings and header imports are roots. **New Child Topic** intentionally has no import action. Imported Markdown bytes are unchanged. |
 | S2, P | Context after creation separator: **Duplicate**; **Duplicate Topic**, **Topic Filename:** | `WorkspaceService.duplicateWritersideTopic`, guarded creator | W: new XML ID, unchanged body, basic sibling only; C publication guards | Native duplication passed: source copy opened with its new XML root ID. Filename validation retains BusyMark's conservative identifier restrictions; race errors use existing workspace error presentation. |
 | S2, P | Context: **Copy Special** → **Topic File Name '{name}'**, **Topic File Path**, **Topic Title '{title}'**, **TOC Element ID '{id}'** | `WS._showTocTreeMenu`, `_showTopicContextMenu` | App: all four Copy Special clipboard payloads in RTL, including base versus navigation title; M nested keyboard/focus/RTL | Native menu captured. Payloads are raw topic reference, canonical path, base title, explicit ID; unavailable values are disabled. No claim that contextual TOC title is copied. |
 | S2, S14 | Context: **Preview Topic** | `WS._showTopicContextMenu` preview case, existing view-mode/preview controller | Existing preview/view-mode suites; native selected-topic assertion | Native selected-topic preview passed and was captured. Uses BusyMark renderer, not the Writerside website renderer. |
@@ -163,6 +165,34 @@ mixed-entry sort, safe-delete and front-matter restrictions are explicit above.
 The two pictured toolbar chevrons' original tooltips have not been established;
 no guessed tooltip names were added.
 
+Existing-instance Markdown import reuses `discoverMarkdownFiles` for source-root
+discovery and the shared import planner for selected topic and referenced-media
+copies. Topic targets retain source-root-relative directories beneath the first
+configured topics root. Media references use the established Markdown, semantic
+XML, Writerside video, and preview-source scan; external/absolute references and
+intentionally missing local media retain their prior behavior, and duplicate
+media targets are staged once.
+
+Before planning, and again immediately before publication, the owning module is
+reloaded and complete semantic topic discovery is required. Each source basename
+passes the shared topic filename validator. IDs are basenames without extensions;
+the selected batch must be unique and must not intersect
+`WritersideModule.reservedTopicIds`, which includes parsed and discovered-but-
+unparsed topic files across all configured topic roots. The import transaction
+stages every selected Markdown file, deduplicated media file, and the updated
+tree, verifies all source/target snapshots, then publishes once with conservative
+rollback. Consequently a stale TOC identity, target change, or concurrent topic
+ID leaves no partial topic/media/tree publication. The shared first-topic helper
+sets only the first imported reference as `start-page` when appropriate.
+
+Ordinary empty, template, custom-template, and duplicate creation retains exact
+exclusive path creation, then reloads semantic module state after its own topic
+exists and before tree publication. A valid final state has exactly one parsed
+reservation for the requested ID and that reservation is the candidate path;
+another extension, subdirectory, or configured root fails with the existing ID
+collision error. Existing owned-file cleanup and final tree snapshot checks remain
+independent safeguards.
+
 ## Template implementation and resource provenance
 
 `assets/writerside/templates.json` contains the installed resources, with each
@@ -218,23 +248,25 @@ The existing main application menu remains flat.
 
 ## Verification log
 
-Final verification, including topic removal, templates, and native menus:
+Final verification, including local Markdown topic import, topic removal,
+templates, and native menus:
 
 - `flutter gen-l10n`: exit 0; generated localization sources are current.
 - Changed Dart sources and tests were formatted with `dart format`.
 - `flutter analyze --no-pub`: exit 0, no issues.
-- Full `flutter test --no-pub`: exit 0, **2,038 passed, 58 skipped**.
-- Required focused removal/project/workspace/controller/TOC/UI suites: exit 0,
-  **302 passed**.
+- Full `flutter test --no-pub`: exit 0, **2,074 passed, 58 skipped**.
+- Required focused import/topic-creator/template/workspace/controller/TOC/UI
+  suites, including the focused import dialog: exit 0, **335 passed**.
 - `bash tools/validate_writerside_conformance.sh`: exit 0, **181 checks passed**.
   This uses the pinned builder 2026.08.0328, distinct from the selected UI plugin
   2026.07.8925. It checks the semantic fixture, not website or menu parity.
-- Linux interaction harness: result artifact reports no failure and **48 checks
+- Linux interaction harness: result artifact reports no failure and **50 checks
   passed**.
   Includes real GTK two-level keyboard traversal in LTR/RTL, disabled headings,
   Escape, focus return, session-scoped dismissal, existing flat radio selectors,
-  the reviewed removal flow, mandatory Safe Delete, and the core TOC/template
-  workflows in the action matrix.
+  both Add Local Markdown Files menu locations, the reviewed removal flow,
+  mandatory Safe Delete, and the core TOC/template workflows in the action
+  matrix.
 - Normal `flutter build linux --debug --no-pub --target lib/main.dart`: exit 0;
   the bundle is restored to the normal application, not the acceptance harness.
 - `git diff --check`: exit 0.

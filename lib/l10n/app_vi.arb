@@ -53,6 +53,7 @@
   "tocNewGroup": "Nhóm mới",
   "tocSortChildren": "Sắp xếp chủ đề con theo bảng chữ cái",
   "tocLinkTopicFiles": "Liên kết tệp chủ đề với mục lục...",
+  "addLocalMarkdownFiles": "Thêm tệp Markdown cục bộ",
   "tocTitleField": "Tiêu đề mục lục:",
   "tocTopicTitleField": "Tiêu đề chủ đề:",
   "tocAdvancedSettings": "Cài đặt nâng cao",

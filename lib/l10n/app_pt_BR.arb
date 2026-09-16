@@ -53,6 +53,7 @@
   "tocNewGroup": "Novo grupo",
   "tocSortChildren": "Ordenar subtópicos alfabeticamente",
   "tocLinkTopicFiles": "Vincular arquivos de tópicos ao índice...",
+  "addLocalMarkdownFiles": "Adicionar arquivos Markdown locais",
   "tocTitleField": "Título no índice:",
   "tocTopicTitleField": "Título do tópico:",
   "tocAdvancedSettings": "Configurações avançadas",

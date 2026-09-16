@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:busymark/src/core/busymark_exception.dart';
 import 'package:busymark/src/writerside/writerside_model.dart';
+import 'package:busymark/src/writerside/writerside_module_service.dart';
 import 'package:busymark/src/writerside/writerside_topic_creator.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
@@ -20,6 +21,12 @@ void main() {
       }
     });
     Directory(p.join(root.path, 'topics')).createSync();
+    File(p.join(root.path, 'writerside.cfg')).writeAsStringSync('''
+<ihp version="2.0">
+  <topics dir="topics"/>
+  <instance src="ug.tree"/>
+</ihp>
+''');
     File(p.join(root.path, 'ug.tree')).writeAsStringSync('''
 <?xml version="1.0" encoding="UTF-8"?>
 <instance-profile id="ug" name="User Guide" start-page="intro.md">
@@ -30,6 +37,31 @@ void main() {
 # Intro
 ''');
     return Directory(await root.resolveSymbolicLinks());
+  }
+
+  Future<void> validateCreatedTopicIdentity(
+    WritersideTopicIdentityValidation validation,
+    String rootPath,
+  ) async {
+    final module = await const WritersideModuleService().load(rootPath);
+    if (!module.topicDiscoveryComplete) {
+      throw const BusyMarkException('writerside.topic.discovery-incomplete');
+    }
+    final matches = module.topics
+        .where((topic) => topic.id == validation.topicId)
+        .toList();
+    final unparsed = module.unparsedTopicReferences.any(
+      (reference) =>
+          p.basenameWithoutExtension(reference) == validation.topicId,
+    );
+    if (unparsed ||
+        matches.length != 1 ||
+        !p.equals(matches.single.filePath, validation.candidateTopicPath)) {
+      throw BusyMarkException(
+        'writerside.topic.id-exists',
+        args: {'topicId': validation.topicId},
+      );
+    }
   }
 
   test(
@@ -643,4 +675,113 @@ void main() {
 
     expect((await treeFile.stat()).mode & 0xfff, originalMode);
   }, skip: Platform.isWindows ? 'POSIX permissions only.' : false);
+
+  group('final module-wide topic ID validation', () {
+    Future<void> expectRaceBlocked(
+      String concurrentRelativePath, {
+      bool secondRoot = false,
+    }) async {
+      final root = await tempModule();
+      if (secondRoot) {
+        Directory(p.join(root.path, 'other-topics')).createSync();
+        final config = File(p.join(root.path, 'writerside.cfg'));
+        config.writeAsStringSync(
+          config.readAsStringSync().replaceFirst(
+            '<topics dir="topics"/>',
+            '<topics dir="topics"/>\n  <topics dir="other-topics"/>',
+          ),
+        );
+      }
+      final tree = File(p.join(root.path, 'ug.tree'));
+      final originalTree = tree.readAsStringSync();
+      final concurrent = File(p.join(root.path, concurrentRelativePath));
+      final racingCreator = WritersideTopicCreator(
+        beforeTreePublish: (_) async {
+          concurrent.parent.createSync(recursive: true);
+          concurrent.writeAsStringSync(
+            p.extension(concurrent.path) == '.topic'
+                ? '<topic id="details" title="Concurrent"/>\n'
+                : '# Concurrent\n',
+          );
+        },
+      );
+
+      await expectLater(
+        racingCreator.create(
+          WritersideTopicCreateTarget(
+            rootPath: root.path,
+            treePath: tree.path,
+            topicsRootDir: 'topics',
+            existingTopicIds: const {'intro'},
+          ),
+          const WritersideTopicCreateRequest(
+            title: 'Details',
+            fileName: 'details.md',
+          ),
+          validateTopicIdentityBeforePublish: (validation) =>
+              validateCreatedTopicIdentity(validation, root.path),
+        ),
+        throwsA(
+          isA<BusyMarkException>().having(
+            (error) => error.code,
+            'code',
+            'writerside.topic.id-exists',
+          ),
+        ),
+      );
+      expect(concurrent.existsSync(), true);
+      expect(
+        File(p.join(root.path, 'topics', 'details.md')).existsSync(),
+        false,
+      );
+      expect(tree.readAsStringSync(), originalTree);
+    }
+
+    test('blocks a concurrent same ID with a different extension', () async {
+      await expectRaceBlocked(p.join('topics', 'details.topic'));
+    });
+
+    test('blocks a concurrent same ID in a different directory', () async {
+      await expectRaceBlocked(p.join('topics', 'nested', 'details.md'));
+    });
+
+    test('blocks a concurrent same ID in another configured root', () async {
+      await expectRaceBlocked(
+        p.join('other-topics', 'details.md'),
+        secondRoot: true,
+      );
+    });
+
+    test('allows an unrelated concurrent topic ID', () async {
+      final root = await tempModule();
+      final unrelated = File(p.join(root.path, 'topics', 'unrelated.topic'));
+      final racingCreator = WritersideTopicCreator(
+        beforeTreePublish: (_) async => unrelated.writeAsString(
+          '<topic id="unrelated" title="Unrelated"/>\n',
+        ),
+      );
+
+      final result = await racingCreator.create(
+        WritersideTopicCreateTarget(
+          rootPath: root.path,
+          treePath: p.join(root.path, 'ug.tree'),
+          topicsRootDir: 'topics',
+          existingTopicIds: const {'intro'},
+        ),
+        const WritersideTopicCreateRequest(
+          title: 'Details',
+          fileName: 'details.md',
+        ),
+        validateTopicIdentityBeforePublish: (validation) =>
+            validateCreatedTopicIdentity(validation, root.path),
+      );
+
+      expect(File(result.topicPath).existsSync(), true);
+      expect(unrelated.existsSync(), true);
+      expect(
+        File(p.join(root.path, 'ug.tree')).readAsStringSync(),
+        contains('details.md'),
+      );
+    });
+  });
 }

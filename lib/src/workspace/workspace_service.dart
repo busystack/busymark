@@ -268,6 +268,8 @@ class WorkspaceService {
       request,
       initialSource: initialSource,
       validateBeforePublish: validateBeforePublish,
+      validateTopicIdentityBeforePublish: (validation) =>
+          _validateCreatedTopicIdentity(module.rootPath, validation),
     );
     return _openWriterside(module.rootPath, activeFilePath: result.topicPath);
   }
@@ -282,7 +284,29 @@ class WorkspaceService {
     WritersideInstanceCreateRequest request,
   ) async {
     final module = await _currentWritersideModule(workspace);
-    return writersideInstanceService.create(module: module, request: request);
+    return writersideInstanceService.create(
+      module: module,
+      request: request,
+      reloadModule: () => _loadWritersideModule(module.rootPath),
+    );
+  }
+
+  Future<Workspace> addWritersideMarkdownTopics(
+    Workspace workspace,
+    WritersideMarkdownTopicImportRequest request, {
+    Future<void> Function()? validateBeforePublish,
+  }) async {
+    final module = await _currentWritersideModule(workspace);
+    final result = await writersideInstanceService.addMarkdownTopics(
+      module: module,
+      request: request,
+      reloadModule: () => _loadWritersideModule(module.rootPath),
+      validateBeforePublish: validateBeforePublish,
+    );
+    return _openWriterside(
+      module.rootPath,
+      activeFilePath: result.firstTopicPath,
+    );
   }
 
   Future<WritersideInstanceMutationResult> updateWritersideInstance(
@@ -469,6 +493,8 @@ class WorkspaceService {
       ),
       initialSource: source,
       validateBeforePublish: validate,
+      validateTopicIdentityBeforePublish: (validation) =>
+          _validateCreatedTopicIdentity(module.rootPath, validation),
     );
     return result.topicPath;
   }
@@ -1054,6 +1080,32 @@ class WorkspaceService {
   Future<WritersideModule> _currentWritersideModule(Workspace workspace) async {
     final openedModule = _writersideModule(workspace);
     return _loadWritersideModule(openedModule.rootPath);
+  }
+
+  Future<void> _validateCreatedTopicIdentity(
+    String moduleRoot,
+    WritersideTopicIdentityValidation validation,
+  ) async {
+    final current = await _loadWritersideModule(moduleRoot);
+    if (!current.topicDiscoveryComplete) {
+      throw const BusyMarkException('writerside.topic.discovery-incomplete');
+    }
+    final candidatePath = p.normalize(validation.candidateTopicPath);
+    final matchingTopics = current.topics
+        .where((topic) => topic.id == validation.topicId)
+        .toList();
+    final unparsedConflict = current.unparsedTopicReferences.any(
+      (reference) =>
+          p.basenameWithoutExtension(reference) == validation.topicId,
+    );
+    if (unparsedConflict ||
+        matchingTopics.length != 1 ||
+        !p.equals(matchingTopics.single.filePath, candidatePath)) {
+      throw BusyMarkException(
+        'writerside.topic.id-exists',
+        args: {'topicId': validation.topicId},
+      );
+    }
   }
 
   Future<WritersideModule> _loadWritersideModule(String rootPath) {

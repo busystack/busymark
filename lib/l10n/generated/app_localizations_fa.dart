@@ -189,6 +189,9 @@ class AppLocalizationsFa extends AppLocalizations {
   String get tocLinkTopicFiles => 'پیوند پرونده‌های موضوع به فهرست مطالب...';
 
   @override
+  String get addLocalMarkdownFiles => 'افزودن فایل‌های Markdown محلی';
+
+  @override
   String get tocTitleField => 'عنوان فهرست مطالب:';
 
   @override

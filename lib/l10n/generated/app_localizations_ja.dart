@@ -184,6 +184,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get tocLinkTopicFiles => 'トピックファイルを目次にリンク...';
 
   @override
+  String get addLocalMarkdownFiles => 'ローカル Markdown ファイルを追加';
+
+  @override
   String get tocTitleField => '目次タイトル:';
 
   @override

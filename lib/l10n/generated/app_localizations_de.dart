@@ -190,6 +190,9 @@ class AppLocalizationsDe extends AppLocalizations {
       'Themendateien mit Inhaltsverzeichnis verknüpfen...';
 
   @override
+  String get addLocalMarkdownFiles => 'Lokale Markdown-Dateien hinzufügen';
+
+  @override
   String get tocTitleField => 'Inhaltsverzeichnistitel:';
 
   @override

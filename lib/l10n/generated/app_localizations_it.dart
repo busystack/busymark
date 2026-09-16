@@ -190,6 +190,9 @@ class AppLocalizationsIt extends AppLocalizations {
   String get tocLinkTopicFiles => 'Collega file di argomenti al sommario...';
 
   @override
+  String get addLocalMarkdownFiles => 'Aggiungi file Markdown locali';
+
+  @override
   String get tocTitleField => 'Titolo nel sommario:';
 
   @override

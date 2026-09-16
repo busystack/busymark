@@ -1379,6 +1379,19 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     }
   }
 
+  Future<bool> addWritersideMarkdownTopics(
+    WritersideMarkdownTopicImportRequest request,
+  ) => _runWorkspaceFileOperation((workspace) async {
+    _requireCleanWritersideProject(workspace);
+    final updated = await _service.addWritersideMarkdownTopics(
+      workspace,
+      request,
+      validateBeforePublish: () async =>
+          _requireCleanWritersideProject(workspace),
+    );
+    return updated.activeFilePath;
+  }, openForEditing: true);
+
   Future<WritersideInstanceMutationResult?> createWritersideInstance(
     WritersideInstanceCreateRequest request,
   ) async {

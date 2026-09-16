@@ -53,6 +53,7 @@
   "tocNewGroup": "Nieuwe groep",
   "tocSortChildren": "Onderliggende onderwerpen alfabetisch sorteren",
   "tocLinkTopicFiles": "Onderwerpbestanden aan inhoudsopgave koppelen...",
+  "addLocalMarkdownFiles": "Lokale Markdown-bestanden toevoegen",
   "tocTitleField": "Titel in inhoudsopgave:",
   "tocTopicTitleField": "Onderwerptitel:",
   "tocAdvancedSettings": "Geavanceerde instellingen",

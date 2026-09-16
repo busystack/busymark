@@ -189,6 +189,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get tocLinkTopicFiles => 'Связать файлы тем с оглавлением...';
 
   @override
+  String get addLocalMarkdownFiles => 'Добавить локальные файлы Markdown';
+
+  @override
   String get tocTitleField => 'Заголовок в оглавлении:';
 
   @override

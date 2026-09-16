@@ -189,6 +189,9 @@ class AppLocalizationsPl extends AppLocalizations {
   String get tocLinkTopicFiles => 'Połącz pliki tematów ze spisem treści...';
 
   @override
+  String get addLocalMarkdownFiles => 'Dodaj lokalne pliki Markdown';
+
+  @override
   String get tocTitleField => 'Tytuł w spisie treści:';
 
   @override

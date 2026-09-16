@@ -189,6 +189,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get tocLinkTopicFiles => 'ربط ملفات المواضيع بجدول المحتويات...';
 
   @override
+  String get addLocalMarkdownFiles => 'إضافة ملفات Markdown محلية';
+
+  @override
   String get tocTitleField => 'عنوان جدول المحتويات:';
 
   @override

@@ -2267,6 +2267,8 @@ void main() {
       await tester.pumpAndSettle();
 
       await openPopup(find.byTooltip(l10n.newTopic));
+      expect(find.text(l10n.addLocalMarkdownFiles), findsOneWidget);
+      expect(find.text(l10n.tocLinkTopicFiles), findsOneWidget);
       await tester.tap(find.text(l10n.tocEmptyMdTopic));
       await tester.pumpAndSettle();
 
@@ -2286,10 +2288,10 @@ void main() {
       expect(controller.createdTopicRequest, isNotNull);
       expect(
         controller.createdTopicRequest!.placement,
-        WritersideTopicCreatePlacement.sibling,
+        WritersideTopicCreatePlacement.root,
       );
-      expect(controller.createdTopicRequest!.referenceTocPath, [0, 0]);
-      expect(controller.createdTopicRequest!.referenceTopic, 'nested.md');
+      expect(controller.createdTopicRequest!.referenceTocPath, isNull);
+      expect(controller.createdTopicRequest!.referenceTopic, isNull);
       expect(controller.createdTopicTreePath, p.join(root.path, 'guide.tree'));
 
       await openPopup(instanceSelector);

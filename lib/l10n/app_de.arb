@@ -53,6 +53,7 @@
   "tocNewGroup": "Neue Gruppe",
   "tocSortChildren": "Untergeordnete Themen alphabetisch sortieren",
   "tocLinkTopicFiles": "Themendateien mit Inhaltsverzeichnis verknüpfen...",
+  "addLocalMarkdownFiles": "Lokale Markdown-Dateien hinzufügen",
   "tocTitleField": "Inhaltsverzeichnistitel:",
   "tocTopicTitleField": "Thementitel:",
   "tocAdvancedSettings": "Erweiterte Einstellungen",

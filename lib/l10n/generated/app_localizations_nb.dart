@@ -190,6 +190,9 @@ class AppLocalizationsNb extends AppLocalizations {
   String get tocLinkTopicFiles => 'Koble emnefiler til innholdsfortegnelsen...';
 
   @override
+  String get addLocalMarkdownFiles => 'Legg til lokale Markdown-filer';
+
+  @override
   String get tocTitleField => 'Tittel i innholdsfortegnelsen:';
 
   @override

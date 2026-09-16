@@ -189,6 +189,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get tocLinkTopicFiles => 'Vincular archivos de temas al índice...';
 
   @override
+  String get addLocalMarkdownFiles => 'Añadir archivos Markdown locales';
+
+  @override
   String get tocTitleField => 'Título del índice:';
 
   @override

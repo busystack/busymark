@@ -53,6 +53,7 @@
   "tocNewGroup": "Yeni grup",
   "tocSortChildren": "Alt konuları alfabetik sırala",
   "tocLinkTopicFiles": "Konu dosyalarını içindekilere bağla...",
+  "addLocalMarkdownFiles": "Yerel Markdown Dosyaları Ekle",
   "tocTitleField": "İçindekiler başlığı:",
   "tocTopicTitleField": "Konu başlığı:",
   "tocAdvancedSettings": "Gelişmiş ayarlar",

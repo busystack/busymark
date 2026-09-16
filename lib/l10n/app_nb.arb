@@ -53,6 +53,7 @@
   "tocNewGroup": "Ny gruppe",
   "tocSortChildren": "Sorter underemner alfabetisk",
   "tocLinkTopicFiles": "Koble emnefiler til innholdsfortegnelsen...",
+  "addLocalMarkdownFiles": "Legg til lokale Markdown-filer",
   "tocTitleField": "Tittel i innholdsfortegnelsen:",
   "tocTopicTitleField": "Emnetittel:",
   "tocAdvancedSettings": "Avanserte innstillinger",

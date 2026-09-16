@@ -189,6 +189,9 @@ class AppLocalizationsId extends AppLocalizations {
   String get tocLinkTopicFiles => 'Tautkan berkas topik ke daftar isi...';
 
   @override
+  String get addLocalMarkdownFiles => 'Tambahkan Berkas Markdown Lokal';
+
+  @override
   String get tocTitleField => 'Judul daftar isi:';
 
   @override

@@ -53,6 +53,7 @@
   "tocNewGroup": "Grup baru",
   "tocSortChildren": "Urutkan subtopik berdasarkan abjad",
   "tocLinkTopicFiles": "Tautkan berkas topik ke daftar isi...",
+  "addLocalMarkdownFiles": "Tambahkan Berkas Markdown Lokal",
   "tocTitleField": "Judul daftar isi:",
   "tocTopicTitleField": "Judul topik:",
   "tocAdvancedSettings": "Pengaturan lanjutan",

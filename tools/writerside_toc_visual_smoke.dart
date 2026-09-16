@@ -121,6 +121,16 @@ class _HarnessState extends ConsumerState<_Harness> {
     return result.stdout.toString().trim();
   }
 
+  Future<bool> _nativeMenuContains(String label) async {
+    final nodes = jsonDecode(await _native('inspect')) as List<dynamic>;
+    return nodes.whereType<Map<String, dynamic>>().any(
+      (node) =>
+          node['name'] == label &&
+          node['showing'] == true &&
+          '${node['role']}'.contains('menu'),
+    );
+  }
+
   Future<void> _tapLabel(String label) async {
     if (_nativeMenuOpen) {
       stdout.writeln('GTK menu: $label');
@@ -572,6 +582,25 @@ class _HarnessState extends ConsumerState<_Harness> {
       _checks.add(
         'Production context menu, title dialog and removal dialog rendered',
       );
+      await _menu('Welcome to BusyMark');
+      await _tapLabel('New Topic');
+      _check(
+        await _nativeMenuContains('Add Local Markdown Files'),
+        'Context New Topic submenu exposes Add Local Markdown Files',
+      );
+      await _key(PhysicalKeyboardKey.escape, LogicalKeyboardKey.escape);
+      await _key(PhysicalKeyboardKey.escape, LogicalKeyboardKey.escape);
+      final headerAdd = _elements(
+        (widget) =>
+            widget.key == const ValueKey('workspace-sidebar-new-topic-menu'),
+      ).single;
+      await _tap(headerAdd);
+      _nativeMenuOpen = true;
+      _check(
+        await _nativeMenuContains('Add Local Markdown Files'),
+        'Header New Topic menu exposes Add Local Markdown Files',
+      );
+      await _key(PhysicalKeyboardKey.escape, LogicalKeyboardKey.escape);
       await _create(
         'Welcome to BusyMark',
         'New Topic',

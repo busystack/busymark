@@ -189,6 +189,9 @@ class AppLocalizationsHi extends AppLocalizations {
   String get tocLinkTopicFiles => 'विषय फ़ाइलों को विषय-सूची से लिंक करें...';
 
   @override
+  String get addLocalMarkdownFiles => 'स्थानीय Markdown फ़ाइलें जोड़ें';
+
+  @override
   String get tocTitleField => 'विषय-सूची का शीर्षक:';
 
   @override

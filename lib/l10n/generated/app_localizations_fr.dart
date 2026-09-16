@@ -194,6 +194,9 @@ class AppLocalizationsFr extends AppLocalizations {
       'Lier des fichiers de sujets à la table des matières...';
 
   @override
+  String get addLocalMarkdownFiles => 'Ajouter des fichiers Markdown locaux';
+
+  @override
   String get tocTitleField => 'Titre dans la table des matières:';
 
   @override

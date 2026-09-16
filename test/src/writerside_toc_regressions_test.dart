@@ -269,6 +269,49 @@ void main() {
     },
   );
 
+  testWidgets(
+    'New Topic surfaces expose local Markdown import only at root/sibling',
+    (tester) async {
+      await start(tester);
+      await tester.tap(
+        find.byKey(const ValueKey('workspace-sidebar-toc-row-0')),
+        buttons: kSecondaryMouseButton,
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('New Topic'));
+      await tester.pumpAndSettle();
+      expect(find.text('Empty MD Topic'), findsOneWidget);
+      expect(find.text('Empty XML Topic'), findsOneWidget);
+      expect(find.text('Empty Group'), findsOneWidget);
+      expect(find.text('Topic from Template...'), findsOneWidget);
+      expect(find.text('Add Local Markdown Files'), findsOneWidget);
+      expect(find.text('Link Topic Files to TOC...'), findsOneWidget);
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pumpAndSettle();
+
+      await tester.tap(
+        find.byKey(const ValueKey('workspace-sidebar-toc-row-0')),
+        buttons: kSecondaryMouseButton,
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('New Child Topic'));
+      await tester.pumpAndSettle();
+      expect(find.text('Add Local Markdown Files'), findsNothing);
+      expect(find.text('Link Topic Files to TOC...'), findsOneWidget);
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pumpAndSettle();
+
+      await tester.tap(
+        find.byKey(const ValueKey('workspace-sidebar-new-topic-menu')),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Add Local Markdown Files'), findsOneWidget);
+      expect(find.text('Link Topic Files to TOC...'), findsOneWidget);
+    },
+  );
+
   for (final choice in [
     'Empty MD Topic',
     'Empty XML Topic',

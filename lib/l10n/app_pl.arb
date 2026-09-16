@@ -53,6 +53,7 @@
   "tocNewGroup": "Nowa grupa",
   "tocSortChildren": "Sortuj tematy podrzędne alfabetycznie",
   "tocLinkTopicFiles": "Połącz pliki tematów ze spisem treści...",
+  "addLocalMarkdownFiles": "Dodaj lokalne pliki Markdown",
   "tocTitleField": "Tytuł w spisie treści:",
   "tocTopicTitleField": "Tytuł tematu:",
   "tocAdvancedSettings": "Ustawienia zaawansowane",

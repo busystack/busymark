@@ -189,6 +189,9 @@ class AppLocalizationsUk extends AppLocalizations {
   String get tocLinkTopicFiles => 'Пов’язати файли тем зі змістом...';
 
   @override
+  String get addLocalMarkdownFiles => 'Додати локальні файли Markdown';
+
+  @override
   String get tocTitleField => 'Заголовок у змісті:';
 
   @override

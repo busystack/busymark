@@ -53,6 +53,7 @@
   "tocNewGroup": "新しいグループ",
   "tocSortChildren": "子トピックをアルファベット順に並べ替え",
   "tocLinkTopicFiles": "トピックファイルを目次にリンク...",
+  "addLocalMarkdownFiles": "ローカル Markdown ファイルを追加",
   "tocTitleField": "目次タイトル:",
   "tocTopicTitleField": "トピックのタイトル:",
   "tocAdvancedSettings": "詳細設定",

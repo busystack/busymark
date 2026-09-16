@@ -189,6 +189,9 @@ class AppLocalizationsPt extends AppLocalizations {
   String get tocLinkTopicFiles => 'Ligar ficheiros de tópicos ao índice...';
 
   @override
+  String get addLocalMarkdownFiles => 'Adicionar ficheiros Markdown locais';
+
+  @override
   String get tocTitleField => 'Título no índice:';
 
   @override
@@ -4759,6 +4762,9 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get tocLinkTopicFiles => 'Vincular arquivos de tópicos ao índice...';
+
+  @override
+  String get addLocalMarkdownFiles => 'Adicionar arquivos Markdown locais';
 
   @override
   String get tocTitleField => 'Título no índice:';

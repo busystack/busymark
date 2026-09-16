@@ -53,6 +53,7 @@
   "tocNewGroup": "گروه جدید",
   "tocSortChildren": "مرتب‌سازی الفبایی زیرموضوع‌ها",
   "tocLinkTopicFiles": "پیوند پرونده‌های موضوع به فهرست مطالب...",
+  "addLocalMarkdownFiles": "افزودن فایل‌های Markdown محلی",
   "tocTitleField": "عنوان فهرست مطالب:",
   "tocTopicTitleField": "عنوان موضوع:",
   "tocAdvancedSettings": "تنظیمات پیشرفته",

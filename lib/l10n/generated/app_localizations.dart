@@ -463,6 +463,12 @@ abstract class AppLocalizations {
   /// **'Link Topic Files to TOC...'**
   String get tocLinkTopicFiles;
 
+  /// Action and dialog title for importing selected Markdown files as topics into an existing Writerside instance.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Local Markdown Files'**
+  String get addLocalMarkdownFiles;
+
   /// Writerside Table of Contents command or dialog text.
   ///
   /// In en, this message translates to:
