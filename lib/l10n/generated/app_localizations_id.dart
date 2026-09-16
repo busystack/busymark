@@ -148,9 +148,6 @@ class AppLocalizationsId extends AppLocalizations {
   String get tocCopyElementIdUnavailable => 'ID elemen daftar isi';
 
   @override
-  String get tocPreviewTopic => 'Pratinjau topik';
-
-  @override
   String get tocEditTitleAction => 'Edit judul...';
 
   @override

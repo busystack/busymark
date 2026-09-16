@@ -7020,26 +7020,6 @@ class _TocTabState extends ConsumerState<_TocTab> {
               ? WritersideTopicFormat.xml
               : WritersideTopicFormat.markdown,
         );
-      case _TocTreeAction.preview:
-        if (topicPath == null) return;
-        final moduleId = widget.workspace.writersideProject?.activeModuleId;
-        final instance = _tocInstanceForTreePath(
-          widget.workspace.writersideModule!,
-          instanceTreePath,
-        );
-        final controller = ref.read(workspaceControllerProvider.notifier);
-        if (!await controller.openActiveFile(topicPath) || !mounted) return;
-        if (moduleId != null && instance != null) {
-          await controller.selectWritersideContext(
-            moduleId: moduleId,
-            instanceId: instance.id,
-          );
-        }
-        if (!mounted) return;
-        controller.updateActiveEditorMode(DocumentViewModePreference.preview);
-        await ref
-            .read(appSettingsControllerProvider.notifier)
-            .setDocumentViewMode(DocumentViewModePreference.preview);
       case _TocTreeAction.goToElement:
         await _goToTocElement(context, entry);
       case _TocTreeAction.copyTopicReference:
@@ -7869,7 +7849,6 @@ enum _TocTreeAction {
   newChildTopic,
   newSiblingXmlTopic,
   newChildXmlTopic,
-  preview,
   goToElement,
   copyTopicReference,
   copyTopicTitle,
@@ -8019,12 +7998,6 @@ Future<_TocTreeAction?> _showTocTreeMenu(
               enabled: tocId?.trim().isNotEmpty ?? false,
             ),
           ],
-        ),
-        const PopupMenuDivider(),
-        BusyMarkPopupMenuItem(
-          value: _TocTreeAction.preview,
-          label: context.l10n.tocPreviewTopic,
-          enabled: hasTopicFile,
         ),
         const PopupMenuDivider(),
         BusyMarkPopupMenuItem(

@@ -148,9 +148,6 @@ class AppLocalizationsAr extends AppLocalizations {
   String get tocCopyElementIdUnavailable => 'معرّف عنصر جدول المحتويات';
 
   @override
-  String get tocPreviewTopic => 'معاينة الموضوع';
-
-  @override
   String get tocEditTitleAction => 'تحرير العنوان...';
 
   @override

@@ -143,9 +143,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get tocCopyElementIdUnavailable => '目次要素 ID';
 
   @override
-  String get tocPreviewTopic => 'トピックをプレビュー';
-
-  @override
   String get tocEditTitleAction => 'タイトルを編集...';
 
   @override

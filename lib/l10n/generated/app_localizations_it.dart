@@ -148,9 +148,6 @@ class AppLocalizationsIt extends AppLocalizations {
   String get tocCopyElementIdUnavailable => 'ID dell’elemento del sommario';
 
   @override
-  String get tocPreviewTopic => 'Anteprima argomento';
-
-  @override
   String get tocEditTitleAction => 'Modifica titolo...';
 
   @override

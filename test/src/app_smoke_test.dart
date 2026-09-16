@@ -2356,11 +2356,16 @@ void main() {
         l10n.aiRefineWithAi,
         l10n.newSiblingTopic,
         l10n.newChildTopic,
+        l10n.tocDuplicate,
+        l10n.tocCopySpecial,
+        l10n.tocEditTitleAction,
         l10n.renameTopicFile,
         l10n.cut,
         l10n.pasteAfterTopic,
         l10n.pasteAsChildTopic,
         l10n.tocRemoveElementAction,
+        l10n.tocSetHomePage,
+        l10n.tocGoToElement('guide.tree'),
         l10n.copyName,
         l10n.copyPath,
         l10n.openInFiles,
@@ -2371,21 +2376,10 @@ void main() {
       }
       expect(popupMenuItem(l10n.safeDeleteTopicFile), findsNothing);
       expect(popupMenuItem(l10n.delete), findsNothing);
+      expect(popupMenuItem('Preview Topic'), findsNothing);
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pumpAndSettle();
 
-      final previousMode = container
-          .read(appSettingsControllerProvider)
-          .documentViewMode;
-      await tester.tap(find.text(l10n.tocPreviewTopic));
-      await tester.pumpAndSettle();
-      expect(controller.openedFilePath, p.join(root.path, 'topics/nested.md'));
-      expect(
-        controller.requestedEditorMode,
-        DocumentViewModePreference.preview,
-      );
-      await container
-          .read(appSettingsControllerProvider.notifier)
-          .setDocumentViewMode(previousMode);
-      await tester.pumpAndSettle();
       await openPopup(find.text('Nested entry'), buttons: kSecondaryButton);
       await tester.tap(find.text(l10n.newChildTopic));
       await tester.pumpAndSettle();

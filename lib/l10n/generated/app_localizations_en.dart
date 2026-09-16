@@ -148,9 +148,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tocCopyElementIdUnavailable => 'TOC Element ID';
 
   @override
-  String get tocPreviewTopic => 'Preview Topic';
-
-  @override
   String get tocEditTitleAction => 'Edit Title...';
 
   @override

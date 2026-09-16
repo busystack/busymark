@@ -447,38 +447,45 @@ class _HarnessState extends ConsumerState<_Harness> {
       await _capture('03-edit-title');
       await _native('activate', 'Cancel');
       await _menu('Welcome to BusyMark');
-      await _tapLabel('Preview Topic');
-      await _until(
-        () =>
-            ref
-                    .read(workspaceControllerProvider)
-                    .activeBuffer
-                    ?.editorState
-                    .mode ==
-                DocumentViewModePreference.preview &&
-            _elements(
-              (widget) => widget.runtimeType.toString() == '_PreviewPane',
-            ).isNotEmpty,
-        'Selected topic preview is visible',
-      );
       _check(
-        ref.read(workspaceControllerProvider).activeBuffer?.filePath ==
-            p.join(widget.root.path, 'topics/home.md'),
-        'Preview Topic opens the selected topic',
+        !await _nativeMenuContains('Preview Topic'),
+        'TOC context menu omits Preview Topic',
       );
-      await _capture('13-selected-topic-preview');
+      await _key(PhysicalKeyboardKey.escape, LogicalKeyboardKey.escape);
+      controller.updateActiveEditorMode(DocumentViewModePreference.preview);
+      await ref
+          .read(appSettingsControllerProvider.notifier)
+          .setDocumentViewMode(DocumentViewModePreference.preview);
+      await _pause();
+      _check(
+        ref.read(workspaceControllerProvider).activeBuffer?.editorState.mode ==
+            DocumentViewModePreference.preview,
+        'Reading mode is active before structural source navigation',
+      );
       await _menu('Welcome to BusyMark');
       await _tapLabel("Go to TOC Element in 'guide.tree'");
       await _until(
         () =>
             ref.read(workspaceControllerProvider).activeBuffer?.filePath ==
-            p.join(widget.root.path, 'guide.tree'),
+                p.join(widget.root.path, 'guide.tree') &&
+            ref
+                    .read(workspaceControllerProvider)
+                    .activeBuffer
+                    ?.editorState
+                    .mode ==
+                DocumentViewModePreference.source,
         'Guide source navigation completes',
       );
       _check(
         ref.read(workspaceControllerProvider).activeBuffer?.filePath ==
-            p.join(widget.root.path, 'guide.tree'),
-        'Exact source navigation opens guide.tree',
+                p.join(widget.root.path, 'guide.tree') &&
+            ref
+                    .read(workspaceControllerProvider)
+                    .activeBuffer
+                    ?.editorState
+                    .mode ==
+                DocumentViewModePreference.source,
+        'Exact source navigation opens guide.tree in Source mode',
       );
       await _capture('04-source-navigation');
       await _menu('Included source topic');

@@ -148,9 +148,6 @@ class AppLocalizationsNl extends AppLocalizations {
   String get tocCopyElementIdUnavailable => 'ID van inhoudsopgave-element';
 
   @override
-  String get tocPreviewTopic => 'Onderwerpvoorbeeld';
-
-  @override
   String get tocEditTitleAction => 'Titel bewerken...';
 
   @override

@@ -148,9 +148,6 @@ class AppLocalizationsEt extends AppLocalizations {
   String get tocCopyElementIdUnavailable => 'Sisukorra elemendi ID';
 
   @override
-  String get tocPreviewTopic => 'Teema eelvaade';
-
-  @override
   String get tocEditTitleAction => 'Muuda pealkirja...';
 
   @override

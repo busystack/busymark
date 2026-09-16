@@ -148,9 +148,6 @@ class AppLocalizationsFa extends AppLocalizations {
   String get tocCopyElementIdUnavailable => 'شناسهٔ عنصر فهرست مطالب';
 
   @override
-  String get tocPreviewTopic => 'پیش‌نمایش موضوع';
-
-  @override
   String get tocEditTitleAction => 'ویرایش عنوان...';
 
   @override

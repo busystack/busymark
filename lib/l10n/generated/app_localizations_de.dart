@@ -148,9 +148,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String get tocCopyElementIdUnavailable => 'ID des Inhaltsverzeichniselements';
 
   @override
-  String get tocPreviewTopic => 'Thema in Vorschau anzeigen';
-
-  @override
   String get tocEditTitleAction => 'Titel bearbeiten...';
 
   @override

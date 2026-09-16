@@ -148,9 +148,6 @@ class AppLocalizationsPt extends AppLocalizations {
   String get tocCopyElementIdUnavailable => 'ID do elemento do índice';
 
   @override
-  String get tocPreviewTopic => 'Pré-visualizar tópico';
-
-  @override
   String get tocEditTitleAction => 'Editar título...';
 
   @override
@@ -4721,9 +4718,6 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get tocCopyElementIdUnavailable => 'ID do elemento do índice';
-
-  @override
-  String get tocPreviewTopic => 'Pré-visualizar tópico';
 
   @override
   String get tocEditTitleAction => 'Editar título...';

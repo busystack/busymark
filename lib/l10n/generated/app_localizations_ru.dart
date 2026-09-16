@@ -148,9 +148,6 @@ class AppLocalizationsRu extends AppLocalizations {
   String get tocCopyElementIdUnavailable => 'ID элемента оглавления';
 
   @override
-  String get tocPreviewTopic => 'Предпросмотр темы';
-
-  @override
   String get tocEditTitleAction => 'Изменить заголовок...';
 
   @override

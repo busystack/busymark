@@ -147,9 +147,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get tocCopyElementIdUnavailable => 'İçindekiler öğesi kimliği';
 
   @override
-  String get tocPreviewTopic => 'Konuyu önizle';
-
-  @override
   String get tocEditTitleAction => 'Başlığı düzenle...';
 
   @override

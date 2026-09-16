@@ -318,7 +318,7 @@ void main() {
     'Topic from Template...',
   ]) {
     testWidgets(
-      '$choice creates an editable document after Preview Topic, preserving other tabs',
+      '$choice creates an editable document when Reading mode is active, preserving other tabs',
       (tester) async {
         await start(tester);
         final other = topicPath('guides/install.md');
@@ -329,12 +329,12 @@ void main() {
           () => controller().openActiveFile(topicPath('other.md')),
         );
         await _settle(tester);
-        await tester.tap(
-          find.byKey(const ValueKey('workspace-sidebar-toc-row-0')),
-          buttons: kSecondaryMouseButton,
+        controller().updateActiveEditorMode(DocumentViewModePreference.preview);
+        await tester.runAsync(
+          () => container
+              .read(appSettingsControllerProvider.notifier)
+              .setDocumentViewMode(DocumentViewModePreference.preview),
         );
-        await tester.pumpAndSettle();
-        await tester.tap(find.text('Preview Topic'));
         await _settle(
           tester,
           until: () =>

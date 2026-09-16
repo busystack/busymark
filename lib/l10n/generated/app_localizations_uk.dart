@@ -148,9 +148,6 @@ class AppLocalizationsUk extends AppLocalizations {
   String get tocCopyElementIdUnavailable => 'ID елемента змісту';
 
   @override
-  String get tocPreviewTopic => 'Попередній перегляд теми';
-
-  @override
   String get tocEditTitleAction => 'Редагувати заголовок...';
 
   @override

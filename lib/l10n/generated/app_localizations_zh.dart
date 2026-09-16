@@ -142,9 +142,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get tocCopyElementIdUnavailable => '目录元素 ID';
 
   @override
-  String get tocPreviewTopic => '预览主题';
-
-  @override
   String get tocEditTitleAction => '编辑标题...';
 
   @override
@@ -4454,9 +4451,6 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get tocCopyElementIdUnavailable => '目录元素 ID';
-
-  @override
-  String get tocPreviewTopic => '预览主题';
 
   @override
   String get tocEditTitleAction => '编辑标题...';

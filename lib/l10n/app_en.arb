@@ -85,8 +85,6 @@
   "@tocCopyTopicTitleUnavailable": {"description":"Writerside Table of Contents command or dialog text."},
   "tocCopyElementIdUnavailable": "TOC Element ID",
   "@tocCopyElementIdUnavailable": {"description":"Writerside Table of Contents command or dialog text."},
-  "tocPreviewTopic": "Preview Topic",
-  "@tocPreviewTopic": {"description":"Writerside Table of Contents command or dialog text."},
   "tocEditTitleAction": "Edit Title...",
   "@tocEditTitleAction": {"description":"Writerside Table of Contents command or dialog text."},
   "tocEditTitleDialog": "Edit Title",

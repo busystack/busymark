@@ -388,12 +388,6 @@ abstract class AppLocalizations {
   /// Writerside Table of Contents command or dialog text.
   ///
   /// In en, this message translates to:
-  /// **'Preview Topic'**
-  String get tocPreviewTopic;
-
-  /// Writerside Table of Contents command or dialog text.
-  ///
-  /// In en, this message translates to:
   /// **'Edit Title...'**
   String get tocEditTitleAction;
 

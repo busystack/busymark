@@ -148,9 +148,6 @@ class AppLocalizationsVi extends AppLocalizations {
   String get tocCopyElementIdUnavailable => 'ID phần tử mục lục';
 
   @override
-  String get tocPreviewTopic => 'Xem trước chủ đề';
-
-  @override
   String get tocEditTitleAction => 'Sửa tiêu đề...';
 
   @override

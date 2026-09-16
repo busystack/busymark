@@ -149,9 +149,6 @@ class AppLocalizationsNb extends AppLocalizations {
       'ID for innholdsfortegnelseselement';
 
   @override
-  String get tocPreviewTopic => 'Forhåndsvis emne';
-
-  @override
   String get tocEditTitleAction => 'Rediger tittel...';
 
   @override

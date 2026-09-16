@@ -142,9 +142,6 @@ class AppLocalizationsKo extends AppLocalizations {
   String get tocCopyElementIdUnavailable => '목차 요소 ID';
 
   @override
-  String get tocPreviewTopic => '토픽 미리보기';
-
-  @override
   String get tocEditTitleAction => '제목 편집...';
 
   @override

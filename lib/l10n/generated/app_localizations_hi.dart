@@ -148,9 +148,6 @@ class AppLocalizationsHi extends AppLocalizations {
   String get tocCopyElementIdUnavailable => 'विषय-सूची तत्व की ID';
 
   @override
-  String get tocPreviewTopic => 'विषय का पूर्वावलोकन';
-
-  @override
   String get tocEditTitleAction => 'शीर्षक संपादित करें...';
 
   @override

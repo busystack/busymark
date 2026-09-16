@@ -149,9 +149,6 @@ class AppLocalizationsFr extends AppLocalizations {
       'ID de l’élément de la table des matières';
 
   @override
-  String get tocPreviewTopic => 'Aperçu du sujet';
-
-  @override
   String get tocEditTitleAction => 'Modifier le titre...';
 
   @override
