@@ -2236,7 +2236,7 @@ void main() {
       expect(find.text(l10n.newTocLibrary), findsOneWidget);
       expect(find.text(l10n.editInstance), findsOneWidget);
       expect(find.text(l10n.openTocFile), findsOneWidget);
-      expect(find.text(l10n.export), findsOneWidget);
+      expect(find.text(l10n.export), findsNothing);
       final tocActionSequence = find
           .byWidgetPredicate(
             (widget) =>
@@ -2259,8 +2259,6 @@ void main() {
         '<divider>',
         l10n.editInstance,
         l10n.openTocFile,
-        '<divider>',
-        l10n.export,
       ]);
       await tester.tap(find.text(l10n.editInstance));
       await tester.pumpAndSettle();
@@ -2698,6 +2696,11 @@ void main() {
         }
       }
       expect(find.byType(BusyMarkModalEditorSurface), findsOneWidget);
+      expect(find.byType(BusyMarkModalEditorScaffold), findsOneWidget);
+      expect(find.byType(BusyMarkComboRow<ExportFormat>), findsOneWidget);
+      expect(find.byType(SegmentedButton<ExportFormat>), findsNothing);
+      expect(find.text(l10n.pdfPageSize), findsOneWidget);
+      expect(find.text(l10n.pdfIncludePageNumbers), findsOneWidget);
       await tester.tap(find.text(l10n.cancel));
       await tester.pumpAndSettle();
 
@@ -2707,25 +2710,13 @@ void main() {
             widget is BusyMarkPopupMenuItem<Object?> &&
             widget.label == l10n.export,
       );
-      expect(exportItem, findsOneWidget);
-      expect(
-        tester.widget<BusyMarkPopupMenuItem<Object?>>(exportItem).enabled,
-        isTrue,
-      );
-      await tester.tap(exportItem);
-      for (var index = 0; index < 20; index++) {
-        await tester.pump(const Duration(milliseconds: 100));
-        if (find.byType(BusyMarkModalEditorSurface).evaluate().isNotEmpty) {
-          break;
-        }
-      }
-      expect(find.byType(BusyMarkModalEditorSurface), findsOneWidget);
-      expect(find.byType(BusyMarkModalEditorScaffold), findsOneWidget);
-      expect(find.byType(BusyMarkComboRow<ExportFormat>), findsOneWidget);
-      expect(find.byType(SegmentedButton<ExportFormat>), findsNothing);
-      expect(find.text(l10n.pdfPageSize), findsOneWidget);
-      expect(find.text(l10n.pdfIncludePageNumbers), findsOneWidget);
-      await tester.tap(find.text(l10n.cancel));
+      expect(find.text(l10n.tocSynchronize), findsOneWidget);
+      expect(find.text(l10n.newInstance), findsOneWidget);
+      expect(find.text(l10n.newTocLibrary), findsOneWidget);
+      expect(find.text(l10n.editInstance), findsOneWidget);
+      expect(find.text(l10n.openTocFile), findsOneWidget);
+      expect(exportItem, findsNothing);
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
       await tester.pumpAndSettle();
 
       await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
@@ -4295,8 +4286,8 @@ void main() {
     expect(find.text(l10n.copyPath), findsOneWidget);
     expect(find.text(l10n.openInFiles), findsOneWidget);
     expect(find.text(l10n.aiRefineWithAi), findsOneWidget);
-    expect(find.text(l10n.export), findsOneWidget);
-    expect(find.byType(PopupMenuDivider), findsOneWidget);
+    expect(find.text(l10n.export), findsNothing);
+    expect(find.byType(PopupMenuDivider), findsNothing);
 
     await tester.tap(find.text(l10n.copyFileName));
     await tester.pumpAndSettle();

@@ -1012,6 +1012,15 @@ void main() {
     final gitSidebar = File(
       'lib/src/git/presentation/git_sidebar_tab.dart',
     ).readAsStringSync();
+    final outlineMenu = RegExp(
+      r'enum _OutlineDocumentAction[\s\S]*?'
+      r'Future<_PathMenuAction\?> _showSidebarPathMenu',
+    ).firstMatch(workspace)!.group(0)!;
+    final outlineHeader = RegExp(
+      r'class _SidebarHeader extends StatelessWidget[\s\S]*?'
+      r'class _SidebarHeaderRow',
+    ).firstMatch(workspace)!.group(0)!;
+    final outlineActions = '$outlineMenu\n$outlineHeader';
 
     expect(workspace, contains('BusyMarkHeaderPopupMenuButton<_SidebarTab>'));
     expect(
@@ -1115,8 +1124,17 @@ void main() {
       contains("ValueKey('workspace-sidebar-outline-file-menu')"),
     );
     expect(workspace, contains('_outlineDocumentMenuItems('));
-    expect(workspace, contains('label: context.l10n.copyFileName'));
-    expect(workspace, contains('label: context.l10n.export'));
+    expect(outlineActions, contains('_OutlineDocumentAction.copyName'));
+    expect(outlineActions, contains('_OutlineDocumentAction.copyPath'));
+    expect(outlineActions, contains('_OutlineDocumentAction.openInFiles'));
+    expect(outlineActions, contains('_OutlineDocumentAction.refineWithAi'));
+    expect(outlineActions, contains('label: context.l10n.copyFileName'));
+    expect(outlineActions, isNot(contains('_OutlineDocumentAction.export')));
+    expect(outlineActions, isNot(contains('label: context.l10n.export')));
+    expect(outlineActions, isNot(contains('BusyMarkGlyphs.exportPdf')));
+    expect(outlineActions, isNot(contains('showExport')));
+    expect(outlineActions, isNot(contains('canExport')));
+    expect(outlineActions, isNot(contains('onExport()')));
     expect(workspace, contains('tooltip: context.l10n.actions'));
     expect(workspace, isNot(contains('tooltip: context.l10n.openInFiles')));
     expect(workspace, contains('icon: WorkspaceGlyphs.branch'));
@@ -1532,8 +1550,21 @@ void main() {
     expect(tocHeader, contains('highlightWhenOpen: false'));
     expect(tocHeader, contains('tooltip: context.l10n.newTopic'));
     expect(tocHeader, contains('_TocHeaderAction.synchronize'));
+    expect(tocHeader, contains('_TocHeaderAction.newInstance'));
+    expect(tocHeader, contains('_TocHeaderAction.newLibrary'));
+    expect(tocHeader, contains('_TocHeaderAction.editInstance'));
+    expect(tocHeader, contains('_TocHeaderAction.openTocFile'));
     expect(tocHeader, contains('label: context.l10n.tocSynchronize'));
+    expect(tocHeader, contains('label: context.l10n.newInstance'));
+    expect(tocHeader, contains('label: context.l10n.newTocLibrary'));
+    expect(tocHeader, contains('label: context.l10n.editInstance'));
+    expect(tocHeader, contains('label: context.l10n.openTocFile'));
     expect(tocHeader, contains('icon: BusyMarkGlyphs.refresh'));
+    expect(workspace, isNot(contains('_TocHeaderAction.export')));
+    expect(tocHeader, isNot(contains('context.l10n.export')));
+    expect(tocHeader, isNot(contains('BusyMarkGlyphs.exportPdf')));
+    expect(tocHeader, isNot(contains('canExport')));
+    expect(tocHeader, isNot(contains('onExport')));
     expect(
       tocHeader,
       contains(
