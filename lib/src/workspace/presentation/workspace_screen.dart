@@ -6781,8 +6781,8 @@ class _TocTabState extends ConsumerState<_TocTab> {
           if (!isValidWritersideTopicId(name.trim())) {
             return context.l10n.useIdentifierCharacters;
           }
-          if (widget.workspace.writersideModule!.topics.any(
-            (candidate) => candidate.id == name,
+          if (widget.workspace.writersideModule!.reservedTopicIds.contains(
+            name,
           )) {
             return context.l10n.topicIdAlreadyExists;
           }
@@ -6799,9 +6799,8 @@ class _TocTabState extends ConsumerState<_TocTab> {
               requiredError: context.l10n.fileNameRequired,
               invalidCharactersError: context.l10n.useIdentifierCharacters,
               duplicateError: context.l10n.topicIdAlreadyExists,
-              existingTopicIds: widget.workspace.writersideModule!.topics.map(
-                (candidate) => candidate.id,
-              ),
+              existingTopicIds:
+                  widget.workspace.writersideModule!.reservedTopicIds,
               textDirection: Directionality.of(context),
             );
         if (!mounted || !context.mounted) return;
@@ -7580,7 +7579,7 @@ class _TocTabState extends ConsumerState<_TocTab> {
       await showBusyMarkModalDialog<void>(
         context,
         builder: (_) => WritersideTemplateDialog(
-          existingIds: module.topics.map((topic) => topic.id).toSet(),
+          existingIds: module.reservedTopicIds,
           previewBuilder: (context, template, title, filename) {
             final source = WritersideTemplateService.generate(
               template,
@@ -8886,9 +8885,7 @@ class _CreateWritersideTopicDialogState
       return context.l10n.useIdentifierCharacters;
     }
     final id = p.basenameWithoutExtension(effective);
-    final existingIds = widget.workspace.writersideModule?.topics
-        .map((topic) => topic.id)
-        .toSet();
+    final existingIds = widget.workspace.writersideModule?.reservedTopicIds;
     if (existingIds?.contains(id) ?? false) {
       return context.l10n.topicIdAlreadyExists;
     }

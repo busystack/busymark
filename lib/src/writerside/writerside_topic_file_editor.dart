@@ -323,6 +323,12 @@ class WritersideTopicFileEditor {
   }
 
   void _validateModuleSemanticCoverage(WritersideModule module) {
+    if (!module.topicDiscoveryComplete) {
+      throw BusyMarkException(
+        'writerside.topic-file.topic-discovery-incomplete',
+        args: {'module': module.config.moduleName ?? module.rootPath},
+      );
+    }
     final skipped = module.unparsedTopicReferences.toList()..sort();
     if (skipped.isEmpty) return;
     throw BusyMarkException(

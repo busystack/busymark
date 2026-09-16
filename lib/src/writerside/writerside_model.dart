@@ -542,6 +542,7 @@ class WritersideModule {
     this.referenceData = const WritersideReferenceData(),
     this.semanticDiagnostics = const [],
     Set<String> unparsedTopicReferences = const {},
+    this.topicDiscoveryComplete = true,
     this.variablesAvailable = true,
   }) : structuralDiagnostics = diagnostics,
        unparsedTopicReferences = Set.unmodifiable(unparsedTopicReferences);
@@ -561,6 +562,13 @@ class WritersideModule {
   /// Discovered topic sources excluded from the semantic model because they
   /// could not be parsed within the configured scan limits.
   final Set<String> unparsedTopicReferences;
+
+  /// Whether every configured topic root was traversed exhaustively.
+  ///
+  /// This is separate from [unparsedTopicReferences], whose entries were
+  /// discovered but could not be parsed. An incomplete traversal cannot name
+  /// the topic sources it never reached.
+  final bool topicDiscoveryComplete;
   final bool variablesAvailable;
   List<Diagnostic> get diagnostics =>
       sortDiagnostics([...structuralDiagnostics, ...semanticDiagnostics]);
@@ -592,6 +600,7 @@ class WritersideModule {
       diagnostics: diagnostics ?? structuralDiagnostics,
       semanticDiagnostics: semanticDiagnostics ?? this.semanticDiagnostics,
       unparsedTopicReferences: unparsedTopicReferences,
+      topicDiscoveryComplete: topicDiscoveryComplete,
       variablesAvailable: variablesAvailable,
       validatedImageDirs: validatedImageDirs,
       buildProfiles: buildProfiles,
@@ -618,6 +627,14 @@ class WritersideModule {
   Map<String, WritersideTopic> get topicsById => {
     for (final topic in topics) topic.id: topic,
   };
+
+  /// Every topic ID whose basename is already reserved in this help module,
+  /// including discovered sources that were not parsed successfully.
+  Set<String> get reservedTopicIds => Set.unmodifiable({
+    for (final topic in topics) topic.id,
+    for (final reference in unparsedTopicReferences)
+      p.basenameWithoutExtension(reference),
+  });
 
   WritersideTopic? topicByReference(
     String reference, {

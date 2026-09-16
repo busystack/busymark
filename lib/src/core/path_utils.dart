@@ -85,10 +85,18 @@ class WorkspaceScanResult {
   const WorkspaceScanResult({
     required this.entities,
     required this.diagnostics,
+    required this.traversalComplete,
   });
 
   final List<FileSystemEntity> entities;
   final List<Diagnostic> diagnostics;
+
+  /// Whether every reachable directory entry was inspected.
+  ///
+  /// Diagnostics describe why a scan was incomplete, but callers that must
+  /// prove a filesystem inventory is exhaustive should use this bit rather
+  /// than infer completeness from the set of discovered files.
+  final bool traversalComplete;
 }
 
 String normalizePath(String path) {
@@ -147,7 +155,11 @@ Future<WorkspaceScanResult> scanWorkspaceEntities(
 }) async {
   final directory = Directory(rootPath);
   if (!await directory.exists()) {
-    return const WorkspaceScanResult(entities: [], diagnostics: []);
+    return const WorkspaceScanResult(
+      entities: [],
+      diagnostics: [],
+      traversalComplete: true,
+    );
   }
   final listDirectory = directoryLister ?? _listWorkspaceDirectory;
   final entities = <FileSystemEntity>[];
@@ -156,6 +168,7 @@ Future<WorkspaceScanResult> scanWorkspaceEntities(
   var pendingIndex = 0;
   var inspectedEntries = 0;
   var reachedTreeEntryLimit = options.maxTreeEntries <= 0;
+  var traversalComplete = !reachedTreeEntryLimit;
 
   while (pendingIndex < pending.length &&
       inspectedEntries < options.maxTreeEntries) {
@@ -174,6 +187,7 @@ Future<WorkspaceScanResult> scanWorkspaceEntities(
         }
       }
     } on Object catch (error) {
+      traversalComplete = false;
       diagnostics.add(
         _scanWarning(
           current.path,
@@ -193,12 +207,20 @@ Future<WorkspaceScanResult> scanWorkspaceEntities(
           followLinks: options.followLinks,
         );
       } on Object catch (error) {
+        traversalComplete = false;
         diagnostics.add(
           _scanWarning(
             entity.path,
             'workspace.scan.inspect-failed',
             args: {'error': '$error'},
           ),
+        );
+        continue;
+      }
+      if (type == FileSystemEntityType.notFound) {
+        traversalComplete = false;
+        diagnostics.add(
+          _scanWarning(entity.path, 'workspace.scan.inspect-failed'),
         );
         continue;
       }
@@ -228,12 +250,14 @@ Future<WorkspaceScanResult> scanWorkspaceEntities(
     }
   }
   if (reachedTreeEntryLimit) {
+    traversalComplete = false;
     diagnostics.add(_scanWarning(rootPath, 'workspace.scan.skipped'));
   }
   entities.sort((a, b) => a.path.compareTo(b.path));
   return WorkspaceScanResult(
     entities: entities,
     diagnostics: sortDiagnostics(diagnostics),
+    traversalComplete: traversalComplete,
   );
 }
 

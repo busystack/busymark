@@ -861,6 +861,8 @@ class WritersideProject {
     required this.activeInstanceId,
     required this.index,
     required this.diagnostics,
+    this.moduleDiscoveryComplete = true,
+    this.moduleDiscoveryDiagnostics = const [],
   });
 
   final String rootPath;
@@ -869,6 +871,8 @@ class WritersideProject {
   final String? activeInstanceId;
   final WritersideProjectIndex index;
   final List<Diagnostic> diagnostics;
+  final bool moduleDiscoveryComplete;
+  final List<Diagnostic> moduleDiscoveryDiagnostics;
 
   WritersideModule? get activeModule {
     for (final module in modules) {
@@ -909,6 +913,8 @@ class WritersideProject {
       activeInstanceId: instanceId,
       index: index,
       diagnostics: diagnostics,
+      moduleDiscoveryComplete: moduleDiscoveryComplete,
+      moduleDiscoveryDiagnostics: moduleDiscoveryDiagnostics,
     );
   }
 
@@ -966,21 +972,43 @@ class WritersideProject {
         for (final candidate in nextModules) ...candidate.diagnostics,
         ...nextIndex.diagnostics,
         ...writersideWebFileNameDiagnostics(nextModules),
+        ...moduleDiscoveryDiagnostics,
       ]),
+      moduleDiscoveryComplete: moduleDiscoveryComplete,
+      moduleDiscoveryDiagnostics: moduleDiscoveryDiagnostics,
     );
   }
+}
+
+class WritersideModuleDiscoveryResult {
+  WritersideModuleDiscoveryResult({
+    required Iterable<String> roots,
+    required Iterable<Diagnostic> diagnostics,
+    required this.complete,
+  }) : roots = List.unmodifiable(
+         roots.map(normalizePath).toSet().toList()..sort(),
+       ),
+       diagnostics = List.unmodifiable(sortDiagnostics(diagnostics));
+
+  final List<String> roots;
+  final List<Diagnostic> diagnostics;
+  final bool complete;
 }
 
 class WritersideProjectService {
   const WritersideProjectService({
     this.moduleService = const WritersideModuleService(),
     this.scanOptions = const WorkspaceScanOptions(),
+    this.moduleDirectoryLister,
   });
 
   final WritersideModuleService moduleService;
   final WorkspaceScanOptions scanOptions;
+  final WorkspaceDirectoryLister? moduleDirectoryLister;
 
-  Future<List<String>> discoverModuleRoots(String projectRoot) async {
+  Future<WritersideModuleDiscoveryResult> discoverModuleRoots(
+    String projectRoot,
+  ) async {
     final root = normalizePath(projectRoot);
     final direct = [
       p.join(root, 'writerside.cfg'),
@@ -999,22 +1027,27 @@ class WritersideProjectService {
         includeHiddenDirectories: false,
         includeExcludedDirectories: false,
       ),
+      directoryLister: moduleDirectoryLister,
     );
     for (final file in scan.entities.whereType<File>()) {
       if ({'writerside.cfg', 'project.ihp'}.contains(p.basename(file.path))) {
         roots.add(p.dirname(file.path));
       }
     }
-    return roots.toList()..sort();
+    return WritersideModuleDiscoveryResult(
+      roots: roots,
+      diagnostics: scan.diagnostics,
+      complete: scan.traversalComplete,
+    );
   }
 
   Future<WritersideProject> load(
     String projectRoot, {
     String? preferredModuleRoot,
   }) async {
-    final roots = await discoverModuleRoots(projectRoot);
+    final discovery = await discoverModuleRoots(projectRoot);
     var modules = <WritersideModule>[];
-    for (final root in roots) {
+    for (final root in discovery.roots) {
       modules.add(await moduleService.load(root, options: scanOptions));
     }
     modules = _resolveProjectModules(modules);
@@ -1042,7 +1075,10 @@ class WritersideProjectService {
         for (final module in modules) ...module.diagnostics,
         ...index.diagnostics,
         ...writersideWebFileNameDiagnostics(modules),
+        ...discovery.diagnostics,
       ]),
+      moduleDiscoveryComplete: discovery.complete,
+      moduleDiscoveryDiagnostics: discovery.diagnostics,
     );
   }
 
@@ -1072,7 +1108,10 @@ class WritersideProjectService {
         for (final candidate in replaced.modules) ...candidate.diagnostics,
         ...index.diagnostics,
         ...writersideWebFileNameDiagnostics(replaced.modules),
+        ...replaced.moduleDiscoveryDiagnostics,
       ]),
+      moduleDiscoveryComplete: replaced.moduleDiscoveryComplete,
+      moduleDiscoveryDiagnostics: replaced.moduleDiscoveryDiagnostics,
     );
   }
 

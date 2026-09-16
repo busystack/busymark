@@ -89,6 +89,120 @@ void main() {
   });
 
   test(
+    'rename planning rejects topic discovery truncated by tree limits',
+    () async {
+      final fixture = await _fixture(
+        trees: {
+          'guide.tree': '''
+<instance-profile id="guide" start-page="guide.md">
+  <toc-element topic="guide.md"/>
+</instance-profile>
+''',
+        },
+        topics: {
+          'guide.md': '# Guide\n',
+          'deep/reference.md': '# Reference\n\n[Guide](../guide.md)\n',
+        },
+      );
+      final topicsRoot = p.join(fixture.root.path, 'topics');
+      final guidePath = p.join(topicsRoot, 'guide.md');
+      final deepPath = p.join(topicsRoot, 'deep');
+
+      Stream<FileSystemEntity> deterministicListing(
+        Directory directory, {
+        required bool followLinks,
+      }) async* {
+        if (p.equals(directory.path, topicsRoot)) {
+          yield File(guidePath);
+          yield Directory(deepPath);
+          return;
+        }
+        yield File(p.join(deepPath, 'reference.md'));
+      }
+
+      final limitedModule =
+          await WritersideModuleService(
+            topicDirectoryLister: deterministicListing,
+          ).load(
+            fixture.root.path,
+            options: const WorkspaceScanOptions(maxTreeEntries: 2),
+          );
+
+      expect(limitedModule.topicDiscoveryComplete, isFalse);
+      expect(limitedModule.unparsedTopicReferences, isEmpty);
+      await expectLater(
+        editor.prepareRename(
+          module: limitedModule,
+          topic: _topic(limitedModule, 'guide.md'),
+          newFileName: 'setup.md',
+        ),
+        throwsA(
+          isA<BusyMarkException>().having(
+            (error) => error.code,
+            'code',
+            'writerside.topic-file.topic-discovery-incomplete',
+          ),
+        ),
+      );
+      expect(File(guidePath).existsSync(), isTrue);
+      expect(File(p.join(topicsRoot, 'setup.md')).existsSync(), isFalse);
+    },
+  );
+
+  test(
+    'rename planning rejects a topic-root directory listing failure',
+    () async {
+      final fixture = await _fixture(
+        trees: {
+          'guide.tree': '''
+<instance-profile id="guide" start-page="guide.md">
+  <toc-element topic="guide.md"/>
+</instance-profile>
+''',
+        },
+        topics: {
+          'guide.md': '# Guide\n',
+          'deep/reference.md': '# Reference\n\n[Guide](../guide.md)\n',
+        },
+      );
+      final topicsRoot = p.join(fixture.root.path, 'topics');
+      final deepPath = p.join(topicsRoot, 'deep');
+
+      Stream<FileSystemEntity> failingListing(
+        Directory directory, {
+        required bool followLinks,
+      }) async* {
+        if (p.equals(directory.path, deepPath)) {
+          throw FileSystemException('listing failed', directory.path);
+        }
+        yield File(p.join(topicsRoot, 'guide.md'));
+        yield Directory(deepPath);
+      }
+
+      final incompleteModule = await WritersideModuleService(
+        topicDirectoryLister: failingListing,
+      ).load(fixture.root.path);
+
+      expect(incompleteModule.topicDiscoveryComplete, isFalse);
+      expect(incompleteModule.unparsedTopicReferences, isEmpty);
+      await expectLater(
+        editor.prepareRename(
+          module: incompleteModule,
+          topic: _topic(incompleteModule, 'guide.md'),
+          newFileName: 'setup.md',
+        ),
+        throwsA(
+          isA<BusyMarkException>().having(
+            (error) => error.code,
+            'code',
+            'writerside.topic-file.topic-discovery-incomplete',
+          ),
+        ),
+      );
+    },
+  );
+
+  test(
     'rename planning rejects a discovered unreadable topic source',
     () async {
       final fixture = await _fixture(

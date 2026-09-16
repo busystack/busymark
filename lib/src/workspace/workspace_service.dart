@@ -181,13 +181,13 @@ class WorkspaceService {
         File(p.join(canonicalPath, 'project.ihp')).existsSync()) {
       return _openWriterside(canonicalPath, preferredModuleRoot: canonicalPath);
     }
-    final moduleRoots = await _writersideProjectService.discoverModuleRoots(
+    final moduleDiscovery = await _writersideProjectService.discoverModuleRoots(
       canonicalPath,
     );
-    if (moduleRoots.isNotEmpty) {
+    if (moduleDiscovery.roots.isNotEmpty) {
       return _openWriterside(
         canonicalPath,
-        preferredModuleRoot: moduleRoots.first,
+        preferredModuleRoot: moduleDiscovery.roots.first,
       );
     }
     return _openMarkdownFolder(canonicalPath);
@@ -262,7 +262,8 @@ class WorkspaceService {
         rootPath: module.rootPath,
         treePath: instance.sourceTreePath,
         topicsRootDir: topicsRootDir,
-        existingTopicIds: {for (final topic in module.topics) topic.id},
+        existingTopicIds: module.reservedTopicIds,
+        topicDiscoveryComplete: module.topicDiscoveryComplete,
       ),
       request,
       initialSource: initialSource,
@@ -455,7 +456,8 @@ class WorkspaceService {
         rootPath: module.rootPath,
         treePath: instance.sourceTreePath,
         topicsRootDir: p.relative(p.dirname(topicPath), from: module.rootPath),
-        existingTopicIds: module.topics.map((topic) => topic.id).toSet(),
+        existingTopicIds: module.reservedTopicIds,
+        topicDiscoveryComplete: module.topicDiscoveryComplete,
       ),
       WritersideTopicCreateRequest(
         title: topic.title ?? topic.id,
@@ -810,6 +812,12 @@ class WorkspaceService {
       workspace.rootPath,
       preferredModuleRoot: ownerRoot,
     );
+    if (!project.moduleDiscoveryComplete) {
+      throw BusyMarkException(
+        'writerside.topic-file.project-discovery-incomplete',
+        args: {'path': project.rootPath},
+      );
+    }
     final module = project.modules
         .where((candidate) => p.equals(candidate.rootPath, ownerRoot))
         .singleOrNull;
@@ -835,11 +843,17 @@ class WorkspaceService {
   }) async {
     final projectRoot = plan.projectRoot;
     if (projectRoot != null) {
-      final currentRoots = await _writersideProjectService.discoverModuleRoots(
+      final discovery = await _writersideProjectService.discoverModuleRoots(
         projectRoot,
       );
-      final normalizedCurrent = currentRoots.map(normalizePath).toSet().toList()
-        ..sort();
+      if (!discovery.complete) {
+        throw BusyMarkException(
+          'writerside.topic-file.project-discovery-incomplete',
+          args: {'path': projectRoot},
+        );
+      }
+      final normalizedCurrent =
+          discovery.roots.map(normalizePath).toSet().toList()..sort();
       if (!_sameStringList(normalizedCurrent, plan.projectModuleRoots)) {
         throw BusyMarkException(
           'writerside.topic-file.project-inventory-changed',

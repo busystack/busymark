@@ -29,6 +29,7 @@ class WritersideModuleService {
     this.variablesParser = const WritersideVariablesParser(),
     this.categoriesParser = const WritersideCategoriesParser(),
     this.scanOptions = const WorkspaceScanOptions(),
+    this.topicDirectoryLister,
   });
 
   final WritersideConfigParser configParser;
@@ -40,6 +41,7 @@ class WritersideModuleService {
   final WritersideVariablesParser variablesParser;
   final WritersideCategoriesParser categoriesParser;
   final WorkspaceScanOptions scanOptions;
+  final WorkspaceDirectoryLister? topicDirectoryLister;
 
   Future<WritersideModule> load(
     String rootPath, {
@@ -357,13 +359,18 @@ class WritersideModuleService {
 
     final topics = <WritersideTopic>[];
     final unparsedTopics = _UnparsedTopicIndex();
+    var topicDiscoveryComplete = true;
     var parsedDocuments = 0;
     for (final topicsRoot in usableTopicRoots) {
       final scan = await scanWorkspaceEntities(
         topicsRoot,
         options: effectiveScanOptions,
+        directoryLister: topicDirectoryLister,
       );
       diagnostics.addAll(scan.diagnostics);
+      if (!scan.traversalComplete) {
+        topicDiscoveryComplete = false;
+      }
       for (final entity in scan.entities.whereType<File>()) {
         final extension = p.extension(entity.path).toLowerCase();
         if (extension != '.md' &&
@@ -479,6 +486,7 @@ class WritersideModuleService {
       categories: categories,
       diagnostics: const [],
       unparsedTopicReferences: Set.unmodifiable(unparsedTopics._fileNames),
+      topicDiscoveryComplete: topicDiscoveryComplete,
       variablesAvailable: variablesAvailable,
       validatedImageDirs: validatedImageDirs,
       buildProfiles: buildProfiles,
@@ -564,6 +572,7 @@ class WritersideModuleService {
       categories: const [],
       diagnostics: sortDiagnostics(diagnostics),
       validatedImageDirs: const ['images'],
+      topicDiscoveryComplete: false,
       sourceOverrides: sourceOverrides,
     );
   }

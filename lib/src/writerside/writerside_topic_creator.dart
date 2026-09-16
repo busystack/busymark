@@ -172,12 +172,14 @@ class WritersideTopicCreateTarget {
     required this.treePath,
     required this.topicsRootDir,
     required this.existingTopicIds,
+    this.topicDiscoveryComplete = true,
   });
 
   final String rootPath;
   final String treePath;
   final String topicsRootDir;
   final Set<String> existingTopicIds;
+  final bool topicDiscoveryComplete;
 }
 
 class WritersideTopicCreateResult {
@@ -211,6 +213,9 @@ class WritersideTopicCreator {
     String? initialSource,
     Future<void> Function()? validateBeforePublish,
   }) async {
+    if (!target.topicDiscoveryComplete) {
+      throw const BusyMarkException('writerside.topic.discovery-incomplete');
+    }
     final rootPath = normalizePath(target.rootPath);
     final CanonicalPathAnchor rootAnchor;
     try {

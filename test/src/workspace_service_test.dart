@@ -8,6 +8,7 @@ import 'package:busymark/src/workspace/workspace_model.dart';
 import 'package:busymark/src/workspace/workspace_service.dart';
 import 'package:busymark/src/writerside/writerside_module_service.dart';
 import 'package:busymark/src/writerside/writerside_parsers.dart';
+import 'package:busymark/src/writerside/writerside_project.dart';
 import 'package:busymark/src/writerside/writerside_project_creator.dart';
 import 'package:busymark/src/writerside/writerside_topic_creator.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -368,6 +369,136 @@ void main() {
   );
 
   test(
+    'unparsed topic basename reserves its module-wide topic ID for creation',
+    () async {
+      final fixture = await _createWorkspaceWithUnparsedGuide();
+      final module = fixture.workspace.writersideModule!;
+
+      expect(module.unparsedTopicReferences, contains('guide.topic'));
+      expect(module.reservedTopicIds, containsAll(['guide', 'intro']));
+      await expectLater(
+        fixture.service.createWritersideTopic(
+          fixture.workspace,
+          const WritersideTopicCreateRequest(
+            title: 'Duplicate guide',
+            fileName: 'guide.md',
+          ),
+        ),
+        throwsA(
+          isA<BusyMarkException>()
+              .having(
+                (error) => error.code,
+                'code',
+                'writerside.topic.id-exists',
+              )
+              .having((error) => error.args['topicId'], 'topicId', 'guide'),
+        ),
+      );
+      expect(
+        File(p.join(fixture.root.path, 'topics', 'guide.md')).existsSync(),
+        isFalse,
+      );
+
+      final updated = await fixture.service.createWritersideTopic(
+        fixture.workspace,
+        const WritersideTopicCreateRequest(
+          title: 'Different topic',
+          fileName: 'different.md',
+        ),
+      );
+      expect(
+        File(p.join(updated.rootPath, 'topics', 'different.md')).existsSync(),
+        isTrue,
+      );
+    },
+  );
+
+  test('duplicate topic cannot reuse an unparsed topic basename', () async {
+    final fixture = await _createWorkspaceWithUnparsedGuide();
+    final module = fixture.workspace.writersideModule!;
+    final intro = module.topicByReference('intro.md')!;
+    final node = module.instances.single.tocRoots.single;
+
+    await expectLater(
+      fixture.service.duplicateWritersideTopic(
+        fixture.workspace,
+        treePath: fixture.treePath,
+        tocPath: const [0],
+        identity: WritersideTocNodeIdentity.fromNode(node),
+        topicPath: intro.filePath,
+        expectedSource: intro.document.source,
+        newName: 'guide',
+        validateBeforePublish: () async {},
+      ),
+      throwsA(
+        isA<BusyMarkException>().having(
+          (error) => error.code,
+          'code',
+          'writerside.topic.id-exists',
+        ),
+      ),
+    );
+    expect(
+      File(p.join(fixture.root.path, 'topics', 'guide.md')).existsSync(),
+      isFalse,
+    );
+  });
+
+  test('template source cannot reuse an unparsed topic basename', () async {
+    final fixture = await _createWorkspaceWithUnparsedGuide();
+
+    await expectLater(
+      fixture.service.createWritersideTopic(
+        fixture.workspace,
+        const WritersideTopicCreateRequest(
+          title: 'Template guide',
+          fileName: 'guide.md',
+        ),
+        initialSource: '# Template guide\n',
+      ),
+      throwsA(
+        isA<BusyMarkException>().having(
+          (error) => error.code,
+          'code',
+          'writerside.topic.id-exists',
+        ),
+      ),
+    );
+    expect(
+      File(p.join(fixture.root.path, 'topics', 'guide.md')).existsSync(),
+      isFalse,
+    );
+  });
+
+  test('topic creation refuses incomplete topic discovery', () async {
+    final fixture = await _createWorkspaceWithUnparsedGuide(
+      scanOptions: const WorkspaceScanOptions(maxTreeEntries: 1),
+    );
+
+    expect(fixture.workspace.writersideModule!.topicDiscoveryComplete, isFalse);
+    await expectLater(
+      fixture.service.createWritersideTopic(
+        fixture.workspace,
+        const WritersideTopicCreateRequest(
+          title: 'Cannot prove uniqueness',
+          fileName: 'unknown.md',
+        ),
+      ),
+      throwsA(
+        isA<BusyMarkException>().having(
+          (error) => error.code,
+          'code',
+          'writerside.topic.discovery-incomplete',
+        ),
+      ),
+    );
+    expect(
+      File(p.join(fixture.root.path, 'topics', 'unknown.md')).existsSync(),
+      isFalse,
+    );
+  });
+
+  test(
     'rejects topic creation when the configured instance tree is outside the module',
     () async {
       final base = await Directory.systemTemp.createTemp(
@@ -462,6 +593,91 @@ void main() {
       );
     },
   );
+
+  test(
+    'topic rename planning rejects incomplete project module discovery',
+    () async {
+      final fixture = await _createTopicRenameWorkspace();
+      final limitedService = WorkspaceService(
+        scanOptions: const WorkspaceScanOptions(maxTreeEntries: 1),
+      );
+
+      await expectLater(
+        limitedService.prepareWritersideTopicRename(
+          fixture.workspace,
+          topicPath: fixture.guidePath,
+          newFileName: 'setup.md',
+          topicModuleRoot: fixture.mainRoot.path,
+        ),
+        throwsA(
+          isA<BusyMarkException>().having(
+            (error) => error.code,
+            'code',
+            'writerside.topic-file.project-discovery-incomplete',
+          ),
+        ),
+      );
+      expect(File(fixture.guidePath).existsSync(), isTrue);
+      expect(
+        File(p.join(fixture.mainRoot.path, 'topics', 'setup.md')).existsSync(),
+        isFalse,
+      );
+    },
+  );
+
+  test(
+    'prepared topic rename rejects incomplete module discovery on apply',
+    () async {
+      final fixture = await _createTopicRenameWorkspace();
+      final plan = await service.prepareWritersideTopicRename(
+        fixture.workspace,
+        topicPath: fixture.guidePath,
+        newFileName: 'setup.md',
+        topicModuleRoot: fixture.mainRoot.path,
+      );
+      final limitedService = WorkspaceService(
+        scanOptions: const WorkspaceScanOptions(maxTreeEntries: 1),
+      );
+
+      await expectLater(
+        limitedService.applyWritersideTopicRename(plan),
+        throwsA(
+          isA<BusyMarkException>().having(
+            (error) => error.code,
+            'code',
+            'writerside.topic-file.project-discovery-incomplete',
+          ),
+        ),
+      );
+      expect(File(fixture.guidePath).existsSync(), isTrue);
+      expect(
+        File(p.join(fixture.mainRoot.path, 'topics', 'setup.md')).existsSync(),
+        isFalse,
+      );
+    },
+  );
+
+  test('project module discovery reports directory listing failure', () async {
+    final fixture = await _createTopicRenameWorkspace();
+
+    Stream<FileSystemEntity> failListing(
+      Directory directory, {
+      required bool followLinks,
+    }) async* {
+      throw FileSystemException('listing failed', directory.path);
+    }
+
+    final discovery = await WritersideProjectService(
+      moduleDirectoryLister: failListing,
+    ).discoverModuleRoots(fixture.projectRoot.path);
+
+    expect(discovery.complete, isFalse);
+    expect(discovery.roots, isEmpty);
+    expect(
+      discovery.diagnostics.map((diagnostic) => diagnostic.code),
+      contains('workspace.scan.inspect-failed'),
+    );
+  });
 
   test(
     'ordinary directory creation does not stale a prepared rename',
@@ -1180,6 +1396,56 @@ void main() {
       isNot(contains('writerside.tree.missing-topic')),
     );
   });
+}
+
+Future<
+  ({
+    Directory root,
+    WorkspaceService service,
+    Workspace workspace,
+    String treePath,
+  })
+>
+_createWorkspaceWithUnparsedGuide({
+  WorkspaceScanOptions scanOptions = const WorkspaceScanOptions(
+    maxParsedFileBytes: 256,
+  ),
+}) async {
+  final root = await Directory.systemTemp.createTemp(
+    'busymark-workspace-unparsed-topic-id-',
+  );
+  addTearDown(() async {
+    if (await root.exists()) {
+      await root.delete(recursive: true);
+    }
+  });
+  await Directory(p.join(root.path, 'topics')).create();
+  await File(p.join(root.path, 'writerside.cfg')).writeAsString('''
+<ihp version="2.0">
+  <topics dir="topics"/>
+  <instance src="guide.tree"/>
+</ihp>
+''');
+  final treePath = p.join(root.path, 'guide.tree');
+  await File(treePath).writeAsString('''
+<instance-profile id="guide" start-page="intro.md">
+  <toc-element topic="intro.md"/>
+</instance-profile>
+''');
+  await File(
+    p.join(root.path, 'topics', 'intro.md'),
+  ).writeAsString('# Intro\n');
+  await File(p.join(root.path, 'topics', 'guide.topic')).writeAsString(
+    '<topic id="guide" title="Guide">${'content ' * 80}</topic>\n',
+  );
+  final service = WorkspaceService(scanOptions: scanOptions);
+  final workspace = await service.openPath(root.path);
+  return (
+    root: Directory(await root.resolveSymbolicLinks()),
+    service: service,
+    workspace: workspace,
+    treePath: normalizePath(treePath),
+  );
 }
 
 Future<
