@@ -1650,6 +1650,8 @@ void main() {
     );
     expect(design, contains('iconColorArgb: item.iconColor?.toARGB32()'));
     expect(nativeMenu, contains('create_native_menu_icon('));
+    expect(nativeMenu, contains('kGitBranchMenuIcon'));
+    expect(nativeMenu, contains('cairo_curve_to('));
     expect(nativeMenu, contains('gtk_icon_info_load_symbolic('));
     expect(design, contains('shortcut: item.shortcut'));
     expect(design, contains('checkable: item.trailingCheck'));

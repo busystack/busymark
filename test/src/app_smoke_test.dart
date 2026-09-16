@@ -4115,20 +4115,52 @@ void main() {
     await pressControlShortcut(LogicalKeyboardKey.digit1);
     expect(find.text('Api.md'), findsOneWidget);
     expect(find.byTooltip(l10n.sidebarViewMenu), findsOneWidget);
+    expect(
+      tester
+          .widget<BusyMarkHeaderPopupMenuButton>(
+            find.byKey(const ValueKey('workspace-sidebar-view-menu')),
+          )
+          .icon,
+      BusyMarkGlyphs.documentOpen,
+    );
     expect(find.byTooltip(temp.path), findsOneWidget);
     expect(find.byTooltip(l10n.gitActions), findsNothing);
 
     await pressControlShortcut(LogicalKeyboardKey.digit5);
     expect(find.byType(LocalHistoryPanel), findsOneWidget);
+    expect(
+      tester
+          .widget<BusyMarkHeaderPopupMenuButton>(
+            find.byKey(const ValueKey('workspace-sidebar-view-menu')),
+          )
+          .icon,
+      BusyMarkGlyphs.sidebarLocalHistory,
+    );
 
     await pressControlShortcut(LogicalKeyboardKey.digit6);
     expect(find.byType(ClipboardHistoryPanel), findsOneWidget);
+    expect(
+      tester
+          .widget<BusyMarkHeaderPopupMenuButton>(
+            find.byKey(const ValueKey('workspace-sidebar-view-menu')),
+          )
+          .icon,
+      BusyMarkGlyphs.copy,
+    );
 
     await setDocumentViewMode(DocumentViewModePreference.preview);
     await pressControlShortcut(LogicalKeyboardKey.digit4);
     expect(find.text(l10n.gitNoChanges), findsOneWidget);
     expect(find.byTooltip(temp.path), findsNothing);
     expect(find.byTooltip(l10n.gitActions), findsOneWidget);
+    expect(
+      tester
+          .widget<BusyMarkHeaderPopupMenuButton>(
+            find.byKey(const ValueKey('workspace-sidebar-view-menu')),
+          )
+          .icon,
+      BusyMarkGlyphs.branch,
+    );
     final branchRow = find.byKey(
       const ValueKey('workspace-sidebar-first-content'),
     );
@@ -4204,6 +4236,14 @@ void main() {
     expect(find.text('Intro.md'), findsWidgets);
     expect(find.byTooltip(temp.path), findsNothing);
     expect(find.byTooltip(l10n.gitActions), findsNothing);
+    expect(
+      tester
+          .widget<BusyMarkHeaderPopupMenuButton>(
+            find.byKey(const ValueKey('workspace-sidebar-view-menu')),
+          )
+          .icon,
+      BusyMarkGlyphs.indent,
+    );
     final outlineFileMenu = find.byKey(
       const ValueKey('workspace-sidebar-outline-file-menu'),
     );
@@ -4258,6 +4298,8 @@ void main() {
     expect(find.text(l10n.findLocalHistoryEllipsis), findsNothing);
     expect(find.text(l10n.generateOrUpdateMarkdownToc), findsNothing);
     expect(find.text(l10n.export), findsNothing);
+    expect(find.byIcon(BusyMarkGlyphs.branch), findsOneWidget);
+    expect(find.byIcon(BusyMarkGlyphs.sidebarLocalHistory), findsOneWidget);
   });
 
   testWidgets(

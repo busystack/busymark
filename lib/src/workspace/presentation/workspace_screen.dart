@@ -3023,7 +3023,7 @@ IconData _sidebarTabIcon(_SidebarTab tab, TextDirection direction) {
     _SidebarTab.toc => BusyMarkGlyphs.orderedList,
     _SidebarTab.outline => BusyMarkGlyphs.indentFor(direction),
     _SidebarTab.git => BusyMarkGlyphs.branch,
-    _SidebarTab.localHistory => BusyMarkGlyphs.documentHistory,
+    _SidebarTab.localHistory => BusyMarkGlyphs.sidebarLocalHistory,
     _SidebarTab.clipboard => BusyMarkGlyphs.copy,
   };
 }
@@ -3155,6 +3155,22 @@ class _SidebarHeader extends StatelessWidget {
       color: accentColor,
       fontWeight: FontWeight.w700,
     );
+    final direction = Directionality.of(context);
+    final tabMenuItems = <BusyMarkPopupMenuItem<_SidebarTab>>[
+      for (final tab in tabs)
+        BusyMarkPopupMenuItem(
+          value: tab,
+          label: _sidebarTabLabel(context, tab),
+          icon: _sidebarTabIcon(tab, direction),
+          iconColor: tab == _SidebarTab.git ? colors.foreground : null,
+          shortcut: _sidebarTabShortcut(context, tab),
+          checked: tab == selectedTab,
+          trailingCheck: true,
+        ),
+    ];
+    final selectedTabMenuItem = selectedTab == null
+        ? null
+        : tabMenuItems.firstWhere((item) => item.menuValue == selectedTab);
     return Padding(
       padding: BusyMarkInsets.sidebarHeader,
       child: Column(
@@ -3174,32 +3190,16 @@ class _SidebarHeader extends StatelessWidget {
                     ).textTheme.bodyMedium?.copyWith(color: colors.foreground),
                   ),
                 ),
-                if (showTabMenu && selectedTab != null) ...[
+                if (showTabMenu && selectedTabMenuItem != null) ...[
                   const SizedBox(width: BusyMarkSpacing.sm),
                   BusyMarkHeaderPopupMenuButton<_SidebarTab>(
                     key: const ValueKey('workspace-sidebar-view-menu'),
                     tooltip: context.l10n.sidebarViewMenu,
-                    icon: _sidebarTabIcon(
-                      selectedTab!,
-                      Directionality.of(context),
-                    ),
+                    icon: selectedTabMenuItem.icon!,
                     transparent: true,
                     borderRadius: BusyMarkRadius.nativeHeaderButton,
                     highlightWhenOpen: false,
-                    itemBuilder: (context) => [
-                      for (final tab in tabs)
-                        BusyMarkPopupMenuItem(
-                          value: tab,
-                          label: _sidebarTabLabel(context, tab),
-                          icon: _sidebarTabIcon(
-                            tab,
-                            Directionality.of(context),
-                          ),
-                          shortcut: _sidebarTabShortcut(context, tab),
-                          checked: tab == selectedTab,
-                          trailingCheck: true,
-                        ),
-                    ],
+                    itemBuilder: (context) => tabMenuItems,
                     onSelected: onSelectTab,
                   ),
                 ],

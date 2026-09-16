@@ -79,6 +79,7 @@ abstract final class BusyMarkGlyphs {
   static const IconData searchUnavailable = YaruIcons.find_replace;
   static const IconData selectAll = YaruIcons.selection;
   static const IconData settings = YaruIcons.settings;
+  static const IconData sidebarLocalHistory = YaruIcons.history;
   static const IconData sidebar = YaruIcons.sidebar;
   static const IconData startTopic = YaruIcons.document;
   static const IconData strikethrough = YaruIcons.strikethrough;
@@ -130,7 +131,10 @@ abstract final class BusyMarkGlyphs {
     if (icon == bold) {
       return 'format-text-bold-symbolic';
     }
-    if (icon == branch || icon == tree) {
+    if (icon == branch) {
+      return 'busymark-git-branch-symbolic';
+    }
+    if (icon == tree) {
       return 'view-treemap-symbolic';
     }
     if (icon == category || icon == tag) {

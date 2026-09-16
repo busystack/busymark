@@ -19,6 +19,7 @@
 constexpr char kApplicationDisplayName[] = "BusyMark";
 constexpr char kHeaderBarChannel[] = "com.busymark.app/headerbar";
 constexpr char kNativeMenuChannel[] = "busymark/native_menus";
+constexpr char kGitBranchMenuIcon[] = "busymark-git-branch-symbolic";
 constexpr char kAssetInputChannel[] = "com.busymark.app/asset_input";
 constexpr gint kHeaderButtonHeight = 32;
 constexpr gint kHeaderButtonSpacing = 8;
@@ -2477,15 +2478,54 @@ static GIcon* create_native_menu_icon(const gchar* icon_name, FlValue* entry) {
   }
 
   FlValue* packed_color = fl_value_lookup_string(entry, "iconColor");
+  GdkRGBA foreground = {0.5, 0.5, 0.5, 1.0};
   if (packed_color != nullptr &&
       fl_value_get_type(packed_color) == FL_VALUE_TYPE_INT) {
     const guint32 argb = static_cast<guint32>(fl_value_get_int(packed_color));
-    const GdkRGBA foreground = {
+    foreground = {
         static_cast<gdouble>((argb >> 16) & 0xff) / 255.0,
         static_cast<gdouble>((argb >> 8) & 0xff) / 255.0,
         static_cast<gdouble>(argb & 0xff) / 255.0,
         static_cast<gdouble>((argb >> 24) & 0xff) / 255.0,
     };
+  }
+
+  if (g_strcmp0(icon_name, kGitBranchMenuIcon) == 0) {
+    constexpr gint kIconSize = 16;
+    cairo_surface_t* surface =
+        cairo_image_surface_create(CAIRO_FORMAT_ARGB32, kIconSize, kIconSize);
+    cairo_t* cr = cairo_create(surface);
+    cairo_set_source_rgba(cr, foreground.red, foreground.green,
+                          foreground.blue, foreground.alpha);
+    cairo_set_line_width(cr, 1.5);
+    cairo_set_line_cap(cr, CAIRO_LINE_CAP_ROUND);
+    cairo_set_line_join(cr, CAIRO_LINE_JOIN_ROUND);
+
+    cairo_move_to(cr, 4.0, 4.5);
+    cairo_line_to(cr, 4.0, 11.5);
+    cairo_stroke(cr);
+    cairo_move_to(cr, 4.0, 7.0);
+    cairo_curve_to(cr, 4.0, 5.0, 6.0, 3.0, 10.0, 3.0);
+    cairo_stroke(cr);
+
+    constexpr gdouble kFullCircle = 6.283185307179586;
+    constexpr gdouble kNodes[][2] = {
+        {4.0, 3.0}, {11.5, 3.0}, {4.0, 13.0}};
+    for (const auto& point : kNodes) {
+      cairo_arc(cr, point[0], point[1], 1.5, 0.0, kFullCircle);
+      cairo_fill(cr);
+    }
+
+    cairo_destroy(cr);
+    cairo_surface_flush(surface);
+    GdkPixbuf* pixbuf =
+        gdk_pixbuf_get_from_surface(surface, 0, 0, kIconSize, kIconSize);
+    cairo_surface_destroy(surface);
+    return pixbuf == nullptr ? nullptr : G_ICON(pixbuf);
+  }
+
+  if (packed_color != nullptr &&
+      fl_value_get_type(packed_color) == FL_VALUE_TYPE_INT) {
     GtkIconInfo* icon_info = gtk_icon_theme_lookup_icon(
         gtk_icon_theme_get_default(), icon_name, 16,
         static_cast<GtkIconLookupFlags>(GTK_ICON_LOOKUP_FORCE_SIZE |

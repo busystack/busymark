@@ -899,7 +899,7 @@ void main() {
     expect(workspace, contains('BusyMarkHeaderPopupMenuButton<_SidebarTab>'));
     expect(workspace, contains('BusyMarkPopupMenuItem('));
     expect(workspace, contains('tooltip: context.l10n.sidebarViewMenu'));
-    expect(workspace, contains('icon: _sidebarTabIcon('));
+    expect(workspace, contains('icon: selectedTabMenuItem.icon!'));
     expect(workspace, contains('transparent: true'));
     expect(
       workspace,
@@ -907,11 +907,7 @@ void main() {
     );
     expect(
       workspace,
-      matches(
-        RegExp(
-          r'icon: _sidebarTabIcon\(\s*tab,\s*Directionality\.of\(context\),?\s*\)',
-        ),
-      ),
+      matches(RegExp(r'icon: _sidebarTabIcon\(tab, direction\)')),
     );
     expect(workspace, contains('shortcut: _sidebarTabShortcut(context, tab)'));
     expect(
@@ -930,6 +926,13 @@ void main() {
     );
     expect(workspace, contains('_SidebarTab.outline => BusyMarkGlyphs.indent'));
     expect(workspace, contains('_SidebarTab.git => BusyMarkGlyphs.branch'));
+    expect(
+      workspace,
+      contains(
+        '_SidebarTab.localHistory => BusyMarkGlyphs.sidebarLocalHistory',
+      ),
+    );
+    expect(workspace, contains('itemBuilder: (context) => tabMenuItems'));
     expect(workspace, isNot(contains('_SidebarTab.gitFileHistory')));
     expect(workspace, isNot(contains('_SidebarTab.gitProjectHistory')));
     expect(workspace, contains('checked: tab == selectedTab'));
