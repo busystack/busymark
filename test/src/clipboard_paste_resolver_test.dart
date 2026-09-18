@@ -197,5 +197,12 @@ void main() {
       ),
       'destination content\n',
     );
+    expect(
+      candidate.fragment.serializeInlineFor(
+        destinationMode: MarkdownMode.gfm,
+        destinationFilePath: '/workspace/destination.md',
+      ),
+      'destination content',
+    );
   });
 }

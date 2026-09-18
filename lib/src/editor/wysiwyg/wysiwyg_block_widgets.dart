@@ -169,6 +169,7 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
     this.onCopy,
     this.onPaste,
     this.onPastePlainText,
+    this.readPasteAvailability,
     this.onCopyPlainText,
     this.onRefineWithAi,
     this.editRevision = 0,
@@ -217,6 +218,7 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
   final VoidCallback? onCopy;
   final VoidCallback? onPaste;
   final VoidCallback? onPastePlainText;
+  final BusyMarkEditorTextPasteAvailabilityReader? readPasteAvailability;
   final VoidCallback? onCopyPlainText;
   final VoidCallback? onRefineWithAi;
   final int editRevision;
@@ -400,6 +402,7 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
           onCopy: onCopy,
           onPaste: onPaste,
           onPastePlainText: onPastePlainText,
+          readPasteAvailability: readPasteAvailability,
           onCopyPlainText: onCopyPlainText,
         ),
       );
@@ -563,6 +566,8 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
                                           onCopy: onCopy,
                                           onPaste: onPaste,
                                           onPastePlainText: onPastePlainText,
+                                          readPasteAvailability:
+                                              readPasteAvailability,
                                           onCopyPlainText: onCopyPlainText,
                                         ),
                               onTap: onFocused,
@@ -1481,6 +1486,7 @@ class _TableBlockEditor extends StatefulWidget {
     this.onCopy,
     this.onPaste,
     this.onPastePlainText,
+    this.readPasteAvailability,
     this.onCopyPlainText,
   });
 
@@ -1507,6 +1513,7 @@ class _TableBlockEditor extends StatefulWidget {
   final VoidCallback? onCopy;
   final VoidCallback? onPaste;
   final VoidCallback? onPastePlainText;
+  final BusyMarkEditorTextPasteAvailabilityReader? readPasteAvailability;
   final VoidCallback? onCopyPlainText;
 
   @override
@@ -1681,6 +1688,7 @@ class _TableBlockEditorState extends State<_TableBlockEditor> {
         onCopy: widget.onCopy,
         onPaste: widget.onPaste,
         onPastePlainText: widget.onPastePlainText,
+        readPasteAvailability: widget.readPasteAvailability,
         onCopyPlainText: widget.onCopyPlainText,
       ),
     );
@@ -2045,6 +2053,7 @@ class _TableCellEditor extends StatefulWidget {
     this.onCopy,
     this.onPaste,
     this.onPastePlainText,
+    this.readPasteAvailability,
     this.onCopyPlainText,
   });
 
@@ -2067,6 +2076,7 @@ class _TableCellEditor extends StatefulWidget {
   final VoidCallback? onCopy;
   final VoidCallback? onPaste;
   final VoidCallback? onPastePlainText;
+  final BusyMarkEditorTextPasteAvailabilityReader? readPasteAvailability;
   final VoidCallback? onCopyPlainText;
 
   @override
@@ -2252,6 +2262,7 @@ class _TableCellEditorState extends State<_TableCellEditor> {
                       onCopy: widget.onCopy,
                       onPaste: widget.onPaste,
                       onPastePlainText: widget.onPastePlainText,
+                      readPasteAvailability: widget.readPasteAvailability,
                       onCopyPlainText: widget.onCopyPlainText,
                     ),
           onTap: () {

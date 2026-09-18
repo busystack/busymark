@@ -47,6 +47,27 @@ class WysiwygClipboardFragment {
     ),
   );
 
+  bool get isInlineSourceFragment {
+    final values = documentBlocks;
+    return values.length == 1 &&
+        values.single.kind == BusyBlockKind.paragraph &&
+        values.single.children.isEmpty &&
+        !values.single.isSourceOnly;
+  }
+
+  String serializeInlineFor({
+    required MarkdownMode destinationMode,
+    required String destinationFilePath,
+  }) {
+    final serialized = serializeFor(
+      destinationMode: destinationMode,
+      destinationFilePath: destinationFilePath,
+    );
+    return isInlineSourceFragment && serialized.endsWith('\n')
+        ? serialized.substring(0, serialized.length - 1)
+        : serialized;
+  }
+
   String encode() => jsonEncode({
     'version': 1,
     'mode': mode.name,

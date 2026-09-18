@@ -826,6 +826,8 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
                                     BusyMarkPasteMode.plainText,
                                   ),
                                 ),
+                                readPasteAvailability:
+                                    _readContextMenuPasteAvailability,
                               ),
                           onChanged: (_) => _handleSourceChanged(),
                         ),
@@ -1884,6 +1886,93 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
     return outcome.result;
   }
 
+  Future<BusyMarkEditorTextPasteAvailability>
+  _readContextMenuPasteAvailability() async {
+    if (_hasActiveComposition) {
+      return BusyMarkEditorTextPasteAvailability.unavailable;
+    }
+    final target = _captureClipboardTarget();
+    final first = await _clipboard.read();
+    if (!_isClipboardTargetCurrent(target)) {
+      return BusyMarkEditorTextPasteAvailability.unavailable;
+    }
+    final snapshot = BusyMarkClipboardSnapshot.fromSystem(first);
+    final destination = switch (target.format) {
+      SourceDocumentFormat.markdown => BusyMarkPasteDestination.markdownSource,
+      SourceDocumentFormat.writersideXmlTopic =>
+        BusyMarkPasteDestination.writersideXmlSource,
+      SourceDocumentFormat.genericXml =>
+        BusyMarkPasteDestination.genericXmlSource,
+      SourceDocumentFormat.plainText => BusyMarkPasteDestination.plainSource,
+    };
+    const resolver = BusyMarkClipboardPasteResolver();
+    final plainText = resolver
+        .resolve(
+          snapshot: snapshot,
+          mode: BusyMarkPasteMode.plainText,
+          destination: destination,
+          markdownMode: target.markdownMode,
+        )
+        .candidates
+        .isNotEmpty;
+    final normalPlan = resolver.resolve(
+      snapshot: snapshot,
+      mode: BusyMarkPasteMode.normal,
+      destination: destination,
+      markdownMode: target.markdownMode,
+    );
+    var normal = normalPlan.candidates.any(
+      (candidate) =>
+          candidate is! BusyMarkNativeImagePasteCandidate &&
+          _canPrepareSystemPasteCandidate(snapshot, candidate),
+    );
+    if (!normal &&
+        normalPlan.candidates.any(
+          (candidate) => candidate is BusyMarkNativeImagePasteCandidate,
+        )) {
+      final input = widget.assetInputService ?? busyMarkAssetInputService;
+      final files = await input.readClipboardImageFiles();
+      Uint8List? png;
+      if (files.isEmpty) png = await input.readClipboardImagePng();
+      final second = await _clipboard.read();
+      if (!_isClipboardTargetCurrent(target)) {
+        return BusyMarkEditorTextPasteAvailability.unavailable;
+      }
+      normal =
+          first.sameExternalIdentity(second) &&
+          (files.isNotEmpty || (png != null && png.isNotEmpty));
+    }
+    return BusyMarkEditorTextPasteAvailability(
+      normal: normal,
+      plainText: plainText,
+    );
+  }
+
+  bool _canPrepareSystemPasteCandidate(
+    BusyMarkClipboardSnapshot snapshot,
+    BusyMarkPasteCandidate candidate,
+  ) {
+    if (candidate is BusyMarkImagePasteCandidate) {
+      return widget.assetIngestionService.canIngestMediaBytes(
+        bytes: candidate.bytes,
+        suggestedFileName: candidate.displayName ?? 'clipboard-image.png',
+      );
+    }
+    if (candidate is! BusyMarkStructuredPasteCandidate ||
+        candidate.fragment.mediaPaths.isEmpty) {
+      return true;
+    }
+    return snapshot.mediaComplete &&
+        candidate.fragment.mediaPaths.entries.every((entry) {
+          final bytes = snapshot.mediaBytes[entry.key];
+          return bytes != null &&
+              widget.assetIngestionService.canIngestMediaBytes(
+                bytes: bytes,
+                suggestedFileName: p.basename(entry.value),
+              );
+        });
+  }
+
   Future<ClipboardPasteResult> _pasteHistoryPayload(
     BusyMarkClipboardPayload payload, {
     required BusyMarkPasteMode mode,
@@ -1968,10 +2057,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
         }
         final result = _insertClipboardText(
           target,
-          fragment.serializeFor(
-            destinationMode: target.markdownMode,
-            destinationFilePath: target.filePath ?? '',
-          ),
+          _serializeStructuredClipboardInsertion(target, fragment),
         );
         if (result != ClipboardPasteResult.inserted) {
           await _deleteUncommittedClipboardAssets(assets);
@@ -2017,9 +2103,21 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
           _formatSupportsImages(target.format)) {
         final path = _localFilePathFromClipboardText(text);
         if (path != null) {
-          final result = await _pasteImageFile(path, target: target);
+          Uint8List? retainedBytes;
+          final result = await _pasteImageFile(
+            path,
+            target: target,
+            onInserted: (value) => retainedBytes = value,
+          );
           if (result == ClipboardPasteResult.inserted) {
-            return (result: result, fragment: null, retained: false);
+            if (snapshot.external && retainedBytes != null) {
+              _retainExternalPathImageSnapshot(snapshot, retainedBytes!, path);
+            }
+            return (
+              result: result,
+              fragment: null,
+              retained: snapshot.external && retainedBytes != null,
+            );
           }
           if (result == ClipboardPasteResult.staleTarget) {
             return (result: result, fragment: null, retained: false);
@@ -2041,6 +2139,58 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
   bool _formatSupportsImages(SourceDocumentFormat format) =>
       format == SourceDocumentFormat.markdown ||
       format == SourceDocumentFormat.writersideXmlTopic;
+
+  String _serializeStructuredClipboardInsertion(
+    _SourceClipboardOperationTarget target,
+    WysiwygClipboardFragment fragment,
+  ) {
+    if (fragment.isInlineSourceFragment) {
+      return fragment.serializeInlineFor(
+        destinationMode: target.markdownMode,
+        destinationFilePath: target.filePath ?? '',
+      );
+    }
+    final serialized = fragment.serializeFor(
+      destinationMode: target.markdownMode,
+      destinationFilePath: target.filePath ?? '',
+    );
+    final selection = target.selection.isValid
+        ? target.selection
+        : TextSelection.collapsed(offset: target.text.length);
+    final start = selection.start.clamp(0, target.text.length).toInt();
+    final end = selection.end.clamp(start, target.text.length).toInt();
+    final before = target.text.substring(0, start);
+    final after = target.text.substring(end);
+    final leadingBreaks = _leadingLineBreaks(serialized);
+    final trailingBreaks = _trailingLineBreaks(serialized);
+    final prefix = before.isEmpty
+        ? ''
+        : '\n' * math.max(0, 2 - _trailingLineBreaks(before) - leadingBreaks);
+    final suffix = after.isEmpty
+        ? ''
+        : '\n' * math.max(0, 2 - trailingBreaks - _leadingLineBreaks(after));
+    return '$prefix$serialized$suffix';
+  }
+
+  int _leadingLineBreaks(String value) {
+    var count = 0;
+    while (count < value.length && value.codeUnitAt(count) == 0x0a) {
+      count += 1;
+    }
+    return count;
+  }
+
+  int _trailingLineBreaks(String value) {
+    var count = 0;
+    for (
+      var index = value.length - 1;
+      index >= 0 && value.codeUnitAt(index) == 0x0a;
+      index -= 1
+    ) {
+      count += 1;
+    }
+    return count;
+  }
 
   String? _localFilePathFromClipboardText(String value) {
     final trimmed = value.trim();
@@ -2210,6 +2360,30 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
         origin: data.origin,
         mediaBytes: data.mediaBytes,
         mediaComplete: data.mediaComplete,
+        external: true,
+      ),
+    );
+  }
+
+  void _retainExternalPathImageSnapshot(
+    BusyMarkClipboardSnapshot snapshot,
+    Uint8List bytes,
+    String path,
+  ) {
+    if (!snapshot.external) return;
+    widget.onClipboardCaptured?.call(
+      BusyMarkClipboardCapture(
+        kind: BusyMarkClipboardContentKind.image,
+        text: snapshot.text,
+        sourceText: snapshot.sourceText,
+        html: snapshot.html,
+        richFragment: snapshot.richFragment,
+        imageBytes: bytes,
+        imageMimeType: _sourceClipboardImageMimeType(path),
+        imageDisplayName: p.basename(path),
+        origin: snapshot.origin,
+        mediaBytes: snapshot.mediaBytes,
+        mediaComplete: snapshot.mediaComplete,
         external: true,
       ),
     );

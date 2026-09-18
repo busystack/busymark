@@ -6,6 +6,25 @@ import '../app/busymark_design.dart';
 import '../app/busymark_glyphs.dart';
 import '../app/command_registry.dart';
 
+@immutable
+class BusyMarkEditorTextPasteAvailability {
+  const BusyMarkEditorTextPasteAvailability({
+    required this.normal,
+    required this.plainText,
+  });
+
+  static const unavailable = BusyMarkEditorTextPasteAvailability(
+    normal: false,
+    plainText: false,
+  );
+
+  final bool normal;
+  final bool plainText;
+}
+
+typedef BusyMarkEditorTextPasteAvailabilityReader =
+    Future<BusyMarkEditorTextPasteAvailability> Function();
+
 Widget buildBusyMarkEditorTextContextMenu(
   BuildContext context,
   EditableTextState editableTextState, {
@@ -15,6 +34,7 @@ Widget buildBusyMarkEditorTextContextMenu(
   VoidCallback? onCopy,
   VoidCallback? onPaste,
   VoidCallback? onPastePlainText,
+  BusyMarkEditorTextPasteAvailabilityReader? readPasteAvailability,
   VoidCallback? onCopyPlainText,
   List<PopupMenuEntry<VoidCallback>> additionalItems = const [],
 }) {
@@ -26,6 +46,7 @@ Widget buildBusyMarkEditorTextContextMenu(
     onCopy: onCopy,
     onPaste: onPaste,
     onPastePlainText: onPastePlainText,
+    readPasteAvailability: readPasteAvailability,
     onCopyPlainText: onCopyPlainText,
     additionalItems: additionalItems,
   );
@@ -40,6 +61,7 @@ class _BusyMarkEditorTextContextMenu extends StatefulWidget {
     required this.onCopy,
     required this.onPaste,
     required this.onPastePlainText,
+    required this.readPasteAvailability,
     required this.onCopyPlainText,
     required this.additionalItems,
   });
@@ -51,6 +73,7 @@ class _BusyMarkEditorTextContextMenu extends StatefulWidget {
   final VoidCallback? onCopy;
   final VoidCallback? onPaste;
   final VoidCallback? onPastePlainText;
+  final BusyMarkEditorTextPasteAvailabilityReader? readPasteAvailability;
   final VoidCallback? onCopyPlainText;
   final List<PopupMenuEntry<VoidCallback>> additionalItems;
 
@@ -63,6 +86,7 @@ class _BusyMarkEditorTextContextMenuState
     extends State<_BusyMarkEditorTextContextMenu> {
   final _menuSession = BusyMarkMenuSession();
   var _presented = false;
+  var _pasteAvailability = BusyMarkEditorTextPasteAvailability.unavailable;
 
   @override
   void initState() {
@@ -84,15 +108,29 @@ class _BusyMarkEditorTextContextMenuState
       return;
     }
     _presented = true;
-    final clipboardStatus = widget.editableTextState.clipboardStatus;
-    if (clipboardStatus.value == ClipboardStatus.unknown) {
-      await clipboardStatus.update().timeout(
-        const Duration(milliseconds: 500),
-        onTimeout: () {},
-      );
-      if (!mounted) {
-        return;
+    final availabilityReader = widget.readPasteAvailability;
+    if (availabilityReader != null) {
+      try {
+        _pasteAvailability = await availabilityReader();
+      } on Object {
+        _pasteAvailability = BusyMarkEditorTextPasteAvailability.unavailable;
       }
+    } else {
+      final clipboardStatus = widget.editableTextState.clipboardStatus;
+      if (clipboardStatus.value == ClipboardStatus.unknown) {
+        await clipboardStatus.update().timeout(
+          const Duration(milliseconds: 500),
+          onTimeout: () {},
+        );
+      }
+      final textAvailable = clipboardStatus.value == ClipboardStatus.pasteable;
+      _pasteAvailability = BusyMarkEditorTextPasteAvailability(
+        normal: textAvailable,
+        plainText: textAvailable,
+      );
+    }
+    if (!mounted) {
+      return;
     }
     final action = await showBusyMarkMenu<VoidCallback>(
       context: context,
@@ -118,7 +156,46 @@ class _BusyMarkEditorTextContextMenuState
     final selection = editable.textEditingValue.selection;
     final hasSelection = selection.isValid && !selection.isCollapsed;
     final items = <PopupMenuEntry<VoidCallback>>[];
+    var addedBusyMarkPaste = false;
+
+    void addBusyMarkPasteItems() {
+      if (addedBusyMarkPaste) return;
+      addedBusyMarkPaste = true;
+      final paste = widget.onPaste;
+      if (paste != null && _pasteAvailability.normal) {
+        final command = commands[BusyMarkCommandIds.textPaste]!;
+        items.add(
+          BusyMarkPopupMenuItem<VoidCallback>(
+            value: paste,
+            label: command.label(context),
+            icon: BusyMarkGlyphs.paste,
+            shortcut: command.shortcut?.label,
+          ),
+        );
+      }
+      final pastePlainText = widget.onPastePlainText;
+      if (pastePlainText != null && _pasteAvailability.plainText) {
+        final command = commands[BusyMarkCommandIds.textPastePlainText]!;
+        items.add(
+          BusyMarkPopupMenuItem<VoidCallback>(
+            value: pastePlainText,
+            label: command.label(context),
+            icon: BusyMarkGlyphs.paste,
+            shortcut: command.shortcut?.label,
+          ),
+        );
+      }
+    }
+
     for (final item in editable.contextMenuButtonItems) {
+      if (widget.onPaste != null && item.type == ContextMenuButtonType.paste) {
+        addBusyMarkPasteItems();
+        continue;
+      }
+      if (widget.onPaste != null &&
+          item.type == ContextMenuButtonType.selectAll) {
+        addBusyMarkPasteItems();
+      }
       final callback = switch (item.type) {
         ContextMenuButtonType.cut => widget.onCut ?? item.onPressed,
         ContextMenuButtonType.copy => widget.onCopy ?? item.onPressed,
@@ -159,19 +236,8 @@ class _BusyMarkEditorTextContextMenuState
           ),
         );
       }
-      final pastePlainText = widget.onPastePlainText;
-      if (item.type == ContextMenuButtonType.paste && pastePlainText != null) {
-        final command = commands[BusyMarkCommandIds.textPastePlainText]!;
-        items.add(
-          BusyMarkPopupMenuItem<VoidCallback>(
-            value: pastePlainText,
-            label: command.label(context),
-            icon: BusyMarkGlyphs.paste,
-            shortcut: command.shortcut?.label,
-          ),
-        );
-      }
     }
+    if (widget.onPaste != null) addBusyMarkPasteItems();
     final refineWithAi = widget.onRefineWithAi;
     if (refineWithAi != null && hasSelection) {
       items.add(

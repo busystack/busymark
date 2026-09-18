@@ -331,6 +331,9 @@ void main() {
             height: 600,
             child: BusyMarkSourceEditor(
               text: source,
+              clipboardService: _SourceTestClipboard(
+                readData: const RichClipboardData(text: 'Paste', generation: 7),
+              ),
               language: SourceSyntaxLanguage.markdown,
               filePath: '/project/topic.md',
               diagnostics: const [],
@@ -1784,12 +1787,61 @@ void main() {
       source: 'Target',
       clipboard: plainClipboard,
     );
+    final readsBeforePlainPaste = plainClipboard.reads;
     plain.selection = const TextSelection(baseOffset: 0, extentOffset: 6);
     await _pressControlKey(tester, LogicalKeyboardKey.keyV, shift: true);
     await tester.pump();
     expect(plain.text, '  Plain HTML\n');
-    expect(plainClipboard.reads, 1);
+    expect(plainClipboard.reads, readsBeforePlainPaste + 1);
     await tester.pump(const Duration(milliseconds: 600));
+  });
+
+  testWidgets('Source structured inline paste keeps surrounding text inline', (
+    tester,
+  ) async {
+    final clipboard = _SourceTestClipboard(
+      readData: const RichClipboardData(
+        text: 'X',
+        html: '<strong>X</strong>',
+        generation: 40,
+      ),
+    );
+    final controller = await _pumpClipboardSourceEditor(
+      tester,
+      source: 'leftright',
+      clipboard: clipboard,
+    );
+    controller.selection = const TextSelection.collapsed(offset: 4);
+
+    await _pressControlKey(tester, LogicalKeyboardKey.keyV);
+    await tester.pump();
+
+    expect(controller.text, 'left**X**right');
+    expect(clipboard.reads, 1);
+  });
+
+  testWidgets('Source structured block paste adds Markdown boundaries', (
+    tester,
+  ) async {
+    final clipboard = _SourceTestClipboard(
+      readData: const RichClipboardData(
+        text: 'Heading\nItem',
+        html: '<h2>Heading</h2><ul><li>Item</li></ul>',
+        generation: 41,
+      ),
+    );
+    final controller = await _pumpClipboardSourceEditor(
+      tester,
+      source: 'existing',
+      clipboard: clipboard,
+    );
+    controller.selection = const TextSelection.collapsed(offset: 8);
+
+    await _pressControlKey(tester, LogicalKeyboardKey.keyV);
+    await tester.pump();
+
+    expect(controller.text, 'existing\n\n## Heading\n\n- Item\n');
+    expect(clipboard.reads, 1);
   });
 
   testWidgets('Source delayed paste rejects a changed selection', (
@@ -2108,6 +2160,51 @@ void main() {
       expect(await tester.runAsync(asset.exists), isTrue);
     },
   );
+
+  testWidgets('Source local image path retains imported bytes once', (
+    tester,
+  ) async {
+    final root = (await tester.runAsync(
+      () => Directory.systemTemp.createTemp('busymark-source-path-image-'),
+    ))!;
+    addTearDown(() async {
+      if (await root.exists()) await root.delete(recursive: true);
+    });
+    final original = Uint8List.fromList(const [
+      0x89,
+      0x50,
+      0x4e,
+      0x47,
+      0x0d,
+      0x0a,
+      0x1a,
+      0x0a,
+    ]);
+    final sourceFile = File('${root.path}/original.png');
+    await tester.runAsync(() => sourceFile.writeAsBytes(original));
+    final clipboard = _SourceTestClipboard(
+      readData: RichClipboardData(text: sourceFile.path, generation: 42),
+    );
+    final captures = <BusyMarkClipboardCapture>[];
+    final controller = await _pumpClipboardSourceEditor(
+      tester,
+      source: 'Target',
+      clipboard: clipboard,
+      onCaptured: captures.add,
+      filePath: '${root.path}/target.md',
+      assetWorkspaceKind: AssetWorkspaceKind.standalone,
+    );
+    controller.selection = const TextSelection.collapsed(offset: 6);
+
+    await _pressControlKey(tester, LogicalKeyboardKey.keyV);
+    await _pumpUntil(tester, () => captures.isNotEmpty);
+
+    expect(controller.text, contains('![Image](images/original.png)'));
+    expect(captures, hasLength(1));
+    expect(captures.single.kind, BusyMarkClipboardContentKind.image);
+    expect(captures.single.text, sourceFile.path);
+    expect(captures.single.imageBytes, original);
+  });
 
   testWidgets('image history asks to save an untitled Source document', (
     tester,

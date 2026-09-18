@@ -9,6 +9,7 @@ import 'package:busymark/src/markdown/busymark_document.dart';
 import 'package:busymark/src/markdown/markdown_model.dart';
 import 'package:busymark/src/markdown/markdown_parser.dart';
 import 'package:busymark/src/platform/native_menu_service.dart';
+import 'package:busymark/src/platform/rich_clipboard_service.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -216,6 +217,7 @@ void main() {
         home: Scaffold(
           body: BusyMarkWysiwygEditor(
             document: document,
+            clipboardService: _AiClipboard(),
             visualizationRevision: 5,
             onSourceChanged: (_, value) => changedSource = value,
             onAiEdit: (snapshot) async {
@@ -342,6 +344,14 @@ void main() {
 String? _nativeShortcut(List<Map<Object?, Object?>> entries, String label) {
   return entries.singleWhere((entry) => entry['label'] == label)['shortcut']
       as String?;
+}
+
+class _AiClipboard extends RichClipboardService {
+  _AiClipboard() : super(channel: const MethodChannel('busymark.test/ai'));
+
+  @override
+  Future<RichClipboardData> read() async =>
+      const RichClipboardData(text: 'Paste', generation: 1);
 }
 
 String? _nativeIcon(List<Map<Object?, Object?>> entries, String label) {
