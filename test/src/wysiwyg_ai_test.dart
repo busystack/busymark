@@ -276,6 +276,9 @@ void main() {
       if (item.type == ContextMenuButtonType.copy) {
         expectedSelectionActions.add('Copy Plain Text');
       }
+      if (item.type == ContextMenuButtonType.paste) {
+        expectedSelectionActions.add('Paste as Plain Text');
+      }
     }
 
     expect(paragraph.controller!.selection.isCollapsed, isFalse);
@@ -304,6 +307,10 @@ void main() {
     expect(_nativeShortcut(nativeEntries!, 'Copy'), 'Ctrl+C');
     expect(_nativeShortcut(nativeEntries!, 'Copy Plain Text'), 'Ctrl+Shift+C');
     expect(_nativeShortcut(nativeEntries!, 'Paste'), 'Ctrl+V');
+    expect(
+      _nativeShortcut(nativeEntries!, 'Paste as Plain Text'),
+      'Ctrl+Shift+V',
+    );
     expect(_nativeShortcut(nativeEntries!, 'Select all'), 'Ctrl+A');
     expect(_nativeShortcut(nativeEntries!, 'Refine with AI'), 'Ctrl+G');
     expect(_nativeIcon(nativeEntries!, 'Cut'), 'edit-cut-symbolic');
@@ -313,6 +320,10 @@ void main() {
       'edit-copy-symbolic',
     );
     expect(_nativeIcon(nativeEntries!, 'Paste'), 'edit-paste-symbolic');
+    expect(
+      _nativeIcon(nativeEntries!, 'Paste as Plain Text'),
+      'edit-paste-symbolic',
+    );
     expect(
       _nativeIcon(nativeEntries!, 'Select all'),
       'edit-select-all-symbolic',

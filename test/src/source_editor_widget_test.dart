@@ -10,6 +10,7 @@ import 'package:busymark/src/ai/ai_models.dart';
 import 'package:busymark/src/app/app_theme.dart';
 import 'package:busymark/src/app/busymark_design.dart';
 import 'package:busymark/src/assets/asset_ingestion_service.dart';
+import 'package:busymark/src/assets/asset_input_service.dart';
 import 'package:busymark/src/clipboard/clipboard_insertion.dart';
 import 'package:busymark/src/clipboard/clipboard_models.dart';
 import 'package:busymark/src/core/diagnostic.dart';
@@ -396,8 +397,15 @@ void main() {
     await tester.tap(fieldFinder, buttons: kSecondaryMouseButton);
     await tester.pumpAndSettle();
 
+    final expectedWithPlainPaste = <String>[];
+    for (final label in expectedSelectionActions) {
+      expectedWithPlainPaste.add(label);
+      if (label == 'Paste') {
+        expectedWithPlainPaste.add('Paste as Plain Text');
+      }
+    }
     expect(nativeEntries!.map((entry) => entry['label']), <String>[
-      ...expectedSelectionActions,
+      ...expectedWithPlainPaste,
       'Refine with AI',
       '',
       'Clipboard History',
@@ -414,6 +422,10 @@ void main() {
     expect(_nativeShortcut(nativeEntries!, 'Cut'), 'Ctrl+X');
     expect(_nativeShortcut(nativeEntries!, 'Copy'), 'Ctrl+C');
     expect(_nativeShortcut(nativeEntries!, 'Paste'), 'Ctrl+V');
+    expect(
+      _nativeShortcut(nativeEntries!, 'Paste as Plain Text'),
+      'Ctrl+Shift+V',
+    );
     expect(_nativeShortcut(nativeEntries!, 'Select all'), 'Ctrl+A');
     expect(_nativeShortcut(nativeEntries!, 'Refine with AI'), 'Ctrl+G');
     expect(_nativeIcon(nativeEntries!, 'Cut'), 'edit-cut-symbolic');
@@ -1738,6 +1750,70 @@ void main() {
     expect(captures.single.sourceText, ' \n\t\n');
   });
 
+  testWidgets('Source normal HTML paste converts while plain paste uses text', (
+    tester,
+  ) async {
+    final normalClipboard = _SourceTestClipboard(
+      readData: const RichClipboardData(
+        text: 'Plain HTML',
+        html: '<h2>Heading</h2><p><strong>Bold</strong></p>',
+        generation: 1,
+      ),
+    );
+    final normal = await _pumpClipboardSourceEditor(
+      tester,
+      source: 'Target',
+      clipboard: normalClipboard,
+    );
+    normal.selection = const TextSelection(baseOffset: 0, extentOffset: 6);
+    await _pressControlKey(tester, LogicalKeyboardKey.keyV);
+    await tester.pump();
+    expect(normal.text, contains('## Heading'));
+    expect(normal.text, contains('**Bold**'));
+    expect(normalClipboard.reads, 1);
+
+    final plainClipboard = _SourceTestClipboard(
+      readData: const RichClipboardData(
+        text: '  Plain HTML\n',
+        html: '<h2>Heading</h2><p><strong>Bold</strong></p>',
+        generation: 2,
+      ),
+    );
+    final plain = await _pumpClipboardSourceEditor(
+      tester,
+      source: 'Target',
+      clipboard: plainClipboard,
+    );
+    plain.selection = const TextSelection(baseOffset: 0, extentOffset: 6);
+    await _pressControlKey(tester, LogicalKeyboardKey.keyV, shift: true);
+    await tester.pump();
+    expect(plain.text, '  Plain HTML\n');
+    expect(plainClipboard.reads, 1);
+    await tester.pump(const Duration(milliseconds: 600));
+  });
+
+  testWidgets('Source delayed paste rejects a changed selection', (
+    tester,
+  ) async {
+    final clipboard = _SourceTestClipboard(
+      readData: const RichClipboardData(text: 'paste', generation: 3),
+      delayRead: true,
+    );
+    final controller = await _pumpClipboardSourceEditor(
+      tester,
+      source: 'abcdef',
+      clipboard: clipboard,
+    );
+    controller.selection = const TextSelection.collapsed(offset: 1);
+    await _pressControlKey(tester, LogicalKeyboardKey.keyV);
+    await clipboard.readStarted.future;
+    controller.selection = const TextSelection.collapsed(offset: 5);
+    clipboard.releaseRead();
+    await tester.pump();
+    expect(controller.text, 'abcdef');
+    expect(clipboard.reads, 1);
+  });
+
   testWidgets('source failed cut keeps text and does not record history', (
     tester,
   ) async {
@@ -1813,8 +1889,26 @@ void main() {
       sourceText: '**rich**',
     );
 
+    final sourceOnly = BusyMarkClipboardPayload(
+      id: 'source-only-payload',
+      acquiredAt: DateTime.utc(2026),
+      kind: BusyMarkClipboardContentKind.text,
+      sourceText: '**source only**',
+    );
+    expect(registry.canPaste(sourceOnly), isTrue);
+    expect(
+      registry.canPaste(sourceOnly, mode: BusyMarkPasteMode.plainText),
+      isFalse,
+    );
+
     expect(await registry.paste(payload), ClipboardPasteResult.inserted);
     expect(changed, 'abc**rich**d');
+    controller.selection = const TextSelection.collapsed(offset: 0);
+    expect(
+      await registry.paste(payload, mode: BusyMarkPasteMode.plainText),
+      ClipboardPasteResult.inserted,
+    );
+    expect(changed, 'plainabc**rich**d');
   });
 
   testWidgets('structured history rebases retained media into Source', (
@@ -2057,6 +2151,40 @@ void main() {
     expect(saveRequests, 1);
     expect(changes, 0);
   });
+
+  testWidgets('generic XML does not invent Writerside image syntax', (
+    tester,
+  ) async {
+    final registry = BusyMarkClipboardInsertionRegistry();
+    addTearDown(registry.dispose);
+    final controller = await _pumpClipboardSourceEditor(
+      tester,
+      source: '<root/>',
+      clipboard: _SourceTestClipboard(),
+      registry: registry,
+      documentFormat: SourceDocumentFormat.genericXml,
+    );
+    final payload = BusyMarkClipboardPayload(
+      id: 'generic-xml-image',
+      acquiredAt: DateTime.utc(2026),
+      kind: BusyMarkClipboardContentKind.image,
+      imageBytes: Uint8List.fromList(const [
+        0x89,
+        0x50,
+        0x4e,
+        0x47,
+        0x0d,
+        0x0a,
+        0x1a,
+        0x0a,
+      ]),
+      imageDisplayName: 'image.png',
+    );
+
+    expect(registry.canPaste(payload), isFalse);
+    expect(await registry.paste(payload), ClipboardPasteResult.unavailable);
+    expect(controller.text, '<root/>');
+  });
 }
 
 WysiwygClipboardFragment _structuredImageFragment(String sourcePath) {
@@ -2194,6 +2322,9 @@ Future<TextEditingController> _pumpClipboardSourceEditor(
   String? filePath = '/project/source.md',
   String? workspaceRoot,
   AssetWorkspaceKind? assetWorkspaceKind,
+  SourceDocumentFormat documentFormat = SourceDocumentFormat.markdown,
+  MarkdownMode markdownMode = MarkdownMode.commonMark,
+  AssetInputService? assetInputService,
   VoidCallback? onAssetSaveRequired,
 }) async {
   await tester.pumpWidget(
@@ -2211,10 +2342,13 @@ Future<TextEditingController> _pumpClipboardSourceEditor(
           child: BusyMarkSourceEditor(
             text: source,
             language: SourceSyntaxLanguage.markdown,
+            documentFormat: documentFormat,
+            markdownMode: markdownMode,
             filePath: filePath,
             documentId: 'source-document',
             workspaceRoot: workspaceRoot,
             assetWorkspaceKind: assetWorkspaceKind,
+            assetInputService: assetInputService,
             diagnostics: const [],
             editorFontSize: 14,
             wordWrap: true,
@@ -2243,25 +2377,49 @@ Future<TextEditingController> _pumpClipboardSourceEditor(
 
 Future<void> _pressControlKey(
   WidgetTester tester,
-  LogicalKeyboardKey key,
-) async {
+  LogicalKeyboardKey key, {
+  bool shift = false,
+}) async {
   await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+  if (shift) await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
   await tester.sendKeyEvent(key);
+  if (shift) await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
   await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
 }
 
 class _SourceTestClipboard extends RichClipboardService {
-  _SourceTestClipboard({this.writeResult = true, this.delayWrite = false})
-    : super(channel: const MethodChannel('busymark.test/source-clipboard'));
+  _SourceTestClipboard({
+    this.writeResult = true,
+    this.delayWrite = false,
+    this.readData = const RichClipboardData(),
+    this.delayRead = false,
+  }) : super(channel: const MethodChannel('busymark.test/source-clipboard'));
 
   final bool writeResult;
   final bool delayWrite;
+  RichClipboardData readData;
+  final bool delayRead;
   final writes = <RichClipboardData>[];
+  int reads = 0;
   final writeStarted = Completer<void>();
   final _writeRelease = Completer<void>();
+  final readStarted = Completer<void>();
+  final _readRelease = Completer<void>();
 
   void releaseWrite() {
     if (!_writeRelease.isCompleted) _writeRelease.complete();
+  }
+
+  void releaseRead() {
+    if (!_readRelease.isCompleted) _readRelease.complete();
+  }
+
+  @override
+  Future<RichClipboardData> read() async {
+    reads++;
+    if (!readStarted.isCompleted) readStarted.complete();
+    if (delayRead) await _readRelease.future;
+    return readData;
   }
 
   @override

@@ -709,6 +709,14 @@ void showLegacyBusyMarkKeyboardShortcutsDialog(BuildContext context) {
                 ),
               ),
               BusyMarkActionRow(
+                title: context.l10n.clipboardPastePlainText,
+                subtitle: context.l10n.shortcutPastePlainTextDescription,
+                leading: const Icon(BusyMarkGlyphs.paste),
+                trailing: const _KeyboardShortcutBadge(
+                  BusyMarkTextEditingShortcutLabels.pastePlainText,
+                ),
+              ),
+              BusyMarkActionRow(
                 title: context.l10n.undo,
                 subtitle: context.l10n.shortcutUndoDescription,
                 leading: Icon(

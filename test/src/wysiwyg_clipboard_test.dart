@@ -324,6 +324,7 @@ void main() {
     late Completer<void>? readGate;
     late Completer<void>? writeGate;
     late bool failWrite;
+    late int readCalls;
     const channel = MethodChannel(richClipboardChannelName);
     const videoChannel = MethodChannel(writersideVideoPlayerChannelName);
     setUp(() {
@@ -331,6 +332,7 @@ void main() {
       readGate = null;
       writeGate = null;
       failWrite = false;
+      readCalls = 0;
       final messenger =
           TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
       messenger.setMockMethodCallHandler(channel, (call) async {
@@ -341,6 +343,7 @@ void main() {
           return true;
         }
         if (call.method == 'read') {
+          readCalls++;
           await readGate?.future;
           return Map<String, dynamic>.from(systemData);
         }
@@ -655,6 +658,25 @@ void main() {
       await key(tester, LogicalKeyboardKey.keyV);
       expect(result, contains('# Other app'));
       expect(result, contains('**Bold**'));
+      expect(readCalls, 1);
+    });
+
+    testWidgets('HTML clipboard plain paste inserts only its text', (
+      tester,
+    ) async {
+      systemData = {
+        'html': '<h1>Other app</h1><p><b>Bold</b></p>',
+        'text': '  Other app\nBold\n',
+      };
+      var result = '';
+      await mount(tester, 'plain-html', 'Target\n', (value) => result = value);
+      await key(tester, LogicalKeyboardKey.keyA);
+      await key(tester, LogicalKeyboardKey.keyV, shift: true);
+      expect(result, startsWith('  Other app'));
+      expect(result, contains('Bold'));
+      expect(result, isNot(contains('# Other app')));
+      expect(result, isNot(contains('**Bold**')));
+      expect(readCalls, 1);
     });
 
     testWidgets('retained external HTML preserves structure on history paste', (
@@ -758,7 +780,7 @@ void main() {
       );
       await key(tester, LogicalKeyboardKey.keyA);
       expect(
-        await registry.paste(current, plainText: true),
+        await registry.paste(current, mode: BusyMarkPasteMode.plainText),
         ClipboardPasteResult.inserted,
       );
       await tester.pump();
@@ -888,7 +910,8 @@ void main() {
 
         expect(changed, contains('images/original.png'));
         expect(captures, hasLength(1));
-        expect(captures.single.imageBytes, original);
+        expect(captures.single.text, sourceFile.path);
+        expect(captures.single.imageBytes, isNull);
         expect(
           await tester.runAsync(
             () => File('${root.path}/images/original.png').readAsBytes(),
@@ -987,13 +1010,18 @@ void main() {
       );
     });
 
-    testWidgets('Ctrl+Shift+V is not an Editor paste command', (tester) async {
+    testWidgets('Ctrl+Shift+V pastes only interoperable plain text', (
+      tester,
+    ) async {
       await copyAll(tester);
       var result = 'Target\n';
       await mount(tester, 'destination', result, (value) => result = value);
       await key(tester, LogicalKeyboardKey.keyA);
       await key(tester, LogicalKeyboardKey.keyV, shift: true);
-      expect(result, 'Target\n');
+      expect(result, contains('Issues'));
+      expect(result, isNot(contains('# Issues')));
+      expect(result, isNot(contains('**')));
+      expect(readCalls, 1);
     });
 
     testWidgets('failed clipboard write leaves cut selection intact', (

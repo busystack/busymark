@@ -12,6 +12,7 @@ import 'package:busymark/src/app/command_registry.dart';
 import 'package:busymark/src/app/startup_path.dart';
 import 'package:busymark/src/app/system_accent.dart';
 import 'package:busymark/src/clipboard/clipboard_history_controller.dart';
+import 'package:busymark/src/clipboard/clipboard_insertion.dart';
 import 'package:busymark/src/clipboard/clipboard_history_panel.dart';
 import 'package:busymark/src/clipboard/clipboard_models.dart';
 import 'package:busymark/src/comparison/source_comparison.dart';
@@ -474,7 +475,7 @@ class _HistoryVisualHarnessState extends ConsumerState<_HistoryVisualHarness> {
     );
     final firstInsertion = await ref
         .read(clipboardInsertionRegistryProvider)
-        .paste(current, plainText: false);
+        .paste(current, mode: BusyMarkPasteMode.normal);
     _check(
       firstInsertion == ClipboardPasteResult.inserted,
       'current external HTML inserted',
@@ -493,7 +494,7 @@ class _HistoryVisualHarnessState extends ConsumerState<_HistoryVisualHarness> {
         .firstWhere((entry) => entry.html == externalHtml);
     final secondInsertion = await ref
         .read(clipboardInsertionRegistryProvider)
-        .paste(retained, plainText: false);
+        .paste(retained, mode: BusyMarkPasteMode.normal);
     _check(
       secondInsertion == ClipboardPasteResult.inserted,
       'retained external HTML reused after clipboard replacement',

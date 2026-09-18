@@ -200,6 +200,28 @@ void main() {
     },
   );
 
+  test('current source-only clipboard does not invent plain text', () async {
+    final scope = container(
+      current: const RichClipboardData(
+        sourceText: '**authored source**',
+        generation: 13,
+      ),
+    );
+    await Future<void>.delayed(Duration.zero);
+
+    await scope
+        .read(clipboardHistoryControllerProvider.notifier)
+        .refreshCurrentClipboard();
+    final current = scope
+        .read(clipboardHistoryControllerProvider)
+        .currentClipboard!;
+    expect(current.kind, BusyMarkClipboardContentKind.text);
+    expect(current.text, isNull);
+    expect(current.sourceText, '**authored source**');
+    expect(current.hasPlainTextRepresentation, isFalse);
+    expect(current.hasSourceOrTextRepresentation, isTrue);
+  });
+
   test('equal visible text with different structure stays distinct', () async {
     final scope = container();
     await Future<void>.delayed(Duration.zero);
@@ -490,7 +512,7 @@ class _InsertionTarget implements BusyMarkClipboardInsertionTarget {
   @override
   Future<ClipboardPasteResult> paste(
     BusyMarkClipboardPayload payload, {
-    required bool plainText,
+    required BusyMarkPasteMode mode,
   }) async {
     pastes++;
     return ClipboardPasteResult.inserted;

@@ -268,6 +268,7 @@ abstract final class BusyMarkCommandIds {
   static const textCopy = 'text.copy';
   static const editorCopyPlainText = 'editor.copyPlainText';
   static const textPaste = 'text.paste';
+  static const textPastePlainText = 'text.pastePlainText';
   static const textUndo = 'text.undo';
   static const textRedo = 'text.redo';
   static const textInsertIndentation = 'text.insertIndentation';
@@ -538,6 +539,8 @@ abstract final class BusyMarkCommandCatalog {
     BusyMarkTextEditingShortcutAction.cut => context.l10n.cut,
     BusyMarkTextEditingShortcutAction.copy => context.l10n.copy,
     BusyMarkTextEditingShortcutAction.paste => context.l10n.paste,
+    BusyMarkTextEditingShortcutAction.pastePlainText =>
+      context.l10n.clipboardPastePlainText,
     BusyMarkTextEditingShortcutAction.undo => context.l10n.undo,
     BusyMarkTextEditingShortcutAction.redo => context.l10n.redo,
     BusyMarkTextEditingShortcutAction.insertIndentation =>
@@ -595,6 +598,8 @@ abstract final class BusyMarkCommandCatalog {
       context.l10n.shortcutCopyDescription,
     BusyMarkTextEditingShortcutAction.paste =>
       context.l10n.shortcutPasteDescription,
+    BusyMarkTextEditingShortcutAction.pastePlainText =>
+      context.l10n.shortcutPastePlainTextDescription,
     BusyMarkTextEditingShortcutAction.undo =>
       context.l10n.shortcutUndoDescription,
     BusyMarkTextEditingShortcutAction.redo =>

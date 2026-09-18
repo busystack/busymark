@@ -23,7 +23,9 @@ import 'package:busymark/src/core/busymark_exception.dart';
 import 'package:busymark/src/core/diagnostic.dart';
 import 'package:busymark/src/core/local_image_resolver.dart';
 import 'package:busymark/src/core/source_span.dart';
+import 'package:busymark/src/clipboard/clipboard_history_controller.dart';
 import 'package:busymark/src/clipboard/clipboard_history_panel.dart';
+import 'package:busymark/src/clipboard/clipboard_insertion.dart';
 import 'package:busymark/src/editor/document_callout.dart';
 import 'package:busymark/src/editor/document_code_block.dart';
 import 'package:busymark/src/editor/document_layout.dart';
@@ -48,6 +50,7 @@ import 'package:busymark/src/markdown/preview_model.dart';
 import 'package:busymark/src/markdown/markdown_model.dart';
 import 'package:busymark/src/markdown/markdown_parser.dart';
 import 'package:busymark/src/platform/linux_header_bar_service.dart';
+import 'package:busymark/src/platform/rich_clipboard_service.dart';
 import 'package:busymark/src/writerside/writerside_model.dart';
 import 'package:busymark/src/writerside/writerside_project.dart';
 import 'package:busymark/src/writerside/writerside_toc_editor.dart';
@@ -117,11 +120,18 @@ void main() {
         BusyMarkEditorShortcutAction.hardLineBreak: 'Shift+Enter',
       },
     );
+    final pastePlainText = BusyMarkTextEditingShortcuts
+        .definitions[BusyMarkTextEditingShortcutAction.pastePlainText]!;
+    expect(pastePlainText.label, 'Ctrl+Shift+V');
+    final activator = pastePlainText.activator as SingleActivator;
+    expect(activator.trigger, LogicalKeyboardKey.keyV);
+    expect(activator.control, isTrue);
+    expect(activator.shift, isTrue);
     expect(
-      BusyMarkTextEditingShortcuts.definitions.values.map(
-        (definition) => definition.label,
+      BusyMarkTextEditingShortcuts.definitions.values.where(
+        (definition) => definition.activator == activator,
       ),
-      isNot(contains('Ctrl+Shift+V')),
+      hasLength(1),
     );
   });
 
@@ -160,6 +170,158 @@ void main() {
       expect(existingActivators, isNot(contains(definition.activator)));
     }
   });
+
+  testWidgets(
+    'workspace routes paste shortcuts only to editable document views',
+    (tester) async {
+      var generation = 0;
+      var clipboardText = '';
+      var readCount = 0;
+      const clipboardChannel = MethodChannel(richClipboardChannelName);
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        clipboardChannel,
+        (call) async {
+          if (call.method != 'read') return null;
+          readCount += 1;
+          return <String, Object?>{
+            'text': clipboardText,
+            'generation': generation,
+          };
+        },
+      );
+      addTearDown(
+        () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          clipboardChannel,
+          null,
+        ),
+      );
+
+      final settingsStore = _MemorySettingsStore()
+        ..value = AppSettings.defaults()
+            .copyWith(
+              autoSave: false,
+              documentViewMode: DocumentViewModePreference.editor,
+            )
+            .toJson();
+      const service = _SearchWorkspaceService('start');
+      final container = ProviderContainer(
+        overrides: [
+          linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+          localSettingsStoreProvider.overrideWithValue(settingsStore),
+          workspaceServiceProvider.overrideWithValue(service),
+          startupPathProvider.overrideWithValue('/tmp/workspace-paste.md'),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      Future<void> pressPaste(BusyMarkPasteMode mode) async {
+        final useShift = mode == BusyMarkPasteMode.plainText;
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+        if (useShift) {
+          await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+        }
+        await tester.sendKeyEvent(LogicalKeyboardKey.keyV);
+        if (useShift) {
+          await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+        }
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+
+      Future<void> selectView(DocumentViewModePreference mode) async {
+        container
+            .read(workspaceControllerProvider.notifier)
+            .updateActiveEditorMode(mode);
+        await container
+            .read(appSettingsControllerProvider.notifier)
+            .setDocumentViewMode(mode);
+        for (var index = 0; index < 10; index += 1) {
+          await tester.pump(const Duration(milliseconds: 100));
+        }
+      }
+
+      Future<void> focusLastEditableTextField() async {
+        final field = find.byType(TextField).last;
+        await tester.tap(field);
+        await tester.showKeyboard(field);
+        final controller = tester.widget<TextField>(field).controller!;
+        controller.selection = TextSelection.collapsed(
+          offset: controller.text.length,
+        );
+        await tester.pump();
+      }
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: const BusyMarkApp(),
+        ),
+      );
+      for (var index = 0; index < 30; index += 1) {
+        await tester.pump(const Duration(milliseconds: 100));
+        if (find
+            .byKey(const ValueKey('document-wysiwyg-pane'))
+            .evaluate()
+            .isNotEmpty) {
+          break;
+        }
+      }
+
+      await focusLastEditableTextField();
+      clipboardText = ' editor-normal';
+      generation += 1;
+      await pressPaste(BusyMarkPasteMode.normal);
+      clipboardText = ' editor-plain';
+      generation += 1;
+      await pressPaste(BusyMarkPasteMode.plainText);
+      expect(
+        container.read(workspaceControllerProvider).activeText,
+        contains('editor-normal editor-plain'),
+      );
+
+      await selectView(DocumentViewModePreference.source);
+      expect(find.byType(BusyMarkSourceEditor), findsOneWidget);
+      await focusLastEditableTextField();
+      clipboardText = ' source-normal';
+      generation += 1;
+      await pressPaste(BusyMarkPasteMode.normal);
+      clipboardText = ' source-plain';
+      generation += 1;
+      await pressPaste(BusyMarkPasteMode.plainText);
+      expect(
+        container.read(workspaceControllerProvider).activeText,
+        contains('source-normal source-plain'),
+      );
+
+      await selectView(DocumentViewModePreference.split);
+      expect(find.byType(BusyMarkSourceEditor), findsOneWidget);
+      await focusLastEditableTextField();
+      clipboardText = ' split-source';
+      generation += 1;
+      await pressPaste(BusyMarkPasteMode.plainText);
+      expect(
+        container.read(workspaceControllerProvider).activeText,
+        endsWith(' split-source'),
+      );
+
+      await selectView(DocumentViewModePreference.preview);
+      expect(find.byType(BusyMarkSourceEditor), findsNothing);
+      expect(container.read(clipboardInsertionRegistryProvider).target, isNull);
+      final readingText = container
+          .read(workspaceControllerProvider)
+          .activeText;
+      final readingReadCount = readCount;
+      clipboardText = ' must-not-insert';
+      generation += 1;
+      await pressPaste(BusyMarkPasteMode.normal);
+      await pressPaste(BusyMarkPasteMode.plainText);
+      expect(
+        container.read(workspaceControllerProvider).activeText,
+        readingText,
+      );
+      expect(readCount, readingReadCount);
+    },
+  );
 
   testWidgets('app wires generated localization delegates and locales', (
     tester,

@@ -33,6 +33,20 @@ class WysiwygClipboardFragment {
     BusyDocument(filePath: sourcePath, mode: mode, blocks: documentBlocks),
   );
 
+  String serializeFor({
+    required MarkdownMode destinationMode,
+    required String destinationFilePath,
+  }) => const BusyMarkMarkdownSerializer().serialize(
+    BusyDocument(
+      filePath: destinationFilePath,
+      mode: destinationMode,
+      blocks: [
+        for (final block in documentBlocks)
+          _destinationSerializationBlock(block),
+      ],
+    ),
+  );
+
   String encode() => jsonEncode({
     'version': 1,
     'mode': mode.name,
@@ -311,6 +325,22 @@ bool _boundedJsonDepth(String source) {
   }
   return true;
 }
+
+BusyBlock _destinationSerializationBlock(BusyBlock block) => BusyBlock(
+  id: block.id,
+  kind: block.kind,
+  inlines: block.inlines,
+  children: [
+    for (final child in block.children) _destinationSerializationBlock(child),
+  ],
+  attributes: block.attributes,
+  rawSource: block.rawSource,
+  preserveRaw: false,
+  isSourceOnly: block.isSourceOnly,
+  isGenerated: block.isGenerated,
+  isSourceProtected: false,
+  dirty: true,
+);
 
 class _FragmentReader {
   var nodes = 0;

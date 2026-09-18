@@ -14,6 +14,7 @@ Widget buildBusyMarkEditorTextContextMenu(
   VoidCallback? onCut,
   VoidCallback? onCopy,
   VoidCallback? onPaste,
+  VoidCallback? onPastePlainText,
   VoidCallback? onCopyPlainText,
   List<PopupMenuEntry<VoidCallback>> additionalItems = const [],
 }) {
@@ -24,6 +25,7 @@ Widget buildBusyMarkEditorTextContextMenu(
     onCut: onCut,
     onCopy: onCopy,
     onPaste: onPaste,
+    onPastePlainText: onPastePlainText,
     onCopyPlainText: onCopyPlainText,
     additionalItems: additionalItems,
   );
@@ -37,6 +39,7 @@ class _BusyMarkEditorTextContextMenu extends StatefulWidget {
     required this.onCut,
     required this.onCopy,
     required this.onPaste,
+    required this.onPastePlainText,
     required this.onCopyPlainText,
     required this.additionalItems,
   });
@@ -47,6 +50,7 @@ class _BusyMarkEditorTextContextMenu extends StatefulWidget {
   final VoidCallback? onCut;
   final VoidCallback? onCopy;
   final VoidCallback? onPaste;
+  final VoidCallback? onPastePlainText;
   final VoidCallback? onCopyPlainText;
   final List<PopupMenuEntry<VoidCallback>> additionalItems;
 
@@ -95,7 +99,7 @@ class _BusyMarkEditorTextContextMenuState
       anchorPoint: widget.editableTextState.contextMenuAnchors.primaryAnchor,
       items: _menuItems(context),
       session: _menuSession,
-      width: widget.onCopyPlainText == null
+      width: widget.onCopyPlainText == null && widget.onPastePlainText == null
           ? BusyMarkSizes.popupMenuMinWidth
           : BusyMarkSizes.editorContextMenuWidth,
     );
@@ -151,6 +155,18 @@ class _BusyMarkEditorTextContextMenuState
             value: copyPlainText,
             label: command.label(context),
             icon: BusyMarkGlyphs.copy,
+            shortcut: command.shortcut?.label,
+          ),
+        );
+      }
+      final pastePlainText = widget.onPastePlainText;
+      if (item.type == ContextMenuButtonType.paste && pastePlainText != null) {
+        final command = commands[BusyMarkCommandIds.textPastePlainText]!;
+        items.add(
+          BusyMarkPopupMenuItem<VoidCallback>(
+            value: pastePlainText,
+            label: command.label(context),
+            icon: BusyMarkGlyphs.paste,
             shortcut: command.shortcut?.label,
           ),
         );

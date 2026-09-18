@@ -4,6 +4,8 @@ import 'package:flutter/foundation.dart';
 
 import 'clipboard_models.dart';
 
+enum BusyMarkPasteMode { normal, plainText }
+
 abstract interface class BusyMarkClipboardInsertionTarget {
   String get documentId;
   String get documentName;
@@ -12,7 +14,7 @@ abstract interface class BusyMarkClipboardInsertionTarget {
 
   Future<ClipboardPasteResult> paste(
     BusyMarkClipboardPayload payload, {
-    required bool plainText,
+    required BusyMarkPasteMode mode,
   });
 
   void requestEditorFocus();
@@ -20,7 +22,10 @@ abstract interface class BusyMarkClipboardInsertionTarget {
 
 /// Optional destination-specific capability used to keep panel actions honest.
 abstract interface class BusyMarkClipboardInsertionCapabilities {
-  bool canPaste(BusyMarkClipboardPayload payload, {required bool plainText});
+  bool canPaste(
+    BusyMarkClipboardPayload payload, {
+    required BusyMarkPasteMode mode,
+  });
 }
 
 /// Holds only the currently mounted document surface. Registrations remove
@@ -33,12 +38,15 @@ class BusyMarkClipboardInsertionRegistry extends ChangeNotifier {
 
   BusyMarkClipboardInsertionTarget? get target => _target;
 
-  bool canPaste(BusyMarkClipboardPayload payload, {bool plainText = false}) {
+  bool canPaste(
+    BusyMarkClipboardPayload payload, {
+    BusyMarkPasteMode mode = BusyMarkPasteMode.normal,
+  }) {
     final captured = _target;
     if (captured == null || !captured.editable) return false;
     if (captured is BusyMarkClipboardInsertionCapabilities) {
       final capabilities = captured as BusyMarkClipboardInsertionCapabilities;
-      return capabilities.canPaste(payload, plainText: plainText);
+      return capabilities.canPaste(payload, mode: mode);
     }
     return true;
   }
@@ -72,7 +80,7 @@ class BusyMarkClipboardInsertionRegistry extends ChangeNotifier {
 
   Future<ClipboardPasteResult> paste(
     BusyMarkClipboardPayload payload, {
-    bool plainText = false,
+    BusyMarkPasteMode mode = BusyMarkPasteMode.normal,
   }) async {
     final captured = _target;
     if (captured == null ||
@@ -80,11 +88,11 @@ class BusyMarkClipboardInsertionRegistry extends ChangeNotifier {
         (captured is BusyMarkClipboardInsertionCapabilities &&
             !(captured as BusyMarkClipboardInsertionCapabilities).canPaste(
               payload,
-              plainText: plainText,
+              mode: mode,
             ))) {
       return ClipboardPasteResult.unavailable;
     }
-    final result = await captured.paste(payload, plainText: plainText);
+    final result = await captured.paste(payload, mode: mode);
     if (result == ClipboardPasteResult.inserted &&
         identical(_target, captured)) {
       captured.requestEditorFocus();

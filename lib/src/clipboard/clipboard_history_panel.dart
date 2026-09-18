@@ -169,16 +169,25 @@ class _ClipboardHistoryPanelState extends ConsumerState<ClipboardHistoryPanel> {
                           payload: payload,
                           current: identical(payload, current),
                           selected: payload.id == _selectedId,
-                          canPaste: registry.canPaste(payload),
+                          canPaste: registry.canPaste(
+                            payload,
+                            mode: BusyMarkPasteMode.normal,
+                          ),
                           onSelect: () {
                             setState(() => _selectedId = payload.id);
                             _listFocusNode.requestFocus();
                           },
-                          onPaste: () => _paste(payload, plainText: false),
+                          onPaste: () =>
+                              _paste(payload, mode: BusyMarkPasteMode.normal),
                           onPastePlain:
-                              payload.hasMeaningfulTextRepresentation &&
-                                  registry.canPaste(payload, plainText: true)
-                              ? () => _paste(payload, plainText: true)
+                              registry.canPaste(
+                                payload,
+                                mode: BusyMarkPasteMode.plainText,
+                              )
+                              ? () => _paste(
+                                  payload,
+                                  mode: BusyMarkPasteMode.plainText,
+                                )
                               : null,
                           onRemove: identical(payload, current)
                               ? null
@@ -235,8 +244,8 @@ class _ClipboardHistoryPanelState extends ConsumerState<ClipboardHistoryPanel> {
     }
     final selected = index < 0 ? visible.first : visible[index];
     if (event.logicalKey == LogicalKeyboardKey.enter &&
-        registry.canPaste(selected)) {
-      unawaited(_paste(selected, plainText: false));
+        registry.canPaste(selected, mode: BusyMarkPasteMode.normal)) {
+      unawaited(_paste(selected, mode: BusyMarkPasteMode.normal));
       return KeyEventResult.handled;
     }
     if (event.logicalKey == LogicalKeyboardKey.delete &&
@@ -267,14 +276,14 @@ class _ClipboardHistoryPanelState extends ConsumerState<ClipboardHistoryPanel> {
 
   Future<void> _paste(
     BusyMarkClipboardPayload payload, {
-    required bool plainText,
+    required BusyMarkPasteMode mode,
   }) async {
     // Both dependencies outlive this sidebar panel. Capture them before the
     // asynchronous insertion so a successful editor operation can still be
     // retained if the user switches sidebar tabs while it is in flight.
     final registry = ref.read(clipboardInsertionRegistryProvider);
     final history = ref.read(clipboardHistoryControllerProvider.notifier);
-    final result = await registry.paste(payload, plainText: plainText);
+    final result = await registry.paste(payload, mode: mode);
     if (result == ClipboardPasteResult.inserted && payload.external) {
       history.retainCurrentAfterPaste(payload);
     } else if (result != ClipboardPasteResult.inserted && mounted) {
@@ -432,7 +441,7 @@ String _clipboardEntryPreview(
 ) {
   final value =
       payload.imageDisplayName ??
-      payload.preferredSourceText ??
+      payload.displayText ??
       payload.text ??
       fallback;
   final preview = value.trim();

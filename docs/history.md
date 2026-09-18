@@ -11,6 +11,9 @@ context menu. Search examines each item's complete text. Select an item and use
 **Paste** or **Paste as Plain Text**; Enter and double-click also insert the
 selected item at the latest editable selection.
 
+`Ctrl+Shift+V` invokes that same **Paste as Plain Text** operation in Editor and
+Source. It uses only the clipboard's interoperable plain-text representation.
+
 BusyMark collects successful copy and cut operations from its editors. Supported
 content copied in another application is added after it is successfully pasted
 into BusyMark. Refresh can inspect the current system clipboard without adding

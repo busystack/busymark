@@ -247,6 +247,7 @@ void main() {
       ),
     );
     expect(disabledPaste, findsOneWidget);
+    expect(find.text('Paste as Plain Text'), findsNothing);
   });
 
   testWidgets('double-clicking a shared history row pastes the item', (
@@ -313,6 +314,47 @@ void main() {
     },
   );
 
+  testWidgets('source-only payload has no plain-text action', (tester) async {
+    final container = _container();
+    container
+        .read(clipboardHistoryControllerProvider.notifier)
+        .retain(
+          const BusyMarkClipboardCapture(
+            kind: BusyMarkClipboardContentKind.text,
+            sourceText: '**source only**',
+          ),
+        );
+    container
+        .read(clipboardInsertionRegistryProvider)
+        .register(_PanelInsertionTarget());
+    await _pumpPanel(tester, container);
+
+    await _openEntryActions(tester);
+    expect(find.text('Paste as Plain Text'), findsNothing);
+  });
+
+  testWidgets('image exposes plain paste only with real text', (tester) async {
+    final container = _container();
+    container
+        .read(clipboardHistoryControllerProvider.notifier)
+        .retain(
+          BusyMarkClipboardCapture(
+            kind: BusyMarkClipboardContentKind.image,
+            text: 'image alternative',
+            imageBytes: Uint8List.fromList([1, 2, 3]),
+            imageMimeType: 'image/png',
+          ),
+        );
+    final target = _PanelInsertionTarget();
+    container.read(clipboardInsertionRegistryProvider).register(target);
+    await _pumpPanel(tester, container);
+
+    await _openEntryActions(tester);
+    await tester.tap(find.text('Paste as Plain Text'));
+    await tester.pump();
+    expect(target.lastPlainText, isTrue);
+  });
+
   testWidgets('failed insertion reports visible feedback', (tester) async {
     final container = _container();
     container
@@ -371,6 +413,10 @@ void main() {
         container.read(clipboardHistoryControllerProvider).entries,
         hasLength(1),
       );
+      expect(
+        container.read(clipboardHistoryControllerProvider).entries.single.html,
+        html,
+      );
 
       clipboard.value = const RichClipboardData(
         text: 'Replacement clipboard',
@@ -426,6 +472,10 @@ void main() {
       expect(
         container.read(clipboardHistoryControllerProvider).entries,
         hasLength(1),
+      );
+      expect(
+        container.read(clipboardHistoryControllerProvider).entries.single.html,
+        '<p><strong>Rich source</strong></p>',
       );
     },
   );
@@ -606,21 +656,27 @@ class _PanelInsertionTarget
   bool get editable => true;
 
   @override
-  bool canPaste(BusyMarkClipboardPayload payload, {required bool plainText}) {
-    final configured = plainText
+  bool canPaste(
+    BusyMarkClipboardPayload payload, {
+    required BusyMarkPasteMode mode,
+  }) {
+    final configured = mode == BusyMarkPasteMode.plainText
         ? plainTextPasteAvailable
         : normalPasteAvailable;
-    return configured ??
-        (supportImages || payload.kind != BusyMarkClipboardContentKind.image);
+    if (configured != null) return configured;
+    if (mode == BusyMarkPasteMode.plainText) {
+      return payload.hasPlainTextRepresentation;
+    }
+    return supportImages || payload.kind != BusyMarkClipboardContentKind.image;
   }
 
   @override
   Future<ClipboardPasteResult> paste(
     BusyMarkClipboardPayload payload, {
-    required bool plainText,
+    required BusyMarkPasteMode mode,
   }) async {
     pasteCalls++;
-    lastPlainText = plainText;
+    lastPlainText = mode == BusyMarkPasteMode.plainText;
     payloads.add(payload);
     return resultFuture ?? result;
   }

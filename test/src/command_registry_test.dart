@@ -33,6 +33,12 @@ void main() {
     final registry = BusyMarkCommandCatalog.create();
 
     expect(registry.commands, isNotEmpty);
+    expect(BusyMarkCommandIds.textPastePlainText, 'text.pastePlainText');
+    final pastePlainText = registry[BusyMarkCommandIds.textPastePlainText];
+    expect(pastePlainText, isNotNull);
+    expect(pastePlainText?.scope, BusyMarkCommandScope.textEditing);
+    expect(pastePlainText?.shortcut?.label, 'Ctrl+Shift+V');
+    expect(pastePlainText?.execute, isNotNull);
     expect(registry[BusyMarkCommandIds.save]?.shortcut?.label, 'Ctrl+S');
     expect(
       registry[BusyMarkCommandIds.commandPalette]?.shortcut?.label,

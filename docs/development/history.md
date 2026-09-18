@@ -36,6 +36,13 @@ Copy and cut snapshot the selection before asynchronous publication. Cut deletes
 only after a successful write and after revalidating the document, active target,
 and selection. Paste uses the same revalidation and normal one-step undo path.
 
+Live clipboard paste and Clipboard History use one ordered resolver. Editor and
+Markdown Source share the same semantic interpretation; only the final inserted
+representation differs. Plain-text mode consumes only interoperable text, never
+source markup, HTML, rich fragments, or media. Paste revalidates both its target
+and, when native image acquisition crosses a second platform boundary, clipboard
+identity around asynchronous work.
+
 ## Clipboard retention
 
 `ClipboardHistoryController` retains successful BusyMark copy/cut payloads and

@@ -12057,6 +12057,10 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
                       key: _sourceEditorKey,
                       text: widget.state.activeText,
                       language: _sourceSyntaxLanguage(widget.state.workspace),
+                      documentFormat: _sourceDocumentFormat(
+                        widget.state.workspace,
+                      ),
+                      markdownMode: _sourceMarkdownMode(widget.state.workspace),
                       filePath: activeEditorPath,
                       documentId: activeBuffer?.id,
                       clipboardInsertionRegistry: ref.read(
@@ -12462,6 +12466,33 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
       DocumentKind.resource ||
       DocumentKind.unknown ||
       null => SourceSyntaxLanguage.plain,
+    };
+  }
+
+  SourceDocumentFormat _sourceDocumentFormat(Workspace? workspace) {
+    return switch (_activeDocumentKind(workspace)) {
+      DocumentKind.markdown ||
+      DocumentKind.writersideMarkdownTopic => SourceDocumentFormat.markdown,
+      DocumentKind.writersideXmlTopic =>
+        SourceDocumentFormat.writersideXmlTopic,
+      DocumentKind.tree ||
+      DocumentKind.config ||
+      DocumentKind.variables ||
+      DocumentKind.categories => SourceDocumentFormat.genericXml,
+      DocumentKind.gitIgnore ||
+      DocumentKind.resource ||
+      DocumentKind.unknown ||
+      DocumentKind.image ||
+      null => SourceDocumentFormat.plainText,
+    };
+  }
+
+  MarkdownMode _sourceMarkdownMode(Workspace? workspace) {
+    return switch (_activeDocumentKind(workspace)) {
+      DocumentKind.writersideMarkdownTopic => MarkdownMode.writersideMarkdown,
+      DocumentKind.markdown =>
+        workspace?.markdown?.mode ?? MarkdownMode.commonMark,
+      _ => MarkdownMode.commonMark,
     };
   }
 

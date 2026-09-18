@@ -167,6 +167,8 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
     required this.onFocused,
     this.onCut,
     this.onCopy,
+    this.onPaste,
+    this.onPastePlainText,
     this.onCopyPlainText,
     this.onRefineWithAi,
     this.editRevision = 0,
@@ -213,6 +215,8 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
   final VoidCallback onFocused;
   final VoidCallback? onCut;
   final VoidCallback? onCopy;
+  final VoidCallback? onPaste;
+  final VoidCallback? onPastePlainText;
   final VoidCallback? onCopyPlainText;
   final VoidCallback? onRefineWithAi;
   final int editRevision;
@@ -394,6 +398,8 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
           suppressContextMenu: documentSelectionActive,
           onCut: onCut,
           onCopy: onCopy,
+          onPaste: onPaste,
+          onPastePlainText: onPastePlainText,
           onCopyPlainText: onCopyPlainText,
         ),
       );
@@ -555,6 +561,8 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
                                           onRefineWithAi: onRefineWithAi,
                                           onCut: onCut,
                                           onCopy: onCopy,
+                                          onPaste: onPaste,
+                                          onPastePlainText: onPastePlainText,
                                           onCopyPlainText: onCopyPlainText,
                                         ),
                               onTap: onFocused,
@@ -1471,6 +1479,8 @@ class _TableBlockEditor extends StatefulWidget {
     this.suppressContextMenu = false,
     this.onCut,
     this.onCopy,
+    this.onPaste,
+    this.onPastePlainText,
     this.onCopyPlainText,
   });
 
@@ -1495,6 +1505,8 @@ class _TableBlockEditor extends StatefulWidget {
   final bool suppressContextMenu;
   final VoidCallback? onCut;
   final VoidCallback? onCopy;
+  final VoidCallback? onPaste;
+  final VoidCallback? onPastePlainText;
   final VoidCallback? onCopyPlainText;
 
   @override
@@ -1667,6 +1679,8 @@ class _TableBlockEditorState extends State<_TableBlockEditor> {
         suppressContextMenu: widget.suppressContextMenu,
         onCut: widget.onCut,
         onCopy: widget.onCopy,
+        onPaste: widget.onPaste,
+        onPastePlainText: widget.onPastePlainText,
         onCopyPlainText: widget.onCopyPlainText,
       ),
     );
@@ -2029,6 +2043,8 @@ class _TableCellEditor extends StatefulWidget {
     this.suppressContextMenu = false,
     this.onCut,
     this.onCopy,
+    this.onPaste,
+    this.onPastePlainText,
     this.onCopyPlainText,
   });
 
@@ -2049,6 +2065,8 @@ class _TableCellEditor extends StatefulWidget {
   final bool suppressContextMenu;
   final VoidCallback? onCut;
   final VoidCallback? onCopy;
+  final VoidCallback? onPaste;
+  final VoidCallback? onPastePlainText;
   final VoidCallback? onCopyPlainText;
 
   @override
@@ -2232,6 +2250,8 @@ class _TableCellEditorState extends State<_TableCellEditor> {
                       refineWithAiLabel: context.l10n.aiRefineWithAi,
                       onCut: widget.onCut,
                       onCopy: widget.onCopy,
+                      onPaste: widget.onPaste,
+                      onPastePlainText: widget.onPastePlainText,
                       onCopyPlainText: widget.onCopyPlainText,
                     ),
           onTap: () {
