@@ -31,6 +31,7 @@ import '../../markdown/busymark_document.dart';
 import '../../markdown/document_outline.dart';
 import '../../markdown/markdown_model.dart';
 import '../../markdown/markdown_parser.dart';
+import '../../markdown/markdown_source_structure.dart';
 import '../../platform/linux_header_bar_service.dart';
 import '../../platform/rich_clipboard_service.dart';
 import '../document_callout.dart';
@@ -2179,106 +2180,30 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     int sourceStart,
     int sourceEnd,
   ) {
-    if (tableSpan.startOffset < 0 || tableSpan.endOffset > source.length) {
-      return const [];
-    }
-    final raw = source.substring(tableSpan.startOffset, tableSpan.endOffset);
-    final lines = <({String text, int offset})>[];
-    var offset = 0;
-    for (final match in RegExp(r'.*(?:\n|$)').allMatches(raw)) {
-      var text = match.group(0) ?? '';
-      if (text.isEmpty) {
-        continue;
-      }
-      if (text.endsWith('\n')) {
-        text = text.substring(0, text.length - 1);
-      }
-      if (text.endsWith('\r')) {
-        text = text.substring(0, text.length - 1);
-      }
-      lines.add((text: text, offset: offset));
-      offset = match.end;
-    }
     final targets = <_WysiwygSourceTarget>[];
-    for (final (rowIndex, row) in table.children.indexed) {
-      final lineIndex = rowIndex == 0 ? 0 : rowIndex + 1;
-      if (lineIndex >= lines.length) {
-        break;
-      }
-      final line = lines[lineIndex];
-      final cellSpans = _markdownTableCellSpans(line.text);
-      for (final (column, cell) in row.children.indexed) {
-        if (column >= cellSpans.length) {
-          break;
-        }
-        final local = cellSpans[column];
-        final span = SourceSpan.fromOffsets(
-          filePath: tableSpan.filePath,
-          source: source,
-          startOffset: tableSpan.startOffset + line.offset + local.start,
-          endOffset: tableSpan.startOffset + line.offset + local.end,
-        );
-        final visibleRange = _visibleRangeForSourceRange(
-          source: source,
-          block: cell,
-          span: span,
-          sourceStart: sourceStart,
-          sourceEnd: sourceEnd,
-        );
-        targets.add(
-          _WysiwygSourceTarget(
-            block: cell,
-            outerBlockId: table.id,
-            cellId: cell.id,
-            span: span,
-            visibleStart: visibleRange?.start ?? 0,
-            visibleEnd: visibleRange?.end ?? cell.plainText.length,
-          ),
-        );
-      }
+    for (final region in busyMarkMarkdownTableCellRegions(
+      source: source,
+      table: table.copyWith(sourceSpan: tableSpan),
+    )) {
+      final visibleRange = _visibleRangeForSourceRange(
+        source: source,
+        block: region.cell,
+        span: region.span,
+        sourceStart: sourceStart,
+        sourceEnd: sourceEnd,
+      );
+      targets.add(
+        _WysiwygSourceTarget(
+          block: region.cell,
+          outerBlockId: table.id,
+          cellId: region.cell.id,
+          span: region.span,
+          visibleStart: visibleRange?.start ?? 0,
+          visibleEnd: visibleRange?.end ?? region.cell.plainText.length,
+        ),
+      );
     }
     return targets;
-  }
-
-  List<({int start, int end})> _markdownTableCellSpans(String line) {
-    final delimiters = <int>[];
-    var escaped = false;
-    for (var index = 0; index < line.length; index++) {
-      final codeUnit = line.codeUnitAt(index);
-      if (codeUnit == 0x5c && !escaped) {
-        escaped = true;
-        continue;
-      }
-      if (codeUnit == 0x7c && !escaped) {
-        delimiters.add(index);
-      }
-      escaped = false;
-    }
-    final boundaries = <int>[0, ...delimiters, line.length];
-    final spans = <({int start, int end})>[];
-    for (var index = 0; index < boundaries.length - 1; index++) {
-      if (index == 0 && delimiters.isNotEmpty && delimiters.first == 0) {
-        continue;
-      }
-      if (index == boundaries.length - 2 &&
-          delimiters.isNotEmpty &&
-          delimiters.last == line.length - 1) {
-        continue;
-      }
-      var start = boundaries[index] + (index == 0 ? 0 : 1);
-      var end = boundaries[index + 1];
-      while (start < end &&
-          (line.codeUnitAt(start) == 0x20 || line.codeUnitAt(start) == 0x09)) {
-        start++;
-      }
-      while (end > start &&
-          (line.codeUnitAt(end - 1) == 0x20 ||
-              line.codeUnitAt(end - 1) == 0x09)) {
-        end--;
-      }
-      spans.add((start: start, end: end));
-    }
-    return spans;
   }
 
   ({int start, int end})? _visibleRangeForSourceRange({
@@ -5177,6 +5102,18 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
         BusyMarkToastOverlay.show(
           context,
           message: error.message,
+          priority: BusyMarkToastPriority.high,
+        );
+      }
+      return clipboardTarget != null &&
+              !_isClipboardTargetCurrent(clipboardTarget)
+          ? ClipboardPasteResult.staleTarget
+          : ClipboardPasteResult.unsupported;
+    } on FileSystemException {
+      if (mounted) {
+        BusyMarkToastOverlay.show(
+          context,
+          message: context.l10n.clipboardUnavailable,
           priority: BusyMarkToastPriority.high,
         );
       }

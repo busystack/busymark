@@ -50,6 +50,7 @@ class WysiwygClipboardFragment {
   bool get isInlineSourceFragment {
     final values = documentBlocks;
     return values.length == 1 &&
+        !busyMarkClipboardRequiresCompleteBlockInsertion(blocks.single) &&
         values.single.kind == BusyBlockKind.paragraph &&
         values.single.children.isEmpty &&
         !values.single.isSourceOnly;

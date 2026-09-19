@@ -1838,7 +1838,7 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
       end,
     );
 
-    if (blocks.any(_requiresCompleteBlockInsertion)) {
+    if (blocks.any(busyMarkClipboardRequiresCompleteBlockInsertion)) {
       return _insertCompleteBlocksAtSelection(
         block: block,
         blockId: blockId,
@@ -1853,6 +1853,10 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     final replacements = <BusyBlock>[];
     if (blocks.length == 1) {
       final inserted = blocks.single;
+      final insertedInlines = _applyInlineReplacementContext(
+        busyMarkWysiwygClipboardBlock(inserted).inlines,
+        _inlineContextForReplacement(block.inlines, start, end),
+      );
       replacements.add(
         block.copyWith(
           kind: beforeText.isEmpty && afterText.isEmpty
@@ -1861,11 +1865,11 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
           attributes: beforeText.isEmpty && afterText.isEmpty
               ? inserted.attributes
               : block.attributes,
-          inlines: [
+          inlines: _mergeAdjacentInlineStyles([
             ...partition.before,
-            ...busyMarkWysiwygClipboardBlock(inserted).inlines,
+            ...insertedInlines,
             ...partition.after,
-          ],
+          ]),
           preserveRaw: false,
           dirty: true,
         ),
@@ -1954,6 +1958,7 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
       originalIdAvailable = false;
     }
     late final BusyBlock focusBlock;
+    late final int focusOffset;
     if (afterText.isNotEmpty) {
       focusBlock = BusyBlock(
         id: originalIdAvailable ? block.id : _nextGeneratedBlockId('paragraph'),
@@ -1962,6 +1967,12 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
         dirty: true,
       );
       replacements.add(focusBlock);
+      focusOffset = 0;
+    } else if (beforeText.isEmpty &&
+        block.kind != BusyBlockKind.paragraph &&
+        replacements.isNotEmpty) {
+      focusBlock = replacements.last;
+      focusOffset = focusBlock.plainText.length;
     } else {
       focusBlock = BusyBlock(
         id: _nextGeneratedBlockId('paragraph'),
@@ -1971,12 +1982,16 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
         dirty: true,
       );
       replacements.add(focusBlock);
+      focusOffset = 0;
     }
     _document = _document.copyWith(
       blocks: _replaceBlockWithMany(_document.blocks, blockId, replacements),
     );
     notifyListeners();
-    return BusyWysiwygTextSplitResult(blockId: focusBlock.id, offset: 0);
+    return BusyWysiwygTextSplitResult(
+      blockId: focusBlock.id,
+      offset: focusOffset,
+    );
   }
 
   BusyWysiwygTextSplitResult? replaceTextSelectionWithStyledBlocks({
@@ -2369,13 +2384,11 @@ List<BusyInline> busyMarkWysiwygClipboardInlineSlice(
   ).before;
 }
 
-bool _requiresCompleteBlockInsertion(BusyWysiwygStyledBlock styled) {
+bool busyMarkClipboardRequiresCompleteBlockInsertion(
+  BusyWysiwygStyledBlock styled,
+) {
   final block = styled.completeBlock;
-  return block != null &&
-      !busyMarkWysiwygCanApplyBlockCommand(
-        block,
-        BusyWysiwygBlockCommand.paragraph,
-      );
+  return block != null && block.kind != BusyBlockKind.paragraph;
 }
 
 class _OutdentResult {
@@ -2634,6 +2647,80 @@ _partitionInlinesForReplacement(List<BusyInline> inlines, int start, int end) {
         : inline.copyWith(text: inline.text.substring(end)),
   );
 }
+
+List<BusyInline> _inlineContextForReplacement(
+  List<BusyInline> inlines,
+  int start,
+  int end,
+) {
+  var offset = 0;
+  for (final inline in inlines) {
+    final length = inline.plainText.length;
+    final inlineEnd = offset + length;
+    final contains =
+        start >= offset &&
+        end <= inlineEnd &&
+        (start < inlineEnd || start == offset);
+    if (contains &&
+        inline.children.isNotEmpty &&
+        _isInheritedInlineContext(inline.kind)) {
+      return [
+        inline,
+        ..._inlineContextForReplacement(
+          inline.children,
+          (start - offset).clamp(0, length).toInt(),
+          (end - offset).clamp(0, length).toInt(),
+        ),
+      ];
+    }
+    offset = inlineEnd;
+  }
+  return const [];
+}
+
+bool _isInheritedInlineContext(BusyInlineKind kind) =>
+    kind == BusyInlineKind.strong ||
+    kind == BusyInlineKind.emphasis ||
+    kind == BusyInlineKind.underline ||
+    kind == BusyInlineKind.strikethrough ||
+    kind == BusyInlineKind.link;
+
+List<BusyInline> _applyInlineReplacementContext(
+  List<BusyInline> inserted,
+  List<BusyInline> context,
+) {
+  var result = inserted;
+  for (final wrapper in context.reversed) {
+    if (wrapper.kind == BusyInlineKind.link &&
+        _containsInlineKind(result, BusyInlineKind.link)) {
+      continue;
+    }
+    if (result.length == 1 && _sameInlineContext(wrapper, result.single)) {
+      continue;
+    }
+    result = [
+      wrapper.copyWith(
+        text: result.map((inline) => inline.plainText).join(),
+        children: result,
+      ),
+    ];
+  }
+  return result;
+}
+
+bool _containsInlineKind(List<BusyInline> inlines, BusyInlineKind kind) {
+  for (final inline in inlines) {
+    if (inline.kind == kind || _containsInlineKind(inline.children, kind)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+bool _sameInlineContext(BusyInline left, BusyInline right) =>
+    left.kind == right.kind &&
+    left.destination == right.destination &&
+    mapEquals(left.attributes, right.attributes);
 
 ({String expression, String leading, String trailing})?
 _inlineMathExpressionParts(String value) {

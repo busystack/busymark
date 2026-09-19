@@ -7,6 +7,7 @@ import 'package:busymark/src/app/app_settings.dart';
 import 'package:busymark/src/assets/asset_ingestion_service.dart';
 import 'package:busymark/src/assets/asset_input_service.dart';
 import 'package:busymark/src/app/busymark_design.dart';
+import 'package:busymark/src/app/busymark_toast.dart';
 import 'package:busymark/src/clipboard/clipboard_history_controller.dart';
 import 'package:busymark/src/clipboard/clipboard_history_panel.dart';
 import 'package:busymark/src/clipboard/clipboard_insertion.dart';
@@ -400,6 +401,9 @@ void main() {
       AssetInputService? assetInputService,
       AssetIngestionService assetIngestionService =
           const AssetIngestionService(),
+      BusyMarkWysiwygTransactionalSourceChanged? onTransactionalSourceChanged,
+      bool useExternalUndoHistory = false,
+      bool hostToasts = false,
       WysiwygEditorSessionState Function(BusyDocument document)?
       initialSessionFor,
     }) async {
@@ -414,6 +418,9 @@ void main() {
         MaterialApp(
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
+          builder: hostToasts
+              ? (context, child) => BusyMarkToastOverlay(child: child!)
+              : null,
           home: Scaffold(
             body: BusyMarkWysiwygEditor(
               key: ValueKey(id),
@@ -424,6 +431,8 @@ void main() {
               assetWorkspaceKind: assetWorkspaceKind,
               assetInputService: assetInputService,
               assetIngestionService: assetIngestionService,
+              onTransactionalSourceChanged: onTransactionalSourceChanged,
+              useExternalUndoHistory: useExternalUndoHistory,
               initialSessionState:
                   initialSessionFor?.call(document) ??
                   const WysiwygEditorSessionState(),
@@ -466,6 +475,92 @@ void main() {
       await key(tester, LogicalKeyboardKey.keyZ, shift: true);
       expect(result, contains('**When**'));
     });
+
+    testWidgets(
+      'complete heading list and code blocks retain structure at every paragraph position',
+      (tester) async {
+        final registry = BusyMarkClipboardInsertionRegistry();
+        addTearDown(registry.dispose);
+        final cases = <({String source, BusyBlockKind kind, String text})>[
+          (
+            source: '## Heading\n',
+            kind: BusyBlockKind.heading,
+            text: 'Heading',
+          ),
+          (
+            source: '- Item\n',
+            kind: BusyBlockKind.unorderedListItem,
+            text: 'Item',
+          ),
+          (
+            source: '```text\ncode\n```\n',
+            kind: BusyBlockKind.codeBlock,
+            text: 'code',
+          ),
+        ];
+        for (final blockCase in cases) {
+          final fragment = _fragment(blockCase.source);
+          for (final position in [0, 4, 9]) {
+            var result = 'leftright\n';
+            await mount(
+              tester,
+              '${blockCase.kind.name}-$position',
+              result,
+              (value) => result = value,
+              registry: registry,
+            );
+            final field = tester.widget<TextField>(
+              find.byType(TextField).first,
+            );
+            field.controller!.selection = TextSelection.collapsed(
+              offset: position,
+            );
+
+            expect(
+              await registry.paste(
+                BusyMarkClipboardPayload(
+                  id: '${blockCase.kind.name}-$position',
+                  acquiredAt: DateTime.utc(2026),
+                  kind: BusyMarkClipboardContentKind.richText,
+                  text: blockCase.text,
+                  richFragment: fragment.encode(),
+                ),
+              ),
+              ClipboardPasteResult.inserted,
+            );
+            await tester.pump();
+
+            final parsed = _parser
+                .parse(
+                  filePath: '/destination.md',
+                  source: result,
+                  mode: MarkdownMode.writersideMarkdown,
+                  validateLocalReferences: false,
+                )
+                .busyDocument;
+            expect(
+              parsed.blocks.where((block) => block.kind == blockCase.kind),
+              hasLength(1),
+              reason:
+                  '${blockCase.kind.name} was flattened at paragraph offset $position: $result',
+            );
+            expect(
+              parsed.blocks
+                  .singleWhere((block) => block.kind == blockCase.kind)
+                  .plainText,
+              blockCase.text,
+            );
+            expect(
+              parsed.blocks
+                  .where((block) => block.kind == BusyBlockKind.paragraph)
+                  .map((block) => block.plainText)
+                  .join(),
+              'leftright',
+            );
+          }
+        }
+      },
+    );
 
     testWidgets('copy all does not duplicate nested list children', (
       tester,
@@ -1440,6 +1535,103 @@ void main() {
     });
 
     testWidgets(
+      'native and history image filesystem failures are handled outcomes',
+      (tester) async {
+        final png = base64Decode(
+          'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
+        );
+        final ingestion = _FileSystemFailingAssetIngestionService();
+        final historyScope = ProviderContainer(
+          overrides: [
+            localSettingsStoreProvider.overrideWithValue(
+              _ClipboardMemorySettingsStore(),
+            ),
+          ],
+        );
+        addTearDown(historyScope.dispose);
+        final history = historyScope.read(
+          clipboardHistoryControllerProvider.notifier,
+        );
+        final transactions = <String>[];
+        var result = 'Target\n';
+        systemData = {'generation': 801};
+        await mount(
+          tester,
+          'native-filesystem-failure',
+          result,
+          (value) => result = value,
+          onCaptured: history.retain,
+          assetInputService: _ClipboardImageAssetInput(png),
+          assetIngestionService: ingestion,
+          onTransactionalSourceChanged: (_, source, _) =>
+              transactions.add(source),
+          useExternalUndoHistory: true,
+          hostToasts: true,
+        );
+
+        await key(tester, LogicalKeyboardKey.keyV);
+        await tester.pump();
+
+        expect(result, 'Target\n');
+        expect(transactions, isEmpty);
+        expect(
+          historyScope.read(clipboardHistoryControllerProvider).entries,
+          isEmpty,
+        );
+        expect(
+          find.text(
+            'The current clipboard content is unavailable or unsupported.',
+          ),
+          findsWidgets,
+        );
+        expect(find.byKey(BusyMarkImageDialogKeys.submit), findsNothing);
+
+        final registry = BusyMarkClipboardInsertionRegistry();
+        addTearDown(registry.dispose);
+        await mount(
+          tester,
+          'history-filesystem-failure',
+          result,
+          (value) => result = value,
+          registry: registry,
+          onCaptured: history.retain,
+          assetIngestionService: ingestion,
+          onTransactionalSourceChanged: (_, source, _) =>
+              transactions.add(source),
+          useExternalUndoHistory: true,
+          hostToasts: true,
+        );
+        final pasteResult = await registry.paste(
+          BusyMarkClipboardPayload(
+            id: 'filesystem-image-history',
+            acquiredAt: DateTime.utc(2026),
+            kind: BusyMarkClipboardContentKind.image,
+            imageBytes: png,
+            imageMimeType: 'image/png',
+            imageDisplayName: 'failure.png',
+            external: true,
+          ),
+        );
+        await tester.pump();
+
+        expect(pasteResult, ClipboardPasteResult.unsupported);
+        expect(result, 'Target\n');
+        expect(transactions, isEmpty);
+        expect(
+          historyScope.read(clipboardHistoryControllerProvider).entries,
+          isEmpty,
+        );
+        expect(
+          find.text(
+            'The current clipboard content is unavailable or unsupported.',
+          ),
+          findsWidgets,
+        );
+        expect(ingestion.calls, 2);
+      },
+    );
+
+    testWidgets(
       'plain history paste replaces a document selection ending at a non-field block',
       (tester) async {
         final registry = BusyMarkClipboardInsertionRegistry();
@@ -1918,6 +2110,21 @@ class _DelayedAssetIngestionService extends AssetIngestionService {
       request: request,
       origin: origin,
     );
+  }
+}
+
+class _FileSystemFailingAssetIngestionService extends AssetIngestionService {
+  int calls = 0;
+
+  @override
+  Future<IngestedAsset> ingestBytes({
+    required Uint8List bytes,
+    required String suggestedFileName,
+    required AssetIngestionRequest request,
+    required AssetIngestionOrigin origin,
+  }) {
+    calls++;
+    throw FileSystemException('Test filesystem failure');
   }
 }
 

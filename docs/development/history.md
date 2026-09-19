@@ -45,8 +45,11 @@ identity around asynchronous work.
 
 Source fragment insertion uses the Markdown serializer's inline entry point,
 including block-start and table-cell escaping, without document-level trimming.
-Destination source is parsed to protect raw/code contexts and preserve list,
-blockquote, and table syntax while replacing only the captured range.
+Destination source is parsed after modeling the captured replacement: complete
+non-paragraph fragments remain blocks, enclosing inline styles are reconciled
+within the smallest changed source range, and table-cell serialization is used
+only for a selection contained by one cell. Raw/code protection and list or
+blockquote continuation apply only to structure that survives the replacement.
 
 Paste outcomes distinguish insertion, cancellation, stale targets, unsupported
 representations, and unavailable targets. Cancellation and staleness terminate

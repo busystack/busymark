@@ -39,6 +39,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:markdown/markdown.dart' as md;
 import 'package:yaru/yaru.dart';
 
 void main() {
@@ -1886,6 +1887,403 @@ void main() {
     }
   });
 
+  testWidgets(
+    'Source complete heading list and code blocks retain structure at every paragraph position',
+    (tester) async {
+      final cases = <({String source, BusyBlockKind kind, String text})>[
+        (source: '## Heading\n', kind: BusyBlockKind.heading, text: 'Heading'),
+        (
+          source: '- Item\n',
+          kind: BusyBlockKind.unorderedListItem,
+          text: 'Item',
+        ),
+        (
+          source: '```text\ncode\n```\n',
+          kind: BusyBlockKind.codeBlock,
+          text: 'code',
+        ),
+      ];
+      for (final blockCase in cases) {
+        final fragment = _completeSourceFragment(blockCase.source);
+        for (final position in [0, 4, 9]) {
+          final controller = await _pumpClipboardSourceEditor(
+            tester,
+            source: 'leftright',
+            clipboard: _SourceTestClipboard(
+              readData: RichClipboardData(
+                text: blockCase.text,
+                richFragment: fragment.encode(),
+                generation: 700 + position,
+              ),
+            ),
+          );
+          controller.selection = TextSelection.collapsed(offset: position);
+
+          await _pressControlKey(tester, LogicalKeyboardKey.keyV);
+          await tester.pump();
+
+          final parsed = const MarkdownParser()
+              .parse(
+                filePath: '/project/source.md',
+                source: controller.text,
+                validateLocalReferences: false,
+              )
+              .busyDocument;
+          expect(
+            parsed.blocks.where((block) => block.kind == blockCase.kind),
+            hasLength(1),
+          );
+          expect(
+            parsed.blocks
+                .singleWhere((block) => block.kind == blockCase.kind)
+                .plainText,
+            blockCase.text,
+          );
+          expect(
+            parsed.blocks
+                .where((block) => block.kind == BusyBlockKind.paragraph)
+                .map((block) => block.plainText)
+                .join(),
+            'leftright',
+          );
+        }
+      }
+    },
+  );
+
+  testWidgets(
+    'Source rich inline paste composes with enclosing inline syntax',
+    (tester) async {
+      Future<TextEditingController> paste({
+        required String source,
+        required int offset,
+        required String fragmentSource,
+      }) async {
+        final fragment = _completeSourceFragment(fragmentSource);
+        final controller = await _pumpClipboardSourceEditor(
+          tester,
+          source: source,
+          clipboard: _SourceTestClipboard(
+            readData: RichClipboardData(
+              text: 'X',
+              richFragment: fragment.encode(),
+            ),
+          ),
+        );
+        controller.selection = TextSelection.collapsed(offset: offset);
+        await _pressControlKey(tester, LogicalKeyboardKey.keyV);
+        await tester.pump();
+        return controller;
+      }
+
+      final bold = await paste(
+        source: 'Before\n\n**leftright**\n\nAfter\n',
+        offset: 'Before\n\n**left'.length,
+        fragmentSource: '**X**\n',
+      );
+      expect(bold.text, 'Before\n\n**leftXright**\n\nAfter\n');
+      final boldBlock = const MarkdownParser()
+          .parse(
+            filePath: '/project/source.md',
+            source: bold.text,
+            validateLocalReferences: false,
+          )
+          .busyDocument
+          .blocks[1];
+      expect(boldBlock.inlines.single.kind, BusyInlineKind.strong);
+      expect(boldBlock.inlines.single.plainText, 'leftXright');
+
+      final emphasis = await paste(
+        source: '*leftright*',
+        offset: '*left'.length,
+        fragmentSource: '*X*\n',
+      );
+      expect(emphasis.text, '*leftXright*');
+      final emphasisInline = const MarkdownParser()
+          .parse(
+            filePath: '/project/source.md',
+            source: emphasis.text,
+            validateLocalReferences: false,
+          )
+          .busyDocument
+          .blocks
+          .single
+          .inlines
+          .single;
+      expect(emphasisInline.kind, BusyInlineKind.emphasis);
+      expect(emphasisInline.plainText, 'leftXright');
+
+      const linkedSource = '[leftright](https://example.test)';
+      final linked = await paste(
+        source: linkedSource,
+        offset: '[left'.length,
+        fragmentSource: '**X**\n',
+      );
+      final link = const MarkdownParser()
+          .parse(
+            filePath: '/project/source.md',
+            source: linked.text,
+            validateLocalReferences: false,
+          )
+          .busyDocument
+          .blocks
+          .single
+          .inlines
+          .single;
+      expect(link.kind, BusyInlineKind.link);
+      expect(link.destination, 'https://example.test');
+      expect(link.plainText, 'leftXright');
+      expect(
+        link.children.where((inline) => inline.kind == BusyInlineKind.strong),
+        hasLength(1),
+      );
+
+      final adjacent = await paste(
+        source: '**left****right**',
+        offset: '**left**'.length,
+        fragmentSource: '**X**\n',
+      );
+      final adjacentBlock = const MarkdownParser()
+          .parse(
+            filePath: '/project/source.md',
+            source: adjacent.text,
+            validateLocalReferences: false,
+          )
+          .busyDocument
+          .blocks
+          .single;
+      expect(adjacentBlock.inlines.single.kind, BusyInlineKind.strong);
+      expect(adjacentBlock.inlines.single.plainText, 'leftXright');
+    },
+  );
+
+  testWidgets(
+    'Source whole-block replacement differs from surviving table and code contexts',
+    (tester) async {
+      final heading = _completeSourceFragment('## Replacement\n');
+      const tableSource = '| A | B |\n| --- | --- |\n| one | two |\n';
+      final wholeTable = await _pumpClipboardSourceEditor(
+        tester,
+        source: tableSource,
+        markdownMode: MarkdownMode.gfm,
+        clipboard: _SourceTestClipboard(
+          readData: RichClipboardData(
+            text: 'Replacement',
+            richFragment: heading.encode(),
+          ),
+        ),
+      );
+      wholeTable.selection = TextSelection(
+        baseOffset: 0,
+        extentOffset: tableSource.length,
+      );
+      await _pressControlKey(tester, LogicalKeyboardKey.keyV);
+      await tester.pump();
+      var parsed = const MarkdownParser().parse(
+        filePath: '/project/source.md',
+        source: wholeTable.text,
+        mode: MarkdownMode.gfm,
+        validateLocalReferences: false,
+      );
+      expect(parsed.busyDocument.blocks.single.kind, BusyBlockKind.heading);
+
+      final replacementTable = _completeSourceFragment(
+        '| C | D |\n| --- | --- |\n| three | four |\n',
+        mode: MarkdownMode.gfm,
+      );
+      final tableWithTable = await _pumpClipboardSourceEditor(
+        tester,
+        source: tableSource,
+        markdownMode: MarkdownMode.gfm,
+        clipboard: _SourceTestClipboard(
+          readData: RichClipboardData(
+            text: 'C D three four',
+            richFragment: replacementTable.encode(),
+          ),
+        ),
+      );
+      tableWithTable.selection = TextSelection(
+        baseOffset: 0,
+        extentOffset: tableSource.length,
+      );
+      await _pressControlKey(tester, LogicalKeyboardKey.keyV);
+      await tester.pump();
+      parsed = const MarkdownParser().parse(
+        filePath: '/project/source.md',
+        source: tableWithTable.text,
+        mode: MarkdownMode.gfm,
+        validateLocalReferences: false,
+      );
+      expect(parsed.busyDocument.blocks.single.kind, BusyBlockKind.table);
+      expect(
+        parsed.busyDocument.blocks.single.children.last.children.last.plainText,
+        'four',
+      );
+
+      const codeSource = '```text\nold\n```\n';
+      final wholeCode = await _pumpClipboardSourceEditor(
+        tester,
+        source: codeSource,
+        clipboard: _SourceTestClipboard(
+          readData: RichClipboardData(
+            text: 'Replacement',
+            richFragment: heading.encode(),
+          ),
+        ),
+      );
+      wholeCode.selection = TextSelection(
+        baseOffset: 0,
+        extentOffset: codeSource.length,
+      );
+      await _pressControlKey(tester, LogicalKeyboardKey.keyV);
+      await tester.pump();
+      parsed = const MarkdownParser().parse(
+        filePath: '/project/source.md',
+        source: wholeCode.text,
+        validateLocalReferences: false,
+      );
+      expect(parsed.busyDocument.blocks.single.kind, BusyBlockKind.heading);
+
+      final registry = BusyMarkClipboardInsertionRegistry();
+      addTearDown(registry.dispose);
+      final crossCell = await _pumpClipboardSourceEditor(
+        tester,
+        source: tableSource,
+        markdownMode: MarkdownMode.gfm,
+        registry: registry,
+        clipboard: _SourceTestClipboard(),
+      );
+      crossCell.selection = TextSelection(
+        baseOffset: tableSource.indexOf('one'),
+        extentOffset: tableSource.indexOf('two') + 3,
+      );
+      await tester.pump();
+      final richOnly = BusyMarkClipboardPayload(
+        id: 'cross-cell-rich-only',
+        acquiredAt: DateTime.utc(2026),
+        kind: BusyMarkClipboardContentKind.richText,
+        richFragment: heading.encode(),
+      );
+      expect(registry.canPaste(richOnly), isFalse);
+      expect(await registry.paste(richOnly), ClipboardPasteResult.unavailable);
+      expect(crossCell.text, tableSource);
+    },
+  );
+
+  testWidgets(
+    'Source structured paragraph markers escape only at block starts',
+    (tester) async {
+      for (final marker in ['# Heading', '> quotation', '- item', '1. item']) {
+        final fragment = WysiwygClipboardFragment(
+          mode: MarkdownMode.commonMark,
+          blocks: [
+            BusyWysiwygStyledBlock(
+              kind: BusyBlockKind.paragraph,
+              text: marker,
+              ranges: const [],
+              completeBlock: BusyBlock(
+                id: 'literal-marker',
+                kind: BusyBlockKind.paragraph,
+                inlines: [BusyInline(kind: BusyInlineKind.text, text: marker)],
+              ),
+            ),
+          ],
+        );
+        final empty = await _pumpClipboardSourceEditor(
+          tester,
+          source: '',
+          clipboard: _SourceTestClipboard(
+            readData: RichClipboardData(
+              text: marker,
+              richFragment: fragment.encode(),
+            ),
+          ),
+        );
+        empty.selection = const TextSelection.collapsed(offset: 0);
+        await _pressControlKey(tester, LogicalKeyboardKey.keyV);
+        await tester.pump();
+        final parsed = const MarkdownParser().parse(
+          filePath: '/project/source.md',
+          source: empty.text,
+          validateLocalReferences: false,
+        );
+        expect(parsed.busyDocument.blocks.single.kind, BusyBlockKind.paragraph);
+        expect(parsed.busyDocument.blocks.single.plainText, marker);
+
+        final middle = await _pumpClipboardSourceEditor(
+          tester,
+          source: 'leftright',
+          clipboard: _SourceTestClipboard(
+            readData: RichClipboardData(
+              text: marker,
+              richFragment: fragment.encode(),
+            ),
+          ),
+        );
+        middle.selection = const TextSelection.collapsed(offset: 4);
+        await _pressControlKey(tester, LogicalKeyboardKey.keyV);
+        await tester.pump();
+        expect(middle.text, 'left${marker}right');
+      }
+
+      final prefixedFragment = WysiwygClipboardFragment(
+        mode: MarkdownMode.commonMark,
+        blocks: const [
+          BusyWysiwygStyledBlock(
+            kind: BusyBlockKind.paragraph,
+            text: '# Heading',
+            ranges: [],
+          ),
+        ],
+      );
+      for (final value in [
+        (source: '> right', offset: 2, kind: BusyBlockKind.blockquote),
+        (source: '- right', offset: 2, kind: BusyBlockKind.unorderedListItem),
+      ]) {
+        final prefixed = await _pumpClipboardSourceEditor(
+          tester,
+          source: value.source,
+          clipboard: _SourceTestClipboard(
+            readData: RichClipboardData(
+              text: '# Heading',
+              richFragment: prefixedFragment.encode(),
+            ),
+          ),
+        );
+        prefixed.selection = TextSelection.collapsed(offset: value.offset);
+        await _pressControlKey(tester, LogicalKeyboardKey.keyV);
+        await tester.pump();
+        final parsed = const MarkdownParser()
+            .parse(
+              filePath: '/project/source.md',
+              source: prefixed.text,
+              validateLocalReferences: false,
+            )
+            .busyDocument;
+        expect(parsed.blocks.single.kind, value.kind, reason: prefixed.text);
+        expect(
+          _sourceBlocksDepthFirst(
+            parsed.blocks,
+          ).any((block) => block.plainText == '# Headingright'),
+          isTrue,
+          reason: prefixed.text,
+        );
+        expect(prefixed.text, contains(r'\# Heading'));
+      }
+
+      final plain = await _pumpClipboardSourceEditor(
+        tester,
+        source: '',
+        clipboard: _SourceTestClipboard(
+          readData: const RichClipboardData(text: '# Heading'),
+        ),
+      );
+      await _pressControlKey(tester, LogicalKeyboardKey.keyV, shift: true);
+      await tester.pump();
+      expect(plain.text, '# Heading');
+    },
+  );
+
   testWidgets('Source native inline paste preserves edge and only whitespace', (
     tester,
   ) async {
@@ -2052,6 +2450,52 @@ void main() {
       expect(controller.text, value.$2);
     }
   });
+
+  testWidgets(
+    'Source complete blocks remain in containers at every content boundary',
+    (tester) async {
+      final heading = _completeSourceFragment('## Heading\n');
+      final cases = <({String source, int offset})>[];
+      for (final source in ['> item', '> item\n', '- item', '- item\n']) {
+        final contentStart = source.indexOf('item');
+        for (final relative in [0, 2, 4]) {
+          cases.add((source: source, offset: contentStart + relative));
+        }
+      }
+      cases.addAll([
+        (source: '   - item', offset: '   - item'.length),
+        (source: '>   3. item', offset: '>   3. item'.length),
+      ]);
+      for (final value in cases) {
+        final controller = await _pumpClipboardSourceEditor(
+          tester,
+          source: value.source,
+          clipboard: _SourceTestClipboard(
+            readData: RichClipboardData(
+              text: 'Heading',
+              richFragment: heading.encode(),
+            ),
+          ),
+        );
+        controller.selection = TextSelection.collapsed(offset: value.offset);
+        await _pressControlKey(tester, LogicalKeyboardKey.keyV);
+        await tester.pump();
+
+        final headingPaths = _markdownElementPaths(
+          md.Document().parse(controller.text),
+          'h2',
+        );
+        expect(headingPaths, hasLength(1), reason: controller.text);
+        expect(
+          headingPaths.single.any(
+            (element) => element.tag == 'li' || element.tag == 'blockquote',
+          ),
+          isTrue,
+          reason: 'Heading escaped its container: ${controller.text}',
+        );
+      }
+    },
+  );
 
   testWidgets('Source protected contexts use the safe source fallback', (
     tester,
@@ -2781,6 +3225,58 @@ void main() {
     expect(await registry.paste(payload), ClipboardPasteResult.unavailable);
     expect(controller.text, '<root/>');
   });
+}
+
+WysiwygClipboardFragment _completeSourceFragment(
+  String source, {
+  MarkdownMode mode = MarkdownMode.commonMark,
+}) {
+  final document = const MarkdownParser()
+      .parse(
+        filePath: '/clipboard/source.md',
+        source: source,
+        mode: mode,
+        validateLocalReferences: false,
+      )
+      .busyDocument;
+  return WysiwygClipboardFragment(
+    sourcePath: document.filePath,
+    mode: document.mode,
+    blocks: [
+      for (final block in document.blocks)
+        BusyWysiwygStyledBlock(
+          kind: block.kind,
+          text: block.plainText,
+          ranges: busyInlineStyleRanges(block.inlines),
+          attributes: block.attributes,
+          completeBlock: busyMarkWysiwygImmutableBlockSnapshot(block),
+        ),
+    ],
+  );
+}
+
+List<List<md.Element>> _markdownElementPaths(
+  Iterable<md.Node> nodes,
+  String targetTag, [
+  List<md.Element> ancestors = const [],
+]) {
+  final paths = <List<md.Element>>[];
+  for (final node in nodes) {
+    if (node is! md.Element) continue;
+    final path = [...ancestors, node];
+    if (node.tag == targetTag) paths.add(path);
+    paths.addAll(
+      _markdownElementPaths(node.children ?? const [], targetTag, path),
+    );
+  }
+  return paths;
+}
+
+Iterable<BusyBlock> _sourceBlocksDepthFirst(Iterable<BusyBlock> blocks) sync* {
+  for (final block in blocks) {
+    yield block;
+    yield* _sourceBlocksDepthFirst(block.children);
+  }
 }
 
 WysiwygClipboardFragment _structuredImageFragment(String sourcePath) {
