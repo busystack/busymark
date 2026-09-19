@@ -54,6 +54,7 @@ String _normalizeSourceMappingLabel(String label) =>
     label.trim().replaceAll(RegExp(r'\s+'), ' ').toLowerCase();
 
 String _decodeMarkdownAttribute(String value) => value
+    .replaceAll('&#92;', '\\')
     .replaceAll('&quot;', '"')
     .replaceAll('&#39;', "'")
     .replaceAll('&lt;', '<')

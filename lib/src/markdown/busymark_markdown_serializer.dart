@@ -851,9 +851,9 @@ class BusyMarkMarkdownSerializer {
     final destination = inline.destination ?? '';
     final title = inline.attributes['title'];
     if (title == null || title.isEmpty) return destination;
-    var escapedTitle = title
+    final escapedTitle = title
         .replaceAll('&', '&amp;')
-        .replaceAll('\\', r'\\\\')
+        .replaceAll('\\', '&#92;')
         .replaceAll('"', '\\"')
         .replaceAll('\r', '&#13;')
         .replaceAll('\n', '&#10;');

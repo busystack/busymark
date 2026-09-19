@@ -2104,6 +2104,87 @@ void main() {
   );
 
   testWidgets(
+    'Source adjacent-style reconciliation preserves literal code delimiters',
+    (tester) async {
+      Future<void> verify({
+        required String source,
+        required MarkdownMode mode,
+      }) async {
+        var transactions = 0;
+        TextEditingValue? undoValue;
+        final controller = await _pumpClipboardSourceEditor(
+          tester,
+          source: source,
+          markdownMode: mode,
+          clipboard: _SourceTestClipboard(
+            readData: RichClipboardData(
+              text: 'X',
+              richFragment: _completeSourceFragment(
+                '**X**\n',
+                mode: mode,
+              ).encode(),
+            ),
+          ),
+          onTransactionalChanged: (_, _, previousSelection, _, _) {
+            transactions += 1;
+            undoValue = TextEditingValue(
+              text: source,
+              selection: previousSelection,
+            );
+          },
+          onUndo: () {
+            final value = undoValue;
+            undoValue = null;
+            return value;
+          },
+        );
+        final firstRunEnd = source.indexOf('**left**') + '**left**'.length;
+        controller.selection = TextSelection.collapsed(offset: firstRunEnd);
+
+        await _pressControlKey(tester, LogicalKeyboardKey.keyV);
+        await tester.pump();
+
+        final expected = source.replaceRange(firstRunEnd, firstRunEnd, '**X**');
+        expect(controller.text, expected);
+        expect(controller.selection.baseOffset, firstRunEnd + '**X**'.length);
+        final document = const MarkdownParser()
+            .parse(
+              filePath: '/project/source.md',
+              source: controller.text,
+              mode: mode,
+              validateLocalReferences: false,
+            )
+            .busyDocument;
+        final inlines = document.blocks.single.kind == BusyBlockKind.table
+            ? document.blocks.single.children.last.children.single.inlines
+            : document.blocks.single.inlines;
+        expect(inlines, hasLength(1));
+        expect(inlines.single.kind, BusyInlineKind.code);
+        expect(inlines.single.text, '**left****X****right**');
+        expect(transactions, 1);
+
+        await _pressControlKey(tester, LogicalKeyboardKey.keyZ);
+        await tester.pump();
+        expect(controller.text, source);
+      }
+
+      await verify(
+        source: '`**left****right**`',
+        mode: MarkdownMode.commonMark,
+      );
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump();
+      await verify(
+        source:
+            '| H |\n'
+            '| --- |\n'
+            '| `**left****right**` |\n',
+        mode: MarkdownMode.gfm,
+      );
+    },
+  );
+
+  testWidgets(
     'Source table inline reconciliation is confined to the selected cell',
     (tester) async {
       const source =
@@ -3096,6 +3177,101 @@ void main() {
         controller.selection.baseOffset,
         '[X](https://incoming.test)'.length,
       );
+      if (index + 1 < cases.length) {
+        await tester.pumpWidget(const SizedBox.shrink());
+        await tester.pump();
+      }
+    }
+  });
+
+  testWidgets('Source maps links with escaped and balanced label brackets', (
+    tester,
+  ) async {
+    final measurements = <int>[];
+    debugBusyMarkSourceInlineMappingParseCount = measurements.add;
+    addTearDown(() => debugBusyMarkSourceInlineMappingParseCount = null);
+    final escapedBrackets = List.filled(20, r'\[').join();
+    final literalBrackets = List.filled(20, '[').join();
+    final cases = [
+      (
+        source:
+            '[$escapedBrackets'
+            'leftright](https://destination.test)',
+        startText: 'leftright',
+        selectionLength: 0,
+        expectedBefore: '${literalBrackets}left',
+        expectedAfter: 'right',
+      ),
+      (
+        source: '[prefix [balanced] leftright](https://destination.test)',
+        startText: 'left',
+        selectionLength: 'left'.length,
+        expectedBefore: 'prefix [balanced] ',
+        expectedAfter: 'right',
+      ),
+    ];
+    for (final (index, value) in cases.indexed) {
+      final registry = BusyMarkClipboardInsertionRegistry();
+      final fragment = _completeSourceFragment('[X](https://incoming.test)\n');
+      final controller = await _pumpClipboardSourceEditor(
+        tester,
+        source: value.source,
+        registry: registry,
+        clipboard: _SourceTestClipboard(
+          readData: RichClipboardData(
+            text: 'X',
+            richFragment: fragment.encode(),
+          ),
+        ),
+      );
+      final selectionStart =
+          value.source.indexOf(value.startText) +
+          (value.selectionLength == 0 ? 4 : 0);
+      controller.selection = TextSelection(
+        baseOffset: selectionStart,
+        extentOffset: selectionStart + value.selectionLength,
+      );
+      final payload = BusyMarkClipboardPayload(
+        id: 'bracket-link-$index',
+        acquiredAt: DateTime.utc(2026),
+        kind: BusyMarkClipboardContentKind.richText,
+        text: 'X',
+        richFragment: fragment.encode(),
+      );
+
+      measurements.clear();
+      expect(registry.canPaste(payload), isTrue);
+      expect(measurements, isNotEmpty);
+
+      measurements.clear();
+      await _pressControlKey(tester, LogicalKeyboardKey.keyV);
+      await tester.pump();
+
+      final parsed = const MarkdownParser()
+          .parse(
+            filePath: '/project/source.md',
+            source: controller.text,
+            validateLocalReferences: false,
+          )
+          .busyDocument;
+      final links = parsed.blocks.single.inlines
+          .where((inline) => inline.kind == BusyInlineKind.link)
+          .toList();
+      expect(links.map((inline) => inline.destination), [
+        'https://destination.test',
+        'https://incoming.test',
+        'https://destination.test',
+      ], reason: controller.text);
+      expect(links[0].plainText, value.expectedBefore);
+      expect(links[1].plainText, 'X');
+      expect(links[2].plainText, value.expectedAfter);
+      final incomingEnd =
+          controller.text.indexOf('[X](https://incoming.test)') +
+          '[X](https://incoming.test)'.length;
+      expect(controller.selection.baseOffset, incomingEnd);
+      expect(measurements, isNotEmpty);
+      expect(measurements.reduce(math.max), lessThanOrEqualTo(4));
+      registry.dispose();
       if (index + 1 < cases.length) {
         await tester.pumpWidget(const SizedBox.shrink());
         await tester.pump();

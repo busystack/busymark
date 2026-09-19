@@ -4673,6 +4673,41 @@ void main() {}
     }
   });
 
+  test('link title backslashes use standards-safe character references', () {
+    for (final value in const [
+      (title: r'C:\Temp', encoded: 'C:&#92;Temp'),
+      (title: r'C:\\Temp', encoded: 'C:&#92;&#92;Temp'),
+      (title: r'\* \[ \( \!', encoded: '&#92;* &#92;[ &#92;( &#92;!'),
+      (title: '\\"&copy;\\', encoded: '&#92;\\"&amp;copy;&#92;'),
+    ]) {
+      final link = BusyInline(
+        kind: BusyInlineKind.link,
+        text: 'X',
+        children: const [BusyInline(kind: BusyInlineKind.text, text: 'X')],
+        destination: 'https://example.test',
+        attributes: {'title': value.title},
+      );
+      final expected = '[X](https://example.test "${value.encoded}")';
+      final serializer = const BusyMarkMarkdownSerializer();
+
+      expect(serializer.serializeInlineFragment([link]), expected);
+      final mapped = serializer.serializeInlineFragmentAtTextOffset([
+        link,
+      ], textOffset: 1);
+      expect(mapped.source, expected);
+      expect(mapped.sourceOffset, expected.length);
+
+      final reparsed = parser.parse(
+        filePath: 'topic.md',
+        source: '$expected\n',
+        validateLocalReferences: false,
+      );
+      final reparsedLink = reparsed.busyDocument.blocks.single.inlines.single;
+      expect(reparsedLink.kind, BusyInlineKind.link);
+      expect(reparsedLink.attributes['title'], value.title, reason: expected);
+    }
+  });
+
   test('link titles round-trip decoded punctuation and line endings', () {
     for (final title in const [
       'literal &copy;',
