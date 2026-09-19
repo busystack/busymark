@@ -41,6 +41,57 @@ void main() {
     );
   });
 
+  test('inline source mapping locates partially consumed delimiter runs', () {
+    BusyMarkMappedInlineRange mappedRange(String source, BusyInlineKind kind) {
+      final context = const MarkdownAstAdapter().createInlineParserContext(
+        documentSource: source,
+        mode: MarkdownMode.commonMark,
+      );
+      final mapped = context.parseMapped(source);
+      BusyInline? result;
+      void visit(Iterable<BusyInline> inlines) {
+        for (final inline in inlines) {
+          if (result == null && inline.kind == kind) result = inline;
+          visit(inline.children);
+        }
+      }
+
+      visit(mapped.inlines);
+      expect(result, isNotNull, reason: source);
+      return mapped.ranges[result!]!;
+    }
+
+    for (final delimiter in ['*', '_']) {
+      final partialOpening =
+          '$delimiter$delimiter${delimiter}leftright'
+          '$delimiter$delimiter';
+      final openingRange = mappedRange(partialOpening, BusyInlineKind.strong);
+      expect(openingRange.start, 1, reason: partialOpening);
+      expect(openingRange.end, partialOpening.length, reason: partialOpening);
+
+      final partialClosing =
+          '$delimiter${delimiter}leftright'
+          '$delimiter$delimiter$delimiter';
+      final closingRange = mappedRange(partialClosing, BusyInlineKind.strong);
+      expect(closingRange.start, 0, reason: partialClosing);
+      expect(
+        closingRange.end,
+        partialClosing.length - 1,
+        reason: partialClosing,
+      );
+
+      final nested =
+          '$delimiter$delimiter${delimiter}leftright'
+          '$delimiter$delimiter$delimiter';
+      final strongRange = mappedRange(nested, BusyInlineKind.strong);
+      final emphasisRange = mappedRange(nested, BusyInlineKind.emphasis);
+      expect(strongRange.start, 1, reason: nested);
+      expect(strongRange.end, nested.length - 1, reason: nested);
+      expect(emphasisRange.start, 0, reason: nested);
+      expect(emphasisRange.end, nested.length, reason: nested);
+    }
+  });
+
   test('inline source mapping retains escaped collapsed references', () {
     const marker = '\ue000';
     final marked = '${r'[prefix \[ left'}$marker${r'right][]'}';
@@ -66,6 +117,53 @@ void main() {
     expect(range?.end, marked.length);
     expect(range?.labelStart, 1);
     expect(range?.labelEnd, marked.indexOf(']'));
+  });
+
+  test('block inline mapping projects logical content to container source', () {
+    const marker = '\ue000';
+    const original =
+        '> [left\n'
+        '> right](https://destination.test)';
+    const marked =
+        '> [left$marker\n'
+        '> right](https://destination.test)';
+    final context = const MarkdownAstAdapter().createInlineParserContext(
+      documentSource: original,
+      mode: MarkdownMode.commonMark,
+    );
+
+    final mapped = context.parseMappedBlock(
+      marked,
+      sourceStart: 0,
+      sourceEnd: marked.length,
+      ignoredReferenceLabelMarkers: const [marker],
+    );
+
+    expect(mapped, isNotNull);
+    final link = mapped!.inlines.single;
+    expect(link.kind, BusyInlineKind.link);
+    expect(link.plainText, 'left$marker\nright');
+    expect(link.plainText, isNot(contains('>')));
+    final range = mapped.ranges[link];
+    expect(range?.start, 2);
+    expect(range?.end, marked.length);
+    expect(range?.lineBreaks, hasLength(1));
+    expect(range?.lineBreaks.single.lineEnding, '\n');
+    expect(range?.lineBreaks.single.continuationPrefix, '> ');
+
+    final crlfMapped = context.parseMappedBlock(
+      marked.replaceAll('\n', '\r\n'),
+      sourceStart: 0,
+      sourceEnd: marked.length + 1,
+      ignoredReferenceLabelMarkers: const [marker],
+    );
+    final crlfLink = crlfMapped!.inlines.single;
+    expect(crlfLink.plainText, 'left$marker\nright');
+    expect(crlfMapped.ranges[crlfLink]?.lineBreaks.single.lineEnding, '\r\n');
+    expect(
+      crlfMapped.ranges[crlfLink]?.lineBreaks.single.continuationPrefix,
+      '> ',
+    );
   });
 
   test('extracts title, outline, links, images, and code fences', () {

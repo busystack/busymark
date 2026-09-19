@@ -2578,6 +2578,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
       before,
       adjustedIncoming,
       after,
+      authoredWrapper: mapped,
     );
   }
 
@@ -2604,11 +2605,49 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
       context,
       authoredWrapper,
     );
+    final restored = _restoreMappedSourceLineBreaks(
+      serialized,
+      authoredWrapper?.lineBreaks ?? const [],
+      context.containerContinuationPrefix,
+    );
     return _SourceClipboardInsertion(
       start: sourceRange.start,
       end: sourceRange.end,
-      text: serialized.source,
-      caretOffset: sourceRange.start + serialized.sourceOffset,
+      text: restored.source,
+      caretOffset: sourceRange.start + restored.sourceOffset,
+    );
+  }
+
+  BusyMarkSerializedInlineFragment _restoreMappedSourceLineBreaks(
+    BusyMarkSerializedInlineFragment serialized,
+    List<BusyMarkMappedSourceLineBreak> lineBreaks,
+    String fallbackPrefix,
+  ) {
+    if (!serialized.source.contains('\n')) return serialized;
+    final source = StringBuffer();
+    var sourceOffset = serialized.sourceOffset;
+    var lineBreakIndex = 0;
+    for (var index = 0; index < serialized.source.length; index++) {
+      final character = serialized.source[index];
+      if (character != '\n') {
+        source.write(character);
+        continue;
+      }
+      final mapped = lineBreakIndex < lineBreaks.length
+          ? lineBreaks[lineBreakIndex]
+          : null;
+      final lineEnding = mapped?.lineEnding ?? '\n';
+      final prefix = mapped?.continuationPrefix ?? fallbackPrefix;
+      source.write(lineEnding);
+      source.write(prefix);
+      if (index < serialized.sourceOffset) {
+        sourceOffset += lineEnding.length - 1 + prefix.length;
+      }
+      lineBreakIndex += 1;
+    }
+    return BusyMarkSerializedInlineFragment(
+      source: source.toString(),
+      sourceOffset: sourceOffset,
     );
   }
 
@@ -2896,6 +2935,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
         start,
         end,
         inlineMappingRange,
+        inlineOnly: originalCell != null,
       ),
     );
   }
@@ -2904,8 +2944,9 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
     _SourceClipboardOperationTarget target,
     int start,
     int end,
-    TextRange sourceBounds,
-  ) {
+    TextRange sourceBounds, {
+    required bool inlineOnly,
+  }) {
     final startMarker = _sourceClipboardMarker(target.text);
     final endMarker = start == end
         ? startMarker
@@ -2932,10 +2973,19 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
         markedBounds.end > markedSource.length) {
       return null;
     }
-    final mapped = parserContext.parseMapped(
-      markedSource.substring(markedBounds.start, markedBounds.end),
-      ignoredReferenceLabelMarkers: [startMarker, if (start != end) endMarker],
-    );
+    final markers = [startMarker, if (start != end) endMarker];
+    final mapped = inlineOnly
+        ? parserContext.parseMapped(
+            markedSource.substring(markedBounds.start, markedBounds.end),
+            ignoredReferenceLabelMarkers: markers,
+          )
+        : parserContext.parseMappedBlock(
+            markedSource,
+            sourceStart: markedBounds.start,
+            sourceEnd: markedBounds.end,
+            ignoredReferenceLabelMarkers: markers,
+          );
+    if (mapped == null) return null;
     final startTrace = _sourceInlineTraceContainingMarkerInInlines(
       mapped.inlines,
       startMarker,
@@ -2982,6 +3032,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
               end,
               markerCount,
               markedBounds,
+              rangeBaseOffset: inlineOnly ? markedBounds.start : 0,
             );
       if (wrapper != null) wrappers.add(wrapper);
     }
@@ -3012,10 +3063,11 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
     int selectionStart,
     int selectionEnd,
     int markerCount,
-    TextRange markedBounds,
-  ) {
-    final markedStart = markedBounds.start + mappedRange.start;
-    final markedEnd = markedBounds.start + mappedRange.end;
+    TextRange markedBounds, {
+    required int rangeBaseOffset,
+  }) {
+    final markedStart = rangeBaseOffset + mappedRange.start;
+    final markedEnd = rangeBaseOffset + mappedRange.end;
     final originalEnd = markedEnd - markerCount;
     if (markedStart < markedBounds.start ||
         markedStart > selectionStart ||
@@ -3029,6 +3081,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
       sourceRange: TextRange(start: markedStart, end: originalEnd),
       opening: mappedRange.opening,
       closing: mappedRange.closing,
+      lineBreaks: mappedRange.lineBreaks,
     );
   }
 
@@ -4806,12 +4859,14 @@ class _MappedSourceInlineWrapper {
     required this.sourceRange,
     this.opening,
     this.closing,
+    this.lineBreaks = const [],
   });
 
   final BusyInline inline;
   final TextRange sourceRange;
   final String? opening;
   final String? closing;
+  final List<BusyMarkMappedSourceLineBreak> lineBreaks;
 }
 
 class _SourceInlineTrace {
