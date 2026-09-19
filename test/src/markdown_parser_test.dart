@@ -107,7 +107,7 @@ void main() {
       ignoredReferenceLabelMarkers: const [marker],
     );
 
-    expect(context.parseInvocations, 2);
+    expect(context.parseInvocations, 4);
     expect(mapped.inlines, hasLength(1));
     final link = mapped.inlines.single;
     expect(link.kind, BusyInlineKind.link);
@@ -117,6 +117,104 @@ void main() {
     expect(range?.end, marked.length);
     expect(range?.labelStart, 1);
     expect(range?.labelEnd, marked.indexOf(']'));
+    expect(range?.isReference, isTrue);
+  });
+
+  test('inline source mapping keeps original autolink semantics', () {
+    const marker = '\ue000';
+    const original = '<https://example.test/leftright>';
+    const marked = '<https://example.test/left${marker}right>';
+    final context = const MarkdownAstAdapter().createInlineParserContext(
+      documentSource: original,
+      mode: MarkdownMode.commonMark,
+    );
+
+    final mapped = context.parseMapped(
+      marked,
+      ignoredReferenceLabelMarkers: const [marker],
+    );
+
+    final link = mapped.inlines.single;
+    expect(link.kind, BusyInlineKind.link);
+    expect(link.plainText, 'https://example.test/left${marker}right');
+    expect(link.destination, 'https://example.test/leftright');
+    expect(link.attributes['href'], 'https://example.test/leftright');
+    expect(mapped.ranges[link]?.isAutolink, isTrue);
+    expect(mapped.ranges[link]?.isReference, isFalse);
+  });
+
+  test('inline source mapping preserves supported autolink variants', () {
+    const cases = <({String original, String marked, String destination})>[
+      (
+        original: '<https://example.test/a%20b-right>',
+        marked: '<https://example.test/a%20b-\ue000right>',
+        destination: 'https://example.test/a%20b-right',
+      ),
+      (
+        original: '<left@example.test>',
+        marked: '<left\ue000@example.test>',
+        destination: 'mailto:left@example.test',
+      ),
+      (
+        original: '<https://example.test/\ue000-%EE%80%80-right>',
+        marked: '<https://example.test/\ue000-%EE%80%80-\ue001right>',
+        destination: 'https://example.test/%EE%80%80-%EE%80%80-right',
+      ),
+    ];
+    for (final value in cases) {
+      final marker = value.marked.contains('\ue001') ? '\ue001' : '\ue000';
+      final context = const MarkdownAstAdapter().createInlineParserContext(
+        documentSource: value.original,
+        mode: MarkdownMode.commonMark,
+      );
+
+      final mapped = context.parseMapped(
+        value.marked,
+        ignoredReferenceLabelMarkers: [marker],
+      );
+
+      final link = mapped.inlines.single;
+      expect(link.kind, BusyInlineKind.link, reason: value.original);
+      expect(link.destination, value.destination, reason: value.original);
+      expect(
+        link.attributes['href'],
+        value.destination,
+        reason: value.original,
+      );
+      expect(
+        mapped.ranges[link]?.originalInline?.destination,
+        value.destination,
+      );
+      expect(mapped.ranges[link]?.isAutolink, isTrue);
+    }
+  });
+
+  test('inline source mapping uses parser case folding for references', () {
+    const marker = '\ue000';
+    const original = '[stra\u00dfe][]\n\n[STRASSE]: https://destination.test\n';
+    final parsed = parser.parse(
+      filePath: 'case-folded.md',
+      source: original,
+      validateLocalReferences: false,
+    );
+    expect(
+      parsed.busyDocument.blocks.first.inlines.single.destination,
+      'https://destination.test',
+    );
+    final context = const MarkdownAstAdapter().createInlineParserContext(
+      documentSource: original,
+      mode: MarkdownMode.commonMark,
+    );
+
+    final mapped = context.parseMapped(
+      '[stra$marker\u00dfe][]',
+      ignoredReferenceLabelMarkers: const [marker],
+    );
+
+    final link = mapped.inlines.single;
+    expect(link.kind, BusyInlineKind.link);
+    expect(link.destination, 'https://destination.test');
+    expect(link.attributes['href'], 'https://destination.test');
   });
 
   test('block inline mapping projects logical content to container source', () {
@@ -150,6 +248,7 @@ void main() {
     expect(range?.lineBreaks, hasLength(1));
     expect(range?.lineBreaks.single.lineEnding, '\n');
     expect(range?.lineBreaks.single.continuationPrefix, '> ');
+    expect(range?.lineBreaks.single.textOffset, 'left$marker'.length);
 
     final crlfMapped = context.parseMappedBlock(
       marked.replaceAll('\n', '\r\n'),

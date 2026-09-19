@@ -35,6 +35,7 @@ md.Document busyMarkMarkdownDocument(
     blockSyntaxes: const [BusyDisplayMathSyntax()],
     inlineSyntaxes: [
       ...leadingInlineSyntaxes,
+      BusyMarkReferenceLinkSyntax(),
       if (mode == MarkdownMode.writersideMarkdown)
         WritersideLiteralPercentSyntax(),
       BusyDollarMathSyntax(),
@@ -43,6 +44,76 @@ md.Document busyMarkMarkdownDocument(
     extensionSet: md.ExtensionSet.gitHubWeb,
     encodeHtml: false,
   );
+}
+
+/// Keeps reference lookup inside the pinned Markdown parser's normalization
+/// path. Markdown 7.3.1's case-folding asset maps capital sharp S to `ss` but
+/// omits the equivalent lower-case entry, so expose that parser-owned fold to
+/// labels containing lower-case sharp S before [md.LinkSyntax] resolves them.
+class BusyMarkReferenceLinkSyntax extends md.LinkSyntax {
+  void _installParserReferenceAlias(md.InlineParser parser, String label) {
+    if (!label.contains('ß')) return;
+    final lookupKey = busyMarkParserReferenceLabel(label);
+    final parserFoldedKey = busyMarkParserReferenceLabel(
+      label.replaceAll('ß', 'ẞ'),
+    );
+    if (lookupKey == null || parserFoldedKey == null) return;
+    final reference = parser.document.linkReferences[parserFoldedKey];
+    if (reference != null) {
+      parser.document.linkReferences.putIfAbsent(lookupKey, () => reference);
+    }
+  }
+
+  String? _secondaryLabel(String source, int closingBracket) {
+    final opening = closingBracket + 1;
+    if (opening >= source.length || source.codeUnitAt(opening) != 0x5b) {
+      return null;
+    }
+    var escaped = false;
+    for (var index = opening + 1; index < source.length; index++) {
+      final unit = source.codeUnitAt(index);
+      if (unit == 0x5d && !escaped) {
+        return source.substring(opening + 1, index);
+      }
+      if (unit == 0x5c && !escaped) {
+        escaped = true;
+      } else {
+        escaped = false;
+      }
+    }
+    return null;
+  }
+
+  @override
+  Iterable<md.Node>? close(
+    md.InlineParser parser,
+    covariant md.SimpleDelimiter opener,
+    md.Delimiter? closer, {
+    String? tag,
+    required List<md.Node> Function() getChildren,
+  }) {
+    final visibleLabel = parser.source.substring(opener.endPos, parser.pos);
+    final secondary = _secondaryLabel(parser.source, parser.pos);
+    _installParserReferenceAlias(
+      parser,
+      secondary == null || secondary.isEmpty ? visibleLabel : secondary,
+    );
+    return super.close(
+      parser,
+      opener,
+      closer,
+      tag: tag,
+      getChildren: getChildren,
+    );
+  }
+}
+
+/// Returns the exact key the pinned Markdown parser registers for [label].
+/// This deliberately uses the parser rather than maintaining a second
+/// whitespace or Unicode case-folding implementation in BusyMark.
+String? busyMarkParserReferenceLabel(String label) {
+  final document = md.Document(encodeHtml: false)..parse('[$label]: /');
+  return document.linkReferences.keys.singleOrNull;
 }
 
 class BusyDollarMathSyntax extends md.InlineSyntax {

@@ -2282,10 +2282,18 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
         (inline) => inline.kind == BusyInlineKind.link,
       );
       if (destinationLinkIndex >= 0 &&
-          _containsDifferentLink(
-            incoming,
-            activeContexts[destinationLinkIndex],
-          )) {
+          (destination
+                      .wrapperFor(activeContexts[destinationLinkIndex])
+                      ?.isAutolink ==
+                  true ||
+              destination
+                      .wrapperFor(activeContexts[destinationLinkIndex])
+                      ?.isReference ==
+                  true ||
+              _containsDifferentLink(
+                incoming,
+                activeContexts[destinationLinkIndex],
+              ))) {
         final expanded = _replaceMappedDestinationLink(
           context,
           destination,
@@ -2594,6 +2602,48 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
       ...before,
       ...incoming,
     ].fold<int>(0, (length, inline) => length + inline.plainText.length);
+    final retainedLineBreaks = <BusyMarkMappedSourceLineBreak>[];
+    final mappedText = authoredWrapper?.inline.plainText;
+    final inlineContext = context.inlineContext;
+    if (authoredWrapper != null &&
+        mappedText != null &&
+        inlineContext != null) {
+      final markerStart = mappedText.indexOf(inlineContext.startMarker);
+      final markerEnd = inlineContext.endMarker == null
+          ? markerStart + inlineContext.startMarker.length
+          : mappedText.indexOf(
+                  inlineContext.endMarker!,
+                  markerStart + inlineContext.startMarker.length,
+                ) +
+                inlineContext.endMarker!.length;
+      if (markerStart >= 0 && markerEnd >= markerStart) {
+        final beforeLength = before.fold<int>(
+          0,
+          (length, inline) => length + inline.plainText.length,
+        );
+        final incomingLength = incoming.fold<int>(
+          0,
+          (length, inline) => length + inline.plainText.length,
+        );
+        for (final lineBreak in authoredWrapper.lineBreaks) {
+          if (lineBreak.textOffset < markerStart) {
+            retainedLineBreaks.add(lineBreak);
+          } else if (lineBreak.textOffset >= markerEnd) {
+            retainedLineBreaks.add(
+              BusyMarkMappedSourceLineBreak(
+                textOffset:
+                    beforeLength +
+                    incomingLength +
+                    lineBreak.textOffset -
+                    markerEnd,
+                lineEnding: lineBreak.lineEnding,
+                continuationPrefix: lineBreak.continuationPrefix,
+              ),
+            );
+          }
+        }
+      }
+    }
     final merged = _mergeAdjacentSourceInlineStyles([
       ...before,
       ...incoming,
@@ -2605,10 +2655,34 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
       context,
       authoredWrapper,
     );
+    final serializedLineBreaks = <_SerializedMappedSourceLineBreak>[];
+    for (final lineBreak in retainedLineBreaks) {
+      final afterBreakOffset = _serializeMappedInlineSequence(
+        merged,
+        lineBreak.textOffset + 1,
+        context,
+        authoredWrapper,
+      ).sourceOffset;
+      final mappedOffset = serialized.source.lastIndexOf(
+        '\n',
+        math.max(0, afterBreakOffset - 1),
+      );
+      if (mappedOffset < serialized.source.length &&
+          mappedOffset >= 0 &&
+          serialized.source.codeUnitAt(mappedOffset) == 0x0a) {
+        serializedLineBreaks.add(
+          _SerializedMappedSourceLineBreak(
+            sourceOffset: mappedOffset,
+            lineBreak: lineBreak,
+          ),
+        );
+      }
+    }
     final restored = _restoreMappedSourceLineBreaks(
       serialized,
-      authoredWrapper?.lineBreaks ?? const [],
+      serializedLineBreaks,
       context.containerContinuationPrefix,
+      context.lineEnding,
     );
     return _SourceClipboardInsertion(
       start: sourceRange.start,
@@ -2620,30 +2694,30 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
 
   BusyMarkSerializedInlineFragment _restoreMappedSourceLineBreaks(
     BusyMarkSerializedInlineFragment serialized,
-    List<BusyMarkMappedSourceLineBreak> lineBreaks,
+    List<_SerializedMappedSourceLineBreak> lineBreaks,
     String fallbackPrefix,
+    String fallbackLineEnding,
   ) {
     if (!serialized.source.contains('\n')) return serialized;
     final source = StringBuffer();
     var sourceOffset = serialized.sourceOffset;
-    var lineBreakIndex = 0;
+    final lineBreaksByOffset = {
+      for (final lineBreak in lineBreaks) lineBreak.sourceOffset: lineBreak,
+    };
     for (var index = 0; index < serialized.source.length; index++) {
       final character = serialized.source[index];
       if (character != '\n') {
         source.write(character);
         continue;
       }
-      final mapped = lineBreakIndex < lineBreaks.length
-          ? lineBreaks[lineBreakIndex]
-          : null;
-      final lineEnding = mapped?.lineEnding ?? '\n';
+      final mapped = lineBreaksByOffset[index]?.lineBreak;
+      final lineEnding = mapped?.lineEnding ?? fallbackLineEnding;
       final prefix = mapped?.continuationPrefix ?? fallbackPrefix;
       source.write(lineEnding);
       source.write(prefix);
       if (index < serialized.sourceOffset) {
         sourceOffset += lineEnding.length - 1 + prefix.length;
       }
-      lineBreakIndex += 1;
     }
     return BusyMarkSerializedInlineFragment(
       source: source.toString(),
@@ -2916,6 +2990,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
     return _StructuredSourceInsertionContext(
       start: start,
       end: end,
+      lineEnding: _sourceInsertionLineEnding(target.text, start),
       marker: marker,
       tableCell: tableCell,
       sourceProtected: sourceProtected,
@@ -2938,6 +3013,20 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
         inlineOnly: originalCell != null,
       ),
     );
+  }
+
+  String _sourceInsertionLineEnding(String source, int offset) {
+    final before = source.lastIndexOf('\n', math.max(0, offset - 1));
+    if (before >= 0) {
+      return before > 0 && source.codeUnitAt(before - 1) == 0x0d
+          ? '\r\n'
+          : '\n';
+    }
+    final after = source.indexOf('\n', offset.clamp(0, source.length).toInt());
+    if (after >= 0) {
+      return after > 0 && source.codeUnitAt(after - 1) == 0x0d ? '\r\n' : '\n';
+    }
+    return '\n';
   }
 
   _MappedSourceInlineContext? _mappedSourceInlineContext(
@@ -3066,6 +3155,10 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
     TextRange markedBounds, {
     required int rangeBaseOffset,
   }) {
+    if (inline.kind == BusyInlineKind.link &&
+        mappedRange.originalInline == null) {
+      return null;
+    }
     final markedStart = rangeBaseOffset + mappedRange.start;
     final markedEnd = rangeBaseOffset + mappedRange.end;
     final originalEnd = markedEnd - markerCount;
@@ -3082,6 +3175,8 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
       opening: mappedRange.opening,
       closing: mappedRange.closing,
       lineBreaks: mappedRange.lineBreaks,
+      isAutolink: mappedRange.isAutolink,
+      isReference: mappedRange.isReference,
     );
   }
 
@@ -3137,24 +3232,9 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
               endMarker.length;
     if (markedStart < 0 || markedEnd <= markedStart) return null;
     if (inline.kind == BusyInlineKind.link) {
-      // Bracket links are mapped by the parser itself. This fallback is only
-      // for autolinks, whose angle-bracket syntax is not delimiter based.
-      final opening = markedSource.lastIndexOf('<', markedStart);
-      final closing = _sourceFirstUnescapedCharacter(
-        markedSource,
-        '>',
-        markedEnd,
-        markedBounds.end,
-      );
-      if (opening >= markedBounds.start &&
-          !_sourceCharacterIsEscaped(markedSource, opening) &&
-          closing != null &&
-          candidateMatches(opening, closing + 1)) {
-        final range = originalRange(opening, closing + 1);
-        return range == null
-            ? null
-            : _MappedSourceInlineWrapper(inline: inline, sourceRange: range);
-      }
+      // A known original link must have a parser-derived range and semantic
+      // association. Falling back to marked link content could persist a
+      // mapping marker as its destination or change reference identity.
       return null;
     }
 
@@ -3180,32 +3260,6 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
       }
     }
     return null;
-  }
-
-  int? _sourceFirstUnescapedCharacter(
-    String source,
-    String character,
-    int start,
-    int limit,
-  ) {
-    var index = source.indexOf(character, start);
-    while (index >= 0 && index < limit) {
-      if (!_sourceCharacterIsEscaped(source, index)) return index;
-      index = source.indexOf(character, index + character.length);
-    }
-    return null;
-  }
-
-  bool _sourceCharacterIsEscaped(String source, int offset) {
-    var backslashes = 0;
-    for (
-      var index = offset - 1;
-      index >= 0 && source.codeUnitAt(index) == 0x5c;
-      index--
-    ) {
-      backslashes += 1;
-    }
-    return backslashes.isOdd;
   }
 
   _SourceInlineTrace? _sourceInlineTraceContainingMarkerInInlines(
@@ -4800,6 +4854,7 @@ class _StructuredSourceInsertionContext {
   const _StructuredSourceInsertionContext({
     required this.start,
     required this.end,
+    this.lineEnding = '\n',
     this.marker = '',
     this.tableCell = false,
     this.sourceProtected = false,
@@ -4815,6 +4870,7 @@ class _StructuredSourceInsertionContext {
 
   final int start;
   final int end;
+  final String lineEnding;
   final String marker;
   final bool tableCell;
   final bool sourceProtected;
@@ -4860,6 +4916,8 @@ class _MappedSourceInlineWrapper {
     this.opening,
     this.closing,
     this.lineBreaks = const [],
+    this.isAutolink = false,
+    this.isReference = false,
   });
 
   final BusyInline inline;
@@ -4867,6 +4925,18 @@ class _MappedSourceInlineWrapper {
   final String? opening;
   final String? closing;
   final List<BusyMarkMappedSourceLineBreak> lineBreaks;
+  final bool isAutolink;
+  final bool isReference;
+}
+
+class _SerializedMappedSourceLineBreak {
+  const _SerializedMappedSourceLineBreak({
+    required this.sourceOffset,
+    required this.lineBreak,
+  });
+
+  final int sourceOffset;
+  final BusyMarkMappedSourceLineBreak lineBreak;
 }
 
 class _SourceInlineTrace {
