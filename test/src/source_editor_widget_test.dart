@@ -2058,6 +2058,391 @@ void main() {
   );
 
   testWidgets(
+    'Source inline reconciliation ignores separate destination runs',
+    (tester) async {
+      const source = '**left** gap **right**';
+      final controller = await _pumpClipboardSourceEditor(
+        tester,
+        source: source,
+        clipboard: _SourceTestClipboard(
+          readData: RichClipboardData(
+            text: 'X',
+            richFragment: _completeSourceFragment('**X**\n').encode(),
+          ),
+        ),
+      );
+      final gap = source.indexOf('gap');
+      controller.selection = TextSelection(
+        baseOffset: gap,
+        extentOffset: gap + 3,
+      );
+
+      await _pressControlKey(tester, LogicalKeyboardKey.keyV);
+      await tester.pump();
+
+      expect(controller.text, '**left** **X** **right**');
+      expect(controller.selection.baseOffset, '**left** **X**'.length);
+      final inlines = const MarkdownParser()
+          .parse(
+            filePath: '/project/source.md',
+            source: controller.text,
+            validateLocalReferences: false,
+          )
+          .busyDocument
+          .blocks
+          .single
+          .inlines;
+      expect(
+        inlines
+            .where((inline) => inline.kind == BusyInlineKind.strong)
+            .map((inline) => inline.plainText),
+        ['left', 'X', 'right'],
+      );
+    },
+  );
+
+  testWidgets(
+    'Source table inline reconciliation is confined to the selected cell',
+    (tester) async {
+      const source =
+          '| A | B | C |\n'
+          '| --- | --- | --- |\n'
+          '| **left** | gap | **right** |\n';
+      final controller = await _pumpClipboardSourceEditor(
+        tester,
+        source: source,
+        markdownMode: MarkdownMode.gfm,
+        clipboard: _SourceTestClipboard(
+          readData: RichClipboardData(
+            text: 'X',
+            richFragment: _completeSourceFragment('**X**\n').encode(),
+          ),
+        ),
+      );
+      final gap = source.indexOf('gap');
+      controller.selection = TextSelection(
+        baseOffset: gap,
+        extentOffset: gap + 3,
+      );
+
+      await _pressControlKey(tester, LogicalKeyboardKey.keyV);
+      await tester.pump();
+
+      expect(
+        controller.text,
+        '| A | B | C |\n'
+        '| --- | --- | --- |\n'
+        '| **left** | **X** | **right** |\n',
+      );
+      expect(controller.selection.baseOffset, controller.text.indexOf('X') + 3);
+      final table = const MarkdownParser()
+          .parse(
+            filePath: '/project/source.md',
+            source: controller.text,
+            mode: MarkdownMode.gfm,
+            validateLocalReferences: false,
+          )
+          .busyDocument
+          .blocks
+          .single;
+      final cells = table.children.last.children;
+      expect(cells[0].inlines.single.kind, BusyInlineKind.strong);
+      expect(cells[1].inlines.single.kind, BusyInlineKind.strong);
+      expect(cells[1].inlines.single.plainText, 'X');
+      expect(cells[2].inlines.single.kind, BusyInlineKind.strong);
+    },
+  );
+
+  testWidgets('Source table keeps multiple independent incoming style runs', (
+    tester,
+  ) async {
+    const source = '| H |\n| --- |\n| gap |\n';
+    final controller = await _pumpClipboardSourceEditor(
+      tester,
+      source: source,
+      markdownMode: MarkdownMode.gfm,
+      clipboard: _SourceTestClipboard(
+        readData: RichClipboardData(
+          text: 'A and B',
+          richFragment: _completeSourceFragment('**A** and **B**\n').encode(),
+        ),
+      ),
+    );
+    final gap = source.indexOf('gap');
+    controller.selection = TextSelection(
+      baseOffset: gap,
+      extentOffset: gap + 3,
+    );
+
+    await _pressControlKey(tester, LogicalKeyboardKey.keyV);
+    await tester.pump();
+
+    expect(controller.text, '| H |\n| --- |\n| **A** and **B** |\n');
+    final table = const MarkdownParser()
+        .parse(
+          filePath: '/project/source.md',
+          source: controller.text,
+          mode: MarkdownMode.gfm,
+          validateLocalReferences: false,
+        )
+        .busyDocument
+        .blocks
+        .single;
+    expect(
+      table.children.last.children.single.inlines
+          .where((inline) => inline.kind == BusyInlineKind.strong)
+          .map((inline) => inline.plainText),
+      ['A', 'B'],
+    );
+  });
+
+  testWidgets(
+    'Source does not treat multiple incoming bold runs as one wrapper',
+    (tester) async {
+      final fragment = _completeSourceFragment('**A** and **B**\n');
+      final controller = await _pumpClipboardSourceEditor(
+        tester,
+        source: 'leftright',
+        clipboard: _SourceTestClipboard(
+          readData: RichClipboardData(
+            text: 'A and B',
+            richFragment: fragment.encode(),
+          ),
+        ),
+      );
+      controller.selection = const TextSelection.collapsed(offset: 4);
+
+      await _pressControlKey(tester, LogicalKeyboardKey.keyV);
+      await tester.pump();
+
+      expect(controller.text, 'left**A** and **B**right');
+      final inlines = const MarkdownParser()
+          .parse(
+            filePath: '/project/source.md',
+            source: controller.text,
+            validateLocalReferences: false,
+          )
+          .busyDocument
+          .blocks
+          .single
+          .inlines;
+      expect(
+        inlines
+            .where((inline) => inline.kind == BusyInlineKind.strong)
+            .map((inline) => inline.plainText),
+        ['A', 'B'],
+      );
+    },
+  );
+
+  testWidgets(
+    'Source inline mapping handles links multiline styles and literal syntax',
+    (tester) async {
+      var pasteCount = 0;
+      Future<TextEditingController> paste({
+        required String source,
+        required int start,
+        int? end,
+        required String fragmentSource,
+      }) async {
+        if (pasteCount++ > 0) {
+          await tester.pumpWidget(const SizedBox.shrink());
+          await tester.pump();
+        }
+        final controller = await _pumpClipboardSourceEditor(
+          tester,
+          source: source,
+          clipboard: _SourceTestClipboard(
+            readData: RichClipboardData(
+              text: 'X',
+              richFragment: _completeSourceFragment(fragmentSource).encode(),
+            ),
+          ),
+        );
+        controller.selection = TextSelection(
+          baseOffset: start,
+          extentOffset: end ?? start,
+        );
+        await _pressControlKey(tester, LogicalKeyboardKey.keyV);
+        await tester.pump();
+        return controller;
+      }
+
+      const destinationLink = '[leftright](https://destination.test)';
+      var controller = await paste(
+        source: destinationLink,
+        start: '[left'.length,
+        fragmentSource: '[X](https://incoming.test)\n',
+      );
+      expect(controller.text, '[leftXright](https://destination.test)');
+      expect(controller.selection.baseOffset, '[leftX'.length);
+      var parsed = const MarkdownParser()
+          .parse(
+            filePath: '/project/source.md',
+            source: controller.text,
+            validateLocalReferences: false,
+          )
+          .busyDocument;
+      final link = parsed.blocks.single.inlines.single;
+      expect(link.kind, BusyInlineKind.link);
+      expect(link.destination, 'https://destination.test');
+      expect(
+        link.children.where((inline) => inline.kind == BusyInlineKind.link),
+        isEmpty,
+      );
+
+      controller = await paste(
+        source: 'leftright',
+        start: 4,
+        fragmentSource: '[X](https://incoming.test)\n',
+      );
+      expect(controller.text, 'left[X](https://incoming.test)right');
+      expect(
+        controller.selection.baseOffset,
+        'left[X](https://incoming.test)'.length,
+      );
+
+      const multiline = '*left\nright*';
+      controller = await paste(
+        source: multiline,
+        start: '*left'.length,
+        fragmentSource: '*X*\n',
+      );
+      expect(controller.text, '*leftX\nright*');
+      expect(controller.selection.baseOffset, '*leftX'.length);
+      parsed = const MarkdownParser()
+          .parse(
+            filePath: '/project/source.md',
+            source: controller.text,
+            validateLocalReferences: false,
+          )
+          .busyDocument;
+      expect(parsed.blocks.single.inlines.single.kind, BusyInlineKind.emphasis);
+
+      const escaped = r'\*\*left\*\* gap \*\*right\*\*';
+      final escapedGap = escaped.indexOf('gap');
+      controller = await paste(
+        source: escaped,
+        start: escapedGap,
+        end: escapedGap + 3,
+        fragmentSource: '**X**\n',
+      );
+      expect(controller.text, r'\*\*left\*\* **X** \*\*right\*\*');
+      parsed = const MarkdownParser()
+          .parse(
+            filePath: '/project/source.md',
+            source: controller.text,
+            validateLocalReferences: false,
+          )
+          .busyDocument;
+      expect(
+        parsed.blocks.single.inlines
+            .where((inline) => inline.kind == BusyInlineKind.strong)
+            .map((inline) => inline.plainText),
+        ['X'],
+      );
+
+      const code = '`**left** gap **right**`';
+      final codeGap = code.indexOf('gap');
+      controller = await paste(
+        source: code,
+        start: codeGap,
+        end: codeGap + 3,
+        fragmentSource: '**X**\n',
+      );
+      expect(controller.text, '`**left** **X** **right**`');
+      parsed = const MarkdownParser()
+          .parse(
+            filePath: '/project/source.md',
+            source: controller.text,
+            validateLocalReferences: false,
+          )
+          .busyDocument;
+      expect(parsed.blocks.single.inlines.single.kind, BusyInlineKind.code);
+      expect(
+        parsed.blocks.single.inlines.single.plainText,
+        '**left** **X** **right**',
+      );
+
+      const crossing = 'before **bold** and *em* after';
+      final crossingStart = crossing.indexOf('**bold**');
+      final crossingEnd = crossing.indexOf('*em*') + '*em*'.length;
+      controller = await paste(
+        source: crossing,
+        start: crossingStart,
+        end: crossingEnd,
+        fragmentSource: '**X**\n',
+      );
+      expect(controller.text, 'before **X** after');
+      expect(controller.selection.baseOffset, 'before **X**'.length);
+
+      const replacement = '**leftDELETEright**';
+      final replacementStart = replacement.indexOf('DELETE');
+      controller = await paste(
+        source: replacement,
+        start: replacementStart,
+        end: replacementStart + 'DELETE'.length,
+        fragmentSource: '**X**\n',
+      );
+      expect(controller.text, '**leftXright**');
+      expect(controller.selection.baseOffset, '**leftX'.length);
+
+      controller = await paste(
+        source: '**left**right',
+        start: '**left**'.length,
+        fragmentSource: '**X**\n',
+      );
+      expect(controller.text, '**left****X**right');
+      expect(controller.selection.baseOffset, '**left****X**'.length);
+    },
+  );
+
+  testWidgets('Source structured inline paste handles every line boundary', (
+    tester,
+  ) async {
+    final cases = <({String source, int offset, String expected})>[
+      (source: '', offset: 0, expected: '**X**'),
+      (source: '\nright', offset: 0, expected: '**X**\nright'),
+      (source: '\n\nright', offset: 0, expected: '**X**\n\nright'),
+      (source: '\r\nright', offset: 0, expected: '**X**\r\nright'),
+      (source: 'left\nright', offset: 4, expected: 'left**X**\nright'),
+      (source: 'left\nright', offset: 5, expected: 'left\n**X**right'),
+      (source: 'right', offset: 5, expected: 'right**X**'),
+      (source: 'right\n', offset: 6, expected: 'right\n**X**'),
+    ];
+    for (final (index, value) in cases.indexed) {
+      var transactions = 0;
+      final controller = await _pumpClipboardSourceEditor(
+        tester,
+        source: value.source,
+        clipboard: _SourceTestClipboard(
+          readData: RichClipboardData(
+            text: 'X',
+            richFragment: _completeSourceFragment('**X**\n').encode(),
+          ),
+        ),
+        onTransactionalChanged: (_, _, _, _, _) => transactions++,
+      );
+      controller.selection = TextSelection.collapsed(offset: value.offset);
+
+      await _pressControlKey(tester, LogicalKeyboardKey.keyV);
+      await tester.pump();
+
+      expect(controller.text, value.expected, reason: value.source);
+      expect(
+        controller.selection.baseOffset,
+        value.offset + '**X**'.length,
+        reason: value.source,
+      );
+      expect(transactions, 1, reason: value.source);
+      if (index + 1 < cases.length) {
+        await tester.pumpWidget(const SizedBox.shrink());
+        await tester.pump();
+      }
+    }
+  });
+
+  testWidgets(
     'Source inline paste preserves unrelated syntax whitespace and caret',
     (tester) async {
       Future<TextEditingController> paste(
@@ -2525,6 +2910,57 @@ void main() {
     );
   });
 
+  testWidgets('Source maps a final table cell ending in an escaped pipe', (
+    tester,
+  ) async {
+    const source =
+        '| A | B |\n'
+        '| --- | --- |\n'
+        '| left | B\\|';
+    final controller = await _pumpClipboardSourceEditor(
+      tester,
+      source: source,
+      markdownMode: MarkdownMode.gfm,
+      clipboard: _SourceTestClipboard(
+        readData: RichClipboardData(
+          text: 'X',
+          richFragment: _completeSourceFragment('**X**\n').encode(),
+        ),
+      ),
+    );
+    final selected = source.lastIndexOf('B');
+    controller.selection = TextSelection(
+      baseOffset: selected,
+      extentOffset: selected + 1,
+    );
+
+    await _pressControlKey(tester, LogicalKeyboardKey.keyV);
+    await tester.pump();
+
+    expect(
+      controller.text,
+      '| A | B |\n'
+      '| --- | --- |\n'
+      '| left | **X**\\|',
+    );
+    expect(controller.selection.baseOffset, controller.text.indexOf('X') + 3);
+    final table = const MarkdownParser()
+        .parse(
+          filePath: '/project/source.md',
+          source: controller.text,
+          mode: MarkdownMode.gfm,
+          validateLocalReferences: false,
+        )
+        .busyDocument
+        .blocks
+        .single;
+    final cells = table.children.last.children;
+    expect(cells, hasLength(2));
+    expect(cells.first.plainText, 'left');
+    expect(cells.last.plainText, 'X|');
+    expect(cells.last.inlines.first.kind, BusyInlineKind.strong);
+  });
+
   testWidgets('Source structured blocks preserve list and quote containers', (
     tester,
   ) async {
@@ -2648,6 +3084,185 @@ void main() {
           isTrue,
           reason: 'Heading escaped continuation: ${controller.text}',
         );
+      }
+    }
+  });
+
+  testWidgets(
+    'Source container recovery is bound to the actual nested ancestors',
+    (tester) async {
+      final heading = _completeSourceFragment('## Heading\n');
+      const subtree =
+          'Paragraph.\n\n'
+          '- Outer\n'
+          '  - Inner\n'
+          '    leftright\n';
+      final prefixes = ['12345.  - unrelated\n\n', '', '9.  - unrelated\n\n'];
+      for (final (index, prefix) in prefixes.indexed) {
+        final source = '$prefix$subtree';
+        final controller = await _pumpClipboardSourceEditor(
+          tester,
+          source: source,
+          clipboard: _SourceTestClipboard(
+            readData: RichClipboardData(
+              text: 'Heading',
+              richFragment: heading.encode(),
+            ),
+          ),
+        );
+        controller.selection = TextSelection.collapsed(
+          offset: source.indexOf('leftright') + 4,
+        );
+
+        await _pressControlKey(tester, LogicalKeyboardKey.keyV);
+        await tester.pump();
+
+        expect(
+          controller.text,
+          '$prefix'
+          'Paragraph.\n\n'
+          '- Outer\n'
+          '  - Inner\n'
+          '    left\n'
+          '\n'
+          '    ## Heading\n'
+          '\n'
+          '    right\n',
+          reason: prefix,
+        );
+        final headingPaths = _markdownElementPaths(
+          md.Document().parse(controller.text),
+          'h2',
+        );
+        expect(headingPaths, hasLength(1), reason: controller.text);
+        expect(
+          headingPaths.single.where((element) => element.tag == 'li'),
+          hasLength(2),
+          reason: 'Heading does not belong to Inner under Outer',
+        );
+        expect(RegExp(r'\bright\b').allMatches(controller.text), hasLength(1));
+        if (index + 1 < prefixes.length) {
+          await tester.pumpWidget(const SizedBox.shrink());
+          await tester.pump();
+        }
+      }
+    },
+  );
+
+  testWidgets('Source composes mixed and continuation container ancestors', (
+    tester,
+  ) async {
+    final heading = _completeSourceFragment('## Heading\n');
+    final cases = <({String source, String expected, List<String> ancestors})>[
+      (
+        source: '> Outer\n> - Inner\n>   leftright',
+        expected:
+            '> Outer\n'
+            '> - Inner\n'
+            '>   left\n'
+            '>\n'
+            '>   ## Heading\n'
+            '>\n'
+            '>   right',
+        ancestors: ['blockquote', 'li'],
+      ),
+      (
+        source: '- Outer\n  > Inner\n  > leftright',
+        expected:
+            '- Outer\n'
+            '  > Inner\n'
+            '  > left\n'
+            '  >\n'
+            '  > ## Heading\n'
+            '  >\n'
+            '  > right',
+        ancestors: ['li', 'blockquote'],
+      ),
+      (
+        source: '- Outer\n\n    Later leftright',
+        expected:
+            '- Outer\n'
+            '\n'
+            '    Later left\n'
+            '\n'
+            '    ## Heading\n'
+            '\n'
+            '    right',
+        ancestors: ['li'],
+      ),
+      (
+        source: '- Outer\n  - Inner\n\tleftright',
+        expected:
+            '- Outer\n'
+            '  - Inner\n'
+            '\tleft\n'
+            '\n'
+            '\t## Heading\n'
+            '\n'
+            '\tright',
+        ancestors: ['li', 'li'],
+      ),
+      (
+        source: '12345. Outer\n       - Inner\n         leftright',
+        expected:
+            '12345. Outer\n'
+            '       - Inner\n'
+            '         left\n'
+            '\n'
+            '         ## Heading\n'
+            '\n'
+            '         right',
+        ancestors: ['li', 'li'],
+      ),
+      (
+        source: '> Outer\nleftright',
+        expected:
+            '> Outer\n'
+            'left\n'
+            '>\n'
+            '> ## Heading\n'
+            '>\n'
+            '> right',
+        ancestors: ['blockquote'],
+      ),
+    ];
+    for (final (index, value) in cases.indexed) {
+      final controller = await _pumpClipboardSourceEditor(
+        tester,
+        source: value.source,
+        clipboard: _SourceTestClipboard(
+          readData: RichClipboardData(
+            text: 'Heading',
+            richFragment: heading.encode(),
+          ),
+        ),
+      );
+      controller.selection = TextSelection.collapsed(
+        offset: value.source.indexOf('leftright') + 4,
+      );
+
+      await _pressControlKey(tester, LogicalKeyboardKey.keyV);
+      await tester.pump();
+
+      expect(controller.text, value.expected, reason: value.source);
+      final paths = _markdownElementPaths(
+        md.Document().parse(controller.text),
+        'h2',
+      );
+      expect(paths, hasLength(1), reason: controller.text);
+      expect(
+        paths.single
+            .where(
+              (element) => element.tag == 'li' || element.tag == 'blockquote',
+            )
+            .map((element) => element.tag),
+        value.ancestors,
+        reason: controller.text,
+      );
+      expect(RegExp(r'\bright\b').allMatches(controller.text), hasLength(1));
+      if (index + 1 < cases.length) {
+        await tester.pumpWidget(const SizedBox.shrink());
+        await tester.pump();
       }
     }
   });

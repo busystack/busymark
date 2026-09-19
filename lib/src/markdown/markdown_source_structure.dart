@@ -17,6 +17,30 @@ class BusyMarkMarkdownTableCellRegion {
   final SourceSpan span;
 }
 
+class BusyMarkSourceLineBounds {
+  const BusyMarkSourceLineBounds({required this.start, required this.end});
+
+  final int start;
+  final int end;
+}
+
+/// Returns the physical line containing an insertion position.
+///
+/// The preceding line break is searched strictly before [offset]. A position
+/// on a line feed therefore belongs to the line ending there, while a position
+/// immediately after it belongs to the following line.
+BusyMarkSourceLineBounds busyMarkSourceLineBounds(String source, int offset) {
+  final position = offset.clamp(0, source.length).toInt();
+  final precedingBreak = position == 0
+      ? -1
+      : source.lastIndexOf('\n', position - 1);
+  final followingBreak = source.indexOf('\n', position);
+  return BusyMarkSourceLineBounds(
+    start: precedingBreak + 1,
+    end: followingBreak < 0 ? source.length : followingBreak,
+  );
+}
+
 /// Maps modeled Markdown table cells back to their exact source content spans.
 /// Pipes escaped with a backslash remain cell content rather than delimiters.
 List<BusyMarkMarkdownTableCellRegion> busyMarkMarkdownTableCellRegions({
@@ -92,11 +116,9 @@ List<({int start, int end})> busyMarkMarkdownTableCellSpans(String line) {
     meaningfulEnd--;
   }
   final hasLeadingOuterPipe =
-      meaningfulStart < meaningfulEnd &&
-      line.codeUnitAt(meaningfulStart) == 0x7c;
+      meaningfulStart < meaningfulEnd && delimiters.contains(meaningfulStart);
   final hasTrailingOuterPipe =
-      meaningfulEnd > meaningfulStart &&
-      line.codeUnitAt(meaningfulEnd - 1) == 0x7c;
+      meaningfulEnd > meaningfulStart && delimiters.contains(meaningfulEnd - 1);
   final contentStart = hasLeadingOuterPipe ? meaningfulStart : 0;
   final contentEnd = hasTrailingOuterPipe ? meaningfulEnd : line.length;
   final contentDelimiters = delimiters
