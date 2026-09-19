@@ -2043,6 +2043,7 @@ void main() {
         offset: '**left**'.length,
         fragmentSource: '**X**\n',
       );
+      expect(adjacent.text, '**leftXright**');
       final adjacentBlock = const MarkdownParser()
           .parse(
             filePath: '/project/source.md',
@@ -2236,6 +2237,389 @@ void main() {
   );
 
   testWidgets(
+    'Source reconciles arbitrary inline sequences with paragraph context',
+    (tester) async {
+      final cases = [
+        _completeSourceFragment('**A** and **B**\n'),
+        _completeSourceFragment('***A*** and [B](https://incoming.test)\n'),
+      ];
+      for (final (index, fragment) in cases.indexed) {
+        const source = '**leftright**';
+        final sourceController = await _pumpClipboardSourceEditor(
+          tester,
+          source: source,
+          clipboard: _SourceTestClipboard(
+            readData: RichClipboardData(
+              text: fragment.documentBlocks.single.plainText,
+              richFragment: fragment.encode(),
+            ),
+          ),
+        );
+        sourceController.selection = const TextSelection.collapsed(offset: 6);
+        await _pressControlKey(tester, LogicalKeyboardKey.keyV);
+        await tester.pump();
+
+        final sourceDocument = const MarkdownParser()
+            .parse(
+              filePath: '/project/source.md',
+              source: sourceController.text,
+              validateLocalReferences: false,
+            )
+            .busyDocument;
+        final editorDocument = const MarkdownParser()
+            .parse(
+              filePath: '/project/editor.md',
+              source: source,
+              validateLocalReferences: false,
+            )
+            .busyDocument;
+        final editorController = BusyMarkWysiwygDocumentController(
+          document: editorDocument,
+        );
+        addTearDown(editorController.dispose);
+        final editorBlock = editorController.document.blocks.single;
+        expect(
+          editorController.insertStyledBlocksAtSelection(
+            blockId: editorBlock.id,
+            selectionStart: 4,
+            selectionEnd: 4,
+            blocks: fragment.blocks,
+          ),
+          isNotNull,
+        );
+
+        expect(
+          _inlineSemanticRuns(sourceDocument.blocks.single.inlines),
+          _inlineSemanticRuns(editorController.document.blocks.single.inlines),
+          reason: sourceController.text,
+        );
+        expect(
+          sourceDocument.blocks.single.plainText,
+          'left${fragment.documentBlocks.single.plainText}right',
+        );
+        if (index == 0) {
+          expect(sourceController.text, '**leftA and Bright**');
+        } else {
+          expect(
+            _inlineSemanticRuns(
+              sourceDocument.blocks.single.inlines,
+            ).any((run) => run.context.contains('link:https://incoming.test')),
+            isTrue,
+          );
+        }
+        if (index + 1 < cases.length) {
+          await tester.pumpWidget(const SizedBox.shrink());
+          await tester.pump();
+        }
+      }
+    },
+  );
+
+  testWidgets(
+    'Source reconciles arbitrary inline sequences inside table cells',
+    (tester) async {
+      final fragment = _completeSourceFragment(
+        '**A** and **B**\n',
+        mode: MarkdownMode.gfm,
+      );
+      const source = '| H |\n| --- |\n| **leftright** |\n';
+      final sourceController = await _pumpClipboardSourceEditor(
+        tester,
+        source: source,
+        markdownMode: MarkdownMode.gfm,
+        clipboard: _SourceTestClipboard(
+          readData: RichClipboardData(
+            text: 'A and B',
+            richFragment: fragment.encode(),
+          ),
+        ),
+      );
+      sourceController.selection = TextSelection.collapsed(
+        offset: source.indexOf('leftright') + 4,
+      );
+      await _pressControlKey(tester, LogicalKeyboardKey.keyV);
+      await tester.pump();
+
+      final sourceTable = const MarkdownParser()
+          .parse(
+            filePath: '/project/source.md',
+            source: sourceController.text,
+            mode: MarkdownMode.gfm,
+            validateLocalReferences: false,
+          )
+          .busyDocument
+          .blocks
+          .single;
+      final editorDocument = const MarkdownParser()
+          .parse(
+            filePath: '/project/editor.md',
+            source: source,
+            mode: MarkdownMode.gfm,
+            validateLocalReferences: false,
+          )
+          .busyDocument;
+      final editorController = BusyMarkWysiwygDocumentController(
+        document: editorDocument,
+      );
+      addTearDown(editorController.dispose);
+      final editorTable = editorController.document.blocks.single;
+      final editorCell = editorTable.children.last.children.single;
+      expect(
+        editorController.insertStyledInlinesInTableCell(
+          tableBlockId: editorTable.id,
+          cellId: editorCell.id,
+          selectionStart: 4,
+          selectionEnd: 4,
+          blocks: fragment.blocks,
+        ),
+        isNotNull,
+      );
+
+      final sourceCell = sourceTable.children.last.children.single;
+      final resultingEditorCell = editorController.blockById(editorCell.id)!;
+      expect(
+        _inlineSemanticRuns(sourceCell.inlines),
+        _inlineSemanticRuns(resultingEditorCell.inlines),
+        reason: sourceController.text,
+      );
+      expect(sourceCell.plainText, 'leftA and Bright');
+      expect(sourceTable.children, hasLength(2));
+    },
+  );
+
+  testWidgets(
+    'Source table sequence reconciliation retains authored delimiters',
+    (tester) async {
+      final fragment = _completeSourceFragment(
+        '**A** and **B**\n',
+        mode: MarkdownMode.gfm,
+      );
+      const source = '| H |\n| --- |\n| __leftright__ |\n';
+      final controller = await _pumpClipboardSourceEditor(
+        tester,
+        source: source,
+        markdownMode: MarkdownMode.gfm,
+        clipboard: _SourceTestClipboard(
+          readData: RichClipboardData(
+            text: 'A and B',
+            richFragment: fragment.encode(),
+          ),
+        ),
+      );
+      controller.selection = TextSelection.collapsed(
+        offset: source.indexOf('leftright') + 4,
+      );
+      await _pressControlKey(tester, LogicalKeyboardKey.keyV);
+      await tester.pump();
+
+      expect(controller.text, '| H |\n| --- |\n| __leftA__ and __Bright__ |\n');
+      expect(controller.selection.baseOffset, controller.text.indexOf('B') + 1);
+    },
+  );
+
+  testWidgets('Source table reconciliation retains mixed nested styles', (
+    tester,
+  ) async {
+    final fragment = _completeSourceFragment(
+      '***A*** and [B](https://incoming.test)\n',
+      mode: MarkdownMode.gfm,
+    );
+    const source = '| H |\n| --- |\n| **leftright** |\n';
+    final sourceController = await _pumpClipboardSourceEditor(
+      tester,
+      source: source,
+      markdownMode: MarkdownMode.gfm,
+      clipboard: _SourceTestClipboard(
+        readData: RichClipboardData(
+          text: 'A and B',
+          richFragment: fragment.encode(),
+        ),
+      ),
+    );
+    sourceController.selection = TextSelection.collapsed(
+      offset: source.indexOf('leftright') + 4,
+    );
+    await _pressControlKey(tester, LogicalKeyboardKey.keyV);
+    await tester.pump();
+
+    final sourceTable = const MarkdownParser()
+        .parse(
+          filePath: '/project/source.md',
+          source: sourceController.text,
+          mode: MarkdownMode.gfm,
+          validateLocalReferences: false,
+        )
+        .busyDocument
+        .blocks
+        .single;
+    final sourceCell = sourceTable.children.last.children.single;
+    final editorDocument = const MarkdownParser()
+        .parse(
+          filePath: '/project/editor.md',
+          source: source,
+          mode: MarkdownMode.gfm,
+          validateLocalReferences: false,
+        )
+        .busyDocument;
+    final editorController = BusyMarkWysiwygDocumentController(
+      document: editorDocument,
+    );
+    addTearDown(editorController.dispose);
+    final editorTable = editorController.document.blocks.single;
+    final editorCell = editorTable.children.last.children.single;
+    expect(
+      editorController.insertStyledInlinesInTableCell(
+        tableBlockId: editorTable.id,
+        cellId: editorCell.id,
+        selectionStart: 4,
+        selectionEnd: 4,
+        blocks: fragment.blocks,
+      ),
+      isNotNull,
+    );
+    expect(
+      _inlineSemanticRuns(sourceCell.inlines),
+      _inlineSemanticRuns(editorController.blockById(editorCell.id)!.inlines),
+      reason: sourceController.text,
+    );
+    expect(sourceTable.children, hasLength(2));
+    expect(sourceCell.plainText, 'leftA and Bright');
+    expect(
+      _inlineSemanticRuns(
+        sourceCell.inlines,
+      ).any((run) => run.context.contains('link:https://incoming.test')),
+      isTrue,
+    );
+  });
+
+  testWidgets('Source preserves hyperlink semantics in table cells', (
+    tester,
+  ) async {
+    final cases =
+        <
+          ({
+            String label,
+            int start,
+            int end,
+            String incoming,
+            List<String?> links,
+          })
+        >[
+          (
+            label: 'leftright',
+            start: 4,
+            end: 4,
+            incoming: 'https://incoming.test',
+            links: const [
+              'https://destination.test',
+              'https://incoming.test',
+              'https://destination.test',
+            ],
+          ),
+          (
+            label: 'leftright',
+            start: 4,
+            end: 4,
+            incoming: 'https://destination.test',
+            links: const ['https://destination.test'],
+          ),
+          (
+            label: 'leftmiddleright',
+            start: 4,
+            end: 10,
+            incoming: 'https://incoming.test',
+            links: const [
+              'https://destination.test',
+              'https://incoming.test',
+              'https://destination.test',
+            ],
+          ),
+        ];
+    for (final (index, value) in cases.indexed) {
+      final fragment = _completeSourceFragment(
+        '[X](${value.incoming})\n',
+        mode: MarkdownMode.gfm,
+      );
+      final source =
+          '| H |\n'
+          '| --- |\n'
+          '| [${value.label}](https://destination.test) |\n';
+      final controller = await _pumpClipboardSourceEditor(
+        tester,
+        source: source,
+        markdownMode: MarkdownMode.gfm,
+        clipboard: _SourceTestClipboard(
+          readData: RichClipboardData(
+            text: 'X',
+            richFragment: fragment.encode(),
+          ),
+        ),
+      );
+      final labelStart = source.indexOf(value.label);
+      controller.selection = TextSelection(
+        baseOffset: labelStart + value.start,
+        extentOffset: labelStart + value.end,
+      );
+      await _pressControlKey(tester, LogicalKeyboardKey.keyV);
+      await tester.pump();
+
+      final table = const MarkdownParser()
+          .parse(
+            filePath: '/project/source.md',
+            source: controller.text,
+            mode: MarkdownMode.gfm,
+            validateLocalReferences: false,
+          )
+          .busyDocument
+          .blocks
+          .single;
+      expect(table.children, hasLength(2), reason: controller.text);
+      final sourceCell = table.children.last.children.single;
+      expect(
+        sourceCell.inlines
+            .where((inline) => inline.kind == BusyInlineKind.link)
+            .map((inline) => inline.destination),
+        value.links,
+        reason: controller.text,
+      );
+
+      final editorDocument = const MarkdownParser()
+          .parse(
+            filePath: '/project/editor.md',
+            source: source,
+            mode: MarkdownMode.gfm,
+            validateLocalReferences: false,
+          )
+          .busyDocument;
+      final editorController = BusyMarkWysiwygDocumentController(
+        document: editorDocument,
+      );
+      addTearDown(editorController.dispose);
+      final editorTable = editorController.document.blocks.single;
+      final editorCell = editorTable.children.last.children.single;
+      expect(
+        editorController.insertStyledInlinesInTableCell(
+          tableBlockId: editorTable.id,
+          cellId: editorCell.id,
+          selectionStart: value.start,
+          selectionEnd: value.end,
+          blocks: fragment.blocks,
+        ),
+        isNotNull,
+      );
+      expect(
+        _inlineSemanticRuns(sourceCell.inlines),
+        _inlineSemanticRuns(editorController.blockById(editorCell.id)!.inlines),
+        reason: controller.text,
+      );
+      if (index + 1 < cases.length) {
+        await tester.pumpWidget(const SizedBox.shrink());
+        await tester.pump();
+      }
+    }
+  });
+
+  testWidgets(
     'Source inline mapping handles links multiline styles and literal syntax',
     (tester) async {
       var pasteCount = 0;
@@ -2274,8 +2658,18 @@ void main() {
         start: '[left'.length,
         fragmentSource: '[X](https://incoming.test)\n',
       );
-      expect(controller.text, '[leftXright](https://destination.test)');
-      expect(controller.selection.baseOffset, '[leftX'.length);
+      expect(
+        controller.text,
+        '[left](https://destination.test)'
+        '[X](https://incoming.test)'
+        '[right](https://destination.test)',
+      );
+      expect(
+        controller.selection.baseOffset,
+        '[left](https://destination.test)'
+                '[X](https://incoming.test)'
+            .length,
+      );
       var parsed = const MarkdownParser()
           .parse(
             filePath: '/project/source.md',
@@ -2283,12 +2677,85 @@ void main() {
             validateLocalReferences: false,
           )
           .busyDocument;
-      final link = parsed.blocks.single.inlines.single;
-      expect(link.kind, BusyInlineKind.link);
-      expect(link.destination, 'https://destination.test');
+      expect(parsed.blocks.single.inlines.map((inline) => inline.destination), [
+        'https://destination.test',
+        'https://incoming.test',
+        'https://destination.test',
+      ]);
+
+      controller = await paste(
+        source: destinationLink,
+        start: '[left'.length,
+        fragmentSource: '[X](https://destination.test)\n',
+      );
+      expect(controller.text, '[leftXright](https://destination.test)');
+      parsed = const MarkdownParser()
+          .parse(
+            filePath: '/project/source.md',
+            source: controller.text,
+            validateLocalReferences: false,
+          )
+          .busyDocument;
       expect(
-        link.children.where((inline) => inline.kind == BusyInlineKind.link),
-        isEmpty,
+        parsed.blocks.single.inlines.single.destination,
+        'https://destination.test',
+      );
+
+      const selectedLink = '[leftmiddleright](https://destination.test)';
+      controller = await paste(
+        source: selectedLink,
+        start: selectedLink.indexOf('middle'),
+        end: selectedLink.indexOf('middle') + 'middle'.length,
+        fragmentSource: '[X](https://incoming.test)\n',
+      );
+      expect(
+        controller.text,
+        '[left](https://destination.test)'
+        '[X](https://incoming.test)'
+        '[right](https://destination.test)',
+      );
+
+      controller = await paste(
+        source: destinationLink,
+        start: 1,
+        end: 1 + 'leftright'.length,
+        fragmentSource: '[X](https://incoming.test)\n',
+      );
+      expect(controller.text, '[X](https://incoming.test)');
+      expect(
+        controller.selection.baseOffset,
+        '[X](https://incoming.test)'.length,
+      );
+
+      const titledDestination =
+          '[leftright](https://destination.test "Destination title")';
+      controller = await paste(
+        source: titledDestination,
+        start: '[left'.length,
+        fragmentSource: '[X](https://incoming.test "Incoming title")\n',
+      );
+      expect(
+        controller.text,
+        '[left](https://destination.test "Destination title")'
+        '[X](https://incoming.test "Incoming title")'
+        '[right](https://destination.test "Destination title")',
+      );
+      parsed = const MarkdownParser()
+          .parse(
+            filePath: '/project/source.md',
+            source: controller.text,
+            validateLocalReferences: false,
+          )
+          .busyDocument;
+      expect(
+        parsed.blocks.single.inlines.map(
+          (inline) => (inline.destination, inline.attributes['title']),
+        ),
+        [
+          ('https://destination.test', 'Destination title'),
+          ('https://incoming.test', 'Incoming title'),
+          ('https://destination.test', 'Destination title'),
+        ],
       );
 
       controller = await paste(
@@ -2552,6 +3019,96 @@ void main() {
     await _pressControlKey(tester, LogicalKeyboardKey.keyV);
     await tester.pump();
     expect(indentedController.text, '  | H |\n  | --- |\n  | *leftXright* |\n');
+  });
+
+  testWidgets('Source reconciliation reuses table-normalized inline content', (
+    tester,
+  ) async {
+    final cases = <({BusyInlineKind kind, List<BusyInline> children})>[
+      (
+        kind: BusyInlineKind.strong,
+        children: const [
+          BusyInline(kind: BusyInlineKind.text, text: 'A'),
+          BusyInline(kind: BusyInlineKind.hardBreak, text: '\n'),
+          BusyInline(kind: BusyInlineKind.text, text: 'B'),
+        ],
+      ),
+      (
+        kind: BusyInlineKind.emphasis,
+        children: const [BusyInline(kind: BusyInlineKind.text, text: 'A\r\nB')],
+      ),
+    ];
+    for (final (index, value) in cases.indexed) {
+      final delimiter = value.kind == BusyInlineKind.strong ? '**' : '*';
+      final fragment = WysiwygClipboardFragment(
+        mode: MarkdownMode.gfm,
+        blocks: [
+          BusyWysiwygStyledBlock(
+            kind: BusyBlockKind.paragraph,
+            text: 'A\nB',
+            ranges: const [],
+            completeBlock: BusyBlock(
+              id: 'normalized-inline-$index',
+              kind: BusyBlockKind.paragraph,
+              inlines: [
+                BusyInline(
+                  kind: value.kind,
+                  text: 'A\nB',
+                  children: value.children,
+                ),
+              ],
+            ),
+          ),
+        ],
+      );
+      final source =
+          '| H |\n'
+          '| --- |\n'
+          '| ${delimiter}leftright$delimiter |\n';
+      final controller = await _pumpClipboardSourceEditor(
+        tester,
+        source: source,
+        markdownMode: MarkdownMode.gfm,
+        clipboard: _SourceTestClipboard(
+          readData: RichClipboardData(
+            text: 'A B',
+            richFragment: fragment.encode(),
+          ),
+        ),
+      );
+      controller.selection = TextSelection.collapsed(
+        offset: source.indexOf('leftright') + 4,
+      );
+      await _pressControlKey(tester, LogicalKeyboardKey.keyV);
+      await tester.pump();
+
+      expect(
+        controller.text,
+        '| H |\n'
+        '| --- |\n'
+        '| ${delimiter}leftA Bright$delimiter |\n',
+      );
+      final parsed = const MarkdownParser()
+          .parse(
+            filePath: '/project/source.md',
+            source: controller.text,
+            mode: MarkdownMode.gfm,
+            validateLocalReferences: false,
+          )
+          .busyDocument;
+      expect(parsed.blocks, hasLength(1), reason: controller.text);
+      final table = parsed.blocks.single;
+      expect(table.kind, BusyBlockKind.table);
+      expect(table.children, hasLength(2));
+      final cell = table.children.last.children.single;
+      expect(cell.plainText, 'leftA Bright');
+      expect(cell.inlines.single.kind, value.kind);
+      expect(controller.text.split('\n'), hasLength(4));
+      if (index + 1 < cases.length) {
+        await tester.pumpWidget(const SizedBox.shrink());
+        await tester.pump();
+      }
+    }
   });
 
   testWidgets(
@@ -3142,6 +3699,306 @@ void main() {
         );
         expect(RegExp(r'\bright\b').allMatches(controller.text), hasLength(1));
         if (index + 1 < prefixes.length) {
+          await tester.pumpWidget(const SizedBox.shrink());
+          await tester.pump();
+        }
+      }
+    },
+  );
+
+  testWidgets(
+    'Source complete blocks use list markers rather than task prefixes',
+    (tester) async {
+      final heading = _completeSourceFragment('## Heading\n');
+      final cases = <({String source, String expected, int listDepth})>[
+        (
+          source: '- [ ] leftright',
+          expected:
+              '- [ ] left\n'
+              '\n'
+              '  ## Heading\n'
+              '\n'
+              '  right',
+          listDepth: 1,
+        ),
+        (
+          source: '- [x] leftright',
+          expected:
+              '- [x] left\n'
+              '\n'
+              '  ## Heading\n'
+              '\n'
+              '  right',
+          listDepth: 1,
+        ),
+        (
+          source: '2. [X] leftright',
+          expected:
+              '2. [X] left\n'
+              '\n'
+              '   ## Heading\n'
+              '\n'
+              '   right',
+          listDepth: 1,
+        ),
+        (
+          source: '- Outer\n  - [ ] leftright',
+          expected:
+              '- Outer\n'
+              '  - [ ] left\n'
+              '\n'
+              '    ## Heading\n'
+              '\n'
+              '    right',
+          listDepth: 2,
+        ),
+        (
+          source: '0. leftright',
+          expected:
+              '0. left\n'
+              '\n'
+              '   ## Heading\n'
+              '\n'
+              '   right',
+          listDepth: 1,
+        ),
+      ];
+      for (final (index, value) in cases.indexed) {
+        final controller = await _pumpClipboardSourceEditor(
+          tester,
+          source: value.source,
+          markdownMode: MarkdownMode.gfm,
+          clipboard: _SourceTestClipboard(
+            readData: RichClipboardData(
+              text: 'Heading',
+              richFragment: heading.encode(),
+            ),
+          ),
+        );
+        controller.selection = TextSelection.collapsed(
+          offset: value.source.indexOf('leftright') + 4,
+        );
+        await _pressControlKey(tester, LogicalKeyboardKey.keyV);
+        await tester.pump();
+
+        expect(controller.text, value.expected, reason: value.source);
+        final document = const MarkdownParser()
+            .parse(
+              filePath: '/project/source.md',
+              source: controller.text,
+              mode: MarkdownMode.gfm,
+              validateLocalReferences: false,
+            )
+            .busyDocument;
+        final paths = _busyBlockKindPaths(
+          document.blocks,
+          BusyBlockKind.heading,
+        );
+        expect(paths, hasLength(1), reason: controller.text);
+        expect(
+          paths.single
+              .where(
+                (kind) =>
+                    kind == BusyBlockKind.taskListItem ||
+                    kind == BusyBlockKind.orderedListItem ||
+                    kind == BusyBlockKind.unorderedListItem,
+              )
+              .length,
+          value.listDepth,
+          reason: controller.text,
+        );
+        if (value.source.contains('[ ]')) {
+          final task = _sourceBlocksDepthFirst(
+            document.blocks,
+          ).firstWhere((block) => block.kind == BusyBlockKind.taskListItem);
+          expect(task.attributes['task'], 'false');
+        }
+        if (value.source.contains('[x]') || value.source.contains('[X]')) {
+          final task = _sourceBlocksDepthFirst(
+            document.blocks,
+          ).firstWhere((block) => block.kind == BusyBlockKind.taskListItem);
+          expect(task.attributes['task'], 'true');
+        }
+        if (index + 1 < cases.length) {
+          await tester.pumpWidget(const SizedBox.shrink());
+          await tester.pump();
+        }
+      }
+    },
+  );
+
+  testWidgets('Source task items keep block kinds at every content position', (
+    tester,
+  ) async {
+    final fragments = [
+      (
+        fragment: _completeSourceFragment('## Heading\n'),
+        kind: BusyBlockKind.heading,
+        text: 'Heading',
+      ),
+      (
+        fragment: _completeSourceFragment('```text\ncode\n```\n'),
+        kind: BusyBlockKind.codeBlock,
+        text: 'code',
+      ),
+    ];
+    var caseIndex = 0;
+    for (final value in fragments) {
+      for (final relativeOffset in [0, 4, 'leftright'.length]) {
+        if (caseIndex++ > 0) {
+          await tester.pumpWidget(const SizedBox.shrink());
+          await tester.pump();
+        }
+        const source = '- [ ] leftright';
+        final controller = await _pumpClipboardSourceEditor(
+          tester,
+          source: source,
+          markdownMode: MarkdownMode.gfm,
+          clipboard: _SourceTestClipboard(
+            readData: RichClipboardData(
+              text: value.text,
+              richFragment: value.fragment.encode(),
+            ),
+          ),
+        );
+        controller.selection = TextSelection.collapsed(
+          offset: source.indexOf('leftright') + relativeOffset,
+        );
+        await _pressControlKey(tester, LogicalKeyboardKey.keyV);
+        await tester.pump();
+
+        final document = const MarkdownParser()
+            .parse(
+              filePath: '/project/source.md',
+              source: controller.text,
+              mode: MarkdownMode.gfm,
+              validateLocalReferences: false,
+            )
+            .busyDocument;
+        final task = _sourceBlocksDepthFirst(
+          document.blocks,
+        ).firstWhere((block) => block.kind == BusyBlockKind.taskListItem);
+        expect(task.attributes['task'], 'false', reason: controller.text);
+        final paths = _busyBlockKindPaths(document.blocks, value.kind);
+        expect(paths, hasLength(1), reason: controller.text);
+        expect(
+          paths.single,
+          contains(BusyBlockKind.taskListItem),
+          reason: controller.text,
+        );
+      }
+    }
+  });
+
+  testWidgets(
+    'Source checked ordered nested and zero lists retain inserted block kinds',
+    (tester) async {
+      final heading = _completeSourceFragment('## Heading\n');
+      final code = _completeSourceFragment('```text\ncode\n```\n');
+      final cases =
+          <
+            ({
+              String source,
+              int offset,
+              WysiwygClipboardFragment fragment,
+              BusyBlockKind kind,
+              int depth,
+              bool? checked,
+            })
+          >[
+            (
+              source: '- [x] leftright',
+              offset: 0,
+              fragment: code,
+              kind: BusyBlockKind.codeBlock,
+              depth: 1,
+              checked: true,
+            ),
+            (
+              source: '3. [ ] leftright',
+              offset: 'leftright'.length,
+              fragment: code,
+              kind: BusyBlockKind.codeBlock,
+              depth: 1,
+              checked: false,
+            ),
+            (
+              source: '- Outer\n  - [x] leftright',
+              offset: 4,
+              fragment: code,
+              kind: BusyBlockKind.codeBlock,
+              depth: 2,
+              checked: true,
+            ),
+            (
+              source: '0. leftright',
+              offset: 0,
+              fragment: code,
+              kind: BusyBlockKind.codeBlock,
+              depth: 1,
+              checked: null,
+            ),
+            (
+              source: '0. leftright',
+              offset: 'leftright'.length,
+              fragment: heading,
+              kind: BusyBlockKind.heading,
+              depth: 1,
+              checked: null,
+            ),
+          ];
+      for (final (index, value) in cases.indexed) {
+        final controller = await _pumpClipboardSourceEditor(
+          tester,
+          source: value.source,
+          markdownMode: MarkdownMode.gfm,
+          clipboard: _SourceTestClipboard(
+            readData: RichClipboardData(
+              text: value.kind == BusyBlockKind.heading ? 'Heading' : 'code',
+              richFragment: value.fragment.encode(),
+            ),
+          ),
+        );
+        controller.selection = TextSelection.collapsed(
+          offset: value.source.indexOf('leftright') + value.offset,
+        );
+        await _pressControlKey(tester, LogicalKeyboardKey.keyV);
+        await tester.pump();
+
+        final document = const MarkdownParser()
+            .parse(
+              filePath: '/project/source.md',
+              source: controller.text,
+              mode: MarkdownMode.gfm,
+              validateLocalReferences: false,
+            )
+            .busyDocument;
+        final paths = _busyBlockKindPaths(document.blocks, value.kind);
+        expect(paths, hasLength(1), reason: controller.text);
+        expect(
+          paths.single
+              .where(
+                (kind) =>
+                    kind == BusyBlockKind.taskListItem ||
+                    kind == BusyBlockKind.orderedListItem ||
+                    kind == BusyBlockKind.unorderedListItem,
+              )
+              .length,
+          value.depth,
+          reason: controller.text,
+        );
+        if (value.checked != null) {
+          final task = _sourceBlocksDepthFirst(
+            document.blocks,
+          ).firstWhere((block) => block.kind == BusyBlockKind.taskListItem);
+          expect(task.attributes['task'], '${value.checked}');
+        }
+        if (value.source.startsWith('0.')) {
+          final ordered = document.blocks.single;
+          expect(ordered.kind, BusyBlockKind.orderedListItem);
+          expect(ordered.attributes['marker'], '0.');
+        }
+        if (index + 1 < cases.length) {
           await tester.pumpWidget(const SizedBox.shrink());
           await tester.pump();
         }
@@ -4038,6 +4895,60 @@ List<List<md.Element>> _markdownElementPaths(
     paths.addAll(
       _markdownElementPaths(node.children ?? const [], targetTag, path),
     );
+  }
+  return paths;
+}
+
+List<({String text, String context})> _inlineSemanticRuns(
+  List<BusyInline> inlines,
+) {
+  final runs = <({String text, String context})>[];
+  void append(String text, Iterable<String> contexts) {
+    if (text.isEmpty) return;
+    final context = (contexts.toSet().toList()..sort()).join('|');
+    if (runs.isNotEmpty && runs.last.context == context) {
+      final previous = runs.removeLast();
+      runs.add((text: previous.text + text, context: context));
+    } else {
+      runs.add((text: text, context: context));
+    }
+  }
+
+  void visit(BusyInline inline, List<String> inherited) {
+    final own = switch (inline.kind) {
+      BusyInlineKind.strong => 'strong',
+      BusyInlineKind.emphasis => 'emphasis',
+      BusyInlineKind.underline => 'underline',
+      BusyInlineKind.strikethrough => 'strikethrough',
+      BusyInlineKind.link => 'link:${inline.destination}:${inline.attributes}',
+      _ => null,
+    };
+    final contexts = own == null ? inherited : [...inherited, own];
+    if (inline.children.isEmpty) {
+      append(inline.plainText, contexts);
+      return;
+    }
+    for (final child in inline.children) {
+      visit(child, contexts);
+    }
+  }
+
+  for (final inline in inlines) {
+    visit(inline, const []);
+  }
+  return runs;
+}
+
+List<List<BusyBlockKind>> _busyBlockKindPaths(
+  Iterable<BusyBlock> blocks,
+  BusyBlockKind target, [
+  List<BusyBlockKind> ancestors = const [],
+]) {
+  final paths = <List<BusyBlockKind>>[];
+  for (final block in blocks) {
+    final path = [...ancestors, block.kind];
+    if (block.kind == target) paths.add(path);
+    paths.addAll(_busyBlockKindPaths(block.children, target, path));
   }
   return paths;
 }

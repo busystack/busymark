@@ -602,18 +602,26 @@ class MarkdownAstAdapter {
       final contentChildren = _withoutTaskCheckbox(itemChildren);
       final nestedBlocks = <BusyBlock>[];
       final inlineNodes = <md.Node>[];
+      var hasPrimaryContent = false;
       for (final child in contentChildren) {
-        if (child is md.Element &&
+        final blockChild =
+            child is md.Element &&
             (child.tag == 'ul' ||
                 child.tag == 'ol' ||
                 child.tag == 'blockquote' ||
                 child.tag == 'pre' ||
-                child.tag == 'table')) {
+                child.tag == 'table' ||
+                child.tag == 'hr' ||
+                RegExp(r'^h[1-6]$').hasMatch(child.tag) ||
+                (child.tag == 'p' &&
+                    (hasPrimaryContent || nestedBlocks.isNotEmpty)));
+        if (blockChild) {
           nestedBlocks.addAll(
             _blocksFromNode(child, nextId: nextId, mode: mode),
           );
         } else {
           inlineNodes.add(child);
+          hasPrimaryContent = true;
         }
       }
       final attributes = {

@@ -62,14 +62,28 @@ class WysiwygClipboardFragment {
     bool tableCell = false,
     bool atBlockStart = false,
   }) {
-    if (!isInlineSourceFragment) return '';
-    final block = _destinationSerializationBlock(documentBlocks.single);
+    final inlines = sourceInsertionInlinesFor(tableCell: tableCell);
+    if (inlines.isEmpty) return '';
     return const BusyMarkMarkdownSerializer().serializeInlineFragment(
-      block.inlines,
+      inlines,
       tableCell: tableCell,
       atBlockStart: atBlockStart,
       readableHardBreakRuns: !tableCell,
     );
+  }
+
+  /// Returns the exact semantic inline sequence used for Source insertion.
+  /// Table destinations receive the same flattened, newline-free model as
+  /// Editor table-cell insertion.
+  List<BusyInline> sourceInsertionInlinesFor({required bool tableCell}) {
+    final values = [
+      for (final block in documentBlocks) _destinationSerializationBlock(block),
+    ];
+    if (tableCell) {
+      return busyMarkTableCellInlinesFromBlocks(values);
+    }
+    if (!isInlineSourceFragment) return const [];
+    return values.single.inlines;
   }
 
   /// Flattens structured blocks with the same semantics as an Editor table
@@ -79,31 +93,7 @@ class WysiwygClipboardFragment {
     required String destinationFilePath,
     bool atBlockStart = false,
   }) {
-    BusyInline normalize(BusyInline inline) =>
-        inline.kind == BusyInlineKind.hardBreak ||
-            inline.kind == BusyInlineKind.softBreak
-        ? const BusyInline(kind: BusyInlineKind.text, text: ' ')
-        : BusyInline(
-            kind: inline.kind,
-            text: inline.text.replaceAll(RegExp(r'\r\n|\r|\n'), ' '),
-            destination: inline.destination,
-            attributes: inline.attributes,
-            children: [for (final child in inline.children) normalize(child)],
-          );
-    final inlines = <BusyInline>[];
-    void append(BusyBlock block) {
-      if (inlines.isNotEmpty) {
-        inlines.add(const BusyInline(kind: BusyInlineKind.text, text: ' '));
-      }
-      inlines.addAll(block.inlines.map(normalize));
-      for (final child in block.children) {
-        append(child);
-      }
-    }
-
-    for (final block in documentBlocks) {
-      append(_destinationSerializationBlock(block));
-    }
+    final inlines = sourceInsertionInlinesFor(tableCell: true);
     return const BusyMarkMarkdownSerializer().serializeInlineFragment(
       inlines,
       tableCell: true,

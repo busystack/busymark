@@ -17,6 +17,37 @@ String busyMarkNormalizeTableCellText(String text) {
   return text.replaceAll(RegExp(r'\r\n|\r|\n'), ' ');
 }
 
+/// Flattens clipboard blocks into the single inline stream accepted by a
+/// table cell. This is shared by Editor insertion and Source serialization so
+/// reconciliation cannot accidentally return to the unnormalized tree.
+List<BusyInline> busyMarkTableCellInlinesFromBlocks(
+  Iterable<BusyBlock> blocks,
+) {
+  BusyInline normalize(BusyInline inline) =>
+      inline.kind == BusyInlineKind.hardBreak ||
+          inline.kind == BusyInlineKind.softBreak
+      ? const BusyInline(kind: BusyInlineKind.text, text: ' ')
+      : inline.copyWith(
+          text: busyMarkNormalizeTableCellText(inline.text),
+          children: [for (final child in inline.children) normalize(child)],
+        );
+  final inlines = <BusyInline>[];
+  void append(BusyBlock block) {
+    if (inlines.isNotEmpty) {
+      inlines.add(const BusyInline(kind: BusyInlineKind.text, text: ' '));
+    }
+    inlines.addAll(block.inlines.map(normalize));
+    for (final child in block.children) {
+      append(child);
+    }
+  }
+
+  for (final block in blocks) {
+    append(block);
+  }
+  return inlines;
+}
+
 BusyBlock busyMarkWysiwygImmutableBlockSnapshot(BusyBlock block) {
   BusyInline snapshotInline(BusyInline inline) {
     return BusyInline(
@@ -485,28 +516,9 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     if (cell == null || table?.kind != BusyBlockKind.table || blocks.isEmpty) {
       return null;
     }
-    BusyInline normalize(BusyInline inline) =>
-        inline.kind == BusyInlineKind.hardBreak ||
-            inline.kind == BusyInlineKind.softBreak
-        ? const BusyInline(kind: BusyInlineKind.text, text: ' ')
-        : inline.copyWith(
-            text: busyMarkNormalizeTableCellText(inline.text),
-            children: [for (final child in inline.children) normalize(child)],
-          );
-    final inserted = <BusyInline>[];
-    void append(BusyBlock block) {
-      if (inserted.isNotEmpty) {
-        inserted.add(const BusyInline(kind: BusyInlineKind.text, text: ' '));
-      }
-      inserted.addAll(block.inlines.map(normalize));
-      for (final child in block.children) {
-        append(child);
-      }
-    }
-
-    for (final block in blocks) {
-      append(busyMarkWysiwygClipboardBlock(block));
-    }
+    final inserted = busyMarkTableCellInlinesFromBlocks([
+      for (final block in blocks) busyMarkWysiwygClipboardBlock(block),
+    ]);
     final start = selectionStart.clamp(0, cell.plainText.length);
     final end = selectionEnd.clamp(start, cell.plainText.length);
     final partition = _partitionInlinesForReplacement(cell.inlines, start, end);

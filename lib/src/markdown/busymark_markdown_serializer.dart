@@ -571,7 +571,7 @@ class BusyMarkMarkdownSerializer {
             ? _htmlCodeSpan(inline.text)
             : _codeSpan(inline.text),
       BusyInlineKind.link =>
-        '[${children.isEmpty ? inline.text : children}](${inline.destination ?? ''})',
+        '[${children.isEmpty ? inline.text : children}](${_linkTarget(inline)})',
       BusyInlineKind.image =>
         '![${_escapeInlineText(inline.text)}](${inline.destination ?? ''})',
       BusyInlineKind.softBreak => ' ',
@@ -579,6 +579,14 @@ class BusyMarkMarkdownSerializer {
       BusyInlineKind.writersideVariable => '%${inline.text}%',
       BusyInlineKind.html || BusyInlineKind.unknown => inline.text,
     };
+  }
+
+  String _linkTarget(BusyInline inline) {
+    final destination = inline.destination ?? '';
+    final title = inline.attributes['title'];
+    if (title == null || title.isEmpty) return destination;
+    final escapedTitle = title.replaceAll('\\', '\\\\').replaceAll('"', '\\"');
+    return '$destination "$escapedTitle"';
   }
 
   String _mathInline(BusyInline inline) {
