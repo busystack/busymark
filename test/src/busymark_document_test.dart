@@ -4708,6 +4708,107 @@ void main() {}
     }
   });
 
+  test('inline serialization distinguishes every hard-break run boundary', () {
+    const hardBreak = BusyInline(kind: BusyInlineKind.hardBreak, text: '\n');
+    const serializer = BusyMarkMarkdownSerializer();
+
+    void expectOffsets(
+      List<BusyInline> inlines,
+      String source,
+      Map<int, int> offsets,
+    ) {
+      for (final entry in offsets.entries) {
+        final serialized = serializer.serializeInlineFragmentAtTextOffset(
+          inlines,
+          textOffset: entry.key,
+        );
+        expect(serialized.source, source);
+        expect(
+          serialized.sourceOffset,
+          entry.value,
+          reason: 'logical offset ${entry.key} in $source',
+        );
+      }
+    }
+
+    expectOffsets(
+      const [
+        BusyInline(kind: BusyInlineKind.text, text: 'A'),
+        hardBreak,
+        hardBreak,
+        BusyInline(kind: BusyInlineKind.text, text: 'B'),
+      ],
+      'A\n<br>\n<br>\nB',
+      const {1: 1, 2: 6, 3: 11, 4: 13},
+    );
+    expectOffsets(
+      const [hardBreak, hardBreak],
+      '<br><br>',
+      const {0: 0, 1: 4, 2: 8},
+    );
+    expectOffsets(
+      const [hardBreak, hardBreak, hardBreak],
+      '<br><br>\n<br>',
+      const {0: 0, 1: 4, 2: 8, 3: 13},
+    );
+
+    final nested = BusyInline(
+      kind: BusyInlineKind.link,
+      text: 'A\n\nB',
+      destination: 'https://destination.test',
+      children: const [
+        BusyInline(kind: BusyInlineKind.text, text: 'A'),
+        hardBreak,
+        hardBreak,
+        BusyInline(kind: BusyInlineKind.text, text: 'B'),
+      ],
+    );
+    expectOffsets(
+      [nested],
+      '[A\n<br>\n<br>\nB](https://destination.test)',
+      const {1: 2, 2: 7, 3: 12, 4: 41},
+    );
+    expectOffsets(
+      const [
+        BusyInline(
+          kind: BusyInlineKind.strong,
+          text: 'A\n\n\nB',
+          children: [
+            BusyInline(kind: BusyInlineKind.text, text: 'A'),
+            hardBreak,
+            hardBreak,
+            hardBreak,
+            BusyInline(kind: BusyInlineKind.text, text: 'B'),
+          ],
+        ),
+      ],
+      '**A\n<br>\n<br>\n<br>\nB**',
+      const {1: 3, 2: 8, 3: 13, 4: 18, 5: 22},
+    );
+
+    final markers = [
+      const BusyMarkInlineLineBreakOffset(textOffset: 1),
+      const BusyMarkInlineLineBreakOffset(textOffset: 2),
+    ];
+    final traversals = <int>[];
+    debugBusyMarkInlineSerializationTraversal = traversals.add;
+    addTearDown(() => debugBusyMarkInlineSerializationTraversal = null);
+    final serialized = serializer.serializeInlineFragmentWithOffsets(
+      const [
+        BusyInline(kind: BusyInlineKind.text, text: 'A'),
+        hardBreak,
+        hardBreak,
+        BusyInline(kind: BusyInlineKind.text, text: 'B'),
+      ],
+      textOffset: 2,
+      lineBreakOffsets: markers,
+    );
+    expect(traversals, hasLength(1));
+    expect(serialized.sourceOffset, 6);
+    expect(serialized.lineBreakSourceOffsets[markers.first], 6);
+    expect(serialized.lineBreakSourceOffsets[markers.last], 11);
+  });
+
   test('link titles round-trip decoded punctuation and line endings', () {
     for (final title in const [
       'literal &copy;',

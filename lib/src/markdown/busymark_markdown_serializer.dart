@@ -642,7 +642,7 @@ class BusyMarkMarkdownSerializer {
           0,
           (length, item) => length + item.plainText.length,
         );
-        final runSource = _hardBreakRunSource(
+        final runSerialization = _serializeHardBreakRun(
           count: run.length,
           startsBlock: buffer.isEmpty,
           hasFollowingContent: runEnd < inlines.length,
@@ -650,24 +650,33 @@ class BusyMarkMarkdownSerializer {
           nextAtBlockStart: nextAtBlockStart,
           readableHardBreakRuns: readableHardBreakRuns,
         );
+        var breakIndex = 0;
+        var breakTextEnd = run.first.plainText.length;
         while (targetCursor < sortedTargets.length &&
             sortedTargets[targetCursor] <= consumedText + runTextLength) {
           final target = sortedTargets[targetCursor++];
           if (target == consumedText) {
             sourceOffsets[target] = buffer.length;
           } else if (target <= consumedText + runTextLength) {
-            sourceOffsets[target] = buffer.length + runSource.length;
-            if (run.length == 1 &&
-                target == consumedText + runTextLength &&
-                runSource.endsWith('\n')) {
+            final localTarget = target - consumedText;
+            while (breakIndex + 1 < run.length && localTarget > breakTextEnd) {
+              breakIndex += 1;
+              breakTextEnd += run[breakIndex].plainText.length;
+            }
+            sourceOffsets[target] =
+                buffer.length +
+                runSerialization.boundarySourceOffsets[breakIndex];
+            final lineBreakSourceOffset =
+                runSerialization.lineBreakSourceOffsets[breakIndex];
+            if (localTarget == breakTextEnd && lineBreakSourceOffset != null) {
               lineBreakSourceOffsets[target] =
-                  buffer.length + runSource.length - 1;
+                  buffer.length + lineBreakSourceOffset;
             }
           }
         }
-        buffer.write(runSource);
+        buffer.write(runSerialization.source);
         consumedText += runTextLength;
-        nextAtBlockStart = runSource.endsWith('\n');
+        nextAtBlockStart = runSerialization.source.endsWith('\n');
         index = runEnd - 1;
         continue;
       }
@@ -828,7 +837,7 @@ class BusyMarkMarkdownSerializer {
     );
   }
 
-  String _hardBreakRunSource({
+  _HardBreakRunSerialization _serializeHardBreakRun({
     required int count,
     required bool startsBlock,
     required bool hasFollowingContent,
@@ -836,22 +845,47 @@ class BusyMarkMarkdownSerializer {
     required bool nextAtBlockStart,
     required bool readableHardBreakRuns,
   }) {
-    if (count == 1) return '  \n';
+    if (count == 1) {
+      return const _HardBreakRunSerialization(
+        source: '  \n',
+        boundarySourceOffsets: [3],
+        lineBreakSourceOffsets: [2],
+      );
+    }
     if (!readableHardBreakRuns || tableCell) {
-      return List.filled(count, '<br>').join();
+      return _HardBreakRunSerialization(
+        source: List.filled(count, '<br>').join(),
+        boundarySourceOffsets: [
+          for (var index = 1; index <= count; index++) 4 * index,
+        ],
+        lineBreakSourceOffsets: List<int?>.filled(count, null),
+      );
     }
     final buffer = StringBuffer();
     if (!startsBlock && !nextAtBlockStart) buffer.write('\n');
-    if (startsBlock) {
-      buffer.write('<br><br>');
-      for (var marker = 2; marker < count; marker++) {
-        buffer.write('\n<br>');
+    final boundarySourceOffsets = <int>[];
+    final lineBreakSourceOffsets = <int?>[];
+    for (var index = 0; index < count; index++) {
+      buffer.write('<br>');
+      // The semantic boundary is after the tag. A following newline only
+      // lays out the readable source and must not move the editing caret.
+      boundarySourceOffsets.add(buffer.length);
+      final hasNext = index + 1 < count;
+      final emitsLayoutBreak = startsBlock
+          ? index > 0 && (hasNext || hasFollowingContent)
+          : hasNext || hasFollowingContent;
+      if (emitsLayoutBreak) {
+        lineBreakSourceOffsets.add(buffer.length);
+        buffer.write('\n');
+      } else {
+        lineBreakSourceOffsets.add(null);
       }
-    } else {
-      buffer.write(List.filled(count, '<br>').join('\n'));
     }
-    if (hasFollowingContent) buffer.write('\n');
-    return buffer.toString();
+    return _HardBreakRunSerialization(
+      source: buffer.toString(),
+      boundarySourceOffsets: boundarySourceOffsets,
+      lineBreakSourceOffsets: lineBreakSourceOffsets,
+    );
   }
 
   Map<int, int> _escapedInlineTextOffsets(
@@ -903,32 +937,16 @@ class BusyMarkMarkdownSerializer {
         }
         final count = runEnd - index;
         if (count > 1) {
-          if (readableHardBreakRuns && !tableCell) {
-            final startsBlock = buffer.isEmpty;
-            if (!startsBlock && !nextAtBlockStart) {
-              buffer.write('\n');
-            }
-            if (startsBlock) {
-              // Two tags on the marker-only first line keep CommonMark from
-              // treating a leading <br> as a raw HTML block.
-              buffer.write('<br><br>');
-              for (var marker = 2; marker < count; marker++) {
-                buffer.write('\n<br>');
-              }
-            } else {
-              buffer.write(List.filled(count, '<br>').join('\n'));
-            }
-            final hasFollowingContent = runEnd < inlines.length;
-            if (hasFollowingContent) {
-              buffer.write('\n');
-            }
-            nextAtBlockStart = hasFollowingContent;
-          } else {
-            // Physical newlines cannot safely occur in headings or table
-            // cells. Keep their repeated breaks in compact inline HTML.
-            buffer.write(List.filled(count, '<br>').join());
-            nextAtBlockStart = false;
-          }
+          final serialization = _serializeHardBreakRun(
+            count: count,
+            startsBlock: buffer.isEmpty,
+            hasFollowingContent: runEnd < inlines.length,
+            tableCell: tableCell,
+            nextAtBlockStart: nextAtBlockStart,
+            readableHardBreakRuns: readableHardBreakRuns,
+          );
+          buffer.write(serialization.source);
+          nextAtBlockStart = serialization.source.endsWith('\n');
           index = runEnd - 1;
           continue;
         }
@@ -1172,6 +1190,18 @@ class _InlineSerialization {
   final String source;
   final Map<int, int> sourceOffsets;
   final Map<int, int> lineBreakSourceOffsets;
+}
+
+class _HardBreakRunSerialization {
+  const _HardBreakRunSerialization({
+    required this.source,
+    required this.boundarySourceOffsets,
+    required this.lineBreakSourceOffsets,
+  });
+
+  final String source;
+  final List<int> boundarySourceOffsets;
+  final List<int?> lineBreakSourceOffsets;
 }
 
 class _InlineTraversalMetrics {

@@ -417,6 +417,57 @@ void main() {
     expect(codeMapped.ranges[codeLink]?.lineBreaks.single.lineEnding, '\r\n');
   });
 
+  test('block inline mapping keeps each hard-break occurrence range', () {
+    const marker = '\ue000';
+    const source =
+        '> [left$marker  \r\n'
+        '> middle  \n'
+        '> right](https://destination.test)';
+    final context = const MarkdownAstAdapter().createInlineParserContext(
+      documentSource: source.replaceAll(marker, ''),
+      mode: MarkdownMode.commonMark,
+    );
+
+    final mapped = context.parseMappedBlock(
+      source,
+      sourceStart: 0,
+      sourceEnd: source.length,
+      ignoredReferenceLabelMarkers: const [marker],
+    )!;
+    final link = mapped.inlines.single;
+    final hardBreaks = link.children
+        .where((inline) => inline.kind == BusyInlineKind.hardBreak)
+        .toList(growable: false);
+    final firstStart = source.indexOf('  \r\n');
+    final secondStart = source.indexOf('  \n');
+
+    expect(hardBreaks, hasLength(2));
+    expect(identical(hardBreaks.first, hardBreaks.last), isFalse);
+    expect(mapped.ranges[hardBreaks.first]?.start, firstStart);
+    expect(mapped.ranges[hardBreaks.first]?.end, firstStart + '  \r\n'.length);
+    expect(mapped.ranges[hardBreaks.last]?.start, secondStart);
+    expect(mapped.ranges[hardBreaks.last]?.end, secondStart + '  \n'.length);
+    expect(
+      mapped.ranges[link]?.lineBreaks.map(
+        (lineBreak) => (
+          lineBreak.textOffset,
+          lineBreak.sourceOffset,
+          lineBreak.lineEnding,
+          lineBreak.continuationPrefix,
+        ),
+      ),
+      [
+        ('left$marker'.length, source.indexOf('\r\n'), '\r\n', '> '),
+        (
+          'left$marker\nmiddle'.length,
+          source.indexOf('\n', source.indexOf('\r\n') + 2),
+          '\n',
+          '> ',
+        ),
+      ],
+    );
+  });
+
   test('extracts title, outline, links, images, and code fences', () {
     final path = fixture('basic.md');
     final parsed = parser.parse(

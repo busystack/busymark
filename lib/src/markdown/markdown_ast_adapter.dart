@@ -1739,7 +1739,10 @@ class MarkdownAstAdapter {
           attributes: node.attributes,
         ),
       ],
-      'br' => const [BusyInline(kind: BusyInlineKind.hardBreak, text: '\n')],
+      // Source mappings are keyed by inline identity. Each parser occurrence
+      // therefore needs its own object even though every hard break has the
+      // same semantic value.
+      'br' => [BusyInline(kind: BusyInlineKind.hardBreak, text: '\n')],
       'var' => [
         BusyInline(
           kind: BusyInlineKind.writersideVariable,
