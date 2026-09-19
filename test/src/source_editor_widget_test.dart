@@ -3515,6 +3515,226 @@ void main() {
     expect(controller.selection.baseOffset, intendedCaret + 1);
   });
 
+  testWidgets('Source rich paste remaps generated grouped hard breaks', (
+    tester,
+  ) async {
+    const source = '[left  \nright](https://destination.test) tail';
+    final clipboard = _SourceTestClipboard(
+      readData: RichClipboardData(
+        text: 'XA',
+        richFragment: _completeSourceFragment(
+          '[X](https://incoming.test)'
+          '[A  \n](https://destination.test)\n',
+        ).encode(),
+      ),
+    );
+    var modelText = source;
+    var modelSelection = const TextSelection.collapsed(offset: 0);
+    var history = const DocumentUndoState();
+    var transactions = 0;
+    final controller = await _pumpClipboardSourceEditor(
+      tester,
+      source: source,
+      clipboard: clipboard,
+      onTransactionalChanged:
+          (value, _, previousSelection, selection, undoGroup) {
+            transactions += 1;
+            history = history.push(
+              DocumentHistoryState(
+                text: modelText,
+                selection: previousSelection,
+              ),
+              group: undoGroup,
+            );
+            modelText = value;
+            modelSelection = selection;
+          },
+      onUndo: () {
+        if (history.undo.isEmpty) return null;
+        final target = history.undo.last;
+        history = history.afterUndo(
+          DocumentHistoryState(text: modelText, selection: modelSelection),
+        );
+        modelText = target.text;
+        modelSelection = target.selection;
+        return TextEditingValue(text: target.text, selection: target.selection);
+      },
+      onRedo: () {
+        if (history.redo.isEmpty) return null;
+        final target = history.redo.last;
+        history = history.afterRedo(
+          DocumentHistoryState(text: modelText, selection: modelSelection),
+        );
+        modelText = target.text;
+        modelSelection = target.selection;
+        return TextEditingValue(text: target.text, selection: target.selection);
+      },
+    );
+    controller.selection = TextSelection.collapsed(
+      offset: source.indexOf('left') + 'left'.length,
+    );
+
+    await _pressControlKey(tester, LogicalKeyboardKey.keyV);
+    await tester.pump();
+
+    const firstPaste =
+        '[left](https://destination.test)'
+        '[X](https://incoming.test)'
+        '[A\n'
+        '<br>\n'
+        '<br>\n'
+        'right](https://destination.test) tail';
+    expect(controller.text, firstPaste);
+    final firstCaret = firstPaste.indexOf('<br>\n<br>') + '<br>'.length;
+    expect(controller.selection.baseOffset, firstCaret);
+
+    clipboard.readData = RichClipboardData(
+      text: 'Y',
+      richFragment: _completeSourceFragment(
+        '[Y](https://second.test)\n',
+      ).encode(),
+    );
+    final secondInsertion = firstPaste.indexOf('right') + 'ri'.length;
+    controller.selection = TextSelection.collapsed(offset: secondInsertion);
+    await _pressControlKey(tester, LogicalKeyboardKey.keyV);
+    await tester.pump();
+
+    const secondPaste =
+        '[left](https://destination.test)'
+        '[X](https://incoming.test)'
+        '[A\n'
+        '<br>\n'
+        '<br>\n'
+        'ri](https://destination.test)'
+        '[Y](https://second.test)'
+        '[ght](https://destination.test) tail';
+    expect(controller.text, secondPaste);
+    final secondCaret =
+        secondPaste.indexOf('[Y](https://second.test)') +
+        '[Y](https://second.test)'.length;
+    expect(controller.selection.baseOffset, secondCaret);
+    expect(transactions, 2);
+
+    final parsed = const MarkdownParser()
+        .parse(
+          filePath: '/project/source.md',
+          source: controller.text,
+          validateLocalReferences: false,
+        )
+        .busyDocument;
+    final links = parsed.blocks.single.inlines
+        .where((inline) => inline.kind == BusyInlineKind.link)
+        .toList(growable: false);
+    expect(links.map((inline) => inline.destination), [
+      'https://destination.test',
+      'https://incoming.test',
+      'https://destination.test',
+      'https://second.test',
+      'https://destination.test',
+    ]);
+    expect(
+      links
+          .expand((link) => link.children)
+          .where((inline) => inline.kind == BusyInlineKind.hardBreak),
+      hasLength(2),
+    );
+
+    await _pressControlKey(tester, LogicalKeyboardKey.keyZ);
+    await tester.pump();
+    expect(controller.text, firstPaste);
+    expect(controller.selection.baseOffset, secondInsertion);
+    await _pressControlKey(tester, LogicalKeyboardKey.keyZ);
+    await tester.pump();
+    expect(controller.text, source);
+    await _pressControlKey(tester, LogicalKeyboardKey.keyZ, shift: true);
+    await tester.pump();
+    expect(controller.text, firstPaste);
+    expect(controller.selection.baseOffset, secondInsertion);
+    await _pressControlKey(tester, LogicalKeyboardKey.keyZ, shift: true);
+    await tester.pump();
+    expect(controller.text, secondPaste);
+    expect(controller.selection.baseOffset, secondCaret);
+  });
+
+  testWidgets('Source remaps reopened grouped breaks in a CRLF container', (
+    tester,
+  ) async {
+    const source =
+        '> [A\r\n'
+        '> <br>\r\n'
+        '> <br>\r\n'
+        '> right](https://destination.test) tail';
+    TextEditingValue? undoValue;
+    final controller = await _pumpClipboardSourceEditor(
+      tester,
+      source: source,
+      clipboard: _SourceTestClipboard(
+        readData: RichClipboardData(
+          text: 'Y',
+          richFragment: _completeSourceFragment(
+            '[Y](https://second.test)\n',
+          ).encode(),
+        ),
+      ),
+      onTransactionalChanged: (_, _, previousSelection, _, _) {
+        undoValue = TextEditingValue(
+          text: source,
+          selection: previousSelection,
+        );
+      },
+      onUndo: () {
+        final value = undoValue;
+        undoValue = null;
+        return value;
+      },
+    );
+    controller.selection = TextSelection.collapsed(
+      offset: source.indexOf('right') + 'ri'.length,
+    );
+
+    await _pressControlKey(tester, LogicalKeyboardKey.keyV);
+    await tester.pump();
+
+    const expected =
+        '> [A\r\n'
+        '> <br>\r\n'
+        '> <br>\r\n'
+        '> ri](https://destination.test)'
+        '[Y](https://second.test)'
+        '[ght](https://destination.test) tail';
+    expect(controller.text, expected);
+    final caret =
+        expected.indexOf('[Y](https://second.test)') +
+        '[Y](https://second.test)'.length;
+    expect(controller.selection.baseOffset, caret);
+    final parsed = const MarkdownParser()
+        .parse(
+          filePath: '/project/source.md',
+          source: controller.text,
+          validateLocalReferences: false,
+        )
+        .busyDocument;
+    final links = _sourceBlocksDepthFirst(parsed.blocks)
+        .expand((block) => block.inlines)
+        .where((inline) => inline.kind == BusyInlineKind.link)
+        .toList(growable: false);
+    expect(links.map((inline) => inline.destination), [
+      'https://destination.test',
+      'https://second.test',
+      'https://destination.test',
+    ]);
+    expect(
+      links
+          .expand((link) => link.children)
+          .where((inline) => inline.kind == BusyInlineKind.hardBreak),
+      hasLength(2),
+    );
+
+    await _pressControlKey(tester, LogicalKeyboardKey.keyZ);
+    await tester.pump();
+    expect(controller.text, source);
+  });
+
   testWidgets(
     'Source maps nested and reference links through container prefixes',
     (tester) async {

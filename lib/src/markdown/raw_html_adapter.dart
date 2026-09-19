@@ -15,6 +15,15 @@ class RawHtmlBlockParseResult {
 class RawHtmlAdapter {
   const RawHtmlAdapter();
 
+  static final RegExp _lineEndingBeforeStandaloneBreak = RegExp(
+    r'\r?\n[ \t]*(?=<br\s*/?>)',
+    caseSensitive: false,
+  );
+  static final RegExp _lineEndingAfterStandaloneBreak = RegExp(
+    r'(<br\s*/?>)(\r?\n)',
+    caseSensitive: false,
+  );
+
   RawHtmlBlockParseResult? parseRawHtmlBlock(
     String rawSource,
     String Function() nextId,
@@ -66,15 +75,59 @@ class RawHtmlAdapter {
     // line endings before HTML whitespace collapsing so marker-only lines do
     // not add spaces to the editable document model. Explicit indentation
     // after a marker line remains intact.
-    return source
-        .replaceAll(
-          RegExp(r'\r?\n[ \t]*(?=<br\s*/?>)', caseSensitive: false),
-          '',
-        )
-        .replaceAllMapped(
-          RegExp(r'(<br\s*/?>)\r?\n', caseSensitive: false),
-          (match) => match.group(1)!,
-        );
+    final removals = standaloneBreakLayoutRemovals(source);
+    if (removals.isEmpty) return source;
+    final result = StringBuffer();
+    var offset = 0;
+    for (final removal in removals) {
+      if (removal.start > offset) {
+        result.write(source.substring(offset, removal.start));
+      }
+      if (removal.end > offset) offset = removal.end;
+    }
+    result.write(source.substring(offset));
+    return result.toString();
+  }
+
+  /// Source ranges which are layout around standalone `<br>` tags rather
+  /// than additional semantic line breaks.
+  ///
+  /// Source mapping consumes these exact ranges while recording the real
+  /// `<br>` occurrence separately. Keeping this classification here ensures
+  /// mapped parsing and ordinary raw-HTML parsing use the same rule.
+  List<({int start, int end, int lineFeedOffset})>
+  standaloneBreakLayoutRemovals(String source) {
+    final byLineFeed = <int, ({int start, int end, int lineFeedOffset})>{};
+
+    void add(int start, int end) {
+      final lineFeedOffset = source.indexOf('\n', start);
+      if (lineFeedOffset < 0 || lineFeedOffset >= end) return;
+      final existing = byLineFeed[lineFeedOffset];
+      byLineFeed[lineFeedOffset] = (
+        start: existing == null
+            ? start
+            : existing.start < start
+            ? existing.start
+            : start,
+        end: existing == null
+            ? end
+            : existing.end > end
+            ? existing.end
+            : end,
+        lineFeedOffset: lineFeedOffset,
+      );
+    }
+
+    for (final match in _lineEndingBeforeStandaloneBreak.allMatches(source)) {
+      add(match.start, match.end);
+    }
+    for (final match in _lineEndingAfterStandaloneBreak.allMatches(source)) {
+      final lineEnding = match.group(2)!;
+      add(match.end - lineEnding.length, match.end);
+    }
+    final result = byLineFeed.values.toList()
+      ..sort((left, right) => left.start.compareTo(right.start));
+    return result;
   }
 
   html.DocumentFragment? _parseFragment(String source) {

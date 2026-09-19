@@ -468,6 +468,216 @@ void main() {
     );
   });
 
+  test('block inline mapping matches standalone HTML break layout', () {
+    const marker = '\ue000';
+    const original =
+        '[A\n'
+        '<br>\n'
+        '<br>\n'
+        'right](https://destination.test) tail';
+    const marked =
+        '[A\n'
+        '<br>\n'
+        '<br>\n'
+        'ri${marker}ght](https://destination.test) tail';
+    final parsed = parser.parse(
+      filePath: 'generated-breaks.md',
+      source: original,
+      validateLocalReferences: false,
+    );
+    final ordinaryLink = parsed.busyDocument.blocks.single.inlines.firstWhere(
+      (inline) => inline.kind == BusyInlineKind.link,
+    );
+    final context = const MarkdownAstAdapter().createInlineParserContext(
+      documentSource: original,
+      mode: MarkdownMode.commonMark,
+    );
+
+    final mapped = context.parseMappedBlock(
+      marked,
+      sourceStart: 0,
+      sourceEnd: marked.length,
+      ignoredReferenceLabelMarkers: const [marker],
+    )!;
+    final mappedLink = mapped.inlines.firstWhere(
+      (inline) => inline.kind == BusyInlineKind.link,
+    );
+    final hardBreaks = mappedLink.children
+        .where((inline) => inline.kind == BusyInlineKind.hardBreak)
+        .toList(growable: false);
+    final firstBreak = marked.indexOf('<br>');
+    final secondBreak = marked.indexOf('<br>', firstBreak + 1);
+
+    expect(ordinaryLink.plainText, 'A\n\nright');
+    expect(mappedLink.plainText.replaceAll(marker, ''), ordinaryLink.plainText);
+    expect(hardBreaks, hasLength(2));
+    expect(mapped.ranges[hardBreaks.first]?.start, firstBreak);
+    expect(mapped.ranges[hardBreaks.first]?.end, firstBreak + '<br>'.length);
+    expect(mapped.ranges[hardBreaks.last]?.start, secondBreak);
+    expect(mapped.ranges[hardBreaks.last]?.end, secondBreak + '<br>'.length);
+    expect(mappedLink.destination, 'https://destination.test');
+    expect(
+      mapped.ranges[mappedLink]?.originalInline?.destination,
+      'https://destination.test',
+    );
+    expect(
+      mapped.ranges[mappedLink]?.lineBreaks.map(
+        (lineBreak) => (
+          lineBreak.lineEnding,
+          lineBreak.continuationPrefix,
+          lineBreak.sourceOffset,
+        ),
+      ),
+      [
+        ('\n', '', original.indexOf('\n', firstBreak)),
+        ('\n', '', original.indexOf('\n', secondBreak)),
+      ],
+    );
+  });
+
+  test(
+    'block inline mapping projects HTML break layout through containers',
+    () {
+      const marker = '\ue000';
+      const original =
+          '> [A\r\n'
+          '> <br>\r\n'
+          '> <br>\r\n'
+          '> right](https://destination.test) tail';
+      const marked =
+          '> [A\r\n'
+          '> <br>\r\n'
+          '> <br>\r\n'
+          '> ri${marker}ght](https://destination.test) tail';
+      final parsed = parser.parse(
+        filePath: 'generated-breaks.md',
+        source: original,
+        validateLocalReferences: false,
+      );
+      final ordinaryLink = parsed
+          .busyDocument
+          .blocks
+          .single
+          .children
+          .single
+          .inlines
+          .firstWhere((inline) => inline.kind == BusyInlineKind.link);
+      final context = const MarkdownAstAdapter().createInlineParserContext(
+        documentSource: original,
+        mode: MarkdownMode.commonMark,
+      );
+
+      final mapped = context.parseMappedBlock(
+        marked,
+        sourceStart: 0,
+        sourceEnd: marked.length,
+        ignoredReferenceLabelMarkers: const [marker],
+      )!;
+      final mappedLink = mapped.inlines.firstWhere(
+        (inline) => inline.kind == BusyInlineKind.link,
+      );
+
+      expect(ordinaryLink.plainText, 'A\n\nright');
+      expect(
+        mappedLink.plainText.replaceAll(marker, ''),
+        ordinaryLink.plainText,
+      );
+      expect(
+        mappedLink.children.where(
+          (inline) => inline.kind == BusyInlineKind.hardBreak,
+        ),
+        hasLength(2),
+      );
+      expect(
+        mapped.ranges[mappedLink]?.lineBreaks.map(
+          (lineBreak) => (lineBreak.lineEnding, lineBreak.continuationPrefix),
+        ),
+        const [('\r\n', '> '), ('\r\n', '> ')],
+      );
+      expect(
+        mapped.ranges[mappedLink]?.originalInline?.destination,
+        'https://destination.test',
+      );
+    },
+  );
+
+  test('HTML break layout mapping preserves soft breaks and literal code', () {
+    const marker = '\ue000';
+    const original =
+        '> [left\n'
+        '> `<br>`\n'
+        '> right](https://destination.test)';
+    const marked =
+        '> [left\n'
+        '> `<br>`\n'
+        '> ri${marker}ght](https://destination.test)';
+    final context = const MarkdownAstAdapter().createInlineParserContext(
+      documentSource: original,
+      mode: MarkdownMode.commonMark,
+    );
+    final ordinary = context.parse('left\n`<br>`\nright');
+
+    final mapped = context.parseMappedBlock(
+      marked,
+      sourceStart: 0,
+      sourceEnd: marked.length,
+      ignoredReferenceLabelMarkers: const [marker],
+    )!;
+    final link = mapped.inlines.single;
+
+    expect(
+      link.plainText.replaceAll(marker, ''),
+      ordinary.map((e) => e.plainText).join(),
+    );
+    expect(link.plainText, 'left\n<br>\nri${marker}ght');
+    expect(
+      link.children.where((inline) => inline.kind == BusyInlineKind.code),
+      hasLength(1),
+    );
+    expect(
+      link.children.where((inline) => inline.kind == BusyInlineKind.hardBreak),
+      isEmpty,
+    );
+    expect(mapped.ranges[link]?.lineBreaks, hasLength(2));
+    expect(mapped.ranges[link]?.originalInline, isNotNull);
+
+    const hardBreakOriginal =
+        '[left  \n'
+        '<br>\n'
+        'right](https://destination.test)';
+    const hardBreakMarked =
+        '[left  \n'
+        '<br>\n'
+        'ri${marker}ght](https://destination.test)';
+    final hardBreakContext = const MarkdownAstAdapter()
+        .createInlineParserContext(
+          documentSource: hardBreakOriginal,
+          mode: MarkdownMode.commonMark,
+        );
+    final hardBreakMapped = hardBreakContext.parseMappedBlock(
+      hardBreakMarked,
+      sourceStart: 0,
+      sourceEnd: hardBreakMarked.length,
+      ignoredReferenceLabelMarkers: const [marker],
+    )!;
+    final hardBreakLink = hardBreakMapped.inlines.single;
+    expect(
+      hardBreakLink.children.where(
+        (inline) => inline.kind == BusyInlineKind.hardBreak,
+      ),
+      hasLength(2),
+    );
+    expect(
+      hardBreakMapped.ranges[hardBreakLink]?.lineBreaks.map(
+        (lineBreak) => lineBreak.sourceOffset,
+      ),
+      [
+        hardBreakOriginal.indexOf('\n'),
+        hardBreakOriginal.indexOf('\n', hardBreakOriginal.indexOf('<br>')),
+      ],
+    );
+  });
+
   test('extracts title, outline, links, images, and code fences', () {
     final path = fixture('basic.md');
     final parsed = parser.parse(

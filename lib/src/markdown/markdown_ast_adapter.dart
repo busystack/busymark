@@ -25,6 +25,8 @@ const _sourceMappingLabelEndAttribute = 'data-busymark-source-label-end';
 const _sourceMappingAutolinkAttribute = 'data-busymark-source-autolink';
 const _sourceMappingReferenceAttribute = 'data-busymark-source-reference';
 const _sourceMappingLineBreakAttribute = 'data-busymark-source-line-break';
+const _sourceMappingLineBreakOffsetAttribute =
+    'data-busymark-source-line-break-offset';
 
 class BusyMarkMappedInlineRange {
   const BusyMarkMappedInlineRange({
@@ -39,6 +41,7 @@ class BusyMarkMappedInlineRange {
     this.isAutolink = false,
     this.isReference = false,
     this.isSourceLineBreak = false,
+    this.sourceLineBreakOffset,
   });
 
   final int start;
@@ -52,6 +55,7 @@ class BusyMarkMappedInlineRange {
   final bool isAutolink;
   final bool isReference;
   final bool isSourceLineBreak;
+  final int? sourceLineBreakOffset;
 }
 
 class BusyMarkMappedSourceLineBreak {
@@ -97,6 +101,7 @@ void _setSourceMappingAttributes(
   bool isAutolink = false,
   bool isReference = false,
   bool isSourceLineBreak = false,
+  int? sourceLineBreakOffset,
 }) {
   element.attributes[_sourceMappingStartAttribute] = '$start';
   element.attributes[_sourceMappingEndAttribute] = '$end';
@@ -120,6 +125,10 @@ void _setSourceMappingAttributes(
   }
   if (isSourceLineBreak) {
     element.attributes[_sourceMappingLineBreakAttribute] = 'true';
+  }
+  if (sourceLineBreakOffset != null) {
+    element.attributes[_sourceMappingLineBreakOffsetAttribute] =
+        '$sourceLineBreakOffset';
   }
 }
 
@@ -348,8 +357,13 @@ class _SourceMappingEmailAutolinkSyntax extends md.InlineSyntax {
 }
 
 class _SourceMappingHardLineBreakSyntax extends md.LineBreakSyntax {
+  _SourceMappingHardLineBreakSyntax(this._layout);
+
+  final _SourceMappingStandaloneBreakLayout _layout;
+
   @override
   bool onMatch(md.InlineParser parser, Match match) {
+    _layout.claimSemantic(parser, match.end - 1);
     final element = md.Element.empty('br');
     _setSourceMappingAttributes(
       element,
@@ -362,11 +376,88 @@ class _SourceMappingHardLineBreakSyntax extends md.LineBreakSyntax {
   }
 }
 
-class _SourceMappingLineBreakSyntax extends md.InlineSyntax {
-  _SourceMappingLineBreakSyntax() : super('\n', startCharacter: 0x0a);
+class _SourceMappingStandaloneBreakLayout {
+  md.InlineParser? _parser;
+  List<({int start, int end, int lineFeedOffset})> _removals = const [];
+  final Set<int> _claimedLineFeeds = {};
+
+  void _prepare(md.InlineParser parser) {
+    if (identical(_parser, parser)) return;
+    _parser = parser;
+    _removals = _rawHtmlAdapter.standaloneBreakLayoutRemovals(parser.source);
+    _claimedLineFeeds.clear();
+  }
+
+  ({int start, int end, int lineFeedOffset})? removalAt(
+    md.InlineParser parser,
+    int lineFeedOffset,
+  ) {
+    _prepare(parser);
+    for (final removal in _removals) {
+      if (removal.lineFeedOffset == lineFeedOffset) return removal;
+    }
+    return null;
+  }
+
+  int? claimForBreak(md.InlineParser parser, int start, int end) {
+    _prepare(parser);
+    for (final removal in _removals) {
+      if (removal.start == end &&
+          _claimedLineFeeds.add(removal.lineFeedOffset)) {
+        return removal.lineFeedOffset;
+      }
+    }
+    for (final removal in _removals.reversed) {
+      if (removal.end == start &&
+          _claimedLineFeeds.add(removal.lineFeedOffset)) {
+        return removal.lineFeedOffset;
+      }
+    }
+    return null;
+  }
+
+  void claimSemantic(md.InlineParser parser, int lineFeedOffset) {
+    _prepare(parser);
+    _claimedLineFeeds.add(lineFeedOffset);
+  }
+}
+
+class _SourceMappingHtmlBreakSyntax extends md.InlineSyntax {
+  _SourceMappingHtmlBreakSyntax(this._layout)
+    : super(r'<br\s*/?>', startCharacter: 0x3c, caseSensitive: false);
+
+  final _SourceMappingStandaloneBreakLayout _layout;
 
   @override
   bool onMatch(md.InlineParser parser, Match match) {
+    final start = parser.pos;
+    final end = match.end;
+    final element = md.Element.empty('br');
+    _setSourceMappingAttributes(
+      element,
+      start: start,
+      end: end,
+      isSourceLineBreak: true,
+      sourceLineBreakOffset: _layout.claimForBreak(parser, start, end),
+    );
+    parser.addNode(element);
+    return true;
+  }
+}
+
+class _SourceMappingLineBreakSyntax extends md.InlineSyntax {
+  _SourceMappingLineBreakSyntax(this._layout)
+    : super('\n', startCharacter: 0x0a);
+
+  final _SourceMappingStandaloneBreakLayout _layout;
+
+  @override
+  bool onMatch(md.InlineParser parser, Match match) {
+    final removal = _layout.removalAt(parser, parser.pos);
+    if (removal != null) {
+      parser.consume(removal.end - parser.pos);
+      return false;
+    }
     final element = md.Element('busymark-source-line-break', [md.Text('\n')]);
     _setSourceMappingAttributes(
       element,
@@ -381,16 +472,20 @@ class _SourceMappingLineBreakSyntax extends md.InlineSyntax {
 
 List<md.InlineSyntax> _sourceMappingInlineSyntaxes(
   _SourceMappingEmailAutolinkSyntax emailSyntax,
-) => [
-  emailSyntax,
-  _SourceMappingAutolinkSyntax(),
-  _SourceMappingLinkSyntax(),
-  _SourceMappingDelimiterSyntax.asterisk(),
-  _SourceMappingDelimiterSyntax.underscore(),
-  _SourceMappingDelimiterSyntax.strikethrough(),
-  _SourceMappingHardLineBreakSyntax(),
-  _SourceMappingLineBreakSyntax(),
-];
+) {
+  final breakLayout = _SourceMappingStandaloneBreakLayout();
+  return [
+    emailSyntax,
+    _SourceMappingAutolinkSyntax(),
+    _SourceMappingLinkSyntax(),
+    _SourceMappingDelimiterSyntax.asterisk(),
+    _SourceMappingDelimiterSyntax.underscore(),
+    _SourceMappingDelimiterSyntax.strikethrough(),
+    _SourceMappingHardLineBreakSyntax(breakLayout),
+    _SourceMappingHtmlBreakSyntax(breakLayout),
+    _SourceMappingLineBreakSyntax(breakLayout),
+  ];
+}
 
 class BusyMarkInlineParserContext {
   BusyMarkInlineParserContext._({
@@ -712,6 +807,7 @@ class BusyMarkInlineParserContext {
           isAutolink: mappedRange.isAutolink,
           isReference: mappedRange.isReference,
           isSourceLineBreak: mappedRange.isSourceLineBreak,
+          sourceLineBreakOffset: mappedRange.sourceLineBreakOffset,
         );
       }
       return result;
@@ -782,7 +878,9 @@ class BusyMarkInlineParserContext {
         void collectLineBreaks(BusyInline inline, int textOffset) {
           final inlineRange = mapped.ranges[inline];
           if (inlineRange?.isSourceLineBreak ?? false) {
-            final projected = projection.lineBreakAt(inlineRange!.end - 1);
+            final projected = projection.lineBreakAt(
+              inlineRange!.sourceLineBreakOffset ?? inlineRange.end - 1,
+            );
             if (projected != null) {
               lineBreaks.add(
                 BusyMarkMappedSourceLineBreak(
@@ -819,6 +917,9 @@ class BusyMarkInlineParserContext {
           isAutolink: range.isAutolink,
           isReference: range.isReference,
           isSourceLineBreak: range.isSourceLineBreak,
+          sourceLineBreakOffset: range.sourceLineBreakOffset == null
+              ? null
+              : projection.rawStartFor(range.sourceLineBreakOffset!),
         );
       }
       return BusyMarkMappedInlineParse(inlines: mapped.inlines, ranges: ranges);
@@ -1785,6 +1886,9 @@ class MarkdownAstAdapter {
               node.attributes[_sourceMappingReferenceAttribute] == 'true',
           isSourceLineBreak:
               node.attributes[_sourceMappingLineBreakAttribute] == 'true',
+          sourceLineBreakOffset: int.tryParse(
+            node.attributes[_sourceMappingLineBreakOffsetAttribute] ?? '',
+          ),
         );
       }
     }
