@@ -2638,6 +2638,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
                     markerEnd,
                 lineEnding: lineBreak.lineEnding,
                 continuationPrefix: lineBreak.continuationPrefix,
+                sourceOffset: lineBreak.sourceOffset,
               ),
             );
           }
@@ -2649,35 +2650,27 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
       ...incoming,
       ...after,
     ]);
+    final lineBreakOffsets = {
+      for (final lineBreak in retainedLineBreaks)
+        lineBreak: BusyMarkInlineLineBreakOffset(
+          textOffset: lineBreak.textOffset,
+        ),
+    };
     final serialized = _serializeMappedInlineSequence(
       merged,
       caretTextOffset,
       context,
       authoredWrapper,
+      lineBreakOffsets.values,
     );
-    final serializedLineBreaks = <_SerializedMappedSourceLineBreak>[];
-    for (final lineBreak in retainedLineBreaks) {
-      final afterBreakOffset = _serializeMappedInlineSequence(
-        merged,
-        lineBreak.textOffset + 1,
-        context,
-        authoredWrapper,
-      ).sourceOffset;
-      final mappedOffset = serialized.source.lastIndexOf(
-        '\n',
-        math.max(0, afterBreakOffset - 1),
-      );
-      if (mappedOffset < serialized.source.length &&
-          mappedOffset >= 0 &&
-          serialized.source.codeUnitAt(mappedOffset) == 0x0a) {
-        serializedLineBreaks.add(
+    final serializedLineBreaks = [
+      for (final entry in lineBreakOffsets.entries)
+        if (serialized.lineBreakSourceOffsets[entry.value] case final offset?)
           _SerializedMappedSourceLineBreak(
-            sourceOffset: mappedOffset,
-            lineBreak: lineBreak,
+            sourceOffset: offset,
+            lineBreak: entry.key,
           ),
-        );
-      }
-    }
+    ];
     final restored = _restoreMappedSourceLineBreaks(
       serialized,
       serializedLineBreaks,
@@ -2729,14 +2722,16 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
     List<BusyInline> inlines,
     int caretTextOffset,
     _StructuredSourceInsertionContext context,
-    _MappedSourceInlineWrapper? authoredWrapper,
-  ) {
+    _MappedSourceInlineWrapper? authoredWrapper, [
+    Iterable<BusyMarkInlineLineBreakOffset> lineBreakOffsets = const [],
+  ]) {
     final opening = authoredWrapper?.opening;
     final closing = authoredWrapper?.closing;
     return const BusyMarkMarkdownSerializer()
-        .serializeInlineFragmentAtTextOffset(
+        .serializeInlineFragmentWithOffsets(
           inlines,
           textOffset: caretTextOffset,
+          lineBreakOffsets: lineBreakOffsets,
           tableCell: context.tableCell,
           atBlockStart: context.atBlockStart,
           readableHardBreakRuns: !context.tableCell,

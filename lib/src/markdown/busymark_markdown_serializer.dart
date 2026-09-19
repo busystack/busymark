@@ -6,11 +6,26 @@ class BusyMarkSerializedInlineFragment {
   const BusyMarkSerializedInlineFragment({
     required this.source,
     required this.sourceOffset,
+    this.lineBreakSourceOffsets = const {},
   });
 
   final String source;
   final int sourceOffset;
+  final Map<BusyMarkInlineLineBreakOffset, int> lineBreakSourceOffsets;
 }
+
+class BusyMarkInlineLineBreakOffset {
+  const BusyMarkInlineLineBreakOffset({required this.textOffset});
+
+  final int textOffset;
+}
+
+/// Reports one callback per complete metadata-producing inline traversal.
+///
+/// The value is the emitted source length and is useful for deterministic
+/// regression checks that traversal work remains proportional to the fragment.
+void Function(int emittedCharacters)? debugBusyMarkInlineSerializationTraversal;
+void Function(int visitedNodes)? debugBusyMarkInlineSerializationVisitedNodes;
 
 class BusyMarkInlineDelimiter {
   const BusyMarkInlineDelimiter({required this.opening, required this.closing});
@@ -50,7 +65,7 @@ class BusyMarkMarkdownSerializer {
     bool readableHardBreakRuns = true,
     Map<BusyInlineKind, BusyMarkInlineDelimiter> delimiterOverrides = const {},
   }) {
-    final result = _inlineMarkdownAtTextOffset(
+    return serializeInlineFragmentWithOffsets(
       inlines,
       textOffset: textOffset,
       tableCell: tableCell,
@@ -58,16 +73,80 @@ class BusyMarkMarkdownSerializer {
       readableHardBreakRuns: readableHardBreakRuns,
       delimiterOverrides: delimiterOverrides,
     );
-    if (!tableCell) {
-      return BusyMarkSerializedInlineFragment(
-        source: result.source,
-        sourceOffset: result.sourceOffset!,
-      );
+  }
+
+  BusyMarkSerializedInlineFragment serializeInlineFragmentWithOffsets(
+    List<BusyInline> inlines, {
+    required int textOffset,
+    Iterable<BusyMarkInlineLineBreakOffset> lineBreakOffsets = const [],
+    bool tableCell = false,
+    bool atBlockStart = false,
+    bool readableHardBreakRuns = true,
+    Map<BusyInlineKind, BusyMarkInlineDelimiter> delimiterOverrides = const {},
+  }) {
+    final requestedOffsets = <int>{textOffset};
+    final lineBreaksByBoundary = <int, List<BusyMarkInlineLineBreakOffset>>{};
+    for (final lineBreak in lineBreakOffsets) {
+      final boundary = lineBreak.textOffset + 1;
+      requestedOffsets.add(boundary);
+      lineBreaksByBoundary.putIfAbsent(boundary, () => []).add(lineBreak);
     }
-    final prefix = result.source.substring(0, result.sourceOffset!);
+    final metrics = _InlineTraversalMetrics();
+    var result = _inlineMarkdownAtTextOffsets(
+      inlines,
+      textOffsets: requestedOffsets,
+      tableCell: tableCell,
+      atBlockStart: atBlockStart,
+      readableHardBreakRuns: readableHardBreakRuns,
+      delimiterOverrides: delimiterOverrides,
+      metrics: metrics,
+    );
+    if (tableCell) {
+      result = _escapeTablePipesWithOffsets(result);
+    }
+    final mappedLineBreaks = <BusyMarkInlineLineBreakOffset, int>{};
+    for (final entry in lineBreaksByBoundary.entries) {
+      final sourceOffset = result.lineBreakSourceOffsets[entry.key];
+      if (sourceOffset == null) continue;
+      for (final lineBreak in entry.value) {
+        mappedLineBreaks[lineBreak] = sourceOffset;
+      }
+    }
+    debugBusyMarkInlineSerializationTraversal?.call(result.source.length);
+    debugBusyMarkInlineSerializationVisitedNodes?.call(metrics.visitedNodes);
     return BusyMarkSerializedInlineFragment(
-      source: result.source.replaceAll('|', r'\|'),
-      sourceOffset: prefix.replaceAll('|', r'\|').length,
+      source: result.source,
+      sourceOffset: result.sourceOffsets[textOffset] ?? result.source.length,
+      lineBreakSourceOffsets: Map.unmodifiable(mappedLineBreaks),
+    );
+  }
+
+  _InlineSerialization _escapeTablePipesWithOffsets(
+    _InlineSerialization serialization,
+  ) {
+    final requested = <int>{
+      ...serialization.sourceOffsets.values,
+      ...serialization.lineBreakSourceOffsets.values,
+    };
+    final translated = <int, int>{};
+    final source = StringBuffer();
+    for (var index = 0; index <= serialization.source.length; index++) {
+      if (requested.contains(index)) translated[index] = source.length;
+      if (index == serialization.source.length) break;
+      final character = serialization.source[index];
+      if (character == '|') source.write(r'\');
+      source.write(character);
+    }
+    return _InlineSerialization(
+      source: source.toString(),
+      sourceOffsets: {
+        for (final entry in serialization.sourceOffsets.entries)
+          entry.key: translated[entry.value]!,
+      },
+      lineBreakSourceOffsets: {
+        for (final entry in serialization.lineBreakSourceOffsets.entries)
+          entry.key: translated[entry.value]!,
+      },
     );
   }
 
@@ -524,25 +603,33 @@ class BusyMarkMarkdownSerializer {
         .replaceAll('>', '&gt;');
   }
 
-  _InlineSerialization _inlineMarkdownAtTextOffset(
+  _InlineSerialization _inlineMarkdownAtTextOffsets(
     List<BusyInline> inlines, {
-    required int textOffset,
+    required Set<int> textOffsets,
     required bool tableCell,
     required bool atBlockStart,
     required bool readableHardBreakRuns,
     required Map<BusyInlineKind, BusyMarkInlineDelimiter> delimiterOverrides,
+    required _InlineTraversalMetrics metrics,
   }) {
     final totalTextLength = inlines.fold<int>(
       0,
       (length, inline) => length + inline.plainText.length,
     );
-    final target = textOffset.clamp(0, totalTextLength).toInt();
+    final targets = {
+      for (final offset in textOffsets)
+        offset.clamp(0, totalTextLength).toInt(),
+    };
     final buffer = StringBuffer();
     var consumedText = 0;
-    int? sourceOffset;
+    final sourceOffsets = <int, int>{};
+    final lineBreakSourceOffsets = <int, int>{};
     var nextAtBlockStart = atBlockStart;
+    final sortedTargets = targets.toList()..sort();
+    var targetCursor = 0;
     for (var index = 0; index < inlines.length; index++) {
       final inline = inlines[index];
+      metrics.visitedNodes += 1;
       if (inline.kind == BusyInlineKind.hardBreak) {
         var runEnd = index + 1;
         while (runEnd < inlines.length &&
@@ -550,6 +637,7 @@ class BusyMarkMarkdownSerializer {
           runEnd += 1;
         }
         final run = inlines.sublist(index, runEnd);
+        metrics.visitedNodes += run.length - 1;
         final runTextLength = run.fold<int>(
           0,
           (length, item) => length + item.plainText.length,
@@ -562,11 +650,19 @@ class BusyMarkMarkdownSerializer {
           nextAtBlockStart: nextAtBlockStart,
           readableHardBreakRuns: readableHardBreakRuns,
         );
-        if (sourceOffset == null && target >= consumedText) {
+        while (targetCursor < sortedTargets.length &&
+            sortedTargets[targetCursor] <= consumedText + runTextLength) {
+          final target = sortedTargets[targetCursor++];
           if (target == consumedText) {
-            sourceOffset = buffer.length;
+            sourceOffsets[target] = buffer.length;
           } else if (target <= consumedText + runTextLength) {
-            sourceOffset = buffer.length + runSource.length;
+            sourceOffsets[target] = buffer.length + runSource.length;
+            if (run.length == 1 &&
+                target == consumedText + runTextLength &&
+                runSource.endsWith('\n')) {
+              lineBreakSourceOffsets[target] =
+                  buffer.length + runSource.length - 1;
+            }
           }
         }
         buffer.write(runSource);
@@ -576,13 +672,14 @@ class BusyMarkMarkdownSerializer {
         continue;
       }
       final length = inline.plainText.length;
-      final localOffset =
-          target >= consumedText && target <= consumedText + length
-          ? target - consumedText
-          : null;
-      final result = _inlineAtTextOffset(
+      final localOffsets = <int>{};
+      while (targetCursor < sortedTargets.length &&
+          sortedTargets[targetCursor] <= consumedText + length) {
+        localOffsets.add(sortedTargets[targetCursor++] - consumedText);
+      }
+      final result = _inlineAtTextOffsets(
         inline,
-        textOffset: localOffset,
+        textOffsets: localOffsets,
         tableCell: tableCell,
         atBlockStart: nextAtBlockStart,
         readableHardBreakRuns: readableHardBreakRuns,
@@ -590,9 +687,17 @@ class BusyMarkMarkdownSerializer {
             index + 1 < inlines.length &&
             inlines[index + 1].kind == BusyInlineKind.link,
         delimiterOverrides: delimiterOverrides,
+        metrics: metrics,
       );
-      if (sourceOffset == null && result.sourceOffset != null) {
-        sourceOffset = buffer.length + result.sourceOffset!;
+      for (final entry in result.sourceOffsets.entries) {
+        sourceOffsets.putIfAbsent(
+          consumedText + entry.key,
+          () => buffer.length + entry.value,
+        );
+      }
+      for (final entry in result.lineBreakSourceOffsets.entries) {
+        lineBreakSourceOffsets[consumedText + entry.key] =
+            buffer.length + entry.value;
       }
       buffer.write(result.source);
       consumedText += length;
@@ -602,30 +707,38 @@ class BusyMarkMarkdownSerializer {
     }
     return _InlineSerialization(
       source: buffer.toString(),
-      sourceOffset: sourceOffset ?? buffer.length,
+      sourceOffsets: {
+        for (final target in targets)
+          target: sourceOffsets[target] ?? buffer.length,
+      },
+      lineBreakSourceOffsets: lineBreakSourceOffsets,
     );
   }
 
-  _InlineSerialization _inlineAtTextOffset(
+  _InlineSerialization _inlineAtTextOffsets(
     BusyInline inline, {
-    required int? textOffset,
+    required Set<int> textOffsets,
     required bool tableCell,
     required bool atBlockStart,
     required bool readableHardBreakRuns,
     required bool followedByLink,
     required Map<BusyInlineKind, BusyMarkInlineDelimiter> delimiterOverrides,
+    required _InlineTraversalMetrics metrics,
   }) {
     final length = inline.plainText.length;
-    final target = textOffset?.clamp(0, length).toInt();
+    final targets = {
+      for (final offset in textOffsets) offset.clamp(0, length).toInt(),
+    };
     final childResult = inline.children.isEmpty
         ? null
-        : _inlineMarkdownAtTextOffset(
+        : _inlineMarkdownAtTextOffsets(
             inline.children,
-            textOffset: target ?? 0,
+            textOffsets: targets,
             tableCell: tableCell,
             atBlockStart: false,
             readableHardBreakRuns: readableHardBreakRuns,
             delimiterOverrides: delimiterOverrides,
+            metrics: metrics,
           );
     final children = inline.children.isEmpty
         ? _escapeInlineText(inline.text, atBlockStart: atBlockStart)
@@ -659,38 +772,60 @@ class BusyMarkMarkdownSerializer {
       BusyInlineKind.writersideVariable => '%${inline.text}%',
       BusyInlineKind.html || BusyInlineKind.unknown => inline.text,
     };
-    if (target == null) {
-      return _InlineSerialization(source: source);
+    final escapedTextOffsets = inline.kind == BusyInlineKind.text
+        ? _escapedInlineTextOffsets(
+            inline.text,
+            targets,
+            atBlockStart: atBlockStart,
+            escapeTrailingBang: followedByLink,
+          )
+        : const <int, int>{};
+    final openingLength =
+        delimiter?.opening.length ??
+        switch (inline.kind) {
+          BusyInlineKind.strong || BusyInlineKind.strikethrough => 2,
+          BusyInlineKind.underline => 3,
+          BusyInlineKind.emphasis => 1,
+          _ => 0,
+        };
+    final sourceOffsets = <int, int>{};
+    for (final target in targets) {
+      sourceOffsets[target] = target == 0
+          ? 0
+          : target == length
+          ? source.length
+          : switch (inline.kind) {
+              BusyInlineKind.text => escapedTextOffsets[target]!,
+              BusyInlineKind.strong ||
+              BusyInlineKind.emphasis ||
+              BusyInlineKind.underline ||
+              BusyInlineKind.strikethrough =>
+                openingLength + (childResult?.sourceOffsets[target] ?? 0),
+              BusyInlineKind.link =>
+                1 + (childResult?.sourceOffsets[target] ?? 0),
+              _ => source.length,
+            };
     }
-    if (target == 0) {
-      return _InlineSerialization(source: source, sourceOffset: 0);
+    final lineBreakSourceOffsets = <int, int>{};
+    if (inline.kind == BusyInlineKind.text) {
+      for (final target in targets) {
+        if (target > 0 && inline.text.codeUnitAt(target - 1) == 0x0a) {
+          lineBreakSourceOffsets[target] = sourceOffsets[target]! - 1;
+        }
+      }
+    } else if (childResult != null) {
+      final childOpeningLength = inline.kind == BusyInlineKind.link
+          ? 1
+          : openingLength;
+      for (final entry in childResult.lineBreakSourceOffsets.entries) {
+        lineBreakSourceOffsets[entry.key] = childOpeningLength + entry.value;
+      }
     }
-    if (target == length) {
-      return _InlineSerialization(source: source, sourceOffset: source.length);
-    }
-    final childOffset = childResult?.sourceOffset;
-    final sourceOffset = switch (inline.kind) {
-      BusyInlineKind.text => _escapedInlineTextOffset(
-        inline.text,
-        target,
-        atBlockStart: atBlockStart,
-        escapeTrailingBang: followedByLink,
-      ),
-      BusyInlineKind.strong ||
-      BusyInlineKind.emphasis ||
-      BusyInlineKind.underline ||
-      BusyInlineKind.strikethrough =>
-        (delimiter?.opening.length ??
-                switch (inline.kind) {
-                  BusyInlineKind.strong || BusyInlineKind.strikethrough => 2,
-                  BusyInlineKind.underline => 3,
-                  _ => 1,
-                }) +
-            (childOffset ?? 0),
-      BusyInlineKind.link => 1 + (childOffset ?? 0),
-      _ => source.length,
-    };
-    return _InlineSerialization(source: source, sourceOffset: sourceOffset);
+    return _InlineSerialization(
+      source: source,
+      sourceOffsets: sourceOffsets,
+      lineBreakSourceOffsets: lineBreakSourceOffsets,
+    );
   }
 
   String _hardBreakRunSource({
@@ -719,9 +854,9 @@ class BusyMarkMarkdownSerializer {
     return buffer.toString();
   }
 
-  int _escapedInlineTextOffset(
+  Map<int, int> _escapedInlineTextOffsets(
     String value,
-    int offset, {
+    Set<int> offsets, {
     required bool atBlockStart,
     required bool escapeTrailingBang,
   }) {
@@ -729,8 +864,16 @@ class BusyMarkMarkdownSerializer {
       value,
       atBlockStart: atBlockStart,
     );
+    final targets = offsets.toList()..sort();
+    final result = <int, int>{};
     var sourceOffset = 0;
-    for (var index = 0; index < offset; index++) {
+    var targetIndex = 0;
+    for (var index = 0; index <= value.length; index++) {
+      while (targetIndex < targets.length && targets[targetIndex] == index) {
+        result[targets[targetIndex]] = sourceOffset;
+        targetIndex += 1;
+      }
+      if (index == value.length) break;
       final unit = value.codeUnitAt(index);
       if (_inlineSyntaxCharacters.contains(unit) ||
           (escapeTrailingBang && unit == 0x21 && index == value.length - 1) ||
@@ -739,7 +882,7 @@ class BusyMarkMarkdownSerializer {
       }
       sourceOffset += 1;
     }
-    return sourceOffset;
+    return result;
   }
 
   String _inlineMarkdown(
@@ -1020,10 +1163,19 @@ class BusyMarkMarkdownSerializer {
 }
 
 class _InlineSerialization {
-  const _InlineSerialization({required this.source, this.sourceOffset});
+  const _InlineSerialization({
+    required this.source,
+    this.sourceOffsets = const {},
+    this.lineBreakSourceOffsets = const {},
+  });
 
   final String source;
-  final int? sourceOffset;
+  final Map<int, int> sourceOffsets;
+  final Map<int, int> lineBreakSourceOffsets;
+}
+
+class _InlineTraversalMetrics {
+  int visitedNodes = 0;
 }
 
 extension _FirstOrNull<T> on Iterable<T> {

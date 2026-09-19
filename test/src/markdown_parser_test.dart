@@ -191,7 +191,7 @@ void main() {
 
   test('inline source mapping uses parser case folding for references', () {
     const marker = '\ue000';
-    const original = '[stra\u00dfe][]\n\n[STRASSE]: https://destination.test\n';
+    const original = '[STRA\u1e9eE][]\n\n[STRASSE]: https://destination.test\n';
     final parsed = parser.parse(
       filePath: 'case-folded.md',
       source: original,
@@ -207,7 +207,7 @@ void main() {
     );
 
     final mapped = context.parseMapped(
-      '[stra$marker\u00dfe][]',
+      '[STRA$marker\u1e9eE][]',
       ignoredReferenceLabelMarkers: const [marker],
     );
 
@@ -215,6 +215,74 @@ void main() {
     expect(link.kind, BusyInlineKind.link);
     expect(link.destination, 'https://destination.test');
     expect(link.attributes['href'], 'https://destination.test');
+  });
+
+  test(
+    'ordinary reference parsing retains pinned sharp-S folding behavior',
+    () {
+      for (final link in const ['[STRA\u1e9eE][]', '[STRA\u1e9eE]']) {
+        final parsed = parser.parse(
+          filePath: 'case-folded.md',
+          source: '$link\n\n[STRASSE]: https://destination.test\n',
+          validateLocalReferences: false,
+        );
+        expect(
+          parsed.busyDocument.blocks.first.inlines.single.destination,
+          'https://destination.test',
+          reason: link,
+        );
+      }
+
+      final unsupported = parser.parse(
+        filePath: 'case-folded.md',
+        source: '[stra\u00dfe][]\n\n[STRASSE]: https://destination.test\n',
+        validateLocalReferences: false,
+      );
+      expect(
+        unsupported.busyDocument.blocks.first.inlines.single.kind,
+        BusyInlineKind.text,
+      );
+    },
+  );
+
+  test('invalid email-like text cannot orphan a later mapped link', () {
+    const marker = '\ue000';
+    for (final original in const [
+      'Before <x@-y> and <https://example.test/leftright> after',
+      'Before <https://example.test/leftright> and <x@-y> after',
+      'Before <https://example.test/leftright> and '
+          '<https://example.test/leftright> after',
+    ]) {
+      final target = original.indexOf('leftright');
+      final marked = original.replaceRange(target + 4, target + 4, marker);
+      final context = const MarkdownAstAdapter().createInlineParserContext(
+        documentSource: original,
+        mode: MarkdownMode.commonMark,
+      );
+      final mapped = context.parseMapped(
+        marked,
+        ignoredReferenceLabelMarkers: const [marker],
+      );
+      final links = mapped.inlines
+          .where((inline) => inline.kind == BusyInlineKind.link)
+          .toList();
+      final selected = links.singleWhere(
+        (inline) => inline.plainText.contains(marker),
+      );
+      expect(
+        mapped.ranges[selected]?.originalInline?.destination,
+        'https://example.test/leftright',
+        reason: original,
+      );
+      expect(
+        mapped.inlines.map((inline) => inline.plainText).join(),
+        marked.replaceAllMapped(
+          RegExp(r'<(https://example\.test/[^>]*)>'),
+          (match) => match[1]!,
+        ),
+        reason: original,
+      );
+    }
   });
 
   test('block inline mapping projects logical content to container source', () {
@@ -263,6 +331,90 @@ void main() {
       crlfMapped.ranges[crlfLink]?.lineBreaks.single.continuationPrefix,
       '> ',
     );
+  });
+
+  test('block inline mapping ignores title and code-span source breaks', () {
+    const marker = '\ue000';
+    const titleSource =
+        '> [left$marker\n'
+        '> middle\r\n'
+        '> right](https://destination.test "first\n'
+        '> second")';
+    final titleContext = const MarkdownAstAdapter().createInlineParserContext(
+      documentSource: titleSource.replaceAll(marker, ''),
+      mode: MarkdownMode.commonMark,
+    );
+    final titleMapped = titleContext.parseMappedBlock(
+      titleSource,
+      sourceStart: 0,
+      sourceEnd: titleSource.length,
+      ignoredReferenceLabelMarkers: const [marker],
+    )!;
+    final titleLink = titleMapped.inlines.single;
+    expect(titleLink.attributes['title'], 'first\nsecond');
+    expect(titleMapped.ranges[titleLink]?.lineBreaks, hasLength(2));
+    expect(
+      titleMapped.ranges[titleLink]?.lineBreaks.map(
+        (value) => value.lineEnding,
+      ),
+      ['\n', '\r\n'],
+    );
+    expect(
+      titleMapped.ranges[titleLink]?.lineBreaks.map(
+        (value) => value.sourceOffset,
+      ),
+      [titleSource.indexOf('\n'), titleSource.indexOf('\r\n')],
+    );
+
+    const multipleTitleSource =
+        '> [left$marker\r\n'
+        '> right](https://destination.test "first\n'
+        '> second\r\n'
+        '> third")';
+    final multipleTitleContext = const MarkdownAstAdapter()
+        .createInlineParserContext(
+          documentSource: multipleTitleSource.replaceAll(marker, ''),
+          mode: MarkdownMode.commonMark,
+        );
+    final multipleTitleMapped = multipleTitleContext.parseMappedBlock(
+      multipleTitleSource,
+      sourceStart: 0,
+      sourceEnd: multipleTitleSource.length,
+      ignoredReferenceLabelMarkers: const [marker],
+    )!;
+    final multipleTitleLink = multipleTitleMapped.inlines.single;
+    expect(multipleTitleLink.attributes['title'], 'first\nsecond\nthird');
+    expect(
+      multipleTitleMapped.ranges[multipleTitleLink]?.lineBreaks,
+      hasLength(1),
+    );
+    expect(
+      multipleTitleMapped
+          .ranges[multipleTitleLink]
+          ?.lineBreaks
+          .single
+          .lineEnding,
+      '\r\n',
+    );
+
+    const codeSource =
+        '> [left `code\n'
+        '> span`$marker middle\r\n'
+        '> right](https://destination.test)';
+    final codeContext = const MarkdownAstAdapter().createInlineParserContext(
+      documentSource: codeSource.replaceAll(marker, ''),
+      mode: MarkdownMode.commonMark,
+    );
+    final codeMapped = codeContext.parseMappedBlock(
+      codeSource,
+      sourceStart: 0,
+      sourceEnd: codeSource.length,
+      ignoredReferenceLabelMarkers: const [marker],
+    )!;
+    final codeLink = codeMapped.inlines.single;
+    expect(codeLink.plainText, 'left code span$marker middle\nright');
+    expect(codeMapped.ranges[codeLink]?.lineBreaks, hasLength(1));
+    expect(codeMapped.ranges[codeLink]?.lineBreaks.single.lineEnding, '\r\n');
   });
 
   test('extracts title, outline, links, images, and code fences', () {
