@@ -18,6 +18,68 @@ import '../support/memory_rich_clipboard.dart';
 void main() {
   const parser = MarkdownParser();
 
+  test('complete blocks inserted in list content retain every descendant', () {
+    final insertedSources = [
+      '## Heading\n',
+      '- Inserted\n',
+      '```text\ncode\n```\n',
+    ];
+    for (final insertedSource in insertedSources) {
+      final insertedBlock = parser
+          .parse(filePath: 'clip.md', source: insertedSource)
+          .busyDocument
+          .blocks
+          .single;
+      for (final offset in [0, 3, 6]) {
+        final original = parser
+            .parse(
+              filePath: 'topic.md',
+              source: '- Parent\n  - Child\n    - Grandchild\n',
+            )
+            .busyDocument;
+        final root = original.blocks.single;
+        final childId = root.children.single.id;
+        final controller = BusyMarkWysiwygDocumentController(
+          document: original,
+        );
+        final result = controller.insertStyledBlocksAtSelection(
+          blockId: root.id,
+          selectionStart: offset,
+          selectionEnd: offset,
+          blocks: [
+            BusyWysiwygStyledBlock(
+              kind: insertedBlock.kind,
+              text: insertedBlock.plainText,
+              ranges: const [],
+              attributes: insertedBlock.attributes,
+              completeBlock: busyMarkWysiwygImmutableBlockSnapshot(
+                insertedBlock,
+              ),
+            ),
+          ],
+        );
+
+        expect(result, isNotNull);
+        final updated = controller.document.blocks.single;
+        expect(updated.id, root.id);
+        expect(
+          updated.children.where((block) => block.id == childId),
+          hasLength(1),
+        );
+        expect(updated.children.last.id, childId);
+        expect(updated.children.last.children.single.plainText, 'Grandchild');
+        expect(
+          updated.children.where(
+            (block) =>
+                block.kind == insertedBlock.kind &&
+                block.plainText == insertedBlock.plainText,
+          ),
+          hasLength(1),
+        );
+      }
+    }
+  });
+
   test(
     'generic block commands cannot convert tables or preserved raw blocks',
     () {

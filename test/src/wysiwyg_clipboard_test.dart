@@ -562,6 +562,71 @@ void main() {
       },
     );
 
+    testWidgets(
+      'complete blocks in list items preserve descendants and undo tree',
+      (tester) async {
+        final registry = BusyMarkClipboardInsertionRegistry();
+        addTearDown(registry.dispose);
+        const original = '- Parent\n  - Child\n';
+        for (final insertedSource in [
+          '## Heading\n',
+          '- Inserted\n',
+          '```text\ncode\n```\n',
+        ]) {
+          final fragment = _fragment(insertedSource);
+          for (final offset in [0, 3, 6]) {
+            var result = original;
+            await mount(
+              tester,
+              'nested-${insertedSource.hashCode}-$offset',
+              result,
+              (value) => result = value,
+              registry: registry,
+            );
+            final field = tester.widget<TextField>(
+              find.byType(TextField).first,
+            );
+            field.focusNode!.requestFocus();
+            field.controller!.selection = TextSelection.collapsed(
+              offset: offset,
+            );
+
+            expect(
+              await registry.paste(
+                BusyMarkClipboardPayload(
+                  id: 'nested-${insertedSource.hashCode}-$offset',
+                  acquiredAt: DateTime.utc(2026),
+                  kind: BusyMarkClipboardContentKind.richText,
+                  text: insertedSource,
+                  richFragment: fragment.encode(),
+                ),
+              ),
+              ClipboardPasteResult.inserted,
+            );
+            await tester.pump();
+
+            final root = _parser
+                .parse(
+                  filePath: '/destination.md',
+                  source: result,
+                  validateLocalReferences: false,
+                )
+                .busyDocument
+                .blocks
+                .single;
+            expect(root.kind, BusyBlockKind.unorderedListItem);
+            expect(
+              root.children.where((block) => block.plainText == 'Child'),
+              hasLength(1),
+              reason: result,
+            );
+            await key(tester, LogicalKeyboardKey.keyZ);
+            expect(result, original);
+          }
+        }
+      },
+    );
+
     testWidgets('copy all does not duplicate nested list children', (
       tester,
     ) async {

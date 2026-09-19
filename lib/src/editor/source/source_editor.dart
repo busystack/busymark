@@ -32,7 +32,6 @@ import '../clipboard_paste_resolver.dart';
 import '../clipboard_local_image_path.dart';
 import '../editor_text_context_menu.dart';
 import '../wysiwyg/wysiwyg_clipboard_fragment.dart';
-import '../wysiwyg/wysiwyg_document_controller.dart';
 import '../source_folding.dart';
 import 'source_commands.dart';
 import 'source_controller.dart';
@@ -2083,6 +2082,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
           serialized.text,
           replacementStart: serialized.start,
           replacementEnd: serialized.end,
+          resultingSelectionOffset: serialized.caretOffset,
         );
         if (result != ClipboardPasteResult.inserted) {
           await _deleteUncommittedClipboardAssets(assets);
@@ -2177,35 +2177,17 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
         destinationFilePath: target.filePath ?? '',
         atBlockStart: context.atBlockStart,
       );
-      return serialized.isEmpty
-          ? null
-          : _SourceClipboardInsertion(
-              start: context.start,
-              end: context.end,
-              text: serialized,
-            );
+      if (serialized.isEmpty) return null;
+      return _reconcileStructuredInlineInsertion(target, context, serialized);
     }
     if (fragment.isInlineSourceFragment) {
-      if (context.requiresInlineRewrite) {
-        final rewritten = _rewriteStructuredInlineInsertion(
-          target,
-          fragment,
-          context,
-        );
-        if (rewritten != null) return rewritten;
-      }
       final serialized = fragment.serializeInlineFor(
         destinationMode: target.markdownMode,
         destinationFilePath: target.filePath ?? '',
         atBlockStart: context.atBlockStart,
       );
-      return serialized.isEmpty
-          ? null
-          : _SourceClipboardInsertion(
-              start: context.start,
-              end: context.end,
-              text: serialized,
-            );
+      if (serialized.isEmpty) return null;
+      return _reconcileStructuredInlineInsertion(target, context, serialized);
     }
     final serialized = fragment.serializeFor(
       destinationMode: target.markdownMode,
@@ -2254,62 +2236,127 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
     );
   }
 
-  _SourceClipboardInsertion? _rewriteStructuredInlineInsertion(
+  _SourceClipboardInsertion _reconcileStructuredInlineInsertion(
     _SourceClipboardOperationTarget target,
-    WysiwygClipboardFragment fragment,
     _StructuredSourceInsertionContext context,
+    String serialized,
   ) {
-    final markedDocument = context.markedDocument;
-    final markerBlockId = context.markerBlockId;
-    final markerOffset = context.markerTextOffset;
-    if (markedDocument == null ||
-        markerBlockId == null ||
-        markerOffset == null) {
-      return null;
-    }
-    final controller = BusyMarkWysiwygDocumentController(
-      document: markedDocument,
-    );
-    final result = controller.insertStyledBlocksAtSelection(
-      blockId: markerBlockId,
-      selectionStart: markerOffset,
-      selectionEnd: markerOffset + context.marker.length,
-      blocks: fragment.blocks,
-    );
-    if (result == null) {
-      controller.dispose();
-      return null;
-    }
-    final updated = controller.markdown;
-    controller.dispose();
-    if (updated.contains(context.marker)) return null;
-    return _minimalSourceInsertion(target.text, updated);
-  }
-
-  _SourceClipboardInsertion _minimalSourceInsertion(
-    String original,
-    String updated,
-  ) {
-    var start = 0;
-    final shortest = math.min(original.length, updated.length);
-    while (start < shortest &&
-        original.codeUnitAt(start) == updated.codeUnitAt(start)) {
-      start += 1;
-    }
-    var originalEnd = original.length;
-    var updatedEnd = updated.length;
-    while (originalEnd > start &&
-        updatedEnd > start &&
-        original.codeUnitAt(originalEnd - 1) ==
-            updated.codeUnitAt(updatedEnd - 1)) {
-      originalEnd -= 1;
-      updatedEnd -= 1;
+    final source = target.text;
+    final wrapper = _outerInlineDelimiter(serialized);
+    if (wrapper != null) {
+      final inner = serialized.substring(
+        wrapper.length,
+        serialized.length - wrapper.length,
+      );
+      // Joining three adjacent runs is local and retains the authored outer
+      // delimiters (including underscore style) on the destination runs.
+      final adjacentDelimiter = _adjacentEquivalentDelimiter(
+        source,
+        context.start,
+        wrapper,
+      );
+      if (context.start == context.end && adjacentDelimiter != null) {
+        return _SourceClipboardInsertion(
+          start: context.start - adjacentDelimiter.length,
+          end: context.end + adjacentDelimiter.length,
+          text: inner,
+          caretOffset: context.start - adjacentDelimiter.length + inner.length,
+        );
+      }
+      if (_equivalentEnclosingDelimiter(source, context.start, wrapper) !=
+              null &&
+          _equivalentEnclosingDelimiter(source, context.end, wrapper) != null) {
+        return _SourceClipboardInsertion(
+          start: context.start,
+          end: context.end,
+          text: inner,
+          caretOffset: context.start + inner.length,
+        );
+      }
     }
     return _SourceClipboardInsertion(
-      start: start,
-      end: originalEnd,
-      text: updated.substring(start, updatedEnd),
+      start: context.start,
+      end: context.end,
+      text: serialized,
+      caretOffset: context.start + serialized.length,
     );
+  }
+
+  Iterable<String> _equivalentInlineDelimiters(String delimiter) =>
+      switch (delimiter) {
+        '**' || '__' => const ['**', '__'],
+        '*' || '_' => const ['*', '_'],
+        _ => [delimiter],
+      };
+
+  String? _adjacentEquivalentDelimiter(
+    String source,
+    int offset,
+    String insertedDelimiter,
+  ) {
+    for (final delimiter in _equivalentInlineDelimiters(insertedDelimiter)) {
+      if (offset >= delimiter.length &&
+          offset + delimiter.length <= source.length &&
+          source.substring(offset - delimiter.length, offset) == delimiter &&
+          source.substring(offset, offset + delimiter.length) == delimiter) {
+        return delimiter;
+      }
+    }
+    return null;
+  }
+
+  String? _equivalentEnclosingDelimiter(
+    String source,
+    int offset,
+    String insertedDelimiter,
+  ) {
+    for (final delimiter in _equivalentInlineDelimiters(insertedDelimiter)) {
+      if (_sourceOffsetIsInsideDelimiterRun(source, offset, delimiter)) {
+        return delimiter;
+      }
+    }
+    return null;
+  }
+
+  String? _outerInlineDelimiter(String source) {
+    for (final delimiter in const ['**', '__', '~~', '*', '_']) {
+      if (source.length >= delimiter.length * 2 &&
+          source.startsWith(delimiter) &&
+          source.endsWith(delimiter)) {
+        return delimiter;
+      }
+    }
+    return null;
+  }
+
+  bool _sourceOffsetIsInsideDelimiterRun(
+    String source,
+    int offset,
+    String delimiter,
+  ) {
+    final lineStart = source.lastIndexOf('\n', math.max(0, offset - 1)) + 1;
+    final lineEndValue = source.indexOf('\n', offset);
+    final lineEnd = lineEndValue < 0 ? source.length : lineEndValue;
+    final before = source.substring(lineStart, offset);
+    final after = source.substring(offset, lineEnd);
+    final opening = before.lastIndexOf(delimiter);
+    if (opening < 0) return false;
+    final closing = after.indexOf(delimiter);
+    if (closing < 0) return false;
+    return !_sourceDelimiterIsEscaped(before, opening) &&
+        !_sourceDelimiterIsEscaped(after, closing);
+  }
+
+  bool _sourceDelimiterIsEscaped(String source, int offset) {
+    var slashes = 0;
+    for (
+      var index = offset - 1;
+      index >= 0 && source.codeUnitAt(index) == 0x5c;
+      index--
+    ) {
+      slashes++;
+    }
+    return slashes.isOdd;
   }
 
   _StructuredSourceInsertionContext _structuredSourceInsertionContext(
@@ -2382,11 +2429,6 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
         partialTableSelection || (survivingTable && originalCell == null);
     final atBlockStart = markerOffset == null || markerOffset == 0;
     final prefixes = _sourceContainerPrefixes(markedSource, start, path ?? []);
-    final hasStyledInline =
-        markerBlock?.inlines.any(
-          (inline) => _sourceInlineContainsFormatting(inline),
-        ) ??
-        false;
     return _StructuredSourceInsertionContext(
       start: start,
       end: end,
@@ -2402,12 +2444,6 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
           markerOffset != null &&
           markerBlock != null &&
           markerOffset + marker.length < markerBlock.plainText.length,
-      markedDocument: marked.busyDocument,
-      markerBlockId: markerBlock?.id,
-      markerTextOffset: markerOffset == null || markerOffset < 0
-          ? null
-          : markerOffset,
-      requiresInlineRewrite: hasStyledInline,
     );
   }
 
@@ -2503,51 +2539,76 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
           block.kind,
     ];
     if (containerKinds.isEmpty) return (continuation: '', blank: '');
-    final lineStart =
-        source.lastIndexOf('\n', math.max(0, markerOffset - 1)) + 1;
-    final lineEndValue = source.indexOf('\n', markerOffset);
-    final lineEnd = lineEndValue < 0 ? source.length : lineEndValue;
-    final line = source.substring(lineStart, lineEnd);
-    var cursor = 0;
-    final continuation = StringBuffer();
-    for (final kind in containerKinds) {
-      if (kind == BusyBlockKind.blockquote) {
-        final start = cursor;
-        var spaces = 0;
-        while (cursor < line.length &&
-            spaces < 3 &&
-            line.codeUnitAt(cursor) == 0x20) {
+    ({String value, int count}) parseLine(String line) {
+      var cursor = 0;
+      var count = 0;
+      final continuation = StringBuffer();
+      for (final kind in containerKinds) {
+        if (kind == BusyBlockKind.blockquote) {
+          final start = cursor;
+          var spaces = 0;
+          while (cursor < line.length &&
+              spaces < 3 &&
+              line.codeUnitAt(cursor) == 0x20) {
+            cursor += 1;
+            spaces += 1;
+          }
+          if (cursor >= line.length || line.codeUnitAt(cursor) != 0x3e) {
+            cursor = start;
+            break;
+          }
           cursor += 1;
-          spaces += 1;
-        }
-        if (cursor >= line.length || line.codeUnitAt(cursor) != 0x3e) {
-          cursor = start;
+          if (cursor < line.length &&
+              (line.codeUnitAt(cursor) == 0x20 ||
+                  line.codeUnitAt(cursor) == 0x09)) {
+            cursor += 1;
+          }
+          continuation.write(line.substring(start, cursor));
+          count++;
           continue;
         }
-        cursor += 1;
-        if (cursor < line.length &&
+        final start = cursor;
+        while (cursor < line.length &&
             (line.codeUnitAt(cursor) == 0x20 ||
                 line.codeUnitAt(cursor) == 0x09)) {
           cursor += 1;
         }
-        continuation.write(line.substring(start, cursor));
-        continue;
+        final markerEnd = _consumeSourceListMarker(line, cursor);
+        if (markerEnd == null) {
+          cursor = start;
+          break;
+        }
+        cursor = markerEnd;
+        continuation.write(' ' * (cursor - start));
+        count++;
       }
-      final start = cursor;
-      while (cursor < line.length &&
-          (line.codeUnitAt(cursor) == 0x20 ||
-              line.codeUnitAt(cursor) == 0x09)) {
-        cursor += 1;
-      }
-      final markerEnd = _consumeSourceListMarker(line, cursor);
-      if (markerEnd == null) {
-        cursor = start;
-        continue;
-      }
-      cursor = markerEnd;
-      continuation.write(' ' * (cursor - start));
+      return (value: continuation.toString(), count: count);
     }
-    final value = continuation.toString();
+
+    final currentLineStart =
+        source.lastIndexOf('\n', math.max(0, markerOffset - 1)) + 1;
+    final currentLineEndValue = source.indexOf('\n', markerOffset);
+    final currentLineEnd = currentLineEndValue < 0
+        ? source.length
+        : currentLineEndValue;
+    var best = parseLine(source.substring(currentLineStart, currentLineEnd));
+
+    // Continuation and lazy-quote lines need not repeat their ancestors'
+    // opening markers. Search only within the surviving outer container and
+    // recover the exact authored marker widths from an opening line.
+    // Nested list adapters can attach the continuation paragraph's span to
+    // the modeled item. Walk backward to the nearest line that spells all
+    // ancestors instead of treating that child span as the container start.
+    const outerStart = 0;
+    var scanEnd = currentLineStart > 0 ? currentLineStart - 1 : 0;
+    while (best.count < containerKinds.length && scanEnd >= outerStart) {
+      final scanStart = source.lastIndexOf('\n', math.max(0, scanEnd - 1)) + 1;
+      final candidate = parseLine(source.substring(scanStart, scanEnd));
+      if (candidate.count > best.count) best = candidate;
+      if (candidate.count == containerKinds.length || scanStart == 0) break;
+      scanEnd = scanStart - 1;
+    }
+    final value = best.value;
     return (continuation: value, blank: value.trimRight());
   }
 
@@ -2603,10 +2664,6 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
     }
     return cursor;
   }
-
-  bool _sourceInlineContainsFormatting(BusyInline inline) =>
-      inline.kind != BusyInlineKind.text ||
-      inline.children.any(_sourceInlineContainsFormatting);
 
   int _leadingLineBreaks(String value) {
     var count = 0;
@@ -2855,6 +2912,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
     String text, {
     int? replacementStart,
     int? replacementEnd,
+    int? resultingSelectionOffset,
   }) {
     if (!_isClipboardTargetCurrent(target)) {
       return ClipboardPasteResult.staleTarget;
@@ -2871,7 +2929,9 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
     _applyFullEditingValue(
       TextEditingValue(
         text: target.text.replaceRange(start, end, text),
-        selection: TextSelection.collapsed(offset: start + text.length),
+        selection: TextSelection.collapsed(
+          offset: resultingSelectionOffset ?? start + text.length,
+        ),
       ),
       origin: _SourceEditOrigin.paste,
     );
@@ -3872,10 +3932,6 @@ class _StructuredSourceInsertionContext {
     this.containerBlankPrefix = '',
     this.hasContainerContentBefore = false,
     this.hasContainerContentAfter = false,
-    this.markedDocument,
-    this.markerBlockId,
-    this.markerTextOffset,
-    this.requiresInlineRewrite = false,
   });
 
   final int start;
@@ -3889,10 +3945,6 @@ class _StructuredSourceInsertionContext {
   final String containerBlankPrefix;
   final bool hasContainerContentBefore;
   final bool hasContainerContentAfter;
-  final BusyDocument? markedDocument;
-  final String? markerBlockId;
-  final int? markerTextOffset;
-  final bool requiresInlineRewrite;
 }
 
 class _SourceClipboardInsertion {
@@ -3900,11 +3952,13 @@ class _SourceClipboardInsertion {
     required this.start,
     required this.end,
     required this.text,
+    this.caretOffset,
   });
 
   final int start;
   final int end;
   final String text;
+  final int? caretOffset;
 }
 
 class _SourceClipboardInsertionTarget

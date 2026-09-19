@@ -2058,6 +2058,118 @@ void main() {
   );
 
   testWidgets(
+    'Source inline paste preserves unrelated syntax whitespace and caret',
+    (tester) async {
+      Future<TextEditingController> paste(
+        String source,
+        int offset,
+        String? fragmentSource,
+      ) async {
+        final fragment = fragmentSource == null
+            ? WysiwygClipboardFragment(
+                mode: MarkdownMode.commonMark,
+                blocks: const [
+                  BusyWysiwygStyledBlock(
+                    kind: BusyBlockKind.paragraph,
+                    text: 'X ',
+                    ranges: [],
+                  ),
+                ],
+              )
+            : _completeSourceFragment(fragmentSource);
+        final controller = await _pumpClipboardSourceEditor(
+          tester,
+          source: source,
+          clipboard: _SourceTestClipboard(
+            readData: RichClipboardData(
+              text: 'X',
+              richFragment: fragment.encode(),
+            ),
+          ),
+        );
+        controller.selection = TextSelection.collapsed(offset: offset);
+        await _pressControlKey(tester, LogicalKeyboardKey.keyV);
+        await tester.pump();
+        return controller;
+      }
+
+      var controller = await paste(
+        'left __keep__ right',
+        'left'.length,
+        '**X**\n',
+      );
+      expect(controller.text, 'left**X** __keep__ right');
+      expect(controller.selection.baseOffset, 'left**X**'.length);
+
+      controller = await paste('**left**right', '**left**'.length, null);
+      expect(controller.text, '**left**X right');
+      expect(controller.selection.baseOffset, '**left**X '.length);
+
+      controller = await paste('__leftright__', '__left'.length, '**X**\n');
+      expect(controller.text, '__leftXright__');
+      expect(controller.selection.baseOffset, '__leftX'.length);
+    },
+  );
+
+  testWidgets('Source table cells reconcile surrounding inline styles', (
+    tester,
+  ) async {
+    const source = '| H |\n| --- |\n| **leftright** |\n';
+    final controller = await _pumpClipboardSourceEditor(
+      tester,
+      source: source,
+      markdownMode: MarkdownMode.gfm,
+      clipboard: _SourceTestClipboard(
+        readData: RichClipboardData(
+          text: 'X',
+          richFragment: _completeSourceFragment('**X**\n').encode(),
+        ),
+      ),
+    );
+    controller.selection = TextSelection.collapsed(
+      offset: source.indexOf('left') + 4,
+    );
+    await _pressControlKey(tester, LogicalKeyboardKey.keyV);
+    await tester.pump();
+
+    expect(controller.text, '| H |\n| --- |\n| **leftXright** |\n');
+    expect(controller.selection.baseOffset, controller.text.indexOf('X') + 1);
+    final table = const MarkdownParser()
+        .parse(
+          filePath: '/project/source.md',
+          source: controller.text,
+          mode: MarkdownMode.gfm,
+          validateLocalReferences: false,
+        )
+        .busyDocument
+        .blocks
+        .single;
+    expect(
+      table.children.last.children.single.inlines.single.kind,
+      BusyInlineKind.strong,
+    );
+
+    const indented = '  | H |\n  | --- |\n  | *leftright* |\n';
+    final indentedController = await _pumpClipboardSourceEditor(
+      tester,
+      source: indented,
+      markdownMode: MarkdownMode.gfm,
+      clipboard: _SourceTestClipboard(
+        readData: RichClipboardData(
+          text: 'X',
+          richFragment: _completeSourceFragment('*X*\n').encode(),
+        ),
+      ),
+    );
+    indentedController.selection = TextSelection.collapsed(
+      offset: indented.indexOf('left') + 4,
+    );
+    await _pressControlKey(tester, LogicalKeyboardKey.keyV);
+    await tester.pump();
+    expect(indentedController.text, '  | H |\n  | --- |\n  | *leftXright* |\n');
+  });
+
+  testWidgets(
     'Source whole-block replacement differs from surviving table and code contexts',
     (tester) async {
       final heading = _completeSourceFragment('## Replacement\n');
@@ -2496,6 +2608,49 @@ void main() {
       }
     },
   );
+
+  testWidgets('Source complete blocks retain continuation-line ancestors', (
+    tester,
+  ) async {
+    final heading = _completeSourceFragment('## Heading\n');
+    for (final source in [
+      '- first\n  leftright\n',
+      '- first\n\n  leftright\n',
+      '> first\nleftright\n',
+    ]) {
+      final contentStart = source.indexOf('leftright');
+      for (final relative in [0, 4, 9]) {
+        final controller = await _pumpClipboardSourceEditor(
+          tester,
+          source: source,
+          clipboard: _SourceTestClipboard(
+            readData: RichClipboardData(
+              text: 'Heading',
+              richFragment: heading.encode(),
+            ),
+          ),
+        );
+        controller.selection = TextSelection.collapsed(
+          offset: contentStart + relative,
+        );
+        await _pressControlKey(tester, LogicalKeyboardKey.keyV);
+        await tester.pump();
+
+        final headingPaths = _markdownElementPaths(
+          md.Document().parse(controller.text),
+          'h2',
+        );
+        expect(headingPaths, hasLength(1), reason: controller.text);
+        expect(
+          headingPaths.single.any(
+            (element) => element.tag == 'li' || element.tag == 'blockquote',
+          ),
+          isTrue,
+          reason: 'Heading escaped continuation: ${controller.text}',
+        );
+      }
+    }
+  });
 
   testWidgets('Source protected contexts use the safe source fallback', (
     tester,

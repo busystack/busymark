@@ -1931,6 +1931,17 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     required List<BusyInline> afterInlines,
     required List<BusyWysiwygStyledBlock> blocks,
   }) {
+    if (_isBlockContentContainer(block.kind)) {
+      return _insertCompleteBlocksInsideContainer(
+        block: block,
+        blockId: blockId,
+        beforeText: beforeText,
+        afterText: afterText,
+        beforeInlines: beforeInlines,
+        afterInlines: afterInlines,
+        blocks: blocks,
+      );
+    }
     final replacements = <BusyBlock>[];
     var originalIdAvailable = true;
     if (beforeText.isNotEmpty) {
@@ -1991,6 +2002,62 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     return BusyWysiwygTextSplitResult(
       blockId: focusBlock.id,
       offset: focusOffset,
+    );
+  }
+
+  bool _isBlockContentContainer(BusyBlockKind kind) =>
+      kind == BusyBlockKind.unorderedListItem ||
+      kind == BusyBlockKind.orderedListItem ||
+      kind == BusyBlockKind.taskListItem ||
+      kind == BusyBlockKind.blockquote;
+
+  BusyWysiwygTextSplitResult _insertCompleteBlocksInsideContainer({
+    required BusyBlock block,
+    required String blockId,
+    required String beforeText,
+    required String afterText,
+    required List<BusyInline> beforeInlines,
+    required List<BusyInline> afterInlines,
+    required List<BusyWysiwygStyledBlock> blocks,
+  }) {
+    final inserted = [
+      for (final styled in blocks) _styledBlockToBusyBlock(styled),
+    ];
+    BusyBlock? trailing;
+    if (afterText.isNotEmpty) {
+      trailing = BusyBlock(
+        id: _nextGeneratedBlockId('paragraph'),
+        kind: BusyBlockKind.paragraph,
+        inlines: afterInlines,
+        dirty: true,
+      );
+    } else if (beforeText.isNotEmpty) {
+      trailing = BusyBlock(
+        id: _nextGeneratedBlockId('paragraph'),
+        kind: BusyBlockKind.paragraph,
+        inlines: _textInlines(''),
+        attributes: const {busyMarkPreserveEmptyParagraphAttribute: 'true'},
+        dirty: true,
+      );
+    }
+    final updated = block.copyWith(
+      inlines: beforeInlines,
+      children: [
+        ...inserted,
+        if (trailing != null) trailing,
+        ...block.children,
+      ],
+      preserveRaw: false,
+      dirty: true,
+    );
+    _document = _document.copyWith(
+      blocks: _replaceBlockWithMany(_document.blocks, blockId, [updated]),
+    );
+    notifyListeners();
+    final focus = trailing ?? inserted.last;
+    return BusyWysiwygTextSplitResult(
+      blockId: focus.id,
+      offset: trailing == null ? focus.plainText.length : 0,
     );
   }
 

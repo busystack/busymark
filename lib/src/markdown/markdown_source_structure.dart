@@ -44,7 +44,7 @@ List<BusyMarkMarkdownTableCellRegion> busyMarkMarkdownTableCellRegions({
     final lineIndex = rowIndex == 0 ? 0 : rowIndex + 1;
     if (lineIndex >= lines.length) break;
     final line = lines[lineIndex];
-    final spans = _markdownTableCellSpans(line.text);
+    final spans = busyMarkMarkdownTableCellSpans(line.text);
     for (final (column, cell) in row.children.indexed) {
       if (column >= spans.length) break;
       final local = spans[column];
@@ -67,7 +67,9 @@ List<BusyMarkMarkdownTableCellRegion> busyMarkMarkdownTableCellRegions({
   return regions;
 }
 
-List<({int start, int end})> _markdownTableCellSpans(String line) {
+/// Returns absolute-within-line content spans without treating indentation
+/// outside an optional leading pipe as a table cell.
+List<({int start, int end})> busyMarkMarkdownTableCellSpans(String line) {
   final delimiters = <int>[];
   var escaped = false;
   for (var index = 0; index < line.length; index++) {
@@ -79,15 +81,34 @@ List<({int start, int end})> _markdownTableCellSpans(String line) {
     if (codeUnit == 0x7c && !escaped) delimiters.add(index);
     escaped = false;
   }
-  final boundaries = <int>[0, ...delimiters, line.length];
+  var meaningfulStart = 0;
+  while (meaningfulStart < line.length &&
+      _horizontalWhitespace(line.codeUnitAt(meaningfulStart))) {
+    meaningfulStart++;
+  }
+  var meaningfulEnd = line.length;
+  while (meaningfulEnd > meaningfulStart &&
+      _horizontalWhitespace(line.codeUnitAt(meaningfulEnd - 1))) {
+    meaningfulEnd--;
+  }
+  final hasLeadingOuterPipe =
+      meaningfulStart < meaningfulEnd &&
+      line.codeUnitAt(meaningfulStart) == 0x7c;
+  final hasTrailingOuterPipe =
+      meaningfulEnd > meaningfulStart &&
+      line.codeUnitAt(meaningfulEnd - 1) == 0x7c;
+  final contentStart = hasLeadingOuterPipe ? meaningfulStart : 0;
+  final contentEnd = hasTrailingOuterPipe ? meaningfulEnd : line.length;
+  final contentDelimiters = delimiters
+      .where((offset) => offset >= contentStart && offset < contentEnd)
+      .toList(growable: false);
+  final boundaries = <int>[contentStart, ...contentDelimiters, contentEnd];
   final spans = <({int start, int end})>[];
   for (var index = 0; index < boundaries.length - 1; index++) {
-    if (index == 0 && delimiters.isNotEmpty && delimiters.first == 0) {
+    if (index == 0 && hasLeadingOuterPipe) {
       continue;
     }
-    if (index == boundaries.length - 2 &&
-        delimiters.isNotEmpty &&
-        delimiters.last == line.length - 1) {
+    if (index == boundaries.length - 2 && hasTrailingOuterPipe) {
       continue;
     }
     var start = boundaries[index] + (index == 0 ? 0 : 1);
