@@ -4673,6 +4673,104 @@ void main() {}
     }
   });
 
+  test('link titles round-trip decoded punctuation and line endings', () {
+    for (final title in const [
+      'literal &copy;',
+      r'quote " and backslash \\',
+      'first\nsecond',
+      'first\r\nsecond',
+    ]) {
+      final source = const BusyMarkMarkdownSerializer().serializeInlineFragment(
+        [
+          BusyInline(
+            kind: BusyInlineKind.link,
+            text: 'X',
+            children: [BusyInline(kind: BusyInlineKind.text, text: 'X')],
+            destination: 'https://example.test',
+            attributes: {'title': title},
+          ),
+        ],
+      );
+      final reparsed = parser.parse(
+        filePath: 'topic.md',
+        source: '$source\n',
+        validateLocalReferences: false,
+      );
+      final link = reparsed.busyDocument.blocks.single.inlines.single;
+      expect(link.kind, BusyInlineKind.link, reason: source);
+      expect(link.destination, 'https://example.test', reason: source);
+      expect(link.attributes['title'], title, reason: source);
+    }
+
+    const editorTitle = 'literal &copy; "quoted" \\ first\nsecond';
+    final controller = BusyMarkWysiwygDocumentController(
+      document: const BusyDocument(
+        filePath: 'editor.md',
+        mode: MarkdownMode.gfm,
+        blocks: [
+          BusyBlock(
+            id: 'editor-link-title',
+            kind: BusyBlockKind.paragraph,
+            dirty: true,
+            inlines: [
+              BusyInline(
+                kind: BusyInlineKind.link,
+                text: 'X',
+                destination: 'https://example.test',
+                children: [BusyInline(kind: BusyInlineKind.text, text: 'X')],
+                attributes: {'title': editorTitle},
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+    final editorMarkdown = controller.markdown;
+    controller.dispose();
+    final editorLink = parser
+        .parse(
+          filePath: 'editor.md',
+          source: editorMarkdown,
+          validateLocalReferences: false,
+        )
+        .busyDocument
+        .blocks
+        .single
+        .inlines
+        .single;
+    expect(editorLink.attributes['title'], editorTitle);
+  });
+
+  test('table link titles retain multiline values without physical rows', () {
+    const title = 'first\nsecond &copy;';
+    final link = BusyInline(
+      kind: BusyInlineKind.link,
+      text: 'X',
+      children: const [BusyInline(kind: BusyInlineKind.text, text: 'X')],
+      destination: 'https://example.test',
+      attributes: const {'title': title},
+    );
+    final cell = const BusyMarkMarkdownSerializer().serializeInlineFragment([
+      link,
+    ], tableCell: true);
+    expect(cell, isNot(contains('\n')));
+    final source = '| H |\n| --- |\n| $cell |\n';
+    final reparsed = parser.parse(
+      filePath: 'topic.md',
+      source: source,
+      mode: MarkdownMode.gfm,
+      validateLocalReferences: false,
+    );
+    final table = reparsed.busyDocument.blocks.single;
+    expect(table.kind, BusyBlockKind.table);
+    expect(table.children, hasLength(2));
+    expect(table.children.last.children, hasLength(1));
+    final reparsedLink = table.children.last.children.single.inlines.single;
+    expect(reparsedLink.kind, BusyInlineKind.link);
+    expect(reparsedLink.destination, 'https://example.test');
+    expect(reparsedLink.attributes['title'], title);
+  });
+
   test(
     'serializer preserves fenced code delimiters and trailing whitespace',
     () {

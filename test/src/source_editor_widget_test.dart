@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math' as math;
 import 'dart:ui' show BoxHeightStyle;
 
 import 'package:busymark/l10n/generated/app_localizations.dart';
@@ -2863,6 +2864,407 @@ void main() {
       expect(controller.selection.baseOffset, '**left****X**'.length);
     },
   );
+
+  testWidgets(
+    'Source caret mapping preserves literal bang before a following link',
+    (tester) async {
+      Future<void> verify({
+        required String source,
+        required MarkdownMode mode,
+      }) async {
+        var transactions = 0;
+        TextEditingValue? undoValue;
+        final fragment = _completeSourceFragment(
+          '[X](https://incoming.test)!\n',
+          mode: mode,
+        );
+        final controller = await _pumpClipboardSourceEditor(
+          tester,
+          source: source,
+          markdownMode: mode,
+          clipboard: _SourceTestClipboard(
+            readData: RichClipboardData(
+              text: 'X!',
+              richFragment: fragment.encode(),
+            ),
+          ),
+          onTransactionalChanged: (_, _, previousSelection, _, _) {
+            transactions += 1;
+            undoValue = TextEditingValue(
+              text: source,
+              selection: previousSelection,
+            );
+          },
+          onUndo: () {
+            final value = undoValue;
+            undoValue = null;
+            return value;
+          },
+        );
+        controller.selection = TextSelection.collapsed(
+          offset: source.indexOf('leftright') + 4,
+        );
+
+        await _pressControlKey(tester, LogicalKeyboardKey.keyV);
+        await tester.pump();
+
+        const replacement =
+            '[left](https://destination.test)'
+            '[X](https://incoming.test)\\!'
+            '[right](https://destination.test)';
+        final expected = source.replaceFirst(
+          '[leftright](https://destination.test)',
+          replacement,
+        );
+        expect(controller.text, expected);
+        expect(controller.selection.baseOffset, expected.indexOf(r'\!') + 2);
+        final document = const MarkdownParser()
+            .parse(
+              filePath: '/project/source.md',
+              source: controller.text,
+              mode: mode,
+              validateLocalReferences: false,
+            )
+            .busyDocument;
+        final inlines = document.blocks.single.kind == BusyBlockKind.table
+            ? document.blocks.single.children.last.children.single.inlines
+            : document.blocks.single.inlines;
+        expect(
+          inlines
+              .where((inline) => inline.kind == BusyInlineKind.link)
+              .map((inline) => inline.destination),
+          [
+            'https://destination.test',
+            'https://incoming.test',
+            'https://destination.test',
+          ],
+          reason: controller.text,
+        );
+        expect(
+          inlines.where((inline) => inline.kind == BusyInlineKind.image),
+          isEmpty,
+          reason: controller.text,
+        );
+        expect(inlines.map((inline) => inline.plainText).join(), 'leftX!right');
+        expect(transactions, 1);
+        await _pressControlKey(tester, LogicalKeyboardKey.keyZ);
+        await tester.pump();
+        expect(controller.text, source);
+      }
+
+      await verify(
+        source: '[leftright](https://destination.test)',
+        mode: MarkdownMode.commonMark,
+      );
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump();
+      await verify(
+        source:
+            '| H |\n'
+            '| --- |\n'
+            '| [leftright](https://destination.test) |\n',
+        mode: MarkdownMode.gfm,
+      );
+    },
+  );
+
+  testWidgets(
+    'Source splits resolved reference links without changing definitions',
+    (tester) async {
+      final cases = <({String link, String definition})>[
+        (
+          link: '[leftright][dest]',
+          definition: '[dest]: https://destination.test',
+        ),
+        (
+          link: '[leftright][]',
+          definition: '[leftright]: https://destination.test',
+        ),
+        (
+          link: '[leftright]',
+          definition: '[leftright]: https://destination.test',
+        ),
+      ];
+      for (final (index, value) in cases.indexed) {
+        final source = '${value.link}\n\n${value.definition}\n';
+        final fragment = _completeSourceFragment(
+          '[X](https://incoming.test)\n',
+        );
+        final controller = await _pumpClipboardSourceEditor(
+          tester,
+          source: source,
+          clipboard: _SourceTestClipboard(
+            readData: RichClipboardData(
+              text: 'X',
+              richFragment: fragment.encode(),
+            ),
+          ),
+        );
+        controller.selection = TextSelection.collapsed(
+          offset: source.indexOf('leftright') + 4,
+        );
+
+        await _pressControlKey(tester, LogicalKeyboardKey.keyV);
+        await tester.pump();
+
+        expect(
+          controller.text,
+          '[left](https://destination.test)'
+          '[X](https://incoming.test)'
+          '[right](https://destination.test)\n\n'
+          '${value.definition}\n',
+          reason: value.link,
+        );
+        expect(
+          controller.selection.baseOffset,
+          '[left](https://destination.test)'
+                  '[X](https://incoming.test)'
+              .length,
+        );
+        final parsed = const MarkdownParser()
+            .parse(
+              filePath: '/project/source.md',
+              source: controller.text,
+              validateLocalReferences: false,
+            )
+            .busyDocument;
+        expect(
+          parsed.blocks.first.inlines
+              .where((inline) => inline.kind == BusyInlineKind.link)
+              .map((inline) => inline.destination),
+          [
+            'https://destination.test',
+            'https://incoming.test',
+            'https://destination.test',
+          ],
+        );
+        expect(controller.text, contains('${value.definition}\n'));
+        if (index + 1 < cases.length) {
+          await tester.pumpWidget(const SizedBox.shrink());
+          await tester.pump();
+        }
+      }
+    },
+  );
+
+  testWidgets('Source reference-link label replacement retains definitions', (
+    tester,
+  ) async {
+    final cases = <({String link, String definition})>[
+      (
+        link: '[leftright][dest]',
+        definition: '[dest]: https://destination.test',
+      ),
+      (
+        link: '[leftright][]',
+        definition: '[leftright]: https://destination.test',
+      ),
+      (
+        link: '[leftright]',
+        definition: '[leftright]: https://destination.test',
+      ),
+    ];
+    for (final (index, value) in cases.indexed) {
+      final source = '${value.link}\n\n${value.definition}\n';
+      final controller = await _pumpClipboardSourceEditor(
+        tester,
+        source: source,
+        clipboard: _SourceTestClipboard(
+          readData: RichClipboardData(
+            text: 'X',
+            richFragment: _completeSourceFragment(
+              '[X](https://incoming.test)\n',
+            ).encode(),
+          ),
+        ),
+      );
+      final labelStart = source.indexOf('leftright');
+      controller.selection = TextSelection(
+        baseOffset: labelStart,
+        extentOffset: labelStart + 'leftright'.length,
+      );
+
+      await _pressControlKey(tester, LogicalKeyboardKey.keyV);
+      await tester.pump();
+
+      expect(
+        controller.text,
+        '[X](https://incoming.test)\n\n${value.definition}\n',
+        reason: value.link,
+      );
+      expect(
+        controller.selection.baseOffset,
+        '[X](https://incoming.test)'.length,
+      );
+      if (index + 1 < cases.length) {
+        await tester.pumpWidget(const SizedBox.shrink());
+        await tester.pump();
+      }
+    }
+  });
+
+  testWidgets(
+    'Source inline wrapper mapping stays bounded for paste and availability',
+    (tester) async {
+      final measurements = <int>[];
+      debugBusyMarkSourceInlineMappingParseCount = measurements.add;
+      addTearDown(() => debugBusyMarkSourceInlineMappingParseCount = null);
+      final fragment = _completeSourceFragment('**X**\n');
+      for (final (index, spanCount) in [10, 60].indexed) {
+        final source = [
+          for (var span = 0; span < spanCount; span++) '**value$span**',
+        ].join(' gap ');
+        final registry = BusyMarkClipboardInsertionRegistry();
+        final controller = await _pumpClipboardSourceEditor(
+          tester,
+          source: source,
+          registry: registry,
+          clipboard: _SourceTestClipboard(
+            readData: RichClipboardData(
+              text: 'X',
+              richFragment: fragment.encode(),
+            ),
+          ),
+        );
+        controller.selection = TextSelection.collapsed(
+          offset: source.indexOf('value${spanCount ~/ 2}') + 3,
+        );
+        final payload = BusyMarkClipboardPayload(
+          id: 'mapping-$spanCount',
+          acquiredAt: DateTime.utc(2026),
+          kind: BusyMarkClipboardContentKind.richText,
+          text: 'X',
+          richFragment: fragment.encode(),
+        );
+
+        measurements.clear();
+        expect(registry.canPaste(payload), isTrue);
+        expect(measurements, isNotEmpty);
+        expect(measurements.reduce(math.max), lessThanOrEqualTo(4));
+
+        measurements.clear();
+        await _pressControlKey(tester, LogicalKeyboardKey.keyV);
+        await tester.pump();
+        expect(measurements, isNotEmpty);
+        expect(measurements.reduce(math.max), lessThanOrEqualTo(4));
+        expect(controller.text, contains('valXue${spanCount ~/ 2}'));
+        registry.dispose();
+        if (index + 1 < 2) {
+          await tester.pumpWidget(const SizedBox.shrink());
+          await tester.pump();
+        }
+      }
+
+      final surroundingDocument = [
+        for (var paragraph = 0; paragraph < 80; paragraph++)
+          'Paragraph $paragraph has **bold text** and '
+              '[a link](https://example.test/$paragraph).',
+      ].join('\n\n');
+      final largeSource =
+          '$surroundingDocument\n\n'
+          'Target **leftright** paragraph.\n\n'
+          '$surroundingDocument\n';
+      final registry = BusyMarkClipboardInsertionRegistry();
+      final controller = await _pumpClipboardSourceEditor(
+        tester,
+        source: largeSource,
+        registry: registry,
+        clipboard: _SourceTestClipboard(
+          readData: RichClipboardData(
+            text: 'X',
+            richFragment: fragment.encode(),
+          ),
+        ),
+      );
+      controller.selection = TextSelection.collapsed(
+        offset: largeSource.indexOf('leftright') + 4,
+      );
+      final payload = BusyMarkClipboardPayload(
+        id: 'mapping-large-document',
+        acquiredAt: DateTime.utc(2026),
+        kind: BusyMarkClipboardContentKind.richText,
+        text: 'X',
+        richFragment: fragment.encode(),
+      );
+
+      measurements.clear();
+      expect(registry.canPaste(payload), isTrue);
+      expect(measurements, isNotEmpty);
+      expect(measurements.reduce(math.max), lessThanOrEqualTo(4));
+
+      measurements.clear();
+      await _pressControlKey(tester, LogicalKeyboardKey.keyV);
+      await tester.pump();
+      expect(measurements, isNotEmpty);
+      expect(measurements.reduce(math.max), lessThanOrEqualTo(4));
+      expect(controller.text, contains('Target **leftXright** paragraph.'));
+      registry.dispose();
+    },
+  );
+
+  testWidgets('Source table paste preserves multiline link titles', (
+    tester,
+  ) async {
+    const title = 'first\nsecond &copy;';
+    final fragment = WysiwygClipboardFragment(
+      mode: MarkdownMode.gfm,
+      blocks: const [
+        BusyWysiwygStyledBlock(
+          kind: BusyBlockKind.paragraph,
+          text: 'X',
+          ranges: [],
+          completeBlock: BusyBlock(
+            id: 'title-fragment',
+            kind: BusyBlockKind.paragraph,
+            inlines: [
+              BusyInline(
+                kind: BusyInlineKind.link,
+                text: 'X',
+                destination: 'https://example.test',
+                children: [BusyInline(kind: BusyInlineKind.text, text: 'X')],
+                attributes: {'title': title},
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+    const source = '| H |\n| --- |\n| gap |\n';
+    final controller = await _pumpClipboardSourceEditor(
+      tester,
+      source: source,
+      markdownMode: MarkdownMode.gfm,
+      clipboard: _SourceTestClipboard(
+        readData: RichClipboardData(text: 'X', richFragment: fragment.encode()),
+      ),
+    );
+    final gap = source.indexOf('gap');
+    controller.selection = TextSelection(
+      baseOffset: gap,
+      extentOffset: gap + 3,
+    );
+
+    await _pressControlKey(tester, LogicalKeyboardKey.keyV);
+    await tester.pump();
+
+    expect(controller.text.split('\n'), hasLength(4));
+    final table = const MarkdownParser()
+        .parse(
+          filePath: '/project/source.md',
+          source: controller.text,
+          mode: MarkdownMode.gfm,
+          validateLocalReferences: false,
+        )
+        .busyDocument
+        .blocks
+        .single;
+    expect(table.children, hasLength(2));
+    expect(table.children.last.children, hasLength(1));
+    final link = table.children.last.children.single.inlines.single;
+    expect(link.kind, BusyInlineKind.link);
+    expect(link.destination, 'https://example.test');
+    expect(link.attributes['title'], title);
+  });
 
   testWidgets('Source structured inline paste handles every line boundary', (
     tester,

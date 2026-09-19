@@ -2,7 +2,8 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:math' as math;
 
-import 'package:flutter/foundation.dart' show mapEquals, setEquals;
+import 'package:flutter/foundation.dart'
+    show mapEquals, setEquals, visibleForTesting;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
@@ -23,6 +24,7 @@ import '../../clipboard/clipboard_models.dart';
 import '../../core/diagnostic.dart';
 import '../../markdown/busymark_document.dart';
 import '../../markdown/busymark_markdown_serializer.dart';
+import '../../markdown/markdown_ast_adapter.dart';
 import '../../markdown/markdown_model.dart';
 import '../../markdown/markdown_parser.dart';
 import '../../markdown/markdown_source_structure.dart';
@@ -72,6 +74,9 @@ enum SourceDocumentFormat {
 }
 
 var _sourceEditorUndoSessionSequence = 0;
+
+@visibleForTesting
+ValueChanged<int>? debugBusyMarkSourceInlineMappingParseCount;
 
 class BusyMarkSourceEditor extends StatefulWidget {
   const BusyMarkSourceEditor({
@@ -2588,64 +2593,44 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
       ...incoming,
       ...after,
     ]);
-    final marker = _sourceClipboardMarker(
-      merged.map((inline) => inline.plainText).join(),
-    );
-    final marked = _insertSourceCaretMarker(merged, caretTextOffset, marker);
-    final markedSource = _serializeMappedInlineSequence(
-      marked,
+    final serialized = _serializeMappedInlineSequence(
+      merged,
+      caretTextOffset,
       context,
       authoredWrapper,
     );
-    final caretInReplacement = markedSource.indexOf(marker);
-    final replacement = caretInReplacement < 0
-        ? markedSource
-        : markedSource.replaceFirst(marker, '');
     return _SourceClipboardInsertion(
       start: sourceRange.start,
       end: sourceRange.end,
-      text: replacement,
-      caretOffset:
-          sourceRange.start +
-          (caretInReplacement < 0 ? replacement.length : caretInReplacement),
+      text: serialized.source,
+      caretOffset: sourceRange.start + serialized.sourceOffset,
     );
   }
 
-  String _serializeMappedInlineSequence(
+  BusyMarkSerializedInlineFragment _serializeMappedInlineSequence(
     List<BusyInline> inlines,
+    int caretTextOffset,
     _StructuredSourceInsertionContext context,
     _MappedSourceInlineWrapper? authoredWrapper,
   ) {
-    if (authoredWrapper?.opening == null || authoredWrapper?.closing == null) {
-      return _serializeSourceInlineSequence(inlines, context);
-    }
-    final buffer = StringBuffer();
-    for (var index = 0; index < inlines.length; index++) {
-      final inline = inlines[index];
-      if (_sameInlineSemantics(inline, authoredWrapper!.inline)) {
-        final content = const BusyMarkMarkdownSerializer()
-            .serializeInlineFragment(
-              inline.children,
-              tableCell: context.tableCell,
-              atBlockStart: index == 0 && context.atBlockStart,
-              readableHardBreakRuns: !context.tableCell,
-            );
-        buffer
-          ..write(authoredWrapper.opening)
-          ..write(content)
-          ..write(authoredWrapper.closing);
-      } else {
-        buffer.write(
-          const BusyMarkMarkdownSerializer().serializeInlineFragment(
-            [inline],
-            tableCell: context.tableCell,
-            atBlockStart: index == 0 && context.atBlockStart,
-            readableHardBreakRuns: !context.tableCell,
-          ),
+    final opening = authoredWrapper?.opening;
+    final closing = authoredWrapper?.closing;
+    return const BusyMarkMarkdownSerializer()
+        .serializeInlineFragmentAtTextOffset(
+          inlines,
+          textOffset: caretTextOffset,
+          tableCell: context.tableCell,
+          atBlockStart: context.atBlockStart,
+          readableHardBreakRuns: !context.tableCell,
+          delimiterOverrides: opening == null || closing == null
+              ? const {}
+              : {
+                  authoredWrapper!.inline.kind: BusyMarkInlineDelimiter(
+                    opening: opening,
+                    closing: closing,
+                  ),
+                },
         );
-      }
-    }
-    return buffer.toString();
   }
 
   List<BusyInline> _mergeAdjacentSourceInlineStyles(List<BusyInline> inlines) {
@@ -2683,54 +2668,6 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
       }
     }
     return merged;
-  }
-
-  List<BusyInline> _insertSourceCaretMarker(
-    List<BusyInline> inlines,
-    int offset,
-    String marker,
-  ) {
-    final result = <BusyInline>[];
-    var current = 0;
-    var inserted = false;
-    for (final inline in inlines) {
-      final length = inline.plainText.length;
-      final end = current + length;
-      if (!inserted && offset > current && offset < end) {
-        result.add(
-          _insertSourceCaretMarkerInInline(inline, offset - current, marker),
-        );
-        inserted = true;
-      } else if (!inserted && offset == current) {
-        result
-          ..add(BusyInline(kind: BusyInlineKind.text, text: marker))
-          ..add(inline);
-        inserted = true;
-      } else {
-        result.add(inline);
-      }
-      current = end;
-    }
-    if (!inserted) {
-      result.add(BusyInline(kind: BusyInlineKind.text, text: marker));
-    }
-    return result;
-  }
-
-  BusyInline _insertSourceCaretMarkerInInline(
-    BusyInline inline,
-    int offset,
-    String marker,
-  ) {
-    if (inline.children.isEmpty) {
-      return inline.copyWith(
-        text: inline.text.replaceRange(offset, offset, marker),
-      );
-    }
-    return inline.copyWith(
-      text: inline.plainText.replaceRange(offset, offset, marker),
-      children: _insertSourceCaretMarker(inline.children, offset, marker),
-    );
   }
 
   ({List<BusyInline> before, List<BusyInline> after})? _partitionMappedInline(
@@ -2984,6 +2921,17 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
         partialTableSelection || (survivingTable && originalCell == null);
     final atBlockStart = markerOffset == null || markerOffset == 0;
     final prefixes = _sourceContainerPrefixes(markedSource, start, path ?? []);
+    final inlineMappingRange = originalCell == null
+        ? _sourceInlineMappingRange(
+            original.busyDocument.blocks,
+            target.text,
+            start,
+            end,
+          )
+        : TextRange(
+            start: originalCell.span.startOffset,
+            end: originalCell.span.endOffset,
+          );
     return _StructuredSourceInsertionContext(
       start: start,
       end: end,
@@ -3001,7 +2949,12 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
           markerOffset + marker.length < markerBlock.plainText.length,
       taskItemAtContentStart:
           markerOffset == 0 && markerBlock?.kind == BusyBlockKind.taskListItem,
-      inlineContext: _mappedSourceInlineContext(target, start, end),
+      inlineContext: _mappedSourceInlineContext(
+        target,
+        start,
+        end,
+        inlineMappingRange,
+      ),
     );
   }
 
@@ -3009,6 +2962,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
     _SourceClipboardOperationTarget target,
     int start,
     int end,
+    TextRange sourceBounds,
   ) {
     final startMarker = _sourceClipboardMarker(target.text);
     final endMarker = start == end
@@ -3019,13 +2973,15 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
       markedSource = markedSource.replaceRange(end, end, endMarker);
     }
     markedSource = markedSource.replaceRange(start, start, startMarker);
-    final parsed = const MarkdownParser().parse(
-      filePath: target.filePath ?? '',
-      source: markedSource,
+    final parserContext = const MarkdownAstAdapter().createInlineParserContext(
+      documentSource: target.text,
       mode: target.markdownMode,
-      validateLocalReferences: false,
     );
-    final document = parsed.busyDocument;
+    final document = parserContext.parseDocument(
+      filePath: target.filePath ?? '',
+      markedSource: markedSource,
+      ignoredReferenceLabelMarkers: [startMarker, if (start != end) endMarker],
+    );
     final startTrace = _sourceInlineTraceContainingMarker(
       document.blocks,
       startMarker,
@@ -3045,6 +3001,14 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
       if (!identical(startInline, endTrace.frames[index].inline)) break;
       commonAncestors.add(startInline);
     }
+    final markerCount =
+        startMarker.length + (start == end ? 0 : endMarker.length);
+    final markedBounds = TextRange(
+      start: sourceBounds.start,
+      end: (sourceBounds.end + markerCount)
+          .clamp(0, markedSource.length)
+          .toInt(),
+    );
     final wrappers = <_MappedSourceInlineWrapper>[];
     for (final inline in commonAncestors) {
       if (!_isInheritedSourceInline(inline.kind)) continue;
@@ -3056,9 +3020,17 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
         start == end ? null : endMarker,
         start,
         end,
+        markedBounds,
+        parserContext,
       );
       if (wrapper != null) wrappers.add(wrapper);
     }
+    assert(() {
+      debugBusyMarkSourceInlineMappingParseCount?.call(
+        parserContext.parseInvocations,
+      );
+      return true;
+    }());
     return _MappedSourceInlineContext(
       commonAncestors: List.unmodifiable(commonAncestors),
       wrappers: List.unmodifiable(wrappers),
@@ -3081,6 +3053,8 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
     String? endMarker,
     int selectionStart,
     int selectionEnd,
+    TextRange markedBounds,
+    BusyMarkInlineParserContext parserContext,
   ) {
     final markerCount = startMarker.length + (endMarker?.length ?? 0);
     TextRange? originalRange(int markedStart, int markedEnd) {
@@ -3097,37 +3071,51 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
     bool containsMarkers(String text) =>
         text.contains(startMarker) &&
         (endMarker == null || text.contains(endMarker));
+    bool candidateMatches(int start, int end) {
+      if (start < markedBounds.start ||
+          end > markedBounds.end ||
+          start >= end) {
+        return false;
+      }
+      final parsed = parserContext.parse(
+        markedSource.substring(start, end),
+        ignoredReferenceLabelMarkers: [
+          startMarker,
+          if (endMarker != null) endMarker,
+        ],
+      );
+      return parsed.length == 1 &&
+          _sameInlineSemantics(parsed.single, inline) &&
+          parsed.single.plainText == inline.plainText &&
+          containsMarkers(parsed.single.plainText);
+    }
+
+    final markedStart = markedSource.indexOf(startMarker);
+    final markedEnd = endMarker == null
+        ? markedStart + startMarker.length
+        : markedSource.indexOf(endMarker, markedStart + startMarker.length) +
+              endMarker.length;
+    if (markedStart < 0 || markedEnd <= markedStart) return null;
     if (inline.kind == BusyInlineKind.link) {
-      final markedStart = markedSource.indexOf(startMarker);
-      final markedEnd = endMarker == null
-          ? markedStart + startMarker.length
-          : markedSource.indexOf(endMarker, markedStart + startMarker.length) +
-                endMarker.length;
-      if (markedStart < 0 || markedEnd <= markedStart) return null;
-      ({int start, int end})? best;
       for (final boundary in const [
         (opening: '[', closings: [')', ']']),
         (opening: '<', closings: ['>']),
       ]) {
         var opening = markedSource.lastIndexOf(boundary.opening, markedStart);
-        while (opening >= 0) {
+        var openingAttempts = 0;
+        while (opening >= markedBounds.start && openingAttempts < 16) {
+          final ends = <int>{};
           for (final closingText in boundary.closings) {
             var closing = markedSource.indexOf(closingText, markedEnd);
-            while (closing >= 0) {
+            while (closing >= 0 && closing < markedBounds.end) {
               final end = closing + closingText.length;
-              final candidate = markedSource.substring(opening, end);
-              final inlines = const MarkdownParser().parseInlineFragment(
-                source: candidate,
-                mode: target.markdownMode,
-              );
-              if (inlines.length == 1 &&
-                  _sameInlineSemantics(inlines.single, inline) &&
-                  inlines.single.plainText == inline.plainText &&
-                  containsMarkers(inlines.single.plainText)) {
-                if (best == null || end - opening < best.end - best.start) {
-                  best = (start: opening, end: end);
-                }
-                break;
+              final followedByLinkSuffix =
+                  closingText == ']' &&
+                  end < markedSource.length &&
+                  (markedSource.codeUnitAt(end) == 0x28 ||
+                      markedSource.codeUnitAt(end) == 0x5b);
+              if (!followedByLinkSuffix) {
+                ends.add(end);
               }
               closing = markedSource.indexOf(
                 closingText,
@@ -3135,16 +3123,24 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
               );
             }
           }
+          final orderedEnds = ends.toList()..sort();
+          for (final candidateEnd in orderedEnds) {
+            if (!candidateMatches(opening, candidateEnd)) continue;
+            final range = originalRange(opening, candidateEnd);
+            return range == null
+                ? null
+                : _MappedSourceInlineWrapper(
+                    inline: inline,
+                    sourceRange: range,
+                  );
+          }
           opening = opening == 0
               ? -1
               : markedSource.lastIndexOf(boundary.opening, opening - 1);
+          openingAttempts += 1;
         }
       }
-      if (best == null) return null;
-      final range = originalRange(best.start, best.end);
-      return range == null
-          ? null
-          : _MappedSourceInlineWrapper(inline: inline, sourceRange: range);
+      return null;
     }
 
     final delimiters = switch (inline.kind) {
@@ -3160,36 +3156,23 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
       BusyInlineKind.underline => const [(opening: '<u>', closing: '</u>')],
       _ => const <({String opening, String closing})>[],
     };
-    final markedStart = markedSource.indexOf(startMarker);
-    final markedEnd = endMarker == null
-        ? markedStart + startMarker.length
-        : markedSource.indexOf(endMarker, markedStart + startMarker.length) +
-              endMarker.length;
-    if (markedStart < 0 || markedEnd <= markedStart) return null;
-    ({int start, int end, String opening, String closing})? best;
     for (final delimiter in delimiters) {
       var opening = markedSource.lastIndexOf(delimiter.opening, markedStart);
-      while (opening >= 0) {
+      var openingAttempts = 0;
+      while (opening >= markedBounds.start && openingAttempts < 16) {
         var closing = markedSource.indexOf(delimiter.closing, markedEnd);
-        while (closing >= 0) {
+        while (closing >= 0 && closing < markedBounds.end) {
           final end = closing + delimiter.closing.length;
-          final candidate = markedSource.substring(opening, end);
-          final inlines = const MarkdownParser().parseInlineFragment(
-            source: candidate,
-            mode: target.markdownMode,
-          );
-          if (inlines.length == 1 &&
-              _sameInlineSemantics(inlines.single, inline) &&
-              inlines.single.plainText == inline.plainText) {
-            if (best == null || end - opening < best.end - best.start) {
-              best = (
-                start: opening,
-                end: end,
-                opening: delimiter.opening,
-                closing: delimiter.closing,
-              );
-            }
-            break;
+          if (candidateMatches(opening, end)) {
+            final range = originalRange(opening, end);
+            return range == null
+                ? null
+                : _MappedSourceInlineWrapper(
+                    inline: inline,
+                    sourceRange: range,
+                    opening: delimiter.opening,
+                    closing: delimiter.closing,
+                  );
           }
           closing = markedSource.indexOf(
             delimiter.closing,
@@ -3199,18 +3182,10 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
         opening = opening == 0
             ? -1
             : markedSource.lastIndexOf(delimiter.opening, opening - 1);
+        openingAttempts += 1;
       }
     }
-    if (best == null) return null;
-    final range = originalRange(best.start, best.end);
-    return range == null
-        ? null
-        : _MappedSourceInlineWrapper(
-            inline: inline,
-            sourceRange: range,
-            opening: best.opening,
-            closing: best.closing,
-          );
+    return null;
   }
 
   _SourceInlineTrace? _sourceInlineTraceContainingMarker(
@@ -3313,6 +3288,29 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
       }
     }
     return null;
+  }
+
+  TextRange _sourceInlineMappingRange(
+    Iterable<BusyBlock> blocks,
+    String source,
+    int start,
+    int end,
+  ) {
+    TextRange? smallest;
+    for (final block in _sourceBlocksDepthFirst(blocks)) {
+      final span = block.sourceSpan;
+      if (span == null || start < span.startOffset || end > span.endOffset) {
+        continue;
+      }
+      final candidate = TextRange(start: span.startOffset, end: span.endOffset);
+      if (smallest == null ||
+          candidate.end - candidate.start < smallest.end - smallest.start) {
+        smallest = candidate;
+      }
+    }
+    if (smallest != null) return smallest;
+    final line = busyMarkSourceLineBounds(source, start);
+    return TextRange(start: line.start, end: line.end);
   }
 
   ({BusyBlock table, bool coversWhole})? _tableIntersectingSelection(

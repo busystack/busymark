@@ -14,6 +14,114 @@ import '../writerside/writerside_schema.dart';
 
 const _rawHtmlAdapter = RawHtmlAdapter();
 
+void _addReferenceLabelMarkerVariants(
+  md.Document document,
+  Map<String, md.LinkReference> definitions,
+  String source,
+  Iterable<String> markers,
+) {
+  final markerList = markers.where((marker) => marker.isNotEmpty).toList();
+  if (markerList.isEmpty || definitions.isEmpty) return;
+  for (final marker in markerList) {
+    var markerOffset = source.indexOf(marker);
+    while (markerOffset >= 0) {
+      final opening = source.lastIndexOf('[', markerOffset);
+      final closing = source.indexOf(']', markerOffset + marker.length);
+      if (opening >= 0 && closing >= markerOffset + marker.length) {
+        final markedLabel = source.substring(opening + 1, closing);
+        var originalLabel = markedLabel;
+        for (final ignored in markerList) {
+          originalLabel = originalLabel.replaceAll(ignored, '');
+        }
+        final reference =
+            definitions[_normalizeSourceMappingLabel(originalLabel)];
+        if (reference != null) {
+          document.linkReferences[_normalizeSourceMappingLabel(
+            markedLabel,
+          )] = md.LinkReference(
+            markedLabel,
+            reference.destination,
+            reference.title,
+          );
+        }
+      }
+      markerOffset = source.indexOf(marker, markerOffset + marker.length);
+    }
+  }
+}
+
+String _normalizeSourceMappingLabel(String label) =>
+    label.trim().replaceAll(RegExp(r'\s+'), ' ').toLowerCase();
+
+String _decodeMarkdownAttribute(String value) => value
+    .replaceAll('&quot;', '"')
+    .replaceAll('&#39;', "'")
+    .replaceAll('&lt;', '<')
+    .replaceAll('&gt;', '>')
+    .replaceAll('&amp;', '&');
+
+class BusyMarkInlineParserContext {
+  BusyMarkInlineParserContext._({
+    required md.Document document,
+    required Map<String, md.LinkReference> referenceDefinitions,
+    required MarkdownMode mode,
+  }) : _document = document,
+       _referenceDefinitions = referenceDefinitions,
+       _mode = mode;
+
+  final md.Document _document;
+  final Map<String, md.LinkReference> _referenceDefinitions;
+  final MarkdownMode _mode;
+
+  int parseInvocations = 0;
+
+  List<BusyInline> parse(
+    String source, {
+    Iterable<String> ignoredReferenceLabelMarkers = const [],
+  }) {
+    _addReferenceLabelMarkerVariants(
+      _document,
+      _referenceDefinitions,
+      source,
+      ignoredReferenceLabelMarkers,
+    );
+    parseInvocations += 1;
+    return const MarkdownAstAdapter()._inlinesFromNodes(
+      _document.parseInline(source),
+    );
+  }
+
+  BusyDocument parseDocument({
+    required String filePath,
+    required String markedSource,
+    required Iterable<String> ignoredReferenceLabelMarkers,
+  }) {
+    final document = busyMarkMarkdownDocument(_mode)
+      ..linkReferences.addAll(_referenceDefinitions);
+    _addReferenceLabelMarkerVariants(
+      document,
+      _referenceDefinitions,
+      markedSource,
+      ignoredReferenceLabelMarkers,
+    );
+    var blockIndex = 0;
+    final blocks = [
+      for (final node in document.parse(markedSource))
+        ...const MarkdownAstAdapter()._blocksFromNode(
+          node,
+          nextId: () => 'mapping-b${blockIndex++}',
+          mode: _mode,
+        ),
+    ];
+    return BusyDocument(
+      filePath: filePath,
+      mode: _mode,
+      blocks: blocks,
+      source: markedSource,
+    );
+  }
+}
+
 class MarkdownAstAdapter {
   const MarkdownAstAdapter();
 
@@ -30,6 +138,21 @@ class MarkdownAstAdapter {
     }
     final document = busyMarkMarkdownDocument(mode);
     return _inlinesFromNodes(document.parseInline(source));
+  }
+
+  BusyMarkInlineParserContext createInlineParserContext({
+    required String documentSource,
+    required MarkdownMode mode,
+  }) {
+    final referenceDocument = busyMarkMarkdownDocument(mode)
+      ..parse(documentSource);
+    final document = busyMarkMarkdownDocument(mode)
+      ..linkReferences.addAll(referenceDocument.linkReferences);
+    return BusyMarkInlineParserContext._(
+      document: document,
+      referenceDefinitions: Map.unmodifiable(referenceDocument.linkReferences),
+      mode: mode,
+    );
   }
 
   BusyDocument parse({
@@ -719,7 +842,11 @@ class MarkdownAstAdapter {
           text: text,
           destination: node.attributes['href'],
           children: children,
-          attributes: node.attributes,
+          attributes: {
+            ...node.attributes,
+            if (node.attributes['title'] case final title?)
+              'title': _decodeMarkdownAttribute(title),
+          },
         ),
       ],
       'img' => [
