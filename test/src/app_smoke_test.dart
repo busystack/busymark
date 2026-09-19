@@ -26,6 +26,7 @@ import 'package:busymark/src/core/source_span.dart';
 import 'package:busymark/src/clipboard/clipboard_history_controller.dart';
 import 'package:busymark/src/clipboard/clipboard_history_panel.dart';
 import 'package:busymark/src/clipboard/clipboard_insertion.dart';
+import 'package:busymark/src/clipboard/clipboard_models.dart';
 import 'package:busymark/src/editor/document_callout.dart';
 import 'package:busymark/src/editor/document_code_block.dart';
 import 'package:busymark/src/editor/document_layout.dart';
@@ -251,6 +252,94 @@ void main() {
         await tester.pump();
       }
 
+      Future<void> typeSuffix(String suffix) async {
+        final field = find.byType(TextField).last;
+        final controller = tester.widget<TextField>(field).controller!;
+        await tester.enterText(field, '${controller.text}$suffix');
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+
+      Future<void> expectUndoRedoSequence({
+        required BusyMarkPasteMode mode,
+        BusyMarkClipboardPayload? historyPayload,
+        String pasteText = 'b',
+        bool replaceTypedCharacter = false,
+      }) async {
+        final workspace = container.read(workspaceControllerProvider.notifier);
+        final original = container.read(workspaceControllerProvider).activeText;
+        await typeSuffix('a');
+        final afterTyping = container
+            .read(workspaceControllerProvider)
+            .activeText;
+        if (replaceTypedCharacter) {
+          final field = find.byType(TextField).last;
+          final controller = tester.widget<TextField>(field).controller!;
+          controller.selection = TextSelection(
+            baseOffset: controller.text.length - 1,
+            extentOffset: controller.text.length,
+          );
+          await tester.pump();
+        }
+        if (historyPayload == null) {
+          clipboardText = pasteText;
+          generation += 1;
+          await pressPaste(mode);
+        } else {
+          expect(
+            await container
+                .read(clipboardInsertionRegistryProvider)
+                .paste(historyPayload, mode: mode),
+            ClipboardPasteResult.inserted,
+          );
+          await tester.pump(const Duration(milliseconds: 100));
+        }
+        final afterPaste = container
+            .read(workspaceControllerProvider)
+            .activeText;
+        await typeSuffix('c');
+        final afterFollowingTyping = container
+            .read(workspaceControllerProvider)
+            .activeText;
+
+        workspace.undoActiveBuffer();
+        await tester.pump(const Duration(milliseconds: 100));
+        expect(
+          container.read(workspaceControllerProvider).activeText,
+          afterPaste,
+        );
+        workspace.undoActiveBuffer();
+        await tester.pump(const Duration(milliseconds: 100));
+        expect(
+          container.read(workspaceControllerProvider).activeText,
+          afterTyping,
+        );
+        workspace.undoActiveBuffer();
+        await tester.pump(const Duration(milliseconds: 100));
+        expect(
+          container.read(workspaceControllerProvider).activeText,
+          original,
+        );
+
+        workspace.redoActiveBuffer();
+        await tester.pump(const Duration(milliseconds: 100));
+        expect(
+          container.read(workspaceControllerProvider).activeText,
+          afterTyping,
+        );
+        workspace.redoActiveBuffer();
+        await tester.pump(const Duration(milliseconds: 100));
+        expect(
+          container.read(workspaceControllerProvider).activeText,
+          afterPaste,
+        );
+        workspace.redoActiveBuffer();
+        await tester.pump(const Duration(milliseconds: 100));
+        expect(
+          container.read(workspaceControllerProvider).activeText,
+          afterFollowingTyping,
+        );
+      }
+
       await tester.pumpWidget(
         UncontrolledProviderScope(
           container: container,
@@ -268,6 +357,31 @@ void main() {
       }
 
       await focusLastEditableTextField();
+      await expectUndoRedoSequence(mode: BusyMarkPasteMode.normal);
+      await focusLastEditableTextField();
+      await expectUndoRedoSequence(mode: BusyMarkPasteMode.plainText);
+      await focusLastEditableTextField();
+      await expectUndoRedoSequence(
+        mode: BusyMarkPasteMode.normal,
+        historyPayload: BusyMarkClipboardPayload(
+          id: 'workspace-history-paste',
+          acquiredAt: DateTime.utc(2026),
+          kind: BusyMarkClipboardContentKind.text,
+          text: 'b',
+          external: true,
+        ),
+      );
+      await focusLastEditableTextField();
+      await expectUndoRedoSequence(
+        mode: BusyMarkPasteMode.normal,
+        replaceTypedCharacter: true,
+      );
+      await focusLastEditableTextField();
+      await expectUndoRedoSequence(
+        mode: BusyMarkPasteMode.normal,
+        pasteText: 'b\nline',
+      );
+      await focusLastEditableTextField();
       clipboardText = ' editor-normal';
       generation += 1;
       await pressPaste(BusyMarkPasteMode.normal);
@@ -281,6 +395,10 @@ void main() {
 
       await selectView(DocumentViewModePreference.source);
       expect(find.byType(BusyMarkSourceEditor), findsOneWidget);
+      await focusLastEditableTextField();
+      await expectUndoRedoSequence(mode: BusyMarkPasteMode.normal);
+      await focusLastEditableTextField();
+      await expectUndoRedoSequence(mode: BusyMarkPasteMode.plainText);
       await focusLastEditableTextField();
       clipboardText = ' source-normal';
       generation += 1;

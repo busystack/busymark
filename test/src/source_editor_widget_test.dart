@@ -15,6 +15,7 @@ import 'package:busymark/src/clipboard/clipboard_insertion.dart';
 import 'package:busymark/src/clipboard/clipboard_models.dart';
 import 'package:busymark/src/core/diagnostic.dart';
 import 'package:busymark/src/core/source_span.dart';
+import 'package:busymark/src/markdown/busymark_document.dart';
 import 'package:busymark/src/editor/document_text_geometry.dart';
 import 'package:busymark/src/editor/source_highlighter.dart'
     show BusyMarkSourceEditingController;
@@ -1844,6 +1845,310 @@ void main() {
     expect(clipboard.reads, 1);
   });
 
+  testWidgets('Source structured blocks keep boundaries at every position', (
+    tester,
+  ) async {
+    final fragment = WysiwygClipboardFragment(
+      mode: MarkdownMode.commonMark,
+      blocks: const [
+        BusyWysiwygStyledBlock(
+          kind: BusyBlockKind.heading,
+          text: 'Heading',
+          ranges: [],
+          attributes: {'level': '2'},
+        ),
+        BusyWysiwygStyledBlock(
+          kind: BusyBlockKind.unorderedListItem,
+          text: 'Item',
+          ranges: [],
+        ),
+      ],
+    );
+    for (final value in [
+      ('existing', 0, '## Heading\n\n- Item\n\nexisting'),
+      ('existing', 8, 'existing\n\n## Heading\n\n- Item\n'),
+      ('leftright', 4, 'left\n\n## Heading\n\n- Item\n\nright'),
+    ]) {
+      final controller = await _pumpClipboardSourceEditor(
+        tester,
+        source: value.$1,
+        clipboard: _SourceTestClipboard(
+          readData: RichClipboardData(
+            text: 'Heading\nItem',
+            richFragment: fragment.encode(),
+          ),
+        ),
+      );
+      controller.selection = TextSelection.collapsed(offset: value.$2);
+      await _pressControlKey(tester, LogicalKeyboardKey.keyV);
+      await tester.pump();
+      expect(controller.text, value.$3);
+    }
+  });
+
+  testWidgets('Source native inline paste preserves edge and only whitespace', (
+    tester,
+  ) async {
+    WysiwygClipboardFragment native(
+      String text, {
+      List<BusyInlineStyleRange> ranges = const [],
+    }) => WysiwygClipboardFragment(
+      mode: MarkdownMode.commonMark,
+      blocks: [
+        BusyWysiwygStyledBlock(
+          kind: BusyBlockKind.paragraph,
+          text: text,
+          ranges: ranges,
+        ),
+      ],
+    );
+
+    final trailing = await _pumpClipboardSourceEditor(
+      tester,
+      source: 'leftright',
+      clipboard: _SourceTestClipboard(
+        readData: RichClipboardData(
+          text: 'X ',
+          richFragment: native('X ').encode(),
+          generation: 42,
+        ),
+      ),
+    );
+    trailing.selection = const TextSelection.collapsed(offset: 4);
+    await _pressControlKey(tester, LogicalKeyboardKey.keyV);
+    await tester.pump();
+    expect(trailing.text, 'leftX right');
+
+    final styled = await _pumpClipboardSourceEditor(
+      tester,
+      source: 'leftright',
+      clipboard: _SourceTestClipboard(
+        readData: RichClipboardData(
+          text: ' X ',
+          richFragment: native(
+            ' X ',
+            ranges: const [
+              BusyInlineStyleRange(
+                start: 1,
+                end: 2,
+                kind: BusyInlineKind.strong,
+              ),
+            ],
+          ).encode(),
+          generation: 43,
+        ),
+      ),
+    );
+    styled.selection = const TextSelection.collapsed(offset: 4);
+    await _pressControlKey(tester, LogicalKeyboardKey.keyV);
+    await tester.pump();
+    expect(styled.text, 'left **X** right');
+
+    final whitespace = await _pumpClipboardSourceEditor(
+      tester,
+      source: 'leftDELETEright',
+      clipboard: _SourceTestClipboard(
+        readData: RichClipboardData(
+          text: '   ',
+          richFragment: native('   ').encode(),
+          generation: 44,
+        ),
+      ),
+    );
+    whitespace.selection = const TextSelection(baseOffset: 4, extentOffset: 10);
+    await _pressControlKey(tester, LogicalKeyboardKey.keyV);
+    await tester.pump();
+    expect(whitespace.text, 'left   right');
+  });
+
+  testWidgets('Source structured paste respects table-cell semantics', (
+    tester,
+  ) async {
+    final fragment = WysiwygClipboardFragment(
+      mode: MarkdownMode.gfm,
+      blocks: [
+        BusyWysiwygStyledBlock(
+          kind: BusyBlockKind.paragraph,
+          text: 'A|B',
+          ranges: const [],
+        ),
+        BusyWysiwygStyledBlock(
+          kind: BusyBlockKind.paragraph,
+          text: 'C\nD',
+          ranges: const [],
+        ),
+      ],
+    );
+    const source = 'before\n\n| H |\n| --- |\n| leftright |\n\nafter\n';
+    final controller = await _pumpClipboardSourceEditor(
+      tester,
+      source: source,
+      markdownMode: MarkdownMode.gfm,
+      clipboard: _SourceTestClipboard(
+        readData: RichClipboardData(
+          text: 'A|B C D',
+          richFragment: fragment.encode(),
+          generation: 45,
+        ),
+      ),
+    );
+    controller.selection = TextSelection.collapsed(
+      offset: source.indexOf('leftright') + 4,
+    );
+    await _pressControlKey(tester, LogicalKeyboardKey.keyV);
+    await tester.pump();
+
+    expect(
+      controller.text,
+      'before\n\n| H |\n| --- |\n| leftA\\|B C Dright |\n\nafter\n',
+    );
+    final parsed = const MarkdownParser().parse(
+      filePath: '/project/source.md',
+      source: controller.text,
+      mode: MarkdownMode.gfm,
+      validateLocalReferences: false,
+    );
+    expect(parsed.busyDocument.blocks[1].kind, BusyBlockKind.table);
+    expect(
+      parsed.busyDocument.blocks[1].children.last.children.single.plainText,
+      'leftA|B C Dright',
+    );
+  });
+
+  testWidgets('Source structured blocks preserve list and quote containers', (
+    tester,
+  ) async {
+    final fragment = WysiwygClipboardFragment(
+      mode: MarkdownMode.commonMark,
+      blocks: [
+        BusyWysiwygStyledBlock(
+          kind: BusyBlockKind.heading,
+          text: 'Heading',
+          ranges: const [],
+          attributes: const {'level': '2'},
+        ),
+      ],
+    );
+    for (final value in [
+      ('- leftright\n', '- left\n\n  ## Heading\n\n  right\n'),
+      ('> leftright\n', '> left\n>\n> ## Heading\n>\n> right\n'),
+    ]) {
+      final controller = await _pumpClipboardSourceEditor(
+        tester,
+        source: value.$1,
+        clipboard: _SourceTestClipboard(
+          readData: RichClipboardData(
+            text: 'Heading',
+            richFragment: fragment.encode(),
+            generation: 46,
+          ),
+        ),
+      );
+      controller.selection = TextSelection.collapsed(
+        offset: value.$1.indexOf('leftright') + 4,
+      );
+      await _pressControlKey(tester, LogicalKeyboardKey.keyV);
+      await tester.pump();
+      expect(controller.text, value.$2);
+    }
+  });
+
+  testWidgets('Source protected contexts use the safe source fallback', (
+    tester,
+  ) async {
+    final registry = BusyMarkClipboardInsertionRegistry();
+    addTearDown(registry.dispose);
+    final fragment = WysiwygClipboardFragment(
+      mode: MarkdownMode.commonMark,
+      blocks: const [
+        BusyWysiwygStyledBlock(
+          kind: BusyBlockKind.heading,
+          text: 'Heading',
+          ranges: [],
+          attributes: {'level': '2'},
+        ),
+      ],
+    );
+    const source = '```text\nleftright\n```\n';
+    final controller = await _pumpClipboardSourceEditor(
+      tester,
+      source: source,
+      clipboard: _SourceTestClipboard(
+        readData: RichClipboardData(
+          text: 'Heading',
+          sourceText: '## Heading',
+          richFragment: fragment.encode(),
+        ),
+      ),
+      registry: registry,
+    );
+    controller.selection = TextSelection.collapsed(
+      offset: source.indexOf('leftright') + 4,
+    );
+    await tester.pump();
+    expect(
+      registry.canPaste(
+        BusyMarkClipboardPayload(
+          id: 'protected-rich-only',
+          acquiredAt: DateTime.utc(2026),
+          kind: BusyMarkClipboardContentKind.richText,
+          richFragment: fragment.encode(),
+          external: true,
+        ),
+      ),
+      isFalse,
+    );
+
+    await _pressControlKey(tester, LogicalKeyboardKey.keyV);
+    await tester.pump();
+
+    expect(controller.text, '```text\nleft## Headingright\n```\n');
+  });
+
+  testWidgets('Writerside Source preserves a structured procedure block', (
+    tester,
+  ) async {
+    const procedure =
+        '<procedure title="Deploy"><step><p>Run.</p></step></procedure>';
+    final parsed = const MarkdownParser().parse(
+      filePath: '/project/topic.md',
+      source: '$procedure\n',
+      mode: MarkdownMode.writersideMarkdown,
+      validateLocalReferences: false,
+    );
+    final block = parsed.busyDocument.blocks.single;
+    final fragment = WysiwygClipboardFragment(
+      mode: MarkdownMode.writersideMarkdown,
+      blocks: [
+        BusyWysiwygStyledBlock(
+          kind: block.kind,
+          text: block.plainText,
+          ranges: busyInlineStyleRanges(block.inlines),
+          attributes: block.attributes,
+          completeBlock: busyMarkWysiwygImmutableBlockSnapshot(block),
+        ),
+      ],
+    );
+    final controller = await _pumpClipboardSourceEditor(
+      tester,
+      source: 'Before',
+      markdownMode: MarkdownMode.writersideMarkdown,
+      clipboard: _SourceTestClipboard(
+        readData: RichClipboardData(
+          text: 'Deploy Run.',
+          sourceText: '$procedure\n',
+          richFragment: fragment.encode(),
+        ),
+      ),
+    );
+    controller.selection = const TextSelection.collapsed(offset: 6);
+
+    await _pressControlKey(tester, LogicalKeyboardKey.keyV);
+    await tester.pump();
+
+    expect(controller.text, 'Before\n\n$procedure\n');
+  });
+
   testWidgets('Source delayed paste rejects a changed selection', (
     tester,
   ) async {
@@ -1864,6 +2169,80 @@ void main() {
     await tester.pump();
     expect(controller.text, 'abcdef');
     expect(clipboard.reads, 1);
+  });
+
+  testWidgets('Source paste preserves composition before and during a read', (
+    tester,
+  ) async {
+    final clipboard = _SourceTestClipboard(
+      readData: const RichClipboardData(text: 'paste', generation: 47),
+    );
+    final registry = BusyMarkClipboardInsertionRegistry();
+    addTearDown(registry.dispose);
+    final captures = <BusyMarkClipboardCapture>[];
+    final controller = await _pumpClipboardSourceEditor(
+      tester,
+      source: 'abcdef',
+      clipboard: clipboard,
+      registry: registry,
+      onCaptured: captures.add,
+    );
+    tester.testTextInput.updateEditingValue(
+      const TextEditingValue(
+        text: 'abcdef',
+        selection: TextSelection.collapsed(offset: 2),
+        composing: TextRange(start: 1, end: 2),
+      ),
+    );
+    await tester.pump();
+    await _pressControlKey(tester, LogicalKeyboardKey.keyV);
+    await tester.pump();
+    expect(clipboard.reads, 0);
+    expect(controller.text, 'abcdef');
+    expect(controller.value.composing, const TextRange(start: 1, end: 2));
+    expect(
+      await registry.paste(
+        BusyMarkClipboardPayload(
+          id: 'source-composition-history',
+          acquiredAt: DateTime.utc(2026),
+          kind: BusyMarkClipboardContentKind.text,
+          text: 'history',
+          external: true,
+        ),
+      ),
+      ClipboardPasteResult.unavailable,
+    );
+
+    final delayed = _SourceTestClipboard(
+      readData: const RichClipboardData(text: 'paste', generation: 48),
+      delayRead: true,
+    );
+    final delayedController = await _pumpClipboardSourceEditor(
+      tester,
+      source: 'abcdef',
+      clipboard: delayed,
+      onCaptured: captures.add,
+    );
+    delayedController.selection = const TextSelection.collapsed(offset: 2);
+    await _pressControlKey(tester, LogicalKeyboardKey.keyV);
+    await delayed.readStarted.future;
+    tester.testTextInput.updateEditingValue(
+      const TextEditingValue(
+        text: 'abcdef',
+        selection: TextSelection.collapsed(offset: 2),
+        composing: TextRange(start: 1, end: 2),
+      ),
+    );
+    await tester.pump();
+    expect(
+      delayedController.value.composing,
+      const TextRange(start: 1, end: 2),
+    );
+    delayed.releaseRead();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 20));
+    expect(delayedController.text, 'abcdef');
+    expect(captures, isEmpty);
   });
 
   testWidgets('source failed cut keeps text and does not record history', (
@@ -2204,6 +2583,126 @@ void main() {
     expect(captures.single.kind, BusyMarkClipboardContentKind.image);
     expect(captures.single.text, sourceFile.path);
     expect(captures.single.imageBytes, original);
+
+    final capture = captures.single;
+    final retained = BusyMarkClipboardPayload(
+      id: 'source-retained-path-image',
+      acquiredAt: DateTime.utc(2026),
+      kind: capture.kind,
+      text: capture.text,
+      sourceText: capture.sourceText,
+      html: capture.html,
+      richFragment: capture.richFragment,
+      imageBytes: capture.imageBytes,
+      imageMimeType: capture.imageMimeType,
+      imageDisplayName: capture.imageDisplayName,
+      origin: capture.origin,
+      mediaBytes: capture.mediaBytes,
+      mediaComplete: capture.mediaComplete,
+      external: true,
+    );
+    final registry = BusyMarkClipboardInsertionRegistry();
+    addTearDown(registry.dispose);
+    final replacement = Uint8List.fromList(original);
+    replacement[replacement.length - 1] ^= 0xff;
+    await tester.runAsync(() => sourceFile.writeAsBytes(replacement));
+
+    Future<void> expectNormalReplay(String directoryName) async {
+      final directory = Directory('${root.path}/$directoryName');
+      await tester.runAsync(directory.create);
+      await _pumpClipboardSourceEditor(
+        tester,
+        source: 'Target',
+        clipboard: _SourceTestClipboard(),
+        registry: registry,
+        filePath: '${directory.path}/target.md',
+        assetWorkspaceKind: AssetWorkspaceKind.standalone,
+      );
+      expect(
+        await tester.runAsync(() => registry.paste(retained)),
+        ClipboardPasteResult.inserted,
+      );
+      expect(
+        await tester.runAsync(
+          () => File('${directory.path}/images/original.png').readAsBytes(),
+        ),
+        original,
+      );
+    }
+
+    await expectNormalReplay('modified-replay');
+    await tester.runAsync(sourceFile.delete);
+    await expectNormalReplay('deleted-replay');
+
+    final plainDirectory = Directory('${root.path}/plain-replay');
+    await tester.runAsync(plainDirectory.create);
+    final plain = await _pumpClipboardSourceEditor(
+      tester,
+      source: 'Target',
+      clipboard: _SourceTestClipboard(),
+      registry: registry,
+      filePath: '${plainDirectory.path}/target.md',
+      assetWorkspaceKind: AssetWorkspaceKind.standalone,
+    );
+    plain.selection = const TextSelection(baseOffset: 0, extentOffset: 6);
+    expect(
+      await registry.paste(retained, mode: BusyMarkPasteMode.plainText),
+      ClipboardPasteResult.inserted,
+    );
+    expect(plain.text, sourceFile.path);
+    expect(
+      await tester.runAsync(
+        () => Directory('${plainDirectory.path}/images').exists(),
+      ),
+      isFalse,
+    );
+  });
+
+  testWidgets('unsafe local image candidates paste their original text', (
+    tester,
+  ) async {
+    final root = (await tester.runAsync(
+      () => Directory.systemTemp.createTemp('busymark-source-path-fallback-'),
+    ))!;
+    addTearDown(() async {
+      if (await root.exists()) await root.delete(recursive: true);
+    });
+    final image = File('${root.path}/image.png');
+    final invalidImage = File('${root.path}/invalid.png');
+    final textFile = File('${root.path}/notes.txt');
+    await tester.runAsync(() async {
+      await image.writeAsBytes(const [0x89, 0x50, 0x4e, 0x47]);
+      await invalidImage.writeAsString('not an image');
+      await textFile.writeAsString('notes');
+    });
+    final clipboard = _SourceTestClipboard();
+    final values = [
+      '  ${root.path}/missing.png  ',
+      invalidImage.path,
+      textFile.path,
+      '${image.uri}?download=1',
+      '${image.uri}#preview',
+      'file://remote-host${image.uri.path}',
+    ];
+    for (final value in values) {
+      clipboard.readData = RichClipboardData(text: value);
+      final controller = await _pumpClipboardSourceEditor(
+        tester,
+        source: 'Target',
+        clipboard: clipboard,
+        filePath: '${root.path}/target.md',
+        assetWorkspaceKind: AssetWorkspaceKind.standalone,
+      );
+      controller.selection = const TextSelection(
+        baseOffset: 0,
+        extentOffset: 6,
+      );
+
+      await _pressControlKey(tester, LogicalKeyboardKey.keyV);
+      await _pumpUntil(tester, () => controller.text != 'Target');
+
+      expect(controller.text, value, reason: value);
+    }
   });
 
   testWidgets('image history asks to save an untitled Source document', (

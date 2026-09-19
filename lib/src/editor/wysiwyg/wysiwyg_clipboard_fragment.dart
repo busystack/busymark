@@ -58,14 +58,57 @@ class WysiwygClipboardFragment {
   String serializeInlineFor({
     required MarkdownMode destinationMode,
     required String destinationFilePath,
+    bool tableCell = false,
+    bool atBlockStart = false,
   }) {
-    final serialized = serializeFor(
-      destinationMode: destinationMode,
-      destinationFilePath: destinationFilePath,
+    if (!isInlineSourceFragment) return '';
+    final block = _destinationSerializationBlock(documentBlocks.single);
+    return const BusyMarkMarkdownSerializer().serializeInlineFragment(
+      block.inlines,
+      tableCell: tableCell,
+      atBlockStart: atBlockStart,
+      readableHardBreakRuns: !tableCell,
     );
-    return isInlineSourceFragment && serialized.endsWith('\n')
-        ? serialized.substring(0, serialized.length - 1)
-        : serialized;
+  }
+
+  /// Flattens structured blocks with the same semantics as an Editor table
+  /// cell: block and line boundaries become spaces and inline styles survive.
+  String serializeTableCellFor({
+    required MarkdownMode destinationMode,
+    required String destinationFilePath,
+    bool atBlockStart = false,
+  }) {
+    BusyInline normalize(BusyInline inline) =>
+        inline.kind == BusyInlineKind.hardBreak ||
+            inline.kind == BusyInlineKind.softBreak
+        ? const BusyInline(kind: BusyInlineKind.text, text: ' ')
+        : BusyInline(
+            kind: inline.kind,
+            text: inline.text.replaceAll(RegExp(r'\r\n|\r|\n'), ' '),
+            destination: inline.destination,
+            attributes: inline.attributes,
+            children: [for (final child in inline.children) normalize(child)],
+          );
+    final inlines = <BusyInline>[];
+    void append(BusyBlock block) {
+      if (inlines.isNotEmpty) {
+        inlines.add(const BusyInline(kind: BusyInlineKind.text, text: ' '));
+      }
+      inlines.addAll(block.inlines.map(normalize));
+      for (final child in block.children) {
+        append(child);
+      }
+    }
+
+    for (final block in documentBlocks) {
+      append(_destinationSerializationBlock(block));
+    }
+    return const BusyMarkMarkdownSerializer().serializeInlineFragment(
+      inlines,
+      tableCell: true,
+      atBlockStart: atBlockStart,
+      readableHardBreakRuns: false,
+    );
   }
 
   String encode() => jsonEncode({

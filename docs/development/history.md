@@ -43,6 +43,18 @@ source markup, HTML, rich fragments, or media. Paste revalidates both its target
 and, when native image acquisition crosses a second platform boundary, clipboard
 identity around asynchronous work.
 
+Source fragment insertion uses the Markdown serializer's inline entry point,
+including block-start and table-cell escaping, without document-level trimming.
+Destination source is parsed to protect raw/code contexts and preserve list,
+blockquote, and table syntax while replacing only the captured range.
+
+Paste outcomes distinguish insertion, cancellation, stale targets, unsupported
+representations, and unavailable targets. Cancellation and staleness terminate
+candidate processing. All paste mutations are discrete external-history
+transactions and invalidate continuous-typing groups; active IME composition is
+checked at entry and again immediately before mutation. Newly published assets
+are removed after cancellation or invalidation, while reused assets are kept.
+
 ## Clipboard retention
 
 `ClipboardHistoryController` retains successful BusyMark copy/cut payloads and
@@ -51,6 +63,14 @@ origin metadata, available representations, a SHA-256 equivalence fingerprint,
 and byte accounting. The default policy is 100 entries, 64 MiB total payload,
 and 8 MiB of decoded thumbnails. Deduplication compares every meaningful
 representation.
+
+The editor adapter that completes a successful paste is the sole retention
+owner. Candidate helpers return capture data but never retain it, the history
+panel never performs a second write, and the insertion registry only restores
+focus. Image-path captures use the immutable bytes returned by ingestion rather
+than reopening the original file. Plain-text paste may retain the original
+external snapshot after success but never probes richer fields for insertion or
+acquires image bytes to enrich it.
 
 The insertion registry exposes only the latest mounted editable surface and uses
 identity-safe unregistering. An adapter must capture and revalidate its document,

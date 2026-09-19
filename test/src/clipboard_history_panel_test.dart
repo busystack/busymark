@@ -367,7 +367,7 @@ void main() {
           ),
         );
     final target = _PanelInsertionTarget(
-      result: ClipboardPasteResult.staleTarget,
+      result: ClipboardPasteResult.unsupported,
     );
     container.read(clipboardInsertionRegistryProvider).register(target);
     await _pumpPanel(tester, container);
@@ -380,6 +380,31 @@ void main() {
       find.text(AppLocalizationsEn().clipboardUnavailable),
       findsOneWidget,
     );
+  });
+
+  testWidgets('cancelled insertion is terminal without an error toast', (
+    tester,
+  ) async {
+    final container = _container();
+    container
+        .read(clipboardHistoryControllerProvider.notifier)
+        .retain(
+          const BusyMarkClipboardCapture(
+            kind: BusyMarkClipboardContentKind.text,
+            text: 'cancelled item',
+          ),
+        );
+    final target = _PanelInsertionTarget(
+      result: ClipboardPasteResult.cancelled,
+    );
+    container.read(clipboardInsertionRegistryProvider).register(target);
+    await _pumpPanel(tester, container);
+
+    await _openEntryActions(tester);
+    await tester.tap(find.text('Paste'));
+    await tester.pump(const Duration(milliseconds: 200));
+    expect(target.pasteCalls, 1);
+    expect(find.text(AppLocalizationsEn().clipboardUnavailable), findsNothing);
   });
 
   testWidgets(
@@ -396,7 +421,12 @@ void main() {
         ),
       );
       final container = _container(clipboard: clipboard);
-      final target = _PanelInsertionTarget();
+      final history = container.read(
+        clipboardHistoryControllerProvider.notifier,
+      );
+      final target = _PanelInsertionTarget(
+        onInserted: history.retainCurrentAfterPaste,
+      );
       container.read(clipboardInsertionRegistryProvider).register(target);
       await _pumpPanel(tester, container);
       expect(
@@ -461,7 +491,11 @@ void main() {
         isEmpty,
       );
 
-      final successful = _PanelInsertionTarget();
+      final successful = _PanelInsertionTarget(
+        onInserted: container
+            .read(clipboardHistoryControllerProvider.notifier)
+            .retainCurrentAfterPaste,
+      );
       container.read(clipboardInsertionRegistryProvider).register(successful);
       await tester.pump();
       await _openEntryActions(tester);
@@ -488,7 +522,12 @@ void main() {
     );
     final container = _container(clipboard: clipboard);
     final result = Completer<ClipboardPasteResult>();
-    final target = _PanelInsertionTarget(resultFuture: result.future);
+    final target = _PanelInsertionTarget(
+      resultFuture: result.future,
+      onInserted: container
+          .read(clipboardHistoryControllerProvider.notifier)
+          .retainCurrentAfterPaste,
+    );
     container.read(clipboardInsertionRegistryProvider).register(target);
     await _pumpPanel(tester, container);
 
@@ -632,6 +671,7 @@ class _PanelInsertionTarget
     this.plainTextPasteAvailable,
     this.result = ClipboardPasteResult.inserted,
     this.resultFuture,
+    this.onInserted,
   });
 
   final bool supportImages;
@@ -639,6 +679,7 @@ class _PanelInsertionTarget
   final bool? plainTextPasteAvailable;
   final ClipboardPasteResult result;
   final Future<ClipboardPasteResult>? resultFuture;
+  final ValueChanged<BusyMarkClipboardPayload>? onInserted;
   int pasteCalls = 0;
   bool? lastPlainText;
   final payloads = <BusyMarkClipboardPayload>[];
@@ -678,7 +719,9 @@ class _PanelInsertionTarget
     pasteCalls++;
     lastPlainText = mode == BusyMarkPasteMode.plainText;
     payloads.add(payload);
-    return resultFuture ?? result;
+    final outcome = await (resultFuture ?? Future.value(result));
+    if (outcome == ClipboardPasteResult.inserted) onInserted?.call(payload);
+    return outcome;
   }
 
   @override

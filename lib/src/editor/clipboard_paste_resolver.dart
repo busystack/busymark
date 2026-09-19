@@ -253,6 +253,35 @@ class BusyMarkClipboardPasteResolver {
   }
 }
 
+BusyMarkClipboardCapture busyMarkClipboardCaptureFromSnapshot(
+  BusyMarkClipboardSnapshot snapshot, {
+  Uint8List? imageBytes,
+  String? imageMimeType,
+  String? imageDisplayName,
+}) {
+  final retainedImageBytes = imageBytes ?? snapshot.imageBytes;
+  final kind = retainedImageBytes != null && retainedImageBytes.isNotEmpty
+      ? BusyMarkClipboardContentKind.image
+      : snapshot.contentKind ??
+            (snapshot.richFragment != null || snapshot.html != null
+                ? BusyMarkClipboardContentKind.richText
+                : BusyMarkClipboardContentKind.text);
+  return BusyMarkClipboardCapture(
+    kind: kind,
+    text: snapshot.text,
+    sourceText: snapshot.sourceText,
+    html: snapshot.html,
+    richFragment: snapshot.richFragment,
+    imageBytes: retainedImageBytes,
+    imageMimeType: imageMimeType ?? snapshot.imageMimeType,
+    imageDisplayName: imageDisplayName ?? snapshot.imageDisplayName,
+    origin: snapshot.origin,
+    mediaBytes: snapshot.mediaBytes,
+    mediaComplete: snapshot.mediaComplete,
+    external: snapshot.external,
+  );
+}
+
 bool hasUsableClipboardHtmlContent(WysiwygClipboardFragment fragment) =>
     fragment.documentBlocks.any(
       (block) =>

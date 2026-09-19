@@ -8,6 +8,7 @@ import 'package:busymark/src/assets/asset_ingestion_service.dart';
 import 'package:busymark/src/assets/asset_input_service.dart';
 import 'package:busymark/src/app/busymark_design.dart';
 import 'package:busymark/src/clipboard/clipboard_history_controller.dart';
+import 'package:busymark/src/clipboard/clipboard_history_panel.dart';
 import 'package:busymark/src/clipboard/clipboard_insertion.dart';
 import 'package:busymark/src/clipboard/clipboard_models.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_clipboard_fragment.dart';
@@ -15,6 +16,7 @@ import 'package:busymark/src/editor/wysiwyg/wysiwyg_clipboard_html.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_document_controller.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_editor.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_inline_controller.dart';
+import 'package:busymark/src/editor/wysiwyg/wysiwyg_session_state.dart';
 import 'package:busymark/src/editor/writerside_video_player_host.dart';
 import 'package:busymark/src/markdown/busymark_document.dart';
 import 'package:busymark/src/markdown/markdown_model.dart';
@@ -396,7 +398,18 @@ void main() {
       String? workspaceRoot,
       AssetWorkspaceKind? assetWorkspaceKind,
       AssetInputService? assetInputService,
+      AssetIngestionService assetIngestionService =
+          const AssetIngestionService(),
+      WysiwygEditorSessionState Function(BusyDocument document)?
+      initialSessionFor,
     }) async {
+      final document = _parser
+          .parse(
+            filePath: filePath ?? '/$id.md',
+            source: source,
+            mode: MarkdownMode.writersideMarkdown,
+          )
+          .busyDocument;
       await tester.pumpWidget(
         MaterialApp(
           localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -410,13 +423,11 @@ void main() {
               workspaceRoot: workspaceRoot,
               assetWorkspaceKind: assetWorkspaceKind,
               assetInputService: assetInputService,
-              document: _parser
-                  .parse(
-                    filePath: filePath ?? '/$id.md',
-                    source: source,
-                    mode: MarkdownMode.writersideMarkdown,
-                  )
-                  .busyDocument,
+              assetIngestionService: assetIngestionService,
+              initialSessionState:
+                  initialSessionFor?.call(document) ??
+                  const WysiwygEditorSessionState(),
+              document: document,
               onSourceChanged: (_, value) => changed(value),
             ),
           ),
@@ -490,6 +501,7 @@ void main() {
     testWidgets('right-click opens the menu for a whole-document selection', (
       tester,
     ) async {
+      systemData = {'text': 'Paste', 'generation': 68};
       await mount(tester, 'issues', _source, (_) {});
       await key(tester, LogicalKeyboardKey.keyA);
       await key(tester, LogicalKeyboardKey.keyA);
@@ -611,6 +623,7 @@ void main() {
     });
 
     testWidgets('document selection menu can copy plain text', (tester) async {
+      systemData = {'text': 'Paste', 'generation': 69};
       await mount(tester, 'issues', _source, (_) {});
       await key(tester, LogicalKeyboardKey.keyA);
       await key(tester, LogicalKeyboardKey.keyA);
@@ -792,6 +805,7 @@ void main() {
         'Target\n',
         (value) => first = value,
         registry: registry,
+        onCaptured: history.retain,
       );
       await key(tester, LogicalKeyboardKey.keyA);
       expect(await registry.paste(current), ClipboardPasteResult.inserted);
@@ -799,7 +813,6 @@ void main() {
       expect(first, contains('**Bold**'));
       expect(first, contains('[linked](https://example.com)'));
       expect(first, contains('- Item'));
-      history.retainCurrentAfterPaste(current);
       expect(
         historyScope.read(clipboardHistoryControllerProvider).entries,
         hasLength(1),
@@ -940,14 +953,24 @@ void main() {
         final sourceFile = File('${root.path}/original.png');
         await tester.runAsync(() => sourceFile.writeAsBytes(original));
         systemData = {'text': sourceFile.path};
-        final captures = <BusyMarkClipboardCapture>[];
+        final historyScope = ProviderContainer(
+          overrides: [
+            localSettingsStoreProvider.overrideWithValue(
+              _ClipboardMemorySettingsStore(),
+            ),
+          ],
+        );
+        addTearDown(historyScope.dispose);
+        final history = historyScope.read(
+          clipboardHistoryControllerProvider.notifier,
+        );
         var changed = '';
         await mount(
           tester,
           'image-snapshot',
           'Target\n',
           (value) => changed = value,
-          onCaptured: captures.add,
+          onCaptured: history.retain,
           filePath: '${root.path}/target.md',
           assetWorkspaceKind: AssetWorkspaceKind.standalone,
         );
@@ -970,10 +993,13 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(changed, contains('images/original.png'));
-        expect(captures, hasLength(1));
-        expect(captures.single.text, sourceFile.path);
-        expect(captures.single.kind, BusyMarkClipboardContentKind.image);
-        expect(captures.single.imageBytes, original);
+        final retainedEntries = historyScope
+            .read(clipboardHistoryControllerProvider)
+            .entries;
+        expect(retainedEntries, hasLength(1));
+        expect(retainedEntries.single.text, sourceFile.path);
+        expect(retainedEntries.single.kind, BusyMarkClipboardContentKind.image);
+        expect(retainedEntries.single.imageBytes, original);
         expect(
           await tester.runAsync(
             () => File('${root.path}/images/original.png').readAsBytes(),
@@ -981,25 +1007,7 @@ void main() {
           original,
         );
 
-        final capture = captures.single;
-        final payload = BusyMarkClipboardPayload(
-          id: 'retained-path-image',
-          acquiredAt: DateTime.utc(2026),
-          kind: capture.kind,
-          text: capture.text,
-          sourceText: capture.sourceText,
-          html: capture.html,
-          richFragment: capture.richFragment,
-          imageBytes: capture.imageBytes,
-          imageMimeType: capture.imageMimeType,
-          imageDisplayName: capture.imageDisplayName,
-          origin: capture.origin,
-          mediaBytes: capture.mediaBytes,
-          mediaComplete: capture.mediaComplete,
-          external: true,
-        );
-        await tester.runAsync(sourceFile.delete);
-
+        final payload = retainedEntries.single;
         final replayDirectory = Directory('${root.path}/replay');
         await tester.runAsync(replayDirectory.create);
         final registry = BusyMarkClipboardInsertionRegistry();
@@ -1040,6 +1048,45 @@ void main() {
           original,
         );
 
+        await tester.runAsync(sourceFile.delete);
+        final deletedReplayDirectory = Directory('${root.path}/deleted-replay');
+        await tester.runAsync(deletedReplayDirectory.create);
+        var deletedReplay = '';
+        await mount(
+          tester,
+          'image-deleted-replay',
+          'Target\n',
+          (value) => deletedReplay = value,
+          registry: registry,
+          filePath: '${deletedReplayDirectory.path}/target.md',
+          assetWorkspaceKind: AssetWorkspaceKind.standalone,
+        );
+        final replayAfterDelete = registry.paste(payload);
+        for (
+          var attempt = 0;
+          attempt < 100 &&
+              find.byKey(BusyMarkImageDialogKeys.submit).evaluate().isEmpty;
+          attempt++
+        ) {
+          await tester.runAsync(
+            () => Future<void>.delayed(const Duration(milliseconds: 5)),
+          );
+          await tester.pump();
+        }
+        expect(find.byKey(BusyMarkImageDialogKeys.submit), findsOneWidget);
+        await tester.tap(find.byKey(BusyMarkImageDialogKeys.submit));
+        await tester.pumpAndSettle();
+        expect(await replayAfterDelete, ClipboardPasteResult.inserted);
+        expect(deletedReplay, contains('images/original.png'));
+        expect(
+          await tester.runAsync(
+            () => File(
+              '${deletedReplayDirectory.path}/images/original.png',
+            ).readAsBytes(),
+          ),
+          original,
+        );
+
         final plainDirectory = Directory('${root.path}/plain');
         await tester.runAsync(plainDirectory.create);
         var plain = '';
@@ -1073,6 +1120,111 @@ void main() {
         );
       },
     );
+
+    testWidgets('history panel path paste has one editor-owned retention write', (
+      tester,
+    ) async {
+      final root = (await tester.runAsync(
+        () => Directory.systemTemp.createTemp('busymark-panel-path-retention-'),
+      ))!;
+      addTearDown(() async {
+        if (await root.exists()) await root.delete(recursive: true);
+      });
+      final original = base64Decode(
+        'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
+      );
+      final sourceFile = File('${root.path}/panel.png');
+      await tester.runAsync(() => sourceFile.writeAsBytes(original));
+      final clipboard = _WysiwygHistoryClipboard(
+        RichClipboardData(text: sourceFile.path, generation: 80),
+      );
+      final container = ProviderContainer(
+        overrides: [
+          localSettingsStoreProvider.overrideWithValue(
+            _ClipboardMemorySettingsStore(),
+          ),
+          richClipboardServiceProvider.overrideWithValue(clipboard),
+          clipboardAssetInputServiceProvider.overrideWithValue(
+            _ClipboardEmptyAssetInput(),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+      final registry = container.read(clipboardInsertionRegistryProvider);
+      final history = container.read(
+        clipboardHistoryControllerProvider.notifier,
+      );
+      var changed = 'Target\n';
+      final document = _parser
+          .parse(
+            filePath: '${root.path}/target.md',
+            source: changed,
+            mode: MarkdownMode.writersideMarkdown,
+          )
+          .busyDocument;
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: Scaffold(
+              body: Row(
+                children: [
+                  Expanded(
+                    child: BusyMarkWysiwygEditor(
+                      document: document,
+                      onSourceChanged: (_, value) => changed = value,
+                      clipboardService: RichClipboardService(),
+                      clipboardInsertionRegistry: registry,
+                      onClipboardCaptured: history.retain,
+                      assetWorkspaceKind: AssetWorkspaceKind.standalone,
+                    ),
+                  ),
+                  const SizedBox(width: 320, child: ClipboardHistoryPanel()),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final editorField = find.widgetWithText(TextField, 'Target');
+      await tester.tap(editorField);
+      await tester.pump();
+      expect(
+        container.read(clipboardHistoryControllerProvider).entries,
+        isEmpty,
+      );
+
+      final pathRow = find.text(sourceFile.path).first;
+      await tester.tap(pathRow);
+      await tester.pump(const Duration(milliseconds: 50));
+      await tester.tap(pathRow);
+      for (
+        var attempt = 0;
+        attempt < 100 &&
+            find.byKey(BusyMarkImageDialogKeys.submit).evaluate().isEmpty;
+        attempt++
+      ) {
+        await tester.runAsync(
+          () => Future<void>.delayed(const Duration(milliseconds: 5)),
+        );
+        await tester.pump();
+      }
+      expect(find.byKey(BusyMarkImageDialogKeys.submit), findsOneWidget);
+      await tester.tap(find.byKey(BusyMarkImageDialogKeys.submit));
+      await tester.pumpAndSettle();
+
+      expect(changed, contains('images/panel.png'));
+      final entries = container
+          .read(clipboardHistoryControllerProvider)
+          .entries;
+      expect(entries, hasLength(1));
+      expect(entries.single.kind, BusyMarkClipboardContentKind.image);
+      expect(entries.single.text, sourceFile.path);
+      expect(entries.single.imageBytes, original);
+    });
 
     testWidgets('copied local video can be pasted from history in Editor', (
       tester,
@@ -1163,6 +1315,258 @@ void main() {
       );
     });
 
+    testWidgets('image paste cancellation is terminal and cleans new assets', (
+      tester,
+    ) async {
+      final root = (await tester.runAsync(
+        () => Directory.systemTemp.createTemp('busymark-image-cancel-'),
+      ))!;
+      addTearDown(() async {
+        if (await root.exists()) await root.delete(recursive: true);
+      });
+      final png = base64Decode(
+        'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
+      );
+      final source = File('${root.path}/source.png');
+      await tester.runAsync(() => source.writeAsBytes(png));
+
+      Future<void> waitForDialog() async {
+        for (
+          var attempt = 0;
+          attempt < 100 &&
+              find.byKey(BusyMarkImageDialogKeys.cancel).evaluate().isEmpty;
+          attempt++
+        ) {
+          await tester.runAsync(
+            () => Future<void>.delayed(const Duration(milliseconds: 5)),
+          );
+          await tester.pump();
+        }
+        expect(find.byKey(BusyMarkImageDialogKeys.cancel), findsOneWidget);
+      }
+
+      Future<void> expectNoPublishedAsset(String directory) async {
+        final images = Directory('$directory/images');
+        final entries = await tester.runAsync(
+          () async => await images.exists()
+              ? images.list().toList()
+              : const <FileSystemEntity>[],
+        );
+        expect(entries, isEmpty);
+      }
+
+      systemData = {'text': source.path};
+      final pathCaptures = <BusyMarkClipboardCapture>[];
+      var pathResult = 'Target\n';
+      await mount(
+        tester,
+        'path-cancel',
+        pathResult,
+        (value) => pathResult = value,
+        onCaptured: pathCaptures.add,
+        filePath: '${root.path}/path.md',
+        assetWorkspaceKind: AssetWorkspaceKind.standalone,
+      );
+      await key(tester, LogicalKeyboardKey.keyV);
+      await waitForDialog();
+      await tester.tap(find.byKey(BusyMarkImageDialogKeys.cancel));
+      await tester.pumpAndSettle();
+      expect(pathResult, 'Target\n');
+      expect(pathCaptures, isEmpty);
+      await expectNoPublishedAsset(root.path);
+
+      final nativeDirectory = Directory('${root.path}/native')..createSync();
+      systemData = {'generation': 71};
+      var nativeResult = 'Target\n';
+      await mount(
+        tester,
+        'native-cancel',
+        nativeResult,
+        (value) => nativeResult = value,
+        filePath: '${nativeDirectory.path}/target.md',
+        assetWorkspaceKind: AssetWorkspaceKind.standalone,
+        assetInputService: _ClipboardImageAssetInput(png),
+      );
+      await key(tester, LogicalKeyboardKey.keyV);
+      await waitForDialog();
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pumpAndSettle();
+      expect(nativeResult, 'Target\n');
+      await expectNoPublishedAsset(nativeDirectory.path);
+
+      final historyDirectory = Directory('${root.path}/history')..createSync();
+      final registry = BusyMarkClipboardInsertionRegistry();
+      addTearDown(registry.dispose);
+      final historyCaptures = <BusyMarkClipboardCapture>[];
+      var historyResult = 'Target\n';
+      await mount(
+        tester,
+        'history-cancel',
+        historyResult,
+        (value) => historyResult = value,
+        registry: registry,
+        onCaptured: historyCaptures.add,
+        filePath: '${historyDirectory.path}/target.md',
+        assetWorkspaceKind: AssetWorkspaceKind.standalone,
+      );
+      ClipboardPasteResult? pasteResult;
+      registry
+          .paste(
+            BusyMarkClipboardPayload(
+              id: 'cancel-image-history',
+              acquiredAt: DateTime.utc(2026),
+              kind: BusyMarkClipboardContentKind.image,
+              text: source.path,
+              imageBytes: png,
+              imageMimeType: 'image/png',
+              imageDisplayName: 'source.png',
+              external: true,
+            ),
+          )
+          .then((value) => pasteResult = value);
+      await waitForDialog();
+      await tester.tap(find.byKey(BusyMarkImageDialogKeys.cancel));
+      await tester.pumpAndSettle();
+      for (var attempt = 0; attempt < 100 && pasteResult == null; attempt++) {
+        await tester.runAsync(
+          () => Future<void>.delayed(const Duration(milliseconds: 5)),
+        );
+        await tester.pump();
+      }
+      expect(pasteResult, ClipboardPasteResult.cancelled);
+      expect(historyResult, 'Target\n');
+      expect(historyCaptures, isEmpty);
+      await expectNoPublishedAsset(historyDirectory.path);
+    });
+
+    testWidgets(
+      'plain history paste replaces a document selection ending at a non-field block',
+      (tester) async {
+        final registry = BusyMarkClipboardInsertionRegistry();
+        addTearDown(registry.dispose);
+        var result = 'First\n\n---\n';
+        await mount(
+          tester,
+          'plain-document-selection',
+          result,
+          (value) => result = value,
+          registry: registry,
+          initialSessionFor: (document) => WysiwygEditorSessionState(
+            activeBlockId: document.blocks.first.id,
+            anchorBlockId: document.blocks.first.id,
+            anchorOffset: 0,
+            extentBlockId: document.blocks.last.id,
+            extentOffset: document.blocks.last.plainText.length,
+          ),
+        );
+
+        expect(
+          await registry.paste(
+            BusyMarkClipboardPayload(
+              id: 'plain-document-selection-payload',
+              acquiredAt: DateTime.utc(2026),
+              kind: BusyMarkClipboardContentKind.text,
+              text: 'Replacement',
+            ),
+            mode: BusyMarkPasteMode.plainText,
+          ),
+          ClipboardPasteResult.inserted,
+        );
+        await tester.pump();
+        expect(result, 'Replacement\n');
+      },
+    );
+
+    testWidgets('image history follows table and multi-block destinations', (
+      tester,
+    ) async {
+      final root = (await tester.runAsync(
+        () => Directory.systemTemp.createTemp('busymark-image-routing-'),
+      ))!;
+      addTearDown(() async {
+        if (await root.exists()) await root.delete(recursive: true);
+      });
+      final png = base64Decode(
+        'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
+      );
+      final payload = BusyMarkClipboardPayload(
+        id: 'routed-image',
+        acquiredAt: DateTime.utc(2026),
+        kind: BusyMarkClipboardContentKind.image,
+        imageBytes: png,
+        imageMimeType: 'image/png',
+        imageDisplayName: 'routed.png',
+      );
+      final registry = BusyMarkClipboardInsertionRegistry();
+      addTearDown(registry.dispose);
+
+      Future<void> submitImage() async {
+        for (
+          var attempt = 0;
+          attempt < 100 &&
+              find.byKey(BusyMarkImageDialogKeys.submit).evaluate().isEmpty;
+          attempt++
+        ) {
+          await tester.runAsync(
+            () => Future<void>.delayed(const Duration(milliseconds: 5)),
+          );
+          await tester.pump();
+        }
+        expect(find.byKey(BusyMarkImageDialogKeys.submit), findsOneWidget);
+        await tester.tap(find.byKey(BusyMarkImageDialogKeys.submit));
+        await tester.pumpAndSettle();
+      }
+
+      var tableResult = '| H |\n| --- |\n| Cell |\n';
+      await mount(
+        tester,
+        'table-image-routing',
+        tableResult,
+        (value) => tableResult = value,
+        registry: registry,
+        filePath: '${root.path}/table.md',
+        assetWorkspaceKind: AssetWorkspaceKind.standalone,
+      );
+      final cell = tester
+          .widgetList<TextField>(find.byType(TextField))
+          .singleWhere((field) => field.controller?.text == 'Cell');
+      cell.focusNode!.requestFocus();
+      cell.controller!.selection = const TextSelection(
+        baseOffset: 0,
+        extentOffset: 4,
+      );
+      await tester.pump();
+      final tablePaste = registry.paste(payload);
+      await submitImage();
+      expect(await tablePaste, ClipboardPasteResult.inserted);
+      expect(tableResult, contains('![Image](images/routed.png)'));
+      expect(tableResult, contains('| H |'));
+      await key(tester, LogicalKeyboardKey.keyZ);
+      expect(tableResult, '| H |\n| --- |\n| Cell |\n');
+
+      final multiDirectory = Directory('${root.path}/multi')..createSync();
+      var multiResult = 'First\n\nSecond\n';
+      await mount(
+        tester,
+        'multi-image-routing',
+        multiResult,
+        (value) => multiResult = value,
+        registry: registry,
+        filePath: '${multiDirectory.path}/target.md',
+        assetWorkspaceKind: AssetWorkspaceKind.standalone,
+      );
+      await key(tester, LogicalKeyboardKey.keyA);
+      await key(tester, LogicalKeyboardKey.keyA);
+      final multiPaste = registry.paste(payload);
+      await submitImage();
+      expect(await multiPaste, ClipboardPasteResult.inserted);
+      expect(multiResult, contains('![Image](images/routed.png)'));
+      expect(multiResult, isNot(contains('First')));
+      expect(multiResult, isNot(contains('Second')));
+      await key(tester, LogicalKeyboardKey.keyZ);
+      expect(multiResult, 'First\n\nSecond\n');
+    });
+
     testWidgets('Ctrl+Shift+V pastes only interoperable plain text', (
       tester,
     ) async {
@@ -1175,6 +1579,38 @@ void main() {
       expect(result, isNot(contains('# Issues')));
       expect(result, isNot(contains('**')));
       expect(readCalls, 1);
+    });
+
+    testWidgets('plain paste never probes or ingests an existing image path', (
+      tester,
+    ) async {
+      final root = (await tester.runAsync(
+        () => Directory.systemTemp.createTemp('busymark-plain-path-'),
+      ))!;
+      addTearDown(() async {
+        if (await root.exists()) await root.delete(recursive: true);
+      });
+      final image = File('${root.path}/image.png');
+      await tester.runAsync(() => image.writeAsBytes([1, 2, 3]));
+      systemData = {'text': image.path};
+      final ingestion = _CountingAssetIngestionService();
+      var result = 'Target\n';
+      await mount(
+        tester,
+        'plain-image-path',
+        result,
+        (value) => result = value,
+        filePath: '${root.path}/target.md',
+        assetWorkspaceKind: AssetWorkspaceKind.standalone,
+        assetIngestionService: ingestion,
+      );
+      await key(tester, LogicalKeyboardKey.keyA);
+      await key(tester, LogicalKeyboardKey.keyV, shift: true);
+
+      expect(result, '${image.path}\n');
+      expect(ingestion.fileCalls, 0);
+      expect(ingestion.byteCalls, 0);
+      expect(find.byKey(BusyMarkImageDialogKeys.submit), findsNothing);
     });
 
     testWidgets('failed clipboard write leaves cut selection intact', (
@@ -1203,6 +1639,173 @@ void main() {
       await tester.pumpAndSettle();
       expect(result, 'Changed\n');
     });
+
+    testWidgets('Editor paste preserves composition before and during reads', (
+      tester,
+    ) async {
+      systemData = {'text': 'Pasted'};
+      var result = 'Target\n';
+      final registry = BusyMarkClipboardInsertionRegistry();
+      addTearDown(registry.dispose);
+      final captures = <BusyMarkClipboardCapture>[];
+      await mount(
+        tester,
+        'composing-editor',
+        result,
+        (value) => result = value,
+        registry: registry,
+        onCaptured: captures.add,
+      );
+      var field = tester.widget<TextField>(find.byType(TextField).first);
+      field.controller!.value = const TextEditingValue(
+        text: 'Target',
+        selection: TextSelection.collapsed(offset: 1),
+        composing: TextRange(start: 0, end: 1),
+      );
+      final readsBefore = readCalls;
+      await key(tester, LogicalKeyboardKey.keyV);
+      expect(readCalls, readsBefore);
+      expect(
+        field.controller!.value.composing,
+        const TextRange(start: 0, end: 1),
+      );
+      expect(result, 'Target\n');
+      expect(
+        await registry.paste(
+          BusyMarkClipboardPayload(
+            id: 'composing-history',
+            acquiredAt: DateTime.utc(2026),
+            kind: BusyMarkClipboardContentKind.text,
+            text: 'History',
+            external: true,
+          ),
+        ),
+        ClipboardPasteResult.unavailable,
+      );
+      expect(captures, isEmpty);
+
+      field.controller!.value = const TextEditingValue(
+        text: 'Target',
+        selection: TextSelection.collapsed(offset: 1),
+      );
+      readGate = Completer<void>();
+      await key(tester, LogicalKeyboardKey.keyV);
+      field = tester.widget<TextField>(find.byType(TextField).first);
+      field.controller!.value = const TextEditingValue(
+        text: 'Target',
+        selection: TextSelection.collapsed(offset: 1),
+        composing: TextRange(start: 0, end: 1),
+      );
+      readGate!.complete();
+      await tester.pumpAndSettle();
+      expect(result, 'Target\n');
+      expect(
+        field.controller!.value.composing,
+        const TextRange(start: 0, end: 1),
+      );
+      expect(captures, isEmpty);
+    });
+
+    testWidgets('table-cell paste shortcut is consumed during composition', (
+      tester,
+    ) async {
+      systemData = {'text': 'Pasted'};
+      var result = '| A |\n| --- |\n| Cell |\n';
+      await mount(tester, 'composing-cell', result, (value) => result = value);
+      final cell = tester.widgetList<TextField>(find.byType(TextField)).last;
+      cell.focusNode!.requestFocus();
+      cell.controller!.value = const TextEditingValue(
+        text: 'Cell',
+        selection: TextSelection.collapsed(offset: 1),
+        composing: TextRange(start: 0, end: 1),
+      );
+      final readsBefore = readCalls;
+      await key(tester, LogicalKeyboardKey.keyV);
+      expect(readCalls, readsBefore);
+      expect(result, '| A |\n| --- |\n| Cell |\n');
+      expect(
+        cell.controller!.value.composing,
+        const TextRange(start: 0, end: 1),
+      );
+    });
+
+    testWidgets(
+      'composition starting during image ingestion invalidates and cleans paste',
+      (tester) async {
+        final root = (await tester.runAsync(
+          () => Directory.systemTemp.createTemp(
+            'busymark-composing-image-paste-',
+          ),
+        ))!;
+        addTearDown(() async {
+          if (await root.exists()) await root.delete(recursive: true);
+        });
+        final ingestion = _DelayedAssetIngestionService();
+        final registry = BusyMarkClipboardInsertionRegistry();
+        addTearDown(registry.dispose);
+        final captures = <BusyMarkClipboardCapture>[];
+        var result = 'Target\n';
+        await mount(
+          tester,
+          'composing-image-paste',
+          result,
+          (value) => result = value,
+          registry: registry,
+          onCaptured: captures.add,
+          filePath: '${root.path}/target.md',
+          assetWorkspaceKind: AssetWorkspaceKind.standalone,
+          assetIngestionService: ingestion,
+        );
+        final png = base64Decode(
+          'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
+        );
+        ClipboardPasteResult? pasteResult;
+        registry
+            .paste(
+              BusyMarkClipboardPayload(
+                id: 'composing-image-history',
+                acquiredAt: DateTime.utc(2026),
+                kind: BusyMarkClipboardContentKind.image,
+                imageBytes: png,
+                imageMimeType: 'image/png',
+                imageDisplayName: 'composing.png',
+                external: true,
+              ),
+            )
+            .then((value) => pasteResult = value);
+        await tester.pump();
+        expect(ingestion.started.isCompleted, isTrue);
+
+        final field = tester.widget<TextField>(find.byType(TextField).first);
+        field.controller!.value = const TextEditingValue(
+          text: 'Target',
+          selection: TextSelection.collapsed(offset: 1),
+          composing: TextRange(start: 0, end: 1),
+        );
+        ingestion.release.complete();
+        for (var attempt = 0; attempt < 100 && pasteResult == null; attempt++) {
+          await tester.runAsync(
+            () => Future<void>.delayed(const Duration(milliseconds: 5)),
+          );
+          await tester.pump();
+        }
+
+        expect(pasteResult, ClipboardPasteResult.staleTarget);
+        expect(result, 'Target\n');
+        expect(captures, isEmpty);
+        expect(
+          field.controller!.value.composing,
+          const TextRange(start: 0, end: 1),
+        );
+        final images = Directory('${root.path}/images');
+        final published = await tester.runAsync(
+          () async => await images.exists()
+              ? images.list().toList()
+              : const <FileSystemEntity>[],
+        );
+        expect(published, isEmpty);
+      },
+    );
 
     testWidgets('cut does not delete a selection changed during the write', (
       tester,
@@ -1268,6 +1871,54 @@ class _ClipboardImageAssetInput extends AssetInputService {
 
   @override
   Future<Uint8List?> readClipboardImagePng() async => bytes;
+}
+
+class _CountingAssetIngestionService extends AssetIngestionService {
+  int fileCalls = 0;
+  int byteCalls = 0;
+
+  @override
+  Future<IngestedAssetSnapshot> ingestFileSnapshot({
+    required String sourcePath,
+    required AssetIngestionRequest request,
+    required AssetIngestionOrigin origin,
+  }) {
+    fileCalls++;
+    throw StateError('Plain-text paste must not ingest a file.');
+  }
+
+  @override
+  Future<IngestedAsset> ingestBytes({
+    required Uint8List bytes,
+    required String suggestedFileName,
+    required AssetIngestionRequest request,
+    required AssetIngestionOrigin origin,
+  }) {
+    byteCalls++;
+    throw StateError('Plain-text paste must not ingest bytes.');
+  }
+}
+
+class _DelayedAssetIngestionService extends AssetIngestionService {
+  final started = Completer<void>();
+  final release = Completer<void>();
+
+  @override
+  Future<IngestedAsset> ingestBytes({
+    required Uint8List bytes,
+    required String suggestedFileName,
+    required AssetIngestionRequest request,
+    required AssetIngestionOrigin origin,
+  }) async {
+    if (!started.isCompleted) started.complete();
+    await release.future;
+    return super.ingestBytes(
+      bytes: bytes,
+      suggestedFileName: suggestedFileName,
+      request: request,
+      origin: origin,
+    );
+  }
 }
 
 class _WysiwygHistoryClipboard extends RichClipboardService {

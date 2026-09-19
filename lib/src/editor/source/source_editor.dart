@@ -21,11 +21,14 @@ import '../../assets/asset_input_service.dart';
 import '../../clipboard/clipboard_insertion.dart';
 import '../../clipboard/clipboard_models.dart';
 import '../../core/diagnostic.dart';
+import '../../markdown/busymark_document.dart';
 import '../../markdown/markdown_model.dart';
+import '../../markdown/markdown_parser.dart';
 import '../../platform/rich_clipboard_service.dart';
 import '../../search/search_replace_service.dart';
 import '../document_text_geometry.dart';
 import '../clipboard_paste_resolver.dart';
+import '../clipboard_local_image_path.dart';
 import '../editor_text_context_menu.dart';
 import '../wysiwyg/wysiwyg_clipboard_fragment.dart';
 import '../source_folding.dart';
@@ -1344,7 +1347,9 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
     });
   }
 
-  void _handleSourceChanged() {
+  void _handleSourceChanged({
+    _SourceEditOrigin origin = _SourceEditOrigin.userTyping,
+  }) {
     _replacementWorker.cancel();
     // Sidebar offsets belong to the pre-edit document. Once the user edits,
     // resume normal search on the new text instead of awaiting the old range.
@@ -1354,11 +1359,16 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
     final selection = _controller.fullSelection;
     final previousSelection =
         _controller.lastFullSelectionBeforeEdit ?? selection;
-    final undoGroup = _undoGroupForSourceEdit(
-      visibleEdit,
-      previousSelection: previousSelection,
-      selection: selection,
-    );
+    final undoGroup = origin == _SourceEditOrigin.paste
+        ? null
+        : _undoGroupForSourceEdit(
+            visibleEdit,
+            previousSelection: previousSelection,
+            selection: selection,
+          );
+    if (origin == _SourceEditOrigin.paste) {
+      _continuousSourceEdit = null;
+    }
     final currentSearchIndex = _searchController.result.currentMatchIndex;
     final firstMatchIndex = _searchController.result.firstMatchIndex;
     _scheduleFoldRefresh();
@@ -1583,10 +1593,13 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
         composing.end <= value.text.length;
   }
 
-  void _applyFullEditingValue(TextEditingValue value) {
+  void _applyFullEditingValue(
+    TextEditingValue value, {
+    _SourceEditOrigin origin = _SourceEditOrigin.userTyping,
+  }) {
     _controller.setFullEditingValue(value);
     _focusNode.requestFocus();
-    _handleSourceChanged();
+    _handleSourceChanged(origin: origin);
   }
 
   void _applyOwnedUndoValue(TextEditingValue value) {
@@ -1807,6 +1820,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
         markdownMode: _destinationMarkdownMode,
         text: _controller.fullText,
         selection: _controller.fullSelection,
+        composing: _controller.fullComposing,
       );
 
   bool _isClipboardTargetCurrent(_SourceClipboardOperationTarget target) =>
@@ -1817,7 +1831,9 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
       target.format == _documentFormat &&
       target.markdownMode == _destinationMarkdownMode &&
       target.text == _controller.fullText &&
-      target.selection == _controller.fullSelection;
+      target.selection == _controller.fullSelection &&
+      target.composing == _controller.fullComposing &&
+      !_hasActiveComposition;
 
   Future<bool> _copyOrCutSource({required bool cut}) async {
     if (_hasActiveComposition) return false;
@@ -1866,6 +1882,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
     BusyMarkPasteMode mode,
   ) async {
     if (_hasActiveComposition) return ClipboardPasteResult.staleTarget;
+    final onCaptured = widget.onClipboardCaptured;
     final target = _captureClipboardTarget();
     final data = await _clipboard.read();
     if (!_isClipboardTargetCurrent(target)) {
@@ -1878,10 +1895,10 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
       target: target,
       systemIdentity: data,
     );
-    if (outcome.result == ClipboardPasteResult.inserted &&
-        snapshot.external &&
-        !outcome.retained) {
-      _retainExternalClipboardSnapshot(snapshot, fragment: outcome.fragment);
+    if (outcome.result == ClipboardPasteResult.inserted && snapshot.external) {
+      onCaptured?.call(
+        outcome.capture ?? busyMarkClipboardCaptureFromSnapshot(snapshot),
+      );
     }
     return outcome.result;
   }
@@ -1924,7 +1941,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
     var normal = normalPlan.candidates.any(
       (candidate) =>
           candidate is! BusyMarkNativeImagePasteCandidate &&
-          _canPrepareSystemPasteCandidate(snapshot, candidate),
+          _canPreparePasteCandidate(snapshot, candidate, target),
     );
     if (!normal &&
         normalPlan.candidates.any(
@@ -1948,9 +1965,10 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
     );
   }
 
-  bool _canPrepareSystemPasteCandidate(
+  bool _canPreparePasteCandidate(
     BusyMarkClipboardSnapshot snapshot,
     BusyMarkPasteCandidate candidate,
+    _SourceClipboardOperationTarget target,
   ) {
     if (candidate is BusyMarkImagePasteCandidate) {
       return widget.assetIngestionService.canIngestMediaBytes(
@@ -1958,10 +1976,14 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
         suggestedFileName: candidate.displayName ?? 'clipboard-image.png',
       );
     }
-    if (candidate is! BusyMarkStructuredPasteCandidate ||
-        candidate.fragment.mediaPaths.isEmpty) {
+    if (candidate is! BusyMarkStructuredPasteCandidate) {
       return true;
     }
+    if (_serializeStructuredClipboardInsertion(target, candidate.fragment) ==
+        null) {
+      return false;
+    }
+    if (candidate.fragment.mediaPaths.isEmpty) return true;
     return snapshot.mediaComplete &&
         candidate.fragment.mediaPaths.entries.every((entry) {
           final bytes = snapshot.mediaBytes[entry.key];
@@ -1978,24 +2000,27 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
     required BusyMarkPasteMode mode,
   }) async {
     if (_hasActiveComposition) {
-      return ClipboardPasteResult.unsupported;
+      return ClipboardPasteResult.staleTarget;
     }
+    final onCaptured = widget.onClipboardCaptured;
     final target = _captureClipboardTarget();
     final outcome = await _pasteClipboardSnapshot(
       BusyMarkClipboardSnapshot.fromPayload(payload),
       mode: mode,
       target: target,
     );
+    if (outcome.result == ClipboardPasteResult.inserted && payload.external) {
+      onCaptured?.call(
+        outcome.capture ??
+            busyMarkClipboardCaptureFromSnapshot(
+              BusyMarkClipboardSnapshot.fromPayload(payload),
+            ),
+      );
+    }
     return outcome.result;
   }
 
-  Future<
-    ({
-      ClipboardPasteResult result,
-      WysiwygClipboardFragment? fragment,
-      bool retained,
-    })
-  >
+  Future<({ClipboardPasteResult result, BusyMarkClipboardCapture? capture})>
   _pasteClipboardSnapshot(
     BusyMarkClipboardSnapshot snapshot, {
     required BusyMarkPasteMode mode,
@@ -2017,19 +2042,11 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
       markdownMode: target.markdownMode,
     );
     if (plan.isEmpty) {
-      return (
-        result: ClipboardPasteResult.unsupported,
-        fragment: null,
-        retained: false,
-      );
+      return (result: ClipboardPasteResult.unsupported, capture: null);
     }
     for (final candidate in plan.candidates) {
       if (!_isClipboardTargetCurrent(target)) {
-        return (
-          result: ClipboardPasteResult.staleTarget,
-          fragment: null,
-          retained: false,
-        );
+        return (result: ClipboardPasteResult.staleTarget, capture: null);
       }
       if (candidate is BusyMarkStructuredPasteCandidate) {
         final decoded = candidate.fragment;
@@ -2044,28 +2061,29 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
           );
           if (prepared == null) {
             if (!_isClipboardTargetCurrent(target)) {
-              return (
-                result: ClipboardPasteResult.staleTarget,
-                fragment: null,
-                retained: false,
-              );
+              return (result: ClipboardPasteResult.staleTarget, capture: null);
             }
             continue;
           }
           fragment = prepared.fragment;
           assets = prepared.assets;
         }
-        final result = _insertClipboardText(
+        final serialized = _serializeStructuredClipboardInsertion(
           target,
-          _serializeStructuredClipboardInsertion(target, fragment),
+          fragment,
         );
+        if (serialized == null) {
+          await _deleteUncommittedClipboardAssets(assets);
+          continue;
+        }
+        final result = _insertClipboardText(target, serialized);
         if (result != ClipboardPasteResult.inserted) {
           await _deleteUncommittedClipboardAssets(assets);
         }
         if (result == ClipboardPasteResult.inserted) {
-          return (result: result, fragment: fragment, retained: false);
+          return (result: result, capture: null);
         }
-        return (result: result, fragment: null, retained: false);
+        return (result: result, capture: null);
       }
       if (candidate is BusyMarkImagePasteCandidate) {
         final result = await _pasteImageBytes(
@@ -2074,23 +2092,19 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
           target: target,
         );
         if (result == ClipboardPasteResult.inserted) {
-          return (result: result, fragment: null, retained: false);
+          return (result: result, capture: null);
         }
         if (result == ClipboardPasteResult.staleTarget) {
-          return (result: result, fragment: null, retained: false);
+          return (result: result, capture: null);
         }
         continue;
       }
       if (candidate is BusyMarkNativeImagePasteCandidate) {
-        final result = await _pasteNativeClipboardImage(
+        final native = await _pasteNativeClipboardImage(
           target,
           systemIdentity!,
         );
-        return (
-          result: result,
-          fragment: null,
-          retained: result == ClipboardPasteResult.inserted,
-        );
+        return (result: native.result, capture: native.capture);
       }
       final text = switch (candidate) {
         BusyMarkPlainTextPasteCandidate(:final text) => text,
@@ -2101,7 +2115,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
       if (mode == BusyMarkPasteMode.normal &&
           candidate is BusyMarkPlainTextPasteCandidate &&
           _formatSupportsImages(target.format)) {
-        final path = _localFilePathFromClipboardText(text);
+        final path = busyMarkLocalImagePathFromClipboardText(text);
         if (path != null) {
           Uint8List? retainedBytes;
           final result = await _pasteImageFile(
@@ -2110,29 +2124,31 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
             onInserted: (value) => retainedBytes = value,
           );
           if (result == ClipboardPasteResult.inserted) {
-            if (snapshot.external && retainedBytes != null) {
-              _retainExternalPathImageSnapshot(snapshot, retainedBytes!, path);
-            }
             return (
               result: result,
-              fragment: null,
-              retained: snapshot.external && retainedBytes != null,
+              capture: retainedBytes == null
+                  ? null
+                  : busyMarkClipboardCaptureFromSnapshot(
+                      snapshot,
+                      imageBytes: retainedBytes,
+                      imageMimeType: _sourceClipboardImageMimeType(path),
+                      imageDisplayName: p.basename(path),
+                    ),
             );
           }
           if (result == ClipboardPasteResult.staleTarget) {
-            return (result: result, fragment: null, retained: false);
+            return (result: result, capture: null);
           }
         }
       }
       final result = _insertClipboardText(target, text);
-      return (result: result, fragment: null, retained: false);
+      return (result: result, capture: null);
     }
     return (
       result: _isClipboardTargetCurrent(target)
           ? ClipboardPasteResult.unsupported
           : ClipboardPasteResult.staleTarget,
-      fragment: null,
-      retained: false,
+      capture: null,
     );
   }
 
@@ -2140,20 +2156,33 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
       format == SourceDocumentFormat.markdown ||
       format == SourceDocumentFormat.writersideXmlTopic;
 
-  String _serializeStructuredClipboardInsertion(
+  String? _serializeStructuredClipboardInsertion(
     _SourceClipboardOperationTarget target,
     WysiwygClipboardFragment fragment,
   ) {
-    if (fragment.isInlineSourceFragment) {
-      return fragment.serializeInlineFor(
+    final context = _structuredSourceInsertionContext(target);
+    if (context.sourceProtected) return null;
+    if (context.tableCell) {
+      final serialized = fragment.serializeTableCellFor(
         destinationMode: target.markdownMode,
         destinationFilePath: target.filePath ?? '',
+        atBlockStart: context.atBlockStart,
       );
+      return serialized.isEmpty ? null : serialized;
+    }
+    if (fragment.isInlineSourceFragment) {
+      final serialized = fragment.serializeInlineFor(
+        destinationMode: target.markdownMode,
+        destinationFilePath: target.filePath ?? '',
+        atBlockStart: context.atBlockStart,
+      );
+      return serialized.isEmpty ? null : serialized;
     }
     final serialized = fragment.serializeFor(
       destinationMode: target.markdownMode,
       destinationFilePath: target.filePath ?? '',
     );
+    if (serialized.isEmpty) return null;
     final selection = target.selection.isValid
         ? target.selection
         : TextSelection.collapsed(offset: target.text.length);
@@ -2161,6 +2190,22 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
     final end = selection.end.clamp(start, target.text.length).toInt();
     final before = target.text.substring(0, start);
     final after = target.text.substring(end);
+    if (context.containerPrefix.isNotEmpty &&
+        before.isNotEmpty &&
+        after.isNotEmpty) {
+      final lines = serialized.endsWith('\n')
+          ? serialized.substring(0, serialized.length - 1).split('\n')
+          : serialized.split('\n');
+      final nested = lines
+          .map(
+            (line) => line.isEmpty
+                ? context.containerPrefix.trimRight()
+                : '${context.containerPrefix}$line',
+          )
+          .join('\n');
+      final blank = context.containerPrefix.trimRight();
+      return '\n$blank\n$nested\n$blank\n${context.containerPrefix}';
+    }
     final leadingBreaks = _leadingLineBreaks(serialized);
     final trailingBreaks = _trailingLineBreaks(serialized);
     final prefix = before.isEmpty
@@ -2170,6 +2215,92 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
         ? ''
         : '\n' * math.max(0, 2 - trailingBreaks - _leadingLineBreaks(after));
     return '$prefix$serialized$suffix';
+  }
+
+  _StructuredSourceInsertionContext _structuredSourceInsertionContext(
+    _SourceClipboardOperationTarget target,
+  ) {
+    if (target.format != SourceDocumentFormat.markdown || target.text.isEmpty) {
+      return const _StructuredSourceInsertionContext();
+    }
+    final selection = target.selection.isValid
+        ? target.selection
+        : TextSelection.collapsed(offset: target.text.length);
+    final start = math
+        .min(selection.start, selection.end)
+        .clamp(0, target.text.length);
+    final end = math
+        .max(selection.start, selection.end)
+        .clamp(start, target.text.length);
+    final parsed = const MarkdownParser().parse(
+      filePath: target.filePath ?? '',
+      source: target.text,
+      mode: target.markdownMode,
+      validateLocalReferences: false,
+    );
+    final ancestors = <BusyBlock>[];
+    bool visit(BusyBlock block) {
+      final span = block.sourceSpan;
+      if (span == null || start < span.startOffset || end > span.endOffset) {
+        return false;
+      }
+      ancestors.add(block);
+      for (final child in block.children) {
+        if (visit(child)) break;
+      }
+      return true;
+    }
+
+    for (final block in parsed.busyDocument.blocks) {
+      if (visit(block)) break;
+    }
+    if (ancestors.isEmpty) {
+      return const _StructuredSourceInsertionContext(atBlockStart: true);
+    }
+    final sourceProtected = ancestors.any(
+      (block) =>
+          block.isSourceProtected ||
+          block.preserveRaw ||
+          block.kind == BusyBlockKind.codeBlock ||
+          block.kind == BusyBlockKind.math ||
+          block.kind == BusyBlockKind.htmlBlock ||
+          block.kind == BusyBlockKind.writersideRawXml,
+    );
+    final tableCell = ancestors.any(
+      (block) => block.kind == BusyBlockKind.table,
+    );
+    final deepest = ancestors.last;
+    final span = deepest.sourceSpan;
+    var atBlockStart = span == null || start <= span.startOffset;
+    if (!atBlockStart) {
+      final source = target.text.substring(span.startOffset, start);
+      final textOffset = source.indexOf(deepest.plainText);
+      atBlockStart =
+          source.trim().isEmpty ||
+          (textOffset >= 0 && start <= span.startOffset + textOffset);
+    }
+    final prefix = StringBuffer();
+    for (final block in ancestors) {
+      switch (block.kind) {
+        case BusyBlockKind.blockquote:
+          prefix.write('> ');
+        case BusyBlockKind.unorderedListItem:
+        case BusyBlockKind.orderedListItem:
+        case BusyBlockKind.taskListItem:
+          final marker =
+              block.attributes['marker'] ??
+              (block.kind == BusyBlockKind.orderedListItem ? '1.' : '-');
+          prefix.write(' ' * (marker.length + 1));
+        default:
+          break;
+      }
+    }
+    return _StructuredSourceInsertionContext(
+      tableCell: tableCell,
+      sourceProtected: sourceProtected,
+      atBlockStart: atBlockStart,
+      containerPrefix: prefix.toString(),
+    );
   }
 
   int _leadingLineBreaks(String value) {
@@ -2190,14 +2321,6 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
       count += 1;
     }
     return count;
-  }
-
-  String? _localFilePathFromClipboardText(String value) {
-    final trimmed = value.trim();
-    if (trimmed.contains('\n') || trimmed.contains('\r')) return null;
-    final uri = Uri.tryParse(trimmed);
-    final candidate = uri?.scheme == 'file' ? File.fromUri(uri!).path : trimmed;
-    return File(candidate).existsSync() ? candidate : null;
   }
 
   Future<ClipboardPasteResult> _pasteImageFile(
@@ -2292,7 +2415,8 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
     return result;
   }
 
-  Future<ClipboardPasteResult> _pasteNativeClipboardImage(
+  Future<({ClipboardPasteResult result, BusyMarkClipboardCapture? capture})>
+  _pasteNativeClipboardImage(
     _SourceClipboardOperationTarget target,
     RichClipboardData first,
   ) async {
@@ -2303,7 +2427,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
     final second = await _clipboard.read();
     if (!_isClipboardTargetCurrent(target) ||
         !first.sameExternalIdentity(second)) {
-      return ClipboardPasteResult.staleTarget;
+      return (result: ClipboardPasteResult.staleTarget, capture: null);
     }
     if (files.isNotEmpty) {
       Uint8List? bytes;
@@ -2312,111 +2436,37 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
         target: target,
         onInserted: (value) => bytes = value,
       );
-      if (result == ClipboardPasteResult.inserted && bytes != null) {
-        _retainExternalImageSnapshot(
-          first,
-          bytes!,
-          mimeType: _sourceClipboardImageMimeType(files.first),
-          displayName: p.basename(files.first),
-        );
-      }
-      return result;
+      return (
+        result: result,
+        capture: result == ClipboardPasteResult.inserted && bytes != null
+            ? busyMarkClipboardCaptureFromSnapshot(
+                BusyMarkClipboardSnapshot.fromSystem(first),
+                imageBytes: bytes,
+                imageMimeType: _sourceClipboardImageMimeType(files.first),
+                imageDisplayName: p.basename(files.first),
+              )
+            : null,
+      );
     }
-    if (png == null || png.isEmpty) return ClipboardPasteResult.unsupported;
+    if (png == null || png.isEmpty) {
+      return (result: ClipboardPasteResult.unsupported, capture: null);
+    }
     final name = 'screenshot-${DateTime.now().millisecondsSinceEpoch}.png';
     final result = await _pasteImageBytes(
       png,
       suggestedFileName: name,
       target: target,
     );
-    if (result == ClipboardPasteResult.inserted) {
-      _retainExternalImageSnapshot(
-        first,
-        png,
-        mimeType: 'image/png',
-        displayName: name,
-      );
-    }
-    return result;
-  }
-
-  void _retainExternalImageSnapshot(
-    RichClipboardData data,
-    Uint8List bytes, {
-    required String mimeType,
-    required String displayName,
-  }) {
-    if (data.sessionOwned) return;
-    widget.onClipboardCaptured?.call(
-      BusyMarkClipboardCapture(
-        kind: BusyMarkClipboardContentKind.image,
-        text: data.text,
-        sourceText: data.sourceText,
-        html: data.html,
-        richFragment: data.richFragment,
-        imageBytes: bytes,
-        imageMimeType: mimeType,
-        imageDisplayName: displayName,
-        origin: data.origin,
-        mediaBytes: data.mediaBytes,
-        mediaComplete: data.mediaComplete,
-        external: true,
-      ),
-    );
-  }
-
-  void _retainExternalPathImageSnapshot(
-    BusyMarkClipboardSnapshot snapshot,
-    Uint8List bytes,
-    String path,
-  ) {
-    if (!snapshot.external) return;
-    widget.onClipboardCaptured?.call(
-      BusyMarkClipboardCapture(
-        kind: BusyMarkClipboardContentKind.image,
-        text: snapshot.text,
-        sourceText: snapshot.sourceText,
-        html: snapshot.html,
-        richFragment: snapshot.richFragment,
-        imageBytes: bytes,
-        imageMimeType: _sourceClipboardImageMimeType(path),
-        imageDisplayName: p.basename(path),
-        origin: snapshot.origin,
-        mediaBytes: snapshot.mediaBytes,
-        mediaComplete: snapshot.mediaComplete,
-        external: true,
-      ),
-    );
-  }
-
-  void _retainExternalClipboardSnapshot(
-    BusyMarkClipboardSnapshot snapshot, {
-    WysiwygClipboardFragment? fragment,
-  }) {
-    if (!snapshot.external) return;
-    final originalRichFragment = snapshot.richFragment;
-    final retainedRichFragment =
-        originalRichFragment != null &&
-            WysiwygClipboardFragment.decode(originalRichFragment) != null
-        ? originalRichFragment
-        : fragment?.encode() ?? originalRichFragment;
-    widget.onClipboardCaptured?.call(
-      BusyMarkClipboardCapture(
-        kind:
-            fragment == null &&
-                snapshot.richFragment == null &&
-                snapshot.html == null
-            ? BusyMarkClipboardContentKind.text
-            : BusyMarkClipboardContentKind.richText,
-        text: snapshot.text,
-        sourceText: snapshot.sourceText ?? fragment?.markdown,
-        html: snapshot.html,
-        richFragment: retainedRichFragment,
-        origin: snapshot.origin,
-        mediaBytes: snapshot.mediaBytes,
-        mediaComplete: snapshot.mediaComplete,
-        external: true,
-      ),
+    return (
+      result: result,
+      capture: result == ClipboardPasteResult.inserted
+          ? busyMarkClipboardCaptureFromSnapshot(
+              BusyMarkClipboardSnapshot.fromSystem(first),
+              imageBytes: png,
+              imageMimeType: 'image/png',
+              imageDisplayName: name,
+            )
+          : null,
     );
   }
 
@@ -2512,6 +2562,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
         text: target.text.replaceRange(start, end, text),
         selection: TextSelection.collapsed(offset: start + text.length),
       ),
+      origin: _SourceEditOrigin.paste,
     );
     return ClipboardPasteResult.inserted;
   }
@@ -3482,6 +3533,7 @@ class _SourceClipboardOperationTarget {
     required this.markdownMode,
     required this.text,
     required this.selection,
+    required this.composing,
   });
 
   final String documentId;
@@ -3491,6 +3543,23 @@ class _SourceClipboardOperationTarget {
   final MarkdownMode markdownMode;
   final String text;
   final TextSelection selection;
+  final TextRange composing;
+}
+
+enum _SourceEditOrigin { userTyping, paste }
+
+class _StructuredSourceInsertionContext {
+  const _StructuredSourceInsertionContext({
+    this.tableCell = false,
+    this.sourceProtected = false,
+    this.atBlockStart = false,
+    this.containerPrefix = '',
+  });
+
+  final bool tableCell;
+  final bool sourceProtected;
+  final bool atBlockStart;
+  final String containerPrefix;
 }
 
 class _SourceClipboardInsertionTarget
@@ -3540,27 +3609,11 @@ class _SourceClipboardInsertionTarget
       destination: destination,
       markdownMode: state._destinationMarkdownMode,
     );
-    return plan.candidates.any((candidate) {
-      if (candidate is BusyMarkImagePasteCandidate) {
-        return state.widget.assetIngestionService.canIngestMediaBytes(
-          bytes: candidate.bytes,
-          suggestedFileName: candidate.displayName ?? 'clipboard-image.png',
-        );
-      }
-      if (candidate is! BusyMarkStructuredPasteCandidate ||
-          candidate.fragment.mediaPaths.isEmpty) {
-        return true;
-      }
-      return snapshot.mediaComplete &&
-          candidate.fragment.mediaPaths.entries.every((entry) {
-            final bytes = snapshot.mediaBytes[entry.key];
-            return bytes != null &&
-                state.widget.assetIngestionService.canIngestMediaBytes(
-                  bytes: bytes,
-                  suggestedFileName: p.basename(entry.value),
-                );
-          });
-    });
+    final target = state._captureClipboardTarget();
+    return plan.candidates.any(
+      (candidate) =>
+          state._canPreparePasteCandidate(snapshot, candidate, target),
+    );
   }
 
   @override

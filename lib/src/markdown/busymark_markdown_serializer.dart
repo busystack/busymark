@@ -5,6 +5,24 @@ import 'math_syntax.dart';
 class BusyMarkMarkdownSerializer {
   const BusyMarkMarkdownSerializer();
 
+  /// Serializes an inline fragment without document-level trimming or a final
+  /// newline. This is also the single entry point for context-sensitive inline
+  /// escaping used by clipboard insertion.
+  String serializeInlineFragment(
+    List<BusyInline> inlines, {
+    bool tableCell = false,
+    bool atBlockStart = false,
+    bool readableHardBreakRuns = true,
+  }) {
+    final source = _inlineMarkdown(
+      inlines,
+      tableCell: tableCell,
+      atBlockStart: atBlockStart,
+      readableHardBreakRuns: readableHardBreakRuns,
+    );
+    return tableCell ? source.replaceAll('|', r'\|') : source;
+  }
+
   String serialize(BusyDocument document) {
     final patched = _serializeByPatchingSource(document);
     if (patched != null) {
@@ -415,10 +433,11 @@ class BusyMarkMarkdownSerializer {
   }
 
   String _tableCellMarkdown(BusyBlock cell) {
-    return _inlineMarkdown(
+    return serializeInlineFragment(
       cell.inlines,
       tableCell: true,
-    ).replaceAll('|', r'\|');
+      readableHardBreakRuns: false,
+    );
   }
 
   String _writersideAdmonition(BusyBlock block) {

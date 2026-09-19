@@ -1,10 +1,13 @@
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:busymark/src/clipboard/clipboard_insertion.dart';
 import 'package:busymark/src/clipboard/clipboard_models.dart';
 import 'package:busymark/src/editor/clipboard_paste_resolver.dart';
+import 'package:busymark/src/editor/clipboard_local_image_path.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_clipboard_fragment.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_document_controller.dart';
+import 'package:busymark/src/editor/wysiwyg/wysiwyg_inline_controller.dart';
 import 'package:busymark/src/markdown/busymark_document.dart';
 import 'package:busymark/src/markdown/markdown_model.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -205,4 +208,110 @@ void main() {
       'destination content',
     );
   });
+
+  test(
+    'native inline serialization preserves whitespace without a newline',
+    () {
+      final value = WysiwygClipboardFragment(
+        mode: MarkdownMode.commonMark,
+        blocks: [
+          BusyWysiwygStyledBlock(
+            kind: BusyBlockKind.paragraph,
+            text: ' X ',
+            ranges: const [
+              BusyInlineStyleRange(
+                start: 1,
+                end: 2,
+                kind: BusyInlineKind.strong,
+              ),
+            ],
+          ),
+        ],
+      );
+      expect(
+        value.serializeInlineFor(
+          destinationMode: MarkdownMode.commonMark,
+          destinationFilePath: '/workspace/target.md',
+        ),
+        ' **X** ',
+      );
+
+      final spaces = fragment(text: '   ');
+      expect(
+        spaces.serializeInlineFor(
+          destinationMode: MarkdownMode.commonMark,
+          destinationFilePath: '/workspace/target.md',
+        ),
+        '   ',
+      );
+    },
+  );
+
+  test(
+    'table-cell fragment serialization escapes pipes and flattens lines',
+    () {
+      final value = WysiwygClipboardFragment(
+        mode: MarkdownMode.commonMark,
+        blocks: [
+          BusyWysiwygStyledBlock(
+            kind: BusyBlockKind.paragraph,
+            text: 'A|B',
+            ranges: const [],
+          ),
+          BusyWysiwygStyledBlock(
+            kind: BusyBlockKind.paragraph,
+            text: 'C\nD',
+            ranges: const [],
+          ),
+        ],
+      );
+      expect(
+        value.serializeTableCellFor(
+          destinationMode: MarkdownMode.gfm,
+          destinationFilePath: '/workspace/target.md',
+        ),
+        r'A\|B C D',
+      );
+    },
+  );
+
+  test(
+    'local image path detection is safe and rejects altered URI meaning',
+    () async {
+      final directory = await Directory.systemTemp.createTemp(
+        'busymark-local-clipboard-path-',
+      );
+      addTearDown(() => directory.delete(recursive: true));
+      final image = File('${directory.path}/image.png')..writeAsBytesSync([1]);
+      final text = File('${directory.path}/notes.txt')
+        ..writeAsStringSync('text');
+
+      expect(busyMarkLocalImagePathFromClipboardText(image.path), image.path);
+      expect(
+        busyMarkLocalImagePathFromClipboardText(image.uri.toString()),
+        image.path,
+      );
+      expect(
+        busyMarkLocalImagePathFromClipboardText(
+          '${directory.path}/missing.png',
+        ),
+        isNull,
+      );
+      expect(busyMarkLocalImagePathFromClipboardText(text.path), isNull);
+      expect(
+        busyMarkLocalImagePathFromClipboardText('${image.uri}?version=2'),
+        isNull,
+      );
+      expect(
+        busyMarkLocalImagePathFromClipboardText('${image.uri}#preview'),
+        isNull,
+      );
+      expect(
+        busyMarkLocalImagePathFromClipboardText(
+          'file://remote-host${image.uri.path}',
+        ),
+        isNull,
+      );
+    },
+  );
 }

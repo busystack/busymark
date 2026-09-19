@@ -276,4 +276,10 @@ class ClipboardHistoryPolicy {
 
 enum ClipboardRetentionResult { retained, deduplicated, disabled, oversized }
 
-enum ClipboardPasteResult { inserted, staleTarget, unsupported, unavailable }
+enum ClipboardPasteResult {
+  inserted,
+  cancelled,
+  staleTarget,
+  unsupported,
+  unavailable,
+}

@@ -465,7 +465,6 @@ class _HistoryVisualHarnessState extends ConsumerState<_HistoryVisualHarness> {
         '<p>Use <strong>staged rollout</strong> with a '
         '<a href="https://example.test/rollback">rollback plan</a>.</p>'
         '<ul><li>Verify health</li><li>Keep the prior package</li></ul>';
-    final controller = ref.read(clipboardHistoryControllerProvider.notifier);
     final current = ref
         .read(clipboardHistoryControllerProvider)
         .currentClipboard!;
@@ -480,7 +479,6 @@ class _HistoryVisualHarnessState extends ConsumerState<_HistoryVisualHarness> {
       firstInsertion == ClipboardPasteResult.inserted,
       'current external HTML inserted',
     );
-    controller.retainCurrentAfterPaste(current);
     await Clipboard.setData(const ClipboardData(text: 'Clipboard replaced'));
     await Future<void>.delayed(const Duration(milliseconds: 700));
     await WidgetsBinding.instance.endOfFrame;

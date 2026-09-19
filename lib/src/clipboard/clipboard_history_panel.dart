@@ -278,15 +278,11 @@ class _ClipboardHistoryPanelState extends ConsumerState<ClipboardHistoryPanel> {
     BusyMarkClipboardPayload payload, {
     required BusyMarkPasteMode mode,
   }) async {
-    // Both dependencies outlive this sidebar panel. Capture them before the
-    // asynchronous insertion so a successful editor operation can still be
-    // retained if the user switches sidebar tabs while it is in flight.
     final registry = ref.read(clipboardInsertionRegistryProvider);
-    final history = ref.read(clipboardHistoryControllerProvider.notifier);
     final result = await registry.paste(payload, mode: mode);
-    if (result == ClipboardPasteResult.inserted && payload.external) {
-      history.retainCurrentAfterPaste(payload);
-    } else if (result != ClipboardPasteResult.inserted && mounted) {
+    if ((result == ClipboardPasteResult.unsupported ||
+            result == ClipboardPasteResult.unavailable) &&
+        mounted) {
       BusyMarkToastOverlay.show(
         context,
         message: context.l10n.clipboardUnavailable,
