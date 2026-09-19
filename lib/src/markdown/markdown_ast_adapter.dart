@@ -14,40 +14,39 @@ import '../writerside/writerside_schema.dart';
 
 const _rawHtmlAdapter = RawHtmlAdapter();
 
-void _addReferenceLabelMarkerVariants(
-  md.Document document,
-  Map<String, md.LinkReference> definitions,
-  String source,
-  Iterable<String> markers,
-) {
-  final markerList = markers.where((marker) => marker.isNotEmpty).toList();
-  if (markerList.isEmpty || definitions.isEmpty) return;
-  for (final marker in markerList) {
-    var markerOffset = source.indexOf(marker);
-    while (markerOffset >= 0) {
-      final opening = source.lastIndexOf('[', markerOffset);
-      final closing = source.indexOf(']', markerOffset + marker.length);
-      if (opening >= 0 && closing >= markerOffset + marker.length) {
-        final markedLabel = source.substring(opening + 1, closing);
-        var originalLabel = markedLabel;
-        for (final ignored in markerList) {
-          originalLabel = originalLabel.replaceAll(ignored, '');
-        }
-        final reference =
-            definitions[_normalizeSourceMappingLabel(originalLabel)];
-        if (reference != null) {
-          document.linkReferences[_normalizeSourceMappingLabel(
-            markedLabel,
-          )] = md.LinkReference(
-            markedLabel,
-            reference.destination,
-            reference.title,
-          );
-        }
-      }
-      markerOffset = source.indexOf(marker, markerOffset + marker.length);
-    }
-  }
+const _sourceMappingStartAttribute = 'data-busymark-source-start';
+const _sourceMappingEndAttribute = 'data-busymark-source-end';
+const _sourceMappingOpeningAttribute = 'data-busymark-source-opening';
+const _sourceMappingClosingAttribute = 'data-busymark-source-closing';
+const _sourceMappingLabelStartAttribute = 'data-busymark-source-label-start';
+const _sourceMappingLabelEndAttribute = 'data-busymark-source-label-end';
+
+class BusyMarkMappedInlineRange {
+  const BusyMarkMappedInlineRange({
+    required this.start,
+    required this.end,
+    this.opening,
+    this.closing,
+    this.labelStart,
+    this.labelEnd,
+  });
+
+  final int start;
+  final int end;
+  final String? opening;
+  final String? closing;
+  final int? labelStart;
+  final int? labelEnd;
+}
+
+class BusyMarkMappedInlineParse {
+  BusyMarkMappedInlineParse({
+    required this.inlines,
+    required Map<BusyInline, BusyMarkMappedInlineRange> ranges,
+  }) : ranges = Map.unmodifiable(ranges);
+
+  final List<BusyInline> inlines;
+  final Map<BusyInline, BusyMarkMappedInlineRange> ranges;
 }
 
 String _normalizeSourceMappingLabel(String label) =>
@@ -61,20 +60,268 @@ String _decodeMarkdownAttribute(String value) => value
     .replaceAll('&gt;', '>')
     .replaceAll('&amp;', '&');
 
+void _setSourceMappingAttributes(
+  md.Element element, {
+  required int start,
+  required int end,
+  String? opening,
+  String? closing,
+  int? labelStart,
+  int? labelEnd,
+}) {
+  element.attributes[_sourceMappingStartAttribute] = '$start';
+  element.attributes[_sourceMappingEndAttribute] = '$end';
+  if (opening != null) {
+    element.attributes[_sourceMappingOpeningAttribute] = opening;
+  }
+  if (closing != null) {
+    element.attributes[_sourceMappingClosingAttribute] = closing;
+  }
+  if (labelStart != null) {
+    element.attributes[_sourceMappingLabelStartAttribute] = '$labelStart';
+  }
+  if (labelEnd != null) {
+    element.attributes[_sourceMappingLabelEndAttribute] = '$labelEnd';
+  }
+}
+
+class _SourceMappingDelimiterPosition {
+  _SourceMappingDelimiterPosition(this.start);
+
+  int start;
+}
+
+class _SourceMappingDelimiterSyntax extends md.DelimiterSyntax {
+  _SourceMappingDelimiterSyntax.asterisk()
+    : super(
+        r'\*+',
+        requiresDelimiterRun: true,
+        allowIntraWord: true,
+        tags: [md.DelimiterTag('em', 1), md.DelimiterTag('strong', 2)],
+        startCharacter: 0x2a,
+      );
+
+  _SourceMappingDelimiterSyntax.underscore()
+    : super(
+        '_+',
+        requiresDelimiterRun: true,
+        tags: [md.DelimiterTag('em', 1), md.DelimiterTag('strong', 2)],
+        startCharacter: 0x5f,
+      );
+
+  _SourceMappingDelimiterSyntax.strikethrough()
+    : super(
+        '~+',
+        requiresDelimiterRun: true,
+        allowIntraWord: true,
+        tags: [md.DelimiterTag('del', 1), md.DelimiterTag('del', 2)],
+        startCharacter: 0x7e,
+      );
+
+  final Expando<_SourceMappingDelimiterPosition> _positions = Expando();
+
+  @override
+  bool onMatch(md.InlineParser parser, Match match) {
+    final runLength = match.group(0)!.length;
+    final matchStart = parser.pos;
+    final matchEnd = parser.pos + runLength;
+    final text = md.Text(parser.source.substring(matchStart, matchEnd));
+    final delimiter = md.DelimiterRun.tryParse(
+      parser,
+      matchStart,
+      matchEnd,
+      syntax: this,
+      node: text,
+      allowIntraWord: allowIntraWord,
+      tags: List.of(tags ?? const []),
+    );
+    if (delimiter == null) {
+      parser.advanceBy(runLength);
+      return false;
+    }
+    _positions[delimiter] = _SourceMappingDelimiterPosition(matchStart);
+    parser.pushDelimiter(delimiter);
+    parser.addNode(text);
+    return true;
+  }
+
+  @override
+  Iterable<md.Node>? close(
+    md.InlineParser parser,
+    md.Delimiter opener,
+    md.Delimiter closer, {
+    required String tag,
+    required List<md.Node> Function() getChildren,
+  }) {
+    final indicatorLength = opener is md.DelimiterRun
+        ? opener.tags
+              .lastWhere(
+                (candidate) =>
+                    candidate.tag == tag &&
+                    opener.length >= candidate.indicatorLength &&
+                    closer.length >= candidate.indicatorLength,
+              )
+              .indicatorLength
+        : 1;
+    final openerPosition = _positions[opener];
+    final closerPosition = _positions[closer];
+    final element = md.Element(tag, getChildren());
+    if (openerPosition != null && closerPosition != null) {
+      final opening = parser.source.substring(
+        openerPosition.start,
+        openerPosition.start + indicatorLength,
+      );
+      final closing = parser.source.substring(
+        closerPosition.start,
+        closerPosition.start + indicatorLength,
+      );
+      _setSourceMappingAttributes(
+        element,
+        start: openerPosition.start,
+        end: closerPosition.start + indicatorLength,
+        opening: opening,
+        closing: closing,
+      );
+      openerPosition.start += indicatorLength;
+      closerPosition.start += indicatorLength;
+    }
+    return [element];
+  }
+}
+
+class _SourceMappingLinkSyntax extends md.LinkSyntax {
+  @override
+  Iterable<md.Node>? close(
+    md.InlineParser parser,
+    covariant md.SimpleDelimiter opener,
+    md.Delimiter? closer, {
+    String? tag,
+    required List<md.Node> Function() getChildren,
+  }) {
+    final labelEnd = parser.pos;
+    final result = super.close(
+      parser,
+      opener,
+      closer,
+      tag: tag,
+      getChildren: getChildren,
+    );
+    if (result == null) return null;
+    final nodes = result.toList(growable: false);
+    for (final node in nodes.whereType<md.Element>()) {
+      if (node.tag != 'a') continue;
+      _setSourceMappingAttributes(
+        node,
+        start: opener.endPos - 1,
+        end: parser.pos + 1,
+        labelStart: opener.endPos,
+        labelEnd: labelEnd,
+      );
+    }
+    return nodes;
+  }
+}
+
+List<md.InlineSyntax> _sourceMappingInlineSyntaxes() => [
+  _SourceMappingLinkSyntax(),
+  _SourceMappingDelimiterSyntax.asterisk(),
+  _SourceMappingDelimiterSyntax.underscore(),
+  _SourceMappingDelimiterSyntax.strikethrough(),
+];
+
 class BusyMarkInlineParserContext {
   BusyMarkInlineParserContext._({
     required md.Document document,
+    required md.Document mappingDocument,
     required Map<String, md.LinkReference> referenceDefinitions,
-    required MarkdownMode mode,
   }) : _document = document,
-       _referenceDefinitions = referenceDefinitions,
-       _mode = mode;
+       _mappingDocument = mappingDocument,
+       _referenceDefinitions = referenceDefinitions;
 
   final md.Document _document;
+  final md.Document _mappingDocument;
   final Map<String, md.LinkReference> _referenceDefinitions;
-  final MarkdownMode _mode;
 
   int parseInvocations = 0;
+
+  void _addReferenceLabelMarkerVariants(
+    md.Document document,
+    String source,
+    Iterable<String> markers,
+  ) {
+    final markerList = markers.where((marker) => marker.isNotEmpty).toList();
+    if (markerList.isEmpty || _referenceDefinitions.isEmpty) return;
+    final original = StringBuffer();
+    final insertions = <({int offset, String marker})>[];
+    var sourceOffset = 0;
+    while (sourceOffset < source.length) {
+      String? matchedMarker;
+      for (final marker in markerList) {
+        if (source.startsWith(marker, sourceOffset)) {
+          matchedMarker = marker;
+          break;
+        }
+      }
+      if (matchedMarker != null) {
+        insertions.add((offset: original.length, marker: matchedMarker));
+        sourceOffset += matchedMarker.length;
+      } else {
+        original.writeCharCode(source.codeUnitAt(sourceOffset));
+        sourceOffset += 1;
+      }
+    }
+    if (insertions.isEmpty) return;
+
+    final originalSource = original.toString();
+    final ranges = Map<BusyInline, BusyMarkMappedInlineRange>.identity();
+    parseInvocations += 1;
+    final inlines = const MarkdownAstAdapter()._inlinesFromNodes(
+      _mappingDocument.parseInline(originalSource),
+      sourceMappings: ranges,
+    );
+
+    void addVariants(List<BusyInline> siblings) {
+      for (final inline in siblings) {
+        final range = ranges[inline];
+        final labelStart = range?.labelStart;
+        final labelEnd = range?.labelEnd;
+        if (inline.kind == BusyInlineKind.link &&
+            labelStart != null &&
+            labelEnd != null) {
+          final originalLabel = originalSource.substring(labelStart, labelEnd);
+          final reference =
+              _referenceDefinitions[_normalizeSourceMappingLabel(
+                originalLabel,
+              )];
+          final labelInsertions = insertions
+              .where(
+                (insertion) =>
+                    insertion.offset >= labelStart &&
+                    insertion.offset <= labelEnd,
+              )
+              .toList(growable: false);
+          if (reference != null && labelInsertions.isNotEmpty) {
+            final markedLabel = StringBuffer();
+            var offset = labelStart;
+            for (final insertion in labelInsertions) {
+              markedLabel.write(
+                originalSource.substring(offset, insertion.offset),
+              );
+              markedLabel.write(insertion.marker);
+              offset = insertion.offset;
+            }
+            markedLabel.write(originalSource.substring(offset, labelEnd));
+            final label = markedLabel.toString();
+            document.linkReferences[_normalizeSourceMappingLabel(label)] =
+                md.LinkReference(label, reference.destination, reference.title);
+          }
+        }
+        addVariants(inline.children);
+      }
+    }
+
+    addVariants(inlines);
+  }
 
   List<BusyInline> parse(
     String source, {
@@ -82,7 +329,6 @@ class BusyMarkInlineParserContext {
   }) {
     _addReferenceLabelMarkerVariants(
       _document,
-      _referenceDefinitions,
       source,
       ignoredReferenceLabelMarkers,
     );
@@ -92,34 +338,22 @@ class BusyMarkInlineParserContext {
     );
   }
 
-  BusyDocument parseDocument({
-    required String filePath,
-    required String markedSource,
-    required Iterable<String> ignoredReferenceLabelMarkers,
+  BusyMarkMappedInlineParse parseMapped(
+    String source, {
+    Iterable<String> ignoredReferenceLabelMarkers = const [],
   }) {
-    final document = busyMarkMarkdownDocument(_mode)
-      ..linkReferences.addAll(_referenceDefinitions);
     _addReferenceLabelMarkerVariants(
-      document,
-      _referenceDefinitions,
-      markedSource,
+      _mappingDocument,
+      source,
       ignoredReferenceLabelMarkers,
     );
-    var blockIndex = 0;
-    final blocks = [
-      for (final node in document.parse(markedSource))
-        ...const MarkdownAstAdapter()._blocksFromNode(
-          node,
-          nextId: () => 'mapping-b${blockIndex++}',
-          mode: _mode,
-        ),
-    ];
-    return BusyDocument(
-      filePath: filePath,
-      mode: _mode,
-      blocks: blocks,
-      source: markedSource,
+    parseInvocations += 1;
+    final ranges = Map<BusyInline, BusyMarkMappedInlineRange>.identity();
+    final inlines = const MarkdownAstAdapter()._inlinesFromNodes(
+      _mappingDocument.parseInline(source),
+      sourceMappings: ranges,
     );
+    return BusyMarkMappedInlineParse(inlines: inlines, ranges: ranges);
   }
 }
 
@@ -149,10 +383,14 @@ class MarkdownAstAdapter {
       ..parse(documentSource);
     final document = busyMarkMarkdownDocument(mode)
       ..linkReferences.addAll(referenceDocument.linkReferences);
+    final mappingDocument = busyMarkMarkdownDocument(
+      mode,
+      leadingInlineSyntaxes: _sourceMappingInlineSyntaxes(),
+    )..linkReferences.addAll(referenceDocument.linkReferences);
     return BusyMarkInlineParserContext._(
       document: document,
+      mappingDocument: mappingDocument,
       referenceDefinitions: Map.unmodifiable(referenceDocument.linkReferences),
-      mode: mode,
     );
   }
 
@@ -771,11 +1009,20 @@ class MarkdownAstAdapter {
     return result;
   }
 
-  List<BusyInline> _inlinesFromNodes(Iterable<md.Node> nodes) {
-    return [for (final node in nodes) ..._inlineFromNode(node)];
+  List<BusyInline> _inlinesFromNodes(
+    Iterable<md.Node> nodes, {
+    Map<BusyInline, BusyMarkMappedInlineRange>? sourceMappings,
+  }) {
+    return [
+      for (final node in nodes)
+        ..._inlineFromNode(node, sourceMappings: sourceMappings),
+    ];
   }
 
-  List<BusyInline> _inlineFromNode(md.Node node) {
+  List<BusyInline> _inlineFromNode(
+    md.Node node, {
+    Map<BusyInline, BusyMarkMappedInlineRange>? sourceMappings,
+  }) {
     if (node is md.Element &&
         node.attributes[writersideLiteralPercentAttribute] == 'true') {
       return const [
@@ -800,9 +1047,12 @@ class MarkdownAstAdapter {
       return [BusyInline(kind: BusyInlineKind.unknown, text: node.textContent)];
     }
     final tag = node.tag.toLowerCase();
-    final children = _inlinesFromNodes(node.children ?? const <md.Node>[]);
+    final children = _inlinesFromNodes(
+      node.children ?? const <md.Node>[],
+      sourceMappings: sourceMappings,
+    );
     final text = node.textContent;
-    return switch (tag) {
+    final inlines = switch (tag) {
       busyMarkMathInlineTag => [
         BusyInline(
           kind: BusyInlineKind.math,
@@ -844,7 +1094,9 @@ class MarkdownAstAdapter {
           destination: node.attributes['href'],
           children: children,
           attributes: {
-            ...node.attributes,
+            for (final entry in node.attributes.entries)
+              if (!entry.key.startsWith('data-busymark-source-'))
+                entry.key: entry.value,
             if (node.attributes['title'] case final title?)
               'title': _decodeMarkdownAttribute(title),
           },
@@ -876,6 +1128,37 @@ class MarkdownAstAdapter {
           ...children,
       ],
     };
+    if (sourceMappings != null && inlines.length == 1) {
+      final mappedStart = int.tryParse(
+        node.attributes[_sourceMappingStartAttribute] ?? '',
+      );
+      final mappedEnd = int.tryParse(
+        node.attributes[_sourceMappingEndAttribute] ?? '',
+      );
+      if (mappedStart != null && mappedEnd != null) {
+        var start = mappedStart;
+        var end = mappedEnd;
+        for (final child in children) {
+          final childRange = sourceMappings[child];
+          if (childRange == null) continue;
+          if (childRange.start < start) start = childRange.start;
+          if (childRange.end > end) end = childRange.end;
+        }
+        sourceMappings[inlines.single] = BusyMarkMappedInlineRange(
+          start: start,
+          end: end,
+          opening: node.attributes[_sourceMappingOpeningAttribute],
+          closing: node.attributes[_sourceMappingClosingAttribute],
+          labelStart: int.tryParse(
+            node.attributes[_sourceMappingLabelStartAttribute] ?? '',
+          ),
+          labelEnd: int.tryParse(
+            node.attributes[_sourceMappingLabelEndAttribute] ?? '',
+          ),
+        );
+      }
+    }
+    return inlines;
   }
 
   BusyBlock? _imageBlockFromParagraph(

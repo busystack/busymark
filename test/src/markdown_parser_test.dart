@@ -15,6 +15,59 @@ void main() {
 
   String fixture(String name) => 'test/fixtures/markdown/$name';
 
+  test('inline source mapping uses parsed formatting boundaries', () {
+    const marker = '\ue000';
+    final codeSpans = List.filled(30, '`**`').join(' ');
+    final source = '**start $codeSpans left${marker}right $codeSpans end**';
+    final context = const MarkdownAstAdapter().createInlineParserContext(
+      documentSource: source.replaceAll(marker, ''),
+      mode: MarkdownMode.commonMark,
+    );
+
+    final mapped = context.parseMapped(source);
+
+    expect(context.parseInvocations, 1);
+    expect(mapped.inlines, hasLength(1));
+    final strong = mapped.inlines.single;
+    expect(strong.kind, BusyInlineKind.strong);
+    final range = mapped.ranges[strong];
+    expect(range?.start, 0);
+    expect(range?.end, source.length);
+    expect(range?.opening, '**');
+    expect(range?.closing, '**');
+    expect(
+      strong.children.where((inline) => inline.kind == BusyInlineKind.code),
+      hasLength(60),
+    );
+  });
+
+  test('inline source mapping retains escaped collapsed references', () {
+    const marker = '\ue000';
+    final marked = '${r'[prefix \[ left'}$marker${r'right][]'}';
+    final context = const MarkdownAstAdapter().createInlineParserContext(
+      documentSource:
+          '${r'[prefix \[ leftright][]'}\n\n'
+          '${r'[prefix \[ leftright]: https://destination.test'}\n',
+      mode: MarkdownMode.commonMark,
+    );
+
+    final mapped = context.parseMapped(
+      marked,
+      ignoredReferenceLabelMarkers: const [marker],
+    );
+
+    expect(context.parseInvocations, 2);
+    expect(mapped.inlines, hasLength(1));
+    final link = mapped.inlines.single;
+    expect(link.kind, BusyInlineKind.link);
+    expect(link.destination, 'https://destination.test');
+    final range = mapped.ranges[link];
+    expect(range?.start, 0);
+    expect(range?.end, marked.length);
+    expect(range?.labelStart, 1);
+    expect(range?.labelEnd, marked.indexOf(']'));
+  });
+
   test('extracts title, outline, links, images, and code fences', () {
     final path = fixture('basic.md');
     final parsed = parser.parse(

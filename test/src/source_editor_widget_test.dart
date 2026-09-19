@@ -3184,6 +3184,237 @@ void main() {
     }
   });
 
+  testWidgets(
+    'Source maps escaped brackets in collapsed and shortcut references',
+    (tester) async {
+      final cases = <({String link, String definition})>[
+        (
+          link: r'[prefix \[ leftright][]',
+          definition: r'[prefix \[ leftright]: https://destination.test',
+        ),
+        (
+          link: r'[prefix \[ leftright]',
+          definition: r'[prefix \[ leftright]: https://destination.test',
+        ),
+      ];
+      for (final (caseIndex, value) in cases.indexed) {
+        for (final selectionLength in [0, 'left'.length]) {
+          final source = '${value.link}\n\n${value.definition}\n';
+          var transactions = 0;
+          TextEditingValue? undoValue;
+          final controller = await _pumpClipboardSourceEditor(
+            tester,
+            source: source,
+            clipboard: _SourceTestClipboard(
+              readData: RichClipboardData(
+                text: 'X',
+                richFragment: _completeSourceFragment(
+                  '[X](https://incoming.test)\n',
+                ).encode(),
+              ),
+            ),
+            onTransactionalChanged: (_, _, previousSelection, _, _) {
+              transactions += 1;
+              undoValue = TextEditingValue(
+                text: source,
+                selection: previousSelection,
+              );
+            },
+            onUndo: () {
+              final value = undoValue;
+              undoValue = null;
+              return value;
+            },
+          );
+          final selectionStart = source.indexOf('left');
+          controller.selection = TextSelection(
+            baseOffset: selectionStart,
+            extentOffset: selectionStart + selectionLength,
+          );
+
+          await _pressControlKey(tester, LogicalKeyboardKey.keyV);
+          await tester.pump();
+
+          final parsed = const MarkdownParser()
+              .parse(
+                filePath: '/project/source.md',
+                source: controller.text,
+                validateLocalReferences: false,
+              )
+              .busyDocument;
+          final links = parsed.blocks.first.inlines
+              .where((inline) => inline.kind == BusyInlineKind.link)
+              .toList();
+          expect(
+            links.map((inline) => inline.destination),
+            [
+              'https://destination.test',
+              'https://incoming.test',
+              'https://destination.test',
+            ],
+            reason:
+                '${value.link}; selection $selectionLength; '
+                '${controller.text}',
+          );
+          expect(links[0].plainText, r'prefix [ ');
+          expect(links[1].plainText, 'X');
+          expect(
+            links[2].plainText,
+            selectionLength == 0 ? 'leftright' : 'right',
+          );
+          expect(
+            RegExp(
+              RegExp.escape('${value.definition}\n'),
+            ).allMatches(controller.text),
+            hasLength(1),
+          );
+          final incomingEnd =
+              controller.text.indexOf('[X](https://incoming.test)') +
+              '[X](https://incoming.test)'.length;
+          expect(controller.selection.baseOffset, incomingEnd);
+          expect(transactions, 1);
+
+          await _pressControlKey(tester, LogicalKeyboardKey.keyZ);
+          await tester.pump();
+          expect(controller.text, source);
+
+          if (caseIndex != cases.length - 1 || selectionLength != 4) {
+            await tester.pumpWidget(const SizedBox.shrink());
+            await tester.pump();
+          }
+        }
+      }
+    },
+  );
+
+  testWidgets('Source maps links around unmatched and code-span backticks', (
+    tester,
+  ) async {
+    final cases =
+        <
+          ({
+            String link,
+            String caretNeedle,
+            String expectedPlainText,
+            String expectedLeftLabel,
+            bool hasCode,
+          })
+        >[
+          (
+            link: r'literal ` then [leftright](https://destination.test)',
+            caretNeedle: 'right',
+            expectedPlainText: r'literal ` then leftXright',
+            expectedLeftLabel: 'left',
+            hasCode: false,
+          ),
+          (
+            link: r'[left`right](https://destination.test)',
+            caretNeedle: 'right',
+            expectedPlainText: r'left`Xright',
+            expectedLeftLabel: r'left`',
+            hasCode: false,
+          ),
+          (
+            link: r'[left `code\` right](https://destination.test)',
+            caretNeedle: 'right',
+            expectedPlainText: r'left code\ Xright',
+            expectedLeftLabel: r'left code\ ',
+            hasCode: true,
+          ),
+        ];
+    for (final (caseIndex, value) in cases.indexed) {
+      for (final inTable in [false, true]) {
+        final source = inTable
+            ? '| H |\n| --- |\n| ${value.link} |\n'
+            : value.link;
+        var transactions = 0;
+        TextEditingValue? undoValue;
+        final controller = await _pumpClipboardSourceEditor(
+          tester,
+          source: source,
+          markdownMode: inTable ? MarkdownMode.gfm : MarkdownMode.commonMark,
+          clipboard: _SourceTestClipboard(
+            readData: RichClipboardData(
+              text: 'X',
+              richFragment: _completeSourceFragment(
+                '[X](https://incoming.test)\n',
+                mode: inTable ? MarkdownMode.gfm : MarkdownMode.commonMark,
+              ).encode(),
+            ),
+          ),
+          onTransactionalChanged: (_, _, previousSelection, _, _) {
+            transactions += 1;
+            undoValue = TextEditingValue(
+              text: source,
+              selection: previousSelection,
+            );
+          },
+          onUndo: () {
+            final value = undoValue;
+            undoValue = null;
+            return value;
+          },
+        );
+        controller.selection = TextSelection.collapsed(
+          offset: source.indexOf(value.caretNeedle),
+        );
+
+        await _pressControlKey(tester, LogicalKeyboardKey.keyV);
+        await tester.pump();
+
+        final parsed = const MarkdownParser()
+            .parse(
+              filePath: '/project/source.md',
+              source: controller.text,
+              mode: inTable ? MarkdownMode.gfm : MarkdownMode.commonMark,
+              validateLocalReferences: false,
+            )
+            .busyDocument;
+        final inlines = inTable
+            ? parsed.blocks.single.children.last.children.single.inlines
+            : parsed.blocks.single.inlines;
+        final links = inlines
+            .where((inline) => inline.kind == BusyInlineKind.link)
+            .toList();
+        expect(links.map((inline) => inline.destination), [
+          'https://destination.test',
+          'https://incoming.test',
+          'https://destination.test',
+        ], reason: controller.text);
+        expect(
+          inlines.map((inline) => inline.plainText).join(),
+          value.expectedPlainText,
+        );
+        expect(links[0].plainText, value.expectedLeftLabel);
+        expect(links[1].plainText, 'X');
+        expect(links[2].plainText, 'right');
+        if (value.hasCode) {
+          expect(
+            links[0].children
+                .where((inline) => inline.kind == BusyInlineKind.code)
+                .single
+                .text,
+            r'code\',
+          );
+        }
+        final incomingEnd =
+            controller.text.indexOf('[X](https://incoming.test)') +
+            '[X](https://incoming.test)'.length;
+        expect(controller.selection.baseOffset, incomingEnd);
+        expect(transactions, 1);
+
+        await _pressControlKey(tester, LogicalKeyboardKey.keyZ);
+        await tester.pump();
+        expect(controller.text, source);
+
+        if (caseIndex != cases.length - 1 || !inTable) {
+          await tester.pumpWidget(const SizedBox.shrink());
+          await tester.pump();
+        }
+      }
+    }
+  });
+
   testWidgets('Source maps links with escaped and balanced label brackets', (
     tester,
   ) async {
@@ -3375,6 +3606,70 @@ void main() {
       expect(measurements.reduce(math.max), lessThanOrEqualTo(4));
       expect(controller.text, contains('Target **leftXright** paragraph.'));
       registry.dispose();
+
+      for (final codeSpanCount in [10, 20, 30]) {
+        await tester.pumpWidget(const SizedBox.shrink());
+        await tester.pump();
+        final codeSpans = List.filled(codeSpanCount, '`**`').join(' ');
+        final source = '**start $codeSpans leftright $codeSpans end**';
+        final registry = BusyMarkClipboardInsertionRegistry();
+        final controller = await _pumpClipboardSourceEditor(
+          tester,
+          source: source,
+          registry: registry,
+          clipboard: _SourceTestClipboard(
+            readData: RichClipboardData(
+              text: 'X',
+              richFragment: fragment.encode(),
+            ),
+          ),
+        );
+        controller.selection = TextSelection.collapsed(
+          offset: source.indexOf('leftright') + 4,
+        );
+        final payload = BusyMarkClipboardPayload(
+          id: 'mapping-code-spans-$codeSpanCount',
+          acquiredAt: DateTime.utc(2026),
+          kind: BusyMarkClipboardContentKind.richText,
+          text: 'X',
+          richFragment: fragment.encode(),
+        );
+
+        measurements.clear();
+        expect(registry.canPaste(payload), isTrue);
+        expect(measurements, isNotEmpty);
+        expect(
+          measurements.reduce(math.max),
+          lessThanOrEqualTo(4),
+          reason: 'availability with $codeSpanCount code spans per side',
+        );
+
+        measurements.clear();
+        await _pressControlKey(tester, LogicalKeyboardKey.keyV);
+        await tester.pump();
+        expect(measurements, isNotEmpty);
+        expect(
+          measurements.reduce(math.max),
+          lessThanOrEqualTo(4),
+          reason: 'paste with $codeSpanCount code spans per side',
+        );
+        expect(controller.text, source.replaceFirst('leftright', 'leftXright'));
+        final parsed = const MarkdownParser()
+            .parse(
+              filePath: '/project/source.md',
+              source: controller.text,
+              validateLocalReferences: false,
+            )
+            .busyDocument;
+        expect(parsed.blocks.single.inlines.single.kind, BusyInlineKind.strong);
+        expect(
+          parsed.blocks.single.inlines.single.children.where(
+            (inline) => inline.kind == BusyInlineKind.code,
+          ),
+          hasLength(codeSpanCount * 2),
+        );
+        registry.dispose();
+      }
     },
   );
 

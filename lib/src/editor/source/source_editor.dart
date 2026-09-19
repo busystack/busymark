@@ -2919,19 +2919,34 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
       documentSource: target.text,
       mode: target.markdownMode,
     );
-    final document = parserContext.parseDocument(
-      filePath: target.filePath ?? '',
-      markedSource: markedSource,
+    final markerCount =
+        startMarker.length + (start == end ? 0 : endMarker.length);
+    final markedBounds = TextRange(
+      start: sourceBounds.start,
+      end: (sourceBounds.end + markerCount)
+          .clamp(0, markedSource.length)
+          .toInt(),
+    );
+    if (markedBounds.start < 0 ||
+        markedBounds.start > markedBounds.end ||
+        markedBounds.end > markedSource.length) {
+      return null;
+    }
+    final mapped = parserContext.parseMapped(
+      markedSource.substring(markedBounds.start, markedBounds.end),
       ignoredReferenceLabelMarkers: [startMarker, if (start != end) endMarker],
     );
-    final startTrace = _sourceInlineTraceContainingMarker(
-      document.blocks,
+    final startTrace = _sourceInlineTraceContainingMarkerInInlines(
+      mapped.inlines,
       startMarker,
     );
     if (startTrace == null) return null;
     final endTrace = start == end
         ? startTrace
-        : _sourceInlineTraceContainingMarker(document.blocks, endMarker);
+        : _sourceInlineTraceContainingMarkerInInlines(
+            mapped.inlines,
+            endMarker,
+          );
     if (endTrace == null) return null;
     final commonAncestors = <BusyInline>[];
     final commonLength = math.min(
@@ -2943,28 +2958,31 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
       if (!identical(startInline, endTrace.frames[index].inline)) break;
       commonAncestors.add(startInline);
     }
-    final markerCount =
-        startMarker.length + (start == end ? 0 : endMarker.length);
-    final markedBounds = TextRange(
-      start: sourceBounds.start,
-      end: (sourceBounds.end + markerCount)
-          .clamp(0, markedSource.length)
-          .toInt(),
-    );
     final wrappers = <_MappedSourceInlineWrapper>[];
     for (final inline in commonAncestors) {
       if (!_isInheritedSourceInline(inline.kind)) continue;
-      final wrapper = _mappedSourceInlineWrapper(
-        target,
-        markedSource,
-        inline,
-        startMarker,
-        start == end ? null : endMarker,
-        start,
-        end,
-        markedBounds,
-        parserContext,
-      );
+      final range = mapped.ranges[inline];
+      final wrapper = range == null
+          ? _mappedSourceInlineWrapperFallback(
+              target,
+              markedSource,
+              inline,
+              startMarker,
+              start == end ? null : endMarker,
+              start,
+              end,
+              markedBounds,
+              parserContext,
+            )
+          : _mappedSourceInlineWrapperFromRange(
+              target,
+              inline,
+              range,
+              start,
+              end,
+              markerCount,
+              markedBounds,
+            );
       if (wrapper != null) wrappers.add(wrapper);
     }
     assert(() {
@@ -2987,7 +3005,34 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
     );
   }
 
-  _MappedSourceInlineWrapper? _mappedSourceInlineWrapper(
+  _MappedSourceInlineWrapper? _mappedSourceInlineWrapperFromRange(
+    _SourceClipboardOperationTarget target,
+    BusyInline inline,
+    BusyMarkMappedInlineRange mappedRange,
+    int selectionStart,
+    int selectionEnd,
+    int markerCount,
+    TextRange markedBounds,
+  ) {
+    final markedStart = markedBounds.start + mappedRange.start;
+    final markedEnd = markedBounds.start + mappedRange.end;
+    final originalEnd = markedEnd - markerCount;
+    if (markedStart < markedBounds.start ||
+        markedStart > selectionStart ||
+        originalEnd < selectionEnd ||
+        markedEnd > markedBounds.end ||
+        originalEnd > target.text.length) {
+      return null;
+    }
+    return _MappedSourceInlineWrapper(
+      inline: inline,
+      sourceRange: TextRange(start: markedStart, end: originalEnd),
+      opening: mappedRange.opening,
+      closing: mappedRange.closing,
+    );
+  }
+
+  _MappedSourceInlineWrapper? _mappedSourceInlineWrapperFallback(
     _SourceClipboardOperationTarget target,
     String markedSource,
     BusyInline inline,
@@ -3039,222 +3084,47 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
               endMarker.length;
     if (markedStart < 0 || markedEnd <= markedStart) return null;
     if (inline.kind == BusyInlineKind.link) {
-      final bracketOpenings = _sourceUnclosedBracketOpenings(
+      // Bracket links are mapped by the parser itself. This fallback is only
+      // for autolinks, whose angle-bracket syntax is not delimiter based.
+      final opening = markedSource.lastIndexOf('<', markedStart);
+      final closing = _sourceFirstUnescapedCharacter(
         markedSource,
-        markedBounds.start,
-        markedStart,
+        '>',
+        markedEnd,
+        markedBounds.end,
       );
-      for (final opening in bracketOpenings.reversed) {
-        final ends = _sourceLinkCandidateEnds(
-          markedSource,
-          opening,
-          markedBounds.end,
-        );
-        for (final candidateEnd in ends) {
-          if (!candidateMatches(opening, candidateEnd)) continue;
-          final range = originalRange(opening, candidateEnd);
-          return range == null
-              ? null
-              : _MappedSourceInlineWrapper(inline: inline, sourceRange: range);
-        }
-      }
-      var opening = markedSource.lastIndexOf('<', markedStart);
-      while (opening >= markedBounds.start) {
-        if (!_sourceCharacterIsEscaped(markedSource, opening)) {
-          final closing = _sourceFirstUnescapedCharacter(
-            markedSource,
-            '>',
-            markedEnd,
-            markedBounds.end,
-          );
-          if (closing != null && candidateMatches(opening, closing + 1)) {
-            final range = originalRange(opening, closing + 1);
-            return range == null
-                ? null
-                : _MappedSourceInlineWrapper(
-                    inline: inline,
-                    sourceRange: range,
-                  );
-          }
-        }
-        opening = opening == 0
-            ? -1
-            : markedSource.lastIndexOf('<', opening - 1);
+      if (opening >= markedBounds.start &&
+          !_sourceCharacterIsEscaped(markedSource, opening) &&
+          closing != null &&
+          candidateMatches(opening, closing + 1)) {
+        final range = originalRange(opening, closing + 1);
+        return range == null
+            ? null
+            : _MappedSourceInlineWrapper(inline: inline, sourceRange: range);
       }
       return null;
     }
 
-    final delimiters = switch (inline.kind) {
-      BusyInlineKind.strong => const [
-        (opening: '**', closing: '**'),
-        (opening: '__', closing: '__'),
-      ],
-      BusyInlineKind.emphasis => const [
-        (opening: '*', closing: '*'),
-        (opening: '_', closing: '_'),
-      ],
-      BusyInlineKind.strikethrough => const [(opening: '~~', closing: '~~')],
-      BusyInlineKind.underline => const [(opening: '<u>', closing: '</u>')],
-      _ => const <({String opening, String closing})>[],
-    };
-    for (final delimiter in delimiters) {
-      var opening = markedSource.lastIndexOf(delimiter.opening, markedStart);
-      while (opening >= markedBounds.start) {
-        if (_sourceCharacterIsEscaped(markedSource, opening)) {
-          opening = opening == 0
-              ? -1
-              : markedSource.lastIndexOf(delimiter.opening, opening - 1);
-          continue;
-        }
-        var closing = markedSource.indexOf(delimiter.closing, markedEnd);
-        while (closing >= 0 && closing < markedBounds.end) {
-          final end = closing + delimiter.closing.length;
-          if (!_sourceCharacterIsEscaped(markedSource, closing) &&
-              candidateMatches(opening, end)) {
-            final range = originalRange(opening, end);
-            return range == null
-                ? null
-                : _MappedSourceInlineWrapper(
-                    inline: inline,
-                    sourceRange: range,
-                    opening: delimiter.opening,
-                    closing: delimiter.closing,
-                  );
-          }
-          closing = markedSource.indexOf(
-            delimiter.closing,
-            closing + delimiter.closing.length,
-          );
-        }
-        opening = opening == 0
-            ? -1
-            : markedSource.lastIndexOf(delimiter.opening, opening - 1);
+    if (inline.kind == BusyInlineKind.underline) {
+      const openingDelimiter = '<u>';
+      const closingDelimiter = '</u>';
+      final opening = markedSource.lastIndexOf(openingDelimiter, markedStart);
+      final closing = markedSource.indexOf(closingDelimiter, markedEnd);
+      final candidateEnd = closing + closingDelimiter.length;
+      if (opening >= markedBounds.start &&
+          closing >= markedEnd &&
+          candidateEnd <= markedBounds.end &&
+          candidateMatches(opening, candidateEnd)) {
+        final range = originalRange(opening, candidateEnd);
+        return range == null
+            ? null
+            : _MappedSourceInlineWrapper(
+                inline: inline,
+                sourceRange: range,
+                opening: openingDelimiter,
+                closing: closingDelimiter,
+              );
       }
-    }
-    return null;
-  }
-
-  List<int> _sourceUnclosedBracketOpenings(String source, int start, int end) {
-    final openings = <int>[];
-    var codeDelimiterLength = 0;
-    var index = start.clamp(0, source.length).toInt();
-    final limit = end.clamp(index, source.length).toInt();
-    while (index < limit) {
-      final unit = source.codeUnitAt(index);
-      if (unit == 0x60 && !_sourceCharacterIsEscaped(source, index)) {
-        var runEnd = index + 1;
-        while (runEnd < limit && source.codeUnitAt(runEnd) == 0x60) {
-          runEnd += 1;
-        }
-        final runLength = runEnd - index;
-        if (codeDelimiterLength == 0) {
-          codeDelimiterLength = runLength;
-        } else if (codeDelimiterLength == runLength) {
-          codeDelimiterLength = 0;
-        }
-        index = runEnd;
-        continue;
-      }
-      if (codeDelimiterLength == 0 &&
-          !_sourceCharacterIsEscaped(source, index)) {
-        if (unit == 0x5b) {
-          openings.add(index);
-        } else if (unit == 0x5d && openings.isNotEmpty) {
-          openings.removeLast();
-        }
-      }
-      index += 1;
-    }
-    return openings;
-  }
-
-  List<int> _sourceLinkCandidateEnds(String source, int opening, int limit) {
-    final labelClosing = _sourceMatchingBracket(source, opening, limit);
-    if (labelClosing == null) return const [];
-    final suffixStart = labelClosing + 1;
-    if (suffixStart < limit && source.codeUnitAt(suffixStart) == 0x28) {
-      final closing = _sourceMatchingLinkParenthesis(
-        source,
-        suffixStart,
-        limit,
-      );
-      return closing == null ? const [] : [closing + 1];
-    }
-    if (suffixStart < limit && source.codeUnitAt(suffixStart) == 0x5b) {
-      final closing = _sourceMatchingBracket(source, suffixStart, limit);
-      return closing == null ? const [] : [closing + 1];
-    }
-    return [suffixStart];
-  }
-
-  int? _sourceMatchingBracket(String source, int opening, int limit) {
-    var depth = 1;
-    var codeDelimiterLength = 0;
-    var index = opening + 1;
-    final end = limit.clamp(index, source.length).toInt();
-    while (index < end) {
-      final unit = source.codeUnitAt(index);
-      if (unit == 0x60 && !_sourceCharacterIsEscaped(source, index)) {
-        var runEnd = index + 1;
-        while (runEnd < end && source.codeUnitAt(runEnd) == 0x60) {
-          runEnd += 1;
-        }
-        final runLength = runEnd - index;
-        if (codeDelimiterLength == 0) {
-          codeDelimiterLength = runLength;
-        } else if (codeDelimiterLength == runLength) {
-          codeDelimiterLength = 0;
-        }
-        index = runEnd;
-        continue;
-      }
-      if (codeDelimiterLength == 0 &&
-          !_sourceCharacterIsEscaped(source, index)) {
-        if (unit == 0x5b) {
-          depth += 1;
-        } else if (unit == 0x5d) {
-          depth -= 1;
-          if (depth == 0) return index;
-        }
-      }
-      index += 1;
-    }
-    return null;
-  }
-
-  int? _sourceMatchingLinkParenthesis(String source, int opening, int limit) {
-    var depth = 1;
-    int? quote;
-    var angleDestination = false;
-    var titleMayStart = false;
-    final end = limit.clamp(opening + 1, source.length).toInt();
-    for (var index = opening + 1; index < end; index++) {
-      if (_sourceCharacterIsEscaped(source, index)) continue;
-      final unit = source.codeUnitAt(index);
-      if (quote != null) {
-        if (unit == quote) quote = null;
-        continue;
-      }
-      if (angleDestination) {
-        if (unit == 0x3e) angleDestination = false;
-        continue;
-      }
-      if (depth == 1 &&
-          (unit == 0x20 || unit == 0x09 || unit == 0x0a || unit == 0x0d)) {
-        titleMayStart = true;
-        continue;
-      }
-      if (titleMayStart && (unit == 0x22 || unit == 0x27)) {
-        quote = unit;
-      } else if (unit == 0x3c && depth == 1) {
-        angleDestination = true;
-      } else if (unit == 0x28) {
-        depth += 1;
-      } else if (unit == 0x29) {
-        depth -= 1;
-        if (depth == 0) return index;
-      }
-      titleMayStart = false;
     }
     return null;
   }
@@ -3285,34 +3155,23 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
     return backslashes.isOdd;
   }
 
-  _SourceInlineTrace? _sourceInlineTraceContainingMarker(
-    Iterable<BusyBlock> blocks,
+  _SourceInlineTrace? _sourceInlineTraceContainingMarkerInInlines(
+    List<BusyInline> siblings,
     String marker,
   ) {
-    _SourceInlineTrace? inInlines(List<BusyInline> siblings) {
-      for (var index = 0; index < siblings.length; index++) {
-        final inline = siblings[index];
-        if (!inline.plainText.contains(marker)) continue;
-        final child = inInlines(inline.children);
-        return _SourceInlineTrace(
-          frames: [
-            _SourceInlineFrame(
-              inline: inline,
-              siblings: siblings,
-              index: index,
-            ),
-            ...?child?.frames,
-          ],
-        );
-      }
-      return null;
-    }
-
-    for (final block in blocks) {
-      final trace = inInlines(block.inlines);
-      if (trace != null) return trace;
-      final child = _sourceInlineTraceContainingMarker(block.children, marker);
-      if (child != null) return child;
+    for (var index = 0; index < siblings.length; index++) {
+      final inline = siblings[index];
+      if (!inline.plainText.contains(marker)) continue;
+      final child = _sourceInlineTraceContainingMarkerInInlines(
+        inline.children,
+        marker,
+      );
+      return _SourceInlineTrace(
+        frames: [
+          _SourceInlineFrame(inline: inline, siblings: siblings, index: index),
+          ...?child?.frames,
+        ],
+      );
     }
     return null;
   }

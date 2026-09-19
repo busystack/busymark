@@ -27,10 +27,14 @@ BusyMathSourceForm busyMathSourceFormFromName(String? value) {
   );
 }
 
-md.Document busyMarkMarkdownDocument(MarkdownMode mode) {
+md.Document busyMarkMarkdownDocument(
+  MarkdownMode mode, {
+  Iterable<md.InlineSyntax> leadingInlineSyntaxes = const [],
+}) {
   return md.Document(
     blockSyntaxes: const [BusyDisplayMathSyntax()],
     inlineSyntaxes: [
+      ...leadingInlineSyntaxes,
       if (mode == MarkdownMode.writersideMarkdown)
         WritersideLiteralPercentSyntax(),
       BusyDollarMathSyntax(),
