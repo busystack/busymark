@@ -434,6 +434,7 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     String blockId,
     String text, {
     Iterable<BusyInlineKind> activeInlineKinds = const [],
+    bool preserveTextWhitespace = false,
   }) {
     _replaceBlock(
       blockId,
@@ -441,6 +442,7 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
         block,
         text,
         activeInlineKinds: activeInlineKinds,
+        preserveTextWhitespace: preserveTextWhitespace,
       ),
     );
   }
@@ -677,8 +679,9 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
   BusyWysiwygTextSplitResult? replaceBlockTextWithParagraphs(
     String blockId,
     String text,
-    int cursorOffset,
-  ) {
+    int cursorOffset, {
+    bool preserveTextWhitespace = false,
+  }) {
     final block = blockById(blockId);
     if (block == null || !_shouldSplitNewlines(block.kind)) {
       return null;
@@ -740,6 +743,7 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
               _sourceBackedSplitAttributes(block.attributes),
               block.kind,
               part,
+              preserveTextWhitespace: preserveTextWhitespace,
             ),
             preserveRaw: false,
             dirty: true,
@@ -758,6 +762,7 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
               ),
               splitKind,
               part,
+              preserveTextWhitespace: preserveTextWhitespace,
             ),
             dirty: true,
           ),
@@ -1960,12 +1965,12 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
       );
       replacements.add(
         block.copyWith(
-          kind: beforeText.isEmpty && afterText.isEmpty
-              ? inserted.kind
-              : block.kind,
-          attributes: beforeText.isEmpty && afterText.isEmpty
-              ? inserted.attributes
-              : block.attributes,
+          // A text-field selection never owns the destination block itself.
+          // In particular, selecting all of a list item's own text does not
+          // select its descendants. Keep the destination structure and only
+          // replace its inline content.
+          kind: block.kind,
+          attributes: block.attributes,
           inlines: _mergeAdjacentInlineStyles([
             ...partition.before,
             ...insertedInlines,
@@ -2803,10 +2808,14 @@ Map<String, String> _splitAttributesFor(
 Map<String, String> _attributesForText(
   Map<String, String> attributes,
   BusyBlockKind kind,
-  String text,
-) {
+  String text, {
+  bool preserveTextWhitespace = false,
+}) {
   final updated = {...attributes}
     ..remove(busyMarkPreserveEmptyParagraphAttribute);
+  if (preserveTextWhitespace) {
+    updated[busyMarkPreserveTextWhitespaceAttribute] = 'true';
+  }
   if (text.isNotEmpty) {
     updated.remove(busyMarkTransientTrailingParagraphAttribute);
   }
@@ -3243,6 +3252,7 @@ BusyBlock _blockWithEditedText(
   BusyBlock block,
   String nextText, {
   Iterable<BusyInlineKind> activeInlineKinds = const [],
+  bool preserveTextWhitespace = false,
 }) {
   final oldText = block.plainText;
   final oldRanges = busyInlineStyleRanges(block.inlines);
@@ -3269,7 +3279,12 @@ BusyBlock _blockWithEditedText(
       newText: nextText,
       rebuiltInlines: rebuiltInlines,
     ),
-    attributes: _attributesForText(block.attributes, block.kind, nextText),
+    attributes: _attributesForText(
+      block.attributes,
+      block.kind,
+      nextText,
+      preserveTextWhitespace: preserveTextWhitespace,
+    ),
     preserveRaw: false,
     dirty: true,
   );

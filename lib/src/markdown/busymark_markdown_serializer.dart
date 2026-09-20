@@ -211,8 +211,11 @@ class BusyMarkMarkdownSerializer {
         continue;
       }
       final source = serializeBlock(block);
-      if (source.trim().isNotEmpty) {
-        chunks.add(source.trimRight());
+      final preserveWhitespace =
+          block.attributes[busyMarkPreserveTextWhitespaceAttribute] == 'true';
+      if (source.trim().isNotEmpty ||
+          (preserveWhitespace && source.isNotEmpty)) {
+        chunks.add(preserveWhitespace ? source : source.trimRight());
       }
     }
     return _joinDocumentChunks(chunks);
@@ -325,7 +328,11 @@ class BusyMarkMarkdownSerializer {
       }
       buffer
         ..write(source.substring(offset, span.startOffset))
-        ..write(serializeBlock(block).trimRight());
+        ..write(
+          block.attributes[busyMarkPreserveTextWhitespaceAttribute] == 'true'
+              ? serializeBlock(block)
+              : serializeBlock(block).trimRight(),
+        );
       offset = span.endOffset;
     }
     buffer.write(source.substring(offset));

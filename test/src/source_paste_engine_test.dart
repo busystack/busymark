@@ -1,5 +1,6 @@
 import 'package:busymark/src/editor/source/source_paste_engine.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_clipboard_fragment.dart';
+import 'package:busymark/src/editor/wysiwyg/wysiwyg_clipboard_html.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_document_controller.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_inline_controller.dart';
 import 'package:busymark/src/markdown/busymark_document.dart';
@@ -11,6 +12,133 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   const engine = SourcePasteEngine();
+
+  test('single rich paragraph repairs independently surviving endpoints', () {
+    final cases = <({String source, int start, int end, String expected})>[
+      (
+        source: '**leftSELECT**tail',
+        start: 6,
+        end: 14,
+        expected: '**leftX**tail',
+      ),
+      (
+        source: 'left**SELECTtail**',
+        start: 2,
+        end: 10,
+        expected: 'le**XCTtail**',
+      ),
+      (
+        source: '**left** middle *right*',
+        start: 4,
+        end: 19,
+        expected: '**leX***ght*',
+      ),
+      (source: 'alpha\n\nbeta', start: 2, end: 9, expected: 'al**X**ta'),
+    ];
+    for (final value in cases) {
+      final applied = _applyReady(
+        value.source,
+        engine.prepareStructured(
+          target: _target(
+            value.source,
+            TextSelection(baseOffset: value.start, extentOffset: value.end),
+          ),
+          fragment: _fragment('**X**\n'),
+        ),
+      );
+      expect(applied.source, value.expected, reason: value.source);
+      const caretMarker = '\ue007';
+      final marked = _parse(
+        applied.source.replaceRange(
+          applied.edit.caretOffset,
+          applied.edit.caretOffset,
+          caretMarker,
+        ),
+      );
+      final markedText = _blocksDepthFirst(
+        marked.blocks,
+      ).map((block) => block.plainText).join();
+      expect(markedText.indexOf(caretMarker), markedText.indexOf('X') + 1);
+    }
+  });
+
+  test(
+    'block insertion replaces only a heading own prefix at content start',
+    () {
+      for (final value in [
+        (source: '## right', offset: 3, expected: '### New\n\nright'),
+        (source: '> ## right', offset: 5, expected: '> ### New\n>\n> right'),
+        (source: '- ## right', offset: 5, expected: '- ### New\n\n  right'),
+      ]) {
+        final applied = _applyReady(
+          value.source,
+          engine.prepareStructured(
+            target: _target(
+              value.source,
+              TextSelection.collapsed(offset: value.offset),
+            ),
+            fragment: _fragment('### New\n'),
+          ),
+        );
+        expect(applied.source, value.expected, reason: value.source);
+        final headings = _blocksDepthFirst(
+          _parse(applied.source).blocks,
+        ).where((block) => block.kind == BusyBlockKind.heading).toList();
+        expect(headings, hasLength(1), reason: applied.source);
+        expect(headings.single.attributes['level'], '3');
+        expect(headings.single.plainText, 'New');
+      }
+    },
+  );
+
+  test('paragraph sequence removes nested heading marker at content start', () {
+    const source = '> ## right';
+    final applied = _applyReady(
+      source,
+      engine.prepareStructured(
+        target: _target(source, const TextSelection.collapsed(offset: 5)),
+        fragment: _fragment('A\n\nB\n'),
+      ),
+    );
+    final blocks = _blocksDepthFirst(_parse(applied.source).blocks);
+    expect(
+      blocks.where((block) => block.kind == BusyBlockKind.heading),
+      isEmpty,
+      reason: applied.source,
+    );
+    expect(
+      blocks
+          .where((block) => block.kind == BusyBlockKind.paragraph)
+          .map((block) => block.plainText),
+      ['A', 'Bright'],
+      reason: applied.source,
+    );
+  });
+
+  test('external HTML blockquotes remain structured in Source', () {
+    for (final html in [
+      '<blockquote><p>Quoted</p></blockquote>',
+      '<blockquote><blockquote><p>Nested</p></blockquote></blockquote>',
+      '<blockquote><ul><li>Listed</li></ul></blockquote>',
+    ]) {
+      final fragment = const WysiwygClipboardHtml().decode(
+        html,
+        mode: MarkdownMode.commonMark,
+      )!;
+      final applied = _applyReady(
+        '',
+        engine.prepareStructured(
+          target: _target('', const TextSelection.collapsed(offset: 0)),
+          fragment: fragment,
+        ),
+      );
+      expect(
+        _parse(applied.source).blocks.single.kind,
+        BusyBlockKind.blockquote,
+        reason: applied.source,
+      );
+    }
+  });
 
   test('HTML break layout stays behind a caret after the semantic break', () {
     const source =

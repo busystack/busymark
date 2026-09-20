@@ -591,6 +591,23 @@ void main() {
     }
   });
 
+  test('math field source boundaries map to semantic text boundaries', () {
+    final block = const MarkdownParser()
+        .parse(
+          filePath: 'math.md',
+          source:
+              r'a $x$ b'
+              '\n',
+        )
+        .busyDocument
+        .blocks
+        .single;
+    expect(busyMarkWysiwygEditableText(block), r'a $x$ b');
+    expect(busyMarkWysiwygTextOffsetForSourceOffset(block, 2), 2);
+    expect(busyMarkWysiwygTextOffsetForSourceOffset(block, 5), 3);
+    expect(busyMarkWysiwygTextOffsetForSourceOffset(block, 7), 5);
+  });
+
   test('source-mode math insertion preserves the intended inline position', () {
     const cases = [
       (

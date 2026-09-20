@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
@@ -59,6 +60,7 @@ void main() {
       request: request,
       origin: AssetIngestionOrigin.screenshotPaste,
     );
+    await service.commit(first);
     final reused = await service.ingestBytes(
       bytes: png,
       suggestedFileName: 'different.png',
@@ -77,6 +79,96 @@ void main() {
     expect(reused.reusedExisting, isTrue);
     expect(p.basename(collision.absolutePath), 'image-2.png');
   });
+
+  for (final identicalBytes in [true, false]) {
+    test(
+      'overlapping ${identicalBytes ? 'identical' : 'different'} publications keep the committed owner',
+      () async {
+        final workspace = await Directory.systemTemp.createTemp(
+          'busymark-asset-ownership-',
+        );
+        addTearDown(() => workspace.delete(recursive: true));
+        final firstDocument = File(p.join(workspace.path, 'first.md'))
+          ..writeAsStringSync('');
+        final secondDocument = File(p.join(workspace.path, 'second.md'))
+          ..writeAsStringSync('');
+        final firstPublished = Completer<void>();
+        final releaseFirst = Completer<void>();
+        final firstService = AssetIngestionService(
+          hooks: AssetIngestionHooks(
+            afterPublication: (asset) async {
+              firstPublished.complete();
+              await releaseFirst.future;
+            },
+          ),
+        );
+        const secondService = AssetIngestionService();
+        final firstRequest = AssetIngestionRequest(
+          documentFilePath: firstDocument.path,
+          workspaceKind: AssetWorkspaceKind.markdownWorkspace,
+          workspaceRoot: workspace.path,
+        );
+        final secondRequest = AssetIngestionRequest(
+          documentFilePath: secondDocument.path,
+          workspaceKind: AssetWorkspaceKind.markdownWorkspace,
+          workspaceRoot: workspace.path,
+        );
+        final otherBytes = Uint8List.fromList(png);
+        if (!identicalBytes) otherBytes[otherBytes.length - 1] ^= 1;
+
+        final firstFuture = firstService.ingestBytes(
+          bytes: png,
+          suggestedFileName: 'image.png',
+          request: firstRequest,
+          origin: AssetIngestionOrigin.screenshotPaste,
+        );
+        await firstPublished.future;
+        final committed = await secondService.ingestBytes(
+          bytes: otherBytes,
+          suggestedFileName: 'image.png',
+          request: secondRequest,
+          origin: AssetIngestionOrigin.clipboardImageFile,
+        );
+        await secondService.commit(committed);
+        releaseFirst.complete();
+        final stale = await firstFuture;
+        await firstService.rollback(stale);
+
+        expect(committed.absolutePath, isNot(stale.absolutePath));
+        expect(await File(committed.absolutePath).exists(), isTrue);
+        expect(await File(committed.absolutePath).readAsBytes(), otherBytes);
+        expect(await File(stale.absolutePath).exists(), isFalse);
+      },
+    );
+  }
+
+  test(
+    'rollback cannot delete an asset after its publication is committed',
+    () async {
+      final workspace = await Directory.systemTemp.createTemp(
+        'busymark-asset-commit-',
+      );
+      addTearDown(() => workspace.delete(recursive: true));
+      final document = File(p.join(workspace.path, 'note.md'))
+        ..writeAsStringSync('');
+      const service = AssetIngestionService();
+      final asset = await service.ingestBytes(
+        bytes: png,
+        suggestedFileName: 'image.png',
+        request: AssetIngestionRequest(
+          documentFilePath: document.path,
+          workspaceKind: AssetWorkspaceKind.markdownWorkspace,
+          workspaceRoot: workspace.path,
+        ),
+        origin: AssetIngestionOrigin.screenshotPaste,
+      );
+
+      await service.commit(asset);
+      await service.rollback(asset);
+
+      expect(await File(asset.absolutePath).readAsBytes(), png);
+    },
+  );
 
   test('uses the configured Writerside images directory', () async {
     final project = await Directory.systemTemp.createTemp(

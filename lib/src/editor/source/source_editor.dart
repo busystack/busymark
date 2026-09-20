@@ -2252,6 +2252,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
           await _deleteUncommittedClipboardAssets(assets);
         }
         if (result == ClipboardPasteResult.inserted) {
+          await widget.assetIngestionService.commitAll(assets);
           return (result: result, capture: null);
         }
         return (result: result, capture: null);
@@ -2415,6 +2416,8 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
     final result = _insertClipboardText(target, reference);
     if (result != ClipboardPasteResult.inserted) {
       await _deleteUncommittedClipboardAssets([asset]);
+    } else {
+      await widget.assetIngestionService.commit(asset);
     }
     return result;
   }
@@ -2539,14 +2542,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
   Future<void> _deleteUncommittedClipboardAssets(
     Iterable<IngestedAsset> assets,
   ) async {
-    for (final asset in assets) {
-      if (asset.reusedExisting) continue;
-      try {
-        await File(asset.absolutePath).delete();
-      } on FileSystemException {
-        // Failed cancellation cleanup must not make the editor unusable.
-      }
-    }
+    await widget.assetIngestionService.rollbackAll(assets);
   }
 
   ClipboardPasteResult _insertClipboardText(

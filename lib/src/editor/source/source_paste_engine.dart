@@ -126,6 +126,20 @@ class SourcePasteEngine {
     }
     if (fragment.isInlineSourceFragment) {
       final inlines = fragment.sourceInsertionInlinesFor(tableCell: false);
+      final hasSharedInheritedContext =
+          context.inlineContext?.commonAncestors.any(
+            (inline) => busyMarkIsInheritedInlineContext(inline.kind),
+          ) ??
+          false;
+      if (context.start != context.end &&
+          (context.inlineMappingFailed || !hasSharedInheritedContext)) {
+        final planned = _serializeSingleParagraphRangeInsertion(
+          target,
+          context,
+          inlines,
+        );
+        return planned ?? const _SourceTerminalPlan();
+      }
       if (context.inlineMappingFailed) {
         return _reconcileIncompleteSyntaxBoundary(target, context, inlines);
       }
@@ -163,6 +177,37 @@ class SourcePasteEngine {
     return _serializeCompleteBlockInsertion(target, context, serialized);
   }
 
+  _SourcePlan? _serializeSingleParagraphRangeInsertion(
+    SourcePasteDocumentSnapshot target,
+    _StructuredSourceInsertionContext context,
+    List<BusyInline> incoming,
+  ) {
+    final split = _mappedStructuredBlockSplit(target, context);
+    if (split == null) return null;
+    final beforeLength = split.before.fold<int>(
+      0,
+      (length, inline) => length + inline.plainText.length,
+    );
+    final incomingLength = incoming.fold<int>(
+      0,
+      (length, inline) => length + inline.plainText.length,
+    );
+    final serialized = _serializeStructuredBlockSide(
+      [...split.before, ...incoming, ...split.after],
+      beforeLength + incomingLength,
+      context,
+      split,
+      null,
+      atBlockStart: split.startAtBlockStart,
+    );
+    return _SourceEditPlan(
+      start: split.sourceRange.start,
+      end: split.sourceRange.end,
+      text: serialized.source,
+      caretOffset: split.sourceRange.start + serialized.sourceOffset,
+    );
+  }
+
   _SourcePlan _serializeCompleteBlockInsertion(
     SourcePasteDocumentSnapshot target,
     _StructuredSourceInsertionContext context,
@@ -170,6 +215,10 @@ class SourcePasteEngine {
   ) {
     final split = _mappedStructuredBlockSplit(target, context);
     if (split == null) return const _SourceTerminalPlan();
+    final replacementStart =
+        split.startAtBlockStart && split.startBlockKind == BusyBlockKind.heading
+        ? split.startBlockStructuralPrefixStart ?? split.sourceRange.start
+        : split.sourceRange.start;
     final beforeInline = _serializeStructuredBlockSide(
       split.before,
       split.before.fold<int>(
@@ -192,7 +241,7 @@ class SourcePasteEngine {
     );
     final beforeSource = beforeInline.source;
     final afterSource = afterInline.source;
-    final before = target.text.substring(0, context.start);
+    final before = target.text.substring(0, replacementStart);
     final after = target.text.substring(context.end);
     if (context.containerContinuationPrefix.isNotEmpty) {
       final lines = serialized.endsWith('\n')
@@ -232,13 +281,12 @@ class SourcePasteEngine {
           nested.length +
           localAfterBoundary.length;
       return _SourceEditPlan(
-        start: split.sourceRange.start,
+        start: replacementStart,
         end: split.sourceRange.end,
         text:
             '$beforeSource$localBeforeBoundary$nested'
             '$localAfterBoundary$afterSource',
-        caretOffset:
-            split.sourceRange.start + afterStart + afterInline.sourceOffset,
+        caretOffset: replacementStart + afterStart + afterInline.sourceOffset,
       );
     }
     final leadingBreaks = _leadingLineBreaks(serialized);
@@ -266,11 +314,10 @@ class SourcePasteEngine {
     final afterStart =
         beforeSource.length + prefix.length + serialized.length + suffix.length;
     return _SourceEditPlan(
-      start: split.sourceRange.start,
+      start: replacementStart,
       end: split.sourceRange.end,
       text: '$beforeSource$prefix$serialized$suffix$afterSource',
-      caretOffset:
-          split.sourceRange.start + afterStart + afterInline.sourceOffset,
+      caretOffset: replacementStart + afterStart + afterInline.sourceOffset,
     );
   }
 
@@ -323,9 +370,8 @@ class SourcePasteEngine {
     final replacementStart =
         split.startAtBlockStart &&
             split.startBlockKind == BusyBlockKind.heading &&
-            blocks.first.kind == BusyBlockKind.paragraph &&
-            context.containerContinuationPrefix.isEmpty
-        ? split.startBlockSourceStart ?? split.sourceRange.start
+            blocks.first.kind == BusyBlockKind.paragraph
+        ? split.startBlockStructuralPrefixStart ?? split.sourceRange.start
         : split.sourceRange.start;
     return _SourceEditPlan(
       start: replacementStart,
@@ -351,6 +397,8 @@ class SourcePasteEngine {
         annotations: _SourceInlineOccurrenceAnnotations(),
         startBlockKind: context.destinationBlockKind,
         startBlockSourceStart: context.destinationBlockSourceStart,
+        startBlockStructuralPrefixStart:
+            context.destinationBlockStructuralPrefixStart,
         startAtBlockStart: context.atBlockStart,
       );
     }
@@ -393,6 +441,8 @@ class SourcePasteEngine {
       expanded: true,
       startBlockKind: context.destinationBlockKind,
       startBlockSourceStart: context.destinationBlockSourceStart,
+      startBlockStructuralPrefixStart:
+          context.destinationBlockStructuralPrefixStart,
       startAtBlockStart: context.atBlockStart,
     );
   }
@@ -416,6 +466,8 @@ class SourcePasteEngine {
         annotations: annotations,
         startBlockKind: context.destinationBlockKind,
         startBlockSourceStart: context.destinationBlockSourceStart,
+        startBlockStructuralPrefixStart:
+            context.destinationBlockStructuralPrefixStart,
         startAtBlockStart: context.atBlockStart,
       );
     }
@@ -439,6 +491,8 @@ class SourcePasteEngine {
       expanded: true,
       startBlockKind: context.destinationBlockKind,
       startBlockSourceStart: context.destinationBlockSourceStart,
+      startBlockStructuralPrefixStart:
+          context.destinationBlockStructuralPrefixStart,
       startAtBlockStart: context.atBlockStart,
     );
   }
@@ -498,6 +552,8 @@ class SourcePasteEngine {
       expanded: start.expanded || end.expanded,
       startBlockKind: startContext.destinationBlockKind,
       startBlockSourceStart: startContext.destinationBlockSourceStart,
+      startBlockStructuralPrefixStart:
+          startContext.destinationBlockStructuralPrefixStart,
       startAtBlockStart: startContext.atBlockStart,
     );
   }
@@ -1514,9 +1570,28 @@ class SourcePasteEngine {
       completeBlockSelection: completeBlockSelection,
       destinationBlockKind: markerBlock?.kind,
       destinationBlockSourceStart: markerBlock?.sourceSpan?.startOffset,
+      destinationBlockStructuralPrefixStart: _destinationStructuralPrefixStart(
+        target.text,
+        start,
+        markerBlock,
+        atBlockStart: atBlockStart,
+      ),
       inlineContext: inlineMapping.context,
       inlineMappingFailed: inlineMapping.failed,
     );
+  }
+
+  int? _destinationStructuralPrefixStart(
+    String source,
+    int contentStart,
+    BusyBlock? block, {
+    required bool atBlockStart,
+  }) {
+    if (!atBlockStart || block?.kind != BusyBlockKind.heading) return null;
+    final lineStart = source.lastIndexOf('\n', contentStart - 1) + 1;
+    final prefix = source.substring(lineStart, contentStart);
+    final heading = RegExp(r'#{1,6}[ \t]+$').firstMatch(prefix);
+    return heading == null ? null : lineStart + heading.start;
   }
 
   bool _selectionCoversCompleteBlocks(
@@ -2244,6 +2319,7 @@ class _StructuredSourceInsertionContext {
     this.completeBlockSelection = false,
     this.destinationBlockKind,
     this.destinationBlockSourceStart,
+    this.destinationBlockStructuralPrefixStart,
     this.inlineMappingFailed = false,
     this.inlineContext,
   });
@@ -2264,6 +2340,7 @@ class _StructuredSourceInsertionContext {
   final bool completeBlockSelection;
   final BusyBlockKind? destinationBlockKind;
   final int? destinationBlockSourceStart;
+  final int? destinationBlockStructuralPrefixStart;
   final bool inlineMappingFailed;
   final _MappedSourceInlineContext? inlineContext;
 }
@@ -2362,6 +2439,7 @@ class _StructuredBlockInlineSplit {
     this.expanded = false,
     this.startBlockKind,
     this.startBlockSourceStart,
+    this.startBlockStructuralPrefixStart,
     this.startAtBlockStart = false,
   });
 
@@ -2374,6 +2452,7 @@ class _StructuredBlockInlineSplit {
   final bool expanded;
   final BusyBlockKind? startBlockKind;
   final int? startBlockSourceStart;
+  final int? startBlockStructuralPrefixStart;
   final bool startAtBlockStart;
 }
 

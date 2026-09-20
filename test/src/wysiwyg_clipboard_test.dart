@@ -24,6 +24,9 @@ import 'package:busymark/src/markdown/markdown_model.dart';
 import 'package:busymark/src/markdown/markdown_parser.dart';
 import 'package:busymark/src/platform/native_menu_service.dart';
 import 'package:busymark/src/platform/rich_clipboard_service.dart';
+import 'package:busymark/src/visualization/visualization_providers.dart';
+import 'package:busymark/src/visualization/visualization_renderer.dart';
+import 'package:busymark/src/visualization/web_render_host.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
@@ -103,6 +106,65 @@ void main() {
       expect(output, contains('```dart\nfinal x = 1;\n```'));
     },
   );
+
+  test('single rich paragraphs preserve list descendants through source', () {
+    final incoming = _fragment('**X**\n').blocks;
+    final cases = <({String source, BusyBlockKind kind})>[
+      (
+        source: '- Parent\n  - Child\n    - Grand\n',
+        kind: BusyBlockKind.unorderedListItem,
+      ),
+      (
+        source: '1. Parent\n   1. Child\n      1. Grand\n',
+        kind: BusyBlockKind.orderedListItem,
+      ),
+      (
+        source: '- [ ] Parent\n  - [x] Child\n    - Grand\n',
+        kind: BusyBlockKind.taskListItem,
+      ),
+    ];
+    final selections = <({int start, int end, String text})>[
+      (start: 0, end: 6, text: 'X'),
+      (start: 1, end: 5, text: 'PXt'),
+      (start: 3, end: 3, text: 'ParXent'),
+    ];
+
+    for (final value in cases) {
+      for (final selection in selections) {
+        final document = _parser
+            .parse(filePath: '/destination.md', source: value.source)
+            .busyDocument;
+        final controller = BusyMarkWysiwygDocumentController(
+          document: document,
+        );
+        addTearDown(controller.dispose);
+        final root = document.blocks.single;
+
+        final result = controller.insertStyledBlocksAtSelection(
+          blockId: root.id,
+          selectionStart: selection.start,
+          selectionEnd: selection.end,
+          blocks: incoming,
+        );
+
+        expect(result, isNotNull);
+        final live = controller.document.blocks.single;
+        expect(live.kind, value.kind);
+        expect(live.plainText, selection.text);
+        expect(live.children.single.plainText, 'Child');
+        expect(live.children.single.children.single.plainText, 'Grand');
+        final reparsed = _parser
+            .parse(filePath: '/destination.md', source: controller.markdown)
+            .busyDocument
+            .blocks
+            .single;
+        expect(reparsed.kind, value.kind, reason: controller.markdown);
+        expect(reparsed.plainText, selection.text, reason: controller.markdown);
+        expect(reparsed.children.single.plainText, 'Child');
+        expect(reparsed.children.single.children.single.plainText, 'Grand');
+      }
+    }
+  });
 
   test(
     'fragment rejects invalid versions, ranges, kinds, and excessive nesting',
@@ -285,6 +347,26 @@ void main() {
     expect(_insert(decoded), contains('- [x] Second task'));
   });
 
+  test('external HTML blockquotes survive Editor serialization', () {
+    for (final htmlSource in [
+      '<blockquote><p>Quoted</p></blockquote>',
+      '<blockquote><blockquote><p>Nested</p></blockquote></blockquote>',
+      '<blockquote><ul><li>Listed</li></ul></blockquote>',
+    ]) {
+      final fragment = const WysiwygClipboardHtml().decode(
+        htmlSource,
+        mode: MarkdownMode.commonMark,
+      );
+      expect(fragment, isNotNull);
+      final output = _insert(fragment!);
+      final parsed = _parser
+          .parse(filePath: '/quote.md', source: output)
+          .busyDocument;
+      expect(parsed.blocks.single.kind, BusyBlockKind.blockquote);
+      expect(parsed.blocks.single.children, isNotEmpty, reason: output);
+    }
+  });
+
   test('clipboard fragment serializes its selected structure as Markdown', () {
     final markdown = _fragment(_source).markdown;
     expect(markdown, contains('# Issues'));
@@ -404,6 +486,8 @@ void main() {
       BusyMarkWysiwygTransactionalSourceChanged? onTransactionalSourceChanged,
       bool useExternalUndoHistory = false,
       bool hostToasts = false,
+      bool providerScope = false,
+      bool focusFirstField = true,
       WysiwygEditorSessionState Function(BusyDocument document)?
       initialSessionFor,
     }) async {
@@ -414,35 +498,44 @@ void main() {
             mode: MarkdownMode.writersideMarkdown,
           )
           .busyDocument;
-      await tester.pumpWidget(
-        MaterialApp(
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
-          supportedLocales: AppLocalizations.supportedLocales,
-          builder: hostToasts
-              ? (context, child) => BusyMarkToastOverlay(child: child!)
-              : null,
-          home: Scaffold(
-            body: BusyMarkWysiwygEditor(
-              key: ValueKey(id),
-              clipboardService: RichClipboardService(),
-              clipboardInsertionRegistry: registry,
-              onClipboardCaptured: onCaptured,
-              workspaceRoot: workspaceRoot,
-              assetWorkspaceKind: assetWorkspaceKind,
-              assetInputService: assetInputService,
-              assetIngestionService: assetIngestionService,
-              onTransactionalSourceChanged: onTransactionalSourceChanged,
-              useExternalUndoHistory: useExternalUndoHistory,
-              initialSessionState:
-                  initialSessionFor?.call(document) ??
-                  const WysiwygEditorSessionState(),
-              document: document,
-              onSourceChanged: (_, value) => changed(value),
-            ),
+      final app = MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        builder: hostToasts
+            ? (context, child) => BusyMarkToastOverlay(child: child!)
+            : null,
+        home: Scaffold(
+          body: BusyMarkWysiwygEditor(
+            key: ValueKey(id),
+            clipboardService: RichClipboardService(),
+            clipboardInsertionRegistry: registry,
+            onClipboardCaptured: onCaptured,
+            workspaceRoot: workspaceRoot,
+            assetWorkspaceKind: assetWorkspaceKind,
+            assetInputService: assetInputService,
+            assetIngestionService: assetIngestionService,
+            onTransactionalSourceChanged: onTransactionalSourceChanged,
+            useExternalUndoHistory: useExternalUndoHistory,
+            initialSessionState:
+                initialSessionFor?.call(document) ??
+                const WysiwygEditorSessionState(),
+            document: document,
+            onSourceChanged: (_, value) => changed(value),
           ),
         ),
       );
+      await tester.pumpWidget(
+        providerScope
+            ? ProviderScope(
+                overrides: [
+                  webRenderHostProvider.overrideWithValue(_ClipboardMathHost()),
+                ],
+                child: app,
+              )
+            : app,
+      );
       await tester.pumpAndSettle();
+      if (!focusFirstField) return;
       final field = tester.widget<TextField>(find.byType(TextField).first);
       field.focusNode!.requestFocus();
       field.controller!.selection = const TextSelection.collapsed(offset: 0);
@@ -628,6 +721,69 @@ void main() {
     );
 
     testWidgets(
+      'single rich paragraph field replacement preserves every list subtree',
+      (tester) async {
+        final registry = BusyMarkClipboardInsertionRegistry();
+        addTearDown(registry.dispose);
+        final fragment = _fragment('**X**\n');
+        for (final (index, source) in <String>[
+          '- Parent\n  - Child\n    - Grand\n',
+          '1. Parent\n   1. Child\n      1. Grand\n',
+          '- [ ] Parent\n  - [x] Child\n    - Grand\n',
+        ].indexed) {
+          var result = source;
+          await mount(
+            tester,
+            'single-nested-$index',
+            result,
+            (value) => result = value,
+            registry: registry,
+          );
+          final parent = tester.widget<TextField>(find.byType(TextField).first);
+          parent.controller!.selection = const TextSelection(
+            baseOffset: 0,
+            extentOffset: 6,
+          );
+
+          expect(
+            await registry.paste(
+              BusyMarkClipboardPayload(
+                id: 'single-nested-payload-$index',
+                acquiredAt: DateTime.utc(2026),
+                kind: BusyMarkClipboardContentKind.richText,
+                text: 'X',
+                richFragment: fragment.encode(),
+              ),
+            ),
+            ClipboardPasteResult.inserted,
+          );
+          await tester.pumpAndSettle();
+
+          void expectTree() {
+            final root = _parser
+                .parse(filePath: '/nested.md', source: result)
+                .busyDocument
+                .blocks
+                .single;
+            expect(root.plainText, 'X', reason: result);
+            expect(root.children.single.plainText, 'Child', reason: result);
+            expect(
+              root.children.single.children.single.plainText,
+              'Grand',
+              reason: result,
+            );
+          }
+
+          expectTree();
+          await key(tester, LogicalKeyboardKey.keyZ);
+          expect(result, source);
+          await key(tester, LogicalKeyboardKey.keyZ, shift: true);
+          expectTree();
+        }
+      },
+    );
+
+    testWidgets(
       'history rich paste keeps the committed caret and typing position',
       (tester) async {
         final registry = BusyMarkClipboardInsertionRegistry();
@@ -688,6 +844,156 @@ void main() {
         );
       },
     );
+
+    testWidgets('rich paste in math fields uses source coordinates', (
+      tester,
+    ) async {
+      final registry = BusyMarkClipboardInsertionRegistry();
+      addTearDown(registry.dispose);
+      final fragment = _fragment('**X**\n');
+      final cases = <({int offset, String expected})>[
+        (offset: 2, expected: r'a **X**$x$ b'),
+        (offset: 3, expected: r'a $**X**x$ b'),
+        (offset: 5, expected: r'a $x$**X** b'),
+      ];
+      for (final (index, value) in cases.indexed) {
+        var result =
+            r'a $x$ b'
+            '\n';
+        await mount(
+          tester,
+          'math-rich-$index',
+          result,
+          (source) => result = source,
+          registry: registry,
+          providerScope: true,
+          focusFirstField: false,
+        );
+        final renderedMath = find.byWidgetPredicate(
+          (widget) =>
+              widget.key is ValueKey<String> &&
+              ((widget.key! as ValueKey<String>).value).startsWith(
+                'wysiwyg-rendered-math-',
+              ),
+        );
+        await tester.tap(renderedMath);
+        await tester.pump();
+        var field = tester.widget<TextField>(find.byType(TextField).first);
+        field.controller!.selection = TextSelection.collapsed(
+          offset: value.offset,
+        );
+
+        expect(
+          await registry.paste(
+            BusyMarkClipboardPayload(
+              id: 'math-rich-payload-$index',
+              acquiredAt: DateTime.utc(2026),
+              kind: BusyMarkClipboardContentKind.richText,
+              text: 'X',
+              richFragment: fragment.encode(),
+            ),
+          ),
+          ClipboardPasteResult.inserted,
+        );
+        await tester.pumpAndSettle();
+
+        expect(result, '${value.expected}\n');
+        field = tester.widget<TextField>(find.byType(TextField).first);
+        expect(field.controller!.text, value.expected);
+        expect(
+          field.controller!.selection.extentOffset,
+          value.expected.indexOf('X') + 3,
+        );
+        await key(tester, LogicalKeyboardKey.keyZ);
+        expect(
+          result,
+          r'a $x$ b'
+          '\n',
+        );
+      }
+    });
+
+    testWidgets('plain paste persists intentional whitespace through history', (
+      tester,
+    ) async {
+      final registry = BusyMarkClipboardInsertionRegistry();
+      addTearDown(registry.dispose);
+      final cases =
+          <
+            ({
+              String source,
+              int start,
+              int end,
+              String pasted,
+              String expected,
+            })
+          >[
+            (
+              source: 'Target\n',
+              start: 0,
+              end: 6,
+              pasted: '   ',
+              expected: '   \n',
+            ),
+            (
+              source: 'Target\n',
+              start: 6,
+              end: 6,
+              pasted: ' ',
+              expected: 'Target \n',
+            ),
+            (
+              source: '**Target**\n',
+              start: 2,
+              end: 4,
+              pasted: '   ',
+              expected: '**Ta   et**\n',
+            ),
+          ];
+      for (final (index, value) in cases.indexed) {
+        var result = value.source;
+        await mount(
+          tester,
+          'whitespace-$index',
+          result,
+          (source) => result = source,
+          registry: registry,
+        );
+        var field = tester.widget<TextField>(find.byType(TextField).first);
+        field.controller!.selection = TextSelection(
+          baseOffset: value.start,
+          extentOffset: value.end,
+        );
+
+        expect(
+          await registry.paste(
+            BusyMarkClipboardPayload(
+              id: 'whitespace-payload-$index',
+              acquiredAt: DateTime.utc(2026),
+              kind: BusyMarkClipboardContentKind.text,
+              text: value.pasted,
+            ),
+            mode: BusyMarkPasteMode.plainText,
+          ),
+          ClipboardPasteResult.inserted,
+        );
+        await tester.pumpAndSettle();
+
+        expect(result, value.expected);
+        final reopened = BusyMarkWysiwygDocumentController(
+          document: _parser
+              .parse(filePath: '/reopened.md', source: result)
+              .busyDocument,
+        );
+        expect(reopened.markdown, result);
+        reopened.dispose();
+
+        await key(tester, LogicalKeyboardKey.keyZ);
+        expect(result, value.source);
+        await key(tester, LogicalKeyboardKey.keyZ, shift: true);
+        expect(result, value.expected);
+      }
+    });
 
     testWidgets(
       'history rich paste restores table-cell focus and committed caret',
@@ -1667,6 +1973,18 @@ void main() {
       );
       final source = File('${root.path}/source.png');
       await tester.runAsync(() => source.writeAsBytes(png));
+      final publishedAssets = <IngestedAsset>[];
+      final committedAssets = <IngestedAsset>[];
+      final rolledBackAssets = <IngestedAsset>[];
+      final completedRollbacks = <IngestedAsset>[];
+      final ingestion = AssetIngestionService(
+        hooks: AssetIngestionHooks(
+          afterPublication: (asset) async => publishedAssets.add(asset),
+          beforeCommit: (asset) async => committedAssets.add(asset),
+          beforeRollback: (asset) async => rolledBackAssets.add(asset),
+          afterRollback: (asset) async => completedRollbacks.add(asset),
+        ),
+      );
 
       Future<void> waitForDialog() async {
         for (
@@ -1693,6 +2011,20 @@ void main() {
         expect(entries, isEmpty);
       }
 
+      Future<void> waitForRollbackCount(int count) async {
+        for (
+          var attempt = 0;
+          attempt < 100 && completedRollbacks.length < count;
+          attempt++
+        ) {
+          await tester.runAsync(
+            () => Future<void>.delayed(const Duration(milliseconds: 5)),
+          );
+          await tester.pump();
+        }
+        expect(completedRollbacks, hasLength(count));
+      }
+
       systemData = {'text': source.path};
       final pathCaptures = <BusyMarkClipboardCapture>[];
       var pathResult = 'Target\n';
@@ -1704,13 +2036,20 @@ void main() {
         onCaptured: pathCaptures.add,
         filePath: '${root.path}/path.md',
         assetWorkspaceKind: AssetWorkspaceKind.standalone,
+        assetIngestionService: ingestion,
       );
       await key(tester, LogicalKeyboardKey.keyV);
       await waitForDialog();
       await tester.tap(find.byKey(BusyMarkImageDialogKeys.cancel));
       await tester.pumpAndSettle();
+      await waitForRollbackCount(1);
       expect(pathResult, 'Target\n');
       expect(pathCaptures, isEmpty);
+      expect(publishedAssets, hasLength(1));
+      expect(committedAssets, isEmpty);
+      expect(rolledBackAssets, hasLength(1));
+      expect(publishedAssets.last.publicationId, isNotNull);
+      expect(rolledBackAssets.last, same(publishedAssets.last));
       await expectNoPublishedAsset(root.path);
 
       final nativeDirectory = Directory('${root.path}/native')..createSync();
@@ -1724,11 +2063,13 @@ void main() {
         filePath: '${nativeDirectory.path}/target.md',
         assetWorkspaceKind: AssetWorkspaceKind.standalone,
         assetInputService: _ClipboardImageAssetInput(png),
+        assetIngestionService: ingestion,
       );
       await key(tester, LogicalKeyboardKey.keyV);
       await waitForDialog();
       await tester.sendKeyEvent(LogicalKeyboardKey.escape);
       await tester.pumpAndSettle();
+      await waitForRollbackCount(2);
       expect(nativeResult, 'Target\n');
       await expectNoPublishedAsset(nativeDirectory.path);
 
@@ -1746,6 +2087,7 @@ void main() {
         onCaptured: historyCaptures.add,
         filePath: '${historyDirectory.path}/target.md',
         assetWorkspaceKind: AssetWorkspaceKind.standalone,
+        assetIngestionService: ingestion,
       );
       ClipboardPasteResult? pasteResult;
       registry
@@ -1772,6 +2114,7 @@ void main() {
         await tester.pump();
       }
       expect(pasteResult, ClipboardPasteResult.cancelled);
+      await waitForRollbackCount(3);
       expect(historyResult, 'Target\n');
       expect(historyCaptures, isEmpty);
       await expectNoPublishedAsset(historyDirectory.path);
@@ -2379,4 +2722,31 @@ class _WysiwygHistoryClipboard extends RichClipboardService {
 
   @override
   Future<RichClipboardData> read() async => value;
+}
+
+class _ClipboardMathHost implements WebRenderHost {
+  @override
+  Future<Map<Object?, Object?>> renderMathBatch({
+    required List<Map<String, Object?>> expressions,
+    required VisualizationCancellationToken cancellationToken,
+  }) async {
+    cancellationToken.throwIfCancelled();
+    return {
+      'results': [
+        for (final item in expressions)
+          {
+            'id': item['id'],
+            'svg':
+                '<svg xmlns="http://www.w3.org/2000/svg" '
+                'viewBox="0 0 20 14"><path d="M0 7h20"/></svg>',
+            'width': 20,
+            'height': 14,
+            'depth': 2,
+          },
+      ],
+    };
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }

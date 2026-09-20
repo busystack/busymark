@@ -97,6 +97,48 @@ void main() {
     ]);
   });
 
+  test('HTML-only blockquotes are usable through descendant content', () {
+    for (final html in [
+      '<blockquote><p>Quoted</p></blockquote>',
+      '<blockquote><blockquote><p>Nested</p></blockquote></blockquote>',
+      '<blockquote><ul><li>Listed</li></ul></blockquote>',
+    ]) {
+      final richOnly = resolve(snapshot(html: html));
+      expect(richOnly.candidates, hasLength(1), reason: html);
+      final rich =
+          richOnly.candidates.single as BusyMarkStructuredPasteCandidate;
+      expect(rich.source, BusyMarkStructuredClipboardSource.html);
+      expect(
+        rich.fragment.documentBlocks.single.kind,
+        BusyBlockKind.blockquote,
+      );
+      expect(rich.fragment.markdown, startsWith('>'));
+      expect(
+        resolve(
+          snapshot(html: html),
+          mode: BusyMarkPasteMode.plainText,
+        ).isEmpty,
+        isTrue,
+      );
+
+      final withText = resolve(snapshot(html: html, text: 'plain'));
+      expect(
+        withText.candidates.first,
+        isA<BusyMarkStructuredPasteCandidate>(),
+      );
+      expect(withText.candidates.last, isA<BusyMarkPlainTextPasteCandidate>());
+      final plain = resolve(
+        snapshot(html: html, text: 'plain'),
+        mode: BusyMarkPasteMode.plainText,
+      );
+      expect(plain.candidates, hasLength(1));
+      expect(
+        (plain.candidates.single as BusyMarkPlainTextPasteCandidate).text,
+        'plain',
+      );
+    }
+  });
+
   test('plain mode uses only interoperable text', () {
     final plan = resolve(
       snapshot(

@@ -47,6 +47,7 @@ import '../editor_text_context_menu.dart';
 import '../inline_semantics.dart';
 import '../clipboard_paste_resolver.dart';
 import '../clipboard_local_image_path.dart';
+import '../source/source_paste_engine.dart';
 import 'wysiwyg_block_widgets.dart';
 import 'wysiwyg_commands.dart';
 import 'wysiwyg_clipboard_fragment.dart';
@@ -1822,6 +1823,7 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       blockId,
       value,
       offset,
+      preserveTextWhitespace: origin == _WysiwygTextEditOrigin.paste,
     );
     if (splitResult != null) {
       _emitMarkdown(undoGroup: undoGroup);
@@ -1832,6 +1834,7 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       blockId,
       value,
       activeInlineKinds: pendingInlineKinds,
+      preserveTextWhitespace: origin == _WysiwygTextEditOrigin.paste,
     );
     if (value.isNotEmpty) {
       _pendingInlineKindsByBlockId.remove(blockId);
@@ -4626,8 +4629,10 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
           fragment.blocks,
           snapshot.text ??
               fragment.documentBlocks.map(_copyTextForBlock).join('\n\n'),
+          fragment: fragment,
         );
         if (inserted) {
+          await widget.assetIngestionService.commitAll(assets);
           return (result: ClipboardPasteResult.inserted, capture: null);
         }
         await _deleteUncommittedClipboardAssets(assets);
@@ -4761,8 +4766,9 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
 
   bool _pasteStyledClipboardIntoActiveBlock(
     List<BusyWysiwygStyledBlock> blocks,
-    String text,
-  ) {
+    String text, {
+    WysiwygClipboardFragment? fragment,
+  }) {
     if (_hasActiveClipboardComposition) return false;
     if (_hasBlockSelection) {
       return _replaceDocumentSelectionWithStyledBlocks(blocks);
@@ -4792,6 +4798,48 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
         .max(selection.start, selection.end)
         .clamp(start, currentText.length)
         .toInt();
+    if (busyMarkWysiwygBlockContainsMath(target.block)) {
+      final sourceFragment =
+          fragment ??
+          WysiwygClipboardFragment(
+            blocks: blocks,
+            mode: _documentController.document.mode,
+            sourcePath: _documentController.document.filePath,
+          );
+      final preparation = const SourcePasteEngine().prepareStructured(
+        target: SourcePasteDocumentSnapshot(
+          expectedSource: currentText,
+          selection: TextSelection(baseOffset: start, extentOffset: end),
+          format: SourceDocumentFormat.markdown,
+          markdownMode: _documentController.document.mode,
+          filePath: _documentController.document.filePath,
+        ),
+        fragment: sourceFragment,
+      );
+      if (preparation is! SourcePasteReady) return false;
+      final edit = preparation.edit;
+      final updatedSource = currentText.replaceRange(
+        edit.start,
+        edit.end,
+        edit.replacement,
+      );
+      final undoSnapshot = _historySnapshot();
+      _documentController.updateMathSource(blockId, updatedSource);
+      final updatedBlock = _documentController.blockById(blockId);
+      final caret =
+          updatedBlock == null || busyMarkWysiwygBlockContainsMath(updatedBlock)
+          ? edit.caretOffset
+          : busyMarkWysiwygTextOffsetForSourceOffset(
+              updatedBlock,
+              edit.caretOffset,
+            );
+      _continuousTextEdit = null;
+      _recordUndoSnapshot(undoSnapshot);
+      _clearBlockSelection(collapseFields: false);
+      _emitMarkdown();
+      _focusBlockAfterFrame(blockId, offset: caret);
+      return true;
+    }
     final undoSnapshot = _historySnapshot();
     final result = _documentController.insertStyledBlocksAtSelection(
       blockId: blockId,
@@ -5328,6 +5376,7 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       request: _assetIngestionRequest,
       origin: AssetIngestionOrigin.imagePicker,
     );
+    await widget.assetIngestionService.commit(asset);
     return asset.markdownPath;
   }
 
@@ -5522,17 +5571,12 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       await _deleteUncommittedClipboardAsset(asset);
       return ClipboardPasteResult.unsupported;
     }
+    await widget.assetIngestionService.commit(asset);
     return ClipboardPasteResult.inserted;
   }
 
   Future<void> _deleteUncommittedClipboardAsset(IngestedAsset asset) async {
-    if (asset.reusedExisting) return;
-    try {
-      await File(asset.absolutePath).delete();
-    } on FileSystemException {
-      // Cancellation cleanup must not make the editor unusable. Existing and
-      // shared assets are never removed through this path.
-    }
+    await widget.assetIngestionService.rollback(asset);
   }
 
   Future<_TableDialogResult?> _showTableDialog(

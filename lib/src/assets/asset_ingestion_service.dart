@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
@@ -56,6 +57,7 @@ class IngestedAsset {
     required this.mimeType,
     required this.reusedExisting,
     required this.origin,
+    this.publicationId,
   });
 
   final String absolutePath;
@@ -63,6 +65,26 @@ class IngestedAsset {
   final String mimeType;
   final bool reusedExisting;
   final AssetIngestionOrigin origin;
+
+  /// Identifies a publication that is provisional until the caller commits
+  /// the document reference. Reused, already-committed assets have no ID.
+  final String? publicationId;
+}
+
+class AssetIngestionHooks {
+  const AssetIngestionHooks({
+    this.afterDestinationReserved,
+    this.afterPublication,
+    this.beforeCommit,
+    this.beforeRollback,
+    this.afterRollback,
+  });
+
+  final Future<void> Function(String path)? afterDestinationReserved;
+  final Future<void> Function(IngestedAsset asset)? afterPublication;
+  final Future<void> Function(IngestedAsset asset)? beforeCommit;
+  final Future<void> Function(IngestedAsset asset)? beforeRollback;
+  final Future<void> Function(IngestedAsset asset)? afterRollback;
 }
 
 class IngestedAssetSnapshot {
@@ -73,9 +95,17 @@ class IngestedAssetSnapshot {
 }
 
 class AssetIngestionService {
-  const AssetIngestionService({this.maximumAssetBytes = 100 * 1024 * 1024});
+  const AssetIngestionService({
+    this.maximumAssetBytes = 100 * 1024 * 1024,
+    this.hooks,
+  });
 
   final int maximumAssetBytes;
+  final AssetIngestionHooks? hooks;
+
+  static final Map<String, _AssetDirectoryLock> _directoryOperations = {};
+  static final Map<String, String> _provisionalPublications = {};
+  static var _nextPublicationId = 0;
 
   Future<IngestedAsset> ingestFile({
     required String sourcePath,
@@ -205,35 +235,99 @@ class AssetIngestionService {
     required _DetectedAssetType type,
   }) async {
     final destination = await _destinationDirectory(request);
-    final contentHash = sha256.convert(bytes).toString();
-    final existing = await _identicalAsset(
-      destination,
-      bytes.length,
-      contentHash,
-    );
-    late final File published;
-    var reused = existing != null;
-    if (existing != null) {
-      published = existing;
-    } else {
-      final stem = _safeStem(p.basenameWithoutExtension(suggestedFileName));
-      published = await _publishUnique(
+    final result = await _withDirectoryOperation(destination.path, () async {
+      final contentHash = sha256.convert(bytes).toString();
+      final existing = await _identicalAsset(
         destination,
-        stem: stem,
-        extension: type.extension,
-        bytes: bytes,
+        bytes.length,
+        contentHash,
       );
-      reused = false;
+      late final File published;
+      String? publicationId;
+      final reused = existing != null;
+      if (existing != null) {
+        published = existing;
+      } else {
+        final stem = _safeStem(p.basenameWithoutExtension(suggestedFileName));
+        published = await _publishUnique(
+          destination,
+          stem: stem,
+          extension: type.extension,
+          bytes: bytes,
+        );
+        publicationId =
+            '$pid-${DateTime.now().microsecondsSinceEpoch}-'
+            '${_nextPublicationId++}';
+        _provisionalPublications[published.path] = publicationId;
+      }
+      return IngestedAsset(
+        absolutePath: published.path,
+        markdownPath: p
+            .relative(published.path, from: p.dirname(request.documentFilePath))
+            .replaceAll(p.separator, '/'),
+        mimeType: type.mimeType,
+        reusedExisting: reused,
+        origin: origin,
+        publicationId: publicationId,
+      );
+    });
+    await hooks?.afterPublication?.call(result);
+    return result;
+  }
+
+  /// Makes a provisional publication reusable and transfers its lifetime to
+  /// the successfully inserted document reference.
+  Future<void> commit(IngestedAsset asset) async {
+    final publicationId = asset.publicationId;
+    if (publicationId == null) return;
+    await hooks?.beforeCommit?.call(asset);
+    if (_provisionalPublications[asset.absolutePath] == publicationId) {
+      _provisionalPublications.remove(asset.absolutePath);
     }
-    return IngestedAsset(
-      absolutePath: published.path,
-      markdownPath: p
-          .relative(published.path, from: p.dirname(request.documentFilePath))
-          .replaceAll(p.separator, '/'),
-      mimeType: type.mimeType,
-      reusedExisting: reused,
-      origin: origin,
-    );
+  }
+
+  Future<void> commitAll(Iterable<IngestedAsset> assets) async {
+    for (final asset in assets) {
+      await commit(asset);
+    }
+  }
+
+  /// Removes [asset] only while this exact provisional publication still owns
+  /// the path. A reused or already-committed asset is never deleted.
+  Future<void> rollback(IngestedAsset asset) async {
+    final publicationId = asset.publicationId;
+    if (publicationId == null) return;
+    await hooks?.beforeRollback?.call(asset);
+    if (_provisionalPublications[asset.absolutePath] == publicationId) {
+      final file = File(asset.absolutePath);
+      try {
+        if (file.existsSync()) file.deleteSync();
+        _provisionalPublications.remove(asset.absolutePath);
+      } on FileSystemException {
+        // Retain the provisional ownership record. This prevents a failed
+        // cleanup from making the uncommitted file reusable by another edit.
+      }
+    }
+    await hooks?.afterRollback?.call(asset);
+  }
+
+  Future<void> rollbackAll(Iterable<IngestedAsset> assets) async {
+    for (final asset in assets) {
+      await rollback(asset);
+    }
+  }
+
+  static Future<T> _withDirectoryOperation<T>(
+    String directoryPath,
+    Future<T> Function() operation,
+  ) {
+    final key = p.normalize(p.absolute(directoryPath));
+    final lock = _directoryOperations.putIfAbsent(key, _AssetDirectoryLock.new);
+    return lock.run(operation, () {
+      if (identical(_directoryOperations[key], lock)) {
+        _directoryOperations.remove(key);
+      }
+    });
   }
 
   Future<Directory> _destinationDirectory(AssetIngestionRequest request) async {
@@ -317,7 +411,15 @@ class AssetIngestionService {
       if (entity is! File) {
         continue;
       }
-      final stat = await entity.stat();
+      if (_provisionalPublications.containsKey(entity.path)) {
+        continue;
+      }
+      late final FileStat stat;
+      try {
+        stat = await entity.stat();
+      } on FileSystemException {
+        continue;
+      }
       if (stat.size != size) {
         continue;
       }
@@ -336,29 +438,46 @@ class AssetIngestionService {
     required Uint8List bytes,
   }) async {
     var suffix = 1;
-    late File target;
     while (true) {
       final name = suffix == 1
           ? '$stem.$extension'
           : '$stem-$suffix.$extension';
-      target = File(p.join(directory.path, name));
-      if (!await target.exists()) {
-        break;
+      final target = File(p.join(directory.path, name));
+      RandomAccessFile? reservation;
+      try {
+        await target.create(exclusive: true);
+      } on FileSystemException {
+        if (await target.exists()) {
+          suffix++;
+          continue;
+        }
+        rethrow;
       }
-      suffix++;
-    }
-    final staging = File(
-      p.join(
-        directory.path,
-        '.busymark-asset-$pid-${DateTime.now().microsecondsSinceEpoch}',
-      ),
-    );
-    try {
-      await staging.writeAsBytes(bytes, flush: true);
-      return await staging.rename(target.path);
-    } finally {
-      if (await staging.exists()) {
-        await staging.delete();
+      try {
+        reservation = await target.open(mode: FileMode.writeOnly);
+      } catch (_) {
+        try {
+          if (await target.exists()) await target.delete();
+        } on FileSystemException {
+          // Preserve the original open failure.
+        }
+        rethrow;
+      }
+      try {
+        await hooks?.afterDestinationReserved?.call(target.path);
+        await reservation.writeFrom(bytes);
+        await reservation.flush();
+        await reservation.close();
+        reservation = null;
+        return target;
+      } catch (_) {
+        await reservation?.close();
+        try {
+          if (await target.exists()) await target.delete();
+        } on FileSystemException {
+          // Preserve the original publication failure.
+        }
+        rethrow;
       }
     }
   }
@@ -428,6 +547,34 @@ class AssetIngestionService {
         '.webm' => const _DetectedAssetType('webm', 'video/webm'),
         _ => null,
       };
+}
+
+class _AssetDirectoryLock {
+  var _locked = false;
+  final _waiters = <Completer<void>>[];
+
+  Future<T> run<T>(
+    Future<T> Function() operation,
+    void Function() onIdle,
+  ) async {
+    if (_locked) {
+      final waiter = Completer<void>();
+      _waiters.add(waiter);
+      await waiter.future;
+    } else {
+      _locked = true;
+    }
+    try {
+      return await operation();
+    } finally {
+      if (_waiters.isNotEmpty) {
+        _waiters.removeAt(0).complete();
+      } else {
+        _locked = false;
+        onIdle();
+      }
+    }
+  }
 }
 
 class _DetectedAssetType {
