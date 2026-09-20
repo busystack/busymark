@@ -152,26 +152,27 @@ final class _XmlProjectionBuilder {
       complete = false;
       return;
     }
+    final units = <_EncodedUnit>[];
+    final decodedText = StringBuffer();
     var cursor = 0;
     while (cursor < raw.length) {
-      final variable = _writersideVariable.matchAsPrefix(raw, cursor);
-      if (variable != null && variable.group(1) == null) {
-        flush();
-        cursor = variable.end;
-        continue;
-      }
       if (raw.codeUnitAt(cursor) == 0x26) {
         final match = _xmlEntity.matchAsPrefix(raw, cursor);
         if (match != null) {
           final encoded = match.group(0)!;
-          final decoded = html.parseFragment(encoded).text ?? '';
-          if (decoded != encoded && decoded.isNotEmpty) {
-            _emit(
-              decoded,
-              sourceStart + cursor,
-              sourceStart + match.end,
-              SpellingTransformationKind.entity,
-              context,
+          final entityText = html.parseFragment(encoded).text ?? '';
+          if (entityText != encoded && entityText.isNotEmpty) {
+            final logicalStart = decodedText.length;
+            decodedText.write(entityText);
+            units.add(
+              _EncodedUnit(
+                logical: entityText,
+                logicalStart: logicalStart,
+                logicalEnd: decodedText.length,
+                sourceStart: sourceStart + cursor,
+                sourceEnd: sourceStart + match.end,
+                transformation: SpellingTransformationKind.entity,
+              ),
             );
             cursor = match.end;
             continue;
@@ -180,14 +181,43 @@ final class _XmlProjectionBuilder {
       }
       final rune = _codePointAt(raw, cursor);
       final width = rune > 0xffff ? 2 : 1;
-      _emit(
-        raw.substring(cursor, cursor + width),
-        sourceStart + cursor,
-        sourceStart + cursor + width,
-        SpellingTransformationKind.identity,
-        context,
+      final logical = raw.substring(cursor, cursor + width);
+      final logicalStart = decodedText.length;
+      decodedText.write(logical);
+      units.add(
+        _EncodedUnit(
+          logical: logical,
+          logicalStart: logicalStart,
+          logicalEnd: decodedText.length,
+          sourceStart: sourceStart + cursor,
+          sourceEnd: sourceStart + cursor + width,
+          transformation: SpellingTransformationKind.identity,
+        ),
       );
       cursor += width;
+    }
+    final variables = [
+      for (final match in _writersideVariable.allMatches(
+        decodedText.toString(),
+      ))
+        if (match.group(1) == null) (start: match.start, end: match.end),
+    ];
+    for (final unit in units) {
+      final variable = variables.any(
+        (range) =>
+            range.start < unit.logicalEnd && range.end > unit.logicalStart,
+      );
+      if (variable) {
+        flush();
+        continue;
+      }
+      _emit(
+        unit.logical,
+        unit.sourceStart,
+        unit.sourceEnd,
+        unit.transformation,
+        context,
+      );
     }
   }
 
@@ -259,6 +289,24 @@ final class _XmlProjectionBuilder {
     _text = StringBuffer();
     _atoms = [];
   }
+}
+
+final class _EncodedUnit {
+  const _EncodedUnit({
+    required this.logical,
+    required this.logicalStart,
+    required this.logicalEnd,
+    required this.sourceStart,
+    required this.sourceEnd,
+    required this.transformation,
+  });
+
+  final String logical;
+  final int logicalStart;
+  final int logicalEnd;
+  final int sourceStart;
+  final int sourceEnd;
+  final SpellingTransformationKind transformation;
 }
 
 const _humanReadableAttributes = {

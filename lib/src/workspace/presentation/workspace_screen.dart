@@ -4,6 +4,7 @@ import '../../writerside/writerside_tabs_view.dart';
 import '../../writerside/writerside_source_loader.dart';
 import 'dart:async';
 import 'dart:io';
+import 'dart:isolate';
 import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart' show setEquals;
@@ -86,6 +87,7 @@ import '../../spellcheck/spelling_session_controller.dart';
 import '../../spellcheck/spelling_projection.dart';
 import '../../spellcheck/spelling_coordinator.dart';
 import '../../spellcheck/spelling_language.dart';
+import '../../spellcheck/spelling_replacement.dart';
 import '../../visualization/visualization_card.dart';
 import '../../visualization/visualization_models.dart';
 import '../../writerside/writerside_model.dart';
@@ -12694,22 +12696,75 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     _sourceEditorKey.currentState?.revealSpellingOccurrence(occurrence);
   }
 
-  bool _applySpellingCorrection(
+  Future<SpellingReviewCorrection?> _applySpellingCorrection(
     SpellingOccurrence occurrence,
     String suggestion,
-  ) {
-    if (!_spelling.isCurrent(occurrence)) return false;
-    return occurrence.run.target is SpellingSourceTarget
-        ? _sourceEditorKey.currentState?.applySpellingCorrection(
-                occurrence: occurrence,
-                suggestion: suggestion,
-              ) ??
-              false
-        : _wysiwygEditorKey.currentState?.applySpellingCorrection(
-                occurrence: occurrence,
-                suggestion: suggestion,
-              ) ??
-              false;
+  ) async {
+    if (!_spelling.isCurrent(occurrence)) return null;
+    final sourceEditor = _sourceEditorKey.currentState;
+    final richEditor = _wysiwygEditorKey.currentState;
+    final source = occurrence.run.target is SpellingSourceTarget
+        ? sourceEditor?.spellingSourceSnapshot(occurrence)
+        : null;
+    final field = occurrence.run.target is SpellingSourceTarget
+        ? null
+        : richEditor?.spellingFieldSnapshot(occurrence);
+    if (source == null && field == null) return null;
+    try {
+      final prepared = await Isolate.run(() {
+        final plan = const SpellingReplacementPlanner().build(
+          occurrence: occurrence,
+          suggestion: suggestion,
+        );
+        return (
+          plan: plan,
+          replacementSource: source == null ? null : plan.applyToSource(source),
+          replacementField: field == null || plan.fieldEdits.isEmpty
+              ? null
+              : plan.applyToField(field),
+        );
+      });
+      if (!mounted || !_spelling.isCurrent(occurrence)) return null;
+      final plan = prepared.plan;
+      final applied = occurrence.run.target is SpellingSourceTarget
+          ? sourceEditor?.applyPreparedSpellingCorrection(
+                  occurrence: occurrence,
+                  plan: plan,
+                  expectedSource: source!,
+                  replacementSource: prepared.replacementSource!,
+                ) ??
+                false
+          : richEditor?.applyPreparedSpellingCorrection(
+                  occurrence: occurrence,
+                  suggestion: suggestion,
+                  plan: plan,
+                  expectedFieldText: field!,
+                  preparedFieldText: prepared.replacementField,
+                ) ??
+                false;
+      if (!applied) return null;
+      final sourceStart = occurrence.sourceStart;
+      final sourceEnd = occurrence.sourceEnd;
+      if (sourceStart != null && sourceEnd != null) {
+        return SpellingReviewCorrection(
+          target: _reviewTargetIdentity(occurrence),
+          start: sourceStart,
+          oldEnd: sourceEnd,
+          newEnd: plan.translateSourceOffset(sourceEnd),
+        );
+      }
+      final fieldStart = occurrence.fieldStart;
+      final fieldEnd = occurrence.fieldEnd;
+      if (fieldStart == null || fieldEnd == null) return null;
+      return SpellingReviewCorrection(
+        target: _reviewTargetIdentity(occurrence),
+        start: fieldStart,
+        oldEnd: fieldEnd,
+        newEnd: plan.translateFieldOffset(fieldEnd),
+      );
+    } on Object {
+      return null;
+    }
   }
 
   void _restoreActiveEditorFocus() {
@@ -12773,8 +12828,9 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
           BusyMarkEditorSpellingMenuItem(
             label: suggestion,
             suggestion: true,
-            onSelected: () =>
-                ifCurrent(() => _applySpellingCorrection(captured, suggestion)),
+            onSelected: () => ifCurrent(
+              () => unawaited(_applySpellingCorrection(captured, suggestion)),
+            ),
           ),
       BusyMarkEditorSpellingMenuItem(
         label: context.l10n.ignoreSpellingOnce,
@@ -16183,6 +16239,21 @@ class _SearchSidebar extends StatelessWidget {
 }
 
 @visibleForTesting
+final class SpellingReviewCorrection {
+  const SpellingReviewCorrection({
+    required this.target,
+    required this.start,
+    required this.oldEnd,
+    required this.newEnd,
+  });
+
+  final String target;
+  final int start;
+  final int oldEnd;
+  final int newEnd;
+}
+
+@visibleForTesting
 class BusyMarkSpellingReviewDialog extends StatefulWidget {
   const BusyMarkSpellingReviewDialog({
     required this.spelling,
@@ -16195,7 +16266,10 @@ class BusyMarkSpellingReviewDialog extends StatefulWidget {
   final SpellingSessionController spelling;
   final int initialIndex;
   final ValueChanged<SpellingOccurrence> onReveal;
-  final bool Function(SpellingOccurrence occurrence, String suggestion)
+  final Future<SpellingReviewCorrection?> Function(
+    SpellingOccurrence occurrence,
+    String suggestion,
+  )
   onCorrect;
   final Future<bool> Function() onChooseLanguage;
 
@@ -16206,10 +16280,12 @@ class BusyMarkSpellingReviewDialog extends StatefulWidget {
 
 class _SpellingReviewDialogState extends State<BusyMarkSpellingReviewDialog> {
   late int _index = widget.initialIndex;
-  final Set<String> _visited = {};
+  final List<_SpellingReviewVisit> _visited = [];
   String? _currentOccurrenceId;
   int? _advanceAnchor;
+  String? _advanceTarget;
   String? _bufferId;
+  bool _actionInProgress = false;
   final _dialogFocus = FocusNode(debugLabel: 'Spelling review dialog');
   String? _suggestionOccurrenceId;
   Future<List<String>>? _suggestions;
@@ -16249,6 +16325,10 @@ class _SpellingReviewDialogState extends State<BusyMarkSpellingReviewDialog> {
     if (!mounted) return;
     final occurrences = _occurrences;
     final state = widget.spelling.state;
+    if (_actionInProgress) {
+      setState(() {});
+      return;
+    }
     if (state.status == SpellingPresentationStatus.ready && state.complete) {
       if (occurrences.isEmpty) {
         Navigator.of(context).pop();
@@ -16264,7 +16344,7 @@ class _SpellingReviewDialogState extends State<BusyMarkSpellingReviewDialog> {
         return;
       }
     }
-    final occurrence = occurrences.isEmpty ? null : occurrences[_index];
+    final occurrence = _selectedOccurrence(occurrences);
     if (_suggestionOccurrenceId != occurrence?.id) {
       _suggestionOccurrenceId = null;
       _suggestions = null;
@@ -16275,7 +16355,8 @@ class _SpellingReviewDialogState extends State<BusyMarkSpellingReviewDialog> {
   void _move(int delta) {
     final occurrences = _occurrences;
     if (occurrences.isEmpty) return;
-    final current = occurrences[_index];
+    final current = _selectedOccurrence(occurrences);
+    if (current == null) return;
     if (delta > 0) _recordVisited(current);
     if (delta > 0) {
       if (!_selectNextUnvisited(occurrences)) {
@@ -16301,6 +16382,11 @@ class _SpellingReviewDialogState extends State<BusyMarkSpellingReviewDialog> {
     _recordVisited(removed);
     final occurrences = _occurrences;
     if (occurrences.isEmpty) {
+      final state = widget.spelling.state;
+      if (state.status == SpellingPresentationStatus.ready && state.complete) {
+        Navigator.of(context).pop();
+        return;
+      }
       setState(() {});
       return;
     }
@@ -16316,26 +16402,64 @@ class _SpellingReviewDialogState extends State<BusyMarkSpellingReviewDialog> {
   }
 
   void _recordVisited(SpellingOccurrence occurrence) {
-    _visited.add(_reviewIdentity(occurrence));
+    final visit = _SpellingReviewVisit.fromOccurrence(occurrence);
+    if (!_visited.any((candidate) => candidate.matches(occurrence))) {
+      _visited.add(visit);
+    }
     _advanceAnchor = occurrence.sourceEnd ?? occurrence.fieldEnd;
+    _advanceTarget = _reviewTargetIdentity(occurrence);
     _currentOccurrenceId = null;
+  }
+
+  SpellingOccurrence? _selectedOccurrence(
+    List<SpellingOccurrence> occurrences,
+  ) {
+    if (occurrences.isEmpty) return null;
+    final selected = occurrences.indexWhere(
+      (occurrence) => occurrence.id == _currentOccurrenceId,
+    );
+    if (selected < 0) return null;
+    _index = selected;
+    return occurrences[selected];
+  }
+
+  void _translateReviewState(SpellingReviewCorrection correction) {
+    final delta = correction.newEnd - correction.oldEnd;
+    _visited.removeWhere(
+      (visit) =>
+          visit.target == correction.target &&
+          visit.offset >= correction.start &&
+          visit.offset < correction.oldEnd,
+    );
+    for (final visit in _visited) {
+      if (visit.target == correction.target &&
+          visit.offset >= correction.oldEnd) {
+        visit.offset += delta;
+      }
+    }
+    if (_advanceTarget == correction.target &&
+        _advanceAnchor != null &&
+        _advanceAnchor! >= correction.oldEnd) {
+      _advanceAnchor = _advanceAnchor! + delta;
+    }
   }
 
   bool _selectNextUnvisited(List<SpellingOccurrence> occurrences) {
     final anchor = _advanceAnchor;
     final candidates = <int>[
       for (var index = 0; index < occurrences.length; index++)
-        if (!_visited.contains(_reviewIdentity(occurrences[index]))) index,
+        if (!_visited.any((visit) => visit.matches(occurrences[index]))) index,
     ];
     if (candidates.isEmpty) return false;
     _index = anchor == null
         ? candidates.first
         : candidates.firstWhere(
             (index) =>
+                _reviewTargetIdentity(occurrences[index]) == _advanceTarget &&
                 (occurrences[index].sourceStart ??
-                    occurrences[index].fieldStart ??
-                    -1) >=
-                anchor,
+                        occurrences[index].fieldStart ??
+                        -1) >=
+                    anchor,
             orElse: () => candidates.first,
           );
     _currentOccurrenceId = occurrences[_index].id;
@@ -16355,12 +16479,16 @@ class _SpellingReviewDialogState extends State<BusyMarkSpellingReviewDialog> {
     Future<void> Function(SpellingOccurrence occurrence) action,
     SpellingOccurrence occurrence,
   ) async {
-    _recordVisited(occurrence);
+    setState(() => _actionInProgress = true);
     try {
       await action(occurrence);
-      if (mounted) _finishRemovedOccurrence(occurrence);
-    } on Object {
+      if (mounted) {
+        _actionInProgress = false;
+        _finishRemovedOccurrence(occurrence);
+      }
+    } on Object catch (_) {
       if (!mounted) return;
+      setState(() => _actionInProgress = false);
       BusyMarkToastOverlay.show(
         context,
         message: context.l10n.commandUnavailableInContext,
@@ -16373,7 +16501,7 @@ class _SpellingReviewDialogState extends State<BusyMarkSpellingReviewDialog> {
   Widget build(BuildContext context) {
     final occurrences = _occurrences;
     final state = widget.spelling.state;
-    final occurrence = occurrences.isEmpty ? null : occurrences[_index];
+    final occurrence = _selectedOccurrence(occurrences);
     return Focus(
       focusNode: _dialogFocus,
       autofocus: true,
@@ -16440,16 +16568,21 @@ class _SpellingReviewDialogState extends State<BusyMarkSpellingReviewDialog> {
                           children: [
                             for (final suggestion in suggestions.take(8))
                               BusyMarkPushButton.standard(
-                                onPressed: () {
-                                  if (widget.onCorrect(
+                                onPressed: () async {
+                                  setState(() => _actionInProgress = true);
+                                  final correction = await widget.onCorrect(
                                     occurrence,
                                     suggestion,
-                                  )) {
+                                  );
+                                  if (!mounted) return;
+                                  _actionInProgress = false;
+                                  if (correction != null) {
                                     _recordVisited(occurrence);
+                                    _translateReviewState(correction);
                                     _suggestionOccurrenceId = null;
                                     _suggestions = null;
-                                    setState(() {});
                                   }
+                                  setState(() {});
                                 },
                                 child: Text(suggestion),
                               ),
@@ -16540,15 +16673,36 @@ String _spellingContext(SpellingOccurrence occurrence) {
   return text.substring(start, end).replaceAll(RegExp(r'\s+'), ' ').trim();
 }
 
-String _reviewIdentity(SpellingOccurrence occurrence) {
-  final target = switch (occurrence.run.target) {
-    SpellingSourceTarget(:final filePath) => 'source:$filePath',
-    SpellingRichBlockTarget(:final blockId) => 'block:$blockId',
-    SpellingRichTableCellTarget(:final tableBlockId, :final cellId) =>
-      'cell:$tableBlockId:$cellId',
-  };
-  return '$target:${occurrence.sourceStart ?? occurrence.fieldStart}:'
-      '${occurrence.word}';
+String _reviewTargetIdentity(SpellingOccurrence occurrence) =>
+    switch (occurrence.run.target) {
+      SpellingSourceTarget(:final filePath) => 'source:$filePath',
+      SpellingRichBlockTarget(:final blockId) => 'block:$blockId',
+      SpellingRichTableCellTarget(:final tableBlockId, :final cellId) =>
+        'cell:$tableBlockId:$cellId',
+    };
+
+final class _SpellingReviewVisit {
+  _SpellingReviewVisit({
+    required this.target,
+    required this.offset,
+    required this.word,
+  });
+
+  factory _SpellingReviewVisit.fromOccurrence(SpellingOccurrence occurrence) =>
+      _SpellingReviewVisit(
+        target: _reviewTargetIdentity(occurrence),
+        offset: occurrence.sourceStart ?? occurrence.fieldStart ?? -1,
+        word: occurrence.word,
+      );
+
+  final String target;
+  int offset;
+  final String word;
+
+  bool matches(SpellingOccurrence occurrence) =>
+      target == _reviewTargetIdentity(occurrence) &&
+      offset == (occurrence.sourceStart ?? occurrence.fieldStart ?? -1) &&
+      word == occurrence.word;
 }
 
 String _spellingEmptyStateMessage(

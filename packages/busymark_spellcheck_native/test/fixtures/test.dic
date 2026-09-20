@@ -1,4 +1,4 @@
-9
+11
 hello/S
 world
 sun/C
@@ -8,3 +8,5 @@ C++
 C#
 +lead
 trail#
+-dash
+dash-

@@ -384,17 +384,6 @@ final class _MarkdownProseScanner {
           }
         }
       }
-      if (unit == 0x24 &&
-          (cursor + 1 >= rangeEnd || source.codeUnitAt(cursor + 1) != 0x24)) {
-        final close = source.indexOf(r'$', cursor + 1);
-        if (close >= 0 &&
-            close < rangeEnd &&
-            (close + 1 >= rangeEnd || source.codeUnitAt(close + 1) != 0x24)) {
-          _barrier();
-          _opaqueEnd = close + 1;
-          continue;
-        }
-      }
       if (unit == 0x21 &&
           cursor + 1 < rangeEnd &&
           source.codeUnitAt(cursor + 1) == 0x5b) {
@@ -418,6 +407,23 @@ final class _MarkdownProseScanner {
           if (_autolink.hasMatch(raw) || _emailAutolink.hasMatch(raw)) {
             _barrier();
             cursor = close + 1;
+            continue;
+          }
+          final tag = RegExp(
+            r'^<\s*([A-Za-z][A-Za-z0-9:-]*)\b',
+          ).firstMatch(raw)?.group(1)?.toLowerCase();
+          if (tag != null && _opaqueHtmlElements.contains(tag)) {
+            final closing = RegExp(
+              '</\\s*${RegExp.escape(tag)}\\s*>',
+              caseSensitive: false,
+            ).firstMatch(source.substring(close + 1, rangeEnd));
+            _barrier();
+            if (closing == null) {
+              complete = false;
+              cursor = rangeEnd;
+            } else {
+              cursor = close + 1 + closing.end;
+            }
             continue;
           }
           _scanHumanReadableAttributes(cursor, close + 1);
@@ -561,6 +567,7 @@ final class _MarkdownProseScanner {
             openingEnd: wrapper.opening.end,
             closingStart: wrapper.closing.start,
             closingEnd: wrapper.closing.end,
+            structuralKind: wrapper.kind,
             removableWhenLogicallyEmpty:
                 !opaqueSyntax.any(
                   (opaque) =>
@@ -684,12 +691,14 @@ final class _SourceInterval {
 
 final class _RawFormattingWrapper {
   const _RawFormattingWrapper({
+    required this.kind,
     required this.opening,
     required this.contentStart,
     required this.contentEnd,
     required this.closing,
   });
 
+  final String kind;
   final _SourceInterval opening;
   final int contentStart;
   final int contentEnd;
@@ -753,6 +762,7 @@ List<_RawFormattingWrapper> _formattingWrappers(
       if (openingEnd > closingStart) continue;
       wrappers.add(
         _RawFormattingWrapper(
+          kind: entry.key.kind.name,
           opening: _SourceInterval(openingStart, openingEnd),
           contentStart: openingEnd,
           contentEnd: closingStart,
@@ -797,6 +807,8 @@ const _opaqueInlineKinds = {
   BusyInlineKind.math,
   BusyInlineKind.writersideVariable,
 };
+
+const _opaqueHtmlElements = {'code', 'pre', 'script', 'style'};
 
 bool _commonMarkEscapableAsciiPunctuation(int unit) =>
     (unit >= 0x21 && unit <= 0x2f) ||

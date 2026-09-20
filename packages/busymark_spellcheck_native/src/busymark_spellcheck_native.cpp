@@ -166,6 +166,49 @@ bool is_join_character(BusySpellHandleImpl* handle, gunichar character) {
          character == 0x200d || handle->word_chars.contains(character);
 }
 
+bool is_apostrophe(gunichar character) {
+  return character == '\'' || character == 0x2018 || character == 0x2019;
+}
+
+bool is_quote_pair(gunichar opening, gunichar closing) {
+  return (opening == '\'' && closing == '\'') ||
+         (opening == 0x2018 && closing == 0x2019) ||
+         (opening == 0x2019 && closing == 0x2019);
+}
+
+// Pango supplies Unicode word boundaries. Only dictionary-specific word
+// characters should extend those boundaries unconditionally. Apostrophes are
+// also useful for lexical elisions and possessives, but a matching pair around
+// the Pango candidate is quotation punctuation and must stay outside the
+// correction target. Generic hyphens remain internal joiners only.
+bool edge_can_extend(BusySpellHandleImpl* handle,
+                     const char* text,
+                     const std::vector<guint>& offsets,
+                     guint candidate_start,
+                     guint candidate_end,
+                     guint index,
+                     bool leading) {
+  const auto character = g_utf8_get_char(text + offsets[index]);
+  if (handle->word_chars.contains(character) && !is_apostrophe(character)) {
+    return true;
+  }
+  if (!is_apostrophe(character) || character == 0x2018) return false;
+  if (leading) {
+    if (candidate_end < offsets.size() - 1 &&
+        is_quote_pair(character,
+                      g_utf8_get_char(text + offsets[candidate_end]))) {
+      return false;
+    }
+    return index + 1 == candidate_start;
+  }
+  if (candidate_start > 0 &&
+      is_quote_pair(g_utf8_get_char(text + offsets[candidate_start - 1]),
+                    character)) {
+    return false;
+  }
+  return index == candidate_end;
+}
+
 bool is_word_character(gunichar character) {
   return g_unichar_isalpha(character) || g_unichar_ismark(character);
 }
@@ -210,24 +253,7 @@ bool supported_encoding(const char* encoding) {
   return true;
 }
 
-std::string dictionary_entry_word(const std::string& raw) {
-  std::string word;
-  bool escaped = false;
-  for (const char value : raw) {
-    if (!escaped && (value == '/' || value == '\t' || value == ' ')) break;
-    if (!escaped && value == '\\') {
-      escaped = true;
-      continue;
-    }
-    word.push_back(value);
-    escaped = false;
-  }
-  if (escaped) word.push_back('\\');
-  return word;
-}
-
-bool has_loadable_dictionary_entry(Hunhandle* hunspell,
-                                   const char* dic_path,
+bool has_loadable_dictionary_entry(const char* dic_path,
                                    char** out_error) {
   std::ifstream input(dic_path, std::ios::binary);
   std::string raw;
@@ -259,28 +285,20 @@ bool has_loadable_dictionary_entry(Hunhandle* hunspell,
   }
 
   size_t records = 0;
-  bool accepted = false;
   while (std::getline(input, raw)) {
     if (!raw.empty() && raw.back() == '\r') raw.pop_back();
     if (raw.empty()) continue;
     ++records;
-    if (!accepted) {
-      const auto word = dictionary_entry_word(raw);
-      if (!word.empty() && Hunspell_spell(hunspell, word.c_str()) != 0) {
-        accepted = true;
-      }
-    }
   }
   // Hunspell accepts long-lived dictionaries whose advisory count has drifted
   // from the physical line count (for example the pinned French resource).
   // The security/correctness invariant here is that a positive claim is backed
-  // by at least one real record that the loaded engine itself accepts.
+  // by at least one real record. A bare record need not itself be accepted:
+  // NEEDAFFIX dictionaries deliberately contain stems that become valid only
+  // after an affix rule is applied. Catalog resources are additionally tested
+  // with their language-specific known-valid probes by the Dart worker.
   if (records == 0) {
     set_error(out_error, "Dictionary contains no records");
-    return false;
-  }
-  if (!accepted) {
-    set_error(out_error, "Dictionary loaded no verifiable entries");
     return false;
   }
   return true;
@@ -320,8 +338,7 @@ int busy_spell_open(const char* aff_path_utf8,
       return BUSY_SPELL_ERROR;
     }
     handle->encoding = encoding;
-    if (!has_loadable_dictionary_entry(handle->hunspell, dic_path_utf8,
-                                       out_error)) {
+    if (!has_loadable_dictionary_entry(dic_path_utf8, out_error)) {
       return BUSY_SPELL_ERROR;
     }
     load_word_chars(handle.get(), aff_path_utf8);
@@ -476,14 +493,16 @@ int busy_spell_tokenize(BusySpellHandle* handle,
         ++end;
       }
       if (end > static_cast<guint>(character_count)) break;
+      const guint pango_start = index;
+      const guint pango_end = end;
       while (index > 0 &&
-             is_join_character(
-                 handle, g_utf8_get_char(prose_utf8 + offsets[index - 1]))) {
+             edge_can_extend(handle, prose_utf8, offsets, pango_start,
+                             pango_end, index - 1, true)) {
         --index;
       }
       while (end < static_cast<guint>(character_count) &&
-             is_join_character(handle,
-                               g_utf8_get_char(prose_utf8 + offsets[end]))) {
+             edge_can_extend(handle, prose_utf8, offsets, pango_start,
+                             pango_end, end, false)) {
         ++end;
       }
       bool contains_letter = false;

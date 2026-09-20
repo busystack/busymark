@@ -161,18 +161,41 @@ final class SpellingWordStore {
     final previous = _writeTails[identity] ?? Future<void>.value();
     final operation = previous.catchError((_) {}).then((_) async {
       try {
-        for (var attempt = 0; attempt < 3; attempt++) {
-          final beforeRead = await _fileIdentity();
-          final current = await read();
-          final updated = change(current);
-          if (await _fileIdentity() != beforeRead) continue;
-          await _publish(updated);
-          completer.complete(await read());
-          return;
+        final lockFile = File('$identity.lock');
+        final lockParent = lockFile.parent;
+        if (!await lockParent.exists()) {
+          await lockParent.create(recursive: true);
         }
-        throw const FileSystemException(
-          'Spelling words changed repeatedly during publication.',
-        );
+        final lock = await lockFile.open(mode: FileMode.append);
+        try {
+          await _acquireExclusiveLock(lock);
+          for (var attempt = 0; attempt < 3; attempt++) {
+            final beforeRead = await _fileIdentity();
+            final current = await read();
+            final updated = change(current);
+            if (await _fileIdentity() != beforeRead) continue;
+            try {
+              await _publish(updated, expectedIdentity: beforeRead);
+            } on _SpellingWordStoreConflict catch (_) {
+              continue;
+            } on AtomicFileChangedException catch (_) {
+              continue;
+            }
+            final published = await read();
+            if (!_sameSnapshot(published, updated)) continue;
+            completer.complete(published);
+            return;
+          }
+          throw const FileSystemException(
+            'Spelling words changed repeatedly during publication.',
+          );
+        } finally {
+          try {
+            await lock.unlock();
+          } finally {
+            await lock.close();
+          }
+        }
       } on Object catch (error, stackTrace) {
         completer.completeError(error, stackTrace);
       }
@@ -187,12 +210,13 @@ final class SpellingWordStore {
   }
 
   Future<String> _fileIdentity() async {
-    final file = File(filePath);
-    if (!await file.exists()) return 'missing';
-    return (await sha256.bind(file.openRead()).first).toString();
+    return _identityForFile(File(filePath));
   }
 
-  Future<void> _publish(SpellingWordStoreSnapshot snapshot) async {
+  Future<void> _publish(
+    SpellingWordStoreSnapshot snapshot, {
+    required String expectedIdentity,
+  }) async {
     final parent = Directory(p.dirname(filePath));
     if (!await parent.exists()) await parent.create(recursive: true);
     final json = <String, Object?>{
@@ -214,8 +238,67 @@ final class SpellingWordStore {
       filePath,
       utf8.encode('${const JsonEncoder.withIndent('  ').convert(json)}\n'),
       overwrite: true,
+      beforePublish: () async {
+        if (await _fileIdentity() != expectedIdentity) {
+          throw const _SpellingWordStoreConflict();
+        }
+      },
+      acceptReplaced: (replacedPath) async {
+        if (expectedIdentity == 'missing') return false;
+        return await _identityForFile(File(replacedPath)) == expectedIdentity;
+      },
     );
   }
+}
+
+Future<String> _identityForFile(File file) async {
+  if (!await file.exists()) return 'missing';
+  return (await sha256.bind(file.openRead()).first).toString();
+}
+
+bool _sameSnapshot(
+  SpellingWordStoreSnapshot left,
+  SpellingWordStoreSnapshot right,
+) {
+  if (left.revision != right.revision ||
+      left.projectLanguage != right.projectLanguage ||
+      left.wordsByLanguage.length != right.wordsByLanguage.length) {
+    return false;
+  }
+  for (final entry in left.wordsByLanguage.entries) {
+    final other = right.wordsByLanguage[entry.key];
+    if (other == null || other.length != entry.value.length) return false;
+    for (var index = 0; index < other.length; index++) {
+      if (other[index].key != entry.value[index].key ||
+          other[index].display != entry.value[index].display) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
+Future<void> _acquireExclusiveLock(RandomAccessFile file) async {
+  final stopwatch = Stopwatch()..start();
+  while (true) {
+    try {
+      await file.lock(FileLock.exclusive);
+      return;
+    } on FileSystemException catch (error) {
+      // Linux reports a contended advisory lock as EAGAIN instead of waiting.
+      // Retry it so the lock covers the complete read/merge/publish transaction
+      // across independent BusyMark processes.
+      if (error.osError?.errorCode != 11 ||
+          stopwatch.elapsed >= const Duration(seconds: 30)) {
+        rethrow;
+      }
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+    }
+  }
+}
+
+final class _SpellingWordStoreConflict implements Exception {
+  const _SpellingWordStoreConflict();
 }
 
 Map<String, List<SpellingWordEntry>> _mutableWords(

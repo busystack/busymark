@@ -55,8 +55,10 @@ void main() {
     expect(words, ['helo', 'café', 'don’t', 'state-of-the-art']);
   });
 
-  test('dictionary word characters extend every candidate edge', () {
-    const prose = "C++ C# +lead trail# 'quoted' -hyphen- café";
+  test('dictionary word characters do not absorb quotation punctuation', () {
+    const prose =
+        "C++ C# +lead trail# -dash dash- 'quoted' ‘curly’ -hyphen- "
+        "don't ’tis dogs’ café";
     final ranges = dictionary.tokenize(prose, language: 'en-US');
     final utf16 = nativeUtf8BoundaryToUtf16(prose);
     final words = [
@@ -69,12 +71,20 @@ void main() {
       'C#',
       '+lead',
       'trail#',
-      "'quoted'",
+      '-dash',
+      'dash-',
+      'quoted',
+      'curly',
       '-hyphen-',
+      "don't",
+      '’tis',
+      'dogs’',
       'café',
     ]);
     expect(dictionary.check('C++'), NativeSpellResult.accepted);
     expect(dictionary.check('C#'), NativeSpellResult.accepted);
+    expect(dictionary.check('-dash'), NativeSpellResult.accepted);
+    expect(dictionary.check('dash-'), NativeSpellResult.accepted);
   });
 
   test('closed handles report an unchecked failure', () {
@@ -115,5 +125,28 @@ void main() {
         ),
       ),
     );
+  });
+
+  test('accepts a valid dictionary whose stems require affixes', () async {
+    final temporary = await Directory.systemTemp.createTemp(
+      'busymark-need-affix-dictionary-',
+    );
+    addTearDown(() => temporary.delete(recursive: true));
+    final aff = File('${temporary.path}/need-affix.aff');
+    final dic = File('${temporary.path}/need-affix.dic');
+    await aff.writeAsString('''SET UTF-8
+NEEDAFFIX X
+SFX S Y 1
+SFX S 0 s .
+''');
+    await dic.writeAsString('1\ncat/XS\n');
+
+    final affixOnly = NativeSpellDictionary.open(
+      affPath: aff.path,
+      dicPath: dic.path,
+    );
+    addTearDown(affixOnly.close);
+    expect(affixOnly.check('cat'), NativeSpellResult.rejected);
+    expect(affixOnly.check('cats'), NativeSpellResult.accepted);
   });
 }

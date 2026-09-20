@@ -776,12 +776,17 @@ class BusyMarkInlineParserContext {
     final nodes = md.BlockParser([
       for (final line in sourceLines) md.Line(line.content),
     ], _mappingDocument).parseLines();
-    final candidates = <md.UnparsedContent>[];
+    final candidates = <String>[];
 
     void collect(Iterable<md.Node> values) {
       for (final node in values) {
         if (node is md.UnparsedContent) {
-          if (node.textContent.isNotEmpty) candidates.add(node);
+          if (node.textContent.isNotEmpty) candidates.add(node.textContent);
+        } else if (node is md.Text) {
+          // Block HTML is deliberately retained as raw text by package:
+          // markdown. It still contains authored prose and must be routed
+          // through BusyMark's mapped inline/HTML scanner.
+          if (node.textContent.isNotEmpty) candidates.add(node.textContent);
         } else if (node is md.Element && node.children != null) {
           collect(node.children!);
         }
@@ -795,17 +800,12 @@ class BusyMarkInlineParserContext {
       final projection = _MappedBlockInlineProjection.tryCreatePositioned(
         source,
         sourceLines,
-        candidate.textContent,
+        candidate,
         minimumSourceOffset: cursor,
         maximumSourceOffset: boundedEnd,
       );
       if (projection == null) continue;
-      result.add(
-        _translateBlockProjection(
-          parseMapped(candidate.textContent),
-          projection,
-        ),
-      );
+      result.add(_translateBlockProjection(parseMapped(candidate), projection));
       cursor = projection.rawEnd;
     }
     return List.unmodifiable(result);

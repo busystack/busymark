@@ -95,6 +95,7 @@ final class WysiwygSpellingProjector {
                   fieldOpeningEnd: wrapper.openingEnd,
                   fieldClosingStart: wrapper.closingStart,
                   fieldClosingEnd: wrapper.closingEnd,
+                  structuralKind: wrapper.structuralKind,
                 ),
             ],
             complete: sourceRun.complete,
@@ -405,34 +406,64 @@ List<SpellingSourceAtom>? _mergeRunAtoms(
 List<SpellingFormattingWrapper> _mergeFormattingWrappers(
   List<SpellingFormattingWrapper> source,
   List<SpellingFormattingWrapper> field,
-) => List.unmodifiable([
-  for (final sourceWrapper in source)
-    if (field
-            .where(
-              (candidate) =>
-                  candidate.logicalStart == sourceWrapper.logicalStart &&
-                  candidate.logicalEnd == sourceWrapper.logicalEnd,
-            )
-            .firstOrNull
-        case final fieldWrapper?)
-      SpellingFormattingWrapper(
-        logicalStart: sourceWrapper.logicalStart,
-        logicalEnd: sourceWrapper.logicalEnd,
-        openingStart: sourceWrapper.openingStart,
-        openingEnd: sourceWrapper.openingEnd,
-        closingStart: sourceWrapper.closingStart,
-        closingEnd: sourceWrapper.closingEnd,
-        removableWhenLogicallyEmpty:
-            sourceWrapper.removableWhenLogicallyEmpty &&
-            fieldWrapper.removableWhenLogicallyEmpty,
-        fieldOpeningStart: fieldWrapper.fieldOpeningStart,
-        fieldOpeningEnd: fieldWrapper.fieldOpeningEnd,
-        fieldClosingStart: fieldWrapper.fieldClosingStart,
-        fieldClosingEnd: fieldWrapper.fieldClosingEnd,
-      )
-    else
-      sourceWrapper,
-]);
+) {
+  final used = <int>{};
+  return List.unmodifiable([
+    for (final sourceWrapper in source)
+      if (_matchingFieldWrapper(sourceWrapper, field, used)
+          case final fieldWrapper?)
+        SpellingFormattingWrapper(
+          logicalStart: sourceWrapper.logicalStart,
+          logicalEnd: sourceWrapper.logicalEnd,
+          openingStart: sourceWrapper.openingStart,
+          openingEnd: sourceWrapper.openingEnd,
+          closingStart: sourceWrapper.closingStart,
+          closingEnd: sourceWrapper.closingEnd,
+          removableWhenLogicallyEmpty:
+              sourceWrapper.removableWhenLogicallyEmpty &&
+              fieldWrapper.removableWhenLogicallyEmpty,
+          fieldOpeningStart: fieldWrapper.fieldOpeningStart,
+          fieldOpeningEnd: fieldWrapper.fieldOpeningEnd,
+          fieldClosingStart: fieldWrapper.fieldClosingStart,
+          fieldClosingEnd: fieldWrapper.fieldClosingEnd,
+          structuralKind: sourceWrapper.structuralKind,
+        )
+      else
+        sourceWrapper,
+  ]);
+}
+
+SpellingFormattingWrapper? _matchingFieldWrapper(
+  SpellingFormattingWrapper source,
+  List<SpellingFormattingWrapper> field,
+  Set<int> used,
+) {
+  int? fallback;
+  for (var index = 0; index < field.length; index++) {
+    if (used.contains(index)) continue;
+    final candidate = field[index];
+    if (candidate.logicalStart != source.logicalStart ||
+        candidate.logicalEnd != source.logicalEnd) {
+      continue;
+    }
+    fallback ??= index;
+    final sameKind = candidate.structuralKind == source.structuralKind;
+    final sameDelimiterShape =
+        candidate.fieldOpeningEnd! - candidate.fieldOpeningStart! ==
+            source.openingEnd - source.openingStart &&
+        candidate.fieldClosingEnd! - candidate.fieldClosingStart! ==
+            source.closingEnd - source.closingStart;
+    if (sameKind && sameDelimiterShape) {
+      used.add(index);
+      return candidate;
+    }
+  }
+  if (fallback case final index?) {
+    used.add(index);
+    return field[index];
+  }
+  return null;
+}
 
 final class _SourceFieldRegion {
   const _SourceFieldRegion({

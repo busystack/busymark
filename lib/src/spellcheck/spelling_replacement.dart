@@ -56,6 +56,8 @@ final class SpellingReplacementPlan {
     required this.languageId,
     this.sourceTargetStart,
     this.sourceTargetEnd,
+    this.fieldTargetStart,
+    this.fieldTargetEnd,
   });
 
   final String originalWord;
@@ -67,6 +69,8 @@ final class SpellingReplacementPlan {
   final String languageId;
   final int? sourceTargetStart;
   final int? sourceTargetEnd;
+  final int? fieldTargetStart;
+  final int? fieldTargetEnd;
 
   String applyToSource(String source) {
     var result = source;
@@ -94,15 +98,13 @@ final class SpellingReplacementPlan {
     final start = _translateSourceBoundary(originalStart, sourceEdits);
     final end = _translateSourceBoundary(originalEnd, sourceEdits);
     if (start < 0 || end < start || end > source.length) return false;
-    final region = _correctionValidationRegion(
-      source,
-      start,
-      end,
-      snapshot.documentKind,
-    );
-    final validationSource = source.substring(region.start, region.end);
-    final localStart = start - region.start;
-    final localEnd = end - region.start;
+    // Parser context can cross blank lines through containers, HTML, link
+    // definitions, and other block syntax. Production correction preparation
+    // runs off the UI isolate, so validate against the authoritative complete
+    // snapshot rather than guessing a smaller parsing boundary.
+    final validationSource = source;
+    final localStart = start;
+    final localEnd = end;
     final projection = switch (snapshot.documentKind) {
       DocumentKind.writersideXmlTopic =>
         const WritersideXmlSpellingProjector().project(
@@ -124,34 +126,88 @@ final class SpellingReplacementPlan {
       _ => null,
     };
     if (projection == null) return true;
+    return _projectionContainsReplacement(
+      projection,
+      mappedSource: validationSource,
+      targetStart: localStart,
+      targetEnd: localEnd,
+      markdown: snapshot.documentKind != DocumentKind.writersideXmlTopic,
+    );
+  }
+
+  String applyToField(String fieldSource) {
+    var result = fieldSource;
+    final edits = [...fieldEdits]
+      ..sort((left, right) => right.start.compareTo(left.start));
+    for (final edit in edits) {
+      if (edit.start < 0 || edit.end < edit.start || edit.end > result.length) {
+        throw StateError('Spelling field edit is outside the guarded field.');
+      }
+      result = result.replaceRange(edit.start, edit.end, edit.replacement);
+    }
+    final originalStart = fieldTargetStart;
+    final originalEnd = fieldTargetEnd;
+    if (originalStart == null || originalEnd == null) return result;
+    final start = _translateFieldBoundary(originalStart, fieldEdits);
+    final end = _translateFieldBoundary(originalEnd, fieldEdits);
+    if (start < 0 || end < start || end > result.length) {
+      throw StateError('Spelling field result has invalid target bounds.');
+    }
+    final projection = const MarkdownSpellingProjector().project(
+      filePath: 'spelling-field-validation.md',
+      source: result,
+      mode: snapshot.documentKind == DocumentKind.writersideMarkdownTopic
+          ? MarkdownMode.writersideMarkdown
+          : MarkdownMode.commonMark,
+      languageId: languageId,
+      snapshot: snapshot,
+    );
+    if (!_projectionContainsReplacement(
+      projection,
+      mappedSource: result,
+      targetStart: start,
+      targetEnd: end,
+      markdown: true,
+    )) {
+      throw StateError(
+        'The spelling correction did not preserve the projected field '
+        'structure.',
+      );
+    }
+    return result;
+  }
+
+  bool _projectionContainsReplacement(
+    SpellingProjectionResult projection, {
+    required String mappedSource,
+    required int targetStart,
+    required int targetEnd,
+    required bool markdown,
+  }) {
     for (final run in projection.runs) {
-      var logicalStart = 0;
-      while (logicalStart <= run.text.length - suggestion.length) {
-        final found = run.text.indexOf(suggestion, logicalStart);
-        if (found < 0) break;
+      for (final range in _canonicallyEquivalentRanges(run.text, suggestion)) {
         final candidate = SpellingOccurrence(
           id: 'validation',
           run: run,
-          logicalStart: found,
-          logicalEnd: found + suggestion.length,
-          word: suggestion,
+          logicalStart: range.start,
+          logicalEnd: range.end,
+          word: run.text.substring(range.start, range.end),
           outcome: SpellingCheckOutcome.rejected,
         );
         final intervals = candidate.sourceIntervals;
-        final trailingGap = intervals.isEmpty || intervals.last.end > localEnd
+        final trailingGap = intervals.isEmpty || intervals.last.end > targetEnd
             ? ''
-            : source.substring(intervals.last.end, localEnd);
+            : mappedSource.substring(intervals.last.end, targetEnd);
         final markdownWrapperGap =
-            snapshot.documentKind != DocumentKind.writersideXmlTopic &&
+            markdown &&
             intervals.isNotEmpty &&
-            intervals.last.end < localEnd &&
+            intervals.last.end < targetEnd &&
             RegExp(r'^[*_~]+$').hasMatch(trailingGap);
         if (intervals.isNotEmpty &&
-            intervals.first.start == localStart &&
-            (intervals.last.end == localEnd || markdownWrapperGap)) {
+            intervals.first.start == targetStart &&
+            (intervals.last.end == targetEnd || markdownWrapperGap)) {
           return true;
         }
-        logicalStart = found + 1;
       }
     }
     return false;
@@ -167,31 +223,40 @@ final class SpellingReplacementPlan {
   /// Translates the end of the final editable-field edit into the resulting
   /// field. This is used by Markdown-source fields containing inline math.
   int? get resultingFieldCaret => _resultingCaretForFieldEdits(fieldEdits);
+
+  int translateSourceOffset(int offset) =>
+      _translateSourceBoundary(offset, sourceEdits);
+
+  int translateFieldOffset(int offset) =>
+      _translateFieldBoundary(offset, fieldEdits);
 }
 
-({int start, int end}) _correctionValidationRegion(
-  String source,
-  int targetStart,
-  int targetEnd,
-  DocumentKind kind,
-) {
-  var start = targetStart;
-  var end = targetEnd;
-  if (kind == DocumentKind.markdown ||
-      kind == DocumentKind.writersideMarkdownTopic) {
-    final before = source.lastIndexOf('\n\n', targetStart);
-    start = before < 0 ? 0 : before + 2;
-    final after = source.indexOf('\n\n', targetEnd);
-    end = after < 0 ? source.length : after;
-  } else {
-    // An arbitrary XML line is not necessarily a parseable fragment: its
-    // owning element may begin or end on another line. Keep full-document XML
-    // validation until an element-boundary extractor can prove a smaller
-    // region is self-contained.
-    start = 0;
-    end = source.length;
+Iterable<({int start, int end})> _canonicallyEquivalentRanges(
+  String text,
+  String expected,
+) sync* {
+  final expectedClusters = expected.characters.toList(growable: false);
+  if (expectedClusters.isEmpty) return;
+  final clusters = text.characters.toList(growable: false);
+  if (clusters.length < expectedClusters.length) return;
+  final offsets = <int>[0];
+  for (final cluster in clusters) {
+    offsets.add(offsets.last + cluster.length);
   }
-  return (start: start, end: end);
+  final normalizedExpected = unicode.nfc(expected);
+  for (
+    var index = 0;
+    index + expectedClusters.length <= clusters.length;
+    index++
+  ) {
+    final candidate = clusters.skip(index).take(expectedClusters.length).join();
+    if (unicode.nfc(candidate) == normalizedExpected) {
+      yield (
+        start: offsets[index],
+        end: offsets[index + expectedClusters.length],
+      );
+    }
+  }
 }
 
 int? _resultingCaretForSourceEdits(List<SpellingSourceEdit> edits) {
@@ -456,6 +521,7 @@ final class SpellingReplacementPlanner {
       );
     }
     final sourceOffsets = occurrence.sourceIntervals;
+    final fieldOffsets = occurrence.fieldIntervals;
     return SpellingReplacementPlan(
       originalWord: occurrence.word,
       suggestion: suggestion,
@@ -474,11 +540,33 @@ final class SpellingReplacementPlanner {
           : sourceOffsets
                 .map((range) => range.end)
                 .reduce((left, right) => left > right ? left : right),
+      fieldTargetStart: fieldOffsets.isEmpty
+          ? null
+          : fieldOffsets
+                .map((range) => range.start)
+                .reduce((left, right) => left < right ? left : right),
+      fieldTargetEnd: fieldOffsets.isEmpty
+          ? null
+          : fieldOffsets
+                .map((range) => range.end)
+                .reduce((left, right) => left > right ? left : right),
     );
   }
 }
 
 int _translateSourceBoundary(int offset, List<SpellingSourceEdit> edits) {
+  var translated = offset;
+  for (final edit in edits) {
+    if (edit.end <= offset) {
+      translated += edit.replacement.length - (edit.end - edit.start);
+    } else if (edit.start < offset && edit.end > offset) {
+      translated = edit.start + edit.replacement.length;
+    }
+  }
+  return translated;
+}
+
+int _translateFieldBoundary(int offset, List<SpellingFieldEdit> edits) {
   var translated = offset;
   for (final edit in edits) {
     if (edit.end <= offset) {

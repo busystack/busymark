@@ -72,6 +72,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             .where((entry) => entry.imported)
             .toList(growable: false) ??
         const <SpellingDictionaryInstallation>[];
+    final invalidImportedDictionaries =
+        spellingCatalog?.invalidInstallations
+            .where(
+              (entry) =>
+                  entry.kind == SpellingDictionaryInstallationKind.imported,
+            )
+            .toList(growable: false) ??
+        const <SpellingInvalidDictionaryInstallation>[];
     _prepareSpellingSettings(spelling, workspace?.id);
     final colors = BusyMarkSurfaceColors.of(context);
     final headerBar = ref.watch(linuxHeaderBarServiceProvider);
@@ -189,6 +197,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               destructive: true,
               onTap: () => unawaited(
                 _removeImportedSpellingDictionary(context, spelling, entry.id),
+              ),
+            ),
+          for (final entry in invalidImportedDictionaries)
+            BusyMarkActionRow(
+              title: entry.id ?? entry.resourceId ?? entry.directoryPath,
+              subtitle: entry.error,
+              leading: const Icon(BusyMarkGlyphs.warning),
+              trailing: const Icon(BusyMarkGlyphs.delete),
+              destructive: true,
+              onTap: () => unawaited(
+                _removeInvalidSpellingDictionary(context, spelling, entry),
               ),
             ),
           _SpellingWordStoreRow(
@@ -870,6 +889,18 @@ Future<void> _removeImportedSpellingDictionary(
 ) async {
   try {
     await spelling.removeImportedDictionary(languageId);
+  } on Object {
+    if (context.mounted) _showSpellingSettingsFailure(context);
+  }
+}
+
+Future<void> _removeInvalidSpellingDictionary(
+  BuildContext context,
+  SpellingSessionController spelling,
+  SpellingInvalidDictionaryInstallation installation,
+) async {
+  try {
+    await spelling.removeInvalidDictionary(installation);
   } on Object {
     if (context.mounted) _showSpellingSettingsFailure(context);
   }

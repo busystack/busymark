@@ -186,6 +186,7 @@ final class SpellingFormattingWrapper {
     this.fieldOpeningEnd,
     this.fieldClosingStart,
     this.fieldClosingEnd,
+    this.structuralKind,
   });
 
   final int logicalStart;
@@ -199,6 +200,7 @@ final class SpellingFormattingWrapper {
   final int? fieldOpeningEnd;
   final int? fieldClosingStart;
   final int? fieldClosingEnd;
+  final String? structuralKind;
 }
 
 final class SpellingProseRun {

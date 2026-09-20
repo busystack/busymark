@@ -358,6 +358,52 @@ Beforee %hiddenvariable% afterrr.
       }
     });
 
+    test('validates formatting gaps in regional coordinates', () {
+      for (final source in ['he**llo**x\n', 'intro\n\nhe**llo**x\n']) {
+        final projected = const MarkdownSpellingProjector().project(
+          filePath: '/tmp/regional.md',
+          source: source,
+          mode: MarkdownMode.commonMark,
+          languageId: 'en-US',
+          snapshot: _snapshot,
+        );
+        final run = projected.runs.firstWhere(
+          (candidate) => candidate.text == 'hellox',
+        );
+
+        expect(
+          const SpellingReplacementPlanner()
+              .build(occurrence: _rejected(run, 'hellox'), suggestion: 'hello')
+              .applyToSource(source),
+          source.replaceFirst('he**llo**x', 'he**llo**'),
+        );
+      }
+    });
+
+    test('accepts canonically equivalent mapped replacement text', () {
+      const source = 'prefix\n\ncafe\u0301x\n';
+      final projected = const MarkdownSpellingProjector().project(
+        filePath: '/tmp/unicode.md',
+        source: source,
+        mode: MarkdownMode.commonMark,
+        languageId: 'en-US',
+        snapshot: _snapshot,
+      );
+      final run = projected.runs.singleWhere(
+        (candidate) => candidate.text.contains('cafe\u0301x'),
+      );
+
+      expect(
+        const SpellingReplacementPlanner()
+            .build(
+              occurrence: _rejected(run, 'cafe\u0301x'),
+              suggestion: 'café',
+            )
+            .applyToSource(source),
+        'prefix\n\ncafe\u0301\n',
+      );
+    });
+
     test(
       'link titles use exact quote boundaries before trailing whitespace',
       () {
@@ -444,6 +490,29 @@ before $hiddenmath$ aftermath
       expect(texts.join(' '), isNot(contains('hiddencontainercode')));
       expect(texts.join(' '), isNot(contains('hiddenmath')));
       expect(texts.every((text) => text != 'parentt nestedd'), isTrue);
+    });
+
+    test('projects semantic HTML prose and trusts parser math nodes', () {
+      const source =
+          '''<div title="Readablee"><p>mispelled</p><code>hiddenbad</code></div>
+
+Price \$ 5, mispelled \$ 6 and actual \$hiddenmath\$ tail.
+''';
+      final projected = const MarkdownSpellingProjector().project(
+        filePath: '/tmp/html.md',
+        source: source,
+        mode: MarkdownMode.commonMark,
+        languageId: 'en-US',
+        snapshot: _snapshot,
+      );
+      final text = projected.runs.map((run) => run.text).join('\n');
+
+      expect(projected.complete, isTrue, reason: projected.message);
+      expect(text, contains('Readablee'));
+      expect(text, contains('mispelled'));
+      expect(text, contains(r'Price $ 5, mispelled $ 6'));
+      expect(text, isNot(contains('hiddenbad')));
+      expect(text, isNot(contains('hiddenmath')));
     });
 
     test('large formatting-heavy projection and correction stay bounded', () {
@@ -596,6 +665,64 @@ before $hiddenmath$ aftermath
       expect(text, contains(r'%\escaped%'));
       expect(text, contains('Titlle'));
       expect(text, contains('Setttings'));
+    });
+
+    test('excludes entity-encoded variables after XML decoding', () {
+      const source = r'''<topic id="sample">
+  <p>before %project&#110;ame% after &#37;other_name% literal %\escaped%</p>
+  <p title="prefix %pro&#106;ect% suffix">tail</p>
+</topic>''';
+      final projected = const WritersideXmlSpellingProjector().project(
+        filePath: '/tmp/encoded-variables.topic',
+        source: source,
+        languageId: 'en-US',
+        snapshot: const SpellingSnapshotIdentity(
+          bufferId: 'xml',
+          contentRevision: 1,
+          documentKind: DocumentKind.writersideXmlTopic,
+          contextGeneration: 1,
+        ),
+      );
+      final text = projected.runs.map((run) => run.text).join('\n');
+
+      expect(projected.complete, isTrue, reason: projected.message);
+      expect(text, contains('before '));
+      expect(text, contains(' after '));
+      expect(text, contains(r'literal %\escaped%'));
+      expect(text, isNot(contains('projectname')));
+      expect(text, isNot(contains('other_name')));
+      expect(text, isNot(contains('project')));
+    });
+
+    test('keeps decomposed Unicode in XML and CDATA corrections', () {
+      for (final source in [
+        '<topic><p>cafe\u0301x</p></topic>',
+        '<topic><p><![CDATA[cafe\u0301x]]></p></topic>',
+      ]) {
+        final projected = const WritersideXmlSpellingProjector().project(
+          filePath: '/tmp/unicode.topic',
+          source: source,
+          languageId: 'en-US',
+          snapshot: const SpellingSnapshotIdentity(
+            bufferId: 'xml',
+            contentRevision: 1,
+            documentKind: DocumentKind.writersideXmlTopic,
+            contextGeneration: 1,
+          ),
+        );
+        final run = projected.runs.singleWhere(
+          (candidate) => candidate.text.contains('cafe\u0301x'),
+        );
+        expect(
+          const SpellingReplacementPlanner()
+              .build(
+                occurrence: _rejected(run, 'cafe\u0301x'),
+                suggestion: 'café',
+              )
+              .applyToSource(source),
+          source.replaceFirst('cafe\u0301x', 'cafe\u0301'),
+        );
+      }
     });
   });
 
@@ -959,6 +1086,12 @@ before $hiddenmath$ aftermath
               suggestion: 'hello',
               expected: r'hello $x$',
             ),
+            (
+              cell: r'he***x***llo $x$',
+              word: 'hexllo',
+              suggestion: 'hello',
+              expected: r'hello $x$',
+            ),
           ]) {
         final source = '| Value |\n| --- |\n| ${fixture.cell} |\n';
         final document = const MarkdownParser()
@@ -1003,32 +1136,47 @@ before $hiddenmath$ aftermath
     });
 
     test('corrects formatted and encoded prose in math source fields', () {
-      for (final fixture in <({String source, String expected})>[
-        (
-          source:
-              r'mispel**led** $x$'
-              '\n',
-          expected:
-              r'misspel**led** $x$'
-              '\n',
-        ),
-        (
-          source:
-              r'mispell&#101;d $x$'
-              '\n',
-          expected:
-              r'misspelled $x$'
-              '\n',
-        ),
-        (
-          source:
-              r'he**x**llo $x$'
-              '\n',
-          expected:
-              r'hello $x$'
-              '\n',
-        ),
-      ]) {
+      for (final fixture
+          in <
+            ({String source, String word, String suggestion, String expected})
+          >[
+            (
+              source:
+                  r'mispel**led** $x$'
+                  '\n',
+              expected:
+                  r'misspel**led** $x$'
+                  '\n',
+              word: 'mispelled',
+              suggestion: 'misspelled',
+            ),
+            (
+              source:
+                  r'mispell&#101;d $x$'
+                  '\n',
+              expected:
+                  r'misspelled $x$'
+                  '\n',
+              word: 'mispelled',
+              suggestion: 'misspelled',
+            ),
+            (
+              source:
+                  r'he**x**llo $x$'
+                  '\n',
+              expected:
+                  r'hello $x$'
+                  '\n',
+              word: 'hexllo',
+              suggestion: 'hello',
+            ),
+            (
+              source: 'cafe\u0301x \$x\$\n',
+              expected: 'cafe\u0301 \$x\$\n',
+              word: 'cafe\u0301x',
+              suggestion: 'café',
+            ),
+          ]) {
         final document = const MarkdownParser()
             .parse(
               filePath: '/tmp/math-rich.md',
@@ -1044,14 +1192,11 @@ before $hiddenmath$ aftermath
           documentGeneration: 7,
         );
         final run = projected.runs.firstWhere(
-          (candidate) =>
-              candidate.text.contains('mispelled') ||
-              candidate.text.contains('hexllo'),
+          (candidate) => candidate.text.contains(fixture.word),
         );
-        final word = run.text.contains('mispelled') ? 'mispelled' : 'hexllo';
         final plan = const SpellingReplacementPlanner().build(
-          occurrence: _rejected(run, word),
-          suggestion: word == 'hexllo' ? 'hello' : 'misspelled',
+          occurrence: _rejected(run, fixture.word),
+          suggestion: fixture.suggestion,
         );
         final controller = BusyMarkWysiwygDocumentController(
           document: document,
@@ -1070,6 +1215,45 @@ before $hiddenmath$ aftermath
         );
         expect(controller.markdown, fixture.expected);
       }
+    });
+
+    test('owns every nested wrapper in paragraph math-source fields', () {
+      const source = 'he***x***llo \$y\$\n';
+      final document = const MarkdownParser()
+          .parse(
+            filePath: '/tmp/nested-math-rich.md',
+            source: source,
+            mode: MarkdownMode.commonMark,
+            validateLocalReferences: false,
+          )
+          .busyDocument;
+      final projected = const WysiwygSpellingProjector().project(
+        document: document,
+        languageId: 'en-US',
+        snapshot: _snapshot,
+        documentGeneration: 10,
+      );
+      final run = projected.runs.singleWhere(
+        (candidate) => candidate.text.contains('hexllo'),
+      );
+      final target = run.target as SpellingRichBlockTarget;
+      final controller = BusyMarkWysiwygDocumentController(document: document);
+      final plan = const SpellingReplacementPlanner().build(
+        occurrence: _rejected(run, 'hexllo'),
+        suggestion: 'hello',
+      );
+
+      expect(
+        controller.replaceSpellingInBlock(
+          blockId: target.blockId,
+          expectedFieldText: busyMarkWysiwygEditableText(
+            controller.blockById(target.blockId)!,
+          ),
+          plan: plan,
+        ),
+        isTrue,
+      );
+      expect(controller.markdown, 'hello \$y\$\n');
     });
   });
 }

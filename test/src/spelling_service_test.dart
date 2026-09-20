@@ -15,6 +15,7 @@ import 'package:busymark/src/spellcheck/spelling_dictionary_downloader.dart';
 import 'package:busymark/src/spellcheck/spelling_dictionary_importer.dart';
 import 'package:busymark/src/spellcheck/spelling_dictionary_installer.dart';
 import 'package:busymark/src/spellcheck/spelling_projection.dart';
+import 'package:busymark/src/spellcheck/spelling_replacement.dart';
 import 'package:busymark/src/spellcheck/spelling_session_controller.dart';
 import 'package:busymark/src/spellcheck/spelling_word_store.dart';
 import 'package:busymark/src/spellcheck/spelling_worker.dart';
@@ -75,6 +76,99 @@ void main() {
         containsAll(<String>['BusyMark', 'BusyStack']),
       );
       expect(saved.revision, 3);
+    });
+
+    test('coordinates writers in independent application processes', () async {
+      final flutterRoot = Platform.environment['FLUTTER_ROOT'];
+      final dartExecutable = flutterRoot == null
+          ? 'dart'
+          : p.join(flutterRoot, 'bin', 'cache', 'dart-sdk', 'bin', 'dart');
+      final helper = p.join(
+        Directory.current.path,
+        'test',
+        'support',
+        'spelling_word_store_process.dart',
+      );
+      final results = await Future.wait([
+        Process.run(dartExecutable, [
+          '--packages=.dart_tool/package_config.json',
+          helper,
+          path,
+          'BusyMark',
+        ], workingDirectory: Directory.current.path),
+        Process.run(dartExecutable, [
+          '--packages=.dart_tool/package_config.json',
+          helper,
+          path,
+          'BusyStack',
+        ], workingDirectory: Directory.current.path),
+      ]);
+      for (final result in results) {
+        expect(
+          result.exitCode,
+          0,
+          reason: '${result.stdout}\n${result.stderr}',
+        );
+      }
+
+      final saved = await SpellingWordStore(
+        filePath: path,
+        projectStore: true,
+      ).read();
+      expect(saved.wordsFor('en-US'), containsAll(['BusyMark', 'BusyStack']));
+      expect(saved.revision, 2);
+    });
+
+    test('merges an external edit injected after staging', () async {
+      final delayed = _DelayedAtomicFileWriter();
+      addTearDown(delayed.releaseIfNeeded);
+      final store = SpellingWordStore(filePath: path, writer: delayed);
+      final mutation = store.addWord('en-US', 'BusyMark');
+      await delayed.started.future;
+      await File(path).writeAsString(
+        jsonEncode({
+          'schemaVersion': 1,
+          'revision': 7,
+          'words': {
+            'en-US': [
+              {'key': 'BusyStack', 'display': 'BusyStack'},
+            ],
+          },
+        }),
+        flush: true,
+      );
+      delayed.releaseIfNeeded();
+
+      final saved = await mutation;
+      expect(saved.wordsFor('en-US'), containsAll(['BusyMark', 'BusyStack']));
+      expect(saved.revision, 8);
+    });
+
+    test('merges an external replacement after the atomic exchange', () async {
+      await SpellingWordStore(filePath: path).addWord('en-US', 'InitialWord');
+      final exchanged = _PostExchangeAtomicFileWriter();
+      addTearDown(exchanged.releaseIfNeeded);
+      final store = SpellingWordStore(filePath: path, writer: exchanged);
+      final mutation = store.addWord('en-US', 'BusyMark');
+      await exchanged.exchanged.future;
+
+      await File(path).writeAsString(
+        jsonEncode({
+          'schemaVersion': 1,
+          'revision': 7,
+          'words': {
+            'en-US': [
+              {'key': 'BusyStack', 'display': 'BusyStack'},
+            ],
+          },
+        }),
+        flush: true,
+      );
+      exchanged.releaseIfNeeded();
+
+      final saved = await mutation;
+      expect(saved.wordsFor('en-US'), containsAll(['BusyMark', 'BusyStack']));
+      expect(saved.revision, 8);
     });
 
     test(
@@ -679,6 +773,96 @@ void main() {
       expect(controller.catalog!.installedById('nl-NL')!.id, 'nl-AW');
     },
   );
+
+  test(
+    'same-resource import collision is rejected before publication',
+    () async {
+      final temporary = await Directory.systemTemp.createTemp(
+        'busymark-import-collision-',
+      );
+      addTearDown(() async {
+        if (await temporary.exists()) await temporary.delete(recursive: true);
+      });
+      final bundle = await _createFixtureBundle(temporary);
+      final fixtureRoot = p.join(
+        Directory.current.path,
+        'packages',
+        'busymark_spellcheck_native',
+        'test',
+        'fixtures',
+      );
+      final storage = p.join(temporary.path, 'dictionary-storage');
+      final controller = SpellingSessionController(
+        bundledRoot: bundle,
+        applicationSupportRoot: p.join(temporary.path, 'support'),
+        dictionaryStorageRoot: storage,
+        verifyDictionaryChecksums: false,
+      );
+      addTearDown(controller.dispose);
+      await controller.prepareSettings(null);
+
+      await expectLater(
+        controller.importDictionary(
+          affPath: p.join(fixtureRoot, 'test.aff'),
+          dicPath: p.join(fixtureRoot, 'test.dic'),
+          languageId: 'en-Test',
+          displayLabel: 'Imported Test English',
+        ),
+        throwsStateError,
+      );
+      expect(await _publishedDirectories(p.join(storage, 'imported')), isEmpty);
+      expect(controller.catalog!.installedById('en-Test')!.imported, isFalse);
+    },
+  );
+
+  test('invalid imported installation is removable by exact record', () async {
+    final temporary = await Directory.systemTemp.createTemp(
+      'busymark-invalid-import-',
+    );
+    addTearDown(() async {
+      if (await temporary.exists()) await temporary.delete(recursive: true);
+    });
+    final bundle = await _createFixtureBundle(temporary);
+    final storage = p.join(temporary.path, 'dictionary-storage');
+    final broken = Directory(p.join(storage, 'imported', 'xx-Test'));
+    await broken.create(recursive: true);
+    await File(p.join(broken.path, 'manifest.json')).writeAsString(
+      jsonEncode({
+        'schemaVersion': 1,
+        'kind': 'imported',
+        'resourceId': 'xx-Test',
+        'id': 'xx-Test',
+        'locales': ['xx-Test'],
+        'label': 'Broken import',
+        'sourceRevision': 'local-import',
+        'affPath': 'missing.aff',
+        'dicPath': 'missing.dic',
+        'affSha256': '0' * 64,
+        'dicSha256': '0' * 64,
+      }),
+    );
+    final controller = SpellingSessionController(
+      bundledRoot: bundle,
+      applicationSupportRoot: p.join(temporary.path, 'support'),
+      dictionaryStorageRoot: storage,
+      verifyDictionaryChecksums: false,
+    );
+    addTearDown(controller.dispose);
+    await controller.prepareSettings(null);
+    final invalid = controller.catalog!.invalidInstallations.singleWhere(
+      (entry) => entry.id == 'xx-Test',
+    );
+
+    await controller.removeInvalidDictionary(invalid);
+
+    expect(await broken.exists(), isFalse);
+    expect(
+      controller.catalog!.invalidInstallations.where(
+        (entry) => entry.id == 'xx-Test',
+      ),
+      isEmpty,
+    );
+  });
 
   test(
     'invalid downloaded installation repairs through settings API',
@@ -1467,10 +1651,11 @@ void main() {
     });
     final bundle = await _createFixtureBundle(temporary);
     final root = p.join(temporary.path, 'project');
+    await Directory(root).create(recursive: true);
     final storeFile = File(p.join(root, '.busymark', 'spelling.json'));
-    await storeFile.parent.create(recursive: true);
-    await storeFile.writeAsString(
-      jsonEncode({'schemaVersion': 1, 'revision': 1, 'words': {}}),
+    final externalStore = SpellingWordStore(
+      filePath: storeFile.path,
+      projectStore: true,
     );
     final controller = SpellingSessionController(
       bundledRoot: bundle,
@@ -1495,18 +1680,33 @@ void main() {
     );
     expect(controller.misspellings.single.word, 'BusyBrand');
 
-    await storeFile.writeAsString(
-      jsonEncode({
-        'schemaVersion': 1,
-        'revision': 2,
-        'words': {
-          'en-Test': [
-            {'key': 'ignored', 'display': 'BusyBrand'},
-          ],
-        },
-      }),
-      flush: true,
+    await externalStore.addWord('en-Test', 'BusyBrand');
+    await _waitFor(
+      () =>
+          controller.projectWords.revision == 1 &&
+          controller.state.status == SpellingPresentationStatus.ready &&
+          controller.misspellings.isEmpty,
     );
+    expect(controller.projectWords.wordsFor('en-Test'), ['BusyBrand']);
+
+    // Replace the inode while deliberately retaining the same revision. The
+    // effective-word fingerprint, rather than the advisory counter, must
+    // rebuild the native dictionary and invalidate checked-run caches.
+    await const AtomicFileWriter().writeBytes(
+      storeFile.path,
+      utf8.encode(
+        '${jsonEncode({'schemaVersion': 1, 'revision': 1, 'words': {}})}\n',
+      ),
+      overwrite: true,
+    );
+    await _waitFor(
+      () =>
+          controller.projectWords.wordsFor('en-Test').isEmpty &&
+          controller.state.status == SpellingPresentationStatus.ready &&
+          controller.misspellings.singleOrNull?.word == 'BusyBrand',
+    );
+
+    await externalStore.addWord('en-Test', 'BusyBrand');
     await _waitFor(
       () =>
           controller.projectWords.revision == 2 &&
@@ -1514,7 +1714,18 @@ void main() {
           controller.misspellings.isEmpty,
     );
 
-    expect(controller.projectWords.wordsFor('en-Test'), ['BusyBrand']);
+    await storeFile.parent.delete(recursive: true);
+    await _waitFor(
+      () =>
+          controller.projectWords.wordsFor('en-Test').isEmpty &&
+          controller.misspellings.singleOrNull?.word == 'BusyBrand',
+    );
+    await externalStore.addWord('en-Test', 'BusyBrand');
+    await _waitFor(
+      () =>
+          controller.projectWords.wordsFor('en-Test').contains('BusyBrand') &&
+          controller.misspellings.isEmpty,
+    );
   });
 
   testWidgets(
@@ -1528,6 +1739,7 @@ void main() {
       late final SpellingSessionController controller;
       late DocumentBuffer buffer;
       late final AppSettings settings;
+      final personalWriter = _ToggleFailAtomicFileWriter();
       await tester.runAsync(() async {
         temporary = await Directory.systemTemp.createTemp(
           'busymark-review-dialog-',
@@ -1545,6 +1757,13 @@ void main() {
               _ => const [],
             },
           ),
+          wordStoreFactory:
+              ({required String filePath, required bool projectStore}) =>
+                  SpellingWordStore(
+                    filePath: filePath,
+                    projectStore: projectStore,
+                    writer: personalWriter,
+                  ),
         );
         buffer = DocumentBuffer.untitled(
           id: 'review-dialog',
@@ -1582,6 +1801,7 @@ void main() {
       ]);
       final reveals = <String>[];
       final l10n = AppLocalizationsEn();
+      var initialIndex = 0;
 
       await tester.pumpWidget(
         MaterialApp(
@@ -1593,16 +1813,22 @@ void main() {
                 context: context,
                 builder: (context) => BusyMarkSpellingReviewDialog(
                   spelling: controller,
-                  initialIndex: 0,
+                  initialIndex: initialIndex,
                   onReveal: (occurrence) => reveals.add(occurrence.word),
-                  onCorrect: (occurrence, suggestion) {
+                  onCorrect: (occurrence, suggestion) async {
                     final start = occurrence.sourceStart!;
                     final end = occurrence.sourceEnd!;
                     buffer = buffer.copyWith(
                       text: buffer.text.replaceRange(start, end, suggestion),
                       revision: buffer.revision + 1,
                     );
-                    return true;
+                    return SpellingReviewCorrection(
+                      target:
+                          'source:${(occurrence.run.target as SpellingSourceTarget).filePath}',
+                      start: start,
+                      oldEnd: end,
+                      newEnd: start + suggestion.length,
+                    );
                   },
                   onChooseLanguage: () async => false,
                 ),
@@ -1647,10 +1873,25 @@ void main() {
         (occurrence) => occurrence.word == 'eror',
       );
       expect(controller.isCurrent(erorOccurrence), isTrue);
-      final addPersonal = find.text(l10n.addPersonalSpellingWord);
+      final addPersonal = find.widgetWithText(
+        TextButton,
+        l10n.addPersonalSpellingWord,
+      );
       await tester.ensureVisible(addPersonal);
-      await tester.tap(addPersonal);
+      personalWriter.failWrites = true;
+      tester.widget<TextButton>(addPersonal).onPressed!.call();
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 500)),
+      );
       await tester.pump();
+      expect(find.text('eror'), findsOneWidget);
+      expect(
+        controller.personalWords.wordsFor('en-Test'),
+        isNot(contains('eror')),
+      );
+
+      personalWriter.failWrites = false;
+      tester.widget<TextButton>(addPersonal).onPressed!.call();
       await _pumpWidgetUntil(
         tester,
         () =>
@@ -1664,6 +1905,59 @@ void main() {
         tester,
         () => controller.state.status == SpellingPresentationStatus.ready,
       );
+
+      buffer = DocumentBuffer.untitled(
+        id: 'review-dialog-wrap',
+        name: 'review-wrap.md',
+        text: 'helo\n\nhelo\n\nhelo',
+      );
+      await tester.runAsync(() => controller.checkNow(input()));
+      initialIndex = 2;
+      await tester.tap(find.text('Open review'));
+      await _pumpWidgetUntil(
+        tester,
+        () => find.text('hello').evaluate().isNotEmpty,
+      );
+      await tester.tap(find.text('hello'));
+      await tester.runAsync(() => controller.checkNow(input()));
+      await tester.pump();
+
+      expect(tester.takeException(), isNull);
+      expect(find.byType(BusyMarkSpellingReviewDialog), findsOneWidget);
+      expect(controller.misspellings, hasLength(2));
+      expect(buffer.text, 'helo\n\nhelo\n\nhello');
+      await _pumpWidgetUntil(
+        tester,
+        () => find.text('hello').evaluate().isNotEmpty,
+      );
+      await tester.tap(find.text('hello'));
+      await tester.runAsync(() => controller.checkNow(input()));
+      await tester.pump();
+      expect(tester.takeException(), isNull);
+      expect(buffer.text, 'hello\n\nhelo\n\nhello');
+      await tester.tap(find.text(l10n.close));
+      await tester.pumpAndSettle();
+
+      buffer = DocumentBuffer.untitled(
+        id: 'review-dialog-batch',
+        name: 'review-batch.md',
+        text: List.filled(15, 'helo').join('\n\n'),
+      );
+      await tester.runAsync(() => controller.checkNow(input()));
+      initialIndex = 13;
+      await tester.tap(find.text('Open review'));
+      await _pumpWidgetUntil(
+        tester,
+        () => find.text('hello').evaluate().isNotEmpty,
+      );
+      await tester.tap(find.text('hello'));
+      await tester.runAsync(() => controller.checkNow(input()));
+      await tester.pump();
+      expect(tester.takeException(), isNull);
+      expect(buffer.text.split('\n\n')[13], 'hello');
+      expect(find.byType(BusyMarkSpellingReviewDialog), findsOneWidget);
+      await tester.tap(find.text(l10n.close));
+      await tester.pumpAndSettle();
     },
   );
 
@@ -1921,6 +2215,50 @@ void main() {
       },
     );
 
+    test('incrementally reuses unaffected plain Markdown runs', () async {
+      const firstSource = 'helo first\n\nwrld second\n';
+      const secondSource = 'hello first\n\nwrld second\n';
+      final first = await worker.project(
+        const SpellingProjectionJob(
+          filePath: '/tmp/incremental.md',
+          source: firstSource,
+          documentKind: DocumentKind.markdown,
+          markdownMode: MarkdownMode.commonMark,
+          languageId: 'en-Test',
+          snapshot: _snapshot,
+        ),
+      );
+      final second = await worker.project(
+        const SpellingProjectionJob(
+          filePath: '/tmp/incremental.md',
+          source: secondSource,
+          documentKind: DocumentKind.markdown,
+          markdownMode: MarkdownMode.commonMark,
+          languageId: 'en-Test',
+          snapshot: SpellingSnapshotIdentity(
+            bufferId: 'buffer',
+            contentRevision: 2,
+            documentKind: DocumentKind.markdown,
+            contextGeneration: 1,
+          ),
+        ),
+      );
+
+      expect(first.runs.map((run) => run.text), ['helo first', 'wrld second']);
+      expect(second.runs.map((run) => run.text), [
+        'hello first',
+        'wrld second',
+      ]);
+      expect(
+        secondSource.substring(
+          second.runs.last.atoms.first.sourceStart,
+          second.runs.last.atoms.last.sourceEnd,
+        ),
+        'wrld second',
+      );
+      expect(second.runs.last.snapshot.contentRevision, 2);
+    });
+
     test('project custom words do not leak between contexts', () async {
       final accepted = await worker.check(
         context: _fixtureContext(
@@ -1940,6 +2278,36 @@ void main() {
         rejected.occurrences.single.outcome,
         SpellingCheckOutcome.rejected,
       );
+    });
+
+    test('quoted corrections retain straight and curly punctuation', () async {
+      for (final fixture in [
+        (source: "'helo'", expected: "'hello'"),
+        (source: '‘helo’', expected: '‘hello’'),
+      ]) {
+        final run = const MarkdownSpellingProjector()
+            .project(
+              filePath: '/tmp/quoted.md',
+              source: fixture.source,
+              mode: MarkdownMode.commonMark,
+              languageId: 'en-Test',
+              snapshot: _snapshot,
+            )
+            .runs
+            .single;
+        final checked = await worker.check(
+          context: _fixtureContext(project: 'quoted', revision: 0),
+          runs: [run],
+        );
+        final occurrence = checked.occurrences.single;
+        expect(occurrence.word, 'helo');
+        expect(
+          const SpellingReplacementPlanner()
+              .build(occurrence: occurrence, suggestion: 'hello')
+              .applyToSource(fixture.source),
+          fixture.expected,
+        );
+      }
     });
 
     test('removing a custom exception does not forbid a base word', () async {
@@ -2027,25 +2395,26 @@ void main() {
         'Ελληνικά',
       );
 
-      final oversized = 'x' * (70 * 1024);
-      final oversizedText = 'helo $oversized helo';
-      final oversizedResult = await worker.check(
-        context: context,
-        runs: [_run(oversizedText)],
-      );
-      expect(oversizedResult.complete, isFalse);
-      expect(
-        oversizedResult.occurrences
-            .where((item) => item.outcome == SpellingCheckOutcome.rejected)
-            .map((item) => item.word),
-        ['helo', 'helo'],
-      );
-      final unchecked = oversizedResult.occurrences.singleWhere(
-        (item) => item.outcome == SpellingCheckOutcome.unchecked,
-      );
-      expect(unchecked.word.length, oversized.length);
-      expect(unchecked.logicalStart, 'helo '.length);
-      expect(unchecked.logicalEnd, 'helo '.length + oversized.length);
+      for (final oversized in ['x' * (70 * 1024), 'é' * (35 * 1024)]) {
+        final oversizedText = 'helo $oversized,wrld';
+        final oversizedResult = await worker.check(
+          context: context,
+          runs: [_run(oversizedText)],
+        );
+        expect(oversizedResult.complete, isFalse);
+        expect(
+          oversizedResult.occurrences
+              .where((item) => item.outcome == SpellingCheckOutcome.rejected)
+              .map((item) => item.word),
+          ['helo', 'wrld'],
+        );
+        final unchecked = oversizedResult.occurrences.singleWhere(
+          (item) => item.outcome == SpellingCheckOutcome.unchecked,
+        );
+        expect(unchecked.word, oversized);
+        expect(unchecked.logicalStart, 'helo '.length);
+        expect(unchecked.logicalEnd, 'helo '.length + oversized.length);
+      }
     });
 
     test('normal, large, and superseded checks stay bounded', () async {
@@ -2369,9 +2738,75 @@ final class _DelayedAtomicFileWriter extends AtomicFileWriter {
     String targetPath,
     List<int> bytes, {
     required bool overwrite,
+    FutureOr<void> Function()? beforePublish,
+    FutureOr<bool> Function(String replacedPath)? acceptReplaced,
   }) async {
-    if (!started.isCompleted) started.complete();
-    await _release.future;
-    await super.writeBytes(targetPath, bytes, overwrite: overwrite);
+    await super.writeBytes(
+      targetPath,
+      bytes,
+      overwrite: overwrite,
+      beforePublish: () async {
+        if (!started.isCompleted) started.complete();
+        await _release.future;
+        await beforePublish?.call();
+      },
+      acceptReplaced: acceptReplaced,
+    );
+  }
+}
+
+final class _ToggleFailAtomicFileWriter extends AtomicFileWriter {
+  bool failWrites = false;
+
+  @override
+  Future<void> writeBytes(
+    String targetPath,
+    List<int> bytes, {
+    required bool overwrite,
+    FutureOr<void> Function()? beforePublish,
+    FutureOr<bool> Function(String replacedPath)? acceptReplaced,
+  }) async {
+    if (failWrites) {
+      throw FileSystemException('Injected spelling word-store failure.');
+    }
+    await super.writeBytes(
+      targetPath,
+      bytes,
+      overwrite: overwrite,
+      beforePublish: beforePublish,
+      acceptReplaced: acceptReplaced,
+    );
+  }
+}
+
+final class _PostExchangeAtomicFileWriter extends AtomicFileWriter {
+  final Completer<void> exchanged = Completer<void>();
+  final Completer<void> _release = Completer<void>();
+
+  void releaseIfNeeded() {
+    if (!_release.isCompleted) _release.complete();
+  }
+
+  @override
+  Future<void> writeBytes(
+    String targetPath,
+    List<int> bytes, {
+    required bool overwrite,
+    FutureOr<void> Function()? beforePublish,
+    FutureOr<bool> Function(String replacedPath)? acceptReplaced,
+  }) async {
+    await super.writeBytes(
+      targetPath,
+      bytes,
+      overwrite: overwrite,
+      beforePublish: beforePublish,
+      acceptReplaced: acceptReplaced == null
+          ? null
+          : (replacedPath) async {
+              if (!exchanged.isCompleted) exchanged.complete();
+              await _release.future;
+              return acceptReplaced(replacedPath);
+            },
+    );
   }
 }

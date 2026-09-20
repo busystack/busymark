@@ -141,6 +141,8 @@ final class SpellingSessionController extends ChangeNotifier {
   StreamSubscription<FileSystemEvent>? _projectStoreWatcher;
   Timer? _projectStoreReloadDebounce;
   String? _watchedProjectFile;
+  String? _watchedProjectDirectory;
+  int _projectWatcherGeneration = 0;
 
   SpellingPresentationState get state => _presentationUsesLocalState
       ? _localState
@@ -305,6 +307,29 @@ final class SpellingSessionController extends ChangeNotifier {
     required String displayLabel,
   }) async {
     await _ensureStorageRoot();
+    await _initializeStorage(_latestInput?.workspace ?? _settingsWorkspace);
+    final normalizedLanguage = normalizeSpellingLanguageId(languageId);
+    if (normalizedLanguage == null) {
+      throw const FormatException('Choose an explicit valid language tag.');
+    }
+    final collision =
+        _catalog?.installations.any(
+          (installation) => installation.resourceId == normalizedLanguage,
+        ) ??
+        false;
+    final invalidCollision =
+        _catalog?.invalidInstallations.any(
+          (installation) =>
+              installation.resourceId == normalizedLanguage ||
+              installation.id == normalizedLanguage,
+        ) ??
+        false;
+    if (collision || invalidCollision) {
+      throw StateError(
+        'A dictionary installation already uses $normalizedLanguage. '
+        'Remove it before importing a replacement.',
+      );
+    }
     final dictionaryRoot = await _ensureDictionaryStorageRoot();
     await _ensureCoordinator();
     final coordinator = _coordinator;
@@ -338,6 +363,21 @@ final class SpellingSessionController extends ChangeNotifier {
         invalid.kind == SpellingDictionaryInstallationKind.imported) {
       await _releaseAndRemoveInvalidInstallation(invalid);
     }
+  }
+
+  Future<void> removeInvalidDictionary(
+    SpellingInvalidDictionaryInstallation installation,
+  ) async {
+    await _initializeStorage(_latestInput?.workspace ?? _settingsWorkspace);
+    final current =
+        _catalog?.invalidInstallations.any(
+          (candidate) =>
+              candidate.directoryPath == installation.directoryPath &&
+              candidate.kind == installation.kind,
+        ) ??
+        false;
+    if (!current) return;
+    await _releaseAndRemoveInvalidInstallation(installation);
   }
 
   Future<void> installDictionary(String languageId) async {
@@ -536,22 +576,11 @@ final class SpellingSessionController extends ChangeNotifier {
         _coordinator!.showDictionaryNotInstalled(languageId);
         return;
       }
-      final contextIdentity = [
-        languageId,
-        installation.fingerprint,
-        _personalWords.revision,
-        _projectRoot ?? '',
-        _projectWords.revision,
-      ].join('\u0000');
-      if (contextIdentity != _contextIdentity) {
-        _contextIdentity = contextIdentity;
-        _contextGeneration++;
-      }
       final customWords = <String>{
         ..._personalWords.wordsFor(languageId),
         ..._projectWords.wordsFor(languageId),
       }.toList(growable: false);
-      _engineContext = SpellingEngineContext(
+      final nextEngineContext = SpellingEngineContext(
         languageId: languageId,
         affPath: installation.affPath,
         dicPath: installation.dicPath,
@@ -561,6 +590,11 @@ final class SpellingSessionController extends ChangeNotifier {
         projectRevision: _projectWords.revision,
         customWords: customWords,
       );
+      if (nextEngineContext.identity != _contextIdentity) {
+        _contextIdentity = nextEngineContext.identity;
+        _contextGeneration++;
+      }
+      _engineContext = nextEngineContext;
       final snapshot = SpellingSnapshotIdentity(
         bufferId: input.buffer.id,
         contentRevision: input.buffer.revision,
@@ -785,27 +819,85 @@ final class SpellingSessionController extends ChangeNotifier {
     final normalizedFile = filePath == null
         ? null
         : p.normalize(p.absolute(filePath));
-    if (_watchedProjectFile == normalizedFile) return;
+    if (_watchedProjectFile == normalizedFile && _projectStoreWatcher != null) {
+      return;
+    }
     _watchedProjectFile = normalizedFile;
     _projectStoreReloadDebounce?.cancel();
     _projectStoreReloadDebounce = null;
+    _installProjectStoreWatcher(projectRoot, normalizedFile);
+  }
+
+  void _installProjectStoreWatcher(
+    String? projectRoot,
+    String? normalizedFile,
+  ) {
+    final generation = ++_projectWatcherGeneration;
     unawaited(_projectStoreWatcher?.cancel());
     _projectStoreWatcher = null;
-    if (projectRoot == null || normalizedFile == null) return;
-    final directory = Directory(projectRoot);
-    if (!directory.existsSync()) return;
-    final file = File(normalizedFile);
-    final events = file.existsSync()
-        ? file.watch()
-        : directory.watch(recursive: true);
-    _projectStoreWatcher = events.listen((event) {
-      if (p.normalize(p.absolute(event.path)) != normalizedFile) return;
+    _watchedProjectDirectory = null;
+    if (projectRoot == null || normalizedFile == null || _disposed) return;
+
+    final desiredParent = p.dirname(normalizedFile);
+    var watchedDirectory = desiredParent;
+    while (!Directory(watchedDirectory).existsSync()) {
+      final parent = p.dirname(watchedDirectory);
+      if (parent == watchedDirectory ||
+          !p.isWithin(p.normalize(p.absolute(projectRoot)), parent) &&
+              p.normalize(p.absolute(projectRoot)) != parent) {
+        watchedDirectory = p.normalize(p.absolute(projectRoot));
+        break;
+      }
+      watchedDirectory = parent;
+    }
+    if (!Directory(watchedDirectory).existsSync()) return;
+    _watchedProjectDirectory = watchedDirectory;
+
+    late final StreamSubscription<FileSystemEvent> subscription;
+    void reinstallAndReload() {
+      if (_disposed ||
+          generation != _projectWatcherGeneration ||
+          _watchedProjectFile != normalizedFile) {
+        return;
+      }
       _projectStoreReloadDebounce?.cancel();
       _projectStoreReloadDebounce = Timer(
         const Duration(milliseconds: 100),
-        _reloadProjectWordsFromDisk,
+        () {
+          if (_disposed || generation != _projectWatcherGeneration) return;
+          final parentNowExists = Directory(desiredParent).existsSync();
+          if (parentNowExists && _watchedProjectDirectory != desiredParent) {
+            _installProjectStoreWatcher(projectRoot, normalizedFile);
+          }
+          unawaited(_reloadProjectWordsFromDisk());
+        },
       );
-    }, onError: (_) {});
+    }
+
+    subscription = Directory(watchedDirectory).watch().listen(
+      (event) {
+        final eventPath = p.normalize(p.absolute(event.path));
+        final relevant =
+            eventPath == normalizedFile ||
+            eventPath == desiredParent ||
+            p.isWithin(eventPath, normalizedFile) ||
+            p.isWithin(eventPath, desiredParent);
+        if (relevant) reinstallAndReload();
+      },
+      onError: (_) {
+        if (identical(_projectStoreWatcher, subscription)) {
+          _projectStoreWatcher = null;
+          reinstallAndReload();
+        }
+      },
+      onDone: () {
+        if (identical(_projectStoreWatcher, subscription)) {
+          _projectStoreWatcher = null;
+          reinstallAndReload();
+        }
+      },
+    );
+    _projectStoreWatcher = subscription;
   }
 
   Future<void> _reloadProjectWordsFromDisk() async {
@@ -886,6 +978,7 @@ final class SpellingSessionController extends ChangeNotifier {
     final refreshed = input.refreshed();
     _latestInput = refreshed;
     if (_manualReviewActive) {
+      _invalidatePresentation();
       final operation = ++_operation;
       await _prepareAndSchedule(refreshed, operation: operation, manual: true);
     } else {

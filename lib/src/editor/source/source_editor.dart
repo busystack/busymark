@@ -230,6 +230,28 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
     required SpellingOccurrence occurrence,
     required String suggestion,
   }) {
+    final before = spellingSourceSnapshot(occurrence);
+    if (before == null) return false;
+    late final SpellingReplacementPlan plan;
+    late final String after;
+    try {
+      plan = const SpellingReplacementPlanner().build(
+        occurrence: occurrence,
+        suggestion: suggestion,
+      );
+      after = plan.applyToSource(before);
+    } on Object {
+      return false;
+    }
+    return applyPreparedSpellingCorrection(
+      occurrence: occurrence,
+      plan: plan,
+      expectedSource: before,
+      replacementSource: after,
+    );
+  }
+
+  String? spellingSourceSnapshot(SpellingOccurrence occurrence) {
     final snapshot = occurrence.run.snapshot;
     final target = occurrence.run.target;
     if (snapshot.bufferId != (widget.documentId ?? widget.filePath) ||
@@ -241,28 +263,35 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
               occurrence.logicalStart,
               occurrence.logicalEnd,
             )) {
-      return false;
+      return null;
     }
-    final plan = const SpellingReplacementPlanner().build(
-      occurrence: occurrence,
-      suggestion: suggestion,
-    );
     final before = _controller.fullText;
     for (final atom in occurrence.atoms) {
       if (atom.sourceStart < 0 ||
           atom.sourceEnd > before.length ||
           atom.sourceEnd < atom.sourceStart) {
-        return false;
+        return null;
       }
     }
+    return before;
+  }
+
+  bool applyPreparedSpellingCorrection({
+    required SpellingOccurrence occurrence,
+    required SpellingReplacementPlan plan,
+    required String expectedSource,
+    required String replacementSource,
+  }) {
+    final snapshot = occurrence.run.snapshot;
     // Final guard and mutation are synchronous; no operation is awaited here.
     if (snapshot.bufferId != (widget.documentId ?? widget.filePath) ||
         snapshot.contentRevision != widget.editRevision ||
-        before != _controller.fullText) {
+        expectedSource != _controller.fullText) {
       return false;
     }
-    final after = plan.applyToSource(before);
-    if (after == before || plan.sourceEdits.isEmpty) return false;
+    if (replacementSource == expectedSource || plan.sourceEdits.isEmpty) {
+      return false;
+    }
     final start = plan.sourceEdits.map((edit) => edit.start).reduce(math.min);
     final selectionOffset = plan.resultingSourceCaret ?? start;
     _unfoldSourceRange(
@@ -271,9 +300,9 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
     );
     _applyFullEditingValue(
       TextEditingValue(
-        text: after,
+        text: replacementSource,
         selection: TextSelection.collapsed(
-          offset: selectionOffset.clamp(0, after.length),
+          offset: selectionOffset.clamp(0, replacementSource.length),
         ),
       ),
       origin: _SourceEditOrigin.spellingCorrection,

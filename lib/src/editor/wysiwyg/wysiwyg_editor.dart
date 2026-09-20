@@ -311,6 +311,73 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     required SpellingOccurrence occurrence,
     required String suggestion,
   }) {
+    final expectedFieldText = spellingFieldSnapshot(occurrence);
+    if (expectedFieldText == null) return false;
+    late final SpellingReplacementPlan plan;
+    String? preparedFieldText;
+    try {
+      plan = const SpellingReplacementPlanner().build(
+        occurrence: occurrence,
+        suggestion: suggestion,
+      );
+      if (plan.fieldEdits.isNotEmpty) {
+        preparedFieldText = plan.applyToField(expectedFieldText);
+      }
+    } on Object {
+      return false;
+    }
+    return applyPreparedSpellingCorrection(
+      occurrence: occurrence,
+      suggestion: suggestion,
+      plan: plan,
+      expectedFieldText: expectedFieldText,
+      preparedFieldText: preparedFieldText,
+    );
+  }
+
+  String? spellingFieldSnapshot(SpellingOccurrence occurrence) {
+    if (!_isSpellingOccurrenceCurrent(occurrence)) return null;
+    final target = occurrence.run.target;
+    if (target is! SpellingRichBlockTarget &&
+        target is! SpellingRichTableCellTarget) {
+      return null;
+    }
+    final targetId = switch (target) {
+      SpellingRichBlockTarget(:final blockId) => blockId,
+      SpellingRichTableCellTarget(:final cellId) => cellId,
+      _ => throw StateError('Unreachable spelling target.'),
+    };
+    final controller = target is SpellingRichTableCellTarget
+        ? _tableCellControllers[targetId]
+        : _textControllers[targetId];
+    final currentBlock = _documentController.blockById(targetId);
+    if (controller == null || currentBlock == null) return null;
+    final expectedFieldText = busyMarkWysiwygEditableText(currentBlock);
+    final start = occurrence.fieldStart;
+    final end = occurrence.fieldEnd;
+    if (controller.text != expectedFieldText ||
+        start == null ||
+        end == null ||
+        start < 0 ||
+        end < start ||
+        end > expectedFieldText.length ||
+        occurrence.run.text.substring(
+              occurrence.logicalStart,
+              occurrence.logicalEnd,
+            ) !=
+            occurrence.word) {
+      return null;
+    }
+    return expectedFieldText;
+  }
+
+  bool applyPreparedSpellingCorrection({
+    required SpellingOccurrence occurrence,
+    required String suggestion,
+    required SpellingReplacementPlan plan,
+    required String expectedFieldText,
+    String? preparedFieldText,
+  }) {
     if (!_isSpellingOccurrenceCurrent(occurrence)) return false;
     final target = occurrence.run.target;
     if (target is! SpellingRichBlockTarget &&
@@ -326,34 +393,10 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
         ? _tableCellControllers[targetId]
         : _textControllers[targetId];
     final currentBlock = _documentController.blockById(targetId);
-    if (controller == null || currentBlock == null) return false;
-    final expectedFieldText = busyMarkWysiwygEditableText(currentBlock);
     final start = occurrence.fieldStart;
-    final end = occurrence.fieldEnd;
-    if (controller.text != expectedFieldText ||
-        start == null ||
-        end == null ||
-        start < 0 ||
-        end < start ||
-        end > expectedFieldText.length ||
-        occurrence.run.text.substring(
-              occurrence.logicalStart,
-              occurrence.logicalEnd,
-            ) !=
-            occurrence.word) {
+    if (controller == null || currentBlock == null || start == null) {
       return false;
     }
-
-    late final SpellingReplacementPlan plan;
-    try {
-      plan = const SpellingReplacementPlanner().build(
-        occurrence: occurrence,
-        suggestion: suggestion,
-      );
-    } on Object {
-      return false;
-    }
-
     // Final guard: no asynchronous operation may occur between this check and
     // the structured mutation below.
     if (!_isSpellingOccurrenceCurrent(occurrence) ||
@@ -371,6 +414,7 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
           blockId: blockId,
           expectedFieldText: expectedFieldText,
           plan: plan,
+          preparedFieldText: preparedFieldText,
         ),
       SpellingRichTableCellTarget(:final tableBlockId, :final cellId) =>
         _documentController.replaceSpellingInTableCell(
@@ -378,6 +422,7 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
           cellId: cellId,
           expectedFieldText: expectedFieldText,
           plan: plan,
+          preparedFieldText: preparedFieldText,
         ),
       _ => false,
     };

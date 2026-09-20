@@ -473,6 +473,7 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     required String blockId,
     required String expectedFieldText,
     required SpellingReplacementPlan plan,
+    String? preparedFieldText,
   }) {
     final current = blockById(blockId);
     if (current == null ||
@@ -481,11 +482,17 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
       return false;
     }
     if (busyMarkWysiwygBlockContainsMath(current)) {
-      final updatedSource = _applySpellingFieldEdits(
-        expectedFieldText,
-        plan.fieldEdits,
-      );
-      if (updatedSource == null) return false;
+      late final String updatedSource;
+      if (preparedFieldText != null) {
+        if (preparedFieldText == expectedFieldText) return false;
+        updatedSource = preparedFieldText;
+      } else {
+        try {
+          updatedSource = plan.applyToField(expectedFieldText);
+        } on StateError {
+          return false;
+        }
+      }
       updateMathSource(blockId, updatedSource);
       return true;
     }
@@ -512,6 +519,7 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     required String cellId,
     required String expectedFieldText,
     required SpellingReplacementPlan plan,
+    String? preparedFieldText,
   }) {
     final table = blockById(tableBlockId);
     final current = blockById(cellId);
@@ -522,11 +530,17 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
       return false;
     }
     if (busyMarkWysiwygBlockContainsMath(current)) {
-      final updatedSource = _applySpellingFieldEdits(
-        expectedFieldText,
-        plan.fieldEdits,
-      );
-      if (updatedSource == null) return false;
+      late final String updatedSource;
+      if (preparedFieldText != null) {
+        if (preparedFieldText == expectedFieldText) return false;
+        updatedSource = preparedFieldText;
+      } else {
+        try {
+          updatedSource = plan.applyToField(expectedFieldText);
+        } on StateError {
+          return false;
+        }
+      }
       updateTableCellMarkdownSource(tableBlockId, cellId, updatedSource);
       return true;
     }
@@ -2665,20 +2679,6 @@ const _removableEmptyFormattingKinds = {
   BusyInlineKind.underline,
   BusyInlineKind.strikethrough,
 };
-
-String? _applySpellingFieldEdits(String source, List<SpellingFieldEdit> edits) {
-  if (edits.isEmpty) return null;
-  var result = source;
-  final descending = [...edits]
-    ..sort((left, right) => right.start.compareTo(left.start));
-  for (final edit in descending) {
-    if (edit.start < 0 || edit.end < edit.start || edit.end > result.length) {
-      return null;
-    }
-    result = result.replaceRange(edit.start, edit.end, edit.replacement);
-  }
-  return result == source ? null : result;
-}
 
 List<BusyInline> _textInlines(String text) {
   return [BusyInline(kind: BusyInlineKind.text, text: text)];

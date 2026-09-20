@@ -67,13 +67,17 @@ final class SpellingEngineContext {
   final int projectRevision;
   final List<String> customWords;
 
-  String get identity => [
-    languageId,
-    baseFingerprint,
-    personalRevision,
-    projectIdentity ?? '',
-    projectRevision,
-  ].join('\u0000');
+  String get identity {
+    final effectiveWords = [...customWords]..sort();
+    return [
+      languageId,
+      baseFingerprint,
+      personalRevision,
+      projectIdentity ?? '',
+      projectRevision,
+      for (final word in effectiveWords) '${word.length}:$word',
+    ].join('\u0000');
+  }
 
   Map<String, Object?> toMessage() => {
     'languageId': languageId,
@@ -319,6 +323,8 @@ final class _WorkerRuntime {
   final LinkedHashMap<String, String> _wordCache = LinkedHashMap();
   Map<Object?, Object?>? _newestCheck;
   final List<Map<Object?, Object?>> _sideRequestQueue = [];
+  final LinkedHashMap<String, _ProjectionCacheEntry> _projectionCache =
+      LinkedHashMap();
   bool _busy = false;
   int _cancelGeneration = 0;
 
@@ -637,31 +643,77 @@ final class _WorkerRuntime {
       final source = job['source'].toString();
       final languageId = job['languageId'].toString();
       final richDocument = job['richDocument'];
-      final projection = richDocument is BusyDocument
-          ? const WysiwygSpellingProjector().project(
-              document: richDocument,
+      final cacheKey =
+          '${snapshot.bufferId}\u0000${documentKind.name}\u0000'
+          '${richDocument == null ? 'source' : 'rich'}';
+      final previous = _projectionCache.remove(cacheKey);
+      SpellingProjectionResult projection;
+      if (previous != null &&
+          previous.source == source &&
+          previous.markdownMode == markdownMode &&
+          previous.languageId == languageId &&
+          previous.richDocumentGeneration ==
+              (job['richDocumentGeneration'] as int)) {
+        projection = _rebindProjection(previous.projection, snapshot);
+      } else if (richDocument == null &&
+          previous != null &&
+          (documentKind == DocumentKind.markdown ||
+              documentKind == DocumentKind.writersideMarkdownTopic) &&
+          previous.markdownMode == markdownMode &&
+          previous.languageId == languageId) {
+        projection =
+            _incrementalPlainMarkdownProjection(
+              previous: previous,
+              source: source,
+              filePath: filePath,
+              mode: markdownMode,
               languageId: languageId,
               snapshot: snapshot,
-              documentGeneration: job['richDocumentGeneration'] as int,
-            )
-          : switch (documentKind) {
-              DocumentKind.markdown || DocumentKind.writersideMarkdownTopic =>
-                const MarkdownSpellingProjector().project(
-                  filePath: filePath,
-                  source: source,
-                  mode: markdownMode,
-                  languageId: languageId,
-                  snapshot: snapshot,
-                ),
-              DocumentKind.writersideXmlTopic =>
-                const WritersideXmlSpellingProjector().project(
-                  filePath: filePath,
-                  source: source,
-                  languageId: languageId,
-                  snapshot: snapshot,
-                ),
-              _ => const SpellingProjectionResult(runs: [], complete: true),
-            };
+            ) ??
+            const MarkdownSpellingProjector().project(
+              filePath: filePath,
+              source: source,
+              mode: markdownMode,
+              languageId: languageId,
+              snapshot: snapshot,
+            );
+      } else {
+        projection = richDocument is BusyDocument
+            ? const WysiwygSpellingProjector().project(
+                document: richDocument,
+                languageId: languageId,
+                snapshot: snapshot,
+                documentGeneration: job['richDocumentGeneration'] as int,
+              )
+            : switch (documentKind) {
+                DocumentKind.markdown || DocumentKind.writersideMarkdownTopic =>
+                  const MarkdownSpellingProjector().project(
+                    filePath: filePath,
+                    source: source,
+                    mode: markdownMode,
+                    languageId: languageId,
+                    snapshot: snapshot,
+                  ),
+                DocumentKind.writersideXmlTopic =>
+                  const WritersideXmlSpellingProjector().project(
+                    filePath: filePath,
+                    source: source,
+                    languageId: languageId,
+                    snapshot: snapshot,
+                  ),
+                _ => const SpellingProjectionResult(runs: [], complete: true),
+              };
+      }
+      _projectionCache[cacheKey] = _ProjectionCacheEntry(
+        source: source,
+        markdownMode: markdownMode,
+        languageId: languageId,
+        richDocumentGeneration: job['richDocumentGeneration'] as int,
+        projection: projection,
+      );
+      while (_projectionCache.length > 8) {
+        _projectionCache.remove(_projectionCache.keys.first);
+      }
       mainPort.send({
         'requestId': request['requestId'],
         'projection': projection,
@@ -714,13 +766,7 @@ final class _WorkerRuntime {
   }
 
   NativeSpellDictionary _ensureDictionary(Map<Object?, Object?> context) {
-    final identity = [
-      context['languageId'],
-      context['baseFingerprint'],
-      context['personalRevision'],
-      context['projectIdentity'] ?? '',
-      context['projectRevision'],
-    ].join('\u0000');
+    final identity = context['identity'].toString();
     if (_dictionary != null && _contextIdentity == identity) {
       return _dictionary!;
     }
@@ -750,6 +796,219 @@ final class _WorkerRuntime {
     _wordCache.clear();
   }
 }
+
+final class _ProjectionCacheEntry {
+  const _ProjectionCacheEntry({
+    required this.source,
+    required this.markdownMode,
+    required this.languageId,
+    required this.richDocumentGeneration,
+    required this.projection,
+  });
+
+  final String source;
+  final MarkdownMode markdownMode;
+  final String languageId;
+  final int richDocumentGeneration;
+  final SpellingProjectionResult projection;
+}
+
+SpellingProjectionResult _rebindProjection(
+  SpellingProjectionResult projection,
+  SpellingSnapshotIdentity snapshot,
+) => SpellingProjectionResult(
+  runs: List.unmodifiable([
+    for (final (index, run) in projection.runs.indexed)
+      _copyProjectedRun(
+        run,
+        id: 'cached:$index',
+        snapshot: snapshot,
+        sourceDelta: 0,
+      ),
+  ]),
+  complete: projection.complete,
+  message: projection.message,
+);
+
+SpellingProjectionResult? _incrementalPlainMarkdownProjection({
+  required _ProjectionCacheEntry previous,
+  required String source,
+  required String filePath,
+  required MarkdownMode mode,
+  required String languageId,
+  required SpellingSnapshotIdentity snapshot,
+}) {
+  final oldSource = previous.source;
+  var prefix = 0;
+  final shared = oldSource.length < source.length
+      ? oldSource.length
+      : source.length;
+  while (prefix < shared &&
+      oldSource.codeUnitAt(prefix) == source.codeUnitAt(prefix)) {
+    prefix++;
+  }
+  var oldSuffix = oldSource.length;
+  var newSuffix = source.length;
+  while (oldSuffix > prefix &&
+      newSuffix > prefix &&
+      oldSource.codeUnitAt(oldSuffix - 1) == source.codeUnitAt(newSuffix - 1)) {
+    oldSuffix--;
+    newSuffix--;
+  }
+  final oldRegion = _singleLineParagraphRegion(oldSource, prefix, oldSuffix);
+  final newRegion = _singleLineParagraphRegion(source, prefix, newSuffix);
+  if (oldRegion == null || newRegion == null) return null;
+  final oldFragment = oldSource.substring(oldRegion.start, oldRegion.end);
+  final newFragment = source.substring(newRegion.start, newRegion.end);
+  if (!_plainMarkdownParagraph(oldFragment) ||
+      !_plainMarkdownParagraph(newFragment)) {
+    return null;
+  }
+  final delta = newRegion.end - oldRegion.end;
+  final before = <SpellingProseRun>[];
+  final after = <SpellingProseRun>[];
+  for (final run in previous.projection.runs) {
+    final bounds = _projectedRunSourceBounds(run);
+    if (bounds == null) return null;
+    if (bounds.end <= oldRegion.start) {
+      before.add(run);
+    } else if (bounds.start >= oldRegion.end) {
+      after.add(run);
+    } else if (bounds.start < oldRegion.start || bounds.end > oldRegion.end) {
+      return null;
+    }
+  }
+  final changed = const MarkdownSpellingProjector().project(
+    filePath: filePath,
+    source: newFragment,
+    mode: mode,
+    languageId: languageId,
+    snapshot: snapshot,
+  );
+  if (!changed.complete) return null;
+  final combined = <SpellingProseRun>[
+    for (final run in before)
+      _copyProjectedRun(run, id: '', snapshot: snapshot, sourceDelta: 0),
+    for (final run in changed.runs)
+      _copyProjectedRun(
+        run,
+        id: '',
+        snapshot: snapshot,
+        sourceDelta: newRegion.start,
+      ),
+    for (final run in after)
+      _copyProjectedRun(run, id: '', snapshot: snapshot, sourceDelta: delta),
+  ];
+  return SpellingProjectionResult(
+    runs: List.unmodifiable([
+      for (final (index, run) in combined.indexed)
+        SpellingProseRun(
+          id: 'incremental:$index',
+          text: run.text,
+          languageId: run.languageId,
+          atoms: run.atoms,
+          target: run.target,
+          snapshot: run.snapshot,
+          formattingWrappers: run.formattingWrappers,
+          complete: run.complete,
+        ),
+    ]),
+    complete: previous.projection.complete,
+    message: previous.projection.message,
+  );
+}
+
+({int start, int end})? _singleLineParagraphRegion(
+  String source,
+  int changedStart,
+  int changedEnd,
+) {
+  var start = 0;
+  var end = source.length;
+  for (final separator in RegExp(r'\r?\n[ \t]*\r?\n').allMatches(source)) {
+    if (separator.end <= changedStart) {
+      start = separator.end;
+    } else if (separator.start >= changedEnd) {
+      end = separator.start;
+      break;
+    }
+  }
+  if (source.substring(start, end).contains(RegExp(r'[\r\n]'))) return null;
+  return (start: start, end: end);
+}
+
+bool _plainMarkdownParagraph(String value) =>
+    !RegExp(r'[`~$<>{}\[\]\\*_#|%&]').hasMatch(value);
+
+({int start, int end})? _projectedRunSourceBounds(SpellingProseRun run) {
+  final atoms = run.atoms.where((atom) => atom.sourceStart >= 0).toList();
+  if (atoms.length != run.atoms.length || atoms.isEmpty) return null;
+  var start = atoms.first.sourceStart;
+  var end = atoms.first.sourceEnd;
+  for (final atom in atoms.skip(1)) {
+    if (atom.sourceStart < start) start = atom.sourceStart;
+    if (atom.sourceEnd > end) end = atom.sourceEnd;
+  }
+  return (start: start, end: end);
+}
+
+SpellingProseRun _copyProjectedRun(
+  SpellingProseRun run, {
+  required String id,
+  required SpellingSnapshotIdentity snapshot,
+  required int sourceDelta,
+}) => SpellingProseRun(
+  id: id.isEmpty ? run.id : id,
+  text: run.text,
+  languageId: run.languageId,
+  atoms: List.unmodifiable([
+    for (final atom in run.atoms)
+      SpellingSourceAtom(
+        logicalText: atom.logicalText,
+        logicalStart: atom.logicalStart,
+        logicalEnd: atom.logicalEnd,
+        sourceStart: atom.sourceStart < 0
+            ? atom.sourceStart
+            : atom.sourceStart + sourceDelta,
+        sourceEnd: atom.sourceEnd < 0
+            ? atom.sourceEnd
+            : atom.sourceEnd + sourceDelta,
+        transformation: atom.transformation,
+        context: atom.context,
+        fieldStart: atom.fieldStart,
+        fieldEnd: atom.fieldEnd,
+        richLeafPath: atom.richLeafPath,
+      ),
+  ]),
+  target: run.target,
+  snapshot: snapshot,
+  formattingWrappers: List.unmodifiable([
+    for (final wrapper in run.formattingWrappers)
+      SpellingFormattingWrapper(
+        logicalStart: wrapper.logicalStart,
+        logicalEnd: wrapper.logicalEnd,
+        openingStart: wrapper.openingStart < 0
+            ? wrapper.openingStart
+            : wrapper.openingStart + sourceDelta,
+        openingEnd: wrapper.openingEnd < 0
+            ? wrapper.openingEnd
+            : wrapper.openingEnd + sourceDelta,
+        closingStart: wrapper.closingStart < 0
+            ? wrapper.closingStart
+            : wrapper.closingStart + sourceDelta,
+        closingEnd: wrapper.closingEnd < 0
+            ? wrapper.closingEnd
+            : wrapper.closingEnd + sourceDelta,
+        removableWhenLogicallyEmpty: wrapper.removableWhenLogicallyEmpty,
+        fieldOpeningStart: wrapper.fieldOpeningStart,
+        fieldOpeningEnd: wrapper.fieldOpeningEnd,
+        fieldClosingStart: wrapper.fieldClosingStart,
+        fieldClosingEnd: wrapper.fieldClosingEnd,
+        structuralKind: wrapper.structuralKind,
+      ),
+  ]),
+  complete: run.complete,
+);
 
 const _maximumProseChunkBytes = 48 * 1024;
 const _maximumCachedWords = 8192;
@@ -829,13 +1088,13 @@ Iterable<_ProseChunk> _boundedProseChunks(
     }
     end ??= start;
     if (end <= start) {
-      var tokenEnd = cursor;
-      while (tokenEnd < text.length &&
-          !_unicodeWhitespace.hasMatch(
-            String.fromCharCode(_codePointAtUtf16(text, tokenEnd)),
-          )) {
-        tokenEnd += _codePointAtUtf16(text, tokenEnd) > 0xffff ? 2 : 1;
-      }
+      final tokenEnd = _oversizedTokenEnd(
+        text,
+        start: start,
+        firstProbeEnd: cursor,
+        dictionary: dictionary,
+        language: language,
+      );
       yield _ProseChunk(
         text: text.substring(start, tokenEnd),
         utf16Start: start,
@@ -847,6 +1106,51 @@ Iterable<_ProseChunk> _boundedProseChunks(
     yield _ProseChunk(text: text.substring(start, end), utf16Start: start);
     start = end;
   }
+}
+
+int _oversizedTokenEnd(
+  String text, {
+  required int start,
+  required int firstProbeEnd,
+  required NativeSpellDictionary dictionary,
+  required String language,
+}) {
+  var probeStart = firstProbeEnd;
+  while (probeStart < text.length) {
+    var probeEnd = probeStart;
+    var bytes = 0;
+    while (probeEnd < text.length) {
+      final rune = _codePointAtUtf16(text, probeEnd);
+      final width = rune > 0xffff ? 2 : 1;
+      final encodedWidth = rune <= 0x7f
+          ? 1
+          : rune <= 0x7ff
+          ? 2
+          : rune <= 0xffff
+          ? 3
+          : 4;
+      if (bytes + encodedWidth > _maximumProseChunkBytes) break;
+      bytes += encodedWidth;
+      probeEnd += width;
+    }
+    if (probeEnd <= probeStart) break;
+    final probe = text.substring(probeStart, probeEnd);
+    final boundaries = _codePointToUtf16Boundaries(probe);
+    final tokens = dictionary.tokenize(probe, language: language);
+    if (tokens.isEmpty || tokens.first.characterStart > 0) {
+      return probeStart;
+    }
+    final first = tokens.first;
+    if (first.characterEnd < boundaries.length - 1) {
+      return probeStart + boundaries[first.characterEnd];
+    }
+    if (probeEnd == text.length) return text.length;
+    probeStart = probeEnd;
+  }
+  // Defensive progress for an invalid tokenizer response. This remains
+  // bounded to the first native-safe probe rather than consuming a complete
+  // whitespace-delimited segment and hiding later punctuation-separated words.
+  return firstProbeEnd > start ? firstProbeEnd : text.length;
 }
 
 final RegExp _unicodeWhitespace = RegExp(r'^\s$', unicode: true);

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:convert';
 import 'package:busymark/src/core/atomic_file_writer.dart';
@@ -513,10 +514,18 @@ class _FailHtmlWrite extends AtomicFileWriter {
     String targetPath,
     List<int> bytes, {
     required bool overwrite,
+    FutureOr<void> Function()? beforePublish,
+    FutureOr<bool> Function(String replacedPath)? acceptReplaced,
   }) async {
     if (targetPath.endsWith('.html')) {
       throw const FileSystemException('Simulated permission failure');
     }
-    return super.writeBytes(targetPath, bytes, overwrite: overwrite);
+    return super.writeBytes(
+      targetPath,
+      bytes,
+      overwrite: overwrite,
+      beforePublish: beforePublish,
+      acceptReplaced: acceptReplaced,
+    );
   }
 }
