@@ -3,6 +3,7 @@ import 'package:busymark/src/editor/wysiwyg/wysiwyg_clipboard_fragment.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_document_controller.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_inline_controller.dart';
 import 'package:busymark/src/markdown/busymark_document.dart';
+import 'package:busymark/src/markdown/markdown_ast_adapter.dart';
 import 'package:busymark/src/markdown/markdown_model.dart';
 import 'package:busymark/src/markdown/markdown_parser.dart';
 import 'package:flutter/services.dart';
@@ -115,6 +116,375 @@ void main() {
     ]);
     expect(_countKind(paragraph.inlines, BusyInlineKind.underline), 3);
     expect(_countKind(paragraph.inlines, BusyInlineKind.hardBreak), 1);
+  });
+
+  test('native rich trailing space survives inherited HTML insertion', () {
+    const source = '[<u>leftright</u>](https://destination.test) tail';
+    const incomingDestination = 'https://incoming.test';
+    const incomingText = 'Y ';
+    const native = WysiwygClipboardFragment(
+      mode: MarkdownMode.commonMark,
+      sourcePath: '/clipboard/source.md',
+      blocks: [
+        BusyWysiwygStyledBlock(
+          kind: BusyBlockKind.paragraph,
+          text: incomingText,
+          ranges: [
+            BusyInlineStyleRange(
+              start: 0,
+              end: incomingText.length,
+              kind: BusyInlineKind.link,
+              destination: incomingDestination,
+            ),
+          ],
+          completeBlock: BusyBlock(
+            id: 'clipboard-paragraph',
+            kind: BusyBlockKind.paragraph,
+            inlines: [
+              BusyInline(
+                kind: BusyInlineKind.link,
+                text: incomingText,
+                destination: incomingDestination,
+                children: [
+                  BusyInline(kind: BusyInlineKind.text, text: incomingText),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+    final decoded = WysiwygClipboardFragment.decode(native.encode());
+
+    expect(decoded, isNotNull);
+    expect(decoded!.blocks.single.text, incomingText);
+    final prepared = decoded.sourceInsertionInlinesFor(tableCell: false);
+    expect(prepared.single.kind, BusyInlineKind.link);
+    expect(prepared.single.plainText, incomingText);
+    expect(prepared.single.destination, incomingDestination);
+
+    final result = engine.prepareStructured(
+      target: _target(
+        source,
+        TextSelection.collapsed(offset: source.indexOf('right')),
+      ),
+      fragment: decoded,
+    );
+    final applied = _applyReady(source, result);
+    final paragraph = _parse(applied.source).blocks.single;
+
+    expect(paragraph.plainText, 'leftY right tail', reason: applied.source);
+    expect(_destinations(paragraph.inlines), [
+      'https://destination.test',
+      incomingDestination,
+      'https://destination.test',
+    ], reason: applied.source);
+    expect(
+      _links(paragraph.inlines)
+          .singleWhere((inline) => inline.destination == incomingDestination)
+          .plainText,
+      'Y',
+      reason: applied.source,
+    );
+    const caretMarker = '\ue002';
+    final marked = applied.source.replaceRange(
+      applied.edit.caretOffset,
+      applied.edit.caretOffset,
+      caretMarker,
+    );
+    expect(
+      _parse(marked).blocks.single.plainText,
+      'leftY ${caretMarker}right tail',
+      reason: 'replacement: ${applied.edit.replacement}\nsource: $marked',
+    );
+  });
+
+  test('native incoming edge whitespace survives inherited HTML styles', () {
+    const incomingDestination = 'https://incoming.test';
+    const destination = 'https://destination.test';
+    const destinationTitle = 'Destination title';
+    const incomingTitle = 'Incoming title';
+    final styles = <({String tag, BusyInlineKind kind})>[
+      (tag: 'u', kind: BusyInlineKind.underline),
+      (tag: 'strong', kind: BusyInlineKind.strong),
+      (tag: 'em', kind: BusyInlineKind.emphasis),
+      (tag: 's', kind: BusyInlineKind.strikethrough),
+    ];
+    const incomingValues = ['Y ', ' Y', ' Y ', ' '];
+    var cases = 0;
+
+    for (final style in styles) {
+      for (final incomingText in incomingValues) {
+        for (final tableCell in [false, true]) {
+          cases += 1;
+          final link =
+              '[<${style.tag}>leftright</${style.tag}>]'
+              '($destination "$destinationTitle") tail';
+          final source = tableCell
+              ? '| H |\n| --- |\n| $link |\n'
+              : 'prefix $link suffix';
+          final fragment = _nativeFragment([
+            BusyInline(
+              kind: BusyInlineKind.link,
+              text: incomingText,
+              destination: incomingDestination,
+              attributes: const {'title': incomingTitle},
+              children: [
+                BusyInline(kind: BusyInlineKind.text, text: incomingText),
+              ],
+            ),
+          ]);
+          final decoded = WysiwygClipboardFragment.decode(fragment.encode());
+
+          expect(decoded, isNotNull, reason: 'case $cases');
+          expect(decoded!.blocks.single.text, incomingText);
+          expect(
+            decoded
+                .sourceInsertionInlinesFor(tableCell: tableCell)
+                .map((inline) => inline.plainText)
+                .join(),
+            incomingText,
+          );
+          final result = engine.prepareStructured(
+            target: _target(
+              source,
+              TextSelection.collapsed(offset: source.indexOf('right')),
+            ),
+            fragment: decoded,
+          );
+          expect(result, isA<SourcePasteReady>(), reason: 'case $cases');
+          final applied = _applyReady(source, result);
+          final paragraph = _contentParagraph(_parse(applied.source));
+          final expectedText = tableCell
+              ? 'left${incomingText}right tail'
+              : 'prefix left${incomingText}right tail suffix';
+
+          expect(
+            paragraph.plainText,
+            expectedText,
+            reason: 'case $cases: ${applied.source}',
+          );
+          expect(
+            applied.source.substring(0, applied.edit.start),
+            source.substring(0, applied.edit.start),
+          );
+          expect(
+            applied.source.substring(
+              applied.edit.start + applied.edit.replacement.length,
+            ),
+            source.substring(applied.edit.end),
+          );
+          final links = _links(paragraph.inlines);
+          expect(
+            links
+                .where((inline) => inline.destination == destination)
+                .map((inline) => inline.attributes['title']),
+            everyElement(destinationTitle),
+            reason: applied.source,
+          );
+          final incomingLinks = links.where(
+            (inline) => inline.destination == incomingDestination,
+          );
+          if (incomingText.trim().isEmpty) {
+            expect(incomingLinks.length, lessThanOrEqualTo(1));
+            if (incomingLinks.isNotEmpty) {
+              expect(incomingLinks.single.plainText, incomingText);
+              expect(incomingLinks.single.attributes['title'], incomingTitle);
+            }
+          } else {
+            expect(incomingLinks, hasLength(1), reason: applied.source);
+            expect(incomingLinks.single.plainText.trim(), 'Y');
+            expect(incomingLinks.single.attributes['title'], incomingTitle);
+            expect(
+              _leafContexts(
+                paragraph.inlines,
+              ).where((run) => run.text.trim() == 'Y').single.contexts,
+              containsAll([style.kind, BusyInlineKind.link]),
+              reason: applied.source,
+            );
+          }
+          if (incomingText.trim().isEmpty ||
+              style.kind != BusyInlineKind.underline) {
+            final localCaret = applied.edit.caretOffset - applied.edit.start;
+            expect(
+              localCaret,
+              inInclusiveRange(0, applied.edit.replacement.length),
+              reason: 'case $cases: ${applied.edit.replacement}',
+            );
+            if (incomingText.trim().isEmpty &&
+                style.kind == BusyInlineKind.underline) {
+              expect(
+                applied.edit.replacement.substring(0, localCaret),
+                endsWith(incomingText),
+                reason: 'case $cases: ${applied.edit.replacement}',
+              );
+            }
+          } else {
+            final second = _applyReady(
+              applied.source,
+              engine.prepareStructured(
+                target: _target(
+                  applied.source,
+                  TextSelection.collapsed(offset: applied.edit.caretOffset),
+                ),
+                fragment: _nativeFragment(const [
+                  BusyInline(
+                    kind: BusyInlineKind.link,
+                    text: 'Z',
+                    destination: 'https://second.test',
+                    children: [
+                      BusyInline(kind: BusyInlineKind.text, text: 'Z'),
+                    ],
+                  ),
+                ]),
+              ),
+            );
+            expect(
+              _contentParagraph(_parse(second.source)).plainText,
+              expectedText.replaceFirst(
+                '${incomingText}right',
+                '${incomingText}Zright',
+              ),
+              reason: 'case $cases: ${second.source}',
+            );
+            expect(
+              _destinations(_contentParagraph(_parse(second.source)).inlines),
+              contains('https://second.test'),
+            );
+          }
+        }
+      }
+    }
+    expect(cases, 32);
+  });
+
+  test('selection replacement retains native whitespace and link titles', () {
+    const source =
+        'prefix [<u>leftmiddleright</u>]'
+        '(https://destination.test "Destination title") tail suffix';
+    const incomingText = ' Y ';
+    final start = source.indexOf('middle');
+    final end = start + 'middle'.length;
+    final fragment = _nativeFragment(const [
+      BusyInline(
+        kind: BusyInlineKind.link,
+        text: incomingText,
+        destination: 'https://incoming.test',
+        attributes: {'title': 'Incoming title'},
+        children: [BusyInline(kind: BusyInlineKind.text, text: incomingText)],
+      ),
+    ]);
+    final applied = _applyReady(
+      source,
+      engine.prepareStructured(
+        target: _target(
+          source,
+          TextSelection(baseOffset: start, extentOffset: end),
+        ),
+        fragment: WysiwygClipboardFragment.decode(fragment.encode())!,
+      ),
+    );
+    final paragraph = _parse(applied.source).blocks.single;
+
+    expect(paragraph.plainText, 'prefix left Y right tail suffix');
+    expect(
+      _links(
+        paragraph.inlines,
+      ).map((inline) => (inline.destination, inline.attributes['title'])),
+      [
+        ('https://destination.test', 'Destination title'),
+        ('https://incoming.test', 'Incoming title'),
+        ('https://destination.test', 'Destination title'),
+      ],
+      reason: applied.source,
+    );
+    const marker = '\ue002';
+    expect(
+      _parse(
+        applied.source.replaceRange(
+          applied.edit.caretOffset,
+          applied.edit.caretOffset,
+          marker,
+        ),
+      ).blocks.single.plainText,
+      'prefix left Y ${marker}right tail suffix',
+    );
+  });
+
+  test('multiple native inline runs retain text styles links and spaces', () {
+    const source =
+        '[<u>leftright</u>]'
+        '(https://destination.test "Destination title") tail';
+    final fragment = _nativeFragment(const [
+      BusyInline(
+        kind: BusyInlineKind.link,
+        text: 'A ',
+        destination: 'https://first.test',
+        attributes: {'title': 'First title'},
+        children: [BusyInline(kind: BusyInlineKind.text, text: 'A ')],
+      ),
+      BusyInline(
+        kind: BusyInlineKind.strong,
+        text: 'B ',
+        children: [BusyInline(kind: BusyInlineKind.text, text: 'B ')],
+      ),
+      BusyInline(
+        kind: BusyInlineKind.link,
+        text: 'C',
+        destination: 'https://second.test',
+        attributes: {'title': 'Second title'},
+        children: [BusyInline(kind: BusyInlineKind.text, text: 'C')],
+      ),
+    ]);
+    final applied = _applyReady(
+      source,
+      engine.prepareStructured(
+        target: _target(
+          source,
+          TextSelection.collapsed(offset: source.indexOf('right')),
+        ),
+        fragment: WysiwygClipboardFragment.decode(fragment.encode())!,
+      ),
+    );
+    final paragraph = _parse(applied.source).blocks.single;
+
+    expect(paragraph.plainText, 'leftA B Cright tail', reason: applied.source);
+    expect(
+      _links(
+        paragraph.inlines,
+      ).map((inline) => (inline.destination, inline.attributes['title'])),
+      [
+        ('https://destination.test', 'Destination title'),
+        ('https://first.test', 'First title'),
+        ('https://second.test', 'Second title'),
+        ('https://destination.test', 'Destination title'),
+      ],
+      reason: applied.source,
+    );
+    final contexts = _leafContexts(paragraph.inlines);
+    expect(
+      contexts.singleWhere((run) => run.text.trim() == 'A').contexts,
+      containsAll([BusyInlineKind.underline, BusyInlineKind.link]),
+    );
+    expect(
+      contexts.singleWhere((run) => run.text.trim() == 'B').contexts,
+      containsAll([BusyInlineKind.underline, BusyInlineKind.strong]),
+    );
+    expect(
+      contexts.singleWhere((run) => run.text.trim() == 'C').contexts,
+      containsAll([BusyInlineKind.underline, BusyInlineKind.link]),
+    );
+    const marker = '\ue002';
+    expect(
+      _parse(
+        applied.source.replaceRange(
+          applied.edit.caretOffset,
+          applied.edit.caretOffset,
+          marker,
+        ),
+      ).blocks.single.plainText,
+      'leftA B C${marker}right tail',
+    );
   });
 
   test('rich insertion maps collapsed HTML whitespace as content', () {
@@ -305,6 +675,88 @@ void main() {
     expect(cases, 70);
   });
 
+  test('repeated mapped siblings avoid fallback and preserve final paste', () {
+    addTearDown(() {
+      debugBusyMarkSourceMappingBoundaryInspections = null;
+      debugBusyMarkSourceMappingFallbackSearchCalls = null;
+      debugBusyMarkSourceMappingFallbackSearchRanges = null;
+    });
+    const segment = r'**x** \[ ';
+    for (final count in [10, 100, 1000]) {
+      final prefix = List.filled(count, segment).join();
+      final source = '$prefix[leftright](https://destination.test)';
+      var inspections = 0;
+      var fallbackCalls = 0;
+      final fallbackRanges = <({int start, int end})>[];
+      debugBusyMarkSourceMappingBoundaryInspections = (value) =>
+          inspections += value;
+      debugBusyMarkSourceMappingFallbackSearchCalls = () => fallbackCalls += 1;
+      debugBusyMarkSourceMappingFallbackSearchRanges = (start, end) =>
+          fallbackRanges.add((start: start, end: end));
+      final first = _applyReady(
+        source,
+        engine.prepareStructured(
+          target: _target(
+            source,
+            TextSelection.collapsed(offset: source.indexOf('right')),
+          ),
+          fragment: _nativeFragment(const [
+            BusyInline(
+              kind: BusyInlineKind.link,
+              text: 'Q',
+              destination: 'https://incoming.test',
+              attributes: {'title': 'Incoming title'},
+              children: [BusyInline(kind: BusyInlineKind.text, text: 'Q')],
+            ),
+          ]),
+        ),
+      );
+
+      expect(first.source, startsWith(prefix), reason: '$count repetitions');
+      final firstParagraph = _parse(first.source).blocks.single;
+      expect(
+        firstParagraph.plainText,
+        '${List.filled(count, 'x [ ').join()}leftQright',
+      );
+      expect(
+        _links(
+          firstParagraph.inlines,
+        ).map((inline) => (inline.destination, inline.attributes['title'])),
+        [
+          ('https://destination.test', null),
+          ('https://incoming.test', 'Incoming title'),
+          ('https://destination.test', null),
+        ],
+      );
+      final second = _applyReady(
+        first.source,
+        engine.prepareStructured(
+          target: _target(
+            first.source,
+            TextSelection.collapsed(offset: first.edit.caretOffset),
+          ),
+          fragment: _nativeFragment(const [
+            BusyInline(
+              kind: BusyInlineKind.link,
+              text: 'R',
+              destination: 'https://second.test',
+              children: [BusyInline(kind: BusyInlineKind.text, text: 'R')],
+            ),
+          ]),
+        ),
+      );
+      expect(second.source, startsWith(prefix));
+      expect(
+        _parse(second.source).blocks.single.plainText,
+        '${List.filled(count, 'x [ ').join()}leftQRright',
+      );
+      expect(second.edit.caretOffset, greaterThan(first.edit.caretOffset));
+      expect(fallbackCalls, 0, reason: '$count repetitions');
+      expect(fallbackRanges, isEmpty, reason: '$count repetitions');
+      expect(inspections, greaterThan(0));
+    }
+  });
+
   test('paste output is valid input for a second paste at returned caret', () {
     const source =
         '[A\n'
@@ -436,6 +888,27 @@ WysiwygClipboardFragment _fragment(String source) {
   );
 }
 
+WysiwygClipboardFragment _nativeFragment(List<BusyInline> inlines) {
+  final text = inlines.map((inline) => inline.plainText).join();
+  final block = BusyBlock(
+    id: 'native-clipboard-paragraph',
+    kind: BusyBlockKind.paragraph,
+    inlines: inlines,
+  );
+  return WysiwygClipboardFragment(
+    sourcePath: '/clipboard/source.md',
+    mode: MarkdownMode.commonMark,
+    blocks: [
+      BusyWysiwygStyledBlock(
+        kind: BusyBlockKind.paragraph,
+        text: text,
+        ranges: busyInlineStyleRanges(inlines),
+        completeBlock: block,
+      ),
+    ],
+  );
+}
+
 BusyDocument _parse(String source, {String filePath = '/project/source.md'}) {
   return const MarkdownParser()
       .parse(
@@ -445,6 +918,12 @@ BusyDocument _parse(String source, {String filePath = '/project/source.md'}) {
         validateLocalReferences: false,
       )
       .busyDocument;
+}
+
+BusyBlock _contentParagraph(BusyDocument document) {
+  final root = document.blocks.single;
+  if (root.kind != BusyBlockKind.table) return root;
+  return root.children.last.children.single;
 }
 
 ({String source, SourcePasteEdit edit}) _applyReady(
@@ -482,6 +961,32 @@ int _countKind(List<BusyInline> inlines, BusyInlineKind kind) {
   for (final inline in inlines) {
     if (inline.kind == kind) result += 1;
     result += _countKind(inline.children, kind);
+  }
+  return result;
+}
+
+List<({String text, List<BusyInlineKind> contexts})> _leafContexts(
+  List<BusyInline> inlines,
+) {
+  final result = <({String text, List<BusyInlineKind> contexts})>[];
+
+  void visit(BusyInline inline, List<BusyInlineKind> inherited) {
+    final contexts = inline.kind == BusyInlineKind.text
+        ? inherited
+        : [...inherited, inline.kind];
+    if (inline.children.isEmpty) {
+      if (inline.plainText.isNotEmpty) {
+        result.add((text: inline.plainText, contexts: contexts));
+      }
+      return;
+    }
+    for (final child in inline.children) {
+      visit(child, contexts);
+    }
+  }
+
+  for (final inline in inlines) {
+    visit(inline, const []);
   }
   return result;
 }

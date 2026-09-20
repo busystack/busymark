@@ -6306,6 +6306,259 @@ void main() {
     expect(whitespace.text, 'left   right');
   });
 
+  testWidgets(
+    'Source native rich edge whitespace repeats and restores real Undo state',
+    (tester) async {
+      const source = '[<u>leftright</u>](https://destination.test) tail';
+      const fragment = WysiwygClipboardFragment(
+        mode: MarkdownMode.commonMark,
+        sourcePath: '/clipboard/source.md',
+        blocks: [
+          BusyWysiwygStyledBlock(
+            kind: BusyBlockKind.paragraph,
+            text: 'Y ',
+            ranges: [
+              BusyInlineStyleRange(
+                start: 0,
+                end: 2,
+                kind: BusyInlineKind.link,
+                destination: 'https://incoming.test',
+              ),
+            ],
+            completeBlock: BusyBlock(
+              id: 'native-rich-space',
+              kind: BusyBlockKind.paragraph,
+              inlines: [
+                BusyInline(
+                  kind: BusyInlineKind.link,
+                  text: 'Y ',
+                  destination: 'https://incoming.test',
+                  attributes: {'title': 'Incoming title'},
+                  children: [BusyInline(kind: BusyInlineKind.text, text: 'Y ')],
+                ),
+              ],
+            ),
+          ),
+        ],
+      );
+      final clipboard = _SourceTestClipboard(
+        readData: RichClipboardData(
+          text: 'PLAIN_FALLBACK',
+          sourceText: '**SOURCE_FALLBACK**',
+          html: '<p><strong>HTML_FALLBACK</strong></p>',
+          richFragment: fragment.encode(),
+          generation: 46,
+        ),
+      );
+      var modelText = source;
+      var modelSelection = const TextSelection.collapsed(offset: 0);
+      var history = const DocumentUndoState();
+      final controller = await _pumpClipboardSourceEditor(
+        tester,
+        source: source,
+        clipboard: clipboard,
+        onTransactionalChanged:
+            (value, _, previousSelection, selection, undoGroup) {
+              history = history.push(
+                DocumentHistoryState(
+                  text: modelText,
+                  selection: previousSelection,
+                ),
+                group: undoGroup,
+              );
+              modelText = value;
+              modelSelection = selection;
+            },
+        onUndo: () {
+          if (history.undo.isEmpty) return null;
+          final target = history.undo.last;
+          history = history.afterUndo(
+            DocumentHistoryState(text: modelText, selection: modelSelection),
+          );
+          modelText = target.text;
+          modelSelection = target.selection;
+          return TextEditingValue(
+            text: target.text,
+            selection: target.selection,
+          );
+        },
+        onRedo: () {
+          if (history.redo.isEmpty) return null;
+          final target = history.redo.last;
+          history = history.afterRedo(
+            DocumentHistoryState(text: modelText, selection: modelSelection),
+          );
+          modelText = target.text;
+          modelSelection = target.selection;
+          return TextEditingValue(
+            text: target.text,
+            selection: target.selection,
+          );
+        },
+      );
+      final initialSelection = TextSelection.collapsed(
+        offset: source.indexOf('right'),
+      );
+      controller.selection = initialSelection;
+
+      await _pressControlKey(tester, LogicalKeyboardKey.keyV);
+      await tester.pump();
+      final firstText = controller.text;
+      final firstSelection = controller.selection;
+      expect(firstSelection.isCollapsed, isTrue);
+      expect(firstText, isNot(contains('PLAIN_FALLBACK')));
+      expect(firstText, isNot(contains('SOURCE_FALLBACK')));
+      expect(firstText, isNot(contains('HTML_FALLBACK')));
+      var paragraph = const MarkdownParser()
+          .parse(
+            filePath: '/project/source.md',
+            source: firstText,
+            validateLocalReferences: false,
+          )
+          .busyDocument
+          .blocks
+          .single;
+      expect(paragraph.plainText, 'leftY right tail', reason: firstText);
+      expect(
+        paragraph.inlines
+            .where((inline) => inline.kind == BusyInlineKind.link)
+            .map((inline) => inline.destination),
+        [
+          'https://destination.test',
+          'https://incoming.test',
+          'https://destination.test',
+        ],
+      );
+      final editorDocument = const MarkdownParser()
+          .parse(
+            filePath: '/project/editor.md',
+            source: source,
+            validateLocalReferences: false,
+          )
+          .busyDocument;
+      final editorController = BusyMarkWysiwygDocumentController(
+        document: editorDocument,
+      );
+      addTearDown(editorController.dispose);
+      final editorBlock = editorController.document.blocks.single;
+      expect(
+        editorController.insertStyledBlocksAtSelection(
+          blockId: editorBlock.id,
+          selectionStart: 4,
+          selectionEnd: 4,
+          blocks: fragment.blocks,
+        ),
+        isNotNull,
+      );
+      final editorParagraph = editorController.document.blocks.single;
+      expect(editorParagraph.plainText, paragraph.plainText);
+      final sourceRuns = _inlineSemanticRuns(
+        paragraph.inlines,
+      ).where((run) => run.text.trim().isNotEmpty).toList(growable: false);
+      final editorRuns = _inlineSemanticRuns(
+        editorParagraph.inlines,
+      ).where((run) => run.text.trim().isNotEmpty).toList(growable: false);
+      expect(
+        sourceRuns.map((run) => run.text.trim()),
+        editorRuns.map((run) => run.text.trim()),
+      );
+      for (final runs in [sourceRuns, editorRuns]) {
+        final incoming = runs.singleWhere((run) => run.text.trim() == 'Y');
+        expect(incoming.context, contains('underline'));
+        expect(incoming.context, contains('link:https://incoming.test'));
+        expect(incoming.context, contains('Incoming title'));
+      }
+      expect(
+        editorRuns
+            .where(
+              (run) => run.context.contains('link:https://destination.test'),
+            )
+            .map((run) => run.text.trim()),
+        ['left', 'right'],
+      );
+
+      await _pressControlKey(tester, LogicalKeyboardKey.keyV);
+      await tester.pump();
+      final secondText = controller.text;
+      final secondSelection = controller.selection;
+      paragraph = const MarkdownParser()
+          .parse(
+            filePath: '/project/source.md',
+            source: secondText,
+            validateLocalReferences: false,
+          )
+          .busyDocument
+          .blocks
+          .single;
+      expect(paragraph.plainText, 'leftY Y right tail', reason: secondText);
+      expect(
+        secondSelection.baseOffset,
+        greaterThan(firstSelection.baseOffset),
+      );
+
+      final typedOffset = secondSelection.baseOffset;
+      final typedText = secondText.replaceRange(typedOffset, typedOffset, 'Z');
+      tester.testTextInput.updateEditingValue(
+        TextEditingValue(
+          text: typedText,
+          selection: TextSelection.collapsed(offset: typedOffset + 1),
+        ),
+      );
+      await tester.pump();
+      expect(controller.text, typedText);
+
+      await _pressControlKey(tester, LogicalKeyboardKey.keyZ);
+      await tester.pump();
+      expect(controller.text, secondText);
+      expect(controller.selection, secondSelection);
+      await _pressControlKey(tester, LogicalKeyboardKey.keyZ);
+      await tester.pump();
+      expect(controller.text, firstText);
+      expect(controller.selection, firstSelection);
+      await _pressControlKey(tester, LogicalKeyboardKey.keyZ);
+      await tester.pump();
+      expect(controller.text, source);
+      expect(controller.selection, initialSelection);
+
+      await _pressControlKey(tester, LogicalKeyboardKey.keyZ, shift: true);
+      await tester.pump();
+      expect(controller.text, firstText);
+      expect(controller.selection, firstSelection);
+      await _pressControlKey(tester, LogicalKeyboardKey.keyZ, shift: true);
+      await tester.pump();
+      expect(controller.text, secondText);
+      expect(controller.selection, secondSelection);
+      await _pressControlKey(tester, LogicalKeyboardKey.keyZ, shift: true);
+      await tester.pump();
+      expect(controller.text, typedText);
+      expect(
+        controller.selection,
+        TextSelection.collapsed(offset: typedOffset + 1),
+      );
+
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump();
+      final reopened = await _pumpClipboardSourceEditor(
+        tester,
+        source: secondText,
+        clipboard: clipboard,
+      );
+      reopened.selection = secondSelection;
+      await _pressControlKey(tester, LogicalKeyboardKey.keyV);
+      await tester.pump();
+      paragraph = const MarkdownParser()
+          .parse(
+            filePath: '/project/source.md',
+            source: reopened.text,
+            validateLocalReferences: false,
+          )
+          .busyDocument
+          .blocks
+          .single;
+      expect(paragraph.plainText, 'leftY Y Y right tail');
+    },
+  );
+
   testWidgets('Source structured paste respects table-cell semantics', (
     tester,
   ) async {

@@ -4,6 +4,7 @@ import 'package:busymark/src/markdown/markdown_model.dart';
 import 'package:busymark/src/markdown/markdown_source_map.dart';
 import 'package:busymark/src/markdown/raw_html_adapter.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:markdown/markdown.dart' as md;
 
 void main() {
   const mapper = MarkdownSourceMapper();
@@ -399,28 +400,41 @@ void main() {
   });
 
   test('AST source boundary lookahead is linear and maps the final link', () {
-    addTearDown(() => debugBusyMarkSourceMappingBoundaryInspections = null);
+    addTearDown(() {
+      debugBusyMarkSourceMappingBoundaryInspections = null;
+      debugBusyMarkSourceMappingFallbackSearchCalls = null;
+      debugBusyMarkSourceMappingFallbackSearchRanges = null;
+    });
     const marker = '\ue001';
+    const segment = r'**x** \[ ';
     for (final count in [10, 100, 1000]) {
-      final prefix = [
-        for (var index = 0; index < count; index++) '`code$index`',
-      ].join(' ');
-      final source = '$prefix [leftright](https://destination.test)';
+      final prefix = List.filled(count, segment).join();
+      final source = '$prefix[leftright](https://destination.test)';
       final position = source.indexOf('leftright') + 4;
       final marked = source.replaceRange(position, position, marker);
       var inspections = 0;
+      var fallbackCalls = 0;
+      final fallbackRanges = <({int start, int end})>[];
       debugBusyMarkSourceMappingBoundaryInspections = (value) =>
           inspections += value;
+      debugBusyMarkSourceMappingFallbackSearchCalls = () => fallbackCalls += 1;
+      debugBusyMarkSourceMappingFallbackSearchRanges = (start, end) =>
+          fallbackRanges.add((start: start, end: end));
       final context = mapper.createInlineParserContext(
         documentSource: source,
         mode: MarkdownMode.commonMark,
       );
+      final ordinary = context.parse(source);
       final mapped = context.parseMapped(
         marked,
         ignoredReferenceLabelMarkers: const [marker],
       );
 
       expect(mapped.positionRecordsComplete, isTrue, reason: '$count spans');
+      expect(
+        _semanticTree(mapped.inlines, ignoredMarkers: const [marker]),
+        _semanticTree(ordinary),
+      );
       final link = _allInlines(
         mapped.inlines,
       ).singleWhere((inline) => inline.kind == BusyInlineKind.link);
@@ -430,6 +444,8 @@ void main() {
       expect(range, isNotNull);
       expect(range!.start, source.indexOf('[leftright]'));
       expect(range.end, marked.length);
+      expect(fallbackCalls, 0, reason: '$count spans');
+      expect(fallbackRanges, isEmpty, reason: '$count spans');
       expect(
         inspections,
         lessThanOrEqualTo(count * 6 + 30),
@@ -437,6 +453,59 @@ void main() {
       );
     }
   });
+
+  test(
+    'fallback mapping is bounded for entities repetitions and code spans',
+    () {
+      addTearDown(() {
+        debugBusyMarkSourceMappingBoundaryInspections = null;
+        debugBusyMarkSourceMappingFallbackSearchCalls = null;
+        debugBusyMarkSourceMappingFallbackSearchRanges = null;
+      });
+      const source = 'A &amp; B same same `same` tail';
+      final nodes = <md.Node>[
+        md.Text('A & B same same '),
+        md.Element.text('code', 'same'),
+        md.Text(' tail'),
+      ];
+      var inspections = 0;
+      var fallbackCalls = 0;
+      final ranges = <({int start, int end})>[];
+      debugBusyMarkSourceMappingBoundaryInspections = (value) =>
+          inspections += value;
+      debugBusyMarkSourceMappingFallbackSearchCalls = () => fallbackCalls += 1;
+      debugBusyMarkSourceMappingFallbackSearchRanges = (start, end) =>
+          ranges.add((start: start, end: end));
+      final mappedRanges = <BusyInline, BusyMarkMappedInlineRange>{};
+
+      final inlines = const MarkdownAstAdapter().convertInlineNodes(
+        nodes,
+        sourceMappings: mappedRanges,
+        mappingSource: source,
+        mappingStart: 0,
+        mappingEnd: source.length,
+      );
+
+      expect(
+        inlines.map((inline) => inline.plainText).join(),
+        'A & B same same same tail',
+      );
+      expect(
+        _allInlines(inlines)
+            .where((inline) => inline.kind == BusyInlineKind.code)
+            .single
+            .plainText,
+        'same',
+      );
+      expect(inspections, 4, reason: 'three siblings plus the code child');
+      expect(fallbackCalls, greaterThan(0));
+      expect(ranges, hasLength(fallbackCalls));
+      for (final range in ranges) {
+        expect(range.start, inInclusiveRange(0, source.length));
+        expect(range.end, inInclusiveRange(range.start, source.length));
+      }
+    },
+  );
 
   test('tag-looking attribute text does not claim break layout', () {
     const source = '<u title="before\n<br>\nafter">left<br>\nright</u>';

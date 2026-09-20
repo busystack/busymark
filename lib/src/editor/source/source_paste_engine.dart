@@ -387,8 +387,9 @@ class SourcePasteEngine {
 
   List<BusyInline> _removeEquivalentInlineContexts(
     List<BusyInline> inlines,
-    List<BusyInline> contexts,
-  ) {
+    List<BusyInline> contexts, [
+    _SourceInlineOccurrenceAnnotations? annotations,
+  ]) {
     List<BusyInline> transform(BusyInline inline) {
       final children = inline.children.isEmpty
           ? <BusyInline>[
@@ -402,14 +403,13 @@ class SourcePasteEngine {
           )) {
         return children;
       }
-      return [
-        inline.copyWith(
-          text: children.isEmpty
-              ? inline.text
-              : children.map((child) => child.plainText).join(),
-          children: inline.children.isEmpty ? inline.children : children,
-        ),
-      ];
+      final rebuilt = inline.copyWith(
+        text: children.isEmpty
+            ? inline.text
+            : children.map((child) => child.plainText).join(),
+        children: inline.children.isEmpty ? inline.children : children,
+      );
+      return [annotations?.copyAnnotation(inline, rebuilt) ?? rebuilt];
     }
 
     return [for (final inline in inlines) ...transform(inline)];
@@ -418,6 +418,8 @@ class SourcePasteEngine {
   List<BusyInline> _applySourceInlineContexts(
     List<BusyInline> inlines,
     List<BusyInline> contexts,
+    Set<BusyInline> rawHtmlSourceInlines,
+    _SourceInlineOccurrenceAnnotations annotations,
   ) {
     var result = inlines;
     for (final wrapper in contexts.reversed) {
@@ -433,29 +435,47 @@ class SourcePasteEngine {
           _containsSourceInlineKind(result, BusyInlineKind.link)) {
         BusyInline applyInsideLinks(BusyInline inline) {
           if (inline.kind == BusyInlineKind.link) {
-            final wrapped = wrapper.copyWith(
-              text: inline.plainText,
-              children: inline.children,
+            final wrapped = annotations.copyAnnotation(
+              wrapper,
+              wrapper.copyWith(
+                text: inline.plainText,
+                children: inline.children,
+              ),
+              rawHtml: rawHtmlSourceInlines.contains(wrapper),
             );
-            return inline.copyWith(children: [wrapped]);
+            return annotations.copyAnnotation(
+              inline,
+              inline.copyWith(children: [wrapped]),
+            );
           }
           if (inline.children.isNotEmpty) {
-            return inline.copyWith(
-              children: [
-                for (final child in inline.children) applyInsideLinks(child),
-              ],
+            return annotations.copyAnnotation(
+              inline,
+              inline.copyWith(
+                children: [
+                  for (final child in inline.children) applyInsideLinks(child),
+                ],
+              ),
             );
           }
-          return wrapper.copyWith(text: inline.plainText, children: [inline]);
+          return annotations.copyAnnotation(
+            wrapper,
+            wrapper.copyWith(text: inline.plainText, children: [inline]),
+            rawHtml: rawHtmlSourceInlines.contains(wrapper),
+          );
         }
 
         result = [for (final inline in result) applyInsideLinks(inline)];
         continue;
       }
       result = [
-        wrapper.copyWith(
-          text: result.map((inline) => inline.plainText).join(),
-          children: result,
+        annotations.copyAnnotation(
+          wrapper,
+          wrapper.copyWith(
+            text: result.map((inline) => inline.plainText).join(),
+            children: result,
+          ),
+          rawHtml: rawHtmlSourceInlines.contains(wrapper),
         ),
       ];
     }
@@ -473,11 +493,13 @@ class SourcePasteEngine {
     if (outermost == null) return null;
     final mapped = destination.wrapperFor(outermost);
     if (mapped == null) return null;
+    final annotations = _SourceInlineOccurrenceAnnotations();
     final partition = _partitionMappedInline(
       mapped.inline,
       destination.startMarker,
       destination.endMarker,
       rawHtmlSourceInlines: _rawHtmlSourceInlines(destination),
+      annotations: annotations,
     );
     if (partition == null) return null;
     return _serializeMappedInlineReplacement(
@@ -487,7 +509,7 @@ class SourcePasteEngine {
       incoming,
       partition.after,
       authoredWrapper: mapped,
-      rawHtmlFragments: partition.rawHtmlFragments,
+      annotations: annotations,
     );
   }
 
@@ -499,11 +521,14 @@ class SourcePasteEngine {
   ) {
     final mapped = destination.wrapperFor(destinationLink);
     if (mapped == null) return null;
+    final rawHtmlSourceInlines = _rawHtmlSourceInlines(destination);
+    final annotations = _SourceInlineOccurrenceAnnotations();
     final partition = _partitionMappedInline(
       mapped.inline,
       destination.startMarker,
       destination.endMarker,
-      rawHtmlSourceInlines: _rawHtmlSourceInlines(destination),
+      rawHtmlSourceInlines: rawHtmlSourceInlines,
+      annotations: annotations,
     );
     if (partition == null) return null;
     final linkIndex = destination.commonAncestors.indexWhere(
@@ -519,8 +544,14 @@ class SourcePasteEngine {
         .where((inline) => busyMarkIsInheritedInlineContext(inline.kind))
         .toList(growable: false);
     final adjustedIncoming = _removeEquivalentInlineContexts(
-      _applySourceInlineContexts(incoming, innerContexts),
+      _applySourceInlineContexts(
+        incoming,
+        innerContexts,
+        rawHtmlSourceInlines,
+        annotations,
+      ),
       outerContexts,
+      annotations,
     );
     return _serializeMappedInlineReplacement(
       context,
@@ -529,7 +560,7 @@ class SourcePasteEngine {
       adjustedIncoming,
       partition.after,
       authoredWrapper: mapped,
-      rawHtmlFragments: partition.rawHtmlFragments,
+      annotations: annotations,
     );
   }
 
@@ -552,7 +583,7 @@ class SourcePasteEngine {
     List<BusyInline> incoming,
     List<BusyInline> after, {
     _MappedSourceInlineWrapper? authoredWrapper,
-    Set<BusyInline> rawHtmlFragments = const {},
+    required _SourceInlineOccurrenceAnnotations annotations,
   }) {
     final caretTextOffset = [
       ...before,
@@ -601,12 +632,13 @@ class SourcePasteEngine {
         }
       }
     }
-    final merged = _mergeAdjacentSourceInlineStyles(
-      _stabilizeMappedWrapperWhitespace([
+    final merged = _stabilizeMappedWrapperWhitespace(
+      _mergeAdjacentSourceInlineStyles([
         ...before,
         ...incoming,
         ...after,
-      ], rawHtmlFragments),
+      ], annotations),
+      annotations,
     );
     final lineBreakOffsets = {
       for (final lineBreak in retainedLineBreaks)
@@ -704,13 +736,22 @@ class SourcePasteEngine {
         );
   }
 
-  List<BusyInline> _mergeAdjacentSourceInlineStyles(List<BusyInline> inlines) {
+  List<BusyInline> _mergeAdjacentSourceInlineStyles(
+    List<BusyInline> inlines,
+    _SourceInlineOccurrenceAnnotations annotations,
+  ) {
     final merged = <BusyInline>[];
     for (final sourceInline in inlines) {
       final inline = sourceInline.children.isEmpty
           ? sourceInline
-          : sourceInline.copyWith(
-              children: _mergeAdjacentSourceInlineStyles(sourceInline.children),
+          : annotations.copyAnnotation(
+              sourceInline,
+              sourceInline.copyWith(
+                children: _mergeAdjacentSourceInlineStyles(
+                  sourceInline.children,
+                  annotations,
+                ),
+              ),
             );
       final previous = merged.lastOrNull;
       if (previous == null ||
@@ -724,16 +765,24 @@ class SourcePasteEngine {
       }
       merged.removeLast();
       if (inline.kind == BusyInlineKind.text) {
-        merged.add(previous.copyWith(text: previous.text + inline.text));
+        merged.add(
+          annotations.copyAnnotations([
+            previous,
+            inline,
+          ], previous.copyWith(text: previous.text + inline.text)),
+        );
       } else {
         final children = _mergeAdjacentSourceInlineStyles([
           ...previous.children,
           ...inline.children,
-        ]);
+        ], annotations);
         merged.add(
-          previous.copyWith(
-            text: children.map((child) => child.plainText).join(),
-            children: children,
+          annotations.copyAnnotations(
+            [previous, inline],
+            previous.copyWith(
+              text: children.map((child) => child.plainText).join(),
+              children: children,
+            ),
           ),
         );
       }
@@ -747,7 +796,7 @@ class SourcePasteEngine {
   /// serializer/reparse round trip.
   List<BusyInline> _stabilizeMappedWrapperWhitespace(
     List<BusyInline> inlines,
-    Set<BusyInline> rawHtmlFragments,
+    _SourceInlineOccurrenceAnnotations annotations,
   ) {
     final result = <BusyInline>[];
     for (final inline in inlines) {
@@ -757,20 +806,24 @@ class SourcePasteEngine {
       }
       final containsRawHtmlWrapper = _containsMappedRawHtmlInline(
         inline.children,
-        rawHtmlFragments,
+        annotations,
       );
       final children = _stabilizeMappedWrapperWhitespace(
         inline.children,
-        rawHtmlFragments,
+        annotations,
       );
-      final rebuilt = inline.copyWith(
-        text: children.map((child) => child.plainText).join(),
-        children: children,
+      final rebuilt = annotations.copyAnnotation(
+        inline,
+        inline.copyWith(
+          text: children.map((child) => child.plainText).join(),
+          children: children,
+        ),
       );
-      final rawHtmlStyle = rawHtmlFragments.contains(inline);
-      final containingLink =
-          inline.kind == BusyInlineKind.link && containsRawHtmlWrapper;
-      if (!rawHtmlStyle && !containingLink) {
+      final rawHtmlStyle = annotations.isRawHtml(inline);
+      final containingInheritedContext =
+          busyMarkIsInheritedInlineContext(inline.kind) &&
+          containsRawHtmlWrapper;
+      if (!rawHtmlStyle && !containingInheritedContext) {
         result.add(rebuilt);
         continue;
       }
@@ -819,27 +872,23 @@ class SourcePasteEngine {
 
   bool _containsMappedRawHtmlInline(
     List<BusyInline> inlines,
-    Set<BusyInline> rawHtmlFragments,
+    _SourceInlineOccurrenceAnnotations annotations,
   ) {
     for (final inline in inlines) {
-      if (rawHtmlFragments.contains(inline) ||
-          _containsMappedRawHtmlInline(inline.children, rawHtmlFragments)) {
+      if (annotations.isRawHtml(inline) ||
+          _containsMappedRawHtmlInline(inline.children, annotations)) {
         return true;
       }
     }
     return false;
   }
 
-  ({
-    List<BusyInline> before,
-    List<BusyInline> after,
-    Set<BusyInline> rawHtmlFragments,
-  })?
-  _partitionMappedInline(
+  ({List<BusyInline> before, List<BusyInline> after})? _partitionMappedInline(
     BusyInline inline,
     String startMarker,
     String? endMarker, {
     required Set<BusyInline> rawHtmlSourceInlines,
+    required _SourceInlineOccurrenceAnnotations annotations,
   }) {
     final text = inline.plainText;
     final start = text.indexOf(startMarker);
@@ -849,18 +898,16 @@ class SourcePasteEngine {
         : text.indexOf(endMarker, start + startMarker.length) +
               endMarker.length;
     if (end < start + startMarker.length) return null;
-    final rawHtmlFragments = Set<BusyInline>.identity();
     final partition = _partitionSourceInline(
       inline,
       start,
       end,
       rawHtmlSourceInlines,
-      rawHtmlFragments,
+      annotations,
     );
     return (
       before: [if (partition.before case final before?) before],
       after: [if (partition.after case final after?) after],
-      rawHtmlFragments: rawHtmlFragments,
     );
   }
 
@@ -869,7 +916,7 @@ class SourcePasteEngine {
     int start,
     int end,
     Set<BusyInline> rawHtmlSourceInlines,
-    Set<BusyInline> rawHtmlFragments,
+    _SourceInlineOccurrenceAnnotations annotations,
   ) {
     final before = <BusyInline>[];
     final after = <BusyInline>[];
@@ -887,7 +934,7 @@ class SourcePasteEngine {
           (start - offset).clamp(0, length).toInt(),
           (end - offset).clamp(0, length).toInt(),
           rawHtmlSourceInlines,
-          rawHtmlFragments,
+          annotations,
         );
         if (partition.before != null) before.add(partition.before!);
         if (partition.after != null) after.add(partition.after!);
@@ -902,7 +949,7 @@ class SourcePasteEngine {
     int start,
     int end,
     Set<BusyInline> rawHtmlSourceInlines,
-    Set<BusyInline> rawHtmlFragments,
+    _SourceInlineOccurrenceAnnotations annotations,
   ) {
     final length = inline.plainText.length;
     if (inline.children.isNotEmpty) {
@@ -911,7 +958,7 @@ class SourcePasteEngine {
         start,
         end,
         rawHtmlSourceInlines,
-        rawHtmlFragments,
+        annotations,
       );
       final before = partition.before.isEmpty
           ? null
@@ -926,8 +973,8 @@ class SourcePasteEngine {
               children: partition.after,
             );
       if (rawHtmlSourceInlines.contains(inline)) {
-        if (before != null) rawHtmlFragments.add(before);
-        if (after != null) rawHtmlFragments.add(after);
+        if (before != null) annotations.markRawHtml(before);
+        if (after != null) annotations.markRawHtml(after);
       }
       return (before: before, after: after);
     }
@@ -1888,6 +1935,31 @@ class _MappedAdjacentInlineRuns {
 
   final TextRange leftClosingRange;
   final TextRange rightOpeningRange;
+}
+
+class _SourceInlineOccurrenceAnnotations {
+  final Set<BusyInline> _rawHtml = Set<BusyInline>.identity();
+
+  bool isRawHtml(BusyInline inline) => _rawHtml.contains(inline);
+
+  void markRawHtml(BusyInline inline) => _rawHtml.add(inline);
+
+  BusyInline copyAnnotation(
+    BusyInline source,
+    BusyInline replacement, {
+    bool rawHtml = false,
+  }) {
+    if (rawHtml || isRawHtml(source)) markRawHtml(replacement);
+    return replacement;
+  }
+
+  BusyInline copyAnnotations(
+    Iterable<BusyInline> sources,
+    BusyInline replacement,
+  ) {
+    if (sources.any(isRawHtml)) markRawHtml(replacement);
+    return replacement;
+  }
 }
 
 sealed class _SourcePlan {

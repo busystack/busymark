@@ -22,6 +22,14 @@ const _rawHtmlAdapter = RawHtmlAdapter();
 /// complete AST mapping path against per-node forward rescans.
 void Function(int inspections)? debugBusyMarkSourceMappingBoundaryInspections;
 
+/// Reports genuine source-text fallback searches after exact mapped ranges,
+/// exact text, and cached sibling boundaries could not resolve a node.
+void Function()? debugBusyMarkSourceMappingFallbackSearchCalls;
+
+/// Reports the half-open source interval permitted for each fallback search.
+void Function(int start, int end)?
+debugBusyMarkSourceMappingFallbackSearchRanges;
+
 String _decodeMarkdownAttribute(String value) => value
     .replaceAll('&#92;', '\\')
     .replaceAll('&quot;', '"')
@@ -699,38 +707,82 @@ class MarkdownAstAdapter {
         .toInt();
     final ranges = [for (final node in values) _sourceMappingOffsets(node)];
     final nextMappedStarts = List<int?>.filled(values.length, null);
-    final nextTextNodes = List<md.Text?>.filled(values.length, null);
+    final nextTextIndices = List<int?>.filled(values.length, null);
     int? nextMappedStart;
-    md.Text? nextTextNode;
+    int? nextTextIndex;
     for (var index = values.length - 1; index >= 0; index--) {
       nextMappedStarts[index] = nextMappedStart;
-      nextTextNodes[index] = nextTextNode;
+      nextTextIndices[index] = nextTextIndex;
       final range = ranges[index];
       if (range != null) nextMappedStart = range.start;
       final node = values[index];
-      if (node is md.Text && node.text.isNotEmpty) nextTextNode = node;
+      if (node is md.Text && node.text.isNotEmpty) nextTextIndex = index;
     }
     debugBusyMarkSourceMappingBoundaryInspections?.call(values.length);
     final result = <BusyInline>[];
+    final fallbackTextStarts = List<int?>.filled(values.length, null);
     var cursor = mappingStart.clamp(0, end).toInt();
     for (var index = 0; index < values.length; index++) {
       final node = values[index];
       final range = ranges[index];
-      final nodeStart = (range?.start ?? cursor).clamp(mappingStart, end);
-      int? nextTextStart;
-      if (nextTextNodes[index] case final candidate?) {
-        final found = mappingSource.indexOf(candidate.text, nodeStart);
-        if (found >= nodeStart && found <= end) nextTextStart = found;
-      }
+      final exactRange =
+          range != null &&
+              range.start >= mappingStart &&
+              range.start >= cursor &&
+              range.end >= range.start &&
+              range.end <= end
+          ? range
+          : null;
+      final cachedFallbackStart = fallbackTextStarts[index];
+      final nodeStart =
+          (exactRange?.start ??
+                  (cachedFallbackStart != null &&
+                          cachedFallbackStart >= cursor &&
+                          cachedFallbackStart <= end
+                      ? cachedFallbackStart
+                      : cursor))
+              .clamp(mappingStart, end)
+              .toInt();
       final exactTextEnd =
-          node is md.Text && mappingSource.startsWith(node.text, nodeStart)
+          node is md.Text &&
+              nodeStart + node.text.length <= end &&
+              mappingSource.startsWith(node.text, nodeStart)
           ? nodeStart + node.text.length
           : null;
+      final nextMappedBoundary = nextMappedStarts[index];
+      final cachedMappedEnd =
+          nextMappedBoundary != null &&
+              nextMappedBoundary >= nodeStart &&
+              nextMappedBoundary <= end
+          ? nextMappedBoundary
+          : null;
+      int? fallbackTextEnd;
+      final candidateIndex = nextTextIndices[index];
+      if (exactRange == null &&
+          exactTextEnd == null &&
+          cachedMappedEnd == null &&
+          candidateIndex != null) {
+        final reused = fallbackTextStarts[candidateIndex];
+        if (reused != null && reused >= nodeStart && reused <= end) {
+          fallbackTextEnd = reused;
+        } else {
+          final candidate = values[candidateIndex] as md.Text;
+          debugBusyMarkSourceMappingFallbackSearchCalls?.call();
+          debugBusyMarkSourceMappingFallbackSearchRanges?.call(nodeStart, end);
+          final relative = mappingSource
+              .substring(nodeStart, end)
+              .indexOf(candidate.text);
+          if (relative >= 0) {
+            fallbackTextEnd = nodeStart + relative;
+            fallbackTextStarts[candidateIndex] = fallbackTextEnd;
+          }
+        }
+      }
       final nodeEnd =
-          (range?.end ??
+          (exactRange?.end ??
                   exactTextEnd ??
-                  nextMappedStarts[index] ??
-                  nextTextStart ??
+                  cachedMappedEnd ??
+                  fallbackTextEnd ??
                   end)
               .clamp(nodeStart, end);
       result.addAll(
