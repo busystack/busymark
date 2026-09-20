@@ -409,17 +409,38 @@ class BusyMarkMarkdownSerializer {
       if (contentPrefix != null) contentPrefix,
       if (text.isNotEmpty) text,
     ].join(' ');
-    final line = content.isEmpty ? marker : '$marker $content';
-    if (block.children.isEmpty) {
-      return line;
-    }
     final indentation = marker.length + 1;
-    final nested = block.children
-        .map(serializeBlock)
-        .where((source) => source.trim().isNotEmpty)
-        .map((source) => _indentBlock(source, indentation))
-        .join('\n');
-    return nested.isEmpty ? line : '$line\n$nested';
+    final children = <({BusyBlock block, String source})>[
+      for (final child in block.children)
+        if (serializeBlock(child) case final source
+            when source.trim().isNotEmpty)
+          (block: child, source: source),
+    ];
+    if (content.isEmpty && children.isNotEmpty) {
+      final first = children.removeAt(0).source.split('\n');
+      final source = StringBuffer('$marker ${first.first}');
+      for (final line in first.skip(1)) {
+        source
+          ..write('\n')
+          ..write(line.isEmpty ? '' : '${' ' * indentation}$line');
+      }
+      for (final child in children) {
+        source.write(
+          child.block.kind == BusyBlockKind.paragraph ? '\n\n' : '\n',
+        );
+        source.write(_indentBlock(child.source, indentation));
+      }
+      return source.toString();
+    }
+    final line = content.isEmpty ? marker : '$marker $content';
+    if (children.isEmpty) return line;
+    final source = StringBuffer(line);
+    for (final child in children) {
+      final nested = child.source;
+      source.write(child.block.kind == BusyBlockKind.paragraph ? '\n\n' : '\n');
+      source.write(_indentBlock(nested, indentation));
+    }
+    return source.toString();
   }
 
   String _indentBlock(String source, int width) {

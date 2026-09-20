@@ -152,7 +152,7 @@ class SourcePasteEngine {
               block.children.isEmpty &&
               !block.isSourceOnly,
         );
-    if (paragraphOnly && context.containerContinuationPrefix.isEmpty) {
+    if (paragraphOnly) {
       return _serializeParagraphBlockInsertion(target, context, blocks);
     }
     final serialized = fragment.serializeFor(
@@ -168,7 +168,7 @@ class SourcePasteEngine {
     _StructuredSourceInsertionContext context,
     String serialized,
   ) {
-    final split = _mappedStructuredBlockSplit(context);
+    final split = _mappedStructuredBlockSplit(target, context);
     if (split == null) return const _SourceTerminalPlan();
     final beforeInline = _serializeStructuredBlockSide(
       split.before,
@@ -178,6 +178,7 @@ class SourcePasteEngine {
       ),
       context,
       split,
+      split.beforeAuthoredWrapper,
       atBlockStart: context.atBlockStart,
     );
     final afterInline = _serializeStructuredBlockSide(
@@ -185,6 +186,7 @@ class SourcePasteEngine {
       0,
       context,
       split,
+      split.afterAuthoredWrapper,
       atBlockStart: true,
       preferInsideOpeningBoundary: true,
     );
@@ -277,7 +279,7 @@ class SourcePasteEngine {
     _StructuredSourceInsertionContext context,
     List<BusyBlock> blocks,
   ) {
-    final split = _mappedStructuredBlockSplit(context);
+    final split = _mappedStructuredBlockSplit(target, context);
     if (split == null) return const _SourceTerminalPlan();
     final firstInlines = [...split.before, ...blocks.first.inlines];
     final lastInlines = [...blocks.last.inlines, ...split.after];
@@ -289,7 +291,8 @@ class SourcePasteEngine {
       ),
       context,
       split,
-      atBlockStart: context.atBlockStart,
+      split.beforeAuthoredWrapper,
+      atBlockStart: split.startAtBlockStart,
     );
     final lastCaretOffset = blocks.last.inlines.fold<int>(
       0,
@@ -300,9 +303,13 @@ class SourcePasteEngine {
       lastCaretOffset,
       context,
       split,
+      split.afterAuthoredWrapper,
       atBlockStart: true,
     );
-    final separator = '${context.lineEnding}${context.lineEnding}';
+    final separator = context.containerContinuationPrefix.isEmpty
+        ? '${context.lineEnding}${context.lineEnding}'
+        : '${context.lineEnding}${context.containerBlankPrefix}'
+              '${context.lineEnding}${context.containerContinuationPrefix}';
     final middle = <String>[
       for (final block in blocks.skip(1).take(blocks.length - 2))
         const BusyMarkMarkdownSerializer().serializeInlineFragment(
@@ -313,12 +320,19 @@ class SourcePasteEngine {
     ];
     final prefix = [first.source, ...middle].join(separator);
     final replacement = '$prefix$separator${last.source}';
+    final replacementStart =
+        split.startAtBlockStart &&
+            split.startBlockKind == BusyBlockKind.heading &&
+            blocks.first.kind == BusyBlockKind.paragraph &&
+            context.containerContinuationPrefix.isEmpty
+        ? split.startBlockSourceStart ?? split.sourceRange.start
+        : split.sourceRange.start;
     return _SourceEditPlan(
-      start: split.sourceRange.start,
+      start: replacementStart,
       end: split.sourceRange.end,
       text: replacement,
       caretOffset:
-          split.sourceRange.start +
+          replacementStart +
           prefix.length +
           separator.length +
           last.sourceOffset,
@@ -326,6 +340,7 @@ class SourcePasteEngine {
   }
 
   _StructuredBlockInlineSplit? _mappedStructuredBlockSplit(
+    SourcePasteDocumentSnapshot target,
     _StructuredSourceInsertionContext context,
   ) {
     if (context.completeBlockSelection) {
@@ -334,21 +349,29 @@ class SourcePasteEngine {
         before: const [],
         after: const [],
         annotations: _SourceInlineOccurrenceAnnotations(),
+        startBlockKind: context.destinationBlockKind,
+        startBlockSourceStart: context.destinationBlockSourceStart,
+        startAtBlockStart: context.atBlockStart,
       );
     }
-    if (context.inlineMappingFailed) return null;
+    if (context.start != context.end) {
+      if (!context.inlineMappingFailed) {
+        final shared = _mappedSharedStructuredBlockSplit(context);
+        if (shared != null) return shared;
+      }
+      return _mappedIndependentStructuredBlockSplit(target, context);
+    }
+    return _mappedCollapsedStructuredBlockSplit(context);
+  }
+
+  _StructuredBlockInlineSplit? _mappedSharedStructuredBlockSplit(
+    _StructuredSourceInsertionContext context,
+  ) {
     final destination = context.inlineContext;
     final outermost = destination?.commonAncestors
         .where((inline) => busyMarkIsInheritedInlineContext(inline.kind))
         .firstOrNull;
-    if (destination == null || outermost == null) {
-      return _StructuredBlockInlineSplit(
-        sourceRange: TextRange(start: context.start, end: context.end),
-        before: const [],
-        after: const [],
-        annotations: _SourceInlineOccurrenceAnnotations(),
-      );
-    }
+    if (destination == null || outermost == null) return null;
     final mapped = destination.wrapperFor(outermost);
     if (mapped == null || mapped.isAutolink) return null;
     final annotations = _SourceInlineOccurrenceAnnotations();
@@ -365,8 +388,117 @@ class SourcePasteEngine {
       before: partition.before,
       after: partition.after,
       annotations: annotations,
-      authoredWrapper: mapped,
+      beforeAuthoredWrapper: mapped,
+      afterAuthoredWrapper: mapped,
       expanded: true,
+      startBlockKind: context.destinationBlockKind,
+      startBlockSourceStart: context.destinationBlockSourceStart,
+      startAtBlockStart: context.atBlockStart,
+    );
+  }
+
+  _StructuredBlockInlineSplit? _mappedCollapsedStructuredBlockSplit(
+    _StructuredSourceInsertionContext context, {
+    _SourceInlineOccurrenceAnnotations? sharedAnnotations,
+  }) {
+    if (context.inlineMappingFailed) return null;
+    final annotations =
+        sharedAnnotations ?? _SourceInlineOccurrenceAnnotations();
+    final destination = context.inlineContext;
+    final outermost = destination?.commonAncestors
+        .where((inline) => busyMarkIsInheritedInlineContext(inline.kind))
+        .firstOrNull;
+    if (destination == null || outermost == null) {
+      return _StructuredBlockInlineSplit(
+        sourceRange: TextRange(start: context.start, end: context.end),
+        before: const [],
+        after: const [],
+        annotations: annotations,
+        startBlockKind: context.destinationBlockKind,
+        startBlockSourceStart: context.destinationBlockSourceStart,
+        startAtBlockStart: context.atBlockStart,
+      );
+    }
+    final mapped = destination.wrapperFor(outermost);
+    if (mapped == null || mapped.isAutolink) return null;
+    final partition = _partitionMappedInline(
+      mapped.inline,
+      destination.startMarker,
+      null,
+      rawHtmlSourceInlines: _rawHtmlSourceInlines(destination),
+      annotations: annotations,
+    );
+    if (partition == null) return null;
+    return _StructuredBlockInlineSplit(
+      sourceRange: mapped.sourceRange,
+      before: partition.before,
+      after: partition.after,
+      annotations: annotations,
+      beforeAuthoredWrapper: mapped,
+      afterAuthoredWrapper: mapped,
+      expanded: true,
+      startBlockKind: context.destinationBlockKind,
+      startBlockSourceStart: context.destinationBlockSourceStart,
+      startAtBlockStart: context.atBlockStart,
+    );
+  }
+
+  _StructuredBlockInlineSplit? _mappedIndependentStructuredBlockSplit(
+    SourcePasteDocumentSnapshot target,
+    _StructuredSourceInsertionContext context,
+  ) {
+    final startContext = _structuredSourceInsertionContext(
+      SourcePasteDocumentSnapshot(
+        expectedSource: target.expectedSource,
+        selection: TextSelection.collapsed(offset: context.start),
+        format: target.format,
+        markdownMode: target.markdownMode,
+        filePath: target.filePath,
+      ),
+    );
+    final endContext = _structuredSourceInsertionContext(
+      SourcePasteDocumentSnapshot(
+        expectedSource: target.expectedSource,
+        selection: TextSelection.collapsed(offset: context.end),
+        format: target.format,
+        markdownMode: target.markdownMode,
+        filePath: target.filePath,
+      ),
+    );
+    if (startContext.sourceProtected ||
+        endContext.sourceProtected ||
+        startContext.unsafeStructuredContainer ||
+        endContext.unsafeStructuredContainer) {
+      return null;
+    }
+    final annotations = _SourceInlineOccurrenceAnnotations();
+    final start = _mappedCollapsedStructuredBlockSplit(
+      startContext,
+      sharedAnnotations: annotations,
+    );
+    final end = _mappedCollapsedStructuredBlockSplit(
+      endContext,
+      sharedAnnotations: annotations,
+    );
+    if (start == null ||
+        end == null ||
+        start.sourceRange.end > end.sourceRange.start) {
+      return null;
+    }
+    return _StructuredBlockInlineSplit(
+      sourceRange: TextRange(
+        start: start.sourceRange.start,
+        end: end.sourceRange.end,
+      ),
+      before: start.before,
+      after: end.after,
+      annotations: annotations,
+      beforeAuthoredWrapper: start.beforeAuthoredWrapper,
+      afterAuthoredWrapper: end.afterAuthoredWrapper,
+      expanded: start.expanded || end.expanded,
+      startBlockKind: startContext.destinationBlockKind,
+      startBlockSourceStart: startContext.destinationBlockSourceStart,
+      startAtBlockStart: startContext.atBlockStart,
     );
   }
 
@@ -374,7 +506,8 @@ class SourcePasteEngine {
     List<BusyInline> inlines,
     int caretTextOffset,
     _StructuredSourceInsertionContext context,
-    _StructuredBlockInlineSplit split, {
+    _StructuredBlockInlineSplit split,
+    _MappedSourceInlineWrapper? authoredWrapper, {
     required bool atBlockStart,
     bool preferInsideOpeningBoundary = false,
   }) {
@@ -386,7 +519,7 @@ class SourcePasteEngine {
       prepared,
       caretTextOffset,
       context,
-      split.authoredWrapper,
+      authoredWrapper,
       atBlockStart: atBlockStart,
     );
     if (!preferInsideOpeningBoundary || prepared.isEmpty) return serialized;
@@ -399,7 +532,7 @@ class SourcePasteEngine {
       markedInlines,
       context.marker.length,
       context,
-      split.authoredWrapper,
+      authoredWrapper,
       atBlockStart: atBlockStart,
     );
     final markerOffset = marked.source.indexOf(context.marker);
@@ -1379,6 +1512,8 @@ class SourcePasteEngine {
       taskItemAtContentStart:
           markerOffset == 0 && markerBlock?.kind == BusyBlockKind.taskListItem,
       completeBlockSelection: completeBlockSelection,
+      destinationBlockKind: markerBlock?.kind,
+      destinationBlockSourceStart: markerBlock?.sourceSpan?.startOffset,
       inlineContext: inlineMapping.context,
       inlineMappingFailed: inlineMapping.failed,
     );
@@ -2107,6 +2242,8 @@ class _StructuredSourceInsertionContext {
     this.hasContainerContentAfter = false,
     this.taskItemAtContentStart = false,
     this.completeBlockSelection = false,
+    this.destinationBlockKind,
+    this.destinationBlockSourceStart,
     this.inlineMappingFailed = false,
     this.inlineContext,
   });
@@ -2125,6 +2262,8 @@ class _StructuredSourceInsertionContext {
   final bool hasContainerContentAfter;
   final bool taskItemAtContentStart;
   final bool completeBlockSelection;
+  final BusyBlockKind? destinationBlockKind;
+  final int? destinationBlockSourceStart;
   final bool inlineMappingFailed;
   final _MappedSourceInlineContext? inlineContext;
 }
@@ -2218,16 +2357,24 @@ class _StructuredBlockInlineSplit {
     required this.before,
     required this.after,
     required this.annotations,
-    this.authoredWrapper,
+    this.beforeAuthoredWrapper,
+    this.afterAuthoredWrapper,
     this.expanded = false,
+    this.startBlockKind,
+    this.startBlockSourceStart,
+    this.startAtBlockStart = false,
   });
 
   final TextRange sourceRange;
   final List<BusyInline> before;
   final List<BusyInline> after;
   final _SourceInlineOccurrenceAnnotations annotations;
-  final _MappedSourceInlineWrapper? authoredWrapper;
+  final _MappedSourceInlineWrapper? beforeAuthoredWrapper;
+  final _MappedSourceInlineWrapper? afterAuthoredWrapper;
   final bool expanded;
+  final BusyBlockKind? startBlockKind;
+  final int? startBlockSourceStart;
+  final bool startAtBlockStart;
 }
 
 class _SourceInlineOccurrenceAnnotations {

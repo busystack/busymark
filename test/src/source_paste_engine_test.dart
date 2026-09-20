@@ -944,6 +944,300 @@ void main() {
     }
   });
 
+  test('block paste preserves independent formatted selection boundaries', () {
+    final fragments = [
+      _fragment('## Heading\n'),
+      _fragment('`A`\n\n[B](https://incoming.test "Incoming")\n'),
+    ];
+    final cases =
+        <
+          ({
+            String source,
+            int sourceStart,
+            int sourceEnd,
+            int editorStart,
+            int editorEnd,
+          })
+        >[
+          (
+            source: '**leftSELECT**tail',
+            sourceStart: '**left'.length,
+            sourceEnd: '**leftSELECT**'.length,
+            editorStart: 'left'.length,
+            editorEnd: 'leftSELECT'.length,
+          ),
+          (
+            source: '*leftSELECT*tail',
+            sourceStart: '*left'.length,
+            sourceEnd: '*leftSELECT*'.length,
+            editorStart: 'left'.length,
+            editorEnd: 'leftSELECT'.length,
+          ),
+          (
+            source: '[leftSELECT](https://destination.test "Title")tail',
+            sourceStart: '[left'.length,
+            sourceEnd: '[leftSELECT](https://destination.test "Title")'.length,
+            editorStart: 'left'.length,
+            editorEnd: 'leftSELECT'.length,
+          ),
+          (
+            source: 'headSELECT**RIGHTtail**',
+            sourceStart: 'head'.length,
+            sourceEnd: 'headSELECT**RIGHT'.length,
+            editorStart: 'head'.length,
+            editorEnd: 'headSELECTRIGHT'.length,
+          ),
+          (
+            source: 'headSELECT*RIGHTtail*',
+            sourceStart: 'head'.length,
+            sourceEnd: 'headSELECT*RIGHT'.length,
+            editorStart: 'head'.length,
+            editorEnd: 'headSELECTRIGHT'.length,
+          ),
+          (
+            source: 'headSELECT[RIGHTtail](https://destination.test "Title")',
+            sourceStart: 'head'.length,
+            sourceEnd: 'headSELECT[RIGHT'.length,
+            editorStart: 'head'.length,
+            editorEnd: 'headSELECTRIGHT'.length,
+          ),
+          (
+            source: '**leftSELECT**middle*SELECTright*',
+            sourceStart: '**left'.length,
+            sourceEnd: '**leftSELECT**middle*SELECT'.length,
+            editorStart: 'left'.length,
+            editorEnd: 'leftSELECTmiddleSELECT'.length,
+          ),
+        ];
+
+    for (final value in cases) {
+      for (final fragment in fragments) {
+        final applied = _applyReady(
+          value.source,
+          engine.prepareStructured(
+            target: _target(
+              value.source,
+              TextSelection(
+                baseOffset: value.sourceStart,
+                extentOffset: value.sourceEnd,
+              ),
+            ),
+            fragment: fragment,
+          ),
+        );
+        if (value.source == '**leftSELECT**tail' &&
+            fragment.blocks.length == 1 &&
+            fragment.blocks.first.kind == BusyBlockKind.heading) {
+          expect(applied.source, '**left**\n\n## Heading\n\ntail');
+        }
+        final editorDocument = _parse(value.source);
+        final editor = BusyMarkWysiwygDocumentController(
+          document: editorDocument,
+        );
+        addTearDown(editor.dispose);
+        final result = editor.insertStyledBlocksAtSelection(
+          blockId: editorDocument.blocks.single.id,
+          selectionStart: value.editorStart,
+          selectionEnd: value.editorEnd,
+          blocks: fragment.blocks,
+        );
+        expect(result, isNotNull);
+        _expectSourceEditorParity(
+          applied,
+          editor,
+          result!.blockId,
+          result.offset,
+        );
+      }
+    }
+  });
+
+  test('structured paste spans partial first and last destination blocks', () {
+    final fragments = [
+      _fragment('## Heading\n'),
+      _fragment('*A*\n\nM\n\n[B](https://incoming.test "Incoming")\n'),
+    ];
+    final cases =
+        <
+          ({
+            String source,
+            int sourceStart,
+            int sourceEnd,
+            int editorStart,
+            int editorEnd,
+          })
+        >[
+          (
+            source: 'alpha\n\nbeta',
+            sourceStart: 2,
+            sourceEnd: 9,
+            editorStart: 2,
+            editorEnd: 2,
+          ),
+          (
+            source: 'alpha\n\n## middle\n\nbeta',
+            sourceStart: 2,
+            sourceEnd: 'alpha\n\n## middle\n\nbe'.length,
+            editorStart: 2,
+            editorEnd: 2,
+          ),
+          (
+            source: '**alpha**\n\nmid\n\n*beta*',
+            sourceStart: '**al'.length,
+            sourceEnd: '**alpha**\n\nmid\n\n*be'.length,
+            editorStart: 2,
+            editorEnd: 2,
+          ),
+        ];
+
+    for (final value in cases) {
+      for (final fragment in fragments) {
+        final applied = _applyReady(
+          value.source,
+          engine.prepareStructured(
+            target: _target(
+              value.source,
+              TextSelection(
+                baseOffset: value.sourceStart,
+                extentOffset: value.sourceEnd,
+              ),
+            ),
+            fragment: fragment,
+          ),
+        );
+        final editorDocument = _parse(value.source);
+        final editor = BusyMarkWysiwygDocumentController(
+          document: editorDocument,
+        );
+        addTearDown(editor.dispose);
+        final result = editor.replaceTextSelectionWithStyledBlocks(
+          firstBlockId: editorDocument.blocks.first.id,
+          firstStartOffset: value.editorStart,
+          lastBlockId: editorDocument.blocks.last.id,
+          lastEndOffset: value.editorEnd,
+          removedBlockIds: [
+            for (final block in editorDocument.blocks) block.id,
+          ],
+          blocks: fragment.blocks,
+        );
+        expect(result, isNotNull);
+        _expectSourceEditorParity(
+          applied,
+          editor,
+          result!.blockId,
+          result.offset,
+        );
+      }
+    }
+  });
+
+  test('paragraph sequences retain destination block and container paths', () {
+    final fragments = [
+      _fragment('`A`\n\n[B](https://incoming.test "Incoming")\n'),
+      _fragment('`A`\n\nM\n\n[B](https://incoming.test "Incoming")\n'),
+    ];
+    final cases =
+        <
+          ({
+            String source,
+            int sourceOffset,
+            int editorOffset,
+            String targetText,
+          })
+        >[
+          (
+            source: '> leftright',
+            sourceOffset: '> left'.length,
+            editorOffset: 'left'.length,
+            targetText: 'leftright',
+          ),
+          (
+            source: '## leftright',
+            sourceOffset: '## '.length,
+            editorOffset: 0,
+            targetText: 'leftright',
+          ),
+          (
+            source: '## leftright',
+            sourceOffset: '## left'.length,
+            editorOffset: 'left'.length,
+            targetText: 'leftright',
+          ),
+          (
+            source: '## leftright',
+            sourceOffset: '## leftright'.length,
+            editorOffset: 'leftright'.length,
+            targetText: 'leftright',
+          ),
+          (
+            source: '- leftright\n  - child',
+            sourceOffset: '- '.length,
+            editorOffset: 0,
+            targetText: 'leftright',
+          ),
+          (
+            source: '- leftright\n  - child',
+            sourceOffset: '- left'.length,
+            editorOffset: 'left'.length,
+            targetText: 'leftright',
+          ),
+          (
+            source: '- leftright\n  - child',
+            sourceOffset: '- leftright'.length,
+            editorOffset: 'leftright'.length,
+            targetText: 'leftright',
+          ),
+          (
+            source: '1. leftright\n   - child',
+            sourceOffset: '1. left'.length,
+            editorOffset: 'left'.length,
+            targetText: 'leftright',
+          ),
+          (
+            source: '- [ ] leftright\n  - child',
+            sourceOffset: '- [ ] left'.length,
+            editorOffset: 'left'.length,
+            targetText: 'leftright',
+          ),
+        ];
+
+    for (final value in cases) {
+      for (final fragment in fragments) {
+        final applied = _applyReady(
+          value.source,
+          engine.prepareStructured(
+            target: _target(
+              value.source,
+              TextSelection.collapsed(offset: value.sourceOffset),
+            ),
+            fragment: fragment,
+          ),
+        );
+        final editorDocument = _parse(value.source);
+        final targetBlock = _blocksDepthFirst(
+          editorDocument.blocks,
+        ).firstWhere((block) => block.plainText == value.targetText);
+        final editor = BusyMarkWysiwygDocumentController(
+          document: editorDocument,
+        );
+        addTearDown(editor.dispose);
+        final result = editor.insertStyledBlocksAtSelection(
+          blockId: targetBlock.id,
+          selectionStart: value.editorOffset,
+          selectionEnd: value.editorOffset,
+          blocks: fragment.blocks,
+        );
+        expect(result, isNotNull);
+        _expectSourceEditorParity(
+          applied,
+          editor,
+          result!.blockId,
+          result.offset,
+        );
+      }
+    }
+  });
+
   test('paste output is valid input for a second paste at returned caret', () {
     const source =
         '[A\n'
@@ -1172,6 +1466,66 @@ List<String> _documentSemanticSignature(BusyDocument document) {
     addBlock(block, 0);
   }
   return result;
+}
+
+Iterable<BusyBlock> _blocksDepthFirst(Iterable<BusyBlock> blocks) sync* {
+  for (final block in blocks) {
+    yield block;
+    yield* _blocksDepthFirst(block.children);
+  }
+}
+
+List<int>? _blockPath(
+  List<BusyBlock> blocks,
+  bool Function(BusyBlock block) matches,
+) {
+  for (var index = 0; index < blocks.length; index++) {
+    final block = blocks[index];
+    if (matches(block)) return [index];
+    final child = _blockPath(block.children, matches);
+    if (child != null) return [index, ...child];
+  }
+  return null;
+}
+
+void _expectSourceEditorParity(
+  ({String source, SourcePasteEdit edit}) applied,
+  BusyMarkWysiwygDocumentController editor,
+  String editorCaretBlockId,
+  int editorCaretOffset,
+) {
+  final sourceDocument = _parse(applied.source);
+  expect(
+    _documentSemanticSignature(sourceDocument),
+    _documentSemanticSignature(_parse(editor.markdown)),
+    reason: 'Source: ${applied.source}\nEditor: ${editor.markdown}',
+  );
+
+  const marker = '\ue006';
+  final marked = _parse(
+    applied.source.replaceRange(
+      applied.edit.caretOffset,
+      applied.edit.caretOffset,
+      marker,
+    ),
+  );
+  final sourcePath = _blockPath(
+    marked.blocks,
+    (block) => block.plainText.contains(marker),
+  );
+  final editorPath = _blockPath(
+    editor.document.blocks,
+    (block) => block.id == editorCaretBlockId,
+  );
+  expect(sourcePath, editorPath, reason: applied.source);
+  final markedBlock = _blocksDepthFirst(
+    marked.blocks,
+  ).firstWhere((block) => block.plainText.contains(marker));
+  expect(
+    markedBlock.plainText.indexOf(marker),
+    editorCaretOffset,
+    reason: applied.source,
+  );
 }
 
 int _countKind(List<BusyInline> inlines, BusyInlineKind kind) {

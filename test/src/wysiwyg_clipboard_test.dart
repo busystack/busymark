@@ -605,15 +605,15 @@ void main() {
             );
             await tester.pump();
 
-            final root = _parser
+            final parsed = _parser
                 .parse(
                   filePath: '/destination.md',
                   source: result,
                   validateLocalReferences: false,
                 )
-                .busyDocument
-                .blocks
-                .single;
+                .busyDocument;
+            expect(parsed.blocks, hasLength(1), reason: result);
+            final root = parsed.blocks.single;
             expect(root.kind, BusyBlockKind.unorderedListItem);
             expect(
               root.children.where((block) => block.plainText == 'Child'),

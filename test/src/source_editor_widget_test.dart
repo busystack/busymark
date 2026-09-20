@@ -2091,6 +2091,129 @@ void main() {
   );
 
   testWidgets(
+    'Source boundary-crossing replacements restore text selection and caret',
+    (tester) async {
+      final cases =
+          <
+            ({
+              String source,
+              TextSelection selection,
+              String fragmentSource,
+              String clipboardText,
+              String expected,
+              int expectedCaret,
+            })
+          >[
+            (
+              source: '**leftSELECT**tail',
+              selection: TextSelection(
+                baseOffset: '**left'.length,
+                extentOffset: '**leftSELECT**'.length,
+              ),
+              fragmentSource: '## Heading\n',
+              clipboardText: 'Heading',
+              expected: '**left**\n\n## Heading\n\ntail',
+              expectedCaret: '**left**\n\n## Heading\n\n'.length,
+            ),
+            (
+              source: 'alpha\n\nbeta',
+              selection: TextSelection(baseOffset: 2, extentOffset: 9),
+              fragmentSource: 'A\n\nB\n',
+              clipboardText: 'A\n\nB',
+              expected: 'alA\n\nBta',
+              expectedCaret: 'alA\n\nB'.length,
+            ),
+          ];
+
+      for (var index = 0; index < cases.length; index++) {
+        final value = cases[index];
+        final fragment = _completeSourceFragment(value.fragmentSource);
+        var modelText = value.source;
+        var modelSelection = const TextSelection.collapsed(offset: 0);
+        var history = const DocumentUndoState();
+        var transactions = 0;
+        final controller = await _pumpClipboardSourceEditor(
+          tester,
+          source: value.source,
+          clipboard: _SourceTestClipboard(
+            readData: RichClipboardData(
+              text: value.clipboardText,
+              richFragment: fragment.encode(),
+              generation: 810 + index,
+            ),
+          ),
+          onTransactionalChanged:
+              (text, _, previousSelection, selection, undoGroup) {
+                transactions += 1;
+                history = history.push(
+                  DocumentHistoryState(
+                    text: modelText,
+                    selection: previousSelection,
+                  ),
+                  group: undoGroup,
+                );
+                modelText = text;
+                modelSelection = selection;
+              },
+          onUndo: () {
+            if (history.undo.isEmpty) return null;
+            final target = history.undo.last;
+            history = history.afterUndo(
+              DocumentHistoryState(text: modelText, selection: modelSelection),
+            );
+            modelText = target.text;
+            modelSelection = target.selection;
+            return TextEditingValue(
+              text: target.text,
+              selection: target.selection,
+            );
+          },
+          onRedo: () {
+            if (history.redo.isEmpty) return null;
+            final target = history.redo.last;
+            history = history.afterRedo(
+              DocumentHistoryState(text: modelText, selection: modelSelection),
+            );
+            modelText = target.text;
+            modelSelection = target.selection;
+            return TextEditingValue(
+              text: target.text,
+              selection: target.selection,
+            );
+          },
+        );
+        controller.selection = value.selection;
+
+        await _pressControlKey(tester, LogicalKeyboardKey.keyV);
+        await tester.pump();
+
+        final pastedSelection = TextSelection.collapsed(
+          offset: value.expectedCaret,
+        );
+        expect(controller.text, value.expected);
+        expect(controller.selection, pastedSelection);
+        expect(transactions, 1);
+
+        await _pressControlKey(tester, LogicalKeyboardKey.keyZ);
+        await tester.pump();
+        expect(controller.text, value.source);
+        expect(controller.selection, value.selection);
+
+        await _pressControlKey(tester, LogicalKeyboardKey.keyZ, shift: true);
+        await tester.pump();
+        expect(controller.text, value.expected);
+        expect(controller.selection, pastedSelection);
+        expect(transactions, 1);
+
+        if (index + 1 < cases.length) {
+          await tester.pumpWidget(const SizedBox.shrink());
+          await tester.pump();
+        }
+      }
+    },
+  );
+
+  testWidgets(
     'Source rich inline paste composes with enclosing inline syntax',
     (tester) async {
       Future<TextEditingController> paste({

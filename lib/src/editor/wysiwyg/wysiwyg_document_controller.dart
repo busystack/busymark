@@ -1757,8 +1757,21 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
       return null;
     }
 
-    final mergedText =
-        firstText.substring(0, firstStart) + lastText.substring(lastEnd);
+    final firstPartition = _partitionInlinesForReplacement(
+      firstBlock.inlines,
+      firstStart,
+      firstText.length,
+    );
+    final lastPartition = _partitionInlinesForReplacement(
+      lastBlock.inlines,
+      0,
+      lastEnd,
+    );
+    final mergedInlines = _mergeAdjacentInlineStyles([
+      ...firstPartition.before,
+      ...lastPartition.after,
+    ]);
+    final mergedText = mergedInlines.map((inline) => inline.plainText).join();
     final removeIds = removedIds.where((id) => id != firstBlockId).toSet();
     _document = _document.copyWith(
       blocks: _removeBlocksByIds(
@@ -1769,7 +1782,7 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
               ? BusyBlock(
                   id: block.id,
                   kind: BusyBlockKind.paragraph,
-                  inlines: _textInlines(mergedText),
+                  inlines: mergedInlines,
                   attributes: _attributesForText(
                     const {},
                     BusyBlockKind.paragraph,
@@ -1777,7 +1790,11 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
                   ),
                   dirty: true,
                 )
-              : _blockWithEditedText(block, mergedText),
+              : block.copyWith(
+                  inlines: mergedInlines,
+                  preserveRaw: false,
+                  dirty: true,
+                ),
         ),
         removeIds,
       ),
@@ -1856,6 +1873,15 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
       return BusyWysiwygTextSplitResult(
         blockId: blockId,
         offset: beforeText.length + inserted.text.length,
+      );
+    }
+
+    if (_isBlockContentContainer(block.kind)) {
+      return _insertParagraphBlocksInsideContainer(
+        block: block,
+        beforeInlines: partition.before,
+        afterInlines: partition.after,
+        blocks: blocks,
       );
     }
 
@@ -1985,6 +2011,42 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
       kind == BusyBlockKind.orderedListItem ||
       kind == BusyBlockKind.taskListItem ||
       kind == BusyBlockKind.blockquote;
+
+  BusyWysiwygTextSplitResult _insertParagraphBlocksInsideContainer({
+    required BusyBlock block,
+    required List<BusyInline> beforeInlines,
+    required List<BusyInline> afterInlines,
+    required List<BusyWysiwygStyledBlock> blocks,
+  }) {
+    final first = busyMarkWysiwygClipboardBlock(blocks.first);
+    final insertedChildren = <BusyBlock>[
+      for (final styled in blocks.skip(1).take(blocks.length - 2))
+        _styledBlockToBusyBlock(styled),
+    ];
+    final lastStyled = blocks.last;
+    final last = _styledBlockToBusyBlock(lastStyled).copyWith(
+      inlines: [
+        ...busyMarkWysiwygClipboardBlock(lastStyled).inlines,
+        ...afterInlines,
+      ],
+      dirty: true,
+    );
+    insertedChildren.add(last);
+    final updated = block.copyWith(
+      inlines: _mergeAdjacentInlineStyles([...beforeInlines, ...first.inlines]),
+      children: [...insertedChildren, ...block.children],
+      preserveRaw: false,
+      dirty: true,
+    );
+    _document = _document.copyWith(
+      blocks: _replaceBlockWithMany(_document.blocks, block.id, [updated]),
+    );
+    notifyListeners();
+    return BusyWysiwygTextSplitResult(
+      blockId: last.id,
+      offset: lastStyled.text.length,
+    );
+  }
 
   BusyWysiwygTextSplitResult _insertCompleteBlocksInsideContainer({
     required BusyBlock block,
