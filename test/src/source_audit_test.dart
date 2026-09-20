@@ -2100,6 +2100,46 @@ void main() {
     expect(workspace, isNot(contains('class _StatusPill')));
     expect(workspace, isNot(contains("'Not saved' : 'Saved'")));
   });
+
+  test('Source paste planning and mapping keep explicit boundaries', () {
+    final editor = File(
+      'lib/src/editor/source/source_editor.dart',
+    ).readAsStringSync();
+    final engine = File(
+      'lib/src/editor/source/source_paste_engine.dart',
+    ).readAsStringSync();
+    final mapper = File(
+      'lib/src/markdown/markdown_source_map.dart',
+    ).readAsStringSync();
+    final adapter = File(
+      'lib/src/markdown/markdown_ast_adapter.dart',
+    ).readAsStringSync();
+    final serializer = File(
+      'lib/src/markdown/busymark_markdown_serializer.dart',
+    ).readAsStringSync();
+
+    expect(editor, contains("import 'source_paste_engine.dart';"));
+    expect(editor, contains('final _pasteEngine = const SourcePasteEngine()'));
+    expect(editor, isNot(contains('MarkdownAstAdapter')));
+    expect(editor, isNot(contains('BusyMarkMarkdownSerializer')));
+    expect(editor, isNot(contains('MarkdownParser')));
+
+    expect(engine, contains('sealed class SourcePastePreparation'));
+    expect(engine, contains('class SourcePasteReady'));
+    expect(engine, contains('class SourcePasteTryNext'));
+    expect(engine, contains('class SourcePasteStop'));
+    expect(engine, isNot(contains('terminalFailure')));
+    expect(engine, isNot(contains('BuildContext')));
+    expect(engine, isNot(contains('WidgetRef')));
+    expect(engine, isNot(contains('RichClipboardService')));
+    expect(engine, isNot(contains('ClipboardHistory')));
+
+    expect(mapper, contains("import 'markdown_ast_adapter.dart';"));
+    expect(adapter, isNot(contains("import 'markdown_source_map.dart';")));
+    expect(mapper, contains('class MarkdownSourceMapper'));
+    expect(serializer, isNot(contains('String _inline(')));
+    expect(serializer, contains('return _inlineMarkdownAtTextOffsets('));
+  });
 }
 
 bool _isText(String path) {

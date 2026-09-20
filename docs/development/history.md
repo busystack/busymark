@@ -51,6 +51,23 @@ within the smallest changed source range, and table-cell serialization is used
 only for a selection contained by one cell. Raw/code protection and list or
 blockquote continuation apply only to structure that survives the replacement.
 
+The Source widget is the asynchronous execution shell: it captures and
+revalidates the target, prepares assets, commits one edit, restores focus, and
+reports Undo and retention. `SourcePasteEngine` is pure planning over an
+immutable source snapshot and returns one of ready, try-next, or stop; its ready
+result includes the expected source identity, exact replacement bounds, and
+final caret. `MarkdownSourceMapper` owns source/logical/semantic projections,
+while `MarkdownAstAdapter` remains the ordinary semantic converter. Raw HTML is
+converted as one safe parser fragment and gains optional occurrence metadata at
+that conversion boundary. Position probes are operation-local and never define
+HTML, links, attributes, references, or whitespace classification.
+
+Inline serialization has one syntax-emission path. Ordinary serialization and
+serialization with caret or break provenance differ only in requested output
+bookkeeping, so identical content and options must produce byte-identical
+source. Standalone HTML-break layout is indexed once per snapshot; retained
+breaks keep their own source occurrence, line ending, and container prefix.
+
 Paste outcomes distinguish insertion, cancellation, stale targets, unsupported
 representations, and unavailable targets. Cancellation and staleness terminate
 candidate processing. All paste mutations are discrete external-history

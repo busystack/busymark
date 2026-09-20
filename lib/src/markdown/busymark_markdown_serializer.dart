@@ -738,6 +738,9 @@ class BusyMarkMarkdownSerializer {
     final targets = {
       for (final offset in textOffsets) offset.clamp(0, length).toInt(),
     };
+    final childReadableHardBreakRuns = inline.kind == BusyInlineKind.underline
+        ? false
+        : readableHardBreakRuns;
     final childResult = inline.children.isEmpty
         ? null
         : _inlineMarkdownAtTextOffsets(
@@ -745,7 +748,7 @@ class BusyMarkMarkdownSerializer {
             textOffsets: targets,
             tableCell: tableCell,
             atBlockStart: false,
-            readableHardBreakRuns: readableHardBreakRuns,
+            readableHardBreakRuns: childReadableHardBreakRuns,
             delimiterOverrides: delimiterOverrides,
             metrics: metrics,
           );
@@ -845,7 +848,7 @@ class BusyMarkMarkdownSerializer {
     required bool nextAtBlockStart,
     required bool readableHardBreakRuns,
   }) {
-    if (count == 1) {
+    if (count == 1 && readableHardBreakRuns && !tableCell) {
       return const _HardBreakRunSerialization(
         source: '  \n',
         boundarySourceOffsets: [3],
@@ -925,87 +928,15 @@ class BusyMarkMarkdownSerializer {
     bool atBlockStart = false,
     bool readableHardBreakRuns = false,
   }) {
-    final buffer = StringBuffer();
-    var nextAtBlockStart = atBlockStart;
-    for (var index = 0; index < inlines.length; index++) {
-      final inline = inlines[index];
-      if (inline.kind == BusyInlineKind.hardBreak) {
-        var runEnd = index + 1;
-        while (runEnd < inlines.length &&
-            inlines[runEnd].kind == BusyInlineKind.hardBreak) {
-          runEnd += 1;
-        }
-        final count = runEnd - index;
-        if (count > 1) {
-          final serialization = _serializeHardBreakRun(
-            count: count,
-            startsBlock: buffer.isEmpty,
-            hasFollowingContent: runEnd < inlines.length,
-            tableCell: tableCell,
-            nextAtBlockStart: nextAtBlockStart,
-            readableHardBreakRuns: readableHardBreakRuns,
-          );
-          buffer.write(serialization.source);
-          nextAtBlockStart = serialization.source.endsWith('\n');
-          index = runEnd - 1;
-          continue;
-        }
-      }
-      final source = _inline(
-        inline,
-        tableCell: tableCell,
-        atBlockStart: nextAtBlockStart,
-        readableHardBreakRuns: readableHardBreakRuns,
-        followedByLink:
-            index + 1 < inlines.length &&
-            inlines[index + 1].kind == BusyInlineKind.link,
-      );
-      buffer.write(source);
-      if (source.isNotEmpty) {
-        nextAtBlockStart = source.endsWith('\n');
-      }
-    }
-    return buffer.toString();
-  }
-
-  String _inline(
-    BusyInline inline, {
-    bool tableCell = false,
-    bool atBlockStart = false,
-    bool readableHardBreakRuns = false,
-    bool followedByLink = false,
-  }) {
-    final children = inline.children.isEmpty
-        ? _escapeInlineText(inline.text, atBlockStart: atBlockStart)
-        : _inlineMarkdown(
-            inline.children,
-            tableCell: tableCell,
-            readableHardBreakRuns: readableHardBreakRuns,
-          );
-    return switch (inline.kind) {
-      BusyInlineKind.text => _escapeInlineText(
-        inline.text,
-        atBlockStart: atBlockStart,
-        escapeTrailingBang: followedByLink,
-      ),
-      BusyInlineKind.math => _mathInline(inline),
-      BusyInlineKind.strong => '**$children**',
-      BusyInlineKind.emphasis => '*$children*',
-      BusyInlineKind.underline => '<u>$children</u>',
-      BusyInlineKind.strikethrough => '~~$children~~',
-      BusyInlineKind.code =>
-        tableCell && _tableCodeNeedsHtml(inline.text)
-            ? _htmlCodeSpan(inline.text)
-            : _codeSpan(inline.text),
-      BusyInlineKind.link =>
-        '[${children.isEmpty ? inline.text : children}](${_linkTarget(inline)})',
-      BusyInlineKind.image =>
-        '![${_escapeInlineText(inline.text)}](${inline.destination ?? ''})',
-      BusyInlineKind.softBreak => ' ',
-      BusyInlineKind.hardBreak => '  \n',
-      BusyInlineKind.writersideVariable => '%${inline.text}%',
-      BusyInlineKind.html || BusyInlineKind.unknown => inline.text,
-    };
+    return _inlineMarkdownAtTextOffsets(
+      inlines,
+      textOffsets: const {},
+      tableCell: tableCell,
+      atBlockStart: atBlockStart,
+      readableHardBreakRuns: readableHardBreakRuns,
+      delimiterOverrides: const {},
+      metrics: _InlineTraversalMetrics(),
+    ).source;
   }
 
   String _linkTarget(BusyInline inline) {

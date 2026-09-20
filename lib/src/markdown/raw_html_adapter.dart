@@ -1,9 +1,19 @@
 import 'package:html/dom.dart' as html;
 import 'package:html/parser.dart' as html_parser;
+// The public parser does not expose authored closing-tag spans. Its tokenizer
+// is the parser's own location-aware boundary source, not a second HTML parser.
+// ignore: implementation_imports
+import 'package:html/src/token.dart' as html_token;
+// ignore: implementation_imports
+import 'package:html/src/tokenizer.dart' as html_tokenizer;
 
 import '../core/path_utils.dart';
 import 'busymark_document.dart';
 import 'raw_html_policy.dart';
+
+/// Reports one indexed ownership lookup per semantic HTML break while source
+/// metadata is collected. Tests use this to guard against per-break rescans.
+void Function(int lookups)? debugBusyMarkStandaloneBreakLayoutLookups;
 
 class RawHtmlBlockParseResult {
   const RawHtmlBlockParseResult({required this.safe, this.blocks = const []});
@@ -12,17 +22,34 @@ class RawHtmlBlockParseResult {
   final List<BusyBlock> blocks;
 }
 
+class RawHtmlInlineSourceRange {
+  const RawHtmlInlineSourceRange({
+    required this.start,
+    required this.end,
+    this.opening,
+    this.closing,
+    this.sourceLineBreakOffset,
+  });
+
+  final int start;
+  final int end;
+  final String? opening;
+  final String? closing;
+  final int? sourceLineBreakOffset;
+}
+
+class RawHtmlInlineParseResult {
+  RawHtmlInlineParseResult({
+    required this.inlines,
+    required Map<BusyInline, RawHtmlInlineSourceRange> ranges,
+  }) : ranges = Map.unmodifiable(ranges);
+
+  final List<BusyInline> inlines;
+  final Map<BusyInline, RawHtmlInlineSourceRange> ranges;
+}
+
 class RawHtmlAdapter {
   const RawHtmlAdapter();
-
-  static final RegExp _lineEndingBeforeStandaloneBreak = RegExp(
-    r'\r?\n[ \t]*(?=<br\s*/?>)',
-    caseSensitive: false,
-  );
-  static final RegExp _lineEndingAfterStandaloneBreak = RegExp(
-    r'(<br\s*/?>)(\r?\n)',
-    caseSensitive: false,
-  );
 
   RawHtmlBlockParseResult? parseRawHtmlBlock(
     String rawSource,
@@ -49,10 +76,47 @@ class RawHtmlAdapter {
   }
 
   List<BusyInline>? parseRawHtmlInlineFragment(String text) {
+    if (!_mayContainHtml(text)) return null;
+    final normalized = _HtmlSourceProjection.create(
+      text,
+      standaloneBreakLayoutRemovals(text),
+    ).normalized;
+    final fragment = _parseFragment(normalized);
+    if (fragment == null) return null;
+    final elementScan = _HtmlElementScanState();
+    if (!_hasElement(fragment.nodes, state: elementScan) ||
+        !_isSafeFragment(fragment, inlineOnly: true)) {
+      return null;
+    }
+    return _trimInlineEdges(_inlinesFromNodes(fragment.nodes));
+  }
+
+  /// Parses a complete safe inline HTML fragment and records the authored
+  /// occurrence occupied by each semantic inline element.
+  ///
+  /// The HTML parser's element span covers its opening tag, not necessarily
+  /// its closing tag. Closing extents are therefore paired from the same HTML
+  /// tokenizer that feeds the parser. Repaired or inferred DOM nodes without
+  /// authored spans deliberately receive no source range.
+  RawHtmlInlineParseResult? parseRawHtmlInlineFragmentWithMetadata(
+    String text, {
+    String? sourceText,
+    Iterable<String> ignoredPositionMarkers = const [],
+  }) {
     if (!_mayContainHtml(text)) {
       return null;
     }
-    final fragment = _parseFragment(_normalizeStandaloneBreakLayout(text));
+    final source = sourceText ?? text;
+    final layoutRemovals = _mappedStandaloneBreakLayoutRemovals(
+      source,
+      ignoredPositionMarkers,
+    );
+    final projection = _HtmlSourceProjection.create(
+      source,
+      layoutRemovals,
+      parserText: text,
+    );
+    final fragment = _parseFragment(projection.normalized, generateSpans: true);
     if (fragment == null) {
       return null;
     }
@@ -63,30 +127,59 @@ class RawHtmlAdapter {
     if (!_isSafeFragment(fragment, inlineOnly: true)) {
       return null;
     }
-    return _trimInlineEdges(_inlinesFromNodes(fragment.nodes));
+    final context = _RawHtmlInlineMappingContext(
+      projection: projection,
+      authoredClosingsByOpeningStart: _authoredElementClosingsByOpeningStart(
+        projection.normalized,
+      ),
+      layout: _StandaloneBreakLayoutIndex(layoutRemovals),
+    );
+    return RawHtmlInlineParseResult(
+      inlines: _trimInlineEdges(
+        _inlinesFromNodes(fragment.nodes, mapping: context),
+        ranges: context.ranges,
+      ),
+      ranges: context.ranges,
+    );
   }
 
-  String _normalizeStandaloneBreakLayout(String source) {
-    if (!source.contains('\n') && !source.contains('\r')) {
-      return source;
-    }
-    // A CommonMark soft line ending immediately beside an inline <br> is
-    // layout whitespace, not another visible break. Remove only those source
-    // line endings before HTML whitespace collapsing so marker-only lines do
-    // not add spaces to the editable document model. Explicit indentation
-    // after a marker line remains intact.
-    final removals = standaloneBreakLayoutRemovals(source);
-    if (removals.isEmpty) return source;
-    final result = StringBuffer();
+  List<({int start, int end, int lineFeedOffset})>
+  _mappedStandaloneBreakLayoutRemovals(
+    String source,
+    Iterable<String> ignoredMarkers,
+  ) {
+    final markers = ignoredMarkers
+        .where((marker) => marker.isNotEmpty)
+        .toList(growable: false);
+    if (markers.isEmpty) return standaloneBreakLayoutRemovals(source);
+    final unmarked = StringBuffer();
+    final starts = <int>[];
+    final ends = <int>[];
     var offset = 0;
-    for (final removal in removals) {
-      if (removal.start > offset) {
-        result.write(source.substring(offset, removal.start));
+    while (offset < source.length) {
+      final marker = markers.firstWhere(
+        (candidate) => source.startsWith(candidate, offset),
+        orElse: () => '',
+      );
+      if (marker.isNotEmpty) {
+        offset += marker.length;
+        continue;
       }
-      if (removal.end > offset) offset = removal.end;
+      unmarked.writeCharCode(source.codeUnitAt(offset));
+      starts.add(offset);
+      ends.add(offset + 1);
+      offset += 1;
     }
-    result.write(source.substring(offset));
-    return result.toString();
+    final removals = standaloneBreakLayoutRemovals(unmarked.toString());
+    return [
+      for (final removal in removals)
+        if (removal.start < starts.length && removal.end > 0)
+          (
+            start: starts[removal.start],
+            end: ends[removal.end - 1],
+            lineFeedOffset: starts[removal.lineFeedOffset],
+          ),
+    ];
   }
 
   /// Source ranges which are layout around standalone `<br>` tags rather
@@ -118,24 +211,91 @@ class RawHtmlAdapter {
       );
     }
 
-    for (final match in _lineEndingBeforeStandaloneBreak.allMatches(source)) {
-      add(match.start, match.end);
-    }
-    for (final match in _lineEndingAfterStandaloneBreak.allMatches(source)) {
-      final lineEnding = match.group(2)!;
-      add(match.end - lineEnding.length, match.end);
+    // Token spans, rather than a lexical `<br>` search, decide which text is
+    // an actual HTML break. Tag-looking attribute values and comments must not
+    // alter whitespace classification.
+    final tokenizer = html_tokenizer.HtmlTokenizer(source, generateSpans: true);
+    while (tokenizer.moveNext()) {
+      final token = tokenizer.current;
+      final span = token.span;
+      if (token is! html_token.StartTagToken ||
+          token.name?.toLowerCase() != 'br' ||
+          span == null) {
+        continue;
+      }
+      var before = span.start.offset;
+      while (before > 0) {
+        final unit = source.codeUnitAt(before - 1);
+        if (unit != 0x20 && unit != 0x09) break;
+        before -= 1;
+      }
+      if (before > 0 && source.codeUnitAt(before - 1) == 0x0a) {
+        var lineStart = before - 1;
+        if (lineStart > 0 && source.codeUnitAt(lineStart - 1) == 0x0d) {
+          lineStart -= 1;
+        }
+        add(lineStart, span.start.offset);
+      }
+
+      final after = span.end.offset;
+      if (after < source.length && source.codeUnitAt(after) == 0x0a) {
+        add(after, after + 1);
+      } else if (after + 1 < source.length &&
+          source.codeUnitAt(after) == 0x0d &&
+          source.codeUnitAt(after + 1) == 0x0a) {
+        add(after, after + 2);
+      }
     }
     final result = byLineFeed.values.toList()
       ..sort((left, right) => left.start.compareTo(right.start));
     return result;
   }
 
-  html.DocumentFragment? _parseFragment(String source) {
+  html.DocumentFragment? _parseFragment(
+    String source, {
+    bool generateSpans = false,
+  }) {
     try {
-      return html_parser.parseFragment(source);
+      return html_parser.parseFragment(source, generateSpans: generateSpans);
     } on Object {
       return null;
     }
+  }
+
+  Map<int, ({int start, int end})> _authoredElementClosingsByOpeningStart(
+    String source,
+  ) {
+    final closings = <int, ({int start, int end})>{};
+    final stack = <({String name, int start})>[];
+    final tokenizer = html_tokenizer.HtmlTokenizer(source, generateSpans: true);
+    while (tokenizer.moveNext()) {
+      final token = tokenizer.current;
+      final span = token.span;
+      if (span == null) continue;
+      if (token is html_token.StartTagToken) {
+        final name = token.name?.toLowerCase() ?? '';
+        if (token.selfClosing || voidHtmlTags.contains(name)) {
+          closings[span.start.offset] = (
+            start: span.end.offset,
+            end: span.end.offset,
+          );
+        } else {
+          stack.add((name: name, start: span.start.offset));
+        }
+        continue;
+      }
+      if (token is! html_token.EndTagToken) continue;
+      final name = token.name?.toLowerCase() ?? '';
+      final match = stack.lastIndexWhere((entry) => entry.name == name);
+      if (match < 0) continue;
+      final opening = stack[match];
+      stack.removeRange(match, stack.length);
+      closings[opening.start] = (
+        start: span.start.offset,
+        end: span.end.offset,
+      );
+    }
+    return closings;
   }
 
   bool _isSafeFragment(
@@ -630,11 +790,19 @@ class RawHtmlAdapter {
     );
   }
 
-  List<BusyInline> _inlinesFromNodes(Iterable<html.Node> nodes) {
-    return [for (final node in nodes) ..._inlineFromNode(node)];
+  List<BusyInline> _inlinesFromNodes(
+    Iterable<html.Node> nodes, {
+    _RawHtmlInlineMappingContext? mapping,
+  }) {
+    return [
+      for (final node in nodes) ..._inlineFromNode(node, mapping: mapping),
+    ];
   }
 
-  List<BusyInline> _inlineFromNode(html.Node node) {
+  List<BusyInline> _inlineFromNode(
+    html.Node node, {
+    _RawHtmlInlineMappingContext? mapping,
+  }) {
     if (node is html.Text) {
       if (node.data.isEmpty) {
         return const [];
@@ -646,17 +814,23 @@ class RawHtmlAdapter {
       return [BusyInline(kind: BusyInlineKind.text, text: text)];
     }
     if (node is html.Element) {
-      return _inlineFromElement(node);
+      return _inlineFromElement(node, mapping: mapping);
     }
     return const [];
   }
 
-  List<BusyInline> _inlineFromElement(html.Element element) {
+  List<BusyInline> _inlineFromElement(
+    html.Element element, {
+    _RawHtmlInlineMappingContext? mapping,
+  }) {
     final tag = element.localName?.toLowerCase() ?? '';
     final attributes = sanitizeHtmlAttributes(tag, element.attributes) ?? {};
-    final children = _trimInlineEdges(_inlinesFromNodes(element.nodes));
+    final children = _trimInlineEdges(
+      _inlinesFromNodes(element.nodes, mapping: mapping),
+      ranges: mapping?.ranges,
+    );
     final text = _plainText(children);
-    return switch (tag) {
+    final List<BusyInline> result = switch (tag) {
       'strong' || 'b' => [
         BusyInline(kind: BusyInlineKind.strong, text: text, children: children),
       ],
@@ -709,7 +883,7 @@ class RawHtmlAdapter {
           attributes: attributes,
         ),
       ],
-      'br' => const [BusyInline(kind: BusyInlineKind.hardBreak, text: '\n')],
+      'br' => [BusyInline(kind: BusyInlineKind.hardBreak, text: '\n')],
       'wbr' => const [],
       _ =>
         children.isEmpty
@@ -723,20 +897,54 @@ class RawHtmlAdapter {
               ]
             : children,
     };
+    final span = element.sourceSpan;
+    if (mapping != null && span != null && result.length == 1) {
+      final normalizedStart = span.start.offset;
+      final authoredClosing =
+          mapping.authoredClosingsByOpeningStart[normalizedStart];
+      final normalizedEnd = authoredClosing?.end ?? span.end.offset;
+      final start = mapping.projection.rawStartFor(normalizedStart);
+      final end = mapping.projection.rawEndFor(normalizedEnd);
+      final openingEnd = mapping.projection.rawEndFor(span.end.offset);
+      final closingStart = authoredClosing == null
+          ? null
+          : mapping.projection.rawStartFor(authoredClosing.start);
+      mapping.ranges[result.single] = RawHtmlInlineSourceRange(
+        start: start,
+        end: end,
+        opening: mapping.projection.source.substring(start, openingEnd),
+        closing: closingStart == null || closingStart >= end
+            ? null
+            : mapping.projection.source.substring(closingStart, end),
+        sourceLineBreakOffset: tag == 'br'
+            ? mapping.layout.claimForBreak(start, end)
+            : null,
+      );
+    }
+    return result;
   }
 
-  List<BusyInline> _trimInlineEdges(List<BusyInline> inlines) {
+  List<BusyInline> _trimInlineEdges(
+    List<BusyInline> inlines, {
+    Map<BusyInline, RawHtmlInlineSourceRange>? ranges,
+  }) {
     if (inlines.isEmpty) {
       return const [];
     }
     final result = [...inlines];
     if (result.first.kind == BusyInlineKind.text) {
-      result[0] = result.first.copyWith(text: result.first.text.trimLeft());
+      final previous = result.first;
+      result[0] = previous.copyWith(text: previous.text.trimLeft());
+      final range = ranges?.remove(previous);
+      if (range != null) ranges![result[0]] = range;
     }
     if (result.last.kind == BusyInlineKind.text) {
-      result[result.length - 1] = result.last.copyWith(
-        text: result.last.text.trimRight(),
+      final previous = result.last;
+      result[result.length - 1] = previous.copyWith(
+        text: previous.text.trimRight(),
       );
+      final range = ranges?.remove(previous);
+      if (range != null) ranges![result.last] = range;
     }
     return [
       for (final inline in result)
@@ -804,6 +1012,145 @@ class RawHtmlAdapter {
     return value.contains('<') &&
         value.contains('>') &&
         RegExp(r'</?\s*[A-Za-z][A-Za-z0-9_-]*(?:\s|/?>)').hasMatch(value);
+  }
+}
+
+class _RawHtmlInlineMappingContext {
+  _RawHtmlInlineMappingContext({
+    required this.projection,
+    required this.authoredClosingsByOpeningStart,
+    required this.layout,
+  });
+
+  final _HtmlSourceProjection projection;
+  final Map<int, ({int start, int end})> authoredClosingsByOpeningStart;
+  final _StandaloneBreakLayoutIndex layout;
+  final Map<BusyInline, RawHtmlInlineSourceRange> ranges = Map.identity();
+}
+
+class _HtmlSourceProjection {
+  const _HtmlSourceProjection({
+    required this.source,
+    required this.normalized,
+    required this.rawStarts,
+    required this.rawEnds,
+    required this.rawLength,
+  });
+
+  factory _HtmlSourceProjection.create(
+    String source,
+    List<({int start, int end, int lineFeedOffset})> removals, {
+    String? parserText,
+  }) {
+    final parsed = parserText ?? source;
+    final parsedRawStarts = <int>[];
+    final parsedRawEnds = <int>[];
+    var rawOffset = 0;
+    for (var parsedOffset = 0; parsedOffset < parsed.length; parsedOffset++) {
+      final unit = parsed.codeUnitAt(parsedOffset);
+      if (rawOffset < source.length && source.codeUnitAt(rawOffset) == unit) {
+        parsedRawStarts.add(rawOffset);
+        parsedRawEnds.add(rawOffset + 1);
+        rawOffset += 1;
+        continue;
+      }
+      if (rawOffset + 1 < source.length &&
+          source.codeUnitAt(rawOffset) == 0x5c &&
+          source.codeUnitAt(rawOffset + 1) == unit) {
+        parsedRawStarts.add(rawOffset);
+        parsedRawEnds.add(rawOffset + 2);
+        rawOffset += 2;
+        continue;
+      }
+      if (unit == 0x0a &&
+          rawOffset + 1 < source.length &&
+          source.codeUnitAt(rawOffset) == 0x0d &&
+          source.codeUnitAt(rawOffset + 1) == 0x0a) {
+        parsedRawStarts.add(rawOffset);
+        parsedRawEnds.add(rawOffset + 2);
+        rawOffset += 2;
+        continue;
+      }
+      final found = source.indexOf(String.fromCharCode(unit), rawOffset);
+      if (found >= 0) {
+        parsedRawStarts.add(found);
+        parsedRawEnds.add(found + 1);
+        rawOffset = found + 1;
+      } else {
+        final boundary = rawOffset.clamp(0, source.length).toInt();
+        parsedRawStarts.add(boundary);
+        parsedRawEnds.add(boundary);
+      }
+    }
+    final normalized = StringBuffer();
+    final rawStarts = <int>[];
+    final rawEnds = <int>[];
+    var removalIndex = 0;
+    for (var offset = 0; offset < parsed.length; offset++) {
+      final start = parsedRawStarts[offset];
+      final end = parsedRawEnds[offset];
+      while (removalIndex < removals.length &&
+          removals[removalIndex].end <= start) {
+        removalIndex += 1;
+      }
+      if (removalIndex < removals.length &&
+          start >= removals[removalIndex].start &&
+          end <= removals[removalIndex].end) {
+        continue;
+      }
+      normalized.writeCharCode(parsed.codeUnitAt(offset));
+      rawStarts.add(start);
+      rawEnds.add(end);
+    }
+    return _HtmlSourceProjection(
+      source: source,
+      normalized: normalized.toString(),
+      rawStarts: rawStarts,
+      rawEnds: rawEnds,
+      rawLength: source.length,
+    );
+  }
+
+  final String source;
+  final String normalized;
+  final List<int> rawStarts;
+  final List<int> rawEnds;
+  final int rawLength;
+
+  int rawStartFor(int offset) {
+    if (rawStarts.isEmpty || offset >= rawStarts.length) return rawLength;
+    if (offset <= 0) return rawStarts.first;
+    return rawStarts[offset];
+  }
+
+  int rawEndFor(int offset) {
+    if (rawEnds.isEmpty || offset <= 0) return 0;
+    if (offset > rawEnds.length) return rawLength;
+    return rawEnds[offset - 1];
+  }
+}
+
+class _StandaloneBreakLayoutIndex {
+  _StandaloneBreakLayoutIndex(
+    List<({int start, int end, int lineFeedOffset})> removals,
+  ) : _afterTag = {
+        for (final removal in removals) removal.start: removal.lineFeedOffset,
+      },
+      _beforeTag = {
+        for (final removal in removals) removal.end: removal.lineFeedOffset,
+      };
+
+  final Map<int, int> _afterTag;
+  final Map<int, int> _beforeTag;
+  final Set<int> _claimedLineFeeds = {};
+
+  int? claimForBreak(int start, int end) {
+    debugBusyMarkStandaloneBreakLayoutLookups?.call(1);
+    final after = _afterTag[end];
+    if (after != null && _claimedLineFeeds.add(after)) return after;
+    final before = _beforeTag[start];
+    if (before != null && _claimedLineFeeds.add(before)) return before;
+    return null;
   }
 }
 

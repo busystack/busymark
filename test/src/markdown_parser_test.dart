@@ -7,6 +7,7 @@ import 'package:busymark/src/markdown/busymark_document.dart';
 import 'package:busymark/src/markdown/markdown_ast_adapter.dart';
 import 'package:busymark/src/markdown/markdown_model.dart';
 import 'package:busymark/src/markdown/markdown_parser.dart';
+import 'package:busymark/src/markdown/markdown_source_map.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 
@@ -19,7 +20,7 @@ void main() {
     const marker = '\ue000';
     final codeSpans = List.filled(30, '`**`').join(' ');
     final source = '**start $codeSpans left${marker}right $codeSpans end**';
-    final context = const MarkdownAstAdapter().createInlineParserContext(
+    final context = const MarkdownSourceMapper().createInlineParserContext(
       documentSource: source.replaceAll(marker, ''),
       mode: MarkdownMode.commonMark,
     );
@@ -43,7 +44,7 @@ void main() {
 
   test('inline source mapping locates partially consumed delimiter runs', () {
     BusyMarkMappedInlineRange mappedRange(String source, BusyInlineKind kind) {
-      final context = const MarkdownAstAdapter().createInlineParserContext(
+      final context = const MarkdownSourceMapper().createInlineParserContext(
         documentSource: source,
         mode: MarkdownMode.commonMark,
       );
@@ -95,7 +96,7 @@ void main() {
   test('inline source mapping retains escaped collapsed references', () {
     const marker = '\ue000';
     final marked = '${r'[prefix \[ left'}$marker${r'right][]'}';
-    final context = const MarkdownAstAdapter().createInlineParserContext(
+    final context = const MarkdownSourceMapper().createInlineParserContext(
       documentSource:
           '${r'[prefix \[ leftright][]'}\n\n'
           '${r'[prefix \[ leftright]: https://destination.test'}\n',
@@ -124,7 +125,7 @@ void main() {
     const marker = '\ue000';
     const original = '<https://example.test/leftright>';
     const marked = '<https://example.test/left${marker}right>';
-    final context = const MarkdownAstAdapter().createInlineParserContext(
+    final context = const MarkdownSourceMapper().createInlineParserContext(
       documentSource: original,
       mode: MarkdownMode.commonMark,
     );
@@ -163,7 +164,7 @@ void main() {
     ];
     for (final value in cases) {
       final marker = value.marked.contains('\ue001') ? '\ue001' : '\ue000';
-      final context = const MarkdownAstAdapter().createInlineParserContext(
+      final context = const MarkdownSourceMapper().createInlineParserContext(
         documentSource: value.original,
         mode: MarkdownMode.commonMark,
       );
@@ -201,7 +202,7 @@ void main() {
       parsed.busyDocument.blocks.first.inlines.single.destination,
       'https://destination.test',
     );
-    final context = const MarkdownAstAdapter().createInlineParserContext(
+    final context = const MarkdownSourceMapper().createInlineParserContext(
       documentSource: original,
       mode: MarkdownMode.commonMark,
     );
@@ -255,7 +256,7 @@ void main() {
     ]) {
       final target = original.indexOf('leftright');
       final marked = original.replaceRange(target + 4, target + 4, marker);
-      final context = const MarkdownAstAdapter().createInlineParserContext(
+      final context = const MarkdownSourceMapper().createInlineParserContext(
         documentSource: original,
         mode: MarkdownMode.commonMark,
       );
@@ -293,7 +294,7 @@ void main() {
     const marked =
         '> [left$marker\n'
         '> right](https://destination.test)';
-    final context = const MarkdownAstAdapter().createInlineParserContext(
+    final context = const MarkdownSourceMapper().createInlineParserContext(
       documentSource: original,
       mode: MarkdownMode.commonMark,
     );
@@ -340,7 +341,7 @@ void main() {
         '> middle\r\n'
         '> right](https://destination.test "first\n'
         '> second")';
-    final titleContext = const MarkdownAstAdapter().createInlineParserContext(
+    final titleContext = const MarkdownSourceMapper().createInlineParserContext(
       documentSource: titleSource.replaceAll(marker, ''),
       mode: MarkdownMode.commonMark,
     );
@@ -371,7 +372,7 @@ void main() {
         '> right](https://destination.test "first\n'
         '> second\r\n'
         '> third")';
-    final multipleTitleContext = const MarkdownAstAdapter()
+    final multipleTitleContext = const MarkdownSourceMapper()
         .createInlineParserContext(
           documentSource: multipleTitleSource.replaceAll(marker, ''),
           mode: MarkdownMode.commonMark,
@@ -401,7 +402,7 @@ void main() {
         '> [left `code\n'
         '> span`$marker middle\r\n'
         '> right](https://destination.test)';
-    final codeContext = const MarkdownAstAdapter().createInlineParserContext(
+    final codeContext = const MarkdownSourceMapper().createInlineParserContext(
       documentSource: codeSource.replaceAll(marker, ''),
       mode: MarkdownMode.commonMark,
     );
@@ -423,7 +424,7 @@ void main() {
         '> [left$marker  \r\n'
         '> middle  \n'
         '> right](https://destination.test)';
-    final context = const MarkdownAstAdapter().createInlineParserContext(
+    final context = const MarkdownSourceMapper().createInlineParserContext(
       documentSource: source.replaceAll(marker, ''),
       mode: MarkdownMode.commonMark,
     );
@@ -488,7 +489,7 @@ void main() {
     final ordinaryLink = parsed.busyDocument.blocks.single.inlines.firstWhere(
       (inline) => inline.kind == BusyInlineKind.link,
     );
-    final context = const MarkdownAstAdapter().createInlineParserContext(
+    final context = const MarkdownSourceMapper().createInlineParserContext(
       documentSource: original,
       mode: MarkdownMode.commonMark,
     );
@@ -562,7 +563,7 @@ void main() {
           .single
           .inlines
           .firstWhere((inline) => inline.kind == BusyInlineKind.link);
-      final context = const MarkdownAstAdapter().createInlineParserContext(
+      final context = const MarkdownSourceMapper().createInlineParserContext(
         documentSource: original,
         mode: MarkdownMode.commonMark,
       );
@@ -611,7 +612,7 @@ void main() {
         '> [left\n'
         '> `<br>`\n'
         '> ri${marker}ght](https://destination.test)';
-    final context = const MarkdownAstAdapter().createInlineParserContext(
+    final context = const MarkdownSourceMapper().createInlineParserContext(
       documentSource: original,
       mode: MarkdownMode.commonMark,
     );
@@ -649,7 +650,7 @@ void main() {
         '[left  \n'
         '<br>\n'
         'ri${marker}ght](https://destination.test)';
-    final hardBreakContext = const MarkdownAstAdapter()
+    final hardBreakContext = const MarkdownSourceMapper()
         .createInlineParserContext(
           documentSource: hardBreakOriginal,
           mode: MarkdownMode.commonMark,

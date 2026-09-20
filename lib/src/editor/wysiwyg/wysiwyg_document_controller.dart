@@ -7,46 +7,9 @@ import '../../markdown/markdown_model.dart';
 import '../../markdown/markdown_parser.dart';
 import '../../markdown/math_syntax.dart';
 import '../../markdown/raw_html_adapter.dart';
+import '../inline_semantics.dart';
 import 'wysiwyg_commands.dart';
 import 'wysiwyg_inline_controller.dart';
-
-/// Markdown table cells are represented by one source line. Normalize all
-/// platform newline forms at the model boundary so programmatic callers cannot
-/// create content that the table serializer cannot faithfully represent.
-String busyMarkNormalizeTableCellText(String text) {
-  return text.replaceAll(RegExp(r'\r\n|\r|\n'), ' ');
-}
-
-/// Flattens clipboard blocks into the single inline stream accepted by a
-/// table cell. This is shared by Editor insertion and Source serialization so
-/// reconciliation cannot accidentally return to the unnormalized tree.
-List<BusyInline> busyMarkTableCellInlinesFromBlocks(
-  Iterable<BusyBlock> blocks,
-) {
-  BusyInline normalize(BusyInline inline) =>
-      inline.kind == BusyInlineKind.hardBreak ||
-          inline.kind == BusyInlineKind.softBreak
-      ? const BusyInline(kind: BusyInlineKind.text, text: ' ')
-      : inline.copyWith(
-          text: busyMarkNormalizeTableCellText(inline.text),
-          children: [for (final child in inline.children) normalize(child)],
-        );
-  final inlines = <BusyInline>[];
-  void append(BusyBlock block) {
-    if (inlines.isNotEmpty) {
-      inlines.add(const BusyInline(kind: BusyInlineKind.text, text: ' '));
-    }
-    inlines.addAll(block.inlines.map(normalize));
-    for (final child in block.children) {
-      append(child);
-    }
-  }
-
-  for (final block in blocks) {
-    append(block);
-  }
-  return inlines;
-}
 
 BusyBlock busyMarkWysiwygImmutableBlockSnapshot(BusyBlock block) {
   BusyInline snapshotInline(BusyInline inline) {
@@ -2742,7 +2705,7 @@ List<BusyInline> _inlineContextForReplacement(
         (start < inlineEnd || start == offset);
     if (contains &&
         inline.children.isNotEmpty &&
-        _isInheritedInlineContext(inline.kind)) {
+        busyMarkIsInheritedInlineContext(inline.kind)) {
       return [
         inline,
         ..._inlineContextForReplacement(
@@ -2757,13 +2720,6 @@ List<BusyInline> _inlineContextForReplacement(
   return const [];
 }
 
-bool _isInheritedInlineContext(BusyInlineKind kind) =>
-    kind == BusyInlineKind.strong ||
-    kind == BusyInlineKind.emphasis ||
-    kind == BusyInlineKind.underline ||
-    kind == BusyInlineKind.strikethrough ||
-    kind == BusyInlineKind.link;
-
 List<BusyInline> _applyInlineReplacementContext(
   List<BusyInline> inserted,
   List<BusyInline> context,
@@ -2774,7 +2730,8 @@ List<BusyInline> _applyInlineReplacementContext(
         _containsInlineKind(result, BusyInlineKind.link)) {
       continue;
     }
-    if (result.length == 1 && _sameInlineContext(wrapper, result.single)) {
+    if (result.length == 1 &&
+        busyMarkSameInlineSemantics(wrapper, result.single)) {
       continue;
     }
     result = [
@@ -2795,11 +2752,6 @@ bool _containsInlineKind(List<BusyInline> inlines, BusyInlineKind kind) {
   }
   return false;
 }
-
-bool _sameInlineContext(BusyInline left, BusyInline right) =>
-    left.kind == right.kind &&
-    left.destination == right.destination &&
-    mapEquals(left.attributes, right.attributes);
 
 ({String expression, String leading, String trailing})?
 _inlineMathExpressionParts(String value) {

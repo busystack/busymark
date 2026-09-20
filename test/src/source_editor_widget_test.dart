@@ -3515,6 +3515,181 @@ void main() {
     expect(controller.selection.baseOffset, intendedCaret + 1);
   });
 
+  testWidgets(
+    'Source rich paste after an HTML break does not retain its layout newline',
+    (tester) async {
+      const source =
+          '[A\n'
+          '<br>\n'
+          '<br>\n'
+          'right](https://destination.test) tail';
+      final controller = await _pumpClipboardSourceEditor(
+        tester,
+        source: source,
+        clipboard: _SourceTestClipboard(
+          readData: RichClipboardData(
+            text: 'Y',
+            richFragment: _completeSourceFragment(
+              '[Y](https://incoming.test)\n',
+            ).encode(),
+          ),
+        ),
+      );
+      final secondBreak = source.indexOf('<br>', source.indexOf('<br>') + 1);
+      controller.selection = TextSelection.collapsed(
+        offset: secondBreak + '<br>'.length,
+      );
+
+      await _pressControlKey(tester, LogicalKeyboardKey.keyV);
+      await tester.pump();
+
+      final parsed = const MarkdownParser()
+          .parse(
+            filePath: '/project/source.md',
+            source: controller.text,
+            validateLocalReferences: false,
+          )
+          .busyDocument;
+      final paragraph = parsed.blocks.single;
+      expect(paragraph.plainText, 'A\n\nYright tail', reason: controller.text);
+      expect(
+        paragraph.inlines
+            .where((inline) => inline.kind == BusyInlineKind.link)
+            .map((inline) => inline.destination),
+        [
+          'https://destination.test',
+          'https://incoming.test',
+          'https://destination.test',
+        ],
+        reason: controller.text,
+      );
+    },
+  );
+
+  testWidgets('Source rich paste preserves enclosing inline HTML as one run', (
+    tester,
+  ) async {
+    const source = '[<u>left<br>right</u>](https://destination.test) tail';
+    final controller = await _pumpClipboardSourceEditor(
+      tester,
+      source: source,
+      clipboard: _SourceTestClipboard(
+        readData: RichClipboardData(
+          text: 'Y',
+          richFragment: _completeSourceFragment(
+            '[Y](https://incoming.test)\n',
+          ).encode(),
+        ),
+      ),
+    );
+    controller.selection = TextSelection.collapsed(
+      offset: source.indexOf('right') + 'ri'.length,
+    );
+
+    await _pressControlKey(tester, LogicalKeyboardKey.keyV);
+    await tester.pump();
+
+    final parsed = const MarkdownParser()
+        .parse(
+          filePath: '/project/source.md',
+          source: controller.text,
+          validateLocalReferences: false,
+        )
+        .busyDocument;
+    final paragraph = parsed.blocks.single;
+    expect(paragraph.plainText, 'left\nriYght tail', reason: controller.text);
+    expect(controller.text, isNot(contains('</u> tail')));
+    final links = paragraph.inlines
+        .where((inline) => inline.kind == BusyInlineKind.link)
+        .toList(growable: false);
+    expect(links.map((inline) => inline.destination), [
+      'https://destination.test',
+      'https://incoming.test',
+      'https://destination.test',
+    ], reason: controller.text);
+    final surviving = [links.first, links.last]
+        .expand((inline) => inline.children)
+        .where((inline) => inline.kind == BusyInlineKind.underline)
+        .toList(growable: false);
+    expect(surviving, hasLength(2), reason: controller.text);
+    expect(
+      surviving
+          .expand((inline) => inline.children)
+          .where((inline) => inline.kind == BusyInlineKind.hardBreak),
+      hasLength(1),
+      reason: controller.text,
+    );
+  });
+
+  testWidgets(
+    'Source syntax-only availability agrees with textual fallback execution',
+    (tester) async {
+      const source = '**left**';
+      final registry = BusyMarkClipboardInsertionRegistry();
+      addTearDown(registry.dispose);
+      final controller = await _pumpClipboardSourceEditor(
+        tester,
+        source: source,
+        registry: registry,
+        clipboard: _SourceTestClipboard(),
+      );
+      controller.selection = const TextSelection.collapsed(offset: 1);
+      final fragment = _completeSourceFragment('[Y](https://incoming.test)\n');
+      final payload = BusyMarkClipboardPayload(
+        id: 'syntax-fallback',
+        acquiredAt: DateTime.utc(2026),
+        kind: BusyMarkClipboardContentKind.richText,
+        text: 'Y',
+        richFragment: fragment.encode(),
+      );
+
+      expect(registry.canPaste(payload), isTrue);
+      expect(await registry.paste(payload), ClipboardPasteResult.inserted);
+      expect(controller.text, '*Y*left**');
+      expect(controller.selection, const TextSelection.collapsed(offset: 2));
+    },
+  );
+
+  testWidgets(
+    'Source terminal structured failure blocks availability and text fallback',
+    (tester) async {
+      const source = '<a href="https://destination.test">left';
+      final registry = BusyMarkClipboardInsertionRegistry();
+      addTearDown(registry.dispose);
+      var transactions = 0;
+      final fragment = _completeSourceFragment('[Y](https://incoming.test)\n');
+      final controller = await _pumpClipboardSourceEditor(
+        tester,
+        source: source,
+        registry: registry,
+        clipboard: _SourceTestClipboard(
+          readData: RichClipboardData(
+            text: 'Y',
+            richFragment: fragment.encode(),
+          ),
+        ),
+        onTransactionalChanged: (_, _, _, _, _) => transactions += 1,
+      );
+      controller.selection = TextSelection.collapsed(
+        offset: source.indexOf('left') + 2,
+      );
+      final payload = BusyMarkClipboardPayload(
+        id: 'terminal-structured',
+        acquiredAt: DateTime.utc(2026),
+        kind: BusyMarkClipboardContentKind.richText,
+        text: 'Y',
+        richFragment: fragment.encode(),
+      );
+
+      expect(registry.canPaste(payload), isFalse);
+      expect(await registry.paste(payload), ClipboardPasteResult.unavailable);
+      await _pressControlKey(tester, LogicalKeyboardKey.keyV);
+      await tester.pump();
+      expect(controller.text, source);
+      expect(transactions, 0);
+    },
+  );
+
   testWidgets('Source rich paste remaps generated grouped hard breaks', (
     tester,
   ) async {

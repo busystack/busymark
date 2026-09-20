@@ -41,6 +41,7 @@ import '../document_layout.dart';
 import '../document_surface.dart';
 import '../document_text_geometry.dart';
 import '../editor_text_context_menu.dart';
+import '../inline_semantics.dart';
 import '../clipboard_paste_resolver.dart';
 import '../clipboard_local_image_path.dart';
 import 'wysiwyg_block_widgets.dart';
