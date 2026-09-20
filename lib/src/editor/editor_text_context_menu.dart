@@ -25,6 +25,24 @@ class BusyMarkEditorTextPasteAvailability {
 typedef BusyMarkEditorTextPasteAvailabilityReader =
     Future<BusyMarkEditorTextPasteAvailability> Function();
 
+@immutable
+class BusyMarkEditorSpellingMenuItem {
+  const BusyMarkEditorSpellingMenuItem({
+    required this.label,
+    required this.onSelected,
+    this.enabled = true,
+    this.suggestion = false,
+  });
+
+  final String label;
+  final VoidCallback onSelected;
+  final bool enabled;
+  final bool suggestion;
+}
+
+typedef BusyMarkEditorSpellingMenuReader =
+    Future<List<BusyMarkEditorSpellingMenuItem>> Function(int offset);
+
 Widget buildBusyMarkEditorTextContextMenu(
   BuildContext context,
   EditableTextState editableTextState, {
@@ -37,6 +55,8 @@ Widget buildBusyMarkEditorTextContextMenu(
   BusyMarkEditorTextPasteAvailabilityReader? readPasteAvailability,
   VoidCallback? onCopyPlainText,
   List<PopupMenuEntry<VoidCallback>> additionalItems = const [],
+  BusyMarkEditorSpellingMenuReader? readSpellingItems,
+  VoidCallback? onCheckSpelling,
 }) {
   return _BusyMarkEditorTextContextMenu(
     editableTextState: editableTextState,
@@ -49,6 +69,8 @@ Widget buildBusyMarkEditorTextContextMenu(
     readPasteAvailability: readPasteAvailability,
     onCopyPlainText: onCopyPlainText,
     additionalItems: additionalItems,
+    readSpellingItems: readSpellingItems,
+    onCheckSpelling: onCheckSpelling,
   );
 }
 
@@ -64,6 +86,8 @@ class _BusyMarkEditorTextContextMenu extends StatefulWidget {
     required this.readPasteAvailability,
     required this.onCopyPlainText,
     required this.additionalItems,
+    required this.readSpellingItems,
+    required this.onCheckSpelling,
   });
 
   final EditableTextState editableTextState;
@@ -76,6 +100,8 @@ class _BusyMarkEditorTextContextMenu extends StatefulWidget {
   final BusyMarkEditorTextPasteAvailabilityReader? readPasteAvailability;
   final VoidCallback? onCopyPlainText;
   final List<PopupMenuEntry<VoidCallback>> additionalItems;
+  final BusyMarkEditorSpellingMenuReader? readSpellingItems;
+  final VoidCallback? onCheckSpelling;
 
   @override
   State<_BusyMarkEditorTextContextMenu> createState() =>
@@ -87,6 +113,8 @@ class _BusyMarkEditorTextContextMenuState
   final _menuSession = BusyMarkMenuSession();
   var _presented = false;
   var _pasteAvailability = BusyMarkEditorTextPasteAvailability.unavailable;
+  List<BusyMarkEditorSpellingMenuItem> _spellingItems = const [];
+  var _spellingPreparationTimedOut = false;
 
   @override
   void initState() {
@@ -108,27 +136,9 @@ class _BusyMarkEditorTextContextMenuState
       return;
     }
     _presented = true;
-    final availabilityReader = widget.readPasteAvailability;
-    if (availabilityReader != null) {
-      try {
-        _pasteAvailability = await availabilityReader();
-      } on Object {
-        _pasteAvailability = BusyMarkEditorTextPasteAvailability.unavailable;
-      }
-    } else {
-      final clipboardStatus = widget.editableTextState.clipboardStatus;
-      if (clipboardStatus.value == ClipboardStatus.unknown) {
-        await clipboardStatus.update().timeout(
-          const Duration(milliseconds: 500),
-          onTimeout: () {},
-        );
-      }
-      final textAvailable = clipboardStatus.value == ClipboardStatus.pasteable;
-      _pasteAvailability = BusyMarkEditorTextPasteAvailability(
-        normal: textAvailable,
-        plainText: textAvailable,
-      );
-    }
+    final selection = widget.editableTextState.textEditingValue.selection;
+    final offset = selection.isValid ? selection.extentOffset : 0;
+    await Future.wait([_preparePaste(), _prepareSpelling(offset)]);
     if (!mounted) {
       return;
     }
@@ -148,6 +158,46 @@ class _BusyMarkEditorTextContextMenuState
     action?.call();
   }
 
+  Future<void> _preparePaste() async {
+    final availabilityReader = widget.readPasteAvailability;
+    if (availabilityReader != null) {
+      try {
+        _pasteAvailability = await availabilityReader();
+      } on Object {
+        _pasteAvailability = BusyMarkEditorTextPasteAvailability.unavailable;
+      }
+      return;
+    }
+    final clipboardStatus = widget.editableTextState.clipboardStatus;
+    if (clipboardStatus.value == ClipboardStatus.unknown) {
+      await clipboardStatus.update().timeout(
+        const Duration(milliseconds: 500),
+        onTimeout: () {},
+      );
+    }
+    final textAvailable = clipboardStatus.value == ClipboardStatus.pasteable;
+    _pasteAvailability = BusyMarkEditorTextPasteAvailability(
+      normal: textAvailable,
+      plainText: textAvailable,
+    );
+  }
+
+  Future<void> _prepareSpelling(int offset) async {
+    final reader = widget.readSpellingItems;
+    if (reader == null) return;
+    try {
+      _spellingItems = await reader(offset).timeout(
+        const Duration(milliseconds: 350),
+        onTimeout: () {
+          _spellingPreparationTimedOut = true;
+          return const [];
+        },
+      );
+    } on Object {
+      _spellingItems = const [];
+    }
+  }
+
   List<PopupMenuEntry<VoidCallback>> _menuItems(BuildContext context) {
     final editable = widget.editableTextState;
     final commands =
@@ -157,6 +207,30 @@ class _BusyMarkEditorTextContextMenuState
     final hasSelection = selection.isValid && !selection.isCollapsed;
     final items = <PopupMenuEntry<VoidCallback>>[];
     var addedBusyMarkPaste = false;
+    final spellingFallback = widget.onCheckSpelling;
+
+    if (_spellingItems.isNotEmpty) {
+      for (final item in _spellingItems) {
+        items.add(
+          BusyMarkPopupMenuItem<VoidCallback>(
+            value: item.onSelected,
+            label: item.label,
+            enabled: item.enabled,
+          ),
+        );
+      }
+      items.add(const PopupMenuDivider(height: BusyMarkSpacing.sm));
+    } else if (_spellingPreparationTimedOut && spellingFallback != null) {
+      final command = commands[BusyMarkCommandIds.checkSpelling];
+      items.add(
+        BusyMarkPopupMenuItem<VoidCallback>(
+          value: spellingFallback,
+          label: command?.label(context) ?? '',
+          shortcut: command?.shortcut?.label,
+        ),
+      );
+      items.add(const PopupMenuDivider(height: BusyMarkSpacing.sm));
+    }
 
     void addBusyMarkPasteItems() {
       if (addedBusyMarkPaste) return;

@@ -4509,6 +4509,72 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get spelling => 'Spelling';
+
+  @override
+  String get automaticSpelling => 'Check spelling automatically';
+
+  @override
+  String get defaultSpellingLanguage => 'Default spelling language';
+
+  @override
+  String get projectSpellingLanguage => 'Project spelling language';
+
+  @override
+  String get chooseSpellingLanguage => 'Choose spelling language';
+
+  @override
+  String get checkSpelling => 'Check Spelling';
+
+  @override
+  String get ignoreSpellingOnce => 'Ignore Once';
+
+  @override
+  String get ignoreSpellingDocument => 'Ignore All in This Document';
+
+  @override
+  String get addPersonalSpellingWord => 'Add to Personal Dictionary';
+
+  @override
+  String get addProjectSpellingWord => 'Add to Project Dictionary';
+
+  @override
+  String get inheritSpellingLanguage => 'Use project or application language';
+
+  @override
+  String get disableDocumentSpelling => 'Do not check spelling';
+
+  @override
+  String get importSpellingDictionary => 'Import Dictionary';
+
+  @override
+  String get personalSpellingDictionary => 'Personal Dictionary';
+
+  @override
+  String get projectSpellingDictionary => 'Project Dictionary';
+
+  @override
+  String get noSpellingErrors => 'No spelling errors';
+
+  @override
+  String get noSpellingSuggestions => 'No spelling suggestions';
+
+  @override
+  String get spellingWordCheckFailed => 'Could not check this word';
+
+  @override
+  String get spellingCheckFailed => 'Spelling check failed';
+
+  @override
+  String get spellingCheckIncomplete => 'Spelling check is incomplete';
+
+  @override
+  String get spellingDictionaryUnavailable => 'Dictionary unavailable';
+
+  @override
+  String get spellingChecking => 'Checking spelling…';
+
+  @override
   String exportInvalidRange(String field, String minimum, String maximum) {
     return '$field: enter a number between $minimum and $maximum.';
   }

@@ -178,4 +178,46 @@ void main() {
     );
     expect(result.source, 'A\n<br>\n<br>\nB');
   });
+
+  test('text-leaf atoms use interior spans and exclude delimiters', () {
+    final result = serializer.serializeInlineFragmentWithOffsets(const [
+      BusyInline(
+        kind: BusyInlineKind.strong,
+        text: 'mispel',
+        children: [BusyInline(kind: BusyInlineKind.text, text: 'mispel')],
+      ),
+      BusyInline(kind: BusyInlineKind.text, text: 'led'),
+    ], textOffset: 4);
+
+    expect(result.source, '**mispel**led');
+    expect(result.textAtoms.map((atom) => atom.text).join(), 'mispelled');
+    expect(
+      [
+        for (final atom in result.textAtoms)
+          result.source.substring(atom.sourceStart, atom.sourceEnd),
+      ].join(),
+      'mispelled',
+    );
+    expect(result.textAtoms.first.inlinePath, [0, 0]);
+    expect(result.textAtoms.last.inlinePath, [1]);
+  });
+
+  test('table escaping translates leaf spans without changing source', () {
+    const inlines = [BusyInline(kind: BusyInlineKind.text, text: 'a|b')];
+    final ordinary = serializer.serializeInlineFragment(
+      inlines,
+      tableCell: true,
+    );
+    final result = serializer.serializeInlineFragmentWithOffsets(
+      inlines,
+      textOffset: 2,
+      tableCell: true,
+    );
+
+    expect(result.source, ordinary);
+    expect(result.source, r'a\|b');
+    final pipe = result.textAtoms.singleWhere((atom) => atom.text == '|');
+    expect(result.source.substring(pipe.sourceStart, pipe.sourceEnd), r'\|');
+    expect(pipe.escaped, isTrue);
+  });
 }

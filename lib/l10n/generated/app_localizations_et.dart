@@ -4491,6 +4491,72 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
+  String get spelling => 'Õigekiri';
+
+  @override
+  String get automaticSpelling => 'Automaatne õigekirjakontroll';
+
+  @override
+  String get defaultSpellingLanguage => 'Vaikimisi õigekirjakeel';
+
+  @override
+  String get projectSpellingLanguage => 'Projekti õigekirjakontrolli keel';
+
+  @override
+  String get chooseSpellingLanguage => 'Vali õigekirjakeel';
+
+  @override
+  String get checkSpelling => 'Kontrolli õigekirja';
+
+  @override
+  String get ignoreSpellingOnce => 'Eira üks kord';
+
+  @override
+  String get ignoreSpellingDocument => 'Eira selles dokumendis kõiki';
+
+  @override
+  String get addPersonalSpellingWord => 'Lisa isiklikku sõnastikku';
+
+  @override
+  String get addProjectSpellingWord => 'Lisa projekti sõnastikku';
+
+  @override
+  String get inheritSpellingLanguage => 'Kasuta projekti või rakenduse keelt';
+
+  @override
+  String get disableDocumentSpelling => 'Ära kontrolli õigekirja';
+
+  @override
+  String get importSpellingDictionary => 'Impordi sõnastik';
+
+  @override
+  String get personalSpellingDictionary => 'Isiklik sõnastik';
+
+  @override
+  String get projectSpellingDictionary => 'Projekti sõnastik';
+
+  @override
+  String get noSpellingErrors => 'Õigekirjavigu pole';
+
+  @override
+  String get noSpellingSuggestions => 'Õigekirjasoovitusi pole';
+
+  @override
+  String get spellingWordCheckFailed => 'Seda sõna ei saanud kontrollida';
+
+  @override
+  String get spellingCheckFailed => 'Õigekirjakontroll nurjus';
+
+  @override
+  String get spellingCheckIncomplete => 'Õigekirjakontroll on pooleli';
+
+  @override
+  String get spellingDictionaryUnavailable => 'Sõnastik pole saadaval';
+
+  @override
+  String get spellingChecking => 'Õigekirja kontrollimine…';
+
+  @override
   String exportInvalidRange(String field, String minimum, String maximum) {
     return '$field: sisesta arv vahemikus $minimum kuni $maximum.';
   }

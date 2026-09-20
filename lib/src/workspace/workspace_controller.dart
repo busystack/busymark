@@ -13,6 +13,7 @@ import '../core/busymark_exception.dart';
 import '../core/diagnostic.dart';
 import '../core/source_span.dart';
 import '../core/path_utils.dart' show isTextDocumentationPath;
+import '../editor/wysiwyg/wysiwyg_session_state.dart';
 import '../markdown/busymark_document.dart';
 import '../markdown/document_outline.dart';
 import '../markdown/preview_model.dart';
@@ -2754,6 +2755,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     final current = DocumentHistoryState(
       text: buffer.text,
       selection: buffer.editorState.selection,
+      wysiwygState: buffer.editorState.wysiwygState,
     );
     final next = buffer.copyWith(
       text: target.text,
@@ -2764,6 +2766,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       revision: buffer.revision + 1,
       editorState: buffer.editorState.copyWith(
         selection: target.selection,
+        wysiwygState: target.wysiwygState,
         undoState: undo.afterUndo(current),
       ),
     );
@@ -2790,6 +2793,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     final current = DocumentHistoryState(
       text: buffer.text,
       selection: buffer.editorState.selection,
+      wysiwygState: buffer.editorState.wysiwygState,
     );
     final next = buffer.copyWith(
       text: target.text,
@@ -2800,6 +2804,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       revision: buffer.revision + 1,
       editorState: buffer.editorState.copyWith(
         selection: target.selection,
+        wysiwygState: target.wysiwygState,
         undoState: undo.afterRedo(current),
       ),
     );
@@ -2850,6 +2855,8 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     required BusyDocument document,
     String? sourceFilePath,
     String? undoGroup,
+    WysiwygEditorSessionState? previousWysiwygState,
+    WysiwygEditorSessionState? wysiwygState,
   }) {
     _updateActiveText(
       text,
@@ -2858,6 +2865,8 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       liveOutline: document.outline,
       preserveFinalNewline: true,
       undoGroup: undoGroup,
+      previousWysiwygState: previousWysiwygState,
+      wysiwygState: wysiwygState,
     );
   }
 
@@ -2956,6 +2965,8 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     TextSelection? previousSelection,
     TextSelection? selection,
     String? undoGroup,
+    WysiwygEditorSessionState? previousWysiwygState,
+    WysiwygEditorSessionState? wysiwygState,
   }) {
     final workspace = state.workspace;
     final activeEditorPath =
@@ -2975,6 +2986,8 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       undoGroup: undoGroup,
       previousSelection: previousSelection,
       nextSelection: selection,
+      previousWysiwygState: previousWysiwygState,
+      nextWysiwygState: wysiwygState,
     );
     if (identical(nextBuffer, activeBuffer)) {
       return;

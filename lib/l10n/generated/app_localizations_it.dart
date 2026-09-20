@@ -4530,6 +4530,73 @@ class AppLocalizationsIt extends AppLocalizations {
   }
 
   @override
+  String get spelling => 'Ortografia';
+
+  @override
+  String get automaticSpelling => 'Controllo ortografico automatico';
+
+  @override
+  String get defaultSpellingLanguage => 'Lingua ortografica predefinita';
+
+  @override
+  String get projectSpellingLanguage =>
+      'Lingua di controllo ortografico del progetto';
+
+  @override
+  String get chooseSpellingLanguage => 'Scegli la lingua ortografica';
+
+  @override
+  String get checkSpelling => 'Controlla ortografia';
+
+  @override
+  String get ignoreSpellingOnce => 'Ignora una volta';
+
+  @override
+  String get ignoreSpellingDocument => 'Ignora tutto in questo documento';
+
+  @override
+  String get addPersonalSpellingWord => 'Aggiungi al dizionario personale';
+
+  @override
+  String get addProjectSpellingWord => 'Aggiungi al dizionario del progetto';
+
+  @override
+  String get inheritSpellingLanguage => 'Usa la lingua del progetto o dell’app';
+
+  @override
+  String get disableDocumentSpelling => 'Non controllare l’ortografia';
+
+  @override
+  String get importSpellingDictionary => 'Importa dizionario';
+
+  @override
+  String get personalSpellingDictionary => 'Dizionario personale';
+
+  @override
+  String get projectSpellingDictionary => 'Dizionario del progetto';
+
+  @override
+  String get noSpellingErrors => 'Nessun errore di ortografia';
+
+  @override
+  String get noSpellingSuggestions => 'Nessun suggerimento ortografico';
+
+  @override
+  String get spellingWordCheckFailed => 'Impossibile controllare questa parola';
+
+  @override
+  String get spellingCheckFailed => 'Controllo ortografico non riuscito';
+
+  @override
+  String get spellingCheckIncomplete => 'Il controllo ortografico è incompleto';
+
+  @override
+  String get spellingDictionaryUnavailable => 'Dizionario non disponibile';
+
+  @override
+  String get spellingChecking => 'Controllo ortografico…';
+
+  @override
   String exportInvalidRange(String field, String minimum, String maximum) {
     return '$field: inserisci un numero tra $minimum e $maximum.';
   }

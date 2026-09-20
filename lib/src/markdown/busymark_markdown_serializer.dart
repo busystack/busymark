@@ -7,11 +7,33 @@ class BusyMarkSerializedInlineFragment {
     required this.source,
     required this.sourceOffset,
     this.lineBreakSourceOffsets = const {},
+    this.textAtoms = const [],
   });
 
   final String source;
   final int sourceOffset;
   final Map<BusyMarkInlineLineBreakOffset, int> lineBreakSourceOffsets;
+  final List<BusyMarkSerializedTextAtom> textAtoms;
+}
+
+class BusyMarkSerializedTextAtom {
+  const BusyMarkSerializedTextAtom({
+    required this.inlinePath,
+    required this.text,
+    required this.textStart,
+    required this.textEnd,
+    required this.sourceStart,
+    required this.sourceEnd,
+    required this.escaped,
+  });
+
+  final List<int> inlinePath;
+  final String text;
+  final int textStart;
+  final int textEnd;
+  final int sourceStart;
+  final int sourceEnd;
+  final bool escaped;
 }
 
 class BusyMarkInlineLineBreakOffset {
@@ -118,6 +140,7 @@ class BusyMarkMarkdownSerializer {
       source: result.source,
       sourceOffset: result.sourceOffsets[textOffset] ?? result.source.length,
       lineBreakSourceOffsets: Map.unmodifiable(mappedLineBreaks),
+      textAtoms: List.unmodifiable(result.textAtoms),
     );
   }
 
@@ -127,6 +150,10 @@ class BusyMarkMarkdownSerializer {
     final requested = <int>{
       ...serialization.sourceOffsets.values,
       ...serialization.lineBreakSourceOffsets.values,
+      for (final atom in serialization.textAtoms) ...[
+        atom.sourceStart,
+        atom.sourceEnd,
+      ],
     };
     final translated = <int, int>{};
     final source = StringBuffer();
@@ -147,6 +174,21 @@ class BusyMarkMarkdownSerializer {
         for (final entry in serialization.lineBreakSourceOffsets.entries)
           entry.key: translated[entry.value]!,
       },
+      textAtoms: [
+        for (final atom in serialization.textAtoms)
+          BusyMarkSerializedTextAtom(
+            inlinePath: atom.inlinePath,
+            text: atom.text,
+            textStart: atom.textStart,
+            textEnd: atom.textEnd,
+            sourceStart: translated[atom.sourceStart]!,
+            sourceEnd: translated[atom.sourceEnd]!,
+            escaped:
+                atom.escaped ||
+                translated[atom.sourceEnd]! - translated[atom.sourceStart]! !=
+                    atom.sourceEnd - atom.sourceStart,
+          ),
+      ],
     );
   }
 
@@ -632,6 +674,8 @@ class BusyMarkMarkdownSerializer {
     required bool readableHardBreakRuns,
     required Map<BusyInlineKind, BusyMarkInlineDelimiter> delimiterOverrides,
     required _InlineTraversalMetrics metrics,
+    List<int> pathPrefix = const [],
+    int textBase = 0,
   }) {
     final totalTextLength = inlines.fold<int>(
       0,
@@ -645,6 +689,7 @@ class BusyMarkMarkdownSerializer {
     var consumedText = 0;
     final sourceOffsets = <int, int>{};
     final lineBreakSourceOffsets = <int, int>{};
+    final textAtoms = <BusyMarkSerializedTextAtom>[];
     var nextAtBlockStart = atBlockStart;
     final sortedTargets = targets.toList()..sort();
     var targetCursor = 0;
@@ -696,6 +741,28 @@ class BusyMarkMarkdownSerializer {
           }
         }
         buffer.write(runSerialization.source);
+        var runTextStart = textBase + consumedText;
+        var runSourceStart = buffer.length - runSerialization.source.length;
+        for (var runIndex = 0; runIndex < run.length; runIndex++) {
+          final runText = run[runIndex].plainText;
+          final runSourceEnd =
+              buffer.length -
+              runSerialization.source.length +
+              runSerialization.boundarySourceOffsets[runIndex];
+          textAtoms.add(
+            BusyMarkSerializedTextAtom(
+              inlinePath: [...pathPrefix, index + runIndex],
+              text: runText,
+              textStart: runTextStart,
+              textEnd: runTextStart + runText.length,
+              sourceStart: runSourceStart,
+              sourceEnd: runSourceEnd,
+              escaped: true,
+            ),
+          );
+          runTextStart += runText.length;
+          runSourceStart = runSourceEnd;
+        }
         consumedText += runTextLength;
         nextAtBlockStart = runSerialization.source.endsWith('\n');
         index = runEnd - 1;
@@ -718,6 +785,8 @@ class BusyMarkMarkdownSerializer {
             inlines[index + 1].kind == BusyInlineKind.link,
         delimiterOverrides: delimiterOverrides,
         metrics: metrics,
+        inlinePath: [...pathPrefix, index],
+        textBase: textBase + consumedText,
       );
       for (final entry in result.sourceOffsets.entries) {
         sourceOffsets.putIfAbsent(
@@ -728,6 +797,19 @@ class BusyMarkMarkdownSerializer {
       for (final entry in result.lineBreakSourceOffsets.entries) {
         lineBreakSourceOffsets[consumedText + entry.key] =
             buffer.length + entry.value;
+      }
+      for (final atom in result.textAtoms) {
+        textAtoms.add(
+          BusyMarkSerializedTextAtom(
+            inlinePath: atom.inlinePath,
+            text: atom.text,
+            textStart: atom.textStart,
+            textEnd: atom.textEnd,
+            sourceStart: buffer.length + atom.sourceStart,
+            sourceEnd: buffer.length + atom.sourceEnd,
+            escaped: atom.escaped,
+          ),
+        );
       }
       buffer.write(result.source);
       consumedText += length;
@@ -742,6 +824,7 @@ class BusyMarkMarkdownSerializer {
           target: sourceOffsets[target] ?? buffer.length,
       },
       lineBreakSourceOffsets: lineBreakSourceOffsets,
+      textAtoms: textAtoms,
     );
   }
 
@@ -754,6 +837,8 @@ class BusyMarkMarkdownSerializer {
     required bool followedByLink,
     required Map<BusyInlineKind, BusyMarkInlineDelimiter> delimiterOverrides,
     required _InlineTraversalMetrics metrics,
+    required List<int> inlinePath,
+    required int textBase,
   }) {
     final length = inline.plainText.length;
     final targets = {
@@ -772,6 +857,8 @@ class BusyMarkMarkdownSerializer {
             readableHardBreakRuns: childReadableHardBreakRuns,
             delimiterOverrides: delimiterOverrides,
             metrics: metrics,
+            pathPrefix: inlinePath,
+            textBase: textBase,
           );
     final children = inline.children.isEmpty
         ? _escapeInlineText(inline.text, atBlockStart: atBlockStart)
@@ -854,10 +941,74 @@ class BusyMarkMarkdownSerializer {
         lineBreakSourceOffsets[entry.key] = childOpeningLength + entry.value;
       }
     }
+    final textAtoms = <BusyMarkSerializedTextAtom>[];
+    if (inline.kind == BusyInlineKind.text ||
+        (inline.kind == BusyInlineKind.link && inline.children.isEmpty) ||
+        inline.kind == BusyInlineKind.image) {
+      final value = inline.text;
+      final prefix = switch (inline.kind) {
+        BusyInlineKind.link => 1,
+        BusyInlineKind.image => 2,
+        _ => 0,
+      };
+      final escapedOffsets = _escapedInlineTextOffsets(
+        value,
+        {for (var index = 0; index <= value.length; index++) index},
+        atBlockStart: inline.kind == BusyInlineKind.text && atBlockStart,
+        escapeTrailingBang:
+            inline.kind == BusyInlineKind.text && followedByLink,
+      );
+      var offset = 0;
+      for (final rune in value.runes) {
+        final width = rune > 0xffff ? 2 : 1;
+        final sourceStart = prefix + escapedOffsets[offset]!;
+        final sourceEnd = prefix + escapedOffsets[offset + width]!;
+        textAtoms.add(
+          BusyMarkSerializedTextAtom(
+            inlinePath: inlinePath,
+            text: value.substring(offset, offset + width),
+            textStart: textBase + offset,
+            textEnd: textBase + offset + width,
+            sourceStart: sourceStart,
+            sourceEnd: sourceEnd,
+            escaped: sourceEnd - sourceStart != width,
+          ),
+        );
+        offset += width;
+      }
+    } else if (childResult != null) {
+      final prefix = inline.kind == BusyInlineKind.link ? 1 : openingLength;
+      for (final atom in childResult.textAtoms) {
+        textAtoms.add(
+          BusyMarkSerializedTextAtom(
+            inlinePath: atom.inlinePath,
+            text: atom.text,
+            textStart: atom.textStart,
+            textEnd: atom.textEnd,
+            sourceStart: prefix + atom.sourceStart,
+            sourceEnd: prefix + atom.sourceEnd,
+            escaped: atom.escaped,
+          ),
+        );
+      }
+    } else if (inline.kind == BusyInlineKind.softBreak) {
+      textAtoms.add(
+        BusyMarkSerializedTextAtom(
+          inlinePath: inlinePath,
+          text: inline.text,
+          textStart: textBase,
+          textEnd: textBase + inline.text.length,
+          sourceStart: 0,
+          sourceEnd: source.length,
+          escaped: inline.text != source,
+        ),
+      );
+    }
     return _InlineSerialization(
       source: source,
       sourceOffsets: sourceOffsets,
       lineBreakSourceOffsets: lineBreakSourceOffsets,
+      textAtoms: textAtoms,
     );
   }
 
@@ -1137,11 +1288,13 @@ class _InlineSerialization {
     required this.source,
     this.sourceOffsets = const {},
     this.lineBreakSourceOffsets = const {},
+    this.textAtoms = const [],
   });
 
   final String source;
   final Map<int, int> sourceOffsets;
   final Map<int, int> lineBreakSourceOffsets;
+  final List<BusyMarkSerializedTextAtom> textAtoms;
 }
 
 class _HardBreakRunSerialization {

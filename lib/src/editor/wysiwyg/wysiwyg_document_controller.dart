@@ -7,6 +7,7 @@ import '../../markdown/markdown_model.dart';
 import '../../markdown/markdown_parser.dart';
 import '../../markdown/math_syntax.dart';
 import '../../markdown/raw_html_adapter.dart';
+import '../../spellcheck/spelling_replacement.dart';
 import '../inline_semantics.dart';
 import 'wysiwyg_commands.dart';
 import 'wysiwyg_inline_controller.dart';
@@ -464,6 +465,100 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
       source,
       parseMarkdownSource: true,
     );
+  }
+
+  /// Applies a verified spelling plan directly to the owning inline leaves.
+  /// This intentionally bypasses whole-string style-range inference.
+  bool replaceSpellingInBlock({
+    required String blockId,
+    required String expectedFieldText,
+    required SpellingReplacementPlan plan,
+  }) {
+    final current = blockById(blockId);
+    if (current == null ||
+        current.isSourceProtected ||
+        busyMarkWysiwygEditableText(current) != expectedFieldText) {
+      return false;
+    }
+    if (busyMarkWysiwygBlockContainsMath(current)) {
+      final updatedSource = _applySpellingFieldEdits(
+        expectedFieldText,
+        plan.fieldEdits,
+      );
+      if (updatedSource == null) return false;
+      updateMathSource(blockId, updatedSource);
+      return true;
+    }
+    final updatedInlines = _applySpellingLeafEdits(
+      current.inlines,
+      plan.richLeafEdits,
+    );
+    if (updatedInlines == null) return false;
+    final updatedText = updatedInlines.map((inline) => inline.plainText).join();
+    _replaceBlock(
+      blockId,
+      (block) => block.copyWith(
+        inlines: updatedInlines,
+        attributes: _attributesAfterInlineMathEdit(block, updatedInlines),
+        preserveRaw: false,
+        dirty: true,
+      ),
+    );
+    return updatedText != current.plainText;
+  }
+
+  bool replaceSpellingInTableCell({
+    required String tableBlockId,
+    required String cellId,
+    required String expectedFieldText,
+    required SpellingReplacementPlan plan,
+  }) {
+    final table = blockById(tableBlockId);
+    final current = blockById(cellId);
+    if (table?.kind != BusyBlockKind.table ||
+        current == null ||
+        current.isSourceProtected ||
+        busyMarkWysiwygEditableText(current) != expectedFieldText) {
+      return false;
+    }
+    if (busyMarkWysiwygBlockContainsMath(current)) {
+      final updatedSource = _applySpellingFieldEdits(
+        expectedFieldText,
+        plan.fieldEdits,
+      );
+      if (updatedSource == null) return false;
+      updateTableCellMarkdownSource(tableBlockId, cellId, updatedSource);
+      return true;
+    }
+    final updatedInlines = _applySpellingLeafEdits(
+      current.inlines,
+      plan.richLeafEdits,
+    );
+    if (updatedInlines == null) return false;
+    var changed = false;
+    _document = _document.copyWith(
+      blocks: _replaceInBlocks(_document.blocks, tableBlockId, (block) {
+        if (block.kind != BusyBlockKind.table) return block;
+        final children = _replaceInBlocks(block.children, cellId, (cell) {
+          changed = true;
+          return cell.copyWith(
+            inlines: updatedInlines,
+            preserveRaw: false,
+            dirty: true,
+          );
+        });
+        return changed
+            ? block.copyWith(
+                children: children,
+                preserveRaw: false,
+                dirty: true,
+              )
+            : block;
+      }),
+    );
+    if (!changed) return false;
+    notifyListeners();
+    return true;
   }
 
   /// A table cell accepts inline formatting; block boundaries become spaces.
@@ -2500,6 +2595,78 @@ class _OutdentResult {
 
   final List<BusyBlock> kept;
   final List<BusyBlock> outdented;
+}
+
+List<BusyInline>? _applySpellingLeafEdits(
+  List<BusyInline> inlines,
+  List<SpellingRichLeafEdit> edits,
+) {
+  if (edits.isEmpty) return null;
+  final byPath = <String, List<SpellingRichLeafEdit>>{};
+  for (final edit in edits) {
+    byPath.putIfAbsent(edit.path.join('.'), () => []).add(edit);
+  }
+  var fieldOffset = 0;
+  var applied = 0;
+
+  BusyInline visit(BusyInline inline, List<int> path) {
+    if (inline.children.isNotEmpty) {
+      final children = <BusyInline>[];
+      for (final (index, child) in inline.children.indexed) {
+        children.add(visit(child, [...path, index]));
+      }
+      return inline.copyWith(
+        text: children.map((child) => child.plainText).join(),
+        children: children,
+      );
+    }
+    final leafStart = fieldOffset;
+    final leafEnd = leafStart + inline.text.length;
+    fieldOffset = leafEnd;
+    final leafEdits = byPath[path.join('.')];
+    if (leafEdits == null || leafEdits.isEmpty) return inline;
+    var text = inline.text;
+    final descending = [...leafEdits]
+      ..sort((left, right) => right.start.compareTo(left.start));
+    for (final edit in descending) {
+      if (edit.start < leafStart ||
+          edit.end < edit.start ||
+          edit.end > leafEnd) {
+        throw StateError('Spelling leaf edit escaped its verified leaf.');
+      }
+      text = text.replaceRange(
+        edit.start - leafStart,
+        edit.end - leafStart,
+        edit.replacement,
+      );
+      applied++;
+    }
+    return inline.copyWith(text: text);
+  }
+
+  try {
+    final result = <BusyInline>[];
+    for (final (index, inline) in inlines.indexed) {
+      result.add(visit(inline, [index]));
+    }
+    return applied == edits.length ? result : null;
+  } on StateError {
+    return null;
+  }
+}
+
+String? _applySpellingFieldEdits(String source, List<SpellingFieldEdit> edits) {
+  if (edits.isEmpty) return null;
+  var result = source;
+  final descending = [...edits]
+    ..sort((left, right) => right.start.compareTo(left.start));
+  for (final edit in descending) {
+    if (edit.start < 0 || edit.end < edit.start || edit.end > result.length) {
+      return null;
+    }
+    result = result.replaceRange(edit.start, edit.end, edit.replacement);
+  }
+  return result == source ? null : result;
 }
 
 List<BusyInline> _textInlines(String text) {

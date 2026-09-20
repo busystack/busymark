@@ -8,6 +8,7 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
 import '../export/export_options.dart';
+import '../spellcheck/spelling_language.dart';
 import 'app_locale.dart';
 
 enum BusyMarkThemeModePreference { system, light, dark }
@@ -86,6 +87,8 @@ class AppSettings {
     required this.editorToolbarDirection,
     required this.autoSave,
     required this.validateOnEdit,
+    required this.automaticSpelling,
+    required this.defaultSpellingLanguage,
     required this.clipboardHistoryEnabled,
     required this.localHistoryRecordingEnabled,
     required this.localHistoryCheckpointSeconds,
@@ -125,6 +128,8 @@ class AppSettings {
       editorToolbarDirection: EditorToolbarDirection.horizontal,
       autoSave: true,
       validateOnEdit: true,
+      automaticSpelling: true,
+      defaultSpellingLanguage: null,
       clipboardHistoryEnabled: true,
       localHistoryRecordingEnabled: true,
       localHistoryCheckpointSeconds: 60,
@@ -188,6 +193,11 @@ class AppSettings {
       autoSave: json['autoSave'] as bool? ?? defaults.autoSave,
       validateOnEdit:
           json['validateOnEdit'] as bool? ?? defaults.validateOnEdit,
+      automaticSpelling:
+          json['automaticSpelling'] as bool? ?? defaults.automaticSpelling,
+      defaultSpellingLanguage: normalizeSpellingLanguageId(
+        json['defaultSpellingLanguage'],
+      ),
       clipboardHistoryEnabled:
           json['clipboardHistoryEnabled'] as bool? ??
           defaults.clipboardHistoryEnabled,
@@ -281,6 +291,8 @@ class AppSettings {
   final EditorToolbarDirection editorToolbarDirection;
   final bool autoSave;
   final bool validateOnEdit;
+  final bool automaticSpelling;
+  final String? defaultSpellingLanguage;
   final bool clipboardHistoryEnabled;
   final bool localHistoryRecordingEnabled;
   final int localHistoryCheckpointSeconds;
@@ -322,6 +334,8 @@ class AppSettings {
     'editorToolbarDirection': editorToolbarDirection.name,
     'autoSave': autoSave,
     'validateOnEdit': validateOnEdit,
+    'automaticSpelling': automaticSpelling,
+    'defaultSpellingLanguage': defaultSpellingLanguage,
     'clipboardHistoryEnabled': clipboardHistoryEnabled,
     'localHistoryRecordingEnabled': localHistoryRecordingEnabled,
     'localHistoryCheckpointSeconds': localHistoryCheckpointSeconds,
@@ -402,6 +416,8 @@ class AppSettings {
     EditorToolbarDirection? editorToolbarDirection,
     bool? autoSave,
     bool? validateOnEdit,
+    bool? automaticSpelling,
+    Object? defaultSpellingLanguage = _unset,
     bool? clipboardHistoryEnabled,
     bool? localHistoryRecordingEnabled,
     int? localHistoryCheckpointSeconds,
@@ -443,6 +459,10 @@ class AppSettings {
           editorToolbarDirection ?? this.editorToolbarDirection,
       autoSave: autoSave ?? this.autoSave,
       validateOnEdit: validateOnEdit ?? this.validateOnEdit,
+      automaticSpelling: automaticSpelling ?? this.automaticSpelling,
+      defaultSpellingLanguage: identical(defaultSpellingLanguage, _unset)
+          ? this.defaultSpellingLanguage
+          : normalizeSpellingLanguageId(defaultSpellingLanguage),
       clipboardHistoryEnabled:
           clipboardHistoryEnabled ?? this.clipboardHistoryEnabled,
       localHistoryRecordingEnabled:
@@ -647,6 +667,18 @@ class AppSettingsController extends Notifier<AppSettings> {
 
   Future<void> setValidateOnEdit(bool enabled) {
     return _mutate((settings) => settings.copyWith(validateOnEdit: enabled));
+  }
+
+  Future<void> setAutomaticSpelling(bool enabled) {
+    return _mutate((settings) => settings.copyWith(automaticSpelling: enabled));
+  }
+
+  Future<void> setDefaultSpellingLanguage(String? languageId) {
+    return _mutate(
+      (settings) => settings.copyWith(
+        defaultSpellingLanguage: normalizeSpellingLanguageId(languageId),
+      ),
+    );
   }
 
   Future<void> setClipboardHistoryEnabled(bool enabled) {

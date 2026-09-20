@@ -34,6 +34,9 @@ import '../../markdown/markdown_parser.dart';
 import '../../markdown/markdown_source_structure.dart';
 import '../../platform/linux_header_bar_service.dart';
 import '../../platform/rich_clipboard_service.dart';
+import '../../spellcheck/spelling_projection.dart';
+import '../../spellcheck/spelling_replacement.dart';
+import '../../spellcheck/spelling_coordinator.dart';
 import '../document_callout.dart';
 import '../document_code_block.dart';
 import '../document_collapsible.dart';
@@ -59,6 +62,18 @@ typedef BusyMarkWysiwygSessionChanged =
     void Function(String documentId, WysiwygEditorSessionState state);
 typedef BusyMarkWysiwygTransactionalSourceChanged =
     void Function(String filePath, String source, String? undoGroup);
+typedef BusyMarkWysiwygSpellingSourceChanged =
+    void Function(
+      String filePath,
+      String source,
+      WysiwygEditorSessionState beforeSession,
+      WysiwygEditorSessionState afterSession,
+    );
+typedef BusyMarkWysiwygSpellingMenuReader =
+    Future<List<BusyMarkEditorSpellingMenuItem>> Function(
+      SpellingEditorTarget target,
+      int offset,
+    );
 
 class BusyMarkWysiwygSourceRange {
   const BusyMarkWysiwygSourceRange({
@@ -79,6 +94,11 @@ class BusyMarkWysiwygEditor extends StatefulWidget {
     this.initialSessionState = const WysiwygEditorSessionState(),
     this.onSessionChanged,
     this.onTransactionalSourceChanged,
+    this.onSpellingSourceChanged,
+    this.contentRevision,
+    this.spellingAnnotations = const [],
+    this.onCheckSpelling,
+    this.readSpellingMenuItems,
     this.useExternalUndoHistory = false,
     this.onDocumentChanged,
     this.workspaceRoot,
@@ -120,6 +140,11 @@ class BusyMarkWysiwygEditor extends StatefulWidget {
   final WysiwygEditorSessionState initialSessionState;
   final BusyMarkWysiwygSessionChanged? onSessionChanged;
   final BusyMarkWysiwygTransactionalSourceChanged? onTransactionalSourceChanged;
+  final BusyMarkWysiwygSpellingSourceChanged? onSpellingSourceChanged;
+  final int? contentRevision;
+  final List<SpellingAnnotation> spellingAnnotations;
+  final VoidCallback? onCheckSpelling;
+  final BusyMarkWysiwygSpellingMenuReader? readSpellingMenuItems;
   final bool useExternalUndoHistory;
   final ValueChanged<BusyDocument>? onDocumentChanged;
   final String? workspaceRoot;
@@ -155,10 +180,10 @@ class BusyMarkWysiwygEditor extends StatefulWidget {
   final BusyMarkWysiwygMathDiagnosticCallback? onMathDiagnostic;
 
   @override
-  State<BusyMarkWysiwygEditor> createState() => _BusyMarkWysiwygEditorState();
+  State<BusyMarkWysiwygEditor> createState() => BusyMarkWysiwygEditorState();
 }
 
-class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
+class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   static const _historyLimit = 100;
 
   late final BusyMarkWysiwygDocumentController _documentController;
@@ -168,6 +193,8 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   final _tableCellControllers = <String, BusyMarkWysiwygTextController>{};
   final _tableCellFocusNodes = <String, FocusNode>{};
   final _tableCellKeys = <String, GlobalKey>{};
+  final _spellingEditableKeys = <String, GlobalKey>{};
+  final _tableCellSpellingEditableKeys = <String, GlobalKey>{};
   StreamSubscription<List<String>>? _assetDropSubscription;
   final _blockKeys = <String, GlobalKey>{};
   final _undoStack = <BusyDocument>[];
@@ -214,6 +241,185 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
 
   @visibleForTesting
   int get debugUndoSnapshotCount => _undoStack.length;
+
+  /// Generation that projection adapters must capture for rich targets.
+  int get spellingDocumentGeneration => _documentGeneration;
+
+  int spellingReviewStartIndex(List<SpellingOccurrence> occurrences) {
+    final targetId = _activeCellId ?? _activeBlockId;
+    if (targetId == null) return 0;
+    final controller = _activeCellId == null
+        ? _textControllers[targetId]
+        : _tableCellControllers[targetId];
+    final caret = controller?.selection.extentOffset ?? 0;
+    final exact = occurrences.indexWhere((occurrence) {
+      final target = occurrence.run.target;
+      final matches = switch (target) {
+        SpellingRichBlockTarget(:final blockId) =>
+          _activeCellId == null && blockId == targetId,
+        SpellingRichTableCellTarget(:final cellId) => cellId == targetId,
+        _ => false,
+      };
+      return matches &&
+          (occurrence.fieldEnd ?? -1) >= caret &&
+          occurrence.run.snapshot.bufferId == _documentId;
+    });
+    return exact < 0 ? 0 : exact;
+  }
+
+  void revealSpellingOccurrence(SpellingOccurrence occurrence) {
+    final target = occurrence.run.target;
+    final fieldStart = occurrence.fieldStart;
+    final fieldEnd = occurrence.fieldEnd;
+    if (fieldStart == null || fieldEnd == null) return;
+    switch (target) {
+      case SpellingRichBlockTarget(:final blockId):
+        _revealBlockThen(blockId, () {
+          final controller = _textControllers[blockId];
+          if (controller == null || fieldEnd > controller.text.length) return;
+          _setActiveBlock(blockId);
+          controller.selection = TextSelection(
+            baseOffset: fieldStart,
+            extentOffset: fieldEnd,
+          );
+          _focusNodes[blockId]?.requestFocus();
+        });
+      case SpellingRichTableCellTarget(:final tableBlockId, :final cellId):
+        _revealBlockThen(tableBlockId, () {
+          final controller = _tableCellControllers[cellId];
+          if (controller == null || fieldEnd > controller.text.length) return;
+          _setActiveTableCell(tableBlockId, cellId);
+          controller.selection = TextSelection(
+            baseOffset: fieldStart,
+            extentOffset: fieldEnd,
+          );
+          _tableCellFocusNodes[cellId]?.requestFocus();
+        });
+      case SpellingSourceTarget():
+        break;
+    }
+  }
+
+  void restoreSpellingFocus() => _restoreEditingFocusAfterFrame();
+
+  /// Applies one already-checked occurrence as a single structured edit.
+  ///
+  /// Every identity is checked both before planning and immediately before
+  /// the synchronous controller mutation. Stale occurrences are never
+  /// recovered by searching for the same word.
+  bool applySpellingCorrection({
+    required SpellingOccurrence occurrence,
+    required String suggestion,
+  }) {
+    if (!_isSpellingOccurrenceCurrent(occurrence)) return false;
+    final target = occurrence.run.target;
+    if (target is! SpellingRichBlockTarget &&
+        target is! SpellingRichTableCellTarget) {
+      return false;
+    }
+    final targetId = switch (target) {
+      SpellingRichBlockTarget(:final blockId) => blockId,
+      SpellingRichTableCellTarget(:final cellId) => cellId,
+      _ => throw StateError('Unreachable spelling target.'),
+    };
+    final controller = target is SpellingRichTableCellTarget
+        ? _tableCellControllers[targetId]
+        : _textControllers[targetId];
+    final currentBlock = _documentController.blockById(targetId);
+    if (controller == null || currentBlock == null) return false;
+    final expectedFieldText = busyMarkWysiwygEditableText(currentBlock);
+    final start = occurrence.fieldStart;
+    final end = occurrence.fieldEnd;
+    if (controller.text != expectedFieldText ||
+        start == null ||
+        end == null ||
+        start < 0 ||
+        end < start ||
+        end > expectedFieldText.length ||
+        expectedFieldText.substring(start, end) != occurrence.word) {
+      return false;
+    }
+
+    late final SpellingReplacementPlan plan;
+    try {
+      plan = const SpellingReplacementPlanner().build(
+        occurrence: occurrence,
+        suggestion: suggestion,
+      );
+    } on Object {
+      return false;
+    }
+
+    // Final guard: no asynchronous operation may occur between this check and
+    // the structured mutation below.
+    if (!_isSpellingOccurrenceCurrent(occurrence) ||
+        _documentController.blockById(targetId) != currentBlock ||
+        busyMarkWysiwygEditableText(currentBlock) != expectedFieldText ||
+        controller.text != expectedFieldText) {
+      return false;
+    }
+    final beforeSession = _captureSessionState();
+    _continuousTextEdit = null;
+    _recordUndoSnapshot();
+    final changed = switch (target) {
+      SpellingRichBlockTarget(:final blockId) =>
+        _documentController.replaceSpellingInBlock(
+          blockId: blockId,
+          expectedFieldText: expectedFieldText,
+          plan: plan,
+        ),
+      SpellingRichTableCellTarget(:final tableBlockId, :final cellId) =>
+        _documentController.replaceSpellingInTableCell(
+          tableBlockId: tableBlockId,
+          cellId: cellId,
+          expectedFieldText: expectedFieldText,
+          plan: plan,
+        ),
+      _ => false,
+    };
+    if (!changed) return false;
+
+    _clearBlockSelection();
+    if (target is SpellingRichTableCellTarget) {
+      _setActiveTableCell(target.tableBlockId, target.cellId);
+    } else {
+      _setActiveBlock(targetId);
+    }
+    final updatedController = target is SpellingRichTableCellTarget
+        ? _tableCellControllers[targetId]
+        : _textControllers[targetId];
+    if (updatedController != null) {
+      final caret = (plan.resultingFieldCaret ?? start + suggestion.length)
+          .clamp(0, updatedController.text.length)
+          .toInt();
+      updatedController.selection = TextSelection.collapsed(offset: caret);
+    }
+    final afterSession = _captureSessionState();
+    _emitMarkdown(
+      beforeSpellingSession: beforeSession,
+      afterSpellingSession: afterSession,
+    );
+    return true;
+  }
+
+  bool _isSpellingOccurrenceCurrent(SpellingOccurrence occurrence) {
+    if (!mounted || occurrence.outcome != SpellingCheckOutcome.rejected) {
+      return false;
+    }
+    final snapshot = occurrence.run.snapshot;
+    if (snapshot.bufferId != _documentId ||
+        (widget.contentRevision != null &&
+            snapshot.contentRevision != widget.contentRevision)) {
+      return false;
+    }
+    return switch (occurrence.run.target) {
+      SpellingRichBlockTarget(:final documentGeneration) ||
+      SpellingRichTableCellTarget(
+        :final documentGeneration,
+      ) => documentGeneration == _documentGeneration,
+      _ => false,
+    };
+  }
 
   @override
   void initState() {
@@ -331,6 +537,8 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     _tableCellFocusNodes.clear();
     _blockKeys.clear();
     _tableCellKeys.clear();
+    _spellingEditableKeys.clear();
+    _tableCellSpellingEditableKeys.clear();
     _pendingInlineKindsByBlockId.clear();
     _activeBlockId = null;
     _activeCellId = null;
@@ -945,6 +1153,31 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       tableCellUndoController: _textUndoControllerFor,
       tableCellFocusNode: (cell) => _tableCellFocusNodeFor(block.id, cell),
       tableCellKey: _tableCellKeyFor,
+      spellingRanges: _spellingRangesForBlock(block.id),
+      spellingEditableKey: _spellingEditableKeyFor(block.id),
+      tableCellSpellingRanges: _spellingRangesForCell,
+      tableCellSpellingEditableKey: _tableCellSpellingEditableKeyFor,
+      spellingMenuReader: widget.readSpellingMenuItems == null
+          ? null
+          : (offset) => widget.readSpellingMenuItems!(
+              SpellingRichBlockTarget(
+                blockId: block.id,
+                documentGeneration: _documentGeneration,
+              ),
+              offset,
+            ),
+      tableCellSpellingMenuReader: widget.readSpellingMenuItems == null
+          ? null
+          : (cellId) =>
+                (offset) => widget.readSpellingMenuItems!(
+                  SpellingRichTableCellTarget(
+                    tableBlockId: block.id,
+                    cellId: cellId,
+                    documentGeneration: _documentGeneration,
+                  ),
+                  offset,
+                ),
+      onCheckSpelling: widget.onCheckSpelling,
       onTableCellFocused: (cellId) => _handleTableCellFocused(block.id, cellId),
       onTableRowInserted: (rowIndex, {required after}) =>
           _handleTableRowInserted(block.id, rowIndex, after: after),
@@ -1026,9 +1259,19 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
         _blockKeys.remove(id);
       }
     }
+    for (final id in _spellingEditableKeys.keys.toList()) {
+      if (!ids.contains(id)) {
+        _spellingEditableKeys.remove(id);
+      }
+    }
     for (final id in _tableCellKeys.keys.toList()) {
       if (!cellIds.contains(id)) {
         _tableCellKeys.remove(id);
+      }
+    }
+    for (final id in _tableCellSpellingEditableKeys.keys.toList()) {
+      if (!cellIds.contains(id)) {
+        _tableCellSpellingEditableKeys.remove(id);
       }
     }
     for (final id in _pendingInlineKindsByBlockId.keys.toList()) {
@@ -1149,6 +1392,22 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   GlobalKey _tableCellKeyFor(String cellId) {
     return _tableCellKeys.putIfAbsent(cellId, GlobalKey.new);
   }
+
+  GlobalKey _tableCellSpellingEditableKeyFor(String cellId) {
+    return _tableCellSpellingEditableKeys.putIfAbsent(cellId, GlobalKey.new);
+  }
+
+  List<TextRange> _spellingRangesForCell(String cellId) => [
+    for (final annotation in widget.spellingAnnotations)
+      if (annotation.target
+          case SpellingRichTableCellTarget(
+            cellId: final targetCellId,
+            :final documentGeneration,
+          )
+          when targetCellId == cellId &&
+              documentGeneration == _documentGeneration)
+        TextRange(start: annotation.start, end: annotation.end),
+  ];
 
   FocusNode _focusNodeFor(BusyBlock block) {
     final focusNode = _focusNodes.putIfAbsent(
@@ -1904,6 +2163,21 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     if (report == null) {
       return;
     }
+    final session = _captureSessionState();
+    final targetDocumentId = documentId ?? _documentId;
+    if (SchedulerBinding.instance.schedulerPhase ==
+        SchedulerPhase.persistentCallbacks) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          report(targetDocumentId, session);
+        }
+      });
+      return;
+    }
+    report(targetDocumentId, session);
+  }
+
+  WysiwygEditorSessionState _captureSessionState() {
     String? anchorBlockId;
     String? extentBlockId;
     var anchorOffset = 0;
@@ -1941,8 +2215,7 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       viewportBlockId = _viewportBlockIds[positions.first.index];
       viewportAlignment = positions.first.itemLeadingEdge.clamp(0.0, 1.0);
     }
-    final targetDocumentId = documentId ?? _documentId;
-    final session = WysiwygEditorSessionState(
+    return WysiwygEditorSessionState(
       activeBlockId: _activeBlockId,
       activeCellId: _activeCellId,
       anchorBlockId: anchorBlockId,
@@ -1952,16 +2225,6 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       viewportBlockId: viewportBlockId,
       viewportAlignment: viewportAlignment,
     );
-    if (SchedulerBinding.instance.schedulerPhase ==
-        SchedulerPhase.persistentCallbacks) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          report(targetDocumentId, session);
-        }
-      });
-      return;
-    }
-    report(targetDocumentId, session);
   }
 
   void _scheduleHeadingScroll() {
@@ -3813,6 +4076,9 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
         (action) => action.name == name,
       );
     }
+    if (commandId == BusyMarkCommandIds.checkSpelling) {
+      return widget.onCheckSpelling != null;
+    }
     return switch (commandId) {
       BusyMarkCommandIds.textSelectAll ||
       BusyMarkCommandIds.textCut ||
@@ -3826,6 +4092,10 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   }
 
   void _applyContextCommand(String commandId) {
+    if (commandId == BusyMarkCommandIds.checkSpelling) {
+      widget.onCheckSpelling?.call();
+      return;
+    }
     if (commandId.startsWith('editor.')) {
       final name = commandId.substring('editor.'.length);
       final action = BusyMarkEditorShortcutAction.values
@@ -5367,7 +5637,11 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     return group;
   }
 
-  void _emitMarkdown({String? undoGroup}) {
+  void _emitMarkdown({
+    String? undoGroup,
+    WysiwygEditorSessionState? beforeSpellingSession,
+    WysiwygEditorSessionState? afterSpellingSession,
+  }) {
     if (undoGroup == null) {
       _continuousTextEdit = null;
     }
@@ -5376,15 +5650,27 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     widget.onDocumentChanged?.call(
       _documentController.document.copyWith(source: markdown),
     );
-    final transactionalCallback = widget.onTransactionalSourceChanged;
-    if (transactionalCallback != null) {
-      transactionalCallback(
+    final spellingCallback = widget.onSpellingSourceChanged;
+    if (spellingCallback != null &&
+        beforeSpellingSession != null &&
+        afterSpellingSession != null) {
+      spellingCallback(
         _documentController.document.filePath,
         markdown,
-        undoGroup,
+        beforeSpellingSession,
+        afterSpellingSession,
       );
     } else {
-      widget.onSourceChanged(_documentController.document.filePath, markdown);
+      final transactionalCallback = widget.onTransactionalSourceChanged;
+      if (transactionalCallback != null) {
+        transactionalCallback(
+          _documentController.document.filePath,
+          markdown,
+          undoGroup,
+        );
+      } else {
+        widget.onSourceChanged(_documentController.document.filePath, markdown);
+      }
     }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _internalChange = false;
@@ -5786,6 +6072,22 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   GlobalKey _blockKeyFor(String blockId) {
     return _blockKeys.putIfAbsent(blockId, GlobalKey.new);
   }
+
+  GlobalKey _spellingEditableKeyFor(String blockId) {
+    return _spellingEditableKeys.putIfAbsent(blockId, GlobalKey.new);
+  }
+
+  List<TextRange> _spellingRangesForBlock(String blockId) => [
+    for (final annotation in widget.spellingAnnotations)
+      if (annotation.target
+          case SpellingRichBlockTarget(
+            blockId: final targetBlockId,
+            :final documentGeneration,
+          )
+          when targetBlockId == blockId &&
+              documentGeneration == _documentGeneration)
+        TextRange(start: annotation.start, end: annotation.end),
+  ];
 
   Set<String> _selectedBlockIds(List<BusyBlock> blocks) {
     final selection = _documentSelection;
@@ -7192,7 +7494,7 @@ class _WysiwygClipboardInsertionTarget
         BusyMarkClipboardInsertionCapabilities {
   const _WysiwygClipboardInsertionTarget(this.state);
 
-  final _BusyMarkWysiwygEditorState state;
+  final BusyMarkWysiwygEditorState state;
 
   @override
   String get documentId => state._documentId;

@@ -4536,6 +4536,73 @@ class AppLocalizationsNl extends AppLocalizations {
   }
 
   @override
+  String get spelling => 'Spellingcontrole';
+
+  @override
+  String get automaticSpelling => 'Spelling automatisch controleren';
+
+  @override
+  String get defaultSpellingLanguage => 'Standaardtaal voor spelling';
+
+  @override
+  String get projectSpellingLanguage => 'Projecttaal voor spelling';
+
+  @override
+  String get chooseSpellingLanguage => 'Taal voor spelling kiezen';
+
+  @override
+  String get checkSpelling => 'Spelling controleren';
+
+  @override
+  String get ignoreSpellingOnce => 'Eenmaal negeren';
+
+  @override
+  String get ignoreSpellingDocument => 'Alles in dit document negeren';
+
+  @override
+  String get addPersonalSpellingWord => 'Aan persoonlijk woordenboek toevoegen';
+
+  @override
+  String get addProjectSpellingWord => 'Aan projectwoordenboek toevoegen';
+
+  @override
+  String get inheritSpellingLanguage => 'Project- of toepassingstaal gebruiken';
+
+  @override
+  String get disableDocumentSpelling => 'Spelling niet controleren';
+
+  @override
+  String get importSpellingDictionary => 'Woordenboek importeren';
+
+  @override
+  String get personalSpellingDictionary => 'Persoonlijk woordenboek';
+
+  @override
+  String get projectSpellingDictionary => 'Projectwoordenboek';
+
+  @override
+  String get noSpellingErrors => 'Geen spelfouten';
+
+  @override
+  String get noSpellingSuggestions => 'Geen spellingsuggesties';
+
+  @override
+  String get spellingWordCheckFailed =>
+      'Dit woord kon niet worden gecontroleerd';
+
+  @override
+  String get spellingCheckFailed => 'Spellingcontrole mislukt';
+
+  @override
+  String get spellingCheckIncomplete => 'De spellingcontrole is onvolledig';
+
+  @override
+  String get spellingDictionaryUnavailable => 'Woordenboek niet beschikbaar';
+
+  @override
+  String get spellingChecking => 'Spelling controleren…';
+
+  @override
   String exportInvalidRange(String field, String minimum, String maximum) {
     return '$field: voer een getal tussen $minimum en $maximum in.';
   }

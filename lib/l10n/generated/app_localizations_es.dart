@@ -4533,6 +4533,75 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
+  String get spelling => 'Ortografía';
+
+  @override
+  String get automaticSpelling => 'Revisión ortográfica automática';
+
+  @override
+  String get defaultSpellingLanguage => 'Idioma ortográfico predeterminado';
+
+  @override
+  String get projectSpellingLanguage =>
+      'Idioma de corrección ortográfica del proyecto';
+
+  @override
+  String get chooseSpellingLanguage => 'Elegir idioma ortográfico';
+
+  @override
+  String get checkSpelling => 'Revisar ortografía';
+
+  @override
+  String get ignoreSpellingOnce => 'Ignorar una vez';
+
+  @override
+  String get ignoreSpellingDocument => 'Ignorar todo en este documento';
+
+  @override
+  String get addPersonalSpellingWord => 'Añadir al diccionario personal';
+
+  @override
+  String get addProjectSpellingWord => 'Añadir al diccionario del proyecto';
+
+  @override
+  String get inheritSpellingLanguage =>
+      'Usar el idioma del proyecto o la aplicación';
+
+  @override
+  String get disableDocumentSpelling => 'No revisar la ortografía';
+
+  @override
+  String get importSpellingDictionary => 'Importar diccionario';
+
+  @override
+  String get personalSpellingDictionary => 'Diccionario personal';
+
+  @override
+  String get projectSpellingDictionary => 'Diccionario del proyecto';
+
+  @override
+  String get noSpellingErrors => 'No hay errores ortográficos';
+
+  @override
+  String get noSpellingSuggestions => 'No hay sugerencias ortográficas';
+
+  @override
+  String get spellingWordCheckFailed => 'No se pudo comprobar esta palabra';
+
+  @override
+  String get spellingCheckFailed => 'La revisión ortográfica falló';
+
+  @override
+  String get spellingCheckIncomplete =>
+      'La revisión ortográfica está incompleta';
+
+  @override
+  String get spellingDictionaryUnavailable => 'Diccionario no disponible';
+
+  @override
+  String get spellingChecking => 'Comprobando la ortografía…';
+
+  @override
   String exportInvalidRange(String field, String minimum, String maximum) {
     return '$field: introduzca un número entre $minimum y $maximum.';
   }

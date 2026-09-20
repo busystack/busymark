@@ -1,0 +1,9 @@
+SET UTF-8
+TRY etaoinshrdlucmfwypvbgkjqxz
+WORDCHARS ’-
+REP 1
+REP helo hello
+SFX S Y 1
+SFX S 0 s .
+COMPOUNDMIN 3
+COMPOUNDFLAG C

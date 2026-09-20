@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 
 import '../../app/busymark_design.dart';
@@ -184,6 +185,13 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
     this.tableCellFocusNode,
     this.tableCellKey,
     this.onTableCellFocused,
+    this.spellingRanges = const [],
+    this.spellingEditableKey,
+    this.tableCellSpellingRanges,
+    this.tableCellSpellingEditableKey,
+    this.spellingMenuReader,
+    this.tableCellSpellingMenuReader,
+    this.onCheckSpelling,
   });
 
   final BusyBlock block;
@@ -233,6 +241,14 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
   final FocusNode Function(BusyBlock cell)? tableCellFocusNode;
   final GlobalKey Function(String cellId)? tableCellKey;
   final ValueChanged<String>? onTableCellFocused;
+  final List<TextRange> spellingRanges;
+  final GlobalKey? spellingEditableKey;
+  final List<TextRange> Function(String cellId)? tableCellSpellingRanges;
+  final GlobalKey Function(String cellId)? tableCellSpellingEditableKey;
+  final BusyMarkEditorSpellingMenuReader? spellingMenuReader;
+  final BusyMarkEditorSpellingMenuReader Function(String cellId)?
+  tableCellSpellingMenuReader;
+  final VoidCallback? onCheckSpelling;
 
   @override
   Widget build(BuildContext context) {
@@ -397,6 +413,10 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
           cellFocusNode: tableCellFocusNode,
           cellKey: tableCellKey,
           onCellFocused: onTableCellFocused,
+          cellSpellingRanges: tableCellSpellingRanges,
+          cellSpellingEditableKey: tableCellSpellingEditableKey,
+          cellSpellingMenuReader: tableCellSpellingMenuReader,
+          onCheckSpelling: onCheckSpelling,
           suppressContextMenu: documentSelectionActive,
           onCut: onCut,
           onCopy: onCopy,
@@ -526,54 +546,71 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
                                     selectionColor:
                                         BusyMarkLinuxPalette.transparent,
                                   ),
-                            child: TextField(
-                              key: ValueKey(
-                                'wysiwyg-field-$documentFilePath-${block.id}',
+                            child: KeyedSubtree(
+                              key: spellingEditableKey,
+                              child: TextField(
+                                key: ValueKey(
+                                  'wysiwyg-field-$documentFilePath-${block.id}',
+                                ),
+                                controller: controller,
+                                undoController: undoController,
+                                focusNode: focusNode,
+                                maxLines: null,
+                                minLines: 1,
+                                textDirection: textDirection,
+                                style: style,
+                                cursorWidth: BusyMarkDocumentTextGeometry
+                                    .editableCursorWidth,
+                                selectionHeightStyle:
+                                    BusyMarkDocumentTextGeometry
+                                        .selectionHeightStyle,
+                                selectionWidthStyle:
+                                    BusyMarkDocumentTextGeometry
+                                        .selectionWidthStyle,
+                                decoration: const InputDecoration(
+                                  isCollapsed: true,
+                                  border: InputBorder.none,
+                                  enabledBorder: InputBorder.none,
+                                  focusedBorder: InputBorder.none,
+                                  filled: false,
+                                  hoverColor: BusyMarkLinuxPalette.transparent,
+                                  contentPadding: EdgeInsets.zero,
+                                ),
+                                contextMenuBuilder: documentSelectionActive
+                                    ? (context, editableTextState) =>
+                                          const SizedBox.shrink()
+                                    : (context, editableTextState) =>
+                                          buildBusyMarkEditorTextContextMenu(
+                                            context,
+                                            editableTextState,
+                                            refineWithAiLabel:
+                                                context.l10n.aiRefineWithAi,
+                                            onRefineWithAi: onRefineWithAi,
+                                            onCut: onCut,
+                                            onCopy: onCopy,
+                                            onPaste: onPaste,
+                                            onPastePlainText: onPastePlainText,
+                                            readPasteAvailability:
+                                                readPasteAvailability,
+                                            onCopyPlainText: onCopyPlainText,
+                                            readSpellingItems:
+                                                spellingMenuReader,
+                                            onCheckSpelling: onCheckSpelling,
+                                          ),
+                                onTap: onFocused,
+                                onChanged: onChanged,
                               ),
-                              controller: controller,
-                              undoController: undoController,
-                              focusNode: focusNode,
-                              maxLines: null,
-                              minLines: 1,
-                              textDirection: textDirection,
-                              style: style,
-                              cursorWidth: BusyMarkDocumentTextGeometry
-                                  .editableCursorWidth,
-                              selectionHeightStyle: BusyMarkDocumentTextGeometry
-                                  .selectionHeightStyle,
-                              selectionWidthStyle: BusyMarkDocumentTextGeometry
-                                  .selectionWidthStyle,
-                              decoration: const InputDecoration(
-                                isCollapsed: true,
-                                border: InputBorder.none,
-                                enabledBorder: InputBorder.none,
-                                focusedBorder: InputBorder.none,
-                                filled: false,
-                                hoverColor: BusyMarkLinuxPalette.transparent,
-                                contentPadding: EdgeInsets.zero,
-                              ),
-                              contextMenuBuilder: documentSelectionActive
-                                  ? (context, editableTextState) =>
-                                        const SizedBox.shrink()
-                                  : (context, editableTextState) =>
-                                        buildBusyMarkEditorTextContextMenu(
-                                          context,
-                                          editableTextState,
-                                          refineWithAiLabel:
-                                              context.l10n.aiRefineWithAi,
-                                          onRefineWithAi: onRefineWithAi,
-                                          onCut: onCut,
-                                          onCopy: onCopy,
-                                          onPaste: onPaste,
-                                          onPastePlainText: onPastePlainText,
-                                          readPasteAvailability:
-                                              readPasteAvailability,
-                                          onCopyPlainText: onCopyPlainText,
-                                        ),
-                              onTap: onFocused,
-                              onChanged: onChanged,
                             ),
                           ),
+                          if (spellingRanges.isNotEmpty &&
+                              spellingEditableKey != null)
+                            Positioned.fill(
+                              child: _SpellingUnderlineOverlay(
+                                editableKey: spellingEditableKey!,
+                                controller: controller,
+                                ranges: spellingRanges,
+                              ),
+                            ),
                         ],
                       )),
           ),
@@ -1488,6 +1525,10 @@ class _TableBlockEditor extends StatefulWidget {
     this.onPastePlainText,
     this.readPasteAvailability,
     this.onCopyPlainText,
+    this.cellSpellingRanges,
+    this.cellSpellingEditableKey,
+    this.cellSpellingMenuReader,
+    this.onCheckSpelling,
   });
 
   final BusyBlock block;
@@ -1515,6 +1556,11 @@ class _TableBlockEditor extends StatefulWidget {
   final VoidCallback? onPastePlainText;
   final BusyMarkEditorTextPasteAvailabilityReader? readPasteAvailability;
   final VoidCallback? onCopyPlainText;
+  final List<TextRange> Function(String cellId)? cellSpellingRanges;
+  final GlobalKey Function(String cellId)? cellSpellingEditableKey;
+  final BusyMarkEditorSpellingMenuReader Function(String cellId)?
+  cellSpellingMenuReader;
+  final VoidCallback? onCheckSpelling;
 
   @override
   State<_TableBlockEditor> createState() => _TableBlockEditorState();
@@ -1683,6 +1729,16 @@ class _TableBlockEditorState extends State<_TableBlockEditor> {
                   onCellFocused(cellId);
                 }
               },
+        spellingRanges: cell == null
+            ? const []
+            : widget.cellSpellingRanges?.call(cell.id) ?? const [],
+        spellingEditableKey: cell == null
+            ? null
+            : widget.cellSpellingEditableKey?.call(cell.id),
+        spellingMenuReader: cell == null
+            ? null
+            : widget.cellSpellingMenuReader?.call(cell.id),
+        onCheckSpelling: widget.onCheckSpelling,
         suppressContextMenu: widget.suppressContextMenu,
         onCut: widget.onCut,
         onCopy: widget.onCopy,
@@ -2055,6 +2111,10 @@ class _TableCellEditor extends StatefulWidget {
     this.onPastePlainText,
     this.readPasteAvailability,
     this.onCopyPlainText,
+    this.spellingRanges = const [],
+    this.spellingEditableKey,
+    this.spellingMenuReader,
+    this.onCheckSpelling,
   });
 
   final BusyBlock? cell;
@@ -2078,6 +2138,10 @@ class _TableCellEditor extends StatefulWidget {
   final VoidCallback? onPastePlainText;
   final BusyMarkEditorTextPasteAvailabilityReader? readPasteAvailability;
   final VoidCallback? onCopyPlainText;
+  final List<TextRange> spellingRanges;
+  final GlobalKey? spellingEditableKey;
+  final BusyMarkEditorSpellingMenuReader? spellingMenuReader;
+  final VoidCallback? onCheckSpelling;
 
   @override
   State<_TableCellEditor> createState() => _TableCellEditorState();
@@ -2225,65 +2289,279 @@ class _TableCellEditorState extends State<_TableCellEditor> {
       key: widget.cellKey,
       child: Padding(
         padding: BusyMarkInsets.documentTableCell,
-        child: TextField(
-          key: ValueKey(cell.id),
-          controller: _controller,
-          focusNode: _focusNode,
-          undoController: widget.undoController,
-          minLines: 1,
-          maxLines: 1,
-          inputFormatters: const [_SingleLineTableCellFormatter()],
-          style: textStyle,
-          textAlign: textAlign,
-          selectionHeightStyle:
-              BusyMarkDocumentTextGeometry.selectionHeightStyle,
-          selectionWidthStyle: BusyMarkDocumentTextGeometry.selectionWidthStyle,
-          decoration: InputDecoration(
-            isCollapsed: true,
-            border: InputBorder.none,
-            enabledBorder: InputBorder.none,
-            focusedBorder: InputBorder.none,
-            filled: false,
-            hoverColor: BusyMarkLinuxPalette.transparent,
-            hintText: widget.header
-                ? context.l10n.tableHeaderHint
-                : context.l10n.tableCellHint,
-            hintStyle: textStyle.copyWith(color: colors.mutedForeground),
-            contentPadding: EdgeInsets.zero,
-          ),
-          contextMenuBuilder: widget.suppressContextMenu
-              ? (context, editableTextState) => const SizedBox.shrink()
-              : (context, editableTextState) =>
-                    buildBusyMarkEditorTextContextMenu(
-                      context,
-                      editableTextState,
-                      refineWithAiLabel: context.l10n.aiRefineWithAi,
-                      onCut: widget.onCut,
-                      onCopy: widget.onCopy,
-                      onPaste: widget.onPaste,
-                      onPastePlainText: widget.onPastePlainText,
-                      readPasteAvailability: widget.readPasteAvailability,
-                      onCopyPlainText: widget.onCopyPlainText,
-                    ),
-          onTap: () {
-            final onCellFocused = widget.onCellFocused;
-            if (onCellFocused == null) {
-              widget.onFocused();
-            } else {
-              onCellFocused(cell.id);
-            }
-          },
-          onChanged: (value) {
-            if (_sourceEditing) {
-              widget.onSourceChanged(cell.id, value);
-            } else {
-              widget.onChanged(cell.id, value);
-            }
-          },
+        child: Stack(
+          clipBehavior: Clip.hardEdge,
+          children: [
+            KeyedSubtree(
+              key: widget.spellingEditableKey,
+              child: TextField(
+                key: ValueKey(cell.id),
+                controller: _controller,
+                focusNode: _focusNode,
+                undoController: widget.undoController,
+                minLines: 1,
+                maxLines: 1,
+                inputFormatters: const [_SingleLineTableCellFormatter()],
+                style: textStyle,
+                textAlign: textAlign,
+                selectionHeightStyle:
+                    BusyMarkDocumentTextGeometry.selectionHeightStyle,
+                selectionWidthStyle:
+                    BusyMarkDocumentTextGeometry.selectionWidthStyle,
+                decoration: InputDecoration(
+                  isCollapsed: true,
+                  border: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                  filled: false,
+                  hoverColor: BusyMarkLinuxPalette.transparent,
+                  hintText: widget.header
+                      ? context.l10n.tableHeaderHint
+                      : context.l10n.tableCellHint,
+                  hintStyle: textStyle.copyWith(color: colors.mutedForeground),
+                  contentPadding: EdgeInsets.zero,
+                ),
+                contextMenuBuilder: widget.suppressContextMenu
+                    ? (context, editableTextState) => const SizedBox.shrink()
+                    : (context, editableTextState) =>
+                          buildBusyMarkEditorTextContextMenu(
+                            context,
+                            editableTextState,
+                            refineWithAiLabel: context.l10n.aiRefineWithAi,
+                            onCut: widget.onCut,
+                            onCopy: widget.onCopy,
+                            onPaste: widget.onPaste,
+                            onPastePlainText: widget.onPastePlainText,
+                            readPasteAvailability: widget.readPasteAvailability,
+                            onCopyPlainText: widget.onCopyPlainText,
+                            readSpellingItems: widget.spellingMenuReader,
+                            onCheckSpelling: widget.onCheckSpelling,
+                          ),
+                onTap: () {
+                  final onCellFocused = widget.onCellFocused;
+                  if (onCellFocused == null) {
+                    widget.onFocused();
+                  } else {
+                    onCellFocused(cell.id);
+                  }
+                },
+                onChanged: (value) {
+                  if (_sourceEditing) {
+                    widget.onSourceChanged(cell.id, value);
+                  } else {
+                    widget.onChanged(cell.id, value);
+                  }
+                },
+              ),
+            ),
+            if (widget.spellingRanges.isNotEmpty &&
+                widget.spellingEditableKey != null)
+              Positioned.fill(
+                child: _SpellingUnderlineOverlay(
+                  editableKey: widget.spellingEditableKey!,
+                  controller: _controller,
+                  ranges: widget.spellingRanges,
+                ),
+              ),
+          ],
         ),
       ),
     );
   }
+}
+
+class _SpellingUnderlineOverlay extends StatefulWidget {
+  const _SpellingUnderlineOverlay({
+    required this.editableKey,
+    required this.controller,
+    required this.ranges,
+  });
+
+  final GlobalKey editableKey;
+  final TextEditingController controller;
+  final List<TextRange> ranges;
+
+  @override
+  State<_SpellingUnderlineOverlay> createState() =>
+      _SpellingUnderlineOverlayState();
+}
+
+class _SpellingUnderlineOverlayState extends State<_SpellingUnderlineOverlay> {
+  final _overlayKey = GlobalKey();
+  final _repaint = ValueNotifier<int>(0);
+  ViewportOffset? _editableOffset;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.controller.addListener(_requestRepaint);
+    _scheduleOffsetBinding();
+  }
+
+  @override
+  void didUpdateWidget(covariant _SpellingUnderlineOverlay oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!identical(oldWidget.controller, widget.controller)) {
+      oldWidget.controller.removeListener(_requestRepaint);
+      widget.controller.addListener(_requestRepaint);
+    }
+    _scheduleOffsetBinding();
+    _requestRepaint();
+  }
+
+  void _scheduleOffsetBinding() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final editable = _findRenderEditable(
+        widget.editableKey.currentContext?.findRenderObject(),
+      );
+      final offset = editable?.offset;
+      if (identical(offset, _editableOffset)) return;
+      _editableOffset?.removeListener(_requestRepaint);
+      _editableOffset = offset;
+      _editableOffset?.addListener(_requestRepaint);
+      _requestRepaint();
+    });
+  }
+
+  void _requestRepaint() => _repaint.value++;
+
+  @override
+  void dispose() {
+    widget.controller.removeListener(_requestRepaint);
+    _editableOffset?.removeListener(_requestRepaint);
+    _repaint.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return IgnorePointer(
+      child: CustomPaint(
+        key: _overlayKey,
+        painter: _SpellingUnderlinePainter(
+          editableKey: widget.editableKey,
+          overlayKey: _overlayKey,
+          ranges: widget.ranges,
+          composing: widget.controller.value.composing,
+          selection: widget.controller.selection,
+          color: Theme.of(context).colorScheme.error,
+          repaint: _repaint,
+        ),
+      ),
+    );
+  }
+}
+
+class _SpellingUnderlinePainter extends CustomPainter {
+  _SpellingUnderlinePainter({
+    required this.editableKey,
+    required this.overlayKey,
+    required this.ranges,
+    required this.composing,
+    required this.selection,
+    required this.color,
+    required Listenable repaint,
+  }) : super(repaint: repaint);
+
+  final GlobalKey editableKey;
+  final GlobalKey overlayKey;
+  final List<TextRange> ranges;
+  final TextRange composing;
+  final TextSelection selection;
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final editable = _findRenderEditable(
+      editableKey.currentContext?.findRenderObject(),
+    );
+    final overlay = overlayKey.currentContext?.findRenderObject();
+    if (editable == null || overlay is! RenderBox || !overlay.hasSize) return;
+    canvas.save();
+    canvas.clipRect(Offset.zero & size);
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 1.2
+      ..style = PaintingStyle.stroke;
+    for (final range in ranges) {
+      if (!range.isValid ||
+          range.isCollapsed ||
+          range.end > (editable.text?.toPlainText().length ?? 0)) {
+        continue;
+      }
+      if (selection.isValid &&
+          selection.isCollapsed &&
+          selection.extentOffset >= range.start &&
+          selection.extentOffset <= range.end) {
+        continue;
+      }
+      if (composing.isValid &&
+          !composing.isCollapsed &&
+          range.start < composing.end &&
+          range.end > composing.start) {
+        continue;
+      }
+      final boxes = editable.getBoxesForSelection(
+        TextSelection(baseOffset: range.start, extentOffset: range.end),
+      );
+      for (final box in boxes) {
+        final topLeft = overlay.globalToLocal(
+          editable.localToGlobal(Offset(box.left, box.top)),
+        );
+        final bottomRight = overlay.globalToLocal(
+          editable.localToGlobal(Offset(box.right, box.bottom)),
+        );
+        _paintWave(
+          canvas,
+          paint,
+          left: topLeft.dx,
+          right: bottomRight.dx,
+          y: bottomRight.dy - 1,
+        );
+      }
+    }
+    canvas.restore();
+  }
+
+  void _paintWave(
+    Canvas canvas,
+    Paint paint, {
+    required double left,
+    required double right,
+    required double y,
+  }) {
+    if (right <= left) return;
+    const halfWave = 2.0;
+    const amplitude = 1.25;
+    final path = Path()..moveTo(left, y);
+    var x = left;
+    var up = true;
+    while (x < right) {
+      x = (x + halfWave).clamp(left, right);
+      path.lineTo(x, y + (up ? -amplitude : amplitude));
+      up = !up;
+    }
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _SpellingUnderlinePainter oldDelegate) =>
+      oldDelegate.ranges != ranges ||
+      oldDelegate.composing != composing ||
+      oldDelegate.selection != selection ||
+      oldDelegate.color != color ||
+      oldDelegate.editableKey != editableKey;
+}
+
+RenderEditable? _findRenderEditable(RenderObject? root) {
+  if (root == null) return null;
+  if (root is RenderEditable) return root;
+  RenderEditable? result;
+  root.visitChildren((child) {
+    result ??= _findRenderEditable(child);
+  });
+  return result;
 }
 
 TextAlign _tableCellTextAlign(String? value) {

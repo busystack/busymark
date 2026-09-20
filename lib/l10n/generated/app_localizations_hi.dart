@@ -4484,6 +4484,72 @@ class AppLocalizationsHi extends AppLocalizations {
   }
 
   @override
+  String get spelling => 'वर्तनी';
+
+  @override
+  String get automaticSpelling => 'स्वचालित वर्तनी जाँच';
+
+  @override
+  String get defaultSpellingLanguage => 'डिफ़ॉल्ट वर्तनी भाषा';
+
+  @override
+  String get projectSpellingLanguage => 'परियोजना की वर्तनी भाषा';
+
+  @override
+  String get chooseSpellingLanguage => 'वर्तनी भाषा चुनें';
+
+  @override
+  String get checkSpelling => 'वर्तनी जाँचें';
+
+  @override
+  String get ignoreSpellingOnce => 'एक बार अनदेखा करें';
+
+  @override
+  String get ignoreSpellingDocument => 'इस दस्तावेज़ में सभी अनदेखे करें';
+
+  @override
+  String get addPersonalSpellingWord => 'निजी शब्दकोश में जोड़ें';
+
+  @override
+  String get addProjectSpellingWord => 'परियोजना शब्दकोश में जोड़ें';
+
+  @override
+  String get inheritSpellingLanguage => 'परियोजना या ऐप की भाषा उपयोग करें';
+
+  @override
+  String get disableDocumentSpelling => 'वर्तनी जाँच न करें';
+
+  @override
+  String get importSpellingDictionary => 'शब्दकोश आयात करें';
+
+  @override
+  String get personalSpellingDictionary => 'व्यक्तिगत शब्दकोश';
+
+  @override
+  String get projectSpellingDictionary => 'परियोजना शब्दकोश';
+
+  @override
+  String get noSpellingErrors => 'कोई वर्तनी त्रुटि नहीं';
+
+  @override
+  String get noSpellingSuggestions => 'कोई वर्तनी सुझाव नहीं';
+
+  @override
+  String get spellingWordCheckFailed => 'इस शब्द की जाँच नहीं हो सकी';
+
+  @override
+  String get spellingCheckFailed => 'वर्तनी जाँच विफल रही';
+
+  @override
+  String get spellingCheckIncomplete => 'वर्तनी जाँच अधूरी है';
+
+  @override
+  String get spellingDictionaryUnavailable => 'शब्दकोश उपलब्ध नहीं है';
+
+  @override
+  String get spellingChecking => 'वर्तनी की जाँच हो रही है…';
+
+  @override
   String exportInvalidRange(String field, String minimum, String maximum) {
     return '$field: $minimum से $maximum के बीच संख्या दर्ज करें।';
   }

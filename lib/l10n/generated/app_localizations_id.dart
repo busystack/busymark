@@ -4494,6 +4494,72 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
+  String get spelling => 'Ejaan';
+
+  @override
+  String get automaticSpelling => 'Periksa ejaan secara otomatis';
+
+  @override
+  String get defaultSpellingLanguage => 'Bahasa ejaan bawaan';
+
+  @override
+  String get projectSpellingLanguage => 'Bahasa ejaan proyek';
+
+  @override
+  String get chooseSpellingLanguage => 'Pilih bahasa ejaan';
+
+  @override
+  String get checkSpelling => 'Periksa Ejaan';
+
+  @override
+  String get ignoreSpellingOnce => 'Abaikan Sekali';
+
+  @override
+  String get ignoreSpellingDocument => 'Abaikan Semua di Dokumen Ini';
+
+  @override
+  String get addPersonalSpellingWord => 'Tambahkan ke Kamus Pribadi';
+
+  @override
+  String get addProjectSpellingWord => 'Tambahkan ke Kamus Proyek';
+
+  @override
+  String get inheritSpellingLanguage => 'Gunakan bahasa proyek atau aplikasi';
+
+  @override
+  String get disableDocumentSpelling => 'Jangan periksa ejaan';
+
+  @override
+  String get importSpellingDictionary => 'Impor Kamus';
+
+  @override
+  String get personalSpellingDictionary => 'Kamus Pribadi';
+
+  @override
+  String get projectSpellingDictionary => 'Kamus Proyek';
+
+  @override
+  String get noSpellingErrors => 'Tidak ada kesalahan ejaan';
+
+  @override
+  String get noSpellingSuggestions => 'Tidak ada saran ejaan';
+
+  @override
+  String get spellingWordCheckFailed => 'Kata ini tidak dapat diperiksa';
+
+  @override
+  String get spellingCheckFailed => 'Pemeriksaan ejaan gagal';
+
+  @override
+  String get spellingCheckIncomplete => 'Pemeriksaan ejaan belum lengkap';
+
+  @override
+  String get spellingDictionaryUnavailable => 'Kamus tidak tersedia';
+
+  @override
+  String get spellingChecking => 'Memeriksa ejaan…';
+
+  @override
   String exportInvalidRange(String field, String minimum, String maximum) {
     return '$field: masukkan angka antara $minimum dan $maximum.';
   }

@@ -275,6 +275,7 @@ abstract final class BusyMarkCommandIds {
   static const textOutdentSource = 'text.outdentSource';
   static const textEscape = 'text.escape';
   static const editorRefineWithAi = 'editor.refineWithAi';
+  static const checkSpelling = 'spelling.check';
   static const sidebarFiles = 'sidebar.files';
   static const sidebarToc = 'sidebar.toc';
   static const sidebarOutline = 'sidebar.outline';
@@ -401,6 +402,20 @@ abstract final class BusyMarkCommandCatalog {
           shortcut: BusyMarkEditorShortcuts.definitions[action],
           description: (context) => _editorDescription(context, action),
         ),
+      command(
+        id: BusyMarkCommandIds.checkSpelling,
+        label: (context) => context.l10n.checkSpelling,
+        category: (context) => context.l10n.shortcutGroupTextEditing,
+        scope: BusyMarkCommandScope.editor,
+        shortcut: const BusyMarkShortcutDefinition(
+          label: 'F7',
+          activator: SingleActivator(
+            LogicalKeyboardKey.f7,
+            includeRepeats: false,
+          ),
+          gtkAccelerator: 'F7',
+        ),
+      ),
       for (final action in BusyMarkSidebarShortcutAction.values)
         command(
           id: _sidebarId(action),

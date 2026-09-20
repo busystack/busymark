@@ -7578,6 +7578,138 @@ abstract class AppLocalizations {
   /// **'{value} MiB'**
   String settingsMebibytesValue(int value);
 
+  /// No description provided for @spelling.
+  ///
+  /// In en, this message translates to:
+  /// **'Spelling'**
+  String get spelling;
+
+  /// No description provided for @automaticSpelling.
+  ///
+  /// In en, this message translates to:
+  /// **'Check spelling automatically'**
+  String get automaticSpelling;
+
+  /// No description provided for @defaultSpellingLanguage.
+  ///
+  /// In en, this message translates to:
+  /// **'Default spelling language'**
+  String get defaultSpellingLanguage;
+
+  /// No description provided for @projectSpellingLanguage.
+  ///
+  /// In en, this message translates to:
+  /// **'Project spelling language'**
+  String get projectSpellingLanguage;
+
+  /// No description provided for @chooseSpellingLanguage.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose spelling language'**
+  String get chooseSpellingLanguage;
+
+  /// No description provided for @checkSpelling.
+  ///
+  /// In en, this message translates to:
+  /// **'Check Spelling'**
+  String get checkSpelling;
+
+  /// No description provided for @ignoreSpellingOnce.
+  ///
+  /// In en, this message translates to:
+  /// **'Ignore Once'**
+  String get ignoreSpellingOnce;
+
+  /// No description provided for @ignoreSpellingDocument.
+  ///
+  /// In en, this message translates to:
+  /// **'Ignore All in This Document'**
+  String get ignoreSpellingDocument;
+
+  /// No description provided for @addPersonalSpellingWord.
+  ///
+  /// In en, this message translates to:
+  /// **'Add to Personal Dictionary'**
+  String get addPersonalSpellingWord;
+
+  /// No description provided for @addProjectSpellingWord.
+  ///
+  /// In en, this message translates to:
+  /// **'Add to Project Dictionary'**
+  String get addProjectSpellingWord;
+
+  /// No description provided for @inheritSpellingLanguage.
+  ///
+  /// In en, this message translates to:
+  /// **'Use project or application language'**
+  String get inheritSpellingLanguage;
+
+  /// No description provided for @disableDocumentSpelling.
+  ///
+  /// In en, this message translates to:
+  /// **'Do not check spelling'**
+  String get disableDocumentSpelling;
+
+  /// No description provided for @importSpellingDictionary.
+  ///
+  /// In en, this message translates to:
+  /// **'Import Dictionary'**
+  String get importSpellingDictionary;
+
+  /// No description provided for @personalSpellingDictionary.
+  ///
+  /// In en, this message translates to:
+  /// **'Personal Dictionary'**
+  String get personalSpellingDictionary;
+
+  /// No description provided for @projectSpellingDictionary.
+  ///
+  /// In en, this message translates to:
+  /// **'Project Dictionary'**
+  String get projectSpellingDictionary;
+
+  /// No description provided for @noSpellingErrors.
+  ///
+  /// In en, this message translates to:
+  /// **'No spelling errors'**
+  String get noSpellingErrors;
+
+  /// No description provided for @noSpellingSuggestions.
+  ///
+  /// In en, this message translates to:
+  /// **'No spelling suggestions'**
+  String get noSpellingSuggestions;
+
+  /// No description provided for @spellingWordCheckFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not check this word'**
+  String get spellingWordCheckFailed;
+
+  /// No description provided for @spellingCheckFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Spelling check failed'**
+  String get spellingCheckFailed;
+
+  /// No description provided for @spellingCheckIncomplete.
+  ///
+  /// In en, this message translates to:
+  /// **'Spelling check is incomplete'**
+  String get spellingCheckIncomplete;
+
+  /// No description provided for @spellingDictionaryUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Dictionary unavailable'**
+  String get spellingDictionaryUnavailable;
+
+  /// No description provided for @spellingChecking.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking spelling…'**
+  String get spellingChecking;
+
   /// Invalid numeric export setting.
   ///
   /// In en, this message translates to:

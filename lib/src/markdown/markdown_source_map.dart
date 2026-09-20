@@ -724,65 +724,125 @@ class BusyMarkInlineParserContext {
         candidate.textContent,
         ignoredReferenceLabelMarkers: markers,
       );
-      final ranges = Map<BusyInline, BusyMarkMappedInlineRange>.identity();
-      for (final entry in mapped.ranges.entries) {
-        final range = entry.value;
-        final lineBreaks = <BusyMarkMappedSourceLineBreak>[];
-
-        void collectLineBreaks(BusyInline inline, int textOffset) {
-          final inlineRange = mapped.ranges[inline];
-          if (inlineRange?.isSourceLineBreak ?? false) {
-            final projected = projection.lineBreakAt(
-              inlineRange!.sourceLineBreakOffset ?? inlineRange.end - 1,
-            );
-            if (projected != null) {
-              lineBreaks.add(
-                BusyMarkMappedSourceLineBreak(
-                  textOffset: textOffset,
-                  lineEnding: projected.lineEnding,
-                  continuationPrefix: projected.continuationPrefix,
-                  sourceOffset: projected.sourceOffset,
-                ),
-              );
-            }
-            return;
-          }
-          var childOffset = textOffset;
-          for (final child in inline.children) {
-            collectLineBreaks(child, childOffset);
-            childOffset += child.plainText.length;
-          }
-        }
-
-        collectLineBreaks(entry.key, 0);
-        ranges[entry.key] = BusyMarkMappedInlineRange(
-          start: projection.rawStartFor(range.start),
-          end: projection.rawEndFor(range.end),
-          opening: range.opening,
-          closing: range.closing,
-          labelStart: range.labelStart == null
-              ? null
-              : projection.rawStartFor(range.labelStart!),
-          labelEnd: range.labelEnd == null
-              ? null
-              : projection.rawStartFor(range.labelEnd!),
-          lineBreaks: lineBreaks,
-          originalInline: range.originalInline,
-          isAutolink: range.isAutolink,
-          isReference: range.isReference,
-          isSourceLineBreak: range.isSourceLineBreak,
-          sourceLineBreakOffset: range.sourceLineBreakOffset == null
-              ? null
-              : projection.rawStartFor(range.sourceLineBreakOffset!),
-        );
-      }
-      return BusyMarkMappedInlineParse(
-        inlines: mapped.inlines,
-        ranges: ranges,
-        positionRecordsComplete: mapped.positionRecordsComplete,
-      );
+      return _translateBlockProjection(mapped, projection);
     }
     return null;
+  }
+
+  /// Maps every inline-content candidate in an authored block/container slice
+  /// without injecting a position marker. Candidates and repeated text are
+  /// resolved monotonically in physical source order.
+  List<BusyMarkMappedInlineParse> parsePositionedBlocks(
+    String source, {
+    int sourceStart = 0,
+    int? sourceEnd,
+  }) {
+    if (source.isEmpty) return const [];
+    final boundedStart = sourceStart.clamp(0, source.length).toInt();
+    final boundedEnd = (sourceEnd ?? source.length)
+        .clamp(boundedStart, source.length)
+        .toInt();
+    final sourceLines = _mappedSourceLines(source);
+    if (sourceLines.isEmpty) return const [];
+    final nodes = md.BlockParser([
+      for (final line in sourceLines) md.Line(line.content),
+    ], _mappingDocument).parseLines();
+    final candidates = <md.UnparsedContent>[];
+
+    void collect(Iterable<md.Node> values) {
+      for (final node in values) {
+        if (node is md.UnparsedContent) {
+          if (node.textContent.isNotEmpty) candidates.add(node);
+        } else if (node is md.Element && node.children != null) {
+          collect(node.children!);
+        }
+      }
+    }
+
+    collect(nodes);
+    final result = <BusyMarkMappedInlineParse>[];
+    var cursor = boundedStart;
+    for (final candidate in candidates) {
+      final projection = _MappedBlockInlineProjection.tryCreatePositioned(
+        source,
+        sourceLines,
+        candidate.textContent,
+        minimumSourceOffset: cursor,
+        maximumSourceOffset: boundedEnd,
+      );
+      if (projection == null) continue;
+      result.add(
+        _translateBlockProjection(
+          parseMapped(candidate.textContent),
+          projection,
+        ),
+      );
+      cursor = projection.rawEnd;
+    }
+    return List.unmodifiable(result);
+  }
+
+  BusyMarkMappedInlineParse _translateBlockProjection(
+    BusyMarkMappedInlineParse mapped,
+    _MappedBlockInlineProjection projection,
+  ) {
+    final ranges = Map<BusyInline, BusyMarkMappedInlineRange>.identity();
+    for (final entry in mapped.ranges.entries) {
+      final range = entry.value;
+      final lineBreaks = <BusyMarkMappedSourceLineBreak>[];
+
+      void collectLineBreaks(BusyInline inline, int textOffset) {
+        final inlineRange = mapped.ranges[inline];
+        if (inlineRange?.isSourceLineBreak ?? false) {
+          final projected = projection.lineBreakAt(
+            inlineRange!.sourceLineBreakOffset ?? inlineRange.end - 1,
+          );
+          if (projected != null) {
+            lineBreaks.add(
+              BusyMarkMappedSourceLineBreak(
+                textOffset: textOffset,
+                lineEnding: projected.lineEnding,
+                continuationPrefix: projected.continuationPrefix,
+                sourceOffset: projected.sourceOffset,
+              ),
+            );
+          }
+          return;
+        }
+        var childOffset = textOffset;
+        for (final child in inline.children) {
+          collectLineBreaks(child, childOffset);
+          childOffset += child.plainText.length;
+        }
+      }
+
+      collectLineBreaks(entry.key, 0);
+      ranges[entry.key] = BusyMarkMappedInlineRange(
+        start: projection.rawStartFor(range.start),
+        end: projection.rawEndFor(range.end),
+        opening: range.opening,
+        closing: range.closing,
+        labelStart: range.labelStart == null
+            ? null
+            : projection.rawStartFor(range.labelStart!),
+        labelEnd: range.labelEnd == null
+            ? null
+            : projection.rawStartFor(range.labelEnd!),
+        lineBreaks: lineBreaks,
+        originalInline: range.originalInline,
+        isAutolink: range.isAutolink,
+        isReference: range.isReference,
+        isSourceLineBreak: range.isSourceLineBreak,
+        sourceLineBreakOffset: range.sourceLineBreakOffset == null
+            ? null
+            : projection.rawStartFor(range.sourceLineBreakOffset!),
+      );
+    }
+    return BusyMarkMappedInlineParse(
+      inlines: mapped.inlines,
+      ranges: ranges,
+      positionRecordsComplete: mapped.positionRecordsComplete,
+    );
   }
 }
 
@@ -981,11 +1041,101 @@ class _MappedBlockInlineProjection {
     );
   }
 
+  static _MappedBlockInlineProjection? tryCreatePositioned(
+    String source,
+    List<_MappedSourceLine> sourceLines,
+    String logicalSource, {
+    required int minimumSourceOffset,
+    required int maximumSourceOffset,
+  }) {
+    if (logicalSource.isEmpty || sourceLines.isEmpty) return null;
+    final logicalLines = logicalSource.split('\n');
+    for (
+      var firstSourceLine = 0;
+      firstSourceLine + logicalLines.length <= sourceLines.length;
+      firstSourceLine++
+    ) {
+      final positions = <int>[];
+      var valid = true;
+      for (var index = 0; index < logicalLines.length; index++) {
+        final sourceLine = sourceLines[firstSourceLine + index];
+        final searchFrom = index == 0
+            ? math.max(0, minimumSourceOffset - sourceLine.contentStart)
+            : 0;
+        if (searchFrom > sourceLine.content.length) {
+          valid = false;
+          break;
+        }
+        final position = sourceLine.content.indexOf(
+          logicalLines[index],
+          searchFrom,
+        );
+        final rawPosition = sourceLine.contentStart + position;
+        if (position < 0 ||
+            rawPosition < minimumSourceOffset ||
+            rawPosition + logicalLines[index].length > maximumSourceOffset) {
+          valid = false;
+          break;
+        }
+        positions.add(rawPosition);
+      }
+      if (!valid) continue;
+      return _fromLinePositions(
+        source,
+        sourceLines,
+        logicalLines,
+        positions,
+        firstSourceLine,
+      );
+    }
+    return null;
+  }
+
+  static _MappedBlockInlineProjection? _fromLinePositions(
+    String source,
+    List<_MappedSourceLine> sourceLines,
+    List<String> logicalLines,
+    List<int> positions,
+    int firstSourceLine,
+  ) {
+    final rawOffsets = <int>[];
+    final logicalLineStarts = <int>[];
+    for (var index = 0; index < logicalLines.length; index++) {
+      logicalLineStarts.add(rawOffsets.length);
+      final lineStart = positions[index];
+      for (
+        var character = 0;
+        character < logicalLines[index].length;
+        character++
+      ) {
+        rawOffsets.add(lineStart + character);
+      }
+      if (index + 1 < logicalLines.length) {
+        final sourceLine = sourceLines[firstSourceLine + index];
+        if (sourceLine.end == sourceLine.contentEnd) return null;
+        rawOffsets.add(sourceLine.end - 1);
+      }
+    }
+    if (rawOffsets.length != logicalLines.join('\n').length ||
+        rawOffsets.isEmpty) {
+      return null;
+    }
+    return _MappedBlockInlineProjection(
+      source: source,
+      rawOffsets: rawOffsets,
+      logicalLineStarts: logicalLineStarts,
+      sourceLines: sourceLines,
+      firstSourceLine: firstSourceLine,
+    );
+  }
+
   final String source;
   final List<int> rawOffsets;
   final List<int> logicalLineStarts;
   final List<_MappedSourceLine> sourceLines;
   final int firstSourceLine;
+  int get rawStart => rawOffsets.first;
+  int get rawEnd => rawOffsets.last + 1;
   late final Map<int, BusyMarkMappedSourceLineBreak>
   _lineBreaksByLogicalOffset = _createLineBreaksByLogicalOffset();
 

@@ -4548,6 +4548,74 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
+  String get spelling => 'Правописание';
+
+  @override
+  String get automaticSpelling => 'Автоматическая проверка правописания';
+
+  @override
+  String get defaultSpellingLanguage =>
+      'Язык проверки правописания по умолчанию';
+
+  @override
+  String get projectSpellingLanguage => 'Язык проверки орфографии проекта';
+
+  @override
+  String get chooseSpellingLanguage => 'Выбрать язык правописания';
+
+  @override
+  String get checkSpelling => 'Проверить правописание';
+
+  @override
+  String get ignoreSpellingOnce => 'Игнорировать один раз';
+
+  @override
+  String get ignoreSpellingDocument => 'Игнорировать все в этом документе';
+
+  @override
+  String get addPersonalSpellingWord => 'Добавить в личный словарь';
+
+  @override
+  String get addProjectSpellingWord => 'Добавить в словарь проекта';
+
+  @override
+  String get inheritSpellingLanguage =>
+      'Использовать язык проекта или приложения';
+
+  @override
+  String get disableDocumentSpelling => 'Не проверять орфографию';
+
+  @override
+  String get importSpellingDictionary => 'Импортировать словарь';
+
+  @override
+  String get personalSpellingDictionary => 'Личный словарь';
+
+  @override
+  String get projectSpellingDictionary => 'Словарь проекта';
+
+  @override
+  String get noSpellingErrors => 'Орфографических ошибок нет';
+
+  @override
+  String get noSpellingSuggestions => 'Нет вариантов исправления';
+
+  @override
+  String get spellingWordCheckFailed => 'Не удалось проверить это слово';
+
+  @override
+  String get spellingCheckFailed => 'Не удалось проверить правописание';
+
+  @override
+  String get spellingCheckIncomplete => 'Проверка правописания не завершена';
+
+  @override
+  String get spellingDictionaryUnavailable => 'Словарь недоступен';
+
+  @override
+  String get spellingChecking => 'Проверка правописания…';
+
+  @override
   String exportInvalidRange(String field, String minimum, String maximum) {
     return '$field: введите число от $minimum до $maximum.';
   }

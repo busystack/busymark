@@ -4485,6 +4485,72 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
+  String get spelling => 'Chính tả';
+
+  @override
+  String get automaticSpelling => 'Tự động kiểm tra chính tả';
+
+  @override
+  String get defaultSpellingLanguage => 'Ngôn ngữ chính tả mặc định';
+
+  @override
+  String get projectSpellingLanguage => 'Ngôn ngữ kiểm tra chính tả của dự án';
+
+  @override
+  String get chooseSpellingLanguage => 'Chọn ngôn ngữ chính tả';
+
+  @override
+  String get checkSpelling => 'Kiểm tra chính tả';
+
+  @override
+  String get ignoreSpellingOnce => 'Bỏ qua một lần';
+
+  @override
+  String get ignoreSpellingDocument => 'Bỏ qua tất cả trong tài liệu này';
+
+  @override
+  String get addPersonalSpellingWord => 'Thêm vào từ điển cá nhân';
+
+  @override
+  String get addProjectSpellingWord => 'Thêm vào từ điển dự án';
+
+  @override
+  String get inheritSpellingLanguage => 'Dùng ngôn ngữ dự án hoặc ứng dụng';
+
+  @override
+  String get disableDocumentSpelling => 'Không kiểm tra chính tả';
+
+  @override
+  String get importSpellingDictionary => 'Nhập từ điển';
+
+  @override
+  String get personalSpellingDictionary => 'Từ điển cá nhân';
+
+  @override
+  String get projectSpellingDictionary => 'Từ điển dự án';
+
+  @override
+  String get noSpellingErrors => 'Không có lỗi chính tả';
+
+  @override
+  String get noSpellingSuggestions => 'Không có đề xuất chính tả';
+
+  @override
+  String get spellingWordCheckFailed => 'Không thể kiểm tra từ này';
+
+  @override
+  String get spellingCheckFailed => 'Kiểm tra chính tả thất bại';
+
+  @override
+  String get spellingCheckIncomplete => 'Kiểm tra chính tả chưa hoàn tất';
+
+  @override
+  String get spellingDictionaryUnavailable => 'Từ điển không khả dụng';
+
+  @override
+  String get spellingChecking => 'Đang kiểm tra chính tả…';
+
+  @override
   String exportInvalidRange(String field, String minimum, String maximum) {
     return '$field: nhập số từ $minimum đến $maximum.';
   }

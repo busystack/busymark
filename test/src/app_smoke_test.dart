@@ -1417,6 +1417,7 @@ void main() {
       ...BusyMarkTreeShortcuts.definitions.values.map(
         (definition) => definition.label,
       ),
+      'F7',
       'Ctrl+Shift+Home',
       'Ctrl+Shift+End',
     };

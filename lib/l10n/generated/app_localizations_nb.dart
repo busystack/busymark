@@ -4492,6 +4492,72 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
+  String get spelling => 'Stavekontroll';
+
+  @override
+  String get automaticSpelling => 'Automatisk stavekontroll';
+
+  @override
+  String get defaultSpellingLanguage => 'Standard språk for stavekontroll';
+
+  @override
+  String get projectSpellingLanguage => 'Prosjektspråk for stavekontroll';
+
+  @override
+  String get chooseSpellingLanguage => 'Velg språk for stavekontroll';
+
+  @override
+  String get checkSpelling => 'Kontroller staving';
+
+  @override
+  String get ignoreSpellingOnce => 'Ignorer én gang';
+
+  @override
+  String get ignoreSpellingDocument => 'Ignorer alle i dette dokumentet';
+
+  @override
+  String get addPersonalSpellingWord => 'Legg til i personlig ordliste';
+
+  @override
+  String get addProjectSpellingWord => 'Legg til i prosjektordlisten';
+
+  @override
+  String get inheritSpellingLanguage => 'Bruk prosjekt- eller programspråk';
+
+  @override
+  String get disableDocumentSpelling => 'Ikke kontroller staving';
+
+  @override
+  String get importSpellingDictionary => 'Importer ordliste';
+
+  @override
+  String get personalSpellingDictionary => 'Personlig ordliste';
+
+  @override
+  String get projectSpellingDictionary => 'Prosjektordliste';
+
+  @override
+  String get noSpellingErrors => 'Ingen stavefeil';
+
+  @override
+  String get noSpellingSuggestions => 'Ingen staveforslag';
+
+  @override
+  String get spellingWordCheckFailed => 'Kunne ikke kontrollere dette ordet';
+
+  @override
+  String get spellingCheckFailed => 'Stavekontrollen mislyktes';
+
+  @override
+  String get spellingCheckIncomplete => 'Stavekontrollen er ufullstendig';
+
+  @override
+  String get spellingDictionaryUnavailable => 'Ordliste utilgjengelig';
+
+  @override
+  String get spellingChecking => 'Kontrollerer staving…';
+
+  @override
   String exportInvalidRange(String field, String minimum, String maximum) {
     return '$field: skriv inn et tall mellom $minimum og $maximum.';
   }

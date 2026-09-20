@@ -32,6 +32,24 @@ class MarkdownParser {
   /// editor and source serializer retain their existing projection by default.
   final bool preserveHtmlSemantics;
 
+  /// Exposes the lossless scanner's positioned block/container slices for
+  /// side-effect-free projections such as spelling. Callers receive authored
+  /// source positions; no reference validation or publication expansion is
+  /// performed.
+  List<MarkdownPositionedSourceChunk> positionedSourceChunks({
+    required String filePath,
+    required String source,
+    MarkdownMode mode = MarkdownMode.commonMark,
+  }) => [
+    for (final chunk in _scannedBlockSources(filePath, source, mode: mode))
+      MarkdownPositionedSourceChunk(
+        rawSource: chunk.rawSource,
+        span: chunk.span,
+        sourceOnly: chunk.sourceOnly,
+        protectsEdits: chunk.protectEdits,
+      ),
+  ];
+
   List<BusyInline> parseInlineFragment({
     required String source,
     MarkdownMode mode = MarkdownMode.commonMark,
@@ -1880,6 +1898,20 @@ class MarkdownParser {
   bool _isWithinDirectory(String root, String candidate) {
     return p.equals(root, candidate) || p.isWithin(root, candidate);
   }
+}
+
+final class MarkdownPositionedSourceChunk {
+  const MarkdownPositionedSourceChunk({
+    required this.rawSource,
+    required this.span,
+    required this.sourceOnly,
+    required this.protectsEdits,
+  });
+
+  final String rawSource;
+  final SourceSpan span;
+  final bool sourceOnly;
+  final bool protectsEdits;
 }
 
 class _AstInlineReferences {

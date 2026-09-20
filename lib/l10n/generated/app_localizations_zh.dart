@@ -4295,6 +4295,72 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get spelling => '拼写检查';
+
+  @override
+  String get automaticSpelling => '自动检查拼写';
+
+  @override
+  String get defaultSpellingLanguage => '默认拼写语言';
+
+  @override
+  String get projectSpellingLanguage => '项目拼写检查语言';
+
+  @override
+  String get chooseSpellingLanguage => '选择拼写语言';
+
+  @override
+  String get checkSpelling => '检查拼写';
+
+  @override
+  String get ignoreSpellingOnce => '忽略一次';
+
+  @override
+  String get ignoreSpellingDocument => '在此文档中全部忽略';
+
+  @override
+  String get addPersonalSpellingWord => '添加到个人词典';
+
+  @override
+  String get addProjectSpellingWord => '添加到项目词典';
+
+  @override
+  String get inheritSpellingLanguage => '使用项目或应用语言';
+
+  @override
+  String get disableDocumentSpelling => '不检查拼写';
+
+  @override
+  String get importSpellingDictionary => '导入词典';
+
+  @override
+  String get personalSpellingDictionary => '个人词典';
+
+  @override
+  String get projectSpellingDictionary => '项目词典';
+
+  @override
+  String get noSpellingErrors => '没有拼写错误';
+
+  @override
+  String get noSpellingSuggestions => '没有拼写建议';
+
+  @override
+  String get spellingWordCheckFailed => '无法检查此单词';
+
+  @override
+  String get spellingCheckFailed => '拼写检查失败';
+
+  @override
+  String get spellingCheckIncomplete => '拼写检查未完成';
+
+  @override
+  String get spellingDictionaryUnavailable => '词典不可用';
+
+  @override
+  String get spellingChecking => '正在检查拼写…';
+
+  @override
   String exportInvalidRange(String field, String minimum, String maximum) {
     return '$field：请输入 $minimum 到 $maximum 之间的数字。';
   }
@@ -8587,6 +8653,72 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String settingsMebibytesValue(int value) {
     return '$value MiB';
   }
+
+  @override
+  String get spelling => '拼写检查';
+
+  @override
+  String get automaticSpelling => '自动检查拼写';
+
+  @override
+  String get defaultSpellingLanguage => '默认拼写语言';
+
+  @override
+  String get projectSpellingLanguage => '项目拼写检查语言';
+
+  @override
+  String get chooseSpellingLanguage => '选择拼写语言';
+
+  @override
+  String get checkSpelling => '检查拼写';
+
+  @override
+  String get ignoreSpellingOnce => '忽略一次';
+
+  @override
+  String get ignoreSpellingDocument => '在此文档中全部忽略';
+
+  @override
+  String get addPersonalSpellingWord => '添加到个人词典';
+
+  @override
+  String get addProjectSpellingWord => '添加到项目词典';
+
+  @override
+  String get inheritSpellingLanguage => '使用项目或应用语言';
+
+  @override
+  String get disableDocumentSpelling => '不检查拼写';
+
+  @override
+  String get importSpellingDictionary => '导入词典';
+
+  @override
+  String get personalSpellingDictionary => '个人词典';
+
+  @override
+  String get projectSpellingDictionary => '项目词典';
+
+  @override
+  String get noSpellingErrors => '没有拼写错误';
+
+  @override
+  String get noSpellingSuggestions => '没有拼写建议';
+
+  @override
+  String get spellingWordCheckFailed => '无法检查此单词';
+
+  @override
+  String get spellingCheckFailed => '拼写检查失败';
+
+  @override
+  String get spellingCheckIncomplete => '拼写检查未完成';
+
+  @override
+  String get spellingDictionaryUnavailable => '词典不可用';
+
+  @override
+  String get spellingChecking => '正在检查拼写…';
 
   @override
   String exportInvalidRange(String field, String minimum, String maximum) {

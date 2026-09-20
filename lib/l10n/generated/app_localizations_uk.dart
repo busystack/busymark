@@ -4556,6 +4556,73 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
+  String get spelling => 'Правопис';
+
+  @override
+  String get automaticSpelling => 'Автоматична перевірка правопису';
+
+  @override
+  String get defaultSpellingLanguage => 'Типова мова перевірки правопису';
+
+  @override
+  String get projectSpellingLanguage => 'Мова перевірки правопису проєкту';
+
+  @override
+  String get chooseSpellingLanguage => 'Вибрати мову правопису';
+
+  @override
+  String get checkSpelling => 'Перевірити правопис';
+
+  @override
+  String get ignoreSpellingOnce => 'Ігнорувати один раз';
+
+  @override
+  String get ignoreSpellingDocument => 'Ігнорувати все в цьому документі';
+
+  @override
+  String get addPersonalSpellingWord => 'Додати до особистого словника';
+
+  @override
+  String get addProjectSpellingWord => 'Додати до словника проєкту';
+
+  @override
+  String get inheritSpellingLanguage =>
+      'Використовувати мову проєкту або програми';
+
+  @override
+  String get disableDocumentSpelling => 'Не перевіряти правопис';
+
+  @override
+  String get importSpellingDictionary => 'Імпортувати словник';
+
+  @override
+  String get personalSpellingDictionary => 'Особистий словник';
+
+  @override
+  String get projectSpellingDictionary => 'Словник проєкту';
+
+  @override
+  String get noSpellingErrors => 'Орфографічних помилок немає';
+
+  @override
+  String get noSpellingSuggestions => 'Немає варіантів виправлення';
+
+  @override
+  String get spellingWordCheckFailed => 'Не вдалося перевірити це слово';
+
+  @override
+  String get spellingCheckFailed => 'Не вдалося перевірити правопис';
+
+  @override
+  String get spellingCheckIncomplete => 'Перевірку правопису не завершено';
+
+  @override
+  String get spellingDictionaryUnavailable => 'Словник недоступний';
+
+  @override
+  String get spellingChecking => 'Перевірка правопису…';
+
+  @override
   String exportInvalidRange(String field, String minimum, String maximum) {
     return '$field: введіть число від $minimum до $maximum.';
   }

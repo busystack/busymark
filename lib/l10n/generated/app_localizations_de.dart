@@ -4531,6 +4531,75 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
+  String get spelling => 'Rechtschreibung';
+
+  @override
+  String get automaticSpelling => 'Automatische Rechtschreibprüfung';
+
+  @override
+  String get defaultSpellingLanguage => 'Standardsprache für Rechtschreibung';
+
+  @override
+  String get projectSpellingLanguage => 'Projektsprache für Rechtschreibung';
+
+  @override
+  String get chooseSpellingLanguage => 'Rechtschreibsprache auswählen';
+
+  @override
+  String get checkSpelling => 'Rechtschreibung prüfen';
+
+  @override
+  String get ignoreSpellingOnce => 'Einmal ignorieren';
+
+  @override
+  String get ignoreSpellingDocument => 'Alle in diesem Dokument ignorieren';
+
+  @override
+  String get addPersonalSpellingWord =>
+      'Zum persönlichen Wörterbuch hinzufügen';
+
+  @override
+  String get addProjectSpellingWord => 'Zum Projektwörterbuch hinzufügen';
+
+  @override
+  String get inheritSpellingLanguage =>
+      'Projekt- oder Anwendungssprache verwenden';
+
+  @override
+  String get disableDocumentSpelling => 'Rechtschreibung nicht prüfen';
+
+  @override
+  String get importSpellingDictionary => 'Wörterbuch importieren';
+
+  @override
+  String get personalSpellingDictionary => 'Persönliches Wörterbuch';
+
+  @override
+  String get projectSpellingDictionary => 'Projektwörterbuch';
+
+  @override
+  String get noSpellingErrors => 'Keine Rechtschreibfehler';
+
+  @override
+  String get noSpellingSuggestions => 'Keine Rechtschreibvorschläge';
+
+  @override
+  String get spellingWordCheckFailed =>
+      'Dieses Wort konnte nicht geprüft werden';
+
+  @override
+  String get spellingCheckFailed => 'Rechtschreibprüfung fehlgeschlagen';
+
+  @override
+  String get spellingCheckIncomplete => 'Rechtschreibprüfung ist unvollständig';
+
+  @override
+  String get spellingDictionaryUnavailable => 'Wörterbuch nicht verfügbar';
+
+  @override
+  String get spellingChecking => 'Rechtschreibung wird geprüft…';
+
+  @override
   String exportInvalidRange(String field, String minimum, String maximum) {
     return '$field: Geben Sie eine Zahl zwischen $minimum und $maximum ein.';
   }

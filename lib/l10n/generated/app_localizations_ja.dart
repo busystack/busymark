@@ -4368,6 +4368,72 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
+  String get spelling => 'スペルチェック';
+
+  @override
+  String get automaticSpelling => '自動スペルチェック';
+
+  @override
+  String get defaultSpellingLanguage => '既定のスペルチェック言語';
+
+  @override
+  String get projectSpellingLanguage => 'プロジェクトのスペルチェック言語';
+
+  @override
+  String get chooseSpellingLanguage => 'スペルチェック言語を選択';
+
+  @override
+  String get checkSpelling => 'スペルチェック';
+
+  @override
+  String get ignoreSpellingOnce => '一度だけ無視';
+
+  @override
+  String get ignoreSpellingDocument => 'この文書ですべて無視';
+
+  @override
+  String get addPersonalSpellingWord => '個人辞書に追加';
+
+  @override
+  String get addProjectSpellingWord => 'プロジェクト辞書に追加';
+
+  @override
+  String get inheritSpellingLanguage => 'プロジェクトまたはアプリの言語を使用';
+
+  @override
+  String get disableDocumentSpelling => 'スペルチェックしない';
+
+  @override
+  String get importSpellingDictionary => '辞書をインポート';
+
+  @override
+  String get personalSpellingDictionary => '個人辞書';
+
+  @override
+  String get projectSpellingDictionary => 'プロジェクト辞書';
+
+  @override
+  String get noSpellingErrors => 'スペルミスはありません';
+
+  @override
+  String get noSpellingSuggestions => 'スペル候補はありません';
+
+  @override
+  String get spellingWordCheckFailed => 'この単語を確認できませんでした';
+
+  @override
+  String get spellingCheckFailed => 'スペルチェックに失敗しました';
+
+  @override
+  String get spellingCheckIncomplete => 'スペルチェックが完了していません';
+
+  @override
+  String get spellingDictionaryUnavailable => '辞書を利用できません';
+
+  @override
+  String get spellingChecking => 'スペルを確認中…';
+
+  @override
   String exportInvalidRange(String field, String minimum, String maximum) {
     return '$field: $minimum から $maximum の数値を入力してください。';
   }

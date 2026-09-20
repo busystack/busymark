@@ -4536,6 +4536,74 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
+  String get spelling => 'Orthographe';
+
+  @override
+  String get automaticSpelling => 'Vérification orthographique automatique';
+
+  @override
+  String get defaultSpellingLanguage => 'Langue orthographique par défaut';
+
+  @override
+  String get projectSpellingLanguage => 'Langue de correction du projet';
+
+  @override
+  String get chooseSpellingLanguage => 'Choisir la langue orthographique';
+
+  @override
+  String get checkSpelling => 'Vérifier l’orthographe';
+
+  @override
+  String get ignoreSpellingOnce => 'Ignorer une fois';
+
+  @override
+  String get ignoreSpellingDocument => 'Tout ignorer dans ce document';
+
+  @override
+  String get addPersonalSpellingWord => 'Ajouter au dictionnaire personnel';
+
+  @override
+  String get addProjectSpellingWord => 'Ajouter au dictionnaire du projet';
+
+  @override
+  String get inheritSpellingLanguage =>
+      'Utiliser la langue du projet ou de l’application';
+
+  @override
+  String get disableDocumentSpelling => 'Ne pas vérifier l’orthographe';
+
+  @override
+  String get importSpellingDictionary => 'Importer un dictionnaire';
+
+  @override
+  String get personalSpellingDictionary => 'Dictionnaire personnel';
+
+  @override
+  String get projectSpellingDictionary => 'Dictionnaire du projet';
+
+  @override
+  String get noSpellingErrors => 'Aucune faute d’orthographe';
+
+  @override
+  String get noSpellingSuggestions => 'Aucune suggestion orthographique';
+
+  @override
+  String get spellingWordCheckFailed => 'Impossible de vérifier ce mot';
+
+  @override
+  String get spellingCheckFailed => 'Échec de la vérification orthographique';
+
+  @override
+  String get spellingCheckIncomplete =>
+      'La vérification orthographique est incomplète';
+
+  @override
+  String get spellingDictionaryUnavailable => 'Dictionnaire indisponible';
+
+  @override
+  String get spellingChecking => 'Vérification de l’orthographe…';
+
+  @override
   String exportInvalidRange(String field, String minimum, String maximum) {
     return '$field : saisissez un nombre entre $minimum et $maximum.';
   }

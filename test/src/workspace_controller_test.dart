@@ -6,6 +6,7 @@ import 'package:busymark/src/markdown/markdown_parser.dart';
 import 'package:busymark/src/app/app_settings.dart';
 import 'package:busymark/src/core/busymark_exception.dart';
 import 'package:busymark/src/core/source_span.dart';
+import 'package:busymark/src/editor/wysiwyg/wysiwyg_session_state.dart';
 import 'package:busymark/src/local_history/local_history_controller.dart';
 import 'package:busymark/src/local_history/local_history_models.dart';
 import 'package:busymark/src/local_history/local_history_store.dart';
@@ -2442,6 +2443,78 @@ void main() {
     expect(await harness.controller.saveActive(), isTrue);
     expect(await file.readAsString(), '- changed');
   });
+
+  test(
+    'spelling correction undo and redo restore source and rich selections',
+    () async {
+      final directory = await Directory.systemTemp.createTemp(
+        'busymark-spelling-history-',
+      );
+      addTearDown(() => directory.delete(recursive: true));
+      final file = File(p.join(directory.path, 'note.md'));
+      await file.writeAsString('mispelled\n');
+      final harness = await _createControllerHarness();
+      await harness.controller.openPath(file.path);
+      final controller = harness.controller._notifier;
+      final buffer = controller.state.activeBuffer!;
+      controller.updateActiveEditorState(
+        buffer.editorState.copyWith(
+          selection: const TextSelection(baseOffset: 0, extentOffset: 9),
+        ),
+      );
+      const beforeRich = WysiwygEditorSessionState(
+        activeBlockId: 'before-block',
+        anchorBlockId: 'before-block',
+        anchorOffset: 0,
+        extentBlockId: 'before-block',
+        extentOffset: 9,
+      );
+      const afterRich = WysiwygEditorSessionState(
+        activeBlockId: 'after-block',
+        anchorBlockId: 'after-block',
+        anchorOffset: 10,
+        extentBlockId: 'after-block',
+        extentOffset: 10,
+      );
+      final correctedDocument = const MarkdownParser()
+          .parse(filePath: file.path, source: 'misspelled\n')
+          .busyDocument;
+
+      controller.updateActiveWysiwygText(
+        'misspelled\n',
+        document: correctedDocument,
+        sourceFilePath: file.path,
+        previousWysiwygState: beforeRich,
+        wysiwygState: afterRich,
+      );
+      expect(
+        controller.state.activeBuffer!.editorState.undoState.undo,
+        hasLength(1),
+      );
+      expect(
+        controller.state.activeBuffer!.editorState.wysiwygState,
+        afterRich,
+      );
+
+      expect(controller.undoActiveBuffer(), isTrue);
+      expect(controller.state.activeText, 'mispelled\n');
+      expect(
+        controller.state.activeBuffer!.editorState.selection,
+        const TextSelection(baseOffset: 0, extentOffset: 9),
+      );
+      expect(
+        controller.state.activeBuffer!.editorState.wysiwygState,
+        beforeRich,
+      );
+
+      expect(controller.redoActiveBuffer(), isTrue);
+      expect(controller.state.activeText, 'misspelled\n');
+      expect(
+        controller.state.activeBuffer!.editorState.wysiwygState,
+        afterRich,
+      );
+    },
+  );
 
   test(
     'Keep Mine retains the conflict snapshot until explicit overwrite',

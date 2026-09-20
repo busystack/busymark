@@ -4546,6 +4546,72 @@ class AppLocalizationsPl extends AppLocalizations {
   }
 
   @override
+  String get spelling => 'Pisownia';
+
+  @override
+  String get automaticSpelling => 'Automatyczne sprawdzanie pisowni';
+
+  @override
+  String get defaultSpellingLanguage => 'Domyślny język pisowni';
+
+  @override
+  String get projectSpellingLanguage => 'Język sprawdzania pisowni projektu';
+
+  @override
+  String get chooseSpellingLanguage => 'Wybierz język pisowni';
+
+  @override
+  String get checkSpelling => 'Sprawdź pisownię';
+
+  @override
+  String get ignoreSpellingOnce => 'Ignoruj raz';
+
+  @override
+  String get ignoreSpellingDocument => 'Ignoruj wszystkie w tym dokumencie';
+
+  @override
+  String get addPersonalSpellingWord => 'Dodaj do słownika osobistego';
+
+  @override
+  String get addProjectSpellingWord => 'Dodaj do słownika projektu';
+
+  @override
+  String get inheritSpellingLanguage => 'Użyj języka projektu lub aplikacji';
+
+  @override
+  String get disableDocumentSpelling => 'Nie sprawdzaj pisowni';
+
+  @override
+  String get importSpellingDictionary => 'Importuj słownik';
+
+  @override
+  String get personalSpellingDictionary => 'Słownik osobisty';
+
+  @override
+  String get projectSpellingDictionary => 'Słownik projektu';
+
+  @override
+  String get noSpellingErrors => 'Brak błędów pisowni';
+
+  @override
+  String get noSpellingSuggestions => 'Brak sugestii pisowni';
+
+  @override
+  String get spellingWordCheckFailed => 'Nie można sprawdzić tego słowa';
+
+  @override
+  String get spellingCheckFailed => 'Sprawdzanie pisowni nie powiodło się';
+
+  @override
+  String get spellingCheckIncomplete => 'Sprawdzanie pisowni jest niepełne';
+
+  @override
+  String get spellingDictionaryUnavailable => 'Słownik jest niedostępny';
+
+  @override
+  String get spellingChecking => 'Sprawdzanie pisowni…';
+
+  @override
   String exportInvalidRange(String field, String minimum, String maximum) {
     return '$field: wpisz liczbę między $minimum a $maximum.';
   }

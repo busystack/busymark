@@ -24,6 +24,9 @@ import '../../core/diagnostic.dart';
 import '../../markdown/markdown_model.dart';
 import '../../platform/rich_clipboard_service.dart';
 import '../../search/search_replace_service.dart';
+import '../../spellcheck/spelling_coordinator.dart';
+import '../../spellcheck/spelling_projection.dart';
+import '../../spellcheck/spelling_replacement.dart';
 import '../document_text_geometry.dart';
 import '../clipboard_paste_resolver.dart';
 import '../clipboard_local_image_path.dart';
@@ -108,6 +111,9 @@ class BusyMarkSourceEditor extends StatefulWidget {
     this.documentFormat,
     this.markdownMode,
     this.onAssetSaveRequired,
+    this.spellingAnnotations = const [],
+    this.onCheckSpelling,
+    this.readSpellingMenuItems,
   });
 
   final String text;
@@ -149,6 +155,9 @@ class BusyMarkSourceEditor extends StatefulWidget {
   final SourceDocumentFormat? documentFormat;
   final MarkdownMode? markdownMode;
   final VoidCallback? onAssetSaveRequired;
+  final List<SpellingAnnotation> spellingAnnotations;
+  final VoidCallback? onCheckSpelling;
+  final BusyMarkEditorSpellingMenuReader? readSpellingMenuItems;
 
   @override
   State<BusyMarkSourceEditor> createState() => BusyMarkSourceEditorState();
@@ -189,6 +198,85 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
 
   RichClipboardService get _clipboard =>
       widget.clipboardService ?? busyMarkRichClipboardService;
+
+  int get spellingCaretOffset => _controller.selection.extentOffset
+      .clamp(0, _controller.fullText.length)
+      .toInt();
+
+  void restoreSpellingFocus() => _focusNode.requestFocus();
+
+  void revealSpellingOccurrence(SpellingOccurrence occurrence) {
+    if (occurrence.run.snapshot.bufferId !=
+            (widget.documentId ?? widget.filePath) ||
+        occurrence.run.snapshot.contentRevision != widget.editRevision ||
+        occurrence.run.target is! SpellingSourceTarget) {
+      return;
+    }
+    final start = occurrence.sourceStart;
+    final end = occurrence.sourceEnd;
+    if (start == null || end == null || end > _controller.fullText.length) {
+      return;
+    }
+    _unfoldSourceRange(start, end);
+    _controller.selection = TextSelection(baseOffset: start, extentOffset: end);
+    _focusNode.requestFocus();
+    scrollToOffset(start);
+  }
+
+  bool applySpellingCorrection({
+    required SpellingOccurrence occurrence,
+    required String suggestion,
+  }) {
+    final snapshot = occurrence.run.snapshot;
+    final target = occurrence.run.target;
+    if (snapshot.bufferId != (widget.documentId ?? widget.filePath) ||
+        snapshot.contentRevision != widget.editRevision ||
+        target is! SpellingSourceTarget ||
+        target.filePath != (widget.filePath ?? widget.documentId) ||
+        occurrence.word !=
+            occurrence.run.text.substring(
+              occurrence.logicalStart,
+              occurrence.logicalEnd,
+            )) {
+      return false;
+    }
+    final plan = const SpellingReplacementPlanner().build(
+      occurrence: occurrence,
+      suggestion: suggestion,
+    );
+    final before = _controller.fullText;
+    for (final atom in occurrence.atoms) {
+      if (atom.sourceStart < 0 ||
+          atom.sourceEnd > before.length ||
+          atom.sourceEnd < atom.sourceStart) {
+        return false;
+      }
+    }
+    // Final guard and mutation are synchronous; no operation is awaited here.
+    if (snapshot.bufferId != (widget.documentId ?? widget.filePath) ||
+        snapshot.contentRevision != widget.editRevision ||
+        before != _controller.fullText) {
+      return false;
+    }
+    final after = plan.applyToSource(before);
+    if (after == before || plan.sourceEdits.isEmpty) return false;
+    final start = plan.sourceEdits.map((edit) => edit.start).reduce(math.min);
+    final selectionOffset = plan.resultingSourceCaret ?? start;
+    _unfoldSourceRange(
+      start,
+      plan.sourceEdits.map((edit) => edit.end).reduce(math.max),
+    );
+    _applyFullEditingValue(
+      TextEditingValue(
+        text: after,
+        selection: TextSelection.collapsed(
+          offset: selectionOffset.clamp(0, after.length),
+        ),
+      ),
+      origin: _SourceEditOrigin.spellingCorrection,
+    );
+    return true;
+  }
 
   SourceDocumentFormat get _documentFormat =>
       widget.documentFormat ??
@@ -639,6 +727,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
               collapsedRegionKeys: _foldedRegionKeys,
               foldRegions: _foldRegions,
               diagnosticMarkers: markers,
+              spellingAnnotations: widget.spellingAnnotations,
               layoutCache: _lineLayoutCache,
               intrinsicWidthCache: _intrinsicWidthCache,
               onToggleFold: _toggleFold,
@@ -661,7 +750,9 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
                             BusyMarkContextCommandAction(
                               isCommandEnabled: (commandId) =>
                                   !_hasActiveComposition &&
-                                  (commandId.startsWith('editor.') ||
+                                  (commandId ==
+                                          BusyMarkCommandIds.checkSpelling ||
+                                      commandId.startsWith('editor.') ||
                                       (widget.filePath?.toLowerCase().endsWith(
                                                 '.tree',
                                               ) ==
@@ -677,6 +768,11 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
                                         BusyMarkCommandIds.textPastePlainText,
                                       }.contains(commandId)),
                               onCommand: (commandId) {
+                                if (commandId ==
+                                    BusyMarkCommandIds.checkSpelling) {
+                                  widget.onCheckSpelling?.call();
+                                  return;
+                                }
                                 if (commandId ==
                                         BusyMarkCommandIds.treeMoveLineUp ||
                                     commandId ==
@@ -780,6 +876,8 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
                                 context,
                                 editableTextState,
                                 refineWithAiLabel: context.l10n.aiRefineWithAi,
+                                readSpellingItems: widget.readSpellingMenuItems,
+                                onCheckSpelling: widget.onCheckSpelling,
                                 additionalItems: [
                                   if (widget.onSymbolAction != null)
                                     for (final action
@@ -1355,14 +1453,17 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
     final selection = _controller.fullSelection;
     final previousSelection =
         _controller.lastFullSelectionBeforeEdit ?? selection;
-    final undoGroup = origin == _SourceEditOrigin.paste
+    final undoGroup =
+        origin == _SourceEditOrigin.paste ||
+            origin == _SourceEditOrigin.spellingCorrection
         ? null
         : _undoGroupForSourceEdit(
             visibleEdit,
             previousSelection: previousSelection,
             selection: selection,
           );
-    if (origin == _SourceEditOrigin.paste) {
+    if (origin == _SourceEditOrigin.paste ||
+        origin == _SourceEditOrigin.spellingCorrection) {
       _continuousSourceEdit = null;
     }
     final currentSearchIndex = _searchController.result.currentMatchIndex;
@@ -2610,6 +2711,7 @@ class _SourceEditorFrame extends StatelessWidget {
     required this.foldRegions,
     required this.collapsedRegionKeys,
     required this.diagnosticMarkers,
+    required this.spellingAnnotations,
     required this.layoutCache,
     required this.intrinsicWidthCache,
     required this.onToggleFold,
@@ -2634,6 +2736,7 @@ class _SourceEditorFrame extends StatelessWidget {
   final List<SourceFoldRegion> foldRegions;
   final Set<String> collapsedRegionKeys;
   final List<SourceDiagnosticMarker> diagnosticMarkers;
+  final List<SpellingAnnotation> spellingAnnotations;
   final SourceLineLayoutCache layoutCache;
   final SourceIntrinsicWidthCache intrinsicWidthCache;
   final ValueChanged<SourceFoldRegion> onToggleFold;
@@ -2761,6 +2864,7 @@ class _SourceEditorFrame extends StatelessWidget {
                                 textStyle: textStyle,
                                 strutStyle: strutStyle,
                                 textWidth: textWidth,
+                                spellingAnnotations: spellingAnnotations,
                               ),
                             ),
                             if (collapsedRegionKeys.isNotEmpty)
@@ -2775,6 +2879,7 @@ class _SourceEditorFrame extends StatelessWidget {
                                   foldRegions: foldRegions,
                                   collapsedRegionKeys: collapsedRegionKeys,
                                   diagnosticMarkers: diagnosticMarkers,
+                                  spellingAnnotations: spellingAnnotations,
                                   layoutCache: layoutCache,
                                 ),
                               ),
@@ -2818,13 +2923,14 @@ RenderEditable? _findSourceRenderEditable(RenderObject root) {
   return result;
 }
 
-class _SourceRenderedTextLayer extends StatelessWidget {
+class _SourceRenderedTextLayer extends StatefulWidget {
   const _SourceRenderedTextLayer({
     required this.controller,
     required this.scrollController,
     required this.textStyle,
     required this.strutStyle,
     required this.textWidth,
+    required this.spellingAnnotations,
   });
 
   final BusyMarkSourceEditingController controller;
@@ -2832,17 +2938,27 @@ class _SourceRenderedTextLayer extends StatelessWidget {
   final TextStyle textStyle;
   final StrutStyle? strutStyle;
   final double textWidth;
+  final List<SpellingAnnotation> spellingAnnotations;
+
+  @override
+  State<_SourceRenderedTextLayer> createState() =>
+      _SourceRenderedTextLayerState();
+}
+
+class _SourceRenderedTextLayerState extends State<_SourceRenderedTextLayer> {
+  final _paragraphKey = GlobalKey();
 
   @override
   Widget build(BuildContext context) {
     final renderedText = RichText(
+      key: _paragraphKey,
       textDirection: TextDirection.ltr,
-      text: controller.buildSourceTextSpan(
+      text: widget.controller.buildSourceTextSpan(
         context: context,
-        style: textStyle,
+        style: widget.textStyle,
         hideCollapsedStartLines: true,
       ),
-      strutStyle: strutStyle,
+      strutStyle: widget.strutStyle,
       textHeightBehavior: sourceTextHeightBehavior,
       textScaler: MediaQuery.textScalerOf(context),
       textWidthBasis: TextWidthBasis.parent,
@@ -2850,17 +2966,30 @@ class _SourceRenderedTextLayer extends StatelessWidget {
     return IgnorePointer(
       child: ClipRect(
         child: AnimatedBuilder(
-          animation: scrollController,
-          child: renderedText,
+          animation: Listenable.merge([
+            widget.controller,
+            widget.scrollController,
+          ]),
+          child: CustomPaint(
+            foregroundPainter: _SourceSpellingPainter(
+              paragraphKey: _paragraphKey,
+              document: widget.controller.document,
+              annotations: widget.spellingAnnotations,
+              composing: widget.controller.fullComposing,
+              selection: widget.controller.fullSelection,
+              color: busyMarkStatusColor(context, BusyMarkStatusKind.error),
+            ),
+            child: renderedText,
+          ),
           builder: (context, child) {
-            final scrollOffset = safeScrollOffset(scrollController);
+            final scrollOffset = safeScrollOffset(widget.scrollController);
             return Stack(
               clipBehavior: Clip.none,
               children: [
                 Positioned(
                   top: _SourceEditorFrame.editorPaddingTop - scrollOffset,
                   left: _SourceEditorFrame.editorPaddingLeft,
-                  width: textWidth,
+                  width: widget.textWidth,
                   child: child!,
                 ),
               ],
@@ -2884,6 +3013,7 @@ class _CollapsedSourceLineOverlay extends StatelessWidget {
     required this.collapsedRegionKeys,
     required this.diagnosticMarkers,
     required this.layoutCache,
+    required this.spellingAnnotations,
   });
 
   final BusyMarkSourceEditingController controller;
@@ -2896,6 +3026,7 @@ class _CollapsedSourceLineOverlay extends StatelessWidget {
   final Set<String> collapsedRegionKeys;
   final List<SourceDiagnosticMarker> diagnosticMarkers;
   final SourceLineLayoutCache layoutCache;
+  final List<SpellingAnnotation> spellingAnnotations;
 
   @override
   Widget build(BuildContext context) {
@@ -2949,6 +3080,9 @@ class _CollapsedSourceLineOverlay extends StatelessWidget {
                       height: layout.height,
                       child: _CollapsedSourceLine(
                         text: _collapsedLineText(fullLine.text),
+                        authoredLength: fullLine.text.trimRight().length,
+                        sourceStart: fullLine.startOffset,
+                        spellingAnnotations: spellingAnnotations,
                         height: lineHeight,
                         textStyle: textStyle,
                       ),
@@ -2965,16 +3099,109 @@ class _CollapsedSourceLineOverlay extends StatelessWidget {
   }
 }
 
+class _SourceSpellingPainter extends CustomPainter {
+  const _SourceSpellingPainter({
+    required this.paragraphKey,
+    required this.document,
+    required this.annotations,
+    required this.composing,
+    required this.selection,
+    required this.color,
+  });
+
+  final GlobalKey paragraphKey;
+  final SourceDocument document;
+  final List<SpellingAnnotation> annotations;
+  final TextRange composing;
+  final TextSelection selection;
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paragraph = paragraphKey.currentContext?.findRenderObject();
+    if (paragraph is! RenderParagraph) return;
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = BusyMarkStroke.hairline
+      ..style = PaintingStyle.stroke;
+    for (final annotation in annotations) {
+      if (annotation.target is! SpellingSourceTarget ||
+          annotation.end <= annotation.start ||
+          (_selectionSuppressesRange(
+            selection,
+            annotation.start,
+            annotation.end,
+          )) ||
+          (composing.isValid &&
+              composing.start < annotation.end &&
+              annotation.start < composing.end)) {
+        continue;
+      }
+      final mapped = document.fullRangeToVisibleRange(
+        annotation.start,
+        annotation.end,
+      );
+      if (mapped.clippedByHiddenRange || mapped.range.isCollapsed) continue;
+      final boxes = paragraph.getBoxesForSelection(
+        TextSelection(
+          baseOffset: mapped.range.start,
+          extentOffset: mapped.range.end,
+        ),
+        boxHeightStyle: BusyMarkDocumentTextGeometry.selectionHeightStyle,
+        boxWidthStyle: BusyMarkDocumentTextGeometry.selectionWidthStyle,
+      );
+      for (final box in boxes) {
+        _paintSpellingWave(canvas, box.toRect(), paint);
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _SourceSpellingPainter oldDelegate) =>
+      oldDelegate.document != document ||
+      oldDelegate.annotations != annotations ||
+      oldDelegate.composing != composing ||
+      oldDelegate.selection != selection ||
+      oldDelegate.color != color;
+}
+
+bool _selectionSuppressesRange(TextSelection selection, int start, int end) =>
+    selection.isValid &&
+    selection.isCollapsed &&
+    selection.extentOffset >= start &&
+    selection.extentOffset <= end;
+
+void _paintSpellingWave(Canvas canvas, Rect rect, Paint paint) {
+  if (rect.width <= 0) return;
+  final y = rect.bottom - 1;
+  const halfWave = 2.0;
+  final path = Path()..moveTo(rect.left, y);
+  var x = rect.left;
+  var up = true;
+  while (x < rect.right) {
+    x = math.min(rect.right, x + halfWave);
+    path.lineTo(x, y + (up ? -1.25 : 1.25));
+    up = !up;
+  }
+  canvas.drawPath(path, paint);
+}
+
 class _CollapsedSourceLine extends StatelessWidget {
   const _CollapsedSourceLine({
     required this.text,
     required this.height,
     required this.textStyle,
+    required this.authoredLength,
+    required this.sourceStart,
+    required this.spellingAnnotations,
   });
 
   final String text;
   final double height;
   final TextStyle textStyle;
+  final int authoredLength;
+  final int sourceStart;
+  final List<SpellingAnnotation> spellingAnnotations;
 
   @override
   Widget build(BuildContext context) {
@@ -2996,12 +3223,23 @@ class _CollapsedSourceLine extends StatelessWidget {
             ),
             child: Align(
               alignment: Alignment.centerLeft,
-              child: Text(
-                text,
-                textDirection: TextDirection.ltr,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: textStyle.copyWith(color: colors.mutedForeground),
+              child: CustomPaint(
+                foregroundPainter: _CollapsedSpellingPainter(
+                  text: text,
+                  authoredLength: authoredLength,
+                  sourceStart: sourceStart,
+                  annotations: spellingAnnotations,
+                  style: textStyle,
+                  color: busyMarkStatusColor(context, BusyMarkStatusKind.error),
+                  textScaler: MediaQuery.textScalerOf(context),
+                ),
+                child: Text(
+                  text,
+                  textDirection: TextDirection.ltr,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: textStyle.copyWith(color: colors.mutedForeground),
+                ),
               ),
             ),
           ),
@@ -3009,6 +3247,69 @@ class _CollapsedSourceLine extends StatelessWidget {
       ),
     );
   }
+}
+
+class _CollapsedSpellingPainter extends CustomPainter {
+  const _CollapsedSpellingPainter({
+    required this.text,
+    required this.authoredLength,
+    required this.sourceStart,
+    required this.annotations,
+    required this.style,
+    required this.color,
+    required this.textScaler,
+  });
+
+  final String text;
+  final int authoredLength;
+  final int sourceStart;
+  final List<SpellingAnnotation> annotations;
+  final TextStyle style;
+  final Color color;
+  final TextScaler textScaler;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (authoredLength <= 0 || size.width <= 0) return;
+    final painter = TextPainter(
+      text: TextSpan(text: text, style: style),
+      textDirection: TextDirection.ltr,
+      textScaler: textScaler,
+      maxLines: 1,
+      ellipsis: '…',
+    )..layout(maxWidth: size.width);
+    final wave = Paint()
+      ..color = color
+      ..strokeWidth = BusyMarkStroke.hairline
+      ..style = PaintingStyle.stroke;
+    for (final annotation in annotations) {
+      if (annotation.target is! SpellingSourceTarget ||
+          annotation.start < sourceStart ||
+          annotation.end > sourceStart + authoredLength) {
+        continue;
+      }
+      final boxes = painter.getBoxesForSelection(
+        TextSelection(
+          baseOffset: annotation.start - sourceStart,
+          extentOffset: annotation.end - sourceStart,
+        ),
+      );
+      for (final box in boxes) {
+        _paintSpellingWave(canvas, box.toRect(), wave);
+      }
+    }
+    painter.dispose();
+  }
+
+  @override
+  bool shouldRepaint(covariant _CollapsedSpellingPainter oldDelegate) =>
+      oldDelegate.text != text ||
+      oldDelegate.authoredLength != authoredLength ||
+      oldDelegate.sourceStart != sourceStart ||
+      oldDelegate.annotations != annotations ||
+      oldDelegate.style != style ||
+      oldDelegate.color != color ||
+      oldDelegate.textScaler != textScaler;
 }
 
 class _SourceSearchPanel extends StatefulWidget {
@@ -3415,7 +3716,7 @@ class _SourceClipboardOperationTarget {
   final TextRange composing;
 }
 
-enum _SourceEditOrigin { userTyping, paste }
+enum _SourceEditOrigin { userTyping, paste, spellingCorrection }
 
 class _SourceClipboardInsertionTarget
     implements

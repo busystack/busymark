@@ -4524,6 +4524,72 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
+  String get spelling => 'الإملاء';
+
+  @override
+  String get automaticSpelling => 'التدقيق الإملائي التلقائي';
+
+  @override
+  String get defaultSpellingLanguage => 'لغة الإملاء الافتراضية';
+
+  @override
+  String get projectSpellingLanguage => 'لغة التدقيق الإملائي للمشروع';
+
+  @override
+  String get chooseSpellingLanguage => 'اختر لغة الإملاء';
+
+  @override
+  String get checkSpelling => 'تدقيق الإملاء';
+
+  @override
+  String get ignoreSpellingOnce => 'تجاهل مرة واحدة';
+
+  @override
+  String get ignoreSpellingDocument => 'تجاهل الكل في هذا المستند';
+
+  @override
+  String get addPersonalSpellingWord => 'إضافة إلى القاموس الشخصي';
+
+  @override
+  String get addProjectSpellingWord => 'إضافة إلى قاموس المشروع';
+
+  @override
+  String get inheritSpellingLanguage => 'استخدام لغة المشروع أو التطبيق';
+
+  @override
+  String get disableDocumentSpelling => 'عدم التدقيق الإملائي';
+
+  @override
+  String get importSpellingDictionary => 'استيراد قاموس';
+
+  @override
+  String get personalSpellingDictionary => 'القاموس الشخصي';
+
+  @override
+  String get projectSpellingDictionary => 'قاموس المشروع';
+
+  @override
+  String get noSpellingErrors => 'لا توجد أخطاء إملائية';
+
+  @override
+  String get noSpellingSuggestions => 'لا توجد اقتراحات إملائية';
+
+  @override
+  String get spellingWordCheckFailed => 'تعذّر التحقق من هذه الكلمة';
+
+  @override
+  String get spellingCheckFailed => 'فشل التدقيق الإملائي';
+
+  @override
+  String get spellingCheckIncomplete => 'التدقيق الإملائي غير مكتمل';
+
+  @override
+  String get spellingDictionaryUnavailable => 'القاموس غير متاح';
+
+  @override
+  String get spellingChecking => 'جارٍ التدقيق الإملائي…';
+
+  @override
   String exportInvalidRange(String field, String minimum, String maximum) {
     return '$field: أدخل رقمًا بين $minimum و$maximum.';
   }

@@ -4494,6 +4494,72 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
+  String get spelling => 'Yazım';
+
+  @override
+  String get automaticSpelling => 'Otomatik yazım denetimi';
+
+  @override
+  String get defaultSpellingLanguage => 'Varsayılan yazım dili';
+
+  @override
+  String get projectSpellingLanguage => 'Proje yazım denetimi dili';
+
+  @override
+  String get chooseSpellingLanguage => 'Yazım dili seç';
+
+  @override
+  String get checkSpelling => 'Yazımı Denetle';
+
+  @override
+  String get ignoreSpellingOnce => 'Bir Kez Yoksay';
+
+  @override
+  String get ignoreSpellingDocument => 'Bu Belgede Tümünü Yoksay';
+
+  @override
+  String get addPersonalSpellingWord => 'Kişisel Sözlüğe Ekle';
+
+  @override
+  String get addProjectSpellingWord => 'Proje Sözlüğüne Ekle';
+
+  @override
+  String get inheritSpellingLanguage => 'Proje veya uygulama dilini kullan';
+
+  @override
+  String get disableDocumentSpelling => 'Yazımı denetleme';
+
+  @override
+  String get importSpellingDictionary => 'Sözlük İçe Aktar';
+
+  @override
+  String get personalSpellingDictionary => 'Kişisel Sözlük';
+
+  @override
+  String get projectSpellingDictionary => 'Proje Sözlüğü';
+
+  @override
+  String get noSpellingErrors => 'Yazım hatası yok';
+
+  @override
+  String get noSpellingSuggestions => 'Yazım önerisi yok';
+
+  @override
+  String get spellingWordCheckFailed => 'Bu sözcük denetlenemedi';
+
+  @override
+  String get spellingCheckFailed => 'Yazım denetimi başarısız oldu';
+
+  @override
+  String get spellingCheckIncomplete => 'Yazım denetimi tamamlanmadı';
+
+  @override
+  String get spellingDictionaryUnavailable => 'Sözlük kullanılamıyor';
+
+  @override
+  String get spellingChecking => 'Yazım denetleniyor…';
+
+  @override
   String exportInvalidRange(String field, String minimum, String maximum) {
     return '$field: $minimum ile $maximum arasında bir sayı girin.';
   }

@@ -38,6 +38,8 @@ jobs:
             ninja-build \
             pkg-config \
             libgtk-3-dev \
+            libglib2.0-dev \
+            libpango1.0-dev \
             libhandy-1-dev \
             libsecret-1-dev \
             libwebkit2gtk-4.1-dev \
@@ -100,8 +102,35 @@ jobs:
       - name: Analyze
         run: flutter analyze
 
+      - name: Test native Hunspell package explicitly
+        working-directory: packages/busymark_spellcheck_native
+        run: dart test
+
       - name: Build Linux release
         run: flutter build linux --release
+
+      - name: Test installed spelling dictionaries and native engine
+        env:
+          BUSYMARK_TEST_SPELLING_ROOT: ${{ github.workspace }}/build/linux/x64/release/bundle/share/busymark/spelling
+        run: flutter test test/src/spelling_bundle_integration_test.dart
+
+      - name: Exercise installed offline spelling correction and persistence
+        run: |
+          report="${RUNNER_TEMP}/spelling-release.json"
+          profile="${RUNNER_TEMP}/spelling-profile"
+          mkdir -p "$profile"
+          xvfb-run -a -s '-screen 0 1280x1024x24' \
+            env GDK_BACKEND=x11 BUSYMARK_RELEASE_SMOKE=1 \
+            XDG_DATA_HOME="$profile" LIBGL_ALWAYS_SOFTWARE=1 \
+            build/linux/x64/release/bundle/busymark \
+            --spelling-release-smoke="$report"
+          python3 -c 'import json,sys; report=json.load(open(sys.argv[1], encoding="utf-8")); assert report["ok"], report; assert not report["checks"]["personalWordPresentBeforeRun"], report' "$report"
+          xvfb-run -a -s '-screen 0 1280x1024x24' \
+            env GDK_BACKEND=x11 BUSYMARK_RELEASE_SMOKE=1 \
+            XDG_DATA_HOME="$profile" LIBGL_ALWAYS_SOFTWARE=1 \
+            build/linux/x64/release/bundle/busymark \
+            --spelling-release-smoke="$report"
+          python3 -c 'import json,sys; report=json.load(open(sys.argv[1], encoding="utf-8")); assert report["ok"], report; assert report["checks"]["personalWordPresentBeforeRun"], report' "$report"
 
       - name: Test including bundled D2 and Typst paths
         env:
@@ -221,6 +250,21 @@ jobs:
             loader="$SNAP_DESKTOP_RUNTIME/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET/gdk-pixbuf-2.0/2.10.0/loaders/libpixbufloader_svg.so"
             "$query" "$loader" | grep -q "\"svg\" 6 \"gdk-pixbuf\""
           '
+
+      - name: Exercise strict Snap offline spelling and restart persistence
+        run: |
+          report="$HOME/snap/busymark/common/spelling-release.json"
+          rm -f "$report"
+          xvfb-run -a -s '-screen 0 1280x1024x24' \
+            env GDK_BACKEND=x11 BUSYMARK_RELEASE_SMOKE=1 \
+            LIBGL_ALWAYS_SOFTWARE=1 snap run busymark \
+            --spelling-release-smoke="$report"
+          python3 -c 'import json,sys; report=json.load(open(sys.argv[1], encoding="utf-8")); assert report["ok"], report; assert not report["checks"]["personalWordPresentBeforeRun"], report' "$report"
+          xvfb-run -a -s '-screen 0 1280x1024x24' \
+            env GDK_BACKEND=x11 BUSYMARK_RELEASE_SMOKE=1 \
+            LIBGL_ALWAYS_SOFTWARE=1 snap run busymark \
+            --spelling-release-smoke="$report"
+          python3 -c 'import json,sys; report=json.load(open(sys.argv[1], encoding="utf-8")); assert report["ok"], report; assert report["checks"]["personalWordPresentBeforeRun"], report' "$report"
 
       - name: Exercise strict Snap visualization and PDF paths under X11
         run: |

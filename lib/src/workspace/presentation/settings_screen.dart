@@ -1,7 +1,10 @@
 import 'dart:async';
+import 'dart:convert';
 
+import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
@@ -17,10 +20,15 @@ import '../../app/busymark_design.dart';
 import '../../app/busymark_glyphs.dart';
 import '../../app/busymark_main_menu.dart';
 import '../../app/busymark_shortcuts.dart';
+import '../../app/busymark_toast.dart';
 import '../../app/localization.dart';
 import '../../app/window_control_service.dart';
 import '../../feedback/presentation/feedback_dialog.dart';
 import '../../platform/linux_header_bar_service.dart';
+import '../../spellcheck/spelling_catalog.dart';
+import '../../spellcheck/spelling_session_controller.dart';
+import '../../spellcheck/spelling_word_store.dart';
+import '../workspace_controller.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({
@@ -38,6 +46,8 @@ class SettingsScreen extends ConsumerStatefulWidget {
 
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   late SettingsPage _page = widget.initialPage;
+  String? _preparedSpellingWorkspaceId;
+  bool _preparingSpelling = false;
 
   @override
   void didUpdateWidget(covariant SettingsScreen oldWidget) {
@@ -52,6 +62,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final l10n = AppLocalizations.of(context);
     final settings = ref.watch(appSettingsControllerProvider);
     final controller = ref.read(appSettingsControllerProvider.notifier);
+    final spelling = ref.watch(spellingSessionControllerProvider);
+    final workspace = ref.watch(
+      workspaceControllerProvider.select((state) => state.workspace),
+    );
+    final importedDictionaries =
+        spelling.catalog?.entries
+            .where((entry) => entry.imported)
+            .toList(growable: false) ??
+        const <SpellingDictionaryEntry>[];
+    _prepareSpellingSettings(spelling, workspace?.id);
     final colors = BusyMarkSurfaceColors.of(context);
     final headerBar = ref.watch(linuxHeaderBarServiceProvider);
     final useNativeHeaderBar = headerBar.usesNativeHeaderBar;
@@ -95,6 +115,19 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               BusyMarkGlyphs.wordWrapFor(Directionality.of(context)),
             ),
           ),
+          BusyMarkSwitchRow(
+            title: l10n.automaticSpelling,
+            value: settings.automaticSpelling,
+            onChanged: controller.setAutomaticSpelling,
+            leading: const Icon(BusyMarkGlyphs.diagnostics),
+          ),
+          _SpellingLanguageRow(
+            title: l10n.defaultSpellingLanguage,
+            selected: settings.defaultSpellingLanguage,
+            catalogEntries: spelling.catalog?.entries ?? const [],
+            unsetLabel: l10n.chooseSpellingLanguage,
+            onChanged: controller.setDefaultSpellingLanguage,
+          ),
           _EditorFontSizeRow(
             value: settings.editorFontSize,
             onChanged: controller.setEditorFontSize,
@@ -106,6 +139,44 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           _EditorToolbarDirectionRow(
             selected: settings.editorToolbarDirection,
             onChanged: controller.setEditorToolbarDirection,
+          ),
+          BusyMarkActionRow(
+            title: l10n.importSpellingDictionary,
+            leading: const Icon(BusyMarkGlyphs.add),
+            onTap: () =>
+                unawaited(_importSpellingDictionary(context, spelling)),
+          ),
+          for (final entry in importedDictionaries)
+            BusyMarkActionRow(
+              title: entry.label,
+              subtitle: entry.id,
+              leading: const Icon(BusyMarkGlyphs.symbols),
+              trailing: const Icon(BusyMarkGlyphs.delete),
+              destructive: true,
+              onTap: () => unawaited(
+                _removeImportedSpellingDictionary(context, spelling, entry.id),
+              ),
+            ),
+          _SpellingWordStoreRow(
+            title: l10n.personalSpellingDictionary,
+            snapshot: spelling.personalWords,
+            onRemove: spelling.removePersonalWord,
+          ),
+          _SpellingLanguageRow(
+            title: l10n.projectSpellingLanguage,
+            selected: spelling.projectWords.projectLanguage,
+            catalogEntries: spelling.catalog?.entries ?? const [],
+            unsetLabel: l10n.inheritSpellingLanguage,
+            enabled: spelling.hasProjectScope,
+            onChanged: (value) => unawaited(
+              _setProjectSpellingLanguage(context, spelling, value),
+            ),
+          ),
+          _SpellingWordStoreRow(
+            title: l10n.projectSpellingDictionary,
+            snapshot: spelling.projectWords,
+            enabled: spelling.hasProjectScope,
+            onRemove: spelling.removeProjectWord,
           ),
         ],
       ),
@@ -319,6 +390,29 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 
+  void _prepareSpellingSettings(
+    SpellingSessionController spelling,
+    String? workspaceId,
+  ) {
+    if (_preparingSpelling ||
+        (_preparedSpellingWorkspaceId == workspaceId &&
+            spelling.catalog != null)) {
+      return;
+    }
+    _preparingSpelling = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      try {
+        await spelling.prepareSettings(
+          ref.read(workspaceControllerProvider).workspace,
+        );
+        _preparedSpellingWorkspaceId = workspaceId;
+      } finally {
+        _preparingSpelling = false;
+        if (mounted) setState(() {});
+      }
+    });
+  }
+
   void _goBack() {
     context.go(widget.returnTarget.location);
   }
@@ -418,6 +512,282 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         showBusyMarkAboutDialog(context);
     }
   }
+}
+
+class _SpellingLanguageRow extends StatefulWidget {
+  const _SpellingLanguageRow({
+    required this.title,
+    required this.selected,
+    required this.catalogEntries,
+    required this.unsetLabel,
+    required this.onChanged,
+    this.enabled = true,
+  });
+
+  final String title;
+  final String? selected;
+  final List<SpellingDictionaryEntry> catalogEntries;
+  final String unsetLabel;
+  final bool enabled;
+  final ValueChanged<String?> onChanged;
+
+  @override
+  State<_SpellingLanguageRow> createState() => _SpellingLanguageRowState();
+}
+
+class _SpellingLanguageRowState extends State<_SpellingLanguageRow> {
+  static const _unset = '';
+  late final Future<List<({String id, String label})>> _catalog =
+      _loadCatalog();
+
+  Future<List<({String id, String label})>> _loadCatalog() async {
+    final source = await rootBundle.loadString(
+      'assets/spelling/dictionaries.json',
+    );
+    final decoded = jsonDecode(source);
+    final values = decoded is Map ? decoded['dictionaries'] : null;
+    if (values is! List) return const [];
+    return [
+      for (final value in values.whereType<Map>())
+        if (value['id'] case final String id when id.trim().isNotEmpty)
+          (
+            id: id,
+            label: value['label']?.toString().trim().isNotEmpty == true
+                ? value['label'].toString()
+                : id,
+          ),
+    ];
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<List<({String id, String label})>>(
+      future: _catalog,
+      builder: (context, snapshot) {
+        final dictionariesById = {
+          for (final entry in snapshot.data ?? const []) entry.id: entry,
+          for (final entry in widget.catalogEntries)
+            entry.id: (id: entry.id, label: entry.label),
+        };
+        final dictionaries = dictionariesById.values.toList()
+          ..sort((left, right) => left.label.compareTo(right.label));
+        final selected = widget.selected ?? _unset;
+        final selectedLabel = dictionaries
+            .where((entry) => entry.id == widget.selected)
+            .map((entry) => entry.label)
+            .firstOrNull;
+        return BusyMarkActionRow(
+          title: widget.title,
+          enabled: widget.enabled,
+          leading: const Icon(BusyMarkGlyphs.symbols),
+          trailing: SizedBox(
+            width: BusyMarkSizes.controlRowWidth,
+            child: BusyMarkPopupSelector<String>(
+              value: selected,
+              label: selectedLabel ?? widget.unsetLabel,
+              tooltip: widget.title,
+              enabled:
+                  widget.enabled &&
+                  snapshot.connectionState == ConnectionState.done,
+              options: [
+                BusyMarkPopupSelectorOption(
+                  value: _unset,
+                  label: widget.unsetLabel,
+                ),
+                for (final dictionary in dictionaries)
+                  BusyMarkPopupSelectorOption(
+                    value: dictionary.id,
+                    label: dictionary.label,
+                  ),
+              ],
+              onSelected: (value) {
+                widget.onChanged(value == _unset ? null : value);
+              },
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+Future<void> _setProjectSpellingLanguage(
+  BuildContext context,
+  SpellingSessionController spelling,
+  String? languageId,
+) async {
+  try {
+    await spelling.setProjectLanguage(languageId);
+  } on Object {
+    if (context.mounted) _showSpellingSettingsFailure(context);
+  }
+}
+
+class _SpellingWordStoreRow extends StatelessWidget {
+  const _SpellingWordStoreRow({
+    required this.title,
+    required this.snapshot,
+    required this.onRemove,
+    this.enabled = true,
+  });
+
+  final String title;
+  final SpellingWordStoreSnapshot snapshot;
+  final bool enabled;
+  final Future<void> Function(String languageId, String word) onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    final count = snapshot.wordsByLanguage.values.fold<int>(
+      0,
+      (total, words) => total + words.length,
+    );
+    return BusyMarkActionRow(
+      title: title,
+      subtitle: count == 0 ? context.l10n.noResults : count.toString(),
+      enabled: enabled,
+      leading: const Icon(BusyMarkGlyphs.symbols),
+      onTap: () =>
+          unawaited(_showSpellingWords(context, title, snapshot, onRemove)),
+    );
+  }
+}
+
+Future<void> _importSpellingDictionary(
+  BuildContext context,
+  SpellingSessionController spelling,
+) async {
+  final selected = await openFiles(
+    acceptedTypeGroups: [
+      XTypeGroup(
+        label: context.l10n.spelling,
+        extensions: const ['aff', 'dic'],
+      ),
+    ],
+  );
+  if (!context.mounted || selected.isEmpty) return;
+  final affFiles = selected
+      .where((file) => file.path.toLowerCase().endsWith('.aff'))
+      .toList(growable: false);
+  final dicFiles = selected
+      .where((file) => file.path.toLowerCase().endsWith('.dic'))
+      .toList(growable: false);
+  if (affFiles.length != 1 || dicFiles.length != 1) {
+    _showSpellingSettingsFailure(context);
+    return;
+  }
+  final languageController = TextEditingController();
+  final languageId = await showBusyMarkModalDialog<String>(
+    context,
+    barrierDismissible: false,
+    builder: (dialogContext) => AlertDialog(
+      title: Text(dialogContext.l10n.importSpellingDictionary),
+      content: TextField(
+        controller: languageController,
+        autofocus: true,
+        textCapitalization: TextCapitalization.none,
+        decoration: InputDecoration(
+          labelText: dialogContext.l10n.language,
+          hintText: 'en-US',
+          border: const OutlineInputBorder(),
+        ),
+        onSubmitted: (value) {
+          if (value.trim().isNotEmpty) Navigator.pop(dialogContext, value);
+        },
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(dialogContext),
+          child: Text(dialogContext.l10n.cancel),
+        ),
+        FilledButton(
+          onPressed: () {
+            final value = languageController.text.trim();
+            if (value.isNotEmpty) Navigator.pop(dialogContext, value);
+          },
+          child: Text(dialogContext.l10n.save),
+        ),
+      ],
+    ),
+  );
+  languageController.dispose();
+  if (!context.mounted || languageId == null) return;
+  try {
+    await spelling.importDictionary(
+      affPath: affFiles.single.path,
+      dicPath: dicFiles.single.path,
+      languageId: languageId,
+      displayLabel: languageId,
+    );
+  } on Object {
+    if (context.mounted) _showSpellingSettingsFailure(context);
+  }
+}
+
+Future<void> _removeImportedSpellingDictionary(
+  BuildContext context,
+  SpellingSessionController spelling,
+  String languageId,
+) async {
+  try {
+    await spelling.removeImportedDictionary(languageId);
+  } on Object {
+    if (context.mounted) _showSpellingSettingsFailure(context);
+  }
+}
+
+Future<void> _showSpellingWords(
+  BuildContext context,
+  String title,
+  SpellingWordStoreSnapshot snapshot,
+  Future<void> Function(String languageId, String word) remove,
+) async {
+  final words = [
+    for (final entry in snapshot.wordsByLanguage.entries)
+      for (final word in entry.value) (language: entry.key, word: word.display),
+  ];
+  await showBusyMarkModalDialog<void>(
+    context,
+    builder: (dialogContext) => BusyMarkDialogShell(
+      title: title,
+      actions: [
+        BusyMarkDialogButton(
+          label: dialogContext.l10n.close,
+          onPressed: () => Navigator.pop(dialogContext),
+        ),
+      ],
+      children: [
+        if (words.isEmpty) Text(dialogContext.l10n.noResults),
+        for (final entry in words)
+          BusyMarkActionRow(
+            title: entry.word,
+            subtitle: entry.language,
+            leading: const Icon(BusyMarkGlyphs.symbols),
+            trailing: const Icon(BusyMarkGlyphs.delete),
+            tooltip: dialogContext.l10n.removeAction,
+            destructive: true,
+            onTap: () async {
+              try {
+                await remove(entry.language, entry.word);
+                if (dialogContext.mounted) Navigator.pop(dialogContext);
+              } on Object {
+                if (dialogContext.mounted) {
+                  _showSpellingSettingsFailure(dialogContext);
+                }
+              }
+            },
+          ),
+      ],
+    ),
+  );
+}
+
+void _showSpellingSettingsFailure(BuildContext context) {
+  BusyMarkToastOverlay.show(
+    context,
+    message: context.l10n.commandUnavailableInContext,
+    priority: BusyMarkToastPriority.high,
+  );
 }
 
 class _HistoryNumberRow extends StatelessWidget {

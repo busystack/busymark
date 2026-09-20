@@ -4532,6 +4532,72 @@ class AppLocalizationsFa extends AppLocalizations {
   }
 
   @override
+  String get spelling => 'املا';
+
+  @override
+  String get automaticSpelling => 'بررسی خودکار املا';
+
+  @override
+  String get defaultSpellingLanguage => 'زبان پیش‌فرض بررسی املا';
+
+  @override
+  String get projectSpellingLanguage => 'زبان غلط‌یابی پروژه';
+
+  @override
+  String get chooseSpellingLanguage => 'انتخاب زبان املا';
+
+  @override
+  String get checkSpelling => 'بررسی املا';
+
+  @override
+  String get ignoreSpellingOnce => 'یک‌بار نادیده بگیر';
+
+  @override
+  String get ignoreSpellingDocument => 'همه را در این سند نادیده بگیر';
+
+  @override
+  String get addPersonalSpellingWord => 'افزودن به واژه‌نامه شخصی';
+
+  @override
+  String get addProjectSpellingWord => 'افزودن به واژه‌نامه پروژه';
+
+  @override
+  String get inheritSpellingLanguage => 'استفاده از زبان پروژه یا برنامه';
+
+  @override
+  String get disableDocumentSpelling => 'املاء بررسی نشود';
+
+  @override
+  String get importSpellingDictionary => 'درون‌ریزی واژه‌نامه';
+
+  @override
+  String get personalSpellingDictionary => 'واژه‌نامه شخصی';
+
+  @override
+  String get projectSpellingDictionary => 'واژه‌نامه پروژه';
+
+  @override
+  String get noSpellingErrors => 'خطای املایی وجود ندارد';
+
+  @override
+  String get noSpellingSuggestions => 'پیشنهاد املایی وجود ندارد';
+
+  @override
+  String get spellingWordCheckFailed => 'بررسی این واژه ممکن نشد';
+
+  @override
+  String get spellingCheckFailed => 'بررسی املا ناموفق بود';
+
+  @override
+  String get spellingCheckIncomplete => 'بررسی املا کامل نیست';
+
+  @override
+  String get spellingDictionaryUnavailable => 'واژه‌نامه در دسترس نیست';
+
+  @override
+  String get spellingChecking => 'در حال بررسی املا…';
+
+  @override
   String exportInvalidRange(String field, String minimum, String maximum) {
     return '$field: عددی بین $minimum و $maximum وارد کنید.';
   }

@@ -4547,6 +4547,76 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
+  String get spelling => 'Ortografia';
+
+  @override
+  String get automaticSpelling => 'Verificação ortográfica automática';
+
+  @override
+  String get defaultSpellingLanguage => 'Idioma ortográfico predefinido';
+
+  @override
+  String get projectSpellingLanguage =>
+      'Idioma de verificação ortográfica do projeto';
+
+  @override
+  String get chooseSpellingLanguage => 'Escolher idioma ortográfico';
+
+  @override
+  String get checkSpelling => 'Verificar ortografia';
+
+  @override
+  String get ignoreSpellingOnce => 'Ignorar uma vez';
+
+  @override
+  String get ignoreSpellingDocument => 'Ignorar tudo neste documento';
+
+  @override
+  String get addPersonalSpellingWord => 'Adicionar ao dicionário pessoal';
+
+  @override
+  String get addProjectSpellingWord => 'Adicionar ao dicionário do projeto';
+
+  @override
+  String get inheritSpellingLanguage =>
+      'Usar o idioma do projeto ou da aplicação';
+
+  @override
+  String get disableDocumentSpelling => 'Não verificar a ortografia';
+
+  @override
+  String get importSpellingDictionary => 'Importar dicionário';
+
+  @override
+  String get personalSpellingDictionary => 'Dicionário pessoal';
+
+  @override
+  String get projectSpellingDictionary => 'Dicionário do projeto';
+
+  @override
+  String get noSpellingErrors => 'Sem erros ortográficos';
+
+  @override
+  String get noSpellingSuggestions => 'Sem sugestões ortográficas';
+
+  @override
+  String get spellingWordCheckFailed =>
+      'Não foi possível verificar esta palavra';
+
+  @override
+  String get spellingCheckFailed => 'A verificação ortográfica falhou';
+
+  @override
+  String get spellingCheckIncomplete =>
+      'A verificação ortográfica está incompleta';
+
+  @override
+  String get spellingDictionaryUnavailable => 'Dicionário indisponível';
+
+  @override
+  String get spellingChecking => 'A verificar a ortografia…';
+
+  @override
   String exportInvalidRange(String field, String minimum, String maximum) {
     return '$field: introduza um número entre $minimum e $maximum.';
   }
@@ -9090,6 +9160,76 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   String settingsMebibytesValue(int value) {
     return '$value MiB';
   }
+
+  @override
+  String get spelling => 'Ortografia';
+
+  @override
+  String get automaticSpelling => 'Verificação ortográfica automática';
+
+  @override
+  String get defaultSpellingLanguage => 'Idioma ortográfico padrão';
+
+  @override
+  String get projectSpellingLanguage =>
+      'Idioma de verificação ortográfica do projeto';
+
+  @override
+  String get chooseSpellingLanguage => 'Escolher idioma ortográfico';
+
+  @override
+  String get checkSpelling => 'Verificar ortografia';
+
+  @override
+  String get ignoreSpellingOnce => 'Ignorar uma vez';
+
+  @override
+  String get ignoreSpellingDocument => 'Ignorar tudo neste documento';
+
+  @override
+  String get addPersonalSpellingWord => 'Adicionar ao dicionário pessoal';
+
+  @override
+  String get addProjectSpellingWord => 'Adicionar ao dicionário do projeto';
+
+  @override
+  String get inheritSpellingLanguage =>
+      'Usar o idioma do projeto ou do aplicativo';
+
+  @override
+  String get disableDocumentSpelling => 'Não verificar a ortografia';
+
+  @override
+  String get importSpellingDictionary => 'Importar dicionário';
+
+  @override
+  String get personalSpellingDictionary => 'Dicionário pessoal';
+
+  @override
+  String get projectSpellingDictionary => 'Dicionário do projeto';
+
+  @override
+  String get noSpellingErrors => 'Nenhum erro ortográfico';
+
+  @override
+  String get noSpellingSuggestions => 'Nenhuma sugestão ortográfica';
+
+  @override
+  String get spellingWordCheckFailed =>
+      'Não foi possível verificar esta palavra';
+
+  @override
+  String get spellingCheckFailed => 'A verificação ortográfica falhou';
+
+  @override
+  String get spellingCheckIncomplete =>
+      'A verificação ortográfica está incompleta';
+
+  @override
+  String get spellingDictionaryUnavailable => 'Dicionário indisponível';
+
+  @override
+  String get spellingChecking => 'Verificando a ortografia…';
 
   @override
   String exportInvalidRange(String field, String minimum, String maximum) {

@@ -4362,6 +4362,72 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
+  String get spelling => '맞춤법';
+
+  @override
+  String get automaticSpelling => '자동 맞춤법 검사';
+
+  @override
+  String get defaultSpellingLanguage => '기본 맞춤법 언어';
+
+  @override
+  String get projectSpellingLanguage => '프로젝트 맞춤법 검사 언어';
+
+  @override
+  String get chooseSpellingLanguage => '맞춤법 언어 선택';
+
+  @override
+  String get checkSpelling => '맞춤법 검사';
+
+  @override
+  String get ignoreSpellingOnce => '한 번 무시';
+
+  @override
+  String get ignoreSpellingDocument => '이 문서에서 모두 무시';
+
+  @override
+  String get addPersonalSpellingWord => '개인 사전에 추가';
+
+  @override
+  String get addProjectSpellingWord => '프로젝트 사전에 추가';
+
+  @override
+  String get inheritSpellingLanguage => '프로젝트 또는 앱 언어 사용';
+
+  @override
+  String get disableDocumentSpelling => '맞춤법 검사 안 함';
+
+  @override
+  String get importSpellingDictionary => '사전 가져오기';
+
+  @override
+  String get personalSpellingDictionary => '개인 사전';
+
+  @override
+  String get projectSpellingDictionary => '프로젝트 사전';
+
+  @override
+  String get noSpellingErrors => '맞춤법 오류가 없습니다';
+
+  @override
+  String get noSpellingSuggestions => '맞춤법 제안이 없습니다';
+
+  @override
+  String get spellingWordCheckFailed => '이 단어를 확인할 수 없습니다';
+
+  @override
+  String get spellingCheckFailed => '맞춤법 검사에 실패했습니다';
+
+  @override
+  String get spellingCheckIncomplete => '맞춤법 검사가 완료되지 않았습니다';
+
+  @override
+  String get spellingDictionaryUnavailable => '사전을 사용할 수 없습니다';
+
+  @override
+  String get spellingChecking => '맞춤법 검사 중…';
+
+  @override
   String exportInvalidRange(String field, String minimum, String maximum) {
     return '$field: $minimum에서 $maximum 사이의 숫자를 입력하세요.';
   }

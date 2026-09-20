@@ -180,6 +180,39 @@ add_custom_target(busymark_d2 ALL
 )
 add_dependencies(${BINARY_NAME} busymark_d2)
 
+# Prepare only the spelling resources declared as DICT_SPELL by the pinned
+# LibreOffice dictionaries revision. The helper verifies the archive and every
+# emitted resource before anything is installed.
+set(SPELLING_BUNDLE_DIR "${CMAKE_BINARY_DIR}/spelling")
+set(SPELLING_CATALOG "${SPELLING_BUNDLE_DIR}/dictionaries.json")
+set(SPELLING_VERSION "${SPELLING_BUNDLE_DIR}/VERSION")
+set(SPELLING_NOTICE "${SPELLING_BUNDLE_DIR}/NOTICE")
+set(SPELLING_CHECKSUMS "${SPELLING_BUNDLE_DIR}/CHECKSUMS.sha256")
+add_custom_command(
+  OUTPUT
+    "${SPELLING_CATALOG}"
+    "${SPELLING_VERSION}"
+    "${SPELLING_NOTICE}"
+    "${SPELLING_CHECKSUMS}"
+  COMMAND
+    "${CMAKE_CURRENT_SOURCE_DIR}/../tools/fetch_spelling_dictionaries.sh"
+    "${SPELLING_BUNDLE_DIR}"
+  DEPENDS
+    "${CMAKE_CURRENT_SOURCE_DIR}/../tools/fetch_spelling_dictionaries.sh"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../tools/prepare_spelling_dictionaries.dart"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../assets/spelling/dictionaries.json"
+  COMMENT "Preparing checksum-pinned spelling dictionaries"
+  VERBATIM
+)
+add_custom_target(busymark_spelling ALL
+  DEPENDS
+    "${SPELLING_CATALOG}"
+    "${SPELLING_VERSION}"
+    "${SPELLING_NOTICE}"
+    "${SPELLING_CHECKSUMS}"
+)
+add_dependencies(${BINARY_NAME} busymark_spelling)
+
 # Only the install-generated bundle's copy of the executable will launch
 # correctly, since the resources must in the right relative locations. To avoid
 # people trying to run the unbundled copy, put it in a subdirectory instead of
@@ -244,6 +277,10 @@ install(FILES
 
 install(DIRECTORY "${VISUALIZATION_WEB_DIR}/"
   DESTINATION "${CMAKE_INSTALL_PREFIX}/share/busymark/visualization"
+  COMPONENT Runtime)
+
+install(DIRECTORY "${SPELLING_BUNDLE_DIR}/"
+  DESTINATION "${CMAKE_INSTALL_PREFIX}/share/busymark/spelling"
   COMPONENT Runtime)
 
 install(TARGETS ${BINARY_NAME} RUNTIME DESTINATION "${CMAKE_INSTALL_PREFIX}"
