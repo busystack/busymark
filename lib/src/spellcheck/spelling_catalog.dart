@@ -6,6 +6,25 @@ import 'package:path/path.dart' as p;
 
 enum SpellingDictionaryInstallationKind { downloaded, imported }
 
+final class SpellingInvalidDictionaryInstallation {
+  const SpellingInvalidDictionaryInstallation({
+    required this.directoryPath,
+    required this.kind,
+    required this.error,
+    this.resourceId,
+    this.id,
+  });
+
+  final String directoryPath;
+  final SpellingDictionaryInstallationKind kind;
+  final String error;
+  final String? resourceId;
+  final String? id;
+
+  bool matches(String value) =>
+      resourceId == value || id == value || p.basename(directoryPath) == value;
+}
+
 /// Metadata for an immutable dictionary resource BusyMark can acquire.
 ///
 /// Availability never implies that the pair is installed locally.
@@ -24,6 +43,7 @@ final class SpellingDictionaryResource {
     required this.affSha256,
     required this.dicSha256,
     required this.sourceRevision,
+    required this.knownValidProbe,
     this.licenseDirectory,
   });
 
@@ -64,6 +84,7 @@ final class SpellingDictionaryResource {
       affSha256: requiredString('affSha256'),
       dicSha256: requiredString('dicSha256'),
       sourceRevision: requiredString('sourceRevision'),
+      knownValidProbe: requiredString('knownValidProbe'),
       licenseDirectory: json['licenseDirectory']?.toString(),
     );
   }
@@ -81,6 +102,9 @@ final class SpellingDictionaryResource {
   final String affSha256;
   final String dicSha256;
   final String sourceRevision;
+
+  /// A catalog-owned word that must be accepted by this exact resource.
+  final String knownValidProbe;
   final String? licenseDirectory;
 
   int get downloadSize => affSize + dicSize;
@@ -179,11 +203,13 @@ final class SpellingDictionaryCatalog {
     required this.availableEntries,
     required this.installations,
     required this.unavailableEntries,
+    this.invalidInstallations = const [],
   });
 
   final List<SpellingDictionaryResource> availableEntries;
   final List<SpellingDictionaryInstallation> installations;
   final Map<String, String> unavailableEntries;
+  final List<SpellingInvalidDictionaryInstallation> invalidInstallations;
 
   List<SpellingDictionaryEntry> get entries {
     final result = <SpellingDictionaryEntry>[
@@ -196,10 +222,7 @@ final class SpellingDictionaryCatalog {
           installation: installationForResource(resource.resourceId),
         ),
       for (final installation in installations)
-        if (installation.imported &&
-            !availableEntries.any(
-              (resource) => resource.supports(installation.id),
-            ))
+        if (installation.imported)
           SpellingDictionaryEntry(
             id: installation.id,
             locales: installation.locales,
@@ -219,12 +242,32 @@ final class SpellingDictionaryCatalog {
   }
 
   SpellingDictionaryInstallation? installedById(String id) {
+    for (final installation in installations) {
+      if (installation.id == id) return installation;
+    }
+    for (final installation in installations) {
+      if (installation.locales.contains(id)) return installation;
+    }
     final available = availableById(id);
     if (available != null) {
       return installationForResource(available.resourceId);
     }
-    for (final installation in installations) {
-      if (installation.supports(id)) return installation;
+    return null;
+  }
+
+  SpellingInvalidDictionaryInstallation? invalidById(String id) {
+    for (final installation in invalidInstallations) {
+      if (installation.matches(id)) return installation;
+    }
+    final resource = availableById(id);
+    if (resource != null) {
+      for (final installation in invalidInstallations) {
+        if (installation.resourceId == resource.resourceId ||
+            p.basename(installation.directoryPath) ==
+                safeSpellingCatalogResourceName(resource.resourceId)) {
+          return installation;
+        }
+      }
     }
     return null;
   }
@@ -238,7 +281,10 @@ final class SpellingDictionaryCatalog {
 
   SpellingDictionaryEntry? byId(String id) {
     for (final entry in entries) {
-      if (entry.id == id || entry.locales.contains(id)) return entry;
+      if (entry.id == id) return entry;
+    }
+    for (final entry in entries) {
+      if (entry.locales.contains(id)) return entry;
     }
     return null;
   }
@@ -251,6 +297,7 @@ final class SpellingDictionaryCatalog {
   }) async {
     final available = <SpellingDictionaryResource>[];
     final installations = <SpellingDictionaryInstallation>[];
+    final invalidInstallations = <SpellingInvalidDictionaryInstallation>[];
     final unavailable = <String, String>{};
     await _loadAvailableManifest(
       File(p.join(bundledRoot, 'dictionaries.json')),
@@ -264,6 +311,7 @@ final class SpellingDictionaryCatalog {
       verifyChecksums: verifyChecksums,
       entries: installations,
       unavailable: unavailable,
+      invalidEntries: invalidInstallations,
     );
     await _loadInstallations(
       importedRoot,
@@ -272,6 +320,7 @@ final class SpellingDictionaryCatalog {
       verifyChecksums: verifyChecksums,
       entries: installations,
       unavailable: unavailable,
+      invalidEntries: invalidInstallations,
     );
     available.sort((left, right) => left.label.compareTo(right.label));
     installations.sort((left, right) => left.label.compareTo(right.label));
@@ -279,6 +328,7 @@ final class SpellingDictionaryCatalog {
       availableEntries: List.unmodifiable(available),
       installations: List.unmodifiable(installations),
       unavailableEntries: Map.unmodifiable(unavailable),
+      invalidInstallations: List.unmodifiable(invalidInstallations),
     );
   }
 
@@ -332,6 +382,7 @@ final class SpellingDictionaryCatalog {
     required bool verifyChecksums,
     required List<SpellingDictionaryInstallation> entries,
     required Map<String, String> unavailable,
+    required List<SpellingInvalidDictionaryInstallation> invalidEntries,
   }) async {
     if (rootPath == null) return;
     final root = Directory(rootPath);
@@ -341,16 +392,24 @@ final class SpellingDictionaryCatalog {
         continue;
       }
       final manifest = File(p.join(entity.path, 'manifest.json'));
-      if (!await manifest.exists()) continue;
+      String? resourceId;
+      String? id;
       try {
+        if (!await manifest.exists()) {
+          throw const FormatException('Installation manifest is missing.');
+        }
         final decoded = jsonDecode(await manifest.readAsString());
         if (decoded is! Map || decoded['schemaVersion'] != 1) {
           throw const FormatException('Unsupported installation manifest.');
         }
+        resourceId = decoded['resourceId']?.toString();
+        id = decoded['id']?.toString();
         final installation = SpellingDictionaryInstallation.fromJson(
           decoded.cast<String, Object?>(),
           rootPath: entity.path,
         );
+        resourceId = installation.resourceId;
+        id = installation.id;
         if (installation.kind != expectedKind) {
           throw const FormatException('Dictionary installation kind mismatch.');
         }
@@ -383,10 +442,22 @@ final class SpellingDictionaryCatalog {
         entries.add(installation);
       } on Object catch (error) {
         unavailable[entity.path] = error.toString();
+        invalidEntries.add(
+          SpellingInvalidDictionaryInstallation(
+            directoryPath: p.normalize(p.absolute(entity.path)),
+            kind: expectedKind,
+            error: error.toString(),
+            resourceId: resourceId,
+            id: id,
+          ),
+        );
       }
     }
   }
 }
+
+String safeSpellingCatalogResourceName(String value) =>
+    value.replaceAll(RegExp(r'[^A-Za-z0-9_.-]'), '_');
 
 final class SpellingResourceLocator {
   const SpellingResourceLocator({this.environment, this.resolvedExecutable});

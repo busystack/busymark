@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
+import 'package:crypto/crypto.dart';
 import 'package:unorm_dart/unorm_dart.dart' as unicode;
 
 import '../core/atomic_file_writer.dart';
@@ -45,7 +46,7 @@ final class SpellingWordStore {
   final String filePath;
   final bool projectStore;
   final AtomicFileWriter _writer;
-  Future<void> _writeTail = Future<void>.value();
+  static final Map<String, Future<void>> _writeTails = {};
 
   Future<SpellingWordStoreSnapshot> read() async {
     final file = File(filePath);
@@ -66,8 +67,10 @@ final class SpellingWordStore {
           final values = <SpellingWordEntry>[];
           for (final item in (entry.value as List)) {
             if (item is String) {
-              final display = item.trim();
-              if (display.isNotEmpty) {
+              final display = _validatedSpellingWord(item);
+              if (!values.any(
+                (entry) => entry.key == normalizeSpellingWordKey(display),
+              )) {
                 values.add(
                   SpellingWordEntry(
                     key: normalizeSpellingWordKey(display),
@@ -76,9 +79,11 @@ final class SpellingWordStore {
                 );
               }
             } else if (item is Map) {
-              final display = item['display']?.toString().trim() ?? '';
-              final key = item['key']?.toString().trim() ?? '';
-              if (display.isNotEmpty && key.isNotEmpty) {
+              final display = _validatedSpellingWord(
+                item['display']?.toString() ?? '',
+              );
+              final key = normalizeSpellingWordKey(display);
+              if (!values.any((entry) => entry.key == key)) {
                 values.add(SpellingWordEntry(key: key, display: display));
               }
             }
@@ -103,11 +108,13 @@ final class SpellingWordStore {
 
   Future<SpellingWordStoreSnapshot> addWord(String languageId, String word) =>
       _mutate((snapshot) {
-        final display = word.trim();
-        if (display.isEmpty) throw ArgumentError.value(word, 'word');
+        final display = _validatedSpellingWord(word);
         final key = normalizeSpellingWordKey(display);
         final words = _mutableWords(snapshot);
-        final language = words.putIfAbsent(languageId, () => []);
+        final language = words.putIfAbsent(
+          normalizeSpellingLanguageId(languageId) ?? languageId,
+          () => [],
+        );
         if (!language.any((entry) => entry.key == key)) {
           language.add(SpellingWordEntry(key: key, display: display));
         }
@@ -123,7 +130,7 @@ final class SpellingWordStore {
     String word,
   ) => _mutate((snapshot) {
     final words = _mutableWords(snapshot);
-    words[languageId]?.removeWhere(
+    words[normalizeSpellingLanguageId(languageId) ?? languageId]?.removeWhere(
       (entry) => entry.key == normalizeSpellingWordKey(word),
     );
     return SpellingWordStoreSnapshot(
@@ -149,18 +156,40 @@ final class SpellingWordStore {
   Future<SpellingWordStoreSnapshot> _mutate(
     SpellingWordStoreSnapshot Function(SpellingWordStoreSnapshot) change,
   ) {
+    final identity = _canonicalStoreIdentity(filePath);
     final completer = Completer<SpellingWordStoreSnapshot>();
-    _writeTail = _writeTail.catchError((_) {}).then((_) async {
+    final previous = _writeTails[identity] ?? Future<void>.value();
+    final operation = previous.catchError((_) {}).then((_) async {
       try {
-        final current = await read();
-        final updated = change(current);
-        await _publish(updated);
-        completer.complete(await read());
+        for (var attempt = 0; attempt < 3; attempt++) {
+          final beforeRead = await _fileIdentity();
+          final current = await read();
+          final updated = change(current);
+          if (await _fileIdentity() != beforeRead) continue;
+          await _publish(updated);
+          completer.complete(await read());
+          return;
+        }
+        throw const FileSystemException(
+          'Spelling words changed repeatedly during publication.',
+        );
       } on Object catch (error, stackTrace) {
         completer.completeError(error, stackTrace);
       }
     });
+    _writeTails[identity] = operation;
+    operation.whenComplete(() {
+      if (identical(_writeTails[identity], operation)) {
+        _writeTails.remove(identity);
+      }
+    });
     return completer.future;
+  }
+
+  Future<String> _fileIdentity() async {
+    final file = File(filePath);
+    if (!await file.exists()) return 'missing';
+    return (await sha256.bind(file.openRead()).first).toString();
   }
 
   Future<void> _publish(SpellingWordStoreSnapshot snapshot) async {
@@ -196,5 +225,34 @@ Map<String, List<SpellingWordEntry>> _mutableWords(
     entry.key: [...entry.value],
 };
 
-String normalizeSpellingWordKey(String word) =>
-    unicode.nfc(word.trim()).toLowerCase();
+String normalizeSpellingWordKey(String word) => unicode.nfc(word.trim());
+
+String _canonicalStoreIdentity(String filePath) {
+  final absolute = p.normalize(p.absolute(filePath));
+  try {
+    return File(absolute).resolveSymbolicLinksSync();
+  } on FileSystemException {
+    try {
+      return p.join(
+        Directory(p.dirname(absolute)).resolveSymbolicLinksSync(),
+        p.basename(absolute),
+      );
+    } on FileSystemException {
+      return absolute;
+    }
+  }
+}
+
+String _validatedSpellingWord(String word) {
+  final normalized = unicode.nfc(word.trim());
+  if (normalized.isEmpty ||
+      normalized.runes.length > 256 ||
+      RegExp(r'[\u0000-\u001f\u007f-\u009f]').hasMatch(normalized)) {
+    throw ArgumentError.value(
+      word,
+      'word',
+      'Invalid persistent spelling word.',
+    );
+  }
+  return normalized;
+}

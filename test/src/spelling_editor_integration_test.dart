@@ -4,6 +4,7 @@ import 'package:busymark/src/editor/source/source_editor.dart';
 import 'package:busymark/src/editor/source/source_search.dart';
 import 'package:busymark/src/editor/source_language.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_editor.dart';
+import 'package:busymark/src/editor/wysiwyg/wysiwyg_block_widgets.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_session_state.dart';
 import 'package:busymark/src/markdown/busymark_document.dart';
 import 'package:busymark/src/markdown/markdown_model.dart';
@@ -287,6 +288,74 @@ void main() {
       );
     },
   );
+
+  testWidgets('rich underline painter reads live caret and composing ranges', (
+    tester,
+  ) async {
+    const source = 'mispelled tail\n';
+    final document = const MarkdownParser()
+        .parse(
+          filePath: '/tmp/live-overlay.md',
+          source: source,
+          mode: MarkdownMode.commonMark,
+          validateLocalReferences: false,
+        )
+        .busyDocument;
+    final run = const WysiwygSpellingProjector()
+        .project(
+          document: document,
+          languageId: 'en-Test',
+          snapshot: _sourceSnapshot,
+          documentGeneration: 0,
+        )
+        .runs
+        .single;
+    final occurrence = _occurrence(run, word: 'mispelled', logicalStart: 0);
+
+    await tester.pumpWidget(
+      _testApp(
+        BusyMarkWysiwygEditor(
+          document: document,
+          documentId: 'live-overlay',
+          contentRevision: 1,
+          spellingAnnotations: [_annotation(occurrence)],
+          onDocumentChanged: (_) {},
+          onSourceChanged: (_, _) {},
+        ),
+      ),
+    );
+    await tester.pump();
+    final field = tester.widget<TextField>(find.byType(TextField).first);
+    final controller = field.controller!;
+    controller.selection = const TextSelection.collapsed(offset: 12);
+    await tester.pump();
+    final overlayFinder = find.byWidgetPredicate(
+      (widget) =>
+          widget is CustomPaint &&
+          widget.painter.runtimeType.toString() == '_SpellingUnderlinePainter',
+    );
+    expect(overlayFinder, findsOneWidget);
+    final overlay = tester.widget<CustomPaint>(overlayFinder);
+    final painter = overlay.painter!;
+    const range = TextRange(start: 0, end: 9);
+    expect(busyMarkSpellingUnderlineSuppressed(controller, range), isFalse);
+
+    controller.selection = const TextSelection.collapsed(offset: 3);
+    expect(tester.widget<CustomPaint>(overlayFinder).painter, same(painter));
+    expect(busyMarkSpellingUnderlineSuppressed(controller, range), isTrue);
+
+    controller.value = controller.value.copyWith(
+      selection: const TextSelection.collapsed(offset: 12),
+      composing: const TextRange(start: 2, end: 6),
+    );
+    expect(busyMarkSpellingUnderlineSuppressed(controller, range), isTrue);
+
+    controller.value = controller.value.copyWith(
+      selection: const TextSelection.collapsed(offset: 12),
+      composing: TextRange.empty,
+    );
+    expect(busyMarkSpellingUnderlineSuppressed(controller, range), isFalse);
+  });
 }
 
 SpellingOccurrence _occurrence(

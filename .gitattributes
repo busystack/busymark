@@ -1,0 +1,7 @@
+# Dictionary license inputs are checksum-addressed byte artifacts. Do not let
+# checkout settings rewrite their upstream line endings.
+assets/spelling/licenses/** -text
+assets/spelling/CHECKSUMS.sha256 text eol=lf
+assets/spelling/NOTICE text eol=lf
+assets/spelling/VERSION text eol=lf
+assets/spelling/dictionaries.json text eol=lf

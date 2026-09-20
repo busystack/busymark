@@ -51,6 +51,32 @@ const languageNames = <String, String>{
   'vi': 'Vietnamese',
 };
 
+// These catalog-owned probes are intentionally ordinary headwords rather than
+// an application-specific English token. Installation validates each exact
+// resource against the probe for its language after Hunspell has loaded it.
+const knownValidProbes = <String, String>{
+  'ar': 'بيت',
+  'de': 'Haus',
+  'en': 'house',
+  'es': 'casa',
+  'et': 'maja',
+  'fa': 'خانه',
+  'fr': 'maison',
+  'hi': 'घर',
+  'id': 'rumah',
+  'it': 'casa',
+  'ko': '사람',
+  'nb': 'hus',
+  'nn': 'hus',
+  'nl': 'huis',
+  'pl': 'dom',
+  'pt': 'casa',
+  'ru': 'дом',
+  'tr': 'ev',
+  'uk': 'дім',
+  'vi': 'nhà',
+};
+
 Future<void> main(List<String> arguments) async {
   if (arguments.length < 2 ||
       arguments.length > 3 ||
@@ -152,6 +178,9 @@ Future<void> main(List<String> arguments) async {
         sourcePackage: packageName,
         affSource: affSource,
         dicSource: dicSource,
+        knownValidProbe:
+            knownValidProbes[id.split('-').first.toLowerCase()] ??
+            (throw StateError('No validation probe is defined for $id.')),
       );
       entries.add(entry);
       pairByFingerprint[fingerprint] = entry;
@@ -303,6 +332,7 @@ final class _Entry {
     required this.sourcePackage,
     required this.affSource,
     required this.dicSource,
+    required this.knownValidProbe,
   });
 
   final String resourceId;
@@ -318,10 +348,12 @@ final class _Entry {
   final String sourcePackage;
   final File affSource;
   final File dicSource;
+  final String knownValidProbe;
 
   Map<String, Object?> toJson() => <String, Object?>{
     'resourceId': resourceId,
     'id': id,
+    'knownValidProbe': knownValidProbe,
     'locales': locales.toList()..sort(),
     'label': label,
     'affSourcePath': affSourcePath,

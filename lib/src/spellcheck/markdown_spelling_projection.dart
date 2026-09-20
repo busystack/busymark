@@ -38,10 +38,12 @@ final class MarkdownSpellingProjector {
       documentSource: source,
       mode: mode,
     );
-    final codeSpans = <SourceSpan>[
+    final excludedBlockSpans = <SourceSpan>[
       ...parsed.codeBlocks.map((block) => block.span),
       for (final block in _walkBlocks(parsed.busyDocument.blocks))
-        if (block.kind == BusyBlockKind.math && block.sourceSpan != null)
+        if ((block.kind == BusyBlockKind.math ||
+                block.kind == BusyBlockKind.codeBlock) &&
+            block.sourceSpan != null)
           block.sourceSpan!,
     ];
     final tables = [
@@ -54,30 +56,24 @@ final class MarkdownSpellingProjector {
     var complete = true;
     var sequence = 0;
 
-    void addScanned(
-      int start,
-      int end, {
+    void addMapped(
+      int mappedStart,
+      int mappedEnd,
+      BusyMarkMappedInlineParse mapped, {
+      required int sourceBase,
+      required int sourceLimit,
+      required bool stripBlockSyntax,
       required SpellingSourceContext context,
-      bool stripBlockSyntax = true,
     }) {
-      if (start < 0 || end > source.length || end <= start) {
-        complete = false;
-        return;
-      }
-      final slice = source.substring(start, end);
-      final mapped = stripBlockSyntax
-          ? inlineParser.parsePositionedBlocks(slice)
-          : [inlineParser.parseMapped(slice)];
-      final formattingSyntax = _formattingSyntaxSpans(
+      final formattingSyntax = _formattingSyntaxSpans([
         mapped,
-        sourceBase: start,
-      );
+      ], sourceBase: sourceBase);
       final opaqueSyntax = <_SourceInterval>[
-        ..._opaqueSyntaxSpans(mapped, sourceBase: start),
+        ..._opaqueSyntaxSpans([mapped], sourceBase: sourceBase),
         if (mode == MarkdownMode.writersideMarkdown)
           for (final variable in parsed.variables)
-            if (variable.span.startOffset < end &&
-                variable.span.endOffset > start)
+            if (variable.span.startOffset < sourceLimit &&
+                variable.span.endOffset > sourceBase)
               _SourceInterval(
                 variable.span.startOffset,
                 variable.span.endOffset,
@@ -85,12 +81,14 @@ final class MarkdownSpellingProjector {
       ]..sort((left, right) => left.start.compareTo(right.start));
       final scanner = _MarkdownProseScanner(
         source: source,
-        start: start,
-        end: end,
+        start: mappedStart,
+        end: mappedEnd,
         context: context,
         stripBlockSyntax: stripBlockSyntax,
         formattingSyntax: formattingSyntax,
-        formattingWrappers: _formattingWrappers(mapped, sourceBase: start),
+        formattingWrappers: _formattingWrappers([
+          mapped,
+        ], sourceBase: sourceBase),
         opaqueSyntax: opaqueSyntax,
       );
       final groups = scanner.scan();
@@ -98,7 +96,7 @@ final class MarkdownSpellingProjector {
       for (final group in groups) {
         if (group.text.trim().isEmpty) continue;
         final run = SpellingProseRun(
-          id: 'markdown:${sequence++}:$start',
+          id: 'markdown:${sequence++}:$mappedStart',
           text: group.text,
           languageId: languageId,
           atoms: List.unmodifiable(group.atoms),
@@ -115,10 +113,57 @@ final class MarkdownSpellingProjector {
       }
     }
 
+    void addScanned(
+      int start,
+      int end, {
+      required SpellingSourceContext context,
+      bool stripBlockSyntax = true,
+    }) {
+      if (start < 0 || end > source.length || end <= start) {
+        complete = false;
+        return;
+      }
+      final slice = source.substring(start, end);
+      final mapped = stripBlockSyntax
+          ? inlineParser.parsePositionedBlocks(slice)
+          : [inlineParser.parseMapped(slice)];
+      if (stripBlockSyntax && mapped.isNotEmpty) {
+        for (final semanticLeaf in mapped) {
+          final leafStart = semanticLeaf.sourceStart;
+          final leafEnd = semanticLeaf.sourceEnd;
+          if (leafStart == null || leafEnd == null) {
+            complete = false;
+            continue;
+          }
+          if (leafEnd <= leafStart) continue;
+          addMapped(
+            start + leafStart,
+            start + leafEnd,
+            semanticLeaf,
+            sourceBase: start,
+            sourceLimit: end,
+            stripBlockSyntax: true,
+            context: context,
+          );
+        }
+        return;
+      }
+      if (stripBlockSyntax && mapped.isEmpty) return;
+      addMapped(
+        start,
+        end,
+        mapped.single,
+        sourceBase: start,
+        sourceLimit: end,
+        stripBlockSyntax: false,
+        context: context,
+      );
+    }
+
     final consumedTables = <String>{};
     for (final chunk in chunks) {
       if (chunk.sourceOnly ||
-          codeSpans.any((span) => _contains(span, chunk.span)) ||
+          excludedBlockSpans.any((span) => _contains(span, chunk.span)) ||
           _startsExcludedBlock(chunk.rawSource)) {
         continue;
       }
@@ -173,7 +218,7 @@ bool _sameSpan(SourceSpan left, SourceSpan right) =>
 
 bool _startsExcludedBlock(String raw) {
   final trimmed = raw.trimLeft();
-  return RegExp(r'^(?:```|~~~|\$\$)').hasMatch(trimmed) ||
+  return RegExp(r'^(?:```|~~~)').hasMatch(trimmed) ||
       RegExp(
         r'^(?:<!--|<\?xml\b|<!DOCTYPE\b)',
         caseSensitive: false,
@@ -339,13 +384,14 @@ final class _MarkdownProseScanner {
           }
         }
       }
-      if (unit == 0x24) {
-        final count = _runLength(cursor, rangeEnd, 0x24).clamp(1, 2);
-        final delimiter = r'$' * count;
-        final close = source.indexOf(delimiter, cursor + count);
-        if (close >= 0 && close < end) {
+      if (unit == 0x24 &&
+          (cursor + 1 >= rangeEnd || source.codeUnitAt(cursor + 1) != 0x24)) {
+        final close = source.indexOf(r'$', cursor + 1);
+        if (close >= 0 &&
+            close < rangeEnd &&
+            (close + 1 >= rangeEnd || source.codeUnitAt(close + 1) != 0x24)) {
           _barrier();
-          _opaqueEnd = close + count;
+          _opaqueEnd = close + 1;
           continue;
         }
       }
@@ -405,16 +451,16 @@ final class _MarkdownProseScanner {
       if (destinationEnd == null) return null;
       syntaxEnd = destinationEnd + 1;
       final inside = source.substring(afterLabel + 1, destinationEnd);
-      final title = RegExp(r'''(?:^|\s)(["'])(.*?)\1\s*$''').firstMatch(inside);
+      final title = _trailingLinkTitle(inside);
       if (title != null) {
-        titleContext = title.group(1) == "'"
+        titleContext = title.quote == "'"
             ? SpellingSourceContext.markdownSingleQuotedTitle
             : SpellingSourceContext.markdownDoubleQuotedTitle;
         // The value ends immediately before the closing quote. Derive its
         // range from those parsed boundaries rather than searching for its
         // contents, which may also occur in the destination.
-        titleStart = afterLabel + 1 + title.end - 1 - title.group(2)!.length;
-        titleEnd = titleStart + title.group(2)!.length;
+        titleStart = afterLabel + 1 + title.start;
+        titleEnd = afterLabel + 1 + title.end;
       }
     } else if (afterLabel < rangeEnd && source.codeUnitAt(afterLabel) == 0x5b) {
       final referenceEnd = source.indexOf(']', afterLabel + 1);
@@ -515,6 +561,20 @@ final class _MarkdownProseScanner {
             openingEnd: wrapper.opening.end,
             closingStart: wrapper.closing.start,
             closingEnd: wrapper.closing.end,
+            removableWhenLogicallyEmpty:
+                !opaqueSyntax.any(
+                  (opaque) =>
+                      opaque.start < wrapper.contentEnd &&
+                      opaque.end > wrapper.contentStart,
+                ) &&
+                _coversSourceRange(wrapper.contentStart, wrapper.contentEnd, [
+                  for (final atom in contained)
+                    _SourceInterval(atom.sourceStart, atom.sourceEnd),
+                  for (final syntax in formattingSyntax)
+                    if (syntax.start < wrapper.contentEnd &&
+                        syntax.end > wrapper.contentStart)
+                      syntax,
+                ]),
           ),
         );
       }
@@ -550,14 +610,6 @@ final class _MarkdownProseScanner {
       }
     }
     return result;
-  }
-
-  int _runLength(int start, int end, int unit) {
-    var cursor = start;
-    while (cursor < end && source.codeUnitAt(cursor) == unit) {
-      cursor++;
-    }
-    return cursor - start;
   }
 
   int? _formattingEndAt(int offset) {
@@ -597,6 +649,37 @@ final class _SourceInterval {
 
   final int start;
   final int end;
+}
+
+({int start, int end, String quote})? _trailingLinkTitle(String value) {
+  var closing = value.length - 1;
+  while (closing >= 0 && _horizontalWhitespace(value.codeUnitAt(closing))) {
+    closing--;
+  }
+  if (closing < 0 || (value[closing] != '"' && value[closing] != "'")) {
+    return null;
+  }
+  final quote = value[closing];
+  bool escaped(int offset) {
+    var slashes = 0;
+    for (
+      var cursor = offset - 1;
+      cursor >= 0 && value.codeUnitAt(cursor) == 0x5c;
+      cursor--
+    ) {
+      slashes++;
+    }
+    return slashes.isOdd;
+  }
+
+  for (var opening = closing - 1; opening >= 0; opening--) {
+    if (value[opening] != quote || escaped(opening)) continue;
+    if (opening > 0 && !_horizontalWhitespace(value.codeUnitAt(opening - 1))) {
+      continue;
+    }
+    return (start: opening + 1, end: closing, quote: quote);
+  }
+  return null;
 }
 
 final class _RawFormattingWrapper {
@@ -722,6 +805,20 @@ bool _commonMarkEscapableAsciiPunctuation(int unit) =>
     (unit >= 0x7b && unit <= 0x7e);
 
 bool _horizontalWhitespace(int unit) => unit == 0x20 || unit == 0x09;
+
+bool _coversSourceRange(int start, int end, List<_SourceInterval> intervals) {
+  if (start >= end) return true;
+  final ordered = [...intervals]
+    ..sort((left, right) => left.start.compareTo(right.start));
+  var cursor = start;
+  for (final interval in ordered) {
+    if (interval.end <= cursor || interval.start >= end) continue;
+    if (interval.start > cursor) return false;
+    cursor = math.max(cursor, interval.end);
+    if (cursor >= end) return true;
+  }
+  return false;
+}
 
 bool _isSetextOrThematic(String line) {
   final trimmed = line.trim();

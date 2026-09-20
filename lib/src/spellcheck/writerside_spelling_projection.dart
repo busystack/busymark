@@ -81,6 +81,16 @@ final class _XmlProjectionBuilder {
     final inline = _inlineKinds.contains(kind);
     if (!inline) flush();
     _appendAttributes(element);
+    if (kind == WritersideSemanticKind.lineBreak) {
+      _emit(
+        ' ',
+        element.span.startOffset,
+        element.span.endOffset,
+        SpellingTransformationKind.lineBreak,
+        SpellingSourceContext.xmlText,
+      );
+      return;
+    }
     if (elementEligible) {
       for (final child in element.children) {
         visit(child, eligible: true);
@@ -99,13 +109,7 @@ final class _XmlProjectionBuilder {
       final contentStart = node.span.startOffset + '<![CDATA['.length;
       final contentEnd = node.span.endOffset - ']]>'.length;
       final content = source.substring(contentStart, contentEnd);
-      _emit(
-        content,
-        contentStart,
-        contentEnd,
-        SpellingTransformationKind.xmlCdata,
-        SpellingSourceContext.xmlCdata,
-      );
+      _appendCdata(content, contentStart);
       if (content != node.text) complete = false;
       return;
     }
@@ -143,9 +147,19 @@ final class _XmlProjectionBuilder {
     required String expected,
     required SpellingSourceContext context,
   }) {
-    final before = _text.length;
+    final decoded = html.parseFragment(raw).text ?? '';
+    if (decoded != expected) {
+      complete = false;
+      return;
+    }
     var cursor = 0;
     while (cursor < raw.length) {
+      final variable = _writersideVariable.matchAsPrefix(raw, cursor);
+      if (variable != null && variable.group(1) == null) {
+        flush();
+        cursor = variable.end;
+        continue;
+      }
       if (raw.codeUnitAt(cursor) == 0x26) {
         final match = _xmlEntity.matchAsPrefix(raw, cursor);
         if (match != null) {
@@ -175,12 +189,32 @@ final class _XmlProjectionBuilder {
       );
       cursor += width;
     }
-    final actual = _text.toString().substring(before);
-    if (actual != expected) {
-      complete = false;
-      // A mismatch is not repaired by searching. Drop the unreliable atoms.
-      _text = StringBuffer(_text.toString().substring(0, before));
-      _atoms.removeWhere((atom) => atom.logicalStart >= before);
+  }
+
+  void _appendCdata(String content, int sourceStart) {
+    var cursor = 0;
+    for (final variable in _writersideVariable.allMatches(content)) {
+      if (variable.group(1) != null) continue;
+      if (variable.start > cursor) {
+        _emit(
+          content.substring(cursor, variable.start),
+          sourceStart + cursor,
+          sourceStart + variable.start,
+          SpellingTransformationKind.xmlCdata,
+          SpellingSourceContext.xmlCdata,
+        );
+      }
+      flush();
+      cursor = variable.end;
+    }
+    if (cursor < content.length) {
+      _emit(
+        content.substring(cursor),
+        sourceStart + cursor,
+        sourceStart + content.length,
+        SpellingTransformationKind.xmlCdata,
+        SpellingSourceContext.xmlCdata,
+      );
     }
   }
 
@@ -240,6 +274,7 @@ const _inlineKinds = {
   WritersideSemanticKind.link,
   WritersideSemanticKind.strong,
   WritersideSemanticKind.emphasis,
+  WritersideSemanticKind.control,
   WritersideSemanticKind.tooltip,
   WritersideSemanticKind.lineBreak,
 };
@@ -255,6 +290,7 @@ const _eligibleKinds = {
   WritersideSemanticKind.tableRow,
   WritersideSemanticKind.tableCell,
   WritersideSemanticKind.link,
+  WritersideSemanticKind.control,
   WritersideSemanticKind.image,
   WritersideSemanticKind.procedure,
   WritersideSemanticKind.step,
@@ -282,6 +318,7 @@ const _eligibleKinds = {
 final RegExp _xmlEntity = RegExp(
   r'&(?:#[0-9]{1,7}|#[xX][0-9A-Fa-f]{1,6}|[A-Za-z][A-Za-z0-9]{1,31});',
 );
+final RegExp _writersideVariable = RegExp(r'%(\\)?([A-Za-z_][A-Za-z0-9_.-]*)%');
 
 int _codePointAt(String value, int offset) {
   final first = value.codeUnitAt(offset);

@@ -10,6 +10,7 @@
     {
       "resourceId": "ar-SA",
       "id": "ar-SA",
+      "knownValidProbe": "بيت",
       "locales": [
         "ar-AE",
         "ar-BH",
@@ -44,6 +45,7 @@
     {
       "resourceId": "nl-AW",
       "id": "nl-AW",
+      "knownValidProbe": "huis",
       "locales": [
         "nl-AW",
         "nl-BE",
@@ -65,6 +67,7 @@
     {
       "resourceId": "en-AU",
       "id": "en-AU",
+      "knownValidProbe": "house",
       "locales": [
         "en-AU"
       ],
@@ -83,6 +86,7 @@
     {
       "resourceId": "en-CA",
       "id": "en-CA",
+      "knownValidProbe": "house",
       "locales": [
         "en-CA"
       ],
@@ -101,6 +105,7 @@
     {
       "resourceId": "en-GB",
       "id": "en-GB",
+      "knownValidProbe": "house",
       "locales": [
         "en-BS",
         "en-BZ",
@@ -127,6 +132,7 @@
     {
       "resourceId": "en-US",
       "id": "en-US",
+      "knownValidProbe": "house",
       "locales": [
         "en-IL",
         "en-PH",
@@ -147,6 +153,7 @@
     {
       "resourceId": "en-ZA",
       "id": "en-ZA",
+      "knownValidProbe": "house",
       "locales": [
         "en-MW",
         "en-NA",
@@ -168,6 +175,7 @@
     {
       "resourceId": "et-EE",
       "id": "et-EE",
+      "knownValidProbe": "maja",
       "locales": [
         "et-EE"
       ],
@@ -186,6 +194,7 @@
     {
       "resourceId": "fr-FR",
       "id": "fr-FR",
+      "knownValidProbe": "maison",
       "locales": [
         "fr-BE",
         "fr-BF",
@@ -216,6 +225,7 @@
     {
       "resourceId": "de-AT",
       "id": "de-AT",
+      "knownValidProbe": "Haus",
       "locales": [
         "de-AT"
       ],
@@ -234,6 +244,7 @@
     {
       "resourceId": "de-CH",
       "id": "de-CH",
+      "knownValidProbe": "Haus",
       "locales": [
         "de-CH"
       ],
@@ -252,6 +263,7 @@
     {
       "resourceId": "de-DE",
       "id": "de-DE",
+      "knownValidProbe": "Haus",
       "locales": [
         "de-DE"
       ],
@@ -270,6 +282,7 @@
     {
       "resourceId": "hi-IN",
       "id": "hi-IN",
+      "knownValidProbe": "घर",
       "locales": [
         "hi-IN"
       ],
@@ -288,6 +301,7 @@
     {
       "resourceId": "id-ID",
       "id": "id-ID",
+      "knownValidProbe": "rumah",
       "locales": [
         "id-ID"
       ],
@@ -306,6 +320,7 @@
     {
       "resourceId": "it-IT",
       "id": "it-IT",
+      "knownValidProbe": "casa",
       "locales": [
         "it-CH",
         "it-IT"
@@ -325,6 +340,7 @@
     {
       "resourceId": "ko-KR",
       "id": "ko-KR",
+      "knownValidProbe": "사람",
       "locales": [
         "ko-KR"
       ],
@@ -343,6 +359,7 @@
     {
       "resourceId": "nb-NO",
       "id": "nb-NO",
+      "knownValidProbe": "hus",
       "locales": [
         "nb-NO"
       ],
@@ -361,6 +378,7 @@
     {
       "resourceId": "nn-NO",
       "id": "nn-NO",
+      "knownValidProbe": "hus",
       "locales": [
         "nn-NO"
       ],
@@ -379,6 +397,7 @@
     {
       "resourceId": "fa-IR",
       "id": "fa-IR",
+      "knownValidProbe": "خانه",
       "locales": [
         "fa-IR"
       ],
@@ -397,6 +416,7 @@
     {
       "resourceId": "pl-PL",
       "id": "pl-PL",
+      "knownValidProbe": "dom",
       "locales": [
         "pl-PL"
       ],
@@ -415,6 +435,7 @@
     {
       "resourceId": "pt-BR",
       "id": "pt-BR",
+      "knownValidProbe": "casa",
       "locales": [
         "pt-BR"
       ],
@@ -433,6 +454,7 @@
     {
       "resourceId": "ru-RU",
       "id": "ru-RU",
+      "knownValidProbe": "дом",
       "locales": [
         "ru-RU"
       ],
@@ -451,6 +473,7 @@
     {
       "resourceId": "es-AR",
       "id": "es-AR",
+      "knownValidProbe": "casa",
       "locales": [
         "es-AR"
       ],
@@ -469,6 +492,7 @@
     {
       "resourceId": "es-BO",
       "id": "es-BO",
+      "knownValidProbe": "casa",
       "locales": [
         "es-BO"
       ],
@@ -487,6 +511,7 @@
     {
       "resourceId": "es-CL",
       "id": "es-CL",
+      "knownValidProbe": "casa",
       "locales": [
         "es-CL"
       ],
@@ -505,6 +530,7 @@
     {
       "resourceId": "es-CO",
       "id": "es-CO",
+      "knownValidProbe": "casa",
       "locales": [
         "es-CO"
       ],
@@ -523,6 +549,7 @@
     {
       "resourceId": "es-CR",
       "id": "es-CR",
+      "knownValidProbe": "casa",
       "locales": [
         "es-CR"
       ],
@@ -541,6 +568,7 @@
     {
       "resourceId": "es-CU",
       "id": "es-CU",
+      "knownValidProbe": "casa",
       "locales": [
         "es-CU"
       ],
@@ -559,6 +587,7 @@
     {
       "resourceId": "es-DO",
       "id": "es-DO",
+      "knownValidProbe": "casa",
       "locales": [
         "es-DO"
       ],
@@ -577,6 +606,7 @@
     {
       "resourceId": "es-EC",
       "id": "es-EC",
+      "knownValidProbe": "casa",
       "locales": [
         "es-EC"
       ],
@@ -595,6 +625,7 @@
     {
       "resourceId": "es-ES",
       "id": "es-ES",
+      "knownValidProbe": "casa",
       "locales": [
         "es-ES"
       ],
@@ -613,6 +644,7 @@
     {
       "resourceId": "es-GQ",
       "id": "es-GQ",
+      "knownValidProbe": "casa",
       "locales": [
         "es-GQ"
       ],
@@ -631,6 +663,7 @@
     {
       "resourceId": "es-GT",
       "id": "es-GT",
+      "knownValidProbe": "casa",
       "locales": [
         "es-GT"
       ],
@@ -649,6 +682,7 @@
     {
       "resourceId": "es-HN",
       "id": "es-HN",
+      "knownValidProbe": "casa",
       "locales": [
         "es-HN"
       ],
@@ -667,6 +701,7 @@
     {
       "resourceId": "es-MX",
       "id": "es-MX",
+      "knownValidProbe": "casa",
       "locales": [
         "es-MX"
       ],
@@ -685,6 +720,7 @@
     {
       "resourceId": "es-NI",
       "id": "es-NI",
+      "knownValidProbe": "casa",
       "locales": [
         "es-NI"
       ],
@@ -703,6 +739,7 @@
     {
       "resourceId": "es-PA",
       "id": "es-PA",
+      "knownValidProbe": "casa",
       "locales": [
         "es-PA"
       ],
@@ -721,6 +758,7 @@
     {
       "resourceId": "es-PE",
       "id": "es-PE",
+      "knownValidProbe": "casa",
       "locales": [
         "es-PE"
       ],
@@ -739,6 +777,7 @@
     {
       "resourceId": "es-PH",
       "id": "es-PH",
+      "knownValidProbe": "casa",
       "locales": [
         "es-PH"
       ],
@@ -757,6 +796,7 @@
     {
       "resourceId": "es-PR",
       "id": "es-PR",
+      "knownValidProbe": "casa",
       "locales": [
         "es-PR"
       ],
@@ -775,6 +815,7 @@
     {
       "resourceId": "es-PY",
       "id": "es-PY",
+      "knownValidProbe": "casa",
       "locales": [
         "es-PY"
       ],
@@ -793,6 +834,7 @@
     {
       "resourceId": "es-SV",
       "id": "es-SV",
+      "knownValidProbe": "casa",
       "locales": [
         "es-SV"
       ],
@@ -811,6 +853,7 @@
     {
       "resourceId": "es-US",
       "id": "es-US",
+      "knownValidProbe": "casa",
       "locales": [
         "es-US"
       ],
@@ -829,6 +872,7 @@
     {
       "resourceId": "es-UY",
       "id": "es-UY",
+      "knownValidProbe": "casa",
       "locales": [
         "es-UY"
       ],
@@ -847,6 +891,7 @@
     {
       "resourceId": "es-VE",
       "id": "es-VE",
+      "knownValidProbe": "casa",
       "locales": [
         "es-VE"
       ],
@@ -865,6 +910,7 @@
     {
       "resourceId": "tr-TR",
       "id": "tr-TR",
+      "knownValidProbe": "ev",
       "locales": [
         "tr",
         "tr-TR"
@@ -884,6 +930,7 @@
     {
       "resourceId": "uk-UA",
       "id": "uk-UA",
+      "knownValidProbe": "дім",
       "locales": [
         "uk-UA"
       ],
@@ -902,6 +949,7 @@
     {
       "resourceId": "vi-VN",
       "id": "vi-VN",
+      "knownValidProbe": "nhà",
       "locales": [
         "vi-VN"
       ],

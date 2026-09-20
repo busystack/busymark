@@ -1,6 +1,7 @@
 import 'package:markdown/markdown.dart' as md;
 
 import 'markdown_model.dart';
+import 'markdown_source_annotation.dart';
 import 'writerside_variable_syntax.dart';
 
 const busyMarkMathInlineTag = 'busymark-math-inline';
@@ -77,6 +78,8 @@ class BusyDollarMathSyntax extends md.InlineSyntax {
               expression,
               BusyMathSourceForm.githubDollarBacktick,
               display: false,
+              sourceStart: start,
+              sourceEnd: end + 2,
             ),
           );
           parser.consume(end + 2 - start);
@@ -103,6 +106,8 @@ class BusyDollarMathSyntax extends md.InlineSyntax {
           expression,
           BusyMathSourceForm.dollarInline,
           display: false,
+          sourceStart: start,
+          sourceEnd: end + 1,
         ),
       );
       parser.consume(end + 1 - start);
@@ -200,6 +205,8 @@ class BusyWritersideMathSyntax extends md.InlineSyntax {
         BusyMathSourceForm.writersideElement,
         display: false,
         rawExpression: rawExpression,
+        sourceStart: match.start,
+        sourceEnd: closeEnd,
       ),
     );
     parser.consume(closeEnd - match.start);
@@ -292,6 +299,8 @@ md.Element _mathElement(
   BusyMathSourceForm sourceForm, {
   required bool display,
   String? rawExpression,
+  int? sourceStart,
+  int? sourceEnd,
 }) {
   return md.Element.text(tag, expression)
     ..attributes[busyMarkMathExpressionAttribute] = expression
@@ -300,6 +309,9 @@ md.Element _mathElement(
     ..attributes.addAll({
       if (rawExpression != null)
         busyMarkMathRawExpressionAttribute: rawExpression,
+      if (sourceStart != null)
+        busyMarkSourceMappingStartAttribute: '$sourceStart',
+      if (sourceEnd != null) busyMarkSourceMappingEndAttribute: '$sourceEnd',
     });
 }
 

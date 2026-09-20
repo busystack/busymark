@@ -597,7 +597,12 @@ class BusyMarkInlineParserContext {
       ignoredPositionMarkers: markers,
     );
     if (original == null) {
-      return BusyMarkMappedInlineParse(inlines: inlines, ranges: ranges);
+      return BusyMarkMappedInlineParse(
+        inlines: inlines,
+        ranges: ranges,
+        sourceStart: 0,
+        sourceEnd: source.length,
+      );
     }
 
     int originalOffsetFor(int markedOffset) {
@@ -685,11 +690,15 @@ class BusyMarkInlineParserContext {
         inlines: original.inlines,
         ranges: originalRangesWithSemantics,
         positionRecordsComplete: false,
+        sourceStart: 0,
+        sourceEnd: source.length,
       );
     }
     return BusyMarkMappedInlineParse(
       inlines: reconciled,
       ranges: reconciledRanges,
+      sourceStart: 0,
+      sourceEnd: source.length,
     );
   }
 
@@ -862,6 +871,8 @@ class BusyMarkInlineParserContext {
       inlines: mapped.inlines,
       ranges: ranges,
       positionRecordsComplete: mapped.positionRecordsComplete,
+      sourceStart: projection.rawStart,
+      sourceEnd: projection.rawEnd,
     );
   }
 }

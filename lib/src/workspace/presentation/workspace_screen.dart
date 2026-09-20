@@ -11753,6 +11753,25 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
   @override
   void didUpdateWidget(covariant _EditorPreviewSplit oldWidget) {
     super.didUpdateWidget(oldWidget);
+    final previousBuffer = oldWidget.state.activeBuffer;
+    final nextBuffer = widget.state.activeBuffer;
+    if (previousBuffer != null &&
+        nextBuffer != null &&
+        previousBuffer.id == nextBuffer.id &&
+        previousBuffer.text != nextBuffer.text) {
+      if (identical(
+        previousBuffer.editorState.undoState,
+        nextBuffer.editorState.undoState,
+      )) {
+        _spelling.invalidateBufferAnchors(nextBuffer.id);
+      } else {
+        _translateSpellingAnchors(
+          nextBuffer.text,
+          previousText: previousBuffer.text,
+          bufferId: nextBuffer.id,
+        );
+      }
+    }
     _spelling.synchronizeOpenBuffers(
       widget.state.documentBuffers.map((buffer) => buffer.id),
     );
@@ -12369,9 +12388,6 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
                         child: _SpellingStatusBanner(
                           message: message,
                           detail: _spelling.state.message,
-                          checking:
-                              _spelling.state.status ==
-                              SpellingPresentationStatus.checking,
                         ),
                       ),
                     ),
@@ -12497,7 +12513,6 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     if (sourceFilePath != null && sourceFilePath != activePath) {
       return;
     }
-    _translateSpellingAnchors(value);
     _clearWysiwygCache();
     ref
         .read(workspaceControllerProvider.notifier)
@@ -12614,7 +12629,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
       reopenForLanguage =
           await showBusyMarkModalDialog<bool>(
             context,
-            builder: (context) => _SpellingReviewDialog(
+            builder: (context) => BusyMarkSpellingReviewDialog(
               spelling: _spelling,
               initialIndex: initialIndex,
               onReveal: _revealSpellingOccurrence,
@@ -12919,7 +12934,6 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     if (sourceFilePath != null && sourceFilePath != activePath) {
       return;
     }
-    _translateSpellingAnchors(value);
     _clearWysiwygCache();
     ref
         .read(workspaceControllerProvider.notifier)
@@ -12940,7 +12954,6 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     if (filePath != _activeEditorPath()) {
       return;
     }
-    _translateSpellingAnchors(value);
     final document = _cachedWysiwygDocument;
     final controller = ref.read(workspaceControllerProvider.notifier);
     if (document == null ||
@@ -12949,7 +12962,6 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
       controller.updateActiveText(value, sourceFilePath: filePath);
       return;
     }
-    _translateSpellingAnchors(value);
     controller.updateActiveWysiwygText(
       value,
       document: document,
@@ -12987,10 +12999,16 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     );
   }
 
-  void _translateSpellingAnchors(String value) {
+  void _translateSpellingAnchors(
+    String value, {
+    String? previousText,
+    String? bufferId,
+  }) {
     final buffer = ref.read(workspaceControllerProvider).activeBuffer;
-    if (buffer == null || buffer.text == value) return;
-    final previous = buffer.text;
+    if (buffer == null && (previousText == null || bufferId == null)) return;
+    final previous = previousText ?? buffer!.text;
+    final resolvedBufferId = bufferId ?? buffer!.id;
+    if (previous == value) return;
     final sharedLength = math.min(previous.length, value.length);
     var start = 0;
     while (start < sharedLength &&
@@ -13007,7 +13025,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
       valueEnd--;
     }
     _spelling.translateSourceEdit(
-      bufferId: buffer.id,
+      bufferId: resolvedBufferId,
       start: start,
       oldEnd: previousEnd,
       newEnd: valueEnd,
@@ -13817,15 +13835,10 @@ class _RecoveredDocumentBanner extends StatelessWidget {
 }
 
 class _SpellingStatusBanner extends StatelessWidget {
-  const _SpellingStatusBanner({
-    required this.message,
-    required this.checking,
-    this.detail,
-  });
+  const _SpellingStatusBanner({required this.message, this.detail});
 
   final String message;
   final String? detail;
-  final bool checking;
 
   @override
   Widget build(BuildContext context) {
@@ -13845,13 +13858,7 @@ class _SpellingStatusBanner extends StatelessWidget {
           ),
           child: Row(
             children: [
-              if (checking)
-                const SizedBox.square(
-                  dimension: BusyMarkSizes.iconSm,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              else
-                const Icon(BusyMarkGlyphs.symbols, size: BusyMarkSizes.iconSm),
+              const Icon(BusyMarkGlyphs.symbols, size: BusyMarkSizes.iconSm),
               const SizedBox(width: BusyMarkSpacing.sm),
               Expanded(
                 child: Tooltip(
@@ -16175,8 +16182,9 @@ class _SearchSidebar extends StatelessWidget {
   }
 }
 
-class _SpellingReviewDialog extends StatefulWidget {
-  const _SpellingReviewDialog({
+@visibleForTesting
+class BusyMarkSpellingReviewDialog extends StatefulWidget {
+  const BusyMarkSpellingReviewDialog({
     required this.spelling,
     required this.initialIndex,
     required this.onReveal,
@@ -16192,24 +16200,38 @@ class _SpellingReviewDialog extends StatefulWidget {
   final Future<bool> Function() onChooseLanguage;
 
   @override
-  State<_SpellingReviewDialog> createState() => _SpellingReviewDialogState();
+  State<BusyMarkSpellingReviewDialog> createState() =>
+      _SpellingReviewDialogState();
 }
 
-class _SpellingReviewDialogState extends State<_SpellingReviewDialog> {
+class _SpellingReviewDialogState extends State<BusyMarkSpellingReviewDialog> {
   late int _index = widget.initialIndex;
-  late final int _reviewScopeLength = widget.spelling.misspellings.length;
-  int _advanced = 0;
+  final Set<String> _visited = {};
+  String? _currentOccurrenceId;
+  int? _advanceAnchor;
+  String? _bufferId;
   final _dialogFocus = FocusNode(debugLabel: 'Spelling review dialog');
   String? _suggestionOccurrenceId;
   Future<List<String>>? _suggestions;
 
   List<SpellingOccurrence> get _occurrences => widget.spelling.misspellings
-      .where(widget.spelling.isCurrent)
+      .where(
+        (occurrence) =>
+            widget.spelling.isCurrent(occurrence) &&
+            (_bufferId == null ||
+                occurrence.run.snapshot.bufferId == _bufferId),
+      )
       .toList(growable: false);
 
   @override
   void initState() {
     super.initState();
+    _bufferId = widget.spelling.misspellings.firstOrNull?.run.snapshot.bufferId;
+    final occurrences = _occurrences;
+    if (occurrences.isNotEmpty) {
+      _index = _index.clamp(0, occurrences.length - 1).toInt();
+      _currentOccurrenceId = occurrences[_index].id;
+    }
     widget.spelling.addListener(_handleSpellingChanged);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) _dialogFocus.requestFocus();
@@ -16226,15 +16248,26 @@ class _SpellingReviewDialogState extends State<_SpellingReviewDialog> {
   void _handleSpellingChanged() {
     if (!mounted) return;
     final occurrences = _occurrences;
-    if (occurrences.isNotEmpty) {
-      _index = _index.clamp(0, occurrences.length - 1).toInt();
-      final occurrence = occurrences[_index];
-      if (_suggestionOccurrenceId != occurrence.id) {
-        _suggestionOccurrenceId = null;
-        _suggestions = null;
+    final state = widget.spelling.state;
+    if (state.status == SpellingPresentationStatus.ready && state.complete) {
+      if (occurrences.isEmpty) {
+        Navigator.of(context).pop();
+        return;
       }
-    } else {
-      _index = 0;
+      final current = occurrences.indexWhere(
+        (occurrence) => occurrence.id == _currentOccurrenceId,
+      );
+      if (current >= 0) {
+        _index = current;
+      } else if (!_selectNextUnvisited(occurrences)) {
+        Navigator.of(context).pop();
+        return;
+      }
+    }
+    final occurrence = occurrences.isEmpty ? null : occurrences[_index];
+    if (_suggestionOccurrenceId != occurrence?.id) {
+      _suggestionOccurrenceId = null;
+      _suggestions = null;
     }
     setState(() {});
   }
@@ -16242,13 +16275,19 @@ class _SpellingReviewDialogState extends State<_SpellingReviewDialog> {
   void _move(int delta) {
     final occurrences = _occurrences;
     if (occurrences.isEmpty) return;
-    if (delta > 0 && ++_advanced >= _reviewScopeLength) {
-      Navigator.of(context).pop();
-      return;
+    final current = occurrences[_index];
+    if (delta > 0) _recordVisited(current);
+    if (delta > 0) {
+      if (!_selectNextUnvisited(occurrences)) {
+        Navigator.of(context).pop();
+        return;
+      }
+    } else {
+      _index = (_index - 1) % occurrences.length;
+      if (_index < 0) _index += occurrences.length;
+      _currentOccurrenceId = occurrences[_index].id;
     }
     setState(() {
-      _index = (_index + delta) % occurrences.length;
-      if (_index < 0) _index += occurrences.length;
       _suggestionOccurrenceId = null;
       _suggestions = null;
     });
@@ -16258,22 +16297,50 @@ class _SpellingReviewDialogState extends State<_SpellingReviewDialog> {
     });
   }
 
-  void _finishRemovedOccurrence() {
-    if (++_advanced >= _reviewScopeLength) {
-      Navigator.of(context).pop();
-      return;
-    }
+  void _finishRemovedOccurrence(SpellingOccurrence removed) {
+    _recordVisited(removed);
     final occurrences = _occurrences;
     if (occurrences.isEmpty) {
+      setState(() {});
+      return;
+    }
+    if (!_selectNextUnvisited(occurrences)) {
       Navigator.of(context).pop();
       return;
     }
-    _index = _index.clamp(0, occurrences.length - 1).toInt();
     widget.onReveal(occurrences[_index]);
     setState(() {
       _suggestionOccurrenceId = null;
       _suggestions = null;
     });
+  }
+
+  void _recordVisited(SpellingOccurrence occurrence) {
+    _visited.add(_reviewIdentity(occurrence));
+    _advanceAnchor = occurrence.sourceEnd ?? occurrence.fieldEnd;
+    _currentOccurrenceId = null;
+  }
+
+  bool _selectNextUnvisited(List<SpellingOccurrence> occurrences) {
+    final anchor = _advanceAnchor;
+    final candidates = <int>[
+      for (var index = 0; index < occurrences.length; index++)
+        if (!_visited.contains(_reviewIdentity(occurrences[index]))) index,
+    ];
+    if (candidates.isEmpty) return false;
+    _index = anchor == null
+        ? candidates.first
+        : candidates.firstWhere(
+            (index) =>
+                (occurrences[index].sourceStart ??
+                    occurrences[index].fieldStart ??
+                    -1) >=
+                anchor,
+            orElse: () => candidates.first,
+          );
+    _currentOccurrenceId = occurrences[_index].id;
+    widget.onReveal(occurrences[_index]);
+    return true;
   }
 
   Future<List<String>> _suggestionsFor(SpellingOccurrence occurrence) {
@@ -16288,9 +16355,10 @@ class _SpellingReviewDialogState extends State<_SpellingReviewDialog> {
     Future<void> Function(SpellingOccurrence occurrence) action,
     SpellingOccurrence occurrence,
   ) async {
+    _recordVisited(occurrence);
     try {
       await action(occurrence);
-      if (mounted) _finishRemovedOccurrence();
+      if (mounted) _finishRemovedOccurrence(occurrence);
     } on Object {
       if (!mounted) return;
       BusyMarkToastOverlay.show(
@@ -16304,8 +16372,7 @@ class _SpellingReviewDialogState extends State<_SpellingReviewDialog> {
   @override
   Widget build(BuildContext context) {
     final occurrences = _occurrences;
-    final checking =
-        widget.spelling.state.status == SpellingPresentationStatus.checking;
+    final state = widget.spelling.state;
     final occurrence = occurrences.isEmpty ? null : occurrences[_index];
     return Focus(
       focusNode: _dialogFocus,
@@ -16325,14 +16392,14 @@ class _SpellingReviewDialogState extends State<_SpellingReviewDialog> {
           child: occurrence == null
               ? Padding(
                   padding: const EdgeInsets.all(BusyMarkSpacing.lg),
-                  child: checking
+                  child: state.status == SpellingPresentationStatus.checking
                       ? Center(
                           child: Semantics(
                             label: context.l10n.spellingChecking,
                             child: const CircularProgressIndicator(),
                           ),
                         )
-                      : Text(context.l10n.noSpellingErrors),
+                      : Text(_spellingEmptyStateMessage(context, state)),
                 )
               : Column(
                   mainAxisSize: MainAxisSize.min,
@@ -16378,9 +16445,10 @@ class _SpellingReviewDialogState extends State<_SpellingReviewDialog> {
                                     occurrence,
                                     suggestion,
                                   )) {
+                                    _recordVisited(occurrence);
                                     _suggestionOccurrenceId = null;
                                     _suggestions = null;
-                                    _move(1);
+                                    setState(() {});
                                   }
                                 },
                                 child: Text(suggestion),
@@ -16396,15 +16464,17 @@ class _SpellingReviewDialogState extends State<_SpellingReviewDialog> {
                       children: [
                         TextButton(
                           onPressed: () {
+                            _recordVisited(occurrence);
                             widget.spelling.ignoreOnce(occurrence);
-                            _finishRemovedOccurrence();
+                            _finishRemovedOccurrence(occurrence);
                           },
                           child: Text(context.l10n.ignoreSpellingOnce),
                         ),
                         TextButton(
                           onPressed: () {
+                            _recordVisited(occurrence);
                             widget.spelling.ignoreAllInDocument(occurrence);
-                            _finishRemovedOccurrence();
+                            _finishRemovedOccurrence(occurrence);
                           },
                           child: Text(context.l10n.ignoreSpellingDocument),
                         ),
@@ -16469,6 +16539,37 @@ String _spellingContext(SpellingOccurrence occurrence) {
   final end = math.min(text.length, occurrence.logicalEnd + 40);
   return text.substring(start, end).replaceAll(RegExp(r'\s+'), ' ').trim();
 }
+
+String _reviewIdentity(SpellingOccurrence occurrence) {
+  final target = switch (occurrence.run.target) {
+    SpellingSourceTarget(:final filePath) => 'source:$filePath',
+    SpellingRichBlockTarget(:final blockId) => 'block:$blockId',
+    SpellingRichTableCellTarget(:final tableBlockId, :final cellId) =>
+      'cell:$tableBlockId:$cellId',
+  };
+  return '$target:${occurrence.sourceStart ?? occurrence.fieldStart}:'
+      '${occurrence.word}';
+}
+
+String _spellingEmptyStateMessage(
+  BuildContext context,
+  SpellingPresentationState state,
+) => switch (state.status) {
+  SpellingPresentationStatus.ready when state.complete =>
+    context.l10n.noSpellingErrors,
+  SpellingPresentationStatus.failure => context.l10n.spellingCheckFailed,
+  SpellingPresentationStatus.incomplete => context.l10n.spellingCheckIncomplete,
+  SpellingPresentationStatus.dictionaryNotInstalled =>
+    context.l10n.spellingDictionaryNotInstalled,
+  SpellingPresentationStatus.dictionaryUnavailable =>
+    context.l10n.spellingDictionaryUnavailable,
+  SpellingPresentationStatus.languageRequired =>
+    context.l10n.chooseSpellingLanguage,
+  SpellingPresentationStatus.disabled =>
+    context.l10n.commandUnavailableInContext,
+  SpellingPresentationStatus.checking => context.l10n.spellingChecking,
+  SpellingPresentationStatus.ready => context.l10n.spellingCheckIncomplete,
+};
 
 class _WorkspaceReplacementProgress extends StatefulWidget {
   const _WorkspaceReplacementProgress({

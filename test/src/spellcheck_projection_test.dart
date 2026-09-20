@@ -314,6 +314,169 @@ Beforee %hiddenvariable% afterrr.
         contains('20% misspelled 30%'),
       );
     });
+
+    test('retains complete formatting ancestors across opaque children', () {
+      for (final fixture in <({String source, String expected})>[
+        (source: 'hello**x`code`world**\n', expected: 'hello**`code`world**\n'),
+        (
+          source:
+              r'hello**x$y$world**'
+              '\n',
+          expected:
+              r'hello**$y$world**'
+              '\n',
+        ),
+        (
+          source: 'hello***x`code`world***\n',
+          expected: 'hello***`code`world***\n',
+        ),
+        (
+          source: 'hello**x [good](target "title") world**\n',
+          expected: 'hello** [good](target "title") world**\n',
+        ),
+      ]) {
+        final projected = const MarkdownSpellingProjector().project(
+          filePath: '/tmp/ancestor.md',
+          source: fixture.source,
+          mode: MarkdownMode.commonMark,
+          languageId: 'en-US',
+          snapshot: _snapshot,
+        );
+        final run = projected.runs.firstWhere(
+          (candidate) => candidate.text.contains('hellox'),
+        );
+        late final String corrected;
+        expect(
+          () => corrected = const SpellingReplacementPlanner()
+              .build(occurrence: _rejected(run, 'hellox'), suggestion: 'hello')
+              .applyToSource(fixture.source),
+          returnsNormally,
+          reason: fixture.source,
+        );
+
+        expect(corrected, fixture.expected);
+      }
+    });
+
+    test(
+      'link titles use exact quote boundaries before trailing whitespace',
+      () {
+        for (final fixture in <({String source, String expected})>[
+          (
+            source: '[label](mispelled "mispelled"   )\n',
+            expected: '[label](mispelled "misspelled"   )\n',
+          ),
+          (
+            source: "[label](target 'mispelled'\t )\n",
+            expected: "[label](target 'misspelled'\t )\n",
+          ),
+          (
+            source:
+                r'''[label](target "mispelled \"quoted\"")'''
+                '\n',
+            expected:
+                r'''[label](target "misspelled \"quoted\"")'''
+                '\n',
+          ),
+        ]) {
+          final projected = const MarkdownSpellingProjector().project(
+            filePath: '/tmp/title.md',
+            source: fixture.source,
+            mode: MarkdownMode.commonMark,
+            languageId: 'en-US',
+            snapshot: _snapshot,
+          );
+          final run = projected.runs.firstWhere(
+            (candidate) => candidate.text.contains('mispelled'),
+          );
+          final occurrence = _rejected(run, 'mispelled');
+          expect(
+            fixture.source.substring(
+              occurrence.sourceStart!,
+              occurrence.sourceEnd!,
+            ),
+            'mispelled',
+          );
+          expect(
+            const SpellingReplacementPlanner()
+                .build(occurrence: occurrence, suggestion: 'misspelled')
+                .applyToSource(fixture.source),
+            fixture.expected,
+          );
+        }
+      },
+    );
+
+    test('semantic leaf blocks define independent complete prose runs', () {
+      const source = r'''    hiddenindent
+
+- parentt
+  - nestedd
+
+> firstt
+>
+> secondd
+
+- visiblee
+
+      hiddencontainercode
+
+before $$ mispelled $$ afterr
+
+before $hiddenmath$ aftermath
+''';
+      final projected = const MarkdownSpellingProjector().project(
+        filePath: '/tmp/leaves.md',
+        source: source,
+        mode: MarkdownMode.commonMark,
+        languageId: 'en-US',
+        snapshot: _snapshot,
+      );
+      final texts = projected.runs.map((run) => run.text).toList();
+
+      expect(projected.complete, isTrue, reason: projected.message);
+      expect(texts, contains('parentt'));
+      expect(texts, contains('nestedd'));
+      expect(texts, contains('firstt'));
+      expect(texts, contains('secondd'));
+      expect(texts, contains(r'before $$ mispelled $$ afterr'));
+      expect(texts.join(' '), isNot(contains('hiddenindent')));
+      expect(texts.join(' '), isNot(contains('hiddencontainercode')));
+      expect(texts.join(' '), isNot(contains('hiddenmath')));
+      expect(texts.every((text) => text != 'parentt nestedd'), isTrue);
+    });
+
+    test('large formatting-heavy projection and correction stay bounded', () {
+      final source = List.generate(
+        600,
+        (index) =>
+            '**mispel**led paragraph $index with [hello](target) and `code` '
+            r'$x$',
+      ).join('\n\n');
+      final watch = Stopwatch()..start();
+      final projected = const MarkdownSpellingProjector().project(
+        filePath: '/tmp/large-correction.md',
+        source: source,
+        mode: MarkdownMode.commonMark,
+        languageId: 'en-US',
+        snapshot: _snapshot,
+      );
+      final first = projected.runs.firstWhere(
+        (run) => run.text.contains('mispelled'),
+      );
+      final corrected = const SpellingReplacementPlanner()
+          .build(
+            occurrence: _rejected(first, 'mispelled'),
+            suggestion: 'misspelled',
+          )
+          .applyToSource(source);
+      watch.stop();
+
+      expect(projected.complete, isTrue, reason: projected.message);
+      expect(corrected, startsWith('**misspel**led paragraph 0'));
+      expect(corrected, contains('**mispel**led paragraph 599'));
+      expect(watch.elapsed, lessThan(const Duration(seconds: 5)));
+    });
   });
 
   group('Writerside XML spelling projection', () {
@@ -361,6 +524,78 @@ Beforee %hiddenvariable% afterrr.
       );
       expect(result.complete, isFalse);
       expect(result.runs, isEmpty);
+    });
+
+    test(
+      'clips CDATA occurrences while preserving repeated surrounding text',
+      () {
+        const source =
+            '<topic><p><![CDATA[hello helo helo world]]> plain helo</p></topic>';
+        final projected = const WritersideXmlSpellingProjector().project(
+          filePath: '/tmp/cdata.topic',
+          source: source,
+          languageId: 'en-US',
+          snapshot: const SpellingSnapshotIdentity(
+            bufferId: 'xml',
+            contentRevision: 1,
+            documentKind: DocumentKind.writersideXmlTopic,
+            contextGeneration: 1,
+          ),
+        );
+        final run = projected.runs.firstWhere(
+          (candidate) => candidate.text.contains('hello helo helo world'),
+        );
+        final first = _rejected(run, 'helo');
+
+        expect(source.substring(first.sourceStart!, first.sourceEnd!), 'helo');
+        expect(first.sourceIntervals, hasLength(1));
+        expect(
+          const SpellingReplacementPlanner()
+              .build(occurrence: first, suggestion: 'hello')
+              .applyToSource(source),
+          '<topic><p><![CDATA[hello hello helo world]]> plain helo</p></topic>',
+        );
+
+        final transformed = SpellingSourceAtom(
+          logicalText: 'xy',
+          logicalStart: 0,
+          logicalEnd: 2,
+          sourceStart: 10,
+          sourceEnd: 18,
+          transformation: SpellingTransformationKind.entity,
+          context: SpellingSourceContext.xmlText,
+        );
+        expect(transformed.sourceIntervalFor(1, 2)?.start, 10);
+        expect(transformed.sourceIntervalFor(1, 2)?.end, 18);
+      },
+    );
+
+    test('maps line breaks, excludes variables, and includes controls', () {
+      const source = r'''<topic id="sample">
+  <p>hello<br/>world %projectname% prose %\escaped%</p>
+  <p title="%projectname% Titlle">tail</p>
+  <control>Setttings</control>
+</topic>''';
+      final projected = const WritersideXmlSpellingProjector().project(
+        filePath: '/tmp/variables.topic',
+        source: source,
+        languageId: 'en-US',
+        snapshot: const SpellingSnapshotIdentity(
+          bufferId: 'xml',
+          contentRevision: 1,
+          documentKind: DocumentKind.writersideXmlTopic,
+          contextGeneration: 1,
+        ),
+      );
+      final text = projected.runs.map((run) => run.text).join('\n');
+
+      expect(projected.complete, isTrue, reason: projected.message);
+      expect(text, contains('hello world'));
+      expect(text, isNot(contains('helloworld')));
+      expect(text, isNot(contains('projectname')));
+      expect(text, contains(r'%\escaped%'));
+      expect(text, contains('Titlle'));
+      expect(text, contains('Setttings'));
     });
   });
 
@@ -701,6 +936,140 @@ Beforee %hiddenvariable% afterrr.
         isTrue,
       );
       expect(controller.markdown, contains(r'error $x$ tail'));
+    });
+
+    test('corrects transformed prose in table math source fields', () {
+      for (final fixture
+          in <({String cell, String word, String suggestion, String expected})>[
+            (
+              cell: r'mispel**led** $x$',
+              word: 'mispelled',
+              suggestion: 'misspelled',
+              expected: r'misspel**led** $x$',
+            ),
+            (
+              cell: r'mispell&#101;d $x$',
+              word: 'mispelled',
+              suggestion: 'misspelled',
+              expected: r'misspelled $x$',
+            ),
+            (
+              cell: r'he**x**llo $x$',
+              word: 'hexllo',
+              suggestion: 'hello',
+              expected: r'hello $x$',
+            ),
+          ]) {
+        final source = '| Value |\n| --- |\n| ${fixture.cell} |\n';
+        final document = const MarkdownParser()
+            .parse(
+              filePath: '/tmp/transformed-math-table.md',
+              source: source,
+              mode: MarkdownMode.commonMark,
+              validateLocalReferences: false,
+            )
+            .busyDocument;
+        final projected = const WysiwygSpellingProjector().project(
+          document: document,
+          languageId: 'en-US',
+          snapshot: _snapshot,
+          documentGeneration: 8,
+        );
+        final run = projected.runs.firstWhere(
+          (candidate) => candidate.text.contains(fixture.word),
+        );
+        final target = run.target as SpellingRichTableCellTarget;
+        final controller = BusyMarkWysiwygDocumentController(
+          document: document,
+        );
+        final plan = const SpellingReplacementPlanner().build(
+          occurrence: _rejected(run, fixture.word),
+          suggestion: fixture.suggestion,
+        );
+
+        expect(
+          controller.replaceSpellingInTableCell(
+            tableBlockId: target.tableBlockId,
+            cellId: target.cellId,
+            expectedFieldText: busyMarkWysiwygEditableText(
+              controller.blockById(target.cellId)!,
+            ),
+            plan: plan,
+          ),
+          isTrue,
+        );
+        expect(controller.markdown, contains('| ${fixture.expected} |'));
+      }
+    });
+
+    test('corrects formatted and encoded prose in math source fields', () {
+      for (final fixture in <({String source, String expected})>[
+        (
+          source:
+              r'mispel**led** $x$'
+              '\n',
+          expected:
+              r'misspel**led** $x$'
+              '\n',
+        ),
+        (
+          source:
+              r'mispell&#101;d $x$'
+              '\n',
+          expected:
+              r'misspelled $x$'
+              '\n',
+        ),
+        (
+          source:
+              r'he**x**llo $x$'
+              '\n',
+          expected:
+              r'hello $x$'
+              '\n',
+        ),
+      ]) {
+        final document = const MarkdownParser()
+            .parse(
+              filePath: '/tmp/math-rich.md',
+              source: fixture.source,
+              mode: MarkdownMode.commonMark,
+              validateLocalReferences: false,
+            )
+            .busyDocument;
+        final projected = const WysiwygSpellingProjector().project(
+          document: document,
+          languageId: 'en-US',
+          snapshot: _snapshot,
+          documentGeneration: 7,
+        );
+        final run = projected.runs.firstWhere(
+          (candidate) =>
+              candidate.text.contains('mispelled') ||
+              candidate.text.contains('hexllo'),
+        );
+        final word = run.text.contains('mispelled') ? 'mispelled' : 'hexllo';
+        final plan = const SpellingReplacementPlanner().build(
+          occurrence: _rejected(run, word),
+          suggestion: word == 'hexllo' ? 'hello' : 'misspelled',
+        );
+        final controller = BusyMarkWysiwygDocumentController(
+          document: document,
+        );
+        final target = run.target as SpellingRichBlockTarget;
+
+        expect(
+          controller.replaceSpellingInBlock(
+            blockId: target.blockId,
+            expectedFieldText: busyMarkWysiwygEditableText(
+              controller.blockById(target.blockId)!,
+            ),
+            plan: plan,
+          ),
+          isTrue,
+        );
+        expect(controller.markdown, fixture.expected);
+      }
     });
   });
 }

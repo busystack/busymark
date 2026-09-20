@@ -94,18 +94,27 @@ final class SpellingReplacementPlan {
     final start = _translateSourceBoundary(originalStart, sourceEdits);
     final end = _translateSourceBoundary(originalEnd, sourceEdits);
     if (start < 0 || end < start || end > source.length) return false;
+    final region = _correctionValidationRegion(
+      source,
+      start,
+      end,
+      snapshot.documentKind,
+    );
+    final validationSource = source.substring(region.start, region.end);
+    final localStart = start - region.start;
+    final localEnd = end - region.start;
     final projection = switch (snapshot.documentKind) {
       DocumentKind.writersideXmlTopic =>
         const WritersideXmlSpellingProjector().project(
           filePath: 'spelling-validation.topic',
-          source: source,
+          source: validationSource,
           languageId: languageId,
           snapshot: snapshot,
         ),
       DocumentKind.markdown || DocumentKind.writersideMarkdownTopic =>
         const MarkdownSpellingProjector().project(
           filePath: 'spelling-validation.md',
-          source: source,
+          source: validationSource,
           mode: snapshot.documentKind == DocumentKind.writersideMarkdownTopic
               ? MarkdownMode.writersideMarkdown
               : MarkdownMode.commonMark,
@@ -115,20 +124,37 @@ final class SpellingReplacementPlan {
       _ => null,
     };
     if (projection == null) return true;
-    final atoms =
-        [
-          for (final run in projection.runs)
-            for (final atom in run.atoms)
-              if (atom.sourceStart >= start && atom.sourceEnd <= end) atom,
-        ]..sort((left, right) {
-          final byStart = left.sourceStart.compareTo(right.sourceStart);
-          return byStart != 0
-              ? byStart
-              : left.sourceEnd.compareTo(right.sourceEnd);
-        });
-    if (atoms.isEmpty) return false;
-    final logical = atoms.map((atom) => atom.logicalText).join();
-    return unicode.nfc(logical) == unicode.nfc(suggestion);
+    for (final run in projection.runs) {
+      var logicalStart = 0;
+      while (logicalStart <= run.text.length - suggestion.length) {
+        final found = run.text.indexOf(suggestion, logicalStart);
+        if (found < 0) break;
+        final candidate = SpellingOccurrence(
+          id: 'validation',
+          run: run,
+          logicalStart: found,
+          logicalEnd: found + suggestion.length,
+          word: suggestion,
+          outcome: SpellingCheckOutcome.rejected,
+        );
+        final intervals = candidate.sourceIntervals;
+        final trailingGap = intervals.isEmpty || intervals.last.end > localEnd
+            ? ''
+            : source.substring(intervals.last.end, localEnd);
+        final markdownWrapperGap =
+            snapshot.documentKind != DocumentKind.writersideXmlTopic &&
+            intervals.isNotEmpty &&
+            intervals.last.end < localEnd &&
+            RegExp(r'^[*_~]+$').hasMatch(trailingGap);
+        if (intervals.isNotEmpty &&
+            intervals.first.start == localStart &&
+            (intervals.last.end == localEnd || markdownWrapperGap)) {
+          return true;
+        }
+        logicalStart = found + 1;
+      }
+    }
+    return false;
   }
 
   /// Translates the end of the final source edit into the resulting source.
@@ -141,6 +167,31 @@ final class SpellingReplacementPlan {
   /// Translates the end of the final editable-field edit into the resulting
   /// field. This is used by Markdown-source fields containing inline math.
   int? get resultingFieldCaret => _resultingCaretForFieldEdits(fieldEdits);
+}
+
+({int start, int end}) _correctionValidationRegion(
+  String source,
+  int targetStart,
+  int targetEnd,
+  DocumentKind kind,
+) {
+  var start = targetStart;
+  var end = targetEnd;
+  if (kind == DocumentKind.markdown ||
+      kind == DocumentKind.writersideMarkdownTopic) {
+    final before = source.lastIndexOf('\n\n', targetStart);
+    start = before < 0 ? 0 : before + 2;
+    final after = source.indexOf('\n\n', targetEnd);
+    end = after < 0 ? source.length : after;
+  } else {
+    // An arbitrary XML line is not necessarily a parseable fragment: its
+    // owning element may begin or end on another line. Keep full-document XML
+    // validation until an element-boundary extractor can prove a smaller
+    // region is self-contained.
+    start = 0;
+    end = source.length;
+  }
+  return (start: start, end: end);
 }
 
 int? _resultingCaretForSourceEdits(List<SpellingSourceEdit> edits) {
@@ -254,14 +305,18 @@ final class SpellingReplacementPlanner {
       final replacement = assigned[index]?.toString() ?? '';
 
       if (atom.sourceStart >= 0) {
-        final identitySlice =
-            atom.transformation == SpellingTransformationKind.identity &&
-            atom.sourceEnd - atom.sourceStart == atom.logicalText.length;
-        if (identitySlice) {
+        final mapped = atom.sourceIntervalFor(overlapStart, overlapEnd);
+        final linearAtom = switch (atom.transformation) {
+          SpellingTransformationKind.identity ||
+          SpellingTransformationKind.xmlCdata =>
+            atom.sourceEnd - atom.sourceStart == atom.logicalText.length,
+          _ => false,
+        };
+        if (linearAtom) {
           sourceEdits.add(
             SpellingSourceEdit(
-              start: atom.sourceStart + localStart,
-              end: atom.sourceStart + localEnd,
+              start: mapped!.start,
+              end: mapped.end,
               replacement: _encode(replacement, atom.context),
             ),
           );
@@ -295,14 +350,18 @@ final class SpellingReplacementPlanner {
           replacement: replacement,
         );
       } else if (fieldStart != null && fieldEnd != null) {
-        final identitySlice =
-            atom.transformation == SpellingTransformationKind.identity &&
-            fieldEnd - fieldStart == atom.logicalText.length;
-        if (identitySlice) {
+        final mapped = atom.fieldIntervalFor(overlapStart, overlapEnd);
+        final linearAtom = switch (atom.transformation) {
+          SpellingTransformationKind.identity ||
+          SpellingTransformationKind.xmlCdata =>
+            fieldEnd - fieldStart == atom.logicalText.length,
+          _ => false,
+        };
+        if (linearAtom) {
           fieldEdits.add(
             SpellingFieldEdit(
-              start: fieldStart + localStart,
-              end: fieldStart + localEnd,
+              start: mapped!.start,
+              end: mapped.end,
               replacement: _encode(replacement, atom.context),
             ),
           );
@@ -322,6 +381,7 @@ final class SpellingReplacementPlanner {
       }
     }
     for (final wrapper in occurrence.run.formattingWrappers) {
+      if (!wrapper.removableWhenLogicallyEmpty) continue;
       if (occurrence.logicalStart > wrapper.logicalStart ||
           occurrence.logicalEnd < wrapper.logicalEnd) {
         continue;
@@ -338,21 +398,47 @@ final class SpellingReplacementPlanner {
         remaining.write(assigned[index] ?? '');
       }
       if (remaining.isNotEmpty) continue;
-      sourceEdits
-        ..add(
-          SpellingSourceEdit(
-            start: wrapper.openingStart,
-            end: wrapper.openingEnd,
-            replacement: '',
-          ),
-        )
-        ..add(
-          SpellingSourceEdit(
-            start: wrapper.closingStart,
-            end: wrapper.closingEnd,
-            replacement: '',
-          ),
-        );
+      if (wrapper.openingStart >= 0 && wrapper.closingStart >= 0) {
+        sourceEdits
+          ..add(
+            SpellingSourceEdit(
+              start: wrapper.openingStart,
+              end: wrapper.openingEnd,
+              replacement: '',
+            ),
+          )
+          ..add(
+            SpellingSourceEdit(
+              start: wrapper.closingStart,
+              end: wrapper.closingEnd,
+              replacement: '',
+            ),
+          );
+      }
+      final fieldOpeningStart = wrapper.fieldOpeningStart;
+      final fieldOpeningEnd = wrapper.fieldOpeningEnd;
+      final fieldClosingStart = wrapper.fieldClosingStart;
+      final fieldClosingEnd = wrapper.fieldClosingEnd;
+      if (fieldOpeningStart != null &&
+          fieldOpeningEnd != null &&
+          fieldClosingStart != null &&
+          fieldClosingEnd != null) {
+        fieldEdits
+          ..add(
+            SpellingFieldEdit(
+              start: fieldOpeningStart,
+              end: fieldOpeningEnd,
+              replacement: '',
+            ),
+          )
+          ..add(
+            SpellingFieldEdit(
+              start: fieldClosingStart,
+              end: fieldClosingEnd,
+              replacement: '',
+            ),
+          );
+      }
     }
     final richEdits = [
       for (final accumulator in richGroups.values) accumulator.build(),
@@ -369,9 +455,7 @@ final class SpellingReplacementPlanner {
         'the selected suggestion.',
       );
     }
-    final sourceOffsets = atoms
-        .where((atom) => atom.sourceStart >= 0 && atom.sourceEnd >= 0)
-        .toList(growable: false);
+    final sourceOffsets = occurrence.sourceIntervals;
     return SpellingReplacementPlan(
       originalWord: occurrence.word,
       suggestion: suggestion,
@@ -383,12 +467,12 @@ final class SpellingReplacementPlanner {
       sourceTargetStart: sourceOffsets.isEmpty
           ? null
           : sourceOffsets
-                .map((atom) => atom.sourceStart)
+                .map((range) => range.start)
                 .reduce((left, right) => left < right ? left : right),
       sourceTargetEnd: sourceOffsets.isEmpty
           ? null
           : sourceOffsets
-                .map((atom) => atom.sourceEnd)
+                .map((range) => range.end)
                 .reduce((left, right) => left > right ? left : right),
     );
   }

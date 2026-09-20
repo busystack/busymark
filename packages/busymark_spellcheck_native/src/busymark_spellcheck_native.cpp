@@ -5,6 +5,7 @@
 #include <pango/pango.h>
 
 #include <algorithm>
+#include <cstdlib>
 #include <cstring>
 #include <exception>
 #include <fstream>
@@ -137,8 +138,14 @@ void load_word_chars(BusySpellHandleImpl* handle, const char* aff_path) {
   std::ifstream input(aff_path, std::ios::binary);
   std::string raw;
   while (std::getline(input, raw)) {
-    if (raw.rfind("WORDCHARS ", 0) != 0) continue;
-    raw = trim_ascii(raw.substr(std::strlen("WORDCHARS ")));
+    raw = trim_ascii(raw);
+    constexpr auto directive = "WORDCHARS";
+    constexpr auto directive_length = std::char_traits<char>::length(directive);
+    if (raw.rfind(directive, 0) != 0 || raw.size() <= directive_length ||
+        (raw[directive_length] != ' ' && raw[directive_length] != '\t')) {
+      continue;
+    }
+    raw = trim_ascii(raw.substr(directive_length));
     if (raw.empty()) return;
     char* ignored_error = nullptr;
     auto utf8 = convert_text(raw.c_str(), "UTF-8", handle->encoding.c_str(),
@@ -203,6 +210,82 @@ bool supported_encoding(const char* encoding) {
   return true;
 }
 
+std::string dictionary_entry_word(const std::string& raw) {
+  std::string word;
+  bool escaped = false;
+  for (const char value : raw) {
+    if (!escaped && (value == '/' || value == '\t' || value == ' ')) break;
+    if (!escaped && value == '\\') {
+      escaped = true;
+      continue;
+    }
+    word.push_back(value);
+    escaped = false;
+  }
+  if (escaped) word.push_back('\\');
+  return word;
+}
+
+bool has_loadable_dictionary_entry(Hunhandle* hunspell,
+                                   const char* dic_path,
+                                   char** out_error) {
+  std::ifstream input(dic_path, std::ios::binary);
+  std::string raw;
+  if (!std::getline(input, raw)) {
+    set_error(out_error, "Dictionary has no record count");
+    return false;
+  }
+  raw = trim_ascii(raw);
+  if (raw.size() >= 3 && static_cast<unsigned char>(raw[0]) == 0xef &&
+      static_cast<unsigned char>(raw[1]) == 0xbb &&
+      static_cast<unsigned char>(raw[2]) == 0xbf) {
+    raw.erase(0, 3);
+  }
+  char* count_end = nullptr;
+  const auto declared = std::strtoull(raw.c_str(), &count_end, 10);
+  if (count_end == raw.c_str() || declared == 0) {
+    set_error(out_error, "Dictionary declares no usable records");
+    return false;
+  }
+  // Some established Hunspell dictionaries append a tab-separated format
+  // revision to the record count. It is metadata, not another dictionary
+  // entry; accept only an all-numeric suffix so arbitrary malformed headers
+  // do not pass structural validation.
+  while (*count_end == ' ' || *count_end == '\t') ++count_end;
+  while (*count_end >= '0' && *count_end <= '9') ++count_end;
+  if (*count_end != '\0') {
+    set_error(out_error, "Dictionary has a malformed record count");
+    return false;
+  }
+
+  size_t records = 0;
+  bool accepted = false;
+  while (std::getline(input, raw)) {
+    if (!raw.empty() && raw.back() == '\r') raw.pop_back();
+    if (raw.empty()) continue;
+    ++records;
+    if (!accepted) {
+      const auto word = dictionary_entry_word(raw);
+      if (!word.empty() && Hunspell_spell(hunspell, word.c_str()) != 0) {
+        accepted = true;
+      }
+    }
+  }
+  // Hunspell accepts long-lived dictionaries whose advisory count has drifted
+  // from the physical line count (for example the pinned French resource).
+  // The security/correctness invariant here is that a positive claim is backed
+  // by at least one real record that the loaded engine itself accepts.
+  if (records == 0) {
+    set_error(out_error, "Dictionary contains no records");
+    return false;
+  }
+  if (!accepted) {
+    set_error(out_error, "Dictionary loaded no verifiable entries");
+    return false;
+  }
+  return true;
+}
+
 }  // namespace
 
 struct BusySpellHandle : BusySpellHandleImpl {};
@@ -237,6 +320,10 @@ int busy_spell_open(const char* aff_path_utf8,
       return BUSY_SPELL_ERROR;
     }
     handle->encoding = encoding;
+    if (!has_loadable_dictionary_entry(handle->hunspell, dic_path_utf8,
+                                       out_error)) {
+      return BUSY_SPELL_ERROR;
+    }
     load_word_chars(handle.get(), aff_path_utf8);
     *out_handle = handle.release();
     return BUSY_SPELL_ACCEPTED;
@@ -389,6 +476,16 @@ int busy_spell_tokenize(BusySpellHandle* handle,
         ++end;
       }
       if (end > static_cast<guint>(character_count)) break;
+      while (index > 0 &&
+             is_join_character(
+                 handle, g_utf8_get_char(prose_utf8 + offsets[index - 1]))) {
+        --index;
+      }
+      while (end < static_cast<guint>(character_count) &&
+             is_join_character(handle,
+                               g_utf8_get_char(prose_utf8 + offsets[end]))) {
+        ++end;
+      }
       bool contains_letter = false;
       for (guint cursor = index; cursor < end; ++cursor) {
         if (is_word_character(g_utf8_get_char(prose_utf8 + offsets[cursor]))) {
@@ -403,9 +500,10 @@ int busy_spell_tokenize(BusySpellHandle* handle,
     std::vector<Candidate> merged;
     for (const auto candidate : candidates) {
       if (!merged.empty() &&
-          separator_can_join(handle, prose_utf8, offsets, merged.back().end,
-                             candidate.start)) {
-        merged.back().end = candidate.end;
+          (candidate.start <= merged.back().end ||
+           separator_can_join(handle, prose_utf8, offsets, merged.back().end,
+                              candidate.start))) {
+        merged.back().end = std::max(merged.back().end, candidate.end);
       } else {
         merged.push_back(candidate);
       }

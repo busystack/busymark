@@ -64,9 +64,13 @@ class BusyMarkMappedInlineParse {
     required this.inlines,
     required Map<BusyInline, BusyMarkMappedInlineRange> ranges,
     this.positionRecordsComplete = true,
+    this.sourceStart,
+    this.sourceEnd,
   }) : ranges = Map.unmodifiable(ranges);
 
   final List<BusyInline> inlines;
   final Map<BusyInline, BusyMarkMappedInlineRange> ranges;
   final bool positionRecordsComplete;
+  final int? sourceStart;
+  final int? sourceEnd;
 }

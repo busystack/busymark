@@ -111,6 +111,61 @@ final class SpellingSourceAtom {
 
   bool intersectsLogical(int start, int end) =>
       logicalStart < end && logicalEnd > start;
+
+  /// Maps a logical subrange through this atom without widening a linear
+  /// representation (plain text and CDATA) to the complete atom. Encoded
+  /// units remain indivisible because replacing only part of an entity or an
+  /// escape would corrupt its authored representation.
+  SpellingMappedInterval? sourceIntervalFor(int start, int end) =>
+      _mappedIntervalFor(
+        start,
+        end,
+        mappedStart: sourceStart,
+        mappedEnd: sourceEnd,
+      );
+
+  SpellingMappedInterval? fieldIntervalFor(int start, int end) {
+    final startOffset = fieldStart;
+    final endOffset = fieldEnd;
+    if (startOffset == null || endOffset == null) return null;
+    return _mappedIntervalFor(
+      start,
+      end,
+      mappedStart: startOffset,
+      mappedEnd: endOffset,
+    );
+  }
+
+  SpellingMappedInterval? _mappedIntervalFor(
+    int start,
+    int end, {
+    required int mappedStart,
+    required int mappedEnd,
+  }) {
+    if (mappedStart < 0 || mappedEnd < mappedStart) return null;
+    final overlapStart = start > logicalStart ? start : logicalStart;
+    final overlapEnd = end < logicalEnd ? end : logicalEnd;
+    if (overlapEnd <= overlapStart) return null;
+    final linear = switch (transformation) {
+      SpellingTransformationKind.identity ||
+      SpellingTransformationKind.xmlCdata =>
+        mappedEnd - mappedStart == logicalEnd - logicalStart,
+      _ => false,
+    };
+    return SpellingMappedInterval(
+      start: linear ? mappedStart + overlapStart - logicalStart : mappedStart,
+      end: linear ? mappedStart + overlapEnd - logicalStart : mappedEnd,
+    );
+  }
+}
+
+final class SpellingMappedInterval {
+  const SpellingMappedInterval({required this.start, required this.end});
+
+  final int start;
+  final int end;
+
+  bool contains(int offset) => offset >= start && offset < end;
 }
 
 /// Authored delimiters surrounding a formatted logical interval.
@@ -126,6 +181,11 @@ final class SpellingFormattingWrapper {
     required this.openingEnd,
     required this.closingStart,
     required this.closingEnd,
+    this.removableWhenLogicallyEmpty = true,
+    this.fieldOpeningStart,
+    this.fieldOpeningEnd,
+    this.fieldClosingStart,
+    this.fieldClosingEnd,
   });
 
   final int logicalStart;
@@ -134,6 +194,11 @@ final class SpellingFormattingWrapper {
   final int openingEnd;
   final int closingStart;
   final int closingEnd;
+  final bool removableWhenLogicallyEmpty;
+  final int? fieldOpeningStart;
+  final int? fieldOpeningEnd;
+  final int? fieldClosingStart;
+  final int? fieldClosingEnd;
 }
 
 final class SpellingProseRun {
@@ -197,29 +262,57 @@ final class SpellingOccurrence {
     (atom) => atom.intersectsLogical(logicalStart, logicalEnd),
   );
 
+  List<SpellingMappedInterval> get sourceIntervals => _coalesceIntervals([
+    for (final atom in atoms)
+      if (atom.sourceIntervalFor(logicalStart, logicalEnd) case final range?)
+        range,
+  ]);
+
+  List<SpellingMappedInterval> get fieldIntervals => _coalesceIntervals([
+    for (final atom in atoms)
+      if (atom.fieldIntervalFor(logicalStart, logicalEnd) case final range?)
+        range,
+  ]);
+
   int? get sourceStart {
-    final offsets = atoms
-        .where((atom) => atom.sourceStart >= 0 && atom.sourceEnd >= 0)
-        .map((atom) => atom.sourceStart);
+    final offsets = sourceIntervals.map((range) => range.start);
     return offsets.isEmpty ? null : offsets.reduce((a, b) => a < b ? a : b);
   }
 
   int? get sourceEnd {
-    final offsets = atoms
-        .where((atom) => atom.sourceStart >= 0 && atom.sourceEnd >= 0)
-        .map((atom) => atom.sourceEnd);
+    final offsets = sourceIntervals.map((range) => range.end);
     return offsets.isEmpty ? null : offsets.reduce((a, b) => a > b ? a : b);
   }
 
   int? get fieldStart {
-    final offsets = atoms.map((atom) => atom.fieldStart).whereType<int>();
+    final offsets = fieldIntervals.map((range) => range.start);
     return offsets.isEmpty ? null : offsets.reduce((a, b) => a < b ? a : b);
   }
 
   int? get fieldEnd {
-    final offsets = atoms.map((atom) => atom.fieldEnd).whereType<int>();
+    final offsets = fieldIntervals.map((range) => range.end);
     return offsets.isEmpty ? null : offsets.reduce((a, b) => a > b ? a : b);
   }
+}
+
+List<SpellingMappedInterval> _coalesceIntervals(
+  List<SpellingMappedInterval> intervals,
+) {
+  if (intervals.length < 2) return List.unmodifiable(intervals);
+  intervals.sort((left, right) => left.start.compareTo(right.start));
+  final result = <SpellingMappedInterval>[];
+  for (final interval in intervals) {
+    final previous = result.lastOrNull;
+    if (previous != null && interval.start <= previous.end) {
+      result[result.length - 1] = SpellingMappedInterval(
+        start: previous.start,
+        end: interval.end > previous.end ? interval.end : previous.end,
+      );
+    } else {
+      result.add(interval);
+    }
+  }
+  return List.unmodifiable(result);
 }
 
 final class SpellingProjectionResult {

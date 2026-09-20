@@ -21,6 +21,7 @@ final class SpellingDictionaryInstallSpec {
     required this.affSize,
     required this.dicSize,
     required this.kind,
+    this.knownValidProbe,
   });
 
   factory SpellingDictionaryInstallSpec.downloaded(
@@ -36,6 +37,7 @@ final class SpellingDictionaryInstallSpec {
     affSize: resource.affSize,
     dicSize: resource.dicSize,
     kind: SpellingDictionaryInstallationKind.downloaded,
+    knownValidProbe: resource.knownValidProbe,
   );
 
   final String resourceId;
@@ -48,6 +50,7 @@ final class SpellingDictionaryInstallSpec {
   final int affSize;
   final int dicSize;
   final SpellingDictionaryInstallationKind kind;
+  final String? knownValidProbe;
 }
 
 /// Validates and atomically publishes a complete affix/dictionary pair.
@@ -56,16 +59,25 @@ final class SpellingDictionaryInstallSpec {
 /// directory is always complete and native-loadable; staging directories are
 /// ignored by catalog discovery and removed after failure or cancellation.
 final class SpellingDictionaryPairInstaller {
-  const SpellingDictionaryPairInstaller();
+  const SpellingDictionaryPairInstaller({this.onCommitted});
+
+  /// Observes the commit point after the staged directory becomes the
+  /// published installation. The callback must not throw.
+  final void Function(SpellingDictionaryInstallation installation)? onCommitted;
 
   Future<SpellingDictionaryInstallation> install({
     required File affSource,
     required File dicSource,
     required SpellingDictionaryInstallSpec spec,
     required String destinationRoot,
-    required Future<String> Function(String affPath, String dicPath)
+    required Future<String> Function(
+      String affPath,
+      String dicPath,
+      String? knownValidProbe,
+    )
     validateNativePair,
     void Function()? cancellationGuard,
+    bool replaceExisting = false,
   }) async {
     cancellationGuard?.call();
     await validateSpellingDictionaryPair(
@@ -84,7 +96,7 @@ final class SpellingDictionaryPairInstaller {
     if (!p.isWithin(root.path, destination.path)) {
       throw StateError('Dictionary installation escaped its storage root.');
     }
-    if (await destination.exists()) {
+    if (await destination.exists() && !replaceExisting) {
       throw FileSystemException(
         'This dictionary resource is already installed',
         destination.path,
@@ -108,6 +120,7 @@ final class SpellingDictionaryPairInstaller {
       final encoding = (await validateNativePair(
         stagedAff.path,
         stagedDic.path,
+        spec.knownValidProbe,
       )).trim();
       if (encoding.isEmpty) {
         throw const FormatException('Dictionary declares no usable encoding.');
@@ -131,8 +144,26 @@ final class SpellingDictionaryPairInstaller {
         flush: true,
       );
       cancellationGuard?.call();
-      await staging.rename(destination.path);
-      return SpellingDictionaryInstallation(
+      Directory? replaced;
+      if (await destination.exists()) {
+        replaced = Directory(
+          p.join(
+            root.path,
+            '.busymark-replaced-${safeSpellingResourceName(spec.resourceId)}-'
+            '${DateTime.now().microsecondsSinceEpoch}',
+          ),
+        );
+        await destination.rename(replaced.path);
+      }
+      try {
+        await staging.rename(destination.path);
+      } on Object {
+        if (replaced != null && await replaced.exists()) {
+          await replaced.rename(destination.path);
+        }
+        rethrow;
+      }
+      final installation = SpellingDictionaryInstallation(
         resourceId: spec.resourceId,
         id: spec.id,
         locales: List.unmodifiable(spec.locales),
@@ -145,6 +176,11 @@ final class SpellingDictionaryPairInstaller {
         directoryPath: destination.path,
         sourceRevision: spec.sourceRevision,
       );
+      onCommitted?.call(installation);
+      if (replaced != null && await replaced.exists()) {
+        await replaced.delete(recursive: true);
+      }
+      return installation;
     } finally {
       if (await staging.exists()) {
         await staging.delete(recursive: true);
@@ -154,6 +190,19 @@ final class SpellingDictionaryPairInstaller {
 
   Future<void> remove({
     required SpellingDictionaryInstallation installation,
+    required String installationRoot,
+  }) async {
+    final root = p.normalize(p.absolute(installationRoot));
+    final target = p.normalize(p.absolute(installation.directoryPath));
+    if (!p.isWithin(root, target) || p.equals(root, target)) {
+      throw StateError('Dictionary removal escaped its storage root.');
+    }
+    final directory = Directory(target);
+    if (await directory.exists()) await directory.delete(recursive: true);
+  }
+
+  Future<void> removeInvalid({
+    required SpellingInvalidDictionaryInstallation installation,
     required String installationRoot,
   }) async {
     final root = p.normalize(p.absolute(installationRoot));
@@ -197,10 +246,11 @@ Future<void> validateSpellingDictionaryPair({
         .openRead(0, 64 * 1024)
         .fold<List<int>>(<int>[], (bytes, part) => bytes..addAll(part)),
   );
-  final firstLine = await dicSource
+  final prefix = await dicSource
       .openRead(0, 4096)
       .fold<List<int>>(<int>[], (bytes, part) => bytes..addAll(part));
-  _validateDictionaryHeader(firstLine);
+  final declaredRecords = _validateDictionaryHeader(prefix);
+  await _validateDictionaryRecords(dicSource, declaredRecords);
 }
 
 Future<void> _validateFile(
@@ -237,13 +287,53 @@ void _validateAffixMetadata(List<int> bytes) {
   }
 }
 
-void _validateDictionaryHeader(List<int> bytes) {
+int _validateDictionaryHeader(List<int> bytes) {
   final newline = bytes.indexOf(0x0a);
-  final headerBytes = bytes.take(newline < 0 ? bytes.length : newline).toList();
+  var headerBytes = bytes
+      .take(newline < 0 ? bytes.length : newline)
+      .toList(growable: false);
+  if (headerBytes.length >= 3 &&
+      headerBytes[0] == 0xef &&
+      headerBytes[1] == 0xbb &&
+      headerBytes[2] == 0xbf) {
+    headerBytes = headerBytes.sublist(3);
+  }
   final header = ascii.decode(headerBytes, allowInvalid: false).trim();
-  final count = int.tryParse(header);
-  if (count == null || count < 0) {
+  // A few established Hunspell dictionaries append a numeric, tab-separated
+  // format revision to the advisory record count (for example `465928\t1`).
+  // Accept only that well-defined suffix, not arbitrary trailing metadata.
+  final match = RegExp(r'^([0-9]+)(?:[ \t]+[0-9]+)?$').firstMatch(header);
+  final count = match == null ? null : int.tryParse(match.group(1)!);
+  if (count == null || count <= 0) {
     throw const FormatException('The .dic header is not a word count.');
+  }
+  return count;
+}
+
+Future<void> _validateDictionaryRecords(File file, int declaredRecords) async {
+  var line = 0;
+  var records = 0;
+  var hasContent = false;
+  await for (final bytes in file.openRead()) {
+    for (final byte in bytes) {
+      if (byte == 0x0a) {
+        if (line > 0 && hasContent) records++;
+        line++;
+        hasContent = false;
+      } else if (line > 0 && byte != 0x0d && byte != 0x20 && byte != 0x09) {
+        hasContent = true;
+      }
+    }
+  }
+  if (line > 0 && hasContent) records++;
+  // The header is advisory and upstream dictionaries can legitimately drift
+  // from their physical line count. Native validation subsequently proves
+  // that the loaded engine accepts a real entry (and, for catalog resources,
+  // the resource-specific known-valid probe).
+  if (records == 0) {
+    throw FormatException(
+      'The .dic file declares $declaredRecords records but contains none.',
+    );
   }
 }
 

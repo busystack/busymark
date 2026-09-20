@@ -254,6 +254,22 @@ install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../assets/spelling/"
   PATTERN "*.aff" EXCLUDE
   PATTERN "*.dic" EXCLUDE)
 
+# Native-code dependency notices must travel with the relocatable application;
+# references to source-tree paths are not sufficient in a packaged install.
+install(FILES
+  "${CMAKE_CURRENT_SOURCE_DIR}/../packages/busymark_spellcheck_native/LICENSE"
+  "${CMAKE_CURRENT_SOURCE_DIR}/../packages/busymark_spellcheck_native/DEPENDENCIES.md"
+  DESTINATION "${CMAKE_INSTALL_PREFIX}/share/licenses/busymark-spellcheck"
+  COMPONENT Runtime)
+install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/../LICENSE"
+  DESTINATION "${CMAKE_INSTALL_PREFIX}/share/licenses/busymark-spellcheck"
+  RENAME "Apache-2.0.txt"
+  COMPONENT Runtime)
+install(DIRECTORY
+  "${CMAKE_CURRENT_SOURCE_DIR}/../packages/busymark_spellcheck_native/third_party/hunspell/licenses/"
+  DESTINATION "${CMAKE_INSTALL_PREFIX}/share/licenses/busymark-spellcheck/hunspell"
+  COMPONENT Runtime)
+
 install(TARGETS ${BINARY_NAME} RUNTIME DESTINATION "${CMAKE_INSTALL_PREFIX}"
   COMPONENT Runtime)
 

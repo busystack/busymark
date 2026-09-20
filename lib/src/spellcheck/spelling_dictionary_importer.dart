@@ -20,7 +20,11 @@ final class SpellingDictionaryImporter {
     required String languageId,
     required String displayLabel,
     required String importedRoot,
-    required Future<String> Function(String affPath, String dicPath)
+    required Future<String> Function(
+      String affPath,
+      String dicPath,
+      String? knownValidProbe,
+    )
     validateNativePair,
   }) async {
     final language = normalizeSpellingLanguageId(languageId);

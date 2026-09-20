@@ -2442,9 +2442,8 @@ class _SpellingUnderlineOverlayState extends State<_SpellingUnderlineOverlay> {
         painter: _SpellingUnderlinePainter(
           editableKey: widget.editableKey,
           overlayKey: _overlayKey,
+          controller: widget.controller,
           ranges: widget.ranges,
-          composing: widget.controller.value.composing,
-          selection: widget.controller.selection,
           color: Theme.of(context).colorScheme.error,
           repaint: _repaint,
         ),
@@ -2457,18 +2456,16 @@ class _SpellingUnderlinePainter extends CustomPainter {
   _SpellingUnderlinePainter({
     required this.editableKey,
     required this.overlayKey,
+    required this.controller,
     required this.ranges,
-    required this.composing,
-    required this.selection,
     required this.color,
     required Listenable repaint,
   }) : super(repaint: repaint);
 
   final GlobalKey editableKey;
   final GlobalKey overlayKey;
+  final TextEditingController controller;
   final List<TextRange> ranges;
-  final TextRange composing;
-  final TextSelection selection;
   final Color color;
 
   @override
@@ -2490,18 +2487,7 @@ class _SpellingUnderlinePainter extends CustomPainter {
           range.end > (editable.text?.toPlainText().length ?? 0)) {
         continue;
       }
-      if (selection.isValid &&
-          selection.isCollapsed &&
-          selection.extentOffset >= range.start &&
-          selection.extentOffset <= range.end) {
-        continue;
-      }
-      if (composing.isValid &&
-          !composing.isCollapsed &&
-          range.start < composing.end &&
-          range.end > composing.start) {
-        continue;
-      }
+      if (busyMarkSpellingUnderlineSuppressed(controller, range)) continue;
       final boxes = editable.getBoxesForSelection(
         TextSelection(baseOffset: range.start, extentOffset: range.end),
       );
@@ -2548,10 +2534,28 @@ class _SpellingUnderlinePainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _SpellingUnderlinePainter oldDelegate) =>
       oldDelegate.ranges != ranges ||
-      oldDelegate.composing != composing ||
-      oldDelegate.selection != selection ||
+      oldDelegate.controller != controller ||
       oldDelegate.color != color ||
       oldDelegate.editableKey != editableKey;
+}
+
+@visibleForTesting
+bool busyMarkSpellingUnderlineSuppressed(
+  TextEditingController controller,
+  TextRange range,
+) {
+  final selection = controller.selection;
+  if (selection.isValid &&
+      selection.isCollapsed &&
+      selection.extentOffset >= range.start &&
+      selection.extentOffset <= range.end) {
+    return true;
+  }
+  final composing = controller.value.composing;
+  return composing.isValid &&
+      !composing.isCollapsed &&
+      range.start < composing.end &&
+      range.end > composing.start;
 }
 
 RenderEditable? _findRenderEditable(RenderObject? root) {

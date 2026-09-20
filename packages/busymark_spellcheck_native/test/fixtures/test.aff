@@ -1,6 +1,6 @@
 SET UTF-8
 TRY etaoinshrdlucmfwypvbgkjqxz
-WORDCHARS ’-
+WORDCHARS   ’-+#
 REP 1
 REP helo hello
 SFX S Y 1

@@ -84,6 +84,7 @@ final class SpellingEngineContext {
     'projectIdentity': projectIdentity,
     'projectRevision': projectRevision,
     'customWords': customWords,
+    'identity': identity,
   };
 }
 
@@ -226,6 +227,7 @@ final class SpellingWorker {
   Future<String> validateDictionary({
     required String affPath,
     required String dicPath,
+    String? knownValidProbe,
   }) async {
     _requireOpen();
     final message = await _request({
@@ -233,6 +235,7 @@ final class SpellingWorker {
       'requestId': _nextRequest++,
       'affPath': affPath,
       'dicPath': dicPath,
+      if (knownValidProbe != null) 'knownValidProbe': knownValidProbe,
     });
     return message['encoding']?.toString() ?? '';
   }
@@ -338,6 +341,24 @@ final class _WorkerRuntime {
         if (!_busy) unawaited(_drain());
         return;
       case 'suggest':
+        while (_sideRequestQueue
+                .where((item) => item['type'] == 'suggest')
+                .length >=
+            _maximumPendingSuggestions) {
+          final index = _sideRequestQueue.indexWhere(
+            (item) => item['type'] == 'suggest',
+          );
+          if (index < 0) break;
+          final obsolete = _sideRequestQueue.removeAt(index);
+          mainPort.send({
+            'requestId': obsolete['requestId'],
+            'fatal': true,
+            'error': 'The pending spelling suggestion became obsolete.',
+          });
+        }
+        _sideRequestQueue.add(message);
+        if (!_busy) unawaited(_drain());
+        return;
       case 'validate':
       case 'project':
       case 'releaseDictionary':
@@ -429,8 +450,34 @@ final class _WorkerRuntime {
             dictionary: dictionary,
             language: language,
           )) {
+            if (chunk.error case final error?) {
+              complete = false;
+              firstError ??= error;
+              occurrences.add({
+                'runIndex': runIndex,
+                'start': chunk.utf16Start,
+                'end': chunk.utf16Start + chunk.text.length,
+                'outcome': 'unchecked',
+                'error': error,
+              });
+              continue;
+            }
             final utf16Boundaries = _codePointToUtf16Boundaries(chunk.text);
-            final tokens = dictionary.tokenize(chunk.text, language: language);
+            late final List<NativeWordRange> tokens;
+            try {
+              tokens = dictionary.tokenize(chunk.text, language: language);
+            } on Object catch (error) {
+              complete = false;
+              firstError ??= error.toString();
+              occurrences.add({
+                'runIndex': runIndex,
+                'start': chunk.utf16Start,
+                'end': chunk.utf16Start + chunk.text.length,
+                'outcome': 'unchecked',
+                'error': error.toString(),
+              });
+              continue;
+            }
             for (final token in tokens) {
               if (generation != _cancelGeneration) {
                 mainPort.send({
@@ -443,9 +490,17 @@ final class _WorkerRuntime {
               }
               if (token.characterStart >= utf16Boundaries.length ||
                   token.characterEnd >= utf16Boundaries.length) {
-                throw const FormatException(
-                  'Native token boundary is invalid.',
-                );
+                complete = false;
+                const error = 'Native token boundary is invalid.';
+                firstError ??= error;
+                occurrences.add({
+                  'runIndex': runIndex,
+                  'start': chunk.utf16Start,
+                  'end': chunk.utf16Start + chunk.text.length,
+                  'outcome': 'unchecked',
+                  'error': error,
+                });
+                continue;
               }
               final start =
                   chunk.utf16Start + utf16Boundaries[token.characterStart];
@@ -456,9 +511,24 @@ final class _WorkerRuntime {
               final cacheKey =
                   '${context['identity'] ?? _contextIdentity}\u0000${unicode.nfc(word)}';
               var outcome = _wordCache.remove(cacheKey);
-              outcome ??= dictionary.check(word) == NativeSpellResult.accepted
-                  ? 'accepted'
-                  : 'rejected';
+              if (outcome == null) {
+                try {
+                  outcome = dictionary.check(word) == NativeSpellResult.accepted
+                      ? 'accepted'
+                      : 'rejected';
+                } on Object catch (error) {
+                  complete = false;
+                  firstError ??= error.toString();
+                  occurrences.add({
+                    'runIndex': runIndex,
+                    'start': start,
+                    'end': end,
+                    'outcome': 'unchecked',
+                    'error': error.toString(),
+                  });
+                  continue;
+                }
+              }
               _wordCache[cacheKey] = outcome;
               while (_wordCache.length > _maximumCachedWords) {
                 _wordCache.remove(_wordCache.keys.first);
@@ -475,6 +545,7 @@ final class _WorkerRuntime {
               if (wordsSinceYield >= _wordBatchSize) {
                 wordsSinceYield = 0;
                 await Future<void>.delayed(Duration.zero);
+                await _serviceSuggestionsDuringCheck();
               }
             }
           }
@@ -526,6 +597,26 @@ final class _WorkerRuntime {
         'fatal': true,
         'error': error.toString(),
       });
+    }
+  }
+
+  Future<void> _serviceSuggestionsDuringCheck() async {
+    while (true) {
+      final index = _sideRequestQueue.indexWhere(
+        (request) => request['type'] == 'suggest',
+      );
+      if (index < 0) return;
+      final request = _sideRequestQueue.removeAt(index);
+      final context = (request['context'] as Map).cast<Object?, Object?>();
+      if (context['identity'] != _contextIdentity) {
+        mainPort.send({
+          'requestId': request['requestId'],
+          'fatal': true,
+          'error': 'The spelling suggestion context became obsolete.',
+        });
+        continue;
+      }
+      await _suggest(request);
     }
   }
 
@@ -598,7 +689,14 @@ final class _WorkerRuntime {
             'Dictionary declares no usable encoding.',
           );
         }
-        dictionary.check('BusyMark');
+        final knownValidProbe = request['knownValidProbe']?.toString();
+        if (knownValidProbe != null &&
+            knownValidProbe.isNotEmpty &&
+            dictionary.check(knownValidProbe) != NativeSpellResult.accepted) {
+          throw FormatException(
+            'Dictionary rejected its catalog validation probe.',
+          );
+        }
         mainPort.send({
           'requestId': request['requestId'],
           'encoding': encoding,
@@ -656,12 +754,14 @@ final class _WorkerRuntime {
 const _maximumProseChunkBytes = 48 * 1024;
 const _maximumCachedWords = 8192;
 const _wordBatchSize = 256;
+const _maximumPendingSuggestions = 32;
 
 final class _ProseChunk {
-  const _ProseChunk({required this.text, required this.utf16Start});
+  const _ProseChunk({required this.text, required this.utf16Start, this.error});
 
   final String text;
   final int utf16Start;
+  final String? error;
 }
 
 Iterable<_ProseChunk> _boundedProseChunks(
@@ -729,9 +829,20 @@ Iterable<_ProseChunk> _boundedProseChunks(
     }
     end ??= start;
     if (end <= start) {
-      throw const FormatException(
-        'A spelling token exceeds the bounded native input size.',
+      var tokenEnd = cursor;
+      while (tokenEnd < text.length &&
+          !_unicodeWhitespace.hasMatch(
+            String.fromCharCode(_codePointAtUtf16(text, tokenEnd)),
+          )) {
+        tokenEnd += _codePointAtUtf16(text, tokenEnd) > 0xffff ? 2 : 1;
+      }
+      yield _ProseChunk(
+        text: text.substring(start, tokenEnd),
+        utf16Start: start,
+        error: 'A spelling token exceeds the bounded native input size.',
       );
+      start = tokenEnd;
+      continue;
     }
     yield _ProseChunk(text: text.substring(start, end), utf16Start: start);
     start = end;

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
+import 'package:crypto/crypto.dart';
 
 import '../../l10n/generated/app_localizations.dart';
 import '../core/diagnostic.dart';
@@ -61,6 +62,29 @@ Future<int> runSpellingReleaseSmoke(String reportPath) async {
       throw StateError('Installed spelling resources were not found.');
     }
     checks['resourceRoot'] = bundledRoot;
+    await _verifyInstalledSpellingInventory(bundledRoot);
+    checks['resourceChecksumInventory'] = true;
+    final nativeNoticeRoot = Directory(
+      p.normalize(
+        p.join(bundledRoot, '..', '..', 'licenses', 'busymark-spellcheck'),
+      ),
+    );
+    for (final relative in [
+      'Apache-2.0.txt',
+      'DEPENDENCIES.md',
+      p.join('hunspell', 'COPYING'),
+      p.join('hunspell', 'COPYING.LESSER'),
+      p.join('hunspell', 'COPYING.MPL'),
+      p.join('hunspell', 'license.hunspell'),
+      p.join('hunspell', 'license.myspell'),
+    ]) {
+      if (!await File(p.join(nativeNoticeRoot.path, relative)).exists()) {
+        throw StateError(
+          'Installed native dependency notice is missing: $relative',
+        );
+      }
+    }
+    checks['nativeDependencyNotices'] = true;
     final catalog = await SpellingDictionaryCatalog.load(
       bundledRoot: bundledRoot,
       verifyChecksums: true,
@@ -97,8 +121,11 @@ Future<int> runSpellingReleaseSmoke(String reportPath) async {
       await const SpellingDictionaryDownloader().install(
         resource: englishResource,
         downloadedRoot: downloadedRoot,
-        validateNativePair: (aff, dic) =>
-            worker!.validateDictionary(affPath: aff, dicPath: dic),
+        validateNativePair: (aff, dic, probe) => worker!.validateDictionary(
+          affPath: aff,
+          dicPath: dic,
+          knownValidProbe: probe,
+        ),
         cancellation: SpellingDictionaryDownloadCancellation(),
         onProgress: (_, _) {},
       );
@@ -292,6 +319,28 @@ Future<int> runSpellingReleaseSmoke(String reportPath) async {
     return 1;
   } finally {
     await worker?.close();
+  }
+}
+
+Future<void> _verifyInstalledSpellingInventory(String root) async {
+  final inventory = File(p.join(root, 'CHECKSUMS.sha256'));
+  if (!await inventory.exists()) {
+    throw StateError('Installed spelling checksum inventory is missing.');
+  }
+  for (final line in await inventory.readAsLines()) {
+    if (line.trim().isEmpty) continue;
+    final match = RegExp(r'^([0-9a-f]{64})  (.+)$').firstMatch(line);
+    if (match == null) {
+      throw StateError('Installed spelling checksum inventory is malformed.');
+    }
+    final file = File(p.join(root, match.group(2)!));
+    if (!await file.exists() ||
+        (await sha256.bind(file.openRead()).first).toString() !=
+            match.group(1)) {
+      throw StateError(
+        'Installed spelling resource failed checksum: ${match.group(2)}',
+      );
+    }
   }
 }
 

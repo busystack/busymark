@@ -881,7 +881,16 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
                                 context,
                                 editableTextState,
                                 refineWithAiLabel: context.l10n.aiRefineWithAi,
-                                readSpellingItems: widget.readSpellingMenuItems,
+                                readSpellingItems:
+                                    widget.readSpellingMenuItems == null
+                                    ? null
+                                    : (visibleOffset) =>
+                                          widget.readSpellingMenuItems!(
+                                            _controller
+                                                .visibleOffsetToFullOffset(
+                                                  visibleOffset,
+                                                ),
+                                          ),
                                 onCheckSpelling: widget.onCheckSpelling,
                                 additionalItems: [
                                   if (widget.onSymbolAction != null)

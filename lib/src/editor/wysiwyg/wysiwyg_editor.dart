@@ -336,7 +336,11 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
         start < 0 ||
         end < start ||
         end > expectedFieldText.length ||
-        expectedFieldText.substring(start, end) != occurrence.word) {
+        occurrence.run.text.substring(
+              occurrence.logicalStart,
+              occurrence.logicalEnd,
+            ) !=
+            occurrence.word) {
       return false;
     }
 

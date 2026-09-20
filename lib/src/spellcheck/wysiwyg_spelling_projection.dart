@@ -80,6 +80,23 @@ final class WysiwygSpellingProjector {
             ],
             target: target,
             snapshot: snapshot,
+            formattingWrappers: [
+              for (final wrapper in sourceRun.formattingWrappers)
+                SpellingFormattingWrapper(
+                  logicalStart: wrapper.logicalStart,
+                  logicalEnd: wrapper.logicalEnd,
+                  openingStart: -1,
+                  openingEnd: -1,
+                  closingStart: -1,
+                  closingEnd: -1,
+                  removableWhenLogicallyEmpty:
+                      wrapper.removableWhenLogicallyEmpty,
+                  fieldOpeningStart: wrapper.openingStart,
+                  fieldOpeningEnd: wrapper.openingEnd,
+                  fieldClosingStart: wrapper.closingStart,
+                  fieldClosingEnd: wrapper.closingEnd,
+                ),
+            ],
             complete: sourceRun.complete,
           ),
         );
@@ -304,7 +321,10 @@ _MergedRichProjection _mergeFieldMappings({
         atoms: mergedAtoms,
         target: richRun.target,
         snapshot: richRun.snapshot,
-        formattingWrappers: sourceRun.formattingWrappers,
+        formattingWrappers: _mergeFormattingWrappers(
+          sourceRun.formattingWrappers,
+          richRun.formattingWrappers,
+        ),
         complete: sourceRun.complete && richRun.complete,
       ),
     );
@@ -359,12 +379,11 @@ List<SpellingSourceAtom>? _mergeRunAtoms(
         richAtom.logicalEnd < sourceAtom.logicalEnd) {
       return null;
     }
-    final fieldStart = richAtom.fieldStart;
-    final fieldEnd = richAtom.fieldEnd;
-    if (fieldStart == null || fieldEnd == null) return null;
-    final localStart = sourceAtom.logicalStart - richAtom.logicalStart;
-    final localEnd = sourceAtom.logicalEnd - richAtom.logicalStart;
-    if (fieldStart + localEnd > fieldEnd) return null;
+    final fieldRange = richAtom.fieldIntervalFor(
+      sourceAtom.logicalStart,
+      sourceAtom.logicalEnd,
+    );
+    if (fieldRange == null) return null;
     result.add(
       SpellingSourceAtom(
         logicalText: sourceAtom.logicalText,
@@ -372,8 +391,8 @@ List<SpellingSourceAtom>? _mergeRunAtoms(
         logicalEnd: sourceAtom.logicalEnd,
         sourceStart: sourceAtom.sourceStart,
         sourceEnd: sourceAtom.sourceEnd,
-        fieldStart: fieldStart + localStart,
-        fieldEnd: fieldStart + localEnd,
+        fieldStart: fieldRange.start,
+        fieldEnd: fieldRange.end,
         richLeafPath: richAtom.richLeafPath,
         transformation: sourceAtom.transformation,
         context: sourceAtom.context,
@@ -382,6 +401,38 @@ List<SpellingSourceAtom>? _mergeRunAtoms(
   }
   return List.unmodifiable(result);
 }
+
+List<SpellingFormattingWrapper> _mergeFormattingWrappers(
+  List<SpellingFormattingWrapper> source,
+  List<SpellingFormattingWrapper> field,
+) => List.unmodifiable([
+  for (final sourceWrapper in source)
+    if (field
+            .where(
+              (candidate) =>
+                  candidate.logicalStart == sourceWrapper.logicalStart &&
+                  candidate.logicalEnd == sourceWrapper.logicalEnd,
+            )
+            .firstOrNull
+        case final fieldWrapper?)
+      SpellingFormattingWrapper(
+        logicalStart: sourceWrapper.logicalStart,
+        logicalEnd: sourceWrapper.logicalEnd,
+        openingStart: sourceWrapper.openingStart,
+        openingEnd: sourceWrapper.openingEnd,
+        closingStart: sourceWrapper.closingStart,
+        closingEnd: sourceWrapper.closingEnd,
+        removableWhenLogicallyEmpty:
+            sourceWrapper.removableWhenLogicallyEmpty &&
+            fieldWrapper.removableWhenLogicallyEmpty,
+        fieldOpeningStart: fieldWrapper.fieldOpeningStart,
+        fieldOpeningEnd: fieldWrapper.fieldOpeningEnd,
+        fieldClosingStart: fieldWrapper.fieldClosingStart,
+        fieldClosingEnd: fieldWrapper.fieldClosingEnd,
+      )
+    else
+      sourceWrapper,
+]);
 
 final class _SourceFieldRegion {
   const _SourceFieldRegion({

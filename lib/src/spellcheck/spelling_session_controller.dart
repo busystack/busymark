@@ -21,6 +21,24 @@ import 'spelling_projection.dart';
 import 'spelling_word_store.dart';
 import 'spelling_worker.dart';
 
+typedef SpellingCoordinatorStarter = Future<SpellingCoordinator> Function();
+typedef SpellingWordStoreFactory =
+    SpellingWordStore Function({
+      required String filePath,
+      required bool projectStore,
+    });
+typedef SpellingWordStoreReader =
+    Future<SpellingWordStoreSnapshot> Function(SpellingWordStore store);
+
+SpellingWordStore _createSpellingWordStore({
+  required String filePath,
+  required bool projectStore,
+}) => SpellingWordStore(filePath: filePath, projectStore: projectStore);
+
+Future<SpellingWordStoreSnapshot> _readSpellingWordStore(
+  SpellingWordStore store,
+) => store.read();
+
 final spellingSessionControllerProvider =
     ChangeNotifierProvider<SpellingSessionController>((ref) {
       return SpellingSessionController(
@@ -65,7 +83,12 @@ final class SpellingSessionController extends ChangeNotifier {
     this.verifyDictionaryChecksums = true,
     this.dictionaryDownloader = const SpellingDictionaryDownloader(),
     this.dictionaryInstaller = const SpellingDictionaryPairInstaller(),
-  });
+    SpellingCoordinatorStarter? coordinatorStarter,
+    SpellingWordStoreFactory? wordStoreFactory,
+    SpellingWordStoreReader? wordStoreReader,
+  }) : coordinatorStarter = coordinatorStarter ?? SpellingCoordinator.start,
+       wordStoreFactory = wordStoreFactory ?? _createSpellingWordStore,
+       wordStoreReader = wordStoreReader ?? _readSpellingWordStore;
 
   final String? bundledRoot;
   final String? applicationSupportRoot;
@@ -74,8 +97,12 @@ final class SpellingSessionController extends ChangeNotifier {
   final bool verifyDictionaryChecksums;
   final SpellingDictionaryDownloader dictionaryDownloader;
   final SpellingDictionaryPairInstaller dictionaryInstaller;
+  final SpellingCoordinatorStarter coordinatorStarter;
+  final SpellingWordStoreFactory wordStoreFactory;
+  final SpellingWordStoreReader wordStoreReader;
 
   SpellingCoordinator? _coordinator;
+  Future<SpellingCoordinator>? _coordinatorStartup;
   SpellingDictionaryCatalog? _catalog;
   SpellingWordStore? _personalStore;
   SpellingWordStore? _projectStore;
@@ -97,6 +124,10 @@ final class SpellingSessionController extends ChangeNotifier {
   String? _resolvedDictionaryStorageRoot;
   bool _personalStorageInitialized = false;
   bool _projectStorageInitialized = false;
+  Future<({SpellingWordStore store, SpellingWordStoreSnapshot snapshot})>?
+  _personalStorageLoad;
+  String? _requestedProjectRoot;
+  int _projectStorageGeneration = 0;
   String _scheduledIdentity = '';
   String _contextIdentity = '';
   int _contextGeneration = 0;
@@ -106,12 +137,20 @@ final class SpellingSessionController extends ChangeNotifier {
   Set<String> _openBufferIds = const {};
   SpellingDictionaryDownloadCancellation? _dictionaryDownloadCancellation;
   SpellingDictionaryInstallStatus? _dictionaryInstallStatus;
+  bool _presentationUsesLocalState = true;
+  StreamSubscription<FileSystemEvent>? _projectStoreWatcher;
+  Timer? _projectStoreReloadDebounce;
+  String? _watchedProjectFile;
 
-  SpellingPresentationState get state => _coordinator?.state ?? _localState;
-  List<SpellingAnnotation> get annotations =>
-      _coordinator?.annotations ?? const [];
-  List<SpellingOccurrence> get misspellings =>
-      _coordinator?.misspellings ?? const [];
+  SpellingPresentationState get state => _presentationUsesLocalState
+      ? _localState
+      : (_coordinator?.state ?? _localState);
+  List<SpellingAnnotation> get annotations => _presentationUsesLocalState
+      ? const []
+      : _coordinator?.annotations ?? const [];
+  List<SpellingOccurrence> get misspellings => _presentationUsesLocalState
+      ? const []
+      : _coordinator?.misspellings ?? const [];
   SpellingDictionaryCatalog? get catalog => _catalog;
   SpellingDictionaryInstallStatus? get dictionaryInstallStatus =>
       _dictionaryInstallStatus;
@@ -137,6 +176,7 @@ final class SpellingSessionController extends ChangeNotifier {
     _latestInput = input;
     _scheduledIdentity = identity;
     final operation = ++_operation;
+    _invalidatePresentation();
     unawaited(
       _prepareAndSchedule(
         input,
@@ -149,7 +189,9 @@ final class SpellingSessionController extends ChangeNotifier {
   Future<void> checkNow(SpellingSessionInput input) async {
     _manualReviewActive = true;
     _latestInput = input;
+    _scheduledIdentity = input.identity;
     final operation = ++_operation;
+    _invalidatePresentation();
     await _prepareAndSchedule(input, operation: operation, manual: true);
   }
 
@@ -179,32 +221,45 @@ final class SpellingSessionController extends ChangeNotifier {
   }
 
   bool isCurrent(SpellingOccurrence occurrence) =>
+      !_presentationUsesLocalState &&
+      occurrence.run.snapshot.bufferId == _latestInput?.buffer.id &&
+      occurrence.run.snapshot.contentRevision ==
+          _latestInput?.buffer.revision &&
+      occurrence.run.snapshot.documentKind == _latestInput?.documentKind &&
       occurrence.run.snapshot.contextGeneration == _contextGeneration &&
       occurrence.run.languageId == _engineContext?.languageId &&
       (_coordinator?.isCurrent(occurrence) ?? false);
 
   SpellingOccurrence? occurrenceAtSource(int offset) =>
-      _coordinator?.occurrenceAtSource(offset);
+      _presentationUsesLocalState
+      ? null
+      : _coordinator?.occurrenceAtSource(offset);
 
   SpellingOccurrence? occurrenceAtField({
     required SpellingEditorTarget target,
     required int offset,
-  }) => _coordinator?.occurrenceAtField(target: target, offset: offset);
+  }) => _presentationUsesLocalState
+      ? null
+      : _coordinator?.occurrenceAtField(target: target, offset: offset);
 
-  void ignoreOnce(SpellingOccurrence occurrence) =>
-      _coordinator?.ignoreOnce(occurrence);
+  void ignoreOnce(SpellingOccurrence occurrence) {
+    if (isCurrent(occurrence)) _coordinator?.ignoreOnce(occurrence);
+  }
 
-  void ignoreAllInDocument(SpellingOccurrence occurrence) =>
-      _coordinator?.ignoreAllInDocument(occurrence);
+  void ignoreAllInDocument(SpellingOccurrence occurrence) {
+    if (isCurrent(occurrence)) _coordinator?.ignoreAllInDocument(occurrence);
+  }
 
   Future<void> addPersonalWord(SpellingOccurrence occurrence) async {
     _requireCurrent(occurrence);
     final store = _personalStore;
     if (store == null) throw StateError('Personal dictionary is unavailable.');
-    _personalWords = await store.addWord(
+    final updated = await store.addWord(
       occurrence.run.languageId,
       occurrence.word,
     );
+    if (!identical(store, _personalStore)) return;
+    _personalWords = updated;
     await _refreshAfterPersistentChange();
   }
 
@@ -214,24 +269,32 @@ final class SpellingSessionController extends ChangeNotifier {
     if (store == null) {
       throw StateError('This document is not associated with a project.');
     }
-    _projectWords = await store.addWord(
+    final projectRoot = _projectRoot;
+    final updated = await store.addWord(
       occurrence.run.languageId,
       occurrence.word,
     );
+    if (!identical(store, _projectStore) || projectRoot != _projectRoot) return;
+    _projectWords = updated;
     await _refreshAfterPersistentChange();
   }
 
   Future<void> removePersonalWord(String languageId, String word) async {
     final store = _personalStore;
     if (store == null) throw StateError('Personal dictionary is unavailable.');
-    _personalWords = await store.removeWord(languageId, word);
+    final updated = await store.removeWord(languageId, word);
+    if (!identical(store, _personalStore)) return;
+    _personalWords = updated;
     await _refreshAfterPersistentChange();
   }
 
   Future<void> removeProjectWord(String languageId, String word) async {
     final store = _projectStore;
     if (store == null) throw StateError('Project dictionary is unavailable.');
-    _projectWords = await store.removeWord(languageId, word);
+    final projectRoot = _projectRoot;
+    final updated = await store.removeWord(languageId, word);
+    if (!identical(store, _projectStore) || projectRoot != _projectRoot) return;
+    _projectWords = updated;
     await _refreshAfterPersistentChange();
   }
 
@@ -254,8 +317,11 @@ final class SpellingSessionController extends ChangeNotifier {
       languageId: languageId,
       displayLabel: displayLabel,
       importedRoot: p.join(dictionaryRoot, 'imported'),
-      validateNativePair: (aff, dic) =>
-          coordinator.validateDictionary(affPath: aff, dicPath: dic),
+      validateNativePair: (aff, dic, probe) => coordinator.validateDictionary(
+        affPath: aff,
+        dicPath: dic,
+        knownValidProbe: probe,
+      ),
     );
     await _reloadCatalogAndRefresh();
   }
@@ -263,8 +329,15 @@ final class SpellingSessionController extends ChangeNotifier {
   Future<void> removeImportedDictionary(String languageId) async {
     await _initializeStorage(_latestInput?.workspace ?? _settingsWorkspace);
     final installation = _catalog?.installedById(languageId);
-    if (installation == null || !installation.imported) return;
-    await _releaseAndRemoveInstallation(installation);
+    if (installation != null && installation.imported) {
+      await _releaseAndRemoveInstallation(installation);
+      return;
+    }
+    final invalid = _catalog?.invalidById(languageId);
+    if (invalid != null &&
+        invalid.kind == SpellingDictionaryInstallationKind.imported) {
+      await _releaseAndRemoveInvalidInstallation(invalid);
+    }
   }
 
   Future<void> installDictionary(String languageId) async {
@@ -275,6 +348,7 @@ final class SpellingSessionController extends ChangeNotifier {
       throw StateError('Dictionary resource is not in the shipped catalog.');
     }
     if (catalog!.installationForResource(resource.resourceId) != null) return;
+    final invalidInstallation = catalog.invalidById(resource.resourceId);
     if (_dictionaryDownloadCancellation != null) {
       throw StateError('Another dictionary installation is in progress.');
     }
@@ -297,8 +371,11 @@ final class SpellingSessionController extends ChangeNotifier {
       await dictionaryDownloader.install(
         resource: resource,
         downloadedRoot: p.join(dictionaryRoot, 'downloaded'),
-        validateNativePair: (aff, dic) =>
-            coordinator.validateDictionary(affPath: aff, dicPath: dic),
+        validateNativePair: (aff, dic, probe) => coordinator.validateDictionary(
+          affPath: aff,
+          dicPath: dic,
+          knownValidProbe: probe,
+        ),
         cancellation: cancellation,
         onProgress: (received, total) {
           if (_disposed ||
@@ -315,8 +392,8 @@ final class SpellingSessionController extends ChangeNotifier {
           );
           notifyListeners();
         },
+        replaceExisting: invalidInstallation != null,
       );
-      if (cancellation.isCancelled) return;
       _dictionaryInstallStatus = null;
       await _reloadCatalogAndRefresh();
     } on SpellingDictionaryDownloadCancelled {
@@ -360,8 +437,15 @@ final class SpellingSessionController extends ChangeNotifier {
   Future<void> removeDownloadedDictionary(String languageId) async {
     await _initializeStorage(_latestInput?.workspace ?? _settingsWorkspace);
     final installation = _catalog?.installedById(languageId);
-    if (installation == null || installation.imported) return;
-    await _releaseAndRemoveInstallation(installation);
+    if (installation != null && !installation.imported) {
+      await _releaseAndRemoveInstallation(installation);
+      return;
+    }
+    final invalid = _catalog?.invalidById(languageId);
+    if (invalid != null &&
+        invalid.kind == SpellingDictionaryInstallationKind.downloaded) {
+      await _releaseAndRemoveInvalidInstallation(invalid);
+    }
   }
 
   Future<void> setProjectLanguage(String? languageId) async {
@@ -369,11 +453,17 @@ final class SpellingSessionController extends ChangeNotifier {
     if (store == null) {
       throw StateError('This workspace has no project spelling scope.');
     }
-    _projectWords = await store.setProjectLanguage(languageId);
+    final projectRoot = _projectRoot;
+    final updated = await store.setProjectLanguage(languageId);
+    if (!identical(store, _projectStore) || projectRoot != _projectRoot) return;
+    _projectWords = updated;
     await _refreshAfterPersistentChange();
   }
 
   void closeBuffer(String bufferId) => _coordinator?.closeBuffer(bufferId);
+
+  void invalidateBufferAnchors(String bufferId) =>
+      _coordinator?.invalidateBufferAnchors(bufferId);
 
   /// Clears document-session ignores only for buffers that actually left the
   /// workspace. Merely activating another tab must retain them.
@@ -433,6 +523,7 @@ final class SpellingSessionController extends ChangeNotifier {
       if (entry == null) {
         await _ensureCoordinator();
         if (!_isOperationCurrent(operation, input)) return;
+        _presentationUsesLocalState = false;
         _coordinator!.showDictionaryUnavailable(languageId);
         return;
       }
@@ -441,6 +532,7 @@ final class SpellingSessionController extends ChangeNotifier {
         await _ensureCoordinator();
         if (!_isOperationCurrent(operation, input)) return;
         _engineContext = null;
+        _presentationUsesLocalState = false;
         _coordinator!.showDictionaryNotInstalled(languageId);
         return;
       }
@@ -484,8 +576,10 @@ final class SpellingSessionController extends ChangeNotifier {
       await _ensureCoordinator();
       if (!_isOperationCurrent(operation, input)) return;
       if (manual) {
+        _presentationUsesLocalState = false;
         await _coordinator!.checkNow(request);
       } else {
+        _presentationUsesLocalState = false;
         _coordinator!.schedule(request);
       }
     } on Object catch (error) {
@@ -496,6 +590,7 @@ final class SpellingSessionController extends ChangeNotifier {
         complete: false,
         message: error.toString(),
       );
+      _presentationUsesLocalState = true;
       notifyListeners();
     }
   }
@@ -526,26 +621,45 @@ final class SpellingSessionController extends ChangeNotifier {
   Future<void> _initializeStorage(Workspace? workspace) async {
     final supportRoot = await _ensureStorageRoot();
     if (!_personalStorageInitialized) {
-      _personalStore = SpellingWordStore(
-        filePath: p.join(supportRoot, 'spelling', 'personal.json'),
-      );
-      _personalWords = await _personalStore!.read();
-      _personalStorageInitialized = true;
+      final load = _personalStorageLoad ??= () async {
+        final store = wordStoreFactory(
+          filePath: p.join(supportRoot, 'spelling', 'personal.json'),
+          projectStore: false,
+        );
+        return (store: store, snapshot: await wordStoreReader(store));
+      }();
+      final loaded = await load;
+      if (!_disposed && !_personalStorageInitialized) {
+        _personalStore = loaded.store;
+        _personalWords = loaded.snapshot;
+        _personalStorageInitialized = true;
+      }
     }
 
     final nextProjectRoot = _projectScopeRoot(workspace);
-    if (!_projectStorageInitialized || _projectRoot != nextProjectRoot) {
+    _requestedProjectRoot = nextProjectRoot;
+    final projectGeneration = ++_projectStorageGeneration;
+    final nextProjectStore = nextProjectRoot == null
+        ? null
+        : _projectStorageInitialized && _projectRoot == nextProjectRoot
+        ? _projectStore
+        : wordStoreFactory(
+            filePath: p.join(nextProjectRoot, '.busymark', 'spelling.json'),
+            projectStore: true,
+          );
+    final nextProjectWords =
+        (nextProjectStore == null
+            ? null
+            : await wordStoreReader(nextProjectStore)) ??
+        const SpellingWordStoreSnapshot(revision: 0, wordsByLanguage: {});
+    if (!_disposed &&
+        projectGeneration == _projectStorageGeneration &&
+        _requestedProjectRoot == nextProjectRoot) {
       _projectRoot = nextProjectRoot;
-      _projectStore = nextProjectRoot == null
-          ? null
-          : SpellingWordStore(
-              filePath: p.join(nextProjectRoot, '.busymark', 'spelling.json'),
-              projectStore: true,
-            );
-      _projectWords =
-          await _projectStore?.read() ??
-          const SpellingWordStoreSnapshot(revision: 0, wordsByLanguage: {});
+      _projectStore = nextProjectStore;
+      _projectWords = nextProjectWords;
       _projectStorageInitialized = true;
+      _watchProjectStore(nextProjectRoot, nextProjectStore?.filePath);
     }
 
     // Available metadata is shipped with BusyMark. Only application-managed
@@ -615,26 +729,121 @@ final class SpellingSessionController extends ChangeNotifier {
     await _reloadCatalogAndRefresh();
   }
 
+  Future<void> _releaseAndRemoveInvalidInstallation(
+    SpellingInvalidDictionaryInstallation installation,
+  ) async {
+    final coordinator = _coordinator;
+    if (coordinator != null) {
+      coordinator.disablePresentation();
+      await coordinator.releaseDictionary();
+    }
+    _engineContext = null;
+    _contextIdentity = '';
+    final dictionaryRoot = await _ensureDictionaryStorageRoot();
+    final root = p.join(
+      dictionaryRoot,
+      installation.kind == SpellingDictionaryInstallationKind.imported
+          ? 'imported'
+          : 'downloaded',
+    );
+    await dictionaryInstaller.removeInvalid(
+      installation: installation,
+      installationRoot: root,
+    );
+    await _reloadCatalogAndRefresh();
+  }
+
   Future<void> _reloadCatalogAndRefresh() async {
     _catalog = null;
     await _initializeStorage(_latestInput?.workspace ?? _settingsWorkspace);
+    if (!_disposed) notifyListeners();
     await _refreshAfterPersistentChange();
   }
 
   Future<void> _ensureCoordinator() async {
     if (_coordinator != null) return;
-    final coordinator = await SpellingCoordinator.start();
+    final startup = _coordinatorStartup ??= coordinatorStarter();
+    late final SpellingCoordinator coordinator;
+    try {
+      coordinator = await startup;
+    } on Object {
+      if (identical(_coordinatorStartup, startup)) _coordinatorStartup = null;
+      rethrow;
+    }
     if (_disposed) {
       coordinator.dispose();
       return;
     }
-    _coordinator = coordinator..addListener(_forwardCoordinatorChange);
+    if (_coordinator == null) {
+      _coordinator = coordinator..addListener(_forwardCoordinatorChange);
+    } else if (!identical(_coordinator, coordinator)) {
+      coordinator.dispose();
+    }
+  }
+
+  void _watchProjectStore(String? projectRoot, String? filePath) {
+    final normalizedFile = filePath == null
+        ? null
+        : p.normalize(p.absolute(filePath));
+    if (_watchedProjectFile == normalizedFile) return;
+    _watchedProjectFile = normalizedFile;
+    _projectStoreReloadDebounce?.cancel();
+    _projectStoreReloadDebounce = null;
+    unawaited(_projectStoreWatcher?.cancel());
+    _projectStoreWatcher = null;
+    if (projectRoot == null || normalizedFile == null) return;
+    final directory = Directory(projectRoot);
+    if (!directory.existsSync()) return;
+    final file = File(normalizedFile);
+    final events = file.existsSync()
+        ? file.watch()
+        : directory.watch(recursive: true);
+    _projectStoreWatcher = events.listen((event) {
+      if (p.normalize(p.absolute(event.path)) != normalizedFile) return;
+      _projectStoreReloadDebounce?.cancel();
+      _projectStoreReloadDebounce = Timer(
+        const Duration(milliseconds: 100),
+        _reloadProjectWordsFromDisk,
+      );
+    }, onError: (_) {});
+  }
+
+  Future<void> _reloadProjectWordsFromDisk() async {
+    final store = _projectStore;
+    final root = _projectRoot;
+    if (_disposed || store == null || root == null) return;
+    try {
+      final snapshot = await wordStoreReader(store);
+      if (_disposed ||
+          !identical(store, _projectStore) ||
+          root != _projectRoot) {
+        return;
+      }
+      if (_sameWordStoreSnapshot(snapshot, _projectWords)) return;
+      _projectWords = snapshot;
+      await _refreshAfterPersistentChange();
+    } on Object catch (error) {
+      if (_disposed ||
+          !identical(store, _projectStore) ||
+          root != _projectRoot) {
+        return;
+      }
+      _localState = SpellingPresentationState(
+        status: SpellingPresentationStatus.failure,
+        occurrences: const [],
+        complete: false,
+        message: error.toString(),
+      );
+      _presentationUsesLocalState = true;
+      notifyListeners();
+    }
   }
 
   void _forwardCoordinatorChange() => notifyListeners();
 
   void _showLanguageRequired() {
     if (_coordinator case final coordinator?) {
+      _presentationUsesLocalState = false;
       coordinator.showLanguageRequired();
     } else {
       _localState = const SpellingPresentationState.languageRequired();
@@ -644,6 +853,7 @@ final class SpellingSessionController extends ChangeNotifier {
 
   void _showDisabled() {
     if (_coordinator case final coordinator?) {
+      _presentationUsesLocalState = false;
       coordinator.disablePresentation();
     } else {
       _localState = const SpellingPresentationState(
@@ -669,7 +879,10 @@ final class SpellingSessionController extends ChangeNotifier {
   Future<void> _refreshAfterPersistentChange() async {
     _scheduledIdentity = '';
     final input = _latestInput;
-    if (input == null) return;
+    if (input == null) {
+      if (!_disposed) notifyListeners();
+      return;
+    }
     final refreshed = input.refreshed();
     _latestInput = refreshed;
     if (_manualReviewActive) {
@@ -680,12 +893,25 @@ final class SpellingSessionController extends ChangeNotifier {
     }
   }
 
+  void _invalidatePresentation() {
+    _engineContext = null;
+    _presentationUsesLocalState = true;
+    _localState = const SpellingPresentationState(
+      status: SpellingPresentationStatus.checking,
+      occurrences: [],
+      complete: false,
+    );
+    notifyListeners();
+  }
+
   @override
   void dispose() {
     if (_disposed) return;
     _disposed = true;
     _operation++;
     _dictionaryDownloadCancellation?.cancel();
+    _projectStoreReloadDebounce?.cancel();
+    unawaited(_projectStoreWatcher?.cancel());
     final coordinator = _coordinator;
     if (coordinator != null) {
       coordinator.removeListener(_forwardCoordinatorChange);
@@ -779,6 +1005,28 @@ bool _isEligible(DocumentKind kind) => switch (kind) {
   DocumentKind.writersideXmlTopic => true,
   _ => false,
 };
+
+bool _sameWordStoreSnapshot(
+  SpellingWordStoreSnapshot left,
+  SpellingWordStoreSnapshot right,
+) {
+  if (left.revision != right.revision ||
+      left.projectLanguage != right.projectLanguage ||
+      left.wordsByLanguage.length != right.wordsByLanguage.length) {
+    return false;
+  }
+  for (final entry in left.wordsByLanguage.entries) {
+    final other = right.wordsByLanguage[entry.key];
+    if (other == null || other.length != entry.value.length) return false;
+    for (var index = 0; index < other.length; index++) {
+      if (entry.value[index].key != other[index].key ||
+          entry.value[index].display != other[index].display) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
 
 String? _projectScopeRoot(Workspace? workspace) => switch (workspace?.kind) {
   WorkspaceKind.markdownFolder ||

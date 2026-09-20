@@ -20,23 +20,39 @@ void main() {
       expect(catalog.availableEntries, hasLength(48));
       expect(catalog.installations, hasLength(48));
 
+      for (final resource in catalog.availableEntries) {
+        final installation = catalog.installationForResource(
+          resource.resourceId,
+        );
+        expect(installation, isNotNull, reason: resource.resourceId);
+        late final NativeSpellDictionary dictionary;
+        try {
+          dictionary = NativeSpellDictionary.open(
+            affPath: installation!.affPath,
+            dicPath: installation.dicPath,
+          );
+        } on Object catch (error) {
+          fail('${resource.resourceId} failed native validation: $error');
+        }
+        try {
+          expect(dictionary.encoding, isNotEmpty, reason: resource.resourceId);
+          expect(
+            dictionary.check(resource.knownValidProbe),
+            NativeSpellResult.accepted,
+            reason: '${resource.resourceId}: ${resource.knownValidProbe}',
+          );
+        } finally {
+          dictionary.close();
+        }
+      }
+
       final us = _open(catalog, 'en-US');
-      final gb = _open(catalog, 'en-GB');
-      final russian = _open(catalog, 'ru-RU');
-      final hindi = _open(catalog, 'hi-IN');
       try {
-        expect(us.encoding, isNotEmpty);
         expect(us.check('color'), NativeSpellResult.accepted);
         expect(us.check('helo'), NativeSpellResult.rejected);
         expect(us.suggest('helo'), contains('hello'));
-        expect(gb.check('colour'), NativeSpellResult.accepted);
-        expect(russian.check('ЧПУ'), NativeSpellResult.accepted);
-        expect(hindi.check('ढूंढेगा'), NativeSpellResult.accepted);
       } finally {
         us.close();
-        gb.close();
-        russian.close();
-        hindi.close();
       }
     },
     skip: unavailable ? 'Prepared spelling bundle is not available.' : false,

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
@@ -68,10 +69,15 @@ final class SpellingDictionaryDownloader {
   Future<SpellingDictionaryInstallation> install({
     required SpellingDictionaryResource resource,
     required String downloadedRoot,
-    required Future<String> Function(String affPath, String dicPath)
+    required Future<String> Function(
+      String affPath,
+      String dicPath,
+      String? knownValidProbe,
+    )
     validateNativePair,
     required SpellingDictionaryDownloadCancellation cancellation,
     required SpellingDictionaryDownloadProgress onProgress,
+    bool replaceExisting = false,
   }) async {
     cancellation.throwIfCancelled();
     final root = Directory(p.normalize(p.absolute(downloadedRoot)));
@@ -113,6 +119,7 @@ final class SpellingDictionaryDownloader {
         destinationRoot: root.path,
         validateNativePair: validateNativePair,
         cancellationGuard: cancellation.throwIfCancelled,
+        replaceExisting: replaceExisting,
       );
     } finally {
       if (await downloadStage.exists()) {
@@ -129,18 +136,18 @@ Future<void> _downloadFile({
   required SpellingDictionaryDownloadCancellation cancellation,
   required void Function(int receivedBytes) onProgress,
 }) async {
+  const inactivityTimeout = Duration(seconds: 15);
   if (source.scheme != 'https') {
     throw const FormatException('Dictionary downloads must use HTTPS.');
   }
   final client = HttpClient()..autoUncompress = false;
   void abort() => client.close(force: true);
   cancellation.register(abort);
-  IOSink? sink;
   try {
     cancellation.throwIfCancelled();
-    final request = await client.getUrl(source);
+    final request = await client.getUrl(source).timeout(inactivityTimeout);
     request.headers.set(HttpHeaders.acceptEncodingHeader, 'identity');
-    final response = await request.close();
+    final response = await request.close().timeout(inactivityTimeout);
     if (response.statusCode != HttpStatus.ok) {
       throw HttpException(
         'Dictionary download returned HTTP ${response.statusCode}.',
@@ -153,15 +160,47 @@ Future<void> _downloadFile({
         'Dictionary download size does not match its catalog.',
       );
     }
+    await receiveSpellingDictionaryBody(
+      bytes: response,
+      destination: destination,
+      expectedBytes: expectedBytes,
+      cancellation: cancellation,
+      onProgress: onProgress,
+      inactivityTimeout: inactivityTimeout,
+    );
+  } on Object {
+    if (cancellation.isCancelled) {
+      throw const SpellingDictionaryDownloadCancelled();
+    }
+    rethrow;
+  } finally {
+    cancellation.unregister(abort);
+    client.close(force: true);
+  }
+}
+
+/// Receives one response body with a deadline that resets after every chunk.
+/// Kept separate so stalled-transfer behavior can be exercised without a
+/// public network dependency.
+Future<void> receiveSpellingDictionaryBody({
+  required Stream<List<int>> bytes,
+  required File destination,
+  required int expectedBytes,
+  required SpellingDictionaryDownloadCancellation cancellation,
+  required void Function(int receivedBytes) onProgress,
+  Duration inactivityTimeout = const Duration(seconds: 15),
+}) async {
+  IOSink? sink;
+  try {
     sink = destination.openWrite();
     var received = 0;
-    await for (final bytes in response) {
+    await for (final chunk in bytes.timeout(inactivityTimeout)) {
       cancellation.throwIfCancelled();
-      received += bytes.length;
+      received += chunk.length;
       if (received > expectedBytes) {
         throw const FormatException('Dictionary download exceeded its size.');
       }
-      sink.add(bytes);
+      sink.add(chunk);
       onProgress(received);
     }
     await sink.flush();
@@ -171,14 +210,7 @@ Future<void> _downloadFile({
     if (received != expectedBytes) {
       throw const FormatException('Dictionary download was incomplete.');
     }
-  } on Object {
-    if (cancellation.isCancelled) {
-      throw const SpellingDictionaryDownloadCancelled();
-    }
-    rethrow;
   } finally {
-    cancellation.unregister(abort);
     await sink?.close();
-    client.close(force: true);
   }
 }

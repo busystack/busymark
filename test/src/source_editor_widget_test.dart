@@ -652,6 +652,83 @@ void main() {
     );
   });
 
+  testWidgets('source spelling menu converts folded offsets to full source', (
+    tester,
+  ) async {
+    const source = '# First\nhelo hidden\n# Second\nhelo visible\n';
+    const path = '/project/folded-menu.md';
+    final region = sourceFoldRegions(
+      source,
+      SourceSyntaxLanguage.markdown,
+    ).first;
+    final expected = source.lastIndexOf('helo');
+    int? requestedOffset;
+    const nativeMenuChannel = MethodChannel(nativeMenuChannelName);
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      nativeMenuChannel,
+      (call) async => call.method == 'show' ? -1 : false,
+    );
+    addTearDown(() {
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        nativeMenuChannel,
+        null,
+      );
+    });
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: SizedBox(
+            width: 900,
+            height: 600,
+            child: BusyMarkSourceEditor(
+              text: source,
+              clipboardService: _SourceTestClipboard(),
+              language: SourceSyntaxLanguage.markdown,
+              filePath: path,
+              diagnostics: const [],
+              editorFontSize: 14,
+              wordWrap: true,
+              searchActive: false,
+              searchOptions: const SourceSearchOptions(),
+              initialFoldedRegionKeys: {region.key},
+              onSearchOptionsChanged: (_) {},
+              onChanged: (_, _) {},
+              onOpenSearch: () {},
+              onCloseSearch: () {},
+              readSpellingMenuItems: (offset) async {
+                requestedOffset = offset;
+                return const [];
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    final field = find.byType(TextField);
+    final controller =
+        tester.widget<TextField>(field).controller!
+            as BusyMarkSourceEditingController;
+    final visibleTarget = controller.text.lastIndexOf('helo');
+    expect(visibleTarget, lessThan(expected));
+    final render = _findRenderEditable(tester.renderObject(field))!;
+    final local = render.getLocalRectForCaret(
+      TextPosition(offset: visibleTarget + 1),
+    );
+    await tester.tapAt(
+      render.localToGlobal(local.center),
+      buttons: kSecondaryMouseButton,
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      requestedOffset,
+      inInclusiveRange(expected, expected + 'helo'.length),
+    );
+  });
+
   testWidgets('source AI applies a user-selected insertion target', (
     tester,
   ) async {

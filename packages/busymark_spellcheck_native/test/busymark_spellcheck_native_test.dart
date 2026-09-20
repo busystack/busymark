@@ -55,6 +55,28 @@ void main() {
     expect(words, ['helo', 'café', 'don’t', 'state-of-the-art']);
   });
 
+  test('dictionary word characters extend every candidate edge', () {
+    const prose = "C++ C# +lead trail# 'quoted' -hyphen- café";
+    final ranges = dictionary.tokenize(prose, language: 'en-US');
+    final utf16 = nativeUtf8BoundaryToUtf16(prose);
+    final words = [
+      for (final range in ranges)
+        prose.substring(utf16[range.utf8Start], utf16[range.utf8End]),
+    ];
+
+    expect(words, [
+      'C++',
+      'C#',
+      '+lead',
+      'trail#',
+      "'quoted'",
+      '-hyphen-',
+      'café',
+    ]);
+    expect(dictionary.check('C++'), NativeSpellResult.accepted);
+    expect(dictionary.check('C#'), NativeSpellResult.accepted);
+  });
+
   test('closed handles report an unchecked failure', () {
     dictionary.close();
     expect(
@@ -70,6 +92,28 @@ void main() {
         dicPath: '/missing/test.dic',
       ),
       throwsA(isA<NativeSpellException>()),
+    );
+  });
+
+  test('rejects a dictionary that claims records but loads none', () async {
+    final temporary = await Directory.systemTemp.createTemp(
+      'busymark-empty-dictionary-',
+    );
+    addTearDown(() => temporary.delete(recursive: true));
+    final aff = File('${temporary.path}/empty.aff');
+    final dic = File('${temporary.path}/empty.dic');
+    await aff.writeAsString('SET UTF-8\n');
+    await dic.writeAsString('1\n');
+
+    expect(
+      () => NativeSpellDictionary.open(affPath: aff.path, dicPath: dic.path),
+      throwsA(
+        isA<NativeSpellException>().having(
+          (error) => error.message,
+          'message',
+          contains('no records'),
+        ),
+      ),
     );
   });
 }
