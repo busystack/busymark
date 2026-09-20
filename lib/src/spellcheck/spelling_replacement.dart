@@ -1,7 +1,11 @@
 import 'package:characters/characters.dart';
 import 'package:unorm_dart/unorm_dart.dart' as unicode;
 
+import '../markdown/markdown_model.dart';
+import '../workspace/workspace_model.dart';
+import 'markdown_spelling_projection.dart';
 import 'spelling_projection.dart';
+import 'writerside_spelling_projection.dart';
 
 final class SpellingSourceEdit {
   const SpellingSourceEdit({
@@ -48,6 +52,10 @@ final class SpellingReplacementPlan {
     required this.sourceEdits,
     required this.richLeafEdits,
     required this.fieldEdits,
+    required this.snapshot,
+    required this.languageId,
+    this.sourceTargetStart,
+    this.sourceTargetEnd,
   });
 
   final String originalWord;
@@ -55,6 +63,10 @@ final class SpellingReplacementPlan {
   final List<SpellingSourceEdit> sourceEdits;
   final List<SpellingRichLeafEdit> richLeafEdits;
   final List<SpellingFieldEdit> fieldEdits;
+  final SpellingSnapshotIdentity snapshot;
+  final String languageId;
+  final int? sourceTargetStart;
+  final int? sourceTargetEnd;
 
   String applyToSource(String source) {
     var result = source;
@@ -66,7 +78,57 @@ final class SpellingReplacementPlan {
       }
       result = result.replaceRange(edit.start, edit.end, edit.replacement);
     }
+    if (!_sourceResultMatches(result)) {
+      throw StateError(
+        'The spelling correction did not preserve the projected source '
+        'structure.',
+      );
+    }
     return result;
+  }
+
+  bool _sourceResultMatches(String source) {
+    final originalStart = sourceTargetStart;
+    final originalEnd = sourceTargetEnd;
+    if (originalStart == null || originalEnd == null) return true;
+    final start = _translateSourceBoundary(originalStart, sourceEdits);
+    final end = _translateSourceBoundary(originalEnd, sourceEdits);
+    if (start < 0 || end < start || end > source.length) return false;
+    final projection = switch (snapshot.documentKind) {
+      DocumentKind.writersideXmlTopic =>
+        const WritersideXmlSpellingProjector().project(
+          filePath: 'spelling-validation.topic',
+          source: source,
+          languageId: languageId,
+          snapshot: snapshot,
+        ),
+      DocumentKind.markdown || DocumentKind.writersideMarkdownTopic =>
+        const MarkdownSpellingProjector().project(
+          filePath: 'spelling-validation.md',
+          source: source,
+          mode: snapshot.documentKind == DocumentKind.writersideMarkdownTopic
+              ? MarkdownMode.writersideMarkdown
+              : MarkdownMode.commonMark,
+          languageId: languageId,
+          snapshot: snapshot,
+        ),
+      _ => null,
+    };
+    if (projection == null) return true;
+    final atoms =
+        [
+          for (final run in projection.runs)
+            for (final atom in run.atoms)
+              if (atom.sourceStart >= start && atom.sourceEnd <= end) atom,
+        ]..sort((left, right) {
+          final byStart = left.sourceStart.compareTo(right.sourceStart);
+          return byStart != 0
+              ? byStart
+              : left.sourceEnd.compareTo(right.sourceEnd);
+        });
+    if (atoms.isEmpty) return false;
+    final logical = atoms.map((atom) => atom.logicalText).join();
+    return unicode.nfc(logical) == unicode.nfc(suggestion);
   }
 
   /// Translates the end of the final source edit into the resulting source.
@@ -259,6 +321,39 @@ final class SpellingReplacementPlanner {
         }
       }
     }
+    for (final wrapper in occurrence.run.formattingWrappers) {
+      if (occurrence.logicalStart > wrapper.logicalStart ||
+          occurrence.logicalEnd < wrapper.logicalEnd) {
+        continue;
+      }
+      final ownedAtomIndexes = <int>[
+        for (final (index, atom) in atoms.indexed)
+          if (atom.logicalStart >= wrapper.logicalStart &&
+              atom.logicalEnd <= wrapper.logicalEnd)
+            index,
+      ];
+      if (ownedAtomIndexes.isEmpty) continue;
+      final remaining = StringBuffer();
+      for (final index in ownedAtomIndexes) {
+        remaining.write(assigned[index] ?? '');
+      }
+      if (remaining.isNotEmpty) continue;
+      sourceEdits
+        ..add(
+          SpellingSourceEdit(
+            start: wrapper.openingStart,
+            end: wrapper.openingEnd,
+            replacement: '',
+          ),
+        )
+        ..add(
+          SpellingSourceEdit(
+            start: wrapper.closingStart,
+            end: wrapper.closingEnd,
+            replacement: '',
+          ),
+        );
+    }
     final richEdits = [
       for (final accumulator in richGroups.values) accumulator.build(),
     ]..sort((left, right) => _comparePaths(left.path, right.path));
@@ -274,14 +369,41 @@ final class SpellingReplacementPlanner {
         'the selected suggestion.',
       );
     }
+    final sourceOffsets = atoms
+        .where((atom) => atom.sourceStart >= 0 && atom.sourceEnd >= 0)
+        .toList(growable: false);
     return SpellingReplacementPlan(
       originalWord: occurrence.word,
       suggestion: suggestion,
       sourceEdits: _coalesceSourceEdits(sourceEdits),
       richLeafEdits: List.unmodifiable(richEdits),
       fieldEdits: _coalesceFieldEdits(fieldEdits),
+      snapshot: occurrence.run.snapshot,
+      languageId: occurrence.run.languageId,
+      sourceTargetStart: sourceOffsets.isEmpty
+          ? null
+          : sourceOffsets
+                .map((atom) => atom.sourceStart)
+                .reduce((left, right) => left < right ? left : right),
+      sourceTargetEnd: sourceOffsets.isEmpty
+          ? null
+          : sourceOffsets
+                .map((atom) => atom.sourceEnd)
+                .reduce((left, right) => left > right ? left : right),
     );
   }
+}
+
+int _translateSourceBoundary(int offset, List<SpellingSourceEdit> edits) {
+  var translated = offset;
+  for (final edit in edits) {
+    if (edit.end <= offset) {
+      translated += edit.replacement.length - (edit.end - edit.start);
+    } else if (edit.start < offset && edit.end > offset) {
+      translated = edit.start + edit.replacement.length;
+    }
+  }
+  return translated;
 }
 
 List<SpellingFieldEdit> _coalesceFieldEdits(List<SpellingFieldEdit> edits) {
@@ -291,6 +413,14 @@ List<SpellingFieldEdit> _coalesceFieldEdits(List<SpellingFieldEdit> edits) {
   final result = <SpellingFieldEdit>[];
   for (final edit in sorted) {
     final previous = result.lastOrNull;
+    if (previous != null && edit.start < previous.end) {
+      if (edit.start == previous.start &&
+          edit.end == previous.end &&
+          edit.replacement == previous.replacement) {
+        continue;
+      }
+      throw StateError('Overlapping spelling source edits are unsafe.');
+    }
     if (previous != null && previous.end == edit.start) {
       result[result.length - 1] = SpellingFieldEdit(
         start: previous.start,

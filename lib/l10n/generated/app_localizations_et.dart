@@ -4551,6 +4551,48 @@ class AppLocalizationsEt extends AppLocalizations {
   String get spellingCheckIncomplete => 'Õigekirjakontroll on pooleli';
 
   @override
+  String get spellingDictionaryNotInstalled => 'Sõnastik pole installitud';
+
+  @override
+  String spellingDictionaryNotInstalledWithSize(String size) {
+    return 'Pole installitud · $size';
+  }
+
+  @override
+  String get spellingDictionaryInstalled => 'Installitud';
+
+  @override
+  String get installSpellingDictionary => 'Installi sõnastik';
+
+  @override
+  String get removeSpellingDictionary => 'Eemalda sõnastik';
+
+  @override
+  String get cancelSpellingDictionaryInstall =>
+      'Katkesta sõnastiku allalaadimine';
+
+  @override
+  String get retrySpellingDictionaryInstall =>
+      'Proovi sõnastikku uuesti installida';
+
+  @override
+  String spellingDictionaryDownloading(String size) {
+    return 'Allalaadimine: $size…';
+  }
+
+  @override
+  String get spellingDictionaryValidating => 'Sõnastiku kontrollimine…';
+
+  @override
+  String get spellingDictionaryInstallFailed =>
+      'Sõnastiku installimine nurjus — uuesti proovimiseks vali see';
+
+  @override
+  String spellingDictionaryInstallPrompt(String dictionary, String size) {
+    return 'Kas installida $dictionary ($size)? Pärast installimist on see võrguühenduseta saadaval, kuni selle eemaldad.';
+  }
+
+  @override
   String get spellingDictionaryUnavailable => 'Sõnastik pole saadaval';
 
   @override

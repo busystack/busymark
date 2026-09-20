@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:collection';
 import 'dart:isolate';
 
 import 'package:busymark_spellcheck_native/busymark_spellcheck_native.dart';
@@ -169,7 +170,11 @@ final class SpellingWorker {
       final word = run.text.substring(start, end);
       occurrences.add(
         SpellingOccurrence(
-          id: '${run.snapshot.bufferId}:${run.snapshot.contentRevision}:${run.id}:$start:$end',
+          id:
+              '${run.snapshot.bufferId}:${run.snapshot.contentRevision}:'
+              '${run.snapshot.documentKind.name}:'
+              '${run.snapshot.contextGeneration}:${run.languageId}:'
+              '${run.id}:$start:$end',
           run: run,
           logicalStart: start,
           logicalEnd: end,
@@ -230,6 +235,12 @@ final class SpellingWorker {
       'dicPath': dicPath,
     });
     return message['encoding']?.toString() ?? '';
+  }
+
+  /// Releases the active native handle before an installed pair is removed.
+  Future<void> releaseDictionary() async {
+    _requireOpen();
+    await _request({'type': 'releaseDictionary'});
   }
 
   void cancelChecks() {
@@ -302,7 +313,7 @@ final class _WorkerRuntime {
   final SendPort mainPort;
   NativeSpellDictionary? _dictionary;
   String? _contextIdentity;
-  final Map<String, String> _wordCache = {};
+  final LinkedHashMap<String, String> _wordCache = LinkedHashMap();
   Map<Object?, Object?>? _newestCheck;
   final List<Map<Object?, Object?>> _sideRequestQueue = [];
   bool _busy = false;
@@ -329,6 +340,7 @@ final class _WorkerRuntime {
       case 'suggest':
       case 'validate':
       case 'project':
+      case 'releaseDictionary':
         _sideRequestQueue.add(message);
         if (!_busy) unawaited(_drain());
         return;
@@ -368,6 +380,12 @@ final class _WorkerRuntime {
             await _validateDictionary(request);
           } else if (request['type'] == 'project') {
             await _project(request);
+          } else if (request['type'] == 'releaseDictionary') {
+            _disposeDictionary();
+            mainPort.send({
+              'requestId': request['requestId'],
+              'released': true,
+            });
           } else {
             await _suggest(request);
           }
@@ -391,6 +409,7 @@ final class _WorkerRuntime {
       final dictionary = _ensureDictionary(context);
       final language = context['languageId'].toString();
       final runs = request['runs'] as List;
+      var wordsSinceYield = 0;
       for (var runCursor = 0; runCursor < runs.length; runCursor++) {
         if (generation != _cancelGeneration) {
           mainPort.send({
@@ -405,32 +424,59 @@ final class _WorkerRuntime {
         final runIndex = run['index'] as int;
         final text = run['text'].toString();
         try {
-          final utf16Boundaries = _codePointToUtf16Boundaries(text);
-          final tokens = dictionary.tokenize(text, language: language);
-          for (final token in tokens) {
-            if (token.characterStart >= utf16Boundaries.length ||
-                token.characterEnd >= utf16Boundaries.length) {
-              throw const FormatException('Native token boundary is invalid.');
-            }
-            final start = utf16Boundaries[token.characterStart];
-            final end = utf16Boundaries[token.characterEnd];
-            if (end <= start) continue;
-            final word = text.substring(start, end);
-            final cacheKey =
-                '${context['identity'] ?? _contextIdentity}\u0000${unicode.nfc(word)}';
-            var outcome = _wordCache[cacheKey];
-            if (outcome == null) {
-              outcome = dictionary.check(word) == NativeSpellResult.accepted
+          for (final chunk in _boundedProseChunks(
+            text,
+            dictionary: dictionary,
+            language: language,
+          )) {
+            final utf16Boundaries = _codePointToUtf16Boundaries(chunk.text);
+            final tokens = dictionary.tokenize(chunk.text, language: language);
+            for (final token in tokens) {
+              if (generation != _cancelGeneration) {
+                mainPort.send({
+                  'requestId': requestId,
+                  'occurrences': occurrences,
+                  'cancelled': true,
+                  'complete': false,
+                });
+                return;
+              }
+              if (token.characterStart >= utf16Boundaries.length ||
+                  token.characterEnd >= utf16Boundaries.length) {
+                throw const FormatException(
+                  'Native token boundary is invalid.',
+                );
+              }
+              final start =
+                  chunk.utf16Start + utf16Boundaries[token.characterStart];
+              final end =
+                  chunk.utf16Start + utf16Boundaries[token.characterEnd];
+              if (end <= start) continue;
+              final word = text.substring(start, end);
+              final cacheKey =
+                  '${context['identity'] ?? _contextIdentity}\u0000${unicode.nfc(word)}';
+              var outcome = _wordCache.remove(cacheKey);
+              outcome ??= dictionary.check(word) == NativeSpellResult.accepted
                   ? 'accepted'
                   : 'rejected';
               _wordCache[cacheKey] = outcome;
+              while (_wordCache.length > _maximumCachedWords) {
+                _wordCache.remove(_wordCache.keys.first);
+              }
+              if (outcome == 'rejected') {
+                occurrences.add({
+                  'runIndex': runIndex,
+                  'start': start,
+                  'end': end,
+                  'outcome': outcome,
+                });
+              }
+              wordsSinceYield++;
+              if (wordsSinceYield >= _wordBatchSize) {
+                wordsSinceYield = 0;
+                await Future<void>.delayed(Duration.zero);
+              }
             }
-            occurrences.add({
-              'runIndex': runIndex,
-              'start': start,
-              'end': end,
-              'outcome': outcome,
-            });
           }
         } on Object catch (error) {
           complete = false;
@@ -605,6 +651,104 @@ final class _WorkerRuntime {
     _contextIdentity = null;
     _wordCache.clear();
   }
+}
+
+const _maximumProseChunkBytes = 48 * 1024;
+const _maximumCachedWords = 8192;
+const _wordBatchSize = 256;
+
+final class _ProseChunk {
+  const _ProseChunk({required this.text, required this.utf16Start});
+
+  final String text;
+  final int utf16Start;
+}
+
+Iterable<_ProseChunk> _boundedProseChunks(
+  String text, {
+  required NativeSpellDictionary dictionary,
+  required String language,
+}) sync* {
+  var start = 0;
+  while (start < text.length) {
+    var cursor = start;
+    var bytes = 0;
+    int? lastWhitespaceBoundary;
+    while (cursor < text.length) {
+      final rune = _codePointAtUtf16(text, cursor);
+      final width = rune > 0xffff ? 2 : 1;
+      final encodedWidth = rune <= 0x7f
+          ? 1
+          : rune <= 0x7ff
+          ? 2
+          : rune <= 0xffff
+          ? 3
+          : 4;
+      if (bytes + encodedWidth > _maximumProseChunkBytes) break;
+      bytes += encodedWidth;
+      cursor += width;
+      if (_unicodeWhitespace.hasMatch(String.fromCharCode(rune))) {
+        lastWhitespaceBoundary = cursor;
+      }
+    }
+    if (cursor >= text.length) {
+      yield _ProseChunk(text: text.substring(start), utf16Start: start);
+      break;
+    }
+    var end = lastWhitespaceBoundary != null && lastWhitespaceBoundary > start
+        ? lastWhitespaceBoundary
+        : null;
+    if (end == null) {
+      // Ask the same Pango-backed tokenizer used for checking where the last
+      // complete candidate begins. Ending immediately before that candidate
+      // is safe even for scripts that do not separate words with spaces. An
+      // artificial end-of-probe word boundary is deliberately not trusted.
+      final probe = text.substring(start, cursor);
+      final boundaries = _codePointToUtf16Boundaries(probe);
+      final tokens = dictionary.tokenize(probe, language: language);
+      for (final token in tokens.reversed) {
+        if (token.characterStart > 0 &&
+            token.characterStart < boundaries.length) {
+          end = start + boundaries[token.characterStart];
+          break;
+        }
+      }
+      if (end == null) {
+        for (final token in tokens.reversed) {
+          if (token.characterEnd > 0 &&
+              token.characterEnd < boundaries.length - 1) {
+            end = start + boundaries[token.characterEnd];
+            break;
+          }
+        }
+      }
+      // Pango found no candidate at all, so the probe cannot cut a spelling
+      // token even though it contains no whitespace (for example a long run
+      // of non-word punctuation).
+      if (end == null && tokens.isEmpty) end = cursor;
+    }
+    end ??= start;
+    if (end <= start) {
+      throw const FormatException(
+        'A spelling token exceeds the bounded native input size.',
+      );
+    }
+    yield _ProseChunk(text: text.substring(start, end), utf16Start: start);
+    start = end;
+  }
+}
+
+final RegExp _unicodeWhitespace = RegExp(r'^\s$', unicode: true);
+
+int _codePointAtUtf16(String text, int offset) {
+  final first = text.codeUnitAt(offset);
+  if (first >= 0xd800 && first <= 0xdbff && offset + 1 < text.length) {
+    final second = text.codeUnitAt(offset + 1);
+    if (second >= 0xdc00 && second <= 0xdfff) {
+      return 0x10000 + ((first - 0xd800) << 10) + (second - 0xdc00);
+    }
+  }
+  return first;
 }
 
 List<int> _codePointToUtf16Boundaries(String text) {

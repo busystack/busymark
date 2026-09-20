@@ -4611,6 +4611,48 @@ class AppLocalizationsPt extends AppLocalizations {
       'A verificação ortográfica está incompleta';
 
   @override
+  String get spellingDictionaryNotInstalled => 'Dicionário não instalado';
+
+  @override
+  String spellingDictionaryNotInstalledWithSize(String size) {
+    return 'Não instalado · $size';
+  }
+
+  @override
+  String get spellingDictionaryInstalled => 'Instalado';
+
+  @override
+  String get installSpellingDictionary => 'Instalar dicionário';
+
+  @override
+  String get removeSpellingDictionary => 'Remover dicionário';
+
+  @override
+  String get cancelSpellingDictionaryInstall =>
+      'Cancelar transferência do dicionário';
+
+  @override
+  String get retrySpellingDictionaryInstall =>
+      'Repetir instalação do dicionário';
+
+  @override
+  String spellingDictionaryDownloading(String size) {
+    return 'A transferir $size…';
+  }
+
+  @override
+  String get spellingDictionaryValidating => 'A validar o dicionário…';
+
+  @override
+  String get spellingDictionaryInstallFailed =>
+      'A instalação falhou — selecione para repetir';
+
+  @override
+  String spellingDictionaryInstallPrompt(String dictionary, String size) {
+    return 'Instalar $dictionary ($size)? Depois de instalado, ficará disponível offline até ser removido.';
+  }
+
+  @override
   String get spellingDictionaryUnavailable => 'Dicionário indisponível';
 
   @override
@@ -9224,6 +9266,48 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   @override
   String get spellingCheckIncomplete =>
       'A verificação ortográfica está incompleta';
+
+  @override
+  String get spellingDictionaryNotInstalled => 'Dicionário não instalado';
+
+  @override
+  String spellingDictionaryNotInstalledWithSize(String size) {
+    return 'Não instalado · $size';
+  }
+
+  @override
+  String get spellingDictionaryInstalled => 'Instalado';
+
+  @override
+  String get installSpellingDictionary => 'Instalar dicionário';
+
+  @override
+  String get removeSpellingDictionary => 'Remover dicionário';
+
+  @override
+  String get cancelSpellingDictionaryInstall =>
+      'Cancelar download do dicionário';
+
+  @override
+  String get retrySpellingDictionaryInstall =>
+      'Tentar instalar o dicionário novamente';
+
+  @override
+  String spellingDictionaryDownloading(String size) {
+    return 'Baixando $size…';
+  }
+
+  @override
+  String get spellingDictionaryValidating => 'Validando dicionário…';
+
+  @override
+  String get spellingDictionaryInstallFailed =>
+      'Falha na instalação — selecione para tentar novamente';
+
+  @override
+  String spellingDictionaryInstallPrompt(String dictionary, String size) {
+    return 'Instalar $dictionary ($size)? Depois de instalado, ficará disponível offline até ser removido.';
+  }
 
   @override
   String get spellingDictionaryUnavailable => 'Dicionário indisponível';

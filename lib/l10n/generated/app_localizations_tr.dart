@@ -4554,6 +4554,47 @@ class AppLocalizationsTr extends AppLocalizations {
   String get spellingCheckIncomplete => 'Yazım denetimi tamamlanmadı';
 
   @override
+  String get spellingDictionaryNotInstalled => 'Sözlük yüklü değil';
+
+  @override
+  String spellingDictionaryNotInstalledWithSize(String size) {
+    return 'Yüklü değil · $size';
+  }
+
+  @override
+  String get spellingDictionaryInstalled => 'Yüklü';
+
+  @override
+  String get installSpellingDictionary => 'Sözlüğü yükle';
+
+  @override
+  String get removeSpellingDictionary => 'Sözlüğü kaldır';
+
+  @override
+  String get cancelSpellingDictionaryInstall => 'Sözlük indirmesini iptal et';
+
+  @override
+  String get retrySpellingDictionaryInstall =>
+      'Sözlük yüklemesini yeniden dene';
+
+  @override
+  String spellingDictionaryDownloading(String size) {
+    return '$size indiriliyor…';
+  }
+
+  @override
+  String get spellingDictionaryValidating => 'Sözlük doğrulanıyor…';
+
+  @override
+  String get spellingDictionaryInstallFailed =>
+      'Sözlük yüklenemedi — yeniden denemek için seçin';
+
+  @override
+  String spellingDictionaryInstallPrompt(String dictionary, String size) {
+    return '$dictionary ($size) yüklensin mi? Yüklendikten sonra kaldırılana kadar çevrimdışı kullanılabilir.';
+  }
+
+  @override
   String get spellingDictionaryUnavailable => 'Sözlük kullanılamıyor';
 
   @override

@@ -4422,6 +4422,45 @@ class AppLocalizationsKo extends AppLocalizations {
   String get spellingCheckIncomplete => '맞춤법 검사가 완료되지 않았습니다';
 
   @override
+  String get spellingDictionaryNotInstalled => '사전이 설치되지 않음';
+
+  @override
+  String spellingDictionaryNotInstalledWithSize(String size) {
+    return '설치되지 않음 · $size';
+  }
+
+  @override
+  String get spellingDictionaryInstalled => '설치됨';
+
+  @override
+  String get installSpellingDictionary => '사전 설치';
+
+  @override
+  String get removeSpellingDictionary => '사전 제거';
+
+  @override
+  String get cancelSpellingDictionaryInstall => '사전 다운로드 취소';
+
+  @override
+  String get retrySpellingDictionaryInstall => '사전 설치 다시 시도';
+
+  @override
+  String spellingDictionaryDownloading(String size) {
+    return '$size 다운로드 중…';
+  }
+
+  @override
+  String get spellingDictionaryValidating => '사전 검증 중…';
+
+  @override
+  String get spellingDictionaryInstallFailed => '사전 설치 실패 — 선택하여 다시 시도';
+
+  @override
+  String spellingDictionaryInstallPrompt(String dictionary, String size) {
+    return '$dictionary($size)을 설치하시겠습니까? 설치 후 제거할 때까지 오프라인에서 사용할 수 있습니다.';
+  }
+
+  @override
   String get spellingDictionaryUnavailable => '사전을 사용할 수 없습니다';
 
   @override

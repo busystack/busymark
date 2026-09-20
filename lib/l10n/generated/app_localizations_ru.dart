@@ -4610,6 +4610,46 @@ class AppLocalizationsRu extends AppLocalizations {
   String get spellingCheckIncomplete => 'Проверка правописания не завершена';
 
   @override
+  String get spellingDictionaryNotInstalled => 'Словарь не установлен';
+
+  @override
+  String spellingDictionaryNotInstalledWithSize(String size) {
+    return 'Не установлен · $size';
+  }
+
+  @override
+  String get spellingDictionaryInstalled => 'Установлен';
+
+  @override
+  String get installSpellingDictionary => 'Установить словарь';
+
+  @override
+  String get removeSpellingDictionary => 'Удалить словарь';
+
+  @override
+  String get cancelSpellingDictionaryInstall => 'Отменить загрузку словаря';
+
+  @override
+  String get retrySpellingDictionaryInstall => 'Повторить установку словаря';
+
+  @override
+  String spellingDictionaryDownloading(String size) {
+    return 'Загрузка $size…';
+  }
+
+  @override
+  String get spellingDictionaryValidating => 'Проверка словаря…';
+
+  @override
+  String get spellingDictionaryInstallFailed =>
+      'Не удалось установить словарь — выберите для повтора';
+
+  @override
+  String spellingDictionaryInstallPrompt(String dictionary, String size) {
+    return 'Установить $dictionary ($size)? После установки он будет доступен без сети, пока вы его не удалите.';
+  }
+
+  @override
   String get spellingDictionaryUnavailable => 'Словарь недоступен';
 
   @override

@@ -4617,6 +4617,48 @@ class AppLocalizationsUk extends AppLocalizations {
   String get spellingCheckIncomplete => 'Перевірку правопису не завершено';
 
   @override
+  String get spellingDictionaryNotInstalled => 'Словник не встановлено';
+
+  @override
+  String spellingDictionaryNotInstalledWithSize(String size) {
+    return 'Не встановлено · $size';
+  }
+
+  @override
+  String get spellingDictionaryInstalled => 'Встановлено';
+
+  @override
+  String get installSpellingDictionary => 'Встановити словник';
+
+  @override
+  String get removeSpellingDictionary => 'Видалити словник';
+
+  @override
+  String get cancelSpellingDictionaryInstall =>
+      'Скасувати завантаження словника';
+
+  @override
+  String get retrySpellingDictionaryInstall =>
+      'Повторити встановлення словника';
+
+  @override
+  String spellingDictionaryDownloading(String size) {
+    return 'Завантаження $size…';
+  }
+
+  @override
+  String get spellingDictionaryValidating => 'Перевірка словника…';
+
+  @override
+  String get spellingDictionaryInstallFailed =>
+      'Не вдалося встановити словник — виберіть, щоб повторити';
+
+  @override
+  String spellingDictionaryInstallPrompt(String dictionary, String size) {
+    return 'Встановити $dictionary ($size)? Після встановлення він буде доступний офлайн, доки ви його не видалите.';
+  }
+
+  @override
   String get spellingDictionaryUnavailable => 'Словник недоступний';
 
   @override

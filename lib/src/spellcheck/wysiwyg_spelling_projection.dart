@@ -1,6 +1,8 @@
 import '../editor/wysiwyg/wysiwyg_inline_controller.dart';
 import '../markdown/busymark_document.dart';
 import '../markdown/busymark_markdown_serializer.dart';
+import '../markdown/markdown_parser.dart';
+import '../markdown/markdown_source_structure.dart';
 import 'markdown_spelling_projection.dart';
 import 'spelling_inline_projection.dart';
 import 'spelling_projection.dart';
@@ -15,6 +17,7 @@ final class WysiwygSpellingProjector {
     required int documentGeneration,
   }) {
     final richRuns = <SpellingProseRun>[];
+    final fieldKeysByTarget = <String, String>{};
     var sequence = 0;
     var complete = true;
 
@@ -83,7 +86,7 @@ final class WysiwygSpellingProjector {
       }
     }
 
-    void visit(BusyBlock block) {
+    void visit(BusyBlock block, List<int> path) {
       if (block.isGenerated ||
           block.isSourceProtected ||
           block.isSourceOnly ||
@@ -91,13 +94,15 @@ final class WysiwygSpellingProjector {
         return;
       }
       if (block.kind == BusyBlockKind.table) {
-        for (final row in block.children) {
-          for (final cell in row.children) {
+        for (final (rowIndex, row) in block.children.indexed) {
+          for (final (columnIndex, cell) in row.children.indexed) {
             final target = SpellingRichTableCellTarget(
               tableBlockId: block.id,
               cellId: cell.id,
               documentGeneration: documentGeneration,
             );
+            fieldKeysByTarget[_targetIdentity(target)] =
+                '${path.join('.')}:table:$rowIndex:$columnIndex';
             if (busyMarkWysiwygBlockContainsMath(cell)) {
               addMathSource(cell, target);
             } else {
@@ -112,19 +117,20 @@ final class WysiwygSpellingProjector {
           blockId: block.id,
           documentGeneration: documentGeneration,
         );
+        fieldKeysByTarget[_targetIdentity(target)] = '${path.join('.')}:block';
         if (busyMarkWysiwygBlockContainsMath(block)) {
           addMathSource(block, target);
         } else {
           addOrdinary(block, target);
         }
       }
-      for (final child in block.children) {
-        visit(child);
+      for (final (index, child) in block.children.indexed) {
+        visit(child, [...path, index]);
       }
     }
 
-    for (final block in document.blocks) {
-      visit(block);
+    for (final (index, block) in document.blocks.indexed) {
+      visit(block, [index]);
     }
     final source = document.source;
     if (source == null) {
@@ -143,9 +149,19 @@ final class WysiwygSpellingProjector {
       languageId: languageId,
       snapshot: snapshot,
     );
+    final currentDocument = const MarkdownParser()
+        .parse(
+          filePath: document.filePath,
+          source: source,
+          mode: document.mode,
+          validateLocalReferences: false,
+        )
+        .busyDocument;
     final merged = _mergeCurrentSourceMappings(
       richRuns: richRuns,
       sourceRuns: sourceProjection.runs,
+      fieldKeysByTarget: fieldKeysByTarget,
+      sourceRegions: _sourceFieldRegions(source, currentDocument.blocks),
     );
     complete =
         complete &&
@@ -179,19 +195,104 @@ final class _MergedRichProjection {
 _MergedRichProjection _mergeCurrentSourceMappings({
   required List<SpellingProseRun> richRuns,
   required List<SpellingProseRun> sourceRuns,
+  required Map<String, String> fieldKeysByTarget,
+  required List<_SourceFieldRegion> sourceRegions,
+}) {
+  final richByField = <String, List<SpellingProseRun>>{};
+  for (final run in richRuns) {
+    final key = fieldKeysByTarget[_targetIdentity(run.target)];
+    if (key == null) continue;
+    richByField.putIfAbsent(key, () => []).add(run);
+  }
+  final sourceByField = <String, List<SpellingProseRun>>{};
+  final sourceFieldKeys = <SpellingProseRun, String>{};
+  for (final run in sourceRuns) {
+    int? start;
+    int? end;
+    for (final atom in run.atoms) {
+      if (atom.sourceStart < 0 || atom.sourceEnd < 0) continue;
+      start = start == null || atom.sourceStart < start
+          ? atom.sourceStart
+          : start;
+      end = end == null || atom.sourceEnd > end ? atom.sourceEnd : end;
+    }
+    if (start == null || end == null) continue;
+    _SourceFieldRegion? region;
+    for (final candidate in sourceRegions) {
+      if (candidate.start > start || candidate.end < end) continue;
+      if (region == null ||
+          candidate.end - candidate.start < region.end - region.start) {
+        region = candidate;
+      }
+    }
+    if (region == null) continue;
+    sourceFieldKeys[run] = region.key;
+    sourceByField.putIfAbsent(region.key, () => []).add(run);
+  }
+
+  final mergedByField = <String, _MergedRichProjection>{};
+  var allRichRunsMapped = true;
+  for (final entry in richByField.entries) {
+    final merged = _mergeFieldMappings(
+      richRuns: entry.value,
+      sourceRuns: sourceByField[entry.key] ?? const [],
+    );
+    mergedByField[entry.key] = merged;
+    allRichRunsMapped = allRichRunsMapped && merged.allRichRunsMapped;
+  }
+
+  final result = <SpellingProseRun>[];
+  final emittedFields = <String>{};
+  for (final sourceRun in sourceRuns) {
+    final key = sourceFieldKeys[sourceRun];
+    if (key == null || !richByField.containsKey(key)) {
+      result.add(sourceRun);
+    } else if (emittedFields.add(key)) {
+      result.addAll(mergedByField[key]!.runs);
+    }
+  }
+  for (final entry in richByField.entries) {
+    if (emittedFields.add(entry.key)) {
+      result.addAll(mergedByField[entry.key]!.runs);
+      allRichRunsMapped = false;
+    }
+  }
+  return _MergedRichProjection(
+    runs: List.unmodifiable(result),
+    allRichRunsMapped: allRichRunsMapped,
+  );
+}
+
+_MergedRichProjection _mergeFieldMappings({
+  required List<SpellingProseRun> richRuns,
+  required List<SpellingProseRun> sourceRuns,
 }) {
   final result = <SpellingProseRun>[];
   var richCursor = 0;
-  var allRichRunsMapped = true;
+  var complete = true;
   for (final sourceRun in sourceRuns) {
+    if (_sourceOnlyMetadataRun(sourceRun)) {
+      result.add(sourceRun);
+      continue;
+    }
     final richRun = richCursor < richRuns.length ? richRuns[richCursor] : null;
-    if (richRun == null || !_compatibleRuns(sourceRun, richRun)) {
+    if (richRun == null) {
+      complete = false;
+      result.add(sourceRun);
+      continue;
+    }
+    // Field identity and run ordinal establish provenance. Text equality is
+    // only an integrity check; a mismatch consumes this pair so it cannot
+    // cascade into duplicate/falsely matched runs later in the field.
+    richCursor++;
+    if (!_compatibleRuns(sourceRun, richRun)) {
+      complete = false;
       result.add(sourceRun);
       continue;
     }
     final mergedAtoms = _mergeRunAtoms(sourceRun, richRun);
     if (mergedAtoms == null) {
-      allRichRunsMapped = false;
+      complete = false;
       result.add(sourceRun);
       continue;
     }
@@ -203,18 +304,31 @@ _MergedRichProjection _mergeCurrentSourceMappings({
         atoms: mergedAtoms,
         target: richRun.target,
         snapshot: richRun.snapshot,
+        formattingWrappers: sourceRun.formattingWrappers,
         complete: sourceRun.complete && richRun.complete,
       ),
     );
-    richCursor++;
   }
   if (richCursor < richRuns.length) {
-    allRichRunsMapped = false;
+    complete = false;
     result.addAll(richRuns.skip(richCursor));
   }
   return _MergedRichProjection(
     runs: List.unmodifiable(result),
-    allRichRunsMapped: allRichRunsMapped,
+    allRichRunsMapped: complete,
+  );
+}
+
+bool _sourceOnlyMetadataRun(SpellingProseRun run) {
+  if (run.atoms.isEmpty) return false;
+  return run.atoms.every(
+    (atom) => switch (atom.context) {
+      SpellingSourceContext.markdownSingleQuotedTitle ||
+      SpellingSourceContext.markdownDoubleQuotedTitle ||
+      SpellingSourceContext.xmlSingleQuotedAttribute ||
+      SpellingSourceContext.xmlDoubleQuotedAttribute => true,
+      _ => false,
+    },
   );
 }
 
@@ -268,6 +382,74 @@ List<SpellingSourceAtom>? _mergeRunAtoms(
   }
   return List.unmodifiable(result);
 }
+
+final class _SourceFieldRegion {
+  const _SourceFieldRegion({
+    required this.key,
+    required this.start,
+    required this.end,
+  });
+
+  final String key;
+  final int start;
+  final int end;
+}
+
+List<_SourceFieldRegion> _sourceFieldRegions(
+  String source,
+  List<BusyBlock> blocks,
+) {
+  final result = <_SourceFieldRegion>[];
+
+  void visit(BusyBlock block, List<int> path) {
+    if (block.isGenerated ||
+        block.isSourceProtected ||
+        block.isSourceOnly ||
+        !_eligibleBlockKinds.contains(block.kind)) {
+      return;
+    }
+    if (block.kind == BusyBlockKind.table) {
+      for (final region in busyMarkMarkdownTableCellRegions(
+        source: source,
+        table: block,
+      )) {
+        result.add(
+          _SourceFieldRegion(
+            key: '${path.join('.')}:table:${region.row}:${region.column}',
+            start: region.span.startOffset,
+            end: region.span.endOffset,
+          ),
+        );
+      }
+      return;
+    }
+    final span = block.sourceSpan;
+    if (block.inlines.isNotEmpty && span != null) {
+      result.add(
+        _SourceFieldRegion(
+          key: '${path.join('.')}:block',
+          start: span.startOffset,
+          end: span.endOffset,
+        ),
+      );
+    }
+    for (final (index, child) in block.children.indexed) {
+      visit(child, [...path, index]);
+    }
+  }
+
+  for (final (index, block) in blocks.indexed) {
+    visit(block, [index]);
+  }
+  return List.unmodifiable(result);
+}
+
+String _targetIdentity(SpellingEditorTarget target) => switch (target) {
+  SpellingRichBlockTarget(:final blockId) => 'block:$blockId',
+  SpellingRichTableCellTarget(:final tableBlockId, :final cellId) =>
+    'table:$tableBlockId:$cellId',
+  SpellingSourceTarget(:final filePath) => 'source:$filePath',
+};
 
 const _eligibleBlockKinds = {
   BusyBlockKind.heading,

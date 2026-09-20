@@ -4428,6 +4428,45 @@ class AppLocalizationsJa extends AppLocalizations {
   String get spellingCheckIncomplete => 'スペルチェックが完了していません';
 
   @override
+  String get spellingDictionaryNotInstalled => '辞書がインストールされていません';
+
+  @override
+  String spellingDictionaryNotInstalledWithSize(String size) {
+    return '未インストール · $size';
+  }
+
+  @override
+  String get spellingDictionaryInstalled => 'インストール済み';
+
+  @override
+  String get installSpellingDictionary => '辞書をインストール';
+
+  @override
+  String get removeSpellingDictionary => '辞書を削除';
+
+  @override
+  String get cancelSpellingDictionaryInstall => '辞書のダウンロードをキャンセル';
+
+  @override
+  String get retrySpellingDictionaryInstall => '辞書のインストールを再試行';
+
+  @override
+  String spellingDictionaryDownloading(String size) {
+    return '$size をダウンロード中…';
+  }
+
+  @override
+  String get spellingDictionaryValidating => '辞書を検証中…';
+
+  @override
+  String get spellingDictionaryInstallFailed => '辞書のインストールに失敗しました — 選択して再試行';
+
+  @override
+  String spellingDictionaryInstallPrompt(String dictionary, String size) {
+    return '$dictionary（$size）をインストールしますか？インストール後は削除するまでオフラインで利用できます。';
+  }
+
+  @override
   String get spellingDictionaryUnavailable => '辞書を利用できません';
 
   @override

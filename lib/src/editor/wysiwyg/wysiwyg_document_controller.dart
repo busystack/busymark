@@ -2609,16 +2609,19 @@ List<BusyInline>? _applySpellingLeafEdits(
   var fieldOffset = 0;
   var applied = 0;
 
-  BusyInline visit(BusyInline inline, List<int> path) {
+  BusyInline? visit(BusyInline inline, List<int> path) {
     if (inline.children.isNotEmpty) {
       final children = <BusyInline>[];
       for (final (index, child) in inline.children.indexed) {
-        children.add(visit(child, [...path, index]));
+        final updated = visit(child, [...path, index]);
+        if (updated != null) children.add(updated);
       }
-      return inline.copyWith(
-        text: children.map((child) => child.plainText).join(),
-        children: children,
-      );
+      final text = children.map((child) => child.plainText).join();
+      if (text.isEmpty &&
+          _removableEmptyFormattingKinds.contains(inline.kind)) {
+        return null;
+      }
+      return inline.copyWith(text: text, children: children);
     }
     final leafStart = fieldOffset;
     final leafEnd = leafStart + inline.text.length;
@@ -2647,13 +2650,21 @@ List<BusyInline>? _applySpellingLeafEdits(
   try {
     final result = <BusyInline>[];
     for (final (index, inline) in inlines.indexed) {
-      result.add(visit(inline, [index]));
+      final updated = visit(inline, [index]);
+      if (updated != null) result.add(updated);
     }
     return applied == edits.length ? result : null;
   } on StateError {
     return null;
   }
 }
+
+const _removableEmptyFormattingKinds = {
+  BusyInlineKind.strong,
+  BusyInlineKind.emphasis,
+  BusyInlineKind.underline,
+  BusyInlineKind.strikethrough,
+};
 
 String? _applySpellingFieldEdits(String source, List<SpellingFieldEdit> edits) {
   if (edits.isEmpty) return null;

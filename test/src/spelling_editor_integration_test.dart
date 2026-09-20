@@ -5,6 +5,7 @@ import 'package:busymark/src/editor/source/source_search.dart';
 import 'package:busymark/src/editor/source_language.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_editor.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_session_state.dart';
+import 'package:busymark/src/markdown/busymark_document.dart';
 import 'package:busymark/src/markdown/markdown_model.dart';
 import 'package:busymark/src/markdown/markdown_parser.dart';
 import 'package:busymark/src/spellcheck/markdown_spelling_projection.dart';
@@ -104,6 +105,75 @@ void main() {
     );
     expect(transactions.single.group, isNull);
   });
+
+  testWidgets(
+    'formatted rich correction preserves structure and publishes once',
+    (tester) async {
+      const source = '**mispelled**\n';
+      final document = const MarkdownParser()
+          .parse(
+            filePath: '/tmp/formatted.md',
+            source: source,
+            mode: MarkdownMode.commonMark,
+            validateLocalReferences: false,
+          )
+          .busyDocument;
+      const snapshot = SpellingSnapshotIdentity(
+        bufferId: 'formatted-buffer',
+        contentRevision: 3,
+        documentKind: DocumentKind.markdown,
+        contextGeneration: 2,
+      );
+      final projection = const WysiwygSpellingProjector().project(
+        document: document,
+        languageId: 'en-Test',
+        snapshot: snapshot,
+        documentGeneration: 0,
+      );
+      expect(projection.complete, isTrue, reason: projection.message);
+      final run = projection.runs.singleWhere(
+        (candidate) => candidate.text == 'mispelled',
+      );
+      final occurrence = _occurrence(run, word: 'mispelled', logicalStart: 0);
+      final key = GlobalKey<BusyMarkWysiwygEditorState>();
+      final sources = <String>[];
+      BusyDocument? updatedDocument;
+
+      await tester.pumpWidget(
+        _testApp(
+          BusyMarkWysiwygEditor(
+            key: key,
+            document: document,
+            documentId: 'formatted-buffer',
+            contentRevision: 3,
+            useExternalUndoHistory: true,
+            spellingAnnotations: [_annotation(occurrence)],
+            onDocumentChanged: (value) => updatedDocument = value,
+            onSourceChanged: (_, _) {},
+            onSpellingSourceChanged: (_, value, _, _) => sources.add(value),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(
+        key.currentState!.applySpellingCorrection(
+          occurrence: occurrence,
+          suggestion: 'misspelled',
+        ),
+        isTrue,
+      );
+      await tester.pump();
+
+      expect(sources, ['**misspelled**\n']);
+      expect(updatedDocument, isNotNull);
+      expect(
+        updatedDocument!.blocks.single.inlines.single.kind,
+        BusyInlineKind.strong,
+      );
+      expect(updatedDocument!.blocks.single.plainText, 'misspelled');
+    },
+  );
 
   testWidgets(
     'rich table-cell correction preserves link and publishes sessions once',

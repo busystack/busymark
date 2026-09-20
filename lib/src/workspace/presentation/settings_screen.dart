@@ -66,11 +66,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final workspace = ref.watch(
       workspaceControllerProvider.select((state) => state.workspace),
     );
+    final spellingCatalog = spelling.catalog;
     final importedDictionaries =
-        spelling.catalog?.entries
+        spellingCatalog?.installations
             .where((entry) => entry.imported)
             .toList(growable: false) ??
-        const <SpellingDictionaryEntry>[];
+        const <SpellingDictionaryInstallation>[];
     _prepareSpellingSettings(spelling, workspace?.id);
     final colors = BusyMarkSurfaceColors.of(context);
     final headerBar = ref.watch(linuxHeaderBarServiceProvider);
@@ -126,8 +127,41 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             selected: settings.defaultSpellingLanguage,
             catalogEntries: spelling.catalog?.entries ?? const [],
             unsetLabel: l10n.chooseSpellingLanguage,
-            onChanged: controller.setDefaultSpellingLanguage,
+            onChanged: (value) {
+              controller.setDefaultSpellingLanguage(value);
+              if (value != null &&
+                  spelling.catalog?.installedById(value) == null) {
+                unawaited(
+                  _offerSpellingDictionaryInstall(context, spelling, value),
+                );
+              }
+            },
           ),
+          for (final resource
+              in spellingCatalog?.availableEntries ??
+                  const <SpellingDictionaryResource>[])
+            _SpellingDictionaryResourceRow(
+              resource: resource,
+              installed:
+                  spellingCatalog?.installationForResource(
+                    resource.resourceId,
+                  ) !=
+                  null,
+              status: spelling.dictionaryInstallStatus,
+              onInstall: () => unawaited(
+                _installSpellingDictionary(context, spelling, resource.id),
+              ),
+              onRemove: () => unawaited(
+                _removeDownloadedSpellingDictionary(
+                  context,
+                  spelling,
+                  resource.id,
+                ),
+              ),
+              onCancel: spelling.cancelDictionaryInstallation,
+              onRetry: () =>
+                  unawaited(_retrySpellingDictionary(context, spelling)),
+            ),
           _EditorFontSizeRow(
             value: settings.editorFontSize,
             onChanged: controller.setEditorFontSize,
@@ -169,7 +203,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             unsetLabel: l10n.inheritSpellingLanguage,
             enabled: spelling.hasProjectScope,
             onChanged: (value) => unawaited(
-              _setProjectSpellingLanguage(context, spelling, value),
+              _setProjectSpellingLanguage(context, spelling, value).then((_) {
+                if (value != null &&
+                    spelling.catalog?.installedById(value) == null &&
+                    context.mounted) {
+                  return _offerSpellingDictionaryInstall(
+                    context,
+                    spelling,
+                    value,
+                  );
+                }
+              }),
             ),
           ),
           _SpellingWordStoreRow(
@@ -611,6 +655,101 @@ class _SpellingLanguageRowState extends State<_SpellingLanguageRow> {
   }
 }
 
+class _SpellingDictionaryResourceRow extends StatelessWidget {
+  const _SpellingDictionaryResourceRow({
+    required this.resource,
+    required this.installed,
+    required this.status,
+    required this.onInstall,
+    required this.onRemove,
+    required this.onCancel,
+    required this.onRetry,
+  });
+
+  final SpellingDictionaryResource resource;
+  final bool installed;
+  final SpellingDictionaryInstallStatus? status;
+  final VoidCallback onInstall;
+  final VoidCallback onRemove;
+  final VoidCallback onCancel;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    final active = status?.resourceId == resource.resourceId ? status : null;
+    final size = _formatDictionarySize(resource.downloadSize);
+    final subtitle = switch (active?.phase) {
+      SpellingDictionaryInstallPhase.downloading =>
+        context.l10n.spellingDictionaryDownloading(size),
+      SpellingDictionaryInstallPhase.validating =>
+        context.l10n.spellingDictionaryValidating,
+      SpellingDictionaryInstallPhase.failed =>
+        context.l10n.spellingDictionaryInstallFailed,
+      null =>
+        installed
+            ? context.l10n.spellingDictionaryInstalled
+            : context.l10n.spellingDictionaryNotInstalledWithSize(size),
+    };
+    final progress = active?.phase == SpellingDictionaryInstallPhase.downloading
+        ? active?.progress
+        : null;
+    final action = switch (active?.phase) {
+      SpellingDictionaryInstallPhase.downloading ||
+      SpellingDictionaryInstallPhase.validating => onCancel,
+      SpellingDictionaryInstallPhase.failed => onRetry,
+      null => installed ? onRemove : onInstall,
+    };
+    final icon = switch (active?.phase) {
+      SpellingDictionaryInstallPhase.downloading ||
+      SpellingDictionaryInstallPhase.validating => BusyMarkGlyphs.windowClose,
+      SpellingDictionaryInstallPhase.failed => BusyMarkGlyphs.refresh,
+      null => installed ? BusyMarkGlyphs.delete : BusyMarkGlyphs.pull,
+    };
+    final tooltip = switch (active?.phase) {
+      SpellingDictionaryInstallPhase.downloading ||
+      SpellingDictionaryInstallPhase.validating =>
+        context.l10n.cancelSpellingDictionaryInstall,
+      SpellingDictionaryInstallPhase.failed =>
+        context.l10n.retrySpellingDictionaryInstall,
+      null =>
+        installed
+            ? context.l10n.removeSpellingDictionary
+            : context.l10n.installSpellingDictionary,
+    };
+    return BusyMarkActionRow(
+      title: resource.label,
+      subtitleWidget: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(subtitle, maxLines: 1, overflow: TextOverflow.ellipsis),
+          if (active != null &&
+              active.phase != SpellingDictionaryInstallPhase.failed)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: LinearProgressIndicator(value: progress),
+            ),
+        ],
+      ),
+      leading: const Icon(BusyMarkGlyphs.symbols),
+      trailing: IconButton(
+        tooltip: tooltip,
+        icon: Icon(icon),
+        onPressed: action,
+      ),
+      onTap: action,
+      destructive: installed && active == null,
+    );
+  }
+}
+
+String _formatDictionarySize(int bytes) {
+  final mebibytes = bytes / (1024 * 1024);
+  return mebibytes >= 10
+      ? '${mebibytes.toStringAsFixed(0)} MiB'
+      : '${mebibytes.toStringAsFixed(1)} MiB';
+}
+
 Future<void> _setProjectSpellingLanguage(
   BuildContext context,
   SpellingSessionController spelling,
@@ -731,6 +870,78 @@ Future<void> _removeImportedSpellingDictionary(
 ) async {
   try {
     await spelling.removeImportedDictionary(languageId);
+  } on Object {
+    if (context.mounted) _showSpellingSettingsFailure(context);
+  }
+}
+
+Future<void> _installSpellingDictionary(
+  BuildContext context,
+  SpellingSessionController spelling,
+  String languageId,
+) async {
+  try {
+    await spelling.installDictionary(languageId);
+  } on Object {
+    if (context.mounted) _showSpellingSettingsFailure(context);
+  }
+}
+
+Future<void> _offerSpellingDictionaryInstall(
+  BuildContext context,
+  SpellingSessionController spelling,
+  String languageId,
+) async {
+  final resource = spelling.catalog?.availableById(languageId);
+  if (resource == null ||
+      spelling.catalog?.installationForResource(resource.resourceId) != null) {
+    return;
+  }
+  final accepted = await showBusyMarkModalDialog<bool>(
+    context,
+    builder: (dialogContext) => AlertDialog(
+      title: Text(dialogContext.l10n.spellingDictionaryNotInstalled),
+      content: Text(
+        dialogContext.l10n.spellingDictionaryInstallPrompt(
+          resource.label,
+          _formatDictionarySize(resource.downloadSize),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(dialogContext, false),
+          child: Text(dialogContext.l10n.cancel),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.pop(dialogContext, true),
+          child: Text(dialogContext.l10n.installSpellingDictionary),
+        ),
+      ],
+    ),
+  );
+  if (accepted == true && context.mounted) {
+    await _installSpellingDictionary(context, spelling, languageId);
+  }
+}
+
+Future<void> _retrySpellingDictionary(
+  BuildContext context,
+  SpellingSessionController spelling,
+) async {
+  try {
+    await spelling.retryDictionaryInstallation();
+  } on Object {
+    if (context.mounted) _showSpellingSettingsFailure(context);
+  }
+}
+
+Future<void> _removeDownloadedSpellingDictionary(
+  BuildContext context,
+  SpellingSessionController spelling,
+  String languageId,
+) async {
+  try {
+    await spelling.removeDownloadedDictionary(languageId);
   } on Object {
     if (context.mounted) _showSpellingSettingsFailure(context);
   }

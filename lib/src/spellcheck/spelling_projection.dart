@@ -113,6 +113,29 @@ final class SpellingSourceAtom {
       logicalStart < end && logicalEnd > start;
 }
 
+/// Authored delimiters surrounding a formatted logical interval.
+///
+/// These intervals let an exact source correction remove an emphasis-like
+/// container when deleting its complete contents. They are deliberately kept
+/// separate from text atoms: delimiters produce no logical characters.
+final class SpellingFormattingWrapper {
+  const SpellingFormattingWrapper({
+    required this.logicalStart,
+    required this.logicalEnd,
+    required this.openingStart,
+    required this.openingEnd,
+    required this.closingStart,
+    required this.closingEnd,
+  });
+
+  final int logicalStart;
+  final int logicalEnd;
+  final int openingStart;
+  final int openingEnd;
+  final int closingStart;
+  final int closingEnd;
+}
+
 final class SpellingProseRun {
   const SpellingProseRun({
     required this.id,
@@ -121,6 +144,7 @@ final class SpellingProseRun {
     required this.atoms,
     required this.target,
     required this.snapshot,
+    this.formattingWrappers = const [],
     this.complete = true,
   });
 
@@ -130,6 +154,7 @@ final class SpellingProseRun {
   final List<SpellingSourceAtom> atoms;
   final SpellingEditorTarget target;
   final SpellingSnapshotIdentity snapshot;
+  final List<SpellingFormattingWrapper> formattingWrappers;
   final bool complete;
 
   bool get hasValidMapping {

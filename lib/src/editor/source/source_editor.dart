@@ -199,7 +199,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
   RichClipboardService get _clipboard =>
       widget.clipboardService ?? busyMarkRichClipboardService;
 
-  int get spellingCaretOffset => _controller.selection.extentOffset
+  int get spellingCaretOffset => _controller.fullSelection.extentOffset
       .clamp(0, _controller.fullText.length)
       .toInt();
 
@@ -218,9 +218,12 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
       return;
     }
     _unfoldSourceRange(start, end);
-    _controller.selection = TextSelection(baseOffset: start, extentOffset: end);
     _focusNode.requestFocus();
-    scrollToOffset(start);
+    scrollToOffset(start, updateSelection: false);
+    _controller.fullSelection = TextSelection(
+      baseOffset: start,
+      extentOffset: end,
+    );
   }
 
   bool applySpellingCorrection({
@@ -434,14 +437,16 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
   }
 
   /// Reveals a full-document offset, including a destination inside a fold.
-  void scrollToOffset(int offset) {
+  void scrollToOffset(int offset, {bool updateSelection = true}) {
     final textOffset = offset.clamp(0, _controller.fullText.length);
     final line =
         '\n'.allMatches(_controller.fullText.substring(0, textOffset)).length +
         1;
     _unfoldSourceLine(line);
     _focusNode.requestFocus();
-    _controller.fullSelection = TextSelection.collapsed(offset: textOffset);
+    if (updateSelection) {
+      _controller.fullSelection = TextSelection.collapsed(offset: textOffset);
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _animateScrollToLine(line);
       WidgetsBinding.instance.addPostFrameCallback((_) {

@@ -198,6 +198,122 @@ Beforee %hiddenvariable% afterrr.
         result.runs.single.text,
       );
     });
+
+    test('maps quoted HTML attribute values from quote boundaries', () {
+      for (final fixture in <({String source, String expected})>[
+        (
+          source: 'A <span title="titl" data-x="titl">x</span>.\n',
+          expected: 'A <span title="title" data-x="titl">x</span>.\n',
+        ),
+        (
+          source: 'A <span title="titl" summary="titl">x</span>.\n',
+          expected: 'A <span title="title" summary="titl">x</span>.\n',
+        ),
+        (
+          source: "A <span title='titl' summary='other'>x</span>.\n",
+          expected: "A <span title='title' summary='other'>x</span>.\n",
+        ),
+        (
+          source: 'A <span title="titl &amp; more" tooltip="titl">x</span>.\n',
+          expected:
+              'A <span title="title &amp; more" tooltip="titl">x</span>.\n',
+        ),
+      ]) {
+        final result = const MarkdownSpellingProjector().project(
+          filePath: '/tmp/attributes.md',
+          source: fixture.source,
+          mode: MarkdownMode.commonMark,
+          languageId: 'en-US',
+          snapshot: _snapshot,
+        );
+        final run = result.runs.firstWhere(
+          (candidate) =>
+              candidate.text == 'titl' || candidate.text.startsWith('titl '),
+        );
+        final corrected = const SpellingReplacementPlanner()
+            .build(occurrence: _rejected(run, 'titl'), suggestion: 'title')
+            .applyToSource(fixture.source);
+
+        expect(corrected, fixture.expected);
+        expect(corrected, contains('<span title='));
+      }
+    });
+
+    test('removes delimiters when a correction empties formatting', () {
+      for (final fixture in <({String source, MarkdownMode mode})>[
+        (source: 'he**x**llo\n', mode: MarkdownMode.commonMark),
+        (source: 'he***x***llo\n', mode: MarkdownMode.commonMark),
+        (source: 'he~~x~~llo\n', mode: MarkdownMode.gfm),
+      ]) {
+        final result = const MarkdownSpellingProjector().project(
+          filePath: '/tmp/empty-format.md',
+          source: fixture.source,
+          mode: fixture.mode,
+          languageId: 'en-US',
+          snapshot: _snapshot,
+        );
+        final run = result.runs.single;
+        final corrected = const SpellingReplacementPlanner()
+            .build(occurrence: _rejected(run, 'hexllo'), suggestion: 'hello')
+            .applyToSource(fixture.source);
+        final parsed = const MarkdownParser().parse(
+          filePath: '/tmp/empty-format.md',
+          source: corrected,
+          mode: fixture.mode,
+          validateLocalReferences: false,
+        );
+
+        expect(corrected, 'hello\n');
+        expect(parsed.busyDocument.blocks.single.plainText, 'hello');
+        expect(
+          parsed.busyDocument.blocks.single.inlines.where(
+            (inline) => inline.kind != BusyInlineKind.text,
+          ),
+          isEmpty,
+        );
+      }
+    });
+
+    test('uses parser-compatible percentages escapes and code spans', () {
+      const source =
+          r'20% mispelled 30% \letter \*escaped* %real_variable% '
+          'before ``hidden ` tick`` after `unmatched\n';
+      final commonMark = const MarkdownSpellingProjector().project(
+        filePath: '/tmp/common.md',
+        source: source,
+        mode: MarkdownMode.commonMark,
+        languageId: 'en-US',
+        snapshot: _snapshot,
+      );
+      final writerside = const MarkdownSpellingProjector().project(
+        filePath: '/tmp/writerside.md',
+        source: source,
+        mode: MarkdownMode.writersideMarkdown,
+        languageId: 'en-US',
+        snapshot: _snapshot,
+      );
+      final commonText = commonMark.runs.map((run) => run.text).join(' ');
+      final writersideText = writerside.runs.map((run) => run.text).join(' ');
+
+      expect(commonText, contains(r'20% mispelled 30% \letter *escaped*'));
+      expect(commonText, contains('%real_variable%'));
+      expect(commonText, isNot(contains('hidden ` tick')));
+      expect(commonText, contains('after `unmatched'));
+      expect(writersideText, contains('20% mispelled 30%'));
+      expect(writersideText, isNot(contains('real_variable')));
+      final typoRun = writerside.runs.firstWhere(
+        (run) => run.text.contains('mispelled'),
+      );
+      expect(
+        const SpellingReplacementPlanner()
+            .build(
+              occurrence: _rejected(typoRun, 'mispelled'),
+              suggestion: 'misspelled',
+            )
+            .applyToSource(source),
+        contains('20% misspelled 30%'),
+      );
+    });
   });
 
   group('Writerside XML spelling projection', () {
@@ -249,6 +365,97 @@ Beforee %hiddenvariable% afterrr.
   });
 
   group('exact rich correction', () {
+    test('maps hard breaks by structural field identity', () {
+      const source = 'helo  \nworld\n\nhelo world\n';
+      final document = const MarkdownParser()
+          .parse(
+            filePath: '/tmp/hard-break.md',
+            source: source,
+            mode: MarkdownMode.commonMark,
+            validateLocalReferences: false,
+          )
+          .busyDocument;
+      final projection = const WysiwygSpellingProjector().project(
+        document: document,
+        languageId: 'en-US',
+        snapshot: _snapshot,
+        documentGeneration: 4,
+      );
+      final richRuns = projection.runs
+          .where((run) => run.target is SpellingRichBlockTarget)
+          .toList();
+
+      expect(projection.complete, isTrue, reason: projection.message);
+      expect(richRuns, hasLength(2));
+      expect(richRuns.map((run) => run.text), everyElement('helo world'));
+      expect(
+        const SpellingReplacementPlanner()
+            .build(
+              occurrence: _rejected(richRuns.first, 'helo'),
+              suggestion: 'hello',
+            )
+            .applyToSource(source),
+        'hello  \nworld\n\nhelo world\n',
+      );
+      expect(
+        (richRuns.first.target as SpellingRichBlockTarget).blockId,
+        isNot((richRuns.last.target as SpellingRichBlockTarget).blockId),
+      );
+    });
+
+    test('removes a rich formatting container emptied by deletion', () {
+      final document = BusyDocument(
+        filePath: '/tmp/empty-rich.md',
+        mode: MarkdownMode.commonMark,
+        blocks: const [
+          BusyBlock(
+            id: 'p',
+            kind: BusyBlockKind.paragraph,
+            inlines: [
+              BusyInline(kind: BusyInlineKind.text, text: 'he'),
+              BusyInline(
+                kind: BusyInlineKind.strong,
+                text: 'x',
+                children: [BusyInline(kind: BusyInlineKind.text, text: 'x')],
+              ),
+              BusyInline(kind: BusyInlineKind.text, text: 'llo'),
+            ],
+          ),
+        ],
+      );
+      final run = const WysiwygSpellingProjector()
+          .project(
+            document: document,
+            languageId: 'en-US',
+            snapshot: _snapshot,
+            documentGeneration: 1,
+          )
+          .runs
+          .single;
+      final plan = const SpellingReplacementPlanner().build(
+        occurrence: _rejected(run, 'hexllo'),
+        suggestion: 'hello',
+      );
+      final controller = BusyMarkWysiwygDocumentController(document: document);
+
+      expect(
+        controller.replaceSpellingInBlock(
+          blockId: 'p',
+          expectedFieldText: 'hexllo',
+          plan: plan,
+        ),
+        isTrue,
+      );
+      expect(controller.markdown, 'hello\n');
+      expect(
+        controller
+            .blockById('p')!
+            .inlines
+            .where((inline) => inline.kind == BusyInlineKind.strong),
+        isEmpty,
+      );
+    });
+
     test('retains current source anchors and source-only title targets', () {
       const source =
           '![Altternativ](asset.png "Repeeted")\n\nRepeeted\n\n**mispel**led\n';

@@ -106,15 +106,25 @@ jobs:
         working-directory: packages/busymark_spellcheck_native
         run: dart test
 
+      - name: Prepare all-language spelling test resources
+        run: tools/fetch_spelling_dictionaries.sh build/spelling-test
+
+      - name: Validate every supported dictionary with the native engine
+        env:
+          BUSYMARK_TEST_SPELLING_ROOT: ${{ github.workspace }}/build/spelling-test
+        run: flutter test test/src/spelling_bundle_integration_test.dart
+
       - name: Build Linux release
         run: flutter build linux --release
 
-      - name: Test installed spelling dictionaries and native engine
-        env:
-          BUSYMARK_TEST_SPELLING_ROOT: ${{ github.workspace }}/build/linux/x64/release/bundle/share/busymark/spelling
-        run: flutter test test/src/spelling_bundle_integration_test.dart
+      - name: Verify release ships catalog and notices without language pairs
+        run: |
+          spelling_root="build/linux/x64/release/bundle/share/busymark/spelling"
+          test -s "$spelling_root/dictionaries.json"
+          test -s "$spelling_root/NOTICE"
+          test -z "$(find "$spelling_root" -type f \( -name '*.aff' -o -name '*.dic' \) -print -quit)"
 
-      - name: Exercise installed offline spelling correction and persistence
+      - name: Install one dictionary and exercise it after an offline restart
         run: |
           report="${RUNNER_TEMP}/spelling-release.json"
           profile="${RUNNER_TEMP}/spelling-profile"
@@ -124,13 +134,15 @@ jobs:
             XDG_DATA_HOME="$profile" LIBGL_ALWAYS_SOFTWARE=1 \
             build/linux/x64/release/bundle/busymark \
             --spelling-release-smoke="$report"
-          python3 -c 'import json,sys; report=json.load(open(sys.argv[1], encoding="utf-8")); assert report["ok"], report; assert not report["checks"]["personalWordPresentBeforeRun"], report' "$report"
-          xvfb-run -a -s '-screen 0 1280x1024x24' \
+          python3 -c 'import json,sys; report=json.load(open(sys.argv[1], encoding="utf-8")); assert report["ok"], report; assert report["checks"]["bundledDictionaryFileCount"] == 0, report; assert report["checks"]["dictionaryInstalledDuringRun"], report; assert report["checks"]["installedDictionaryCount"] == 1, report' "$report"
+          sudo unshare --net --fork \
+            --setgid "$(id -g)" --setuid "$(id -u)" -- \
+            xvfb-run -a -s '-screen 0 1280x1024x24' \
             env GDK_BACKEND=x11 BUSYMARK_RELEASE_SMOKE=1 \
             XDG_DATA_HOME="$profile" LIBGL_ALWAYS_SOFTWARE=1 \
             build/linux/x64/release/bundle/busymark \
             --spelling-release-smoke="$report"
-          python3 -c 'import json,sys; report=json.load(open(sys.argv[1], encoding="utf-8")); assert report["ok"], report; assert report["checks"]["personalWordPresentBeforeRun"], report' "$report"
+          python3 -c 'import json,sys; report=json.load(open(sys.argv[1], encoding="utf-8")); assert report["ok"], report; assert not report["checks"]["dictionaryInstalledDuringRun"], report; assert report["checks"]["personalWordPresentBeforeRun"], report' "$report"
 
       - name: Test including bundled D2 and Typst paths
         env:
@@ -160,7 +172,7 @@ jobs:
           python3 -c 'import json,sys; report=json.load(open(sys.argv[1], encoding="utf-8")); assert report["ok"], report' "$report"
           test -s "${RUNNER_TEMP}/visualization-smoke.pdf"
 
-      - name: Run visualization smoke tests under Wayland
+      - name: Run spelling and visualization smoke tests under Wayland
         run: |
           runtime_dir="/run/user/$(id -u)"
           sudo install -d -m 700 -o "$(id -u)" -g "$(id -g)" "$runtime_dir"
@@ -180,6 +192,16 @@ jobs:
             sleep 0.25
           done
           test -S "$runtime_dir/wayland-99"
+          spelling_report="${RUNNER_TEMP}/spelling-release-wayland.json"
+          spelling_profile="${RUNNER_TEMP}/spelling-profile"
+          sudo unshare --net --fork \
+            --setgid "$(id -g)" --setuid "$(id -u)" -- \
+            env XDG_RUNTIME_DIR="$runtime_dir" WAYLAND_DISPLAY=wayland-99 \
+            XDG_DATA_HOME="$spelling_profile" GDK_BACKEND=wayland \
+            BUSYMARK_RELEASE_SMOKE=1 LIBGL_ALWAYS_SOFTWARE=1 \
+            build/linux/x64/release/bundle/busymark \
+            --spelling-release-smoke="$spelling_report"
+          python3 -c 'import json,sys; report=json.load(open(sys.argv[1], encoding="utf-8")); assert report["ok"], report; assert report["checks"]["sourceEditorTransaction"], report; assert report["checks"]["formattedRichEditorTransaction"], report; assert report["checks"]["tableCellEditorTransaction"], report' "$spelling_report"
           XDG_RUNTIME_DIR="$runtime_dir" WAYLAND_DISPLAY=wayland-99 \
             GDK_BACKEND=wayland LIBGL_ALWAYS_SOFTWARE=1 \
             /usr/bin/python3 -u tools/visualization_smoke.py \
@@ -251,7 +273,7 @@ jobs:
             "$query" "$loader" | grep -q "\"svg\" 6 \"gdk-pixbuf\""
           '
 
-      - name: Exercise strict Snap offline spelling and restart persistence
+      - name: Install one strict-Snap dictionary and verify refresh/offline use
         run: |
           report="$HOME/snap/busymark/common/spelling-release.json"
           rm -f "$report"
@@ -259,12 +281,19 @@ jobs:
             env GDK_BACKEND=x11 BUSYMARK_RELEASE_SMOKE=1 \
             LIBGL_ALWAYS_SOFTWARE=1 snap run busymark \
             --spelling-release-smoke="$report"
-          python3 -c 'import json,sys; report=json.load(open(sys.argv[1], encoding="utf-8")); assert report["ok"], report; assert not report["checks"]["personalWordPresentBeforeRun"], report' "$report"
+          python3 -c 'import json,sys; report=json.load(open(sys.argv[1], encoding="utf-8")); assert report["ok"], report; assert report["checks"]["bundledDictionaryFileCount"] == 0, report; assert report["checks"]["dictionaryInstalledDuringRun"], report; assert report["checks"]["installedDictionaryCount"] == 1, report' "$report"
+          test -d "$HOME/snap/busymark/common/spelling/dictionaries/downloaded/en-US"
+          sudo snap refresh --dangerous \
+            "${{ steps.snap-artifact.outputs.snap }}"
+          sudo snap disconnect busymark:network
+          trap 'sudo snap connect busymark:network >/dev/null' EXIT
           xvfb-run -a -s '-screen 0 1280x1024x24' \
             env GDK_BACKEND=x11 BUSYMARK_RELEASE_SMOKE=1 \
             LIBGL_ALWAYS_SOFTWARE=1 snap run busymark \
             --spelling-release-smoke="$report"
-          python3 -c 'import json,sys; report=json.load(open(sys.argv[1], encoding="utf-8")); assert report["ok"], report; assert report["checks"]["personalWordPresentBeforeRun"], report' "$report"
+          python3 -c 'import json,sys; report=json.load(open(sys.argv[1], encoding="utf-8")); assert report["ok"], report; assert not report["checks"]["dictionaryInstalledDuringRun"], report; assert report["checks"]["installedDictionaryCount"] == 1, report; assert report["checks"]["personalWordPresentBeforeRun"], report' "$report"
+          sudo snap connect busymark:network
+          trap - EXIT
 
       - name: Exercise strict Snap visualization and PDF paths under X11
         run: |
@@ -278,7 +307,7 @@ jobs:
           python3 -c 'import json,sys; report=json.load(open(sys.argv[1], encoding="utf-8")); assert report["ok"], report' "$report"
           test -s "$HOME/snap/busymark/common/visualization-smoke.pdf"
 
-      - name: Exercise strict Snap visualization and PDF paths under Wayland
+      - name: Exercise strict Snap spelling and visualization under Wayland
         run: |
           runtime_dir="/run/user/$(id -u)"
           sudo install -d -m 700 -o "$(id -u)" -g "$(id -g)" "$runtime_dir"
@@ -286,7 +315,8 @@ jobs:
             weston --backend=headless-backend.so --socket=wayland-99 \
             --idle-time=0 --log="${RUNNER_TEMP}/weston-snap.log" &
           weston_pid=$!
-          trap 'kill "$weston_pid" 2>/dev/null || true' EXIT
+          sudo snap disconnect busymark:network
+          trap 'sudo snap connect busymark:network >/dev/null; kill "$weston_pid" 2>/dev/null || true' EXIT
           for attempt in {1..40}; do
             if [ -S "$runtime_dir/wayland-99" ]; then
               break
@@ -298,6 +328,13 @@ jobs:
             sleep 0.25
           done
           test -S "$runtime_dir/wayland-99"
+          spelling_report="$HOME/snap/busymark/common/spelling-release-wayland.json"
+          XDG_RUNTIME_DIR="$runtime_dir" WAYLAND_DISPLAY=wayland-99 \
+            GDK_BACKEND=wayland BUSYMARK_RELEASE_SMOKE=1 \
+            LIBGL_ALWAYS_SOFTWARE=1 \
+            timeout --signal=TERM 300s snap run busymark \
+            --spelling-release-smoke="$spelling_report"
+          python3 -c 'import json,sys; report=json.load(open(sys.argv[1], encoding="utf-8")); assert report["ok"], report; assert report["checks"]["sourceEditorTransaction"], report; assert report["checks"]["formattedRichEditorTransaction"], report; assert report["checks"]["tableCellEditorTransaction"], report' "$spelling_report"
           report="$HOME/snap/busymark/common/visualization-release-wayland.json"
           XDG_RUNTIME_DIR="$runtime_dir" WAYLAND_DISPLAY=wayland-99 \
             GDK_BACKEND=wayland BUSYMARK_RELEASE_SMOKE=1 \
@@ -306,3 +343,5 @@ jobs:
             --visualization-release-smoke="$report"
           python3 -c 'import json,sys; report=json.load(open(sys.argv[1], encoding="utf-8")); assert report["ok"], report' "$report"
           test -s "$HOME/snap/busymark/common/visualization-smoke.pdf"
+          sudo snap connect busymark:network
+          trap 'kill "$weston_pid" 2>/dev/null || true' EXIT

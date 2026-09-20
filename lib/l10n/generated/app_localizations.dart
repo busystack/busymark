@@ -7698,6 +7698,72 @@ abstract class AppLocalizations {
   /// **'Spelling check is incomplete'**
   String get spellingCheckIncomplete;
 
+  /// No description provided for @spellingDictionaryNotInstalled.
+  ///
+  /// In en, this message translates to:
+  /// **'Dictionary not installed'**
+  String get spellingDictionaryNotInstalled;
+
+  /// No description provided for @spellingDictionaryNotInstalledWithSize.
+  ///
+  /// In en, this message translates to:
+  /// **'Not installed · {size}'**
+  String spellingDictionaryNotInstalledWithSize(String size);
+
+  /// No description provided for @spellingDictionaryInstalled.
+  ///
+  /// In en, this message translates to:
+  /// **'Installed'**
+  String get spellingDictionaryInstalled;
+
+  /// No description provided for @installSpellingDictionary.
+  ///
+  /// In en, this message translates to:
+  /// **'Install dictionary'**
+  String get installSpellingDictionary;
+
+  /// No description provided for @removeSpellingDictionary.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove dictionary'**
+  String get removeSpellingDictionary;
+
+  /// No description provided for @cancelSpellingDictionaryInstall.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel dictionary download'**
+  String get cancelSpellingDictionaryInstall;
+
+  /// No description provided for @retrySpellingDictionaryInstall.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry dictionary installation'**
+  String get retrySpellingDictionaryInstall;
+
+  /// No description provided for @spellingDictionaryDownloading.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloading {size}…'**
+  String spellingDictionaryDownloading(String size);
+
+  /// No description provided for @spellingDictionaryValidating.
+  ///
+  /// In en, this message translates to:
+  /// **'Validating dictionary…'**
+  String get spellingDictionaryValidating;
+
+  /// No description provided for @spellingDictionaryInstallFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Dictionary installation failed — select to retry'**
+  String get spellingDictionaryInstallFailed;
+
+  /// No description provided for @spellingDictionaryInstallPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Install {dictionary} ({size})? After installation, it remains available offline until you remove it.'**
+  String spellingDictionaryInstallPrompt(String dictionary, String size);
+
   /// No description provided for @spellingDictionaryUnavailable.
   ///
   /// In en, this message translates to:

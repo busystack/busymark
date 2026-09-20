@@ -4544,6 +4544,46 @@ class AppLocalizationsHi extends AppLocalizations {
   String get spellingCheckIncomplete => 'वर्तनी जाँच अधूरी है';
 
   @override
+  String get spellingDictionaryNotInstalled => 'शब्दकोश इंस्टॉल नहीं है';
+
+  @override
+  String spellingDictionaryNotInstalledWithSize(String size) {
+    return 'इंस्टॉल नहीं है · $size';
+  }
+
+  @override
+  String get spellingDictionaryInstalled => 'इंस्टॉल है';
+
+  @override
+  String get installSpellingDictionary => 'शब्दकोश इंस्टॉल करें';
+
+  @override
+  String get removeSpellingDictionary => 'शब्दकोश हटाएँ';
+
+  @override
+  String get cancelSpellingDictionaryInstall => 'शब्दकोश डाउनलोड रद्द करें';
+
+  @override
+  String get retrySpellingDictionaryInstall => 'शब्दकोश इंस्टॉलेशन फिर आज़माएँ';
+
+  @override
+  String spellingDictionaryDownloading(String size) {
+    return '$size डाउनलोड हो रहा है…';
+  }
+
+  @override
+  String get spellingDictionaryValidating => 'शब्दकोश सत्यापित हो रहा है…';
+
+  @override
+  String get spellingDictionaryInstallFailed =>
+      'शब्दकोश इंस्टॉलेशन विफल — फिर प्रयास करने के लिए चुनें';
+
+  @override
+  String spellingDictionaryInstallPrompt(String dictionary, String size) {
+    return '$dictionary ($size) इंस्टॉल करें? इंस्टॉल होने के बाद यह हटाए जाने तक ऑफ़लाइन उपलब्ध रहेगा।';
+  }
+
+  @override
   String get spellingDictionaryUnavailable => 'शब्दकोश उपलब्ध नहीं है';
 
   @override

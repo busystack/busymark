@@ -4584,6 +4584,46 @@ class AppLocalizationsAr extends AppLocalizations {
   String get spellingCheckIncomplete => 'التدقيق الإملائي غير مكتمل';
 
   @override
+  String get spellingDictionaryNotInstalled => 'القاموس غير مثبّت';
+
+  @override
+  String spellingDictionaryNotInstalledWithSize(String size) {
+    return 'غير مثبّت · ⁨$size⁩';
+  }
+
+  @override
+  String get spellingDictionaryInstalled => 'مثبّت';
+
+  @override
+  String get installSpellingDictionary => 'تثبيت القاموس';
+
+  @override
+  String get removeSpellingDictionary => 'إزالة القاموس';
+
+  @override
+  String get cancelSpellingDictionaryInstall => 'إلغاء تنزيل القاموس';
+
+  @override
+  String get retrySpellingDictionaryInstall => 'إعادة محاولة تثبيت القاموس';
+
+  @override
+  String spellingDictionaryDownloading(String size) {
+    return 'جارٍ تنزيل ⁨$size⁩…';
+  }
+
+  @override
+  String get spellingDictionaryValidating => 'جارٍ التحقق من القاموس…';
+
+  @override
+  String get spellingDictionaryInstallFailed =>
+      'فشل تثبيت القاموس — حدده لإعادة المحاولة';
+
+  @override
+  String spellingDictionaryInstallPrompt(String dictionary, String size) {
+    return 'هل تريد تثبيت ⁨$dictionary⁩ (⁨$size⁩)؟ بعد التثبيت، يظل متاحًا دون اتصال حتى تزيله.';
+  }
+
+  @override
   String get spellingDictionaryUnavailable => 'القاموس غير متاح';
 
   @override

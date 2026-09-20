@@ -4592,6 +4592,46 @@ class AppLocalizationsFa extends AppLocalizations {
   String get spellingCheckIncomplete => 'بررسی املا کامل نیست';
 
   @override
+  String get spellingDictionaryNotInstalled => 'واژه‌نامه نصب نشده است';
+
+  @override
+  String spellingDictionaryNotInstalledWithSize(String size) {
+    return 'نصب‌نشده · ⁨$size⁩';
+  }
+
+  @override
+  String get spellingDictionaryInstalled => 'نصب‌شده';
+
+  @override
+  String get installSpellingDictionary => 'نصب واژه‌نامه';
+
+  @override
+  String get removeSpellingDictionary => 'حذف واژه‌نامه';
+
+  @override
+  String get cancelSpellingDictionaryInstall => 'لغو بارگیری واژه‌نامه';
+
+  @override
+  String get retrySpellingDictionaryInstall => 'تلاش دوباره برای نصب واژه‌نامه';
+
+  @override
+  String spellingDictionaryDownloading(String size) {
+    return 'در حال بارگیری ⁨$size⁩…';
+  }
+
+  @override
+  String get spellingDictionaryValidating => 'در حال اعتبارسنجی واژه‌نامه…';
+
+  @override
+  String get spellingDictionaryInstallFailed =>
+      'نصب واژه‌نامه ناموفق بود — برای تلاش دوباره انتخاب کنید';
+
+  @override
+  String spellingDictionaryInstallPrompt(String dictionary, String size) {
+    return 'واژه‌نامهٔ ⁨$dictionary⁩ (⁨$size⁩) نصب شود؟ پس از نصب تا زمانی که آن را حذف نکنید، آفلاین در دسترس می‌ماند.';
+  }
+
+  @override
   String get spellingDictionaryUnavailable => 'واژه‌نامه در دسترس نیست';
 
   @override

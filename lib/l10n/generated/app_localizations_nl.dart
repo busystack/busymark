@@ -4597,6 +4597,48 @@ class AppLocalizationsNl extends AppLocalizations {
   String get spellingCheckIncomplete => 'De spellingcontrole is onvolledig';
 
   @override
+  String get spellingDictionaryNotInstalled => 'Woordenboek niet geïnstalleerd';
+
+  @override
+  String spellingDictionaryNotInstalledWithSize(String size) {
+    return 'Niet geïnstalleerd · $size';
+  }
+
+  @override
+  String get spellingDictionaryInstalled => 'Geïnstalleerd';
+
+  @override
+  String get installSpellingDictionary => 'Woordenboek installeren';
+
+  @override
+  String get removeSpellingDictionary => 'Woordenboek verwijderen';
+
+  @override
+  String get cancelSpellingDictionaryInstall =>
+      'Download van woordenboek annuleren';
+
+  @override
+  String get retrySpellingDictionaryInstall =>
+      'Installatie van woordenboek opnieuw proberen';
+
+  @override
+  String spellingDictionaryDownloading(String size) {
+    return '$size downloaden…';
+  }
+
+  @override
+  String get spellingDictionaryValidating => 'Woordenboek valideren…';
+
+  @override
+  String get spellingDictionaryInstallFailed =>
+      'Installatie mislukt — selecteer om opnieuw te proberen';
+
+  @override
+  String spellingDictionaryInstallPrompt(String dictionary, String size) {
+    return '$dictionary ($size) installeren? Daarna blijft het offline beschikbaar totdat u het verwijdert.';
+  }
+
+  @override
   String get spellingDictionaryUnavailable => 'Woordenboek niet beschikbaar';
 
   @override

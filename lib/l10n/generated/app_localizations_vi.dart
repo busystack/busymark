@@ -4545,6 +4545,46 @@ class AppLocalizationsVi extends AppLocalizations {
   String get spellingCheckIncomplete => 'Kiểm tra chính tả chưa hoàn tất';
 
   @override
+  String get spellingDictionaryNotInstalled => 'Từ điển chưa được cài đặt';
+
+  @override
+  String spellingDictionaryNotInstalledWithSize(String size) {
+    return 'Chưa cài đặt · $size';
+  }
+
+  @override
+  String get spellingDictionaryInstalled => 'Đã cài đặt';
+
+  @override
+  String get installSpellingDictionary => 'Cài đặt từ điển';
+
+  @override
+  String get removeSpellingDictionary => 'Gỡ từ điển';
+
+  @override
+  String get cancelSpellingDictionaryInstall => 'Hủy tải từ điển';
+
+  @override
+  String get retrySpellingDictionaryInstall => 'Thử cài đặt lại từ điển';
+
+  @override
+  String spellingDictionaryDownloading(String size) {
+    return 'Đang tải $size…';
+  }
+
+  @override
+  String get spellingDictionaryValidating => 'Đang xác thực từ điển…';
+
+  @override
+  String get spellingDictionaryInstallFailed =>
+      'Cài đặt từ điển thất bại — chọn để thử lại';
+
+  @override
+  String spellingDictionaryInstallPrompt(String dictionary, String size) {
+    return 'Cài đặt $dictionary ($size)? Sau khi cài đặt, từ điển sẽ dùng được ngoại tuyến cho đến khi bạn gỡ bỏ.';
+  }
+
+  @override
   String get spellingDictionaryUnavailable => 'Từ điển không khả dụng';
 
   @override

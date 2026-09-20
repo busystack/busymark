@@ -13,7 +13,9 @@ import '../workspace/document_buffer.dart';
 import '../workspace/workspace_model.dart';
 import 'spelling_catalog.dart';
 import 'spelling_coordinator.dart';
+import 'spelling_dictionary_downloader.dart';
 import 'spelling_dictionary_importer.dart';
+import 'spelling_dictionary_installer.dart';
 import 'spelling_language.dart';
 import 'spelling_projection.dart';
 import 'spelling_word_store.dart';
@@ -28,6 +30,27 @@ final spellingSessionControllerProvider =
       );
     });
 
+enum SpellingDictionaryInstallPhase { downloading, validating, failed }
+
+final class SpellingDictionaryInstallStatus {
+  const SpellingDictionaryInstallStatus({
+    required this.resourceId,
+    required this.phase,
+    required this.receivedBytes,
+    required this.totalBytes,
+    this.error,
+  });
+
+  final String resourceId;
+  final SpellingDictionaryInstallPhase phase;
+  final int receivedBytes;
+  final int totalBytes;
+  final String? error;
+
+  double? get progress =>
+      totalBytes <= 0 ? null : (receivedBytes / totalBytes).clamp(0.0, 1.0);
+}
+
 /// Application-side owner for the one reusable native spelling worker.
 ///
 /// This class deliberately owns presentation state rather than putting
@@ -37,12 +60,20 @@ final class SpellingSessionController extends ChangeNotifier {
   SpellingSessionController({
     this.bundledRoot,
     this.applicationSupportRoot,
+    this.dictionaryStorageRoot,
+    this.environment,
     this.verifyDictionaryChecksums = true,
+    this.dictionaryDownloader = const SpellingDictionaryDownloader(),
+    this.dictionaryInstaller = const SpellingDictionaryPairInstaller(),
   });
 
   final String? bundledRoot;
   final String? applicationSupportRoot;
+  final String? dictionaryStorageRoot;
+  final Map<String, String>? environment;
   final bool verifyDictionaryChecksums;
+  final SpellingDictionaryDownloader dictionaryDownloader;
+  final SpellingDictionaryPairInstaller dictionaryInstaller;
 
   SpellingCoordinator? _coordinator;
   SpellingDictionaryCatalog? _catalog;
@@ -63,6 +94,7 @@ final class SpellingSessionController extends ChangeNotifier {
   String? _projectRoot;
   Workspace? _settingsWorkspace;
   String? _supportRoot;
+  String? _resolvedDictionaryStorageRoot;
   bool _personalStorageInitialized = false;
   bool _projectStorageInitialized = false;
   String _scheduledIdentity = '';
@@ -71,6 +103,9 @@ final class SpellingSessionController extends ChangeNotifier {
   int _operation = 0;
   bool _disposed = false;
   bool _manualReviewActive = false;
+  Set<String> _openBufferIds = const {};
+  SpellingDictionaryDownloadCancellation? _dictionaryDownloadCancellation;
+  SpellingDictionaryInstallStatus? _dictionaryInstallStatus;
 
   SpellingPresentationState get state => _coordinator?.state ?? _localState;
   List<SpellingAnnotation> get annotations =>
@@ -78,6 +113,8 @@ final class SpellingSessionController extends ChangeNotifier {
   List<SpellingOccurrence> get misspellings =>
       _coordinator?.misspellings ?? const [];
   SpellingDictionaryCatalog? get catalog => _catalog;
+  SpellingDictionaryInstallStatus? get dictionaryInstallStatus =>
+      _dictionaryInstallStatus;
   String? get effectiveLanguage => _engineContext?.languageId;
   bool get hasProjectScope => _projectStore != null;
   SpellingWordStoreSnapshot get personalWords => _personalWords;
@@ -90,9 +127,14 @@ final class SpellingSessionController extends ChangeNotifier {
   }
 
   void update(SpellingSessionInput input) {
-    _latestInput = input;
     final identity = input.identity;
-    if (identity == _scheduledIdentity) return;
+    if (identity == _scheduledIdentity) {
+      // An equivalent rebuild must not replace the object tracked by an
+      // in-flight initialization operation. Its immutable identity already
+      // represents this snapshot.
+      return;
+    }
+    _latestInput = input;
     _scheduledIdentity = identity;
     final operation = ++_operation;
     unawaited(
@@ -125,11 +167,21 @@ final class SpellingSessionController extends ChangeNotifier {
     if (coordinator == null || context == null) {
       throw StateError('Dictionary unavailable.');
     }
-    return coordinator.suggestions(occurrence, context: context);
+    if (!isCurrent(occurrence)) {
+      throw StateError('The spelling occurrence is stale.');
+    }
+    final contextIdentity = context.identity;
+    final result = await coordinator.suggestions(occurrence, context: context);
+    if (!isCurrent(occurrence) || _engineContext?.identity != contextIdentity) {
+      throw StateError('The spelling occurrence became stale.');
+    }
+    return result;
   }
 
   bool isCurrent(SpellingOccurrence occurrence) =>
-      _coordinator?.isCurrent(occurrence) ?? false;
+      occurrence.run.snapshot.contextGeneration == _contextGeneration &&
+      occurrence.run.languageId == _engineContext?.languageId &&
+      (_coordinator?.isCurrent(occurrence) ?? false);
 
   SpellingOccurrence? occurrenceAtSource(int offset) =>
       _coordinator?.occurrenceAtSource(offset);
@@ -190,10 +242,10 @@ final class SpellingSessionController extends ChangeNotifier {
     required String displayLabel,
   }) async {
     await _ensureStorageRoot();
+    final dictionaryRoot = await _ensureDictionaryStorageRoot();
     await _ensureCoordinator();
     final coordinator = _coordinator;
-    final supportRoot = _supportRoot;
-    if (coordinator == null || supportRoot == null) {
+    if (coordinator == null) {
       throw StateError('The spelling service is unavailable.');
     }
     await const SpellingDictionaryImporter().import(
@@ -201,28 +253,115 @@ final class SpellingSessionController extends ChangeNotifier {
       dicPath: dicPath,
       languageId: languageId,
       displayLabel: displayLabel,
-      importedRoot: p.join(supportRoot, 'spelling', 'dictionaries'),
+      importedRoot: p.join(dictionaryRoot, 'imported'),
       validateNativePair: (aff, dic) =>
           coordinator.validateDictionary(affPath: aff, dicPath: dic),
     );
-    _catalog = null;
-    await _initializeStorage(_latestInput?.workspace ?? _settingsWorkspace);
-    await _refreshAfterPersistentChange();
+    await _reloadCatalogAndRefresh();
   }
 
   Future<void> removeImportedDictionary(String languageId) async {
-    await _ensureStorageRoot();
-    final supportRoot = _supportRoot;
-    if (supportRoot == null) {
-      throw StateError('Application support storage is unavailable.');
-    }
-    await const SpellingDictionaryImporter().remove(
-      languageId: languageId,
-      importedRoot: p.join(supportRoot, 'spelling', 'dictionaries'),
-    );
-    _catalog = null;
     await _initializeStorage(_latestInput?.workspace ?? _settingsWorkspace);
-    await _refreshAfterPersistentChange();
+    final installation = _catalog?.installedById(languageId);
+    if (installation == null || !installation.imported) return;
+    await _releaseAndRemoveInstallation(installation);
+  }
+
+  Future<void> installDictionary(String languageId) async {
+    await _initializeStorage(_latestInput?.workspace ?? _settingsWorkspace);
+    final catalog = _catalog;
+    final resource = catalog?.availableById(languageId);
+    if (resource == null) {
+      throw StateError('Dictionary resource is not in the shipped catalog.');
+    }
+    if (catalog!.installationForResource(resource.resourceId) != null) return;
+    if (_dictionaryDownloadCancellation != null) {
+      throw StateError('Another dictionary installation is in progress.');
+    }
+    final dictionaryRoot = await _ensureDictionaryStorageRoot();
+    await _ensureCoordinator();
+    final coordinator = _coordinator;
+    if (coordinator == null) {
+      throw StateError('The spelling service is unavailable.');
+    }
+    final cancellation = SpellingDictionaryDownloadCancellation();
+    _dictionaryDownloadCancellation = cancellation;
+    _dictionaryInstallStatus = SpellingDictionaryInstallStatus(
+      resourceId: resource.resourceId,
+      phase: SpellingDictionaryInstallPhase.downloading,
+      receivedBytes: 0,
+      totalBytes: resource.downloadSize,
+    );
+    notifyListeners();
+    try {
+      await dictionaryDownloader.install(
+        resource: resource,
+        downloadedRoot: p.join(dictionaryRoot, 'downloaded'),
+        validateNativePair: (aff, dic) =>
+            coordinator.validateDictionary(affPath: aff, dicPath: dic),
+        cancellation: cancellation,
+        onProgress: (received, total) {
+          if (_disposed ||
+              !identical(_dictionaryDownloadCancellation, cancellation)) {
+            return;
+          }
+          _dictionaryInstallStatus = SpellingDictionaryInstallStatus(
+            resourceId: resource.resourceId,
+            phase: received >= total
+                ? SpellingDictionaryInstallPhase.validating
+                : SpellingDictionaryInstallPhase.downloading,
+            receivedBytes: received,
+            totalBytes: total,
+          );
+          notifyListeners();
+        },
+      );
+      if (cancellation.isCancelled) return;
+      _dictionaryInstallStatus = null;
+      await _reloadCatalogAndRefresh();
+    } on SpellingDictionaryDownloadCancelled {
+      _dictionaryInstallStatus = null;
+      if (!_disposed) notifyListeners();
+    } on Object catch (error) {
+      _dictionaryInstallStatus = SpellingDictionaryInstallStatus(
+        resourceId: resource.resourceId,
+        phase: SpellingDictionaryInstallPhase.failed,
+        receivedBytes: _dictionaryInstallStatus?.receivedBytes ?? 0,
+        totalBytes: resource.downloadSize,
+        error: error.toString(),
+      );
+      if (!_disposed) notifyListeners();
+      rethrow;
+    } finally {
+      if (identical(_dictionaryDownloadCancellation, cancellation)) {
+        _dictionaryDownloadCancellation = null;
+      }
+    }
+  }
+
+  void cancelDictionaryInstallation() {
+    _dictionaryDownloadCancellation?.cancel();
+  }
+
+  Future<void> retryDictionaryInstallation() async {
+    final status = _dictionaryInstallStatus;
+    if (status == null ||
+        status.phase != SpellingDictionaryInstallPhase.failed) {
+      return;
+    }
+    _dictionaryInstallStatus = null;
+    final resource = _catalog?.availableEntries
+        .where((entry) => entry.resourceId == status.resourceId)
+        .firstOrNull;
+    if (resource == null) return;
+    await installDictionary(resource.id);
+  }
+
+  Future<void> removeDownloadedDictionary(String languageId) async {
+    await _initializeStorage(_latestInput?.workspace ?? _settingsWorkspace);
+    final installation = _catalog?.installedById(languageId);
+    if (installation == null || installation.imported) return;
+    await _releaseAndRemoveInstallation(installation);
   }
 
   Future<void> setProjectLanguage(String? languageId) async {
@@ -235,6 +374,16 @@ final class SpellingSessionController extends ChangeNotifier {
   }
 
   void closeBuffer(String bufferId) => _coordinator?.closeBuffer(bufferId);
+
+  /// Clears document-session ignores only for buffers that actually left the
+  /// workspace. Merely activating another tab must retain them.
+  void synchronizeOpenBuffers(Iterable<String> bufferIds) {
+    final next = Set<String>.unmodifiable(bufferIds);
+    for (final previous in _openBufferIds) {
+      if (!next.contains(previous)) _coordinator?.closeBuffer(previous);
+    }
+    _openBufferIds = next;
+  }
 
   void translateSourceEdit({
     required String bufferId,
@@ -287,9 +436,17 @@ final class SpellingSessionController extends ChangeNotifier {
         _coordinator!.showDictionaryUnavailable(languageId);
         return;
       }
+      final installation = entry.installation;
+      if (installation == null) {
+        await _ensureCoordinator();
+        if (!_isOperationCurrent(operation, input)) return;
+        _engineContext = null;
+        _coordinator!.showDictionaryNotInstalled(languageId);
+        return;
+      }
       final contextIdentity = [
         languageId,
-        entry.fingerprint,
+        installation.fingerprint,
         _personalWords.revision,
         _projectRoot ?? '',
         _projectWords.revision,
@@ -304,9 +461,9 @@ final class SpellingSessionController extends ChangeNotifier {
       }.toList(growable: false);
       _engineContext = SpellingEngineContext(
         languageId: languageId,
-        affPath: entry.affPath,
-        dicPath: entry.dicPath,
-        baseFingerprint: entry.fingerprint,
+        affPath: installation.affPath,
+        dicPath: installation.dicPath,
+        baseFingerprint: installation.fingerprint,
         personalRevision: _personalWords.revision,
         projectIdentity: _projectRoot,
         projectRevision: _projectWords.revision,
@@ -391,22 +548,25 @@ final class SpellingSessionController extends ChangeNotifier {
       _projectStorageInitialized = true;
     }
 
-    // The bundled catalog can be large. Its pair checksums are verified once
-    // per application session, never again on each keystroke.
+    // Available metadata is shipped with BusyMark. Only application-managed
+    // installations are opened and checksum-verified.
     if (_catalog == null) {
       final resourceRoot =
           bundledRoot ?? const SpellingResourceLocator().locate();
       if (resourceRoot == null) {
         _catalog = const SpellingDictionaryCatalog(
-          entries: [],
+          availableEntries: [],
+          installations: [],
           unavailableEntries: {
-            'bundle': 'Bundled dictionary resources are unavailable.',
+            'bundle': 'Dictionary catalog metadata is unavailable.',
           },
         );
       } else {
+        final dictionaryRoot = await _ensureDictionaryStorageRoot();
         _catalog = await SpellingDictionaryCatalog.load(
           bundledRoot: resourceRoot,
-          importedRoot: p.join(supportRoot, 'spelling', 'dictionaries'),
+          downloadedRoot: p.join(dictionaryRoot, 'downloaded'),
+          importedRoot: p.join(dictionaryRoot, 'imported'),
           verifyChecksums: verifyDictionaryChecksums,
         );
       }
@@ -420,6 +580,45 @@ final class SpellingSessionController extends ChangeNotifier {
         applicationSupportRoot ?? (await getApplicationSupportDirectory()).path;
     _supportRoot = resolved;
     return resolved;
+  }
+
+  Future<String> _ensureDictionaryStorageRoot() async {
+    final existing = _resolvedDictionaryStorageRoot;
+    if (existing != null) return existing;
+    _resolvedDictionaryStorageRoot = resolveSpellingDictionaryStorageRoot(
+      applicationSupportRoot: await _ensureStorageRoot(),
+      dictionaryStorageRoot: dictionaryStorageRoot,
+      environment: environment,
+    );
+    return _resolvedDictionaryStorageRoot!;
+  }
+
+  Future<void> _releaseAndRemoveInstallation(
+    SpellingDictionaryInstallation installation,
+  ) async {
+    final coordinator = _coordinator;
+    if (coordinator != null) {
+      coordinator.disablePresentation();
+      await coordinator.releaseDictionary();
+    }
+    _engineContext = null;
+    _contextIdentity = '';
+    final dictionaryRoot = await _ensureDictionaryStorageRoot();
+    final root = p.join(
+      dictionaryRoot,
+      installation.imported ? 'imported' : 'downloaded',
+    );
+    await dictionaryInstaller.remove(
+      installation: installation,
+      installationRoot: root,
+    );
+    await _reloadCatalogAndRefresh();
+  }
+
+  Future<void> _reloadCatalogAndRefresh() async {
+    _catalog = null;
+    await _initializeStorage(_latestInput?.workspace ?? _settingsWorkspace);
+    await _refreshAfterPersistentChange();
   }
 
   Future<void> _ensureCoordinator() async {
@@ -457,7 +656,9 @@ final class SpellingSessionController extends ChangeNotifier {
   }
 
   bool _isOperationCurrent(int operation, SpellingSessionInput input) =>
-      !_disposed && operation == _operation && identical(_latestInput, input);
+      !_disposed &&
+      operation == _operation &&
+      _latestInput?.identity == input.identity;
 
   void _requireCurrent(SpellingOccurrence occurrence) {
     if (!isCurrent(occurrence)) {
@@ -484,6 +685,7 @@ final class SpellingSessionController extends ChangeNotifier {
     if (_disposed) return;
     _disposed = true;
     _operation++;
+    _dictionaryDownloadCancellation?.cancel();
     final coordinator = _coordinator;
     if (coordinator != null) {
       coordinator.removeListener(_forwardCoordinatorChange);
@@ -491,6 +693,25 @@ final class SpellingSessionController extends ChangeNotifier {
     }
     super.dispose();
   }
+}
+
+String resolveSpellingDictionaryStorageRoot({
+  required String applicationSupportRoot,
+  String? dictionaryStorageRoot,
+  Map<String, String>? environment,
+}) {
+  final processEnvironment = environment ?? Platform.environment;
+  final snapCommon = processEnvironment['SNAP_USER_COMMON']?.trim();
+  final configuredRoot = processEnvironment['BUSYMARK_SPELLING_INSTALL_ROOT']
+      ?.trim();
+  final resolved =
+      dictionaryStorageRoot ??
+      (configuredRoot != null && configuredRoot.isNotEmpty
+          ? configuredRoot
+          : snapCommon != null && snapCommon.isNotEmpty
+          ? p.join(snapCommon, 'spelling', 'dictionaries')
+          : p.join(applicationSupportRoot, 'spelling', 'dictionaries'));
+  return p.normalize(p.absolute(resolved));
 }
 
 final class SpellingSessionInput {

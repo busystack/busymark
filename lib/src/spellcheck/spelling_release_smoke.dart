@@ -1,19 +1,31 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:flutter/services.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
+import '../../l10n/generated/app_localizations.dart';
+import '../core/diagnostic.dart';
+import '../editor/source/source_editor.dart';
+import '../editor/source/source_search.dart';
+import '../editor/source_language.dart';
+import '../editor/wysiwyg/wysiwyg_editor.dart';
 import '../markdown/markdown_model.dart';
-import '../workspace/document_buffer.dart';
+import '../markdown/markdown_parser.dart';
+import '../workspace/workspace_controller.dart';
 import '../workspace/workspace_model.dart';
 import 'markdown_spelling_projection.dart';
 import 'spelling_catalog.dart';
+import 'spelling_coordinator.dart';
+import 'spelling_dictionary_downloader.dart';
 import 'spelling_projection.dart';
 import 'spelling_replacement.dart';
+import 'spelling_session_controller.dart';
 import 'spelling_word_store.dart';
 import 'spelling_worker.dart';
+import 'wysiwyg_spelling_projection.dart';
 
 const spellingReleaseSmokeArgument = '--spelling-release-smoke=';
 
@@ -32,11 +44,12 @@ String? spellingReleaseSmokeReportPath(
   return null;
 }
 
-/// Exercises spelling through the installed executable and bundle.
+/// Exercises spelling through the installed executable, editor widgets, and
+/// bundle.
 ///
 /// This deliberately resolves no host dictionary path. It covers the bundled
-/// native asset, real dictionary, source projection, exact correction plan,
-/// document history selections, and application-support word persistence.
+/// native asset, real dictionary, Source and WYSIWYG transaction paths,
+/// workspace undo/redo, and the normal personal-word storage path.
 Future<int> runSpellingReleaseSmoke(String reportPath) async {
   final reportFile = File(p.normalize(p.absolute(reportPath)));
   await reportFile.parent.create(recursive: true);
@@ -52,28 +65,78 @@ Future<int> runSpellingReleaseSmoke(String reportPath) async {
       bundledRoot: bundledRoot,
       verifyChecksums: true,
     );
-    checks['dictionaryCount'] = catalog.entries.length;
-    final english = catalog.byId('en-US');
+    checks['availableDictionaryCount'] = catalog.availableEntries.length;
+    final bundledPairs = await Directory(bundledRoot)
+        .list(recursive: true)
+        .where(
+          (entity) =>
+              entity is File &&
+              (entity.path.endsWith('.aff') || entity.path.endsWith('.dic')),
+        )
+        .length;
+    checks['bundledDictionaryFileCount'] = bundledPairs;
+    if (bundledPairs != 0) {
+      throw StateError('The installed package contains language pairs.');
+    }
+    final englishResource = catalog.availableById('en-US');
+    if (englishResource == null) {
+      throw StateError('The en-US resource is absent from the catalog.');
+    }
+    final support = await getApplicationSupportDirectory();
+    final dictionaryRoot = resolveSpellingDictionaryStorageRoot(
+      applicationSupportRoot: support.path,
+    );
+    final downloadedRoot = p.join(dictionaryRoot, 'downloaded');
+    worker = await SpellingWorker.start();
+    var installedDuringRun = false;
+    var installedCatalog = await SpellingDictionaryCatalog.load(
+      bundledRoot: bundledRoot,
+      downloadedRoot: downloadedRoot,
+    );
+    if (installedCatalog.installedById('en-US') == null) {
+      await const SpellingDictionaryDownloader().install(
+        resource: englishResource,
+        downloadedRoot: downloadedRoot,
+        validateNativePair: (aff, dic) =>
+            worker!.validateDictionary(affPath: aff, dicPath: dic),
+        cancellation: SpellingDictionaryDownloadCancellation(),
+        onProgress: (_, _) {},
+      );
+      installedDuringRun = true;
+      installedCatalog = await SpellingDictionaryCatalog.load(
+        bundledRoot: bundledRoot,
+        downloadedRoot: downloadedRoot,
+      );
+    }
+    final english = installedCatalog.installedById('en-US');
     if (english == null) {
       throw StateError('The installed en-US dictionary is unavailable.');
     }
+    checks['dictionaryInstalledDuringRun'] = installedDuringRun;
+    checks['installedDictionaryCount'] = installedCatalog.installations.length;
+    if (installedCatalog.installations.length != 1) {
+      throw StateError('The smoke profile did not contain exactly one pair.');
+    }
 
     const source = 'This is helo.\n';
-    const bufferId = 'spelling-release-smoke';
-    const snapshot = SpellingSnapshotIdentity(
-      bufferId: bufferId,
-      contentRevision: 0,
+    final container = ProviderContainer();
+    final workspace = container.read(workspaceControllerProvider.notifier);
+    await workspace.createMarkdownFile();
+    workspace.updateActiveText(source);
+    var buffer = container.read(workspaceControllerProvider).activeBuffer!;
+    final snapshot = SpellingSnapshotIdentity(
+      bufferId: buffer.id,
+      contentRevision: buffer.revision,
       documentKind: DocumentKind.markdown,
       contextGeneration: 1,
     );
     final projection = const MarkdownSpellingProjector().project(
-      filePath: '/spelling-release-smoke.md',
+      filePath: buffer.id,
       source: source,
       mode: MarkdownMode.gfm,
       languageId: 'en-US',
       snapshot: snapshot,
     );
-    worker = await SpellingWorker.start();
     final context = SpellingEngineContext(
       languageId: english.id,
       affPath: english.affPath,
@@ -108,46 +171,99 @@ Future<int> runSpellingReleaseSmoke(String reportPath) async {
     if (corrected != 'This is hello.\n') {
       throw StateError('The exact source correction changed unexpected text.');
     }
-    final buffer =
-        DocumentBuffer.untitled(
-          id: bufferId,
-          name: 'spelling-release-smoke.md',
-          text: source,
-        ).copyWith(
-          editorState: const DocumentEditorState(
-            selection: TextSelection.collapsed(offset: 10),
-          ),
-        );
-    final edited = buffer.edited(
-      corrected,
-      previousSelection: const TextSelection(baseOffset: 8, extentOffset: 12),
-      nextSelection: TextSelection.collapsed(
-        offset: plan.resultingSourceCaret ?? 13,
+    final sourceKey = GlobalKey<BusyMarkSourceEditorState>();
+    await _mountSmokeEditor(
+      BusyMarkSourceEditor(
+        key: sourceKey,
+        text: source,
+        language: SourceSyntaxLanguage.markdown,
+        filePath: null,
+        documentId: buffer.id,
+        diagnostics: const <Diagnostic>[],
+        editorFontSize: 14,
+        wordWrap: true,
+        searchActive: false,
+        searchOptions: const SourceSearchOptions(),
+        onSearchOptionsChanged: (_) {},
+        onChanged: (_, _) {},
+        onTransactionalChanged:
+            (text, sourceFilePath, previousSelection, selection, undoGroup) =>
+                workspace.updateActiveSourceText(
+                  text,
+                  sourceFilePath: sourceFilePath,
+                  previousSelection: previousSelection,
+                  selection: selection,
+                  undoGroup: undoGroup,
+                ),
+        onOpenSearch: () {},
+        onCloseSearch: () {},
+        editRevision: buffer.revision,
+        initialSelection: const TextSelection(baseOffset: 8, extentOffset: 12),
+        spellingAnnotations: [_annotationFor(occurrence)],
       ),
     );
-    final undoTarget = edited.editorState.undoState.undo.single;
-    final redoState = edited.editorState.undoState.afterUndo(
-      DocumentHistoryState(
-        text: edited.text,
-        selection: edited.editorState.selection,
-      ),
-    );
-    if (undoTarget.text != source ||
-        undoTarget.selection !=
+    if (sourceKey.currentState?.applySpellingCorrection(
+          occurrence: occurrence,
+          suggestion: 'hello',
+        ) !=
+        true) {
+      throw StateError('The installed Source editor rejected the correction.');
+    }
+    await _settleSmokeFrames();
+    buffer = container.read(workspaceControllerProvider).activeBuffer!;
+    if (buffer.text != corrected ||
+        buffer.editorState.selection !=
+            const TextSelection.collapsed(offset: 13)) {
+      throw StateError('The Source editor did not publish its transaction.');
+    }
+    if (!workspace.undoActiveBuffer() ||
+        container.read(workspaceControllerProvider).activeBuffer?.text !=
+            source ||
+        container
+                .read(workspaceControllerProvider)
+                .activeBuffer
+                ?.editorState
+                .selection !=
             const TextSelection(baseOffset: 8, extentOffset: 12) ||
-        redoState.redo.single.text != corrected ||
-        redoState.redo.single.selection != edited.editorState.selection) {
-      throw StateError('Correction undo/redo state did not retain selections.');
+        !workspace.redoActiveBuffer() ||
+        container.read(workspaceControllerProvider).activeBuffer?.text !=
+            corrected ||
+        container
+                .read(workspaceControllerProvider)
+                .activeBuffer
+                ?.editorState
+                .selection !=
+            const TextSelection.collapsed(offset: 13)) {
+      throw StateError(
+        'Workspace undo/redo did not retain the Source correction selection.',
+      );
     }
     checks['correctedSource'] = corrected;
-    checks['historyRoundTrip'] = true;
+    checks['sourceEditorTransaction'] = true;
+    checks['workspaceHistoryRoundTrip'] = true;
 
-    final support = await getApplicationSupportDirectory();
-    final personalFile = p.join(
-      support.path,
-      'spelling',
-      'personal-release-smoke.json',
+    await _exerciseRichEditor(
+      container: container,
+      workspace: workspace,
+      worker: worker,
+      context: context,
+      source: '**helo**\n',
+      expected: '**hello**\n',
+      expectedTarget: SpellingRichBlockTarget,
     );
+    checks['formattedRichEditorTransaction'] = true;
+    await _exerciseRichEditor(
+      container: container,
+      workspace: workspace,
+      worker: worker,
+      context: context,
+      source: '| Heading |\n| --- |\n| helo |\n',
+      expected: '| Heading |\n| --- |\n| hello |\n',
+      expectedTarget: SpellingRichTableCellTarget,
+    );
+    checks['tableCellEditorTransaction'] = true;
+
+    final personalFile = p.join(support.path, 'spelling', 'personal.json');
     final store = SpellingWordStore(filePath: personalFile);
     final before = await store.read();
     final hadPersistedWord = before
@@ -161,6 +277,9 @@ Future<int> runSpellingReleaseSmoke(String reportPath) async {
     checks['personalWordPersisted'] = true;
     checks['personalWordPresentBeforeRun'] = hadPersistedWord;
 
+    await _unmountSmokeEditor();
+    container.dispose();
+
     await _writeReport(reportFile, {'ok': true, 'checks': checks});
     return 0;
   } on Object catch (error, stackTrace) {
@@ -173,6 +292,126 @@ Future<int> runSpellingReleaseSmoke(String reportPath) async {
     return 1;
   } finally {
     await worker?.close();
+  }
+}
+
+Future<void> _exerciseRichEditor({
+  required ProviderContainer container,
+  required WorkspaceController workspace,
+  required SpellingWorker worker,
+  required SpellingEngineContext context,
+  required String source,
+  required String expected,
+  required Type expectedTarget,
+}) async {
+  workspace.updateActiveText(source);
+  final buffer = container.read(workspaceControllerProvider).activeBuffer!;
+  final document = const MarkdownParser()
+      .parse(
+        filePath: buffer.id,
+        source: source,
+        mode: MarkdownMode.commonMark,
+        validateLocalReferences: false,
+      )
+      .busyDocument;
+  final snapshot = SpellingSnapshotIdentity(
+    bufferId: buffer.id,
+    contentRevision: buffer.revision,
+    documentKind: DocumentKind.markdown,
+    contextGeneration: 1,
+  );
+  final projection = const WysiwygSpellingProjector().project(
+    document: document,
+    languageId: context.languageId,
+    snapshot: snapshot,
+    documentGeneration: 0,
+  );
+  if (!projection.complete) {
+    throw StateError(projection.message ?? 'Rich projection was incomplete.');
+  }
+  final checked = await worker.check(context: context, runs: projection.runs);
+  final occurrence = checked.occurrences.singleWhere(
+    (candidate) =>
+        candidate.word == 'helo' &&
+        candidate.run.target.runtimeType == expectedTarget,
+  );
+  final key = GlobalKey<BusyMarkWysiwygEditorState>();
+  var publishedDocument = document;
+  await _mountSmokeEditor(
+    BusyMarkWysiwygEditor(
+      key: key,
+      document: document,
+      documentId: buffer.id,
+      contentRevision: buffer.revision,
+      useExternalUndoHistory: true,
+      spellingAnnotations: [_annotationFor(occurrence)],
+      onDocumentChanged: (value) => publishedDocument = value,
+      onSourceChanged: (_, _) {},
+      onSpellingSourceChanged: (_, value, before, after) =>
+          workspace.updateActiveWysiwygText(
+            value,
+            document: publishedDocument,
+            previousWysiwygState: before,
+            wysiwygState: after,
+          ),
+    ),
+  );
+  if (key.currentState?.applySpellingCorrection(
+        occurrence: occurrence,
+        suggestion: 'hello',
+      ) !=
+      true) {
+    throw StateError('The installed rich editor rejected a correction.');
+  }
+  await _settleSmokeFrames();
+  if (container.read(workspaceControllerProvider).activeBuffer?.text !=
+      expected) {
+    throw StateError('The rich correction changed unexpected source.');
+  }
+  if (!workspace.undoActiveBuffer() ||
+      container.read(workspaceControllerProvider).activeBuffer?.text !=
+          source ||
+      !workspace.redoActiveBuffer() ||
+      container.read(workspaceControllerProvider).activeBuffer?.text !=
+          expected) {
+    throw StateError('Rich editor correction failed workspace undo/redo.');
+  }
+}
+
+SpellingAnnotation _annotationFor(SpellingOccurrence occurrence) =>
+    SpellingAnnotation(
+      occurrenceId: occurrence.id,
+      start: occurrence.run.target is SpellingSourceTarget
+          ? occurrence.sourceStart!
+          : occurrence.fieldStart!,
+      end: occurrence.run.target is SpellingSourceTarget
+          ? occurrence.sourceEnd!
+          : occurrence.fieldEnd!,
+      target: occurrence.run.target,
+    );
+
+Future<void> _mountSmokeEditor(Widget editor) async {
+  runApp(
+    MaterialApp(
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      home: Scaffold(body: SizedBox(width: 1000, height: 700, child: editor)),
+    ),
+  );
+  await _settleSmokeFrames();
+}
+
+Future<void> _unmountSmokeEditor() async {
+  runApp(const SizedBox.shrink());
+  await _settleSmokeFrames();
+}
+
+Future<void> _settleSmokeFrames() async {
+  for (var index = 0; index < 3; index++) {
+    await WidgetsBinding.instance.endOfFrame.timeout(
+      const Duration(seconds: 5),
+    );
+    await Future<void>.delayed(const Duration(milliseconds: 20));
   }
 }
 

@@ -52,15 +52,19 @@ const languageNames = <String, String>{
 };
 
 Future<void> main(List<String> arguments) async {
-  if (arguments.length != 2) {
+  if (arguments.length < 2 ||
+      arguments.length > 3 ||
+      (arguments.length == 3 && arguments[2] != '--include-pairs')) {
     stderr.writeln(
-      'Usage: dart run tools/prepare_spelling_dictionaries.dart SOURCE OUTPUT',
+      'Usage: dart run tools/prepare_spelling_dictionaries.dart '
+      'SOURCE OUTPUT [--include-pairs]',
     );
     exitCode = 64;
     return;
   }
   final source = Directory(p.normalize(p.absolute(arguments[0])));
   final output = Directory(p.normalize(p.absolute(arguments[1])));
+  final includePairs = arguments.length == 3;
   if (!source.existsSync()) {
     throw FileSystemException(
       'Dictionary source directory is missing',
@@ -128,22 +132,26 @@ Future<void> main(List<String> arguments) async {
         continue;
       }
       final id = locales.first;
-      final pairDirectory = p.join('dictionaries', _safeName(id));
-      final affRelative = p.join(pairDirectory, p.basename(affSource.path));
-      final dicRelative = p.join(pairDirectory, p.basename(dicSource.path));
-      final outputPairDirectory = Directory(p.join(output.path, pairDirectory));
-      outputPairDirectory.createSync(recursive: true);
-      affSource.copySync(p.join(output.path, affRelative));
-      dicSource.copySync(p.join(output.path, dicRelative));
+      final affSourcePath = p.posix.joinAll(
+        p.split(p.relative(affSource.path, from: source.path)),
+      );
+      final dicSourcePath = p.posix.joinAll(
+        p.split(p.relative(dicSource.path, from: source.path)),
+      );
       final entry = _Entry(
+        resourceId: id,
         id: id,
         locales: locales.toSet(),
         label: _label(id),
-        affPath: p.posix.joinAll(p.split(affRelative)),
-        dicPath: p.posix.joinAll(p.split(dicRelative)),
+        affSourcePath: affSourcePath,
+        dicSourcePath: dicSourcePath,
+        affSize: affSource.lengthSync(),
+        dicSize: dicSource.lengthSync(),
         affChecksum: affChecksum,
         dicChecksum: dicChecksum,
         sourcePackage: packageName,
+        affSource: affSource,
+        dicSource: dicSource,
       );
       entries.add(entry);
       pairByFingerprint[fingerprint] = entry;
@@ -172,8 +180,18 @@ Future<void> main(List<String> arguments) async {
     }
   }
   entries.sort((left, right) => left.label.compareTo(right.label));
+  if (includePairs) {
+    for (final entry in entries) {
+      _publishTestInstallation(
+        output: output,
+        entry: entry,
+        affSource: entry.affSource,
+        dicSource: entry.dicSource,
+      );
+    }
+  }
   final manifest = <String, Object?>{
-    'schemaVersion': 1,
+    'schemaVersion': 2,
     'source': <String, Object?>{
       'name': 'LibreOffice dictionaries',
       'url': 'https://github.com/LibreOffice/dictionaries',
@@ -272,34 +290,83 @@ String _label(String locale) {
 
 final class _Entry {
   _Entry({
+    required this.resourceId,
     required this.id,
     required this.locales,
     required this.label,
-    required this.affPath,
-    required this.dicPath,
+    required this.affSourcePath,
+    required this.dicSourcePath,
+    required this.affSize,
+    required this.dicSize,
     required this.affChecksum,
     required this.dicChecksum,
     required this.sourcePackage,
+    required this.affSource,
+    required this.dicSource,
   });
 
+  final String resourceId;
   final String id;
   final Set<String> locales;
   final String label;
-  final String affPath;
-  final String dicPath;
+  final String affSourcePath;
+  final String dicSourcePath;
+  final int affSize;
+  final int dicSize;
   final String affChecksum;
   final String dicChecksum;
   final String sourcePackage;
+  final File affSource;
+  final File dicSource;
 
   Map<String, Object?> toJson() => <String, Object?>{
+    'resourceId': resourceId,
     'id': id,
     'locales': locales.toList()..sort(),
     'label': label,
-    'affPath': affPath,
-    'dicPath': dicPath,
+    'affSourcePath': affSourcePath,
+    'dicSourcePath': dicSourcePath,
+    'affDownloadUrl':
+        'https://raw.githubusercontent.com/LibreOffice/dictionaries/'
+        '$sourceRevision/$affSourcePath',
+    'dicDownloadUrl':
+        'https://raw.githubusercontent.com/LibreOffice/dictionaries/'
+        '$sourceRevision/$dicSourcePath',
+    'affSize': affSize,
+    'dicSize': dicSize,
     'sourceRevision': sourceRevision,
     'affSha256': affChecksum,
     'dicSha256': dicChecksum,
     'licenseDirectory': 'licenses/$sourcePackage',
   };
+}
+
+void _publishTestInstallation({
+  required Directory output,
+  required _Entry entry,
+  required File affSource,
+  required File dicSource,
+}) {
+  final relativeDirectory = p.join('installed', _safeName(entry.resourceId));
+  final directory = Directory(p.join(output.path, relativeDirectory))
+    ..createSync(recursive: true);
+  affSource.copySync(p.join(directory.path, 'dictionary.aff'));
+  dicSource.copySync(p.join(directory.path, 'dictionary.dic'));
+  final manifest = <String, Object?>{
+    'schemaVersion': 1,
+    'kind': 'downloaded',
+    'resourceId': entry.resourceId,
+    'id': entry.id,
+    'locales': entry.locales.toList()..sort(),
+    'label': entry.label,
+    'sourceRevision': sourceRevision,
+    'affPath': 'dictionary.aff',
+    'dicPath': 'dictionary.dic',
+    'affSha256': entry.affChecksum,
+    'dicSha256': entry.dicChecksum,
+  };
+  File(p.join(directory.path, 'manifest.json')).writeAsStringSync(
+    '${const JsonEncoder.withIndent('  ').convert(manifest)}\n',
+    flush: true,
+  );
 }

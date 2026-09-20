@@ -4552,6 +4552,47 @@ class AppLocalizationsNb extends AppLocalizations {
   String get spellingCheckIncomplete => 'Stavekontrollen er ufullstendig';
 
   @override
+  String get spellingDictionaryNotInstalled => 'Ordliste er ikke installert';
+
+  @override
+  String spellingDictionaryNotInstalledWithSize(String size) {
+    return 'Ikke installert · $size';
+  }
+
+  @override
+  String get spellingDictionaryInstalled => 'Installert';
+
+  @override
+  String get installSpellingDictionary => 'Installer ordliste';
+
+  @override
+  String get removeSpellingDictionary => 'Fjern ordliste';
+
+  @override
+  String get cancelSpellingDictionaryInstall => 'Avbryt nedlasting av ordliste';
+
+  @override
+  String get retrySpellingDictionaryInstall =>
+      'Prøv å installere ordlisten på nytt';
+
+  @override
+  String spellingDictionaryDownloading(String size) {
+    return 'Laster ned $size…';
+  }
+
+  @override
+  String get spellingDictionaryValidating => 'Validerer ordliste…';
+
+  @override
+  String get spellingDictionaryInstallFailed =>
+      'Installasjonen mislyktes — velg for å prøve på nytt';
+
+  @override
+  String spellingDictionaryInstallPrompt(String dictionary, String size) {
+    return 'Installere $dictionary ($size)? Etter installering er den tilgjengelig frakoblet til du fjerner den.';
+  }
+
+  @override
   String get spellingDictionaryUnavailable => 'Ordliste utilgjengelig';
 
   @override

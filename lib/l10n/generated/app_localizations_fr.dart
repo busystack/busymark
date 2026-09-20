@@ -4598,6 +4598,48 @@ class AppLocalizationsFr extends AppLocalizations {
       'La vérification orthographique est incomplète';
 
   @override
+  String get spellingDictionaryNotInstalled => 'Dictionnaire non installé';
+
+  @override
+  String spellingDictionaryNotInstalledWithSize(String size) {
+    return 'Non installé · $size';
+  }
+
+  @override
+  String get spellingDictionaryInstalled => 'Installé';
+
+  @override
+  String get installSpellingDictionary => 'Installer le dictionnaire';
+
+  @override
+  String get removeSpellingDictionary => 'Supprimer le dictionnaire';
+
+  @override
+  String get cancelSpellingDictionaryInstall =>
+      'Annuler le téléchargement du dictionnaire';
+
+  @override
+  String get retrySpellingDictionaryInstall =>
+      'Réessayer l’installation du dictionnaire';
+
+  @override
+  String spellingDictionaryDownloading(String size) {
+    return 'Téléchargement de $size…';
+  }
+
+  @override
+  String get spellingDictionaryValidating => 'Validation du dictionnaire…';
+
+  @override
+  String get spellingDictionaryInstallFailed =>
+      'Échec de l’installation — sélectionnez pour réessayer';
+
+  @override
+  String spellingDictionaryInstallPrompt(String dictionary, String size) {
+    return 'Installer $dictionary ($size) ? Après installation, il restera disponible hors ligne jusqu’à sa suppression.';
+  }
+
+  @override
   String get spellingDictionaryUnavailable => 'Dictionnaire indisponible';
 
   @override

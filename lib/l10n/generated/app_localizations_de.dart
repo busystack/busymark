@@ -4594,6 +4594,47 @@ class AppLocalizationsDe extends AppLocalizations {
   String get spellingCheckIncomplete => 'Rechtschreibprüfung ist unvollständig';
 
   @override
+  String get spellingDictionaryNotInstalled => 'Wörterbuch nicht installiert';
+
+  @override
+  String spellingDictionaryNotInstalledWithSize(String size) {
+    return 'Nicht installiert · $size';
+  }
+
+  @override
+  String get spellingDictionaryInstalled => 'Installiert';
+
+  @override
+  String get installSpellingDictionary => 'Wörterbuch installieren';
+
+  @override
+  String get removeSpellingDictionary => 'Wörterbuch entfernen';
+
+  @override
+  String get cancelSpellingDictionaryInstall => 'Wörterbuchdownload abbrechen';
+
+  @override
+  String get retrySpellingDictionaryInstall =>
+      'Wörterbuchinstallation wiederholen';
+
+  @override
+  String spellingDictionaryDownloading(String size) {
+    return '$size werden heruntergeladen…';
+  }
+
+  @override
+  String get spellingDictionaryValidating => 'Wörterbuch wird überprüft…';
+
+  @override
+  String get spellingDictionaryInstallFailed =>
+      'Wörterbuchinstallation fehlgeschlagen – zum Wiederholen auswählen';
+
+  @override
+  String spellingDictionaryInstallPrompt(String dictionary, String size) {
+    return '$dictionary ($size) installieren? Danach bleibt es offline verfügbar, bis Sie es entfernen.';
+  }
+
+  @override
   String get spellingDictionaryUnavailable => 'Wörterbuch nicht verfügbar';
 
   @override

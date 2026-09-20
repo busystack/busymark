@@ -6,10 +6,14 @@ import 'package:unorm_dart/unorm_dart.dart' as unicode;
 import 'spelling_projection.dart';
 import 'spelling_worker.dart';
 
+typedef SpellingSuggestionLookup =
+    Future<List<String>> Function(SpellingEngineContext context, String word);
+
 enum SpellingPresentationStatus {
   languageRequired,
   checking,
   ready,
+  dictionaryNotInstalled,
   dictionaryUnavailable,
   failure,
   incomplete,
@@ -68,12 +72,15 @@ final class SpellingCheckRequest {
 /// Coordinates a reusable worker with one running check and only the newest
 /// pending snapshot. Results live outside document state and never dirty it.
 final class SpellingCoordinator extends ChangeNotifier {
-  SpellingCoordinator._(this._worker);
+  SpellingCoordinator._(this._worker, this._suggestionLookup);
 
-  static Future<SpellingCoordinator> start() async =>
-      SpellingCoordinator._(await SpellingWorker.start());
+  static Future<SpellingCoordinator> start({
+    SpellingSuggestionLookup? suggestionLookup,
+  }) async =>
+      SpellingCoordinator._(await SpellingWorker.start(), suggestionLookup);
 
   final SpellingWorker _worker;
+  final SpellingSuggestionLookup? _suggestionLookup;
   Timer? _debounce;
   SpellingCheckRequest? _pending;
   int _presentationGeneration = 0;
@@ -176,6 +183,18 @@ final class SpellingCoordinator extends ChangeNotifier {
     );
   }
 
+  void showDictionaryNotInstalled(String languageId) {
+    _cancelPresentation();
+    _setState(
+      SpellingPresentationState(
+        status: SpellingPresentationStatus.dictionaryNotInstalled,
+        occurrences: const [],
+        complete: false,
+        message: languageId,
+      ),
+    );
+  }
+
   void disablePresentation() {
     _cancelPresentation();
     _setState(
@@ -224,7 +243,16 @@ final class SpellingCoordinator extends ChangeNotifier {
     if (!isCurrent(occurrence)) {
       throw StateError('The spelling occurrence is stale.');
     }
-    return _worker.suggestions(context: context, word: occurrence.word);
+    if (context.languageId != occurrence.run.languageId) {
+      throw StateError('The spelling dictionary context changed.');
+    }
+    final result =
+        await (_suggestionLookup?.call(context, occurrence.word) ??
+            _worker.suggestions(context: context, word: occurrence.word));
+    if (!isCurrent(occurrence)) {
+      throw StateError('The spelling occurrence became stale.');
+    }
+    return result;
   }
 
   Future<String> validateDictionary({
@@ -232,11 +260,19 @@ final class SpellingCoordinator extends ChangeNotifier {
     required String dicPath,
   }) => _worker.validateDictionary(affPath: affPath, dicPath: dicPath);
 
+  Future<void> releaseDictionary() => _worker.releaseDictionary();
+
   Future<SpellingProjectionResult> project(SpellingProjectionJob job) =>
       _worker.project(job);
 
   bool isCurrent(SpellingOccurrence occurrence) =>
-      misspellings.any((candidate) => candidate.id == occurrence.id) &&
+      misspellings.any(
+        (candidate) =>
+            candidate.id == occurrence.id &&
+            candidate.run.snapshot == occurrence.run.snapshot &&
+            candidate.run.languageId == occurrence.run.languageId &&
+            candidate.word == occurrence.word,
+      ) &&
       !_suppressed(occurrence);
 
   void ignoreOnce(SpellingOccurrence occurrence) {

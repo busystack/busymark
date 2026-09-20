@@ -4606,6 +4606,46 @@ class AppLocalizationsPl extends AppLocalizations {
   String get spellingCheckIncomplete => 'Sprawdzanie pisowni jest niepełne';
 
   @override
+  String get spellingDictionaryNotInstalled => 'Słownik nie jest zainstalowany';
+
+  @override
+  String spellingDictionaryNotInstalledWithSize(String size) {
+    return 'Niezainstalowany · $size';
+  }
+
+  @override
+  String get spellingDictionaryInstalled => 'Zainstalowany';
+
+  @override
+  String get installSpellingDictionary => 'Zainstaluj słownik';
+
+  @override
+  String get removeSpellingDictionary => 'Usuń słownik';
+
+  @override
+  String get cancelSpellingDictionaryInstall => 'Anuluj pobieranie słownika';
+
+  @override
+  String get retrySpellingDictionaryInstall => 'Ponów instalację słownika';
+
+  @override
+  String spellingDictionaryDownloading(String size) {
+    return 'Pobieranie $size…';
+  }
+
+  @override
+  String get spellingDictionaryValidating => 'Sprawdzanie słownika…';
+
+  @override
+  String get spellingDictionaryInstallFailed =>
+      'Instalacja nie powiodła się — wybierz, aby ponowić';
+
+  @override
+  String spellingDictionaryInstallPrompt(String dictionary, String size) {
+    return 'Zainstalować $dictionary ($size)? Po instalacji będzie dostępny offline do czasu usunięcia.';
+  }
+
+  @override
   String get spellingDictionaryUnavailable => 'Słownik jest niedostępny';
 
   @override

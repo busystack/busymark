@@ -54,6 +54,7 @@ apps:
       XDG_CACHE_HOME: $SNAP_USER_DATA/.cache
       XDG_CONFIG_HOME: $SNAP_USER_DATA/.config
       XDG_DATA_HOME: $SNAP_USER_DATA/.local/share
+      BUSYMARK_SPELLING_INSTALL_ROOT: $SNAP_USER_COMMON/spelling/dictionaries
 
 parts:
   busymark:

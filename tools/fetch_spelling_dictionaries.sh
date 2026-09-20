@@ -36,7 +36,7 @@ tar --extract --gzip --file "${ARCHIVE_PATH}" --directory "${TEMP_DIR}/source" \
   --strip-components=1
 
 dart run "${PROJECT_DIR}/tools/prepare_spelling_dictionaries.dart" \
-  "${TEMP_DIR}/source" "${TEMP_DIR}/prepared"
+  "${TEMP_DIR}/source" "${TEMP_DIR}/prepared" --include-pairs
 cmp --silent "${TEMP_DIR}/prepared/dictionaries.json" "${EXPECTED_MANIFEST}" || {
   echo "Generated spelling manifest differs from assets/spelling/dictionaries.json" >&2
   diff --unified "${EXPECTED_MANIFEST}" "${TEMP_DIR}/prepared/dictionaries.json" >&2 || true

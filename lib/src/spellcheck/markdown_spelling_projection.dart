@@ -68,13 +68,30 @@ final class MarkdownSpellingProjector {
       final mapped = stripBlockSyntax
           ? inlineParser.parsePositionedBlocks(slice)
           : [inlineParser.parseMapped(slice)];
+      final formattingSyntax = _formattingSyntaxSpans(
+        mapped,
+        sourceBase: start,
+      );
+      final opaqueSyntax = <_SourceInterval>[
+        ..._opaqueSyntaxSpans(mapped, sourceBase: start),
+        if (mode == MarkdownMode.writersideMarkdown)
+          for (final variable in parsed.variables)
+            if (variable.span.startOffset < end &&
+                variable.span.endOffset > start)
+              _SourceInterval(
+                variable.span.startOffset,
+                variable.span.endOffset,
+              ),
+      ]..sort((left, right) => left.start.compareTo(right.start));
       final scanner = _MarkdownProseScanner(
         source: source,
         start: start,
         end: end,
         context: context,
         stripBlockSyntax: stripBlockSyntax,
-        formattingSyntax: _formattingSyntaxSpans(mapped, sourceBase: start),
+        formattingSyntax: formattingSyntax,
+        formattingWrappers: _formattingWrappers(mapped, sourceBase: start),
+        opaqueSyntax: opaqueSyntax,
       );
       final groups = scanner.scan();
       complete = complete && scanner.complete;
@@ -87,6 +104,7 @@ final class MarkdownSpellingProjector {
           atoms: List.unmodifiable(group.atoms),
           target: SpellingSourceTarget(filePath: filePath),
           snapshot: snapshot,
+          formattingWrappers: group.formattingWrappers,
           complete: scanner.complete,
         );
         if (!run.hasValidMapping) {
@@ -163,9 +181,14 @@ bool _startsExcludedBlock(String raw) {
 }
 
 final class _EmissionGroup {
-  const _EmissionGroup({required this.text, required this.atoms});
+  const _EmissionGroup({
+    required this.text,
+    required this.atoms,
+    required this.formattingWrappers,
+  });
   final String text;
   final List<SpellingSourceAtom> atoms;
+  final List<SpellingFormattingWrapper> formattingWrappers;
 }
 
 final class _MarkdownProseScanner {
@@ -176,6 +199,8 @@ final class _MarkdownProseScanner {
     required this.context,
     required this.stripBlockSyntax,
     this.formattingSyntax = const [],
+    this.formattingWrappers = const [],
+    this.opaqueSyntax = const [],
   });
 
   final String source;
@@ -184,6 +209,8 @@ final class _MarkdownProseScanner {
   final SpellingSourceContext context;
   final bool stripBlockSyntax;
   final List<_SourceInterval> formattingSyntax;
+  final List<_RawFormattingWrapper> formattingWrappers;
+  final List<_SourceInterval> opaqueSyntax;
   final List<_EmissionGroup> _groups = [];
   StringBuffer _text = StringBuffer();
   List<SpellingSourceAtom> _atoms = [];
@@ -256,6 +283,12 @@ final class _MarkdownProseScanner {
         cursor = formattingEnd;
         continue;
       }
+      final opaqueEnd = _opaqueEndAt(cursor);
+      if (opaqueEnd != null) {
+        _barrier();
+        cursor = math.min(rangeEnd, opaqueEnd);
+        continue;
+      }
       if (source.startsWith('<!--', cursor)) {
         final close = source.indexOf('-->', cursor + 4);
         _barrier();
@@ -276,7 +309,9 @@ final class _MarkdownProseScanner {
         continue;
       }
       final unit = source.codeUnitAt(cursor);
-      if (unit == 0x5c && cursor + 1 < rangeEnd) {
+      if (unit == 0x5c &&
+          cursor + 1 < rangeEnd &&
+          _commonMarkEscapableAsciiPunctuation(source.codeUnitAt(cursor + 1))) {
         final escaped = source.substring(cursor + 1, cursor + 2);
         _emit(
           escaped,
@@ -304,15 +339,6 @@ final class _MarkdownProseScanner {
           }
         }
       }
-      if (unit == 0x60) {
-        final count = _runLength(cursor, rangeEnd, 0x60);
-        final delimiter = '`' * count;
-        final close = source.indexOf(delimiter, cursor + count);
-        _barrier();
-        _opaqueEnd = close < 0 || close >= end ? end : close + count;
-        if (close < 0 || close >= end) complete = false;
-        continue;
-      }
       if (unit == 0x24) {
         final count = _runLength(cursor, rangeEnd, 0x24).clamp(1, 2);
         final delimiter = r'$' * count;
@@ -320,14 +346,6 @@ final class _MarkdownProseScanner {
         if (close >= 0 && close < end) {
           _barrier();
           _opaqueEnd = close + count;
-          continue;
-        }
-      }
-      if (unit == 0x25) {
-        final close = source.indexOf('%', cursor + 1);
-        if (close > cursor + 1 && close < end) {
-          _barrier();
-          _opaqueEnd = close + 1;
           continue;
         }
       }
@@ -392,11 +410,10 @@ final class _MarkdownProseScanner {
         titleContext = title.group(1) == "'"
             ? SpellingSourceContext.markdownSingleQuotedTitle
             : SpellingSourceContext.markdownDoubleQuotedTitle;
-        titleStart =
-            afterLabel +
-            1 +
-            title.start +
-            title.group(0)!.indexOf(title.group(2)!);
+        // The value ends immediately before the closing quote. Derive its
+        // range from those parsed boundaries rather than searching for its
+        // contents, which may also occur in the destination.
+        titleStart = afterLabel + 1 + title.end - 1 - title.group(2)!.length;
         titleEnd = titleStart + title.group(2)!.length;
       }
     } else if (afterLabel < rangeEnd && source.codeUnitAt(afterLabel) == 0x5b) {
@@ -433,8 +450,10 @@ final class _MarkdownProseScanner {
       if (!_humanAttributeNames.contains(name)) continue;
       final quote = match.group(2)!;
       final value = match.group(3)!;
-      final valueStart =
-          tagStart + match.start + match.group(0)!.indexOf(value);
+      // The capture ends with the closing quote, so this is the exact quoted
+      // value boundary even when [value] also occurs in the attribute name or
+      // in an earlier attribute.
+      final valueStart = tagStart + match.end - 1 - value.length;
       final savedContext = quote == "'"
           ? SpellingSourceContext.xmlSingleQuotedAttribute
           : SpellingSourceContext.xmlDoubleQuotedAttribute;
@@ -478,7 +497,34 @@ final class _MarkdownProseScanner {
 
   void _flush() {
     if (_text.isNotEmpty) {
-      _groups.add(_EmissionGroup(text: _text.toString(), atoms: _atoms));
+      final wrappers = <SpellingFormattingWrapper>[];
+      for (final wrapper in formattingWrappers) {
+        final contained = _atoms
+            .where(
+              (atom) =>
+                  atom.sourceStart >= wrapper.contentStart &&
+                  atom.sourceEnd <= wrapper.contentEnd,
+            )
+            .toList(growable: false);
+        if (contained.isEmpty) continue;
+        wrappers.add(
+          SpellingFormattingWrapper(
+            logicalStart: contained.first.logicalStart,
+            logicalEnd: contained.last.logicalEnd,
+            openingStart: wrapper.opening.start,
+            openingEnd: wrapper.opening.end,
+            closingStart: wrapper.closing.start,
+            closingEnd: wrapper.closing.end,
+          ),
+        );
+      }
+      _groups.add(
+        _EmissionGroup(
+          text: _text.toString(),
+          atoms: _atoms,
+          formattingWrappers: List.unmodifiable(wrappers),
+        ),
+      );
     }
     _text = StringBuffer();
     _atoms = [];
@@ -522,6 +568,14 @@ final class _MarkdownProseScanner {
     return null;
   }
 
+  int? _opaqueEndAt(int offset) {
+    for (final span in opaqueSyntax) {
+      if (offset >= span.start && offset < span.end) return span.end;
+      if (span.start > offset) return null;
+    }
+    return null;
+  }
+
   int? _matchingBracket(int start, int end, int opening, int closing) {
     if (start >= end || source.codeUnitAt(start) != opening) return null;
     var depth = 0;
@@ -543,6 +597,20 @@ final class _SourceInterval {
 
   final int start;
   final int end;
+}
+
+final class _RawFormattingWrapper {
+  const _RawFormattingWrapper({
+    required this.opening,
+    required this.contentStart,
+    required this.contentEnd,
+    required this.closing,
+  });
+
+  final _SourceInterval opening;
+  final int contentStart;
+  final int contentEnd;
+  final _SourceInterval closing;
 }
 
 List<_SourceInterval> _formattingSyntaxSpans(
@@ -578,12 +646,80 @@ List<_SourceInterval> _formattingSyntaxSpans(
   return List.unmodifiable(spans);
 }
 
+List<_RawFormattingWrapper> _formattingWrappers(
+  Iterable<BusyMarkMappedInlineParse> parses, {
+  required int sourceBase,
+}) {
+  final wrappers = <_RawFormattingWrapper>[];
+  for (final parse in parses) {
+    for (final entry in parse.ranges.entries) {
+      if (!_formattingInlineKinds.contains(entry.key.kind)) continue;
+      final range = entry.value;
+      final opening = range.opening;
+      final closing = range.closing;
+      if (opening == null ||
+          opening.isEmpty ||
+          closing == null ||
+          closing.isEmpty) {
+        continue;
+      }
+      final openingStart = sourceBase + range.start;
+      final openingEnd = openingStart + opening.length;
+      final closingEnd = sourceBase + range.end;
+      final closingStart = closingEnd - closing.length;
+      if (openingEnd > closingStart) continue;
+      wrappers.add(
+        _RawFormattingWrapper(
+          opening: _SourceInterval(openingStart, openingEnd),
+          contentStart: openingEnd,
+          contentEnd: closingStart,
+          closing: _SourceInterval(closingStart, closingEnd),
+        ),
+      );
+    }
+  }
+  wrappers.sort(
+    (left, right) => left.opening.start.compareTo(right.opening.start),
+  );
+  return List.unmodifiable(wrappers);
+}
+
+List<_SourceInterval> _opaqueSyntaxSpans(
+  Iterable<BusyMarkMappedInlineParse> parses, {
+  required int sourceBase,
+}) {
+  final spans = <_SourceInterval>[];
+  for (final parse in parses) {
+    for (final entry in parse.ranges.entries) {
+      if (!_opaqueInlineKinds.contains(entry.key.kind)) continue;
+      final range = entry.value;
+      spans.add(
+        _SourceInterval(sourceBase + range.start, sourceBase + range.end),
+      );
+    }
+  }
+  spans.sort((left, right) => left.start.compareTo(right.start));
+  return List.unmodifiable(spans);
+}
+
 const _formattingInlineKinds = {
   BusyInlineKind.strong,
   BusyInlineKind.emphasis,
   BusyInlineKind.strikethrough,
   BusyInlineKind.underline,
 };
+
+const _opaqueInlineKinds = {
+  BusyInlineKind.code,
+  BusyInlineKind.math,
+  BusyInlineKind.writersideVariable,
+};
+
+bool _commonMarkEscapableAsciiPunctuation(int unit) =>
+    (unit >= 0x21 && unit <= 0x2f) ||
+    (unit >= 0x3a && unit <= 0x40) ||
+    (unit >= 0x5b && unit <= 0x60) ||
+    (unit >= 0x7b && unit <= 0x7e);
 
 bool _horizontalWhitespace(int unit) => unit == 0x20 || unit == 0x09;
 

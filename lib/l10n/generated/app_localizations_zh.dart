@@ -4355,6 +4355,45 @@ class AppLocalizationsZh extends AppLocalizations {
   String get spellingCheckIncomplete => '拼写检查未完成';
 
   @override
+  String get spellingDictionaryNotInstalled => '尚未安装词典';
+
+  @override
+  String spellingDictionaryNotInstalledWithSize(String size) {
+    return '未安装 · $size';
+  }
+
+  @override
+  String get spellingDictionaryInstalled => '已安装';
+
+  @override
+  String get installSpellingDictionary => '安装词典';
+
+  @override
+  String get removeSpellingDictionary => '移除词典';
+
+  @override
+  String get cancelSpellingDictionaryInstall => '取消下载词典';
+
+  @override
+  String get retrySpellingDictionaryInstall => '重试安装词典';
+
+  @override
+  String spellingDictionaryDownloading(String size) {
+    return '正在下载 $size…';
+  }
+
+  @override
+  String get spellingDictionaryValidating => '正在验证词典…';
+
+  @override
+  String get spellingDictionaryInstallFailed => '词典安装失败 — 选择以重试';
+
+  @override
+  String spellingDictionaryInstallPrompt(String dictionary, String size) {
+    return '要安装 $dictionary（$size）吗？安装后，在移除前都可离线使用。';
+  }
+
+  @override
   String get spellingDictionaryUnavailable => '词典不可用';
 
   @override
@@ -8713,6 +8752,45 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get spellingCheckIncomplete => '拼写检查未完成';
+
+  @override
+  String get spellingDictionaryNotInstalled => '尚未安装词典';
+
+  @override
+  String spellingDictionaryNotInstalledWithSize(String size) {
+    return '未安装 · $size';
+  }
+
+  @override
+  String get spellingDictionaryInstalled => '已安装';
+
+  @override
+  String get installSpellingDictionary => '安装词典';
+
+  @override
+  String get removeSpellingDictionary => '移除词典';
+
+  @override
+  String get cancelSpellingDictionaryInstall => '取消下载词典';
+
+  @override
+  String get retrySpellingDictionaryInstall => '重试安装词典';
+
+  @override
+  String spellingDictionaryDownloading(String size) {
+    return '正在下载 $size…';
+  }
+
+  @override
+  String get spellingDictionaryValidating => '正在验证词典…';
+
+  @override
+  String get spellingDictionaryInstallFailed => '词典安装失败 — 选择以重试';
+
+  @override
+  String spellingDictionaryInstallPrompt(String dictionary, String size) {
+    return '要安装 $dictionary（$size）吗？安装后，在移除前都可离线使用。';
+  }
 
   @override
   String get spellingDictionaryUnavailable => '词典不可用';

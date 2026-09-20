@@ -20,6 +20,7 @@ import 'package:busymark/src/markdown/busymark_document.dart';
 import 'package:busymark/src/markdown/busymark_markdown_serializer.dart';
 import 'package:busymark/src/markdown/markdown_ast_adapter.dart';
 import 'package:busymark/src/editor/document_text_geometry.dart';
+import 'package:busymark/src/editor/editor_text_context_menu.dart';
 import 'package:busymark/src/editor/source_highlighter.dart'
     show BusyMarkSourceEditingController;
 import 'package:busymark/src/editor/source/source_editor.dart';
@@ -36,7 +37,9 @@ import 'package:busymark/src/markdown/markdown_model.dart';
 import 'package:busymark/src/markdown/markdown_parser.dart';
 import 'package:busymark/src/platform/native_menu_service.dart';
 import 'package:busymark/src/platform/rich_clipboard_service.dart';
+import 'package:busymark/src/spellcheck/spelling_projection.dart';
 import 'package:busymark/src/workspace/document_buffer.dart';
+import 'package:busymark/src/workspace/workspace_model.dart';
 import 'package:busymark/src/writerside/writerside_project.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -295,6 +298,127 @@ void main() {
     await tester.pump(const Duration(seconds: 1));
   });
 
+  testWidgets('spelling review caret uses full offsets after an earlier fold', (
+    tester,
+  ) async {
+    const source = '# First\nhidden text\n# Second\nmistakke\n';
+    const path = '/project/folded-spelling.md';
+    final firstRegion = sourceFoldRegions(
+      source,
+      SourceSyntaxLanguage.markdown,
+    ).first;
+    final target = source.indexOf('mistakke');
+    final key = GlobalKey<BusyMarkSourceEditorState>();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: BusyMarkSourceEditor(
+            key: key,
+            text: source,
+            language: SourceSyntaxLanguage.markdown,
+            filePath: path,
+            diagnostics: const [],
+            editorFontSize: 14,
+            wordWrap: true,
+            searchActive: false,
+            searchOptions: const SourceSearchOptions(),
+            initialSelection: TextSelection.collapsed(offset: target),
+            initialFoldedRegionKeys: {firstRegion.key},
+            onSearchOptionsChanged: (_) {},
+            onChanged: (_, _) {},
+            onOpenSearch: () {},
+            onCloseSearch: () {},
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    final controller = tester
+        .widgetList<TextField>(find.byType(TextField))
+        .map((field) => field.controller)
+        .whereType<BusyMarkSourceEditingController>()
+        .single;
+
+    expect(controller.selection.extentOffset, lessThan(target));
+    expect(controller.fullSelection.extentOffset, target);
+    expect(key.currentState!.spellingCaretOffset, target);
+  });
+
+  testWidgets('spelling reveal unfolds and retains the word selection', (
+    tester,
+  ) async {
+    const source = '# Fold\nhidden mistakke here\n# Next\nend\n';
+    const path = '/project/folded-spelling.md';
+    final region = sourceFoldRegions(
+      source,
+      SourceSyntaxLanguage.markdown,
+    ).first;
+    final start = source.indexOf('mistakke');
+    final end = start + 'mistakke'.length;
+    final key = GlobalKey<BusyMarkSourceEditorState>();
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: BusyMarkSourceEditor(
+            key: key,
+            text: source,
+            language: SourceSyntaxLanguage.markdown,
+            filePath: path,
+            diagnostics: const [],
+            editorFontSize: 14,
+            wordWrap: true,
+            searchActive: false,
+            searchOptions: const SourceSearchOptions(),
+            initialFoldedRegionKeys: {region.key},
+            onSearchOptionsChanged: (_) {},
+            onChanged: (_, _) {},
+            onOpenSearch: () {},
+            onCloseSearch: () {},
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    final controller = tester
+        .widgetList<TextField>(find.byType(TextField))
+        .map((field) => field.controller)
+        .whereType<BusyMarkSourceEditingController>()
+        .single;
+    expect(controller.text, isNot(contains('hidden mistakke')));
+
+    key.currentState!.revealSpellingOccurrence(
+      _sourceSpellingOccurrence(
+        word: 'mistakke',
+        sourceStart: start,
+        sourceEnd: end,
+        filePath: path,
+      ),
+    );
+    await tester.pump();
+
+    expect(controller.text, contains('hidden mistakke'));
+    expect(
+      controller.fullSelection,
+      TextSelection(baseOffset: start, extentOffset: end),
+    );
+    expect(controller.fullSelection.isCollapsed, isFalse);
+    expect(
+      source.substring(
+        controller.fullSelection.start,
+        controller.fullSelection.end,
+      ),
+      'mistakke',
+    );
+    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pumpWidget(const SizedBox());
+    await tester.pump(const Duration(seconds: 1));
+  });
+
   testWidgets('source AI action applies a selection through the editor path', (
     tester,
   ) async {
@@ -451,6 +575,81 @@ void main() {
     expect(snapshot?.selectionStart, 0);
     expect(snapshot?.selectionEnd, 13);
     expect(changedText, 'Clear text.\n');
+  });
+
+  testWidgets('source spelling menu targets the pointer occurrence exactly', (
+    tester,
+  ) async {
+    const source = 'helo middle helo\n';
+    final secondStart = source.lastIndexOf('helo');
+    int? requestedOffset;
+    const nativeMenuChannel = MethodChannel(nativeMenuChannelName);
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      nativeMenuChannel,
+      (call) async {
+        if (call.method != 'show') return false;
+        return -1;
+      },
+    );
+    addTearDown(() {
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        nativeMenuChannel,
+        null,
+      );
+    });
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: SizedBox(
+            width: 900,
+            height: 600,
+            child: BusyMarkSourceEditor(
+              text: source,
+              clipboardService: _SourceTestClipboard(),
+              language: SourceSyntaxLanguage.markdown,
+              filePath: '/project/spelling.md',
+              diagnostics: const [],
+              editorFontSize: 14,
+              wordWrap: true,
+              searchActive: false,
+              searchOptions: const SourceSearchOptions(),
+              onSearchOptionsChanged: (_) {},
+              onChanged: (_, _) {},
+              onOpenSearch: () {},
+              onCloseSearch: () {},
+              readSpellingMenuItems: (offset) async {
+                requestedOffset = offset;
+                return [
+                  BusyMarkEditorSpellingMenuItem(
+                    label: 'hello',
+                    onSelected: () {},
+                    suggestion: true,
+                  ),
+                ];
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    final field = find.byType(TextField);
+    final render = _findRenderEditable(tester.renderObject(field))!;
+    final local = render.getLocalRectForCaret(
+      TextPosition(offset: secondStart + 1),
+    );
+    await tester.tapAt(
+      render.localToGlobal(local.center),
+      buttons: kSecondaryMouseButton,
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      requestedOffset,
+      inInclusiveRange(secondStart, secondStart + 'helo'.length),
+    );
   });
 
   testWidgets('source AI applies a user-selected insertion target', (
@@ -8646,4 +8845,43 @@ Future<void> _pumpUntil(WidgetTester tester, bool Function() condition) async {
     );
   }
   fail('Timed out waiting for asynchronous Source editor work.');
+}
+
+SpellingOccurrence _sourceSpellingOccurrence({
+  required String word,
+  required int sourceStart,
+  required int sourceEnd,
+  required String filePath,
+}) {
+  final run = SpellingProseRun(
+    id: 'source-fold-$sourceStart',
+    text: word,
+    languageId: 'en-Test',
+    atoms: [
+      SpellingSourceAtom(
+        logicalText: word,
+        logicalStart: 0,
+        logicalEnd: word.length,
+        sourceStart: sourceStart,
+        sourceEnd: sourceEnd,
+        transformation: SpellingTransformationKind.identity,
+        context: SpellingSourceContext.markdownProse,
+      ),
+    ],
+    target: SpellingSourceTarget(filePath: filePath),
+    snapshot: SpellingSnapshotIdentity(
+      bufferId: filePath,
+      contentRevision: 0,
+      documentKind: DocumentKind.markdown,
+      contextGeneration: 1,
+    ),
+  );
+  return SpellingOccurrence(
+    id: 'source-fold-occurrence-$sourceStart',
+    run: run,
+    logicalStart: 0,
+    logicalEnd: word.length,
+    word: word,
+    outcome: SpellingCheckOutcome.rejected,
+  );
 }

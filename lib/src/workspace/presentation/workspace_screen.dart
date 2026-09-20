@@ -11720,7 +11720,6 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
   BusyMarkWysiwygSourceRange? _wysiwygSearchRange;
   var _wysiwygScrollRequest = 0;
   var _lastSearchNavigationRequest = 0;
-  String? _lastSpellingBufferId;
   String? _pendingSpellingInputIdentity;
   SpellingSessionInput? _currentSpellingInput;
 
@@ -11729,6 +11728,9 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     super.initState();
     _spelling = ref.read(spellingSessionControllerProvider)
       ..addListener(_handleSpellingChanged);
+    _spelling.synchronizeOpenBuffers(
+      widget.state.documentBuffers.map((buffer) => buffer.id),
+    );
     _lastPath = widget.state.workspace?.activeFilePath ?? '';
     _previewItemPositionsListener.itemPositions.addListener(
       _handlePreviewVisibleItemsChanged,
@@ -11751,6 +11753,9 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
   @override
   void didUpdateWidget(covariant _EditorPreviewSplit oldWidget) {
     super.didUpdateWidget(oldWidget);
+    _spelling.synchronizeOpenBuffers(
+      widget.state.documentBuffers.map((buffer) => buffer.id),
+    );
     final path = widget.state.workspace?.activeFilePath ?? '';
     if (path != _lastPath) {
       _lastPath = path;
@@ -12505,11 +12510,6 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted || _pendingSpellingInputIdentity != input.identity) return;
       _pendingSpellingInputIdentity = null;
-      if (_lastSpellingBufferId case final previous?
-          when previous != input.buffer.id) {
-        _spelling.closeBuffer(previous);
-      }
-      _lastSpellingBufferId = input.buffer.id;
       final currentInput = input.withRichDocumentGeneration(
         _wysiwygEditorKey.currentState?.spellingDocumentGeneration ??
             input.richDocumentGeneration,
@@ -12553,6 +12553,16 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
         priority: BusyMarkToastPriority.high,
       );
       _spelling.endManualReview();
+      return;
+    }
+    if (state.status == SpellingPresentationStatus.dictionaryNotInstalled) {
+      final languageId = state.message;
+      _spelling.endManualReview();
+      if (languageId != null &&
+          await _offerDocumentDictionaryInstall(languageId)) {
+        await WidgetsBinding.instance.endOfFrame;
+        if (mounted) unawaited(_openSpellingReview());
+      }
       return;
     }
     if (state.status == SpellingPresentationStatus.failure) {
@@ -12628,6 +12638,8 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
       SpellingPresentationStatus.languageRequired =>
         context.l10n.chooseSpellingLanguage,
       SpellingPresentationStatus.checking => context.l10n.spellingChecking,
+      SpellingPresentationStatus.dictionaryNotInstalled =>
+        context.l10n.spellingDictionaryNotInstalled,
       SpellingPresentationStatus.dictionaryUnavailable =>
         context.l10n.spellingDictionaryUnavailable,
       SpellingPresentationStatus.failure => context.l10n.spellingCheckFailed,
@@ -12838,7 +12850,62 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
           latest.id,
           latest.editorState.copyWith(spellingLanguage: selected),
         );
+    final selectedLanguageId = selected.languageId;
+    if (selected.kind == SpellingLanguageOverrideKind.selected &&
+        selectedLanguageId != null) {
+      return _spelling.catalog?.installedById(selectedLanguageId) != null ||
+          await _offerDocumentDictionaryInstall(selectedLanguageId);
+    }
     return selected.kind != SpellingLanguageOverrideKind.disabled;
+  }
+
+  Future<bool> _offerDocumentDictionaryInstall(String languageId) async {
+    final resource = _spelling.catalog?.availableById(languageId);
+    if (resource == null) return false;
+    if (_spelling.catalog?.installationForResource(resource.resourceId) !=
+        null) {
+      return true;
+    }
+    final mebibytes = resource.downloadSize / (1024 * 1024);
+    final size = mebibytes >= 10
+        ? '${mebibytes.toStringAsFixed(0)} MiB'
+        : '${mebibytes.toStringAsFixed(1)} MiB';
+    final accepted = await showBusyMarkModalDialog<bool>(
+      context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(dialogContext.l10n.spellingDictionaryNotInstalled),
+        content: Text(
+          dialogContext.l10n.spellingDictionaryInstallPrompt(
+            resource.label,
+            size,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: Text(dialogContext.l10n.cancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: Text(dialogContext.l10n.installSpellingDictionary),
+          ),
+        ],
+      ),
+    );
+    if (!mounted || accepted != true) return false;
+    try {
+      await _spelling.installDictionary(languageId);
+      return mounted && _spelling.catalog?.installedById(languageId) != null;
+    } on Object {
+      if (mounted) {
+        BusyMarkToastOverlay.show(
+          context,
+          message: context.l10n.spellingDictionaryInstallFailed,
+          priority: BusyMarkToastPriority.high,
+        );
+      }
+      return false;
+    }
   }
 
   void _handleTransactionalSourceChanged(

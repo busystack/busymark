@@ -292,10 +292,30 @@ class _SourceMappingHardLineBreakSyntax extends md.LineBreakSyntax {
   }
 }
 
+class _SourceMappingCodeSyntax extends md.CodeSyntax {
+  @override
+  bool onMatch(md.InlineParser parser, Match match) {
+    final start = parser.pos;
+    final parsed = md.Document(
+      encodeHtml: parser.encodeHtml,
+    ).parseInline(match[0]!);
+    final node = parsed.singleOrNull;
+    if (node is! md.Element || node.tag != 'code') return false;
+    _setSourceMappingAttributes(
+      node,
+      start: start,
+      end: start + match[0]!.length,
+    );
+    parser.addNode(node);
+    return true;
+  }
+}
+
 List<md.InlineSyntax> _sourceMappingInlineSyntaxes(
   _SourceMappingEmailAutolinkSyntax emailSyntax,
 ) {
   return [
+    _SourceMappingCodeSyntax(),
     emailSyntax,
     _SourceMappingAutolinkSyntax(),
     _SourceMappingLinkSyntax(),

@@ -34,8 +34,15 @@ List<SpellingInlineProjection> projectSpellingInlineRuns({
     atoms = [];
   }
 
-  void emitLeaf(BusyInline inline, List<int> path) {
-    final value = inline.text;
+  void emitLeaf(
+    BusyInline inline,
+    List<int> path, {
+    String? logicalText,
+    SpellingTransformationKind transformation =
+        SpellingTransformationKind.identity,
+  }) {
+    final fieldValue = inline.text;
+    final value = logicalText ?? fieldValue;
     if (value.isEmpty) return;
     final logicalStart = text.length;
     text.write(value);
@@ -49,15 +56,15 @@ List<SpellingInlineProjection> projectSpellingInlineRuns({
         sourceStart: sourceBase < 0 ? -1 : sourceBase + fieldOffset,
         sourceEnd: sourceBase < 0
             ? -1
-            : sourceBase + fieldOffset + value.length,
+            : sourceBase + fieldOffset + fieldValue.length,
         fieldStart: fieldOffset,
-        fieldEnd: fieldOffset + value.length,
+        fieldEnd: fieldOffset + fieldValue.length,
         richLeafPath: List.unmodifiable(path),
-        transformation: SpellingTransformationKind.identity,
+        transformation: transformation,
         context: context,
       ),
     );
-    fieldOffset += value.length;
+    fieldOffset += fieldValue.length;
   }
 
   void visit(BusyInline inline, List<int> path) {
@@ -77,7 +84,12 @@ List<SpellingInlineProjection> projectSpellingInlineRuns({
         return;
       case BusyInlineKind.softBreak:
       case BusyInlineKind.hardBreak:
-        emitLeaf(inline, path);
+        emitLeaf(
+          inline,
+          path,
+          logicalText: ' ',
+          transformation: SpellingTransformationKind.lineBreak,
+        );
         return;
       case BusyInlineKind.text:
       case BusyInlineKind.strong:

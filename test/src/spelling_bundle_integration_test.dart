@@ -12,9 +12,13 @@ void main() {
   test(
     'packaged catalog opens real regional and non-Latin dictionaries',
     () async {
-      final catalog = await SpellingDictionaryCatalog.load(bundledRoot: root!);
+      final catalog = await SpellingDictionaryCatalog.load(
+        bundledRoot: root!,
+        downloadedRoot: '$root/installed',
+      );
       expect(catalog.unavailableEntries, isEmpty);
-      expect(catalog.entries, hasLength(48));
+      expect(catalog.availableEntries, hasLength(48));
+      expect(catalog.installations, hasLength(48));
 
       final us = _open(catalog, 'en-US');
       final gb = _open(catalog, 'en-GB');
@@ -40,7 +44,7 @@ void main() {
 }
 
 NativeSpellDictionary _open(SpellingDictionaryCatalog catalog, String id) {
-  final entry = catalog.byId(id)!;
+  final entry = catalog.installedById(id)!;
   return NativeSpellDictionary.open(
     affPath: entry.affPath,
     dicPath: entry.dicPath,
