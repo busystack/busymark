@@ -1956,6 +1956,141 @@ void main() {
   );
 
   testWidgets(
+    'Source complete-block split preserves styles caret and one-step Undo',
+    (tester) async {
+      const source = '**leftright**';
+      final fragment = _completeSourceFragment('## Heading\n');
+      var modelText = source;
+      var modelSelection = const TextSelection.collapsed(offset: 0);
+      var history = const DocumentUndoState();
+      var transactions = 0;
+      final controller = await _pumpClipboardSourceEditor(
+        tester,
+        source: source,
+        clipboard: _SourceTestClipboard(
+          readData: RichClipboardData(
+            text: 'Heading',
+            richFragment: fragment.encode(),
+          ),
+        ),
+        onTransactionalChanged:
+            (value, _, previousSelection, selection, undoGroup) {
+              transactions += 1;
+              history = history.push(
+                DocumentHistoryState(
+                  text: modelText,
+                  selection: previousSelection,
+                ),
+                group: undoGroup,
+              );
+              modelText = value;
+              modelSelection = selection;
+            },
+        onUndo: () {
+          if (history.undo.isEmpty) return null;
+          final target = history.undo.last;
+          history = history.afterUndo(
+            DocumentHistoryState(text: modelText, selection: modelSelection),
+          );
+          modelText = target.text;
+          modelSelection = target.selection;
+          return TextEditingValue(
+            text: target.text,
+            selection: target.selection,
+          );
+        },
+        onRedo: () {
+          if (history.redo.isEmpty) return null;
+          final target = history.redo.last;
+          history = history.afterRedo(
+            DocumentHistoryState(text: modelText, selection: modelSelection),
+          );
+          modelText = target.text;
+          modelSelection = target.selection;
+          return TextEditingValue(
+            text: target.text,
+            selection: target.selection,
+          );
+        },
+      );
+      const initialSelection = TextSelection.collapsed(offset: 6);
+      controller.selection = initialSelection;
+
+      await _pressControlKey(tester, LogicalKeyboardKey.keyV);
+      await tester.pump();
+
+      final parsed = const MarkdownParser()
+          .parse(
+            filePath: '/project/source.md',
+            source: controller.text,
+            validateLocalReferences: false,
+          )
+          .busyDocument;
+      expect(parsed.blocks, hasLength(3), reason: controller.text);
+      expect(parsed.blocks.map((block) => block.plainText), [
+        'left',
+        'Heading',
+        'right',
+      ]);
+      expect(parsed.blocks[1].kind, BusyBlockKind.heading);
+      for (final block in [parsed.blocks.first, parsed.blocks.last]) {
+        expect(block.inlines.single.kind, BusyInlineKind.strong);
+      }
+      const marker = '\ue005';
+      final marked = const MarkdownParser()
+          .parse(
+            filePath: '/project/source.md',
+            source: controller.text.replaceRange(
+              controller.selection.baseOffset,
+              controller.selection.baseOffset,
+              marker,
+            ),
+            validateLocalReferences: false,
+          )
+          .busyDocument;
+      expect(marked.blocks.last.plainText, '${marker}right');
+      expect(marked.blocks.last.inlines.single.kind, BusyInlineKind.strong);
+
+      final editorDocument = const MarkdownParser()
+          .parse(
+            filePath: '/project/editor.md',
+            source: source,
+            validateLocalReferences: false,
+          )
+          .busyDocument;
+      final editor = BusyMarkWysiwygDocumentController(
+        document: editorDocument,
+      );
+      addTearDown(editor.dispose);
+      final editorResult = editor.insertStyledBlocksAtSelection(
+        blockId: editorDocument.blocks.single.id,
+        selectionStart: 4,
+        selectionEnd: 4,
+        blocks: fragment.blocks,
+      );
+      expect(editorResult, isNotNull);
+      expect(editor.document.blocks.map((block) => block.plainText), [
+        'left',
+        'Heading',
+        'right',
+      ]);
+      for (final block in [
+        editor.document.blocks.first,
+        editor.document.blocks.last,
+      ]) {
+        expect(block.inlines.single.kind, BusyInlineKind.strong);
+      }
+
+      expect(transactions, 1);
+      await _pressControlKey(tester, LogicalKeyboardKey.keyZ);
+      await tester.pump();
+      expect(controller.text, source);
+      expect(controller.selection, initialSelection);
+      expect(transactions, 1);
+    },
+  );
+
+  testWidgets(
     'Source rich inline paste composes with enclosing inline syntax',
     (tester) async {
       Future<TextEditingController> paste({
@@ -6032,7 +6167,11 @@ void main() {
         mode: MarkdownMode.gfm,
         validateLocalReferences: false,
       );
-      expect(parsed.busyDocument.blocks.single.kind, BusyBlockKind.heading);
+      expect(
+        parsed.busyDocument.blocks.single.kind,
+        BusyBlockKind.heading,
+        reason: wholeTable.text,
+      );
 
       final replacementTable = _completeSourceFragment(
         '| C | D |\n| --- | --- |\n| three | four |\n',

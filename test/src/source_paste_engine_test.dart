@@ -757,6 +757,193 @@ void main() {
     }
   });
 
+  test('complete blocks split and preserve enclosing inline contexts', () {
+    final destinations =
+        <
+          ({String source, int caret, BusyInlineKind kind, String? destination})
+        >[
+          (
+            source: 'prefix **leftright** suffix',
+            caret: 'prefix **left'.length,
+            kind: BusyInlineKind.strong,
+            destination: null,
+          ),
+          (
+            source: 'prefix *leftright* suffix',
+            caret: 'prefix *left'.length,
+            kind: BusyInlineKind.emphasis,
+            destination: null,
+          ),
+          (
+            source:
+                'prefix [leftright](https://destination.test "Title") suffix',
+            caret: 'prefix [left'.length,
+            kind: BusyInlineKind.link,
+            destination: 'https://destination.test',
+          ),
+        ];
+    final fragments =
+        <
+          ({WysiwygClipboardFragment fragment, BusyBlockKind kind, String text})
+        >[
+          (
+            fragment: _fragment('## Heading\n'),
+            kind: BusyBlockKind.heading,
+            text: 'Heading',
+          ),
+          (
+            fragment: _fragment('- Item\n'),
+            kind: BusyBlockKind.unorderedListItem,
+            text: 'Item',
+          ),
+          (
+            fragment: _fragment('```text\ncode\n```\n'),
+            kind: BusyBlockKind.codeBlock,
+            text: 'code',
+          ),
+        ];
+
+    for (final destination in destinations) {
+      for (final inserted in fragments) {
+        final applied = _applyReady(
+          destination.source,
+          engine.prepareStructured(
+            target: _target(
+              destination.source,
+              TextSelection.collapsed(offset: destination.caret),
+            ),
+            fragment: inserted.fragment,
+          ),
+        );
+        final document = _parse(applied.source);
+        final editorDocument = _parse(destination.source);
+        final editor = BusyMarkWysiwygDocumentController(
+          document: editorDocument,
+        );
+        addTearDown(editor.dispose);
+        final editorResult = editor.insertStyledBlocksAtSelection(
+          blockId: editorDocument.blocks.single.id,
+          selectionStart: 'prefix left'.length,
+          selectionEnd: 'prefix left'.length,
+          blocks: inserted.fragment.blocks,
+        );
+        expect(editorResult, isNotNull);
+        expect(
+          _documentSemanticSignature(document),
+          _documentSemanticSignature(editor.document),
+          reason: 'Source: ${applied.source}\nEditor: ${editor.markdown}',
+        );
+        expect(document.blocks, hasLength(3), reason: applied.source);
+        expect(document.blocks[0].plainText, 'prefix left');
+        expect(document.blocks[1].kind, inserted.kind);
+        expect(document.blocks[1].plainText, inserted.text);
+        expect(document.blocks[2].plainText, 'right suffix');
+        for (final block in [document.blocks.first, document.blocks.last]) {
+          expect(
+            _countKind(block.inlines, destination.kind),
+            1,
+            reason: applied.source,
+          );
+          if (destination.destination case final value?) {
+            final link = _links(block.inlines).single;
+            expect(link.destination, value);
+            expect(link.attributes['title'], 'Title');
+          }
+        }
+        expect(applied.source, startsWith('prefix '));
+        expect(applied.source, endsWith(' suffix'));
+
+        const marker = '\ue003';
+        final marked = _parse(
+          applied.source.replaceRange(
+            applied.edit.caretOffset,
+            applied.edit.caretOffset,
+            marker,
+          ),
+        );
+        expect(marked.blocks[2].plainText, '${marker}right suffix');
+        expect(
+          _countKind(marked.blocks[2].inlines, destination.kind),
+          1,
+          reason: applied.source,
+        );
+      }
+    }
+  });
+
+  test('paragraph-only block sequences match Editor merge semantics', () {
+    final fragments = [
+      _fragment('*A*\n\n[B](https://incoming.test "B title")\n'),
+      _fragment('*A*\n\n`C`\n\n[B](https://incoming.test "B title")\n'),
+    ];
+    final selections = <({int start, int end})>[
+      (start: 0, end: 0),
+      (start: 4, end: 4),
+      (start: 9, end: 9),
+      (start: 3, end: 6),
+    ];
+
+    for (final fragment in fragments) {
+      for (final selection in selections) {
+        const source = '**leftright**';
+        final sourceSelection = TextSelection(
+          baseOffset: 2 + selection.start,
+          extentOffset: 2 + selection.end,
+        );
+        final applied = _applyReady(
+          source,
+          engine.prepareStructured(
+            target: _target(source, sourceSelection),
+            fragment: fragment,
+          ),
+        );
+        final sourceDocument = _parse(applied.source);
+
+        final editorDocument = _parse(source);
+        final editor = BusyMarkWysiwygDocumentController(
+          document: editorDocument,
+        );
+        addTearDown(editor.dispose);
+        final result = editor.insertStyledBlocksAtSelection(
+          blockId: editorDocument.blocks.single.id,
+          selectionStart: selection.start,
+          selectionEnd: selection.end,
+          blocks: fragment.blocks,
+        );
+        expect(result, isNotNull);
+        final insertion = result!;
+        expect(
+          _documentSemanticSignature(sourceDocument),
+          _documentSemanticSignature(editor.document),
+          reason:
+              'selection $selection\nSource: ${applied.source}\n'
+              'Editor: ${editor.markdown}',
+        );
+
+        const marker = '\ue004';
+        final marked = _parse(
+          applied.source.replaceRange(
+            applied.edit.caretOffset,
+            applied.edit.caretOffset,
+            marker,
+          ),
+        );
+        final markedBlockIndex = marked.blocks.indexWhere(
+          (block) => block.plainText.contains(marker),
+        );
+        final editorBlockIndex = editor.document.blocks.indexWhere(
+          (block) => block.id == insertion.blockId,
+        );
+        expect(markedBlockIndex, editorBlockIndex, reason: applied.source);
+        expect(
+          marked.blocks[markedBlockIndex].plainText.indexOf(marker),
+          insertion.offset,
+          reason: applied.source,
+        );
+      }
+    }
+  });
+
   test('paste output is valid input for a second paste at returned caret', () {
     const source =
         '[A\n'
@@ -953,6 +1140,37 @@ List<BusyInline> _links(List<BusyInline> inlines) {
   }
 
   visit(inlines);
+  return result;
+}
+
+List<String> _documentSemanticSignature(BusyDocument document) {
+  final result = <String>[];
+
+  void addInline(BusyInline inline, int depth) {
+    result.add(
+      '${'  ' * depth}inline:${inline.kind.name}:${inline.text}:'
+      '${inline.destination ?? ''}:${inline.attributes['title'] ?? ''}',
+    );
+    for (final child in inline.children) {
+      addInline(child, depth + 1);
+    }
+  }
+
+  void addBlock(BusyBlock block, int depth) {
+    result.add(
+      '${'  ' * depth}block:${block.kind.name}:${block.attributes.entries.toList()}',
+    );
+    for (final inline in block.inlines) {
+      addInline(inline, depth + 1);
+    }
+    for (final child in block.children) {
+      addBlock(child, depth + 1);
+    }
+  }
+
+  for (final block in document.blocks) {
+    addBlock(block, 0);
+  }
   return result;
 }
 

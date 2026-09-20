@@ -77,15 +77,17 @@ class WysiwygClipboardFragment {
   /// Table destinations receive the same flattened, newline-free model as
   /// Editor table-cell insertion.
   List<BusyInline> sourceInsertionInlinesFor({required bool tableCell}) {
-    final values = [
-      for (final block in documentBlocks) _destinationSerializationBlock(block),
-    ];
+    final values = sourceInsertionBlocks;
     if (tableCell) {
       return busyMarkTableCellInlinesFromBlocks(values);
     }
     if (!isInlineSourceFragment) return const [];
     return values.single.inlines;
   }
+
+  List<BusyBlock> get sourceInsertionBlocks => List.unmodifiable([
+    for (final block in documentBlocks) _destinationSerializationBlock(block),
+  ]);
 
   /// Flattens structured blocks with the same semantics as an Editor table
   /// cell: block and line boundaries become spaces and inline styles survive.

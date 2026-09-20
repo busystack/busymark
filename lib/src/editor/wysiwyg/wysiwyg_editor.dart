@@ -202,6 +202,7 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   bool _sessionReportScheduled = false;
   double? _viewportHeight;
   late final _WysiwygClipboardInsertionTarget _historyInsertionTarget;
+  _PendingTextFocus? _pendingTextFocus;
 
   String get _documentId => widget.documentId ?? widget.document.filePath;
 
@@ -3361,7 +3362,12 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
 
   void _focusBlockAfterFrame(String blockId, {required int offset}) {
     _activeBlockId = blockId;
+    final pending = _PendingTextFocus(targetId: blockId, offset: offset);
+    _pendingTextFocus = pending;
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (identical(_pendingTextFocus, pending)) {
+        _pendingTextFocus = null;
+      }
       if (!mounted) {
         return;
       }
@@ -3386,7 +3392,12 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     }
     _activeBlockId = cellEntry.table.id;
     _activeCellId = targetId;
+    final pending = _PendingTextFocus(targetId: targetId, offset: offset);
+    _pendingTextFocus = pending;
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (identical(_pendingTextFocus, pending)) {
+        _pendingTextFocus = null;
+      }
       if (!mounted) {
         return;
       }
@@ -3400,6 +3411,24 @@ class _BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
         offset: offset.clamp(0, controller.text.length).toInt(),
       );
     });
+  }
+
+  void _requestEditorFocusAfterHistoryPaste() {
+    final pending = _pendingTextFocus;
+    if (pending != null) {
+      _focusTextTargetAfterFrame(pending.targetId, offset: pending.offset);
+      return;
+    }
+    final target = _activeTextTarget();
+    final targetId = target?.targetId ?? _activeBlockId;
+    if (targetId == null) return;
+    _focusTextTargetAfterFrame(
+      targetId,
+      offset:
+          target?.controller.selection.extentOffset ??
+          target?.controller.text.length ??
+          0,
+    );
   }
 
   List<BusyBlock> _focusableBlocks() {
@@ -7226,19 +7255,14 @@ class _WysiwygClipboardInsertionTarget
   }) => state._pasteHistoryPayload(payload, mode: mode);
 
   @override
-  void requestEditorFocus() {
-    final target = state._activeTextTarget();
-    final blockId = target?.targetId ?? state._activeBlockId;
-    if (blockId != null) {
-      state._focusBlockAfterFrame(
-        blockId,
-        offset:
-            target?.controller.selection.extentOffset ??
-            target?.controller.text.length ??
-            0,
-      );
-    }
-  }
+  void requestEditorFocus() => state._requestEditorFocusAfterHistoryPaste();
+}
+
+class _PendingTextFocus {
+  const _PendingTextFocus({required this.targetId, required this.offset});
+
+  final String targetId;
+  final int offset;
 }
 
 String _clipboardImageMimeType(String path) =>

@@ -627,6 +627,184 @@ void main() {
       },
     );
 
+    testWidgets(
+      'history rich paste keeps the committed caret and typing position',
+      (tester) async {
+        final registry = BusyMarkClipboardInsertionRegistry();
+        addTearDown(registry.dispose);
+        var result = 'leftright\n';
+        await mount(
+          tester,
+          'history-rich-caret',
+          result,
+          (value) => result = value,
+          registry: registry,
+        );
+        var field = tester.widget<TextField>(find.byType(TextField).first);
+        field.focusNode!.requestFocus();
+        field.controller!.selection = const TextSelection.collapsed(offset: 4);
+
+        final fragment = _fragment('**X**\n');
+        expect(
+          await registry.paste(
+            BusyMarkClipboardPayload(
+              id: 'history-rich-caret-payload',
+              acquiredAt: DateTime.utc(2026),
+              kind: BusyMarkClipboardContentKind.richText,
+              text: 'X',
+              richFragment: fragment.encode(),
+            ),
+          ),
+          ClipboardPasteResult.inserted,
+        );
+        await tester.pumpAndSettle();
+
+        field = tester
+            .widgetList<TextField>(find.byType(TextField))
+            .singleWhere(
+              (candidate) => candidate.controller?.text == 'leftXright',
+            );
+        expect(field.focusNode!.hasFocus, isTrue);
+        expect(
+          field.controller!.selection,
+          const TextSelection.collapsed(offset: 5),
+        );
+        tester.testTextInput.updateEditingValue(
+          const TextEditingValue(
+            text: 'leftXYright',
+            selection: TextSelection.collapsed(offset: 6),
+          ),
+        );
+        await tester.pump();
+        expect(field.controller!.text, 'leftXYright');
+        expect(
+          _parser
+              .parse(filePath: '/result.md', source: result)
+              .busyDocument
+              .blocks
+              .single
+              .plainText,
+          'leftXYright',
+        );
+      },
+    );
+
+    testWidgets(
+      'history rich paste restores table-cell focus and committed caret',
+      (tester) async {
+        final registry = BusyMarkClipboardInsertionRegistry();
+        addTearDown(registry.dispose);
+        var result = '| H |\n| --- |\n| leftright |\n';
+        await mount(
+          tester,
+          'history-table-caret',
+          result,
+          (value) => result = value,
+          registry: registry,
+        );
+        var cell = tester
+            .widgetList<TextField>(find.byType(TextField))
+            .singleWhere((field) => field.controller?.text == 'leftright');
+        cell.focusNode!.requestFocus();
+        cell.controller!.selection = const TextSelection.collapsed(offset: 4);
+        await tester.pump();
+
+        final fragment = _fragment('**X**\n');
+        expect(
+          await registry.paste(
+            BusyMarkClipboardPayload(
+              id: 'history-table-caret-payload',
+              acquiredAt: DateTime.utc(2026),
+              kind: BusyMarkClipboardContentKind.richText,
+              text: 'X',
+              richFragment: fragment.encode(),
+            ),
+          ),
+          ClipboardPasteResult.inserted,
+        );
+        await tester.pumpAndSettle();
+
+        cell = tester
+            .widgetList<TextField>(find.byType(TextField))
+            .singleWhere((field) => field.controller?.text == 'leftXright');
+        expect(cell.focusNode!.hasFocus, isTrue);
+        expect(
+          cell.controller!.selection,
+          const TextSelection.collapsed(offset: 5),
+        );
+        tester.testTextInput.updateEditingValue(
+          const TextEditingValue(
+            text: 'leftXYright',
+            selection: TextSelection.collapsed(offset: 6),
+          ),
+        );
+        await tester.pump();
+        expect(cell.controller!.text, 'leftXYright');
+        expect(result, contains('left**XY**right'));
+      },
+    );
+
+    testWidgets(
+      'history multi-paragraph paste focuses the committed last paragraph',
+      (tester) async {
+        final registry = BusyMarkClipboardInsertionRegistry();
+        addTearDown(registry.dispose);
+        var result = 'leftright\n';
+        await mount(
+          tester,
+          'history-multi-paragraph-caret',
+          result,
+          (value) => result = value,
+          registry: registry,
+        );
+        final original = tester.widget<TextField>(find.byType(TextField).first);
+        original.focusNode!.requestFocus();
+        original.controller!.selection = const TextSelection.collapsed(
+          offset: 4,
+        );
+
+        final fragment = _fragment('*A*\n\n**B**\n');
+        expect(
+          await registry.paste(
+            BusyMarkClipboardPayload(
+              id: 'history-multi-paragraph-caret-payload',
+              acquiredAt: DateTime.utc(2026),
+              kind: BusyMarkClipboardContentKind.richText,
+              text: 'A\n\nB',
+              richFragment: fragment.encode(),
+            ),
+          ),
+          ClipboardPasteResult.inserted,
+        );
+        await tester.pumpAndSettle();
+
+        final last = tester
+            .widgetList<TextField>(find.byType(TextField))
+            .singleWhere((field) => field.controller?.text == 'Bright');
+        expect(last.focusNode!.hasFocus, isTrue);
+        expect(
+          last.controller!.selection,
+          const TextSelection.collapsed(offset: 1),
+        );
+        tester.testTextInput.updateEditingValue(
+          const TextEditingValue(
+            text: 'BXright',
+            selection: TextSelection.collapsed(offset: 2),
+          ),
+        );
+        await tester.pump();
+        expect(last.controller!.text, 'BXright');
+        expect(
+          _parser
+              .parse(filePath: '/result.md', source: result)
+              .busyDocument
+              .blocks
+              .map((block) => block.plainText),
+          ['leftA', 'BXright'],
+        );
+      },
+    );
+
     testWidgets('copy all does not duplicate nested list children', (
       tester,
     ) async {
