@@ -15,6 +15,8 @@ import 'raw_html_policy.dart';
 /// metadata is collected. Tests use this to guard against per-break rescans.
 void Function(int lookups)? debugBusyMarkStandaloneBreakLayoutLookups;
 
+final RegExp _htmlWhitespaceUnit = RegExp(r'\s');
+
 class RawHtmlBlockParseResult {
   const RawHtmlBlockParseResult({required this.safe, this.blocks = const []});
 
@@ -107,9 +109,12 @@ class RawHtmlAdapter {
       return null;
     }
     final source = sourceText ?? text;
+    final positionMarkers = ignoredPositionMarkers
+        .where((marker) => marker.isNotEmpty)
+        .toList(growable: false);
     final layoutRemovals = _mappedStandaloneBreakLayoutRemovals(
       source,
-      ignoredPositionMarkers,
+      positionMarkers,
     );
     final projection = _HtmlSourceProjection.create(
       source,
@@ -133,11 +138,13 @@ class RawHtmlAdapter {
         projection.normalized,
       ),
       layout: _StandaloneBreakLayoutIndex(layoutRemovals),
+      positionMarkers: positionMarkers,
     );
     return RawHtmlInlineParseResult(
       inlines: _trimInlineEdges(
         _inlinesFromNodes(fragment.nodes, mapping: context),
         ranges: context.ranges,
+        ignoredPositionMarkers: positionMarkers,
       ),
       ranges: context.ranges,
     );
@@ -807,7 +814,10 @@ class RawHtmlAdapter {
       if (node.data.isEmpty) {
         return const [];
       }
-      final text = _collapseHtmlWhitespace(node.data);
+      final text = _collapseHtmlWhitespace(
+        node.data,
+        ignoredPositionMarkers: mapping?.positionMarkers ?? const [],
+      );
       if (text.trim().isEmpty) {
         return const [];
       }
@@ -828,6 +838,7 @@ class RawHtmlAdapter {
     final children = _trimInlineEdges(
       _inlinesFromNodes(element.nodes, mapping: mapping),
       ranges: mapping?.ranges,
+      ignoredPositionMarkers: mapping?.positionMarkers ?? const [],
     );
     final text = _plainText(children);
     final List<BusyInline> result = switch (tag) {
@@ -927,6 +938,7 @@ class RawHtmlAdapter {
   List<BusyInline> _trimInlineEdges(
     List<BusyInline> inlines, {
     Map<BusyInline, RawHtmlInlineSourceRange>? ranges,
+    Iterable<String> ignoredPositionMarkers = const [],
   }) {
     if (inlines.isEmpty) {
       return const [];
@@ -934,14 +946,24 @@ class RawHtmlAdapter {
     final result = [...inlines];
     if (result.first.kind == BusyInlineKind.text) {
       final previous = result.first;
-      result[0] = previous.copyWith(text: previous.text.trimLeft());
+      result[0] = previous.copyWith(
+        text: _trimHtmlTextEdge(
+          previous.text,
+          ignoredPositionMarkers,
+          left: true,
+        ),
+      );
       final range = ranges?.remove(previous);
       if (range != null) ranges![result[0]] = range;
     }
     if (result.last.kind == BusyInlineKind.text) {
       final previous = result.last;
       result[result.length - 1] = previous.copyWith(
-        text: previous.text.trimRight(),
+        text: _trimHtmlTextEdge(
+          previous.text,
+          ignoredPositionMarkers,
+          left: false,
+        ),
       );
       final range = ranges?.remove(previous);
       if (range != null) ranges![result.last] = range;
@@ -967,8 +989,91 @@ class RawHtmlAdapter {
     inlines.add(BusyInline(kind: BusyInlineKind.text, text: text));
   }
 
-  String _collapseHtmlWhitespace(String value) {
-    return value.replaceAll(RegExp(r'\s+'), ' ');
+  String _collapseHtmlWhitespace(
+    String value, {
+    Iterable<String> ignoredPositionMarkers = const [],
+  }) {
+    final markers = ignoredPositionMarkers
+        .where((marker) => marker.isNotEmpty)
+        .toList(growable: false);
+    if (markers.isEmpty) return value.replaceAll(RegExp(r'\s+'), ' ');
+
+    final result = StringBuffer();
+    var inWhitespace = false;
+    var offset = 0;
+    while (offset < value.length) {
+      final marker = markers.firstWhere(
+        (candidate) => value.startsWith(candidate, offset),
+        orElse: () => '',
+      );
+      if (marker.isNotEmpty) {
+        // Position records are zero-width for HTML whitespace processing.
+        // Keeping [inWhitespace] unchanged projects a position within a
+        // collapsed run to the boundary selected by its authored offset.
+        result.write(marker);
+        offset += marker.length;
+        continue;
+      }
+      final unit = String.fromCharCode(value.codeUnitAt(offset));
+      if (_htmlWhitespaceUnit.hasMatch(unit)) {
+        if (!inWhitespace) result.write(' ');
+        inWhitespace = true;
+      } else {
+        result.writeCharCode(value.codeUnitAt(offset));
+        inWhitespace = false;
+      }
+      offset += 1;
+    }
+    return result.toString();
+  }
+
+  String _trimHtmlTextEdge(
+    String value,
+    Iterable<String> ignoredPositionMarkers, {
+    required bool left,
+  }) {
+    final markers = ignoredPositionMarkers
+        .where((marker) => marker.isNotEmpty)
+        .toList(growable: false);
+    if (markers.isEmpty) return left ? value.trimLeft() : value.trimRight();
+
+    final unmarked = StringBuffer();
+    var offset = 0;
+    while (offset < value.length) {
+      final marker = markers.firstWhere(
+        (candidate) => value.startsWith(candidate, offset),
+        orElse: () => '',
+      );
+      if (marker.isNotEmpty) {
+        offset += marker.length;
+      } else {
+        unmarked.writeCharCode(value.codeUnitAt(offset));
+        offset += 1;
+      }
+    }
+    final plain = unmarked.toString();
+    final keptStart = left ? plain.length - plain.trimLeft().length : 0;
+    final keptEnd = left ? plain.length : plain.trimRight().length;
+    final result = StringBuffer();
+    var plainOffset = 0;
+    offset = 0;
+    while (offset < value.length) {
+      final marker = markers.firstWhere(
+        (candidate) => value.startsWith(candidate, offset),
+        orElse: () => '',
+      );
+      if (marker.isNotEmpty) {
+        result.write(marker);
+        offset += marker.length;
+        continue;
+      }
+      if (plainOffset >= keptStart && plainOffset < keptEnd) {
+        result.writeCharCode(value.codeUnitAt(offset));
+      }
+      plainOffset += 1;
+      offset += 1;
+    }
+    return result.toString();
   }
 
   String _plainTextFromNodes(Iterable<html.Node> nodes) {
@@ -1020,11 +1125,13 @@ class _RawHtmlInlineMappingContext {
     required this.projection,
     required this.authoredClosingsByOpeningStart,
     required this.layout,
+    required this.positionMarkers,
   });
 
   final _HtmlSourceProjection projection;
   final Map<int, ({int start, int end})> authoredClosingsByOpeningStart;
   final _StandaloneBreakLayoutIndex layout;
+  final List<String> positionMarkers;
   final Map<BusyInline, RawHtmlInlineSourceRange> ranges = Map.identity();
 }
 

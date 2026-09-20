@@ -17,6 +17,11 @@ import '../writerside/writerside_schema.dart';
 
 const _rawHtmlAdapter = RawHtmlAdapter();
 
+/// Reports source-boundary entries inspected while building the reusable
+/// lookahead for a mapped Markdown sibling list. Tests use this to guard the
+/// complete AST mapping path against per-node forward rescans.
+void Function(int inspections)? debugBusyMarkSourceMappingBoundaryInspections;
+
 String _decodeMarkdownAttribute(String value) => value
     .replaceAll('&#92;', '\\')
     .replaceAll('&quot;', '"')
@@ -692,27 +697,30 @@ class MarkdownAstAdapter {
     final end = (mappingEnd ?? mappingSource.length)
         .clamp(mappingStart, mappingSource.length)
         .toInt();
+    final ranges = [for (final node in values) _sourceMappingOffsets(node)];
+    final nextMappedStarts = List<int?>.filled(values.length, null);
+    final nextTextNodes = List<md.Text?>.filled(values.length, null);
+    int? nextMappedStart;
+    md.Text? nextTextNode;
+    for (var index = values.length - 1; index >= 0; index--) {
+      nextMappedStarts[index] = nextMappedStart;
+      nextTextNodes[index] = nextTextNode;
+      final range = ranges[index];
+      if (range != null) nextMappedStart = range.start;
+      final node = values[index];
+      if (node is md.Text && node.text.isNotEmpty) nextTextNode = node;
+    }
+    debugBusyMarkSourceMappingBoundaryInspections?.call(values.length);
     final result = <BusyInline>[];
     var cursor = mappingStart.clamp(0, end).toInt();
     for (var index = 0; index < values.length; index++) {
       final node = values[index];
-      final range = _sourceMappingOffsets(node);
-      int? nextMappedStart;
-      for (var next = index + 1; next < values.length; next++) {
-        final nextRange = _sourceMappingOffsets(values[next]);
-        if (nextRange != null) {
-          nextMappedStart = nextRange.start;
-          break;
-        }
-      }
+      final range = ranges[index];
       final nodeStart = (range?.start ?? cursor).clamp(mappingStart, end);
       int? nextTextStart;
-      for (var next = index + 1; next < values.length; next++) {
-        final candidate = values[next];
-        if (candidate is! md.Text || candidate.text.isEmpty) continue;
+      if (nextTextNodes[index] case final candidate?) {
         final found = mappingSource.indexOf(candidate.text, nodeStart);
         if (found >= nodeStart && found <= end) nextTextStart = found;
-        break;
       }
       final exactTextEnd =
           node is md.Text && mappingSource.startsWith(node.text, nodeStart)
@@ -721,7 +729,7 @@ class MarkdownAstAdapter {
       final nodeEnd =
           (range?.end ??
                   exactTextEnd ??
-                  nextMappedStart ??
+                  nextMappedStarts[index] ??
                   nextTextStart ??
                   end)
               .clamp(nodeStart, end);

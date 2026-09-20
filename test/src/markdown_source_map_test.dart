@@ -1,4 +1,5 @@
 import 'package:busymark/src/markdown/busymark_document.dart';
+import 'package:busymark/src/markdown/markdown_ast_adapter.dart';
 import 'package:busymark/src/markdown/markdown_model.dart';
 import 'package:busymark/src/markdown/markdown_source_map.dart';
 import 'package:busymark/src/markdown/raw_html_adapter.dart';
@@ -76,6 +77,16 @@ void main() {
         ignoredReferenceLabelMarkers: const [marker],
       );
       expect(
+        mapped.positionRecordsComplete,
+        isTrue,
+        reason: 'supported HTML boundary $position in $marked',
+      );
+      expect(
+        _leafMarkerOccurrences(mapped.inlines, marker),
+        1,
+        reason: 'supported HTML boundary $position in $marked',
+      );
+      expect(
         _semanticTree(mapped.inlines, ignoredMarkers: const [marker]),
         _semanticTree(ordinary),
         reason: 'position $position in $marked',
@@ -108,6 +119,9 @@ void main() {
       ignoredReferenceLabelMarkers: const [startMarker, endMarker],
     );
 
+    expect(mapped.positionRecordsComplete, isTrue);
+    expect(_leafMarkerOccurrences(mapped.inlines, startMarker), 1);
+    expect(_leafMarkerOccurrences(mapped.inlines, endMarker), 1);
     expect(
       _semanticTree(
         mapped.inlines,
@@ -125,6 +139,93 @@ void main() {
       hasLength(1),
     );
   });
+
+  test(
+    'supported HTML whitespace positions have complete position records',
+    () {
+      const marker = '\ue001';
+      final fixtures =
+          <({String source, int position, String expectedMarkedText})>[
+            (
+              source:
+                  '[<u>left  right</u>]'
+                  '(https://destination.test) tail',
+              position: '[<u>left'.length,
+              expectedMarkedText: 'left$marker right',
+            ),
+            (
+              source:
+                  '[<u>left  right</u>]'
+                  '(https://destination.test) tail',
+              position: '[<u>left '.length,
+              expectedMarkedText:
+                  'left $marker'
+                  'right',
+            ),
+            (
+              source:
+                  '[<u>left  right</u>]'
+                  '(https://destination.test) tail',
+              position: '[<u>left  '.length,
+              expectedMarkedText:
+                  'left $marker'
+                  'right',
+            ),
+            (
+              source:
+                  '[<u>left \t right</u>]'
+                  '(https://destination.test) tail',
+              position: '[<u>left \t'.length,
+              expectedMarkedText:
+                  'left $marker'
+                  'right',
+            ),
+            (
+              source:
+                  '[<u>left \r\n\t right</u>]'
+                  '(https://destination.test) tail',
+              position: '[<u>left \r\n'.length,
+              expectedMarkedText:
+                  'left $marker'
+                  'right',
+            ),
+          ];
+
+      for (final fixture in fixtures) {
+        final marked = fixture.source.replaceRange(
+          fixture.position,
+          fixture.position,
+          marker,
+        );
+        final context = mapper.createInlineParserContext(
+          documentSource: fixture.source,
+          mode: MarkdownMode.commonMark,
+        );
+        final ordinary = context.parse(fixture.source);
+        final mapped = context.parseMapped(
+          marked,
+          ignoredReferenceLabelMarkers: const [marker],
+        );
+
+        expect(mapped.positionRecordsComplete, isTrue, reason: fixture.source);
+        expect(
+          _semanticTree(mapped.inlines, ignoredMarkers: const [marker]),
+          _semanticTree(ordinary),
+          reason: fixture.source,
+        );
+        final underline = _allInlines(
+          mapped.inlines,
+        ).singleWhere((inline) => inline.kind == BusyInlineKind.underline);
+        expect(underline.plainText, fixture.expectedMarkedText);
+        expect(
+          _allInlines(
+            mapped.inlines,
+          ).where((inline) => inline.plainText.contains(marker)),
+          isNotEmpty,
+        );
+      }
+    },
+  );
 
   test('only operation-local markers are ignored', () {
     const authored = '\ue000';
@@ -146,9 +247,32 @@ void main() {
       (inline) => inline.kind == BusyInlineKind.link,
     );
     expect(link.destination, 'https://example.test/%EE%80%80');
+    expect(mapped.positionRecordsComplete, isTrue);
   });
 
-  test('position probes are semantic at supported syntax boundaries', () {
+  test('delimiter-only positions are explicitly incomplete', () {
+    const marker = '\ue001';
+    const source = '**left**';
+    const position = 1; // Inside the opening delimiter, not text content.
+    final context = mapper.createInlineParserContext(
+      documentSource: source,
+      mode: MarkdownMode.commonMark,
+    );
+    final ordinary = context.parse(source);
+    final mapped = context.parseMapped(
+      source.replaceRange(position, position, marker),
+      ignoredReferenceLabelMarkers: const [marker],
+    );
+
+    expect(mapped.positionRecordsComplete, isFalse);
+    expect(_semanticTree(mapped.inlines), _semanticTree(ordinary));
+  });
+
+  test('syntax-boundary probes retain the ordinary semantic oracle', () {
+    // Completeness is deliberately not qualified here: this corpus includes
+    // both content boundaries and positions inside delimiters, destinations,
+    // and titles. Dedicated tests above classify those categories and require
+    // complete records for supported content.
     const marker = '\ue001';
     final fixtures = <({String source, List<int> positions})>[
       (source: '**left**', positions: const [0, 1, 2, 4, 6, 7, 8]),
@@ -198,13 +322,14 @@ void main() {
 
   test('deterministic inline combinations preserve annotated semantics', () {
     const marker = '\ue001';
-    const contents = [
-      'plain',
-      'white space',
-      'Straße',
-      '😀 value',
-      r'escaped \* value',
-      'entity &amp; value',
+    final contents = <({String value, int position})>[
+      (value: 'plain', position: 2),
+      (value: 'white space', position: 5),
+      (value: 'white  space', position: 'white '.length),
+      (value: 'Straße', position: 4),
+      (value: '😀 value', position: 5),
+      (value: r'escaped \* value', position: r'escaped \* val'.length),
+      (value: 'entity &amp; value', position: 'entity &amp; val'.length),
     ];
     final wrappers = <String Function(String)>[
       (value) => value,
@@ -222,9 +347,9 @@ void main() {
     for (final wrap in wrappers) {
       for (final content in contents) {
         cases += 1;
-        final source = wrap(content);
-        final contentStart = source.indexOf(content);
-        final position = contentStart + content.length ~/ 2;
+        final source = wrap(content.value);
+        final contentStart = source.indexOf(content.value);
+        final position = contentStart + content.position;
         final marked = source.replaceRange(position, position, marker);
         final context = mapper.createInlineParserContext(
           documentSource: source,
@@ -236,13 +361,23 @@ void main() {
           ignoredReferenceLabelMarkers: const [marker],
         );
         expect(
+          mapped.positionRecordsComplete,
+          isTrue,
+          reason: 'case $cases: $source at $position',
+        );
+        expect(
+          _leafMarkerOccurrences(mapped.inlines, marker),
+          1,
+          reason: 'case $cases: $source at $position',
+        );
+        expect(
           _semanticTree(mapped.inlines, ignoredMarkers: const [marker]),
           _semanticTree(ordinary),
           reason: 'case $cases: $source',
         );
       }
     }
-    expect(cases, 60);
+    expect(cases, 70);
   });
 
   test('standalone HTML break ownership uses one indexed lookup per break', () {
@@ -260,6 +395,46 @@ void main() {
       expect(context.parseInvocations, 1, reason: '$count breaks');
       expect(lookups, count, reason: '$count breaks');
       expect(_countKind(mapped.inlines, BusyInlineKind.hardBreak), count);
+    }
+  });
+
+  test('AST source boundary lookahead is linear and maps the final link', () {
+    addTearDown(() => debugBusyMarkSourceMappingBoundaryInspections = null);
+    const marker = '\ue001';
+    for (final count in [10, 100, 1000]) {
+      final prefix = [
+        for (var index = 0; index < count; index++) '`code$index`',
+      ].join(' ');
+      final source = '$prefix [leftright](https://destination.test)';
+      final position = source.indexOf('leftright') + 4;
+      final marked = source.replaceRange(position, position, marker);
+      var inspections = 0;
+      debugBusyMarkSourceMappingBoundaryInspections = (value) =>
+          inspections += value;
+      final context = mapper.createInlineParserContext(
+        documentSource: source,
+        mode: MarkdownMode.commonMark,
+      );
+      final mapped = context.parseMapped(
+        marked,
+        ignoredReferenceLabelMarkers: const [marker],
+      );
+
+      expect(mapped.positionRecordsComplete, isTrue, reason: '$count spans');
+      final link = _allInlines(
+        mapped.inlines,
+      ).singleWhere((inline) => inline.kind == BusyInlineKind.link);
+      expect(link.destination, 'https://destination.test');
+      expect(link.plainText, 'left${marker}right');
+      final range = mapped.ranges[link];
+      expect(range, isNotNull);
+      expect(range!.start, source.indexOf('[leftright]'));
+      expect(range.end, marked.length);
+      expect(
+        inspections,
+        lessThanOrEqualTo(count * 6 + 30),
+        reason: '$count spans inspected $inspections boundaries',
+      );
     }
   });
 
@@ -352,6 +527,28 @@ int _countKind(List<BusyInline> inlines, BusyInlineKind kind) {
   for (final inline in inlines) {
     if (inline.kind == kind) count += 1;
     count += _countKind(inline.children, kind);
+  }
+  return count;
+}
+
+List<BusyInline> _allInlines(List<BusyInline> inlines) {
+  return [
+    for (final inline in inlines) ...[inline, ..._allInlines(inline.children)],
+  ];
+}
+
+int _leafMarkerOccurrences(List<BusyInline> inlines, String marker) {
+  var count = 0;
+  for (final inline in inlines) {
+    if (inline.children.isEmpty) {
+      var offset = 0;
+      while ((offset = inline.text.indexOf(marker, offset)) >= 0) {
+        count += 1;
+        offset += marker.length;
+      }
+    } else {
+      count += _leafMarkerOccurrences(inline.children, marker);
+    }
   }
   return count;
 }

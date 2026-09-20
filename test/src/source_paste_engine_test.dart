@@ -117,6 +117,194 @@ void main() {
     expect(_countKind(paragraph.inlines, BusyInlineKind.hardBreak), 1);
   });
 
+  test('rich insertion maps collapsed HTML whitespace as content', () {
+    final fixtures = <({String source, int caret})>[
+      (
+        source:
+            '[<u>left  right</u>]'
+            '(https://destination.test) tail',
+        caret: '[<u>left '.length,
+      ),
+      (
+        source:
+            '[<u>left \t right</u>]'
+            '(https://destination.test) tail',
+        caret: '[<u>left \t'.length,
+      ),
+      (
+        source:
+            '[<u>left \r\n\t right</u>]'
+            '(https://destination.test) tail',
+        caret: '[<u>left \r\n'.length,
+      ),
+    ];
+
+    for (final fixture in fixtures) {
+      final result = engine.prepareStructured(
+        target: _target(
+          fixture.source,
+          TextSelection.collapsed(offset: fixture.caret),
+        ),
+        fragment: _fragment('[Y](https://incoming.test)\n'),
+      );
+      expect(result, isA<SourcePasteReady>(), reason: fixture.source);
+      final applied = _applyReady(fixture.source, result);
+      final paragraph = _parse(applied.source).blocks.single;
+      expect(paragraph.plainText, 'left Yright tail', reason: applied.source);
+      expect(_destinations(paragraph.inlines), [
+        'https://destination.test',
+        'https://incoming.test',
+        'https://destination.test',
+      ], reason: applied.source);
+      expect(_countKind(paragraph.inlines, BusyInlineKind.underline), 3);
+      expect(
+        applied.source,
+        contains(
+          '[<u>left</u>](https://destination.test) '
+          '[<u>Y</u>](https://incoming.test)',
+        ),
+      );
+      final incomingEnd =
+          applied.source.indexOf('https://incoming.test') +
+          'https://incoming.test'.length +
+          1;
+      expect(applied.edit.caretOffset, incomingEnd);
+      expect(applied.source, endsWith(' tail'));
+    }
+  });
+
+  test('collapsed whitespace maps through supported raw HTML styles', () {
+    final fixtures = <({String tag, BusyInlineKind kind})>[
+      (tag: 'u', kind: BusyInlineKind.underline),
+      (tag: 'strong', kind: BusyInlineKind.strong),
+      (tag: 'em', kind: BusyInlineKind.emphasis),
+      (tag: 's', kind: BusyInlineKind.strikethrough),
+    ];
+    for (final fixture in fixtures) {
+      final source =
+          '[<${fixture.tag}>left  right</${fixture.tag}>]'
+          '(https://destination.test) tail';
+      final result = engine.prepareStructured(
+        target: _target(
+          source,
+          TextSelection.collapsed(offset: source.indexOf('left') + 5),
+        ),
+        fragment: _fragment('[Y](https://incoming.test)\n'),
+      );
+
+      final applied = _applyReady(source, result);
+      final paragraph = _parse(applied.source).blocks.single;
+      expect(paragraph.plainText, 'left Yright tail', reason: applied.source);
+      expect(_destinations(paragraph.inlines), [
+        'https://destination.test',
+        'https://incoming.test',
+        'https://destination.test',
+      ], reason: applied.source);
+      expect(_countKind(paragraph.inlines, fixture.kind), 3);
+    }
+  });
+
+  test('collapsed whitespace maps through a supported raw HTML link', () {
+    const source = '<a href="https://destination.test">left  right</a> tail';
+    final result = engine.prepareStructured(
+      target: _target(
+        source,
+        TextSelection.collapsed(offset: source.indexOf('left') + 5),
+      ),
+      fragment: _fragment('[Y](https://incoming.test)\n'),
+    );
+
+    final applied = _applyReady(source, result);
+    final paragraph = _parse(applied.source).blocks.single;
+    expect(paragraph.plainText, 'left Yright tail', reason: applied.source);
+    expect(_destinations(paragraph.inlines), [
+      'https://destination.test',
+      'https://incoming.test',
+      'https://destination.test',
+    ], reason: applied.source);
+  });
+
+  test('supported content corpus always plans a rich insertion', () {
+    const incomingDestination = 'https://incoming.test';
+    final contents = <({String value, int position})>[
+      (value: 'plain', position: 2),
+      (value: 'white space', position: 5),
+      (value: 'white  space', position: 'white '.length),
+      (value: 'Straße', position: 4),
+      (value: '😀 value', position: 5),
+      (value: r'escaped \* value', position: r'escaped \* val'.length),
+      (value: 'entity &amp; value', position: 'entity &amp; val'.length),
+    ];
+    final wrappers = <String Function(String)>[
+      (value) => value,
+      (value) => '**$value**',
+      (value) => '*$value*',
+      (value) => '~~$value~~',
+      (value) => '[$value](https://destination.test "Title")',
+      (value) => '<u>$value</u>',
+      (value) => '<strong>$value</strong>',
+      (value) => '<em>$value</em>',
+      (value) => '<a href="https://destination.test">$value</a>',
+      (value) => '<u><strong>$value</strong><br>tail</u>',
+    ];
+
+    var cases = 0;
+    for (final wrap in wrappers) {
+      for (final content in contents) {
+        cases += 1;
+        final source = 'prefix ${wrap(content.value)} suffix';
+        final position = source.indexOf(content.value) + content.position;
+        final result = engine.prepareStructured(
+          target: _target(source, TextSelection.collapsed(offset: position)),
+          fragment: _fragment('[Y]($incomingDestination)\n'),
+        );
+
+        expect(
+          result,
+          isA<SourcePasteReady>(),
+          reason: 'case $cases: $source at $position',
+        );
+        final applied = _applyReady(source, result);
+        final parsed = _parse(applied.source);
+        expect(applied.source, startsWith('prefix '));
+        expect(applied.source, endsWith(' suffix'));
+        expect(
+          _destinations(parsed.blocks.single.inlines),
+          contains(incomingDestination),
+          reason: 'case $cases: ${applied.source}',
+        );
+        if (source.contains('https://destination.test')) {
+          expect(
+            _destinations(parsed.blocks.single.inlines),
+            contains('https://destination.test'),
+            reason: 'case $cases: ${applied.source}',
+          );
+        }
+        if (source.contains('"Title"')) {
+          expect(
+            _links(parsed.blocks.single.inlines)
+                .where(
+                  (inline) => inline.destination == 'https://destination.test',
+                )
+                .map((inline) => inline.attributes['title']),
+            everyElement('Title'),
+            reason: 'case $cases: ${applied.source}',
+          );
+        }
+        final incomingEnd =
+            applied.source.indexOf(incomingDestination) +
+            incomingDestination.length +
+            1;
+        expect(
+          applied.edit.caretOffset,
+          incomingEnd,
+          reason: 'case $cases: ${applied.source}',
+        );
+      }
+    }
+    expect(cases, 70);
+  });
+
   test('paste output is valid input for a second paste at returned caret', () {
     const source =
         '[A\n'
@@ -273,10 +461,14 @@ BusyDocument _parse(String source, {String filePath = '/project/source.md'}) {
 }
 
 List<String?> _destinations(List<BusyInline> inlines) {
-  final result = <String?>[];
+  return [for (final inline in _links(inlines)) inline.destination];
+}
+
+List<BusyInline> _links(List<BusyInline> inlines) {
+  final result = <BusyInline>[];
   void visit(List<BusyInline> values) {
     for (final inline in values) {
-      if (inline.kind == BusyInlineKind.link) result.add(inline.destination);
+      if (inline.kind == BusyInlineKind.link) result.add(inline);
       visit(inline.children);
     }
   }

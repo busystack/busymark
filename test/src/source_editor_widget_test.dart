@@ -18,6 +18,7 @@ import 'package:busymark/src/core/diagnostic.dart';
 import 'package:busymark/src/core/source_span.dart';
 import 'package:busymark/src/markdown/busymark_document.dart';
 import 'package:busymark/src/markdown/busymark_markdown_serializer.dart';
+import 'package:busymark/src/markdown/markdown_ast_adapter.dart';
 import 'package:busymark/src/editor/document_text_geometry.dart';
 import 'package:busymark/src/editor/source_highlighter.dart'
     show BusyMarkSourceEditingController;
@@ -3622,6 +3623,104 @@ void main() {
   });
 
   testWidgets(
+    'Source system and history rich paste map normalized HTML whitespace',
+    (tester) async {
+      const source =
+          '[<u>left  right</u>]'
+          '(https://destination.test) tail';
+      const html = '<a href="https://incoming.test">Y</a>';
+      for (final (index, fromHistory) in [false, true].indexed) {
+        final registry = BusyMarkClipboardInsertionRegistry();
+        final clipboard = _SourceTestClipboard(
+          readData: const RichClipboardData(
+            text: 'Y',
+            html: html,
+            generation: 55,
+          ),
+        );
+        TextEditingValue? undoValue;
+        var transactions = 0;
+        final controller = await _pumpClipboardSourceEditor(
+          tester,
+          source: source,
+          clipboard: clipboard,
+          registry: registry,
+          onTransactionalChanged: (_, _, previousSelection, _, _) {
+            transactions += 1;
+            undoValue = TextEditingValue(
+              text: source,
+              selection: previousSelection,
+            );
+          },
+          onUndo: () {
+            final value = undoValue;
+            undoValue = null;
+            return value;
+          },
+        );
+        controller.selection = const TextSelection.collapsed(
+          offset: '[<u>left '.length,
+        );
+
+        if (fromHistory) {
+          final payload = BusyMarkClipboardPayload(
+            id: 'html-whitespace-history',
+            acquiredAt: DateTime.utc(2026),
+            kind: BusyMarkClipboardContentKind.richText,
+            text: 'Y',
+            html: html,
+          );
+          expect(registry.canPaste(payload), isTrue);
+          expect(await registry.paste(payload), ClipboardPasteResult.inserted);
+        } else {
+          await _pressControlKey(tester, LogicalKeyboardKey.keyV);
+          await tester.pump();
+        }
+
+        final document = const MarkdownParser()
+            .parse(
+              filePath: '/project/source.md',
+              source: controller.text,
+              validateLocalReferences: false,
+            )
+            .busyDocument;
+        final paragraph = document.blocks.single;
+        expect(paragraph.plainText, 'left Yright tail');
+        final links = paragraph.inlines
+            .where((inline) => inline.kind == BusyInlineKind.link)
+            .toList(growable: false);
+        expect(links.map((inline) => inline.destination), [
+          'https://destination.test',
+          'https://incoming.test',
+          'https://destination.test',
+        ], reason: controller.text);
+        expect(
+          _inlineSemanticRuns(paragraph.inlines)
+              .where((run) => run.context.contains('underline'))
+              .map((run) => run.text),
+          ['left', 'Y', 'right'],
+          reason: controller.text,
+        );
+        final incomingEnd =
+            controller.text.indexOf('https://incoming.test') +
+            'https://incoming.test'.length +
+            1;
+        expect(controller.selection.baseOffset, incomingEnd);
+        expect(transactions, 1);
+
+        await _pressControlKey(tester, LogicalKeyboardKey.keyZ);
+        await tester.pump();
+        expect(controller.text, source);
+        registry.dispose();
+        if (index == 0) {
+          await tester.pumpWidget(const SizedBox.shrink());
+          await tester.pump();
+        }
+      }
+    },
+  );
+
+  testWidgets(
     'Source syntax-only availability agrees with textual fallback execution',
     (tester) async {
       const source = '**left**';
@@ -5504,6 +5603,89 @@ void main() {
         expect(controller.selection.baseOffset, incomingEnd);
         registry.dispose();
         if (caseIndex + 1 < 3) {
+          await tester.pumpWidget(const SizedBox.shrink());
+          await tester.pump();
+        }
+      }
+    },
+  );
+
+  testWidgets(
+    'Source AST boundary mapping stays linear for availability and paste',
+    (tester) async {
+      addTearDown(() => debugBusyMarkSourceMappingBoundaryInspections = null);
+      final fragment = _completeSourceFragment('[X](https://incoming.test)\n');
+      for (final (caseIndex, codeSpanCount) in [10, 100, 1000].indexed) {
+        final prefix = [
+          for (var index = 0; index < codeSpanCount; index++) '`code$index`',
+        ].join(' ');
+        final source = '$prefix [leftright](https://destination.test)';
+        final registry = BusyMarkClipboardInsertionRegistry();
+        final controller = await _pumpClipboardSourceEditor(
+          tester,
+          source: source,
+          registry: registry,
+          clipboard: _SourceTestClipboard(),
+        );
+        controller.selection = TextSelection.collapsed(
+          offset: source.indexOf('leftright') + 4,
+        );
+        final payload = BusyMarkClipboardPayload(
+          id: 'ast-boundaries-$codeSpanCount',
+          acquiredAt: DateTime.utc(2026),
+          kind: BusyMarkClipboardContentKind.richText,
+          text: 'X',
+          richFragment: fragment.encode(),
+        );
+
+        var inspections = 0;
+        debugBusyMarkSourceMappingBoundaryInspections = (value) =>
+            inspections += value;
+        expect(registry.canPaste(payload), isTrue);
+        expect(
+          inspections,
+          lessThanOrEqualTo(codeSpanCount * 8 + 30),
+          reason:
+              'availability with $codeSpanCount spans inspected '
+              '$inspections boundaries',
+        );
+
+        inspections = 0;
+        expect(await registry.paste(payload), ClipboardPasteResult.inserted);
+        expect(
+          inspections,
+          lessThanOrEqualTo(codeSpanCount * 16 + 60),
+          reason:
+              'paste with $codeSpanCount spans inspected '
+              '$inspections boundaries',
+        );
+        expect(controller.text, startsWith('$prefix '));
+        final parsed = const MarkdownParser()
+            .parse(
+              filePath: '/project/source.md',
+              source: controller.text,
+              validateLocalReferences: false,
+            )
+            .busyDocument;
+        expect(
+          parsed.blocks.single.inlines.where(
+            (inline) => inline.kind == BusyInlineKind.code,
+          ),
+          hasLength(codeSpanCount),
+        );
+        expect(
+          parsed.blocks.single.inlines
+              .where((inline) => inline.kind == BusyInlineKind.link)
+              .map((inline) => inline.destination),
+          [
+            'https://destination.test',
+            'https://incoming.test',
+            'https://destination.test',
+          ],
+          reason: controller.text,
+        );
+        registry.dispose();
+        if (caseIndex < 2) {
           await tester.pumpWidget(const SizedBox.shrink());
           await tester.pump();
         }

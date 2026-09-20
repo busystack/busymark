@@ -477,31 +477,17 @@ class SourcePasteEngine {
       mapped.inline,
       destination.startMarker,
       destination.endMarker,
+      rawHtmlSourceInlines: _rawHtmlSourceInlines(destination),
     );
     if (partition == null) return null;
-    final before = partition.before.isEmpty
-        ? const <BusyInline>[]
-        : [
-            mapped.inline.copyWith(
-              text: partition.before.map((inline) => inline.plainText).join(),
-              children: partition.before,
-            ),
-          ];
-    final after = partition.after.isEmpty
-        ? const <BusyInline>[]
-        : [
-            mapped.inline.copyWith(
-              text: partition.after.map((inline) => inline.plainText).join(),
-              children: partition.after,
-            ),
-          ];
     return _serializeMappedInlineReplacement(
       context,
       mapped.sourceRange,
-      before,
+      partition.before,
       incoming,
-      after,
+      partition.after,
       authoredWrapper: mapped,
+      rawHtmlFragments: partition.rawHtmlFragments,
     );
   }
 
@@ -517,6 +503,7 @@ class SourcePasteEngine {
       mapped.inline,
       destination.startMarker,
       destination.endMarker,
+      rawHtmlSourceInlines: _rawHtmlSourceInlines(destination),
     );
     if (partition == null) return null;
     final linkIndex = destination.commonAncestors.indexWhere(
@@ -535,30 +522,27 @@ class SourcePasteEngine {
       _applySourceInlineContexts(incoming, innerContexts),
       outerContexts,
     );
-    final before = partition.before.isEmpty
-        ? const <BusyInline>[]
-        : [
-            mapped.inline.copyWith(
-              text: partition.before.map((inline) => inline.plainText).join(),
-              children: partition.before,
-            ),
-          ];
-    final after = partition.after.isEmpty
-        ? const <BusyInline>[]
-        : [
-            mapped.inline.copyWith(
-              text: partition.after.map((inline) => inline.plainText).join(),
-              children: partition.after,
-            ),
-          ];
     return _serializeMappedInlineReplacement(
       context,
       mapped.sourceRange,
-      before,
+      partition.before,
       adjustedIncoming,
-      after,
+      partition.after,
       authoredWrapper: mapped,
+      rawHtmlFragments: partition.rawHtmlFragments,
     );
+  }
+
+  Set<BusyInline> _rawHtmlSourceInlines(
+    _MappedSourceInlineContext destination,
+  ) {
+    final result = Set<BusyInline>.identity();
+    for (final wrapper in destination.wrappers) {
+      if (wrapper.opening?.trimLeft().startsWith('<') ?? false) {
+        result.add(wrapper.inline);
+      }
+    }
+    return result;
   }
 
   _SourceEditPlan _serializeMappedInlineReplacement(
@@ -568,6 +552,7 @@ class SourcePasteEngine {
     List<BusyInline> incoming,
     List<BusyInline> after, {
     _MappedSourceInlineWrapper? authoredWrapper,
+    Set<BusyInline> rawHtmlFragments = const {},
   }) {
     final caretTextOffset = [
       ...before,
@@ -616,11 +601,13 @@ class SourcePasteEngine {
         }
       }
     }
-    final merged = _mergeAdjacentSourceInlineStyles([
-      ...before,
-      ...incoming,
-      ...after,
-    ]);
+    final merged = _mergeAdjacentSourceInlineStyles(
+      _stabilizeMappedWrapperWhitespace([
+        ...before,
+        ...incoming,
+        ...after,
+      ], rawHtmlFragments),
+    );
     final lineBreakOffsets = {
       for (final lineBreak in retainedLineBreaks)
         lineBreak: BusyMarkInlineLineBreakOffset(
@@ -754,11 +741,106 @@ class SourcePasteEngine {
     return merged;
   }
 
-  ({List<BusyInline> before, List<BusyInline> after})? _partitionMappedInline(
+  /// Raw-HTML conversion can trim whitespace at a styled element or link edge.
+  /// When mapped paste splits such a wrapper at that edge, hoist the whitespace
+  /// outside the affected delimiter so its text semantics survive the
+  /// serializer/reparse round trip.
+  List<BusyInline> _stabilizeMappedWrapperWhitespace(
+    List<BusyInline> inlines,
+    Set<BusyInline> rawHtmlFragments,
+  ) {
+    final result = <BusyInline>[];
+    for (final inline in inlines) {
+      if (inline.children.isEmpty) {
+        result.add(inline);
+        continue;
+      }
+      final containsRawHtmlWrapper = _containsMappedRawHtmlInline(
+        inline.children,
+        rawHtmlFragments,
+      );
+      final children = _stabilizeMappedWrapperWhitespace(
+        inline.children,
+        rawHtmlFragments,
+      );
+      final rebuilt = inline.copyWith(
+        text: children.map((child) => child.plainText).join(),
+        children: children,
+      );
+      final rawHtmlStyle = rawHtmlFragments.contains(inline);
+      final containingLink =
+          inline.kind == BusyInlineKind.link && containsRawHtmlWrapper;
+      if (!rawHtmlStyle && !containingLink) {
+        result.add(rebuilt);
+        continue;
+      }
+
+      final leading = children.firstOrNull?.kind == BusyInlineKind.text
+          ? RegExp(r'^\s+').firstMatch(children.first.text)?.group(0) ?? ''
+          : '';
+      final core = [...children];
+      if (leading.isNotEmpty) {
+        final first = core.first;
+        core[0] = first.copyWith(text: first.text.substring(leading.length));
+      }
+      final trailing = core.lastOrNull?.kind == BusyInlineKind.text
+          ? RegExp(r'\s+$').firstMatch(core.last.text)?.group(0) ?? ''
+          : '';
+      if (leading.isEmpty && trailing.isEmpty) {
+        result.add(rebuilt);
+        continue;
+      }
+      if (trailing.isNotEmpty) {
+        final last = core.last;
+        core[core.length - 1] = last.copyWith(
+          text: last.text.substring(0, last.text.length - trailing.length),
+        );
+      }
+      core.removeWhere(
+        (child) => child.kind == BusyInlineKind.text && child.plainText.isEmpty,
+      );
+      if (leading.isNotEmpty) {
+        result.add(BusyInline(kind: BusyInlineKind.text, text: leading));
+      }
+      if (core.isNotEmpty) {
+        result.add(
+          rebuilt.copyWith(
+            text: core.map((child) => child.plainText).join(),
+            children: core,
+          ),
+        );
+      }
+      if (trailing.isNotEmpty) {
+        result.add(BusyInline(kind: BusyInlineKind.text, text: trailing));
+      }
+    }
+    return result;
+  }
+
+  bool _containsMappedRawHtmlInline(
+    List<BusyInline> inlines,
+    Set<BusyInline> rawHtmlFragments,
+  ) {
+    for (final inline in inlines) {
+      if (rawHtmlFragments.contains(inline) ||
+          _containsMappedRawHtmlInline(inline.children, rawHtmlFragments)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  ({
+    List<BusyInline> before,
+    List<BusyInline> after,
+    Set<BusyInline> rawHtmlFragments,
+  })?
+  _partitionMappedInline(
     BusyInline inline,
     String startMarker,
-    String? endMarker,
-  ) {
+    String? endMarker, {
+    required Set<BusyInline> rawHtmlSourceInlines,
+  }) {
     final text = inline.plainText;
     final start = text.indexOf(startMarker);
     if (start < 0) return null;
@@ -767,13 +849,27 @@ class SourcePasteEngine {
         : text.indexOf(endMarker, start + startMarker.length) +
               endMarker.length;
     if (end < start + startMarker.length) return null;
-    return _partitionSourceInlines(inline.children, start, end);
+    final rawHtmlFragments = Set<BusyInline>.identity();
+    final partition = _partitionSourceInline(
+      inline,
+      start,
+      end,
+      rawHtmlSourceInlines,
+      rawHtmlFragments,
+    );
+    return (
+      before: [if (partition.before case final before?) before],
+      after: [if (partition.after case final after?) after],
+      rawHtmlFragments: rawHtmlFragments,
+    );
   }
 
   ({List<BusyInline> before, List<BusyInline> after}) _partitionSourceInlines(
     List<BusyInline> inlines,
     int start,
     int end,
+    Set<BusyInline> rawHtmlSourceInlines,
+    Set<BusyInline> rawHtmlFragments,
   ) {
     final before = <BusyInline>[];
     final after = <BusyInline>[];
@@ -790,6 +886,8 @@ class SourcePasteEngine {
           inline,
           (start - offset).clamp(0, length).toInt(),
           (end - offset).clamp(0, length).toInt(),
+          rawHtmlSourceInlines,
+          rawHtmlFragments,
         );
         if (partition.before != null) before.add(partition.before!);
         if (partition.after != null) after.add(partition.after!);
@@ -803,24 +901,35 @@ class SourcePasteEngine {
     BusyInline inline,
     int start,
     int end,
+    Set<BusyInline> rawHtmlSourceInlines,
+    Set<BusyInline> rawHtmlFragments,
   ) {
     final length = inline.plainText.length;
     if (inline.children.isNotEmpty) {
-      final partition = _partitionSourceInlines(inline.children, start, end);
-      return (
-        before: partition.before.isEmpty
-            ? null
-            : inline.copyWith(
-                text: partition.before.map((child) => child.plainText).join(),
-                children: partition.before,
-              ),
-        after: partition.after.isEmpty
-            ? null
-            : inline.copyWith(
-                text: partition.after.map((child) => child.plainText).join(),
-                children: partition.after,
-              ),
+      final partition = _partitionSourceInlines(
+        inline.children,
+        start,
+        end,
+        rawHtmlSourceInlines,
+        rawHtmlFragments,
       );
+      final before = partition.before.isEmpty
+          ? null
+          : inline.copyWith(
+              text: partition.before.map((child) => child.plainText).join(),
+              children: partition.before,
+            );
+      final after = partition.after.isEmpty
+          ? null
+          : inline.copyWith(
+              text: partition.after.map((child) => child.plainText).join(),
+              children: partition.after,
+            );
+      if (rawHtmlSourceInlines.contains(inline)) {
+        if (before != null) rawHtmlFragments.add(before);
+        if (after != null) rawHtmlFragments.add(after);
+      }
+      return (before: before, after: after);
     }
     return (
       before: start == 0
