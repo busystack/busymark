@@ -4390,9 +4390,8 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         )) {
           continue;
         }
-        final exists = workspace.kind == WorkspaceKind.singleMarkdown
-            ? await _service.pathExists(path)
-            : existingFiles.containsKey(path);
+        final exists =
+            existingFiles.containsKey(path) || await _service.pathExists(path);
         if (!_isCurrentWorkspaceRefresh(refreshRevision, workspace.id)) {
           return false;
         }

@@ -1189,6 +1189,67 @@ code
   );
 
   test(
+    'Writerside refresh preserves saved Markdown outside the workspace root',
+    (() async {
+      final root = await _createWritableWritersideFixture('external-save');
+      final external = await Directory.systemTemp.createTemp(
+        'busymark-writerside-external-note-',
+      );
+      addTearDown(() => root.delete(recursive: true));
+      addTearDown(() => external.delete(recursive: true));
+      final harness = await _createControllerHarness();
+      final controller = harness.controller;
+      await controller.openPath(root.path);
+      await controller.createMarkdownFile();
+      final bufferId = controller.state.activeBuffer!.id;
+      const source = '''# External note
+
+CommonMark paragraph.
+
+- remains open
+''';
+      controller.updateActiveText(source);
+      final destination = p.join(external.path, 'note.md');
+
+      expect(await controller.saveActiveAs(destination), isTrue);
+      expect(
+        controller.state.workspace!.files.any(
+          (file) => file.absolutePath == destination,
+        ),
+        isFalse,
+      );
+      expect(await controller.refreshWorkspaceFromDisk(), isTrue);
+
+      final state = controller.state;
+      final buffer = state.documentBuffers.singleWhere(
+        (candidate) => candidate.id == bufferId,
+      );
+      expect(state.workspace?.kind, WorkspaceKind.writersideModule);
+      expect(state.activeBuffer?.id, bufferId);
+      expect(buffer.filePath, destination);
+      expect(buffer.diskState, DocumentDiskState.present);
+      expect(buffer.text, source);
+      expect(state.activeText, source);
+      final resolved = resolveWorkspaceDocumentContext(
+        state.workspace!,
+        buffer,
+      );
+      expect(resolved.kind, DocumentKind.markdown);
+      expect(resolved.markdownMode, MarkdownMode.commonMark);
+      expect(state.workspace?.markdown?.mode, MarkdownMode.commonMark);
+      expect(state.workspace?.markdown?.source, source);
+      expect(
+        state.preview?.blocks.map((block) => block.kind),
+        containsAll(<PreviewBlockKind>[
+          PreviewBlockKind.heading,
+          PreviewBlockKind.paragraph,
+          PreviewBlockKind.list,
+        ]),
+      );
+    }),
+  );
+
+  test(
     'saving untitled Markdown into discovered topics reclassifies it',
     (() async {
       final root = await _createWritableWritersideFixture('topic-save');
