@@ -211,8 +211,7 @@ class BusyMarkMarkdownSerializer {
         continue;
       }
       final source = serializeBlock(block);
-      final preserveWhitespace =
-          block.attributes[busyMarkPreserveTextWhitespaceAttribute] == 'true';
+      final preserveWhitespace = _requiresTextWhitespacePreservation(block);
       if (source.trim().isNotEmpty ||
           (preserveWhitespace && source.isNotEmpty)) {
         chunks.add(preserveWhitespace ? source : source.trimRight());
@@ -329,7 +328,7 @@ class BusyMarkMarkdownSerializer {
       buffer
         ..write(source.substring(offset, span.startOffset))
         ..write(
-          block.attributes[busyMarkPreserveTextWhitespaceAttribute] == 'true'
+          _requiresTextWhitespacePreservation(block)
               ? serializeBlock(block)
               : serializeBlock(block).trimRight(),
         );
@@ -462,7 +461,9 @@ class BusyMarkMarkdownSerializer {
     final children = <({BusyBlock block, String source})>[
       for (final child in block.children)
         if (serializeBlock(child) case final source
-            when source.trim().isNotEmpty)
+            when source.trim().isNotEmpty ||
+                (_requiresTextWhitespacePreservation(child) &&
+                    source.isNotEmpty))
           (block: child, source: source),
     ];
     if (content.isEmpty && children.isNotEmpty) {
@@ -554,6 +555,12 @@ class BusyMarkMarkdownSerializer {
 
   bool _hasDirtyContent(BusyBlock block) {
     return block.dirty || block.children.any(_hasDirtyContent);
+  }
+
+  bool _requiresTextWhitespacePreservation(BusyBlock block) {
+    return block.attributes[busyMarkPreserveTextWhitespaceAttribute] ==
+            'true' ||
+        block.children.any(_requiresTextWhitespacePreservation);
   }
 
   String _blockquote(BusyBlock block) {

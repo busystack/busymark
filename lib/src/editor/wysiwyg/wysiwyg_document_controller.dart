@@ -46,6 +46,8 @@ BusyBlock busyMarkWysiwygImmutableBlockSnapshot(BusyBlock block) {
   );
 }
 
+enum BusyWysiwygReplacementScope { fieldContent, documentRange }
+
 class BusyMarkWysiwygDocumentController extends ChangeNotifier {
   BusyMarkWysiwygDocumentController({
     required BusyDocument document,
@@ -77,8 +79,8 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     return block == null ? '' : busyMarkWysiwygEditableText(block);
   }
 
-  String _sourceWithBlockStructure(BusyBlock block, String source) {
-    final prefix = switch (block.kind) {
+  String _blockStructurePrefix(BusyBlock block) {
+    return switch (block.kind) {
       BusyBlockKind.heading =>
         '${'#' * (int.tryParse(block.attributes['level'] ?? '') ?? 1)} ',
       BusyBlockKind.unorderedListItem =>
@@ -90,17 +92,26 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
       BusyBlockKind.blockquote => '> ',
       _ => '',
     };
-    return '$prefix$source';
   }
 
-  void updateMathSource(String blockId, String source) {
+  String _sourceWithBlockStructure(BusyBlock block, String source) =>
+      '${_blockStructurePrefix(block)}$source';
+
+  BusyWysiwygTextSplitResult? updateMathSource(
+    String blockId,
+    String source, {
+    int? sourceCaretOffset,
+    BusyWysiwygReplacementScope replacementScope =
+        BusyWysiwygReplacementScope.fieldContent,
+  }) {
     final current = blockById(blockId);
     if (current == null) {
-      return;
+      return null;
     }
+    final structuralPrefix = _blockStructurePrefix(current);
     final parsed = const MarkdownParser().parse(
       filePath: _document.filePath,
-      source: _sourceWithBlockStructure(current, source),
+      source: '$structuralPrefix$source',
       mode: _document.mode,
       validateLocalReferences: false,
     );
@@ -110,7 +121,32 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
               block.kind != BusyBlockKind.frontMatter && !block.isSourceOnly,
         )
         .toList(growable: false);
-    final replacements = parsedBlocks.isEmpty
+    List<int>? descendantOwnerPath;
+    if (replacementScope == BusyWysiwygReplacementScope.fieldContent &&
+        current.children.isNotEmpty) {
+      var ownerMarker = '\ue018';
+      while (source.contains(ownerMarker)) {
+        ownerMarker = '${ownerMarker}x';
+      }
+      final anchored = const MarkdownParser().parse(
+        filePath: _document.filePath,
+        source: '$structuralPrefix$ownerMarker$source',
+        mode: _document.mode,
+        validateLocalReferences: false,
+      );
+      final anchoredBlocks = anchored.busyDocument.blocks
+          .where(
+            (block) =>
+                block.kind != BusyBlockKind.frontMatter && !block.isSourceOnly,
+          )
+          .toList(growable: false);
+      descendantOwnerPath = _blockPathContainingText(
+        anchoredBlocks,
+        ownerMarker,
+      )?.path;
+      if (descendantOwnerPath == null) return null;
+    }
+    var replacements = parsedBlocks.isEmpty
         ? [
             BusyBlock(
               id: current.id,
@@ -128,7 +164,7 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
                     : _nextGeneratedBlockId('math-edit'),
                 kind: parsedBlock.kind,
                 inlines: parsedBlock.inlines,
-                children: index == 0 ? current.children : parsedBlock.children,
+                children: parsedBlock.children,
                 attributes: _mathEditedBlockAttributes(
                   current,
                   parsedBlock,
@@ -140,10 +176,61 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
                 dirty: true,
               ),
           ];
+    if (descendantOwnerPath != null) {
+      final owner = _blockAtPath(replacements, descendantOwnerPath);
+      if (owner == null || owner.kind != current.kind) return null;
+      replacements = _replaceBlockAtPath(
+        replacements,
+        descendantOwnerPath,
+        owner.copyWith(children: [...owner.children, ...current.children]),
+      );
+    }
+
+    var destinationPath = const <int>[0];
+    var destinationOffset = replacements.firstOrNull?.plainText.length ?? 0;
+    if (sourceCaretOffset != null && parsedBlocks.isNotEmpty) {
+      var marker = '\ue019';
+      while (source.contains(marker)) {
+        marker = '${marker}x';
+      }
+      final caret = sourceCaretOffset.clamp(0, source.length).toInt();
+      final marked = const MarkdownParser().parse(
+        filePath: _document.filePath,
+        source: '$structuralPrefix${source.replaceRange(caret, caret, marker)}',
+        mode: _document.mode,
+        validateLocalReferences: false,
+      );
+      final markedBlocks = marked.busyDocument.blocks
+          .where(
+            (block) =>
+                block.kind != BusyBlockKind.frontMatter && !block.isSourceOnly,
+          )
+          .toList(growable: false);
+      final located = _blockPathContainingText(markedBlocks, marker);
+      if (located != null) {
+        destinationPath = located.path;
+        final markedDestination = _blockAtPath(markedBlocks, located.path);
+        final editableOffset = markedDestination == null
+            ? -1
+            : busyMarkWysiwygEditableText(markedDestination).indexOf(marker);
+        destinationOffset = editableOffset < 0
+            ? located.offset
+            : editableOffset;
+      }
+    }
     _document = _document.copyWith(
       blocks: _replaceBlockWithMany(_document.blocks, blockId, replacements),
     );
     notifyListeners();
+    final destination = _blockAtPath(replacements, destinationPath);
+    final fallback = replacements.firstOrNull;
+    if (destination == null && fallback == null) return null;
+    final resolved = destination ?? fallback!;
+    final destinationText = busyMarkWysiwygEditableText(resolved);
+    return BusyWysiwygTextSplitResult(
+      blockId: resolved.id,
+      offset: destinationOffset.clamp(0, destinationText.length).toInt(),
+    );
   }
 
   ({int selectionStart, int selectionEnd})? insertInlineMath(
@@ -681,6 +768,7 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     String text,
     int cursorOffset, {
     bool preserveTextWhitespace = false,
+    bool allowListExit = true,
   }) {
     final block = blockById(blockId);
     if (block == null || !_shouldSplitNewlines(block.kind)) {
@@ -702,7 +790,9 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     if (paragraphBreaks.isEmpty) {
       return null;
     }
-    if (_isListItemKind(block.kind) && normalizedText.trim().isEmpty) {
+    if (allowListExit &&
+        _isListItemKind(block.kind) &&
+        normalizedText.trim().isEmpty) {
       _replaceBlockWithParagraph(blockId);
       return BusyWysiwygTextSplitResult(blockId: blockId, offset: 0);
     }
@@ -1925,6 +2015,9 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     required int selectionStart,
     required int selectionEnd,
     required List<BusyWysiwygStyledBlock> blocks,
+    BusyWysiwygReplacementScope replacementScope =
+        BusyWysiwygReplacementScope.fieldContent,
+    bool destinationBlockFullySelected = false,
   }) {
     if (blocks.isEmpty) {
       return null;
@@ -1943,6 +2036,9 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
       start,
       end,
     );
+    final ownsDestinationStructure =
+        replacementScope == BusyWysiwygReplacementScope.documentRange &&
+        destinationBlockFullySelected;
 
     if (blocks.any(busyMarkClipboardRequiresCompleteBlockInsertion)) {
       return _insertCompleteBlocksAtSelection(
@@ -1953,33 +2049,54 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
         beforeInlines: partition.before,
         afterInlines: partition.after,
         blocks: blocks,
+        replaceDestinationStructure: ownsDestinationStructure,
       );
     }
 
     final replacements = <BusyBlock>[];
     if (blocks.length == 1) {
       final inserted = blocks.single;
-      final insertedInlines = _applyInlineReplacementContext(
-        busyMarkWysiwygClipboardBlock(inserted).inlines,
-        _inlineContextForReplacement(block.inlines, start, end),
-      );
-      replacements.add(
-        block.copyWith(
-          // A text-field selection never owns the destination block itself.
-          // In particular, selecting all of a list item's own text does not
-          // select its descendants. Keep the destination structure and only
-          // replace its inline content.
-          kind: block.kind,
-          attributes: block.attributes,
-          inlines: _mergeAdjacentInlineStyles([
-            ...partition.before,
-            ...insertedInlines,
-            ...partition.after,
-          ]),
-          preserveRaw: false,
-          dirty: true,
-        ),
-      );
+      final clipboardBlock = busyMarkWysiwygClipboardBlock(inserted);
+      final insertedInlines = ownsDestinationStructure
+          ? clipboardBlock.inlines
+          : _applyInlineReplacementContext(
+              clipboardBlock.inlines,
+              _inlineContextForReplacement(block.inlines, start, end),
+            );
+      final mergedInlines = _mergeAdjacentInlineStyles([
+        ...partition.before,
+        ...insertedInlines,
+        ...partition.after,
+      ]);
+      if (ownsDestinationStructure) {
+        final structural = _styledBlockToBusyBlock(inserted, rootId: block.id);
+        final retainsDescendants = _isBlockContentContainer(structural.kind);
+        replacements.add(
+          structural.copyWith(
+            inlines: mergedInlines,
+            children: retainsDescendants
+                ? [...structural.children, ...block.children]
+                : structural.children,
+            preserveRaw: false,
+            dirty: true,
+          ),
+        );
+        if (!retainsDescendants) replacements.addAll(block.children);
+      } else {
+        replacements.add(
+          block.copyWith(
+            // A text-field selection never owns the destination block itself.
+            // In particular, selecting all of a list item's own text does not
+            // select its descendants. Keep the destination structure and only
+            // replace its inline content.
+            kind: block.kind,
+            attributes: block.attributes,
+            inlines: mergedInlines,
+            preserveRaw: false,
+            dirty: true,
+          ),
+        );
+      }
       _document = _document.copyWith(
         blocks: _replaceBlockWithMany(_document.blocks, blockId, replacements),
       );
@@ -1990,7 +2107,7 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
       );
     }
 
-    if (_isBlockContentContainer(block.kind)) {
+    if (_isBlockContentContainer(block.kind) && !ownsDestinationStructure) {
       return _insertParagraphBlocksInsideContainer(
         block: block,
         beforeInlines: partition.before,
@@ -2000,18 +2117,38 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     }
 
     final first = blocks.first;
-    replacements.add(
-      block.copyWith(
-        kind: beforeText.isEmpty ? first.kind : block.kind,
-        attributes: beforeText.isEmpty ? first.attributes : block.attributes,
-        inlines: [
-          ...partition.before,
-          ...busyMarkWysiwygClipboardBlock(first).inlines,
-        ],
-        preserveRaw: false,
-        dirty: true,
-      ),
-    );
+    final adoptIncomingStructure =
+        beforeText.isEmpty &&
+        (replacementScope == BusyWysiwygReplacementScope.documentRange ||
+            start == end);
+    if (adoptIncomingStructure) {
+      final structural = _styledBlockToBusyBlock(first, rootId: block.id);
+      final retainsDescendants = _isBlockContentContainer(structural.kind);
+      replacements.add(
+        structural.copyWith(
+          inlines: [
+            ...partition.before,
+            ...busyMarkWysiwygClipboardBlock(first).inlines,
+          ],
+          children: retainsDescendants
+              ? [...structural.children, ...block.children]
+              : structural.children,
+          preserveRaw: false,
+          dirty: true,
+        ),
+      );
+    } else {
+      replacements.add(
+        block.copyWith(
+          inlines: [
+            ...partition.before,
+            ...busyMarkWysiwygClipboardBlock(first).inlines,
+          ],
+          preserveRaw: false,
+          dirty: true,
+        ),
+      );
+    }
 
     for (final inserted in blocks.skip(1).take(blocks.length - 2)) {
       replacements.add(_styledBlockToBusyBlock(inserted));
@@ -2026,6 +2163,10 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
       dirty: true,
     );
     replacements.add(lastBlock);
+    if (adoptIncomingStructure &&
+        !_isBlockContentContainer(replacements.first.kind)) {
+      replacements.addAll(block.children);
+    }
 
     _document = _document.copyWith(
       blocks: _replaceBlockWithMany(_document.blocks, blockId, replacements),
@@ -2045,8 +2186,9 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     required List<BusyInline> beforeInlines,
     required List<BusyInline> afterInlines,
     required List<BusyWysiwygStyledBlock> blocks,
+    required bool replaceDestinationStructure,
   }) {
-    if (_isBlockContentContainer(block.kind)) {
+    if (_isBlockContentContainer(block.kind) && !replaceDestinationStructure) {
       return _insertCompleteBlocksInsideContainer(
         block: block,
         blockId: blockId,
@@ -2082,6 +2224,17 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
         ),
       );
       originalIdAvailable = false;
+    }
+    if (replaceDestinationStructure && block.children.isNotEmpty) {
+      final firstInsertedIndex = beforeText.isEmpty ? 0 : 1;
+      final firstInserted = replacements[firstInsertedIndex];
+      if (_isBlockContentContainer(firstInserted.kind)) {
+        replacements[firstInsertedIndex] = firstInserted.copyWith(
+          children: [...firstInserted.children, ...block.children],
+        );
+      } else {
+        replacements.addAll(block.children);
+      }
     }
     late final BusyBlock focusBlock;
     late final int focusOffset;
@@ -2219,7 +2372,17 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     required int lastEndOffset,
     required Iterable<String> removedBlockIds,
     required List<BusyWysiwygStyledBlock> blocks,
+    BusyWysiwygReplacementScope replacementScope =
+        BusyWysiwygReplacementScope.documentRange,
   }) {
+    final firstBlock = blockById(firstBlockId);
+    final selectedIds = removedBlockIds.toSet();
+    final destinationBlockFullySelected =
+        firstBlock != null &&
+        selectedIds.contains(firstBlockId) &&
+        firstStartOffset <= 0 &&
+        (firstBlockId != lastBlockId ||
+            lastEndOffset >= firstBlock.plainText.length);
     final staged = BusyMarkWysiwygDocumentController(document: _document);
     final deletion = staged.deleteTextSelection(
       firstBlockId: firstBlockId,
@@ -2237,10 +2400,97 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
       selectionStart: deletion.offset,
       selectionEnd: deletion.offset,
       blocks: blocks,
+      replacementScope: replacementScope,
+      destinationBlockFullySelected: destinationBlockFullySelected,
     );
     if (result == null) {
       staged.dispose();
       return null;
+    }
+    _document = staged.document;
+    staged.dispose();
+    notifyListeners();
+    return result;
+  }
+
+  BusyWysiwygTextSplitResult? replaceTextSelectionWithText({
+    required String firstBlockId,
+    required int firstStartOffset,
+    required String lastBlockId,
+    required int lastEndOffset,
+    required Iterable<String> removedBlockIds,
+    required String replacementText,
+    required Iterable<BusyInlineKind> activeInlineKinds,
+    required bool preserveTextWhitespace,
+    BusyWysiwygReplacementScope replacementScope =
+        BusyWysiwygReplacementScope.documentRange,
+  }) {
+    final firstBlock = blockById(firstBlockId);
+    final selectedIds = removedBlockIds.toSet();
+    final destinationBlockFullySelected =
+        replacementScope == BusyWysiwygReplacementScope.documentRange &&
+        firstBlock != null &&
+        selectedIds.contains(firstBlockId) &&
+        firstStartOffset <= 0 &&
+        (firstBlockId != lastBlockId ||
+            lastEndOffset >= firstBlock.plainText.length);
+    final staged = BusyMarkWysiwygDocumentController(document: _document);
+    final deletion = staged.deleteTextSelection(
+      firstBlockId: firstBlockId,
+      firstStartOffset: firstStartOffset,
+      lastBlockId: lastBlockId,
+      lastEndOffset: lastEndOffset,
+      removedBlockIds: selectedIds,
+    );
+    if (deletion == null) {
+      staged.dispose();
+      return null;
+    }
+    if (destinationBlockFullySelected) {
+      staged._replaceBlock(
+        deletion.blockId,
+        (block) => BusyBlock(
+          id: block.id,
+          kind: BusyBlockKind.paragraph,
+          inlines: block.inlines,
+          children: block.children,
+          attributes: _attributesForText(
+            const {},
+            BusyBlockKind.paragraph,
+            block.plainText,
+            preserveTextWhitespace: preserveTextWhitespace,
+          ),
+          dirty: true,
+        ),
+      );
+    }
+    final mergedText = staged.blockText(deletion.blockId);
+    final insertionOffset = deletion.offset.clamp(0, mergedText.length).toInt();
+    final nextText = mergedText.replaceRange(
+      insertionOffset,
+      insertionOffset,
+      replacementText,
+    );
+    final split = staged.replaceBlockTextWithParagraphs(
+      deletion.blockId,
+      nextText,
+      insertionOffset + replacementText.length,
+      preserveTextWhitespace: preserveTextWhitespace,
+      allowListExit: false,
+    );
+    final result =
+        split ??
+        BusyWysiwygTextSplitResult(
+          blockId: deletion.blockId,
+          offset: insertionOffset + replacementText.length,
+        );
+    if (split == null) {
+      staged.updateBlockText(
+        deletion.blockId,
+        nextText,
+        activeInlineKinds: activeInlineKinds,
+        preserveTextWhitespace: preserveTextWhitespace,
+      );
     }
     _document = staged.document;
     staged.dispose();
@@ -2549,6 +2799,56 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
       dirty: true,
     );
   }
+}
+
+({List<int> path, int offset})? _blockPathContainingText(
+  List<BusyBlock> blocks,
+  String marker,
+) {
+  for (final (index, block) in blocks.indexed) {
+    final ownOffset = block.plainText.indexOf(marker);
+    if (ownOffset >= 0) return (path: [index], offset: ownOffset);
+    final child = _blockPathContainingText(block.children, marker);
+    if (child != null) {
+      return (path: [index, ...child.path], offset: child.offset);
+    }
+  }
+  return null;
+}
+
+BusyBlock? _blockAtPath(List<BusyBlock> blocks, List<int> path) {
+  var current = blocks;
+  BusyBlock? result;
+  for (final index in path) {
+    if (index < 0 || index >= current.length) return null;
+    result = current[index];
+    current = result.children;
+  }
+  return result;
+}
+
+List<BusyBlock> _replaceBlockAtPath(
+  List<BusyBlock> blocks,
+  List<int> path,
+  BusyBlock replacement,
+) {
+  if (path.isEmpty) return blocks;
+  final index = path.first;
+  if (index < 0 || index >= blocks.length) return blocks;
+  final updated = [...blocks];
+  if (path.length == 1) {
+    updated[index] = replacement;
+  } else {
+    final current = blocks[index];
+    updated[index] = current.copyWith(
+      children: _replaceBlockAtPath(
+        current.children,
+        path.sublist(1),
+        replacement,
+      ),
+    );
+  }
+  return updated;
 }
 
 class BusyWysiwygTextSplitResult {

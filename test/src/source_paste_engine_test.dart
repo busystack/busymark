@@ -62,6 +62,75 @@ void main() {
     }
   });
 
+  test('table cells repair independently formatted selection endpoints', () {
+    final cases = <({String cell, int start, int end, String expected})>[
+      (
+        cell: '**leftSELECT**tail',
+        start: '**left'.length,
+        end: '**leftSELECT**'.length,
+        expected: '**leftX**tail',
+      ),
+      (
+        cell: 'left**SELECTtail**',
+        start: 'left**'.length,
+        end: 'left**SELECT'.length,
+        expected: 'left**Xtail**',
+      ),
+      (
+        cell: '**leftSELECT**middle*SELECTright*',
+        start: '**left'.length,
+        end: '**leftSELECT**middle*SELECT'.length,
+        expected: '**leftX***right*',
+      ),
+      (
+        cell: '[leftSELECT](https://destination.test)tail',
+        start: '[left'.length,
+        end: '[leftSELECT](https://destination.test)'.length,
+        expected: '[left](https://destination.test)**X**tail',
+      ),
+    ];
+    for (final value in cases) {
+      final source = '| ${value.cell} |\n| --- |\n';
+      final cellStart = source.indexOf(value.cell);
+      final applied = _applyReady(
+        source,
+        engine.prepareStructured(
+          target: _target(
+            source,
+            TextSelection(
+              baseOffset: cellStart + value.start,
+              extentOffset: cellStart + value.end,
+            ),
+          ),
+          fragment: _fragment('**X**\n'),
+        ),
+      );
+      expect(
+        applied.source.split('\n').first,
+        '| ${value.expected} |',
+        reason: value.cell,
+      );
+      final cell = _parse(
+        applied.source,
+      ).blocks.single.children.first.children.single;
+      expect(cell.plainText, isNot(contains('SELECT')), reason: applied.source);
+      expect(_countKind(cell.inlines, BusyInlineKind.strong), greaterThan(0));
+      const caretMarker = '\ue008';
+      final marked = _parse(
+        applied.source.replaceRange(
+          applied.edit.caretOffset,
+          applied.edit.caretOffset,
+          caretMarker,
+        ),
+      );
+      expect(
+        marked.blocks.single.children.first.children.single.plainText,
+        contains('X$caretMarker'),
+        reason: applied.source,
+      );
+    }
+  });
+
   test(
     'block insertion replaces only a heading own prefix at content start',
     () {
@@ -87,6 +156,153 @@ void main() {
         expect(headings, hasLength(1), reason: applied.source);
         expect(headings.single.attributes['level'], '3');
         expect(headings.single.plainText, 'New');
+      }
+    },
+  );
+
+  test('block insertion removes complete ATX and Setext heading syntax', () {
+    for (final value in [
+      (source: '## right ##', offset: '## '.length),
+      (source: 'right\n---', offset: 0),
+      (source: '> ## right ##', offset: '> ## '.length),
+      (source: '- right\n  ---', offset: '- '.length),
+    ]) {
+      final applied = _applyReady(
+        value.source,
+        engine.prepareStructured(
+          target: _target(
+            value.source,
+            TextSelection.collapsed(offset: value.offset),
+          ),
+          fragment: _fragment('### New\n'),
+        ),
+      );
+      final blocks = _blocksDepthFirst(_parse(applied.source).blocks).toList();
+      expect(
+        blocks
+            .where((block) => block.kind == BusyBlockKind.heading)
+            .map((block) => (block.attributes['level'], block.plainText)),
+        [('3', 'New')],
+        reason: applied.source,
+      );
+      expect(
+        blocks.where((block) => block.plainText.contains('right')).single.kind,
+        BusyBlockKind.paragraph,
+        reason: applied.source,
+      );
+      expect(applied.source, isNot(contains('right ##')));
+      expect(applied.source, isNot(contains('right\n---')));
+
+      final editorDocument = _parse(value.source);
+      final destination = _blocksDepthFirst(
+        editorDocument.blocks,
+      ).firstWhere((block) => block.kind == BusyBlockKind.heading);
+      final editor = BusyMarkWysiwygDocumentController(
+        document: editorDocument,
+      );
+      addTearDown(editor.dispose);
+      final editorResult = editor.insertStyledBlocksAtSelection(
+        blockId: destination.id,
+        selectionStart: 0,
+        selectionEnd: 0,
+        blocks: _fragment('### New\n').blocks,
+      );
+      expect(editorResult, isNotNull);
+      expect(
+        blocks.map(
+          (block) => (block.kind, block.attributes['level'], block.plainText),
+        ),
+        _blocksDepthFirst(editor.document.blocks).map(
+          (block) => (block.kind, block.attributes['level'], block.plainText),
+        ),
+        reason: 'Source: ${applied.source}\nEditor: ${editor.markdown}',
+      );
+    }
+  });
+
+  test('block insertion retains literal paragraph hashes', () {
+    const source = 'right ##';
+    final applied = _applyReady(
+      source,
+      engine.prepareStructured(
+        target: _target(source, const TextSelection.collapsed(offset: 0)),
+        fragment: _fragment('### New\n'),
+      ),
+    );
+    final blocks = _parse(applied.source).blocks;
+    expect(blocks.map((block) => block.kind), [
+      BusyBlockKind.heading,
+      BusyBlockKind.paragraph,
+    ]);
+    expect(blocks.last.plainText, 'right ##');
+  });
+
+  test('whole heading replacement removes every authored marker', () {
+    final fragment = _fragment('New\n');
+    for (final source in ['## Old ##', 'Old\n---']) {
+      final applied = _applyReady(
+        source,
+        engine.prepareStructured(
+          target: _target(
+            source,
+            TextSelection(baseOffset: 0, extentOffset: source.length),
+          ),
+          fragment: fragment,
+        ),
+      );
+      final parsed = _parse(applied.source);
+      expect(parsed.blocks, hasLength(1), reason: applied.source);
+      expect(parsed.blocks.single.kind, BusyBlockKind.paragraph);
+      expect(parsed.blocks.single.plainText, 'New');
+
+      final editorDocument = _parse(source);
+      final heading = editorDocument.blocks.single;
+      final editor = BusyMarkWysiwygDocumentController(
+        document: editorDocument,
+      );
+      addTearDown(editor.dispose);
+      final result = editor.replaceTextSelectionWithStyledBlocks(
+        firstBlockId: heading.id,
+        firstStartOffset: 0,
+        lastBlockId: heading.id,
+        lastEndOffset: heading.plainText.length,
+        removedBlockIds: [heading.id],
+        blocks: fragment.blocks,
+        replacementScope: BusyWysiwygReplacementScope.documentRange,
+      );
+      expect(result, isNotNull);
+      expect(editor.document.blocks.single.kind, parsed.blocks.single.kind);
+      expect(editor.document.blocks.single.plainText, 'New');
+    }
+  });
+
+  test(
+    'heading insertion at middle and end preserves only the leading heading',
+    () {
+      for (final value in [
+        (source: '## left right ##', offset: '## left'.length),
+        (source: 'left right\n===', offset: 'left right'.length),
+      ]) {
+        final applied = _applyReady(
+          value.source,
+          engine.prepareStructured(
+            target: _target(
+              value.source,
+              TextSelection.collapsed(offset: value.offset),
+            ),
+            fragment: _fragment('A\n\nB\n'),
+          ),
+        );
+        final parsed = _parse(applied.source);
+        expect(
+          _blocksDepthFirst(
+            parsed.blocks,
+          ).where((block) => block.kind == BusyBlockKind.heading),
+          hasLength(1),
+          reason: applied.source,
+        );
+        expect(applied.source, isNot(contains('right ##')));
+        expect(applied.source, isNot(contains('right\n===')));
       }
     },
   );

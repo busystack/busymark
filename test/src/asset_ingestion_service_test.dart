@@ -142,6 +142,115 @@ void main() {
     );
   }
 
+  for (final identicalBytes in [true, false]) {
+    test(
+      'separate processes protect ${identicalBytes ? 'identical' : 'different'} pending publications with equal filenames',
+      () async {
+        final workspace = await Directory.systemTemp.createTemp(
+          'busymark-asset-process-ownership-',
+        );
+        addTearDown(() => workspace.delete(recursive: true));
+        final firstDocument = File(p.join(workspace.path, 'first.md'))
+          ..writeAsStringSync('');
+        final secondDocument = File(p.join(workspace.path, 'second.md'))
+          ..writeAsStringSync('');
+        final otherBytes = Uint8List.fromList(png);
+        if (!identicalBytes) otherBytes[otherBytes.length - 1] ^= 1;
+
+        final first = await _startAssetProcess(
+          'wait',
+          workspace.path,
+          firstDocument.path,
+          'image.png',
+          png,
+        );
+        addTearDown(() => first.process.kill());
+        final second = await _runAssetProcess(
+          'commit',
+          workspace.path,
+          secondDocument.path,
+          'image.png',
+          otherBytes,
+        );
+        first.process.stdin.writeln('rollback');
+        await first.process.stdin.flush();
+        expect(await first.process.exitCode, 0);
+
+        expect(second['path'], isNot(first.message['path']));
+        final committed = File(second['path']! as String);
+        expect(await committed.exists(), isTrue);
+        expect(await committed.readAsBytes(), otherBytes);
+        expect(await File(first.message['path']! as String).exists(), isFalse);
+      },
+    );
+  }
+
+  test(
+    'failed publication releases only its own filesystem reservation',
+    () async {
+      final workspace = await Directory.systemTemp.createTemp(
+        'busymark-asset-process-failure-',
+      );
+      addTearDown(() => workspace.delete(recursive: true));
+      final document = File(p.join(workspace.path, 'note.md'))
+        ..writeAsStringSync('');
+
+      final failed = await _runAssetProcess(
+        'fail-publication',
+        workspace.path,
+        document.path,
+        'image.png',
+        png,
+      );
+      expect(failed['error'], contains('injected publication failure'));
+      final committed = await _runAssetProcess(
+        'commit',
+        workspace.path,
+        document.path,
+        'image.png',
+        png,
+      );
+
+      expect(p.basename(committed['path']! as String), 'image.png');
+      expect(await File(committed['path']! as String).readAsBytes(), png);
+    },
+  );
+
+  test(
+    'terminated provisional owner remains reserved across processes',
+    () async {
+      final workspace = await Directory.systemTemp.createTemp(
+        'busymark-asset-process-termination-',
+      );
+      addTearDown(() => workspace.delete(recursive: true));
+      final firstDocument = File(p.join(workspace.path, 'first.md'))
+        ..writeAsStringSync('');
+      final secondDocument = File(p.join(workspace.path, 'second.md'))
+        ..writeAsStringSync('');
+      final first = await _startAssetProcess(
+        'wait',
+        workspace.path,
+        firstDocument.path,
+        'image.png',
+        png,
+      );
+      first.process.kill();
+      await first.process.exitCode;
+
+      final second = await _runAssetProcess(
+        'commit',
+        workspace.path,
+        secondDocument.path,
+        'image.png',
+        png,
+      );
+
+      expect(second['path'], isNot(first.message['path']));
+      expect(await File(first.message['path']! as String).readAsBytes(), png);
+      expect(await File(second['path']! as String).readAsBytes(), png);
+    },
+  );
+
   test(
     'rollback cannot delete an asset after its publication is committed',
     () async {
@@ -319,4 +428,57 @@ void main() {
       ),
     );
   });
+}
+
+Future<({Process process, Map<String, Object?> message})> _startAssetProcess(
+  String action,
+  String workspace,
+  String document,
+  String filename,
+  List<int> bytes,
+) async {
+  final dart = p.join(
+    Platform.environment['FLUTTER_ROOT']!,
+    'bin',
+    'cache',
+    'dart-sdk',
+    'bin',
+    'dart',
+  );
+  final process = await Process.start(dart, [
+    'run',
+    'test/support/asset_ingestion_process.dart',
+    action,
+    workspace,
+    document,
+    filename,
+    base64Encode(bytes),
+  ]);
+  final messages = process.stdout
+      .transform(utf8.decoder)
+      .transform(const LineSplitter());
+  final message = jsonDecode(await messages.first) as Map<String, Object?>;
+  return (process: process, message: message);
+}
+
+Future<Map<String, Object?>> _runAssetProcess(
+  String action,
+  String workspace,
+  String document,
+  String filename,
+  List<int> bytes,
+) async {
+  final running = await _startAssetProcess(
+    action,
+    workspace,
+    document,
+    filename,
+    bytes,
+  );
+  final stderrText = await running.process.stderr
+      .transform(utf8.decoder)
+      .join();
+  final exitCode = await running.process.exitCode;
+  expect(exitCode, 0, reason: stderrText);
+  return running.message;
 }

@@ -4,6 +4,7 @@ import 'package:busymark/src/app/busymark_design.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_commands.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_document_controller.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_editor.dart';
+import 'package:busymark/src/editor/wysiwyg/wysiwyg_inline_controller.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_session_state.dart';
 import 'package:busymark/src/markdown/busymark_document.dart';
 import 'package:busymark/src/markdown/markdown_model.dart';
@@ -17,6 +18,251 @@ import '../support/memory_rich_clipboard.dart';
 
 void main() {
   const parser = MarkdownParser();
+
+  test('paste-only whitespace keeps list descendants exactly once', () {
+    for (final source in const [
+      '- Parent\n  - Child\n    - Grandchild\n',
+      '1. Parent\n   1. Child\n      1. Grandchild\n',
+      '- [ ] Parent\n  - [x] Child\n    - [ ] Grandchild\n',
+    ]) {
+      for (final replacement in const ['\n', ' \n ']) {
+        final document = parser
+            .parse(filePath: 'topic.md', source: source)
+            .busyDocument;
+        final parent = document.blocks.single;
+        final controller = BusyMarkWysiwygDocumentController(
+          document: document,
+        );
+        final result = controller.replaceBlockTextWithParagraphs(
+          parent.id,
+          replacement,
+          replacement.length,
+          preserveTextWhitespace: true,
+          allowListExit: false,
+        );
+
+        expect(result, isNotNull, reason: '$source / $replacement');
+        final descendants = _blocksDepthFirst(controller.document.blocks)
+            .where(
+              (block) =>
+                  block.plainText == 'Child' || block.plainText == 'Grandchild',
+            )
+            .toList();
+        expect(descendants.map((block) => block.plainText), [
+          'Child',
+          'Grandchild',
+        ]);
+        final reparsed = parser
+            .parse(filePath: 'topic.md', source: controller.markdown)
+            .busyDocument;
+        expect(
+          _blocksDepthFirst(reparsed.blocks)
+              .where(
+                (block) =>
+                    block.plainText == 'Child' ||
+                    block.plainText == 'Grandchild',
+              )
+              .map((block) => block.plainText),
+          ['Child', 'Grandchild'],
+          reason: controller.markdown,
+        );
+      }
+    }
+  });
+
+  testWidgets(
+    'plain whitespace paste keeps list descendants through Undo and Redo',
+    (tester) async {
+      var clipboardText = '';
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        (call) async =>
+            call.method == 'Clipboard.getData' ? {'text': clipboardText} : null,
+      );
+      addTearDown(() {
+        tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          SystemChannels.platform,
+          null,
+        );
+      });
+
+      for (final (caseIndex, source) in const [
+        '- Parent\n  - Child\n    - Grandchild\n',
+        '1. Parent\n   1. Child\n      1. Grandchild\n',
+        '- [ ] Parent\n  - [x] Child\n    - [ ] Grandchild\n',
+      ].indexed) {
+        for (final (replacementIndex, replacement) in const [
+          '\n',
+          ' \n ',
+        ].indexed) {
+          clipboardText = replacement;
+          final document = parser
+              .parse(filePath: 'topic.md', source: source)
+              .busyDocument;
+          final parent = document.blocks.single;
+          var markdown = source;
+          await tester.pumpWidget(
+            _app(
+              BusyMarkWysiwygEditor(
+                key: ValueKey('whitespace-$caseIndex-$replacementIndex'),
+                document: document,
+                initialSessionState: WysiwygEditorSessionState(
+                  activeBlockId: parent.id,
+                  anchorBlockId: parent.id,
+                  anchorOffset: 0,
+                  extentBlockId: parent.id,
+                  extentOffset: parent.plainText.length,
+                ),
+                onSourceChanged: (_, value) => markdown = value,
+              ),
+            ),
+          );
+          await tester.pump();
+          final field = tester.widget<TextField>(find.byType(TextField).first);
+          expect(field.controller?.text, 'Parent');
+          field.focusNode!.requestFocus();
+          field.controller!.selection = TextSelection(
+            baseOffset: 0,
+            extentOffset: parent.plainText.length,
+          );
+
+          await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+          await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+          await tester.sendKeyEvent(LogicalKeyboardKey.keyV);
+          await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+          await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+          await tester.pump();
+          await tester.pump();
+
+          final pasted = markdown;
+          expect(pasted, isNot(source), reason: '$source / $replacement');
+          expect(
+            tester
+                .widgetList<TextField>(find.byType(TextField))
+                .where((field) => field.controller?.text == 'Child'),
+            hasLength(1),
+          );
+          expect(
+            tester
+                .widgetList<TextField>(find.byType(TextField))
+                .where((field) => field.controller?.text == 'Grandchild'),
+            hasLength(1),
+          );
+          final reparsed = parser
+              .parse(filePath: 'topic.md', source: pasted)
+              .busyDocument;
+          expect(
+            _blocksDepthFirst(reparsed.blocks)
+                .where(
+                  (block) =>
+                      block.plainText == 'Child' ||
+                      block.plainText == 'Grandchild',
+                )
+                .map((block) => block.plainText),
+            ['Child', 'Grandchild'],
+          );
+
+          await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+          await tester.sendKeyEvent(LogicalKeyboardKey.keyZ);
+          await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+          await tester.pump();
+          expect(markdown, source);
+
+          await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+          await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+          await tester.sendKeyEvent(LogicalKeyboardKey.keyZ);
+          await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+          await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+          await tester.pump();
+          expect(markdown, pasted);
+          expect(RegExp('Child').allMatches(markdown), hasLength(1));
+          expect(RegExp('Grandchild').allMatches(markdown), hasLength(1));
+
+          await tester.pumpWidget(const SizedBox.shrink());
+          await tester.pump();
+        }
+      }
+    },
+  );
+
+  test(
+    'replacement scope distinguishes a heading field from its document block',
+    () {
+      BusyWysiwygStyledBlock boldX() => const BusyWysiwygStyledBlock(
+        kind: BusyBlockKind.paragraph,
+        text: 'X',
+        ranges: [
+          BusyInlineStyleRange(start: 0, end: 1, kind: BusyInlineKind.strong),
+        ],
+      );
+
+      final fieldDocument = parser
+          .parse(filePath: 'topic.md', source: '## Old\n')
+          .busyDocument;
+      final field = BusyMarkWysiwygDocumentController(document: fieldDocument);
+      final fieldHeading = fieldDocument.blocks.single;
+      field.insertStyledBlocksAtSelection(
+        blockId: fieldHeading.id,
+        selectionStart: 0,
+        selectionEnd: fieldHeading.plainText.length,
+        blocks: [boldX()],
+        replacementScope: BusyWysiwygReplacementScope.fieldContent,
+      );
+      expect(field.document.blocks.single.kind, BusyBlockKind.heading);
+      expect(field.markdown, '## **X**\n');
+
+      final rangeDocument = parser
+          .parse(filePath: 'topic.md', source: '## Old\n')
+          .busyDocument;
+      final range = BusyMarkWysiwygDocumentController(document: rangeDocument);
+      final rangeHeading = rangeDocument.blocks.single;
+      range.replaceTextSelectionWithStyledBlocks(
+        firstBlockId: rangeHeading.id,
+        firstStartOffset: 0,
+        lastBlockId: rangeHeading.id,
+        lastEndOffset: rangeHeading.plainText.length,
+        removedBlockIds: [rangeHeading.id],
+        blocks: [boldX()],
+        replacementScope: BusyWysiwygReplacementScope.documentRange,
+      );
+      expect(range.document.blocks.single.kind, BusyBlockKind.paragraph);
+      expect(range.document.blocks.single.attributes, isNot(contains('level')));
+      expect(range.markdown, '**X**\n');
+      final reparsed = parser
+          .parse(filePath: 'topic.md', source: range.markdown)
+          .busyDocument;
+      expect(reparsed.blocks.single.kind, BusyBlockKind.paragraph);
+
+      final listDocument = parser
+          .parse(
+            filePath: 'topic.md',
+            source: '- Parent\n  - Child\n    - Grandchild\n',
+          )
+          .busyDocument;
+      final list = BusyMarkWysiwygDocumentController(document: listDocument);
+      final parent = listDocument.blocks.single;
+      list.replaceTextSelectionWithStyledBlocks(
+        firstBlockId: parent.id,
+        firstStartOffset: 0,
+        lastBlockId: parent.id,
+        lastEndOffset: parent.plainText.length,
+        removedBlockIds: [parent.id],
+        blocks: [boldX()],
+        replacementScope: BusyWysiwygReplacementScope.documentRange,
+      );
+      expect(list.document.blocks.first.kind, BusyBlockKind.paragraph);
+      expect(list.document.blocks.first.attributes, isNot(contains('marker')));
+      expect(list.document.blocks.last.plainText, 'Child');
+      expect(list.document.blocks.last.children.single.plainText, 'Grandchild');
+      final listReparsed = parser
+          .parse(filePath: 'topic.md', source: list.markdown)
+          .busyDocument;
+      expect(
+        _blocksDepthFirst(listReparsed.blocks).map((block) => block.plainText),
+        ['X', 'Child', 'Grandchild'],
+      );
+    },
+  );
 
   test('complete blocks inserted in list content retain every descendant', () {
     final insertedSources = [
@@ -984,6 +1230,13 @@ Body.
     await tester.pump();
     expect(state.debugUndoControllerCount, 1);
   });
+}
+
+Iterable<BusyBlock> _blocksDepthFirst(Iterable<BusyBlock> blocks) sync* {
+  for (final block in blocks) {
+    yield block;
+    yield* _blocksDepthFirst(block.children);
+  }
 }
 
 Widget _app(Widget child) {

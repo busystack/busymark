@@ -104,39 +104,24 @@ class SourcePasteEngine {
     if (context.sourceProtected || context.unsafeStructuredContainer) {
       return null;
     }
-    if (context.tableCell) {
-      final inlines = fragment.sourceInsertionInlinesFor(tableCell: true);
-      if (context.inlineMappingFailed) {
-        return _reconcileIncompleteSyntaxBoundary(target, context, inlines);
-      }
-      final serialized = const BusyMarkMarkdownSerializer()
-          .serializeInlineFragment(
-            inlines,
-            tableCell: true,
-            atBlockStart: context.atBlockStart,
-            readableHardBreakRuns: false,
-          );
-      if (serialized.isEmpty) return null;
-      return _reconcileStructuredInlineInsertion(
-        target,
-        context,
-        inlines,
-        serialized,
+    if (context.tableCell || fragment.isInlineSourceFragment) {
+      final inlines = fragment.sourceInsertionInlinesFor(
+        tableCell: context.tableCell,
       );
-    }
-    if (fragment.isInlineSourceFragment) {
-      final inlines = fragment.sourceInsertionInlinesFor(tableCell: false);
       final hasSharedInheritedContext =
           context.inlineContext?.commonAncestors.any(
             (inline) => busyMarkIsInheritedInlineContext(inline.kind),
           ) ??
           false;
       if (context.start != context.end &&
-          (context.inlineMappingFailed || !hasSharedInheritedContext)) {
+          (context.tableCell ||
+              context.inlineMappingFailed ||
+              !hasSharedInheritedContext)) {
         final planned = _serializeSingleParagraphRangeInsertion(
           target,
           context,
           inlines,
+          independentRange: context.tableCell,
         );
         return planned ?? const _SourceTerminalPlan();
       }
@@ -146,8 +131,9 @@ class SourcePasteEngine {
       final serialized = const BusyMarkMarkdownSerializer()
           .serializeInlineFragment(
             inlines,
+            tableCell: context.tableCell,
             atBlockStart: context.atBlockStart,
-            readableHardBreakRuns: true,
+            readableHardBreakRuns: !context.tableCell,
           );
       if (serialized.isEmpty) return null;
       return _reconcileStructuredInlineInsertion(
@@ -180,9 +166,14 @@ class SourcePasteEngine {
   _SourcePlan? _serializeSingleParagraphRangeInsertion(
     SourcePasteDocumentSnapshot target,
     _StructuredSourceInsertionContext context,
-    List<BusyInline> incoming,
-  ) {
-    final split = _mappedStructuredBlockSplit(target, context);
+    List<BusyInline> incoming, {
+    bool independentRange = false,
+  }) {
+    final split = _mappedStructuredBlockSplit(
+      target,
+      context,
+      independentRange: independentRange,
+    );
     if (split == null) return null;
     final beforeLength = split.before.fold<int>(
       0,
@@ -215,10 +206,24 @@ class SourcePasteEngine {
   ) {
     final split = _mappedStructuredBlockSplit(target, context);
     if (split == null) return const _SourceTerminalPlan();
+    final heading = context.headingSource;
+    final trailingHeadingSyntax = heading?.trailingSyntaxRange;
     final replacementStart =
         split.startAtBlockStart && split.startBlockKind == BusyBlockKind.heading
-        ? split.startBlockStructuralPrefixStart ?? split.sourceRange.start
+        ? heading?.openingAtxMarkerRange?.start ?? split.sourceRange.start
         : split.sourceRange.start;
+    final replacementEnd = math.max(
+      split.sourceRange.end,
+      trailingHeadingSyntax?.end ?? split.sourceRange.end,
+    );
+    final retainedHeadingTail =
+        trailingHeadingSyntax != null &&
+            split.sourceRange.end <= trailingHeadingSyntax.start
+        ? target.text.substring(
+            split.sourceRange.end,
+            trailingHeadingSyntax.start,
+          )
+        : '';
     final beforeInline = _serializeStructuredBlockSide(
       split.before,
       split.before.fold<int>(
@@ -239,10 +244,18 @@ class SourcePasteEngine {
       atBlockStart: true,
       preferInsideOpeningBoundary: true,
     );
-    final beforeSource = beforeInline.source;
-    final afterSource = afterInline.source;
+    final survivingSetextSyntax =
+        context.hasContainerContentBefore &&
+            heading?.setextUnderlineRange != null
+        ? target.text.substring(
+            heading!.setextUnderlineRange!.start,
+            heading.setextUnderlineRange!.end,
+          )
+        : '';
+    final beforeSource = '${beforeInline.source}$survivingSetextSyntax';
+    final afterSource = '${afterInline.source}$retainedHeadingTail';
     final before = target.text.substring(0, replacementStart);
-    final after = target.text.substring(context.end);
+    final after = target.text.substring(replacementEnd);
     if (context.containerContinuationPrefix.isNotEmpty) {
       final lines = serialized.endsWith('\n')
           ? serialized.substring(0, serialized.length - 1).split('\n')
@@ -268,8 +281,8 @@ class SourcePasteEngine {
       final contentBefore = split.expanded
           ? target.text.substring(0, split.sourceRange.start) + beforeSource
           : before;
-      final contentAfter = split.expanded
-          ? afterSource + target.text.substring(split.sourceRange.end)
+      final contentAfter = split.expanded || retainedHeadingTail.isNotEmpty
+          ? afterSource + target.text.substring(replacementEnd)
           : after;
       final localBeforeBoundary = contentBefore.isNotEmpty
           ? beforeBoundary
@@ -282,7 +295,7 @@ class SourcePasteEngine {
           localAfterBoundary.length;
       return _SourceEditPlan(
         start: replacementStart,
-        end: split.sourceRange.end,
+        end: replacementEnd,
         text:
             '$beforeSource$localBeforeBoundary$nested'
             '$localAfterBoundary$afterSource',
@@ -294,8 +307,8 @@ class SourcePasteEngine {
     final expandedBefore = split.expanded
         ? target.text.substring(0, split.sourceRange.start) + beforeSource
         : before;
-    final expandedAfter = split.expanded
-        ? afterSource + target.text.substring(split.sourceRange.end)
+    final expandedAfter = split.expanded || retainedHeadingTail.isNotEmpty
+        ? afterSource + target.text.substring(replacementEnd)
         : after;
     final prefix = expandedBefore.isEmpty
         ? ''
@@ -315,7 +328,7 @@ class SourcePasteEngine {
         beforeSource.length + prefix.length + serialized.length + suffix.length;
     return _SourceEditPlan(
       start: replacementStart,
-      end: split.sourceRange.end,
+      end: replacementEnd,
       text: '$beforeSource$prefix$serialized$suffix$afterSource',
       caretOffset: replacementStart + afterStart + afterInline.sourceOffset,
     );
@@ -328,6 +341,20 @@ class SourcePasteEngine {
   ) {
     final split = _mappedStructuredBlockSplit(target, context);
     if (split == null) return const _SourceTerminalPlan();
+    final heading = context.headingSource;
+    final trailingHeadingSyntax = heading?.trailingSyntaxRange;
+    final replacementEnd = math.max(
+      split.sourceRange.end,
+      trailingHeadingSyntax?.end ?? split.sourceRange.end,
+    );
+    final retainedHeadingTail =
+        trailingHeadingSyntax != null &&
+            split.sourceRange.end <= trailingHeadingSyntax.start
+        ? target.text.substring(
+            split.sourceRange.end,
+            trailingHeadingSyntax.start,
+          )
+        : '';
     final firstInlines = [...split.before, ...blocks.first.inlines];
     final lastInlines = [...blocks.last.inlines, ...split.after];
     final first = _serializeStructuredBlockSide(
@@ -365,17 +392,28 @@ class SourcePasteEngine {
           readableHardBreakRuns: true,
         ),
     ];
-    final prefix = [first.source, ...middle].join(separator);
-    final replacement = '$prefix$separator${last.source}';
+    final survivingSetextSyntax =
+        context.hasContainerContentBefore &&
+            heading?.setextUnderlineRange != null
+        ? target.text.substring(
+            heading!.setextUnderlineRange!.start,
+            heading.setextUnderlineRange!.end,
+          )
+        : '';
+    final prefix = [
+      '${first.source}$survivingSetextSyntax',
+      ...middle,
+    ].join(separator);
+    final replacement = '$prefix$separator${last.source}$retainedHeadingTail';
     final replacementStart =
         split.startAtBlockStart &&
             split.startBlockKind == BusyBlockKind.heading &&
             blocks.first.kind == BusyBlockKind.paragraph
-        ? split.startBlockStructuralPrefixStart ?? split.sourceRange.start
+        ? heading?.openingAtxMarkerRange?.start ?? split.sourceRange.start
         : split.sourceRange.start;
     return _SourceEditPlan(
       start: replacementStart,
-      end: split.sourceRange.end,
+      end: replacementEnd,
       text: replacement,
       caretOffset:
           replacementStart +
@@ -387,8 +425,9 @@ class SourcePasteEngine {
 
   _StructuredBlockInlineSplit? _mappedStructuredBlockSplit(
     SourcePasteDocumentSnapshot target,
-    _StructuredSourceInsertionContext context,
-  ) {
+    _StructuredSourceInsertionContext context, {
+    bool independentRange = false,
+  }) {
     if (context.completeBlockSelection) {
       return _StructuredBlockInlineSplit(
         sourceRange: TextRange(start: context.start, end: context.end),
@@ -403,7 +442,7 @@ class SourcePasteEngine {
       );
     }
     if (context.start != context.end) {
-      if (!context.inlineMappingFailed) {
+      if (!independentRange && !context.inlineMappingFailed) {
         final shared = _mappedSharedStructuredBlockSplit(context);
         if (shared != null) return shared;
       }
@@ -536,13 +575,13 @@ class SourcePasteEngine {
     );
     if (start == null ||
         end == null ||
-        start.sourceRange.end > end.sourceRange.start) {
+        start.sourceRange.start > end.sourceRange.end) {
       return null;
     }
     return _StructuredBlockInlineSplit(
       sourceRange: TextRange(
-        start: start.sourceRange.start,
-        end: end.sourceRange.end,
+        start: math.min(start.sourceRange.start, end.sourceRange.start),
+        end: math.max(start.sourceRange.end, end.sourceRange.end),
       ),
       before: start.before,
       after: end.after,
@@ -1549,6 +1588,17 @@ class SourcePasteEngine {
       start,
       end,
     );
+    final headingSource = _headingSourceDescriptor(
+      target.text,
+      markerBlock?.kind == BusyBlockKind.heading
+          ? markerBlock
+          : _headingContainingSelection(
+              original.busyDocument.blocks,
+              start,
+              end,
+            ),
+      contentOffset: start,
+    );
     return _StructuredSourceInsertionContext(
       start: start,
       end: end,
@@ -1570,28 +1620,107 @@ class SourcePasteEngine {
       completeBlockSelection: completeBlockSelection,
       destinationBlockKind: markerBlock?.kind,
       destinationBlockSourceStart: markerBlock?.sourceSpan?.startOffset,
-      destinationBlockStructuralPrefixStart: _destinationStructuralPrefixStart(
-        target.text,
-        start,
-        markerBlock,
-        atBlockStart: atBlockStart,
-      ),
+      headingSource: headingSource,
       inlineContext: inlineMapping.context,
       inlineMappingFailed: inlineMapping.failed,
     );
   }
 
-  int? _destinationStructuralPrefixStart(
+  BusyBlock? _headingContainingSelection(
+    Iterable<BusyBlock> blocks,
+    int start,
+    int end,
+  ) {
+    BusyBlock? result;
+    void visit(Iterable<BusyBlock> values) {
+      for (final block in values) {
+        final span = block.sourceSpan;
+        final intersects =
+            span != null &&
+            (start == end
+                ? start >= span.startOffset && start <= span.endOffset
+                : start < span.endOffset && end > span.startOffset);
+        if (intersects && block.kind == BusyBlockKind.heading) result = block;
+        if (intersects) visit(block.children);
+      }
+    }
+
+    visit(blocks);
+    return result;
+  }
+
+  _HeadingSourceDescriptor? _headingSourceDescriptor(
     String source,
-    int contentStart,
-    BusyBlock? block, {
-    required bool atBlockStart,
+    BusyBlock? heading, {
+    required int contentOffset,
   }) {
-    if (!atBlockStart || block?.kind != BusyBlockKind.heading) return null;
-    final lineStart = source.lastIndexOf('\n', contentStart - 1) + 1;
-    final prefix = source.substring(lineStart, contentStart);
-    final heading = RegExp(r'#{1,6}[ \t]+$').firstMatch(prefix);
-    return heading == null ? null : lineStart + heading.start;
+    final span = heading?.sourceSpan;
+    if (heading == null || source.isEmpty) return null;
+    final firstLine = busyMarkSourceLineBounds(
+      source,
+      span?.startOffset ?? contentOffset,
+    );
+    final line = source.substring(firstLine.start, firstLine.end);
+    final atx = RegExp(
+      r'^(?:[ \t]*(?:>[ \t]*|(?:[-+*]|\d+[.)])[ \t]+))*?'
+      r'(#{1,6}[ \t]+)',
+    ).firstMatch(line);
+    if (atx != null) {
+      final openingEnd = atx.end;
+      final openingStart = openingEnd - atx.group(1)!.length;
+      final openingRange = TextRange(
+        start: firstLine.start + openingStart,
+        end: firstLine.start + openingEnd,
+      );
+      final closing = RegExp(
+        r'[ \t]+#+[ \t]*$',
+      ).firstMatch(line.substring(openingEnd));
+      final closingRange = closing == null
+          ? null
+          : TextRange(
+              start: firstLine.start + openingEnd + closing.start,
+              end: firstLine.start + openingEnd + closing.end,
+            );
+      return _HeadingSourceDescriptor(
+        contentRange: TextRange(
+          start: openingRange.end,
+          end: closingRange?.start ?? firstLine.end,
+        ),
+        openingAtxMarkerRange: openingRange,
+        closingAtxMarkerRange: closingRange,
+        enclosingContainerPrefixRange: TextRange(
+          start: firstLine.start,
+          end: openingRange.start,
+        ),
+      );
+    }
+
+    final nextLineStart = firstLine.end < source.length
+        ? firstLine.end + 1
+        : source.length;
+    if (nextLineStart >= source.length) return null;
+    final underlineLine = busyMarkSourceLineBounds(source, nextLineStart);
+    final underline = source.substring(underlineLine.start, underlineLine.end);
+    if (!RegExp(r'^[ \t]*(?:>[ \t]*)*(?:=+|-+)[ \t]*$').hasMatch(underline)) {
+      return null;
+    }
+    final contentPrefix = RegExp(
+      r'^[ \t]*(?:(?:>[ \t]*)|(?:[-+*][ \t]+)|(?:\d+[.)][ \t]+))*',
+    ).firstMatch(line)!;
+    return _HeadingSourceDescriptor(
+      contentRange: TextRange(
+        start: firstLine.start + contentPrefix.end,
+        end: firstLine.end,
+      ),
+      setextUnderlineRange: TextRange(
+        start: firstLine.end,
+        end: underlineLine.end,
+      ),
+      enclosingContainerPrefixRange: TextRange(
+        start: firstLine.start,
+        end: firstLine.start + contentPrefix.end,
+      ),
+    );
   }
 
   bool _selectionCoversCompleteBlocks(
@@ -2319,7 +2448,7 @@ class _StructuredSourceInsertionContext {
     this.completeBlockSelection = false,
     this.destinationBlockKind,
     this.destinationBlockSourceStart,
-    this.destinationBlockStructuralPrefixStart,
+    this.headingSource,
     this.inlineMappingFailed = false,
     this.inlineContext,
   });
@@ -2340,9 +2469,30 @@ class _StructuredSourceInsertionContext {
   final bool completeBlockSelection;
   final BusyBlockKind? destinationBlockKind;
   final int? destinationBlockSourceStart;
-  final int? destinationBlockStructuralPrefixStart;
+  final _HeadingSourceDescriptor? headingSource;
+  int? get destinationBlockStructuralPrefixStart =>
+      headingSource?.openingAtxMarkerRange?.start;
   final bool inlineMappingFailed;
   final _MappedSourceInlineContext? inlineContext;
+}
+
+class _HeadingSourceDescriptor {
+  const _HeadingSourceDescriptor({
+    required this.contentRange,
+    required this.enclosingContainerPrefixRange,
+    this.openingAtxMarkerRange,
+    this.closingAtxMarkerRange,
+    this.setextUnderlineRange,
+  });
+
+  final TextRange contentRange;
+  final TextRange? openingAtxMarkerRange;
+  final TextRange? closingAtxMarkerRange;
+  final TextRange? setextUnderlineRange;
+  final TextRange enclosingContainerPrefixRange;
+
+  TextRange? get trailingSyntaxRange =>
+      closingAtxMarkerRange ?? setextUnderlineRange;
 }
 
 class _MappedSourceInlineContext {

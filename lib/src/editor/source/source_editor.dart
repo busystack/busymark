@@ -2252,7 +2252,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
           await _deleteUncommittedClipboardAssets(assets);
         }
         if (result == ClipboardPasteResult.inserted) {
-          await widget.assetIngestionService.commitAll(assets);
+          await _finalizeInsertedAssets(assets);
           return (result: result, capture: null);
         }
         return (result: result, capture: null);
@@ -2417,7 +2417,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
     if (result != ClipboardPasteResult.inserted) {
       await _deleteUncommittedClipboardAssets([asset]);
     } else {
-      await widget.assetIngestionService.commit(asset);
+      await _finalizeInsertedAssets([asset]);
     }
     return result;
   }
@@ -2543,6 +2543,23 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
     Iterable<IngestedAsset> assets,
   ) async {
     await widget.assetIngestionService.rollbackAll(assets);
+  }
+
+  Future<void> _finalizeInsertedAssets(Iterable<IngestedAsset> assets) async {
+    try {
+      await widget.assetIngestionService.commitAll(assets);
+    } on Object catch (error) {
+      // Insertion already succeeded. A stale pending record safely protects
+      // the referenced file; rolling it back would corrupt document content.
+      if (!mounted) return;
+      BusyMarkToastOverlay.show(
+        context,
+        message: error is AssetIngestionException
+            ? error.message
+            : context.l10n.clipboardUnavailable,
+        priority: BusyMarkToastPriority.high,
+      );
+    }
   }
 
   ClipboardPasteResult _insertClipboardText(

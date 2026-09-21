@@ -33,6 +33,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:html/parser.dart' as html;
+import 'package:path/path.dart' as p;
 
 const _source =
     '# Issues\n\n**When** selecting all, keep *formatting*.\n\n- [ ] First task\n- [x] Second task\n';
@@ -913,6 +914,154 @@ void main() {
       }
     });
 
+    testWidgets('math structural paste returns the committed block caret', (
+      tester,
+    ) async {
+      final registry = BusyMarkClipboardInsertionRegistry();
+      addTearDown(registry.dispose);
+      final fragment = _fragment('## Heading\n\nFirst\n\nSecond\n');
+
+      var result =
+          r'a $x$ b'
+          '\n';
+      await mount(
+        tester,
+        'math-structural-caret',
+        result,
+        (source) => result = source,
+        registry: registry,
+        providerScope: true,
+        focusFirstField: false,
+      );
+      final renderedMath = find.byWidgetPredicate(
+        (widget) =>
+            widget.key is ValueKey<String> &&
+            ((widget.key! as ValueKey<String>).value).startsWith(
+              'wysiwyg-rendered-math-',
+            ),
+      );
+      await tester.tap(renderedMath);
+      await tester.pump();
+      final originalField = tester.widget<TextField>(
+        find.byType(TextField).first,
+      );
+      originalField.controller!.selection = const TextSelection.collapsed(
+        offset: 2,
+      );
+
+      expect(
+        await registry.paste(
+          BusyMarkClipboardPayload(
+            id: 'math-structural-caret-payload',
+            acquiredAt: DateTime.utc(2026),
+            kind: BusyMarkClipboardContentKind.richText,
+            text: 'Heading\n\nFirst\n\nSecond',
+            richFragment: fragment.encode(),
+          ),
+        ),
+        ClipboardPasteResult.inserted,
+      );
+      await tester.pumpAndSettle();
+
+      final parsed = _parser
+          .parse(filePath: '/math.md', source: result)
+          .busyDocument;
+      expect(
+        parsed.blocks.where((block) => block.kind == BusyBlockKind.heading),
+        hasLength(1),
+      );
+      expect(
+        parsed.blocks.map((block) => block.plainText),
+        containsAll(['First', 'Second']),
+      );
+      final focused = tester
+          .widgetList<TextField>(find.byType(TextField))
+          .singleWhere((field) => field.focusNode?.hasFocus ?? false);
+      final caret = focused.controller!.selection.extentOffset;
+      final beforeTyping = focused.controller!.text;
+      final afterTyping = beforeTyping.replaceRange(caret, caret, 'Q');
+      final focusedFinder = find.byWidgetPredicate(
+        (widget) =>
+            widget is TextField &&
+            identical(widget.controller, focused.controller),
+      );
+      await tester.showKeyboard(focusedFinder);
+      focused.controller!.selection = TextSelection.collapsed(offset: caret);
+      tester.testTextInput.updateEditingValue(
+        TextEditingValue(
+          text: afterTyping,
+          selection: TextSelection.collapsed(offset: caret + 1),
+        ),
+      );
+      await tester.pump();
+      expect(focused.controller!.text, afterTyping);
+      expect(result, contains('Q'));
+    });
+
+    testWidgets(
+      'math structural paste preserves list descendants through Undo and Redo',
+      (tester) async {
+        final registry = BusyMarkClipboardInsertionRegistry();
+        addTearDown(registry.dispose);
+        final fragment = _fragment('## Heading\n\nFirst\n\nSecond\n');
+        const original = '- Parent \$x\$ tail\n  - Existing\n';
+        var result = original;
+        await mount(
+          tester,
+          'math-list-structural-history',
+          result,
+          (source) => result = source,
+          registry: registry,
+          providerScope: true,
+          focusFirstField: false,
+        );
+        final renderedMath = find.byWidgetPredicate(
+          (widget) =>
+              widget.key is ValueKey<String> &&
+              ((widget.key! as ValueKey<String>).value).startsWith(
+                'wysiwyg-rendered-math-',
+              ),
+        );
+        await tester.tap(renderedMath);
+        await tester.pump();
+        final field = tester.widget<TextField>(find.byType(TextField).first);
+        field.controller!.selection = const TextSelection.collapsed(offset: 7);
+
+        expect(
+          await registry.paste(
+            BusyMarkClipboardPayload(
+              id: 'math-list-structural-history-payload',
+              acquiredAt: DateTime.utc(2026),
+              kind: BusyMarkClipboardContentKind.richText,
+              text: 'Heading\n\nFirst\n\nSecond',
+              richFragment: fragment.encode(),
+            ),
+          ),
+          ClipboardPasteResult.inserted,
+        );
+        await tester.pump();
+
+        final pasted = result;
+        expect(pasted, isNot(original));
+        expect(RegExp(r'Existing').allMatches(pasted), hasLength(1));
+        final parsed = _parser
+            .parse(filePath: '/math-list.md', source: pasted)
+            .busyDocument;
+        expect(
+          parsed.blocks
+              .expand((block) => [block, ...block.children])
+              .where((block) => block.plainText == 'Existing'),
+          hasLength(1),
+        );
+
+        await key(tester, LogicalKeyboardKey.keyZ);
+        expect(result, original);
+        await key(tester, LogicalKeyboardKey.keyZ, shift: true);
+        expect(result, pasted);
+        expect(RegExp(r'Existing').allMatches(result), hasLength(1));
+      },
+    );
+
     testWidgets('plain paste persists intentional whitespace through history', (
       tester,
     ) async {
@@ -994,6 +1143,112 @@ void main() {
         expect(result, value.expected);
       }
     });
+
+    testWidgets(
+      'whole-document paste preserves whitespace and heading replacement scope',
+      (tester) async {
+        final registry = BusyMarkClipboardInsertionRegistry();
+        addTearDown(registry.dispose);
+
+        var whitespace = 'First\n\nSecond\n';
+        await mount(
+          tester,
+          'whole-document-whitespace',
+          whitespace,
+          (source) => whitespace = source,
+          registry: registry,
+        );
+        await key(tester, LogicalKeyboardKey.keyA);
+        await key(tester, LogicalKeyboardKey.keyA);
+        expect(
+          await registry.paste(
+            BusyMarkClipboardPayload(
+              id: 'whole-document-whitespace-payload',
+              acquiredAt: DateTime.utc(2026),
+              kind: BusyMarkClipboardContentKind.text,
+              text: '   ',
+            ),
+            mode: BusyMarkPasteMode.plainText,
+          ),
+          ClipboardPasteResult.inserted,
+        );
+        await tester.pumpAndSettle();
+        expect(whitespace, '   \n');
+        final reopened = BusyMarkWysiwygDocumentController(
+          document: _parser
+              .parse(filePath: '/reopened.md', source: whitespace)
+              .busyDocument,
+        );
+        expect(reopened.markdown, whitespace);
+        reopened.dispose();
+        await key(tester, LogicalKeyboardKey.keyZ);
+        expect(whitespace, 'First\n\nSecond\n');
+        await key(tester, LogicalKeyboardKey.keyZ, shift: true);
+        expect(whitespace, '   \n');
+
+        final rich = _fragment('**X**\n');
+        var heading = '## Old\n';
+        await mount(
+          tester,
+          'whole-heading-scope',
+          heading,
+          (source) => heading = source,
+          registry: registry,
+        );
+        await key(tester, LogicalKeyboardKey.keyA);
+        await key(tester, LogicalKeyboardKey.keyA);
+        expect(
+          await registry.paste(
+            BusyMarkClipboardPayload(
+              id: 'whole-heading-scope-payload',
+              acquiredAt: DateTime.utc(2026),
+              kind: BusyMarkClipboardContentKind.richText,
+              text: 'X',
+              richFragment: rich.encode(),
+            ),
+          ),
+          ClipboardPasteResult.inserted,
+        );
+        await tester.pumpAndSettle();
+        expect(heading, '**X**\n');
+        expect(
+          _parser
+              .parse(filePath: '/heading.md', source: heading)
+              .busyDocument
+              .blocks
+              .single
+              .kind,
+          BusyBlockKind.paragraph,
+        );
+        await key(tester, LogicalKeyboardKey.keyZ);
+        expect(heading, '## Old\n');
+        await key(tester, LogicalKeyboardKey.keyZ, shift: true);
+        expect(heading, '**X**\n');
+
+        await mount(
+          tester,
+          'heading-field-scope',
+          '## Old\n',
+          (source) => heading = source,
+          registry: registry,
+        );
+        await key(tester, LogicalKeyboardKey.keyA);
+        expect(
+          await registry.paste(
+            BusyMarkClipboardPayload(
+              id: 'heading-field-scope-payload',
+              acquiredAt: DateTime.utc(2026),
+              kind: BusyMarkClipboardContentKind.richText,
+              text: 'X',
+              richFragment: rich.encode(),
+            ),
+          ),
+          ClipboardPasteResult.inserted,
+        );
+        await tester.pumpAndSettle();
+        expect(heading, '## **X**\n');
+      },
+    );
 
     testWidgets(
       'history rich paste restores table-cell focus and committed caret',
@@ -2005,7 +2260,7 @@ void main() {
         final images = Directory('$directory/images');
         final entries = await tester.runAsync(
           () async => await images.exists()
-              ? images.list().toList()
+              ? images.list().where((entity) => entity is File).toList()
               : const <FileSystemEntity>[],
         );
         expect(entries, isEmpty);
@@ -2119,6 +2374,265 @@ void main() {
       expect(historyCaptures, isEmpty);
       await expectNoPublishedAsset(historyDirectory.path);
     });
+
+    testWidgets('image picker alternatives stay provisional until acceptance', (
+      tester,
+    ) async {
+      final root = (await tester.runAsync(
+        () => Directory.systemTemp.createTemp('busymark-image-alternatives-'),
+      ))!;
+      addTearDown(() async {
+        if (await root.exists()) await root.delete(recursive: true);
+      });
+      final base = base64Decode(
+        'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
+      );
+      final files = <File>[];
+      for (final (index, name) in ['a.png', 'b.png', 'c.png'].indexed) {
+        final bytes = Uint8List.fromList(base)..[base.length - 1] ^= index;
+        final file = File('${root.path}/$name');
+        await tester.runAsync(() => file.writeAsBytes(bytes));
+        files.add(file);
+      }
+      final published = <IngestedAsset>[];
+      final committed = <IngestedAsset>[];
+      final rolledBack = <IngestedAsset>[];
+      final ingestion = AssetIngestionService(
+        hooks: AssetIngestionHooks(
+          afterPublication: (asset) async => published.add(asset),
+          beforeCommit: (asset) async => committed.add(asset),
+          afterRollback: (asset) async => rolledBack.add(asset),
+        ),
+      );
+      const pickerChannel = MethodChannel('plugins.flutter.io/file_selector');
+      final picks = <String>[];
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        pickerChannel,
+        (_) async => [picks.removeAt(0)],
+      );
+      addTearDown(
+        () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          pickerChannel,
+          null,
+        ),
+      );
+
+      Future<void> waitForCount(List<Object> values, int count) async {
+        for (
+          var attempt = 0;
+          attempt < 100 && values.length < count;
+          attempt++
+        ) {
+          await tester.runAsync(
+            () => Future<void>.delayed(const Duration(milliseconds: 5)),
+          );
+          await tester.pump();
+        }
+        expect(values.length, greaterThanOrEqualTo(count));
+      }
+
+      Future<void> waitForDialog() async {
+        for (
+          var attempt = 0;
+          attempt < 100 &&
+              find.byKey(BusyMarkImageDialogKeys.choose).evaluate().isEmpty;
+          attempt++
+        ) {
+          await tester.runAsync(
+            () => Future<void>.delayed(const Duration(milliseconds: 5)),
+          );
+          await tester.pump();
+        }
+        expect(find.byKey(BusyMarkImageDialogKeys.choose), findsOneWidget);
+      }
+
+      systemData = {'text': files[0].path};
+      var result = 'Target\n';
+      await mount(
+        tester,
+        'alternative-cancel',
+        result,
+        (source) => result = source,
+        filePath: '${root.path}/cancel.md',
+        assetWorkspaceKind: AssetWorkspaceKind.standalone,
+        assetIngestionService: ingestion,
+      );
+      await key(tester, LogicalKeyboardKey.keyV);
+      await waitForCount(published, 1);
+      await waitForDialog();
+      picks.add(files[1].path);
+      await tester.tap(find.byKey(BusyMarkImageDialogKeys.choose));
+      await waitForCount(published, 2);
+      await tester.tap(find.byKey(BusyMarkImageDialogKeys.cancel));
+      await tester.pumpAndSettle();
+      await waitForCount(rolledBack, 2);
+      expect(result, 'Target\n');
+      expect(committed, isEmpty);
+
+      final acceptedDirectory = Directory('${root.path}/accepted')
+        ..createSync();
+      systemData = {'text': files[0].path};
+      await mount(
+        tester,
+        'alternative-accept',
+        result,
+        (source) => result = source,
+        filePath: '${acceptedDirectory.path}/target.md',
+        assetWorkspaceKind: AssetWorkspaceKind.standalone,
+        assetIngestionService: ingestion,
+      );
+      await key(tester, LogicalKeyboardKey.keyV);
+      await waitForCount(published, 3);
+      await waitForDialog();
+      picks.addAll([files[1].path, files[2].path]);
+      await tester.tap(find.byKey(BusyMarkImageDialogKeys.choose));
+      await waitForCount(published, 4);
+      await tester.tap(find.byKey(BusyMarkImageDialogKeys.choose));
+      await waitForCount(published, 5);
+      await tester.tap(find.byKey(BusyMarkImageDialogKeys.submit));
+      await tester.pumpAndSettle();
+      await waitForCount(committed, 1);
+      await waitForCount(rolledBack, 4);
+
+      expect(result, contains('images/c.png'));
+      expect(p.basename(committed.single.absolutePath), 'c.png');
+      final remaining = await tester.runAsync(
+        () => Directory('${acceptedDirectory.path}/images')
+            .list()
+            .where((entity) => entity is File)
+            .map((entity) => p.basename(entity.path))
+            .toList(),
+      );
+      expect(remaining, ['c.png']);
+
+      final invalidDirectory = Directory('${root.path}/invalid')..createSync();
+      result = 'Target\n';
+      systemData = {'text': files[0].path};
+      await mount(
+        tester,
+        'alternative-invalid',
+        result,
+        (source) => result = source,
+        filePath: '${invalidDirectory.path}/target.md',
+        assetWorkspaceKind: AssetWorkspaceKind.standalone,
+        assetIngestionService: ingestion,
+      );
+      await key(tester, LogicalKeyboardKey.keyV);
+      await waitForCount(published, 6);
+      await waitForDialog();
+      picks.add(files[1].path);
+      await tester.tap(find.byKey(BusyMarkImageDialogKeys.choose));
+      await waitForCount(published, 7);
+      final destination = tester.widget<TextField>(
+        find.widgetWithText(TextField, 'Target'),
+      );
+      destination.controller!.value = const TextEditingValue(
+        text: 'Changed',
+        selection: TextSelection.collapsed(offset: 7),
+      );
+      await tester.pump();
+      await tester.tap(find.byKey(BusyMarkImageDialogKeys.submit));
+      await tester.pumpAndSettle();
+      await waitForCount(rolledBack, 6);
+      expect(result, 'Target\n');
+      expect(committed, hasLength(1));
+      final invalidFiles = await tester.runAsync(
+        () => Directory(
+          '${invalidDirectory.path}/images',
+        ).list().where((entity) => entity is File).toList(),
+      );
+      expect(invalidFiles, isEmpty);
+    });
+
+    testWidgets(
+      'image finalization failure preserves the inserted reference and file',
+      (tester) async {
+        final root = (await tester.runAsync(
+          () => Directory.systemTemp.createTemp('busymark-image-finalization-'),
+        ))!;
+        addTearDown(() async {
+          if (await root.exists()) await root.delete(recursive: true);
+        });
+        final source = File('${root.path}/source.png');
+        await tester.runAsync(
+          () => source.writeAsBytes(
+            base64Decode(
+              'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
+            ),
+          ),
+        );
+        final published = <IngestedAsset>[];
+        var commitAttempts = 0;
+        var rollbacks = 0;
+        final ingestion = AssetIngestionService(
+          hooks: AssetIngestionHooks(
+            afterPublication: (asset) async => published.add(asset),
+            beforeCommit: (_) async {
+              commitAttempts += 1;
+              throw const FileSystemException('injected finalization failure');
+            },
+            afterRollback: (_) async => rollbacks += 1,
+          ),
+        );
+        systemData = {'text': source.path};
+        var result = 'Target\n';
+        await mount(
+          tester,
+          'image-finalization-failure',
+          result,
+          (value) => result = value,
+          filePath: '${root.path}/target.md',
+          assetWorkspaceKind: AssetWorkspaceKind.standalone,
+          assetIngestionService: ingestion,
+          hostToasts: true,
+        );
+        await key(tester, LogicalKeyboardKey.keyV);
+        for (
+          var attempt = 0;
+          attempt < 100 &&
+              find.byKey(BusyMarkImageDialogKeys.submit).evaluate().isEmpty;
+          attempt++
+        ) {
+          await tester.runAsync(
+            () => Future<void>.delayed(const Duration(milliseconds: 5)),
+          );
+          await tester.pump();
+        }
+        await tester.tap(find.byKey(BusyMarkImageDialogKeys.submit));
+        for (var attempt = 0; attempt < 100 && commitAttempts == 0; attempt++) {
+          await tester.runAsync(
+            () => Future<void>.delayed(const Duration(milliseconds: 5)),
+          );
+          await tester.pump();
+        }
+
+        expect(commitAttempts, 1);
+        expect(rollbacks, 0);
+        expect(published, hasLength(1));
+        expect(
+          RegExp(
+            RegExp.escape(published.single.markdownPath),
+          ).allMatches(result),
+          hasLength(1),
+        );
+        expect(
+          await tester.runAsync(
+            () => File(published.single.absolutePath).readAsBytes(),
+          ),
+          isNotEmpty,
+        );
+        final pending = await tester.runAsync(
+          () => Directory('${root.path}/images/.busymark-asset-transactions')
+              .list()
+              .where(
+                (entity) =>
+                    entity is File && !entity.path.endsWith('directory.lock'),
+              )
+              .toList(),
+        );
+        expect(pending, hasLength(1));
+      },
+    );
 
     testWidgets(
       'native and history image filesystem failures are handled outcomes',
@@ -2578,7 +3092,7 @@ void main() {
         final images = Directory('${root.path}/images');
         final published = await tester.runAsync(
           () async => await images.exists()
-              ? images.list().toList()
+              ? images.list().where((entity) => entity is File).toList()
               : const <FileSystemEntity>[],
         );
         expect(published, isEmpty);

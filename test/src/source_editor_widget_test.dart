@@ -6291,6 +6291,111 @@ void main() {
     expect(link.attributes['title'], title);
   });
 
+  testWidgets(
+    'Source table boundary paste preserves styles caret and one-step history',
+    (tester) async {
+      const source = '| **leftSELECT**tail |\n| --- |\n';
+      const expected = '| **leftX**tail |\n| --- |\n';
+      var modelText = source;
+      var modelSelection = const TextSelection.collapsed(offset: 0);
+      var history = const DocumentUndoState();
+      var transactions = 0;
+      final controller = await _pumpClipboardSourceEditor(
+        tester,
+        source: source,
+        markdownMode: MarkdownMode.gfm,
+        clipboard: _SourceTestClipboard(
+          readData: RichClipboardData(
+            text: 'X',
+            richFragment: _completeSourceFragment('**X**\n').encode(),
+          ),
+        ),
+        onTransactionalChanged:
+            (value, _, previousSelection, selection, undoGroup) {
+              transactions += 1;
+              history = history.push(
+                DocumentHistoryState(
+                  text: modelText,
+                  selection: previousSelection,
+                ),
+                group: undoGroup,
+              );
+              modelText = value;
+              modelSelection = selection;
+            },
+        onUndo: () {
+          if (history.undo.isEmpty) return null;
+          final target = history.undo.last;
+          history = history.afterUndo(
+            DocumentHistoryState(text: modelText, selection: modelSelection),
+          );
+          modelText = target.text;
+          modelSelection = target.selection;
+          return TextEditingValue(
+            text: target.text,
+            selection: target.selection,
+          );
+        },
+        onRedo: () {
+          if (history.redo.isEmpty) return null;
+          final target = history.redo.last;
+          history = history.afterRedo(
+            DocumentHistoryState(text: modelText, selection: modelSelection),
+          );
+          modelText = target.text;
+          modelSelection = target.selection;
+          return TextEditingValue(
+            text: target.text,
+            selection: target.selection,
+          );
+        },
+      );
+      final selection = TextSelection(
+        baseOffset: source.indexOf('SELECT'),
+        extentOffset: source.indexOf('**tail') + 2,
+      );
+      controller.selection = selection;
+
+      await _pressControlKey(tester, LogicalKeyboardKey.keyV);
+      await tester.pump();
+
+      expect(controller.text, expected);
+      expect(
+        controller.selection,
+        TextSelection.collapsed(offset: expected.indexOf('**tail') + 2),
+      );
+      expect(transactions, 1);
+      final parsed = const MarkdownParser()
+          .parse(
+            filePath: '/project/source.md',
+            source: controller.text,
+            mode: MarkdownMode.gfm,
+            validateLocalReferences: false,
+          )
+          .busyDocument;
+      final cell = parsed.blocks.single.children.single.children.single;
+      expect(cell.plainText, 'leftXtail');
+      expect(cell.inlines.first.kind, BusyInlineKind.strong);
+      expect(cell.inlines.first.plainText, 'leftX');
+      expect(cell.inlines.last.kind, BusyInlineKind.text);
+      expect(cell.inlines.last.plainText, 'tail');
+
+      await _pressControlKey(tester, LogicalKeyboardKey.keyZ);
+      await tester.pump();
+      expect(controller.text, source);
+      expect(controller.selection, selection);
+
+      await _pressControlKey(tester, LogicalKeyboardKey.keyZ, shift: true);
+      await tester.pump();
+      expect(controller.text, expected);
+      expect(
+        controller.selection,
+        TextSelection.collapsed(offset: expected.indexOf('**tail') + 2),
+      );
+      expect(transactions, 1);
+    },
+  );
+
   testWidgets('Source structured inline paste handles every line boundary', (
     tester,
   ) async {

@@ -1,9 +1,55 @@
 import 'package:busymark/src/markdown/busymark_document.dart';
 import 'package:busymark/src/markdown/busymark_markdown_serializer.dart';
+import 'package:busymark/src/markdown/markdown_model.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   const serializer = BusyMarkMarkdownSerializer();
+
+  test('descendant whitespace preservation prevents ancestor trimming', () {
+    const preserved = {busyMarkPreserveTextWhitespaceAttribute: 'true'};
+    const whitespace = BusyBlock(
+      id: 'whitespace',
+      kind: BusyBlockKind.paragraph,
+      inlines: [BusyInline(kind: BusyInlineKind.text, text: '   ')],
+      attributes: preserved,
+      dirty: true,
+    );
+    const document = BusyDocument(
+      filePath: 'topic.md',
+      mode: MarkdownMode.commonMark,
+      blocks: [
+        BusyBlock(
+          id: 'list',
+          kind: BusyBlockKind.unorderedListItem,
+          inlines: [BusyInline(kind: BusyInlineKind.text, text: 'Parent')],
+          children: [whitespace],
+          dirty: true,
+        ),
+        BusyBlock(
+          id: 'quote',
+          kind: BusyBlockKind.blockquote,
+          children: [
+            BusyBlock(
+              id: 'quote-text',
+              kind: BusyBlockKind.paragraph,
+              inlines: [BusyInline(kind: BusyInlineKind.text, text: 'Quoted')],
+              dirty: true,
+            ),
+            whitespace,
+          ],
+          dirty: true,
+        ),
+      ],
+    );
+
+    final source = serializer.serialize(document);
+
+    expect(source, contains('- Parent\n\n     '));
+    expect(source, contains('> Quoted\n>\n>    '));
+    expect(source, endsWith('>    \n'));
+    expect(source, isNot(contains(busyMarkPreserveTextWhitespaceAttribute)));
+  });
 
   test('ordinary and metadata inline emission are byte-identical', () {
     final fixtures =
