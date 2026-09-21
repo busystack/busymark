@@ -293,6 +293,19 @@ class MarkdownAstAdapter {
       if (text.isEmpty) {
         return const [];
       }
+      if (RegExp(r'^(?:<!--[^]*?-->\s*)+$').hasMatch(text)) {
+        // Block comments are authored markup, not an editable prose field.
+        // Preserve them verbatim, including when another block is serialized.
+        return [
+          BusyBlock(
+            id: nextId(),
+            kind: BusyBlockKind.htmlBlock,
+            rawSource: rawText,
+            preserveRaw: true,
+            attributes: const {'sourceFormat': 'html'},
+          ),
+        ];
+      }
       if (mode == MarkdownMode.writersideMarkdown) {
         final writerside = _writersideBlockFromText(
           rawText,

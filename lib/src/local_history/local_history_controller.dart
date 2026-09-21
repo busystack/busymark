@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 
@@ -361,7 +362,10 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
       final promotion = _pendingUntitledPromotions[snapshot.bufferId];
       if (promotion != null) {
         if (!_sameOptionalPath(snapshot.path, promotion.destinationPath)) {
-          _setWarning(LocalHistoryWarningKind.pathChange);
+          _setWarning(
+            LocalHistoryWarningKind.pathChange,
+            promotion.destinationPath,
+          );
           return;
         }
         if (!await _completePendingUntitledPromotion(
@@ -799,7 +803,7 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
       _documentIdsByBuffer.remove(source.bufferId);
     }
     if (retainedSourcePromotion) {
-      _setWarning(LocalHistoryWarningKind.pathChange);
+      _setWarning(LocalHistoryWarningKind.pathChange, source.path);
     }
     return captured;
   }
@@ -1326,6 +1330,8 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
     // prevents a fast edit from scheduling a baseline under a competing file
     // identity while the promotion retry is still in progress.
     _pendingUntitledPromotions.remove(match.key);
+    final failure = _captureFailures.remove(match.key);
+    if (failure != null) _captureFailures[snapshot.bufferId] = failure;
     final adopted = match.value.forBuffer(snapshot.bufferId);
     _pendingUntitledPromotions[snapshot.bufferId] = adopted;
     final pending = _pending.remove(match.key);
@@ -1342,6 +1348,8 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
     final promotion = _pendingUntitledPromotions.remove(bufferId);
     if (promotion == null) return;
     final detachedBufferId = 'history-promotion:${promotion.documentId}';
+    final failure = _captureFailures.remove(bufferId);
+    if (failure != null) _captureFailures[detachedBufferId] = failure;
     _pendingUntitledPromotions[detachedBufferId] = promotion.forBuffer(
       detachedBufferId,
     );
@@ -1388,7 +1396,10 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
     final promotion = _pendingUntitledPromotions[snapshot.bufferId];
     if (promotion != null) {
       if (!_sameOptionalPath(snapshot.path, promotion.destinationPath)) {
-        _setWarning(LocalHistoryWarningKind.pathChange);
+        _setWarning(
+          LocalHistoryWarningKind.pathChange,
+          promotion.destinationPath,
+        );
         return false;
       }
       if (!await _completePendingUntitledPromotion(
@@ -1503,11 +1514,21 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
       return true;
     }
     try {
+      final staleOwner = await _stalePromotionOwner(promotion);
+      if (!_operationIsCurrent(
+            bufferId,
+            promotionHistoryGeneration,
+            promotionBufferGeneration,
+          ) ||
+          !identical(_pendingUntitledPromotions[bufferId], promotion)) {
+        return true;
+      }
       final document = await _store.promoteUntitledDocument(
         documentId: promotion.documentId,
         destinationPath: promotion.destinationPath,
         displayName: promotion.displayName,
         updatedAt: _clock().toUtc(),
+        staleDestinationOwner: staleOwner,
       );
       if (!_operationIsCurrent(
             bufferId,
@@ -1518,11 +1539,12 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
         return true;
       }
       if (document == null) {
-        _captureFailures[bufferId] = const _LocalHistoryCaptureFailure(
+        _captureFailures[bufferId] = _LocalHistoryCaptureFailure(
+          detail: promotion.destinationPath,
           retryable: false,
           stage: _LocalHistoryFailureStage.promotion,
         );
-        _setWarning(LocalHistoryWarningKind.pathChange);
+        _showCaptureFailure();
         return false;
       }
       _documentIdsByBuffer[bufferId] = document.id;
@@ -1557,6 +1579,48 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
       );
       _setWarning(LocalHistoryWarningKind.pathChange, error.toString());
       return false;
+    }
+  }
+
+  Future<LocalHistoryDocument?> _stalePromotionOwner(
+    LocalHistoryPendingIdentityPromotion promotion,
+  ) async {
+    // Pending promotions are recorded only after a successful first save to a
+    // vacant pathname. Older versions did not retire stale pathname owners.
+    // Recover those sessions only with evidence that the saved file is still
+    // this lineage; never claim a replacement written since that save.
+    final snapshot = await _store.load();
+    final document = snapshot.documents
+        .where((d) => d.id == promotion.documentId)
+        .firstOrNull;
+    if (document == null ||
+        !document.untitled ||
+        document.currentPath != null) {
+      return null;
+    }
+    final owner = snapshot.documents
+        .where(
+          (d) =>
+              !d.deleted &&
+              d.id != document.id &&
+              d.currentPath != null &&
+              p.equals(d.currentPath!, promotion.destinationPath),
+        )
+        .firstOrNull;
+    if (owner == null || !owner.updatedAt.isBefore(document.updatedAt)) {
+      return null;
+    }
+    final summary = snapshot.revisionsFor(document.id).firstOrNull;
+    if (summary == null) return null;
+    final revision = await _store.readRevision(summary.id);
+    if (revision == null) return null;
+    try {
+      final bytes = await File(promotion.destinationPath).readAsBytes();
+      return listEquals(bytes, revision.format.encode(revision.source))
+          ? owner
+          : null;
+    } on FileSystemException {
+      return null;
     }
   }
 
@@ -1760,7 +1824,7 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
   void _showCaptureFailure() {
     final failure = _captureFailures.values.firstOrNull;
     if (failure != null) {
-      _setWarning(LocalHistoryWarningKind.capture, failure.detail);
+      _setWarning(failure.warningKind, failure.detail);
     }
   }
 
@@ -1820,7 +1884,7 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
     var selectedRevision = state.selectedRevision;
     var effectiveWarning = _captureFailures.isNotEmpty
         ? LocalHistoryWarning(
-            LocalHistoryWarningKind.capture,
+            _captureFailures.values.first.warningKind,
             detail: _captureFailures.values.first.detail,
           )
         : warning;
@@ -1974,6 +2038,11 @@ class _LocalHistoryCaptureFailure {
   final String? detail;
   final bool retryable;
   final _LocalHistoryFailureStage stage;
+
+  LocalHistoryWarningKind get warningKind => switch (stage) {
+    _LocalHistoryFailureStage.capture => LocalHistoryWarningKind.capture,
+    _LocalHistoryFailureStage.promotion => LocalHistoryWarningKind.pathChange,
+  };
 }
 
 enum _LocalHistoryFailureStage { capture, promotion }

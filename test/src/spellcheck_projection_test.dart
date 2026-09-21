@@ -806,6 +806,79 @@ Price \$ 5, mispelled \$ 6 and actual \$hiddenmath\$ tail.
   });
 
   group('exact rich correction', () {
+    for (final source in [
+      '# Introduction\n\n- [Overview](#overview)\n  - [Motivation](#motivation)\n- [Discussion](#discussion)\n<!-- busymark:toc:end -->\n\n## Overview\n\nhelo **world**\n\nhelo world\n',
+      '- helo\n  - helo\n\nhelo\n',
+      '<!-- hidden comment -->\n\nhelo\n',
+    ]) {
+      test(
+        'maps all rich fields without requiring parser block spans: $source',
+        () {
+          final document = const MarkdownParser()
+              .parse(
+                filePath: '/topic.md',
+                source: source,
+                mode: MarkdownMode.writersideMarkdown,
+                validateLocalReferences: false,
+              )
+              .busyDocument;
+          final result = const WysiwygSpellingProjector().project(
+            document: document,
+            languageId: 'en-US',
+            snapshot: _snapshot,
+            documentGeneration: 1,
+          );
+          expect(result.complete, isTrue, reason: result.message);
+          expect(
+            result.runs.every((r) => r.target is SpellingRichBlockTarget),
+            isTrue,
+          );
+          expect(result.runs.any((r) => r.text.contains('<!--')), isFalse);
+          final runs = result.runs
+              .where((r) => r.text.contains('helo'))
+              .toList();
+          expect(runs, hasLength('helo'.allMatches(source).length));
+          final expectedOffsets = 'helo'
+              .allMatches(source)
+              .map((m) => m.start)
+              .toList();
+          for (final (index, run) in runs.indexed) {
+            final occurrence = _rejected(run, 'helo');
+            expect(occurrence.sourceStart, expectedOffsets[index]);
+            expect(
+              const SpellingReplacementPlanner()
+                  .build(occurrence: occurrence, suggestion: 'hello')
+                  .applyToSource(source),
+              source.replaceRange(
+                expectedOffsets[index],
+                expectedOffsets[index] + 4,
+                'hello',
+              ),
+            );
+          }
+        },
+      );
+    }
+
+    test('escaped comment prose is still an editable rich spelling field', () {
+      const source = r'\<!-- helo -->';
+      final document = const MarkdownParser()
+          .parse(
+            filePath: '/literal.md',
+            source: source,
+            validateLocalReferences: false,
+          )
+          .busyDocument;
+      final result = const WysiwygSpellingProjector().project(
+        document: document,
+        languageId: 'en-US',
+        snapshot: _snapshot,
+        documentGeneration: 1,
+      );
+      expect(result.complete, isTrue);
+      expect(result.runs.single.text, contains('helo'));
+    });
+
     test('maps hard breaks by structural field identity', () {
       const source = 'helo  \nworld\n\nhelo world\n';
       final document = const MarkdownParser()

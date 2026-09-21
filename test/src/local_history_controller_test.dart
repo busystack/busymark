@@ -2022,11 +2022,13 @@ class _BlockingRevisionReadStore implements LocalHistoryStore {
     required String destinationPath,
     required String displayName,
     required DateTime updatedAt,
+    LocalHistoryDocument? staleDestinationOwner,
   }) => delegate.promoteUntitledDocument(
     documentId: documentId,
     destinationPath: destinationPath,
     displayName: displayName,
     updatedAt: updatedAt,
+    staleDestinationOwner: staleDestinationOwner,
   );
 
   @override
@@ -2077,11 +2079,13 @@ class _FailingSourceCaptureStore implements LocalHistoryStore {
     required String destinationPath,
     required String displayName,
     required DateTime updatedAt,
+    LocalHistoryDocument? staleDestinationOwner,
   }) => delegate.promoteUntitledDocument(
     documentId: documentId,
     destinationPath: destinationPath,
     displayName: displayName,
     updatedAt: updatedAt,
+    staleDestinationOwner: staleDestinationOwner,
   );
 
   @override
@@ -2155,11 +2159,13 @@ class _BlockingNextCaptureStore implements LocalHistoryStore {
     required String destinationPath,
     required String displayName,
     required DateTime updatedAt,
+    LocalHistoryDocument? staleDestinationOwner,
   }) => delegate.promoteUntitledDocument(
     documentId: documentId,
     destinationPath: destinationPath,
     displayName: displayName,
     updatedAt: updatedAt,
+    staleDestinationOwner: staleDestinationOwner,
   );
 
   @override
@@ -2180,6 +2186,7 @@ class _FailingFirstPromotionStore extends MemoryLocalHistoryStore {
     required String destinationPath,
     required String displayName,
     required DateTime updatedAt,
+    LocalHistoryDocument? staleDestinationOwner,
   }) {
     if (_failNextPromotion) {
       _failNextPromotion = false;
@@ -2190,6 +2197,7 @@ class _FailingFirstPromotionStore extends MemoryLocalHistoryStore {
       destinationPath: destinationPath,
       displayName: displayName,
       updatedAt: updatedAt,
+      staleDestinationOwner: staleDestinationOwner,
     );
   }
 }
@@ -2204,6 +2212,7 @@ class _ControllablePromotionStore extends MemoryLocalHistoryStore {
     required String destinationPath,
     required String displayName,
     required DateTime updatedAt,
+    LocalHistoryDocument? staleDestinationOwner,
   }) {
     promotionAttempts++;
     if (failPromotions) {
@@ -2216,6 +2225,7 @@ class _ControllablePromotionStore extends MemoryLocalHistoryStore {
       destinationPath: destinationPath,
       displayName: displayName,
       updatedAt: updatedAt,
+      staleDestinationOwner: staleDestinationOwner,
     );
   }
 }
@@ -2233,6 +2243,7 @@ class _FailingPromotionThenCaptureStore extends MemoryLocalHistoryStore {
     required String destinationPath,
     required String displayName,
     required DateTime updatedAt,
+    LocalHistoryDocument? staleDestinationOwner,
   }) {
     if (_failPromotion) {
       _failPromotion = false;
@@ -2243,6 +2254,7 @@ class _FailingPromotionThenCaptureStore extends MemoryLocalHistoryStore {
       destinationPath: destinationPath,
       displayName: displayName,
       updatedAt: updatedAt,
+      staleDestinationOwner: staleDestinationOwner,
     );
   }
 

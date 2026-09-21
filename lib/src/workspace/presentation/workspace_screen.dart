@@ -13163,6 +13163,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
       sourceFilePath: filePath,
       undoGroup: undoGroup,
     );
+    _cacheCommittedWysiwygDocument(expectedBufferId, document);
   }
 
   void _handleWysiwygSpellingSourceChanged(
@@ -13196,6 +13197,17 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
       previousWysiwygState: beforeSession,
       wysiwygState: afterSession,
     );
+    _cacheCommittedWysiwygDocument(expectedBufferId, document);
+  }
+
+  void _cacheCommittedWysiwygDocument(String bufferId, BusyDocument document) {
+    final committed = ref.read(workspaceControllerProvider).activeBuffer;
+    if (committed == null || committed.id != bufferId) return;
+    // Workspace final-newline policy can change the emitted Markdown. Rebind
+    // the live tree to that committed source, retaining its editor block IDs.
+    // Reparsing here would give spelling targets IDs the mounted editor never
+    // adopted while handling its own synchronous edit.
+    _cacheWysiwygDocument(bufferId, document.copyWith(source: committed.text));
   }
 
   void _translateSpellingAnchors(

@@ -1,6 +1,5 @@
 import '../editor/wysiwyg/wysiwyg_inline_controller.dart';
 import '../markdown/busymark_document.dart';
-import '../markdown/busymark_markdown_serializer.dart';
 import '../markdown/markdown_parser.dart';
 import '../markdown/markdown_source_structure.dart';
 import 'markdown_spelling_projection.dart';
@@ -163,7 +162,6 @@ final class WysiwygSpellingProjector {
       );
     }
 
-    final serialized = const BusyMarkMarkdownSerializer().serialize(document);
     final sourceProjection = const MarkdownSpellingProjector().project(
       filePath: document.filePath,
       source: source,
@@ -179,17 +177,31 @@ final class WysiwygSpellingProjector {
           validateLocalReferences: false,
         )
         .busyDocument;
-    final merged = _mergeCurrentSourceMappings(
+    var merged = _mergeCurrentSourceMappings(
       richRuns: richRuns,
       sourceRuns: sourceProjection.runs,
       fieldKeysByTarget: fieldKeysByTarget,
       sourceRegions: _sourceFieldRegions(source, currentDocument.blocks),
     );
+    if (!merged.allRichRunsMapped) {
+      // The parser deliberately omits some block spans when its lossless
+      // scanner and AST have different container shapes (e.g. nested lists).
+      // Live editor-only empty paragraphs can also shift tree paths. In that
+      // case require an exact, complete ordered correspondence of prose runs;
+      // never search ahead for matching text or publish a partial guessed
+      // pairing. Repeated words retain their occurrence order and provenance.
+      final ordered = _mergeFieldMappings(
+        richRuns: richRuns,
+        sourceRuns: sourceProjection.runs,
+      );
+      if (ordered.allRichRunsMapped) merged = ordered;
+    }
+    // document.source is the source already committed by the workspace. Dirty
+    // blocks can retain pre-edit spans; serializing this rebased tree a second
+    // time is not a validity check and can apply the same edit twice. Validate
+    // the complete rich/source correspondence instead.
     complete =
-        complete &&
-        sourceProjection.complete &&
-        merged.allRichRunsMapped &&
-        serialized == source;
+        complete && sourceProjection.complete && merged.allRichRunsMapped;
     return SpellingProjectionResult(
       runs: merged.runs,
       complete: complete,

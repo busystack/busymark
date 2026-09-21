@@ -48,6 +48,57 @@ void main() {
     maximumBytes: 16 * 1024 * 1024,
   );
 
+  for (final inMemory in [false, true]) {
+    test(
+      'promotion repair rechecks the stale owner atomically (memory=$inMemory)',
+      () async {
+        final LocalHistoryStore target = inMemory
+            ? MemoryLocalHistoryStore()
+            : store;
+        final time = DateTime.utc(2026, 1, 1);
+        final old = await target.capture(request('Old', time), policy);
+        final draft = await target.capture(
+          LocalHistoryCaptureRequest(
+            displayName: 'Draft',
+            source: 'New',
+            untitled: true,
+            format: TextFormatMetadata.utf8Lf,
+            capturedAt: time.add(const Duration(minutes: 1)),
+            reason: LocalHistoryCaptureReason.baseline,
+          ),
+          policy,
+        );
+        await target.capture(
+          request('Another owner update', time.add(const Duration(minutes: 2))),
+          policy,
+        );
+        expect(
+          await target.promoteUntitledDocument(
+            documentId: draft.document.id,
+            destinationPath: '/workspace/guide.md',
+            displayName: 'guide.md',
+            updatedAt: time.add(const Duration(minutes: 3)),
+            staleDestinationOwner: old.document,
+          ),
+          isNull,
+        );
+        final snapshot = await target.load();
+        expect(
+          snapshot.documents
+              .singleWhere((d) => d.id == old.document.id)
+              .deleted,
+          isFalse,
+        );
+        expect(
+          snapshot.documents
+              .singleWhere((d) => d.id == draft.document.id)
+              .currentPath,
+          isNull,
+        );
+      },
+    );
+  }
+
   test(
     'persists full revisions and stable document identity across restart',
     () async {
