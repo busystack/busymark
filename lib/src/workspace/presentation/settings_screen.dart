@@ -153,6 +153,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               installed:
                   spellingCatalog?.installationForResource(
                     resource.resourceId,
+                    kind: SpellingDictionaryInstallationKind.downloaded,
                   ) !=
                   null,
               status: spelling.dictionaryInstallStatus,

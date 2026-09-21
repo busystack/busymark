@@ -272,9 +272,15 @@ final class SpellingDictionaryCatalog {
     return null;
   }
 
-  SpellingDictionaryInstallation? installationForResource(String resourceId) {
+  SpellingDictionaryInstallation? installationForResource(
+    String resourceId, {
+    SpellingDictionaryInstallationKind? kind,
+  }) {
     for (final installation in installations) {
-      if (installation.resourceId == resourceId) return installation;
+      if (installation.resourceId == resourceId &&
+          (kind == null || installation.kind == kind)) {
+        return installation;
+      }
     }
     return null;
   }

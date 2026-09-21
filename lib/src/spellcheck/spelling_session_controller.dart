@@ -387,8 +387,23 @@ final class SpellingSessionController extends ChangeNotifier {
     if (resource == null) {
       throw StateError('Dictionary resource is not in the shipped catalog.');
     }
-    if (catalog!.installationForResource(resource.resourceId) != null) return;
-    final invalidInstallation = catalog.invalidById(resource.resourceId);
+    final existing = catalog!.installationForResource(resource.resourceId);
+    if (existing != null) {
+      if (existing.kind == SpellingDictionaryInstallationKind.downloaded) {
+        return;
+      }
+      throw StateError(
+        'Remove the local import before installing the catalog dictionary.',
+      );
+    }
+    final invalidInstallation = catalog.invalidInstallations
+        .where(
+          (candidate) =>
+              candidate.kind == SpellingDictionaryInstallationKind.downloaded &&
+              (candidate.resourceId == resource.resourceId ||
+                  candidate.matches(resource.resourceId)),
+        )
+        .firstOrNull;
     if (_dictionaryDownloadCancellation != null) {
       throw StateError('Another dictionary installation is in progress.');
     }
@@ -476,12 +491,35 @@ final class SpellingSessionController extends ChangeNotifier {
 
   Future<void> removeDownloadedDictionary(String languageId) async {
     await _initializeStorage(_latestInput?.workspace ?? _settingsWorkspace);
-    final installation = _catalog?.installedById(languageId);
-    if (installation != null && !installation.imported) {
+    final catalog = _catalog;
+    final resource = catalog?.availableById(languageId);
+    final installation = resource == null
+        ? catalog?.installations
+              .where(
+                (candidate) =>
+                    candidate.kind ==
+                        SpellingDictionaryInstallationKind.downloaded &&
+                    (candidate.id == languageId ||
+                        candidate.locales.contains(languageId)),
+              )
+              .firstOrNull
+        : catalog?.installationForResource(
+            resource.resourceId,
+            kind: SpellingDictionaryInstallationKind.downloaded,
+          );
+    if (installation != null) {
       await _releaseAndRemoveInstallation(installation);
       return;
     }
-    final invalid = _catalog?.invalidById(languageId);
+    final invalid = catalog?.invalidInstallations
+        .where(
+          (candidate) =>
+              candidate.kind == SpellingDictionaryInstallationKind.downloaded &&
+              (candidate.matches(languageId) ||
+                  resource != null &&
+                      candidate.resourceId == resource.resourceId),
+        )
+        .firstOrNull;
     if (invalid != null &&
         invalid.kind == SpellingDictionaryInstallationKind.downloaded) {
       await _releaseAndRemoveInvalidInstallation(invalid);
@@ -854,19 +892,26 @@ final class SpellingSessionController extends ChangeNotifier {
     _watchedProjectDirectory = watchedDirectory;
 
     late final StreamSubscription<FileSystemEvent> subscription;
-    void reinstallAndReload() {
+    var reattachRequired = false;
+    void reinstallAndReload({bool forceReattach = false}) {
       if (_disposed ||
           generation != _projectWatcherGeneration ||
           _watchedProjectFile != normalizedFile) {
         return;
       }
+      reattachRequired = reattachRequired || forceReattach;
       _projectStoreReloadDebounce?.cancel();
       _projectStoreReloadDebounce = Timer(
         const Duration(milliseconds: 100),
         () {
           if (_disposed || generation != _projectWatcherGeneration) return;
           final parentNowExists = Directory(desiredParent).existsSync();
-          if (parentNowExists && _watchedProjectDirectory != desiredParent) {
+          final shouldReattach =
+              reattachRequired ||
+              _projectStoreWatcher == null ||
+              parentNowExists && _watchedProjectDirectory != desiredParent;
+          reattachRequired = false;
+          if (shouldReattach) {
             _installProjectStoreWatcher(projectRoot, normalizedFile);
           }
           unawaited(_reloadProjectWordsFromDisk());
@@ -876,24 +921,31 @@ final class SpellingSessionController extends ChangeNotifier {
 
     subscription = Directory(watchedDirectory).watch().listen(
       (event) {
-        final eventPath = p.normalize(p.absolute(event.path));
+        bool touchesProjectStore(String rawPath) {
+          final eventPath = p.normalize(p.absolute(rawPath));
+          return eventPath == normalizedFile ||
+              eventPath == desiredParent ||
+              p.isWithin(eventPath, normalizedFile) ||
+              p.isWithin(eventPath, desiredParent);
+        }
+
         final relevant =
-            eventPath == normalizedFile ||
-            eventPath == desiredParent ||
-            p.isWithin(eventPath, normalizedFile) ||
-            p.isWithin(eventPath, desiredParent);
+            touchesProjectStore(event.path) ||
+            event is FileSystemMoveEvent &&
+                event.destination != null &&
+                touchesProjectStore(event.destination!);
         if (relevant) reinstallAndReload();
       },
       onError: (_) {
         if (identical(_projectStoreWatcher, subscription)) {
           _projectStoreWatcher = null;
-          reinstallAndReload();
+          reinstallAndReload(forceReattach: true);
         }
       },
       onDone: () {
         if (identical(_projectStoreWatcher, subscription)) {
           _projectStoreWatcher = null;
-          reinstallAndReload();
+          reinstallAndReload(forceReattach: true);
         }
       },
     );
@@ -1056,6 +1108,7 @@ final class SpellingSessionInput {
 
   String get identity => [
     buffer.id,
+    buffer.filePath ?? '',
     buffer.revision,
     buffer.editorState.spellingLanguage.kind.name,
     buffer.editorState.spellingLanguage.languageId ?? '',

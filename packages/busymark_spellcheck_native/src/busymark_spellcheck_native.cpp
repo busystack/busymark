@@ -172,8 +172,77 @@ bool is_apostrophe(gunichar character) {
 
 bool is_quote_pair(gunichar opening, gunichar closing) {
   return (opening == '\'' && closing == '\'') ||
-         (opening == 0x2018 && closing == 0x2019) ||
-         (opening == 0x2019 && closing == 0x2019);
+         (opening == 0x2018 && closing == 0x2019);
+}
+
+bool is_word_character(gunichar character);
+
+bool is_lexical_apostrophe(const char* text,
+                           const std::vector<guint>& offsets,
+                           guint index) {
+  if (index == 0 || index + 1 >= offsets.size() - 1) return false;
+  return is_word_character(g_utf8_get_char(text + offsets[index - 1])) &&
+         is_word_character(g_utf8_get_char(text + offsets[index + 1]));
+}
+
+bool is_opening_quote_at(const char* text,
+                         const std::vector<guint>& offsets,
+                         guint index) {
+  const auto character = g_utf8_get_char(text + offsets[index]);
+  if (character == 0x2018) return true;
+  if (character != '\'' || index + 1 >= offsets.size() - 1) return false;
+  const bool follows_boundary =
+      index == 0 ||
+      !is_word_character(g_utf8_get_char(text + offsets[index - 1]));
+  return follows_boundary &&
+         is_word_character(g_utf8_get_char(text + offsets[index + 1]));
+}
+
+bool is_closing_quote_at(const char* text,
+                         const std::vector<guint>& offsets,
+                         guint index) {
+  const auto character = g_utf8_get_char(text + offsets[index]);
+  if (character == 0x2019) return true;
+  if (character != '\'' || index == 0) return false;
+  const bool precedes_boundary =
+      index + 1 >= offsets.size() - 1 ||
+      !is_word_character(g_utf8_get_char(text + offsets[index + 1]));
+  return precedes_boundary;
+}
+
+bool has_closing_quote(const char* text,
+                       const std::vector<guint>& offsets,
+                       guint from,
+                       gunichar opening) {
+  for (guint index = from; index < offsets.size() - 1; ++index) {
+    const auto character = g_utf8_get_char(text + offsets[index]);
+    if (character == '\n' || character == '\r') return false;
+    if (is_apostrophe(character) &&
+        !is_lexical_apostrophe(text, offsets, index)) {
+      // The nearest non-lexical quote closes this span or terminates it. Do
+      // not pair across a separate quotation or a lexical elision.
+      return is_closing_quote_at(text, offsets, index) &&
+             is_quote_pair(opening, character);
+    }
+  }
+  return false;
+}
+
+bool has_opening_quote(const char* text,
+                       const std::vector<guint>& offsets,
+                       guint before,
+                       gunichar closing) {
+  for (guint index = before; index > 0; --index) {
+    const guint candidate = index - 1;
+    const auto character = g_utf8_get_char(text + offsets[candidate]);
+    if (character == '\n' || character == '\r') return false;
+    if (is_apostrophe(character) &&
+        !is_lexical_apostrophe(text, offsets, candidate)) {
+      return is_opening_quote_at(text, offsets, candidate) &&
+             is_quote_pair(character, closing);
+    }
+  }
+  return false;
 }
 
 // Pango supplies Unicode word boundaries. Only dictionary-specific word
@@ -194,9 +263,15 @@ bool edge_can_extend(BusySpellHandleImpl* handle,
   }
   if (!is_apostrophe(character) || character == 0x2018) return false;
   if (leading) {
+    // U+2019 is the apostrophe used by typographic leading elisions. Curly
+    // quotation spans use U+2018 as their opening punctuation.
+    if (character == 0x2019) return index + 1 == candidate_start;
     if (candidate_end < offsets.size() - 1 &&
         is_quote_pair(character,
                       g_utf8_get_char(text + offsets[candidate_end]))) {
+      return false;
+    }
+    if (has_closing_quote(text, offsets, candidate_end, character)) {
       return false;
     }
     return index + 1 == candidate_start;
@@ -204,6 +279,9 @@ bool edge_can_extend(BusySpellHandleImpl* handle,
   if (candidate_start > 0 &&
       is_quote_pair(g_utf8_get_char(text + offsets[candidate_start - 1]),
                     character)) {
+    return false;
+  }
+  if (has_opening_quote(text, offsets, candidate_start, character)) {
     return false;
   }
   return index == candidate_end;

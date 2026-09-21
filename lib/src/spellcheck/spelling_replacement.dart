@@ -1,3 +1,5 @@
+import 'dart:isolate';
+
 import 'package:characters/characters.dart';
 import 'package:unorm_dart/unorm_dart.dart' as unicode;
 
@@ -230,6 +232,35 @@ final class SpellingReplacementPlan {
   int translateFieldOffset(int offset) =>
       _translateFieldBoundary(offset, fieldEdits);
 }
+
+/// Performs parser-backed correction planning and validation away from the UI
+/// isolate. Editors must still verify the captured source or field snapshot
+/// synchronously immediately before committing the returned transaction.
+Future<
+  ({
+    SpellingReplacementPlan plan,
+    String? replacementSource,
+    String? replacementField,
+  })
+>
+prepareSpellingCorrection({
+  required SpellingOccurrence occurrence,
+  required String suggestion,
+  String? source,
+  String? field,
+}) => Isolate.run(() {
+  final plan = const SpellingReplacementPlanner().build(
+    occurrence: occurrence,
+    suggestion: suggestion,
+  );
+  return (
+    plan: plan,
+    replacementSource: source == null ? null : plan.applyToSource(source),
+    replacementField: field == null || plan.fieldEdits.isEmpty
+        ? null
+        : plan.applyToField(field),
+  );
+});
 
 Iterable<({int start, int end})> _canonicallyEquivalentRanges(
   String text,

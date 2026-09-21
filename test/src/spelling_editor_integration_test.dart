@@ -12,6 +12,7 @@ import 'package:busymark/src/markdown/markdown_parser.dart';
 import 'package:busymark/src/spellcheck/markdown_spelling_projection.dart';
 import 'package:busymark/src/spellcheck/spelling_coordinator.dart';
 import 'package:busymark/src/spellcheck/spelling_projection.dart';
+import 'package:busymark/src/spellcheck/spelling_replacement.dart';
 import 'package:busymark/src/spellcheck/wysiwyg_spelling_projection.dart';
 import 'package:busymark/src/workspace/workspace_model.dart';
 import 'package:flutter/material.dart';
@@ -85,10 +86,19 @@ void main() {
     );
     await tester.pump();
 
-    expect(
-      key.currentState!.applySpellingCorrection(
+    final prepared = await tester.runAsync(
+      () => prepareSpellingCorrection(
         occurrence: occurrence,
         suggestion: 'misspelled',
+        source: source,
+      ),
+    );
+    expect(
+      key.currentState!.applyPreparedSpellingCorrection(
+        occurrence: occurrence,
+        plan: prepared!.plan,
+        expectedSource: source,
+        replacementSource: prepared.replacementSource!,
       ),
       isTrue,
     );

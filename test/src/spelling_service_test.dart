@@ -6,6 +6,7 @@ import 'package:busymark/l10n/generated/app_localizations.dart';
 import 'package:busymark/l10n/generated/app_localizations_en.dart';
 import 'package:busymark/src/app/app_settings.dart';
 import 'package:busymark/src/core/atomic_file_writer.dart';
+import 'package:busymark/src/markdown/busymark_document.dart';
 import 'package:busymark/src/markdown/markdown_model.dart';
 import 'package:busymark/src/markdown/markdown_parser.dart';
 import 'package:busymark/src/spellcheck/markdown_spelling_projection.dart';
@@ -36,6 +37,29 @@ const _snapshot = SpellingSnapshotIdentity(
 );
 
 void main() {
+  test('session identity changes when a stable buffer is saved to a path', () {
+    final settings = AppSettings.defaults();
+    final untitled = DocumentBuffer.untitled(
+      id: 'stable-buffer',
+      name: 'Untitled.md',
+      text: 'helo',
+    );
+    SpellingSessionInput input(DocumentBuffer buffer) => SpellingSessionInput(
+      buffer: buffer,
+      workspace: null,
+      settings: settings,
+      documentKind: DocumentKind.markdown,
+      markdownMode: MarkdownMode.commonMark,
+    );
+
+    final firstSave = untitled.copyWith(filePath: '/tmp/first.md');
+    final saveAs = firstSave.copyWith(filePath: '/tmp/second.md');
+    expect(input(untitled).identity, isNot(input(firstSave).identity));
+    expect(input(firstSave).identity, isNot(input(saveAs).identity));
+    expect(saveAs.id, untitled.id);
+    expect(saveAs.revision, untitled.revision);
+  });
+
   test('downloaded dictionaries use revision-shared Snap storage', () {
     expect(
       resolveSpellingDictionaryStorageRoot(
@@ -44,6 +68,63 @@ void main() {
       ),
       '/snap/common/spelling/dictionaries',
     );
+  });
+
+  test('first save and Save As republish source routing immediately', () async {
+    final temporary = await Directory.systemTemp.createTemp(
+      'busymark-save-as-spelling-',
+    );
+    addTearDown(() async {
+      if (await temporary.exists()) await temporary.delete(recursive: true);
+    });
+    final bundle = await _createFixtureBundle(temporary);
+    final controller = SpellingSessionController(
+      bundledRoot: bundle,
+      applicationSupportRoot: p.join(temporary.path, 'support'),
+      dictionaryStorageRoot: p.join(temporary.path, 'dictionary-storage'),
+      verifyDictionaryChecksums: false,
+    );
+    addTearDown(controller.dispose);
+    final settings = AppSettings.defaults().copyWith(
+      defaultSpellingLanguage: 'en-Test',
+    );
+    var buffer = DocumentBuffer.untitled(
+      id: 'stable-save-buffer',
+      name: 'Untitled.md',
+      text: 'helo',
+    );
+    SpellingSessionInput input() => SpellingSessionInput(
+      buffer: buffer,
+      workspace: null,
+      settings: settings,
+      documentKind: DocumentKind.markdown,
+      markdownMode: MarkdownMode.commonMark,
+    );
+
+    await controller.checkNow(input());
+    expect(
+      (controller.misspellings.single.run.target as SpellingSourceTarget)
+          .filePath,
+      'stable-save-buffer',
+    );
+    for (final path in ['/tmp/first-save.md', '/tmp/save-as.md']) {
+      buffer = buffer.copyWith(filePath: path);
+      controller.update(input());
+      await _waitFor(
+        () =>
+            controller.state.status == SpellingPresentationStatus.ready &&
+            controller.misspellings.singleOrNull?.run.target
+                is SpellingSourceTarget &&
+            (controller.misspellings.single.run.target as SpellingSourceTarget)
+                    .filePath ==
+                path,
+      );
+      final occurrence = controller.occurrenceAtSource(1);
+      expect(occurrence, isNotNull);
+      expect(controller.isCurrent(occurrence!), isTrue);
+      expect(buffer.id, 'stable-save-buffer');
+      expect(buffer.revision, 0);
+    }
   });
 
   group('persistent spelling words', () {
@@ -170,6 +251,67 @@ void main() {
       expect(saved.wordsFor('en-US'), containsAll(['BusyMark', 'BusyStack']));
       expect(saved.revision, 8);
     });
+
+    test(
+      'preserves a newer destination and the rejected displaced version',
+      () async {
+        await SpellingWordStore(filePath: path).addWord('en-US', 'InitialWord');
+        final writer = _RejectedExchangeAtomicFileWriter();
+        addTearDown(writer.releaseIfNeeded);
+        final mutation = SpellingWordStore(
+          filePath: path,
+          writer: writer,
+        ).addWord('en-US', 'BusyMark');
+
+        await writer.beforeValidated.future;
+        await File(path).writeAsString(
+          jsonEncode({
+            'schemaVersion': 1,
+            'revision': 7,
+            'words': {
+              'en-US': [
+                {'key': 'BusyStack', 'display': 'BusyStack'},
+              ],
+            },
+          }),
+          flush: true,
+        );
+        writer.releaseBeforeExchange();
+        await writer.exchanged.future;
+        await File(path).writeAsString(
+          jsonEncode({
+            'schemaVersion': 1,
+            'revision': 8,
+            'words': {
+              'en-US': [
+                {'key': 'NewestExternal', 'display': 'NewestExternal'},
+              ],
+            },
+          }),
+          flush: true,
+        );
+        writer.releaseValidation();
+
+        AtomicFileChangedException? conflict;
+        try {
+          await mutation;
+          fail('Expected publication ownership to be reported as uncertain.');
+        } on AtomicFileChangedException catch (error) {
+          conflict = error;
+        }
+        expect(conflict.recoveryPath, isNotNull);
+        expect(
+          (await SpellingWordStore(filePath: path).read()).wordsFor('en-US'),
+          ['NewestExternal'],
+        );
+        expect(
+          (await SpellingWordStore(
+            filePath: conflict.recoveryPath!,
+          ).read()).wordsFor('en-US'),
+          ['BusyStack'],
+        );
+      },
+    );
 
     test(
       'preserves case while merging canonical Unicode equivalents',
@@ -812,6 +954,87 @@ void main() {
       );
       expect(await _publishedDirectories(p.join(storage, 'imported')), isEmpty);
       expect(controller.catalog!.installedById('en-Test')!.imported, isFalse);
+    },
+  );
+
+  test(
+    'an import does not impersonate the downloadable resource row',
+    () async {
+      final temporary = await Directory.systemTemp.createTemp(
+        'busymark-import-first-ownership-',
+      );
+      addTearDown(() async {
+        if (await temporary.exists()) await temporary.delete(recursive: true);
+      });
+      final bundle = await _createFixtureBundle(temporary);
+      final fixtureRoot = p.join(
+        Directory.current.path,
+        'packages',
+        'busymark_spellcheck_native',
+        'test',
+        'fixtures',
+      );
+      final storage = p.join(temporary.path, 'dictionary-storage');
+      await Directory(p.join(storage, 'downloaded')).delete(recursive: true);
+      final controller = SpellingSessionController(
+        bundledRoot: bundle,
+        applicationSupportRoot: p.join(temporary.path, 'support'),
+        dictionaryStorageRoot: storage,
+        verifyDictionaryChecksums: false,
+        dictionaryDownloader: SpellingDictionaryDownloader(
+          downloadFile:
+              ({
+                required source,
+                required destination,
+                required expectedBytes,
+                required cancellation,
+                required onProgress,
+              }) async {
+                final fixture = File(
+                  p.join(
+                    fixtureRoot,
+                    source.path.endsWith('.aff') ? 'test.aff' : 'test.dic',
+                  ),
+                );
+                await fixture.copy(destination.path);
+                onProgress(expectedBytes);
+              },
+        ),
+      );
+      addTearDown(controller.dispose);
+      await controller.prepareSettings(null);
+      await controller.importDictionary(
+        affPath: p.join(fixtureRoot, 'test.aff'),
+        dicPath: p.join(fixtureRoot, 'test.dic'),
+        languageId: 'en-Test',
+        displayLabel: 'Local Test English',
+      );
+
+      final catalog = controller.catalog!;
+      expect(catalog.installedById('en-Test')?.imported, isTrue);
+      expect(
+        catalog.installationForResource(
+          'en-Test',
+          kind: SpellingDictionaryInstallationKind.downloaded,
+        ),
+        isNull,
+      );
+      await controller.removeDownloadedDictionary('en-Test');
+      expect(controller.catalog!.installedById('en-Test')?.imported, isTrue);
+      await expectLater(
+        controller.installDictionary('en-Test'),
+        throwsStateError,
+      );
+
+      await controller.removeImportedDictionary('en-Test');
+      expect(controller.catalog!.installedById('en-Test'), isNull);
+      await controller.installDictionary('en-Test');
+      final downloaded = controller.catalog!.installationForResource(
+        'en-Test',
+        kind: SpellingDictionaryInstallationKind.downloaded,
+      );
+      expect(downloaded, isNotNull);
+      expect(downloaded!.imported, isFalse);
     },
   );
 
@@ -1714,12 +1937,48 @@ void main() {
           controller.misspellings.isEmpty,
     );
 
-    await storeFile.parent.delete(recursive: true);
+    Future<void> siblingRename(
+      int revision,
+      List<Map<String, String>> words,
+    ) async {
+      final staged = File('${storeFile.path}.sibling-$revision');
+      await staged.writeAsString(
+        '${jsonEncode({
+          'schemaVersion': 1,
+          'revision': revision,
+          'words': {'en-Test': words},
+        })}\n',
+        flush: true,
+      );
+      await staged.rename(storeFile.path);
+    }
+
+    await siblingRename(3, const []);
     await _waitFor(
       () =>
-          controller.projectWords.wordsFor('en-Test').isEmpty &&
+          controller.projectWords.revision == 3 &&
           controller.misspellings.singleOrNull?.word == 'BusyBrand',
     );
+    await siblingRename(4, const [
+      {'key': 'BusyBrand', 'display': 'BusyBrand'},
+    ]);
+    await _waitFor(
+      () =>
+          controller.projectWords.revision == 4 &&
+          controller.misspellings.isEmpty,
+    );
+
+    await siblingRename(5, const []);
+    await _waitFor(
+      () =>
+          controller.projectWords.revision == 5 &&
+          controller.misspellings.singleOrNull?.word == 'BusyBrand',
+    );
+
+    // The effective list is already empty. Reattachment must therefore not
+    // depend on a changed snapshot being published during directory removal.
+    await storeFile.parent.delete(recursive: true);
+    await Future<void>.delayed(const Duration(milliseconds: 250));
     await externalStore.addWord('en-Test', 'BusyBrand');
     await _waitFor(
       () =>
@@ -1738,6 +1997,8 @@ void main() {
       late final Directory temporary;
       late final SpellingSessionController controller;
       late DocumentBuffer buffer;
+      BusyDocument? richDocument;
+      var richGeneration = 0;
       late final AppSettings settings;
       final personalWriter = _ToggleFailAtomicFileWriter();
       await tester.runAsync(() async {
@@ -1793,6 +2054,8 @@ void main() {
         settings: settings,
         documentKind: DocumentKind.markdown,
         markdownMode: MarkdownMode.commonMark,
+        richDocument: richDocument,
+        richDocumentGeneration: richGeneration,
       );
       expect(controller.misspellings.map((item) => item.word), [
         'helo',
@@ -1823,8 +2086,8 @@ void main() {
                       revision: buffer.revision + 1,
                     );
                     return SpellingReviewCorrection(
-                      target:
-                          'source:${(occurrence.run.target as SpellingSourceTarget).filePath}',
+                      coordinateScope:
+                          'document:${occurrence.run.snapshot.bufferId}',
                       start: start,
                       oldEnd: end,
                       newEnd: start + suggestion.length,
@@ -1937,6 +2200,85 @@ void main() {
       expect(buffer.text, 'hello\n\nhelo\n\nhello');
       await tester.tap(find.text(l10n.close));
       await tester.pumpAndSettle();
+
+      buffer = DocumentBuffer.untitled(
+        id: 'review-dialog-rich',
+        name: 'review-rich.md',
+        text: 'helo\n\nwrld\n\nmistakke\n',
+      );
+      richDocument = const MarkdownParser()
+          .parse(
+            filePath: '/tmp/review-rich.md',
+            source: buffer.text,
+            mode: MarkdownMode.commonMark,
+            validateLocalReferences: false,
+          )
+          .busyDocument;
+      richGeneration++;
+      await tester.runAsync(() => controller.checkNow(input()));
+      initialIndex = 1;
+      await tester.tap(find.text('Open review'));
+      await _pumpWidgetUntil(
+        tester,
+        () => find.text('wrld').evaluate().isNotEmpty,
+      );
+      await tester.tap(find.text(l10n.sourceSearchNextMatch));
+      await tester.pump();
+      expect(reveals.last, 'mistakke');
+      await tester.tap(find.text(l10n.sourceSearchNextMatch));
+      await tester.pump();
+      expect(reveals.last, 'helo');
+      await _pumpWidgetUntil(
+        tester,
+        () => find.text('hello').evaluate().isNotEmpty,
+      );
+      await tester.tap(find.text('hello'));
+      richDocument = const MarkdownParser()
+          .parse(
+            filePath: '/tmp/review-rich.md',
+            source: buffer.text,
+            mode: MarkdownMode.commonMark,
+            validateLocalReferences: false,
+          )
+          .busyDocument;
+      richGeneration++;
+      await tester.runAsync(() => controller.checkNow(input()));
+      await _pumpWidgetUntil(
+        tester,
+        () => find.byType(BusyMarkSpellingReviewDialog).evaluate().isEmpty,
+      );
+      expect(buffer.text, 'hello\n\nwrld\n\nmistakke\n');
+
+      buffer = DocumentBuffer.untitled(
+        id: 'review-dialog-rich-table',
+        name: 'review-rich-table.md',
+        text: '| helo | wrld | mistakke |\n| --- | --- | --- |\n',
+      );
+      richDocument = const MarkdownParser()
+          .parse(
+            filePath: '/tmp/review-rich-table.md',
+            source: buffer.text,
+            mode: MarkdownMode.gfm,
+            validateLocalReferences: false,
+          )
+          .busyDocument;
+      richGeneration++;
+      await tester.runAsync(() => controller.checkNow(input()));
+      initialIndex = 1;
+      await tester.tap(find.text('Open review'));
+      await _pumpWidgetUntil(
+        tester,
+        () => find.text('wrld').evaluate().isNotEmpty,
+      );
+      await tester.tap(find.text(l10n.sourceSearchNextMatch));
+      await tester.pump();
+      expect(reveals.last, 'mistakke');
+      await tester.tap(find.text(l10n.sourceSearchNextMatch));
+      await tester.pump();
+      expect(reveals.last, 'helo');
+      await tester.tap(find.text(l10n.close));
+      await tester.pumpAndSettle();
+      richDocument = null;
 
       buffer = DocumentBuffer.untitled(
         id: 'review-dialog-batch',
@@ -2259,6 +2601,116 @@ void main() {
       expect(second.runs.last.snapshot.contentRevision, 2);
     });
 
+    test(
+      'incremental Markdown projection agrees with a fresh structural parse',
+      () async {
+        final cases = <(String, String)>[
+          ('```text\n\nhelo\n\n```\n', '```text\n\nhelop\n\n```\n'),
+          ('<!--\n\nhelo\n\n-->\n', '<!--\n\nhelop\n\n-->\n'),
+          ('---\n\nhelo\n\n---\n', '---\n\nhelop\n\n---\n'),
+          ('<pre>\n\nhelo\n\n</pre>\n', '<pre>\n\nhelop\n\n</pre>\n'),
+          ('- parent\n\n  helo\n', '- parent\n\n  helop\n'),
+        ];
+        for (final (oldSource, newSource) in cases) {
+          await worker.project(
+            SpellingProjectionJob(
+              filePath: '/tmp/differential.md',
+              source: oldSource,
+              documentKind: DocumentKind.markdown,
+              markdownMode: MarkdownMode.commonMark,
+              languageId: 'en-Test',
+              snapshot: _snapshot,
+            ),
+          );
+          const nextSnapshot = SpellingSnapshotIdentity(
+            bufferId: 'buffer',
+            contentRevision: 2,
+            documentKind: DocumentKind.markdown,
+            contextGeneration: 1,
+          );
+          final incremental = await worker.project(
+            SpellingProjectionJob(
+              filePath: '/tmp/differential.md',
+              source: newSource,
+              documentKind: DocumentKind.markdown,
+              markdownMode: MarkdownMode.commonMark,
+              languageId: 'en-Test',
+              snapshot: nextSnapshot,
+            ),
+          );
+          final fresh = const MarkdownSpellingProjector().project(
+            filePath: '/tmp/differential.md',
+            source: newSource,
+            mode: MarkdownMode.commonMark,
+            languageId: 'en-Test',
+            snapshot: nextSnapshot,
+          );
+
+          Object signature(SpellingProjectionResult projection) => [
+            projection.complete,
+            projection.message,
+            for (final run in projection.runs)
+              [
+                run.text,
+                switch (run.target) {
+                  SpellingSourceTarget(:final filePath) => filePath,
+                  _ => run.target.runtimeType.toString(),
+                },
+                for (final atom in run.atoms)
+                  [
+                    atom.logicalText,
+                    atom.logicalStart,
+                    atom.logicalEnd,
+                    atom.sourceStart,
+                    atom.sourceEnd,
+                    atom.transformation.name,
+                    atom.context.name,
+                  ],
+              ],
+          ];
+
+          expect(
+            signature(incremental),
+            equals(signature(fresh)),
+            reason: 'Incremental mismatch for:\n$newSource',
+          );
+        }
+      },
+    );
+
+    test('projection cache rebinds source targets after Save As', () async {
+      const source = 'helo';
+      final first = await worker.project(
+        const SpellingProjectionJob(
+          filePath: '/tmp/original.md',
+          source: source,
+          documentKind: DocumentKind.markdown,
+          markdownMode: MarkdownMode.commonMark,
+          languageId: 'en-Test',
+          snapshot: _snapshot,
+        ),
+      );
+      final saved = await worker.project(
+        const SpellingProjectionJob(
+          filePath: '/tmp/saved-as.md',
+          source: source,
+          documentKind: DocumentKind.markdown,
+          markdownMode: MarkdownMode.commonMark,
+          languageId: 'en-Test',
+          snapshot: _snapshot,
+        ),
+      );
+
+      expect(
+        (first.runs.single.target as SpellingSourceTarget).filePath,
+        '/tmp/original.md',
+      );
+      expect(
+        (saved.runs.single.target as SpellingSourceTarget).filePath,
+        '/tmp/saved-as.md',
+      );
+    });
+
     test('project custom words do not leak between contexts', () async {
       final accepted = await worker.check(
         context: _fixtureContext(
@@ -2282,8 +2734,42 @@ void main() {
 
     test('quoted corrections retain straight and curly punctuation', () async {
       for (final fixture in [
-        (source: "'helo'", expected: "'hello'"),
-        (source: '‘helo’', expected: '‘hello’'),
+        (
+          source: "'helo'",
+          word: 'helo',
+          suggestion: 'hello',
+          expected: "'hello'",
+        ),
+        (
+          source: '‘helo’',
+          word: 'helo',
+          suggestion: 'hello',
+          expected: '‘hello’',
+        ),
+        (
+          source: "'helo world'",
+          word: 'helo',
+          suggestion: 'hello',
+          expected: "'hello world'",
+        ),
+        (
+          source: "'hello wrld'",
+          word: 'wrld',
+          suggestion: 'world',
+          expected: "'hello world'",
+        ),
+        (
+          source: '‘hello wrld’',
+          word: 'wrld',
+          suggestion: 'world',
+          expected: '‘hello world’',
+        ),
+        (
+          source: "'don't wrld,'",
+          word: 'wrld',
+          suggestion: 'world',
+          expected: "'don't world,'",
+        ),
       ]) {
         final run = const MarkdownSpellingProjector()
             .project(
@@ -2299,11 +2785,12 @@ void main() {
           context: _fixtureContext(project: 'quoted', revision: 0),
           runs: [run],
         );
-        final occurrence = checked.occurrences.single;
-        expect(occurrence.word, 'helo');
+        final occurrence = checked.occurrences.firstWhere(
+          (candidate) => candidate.word == fixture.word,
+        );
         expect(
           const SpellingReplacementPlanner()
-              .build(occurrence: occurrence, suggestion: 'hello')
+              .build(occurrence: occurrence, suggestion: fixture.suggestion)
               .applyToSource(fixture.source),
           fixture.expected,
         );
@@ -2805,6 +3292,53 @@ final class _PostExchangeAtomicFileWriter extends AtomicFileWriter {
           : (replacedPath) async {
               if (!exchanged.isCompleted) exchanged.complete();
               await _release.future;
+              return acceptReplaced(replacedPath);
+            },
+    );
+  }
+}
+
+final class _RejectedExchangeAtomicFileWriter extends AtomicFileWriter {
+  final Completer<void> beforeValidated = Completer<void>();
+  final Completer<void> exchanged = Completer<void>();
+  final Completer<void> _releaseBefore = Completer<void>();
+  final Completer<void> _releaseValidation = Completer<void>();
+
+  void releaseBeforeExchange() {
+    if (!_releaseBefore.isCompleted) _releaseBefore.complete();
+  }
+
+  void releaseValidation() {
+    if (!_releaseValidation.isCompleted) _releaseValidation.complete();
+  }
+
+  void releaseIfNeeded() {
+    releaseBeforeExchange();
+    releaseValidation();
+  }
+
+  @override
+  Future<void> writeBytes(
+    String targetPath,
+    List<int> bytes, {
+    required bool overwrite,
+    FutureOr<void> Function()? beforePublish,
+    FutureOr<bool> Function(String replacedPath)? acceptReplaced,
+  }) async {
+    await super.writeBytes(
+      targetPath,
+      bytes,
+      overwrite: overwrite,
+      beforePublish: () async {
+        await beforePublish?.call();
+        if (!beforeValidated.isCompleted) beforeValidated.complete();
+        await _releaseBefore.future;
+      },
+      acceptReplaced: acceptReplaced == null
+          ? null
+          : (replacedPath) async {
+              if (!exchanged.isCompleted) exchanged.complete();
+              await _releaseValidation.future;
               return acceptReplaced(replacedPath);
             },
     );

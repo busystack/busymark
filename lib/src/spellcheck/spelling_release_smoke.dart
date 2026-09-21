@@ -190,11 +190,12 @@ Future<int> runSpellingReleaseSmoke(String reportPath) async {
     checks['rejectedWord'] = occurrence.word;
     checks['suggestion'] = 'hello';
 
-    final plan = const SpellingReplacementPlanner().build(
+    final preparedSource = await prepareSpellingCorrection(
       occurrence: occurrence,
       suggestion: 'hello',
+      source: source,
     );
-    final corrected = plan.applyToSource(source);
+    final corrected = preparedSource.replacementSource!;
     if (corrected != 'This is hello.\n') {
       throw StateError('The exact source correction changed unexpected text.');
     }
@@ -229,9 +230,11 @@ Future<int> runSpellingReleaseSmoke(String reportPath) async {
         spellingAnnotations: [_annotationFor(occurrence)],
       ),
     );
-    if (sourceKey.currentState?.applySpellingCorrection(
+    if (sourceKey.currentState?.applyPreparedSpellingCorrection(
           occurrence: occurrence,
-          suggestion: 'hello',
+          plan: preparedSource.plan,
+          expectedSource: source,
+          replacementSource: corrected,
         ) !=
         true) {
       throw StateError('The installed Source editor rejected the correction.');
@@ -405,9 +408,21 @@ Future<void> _exerciseRichEditor({
           ),
     ),
   );
-  if (key.currentState?.applySpellingCorrection(
+  final field = key.currentState?.spellingFieldSnapshot(occurrence);
+  if (field == null) {
+    throw StateError('The installed rich editor did not expose its field.');
+  }
+  final prepared = await prepareSpellingCorrection(
+    occurrence: occurrence,
+    suggestion: 'hello',
+    field: field,
+  );
+  if (key.currentState?.applyPreparedSpellingCorrection(
         occurrence: occurrence,
         suggestion: 'hello',
+        plan: prepared.plan,
+        expectedFieldText: field,
+        preparedFieldText: prepared.replacementField,
       ) !=
       true) {
     throw StateError('The installed rich editor rejected a correction.');

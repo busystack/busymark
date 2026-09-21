@@ -239,6 +239,46 @@ Beforee %hiddenvariable% afterrr.
       }
     });
 
+    test('preserves semantic HTML boundaries and multiline exclusions', () {
+      const source = '''<div><p>hello</p><p>world</p></div>
+<p>before<br>after<br/>again<br />last</p>
+<div title="Readablee title">left<code>hiddenword</code>right</div>
+<p>above<script>
+hidden script prose
+</script>below</p>
+<style>
+hidden style prose
+</style><p>visible</p>
+''';
+      final projected = const MarkdownSpellingProjector().project(
+        filePath: '/tmp/html.md',
+        source: source,
+        mode: MarkdownMode.commonMark,
+        languageId: 'en-US',
+        snapshot: _snapshot,
+      );
+      final texts = projected.runs.map((run) => run.text).toList();
+      final all = texts.join('\n');
+
+      expect(projected.complete, isTrue, reason: projected.message);
+      expect(texts, containsAll(['hello', 'world']));
+      expect(all, isNot(contains('helloworld')));
+      expect(texts, containsAll(['before', 'after', 'again', 'last']));
+      expect(all, isNot(contains('beforeafter')));
+      expect(texts, contains('Readablee title'));
+      expect(
+        texts,
+        containsAll(['left', 'right', 'above', 'below', 'visible']),
+      );
+      expect(all, isNot(contains('leftright')));
+      expect(all, isNot(contains('hiddenword')));
+      expect(all, isNot(contains('hidden script prose')));
+      expect(all, isNot(contains('hidden style prose')));
+      for (final run in projected.runs) {
+        expect(run.hasValidMapping, isTrue);
+      }
+    });
+
     test('removes delimiters when a correction empties formatting', () {
       for (final fixture in <({String source, MarkdownMode mode})>[
         (source: 'he**x**llo\n', mode: MarkdownMode.commonMark),

@@ -178,7 +178,11 @@ final class SpellingWordStore {
               await _publish(updated, expectedIdentity: beforeRead);
             } on _SpellingWordStoreConflict catch (_) {
               continue;
-            } on AtomicFileChangedException catch (_) {
+            } on AtomicFileChangedException catch (error) {
+              // A recovery path means publication ownership became uncertain
+              // after an exchange. Retrying could overwrite either BusyMark's
+              // proposal or a newer external version, so surface the conflict.
+              if (error.recoveryPath != null) rethrow;
               continue;
             }
             final published = await read();

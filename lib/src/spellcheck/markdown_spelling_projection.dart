@@ -401,7 +401,7 @@ final class _MarkdownProseScanner {
         }
       }
       if (unit == 0x3c) {
-        final close = source.indexOf('>', cursor + 1);
+        final close = _htmlTagEnd(cursor, rangeEnd);
         if (close >= 0 && close < rangeEnd) {
           final raw = source.substring(cursor, close + 1);
           if (_autolink.hasMatch(raw) || _emailAutolink.hasMatch(raw)) {
@@ -409,24 +409,35 @@ final class _MarkdownProseScanner {
             cursor = close + 1;
             continue;
           }
-          final tag = RegExp(
-            r'^<\s*([A-Za-z][A-Za-z0-9:-]*)\b',
-          ).firstMatch(raw)?.group(1)?.toLowerCase();
-          if (tag != null && _opaqueHtmlElements.contains(tag)) {
+          final parsedTag = RegExp(
+            r'^<\s*(/?)\s*([A-Za-z][A-Za-z0-9:-]*)\b',
+          ).firstMatch(raw);
+          final closingTag = parsedTag?.group(1)?.isNotEmpty ?? false;
+          final tag = parsedTag?.group(2)?.toLowerCase();
+          if (!closingTag &&
+              tag != null &&
+              _opaqueHtmlElements.contains(tag) &&
+              !raw.trimRight().endsWith('/>')) {
             final closing = RegExp(
               '</\\s*${RegExp.escape(tag)}\\s*>',
               caseSensitive: false,
-            ).firstMatch(source.substring(close + 1, rangeEnd));
+            ).firstMatch(source.substring(close + 1, end));
             _barrier();
             if (closing == null) {
               complete = false;
-              cursor = rangeEnd;
+              _opaqueEnd = end;
             } else {
-              cursor = close + 1 + closing.end;
+              _opaqueEnd = close + 1 + closing.end;
             }
             continue;
           }
-          _scanHumanReadableAttributes(cursor, close + 1);
+          final semanticBoundary =
+              tag == 'br' ||
+              tag == 'hr' ||
+              tag != null && _blockHtmlElements.contains(tag);
+          if (semanticBoundary) _barrier();
+          if (!closingTag) _scanHumanReadableAttributes(cursor, close + 1);
+          if (semanticBoundary) _barrier();
           cursor = close + 1;
           continue;
         }
@@ -441,6 +452,21 @@ final class _MarkdownProseScanner {
       );
       cursor += width;
     }
+  }
+
+  int _htmlTagEnd(int start, int rangeEnd) {
+    int? quote;
+    for (var cursor = start + 1; cursor < rangeEnd; cursor++) {
+      final unit = source.codeUnitAt(cursor);
+      if (quote != null) {
+        if (unit == quote) quote = null;
+      } else if (unit == 0x22 || unit == 0x27) {
+        quote = unit;
+      } else if (unit == 0x3e) {
+        return cursor;
+      }
+    }
+    return -1;
   }
 
   int? _scanLinkOrImage(int cursor, int rangeEnd, {required bool image}) {
@@ -809,6 +835,48 @@ const _opaqueInlineKinds = {
 };
 
 const _opaqueHtmlElements = {'code', 'pre', 'script', 'style'};
+
+const _blockHtmlElements = {
+  'address',
+  'article',
+  'aside',
+  'blockquote',
+  'body',
+  'details',
+  'dialog',
+  'div',
+  'dl',
+  'dt',
+  'dd',
+  'fieldset',
+  'figcaption',
+  'figure',
+  'footer',
+  'form',
+  'h1',
+  'h2',
+  'h3',
+  'h4',
+  'h5',
+  'h6',
+  'header',
+  'html',
+  'li',
+  'main',
+  'nav',
+  'ol',
+  'p',
+  'section',
+  'summary',
+  'table',
+  'tbody',
+  'td',
+  'tfoot',
+  'th',
+  'thead',
+  'tr',
+  'ul',
+};
 
 bool _commonMarkEscapableAsciiPunctuation(int unit) =>
     (unit >= 0x21 && unit <= 0x2f) ||

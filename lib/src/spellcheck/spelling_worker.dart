@@ -644,17 +644,22 @@ final class _WorkerRuntime {
       final languageId = job['languageId'].toString();
       final richDocument = job['richDocument'];
       final cacheKey =
-          '${snapshot.bufferId}\u0000${documentKind.name}\u0000'
+          '${snapshot.bufferId}\u0000$filePath\u0000${documentKind.name}\u0000'
           '${richDocument == null ? 'source' : 'rich'}';
       final previous = _projectionCache.remove(cacheKey);
       SpellingProjectionResult projection;
       if (previous != null &&
           previous.source == source &&
+          previous.filePath == filePath &&
           previous.markdownMode == markdownMode &&
           previous.languageId == languageId &&
           previous.richDocumentGeneration ==
               (job['richDocumentGeneration'] as int)) {
-        projection = _rebindProjection(previous.projection, snapshot);
+        projection = _rebindProjection(
+          previous.projection,
+          snapshot,
+          filePath: filePath,
+        );
       } else if (richDocument == null &&
           previous != null &&
           (documentKind == DocumentKind.markdown ||
@@ -706,6 +711,7 @@ final class _WorkerRuntime {
       }
       _projectionCache[cacheKey] = _ProjectionCacheEntry(
         source: source,
+        filePath: filePath,
         markdownMode: markdownMode,
         languageId: languageId,
         richDocumentGeneration: job['richDocumentGeneration'] as int,
@@ -800,6 +806,7 @@ final class _WorkerRuntime {
 final class _ProjectionCacheEntry {
   const _ProjectionCacheEntry({
     required this.source,
+    required this.filePath,
     required this.markdownMode,
     required this.languageId,
     required this.richDocumentGeneration,
@@ -807,6 +814,7 @@ final class _ProjectionCacheEntry {
   });
 
   final String source;
+  final String filePath;
   final MarkdownMode markdownMode;
   final String languageId;
   final int richDocumentGeneration;
@@ -815,8 +823,9 @@ final class _ProjectionCacheEntry {
 
 SpellingProjectionResult _rebindProjection(
   SpellingProjectionResult projection,
-  SpellingSnapshotIdentity snapshot,
-) => SpellingProjectionResult(
+  SpellingSnapshotIdentity snapshot, {
+  required String filePath,
+}) => SpellingProjectionResult(
   runs: List.unmodifiable([
     for (final (index, run) in projection.runs.indexed)
       _copyProjectedRun(
@@ -824,6 +833,7 @@ SpellingProjectionResult _rebindProjection(
         id: 'cached:$index',
         snapshot: snapshot,
         sourceDelta: 0,
+        filePath: filePath,
       ),
   ]),
   complete: projection.complete,
@@ -864,6 +874,26 @@ SpellingProjectionResult? _incrementalPlainMarkdownProjection({
       !_plainMarkdownParagraph(newFragment)) {
     return null;
   }
+  final owners = <({SpellingProseRun run, int start, int end})>[];
+  for (final run in previous.projection.runs) {
+    final bounds = _projectedRunSourceBounds(run);
+    if (bounds == null) return null;
+    final ownsChange = oldSuffix == prefix
+        ? bounds.start <= prefix && prefix <= bounds.end
+        : bounds.start <= prefix && bounds.end >= oldSuffix;
+    if (ownsChange) {
+      owners.add((run: run, start: bounds.start, end: bounds.end));
+    }
+  }
+  // Parsing an isolated line is safe only when the prior full projection says
+  // the edit belongs to one eligible prose leaf. An excluded or ambiguous
+  // region (fences, comments, front matter, HTML, or nested containers) must
+  // be projected with its complete parser context.
+  if (owners.length != 1 ||
+      owners.single.start < oldRegion.start ||
+      owners.single.end > oldRegion.end) {
+    return null;
+  }
   final delta = newRegion.end - oldRegion.end;
   final before = <SpellingProseRun>[];
   final after = <SpellingProseRun>[];
@@ -888,16 +918,29 @@ SpellingProjectionResult? _incrementalPlainMarkdownProjection({
   if (!changed.complete) return null;
   final combined = <SpellingProseRun>[
     for (final run in before)
-      _copyProjectedRun(run, id: '', snapshot: snapshot, sourceDelta: 0),
+      _copyProjectedRun(
+        run,
+        id: '',
+        snapshot: snapshot,
+        sourceDelta: 0,
+        filePath: filePath,
+      ),
     for (final run in changed.runs)
       _copyProjectedRun(
         run,
         id: '',
         snapshot: snapshot,
         sourceDelta: newRegion.start,
+        filePath: filePath,
       ),
     for (final run in after)
-      _copyProjectedRun(run, id: '', snapshot: snapshot, sourceDelta: delta),
+      _copyProjectedRun(
+        run,
+        id: '',
+        snapshot: snapshot,
+        sourceDelta: delta,
+        filePath: filePath,
+      ),
   ];
   return SpellingProjectionResult(
     runs: List.unmodifiable([
@@ -937,8 +980,14 @@ SpellingProjectionResult? _incrementalPlainMarkdownProjection({
   return (start: start, end: end);
 }
 
-bool _plainMarkdownParagraph(String value) =>
-    !RegExp(r'[`~$<>{}\[\]\\*_#|%&]').hasMatch(value);
+bool _plainMarkdownParagraph(String value) {
+  if (RegExp(r'[`~$<>{}\[\]\\*_#|%&]').hasMatch(value)) return false;
+  if (RegExp(r'^(?: {4}|\t)').hasMatch(value)) return false;
+  if (RegExp(r'^\s*(?:>|[-+*]\s|\d+[.)]\s|---(?:\s|$))').hasMatch(value)) {
+    return false;
+  }
+  return true;
+}
 
 ({int start, int end})? _projectedRunSourceBounds(SpellingProseRun run) {
   final atoms = run.atoms.where((atom) => atom.sourceStart >= 0).toList();
@@ -957,6 +1006,7 @@ SpellingProseRun _copyProjectedRun(
   required String id,
   required SpellingSnapshotIdentity snapshot,
   required int sourceDelta,
+  String? filePath,
 }) => SpellingProseRun(
   id: id.isEmpty ? run.id : id,
   text: run.text,
@@ -980,7 +1030,12 @@ SpellingProseRun _copyProjectedRun(
         richLeafPath: atom.richLeafPath,
       ),
   ]),
-  target: run.target,
+  target: switch (run.target) {
+    SpellingSourceTarget() when filePath != null => SpellingSourceTarget(
+      filePath: filePath,
+    ),
+    final target => target,
+  },
   snapshot: snapshot,
   formattingWrappers: List.unmodifiable([
     for (final wrapper in run.formattingWrappers)

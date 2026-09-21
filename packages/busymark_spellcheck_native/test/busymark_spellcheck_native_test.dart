@@ -87,6 +87,36 @@ void main() {
     expect(dictionary.check('dash-'), NativeSpellResult.accepted);
   });
 
+  test('quotation punctuation stays outside tokens across phrases', () {
+    const prose = "'helo world' ‘hello wrld’ 'don't wrld,'";
+    final ranges = dictionary.tokenize(prose, language: 'en-US');
+    final utf16 = nativeUtf8BoundaryToUtf16(prose);
+    final words = [
+      for (final range in ranges)
+        prose.substring(utf16[range.utf8Start], utf16[range.utf8End]),
+    ];
+
+    expect(words, ['helo', 'world', 'hello', 'wrld', "don't", 'wrld']);
+    for (final word in words) {
+      expect(word, isNot(startsWith("'")));
+      expect(word, isNot(endsWith("'")));
+      expect(word, isNot(startsWith('‘')));
+      expect(word, isNot(endsWith('’')));
+      expect(word, isNot(endsWith(',')));
+    }
+  });
+
+  test('standalone elisions and possessives retain lexical apostrophes', () {
+    for (final prose in ["'tis", '’tis', "dogs'", 'dogs’']) {
+      final range = dictionary.tokenize(prose, language: 'en-US').single;
+      final utf16 = nativeUtf8BoundaryToUtf16(prose);
+      expect(
+        prose.substring(utf16[range.utf8Start], utf16[range.utf8End]),
+        prose,
+      );
+    }
+  });
+
   test('closed handles report an unchecked failure', () {
     dictionary.close();
     expect(

@@ -4,7 +4,6 @@ import '../../writerside/writerside_tabs_view.dart';
 import '../../writerside/writerside_source_loader.dart';
 import 'dart:async';
 import 'dart:io';
-import 'dart:isolate';
 import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart' show setEquals;
@@ -12711,19 +12710,12 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
         : richEditor?.spellingFieldSnapshot(occurrence);
     if (source == null && field == null) return null;
     try {
-      final prepared = await Isolate.run(() {
-        final plan = const SpellingReplacementPlanner().build(
-          occurrence: occurrence,
-          suggestion: suggestion,
-        );
-        return (
-          plan: plan,
-          replacementSource: source == null ? null : plan.applyToSource(source),
-          replacementField: field == null || plan.fieldEdits.isEmpty
-              ? null
-              : plan.applyToField(field),
-        );
-      });
+      final prepared = await prepareSpellingCorrection(
+        occurrence: occurrence,
+        suggestion: suggestion,
+        source: source,
+        field: field,
+      );
       if (!mounted || !_spelling.isCurrent(occurrence)) return null;
       final plan = prepared.plan;
       final applied = occurrence.run.target is SpellingSourceTarget
@@ -12747,7 +12739,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
       final sourceEnd = occurrence.sourceEnd;
       if (sourceStart != null && sourceEnd != null) {
         return SpellingReviewCorrection(
-          target: _reviewTargetIdentity(occurrence),
+          coordinateScope: _reviewCoordinateScope(occurrence),
           start: sourceStart,
           oldEnd: sourceEnd,
           newEnd: plan.translateSourceOffset(sourceEnd),
@@ -12757,7 +12749,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
       final fieldEnd = occurrence.fieldEnd;
       if (fieldStart == null || fieldEnd == null) return null;
       return SpellingReviewCorrection(
-        target: _reviewTargetIdentity(occurrence),
+        coordinateScope: _reviewCoordinateScope(occurrence),
         start: fieldStart,
         oldEnd: fieldEnd,
         newEnd: plan.translateFieldOffset(fieldEnd),
@@ -16241,13 +16233,13 @@ class _SearchSidebar extends StatelessWidget {
 @visibleForTesting
 final class SpellingReviewCorrection {
   const SpellingReviewCorrection({
-    required this.target,
+    required this.coordinateScope,
     required this.start,
     required this.oldEnd,
     required this.newEnd,
   });
 
-  final String target;
+  final String coordinateScope;
   final int start;
   final int oldEnd;
   final int newEnd;
@@ -16283,21 +16275,35 @@ class _SpellingReviewDialogState extends State<BusyMarkSpellingReviewDialog> {
   final List<_SpellingReviewVisit> _visited = [];
   String? _currentOccurrenceId;
   int? _advanceAnchor;
-  String? _advanceTarget;
+  String? _advanceScope;
   String? _bufferId;
   bool _actionInProgress = false;
   final _dialogFocus = FocusNode(debugLabel: 'Spelling review dialog');
   String? _suggestionOccurrenceId;
   Future<List<String>>? _suggestions;
 
-  List<SpellingOccurrence> get _occurrences => widget.spelling.misspellings
-      .where(
-        (occurrence) =>
-            widget.spelling.isCurrent(occurrence) &&
-            (_bufferId == null ||
-                occurrence.run.snapshot.bufferId == _bufferId),
-      )
-      .toList(growable: false);
+  List<SpellingOccurrence> get _occurrences {
+    final result = widget.spelling.misspellings
+        .where(
+          (occurrence) =>
+              widget.spelling.isCurrent(occurrence) &&
+              (_bufferId == null ||
+                  occurrence.run.snapshot.bufferId == _bufferId),
+        )
+        .toList(growable: false);
+    final originalOrder = {
+      for (final (index, occurrence) in result.indexed) occurrence: index,
+    };
+    result.sort((left, right) {
+      final leftSource = left.sourceStart;
+      final rightSource = right.sourceStart;
+      if (leftSource != null && rightSource != null) {
+        return leftSource.compareTo(rightSource);
+      }
+      return originalOrder[left]!.compareTo(originalOrder[right]!);
+    });
+    return result;
+  }
 
   @override
   void initState() {
@@ -16406,8 +16412,8 @@ class _SpellingReviewDialogState extends State<BusyMarkSpellingReviewDialog> {
     if (!_visited.any((candidate) => candidate.matches(occurrence))) {
       _visited.add(visit);
     }
-    _advanceAnchor = occurrence.sourceEnd ?? occurrence.fieldEnd;
-    _advanceTarget = _reviewTargetIdentity(occurrence);
+    _advanceAnchor = _reviewCoordinateEnd(occurrence);
+    _advanceScope = _reviewCoordinateScope(occurrence);
     _currentOccurrenceId = null;
   }
 
@@ -16427,17 +16433,17 @@ class _SpellingReviewDialogState extends State<BusyMarkSpellingReviewDialog> {
     final delta = correction.newEnd - correction.oldEnd;
     _visited.removeWhere(
       (visit) =>
-          visit.target == correction.target &&
+          visit.coordinateScope == correction.coordinateScope &&
           visit.offset >= correction.start &&
           visit.offset < correction.oldEnd,
     );
     for (final visit in _visited) {
-      if (visit.target == correction.target &&
+      if (visit.coordinateScope == correction.coordinateScope &&
           visit.offset >= correction.oldEnd) {
         visit.offset += delta;
       }
     }
-    if (_advanceTarget == correction.target &&
+    if (_advanceScope == correction.coordinateScope &&
         _advanceAnchor != null &&
         _advanceAnchor! >= correction.oldEnd) {
       _advanceAnchor = _advanceAnchor! + delta;
@@ -16455,11 +16461,8 @@ class _SpellingReviewDialogState extends State<BusyMarkSpellingReviewDialog> {
         ? candidates.first
         : candidates.firstWhere(
             (index) =>
-                _reviewTargetIdentity(occurrences[index]) == _advanceTarget &&
-                (occurrences[index].sourceStart ??
-                        occurrences[index].fieldStart ??
-                        -1) >=
-                    anchor,
+                _reviewCoordinateScope(occurrences[index]) == _advanceScope &&
+                _reviewCoordinateStart(occurrences[index]) >= anchor,
             orElse: () => candidates.first,
           );
     _currentOccurrenceId = occurrences[_index].id;
@@ -16681,27 +16684,38 @@ String _reviewTargetIdentity(SpellingOccurrence occurrence) =>
         'cell:$tableBlockId:$cellId',
     };
 
+String _reviewCoordinateScope(SpellingOccurrence occurrence) =>
+    occurrence.sourceStart != null && occurrence.sourceEnd != null
+    ? 'document:${occurrence.run.snapshot.bufferId}'
+    : 'field:${_reviewTargetIdentity(occurrence)}';
+
+int _reviewCoordinateStart(SpellingOccurrence occurrence) =>
+    occurrence.sourceStart ?? occurrence.fieldStart ?? -1;
+
+int? _reviewCoordinateEnd(SpellingOccurrence occurrence) =>
+    occurrence.sourceEnd ?? occurrence.fieldEnd;
+
 final class _SpellingReviewVisit {
   _SpellingReviewVisit({
-    required this.target,
+    required this.coordinateScope,
     required this.offset,
     required this.word,
   });
 
   factory _SpellingReviewVisit.fromOccurrence(SpellingOccurrence occurrence) =>
       _SpellingReviewVisit(
-        target: _reviewTargetIdentity(occurrence),
-        offset: occurrence.sourceStart ?? occurrence.fieldStart ?? -1,
+        coordinateScope: _reviewCoordinateScope(occurrence),
+        offset: _reviewCoordinateStart(occurrence),
         word: occurrence.word,
       );
 
-  final String target;
+  final String coordinateScope;
   int offset;
   final String word;
 
   bool matches(SpellingOccurrence occurrence) =>
-      target == _reviewTargetIdentity(occurrence) &&
-      offset == (occurrence.sourceStart ?? occurrence.fieldStart ?? -1) &&
+      coordinateScope == _reviewCoordinateScope(occurrence) &&
+      offset == _reviewCoordinateStart(occurrence) &&
       word == occurrence.word;
 }
 
