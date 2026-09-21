@@ -11,6 +11,7 @@ import 'package:busymark/src/markdown/busymark_markdown_serializer.dart';
 import 'package:busymark/src/markdown/markdown_model.dart';
 import 'package:busymark/src/markdown/markdown_parser.dart';
 import 'package:busymark/src/markdown/preview_model.dart';
+import 'package:busymark/src/workspace/document_buffer.dart';
 import 'package:busymark/src/workspace/workspace_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -307,10 +308,15 @@ Helpful advice.
 
       const service = WorkspaceService();
       final workspace = await service.openPath(root.path);
-      final preview = service.buildPreview(
-        workspace.copyWith(activeFilePath: topicPath),
-        source,
-      )!;
+      final targetWorkspace = workspace.copyWith(activeFilePath: topicPath);
+      final target = DocumentBuffer(
+        id: 'admonitions',
+        filePath: topicPath,
+        text: source,
+        lastSavedText: source,
+        dirty: false,
+      );
+      final preview = service.buildDocumentPreview(targetWorkspace, target)!;
       final callouts = preview.blocks.where(
         (block) =>
             block.kind == PreviewBlockKind.admonition ||

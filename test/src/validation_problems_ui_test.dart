@@ -9,6 +9,7 @@ import 'package:busymark/src/app/system_accent.dart';
 import 'package:busymark/src/core/source_span.dart';
 import 'package:busymark/src/editor/source/source_editor.dart';
 import 'package:busymark/src/platform/linux_header_bar_service.dart';
+import 'package:busymark/src/workspace/document_buffer.dart';
 import 'package:busymark/src/workspace/workspace_controller.dart';
 import 'package:busymark/src/workspace/workspace_model.dart';
 import 'package:busymark/src/workspace/workspace_service.dart';
@@ -308,11 +309,14 @@ class _ControlledValidationService extends WorkspaceService {
   String? blockedPath;
   int calls = 0;
   @override
-  Future<Workspace> reparseActive(Workspace workspace, String source) async {
+  Future<Workspace> reparseDocument(
+    Workspace workspace,
+    DocumentBuffer buffer,
+  ) async {
     calls++;
     if (fail) throw StateError('Validation failed');
-    if (workspace.activeFilePath == blockedPath) await gate?.future;
-    return super.reparseActive(workspace, source);
+    if (buffer.filePath == blockedPath) await gate?.future;
+    return super.reparseDocument(workspace, buffer);
   }
 }
 
@@ -325,16 +329,19 @@ class _QueuedValidationService extends WorkspaceService {
   final sources = <String>[];
 
   @override
-  Future<Workspace> reparseActive(Workspace workspace, String source) async {
-    sources.add(source);
-    if (source == '# Automatic first\n') {
+  Future<Workspace> reparseDocument(
+    Workspace workspace,
+    DocumentBuffer buffer,
+  ) async {
+    sources.add(buffer.text);
+    if (buffer.text == '# Automatic first\n') {
       automaticStarted.complete();
       await releaseAutomatic.future;
-    } else if (source == '# Latest\n') {
+    } else if (buffer.text == '# Latest\n') {
       latestCalls++;
       if (!manualStarted.isCompleted) manualStarted.complete();
       await releaseManual.future;
     }
-    return super.reparseActive(workspace, source);
+    return super.reparseDocument(workspace, buffer);
   }
 }

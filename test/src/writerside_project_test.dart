@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:convert';
 
 import 'package:busymark/src/workspace/workspace_model.dart';
+import 'package:busymark/src/workspace/document_buffer.dart';
 import 'package:busymark/src/workspace/workspace_service.dart';
 import 'package:busymark/src/core/diagnostic.dart';
 import 'package:busymark/src/editor/source/source_autocomplete.dart';
@@ -13,6 +14,16 @@ import 'package:busymark/src/writerside/writerside_document_serializer.dart';
 import 'package:busymark/src/writerside/writerside_project.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
+
+DocumentBuffer _documentBuffer(Workspace workspace, String source) {
+  return DocumentBuffer(
+    id: 'test:${workspace.activeFilePath ?? 'untitled'}',
+    filePath: workspace.activeFilePath,
+    text: source,
+    lastSavedText: source,
+    dirty: true,
+  );
+}
 
 void main() {
   test(
@@ -267,13 +278,16 @@ void main() {
         isNotEmpty,
       );
 
-      final reparsed = await service.reparseActive(workspace, '''
+      final reparsed = await service.reparseDocument(
+        workspace,
+        _documentBuffer(workspace, '''
 <topic id="renamed-main" title="Main">
   <include origin="shared-docs" from="shared.topic"
            element-id="shared-note"/>
   <snippet id="active-fixed"><p>Indexed while unsaved.</p></snippet>
 </topic>
-''');
+'''),
+      );
       final project = reparsed.writersideProject!;
       final moduleId = project.activeModuleId;
       final topicNames = project.index.names(
@@ -361,9 +375,12 @@ void main() {
         markdown: null,
         diagnostics: [...workspace.diagnostics, scanDiagnostic],
       );
-      final reparsed = await service.reparseActive(
+      final reparsed = await service.reparseDocument(
         variableWorkspace,
-        '<vars><var name="live-name" value="Live value"/></vars>',
+        _documentBuffer(
+          variableWorkspace,
+          '<vars><var name="live-name" value="Live value"/></vars>',
+        ),
       );
       final project = reparsed.writersideProject!;
       final module = reparsed.writersideModule!;
@@ -443,12 +460,15 @@ void main() {
       markdown: null,
     );
 
-    final reparsed = await service.reparseActive(treeWorkspace, '''
+    final reparsed = await service.reparseDocument(
+      treeWorkspace,
+      _documentBuffer(treeWorkspace, '''
 <instance-profile id="live-guide" name="Live Guide"
                   start-page="main.topic">
   <toc-element topic="main.topic"/>
 </instance-profile>
-''');
+'''),
+    );
     final project = reparsed.writersideProject!;
 
     expect(reparsed.writersideModule?.instances.single.id, 'live-guide');

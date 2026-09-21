@@ -406,6 +406,7 @@ class _SidebarShortcutRequestController extends Notifier<_SidebarTab?> {
 class _OutlineNavigationTarget {
   const _OutlineNavigationTarget({
     required this.workspaceId,
+    required this.bufferId,
     required this.filePath,
     required this.headingId,
     required this.line,
@@ -413,6 +414,7 @@ class _OutlineNavigationTarget {
   });
 
   final String workspaceId;
+  final String bufferId;
   final String? filePath;
   final String headingId;
   final int? line;
@@ -422,6 +424,7 @@ class _OutlineNavigationTarget {
 class _OutlineViewportTarget {
   const _OutlineViewportTarget({
     required this.workspaceId,
+    required this.bufferId,
     required this.filePath,
     required this.headingId,
     required this.sourceStartOffset,
@@ -429,6 +432,7 @@ class _OutlineViewportTarget {
   });
 
   final String workspaceId;
+  final String bufferId;
   final String? filePath;
   final String? headingId;
   final int? sourceStartOffset;
@@ -436,6 +440,7 @@ class _OutlineViewportTarget {
 
   bool sameLocationAs(_OutlineViewportTarget other) {
     return workspaceId == other.workspaceId &&
+        bufferId == other.bufferId &&
         filePath == other.filePath &&
         headingId == other.headingId &&
         sourceStartOffset == other.sourceStartOffset &&
@@ -573,10 +578,8 @@ bool _workspaceSearchInputsChanged(
   if (previousWorkspace == null || nextWorkspace == null) {
     return previousWorkspace != nextWorkspace;
   }
-  final previousActivePath =
-      previousWorkspace.activeFilePath ?? previousWorkspace.markdown?.filePath;
-  final nextActivePath =
-      nextWorkspace.activeFilePath ?? nextWorkspace.markdown?.filePath;
+  final previousActivePath = previous.activeBuffer?.filePath;
+  final nextActivePath = next.activeBuffer?.filePath;
   return previousActivePath != nextActivePath ||
       !_sameWorkspaceSearchFiles(previousWorkspace.files, nextWorkspace.files);
 }
@@ -811,8 +814,8 @@ class WorkspaceScreen extends ConsumerWidget {
       });
     }
     final title = state.isDirty
-        ? '*${_activeFileName(context, workspace)}'
-        : _activeFileName(context, workspace);
+        ? '*${_activeFileName(context, workspace, state.activeBuffer)}'
+        : _activeFileName(context, workspace, state.activeBuffer);
     final hasSidebar = _hasWorkspaceSidebar(workspace);
     final headerConfiguration = HeaderBarConfigurationDefaults.of(context)
         .copyWith(
@@ -932,7 +935,11 @@ class WorkspaceScreen extends ConsumerWidget {
                               onEscape: () => _closeSearch(ref),
                             )
                           : _HeaderTitle(
-                              title: _activeFileName(context, workspace),
+                              title: _activeFileName(
+                                context,
+                                workspace,
+                                state.activeBuffer,
+                              ),
                               subtitle: _workspaceKindLabel(
                                 context,
                                 workspace.kind,
@@ -1097,7 +1104,8 @@ class WorkspaceScreen extends ConsumerWidget {
   }
 
   void _selectSidebarShortcut(WidgetRef ref, _SidebarTab tab) {
-    final workspace = ref.read(workspaceControllerProvider).workspace;
+    final state = ref.read(workspaceControllerProvider);
+    final workspace = state.workspace;
     if (workspace == null || !_sidebarTabsFor(workspace.kind).contains(tab)) {
       return;
     }
@@ -1227,15 +1235,16 @@ class WorkspaceScreen extends ConsumerWidget {
     }
   }
 
-  String _activeFileName(BuildContext context, Workspace workspace) {
-    final path = workspace.activeFilePath ?? workspace.markdown?.filePath;
+  String _activeFileName(
+    BuildContext context,
+    Workspace workspace,
+    DocumentBuffer? buffer,
+  ) {
+    final path = buffer?.filePath;
     if (path == null || path.isEmpty) {
-      return switch (workspace.kind) {
-        WorkspaceKind.markdownFolder ||
-        WorkspaceKind.writersideModule => context.l10n.noOpenFile,
-        WorkspaceKind.untitledMarkdown ||
-        WorkspaceKind.singleMarkdown => context.l10n.untitledMarkdownFileName,
-      };
+      return buffer == null
+          ? context.l10n.noOpenFile
+          : context.l10n.untitledMarkdownFileName;
     }
     return p.basename(path);
   }
@@ -1299,12 +1308,13 @@ class WorkspaceScreen extends ConsumerWidget {
     WidgetRef ref,
     _WorkspaceSearchResult result,
   ) async {
-    final workspace = ref.read(workspaceControllerProvider).workspace;
+    final state = ref.read(workspaceControllerProvider);
+    final workspace = state.workspace;
     final searchOptions = ref.read(_workspaceSearchProvider).options;
     if (workspace == null) {
       return;
     }
-    final activePath = workspace.activeFilePath ?? workspace.markdown?.filePath;
+    final activePath = state.activeBuffer?.filePath;
     if (activePath != result.filePath) {
       final opened = await ref
           .read(workspaceControllerProvider.notifier)
@@ -2259,6 +2269,9 @@ class _SidebarState extends ConsumerState<_Sidebar> {
                     ),
                     _SidebarTab.outline => _OutlineTab(
                       workspace: widget.workspace,
+                      bufferId: ref
+                          .watch(workspaceControllerProvider)
+                          .activeBufferId,
                       headings: widget.outline,
                     ),
                     _SidebarTab.git => GitSidebarTab(
@@ -2326,9 +2339,13 @@ class _SidebarState extends ConsumerState<_Sidebar> {
   Future<void> _refineActiveDocumentWithAi(BuildContext context) async {
     final state = ref.read(workspaceControllerProvider);
     final workspace = state.workspace;
+    final buffer = state.activeBuffer;
     if (workspace == null ||
-        !(_activeWorkspaceDocumentKind(workspace)?.supportsAiMarkdownEditing ??
-            false) ||
+        buffer == null ||
+        !resolveWorkspaceDocumentContext(
+          workspace,
+          buffer,
+        ).kind.supportsAiMarkdownEditing ||
         state.activeText.isEmpty) {
       return;
     }
@@ -9259,10 +9276,12 @@ Future<bool> _refineActiveSourceRangesWithAi(
     }
     final state = ref.read(workspaceControllerProvider);
     final workspace = state.workspace;
-    if (workspace == null) {
+    final buffer = state.activeBuffer;
+    if (workspace == null || buffer == null) {
       return false;
     }
-    final path = workspace.activeFilePath ?? workspace.markdown?.filePath;
+    final path = buffer.filePath;
+    final bufferId = buffer.id;
     final source = state.activeText;
     final start = requestedRange.fullDocument ? 0 : requestedRange.start;
     final end = requestedRange.fullDocument
@@ -9282,7 +9301,7 @@ Future<bool> _refineActiveSourceRangesWithAi(
         sourceRevision: ref
             .read(workspaceControllerProvider.notifier)
             .editRevision,
-        targetId: path ?? 'untitled',
+        targetId: bufferId,
         documentPath: path,
         blockTargetAvailable: false,
       ),
@@ -9305,6 +9324,7 @@ Future<bool> _refineActiveSourceRangesWithAi(
         !_isSameActiveDocument(
           ref.read(workspaceControllerProvider),
           workspaceId: workspace.id,
+          bufferId: bufferId,
           activePath: path,
           source: source,
         )) {
@@ -9325,9 +9345,14 @@ Future<bool> _refineActiveSourceRangesWithAi(
 }
 
 class _OutlineTab extends ConsumerStatefulWidget {
-  const _OutlineTab({required this.workspace, required this.headings});
+  const _OutlineTab({
+    required this.workspace,
+    required this.bufferId,
+    required this.headings,
+  });
 
   final Workspace workspace;
+  final String? bufferId;
   final List<DocumentOutlineHeading> headings;
 
   @override
@@ -9350,6 +9375,7 @@ class _OutlineTabState extends ConsumerState<_OutlineTab> {
     super.initState();
     _outlineStateKey = _outlineStateSignature(
       widget.workspace,
+      widget.bufferId,
       widget.headings,
     );
     _expandedNodeKeys = _initialExpandedOutlineNodeKeys(widget.headings);
@@ -9358,7 +9384,11 @@ class _OutlineTabState extends ConsumerState<_OutlineTab> {
   @override
   void didUpdateWidget(covariant _OutlineTab oldWidget) {
     super.didUpdateWidget(oldWidget);
-    final nextKey = _outlineStateSignature(widget.workspace, widget.headings);
+    final nextKey = _outlineStateSignature(
+      widget.workspace,
+      widget.bufferId,
+      widget.headings,
+    );
     if (nextKey != _outlineStateKey) {
       _outlineStateKey = nextKey;
       _expandedNodeKeys = _initialExpandedOutlineNodeKeys(widget.headings);
@@ -9469,19 +9499,18 @@ class _OutlineTabState extends ConsumerState<_OutlineTab> {
   ) async {
     final initialState = ref.read(workspaceControllerProvider);
     final workspace = initialState.workspace;
-    if (workspace == null) {
+    final buffer = initialState.activeBuffer;
+    if (workspace == null || buffer == null) {
       return;
     }
     final workspaceId = workspace.id;
-    final activePath = workspace.activeFilePath ?? workspace.markdown?.filePath;
-    final source = initialState.activeText;
-    final mode =
-        workspace.markdown?.mode ??
-        (workspace.kind == WorkspaceKind.writersideModule
-            ? MarkdownMode.writersideMarkdown
-            : MarkdownMode.commonMark);
+    final bufferId = buffer.id;
+    final documentContext = resolveWorkspaceDocumentContext(workspace, buffer);
+    final activePath = documentContext.diskPath;
+    final source = buffer.text;
+    final mode = documentContext.markdownMode;
     final parsed = await const MarkdownParser().parseAsync(
-      filePath: activePath ?? 'untitled.md',
+      filePath: documentContext.parserPath,
       source: source,
       mode: mode,
       workspaceRoot: workspace.rootPath,
@@ -9491,6 +9520,7 @@ class _OutlineTabState extends ConsumerState<_OutlineTab> {
         !_isSameActiveDocument(
           ref.read(workspaceControllerProvider),
           workspaceId: workspaceId,
+          bufferId: bufferId,
           activePath: activePath,
           source: source,
         )) {
@@ -9559,6 +9589,7 @@ class _OutlineTabState extends ConsumerState<_OutlineTab> {
         !_isSameActiveDocument(
           ref.read(workspaceControllerProvider),
           workspaceId: workspaceId,
+          bufferId: bufferId,
           activePath: activePath,
           source: source,
         )) {
@@ -9583,6 +9614,7 @@ class _OutlineTabState extends ConsumerState<_OutlineTab> {
     final viewportTarget = ref.watch(_outlineViewportTargetProvider);
     final activeNodeKey = _activeVisibleOutlineNodeKey(
       workspace: widget.workspace,
+      bufferId: widget.bufferId,
       headings: headings,
       entries: entries,
       target: viewportTarget,
@@ -9640,6 +9672,7 @@ class _OutlineTabState extends ConsumerState<_OutlineTab> {
               _setOutlineViewportTarget(
                 ref,
                 workspace: widget.workspace,
+                bufferId: widget.bufferId,
                 heading: heading,
               );
               ref
@@ -9647,6 +9680,7 @@ class _OutlineTabState extends ConsumerState<_OutlineTab> {
                   .set(
                     _OutlineNavigationTarget(
                       workspaceId: widget.workspace.id,
+                      bufferId: widget.bufferId ?? '',
                       filePath: widget.workspace.activeFilePath,
                       headingId: heading.id,
                       line: heading.sourceStartLine,
@@ -9826,14 +9860,15 @@ int _resolveParsedOutlineHeadingIndex(
 bool _isSameActiveDocument(
   WorkspaceState state, {
   required String workspaceId,
+  required String bufferId,
   required String? activePath,
   required String source,
 }) {
   final workspace = state.workspace;
   return workspace?.id == workspaceId &&
-      (workspace?.activeFilePath ?? workspace?.markdown?.filePath) ==
-          activePath &&
-      state.activeText == source;
+      state.activeBuffer?.id == bufferId &&
+      state.activeBuffer?.filePath == activePath &&
+      state.activeBuffer?.text == source;
 }
 
 Future<bool> _confirmDeleteOutlineSection(
@@ -9869,6 +9904,7 @@ Future<bool> _confirmDeleteOutlineSection(
 void _setOutlineViewportTarget(
   WidgetRef ref, {
   required Workspace workspace,
+  required String? bufferId,
   required DocumentOutlineHeading? heading,
 }) {
   ref
@@ -9876,7 +9912,8 @@ void _setOutlineViewportTarget(
       .set(
         _OutlineViewportTarget(
           workspaceId: workspace.id,
-          filePath: workspace.activeFilePath ?? workspace.markdown?.filePath,
+          bufferId: bufferId ?? '',
+          filePath: workspace.activeFilePath,
           headingId: heading?.id,
           sourceStartOffset: heading?.sourceStartOffset,
           editorBlockId: heading?.editorBlockId,
@@ -9886,14 +9923,15 @@ void _setOutlineViewportTarget(
 
 String? _activeVisibleOutlineNodeKey({
   required Workspace workspace,
+  required String? bufferId,
   required List<DocumentOutlineHeading> headings,
   required List<_OutlineTreeEntry> entries,
   required _OutlineViewportTarget? target,
 }) {
   if (target == null ||
       target.workspaceId != workspace.id ||
-      target.filePath !=
-          (workspace.activeFilePath ?? workspace.markdown?.filePath)) {
+      target.bufferId != bufferId ||
+      target.filePath != workspace.activeFilePath) {
     return headings.isEmpty ? null : _outlineNodeKey(headings.first);
   }
   final targetIndex = _outlineViewportHeadingIndex(headings, target);
@@ -9945,16 +9983,31 @@ List<DocumentOutlineHeading> _activeDocumentOutline(WorkspaceState state) {
   final workspace = state.workspace;
   if (liveOutline != null &&
       workspace != null &&
-      liveOutline.matches(workspace, state.activeText)) {
+      liveOutline.matches(workspace, state.activeBuffer, state.activeText)) {
     return liveOutline.headings;
   }
   final preview = state.preview;
   if (preview != null) {
     return preview.outline;
   }
+  final buffer = state.activeBuffer;
+  final markdown = workspace?.markdown;
+  if (workspace == null || markdown == null) return const [];
+  if (buffer == null) {
+    if (state.documentBuffers.isNotEmpty) return const [];
+    return [
+      for (final heading in markdown.headings)
+        DocumentOutlineHeading.fromMarkdown(heading),
+    ];
+  }
+  final context = resolveWorkspaceDocumentContext(workspace, buffer);
+  if (!p.equals(markdown.filePath, context.parserPath) ||
+      markdown.source != buffer.text ||
+      markdown.mode != context.markdownMode) {
+    return const [];
+  }
   return [
-    for (final heading
-        in state.workspace?.markdown?.headings ?? const <MarkdownHeading>[])
+    for (final heading in markdown.headings)
       DocumentOutlineHeading.fromMarkdown(heading),
   ];
 }
@@ -10062,11 +10115,13 @@ String _outlineNodeKey(DocumentOutlineHeading heading) {
 
 String _outlineStateSignature(
   Workspace workspace,
+  String? bufferId,
   List<DocumentOutlineHeading> headings,
 ) {
   return [
     workspace.id,
-    workspace.activeFilePath ?? workspace.markdown?.filePath ?? '',
+    bufferId ?? '',
+    workspace.activeFilePath ?? '',
     for (final heading in headings)
       [
         heading.id,
@@ -11713,8 +11768,10 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
   String _lastPath = '';
   var _previewSearchScrollRequest = 0;
   BusyDocument? _cachedWysiwygDocument;
+  String? _cachedWysiwygBufferId;
   String? _cachedWysiwygPath;
   String? _cachedWysiwygSource;
+  MarkdownMode? _cachedWysiwygMode;
   String? _wysiwygScrollHeadingId;
   String? _wysiwygScrollBlockId;
   String? _wysiwygSearchQuery;
@@ -11732,7 +11789,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     _spelling.synchronizeOpenBuffers(
       widget.state.documentBuffers.map((buffer) => buffer.id),
     );
-    _lastPath = widget.state.workspace?.activeFilePath ?? '';
+    _lastPath = widget.state.activeBuffer?.filePath ?? '';
     _previewItemPositionsListener.itemPositions.addListener(
       _handlePreviewVisibleItemsChanged,
     );
@@ -11776,11 +11833,15 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     _spelling.synchronizeOpenBuffers(
       widget.state.documentBuffers.map((buffer) => buffer.id),
     );
-    final path = widget.state.workspace?.activeFilePath ?? '';
-    if (path != _lastPath) {
+    final path = widget.state.activeBuffer?.filePath ?? '';
+    if (path != _lastPath || previousBuffer?.id != nextBuffer?.id) {
       _lastPath = path;
       _clearWysiwygCache();
       _previewBlockContexts.clear();
+      _outlineStopsPreview = null;
+      _previewOutlineStops = const [];
+      _previewSearchScrollRequest = 0;
+      _lastSearchNavigationRequest = 0;
       _wysiwygScrollHeadingId = null;
       _wysiwygScrollBlockId = null;
       _wysiwygSearchQuery = null;
@@ -11837,7 +11898,12 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     if (!mounted || workspace == null) {
       return;
     }
-    _setOutlineViewportTarget(ref, workspace: workspace, heading: heading);
+    _setOutlineViewportTarget(
+      ref,
+      workspace: workspace,
+      bufferId: widget.state.activeBufferId,
+      heading: heading,
+    );
   }
 
   @override
@@ -11849,6 +11915,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
       final workspace = widget.state.workspace;
       if (workspace == null ||
           next.workspaceId != workspace.id ||
+          next.bufferId != widget.state.activeBufferId ||
           next.filePath != workspace.activeFilePath) {
         return;
       }
@@ -12071,12 +12138,34 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
                             onRemoteImageBlocked: () => unawaited(
                               _showRemoteImagesPrompt(context, ref),
                             ),
-                            onDocumentChanged: _cacheWysiwygDocument,
-                            onSourceChanged: _handleWysiwygSourceChanged,
+                            onDocumentChanged: (document) =>
+                                _cacheWysiwygDocument(
+                                  activeBuffer?.id,
+                                  document,
+                                ),
+                            onSourceChanged: (filePath, value) =>
+                                _handleWysiwygSourceChanged(
+                                  activeBuffer?.id,
+                                  filePath,
+                                  value,
+                                ),
                             onTransactionalSourceChanged:
-                                _handleWysiwygSourceChanged,
+                                (filePath, value, [undoGroup]) =>
+                                    _handleWysiwygSourceChanged(
+                                      activeBuffer?.id,
+                                      filePath,
+                                      value,
+                                      undoGroup,
+                                    ),
                             onSpellingSourceChanged:
-                                _handleWysiwygSpellingSourceChanged,
+                                (filePath, value, before, after) =>
+                                    _handleWysiwygSpellingSourceChanged(
+                                      activeBuffer?.id,
+                                      filePath,
+                                      value,
+                                      before,
+                                      after,
+                                    ),
                             toolbarPlacement: widget.editorToolbarPlacement,
                             toolbarDirection: widget.editorToolbarDirection,
                             onToolbarPlacementChanged: ref
@@ -12295,9 +12384,27 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
                                 .request(),
                             onVisibleLineChanged:
                                 _handleSourceVisibleLineChanged,
-                            onChanged: _handleSourceChanged,
+                            onChanged: (value, sourceFilePath) =>
+                                _handleSourceChanged(
+                                  activeBuffer?.id,
+                                  value,
+                                  sourceFilePath,
+                                ),
                             onTransactionalChanged:
-                                _handleTransactionalSourceChanged,
+                                (
+                                  value,
+                                  sourceFilePath,
+                                  previousSelection,
+                                  selection,
+                                  undoGroup,
+                                ) => _handleTransactionalSourceChanged(
+                                  activeBuffer?.id,
+                                  value,
+                                  sourceFilePath,
+                                  previousSelection,
+                                  selection,
+                                  undoGroup,
+                                ),
                             onUndo: () {
                               final controller = ref.read(
                                 workspaceControllerProvider.notifier,
@@ -12509,7 +12616,15 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     }
   }
 
-  void _handleSourceChanged(String value, String? sourceFilePath) {
+  void _handleSourceChanged(
+    String? expectedBufferId,
+    String value,
+    String? sourceFilePath,
+  ) {
+    if (expectedBufferId == null ||
+        widget.state.activeBuffer?.id != expectedBufferId) {
+      return;
+    }
     final activePath = _activeEditorPath();
     if (sourceFilePath != null && sourceFilePath != activePath) {
       return;
@@ -12517,7 +12632,11 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     _clearWysiwygCache();
     ref
         .read(workspaceControllerProvider.notifier)
-        .updateActiveText(value, sourceFilePath: sourceFilePath ?? activePath);
+        .updateActiveText(
+          value,
+          sourceBufferId: expectedBufferId,
+          sourceFilePath: sourceFilePath ?? activePath,
+        );
   }
 
   void _scheduleSpelling(SpellingSessionInput input) {
@@ -12972,12 +13091,17 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
   }
 
   void _handleTransactionalSourceChanged(
+    String? expectedBufferId,
     String value,
     String? sourceFilePath,
     TextSelection previousSelection,
     TextSelection selection,
     String? undoGroup,
   ) {
+    if (expectedBufferId == null ||
+        widget.state.activeBuffer?.id != expectedBufferId) {
+      return;
+    }
     final activePath = _activeEditorPath();
     if (sourceFilePath != null && sourceFilePath != activePath) {
       return;
@@ -12987,6 +13111,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
         .read(workspaceControllerProvider.notifier)
         .updateActiveSourceText(
           value,
+          sourceBufferId: expectedBufferId,
           sourceFilePath: sourceFilePath ?? activePath,
           previousSelection: previousSelection,
           selection: selection,
@@ -12995,11 +13120,14 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
   }
 
   void _handleWysiwygSourceChanged(
+    String? expectedBufferId,
     String filePath,
     String value, [
     String? undoGroup,
   ]) {
-    if (filePath != _activeEditorPath()) {
+    if (expectedBufferId == null ||
+        widget.state.activeBuffer?.id != expectedBufferId ||
+        filePath != _activeEditorPath()) {
       return;
     }
     final document = _cachedWysiwygDocument;
@@ -13007,24 +13135,32 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     if (document == null ||
         document.filePath != filePath ||
         document.source != value) {
-      controller.updateActiveText(value, sourceFilePath: filePath);
+      controller.updateActiveText(
+        value,
+        sourceBufferId: expectedBufferId,
+        sourceFilePath: filePath,
+      );
       return;
     }
     controller.updateActiveWysiwygText(
       value,
       document: document,
+      sourceBufferId: expectedBufferId,
       sourceFilePath: filePath,
       undoGroup: undoGroup,
     );
   }
 
   void _handleWysiwygSpellingSourceChanged(
+    String? expectedBufferId,
     String filePath,
     String value,
     WysiwygEditorSessionState beforeSession,
     WysiwygEditorSessionState afterSession,
   ) {
-    if (filePath != _activeEditorPath()) {
+    if (expectedBufferId == null ||
+        widget.state.activeBuffer?.id != expectedBufferId ||
+        filePath != _activeEditorPath()) {
       return;
     }
     final document = _cachedWysiwygDocument;
@@ -13040,6 +13176,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     controller.updateActiveWysiwygText(
       value,
       document: document,
+      sourceBufferId: expectedBufferId,
       sourceFilePath: filePath,
       undoGroup: null,
       previousWysiwygState: beforeSession,
@@ -13080,21 +13217,34 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     );
   }
 
-  void _cacheWysiwygDocument(BusyDocument document) {
+  void _cacheWysiwygDocument(String? expectedBufferId, BusyDocument document) {
+    final workspace = widget.state.workspace;
+    final buffer = widget.state.activeBuffer;
+    if (workspace == null || buffer == null || buffer.id != expectedBufferId) {
+      return;
+    }
+    final context = resolveWorkspaceDocumentContext(workspace, buffer);
     _cachedWysiwygDocument = document;
+    _cachedWysiwygBufferId = buffer.id;
     _cachedWysiwygPath = document.filePath;
     _cachedWysiwygSource = document.source;
+    _cachedWysiwygMode = context.markdownMode;
   }
 
   void _clearWysiwygCache() {
     _cachedWysiwygDocument = null;
+    _cachedWysiwygBufferId = null;
     _cachedWysiwygPath = null;
     _cachedWysiwygSource = null;
+    _cachedWysiwygMode = null;
   }
 
   String? _activeEditorPath() {
     final workspace = widget.state.workspace;
-    return workspace?.activeFilePath ?? workspace?.markdown?.filePath;
+    final buffer = widget.state.activeBuffer;
+    return workspace == null || buffer == null
+        ? null
+        : resolveWorkspaceDocumentContext(workspace, buffer).parserPath;
   }
 
   SourceSyntaxLanguage _sourceSyntaxLanguage(Workspace? workspace) {
@@ -13134,12 +13284,10 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
   }
 
   MarkdownMode _sourceMarkdownMode(Workspace? workspace) {
-    return switch (_activeDocumentKind(workspace)) {
-      DocumentKind.writersideMarkdownTopic => MarkdownMode.writersideMarkdown,
-      DocumentKind.markdown =>
-        workspace?.markdown?.mode ?? MarkdownMode.commonMark,
-      _ => MarkdownMode.commonMark,
-    };
+    final buffer = widget.state.activeBuffer;
+    return workspace == null || buffer == null
+        ? MarkdownMode.commonMark
+        : resolveWorkspaceDocumentContext(workspace, buffer).markdownMode;
   }
 
   Future<void> _handleSymbolAction(
@@ -13290,10 +13438,11 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
   }
 
   DocumentKind? _activeDocumentKind(Workspace? workspace) {
-    if (workspace == null) {
+    final buffer = widget.state.activeBuffer;
+    if (workspace == null || buffer == null) {
       return null;
     }
-    return _activeWorkspaceDocumentKind(workspace);
+    return resolveWorkspaceDocumentContext(workspace, buffer).kind;
   }
 
   void _scrollToOutlineTarget(_OutlineNavigationTarget target) {
@@ -13321,8 +13470,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
           ref.read(_searchNavigationTargetProvider)?.request !=
               target.request ||
           _lastSearchNavigationRequest == target.request ||
-          (target.filePath != widget.state.workspace?.activeFilePath &&
-              target.filePath != widget.state.workspace?.markdown?.filePath)) {
+          target.filePath != widget.state.activeBuffer?.filePath) {
         return;
       }
       _lastSearchNavigationRequest = target.request;
@@ -13576,44 +13724,49 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
 
   BusyDocument? _wysiwygDocument() {
     final workspace = widget.state.workspace;
-    final activePath =
-        workspace?.activeFilePath ?? workspace?.markdown?.filePath;
-    if (workspace == null || activePath == null) {
+    final buffer = widget.state.activeBuffer;
+    if (workspace == null || buffer == null) {
       return null;
     }
-    if (_cachedWysiwygPath == activePath &&
-        _cachedWysiwygSource == widget.state.activeText) {
+    final context = resolveWorkspaceDocumentContext(workspace, buffer);
+    final activePath = context.parserPath;
+    if (_cachedWysiwygBufferId == buffer.id &&
+        _cachedWysiwygPath == activePath &&
+        _cachedWysiwygSource == buffer.text &&
+        _cachedWysiwygMode == context.markdownMode) {
       return _cachedWysiwygDocument;
     }
     final currentMarkdown = workspace.markdown;
     if (currentMarkdown != null &&
         p.equals(currentMarkdown.filePath, activePath) &&
-        currentMarkdown.source == widget.state.activeText) {
+        currentMarkdown.source == buffer.text &&
+        currentMarkdown.mode == context.markdownMode) {
       final document = currentMarkdown.busyDocument;
       _cachedWysiwygDocument = document;
+      _cachedWysiwygBufferId = buffer.id;
       _cachedWysiwygPath = activePath;
-      _cachedWysiwygSource = widget.state.activeText;
+      _cachedWysiwygSource = buffer.text;
+      _cachedWysiwygMode = context.markdownMode;
       return document;
     }
-    final mode = workspace.kind == WorkspaceKind.writersideModule
-        ? MarkdownMode.writersideMarkdown
-        : MarkdownMode.commonMark;
     try {
       final document = const MarkdownParser()
           .parse(
             filePath: activePath,
-            source: widget.state.activeText,
-            mode: mode,
+            source: buffer.text,
+            mode: context.markdownMode,
             workspaceRoot: workspace.rootPath,
             validateLocalReferences: false,
           )
           .busyDocument;
       _cachedWysiwygDocument = document;
+      _cachedWysiwygBufferId = buffer.id;
       _cachedWysiwygPath = activePath;
-      _cachedWysiwygSource = widget.state.activeText;
+      _cachedWysiwygSource = buffer.text;
+      _cachedWysiwygMode = context.markdownMode;
       return document;
     } on Object {
-      return workspace.markdown?.busyDocument;
+      return null;
     }
   }
 }
@@ -15255,8 +15408,7 @@ String? _imageWorkspaceRoot(Workspace? workspace) {
   if (module == null) {
     return workspace.rootPath;
   }
-  final activeFilePath =
-      workspace.activeFilePath ?? workspace.markdown?.filePath;
+  final activeFilePath = workspace.activeFilePath;
   if (activeFilePath == null) {
     return null;
   }
@@ -15930,7 +16082,7 @@ void _navigatePreviewAnchor(
   }
   final state = ref.read(workspaceControllerProvider);
   final workspace = state.workspace;
-  final activePath = workspace?.activeFilePath ?? workspace?.markdown?.filePath;
+  final activePath = state.activeBuffer?.filePath;
   if (workspace == null || activePath != filePath) {
     return;
   }
@@ -15969,6 +16121,7 @@ void _navigatePreviewAnchor(
       .set(
         _OutlineNavigationTarget(
           workspaceId: workspace.id,
+          bufferId: state.activeBufferId ?? '',
           filePath: workspace.activeFilePath,
           headingId: heading?.id ?? element!.attributes['id']!,
           line: heading?.sourceStartLine ?? element?.sourceStartLine,
@@ -17167,8 +17320,7 @@ Future<_WorkspaceSearchOutcome> _loadWorkspaceSearchMatches(
     String? text;
     if (buffer != null) {
       text = buffer.text;
-    } else if (file.absolutePath ==
-        (workspace.activeFilePath ?? workspace.markdown?.filePath)) {
+    } else if (file.absolutePath == state.activeBuffer?.filePath) {
       text = state.activeText;
     } else if (file.size > _maxWorkspaceSearchFileBytes) {
       skippedFiles.add(file.relativePath);
@@ -17451,22 +17603,6 @@ class _DiagnosticRow extends ConsumerWidget {
       ),
     );
   }
-}
-
-DocumentKind? _activeWorkspaceDocumentKind(Workspace workspace) {
-  final activePath = workspace.activeFilePath ?? workspace.markdown?.filePath;
-  if (activePath == null) {
-    return null;
-  }
-  for (final file in workspace.files) {
-    if (file.absolutePath == activePath) {
-      return file.kind;
-    }
-  }
-  return workspace.kind == WorkspaceKind.untitledMarkdown ||
-          workspace.kind == WorkspaceKind.singleMarkdown
-      ? DocumentKind.markdown
-      : null;
 }
 
 IconData _diagnosticIconForSeverity(DiagnosticSeverity severity) {

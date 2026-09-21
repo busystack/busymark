@@ -6,6 +6,7 @@ import 'package:busymark/src/app/app_settings.dart';
 import 'package:busymark/src/app/app_theme.dart';
 import 'package:busymark/src/app/busymark_design.dart';
 import 'package:busymark/src/app/busymark_glyphs.dart';
+import 'package:busymark/src/workspace/document_buffer.dart';
 import 'package:busymark/src/workspace/workspace_controller.dart';
 import 'package:busymark/src/workspace/workspace_model.dart';
 import 'package:busymark/src/workspace/workspace_safety.dart';
@@ -1152,7 +1153,10 @@ class _IdentityWorkspaceService extends WorkspaceService {
   }
 
   @override
-  Future<Workspace> reparseActive(Workspace workspace, String source) async {
+  Future<Workspace> reparseDocument(
+    Workspace workspace,
+    DocumentBuffer buffer,
+  ) async {
     return workspace;
   }
 

@@ -1919,8 +1919,11 @@ class _BlockingNextReparseWorkspaceService extends WorkspaceService {
   }
 
   @override
-  Future<Workspace> reparseActive(Workspace workspace, String source) async {
-    final reparsed = await super.reparseActive(workspace, source);
+  Future<Workspace> reparseDocument(
+    Workspace workspace,
+    DocumentBuffer buffer,
+  ) async {
+    final reparsed = await super.reparseDocument(workspace, buffer);
     if (!_pauseNext) return reparsed;
     _pauseNext = false;
     if (!started.isCompleted) started.complete();

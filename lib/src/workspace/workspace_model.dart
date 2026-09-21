@@ -49,21 +49,180 @@ extension DocumentKindAiSupport on DocumentKind {
 class ActiveDocumentOutline {
   const ActiveDocumentOutline({
     required this.workspaceId,
+    required this.bufferId,
     required this.filePath,
     required this.source,
     required this.headings,
   });
 
   final String workspaceId;
+  final String bufferId;
   final String? filePath;
   final String source;
   final List<DocumentOutlineHeading> headings;
 
-  bool matches(Workspace workspace, String activeSource) {
+  bool matches(
+    Workspace workspace,
+    DocumentBuffer? activeBuffer,
+    String activeSource,
+  ) {
     return workspaceId == workspace.id &&
-        filePath == workspace.activeFilePath &&
+        activeBuffer != null &&
+        bufferId == activeBuffer.id &&
+        filePath == activeBuffer.filePath &&
         source == activeSource;
   }
+}
+
+/// Derived routing information for one editor buffer in its workspace.
+///
+/// A workspace describes the open project/container. This context describes
+/// the actual document being edited and must therefore always be resolved from
+/// a concrete [DocumentBuffer].
+class WorkspaceDocumentContext {
+  const WorkspaceDocumentContext({
+    required this.kind,
+    required this.markdownMode,
+    required this.diskPath,
+    required this.parserPath,
+    this.writersideModule,
+    this.writersideTopic,
+  });
+
+  final DocumentKind kind;
+  final MarkdownMode markdownMode;
+  final String? diskPath;
+  final String parserPath;
+  final WritersideModule? writersideModule;
+  final WritersideTopic? writersideTopic;
+
+  bool get isWritersideOwned =>
+      writersideTopic != null ||
+      (diskPath != null &&
+          writersideModule != null &&
+          kind != DocumentKind.markdown &&
+          kind != DocumentKind.unknown &&
+          kind != DocumentKind.image &&
+          kind != DocumentKind.gitIgnore);
+}
+
+/// Resolves the effective document type independently of [Workspace.kind].
+WorkspaceDocumentContext resolveWorkspaceDocumentContext(
+  Workspace workspace,
+  DocumentBuffer buffer,
+) {
+  final path = buffer.filePath;
+  if (path == null) {
+    return const WorkspaceDocumentContext(
+      kind: DocumentKind.markdown,
+      markdownMode: MarkdownMode.commonMark,
+      diskPath: null,
+      parserPath: '',
+    );
+  }
+
+  final normalizedPath = normalizePath(path);
+  final projectModules = workspace.writersideProject?.modules;
+  final modules = <WritersideModule>[
+    if (projectModules != null) ...projectModules,
+    if (projectModules == null)
+      if (workspace.writersideModule case final module?) module,
+  ];
+  for (final module in modules) {
+    for (final topic in module.topics) {
+      if (!p.equals(normalizePath(topic.filePath), normalizedPath)) continue;
+      return WorkspaceDocumentContext(
+        kind: topic.format == WritersideTopicFormat.markdown
+            ? DocumentKind.writersideMarkdownTopic
+            : DocumentKind.writersideXmlTopic,
+        markdownMode: topic.format == WritersideTopicFormat.markdown
+            ? MarkdownMode.writersideMarkdown
+            : MarkdownMode.commonMark,
+        diskPath: path,
+        parserPath: path,
+        writersideModule: module,
+        writersideTopic: topic,
+      );
+    }
+  }
+
+  final inventoryKind = workspace.files
+      .where(
+        (file) => p.equals(normalizePath(file.absolutePath), normalizedPath),
+      )
+      .map((file) => file.kind)
+      .firstOrNull;
+  final kind = inventoryKind ?? documentKindForPath(path);
+  final owningModule = modules
+      .where((module) => _isWritersideOwnedFile(module, normalizedPath))
+      .firstOrNull;
+  return WorkspaceDocumentContext(
+    kind: kind,
+    markdownMode: MarkdownMode.commonMark,
+    diskPath: path,
+    parserPath: path,
+    writersideModule: owningModule,
+  );
+}
+
+/// Existing path/name classification shared by scanning and document routing.
+DocumentKind documentKindForPath(String path) {
+  final extension = p.extension(path).toLowerCase();
+  final basename = p.basename(path);
+  if (basename == '.gitignore') return DocumentKind.gitIgnore;
+  if (extension == '.md' || extension == '.markdown') {
+    return DocumentKind.markdown;
+  }
+  if (extension == '.topic') return DocumentKind.writersideXmlTopic;
+  if (extension == '.tree') return DocumentKind.tree;
+  if (extension == '.cfg' ||
+      basename == 'writerside.cfg' ||
+      basename == 'project.ihp') {
+    return DocumentKind.config;
+  }
+  if (basename == 'v.list') return DocumentKind.variables;
+  if (basename == 'c.list') return DocumentKind.categories;
+  if ({'.png', '.jpg', '.jpeg', '.gif', '.svg', '.webp'}.contains(extension)) {
+    return DocumentKind.image;
+  }
+  return isTextDocumentationPath(path)
+      ? DocumentKind.resource
+      : DocumentKind.unknown;
+}
+
+bool _isWritersideOwnedFile(WritersideModule module, String path) {
+  final config = module.config;
+  final configured = <String>{
+    config.filePath,
+    for (final source in module.sourceFiles.values)
+      if (source.path case final sourcePath?) sourcePath,
+    for (final source in module.referenceData.sources.values)
+      if (source.path case final sourcePath?) sourcePath,
+    for (final instance in module.instances) instance.sourceTreePath,
+    for (final instance in config.instances)
+      _writersideConfiguredPath(module.rootPath, instance.src),
+    if (config.varsFile case final configuredPath?)
+      _writersideConfiguredPath(module.rootPath, configuredPath),
+    if (config.categoriesFile case final configuredPath?)
+      _writersideConfiguredPath(module.rootPath, configuredPath),
+    if (config.instanceGroupsFile case final configuredPath?)
+      _writersideConfiguredPath(module.rootPath, configuredPath),
+    _writersideConfiguredPath(
+      module.rootPath,
+      p.join(config.buildConfigDir, 'buildprofiles.xml'),
+    ),
+  };
+  return configured.any(
+    (candidate) => p.equals(normalizePath(candidate), path),
+  );
+}
+
+String _writersideConfiguredPath(String rootPath, String configuredPath) {
+  return normalizePath(
+    p.isAbsolute(configuredPath)
+        ? configuredPath
+        : p.join(rootPath, configuredPath),
+  );
 }
 
 class DocumentFile {

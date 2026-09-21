@@ -7,6 +7,7 @@ import 'package:busymark/src/markdown/markdown_parser.dart';
 import 'package:busymark/src/markdown/math_syntax.dart';
 import 'package:busymark/src/markdown/preview_model.dart';
 import 'package:busymark/src/visualization/visualization_models.dart';
+import 'package:busymark/src/workspace/document_buffer.dart';
 import 'package:busymark/src/workspace/workspace_service.dart';
 import 'package:busymark/src/writerside/writerside_diagram_source_loader.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -334,10 +335,15 @@ C -> D
 A --&gt; B</code-block>
 </topic>
 ''';
-      final preview = service.buildPreview(
-        workspace.copyWith(activeFilePath: topicPath),
-        source,
-      )!;
+      final targetWorkspace = workspace.copyWith(activeFilePath: topicPath);
+      final target = DocumentBuffer(
+        id: 'math-topic',
+        filePath: topicPath,
+        text: source,
+        lastSavedText: source,
+        dirty: false,
+      );
+      final preview = service.buildDocumentPreview(targetWorkspace, target)!;
 
       final math = preview.blocks.singleWhere(
         (block) => block.kind == PreviewBlockKind.math,

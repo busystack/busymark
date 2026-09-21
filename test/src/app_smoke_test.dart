@@ -39,6 +39,7 @@ import 'package:busymark/src/editor/source/source_search.dart';
 import 'package:busymark/src/editor/source_highlighter.dart'
     show BusyMarkSourceEditingController;
 import 'package:busymark/src/editor/source/source_read_only_view.dart';
+import 'package:busymark/src/editor/wysiwyg/wysiwyg_editor.dart';
 import 'package:busymark/src/feedback/presentation/feedback_dialog.dart';
 import 'package:busymark/src/export/export_options_editor.dart';
 import 'package:busymark/src/git/application/git_controller.dart';
@@ -2138,6 +2139,192 @@ void main() {
       hasLength(3),
     );
     await tester.pump(const Duration(milliseconds: 800));
+  });
+
+  testWidgets('Ctrl+N creates real CommonMark inside a Writerside workspace', (
+    tester,
+  ) async {
+    const yaruWindowChannel = MethodChannel('yaru_window');
+    const yaruWindowEventsChannel = MethodChannel('yaru_window/events');
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(yaruWindowChannel, (call) async {
+          if (call.method == 'state') return <String, Object?>{};
+          return null;
+        });
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(yaruWindowEventsChannel, (_) async => null);
+    addTearDown(() {
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        ..setMockMethodCallHandler(yaruWindowChannel, null)
+        ..setMockMethodCallHandler(yaruWindowEventsChannel, null);
+    });
+    final binding = TestWidgetsFlutterBinding.ensureInitialized();
+    binding.platformDispatcher.defaultRouteNameTestValue = '/workspace';
+    addTearDown(() {
+      binding.platformDispatcher.defaultRouteNameTestValue = '/';
+    });
+    final root = Directory('test/fixtures/writerside/basic_project').absolute;
+    final container = ProviderContainer(
+      overrides: [
+        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+        localSettingsStoreProvider.overrideWithValue(
+          _MemorySettingsStore()
+            ..value = AppSettings.defaults().copyWith(autoSave: false).toJson(),
+        ),
+        startupPathProvider.overrideWithValue(null),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const BusyMarkApp(),
+      ),
+    );
+    await tester.runAsync(
+      () => container
+          .read(workspaceControllerProvider.notifier)
+          .openPath(root.path),
+    );
+    for (var index = 0; index < 30; index += 1) {
+      await tester.pump(const Duration(milliseconds: 100));
+      if (container.read(workspaceControllerProvider).workspace?.kind ==
+          WorkspaceKind.writersideModule) {
+        break;
+      }
+    }
+    final before = container.read(workspaceControllerProvider);
+    expect(before.workspace?.kind, WorkspaceKind.writersideModule);
+    final topicId = before.activeBuffer!.id;
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.keyN);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.keyN);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+    await tester.tap(
+      find.descendant(
+        of: find.byType(BusyMarkDialogShell),
+        matching: find.text(l10n.createMarkdownFile),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+
+    final controller = container.read(workspaceControllerProvider.notifier);
+    const source = '''# Widget draft
+
+Paragraph with *emphasis*.
+
+- item
+
+```text
+code
+    ```
+''';
+    controller.updateActiveText(source);
+    await tester.runAsync(() => controller.validateActive());
+    for (var index = 0; index < 30; index += 1) {
+      await tester.pump(const Duration(milliseconds: 100));
+      if (container
+              .read(workspaceControllerProvider)
+              .preview
+              ?.blocks
+              .any((block) => block.text == 'Widget draft') ??
+          false) {
+        break;
+      }
+    }
+
+    var state = container.read(workspaceControllerProvider);
+    final untitledId = state.activeBuffer!.id;
+    final resolved = resolveWorkspaceDocumentContext(
+      state.workspace!,
+      state.activeBuffer!,
+    );
+    expect(state.workspace?.kind, WorkspaceKind.writersideModule);
+    expect(state.workspace?.activeFilePath, isNull);
+    expect(resolved.kind, DocumentKind.markdown);
+    expect(resolved.markdownMode, MarkdownMode.commonMark);
+    expect(
+      state.preview?.blocks.map((block) => block.kind),
+      containsAll(<PreviewBlockKind>[
+        PreviewBlockKind.heading,
+        PreviewBlockKind.paragraph,
+        PreviewBlockKind.list,
+        PreviewBlockKind.code,
+      ]),
+    );
+
+    controller.updateActiveEditorMode(DocumentViewModePreference.source);
+    await tester.pump(const Duration(milliseconds: 500));
+    final sourceEditor = tester.widget<BusyMarkSourceEditor>(
+      find.byType(BusyMarkSourceEditor),
+    );
+    expect(sourceEditor.documentId, untitledId);
+    expect(sourceEditor.language.name, 'markdown');
+    expect(sourceEditor.documentFormat?.name, 'markdown');
+    expect(sourceEditor.markdownMode, MarkdownMode.commonMark);
+
+    controller.updateActiveEditorMode(DocumentViewModePreference.editor);
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(find.byKey(const ValueKey('document-wysiwyg-pane')), findsOneWidget);
+    expect(find.byKey(const ValueKey('document-source-pane')), findsNothing);
+
+    expect(
+      await tester.runAsync(() => controller.activateDocumentBuffer(topicId)),
+      isTrue,
+    );
+    expect(
+      await tester.runAsync(
+        () => controller.activateDocumentBuffer(untitledId),
+      ),
+      isTrue,
+    );
+    await tester.pump(const Duration(milliseconds: 500));
+    state = container.read(workspaceControllerProvider);
+    expect(state.activeBuffer?.id, untitledId);
+    expect(
+      resolveWorkspaceDocumentContext(
+        state.workspace!,
+        state.activeBuffer!,
+      ).markdownMode,
+      MarkdownMode.commonMark,
+    );
+    expect(find.byKey(const ValueKey('document-wysiwyg-pane')), findsOneWidget);
+    expect(
+      state.preview?.blocks.any((block) => block.text == 'Widget draft'),
+      isTrue,
+    );
+
+    controller.updateActiveEditorMode(DocumentViewModePreference.source);
+    await tester.pump(const Duration(milliseconds: 300));
+    final staleSourceCallback = tester
+        .widget<BusyMarkSourceEditor>(find.byType(BusyMarkSourceEditor))
+        .onChanged;
+    controller.updateActiveEditorMode(DocumentViewModePreference.editor);
+    await tester.pump(const Duration(milliseconds: 300));
+    final firstWysiwyg = tester.widget<BusyMarkWysiwygEditor>(
+      find.byType(BusyMarkWysiwygEditor),
+    );
+
+    await tester.runAsync(controller.createMarkdownFile);
+    controller.updateActiveText(source);
+    await tester.runAsync(() => controller.validateActive());
+    await tester.pump(const Duration(milliseconds: 500));
+    final secondState = container.read(workspaceControllerProvider);
+    final secondWysiwyg = tester.widget<BusyMarkWysiwygEditor>(
+      find.byType(BusyMarkWysiwygEditor),
+    );
+    expect(secondState.activeBuffer?.id, isNot(untitledId));
+    expect(secondWysiwyg.documentId, secondState.activeBuffer?.id);
+    expect(firstWysiwyg.documentId, untitledId);
+    expect(identical(firstWysiwyg.document, secondWysiwyg.document), isFalse);
+
+    staleSourceCallback('# stale callback\n', '');
+    expect(container.read(workspaceControllerProvider).activeText, source);
   });
 
   testWidgets(
@@ -5015,10 +5202,20 @@ void main() {
     final workspace = (await tester.runAsync(
       () => const WorkspaceService().openPath(root.path),
     ))!;
+    final source = workspace.markdown?.source ?? '';
+    final activePath = workspace.activeFilePath!;
+    final activeBuffer = DocumentBuffer(
+      id: 'writerside-sidebar-active',
+      filePath: activePath,
+      text: source,
+      lastSavedText: source,
+      dirty: false,
+    );
     final controller = _MutableWorkspaceController(
       WorkspaceState(
         workspace: workspace,
-        activeText: workspace.markdown?.source ?? '',
+        documentBuffers: [activeBuffer],
+        activeBufferId: activeBuffer.id,
       ),
     );
     final container = ProviderContainer(
@@ -5062,6 +5259,7 @@ void main() {
     Future<void> setDocumentViewMode(
       DocumentViewModePreference expectedMode,
     ) async {
+      controller.updateActiveEditorMode(expectedMode);
       await container
           .read(appSettingsControllerProvider.notifier)
           .setDocumentViewMode(expectedMode);
@@ -5534,8 +5732,18 @@ void main() {
       final workspace = const WorkspaceService()
           .createUntitledMarkdown(source: '# عنوان\n')
           .copyWith(diagnostics: const [diagnostic]);
+      final activeBuffer = DocumentBuffer.untitled(
+        id: 'arabic-untitled-active',
+        name: ar.untitledMarkdownFileName,
+        text: '# عنوان\n',
+        mode: DocumentViewModePreference.source,
+      );
       final controller = _MutableWorkspaceController(
-        WorkspaceState(workspace: workspace, activeText: '# عنوان\n'),
+        WorkspaceState(
+          workspace: workspace,
+          documentBuffers: [activeBuffer],
+          activeBufferId: activeBuffer.id,
+        ),
       );
       final settingsStore = _MemorySettingsStore()
         ..value = AppSettings.defaults()
@@ -7637,17 +7845,45 @@ After break.
       ..value = AppSettings.defaults()
           .copyWith(documentViewMode: DocumentViewModePreference.editor)
           .toJson();
-    const service = _SearchWorkspaceService('''
+    const source = '''
 <warning>Shared warning.</warning>
 
 ![Shared image](missing.png){ width="320" }
-''', writerside: true);
+''';
+    final root = Directory('test/fixtures/writerside/basic_project').absolute;
+    const service = WorkspaceService();
+    final workspace = (await tester.runAsync(
+      () => service.openPath(root.path),
+    ))!;
+    final activeBuffer = DocumentBuffer(
+      id: 'writerside-rich-blocks-active',
+      filePath: workspace.activeFilePath,
+      text: source,
+      lastSavedText: source,
+      dirty: false,
+      editorState: const DocumentEditorState(
+        mode: DocumentViewModePreference.editor,
+      ),
+    );
+    final preview = service.buildDocumentPreview(workspace, activeBuffer);
+    final controller = _MutableWorkspaceController(
+      WorkspaceState(
+        workspace: workspace,
+        preview: preview,
+        documentBuffers: [activeBuffer],
+        activeBufferId: activeBuffer.id,
+      ),
+    );
+    final binding = TestWidgetsFlutterBinding.ensureInitialized();
+    binding.platformDispatcher.defaultRouteNameTestValue = '/workspace';
+    addTearDown(() {
+      binding.platformDispatcher.defaultRouteNameTestValue = '/';
+    });
     final container = ProviderContainer(
       overrides: [
         linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(settingsStore),
-        workspaceServiceProvider.overrideWithValue(service),
-        startupPathProvider.overrideWithValue('/tmp/shared-rich-blocks.md'),
+        workspaceControllerProvider.overrideWith(() => controller),
       ],
     );
     addTearDown(container.dispose);
@@ -11536,6 +11772,19 @@ class _MutableWorkspaceController extends WorkspaceController {
   @override
   void updateActiveEditorMode(DocumentViewModePreference mode) {
     requestedEditorMode = mode;
+    final activeId = state.activeBufferId;
+    if (activeId == null) return;
+    state = state.copyWith(
+      documentBuffers: [
+        for (final buffer in state.documentBuffers)
+          if (buffer.id == activeId)
+            buffer.copyWith(
+              editorState: buffer.editorState.copyWith(mode: mode),
+            )
+          else
+            buffer,
+      ],
+    );
   }
 
   WritersideTocBatchMoveRequest? dragRequest;
@@ -12052,7 +12301,10 @@ class _TabbedWorkspaceService extends WorkspaceService {
   }
 
   @override
-  Future<Workspace> reparseActive(Workspace workspace, String source) async {
+  Future<Workspace> reparseDocument(
+    Workspace workspace,
+    DocumentBuffer buffer,
+  ) async {
     return workspace.copyWith(diagnostics: const []);
   }
 
@@ -12276,19 +12528,16 @@ class _SearchRegressionService extends WorkspaceService {
 }
 
 class _SearchWorkspaceService extends WorkspaceService {
-  const _SearchWorkspaceService(this.source, {this.writerside = false});
+  const _SearchWorkspaceService(this.source);
 
   final String source;
-  final bool writerside;
 
   @override
   Future<Workspace> openPath(String path) async {
     final markdown = markdownParser.parse(
       filePath: path,
       source: source,
-      mode: writerside
-          ? MarkdownMode.writersideMarkdown
-          : MarkdownMode.commonMark,
+      mode: MarkdownMode.commonMark,
     );
     return Workspace(
       id: path,
@@ -12301,9 +12550,7 @@ class _SearchWorkspaceService extends WorkspaceService {
         DocumentFile(
           absolutePath: path,
           relativePath: 'search-scroll.md',
-          kind: writerside
-              ? DocumentKind.writersideMarkdownTopic
-              : DocumentKind.markdown,
+          kind: DocumentKind.markdown,
           size: source.length,
           lastModified: DateTime(2026),
         ),

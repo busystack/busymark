@@ -5,6 +5,7 @@ import 'package:busymark/src/core/diagnostic.dart';
 import 'package:busymark/src/core/path_utils.dart';
 import 'package:busymark/src/markdown/preview_model.dart';
 import 'package:busymark/src/workspace/workspace_model.dart';
+import 'package:busymark/src/workspace/document_buffer.dart';
 import 'package:busymark/src/workspace/workspace_service.dart';
 import 'package:busymark/src/writerside/writerside_document.dart';
 import 'package:busymark/src/writerside/writerside_module_service.dart';
@@ -252,9 +253,17 @@ void main() {
         p.absolute('test/fixtures/writerside/basic_project/topics/math.topic'),
       );
       final source = File(topicPath).readAsStringSync();
-      final preview = workspaceService.buildPreview(
-        workspace.copyWith(activeFilePath: topicPath),
-        source,
+      final targetWorkspace = workspace.copyWith(activeFilePath: topicPath);
+      final target = DocumentBuffer(
+        id: 'math-topic',
+        filePath: topicPath,
+        text: source,
+        lastSavedText: source,
+        dirty: false,
+      );
+      final preview = workspaceService.buildDocumentPreview(
+        targetWorkspace,
+        target,
       );
 
       final math = preview!.blocks
