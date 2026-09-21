@@ -19,6 +19,59 @@ import '../support/memory_rich_clipboard.dart';
 void main() {
   const parser = MarkdownParser();
 
+  test('text whitespace preservation metadata follows pasted whitespace', () {
+    final document = parser
+        .parse(filePath: 'topic.md', source: 'Target\n')
+        .busyDocument;
+    final blockId = document.blocks.single.id;
+    final controller = BusyMarkWysiwygDocumentController(document: document);
+
+    controller.updateBlockText(
+      blockId,
+      'Target ',
+      preserveTextWhitespace: true,
+    );
+    expect(
+      controller
+          .blockById(blockId)!
+          .attributes[busyMarkPreserveTextWhitespaceAttribute],
+      'true',
+    );
+    expect(controller.markdown, 'Target \n');
+
+    controller.updateBlockText(blockId, 'Changed ');
+    expect(
+      controller
+          .blockById(blockId)!
+          .attributes[busyMarkPreserveTextWhitespaceAttribute],
+      'true',
+    );
+    expect(controller.markdown, 'Changed \n');
+
+    controller.updateBlockText(blockId, 'Changed');
+    expect(
+      controller.blockById(blockId)!.attributes,
+      isNot(contains(busyMarkPreserveTextWhitespaceAttribute)),
+    );
+    expect(controller.markdown, 'Changed\n');
+
+    controller.updateBlockText(blockId, 'Ordinary ');
+    expect(
+      controller.blockById(blockId)!.attributes,
+      isNot(contains(busyMarkPreserveTextWhitespaceAttribute)),
+    );
+
+    controller.updateBlockText(
+      blockId,
+      'Replacement',
+      preserveTextWhitespace: true,
+    );
+    expect(
+      controller.blockById(blockId)!.attributes,
+      isNot(contains(busyMarkPreserveTextWhitespaceAttribute)),
+    );
+  });
+
   test('paste-only whitespace keeps list descendants exactly once', () {
     for (final source in const [
       '- Parent\n  - Child\n    - Grandchild\n',

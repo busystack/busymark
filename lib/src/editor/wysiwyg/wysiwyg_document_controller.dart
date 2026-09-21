@@ -3113,9 +3113,18 @@ Map<String, String> _attributesForText(
 }) {
   final updated = {...attributes}
     ..remove(busyMarkPreserveEmptyParagraphAttribute);
-  if (preserveTextWhitespace) {
+
+  final wasPreservingTextWhitespace =
+      updated[busyMarkPreserveTextWhitespaceAttribute] == 'true';
+  final hasTrailingWhitespace = text.isNotEmpty && text.trimRight() != text;
+
+  if (hasTrailingWhitespace &&
+      (preserveTextWhitespace || wasPreservingTextWhitespace)) {
     updated[busyMarkPreserveTextWhitespaceAttribute] = 'true';
+  } else {
+    updated.remove(busyMarkPreserveTextWhitespaceAttribute);
   }
+
   if (text.isNotEmpty) {
     updated.remove(busyMarkTransientTrailingParagraphAttribute);
   }
