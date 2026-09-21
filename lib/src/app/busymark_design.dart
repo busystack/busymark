@@ -119,6 +119,7 @@ abstract final class BusyMarkSizes {
   static const double toolbarPlacementRowWidth = 430;
   static const double settingsControlBreakpoint = 560;
   static const double toolbarPlacementBreakpoint = 620;
+  static const double richListRowMinHeight = 56;
   static const int tableMinColumns = 1;
   static const int tableMaxColumns = 12;
   static const int tableMinRows = 1;
@@ -976,8 +977,9 @@ Color busyMarkRowHoverColor(BuildContext context) {
 
 TextStyle? busyMarkSectionHeaderStyle(BuildContext context) {
   final theme = Theme.of(context);
-  return theme.textTheme.titleSmall?.copyWith(
-    color: theme.colorScheme.onSurfaceVariant,
+  return theme.textTheme.bodyMedium?.copyWith(
+    color: BusyMarkSurfaceColors.of(context).foreground,
+    fontWeight: FontWeight.w700,
   );
 }
 
@@ -1685,24 +1687,50 @@ class _BusyMarkNestedMenuState<T> extends State<_BusyMarkNestedMenu<T>> {
           child: Text(item.label),
         )
       else if (item is BusyMarkPopupMenuItem<T>)
-        MenuItemButton(
-          focusNode: root && identical(item, items.first) ? _firstFocus : null,
-          closeOnActivate: false,
-          onPressed: item.enabled
-              ? () {
-                  _selected = true;
-                  Navigator.of(context).pop(item.menuValue);
-                }
-              : null,
-          leadingIcon: item.icon == null
-              ? null
-              : Icon(
-                  item.icon,
-                  size: BusyMarkSizes.iconSm,
-                  color: item.iconColor,
-                ),
-          trailingIcon: item.shortcut == null ? null : Text(item.shortcut!),
-          child: Text(item.label),
+        Semantics(
+          checked: item.trailingCheck ? item.checked : null,
+          inMutuallyExclusiveGroup:
+              item.trailingCheck && item.mutuallyExclusive,
+          child: MenuItemButton(
+            focusNode: root && identical(item, items.first)
+                ? _firstFocus
+                : null,
+            closeOnActivate: false,
+            onPressed: item.enabled
+                ? () {
+                    _selected = true;
+                    Navigator.of(context).pop(item.menuValue);
+                  }
+                : null,
+            leadingIcon: item.icon == null
+                ? null
+                : Icon(
+                    item.icon,
+                    size: BusyMarkSizes.iconSm,
+                    color: item.iconColor,
+                  ),
+            trailingIcon: item.trailingCheck
+                ? Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (item.shortcut case final shortcut?) ...[
+                        Text(shortcut),
+                        const SizedBox(width: BusyMarkSpacing.sm),
+                      ],
+                      Visibility.maintain(
+                        visible: item.checked,
+                        child: const Icon(
+                          BusyMarkGlyphs.check,
+                          size: BusyMarkSizes.iconSm,
+                        ),
+                      ),
+                    ],
+                  )
+                : item.shortcut == null
+                ? null
+                : Text(item.shortcut!),
+            child: Text(item.label),
+          ),
         )
       else if (item is PopupMenuDivider)
         const Divider(height: BusyMarkSpacing.sm),
@@ -2904,6 +2932,122 @@ class _BusyMarkSidebarRecordRowState<T>
             excludeFromSemantics: true,
             child: semanticRow,
           );
+  }
+}
+
+/// A lazy, unboxed list for spacious Settings-style rows and controls.
+///
+/// This represents GTK's rich-list pattern: the surrounding view remains the
+/// surface owner while this widget provides native row spacing and semantic
+/// separators. Rows retain their own Yaru hover and focus behavior.
+class BusyMarkRichList extends StatelessWidget {
+  const BusyMarkRichList({
+    super.key,
+    required this.itemCount,
+    required this.itemBuilder,
+    this.padding = EdgeInsets.zero,
+  });
+
+  final int itemCount;
+  final IndexedWidgetBuilder itemBuilder;
+  final EdgeInsetsGeometry padding;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = BusyMarkSurfaceColors.of(context);
+    return DefaultTextStyle.merge(
+      style: TextStyle(color: colors.foreground),
+      child: IconTheme.merge(
+        data: IconThemeData(color: colors.foreground),
+        child: ListView.separated(
+          padding: padding,
+          itemCount: itemCount,
+          itemBuilder: (context, index) => ConstrainedBox(
+            constraints: const BoxConstraints(
+              minHeight: BusyMarkSizes.richListRowMinHeight,
+            ),
+            child: itemBuilder(context, index),
+          ),
+          separatorBuilder: (context, index) => Divider(
+            height: BusyMarkStroke.hairline,
+            thickness: BusyMarkStroke.hairline,
+            color: colors.divider,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// A native contextual information bar embedded in the surrounding layout.
+///
+/// This mirrors Libadwaita's banner pattern: the host decides when the banner
+/// is revealed, while the banner owns semantic surface, typography, and
+/// native action-control presentation without floating over content.
+class BusyMarkBanner extends StatelessWidget {
+  const BusyMarkBanner({
+    super.key,
+    required this.title,
+    this.actionLabel,
+    this.onAction,
+    this.suggestedAction = false,
+  }) : assert(actionLabel != null || onAction == null);
+
+  final String title;
+  final String? actionLabel;
+  final VoidCallback? onAction;
+  final bool suggestedAction;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = BusyMarkSurfaceColors.of(context);
+    final actionLabel = this.actionLabel;
+    final action = actionLabel == null
+        ? null
+        : suggestedAction
+        ? BusyMarkPushButton.suggested(
+            onPressed: onAction,
+            child: Text(actionLabel),
+          )
+        : BusyMarkPushButton.standard(
+            onPressed: onAction,
+            child: Text(actionLabel),
+          );
+    return Semantics(
+      container: true,
+      liveRegion: true,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: colors.panel,
+          border: Border(bottom: BorderSide(color: colors.divider)),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: BusyMarkSpacing.md,
+            vertical: BusyMarkSpacing.sm,
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(color: colors.foreground),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+              if (action != null) ...[
+                const SizedBox(width: BusyMarkSpacing.md),
+                action,
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 

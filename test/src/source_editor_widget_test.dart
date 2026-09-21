@@ -787,6 +787,127 @@ void main() {
     );
   });
 
+  testWidgets(
+    'source spelling language uses a checked native submenu without a dialog',
+    (tester) async {
+      const source = 'helo\n';
+      const nativeMenuChannel = MethodChannel(nativeMenuChannelName);
+      List<Map<Object?, Object?>>? nativeEntries;
+      String? targetLabel;
+      String? selected;
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        nativeMenuChannel,
+        (call) async {
+          if (call.method != 'show') return false;
+          final arguments = call.arguments as Map<Object?, Object?>;
+          nativeEntries = (arguments['entries'] as List<Object?>)
+              .cast<Map<Object?, Object?>>();
+          return targetLabel == null
+              ? -1
+              : _nativeMenuIndexForLabel(nativeEntries!, targetLabel);
+        },
+      );
+      addTearDown(() {
+        tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          nativeMenuChannel,
+          null,
+        );
+      });
+      await tester.pumpWidget(
+        MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(
+            body: SizedBox(
+              width: 900,
+              height: 600,
+              child: BusyMarkSourceEditor(
+                text: source,
+                clipboardService: _SourceTestClipboard(),
+                language: SourceSyntaxLanguage.markdown,
+                filePath: '/project/spelling-submenu.md',
+                diagnostics: const [],
+                editorFontSize: 14,
+                wordWrap: true,
+                searchActive: false,
+                searchOptions: const SourceSearchOptions(),
+                onSearchOptionsChanged: (_) {},
+                onChanged: (_, _) {},
+                onOpenSearch: () {},
+                onCloseSearch: () {},
+                readSpellingMenuItems: (_) async => [
+                  BusyMarkEditorSpellingMenuItem.submenu(
+                    label: 'Choose spelling language',
+                    children: [
+                      BusyMarkEditorSpellingMenuItem(
+                        label: 'Inherit spelling language',
+                        checked: true,
+                        mutuallyExclusive: true,
+                        onSelected: () => selected = 'inherit',
+                      ),
+                      BusyMarkEditorSpellingMenuItem(
+                        label: 'Disable spelling',
+                        mutuallyExclusive: true,
+                        onSelected: () => selected = 'disabled',
+                      ),
+                      const BusyMarkEditorSpellingMenuItem.divider(),
+                      BusyMarkEditorSpellingMenuItem(
+                        label: 'Test English',
+                        mutuallyExclusive: true,
+                        onSelected: () => selected = 'en-Test',
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+
+      Future<void> openMenu() async {
+        nativeEntries = null;
+        await tester.tap(
+          find.byType(TextField),
+          buttons: kSecondaryMouseButton,
+        );
+        await _pumpUntil(tester, () => nativeEntries != null);
+      }
+
+      await openMenu();
+      final languageMenu = nativeEntries!.singleWhere(
+        (entry) => entry['label'] == 'Choose spelling language',
+      );
+      final children = (languageMenu['children'] as List<Object?>)
+          .cast<Map<Object?, Object?>>();
+      expect(children.map((entry) => entry['label']), [
+        'Inherit spelling language',
+        'Disable spelling',
+        '',
+        'Test English',
+      ]);
+      expect(
+        children.where((entry) => entry['selected'] == true),
+        hasLength(1),
+      );
+      expect(children.first['selected'], isTrue);
+      expect(children.first['checkable'], isTrue);
+      expect(find.byType(SimpleDialog), findsNothing);
+      expect(find.byType(SimpleDialogOption), findsNothing);
+
+      for (final choice in const {
+        'Inherit spelling language': 'inherit',
+        'Disable spelling': 'disabled',
+        'Test English': 'en-Test',
+      }.entries) {
+        targetLabel = choice.key;
+        selected = null;
+        await openMenu();
+        expect(selected, choice.value);
+      }
+    },
+  );
+
   testWidgets('source spelling menu converts folded offsets to full source', (
     tester,
   ) async {
@@ -9238,6 +9359,27 @@ String? _nativeShortcut(List<Map<Object?, Object?>> entries, String label) {
 String? _nativeIcon(List<Map<Object?, Object?>> entries, String label) {
   return entries.singleWhere((entry) => entry['label'] == label)['icon']
       as String?;
+}
+
+int _nativeMenuIndexForLabel(
+  List<Map<Object?, Object?>> entries,
+  String label,
+) {
+  var index = 0;
+  int? visit(List<Map<Object?, Object?>> items) {
+    for (final item in items) {
+      final current = index++;
+      if (item['label'] == label) return current;
+      final children = item['children'];
+      if (children is List<Object?>) {
+        final found = visit(children.cast<Map<Object?, Object?>>());
+        if (found != null) return found;
+      }
+    }
+    return null;
+  }
+
+  return visit(entries) ?? -1;
 }
 
 RenderEditable? _findRenderEditable(RenderObject root) {

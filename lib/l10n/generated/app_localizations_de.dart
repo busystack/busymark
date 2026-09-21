@@ -4614,6 +4614,11 @@ class AppLocalizationsDe extends AppLocalizations {
   String get spellingDictionaryNotInstalled => 'Wörterbuch nicht installiert';
 
   @override
+  String spellingDictionaryNotInstalledForLanguage(String dictionary) {
+    return 'Das Wörterbuch $dictionary ist nicht installiert';
+  }
+
+  @override
   String spellingDictionaryNotInstalledWithSize(String size) {
     return 'Nicht installiert · $size';
   }

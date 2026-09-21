@@ -4618,6 +4618,11 @@ class AppLocalizationsFr extends AppLocalizations {
   String get spellingDictionaryNotInstalled => 'Dictionnaire non installé';
 
   @override
+  String spellingDictionaryNotInstalledForLanguage(String dictionary) {
+    return 'Le dictionnaire $dictionary n’est pas installé';
+  }
+
+  @override
   String spellingDictionaryNotInstalledWithSize(String size) {
     return 'Non installé · $size';
   }

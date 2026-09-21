@@ -104,6 +104,7 @@
   "spellingCheckFailed": "Не вдалося перевірити правопис",
   "spellingCheckIncomplete": "Перевірку правопису не завершено",
   "spellingDictionaryNotInstalled": "Словник не встановлено",
+  "spellingDictionaryNotInstalledForLanguage": "Словник «{dictionary}» не встановлено",
   "spellingDictionaryNotInstalledWithSize": "Не встановлено · {size}",
   "spellingDictionaryInstalled": "Встановлено",
   "installSpellingDictionary": "Встановити словник",

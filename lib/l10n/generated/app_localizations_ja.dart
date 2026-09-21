@@ -4446,6 +4446,11 @@ class AppLocalizationsJa extends AppLocalizations {
   String get spellingDictionaryNotInstalled => '辞書がインストールされていません';
 
   @override
+  String spellingDictionaryNotInstalledForLanguage(String dictionary) {
+    return '$dictionary の辞書がインストールされていません';
+  }
+
+  @override
   String spellingDictionaryNotInstalledWithSize(String size) {
     return '未インストール · $size';
   }

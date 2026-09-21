@@ -4565,6 +4565,11 @@ class AppLocalizationsVi extends AppLocalizations {
   String get spellingDictionaryNotInstalled => 'Từ điển chưa được cài đặt';
 
   @override
+  String spellingDictionaryNotInstalledForLanguage(String dictionary) {
+    return 'Từ điển $dictionary chưa được cài đặt';
+  }
+
+  @override
   String spellingDictionaryNotInstalledWithSize(String size) {
     return 'Chưa cài đặt · $size';
   }

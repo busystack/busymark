@@ -104,6 +104,7 @@
   "spellingCheckFailed": "Yazım denetimi başarısız oldu",
   "spellingCheckIncomplete": "Yazım denetimi tamamlanmadı",
   "spellingDictionaryNotInstalled": "Sözlük yüklü değil",
+  "spellingDictionaryNotInstalledForLanguage": "{dictionary} sözlüğü yüklü değil",
   "spellingDictionaryNotInstalledWithSize": "Yüklü değil · {size}",
   "spellingDictionaryInstalled": "Yüklü",
   "installSpellingDictionary": "Sözlüğü yükle",

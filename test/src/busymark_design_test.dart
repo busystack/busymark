@@ -1114,6 +1114,106 @@ void main() {
     );
   });
 
+  testWidgets('grouped list headings use the native semantic heading style', (
+    tester,
+  ) async {
+    for (final brightness in Brightness.values) {
+      final theme = buildBusyMarkTheme(
+        brightness: brightness,
+        accentColor: const Color(0xFF3584E4),
+      );
+      final colors = theme.extension<BusyMarkSurfaceColors>()!;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: theme,
+          darkTheme: theme,
+          themeMode: brightness == Brightness.dark
+              ? ThemeMode.dark
+              : ThemeMode.light,
+          themeAnimationDuration: Duration.zero,
+          home: const Scaffold(
+            body: BusyMarkGroupedList(
+              title: 'Native heading',
+              description: 'Secondary description',
+              children: [BusyMarkActionRow(title: 'Setting')],
+            ),
+          ),
+        ),
+      );
+
+      final heading = tester.widget<Text>(find.text('Native heading'));
+      expect(heading.style?.fontSize, theme.textTheme.bodyMedium?.fontSize);
+      expect(heading.style?.fontWeight, FontWeight.w700);
+      expect(heading.style?.color, colors.foreground);
+      expect(heading.style?.color, isNot(colors.mutedForeground));
+
+      final description = tester.widget<Text>(
+        find.text('Secondary description'),
+      );
+      expect(description.style?.color, theme.colorScheme.onSurfaceVariant);
+      expect(description.style?.fontWeight, isNot(FontWeight.w700));
+    }
+  });
+
+  testWidgets('contextual banner uses semantic surfaces in light and dark', (
+    tester,
+  ) async {
+    for (final brightness in Brightness.values) {
+      final theme = buildBusyMarkTheme(
+        brightness: brightness,
+        accentColor: const Color(0xFF3584E4),
+      );
+      final colors = theme.extension<BusyMarkSurfaceColors>()!;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: theme,
+          darkTheme: theme,
+          themeMode: brightness == Brightness.dark
+              ? ThemeMode.dark
+              : ThemeMode.light,
+          themeAnimationDuration: Duration.zero,
+          home: Scaffold(
+            body: SizedBox(
+              width: 360,
+              child: BusyMarkBanner(
+                title: 'Test English dictionary is not installed',
+                actionLabel: 'Install dictionary',
+                suggestedAction: true,
+                onAction: () {},
+              ),
+            ),
+          ),
+        ),
+      );
+
+      final title = tester.widget<Text>(
+        find.text('Test English dictionary is not installed'),
+      );
+      final surface = tester.widget<DecoratedBox>(
+        find.descendant(
+          of: find.byType(BusyMarkBanner),
+          matching: find.byType(DecoratedBox),
+        ),
+      );
+      final decoration = surface.decoration as BoxDecoration;
+      expect(title.style?.color, colors.foreground);
+      expect(title.maxLines, 1);
+      expect(title.overflow, TextOverflow.ellipsis);
+      expect(decoration.color, colors.panel);
+      expect(decoration.border?.bottom.color, colors.divider);
+      expect(
+        find.descendant(
+          of: find.byType(BusyMarkBanner),
+          matching: find.byType(ElevatedButton),
+        ),
+        findsOneWidget,
+      );
+      expect(tester.takeException(), isNull);
+    }
+  });
+
   testWidgets('dialog grouped cards resolve the contextual native layer', (
     tester,
   ) async {

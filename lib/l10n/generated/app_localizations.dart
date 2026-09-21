@@ -7734,6 +7734,12 @@ abstract class AppLocalizations {
   /// **'Dictionary not installed'**
   String get spellingDictionaryNotInstalled;
 
+  /// No description provided for @spellingDictionaryNotInstalledForLanguage.
+  ///
+  /// In en, this message translates to:
+  /// **'{dictionary} dictionary is not installed'**
+  String spellingDictionaryNotInstalledForLanguage(String dictionary);
+
   /// No description provided for @spellingDictionaryNotInstalledWithSize.
   ///
   /// In en, this message translates to:

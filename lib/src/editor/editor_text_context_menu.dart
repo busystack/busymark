@@ -32,12 +32,39 @@ class BusyMarkEditorSpellingMenuItem {
     required this.onSelected,
     this.enabled = true,
     this.suggestion = false,
-  });
+    this.checked = false,
+    this.mutuallyExclusive = false,
+  }) : children = const [],
+       divider = false;
+
+  const BusyMarkEditorSpellingMenuItem.submenu({
+    required this.label,
+    required this.children,
+    this.enabled = true,
+  }) : onSelected = null,
+       suggestion = false,
+       checked = false,
+       mutuallyExclusive = false,
+       divider = false;
+
+  const BusyMarkEditorSpellingMenuItem.divider()
+    : label = '',
+      onSelected = null,
+      enabled = false,
+      suggestion = false,
+      checked = false,
+      mutuallyExclusive = false,
+      children = const [],
+      divider = true;
 
   final String label;
-  final VoidCallback onSelected;
+  final VoidCallback? onSelected;
   final bool enabled;
   final bool suggestion;
+  final bool checked;
+  final bool mutuallyExclusive;
+  final List<BusyMarkEditorSpellingMenuItem> children;
+  final bool divider;
 }
 
 typedef BusyMarkEditorSpellingMenuReader =
@@ -211,13 +238,7 @@ class _BusyMarkEditorTextContextMenuState
 
     if (_spellingItems.isNotEmpty) {
       for (final item in _spellingItems) {
-        items.add(
-          BusyMarkPopupMenuItem<VoidCallback>(
-            value: item.onSelected,
-            label: item.label,
-            enabled: item.enabled,
-          ),
-        );
+        items.add(_spellingMenuEntry(item));
       }
       items.add(const PopupMenuDivider(height: BusyMarkSpacing.sm));
     } else if (_spellingPreparationTimedOut && spellingFallback != null) {
@@ -347,6 +368,31 @@ class _BusyMarkEditorTextContextMenuState
     items.addAll(widget.additionalItems);
     return items;
   }
+
+  PopupMenuEntry<VoidCallback> _spellingMenuEntry(
+    BusyMarkEditorSpellingMenuItem item,
+  ) {
+    if (item.divider) {
+      return const PopupMenuDivider(height: BusyMarkSpacing.sm);
+    }
+    if (item.children.isNotEmpty) {
+      return BusyMarkSubmenuItem<VoidCallback>(
+        label: item.label,
+        enabled: item.enabled,
+        items: [for (final child in item.children) _spellingMenuEntry(child)],
+      );
+    }
+    return BusyMarkPopupMenuItem<VoidCallback>(
+      value: item.onSelected ?? _noOp,
+      label: item.label,
+      enabled: item.enabled,
+      checked: item.checked,
+      trailingCheck: item.mutuallyExclusive,
+      mutuallyExclusive: item.mutuallyExclusive,
+    );
+  }
+
+  static void _noOp() {}
 }
 
 IconData? _iconFor(ContextMenuButtonType type) {

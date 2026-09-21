@@ -104,6 +104,7 @@
   "spellingCheckFailed": "Stavekontrollen mislyktes",
   "spellingCheckIncomplete": "Stavekontrollen er ufullstendig",
   "spellingDictionaryNotInstalled": "Ordliste er ikke installert",
+  "spellingDictionaryNotInstalledForLanguage": "Ordlisten for {dictionary} er ikke installert",
   "spellingDictionaryNotInstalledWithSize": "Ikke installert · {size}",
   "spellingDictionaryInstalled": "Installert",
   "installSpellingDictionary": "Installer ordliste",

@@ -104,6 +104,7 @@
   "spellingCheckFailed": "Spellingcontrole mislukt",
   "spellingCheckIncomplete": "De spellingcontrole is onvolledig",
   "spellingDictionaryNotInstalled": "Woordenboek niet geïnstalleerd",
+  "spellingDictionaryNotInstalledForLanguage": "Het woordenboek voor {dictionary} is niet geïnstalleerd",
   "spellingDictionaryNotInstalledWithSize": "Niet geïnstalleerd · {size}",
   "spellingDictionaryInstalled": "Geïnstalleerd",
   "installSpellingDictionary": "Woordenboek installeren",

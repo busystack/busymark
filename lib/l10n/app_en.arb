@@ -2760,6 +2760,8 @@
   "spellingCheckFailed": "Spelling check failed",
   "spellingCheckIncomplete": "Spelling check is incomplete",
   "spellingDictionaryNotInstalled": "Dictionary not installed",
+  "spellingDictionaryNotInstalledForLanguage": "{dictionary} dictionary is not installed",
+  "@spellingDictionaryNotInstalledForLanguage": {"placeholders": {"dictionary": {"type": "String"}}},
   "spellingDictionaryNotInstalledWithSize": "Not installed · {size}",
   "@spellingDictionaryNotInstalledWithSize": {"placeholders": {"size": {"type": "String"}}},
   "spellingDictionaryInstalled": "Installed",

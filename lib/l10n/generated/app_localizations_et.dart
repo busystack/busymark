@@ -4571,6 +4571,11 @@ class AppLocalizationsEt extends AppLocalizations {
   String get spellingDictionaryNotInstalled => 'Sõnastik pole installitud';
 
   @override
+  String spellingDictionaryNotInstalledForLanguage(String dictionary) {
+    return '$dictionary sõnastik pole installitud';
+  }
+
+  @override
   String spellingDictionaryNotInstalledWithSize(String size) {
     return 'Pole installitud · $size';
   }

@@ -104,6 +104,7 @@
   "spellingCheckFailed": "Kiểm tra chính tả thất bại",
   "spellingCheckIncomplete": "Kiểm tra chính tả chưa hoàn tất",
   "spellingDictionaryNotInstalled": "Từ điển chưa được cài đặt",
+  "spellingDictionaryNotInstalledForLanguage": "Từ điển {dictionary} chưa được cài đặt",
   "spellingDictionaryNotInstalledWithSize": "Chưa cài đặt · {size}",
   "spellingDictionaryInstalled": "Đã cài đặt",
   "installSpellingDictionary": "Cài đặt từ điển",

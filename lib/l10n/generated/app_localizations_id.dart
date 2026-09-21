@@ -4573,6 +4573,11 @@ class AppLocalizationsId extends AppLocalizations {
   String get spellingDictionaryNotInstalled => 'Kamus belum terpasang';
 
   @override
+  String spellingDictionaryNotInstalledForLanguage(String dictionary) {
+    return 'Kamus $dictionary belum terpasang';
+  }
+
+  @override
   String spellingDictionaryNotInstalledWithSize(String size) {
     return 'Belum terpasang · $size';
   }

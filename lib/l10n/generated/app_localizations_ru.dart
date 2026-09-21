@@ -4630,6 +4630,11 @@ class AppLocalizationsRu extends AppLocalizations {
   String get spellingDictionaryNotInstalled => 'Словарь не установлен';
 
   @override
+  String spellingDictionaryNotInstalledForLanguage(String dictionary) {
+    return 'Словарь «$dictionary» не установлен';
+  }
+
+  @override
   String spellingDictionaryNotInstalledWithSize(String size) {
     return 'Не установлен · $size';
   }

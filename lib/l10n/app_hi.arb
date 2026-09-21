@@ -104,6 +104,7 @@
   "spellingCheckFailed": "वर्तनी जाँच विफल रही",
   "spellingCheckIncomplete": "वर्तनी जाँच अधूरी है",
   "spellingDictionaryNotInstalled": "शब्दकोश इंस्टॉल नहीं है",
+  "spellingDictionaryNotInstalledForLanguage": "{dictionary} शब्दकोश इंस्टॉल नहीं है",
   "spellingDictionaryNotInstalledWithSize": "इंस्टॉल नहीं है · {size}",
   "spellingDictionaryInstalled": "इंस्टॉल है",
   "installSpellingDictionary": "शब्दकोश इंस्टॉल करें",

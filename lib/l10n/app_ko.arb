@@ -104,6 +104,7 @@
   "spellingCheckFailed": "맞춤법 검사에 실패했습니다",
   "spellingCheckIncomplete": "맞춤법 검사가 완료되지 않았습니다",
   "spellingDictionaryNotInstalled": "사전이 설치되지 않음",
+  "spellingDictionaryNotInstalledForLanguage": "{dictionary} 사전이 설치되지 않았습니다",
   "spellingDictionaryNotInstalledWithSize": "설치되지 않음 · {size}",
   "spellingDictionaryInstalled": "설치됨",
   "installSpellingDictionary": "사전 설치",

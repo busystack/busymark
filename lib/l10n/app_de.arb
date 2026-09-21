@@ -104,6 +104,7 @@
   "spellingCheckFailed": "Rechtschreibprüfung fehlgeschlagen",
   "spellingCheckIncomplete": "Rechtschreibprüfung ist unvollständig",
   "spellingDictionaryNotInstalled": "Wörterbuch nicht installiert",
+  "spellingDictionaryNotInstalledForLanguage": "Das Wörterbuch {dictionary} ist nicht installiert",
   "spellingDictionaryNotInstalledWithSize": "Nicht installiert · {size}",
   "spellingDictionaryInstalled": "Installiert",
   "installSpellingDictionary": "Wörterbuch installieren",

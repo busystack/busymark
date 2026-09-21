@@ -4604,6 +4604,11 @@ class AppLocalizationsAr extends AppLocalizations {
   String get spellingDictionaryNotInstalled => 'القاموس غير مثبّت';
 
   @override
+  String spellingDictionaryNotInstalledForLanguage(String dictionary) {
+    return 'قاموس ⁨$dictionary⁩ غير مثبّت';
+  }
+
+  @override
   String spellingDictionaryNotInstalledWithSize(String size) {
     return 'غير مثبّت · ⁨$size⁩';
   }

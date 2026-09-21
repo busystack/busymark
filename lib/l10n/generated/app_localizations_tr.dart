@@ -4574,6 +4574,11 @@ class AppLocalizationsTr extends AppLocalizations {
   String get spellingDictionaryNotInstalled => 'Sözlük yüklü değil';
 
   @override
+  String spellingDictionaryNotInstalledForLanguage(String dictionary) {
+    return '$dictionary sözlüğü yüklü değil';
+  }
+
+  @override
   String spellingDictionaryNotInstalledWithSize(String size) {
     return 'Yüklü değil · $size';
   }

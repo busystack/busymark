@@ -104,6 +104,7 @@
   "spellingCheckFailed": "Sprawdzanie pisowni nie powiodło się",
   "spellingCheckIncomplete": "Sprawdzanie pisowni jest niepełne",
   "spellingDictionaryNotInstalled": "Słownik nie jest zainstalowany",
+  "spellingDictionaryNotInstalledForLanguage": "Słownik {dictionary} nie jest zainstalowany",
   "spellingDictionaryNotInstalledWithSize": "Niezainstalowany · {size}",
   "spellingDictionaryInstalled": "Zainstalowany",
   "installSpellingDictionary": "Zainstaluj słownik",

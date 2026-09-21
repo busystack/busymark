@@ -4612,6 +4612,11 @@ class AppLocalizationsFa extends AppLocalizations {
   String get spellingDictionaryNotInstalled => 'واژه‌نامه نصب نشده است';
 
   @override
+  String spellingDictionaryNotInstalledForLanguage(String dictionary) {
+    return 'واژه‌نامهٔ ⁨$dictionary⁩ نصب نشده است';
+  }
+
+  @override
   String spellingDictionaryNotInstalledWithSize(String size) {
     return 'نصب‌نشده · ⁨$size⁩';
   }

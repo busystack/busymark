@@ -4440,6 +4440,11 @@ class AppLocalizationsKo extends AppLocalizations {
   String get spellingDictionaryNotInstalled => '사전이 설치되지 않음';
 
   @override
+  String spellingDictionaryNotInstalledForLanguage(String dictionary) {
+    return '$dictionary 사전이 설치되지 않았습니다';
+  }
+
+  @override
   String spellingDictionaryNotInstalledWithSize(String size) {
     return '설치되지 않음 · $size';
   }

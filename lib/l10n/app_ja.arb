@@ -104,6 +104,7 @@
   "spellingCheckFailed": "スペルチェックに失敗しました",
   "spellingCheckIncomplete": "スペルチェックが完了していません",
   "spellingDictionaryNotInstalled": "辞書がインストールされていません",
+  "spellingDictionaryNotInstalledForLanguage": "{dictionary} の辞書がインストールされていません",
   "spellingDictionaryNotInstalledWithSize": "未インストール · {size}",
   "spellingDictionaryInstalled": "インストール済み",
   "installSpellingDictionary": "辞書をインストール",

@@ -4564,6 +4564,11 @@ class AppLocalizationsHi extends AppLocalizations {
   String get spellingDictionaryNotInstalled => 'शब्दकोश इंस्टॉल नहीं है';
 
   @override
+  String spellingDictionaryNotInstalledForLanguage(String dictionary) {
+    return '$dictionary शब्दकोश इंस्टॉल नहीं है';
+  }
+
+  @override
   String spellingDictionaryNotInstalledWithSize(String size) {
     return 'इंस्टॉल नहीं है · $size';
   }

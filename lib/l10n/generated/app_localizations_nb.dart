@@ -4572,6 +4572,11 @@ class AppLocalizationsNb extends AppLocalizations {
   String get spellingDictionaryNotInstalled => 'Ordliste er ikke installert';
 
   @override
+  String spellingDictionaryNotInstalledForLanguage(String dictionary) {
+    return 'Ordlisten for $dictionary er ikke installert';
+  }
+
+  @override
   String spellingDictionaryNotInstalledWithSize(String size) {
     return 'Ikke installert · $size';
   }

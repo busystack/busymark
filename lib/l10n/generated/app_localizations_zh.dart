@@ -4373,6 +4373,11 @@ class AppLocalizationsZh extends AppLocalizations {
   String get spellingDictionaryNotInstalled => '尚未安装词典';
 
   @override
+  String spellingDictionaryNotInstalledForLanguage(String dictionary) {
+    return '尚未安装 $dictionary 词典';
+  }
+
+  @override
   String spellingDictionaryNotInstalledWithSize(String size) {
     return '未安装 · $size';
   }
@@ -8788,6 +8793,11 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get spellingDictionaryNotInstalled => '尚未安装词典';
+
+  @override
+  String spellingDictionaryNotInstalledForLanguage(String dictionary) {
+    return '尚未安装 $dictionary 词典';
+  }
 
   @override
   String spellingDictionaryNotInstalledWithSize(String size) {

@@ -104,6 +104,7 @@
   "spellingCheckFailed": "拼写检查失败",
   "spellingCheckIncomplete": "拼写检查未完成",
   "spellingDictionaryNotInstalled": "尚未安装词典",
+  "spellingDictionaryNotInstalledForLanguage": "尚未安装 {dictionary} 词典",
   "spellingDictionaryNotInstalledWithSize": "未安装 · {size}",
   "spellingDictionaryInstalled": "已安装",
   "installSpellingDictionary": "安装词典",

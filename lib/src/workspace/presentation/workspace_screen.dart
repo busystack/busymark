@@ -12053,6 +12053,11 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
               ),
               onSaveAs: () => unawaited(saveActiveToNewLocation(context, ref)),
             ),
+          if (activeBuffer != null &&
+              settings.automaticSpelling &&
+              activeBuffer.editorState.spellingLanguage.kind !=
+                  SpellingLanguageOverrideKind.disabled)
+            if (_buildSpellingBanner(context) case final banner?) banner,
           Expanded(
             child: Stack(
               children: [
@@ -12488,18 +12493,6 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
                     ],
                   ),
                 ),
-                if (activeBuffer != null)
-                  if (_spellingStatusMessage(context) case final message?)
-                    PositionedDirectional(
-                      top: BusyMarkSpacing.sm,
-                      end: BusyMarkSpacing.sm,
-                      child: IgnorePointer(
-                        child: _SpellingStatusBanner(
-                          message: message,
-                          detail: _spelling.state.message,
-                        ),
-                      ),
-                    ),
               ],
             ),
           ),
@@ -12769,21 +12762,54 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     }
   }
 
-  String? _spellingStatusMessage(BuildContext context) {
-    return switch (_spelling.state.status) {
-      SpellingPresentationStatus.languageRequired =>
-        context.l10n.chooseSpellingLanguage,
-      SpellingPresentationStatus.checking => context.l10n.spellingChecking,
-      SpellingPresentationStatus.dictionaryNotInstalled =>
-        context.l10n.spellingDictionaryNotInstalled,
-      SpellingPresentationStatus.dictionaryUnavailable =>
-        context.l10n.spellingDictionaryUnavailable,
-      SpellingPresentationStatus.failure => context.l10n.spellingCheckFailed,
-      SpellingPresentationStatus.incomplete =>
-        context.l10n.spellingCheckIncomplete,
-      SpellingPresentationStatus.ready ||
-      SpellingPresentationStatus.disabled => null,
-    };
+  Widget? _buildSpellingBanner(BuildContext context) {
+    final state = _spelling.state;
+    switch (state.status) {
+      case SpellingPresentationStatus.languageRequired:
+        return BusyMarkBanner(
+          key: const ValueKey('spelling-language-required-banner'),
+          title: context.l10n.chooseSpellingLanguage,
+          actionLabel: context.l10n.chooseSpellingLanguage,
+          suggestedAction: true,
+          onAction: () => unawaited(_chooseDocumentSpellingLanguage()),
+        );
+      case SpellingPresentationStatus.dictionaryNotInstalled:
+        final languageId = state.message;
+        final resource = languageId == null
+            ? null
+            : _spelling.catalog?.availableById(languageId);
+        final installStatus = _spelling.dictionaryInstallStatus;
+        final installing =
+            resource != null &&
+            installStatus?.resourceId == resource.resourceId &&
+            installStatus?.phase != SpellingDictionaryInstallPhase.failed;
+        return BusyMarkBanner(
+          key: const ValueKey('spelling-dictionary-banner'),
+          title: resource == null
+              ? context.l10n.spellingDictionaryNotInstalled
+              : context.l10n.spellingDictionaryNotInstalledForLanguage(
+                  resource.label,
+                ),
+          actionLabel: context.l10n.installSpellingDictionary,
+          suggestedAction: true,
+          onAction: languageId == null || resource == null || installing
+              ? null
+              : () => unawaited(_installDocumentDictionary(languageId)),
+        );
+      case SpellingPresentationStatus.dictionaryUnavailable:
+        return BusyMarkBanner(
+          key: const ValueKey('spelling-dictionary-unavailable-banner'),
+          title: context.l10n.spellingDictionaryUnavailable,
+          actionLabel: context.l10n.chooseSpellingLanguage,
+          onAction: () => unawaited(_chooseDocumentSpellingLanguage()),
+        );
+      case SpellingPresentationStatus.checking:
+      case SpellingPresentationStatus.ready:
+      case SpellingPresentationStatus.disabled:
+      case SpellingPresentationStatus.failure:
+      case SpellingPresentationStatus.incomplete:
+        return null;
+    }
   }
 
   void _revealSpellingOccurrence(SpellingOccurrence occurrence) {
@@ -12983,11 +13009,47 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
           () => unawaited(_persistSpellingWord(captured, project: true)),
         ),
       ),
-      BusyMarkEditorSpellingMenuItem(
-        label: context.l10n.chooseSpellingLanguage,
-        onSelected: () => unawaited(_chooseDocumentSpellingLanguage()),
-      ),
+      _documentSpellingLanguageMenuItem(),
     ];
+  }
+
+  BusyMarkEditorSpellingMenuItem _documentSpellingLanguageMenuItem() {
+    final buffer = ref.read(workspaceControllerProvider).activeBuffer;
+    final current = buffer?.editorState.spellingLanguage;
+    final entries = _spelling.catalog?.entries ?? const [];
+    BusyMarkEditorSpellingMenuItem choice(
+      String label,
+      SpellingLanguageOverride requested,
+    ) {
+      return BusyMarkEditorSpellingMenuItem(
+        label: label,
+        checked: current == requested,
+        mutuallyExclusive: true,
+        onSelected: () => unawaited(
+          _applyDocumentSpellingLanguage(
+            requested,
+            expectedBufferId: buffer?.id,
+          ),
+        ),
+      );
+    }
+
+    return BusyMarkEditorSpellingMenuItem.submenu(
+      label: context.l10n.chooseSpellingLanguage,
+      children: [
+        choice(
+          context.l10n.inheritSpellingLanguage,
+          const SpellingLanguageOverride.inherit(),
+        ),
+        choice(
+          context.l10n.disableDocumentSpelling,
+          const SpellingLanguageOverride.disabled(),
+        ),
+        if (entries.isNotEmpty) const BusyMarkEditorSpellingMenuItem.divider(),
+        for (final entry in entries)
+          choice(entry.label, SpellingLanguageOverride.selected(entry.id)),
+      ],
+    );
   }
 
   Future<void> _persistSpellingWord(
@@ -13010,52 +13072,92 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     final buffer = ref.read(workspaceControllerProvider).activeBuffer;
     final entries = _spelling.catalog?.entries ?? const [];
     if (buffer == null || entries.isEmpty) return false;
+    final current = buffer.editorState.spellingLanguage;
+    Widget selectedIcon(SpellingLanguageOverride candidate) {
+      return candidate == current
+          ? const Icon(BusyMarkGlyphs.check, size: BusyMarkSizes.iconSm)
+          : const SizedBox(width: BusyMarkSizes.iconSm);
+    }
+
     final selected = await showBusyMarkModalDialog<SpellingLanguageOverride>(
       context,
-      builder: (context) => SimpleDialog(
-        title: Text(context.l10n.chooseSpellingLanguage),
+      builder: (dialogContext) => BusyMarkDialogShell(
+        title: dialogContext.l10n.chooseSpellingLanguage,
         children: [
-          SimpleDialogOption(
-            onPressed: () => Navigator.of(
-              context,
-            ).pop(const SpellingLanguageOverride.inherit()),
-            child: Text(context.l10n.inheritSpellingLanguage),
+          BusyMarkGroupedList(
+            filled: true,
+            children: [
+              BusyMarkActionRow(
+                title: dialogContext.l10n.inheritSpellingLanguage,
+                trailing: selectedIcon(
+                  const SpellingLanguageOverride.inherit(),
+                ),
+                onTap: () => Navigator.of(
+                  dialogContext,
+                ).pop(const SpellingLanguageOverride.inherit()),
+              ),
+              BusyMarkActionRow(
+                title: dialogContext.l10n.disableDocumentSpelling,
+                trailing: selectedIcon(
+                  const SpellingLanguageOverride.disabled(),
+                ),
+                onTap: () => Navigator.of(
+                  dialogContext,
+                ).pop(const SpellingLanguageOverride.disabled()),
+              ),
+              for (final entry in entries)
+                BusyMarkActionRow(
+                  title: entry.label,
+                  trailing: selectedIcon(
+                    SpellingLanguageOverride.selected(entry.id),
+                  ),
+                  onTap: () => Navigator.of(
+                    dialogContext,
+                  ).pop(SpellingLanguageOverride.selected(entry.id)),
+                ),
+            ],
           ),
-          SimpleDialogOption(
-            onPressed: () => Navigator.of(
-              context,
-            ).pop(const SpellingLanguageOverride.disabled()),
-            child: Text(context.l10n.disableDocumentSpelling),
-          ),
-          for (final entry in entries)
-            SimpleDialogOption(
-              onPressed: () => Navigator.of(
-                context,
-              ).pop(SpellingLanguageOverride.selected(entry.id)),
-              child: Text(entry.label),
-            ),
         ],
       ),
     );
     if (!mounted || selected == null) return false;
+    final applied = await _applyDocumentSpellingLanguage(
+      selected,
+      expectedBufferId: buffer.id,
+    );
+    return applied && selected.kind != SpellingLanguageOverrideKind.disabled;
+  }
+
+  Future<bool> _applyDocumentSpellingLanguage(
+    SpellingLanguageOverride requested, {
+    String? expectedBufferId,
+  }) async {
+    final buffer = ref.read(workspaceControllerProvider).activeBuffer;
+    if (buffer == null ||
+        (expectedBufferId != null && buffer.id != expectedBufferId)) {
+      return false;
+    }
+    final selectedLanguageId = requested.languageId;
+    if (requested.kind == SpellingLanguageOverrideKind.selected &&
+        selectedLanguageId != null &&
+        _spelling.catalog?.installedById(selectedLanguageId) == null &&
+        !await _offerDocumentDictionaryInstall(selectedLanguageId)) {
+      return false;
+    }
+    if (!mounted) return false;
     final latest = ref.read(workspaceControllerProvider).activeBuffer;
     if (latest == null || latest.id != buffer.id) return false;
     ref
         .read(workspaceControllerProvider.notifier)
         .updateDocumentEditorState(
           latest.id,
-          latest.editorState.copyWith(spellingLanguage: selected),
+          latest.editorState.copyWith(spellingLanguage: requested),
         );
-    final selectedLanguageId = selected.languageId;
-    if (selected.kind == SpellingLanguageOverrideKind.selected &&
-        selectedLanguageId != null) {
-      return _spelling.catalog?.installedById(selectedLanguageId) != null ||
-          await _offerDocumentDictionaryInstall(selectedLanguageId);
-    }
-    return selected.kind != SpellingLanguageOverrideKind.disabled;
+    return true;
   }
 
   Future<bool> _offerDocumentDictionaryInstall(String languageId) async {
+    if (_spelling.catalog?.installedById(languageId) != null) return true;
     final resource = _spelling.catalog?.availableById(languageId);
     if (resource == null) return false;
     if (_spelling.catalog?.installationForResource(resource.resourceId) !=
@@ -13068,27 +13170,36 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
         : '${mebibytes.toStringAsFixed(1)} MiB';
     final accepted = await showBusyMarkModalDialog<bool>(
       context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(dialogContext.l10n.spellingDictionaryNotInstalled),
-        content: Text(
-          dialogContext.l10n.spellingDictionaryInstallPrompt(
-            resource.label,
-            size,
-          ),
-        ),
+      builder: (dialogContext) => BusyMarkDialogShell(
+        title: dialogContext.l10n.spellingDictionaryNotInstalled,
         actions: [
-          TextButton(
+          BusyMarkDialogButton(
+            label: dialogContext.l10n.cancel,
             onPressed: () => Navigator.pop(dialogContext, false),
-            child: Text(dialogContext.l10n.cancel),
           ),
-          FilledButton(
+          BusyMarkDialogButton(
+            label: dialogContext.l10n.installSpellingDictionary,
+            suggested: true,
             onPressed: () => Navigator.pop(dialogContext, true),
-            child: Text(dialogContext.l10n.installSpellingDictionary),
+          ),
+        ],
+        children: [
+          Text(
+            dialogContext.l10n.spellingDictionaryInstallPrompt(
+              resource.label,
+              size,
+            ),
           ),
         ],
       ),
     );
     if (!mounted || accepted != true) return false;
+    return _installDocumentDictionary(languageId);
+  }
+
+  Future<bool> _installDocumentDictionary(String languageId) async {
+    if (_spelling.catalog?.installedById(languageId) != null) return true;
+    if (_spelling.catalog?.availableById(languageId) == null) return false;
     try {
       await _spelling.installDictionary(languageId);
       return mounted && _spelling.catalog?.installedById(languageId) != null;
@@ -14041,52 +14152,6 @@ class _RecoveredDocumentBanner extends StatelessWidget {
               child: Text(context.l10n.discard),
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _SpellingStatusBanner extends StatelessWidget {
-  const _SpellingStatusBanner({required this.message, this.detail});
-
-  final String message;
-  final String? detail;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = BusyMarkSurfaceColors.of(context);
-    return ConstrainedBox(
-      constraints: const BoxConstraints(maxWidth: 420),
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: colors.admonitionTip,
-          border: Border.all(color: colors.subtleBorder),
-          borderRadius: BorderRadius.circular(BusyMarkRadius.sm),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: BusyMarkSpacing.md,
-            vertical: BusyMarkSpacing.xs,
-          ),
-          child: Row(
-            children: [
-              const Icon(BusyMarkGlyphs.symbols, size: BusyMarkSizes.iconSm),
-              const SizedBox(width: BusyMarkSpacing.sm),
-              Expanded(
-                child: Tooltip(
-                  message: detail?.trim().isNotEmpty == true
-                      ? detail!
-                      : message,
-                  child: Text(
-                    message,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ),
-            ],
-          ),
         ),
       ),
     );

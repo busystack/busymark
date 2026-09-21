@@ -9,6 +9,7 @@ import 'package:busymark/l10n/generated/app_localizations_en.dart';
 import 'package:busymark/l10n/generated/app_localizations_fa.dart';
 import 'package:busymark/l10n/generated/app_localizations_fr.dart';
 import 'package:busymark/src/app/app_metadata.dart';
+import 'package:busymark/src/app/app_router.dart';
 import 'package:busymark/src/app/app_settings.dart';
 import 'package:busymark/src/app/busymark_app.dart';
 import 'package:busymark/src/app/busymark_dialogs.dart';
@@ -53,6 +54,7 @@ import 'package:busymark/src/markdown/markdown_model.dart';
 import 'package:busymark/src/markdown/markdown_parser.dart';
 import 'package:busymark/src/platform/linux_header_bar_service.dart';
 import 'package:busymark/src/platform/rich_clipboard_service.dart';
+import 'package:busymark/src/spellcheck/spelling_dictionary_downloader.dart';
 import 'package:busymark/src/spellcheck/spelling_session_controller.dart';
 import 'package:busymark/src/writerside/writerside_model.dart';
 import 'package:busymark/src/writerside/writerside_project.dart';
@@ -88,6 +90,12 @@ void main() {
   setUp(() {
     final binding = TestWidgetsFlutterBinding.ensureInitialized();
     binding.platformDispatcher.defaultRouteNameTestValue = '/';
+    for (final channelName in ['yaru_window', 'yaru_window/events']) {
+      binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        MethodChannel(channelName),
+        (call) async => call.method == 'state' ? <String, Object?>{} : null,
+      );
+    }
     headerBarService = _FallbackHeaderBarService();
   });
 
@@ -993,7 +1001,8 @@ void main() {
       find.byKey(const ValueKey('spelling-dictionaries-list')),
       findsOneWidget,
     );
-    expect(find.byType(ListView), findsOneWidget);
+    expect(find.byType(BusyMarkRichList), findsOneWidget);
+    expect(find.byType(Scrollable), findsOneWidget);
     expect(
       tester.widget<BusyMarkClamp>(find.byType(BusyMarkClamp)).scrollable,
       isFalse,
@@ -1160,6 +1169,8 @@ void main() {
       find.byKey(const ValueKey('spelling-dictionaries-list')),
       findsOneWidget,
     );
+    expect(find.byType(BusyMarkRichList), findsOneWidget);
+    expect(find.byType(Scrollable), findsOneWidget);
     header = tester.widget<HeaderBarConfigurationPublisher>(
       find.byType(HeaderBarConfigurationPublisher),
     );
@@ -1254,11 +1265,12 @@ void main() {
       await tester.tap(dictionariesNavigation);
       await tester.pumpAndSettle();
 
-      final list = tester.widget<ListView>(
+      final list = tester.widget<BusyMarkRichList>(
         find.byKey(const ValueKey('spelling-dictionaries-list')),
       );
-      expect(list.childrenDelegate, isA<SliverChildBuilderDelegate>());
-      expect(list.semanticChildCount, 5);
+      expect(list.itemCount, 5);
+      expect(find.byType(Scrollable), findsOneWidget);
+      expect(find.byType(BusyMarkGroupedList), findsNothing);
       expect(find.text(l10n.importSpellingDictionary), findsOneWidget);
       expect(find.text('Test English'), findsOneWidget);
       expect(find.text('Test French'), findsOneWidget);
@@ -1266,6 +1278,46 @@ void main() {
       expect(find.textContaining('Not installed ·'), findsAtLeastNWidgets(1));
       expect(find.text('Local Test English'), findsOneWidget);
       expect(find.text('xx-Test'), findsOneWidget);
+      expect(
+        tester.getTopLeft(find.text(l10n.importSpellingDictionary)).dy,
+        lessThan(tester.getTopLeft(find.text('Test English')).dy),
+      );
+      expect(
+        tester.getTopLeft(find.text('Test French')).dy,
+        lessThan(tester.getTopLeft(find.text('Local Test English')).dy),
+      );
+      expect(
+        tester.getTopLeft(find.text('Local Test English')).dy,
+        lessThan(tester.getTopLeft(find.text('xx-Test')).dy),
+      );
+
+      final richListContext = tester.element(
+        find.byKey(const ValueKey('spelling-dictionaries-list')),
+      );
+      expect(find.byType(Divider), findsNWidgets(list.itemCount - 1));
+      expect(
+        tester
+            .widgetList<Divider>(find.byType(Divider))
+            .every(
+              (divider) =>
+                  divider.color ==
+                  BusyMarkSurfaceColors.of(richListContext).divider,
+            ),
+        isTrue,
+      );
+      for (final resourceTitle in ['Test English', 'Test French']) {
+        final row = find.byWidgetPredicate(
+          (widget) =>
+              widget is BusyMarkActionRow && widget.title == resourceTitle,
+        );
+        expect(
+          find.descendant(
+            of: row,
+            matching: find.byType(BusyMarkCompactIconButton),
+          ),
+          findsOneWidget,
+        );
+      }
 
       final importRow = tester.widget<BusyMarkActionRow>(
         find.byKey(const ValueKey('import-spelling-dictionary')),
@@ -1287,6 +1339,226 @@ void main() {
       );
       expect(invalidRow.destructive, isTrue);
       expect(invalidRow.onTap, isNotNull);
+    },
+  );
+
+  testWidgets(
+    'cancelling a default-language install keeps the previous selection',
+    (tester) async {
+      var downloadCount = 0;
+      final settingsStore = _MemorySettingsStore()
+        ..value = AppSettings.defaults()
+            .copyWith(defaultSpellingLanguage: 'en-Test')
+            .toJson();
+      final harness = await _pumpSettingsSpellingHarness(
+        tester,
+        headerBarService: headerBarService,
+        settingsStore: settingsStore,
+        downloadFile:
+            ({
+              required source,
+              required destination,
+              required expectedBytes,
+              required cancellation,
+              required onProgress,
+            }) async {
+              downloadCount += 1;
+              await _copySettingsDictionaryDownload(
+                source: source,
+                destination: destination,
+                expectedBytes: expectedBytes,
+                cancellation: cancellation,
+                onProgress: onProgress,
+              );
+            },
+      );
+      addTearDown(harness.dispose);
+
+      await _selectSpellingLanguage(
+        tester,
+        selectorTooltip: l10n.defaultSpellingLanguage,
+        languageLabel: 'Test French',
+      );
+
+      expect(find.text(l10n.spellingDictionaryNotInstalled), findsOneWidget);
+      expect(find.byType(BusyMarkDialogShell), findsOneWidget);
+      expect(find.byType(AlertDialog), findsNothing);
+      expect(settingsStore.value['defaultSpellingLanguage'], 'en-Test');
+      await tester.tap(find.text(l10n.cancel));
+      await _pumpSettingsUi(tester);
+
+      expect(settingsStore.value['defaultSpellingLanguage'], 'en-Test');
+      expect(
+        _spellingLanguageSelector(tester, l10n.defaultSpellingLanguage).label,
+        'Test English',
+      );
+      expect(downloadCount, 0);
+    },
+  );
+
+  testWidgets(
+    'default language persists only after dictionary installation succeeds',
+    (tester) async {
+      var downloadCount = 0;
+      final allowDownload = Completer<void>();
+      final settingsStore = _MemorySettingsStore()
+        ..value = AppSettings.defaults()
+            .copyWith(defaultSpellingLanguage: 'en-Test')
+            .toJson();
+      final harness = await _pumpSettingsSpellingHarness(
+        tester,
+        headerBarService: headerBarService,
+        settingsStore: settingsStore,
+        downloadFile:
+            ({
+              required source,
+              required destination,
+              required expectedBytes,
+              required cancellation,
+              required onProgress,
+            }) async {
+              downloadCount += 1;
+              await allowDownload.future;
+              await _copySettingsDictionaryDownload(
+                source: source,
+                destination: destination,
+                expectedBytes: expectedBytes,
+                cancellation: cancellation,
+                onProgress: onProgress,
+              );
+            },
+      );
+      addTearDown(harness.dispose);
+
+      await _selectSpellingLanguage(
+        tester,
+        selectorTooltip: l10n.defaultSpellingLanguage,
+        languageLabel: 'Test French',
+      );
+      await tester.tap(find.text(l10n.installSpellingDictionary));
+      await _pumpUntilCondition(tester, () => downloadCount > 0);
+
+      expect(settingsStore.value['defaultSpellingLanguage'], 'en-Test');
+      expect(
+        _spellingLanguageSelector(tester, l10n.defaultSpellingLanguage).label,
+        'Test English',
+      );
+
+      allowDownload.complete();
+      await _pumpUntilCondition(
+        tester,
+        () => settingsStore.value['defaultSpellingLanguage'] == 'fr-Test',
+      );
+
+      expect(harness.spelling.catalog?.installedById('fr-Test'), isNotNull);
+      expect(settingsStore.value['defaultSpellingLanguage'], 'fr-Test');
+      expect(
+        _spellingLanguageSelector(tester, l10n.defaultSpellingLanguage).label,
+        'Test French',
+      );
+      expect(downloadCount, 2);
+    },
+  );
+
+  testWidgets('failed dictionary install keeps the default language', (
+    tester,
+  ) async {
+    var downloadCount = 0;
+    final settingsStore = _MemorySettingsStore()
+      ..value = AppSettings.defaults()
+          .copyWith(defaultSpellingLanguage: 'en-Test')
+          .toJson();
+    final harness = await _pumpSettingsSpellingHarness(
+      tester,
+      headerBarService: headerBarService,
+      settingsStore: settingsStore,
+      downloadFile:
+          ({
+            required source,
+            required destination,
+            required expectedBytes,
+            required cancellation,
+            required onProgress,
+          }) async {
+            downloadCount += 1;
+            throw const SocketException('test dictionary download failure');
+          },
+    );
+    addTearDown(harness.dispose);
+
+    await _selectSpellingLanguage(
+      tester,
+      selectorTooltip: l10n.defaultSpellingLanguage,
+      languageLabel: 'Test French',
+    );
+    await tester.tap(find.text(l10n.installSpellingDictionary));
+    await _pumpUntilCondition(
+      tester,
+      () =>
+          harness.spelling.dictionaryInstallStatus?.phase ==
+          SpellingDictionaryInstallPhase.failed,
+    );
+
+    expect(downloadCount, 1);
+    expect(settingsStore.value['defaultSpellingLanguage'], 'en-Test');
+    expect(
+      _spellingLanguageSelector(tester, l10n.defaultSpellingLanguage).label,
+      'Test English',
+    );
+    expect(find.text(l10n.commandUnavailableInContext), findsOneWidget);
+  });
+
+  testWidgets(
+    'cancelling a project-language install keeps the previous selection',
+    (tester) async {
+      var downloadCount = 0;
+      final harness = await _pumpSettingsSpellingHarness(
+        tester,
+        headerBarService: headerBarService,
+        settingsStore: _MemorySettingsStore(),
+        projectLanguage: 'en-Test',
+        downloadFile:
+            ({
+              required source,
+              required destination,
+              required expectedBytes,
+              required cancellation,
+              required onProgress,
+            }) async {
+              downloadCount += 1;
+              await _copySettingsDictionaryDownload(
+                source: source,
+                destination: destination,
+                expectedBytes: expectedBytes,
+                cancellation: cancellation,
+                onProgress: onProgress,
+              );
+            },
+      );
+      addTearDown(harness.dispose);
+
+      await _selectSpellingLanguage(
+        tester,
+        selectorTooltip: l10n.projectSpellingLanguage,
+        languageLabel: 'Test French',
+      );
+
+      expect(find.text(l10n.spellingDictionaryNotInstalled), findsOneWidget);
+      expect(harness.spelling.projectWords.projectLanguage, 'en-Test');
+      await tester.tap(find.text(l10n.cancel));
+      await _pumpSettingsUi(tester);
+
+      expect(harness.spelling.projectWords.projectLanguage, 'en-Test');
+      expect(
+        _spellingLanguageSelector(tester, l10n.projectSpellingLanguage).label,
+        'Test English',
+      );
+      expect(downloadCount, 0);
+      final persistedSource = await tester.runAsync(
+        () => File(harness.projectSpellingPath!).readAsString(),
+      );
+      final persisted = jsonDecode(persistedSource!);
+      expect((persisted as Map<String, Object?>)['projectLanguage'], 'en-Test');
     },
   );
 
@@ -6779,6 +7051,7 @@ code
           .copyWith(
             documentViewMode: DocumentViewModePreference.source,
             localeTag: 'de',
+            automaticSpelling: false,
           )
           .toJson();
     final container = ProviderContainer(
@@ -7160,7 +7433,10 @@ code
 
     final settingsStore = _MemorySettingsStore()
       ..value = AppSettings.defaults()
-          .copyWith(documentViewMode: DocumentViewModePreference.editor)
+          .copyWith(
+            documentViewMode: DocumentViewModePreference.editor,
+            automaticSpelling: false,
+          )
           .toJson();
     const service = _SearchWorkspaceService(
       '# Shared document frame\n\nParagraph line one\nParagraph line two\n',
@@ -7694,7 +7970,10 @@ code
 
     final settingsStore = _MemorySettingsStore()
       ..value = AppSettings.defaults()
-          .copyWith(documentViewMode: DocumentViewModePreference.editor)
+          .copyWith(
+            documentViewMode: DocumentViewModePreference.editor,
+            automaticSpelling: false,
+          )
           .toJson();
     const service = _SearchWorkspaceService('> Shared quote.\n');
     final container = ProviderContainer(
@@ -7798,6 +8077,7 @@ code
           .copyWith(
             localeTag: 'ar',
             documentViewMode: DocumentViewModePreference.editor,
+            automaticSpelling: false,
           )
           .toJson();
     const service = _SearchWorkspaceService('```dart\n$code\n```\n\nمرحبا\n');
@@ -7915,7 +8195,10 @@ code
 
     final settingsStore = _MemorySettingsStore()
       ..value = AppSettings.defaults()
-          .copyWith(documentViewMode: DocumentViewModePreference.editor)
+          .copyWith(
+            documentViewMode: DocumentViewModePreference.editor,
+            automaticSpelling: false,
+          )
           .toJson();
     const headings = ['First', 'Second', 'Third', 'Fourth', 'Fifth', 'Sixth'];
     const service = _SearchWorkspaceService('''
@@ -13343,6 +13626,191 @@ Future<({String bundle, String storage})> _createSettingsSpellingFixture(
     }),
   );
   return (bundle: bundle, storage: storage);
+}
+
+class _SettingsSpellingHarness {
+  _SettingsSpellingHarness({
+    required this.temporary,
+    required this.container,
+    required this.spelling,
+    this.projectSpellingPath,
+  });
+
+  final Directory temporary;
+  final ProviderContainer container;
+  final SpellingSessionController spelling;
+  final String? projectSpellingPath;
+
+  Future<void> dispose() async {
+    container.dispose();
+    if (await temporary.exists()) {
+      await temporary.delete(recursive: true);
+    }
+  }
+}
+
+Future<_SettingsSpellingHarness> _pumpSettingsSpellingHarness(
+  WidgetTester tester, {
+  required LinuxHeaderBarService headerBarService,
+  required _MemorySettingsStore settingsStore,
+  required SpellingDictionaryFileDownload downloadFile,
+  String? projectLanguage,
+}) async {
+  tester.view.devicePixelRatio = 1;
+  tester.view.physicalSize = const Size(800, 900);
+  addTearDown(tester.view.resetDevicePixelRatio);
+  addTearDown(tester.view.resetPhysicalSize);
+
+  late Directory temporary;
+  late SpellingSessionController spelling;
+  Workspace? workspace;
+  String? projectSpellingPath;
+  await tester.runAsync(() async {
+    temporary = await Directory.systemTemp.createTemp(
+      'busymark-settings-language-transaction-',
+    );
+    final fixture = await _createSettingsSpellingFixture(temporary);
+    if (projectLanguage != null) {
+      final projectRoot = Directory(p.join(temporary.path, 'project'));
+      await projectRoot.create(recursive: true);
+      await File(
+        p.join(projectRoot.path, 'document.md'),
+      ).writeAsString('# Project\n');
+      projectSpellingPath = p.join(
+        projectRoot.path,
+        '.busymark',
+        'spelling.json',
+      );
+      final projectFile = File(projectSpellingPath!);
+      await projectFile.parent.create(recursive: true);
+      await projectFile.writeAsString(
+        jsonEncode({
+          'schemaVersion': 1,
+          'revision': 1,
+          'projectLanguage': projectLanguage,
+          'words': <String, Object?>{},
+        }),
+      );
+      workspace = await const WorkspaceService().openPath(projectRoot.path);
+    }
+    spelling = SpellingSessionController(
+      bundledRoot: fixture.bundle,
+      applicationSupportRoot: p.join(temporary.path, 'support'),
+      dictionaryStorageRoot: fixture.storage,
+      verifyDictionaryChecksums: false,
+      dictionaryDownloader: SpellingDictionaryDownloader(
+        downloadFile: downloadFile,
+      ),
+    );
+    await spelling.prepareSettings(workspace);
+  });
+
+  final container = ProviderContainer(
+    overrides: [
+      linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+      localSettingsStoreProvider.overrideWithValue(settingsStore),
+      systemAccentColorProvider.overrideWith((ref) => const Stream.empty()),
+      spellingSessionControllerProvider.overrideWith((ref) => spelling),
+      if (workspace != null)
+        startupPathProvider.overrideWithValue(workspace!.rootPath),
+    ],
+  );
+  await tester.pumpWidget(
+    UncontrolledProviderScope(container: container, child: const BusyMarkApp()),
+  );
+  await tester.pump();
+  for (var attempt = 0; attempt < 20; attempt += 1) {
+    await tester.pump(const Duration(milliseconds: 50));
+  }
+  container.read(appRouterProvider).go('/settings?page=editor');
+  await tester.pump();
+  for (var attempt = 0; attempt < 10; attempt += 1) {
+    await tester.pump(const Duration(milliseconds: 50));
+  }
+  final l10n = AppLocalizationsEn();
+  await _pumpUntilFound(tester, find.byTooltip(l10n.defaultSpellingLanguage));
+
+  return _SettingsSpellingHarness(
+    temporary: temporary,
+    container: container,
+    spelling: spelling,
+    projectSpellingPath: projectSpellingPath,
+  );
+}
+
+Future<void> _selectSpellingLanguage(
+  WidgetTester tester, {
+  required String selectorTooltip,
+  required String languageLabel,
+}) async {
+  await tester.ensureVisible(find.byTooltip(selectorTooltip));
+  await _pumpSettingsUi(tester);
+  final selector = _spellingLanguageSelector(tester, selectorTooltip);
+  final languageId = selector.options
+      .singleWhere((option) => option.label == languageLabel)
+      .value;
+  selector.onSelected(languageId);
+  await _pumpSettingsUi(tester);
+}
+
+BusyMarkPopupSelector<String> _spellingLanguageSelector(
+  WidgetTester tester,
+  String tooltip,
+) {
+  return tester.widget<BusyMarkPopupSelector<String>>(
+    find.byWidgetPredicate(
+      (widget) =>
+          widget is BusyMarkPopupSelector<String> && widget.tooltip == tooltip,
+    ),
+  );
+}
+
+Future<void> _pumpUntilCondition(
+  WidgetTester tester,
+  bool Function() condition,
+) async {
+  for (var attempt = 0; attempt < 200 && !condition(); attempt += 1) {
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 25)),
+    );
+    await tester.pump();
+  }
+  expect(condition(), isTrue);
+  await _pumpSettingsUi(tester);
+}
+
+Future<void> _pumpSettingsUi(WidgetTester tester) async {
+  await tester.pump();
+  for (var attempt = 0; attempt < 6; attempt += 1) {
+    await tester.pump(const Duration(milliseconds: 50));
+  }
+}
+
+Future<void> _copySettingsDictionaryDownload({
+  required Uri source,
+  required File destination,
+  required int expectedBytes,
+  required SpellingDictionaryDownloadCancellation cancellation,
+  required void Function(int receivedBytes) onProgress,
+}) async {
+  cancellation.throwIfCancelled();
+  final fileName = source.path.endsWith('.aff') ? 'test.aff' : 'test.dic';
+  final sourceFile = File(
+    p.join(
+      Directory.current.path,
+      'packages',
+      'busymark_spellcheck_native',
+      'test',
+      'fixtures',
+      fileName,
+    ),
+  );
+  final bytes = await sourceFile.readAsBytes();
+  if (bytes.length != expectedBytes) {
+    throw StateError('Test dictionary size does not match its catalog.');
+  }
+  await destination.writeAsBytes(bytes, flush: true);
+  onProgress(bytes.length);
 }
 
 class _MemorySettingsStore implements LocalSettingsStore {

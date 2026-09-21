@@ -4637,6 +4637,11 @@ class AppLocalizationsUk extends AppLocalizations {
   String get spellingDictionaryNotInstalled => 'Словник не встановлено';
 
   @override
+  String spellingDictionaryNotInstalledForLanguage(String dictionary) {
+    return 'Словник «$dictionary» не встановлено';
+  }
+
+  @override
   String spellingDictionaryNotInstalledWithSize(String size) {
     return 'Не встановлено · $size';
   }

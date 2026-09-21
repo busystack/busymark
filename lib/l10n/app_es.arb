@@ -104,6 +104,7 @@
   "spellingCheckFailed": "La revisión ortográfica falló",
   "spellingCheckIncomplete": "La revisión ortográfica está incompleta",
   "spellingDictionaryNotInstalled": "Diccionario no instalado",
+  "spellingDictionaryNotInstalledForLanguage": "El diccionario de {dictionary} no está instalado",
   "spellingDictionaryNotInstalledWithSize": "No instalado · {size}",
   "spellingDictionaryInstalled": "Instalado",
   "installSpellingDictionary": "Instalar diccionario",

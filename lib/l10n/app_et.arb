@@ -104,6 +104,7 @@
   "spellingCheckFailed": "Õigekirjakontroll nurjus",
   "spellingCheckIncomplete": "Õigekirjakontroll on pooleli",
   "spellingDictionaryNotInstalled": "Sõnastik pole installitud",
+  "spellingDictionaryNotInstalledForLanguage": "{dictionary} sõnastik pole installitud",
   "spellingDictionaryNotInstalledWithSize": "Pole installitud · {size}",
   "spellingDictionaryInstalled": "Installitud",
   "installSpellingDictionary": "Installi sõnastik",

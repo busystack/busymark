@@ -196,19 +196,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       selected: settings.defaultSpellingLanguage,
                       catalogEntries: spelling.catalog?.entries ?? const [],
                       unsetLabel: l10n.chooseSpellingLanguage,
-                      onChanged: (value) {
-                        controller.setDefaultSpellingLanguage(value);
-                        if (value != null &&
-                            spelling.catalog?.installedById(value) == null) {
-                          unawaited(
-                            _offerSpellingDictionaryInstall(
-                              context,
-                              spelling,
-                              value,
-                            ),
-                          );
-                        }
-                      },
+                      onChanged: (value) => unawaited(
+                        _setDefaultSpellingLanguage(
+                          context,
+                          spelling,
+                          controller,
+                          value,
+                        ),
+                      ),
                     ),
                     _SpellingLanguageRow(
                       title: l10n.projectSpellingLanguage,
@@ -217,21 +212,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       unsetLabel: l10n.inheritSpellingLanguage,
                       enabled: spelling.hasProjectScope,
                       onChanged: (value) => unawaited(
-                        _setProjectSpellingLanguage(
-                          context,
-                          spelling,
-                          value,
-                        ).then((_) {
-                          if (value != null &&
-                              spelling.catalog?.installedById(value) == null &&
-                              context.mounted) {
-                            return _offerSpellingDictionaryInstall(
-                              context,
-                              spelling,
-                              value,
-                            );
-                          }
-                        }),
+                        _setProjectSpellingLanguage(context, spelling, value),
                       ),
                     ),
                   ],
@@ -793,9 +774,12 @@ class _SpellingDictionaryResourceRow extends StatelessWidget {
         ],
       ),
       leading: const Icon(BusyMarkGlyphs.symbols),
-      trailing: IconButton(
+      trailing: BusyMarkCompactIconButton(
         tooltip: tooltip,
-        icon: Icon(icon),
+        icon: icon,
+        foregroundColor: installed && active == null
+            ? Theme.of(context).colorScheme.error
+            : null,
         onPressed: action,
       ),
       onTap: action,
@@ -833,7 +817,6 @@ class _SpellingDictionariesPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = BusyMarkSurfaceColors.of(context);
     final resources =
         catalog?.availableEntries ?? const <SpellingDictionaryResource>[];
     final itemCount =
@@ -841,7 +824,7 @@ class _SpellingDictionariesPage extends StatelessWidget {
         resources.length +
         importedDictionaries.length +
         invalidImportedDictionaries.length;
-    return ListView.separated(
+    return BusyMarkRichList(
       key: const ValueKey('spelling-dictionaries-list'),
       padding: EdgeInsets.zero,
       itemCount: itemCount,
@@ -895,8 +878,6 @@ class _SpellingDictionariesPage extends StatelessWidget {
           onTap: () => onRemoveInvalid(entry),
         );
       },
-      separatorBuilder: (context, index) =>
-          Divider(height: 1, thickness: 1, color: colors.cardShade),
     );
   }
 }
@@ -908,11 +889,31 @@ String _formatDictionarySize(int bytes) {
       : '${mebibytes.toStringAsFixed(1)} MiB';
 }
 
+Future<void> _setDefaultSpellingLanguage(
+  BuildContext context,
+  SpellingSessionController spelling,
+  AppSettingsController controller,
+  String? languageId,
+) async {
+  if (languageId != null &&
+      !await _offerSpellingDictionaryInstall(context, spelling, languageId)) {
+    return;
+  }
+  if (context.mounted) {
+    await controller.setDefaultSpellingLanguage(languageId);
+  }
+}
+
 Future<void> _setProjectSpellingLanguage(
   BuildContext context,
   SpellingSessionController spelling,
   String? languageId,
 ) async {
+  if (languageId != null &&
+      !await _offerSpellingDictionaryInstall(context, spelling, languageId)) {
+    return;
+  }
+  if (!context.mounted) return;
   try {
     await spelling.setProjectLanguage(languageId);
   } on Object catch (error) {
@@ -1057,41 +1058,48 @@ Future<void> _installSpellingDictionary(
   }
 }
 
-Future<void> _offerSpellingDictionaryInstall(
+Future<bool> _offerSpellingDictionaryInstall(
   BuildContext context,
   SpellingSessionController spelling,
   String languageId,
 ) async {
-  final resource = spelling.catalog?.availableById(languageId);
-  if (resource == null ||
-      spelling.catalog?.installationForResource(resource.resourceId) != null) {
-    return;
-  }
+  final catalog = spelling.catalog;
+  if (catalog?.installedById(languageId) != null) return true;
+  final resource = catalog?.availableById(languageId);
+  if (resource == null) return false;
   final accepted = await showBusyMarkModalDialog<bool>(
     context,
-    builder: (dialogContext) => AlertDialog(
-      title: Text(dialogContext.l10n.spellingDictionaryNotInstalled),
-      content: Text(
-        dialogContext.l10n.spellingDictionaryInstallPrompt(
-          resource.label,
-          _formatDictionarySize(resource.downloadSize),
-        ),
-      ),
+    builder: (dialogContext) => BusyMarkDialogShell(
+      title: dialogContext.l10n.spellingDictionaryNotInstalled,
       actions: [
-        TextButton(
+        BusyMarkDialogButton(
+          label: dialogContext.l10n.cancel,
           onPressed: () => Navigator.pop(dialogContext, false),
-          child: Text(dialogContext.l10n.cancel),
         ),
-        FilledButton(
+        BusyMarkDialogButton(
+          label: dialogContext.l10n.installSpellingDictionary,
+          suggested: true,
           onPressed: () => Navigator.pop(dialogContext, true),
-          child: Text(dialogContext.l10n.installSpellingDictionary),
+        ),
+      ],
+      children: [
+        Text(
+          dialogContext.l10n.spellingDictionaryInstallPrompt(
+            resource.label,
+            _formatDictionarySize(resource.downloadSize),
+          ),
         ),
       ],
     ),
   );
-  if (accepted == true && context.mounted) {
-    await _installSpellingDictionary(context, spelling, languageId);
+  if (accepted != true || !context.mounted) return false;
+  try {
+    await spelling.installDictionary(languageId);
+  } on Object catch (error) {
+    if (context.mounted) _showSpellingSettingsFailure(context, error);
+    return false;
   }
+  return spelling.catalog?.installedById(languageId) != null;
 }
 
 Future<void> _retrySpellingDictionary(

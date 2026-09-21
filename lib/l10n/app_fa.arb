@@ -104,6 +104,7 @@
   "spellingCheckFailed": "بررسی املا ناموفق بود",
   "spellingCheckIncomplete": "بررسی املا کامل نیست",
   "spellingDictionaryNotInstalled": "واژه‌نامه نصب نشده است",
+  "spellingDictionaryNotInstalledForLanguage": "واژه‌نامهٔ ⁨{dictionary}⁩ نصب نشده است",
   "spellingDictionaryNotInstalledWithSize": "نصب‌نشده · ⁨{size}⁩",
   "spellingDictionaryInstalled": "نصب‌شده",
   "installSpellingDictionary": "نصب واژه‌نامه",

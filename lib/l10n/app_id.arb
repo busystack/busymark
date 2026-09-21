@@ -104,6 +104,7 @@
   "spellingCheckFailed": "Pemeriksaan ejaan gagal",
   "spellingCheckIncomplete": "Pemeriksaan ejaan belum lengkap",
   "spellingDictionaryNotInstalled": "Kamus belum terpasang",
+  "spellingDictionaryNotInstalledForLanguage": "Kamus {dictionary} belum terpasang",
   "spellingDictionaryNotInstalledWithSize": "Belum terpasang · {size}",
   "spellingDictionaryInstalled": "Terpasang",
   "installSpellingDictionary": "Pasang kamus",

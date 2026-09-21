@@ -104,6 +104,7 @@
   "spellingCheckFailed": "فشل التدقيق الإملائي",
   "spellingCheckIncomplete": "التدقيق الإملائي غير مكتمل",
   "spellingDictionaryNotInstalled": "القاموس غير مثبّت",
+  "spellingDictionaryNotInstalledForLanguage": "قاموس ⁨{dictionary}⁩ غير مثبّت",
   "spellingDictionaryNotInstalledWithSize": "غير مثبّت · ⁨{size}⁩",
   "spellingDictionaryInstalled": "مثبّت",
   "installSpellingDictionary": "تثبيت القاموس",
