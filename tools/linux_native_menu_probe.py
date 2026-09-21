@@ -83,6 +83,26 @@ def main():
              "enabled": node.get_state_set().contains(Atspi.StateType.ENABLED)}
             for node in walk(app)
         ], ensure_ascii=False))
+    elif command == "assert-check":
+        matches = [node for node in walk(app)
+                   if node.get_name() == args[0]
+                   and node.get_role() in (Atspi.Role.RADIO_MENU_ITEM,
+                                           Atspi.Role.CHECK_MENU_ITEM)
+                   and node.get_state_set().contains(Atspi.StateType.SHOWING)]
+        if len(matches) != 1:
+            raise RuntimeError(
+                f"Expected one visible checked-style menu item {args[0]!r}, "
+                f"got {len(matches)}")
+        item = matches[0]
+        if item.get_role() != Atspi.Role.CHECK_MENU_ITEM:
+            raise RuntimeError(
+                f"Native menu item uses a radio indicator: {args[0]}")
+        expected = args[1].lower() == "true"
+        checked = item.get_state_set().contains(Atspi.StateType.CHECKED)
+        if checked != expected:
+            raise RuntimeError(
+                f"Native menu item {args[0]!r} checked={checked}, "
+                f"expected {expected}")
     elif command == "choose":
         matches = [node for node in walk(app)
                    if node.get_name() == args[0]

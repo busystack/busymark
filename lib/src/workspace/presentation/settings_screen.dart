@@ -978,36 +978,44 @@ Future<void> _importSpellingDictionary(
   final languageId = await showBusyMarkModalDialog<String>(
     context,
     barrierDismissible: false,
-    builder: (dialogContext) => AlertDialog(
-      title: Text(dialogContext.l10n.importSpellingDictionary),
-      content: TextField(
-        controller: languageController,
-        autofocus: true,
-        textCapitalization: TextCapitalization.none,
-        decoration: InputDecoration(
-          labelText: dialogContext.l10n.language,
-          hintText: 'en-US',
-          border: const OutlineInputBorder(),
-        ),
-        onSubmitted: (value) {
-          if (value.trim().isNotEmpty) Navigator.pop(dialogContext, value);
-        },
-      ),
+    builder: (dialogContext) => BusyMarkDialogShell(
+      title: dialogContext.l10n.importSpellingDictionary,
+      closable: false,
       actions: [
-        TextButton(
+        BusyMarkDialogButton(
+          label: dialogContext.l10n.cancel,
           onPressed: () => Navigator.pop(dialogContext),
-          child: Text(dialogContext.l10n.cancel),
         ),
-        FilledButton(
+        BusyMarkDialogButton(
+          label: dialogContext.l10n.save,
+          suggested: true,
           onPressed: () {
             final value = languageController.text.trim();
             if (value.isNotEmpty) Navigator.pop(dialogContext, value);
           },
-          child: Text(dialogContext.l10n.save),
+        ),
+      ],
+      children: [
+        BusyMarkFloatingTextEntry(
+          label: dialogContext.l10n.language,
+          controller: languageController,
+          hintText: 'en-US',
+          autofocus: true,
+          textInputAction: TextInputAction.done,
+          minLines: 1,
+          maxLines: 1,
+          onSubmitted: (value) {
+            final trimmed = value.trim();
+            if (trimmed.isNotEmpty) Navigator.pop(dialogContext, trimmed);
+          },
         ),
       ],
     ),
   );
+  // DialogRoute completes its result before its exit transition unmounts the
+  // native text entry, so keep the controller alive through that transition.
+  await Future<void>.delayed(kThemeAnimationDuration);
+  await WidgetsBinding.instance.endOfFrame;
   languageController.dispose();
   if (!context.mounted || languageId == null) return;
   try {
@@ -1212,22 +1220,17 @@ class _HistoryNumberRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final values = {...choices, value}.toList()..sort();
-    return BusyMarkActionRow(
+    return BusyMarkComboRow<int>(
       title: title,
+      values: values,
+      selected: value,
+      labelFor: format,
       enabled: enabled,
       leading: const Icon(BusyMarkGlyphs.history),
-      trailing: DropdownButton<int>(
-        value: value,
-        onChanged: enabled
-            ? (next) {
-                if (next != null) unawaited(onChanged(next));
-              }
-            : null,
-        items: [
-          for (final choice in values)
-            DropdownMenuItem(value: choice, child: Text(format(choice))),
-        ],
-      ),
+      tooltip: title,
+      onSelected: (next) {
+        if (next != value) unawaited(onChanged(next));
+      },
     );
   }
 }

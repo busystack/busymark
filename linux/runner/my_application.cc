@@ -2248,7 +2248,6 @@ struct NativeMenuHandlerData;
 struct NativeMenuSession {
   NativeMenuHandlerData* owner;
   gint64 id;
-  size_t entry_count;
   GtkWidget* menu;
   GMenu* model;
   GSimpleActionGroup* action_group;
@@ -2362,25 +2361,17 @@ static void native_menu_action_activated_cb(GSimpleAction* action,
       1;
 }
 
-static void native_menu_selection_activated_cb(GSimpleAction* action,
-                                               GVariant* parameter,
-                                               gpointer user_data) {
-  if (parameter == nullptr ||
-      !g_variant_is_of_type(parameter, G_VARIANT_TYPE_STRING)) {
+static void native_menu_check_activated_cb(GSimpleAction* action,
+                                           GVariant*,
+                                           gpointer user_data) {
+  g_autoptr(GVariant) state = g_action_get_state(G_ACTION(action));
+  if (state == nullptr ||
+      !g_variant_is_of_type(state, G_VARIANT_TYPE_BOOLEAN)) {
     return;
   }
-  const gchar* target = g_variant_get_string(parameter, nullptr);
-  gchar* end = nullptr;
-  const guint64 parsed = g_ascii_strtoull(target, &end, 10);
-  auto* session = static_cast<NativeMenuSession*>(user_data);
-  if (target[0] == '\0' || end == nullptr || *end != '\0' ||
-      parsed > static_cast<guint64>(G_MAXINT) ||
-      parsed >= session->entry_count) {
-    return;
-  }
-
-  g_simple_action_set_state(action, parameter);
-  session->pending_selected_index = static_cast<gint>(parsed);
+  g_simple_action_set_state(
+      action, g_variant_new_boolean(!g_variant_get_boolean(state)));
+  native_menu_action_activated_cb(action, nullptr, user_data);
 }
 
 static gboolean native_menu_dismiss_active(NativeMenuHandlerData* data,
@@ -2576,6 +2567,7 @@ static gboolean validate_native_menu_entries(FlValue* entries,
     gboolean enabled = TRUE;
     gboolean checkable = FALSE;
     gboolean selected = FALSE;
+    gboolean mutually_exclusive = FALSE;
     if (entry == nullptr || fl_value_get_type(entry) != FL_VALUE_TYPE_MAP ||
         !fl_lookup_optional_bool_with_default(entry, "separator", FALSE,
                                               &separator) ||
@@ -2585,6 +2577,9 @@ static gboolean validate_native_menu_entries(FlValue* entries,
                                               &checkable) ||
         !fl_lookup_optional_bool_with_default(entry, "selected", FALSE,
                                               &selected) ||
+        !fl_lookup_optional_bool_with_default(entry, "mutuallyExclusive",
+                                              FALSE,
+                                              &mutually_exclusive) ||
         (!separator && fl_lookup_string_arg(entry, "label") == nullptr) ||
         (fl_value_lookup_string(entry, "icon") != nullptr &&
          fl_value_get_type(fl_value_lookup_string(entry, "icon")) !=
@@ -2610,7 +2605,7 @@ static gboolean validate_native_menu_entries(FlValue* entries,
     if (!separator) {
       command_count++;
     }
-    if (!separator && checkable) {
+    if (!separator && checkable && mutually_exclusive) {
       if (!in_checkable_run) {
         checkable_run_selected_count = 0;
         checkable_run_has_disabled_entry = FALSE;
@@ -2677,14 +2672,13 @@ static void build_native_menu_model(FlValue* entries,
     section_length = 0;
   };
 
-  for (size_t index = 0; index < fl_value_get_length(entries);) {
+  for (size_t index = 0; index < fl_value_get_length(entries); index++) {
     FlValue* entry = fl_value_get_list_value(entries, index);
     gboolean separator = FALSE;
     fl_lookup_optional_bool_with_default(entry, "separator", FALSE,
                                          &separator);
     if (separator) {
       flush_section();
-      index++;
       (*next_index)++;
       continue;
     }
@@ -2715,84 +2709,22 @@ static void build_native_menu_model(FlValue* entries,
           g_menu_item_new_submenu(literal_label, G_MENU_MODEL(submenu));
       g_menu_append_item(section, item);
       section_length++;
-      index++;
       continue;
     }
-    if (checkable) {
-      const size_t run_start = index;
-      size_t run_end = run_start;
-      g_autofree gchar* selected_target = g_strdup("");
-      while (run_end < fl_value_get_length(entries)) {
-        FlValue* run_entry = fl_value_get_list_value(entries, run_end);
-        gboolean run_separator = FALSE;
-        gboolean run_checkable = FALSE;
-        gboolean run_selected = FALSE;
-        fl_lookup_optional_bool_with_default(
-            run_entry, "separator", FALSE, &run_separator);
-        fl_lookup_optional_bool_with_default(
-            run_entry, "checkable", FALSE, &run_checkable);
-        if (run_separator || !run_checkable) {
-          break;
-        }
-        fl_lookup_optional_bool_with_default(
-            run_entry, "selected", FALSE, &run_selected);
-        if (run_selected) {
-          g_free(selected_target);
-          selected_target = g_strdup_printf("%zu", entry_index + run_end - run_start);
-        }
-        run_end++;
-      }
-
-      g_autofree gchar* group_action_name =
-          g_strdup_printf("select-group-%zu", entry_index);
-      GSimpleAction* group_action = g_simple_action_new_stateful(
-          group_action_name, G_VARIANT_TYPE_STRING,
-          g_variant_new_string(selected_target));
-      g_simple_action_set_enabled(group_action, ancestors_enabled);
-      g_signal_connect(group_action, "activate",
-                       G_CALLBACK(native_menu_selection_activated_cb),
-                       session);
-      g_action_map_add_action(G_ACTION_MAP(session->action_group),
-                              G_ACTION(group_action));
-      g_autofree gchar* detailed_group_action = g_strdup_printf(
-          "%s.%s", kNativeMenuActionNamespace, group_action_name);
-
-      for (size_t run_index = run_start; run_index < run_end; run_index++) {
-        FlValue* run_entry = fl_value_get_list_value(entries, run_index);
-        const gchar* run_label = fl_lookup_string_arg(run_entry, "label");
-        g_autofree gchar* run_literal_label =
-            escape_native_menu_label(run_label);
-        const gchar* run_icon = fl_lookup_string_arg(run_entry, "icon");
-        const gchar* run_shortcut =
-            fl_lookup_string_arg(run_entry, "shortcut");
-        g_autofree gchar* target = g_strdup_printf("%zu", entry_index + run_index - run_start);
-        g_autoptr(GMenuItem) item = g_menu_item_new(run_literal_label, nullptr);
-        g_menu_item_set_action_and_target_value(
-            item, detailed_group_action, g_variant_new_string(target));
-        if (run_icon != nullptr && run_icon[0] != '\0') {
-          g_autoptr(GIcon) icon =
-              create_native_menu_icon(run_icon, run_entry);
-          g_menu_item_set_icon(item, icon);
-        }
-        if (run_shortcut != nullptr && run_shortcut[0] != '\0') {
-          set_menu_item_accelerator(item, run_shortcut);
-        }
-        g_menu_append_item(section, item);
-        section_length++;
-      }
-      g_object_unref(group_action);
-      *next_index += run_end - run_start - 1;
-      index = run_end;
-      continue;
-    }
-
     g_autofree gchar* action_name = g_strdup_printf("select-%zu", entry_index);
-    GSimpleAction* action = g_simple_action_new(action_name, nullptr);
+    GSimpleAction* action = checkable
+                                ? g_simple_action_new_stateful(
+                                      action_name, nullptr,
+                                      g_variant_new_boolean(selected))
+                                : g_simple_action_new(action_name, nullptr);
     g_simple_action_set_enabled(action, ancestors_enabled && enabled);
     g_object_set_data(G_OBJECT(action), kNativeMenuActionIndexKey,
                       GINT_TO_POINTER(static_cast<gint>(entry_index) + 1));
-    g_signal_connect(action, "activate",
-                     G_CALLBACK(native_menu_action_activated_cb), session);
+    g_signal_connect(
+        action, "activate",
+        G_CALLBACK(checkable ? native_menu_check_activated_cb
+                             : native_menu_action_activated_cb),
+        session);
     g_action_map_add_action(G_ACTION_MAP(session->action_group),
                             G_ACTION(action));
 
@@ -2810,7 +2742,6 @@ static void build_native_menu_model(FlValue* entries,
     g_menu_append_item(section, item);
     g_object_unref(action);
     section_length++;
-    index++;
   }
   flush_section();
   g_object_unref(section);
@@ -2945,7 +2876,6 @@ static void show_native_menu(NativeMenuHandlerData* data,
   auto* session = g_new0(NativeMenuSession, 1);
   session->owner = data;
   session->id = session_id;
-  session->entry_count = entry_count;
   session->pending_selected_index = -1;
   session->method_call =
       FL_METHOD_CALL(g_object_ref(G_OBJECT(method_call)));

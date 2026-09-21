@@ -109,12 +109,17 @@ class _HarnessState extends ConsumerState<_Harness> {
   var _pointer = 0;
   var _nativeMenuOpen = false;
 
-  Future<String> _native(String command, [String? argument]) async {
+  Future<String> _native(
+    String command, [
+    String? argument,
+    String? secondArgument,
+  ]) async {
     final result = await Process.run('/usr/bin/python3', [
       p.absolute('tools/linux_native_menu_probe.py'),
       '$pid',
       command,
       ?argument,
+      ?secondArgument,
     ]);
     if (result.exitCode != 0) {
       throw StateError('Native $command failed: ${result.stderr}');
@@ -1240,7 +1245,7 @@ class _HarnessState extends ConsumerState<_Harness> {
       (await current).selectedIndex == null,
       'Native menu session dismissal returns cancellation',
     );
-    final radio = service.show(
+    final selector = service.show(
       session: NativeMenuSession(),
       anchor: const Rect.fromLTWH(600, 180, 80, 24),
       focusFirst: true,
@@ -1249,16 +1254,30 @@ class _HarnessState extends ConsumerState<_Harness> {
           label: 'First format',
           checkable: true,
           selected: true,
+          mutuallyExclusive: true,
         ),
-        NativeMenuEntry.command(label: 'Second format', checkable: true),
+        NativeMenuEntry.command(
+          label: 'Second format',
+          checkable: true,
+          mutuallyExclusive: true,
+        ),
+        NativeMenuEntry.separator(),
+        NativeMenuEntry.command(
+          label: 'Full Screen',
+          checkable: true,
+          selected: true,
+        ),
       ],
     );
     await _pause();
+    await _native('assert-check', 'First format', 'true');
+    await _native('assert-check', 'Second format', 'false');
+    await _native('assert-check', 'Full Screen', 'true');
     await _native('key', 'Down');
     await _native('key', 'Return');
     _check(
-      (await radio.timeout(const Duration(seconds: 5))).selectedIndex == 1,
-      'Existing flat native single-choice selectors still return their row index',
+      (await selector.timeout(const Duration(seconds: 5))).selectedIndex == 1,
+      'GTK checkmark selectors still return their exact row index',
     );
   }
 }

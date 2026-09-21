@@ -11756,6 +11756,20 @@ class _EditorPreviewSplit extends ConsumerStatefulWidget {
       _EditorPreviewSplitState();
 }
 
+final class _SpellingBannerPresentation {
+  const _SpellingBannerPresentation({
+    required this.title,
+    this.actionLabel,
+    this.onAction,
+    this.suggestedAction = false,
+  });
+
+  final String title;
+  final String? actionLabel;
+  final VoidCallback? onAction;
+  final bool suggestedAction;
+}
+
 class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
   final _previewScrollController = ItemScrollController();
   final _previewItemPositionsListener = ItemPositionsListener.create();
@@ -12005,6 +12019,13 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
         );
     final activeEditorPath = _activeEditorPath();
     final searchState = ref.watch(_workspaceSearchProvider);
+    final spellingBannerPresentation =
+        activeBuffer != null &&
+            settings.automaticSpelling &&
+            activeBuffer.editorState.spellingLanguage.kind !=
+                SpellingLanguageOverrideKind.disabled
+        ? _spellingBannerPresentation(context)
+        : null;
     return DecoratedBox(
       decoration: BoxDecoration(color: colors.view),
       child: Column(
@@ -12053,11 +12074,16 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
               ),
               onSaveAs: () => unawaited(saveActiveToNewLocation(context, ref)),
             ),
-          if (activeBuffer != null &&
-              settings.automaticSpelling &&
-              activeBuffer.editorState.spellingLanguage.kind !=
-                  SpellingLanguageOverrideKind.disabled)
-            if (_buildSpellingBanner(context) case final banner?) banner,
+          if (activeBuffer != null)
+            BusyMarkBanner(
+              key: const ValueKey('spelling-banner'),
+              title: spellingBannerPresentation?.title ?? '',
+              actionLabel: spellingBannerPresentation?.actionLabel,
+              onAction: spellingBannerPresentation?.onAction,
+              suggestedAction:
+                  spellingBannerPresentation?.suggestedAction ?? false,
+              revealed: spellingBannerPresentation != null,
+            ),
           Expanded(
             child: Stack(
               children: [
@@ -12762,12 +12788,13 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     }
   }
 
-  Widget? _buildSpellingBanner(BuildContext context) {
+  _SpellingBannerPresentation? _spellingBannerPresentation(
+    BuildContext context,
+  ) {
     final state = _spelling.state;
     switch (state.status) {
       case SpellingPresentationStatus.languageRequired:
-        return BusyMarkBanner(
-          key: const ValueKey('spelling-language-required-banner'),
+        return _SpellingBannerPresentation(
           title: context.l10n.chooseSpellingLanguage,
           actionLabel: context.l10n.chooseSpellingLanguage,
           suggestedAction: true,
@@ -12783,8 +12810,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
             resource != null &&
             installStatus?.resourceId == resource.resourceId &&
             installStatus?.phase != SpellingDictionaryInstallPhase.failed;
-        return BusyMarkBanner(
-          key: const ValueKey('spelling-dictionary-banner'),
+        return _SpellingBannerPresentation(
           title: resource == null
               ? context.l10n.spellingDictionaryNotInstalled
               : context.l10n.spellingDictionaryNotInstalledForLanguage(
@@ -12797,8 +12823,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
               : () => unawaited(_installDocumentDictionary(languageId)),
         );
       case SpellingPresentationStatus.dictionaryUnavailable:
-        return BusyMarkBanner(
-          key: const ValueKey('spelling-dictionary-unavailable-banner'),
+        return _SpellingBannerPresentation(
           title: context.l10n.spellingDictionaryUnavailable,
           actionLabel: context.l10n.chooseSpellingLanguage,
           onAction: () => unawaited(_chooseDocumentSpellingLanguage()),

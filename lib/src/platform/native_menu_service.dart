@@ -28,6 +28,7 @@ final class NativeMenuEntry {
     this.enabled = true,
     this.checkable = false,
     this.selected = false,
+    this.mutuallyExclusive = false,
   }) : separator = false,
        children = null;
 
@@ -40,6 +41,7 @@ final class NativeMenuEntry {
        shortcut = null,
        checkable = false,
        selected = false,
+       mutuallyExclusive = false,
        separator = false;
 
   const NativeMenuEntry.separator()
@@ -50,6 +52,7 @@ final class NativeMenuEntry {
       enabled = false,
       checkable = false,
       selected = false,
+      mutuallyExclusive = false,
       separator = true,
       children = null;
 
@@ -60,6 +63,7 @@ final class NativeMenuEntry {
   final bool enabled;
   final bool checkable;
   final bool selected;
+  final bool mutuallyExclusive;
   final bool separator;
   final List<NativeMenuEntry>? children;
 
@@ -72,6 +76,7 @@ final class NativeMenuEntry {
       'enabled': enabled,
       'checkable': checkable,
       'selected': selected,
+      'mutuallyExclusive': mutuallyExclusive,
       'separator': separator,
       if (children != null)
         'children': [for (final child in children!) child._toPlatformMap()],

@@ -483,6 +483,8 @@ void main() {
                   value: 'editor',
                   label: 'Editor',
                   shortcut: 'Ctrl+1',
+                  checked: true,
+                  trailingCheck: true,
                 ),
               ],
               onSelected: (_) {},
@@ -506,6 +508,9 @@ void main() {
       );
       expect(find.text('Editor'), findsOneWidget);
       expect(find.text('Ctrl+1'), findsOneWidget);
+      expect(find.byIcon(BusyMarkGlyphs.check), findsOneWidget);
+      expect(find.byType(Radio<String>), findsNothing);
+      expect(find.byType(RadioListTile<String>), findsNothing);
       expect(find.byTooltip('Editor (Ctrl+1)'), findsNothing);
       expect(find.byTooltip('Main menu'), findsOneWidget);
       expect(
@@ -589,6 +594,7 @@ void main() {
           'enabled': true,
           'checkable': false,
           'selected': false,
+          'mutuallyExclusive': true,
           'separator': false,
         },
         {
@@ -596,6 +602,7 @@ void main() {
           'enabled': false,
           'checkable': false,
           'selected': false,
+          'mutuallyExclusive': false,
           'separator': true,
         },
         {
@@ -605,6 +612,7 @@ void main() {
           'enabled': true,
           'checkable': true,
           'selected': true,
+          'mutuallyExclusive': true,
           'separator': false,
         },
       ]);
@@ -1199,8 +1207,11 @@ void main() {
       );
       final decoration = surface.decoration as BoxDecoration;
       expect(title.style?.color, colors.foreground);
-      expect(title.maxLines, 1);
+      expect(title.style?.fontWeight, FontWeight.w700);
+      expect(title.maxLines, 3);
+      expect(title.softWrap, isTrue);
       expect(title.overflow, TextOverflow.ellipsis);
+      expect(title.textAlign, TextAlign.center);
       expect(decoration.color, colors.panel);
       expect(decoration.border?.bottom.color, colors.divider);
       expect(
@@ -1212,6 +1223,94 @@ void main() {
       );
       expect(tester.takeException(), isNull);
     }
+  });
+
+  testWidgets('contextual banner animates its mounted layout height', (
+    tester,
+  ) async {
+    const bannerKey = ValueKey('animated-banner');
+
+    Future<void> pumpBanner(bool revealed) {
+      return tester.pumpWidget(
+        MaterialApp(
+          theme: buildBusyMarkTheme(
+            brightness: Brightness.light,
+            accentColor: const Color(0xFF3584E4),
+          ),
+          home: Scaffold(
+            body: Align(
+              alignment: Alignment.topCenter,
+              child: BusyMarkBanner(
+                key: bannerKey,
+                title: 'Dictionary is not installed',
+                revealed: revealed,
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    await pumpBanner(false);
+    final banner = find.byKey(bannerKey);
+    expect(tester.getSize(banner).height, 0);
+
+    await pumpBanner(true);
+    final immediateRevealHeight = tester.getSize(banner).height;
+    await tester.pump(const Duration(milliseconds: 125));
+    final partialRevealHeight = tester.getSize(banner).height;
+    await tester.pumpAndSettle();
+    final fullHeight = tester.getSize(banner).height;
+
+    expect(immediateRevealHeight, lessThan(fullHeight));
+    expect(partialRevealHeight, greaterThan(0));
+    expect(partialRevealHeight, lessThan(fullHeight));
+
+    await pumpBanner(false);
+    await tester.pump(const Duration(milliseconds: 125));
+    final partialConcealHeight = tester.getSize(banner).height;
+    expect(partialConcealHeight, greaterThan(0));
+    expect(partialConcealHeight, lessThan(fullHeight));
+    await tester.pumpAndSettle();
+    expect(tester.getSize(banner).height, 0);
+  });
+
+  testWidgets('contextual banner reveal honors reduced motion', (tester) async {
+    const bannerKey = ValueKey('reduced-motion-banner');
+
+    Future<void> pumpBanner(bool revealed) {
+      return tester.pumpWidget(
+        MaterialApp(
+          theme: buildBusyMarkTheme(
+            brightness: Brightness.light,
+            accentColor: const Color(0xFF3584E4),
+          ),
+          home: MediaQuery(
+            data: const MediaQueryData(disableAnimations: true),
+            child: Scaffold(
+              body: Align(
+                alignment: Alignment.topCenter,
+                child: BusyMarkBanner(
+                  key: bannerKey,
+                  title: 'Dictionary is not installed',
+                  revealed: revealed,
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    await pumpBanner(false);
+    final banner = find.byKey(bannerKey);
+    expect(tester.getSize(banner).height, 0);
+
+    await pumpBanner(true);
+    expect(tester.getSize(banner).height, greaterThan(0));
+
+    await pumpBanner(false);
+    expect(tester.getSize(banner).height, 0);
   });
 
   testWidgets('dialog grouped cards resolve the contextual native layer', (
@@ -1788,46 +1887,63 @@ void main() {
     expect(actionRows.length, greaterThan(1));
   });
 
-  testWidgets('disabled destructive rows use the disabled semantic color', (
-    tester,
-  ) async {
-    final theme = buildBusyMarkTheme(
-      brightness: Brightness.dark,
-      accentColor: const Color(0xFFE95420),
-    );
-    final colors = theme.extension<BusyMarkSurfaceColors>()!;
+  testWidgets(
+    'action rows use semantic destructive foreground in light and dark themes',
+    (tester) async {
+      for (final brightness in Brightness.values) {
+        final theme = buildBusyMarkTheme(
+          brightness: brightness,
+          accentColor: const Color(0xFFE95420),
+        );
+        final colors = theme.extension<BusyMarkSurfaceColors>()!;
 
-    await tester.pumpWidget(
-      MaterialApp(
-        theme: theme,
-        home: Scaffold(
-          body: Column(
-            children: [
-              BusyMarkActionRow(
-                title: 'Enabled delete',
-                destructive: true,
-                onTap: () {},
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: theme,
+            home: Scaffold(
+              body: Column(
+                children: [
+                  BusyMarkActionRow(
+                    title: 'Enabled delete',
+                    destructive: true,
+                    onTap: () {},
+                  ),
+                  const BusyMarkActionRow(title: 'Ordinary action'),
+                  const BusyMarkActionRow(
+                    title: 'Disabled delete',
+                    destructive: true,
+                    enabled: false,
+                  ),
+                ],
               ),
-              const BusyMarkActionRow(
-                title: 'Disabled delete',
-                destructive: true,
-                enabled: false,
-              ),
-            ],
+            ),
           ),
-        ),
-      ),
-    );
+        );
+        await tester.pumpAndSettle();
 
-    expect(
-      tester.widget<Text>(find.text('Enabled delete')).style?.color,
-      theme.colorScheme.error,
-    );
-    expect(
-      tester.widget<Text>(find.text('Disabled delete')).style?.color,
-      colors.disabledForeground,
-    );
-  });
+        final enabled = find.text('Enabled delete');
+        final enabledContext = tester.element(enabled);
+        final expected = brightness == Brightness.dark
+            ? BusyMarkLinuxPalette.destructiveForegroundDark
+            : BusyMarkLinuxPalette.destructiveForegroundLight;
+        expect(busyMarkDestructiveForeground(enabledContext), expected);
+        expect(tester.widget<Text>(enabled).style?.color, expected);
+        if (brightness == Brightness.dark) {
+          expect(expected, isNot(theme.colorScheme.error));
+        }
+
+        final ordinary = find.text('Ordinary action');
+        expect(
+          DefaultTextStyle.of(tester.element(ordinary)).style.color,
+          colors.foreground,
+        );
+        expect(
+          tester.widget<Text>(find.text('Disabled delete')).style?.color,
+          colors.disabledForeground,
+        );
+      }
+    },
+  );
 
   testWidgets('shared text-entry group delegates fields to the framework', (
     tester,

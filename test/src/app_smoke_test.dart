@@ -1037,6 +1037,133 @@ void main() {
 
     await tester.tap(find.byKey(const ValueKey('settings-page-selector')));
     await tester.pumpAndSettle();
+    await tester.tap(find.text(l10n.settingsHistory));
+    await tester.pumpAndSettle();
+
+    final historySection = find.byWidgetPredicate(
+      (widget) =>
+          widget is BusyMarkGroupedList && widget.title == l10n.settingsHistory,
+    );
+    expect(historySection, findsOneWidget);
+    expect(
+      find.descendant(
+        of: historySection,
+        matching: find.byType(BusyMarkComboRow<int>),
+      ),
+      findsNWidgets(3),
+    );
+    expect(
+      find.descendant(
+        of: historySection,
+        matching: find.byType(DropdownButton<int>),
+      ),
+      findsNothing,
+    );
+
+    BusyMarkComboRow<int> historyRow(String title) =>
+        tester.widget<BusyMarkComboRow<int>>(
+          find.byWidgetPredicate(
+            (widget) =>
+                widget is BusyMarkComboRow<int> && widget.title == title,
+          ),
+        );
+    expect(historyRow(l10n.settingsHistoryCheckpoint).values, [
+      30,
+      60,
+      120,
+      300,
+      600,
+    ]);
+    expect(historyRow(l10n.settingsHistoryCheckpoint).selected, 60);
+    expect(
+      historyRow(l10n.settingsHistoryCheckpoint).labelFor(60),
+      l10n.settingsSecondsValue(60),
+    );
+    expect(historyRow(l10n.settingsHistoryRetention).values, [7, 30, 90, 365]);
+    expect(historyRow(l10n.settingsHistoryRetention).selected, 30);
+    expect(
+      historyRow(l10n.settingsHistoryRetention).labelFor(30),
+      l10n.settingsDaysValue(30),
+    );
+    expect(historyRow(l10n.settingsHistoryStorage).values, [
+      128,
+      256,
+      512,
+      1024,
+      2048,
+      4096,
+    ]);
+    expect(historyRow(l10n.settingsHistoryStorage).selected, 512);
+    expect(
+      historyRow(l10n.settingsHistoryStorage).labelFor(512),
+      l10n.settingsMebibytesValue(512),
+    );
+
+    await tester.tap(find.byTooltip(l10n.settingsHistoryCheckpoint));
+    await tester.pumpAndSettle();
+    for (final choice in [30, 60, 120, 300, 600]) {
+      expect(find.text(l10n.settingsSecondsValue(choice)), findsWidgets);
+    }
+    expect(find.byType(Radio<int>), findsNothing);
+    expect(find.byType(RadioListTile<int>), findsNothing);
+    await tester.tap(find.text(l10n.settingsSecondsValue(120)).last);
+    await tester.pumpAndSettle();
+    expect(settingsStore.value['localHistoryCheckpointSeconds'], 120);
+    expect(historyRow(l10n.settingsHistoryCheckpoint).selected, 120);
+
+    historyRow(l10n.settingsHistoryRetention).onSelected(90);
+    await tester.pumpAndSettle();
+    expect(settingsStore.value['localHistoryRetentionDays'], 90);
+    expect(historyRow(l10n.settingsHistoryRetention).selected, 90);
+
+    historyRow(l10n.settingsHistoryStorage).onSelected(1024);
+    await tester.pumpAndSettle();
+    expect(settingsStore.value['localHistoryMaximumStorageMiB'], 1024);
+    expect(historyRow(l10n.settingsHistoryStorage).selected, 1024);
+
+    await tester.tap(find.text(l10n.settingsLocalHistoryTitle));
+    await tester.pumpAndSettle();
+    expect(settingsStore.value['localHistoryRecordingEnabled'], isFalse);
+    expect(
+      tester
+          .widgetList<BusyMarkComboRow<int>>(
+            find.descendant(
+              of: historySection,
+              matching: find.byType(BusyMarkComboRow<int>),
+            ),
+          )
+          .every((row) => !row.enabled),
+      isTrue,
+    );
+
+    await tester.tap(find.byKey(const ValueKey('settings-page-selector')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(l10n.advanced));
+    await tester.pumpAndSettle();
+
+    final clearRecentRow = tester.widget<BusyMarkActionRow>(
+      find.byWidgetPredicate(
+        (widget) =>
+            widget is BusyMarkActionRow &&
+            widget.title == l10n.clearRecentWorkspaces,
+      ),
+    );
+    expect(clearRecentRow.destructive, isTrue);
+    expect(clearRecentRow.onTap, isNotNull);
+    final clearRecentTitle = find.text(l10n.clearRecentWorkspaces);
+    final clearRecentContext = tester.element(clearRecentTitle);
+    expect(
+      tester.widget<Text>(clearRecentTitle).style?.color,
+      busyMarkDestructiveForeground(clearRecentContext),
+    );
+    expect(Theme.of(clearRecentContext).brightness, Brightness.dark);
+    expect(
+      busyMarkDestructiveForeground(clearRecentContext),
+      isNot(Theme.of(clearRecentContext).colorScheme.error),
+    );
+
+    await tester.tap(find.byKey(const ValueKey('settings-page-selector')));
+    await tester.pumpAndSettle();
     await tester.tap(find.text(l10n.settingsWindowSectionTitle));
     await tester.pumpAndSettle();
 
@@ -1341,6 +1468,174 @@ void main() {
       expect(invalidRow.onTap, isNotNull);
     },
   );
+
+  testWidgets(
+    'import dictionary prompt uses native controls and submits a trimmed ID',
+    (tester) async {
+      final harness = await _pumpSettingsSpellingHarness(
+        tester,
+        headerBarService: headerBarService,
+        settingsStore: _MemorySettingsStore(),
+        downloadFile: _copySettingsDictionaryDownload,
+      );
+      addTearDown(harness.dispose);
+      const fileSelectorChannel = MethodChannel(
+        'plugins.flutter.io/file_selector',
+      );
+      final dictionaryFixture = p.join(
+        Directory.current.path,
+        'packages',
+        'busymark_spellcheck_native',
+        'test',
+        'fixtures',
+      );
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        fileSelectorChannel,
+        (call) async {
+          expect(call.method, 'openFile');
+          expect((call.arguments as Map<Object?, Object?>)['multiple'], isTrue);
+          return <String>[
+            p.join(dictionaryFixture, 'test.aff'),
+            p.join(dictionaryFixture, 'test.dic'),
+          ];
+        },
+      );
+      addTearDown(
+        () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          fileSelectorChannel,
+          null,
+        ),
+      );
+
+      await _openImportDictionaryPrompt(tester);
+
+      final dialog = find.byType(BusyMarkDialogShell);
+      expect(dialog, findsOneWidget);
+      final shell = tester.widget<BusyMarkDialogShell>(dialog);
+      expect(shell.title, l10n.importSpellingDictionary);
+      expect(shell.closable, isFalse);
+      final entryFinder = find.descendant(
+        of: dialog,
+        matching: find.byType(BusyMarkFloatingTextEntry),
+      );
+      expect(entryFinder, findsOneWidget);
+      final entry = tester.widget<BusyMarkFloatingTextEntry>(entryFinder);
+      expect(entry.label, l10n.language);
+      expect(entry.hintText, 'en-US');
+      expect(entry.autofocus, isTrue);
+      expect(entry.textInputAction, TextInputAction.done);
+      expect(entry.minLines, 1);
+      expect(entry.maxLines, 1);
+      final actions = tester
+          .widgetList<BusyMarkDialogButton>(
+            find.descendant(
+              of: dialog,
+              matching: find.byType(BusyMarkDialogButton),
+            ),
+          )
+          .toList(growable: false);
+      expect(actions, hasLength(2));
+      expect(actions.map((action) => action.label), [l10n.cancel, l10n.save]);
+      expect(actions.first.suggested, isFalse);
+      expect(actions.last.suggested, isTrue);
+      expect(find.byType(AlertDialog), findsNothing);
+
+      final source = File(
+        'lib/src/workspace/presentation/settings_screen.dart',
+      ).readAsStringSync();
+      final importStart = source.indexOf(
+        'Future<void> _importSpellingDictionary(',
+      );
+      final importEnd = source.indexOf(
+        'Future<void> _removeImportedSpellingDictionary(',
+        importStart,
+      );
+      final importFunction = source.substring(importStart, importEnd);
+      expect(importFunction, isNot(contains('AlertDialog(')));
+      expect(importFunction, isNot(contains('TextField(')));
+      expect(importFunction, isNot(contains('OutlineInputBorder(')));
+
+      await tester.enterText(find.byType(TextFormField), '   ');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await _pumpSettingsUi(tester);
+      expect(dialog, findsOneWidget);
+
+      await tester.enterText(find.byType(TextFormField), ' en-GB ');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pump(kThemeAnimationDuration);
+      await _pumpUntilCondition(
+        tester,
+        () => harness.spelling.catalog?.installedById('en-GB') != null,
+      );
+
+      expect(dialog, findsNothing);
+      expect(harness.spelling.catalog?.installedById('en-GB'), isNotNull);
+    },
+  );
+
+  testWidgets('import dictionary prompt cancels and saves without redesign', (
+    tester,
+  ) async {
+    final harness = await _pumpSettingsSpellingHarness(
+      tester,
+      headerBarService: headerBarService,
+      settingsStore: _MemorySettingsStore(),
+      downloadFile: _copySettingsDictionaryDownload,
+    );
+    addTearDown(harness.dispose);
+    const fileSelectorChannel = MethodChannel(
+      'plugins.flutter.io/file_selector',
+    );
+    final dictionaryFixture = p.join(
+      Directory.current.path,
+      'packages',
+      'busymark_spellcheck_native',
+      'test',
+      'fixtures',
+    );
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      fileSelectorChannel,
+      (call) async => <String>[
+        p.join(dictionaryFixture, 'test.aff'),
+        p.join(dictionaryFixture, 'test.dic'),
+      ],
+    );
+    addTearDown(
+      () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        fileSelectorChannel,
+        null,
+      ),
+    );
+
+    await _openImportDictionaryPrompt(tester);
+    await tester.tap(
+      find.byWidgetPredicate(
+        (widget) =>
+            widget is BusyMarkDialogButton && widget.label == l10n.cancel,
+      ),
+    );
+    await _pumpSettingsUi(tester);
+
+    expect(find.byType(BusyMarkDialogShell), findsNothing);
+    expect(harness.spelling.catalog?.installedById('en-GB'), isNull);
+
+    await tester.tap(find.byKey(const ValueKey('import-spelling-dictionary')));
+    await _pumpUntilFound(tester, find.byType(BusyMarkDialogShell));
+    await tester.enterText(find.byType(TextFormField), ' en-GB ');
+    await tester.tap(
+      find.byWidgetPredicate(
+        (widget) => widget is BusyMarkDialogButton && widget.label == l10n.save,
+      ),
+    );
+    await tester.pump(kThemeAnimationDuration);
+    await _pumpUntilCondition(
+      tester,
+      () => harness.spelling.catalog?.installedById('en-GB') != null,
+    );
+
+    expect(find.byType(BusyMarkDialogShell), findsNothing);
+    expect(harness.spelling.catalog?.installedById('en-GB'), isNotNull);
+  });
 
   testWidgets(
     'cancelling a default-language install keeps the previous selection',
@@ -8402,7 +8697,10 @@ After break.
 
     final settingsStore = _MemorySettingsStore()
       ..value = AppSettings.defaults()
-          .copyWith(documentViewMode: DocumentViewModePreference.editor)
+          .copyWith(
+            documentViewMode: DocumentViewModePreference.editor,
+            automaticSpelling: false,
+          )
           .toJson();
     const source = '''
 <warning>Shared warning.</warning>
@@ -8460,6 +8758,10 @@ After break.
         break;
       }
     }
+    await tester.pump(BusyMarkMotion.bannerReveal);
+    final spellingBanner = find.byType(BusyMarkBanner);
+    expect(tester.widget<BusyMarkBanner>(spellingBanner).revealed, isFalse);
+    expect(tester.getSize(spellingBanner).height, 0);
 
     final editorAdmonition = find.byType(BusyMarkDocumentAdmonition);
     final editorImage = find.byType(MarkdownImageView);
@@ -13751,6 +14053,21 @@ Future<void> _selectSpellingLanguage(
       .value;
   selector.onSelected(languageId);
   await _pumpSettingsUi(tester);
+}
+
+Future<void> _openImportDictionaryPrompt(WidgetTester tester) async {
+  final dictionariesNavigation = find.byKey(
+    const ValueKey('settings-spelling-dictionaries'),
+  );
+  await tester.ensureVisible(dictionariesNavigation);
+  await _pumpSettingsUi(tester);
+  await tester.tap(dictionariesNavigation);
+  await _pumpUntilFound(
+    tester,
+    find.byKey(const ValueKey('import-spelling-dictionary')),
+  );
+  await tester.tap(find.byKey(const ValueKey('import-spelling-dictionary')));
+  await _pumpUntilFound(tester, find.byType(BusyMarkDialogShell));
 }
 
 BusyMarkPopupSelector<String> _spellingLanguageSelector(

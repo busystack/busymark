@@ -262,11 +262,13 @@ String busyMarkBidiIsolateFor(BuildContext context, Object value) {
 
 abstract final class BusyMarkMotion {
   static const Duration dialogInsets = Duration(milliseconds: 160);
+  static const Duration bannerReveal = Duration(milliseconds: 250);
   static const Duration sidebarExpand = Duration(milliseconds: 120);
   static const Duration scroll = Duration(milliseconds: 180);
   static const Duration previewSearchDelay = Duration(milliseconds: 80);
   static const Duration tooltipWait = Duration(milliseconds: 450);
   static const Curve dialogInsetsCurve = Curves.easeOutCubic;
+  static const Curve bannerRevealCurve = Curves.easeOutCubic;
 }
 
 abstract final class BusyMarkInsets {
@@ -387,6 +389,8 @@ abstract final class BusyMarkLinuxPalette {
   static const ubuntuPrussianGreenAccent = Color(0xFF308280);
   static const ubuntuSageAccent = Color(0xFF657B69);
   static const ubuntuWartyBrownAccent = Color(0xFFB39169);
+  static const destructiveForegroundLight = Color(0xFFC30000);
+  static const destructiveForegroundDark = Color(0xFFFF938C);
   static const red = Color(0xFFC01C28);
   static const yellow = Color(0xFFE5A50A);
   static const green = Color(0xFF2EC27E);
@@ -562,7 +566,9 @@ enum BusyMarkVcsFileColor {
 }
 
 Color busyMarkDestructiveForeground(BuildContext context) {
-  return Theme.of(context).colorScheme.error;
+  return Theme.of(context).brightness == Brightness.dark
+      ? BusyMarkLinuxPalette.destructiveForegroundDark
+      : BusyMarkLinuxPalette.destructiveForegroundLight;
 }
 
 Color busyMarkVcsFileStatusColor(
@@ -1443,6 +1449,7 @@ List<NativeMenuEntry>? _busyMarkNativeMenuEntries<T>(
           enabled: item.enabled,
           checkable: item.trailingCheck,
           selected: item.trailingCheck && item.checked,
+          mutuallyExclusive: item.mutuallyExclusive,
         ),
       );
     } else if (item is BusyMarkSubmenuItem<T>) {
@@ -2991,12 +2998,14 @@ class BusyMarkBanner extends StatelessWidget {
     this.actionLabel,
     this.onAction,
     this.suggestedAction = false,
+    this.revealed = true,
   }) : assert(actionLabel != null || onAction == null);
 
   final String title;
   final String? actionLabel;
   final VoidCallback? onAction;
   final bool suggestedAction;
+  final bool revealed;
 
   @override
   Widget build(BuildContext context) {
@@ -3013,7 +3022,7 @@ class BusyMarkBanner extends StatelessWidget {
             onPressed: onAction,
             child: Text(actionLabel),
           );
-    return Semantics(
+    final banner = Semantics(
       container: true,
       liveRegion: true,
       child: DecoratedBox(
@@ -3031,11 +3040,10 @@ class BusyMarkBanner extends StatelessWidget {
               Expanded(
                 child: Text(
                   title,
-                  maxLines: 1,
+                  maxLines: 3,
+                  softWrap: true,
                   overflow: TextOverflow.ellipsis,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodyMedium?.copyWith(color: colors.foreground),
+                  style: busyMarkSectionHeaderStyle(context),
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -3046,6 +3054,22 @@ class BusyMarkBanner extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+    final revealDuration = MediaQuery.disableAnimationsOf(context)
+        ? Duration.zero
+        : BusyMarkMotion.bannerReveal;
+    if (revealDuration == Duration.zero) {
+      return ClipRect(child: revealed ? banner : const SizedBox.shrink());
+    }
+    return ClipRect(
+      child: AnimatedSize(
+        alignment: Alignment.topCenter,
+        clipBehavior: Clip.hardEdge,
+        duration: revealDuration,
+        reverseDuration: revealDuration,
+        curve: BusyMarkMotion.bannerRevealCurve,
+        child: revealed ? banner : const SizedBox.shrink(),
       ),
     );
   }
@@ -3389,12 +3413,11 @@ class _BusyMarkActionRowState extends State<BusyMarkActionRow> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
     final colors = BusyMarkSurfaceColors.of(context);
     final titleStyle = widget.destructive
         ? TextStyle(
             color: widget.enabled
-                ? colorScheme.error
+                ? busyMarkDestructiveForeground(context)
                 : colors.disabledForeground,
           )
         : null;

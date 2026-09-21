@@ -474,8 +474,12 @@ void main() {
           () =>
               harness.spelling.state.status ==
                   SpellingPresentationStatus.dictionaryNotInstalled &&
-              find.byType(BusyMarkBanner).evaluate().isNotEmpty,
+              find.byType(BusyMarkBanner).evaluate().isNotEmpty &&
+              tester
+                  .widget<BusyMarkBanner>(find.byType(BusyMarkBanner))
+                  .revealed,
         );
+        await tester.pump(BusyMarkMotion.bannerReveal);
 
         final banner = find.byType(BusyMarkBanner);
         final pane = find.byKey(
@@ -518,7 +522,8 @@ void main() {
       () =>
           harness.spelling.state.status ==
               SpellingPresentationStatus.languageRequired &&
-          find.byType(BusyMarkBanner).evaluate().isNotEmpty,
+          find.byType(BusyMarkBanner).evaluate().isNotEmpty &&
+          tester.widget<BusyMarkBanner>(find.byType(BusyMarkBanner)).revealed,
     );
 
     final banner = tester.widget<BusyMarkBanner>(find.byType(BusyMarkBanner));
@@ -527,7 +532,7 @@ void main() {
     expect(banner.onAction, isNotNull);
   });
 
-  testWidgets('banner installs the required dictionary and then disappears', (
+  testWidgets('banner installs the required dictionary and then conceals', (
     tester,
   ) async {
     var downloadCount = 0;
@@ -555,8 +560,11 @@ void main() {
     );
     await _until(
       tester,
-      () => find.byType(BusyMarkBanner).evaluate().isNotEmpty,
+      () =>
+          find.byType(BusyMarkBanner).evaluate().isNotEmpty &&
+          tester.widget<BusyMarkBanner>(find.byType(BusyMarkBanner)).revealed,
     );
+    await tester.pump(BusyMarkMotion.bannerReveal);
 
     await tester.tap(find.text(l10n.installSpellingDictionary));
     await _until(
@@ -564,11 +572,23 @@ void main() {
       () =>
           downloadCount == 2 &&
           harness.spelling.catalog?.installedById('en-Test') != null &&
-          find.byType(BusyMarkBanner).evaluate().isEmpty &&
+          !tester
+              .widget<BusyMarkBanner>(find.byType(BusyMarkBanner))
+              .revealed &&
           harness.spelling.state.complete,
     );
+    await tester.pump(BusyMarkMotion.bannerReveal);
 
     expect(harness.spelling.state.status, SpellingPresentationStatus.ready);
+    expect(find.byType(BusyMarkBanner), findsOneWidget);
+    expect(tester.getSize(find.byType(BusyMarkBanner)).height, 0);
+    expect(
+      find.descendant(
+        of: find.byType(BusyMarkBanner),
+        matching: find.byType(Text),
+      ),
+      findsNothing,
+    );
   });
 
   testWidgets('failed banner installation keeps the unresolved state', (
@@ -591,8 +611,11 @@ void main() {
     );
     await _until(
       tester,
-      () => find.byType(BusyMarkBanner).evaluate().isNotEmpty,
+      () =>
+          find.byType(BusyMarkBanner).evaluate().isNotEmpty &&
+          tester.widget<BusyMarkBanner>(find.byType(BusyMarkBanner)).revealed,
     );
+    await tester.pump(BusyMarkMotion.bannerReveal);
 
     await tester.tap(find.text(l10n.installSpellingDictionary));
     await _until(
@@ -607,6 +630,10 @@ void main() {
       SpellingPresentationStatus.dictionaryNotInstalled,
     );
     expect(find.byType(BusyMarkBanner), findsOneWidget);
+    expect(
+      tester.widget<BusyMarkBanner>(find.byType(BusyMarkBanner)).revealed,
+      isTrue,
+    );
     expect(find.text(l10n.spellingDictionaryInstallFailed), findsOneWidget);
   });
 
@@ -625,7 +652,14 @@ void main() {
           harness.spelling.state.status == SpellingPresentationStatus.checking,
     );
 
-    expect(find.byType(BusyMarkBanner), findsNothing);
+    final banner = find.byType(BusyMarkBanner);
+    expect(banner, findsOneWidget);
+    expect(tester.widget<BusyMarkBanner>(banner).revealed, isFalse);
+    expect(tester.getSize(banner).height, 0);
+    expect(
+      find.descendant(of: banner, matching: find.byType(Text)),
+      findsNothing,
+    );
   });
 
   testWidgets('native spelling submenu applies immediate language choices', (
