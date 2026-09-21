@@ -128,14 +128,18 @@ class SourcePasteEngine {
       if (context.inlineMappingFailed) {
         return _reconcileIncompleteSyntaxBoundary(target, context, inlines);
       }
-      final serialized = const BusyMarkMarkdownSerializer()
-          .serializeInlineFragment(
-            inlines,
-            tableCell: context.tableCell,
-            atBlockStart: context.atBlockStart,
-            readableHardBreakRuns: !context.tableCell,
-          );
-      if (serialized.isEmpty) return null;
+      if (inlines.isEmpty) return null;
+      final serialized = context.inlineContext == null
+          ? _serializeGeneratedInline(
+              inlines,
+              context,
+              textOffset: inlines.fold<int>(
+                0,
+                (length, inline) => length + inline.plainText.length,
+              ),
+            ).source
+          : '';
+      if (serialized.isEmpty && context.inlineContext == null) return null;
       return _reconcileStructuredInlineInsertion(
         target,
         context,
@@ -189,6 +193,12 @@ class SourcePasteEngine {
       context,
       split,
       null,
+      retainedLineBreaks: _retainedMappedLineBreaks(
+        context,
+        split.beforeAuthoredWrapper ?? split.afterAuthoredWrapper,
+        beforeLength: beforeLength,
+        incomingLength: incomingLength,
+      ),
       atBlockStart: split.startAtBlockStart,
     );
     return _SourceEditPlan(
@@ -233,6 +243,23 @@ class SourcePasteEngine {
       context,
       split,
       split.beforeAuthoredWrapper,
+      retainedLineBreaks:
+          _retainedMappedLineBreaks(
+            context,
+            split.beforeAuthoredWrapper ?? split.afterAuthoredWrapper,
+            beforeLength: split.before.fold<int>(
+              0,
+              (length, inline) => length + inline.plainText.length,
+            ),
+            incomingLength: 0,
+          ).where(
+            (lineBreak) =>
+                lineBreak.textOffset <
+                split.before.fold<int>(
+                  0,
+                  (length, inline) => length + inline.plainText.length,
+                ),
+          ),
       atBlockStart: context.atBlockStart,
     );
     final afterInline = _serializeStructuredBlockSide(
@@ -241,6 +268,33 @@ class SourcePasteEngine {
       context,
       split,
       split.afterAuthoredWrapper,
+      retainedLineBreaks: [
+        for (final lineBreak in _retainedMappedLineBreaks(
+          context,
+          split.beforeAuthoredWrapper ?? split.afterAuthoredWrapper,
+          beforeLength: split.before.fold<int>(
+            0,
+            (length, inline) => length + inline.plainText.length,
+          ),
+          incomingLength: 0,
+        ))
+          if (lineBreak.textOffset >=
+              split.before.fold<int>(
+                0,
+                (length, inline) => length + inline.plainText.length,
+              ))
+            BusyMarkMappedSourceLineBreak(
+              textOffset:
+                  lineBreak.textOffset -
+                  split.before.fold<int>(
+                    0,
+                    (length, inline) => length + inline.plainText.length,
+                  ),
+              lineEnding: lineBreak.lineEnding,
+              continuationPrefix: lineBreak.continuationPrefix,
+              sourceOffset: lineBreak.sourceOffset,
+            ),
+      ],
       atBlockStart: true,
       preferInsideOpeningBoundary: true,
     );
@@ -270,13 +324,15 @@ class SourcePasteEngine {
             context.containerBlankPrefix
           else
             '${context.containerContinuationPrefix}${lines[index]}',
-      ].join('\n');
+      ].join(context.lineEnding);
       final beforeBoundary =
           context.hasContainerContentBefore || context.taskItemAtContentStart
-          ? '\n${context.containerBlankPrefix}\n'
+          ? '${context.lineEnding}${context.containerBlankPrefix}'
+                '${context.lineEnding}'
           : '';
       final afterBoundary = context.hasContainerContentAfter
-          ? '\n${context.containerBlankPrefix}\n${context.containerContinuationPrefix}'
+          ? '${context.lineEnding}${context.containerBlankPrefix}'
+                '${context.lineEnding}${context.containerContinuationPrefix}'
           : '';
       final contentBefore = split.expanded
           ? target.text.substring(0, split.sourceRange.start) + beforeSource
@@ -302,8 +358,12 @@ class SourcePasteEngine {
         caretOffset: replacementStart + afterStart + afterInline.sourceOffset,
       );
     }
-    final leadingBreaks = _leadingLineBreaks(serialized);
-    final trailingBreaks = _trailingLineBreaks(serialized);
+    final generated = _restoreGeneratedLineEndings(
+      serialized,
+      context.lineEnding,
+    );
+    final leadingBreaks = _leadingLineBreaks(generated);
+    final trailingBreaks = _trailingLineBreaks(generated);
     final expandedBefore = split.expanded
         ? target.text.substring(0, split.sourceRange.start) + beforeSource
         : before;
@@ -312,24 +372,25 @@ class SourcePasteEngine {
         : after;
     final prefix = expandedBefore.isEmpty
         ? ''
-        : '\n' *
-              math.max(
-                0,
-                2 - _trailingLineBreaks(expandedBefore) - leadingBreaks,
-              );
+        : _repeatLineEnding(
+            context.lineEnding,
+            math.max(
+              0,
+              2 - _trailingLineBreaks(expandedBefore) - leadingBreaks,
+            ),
+          );
     final suffix = expandedAfter.isEmpty
         ? ''
-        : '\n' *
-              math.max(
-                0,
-                2 - trailingBreaks - _leadingLineBreaks(expandedAfter),
-              );
+        : _repeatLineEnding(
+            context.lineEnding,
+            math.max(0, 2 - trailingBreaks - _leadingLineBreaks(expandedAfter)),
+          );
     final afterStart =
-        beforeSource.length + prefix.length + serialized.length + suffix.length;
+        beforeSource.length + prefix.length + generated.length + suffix.length;
     return _SourceEditPlan(
       start: replacementStart,
       end: replacementEnd,
-      text: '$beforeSource$prefix$serialized$suffix$afterSource',
+      text: '$beforeSource$prefix$generated$suffix$afterSource',
       caretOffset: replacementStart + afterStart + afterInline.sourceOffset,
     );
   }
@@ -357,6 +418,20 @@ class SourcePasteEngine {
         : '';
     final firstInlines = [...split.before, ...blocks.first.inlines];
     final lastInlines = [...blocks.last.inlines, ...split.after];
+    final beforeLength = split.before.fold<int>(
+      0,
+      (length, inline) => length + inline.plainText.length,
+    );
+    final firstIncomingLength = blocks.first.inlines.fold<int>(
+      0,
+      (length, inline) => length + inline.plainText.length,
+    );
+    final retainedLineBreaks = _retainedMappedLineBreaks(
+      context,
+      split.beforeAuthoredWrapper ?? split.afterAuthoredWrapper,
+      beforeLength: beforeLength,
+      incomingLength: firstIncomingLength,
+    );
     final first = _serializeStructuredBlockSide(
       firstInlines,
       firstInlines.fold<int>(
@@ -366,6 +441,14 @@ class SourcePasteEngine {
       context,
       split,
       split.beforeAuthoredWrapper,
+      retainedLineBreaks: retainedLineBreaks.where(
+        (lineBreak) =>
+            lineBreak.textOffset <
+            firstInlines.fold<int>(
+              0,
+              (length, inline) => length + inline.plainText.length,
+            ),
+      ),
       atBlockStart: split.startAtBlockStart,
     );
     final lastCaretOffset = blocks.last.inlines.fold<int>(
@@ -378,6 +461,23 @@ class SourcePasteEngine {
       context,
       split,
       split.afterAuthoredWrapper,
+      retainedLineBreaks: [
+        for (final lineBreak in retainedLineBreaks)
+          if (lineBreak.textOffset >= beforeLength + firstIncomingLength)
+            BusyMarkMappedSourceLineBreak(
+              textOffset:
+                  blocks.last.inlines.fold<int>(
+                    0,
+                    (length, inline) => length + inline.plainText.length,
+                  ) +
+                  lineBreak.textOffset -
+                  beforeLength -
+                  firstIncomingLength,
+              lineEnding: lineBreak.lineEnding,
+              continuationPrefix: lineBreak.continuationPrefix,
+              sourceOffset: lineBreak.sourceOffset,
+            ),
+      ],
       atBlockStart: true,
     );
     final separator = context.containerContinuationPrefix.isEmpty
@@ -386,11 +486,15 @@ class SourcePasteEngine {
               '${context.lineEnding}${context.containerContinuationPrefix}';
     final middle = <String>[
       for (final block in blocks.skip(1).take(blocks.length - 2))
-        const BusyMarkMarkdownSerializer().serializeInlineFragment(
+        _serializeGeneratedInline(
           block.inlines,
+          context,
           atBlockStart: true,
-          readableHardBreakRuns: true,
-        ),
+          textOffset: block.inlines.fold<int>(
+            0,
+            (length, inline) => length + inline.plainText.length,
+          ),
+        ).source,
     ];
     final survivingSetextSyntax =
         context.hasContainerContentBefore &&
@@ -605,17 +709,39 @@ class SourcePasteEngine {
     _MappedSourceInlineWrapper? authoredWrapper, {
     required bool atBlockStart,
     bool preferInsideOpeningBoundary = false,
+    Iterable<BusyMarkMappedSourceLineBreak> retainedLineBreaks = const [],
   }) {
     final prepared = _stabilizeMappedWrapperWhitespace(
       _mergeAdjacentSourceInlineStyles(inlines, split.annotations),
       split.annotations,
     );
-    final serialized = _serializeMappedInlineSequence(
+    final lineBreakOffsets = {
+      for (final lineBreak in retainedLineBreaks)
+        lineBreak: BusyMarkInlineLineBreakOffset(
+          textOffset: lineBreak.textOffset,
+        ),
+    };
+    final rawSerialized = _serializeMappedInlineSequence(
       prepared,
       caretTextOffset,
       context,
       authoredWrapper,
       atBlockStart: atBlockStart,
+      lineBreakOffsets: lineBreakOffsets.values,
+    );
+    final serialized = _restoreMappedSourceLineBreaks(
+      rawSerialized,
+      [
+        for (final entry in lineBreakOffsets.entries)
+          if (rawSerialized.lineBreakSourceOffsets[entry.value]
+              case final offset?)
+            _SerializedMappedSourceLineBreak(
+              sourceOffset: offset,
+              lineBreak: entry.key,
+            ),
+      ],
+      context.containerContinuationPrefix,
+      context.lineEnding,
     );
     if (!preferInsideOpeningBoundary || prepared.isEmpty) return serialized;
     final markedInlines = [...prepared];
@@ -623,12 +749,32 @@ class SourcePasteEngine {
       markedInlines.first,
       context.marker,
     );
-    final marked = _serializeMappedInlineSequence(
+    final markedLineBreakOffsets = {
+      for (final lineBreak in retainedLineBreaks)
+        lineBreak: BusyMarkInlineLineBreakOffset(
+          textOffset: lineBreak.textOffset + context.marker.length,
+        ),
+    };
+    final rawMarked = _serializeMappedInlineSequence(
       markedInlines,
       context.marker.length,
       context,
       authoredWrapper,
       atBlockStart: atBlockStart,
+      lineBreakOffsets: markedLineBreakOffsets.values,
+    );
+    final marked = _restoreMappedSourceLineBreaks(
+      rawMarked,
+      [
+        for (final entry in markedLineBreakOffsets.entries)
+          if (rawMarked.lineBreakSourceOffsets[entry.value] case final offset?)
+            _SerializedMappedSourceLineBreak(
+              sourceOffset: offset,
+              lineBreak: entry.key,
+            ),
+      ],
+      context.containerContinuationPrefix,
+      context.lineEnding,
     );
     final markerOffset = marked.source.indexOf(context.marker);
     if (markerOffset >= 0 &&
@@ -783,12 +929,14 @@ class SourcePasteEngine {
   String _serializeSourceInlineSequence(
     List<BusyInline> inlines,
     _StructuredSourceInsertionContext context,
-  ) => const BusyMarkMarkdownSerializer().serializeInlineFragment(
+  ) => _serializeGeneratedInline(
     inlines,
-    tableCell: context.tableCell,
-    atBlockStart: context.atBlockStart,
-    readableHardBreakRuns: !context.tableCell,
-  );
+    context,
+    textOffset: inlines.fold<int>(
+      0,
+      (length, inline) => length + inline.plainText.length,
+    ),
+  ).source;
 
   bool _containsDifferentLink(
     List<BusyInline> inlines,
@@ -1054,49 +1202,18 @@ class SourcePasteEngine {
       ...before,
       ...incoming,
     ].fold<int>(0, (length, inline) => length + inline.plainText.length);
-    final retainedLineBreaks = <BusyMarkMappedSourceLineBreak>[];
-    final mappedText = authoredWrapper?.inline.plainText;
-    final inlineContext = context.inlineContext;
-    if (authoredWrapper != null &&
-        mappedText != null &&
-        inlineContext != null) {
-      final markerStart = mappedText.indexOf(inlineContext.startMarker);
-      final markerEnd = inlineContext.endMarker == null
-          ? markerStart + inlineContext.startMarker.length
-          : mappedText.indexOf(
-                  inlineContext.endMarker!,
-                  markerStart + inlineContext.startMarker.length,
-                ) +
-                inlineContext.endMarker!.length;
-      if (markerStart >= 0 && markerEnd >= markerStart) {
-        final beforeLength = before.fold<int>(
-          0,
-          (length, inline) => length + inline.plainText.length,
-        );
-        final incomingLength = incoming.fold<int>(
-          0,
-          (length, inline) => length + inline.plainText.length,
-        );
-        for (final lineBreak in authoredWrapper.lineBreaks) {
-          if (lineBreak.textOffset < markerStart) {
-            retainedLineBreaks.add(lineBreak);
-          } else if (lineBreak.textOffset >= markerEnd) {
-            retainedLineBreaks.add(
-              BusyMarkMappedSourceLineBreak(
-                textOffset:
-                    beforeLength +
-                    incomingLength +
-                    lineBreak.textOffset -
-                    markerEnd,
-                lineEnding: lineBreak.lineEnding,
-                continuationPrefix: lineBreak.continuationPrefix,
-                sourceOffset: lineBreak.sourceOffset,
-              ),
-            );
-          }
-        }
-      }
-    }
+    final retainedLineBreaks = _retainedMappedLineBreaks(
+      context,
+      authoredWrapper,
+      beforeLength: before.fold<int>(
+        0,
+        (length, inline) => length + inline.plainText.length,
+      ),
+      incomingLength: incoming.fold<int>(
+        0,
+        (length, inline) => length + inline.plainText.length,
+      ),
+    );
     final merged = _stabilizeMappedWrapperWhitespace(
       _mergeAdjacentSourceInlineStyles([
         ...before,
@@ -1138,6 +1255,47 @@ class SourcePasteEngine {
       text: restored.source,
       caretOffset: sourceRange.start + restored.sourceOffset,
     );
+  }
+
+  List<BusyMarkMappedSourceLineBreak> _retainedMappedLineBreaks(
+    _StructuredSourceInsertionContext context,
+    _MappedSourceInlineWrapper? authoredWrapper, {
+    required int beforeLength,
+    required int incomingLength,
+  }) {
+    final mappedText = authoredWrapper?.inline.plainText;
+    final inlineContext = context.inlineContext;
+    if (authoredWrapper == null ||
+        mappedText == null ||
+        inlineContext == null) {
+      return const [];
+    }
+    final markerStart = mappedText.indexOf(inlineContext.startMarker);
+    if (markerStart < 0) return const [];
+    final markerEnd = inlineContext.endMarker == null
+        ? markerStart + inlineContext.startMarker.length
+        : mappedText.indexOf(
+                inlineContext.endMarker!,
+                markerStart + inlineContext.startMarker.length,
+              ) +
+              inlineContext.endMarker!.length;
+    if (markerEnd < markerStart) return const [];
+    return List.unmodifiable([
+      for (final lineBreak in authoredWrapper.lineBreaks)
+        if (lineBreak.textOffset < markerStart)
+          lineBreak
+        else if (lineBreak.textOffset >= markerEnd)
+          BusyMarkMappedSourceLineBreak(
+            textOffset:
+                beforeLength +
+                incomingLength +
+                lineBreak.textOffset -
+                markerEnd,
+            lineEnding: lineBreak.lineEnding,
+            continuationPrefix: lineBreak.continuationPrefix,
+            sourceOffset: lineBreak.sourceOffset,
+          ),
+    ]);
   }
 
   BusyMarkSerializedInlineFragment _restoreMappedSourceLineBreaks(
@@ -1200,6 +1358,28 @@ class SourcePasteEngine {
                   ),
                 },
         );
+  }
+
+  BusyMarkSerializedInlineFragment _serializeGeneratedInline(
+    List<BusyInline> inlines,
+    _StructuredSourceInsertionContext context, {
+    required int textOffset,
+    bool? atBlockStart,
+  }) {
+    final serialized = const BusyMarkMarkdownSerializer()
+        .serializeInlineFragmentWithOffsets(
+          inlines,
+          textOffset: textOffset,
+          tableCell: context.tableCell,
+          atBlockStart: atBlockStart ?? context.atBlockStart,
+          readableHardBreakRuns: !context.tableCell,
+        );
+    return _restoreMappedSourceLineBreaks(
+      serialized,
+      const [],
+      context.containerContinuationPrefix,
+      context.lineEnding,
+    );
   }
 
   List<BusyInline> _mergeAdjacentSourceInlineStyles(
@@ -2411,23 +2591,39 @@ class SourcePasteEngine {
 
   int _leadingLineBreaks(String value) {
     var count = 0;
-    while (count < value.length && value.codeUnitAt(count) == 0x0a) {
-      count += 1;
+    var offset = 0;
+    while (offset < value.length) {
+      if (value.codeUnitAt(offset) == 0x0d &&
+          offset + 1 < value.length &&
+          value.codeUnitAt(offset + 1) == 0x0a) {
+        count++;
+        offset += 2;
+      } else if (value.codeUnitAt(offset) == 0x0a) {
+        count++;
+        offset++;
+      } else {
+        break;
+      }
     }
     return count;
   }
 
   int _trailingLineBreaks(String value) {
     var count = 0;
-    for (
-      var index = value.length - 1;
-      index >= 0 && value.codeUnitAt(index) == 0x0a;
-      index -= 1
-    ) {
-      count += 1;
+    var offset = value.length;
+    while (offset > 0 && value.codeUnitAt(offset - 1) == 0x0a) {
+      count++;
+      offset--;
+      if (offset > 0 && value.codeUnitAt(offset - 1) == 0x0d) offset--;
     }
     return count;
   }
+
+  String _restoreGeneratedLineEndings(String source, String lineEnding) =>
+      lineEnding == '\n' ? source : source.replaceAll('\n', lineEnding);
+
+  String _repeatLineEnding(String lineEnding, int count) =>
+      List.filled(count, lineEnding).join();
 }
 
 class _StructuredSourceInsertionContext {

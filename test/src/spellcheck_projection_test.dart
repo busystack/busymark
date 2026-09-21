@@ -279,6 +279,45 @@ hidden style prose
       }
     });
 
+    test('keeps comparison prose and scans multiline HTML tags exactly', () {
+      const source = '''Before 2 < 3, mispelled > 1 and x <= y.
+<div
+  title="Readablee > prose"
+  data-id="technicall"
+  id="wrongg"
+  class="mistakke"
+  data-url="https://example.test/typpo"
+>visiblee</div>
+''';
+      final projected = const MarkdownSpellingProjector().project(
+        filePath: '/tmp/multiline-html.md',
+        source: source,
+        mode: MarkdownMode.commonMark,
+        languageId: 'en-US',
+        snapshot: _snapshot,
+      );
+      final all = projected.runs.map((run) => run.text).join('\n');
+      expect(projected.complete, isTrue, reason: projected.message);
+      expect(all, contains('mispelled'));
+      expect(all, contains('Readablee > prose'));
+      expect(all, contains('visiblee'));
+      expect(all, isNot(contains('technicall')));
+      expect(all, isNot(contains('wrongg')));
+      expect(all, isNot(contains('mistakke')));
+      expect(all, isNot(contains('typpo')));
+
+      final run = projected.runs.singleWhere(
+        (candidate) => candidate.text.contains('mispelled'),
+      );
+      final corrected = const SpellingReplacementPlanner()
+          .build(
+            occurrence: _rejected(run, 'mispelled'),
+            suggestion: 'misspelled',
+          )
+          .applyToSource(source);
+      expect(corrected, source.replaceFirst('mispelled', 'misspelled'));
+    });
+
     test('removes delimiters when a correction empties formatting', () {
       for (final fixture in <({String source, MarkdownMode mode})>[
         (source: 'he**x**llo\n', mode: MarkdownMode.commonMark),

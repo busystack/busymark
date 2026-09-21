@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:busymark/l10n/generated/app_localizations.dart';
 import 'package:busymark/l10n/generated/app_localizations_en.dart';
 import 'package:busymark/src/app/app_settings.dart';
+import 'package:busymark/src/app/busymark_toast.dart';
 import 'package:busymark/src/core/atomic_file_writer.dart';
 import 'package:busymark/src/markdown/busymark_document.dart';
 import 'package:busymark/src/markdown/markdown_model.dart';
@@ -21,11 +22,13 @@ import 'package:busymark/src/spellcheck/spelling_session_controller.dart';
 import 'package:busymark/src/spellcheck/spelling_word_store.dart';
 import 'package:busymark/src/spellcheck/spelling_worker.dart';
 import 'package:busymark/src/spellcheck/wysiwyg_spelling_projection.dart';
+import 'package:busymark/src/spellcheck/writerside_spelling_projection.dart';
 import 'package:busymark/src/workspace/document_buffer.dart';
 import 'package:busymark/src/workspace/presentation/workspace_screen.dart';
 import 'package:busymark/src/workspace/workspace_model.dart';
 import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 
@@ -2065,39 +2068,46 @@ void main() {
       final reveals = <String>[];
       final l10n = AppLocalizationsEn();
       var initialIndex = 0;
+      final navigatorObserver = _RecordingNavigatorObserver();
+      late BuildContext hostContext;
+      Future<bool> Function() chooseLanguage = () async => false;
 
       await tester.pumpWidget(
         MaterialApp(
+          navigatorObservers: [navigatorObserver],
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           home: Builder(
-            builder: (context) => TextButton(
-              onPressed: () => showDialog<void>(
-                context: context,
-                builder: (context) => BusyMarkSpellingReviewDialog(
-                  spelling: controller,
-                  initialIndex: initialIndex,
-                  onReveal: (occurrence) => reveals.add(occurrence.word),
-                  onCorrect: (occurrence, suggestion) async {
-                    final start = occurrence.sourceStart!;
-                    final end = occurrence.sourceEnd!;
-                    buffer = buffer.copyWith(
-                      text: buffer.text.replaceRange(start, end, suggestion),
-                      revision: buffer.revision + 1,
-                    );
-                    return SpellingReviewCorrection(
-                      coordinateScope:
-                          'document:${occurrence.run.snapshot.bufferId}',
-                      start: start,
-                      oldEnd: end,
-                      newEnd: start + suggestion.length,
-                    );
-                  },
-                  onChooseLanguage: () async => false,
+            builder: (context) {
+              hostContext = context;
+              return TextButton(
+                onPressed: () => showDialog<void>(
+                  context: context,
+                  builder: (context) => BusyMarkSpellingReviewDialog(
+                    spelling: controller,
+                    initialIndex: initialIndex,
+                    onReveal: (occurrence) => reveals.add(occurrence.word),
+                    onCorrect: (occurrence, suggestion) async {
+                      final start = occurrence.sourceStart!;
+                      final end = occurrence.sourceEnd!;
+                      buffer = buffer.copyWith(
+                        text: buffer.text.replaceRange(start, end, suggestion),
+                        revision: buffer.revision + 1,
+                      );
+                      return SpellingReviewCorrection(
+                        coordinateScope:
+                            'document:${occurrence.run.snapshot.bufferId}',
+                        start: start,
+                        oldEnd: end,
+                        newEnd: start + suggestion.length,
+                      );
+                    },
+                    onChooseLanguage: () => chooseLanguage(),
+                  ),
                 ),
-              ),
-              child: const Text('Open review'),
-            ),
+                child: const Text('Open review'),
+              );
+            },
           ),
         ),
       );
@@ -2146,7 +2156,10 @@ void main() {
       await tester.runAsync(
         () => Future<void>.delayed(const Duration(milliseconds: 500)),
       );
-      await tester.pump();
+      await _pumpWidgetUntil(
+        tester,
+        () => tester.widget<TextButton>(addPersonal).onPressed != null,
+      );
       expect(find.text('eror'), findsOneWidget);
       expect(
         controller.personalWords.wordsFor('en-Test'),
@@ -2300,6 +2313,231 @@ void main() {
       expect(find.byType(BusyMarkSpellingReviewDialog), findsOneWidget);
       await tester.tap(find.text(l10n.close));
       await tester.pumpAndSettle();
+
+      for (final action in [
+        l10n.ignoreSpellingOnce,
+        l10n.ignoreSpellingDocument,
+      ]) {
+        buffer = DocumentBuffer.untitled(
+          id: 'review-single-${action.hashCode}',
+          name: 'review-single.md',
+          text: 'helo',
+        );
+        await tester.runAsync(() => controller.checkNow(input()));
+        initialIndex = 0;
+        final popsBefore = navigatorObserver.popCount;
+        await tester.tap(find.text('Open review'));
+        await _pumpWidgetUntil(
+          tester,
+          () => find.text(action).evaluate().isNotEmpty,
+        );
+        final callback = tester
+            .widget<TextButton>(find.widgetWithText(TextButton, action))
+            .onPressed!;
+        callback();
+        callback();
+        await tester.pumpAndSettle();
+
+        expect(navigatorObserver.popCount, popsBefore + 1);
+        expect(find.text('Open review'), findsOneWidget);
+        expect(find.byType(BusyMarkSpellingReviewDialog), findsNothing);
+      }
+
+      buffer = DocumentBuffer.untitled(
+        id: 'review-language-chooser',
+        name: 'review-language.md',
+        text: 'helo',
+      );
+      await tester.runAsync(() => controller.checkNow(input()));
+      initialIndex = 0;
+      chooseLanguage = () async =>
+          await showDialog<bool>(
+            context: hostContext,
+            builder: (context) => AlertDialog(
+              title: const Text('Language chooser probe'),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context, false),
+                  child: const Text('Cancel chooser'),
+                ),
+              ],
+            ),
+          ) ??
+          false;
+      await tester.tap(find.text('Open review'));
+      await _pumpWidgetUntil(
+        tester,
+        () => find.text(l10n.chooseSpellingLanguage).evaluate().isNotEmpty,
+      );
+      await tester.tap(find.text(l10n.chooseSpellingLanguage));
+      await _pumpWidgetUntil(
+        tester,
+        () => find.text('Language chooser probe').evaluate().isNotEmpty,
+      );
+      final chooserPopsBefore = navigatorObserver.popCount;
+      controller.ignoreOnce(controller.misspellings.single);
+      await tester.pump();
+      expect(find.text('Language chooser probe'), findsOneWidget);
+      expect(navigatorObserver.popCount, chooserPopsBefore);
+      await tester.tap(find.text('Cancel chooser'));
+      await tester.pumpAndSettle();
+      expect(find.text('Open review'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'review word-store conflict stays current and exposes preserved recovery path',
+    (tester) async {
+      tester.view.physicalSize = const Size(1200, 900);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final temporary = (await tester.runAsync(
+        () => Directory.systemTemp.createTemp('busymark-review-conflict-'),
+      ))!;
+      addTearDown(() async {
+        if (await temporary.exists()) await temporary.delete(recursive: true);
+      });
+      final bundle = (await tester.runAsync(
+        () => _createFixtureBundle(temporary),
+      ))!;
+      final recoveryPath = p.join(temporary.path, 'preserved-personal.json');
+      final writer = _ToggleFailAtomicFileWriter();
+      final conflictDestinationBytes = utf8.encode(
+        '${jsonEncode({
+          'schemaVersion': 1,
+          'revision': 77,
+          'words': {
+            'en-Test': [
+              {'key': 'external', 'display': 'external'},
+            ],
+          },
+        })}\n',
+      );
+      final controller = SpellingSessionController(
+        bundledRoot: bundle,
+        applicationSupportRoot: p.join(temporary.path, 'support'),
+        dictionaryStorageRoot: p.join(temporary.path, 'dictionary-storage'),
+        verifyDictionaryChecksums: false,
+        wordStoreFactory:
+            ({required String filePath, required bool projectStore}) =>
+                SpellingWordStore(
+                  filePath: filePath,
+                  projectStore: projectStore,
+                  writer: writer,
+                ),
+      );
+      addTearDown(controller.dispose);
+      final buffer = DocumentBuffer.untitled(
+        id: 'review-dialog-conflict',
+        name: 'review-conflict.md',
+        text: 'helo',
+      );
+      final settings = AppSettings.defaults().copyWith(
+        defaultSpellingLanguage: 'en-Test',
+      );
+      await tester.runAsync(
+        () => controller.checkNow(
+          SpellingSessionInput(
+            buffer: buffer,
+            workspace: null,
+            settings: settings,
+            documentKind: DocumentKind.markdown,
+            markdownMode: MarkdownMode.commonMark,
+          ),
+        ),
+      );
+      final occurrence = controller.misspellings.single;
+      writer
+        ..conflictRecoveryPath = recoveryPath
+        ..conflictDestinationBytes = conflictDestinationBytes;
+      String? copiedPath;
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        (call) async {
+          if (call.method == 'Clipboard.setData') {
+            copiedPath =
+                (call.arguments as Map<Object?, Object?>)['text'] as String?;
+          }
+          return null;
+        },
+      );
+      addTearDown(
+        () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          SystemChannels.platform,
+          null,
+        ),
+      );
+      final l10n = AppLocalizationsEn();
+
+      await tester.pumpWidget(
+        MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          builder: (context, child) => BusyMarkToastOverlay(child: child!),
+          home: Builder(
+            builder: (context) => TextButton(
+              onPressed: () => showDialog<void>(
+                context: context,
+                builder: (context) => BusyMarkSpellingReviewDialog(
+                  spelling: controller,
+                  initialIndex: 0,
+                  onReveal: (_) {},
+                  onCorrect: (_, _) async => null,
+                  onChooseLanguage: () async => false,
+                ),
+              ),
+              child: const Text('Open review'),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.text('Open review'));
+      await _pumpWidgetUntil(
+        tester,
+        () => find.text('helo').evaluate().isNotEmpty,
+      );
+      expect(controller.isCurrent(occurrence), isTrue);
+      final writesBefore = writer.writeCount;
+      final addPersonal = find.widgetWithText(
+        TextButton,
+        l10n.addPersonalSpellingWord,
+      );
+      await tester.ensureVisible(addPersonal);
+      tester.widget<TextButton>(addPersonal).onPressed!.call();
+      await _pumpWidgetUntil(tester, () => writer.writeCount > writesBefore);
+      await _pumpWidgetUntil(
+        tester,
+        () => find
+            .text(l10n.spellingDictionaryRecoveryConflict)
+            .evaluate()
+            .isNotEmpty,
+      );
+
+      expect(writer.writeCount, writesBefore + 1);
+      expect(await tester.runAsync(() => File(recoveryPath).exists()), isTrue);
+      expect(controller.personalWords.revision, 77);
+      expect(controller.personalWords.wordsFor('en-Test'), ['external']);
+      expect(find.byType(BusyMarkSpellingReviewDialog), findsOneWidget);
+      expect(find.text('helo'), findsWidgets);
+      final reconciledOccurrence = controller.misspellings.single;
+      expect(reconciledOccurrence.word, 'helo');
+      expect(reconciledOccurrence.sourceStart, occurrence.sourceStart);
+      expect(controller.isCurrent(reconciledOccurrence), isTrue);
+      expect(
+        find.text(l10n.spellingDictionaryRecoveryConflict),
+        findsOneWidget,
+      );
+
+      await tester.pump(const Duration(seconds: 10));
+      expect(
+        find.text(l10n.spellingDictionaryRecoveryConflict),
+        findsOneWidget,
+      );
+      await tester.tap(find.text(l10n.copyPath));
+      await tester.pump(const Duration(milliseconds: 250));
+      expect(copiedPath, recoveryPath);
+      expect(await tester.runAsync(() => File(recoveryPath).exists()), isTrue);
     },
   );
 
@@ -2797,6 +3035,77 @@ void main() {
       }
     });
 
+    test('quotation context survives projection and worker barriers', () async {
+      for (final fixture in [
+        (source: "'click `run` helo'", expected: "'click `run` hello'"),
+        (source: r"'value $x$ helo'", expected: r"'value $x$ hello'"),
+      ]) {
+        final projection = const MarkdownSpellingProjector().project(
+          filePath: '/tmp/barrier.md',
+          source: fixture.source,
+          mode: MarkdownMode.commonMark,
+          languageId: 'en-Test',
+          snapshot: _snapshot,
+        );
+        final checked = await worker.check(
+          context: _fixtureContext(project: 'barrier', revision: 0),
+          runs: projection.runs,
+        );
+        final occurrence = checked.occurrences.singleWhere(
+          (candidate) => candidate.word == 'helo',
+        );
+        expect(occurrence.sourceEnd, fixture.source.length - 1);
+        expect(
+          const SpellingReplacementPlanner()
+              .build(occurrence: occurrence, suggestion: 'hello')
+              .applyToSource(fixture.source),
+          fixture.expected,
+        );
+      }
+
+      const xml = "<p>'value %project% helo'</p>";
+      final xmlProjection = const WritersideXmlSpellingProjector().project(
+        filePath: '/tmp/barrier.topic',
+        source: xml,
+        languageId: 'en-Test',
+        snapshot: _snapshot,
+      );
+      final xmlChecked = await worker.check(
+        context: _fixtureContext(project: 'barrier', revision: 0),
+        runs: xmlProjection.runs,
+      );
+      final xmlOccurrence = xmlChecked.occurrences.singleWhere(
+        (candidate) => candidate.word == 'helo',
+      );
+      expect(
+        const SpellingReplacementPlanner()
+            .build(occurrence: xmlOccurrence, suggestion: 'hello')
+            .applyToSource(xml),
+        "<p>'value %project% hello'</p>",
+      );
+    });
+
+    test('quotation context survives a bounded worker chunk', () async {
+      final middle = List.filled(9000, 'hello').join(' ');
+      final text = "'hello $middle wrld'";
+      final result = await worker.check(
+        context: _fixtureContext(project: 'chunk-quote', revision: 0),
+        runs: [_run(text)],
+      );
+      final occurrence = result.occurrences.singleWhere(
+        (candidate) => candidate.word == 'wrld',
+      );
+      expect(occurrence.logicalEnd, text.length - 1);
+      expect(
+        text.replaceRange(
+          occurrence.logicalStart,
+          occurrence.logicalEnd,
+          'world',
+        ),
+        "'hello $middle world'",
+      );
+    });
+
     test('removing a custom exception does not forbid a base word', () async {
       await worker.check(
         context: _fixtureContext(
@@ -3193,6 +3502,16 @@ Future<void> _waitFor(
   }
 }
 
+final class _RecordingNavigatorObserver extends NavigatorObserver {
+  int popCount = 0;
+
+  @override
+  void didPop(Route<dynamic> route, Route<dynamic>? previousRoute) {
+    popCount++;
+    super.didPop(route, previousRoute);
+  }
+}
+
 Future<void> _pumpWidgetUntil(
   WidgetTester tester,
   bool Function() predicate, {
@@ -3244,6 +3563,9 @@ final class _DelayedAtomicFileWriter extends AtomicFileWriter {
 
 final class _ToggleFailAtomicFileWriter extends AtomicFileWriter {
   bool failWrites = false;
+  String? conflictRecoveryPath;
+  List<int>? conflictDestinationBytes;
+  var writeCount = 0;
 
   @override
   Future<void> writeBytes(
@@ -3253,8 +3575,20 @@ final class _ToggleFailAtomicFileWriter extends AtomicFileWriter {
     FutureOr<void> Function()? beforePublish,
     FutureOr<bool> Function(String replacedPath)? acceptReplaced,
   }) async {
+    writeCount++;
     if (failWrites) {
       throw FileSystemException('Injected spelling word-store failure.');
+    }
+    final recoveryPath = conflictRecoveryPath;
+    if (recoveryPath != null) {
+      final destinationBytes = conflictDestinationBytes;
+      if (destinationBytes == null) {
+        throw StateError('Conflict destination bytes were not configured.');
+      }
+      await File(targetPath).parent.create(recursive: true);
+      await File(targetPath).writeAsBytes(destinationBytes, flush: true);
+      await File(recoveryPath).writeAsBytes(bytes, flush: true);
+      throw AtomicFileChangedException(targetPath, recoveryPath: recoveryPath);
     }
     await super.writeBytes(
       targetPath,

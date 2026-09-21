@@ -3388,5 +3388,6 @@
   "topicRenameAffectedFiles": "Затронутые файлы",
   "renameTopicFileInstead": "ID тем определяются именами их файлов. Используйте «Переименовать файл темы» в оглавлении или на боковой панели «Файлы».",
   "diagnosticWritersideWebFileNameInvalid": "Экземпляр \"{instanceId}\" публикует недопустимое имя веб-файла \"{webFileName}\" для темы \"{topic}\".",
-  "diagnosticWritersideWebFileNameCollision": "Экземпляр \"{instanceId}\" публикует темы \"{firstTopic}\" и \"{secondTopic}\" под одним именем \"{webFileName}\"."
+  "diagnosticWritersideWebFileNameCollision": "Экземпляр \"{instanceId}\" публикует темы \"{firstTopic}\" и \"{secondTopic}\" под одним именем \"{webFileName}\".",
+  "spellingDictionaryRecoveryConflict": "Орфографический словарь был изменён извне. Резервная копия для восстановления сохранена."
 }

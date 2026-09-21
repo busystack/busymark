@@ -153,7 +153,12 @@ final class SpellingWorker {
       'context': context.toMessage(),
       'runs': [
         for (var index = 0; index < runs.length; index++)
-          {'index': index, 'text': runs[index].text},
+          {
+            'index': index,
+            'text': runs[index].text,
+            'tokenizationContext': runs[index].tokenizationContext,
+            'tokenizationContextStart': runs[index].tokenizationContextStart,
+          },
       ],
     });
     final message = await response;
@@ -450,6 +455,11 @@ final class _WorkerRuntime {
         final run = (runs[runCursor] as Map).cast<Object?, Object?>();
         final runIndex = run['index'] as int;
         final text = run['text'].toString();
+        final tokenizationContext = run['tokenizationContext'].toString();
+        final tokenizationContextStart = run['tokenizationContextStart'] as int;
+        final quotationPunctuation = _quotationPunctuationOffsets(
+          tokenizationContext,
+        );
         try {
           for (final chunk in _boundedProseChunks(
             text,
@@ -508,10 +518,24 @@ final class _WorkerRuntime {
                 });
                 continue;
               }
-              final start =
+              var start =
                   chunk.utf16Start + utf16Boundaries[token.characterStart];
-              final end =
-                  chunk.utf16Start + utf16Boundaries[token.characterEnd];
+              var end = chunk.utf16Start + utf16Boundaries[token.characterEnd];
+              while (start < end &&
+                  quotationPunctuation.contains(
+                    tokenizationContextStart + start,
+                  )) {
+                start += _utf16WidthAt(text, start);
+              }
+              while (end > start) {
+                final edge = _previousCodePointStart(text, end);
+                if (!quotationPunctuation.contains(
+                  tokenizationContextStart + edge,
+                )) {
+                  break;
+                }
+                end = edge;
+              }
               if (end <= start) continue;
               final word = text.substring(start, end);
               final cacheKey =
@@ -954,6 +978,8 @@ SpellingProjectionResult? _incrementalPlainMarkdownProjection({
           snapshot: run.snapshot,
           formattingWrappers: run.formattingWrappers,
           complete: run.complete,
+          tokenizationContext: run.tokenizationContext,
+          tokenizationContextStart: run.tokenizationContextStart,
         ),
     ]),
     complete: previous.projection.complete,
@@ -1063,12 +1089,107 @@ SpellingProseRun _copyProjectedRun(
       ),
   ]),
   complete: run.complete,
+  tokenizationContext: run.tokenizationContext,
+  tokenizationContextStart: run.tokenizationContextStart,
 );
 
 const _maximumProseChunkBytes = 48 * 1024;
 const _maximumCachedWords = 8192;
 const _wordBatchSize = 256;
 const _maximumPendingSuggestions = 32;
+
+Set<int> _quotationPunctuationOffsets(String text) {
+  final result = <int>{};
+  int? straightOpening;
+  int? curlyOpening;
+  var offset = 0;
+  while (offset < text.length) {
+    final rune = _codePointAtUtf16(text, offset);
+    final width = rune > 0xffff ? 2 : 1;
+    if (rune == 0x0a || rune == 0x0d) {
+      straightOpening = null;
+      curlyOpening = null;
+      offset += width;
+      continue;
+    }
+    if (rune != 0x27 && rune != 0x2018 && rune != 0x2019) {
+      offset += width;
+      continue;
+    }
+    final previousWord = _wordCharacterBefore(text, offset);
+    final nextWord = _wordCharacterAt(text, offset + width);
+    if (rune != 0x2018 && previousWord && nextWord) {
+      offset += width;
+      continue;
+    }
+    if (rune == 0x2018) {
+      result.add(offset);
+      curlyOpening = offset;
+    } else if (rune == 0x2019) {
+      if (curlyOpening != null) {
+        result.add(curlyOpening);
+        result.add(offset);
+        curlyOpening = null;
+      }
+    } else {
+      final opens = !previousWord && nextWord;
+      final closes = previousWord && !nextWord;
+      if (straightOpening != null && closes) {
+        result.add(straightOpening);
+        result.add(offset);
+        straightOpening = null;
+      } else {
+        straightOpening = opens ? offset : null;
+      }
+    }
+    offset += width;
+  }
+  return result;
+}
+
+bool _wordCharacterBefore(String text, int offset) =>
+    offset > 0 &&
+    _isWordCharacter(
+      _codePointAtUtf16(text, _previousCodePointStart(text, offset)),
+    );
+
+bool _wordCharacterAt(String text, int offset) =>
+    offset < text.length && _isWordCharacter(_codePointAtUtf16(text, offset));
+
+bool _isWordCharacter(int rune) {
+  if ((rune >= 0x41 && rune <= 0x5a) ||
+      (rune >= 0x61 && rune <= 0x7a) ||
+      _isCombiningMark(rune)) {
+    return true;
+  }
+  final character = String.fromCharCode(rune);
+  return character.toLowerCase() != character.toUpperCase();
+}
+
+bool _isCombiningMark(int rune) =>
+    (rune >= 0x0300 && rune <= 0x036f) ||
+    (rune >= 0x1ab0 && rune <= 0x1aff) ||
+    (rune >= 0x1dc0 && rune <= 0x1dff) ||
+    (rune >= 0x20d0 && rune <= 0x20ff) ||
+    (rune >= 0xfe20 && rune <= 0xfe2f);
+
+int _utf16WidthAt(String text, int offset) =>
+    _codePointAtUtf16(text, offset) > 0xffff ? 2 : 1;
+
+int _previousCodePointStart(String text, int offset) {
+  var start = offset - 1;
+  if (start > 0) {
+    final unit = text.codeUnitAt(start);
+    final previous = text.codeUnitAt(start - 1);
+    if (unit >= 0xdc00 &&
+        unit <= 0xdfff &&
+        previous >= 0xd800 &&
+        previous <= 0xdbff) {
+      start--;
+    }
+  }
+  return start;
+}
 
 final class _ProseChunk {
   const _ProseChunk({required this.text, required this.utf16Start, this.error});

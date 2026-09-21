@@ -4659,4 +4659,8 @@ class AppLocalizationsRu extends AppLocalizations {
   String exportInvalidRange(String field, String minimum, String maximum) {
     return '$field: введите число от $minimum до $maximum.';
   }
+
+  @override
+  String get spellingDictionaryRecoveryConflict =>
+      'Орфографический словарь был изменён извне. Резервная копия для восстановления сохранена.';
 }

@@ -4633,4 +4633,8 @@ class AppLocalizationsAr extends AppLocalizations {
   String exportInvalidRange(String field, String minimum, String maximum) {
     return '$field: أدخل رقمًا بين $minimum و$maximum.';
   }
+
+  @override
+  String get spellingDictionaryRecoveryConflict =>
+      'تم تغيير قاموس التدقيق الإملائي خارجيًا. تم الاحتفاظ بنسخة استرداد.';
 }

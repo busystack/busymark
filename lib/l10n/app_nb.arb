@@ -3362,5 +3362,6 @@
   "topicRenameAffectedFiles": "Berørte filer",
   "renameTopicFileInstead": "Emne-ID-er kommer fra filnavnene. Bruk Gi nytt navn til emnefil i innholdsfortegnelsen eller sidepanelet Filer.",
   "diagnosticWritersideWebFileNameInvalid": "Instansen \"{instanceId}\" publiserer det ugyldige nettfilnavnet \"{webFileName}\" for emnet \"{topic}\".",
-  "diagnosticWritersideWebFileNameCollision": "Instansen \"{instanceId}\" publiserer både \"{firstTopic}\" og \"{secondTopic}\" som \"{webFileName}\"."
+  "diagnosticWritersideWebFileNameCollision": "Instansen \"{instanceId}\" publiserer både \"{firstTopic}\" og \"{secondTopic}\" som \"{webFileName}\".",
+  "spellingDictionaryRecoveryConflict": "Staveordboken ble endret eksternt. En gjenopprettingskopi ble bevart."
 }

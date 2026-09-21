@@ -3362,5 +3362,6 @@
   "topicRenameAffectedFiles": "Ficheiros afetados",
   "renameTopicFileInstead": "Os IDs dos tópicos provêm dos nomes dos ficheiros. Utilize Mudar o nome do ficheiro de tópico no índice ou na barra lateral Ficheiros.",
   "diagnosticWritersideWebFileNameInvalid": "A instância \"{instanceId}\" publica o nome de ficheiro Web inválido \"{webFileName}\" para o tópico \"{topic}\".",
-  "diagnosticWritersideWebFileNameCollision": "A instância \"{instanceId}\" publica \"{firstTopic}\" e \"{secondTopic}\" como \"{webFileName}\"."
+  "diagnosticWritersideWebFileNameCollision": "A instância \"{instanceId}\" publica \"{firstTopic}\" e \"{secondTopic}\" como \"{webFileName}\".",
+  "spellingDictionaryRecoveryConflict": "O dicionário ortográfico foi alterado externamente. Foi preservada uma cópia de recuperação."
 }

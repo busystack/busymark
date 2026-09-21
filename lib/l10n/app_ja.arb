@@ -4901,5 +4901,6 @@
   "topicRenameAffectedFiles": "影響を受けるファイル",
   "renameTopicFileInstead": "トピック ID はファイル名から生成されます。目次またはファイルサイドバーの「トピックファイルの名前を変更」を使用してください。",
   "diagnosticWritersideWebFileNameInvalid": "インスタンス \"{instanceId}\" はトピック \"{topic}\" に無効な Web ファイル名 \"{webFileName}\" を使用しています。",
-  "diagnosticWritersideWebFileNameCollision": "インスタンス \"{instanceId}\" は \"{firstTopic}\" と \"{secondTopic}\" の両方を \"{webFileName}\" として公開します。"
+  "diagnosticWritersideWebFileNameCollision": "インスタンス \"{instanceId}\" は \"{firstTopic}\" と \"{secondTopic}\" の両方を \"{webFileName}\" として公開します。",
+  "spellingDictionaryRecoveryConflict": "スペルチェック辞書が外部で変更されました。復旧用コピーを保持しました。"
 }

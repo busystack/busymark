@@ -3404,5 +3404,6 @@
   "topicRenameAffectedFiles": "فایل‌های تحت تأثیر",
   "renameTopicFileInstead": "شناسه‌های موضوع از نام فایل‌هایشان گرفته می‌شوند. از «تغییر نام فایل موضوع» در فهرست مطالب یا نوار کناری فایل‌ها استفاده کنید.",
   "diagnosticWritersideWebFileNameInvalid": "نمونهٔ \"{instanceId}\" نام فایل وب نامعتبر \"{webFileName}\" را برای موضوع \"{topic}\" منتشر می‌کند.",
-  "diagnosticWritersideWebFileNameCollision": "نمونهٔ \"{instanceId}\" هر دو موضوع \"{firstTopic}\" و \"{secondTopic}\" را با نام \"{webFileName}\" منتشر می‌کند."
+  "diagnosticWritersideWebFileNameCollision": "نمونهٔ \"{instanceId}\" هر دو موضوع \"{firstTopic}\" و \"{secondTopic}\" را با نام \"{webFileName}\" منتشر می‌کند.",
+  "spellingDictionaryRecoveryConflict": "فرهنگ لغت املایی به‌صورت خارجی تغییر کرد. یک نسخهٔ بازیابی حفظ شد."
 }

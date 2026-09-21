@@ -4403,6 +4403,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String exportInvalidRange(String field, String minimum, String maximum) {
     return '$field：请输入 $minimum 到 $maximum 之间的数字。';
   }
+
+  @override
+  String get spellingDictionaryRecoveryConflict => '拼写词典已被外部更改。已保留恢复副本。';
 }
 
 /// The translations for Chinese, as used in China (`zh_CN`).
@@ -8802,4 +8805,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String exportInvalidRange(String field, String minimum, String maximum) {
     return '$field：请输入 $minimum 到 $maximum 之间的数字。';
   }
+
+  @override
+  String get spellingDictionaryRecoveryConflict => '拼写词典已被外部更改。已保留恢复副本。';
 }

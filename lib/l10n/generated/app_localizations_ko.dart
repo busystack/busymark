@@ -4470,4 +4470,8 @@ class AppLocalizationsKo extends AppLocalizations {
   String exportInvalidRange(String field, String minimum, String maximum) {
     return '$field: $minimum에서 $maximum 사이의 숫자를 입력하세요.';
   }
+
+  @override
+  String get spellingDictionaryRecoveryConflict =>
+      '맞춤법 사전이 외부에서 변경되었습니다. 복구 사본을 보존했습니다.';
 }

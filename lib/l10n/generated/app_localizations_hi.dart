@@ -4593,4 +4593,8 @@ class AppLocalizationsHi extends AppLocalizations {
   String exportInvalidRange(String field, String minimum, String maximum) {
     return '$field: $minimum से $maximum के बीच संख्या दर्ज करें।';
   }
+
+  @override
+  String get spellingDictionaryRecoveryConflict =>
+      'वर्तनी शब्दकोश को बाहरी रूप से बदला गया। पुनर्प्राप्ति प्रति सुरक्षित रखी गई।';
 }

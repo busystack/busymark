@@ -53,6 +53,7 @@ final class MarkdownSpellingProjector {
           block,
     ];
     final runs = <SpellingProseRun>[];
+    final multilineHtmlSpans = _multilineHtmlSpans(source, 0, source.length);
     var complete = true;
     var sequence = 0;
 
@@ -65,6 +66,7 @@ final class MarkdownSpellingProjector {
       required bool stripBlockSyntax,
       required SpellingSourceContext context,
     }) {
+      final multilineHtml = multilineHtmlSpans;
       final formattingSyntax = _formattingSyntaxSpans([
         mapped,
       ], sourceBase: sourceBase);
@@ -78,6 +80,8 @@ final class MarkdownSpellingProjector {
                 variable.span.startOffset,
                 variable.span.endOffset,
               ),
+        for (final html in multilineHtml)
+          _SourceInterval(html.opaqueStart, html.opaqueEnd),
       ]..sort((left, right) => left.start.compareTo(right.start));
       final scanner = _MarkdownProseScanner(
         source: source,
@@ -91,7 +95,24 @@ final class MarkdownSpellingProjector {
         ], sourceBase: sourceBase),
         opaqueSyntax: opaqueSyntax,
       );
-      final groups = scanner.scan();
+      final groups =
+          <_EmissionGroup>[
+            ...scanner.scan(),
+            for (final html in multilineHtml)
+              if (html.tagStart >= mappedStart && html.tagStart < mappedEnd)
+                for (final attribute in html.readableAttributes)
+                  ..._MarkdownProseScanner(
+                    source: source,
+                    start: attribute.start,
+                    end: attribute.end,
+                    context: attribute.context,
+                    stripBlockSyntax: false,
+                  ).scan(),
+          ]..sort((left, right) {
+            final leftStart = left.atoms.firstOrNull?.sourceStart ?? 0;
+            final rightStart = right.atoms.firstOrNull?.sourceStart ?? 0;
+            return leftStart.compareTo(rightStart);
+          });
       complete = complete && scanner.complete;
       for (final group in groups) {
         if (group.text.trim().isEmpty) continue;
@@ -104,6 +125,8 @@ final class MarkdownSpellingProjector {
           snapshot: snapshot,
           formattingWrappers: group.formattingWrappers,
           complete: scanner.complete,
+          tokenizationContext: group.tokenizationContext,
+          tokenizationContextStart: group.tokenizationContextStart,
         );
         if (!run.hasValidMapping) {
           complete = false;
@@ -230,10 +253,28 @@ final class _EmissionGroup {
     required this.text,
     required this.atoms,
     required this.formattingWrappers,
+    required this.tokenizationContext,
+    required this.tokenizationContextStart,
   });
   final String text;
   final List<SpellingSourceAtom> atoms;
   final List<SpellingFormattingWrapper> formattingWrappers;
+  final String tokenizationContext;
+  final int tokenizationContextStart;
+}
+
+final class _PendingEmissionGroup {
+  const _PendingEmissionGroup({
+    required this.text,
+    required this.atoms,
+    required this.formattingWrappers,
+    required this.tokenizationContextStart,
+  });
+
+  final String text;
+  final List<SpellingSourceAtom> atoms;
+  final List<SpellingFormattingWrapper> formattingWrappers;
+  final int tokenizationContextStart;
 }
 
 final class _MarkdownProseScanner {
@@ -256,9 +297,11 @@ final class _MarkdownProseScanner {
   final List<_SourceInterval> formattingSyntax;
   final List<_RawFormattingWrapper> formattingWrappers;
   final List<_SourceInterval> opaqueSyntax;
-  final List<_EmissionGroup> _groups = [];
+  final List<Object> _groups = [];
   StringBuffer _text = StringBuffer();
+  final StringBuffer _tokenizationContext = StringBuffer();
   List<SpellingSourceAtom> _atoms = [];
+  int? _tokenizationContextStart;
   int? _opaqueEnd;
   bool complete = true;
 
@@ -307,11 +350,25 @@ final class _MarkdownProseScanner {
           line.contentEnd,
           next.start,
           SpellingTransformationKind.lineBreak,
+          tokenizationLogical: '\n',
         );
       }
     }
     _flush();
-    return List.unmodifiable(_groups);
+    final tokenizationContext = _tokenizationContext.toString();
+    return List.unmodifiable([
+      for (final group in _groups)
+        if (group is _PendingEmissionGroup)
+          _EmissionGroup(
+            text: group.text,
+            atoms: group.atoms,
+            formattingWrappers: group.formattingWrappers,
+            tokenizationContext: tokenizationContext,
+            tokenizationContextStart: group.tokenizationContextStart,
+          )
+        else
+          group as _EmissionGroup,
+    ]);
   }
 
   void _scanInline(int rangeStart, int rangeEnd) {
@@ -401,45 +458,53 @@ final class _MarkdownProseScanner {
         }
       }
       if (unit == 0x3c) {
-        final close = _htmlTagEnd(cursor, rangeEnd);
-        if (close >= 0 && close < rangeEnd) {
-          final raw = source.substring(cursor, close + 1);
-          if (_autolink.hasMatch(raw) || _emailAutolink.hasMatch(raw)) {
-            _barrier();
-            cursor = close + 1;
-            continue;
-          }
-          final parsedTag = RegExp(
-            r'^<\s*(/?)\s*([A-Za-z][A-Za-z0-9:-]*)\b',
-          ).firstMatch(raw);
-          final closingTag = parsedTag?.group(1)?.isNotEmpty ?? false;
-          final tag = parsedTag?.group(2)?.toLowerCase();
-          if (!closingTag &&
-              tag != null &&
-              _opaqueHtmlElements.contains(tag) &&
-              !raw.trimRight().endsWith('/>')) {
-            final closing = RegExp(
-              '</\\s*${RegExp.escape(tag)}\\s*>',
-              caseSensitive: false,
-            ).firstMatch(source.substring(close + 1, end));
-            _barrier();
-            if (closing == null) {
-              complete = false;
-              _opaqueEnd = end;
-            } else {
-              _opaqueEnd = close + 1 + closing.end;
+        final tagCandidate = _isHtmlTagCandidate(cursor);
+        final autolinkCandidate = _isAutolinkCandidate(cursor);
+        if (tagCandidate || autolinkCandidate) {
+          final close = _htmlTagEnd(cursor);
+          if (close < 0) {
+            if (tagCandidate) complete = false;
+          } else {
+            final raw = source.substring(cursor, close + 1);
+            if (_autolink.hasMatch(raw) || _emailAutolink.hasMatch(raw)) {
+              _barrier();
+              if (close >= rangeEnd) _opaqueEnd = close + 1;
+              cursor = math.min(rangeEnd, close + 1);
+              continue;
             }
+            final parsedTag = RegExp(
+              r'^<\s*(/?)\s*([A-Za-z][A-Za-z0-9:-]*)\b',
+            ).firstMatch(raw);
+            final closingTag = parsedTag?.group(1)?.isNotEmpty ?? false;
+            final tag = parsedTag?.group(2)?.toLowerCase();
+            if (!closingTag &&
+                tag != null &&
+                _opaqueHtmlElements.contains(tag) &&
+                !raw.trimRight().endsWith('/>')) {
+              final closing = RegExp(
+                '</\\s*${RegExp.escape(tag)}\\s*>',
+                caseSensitive: false,
+              ).firstMatch(source.substring(close + 1, end));
+              _barrier();
+              if (closing == null) {
+                complete = false;
+                _opaqueEnd = end;
+              } else {
+                _opaqueEnd = close + 1 + closing.end;
+              }
+              continue;
+            }
+            final semanticBoundary =
+                tag == 'br' ||
+                tag == 'hr' ||
+                tag != null && _blockHtmlElements.contains(tag);
+            if (semanticBoundary) _barrier();
+            if (!closingTag) _scanHumanReadableAttributes(cursor, close + 1);
+            if (semanticBoundary) _barrier();
+            if (close >= rangeEnd) _opaqueEnd = close + 1;
+            cursor = math.min(rangeEnd, close + 1);
             continue;
           }
-          final semanticBoundary =
-              tag == 'br' ||
-              tag == 'hr' ||
-              tag != null && _blockHtmlElements.contains(tag);
-          if (semanticBoundary) _barrier();
-          if (!closingTag) _scanHumanReadableAttributes(cursor, close + 1);
-          if (semanticBoundary) _barrier();
-          cursor = close + 1;
-          continue;
         }
       }
       final rune = _codePointAt(source, cursor);
@@ -454,9 +519,25 @@ final class _MarkdownProseScanner {
     }
   }
 
-  int _htmlTagEnd(int start, int rangeEnd) {
+  bool _isHtmlTagCandidate(int start) {
+    if (start + 1 >= end) return false;
+    final tail = source.substring(start, math.min(end, start + 128));
+    return RegExp(
+          r'^<\s*/?\s*[A-Za-z][A-Za-z0-9:-]*(?:\s|/?>|$)',
+        ).hasMatch(tail) ||
+        RegExp(r'^<(?:!|\?)').hasMatch(tail);
+  }
+
+  bool _isAutolinkCandidate(int start) {
+    if (start + 1 >= end) return false;
+    final tail = source.substring(start, math.min(end, start + 256));
+    return RegExp(r'^<[A-Za-z][A-Za-z0-9+.-]*:').hasMatch(tail) ||
+        RegExp(r'^<[^\s<>@]+@').hasMatch(tail);
+  }
+
+  int _htmlTagEnd(int start) {
     int? quote;
-    for (var cursor = start + 1; cursor < rangeEnd; cursor++) {
+    for (var cursor = start + 1; cursor < end; cursor++) {
       final unit = source.codeUnitAt(cursor);
       if (quote != null) {
         if (unit == quote) quote = null;
@@ -553,11 +634,14 @@ final class _MarkdownProseScanner {
     String logical,
     int sourceStart,
     int sourceEnd,
-    SpellingTransformationKind transformation,
-  ) {
+    SpellingTransformationKind transformation, {
+    String? tokenizationLogical,
+  }) {
     if (logical.isEmpty) return;
+    _tokenizationContextStart ??= _tokenizationContext.length;
     final logicalStart = _text.length;
     _text.write(logical);
+    _tokenizationContext.write(tokenizationLogical ?? logical);
     _atoms.add(
       SpellingSourceAtom(
         logicalText: logical,
@@ -571,7 +655,13 @@ final class _MarkdownProseScanner {
     );
   }
 
-  void _barrier() => _flush();
+  void _barrier() {
+    _flush();
+    if (_tokenizationContext.isNotEmpty &&
+        !_tokenizationContext.toString().endsWith(' ')) {
+      _tokenizationContext.write(' ');
+    }
+  }
 
   void _flush() {
     if (_text.isNotEmpty) {
@@ -612,15 +702,17 @@ final class _MarkdownProseScanner {
         );
       }
       _groups.add(
-        _EmissionGroup(
+        _PendingEmissionGroup(
           text: _text.toString(),
           atoms: _atoms,
           formattingWrappers: List.unmodifiable(wrappers),
+          tokenizationContextStart: _tokenizationContextStart!,
         ),
       );
     }
     _text = StringBuffer();
     _atoms = [];
+    _tokenizationContextStart = null;
   }
 
   List<({int start, int contentEnd})> _lines() {
@@ -682,6 +774,116 @@ final class _SourceInterval {
 
   final int start;
   final int end;
+}
+
+final class _MultilineHtmlSpan {
+  const _MultilineHtmlSpan({
+    required this.tagStart,
+    required this.opaqueStart,
+    required this.opaqueEnd,
+    required this.readableAttributes,
+  });
+
+  final int tagStart;
+  final int opaqueStart;
+  final int opaqueEnd;
+  final List<_HtmlReadableAttribute> readableAttributes;
+}
+
+final class _HtmlReadableAttribute {
+  const _HtmlReadableAttribute({
+    required this.start,
+    required this.end,
+    required this.context,
+  });
+
+  final int start;
+  final int end;
+  final SpellingSourceContext context;
+}
+
+List<_MultilineHtmlSpan> _multilineHtmlSpans(
+  String source,
+  int start,
+  int end,
+) {
+  final result = <_MultilineHtmlSpan>[];
+  var cursor = start;
+  while (cursor < end) {
+    final opening = source.indexOf('<', cursor);
+    if (opening < 0 || opening >= end) break;
+    final candidate = RegExp(
+      r'^<\s*/?\s*[A-Za-z][A-Za-z0-9:-]*(?:\s|/?>|$)',
+    ).hasMatch(source.substring(opening, math.min(end, opening + 128)));
+    if (!candidate) {
+      cursor = opening + 1;
+      continue;
+    }
+    int? quote;
+    var close = -1;
+    for (var index = opening + 1; index < end; index++) {
+      final unit = source.codeUnitAt(index);
+      if (quote != null) {
+        if (unit == quote) quote = null;
+      } else if (unit == 0x22 || unit == 0x27) {
+        quote = unit;
+      } else if (unit == 0x3e) {
+        close = index;
+        break;
+      }
+    }
+    if (close < 0) break;
+    final raw = source.substring(opening, close + 1);
+    if (!raw.contains(RegExp(r'[\r\n]'))) {
+      cursor = close + 1;
+      continue;
+    }
+    final parsed = RegExp(
+      r'^<\s*(/?)\s*([A-Za-z][A-Za-z0-9:-]*)\b',
+    ).firstMatch(raw);
+    final closing = parsed?.group(1)?.isNotEmpty ?? false;
+    final tag = parsed?.group(2)?.toLowerCase();
+    var opaqueEnd = close + 1;
+    if (!closing &&
+        tag != null &&
+        _opaqueHtmlElements.contains(tag) &&
+        !raw.trimRight().endsWith('/>')) {
+      final closingMatch = RegExp(
+        '</\\s*${RegExp.escape(tag)}\\s*>',
+        caseSensitive: false,
+      ).firstMatch(source.substring(close + 1, end));
+      opaqueEnd = closingMatch == null ? end : close + 1 + closingMatch.end;
+    }
+    final attributes = <_HtmlReadableAttribute>[];
+    if (!closing && (tag == null || !_opaqueHtmlElements.contains(tag))) {
+      for (final match in _humanAttribute.allMatches(raw)) {
+        if (!_humanAttributeNames.contains(match.group(1)!.toLowerCase())) {
+          continue;
+        }
+        final value = match.group(3)!;
+        final valueStart = opening + match.end - 1 - value.length;
+        attributes.add(
+          _HtmlReadableAttribute(
+            start: valueStart,
+            end: valueStart + value.length,
+            context: match.group(2) == "'"
+                ? SpellingSourceContext.xmlSingleQuotedAttribute
+                : SpellingSourceContext.xmlDoubleQuotedAttribute,
+          ),
+        );
+      }
+    }
+    result.add(
+      _MultilineHtmlSpan(
+        tagStart: opening,
+        opaqueStart: opening,
+        opaqueEnd: opaqueEnd,
+        readableAttributes: List.unmodifiable(attributes),
+      ),
+    );
+    cursor = opaqueEnd;
+  }
+  return List.unmodifiable(result);
 }
 
 ({int start, int end, String quote})? _trailingLinkTitle(String value) {

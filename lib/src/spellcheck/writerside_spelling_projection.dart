@@ -62,7 +62,10 @@ final class _XmlProjectionBuilder {
   var complete = true;
   var _sequence = 0;
   StringBuffer _text = StringBuffer();
+  StringBuffer _tokenizationContext = StringBuffer();
   List<SpellingSourceAtom> _atoms = [];
+  final List<_PendingXmlRun> _pendingRuns = [];
+  int? _tokenizationContextStart;
 
   void visit(WritersideDocumentNode node, {required bool eligible}) {
     if (node is WritersideTextNode) {
@@ -88,6 +91,7 @@ final class _XmlProjectionBuilder {
         element.span.endOffset,
         SpellingTransformationKind.lineBreak,
         SpellingSourceContext.xmlText,
+        tokenizationLogical: '\n',
       );
       return;
     }
@@ -98,7 +102,11 @@ final class _XmlProjectionBuilder {
     } else {
       // Excluded technical elements form hard barriers; their descendants do
       // not get joined to authored prose around them.
-      flush();
+      if (inline) {
+        _barrier();
+      } else {
+        flush();
+      }
     }
     if (!inline) flush();
   }
@@ -208,7 +216,7 @@ final class _XmlProjectionBuilder {
             range.start < unit.logicalEnd && range.end > unit.logicalStart,
       );
       if (variable) {
-        flush();
+        _barrier();
         continue;
       }
       _emit(
@@ -234,7 +242,7 @@ final class _XmlProjectionBuilder {
           SpellingSourceContext.xmlCdata,
         );
       }
-      flush();
+      _barrier();
       cursor = variable.end;
     }
     if (cursor < content.length) {
@@ -253,10 +261,14 @@ final class _XmlProjectionBuilder {
     int sourceStart,
     int sourceEnd,
     SpellingTransformationKind transformation,
-    SpellingSourceContext context,
-  ) {
+    SpellingSourceContext context, {
+    String? tokenizationLogical,
+  }) {
+    if (logical.isEmpty) return;
+    _tokenizationContextStart ??= _tokenizationContext.length;
     final logicalStart = _text.length;
     _text.write(logical);
+    _tokenizationContext.write(tokenizationLogical ?? logical);
     _atoms.add(
       SpellingSourceAtom(
         logicalText: logical,
@@ -270,15 +282,42 @@ final class _XmlProjectionBuilder {
     );
   }
 
-  void flush() {
+  void _flushRun() {
     if (_text.isNotEmpty && _text.toString().trim().isNotEmpty) {
+      _pendingRuns.add(
+        _PendingXmlRun(
+          text: _text.toString(),
+          atoms: List.unmodifiable(_atoms),
+          tokenizationContextStart: _tokenizationContextStart!,
+        ),
+      );
+    }
+    _text = StringBuffer();
+    _atoms = [];
+    _tokenizationContextStart = null;
+  }
+
+  void _barrier() {
+    _flushRun();
+    if (_tokenizationContext.isNotEmpty &&
+        !_tokenizationContext.toString().endsWith(' ')) {
+      _tokenizationContext.write(' ');
+    }
+  }
+
+  void flush() {
+    _flushRun();
+    final contextText = _tokenizationContext.toString();
+    for (final pending in _pendingRuns) {
       final run = SpellingProseRun(
         id: 'writerside-xml:${_sequence++}',
-        text: _text.toString(),
+        text: pending.text,
         languageId: languageId,
-        atoms: List.unmodifiable(_atoms),
+        atoms: pending.atoms,
         target: SpellingSourceTarget(filePath: filePath),
         snapshot: snapshot,
+        tokenizationContext: contextText,
+        tokenizationContextStart: pending.tokenizationContextStart,
       );
       if (run.hasValidMapping) {
         runs.add(run);
@@ -286,9 +325,21 @@ final class _XmlProjectionBuilder {
         complete = false;
       }
     }
-    _text = StringBuffer();
-    _atoms = [];
+    _pendingRuns.clear();
+    _tokenizationContext = StringBuffer();
   }
+}
+
+final class _PendingXmlRun {
+  const _PendingXmlRun({
+    required this.text,
+    required this.atoms,
+    required this.tokenizationContextStart,
+  });
+
+  final String text;
+  final List<SpellingSourceAtom> atoms;
+  final int tokenizationContextStart;
 }
 
 final class _EncodedUnit {

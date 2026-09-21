@@ -4901,5 +4901,6 @@
   "topicRenameAffectedFiles": "File yang terpengaruh",
   "renameTopicFileInstead": "ID topik berasal dari nama filenya. Gunakan Ganti Nama File Topik di daftar isi atau bilah samping File.",
   "diagnosticWritersideWebFileNameInvalid": "Instans \"{instanceId}\" menerbitkan nama file web tidak valid \"{webFileName}\" untuk topik \"{topic}\".",
-  "diagnosticWritersideWebFileNameCollision": "Instans \"{instanceId}\" menerbitkan \"{firstTopic}\" dan \"{secondTopic}\" sebagai \"{webFileName}\"."
+  "diagnosticWritersideWebFileNameCollision": "Instans \"{instanceId}\" menerbitkan \"{firstTopic}\" dan \"{secondTopic}\" sebagai \"{webFileName}\".",
+  "spellingDictionaryRecoveryConflict": "Kamus ejaan diubah secara eksternal. Salinan pemulihan telah disimpan."
 }

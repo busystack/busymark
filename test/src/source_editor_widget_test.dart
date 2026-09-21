@@ -2078,6 +2078,96 @@ void main() {
     await tester.pump(const Duration(milliseconds: 600));
   });
 
+  testWidgets('Source CRLF structured paste is one exact undo transaction', (
+    tester,
+  ) async {
+    const source = 'leftright\r\n';
+    final clipboard = _SourceTestClipboard(
+      readData: RichClipboardData(
+        text: '# Heading',
+        richFragment: _completeSourceFragment('# Heading\n').encode(),
+      ),
+    );
+    var modelText = source;
+    var modelSelection = const TextSelection.collapsed(offset: 'left'.length);
+    var history = const DocumentUndoState();
+    var transactions = 0;
+    final controller = await _pumpClipboardSourceEditor(
+      tester,
+      source: source,
+      clipboard: clipboard,
+      onTransactionalChanged:
+          (value, _, previousSelection, selection, undoGroup) {
+            transactions++;
+            history = history.push(
+              DocumentHistoryState(
+                text: modelText,
+                selection: previousSelection,
+              ),
+              group: undoGroup,
+            );
+            modelText = value;
+            modelSelection = selection;
+          },
+      onUndo: () {
+        if (history.undo.isEmpty) return null;
+        final target = history.undo.last;
+        history = history.afterUndo(
+          DocumentHistoryState(text: modelText, selection: modelSelection),
+        );
+        modelText = target.text;
+        modelSelection = target.selection;
+        return TextEditingValue(text: target.text, selection: target.selection);
+      },
+      onRedo: () {
+        if (history.redo.isEmpty) return null;
+        final target = history.redo.last;
+        history = history.afterRedo(
+          DocumentHistoryState(text: modelText, selection: modelSelection),
+        );
+        modelText = target.text;
+        modelSelection = target.selection;
+        return TextEditingValue(text: target.text, selection: target.selection);
+      },
+    );
+    controller.selection = modelSelection;
+
+    await _pressControlKey(tester, LogicalKeyboardKey.keyV);
+    await tester.pump();
+    final pasted = controller.text;
+    final pastedSelection = controller.selection;
+    expect(transactions, 1);
+    expect(pasted, contains('# Heading'));
+    expect(_sourceContainsLoneLf(pasted), isFalse, reason: pasted);
+
+    await _pressControlKey(tester, LogicalKeyboardKey.keyZ);
+    await tester.pump();
+    expect(controller.text, source);
+    await _pressControlKey(tester, LogicalKeyboardKey.keyZ, shift: true);
+    await tester.pump();
+    expect(controller.text, pasted);
+    expect(controller.selection, pastedSelection);
+  });
+
+  testWidgets('Source plain paste keeps LF bytes in a CRLF document', (
+    tester,
+  ) async {
+    const source = 'left\r\nright\r\n';
+    final controller = await _pumpClipboardSourceEditor(
+      tester,
+      source: source,
+      clipboard: _SourceTestClipboard(
+        readData: const RichClipboardData(text: 'A\nB'),
+      ),
+    );
+    controller.selection = const TextSelection.collapsed(offset: 'left'.length);
+
+    await _pressControlKey(tester, LogicalKeyboardKey.keyV, shift: true);
+    await tester.pump();
+
+    expect(controller.text, 'leftA\nB\r\nright\r\n');
+  });
+
   testWidgets('Source structured inline paste keeps surrounding text inline', (
     tester,
   ) async {
@@ -8949,6 +9039,16 @@ Future<void> _pressControlKey(
   await tester.sendKeyEvent(key);
   if (shift) await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
   await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+}
+
+bool _sourceContainsLoneLf(String value) {
+  for (var index = 0; index < value.length; index++) {
+    if (value.codeUnitAt(index) == 0x0a &&
+        (index == 0 || value.codeUnitAt(index - 1) != 0x0d)) {
+      return true;
+    }
+  }
+  return false;
 }
 
 class _SourceTestClipboard extends RichClipboardService {

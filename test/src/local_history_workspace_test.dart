@@ -35,6 +35,98 @@ void main() {
     if (await root.exists()) await root.delete(recursive: true);
   });
 
+  test('first save cannot adopt a deleted path lineage', () async {
+    final store = MemoryLocalHistoryStore();
+    final destination = p.join(root.path, 'Note.md');
+    final old = await _capture(store, destination, 'Old retained history\n');
+    await store.markDeleted(destination, recursive: false);
+    final harness = await _harness(store);
+
+    await harness.controller.createMarkdownFile();
+    harness.controller.updateActiveText('New file contents\n');
+    expect(await harness.controller.saveActiveAs(destination), isTrue);
+
+    final snapshot = await store.load();
+    final oldDocument = snapshot.documents.singleWhere(
+      (document) => document.id == old.document.id,
+    );
+    final active = snapshot.documents.singleWhere(
+      (document) => !document.deleted && document.currentPath == destination,
+    );
+    expect(active.id, isNot(oldDocument.id));
+    expect(oldDocument.deleted, isTrue);
+    expect(
+      await _revisionSources(store, snapshot.revisionsFor(oldDocument.id)),
+      ['Old retained history\n'],
+    );
+    expect(await File(destination).readAsString(), 'New file contents\n');
+    expect(harness.state.activeBuffer!.isDirty, isFalse);
+    expect(
+      harness.container.read(localHistoryControllerProvider).warning?.kind,
+      isNot(LocalHistoryWarningKind.pathChange),
+    );
+  });
+
+  test('vacant first save retires a stale active history owner', () async {
+    final store = MemoryLocalHistoryStore();
+    final destination = p.join(root.path, 'Note.md');
+    final stale = await _capture(store, destination, 'Stale owner\n');
+    expect(await File(destination).exists(), isFalse);
+    final harness = await _harness(store);
+
+    await harness.controller.createMarkdownFile();
+    harness.controller.updateActiveText('Created after vacancy check\n');
+    expect(await harness.controller.saveActiveAs(destination), isTrue);
+
+    final snapshot = await store.load();
+    final retired = snapshot.documents.singleWhere(
+      (document) => document.id == stale.document.id,
+    );
+    final active = snapshot.documents.singleWhere(
+      (document) => !document.deleted && document.currentPath == destination,
+    );
+    expect(retired.deleted, isTrue);
+    expect(active.id, isNot(retired.id));
+    expect(
+      harness.container.read(localHistoryControllerProvider).warning?.kind,
+      isNot(LocalHistoryWarningKind.pathChange),
+    );
+  });
+
+  test(
+    'first save promotes an established untitled lineage over deleted history',
+    () async {
+      final store = MemoryLocalHistoryStore();
+      final destination = p.join(root.path, 'Note.md');
+      final old = await _capture(store, destination, 'Deleted revision\n');
+      await store.markDeleted(destination, recursive: false);
+      final harness = await _harness(store);
+      await harness.controller.createMarkdownFile();
+      harness.controller.updateActiveText('Established untitled revision\n');
+      await Future<void>.delayed(Duration.zero);
+      final history = harness.container.read(
+        localHistoryControllerProvider.notifier,
+      );
+      expect(await history.flushBuffer(harness.state.activeBuffer!), isTrue);
+      final untitledId = history.documentIdForBuffer(
+        harness.state.activeBuffer!.id,
+      );
+
+      expect(await harness.controller.saveActiveAs(destination), isTrue);
+      final snapshot = await store.load();
+      expect(
+        snapshot.documents.singleWhere((document) => !document.deleted).id,
+        untitledId,
+      );
+      expect(
+        snapshot.documents
+            .singleWhere((document) => document.id == old.document.id)
+            .deleted,
+        isTrue,
+      );
+    },
+  );
+
   test(
     'comparison uses unsaved editor source and whole restore is one undo step',
     () async {

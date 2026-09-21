@@ -610,6 +610,24 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
         )) {
           return true;
         }
+        if (source.untitled && !destinationExisted) {
+          try {
+            // The successful filesystem operation proved that this pathname
+            // was vacant. Retire any stale live owner before promotion or a
+            // path-only capture can resolve the new file's identity.
+            await _store.markDeleted(destinationPath, recursive: false);
+          } on Object catch (error) {
+            _setWarning(LocalHistoryWarningKind.pathChange, error.toString());
+            return false;
+          }
+          if (!_operationIsCurrent(
+            source.bufferId,
+            historyGeneration,
+            bufferGeneration,
+          )) {
+            return true;
+          }
+        }
         // A named-file Save As is a fork. Resolve an earlier untitled-to-source
         // promotion before recording the destination. If storage is still
         // unavailable, detach that source association from the buffer so it can
@@ -768,6 +786,7 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
       final document = state.snapshot.documents
           .where(
             (candidate) =>
+                !candidate.deleted &&
                 candidate.currentPath != null &&
                 p.equals(candidate.currentPath!, destinationPath),
           )
@@ -1033,6 +1052,7 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
       final byPath = state.snapshot.documents
           .where(
             (document) =>
+                !document.deleted &&
                 buffer.filePath != null &&
                 document.currentPath != null &&
                 p.equals(document.currentPath!, buffer.filePath!),
@@ -1136,13 +1156,23 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
     await refresh();
     if (!ref.mounted) return;
     final normalized = p.normalize(path);
-    final document = state.snapshot.documents.where((candidate) {
-      final current = candidate.currentPath;
-      return (current != null && p.equals(current, normalized)) ||
-          candidate.historicalPaths.any(
-            (historical) => p.equals(historical, normalized),
-          );
-    }).firstOrNull;
+    final activeDocument = state.snapshot.documents
+        .where(
+          (candidate) =>
+              !candidate.deleted &&
+              candidate.currentPath != null &&
+              p.equals(candidate.currentPath!, normalized),
+        )
+        .firstOrNull;
+    final document =
+        activeDocument ??
+        state.snapshot.documents.where((candidate) {
+          final current = candidate.currentPath;
+          return (current != null && p.equals(current, normalized)) ||
+              candidate.historicalPaths.any(
+                (historical) => p.equals(historical, normalized),
+              );
+        }).firstOrNull;
     if (document != null) selectDocument(document.id);
   }
 
@@ -1767,6 +1797,7 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
           final byPath = snapshot.documents
               .where(
                 (document) =>
+                    !document.deleted &&
                     document.currentPath != null &&
                     p.equals(document.currentPath!, scope.path!),
               )

@@ -4668,4 +4668,8 @@ class AppLocalizationsUk extends AppLocalizations {
   String exportInvalidRange(String field, String minimum, String maximum) {
     return '$field: введіть число від $minimum до $maximum.';
   }
+
+  @override
+  String get spellingDictionaryRecoveryConflict =>
+      'Орфографічний словник було змінено ззовні. Копію для відновлення збережено.';
 }

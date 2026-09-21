@@ -36,6 +36,8 @@ final class WysiwygSpellingProjector {
           atoms: projection.atoms,
           target: target,
           snapshot: snapshot,
+          tokenizationContext: projection.tokenizationContext,
+          tokenizationContextStart: projection.tokenizationContextStart,
         );
         if (run.hasValidMapping) {
           richRuns.add(run);
@@ -99,6 +101,8 @@ final class WysiwygSpellingProjector {
                 ),
             ],
             complete: sourceRun.complete,
+            tokenizationContext: sourceRun.tokenizationContext,
+            tokenizationContextStart: sourceRun.tokenizationContextStart,
           ),
         );
       }
@@ -327,6 +331,8 @@ _MergedRichProjection _mergeFieldMappings({
           richRun.formattingWrappers,
         ),
         complete: sourceRun.complete && richRun.complete,
+        tokenizationContext: sourceRun.tokenizationContext,
+        tokenizationContextStart: sourceRun.tokenizationContextStart,
       ),
     );
   }

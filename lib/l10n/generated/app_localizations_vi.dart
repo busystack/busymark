@@ -4594,4 +4594,8 @@ class AppLocalizationsVi extends AppLocalizations {
   String exportInvalidRange(String field, String minimum, String maximum) {
     return '$field: nhập số từ $minimum đến $maximum.';
   }
+
+  @override
+  String get spellingDictionaryRecoveryConflict =>
+      'Từ điển chính tả đã được thay đổi từ bên ngoài. Một bản sao khôi phục đã được giữ lại.';
 }

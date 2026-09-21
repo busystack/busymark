@@ -4603,4 +4603,8 @@ class AppLocalizationsId extends AppLocalizations {
   String exportInvalidRange(String field, String minimum, String maximum) {
     return '$field: masukkan angka antara $minimum dan $maximum.';
   }
+
+  @override
+  String get spellingDictionaryRecoveryConflict =>
+      'Kamus ejaan diubah secara eksternal. Salinan pemulihan telah disimpan.';
 }

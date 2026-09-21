@@ -23,6 +23,7 @@ import '../../app/busymark_shortcuts.dart';
 import '../../app/busymark_toast.dart';
 import '../../app/localization.dart';
 import '../../app/window_control_service.dart';
+import '../../core/atomic_file_writer.dart';
 import '../../feedback/presentation/feedback_dialog.dart';
 import '../../platform/linux_header_bar_service.dart';
 import '../../spellcheck/spelling_catalog.dart';
@@ -777,8 +778,8 @@ Future<void> _setProjectSpellingLanguage(
 ) async {
   try {
     await spelling.setProjectLanguage(languageId);
-  } on Object {
-    if (context.mounted) _showSpellingSettingsFailure(context);
+  } on Object catch (error) {
+    if (context.mounted) _showSpellingSettingsFailure(context, error);
   }
 }
 
@@ -1013,9 +1014,9 @@ Future<void> _showSpellingWords(
               try {
                 await remove(entry.language, entry.word);
                 if (dialogContext.mounted) Navigator.pop(dialogContext);
-              } on Object {
+              } on Object catch (error) {
                 if (dialogContext.mounted) {
-                  _showSpellingSettingsFailure(dialogContext);
+                  _showSpellingSettingsFailure(dialogContext, error);
                 }
               }
             },
@@ -1025,7 +1026,20 @@ Future<void> _showSpellingWords(
   );
 }
 
-void _showSpellingSettingsFailure(BuildContext context) {
+void _showSpellingSettingsFailure(BuildContext context, [Object? error]) {
+  if (error is AtomicFileChangedException && error.recoveryPath != null) {
+    final recoveryPath = error.recoveryPath!;
+    BusyMarkToastOverlay.show(
+      context,
+      message: context.l10n.spellingDictionaryRecoveryConflict,
+      actionLabel: context.l10n.copyPath,
+      onAction: () =>
+          unawaited(Clipboard.setData(ClipboardData(text: recoveryPath))),
+      duration: Duration.zero,
+      priority: BusyMarkToastPriority.high,
+    );
+    return;
+  }
   BusyMarkToastOverlay.show(
     context,
     message: context.l10n.commandUnavailableInContext,

@@ -4604,4 +4604,8 @@ class AppLocalizationsTr extends AppLocalizations {
   String exportInvalidRange(String field, String minimum, String maximum) {
     return '$field: $minimum ile $maximum arasında bir sayı girin.';
   }
+
+  @override
+  String get spellingDictionaryRecoveryConflict =>
+      'Yazım sözlüğü harici olarak değiştirildi. Bir kurtarma kopyası korundu.';
 }

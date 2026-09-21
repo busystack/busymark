@@ -4901,5 +4901,6 @@
   "topicRenameAffectedFiles": "Các tệp bị ảnh hưởng",
   "renameTopicFileInstead": "ID chủ đề được tạo từ tên tệp. Hãy dùng Đổi tên tệp chủ đề trong mục lục hoặc thanh bên Tệp.",
   "diagnosticWritersideWebFileNameInvalid": "Phiên bản \"{instanceId}\" xuất bản tên tệp web không hợp lệ \"{webFileName}\" cho chủ đề \"{topic}\".",
-  "diagnosticWritersideWebFileNameCollision": "Phiên bản \"{instanceId}\" xuất bản cả \"{firstTopic}\" và \"{secondTopic}\" dưới tên \"{webFileName}\"."
+  "diagnosticWritersideWebFileNameCollision": "Phiên bản \"{instanceId}\" xuất bản cả \"{firstTopic}\" và \"{secondTopic}\" dưới tên \"{webFileName}\".",
+  "spellingDictionaryRecoveryConflict": "Từ điển chính tả đã được thay đổi từ bên ngoài. Một bản sao khôi phục đã được giữ lại."
 }

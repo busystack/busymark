@@ -4648,4 +4648,8 @@ class AppLocalizationsNl extends AppLocalizations {
   String exportInvalidRange(String field, String minimum, String maximum) {
     return '$field: voer een getal tussen $minimum en $maximum in.';
   }
+
+  @override
+  String get spellingDictionaryRecoveryConflict =>
+      'Het spellingwoordenboek is extern gewijzigd. Er is een herstelkopie bewaard.';
 }

@@ -7781,6 +7781,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{field}: enter a number between {minimum} and {maximum}.'**
   String exportInvalidRange(String field, String minimum, String maximum);
+
+  /// No description provided for @spellingDictionaryRecoveryConflict.
+  ///
+  /// In en, this message translates to:
+  /// **'The spelling dictionary changed externally. A recovery copy was preserved.'**
+  String get spellingDictionaryRecoveryConflict;
 }
 
 class _AppLocalizationsDelegate

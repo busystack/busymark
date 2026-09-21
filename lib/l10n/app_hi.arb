@@ -3362,5 +3362,6 @@
   "topicRenameAffectedFiles": "प्रभावित फ़ाइलें",
   "renameTopicFileInstead": "विषय ID उनके फ़ाइल नामों से बनते हैं। विषय-सूची या फ़ाइलें साइडबार में ‘विषय फ़ाइल का नाम बदलें’ का उपयोग करें।",
   "diagnosticWritersideWebFileNameInvalid": "इंस्टेंस \"{instanceId}\" विषय \"{topic}\" के लिए अमान्य वेब फ़ाइल नाम \"{webFileName}\" प्रकाशित करता है।",
-  "diagnosticWritersideWebFileNameCollision": "इंस्टेंस \"{instanceId}\" \"{firstTopic}\" और \"{secondTopic}\" दोनों को \"{webFileName}\" के रूप में प्रकाशित करता है।"
+  "diagnosticWritersideWebFileNameCollision": "इंस्टेंस \"{instanceId}\" \"{firstTopic}\" और \"{secondTopic}\" दोनों को \"{webFileName}\" के रूप में प्रकाशित करता है।",
+  "spellingDictionaryRecoveryConflict": "वर्तनी शब्दकोश को बाहरी रूप से बदला गया। पुनर्प्राप्ति प्रति सुरक्षित रखी गई।"
 }

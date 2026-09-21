@@ -3362,5 +3362,6 @@
   "topicRenameAffectedFiles": "Fichiers concernés",
   "renameTopicFileInstead": "Les ID de sujet proviennent de leur nom de fichier. Utilisez « Renommer le fichier de sujet » dans la table des matières ou la barre latérale Fichiers.",
   "diagnosticWritersideWebFileNameInvalid": "L’instance \"{instanceId}\" publie le nom de fichier web non valide \"{webFileName}\" pour le sujet \"{topic}\".",
-  "diagnosticWritersideWebFileNameCollision": "L’instance \"{instanceId}\" publie \"{firstTopic}\" et \"{secondTopic}\" sous le nom \"{webFileName}\"."
+  "diagnosticWritersideWebFileNameCollision": "L’instance \"{instanceId}\" publie \"{firstTopic}\" et \"{secondTopic}\" sous le nom \"{webFileName}\".",
+  "spellingDictionaryRecoveryConflict": "Le dictionnaire orthographique a été modifié en externe. Une copie de récupération a été conservée."
 }

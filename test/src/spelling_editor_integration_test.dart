@@ -14,6 +14,7 @@ import 'package:busymark/src/spellcheck/spelling_coordinator.dart';
 import 'package:busymark/src/spellcheck/spelling_projection.dart';
 import 'package:busymark/src/spellcheck/spelling_replacement.dart';
 import 'package:busymark/src/spellcheck/wysiwyg_spelling_projection.dart';
+import 'package:busymark/src/workspace/presentation/workspace_screen.dart';
 import 'package:busymark/src/workspace/workspace_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -185,6 +186,220 @@ void main() {
       expect(updatedDocument!.blocks.single.plainText, 'misspelled');
     },
   );
+
+  testWidgets(
+    'rich correction translates later anchors from serialized source',
+    (tester) async {
+      const source = 'helo caf&#233;\n\nwrld\n';
+      final document = const MarkdownParser()
+          .parse(
+            filePath: '/tmp/entity-normalization.md',
+            source: source,
+            mode: MarkdownMode.commonMark,
+            validateLocalReferences: false,
+          )
+          .busyDocument;
+      const snapshot = SpellingSnapshotIdentity(
+        bufferId: 'entity-normalization-buffer',
+        contentRevision: 8,
+        documentKind: DocumentKind.markdown,
+        contextGeneration: 3,
+      );
+      final projection = const WysiwygSpellingProjector().project(
+        document: document,
+        languageId: 'en-Test',
+        snapshot: snapshot,
+        documentGeneration: 0,
+      );
+      final run = projection.runs.singleWhere(
+        (candidate) => candidate.text.startsWith('helo'),
+      );
+      final occurrence = _occurrence(run, word: 'helo', logicalStart: 0);
+      final planned = const SpellingReplacementPlanner().build(
+        occurrence: occurrence,
+        suggestion: 'hello',
+      );
+      final key = GlobalKey<BusyMarkWysiwygEditorState>();
+      String? committedSource;
+
+      await tester.pumpWidget(
+        _testApp(
+          BusyMarkWysiwygEditor(
+            key: key,
+            document: document,
+            documentId: snapshot.bufferId,
+            contentRevision: snapshot.contentRevision,
+            useExternalUndoHistory: true,
+            spellingAnnotations: [_annotation(occurrence)],
+            onDocumentChanged: (_) {},
+            onSourceChanged: (_, _) {},
+            onSpellingSourceChanged: (_, value, _, _) {
+              committedSource = value;
+            },
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(
+        key.currentState!.applySpellingCorrection(
+          occurrence: occurrence,
+          suggestion: 'hello',
+        ),
+        isTrue,
+      );
+      await tester.pump();
+
+      expect(committedSource, 'hello café\n\nwrld\n');
+      final actual = busyMarkMinimalSourceEdit(source, committedSource!);
+      final oldAnchor = source.indexOf('wrld');
+      final translatedAnchor = oldAnchor + (actual.newEnd - actual.oldEnd);
+      expect(translatedAnchor, committedSource!.indexOf('wrld'));
+      expect(
+        planned.translateSourceOffset(oldAnchor),
+        isNot(translatedAnchor),
+        reason: 'The planned word delta cannot represent entity normalization.',
+      );
+    },
+  );
+
+  testWidgets('rich hard-break correction keeps later source anchor', (
+    tester,
+  ) async {
+    const source = 'helo  \nwrld\n\nmistakke\n';
+    final document = const MarkdownParser()
+        .parse(
+          filePath: '/tmp/hard-break.md',
+          source: source,
+          mode: MarkdownMode.commonMark,
+          validateLocalReferences: false,
+        )
+        .busyDocument;
+    const snapshot = SpellingSnapshotIdentity(
+      bufferId: 'hard-break-buffer',
+      contentRevision: 5,
+      documentKind: DocumentKind.markdown,
+      contextGeneration: 2,
+    );
+    final projection = const WysiwygSpellingProjector().project(
+      document: document,
+      languageId: 'en-Test',
+      snapshot: snapshot,
+      documentGeneration: 0,
+    );
+    final run = projection.runs.firstWhere(
+      (candidate) => candidate.text.startsWith('helo'),
+    );
+    final occurrence = _occurrence(run, word: 'helo', logicalStart: 0);
+    final key = GlobalKey<BusyMarkWysiwygEditorState>();
+    String? committedSource;
+
+    await tester.pumpWidget(
+      _testApp(
+        BusyMarkWysiwygEditor(
+          key: key,
+          document: document,
+          documentId: snapshot.bufferId,
+          contentRevision: snapshot.contentRevision,
+          useExternalUndoHistory: true,
+          spellingAnnotations: [_annotation(occurrence)],
+          onDocumentChanged: (_) {},
+          onSourceChanged: (_, _) {},
+          onSpellingSourceChanged: (_, value, _, _) {
+            committedSource = value;
+          },
+        ),
+      ),
+    );
+    await tester.pump();
+    expect(
+      key.currentState!.applySpellingCorrection(
+        occurrence: occurrence,
+        suggestion: 'hello',
+      ),
+      isTrue,
+    );
+    await tester.pump();
+
+    expect(committedSource, 'hello  \nwrld\n\nmistakke\n');
+    final actual = busyMarkMinimalSourceEdit(source, committedSource!);
+    final oldAnchor = source.indexOf('mistakke');
+    expect(
+      oldAnchor + (actual.newEnd - actual.oldEnd),
+      committedSource!.indexOf('mistakke'),
+    );
+  });
+
+  testWidgets('rich table correction uses serialized table source delta', (
+    tester,
+  ) async {
+    const source =
+        '| helo caf&#233; |\n'
+        '| --- |\n'
+        '\n'
+        'wrld\n';
+    final document = const MarkdownParser()
+        .parse(
+          filePath: '/tmp/table-entity.md',
+          source: source,
+          mode: MarkdownMode.gfm,
+          validateLocalReferences: false,
+        )
+        .busyDocument;
+    const snapshot = SpellingSnapshotIdentity(
+      bufferId: 'table-entity-buffer',
+      contentRevision: 13,
+      documentKind: DocumentKind.markdown,
+      contextGeneration: 4,
+    );
+    final projection = const WysiwygSpellingProjector().project(
+      document: document,
+      languageId: 'en-Test',
+      snapshot: snapshot,
+      documentGeneration: 0,
+    );
+    final run = projection.runs.firstWhere(
+      (candidate) => candidate.text.startsWith('helo'),
+    );
+    final occurrence = _occurrence(run, word: 'helo', logicalStart: 0);
+    final key = GlobalKey<BusyMarkWysiwygEditorState>();
+    String? committedSource;
+
+    await tester.pumpWidget(
+      _testApp(
+        BusyMarkWysiwygEditor(
+          key: key,
+          document: document,
+          documentId: snapshot.bufferId,
+          contentRevision: snapshot.contentRevision,
+          useExternalUndoHistory: true,
+          spellingAnnotations: [_annotation(occurrence)],
+          onDocumentChanged: (_) {},
+          onSourceChanged: (_, _) {},
+          onSpellingSourceChanged: (_, value, _, _) {
+            committedSource = value;
+          },
+        ),
+      ),
+    );
+    await tester.pump();
+    expect(
+      key.currentState!.applySpellingCorrection(
+        occurrence: occurrence,
+        suggestion: 'hello',
+      ),
+      isTrue,
+    );
+    await tester.pump();
+
+    expect(committedSource, contains('| hello café |'));
+    final actual = busyMarkMinimalSourceEdit(source, committedSource!);
+    final oldAnchor = source.indexOf('wrld');
+    expect(
+      oldAnchor + (actual.newEnd - actual.oldEnd),
+      committedSource!.indexOf('wrld'),
+    );
+  });
 
   testWidgets(
     'rich table-cell correction preserves link and publishes sessions once',

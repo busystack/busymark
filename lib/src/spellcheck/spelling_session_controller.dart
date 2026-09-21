@@ -7,6 +7,7 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
 import '../app/app_settings.dart';
+import '../core/atomic_file_writer.dart';
 import '../markdown/busymark_document.dart';
 import '../markdown/markdown_model.dart';
 import '../workspace/document_buffer.dart';
@@ -256,10 +257,13 @@ final class SpellingSessionController extends ChangeNotifier {
     _requireCurrent(occurrence);
     final store = _personalStore;
     if (store == null) throw StateError('Personal dictionary is unavailable.');
-    final updated = await store.addWord(
-      occurrence.run.languageId,
-      occurrence.word,
-    );
+    late final SpellingWordStoreSnapshot updated;
+    try {
+      updated = await store.addWord(occurrence.run.languageId, occurrence.word);
+    } on AtomicFileChangedException catch (error, stackTrace) {
+      await _reconcilePersonalStoreConflict(store);
+      Error.throwWithStackTrace(error, stackTrace);
+    }
     if (!identical(store, _personalStore)) return;
     _personalWords = updated;
     await _refreshAfterPersistentChange();
@@ -272,10 +276,13 @@ final class SpellingSessionController extends ChangeNotifier {
       throw StateError('This document is not associated with a project.');
     }
     final projectRoot = _projectRoot;
-    final updated = await store.addWord(
-      occurrence.run.languageId,
-      occurrence.word,
-    );
+    late final SpellingWordStoreSnapshot updated;
+    try {
+      updated = await store.addWord(occurrence.run.languageId, occurrence.word);
+    } on AtomicFileChangedException catch (error, stackTrace) {
+      await _reconcileProjectStoreConflict(store, projectRoot);
+      Error.throwWithStackTrace(error, stackTrace);
+    }
     if (!identical(store, _projectStore) || projectRoot != _projectRoot) return;
     _projectWords = updated;
     await _refreshAfterPersistentChange();
@@ -284,7 +291,13 @@ final class SpellingSessionController extends ChangeNotifier {
   Future<void> removePersonalWord(String languageId, String word) async {
     final store = _personalStore;
     if (store == null) throw StateError('Personal dictionary is unavailable.');
-    final updated = await store.removeWord(languageId, word);
+    late final SpellingWordStoreSnapshot updated;
+    try {
+      updated = await store.removeWord(languageId, word);
+    } on AtomicFileChangedException catch (error, stackTrace) {
+      await _reconcilePersonalStoreConflict(store);
+      Error.throwWithStackTrace(error, stackTrace);
+    }
     if (!identical(store, _personalStore)) return;
     _personalWords = updated;
     await _refreshAfterPersistentChange();
@@ -294,7 +307,13 @@ final class SpellingSessionController extends ChangeNotifier {
     final store = _projectStore;
     if (store == null) throw StateError('Project dictionary is unavailable.');
     final projectRoot = _projectRoot;
-    final updated = await store.removeWord(languageId, word);
+    late final SpellingWordStoreSnapshot updated;
+    try {
+      updated = await store.removeWord(languageId, word);
+    } on AtomicFileChangedException catch (error, stackTrace) {
+      await _reconcileProjectStoreConflict(store, projectRoot);
+      Error.throwWithStackTrace(error, stackTrace);
+    }
     if (!identical(store, _projectStore) || projectRoot != _projectRoot) return;
     _projectWords = updated;
     await _refreshAfterPersistentChange();
@@ -532,10 +551,46 @@ final class SpellingSessionController extends ChangeNotifier {
       throw StateError('This workspace has no project spelling scope.');
     }
     final projectRoot = _projectRoot;
-    final updated = await store.setProjectLanguage(languageId);
+    late final SpellingWordStoreSnapshot updated;
+    try {
+      updated = await store.setProjectLanguage(languageId);
+    } on AtomicFileChangedException catch (error, stackTrace) {
+      await _reconcileProjectStoreConflict(store, projectRoot);
+      Error.throwWithStackTrace(error, stackTrace);
+    }
     if (!identical(store, _projectStore) || projectRoot != _projectRoot) return;
     _projectWords = updated;
     await _refreshAfterPersistentChange();
+  }
+
+  Future<void> _reconcilePersonalStoreConflict(SpellingWordStore store) async {
+    if (!identical(store, _personalStore)) return;
+    try {
+      final actual = await wordStoreReader(store);
+      if (!identical(store, _personalStore)) return;
+      _personalWords = actual;
+      await _refreshAfterPersistentChange();
+    } on Object {
+      // Reconciliation is best effort; the publication conflict remains the
+      // caller-visible failure and must retain its recovery-path detail.
+    }
+  }
+
+  Future<void> _reconcileProjectStoreConflict(
+    SpellingWordStore store,
+    String? projectRoot,
+  ) async {
+    if (!identical(store, _projectStore) || projectRoot != _projectRoot) return;
+    try {
+      final actual = await wordStoreReader(store);
+      if (!identical(store, _projectStore) || projectRoot != _projectRoot) {
+        return;
+      }
+      _projectWords = actual;
+      await _refreshAfterPersistentChange();
+    } on Object {
+      // Preserve the original typed conflict for the initiating UI.
+    }
   }
 
   void closeBuffer(String bufferId) => _coordinator?.closeBuffer(bufferId);

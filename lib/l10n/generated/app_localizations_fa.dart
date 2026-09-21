@@ -4641,4 +4641,8 @@ class AppLocalizationsFa extends AppLocalizations {
   String exportInvalidRange(String field, String minimum, String maximum) {
     return '$field: عددی بین $minimum و $maximum وارد کنید.';
   }
+
+  @override
+  String get spellingDictionaryRecoveryConflict =>
+      'فرهنگ لغت املایی به‌صورت خارجی تغییر کرد. یک نسخهٔ بازیابی حفظ شد.';
 }

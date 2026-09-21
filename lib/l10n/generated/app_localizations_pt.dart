@@ -4662,6 +4662,10 @@ class AppLocalizationsPt extends AppLocalizations {
   String exportInvalidRange(String field, String minimum, String maximum) {
     return '$field: introduza um número entre $minimum e $maximum.';
   }
+
+  @override
+  String get spellingDictionaryRecoveryConflict =>
+      'O dicionário ortográfico foi alterado externamente. Foi preservada uma cópia de recuperação.';
 }
 
 /// The translations for Portuguese, as used in Brazil (`pt_BR`).
@@ -9319,4 +9323,8 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   String exportInvalidRange(String field, String minimum, String maximum) {
     return '$field: insira um número entre $minimum e $maximum.';
   }
+
+  @override
+  String get spellingDictionaryRecoveryConflict =>
+      'O dicionário ortográfico foi alterado externamente. Uma cópia de recuperação foi preservada.';
 }

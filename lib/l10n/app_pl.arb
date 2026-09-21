@@ -3388,5 +3388,6 @@
   "topicRenameAffectedFiles": "Pliki objęte zmianą",
   "renameTopicFileInstead": "Identyfikatory tematów pochodzą z nazw ich plików. Użyj polecenia Zmień nazwę pliku tematu w spisie treści lub na pasku bocznym Pliki.",
   "diagnosticWritersideWebFileNameInvalid": "Instancja \"{instanceId}\" publikuje nieprawidłową nazwę pliku internetowego \"{webFileName}\" dla tematu \"{topic}\".",
-  "diagnosticWritersideWebFileNameCollision": "Instancja \"{instanceId}\" publikuje zarówno \"{firstTopic}\", jak i \"{secondTopic}\" jako \"{webFileName}\"."
+  "diagnosticWritersideWebFileNameCollision": "Instancja \"{instanceId}\" publikuje zarówno \"{firstTopic}\", jak i \"{secondTopic}\" jako \"{webFileName}\".",
+  "spellingDictionaryRecoveryConflict": "Słownik pisowni został zmieniony zewnętrznie. Zachowano kopię odzyskiwania."
 }

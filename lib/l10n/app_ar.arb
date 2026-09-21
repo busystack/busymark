@@ -3362,5 +3362,6 @@
   "topicRenameAffectedFiles": "الملفات المتأثرة",
   "renameTopicFileInstead": "تُشتق معرّفات الموضوعات من أسماء ملفاتها. استخدم «إعادة تسمية ملف الموضوع» في جدول المحتويات أو الشريط الجانبي للملفات.",
   "diagnosticWritersideWebFileNameInvalid": "ينشر المثيل \"{instanceId}\" اسم ملف ويب غير صالح \"{webFileName}\" للموضوع \"{topic}\".",
-  "diagnosticWritersideWebFileNameCollision": "ينشر المثيل \"{instanceId}\" الموضوعين \"{firstTopic}\" و\"{secondTopic}\" باسم \"{webFileName}\"."
+  "diagnosticWritersideWebFileNameCollision": "ينشر المثيل \"{instanceId}\" الموضوعين \"{firstTopic}\" و\"{secondTopic}\" باسم \"{webFileName}\".",
+  "spellingDictionaryRecoveryConflict": "تم تغيير قاموس التدقيق الإملائي خارجيًا. تم الاحتفاظ بنسخة استرداد."
 }

@@ -213,7 +213,9 @@ final class SpellingProseRun {
     required this.snapshot,
     this.formattingWrappers = const [],
     this.complete = true,
-  });
+    String? tokenizationContext,
+    this.tokenizationContextStart = 0,
+  }) : _tokenizationContext = tokenizationContext;
 
   final String id;
   final String text;
@@ -223,8 +225,28 @@ final class SpellingProseRun {
   final SpellingSnapshotIdentity snapshot;
   final List<SpellingFormattingWrapper> formattingWrappers;
   final bool complete;
+  final String? _tokenizationContext;
+
+  /// Semantic prose surrounding [text], used only to classify token edges.
+  /// Context-only characters never participate in source replacement.
+  String get tokenizationContext => _tokenizationContext ?? text;
+
+  /// UTF-16 interval occupied by [text] inside [tokenizationContext].
+  final int tokenizationContextStart;
+  int get tokenizationContextEnd => tokenizationContextStart + text.length;
 
   bool get hasValidMapping {
+    if (tokenizationContextStart < 0 ||
+        tokenizationContextEnd > tokenizationContext.length ||
+        !_sameTokenizationCore(
+          tokenizationContext.substring(
+            tokenizationContextStart,
+            tokenizationContextEnd,
+          ),
+          text,
+        )) {
+      return false;
+    }
     if (atoms.isEmpty) return text.isEmpty;
     final reconstructed = StringBuffer();
     var offset = 0;
@@ -237,6 +259,20 @@ final class SpellingProseRun {
     }
     return offset == text.length && reconstructed.toString() == text;
   }
+}
+
+bool _sameTokenizationCore(String context, String text) {
+  if (context.length != text.length) return false;
+  for (var index = 0; index < text.length; index++) {
+    final contextUnit = context.codeUnitAt(index);
+    final textUnit = text.codeUnitAt(index);
+    if (contextUnit == textUnit) continue;
+    if ((contextUnit == 0x0a || contextUnit == 0x0d) && textUnit == 0x20) {
+      continue;
+    }
+    return false;
+  }
+  return true;
 }
 
 enum SpellingCheckOutcome { accepted, rejected, unchecked }

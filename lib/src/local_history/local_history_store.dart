@@ -210,8 +210,7 @@ class FileLocalHistoryStore implements LocalHistoryStore {
           .where(
             (candidate) =>
                 candidate.id != document.id &&
-                candidate.currentPath != null &&
-                p.equals(candidate.currentPath!, destination),
+                _ownsActivePath(candidate, destination),
           )
           .firstOrNull;
       if (destinationOwner != null) return null;
@@ -234,6 +233,7 @@ class FileLocalHistoryStore implements LocalHistoryStore {
   @override
   Future<void> remapPath(String sourcePath, String destinationPath) =>
       _mutateDocuments((document) {
+        if (document.deleted) return document;
         final current = document.currentPath;
         if (current == null) return document;
         final mapped = _remap(current, sourcePath, destinationPath);
@@ -246,7 +246,6 @@ class FileLocalHistoryStore implements LocalHistoryStore {
             current,
             mapped,
           ]),
-          deleted: false,
           updatedAt: DateTime.now().toUtc(),
         );
       });
@@ -749,13 +748,14 @@ LocalHistoryDocument? _resolveDocument(
   final path = request.path;
   if (path == null) return null;
   return documents
-      .where(
-        (document) =>
-            document.currentPath != null &&
-            p.equals(document.currentPath!, path),
-      )
+      .where((document) => _ownsActivePath(document, path))
       .firstOrNull;
 }
+
+bool _ownsActivePath(LocalHistoryDocument document, String path) =>
+    !document.deleted &&
+    document.currentPath != null &&
+    p.equals(document.currentPath!, path);
 
 LocalHistoryDocument _updatedDocument(
   LocalHistoryDocument document,
@@ -986,8 +986,7 @@ class MemoryLocalHistoryStore implements LocalHistoryStore {
         .where(
           (candidate) =>
               candidate.id != document.id &&
-              candidate.currentPath != null &&
-              p.equals(candidate.currentPath!, destination),
+              _ownsActivePath(candidate, destination),
         )
         .firstOrNull;
     if (destinationOwner != null) return null;
@@ -1006,6 +1005,7 @@ class MemoryLocalHistoryStore implements LocalHistoryStore {
   @override
   Future<void> remapPath(String sourcePath, String destinationPath) async {
     for (final entry in _documents.entries.toList()) {
+      if (entry.value.deleted) continue;
       final current = entry.value.currentPath;
       final mapped = current == null
           ? null
@@ -1019,7 +1019,6 @@ class MemoryLocalHistoryStore implements LocalHistoryStore {
             current!,
             mapped,
           ]),
-          deleted: false,
         );
       }
     }

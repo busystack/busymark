@@ -4901,5 +4901,6 @@
   "topicRenameAffectedFiles": "Etkilenen dosyalar",
   "renameTopicFileInstead": "Konu kimlikleri dosya adlarından gelir. İçindekiler tablosunda veya Dosyalar kenar çubuğunda Konu Dosyasını Yeniden Adlandır'ı kullanın.",
   "diagnosticWritersideWebFileNameInvalid": "\"{instanceId}\" örneği, \"{topic}\" konusu için geçersiz \"{webFileName}\" web dosyası adını yayımlıyor.",
-  "diagnosticWritersideWebFileNameCollision": "\"{instanceId}\" örneği hem \"{firstTopic}\" hem de \"{secondTopic}\" konusunu \"{webFileName}\" olarak yayımlıyor."
+  "diagnosticWritersideWebFileNameCollision": "\"{instanceId}\" örneği hem \"{firstTopic}\" hem de \"{secondTopic}\" konusunu \"{webFileName}\" olarak yayımlıyor.",
+  "spellingDictionaryRecoveryConflict": "Yazım sözlüğü harici olarak değiştirildi. Bir kurtarma kopyası korundu."
 }

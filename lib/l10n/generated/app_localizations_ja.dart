@@ -4476,4 +4476,8 @@ class AppLocalizationsJa extends AppLocalizations {
   String exportInvalidRange(String field, String minimum, String maximum) {
     return '$field: $minimum から $maximum の数値を入力してください。';
   }
+
+  @override
+  String get spellingDictionaryRecoveryConflict =>
+      'スペルチェック辞書が外部で変更されました。復旧用コピーを保持しました。';
 }

@@ -2,10 +2,30 @@ import '../markdown/busymark_document.dart';
 import 'spelling_projection.dart';
 
 final class SpellingInlineProjection {
-  const SpellingInlineProjection({required this.text, required this.atoms});
+  const SpellingInlineProjection({
+    required this.text,
+    required this.atoms,
+    String? tokenizationContext,
+    this.tokenizationContextStart = 0,
+  }) : _tokenizationContext = tokenizationContext;
 
   final String text;
   final List<SpellingSourceAtom> atoms;
+  final String? _tokenizationContext;
+  String get tokenizationContext => _tokenizationContext ?? text;
+  final int tokenizationContextStart;
+}
+
+final class _PendingInlineProjection {
+  const _PendingInlineProjection({
+    required this.text,
+    required this.atoms,
+    required this.tokenizationContextStart,
+  });
+
+  final String text;
+  final List<SpellingSourceAtom> atoms;
+  final int tokenizationContextStart;
 }
 
 /// Projects editable rich-text leaves while keeping a stable tree address for
@@ -16,36 +36,51 @@ List<SpellingInlineProjection> projectSpellingInlineRuns({
   required int sourceBase,
   SpellingSourceContext context = SpellingSourceContext.markdownProse,
 }) {
-  final runs = <SpellingInlineProjection>[];
+  final pendingRuns = <_PendingInlineProjection>[];
   var text = StringBuffer();
+  final tokenizationContext = StringBuffer();
+  int? tokenizationContextStart;
   var atoms = <SpellingSourceAtom>[];
   var fieldOffset = 0;
 
   void flush() {
     if (text.isNotEmpty && text.toString().trim().isNotEmpty) {
-      runs.add(
-        SpellingInlineProjection(
+      pendingRuns.add(
+        _PendingInlineProjection(
           text: text.toString(),
           atoms: List.unmodifiable(atoms),
+          tokenizationContextStart: tokenizationContextStart!,
         ),
       );
     }
     text = StringBuffer();
     atoms = [];
+    tokenizationContextStart = null;
+  }
+
+  void barrier() {
+    flush();
+    if (tokenizationContext.isNotEmpty &&
+        !tokenizationContext.toString().endsWith(' ')) {
+      tokenizationContext.write(' ');
+    }
   }
 
   void emitLeaf(
     BusyInline inline,
     List<int> path, {
     String? logicalText,
+    String? tokenizationText,
     SpellingTransformationKind transformation =
         SpellingTransformationKind.identity,
   }) {
     final fieldValue = inline.text;
     final value = logicalText ?? fieldValue;
     if (value.isEmpty) return;
+    tokenizationContextStart ??= tokenizationContext.length;
     final logicalStart = text.length;
     text.write(value);
+    tokenizationContext.write(tokenizationText ?? value);
     atoms.add(
       SpellingSourceAtom(
         logicalText: value,
@@ -74,13 +109,13 @@ List<SpellingInlineProjection> projectSpellingInlineRuns({
       case BusyInlineKind.html:
       case BusyInlineKind.writersideVariable:
       case BusyInlineKind.unknown:
-        flush();
+        barrier();
         fieldOffset += inline.plainText.length;
         return;
       case BusyInlineKind.image:
-        flush();
+        barrier();
         emitLeaf(inline, path);
-        flush();
+        barrier();
         return;
       case BusyInlineKind.softBreak:
       case BusyInlineKind.hardBreak:
@@ -88,6 +123,7 @@ List<SpellingInlineProjection> projectSpellingInlineRuns({
           inline,
           path,
           logicalText: ' ',
+          tokenizationText: '\n',
           transformation: SpellingTransformationKind.lineBreak,
         );
         return;
@@ -111,7 +147,16 @@ List<SpellingInlineProjection> projectSpellingInlineRuns({
     visit(inline, [index]);
   }
   flush();
-  return List.unmodifiable(runs);
+  final contextText = tokenizationContext.toString();
+  return List.unmodifiable([
+    for (final run in pendingRuns)
+      SpellingInlineProjection(
+        text: run.text,
+        atoms: run.atoms,
+        tokenizationContext: contextText,
+        tokenizationContextStart: run.tokenizationContextStart,
+      ),
+  ]);
 }
 
 SpellingInlineProjection projectSpellingInlines({

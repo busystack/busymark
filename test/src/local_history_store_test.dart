@@ -170,6 +170,95 @@ void main() {
     },
   );
 
+  test('deleted paths never own promotion, lookup, or remap', () async {
+    for (final entry in <({String name, LocalHistoryStore store})>[
+      (name: 'file', store: store),
+      (name: 'memory', store: MemoryLocalHistoryStore()),
+    ]) {
+      final path = '/workspace/${entry.name}-Note.md';
+      final moved = '/archive/${entry.name}-Note.md';
+      final time = DateTime.utc(2026, 1, 1);
+      final old = await entry.store.capture(
+        LocalHistoryCaptureRequest(
+          path: path,
+          displayName: 'Note.md',
+          source: 'old revision',
+          format: TextFormatMetadata.utf8Lf,
+          capturedAt: time,
+          reason: LocalHistoryCaptureReason.saved,
+        ),
+        policy,
+      );
+      await entry.store.markDeleted(path, recursive: false);
+      final untitled = await entry.store.capture(
+        LocalHistoryCaptureRequest(
+          displayName: 'Draft.md',
+          source: 'new untitled revision',
+          format: TextFormatMetadata.utf8Lf,
+          capturedAt: time.add(const Duration(seconds: 1)),
+          reason: LocalHistoryCaptureReason.automaticCheckpoint,
+          untitled: true,
+        ),
+        policy,
+      );
+      final promoted = await entry.store.promoteUntitledDocument(
+        documentId: untitled.document.id,
+        destinationPath: path,
+        displayName: 'Note.md',
+        updatedAt: time.add(const Duration(seconds: 2)),
+      );
+      expect(promoted?.id, untitled.document.id, reason: entry.name);
+
+      var snapshot = await entry.store.load();
+      final oldDocument = snapshot.documents.singleWhere(
+        (document) => document.id == old.document.id,
+      );
+      final active = snapshot.documents.singleWhere(
+        (document) => document.id == untitled.document.id,
+      );
+      expect(oldDocument.deleted, isTrue, reason: entry.name);
+      expect(oldDocument.currentPath, path, reason: entry.name);
+      expect(active.deleted, isFalse, reason: entry.name);
+      expect(active.currentPath, path, reason: entry.name);
+      expect(
+        (await entry.store.readRevision(old.revision!.id))?.source,
+        'old revision',
+        reason: entry.name,
+      );
+
+      await entry.store.remapPath(path, moved);
+      snapshot = await entry.store.load();
+      expect(
+        snapshot.documents
+            .singleWhere((document) => document.id == old.document.id)
+            .currentPath,
+        path,
+        reason: entry.name,
+      );
+      expect(
+        snapshot.documents
+            .singleWhere((document) => document.id == active.id)
+            .currentPath,
+        moved,
+        reason: entry.name,
+      );
+
+      await entry.store.markDeleted(moved, recursive: false);
+      final reused = await entry.store.capture(
+        LocalHistoryCaptureRequest(
+          path: moved,
+          displayName: 'Note.md',
+          source: 'fresh named revision',
+          format: TextFormatMetadata.utf8Lf,
+          capturedAt: time.add(const Duration(seconds: 3)),
+          reason: LocalHistoryCaptureReason.saved,
+        ),
+        policy,
+      );
+      expect(reused.document.id, isNot(active.id), reason: entry.name);
+    }
+  });
+
   test(
     'deduplicates only adjacent ordinary captures and preserves A-B-A',
     () async {

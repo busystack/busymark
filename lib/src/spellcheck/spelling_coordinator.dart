@@ -534,7 +534,8 @@ final class _PendingSpellingCheck {
 String _temporaryWordKey(String word) => unicode.nfc(word).toLowerCase();
 
 String _runCacheKey(SpellingEngineContext context, SpellingProseRun run) =>
-    '${context.identity}\u0000${run.languageId}\u0000${run.text}';
+    '${context.identity}\u0000${run.languageId}\u0000'
+    '${run.tokenizationContextStart}\u0000${run.tokenizationContext}';
 
 final class _CachedRunOccurrence {
   const _CachedRunOccurrence({

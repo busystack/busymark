@@ -4618,4 +4618,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String exportInvalidRange(String field, String minimum, String maximum) {
     return '$field: enter a number between $minimum and $maximum.';
   }
+
+  @override
+  String get spellingDictionaryRecoveryConflict =>
+      'The spelling dictionary changed externally. A recovery copy was preserved.';
 }

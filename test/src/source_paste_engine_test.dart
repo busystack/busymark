@@ -1648,6 +1648,95 @@ void main() {
     ]);
   });
 
+  test('structured complete blocks generate only CRLF boundaries', () {
+    const source = 'leftright\r\n';
+    final applied = _applyReady(
+      source,
+      engine.prepareStructured(
+        target: _target(
+          source,
+          const TextSelection.collapsed(offset: 'left'.length),
+        ),
+        fragment: _fragment('# Heading\n'),
+      ),
+    );
+
+    expect(applied.source, contains('# Heading'));
+    expect(_containsLoneLf(applied.source), isFalse);
+    expect(applied.source, endsWith('right\r\n'));
+    expect(applied.edit.caretOffset, applied.source.indexOf('right'));
+
+    for (final container in ['- leftright\r\n', '> leftright\r\n']) {
+      final containerApplied = _applyReady(
+        container,
+        engine.prepareStructured(
+          target: _target(
+            container,
+            TextSelection.collapsed(offset: container.indexOf('right')),
+          ),
+          fragment: _fragment('# Heading\n'),
+        ),
+      );
+      expect(
+        _containsLoneLf(containerApplied.source),
+        isFalse,
+        reason: containerApplied.source,
+      );
+      expect(containerApplied.source, contains('Heading'));
+      expect(containerApplied.source, contains('right'));
+    }
+  });
+
+  test('structured inline hard breaks use destination CRLF', () {
+    const source = 'leftright\r\n';
+    final fragment = _nativeFragment(const [
+      BusyInline(kind: BusyInlineKind.text, text: 'A'),
+      BusyInline(kind: BusyInlineKind.hardBreak, text: '\n'),
+      BusyInline(kind: BusyInlineKind.text, text: 'B'),
+    ]);
+    final applied = _applyReady(
+      source,
+      engine.prepareStructured(
+        target: _target(
+          source,
+          const TextSelection.collapsed(offset: 'left'.length),
+        ),
+        fragment: fragment,
+      ),
+    );
+
+    expect(applied.source, 'leftA  \r\nBright\r\n');
+    expect(_containsLoneLf(applied.source), isFalse);
+    expect(applied.edit.caretOffset, 'leftA  \r\nB'.length);
+  });
+
+  test(
+    'mapped and generated structured breaks retain CRLF and caret width',
+    () {
+      const source = '[left  \r\nright](https://destination.test) tail\r\n';
+      final insertion = source.indexOf('left') + 'left'.length;
+      final applied = _applyReady(
+        source,
+        engine.prepareStructured(
+          target: _target(source, TextSelection.collapsed(offset: insertion)),
+          fragment: _nativeFragment(const [
+            BusyInline(kind: BusyInlineKind.text, text: 'A'),
+            BusyInline(kind: BusyInlineKind.hardBreak, text: '\n'),
+            BusyInline(kind: BusyInlineKind.text, text: 'B'),
+          ]),
+        ),
+      );
+
+      expect(_containsLoneLf(applied.source), isFalse, reason: applied.source);
+      expect(RegExp(r'  \r\n').allMatches(applied.source), hasLength(2));
+      expect(
+        applied.source.substring(0, applied.edit.caretOffset),
+        endsWith('B'),
+      );
+      expect(applied.source, contains('right'));
+    },
+  );
+
   test('protected Source context explicitly permits textual fallback', () {
     const source = '```text\nprotected\n```';
     final result = engine.prepareStructured(
@@ -1693,6 +1782,16 @@ SourcePasteDocumentSnapshot _target(String source, TextSelection selection) {
     markdownMode: MarkdownMode.commonMark,
     filePath: '/project/source.md',
   );
+}
+
+bool _containsLoneLf(String value) {
+  for (var index = 0; index < value.length; index++) {
+    if (value.codeUnitAt(index) == 0x0a &&
+        (index == 0 || value.codeUnitAt(index - 1) != 0x0d)) {
+      return true;
+    }
+  }
+  return false;
 }
 
 WysiwygClipboardFragment _fragment(String source) {

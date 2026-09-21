@@ -4602,4 +4602,8 @@ class AppLocalizationsEt extends AppLocalizations {
   String exportInvalidRange(String field, String minimum, String maximum) {
     return '$field: sisesta arv vahemikus $minimum kuni $maximum.';
   }
+
+  @override
+  String get spellingDictionaryRecoveryConflict =>
+      'Õigekirjasõnastikku muudeti väliselt. Taastekoopia säilitati.';
 }

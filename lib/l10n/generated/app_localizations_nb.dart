@@ -4602,4 +4602,8 @@ class AppLocalizationsNb extends AppLocalizations {
   String exportInvalidRange(String field, String minimum, String maximum) {
     return '$field: skriv inn et tall mellom $minimum og $maximum.';
   }
+
+  @override
+  String get spellingDictionaryRecoveryConflict =>
+      'Staveordboken ble endret eksternt. En gjenopprettingskopi ble bevart.';
 }

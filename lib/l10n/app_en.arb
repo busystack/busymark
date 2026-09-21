@@ -2779,5 +2779,6 @@
         "type": "String"
       }
     }
-  }
+  },
+  "spellingDictionaryRecoveryConflict": "The spelling dictionary changed externally. A recovery copy was preserved."
 }

@@ -35,6 +35,7 @@ import '../../app/command_registry.dart';
 import '../../app/localization.dart';
 import '../../app/window_control_service.dart';
 import '../../core/busymark_exception.dart';
+import '../../core/atomic_file_writer.dart';
 import '../../core/diagnostic.dart';
 import '../../core/diagnostic_localizations.dart';
 import '../../core/path_utils.dart'
@@ -12836,6 +12837,12 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
         field: field,
       );
       if (!mounted || !_spelling.isCurrent(occurrence)) return null;
+      final beforeBuffer = ref.read(workspaceControllerProvider).activeBuffer;
+      if (beforeBuffer == null ||
+          beforeBuffer.id != occurrence.run.snapshot.bufferId ||
+          beforeBuffer.revision != occurrence.run.snapshot.contentRevision) {
+        return null;
+      }
       final plan = prepared.plan;
       final applied = occurrence.run.target is SpellingSourceTarget
           ? sourceEditor?.applyPreparedSpellingCorrection(
@@ -12854,14 +12861,25 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
                 ) ??
                 false;
       if (!applied) return null;
+      final afterBuffer = ref.read(workspaceControllerProvider).activeBuffer;
+      if (afterBuffer == null ||
+          afterBuffer.id != beforeBuffer.id ||
+          afterBuffer.revision != beforeBuffer.revision + 1 ||
+          afterBuffer.text == beforeBuffer.text) {
+        return null;
+      }
       final sourceStart = occurrence.sourceStart;
       final sourceEnd = occurrence.sourceEnd;
       if (sourceStart != null && sourceEnd != null) {
+        final committed = busyMarkMinimalSourceEdit(
+          beforeBuffer.text,
+          afterBuffer.text,
+        );
         return SpellingReviewCorrection(
           coordinateScope: _reviewCoordinateScope(occurrence),
-          start: sourceStart,
-          oldEnd: sourceEnd,
-          newEnd: plan.translateSourceOffset(sourceEnd),
+          start: committed.start,
+          oldEnd: committed.oldEnd,
+          newEnd: committed.newEnd,
         );
       }
       final fieldStart = occurrence.fieldStart;
@@ -12982,13 +13000,9 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
       } else {
         await _spelling.addPersonalWord(occurrence);
       }
-    } on Object {
+    } on Object catch (error) {
       if (!mounted) return;
-      BusyMarkToastOverlay.show(
-        context,
-        message: context.l10n.commandUnavailableInContext,
-        priority: BusyMarkToastPriority.high,
-      );
+      _showSpellingPersistenceFailure(context, error);
     }
   }
 
@@ -13194,26 +13208,12 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     final previous = previousText ?? buffer!.text;
     final resolvedBufferId = bufferId ?? buffer!.id;
     if (previous == value) return;
-    final sharedLength = math.min(previous.length, value.length);
-    var start = 0;
-    while (start < sharedLength &&
-        previous.codeUnitAt(start) == value.codeUnitAt(start)) {
-      start++;
-    }
-    var previousEnd = previous.length;
-    var valueEnd = value.length;
-    while (previousEnd > start &&
-        valueEnd > start &&
-        previous.codeUnitAt(previousEnd - 1) ==
-            value.codeUnitAt(valueEnd - 1)) {
-      previousEnd--;
-      valueEnd--;
-    }
+    final committed = busyMarkMinimalSourceEdit(previous, value);
     _spelling.translateSourceEdit(
       bufferId: resolvedBufferId,
-      start: start,
-      oldEnd: previousEnd,
-      newEnd: valueEnd,
+      start: committed.start,
+      oldEnd: committed.oldEnd,
+      newEnd: committed.newEnd,
     );
   }
 
@@ -16398,6 +16398,32 @@ final class SpellingReviewCorrection {
   final int newEnd;
 }
 
+/// Returns the one bounding edit that transforms [before] into [after].
+///
+/// Review anchors deliberately use the source committed by the editor rather
+/// than the narrower edit that was planned before rich serialization.
+@visibleForTesting
+({int start, int oldEnd, int newEnd}) busyMarkMinimalSourceEdit(
+  String before,
+  String after,
+) {
+  final sharedLength = math.min(before.length, after.length);
+  var start = 0;
+  while (start < sharedLength &&
+      before.codeUnitAt(start) == after.codeUnitAt(start)) {
+    start++;
+  }
+  var oldEnd = before.length;
+  var newEnd = after.length;
+  while (oldEnd > start &&
+      newEnd > start &&
+      before.codeUnitAt(oldEnd - 1) == after.codeUnitAt(newEnd - 1)) {
+    oldEnd--;
+    newEnd--;
+  }
+  return (start: start, oldEnd: oldEnd, newEnd: newEnd);
+}
+
 @visibleForTesting
 class BusyMarkSpellingReviewDialog extends StatefulWidget {
   const BusyMarkSpellingReviewDialog({
@@ -16431,6 +16457,7 @@ class _SpellingReviewDialogState extends State<BusyMarkSpellingReviewDialog> {
   String? _advanceScope;
   String? _bufferId;
   bool _actionInProgress = false;
+  bool _closing = false;
   final _dialogFocus = FocusNode(debugLabel: 'Spelling review dialog');
   String? _suggestionOccurrenceId;
   Future<List<String>>? _suggestions;
@@ -16481,7 +16508,7 @@ class _SpellingReviewDialogState extends State<BusyMarkSpellingReviewDialog> {
   }
 
   void _handleSpellingChanged() {
-    if (!mounted) return;
+    if (!mounted || _closing) return;
     final occurrences = _occurrences;
     final state = widget.spelling.state;
     if (_actionInProgress) {
@@ -16490,7 +16517,7 @@ class _SpellingReviewDialogState extends State<BusyMarkSpellingReviewDialog> {
     }
     if (state.status == SpellingPresentationStatus.ready && state.complete) {
       if (occurrences.isEmpty) {
-        Navigator.of(context).pop();
+        _requestClose();
         return;
       }
       final current = occurrences.indexWhere(
@@ -16499,7 +16526,7 @@ class _SpellingReviewDialogState extends State<BusyMarkSpellingReviewDialog> {
       if (current >= 0) {
         _index = current;
       } else if (!_selectNextUnvisited(occurrences)) {
-        Navigator.of(context).pop();
+        _requestClose();
         return;
       }
     }
@@ -16512,6 +16539,7 @@ class _SpellingReviewDialogState extends State<BusyMarkSpellingReviewDialog> {
   }
 
   void _move(int delta) {
+    if (_closing || _actionInProgress) return;
     final occurrences = _occurrences;
     if (occurrences.isEmpty) return;
     final current = _selectedOccurrence(occurrences);
@@ -16519,7 +16547,7 @@ class _SpellingReviewDialogState extends State<BusyMarkSpellingReviewDialog> {
     if (delta > 0) _recordVisited(current);
     if (delta > 0) {
       if (!_selectNextUnvisited(occurrences)) {
-        Navigator.of(context).pop();
+        _requestClose();
         return;
       }
     } else {
@@ -16533,8 +16561,14 @@ class _SpellingReviewDialogState extends State<BusyMarkSpellingReviewDialog> {
     });
     widget.onReveal(occurrences[_index]);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _dialogFocus.requestFocus();
+      if (mounted && !_closing) _dialogFocus.requestFocus();
     });
+  }
+
+  void _requestClose({bool reopenForLanguage = false}) {
+    if (!mounted || _closing) return;
+    _closing = true;
+    Navigator.of(context).pop(reopenForLanguage ? true : null);
   }
 
   void _finishRemovedOccurrence(SpellingOccurrence removed) {
@@ -16543,14 +16577,14 @@ class _SpellingReviewDialogState extends State<BusyMarkSpellingReviewDialog> {
     if (occurrences.isEmpty) {
       final state = widget.spelling.state;
       if (state.status == SpellingPresentationStatus.ready && state.complete) {
-        Navigator.of(context).pop();
+        _requestClose();
         return;
       }
       setState(() {});
       return;
     }
     if (!_selectNextUnvisited(occurrences)) {
-      Navigator.of(context).pop();
+      _requestClose();
       return;
     }
     widget.onReveal(occurrences[_index]);
@@ -16631,26 +16665,66 @@ class _SpellingReviewDialogState extends State<BusyMarkSpellingReviewDialog> {
     return _suggestions!;
   }
 
+  void _ignore(
+    SpellingOccurrence occurrence,
+    void Function(SpellingOccurrence occurrence) action,
+  ) {
+    if (_closing ||
+        _actionInProgress ||
+        !widget.spelling.isCurrent(occurrence)) {
+      return;
+    }
+    setState(() => _actionInProgress = true);
+    action(occurrence);
+    if (!mounted || _closing) return;
+    final removed = !widget.spelling.isCurrent(occurrence);
+    _actionInProgress = false;
+    if (removed) {
+      _finishRemovedOccurrence(occurrence);
+    } else {
+      setState(() {});
+    }
+  }
+
   Future<void> _persist(
     Future<void> Function(SpellingOccurrence occurrence) action,
     SpellingOccurrence occurrence,
   ) async {
+    if (_closing || _actionInProgress) return;
     setState(() => _actionInProgress = true);
     try {
       await action(occurrence);
-      if (mounted) {
+      if (mounted && !_closing) {
         _actionInProgress = false;
         _finishRemovedOccurrence(occurrence);
       }
-    } on Object catch (_) {
-      if (!mounted) return;
-      setState(() => _actionInProgress = false);
-      BusyMarkToastOverlay.show(
-        context,
-        message: context.l10n.commandUnavailableInContext,
-        priority: BusyMarkToastPriority.high,
-      );
+    } on Object catch (error) {
+      if (!mounted || _closing) return;
+      _actionInProgress = false;
+      _reconcileFailedAction(occurrence);
+      _showSpellingPersistenceFailure(context, error);
     }
+  }
+
+  void _reconcileFailedAction(SpellingOccurrence failed) {
+    final occurrences = _occurrences;
+    final failedScope = _reviewCoordinateScope(failed);
+    final failedStart = _reviewCoordinateStart(failed);
+    final equivalent = occurrences.indexWhere(
+      (occurrence) =>
+          _reviewCoordinateScope(occurrence) == failedScope &&
+          _reviewCoordinateStart(occurrence) == failedStart &&
+          occurrence.word == failed.word,
+    );
+    if (equivalent >= 0) {
+      _index = equivalent;
+      _currentOccurrenceId = occurrences[equivalent].id;
+    } else if (occurrences.isNotEmpty) {
+      _selectNextUnvisited(occurrences);
+    }
+    _suggestionOccurrenceId = null;
+    _suggestions = null;
+    setState(() {});
   }
 
   @override
@@ -16664,7 +16738,7 @@ class _SpellingReviewDialogState extends State<BusyMarkSpellingReviewDialog> {
       onKeyEvent: (_, event) {
         if (event is KeyDownEvent &&
             event.logicalKey == LogicalKeyboardKey.escape) {
-          Navigator.of(context).pop();
+          _requestClose();
           return KeyEventResult.handled;
         }
         return KeyEventResult.ignored;
@@ -16724,22 +16798,40 @@ class _SpellingReviewDialogState extends State<BusyMarkSpellingReviewDialog> {
                           children: [
                             for (final suggestion in suggestions.take(8))
                               BusyMarkPushButton.standard(
-                                onPressed: () async {
-                                  setState(() => _actionInProgress = true);
-                                  final correction = await widget.onCorrect(
-                                    occurrence,
-                                    suggestion,
-                                  );
-                                  if (!mounted) return;
-                                  _actionInProgress = false;
-                                  if (correction != null) {
-                                    _recordVisited(occurrence);
-                                    _translateReviewState(correction);
-                                    _suggestionOccurrenceId = null;
-                                    _suggestions = null;
-                                  }
-                                  setState(() {});
-                                },
+                                onPressed: _actionInProgress || _closing
+                                    ? null
+                                    : () async {
+                                        setState(
+                                          () => _actionInProgress = true,
+                                        );
+                                        final correction = await widget
+                                            .onCorrect(occurrence, suggestion);
+                                        if (!mounted || _closing) return;
+                                        _actionInProgress = false;
+                                        if (correction != null) {
+                                          _recordVisited(occurrence);
+                                          _translateReviewState(correction);
+                                          _suggestionOccurrenceId = null;
+                                          _suggestions = null;
+                                          final occurrences = _occurrences;
+                                          if (occurrences.isEmpty) {
+                                            final state = widget.spelling.state;
+                                            if (state.status ==
+                                                    SpellingPresentationStatus
+                                                        .ready &&
+                                                state.complete) {
+                                              _requestClose();
+                                              return;
+                                            }
+                                          } else if (!_selectNextUnvisited(
+                                            occurrences,
+                                          )) {
+                                            _requestClose();
+                                            return;
+                                          }
+                                        }
+                                        setState(() {});
+                                      },
                                 child: Text(suggestion),
                               ),
                           ],
@@ -16752,32 +16844,39 @@ class _SpellingReviewDialogState extends State<BusyMarkSpellingReviewDialog> {
                       runSpacing: BusyMarkSpacing.sm,
                       children: [
                         TextButton(
-                          onPressed: () {
-                            _recordVisited(occurrence);
-                            widget.spelling.ignoreOnce(occurrence);
-                            _finishRemovedOccurrence(occurrence);
-                          },
+                          onPressed: _actionInProgress || _closing
+                              ? null
+                              : () => _ignore(
+                                  occurrence,
+                                  widget.spelling.ignoreOnce,
+                                ),
                           child: Text(context.l10n.ignoreSpellingOnce),
                         ),
                         TextButton(
-                          onPressed: () {
-                            _recordVisited(occurrence);
-                            widget.spelling.ignoreAllInDocument(occurrence);
-                            _finishRemovedOccurrence(occurrence);
-                          },
+                          onPressed: _actionInProgress || _closing
+                              ? null
+                              : () => _ignore(
+                                  occurrence,
+                                  widget.spelling.ignoreAllInDocument,
+                                ),
                           child: Text(context.l10n.ignoreSpellingDocument),
                         ),
                         TextButton(
-                          onPressed: () => unawaited(
-                            _persist(
-                              widget.spelling.addPersonalWord,
-                              occurrence,
-                            ),
-                          ),
+                          onPressed: _actionInProgress || _closing
+                              ? null
+                              : () => unawaited(
+                                  _persist(
+                                    widget.spelling.addPersonalWord,
+                                    occurrence,
+                                  ),
+                                ),
                           child: Text(context.l10n.addPersonalSpellingWord),
                         ),
                         TextButton(
-                          onPressed: widget.spelling.hasProjectScope
+                          onPressed:
+                              widget.spelling.hasProjectScope &&
+                                  !_actionInProgress &&
+                                  !_closing
                               ? () => unawaited(
                                   _persist(
                                     widget.spelling.addProjectWord,
@@ -16795,31 +16894,60 @@ class _SpellingReviewDialogState extends State<BusyMarkSpellingReviewDialog> {
         actions: [
           if (occurrence != null) ...[
             TextButton(
-              onPressed: () async {
-                if (await widget.onChooseLanguage() && context.mounted) {
-                  Navigator.of(context).pop(true);
-                }
-              },
+              onPressed: _actionInProgress || _closing
+                  ? null
+                  : () async {
+                      setState(() => _actionInProgress = true);
+                      final selected = await widget.onChooseLanguage();
+                      if (!mounted || _closing) return;
+                      _actionInProgress = false;
+                      if (selected) {
+                        _requestClose(reopenForLanguage: true);
+                      } else {
+                        _handleSpellingChanged();
+                      }
+                    },
               child: Text(context.l10n.chooseSpellingLanguage),
             ),
             TextButton(
-              onPressed: () => _move(-1),
+              onPressed: _actionInProgress || _closing ? null : () => _move(-1),
               child: Text(context.l10n.sourceSearchPreviousMatch),
             ),
             TextButton(
-              onPressed: () => _move(1),
+              onPressed: _actionInProgress || _closing ? null : () => _move(1),
               child: Text(context.l10n.sourceSearchNextMatch),
             ),
           ],
           TextButton(
             autofocus: true,
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: _closing ? null : _requestClose,
             child: Text(context.l10n.close),
           ),
         ],
       ),
     );
   }
+}
+
+void _showSpellingPersistenceFailure(BuildContext context, Object error) {
+  if (error is AtomicFileChangedException && error.recoveryPath != null) {
+    final recoveryPath = error.recoveryPath!;
+    BusyMarkToastOverlay.show(
+      context,
+      message: context.l10n.spellingDictionaryRecoveryConflict,
+      actionLabel: context.l10n.copyPath,
+      onAction: () =>
+          unawaited(Clipboard.setData(ClipboardData(text: recoveryPath))),
+      duration: Duration.zero,
+      priority: BusyMarkToastPriority.high,
+    );
+    return;
+  }
+  BusyMarkToastOverlay.show(
+    context,
+    message: context.l10n.commandUnavailableInContext,
+    priority: BusyMarkToastPriority.high,
+  );
 }
 
 String _spellingContext(SpellingOccurrence occurrence) {
