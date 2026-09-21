@@ -965,6 +965,7 @@
     "description": "Editor setting description for saving files automatically."
   },
   "wordWrap": "자동 줄 바꿈",
+  "wordWrapDescription": "긴 줄을 가로로 스크롤하지 않고 편집기 너비에 맞게 줄 바꿈합니다.",
   "@wordWrap": {
     "description": "Word wrap setting label."
   },
@@ -1032,6 +1033,10 @@
   "@clearGitWorkspaceTrustDescription": {
     "description": "Settings action description for clearing trusted Git workspaces."
   },
+  "settingsEditingButtonsSectionTitle": "편집 버튼",
+  "spellingDictionaries": "맞춤법 검사 사전",
+  "spellingDictionariesDescription": "맞춤법 검사 사전 설치 및 관리",
+  "settingsDictionariesSectionTitle": "사전",
   "settingsWindowSectionTitle": "창",
   "@settingsWindowSectionTitle": {
     "description": "Settings section title for native window behavior."

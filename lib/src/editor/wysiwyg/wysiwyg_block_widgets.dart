@@ -2544,13 +2544,6 @@ bool busyMarkSpellingUnderlineSuppressed(
   TextEditingController controller,
   TextRange range,
 ) {
-  final selection = controller.selection;
-  if (selection.isValid &&
-      selection.isCollapsed &&
-      selection.extentOffset >= range.start &&
-      selection.extentOffset <= range.end) {
-    return true;
-  }
   final composing = controller.value.composing;
   return composing.isValid &&
       !composing.isCollapsed &&

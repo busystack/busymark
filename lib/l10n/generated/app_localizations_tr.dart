@@ -953,6 +953,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get wordWrap => 'Satır kaydırma';
 
   @override
+  String get wordWrapDescription =>
+      'Uzun satırları yatay kaydırmak yerine düzenleyici genişliğine sığacak şekilde kaydırın.';
+
+  @override
   String get editorFontSize => 'Düzenleyici yazı tipi boyutu';
 
   @override
@@ -1005,6 +1009,19 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get clearGitWorkspaceTrustDescription =>
       'Daha önce güvenilen çalışma alanları için Git özelliklerini etkinleştirmeden önce sorun.';
+
+  @override
+  String get settingsEditingButtonsSectionTitle => 'Düzenleme düğmeleri';
+
+  @override
+  String get spellingDictionaries => 'Yazım sözlükleri';
+
+  @override
+  String get spellingDictionariesDescription =>
+      'Yazım sözlüklerini kurun ve yönetin';
+
+  @override
+  String get settingsDictionariesSectionTitle => 'Sözlükler';
 
   @override
   String get settingsWindowSectionTitle => 'Pencere';

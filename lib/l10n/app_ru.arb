@@ -835,6 +835,7 @@
     "description": "Editor setting description for saving files automatically."
   },
   "wordWrap": "Перенос строк",
+  "wordWrapDescription": "Переносить длинные строки по ширине редактора вместо горизонтальной прокрутки.",
   "@wordWrap": {
     "description": "Word wrap setting label."
   },
@@ -902,6 +903,10 @@
   "@clearGitWorkspaceTrustDescription": {
     "description": "Settings action description for clearing trusted Git workspaces."
   },
+  "settingsEditingButtonsSectionTitle": "Кнопки редактирования",
+  "spellingDictionaries": "Орфографические словари",
+  "spellingDictionariesDescription": "Установка и управление орфографическими словарями",
+  "settingsDictionariesSectionTitle": "Словари",
   "settingsWindowSectionTitle": "Окно",
   "@settingsWindowSectionTitle": {
     "description": "Settings section title for native window behavior."

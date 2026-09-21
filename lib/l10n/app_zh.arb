@@ -965,6 +965,7 @@
     "description": "Editor setting description for saving files automatically."
   },
   "wordWrap": "自动换行",
+  "wordWrapDescription": "将长行换行以适应编辑器宽度，而不是水平滚动。",
   "@wordWrap": {
     "description": "Word wrap setting label."
   },
@@ -1032,6 +1033,10 @@
   "@clearGitWorkspaceTrustDescription": {
     "description": "Settings action description for clearing trusted Git workspaces."
   },
+  "settingsEditingButtonsSectionTitle": "编辑按钮",
+  "spellingDictionaries": "拼写词典",
+  "spellingDictionariesDescription": "安装和管理拼写词典",
+  "settingsDictionariesSectionTitle": "词典",
   "settingsWindowSectionTitle": "窗口",
   "@settingsWindowSectionTitle": {
     "description": "Settings section title for native window behavior."

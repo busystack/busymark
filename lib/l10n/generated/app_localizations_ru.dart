@@ -954,6 +954,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get wordWrap => 'Перенос строк';
 
   @override
+  String get wordWrapDescription =>
+      'Переносить длинные строки по ширине редактора вместо горизонтальной прокрутки.';
+
+  @override
   String get editorFontSize => 'Размер шрифта редактора';
 
   @override
@@ -1008,6 +1012,19 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get clearGitWorkspaceTrustDescription =>
       'Спрашивать перед включением функций Git для ранее доверенных рабочих областей.';
+
+  @override
+  String get settingsEditingButtonsSectionTitle => 'Кнопки редактирования';
+
+  @override
+  String get spellingDictionaries => 'Орфографические словари';
+
+  @override
+  String get spellingDictionariesDescription =>
+      'Установка и управление орфографическими словарями';
+
+  @override
+  String get settingsDictionariesSectionTitle => 'Словари';
 
   @override
   String get settingsWindowSectionTitle => 'Окно';

@@ -968,6 +968,10 @@ class AppLocalizationsFr extends AppLocalizations {
   String get wordWrap => 'Retour à la ligne automatique';
 
   @override
+  String get wordWrapDescription =>
+      'Ajuster les lignes longues à la largeur de l’éditeur plutôt que de les faire défiler horizontalement.';
+
+  @override
   String get editorFontSize => 'Taille de la police de l’éditeur';
 
   @override
@@ -1021,6 +1025,19 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get clearGitWorkspaceTrustDescription =>
       'Demander confirmation avant d’activer les fonctions Git pour les espaces de travail précédemment approuvés.';
+
+  @override
+  String get settingsEditingButtonsSectionTitle => 'Boutons d’édition';
+
+  @override
+  String get spellingDictionaries => 'Dictionnaires orthographiques';
+
+  @override
+  String get spellingDictionariesDescription =>
+      'Installer et gérer les dictionnaires orthographiques';
+
+  @override
+  String get settingsDictionariesSectionTitle => 'Dictionnaires';
 
   @override
   String get settingsWindowSectionTitle => 'Fenêtre';

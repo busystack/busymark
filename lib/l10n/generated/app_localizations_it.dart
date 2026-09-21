@@ -961,6 +961,10 @@ class AppLocalizationsIt extends AppLocalizations {
   String get wordWrap => 'A capo automatico';
 
   @override
+  String get wordWrapDescription =>
+      'Adatta le righe lunghe alla larghezza dell’editor invece di scorrerle orizzontalmente.';
+
+  @override
   String get editorFontSize => 'Dimensione del carattere dell\'editor';
 
   @override
@@ -1014,6 +1018,19 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get clearGitWorkspaceTrustDescription =>
       'Chiedi conferma prima di attivare le funzionalità Git per le aree di lavoro considerate attendibili in precedenza.';
+
+  @override
+  String get settingsEditingButtonsSectionTitle => 'Pulsanti di modifica';
+
+  @override
+  String get spellingDictionaries => 'Dizionari ortografici';
+
+  @override
+  String get spellingDictionariesDescription =>
+      'Installa e gestisci i dizionari ortografici';
+
+  @override
+  String get settingsDictionariesSectionTitle => 'Dizionari';
 
   @override
   String get settingsWindowSectionTitle => 'Finestra';

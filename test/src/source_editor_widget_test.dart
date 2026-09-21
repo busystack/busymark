@@ -37,6 +37,7 @@ import 'package:busymark/src/markdown/markdown_model.dart';
 import 'package:busymark/src/markdown/markdown_parser.dart';
 import 'package:busymark/src/platform/native_menu_service.dart';
 import 'package:busymark/src/platform/rich_clipboard_service.dart';
+import 'package:busymark/src/spellcheck/spelling_coordinator.dart';
 import 'package:busymark/src/spellcheck/spelling_projection.dart';
 import 'package:busymark/src/workspace/document_buffer.dart';
 import 'package:busymark/src/workspace/workspace_model.dart';
@@ -418,6 +419,140 @@ void main() {
     await tester.pumpWidget(const SizedBox());
     await tester.pump(const Duration(seconds: 1));
   });
+
+  for (final mode
+      in <
+        ({
+          String label,
+          String path,
+          SourceSyntaxLanguage language,
+          SourceDocumentFormat documentFormat,
+          MarkdownMode? markdownMode,
+        })
+      >[
+        (
+          label: 'Markdown',
+          path: '/project/spelling.md',
+          language: SourceSyntaxLanguage.markdown,
+          documentFormat: SourceDocumentFormat.markdown,
+          markdownMode: MarkdownMode.commonMark,
+        ),
+        (
+          label: 'Writerside Markdown',
+          path: '/project/topics/spelling.md',
+          language: SourceSyntaxLanguage.markdown,
+          documentFormat: SourceDocumentFormat.markdown,
+          markdownMode: MarkdownMode.writersideMarkdown,
+        ),
+        (
+          label: 'XML',
+          path: '/project/topics/spelling.topic',
+          language: SourceSyntaxLanguage.xml,
+          documentFormat: SourceDocumentFormat.genericXml,
+          markdownMode: null,
+        ),
+      ]) {
+    testWidgets(
+      'Source ${mode.label} spelling painter ignores selection and tracks composition',
+      (tester) async {
+        final annotation = SpellingAnnotation(
+          occurrenceId: 'source-paint-helo',
+          start: 0,
+          end: 4,
+          target: SpellingSourceTarget(filePath: mode.path),
+        );
+        await tester.pumpWidget(
+          MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: Scaffold(
+              body: SizedBox(
+                width: 900,
+                height: 600,
+                child: BusyMarkSourceEditor(
+                  text: 'helo',
+                  language: mode.language,
+                  documentFormat: mode.documentFormat,
+                  markdownMode: mode.markdownMode,
+                  filePath: mode.path,
+                  diagnostics: const [],
+                  editorFontSize: 14,
+                  wordWrap: true,
+                  searchActive: false,
+                  searchOptions: const SourceSearchOptions(),
+                  initialSelection: const TextSelection.collapsed(offset: 4),
+                  spellingAnnotations: [annotation],
+                  onSearchOptionsChanged: (_) {},
+                  onChanged: (_, _) {},
+                  onOpenSearch: () {},
+                  onCloseSearch: () {},
+                ),
+              ),
+            ),
+          ),
+        );
+        await tester.pump();
+
+        final controller = tester
+            .widgetList<TextField>(find.byType(TextField))
+            .map((field) => field.controller)
+            .whereType<BusyMarkSourceEditingController>()
+            .single;
+        const range = TextRange(start: 0, end: 4);
+        final painterFinder = find.byWidgetPredicate(
+          (widget) =>
+              widget is CustomPaint &&
+              widget.foregroundPainter.runtimeType.toString() ==
+                  '_SourceSpellingPainter',
+        );
+        expect(painterFinder, findsOneWidget);
+        expect(controller.fullSelection.extentOffset, 4);
+        expect(
+          busyMarkSourceSpellingUnderlineSuppressed(controller, range),
+          isFalse,
+        );
+
+        controller.fullSelection = const TextSelection.collapsed(offset: 2);
+        await tester.pump();
+        expect(painterFinder, findsOneWidget);
+        expect(
+          busyMarkSourceSpellingUnderlineSuppressed(controller, range),
+          isFalse,
+        );
+
+        controller.fullSelection = const TextSelection(
+          baseOffset: 0,
+          extentOffset: 4,
+        );
+        await tester.pump();
+        expect(painterFinder, findsOneWidget);
+        expect(
+          busyMarkSourceSpellingUnderlineSuppressed(controller, range),
+          isFalse,
+        );
+
+        controller.value = controller.value.copyWith(
+          composing: const TextRange(start: 0, end: 4),
+        );
+        await tester.pump();
+        expect(controller.fullComposing, range);
+        expect(
+          busyMarkSourceSpellingUnderlineSuppressed(controller, range),
+          isTrue,
+        );
+
+        controller.value = controller.value.copyWith(
+          composing: TextRange.empty,
+        );
+        await tester.pump();
+        expect(painterFinder, findsOneWidget);
+        expect(
+          busyMarkSourceSpellingUnderlineSuppressed(controller, range),
+          isFalse,
+        );
+      },
+    );
+  }
 
   testWidgets('source AI action applies a selection through the editor path', (
     tester,

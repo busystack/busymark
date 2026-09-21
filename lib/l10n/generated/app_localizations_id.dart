@@ -953,6 +953,10 @@ class AppLocalizationsId extends AppLocalizations {
   String get wordWrap => 'Pindah baris otomatis';
 
   @override
+  String get wordWrapDescription =>
+      'Bungkus baris panjang agar sesuai dengan lebar editor alih-alih menggulir secara horizontal.';
+
+  @override
   String get editorFontSize => 'Ukuran font editor';
 
   @override
@@ -1004,6 +1008,18 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get clearGitWorkspaceTrustDescription =>
       'Tanyakan sebelum mengaktifkan fitur Git untuk ruang kerja tepercaya sebelumnya.';
+
+  @override
+  String get settingsEditingButtonsSectionTitle => 'Tombol pengeditan';
+
+  @override
+  String get spellingDictionaries => 'Kamus ejaan';
+
+  @override
+  String get spellingDictionariesDescription => 'Instal dan kelola kamus ejaan';
+
+  @override
+  String get settingsDictionariesSectionTitle => 'Kamus';
 
   @override
   String get settingsWindowSectionTitle => 'Jendela';

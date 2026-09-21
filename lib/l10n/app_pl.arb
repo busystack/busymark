@@ -835,6 +835,7 @@
     "description": "Editor setting description for saving files automatically."
   },
   "wordWrap": "Zawijanie wierszy",
+  "wordWrapDescription": "Zawijaj długie wiersze do szerokości edytora zamiast przewijać je poziomo.",
   "@wordWrap": {
     "description": "Word wrap setting label."
   },
@@ -902,6 +903,10 @@
   "@clearGitWorkspaceTrustDescription": {
     "description": "Settings action description for clearing trusted Git workspaces."
   },
+  "settingsEditingButtonsSectionTitle": "Przyciski edycji",
+  "spellingDictionaries": "Słowniki pisowni",
+  "spellingDictionariesDescription": "Instaluj słowniki pisowni i zarządzaj nimi",
+  "settingsDictionariesSectionTitle": "Słowniki",
   "settingsWindowSectionTitle": "Okno",
   "@settingsWindowSectionTitle": {
     "description": "Settings section title for native window behavior."

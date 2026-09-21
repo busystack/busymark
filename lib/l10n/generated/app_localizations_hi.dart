@@ -946,6 +946,10 @@ class AppLocalizationsHi extends AppLocalizations {
   String get wordWrap => 'वर्ड रैप';
 
   @override
+  String get wordWrapDescription =>
+      'लंबी पंक्तियों को क्षैतिज रूप से स्क्रॉल करने के बजाय संपादक की चौड़ाई में समेटें।';
+
+  @override
   String get editorFontSize => 'संपादक फ़ॉन्ट आकार';
 
   @override
@@ -997,6 +1001,19 @@ class AppLocalizationsHi extends AppLocalizations {
   @override
   String get clearGitWorkspaceTrustDescription =>
       'पहले से विश्वसनीय कार्यस्थानों के लिए Git सुविधाएँ चालू करने से पहले पूछें।';
+
+  @override
+  String get settingsEditingButtonsSectionTitle => 'संपादन बटन';
+
+  @override
+  String get spellingDictionaries => 'वर्तनी शब्दकोश';
+
+  @override
+  String get spellingDictionariesDescription =>
+      'वर्तनी शब्दकोश इंस्टॉल और प्रबंधित करें';
+
+  @override
+  String get settingsDictionariesSectionTitle => 'शब्दकोश';
 
   @override
   String get settingsWindowSectionTitle => 'विंडो';

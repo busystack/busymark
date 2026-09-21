@@ -835,6 +835,7 @@
     "description": "Editor setting description for saving files automatically."
   },
   "wordWrap": "التفاف النص",
+  "wordWrapDescription": "التفاف السطور الطويلة لتلائم عرض المحرر بدلاً من التمرير أفقيًا.",
   "@wordWrap": {
     "description": "Word wrap setting label."
   },
@@ -902,6 +903,10 @@
   "@clearGitWorkspaceTrustDescription": {
     "description": "Settings action description for clearing trusted Git workspaces."
   },
+  "settingsEditingButtonsSectionTitle": "أزرار التحرير",
+  "spellingDictionaries": "قواميس التدقيق الإملائي",
+  "spellingDictionariesDescription": "تثبيت قواميس التدقيق الإملائي وإدارتها",
+  "settingsDictionariesSectionTitle": "القواميس",
   "settingsWindowSectionTitle": "النافذة",
   "@settingsWindowSectionTitle": {
     "description": "Settings section title for native window behavior."

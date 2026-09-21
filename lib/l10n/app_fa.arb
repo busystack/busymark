@@ -835,6 +835,7 @@
     "description": "Editor setting description for saving files automatically."
   },
   "wordWrap": "شکستن خودکار خطوط",
+  "wordWrapDescription": "سطرهای بلند را به‌جای پیمایش افقی متناسب با عرض ویرایشگر می‌شکند.",
   "@wordWrap": {
     "description": "Word wrap setting label."
   },
@@ -902,6 +903,10 @@
   "@clearGitWorkspaceTrustDescription": {
     "description": "Settings action description for clearing trusted Git workspaces."
   },
+  "settingsEditingButtonsSectionTitle": "دکمه‌های ویرایش",
+  "spellingDictionaries": "واژه‌نامه‌های املایی",
+  "spellingDictionariesDescription": "نصب و مدیریت واژه‌نامه‌های املایی",
+  "settingsDictionariesSectionTitle": "واژه‌نامه‌ها",
   "settingsWindowSectionTitle": "پنجره",
   "@settingsWindowSectionTitle": {
     "description": "Settings section title for native window behavior."

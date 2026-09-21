@@ -939,6 +939,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get wordWrap => 'التفاف النص';
 
   @override
+  String get wordWrapDescription =>
+      'التفاف السطور الطويلة لتلائم عرض المحرر بدلاً من التمرير أفقيًا.';
+
+  @override
   String get editorFontSize => 'حجم خط المحرر';
 
   @override
@@ -990,6 +994,19 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get clearGitWorkspaceTrustDescription =>
       'طلب التأكيد قبل تمكين ميزات Git لمساحات العمل التي سبق الوثوق بها.';
+
+  @override
+  String get settingsEditingButtonsSectionTitle => 'أزرار التحرير';
+
+  @override
+  String get spellingDictionaries => 'قواميس التدقيق الإملائي';
+
+  @override
+  String get spellingDictionariesDescription =>
+      'تثبيت قواميس التدقيق الإملائي وإدارتها';
+
+  @override
+  String get settingsDictionariesSectionTitle => 'القواميس';
 
   @override
   String get settingsWindowSectionTitle => 'النافذة';

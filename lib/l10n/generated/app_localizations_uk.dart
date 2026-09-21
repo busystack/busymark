@@ -959,6 +959,10 @@ class AppLocalizationsUk extends AppLocalizations {
   String get wordWrap => 'Перенесення рядків';
 
   @override
+  String get wordWrapDescription =>
+      'Переносити довгі рядки за шириною редактора замість горизонтального прокручування.';
+
+  @override
   String get editorFontSize => 'Розмір шрифту редактора';
 
   @override
@@ -1013,6 +1017,19 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get clearGitWorkspaceTrustDescription =>
       'Запитувати перед увімкненням функцій Git для раніше довірених робочих областей.';
+
+  @override
+  String get settingsEditingButtonsSectionTitle => 'Кнопки редагування';
+
+  @override
+  String get spellingDictionaries => 'Орфографічні словники';
+
+  @override
+  String get spellingDictionariesDescription =>
+      'Установлення й керування орфографічними словниками';
+
+  @override
+  String get settingsDictionariesSectionTitle => 'Словники';
 
   @override
   String get settingsWindowSectionTitle => 'Вікно';

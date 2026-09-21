@@ -903,6 +903,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get wordWrap => '自动换行';
 
   @override
+  String get wordWrapDescription => '将长行换行以适应编辑器宽度，而不是水平滚动。';
+
+  @override
   String get editorFontSize => '编辑器字体大小';
 
   @override
@@ -950,6 +953,18 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get clearGitWorkspaceTrustDescription => '为之前受信任的工作区启用 Git 功能前先进行询问。';
+
+  @override
+  String get settingsEditingButtonsSectionTitle => '编辑按钮';
+
+  @override
+  String get spellingDictionaries => '拼写词典';
+
+  @override
+  String get spellingDictionariesDescription => '安装和管理拼写词典';
+
+  @override
+  String get settingsDictionariesSectionTitle => '词典';
 
   @override
   String get settingsWindowSectionTitle => '窗口';
@@ -5305,6 +5320,9 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get wordWrap => '自动换行';
 
   @override
+  String get wordWrapDescription => '将长行换行以适应编辑器宽度，而不是水平滚动。';
+
+  @override
   String get editorFontSize => '编辑器字体大小';
 
   @override
@@ -5352,6 +5370,18 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get clearGitWorkspaceTrustDescription => '为之前受信任的工作区启用 Git 功能前先进行询问。';
+
+  @override
+  String get settingsEditingButtonsSectionTitle => '编辑按钮';
+
+  @override
+  String get spellingDictionaries => '拼写词典';
+
+  @override
+  String get spellingDictionariesDescription => '安装和管理拼写词典';
+
+  @override
+  String get settingsDictionariesSectionTitle => '词典';
 
   @override
   String get settingsWindowSectionTitle => '窗口';

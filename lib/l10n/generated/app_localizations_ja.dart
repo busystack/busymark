@@ -915,6 +915,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get wordWrap => '折り返し';
 
   @override
+  String get wordWrapDescription => '長い行を横方向にスクロールせず、エディターの幅に合わせて折り返します。';
+
+  @override
   String get editorFontSize => 'エディターのフォントサイズ';
 
   @override
@@ -966,6 +969,18 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String get clearGitWorkspaceTrustDescription =>
       '以前信頼したワークスペースで Git 機能を有効にする前に確認する';
+
+  @override
+  String get settingsEditingButtonsSectionTitle => '編集ボタン';
+
+  @override
+  String get spellingDictionaries => 'スペルチェック辞書';
+
+  @override
+  String get spellingDictionariesDescription => 'スペルチェック辞書をインストールして管理';
+
+  @override
+  String get settingsDictionariesSectionTitle => '辞書';
 
   @override
   String get settingsWindowSectionTitle => 'ウィンドウ';

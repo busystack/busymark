@@ -965,6 +965,7 @@
     "description": "Editor setting description for saving files automatically."
   },
   "wordWrap": "Satır kaydırma",
+  "wordWrapDescription": "Uzun satırları yatay kaydırmak yerine düzenleyici genişliğine sığacak şekilde kaydırın.",
   "@wordWrap": {
     "description": "Word wrap setting label."
   },
@@ -1032,6 +1033,10 @@
   "@clearGitWorkspaceTrustDescription": {
     "description": "Settings action description for clearing trusted Git workspaces."
   },
+  "settingsEditingButtonsSectionTitle": "Düzenleme düğmeleri",
+  "spellingDictionaries": "Yazım sözlükleri",
+  "spellingDictionariesDescription": "Yazım sözlüklerini kurun ve yönetin",
+  "settingsDictionariesSectionTitle": "Sözlükler",
   "settingsWindowSectionTitle": "Pencere",
   "@settingsWindowSectionTitle": {
     "description": "Settings section title for native window behavior."

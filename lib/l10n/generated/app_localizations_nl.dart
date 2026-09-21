@@ -954,6 +954,10 @@ class AppLocalizationsNl extends AppLocalizations {
   String get wordWrap => 'Regelterugloop';
 
   @override
+  String get wordWrapDescription =>
+      'Laat lange regels op de editorbreedte doorlopen in plaats van horizontaal te schuiven.';
+
+  @override
   String get editorFontSize => 'Lettergrootte van de editor';
 
   @override
@@ -1006,6 +1010,19 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get clearGitWorkspaceTrustDescription =>
       'Vraag dit voordat u Git-functies inschakelt voor eerder vertrouwde werkruimten.';
+
+  @override
+  String get settingsEditingButtonsSectionTitle => 'Bewerkingsknoppen';
+
+  @override
+  String get spellingDictionaries => 'Spellingswoordenboeken';
+
+  @override
+  String get spellingDictionariesDescription =>
+      'Spellingswoordenboeken installeren en beheren';
+
+  @override
+  String get settingsDictionariesSectionTitle => 'Woordenboeken';
 
   @override
   String get settingsWindowSectionTitle => 'Raam';

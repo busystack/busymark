@@ -945,6 +945,10 @@ class AppLocalizationsFa extends AppLocalizations {
   String get wordWrap => 'شکستن خودکار خطوط';
 
   @override
+  String get wordWrapDescription =>
+      'سطرهای بلند را به‌جای پیمایش افقی متناسب با عرض ویرایشگر می‌شکند.';
+
+  @override
   String get editorFontSize => 'اندازهٔ قلم ویرایشگر';
 
   @override
@@ -996,6 +1000,19 @@ class AppLocalizationsFa extends AppLocalizations {
   @override
   String get clearGitWorkspaceTrustDescription =>
       'پیش از فعال‌کردن ویژگی‌های Git برای فضاهای کاری که قبلاً مورد اعتماد بوده‌اند، پرسیده شود.';
+
+  @override
+  String get settingsEditingButtonsSectionTitle => 'دکمه‌های ویرایش';
+
+  @override
+  String get spellingDictionaries => 'واژه‌نامه‌های املایی';
+
+  @override
+  String get spellingDictionariesDescription =>
+      'نصب و مدیریت واژه‌نامه‌های املایی';
+
+  @override
+  String get settingsDictionariesSectionTitle => 'واژه‌نامه‌ها';
 
   @override
   String get settingsWindowSectionTitle => 'پنجره';

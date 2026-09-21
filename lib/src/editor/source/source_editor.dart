@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:math' as math;
 
-import 'package:flutter/foundation.dart' show setEquals;
+import 'package:flutter/foundation.dart' show setEquals, visibleForTesting;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
@@ -3026,17 +3026,7 @@ class _SourceRenderedTextLayerState extends State<_SourceRenderedTextLayer> {
             widget.controller,
             widget.scrollController,
           ]),
-          child: CustomPaint(
-            foregroundPainter: _SourceSpellingPainter(
-              paragraphKey: _paragraphKey,
-              document: widget.controller.document,
-              annotations: widget.spellingAnnotations,
-              composing: widget.controller.fullComposing,
-              selection: widget.controller.fullSelection,
-              color: busyMarkStatusColor(context, BusyMarkStatusKind.error),
-            ),
-            child: renderedText,
-          ),
+          child: renderedText,
           builder: (context, child) {
             final scrollOffset = safeScrollOffset(widget.scrollController);
             return Stack(
@@ -3046,7 +3036,19 @@ class _SourceRenderedTextLayerState extends State<_SourceRenderedTextLayer> {
                   top: _SourceEditorFrame.editorPaddingTop - scrollOffset,
                   left: _SourceEditorFrame.editorPaddingLeft,
                   width: widget.textWidth,
-                  child: child!,
+                  child: CustomPaint(
+                    foregroundPainter: _SourceSpellingPainter(
+                      paragraphKey: _paragraphKey,
+                      controller: widget.controller,
+                      document: widget.controller.document,
+                      annotations: widget.spellingAnnotations,
+                      color: busyMarkStatusColor(
+                        context,
+                        BusyMarkStatusKind.error,
+                      ),
+                    ),
+                    child: child!,
+                  ),
                 ),
               ],
             );
@@ -3158,18 +3160,16 @@ class _CollapsedSourceLineOverlay extends StatelessWidget {
 class _SourceSpellingPainter extends CustomPainter {
   const _SourceSpellingPainter({
     required this.paragraphKey,
+    required this.controller,
     required this.document,
     required this.annotations,
-    required this.composing,
-    required this.selection,
     required this.color,
   });
 
   final GlobalKey paragraphKey;
+  final BusyMarkSourceEditingController controller;
   final SourceDocument document;
   final List<SpellingAnnotation> annotations;
-  final TextRange composing;
-  final TextSelection selection;
   final Color color;
 
   @override
@@ -3183,14 +3183,10 @@ class _SourceSpellingPainter extends CustomPainter {
     for (final annotation in annotations) {
       if (annotation.target is! SpellingSourceTarget ||
           annotation.end <= annotation.start ||
-          (_selectionSuppressesRange(
-            selection,
-            annotation.start,
-            annotation.end,
-          )) ||
-          (composing.isValid &&
-              composing.start < annotation.end &&
-              annotation.start < composing.end)) {
+          busyMarkSourceSpellingUnderlineSuppressed(
+            controller,
+            TextRange(start: annotation.start, end: annotation.end),
+          )) {
         continue;
       }
       final mapped = document.fullRangeToVisibleRange(
@@ -3216,16 +3212,21 @@ class _SourceSpellingPainter extends CustomPainter {
   bool shouldRepaint(covariant _SourceSpellingPainter oldDelegate) =>
       oldDelegate.document != document ||
       oldDelegate.annotations != annotations ||
-      oldDelegate.composing != composing ||
-      oldDelegate.selection != selection ||
+      oldDelegate.controller != controller ||
       oldDelegate.color != color;
 }
 
-bool _selectionSuppressesRange(TextSelection selection, int start, int end) =>
-    selection.isValid &&
-    selection.isCollapsed &&
-    selection.extentOffset >= start &&
-    selection.extentOffset <= end;
+@visibleForTesting
+bool busyMarkSourceSpellingUnderlineSuppressed(
+  BusyMarkSourceEditingController controller,
+  TextRange range,
+) {
+  final composing = controller.fullComposing;
+  return composing.isValid &&
+      !composing.isCollapsed &&
+      range.start < composing.end &&
+      range.end > composing.start;
+}
 
 void _paintSpellingWave(Canvas canvas, Rect rect, Paint paint) {
   if (rect.width <= 0) return;

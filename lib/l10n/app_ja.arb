@@ -965,6 +965,7 @@
     "description": "Editor setting description for saving files automatically."
   },
   "wordWrap": "折り返し",
+  "wordWrapDescription": "長い行を横方向にスクロールせず、エディターの幅に合わせて折り返します。",
   "@wordWrap": {
     "description": "Word wrap setting label."
   },
@@ -1032,6 +1033,10 @@
   "@clearGitWorkspaceTrustDescription": {
     "description": "Settings action description for clearing trusted Git workspaces."
   },
+  "settingsEditingButtonsSectionTitle": "編集ボタン",
+  "spellingDictionaries": "スペルチェック辞書",
+  "spellingDictionariesDescription": "スペルチェック辞書をインストールして管理",
+  "settingsDictionariesSectionTitle": "辞書",
   "settingsWindowSectionTitle": "ウィンドウ",
   "@settingsWindowSectionTitle": {
     "description": "Settings section title for native window behavior."

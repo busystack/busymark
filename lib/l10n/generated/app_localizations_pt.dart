@@ -959,6 +959,10 @@ class AppLocalizationsPt extends AppLocalizations {
   String get wordWrap => 'Quebra de linha';
 
   @override
+  String get wordWrapDescription =>
+      'Ajustar linhas longas à largura do editor em vez de deslocar horizontalmente.';
+
+  @override
   String get editorFontSize => 'Tamanho da fonte do editor';
 
   @override
@@ -1012,6 +1016,19 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get clearGitWorkspaceTrustDescription =>
       'Perguntar antes de ativar recursos do Git em espaços de trabalho considerados confiáveis anteriormente.';
+
+  @override
+  String get settingsEditingButtonsSectionTitle => 'Botões de edição';
+
+  @override
+  String get spellingDictionaries => 'Dicionários ortográficos';
+
+  @override
+  String get spellingDictionariesDescription =>
+      'Instalar e gerir dicionários ortográficos';
+
+  @override
+  String get settingsDictionariesSectionTitle => 'Dicionários';
 
   @override
   String get settingsWindowSectionTitle => 'Janela';
@@ -5622,6 +5639,10 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   String get wordWrap => 'Quebra de linha';
 
   @override
+  String get wordWrapDescription =>
+      'Quebre linhas longas para ajustá-las à largura do editor em vez de rolar horizontalmente.';
+
+  @override
   String get editorFontSize => 'Tamanho da fonte do editor';
 
   @override
@@ -5675,6 +5696,19 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   @override
   String get clearGitWorkspaceTrustDescription =>
       'Perguntar antes de ativar recursos do Git em espaços de trabalho considerados confiáveis anteriormente.';
+
+  @override
+  String get settingsEditingButtonsSectionTitle => 'Botões de edição';
+
+  @override
+  String get spellingDictionaries => 'Dicionários ortográficos';
+
+  @override
+  String get spellingDictionariesDescription =>
+      'Instalar e gerenciar dicionários ortográficos';
+
+  @override
+  String get settingsDictionariesSectionTitle => 'Dicionários';
 
   @override
   String get settingsWindowSectionTitle => 'Janela';

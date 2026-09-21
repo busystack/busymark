@@ -947,6 +947,10 @@ class AppLocalizationsVi extends AppLocalizations {
   String get wordWrap => 'Tự động xuống dòng';
 
   @override
+  String get wordWrapDescription =>
+      'Ngắt các dòng dài cho vừa chiều rộng trình biên tập thay vì cuộn ngang.';
+
+  @override
   String get editorFontSize => 'Cỡ chữ trình biên tập';
 
   @override
@@ -999,6 +1003,19 @@ class AppLocalizationsVi extends AppLocalizations {
   @override
   String get clearGitWorkspaceTrustDescription =>
       'Hỏi trước khi bật các tính năng Git cho những không gian làm việc đã từng được tin cậy.';
+
+  @override
+  String get settingsEditingButtonsSectionTitle => 'Nút chỉnh sửa';
+
+  @override
+  String get spellingDictionaries => 'Từ điển chính tả';
+
+  @override
+  String get spellingDictionariesDescription =>
+      'Cài đặt và quản lý từ điển chính tả';
+
+  @override
+  String get settingsDictionariesSectionTitle => 'Từ điển';
 
   @override
   String get settingsWindowSectionTitle => 'Cửa sổ';

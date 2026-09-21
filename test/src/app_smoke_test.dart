@@ -53,6 +53,7 @@ import 'package:busymark/src/markdown/markdown_model.dart';
 import 'package:busymark/src/markdown/markdown_parser.dart';
 import 'package:busymark/src/platform/linux_header_bar_service.dart';
 import 'package:busymark/src/platform/rich_clipboard_service.dart';
+import 'package:busymark/src/spellcheck/spelling_session_controller.dart';
 import 'package:busymark/src/writerside/writerside_model.dart';
 import 'package:busymark/src/writerside/writerside_project.dart';
 import 'package:busymark/src/writerside/writerside_toc_editor.dart';
@@ -77,6 +78,8 @@ import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 import 'package:window_manager/window_manager.dart';
+
+import '../support/spelling_test_bundle.dart';
 
 void main() {
   late _FallbackHeaderBarService headerBarService;
@@ -870,6 +873,82 @@ void main() {
     await tester.tap(find.text(l10n.editor));
     await tester.pumpAndSettle();
 
+    Finder groupedSection(String title) => find.byWidgetPredicate(
+      (widget) => widget is BusyMarkGroupedList && widget.title == title,
+    );
+    void expectControlInSection(String sectionTitle, String controlTitle) {
+      expect(
+        find.descendant(
+          of: groupedSection(sectionTitle),
+          matching: find.text(controlTitle),
+        ),
+        findsOneWidget,
+      );
+    }
+
+    expect(
+      tester
+          .widgetList<BusyMarkGroupedList>(find.byType(BusyMarkGroupedList))
+          .map((section) => section.title),
+      [
+        l10n.editor,
+        l10n.settingsEditingButtonsSectionTitle,
+        l10n.spelling,
+        l10n.settingsDictionariesSectionTitle,
+      ],
+    );
+    expectControlInSection(l10n.editor, l10n.autoSave);
+    expectControlInSection(l10n.editor, l10n.editorFontSize);
+    expectControlInSection(
+      l10n.settingsEditingButtonsSectionTitle,
+      l10n.editingButtonsPosition,
+    );
+    expectControlInSection(
+      l10n.settingsEditingButtonsSectionTitle,
+      l10n.editingButtonsDirection,
+    );
+    expectControlInSection(l10n.spelling, l10n.automaticSpelling);
+    expectControlInSection(l10n.spelling, l10n.defaultSpellingLanguage);
+    expectControlInSection(l10n.spelling, l10n.projectSpellingLanguage);
+    expectControlInSection(
+      l10n.settingsDictionariesSectionTitle,
+      l10n.spellingDictionaries,
+    );
+    expectControlInSection(
+      l10n.settingsDictionariesSectionTitle,
+      l10n.personalSpellingDictionary,
+    );
+    expectControlInSection(
+      l10n.settingsDictionariesSectionTitle,
+      l10n.projectSpellingDictionary,
+    );
+    final dictionariesSection = tester.widget<BusyMarkGroupedList>(
+      groupedSection(l10n.settingsDictionariesSectionTitle),
+    );
+    expect(dictionariesSection.children, hasLength(3));
+    expect(find.text(l10n.importSpellingDictionary), findsNothing);
+
+    final dictionariesNavigation = find.byKey(
+      const ValueKey('settings-spelling-dictionaries'),
+    );
+    final dictionariesNavigationRow = tester.widget<BusyMarkActionRow>(
+      dictionariesNavigation,
+    );
+    expect(dictionariesNavigationRow.title, l10n.spellingDictionaries);
+    expect(
+      dictionariesNavigationRow.subtitle,
+      l10n.spellingDictionariesDescription,
+    );
+    expect(dictionariesNavigationRow.onTap, isNotNull);
+    expect(
+      (dictionariesNavigationRow.leading! as Icon).icon,
+      BusyMarkGlyphs.symbols,
+    );
+    expect(
+      (dictionariesNavigationRow.trailing! as Icon).icon,
+      BusyMarkGlyphs.forwardFor(TextDirection.ltr),
+    );
+
     expect(
       find.byWidgetPredicate((widget) => widget is SegmentedButton),
       findsNothing,
@@ -898,10 +977,47 @@ void main() {
 
     expect(find.text(l10n.autoSave), findsOneWidget);
     expect(find.text(l10n.autoSaveDescription), findsOneWidget);
+    expect(find.text(l10n.wordWrapDescription), findsOneWidget);
     await tester.tap(find.text(l10n.autoSave));
     await tester.pumpAndSettle();
 
     expect(settingsStore.value['autoSave'], isFalse);
+
+    await tester.ensureVisible(dictionariesNavigation);
+    await tester.tap(dictionariesNavigation);
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey('settings-page-selector')), findsNothing);
+    expect(find.byType(BusyMarkGroupedList), findsNothing);
+    expect(
+      find.byKey(const ValueKey('spelling-dictionaries-list')),
+      findsOneWidget,
+    );
+    expect(find.byType(ListView), findsOneWidget);
+    expect(
+      tester.widget<BusyMarkClamp>(find.byType(BusyMarkClamp)).scrollable,
+      isFalse,
+    );
+    expect(find.text(l10n.importSpellingDictionary), findsOneWidget);
+    var header = tester.widget<HeaderBarConfigurationPublisher>(
+      find.byType(HeaderBarConfigurationPublisher),
+    );
+    expect(header.configuration.title, l10n.spellingDictionaries);
+    expect(header.configuration.sidebarVisible, isFalse);
+
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const ValueKey('settings-page-selector')),
+      findsOneWidget,
+    );
+    expect(find.byType(BusyMarkGroupedList), findsNWidgets(4));
+    expect(find.text(l10n.autoSave), findsOneWidget);
+    header = tester.widget<HeaderBarConfigurationPublisher>(
+      find.byType(HeaderBarConfigurationPublisher),
+    );
+    expect(header.configuration.title, l10n.editor);
 
     await tester.tap(find.byKey(const ValueKey('settings-page-selector')));
     await tester.pumpAndSettle();
@@ -942,6 +1058,13 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(settingsStore.value['confirmCloseWithUnsavedChanges'], isFalse);
+
+    await tester.tap(
+      find.byTooltip('${l10n.back} (${BusyMarkAppShortcutLabels.back})'),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text(l10n.createMarkdownFile), findsOneWidget);
   });
 
   testWidgets('settings uses the regular split sidebar at desktop width', (
@@ -1006,13 +1129,166 @@ void main() {
           .selected,
       isTrue,
     );
+    expect(
+      tester
+          .widgetList<BusyMarkGroupedList>(find.byType(BusyMarkGroupedList))
+          .map((section) => section.title),
+      [
+        l10n.editor,
+        l10n.settingsEditingButtonsSectionTitle,
+        l10n.spelling,
+        l10n.settingsDictionariesSectionTitle,
+      ],
+    );
     expect(find.text(l10n.autoSave), findsOneWidget);
     header = tester.widget<HeaderBarConfigurationPublisher>(
       find.byType(HeaderBarConfigurationPublisher),
     );
     expect(header.configuration.sidebarVisible, isTrue);
     expect(header.configuration.title, l10n.editor);
+
+    final dictionariesNavigation = find.byKey(
+      const ValueKey('settings-spelling-dictionaries'),
+    );
+    await tester.ensureVisible(dictionariesNavigation);
+    await tester.tap(dictionariesNavigation);
+    await tester.pumpAndSettle();
+
+    expect(find.byType(BusyMarkSidebarSurface), findsNothing);
+    expect(find.byKey(const ValueKey('settings-page-selector')), findsNothing);
+    expect(
+      find.byKey(const ValueKey('spelling-dictionaries-list')),
+      findsOneWidget,
+    );
+    header = tester.widget<HeaderBarConfigurationPublisher>(
+      find.byType(HeaderBarConfigurationPublisher),
+    );
+    expect(header.configuration.sidebarVisible, isFalse);
+    expect(header.configuration.title, l10n.spellingDictionaries);
+
+    await tester.tap(
+      find.byTooltip('${l10n.back} (${BusyMarkAppShortcutLabels.back})'),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byType(BusyMarkSidebarSurface), findsOneWidget);
+    expect(
+      tester
+          .widget<BusyMarkSidebarNavigationTile>(
+            find.byKey(const ValueKey('settings-navigation-editor')),
+          )
+          .selected,
+      isTrue,
+    );
+    header = tester.widget<HeaderBarConfigurationPublisher>(
+      find.byType(HeaderBarConfigurationPublisher),
+    );
+    expect(header.configuration.sidebarVisible, isTrue);
+    expect(header.configuration.title, l10n.editor);
   });
+
+  testWidgets(
+    'spelling dictionary subpage owns downloadable and imported packages',
+    (tester) async {
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = const Size(800, 900);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      addTearDown(tester.view.resetPhysicalSize);
+
+      late Directory temporary;
+      late ({String bundle, String storage}) fixture;
+      late SpellingSessionController spelling;
+      await tester.runAsync(() async {
+        temporary = await Directory.systemTemp.createTemp(
+          'busymark-settings-dictionaries-',
+        );
+        fixture = await _createSettingsSpellingFixture(temporary);
+        spelling = SpellingSessionController(
+          bundledRoot: fixture.bundle,
+          applicationSupportRoot: p.join(temporary.path, 'support'),
+          dictionaryStorageRoot: fixture.storage,
+          verifyDictionaryChecksums: false,
+        );
+        await spelling.prepareSettings(null);
+      });
+      final container = ProviderContainer(
+        overrides: [
+          linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+          localSettingsStoreProvider.overrideWithValue(_MemorySettingsStore()),
+          spellingSessionControllerProvider.overrideWith((ref) => spelling),
+        ],
+      );
+      addTearDown(() async {
+        container.dispose();
+        if (await temporary.exists()) {
+          await temporary.delete(recursive: true);
+        }
+      });
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: const BusyMarkApp(),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byTooltip(l10n.mainMenu));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(l10n.settings));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('settings-page-selector')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(l10n.editor));
+      await tester.pumpAndSettle();
+
+      expect(find.text(l10n.importSpellingDictionary), findsNothing);
+      expect(find.text('Test English'), findsNothing);
+      expect(find.text('Test French'), findsNothing);
+      expect(find.text('Local Test English'), findsNothing);
+      expect(find.text('xx-Test'), findsNothing);
+
+      final dictionariesNavigation = find.byKey(
+        const ValueKey('settings-spelling-dictionaries'),
+      );
+      await tester.ensureVisible(dictionariesNavigation);
+      await tester.tap(dictionariesNavigation);
+      await tester.pumpAndSettle();
+
+      final list = tester.widget<ListView>(
+        find.byKey(const ValueKey('spelling-dictionaries-list')),
+      );
+      expect(list.childrenDelegate, isA<SliverChildBuilderDelegate>());
+      expect(list.semanticChildCount, 5);
+      expect(find.text(l10n.importSpellingDictionary), findsOneWidget);
+      expect(find.text('Test English'), findsOneWidget);
+      expect(find.text('Test French'), findsOneWidget);
+      expect(find.text(l10n.spellingDictionaryInstalled), findsOneWidget);
+      expect(find.textContaining('Not installed ·'), findsAtLeastNWidgets(1));
+      expect(find.text('Local Test English'), findsOneWidget);
+      expect(find.text('xx-Test'), findsOneWidget);
+
+      final importRow = tester.widget<BusyMarkActionRow>(
+        find.byKey(const ValueKey('import-spelling-dictionary')),
+      );
+      expect(importRow.onTap, isNotNull);
+      final importedRow = tester.widget<BusyMarkActionRow>(
+        find.byWidgetPredicate(
+          (widget) =>
+              widget is BusyMarkActionRow &&
+              widget.title == 'Local Test English',
+        ),
+      );
+      expect(importedRow.destructive, isTrue);
+      expect(importedRow.onTap, isNotNull);
+      final invalidRow = tester.widget<BusyMarkActionRow>(
+        find.byWidgetPredicate(
+          (widget) => widget is BusyMarkActionRow && widget.title == 'xx-Test',
+        ),
+      );
+      expect(invalidRow.destructive, isTrue);
+      expect(invalidRow.onTap, isNotNull);
+    },
+  );
 
   testWidgets('settings main surface matches the headerbar in light and dark', (
     tester,
@@ -13004,6 +13280,69 @@ GitDiffFile _gitDiffFile(
     additions: 1,
     deletions: 1,
   );
+}
+
+Future<({String bundle, String storage})> _createSettingsSpellingFixture(
+  Directory temporary,
+) async {
+  final bundle = await createSpellingTestBundle(temporary);
+  final storage = p.join(temporary.path, 'dictionary-storage');
+  final catalogFile = File(p.join(bundle, 'dictionaries.json'));
+  final catalog =
+      jsonDecode(await catalogFile.readAsString()) as Map<String, Object?>;
+  final dictionaries = catalog['dictionaries']! as List<Object?>;
+  final english = Map<String, Object?>.from(
+    dictionaries.single! as Map<Object?, Object?>,
+  );
+  dictionaries.add({
+    ...english,
+    'resourceId': 'fr-Test',
+    'id': 'fr-Test',
+    'locales': ['fr-Test'],
+    'label': 'Test French',
+  });
+  await catalogFile.writeAsString(jsonEncode(catalog));
+
+  final downloaded = Directory(p.join(storage, 'downloaded', 'en-Test'));
+  final installedManifest =
+      jsonDecode(
+            await File(p.join(downloaded.path, 'manifest.json')).readAsString(),
+          )
+          as Map<String, Object?>;
+  final imported = Directory(p.join(storage, 'imported', 'local-Test'));
+  await imported.create(recursive: true);
+  await File(
+    p.join(downloaded.path, 'dictionary.aff'),
+  ).copy(p.join(imported.path, 'dictionary.aff'));
+  await File(
+    p.join(downloaded.path, 'dictionary.dic'),
+  ).copy(p.join(imported.path, 'dictionary.dic'));
+  await File(p.join(imported.path, 'manifest.json')).writeAsString(
+    jsonEncode({
+      ...installedManifest,
+      'kind': 'imported',
+      'resourceId': 'local-Test',
+      'id': 'local-Test',
+      'locales': ['local-Test'],
+      'label': 'Local Test English',
+      'sourceRevision': 'local-import',
+    }),
+  );
+
+  final invalid = Directory(p.join(storage, 'imported', 'xx-Test'));
+  await invalid.create(recursive: true);
+  await File(p.join(invalid.path, 'manifest.json')).writeAsString(
+    jsonEncode({
+      ...installedManifest,
+      'kind': 'imported',
+      'resourceId': 'xx-Test',
+      'id': 'xx-Test',
+      'locales': ['xx-Test'],
+      'label': 'Broken import',
+      'sourceRevision': 'local-import',
+    }),
+  );
+  return (bundle: bundle, storage: storage);
 }
 
 class _MemorySettingsStore implements LocalSettingsStore {

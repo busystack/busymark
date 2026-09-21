@@ -47,6 +47,7 @@ class SettingsScreen extends ConsumerStatefulWidget {
 
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   late SettingsPage _page = widget.initialPage;
+  bool _showSpellingDictionaries = false;
   String? _preparedSpellingWorkspaceId;
   bool _preparingSpelling = false;
 
@@ -55,6 +56,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.initialPage != widget.initialPage) {
       _page = widget.initialPage;
+      _showSpellingDictionaries = false;
     }
   }
 
@@ -85,299 +87,319 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final colors = BusyMarkSurfaceColors.of(context);
     final headerBar = ref.watch(linuxHeaderBarServiceProvider);
     final useNativeHeaderBar = headerBar.usesNativeHeaderBar;
-    final title = _settingsPageLabel(context, _page);
+    final title = _showSpellingDictionaries
+        ? l10n.spellingDictionaries
+        : _settingsPageLabel(context, _page);
     ref.listen(headerBarActionsProvider, (previous, next) {
       next.whenData((event) {
         _handleHeaderBarAction(context, headerBar, event.action);
       });
     });
-    final pageBody = switch (_page) {
-      SettingsPage.appearance => BusyMarkGroupedList(
-        title: l10n.appearance,
-        filled: true,
-        children: [
-          _LanguageRow(
-            selectedLocaleTag: settings.localeTag,
-            onChanged: controller.setLocaleTag,
-          ),
-          _ThemeModeRow(
-            selected: settings.themeModePreference,
-            onChanged: controller.setThemeModePreference,
-          ),
-        ],
-      ),
-      SettingsPage.editor => BusyMarkGroupedList(
-        title: l10n.editor,
-        filled: true,
-        children: [
-          BusyMarkSwitchRow(
-            title: l10n.autoSave,
-            subtitle: l10n.autoSaveDescription,
-            value: settings.autoSave,
-            onChanged: controller.setAutoSave,
-            leading: const Icon(BusyMarkGlyphs.save),
-          ),
-          BusyMarkSwitchRow(
-            title: l10n.wordWrap,
-            value: settings.wordWrap,
-            onChanged: controller.setWordWrap,
-            leading: Icon(
-              BusyMarkGlyphs.wordWrapFor(Directionality.of(context)),
-            ),
-          ),
-          BusyMarkSwitchRow(
-            title: l10n.automaticSpelling,
-            value: settings.automaticSpelling,
-            onChanged: controller.setAutomaticSpelling,
-            leading: const Icon(BusyMarkGlyphs.diagnostics),
-          ),
-          _SpellingLanguageRow(
-            title: l10n.defaultSpellingLanguage,
-            selected: settings.defaultSpellingLanguage,
-            catalogEntries: spelling.catalog?.entries ?? const [],
-            unsetLabel: l10n.chooseSpellingLanguage,
-            onChanged: (value) {
-              controller.setDefaultSpellingLanguage(value);
-              if (value != null &&
-                  spelling.catalog?.installedById(value) == null) {
-                unawaited(
-                  _offerSpellingDictionaryInstall(context, spelling, value),
-                );
-              }
-            },
-          ),
-          for (final resource
-              in spellingCatalog?.availableEntries ??
-                  const <SpellingDictionaryResource>[])
-            _SpellingDictionaryResourceRow(
-              resource: resource,
-              installed:
-                  spellingCatalog?.installationForResource(
-                    resource.resourceId,
-                    kind: SpellingDictionaryInstallationKind.downloaded,
-                  ) !=
-                  null,
-              status: spelling.dictionaryInstallStatus,
-              onInstall: () => unawaited(
-                _installSpellingDictionary(context, spelling, resource.id),
-              ),
-              onRemove: () => unawaited(
-                _removeDownloadedSpellingDictionary(
-                  context,
-                  spelling,
-                  resource.id,
-                ),
-              ),
-              onCancel: spelling.cancelDictionaryInstallation,
-              onRetry: () =>
-                  unawaited(_retrySpellingDictionary(context, spelling)),
-            ),
-          _EditorFontSizeRow(
-            value: settings.editorFontSize,
-            onChanged: controller.setEditorFontSize,
-          ),
-          _EditorToolbarPlacementRow(
-            selected: settings.editorToolbarPlacement,
-            onChanged: controller.setEditorToolbarPlacement,
-          ),
-          _EditorToolbarDirectionRow(
-            selected: settings.editorToolbarDirection,
-            onChanged: controller.setEditorToolbarDirection,
-          ),
-          BusyMarkActionRow(
-            title: l10n.importSpellingDictionary,
-            leading: const Icon(BusyMarkGlyphs.add),
-            onTap: () =>
+    final pageBody = _showSpellingDictionaries
+        ? _SpellingDictionariesPage(
+            catalog: spellingCatalog,
+            status: spelling.dictionaryInstallStatus,
+            importedDictionaries: importedDictionaries,
+            invalidImportedDictionaries: invalidImportedDictionaries,
+            onImport: () =>
                 unawaited(_importSpellingDictionary(context, spelling)),
-          ),
-          for (final entry in importedDictionaries)
-            BusyMarkActionRow(
-              title: entry.label,
-              subtitle: entry.id,
-              leading: const Icon(BusyMarkGlyphs.symbols),
-              trailing: const Icon(BusyMarkGlyphs.delete),
-              destructive: true,
-              onTap: () => unawaited(
-                _removeImportedSpellingDictionary(context, spelling, entry.id),
+            onInstall: (resource) => unawaited(
+              _installSpellingDictionary(context, spelling, resource.id),
+            ),
+            onRemoveDownloaded: (resource) => unawaited(
+              _removeDownloadedSpellingDictionary(
+                context,
+                spelling,
+                resource.id,
               ),
             ),
-          for (final entry in invalidImportedDictionaries)
-            BusyMarkActionRow(
-              title: entry.id ?? entry.resourceId ?? entry.directoryPath,
-              subtitle: entry.error,
-              leading: const Icon(BusyMarkGlyphs.warning),
-              trailing: const Icon(BusyMarkGlyphs.delete),
-              destructive: true,
-              onTap: () => unawaited(
-                _removeInvalidSpellingDictionary(context, spelling, entry),
-              ),
+            onCancel: spelling.cancelDictionaryInstallation,
+            onRetry: () =>
+                unawaited(_retrySpellingDictionary(context, spelling)),
+            onRemoveImported: (entry) => unawaited(
+              _removeImportedSpellingDictionary(context, spelling, entry.id),
             ),
-          _SpellingWordStoreRow(
-            title: l10n.personalSpellingDictionary,
-            snapshot: spelling.personalWords,
-            onRemove: spelling.removePersonalWord,
-          ),
-          _SpellingLanguageRow(
-            title: l10n.projectSpellingLanguage,
-            selected: spelling.projectWords.projectLanguage,
-            catalogEntries: spelling.catalog?.entries ?? const [],
-            unsetLabel: l10n.inheritSpellingLanguage,
-            enabled: spelling.hasProjectScope,
-            onChanged: (value) => unawaited(
-              _setProjectSpellingLanguage(context, spelling, value).then((_) {
-                if (value != null &&
-                    spelling.catalog?.installedById(value) == null &&
-                    context.mounted) {
-                  return _offerSpellingDictionaryInstall(
+            onRemoveInvalid: (entry) => unawaited(
+              _removeInvalidSpellingDictionary(context, spelling, entry),
+            ),
+          )
+        : switch (_page) {
+            SettingsPage.appearance => BusyMarkGroupedList(
+              title: l10n.appearance,
+              filled: true,
+              children: [
+                _LanguageRow(
+                  selectedLocaleTag: settings.localeTag,
+                  onChanged: controller.setLocaleTag,
+                ),
+                _ThemeModeRow(
+                  selected: settings.themeModePreference,
+                  onChanged: controller.setThemeModePreference,
+                ),
+              ],
+            ),
+            SettingsPage.editor => Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                BusyMarkGroupedList(
+                  title: l10n.editor,
+                  filled: true,
+                  children: [
+                    BusyMarkSwitchRow(
+                      title: l10n.autoSave,
+                      subtitle: l10n.autoSaveDescription,
+                      value: settings.autoSave,
+                      onChanged: controller.setAutoSave,
+                      leading: const Icon(BusyMarkGlyphs.save),
+                    ),
+                    BusyMarkSwitchRow(
+                      title: l10n.wordWrap,
+                      subtitle: l10n.wordWrapDescription,
+                      value: settings.wordWrap,
+                      onChanged: controller.setWordWrap,
+                      leading: Icon(
+                        BusyMarkGlyphs.wordWrapFor(Directionality.of(context)),
+                      ),
+                    ),
+                    _EditorFontSizeRow(
+                      value: settings.editorFontSize,
+                      onChanged: controller.setEditorFontSize,
+                    ),
+                  ],
+                ),
+                BusyMarkGroupedList(
+                  title: l10n.settingsEditingButtonsSectionTitle,
+                  filled: true,
+                  children: [
+                    _EditorToolbarPlacementRow(
+                      selected: settings.editorToolbarPlacement,
+                      onChanged: controller.setEditorToolbarPlacement,
+                    ),
+                    _EditorToolbarDirectionRow(
+                      selected: settings.editorToolbarDirection,
+                      onChanged: controller.setEditorToolbarDirection,
+                    ),
+                  ],
+                ),
+                BusyMarkGroupedList(
+                  title: l10n.spelling,
+                  filled: true,
+                  children: [
+                    BusyMarkSwitchRow(
+                      title: l10n.automaticSpelling,
+                      value: settings.automaticSpelling,
+                      onChanged: controller.setAutomaticSpelling,
+                      leading: const Icon(BusyMarkGlyphs.diagnostics),
+                    ),
+                    _SpellingLanguageRow(
+                      title: l10n.defaultSpellingLanguage,
+                      selected: settings.defaultSpellingLanguage,
+                      catalogEntries: spelling.catalog?.entries ?? const [],
+                      unsetLabel: l10n.chooseSpellingLanguage,
+                      onChanged: (value) {
+                        controller.setDefaultSpellingLanguage(value);
+                        if (value != null &&
+                            spelling.catalog?.installedById(value) == null) {
+                          unawaited(
+                            _offerSpellingDictionaryInstall(
+                              context,
+                              spelling,
+                              value,
+                            ),
+                          );
+                        }
+                      },
+                    ),
+                    _SpellingLanguageRow(
+                      title: l10n.projectSpellingLanguage,
+                      selected: spelling.projectWords.projectLanguage,
+                      catalogEntries: spelling.catalog?.entries ?? const [],
+                      unsetLabel: l10n.inheritSpellingLanguage,
+                      enabled: spelling.hasProjectScope,
+                      onChanged: (value) => unawaited(
+                        _setProjectSpellingLanguage(
+                          context,
+                          spelling,
+                          value,
+                        ).then((_) {
+                          if (value != null &&
+                              spelling.catalog?.installedById(value) == null &&
+                              context.mounted) {
+                            return _offerSpellingDictionaryInstall(
+                              context,
+                              spelling,
+                              value,
+                            );
+                          }
+                        }),
+                      ),
+                    ),
+                  ],
+                ),
+                BusyMarkGroupedList(
+                  title: l10n.settingsDictionariesSectionTitle,
+                  filled: true,
+                  children: [
+                    BusyMarkActionRow(
+                      key: const ValueKey('settings-spelling-dictionaries'),
+                      title: l10n.spellingDictionaries,
+                      subtitle: l10n.spellingDictionariesDescription,
+                      leading: const Icon(BusyMarkGlyphs.symbols),
+                      trailing: Icon(
+                        BusyMarkGlyphs.forwardFor(Directionality.of(context)),
+                      ),
+                      onTap: _openSpellingDictionaries,
+                    ),
+                    _SpellingWordStoreRow(
+                      title: l10n.personalSpellingDictionary,
+                      snapshot: spelling.personalWords,
+                      onRemove: spelling.removePersonalWord,
+                    ),
+                    _SpellingWordStoreRow(
+                      title: l10n.projectSpellingDictionary,
+                      snapshot: spelling.projectWords,
+                      enabled: spelling.hasProjectScope,
+                      onRemove: spelling.removeProjectWord,
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            SettingsPage.validation => BusyMarkGroupedList(
+              title: l10n.validation,
+              filled: true,
+              children: [
+                BusyMarkSwitchRow(
+                  title: l10n.validateOnEdit,
+                  value: settings.validateOnEdit,
+                  onChanged: controller.setValidateOnEdit,
+                  leading: const Icon(BusyMarkGlyphs.diagnostics),
+                ),
+              ],
+            ),
+            SettingsPage.history => BusyMarkGroupedList(
+              title: l10n.settingsHistory,
+              filled: true,
+              children: [
+                BusyMarkSwitchRow(
+                  title: l10n.settingsClipboardHistoryTitle,
+                  subtitle: l10n.settingsClipboardHistoryDescription,
+                  value: settings.clipboardHistoryEnabled,
+                  onChanged: controller.setClipboardHistoryEnabled,
+                  leading: const Icon(BusyMarkGlyphs.copy),
+                ),
+                BusyMarkSwitchRow(
+                  title: l10n.settingsLocalHistoryTitle,
+                  subtitle: l10n.settingsLocalHistoryDescription,
+                  value: settings.localHistoryRecordingEnabled,
+                  onChanged: controller.setLocalHistoryRecordingEnabled,
+                  leading: const Icon(BusyMarkGlyphs.documentHistory),
+                ),
+                _HistoryNumberRow(
+                  title: l10n.settingsHistoryCheckpoint,
+                  value: settings.localHistoryCheckpointSeconds,
+                  choices: const [30, 60, 120, 300, 600],
+                  format: l10n.settingsSecondsValue,
+                  enabled: settings.localHistoryRecordingEnabled,
+                  onChanged: controller.setLocalHistoryCheckpointSeconds,
+                ),
+                _HistoryNumberRow(
+                  title: l10n.settingsHistoryRetention,
+                  value: settings.localHistoryRetentionDays,
+                  choices: const [7, 30, 90, 365],
+                  format: l10n.settingsDaysValue,
+                  enabled: settings.localHistoryRecordingEnabled,
+                  onChanged: controller.setLocalHistoryRetentionDays,
+                ),
+                _HistoryNumberRow(
+                  title: l10n.settingsHistoryStorage,
+                  value: settings.localHistoryMaximumStorageMiB,
+                  choices: const [128, 256, 512, 1024, 2048, 4096],
+                  format: l10n.settingsMebibytesValue,
+                  enabled: settings.localHistoryRecordingEnabled,
+                  onChanged: controller.setLocalHistoryMaximumStorageMiB,
+                ),
+                BusyMarkActionRow(
+                  title: l10n.settingsHistoryExcludedPaths,
+                  subtitle: settings.localHistoryExcludedPaths.isEmpty
+                      ? l10n.settingsHistoryExcludedPathsHint
+                      : settings.localHistoryExcludedPaths.join('\n'),
+                  leading: const Icon(BusyMarkGlyphs.folder),
+                  onTap: () => _editHistoryExcludedPaths(
                     context,
-                    spelling,
-                    value,
-                  );
-                }
-              }),
+                    settings.localHistoryExcludedPaths,
+                    controller.setLocalHistoryExcludedPaths,
+                  ),
+                ),
+              ],
             ),
-          ),
-          _SpellingWordStoreRow(
-            title: l10n.projectSpellingDictionary,
-            snapshot: spelling.projectWords,
-            enabled: spelling.hasProjectScope,
-            onRemove: spelling.removeProjectWord,
-          ),
-        ],
-      ),
-      SettingsPage.validation => BusyMarkGroupedList(
-        title: l10n.validation,
-        filled: true,
-        children: [
-          BusyMarkSwitchRow(
-            title: l10n.validateOnEdit,
-            value: settings.validateOnEdit,
-            onChanged: controller.setValidateOnEdit,
-            leading: const Icon(BusyMarkGlyphs.diagnostics),
-          ),
-        ],
-      ),
-      SettingsPage.history => BusyMarkGroupedList(
-        title: l10n.settingsHistory,
-        filled: true,
-        children: [
-          BusyMarkSwitchRow(
-            title: l10n.settingsClipboardHistoryTitle,
-            subtitle: l10n.settingsClipboardHistoryDescription,
-            value: settings.clipboardHistoryEnabled,
-            onChanged: controller.setClipboardHistoryEnabled,
-            leading: const Icon(BusyMarkGlyphs.copy),
-          ),
-          BusyMarkSwitchRow(
-            title: l10n.settingsLocalHistoryTitle,
-            subtitle: l10n.settingsLocalHistoryDescription,
-            value: settings.localHistoryRecordingEnabled,
-            onChanged: controller.setLocalHistoryRecordingEnabled,
-            leading: const Icon(BusyMarkGlyphs.documentHistory),
-          ),
-          _HistoryNumberRow(
-            title: l10n.settingsHistoryCheckpoint,
-            value: settings.localHistoryCheckpointSeconds,
-            choices: const [30, 60, 120, 300, 600],
-            format: l10n.settingsSecondsValue,
-            enabled: settings.localHistoryRecordingEnabled,
-            onChanged: controller.setLocalHistoryCheckpointSeconds,
-          ),
-          _HistoryNumberRow(
-            title: l10n.settingsHistoryRetention,
-            value: settings.localHistoryRetentionDays,
-            choices: const [7, 30, 90, 365],
-            format: l10n.settingsDaysValue,
-            enabled: settings.localHistoryRecordingEnabled,
-            onChanged: controller.setLocalHistoryRetentionDays,
-          ),
-          _HistoryNumberRow(
-            title: l10n.settingsHistoryStorage,
-            value: settings.localHistoryMaximumStorageMiB,
-            choices: const [128, 256, 512, 1024, 2048, 4096],
-            format: l10n.settingsMebibytesValue,
-            enabled: settings.localHistoryRecordingEnabled,
-            onChanged: controller.setLocalHistoryMaximumStorageMiB,
-          ),
-          BusyMarkActionRow(
-            title: l10n.settingsHistoryExcludedPaths,
-            subtitle: settings.localHistoryExcludedPaths.isEmpty
-                ? l10n.settingsHistoryExcludedPathsHint
-                : settings.localHistoryExcludedPaths.join('\n'),
-            leading: const Icon(BusyMarkGlyphs.folder),
-            onTap: () => _editHistoryExcludedPaths(
-              context,
-              settings.localHistoryExcludedPaths,
-              controller.setLocalHistoryExcludedPaths,
+            SettingsPage.ai => const _AiSettingsPage(),
+            SettingsPage.window => BusyMarkGroupedList(
+              title: l10n.settingsWindowSectionTitle,
+              filled: true,
+              children: [
+                BusyMarkSwitchRow(
+                  title: l10n.settingsReopenWorkspaceOnStartupTitle,
+                  subtitle: l10n.settingsReopenWorkspaceOnStartupDescription,
+                  value: settings.reopenPreviousWorkspaceOnStartup,
+                  onChanged: controller.setReopenPreviousWorkspaceOnStartup,
+                  leading: const Icon(BusyMarkGlyphs.history),
+                ),
+                BusyMarkSwitchRow(
+                  title: l10n.settingsConfirmCloseWithUnsavedChangesTitle,
+                  subtitle:
+                      l10n.settingsConfirmCloseWithUnsavedChangesDescription,
+                  value: settings.confirmCloseWithUnsavedChanges,
+                  onChanged: controller.setConfirmCloseWithUnsavedChanges,
+                  leading: const Icon(BusyMarkGlyphs.warning),
+                ),
+              ],
             ),
-          ),
-        ],
-      ),
-      SettingsPage.ai => const _AiSettingsPage(),
-      SettingsPage.window => BusyMarkGroupedList(
-        title: l10n.settingsWindowSectionTitle,
-        filled: true,
-        children: [
-          BusyMarkSwitchRow(
-            title: l10n.settingsReopenWorkspaceOnStartupTitle,
-            subtitle: l10n.settingsReopenWorkspaceOnStartupDescription,
-            value: settings.reopenPreviousWorkspaceOnStartup,
-            onChanged: controller.setReopenPreviousWorkspaceOnStartup,
-            leading: const Icon(BusyMarkGlyphs.history),
-          ),
-          BusyMarkSwitchRow(
-            title: l10n.settingsConfirmCloseWithUnsavedChangesTitle,
-            subtitle: l10n.settingsConfirmCloseWithUnsavedChangesDescription,
-            value: settings.confirmCloseWithUnsavedChanges,
-            onChanged: controller.setConfirmCloseWithUnsavedChanges,
-            leading: const Icon(BusyMarkGlyphs.warning),
-          ),
-        ],
-      ),
-      SettingsPage.privacy => BusyMarkGroupedList(
-        title: l10n.privacy,
-        filled: true,
-        children: [
-          BusyMarkSwitchRow(
-            title: l10n.allowRemoteImages,
-            subtitle: l10n.allowRemoteImagesDescription,
-            value: settings.allowRemoteImages,
-            onChanged: controller.setAllowRemoteImages,
-            leading: const Icon(BusyMarkGlyphs.image),
-          ),
-          if (settings.remoteImageAllowedWorkspacePaths.isNotEmpty)
-            BusyMarkActionRow(
-              title: l10n.clearRemoteImagePermissions,
-              subtitle: l10n.clearRemoteImagePermissionsDescription,
-              leading: const Icon(BusyMarkGlyphs.clearAll),
-              onTap: controller.clearRemoteImageWorkspacePermissions,
+            SettingsPage.privacy => BusyMarkGroupedList(
+              title: l10n.privacy,
+              filled: true,
+              children: [
+                BusyMarkSwitchRow(
+                  title: l10n.allowRemoteImages,
+                  subtitle: l10n.allowRemoteImagesDescription,
+                  value: settings.allowRemoteImages,
+                  onChanged: controller.setAllowRemoteImages,
+                  leading: const Icon(BusyMarkGlyphs.image),
+                ),
+                if (settings.remoteImageAllowedWorkspacePaths.isNotEmpty)
+                  BusyMarkActionRow(
+                    title: l10n.clearRemoteImagePermissions,
+                    subtitle: l10n.clearRemoteImagePermissionsDescription,
+                    leading: const Icon(BusyMarkGlyphs.clearAll),
+                    onTap: controller.clearRemoteImageWorkspacePermissions,
+                  ),
+                if (settings.trustedGitWorkspacePaths.isNotEmpty)
+                  BusyMarkActionRow(
+                    title: l10n.clearGitWorkspaceTrust,
+                    subtitle: l10n.clearGitWorkspaceTrustDescription,
+                    leading: const Icon(BusyMarkGlyphs.clearAll),
+                    onTap: controller.clearTrustedGitWorkspaces,
+                  ),
+              ],
             ),
-          if (settings.trustedGitWorkspacePaths.isNotEmpty)
-            BusyMarkActionRow(
-              title: l10n.clearGitWorkspaceTrust,
-              subtitle: l10n.clearGitWorkspaceTrustDescription,
-              leading: const Icon(BusyMarkGlyphs.clearAll),
-              onTap: controller.clearTrustedGitWorkspaces,
+            SettingsPage.advanced => BusyMarkGroupedList(
+              title: l10n.advanced,
+              filled: true,
+              children: [
+                BusyMarkActionRow(
+                  title: l10n.clearRecentWorkspaces,
+                  leading: const Icon(BusyMarkGlyphs.clearAll),
+                  destructive: true,
+                  onTap: controller.clearRecentWorkspaces,
+                ),
+              ],
             ),
-        ],
-      ),
-      SettingsPage.advanced => BusyMarkGroupedList(
-        title: l10n.advanced,
-        filled: true,
-        children: [
-          BusyMarkActionRow(
-            title: l10n.clearRecentWorkspaces,
-            leading: const Icon(BusyMarkGlyphs.clearAll),
-            destructive: true,
-            onTap: controller.clearRecentWorkspaces,
-          ),
-        ],
-      ),
-    };
+          };
 
     return LayoutBuilder(
       builder: (context, constraints) {
         final showSidebar =
+            !_showSpellingDictionaries &&
             constraints.maxWidth >= BusyMarkSizes.settingsSidebarBreakpoint;
         final headerConfiguration = HeaderBarConfigurationDefaults.of(context)
             .copyWith(
@@ -405,7 +427,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   onMenuSelected: (action) =>
                       _handleMainMenuAction(context, headerBar, action),
                 ),
-              if (!showSidebar)
+              if (!_showSpellingDictionaries && !showSidebar)
                 Padding(
                   padding: const EdgeInsets.fromLTRB(
                     BusyMarkSpacing.lg,
@@ -423,6 +445,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   maxWidth: BusyMarkSizes.settingsWidth,
                   margin: EdgeInsets.zero,
                   padding: BusyMarkInsets.settingsPage,
+                  scrollable: !_showSpellingDictionaries,
                   child: pageBody,
                 ),
               ),
@@ -445,11 +468,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               )
             : content;
 
-        return HeaderBarConfigurationPublisher(
-          synchronizer: headerBar.configurationSynchronizer,
-          configuration: headerConfiguration,
-          enabled: headerBar.isAvailable,
-          child: Scaffold(backgroundColor: colors.view, body: body),
+        return PopScope(
+          canPop: false,
+          onPopInvokedWithResult: (didPop, result) {
+            if (!didPop) _goBack();
+          },
+          child: HeaderBarConfigurationPublisher(
+            synchronizer: headerBar.configurationSynchronizer,
+            configuration: headerConfiguration,
+            enabled: headerBar.isAvailable,
+            child: Scaffold(backgroundColor: colors.view, body: body),
+          ),
         );
       },
     );
@@ -479,12 +508,23 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   void _goBack() {
+    if (_showSpellingDictionaries) {
+      setState(() => _showSpellingDictionaries = false);
+      return;
+    }
     context.go(widget.returnTarget.location);
   }
 
+  void _openSpellingDictionaries() {
+    setState(() => _showSpellingDictionaries = true);
+  }
+
   void _selectPage(SettingsPage page) {
-    if (_page != page) {
-      setState(() => _page = page);
+    if (_page != page || _showSpellingDictionaries) {
+      setState(() {
+        _page = page;
+        _showSpellingDictionaries = false;
+      });
     }
     final router = GoRouter.maybeOf(context);
     final uri = router?.state.uri;
@@ -760,6 +800,103 @@ class _SpellingDictionaryResourceRow extends StatelessWidget {
       ),
       onTap: action,
       destructive: installed && active == null,
+    );
+  }
+}
+
+class _SpellingDictionariesPage extends StatelessWidget {
+  const _SpellingDictionariesPage({
+    required this.catalog,
+    required this.status,
+    required this.importedDictionaries,
+    required this.invalidImportedDictionaries,
+    required this.onImport,
+    required this.onInstall,
+    required this.onRemoveDownloaded,
+    required this.onCancel,
+    required this.onRetry,
+    required this.onRemoveImported,
+    required this.onRemoveInvalid,
+  });
+
+  final SpellingDictionaryCatalog? catalog;
+  final SpellingDictionaryInstallStatus? status;
+  final List<SpellingDictionaryInstallation> importedDictionaries;
+  final List<SpellingInvalidDictionaryInstallation> invalidImportedDictionaries;
+  final VoidCallback onImport;
+  final ValueChanged<SpellingDictionaryResource> onInstall;
+  final ValueChanged<SpellingDictionaryResource> onRemoveDownloaded;
+  final VoidCallback onCancel;
+  final VoidCallback onRetry;
+  final ValueChanged<SpellingDictionaryInstallation> onRemoveImported;
+  final ValueChanged<SpellingInvalidDictionaryInstallation> onRemoveInvalid;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = BusyMarkSurfaceColors.of(context);
+    final resources =
+        catalog?.availableEntries ?? const <SpellingDictionaryResource>[];
+    final itemCount =
+        1 +
+        resources.length +
+        importedDictionaries.length +
+        invalidImportedDictionaries.length;
+    return ListView.separated(
+      key: const ValueKey('spelling-dictionaries-list'),
+      padding: EdgeInsets.zero,
+      itemCount: itemCount,
+      itemBuilder: (context, index) {
+        if (index == 0) {
+          return BusyMarkActionRow(
+            key: const ValueKey('import-spelling-dictionary'),
+            title: context.l10n.importSpellingDictionary,
+            leading: const Icon(BusyMarkGlyphs.add),
+            onTap: onImport,
+          );
+        }
+        var collectionIndex = index - 1;
+        if (collectionIndex < resources.length) {
+          final resource = resources[collectionIndex];
+          return _SpellingDictionaryResourceRow(
+            resource: resource,
+            installed:
+                catalog?.installationForResource(
+                  resource.resourceId,
+                  kind: SpellingDictionaryInstallationKind.downloaded,
+                ) !=
+                null,
+            status: status,
+            onInstall: () => onInstall(resource),
+            onRemove: () => onRemoveDownloaded(resource),
+            onCancel: onCancel,
+            onRetry: onRetry,
+          );
+        }
+        collectionIndex -= resources.length;
+        if (collectionIndex < importedDictionaries.length) {
+          final entry = importedDictionaries[collectionIndex];
+          return BusyMarkActionRow(
+            title: entry.label,
+            subtitle: entry.id,
+            leading: const Icon(BusyMarkGlyphs.symbols),
+            trailing: const Icon(BusyMarkGlyphs.delete),
+            destructive: true,
+            onTap: () => onRemoveImported(entry),
+          );
+        }
+        collectionIndex -= importedDictionaries.length;
+        final entry = invalidImportedDictionaries[collectionIndex];
+        return BusyMarkActionRow(
+          title: entry.id ?? entry.resourceId ?? entry.directoryPath,
+          subtitle: entry.error,
+          leading: const Icon(BusyMarkGlyphs.warning),
+          trailing: const Icon(BusyMarkGlyphs.delete),
+          destructive: true,
+          onTap: () => onRemoveInvalid(entry),
+        );
+      },
+      separatorBuilder: (context, index) =>
+          Divider(height: 1, thickness: 1, color: colors.cardShade),
     );
   }
 }

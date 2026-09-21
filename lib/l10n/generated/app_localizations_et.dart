@@ -950,6 +950,10 @@ class AppLocalizationsEt extends AppLocalizations {
   String get wordWrap => 'Reamurdmine';
 
   @override
+  String get wordWrapDescription =>
+      'Murrab pikad read redaktori laiusele, selle asemel et horisontaalselt kerida.';
+
+  @override
   String get editorFontSize => 'Redaktori fondi suurus';
 
   @override
@@ -1003,6 +1007,19 @@ class AppLocalizationsEt extends AppLocalizations {
   @override
   String get clearGitWorkspaceTrustDescription =>
       'Küsi varem usaldatud tööruumides Giti funktsioonide lubamisel uuesti kinnitust.';
+
+  @override
+  String get settingsEditingButtonsSectionTitle => 'Redigeerimisnupud';
+
+  @override
+  String get spellingDictionaries => 'Õigekirjasõnastikud';
+
+  @override
+  String get spellingDictionariesDescription =>
+      'Õigekirjasõnastike installimine ja haldamine';
+
+  @override
+  String get settingsDictionariesSectionTitle => 'Sõnastikud';
 
   @override
   String get settingsWindowSectionTitle => 'Aken';

@@ -953,6 +953,10 @@ class AppLocalizationsNb extends AppLocalizations {
   String get wordWrap => 'Tekstbryting';
 
   @override
+  String get wordWrapDescription =>
+      'Bryt lange linjer så de passer til redigeringsbredden i stedet for å rulle vannrett.';
+
+  @override
   String get editorFontSize => 'Skriftstørrelse i redigereren';
 
   @override
@@ -1005,6 +1009,19 @@ class AppLocalizationsNb extends AppLocalizations {
   @override
   String get clearGitWorkspaceTrustDescription =>
       'Spør før Git-funksjoner aktiveres for tidligere klarerte arbeidsområder.';
+
+  @override
+  String get settingsEditingButtonsSectionTitle => 'Redigeringsknapper';
+
+  @override
+  String get spellingDictionaries => 'Stavekontrollordbøker';
+
+  @override
+  String get spellingDictionariesDescription =>
+      'Installer og administrer stavekontrollordbøker';
+
+  @override
+  String get settingsDictionariesSectionTitle => 'Ordbøker';
 
   @override
   String get settingsWindowSectionTitle => 'Vindu';

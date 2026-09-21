@@ -910,6 +910,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get wordWrap => '자동 줄 바꿈';
 
   @override
+  String get wordWrapDescription => '긴 줄을 가로로 스크롤하지 않고 편집기 너비에 맞게 줄 바꿈합니다.';
+
+  @override
   String get editorFontSize => '편집기 글꼴 크기';
 
   @override
@@ -961,6 +964,18 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get clearGitWorkspaceTrustDescription =>
       '이전에 신뢰한 작업공간에서 Git 기능을 활성화하기 전에 확인하도록 설정합니다.';
+
+  @override
+  String get settingsEditingButtonsSectionTitle => '편집 버튼';
+
+  @override
+  String get spellingDictionaries => '맞춤법 검사 사전';
+
+  @override
+  String get spellingDictionariesDescription => '맞춤법 검사 사전 설치 및 관리';
+
+  @override
+  String get settingsDictionariesSectionTitle => '사전';
 
   @override
   String get settingsWindowSectionTitle => '창';

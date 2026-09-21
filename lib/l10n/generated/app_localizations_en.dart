@@ -949,6 +949,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get wordWrap => 'Word wrap';
 
   @override
+  String get wordWrapDescription =>
+      'Wrap long lines to fit the editor width instead of scrolling horizontally.';
+
+  @override
   String get editorFontSize => 'Editor font size';
 
   @override
@@ -1000,6 +1004,19 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get clearGitWorkspaceTrustDescription =>
       'Ask before enabling Git features for previously trusted workspaces.';
+
+  @override
+  String get settingsEditingButtonsSectionTitle => 'Editing buttons';
+
+  @override
+  String get spellingDictionaries => 'Spelling Dictionaries';
+
+  @override
+  String get spellingDictionariesDescription =>
+      'Install and manage spelling dictionaries';
+
+  @override
+  String get settingsDictionariesSectionTitle => 'Dictionaries';
 
   @override
   String get settingsWindowSectionTitle => 'Window';

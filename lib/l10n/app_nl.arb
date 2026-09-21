@@ -965,6 +965,7 @@
     "description": "Editor setting description for saving files automatically."
   },
   "wordWrap": "Regelterugloop",
+  "wordWrapDescription": "Laat lange regels op de editorbreedte doorlopen in plaats van horizontaal te schuiven.",
   "@wordWrap": {
     "description": "Word wrap setting label."
   },
@@ -1032,6 +1033,10 @@
   "@clearGitWorkspaceTrustDescription": {
     "description": "Settings action description for clearing trusted Git workspaces."
   },
+  "settingsEditingButtonsSectionTitle": "Bewerkingsknoppen",
+  "spellingDictionaries": "Spellingswoordenboeken",
+  "spellingDictionariesDescription": "Spellingswoordenboeken installeren en beheren",
+  "settingsDictionariesSectionTitle": "Woordenboeken",
   "settingsWindowSectionTitle": "Raam",
   "@settingsWindowSectionTitle": {
     "description": "Settings section title for native window behavior."

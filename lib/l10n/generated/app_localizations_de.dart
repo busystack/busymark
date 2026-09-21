@@ -965,6 +965,10 @@ class AppLocalizationsDe extends AppLocalizations {
   String get wordWrap => 'Zeilenumbruch';
 
   @override
+  String get wordWrapDescription =>
+      'Lange Zeilen an die Breite des Editors anpassen, anstatt horizontal zu scrollen.';
+
+  @override
   String get editorFontSize => 'Schriftgröße des Editors';
 
   @override
@@ -1020,6 +1024,19 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get clearGitWorkspaceTrustDescription =>
       'Vor dem Aktivieren von Git-Funktionen für zuvor vertrauenswürdige Arbeitsbereiche nachfragen.';
+
+  @override
+  String get settingsEditingButtonsSectionTitle => 'Bearbeitungsschaltflächen';
+
+  @override
+  String get spellingDictionaries => 'Rechtschreibwörterbücher';
+
+  @override
+  String get spellingDictionariesDescription =>
+      'Rechtschreibwörterbücher installieren und verwalten';
+
+  @override
+  String get settingsDictionariesSectionTitle => 'Wörterbücher';
 
   @override
   String get settingsWindowSectionTitle => 'Fenster';

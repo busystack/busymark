@@ -835,6 +835,7 @@
     "description": "Editor setting description for saving files automatically."
   },
   "wordWrap": "वर्ड रैप",
+  "wordWrapDescription": "लंबी पंक्तियों को क्षैतिज रूप से स्क्रॉल करने के बजाय संपादक की चौड़ाई में समेटें।",
   "@wordWrap": {
     "description": "Word wrap setting label."
   },
@@ -902,6 +903,10 @@
   "@clearGitWorkspaceTrustDescription": {
     "description": "Settings action description for clearing trusted Git workspaces."
   },
+  "settingsEditingButtonsSectionTitle": "संपादन बटन",
+  "spellingDictionaries": "वर्तनी शब्दकोश",
+  "spellingDictionariesDescription": "वर्तनी शब्दकोश इंस्टॉल और प्रबंधित करें",
+  "settingsDictionariesSectionTitle": "शब्दकोश",
   "settingsWindowSectionTitle": "विंडो",
   "@settingsWindowSectionTitle": {
     "description": "Settings section title for native window behavior."

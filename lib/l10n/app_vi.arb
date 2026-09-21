@@ -965,6 +965,7 @@
     "description": "Editor setting description for saving files automatically."
   },
   "wordWrap": "Tự động xuống dòng",
+  "wordWrapDescription": "Ngắt các dòng dài cho vừa chiều rộng trình biên tập thay vì cuộn ngang.",
   "@wordWrap": {
     "description": "Word wrap setting label."
   },
@@ -1032,6 +1033,10 @@
   "@clearGitWorkspaceTrustDescription": {
     "description": "Settings action description for clearing trusted Git workspaces."
   },
+  "settingsEditingButtonsSectionTitle": "Nút chỉnh sửa",
+  "spellingDictionaries": "Từ điển chính tả",
+  "spellingDictionariesDescription": "Cài đặt và quản lý từ điển chính tả",
+  "settingsDictionariesSectionTitle": "Từ điển",
   "settingsWindowSectionTitle": "Cửa sổ",
   "@settingsWindowSectionTitle": {
     "description": "Settings section title for native window behavior."

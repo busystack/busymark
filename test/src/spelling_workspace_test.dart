@@ -123,8 +123,23 @@ void main() {
           harness.spelling.misspellings.single.run.target
               as SpellingRichBlockTarget;
       expect(target.blockId, view.block.id);
+      expect(harness.spelling.state.complete, isTrue);
+      expect(harness.spelling.misspellings.single.word, 'helo');
       expect(view.spellingRanges, [const TextRange(start: 0, end: 4)]);
       expect(harness.workspace.activeText, 'helo');
+      final liveController = _controllerForSpellingOverlay(tester, 'helo');
+      expect(
+        liveController.selection,
+        const TextSelection.collapsed(offset: 4),
+      );
+      expect(
+        busyMarkSpellingUnderlineSuppressed(
+          liveController,
+          const TextRange(start: 0, end: 4),
+        ),
+        isFalse,
+      );
+      expect(_spellingUnderlineOverlay(), findsOneWidget);
 
       // A structural edit can change live IDs/generation without changing the
       // committed source (the new buffer has no final newline). It must still
@@ -183,6 +198,18 @@ void main() {
             harness.spelling.misspellings.any((o) => o.word == 'helo'),
       );
       expect(harness.workspace.activeText, 'helo');
+      final undoView = _viewWithSpellingOverlay(tester, 'helo');
+      expect(undoView.spellingRanges, [const TextRange(start: 0, end: 4)]);
+      final undoController = _controllerForSpellingOverlay(tester, 'helo');
+      expect(undoController.selection.isCollapsed, isTrue);
+      expect(
+        busyMarkSpellingUnderlineSuppressed(
+          undoController,
+          const TextRange(start: 0, end: 4),
+        ),
+        isFalse,
+      );
+      expect(_spellingUnderlineOverlay(), findsOneWidget);
       harness.controller.redoActiveBuffer();
       await _until(
         tester,
@@ -194,6 +221,122 @@ void main() {
       await tester.pumpWidget(const SizedBox.shrink());
     },
   );
+
+  testWidgets('confirmed spelling underline survives continued typing', (
+    tester,
+  ) async {
+    final harness = await _pumpWorkspace(tester);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyN);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(l10n.createMarkdownFile).last);
+    await _until(
+      tester,
+      () => find.byType(BusyMarkWysiwygEditor).evaluate().isNotEmpty,
+    );
+    final field = find.descendant(
+      of: find.byType(BusyMarkWysiwygEditor),
+      matching: find.byType(EditableText),
+    );
+
+    await tester.enterText(field, 'helo');
+    await _until(
+      tester,
+      () =>
+          harness.spelling.state.complete &&
+          harness.spelling.misspellings.any((item) => item.word == 'helo'),
+    );
+    var controller = _controllerForSpellingOverlay(tester, 'helo');
+    expect(controller.selection.extentOffset, 4);
+    expect(
+      busyMarkSpellingUnderlineSuppressed(
+        controller,
+        const TextRange(start: 0, end: 4),
+      ),
+      isFalse,
+    );
+
+    tester.testTextInput.updateEditingValue(
+      const TextEditingValue(
+        text: 'helo ',
+        selection: TextSelection.collapsed(offset: 5),
+      ),
+    );
+    controller = _controllerForSpellingOverlay(tester, 'helo ');
+    expect(controller.text, 'helo ');
+    expect(controller.selection.extentOffset, 5);
+    expect(
+      busyMarkSpellingUnderlineSuppressed(
+        controller,
+        const TextRange(start: 0, end: 4),
+      ),
+      isFalse,
+    );
+    expect(_spellingUnderlineOverlay(), findsOneWidget);
+
+    tester.testTextInput.updateEditingValue(
+      const TextEditingValue(
+        text: 'helo world',
+        selection: TextSelection.collapsed(offset: 10),
+      ),
+    );
+    await _until(
+      tester,
+      () =>
+          harness.workspace.activeText == 'helo world' &&
+          harness.spelling.state.complete &&
+          harness.spelling.misspellings.length == 1 &&
+          harness.spelling.misspellings.single.word == 'helo' &&
+          _wysiwygViewWithSpellingRanges(
+            text: 'helo world',
+          ).evaluate().isNotEmpty,
+    );
+    controller = _controllerForSpellingOverlay(tester, 'helo world');
+    expect(controller.selection.extentOffset, 10);
+    expect(
+      busyMarkSpellingUnderlineSuppressed(
+        controller,
+        const TextRange(start: 0, end: 4),
+      ),
+      isFalse,
+    );
+    expect(_spellingUnderlineOverlay(), findsOneWidget);
+
+    controller.selection = const TextSelection.collapsed(offset: 3);
+    await tester.pump();
+    tester.testTextInput.updateEditingValue(
+      const TextEditingValue(
+        text: 'helxo world',
+        selection: TextSelection.collapsed(offset: 4),
+      ),
+    );
+    await _until(
+      tester,
+      () =>
+          harness.workspace.activeText == 'helxo world' &&
+          harness.spelling.state.complete &&
+          harness.spelling.misspellings.length == 1 &&
+          harness.spelling.misspellings.single.word == 'helxo' &&
+          _wysiwygViewWithSpellingRanges(
+            text: 'helxo world',
+          ).evaluate().isNotEmpty,
+    );
+    controller = _controllerForSpellingOverlay(tester, 'helxo world');
+    expect(controller.selection.extentOffset, 4);
+    expect(_viewWithSpellingOverlay(tester, 'helxo world').spellingRanges, [
+      const TextRange(start: 0, end: 5),
+    ]);
+    expect(
+      busyMarkSpellingUnderlineSuppressed(
+        controller,
+        const TextRange(start: 0, end: 5),
+      ),
+      isFalse,
+    );
+    expect(_spellingUnderlineOverlay(), findsOneWidget);
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
 
   for (final source in [
     'helo caf&#233;\n\nwrld\n',
@@ -358,6 +501,40 @@ class _Harness {
       container.read(workspaceControllerProvider.notifier);
   WorkspaceState get workspace => container.read(workspaceControllerProvider);
 }
+
+BusyMarkWysiwygBlockField _viewWithSpellingOverlay(
+  WidgetTester tester,
+  String text,
+) => tester.widget<BusyMarkWysiwygBlockField>(
+  _wysiwygViewWithSpellingRanges(text: text),
+);
+
+TextEditingController _controllerForSpellingOverlay(
+  WidgetTester tester,
+  String text,
+) => tester
+    .widgetList<EditableText>(
+      find.descendant(
+        of: find.byType(BusyMarkWysiwygEditor),
+        matching: find.byType(EditableText),
+      ),
+    )
+    .map((editable) => editable.controller)
+    .singleWhere((controller) => controller.text == text);
+
+Finder _wysiwygViewWithSpellingRanges({required String text}) =>
+    find.byWidgetPredicate(
+      (widget) =>
+          widget is BusyMarkWysiwygBlockField &&
+          widget.block.plainText == text &&
+          widget.spellingRanges.isNotEmpty,
+    );
+
+Finder _spellingUnderlineOverlay() => find.byWidgetPredicate(
+  (widget) =>
+      widget is CustomPaint &&
+      widget.painter.runtimeType.toString() == '_SpellingUnderlinePainter',
+);
 
 Future<void> _until(WidgetTester tester, bool Function() condition) async {
   final elapsed = Stopwatch()..start();

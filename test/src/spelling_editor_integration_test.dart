@@ -27,6 +27,32 @@ const _sourceSnapshot = SpellingSnapshotIdentity(
 );
 
 void main() {
+  test('ordinary WYSIWYG selection never suppresses spelling underlines', () {
+    final controller = TextEditingController(text: 'mispelled');
+    addTearDown(controller.dispose);
+    const range = TextRange(start: 0, end: 9);
+
+    controller.selection = const TextSelection.collapsed(offset: 0);
+    expect(busyMarkSpellingUnderlineSuppressed(controller, range), isFalse);
+
+    controller.selection = const TextSelection.collapsed(offset: 3);
+    expect(busyMarkSpellingUnderlineSuppressed(controller, range), isFalse);
+
+    controller.selection = const TextSelection.collapsed(offset: 9);
+    expect(busyMarkSpellingUnderlineSuppressed(controller, range), isFalse);
+
+    controller.selection = const TextSelection(baseOffset: 0, extentOffset: 9);
+    expect(busyMarkSpellingUnderlineSuppressed(controller, range), isFalse);
+
+    controller.value = controller.value.copyWith(
+      composing: const TextRange(start: 2, end: 6),
+    );
+    expect(busyMarkSpellingUnderlineSuppressed(controller, range), isTrue);
+
+    controller.value = controller.value.copyWith(composing: TextRange.empty);
+    expect(busyMarkSpellingUnderlineSuppressed(controller, range), isFalse);
+  });
+
   testWidgets('source spelling correction is one exact transaction', (
     tester,
   ) async {
@@ -514,10 +540,10 @@ void main() {
     },
   );
 
-  testWidgets('rich underline painter reads live caret and composing ranges', (
+  testWidgets('rich underline painter keeps confirmed helo visible at caret', (
     tester,
   ) async {
-    const source = 'mispelled tail\n';
+    const source = 'helo\n';
     final document = const MarkdownParser()
         .parse(
           filePath: '/tmp/live-overlay.md',
@@ -535,7 +561,7 @@ void main() {
         )
         .runs
         .single;
-    final occurrence = _occurrence(run, word: 'mispelled', logicalStart: 0);
+    final occurrence = _occurrence(run, word: 'helo', logicalStart: 0);
 
     await tester.pumpWidget(
       _testApp(
@@ -552,7 +578,7 @@ void main() {
     await tester.pump();
     final field = tester.widget<TextField>(find.byType(TextField).first);
     final controller = field.controller!;
-    controller.selection = const TextSelection.collapsed(offset: 12);
+    controller.selection = const TextSelection.collapsed(offset: 4);
     await tester.pump();
     final overlayFinder = find.byWidgetPredicate(
       (widget) =>
@@ -562,23 +588,107 @@ void main() {
     expect(overlayFinder, findsOneWidget);
     final overlay = tester.widget<CustomPaint>(overlayFinder);
     final painter = overlay.painter!;
-    const range = TextRange(start: 0, end: 9);
+    const range = TextRange(start: 0, end: 4);
     expect(busyMarkSpellingUnderlineSuppressed(controller, range), isFalse);
 
-    controller.selection = const TextSelection.collapsed(offset: 3);
+    controller.selection = const TextSelection.collapsed(offset: 2);
+    await tester.pump();
+    expect(tester.widget<CustomPaint>(overlayFinder).painter, same(painter));
+    expect(busyMarkSpellingUnderlineSuppressed(controller, range), isFalse);
+
+    controller.selection = const TextSelection(baseOffset: 0, extentOffset: 4);
+    await tester.pump();
+    expect(tester.widget<CustomPaint>(overlayFinder).painter, same(painter));
+    expect(busyMarkSpellingUnderlineSuppressed(controller, range), isFalse);
+
+    controller.value = controller.value.copyWith(
+      composing: const TextRange(start: 0, end: 4),
+    );
+    await tester.pump();
     expect(tester.widget<CustomPaint>(overlayFinder).painter, same(painter));
     expect(busyMarkSpellingUnderlineSuppressed(controller, range), isTrue);
 
-    controller.value = controller.value.copyWith(
-      selection: const TextSelection.collapsed(offset: 12),
-      composing: const TextRange(start: 2, end: 6),
+    controller.value = controller.value.copyWith(composing: TextRange.empty);
+    await tester.pump();
+    expect(tester.widget<CustomPaint>(overlayFinder).painter, same(painter));
+    expect(busyMarkSpellingUnderlineSuppressed(controller, range), isFalse);
+  });
+
+  testWidgets('table cell underline uses the live cell composing range', (
+    tester,
+  ) async {
+    const source = '| helo |\n| --- |\n';
+    final document = const MarkdownParser()
+        .parse(
+          filePath: '/tmp/table-overlay.md',
+          source: source,
+          mode: MarkdownMode.commonMark,
+          validateLocalReferences: false,
+        )
+        .busyDocument;
+    final run = const WysiwygSpellingProjector()
+        .project(
+          document: document,
+          languageId: 'en-Test',
+          snapshot: _sourceSnapshot,
+          documentGeneration: 0,
+        )
+        .runs
+        .singleWhere((candidate) => candidate.text == 'helo');
+    final occurrence = _occurrence(run, word: 'helo', logicalStart: 0);
+    final target = run.target as SpellingRichTableCellTarget;
+
+    await tester.pumpWidget(
+      _testApp(
+        BusyMarkWysiwygEditor(
+          document: document,
+          documentId: 'table-overlay',
+          contentRevision: 1,
+          spellingAnnotations: [_annotation(occurrence)],
+          onDocumentChanged: (_) {},
+          onSourceChanged: (_, _) {},
+        ),
+      ),
     );
-    expect(busyMarkSpellingUnderlineSuppressed(controller, range), isTrue);
+    await tester.pump();
+
+    final tableView = tester.widget<BusyMarkWysiwygBlockField>(
+      find.byType(BusyMarkWysiwygBlockField),
+    );
+    expect(tableView.tableCellSpellingRanges!(target.cellId), [
+      const TextRange(start: 0, end: 4),
+    ]);
+    final field = tester.widget<TextField>(find.byKey(ValueKey(target.cellId)));
+    final controller = field.controller!;
+    const range = TextRange(start: 0, end: 4);
+    final overlayFinder = find.byWidgetPredicate(
+      (widget) =>
+          widget is CustomPaint &&
+          widget.painter.runtimeType.toString() == '_SpellingUnderlinePainter',
+    );
+    expect(overlayFinder, findsOneWidget);
+
+    controller.selection = const TextSelection.collapsed(offset: 4);
+    await tester.pump();
+    expect(busyMarkSpellingUnderlineSuppressed(controller, range), isFalse);
+
+    controller.selection = const TextSelection.collapsed(offset: 2);
+    await tester.pump();
+    expect(busyMarkSpellingUnderlineSuppressed(controller, range), isFalse);
+
+    controller.selection = const TextSelection(baseOffset: 0, extentOffset: 4);
+    await tester.pump();
+    expect(busyMarkSpellingUnderlineSuppressed(controller, range), isFalse);
 
     controller.value = controller.value.copyWith(
-      selection: const TextSelection.collapsed(offset: 12),
-      composing: TextRange.empty,
+      composing: const TextRange(start: 0, end: 4),
     );
+    await tester.pump();
+    expect(busyMarkSpellingUnderlineSuppressed(controller, range), isTrue);
+
+    controller.value = controller.value.copyWith(composing: TextRange.empty);
+    await tester.pump();
+    expect(overlayFinder, findsOneWidget);
     expect(busyMarkSpellingUnderlineSuppressed(controller, range), isFalse);
   });
 }

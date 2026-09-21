@@ -1885,6 +1885,12 @@ abstract class AppLocalizations {
   /// **'Word wrap'**
   String get wordWrap;
 
+  /// Editor setting description for wrapping long lines.
+  ///
+  /// In en, this message translates to:
+  /// **'Wrap long lines to fit the editor width instead of scrolling horizontally.'**
+  String get wordWrapDescription;
+
   /// Editor font size setting label.
   ///
   /// In en, this message translates to:
@@ -1980,6 +1986,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Ask before enabling Git features for previously trusted workspaces.'**
   String get clearGitWorkspaceTrustDescription;
+
+  /// Editor-settings section title for editing-button controls.
+  ///
+  /// In en, this message translates to:
+  /// **'Editing buttons'**
+  String get settingsEditingButtonsSectionTitle;
+
+  /// Title for the spelling-dictionary management subpage and its navigation row.
+  ///
+  /// In en, this message translates to:
+  /// **'Spelling Dictionaries'**
+  String get spellingDictionaries;
+
+  /// Description for the navigation row that opens spelling-dictionary management.
+  ///
+  /// In en, this message translates to:
+  /// **'Install and manage spelling dictionaries'**
+  String get spellingDictionariesDescription;
+
+  /// Editor-settings section title for dictionary management and word-store controls.
+  ///
+  /// In en, this message translates to:
+  /// **'Dictionaries'**
+  String get settingsDictionariesSectionTitle;
 
   /// Settings section title for native window behavior.
   ///

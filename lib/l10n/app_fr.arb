@@ -835,6 +835,7 @@
     "description": "Editor setting description for saving files automatically."
   },
   "wordWrap": "Retour à la ligne automatique",
+  "wordWrapDescription": "Ajuster les lignes longues à la largeur de l’éditeur plutôt que de les faire défiler horizontalement.",
   "@wordWrap": {
     "description": "Word wrap setting label."
   },
@@ -902,6 +903,10 @@
   "@clearGitWorkspaceTrustDescription": {
     "description": "Settings action description for clearing trusted Git workspaces."
   },
+  "settingsEditingButtonsSectionTitle": "Boutons d’édition",
+  "spellingDictionaries": "Dictionnaires orthographiques",
+  "spellingDictionariesDescription": "Installer et gérer les dictionnaires orthographiques",
+  "settingsDictionariesSectionTitle": "Dictionnaires",
   "settingsWindowSectionTitle": "Fenêtre",
   "@settingsWindowSectionTitle": {
     "description": "Settings section title for native window behavior."

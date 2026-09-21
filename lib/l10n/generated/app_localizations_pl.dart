@@ -959,6 +959,10 @@ class AppLocalizationsPl extends AppLocalizations {
   String get wordWrap => 'Zawijanie wierszy';
 
   @override
+  String get wordWrapDescription =>
+      'Zawijaj długie wiersze do szerokości edytora zamiast przewijać je poziomo.';
+
+  @override
   String get editorFontSize => 'Rozmiar czcionki edytora';
 
   @override
@@ -1012,6 +1016,19 @@ class AppLocalizationsPl extends AppLocalizations {
   @override
   String get clearGitWorkspaceTrustDescription =>
       'Pytaj przed włączeniem funkcji Git w zaufanych wcześniej obszarach roboczych.';
+
+  @override
+  String get settingsEditingButtonsSectionTitle => 'Przyciski edycji';
+
+  @override
+  String get spellingDictionaries => 'Słowniki pisowni';
+
+  @override
+  String get spellingDictionariesDescription =>
+      'Instaluj słowniki pisowni i zarządzaj nimi';
+
+  @override
+  String get settingsDictionariesSectionTitle => 'Słowniki';
 
   @override
   String get settingsWindowSectionTitle => 'Okno';
