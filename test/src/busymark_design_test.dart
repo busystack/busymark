@@ -20,6 +20,152 @@ import 'package:yaru/yaru.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
+  testWidgets('radio suppresses state halos and preserves focus borders', (
+    tester,
+  ) async {
+    final focusNode = FocusNode();
+    addTearDown(focusNode.dispose);
+    final theme = buildBusyMarkTheme(
+      brightness: Brightness.light,
+      accentColor: const Color(0xFF3584E4),
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: theme,
+        home: YaruTheme(
+          data: const YaruThemeData(focusBorders: true),
+          child: Theme(
+            data: theme,
+            child: Scaffold(
+              body: BusyMarkRadioButton<String>(
+                value: 'md',
+                groupValue: 'md',
+                onChanged: (_) {},
+                title: const Text('Markdown'),
+                autofocus: true,
+                focusNode: focusNode,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final radio = find.byType(BusyMarkRadioButton<String>);
+    final localTheme = tester.widget<YaruRadioTheme>(
+      find.descendant(of: radio, matching: find.byType(YaruRadioTheme)),
+    );
+    expect(
+      localTheme.data.indicatorColor?.resolve({WidgetState.hovered}),
+      Colors.transparent,
+    );
+    expect(
+      localTheme.data.indicatorColor?.resolve({WidgetState.focused}),
+      Colors.transparent,
+    );
+    expect(focusNode.hasFocus, isTrue);
+    expect(
+      tester
+          .widget<YaruToggleButton>(
+            find.descendant(
+              of: radio,
+              matching: find.byType(YaruToggleButton),
+            ),
+          )
+          .hasFocusBorder,
+      isTrue,
+    );
+    expect(
+      find.descendant(of: radio, matching: find.byType(YaruFocusBorder)),
+      findsOneWidget,
+    );
+  });
+
+  const radioAccents = {'blue': Color(0xFF3584E4), 'purple': Color(0xFFB34CB4)};
+  for (final brightness in Brightness.values) {
+    for (final accent in radioAccents.entries) {
+      testWidgets('selected radio follows ${accent.key} accent states in '
+          '${brightness.name}', (tester) async {
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: buildBusyMarkTheme(
+              brightness: brightness,
+              accentColor: accent.value,
+            ),
+            home: Scaffold(
+              body: Center(
+                child: BusyMarkRadioButton<String>(
+                  key: const ValueKey('radio'),
+                  value: 'md',
+                  groupValue: 'md',
+                  onChanged: (_) {},
+                  title: const Text('Markdown'),
+                ),
+              ),
+            ),
+          ),
+        );
+        await tester.pump();
+
+        final radio = find.byKey(const ValueKey('radio'));
+        Color selectedColor() {
+          final localTheme = tester.widget<YaruRadioTheme>(
+            find.descendant(of: radio, matching: find.byType(YaruRadioTheme)),
+          );
+          return localTheme.data.color!.resolve({WidgetState.selected})!;
+        }
+
+        final normal = selectedColor();
+        expect(
+          normal,
+          _expectedRadioColor(
+            accent.value,
+            brightness: brightness,
+            stateDelta: 0,
+          ),
+        );
+
+        final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+        addTearDown(mouse.removePointer);
+        await mouse.addPointer(location: Offset.zero);
+        await mouse.moveTo(tester.getCenter(radio));
+        await tester.pump();
+
+        final hovered = selectedColor();
+        expect(hovered, isNot(normal));
+        expect(
+          hovered,
+          _expectedRadioColor(
+            accent.value,
+            brightness: brightness,
+            stateDelta: 0.07,
+          ),
+        );
+
+        await mouse.down(tester.getCenter(radio));
+        await tester.pump();
+        expect(
+          selectedColor(),
+          _expectedRadioColor(
+            accent.value,
+            brightness: brightness,
+            stateDelta: -0.07,
+          ),
+        );
+
+        await mouse.up();
+        await tester.pump();
+        expect(selectedColor(), hovered);
+
+        await mouse.moveTo(Offset.zero);
+        await tester.pump();
+        expect(selectedColor(), normal);
+      });
+    }
+  }
+
   testWidgets(
     'informational dialog keeps the close control at the right edge',
     (tester) async {
@@ -2153,6 +2299,18 @@ void main() {
       colors.sidebarBorder,
     );
   });
+}
+
+Color _expectedRadioColor(
+  Color accent, {
+  required Brightness brightness,
+  required double stateDelta,
+}) {
+  final hsl = HSLColor.fromColor(accent);
+  final normalDelta = brightness == Brightness.light ? 0.05 : 0.0;
+  return hsl
+      .withLightness((hsl.lightness + normalDelta + stateDelta).clamp(0.0, 1.0))
+      .toColor();
 }
 
 double _contrastRatio(Color foreground, Color background) {

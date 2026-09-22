@@ -329,7 +329,7 @@ class _TemplateDialogState extends ConsumerState<WritersideTemplateDialog> {
                                       Text(context.l10n.tocTemplateFormat),
                                       for (final extension in ['md', 'topic'])
                                         IntrinsicWidth(
-                                          child: YaruRadioButton<String>(
+                                          child: BusyMarkRadioButton<String>(
                                             key: ValueKey(
                                               'template-format-$extension',
                                             ),

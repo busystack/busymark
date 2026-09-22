@@ -3556,6 +3556,144 @@ class BusyMarkSwitchRow extends StatelessWidget {
   }
 }
 
+/// A Yaru radio button with GTK-style state colors and no external halo.
+class BusyMarkRadioButton<T> extends StatefulWidget {
+  const BusyMarkRadioButton({
+    super.key,
+    required this.value,
+    required this.groupValue,
+    required this.onChanged,
+    required this.title,
+    this.subtitle,
+    this.contentPadding,
+    this.autofocus = false,
+    this.focusNode,
+    this.mouseCursor,
+    this.hasFocusBorder,
+  });
+
+  final T value;
+  final T? groupValue;
+  final ValueChanged<T?>? onChanged;
+  final Widget title;
+  final Widget? subtitle;
+  final EdgeInsetsGeometry? contentPadding;
+  final bool autofocus;
+  final FocusNode? focusNode;
+  final MouseCursor? mouseCursor;
+  final bool? hasFocusBorder;
+
+  @override
+  State<BusyMarkRadioButton<T>> createState() => _BusyMarkRadioButtonState<T>();
+}
+
+class _BusyMarkRadioButtonState<T> extends State<BusyMarkRadioButton<T>> {
+  bool _hovered = false;
+  int? _pressedPointer;
+
+  bool get _pressed => _pressedPointer != null;
+
+  @override
+  void didUpdateWidget(BusyMarkRadioButton<T> oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.onChanged == null) {
+      _pressedPointer = null;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final inheritedRadioTheme = YaruRadioTheme.of(context);
+    final checkedColor = _busyMarkCheckedRadioColor(
+      theme.colorScheme.primary,
+      brightness: theme.brightness,
+      hovered: _hovered,
+      pressed: _pressed,
+    );
+
+    return MouseRegion(
+      onEnter: (_) => _setHovered(true),
+      onExit: (_) => _setHovered(false),
+      child: Listener(
+        onPointerDown: widget.onChanged == null ? null : _handlePointerDown,
+        onPointerUp: widget.onChanged == null ? null : _handlePointerUp,
+        onPointerCancel: widget.onChanged == null ? null : _handlePointerCancel,
+        child: YaruRadioTheme(
+          data: inheritedRadioTheme.copyWith(
+            color: WidgetStateProperty.resolveWith((states) {
+              if (states.contains(WidgetState.disabled)) {
+                return inheritedRadioTheme.color?.resolve(states);
+              }
+              if (states.contains(WidgetState.selected)) {
+                return checkedColor;
+              }
+              return inheritedRadioTheme.color?.resolve(states);
+            }),
+            indicatorColor: const WidgetStatePropertyAll(Colors.transparent),
+          ),
+          child: YaruRadioButton<T>(
+            value: widget.value,
+            groupValue: widget.groupValue,
+            onChanged: widget.onChanged,
+            title: widget.title,
+            subtitle: widget.subtitle,
+            contentPadding: widget.contentPadding,
+            autofocus: widget.autofocus,
+            focusNode: widget.focusNode,
+            mouseCursor: widget.mouseCursor,
+            hasFocusBorder: widget.hasFocusBorder,
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _setHovered(bool hovered) {
+    if (_hovered != hovered) {
+      setState(() => _hovered = hovered);
+    }
+  }
+
+  void _handlePointerDown(PointerDownEvent event) {
+    if (_pressedPointer != null || event.buttons != kPrimaryButton) {
+      return;
+    }
+    setState(() => _pressedPointer = event.pointer);
+  }
+
+  void _handlePointerUp(PointerUpEvent event) {
+    if (_pressedPointer == event.pointer) {
+      setState(() => _pressedPointer = null);
+    }
+  }
+
+  void _handlePointerCancel(PointerCancelEvent event) {
+    if (_pressedPointer == event.pointer) {
+      setState(() => _pressedPointer = null);
+    }
+  }
+}
+
+Color _busyMarkCheckedRadioColor(
+  Color accent, {
+  required Brightness brightness,
+  required bool hovered,
+  required bool pressed,
+}) {
+  final normalLightnessDelta = brightness == Brightness.light ? 0.05 : 0.0;
+  final stateLightnessDelta = pressed ? -0.07 : (hovered ? 0.07 : 0.0);
+  final hsl = HSLColor.fromColor(accent);
+  return hsl
+      .withLightness(
+        (hsl.lightness + normalLightnessDelta + stateLightnessDelta).clamp(
+          0.0,
+          1.0,
+        ),
+      )
+      .toColor();
+}
+
 class BusyMarkCheckbox extends StatelessWidget {
   const BusyMarkCheckbox({
     super.key,

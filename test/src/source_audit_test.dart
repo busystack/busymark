@@ -303,7 +303,7 @@ void main() {
       ),
     );
     final switchRow = RegExp(
-      r'class BusyMarkSwitchRow[\s\S]*?class BusyMarkDialogShell',
+      r'class BusyMarkSwitchRow[\s\S]*?class BusyMarkRadioButton',
     ).firstMatch(design)!.group(0)!;
     expect(switchRow, contains('return YaruSwitchListTile('));
     expect(switchRow, isNot(contains('MouseRegion(')));
@@ -1402,6 +1402,8 @@ void main() {
     expect(templates, contains('YaruMasterTile('));
     expect(templates, contains('BusyMarkGroupedTextEntry('));
     expect(templates, contains('BusyMarkActionRow('));
+    expect(templates, contains('BusyMarkRadioButton<String>('));
+    expect(templates, isNot(contains('YaruRadioButton<String>(')));
     expect(templates, contains('YaruLinearProgressIndicator('));
   });
 
