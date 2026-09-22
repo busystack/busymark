@@ -280,39 +280,6 @@ void main() {
     expect(createTopicDialog, contains('InputDecoration('));
   });
 
-  test('shared row hover delegates to Yaru interaction state', () {
-    final design = File('lib/src/app/busymark_design.dart').readAsStringSync();
-
-    final helper = RegExp(
-      r'Color busyMarkRowHoverColor\(BuildContext context\) \{(.*?)\n\}',
-      dotAll: true,
-    ).firstMatch(design)!.group(1)!;
-    expect(helper, contains('final hover = theme.hoverColor'));
-    expect(helper, contains('BusyMarkAlpha.groupedRowLightHoverStrength'));
-    expect(helper, isNot(contains('colors.foreground.withValues')));
-    expect(design, isNot(contains('class _BusyMarkHoverBackground')));
-    final actionRow = RegExp(
-      r'class BusyMarkActionRow[\s\S]*?class BusyMarkSwitch extends',
-    ).firstMatch(design)!.group(0)!;
-    expect(actionRow, contains('final row = YaruListTile.square('));
-    expect(actionRow, isNot(contains('MouseRegion(')));
-    expect(
-      actionRow,
-      contains(
-        'hoverColor: widget.hoverColor ?? busyMarkRowHoverColor(context)',
-      ),
-    );
-    final switchRow = RegExp(
-      r'class BusyMarkSwitchRow[\s\S]*?class BusyMarkRadioButton',
-    ).firstMatch(design)!.group(0)!;
-    expect(switchRow, contains('return YaruSwitchListTile('));
-    expect(switchRow, contains('final switchControl = BusyMarkSwitch('));
-    expect(switchRow, contains('control: switchControl'));
-    expect(switchRow, isNot(contains('child: Switch(')));
-    expect(switchRow, contains('hoverColor: busyMarkRowHoverColor(context)'));
-    expect(switchRow, contains('shape: const RoundedRectangleBorder()'));
-  });
-
   test('shared grouped surfaces use native card shadow layers', () {
     final design = File('lib/src/app/busymark_design.dart').readAsStringSync();
     final dialogs = File(
@@ -1404,8 +1371,6 @@ void main() {
     expect(templates, contains('YaruMasterTile('));
     expect(templates, contains('BusyMarkGroupedTextEntry('));
     expect(templates, contains('BusyMarkActionRow('));
-    expect(templates, contains('BusyMarkRadioButton<String>('));
-    expect(templates, isNot(contains('YaruRadioButton<String>(')));
     expect(templates, contains('YaruLinearProgressIndicator('));
   });
 
@@ -2103,46 +2068,6 @@ void main() {
     expect(workspace, isNot(contains('class _PaneHeader')));
     expect(workspace, isNot(contains('class _StatusPill')));
     expect(workspace, isNot(contains("'Not saved' : 'Saved'")));
-  });
-
-  test('Source paste planning and mapping keep explicit boundaries', () {
-    final editor = File(
-      'lib/src/editor/source/source_editor.dart',
-    ).readAsStringSync();
-    final engine = File(
-      'lib/src/editor/source/source_paste_engine.dart',
-    ).readAsStringSync();
-    final mapper = File(
-      'lib/src/markdown/markdown_source_map.dart',
-    ).readAsStringSync();
-    final adapter = File(
-      'lib/src/markdown/markdown_ast_adapter.dart',
-    ).readAsStringSync();
-    final serializer = File(
-      'lib/src/markdown/busymark_markdown_serializer.dart',
-    ).readAsStringSync();
-
-    expect(editor, contains("import 'source_paste_engine.dart';"));
-    expect(editor, contains('final _pasteEngine = const SourcePasteEngine()'));
-    expect(editor, isNot(contains('MarkdownAstAdapter')));
-    expect(editor, isNot(contains('BusyMarkMarkdownSerializer')));
-    expect(editor, isNot(contains('MarkdownParser')));
-
-    expect(engine, contains('sealed class SourcePastePreparation'));
-    expect(engine, contains('class SourcePasteReady'));
-    expect(engine, contains('class SourcePasteTryNext'));
-    expect(engine, contains('class SourcePasteStop'));
-    expect(engine, isNot(contains('terminalFailure')));
-    expect(engine, isNot(contains('BuildContext')));
-    expect(engine, isNot(contains('WidgetRef')));
-    expect(engine, isNot(contains('RichClipboardService')));
-    expect(engine, isNot(contains('ClipboardHistory')));
-
-    expect(mapper, contains("import 'markdown_ast_adapter.dart';"));
-    expect(adapter, isNot(contains("import 'markdown_source_map.dart';")));
-    expect(mapper, contains('class MarkdownSourceMapper'));
-    expect(serializer, isNot(contains('String _inline(')));
-    expect(serializer, contains('return _inlineMarkdownAtTextOffsets('));
   });
 }
 

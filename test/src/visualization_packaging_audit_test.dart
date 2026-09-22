@@ -159,6 +159,11 @@ void main() {
       '.github/workflows/flutter-linux.yml',
     ).readAsStringSync();
 
+    expect(
+      workflow,
+      contains("      - 'Release/**'"),
+      reason: 'Direct release-branch pushes must run the Linux workflow.',
+    );
     expect(workflow, contains('libwebkit2gtk-4.1-dev'));
     expect(workflow, contains('apparmor-profiles'));
     expect(workflow, contains('bwrap-userns-restrict'));
