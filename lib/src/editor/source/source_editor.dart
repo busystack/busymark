@@ -3164,7 +3164,7 @@ class _SourceSpellingPainter extends CustomPainter {
     required this.document,
     required this.annotations,
     required this.color,
-  });
+  }) : super(repaint: controller);
 
   final GlobalKey paragraphKey;
   final BusyMarkSourceEditingController controller;

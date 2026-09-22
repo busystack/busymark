@@ -470,7 +470,7 @@ void main() {
                 width: 900,
                 height: 600,
                 child: BusyMarkSourceEditor(
-                  text: 'helo',
+                  text: 'helo world',
                   language: mode.language,
                   documentFormat: mode.documentFormat,
                   markdownMode: mode.markdownMode,
@@ -506,13 +506,31 @@ void main() {
                   '_SourceSpellingPainter',
         );
         expect(painterFinder, findsOneWidget);
+        final render = tester.renderObject<RenderCustomPaint>(painterFinder);
+        expect(render.debugNeedsPaint, isFalse);
         expect(controller.fullSelection.extentOffset, 4);
         expect(
           busyMarkSourceSpellingUnderlineSuppressed(controller, range),
           isFalse,
         );
 
+        controller.fullSelection = const TextSelection.collapsed(offset: 0);
+        await tester.pump();
+        expect(painterFinder, findsOneWidget);
+        expect(
+          busyMarkSourceSpellingUnderlineSuppressed(controller, range),
+          isFalse,
+        );
+
         controller.fullSelection = const TextSelection.collapsed(offset: 2);
+        await tester.pump();
+        expect(painterFinder, findsOneWidget);
+        expect(
+          busyMarkSourceSpellingUnderlineSuppressed(controller, range),
+          isFalse,
+        );
+
+        controller.fullSelection = const TextSelection.collapsed(offset: 4);
         await tester.pump();
         expect(painterFinder, findsOneWidget);
         expect(
@@ -531,9 +549,22 @@ void main() {
           isFalse,
         );
 
+        controller.fullSelection = const TextSelection(
+          baseOffset: 5,
+          extentOffset: 10,
+        );
+        await tester.pump();
+        expect(painterFinder, findsOneWidget);
+        expect(
+          busyMarkSourceSpellingUnderlineSuppressed(controller, range),
+          isFalse,
+        );
+
+        expect(render.debugNeedsPaint, isFalse);
         controller.value = controller.value.copyWith(
           composing: const TextRange(start: 0, end: 4),
         );
+        expect(render.debugNeedsPaint, isTrue);
         await tester.pump();
         expect(controller.fullComposing, range);
         expect(
@@ -544,8 +575,19 @@ void main() {
         controller.value = controller.value.copyWith(
           composing: TextRange.empty,
         );
+        expect(render.debugNeedsPaint, isTrue);
         await tester.pump();
         expect(painterFinder, findsOneWidget);
+        expect(
+          busyMarkSourceSpellingUnderlineSuppressed(controller, range),
+          isFalse,
+        );
+
+        controller.value = controller.value.copyWith(
+          composing: const TextRange(start: 5, end: 10),
+        );
+        expect(render.debugNeedsPaint, isTrue);
+        await tester.pump();
         expect(
           busyMarkSourceSpellingUnderlineSuppressed(controller, range),
           isFalse,
