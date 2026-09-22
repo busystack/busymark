@@ -7638,6 +7638,18 @@ abstract class AppLocalizations {
   /// **'Choose spelling language'**
   String get chooseSpellingLanguage;
 
+  /// Compact document status shown when no spelling language resolves.
+  ///
+  /// In en, this message translates to:
+  /// **'Language…'**
+  String get spellingLanguageUnsetStatus;
+
+  /// Compact document status shown when spelling is disabled for the document.
+  ///
+  /// In en, this message translates to:
+  /// **'Spelling Off'**
+  String get spellingOffStatus;
+
   /// No description provided for @checkSpelling.
   ///
   /// In en, this message translates to:

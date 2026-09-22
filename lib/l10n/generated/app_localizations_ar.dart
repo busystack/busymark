@@ -4556,6 +4556,12 @@ class AppLocalizationsAr extends AppLocalizations {
   String get chooseSpellingLanguage => 'اختر لغة الإملاء';
 
   @override
+  String get spellingLanguageUnsetStatus => 'اللغة…';
+
+  @override
+  String get spellingOffStatus => 'التدقيق الإملائي متوقف';
+
+  @override
   String get checkSpelling => 'تدقيق الإملاء';
 
   @override

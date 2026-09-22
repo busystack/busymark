@@ -4524,6 +4524,12 @@ class AppLocalizationsNb extends AppLocalizations {
   String get chooseSpellingLanguage => 'Velg språk for stavekontroll';
 
   @override
+  String get spellingLanguageUnsetStatus => 'Språk…';
+
+  @override
+  String get spellingOffStatus => 'Stavekontroll av';
+
+  @override
   String get checkSpelling => 'Kontroller staving';
 
   @override

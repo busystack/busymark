@@ -4580,6 +4580,12 @@ class AppLocalizationsPt extends AppLocalizations {
   String get chooseSpellingLanguage => 'Escolher idioma ortográfico';
 
   @override
+  String get spellingLanguageUnsetStatus => 'Idioma…';
+
+  @override
+  String get spellingOffStatus => 'Ortografia desativada';
+
+  @override
   String get checkSpelling => 'Verificar ortografia';
 
   @override
@@ -9261,6 +9267,12 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get chooseSpellingLanguage => 'Escolher idioma ortográfico';
+
+  @override
+  String get spellingLanguageUnsetStatus => 'Idioma…';
+
+  @override
+  String get spellingOffStatus => 'Ortografia desativada';
 
   @override
   String get checkSpelling => 'Verificar ortografia';

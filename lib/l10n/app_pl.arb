@@ -88,6 +88,8 @@
   "defaultSpellingLanguage": "Domyślny język pisowni",
   "projectSpellingLanguage": "Język sprawdzania pisowni projektu",
   "chooseSpellingLanguage": "Wybierz język pisowni",
+  "spellingLanguageUnsetStatus": "Język…",
+  "spellingOffStatus": "Pisownia wyłączona",
   "checkSpelling": "Sprawdź pisownię",
   "ignoreSpellingOnce": "Ignoruj raz",
   "ignoreSpellingDocument": "Ignoruj wszystkie w tym dokumencie",

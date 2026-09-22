@@ -88,6 +88,8 @@
   "defaultSpellingLanguage": "لغة الإملاء الافتراضية",
   "projectSpellingLanguage": "لغة التدقيق الإملائي للمشروع",
   "chooseSpellingLanguage": "اختر لغة الإملاء",
+  "spellingLanguageUnsetStatus": "اللغة…",
+  "spellingOffStatus": "التدقيق الإملائي متوقف",
   "checkSpelling": "تدقيق الإملاء",
   "ignoreSpellingOnce": "تجاهل مرة واحدة",
   "ignoreSpellingDocument": "تجاهل الكل في هذا المستند",

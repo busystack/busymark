@@ -4516,6 +4516,12 @@ class AppLocalizationsHi extends AppLocalizations {
   String get chooseSpellingLanguage => 'वर्तनी भाषा चुनें';
 
   @override
+  String get spellingLanguageUnsetStatus => 'भाषा…';
+
+  @override
+  String get spellingOffStatus => 'वर्तनी बंद';
+
+  @override
   String get checkSpelling => 'वर्तनी जाँचें';
 
   @override

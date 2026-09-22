@@ -88,6 +88,8 @@
   "defaultSpellingLanguage": "기본 맞춤법 언어",
   "projectSpellingLanguage": "프로젝트 맞춤법 검사 언어",
   "chooseSpellingLanguage": "맞춤법 언어 선택",
+  "spellingLanguageUnsetStatus": "언어…",
+  "spellingOffStatus": "맞춤법 검사 끄기",
   "checkSpelling": "맞춤법 검사",
   "ignoreSpellingOnce": "한 번 무시",
   "ignoreSpellingDocument": "이 문서에서 모두 무시",

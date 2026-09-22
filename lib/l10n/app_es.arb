@@ -88,6 +88,8 @@
   "defaultSpellingLanguage": "Idioma ortográfico predeterminado",
   "projectSpellingLanguage": "Idioma de corrección ortográfica del proyecto",
   "chooseSpellingLanguage": "Elegir idioma ortográfico",
+  "spellingLanguageUnsetStatus": "Idioma…",
+  "spellingOffStatus": "Ortografía desactivada",
   "checkSpelling": "Revisar ortografía",
   "ignoreSpellingOnce": "Ignorar una vez",
   "ignoreSpellingDocument": "Ignorar todo en este documento",

@@ -4564,6 +4564,12 @@ class AppLocalizationsFa extends AppLocalizations {
   String get chooseSpellingLanguage => 'انتخاب زبان املا';
 
   @override
+  String get spellingLanguageUnsetStatus => 'زبان…';
+
+  @override
+  String get spellingOffStatus => 'بررسی املا خاموش';
+
+  @override
   String get checkSpelling => 'بررسی املا';
 
   @override

@@ -88,6 +88,8 @@
   "defaultSpellingLanguage": "Standardsprache für Rechtschreibung",
   "projectSpellingLanguage": "Projektsprache für Rechtschreibung",
   "chooseSpellingLanguage": "Rechtschreibsprache auswählen",
+  "spellingLanguageUnsetStatus": "Sprache…",
+  "spellingOffStatus": "Rechtschreibung aus",
   "checkSpelling": "Rechtschreibung prüfen",
   "ignoreSpellingOnce": "Einmal ignorieren",
   "ignoreSpellingDocument": "Alle in diesem Dokument ignorieren",

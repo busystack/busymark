@@ -4578,6 +4578,12 @@ class AppLocalizationsPl extends AppLocalizations {
   String get chooseSpellingLanguage => 'Wybierz język pisowni';
 
   @override
+  String get spellingLanguageUnsetStatus => 'Język…';
+
+  @override
+  String get spellingOffStatus => 'Pisownia wyłączona';
+
+  @override
   String get checkSpelling => 'Sprawdź pisownię';
 
   @override

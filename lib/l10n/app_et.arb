@@ -88,6 +88,8 @@
   "defaultSpellingLanguage": "Vaikimisi õigekirjakeel",
   "projectSpellingLanguage": "Projekti õigekirjakontrolli keel",
   "chooseSpellingLanguage": "Vali õigekirjakeel",
+  "spellingLanguageUnsetStatus": "Keel…",
+  "spellingOffStatus": "Õigekirjakontroll väljas",
   "checkSpelling": "Kontrolli õigekirja",
   "ignoreSpellingOnce": "Eira üks kord",
   "ignoreSpellingDocument": "Eira selles dokumendis kõiki",

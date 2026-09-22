@@ -88,6 +88,8 @@
   "defaultSpellingLanguage": "زبان پیش‌فرض بررسی املا",
   "projectSpellingLanguage": "زبان غلط‌یابی پروژه",
   "chooseSpellingLanguage": "انتخاب زبان املا",
+  "spellingLanguageUnsetStatus": "زبان…",
+  "spellingOffStatus": "بررسی املا خاموش",
   "checkSpelling": "بررسی املا",
   "ignoreSpellingOnce": "یک‌بار نادیده بگیر",
   "ignoreSpellingDocument": "همه را در این سند نادیده بگیر",

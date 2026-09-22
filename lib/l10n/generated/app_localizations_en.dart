@@ -4541,6 +4541,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get chooseSpellingLanguage => 'Choose spelling language';
 
   @override
+  String get spellingLanguageUnsetStatus => 'Language…';
+
+  @override
+  String get spellingOffStatus => 'Spelling Off';
+
+  @override
   String get checkSpelling => 'Check Spelling';
 
   @override

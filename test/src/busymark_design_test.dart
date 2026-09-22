@@ -69,10 +69,7 @@ void main() {
     expect(
       tester
           .widget<YaruToggleButton>(
-            find.descendant(
-              of: radio,
-              matching: find.byType(YaruToggleButton),
-            ),
+            find.descendant(of: radio, matching: find.byType(YaruToggleButton)),
           )
           .hasFocusBorder,
       isTrue,
@@ -1334,7 +1331,6 @@ void main() {
               child: BusyMarkBanner(
                 title: 'Test English dictionary is not installed',
                 actionLabel: 'Install dictionary',
-                suggestedAction: true,
                 onAction: () {},
               ),
             ),
@@ -1353,17 +1349,40 @@ void main() {
       );
       final decoration = surface.decoration as BoxDecoration;
       expect(title.style?.color, colors.foreground);
-      expect(title.style?.fontWeight, FontWeight.w700);
-      expect(title.maxLines, 3);
+      expect(title.style?.fontSize, theme.textTheme.bodySmall?.fontSize);
+      expect(title.style?.fontWeight, isNot(FontWeight.w700));
+      expect(title.maxLines, 2);
       expect(title.softWrap, isTrue);
       expect(title.overflow, TextOverflow.ellipsis);
-      expect(title.textAlign, TextAlign.center);
+      expect(title.textAlign, TextAlign.start);
       expect(decoration.color, colors.panel);
       expect(decoration.border?.bottom.color, colors.divider);
       expect(
         find.descendant(
           of: find.byType(BusyMarkBanner),
+          matching: find.byType(FilledButton),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: find.byType(BusyMarkBanner),
           matching: find.byType(ElevatedButton),
+        ),
+        findsNothing,
+      );
+      expect(
+        find.descendant(
+          of: find.byType(BusyMarkBanner),
+          matching: find.byWidgetPredicate(
+            (widget) =>
+                widget is Padding &&
+                widget.padding ==
+                    const EdgeInsets.symmetric(
+                      horizontal: BusyMarkSpacing.md,
+                      vertical: BusyMarkSpacing.xs,
+                    ),
+          ),
         ),
         findsOneWidget,
       );

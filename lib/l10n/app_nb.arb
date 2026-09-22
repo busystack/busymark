@@ -88,6 +88,8 @@
   "defaultSpellingLanguage": "Standard språk for stavekontroll",
   "projectSpellingLanguage": "Prosjektspråk for stavekontroll",
   "chooseSpellingLanguage": "Velg språk for stavekontroll",
+  "spellingLanguageUnsetStatus": "Språk…",
+  "spellingOffStatus": "Stavekontroll av",
   "checkSpelling": "Kontroller staving",
   "ignoreSpellingOnce": "Ignorer én gang",
   "ignoreSpellingDocument": "Ignorer alle i dette dokumentet",

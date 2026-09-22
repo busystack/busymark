@@ -4325,6 +4325,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get chooseSpellingLanguage => '选择拼写语言';
 
   @override
+  String get spellingLanguageUnsetStatus => '语言…';
+
+  @override
+  String get spellingOffStatus => '拼写检查已关闭';
+
+  @override
   String get checkSpelling => '检查拼写';
 
   @override
@@ -8745,6 +8751,12 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get chooseSpellingLanguage => '选择拼写语言';
+
+  @override
+  String get spellingLanguageUnsetStatus => '语言…';
+
+  @override
+  String get spellingOffStatus => '拼写检查已关闭';
 
   @override
   String get checkSpelling => '检查拼写';

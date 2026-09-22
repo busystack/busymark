@@ -4392,6 +4392,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get chooseSpellingLanguage => '맞춤법 언어 선택';
 
   @override
+  String get spellingLanguageUnsetStatus => '언어…';
+
+  @override
+  String get spellingOffStatus => '맞춤법 검사 끄기';
+
+  @override
   String get checkSpelling => '맞춤법 검사';
 
   @override

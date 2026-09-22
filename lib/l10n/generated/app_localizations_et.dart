@@ -4523,6 +4523,12 @@ class AppLocalizationsEt extends AppLocalizations {
   String get chooseSpellingLanguage => 'Vali õigekirjakeel';
 
   @override
+  String get spellingLanguageUnsetStatus => 'Keel…';
+
+  @override
+  String get spellingOffStatus => 'Õigekirjakontroll väljas';
+
+  @override
   String get checkSpelling => 'Kontrolli õigekirja';
 
   @override

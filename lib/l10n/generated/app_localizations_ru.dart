@@ -4581,6 +4581,12 @@ class AppLocalizationsRu extends AppLocalizations {
   String get chooseSpellingLanguage => 'Выбрать язык правописания';
 
   @override
+  String get spellingLanguageUnsetStatus => 'Язык…';
+
+  @override
+  String get spellingOffStatus => 'Проверка правописания отключена';
+
+  @override
   String get checkSpelling => 'Проверить правописание';
 
   @override

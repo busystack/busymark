@@ -88,6 +88,8 @@
   "defaultSpellingLanguage": "既定のスペルチェック言語",
   "projectSpellingLanguage": "プロジェクトのスペルチェック言語",
   "chooseSpellingLanguage": "スペルチェック言語を選択",
+  "spellingLanguageUnsetStatus": "言語…",
+  "spellingOffStatus": "スペルチェック オフ",
   "checkSpelling": "スペルチェック",
   "ignoreSpellingOnce": "一度だけ無視",
   "ignoreSpellingDocument": "この文書ですべて無視",

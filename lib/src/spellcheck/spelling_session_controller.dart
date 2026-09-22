@@ -634,20 +634,18 @@ final class SpellingSessionController extends ChangeNotifier {
       _showDisabled();
       return;
     }
-    if (!_isEligible(input.documentKind)) {
+    if (!input.documentKind.supportsSpelling) {
       _showDisabled();
       return;
     }
     try {
       await _initializeStorage(input.workspace);
       if (!_isOperationCurrent(operation, input)) return;
-      final languageId = switch (override.kind) {
-        SpellingLanguageOverrideKind.selected => override.languageId,
-        SpellingLanguageOverrideKind.inherit =>
-          _projectWords.projectLanguage ??
-              input.settings.defaultSpellingLanguage,
-        SpellingLanguageOverrideKind.disabled => null,
-      };
+      final languageId = resolveSpellingLanguageId(
+        override: override,
+        projectLanguage: _projectWords.projectLanguage,
+        defaultLanguage: input.settings.defaultSpellingLanguage,
+      );
       if (languageId == null) {
         _showLanguageRequired();
         return;
@@ -1200,12 +1198,17 @@ final class SpellingSessionInput {
       );
 }
 
-bool _isEligible(DocumentKind kind) => switch (kind) {
-  DocumentKind.markdown ||
-  DocumentKind.writersideMarkdownTopic ||
-  DocumentKind.writersideXmlTopic => true,
-  _ => false,
-};
+String? resolveSpellingLanguageId({
+  required SpellingLanguageOverride override,
+  required String? projectLanguage,
+  required String? defaultLanguage,
+}) {
+  return switch (override.kind) {
+    SpellingLanguageOverrideKind.selected => override.languageId,
+    SpellingLanguageOverrideKind.inherit => projectLanguage ?? defaultLanguage,
+    SpellingLanguageOverrideKind.disabled => null,
+  };
+}
 
 bool _sameWordStoreSnapshot(
   SpellingWordStoreSnapshot left,

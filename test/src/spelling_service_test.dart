@@ -16,6 +16,7 @@ import 'package:busymark/src/spellcheck/spelling_catalog.dart';
 import 'package:busymark/src/spellcheck/spelling_dictionary_downloader.dart';
 import 'package:busymark/src/spellcheck/spelling_dictionary_importer.dart';
 import 'package:busymark/src/spellcheck/spelling_dictionary_installer.dart';
+import 'package:busymark/src/spellcheck/spelling_language.dart';
 import 'package:busymark/src/spellcheck/spelling_projection.dart';
 import 'package:busymark/src/spellcheck/spelling_replacement.dart';
 import 'package:busymark/src/spellcheck/spelling_session_controller.dart';
@@ -40,6 +41,55 @@ const _snapshot = SpellingSnapshotIdentity(
 );
 
 void main() {
+  test('document kinds expose one authoritative spelling capability', () {
+    expect(DocumentKind.markdown.supportsSpelling, isTrue);
+    expect(DocumentKind.writersideMarkdownTopic.supportsSpelling, isTrue);
+    expect(DocumentKind.writersideXmlTopic.supportsSpelling, isTrue);
+    for (final kind in DocumentKind.values.where(
+      (kind) =>
+          kind != DocumentKind.markdown &&
+          kind != DocumentKind.writersideMarkdownTopic &&
+          kind != DocumentKind.writersideXmlTopic,
+    )) {
+      expect(kind.supportsSpelling, isFalse, reason: kind.name);
+    }
+  });
+
+  test('effective spelling language preserves document and project order', () {
+    expect(
+      resolveSpellingLanguageId(
+        override: const SpellingLanguageOverride.selected('fr-CA'),
+        projectLanguage: 'de-DE',
+        defaultLanguage: 'en-CA',
+      ),
+      'fr-CA',
+    );
+    expect(
+      resolveSpellingLanguageId(
+        override: const SpellingLanguageOverride.inherit(),
+        projectLanguage: 'de-DE',
+        defaultLanguage: 'en-CA',
+      ),
+      'de-DE',
+    );
+    expect(
+      resolveSpellingLanguageId(
+        override: const SpellingLanguageOverride.inherit(),
+        projectLanguage: null,
+        defaultLanguage: 'en-CA',
+      ),
+      'en-CA',
+    );
+    expect(
+      resolveSpellingLanguageId(
+        override: const SpellingLanguageOverride.disabled(),
+        projectLanguage: 'de-DE',
+        defaultLanguage: 'en-CA',
+      ),
+      isNull,
+    );
+  });
+
   test('session identity changes when a stable buffer is saved to a path', () {
     final settings = AppSettings.defaults();
     final untitled = DocumentBuffer.untitled(

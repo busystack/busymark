@@ -4,7 +4,7 @@ import '../../app/busymark_design.dart';
 import '../../app/localization.dart';
 import '../text_format_metadata.dart';
 
-/// Compact active-document format status for the pane header.
+/// Compact active-document format status for the document status strip.
 ///
 /// Encoding and final-newline details stay available without recreating the
 /// old full-width footer. A BOM is included in the visible label because its

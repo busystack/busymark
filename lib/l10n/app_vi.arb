@@ -88,6 +88,8 @@
   "defaultSpellingLanguage": "Ngôn ngữ chính tả mặc định",
   "projectSpellingLanguage": "Ngôn ngữ kiểm tra chính tả của dự án",
   "chooseSpellingLanguage": "Chọn ngôn ngữ chính tả",
+  "spellingLanguageUnsetStatus": "Ngôn ngữ…",
+  "spellingOffStatus": "Tắt chính tả",
   "checkSpelling": "Kiểm tra chính tả",
   "ignoreSpellingOnce": "Bỏ qua một lần",
   "ignoreSpellingDocument": "Bỏ qua tất cả trong tài liệu này",

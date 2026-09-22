@@ -88,6 +88,8 @@
   "defaultSpellingLanguage": "Bahasa ejaan bawaan",
   "projectSpellingLanguage": "Bahasa ejaan proyek",
   "chooseSpellingLanguage": "Pilih bahasa ejaan",
+  "spellingLanguageUnsetStatus": "Bahasa…",
+  "spellingOffStatus": "Ejaan Nonaktif",
   "checkSpelling": "Periksa Ejaan",
   "ignoreSpellingOnce": "Abaikan Sekali",
   "ignoreSpellingDocument": "Abaikan Semua di Dokumen Ini",

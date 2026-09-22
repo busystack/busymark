@@ -56,6 +56,7 @@ abstract final class BusyMarkSizes {
   static const double settingsSidebarBreakpoint = sidebarWidth + 520;
   static const double toolbarHeight = kYaruTitleBarHeight;
   static const double paneHeaderHeight = 38;
+  static const double documentStatusBarHeight = 28;
   static const double iconButton = kYaruTitleBarItemHeight;
   static const double compactIconButton = 24;
   static const double compactIcon = 13;
@@ -3020,6 +3021,12 @@ class BusyMarkBanner extends StatelessWidget {
           )
         : BusyMarkPushButton.standard(
             onPressed: onAction,
+            style: FilledButton.styleFrom(
+              padding: const EdgeInsets.symmetric(
+                horizontal: BusyMarkSpacing.sm,
+              ),
+              visualDensity: VisualDensity.compact,
+            ),
             child: Text(actionLabel),
           );
     final banner = Semantics(
@@ -3033,18 +3040,20 @@ class BusyMarkBanner extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.symmetric(
             horizontal: BusyMarkSpacing.md,
-            vertical: BusyMarkSpacing.sm,
+            vertical: BusyMarkSpacing.xs,
           ),
           child: Row(
             children: [
               Expanded(
                 child: Text(
                   title,
-                  maxLines: 3,
+                  maxLines: 2,
                   softWrap: true,
                   overflow: TextOverflow.ellipsis,
-                  style: busyMarkSectionHeaderStyle(context),
-                  textAlign: TextAlign.center,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodySmall?.copyWith(color: colors.foreground),
+                  textAlign: TextAlign.start,
                 ),
               ),
               if (action != null) ...[

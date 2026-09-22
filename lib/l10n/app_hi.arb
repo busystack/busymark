@@ -88,6 +88,8 @@
   "defaultSpellingLanguage": "डिफ़ॉल्ट वर्तनी भाषा",
   "projectSpellingLanguage": "परियोजना की वर्तनी भाषा",
   "chooseSpellingLanguage": "वर्तनी भाषा चुनें",
+  "spellingLanguageUnsetStatus": "भाषा…",
+  "spellingOffStatus": "वर्तनी बंद",
   "checkSpelling": "वर्तनी जाँचें",
   "ignoreSpellingOnce": "एक बार अनदेखा करें",
   "ignoreSpellingDocument": "इस दस्तावेज़ में सभी अनदेखे करें",

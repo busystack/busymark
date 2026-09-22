@@ -4526,6 +4526,12 @@ class AppLocalizationsTr extends AppLocalizations {
   String get chooseSpellingLanguage => 'Yazım dili seç';
 
   @override
+  String get spellingLanguageUnsetStatus => 'Dil…';
+
+  @override
+  String get spellingOffStatus => 'Yazım denetimi kapalı';
+
+  @override
   String get checkSpelling => 'Yazımı Denetle';
 
   @override

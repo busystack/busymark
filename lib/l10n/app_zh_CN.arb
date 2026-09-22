@@ -88,6 +88,8 @@
   "defaultSpellingLanguage": "默认拼写语言",
   "projectSpellingLanguage": "项目拼写检查语言",
   "chooseSpellingLanguage": "选择拼写语言",
+  "spellingLanguageUnsetStatus": "语言…",
+  "spellingOffStatus": "拼写检查已关闭",
   "checkSpelling": "检查拼写",
   "ignoreSpellingOnce": "忽略一次",
   "ignoreSpellingDocument": "在此文档中全部忽略",

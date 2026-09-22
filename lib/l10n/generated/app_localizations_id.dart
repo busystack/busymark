@@ -4525,6 +4525,12 @@ class AppLocalizationsId extends AppLocalizations {
   String get chooseSpellingLanguage => 'Pilih bahasa ejaan';
 
   @override
+  String get spellingLanguageUnsetStatus => 'Bahasa…';
+
+  @override
+  String get spellingOffStatus => 'Ejaan Nonaktif';
+
+  @override
   String get checkSpelling => 'Periksa Ejaan';
 
   @override

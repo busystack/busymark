@@ -482,6 +482,7 @@ void main() {
         await tester.pump(BusyMarkMotion.bannerReveal);
 
         final banner = find.byType(BusyMarkBanner);
+        final statusBar = find.byKey(const ValueKey('document-status-bar'));
         final pane = find.byKey(
           ValueKey(
             viewMode == DocumentViewModePreference.editor
@@ -497,6 +498,19 @@ void main() {
           findsOneWidget,
         );
         expect(find.text(l10n.installSpellingDictionary), findsOneWidget);
+        expect(statusBar, findsOneWidget);
+        expect(
+          find.descendant(of: statusBar, matching: find.text('Test English')),
+          findsOneWidget,
+        );
+        expect(
+          find.descendant(of: banner, matching: find.byType(FilledButton)),
+          findsOneWidget,
+        );
+        expect(
+          find.descendant(of: banner, matching: find.byType(ElevatedButton)),
+          findsNothing,
+        );
         expect(
           find.ancestor(
             of: banner,
@@ -505,31 +519,178 @@ void main() {
           findsNothing,
         );
         expect(tester.getBottomLeft(banner).dy, tester.getTopLeft(pane).dy);
+        expect(tester.getBottomLeft(pane).dy, tester.getTopLeft(statusBar).dy);
       },
     );
   }
 
-  testWidgets('language-required state uses one actionable native banner', (
+  testWidgets(
+    'language-required state uses compact document status instead of a banner',
+    (tester) async {
+      final harness = await _pumpWorkspace(
+        tester,
+        source: 'helo\n',
+        defaultLanguage: null,
+      );
+      await _until(
+        tester,
+        () =>
+            harness.spelling.state.status ==
+            SpellingPresentationStatus.languageRequired,
+      );
+
+      final statusBar = find.byKey(const ValueKey('document-status-bar'));
+      final languageStatus = find.byKey(
+        const ValueKey('document-spelling-language-status'),
+      );
+      final banner = tester.widget<BusyMarkBanner>(find.byType(BusyMarkBanner));
+      expect(statusBar, findsOneWidget);
+      expect(languageStatus, findsOneWidget);
+      expect(
+        find.descendant(
+          of: languageStatus,
+          matching: find.text(l10n.spellingLanguageUnsetStatus),
+        ),
+        findsOneWidget,
+      );
+      expect(banner.revealed, isFalse);
+
+      await tester.tap(languageStatus);
+      await _until(
+        tester,
+        () => find.byType(BusyMarkDialogShell).evaluate().isNotEmpty,
+      );
+      final chooser = find.byType(BusyMarkDialogShell);
+      expect(
+        find.descendant(
+          of: chooser,
+          matching: find.text(l10n.chooseSpellingLanguage),
+        ),
+        findsOneWidget,
+      );
+      await tester.tap(
+        find.descendant(of: chooser, matching: find.text('Test English')),
+      );
+      await _until(
+        tester,
+        () =>
+            find.byType(BusyMarkDialogShell).evaluate().isEmpty &&
+            harness.spelling.state.status == SpellingPresentationStatus.ready,
+      );
+
+      expect(
+        find.descendant(of: statusBar, matching: find.text('Test English')),
+        findsOneWidget,
+      );
+      expect(
+        tester.widget<BusyMarkBanner>(find.byType(BusyMarkBanner)).revealed,
+        isFalse,
+      );
+      expect(
+        harness.workspace.activeBuffer?.editorState.spellingLanguage,
+        const SpellingLanguageOverride.selected('en-Test'),
+      );
+    },
+  );
+
+  for (final viewMode in DocumentViewModePreference.values) {
+    testWidgets('uses one document status strip in ${viewMode.name} mode', (
+      tester,
+    ) async {
+      final harness = await _pumpWorkspace(
+        tester,
+        source: 'helo\n',
+        viewMode: viewMode,
+      );
+      await _until(tester, () => harness.spelling.state.complete);
+
+      final statusBar = find.byKey(const ValueKey('document-status-bar'));
+      expect(statusBar, findsOneWidget);
+      expect(
+        find.descendant(of: statusBar, matching: find.text('Test English')),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: statusBar, matching: find.text('LF')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey('document-spelling-language-status')),
+        findsOneWidget,
+      );
+    });
+  }
+
+  testWidgets('spelling-off status remains an actionable language control', (
+    tester,
+  ) async {
+    final harness = await _pumpWorkspace(tester, source: 'helo\n');
+    await _until(tester, () => harness.spelling.state.complete);
+    final languageStatus = find.byKey(
+      const ValueKey('document-spelling-language-status'),
+    );
+
+    await tester.tap(languageStatus);
+    await _until(
+      tester,
+      () => find.byType(BusyMarkDialogShell).evaluate().isNotEmpty,
+    );
+    await tester.tap(find.text(l10n.disableDocumentSpelling));
+    await _until(
+      tester,
+      () =>
+          harness.workspace.activeBuffer?.editorState.spellingLanguage ==
+          const SpellingLanguageOverride.disabled(),
+    );
+
+    expect(find.text(l10n.spellingOffStatus), findsOneWidget);
+    await tester.tap(languageStatus);
+    await _until(
+      tester,
+      () => find.byType(BusyMarkDialogShell).evaluate().isNotEmpty,
+    );
+    await tester.tap(find.text('Test English'));
+    await _until(
+      tester,
+      () =>
+          harness.spelling.state.status == SpellingPresentationStatus.ready &&
+          find.text('Test English').evaluate().isNotEmpty,
+    );
+  });
+
+  testWidgets('status initializes the chooser when automatic spelling is off', (
     tester,
   ) async {
     final harness = await _pumpWorkspace(
       tester,
       source: 'helo\n',
-      defaultLanguage: null,
+      automaticSpelling: false,
     );
     await _until(
       tester,
       () =>
-          harness.spelling.state.status ==
-              SpellingPresentationStatus.languageRequired &&
-          find.byType(BusyMarkBanner).evaluate().isNotEmpty &&
-          tester.widget<BusyMarkBanner>(find.byType(BusyMarkBanner)).revealed,
+          harness.spelling.state.status == SpellingPresentationStatus.disabled,
     );
+    expect(harness.spelling.catalog, isNull);
 
-    final banner = tester.widget<BusyMarkBanner>(find.byType(BusyMarkBanner));
-    expect(banner.title, l10n.chooseSpellingLanguage);
-    expect(banner.actionLabel, l10n.chooseSpellingLanguage);
-    expect(banner.onAction, isNotNull);
+    await tester.tap(
+      find.byKey(const ValueKey('document-spelling-language-status')),
+    );
+    await _until(
+      tester,
+      () =>
+          harness.spelling.catalog != null &&
+          find.byType(BusyMarkDialogShell).evaluate().isNotEmpty,
+    );
+    expect(
+      find.descendant(
+        of: find.byType(BusyMarkDialogShell),
+        matching: find.text('Test English'),
+      ),
+      findsOneWidget,
+    );
+    await tester.tap(find.text(l10n.inheritSpellingLanguage));
+    await tester.pumpAndSettle();
   });
 
   testWidgets('banner installs the required dictionary and then conceals', (
@@ -878,6 +1039,7 @@ Future<_Harness> _pumpWorkspace(
   bool includeSecondLanguage = false,
   DocumentViewModePreference viewMode = DocumentViewModePreference.editor,
   String? defaultLanguage = 'en-Test',
+  bool automaticSpelling = true,
   SpellingDictionaryFileDownload? downloadFile,
   SpellingCoordinatorStarter? coordinatorStarter,
 }) async {
@@ -925,7 +1087,7 @@ Future<_Harness> _pumpWorkspace(
   final container = ProviderContainer(
     overrides: [
       localSettingsStoreProvider.overrideWithValue(
-        _Settings(viewMode, defaultLanguage),
+        _Settings(viewMode, defaultLanguage, automaticSpelling),
       ),
       localHistoryStoreProvider.overrideWithValue(MemoryLocalHistoryStore()),
       documentSessionStoreProvider.overrideWithValue(
@@ -1029,16 +1191,17 @@ Future<void> _until(WidgetTester tester, bool Function() condition) async {
 }
 
 class _Settings implements LocalSettingsStore {
-  const _Settings(this.viewMode, this.defaultLanguage);
+  const _Settings(this.viewMode, this.defaultLanguage, this.automaticSpelling);
 
   final DocumentViewModePreference viewMode;
   final String? defaultLanguage;
+  final bool automaticSpelling;
 
   @override
   Future<Map<String, Object?>> load() async => AppSettings.defaults()
       .copyWith(
         defaultSpellingLanguage: defaultLanguage,
-        automaticSpelling: true,
+        automaticSpelling: automaticSpelling,
         autoSave: false,
         reopenPreviousWorkspaceOnStartup: false,
         documentViewMode: viewMode,

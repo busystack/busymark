@@ -2828,10 +2828,15 @@ void main() {
     tester,
   ) async {
     final service = _StartupWorkspaceService();
+    final settingsStore = _MemorySettingsStore()
+      ..value = AppSettings.defaults()
+          .copyWith(defaultSpellingLanguage: null)
+          .toJson();
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
           linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+          localSettingsStoreProvider.overrideWithValue(settingsStore),
           workspaceServiceProvider.overrideWithValue(service),
         ],
         child: const BusyMarkApp(),
@@ -2879,6 +2884,17 @@ void main() {
     expect(service.untitledCount, 1);
     expect(find.text(l10n.createMarkdownFile), findsNothing);
     expect(find.text(l10n.workspaceKindUnsavedMarkdown), findsWidgets);
+    expect(find.byKey(const ValueKey('editor-tab-strip')), findsNothing);
+    expect(find.byKey(const ValueKey('document-status-bar')), findsOneWidget);
+    expect(find.text('LF'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('document-spelling-language-status')),
+      findsOneWidget,
+    );
+    expect(find.text(l10n.spellingLanguageUnsetStatus), findsOneWidget);
+    final spellingBanner = find.byKey(const ValueKey('spelling-banner'));
+    expect(spellingBanner, findsOneWidget);
+    expect(tester.widget<BusyMarkBanner>(spellingBanner).revealed, isFalse);
   });
 
   testWidgets('Ctrl+N keeps unsaved documents in independent tabs', (
@@ -4573,12 +4589,12 @@ code
       temp.deleteSync(recursive: true);
     });
     final first = File('${temp.path}/a.md')..writeAsStringSync('# A\n');
-    final second = File('${temp.path}/b.md')..writeAsStringSync('# B\n');
+    final second = File('${temp.path}/b.md')..writeAsStringSync('# B\r\n');
     final third = File('${temp.path}/c.md')..writeAsStringSync('# C\n');
     final service = _TabbedWorkspaceService(
       rootPath: temp.path,
       paths: [first.path, second.path, third.path],
-    );
+    ).._sources[second.path] = '# B\r\n';
     final container = ProviderContainer(
       overrides: [
         linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
@@ -4643,6 +4659,18 @@ code
 
     expect(find.text('LF'), findsOneWidget);
     expect(find.text('CRLF'), findsNothing);
+    final tabStrip = find.byKey(const ValueKey('editor-tab-strip'));
+    final statusBar = find.byKey(const ValueKey('document-status-bar'));
+    expect(tabStrip, findsOneWidget);
+    expect(statusBar, findsOneWidget);
+    expect(
+      find.descendant(of: statusBar, matching: find.text('LF')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: tabStrip, matching: find.text('LF')),
+      findsNothing,
+    );
     expect(
       find.ancestor(of: find.text('LF'), matching: find.byType(InkWell)),
       findsNothing,
@@ -4690,6 +4718,16 @@ code
     expect(
       container.read(workspaceControllerProvider).workspace?.openFilePaths,
       [first.path, second.path],
+    );
+    expect(find.text('LF'), findsNothing);
+    expect(find.text('CRLF'), findsOneWidget);
+    expect(
+      find.descendant(of: statusBar, matching: find.text('CRLF')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: tabStrip, matching: find.text('CRLF')),
+      findsNothing,
     );
     await pressControlShortcut(LogicalKeyboardKey.keyW, shift: true);
 
@@ -4798,6 +4836,7 @@ code
       find.textContaining('Guide change', findRichText: true),
       findsWidgets,
     );
+    expect(find.byKey(const ValueKey('document-status-bar')), findsNothing);
 
     await pressControlShortcut(LogicalKeyboardKey.tab);
     expect(
@@ -4812,6 +4851,7 @@ code
       find.textContaining('Guide change', findRichText: true),
       findsNothing,
     );
+    expect(find.byKey(const ValueKey('document-status-bar')), findsOneWidget);
 
     await pressControlShortcut(LogicalKeyboardKey.tab);
     expect(
@@ -4822,6 +4862,7 @@ code
       find.textContaining('Readme change', findRichText: true),
       findsWidgets,
     );
+    expect(find.byKey(const ValueKey('document-status-bar')), findsNothing);
 
     await pressControlShortcut(LogicalKeyboardKey.tab, shift: true);
     expect(
@@ -13151,8 +13192,10 @@ class _TabbedWorkspaceService extends WorkspaceService {
   @override
   Future<WorkspaceFileLoad> loadTextWithSnapshot(String path) async {
     final text = _sources[path] ?? _sourceFor(path);
+    final decoded = decodeUtf8Document(utf8.encode(text));
     return WorkspaceFileLoad(
-      text: text,
+      text: decoded.text,
+      format: decoded.format,
       snapshot: WorkspaceFileSnapshot(
         modifiedAt: DateTime(2026),
         size: text.length,

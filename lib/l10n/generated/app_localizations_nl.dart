@@ -4568,6 +4568,12 @@ class AppLocalizationsNl extends AppLocalizations {
   String get chooseSpellingLanguage => 'Taal voor spelling kiezen';
 
   @override
+  String get spellingLanguageUnsetStatus => 'Taal…';
+
+  @override
+  String get spellingOffStatus => 'Spelling uit';
+
+  @override
   String get checkSpelling => 'Spelling controleren';
 
   @override

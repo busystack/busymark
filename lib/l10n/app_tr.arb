@@ -88,6 +88,8 @@
   "defaultSpellingLanguage": "Varsayılan yazım dili",
   "projectSpellingLanguage": "Proje yazım denetimi dili",
   "chooseSpellingLanguage": "Yazım dili seç",
+  "spellingLanguageUnsetStatus": "Dil…",
+  "spellingOffStatus": "Yazım denetimi kapalı",
   "checkSpelling": "Yazımı Denetle",
   "ignoreSpellingOnce": "Bir Kez Yoksay",
   "ignoreSpellingDocument": "Bu Belgede Tümünü Yoksay",

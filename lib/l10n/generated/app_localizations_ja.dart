@@ -4398,6 +4398,12 @@ class AppLocalizationsJa extends AppLocalizations {
   String get chooseSpellingLanguage => 'スペルチェック言語を選択';
 
   @override
+  String get spellingLanguageUnsetStatus => '言語…';
+
+  @override
+  String get spellingOffStatus => 'スペルチェック オフ';
+
+  @override
   String get checkSpelling => 'スペルチェック';
 
   @override

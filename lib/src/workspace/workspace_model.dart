@@ -46,6 +46,13 @@ extension DocumentKindAiSupport on DocumentKind {
       this == DocumentKind.writersideMarkdownTopic;
 }
 
+extension DocumentKindSpellingSupport on DocumentKind {
+  bool get supportsSpelling =>
+      this == DocumentKind.markdown ||
+      this == DocumentKind.writersideMarkdownTopic ||
+      this == DocumentKind.writersideXmlTopic;
+}
+
 class ActiveDocumentOutline {
   const ActiveDocumentOutline({
     required this.workspaceId,

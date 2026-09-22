@@ -88,6 +88,8 @@
   "defaultSpellingLanguage": "Типова мова перевірки правопису",
   "projectSpellingLanguage": "Мова перевірки правопису проєкту",
   "chooseSpellingLanguage": "Вибрати мову правопису",
+  "spellingLanguageUnsetStatus": "Мова…",
+  "spellingOffStatus": "Перевірку правопису вимкнено",
   "checkSpelling": "Перевірити правопис",
   "ignoreSpellingOnce": "Ігнорувати один раз",
   "ignoreSpellingDocument": "Ігнорувати все в цьому документі",

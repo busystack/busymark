@@ -4563,6 +4563,12 @@ class AppLocalizationsIt extends AppLocalizations {
   String get chooseSpellingLanguage => 'Scegli la lingua ortografica';
 
   @override
+  String get spellingLanguageUnsetStatus => 'Lingua…';
+
+  @override
+  String get spellingOffStatus => 'Controllo ortografico disattivato';
+
+  @override
   String get checkSpelling => 'Controlla ortografia';
 
   @override

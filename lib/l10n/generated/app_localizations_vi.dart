@@ -4517,6 +4517,12 @@ class AppLocalizationsVi extends AppLocalizations {
   String get chooseSpellingLanguage => 'Chọn ngôn ngữ chính tả';
 
   @override
+  String get spellingLanguageUnsetStatus => 'Ngôn ngữ…';
+
+  @override
+  String get spellingOffStatus => 'Tắt chính tả';
+
+  @override
   String get checkSpelling => 'Kiểm tra chính tả';
 
   @override

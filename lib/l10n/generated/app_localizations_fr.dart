@@ -4568,6 +4568,12 @@ class AppLocalizationsFr extends AppLocalizations {
   String get chooseSpellingLanguage => 'Choisir la langue orthographique';
 
   @override
+  String get spellingLanguageUnsetStatus => 'Langue…';
+
+  @override
+  String get spellingOffStatus => 'Orthographe désactivée';
+
+  @override
   String get checkSpelling => 'Vérifier l’orthographe';
 
   @override

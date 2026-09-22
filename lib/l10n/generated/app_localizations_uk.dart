@@ -4588,6 +4588,12 @@ class AppLocalizationsUk extends AppLocalizations {
   String get chooseSpellingLanguage => 'Вибрати мову правопису';
 
   @override
+  String get spellingLanguageUnsetStatus => 'Мова…';
+
+  @override
+  String get spellingOffStatus => 'Перевірку правопису вимкнено';
+
+  @override
   String get checkSpelling => 'Перевірити правопис';
 
   @override

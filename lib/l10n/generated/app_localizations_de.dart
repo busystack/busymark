@@ -4563,6 +4563,12 @@ class AppLocalizationsDe extends AppLocalizations {
   String get chooseSpellingLanguage => 'Rechtschreibsprache auswählen';
 
   @override
+  String get spellingLanguageUnsetStatus => 'Sprache…';
+
+  @override
+  String get spellingOffStatus => 'Rechtschreibung aus';
+
+  @override
   String get checkSpelling => 'Rechtschreibung prüfen';
 
   @override

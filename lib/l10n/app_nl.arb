@@ -88,6 +88,8 @@
   "defaultSpellingLanguage": "Standaardtaal voor spelling",
   "projectSpellingLanguage": "Projecttaal voor spelling",
   "chooseSpellingLanguage": "Taal voor spelling kiezen",
+  "spellingLanguageUnsetStatus": "Taal…",
+  "spellingOffStatus": "Spelling uit",
   "checkSpelling": "Spelling controleren",
   "ignoreSpellingOnce": "Eenmaal negeren",
   "ignoreSpellingDocument": "Alles in dit document negeren",

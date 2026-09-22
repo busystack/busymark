@@ -102,7 +102,7 @@ import '../../writerside/writerside_topic_removal_service.dart';
 import '../../writerside/writerside_video.dart';
 import '../workspace_controller.dart';
 import '../document_buffer.dart';
-import 'document_format_indicator.dart';
+import 'document_status_bar.dart';
 import '../text_format_metadata.dart';
 import '../workspace_glyphs.dart';
 import '../workspace_model.dart';
@@ -10228,6 +10228,7 @@ class _EditorTabStrip extends ConsumerWidget {
     }
     final colors = BusyMarkSurfaceColors.of(context);
     return DecoratedBox(
+      key: const ValueKey('editor-tab-strip'),
       decoration: BoxDecoration(
         color: colors.headerbarFlat,
         border: Border(bottom: BorderSide(color: colors.subtleBorder)),
@@ -10270,12 +10271,6 @@ class _EditorTabStrip extends ConsumerWidget {
                 itemCount: entries.length,
               ),
             ),
-            if (gitState.selectedDiffForDisplay == null &&
-                localHistoryState.selectedRevision == null)
-              if (state.activeBuffer case final buffer?) ...[
-                BusyMarkDocumentFormatIndicator(format: buffer.format),
-                const SizedBox(width: BusyMarkSpacing.xs),
-              ],
           ],
         ),
       ),
@@ -11761,13 +11756,11 @@ final class _SpellingBannerPresentation {
     required this.title,
     this.actionLabel,
     this.onAction,
-    this.suggestedAction = false,
   });
 
   final String title;
   final String? actionLabel;
   final VoidCallback? onAction;
-  final bool suggestedAction;
 }
 
 class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
@@ -11962,15 +11955,15 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
         widget.viewMode != DocumentViewModePreference.preview &&
         !wysiwygVisible;
     final activeBuffer = widget.state.activeBuffer;
+    final documentKind = _activeDocumentKind(widget.state.workspace);
+    final spellingSupported = documentKind?.supportsSpelling ?? false;
     if (activeBuffer != null) {
       _scheduleSpelling(
         SpellingSessionInput(
           buffer: activeBuffer,
           workspace: widget.state.workspace,
           settings: settings,
-          documentKind:
-              _activeDocumentKind(widget.state.workspace) ??
-              DocumentKind.unknown,
+          documentKind: documentKind ?? DocumentKind.unknown,
           markdownMode: _sourceMarkdownMode(widget.state.workspace),
           richDocument: wysiwygVisible ? wysiwygDocument : null,
           richDocumentGeneration:
@@ -12021,10 +12014,14 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     final searchState = ref.watch(_workspaceSearchProvider);
     final spellingBannerPresentation =
         activeBuffer != null &&
+            spellingSupported &&
             settings.automaticSpelling &&
             activeBuffer.editorState.spellingLanguage.kind !=
                 SpellingLanguageOverrideKind.disabled
         ? _spellingBannerPresentation(context)
+        : null;
+    final spellingLabel = activeBuffer != null && spellingSupported
+        ? _spellingStatusLabel(context, activeBuffer, settings)
         : null;
     return DecoratedBox(
       decoration: BoxDecoration(color: colors.view),
@@ -12080,8 +12077,6 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
               title: spellingBannerPresentation?.title ?? '',
               actionLabel: spellingBannerPresentation?.actionLabel,
               onAction: spellingBannerPresentation?.onAction,
-              suggestedAction:
-                  spellingBannerPresentation?.suggestedAction ?? false,
               revealed: spellingBannerPresentation != null,
             ),
           Expanded(
@@ -12522,6 +12517,17 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
               ],
             ),
           ),
+          if (activeBuffer != null)
+            BusyMarkDocumentStatusBar(
+              format: activeBuffer.format,
+              spellingLabel: spellingLabel,
+              spellingTooltip: spellingSupported
+                  ? context.l10n.chooseSpellingLanguage
+                  : null,
+              onSpellingPressed: spellingSupported
+                  ? () => unawaited(_chooseDocumentSpellingLanguage())
+                  : null,
+            ),
         ],
       ),
     );
@@ -12794,12 +12800,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     final state = _spelling.state;
     switch (state.status) {
       case SpellingPresentationStatus.languageRequired:
-        return _SpellingBannerPresentation(
-          title: context.l10n.chooseSpellingLanguage,
-          actionLabel: context.l10n.chooseSpellingLanguage,
-          suggestedAction: true,
-          onAction: () => unawaited(_chooseDocumentSpellingLanguage()),
-        );
+        return null;
       case SpellingPresentationStatus.dictionaryNotInstalled:
         final languageId = state.message;
         final resource = languageId == null
@@ -12817,7 +12818,6 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
                   resource.label,
                 ),
           actionLabel: context.l10n.installSpellingDictionary,
-          suggestedAction: true,
           onAction: languageId == null || resource == null || installing
               ? null
               : () => unawaited(_installDocumentDictionary(languageId)),
@@ -12835,6 +12835,26 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
       case SpellingPresentationStatus.incomplete:
         return null;
     }
+  }
+
+  String _spellingStatusLabel(
+    BuildContext context,
+    DocumentBuffer buffer,
+    AppSettings settings,
+  ) {
+    final override = buffer.editorState.spellingLanguage;
+    if (override.kind == SpellingLanguageOverrideKind.disabled) {
+      return context.l10n.spellingOffStatus;
+    }
+    final languageId = resolveSpellingLanguageId(
+      override: override,
+      projectLanguage: _spelling.projectWords.projectLanguage,
+      defaultLanguage: settings.defaultSpellingLanguage,
+    );
+    if (languageId == null) {
+      return context.l10n.spellingLanguageUnsetStatus;
+    }
+    return _spelling.catalog?.byId(languageId)?.label ?? languageId;
   }
 
   void _revealSpellingOccurrence(SpellingOccurrence occurrence) {
@@ -13094,9 +13114,16 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
   }
 
   Future<bool> _chooseDocumentSpellingLanguage() async {
+    final initial = ref.read(workspaceControllerProvider).activeBuffer;
+    if (initial == null) return false;
+
+    await _spelling.prepareSettings(widget.state.workspace);
+    if (!mounted) return false;
+
     final buffer = ref.read(workspaceControllerProvider).activeBuffer;
+    if (buffer == null || buffer.id != initial.id) return false;
     final entries = _spelling.catalog?.entries ?? const [];
-    if (buffer == null || entries.isEmpty) return false;
+    if (entries.isEmpty) return false;
     final current = buffer.editorState.spellingLanguage;
     Widget selectedIcon(SpellingLanguageOverride candidate) {
       return candidate == current
