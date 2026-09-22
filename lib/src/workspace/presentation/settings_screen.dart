@@ -320,83 +320,95 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
         ],
       ),
-      SettingsPage.history => BusyMarkGroupedList(
-        title: l10n.settingsHistory,
-        filled: true,
+      SettingsPage.history => Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          BusyMarkSwitchRow(
-            title: l10n.settingsClipboardHistoryTitle,
-            subtitle: l10n.settingsClipboardHistoryDescription,
-            value: settings.clipboardHistoryEnabled,
-            onChanged: controller.setClipboardHistoryEnabled,
-            leading: const Icon(BusyMarkGlyphs.copy),
+          BusyMarkGroupedList(
+            title: l10n.settingsHistory,
+            filled: true,
+            children: [
+              BusyMarkSwitchRow(
+                title: l10n.settingsClipboardHistoryTitle,
+                subtitle: l10n.settingsClipboardHistoryDescription,
+                value: settings.clipboardHistoryEnabled,
+                onChanged: controller.setClipboardHistoryEnabled,
+                leading: const Icon(BusyMarkGlyphs.copy),
+              ),
+              BusyMarkSwitchRow(
+                title: l10n.settingsLocalHistoryTitle,
+                subtitle: l10n.settingsLocalHistoryDescription,
+                value: settings.localHistoryRecordingEnabled,
+                onChanged: controller.setLocalHistoryRecordingEnabled,
+                leading: const Icon(BusyMarkGlyphs.documentHistory),
+              ),
+              _HistoryNumberRow(
+                title: l10n.settingsHistoryCheckpoint,
+                value: settings.localHistoryCheckpointSeconds,
+                choices: const [30, 60, 120, 300, 600],
+                format: l10n.settingsSecondsValue,
+                enabled: settings.localHistoryRecordingEnabled,
+                onChanged: controller.setLocalHistoryCheckpointSeconds,
+              ),
+              _HistoryNumberRow(
+                title: l10n.settingsHistoryRetention,
+                value: settings.localHistoryRetentionDays,
+                choices: const [7, 30, 90, 365],
+                format: l10n.settingsDaysValue,
+                enabled: settings.localHistoryRecordingEnabled,
+                onChanged: controller.setLocalHistoryRetentionDays,
+              ),
+              _HistoryNumberRow(
+                title: l10n.settingsHistoryStorage,
+                value: settings.localHistoryMaximumStorageMiB,
+                choices: const [128, 256, 512, 1024, 2048, 4096],
+                format: l10n.settingsMebibytesValue,
+                enabled: settings.localHistoryRecordingEnabled,
+                onChanged: controller.setLocalHistoryMaximumStorageMiB,
+              ),
+              BusyMarkActionRow(
+                title: l10n.settingsHistoryExcludedPaths,
+                subtitle: settings.localHistoryExcludedPaths.isEmpty
+                    ? l10n.settingsHistoryExcludedPathsHint
+                    : settings.localHistoryExcludedPaths.join('\n'),
+                leading: const Icon(BusyMarkGlyphs.folder),
+                onTap: () => _editHistoryExcludedPaths(
+                  context,
+                  settings.localHistoryExcludedPaths,
+                  controller.setLocalHistoryExcludedPaths,
+                ),
+              ),
+              BusyMarkActionRow(
+                title: l10n.clearRecentWorkspaces,
+                leading: const Icon(BusyMarkGlyphs.clearAll),
+                destructive: true,
+                onTap: controller.clearRecentWorkspaces,
+              ),
+            ],
           ),
-          BusyMarkSwitchRow(
-            title: l10n.settingsLocalHistoryTitle,
-            subtitle: l10n.settingsLocalHistoryDescription,
-            value: settings.localHistoryRecordingEnabled,
-            onChanged: controller.setLocalHistoryRecordingEnabled,
-            leading: const Icon(BusyMarkGlyphs.documentHistory),
-          ),
-          _HistoryNumberRow(
-            title: l10n.settingsHistoryCheckpoint,
-            value: settings.localHistoryCheckpointSeconds,
-            choices: const [30, 60, 120, 300, 600],
-            format: l10n.settingsSecondsValue,
-            enabled: settings.localHistoryRecordingEnabled,
-            onChanged: controller.setLocalHistoryCheckpointSeconds,
-          ),
-          _HistoryNumberRow(
-            title: l10n.settingsHistoryRetention,
-            value: settings.localHistoryRetentionDays,
-            choices: const [7, 30, 90, 365],
-            format: l10n.settingsDaysValue,
-            enabled: settings.localHistoryRecordingEnabled,
-            onChanged: controller.setLocalHistoryRetentionDays,
-          ),
-          _HistoryNumberRow(
-            title: l10n.settingsHistoryStorage,
-            value: settings.localHistoryMaximumStorageMiB,
-            choices: const [128, 256, 512, 1024, 2048, 4096],
-            format: l10n.settingsMebibytesValue,
-            enabled: settings.localHistoryRecordingEnabled,
-            onChanged: controller.setLocalHistoryMaximumStorageMiB,
-          ),
-          BusyMarkActionRow(
-            title: l10n.settingsHistoryExcludedPaths,
-            subtitle: settings.localHistoryExcludedPaths.isEmpty
-                ? l10n.settingsHistoryExcludedPathsHint
-                : settings.localHistoryExcludedPaths.join('\n'),
-            leading: const Icon(BusyMarkGlyphs.folder),
-            onTap: () => _editHistoryExcludedPaths(
-              context,
-              settings.localHistoryExcludedPaths,
-              controller.setLocalHistoryExcludedPaths,
-            ),
+          BusyMarkGroupedList(
+            title: l10n.settingsWindowSectionTitle,
+            filled: true,
+            children: [
+              BusyMarkSwitchRow(
+                title: l10n.settingsReopenWorkspaceOnStartupTitle,
+                subtitle: l10n.settingsReopenWorkspaceOnStartupDescription,
+                value: settings.reopenPreviousWorkspaceOnStartup,
+                onChanged: controller.setReopenPreviousWorkspaceOnStartup,
+                leading: const Icon(BusyMarkGlyphs.history),
+              ),
+              BusyMarkSwitchRow(
+                title: l10n.settingsConfirmCloseWithUnsavedChangesTitle,
+                subtitle:
+                    l10n.settingsConfirmCloseWithUnsavedChangesDescription,
+                value: settings.confirmCloseWithUnsavedChanges,
+                onChanged: controller.setConfirmCloseWithUnsavedChanges,
+                leading: const Icon(BusyMarkGlyphs.warning),
+              ),
+            ],
           ),
         ],
       ),
       SettingsPage.ai => const _AiSettingsPage(),
-      SettingsPage.window => BusyMarkGroupedList(
-        title: l10n.settingsWindowSectionTitle,
-        filled: true,
-        children: [
-          BusyMarkSwitchRow(
-            title: l10n.settingsReopenWorkspaceOnStartupTitle,
-            subtitle: l10n.settingsReopenWorkspaceOnStartupDescription,
-            value: settings.reopenPreviousWorkspaceOnStartup,
-            onChanged: controller.setReopenPreviousWorkspaceOnStartup,
-            leading: const Icon(BusyMarkGlyphs.history),
-          ),
-          BusyMarkSwitchRow(
-            title: l10n.settingsConfirmCloseWithUnsavedChangesTitle,
-            subtitle: l10n.settingsConfirmCloseWithUnsavedChangesDescription,
-            value: settings.confirmCloseWithUnsavedChanges,
-            onChanged: controller.setConfirmCloseWithUnsavedChanges,
-            leading: const Icon(BusyMarkGlyphs.warning),
-          ),
-        ],
-      ),
       SettingsPage.privacy => BusyMarkGroupedList(
         title: l10n.privacy,
         filled: true,
@@ -422,18 +434,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               leading: const Icon(BusyMarkGlyphs.clearAll),
               onTap: controller.clearTrustedGitWorkspaces,
             ),
-        ],
-      ),
-      SettingsPage.advanced => BusyMarkGroupedList(
-        title: l10n.advanced,
-        filled: true,
-        children: [
-          BusyMarkActionRow(
-            title: l10n.clearRecentWorkspaces,
-            leading: const Icon(BusyMarkGlyphs.clearAll),
-            destructive: true,
-            onTap: controller.clearRecentWorkspaces,
-          ),
         ],
       ),
     };
@@ -1238,9 +1238,7 @@ enum SettingsPage {
   validation,
   history,
   ai,
-  window,
   privacy,
-  advanced,
 }
 
 const _primarySettingsPages = <SettingsPage>[
@@ -1249,9 +1247,7 @@ const _primarySettingsPages = <SettingsPage>[
   SettingsPage.validation,
   SettingsPage.history,
   SettingsPage.ai,
-  SettingsPage.window,
   SettingsPage.privacy,
-  SettingsPage.advanced,
 ];
 
 SettingsPage _settingsNavigationSelection(SettingsPage page) {
@@ -1268,9 +1264,11 @@ SettingsPage settingsPageFromRouteValue(String? value) {
     'validation' => SettingsPage.validation,
     'history' => SettingsPage.history,
     'ai' => SettingsPage.ai,
-    'window' => SettingsPage.window,
+    // Preserve links to the former Window settings page.
+    'window' => SettingsPage.history,
     'privacy' => SettingsPage.privacy,
-    'advanced' => SettingsPage.advanced,
+    // Preserve links to the former Advanced settings page.
+    'advanced' => SettingsPage.history,
     _ => SettingsPage.appearance,
   };
 }
@@ -1286,9 +1284,7 @@ String _settingsPageLabel(BuildContext context, SettingsPage page) {
     SettingsPage.validation => l10n.validation,
     SettingsPage.history => l10n.settingsHistory,
     SettingsPage.ai => l10n.ai,
-    SettingsPage.window => l10n.settingsWindowSectionTitle,
     SettingsPage.privacy => l10n.privacy,
-    SettingsPage.advanced => l10n.advanced,
   };
 }
 
@@ -1300,9 +1296,7 @@ IconData _settingsPageIcon(SettingsPage page) {
     SettingsPage.validation => BusyMarkGlyphs.diagnostics,
     SettingsPage.history => BusyMarkGlyphs.documentHistory,
     SettingsPage.ai => BusyMarkGlyphs.ai,
-    SettingsPage.window => BusyMarkGlyphs.desktop,
     SettingsPage.privacy => BusyMarkGlyphs.privacy,
-    SettingsPage.advanced => BusyMarkGlyphs.settings,
   };
 }
 

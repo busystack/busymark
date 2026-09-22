@@ -76,9 +76,9 @@ void main() {
     );
     expect(settingsPageFromRouteValue('validation'), SettingsPage.validation);
     expect(settingsPageFromRouteValue('ai'), SettingsPage.ai);
-    expect(settingsPageFromRouteValue('window'), SettingsPage.window);
+    expect(settingsPageFromRouteValue('window'), SettingsPage.history);
     expect(settingsPageFromRouteValue('privacy'), SettingsPage.privacy);
-    expect(settingsPageFromRouteValue('advanced'), SettingsPage.advanced);
+    expect(settingsPageFromRouteValue('advanced'), SettingsPage.history);
     expect(settingsPageFromRouteValue('unexpected'), SettingsPage.appearance);
     expect(
       SettingsPage.values.map(settingsPageRouteValue),

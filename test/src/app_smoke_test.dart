@@ -1250,11 +1250,6 @@ void main() {
       isTrue,
     );
 
-    await tester.tap(find.byKey(const ValueKey('settings-page-selector')));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text(l10n.advanced));
-    await tester.pumpAndSettle();
-
     final clearRecentRow = tester.widget<BusyMarkActionRow>(
       find.byWidgetPredicate(
         (widget) =>
@@ -1276,11 +1271,6 @@ void main() {
       isNot(Theme.of(clearRecentContext).colorScheme.error),
     );
 
-    await tester.tap(find.byKey(const ValueKey('settings-page-selector')));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text(l10n.settingsWindowSectionTitle));
-    await tester.pumpAndSettle();
-
     expect(
       find.text(l10n.settingsReopenWorkspaceOnStartupTitle),
       findsOneWidget,
@@ -1288,6 +1278,9 @@ void main() {
     expect(
       find.text(l10n.settingsReopenWorkspaceOnStartupDescription),
       findsOneWidget,
+    );
+    await tester.ensureVisible(
+      find.text(l10n.settingsReopenWorkspaceOnStartupTitle),
     );
     await tester.tap(find.text(l10n.settingsReopenWorkspaceOnStartupTitle));
     await tester.pumpAndSettle();
@@ -1301,6 +1294,9 @@ void main() {
     expect(
       find.text(l10n.settingsConfirmCloseWithUnsavedChangesDescription),
       findsOneWidget,
+    );
+    await tester.ensureVisible(
+      find.text(l10n.settingsConfirmCloseWithUnsavedChangesTitle),
     );
     await tester.tap(
       find.text(l10n.settingsConfirmCloseWithUnsavedChangesTitle),
