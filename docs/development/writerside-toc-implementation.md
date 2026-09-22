@@ -10,7 +10,7 @@ parity**; retained safety and integration differences are listed below.
 
 The receiving checkout was clean at `c3b53ff` (BusyMark 0.4.2). The named handoff
 implementation points matched the receiving source; no archive was copied over it.
-Flutter 3.47.2 and Dart 3.13.2 were used without upgrading dependencies.
+Flutter 3.47.4 and Dart 3.13.2 were used without upgrading dependencies.
 
 User decisions: retain BusyMark AI, Git, clipboard, and file commands **after** the
 Writerside actions; use installed Writerside **2026.07.8925** for undocumented
@@ -344,7 +344,7 @@ production controller/services. Only desktop host/theme and persistence services
 are isolated. Their framework menu fallback is test-only; these checks do not
 replace or claim a new recording of the native GTK evidence above.
 
-Review verification (Flutter 3.47.2 / Dart 3.13.2):
+Review verification (Flutter 3.47.4 / Dart 3.13.2):
 
 - Full `flutter test --no-pub --concurrency=2 --file-reporter
   json:/tmp/busymark-toc-review-full.json`: exit 0, **1,921 passed, 58 optional
@@ -404,7 +404,7 @@ remain explicitly documented adaptations. Full original-Writerside parity is
 not claimed. Translations are BusyMark translations, not verified original
 JetBrains locale strings.
 
-Verification for this follow-up (Flutter 3.47.2 / Dart 3.13.2):
+Verification for this follow-up (Flutter 3.47.4 / Dart 3.13.2):
 
 - Full `flutter test --no-pub --concurrency=2 --file-reporter json:/tmp/busymark-title-full.json`:
   exit 0, **1,938 passed, 58 optional integration skips**; 17 new regressions.

@@ -947,6 +947,10 @@ class AppLocalizationsVi extends AppLocalizations {
   String get wordWrap => 'Tự động xuống dòng';
 
   @override
+  String get wordWrapDescription =>
+      'Ngắt các dòng dài cho vừa chiều rộng trình biên tập thay vì cuộn ngang.';
+
+  @override
   String get editorFontSize => 'Cỡ chữ trình biên tập';
 
   @override
@@ -999,6 +1003,28 @@ class AppLocalizationsVi extends AppLocalizations {
   @override
   String get clearGitWorkspaceTrustDescription =>
       'Hỏi trước khi bật các tính năng Git cho những không gian làm việc đã từng được tin cậy.';
+
+  @override
+  String get settingsEditingButtonsSectionTitle => 'Nút chỉnh sửa';
+
+  @override
+  String get spellingDictionaries => 'Từ điển chính tả';
+
+  @override
+  String get spellingDictionariesDescription =>
+      'Cài đặt và quản lý từ điển chính tả';
+
+  @override
+  String get settingsDictionariesSectionTitle => 'Từ điển';
+
+  @override
+  String get availableSpellingDictionaries => 'Từ điển có sẵn';
+
+  @override
+  String get customSpellingDictionaries => 'Từ điển tùy chỉnh';
+
+  @override
+  String get spellingDictionaryProblems => 'Sự cố từ điển';
 
   @override
   String get settingsWindowSectionTitle => 'Cửa sổ';
@@ -4485,7 +4511,128 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
+  String get spelling => 'Chính tả';
+
+  @override
+  String get automaticSpelling => 'Tự động kiểm tra chính tả';
+
+  @override
+  String get defaultSpellingLanguage => 'Ngôn ngữ chính tả mặc định';
+
+  @override
+  String get projectSpellingLanguage => 'Ngôn ngữ kiểm tra chính tả của dự án';
+
+  @override
+  String get chooseSpellingLanguage => 'Chọn ngôn ngữ chính tả';
+
+  @override
+  String get spellingLanguageUnsetStatus => 'Ngôn ngữ…';
+
+  @override
+  String get spellingOffStatus => 'Tắt chính tả';
+
+  @override
+  String get checkSpelling => 'Kiểm tra chính tả';
+
+  @override
+  String get ignoreSpellingOnce => 'Bỏ qua một lần';
+
+  @override
+  String get ignoreSpellingDocument => 'Bỏ qua tất cả trong tài liệu này';
+
+  @override
+  String get addPersonalSpellingWord => 'Thêm vào từ điển cá nhân';
+
+  @override
+  String get addProjectSpellingWord => 'Thêm vào từ điển dự án';
+
+  @override
+  String get inheritSpellingLanguage => 'Dùng ngôn ngữ dự án hoặc ứng dụng';
+
+  @override
+  String get disableDocumentSpelling => 'Không kiểm tra chính tả';
+
+  @override
+  String get importSpellingDictionary => 'Nhập từ điển';
+
+  @override
+  String get personalSpellingDictionary => 'Từ điển cá nhân';
+
+  @override
+  String get projectSpellingDictionary => 'Từ điển dự án';
+
+  @override
+  String get noSpellingErrors => 'Không có lỗi chính tả';
+
+  @override
+  String get noSpellingSuggestions => 'Không có đề xuất chính tả';
+
+  @override
+  String get spellingWordCheckFailed => 'Không thể kiểm tra từ này';
+
+  @override
+  String get spellingCheckFailed => 'Kiểm tra chính tả thất bại';
+
+  @override
+  String get spellingCheckIncomplete => 'Kiểm tra chính tả chưa hoàn tất';
+
+  @override
+  String get spellingDictionaryNotInstalled => 'Từ điển chưa được cài đặt';
+
+  @override
+  String spellingDictionaryNotInstalledForLanguage(String dictionary) {
+    return 'Từ điển $dictionary chưa được cài đặt';
+  }
+
+  @override
+  String spellingDictionaryNotInstalledWithSize(String size) {
+    return 'Chưa cài đặt · $size';
+  }
+
+  @override
+  String get spellingDictionaryInstalled => 'Đã cài đặt';
+
+  @override
+  String get installSpellingDictionary => 'Cài đặt từ điển';
+
+  @override
+  String get removeSpellingDictionary => 'Gỡ từ điển';
+
+  @override
+  String get cancelSpellingDictionaryInstall => 'Hủy tải từ điển';
+
+  @override
+  String get retrySpellingDictionaryInstall => 'Thử cài đặt lại từ điển';
+
+  @override
+  String spellingDictionaryDownloading(String size) {
+    return 'Đang tải $size…';
+  }
+
+  @override
+  String get spellingDictionaryValidating => 'Đang xác thực từ điển…';
+
+  @override
+  String get spellingDictionaryInstallFailed =>
+      'Cài đặt từ điển thất bại — chọn để thử lại';
+
+  @override
+  String spellingDictionaryInstallPrompt(String dictionary, String size) {
+    return 'Cài đặt $dictionary ($size)? Sau khi cài đặt, từ điển sẽ dùng được ngoại tuyến cho đến khi bạn gỡ bỏ.';
+  }
+
+  @override
+  String get spellingDictionaryUnavailable => 'Từ điển không khả dụng';
+
+  @override
+  String get spellingChecking => 'Đang kiểm tra chính tả…';
+
+  @override
   String exportInvalidRange(String field, String minimum, String maximum) {
     return '$field: nhập số từ $minimum đến $maximum.';
   }
+
+  @override
+  String get spellingDictionaryRecoveryConflict =>
+      'Từ điển chính tả đã được thay đổi từ bên ngoài. Một bản sao khôi phục đã được giữ lại.';
 }

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
@@ -5,6 +6,8 @@ import 'dart:typed_data';
 import 'package:crypto/crypto.dart';
 import 'package:path/path.dart' as p;
 import 'package:xml/xml.dart' as xml;
+
+import '../core/atomic_file_writer.dart';
 
 enum AssetIngestionOrigin {
   imagePicker,
@@ -56,6 +59,7 @@ class IngestedAsset {
     required this.mimeType,
     required this.reusedExisting,
     required this.origin,
+    this.publicationId,
   });
 
   final String absolutePath;
@@ -63,6 +67,26 @@ class IngestedAsset {
   final String mimeType;
   final bool reusedExisting;
   final AssetIngestionOrigin origin;
+
+  /// Identifies a publication that is provisional until the caller commits
+  /// the document reference. Reused, already-committed assets have no ID.
+  final String? publicationId;
+}
+
+class AssetIngestionHooks {
+  const AssetIngestionHooks({
+    this.afterDestinationReserved,
+    this.afterPublication,
+    this.beforeCommit,
+    this.beforeRollback,
+    this.afterRollback,
+  });
+
+  final Future<void> Function(String path)? afterDestinationReserved;
+  final Future<void> Function(IngestedAsset asset)? afterPublication;
+  final Future<void> Function(IngestedAsset asset)? beforeCommit;
+  final Future<void> Function(IngestedAsset asset)? beforeRollback;
+  final Future<void> Function(IngestedAsset asset)? afterRollback;
 }
 
 class IngestedAssetSnapshot {
@@ -73,9 +97,19 @@ class IngestedAssetSnapshot {
 }
 
 class AssetIngestionService {
-  const AssetIngestionService({this.maximumAssetBytes = 100 * 1024 * 1024});
+  const AssetIngestionService({
+    this.maximumAssetBytes = 100 * 1024 * 1024,
+    this.hooks,
+  });
 
   final int maximumAssetBytes;
+  final AssetIngestionHooks? hooks;
+
+  static final Map<String, _AssetDirectoryLock> _directoryOperations = {};
+  static var _nextPublicationId = 0;
+
+  static const _transactionDirectoryName = '.busymark-asset-transactions';
+  static const _directoryLockFileName = 'directory.lock';
 
   Future<IngestedAsset> ingestFile({
     required String sourcePath,
@@ -205,34 +239,132 @@ class AssetIngestionService {
     required _DetectedAssetType type,
   }) async {
     final destination = await _destinationDirectory(request);
-    final contentHash = sha256.convert(bytes).toString();
-    final existing = await _identicalAsset(
-      destination,
-      bytes.length,
-      contentHash,
-    );
-    late final File published;
-    var reused = existing != null;
-    if (existing != null) {
-      published = existing;
-    } else {
-      final stem = _safeStem(p.basenameWithoutExtension(suggestedFileName));
-      published = await _publishUnique(
+    final result = await _withDirectoryOperation(destination.path, () async {
+      final pending = await _pendingPublications(destination);
+      final contentHash = sha256.convert(bytes).toString();
+      final existing = await _identicalAsset(
         destination,
-        stem: stem,
-        extension: type.extension,
-        bytes: bytes,
+        bytes.length,
+        contentHash,
+        pendingFinalNames: pending.values.toSet(),
       );
-      reused = false;
+      late final File published;
+      String? publicationId;
+      final reused = existing != null;
+      if (existing != null) {
+        published = existing;
+      } else {
+        final stem = _safeStem(p.basenameWithoutExtension(suggestedFileName));
+        publicationId =
+            '$pid-${DateTime.now().microsecondsSinceEpoch}-'
+            '${_nextPublicationId++}';
+        published = await _publishUnique(
+          destination,
+          stem: stem,
+          extension: type.extension,
+          bytes: bytes,
+          publicationId: publicationId,
+          initiallyPendingFinalNames: pending.values.toSet(),
+        );
+      }
+      return IngestedAsset(
+        absolutePath: published.path,
+        markdownPath: p
+            .relative(published.path, from: p.dirname(request.documentFilePath))
+            .replaceAll(p.separator, '/'),
+        mimeType: type.mimeType,
+        reusedExisting: reused,
+        origin: origin,
+        publicationId: publicationId,
+      );
+    });
+    await hooks?.afterPublication?.call(result);
+    return result;
+  }
+
+  /// Makes a provisional publication reusable and transfers its lifetime to
+  /// the successfully inserted document reference.
+  Future<void> commit(IngestedAsset asset) async {
+    final publicationId = asset.publicationId;
+    if (publicationId == null) return;
+    await hooks?.beforeCommit?.call(asset);
+    final directory = p.dirname(asset.absolutePath);
+    await _withDirectoryOperation(directory, () async {
+      final record = await _ownedPendingRecord(
+        Directory(directory),
+        publicationId,
+        p.basename(asset.absolutePath),
+      );
+      if (record != null) await record.delete();
+    });
+  }
+
+  Future<void> commitAll(Iterable<IngestedAsset> assets) async {
+    for (final asset in assets) {
+      await commit(asset);
     }
-    return IngestedAsset(
-      absolutePath: published.path,
-      markdownPath: p
-          .relative(published.path, from: p.dirname(request.documentFilePath))
-          .replaceAll(p.separator, '/'),
-      mimeType: type.mimeType,
-      reusedExisting: reused,
-      origin: origin,
+  }
+
+  /// Removes [asset] only while this exact provisional publication still owns
+  /// the path. A reused or already-committed asset is never deleted.
+  Future<void> rollback(IngestedAsset asset) async {
+    final publicationId = asset.publicationId;
+    if (publicationId == null) return;
+    await hooks?.beforeRollback?.call(asset);
+    final directory = p.dirname(asset.absolutePath);
+    await _withDirectoryOperation(directory, () async {
+      final record = await _ownedPendingRecord(
+        Directory(directory),
+        publicationId,
+        p.basename(asset.absolutePath),
+      );
+      if (record == null) return;
+      final file = File(asset.absolutePath);
+      try {
+        if (await file.exists()) await file.delete();
+        await record.delete();
+      } on FileSystemException {
+        // Keep the durable ownership record when cleanup is incomplete. A
+        // later process must not deduplicate against an uncommitted asset.
+      }
+    });
+    await hooks?.afterRollback?.call(asset);
+  }
+
+  Future<void> rollbackAll(Iterable<IngestedAsset> assets) async {
+    for (final asset in assets) {
+      await rollback(asset);
+    }
+  }
+
+  static Future<T> _withDirectoryOperation<T>(
+    String directoryPath,
+    Future<T> Function() operation,
+  ) {
+    final key = p.normalize(p.absolute(directoryPath));
+    final lock = _directoryOperations.putIfAbsent(key, _AssetDirectoryLock.new);
+    return lock.run(
+      () async {
+        final metadata = Directory(p.join(key, _transactionDirectoryName));
+        await metadata.create(recursive: true);
+        final lockFile = File(p.join(metadata.path, _directoryLockFileName));
+        final operatingSystemLock = lockFile.openSync(mode: FileMode.append);
+        try {
+          operatingSystemLock.lockSync(FileLock.blockingExclusive);
+          return await operation();
+        } finally {
+          try {
+            operatingSystemLock.unlockSync();
+          } finally {
+            operatingSystemLock.closeSync();
+          }
+        }
+      },
+      () {
+        if (identical(_directoryOperations[key], lock)) {
+          _directoryOperations.remove(key);
+        }
+      },
     );
   }
 
@@ -307,8 +439,9 @@ class AssetIngestionService {
   Future<File?> _identicalAsset(
     Directory directory,
     int size,
-    String expectedHash,
-  ) async {
+    String expectedHash, {
+    required Set<String> pendingFinalNames,
+  }) async {
     var inspected = 0;
     await for (final entity in directory.list(followLinks: false)) {
       if (++inspected > 10000) {
@@ -317,7 +450,15 @@ class AssetIngestionService {
       if (entity is! File) {
         continue;
       }
-      final stat = await entity.stat();
+      if (pendingFinalNames.contains(p.basename(entity.path))) {
+        continue;
+      }
+      late final FileStat stat;
+      try {
+        stat = await entity.stat();
+      } on FileSystemException {
+        continue;
+      }
       if (stat.size != size) {
         continue;
       }
@@ -334,32 +475,165 @@ class AssetIngestionService {
     required String stem,
     required String extension,
     required Uint8List bytes,
+    required String publicationId,
+    required Set<String> initiallyPendingFinalNames,
   }) async {
+    final pendingFinalNames = {...initiallyPendingFinalNames};
     var suffix = 1;
-    late File target;
     while (true) {
       final name = suffix == 1
           ? '$stem.$extension'
           : '$stem-$suffix.$extension';
-      target = File(p.join(directory.path, name));
-      if (!await target.exists()) {
-        break;
+      final target = File(p.join(directory.path, name));
+      if (pendingFinalNames.contains(name) || await target.exists()) {
+        suffix++;
+        continue;
       }
-      suffix++;
+      final record = await _writePendingRecord(
+        directory,
+        publicationId: publicationId,
+        finalFilename: name,
+      );
+      try {
+        await const AtomicFileWriter().writeBytes(
+          target.path,
+          bytes,
+          overwrite: false,
+          beforePublish: () async {
+            await hooks?.afterDestinationReserved?.call(target.path);
+          },
+        );
+        return target;
+      } on AtomicFileAlreadyExistsException {
+        await _removeOwnedPendingRecord(
+          record,
+          publicationId: publicationId,
+          finalFilename: name,
+        );
+        suffix++;
+      } catch (_) {
+        await _removeOwnedPendingRecordBestEffort(
+          record,
+          publicationId: publicationId,
+          finalFilename: name,
+        );
+        rethrow;
+      }
     }
-    final staging = File(
-      p.join(
-        directory.path,
-        '.busymark-asset-$pid-${DateTime.now().microsecondsSinceEpoch}',
-      ),
+  }
+
+  static Directory _transactionDirectory(Directory assetDirectory) =>
+      Directory(p.join(assetDirectory.path, _transactionDirectoryName));
+
+  static File _pendingRecordFile(
+    Directory assetDirectory,
+    String publicationId,
+  ) {
+    final digest = sha256.convert(utf8.encode(publicationId)).toString();
+    return File(
+      p.join(_transactionDirectory(assetDirectory).path, '$digest.json'),
     );
-    try {
-      await staging.writeAsBytes(bytes, flush: true);
-      return await staging.rename(target.path);
-    } finally {
-      if (await staging.exists()) {
-        await staging.delete();
+  }
+
+  static Future<File> _writePendingRecord(
+    Directory assetDirectory, {
+    required String publicationId,
+    required String finalFilename,
+  }) async {
+    final record = _pendingRecordFile(assetDirectory, publicationId);
+    await const AtomicFileWriter().writeBytes(
+      record.path,
+      utf8.encode(
+        jsonEncode({
+          'publicationToken': publicationId,
+          'finalFilename': finalFilename,
+        }),
+      ),
+      overwrite: false,
+    );
+    return record;
+  }
+
+  static Future<Map<String, String>> _pendingPublications(
+    Directory assetDirectory,
+  ) async {
+    final result = <String, String>{};
+    final metadata = _transactionDirectory(assetDirectory);
+    if (!await metadata.exists()) return result;
+    await for (final entity in metadata.list(followLinks: false)) {
+      if (entity is! File ||
+          p.basename(entity.path) == _directoryLockFileName) {
+        continue;
       }
+      final record = await _readPendingRecord(entity);
+      if (record != null) {
+        result[record.publicationId] = record.finalFilename;
+      }
+    }
+    return result;
+  }
+
+  static Future<({String publicationId, String finalFilename})?>
+  _readPendingRecord(File record) async {
+    try {
+      final decoded = jsonDecode(await record.readAsString());
+      if (decoded is! Map<String, dynamic>) return null;
+      final publicationId = decoded['publicationToken'];
+      final finalFilename = decoded['finalFilename'];
+      if (publicationId is! String ||
+          publicationId.isEmpty ||
+          finalFilename is! String ||
+          finalFilename.isEmpty ||
+          p.basename(finalFilename) != finalFilename) {
+        return null;
+      }
+      return (publicationId: publicationId, finalFilename: finalFilename);
+    } on Object {
+      return null;
+    }
+  }
+
+  static Future<File?> _ownedPendingRecord(
+    Directory assetDirectory,
+    String publicationId,
+    String finalFilename,
+  ) async {
+    final record = _pendingRecordFile(assetDirectory, publicationId);
+    if (!await record.exists()) return null;
+    final contents = await _readPendingRecord(record);
+    if (contents == null ||
+        contents.publicationId != publicationId ||
+        contents.finalFilename != finalFilename) {
+      return null;
+    }
+    return record;
+  }
+
+  static Future<void> _removeOwnedPendingRecord(
+    File record, {
+    required String publicationId,
+    required String finalFilename,
+  }) async {
+    final contents = await _readPendingRecord(record);
+    if (contents?.publicationId == publicationId &&
+        contents?.finalFilename == finalFilename) {
+      await record.delete();
+    }
+  }
+
+  static Future<void> _removeOwnedPendingRecordBestEffort(
+    File record, {
+    required String publicationId,
+    required String finalFilename,
+  }) async {
+    try {
+      await _removeOwnedPendingRecord(
+        record,
+        publicationId: publicationId,
+        finalFilename: finalFilename,
+      );
+    } on FileSystemException {
+      // A stale reservation is safer than making uncertain bytes reusable.
     }
   }
 
@@ -428,6 +702,34 @@ class AssetIngestionService {
         '.webm' => const _DetectedAssetType('webm', 'video/webm'),
         _ => null,
       };
+}
+
+class _AssetDirectoryLock {
+  var _locked = false;
+  final _waiters = <Completer<void>>[];
+
+  Future<T> run<T>(
+    Future<T> Function() operation,
+    void Function() onIdle,
+  ) async {
+    if (_locked) {
+      final waiter = Completer<void>();
+      _waiters.add(waiter);
+      await waiter.future;
+    } else {
+      _locked = true;
+    }
+    try {
+      return await operation();
+    } finally {
+      if (_waiters.isNotEmpty) {
+        _waiters.removeAt(0).complete();
+      } else {
+        _locked = false;
+        onIdle();
+      }
+    }
+  }
 }
 
 class _DetectedAssetType {

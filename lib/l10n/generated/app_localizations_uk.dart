@@ -959,6 +959,10 @@ class AppLocalizationsUk extends AppLocalizations {
   String get wordWrap => 'Перенесення рядків';
 
   @override
+  String get wordWrapDescription =>
+      'Переносити довгі рядки за шириною редактора замість горизонтального прокручування.';
+
+  @override
   String get editorFontSize => 'Розмір шрифту редактора';
 
   @override
@@ -1013,6 +1017,28 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get clearGitWorkspaceTrustDescription =>
       'Запитувати перед увімкненням функцій Git для раніше довірених робочих областей.';
+
+  @override
+  String get settingsEditingButtonsSectionTitle => 'Кнопки редагування';
+
+  @override
+  String get spellingDictionaries => 'Орфографічні словники';
+
+  @override
+  String get spellingDictionariesDescription =>
+      'Установлення й керування орфографічними словниками';
+
+  @override
+  String get settingsDictionariesSectionTitle => 'Словники';
+
+  @override
+  String get availableSpellingDictionaries => 'Доступні словники';
+
+  @override
+  String get customSpellingDictionaries => 'Власні словники';
+
+  @override
+  String get spellingDictionaryProblems => 'Проблеми зі словниками';
 
   @override
   String get settingsWindowSectionTitle => 'Вікно';
@@ -4556,7 +4582,131 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
+  String get spelling => 'Правопис';
+
+  @override
+  String get automaticSpelling => 'Автоматична перевірка правопису';
+
+  @override
+  String get defaultSpellingLanguage => 'Типова мова перевірки правопису';
+
+  @override
+  String get projectSpellingLanguage => 'Мова перевірки правопису проєкту';
+
+  @override
+  String get chooseSpellingLanguage => 'Вибрати мову правопису';
+
+  @override
+  String get spellingLanguageUnsetStatus => 'Мова…';
+
+  @override
+  String get spellingOffStatus => 'Перевірку правопису вимкнено';
+
+  @override
+  String get checkSpelling => 'Перевірити правопис';
+
+  @override
+  String get ignoreSpellingOnce => 'Ігнорувати один раз';
+
+  @override
+  String get ignoreSpellingDocument => 'Ігнорувати все в цьому документі';
+
+  @override
+  String get addPersonalSpellingWord => 'Додати до особистого словника';
+
+  @override
+  String get addProjectSpellingWord => 'Додати до словника проєкту';
+
+  @override
+  String get inheritSpellingLanguage =>
+      'Використовувати мову проєкту або програми';
+
+  @override
+  String get disableDocumentSpelling => 'Не перевіряти правопис';
+
+  @override
+  String get importSpellingDictionary => 'Імпортувати словник';
+
+  @override
+  String get personalSpellingDictionary => 'Особистий словник';
+
+  @override
+  String get projectSpellingDictionary => 'Словник проєкту';
+
+  @override
+  String get noSpellingErrors => 'Орфографічних помилок немає';
+
+  @override
+  String get noSpellingSuggestions => 'Немає варіантів виправлення';
+
+  @override
+  String get spellingWordCheckFailed => 'Не вдалося перевірити це слово';
+
+  @override
+  String get spellingCheckFailed => 'Не вдалося перевірити правопис';
+
+  @override
+  String get spellingCheckIncomplete => 'Перевірку правопису не завершено';
+
+  @override
+  String get spellingDictionaryNotInstalled => 'Словник не встановлено';
+
+  @override
+  String spellingDictionaryNotInstalledForLanguage(String dictionary) {
+    return 'Словник «$dictionary» не встановлено';
+  }
+
+  @override
+  String spellingDictionaryNotInstalledWithSize(String size) {
+    return 'Не встановлено · $size';
+  }
+
+  @override
+  String get spellingDictionaryInstalled => 'Встановлено';
+
+  @override
+  String get installSpellingDictionary => 'Встановити словник';
+
+  @override
+  String get removeSpellingDictionary => 'Видалити словник';
+
+  @override
+  String get cancelSpellingDictionaryInstall =>
+      'Скасувати завантаження словника';
+
+  @override
+  String get retrySpellingDictionaryInstall =>
+      'Повторити встановлення словника';
+
+  @override
+  String spellingDictionaryDownloading(String size) {
+    return 'Завантаження $size…';
+  }
+
+  @override
+  String get spellingDictionaryValidating => 'Перевірка словника…';
+
+  @override
+  String get spellingDictionaryInstallFailed =>
+      'Не вдалося встановити словник — виберіть, щоб повторити';
+
+  @override
+  String spellingDictionaryInstallPrompt(String dictionary, String size) {
+    return 'Встановити $dictionary ($size)? Після встановлення він буде доступний офлайн, доки ви його не видалите.';
+  }
+
+  @override
+  String get spellingDictionaryUnavailable => 'Словник недоступний';
+
+  @override
+  String get spellingChecking => 'Перевірка правопису…';
+
+  @override
   String exportInvalidRange(String field, String minimum, String maximum) {
     return '$field: введіть число від $minimum до $maximum.';
   }
+
+  @override
+  String get spellingDictionaryRecoveryConflict =>
+      'Орфографічний словник було змінено ззовні. Копію для відновлення збережено.';
 }

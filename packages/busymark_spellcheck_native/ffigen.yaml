@@ -1,0 +1,25 @@
+# Run with `dart run ffigen --config ffigen.yaml`.
+name: BusymarkSpellcheckNativeBindings
+description: |
+  Bindings for `src/busymark_spellcheck_native.h`.
+
+  Regenerate bindings with `dart run ffigen --config ffigen.yaml`.
+output: 'lib/busymark_spellcheck_native_bindings_generated.dart'
+headers:
+  entry-points:
+    - 'src/busymark_spellcheck_native.h'
+  include-directives:
+    - 'src/busymark_spellcheck_native.h'
+ffi-native:
+functions:
+  include:
+    - 'busy_spell_.*'
+structs:
+  include:
+    - 'BusySpellTokenRange'
+enums:
+  include:
+    - 'BusySpellStatus'
+comments:
+  style: any
+  length: full

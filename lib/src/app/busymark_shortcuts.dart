@@ -371,6 +371,7 @@ enum BusyMarkTextEditingShortcutAction {
   cut,
   copy,
   paste,
+  pastePlainText,
   undo,
   redo,
   insertIndentation,
@@ -385,6 +386,7 @@ abstract final class BusyMarkTextEditingShortcuts {
   static const cutLabel = 'Ctrl+X';
   static const copyLabel = 'Ctrl+C';
   static const pasteLabel = 'Ctrl+V';
+  static const pastePlainTextLabel = 'Ctrl+Shift+V';
   static const undoLabel = 'Ctrl+Z';
   static const redoLabel = 'Ctrl+Shift+Z';
   static const insertIndentationLabel = 'Tab';
@@ -406,6 +408,14 @@ abstract final class BusyMarkTextEditingShortcuts {
   static const paste = BusyMarkShortcutDefinition(
     label: pasteLabel,
     activator: SingleActivator(LogicalKeyboardKey.keyV, control: true),
+  );
+  static const pastePlainText = BusyMarkShortcutDefinition(
+    label: pastePlainTextLabel,
+    activator: SingleActivator(
+      LogicalKeyboardKey.keyV,
+      control: true,
+      shift: true,
+    ),
   );
   static const undo = BusyMarkShortcutDefinition(
     label: undoLabel,
@@ -438,6 +448,7 @@ abstract final class BusyMarkTextEditingShortcuts {
         BusyMarkTextEditingShortcutAction.cut: cut,
         BusyMarkTextEditingShortcutAction.copy: copy,
         BusyMarkTextEditingShortcutAction.paste: paste,
+        BusyMarkTextEditingShortcutAction.pastePlainText: pastePlainText,
         BusyMarkTextEditingShortcutAction.undo: undo,
         BusyMarkTextEditingShortcutAction.redo: redo,
         BusyMarkTextEditingShortcutAction.insertIndentation: insertIndentation,
@@ -453,6 +464,8 @@ abstract final class BusyMarkTextEditingShortcutLabels {
   static const cut = BusyMarkTextEditingShortcuts.cutLabel;
   static const copy = BusyMarkTextEditingShortcuts.copyLabel;
   static const paste = BusyMarkTextEditingShortcuts.pasteLabel;
+  static const pastePlainText =
+      BusyMarkTextEditingShortcuts.pastePlainTextLabel;
   static const undo = BusyMarkTextEditingShortcuts.undoLabel;
   static const redo = BusyMarkTextEditingShortcuts.redoLabel;
   static const insertIndentation =
@@ -472,6 +485,8 @@ abstract final class BusyMarkTextEditingShortcutActivators {
       BusyMarkTextEditingShortcuts.copy.activator;
   static ShortcutActivator get paste =>
       BusyMarkTextEditingShortcuts.paste.activator;
+  static ShortcutActivator get pastePlainText =>
+      BusyMarkTextEditingShortcuts.pastePlainText.activator;
   static ShortcutActivator get undo =>
       BusyMarkTextEditingShortcuts.undo.activator;
   static ShortcutActivator get redo =>

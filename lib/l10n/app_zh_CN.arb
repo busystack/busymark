@@ -83,6 +83,42 @@
   "workspaceSearchShowMore": "显示更多结果",
   "workspaceSearchSkippedFiles": "搜索不完整。以下文件超过 1 MiB 或无法读取：",
   "@@locale": "zh_CN",
+  "spelling": "拼写检查",
+  "automaticSpelling": "自动检查拼写",
+  "defaultSpellingLanguage": "默认拼写语言",
+  "projectSpellingLanguage": "项目拼写检查语言",
+  "chooseSpellingLanguage": "选择拼写语言",
+  "spellingLanguageUnsetStatus": "语言…",
+  "spellingOffStatus": "拼写检查已关闭",
+  "checkSpelling": "检查拼写",
+  "ignoreSpellingOnce": "忽略一次",
+  "ignoreSpellingDocument": "在此文档中全部忽略",
+  "addPersonalSpellingWord": "添加到个人词典",
+  "addProjectSpellingWord": "添加到项目词典",
+  "inheritSpellingLanguage": "使用项目或应用语言",
+  "disableDocumentSpelling": "不检查拼写",
+  "importSpellingDictionary": "导入词典",
+  "personalSpellingDictionary": "个人词典",
+  "projectSpellingDictionary": "项目词典",
+  "noSpellingErrors": "没有拼写错误",
+  "noSpellingSuggestions": "没有拼写建议",
+  "spellingWordCheckFailed": "无法检查此单词",
+  "spellingCheckFailed": "拼写检查失败",
+  "spellingCheckIncomplete": "拼写检查未完成",
+  "spellingDictionaryNotInstalled": "尚未安装词典",
+  "spellingDictionaryNotInstalledForLanguage": "尚未安装 {dictionary} 词典",
+  "spellingDictionaryNotInstalledWithSize": "未安装 · {size}",
+  "spellingDictionaryInstalled": "已安装",
+  "installSpellingDictionary": "安装词典",
+  "removeSpellingDictionary": "移除词典",
+  "cancelSpellingDictionaryInstall": "取消下载词典",
+  "retrySpellingDictionaryInstall": "重试安装词典",
+  "spellingDictionaryDownloading": "正在下载 {size}…",
+  "spellingDictionaryValidating": "正在验证词典…",
+  "spellingDictionaryInstallFailed": "词典安装失败 — 选择以重试",
+  "spellingDictionaryInstallPrompt": "要安装 {dictionary}（{size}）吗？安装后，在移除前都可离线使用。",
+  "spellingDictionaryUnavailable": "词典不可用",
+  "spellingChecking": "正在检查拼写…",
   "appTitle": "BusyMark",
   "@appTitle": {
     "description": "Application name."
@@ -932,6 +968,7 @@
     "description": "Editor setting description for saving files automatically."
   },
   "wordWrap": "自动换行",
+  "wordWrapDescription": "将长行换行以适应编辑器宽度，而不是水平滚动。",
   "@wordWrap": {
     "description": "Word wrap setting label."
   },
@@ -999,6 +1036,13 @@
   "@clearGitWorkspaceTrustDescription": {
     "description": "Settings action description for clearing trusted Git workspaces."
   },
+  "settingsEditingButtonsSectionTitle": "编辑按钮",
+  "spellingDictionaries": "拼写词典",
+  "spellingDictionariesDescription": "安装和管理拼写词典",
+  "settingsDictionariesSectionTitle": "词典",
+  "availableSpellingDictionaries": "可用词典",
+  "customSpellingDictionaries": "自定义词典",
+  "spellingDictionaryProblems": "词典问题",
   "settingsWindowSectionTitle": "窗口",
   "@settingsWindowSectionTitle": {
     "description": "Settings section title for native window behavior."
@@ -4868,5 +4912,6 @@
   "topicRenameAffectedFiles": "受影响的文件",
   "renameTopicFileInstead": "主题 ID 来自其文件名。请在目录或“文件”侧边栏中使用“重命名主题文件”。",
   "diagnosticWritersideWebFileNameInvalid": "实例 \"{instanceId}\" 为主题 \"{topic}\" 发布了无效的 Web 文件名 \"{webFileName}\"。",
-  "diagnosticWritersideWebFileNameCollision": "实例 \"{instanceId}\" 将 \"{firstTopic}\" 和 \"{secondTopic}\" 都发布为 \"{webFileName}\"。"
+  "diagnosticWritersideWebFileNameCollision": "实例 \"{instanceId}\" 将 \"{firstTopic}\" 和 \"{secondTopic}\" 都发布为 \"{webFileName}\"。",
+  "spellingDictionaryRecoveryConflict": "拼写词典已被外部更改。已保留恢复副本。"
 }

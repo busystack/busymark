@@ -39,6 +39,46 @@ String busyMarkWysiwygEditableText(BusyBlock block) {
   return source.replaceFirst(RegExp(r'(?:\r\n|\r|\n)$'), '');
 }
 
+/// Maps an inline Markdown source boundary back to the block's semantic text
+/// coordinate. Math-bearing fields use source coordinates while the document
+/// insertion APIs and ordinary fields use semantic coordinates.
+int busyMarkWysiwygTextOffsetForSourceOffset(
+  BusyBlock block,
+  int sourceOffset,
+) {
+  final source = busyMarkWysiwygEditableText(block);
+  final target = sourceOffset.clamp(0, source.length).toInt();
+  final textLength = block.plainText.length;
+  var low = 0;
+  var high = textLength;
+  var bestTextOffset = 0;
+  var bestSourceOffset = 0;
+  while (low <= high) {
+    final textOffset = low + ((high - low) ~/ 2);
+    final mapped = const BusyMarkMarkdownSerializer()
+        .serializeInlineFragmentAtTextOffset(
+          block.inlines,
+          textOffset: textOffset,
+          atBlockStart: true,
+          readableHardBreakRuns: true,
+        )
+        .sourceOffset;
+    if ((mapped - target).abs() < (bestSourceOffset - target).abs() ||
+        ((mapped - target).abs() == (bestSourceOffset - target).abs() &&
+            mapped <= target)) {
+      bestTextOffset = textOffset;
+      bestSourceOffset = mapped;
+    }
+    if (mapped == target) return textOffset;
+    if (mapped < target) {
+      low = textOffset + 1;
+    } else {
+      high = textOffset - 1;
+    }
+  }
+  return bestTextOffset;
+}
+
 class BusyInlineStyleRange {
   const BusyInlineStyleRange({
     required this.start,

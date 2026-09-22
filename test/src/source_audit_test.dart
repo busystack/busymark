@@ -280,37 +280,6 @@ void main() {
     expect(createTopicDialog, contains('InputDecoration('));
   });
 
-  test('shared row hover delegates to Yaru interaction state', () {
-    final design = File('lib/src/app/busymark_design.dart').readAsStringSync();
-
-    final helper = RegExp(
-      r'Color busyMarkRowHoverColor\(BuildContext context\) \{(.*?)\n\}',
-      dotAll: true,
-    ).firstMatch(design)!.group(1)!;
-    expect(helper, contains('final hover = theme.hoverColor'));
-    expect(helper, contains('BusyMarkAlpha.groupedRowLightHoverStrength'));
-    expect(helper, isNot(contains('colors.foreground.withValues')));
-    expect(design, isNot(contains('class _BusyMarkHoverBackground')));
-    final actionRow = RegExp(
-      r'class BusyMarkActionRow[\s\S]*?class BusyMarkSwitchRow',
-    ).firstMatch(design)!.group(0)!;
-    expect(actionRow, contains('final row = YaruListTile.square('));
-    expect(actionRow, isNot(contains('MouseRegion(')));
-    expect(
-      actionRow,
-      contains(
-        'hoverColor: widget.hoverColor ?? busyMarkRowHoverColor(context)',
-      ),
-    );
-    final switchRow = RegExp(
-      r'class BusyMarkSwitchRow[\s\S]*?class BusyMarkDialogShell',
-    ).firstMatch(design)!.group(0)!;
-    expect(switchRow, contains('return YaruSwitchListTile('));
-    expect(switchRow, isNot(contains('MouseRegion(')));
-    expect(switchRow, contains('hoverColor: busyMarkRowHoverColor(context)'));
-    expect(switchRow, contains('shape: const RoundedRectangleBorder()'));
-  });
-
   test('shared grouped surfaces use native card shadow layers', () {
     final design = File('lib/src/app/busymark_design.dart').readAsStringSync();
     final dialogs = File(

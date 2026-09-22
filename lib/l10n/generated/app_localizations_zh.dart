@@ -903,6 +903,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get wordWrap => '自动换行';
 
   @override
+  String get wordWrapDescription => '将长行换行以适应编辑器宽度，而不是水平滚动。';
+
+  @override
   String get editorFontSize => '编辑器字体大小';
 
   @override
@@ -950,6 +953,27 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get clearGitWorkspaceTrustDescription => '为之前受信任的工作区启用 Git 功能前先进行询问。';
+
+  @override
+  String get settingsEditingButtonsSectionTitle => '编辑按钮';
+
+  @override
+  String get spellingDictionaries => '拼写词典';
+
+  @override
+  String get spellingDictionariesDescription => '安装和管理拼写词典';
+
+  @override
+  String get settingsDictionariesSectionTitle => '词典';
+
+  @override
+  String get availableSpellingDictionaries => '可用词典';
+
+  @override
+  String get customSpellingDictionaries => '自定义词典';
+
+  @override
+  String get spellingDictionaryProblems => '词典问题';
 
   @override
   String get settingsWindowSectionTitle => '窗口';
@@ -4295,9 +4319,128 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get spelling => '拼写检查';
+
+  @override
+  String get automaticSpelling => '自动检查拼写';
+
+  @override
+  String get defaultSpellingLanguage => '默认拼写语言';
+
+  @override
+  String get projectSpellingLanguage => '项目拼写检查语言';
+
+  @override
+  String get chooseSpellingLanguage => '选择拼写语言';
+
+  @override
+  String get spellingLanguageUnsetStatus => '语言…';
+
+  @override
+  String get spellingOffStatus => '拼写检查已关闭';
+
+  @override
+  String get checkSpelling => '检查拼写';
+
+  @override
+  String get ignoreSpellingOnce => '忽略一次';
+
+  @override
+  String get ignoreSpellingDocument => '在此文档中全部忽略';
+
+  @override
+  String get addPersonalSpellingWord => '添加到个人词典';
+
+  @override
+  String get addProjectSpellingWord => '添加到项目词典';
+
+  @override
+  String get inheritSpellingLanguage => '使用项目或应用语言';
+
+  @override
+  String get disableDocumentSpelling => '不检查拼写';
+
+  @override
+  String get importSpellingDictionary => '导入词典';
+
+  @override
+  String get personalSpellingDictionary => '个人词典';
+
+  @override
+  String get projectSpellingDictionary => '项目词典';
+
+  @override
+  String get noSpellingErrors => '没有拼写错误';
+
+  @override
+  String get noSpellingSuggestions => '没有拼写建议';
+
+  @override
+  String get spellingWordCheckFailed => '无法检查此单词';
+
+  @override
+  String get spellingCheckFailed => '拼写检查失败';
+
+  @override
+  String get spellingCheckIncomplete => '拼写检查未完成';
+
+  @override
+  String get spellingDictionaryNotInstalled => '尚未安装词典';
+
+  @override
+  String spellingDictionaryNotInstalledForLanguage(String dictionary) {
+    return '尚未安装 $dictionary 词典';
+  }
+
+  @override
+  String spellingDictionaryNotInstalledWithSize(String size) {
+    return '未安装 · $size';
+  }
+
+  @override
+  String get spellingDictionaryInstalled => '已安装';
+
+  @override
+  String get installSpellingDictionary => '安装词典';
+
+  @override
+  String get removeSpellingDictionary => '移除词典';
+
+  @override
+  String get cancelSpellingDictionaryInstall => '取消下载词典';
+
+  @override
+  String get retrySpellingDictionaryInstall => '重试安装词典';
+
+  @override
+  String spellingDictionaryDownloading(String size) {
+    return '正在下载 $size…';
+  }
+
+  @override
+  String get spellingDictionaryValidating => '正在验证词典…';
+
+  @override
+  String get spellingDictionaryInstallFailed => '词典安装失败 — 选择以重试';
+
+  @override
+  String spellingDictionaryInstallPrompt(String dictionary, String size) {
+    return '要安装 $dictionary（$size）吗？安装后，在移除前都可离线使用。';
+  }
+
+  @override
+  String get spellingDictionaryUnavailable => '词典不可用';
+
+  @override
+  String get spellingChecking => '正在检查拼写…';
+
+  @override
   String exportInvalidRange(String field, String minimum, String maximum) {
     return '$field：请输入 $minimum 到 $maximum 之间的数字。';
   }
+
+  @override
+  String get spellingDictionaryRecoveryConflict => '拼写词典已被外部更改。已保留恢复副本。';
 }
 
 /// The translations for Chinese, as used in China (`zh_CN`).
@@ -5197,6 +5340,9 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get wordWrap => '自动换行';
 
   @override
+  String get wordWrapDescription => '将长行换行以适应编辑器宽度，而不是水平滚动。';
+
+  @override
   String get editorFontSize => '编辑器字体大小';
 
   @override
@@ -5244,6 +5390,27 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get clearGitWorkspaceTrustDescription => '为之前受信任的工作区启用 Git 功能前先进行询问。';
+
+  @override
+  String get settingsEditingButtonsSectionTitle => '编辑按钮';
+
+  @override
+  String get spellingDictionaries => '拼写词典';
+
+  @override
+  String get spellingDictionariesDescription => '安装和管理拼写词典';
+
+  @override
+  String get settingsDictionariesSectionTitle => '词典';
+
+  @override
+  String get availableSpellingDictionaries => '可用词典';
+
+  @override
+  String get customSpellingDictionaries => '自定义词典';
+
+  @override
+  String get spellingDictionaryProblems => '词典问题';
 
   @override
   String get settingsWindowSectionTitle => '窗口';
@@ -8589,7 +8756,126 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   }
 
   @override
+  String get spelling => '拼写检查';
+
+  @override
+  String get automaticSpelling => '自动检查拼写';
+
+  @override
+  String get defaultSpellingLanguage => '默认拼写语言';
+
+  @override
+  String get projectSpellingLanguage => '项目拼写检查语言';
+
+  @override
+  String get chooseSpellingLanguage => '选择拼写语言';
+
+  @override
+  String get spellingLanguageUnsetStatus => '语言…';
+
+  @override
+  String get spellingOffStatus => '拼写检查已关闭';
+
+  @override
+  String get checkSpelling => '检查拼写';
+
+  @override
+  String get ignoreSpellingOnce => '忽略一次';
+
+  @override
+  String get ignoreSpellingDocument => '在此文档中全部忽略';
+
+  @override
+  String get addPersonalSpellingWord => '添加到个人词典';
+
+  @override
+  String get addProjectSpellingWord => '添加到项目词典';
+
+  @override
+  String get inheritSpellingLanguage => '使用项目或应用语言';
+
+  @override
+  String get disableDocumentSpelling => '不检查拼写';
+
+  @override
+  String get importSpellingDictionary => '导入词典';
+
+  @override
+  String get personalSpellingDictionary => '个人词典';
+
+  @override
+  String get projectSpellingDictionary => '项目词典';
+
+  @override
+  String get noSpellingErrors => '没有拼写错误';
+
+  @override
+  String get noSpellingSuggestions => '没有拼写建议';
+
+  @override
+  String get spellingWordCheckFailed => '无法检查此单词';
+
+  @override
+  String get spellingCheckFailed => '拼写检查失败';
+
+  @override
+  String get spellingCheckIncomplete => '拼写检查未完成';
+
+  @override
+  String get spellingDictionaryNotInstalled => '尚未安装词典';
+
+  @override
+  String spellingDictionaryNotInstalledForLanguage(String dictionary) {
+    return '尚未安装 $dictionary 词典';
+  }
+
+  @override
+  String spellingDictionaryNotInstalledWithSize(String size) {
+    return '未安装 · $size';
+  }
+
+  @override
+  String get spellingDictionaryInstalled => '已安装';
+
+  @override
+  String get installSpellingDictionary => '安装词典';
+
+  @override
+  String get removeSpellingDictionary => '移除词典';
+
+  @override
+  String get cancelSpellingDictionaryInstall => '取消下载词典';
+
+  @override
+  String get retrySpellingDictionaryInstall => '重试安装词典';
+
+  @override
+  String spellingDictionaryDownloading(String size) {
+    return '正在下载 $size…';
+  }
+
+  @override
+  String get spellingDictionaryValidating => '正在验证词典…';
+
+  @override
+  String get spellingDictionaryInstallFailed => '词典安装失败 — 选择以重试';
+
+  @override
+  String spellingDictionaryInstallPrompt(String dictionary, String size) {
+    return '要安装 $dictionary（$size）吗？安装后，在移除前都可离线使用。';
+  }
+
+  @override
+  String get spellingDictionaryUnavailable => '词典不可用';
+
+  @override
+  String get spellingChecking => '正在检查拼写…';
+
+  @override
   String exportInvalidRange(String field, String minimum, String maximum) {
     return '$field：请输入 $minimum 到 $maximum 之间的数字。';
   }
+
+  @override
+  String get spellingDictionaryRecoveryConflict => '拼写词典已被外部更改。已保留恢复副本。';
 }

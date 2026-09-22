@@ -29,10 +29,10 @@ void main() {
       'linux/io.busystack.busymark.metainfo.xml',
     ).readAsStringSync();
 
-    expect(pubspec, contains(RegExp(r'^version: 0\.4\.2$', multiLine: true)));
+    expect(pubspec, contains(RegExp(r'^version: 0\.5\.0$', multiLine: true)));
     expect(
       snapcraft,
-      contains(RegExp(r'^version: "0\.4\.2"$', multiLine: true)),
+      contains(RegExp(r'^version: "0\.5\.0"$', multiLine: true)),
     );
     expect(snapcraft, contains(RegExp(r'^grade: stable$', multiLine: true)));
     expect(
@@ -57,9 +57,9 @@ void main() {
         ),
       ),
     );
-    expect(metainfo, contains('<release version="0.4.2"'));
-    expect(pubspec, isNot(contains('0.4.21')));
-    expect(snapcraft, isNot(contains('0.4.21')));
+    expect(metainfo, contains('<release version="0.5.0"'));
+    expect(pubspec, isNot(contains('0.5.01')));
+    expect(snapcraft, isNot(contains('0.5.01')));
   });
 
   test(
@@ -159,6 +159,11 @@ void main() {
       '.github/workflows/flutter-linux.yml',
     ).readAsStringSync();
 
+    expect(
+      workflow,
+      isNot(contains("      - 'Release/**'")),
+      reason: 'Linux CI is intentionally limited to main-branch changes.',
+    );
     expect(workflow, contains('libwebkit2gtk-4.1-dev'));
     expect(workflow, contains('apparmor-profiles'));
     expect(workflow, contains('bwrap-userns-restrict'));

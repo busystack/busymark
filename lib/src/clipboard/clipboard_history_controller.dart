@@ -183,8 +183,8 @@ class ClipboardHistoryController extends Notifier<ClipboardHistoryState> {
     } else if (first.text != null || first.sourceText != null) {
       capture = BusyMarkClipboardCapture(
         kind: BusyMarkClipboardContentKind.text,
-        text: first.text ?? first.sourceText,
-        sourceText: first.sourceText ?? first.text,
+        text: first.text,
+        sourceText: first.sourceText,
         origin: first.origin,
         external: !first.sessionOwned,
       );
@@ -200,6 +200,7 @@ class ClipboardHistoryController extends Notifier<ClipboardHistoryState> {
           imageBytes: image.bytes,
           imageMimeType: image.mimeType,
           imageDisplayName: image.name,
+          origin: first.origin,
           external: true,
         );
       }

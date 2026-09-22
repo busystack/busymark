@@ -83,6 +83,42 @@
   "workspaceSearchShowMore": "Afficher plus de résultats",
   "workspaceSearchSkippedFiles": "La recherche est incomplète. Ces fichiers dépassent 1 MiB ou n’ont pas pu être lus :",
   "@@locale": "fr",
+  "spelling": "Orthographe",
+  "automaticSpelling": "Vérification orthographique automatique",
+  "defaultSpellingLanguage": "Langue orthographique par défaut",
+  "projectSpellingLanguage": "Langue de correction du projet",
+  "chooseSpellingLanguage": "Choisir la langue orthographique",
+  "spellingLanguageUnsetStatus": "Langue…",
+  "spellingOffStatus": "Orthographe désactivée",
+  "checkSpelling": "Vérifier l’orthographe",
+  "ignoreSpellingOnce": "Ignorer une fois",
+  "ignoreSpellingDocument": "Tout ignorer dans ce document",
+  "addPersonalSpellingWord": "Ajouter au dictionnaire personnel",
+  "addProjectSpellingWord": "Ajouter au dictionnaire du projet",
+  "inheritSpellingLanguage": "Utiliser la langue du projet ou de l’application",
+  "disableDocumentSpelling": "Ne pas vérifier l’orthographe",
+  "importSpellingDictionary": "Importer un dictionnaire",
+  "personalSpellingDictionary": "Dictionnaire personnel",
+  "projectSpellingDictionary": "Dictionnaire du projet",
+  "noSpellingErrors": "Aucune faute d’orthographe",
+  "noSpellingSuggestions": "Aucune suggestion orthographique",
+  "spellingWordCheckFailed": "Impossible de vérifier ce mot",
+  "spellingCheckFailed": "Échec de la vérification orthographique",
+  "spellingCheckIncomplete": "La vérification orthographique est incomplète",
+  "spellingDictionaryNotInstalled": "Dictionnaire non installé",
+  "spellingDictionaryNotInstalledForLanguage": "Le dictionnaire {dictionary} n’est pas installé",
+  "spellingDictionaryNotInstalledWithSize": "Non installé · {size}",
+  "spellingDictionaryInstalled": "Installé",
+  "installSpellingDictionary": "Installer le dictionnaire",
+  "removeSpellingDictionary": "Supprimer le dictionnaire",
+  "cancelSpellingDictionaryInstall": "Annuler le téléchargement du dictionnaire",
+  "retrySpellingDictionaryInstall": "Réessayer l’installation du dictionnaire",
+  "spellingDictionaryDownloading": "Téléchargement de {size}…",
+  "spellingDictionaryValidating": "Validation du dictionnaire…",
+  "spellingDictionaryInstallFailed": "Échec de l’installation — sélectionnez pour réessayer",
+  "spellingDictionaryInstallPrompt": "Installer {dictionary} ({size}) ? Après installation, il restera disponible hors ligne jusqu’à sa suppression.",
+  "spellingDictionaryUnavailable": "Dictionnaire indisponible",
+  "spellingChecking": "Vérification de l’orthographe…",
   "reportIssue": "Signaler un problème",
   "feedbackCategory": "Catégorie",
   "feedbackChooseCategory": "Choisir une catégorie",
@@ -802,6 +838,7 @@
     "description": "Editor setting description for saving files automatically."
   },
   "wordWrap": "Retour à la ligne automatique",
+  "wordWrapDescription": "Ajuster les lignes longues à la largeur de l’éditeur plutôt que de les faire défiler horizontalement.",
   "@wordWrap": {
     "description": "Word wrap setting label."
   },
@@ -869,6 +906,13 @@
   "@clearGitWorkspaceTrustDescription": {
     "description": "Settings action description for clearing trusted Git workspaces."
   },
+  "settingsEditingButtonsSectionTitle": "Boutons d’édition",
+  "spellingDictionaries": "Dictionnaires orthographiques",
+  "spellingDictionariesDescription": "Installer et gérer les dictionnaires orthographiques",
+  "settingsDictionariesSectionTitle": "Dictionnaires",
+  "availableSpellingDictionaries": "Dictionnaires disponibles",
+  "customSpellingDictionaries": "Dictionnaires personnalisés",
+  "spellingDictionaryProblems": "Problèmes de dictionnaires",
   "settingsWindowSectionTitle": "Fenêtre",
   "@settingsWindowSectionTitle": {
     "description": "Settings section title for native window behavior."
@@ -3329,5 +3373,6 @@
   "topicRenameAffectedFiles": "Fichiers concernés",
   "renameTopicFileInstead": "Les ID de sujet proviennent de leur nom de fichier. Utilisez « Renommer le fichier de sujet » dans la table des matières ou la barre latérale Fichiers.",
   "diagnosticWritersideWebFileNameInvalid": "L’instance \"{instanceId}\" publie le nom de fichier web non valide \"{webFileName}\" pour le sujet \"{topic}\".",
-  "diagnosticWritersideWebFileNameCollision": "L’instance \"{instanceId}\" publie \"{firstTopic}\" et \"{secondTopic}\" sous le nom \"{webFileName}\"."
+  "diagnosticWritersideWebFileNameCollision": "L’instance \"{instanceId}\" publie \"{firstTopic}\" et \"{secondTopic}\" sous le nom \"{webFileName}\".",
+  "spellingDictionaryRecoveryConflict": "Le dictionnaire orthographique a été modifié en externe. Une copie de récupération a été conservée."
 }

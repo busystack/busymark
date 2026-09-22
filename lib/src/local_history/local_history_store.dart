@@ -26,11 +26,15 @@ abstract interface class LocalHistoryStore {
   ///
   /// Returns the updated document, or `null` when the requested identity is
   /// missing or is no longer eligible for this transition.
+  /// [staleDestinationOwner] is only supplied after verifying a retained
+  /// successful save against the current file. Its identity and timestamp are
+  /// rechecked under the store lock before retiring it in the same index write.
   Future<LocalHistoryDocument?> promoteUntitledDocument({
     required String documentId,
     required String destinationPath,
     required String displayName,
     required DateTime updatedAt,
+    LocalHistoryDocument? staleDestinationOwner,
   });
 
   Future<void> remapPath(String sourcePath, String destinationPath);
@@ -194,9 +198,10 @@ class FileLocalHistoryStore implements LocalHistoryStore {
     required String destinationPath,
     required String displayName,
     required DateTime updatedAt,
+    LocalHistoryDocument? staleDestinationOwner,
   }) => _serialized((root) async {
     return _withFileLock(root, () async {
-      final index = await _loadIndexUnlocked(root, repair: true);
+      var index = await _loadIndexUnlocked(root, repair: true);
       final document = index.documents
           .where((candidate) => candidate.id == documentId)
           .firstOrNull;
@@ -210,11 +215,19 @@ class FileLocalHistoryStore implements LocalHistoryStore {
           .where(
             (candidate) =>
                 candidate.id != document.id &&
-                candidate.currentPath != null &&
-                p.equals(candidate.currentPath!, destination),
+                _ownsActivePath(candidate, destination),
           )
           .firstOrNull;
-      if (destinationOwner != null) return null;
+      if (destinationOwner != null) {
+        if (!_canRetirePromotionOwner(
+          document,
+          destinationOwner,
+          staleDestinationOwner,
+        )) {
+          return null;
+        }
+        index = index.withDocument(destinationOwner.copyWith(deleted: true));
+      }
       final promoted = document.copyWith(
         displayName: displayName,
         currentPath: destination,
@@ -234,6 +247,7 @@ class FileLocalHistoryStore implements LocalHistoryStore {
   @override
   Future<void> remapPath(String sourcePath, String destinationPath) =>
       _mutateDocuments((document) {
+        if (document.deleted) return document;
         final current = document.currentPath;
         if (current == null) return document;
         final mapped = _remap(current, sourcePath, destinationPath);
@@ -246,7 +260,6 @@ class FileLocalHistoryStore implements LocalHistoryStore {
             current,
             mapped,
           ]),
-          deleted: false,
           updatedAt: DateTime.now().toUtc(),
         );
       });
@@ -749,13 +762,27 @@ LocalHistoryDocument? _resolveDocument(
   final path = request.path;
   if (path == null) return null;
   return documents
-      .where(
-        (document) =>
-            document.currentPath != null &&
-            p.equals(document.currentPath!, path),
-      )
+      .where((document) => _ownsActivePath(document, path))
       .firstOrNull;
 }
+
+// The controller verifies the successfully saved bytes before requesting this
+// repair. Recheck the exact owner under the store lock: a later capture or a
+// different owner must not be retired by an old session's promotion retry.
+bool _canRetirePromotionOwner(
+  LocalHistoryDocument document,
+  LocalHistoryDocument owner,
+  LocalHistoryDocument? expectedOwner,
+) =>
+    expectedOwner != null &&
+    owner.id == expectedOwner.id &&
+    owner.updatedAt == expectedOwner.updatedAt &&
+    owner.updatedAt.isBefore(document.updatedAt);
+
+bool _ownsActivePath(LocalHistoryDocument document, String path) =>
+    !document.deleted &&
+    document.currentPath != null &&
+    p.equals(document.currentPath!, path);
 
 LocalHistoryDocument _updatedDocument(
   LocalHistoryDocument document,
@@ -974,6 +1001,7 @@ class MemoryLocalHistoryStore implements LocalHistoryStore {
     required String destinationPath,
     required String displayName,
     required DateTime updatedAt,
+    LocalHistoryDocument? staleDestinationOwner,
   }) async {
     final document = _documents[documentId];
     if (document == null) return null;
@@ -986,11 +1014,21 @@ class MemoryLocalHistoryStore implements LocalHistoryStore {
         .where(
           (candidate) =>
               candidate.id != document.id &&
-              candidate.currentPath != null &&
-              p.equals(candidate.currentPath!, destination),
+              _ownsActivePath(candidate, destination),
         )
         .firstOrNull;
-    if (destinationOwner != null) return null;
+    if (destinationOwner != null) {
+      if (!_canRetirePromotionOwner(
+        document,
+        destinationOwner,
+        staleDestinationOwner,
+      )) {
+        return null;
+      }
+      _documents[destinationOwner.id] = destinationOwner.copyWith(
+        deleted: true,
+      );
+    }
     final promoted = document.copyWith(
       displayName: displayName,
       currentPath: destination,
@@ -1006,6 +1044,7 @@ class MemoryLocalHistoryStore implements LocalHistoryStore {
   @override
   Future<void> remapPath(String sourcePath, String destinationPath) async {
     for (final entry in _documents.entries.toList()) {
+      if (entry.value.deleted) continue;
       final current = entry.value.currentPath;
       final mapped = current == null
           ? null
@@ -1019,7 +1058,6 @@ class MemoryLocalHistoryStore implements LocalHistoryStore {
             current!,
             mapped,
           ]),
-          deleted: false,
         );
       }
     }

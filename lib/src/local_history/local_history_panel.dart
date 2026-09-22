@@ -120,7 +120,8 @@ class _LocalHistoryPanelState extends ConsumerState<LocalHistoryPanel> {
         selected != null &&
         activeBuffer != null &&
         (selected.id == activeHistoryDocumentId ||
-            (selected.currentPath != null &&
+            (!selected.deleted &&
+                selected.currentPath != null &&
                 activeBuffer.filePath != null &&
                 p.equals(selected.currentPath!, activeBuffer.filePath!)));
     final selectedMatchesVisibleScope =

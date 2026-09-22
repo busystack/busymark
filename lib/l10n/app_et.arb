@@ -83,6 +83,42 @@
   "workspaceSearchShowMore": "Kuva rohkem tulemusi",
   "workspaceSearchSkippedFiles": "Otsing pole täielik. Need failid on suuremad kui 1 MiB või neid ei saanud lugeda:",
   "@@locale": "et",
+  "spelling": "Õigekiri",
+  "automaticSpelling": "Automaatne õigekirjakontroll",
+  "defaultSpellingLanguage": "Vaikimisi õigekirjakeel",
+  "projectSpellingLanguage": "Projekti õigekirjakontrolli keel",
+  "chooseSpellingLanguage": "Vali õigekirjakeel",
+  "spellingLanguageUnsetStatus": "Keel…",
+  "spellingOffStatus": "Õigekirjakontroll väljas",
+  "checkSpelling": "Kontrolli õigekirja",
+  "ignoreSpellingOnce": "Eira üks kord",
+  "ignoreSpellingDocument": "Eira selles dokumendis kõiki",
+  "addPersonalSpellingWord": "Lisa isiklikku sõnastikku",
+  "addProjectSpellingWord": "Lisa projekti sõnastikku",
+  "inheritSpellingLanguage": "Kasuta projekti või rakenduse keelt",
+  "disableDocumentSpelling": "Ära kontrolli õigekirja",
+  "importSpellingDictionary": "Impordi sõnastik",
+  "personalSpellingDictionary": "Isiklik sõnastik",
+  "projectSpellingDictionary": "Projekti sõnastik",
+  "noSpellingErrors": "Õigekirjavigu pole",
+  "noSpellingSuggestions": "Õigekirjasoovitusi pole",
+  "spellingWordCheckFailed": "Seda sõna ei saanud kontrollida",
+  "spellingCheckFailed": "Õigekirjakontroll nurjus",
+  "spellingCheckIncomplete": "Õigekirjakontroll on pooleli",
+  "spellingDictionaryNotInstalled": "Sõnastik pole installitud",
+  "spellingDictionaryNotInstalledForLanguage": "{dictionary} sõnastik pole installitud",
+  "spellingDictionaryNotInstalledWithSize": "Pole installitud · {size}",
+  "spellingDictionaryInstalled": "Installitud",
+  "installSpellingDictionary": "Installi sõnastik",
+  "removeSpellingDictionary": "Eemalda sõnastik",
+  "cancelSpellingDictionaryInstall": "Katkesta sõnastiku allalaadimine",
+  "retrySpellingDictionaryInstall": "Proovi sõnastikku uuesti installida",
+  "spellingDictionaryDownloading": "Allalaadimine: {size}…",
+  "spellingDictionaryValidating": "Sõnastiku kontrollimine…",
+  "spellingDictionaryInstallFailed": "Sõnastiku installimine nurjus — uuesti proovimiseks vali see",
+  "spellingDictionaryInstallPrompt": "Kas installida {dictionary} ({size})? Pärast installimist on see võrguühenduseta saadaval, kuni selle eemaldad.",
+  "spellingDictionaryUnavailable": "Sõnastik pole saadaval",
+  "spellingChecking": "Õigekirja kontrollimine…",
   "reportIssue": "Teata probleemist",
   "@reportIssue": {
     "description": "Menu action and dialog title for reporting an issue."
@@ -890,6 +926,7 @@
     "description": "Editor setting description for saving files automatically."
   },
   "wordWrap": "Reamurdmine",
+  "wordWrapDescription": "Murrab pikad read redaktori laiusele, selle asemel et horisontaalselt kerida.",
   "@wordWrap": {
     "description": "Word wrap setting label."
   },
@@ -957,6 +994,13 @@
   "@clearGitWorkspaceTrustDescription": {
     "description": "Settings action description for clearing trusted Git workspaces."
   },
+  "settingsEditingButtonsSectionTitle": "Redigeerimisnupud",
+  "spellingDictionaries": "Õigekirjasõnastikud",
+  "spellingDictionariesDescription": "Õigekirjasõnastike installimine ja haldamine",
+  "settingsDictionariesSectionTitle": "Sõnastikud",
+  "availableSpellingDictionaries": "Saadaolevad sõnastikud",
+  "customSpellingDictionaries": "Kohandatud sõnastikud",
+  "spellingDictionaryProblems": "Sõnastikuprobleemid",
   "settingsWindowSectionTitle": "Aken",
   "@settingsWindowSectionTitle": {
     "description": "Settings section title for native window behavior."
@@ -3789,5 +3833,6 @@
   "topicRenameAffectedFiles": "Mõjutatud failid",
   "renameTopicFileInstead": "Teema ID-d tuletatakse failinimedest. Kasuta sisukorras või failide külgribal käsku „Nimeta teemafail ümber“.",
   "diagnosticWritersideWebFileNameInvalid": "Eksemplar \"{instanceId}\" avaldab teema \"{topic}\" jaoks sobimatu veebifailinime \"{webFileName}\".",
-  "diagnosticWritersideWebFileNameCollision": "Eksemplar \"{instanceId}\" avaldab nii \"{firstTopic}\" kui ka \"{secondTopic}\" nimega \"{webFileName}\"."
+  "diagnosticWritersideWebFileNameCollision": "Eksemplar \"{instanceId}\" avaldab nii \"{firstTopic}\" kui ka \"{secondTopic}\" nimega \"{webFileName}\".",
+  "spellingDictionaryRecoveryConflict": "Õigekirjasõnastikku muudeti väliselt. Taastekoopia säilitati."
 }

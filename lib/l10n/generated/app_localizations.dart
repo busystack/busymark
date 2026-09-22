@@ -1885,6 +1885,12 @@ abstract class AppLocalizations {
   /// **'Word wrap'**
   String get wordWrap;
 
+  /// Editor setting description for wrapping long lines.
+  ///
+  /// In en, this message translates to:
+  /// **'Wrap long lines to fit the editor width instead of scrolling horizontally.'**
+  String get wordWrapDescription;
+
   /// Editor font size setting label.
   ///
   /// In en, this message translates to:
@@ -1980,6 +1986,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Ask before enabling Git features for previously trusted workspaces.'**
   String get clearGitWorkspaceTrustDescription;
+
+  /// Editor-settings section title for editing-button controls.
+  ///
+  /// In en, this message translates to:
+  /// **'Editing buttons'**
+  String get settingsEditingButtonsSectionTitle;
+
+  /// Title for the spelling-dictionary management subpage and its navigation row.
+  ///
+  /// In en, this message translates to:
+  /// **'Spelling Dictionaries'**
+  String get spellingDictionaries;
+
+  /// Description for the navigation row that opens spelling-dictionary management.
+  ///
+  /// In en, this message translates to:
+  /// **'Install and manage spelling dictionaries'**
+  String get spellingDictionariesDescription;
+
+  /// Editor-settings section title for dictionary management and word-store controls.
+  ///
+  /// In en, this message translates to:
+  /// **'Dictionaries'**
+  String get settingsDictionariesSectionTitle;
+
+  /// Settings group title for downloadable spelling dictionaries.
+  ///
+  /// In en, this message translates to:
+  /// **'Available Dictionaries'**
+  String get availableSpellingDictionaries;
+
+  /// Settings group title for imported spelling dictionaries.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom Dictionaries'**
+  String get customSpellingDictionaries;
+
+  /// Settings group title for invalid imported spelling dictionaries.
+  ///
+  /// In en, this message translates to:
+  /// **'Dictionary Problems'**
+  String get spellingDictionaryProblems;
 
   /// Settings section title for native window behavior.
   ///
@@ -7578,11 +7626,233 @@ abstract class AppLocalizations {
   /// **'{value} MiB'**
   String settingsMebibytesValue(int value);
 
+  /// No description provided for @spelling.
+  ///
+  /// In en, this message translates to:
+  /// **'Spelling'**
+  String get spelling;
+
+  /// No description provided for @automaticSpelling.
+  ///
+  /// In en, this message translates to:
+  /// **'Check spelling automatically'**
+  String get automaticSpelling;
+
+  /// No description provided for @defaultSpellingLanguage.
+  ///
+  /// In en, this message translates to:
+  /// **'Default spelling language'**
+  String get defaultSpellingLanguage;
+
+  /// No description provided for @projectSpellingLanguage.
+  ///
+  /// In en, this message translates to:
+  /// **'Project spelling language'**
+  String get projectSpellingLanguage;
+
+  /// No description provided for @chooseSpellingLanguage.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose spelling language'**
+  String get chooseSpellingLanguage;
+
+  /// Compact document status shown when no spelling language resolves.
+  ///
+  /// In en, this message translates to:
+  /// **'Language…'**
+  String get spellingLanguageUnsetStatus;
+
+  /// Compact document status shown when spelling is disabled for the document.
+  ///
+  /// In en, this message translates to:
+  /// **'Spelling Off'**
+  String get spellingOffStatus;
+
+  /// No description provided for @checkSpelling.
+  ///
+  /// In en, this message translates to:
+  /// **'Check Spelling'**
+  String get checkSpelling;
+
+  /// No description provided for @ignoreSpellingOnce.
+  ///
+  /// In en, this message translates to:
+  /// **'Ignore Once'**
+  String get ignoreSpellingOnce;
+
+  /// No description provided for @ignoreSpellingDocument.
+  ///
+  /// In en, this message translates to:
+  /// **'Ignore All in This Document'**
+  String get ignoreSpellingDocument;
+
+  /// No description provided for @addPersonalSpellingWord.
+  ///
+  /// In en, this message translates to:
+  /// **'Add to Personal Dictionary'**
+  String get addPersonalSpellingWord;
+
+  /// No description provided for @addProjectSpellingWord.
+  ///
+  /// In en, this message translates to:
+  /// **'Add to Project Dictionary'**
+  String get addProjectSpellingWord;
+
+  /// No description provided for @inheritSpellingLanguage.
+  ///
+  /// In en, this message translates to:
+  /// **'Use project or application language'**
+  String get inheritSpellingLanguage;
+
+  /// No description provided for @disableDocumentSpelling.
+  ///
+  /// In en, this message translates to:
+  /// **'Do not check spelling'**
+  String get disableDocumentSpelling;
+
+  /// No description provided for @importSpellingDictionary.
+  ///
+  /// In en, this message translates to:
+  /// **'Import Dictionary'**
+  String get importSpellingDictionary;
+
+  /// No description provided for @personalSpellingDictionary.
+  ///
+  /// In en, this message translates to:
+  /// **'Personal Dictionary'**
+  String get personalSpellingDictionary;
+
+  /// No description provided for @projectSpellingDictionary.
+  ///
+  /// In en, this message translates to:
+  /// **'Project Dictionary'**
+  String get projectSpellingDictionary;
+
+  /// No description provided for @noSpellingErrors.
+  ///
+  /// In en, this message translates to:
+  /// **'No spelling errors'**
+  String get noSpellingErrors;
+
+  /// No description provided for @noSpellingSuggestions.
+  ///
+  /// In en, this message translates to:
+  /// **'No spelling suggestions'**
+  String get noSpellingSuggestions;
+
+  /// No description provided for @spellingWordCheckFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not check this word'**
+  String get spellingWordCheckFailed;
+
+  /// No description provided for @spellingCheckFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Spelling check failed'**
+  String get spellingCheckFailed;
+
+  /// No description provided for @spellingCheckIncomplete.
+  ///
+  /// In en, this message translates to:
+  /// **'Spelling check is incomplete'**
+  String get spellingCheckIncomplete;
+
+  /// No description provided for @spellingDictionaryNotInstalled.
+  ///
+  /// In en, this message translates to:
+  /// **'Dictionary not installed'**
+  String get spellingDictionaryNotInstalled;
+
+  /// No description provided for @spellingDictionaryNotInstalledForLanguage.
+  ///
+  /// In en, this message translates to:
+  /// **'{dictionary} dictionary is not installed'**
+  String spellingDictionaryNotInstalledForLanguage(String dictionary);
+
+  /// No description provided for @spellingDictionaryNotInstalledWithSize.
+  ///
+  /// In en, this message translates to:
+  /// **'Not installed · {size}'**
+  String spellingDictionaryNotInstalledWithSize(String size);
+
+  /// No description provided for @spellingDictionaryInstalled.
+  ///
+  /// In en, this message translates to:
+  /// **'Installed'**
+  String get spellingDictionaryInstalled;
+
+  /// No description provided for @installSpellingDictionary.
+  ///
+  /// In en, this message translates to:
+  /// **'Install dictionary'**
+  String get installSpellingDictionary;
+
+  /// No description provided for @removeSpellingDictionary.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove dictionary'**
+  String get removeSpellingDictionary;
+
+  /// No description provided for @cancelSpellingDictionaryInstall.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel dictionary download'**
+  String get cancelSpellingDictionaryInstall;
+
+  /// No description provided for @retrySpellingDictionaryInstall.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry dictionary installation'**
+  String get retrySpellingDictionaryInstall;
+
+  /// No description provided for @spellingDictionaryDownloading.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloading {size}…'**
+  String spellingDictionaryDownloading(String size);
+
+  /// No description provided for @spellingDictionaryValidating.
+  ///
+  /// In en, this message translates to:
+  /// **'Validating dictionary…'**
+  String get spellingDictionaryValidating;
+
+  /// No description provided for @spellingDictionaryInstallFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Dictionary installation failed — select to retry'**
+  String get spellingDictionaryInstallFailed;
+
+  /// No description provided for @spellingDictionaryInstallPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Install {dictionary} ({size})? After installation, it remains available offline until you remove it.'**
+  String spellingDictionaryInstallPrompt(String dictionary, String size);
+
+  /// No description provided for @spellingDictionaryUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Dictionary unavailable'**
+  String get spellingDictionaryUnavailable;
+
+  /// No description provided for @spellingChecking.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking spelling…'**
+  String get spellingChecking;
+
   /// Invalid numeric export setting.
   ///
   /// In en, this message translates to:
   /// **'{field}: enter a number between {minimum} and {maximum}.'**
   String exportInvalidRange(String field, String minimum, String maximum);
+
+  /// No description provided for @spellingDictionaryRecoveryConflict.
+  ///
+  /// In en, this message translates to:
+  /// **'The spelling dictionary changed externally. A recovery copy was preserved.'**
+  String get spellingDictionaryRecoveryConflict;
 }
 
 class _AppLocalizationsDelegate

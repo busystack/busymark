@@ -36,6 +36,45 @@ Copy and cut snapshot the selection before asynchronous publication. Cut deletes
 only after a successful write and after revalidating the document, active target,
 and selection. Paste uses the same revalidation and normal one-step undo path.
 
+Live clipboard paste and Clipboard History use one ordered resolver. Editor and
+Markdown Source share the same semantic interpretation; only the final inserted
+representation differs. Plain-text mode consumes only interoperable text, never
+source markup, HTML, rich fragments, or media. Paste revalidates both its target
+and, when native image acquisition crosses a second platform boundary, clipboard
+identity around asynchronous work.
+
+Source fragment insertion uses the Markdown serializer's inline entry point,
+including block-start and table-cell escaping, without document-level trimming.
+Destination source is parsed after modeling the captured replacement: complete
+non-paragraph fragments remain blocks, enclosing inline styles are reconciled
+within the smallest changed source range, and table-cell serialization is used
+only for a selection contained by one cell. Raw/code protection and list or
+blockquote continuation apply only to structure that survives the replacement.
+
+The Source widget is the asynchronous execution shell: it captures and
+revalidates the target, prepares assets, commits one edit, restores focus, and
+reports Undo and retention. `SourcePasteEngine` is pure planning over an
+immutable source snapshot and returns one of ready, try-next, or stop; its ready
+result includes the expected source identity, exact replacement bounds, and
+final caret. `MarkdownSourceMapper` owns source/logical/semantic projections,
+while `MarkdownAstAdapter` remains the ordinary semantic converter. Raw HTML is
+converted as one safe parser fragment and gains optional occurrence metadata at
+that conversion boundary. Position probes are operation-local and never define
+HTML, links, attributes, references, or whitespace classification.
+
+Inline serialization has one syntax-emission path. Ordinary serialization and
+serialization with caret or break provenance differ only in requested output
+bookkeeping, so identical content and options must produce byte-identical
+source. Standalone HTML-break layout is indexed once per snapshot; retained
+breaks keep their own source occurrence, line ending, and container prefix.
+
+Paste outcomes distinguish insertion, cancellation, stale targets, unsupported
+representations, and unavailable targets. Cancellation and staleness terminate
+candidate processing. All paste mutations are discrete external-history
+transactions and invalidate continuous-typing groups; active IME composition is
+checked at entry and again immediately before mutation. Newly published assets
+are removed after cancellation or invalidation, while reused assets are kept.
+
 ## Clipboard retention
 
 `ClipboardHistoryController` retains successful BusyMark copy/cut payloads and
@@ -44,6 +83,14 @@ origin metadata, available representations, a SHA-256 equivalence fingerprint,
 and byte accounting. The default policy is 100 entries, 64 MiB total payload,
 and 8 MiB of decoded thumbnails. Deduplication compares every meaningful
 representation.
+
+The editor adapter that completes a successful paste is the sole retention
+owner. Candidate helpers return capture data but never retain it, the history
+panel never performs a second write, and the insertion registry only restores
+focus. Image-path captures use the immutable bytes returned by ingestion rather
+than reopening the original file. Plain-text paste may retain the original
+external snapshot after success but never probes richer fields for insertion or
+acquires image bytes to enrich it.
 
 The insertion registry exposes only the latest mounted editable surface and uses
 identity-safe unregistering. An adapter must capture and revalidate its document,

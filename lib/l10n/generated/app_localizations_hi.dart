@@ -946,6 +946,10 @@ class AppLocalizationsHi extends AppLocalizations {
   String get wordWrap => 'वर्ड रैप';
 
   @override
+  String get wordWrapDescription =>
+      'लंबी पंक्तियों को क्षैतिज रूप से स्क्रॉल करने के बजाय संपादक की चौड़ाई में समेटें।';
+
+  @override
   String get editorFontSize => 'संपादक फ़ॉन्ट आकार';
 
   @override
@@ -997,6 +1001,28 @@ class AppLocalizationsHi extends AppLocalizations {
   @override
   String get clearGitWorkspaceTrustDescription =>
       'पहले से विश्वसनीय कार्यस्थानों के लिए Git सुविधाएँ चालू करने से पहले पूछें।';
+
+  @override
+  String get settingsEditingButtonsSectionTitle => 'संपादन बटन';
+
+  @override
+  String get spellingDictionaries => 'वर्तनी शब्दकोश';
+
+  @override
+  String get spellingDictionariesDescription =>
+      'वर्तनी शब्दकोश इंस्टॉल और प्रबंधित करें';
+
+  @override
+  String get settingsDictionariesSectionTitle => 'शब्दकोश';
+
+  @override
+  String get availableSpellingDictionaries => 'उपलब्ध शब्दकोश';
+
+  @override
+  String get customSpellingDictionaries => 'कस्टम शब्दकोश';
+
+  @override
+  String get spellingDictionaryProblems => 'शब्दकोश समस्याएँ';
 
   @override
   String get settingsWindowSectionTitle => 'विंडो';
@@ -4484,7 +4510,128 @@ class AppLocalizationsHi extends AppLocalizations {
   }
 
   @override
+  String get spelling => 'वर्तनी';
+
+  @override
+  String get automaticSpelling => 'स्वचालित वर्तनी जाँच';
+
+  @override
+  String get defaultSpellingLanguage => 'डिफ़ॉल्ट वर्तनी भाषा';
+
+  @override
+  String get projectSpellingLanguage => 'परियोजना की वर्तनी भाषा';
+
+  @override
+  String get chooseSpellingLanguage => 'वर्तनी भाषा चुनें';
+
+  @override
+  String get spellingLanguageUnsetStatus => 'भाषा…';
+
+  @override
+  String get spellingOffStatus => 'वर्तनी बंद';
+
+  @override
+  String get checkSpelling => 'वर्तनी जाँचें';
+
+  @override
+  String get ignoreSpellingOnce => 'एक बार अनदेखा करें';
+
+  @override
+  String get ignoreSpellingDocument => 'इस दस्तावेज़ में सभी अनदेखे करें';
+
+  @override
+  String get addPersonalSpellingWord => 'निजी शब्दकोश में जोड़ें';
+
+  @override
+  String get addProjectSpellingWord => 'परियोजना शब्दकोश में जोड़ें';
+
+  @override
+  String get inheritSpellingLanguage => 'परियोजना या ऐप की भाषा उपयोग करें';
+
+  @override
+  String get disableDocumentSpelling => 'वर्तनी जाँच न करें';
+
+  @override
+  String get importSpellingDictionary => 'शब्दकोश आयात करें';
+
+  @override
+  String get personalSpellingDictionary => 'व्यक्तिगत शब्दकोश';
+
+  @override
+  String get projectSpellingDictionary => 'परियोजना शब्दकोश';
+
+  @override
+  String get noSpellingErrors => 'कोई वर्तनी त्रुटि नहीं';
+
+  @override
+  String get noSpellingSuggestions => 'कोई वर्तनी सुझाव नहीं';
+
+  @override
+  String get spellingWordCheckFailed => 'इस शब्द की जाँच नहीं हो सकी';
+
+  @override
+  String get spellingCheckFailed => 'वर्तनी जाँच विफल रही';
+
+  @override
+  String get spellingCheckIncomplete => 'वर्तनी जाँच अधूरी है';
+
+  @override
+  String get spellingDictionaryNotInstalled => 'शब्दकोश इंस्टॉल नहीं है';
+
+  @override
+  String spellingDictionaryNotInstalledForLanguage(String dictionary) {
+    return '$dictionary शब्दकोश इंस्टॉल नहीं है';
+  }
+
+  @override
+  String spellingDictionaryNotInstalledWithSize(String size) {
+    return 'इंस्टॉल नहीं है · $size';
+  }
+
+  @override
+  String get spellingDictionaryInstalled => 'इंस्टॉल है';
+
+  @override
+  String get installSpellingDictionary => 'शब्दकोश इंस्टॉल करें';
+
+  @override
+  String get removeSpellingDictionary => 'शब्दकोश हटाएँ';
+
+  @override
+  String get cancelSpellingDictionaryInstall => 'शब्दकोश डाउनलोड रद्द करें';
+
+  @override
+  String get retrySpellingDictionaryInstall => 'शब्दकोश इंस्टॉलेशन फिर आज़माएँ';
+
+  @override
+  String spellingDictionaryDownloading(String size) {
+    return '$size डाउनलोड हो रहा है…';
+  }
+
+  @override
+  String get spellingDictionaryValidating => 'शब्दकोश सत्यापित हो रहा है…';
+
+  @override
+  String get spellingDictionaryInstallFailed =>
+      'शब्दकोश इंस्टॉलेशन विफल — फिर प्रयास करने के लिए चुनें';
+
+  @override
+  String spellingDictionaryInstallPrompt(String dictionary, String size) {
+    return '$dictionary ($size) इंस्टॉल करें? इंस्टॉल होने के बाद यह हटाए जाने तक ऑफ़लाइन उपलब्ध रहेगा।';
+  }
+
+  @override
+  String get spellingDictionaryUnavailable => 'शब्दकोश उपलब्ध नहीं है';
+
+  @override
+  String get spellingChecking => 'वर्तनी की जाँच हो रही है…';
+
+  @override
   String exportInvalidRange(String field, String minimum, String maximum) {
     return '$field: $minimum से $maximum के बीच संख्या दर्ज करें।';
   }
+
+  @override
+  String get spellingDictionaryRecoveryConflict =>
+      'वर्तनी शब्दकोश को बाहरी रूप से बदला गया। पुनर्प्राप्ति प्रति सुरक्षित रखी गई।';
 }

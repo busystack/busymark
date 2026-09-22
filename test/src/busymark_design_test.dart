@@ -20,6 +20,430 @@ import 'package:yaru/yaru.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
+  testWidgets('switch suppresses state halos and preserves focus borders', (
+    tester,
+  ) async {
+    final focusNode = FocusNode();
+    addTearDown(focusNode.dispose);
+    final theme = buildBusyMarkTheme(
+      brightness: Brightness.light,
+      accentColor: const Color(0xFF3584E4),
+    );
+
+    final inheritedTheme = YaruSwitchThemeData(
+      color: const WidgetStatePropertyAll(Color(0xFF123456)),
+      borderColor: const WidgetStatePropertyAll(Color(0xFF234567)),
+      thumbColor: const WidgetStatePropertyAll(Color(0xFF345678)),
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: theme,
+        home: YaruTheme(
+          data: const YaruThemeData(focusBorders: true),
+          child: Theme(
+            data: theme,
+            child: YaruSwitchTheme(
+              data: inheritedTheme,
+              child: Scaffold(
+                body: BusyMarkSwitch(
+                  value: true,
+                  onChanged: (_) {},
+                  autofocus: true,
+                  focusNode: focusNode,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final switchFinder = find.byType(BusyMarkSwitch);
+    final localTheme = _busyMarkSwitchTheme(tester, switchFinder);
+    expect(
+      localTheme.indicatorColor?.resolve({WidgetState.hovered}),
+      Colors.transparent,
+    );
+    expect(
+      localTheme.indicatorColor?.resolve({WidgetState.focused}),
+      Colors.transparent,
+    );
+    expect(localTheme.color, same(inheritedTheme.color));
+    expect(localTheme.borderColor, same(inheritedTheme.borderColor));
+    expect(localTheme.thumbColor, same(inheritedTheme.thumbColor));
+    expect(focusNode.hasFocus, isTrue);
+    expect(
+      find.descendant(of: switchFinder, matching: find.byType(YaruFocusBorder)),
+      findsOneWidget,
+    );
+  });
+
+  const switchAccents = {
+    'blue': Color(0xFF3584E4),
+    'purple': Color(0xFFB34CB4),
+  };
+  for (final brightness in Brightness.values) {
+    for (final accent in switchAccents.entries) {
+      testWidgets('checked switch follows ${accent.key} track states in '
+          '${brightness.name}', (tester) async {
+        final theme = buildBusyMarkTheme(
+          brightness: brightness,
+          accentColor: accent.value,
+        );
+
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: theme,
+            home: Scaffold(
+              body: Center(
+                child: BusyMarkSwitch(
+                  key: const ValueKey('switch'),
+                  value: true,
+                  onChanged: (_) {},
+                ),
+              ),
+            ),
+          ),
+        );
+
+        final switchFinder = find.byKey(const ValueKey('switch'));
+        Color selectedTrack() => tester
+            .widget<YaruSwitch>(
+              find.descendant(
+                of: switchFinder,
+                matching: find.byType(YaruSwitch),
+              ),
+            )
+            .selectedColor!;
+        final normal = selectedTrack();
+        expect(
+          normal,
+          _expectedRadioColor(
+            accent.value,
+            brightness: brightness,
+            stateDelta: 0,
+          ),
+        );
+
+        final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+        addTearDown(mouse.removePointer);
+        await mouse.addPointer(location: Offset.zero);
+        await mouse.moveTo(tester.getCenter(switchFinder));
+        await tester.pump();
+
+        final hovered = selectedTrack();
+        expect(
+          hovered,
+          _expectedRadioColor(
+            accent.value,
+            brightness: brightness,
+            stateDelta: 0.07,
+          ),
+        );
+        expect(
+          HSLColor.fromColor(hovered).lightness,
+          greaterThan(HSLColor.fromColor(normal).lightness),
+        );
+
+        await mouse.down(tester.getCenter(switchFinder));
+        await tester.pump();
+        final pressed = selectedTrack();
+        expect(
+          pressed,
+          _expectedRadioColor(
+            accent.value,
+            brightness: brightness,
+            stateDelta: -0.07,
+          ),
+        );
+        expect(pressed, isNot(normal));
+        expect(pressed, isNot(hovered));
+
+        await mouse.up();
+        await tester.pump();
+        expect(selectedTrack(), hovered);
+
+        await mouse.moveTo(Offset.zero);
+        await tester.pump();
+        expect(selectedTrack(), normal);
+      });
+    }
+  }
+
+  testWidgets('disabled switch preserves inherited disabled styling', (
+    tester,
+  ) async {
+    const disabledTrack = Color(0xFF595959);
+    const disabledThumb = Color(0xFF9A9A9A);
+    final inheritedTheme = YaruSwitchThemeData(
+      color: WidgetStateProperty.resolveWith(
+        (states) =>
+            states.contains(WidgetState.disabled) ? disabledTrack : null,
+      ),
+      thumbColor: WidgetStateProperty.resolveWith(
+        (states) =>
+            states.contains(WidgetState.disabled) ? disabledThumb : null,
+      ),
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildBusyMarkTheme(
+          brightness: Brightness.dark,
+          accentColor: const Color(0xFFB34CB4),
+        ),
+        home: YaruSwitchTheme(
+          data: inheritedTheme,
+          child: const Scaffold(
+            body: Center(
+              child: BusyMarkSwitch(
+                key: ValueKey('switch'),
+                value: true,
+                onChanged: null,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    final switchFinder = find.byKey(const ValueKey('switch'));
+    Color? disabledSelectedTrack() => _busyMarkSwitchTheme(
+      tester,
+      switchFinder,
+    ).color!.resolve({WidgetState.disabled, WidgetState.selected});
+    Color? disabledSelectedThumb() => _busyMarkSwitchTheme(
+      tester,
+      switchFinder,
+    ).thumbColor!.resolve({WidgetState.disabled, WidgetState.selected});
+
+    expect(disabledSelectedTrack(), disabledTrack);
+    expect(disabledSelectedThumb(), disabledThumb);
+
+    final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+    addTearDown(mouse.removePointer);
+    await mouse.addPointer(location: Offset.zero);
+    await mouse.moveTo(tester.getCenter(switchFinder));
+    await tester.pump();
+
+    expect(disabledSelectedTrack(), disabledTrack);
+    expect(disabledSelectedThumb(), disabledThumb);
+    expect(
+      tester.getSemantics(find.byType(YaruSwitch)).flagsCollection.isEnabled,
+      ui.Tristate.isFalse,
+    );
+  });
+
+  testWidgets('switch row owns its control and activates exactly once', (
+    tester,
+  ) async {
+    final changes = <bool>[];
+
+    Widget buildRow() => MaterialApp(
+      home: Scaffold(
+        body: BusyMarkSwitchRow(
+          title: 'Automatic save',
+          value: false,
+          onChanged: changes.add,
+        ),
+      ),
+    );
+
+    await tester.pumpWidget(buildRow());
+
+    final row = find.byType(BusyMarkSwitchRow);
+    expect(
+      find.descendant(of: row, matching: find.byType(YaruSwitchListTile)),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: row, matching: find.byType(BusyMarkSwitch)),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: row, matching: find.byType(YaruSwitch)),
+      findsOneWidget,
+    );
+    expect(
+      tester
+          .widget<YaruSwitchListTile>(find.byType(YaruSwitchListTile))
+          .control,
+      isA<BusyMarkSwitch>(),
+    );
+
+    await tester.tap(find.byType(YaruSwitch));
+    await tester.pump();
+    expect(changes, [true]);
+
+    changes.clear();
+    await tester.pumpWidget(buildRow());
+    await tester.tap(find.text('Automatic save'));
+    await tester.pump();
+    expect(changes, [true]);
+  });
+
+  testWidgets('switch preserves Yaru drag activation', (tester) async {
+    final changes = <bool>[];
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Center(
+            child: BusyMarkSwitch(value: false, onChanged: changes.add),
+          ),
+        ),
+      ),
+    );
+
+    await tester.drag(find.byType(YaruSwitch), const Offset(40, 0));
+    await tester.pump();
+
+    expect(changes, [true]);
+  });
+
+  testWidgets('radio suppresses state halos and preserves focus borders', (
+    tester,
+  ) async {
+    final focusNode = FocusNode();
+    addTearDown(focusNode.dispose);
+    final theme = buildBusyMarkTheme(
+      brightness: Brightness.light,
+      accentColor: const Color(0xFF3584E4),
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: theme,
+        home: YaruTheme(
+          data: const YaruThemeData(focusBorders: true),
+          child: Theme(
+            data: theme,
+            child: Scaffold(
+              body: BusyMarkRadioButton<String>(
+                value: 'md',
+                groupValue: 'md',
+                onChanged: (_) {},
+                title: const Text('Markdown'),
+                autofocus: true,
+                focusNode: focusNode,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final radio = find.byType(BusyMarkRadioButton<String>);
+    final localTheme = tester.widget<YaruRadioTheme>(
+      find.descendant(of: radio, matching: find.byType(YaruRadioTheme)),
+    );
+    expect(
+      localTheme.data.indicatorColor?.resolve({WidgetState.hovered}),
+      Colors.transparent,
+    );
+    expect(
+      localTheme.data.indicatorColor?.resolve({WidgetState.focused}),
+      Colors.transparent,
+    );
+    expect(focusNode.hasFocus, isTrue);
+    expect(
+      tester
+          .widget<YaruToggleButton>(
+            find.descendant(of: radio, matching: find.byType(YaruToggleButton)),
+          )
+          .hasFocusBorder,
+      isTrue,
+    );
+    expect(
+      find.descendant(of: radio, matching: find.byType(YaruFocusBorder)),
+      findsOneWidget,
+    );
+  });
+
+  const radioAccents = {'blue': Color(0xFF3584E4), 'purple': Color(0xFFB34CB4)};
+  for (final brightness in Brightness.values) {
+    for (final accent in radioAccents.entries) {
+      testWidgets('selected radio follows ${accent.key} accent states in '
+          '${brightness.name}', (tester) async {
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: buildBusyMarkTheme(
+              brightness: brightness,
+              accentColor: accent.value,
+            ),
+            home: Scaffold(
+              body: Center(
+                child: BusyMarkRadioButton<String>(
+                  key: const ValueKey('radio'),
+                  value: 'md',
+                  groupValue: 'md',
+                  onChanged: (_) {},
+                  title: const Text('Markdown'),
+                ),
+              ),
+            ),
+          ),
+        );
+        await tester.pump();
+
+        final radio = find.byKey(const ValueKey('radio'));
+        Color selectedColor() {
+          final localTheme = tester.widget<YaruRadioTheme>(
+            find.descendant(of: radio, matching: find.byType(YaruRadioTheme)),
+          );
+          return localTheme.data.color!.resolve({WidgetState.selected})!;
+        }
+
+        final normal = selectedColor();
+        expect(
+          normal,
+          _expectedRadioColor(
+            accent.value,
+            brightness: brightness,
+            stateDelta: 0,
+          ),
+        );
+
+        final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+        addTearDown(mouse.removePointer);
+        await mouse.addPointer(location: Offset.zero);
+        await mouse.moveTo(tester.getCenter(radio));
+        await tester.pump();
+
+        final hovered = selectedColor();
+        expect(hovered, isNot(normal));
+        expect(
+          hovered,
+          _expectedRadioColor(
+            accent.value,
+            brightness: brightness,
+            stateDelta: 0.07,
+          ),
+        );
+
+        await mouse.down(tester.getCenter(radio));
+        await tester.pump();
+        expect(
+          selectedColor(),
+          _expectedRadioColor(
+            accent.value,
+            brightness: brightness,
+            stateDelta: -0.07,
+          ),
+        );
+
+        await mouse.up();
+        await tester.pump();
+        expect(selectedColor(), hovered);
+
+        await mouse.moveTo(Offset.zero);
+        await tester.pump();
+        expect(selectedColor(), normal);
+      });
+    }
+  }
+
   testWidgets(
     'informational dialog keeps the close control at the right edge',
     (tester) async {
@@ -483,6 +907,8 @@ void main() {
                   value: 'editor',
                   label: 'Editor',
                   shortcut: 'Ctrl+1',
+                  checked: true,
+                  trailingCheck: true,
                 ),
               ],
               onSelected: (_) {},
@@ -506,6 +932,9 @@ void main() {
       );
       expect(find.text('Editor'), findsOneWidget);
       expect(find.text('Ctrl+1'), findsOneWidget);
+      expect(find.byIcon(BusyMarkGlyphs.check), findsOneWidget);
+      expect(find.byType(Radio<String>), findsNothing);
+      expect(find.byType(RadioListTile<String>), findsNothing);
       expect(find.byTooltip('Editor (Ctrl+1)'), findsNothing);
       expect(find.byTooltip('Main menu'), findsOneWidget);
       expect(
@@ -589,6 +1018,7 @@ void main() {
           'enabled': true,
           'checkable': false,
           'selected': false,
+          'mutuallyExclusive': true,
           'separator': false,
         },
         {
@@ -596,6 +1026,7 @@ void main() {
           'enabled': false,
           'checkable': false,
           'selected': false,
+          'mutuallyExclusive': false,
           'separator': true,
         },
         {
@@ -605,6 +1036,7 @@ void main() {
           'enabled': true,
           'checkable': true,
           'selected': true,
+          'mutuallyExclusive': true,
           'separator': false,
         },
       ]);
@@ -1112,6 +1544,219 @@ void main() {
       DefaultTextStyle.of(tester.element(find.text('One'))).style.color,
       isNot(colors.mutedForeground),
     );
+  });
+
+  testWidgets('grouped list headings use the native semantic heading style', (
+    tester,
+  ) async {
+    for (final brightness in Brightness.values) {
+      final theme = buildBusyMarkTheme(
+        brightness: brightness,
+        accentColor: const Color(0xFF3584E4),
+      );
+      final colors = theme.extension<BusyMarkSurfaceColors>()!;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: theme,
+          darkTheme: theme,
+          themeMode: brightness == Brightness.dark
+              ? ThemeMode.dark
+              : ThemeMode.light,
+          themeAnimationDuration: Duration.zero,
+          home: const Scaffold(
+            body: BusyMarkGroupedList(
+              title: 'Native heading',
+              description: 'Secondary description',
+              children: [BusyMarkActionRow(title: 'Setting')],
+            ),
+          ),
+        ),
+      );
+
+      final heading = tester.widget<Text>(find.text('Native heading'));
+      expect(heading.style?.fontSize, theme.textTheme.bodyMedium?.fontSize);
+      expect(heading.style?.fontWeight, FontWeight.w700);
+      expect(heading.style?.color, colors.foreground);
+      expect(heading.style?.color, isNot(colors.mutedForeground));
+
+      final description = tester.widget<Text>(
+        find.text('Secondary description'),
+      );
+      expect(description.style?.color, theme.colorScheme.onSurfaceVariant);
+      expect(description.style?.fontWeight, isNot(FontWeight.w700));
+    }
+  });
+
+  testWidgets('contextual banner uses semantic surfaces in light and dark', (
+    tester,
+  ) async {
+    for (final brightness in Brightness.values) {
+      final theme = buildBusyMarkTheme(
+        brightness: brightness,
+        accentColor: const Color(0xFF3584E4),
+      );
+      final colors = theme.extension<BusyMarkSurfaceColors>()!;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: theme,
+          darkTheme: theme,
+          themeMode: brightness == Brightness.dark
+              ? ThemeMode.dark
+              : ThemeMode.light,
+          themeAnimationDuration: Duration.zero,
+          home: Scaffold(
+            body: SizedBox(
+              width: 360,
+              child: BusyMarkBanner(
+                title: 'Test English dictionary is not installed',
+                actionLabel: 'Install dictionary',
+                onAction: () {},
+              ),
+            ),
+          ),
+        ),
+      );
+
+      final title = tester.widget<Text>(
+        find.text('Test English dictionary is not installed'),
+      );
+      final surface = tester.widget<DecoratedBox>(
+        find.descendant(
+          of: find.byType(BusyMarkBanner),
+          matching: find.byType(DecoratedBox),
+        ),
+      );
+      final decoration = surface.decoration as BoxDecoration;
+      expect(title.style?.color, colors.foreground);
+      expect(title.style?.fontSize, theme.textTheme.bodySmall?.fontSize);
+      expect(title.style?.fontWeight, isNot(FontWeight.w700));
+      expect(title.maxLines, 2);
+      expect(title.softWrap, isTrue);
+      expect(title.overflow, TextOverflow.ellipsis);
+      expect(title.textAlign, TextAlign.start);
+      expect(decoration.color, colors.panel);
+      expect(decoration.border?.bottom.color, colors.divider);
+      expect(
+        find.descendant(
+          of: find.byType(BusyMarkBanner),
+          matching: find.byType(FilledButton),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: find.byType(BusyMarkBanner),
+          matching: find.byType(ElevatedButton),
+        ),
+        findsNothing,
+      );
+      expect(
+        find.descendant(
+          of: find.byType(BusyMarkBanner),
+          matching: find.byWidgetPredicate(
+            (widget) =>
+                widget is Padding &&
+                widget.padding ==
+                    const EdgeInsets.symmetric(
+                      horizontal: BusyMarkSpacing.md,
+                      vertical: BusyMarkSpacing.xs,
+                    ),
+          ),
+        ),
+        findsOneWidget,
+      );
+      expect(tester.takeException(), isNull);
+    }
+  });
+
+  testWidgets('contextual banner animates its mounted layout height', (
+    tester,
+  ) async {
+    const bannerKey = ValueKey('animated-banner');
+
+    Future<void> pumpBanner(bool revealed) {
+      return tester.pumpWidget(
+        MaterialApp(
+          theme: buildBusyMarkTheme(
+            brightness: Brightness.light,
+            accentColor: const Color(0xFF3584E4),
+          ),
+          home: Scaffold(
+            body: Align(
+              alignment: Alignment.topCenter,
+              child: BusyMarkBanner(
+                key: bannerKey,
+                title: 'Dictionary is not installed',
+                revealed: revealed,
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    await pumpBanner(false);
+    final banner = find.byKey(bannerKey);
+    expect(tester.getSize(banner).height, 0);
+
+    await pumpBanner(true);
+    final immediateRevealHeight = tester.getSize(banner).height;
+    await tester.pump(const Duration(milliseconds: 125));
+    final partialRevealHeight = tester.getSize(banner).height;
+    await tester.pumpAndSettle();
+    final fullHeight = tester.getSize(banner).height;
+
+    expect(immediateRevealHeight, lessThan(fullHeight));
+    expect(partialRevealHeight, greaterThan(0));
+    expect(partialRevealHeight, lessThan(fullHeight));
+
+    await pumpBanner(false);
+    await tester.pump(const Duration(milliseconds: 125));
+    final partialConcealHeight = tester.getSize(banner).height;
+    expect(partialConcealHeight, greaterThan(0));
+    expect(partialConcealHeight, lessThan(fullHeight));
+    await tester.pumpAndSettle();
+    expect(tester.getSize(banner).height, 0);
+  });
+
+  testWidgets('contextual banner reveal honors reduced motion', (tester) async {
+    const bannerKey = ValueKey('reduced-motion-banner');
+
+    Future<void> pumpBanner(bool revealed) {
+      return tester.pumpWidget(
+        MaterialApp(
+          theme: buildBusyMarkTheme(
+            brightness: Brightness.light,
+            accentColor: const Color(0xFF3584E4),
+          ),
+          home: MediaQuery(
+            data: const MediaQueryData(disableAnimations: true),
+            child: Scaffold(
+              body: Align(
+                alignment: Alignment.topCenter,
+                child: BusyMarkBanner(
+                  key: bannerKey,
+                  title: 'Dictionary is not installed',
+                  revealed: revealed,
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    await pumpBanner(false);
+    final banner = find.byKey(bannerKey);
+    expect(tester.getSize(banner).height, 0);
+
+    await pumpBanner(true);
+    expect(tester.getSize(banner).height, greaterThan(0));
+
+    await pumpBanner(false);
+    expect(tester.getSize(banner).height, 0);
   });
 
   testWidgets('dialog grouped cards resolve the contextual native layer', (
@@ -1688,46 +2333,63 @@ void main() {
     expect(actionRows.length, greaterThan(1));
   });
 
-  testWidgets('disabled destructive rows use the disabled semantic color', (
-    tester,
-  ) async {
-    final theme = buildBusyMarkTheme(
-      brightness: Brightness.dark,
-      accentColor: const Color(0xFFE95420),
-    );
-    final colors = theme.extension<BusyMarkSurfaceColors>()!;
+  testWidgets(
+    'action rows use semantic destructive foreground in light and dark themes',
+    (tester) async {
+      for (final brightness in Brightness.values) {
+        final theme = buildBusyMarkTheme(
+          brightness: brightness,
+          accentColor: const Color(0xFFE95420),
+        );
+        final colors = theme.extension<BusyMarkSurfaceColors>()!;
 
-    await tester.pumpWidget(
-      MaterialApp(
-        theme: theme,
-        home: Scaffold(
-          body: Column(
-            children: [
-              BusyMarkActionRow(
-                title: 'Enabled delete',
-                destructive: true,
-                onTap: () {},
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: theme,
+            home: Scaffold(
+              body: Column(
+                children: [
+                  BusyMarkActionRow(
+                    title: 'Enabled delete',
+                    destructive: true,
+                    onTap: () {},
+                  ),
+                  const BusyMarkActionRow(title: 'Ordinary action'),
+                  const BusyMarkActionRow(
+                    title: 'Disabled delete',
+                    destructive: true,
+                    enabled: false,
+                  ),
+                ],
               ),
-              const BusyMarkActionRow(
-                title: 'Disabled delete',
-                destructive: true,
-                enabled: false,
-              ),
-            ],
+            ),
           ),
-        ),
-      ),
-    );
+        );
+        await tester.pumpAndSettle();
 
-    expect(
-      tester.widget<Text>(find.text('Enabled delete')).style?.color,
-      theme.colorScheme.error,
-    );
-    expect(
-      tester.widget<Text>(find.text('Disabled delete')).style?.color,
-      colors.disabledForeground,
-    );
-  });
+        final enabled = find.text('Enabled delete');
+        final enabledContext = tester.element(enabled);
+        final expected = brightness == Brightness.dark
+            ? BusyMarkLinuxPalette.destructiveForegroundDark
+            : BusyMarkLinuxPalette.destructiveForegroundLight;
+        expect(busyMarkDestructiveForeground(enabledContext), expected);
+        expect(tester.widget<Text>(enabled).style?.color, expected);
+        if (brightness == Brightness.dark) {
+          expect(expected, isNot(theme.colorScheme.error));
+        }
+
+        final ordinary = find.text('Ordinary action');
+        expect(
+          DefaultTextStyle.of(tester.element(ordinary)).style.color,
+          colors.foreground,
+        );
+        expect(
+          tester.widget<Text>(find.text('Disabled delete')).style?.color,
+          colors.disabledForeground,
+        );
+      }
+    },
+  );
 
   testWidgets('shared text-entry group delegates fields to the framework', (
     tester,
@@ -1939,6 +2601,18 @@ void main() {
   });
 }
 
+Color _expectedRadioColor(
+  Color accent, {
+  required Brightness brightness,
+  required double stateDelta,
+}) {
+  final hsl = HSLColor.fromColor(accent);
+  final normalDelta = brightness == Brightness.light ? 0.05 : 0.0;
+  return hsl
+      .withLightness((hsl.lightness + normalDelta + stateDelta).clamp(0.0, 1.0))
+      .toColor();
+}
+
 double _contrastRatio(Color foreground, Color background) {
   final foregroundLuminance = foreground.computeLuminance();
   final backgroundLuminance = background.computeLuminance();
@@ -2068,4 +2742,18 @@ class _CapturedPixels {
   final Uint8List bytes;
   final int width;
   final RenderRepaintBoundary boundary;
+}
+
+YaruSwitchThemeData _busyMarkSwitchTheme(
+  WidgetTester tester,
+  Finder switchFinder,
+) {
+  return tester
+      .widget<YaruSwitchTheme>(
+        find.descendant(
+          of: switchFinder,
+          matching: find.byType(YaruSwitchTheme),
+        ),
+      )
+      .data;
 }

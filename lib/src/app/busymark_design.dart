@@ -56,6 +56,7 @@ abstract final class BusyMarkSizes {
   static const double settingsSidebarBreakpoint = sidebarWidth + 520;
   static const double toolbarHeight = kYaruTitleBarHeight;
   static const double paneHeaderHeight = 38;
+  static const double documentStatusBarHeight = 28;
   static const double iconButton = kYaruTitleBarItemHeight;
   static const double compactIconButton = 24;
   static const double compactIcon = 13;
@@ -261,11 +262,13 @@ String busyMarkBidiIsolateFor(BuildContext context, Object value) {
 
 abstract final class BusyMarkMotion {
   static const Duration dialogInsets = Duration(milliseconds: 160);
+  static const Duration bannerReveal = Duration(milliseconds: 250);
   static const Duration sidebarExpand = Duration(milliseconds: 120);
   static const Duration scroll = Duration(milliseconds: 180);
   static const Duration previewSearchDelay = Duration(milliseconds: 80);
   static const Duration tooltipWait = Duration(milliseconds: 450);
   static const Curve dialogInsetsCurve = Curves.easeOutCubic;
+  static const Curve bannerRevealCurve = Curves.easeOutCubic;
 }
 
 abstract final class BusyMarkInsets {
@@ -386,6 +389,8 @@ abstract final class BusyMarkLinuxPalette {
   static const ubuntuPrussianGreenAccent = Color(0xFF308280);
   static const ubuntuSageAccent = Color(0xFF657B69);
   static const ubuntuWartyBrownAccent = Color(0xFFB39169);
+  static const destructiveForegroundLight = Color(0xFFC30000);
+  static const destructiveForegroundDark = Color(0xFFFF938C);
   static const red = Color(0xFFC01C28);
   static const yellow = Color(0xFFE5A50A);
   static const green = Color(0xFF2EC27E);
@@ -561,7 +566,9 @@ enum BusyMarkVcsFileColor {
 }
 
 Color busyMarkDestructiveForeground(BuildContext context) {
-  return Theme.of(context).colorScheme.error;
+  return Theme.of(context).brightness == Brightness.dark
+      ? BusyMarkLinuxPalette.destructiveForegroundDark
+      : BusyMarkLinuxPalette.destructiveForegroundLight;
 }
 
 Color busyMarkVcsFileStatusColor(
@@ -976,8 +983,9 @@ Color busyMarkRowHoverColor(BuildContext context) {
 
 TextStyle? busyMarkSectionHeaderStyle(BuildContext context) {
   final theme = Theme.of(context);
-  return theme.textTheme.titleSmall?.copyWith(
-    color: theme.colorScheme.onSurfaceVariant,
+  return theme.textTheme.bodyMedium?.copyWith(
+    color: BusyMarkSurfaceColors.of(context).foreground,
+    fontWeight: FontWeight.w700,
   );
 }
 
@@ -1441,6 +1449,7 @@ List<NativeMenuEntry>? _busyMarkNativeMenuEntries<T>(
           enabled: item.enabled,
           checkable: item.trailingCheck,
           selected: item.trailingCheck && item.checked,
+          mutuallyExclusive: item.mutuallyExclusive,
         ),
       );
     } else if (item is BusyMarkSubmenuItem<T>) {
@@ -1685,24 +1694,50 @@ class _BusyMarkNestedMenuState<T> extends State<_BusyMarkNestedMenu<T>> {
           child: Text(item.label),
         )
       else if (item is BusyMarkPopupMenuItem<T>)
-        MenuItemButton(
-          focusNode: root && identical(item, items.first) ? _firstFocus : null,
-          closeOnActivate: false,
-          onPressed: item.enabled
-              ? () {
-                  _selected = true;
-                  Navigator.of(context).pop(item.menuValue);
-                }
-              : null,
-          leadingIcon: item.icon == null
-              ? null
-              : Icon(
-                  item.icon,
-                  size: BusyMarkSizes.iconSm,
-                  color: item.iconColor,
-                ),
-          trailingIcon: item.shortcut == null ? null : Text(item.shortcut!),
-          child: Text(item.label),
+        Semantics(
+          checked: item.trailingCheck ? item.checked : null,
+          inMutuallyExclusiveGroup:
+              item.trailingCheck && item.mutuallyExclusive,
+          child: MenuItemButton(
+            focusNode: root && identical(item, items.first)
+                ? _firstFocus
+                : null,
+            closeOnActivate: false,
+            onPressed: item.enabled
+                ? () {
+                    _selected = true;
+                    Navigator.of(context).pop(item.menuValue);
+                  }
+                : null,
+            leadingIcon: item.icon == null
+                ? null
+                : Icon(
+                    item.icon,
+                    size: BusyMarkSizes.iconSm,
+                    color: item.iconColor,
+                  ),
+            trailingIcon: item.trailingCheck
+                ? Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (item.shortcut case final shortcut?) ...[
+                        Text(shortcut),
+                        const SizedBox(width: BusyMarkSpacing.sm),
+                      ],
+                      Visibility.maintain(
+                        visible: item.checked,
+                        child: const Icon(
+                          BusyMarkGlyphs.check,
+                          size: BusyMarkSizes.iconSm,
+                        ),
+                      ),
+                    ],
+                  )
+                : item.shortcut == null
+                ? null
+                : Text(item.shortcut!),
+            child: Text(item.label),
+          ),
         )
       else if (item is PopupMenuDivider)
         const Divider(height: BusyMarkSpacing.sm),
@@ -2907,6 +2942,103 @@ class _BusyMarkSidebarRecordRowState<T>
   }
 }
 
+/// A native contextual information bar embedded in the surrounding layout.
+///
+/// This mirrors Libadwaita's banner pattern: the host decides when the banner
+/// is revealed, while the banner owns semantic surface, typography, and
+/// native action-control presentation without floating over content.
+class BusyMarkBanner extends StatelessWidget {
+  const BusyMarkBanner({
+    super.key,
+    required this.title,
+    this.actionLabel,
+    this.onAction,
+    this.suggestedAction = false,
+    this.revealed = true,
+  }) : assert(actionLabel != null || onAction == null);
+
+  final String title;
+  final String? actionLabel;
+  final VoidCallback? onAction;
+  final bool suggestedAction;
+  final bool revealed;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = BusyMarkSurfaceColors.of(context);
+    final actionLabel = this.actionLabel;
+    final action = actionLabel == null
+        ? null
+        : suggestedAction
+        ? BusyMarkPushButton.suggested(
+            onPressed: onAction,
+            child: Text(actionLabel),
+          )
+        : BusyMarkPushButton.standard(
+            onPressed: onAction,
+            style: FilledButton.styleFrom(
+              padding: const EdgeInsets.symmetric(
+                horizontal: BusyMarkSpacing.sm,
+              ),
+              visualDensity: VisualDensity.compact,
+            ),
+            child: Text(actionLabel),
+          );
+    final banner = Semantics(
+      container: true,
+      liveRegion: true,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: colors.panel,
+          border: Border(bottom: BorderSide(color: colors.divider)),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: BusyMarkSpacing.md,
+            vertical: BusyMarkSpacing.xs,
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  title,
+                  maxLines: 2,
+                  softWrap: true,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodySmall?.copyWith(color: colors.foreground),
+                  textAlign: TextAlign.start,
+                ),
+              ),
+              if (action != null) ...[
+                const SizedBox(width: BusyMarkSpacing.md),
+                action,
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+    final revealDuration = MediaQuery.disableAnimationsOf(context)
+        ? Duration.zero
+        : BusyMarkMotion.bannerReveal;
+    if (revealDuration == Duration.zero) {
+      return ClipRect(child: revealed ? banner : const SizedBox.shrink());
+    }
+    return ClipRect(
+      child: AnimatedSize(
+        alignment: Alignment.topCenter,
+        clipBehavior: Clip.hardEdge,
+        duration: revealDuration,
+        reverseDuration: revealDuration,
+        curve: BusyMarkMotion.bannerRevealCurve,
+        child: revealed ? banner : const SizedBox.shrink(),
+      ),
+    );
+  }
+}
+
 class BusyMarkGroupedList extends StatelessWidget {
   const BusyMarkGroupedList({
     super.key,
@@ -3245,12 +3377,11 @@ class _BusyMarkActionRowState extends State<BusyMarkActionRow> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
     final colors = BusyMarkSurfaceColors.of(context);
     final titleStyle = widget.destructive
         ? TextStyle(
             color: widget.enabled
-                ? colorScheme.error
+                ? busyMarkDestructiveForeground(context)
                 : colors.disabledForeground,
           )
         : null;
@@ -3351,6 +3482,129 @@ class _BusyMarkActionRowState extends State<BusyMarkActionRow> {
   }
 }
 
+/// A Yaru switch with Libadwaita-style state colors and no external halo.
+class BusyMarkSwitch extends StatefulWidget {
+  const BusyMarkSwitch({
+    super.key,
+    required this.value,
+    required this.onChanged,
+    this.focusNode,
+    this.autofocus = false,
+    this.mouseCursor,
+    this.onOffShapes,
+    this.hasFocusBorder,
+  });
+
+  final bool value;
+  final ValueChanged<bool>? onChanged;
+  final FocusNode? focusNode;
+  final bool autofocus;
+  final MouseCursor? mouseCursor;
+  final bool? onOffShapes;
+  final bool? hasFocusBorder;
+
+  @override
+  State<BusyMarkSwitch> createState() => _BusyMarkSwitchState();
+}
+
+class _BusyMarkSwitchState extends State<BusyMarkSwitch> {
+  bool _hovered = false;
+  int? _pressedPointer;
+
+  bool get _pressed => _pressedPointer != null;
+
+  @override
+  void didUpdateWidget(BusyMarkSwitch oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.onChanged == null) {
+      _pressedPointer = null;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final inheritedSwitchTheme = YaruSwitchTheme.of(context);
+    final checkedTrackColor = _busyMarkCheckedSwitchColor(
+      theme.colorScheme.primary,
+      brightness: theme.brightness,
+      hovered: _hovered,
+      pressed: _pressed,
+    );
+
+    return MouseRegion(
+      onEnter: (_) => _setHovered(true),
+      onExit: (_) => _setHovered(false),
+      child: Listener(
+        onPointerDown: widget.onChanged == null ? null : _handlePointerDown,
+        onPointerUp: widget.onChanged == null ? null : _handlePointerUp,
+        onPointerCancel: widget.onChanged == null ? null : _handlePointerCancel,
+        child: YaruSwitchTheme(
+          data: inheritedSwitchTheme.copyWith(
+            indicatorColor: const WidgetStatePropertyAll<Color?>(
+              Colors.transparent,
+            ),
+          ),
+          child: YaruSwitch(
+            value: widget.value,
+            onChanged: widget.onChanged,
+            selectedColor: checkedTrackColor,
+            focusNode: widget.focusNode,
+            autofocus: widget.autofocus,
+            mouseCursor: widget.mouseCursor,
+            onOffShapes: widget.onOffShapes,
+            hasFocusBorder: widget.hasFocusBorder,
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _setHovered(bool hovered) {
+    if (_hovered != hovered) {
+      setState(() => _hovered = hovered);
+    }
+  }
+
+  void _handlePointerDown(PointerDownEvent event) {
+    if (_pressedPointer != null || event.buttons != kPrimaryButton) {
+      return;
+    }
+    setState(() => _pressedPointer = event.pointer);
+  }
+
+  void _handlePointerUp(PointerUpEvent event) {
+    if (_pressedPointer == event.pointer) {
+      setState(() => _pressedPointer = null);
+    }
+  }
+
+  void _handlePointerCancel(PointerCancelEvent event) {
+    if (_pressedPointer == event.pointer) {
+      setState(() => _pressedPointer = null);
+    }
+  }
+}
+
+Color _busyMarkCheckedSwitchColor(
+  Color accent, {
+  required Brightness brightness,
+  required bool hovered,
+  required bool pressed,
+}) {
+  final normalLightnessDelta = brightness == Brightness.light ? 0.05 : 0.0;
+  final stateLightnessDelta = pressed ? -0.07 : (hovered ? 0.07 : 0.0);
+  final hsl = HSLColor.fromColor(accent);
+  return hsl
+      .withLightness(
+        (hsl.lightness + normalLightnessDelta + stateLightnessDelta).clamp(
+          0.0,
+          1.0,
+        ),
+      )
+      .toColor();
+}
+
 class BusyMarkSwitchRow extends StatelessWidget {
   const BusyMarkSwitchRow({
     super.key,
@@ -3371,9 +3625,14 @@ class BusyMarkSwitchRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final switchControl = BusyMarkSwitch(
+      value: value,
+      onChanged: enabled ? onChanged : null,
+    );
     return YaruSwitchListTile(
       value: value,
       onChanged: enabled ? onChanged : null,
+      control: switchControl,
       secondary: leading,
       title: Text(title),
       subtitle: subtitle == null
@@ -3387,6 +3646,144 @@ class BusyMarkSwitchRow extends StatelessWidget {
       hoverColor: busyMarkRowHoverColor(context),
     );
   }
+}
+
+/// A Yaru radio button with GTK-style state colors and no external halo.
+class BusyMarkRadioButton<T> extends StatefulWidget {
+  const BusyMarkRadioButton({
+    super.key,
+    required this.value,
+    required this.groupValue,
+    required this.onChanged,
+    required this.title,
+    this.subtitle,
+    this.contentPadding,
+    this.autofocus = false,
+    this.focusNode,
+    this.mouseCursor,
+    this.hasFocusBorder,
+  });
+
+  final T value;
+  final T? groupValue;
+  final ValueChanged<T?>? onChanged;
+  final Widget title;
+  final Widget? subtitle;
+  final EdgeInsetsGeometry? contentPadding;
+  final bool autofocus;
+  final FocusNode? focusNode;
+  final MouseCursor? mouseCursor;
+  final bool? hasFocusBorder;
+
+  @override
+  State<BusyMarkRadioButton<T>> createState() => _BusyMarkRadioButtonState<T>();
+}
+
+class _BusyMarkRadioButtonState<T> extends State<BusyMarkRadioButton<T>> {
+  bool _hovered = false;
+  int? _pressedPointer;
+
+  bool get _pressed => _pressedPointer != null;
+
+  @override
+  void didUpdateWidget(BusyMarkRadioButton<T> oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.onChanged == null) {
+      _pressedPointer = null;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final inheritedRadioTheme = YaruRadioTheme.of(context);
+    final checkedColor = _busyMarkCheckedRadioColor(
+      theme.colorScheme.primary,
+      brightness: theme.brightness,
+      hovered: _hovered,
+      pressed: _pressed,
+    );
+
+    return MouseRegion(
+      onEnter: (_) => _setHovered(true),
+      onExit: (_) => _setHovered(false),
+      child: Listener(
+        onPointerDown: widget.onChanged == null ? null : _handlePointerDown,
+        onPointerUp: widget.onChanged == null ? null : _handlePointerUp,
+        onPointerCancel: widget.onChanged == null ? null : _handlePointerCancel,
+        child: YaruRadioTheme(
+          data: inheritedRadioTheme.copyWith(
+            color: WidgetStateProperty.resolveWith((states) {
+              if (states.contains(WidgetState.disabled)) {
+                return inheritedRadioTheme.color?.resolve(states);
+              }
+              if (states.contains(WidgetState.selected)) {
+                return checkedColor;
+              }
+              return inheritedRadioTheme.color?.resolve(states);
+            }),
+            indicatorColor: const WidgetStatePropertyAll(Colors.transparent),
+          ),
+          child: YaruRadioButton<T>(
+            value: widget.value,
+            groupValue: widget.groupValue,
+            onChanged: widget.onChanged,
+            title: widget.title,
+            subtitle: widget.subtitle,
+            contentPadding: widget.contentPadding,
+            autofocus: widget.autofocus,
+            focusNode: widget.focusNode,
+            mouseCursor: widget.mouseCursor,
+            hasFocusBorder: widget.hasFocusBorder,
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _setHovered(bool hovered) {
+    if (_hovered != hovered) {
+      setState(() => _hovered = hovered);
+    }
+  }
+
+  void _handlePointerDown(PointerDownEvent event) {
+    if (_pressedPointer != null || event.buttons != kPrimaryButton) {
+      return;
+    }
+    setState(() => _pressedPointer = event.pointer);
+  }
+
+  void _handlePointerUp(PointerUpEvent event) {
+    if (_pressedPointer == event.pointer) {
+      setState(() => _pressedPointer = null);
+    }
+  }
+
+  void _handlePointerCancel(PointerCancelEvent event) {
+    if (_pressedPointer == event.pointer) {
+      setState(() => _pressedPointer = null);
+    }
+  }
+}
+
+Color _busyMarkCheckedRadioColor(
+  Color accent, {
+  required Brightness brightness,
+  required bool hovered,
+  required bool pressed,
+}) {
+  final normalLightnessDelta = brightness == Brightness.light ? 0.05 : 0.0;
+  final stateLightnessDelta = pressed ? -0.07 : (hovered ? 0.07 : 0.0);
+  final hsl = HSLColor.fromColor(accent);
+  return hsl
+      .withLightness(
+        (hsl.lightness + normalLightnessDelta + stateLightnessDelta).clamp(
+          0.0,
+          1.0,
+        ),
+      )
+      .toColor();
 }
 
 class BusyMarkCheckbox extends StatelessWidget {

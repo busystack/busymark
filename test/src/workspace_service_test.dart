@@ -4,6 +4,8 @@ import 'package:busymark/src/core/busymark_exception.dart';
 import 'package:busymark/src/core/path_utils.dart';
 import 'package:busymark/src/markdown/markdown_model.dart';
 import 'package:busymark/src/markdown/markdown_parser.dart';
+import 'package:busymark/src/markdown/preview_model.dart';
+import 'package:busymark/src/workspace/document_buffer.dart';
 import 'package:busymark/src/workspace/workspace_model.dart';
 import 'package:busymark/src/workspace/workspace_service.dart';
 import 'package:busymark/src/writerside/writerside_module_service.dart';
@@ -148,6 +150,107 @@ void main() {
     expect(workspace.activeFilePath, endsWith('intro.md'));
   });
 
+  test(
+    'untitled Markdown in Writerside reparses, previews, and outlines as CommonMark',
+    () async {
+      final workspace = await service.openPath(
+        'test/fixtures/writerside/basic_project',
+      );
+      const source = '''# Untitled heading
+
+Normal *emphasized* paragraph.
+
+- first
+- second
+
+```dart
+final answer = 42;
+```
+''';
+      final buffer = DocumentBuffer.untitled(
+        id: 'untitled-in-writerside',
+        name: 'Untitled',
+        text: source,
+      );
+
+      final reparsed = await service.reparseDocument(
+        workspace.copyWith(activeFilePath: null, markdown: null),
+        buffer,
+      );
+
+      expect(reparsed.kind, WorkspaceKind.writersideModule);
+      expect(reparsed.markdown?.mode, MarkdownMode.commonMark);
+      expect(reparsed.markdown?.source, source);
+      expect(
+        reparsed.markdown?.headings.map((heading) => heading.text),
+        contains('Untitled heading'),
+      );
+
+      void expectMarkdownPreview(PreviewDocument? preview) {
+        expect(preview, isNotNull);
+        final blocks = preview!.blocks;
+        expect(
+          blocks.map((block) => block.kind),
+          containsAll(<PreviewBlockKind>[
+            PreviewBlockKind.heading,
+            PreviewBlockKind.paragraph,
+            PreviewBlockKind.list,
+            PreviewBlockKind.code,
+          ]),
+        );
+        expect(
+          blocks.where((block) => block.kind == PreviewBlockKind.code),
+          hasLength(1),
+        );
+        expect(blocks, isNot(hasLength(1)));
+      }
+
+      expectMarkdownPreview(service.buildDocumentPreview(reparsed, buffer));
+      expectMarkdownPreview(
+        await service.buildDocumentPreviewAsync(reparsed, buffer),
+      );
+      final outline = service.documentOutline(reparsed, buffer);
+      expect(outline.map((heading) => heading.text), ['Untitled heading']);
+      expect(
+        outline.map((heading) => heading.text),
+        isNot(contains('Introduction')),
+      );
+    },
+  );
+
+  test(
+    'genuine Writerside Markdown topic keeps Writerside semantics',
+    () async {
+      final workspace = await service.openPath(
+        'test/fixtures/writerside/basic_project',
+      );
+      final topic = workspace.writersideModule!.topics.singleWhere(
+        (topic) => topic.filePath.endsWith('intro.md'),
+      );
+      final source = await File(topic.filePath).readAsString();
+      final buffer = DocumentBuffer(
+        id: 'writerside-intro',
+        filePath: topic.filePath,
+        text: source,
+        lastSavedText: source,
+        dirty: false,
+      );
+
+      final reparsed = await service.reparseDocument(workspace, buffer);
+      final preview = service.buildDocumentPreview(reparsed, buffer);
+
+      expect(reparsed.markdown?.mode, MarkdownMode.writersideMarkdown);
+      expect(
+        resolveWorkspaceDocumentContext(reparsed, buffer).kind,
+        DocumentKind.writersideMarkdownTopic,
+      );
+      expect(
+        preview?.blocks.map((block) => block.kind),
+        contains(PreviewBlockKind.admonition),
+      );
+    },
+  );
+
   test('creates and opens a Writerside starter project', () async {
     final parent = await Directory.systemTemp.createTemp(
       'busymark-workspace-create-',
@@ -227,14 +330,16 @@ void main() {
       );
       final workspace = await parserService.openPath(root.path);
 
-      final reparsed = await parserService.reparseActive(
-        workspace,
-        activeFile.readAsStringSync(),
+      final source = activeFile.readAsStringSync();
+      final buffer = DocumentBuffer(
+        id: 'writerside-links',
+        filePath: workspace.activeFilePath,
+        text: source,
+        lastSavedText: source,
+        dirty: false,
       );
-      final preview = parserService.buildPreview(
-        workspace,
-        activeFile.readAsStringSync(),
-      );
+      final reparsed = await parserService.reparseDocument(workspace, buffer);
+      final preview = parserService.buildDocumentPreview(workspace, buffer);
 
       expect(parser.validationFlags, isNotEmpty);
       expect(parser.validationFlags, everyElement(isFalse));

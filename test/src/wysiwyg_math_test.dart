@@ -1,5 +1,7 @@
 import 'package:busymark/l10n/generated/app_localizations.dart';
 import 'package:busymark/src/editor/document_list_marker.dart';
+import 'package:busymark/src/editor/source/source_paste_engine.dart';
+import 'package:busymark/src/editor/wysiwyg/wysiwyg_clipboard_fragment.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_editor.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_document_controller.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_inline_controller.dart';
@@ -18,6 +20,78 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  test(
+    'math source paste preserves incoming nested blocks and returns its caret',
+    () {
+      const parser = MarkdownParser();
+      final document = parser
+          .parse(
+            filePath: 'math.md',
+            source:
+                r'a $x$ b'
+                '\n',
+          )
+          .busyDocument;
+      final controller = BusyMarkWysiwygDocumentController(document: document);
+      final block = document.blocks.single;
+      final pasted = parser
+          .parse(filePath: 'clip.md', source: '- Parent\n  - Child\n')
+          .busyDocument;
+      final fragment = WysiwygClipboardFragment(
+        sourcePath: 'clip.md',
+        mode: MarkdownMode.commonMark,
+        blocks: [
+          for (final incoming in pasted.blocks)
+            BusyWysiwygStyledBlock(
+              kind: incoming.kind,
+              text: incoming.plainText,
+              ranges: busyInlineStyleRanges(incoming.inlines),
+              attributes: incoming.attributes,
+              completeBlock: busyMarkWysiwygImmutableBlockSnapshot(incoming),
+            ),
+        ],
+      );
+      final preparation =
+          const SourcePasteEngine().prepareStructured(
+                target: SourcePasteDocumentSnapshot(
+                  expectedSource: controller.blockText(block.id),
+                  selection: const TextSelection.collapsed(offset: 0),
+                  format: SourceDocumentFormat.markdown,
+                  markdownMode: MarkdownMode.commonMark,
+                  filePath: 'math.md',
+                ),
+                fragment: fragment,
+              )
+              as SourcePasteReady;
+      final edit = preparation.edit;
+      final updated = edit.expectedSource.replaceRange(
+        edit.start,
+        edit.end,
+        edit.replacement,
+      );
+
+      final destination = controller.updateMathSource(
+        block.id,
+        updated,
+        sourceCaretOffset: edit.caretOffset,
+        replacementScope: BusyWysiwygReplacementScope.fieldContent,
+      );
+
+      expect(destination, isNotNull);
+      final parent = controller.document.blocks.first;
+      expect(parent.kind, BusyBlockKind.unorderedListItem);
+      expect(parent.plainText, 'Parent');
+      expect(parent.children.single.plainText, 'Child');
+      expect(controller.markdown, contains(r'a $x$ b'));
+      final reparsed = parser
+          .parse(filePath: 'math.md', source: controller.markdown)
+          .busyDocument;
+      expect(reparsed.blocks.first.children.single.plainText, 'Child');
+      expect(controller.markdown, contains('Child'));
+      expect(controller.blockById(destination!.blockId), isNotNull);
+    },
+  );
+
   test('inline math insertion preserves structural block kinds', () {
     const cases = <(String, String, BusyBlockKind, String)>[
       (
@@ -589,6 +663,23 @@ void main() {
         reason: item.source,
       );
     }
+  });
+
+  test('math field source boundaries map to semantic text boundaries', () {
+    final block = const MarkdownParser()
+        .parse(
+          filePath: 'math.md',
+          source:
+              r'a $x$ b'
+              '\n',
+        )
+        .busyDocument
+        .blocks
+        .single;
+    expect(busyMarkWysiwygEditableText(block), r'a $x$ b');
+    expect(busyMarkWysiwygTextOffsetForSourceOffset(block, 2), 2);
+    expect(busyMarkWysiwygTextOffsetForSourceOffset(block, 5), 3);
+    expect(busyMarkWysiwygTextOffsetForSourceOffset(block, 7), 5);
   });
 
   test('source-mode math insertion preserves the intended inline position', () {

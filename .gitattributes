@@ -1,0 +1,9 @@
+# Dictionary license inputs are checksum-addressed byte artifacts. Preserve
+# upstream bytes generally, while pinning the one normalized source file to
+# the LF representation stored in Git and recorded in the inventory.
+assets/spelling/licenses/** -text
+assets/spelling/licenses/es/README_th_es.txt text eol=lf
+assets/spelling/CHECKSUMS.sha256 text eol=lf
+assets/spelling/NOTICE text eol=lf
+assets/spelling/VERSION text eol=lf
+assets/spelling/dictionaries.json text eol=lf

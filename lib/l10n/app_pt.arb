@@ -83,6 +83,42 @@
   "workspaceSearchShowMore": "Mostrar mais resultados",
   "workspaceSearchSkippedFiles": "A pesquisa está incompleta. Estes ficheiros excedem 1 MiB ou não foi possível lê-los:",
   "@@locale": "pt",
+  "spelling": "Ortografia",
+  "automaticSpelling": "Verificação ortográfica automática",
+  "defaultSpellingLanguage": "Idioma ortográfico predefinido",
+  "projectSpellingLanguage": "Idioma de verificação ortográfica do projeto",
+  "chooseSpellingLanguage": "Escolher idioma ortográfico",
+  "spellingLanguageUnsetStatus": "Idioma…",
+  "spellingOffStatus": "Ortografia desativada",
+  "checkSpelling": "Verificar ortografia",
+  "ignoreSpellingOnce": "Ignorar uma vez",
+  "ignoreSpellingDocument": "Ignorar tudo neste documento",
+  "addPersonalSpellingWord": "Adicionar ao dicionário pessoal",
+  "addProjectSpellingWord": "Adicionar ao dicionário do projeto",
+  "inheritSpellingLanguage": "Usar o idioma do projeto ou da aplicação",
+  "disableDocumentSpelling": "Não verificar a ortografia",
+  "importSpellingDictionary": "Importar dicionário",
+  "personalSpellingDictionary": "Dicionário pessoal",
+  "projectSpellingDictionary": "Dicionário do projeto",
+  "noSpellingErrors": "Sem erros ortográficos",
+  "noSpellingSuggestions": "Sem sugestões ortográficas",
+  "spellingWordCheckFailed": "Não foi possível verificar esta palavra",
+  "spellingCheckFailed": "A verificação ortográfica falhou",
+  "spellingCheckIncomplete": "A verificação ortográfica está incompleta",
+  "spellingDictionaryNotInstalled": "Dicionário não instalado",
+  "spellingDictionaryNotInstalledForLanguage": "O dicionário de {dictionary} não está instalado",
+  "spellingDictionaryNotInstalledWithSize": "Não instalado · {size}",
+  "spellingDictionaryInstalled": "Instalado",
+  "installSpellingDictionary": "Instalar dicionário",
+  "removeSpellingDictionary": "Remover dicionário",
+  "cancelSpellingDictionaryInstall": "Cancelar transferência do dicionário",
+  "retrySpellingDictionaryInstall": "Repetir instalação do dicionário",
+  "spellingDictionaryDownloading": "A transferir {size}…",
+  "spellingDictionaryValidating": "A validar o dicionário…",
+  "spellingDictionaryInstallFailed": "A instalação falhou — selecione para repetir",
+  "spellingDictionaryInstallPrompt": "Instalar {dictionary} ({size})? Depois de instalado, ficará disponível offline até ser removido.",
+  "spellingDictionaryUnavailable": "Dicionário indisponível",
+  "spellingChecking": "A verificar a ortografia…",
   "reportIssue": "Comunicar um problema",
   "feedbackCategory": "Categoria",
   "feedbackChooseCategory": "Escolha uma categoria",
@@ -802,6 +838,7 @@
     "description": "Editor setting description for saving files automatically."
   },
   "wordWrap": "Quebra de linha",
+  "wordWrapDescription": "Ajustar linhas longas à largura do editor em vez de deslocar horizontalmente.",
   "@wordWrap": {
     "description": "Word wrap setting label."
   },
@@ -869,6 +906,13 @@
   "@clearGitWorkspaceTrustDescription": {
     "description": "Settings action description for clearing trusted Git workspaces."
   },
+  "settingsEditingButtonsSectionTitle": "Botões de edição",
+  "spellingDictionaries": "Dicionários ortográficos",
+  "spellingDictionariesDescription": "Instalar e gerir dicionários ortográficos",
+  "settingsDictionariesSectionTitle": "Dicionários",
+  "availableSpellingDictionaries": "Dicionários disponíveis",
+  "customSpellingDictionaries": "Dicionários personalizados",
+  "spellingDictionaryProblems": "Problemas de dicionários",
   "settingsWindowSectionTitle": "Janela",
   "@settingsWindowSectionTitle": {
     "description": "Settings section title for native window behavior."
@@ -3329,5 +3373,6 @@
   "topicRenameAffectedFiles": "Ficheiros afetados",
   "renameTopicFileInstead": "Os IDs dos tópicos provêm dos nomes dos ficheiros. Utilize Mudar o nome do ficheiro de tópico no índice ou na barra lateral Ficheiros.",
   "diagnosticWritersideWebFileNameInvalid": "A instância \"{instanceId}\" publica o nome de ficheiro Web inválido \"{webFileName}\" para o tópico \"{topic}\".",
-  "diagnosticWritersideWebFileNameCollision": "A instância \"{instanceId}\" publica \"{firstTopic}\" e \"{secondTopic}\" como \"{webFileName}\"."
+  "diagnosticWritersideWebFileNameCollision": "A instância \"{instanceId}\" publica \"{firstTopic}\" e \"{secondTopic}\" como \"{webFileName}\".",
+  "spellingDictionaryRecoveryConflict": "O dicionário ortográfico foi alterado externamente. Foi preservada uma cópia de recuperação."
 }

@@ -915,6 +915,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get wordWrap => '折り返し';
 
   @override
+  String get wordWrapDescription => '長い行を横方向にスクロールせず、エディターの幅に合わせて折り返します。';
+
+  @override
   String get editorFontSize => 'エディターのフォントサイズ';
 
   @override
@@ -966,6 +969,27 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String get clearGitWorkspaceTrustDescription =>
       '以前信頼したワークスペースで Git 機能を有効にする前に確認する';
+
+  @override
+  String get settingsEditingButtonsSectionTitle => '編集ボタン';
+
+  @override
+  String get spellingDictionaries => 'スペルチェック辞書';
+
+  @override
+  String get spellingDictionariesDescription => 'スペルチェック辞書をインストールして管理';
+
+  @override
+  String get settingsDictionariesSectionTitle => '辞書';
+
+  @override
+  String get availableSpellingDictionaries => '利用可能な辞書';
+
+  @override
+  String get customSpellingDictionaries => 'カスタム辞書';
+
+  @override
+  String get spellingDictionaryProblems => '辞書の問題';
 
   @override
   String get settingsWindowSectionTitle => 'ウィンドウ';
@@ -4368,7 +4392,127 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
+  String get spelling => 'スペルチェック';
+
+  @override
+  String get automaticSpelling => '自動スペルチェック';
+
+  @override
+  String get defaultSpellingLanguage => '既定のスペルチェック言語';
+
+  @override
+  String get projectSpellingLanguage => 'プロジェクトのスペルチェック言語';
+
+  @override
+  String get chooseSpellingLanguage => 'スペルチェック言語を選択';
+
+  @override
+  String get spellingLanguageUnsetStatus => '言語…';
+
+  @override
+  String get spellingOffStatus => 'スペルチェック オフ';
+
+  @override
+  String get checkSpelling => 'スペルチェック';
+
+  @override
+  String get ignoreSpellingOnce => '一度だけ無視';
+
+  @override
+  String get ignoreSpellingDocument => 'この文書ですべて無視';
+
+  @override
+  String get addPersonalSpellingWord => '個人辞書に追加';
+
+  @override
+  String get addProjectSpellingWord => 'プロジェクト辞書に追加';
+
+  @override
+  String get inheritSpellingLanguage => 'プロジェクトまたはアプリの言語を使用';
+
+  @override
+  String get disableDocumentSpelling => 'スペルチェックしない';
+
+  @override
+  String get importSpellingDictionary => '辞書をインポート';
+
+  @override
+  String get personalSpellingDictionary => '個人辞書';
+
+  @override
+  String get projectSpellingDictionary => 'プロジェクト辞書';
+
+  @override
+  String get noSpellingErrors => 'スペルミスはありません';
+
+  @override
+  String get noSpellingSuggestions => 'スペル候補はありません';
+
+  @override
+  String get spellingWordCheckFailed => 'この単語を確認できませんでした';
+
+  @override
+  String get spellingCheckFailed => 'スペルチェックに失敗しました';
+
+  @override
+  String get spellingCheckIncomplete => 'スペルチェックが完了していません';
+
+  @override
+  String get spellingDictionaryNotInstalled => '辞書がインストールされていません';
+
+  @override
+  String spellingDictionaryNotInstalledForLanguage(String dictionary) {
+    return '$dictionary の辞書がインストールされていません';
+  }
+
+  @override
+  String spellingDictionaryNotInstalledWithSize(String size) {
+    return '未インストール · $size';
+  }
+
+  @override
+  String get spellingDictionaryInstalled => 'インストール済み';
+
+  @override
+  String get installSpellingDictionary => '辞書をインストール';
+
+  @override
+  String get removeSpellingDictionary => '辞書を削除';
+
+  @override
+  String get cancelSpellingDictionaryInstall => '辞書のダウンロードをキャンセル';
+
+  @override
+  String get retrySpellingDictionaryInstall => '辞書のインストールを再試行';
+
+  @override
+  String spellingDictionaryDownloading(String size) {
+    return '$size をダウンロード中…';
+  }
+
+  @override
+  String get spellingDictionaryValidating => '辞書を検証中…';
+
+  @override
+  String get spellingDictionaryInstallFailed => '辞書のインストールに失敗しました — 選択して再試行';
+
+  @override
+  String spellingDictionaryInstallPrompt(String dictionary, String size) {
+    return '$dictionary（$size）をインストールしますか？インストール後は削除するまでオフラインで利用できます。';
+  }
+
+  @override
+  String get spellingDictionaryUnavailable => '辞書を利用できません';
+
+  @override
+  String get spellingChecking => 'スペルを確認中…';
+
+  @override
   String exportInvalidRange(String field, String minimum, String maximum) {
     return '$field: $minimum から $maximum の数値を入力してください。';
   }
+
+  @override
+  String get spellingDictionaryRecoveryConflict =>
+      'スペルチェック辞書が外部で変更されました。復旧用コピーを保持しました。';
 }

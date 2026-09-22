@@ -10,6 +10,7 @@ import 'package:busymark/src/markdown/preview_model.dart';
 import 'package:busymark/src/writerside/writerside_parsers.dart';
 import 'package:busymark/src/writerside/writerside_module_service.dart';
 import 'package:busymark/src/writerside/writerside_video.dart';
+import 'package:busymark/src/workspace/document_buffer.dart';
 import 'package:busymark/src/workspace/workspace_service.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
@@ -178,10 +179,15 @@ After.
 
     const service = WorkspaceService();
     final workspace = await service.openPath(root.path);
-    final preview = service.buildPreview(
-      workspace.copyWith(activeFilePath: topicPath),
-      source,
+    final targetWorkspace = workspace.copyWith(activeFilePath: topicPath);
+    final target = DocumentBuffer(
+      id: 'video-topic',
+      filePath: topicPath,
+      text: source,
+      lastSavedText: source,
+      dirty: false,
     );
+    final preview = service.buildDocumentPreview(targetWorkspace, target);
     final video = preview!.blocks.singleWhere(
       (block) => block.kind == PreviewBlockKind.video,
     );

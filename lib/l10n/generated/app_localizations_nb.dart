@@ -953,6 +953,10 @@ class AppLocalizationsNb extends AppLocalizations {
   String get wordWrap => 'Tekstbryting';
 
   @override
+  String get wordWrapDescription =>
+      'Bryt lange linjer så de passer til redigeringsbredden i stedet for å rulle vannrett.';
+
+  @override
   String get editorFontSize => 'Skriftstørrelse i redigereren';
 
   @override
@@ -1005,6 +1009,28 @@ class AppLocalizationsNb extends AppLocalizations {
   @override
   String get clearGitWorkspaceTrustDescription =>
       'Spør før Git-funksjoner aktiveres for tidligere klarerte arbeidsområder.';
+
+  @override
+  String get settingsEditingButtonsSectionTitle => 'Redigeringsknapper';
+
+  @override
+  String get spellingDictionaries => 'Stavekontrollordbøker';
+
+  @override
+  String get spellingDictionariesDescription =>
+      'Installer og administrer stavekontrollordbøker';
+
+  @override
+  String get settingsDictionariesSectionTitle => 'Ordbøker';
+
+  @override
+  String get availableSpellingDictionaries => 'Tilgjengelige ordbøker';
+
+  @override
+  String get customSpellingDictionaries => 'Egendefinerte ordbøker';
+
+  @override
+  String get spellingDictionaryProblems => 'Ordbokproblemer';
 
   @override
   String get settingsWindowSectionTitle => 'Vindu';
@@ -4492,7 +4518,129 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
+  String get spelling => 'Stavekontroll';
+
+  @override
+  String get automaticSpelling => 'Automatisk stavekontroll';
+
+  @override
+  String get defaultSpellingLanguage => 'Standard språk for stavekontroll';
+
+  @override
+  String get projectSpellingLanguage => 'Prosjektspråk for stavekontroll';
+
+  @override
+  String get chooseSpellingLanguage => 'Velg språk for stavekontroll';
+
+  @override
+  String get spellingLanguageUnsetStatus => 'Språk…';
+
+  @override
+  String get spellingOffStatus => 'Stavekontroll av';
+
+  @override
+  String get checkSpelling => 'Kontroller staving';
+
+  @override
+  String get ignoreSpellingOnce => 'Ignorer én gang';
+
+  @override
+  String get ignoreSpellingDocument => 'Ignorer alle i dette dokumentet';
+
+  @override
+  String get addPersonalSpellingWord => 'Legg til i personlig ordliste';
+
+  @override
+  String get addProjectSpellingWord => 'Legg til i prosjektordlisten';
+
+  @override
+  String get inheritSpellingLanguage => 'Bruk prosjekt- eller programspråk';
+
+  @override
+  String get disableDocumentSpelling => 'Ikke kontroller staving';
+
+  @override
+  String get importSpellingDictionary => 'Importer ordliste';
+
+  @override
+  String get personalSpellingDictionary => 'Personlig ordliste';
+
+  @override
+  String get projectSpellingDictionary => 'Prosjektordliste';
+
+  @override
+  String get noSpellingErrors => 'Ingen stavefeil';
+
+  @override
+  String get noSpellingSuggestions => 'Ingen staveforslag';
+
+  @override
+  String get spellingWordCheckFailed => 'Kunne ikke kontrollere dette ordet';
+
+  @override
+  String get spellingCheckFailed => 'Stavekontrollen mislyktes';
+
+  @override
+  String get spellingCheckIncomplete => 'Stavekontrollen er ufullstendig';
+
+  @override
+  String get spellingDictionaryNotInstalled => 'Ordliste er ikke installert';
+
+  @override
+  String spellingDictionaryNotInstalledForLanguage(String dictionary) {
+    return 'Ordlisten for $dictionary er ikke installert';
+  }
+
+  @override
+  String spellingDictionaryNotInstalledWithSize(String size) {
+    return 'Ikke installert · $size';
+  }
+
+  @override
+  String get spellingDictionaryInstalled => 'Installert';
+
+  @override
+  String get installSpellingDictionary => 'Installer ordliste';
+
+  @override
+  String get removeSpellingDictionary => 'Fjern ordliste';
+
+  @override
+  String get cancelSpellingDictionaryInstall => 'Avbryt nedlasting av ordliste';
+
+  @override
+  String get retrySpellingDictionaryInstall =>
+      'Prøv å installere ordlisten på nytt';
+
+  @override
+  String spellingDictionaryDownloading(String size) {
+    return 'Laster ned $size…';
+  }
+
+  @override
+  String get spellingDictionaryValidating => 'Validerer ordliste…';
+
+  @override
+  String get spellingDictionaryInstallFailed =>
+      'Installasjonen mislyktes — velg for å prøve på nytt';
+
+  @override
+  String spellingDictionaryInstallPrompt(String dictionary, String size) {
+    return 'Installere $dictionary ($size)? Etter installering er den tilgjengelig frakoblet til du fjerner den.';
+  }
+
+  @override
+  String get spellingDictionaryUnavailable => 'Ordliste utilgjengelig';
+
+  @override
+  String get spellingChecking => 'Kontrollerer staving…';
+
+  @override
   String exportInvalidRange(String field, String minimum, String maximum) {
     return '$field: skriv inn et tall mellom $minimum og $maximum.';
   }
+
+  @override
+  String get spellingDictionaryRecoveryConflict =>
+      'Staveordboken ble endret eksternt. En gjenopprettingskopi ble bevart.';
 }

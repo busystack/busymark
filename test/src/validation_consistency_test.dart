@@ -5,6 +5,8 @@ import 'package:busymark/src/core/source_span.dart';
 import 'package:busymark/src/markdown/markdown_model.dart';
 import 'package:busymark/src/markdown/markdown_parser.dart';
 import 'package:busymark/src/markdown/raw_html_policy.dart';
+import 'package:busymark/src/workspace/document_buffer.dart';
+import 'package:busymark/src/workspace/workspace_model.dart';
 import 'package:busymark/src/workspace/workspace_service.dart';
 import 'package:busymark/src/writerside/writerside_module_service.dart';
 import 'package:busymark/src/writerside/writerside_document_resolver.dart';
@@ -15,6 +17,17 @@ import 'package:path/path.dart' as p;
 void main() {
   late Directory root;
   const service = WorkspaceService();
+  Future<Workspace> reparse(Workspace workspace, String source) =>
+      service.reparseDocument(
+        workspace,
+        DocumentBuffer(
+          id: 'validation:${workspace.activeFilePath ?? 'untitled'}',
+          filePath: workspace.activeFilePath,
+          text: source,
+          lastSavedText: source,
+          dirty: true,
+        ),
+      );
   String path(String relative) => p.join(root.path, relative);
   Future<void> write(String relative, String source) async {
     final file = File(path(relative));
@@ -84,15 +97,15 @@ void main() {
           'writerside.link.unavailable',
         ]),
       );
-      workspace = await service.reparseActive(workspace, source);
+      workspace = await reparse(workspace, source);
       expect(signature(workspace.diagnostics), original);
-      workspace = await service.reparseActive(
+      workspace = await reparse(
         workspace.copyWith(activeFilePath: path('writerside.cfg')),
         config,
       );
       expect(signature(workspace.diagnostics), original);
       const fixed = '<topic id="a" title="A"><p>Fixed</p></topic>';
-      workspace = await service.reparseActive(
+      workspace = await reparse(
         workspace.copyWith(activeFilePath: path('topics/a.topic')),
         fixed,
       );
@@ -102,7 +115,7 @@ void main() {
         ),
         isEmpty,
       );
-      workspace = await service.reparseActive(
+      workspace = await reparse(
         workspace.copyWith(activeFilePath: path('writerside.cfg')),
         config,
       );
@@ -125,7 +138,7 @@ void main() {
       );
       var workspace = await service.openPath(root.path);
       expect(signature(workspace.diagnostics), isEmpty);
-      workspace = await service.reparseActive(
+      workspace = await reparse(
         workspace.copyWith(activeFilePath: path('topics/b.topic')),
         '<topic id="b" title="B"><p id="changed">Target</p></topic>',
       );
@@ -135,7 +148,7 @@ void main() {
             .map((d) => d.filePath),
         [path('topics/a.topic')],
       );
-      workspace = await service.reparseActive(
+      workspace = await reparse(
         workspace,
         await File(path('topics/b.topic')).readAsString(),
       );
@@ -159,9 +172,9 @@ void main() {
       await write('topics/a.topic', source);
       var workspace = await service.openPath(root.path);
       expect(signature(workspace.diagnostics), isEmpty);
-      workspace = await service.reparseActive(workspace, source);
+      workspace = await reparse(workspace, source);
       expect(signature(workspace.diagnostics), isEmpty);
-      workspace = await service.reparseActive(
+      workspace = await reparse(
         workspace.copyWith(activeFilePath: path('writerside.cfg')),
         config,
       );
@@ -193,7 +206,7 @@ void main() {
       var workspace = await service.openPath(root.path);
       for (final stage in ['load', 'topic', 'config']) {
         if (stage != 'load') {
-          workspace = await service.reparseActive(
+          workspace = await reparse(
             workspace.copyWith(
               activeFilePath: path(
                 stage == 'topic' ? 'topics/a.topic' : 'writerside.cfg',
@@ -238,10 +251,7 @@ void main() {
     );
     var workspace = await service.openPath(root.path);
     expect(signature(workspace.diagnostics), isEmpty);
-    workspace = await service.reparseActive(
-      workspace,
-      topic('a', declaration + declaration),
-    );
+    workspace = await reparse(workspace, topic('a', declaration + declaration));
     final duplicates = workspace.diagnostics.where(
       (d) => d.code == 'writerside.index.duplicate-symbol',
     );
@@ -251,7 +261,7 @@ void main() {
       duplicates.single.relatedSpans.single.filePath,
       path('topics/a.topic'),
     );
-    workspace = await service.reparseActive(
+    workspace = await reparse(
       workspace,
       topic(
         'a',
@@ -286,7 +296,7 @@ void main() {
       ),
       isEmpty,
     );
-    workspace = await service.reparseActive(
+    workspace = await reparse(
       workspace.copyWith(activeFilePath: path('shared/topics/b.topic')),
       '<topic id="b" title="B"><snippet id="part"><p>Shared</p></snippet></topic>',
     );
@@ -335,7 +345,7 @@ void main() {
         'cfg/glossary.xml': '<glossary/>',
         'keymap.xml': '<keymap/>',
       }.entries) {
-        workspace = await service.reparseActive(
+        workspace = await reparse(
           workspace.copyWith(activeFilePath: path(entry.key)),
           entry.value,
         );
@@ -365,9 +375,9 @@ void main() {
         diagnostics: [...workspace.diagnostics, scanWarning],
       );
       final before = signature(workspace.diagnostics);
-      workspace = await service.reparseActive(workspace, '# A\n');
+      workspace = await reparse(workspace, '# A\n');
       expect(signature(workspace.diagnostics), before);
-      workspace = await service.reparseActive(
+      workspace = await reparse(
         workspace.copyWith(activeFilePath: path('b.md')),
         '# Fixed\n',
       );

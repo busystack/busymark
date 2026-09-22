@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import '../app/app_settings.dart';
 import '../editor/source/source_search.dart';
 import '../editor/wysiwyg/wysiwyg_session_state.dart';
+import '../spellcheck/spelling_language.dart';
 import 'text_format_metadata.dart';
 import 'workspace_file_snapshot.dart';
 
@@ -13,10 +14,15 @@ const Object _bufferUnset = Object();
 enum DocumentDiskState { present, changed, deleted, conflict }
 
 class DocumentHistoryState {
-  const DocumentHistoryState({required this.text, required this.selection});
+  const DocumentHistoryState({
+    required this.text,
+    required this.selection,
+    this.wysiwygState = const WysiwygEditorSessionState(),
+  });
 
   final String text;
   final TextSelection selection;
+  final WysiwygEditorSessionState wysiwygState;
 }
 
 class DocumentUndoState {
@@ -74,6 +80,7 @@ class DocumentEditorState {
     this.searchReplacement = '',
     this.undoState = const DocumentUndoState(),
     this.wysiwygState = const WysiwygEditorSessionState(),
+    this.spellingLanguage = const SpellingLanguageOverride.inherit(),
   });
 
   final DocumentViewModePreference mode;
@@ -84,6 +91,7 @@ class DocumentEditorState {
   final String searchReplacement;
   final DocumentUndoState undoState;
   final WysiwygEditorSessionState wysiwygState;
+  final SpellingLanguageOverride spellingLanguage;
 
   DocumentEditorState copyWith({
     DocumentViewModePreference? mode,
@@ -94,6 +102,7 @@ class DocumentEditorState {
     String? searchReplacement,
     DocumentUndoState? undoState,
     WysiwygEditorSessionState? wysiwygState,
+    SpellingLanguageOverride? spellingLanguage,
   }) {
     return DocumentEditorState(
       mode: mode ?? this.mode,
@@ -106,6 +115,7 @@ class DocumentEditorState {
       searchReplacement: searchReplacement ?? this.searchReplacement,
       undoState: undoState ?? this.undoState,
       wysiwygState: wysiwygState ?? this.wysiwygState,
+      spellingLanguage: spellingLanguage ?? this.spellingLanguage,
     );
   }
 
@@ -121,6 +131,7 @@ class DocumentEditorState {
     'searchRegex': searchOptions.regex,
     'searchReplacement': searchReplacement,
     'wysiwygState': wysiwygState.toJson(),
+    'spellingLanguage': spellingLanguage.toJson(),
   };
 
   factory DocumentEditorState.fromJson(Map<String, Object?> json) {
@@ -148,6 +159,9 @@ class DocumentEditorState {
       searchReplacement: json['searchReplacement']?.toString() ?? '',
       wysiwygState: WysiwygEditorSessionState.fromJson(
         (json['wysiwygState'] as Map?)?.cast<String, Object?>() ?? const {},
+      ),
+      spellingLanguage: SpellingLanguageOverride.fromJson(
+        json['spellingLanguage'],
       ),
     );
   }
@@ -234,6 +248,8 @@ class DocumentBuffer {
     String? undoGroup,
     TextSelection? previousSelection,
     TextSelection? nextSelection,
+    WysiwygEditorSessionState? previousWysiwygState,
+    WysiwygEditorSessionState? nextWysiwygState,
   }) {
     if (nextText == text) {
       return this;
@@ -253,8 +269,13 @@ class DocumentBuffer {
       revision: revision + 1,
       editorState: editorState.copyWith(
         selection: updatedSelection,
+        wysiwygState: nextWysiwygState ?? editorState.wysiwygState,
         undoState: editorState.undoState.push(
-          DocumentHistoryState(text: text, selection: historicalSelection),
+          DocumentHistoryState(
+            text: text,
+            selection: historicalSelection,
+            wysiwygState: previousWysiwygState ?? editorState.wysiwygState,
+          ),
           group: undoGroup,
         ),
       ),

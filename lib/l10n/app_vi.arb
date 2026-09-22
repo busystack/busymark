@@ -83,6 +83,42 @@
   "workspaceSearchShowMore": "Hiển thị thêm kết quả",
   "workspaceSearchSkippedFiles": "Tìm kiếm chưa đầy đủ. Các tệp này vượt quá 1 MiB hoặc không thể đọc được:",
   "@@locale": "vi",
+  "spelling": "Chính tả",
+  "automaticSpelling": "Tự động kiểm tra chính tả",
+  "defaultSpellingLanguage": "Ngôn ngữ chính tả mặc định",
+  "projectSpellingLanguage": "Ngôn ngữ kiểm tra chính tả của dự án",
+  "chooseSpellingLanguage": "Chọn ngôn ngữ chính tả",
+  "spellingLanguageUnsetStatus": "Ngôn ngữ…",
+  "spellingOffStatus": "Tắt chính tả",
+  "checkSpelling": "Kiểm tra chính tả",
+  "ignoreSpellingOnce": "Bỏ qua một lần",
+  "ignoreSpellingDocument": "Bỏ qua tất cả trong tài liệu này",
+  "addPersonalSpellingWord": "Thêm vào từ điển cá nhân",
+  "addProjectSpellingWord": "Thêm vào từ điển dự án",
+  "inheritSpellingLanguage": "Dùng ngôn ngữ dự án hoặc ứng dụng",
+  "disableDocumentSpelling": "Không kiểm tra chính tả",
+  "importSpellingDictionary": "Nhập từ điển",
+  "personalSpellingDictionary": "Từ điển cá nhân",
+  "projectSpellingDictionary": "Từ điển dự án",
+  "noSpellingErrors": "Không có lỗi chính tả",
+  "noSpellingSuggestions": "Không có đề xuất chính tả",
+  "spellingWordCheckFailed": "Không thể kiểm tra từ này",
+  "spellingCheckFailed": "Kiểm tra chính tả thất bại",
+  "spellingCheckIncomplete": "Kiểm tra chính tả chưa hoàn tất",
+  "spellingDictionaryNotInstalled": "Từ điển chưa được cài đặt",
+  "spellingDictionaryNotInstalledForLanguage": "Từ điển {dictionary} chưa được cài đặt",
+  "spellingDictionaryNotInstalledWithSize": "Chưa cài đặt · {size}",
+  "spellingDictionaryInstalled": "Đã cài đặt",
+  "installSpellingDictionary": "Cài đặt từ điển",
+  "removeSpellingDictionary": "Gỡ từ điển",
+  "cancelSpellingDictionaryInstall": "Hủy tải từ điển",
+  "retrySpellingDictionaryInstall": "Thử cài đặt lại từ điển",
+  "spellingDictionaryDownloading": "Đang tải {size}…",
+  "spellingDictionaryValidating": "Đang xác thực từ điển…",
+  "spellingDictionaryInstallFailed": "Cài đặt từ điển thất bại — chọn để thử lại",
+  "spellingDictionaryInstallPrompt": "Cài đặt {dictionary} ({size})? Sau khi cài đặt, từ điển sẽ dùng được ngoại tuyến cho đến khi bạn gỡ bỏ.",
+  "spellingDictionaryUnavailable": "Từ điển không khả dụng",
+  "spellingChecking": "Đang kiểm tra chính tả…",
   "appTitle": "BusyMark",
   "@appTitle": {
     "description": "Application name."
@@ -932,6 +968,7 @@
     "description": "Editor setting description for saving files automatically."
   },
   "wordWrap": "Tự động xuống dòng",
+  "wordWrapDescription": "Ngắt các dòng dài cho vừa chiều rộng trình biên tập thay vì cuộn ngang.",
   "@wordWrap": {
     "description": "Word wrap setting label."
   },
@@ -999,6 +1036,13 @@
   "@clearGitWorkspaceTrustDescription": {
     "description": "Settings action description for clearing trusted Git workspaces."
   },
+  "settingsEditingButtonsSectionTitle": "Nút chỉnh sửa",
+  "spellingDictionaries": "Từ điển chính tả",
+  "spellingDictionariesDescription": "Cài đặt và quản lý từ điển chính tả",
+  "settingsDictionariesSectionTitle": "Từ điển",
+  "availableSpellingDictionaries": "Từ điển có sẵn",
+  "customSpellingDictionaries": "Từ điển tùy chỉnh",
+  "spellingDictionaryProblems": "Sự cố từ điển",
   "settingsWindowSectionTitle": "Cửa sổ",
   "@settingsWindowSectionTitle": {
     "description": "Settings section title for native window behavior."
@@ -4868,5 +4912,6 @@
   "topicRenameAffectedFiles": "Các tệp bị ảnh hưởng",
   "renameTopicFileInstead": "ID chủ đề được tạo từ tên tệp. Hãy dùng Đổi tên tệp chủ đề trong mục lục hoặc thanh bên Tệp.",
   "diagnosticWritersideWebFileNameInvalid": "Phiên bản \"{instanceId}\" xuất bản tên tệp web không hợp lệ \"{webFileName}\" cho chủ đề \"{topic}\".",
-  "diagnosticWritersideWebFileNameCollision": "Phiên bản \"{instanceId}\" xuất bản cả \"{firstTopic}\" và \"{secondTopic}\" dưới tên \"{webFileName}\"."
+  "diagnosticWritersideWebFileNameCollision": "Phiên bản \"{instanceId}\" xuất bản cả \"{firstTopic}\" và \"{secondTopic}\" dưới tên \"{webFileName}\".",
+  "spellingDictionaryRecoveryConflict": "Từ điển chính tả đã được thay đổi từ bên ngoài. Một bản sao khôi phục đã được giữ lại."
 }

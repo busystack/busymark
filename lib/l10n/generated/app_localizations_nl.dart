@@ -954,6 +954,10 @@ class AppLocalizationsNl extends AppLocalizations {
   String get wordWrap => 'Regelterugloop';
 
   @override
+  String get wordWrapDescription =>
+      'Laat lange regels op de editorbreedte doorlopen in plaats van horizontaal te schuiven.';
+
+  @override
   String get editorFontSize => 'Lettergrootte van de editor';
 
   @override
@@ -1006,6 +1010,28 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get clearGitWorkspaceTrustDescription =>
       'Vraag dit voordat u Git-functies inschakelt voor eerder vertrouwde werkruimten.';
+
+  @override
+  String get settingsEditingButtonsSectionTitle => 'Bewerkingsknoppen';
+
+  @override
+  String get spellingDictionaries => 'Spellingswoordenboeken';
+
+  @override
+  String get spellingDictionariesDescription =>
+      'Spellingswoordenboeken installeren en beheren';
+
+  @override
+  String get settingsDictionariesSectionTitle => 'Woordenboeken';
+
+  @override
+  String get availableSpellingDictionaries => 'Beschikbare woordenboeken';
+
+  @override
+  String get customSpellingDictionaries => 'Aangepaste woordenboeken';
+
+  @override
+  String get spellingDictionaryProblems => 'Woordenboekproblemen';
 
   @override
   String get settingsWindowSectionTitle => 'Raam';
@@ -4536,7 +4562,131 @@ class AppLocalizationsNl extends AppLocalizations {
   }
 
   @override
+  String get spelling => 'Spellingcontrole';
+
+  @override
+  String get automaticSpelling => 'Spelling automatisch controleren';
+
+  @override
+  String get defaultSpellingLanguage => 'Standaardtaal voor spelling';
+
+  @override
+  String get projectSpellingLanguage => 'Projecttaal voor spelling';
+
+  @override
+  String get chooseSpellingLanguage => 'Taal voor spelling kiezen';
+
+  @override
+  String get spellingLanguageUnsetStatus => 'Taal…';
+
+  @override
+  String get spellingOffStatus => 'Spelling uit';
+
+  @override
+  String get checkSpelling => 'Spelling controleren';
+
+  @override
+  String get ignoreSpellingOnce => 'Eenmaal negeren';
+
+  @override
+  String get ignoreSpellingDocument => 'Alles in dit document negeren';
+
+  @override
+  String get addPersonalSpellingWord => 'Aan persoonlijk woordenboek toevoegen';
+
+  @override
+  String get addProjectSpellingWord => 'Aan projectwoordenboek toevoegen';
+
+  @override
+  String get inheritSpellingLanguage => 'Project- of toepassingstaal gebruiken';
+
+  @override
+  String get disableDocumentSpelling => 'Spelling niet controleren';
+
+  @override
+  String get importSpellingDictionary => 'Woordenboek importeren';
+
+  @override
+  String get personalSpellingDictionary => 'Persoonlijk woordenboek';
+
+  @override
+  String get projectSpellingDictionary => 'Projectwoordenboek';
+
+  @override
+  String get noSpellingErrors => 'Geen spelfouten';
+
+  @override
+  String get noSpellingSuggestions => 'Geen spellingsuggesties';
+
+  @override
+  String get spellingWordCheckFailed =>
+      'Dit woord kon niet worden gecontroleerd';
+
+  @override
+  String get spellingCheckFailed => 'Spellingcontrole mislukt';
+
+  @override
+  String get spellingCheckIncomplete => 'De spellingcontrole is onvolledig';
+
+  @override
+  String get spellingDictionaryNotInstalled => 'Woordenboek niet geïnstalleerd';
+
+  @override
+  String spellingDictionaryNotInstalledForLanguage(String dictionary) {
+    return 'Het woordenboek voor $dictionary is niet geïnstalleerd';
+  }
+
+  @override
+  String spellingDictionaryNotInstalledWithSize(String size) {
+    return 'Niet geïnstalleerd · $size';
+  }
+
+  @override
+  String get spellingDictionaryInstalled => 'Geïnstalleerd';
+
+  @override
+  String get installSpellingDictionary => 'Woordenboek installeren';
+
+  @override
+  String get removeSpellingDictionary => 'Woordenboek verwijderen';
+
+  @override
+  String get cancelSpellingDictionaryInstall =>
+      'Download van woordenboek annuleren';
+
+  @override
+  String get retrySpellingDictionaryInstall =>
+      'Installatie van woordenboek opnieuw proberen';
+
+  @override
+  String spellingDictionaryDownloading(String size) {
+    return '$size downloaden…';
+  }
+
+  @override
+  String get spellingDictionaryValidating => 'Woordenboek valideren…';
+
+  @override
+  String get spellingDictionaryInstallFailed =>
+      'Installatie mislukt — selecteer om opnieuw te proberen';
+
+  @override
+  String spellingDictionaryInstallPrompt(String dictionary, String size) {
+    return '$dictionary ($size) installeren? Daarna blijft het offline beschikbaar totdat u het verwijdert.';
+  }
+
+  @override
+  String get spellingDictionaryUnavailable => 'Woordenboek niet beschikbaar';
+
+  @override
+  String get spellingChecking => 'Spelling controleren…';
+
+  @override
   String exportInvalidRange(String field, String minimum, String maximum) {
     return '$field: voer een getal tussen $minimum en $maximum in.';
   }
+
+  @override
+  String get spellingDictionaryRecoveryConflict =>
+      'Het spellingwoordenboek is extern gewijzigd. Er is een herstelkopie bewaard.';
 }

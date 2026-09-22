@@ -35,7 +35,7 @@ for filesystem and Git-integration details.
 
 ## Run from source
 
-BusyMark currently uses Flutter 3.47.2. Install the Linux packages required by
+BusyMark currently uses Flutter 3.47.4. Install the Linux packages required by
 Flutter and BusyMark's CMake configuration:
 
 ```bash

@@ -83,6 +83,42 @@
   "workspaceSearchShowMore": "さらに結果を表示",
   "workspaceSearchSkippedFiles": "検索は未完了です。次のファイルは 1 MiB を超えているか、読み取れませんでした:",
   "@@locale": "ja",
+  "spelling": "スペルチェック",
+  "automaticSpelling": "自動スペルチェック",
+  "defaultSpellingLanguage": "既定のスペルチェック言語",
+  "projectSpellingLanguage": "プロジェクトのスペルチェック言語",
+  "chooseSpellingLanguage": "スペルチェック言語を選択",
+  "spellingLanguageUnsetStatus": "言語…",
+  "spellingOffStatus": "スペルチェック オフ",
+  "checkSpelling": "スペルチェック",
+  "ignoreSpellingOnce": "一度だけ無視",
+  "ignoreSpellingDocument": "この文書ですべて無視",
+  "addPersonalSpellingWord": "個人辞書に追加",
+  "addProjectSpellingWord": "プロジェクト辞書に追加",
+  "inheritSpellingLanguage": "プロジェクトまたはアプリの言語を使用",
+  "disableDocumentSpelling": "スペルチェックしない",
+  "importSpellingDictionary": "辞書をインポート",
+  "personalSpellingDictionary": "個人辞書",
+  "projectSpellingDictionary": "プロジェクト辞書",
+  "noSpellingErrors": "スペルミスはありません",
+  "noSpellingSuggestions": "スペル候補はありません",
+  "spellingWordCheckFailed": "この単語を確認できませんでした",
+  "spellingCheckFailed": "スペルチェックに失敗しました",
+  "spellingCheckIncomplete": "スペルチェックが完了していません",
+  "spellingDictionaryNotInstalled": "辞書がインストールされていません",
+  "spellingDictionaryNotInstalledForLanguage": "{dictionary} の辞書がインストールされていません",
+  "spellingDictionaryNotInstalledWithSize": "未インストール · {size}",
+  "spellingDictionaryInstalled": "インストール済み",
+  "installSpellingDictionary": "辞書をインストール",
+  "removeSpellingDictionary": "辞書を削除",
+  "cancelSpellingDictionaryInstall": "辞書のダウンロードをキャンセル",
+  "retrySpellingDictionaryInstall": "辞書のインストールを再試行",
+  "spellingDictionaryDownloading": "{size} をダウンロード中…",
+  "spellingDictionaryValidating": "辞書を検証中…",
+  "spellingDictionaryInstallFailed": "辞書のインストールに失敗しました — 選択して再試行",
+  "spellingDictionaryInstallPrompt": "{dictionary}（{size}）をインストールしますか？インストール後は削除するまでオフラインで利用できます。",
+  "spellingDictionaryUnavailable": "辞書を利用できません",
+  "spellingChecking": "スペルを確認中…",
   "appTitle": "BusyMark",
   "@appTitle": {
     "description": "Application name."
@@ -932,6 +968,7 @@
     "description": "Editor setting description for saving files automatically."
   },
   "wordWrap": "折り返し",
+  "wordWrapDescription": "長い行を横方向にスクロールせず、エディターの幅に合わせて折り返します。",
   "@wordWrap": {
     "description": "Word wrap setting label."
   },
@@ -999,6 +1036,13 @@
   "@clearGitWorkspaceTrustDescription": {
     "description": "Settings action description for clearing trusted Git workspaces."
   },
+  "settingsEditingButtonsSectionTitle": "編集ボタン",
+  "spellingDictionaries": "スペルチェック辞書",
+  "spellingDictionariesDescription": "スペルチェック辞書をインストールして管理",
+  "settingsDictionariesSectionTitle": "辞書",
+  "availableSpellingDictionaries": "利用可能な辞書",
+  "customSpellingDictionaries": "カスタム辞書",
+  "spellingDictionaryProblems": "辞書の問題",
   "settingsWindowSectionTitle": "ウィンドウ",
   "@settingsWindowSectionTitle": {
     "description": "Settings section title for native window behavior."
@@ -4868,5 +4912,6 @@
   "topicRenameAffectedFiles": "影響を受けるファイル",
   "renameTopicFileInstead": "トピック ID はファイル名から生成されます。目次またはファイルサイドバーの「トピックファイルの名前を変更」を使用してください。",
   "diagnosticWritersideWebFileNameInvalid": "インスタンス \"{instanceId}\" はトピック \"{topic}\" に無効な Web ファイル名 \"{webFileName}\" を使用しています。",
-  "diagnosticWritersideWebFileNameCollision": "インスタンス \"{instanceId}\" は \"{firstTopic}\" と \"{secondTopic}\" の両方を \"{webFileName}\" として公開します。"
+  "diagnosticWritersideWebFileNameCollision": "インスタンス \"{instanceId}\" は \"{firstTopic}\" と \"{secondTopic}\" の両方を \"{webFileName}\" として公開します。",
+  "spellingDictionaryRecoveryConflict": "スペルチェック辞書が外部で変更されました。復旧用コピーを保持しました。"
 }

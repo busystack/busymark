@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:math' as math;
 
-import 'package:flutter/foundation.dart' show setEquals;
+import 'package:flutter/foundation.dart' show setEquals, visibleForTesting;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
@@ -17,12 +17,19 @@ import '../../app/busymark_toast.dart';
 import '../../app/command_registry.dart';
 import '../../app/localization.dart';
 import '../../assets/asset_ingestion_service.dart';
+import '../../assets/asset_input_service.dart';
 import '../../clipboard/clipboard_insertion.dart';
 import '../../clipboard/clipboard_models.dart';
 import '../../core/diagnostic.dart';
+import '../../markdown/markdown_model.dart';
 import '../../platform/rich_clipboard_service.dart';
 import '../../search/search_replace_service.dart';
+import '../../spellcheck/spelling_coordinator.dart';
+import '../../spellcheck/spelling_projection.dart';
+import '../../spellcheck/spelling_replacement.dart';
 import '../document_text_geometry.dart';
+import '../clipboard_paste_resolver.dart';
+import '../clipboard_local_image_path.dart';
 import '../editor_text_context_menu.dart';
 import '../wysiwyg/wysiwyg_clipboard_fragment.dart';
 import '../source_folding.dart';
@@ -33,7 +40,11 @@ import 'source_diagnostics.dart';
 import 'source_document.dart';
 import 'source_gutter.dart';
 import 'source_intrinsic_width.dart';
+import 'source_paste_engine.dart';
 import 'source_search.dart';
+
+export 'source_paste_engine.dart'
+    show SourceDocumentFormat, debugBusyMarkSourceInlineMappingParseCount;
 
 typedef BusyMarkSourceChanged =
     void Function(String fullText, String? sourceFilePath);
@@ -96,7 +107,13 @@ class BusyMarkSourceEditor extends StatefulWidget {
     this.imagesDir = 'images',
     this.assetWorkspaceKind,
     this.assetIngestionService = const AssetIngestionService(),
+    this.assetInputService,
+    this.documentFormat,
+    this.markdownMode,
     this.onAssetSaveRequired,
+    this.spellingAnnotations = const [],
+    this.onCheckSpelling,
+    this.readSpellingMenuItems,
   });
 
   final String text;
@@ -134,7 +151,13 @@ class BusyMarkSourceEditor extends StatefulWidget {
   final String imagesDir;
   final AssetWorkspaceKind? assetWorkspaceKind;
   final AssetIngestionService assetIngestionService;
+  final AssetInputService? assetInputService;
+  final SourceDocumentFormat? documentFormat;
+  final MarkdownMode? markdownMode;
   final VoidCallback? onAssetSaveRequired;
+  final List<SpellingAnnotation> spellingAnnotations;
+  final VoidCallback? onCheckSpelling;
+  final BusyMarkEditorSpellingMenuReader? readSpellingMenuItems;
 
   @override
   State<BusyMarkSourceEditor> createState() => BusyMarkSourceEditorState();
@@ -157,6 +180,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
   final _intrinsicWidthCache = SourceIntrinsicWidthCache();
   final _lineLayoutCache = SourceLineLayoutCache();
   final _autocompleteProvider = const SourceAutocompleteProvider();
+  final _pasteEngine = const SourcePasteEngine();
   List<SourceFoldRegion> _foldRegions = const [];
   List<SourceAutocompleteSuggestion> _autocompleteSuggestions = const [];
   var _autocompleteSelection = 0;
@@ -174,6 +198,128 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
 
   RichClipboardService get _clipboard =>
       widget.clipboardService ?? busyMarkRichClipboardService;
+
+  int get spellingCaretOffset => _controller.fullSelection.extentOffset
+      .clamp(0, _controller.fullText.length)
+      .toInt();
+
+  void restoreSpellingFocus() => _focusNode.requestFocus();
+
+  void revealSpellingOccurrence(SpellingOccurrence occurrence) {
+    if (occurrence.run.snapshot.bufferId !=
+            (widget.documentId ?? widget.filePath) ||
+        occurrence.run.snapshot.contentRevision != widget.editRevision ||
+        occurrence.run.target is! SpellingSourceTarget) {
+      return;
+    }
+    final start = occurrence.sourceStart;
+    final end = occurrence.sourceEnd;
+    if (start == null || end == null || end > _controller.fullText.length) {
+      return;
+    }
+    _unfoldSourceRange(start, end);
+    _focusNode.requestFocus();
+    scrollToOffset(start, updateSelection: false);
+    _controller.fullSelection = TextSelection(
+      baseOffset: start,
+      extentOffset: end,
+    );
+  }
+
+  bool applySpellingCorrection({
+    required SpellingOccurrence occurrence,
+    required String suggestion,
+  }) {
+    final before = spellingSourceSnapshot(occurrence);
+    if (before == null) return false;
+    late final SpellingReplacementPlan plan;
+    late final String after;
+    try {
+      plan = const SpellingReplacementPlanner().build(
+        occurrence: occurrence,
+        suggestion: suggestion,
+      );
+      after = plan.applyToSource(before);
+    } on Object {
+      return false;
+    }
+    return applyPreparedSpellingCorrection(
+      occurrence: occurrence,
+      plan: plan,
+      expectedSource: before,
+      replacementSource: after,
+    );
+  }
+
+  String? spellingSourceSnapshot(SpellingOccurrence occurrence) {
+    final snapshot = occurrence.run.snapshot;
+    final target = occurrence.run.target;
+    if (snapshot.bufferId != (widget.documentId ?? widget.filePath) ||
+        snapshot.contentRevision != widget.editRevision ||
+        target is! SpellingSourceTarget ||
+        target.filePath != (widget.filePath ?? widget.documentId) ||
+        occurrence.word !=
+            occurrence.run.text.substring(
+              occurrence.logicalStart,
+              occurrence.logicalEnd,
+            )) {
+      return null;
+    }
+    final before = _controller.fullText;
+    for (final atom in occurrence.atoms) {
+      if (atom.sourceStart < 0 ||
+          atom.sourceEnd > before.length ||
+          atom.sourceEnd < atom.sourceStart) {
+        return null;
+      }
+    }
+    return before;
+  }
+
+  bool applyPreparedSpellingCorrection({
+    required SpellingOccurrence occurrence,
+    required SpellingReplacementPlan plan,
+    required String expectedSource,
+    required String replacementSource,
+  }) {
+    final snapshot = occurrence.run.snapshot;
+    // Final guard and mutation are synchronous; no operation is awaited here.
+    if (snapshot.bufferId != (widget.documentId ?? widget.filePath) ||
+        snapshot.contentRevision != widget.editRevision ||
+        expectedSource != _controller.fullText) {
+      return false;
+    }
+    if (replacementSource == expectedSource || plan.sourceEdits.isEmpty) {
+      return false;
+    }
+    final start = plan.sourceEdits.map((edit) => edit.start).reduce(math.min);
+    final selectionOffset = plan.resultingSourceCaret ?? start;
+    _unfoldSourceRange(
+      start,
+      plan.sourceEdits.map((edit) => edit.end).reduce(math.max),
+    );
+    _applyFullEditingValue(
+      TextEditingValue(
+        text: replacementSource,
+        selection: TextSelection.collapsed(
+          offset: selectionOffset.clamp(0, replacementSource.length),
+        ),
+      ),
+      origin: _SourceEditOrigin.spellingCorrection,
+    );
+    return true;
+  }
+
+  SourceDocumentFormat get _documentFormat =>
+      widget.documentFormat ??
+      switch (widget.language) {
+        SourceSyntaxLanguage.markdown => SourceDocumentFormat.markdown,
+        SourceSyntaxLanguage.xml => SourceDocumentFormat.genericXml,
+        SourceSyntaxLanguage.plain => SourceDocumentFormat.plainText,
+      };
+
+  MarkdownMode get _destinationMarkdownMode =>
+      widget.markdownMode ?? MarkdownMode.commonMark;
 
   @override
   void initState() {
@@ -320,14 +466,16 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
   }
 
   /// Reveals a full-document offset, including a destination inside a fold.
-  void scrollToOffset(int offset) {
+  void scrollToOffset(int offset, {bool updateSelection = true}) {
     final textOffset = offset.clamp(0, _controller.fullText.length);
     final line =
         '\n'.allMatches(_controller.fullText.substring(0, textOffset)).length +
         1;
     _unfoldSourceLine(line);
     _focusNode.requestFocus();
-    _controller.fullSelection = TextSelection.collapsed(offset: textOffset);
+    if (updateSelection) {
+      _controller.fullSelection = TextSelection.collapsed(offset: textOffset);
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _animateScrollToLine(line);
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -497,11 +645,19 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
       return KeyEventResult.handled;
     }
     if (commands.shortcutAccepts(
+      BusyMarkCommandIds.textPastePlainText,
+      event,
+      keyboard,
+    )) {
+      unawaited(_pasteFromSystemClipboard(BusyMarkPasteMode.plainText));
+      return KeyEventResult.handled;
+    }
+    if (commands.shortcutAccepts(
       BusyMarkCommandIds.textPaste,
       event,
       keyboard,
     )) {
-      unawaited(_pasteFromSystemClipboard());
+      unawaited(_pasteFromSystemClipboard(BusyMarkPasteMode.normal));
       return KeyEventResult.handled;
     }
     if (commands.shortcutAccepts(
@@ -605,6 +761,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
               collapsedRegionKeys: _foldedRegionKeys,
               foldRegions: _foldRegions,
               diagnosticMarkers: markers,
+              spellingAnnotations: widget.spellingAnnotations,
               layoutCache: _lineLayoutCache,
               intrinsicWidthCache: _intrinsicWidthCache,
               onToggleFold: _toggleFold,
@@ -627,7 +784,9 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
                             BusyMarkContextCommandAction(
                               isCommandEnabled: (commandId) =>
                                   !_hasActiveComposition &&
-                                  (commandId.startsWith('editor.') ||
+                                  (commandId ==
+                                          BusyMarkCommandIds.checkSpelling ||
+                                      commandId.startsWith('editor.') ||
                                       (widget.filePath?.toLowerCase().endsWith(
                                                 '.tree',
                                               ) ==
@@ -640,8 +799,14 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
                                         BusyMarkCommandIds.textCopy,
                                         BusyMarkCommandIds.textCut,
                                         BusyMarkCommandIds.textPaste,
+                                        BusyMarkCommandIds.textPastePlainText,
                                       }.contains(commandId)),
                               onCommand: (commandId) {
+                                if (commandId ==
+                                    BusyMarkCommandIds.checkSpelling) {
+                                  widget.onCheckSpelling?.call();
+                                  return;
+                                }
                                 if (commandId ==
                                         BusyMarkCommandIds.treeMoveLineUp ||
                                     commandId ==
@@ -662,7 +827,20 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
                                   return;
                                 }
                                 if (commandId == BusyMarkCommandIds.textPaste) {
-                                  unawaited(_pasteFromSystemClipboard());
+                                  unawaited(
+                                    _pasteFromSystemClipboard(
+                                      BusyMarkPasteMode.normal,
+                                    ),
+                                  );
+                                  return;
+                                }
+                                if (commandId ==
+                                    BusyMarkCommandIds.textPastePlainText) {
+                                  unawaited(
+                                    _pasteFromSystemClipboard(
+                                      BusyMarkPasteMode.plainText,
+                                    ),
+                                  );
                                   return;
                                 }
                                 final name = commandId.substring(
@@ -732,6 +910,17 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
                                 context,
                                 editableTextState,
                                 refineWithAiLabel: context.l10n.aiRefineWithAi,
+                                readSpellingItems:
+                                    widget.readSpellingMenuItems == null
+                                    ? null
+                                    : (visibleOffset) =>
+                                          widget.readSpellingMenuItems!(
+                                            _controller
+                                                .visibleOffsetToFullOffset(
+                                                  visibleOffset,
+                                                ),
+                                          ),
+                                onCheckSpelling: widget.onCheckSpelling,
                                 additionalItems: [
                                   if (widget.onSymbolAction != null)
                                     for (final action
@@ -767,8 +956,18 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
                                     unawaited(_copyOrCutSource(cut: false)),
                                 onCut: () =>
                                     unawaited(_copyOrCutSource(cut: true)),
-                                onPaste: () =>
-                                    unawaited(_pasteFromSystemClipboard()),
+                                onPaste: () => unawaited(
+                                  _pasteFromSystemClipboard(
+                                    BusyMarkPasteMode.normal,
+                                  ),
+                                ),
+                                onPastePlainText: () => unawaited(
+                                  _pasteFromSystemClipboard(
+                                    BusyMarkPasteMode.plainText,
+                                  ),
+                                ),
+                                readPasteAvailability:
+                                    _readContextMenuPasteAvailability,
                               ),
                           onChanged: (_) => _handleSourceChanged(),
                         ),
@@ -1285,7 +1484,9 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
     });
   }
 
-  void _handleSourceChanged() {
+  void _handleSourceChanged({
+    _SourceEditOrigin origin = _SourceEditOrigin.userTyping,
+  }) {
     _replacementWorker.cancel();
     // Sidebar offsets belong to the pre-edit document. Once the user edits,
     // resume normal search on the new text instead of awaiting the old range.
@@ -1295,11 +1496,19 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
     final selection = _controller.fullSelection;
     final previousSelection =
         _controller.lastFullSelectionBeforeEdit ?? selection;
-    final undoGroup = _undoGroupForSourceEdit(
-      visibleEdit,
-      previousSelection: previousSelection,
-      selection: selection,
-    );
+    final undoGroup =
+        origin == _SourceEditOrigin.paste ||
+            origin == _SourceEditOrigin.spellingCorrection
+        ? null
+        : _undoGroupForSourceEdit(
+            visibleEdit,
+            previousSelection: previousSelection,
+            selection: selection,
+          );
+    if (origin == _SourceEditOrigin.paste ||
+        origin == _SourceEditOrigin.spellingCorrection) {
+      _continuousSourceEdit = null;
+    }
     final currentSearchIndex = _searchController.result.currentMatchIndex;
     final firstMatchIndex = _searchController.result.firstMatchIndex;
     _scheduleFoldRefresh();
@@ -1524,10 +1733,13 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
         composing.end <= value.text.length;
   }
 
-  void _applyFullEditingValue(TextEditingValue value) {
+  void _applyFullEditingValue(
+    TextEditingValue value, {
+    _SourceEditOrigin origin = _SourceEditOrigin.userTyping,
+  }) {
     _controller.setFullEditingValue(value);
     _focusNode.requestFocus();
-    _handleSourceChanged();
+    _handleSourceChanged(origin: origin);
   }
 
   void _applyOwnedUndoValue(TextEditingValue value) {
@@ -1744,8 +1956,11 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
         documentId: widget.documentId ?? widget.filePath ?? '',
         filePath: widget.filePath,
         language: widget.language,
+        format: _documentFormat,
+        markdownMode: _destinationMarkdownMode,
         text: _controller.fullText,
         selection: _controller.fullSelection,
+        composing: _controller.fullComposing,
       );
 
   bool _isClipboardTargetCurrent(_SourceClipboardOperationTarget target) =>
@@ -1753,8 +1968,22 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
       target.documentId == (widget.documentId ?? widget.filePath ?? '') &&
       target.filePath == widget.filePath &&
       target.language == widget.language &&
+      target.format == _documentFormat &&
+      target.markdownMode == _destinationMarkdownMode &&
       target.text == _controller.fullText &&
-      target.selection == _controller.fullSelection;
+      target.selection == _controller.fullSelection &&
+      target.composing == _controller.fullComposing &&
+      !_hasActiveComposition;
+
+  SourcePasteDocumentSnapshot _sourcePasteSnapshot(
+    _SourceClipboardOperationTarget target,
+  ) => SourcePasteDocumentSnapshot(
+    expectedSource: target.text,
+    selection: target.selection,
+    format: target.format,
+    markdownMode: target.markdownMode,
+    filePath: target.filePath,
+  );
 
   Future<bool> _copyOrCutSource({required bool cut}) async {
     if (_hasActiveComposition) return false;
@@ -1799,109 +2028,327 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
     return true;
   }
 
-  Future<ClipboardPasteResult> _pasteFromSystemClipboard() async {
+  Future<ClipboardPasteResult> _pasteFromSystemClipboard(
+    BusyMarkPasteMode mode,
+  ) async {
     if (_hasActiveComposition) return ClipboardPasteResult.staleTarget;
+    final onCaptured = widget.onClipboardCaptured;
     final target = _captureClipboardTarget();
     final data = await _clipboard.read();
     if (!_isClipboardTargetCurrent(target)) {
       return ClipboardPasteResult.staleTarget;
     }
-    final text = data.sourceText ?? data.text;
-    if (text == null) return ClipboardPasteResult.unsupported;
-    final result = _insertClipboardText(target, text);
-    if (result == ClipboardPasteResult.inserted && !data.sessionOwned) {
-      widget.onClipboardCaptured?.call(
-        BusyMarkClipboardCapture(
-          kind: data.richFragment == null
-              ? BusyMarkClipboardContentKind.text
-              : BusyMarkClipboardContentKind.richText,
-          text: data.text,
-          sourceText: text,
-          html: data.html,
-          richFragment: data.richFragment,
-          origin: _clipboardOrigin,
-          external: true,
-        ),
+    final snapshot = BusyMarkClipboardSnapshot.fromSystem(data);
+    final outcome = await _pasteClipboardSnapshot(
+      snapshot,
+      mode: mode,
+      target: target,
+      systemIdentity: data,
+    );
+    if (outcome.result == ClipboardPasteResult.inserted && snapshot.external) {
+      onCaptured?.call(
+        outcome.capture ?? busyMarkClipboardCaptureFromSnapshot(snapshot),
       );
     }
-    return result;
+    return outcome.result;
+  }
+
+  Future<BusyMarkEditorTextPasteAvailability>
+  _readContextMenuPasteAvailability() async {
+    if (_hasActiveComposition) {
+      return BusyMarkEditorTextPasteAvailability.unavailable;
+    }
+    final target = _captureClipboardTarget();
+    final first = await _clipboard.read();
+    if (!_isClipboardTargetCurrent(target)) {
+      return BusyMarkEditorTextPasteAvailability.unavailable;
+    }
+    final snapshot = BusyMarkClipboardSnapshot.fromSystem(first);
+    final destination = switch (target.format) {
+      SourceDocumentFormat.markdown => BusyMarkPasteDestination.markdownSource,
+      SourceDocumentFormat.writersideXmlTopic =>
+        BusyMarkPasteDestination.writersideXmlSource,
+      SourceDocumentFormat.genericXml =>
+        BusyMarkPasteDestination.genericXmlSource,
+      SourceDocumentFormat.plainText => BusyMarkPasteDestination.plainSource,
+    };
+    const resolver = BusyMarkClipboardPasteResolver();
+    final plainText = resolver
+        .resolve(
+          snapshot: snapshot,
+          mode: BusyMarkPasteMode.plainText,
+          destination: destination,
+          markdownMode: target.markdownMode,
+        )
+        .candidates
+        .isNotEmpty;
+    final normalPlan = resolver.resolve(
+      snapshot: snapshot,
+      mode: BusyMarkPasteMode.normal,
+      destination: destination,
+      markdownMode: target.markdownMode,
+    );
+    var normal = false;
+    var inspectNativeImage = false;
+    candidates:
+    for (final candidate in normalPlan.candidates) {
+      if (candidate is BusyMarkStructuredPasteCandidate) {
+        final preparation = _pasteEngine.prepareStructured(
+          target: _sourcePasteSnapshot(target),
+          fragment: candidate.fragment,
+        );
+        if (preparation is SourcePasteStop) break candidates;
+        if (preparation is SourcePasteTryNext) continue;
+        if (!_structuredMediaCanBePrepared(snapshot, candidate.fragment)) {
+          continue;
+        }
+        normal = true;
+        break candidates;
+      }
+      if (candidate is BusyMarkImagePasteCandidate) {
+        normal = widget.assetIngestionService.canIngestMediaBytes(
+          bytes: candidate.bytes,
+          suggestedFileName: candidate.displayName ?? 'clipboard-image.png',
+        );
+        if (normal) break candidates;
+        continue;
+      }
+      if (candidate is BusyMarkNativeImagePasteCandidate) {
+        inspectNativeImage = true;
+        break candidates;
+      }
+      normal = true;
+      break candidates;
+    }
+    if (!normal && inspectNativeImage) {
+      final input = widget.assetInputService ?? busyMarkAssetInputService;
+      final files = await input.readClipboardImageFiles();
+      Uint8List? png;
+      if (files.isEmpty) png = await input.readClipboardImagePng();
+      final second = await _clipboard.read();
+      if (!_isClipboardTargetCurrent(target)) {
+        return BusyMarkEditorTextPasteAvailability.unavailable;
+      }
+      normal =
+          first.sameExternalIdentity(second) &&
+          (files.isNotEmpty || (png != null && png.isNotEmpty));
+    }
+    return BusyMarkEditorTextPasteAvailability(
+      normal: normal,
+      plainText: plainText,
+    );
+  }
+
+  bool _structuredMediaCanBePrepared(
+    BusyMarkClipboardSnapshot snapshot,
+    WysiwygClipboardFragment fragment,
+  ) {
+    if (fragment.mediaPaths.isEmpty) return true;
+    return snapshot.mediaComplete &&
+        fragment.mediaPaths.entries.every((entry) {
+          final bytes = snapshot.mediaBytes[entry.key];
+          return bytes != null &&
+              widget.assetIngestionService.canIngestMediaBytes(
+                bytes: bytes,
+                suggestedFileName: p.basename(entry.value),
+              );
+        });
   }
 
   Future<ClipboardPasteResult> _pasteHistoryPayload(
     BusyMarkClipboardPayload payload, {
-    required bool plainText,
+    required BusyMarkPasteMode mode,
   }) async {
     if (_hasActiveComposition) {
-      return ClipboardPasteResult.unsupported;
+      return ClipboardPasteResult.staleTarget;
     }
+    final onCaptured = widget.onClipboardCaptured;
     final target = _captureClipboardTarget();
-    if (payload.kind == BusyMarkClipboardContentKind.image) {
-      if (plainText) {
-        final text = payload.text;
-        return text == null
-            ? ClipboardPasteResult.unsupported
-            : _insertClipboardText(target, text);
-      }
-      return _pasteHistoryImage(payload, target);
+    final outcome = await _pasteClipboardSnapshot(
+      BusyMarkClipboardSnapshot.fromPayload(payload),
+      mode: mode,
+      target: target,
+    );
+    if (outcome.result == ClipboardPasteResult.inserted && payload.external) {
+      onCaptured?.call(
+        outcome.capture ??
+            busyMarkClipboardCaptureFromSnapshot(
+              BusyMarkClipboardSnapshot.fromPayload(payload),
+            ),
+      );
     }
-    if (!plainText && payload.richFragment != null) {
-      final decoded = WysiwygClipboardFragment.decode(payload.richFragment!);
-      if (decoded != null) {
-        var fragment = decoded.rebase(widget.filePath ?? '');
+    return outcome.result;
+  }
+
+  Future<({ClipboardPasteResult result, BusyMarkClipboardCapture? capture})>
+  _pasteClipboardSnapshot(
+    BusyMarkClipboardSnapshot snapshot, {
+    required BusyMarkPasteMode mode,
+    required _SourceClipboardOperationTarget target,
+    RichClipboardData? systemIdentity,
+  }) async {
+    final destination = switch (target.format) {
+      SourceDocumentFormat.markdown => BusyMarkPasteDestination.markdownSource,
+      SourceDocumentFormat.writersideXmlTopic =>
+        BusyMarkPasteDestination.writersideXmlSource,
+      SourceDocumentFormat.genericXml =>
+        BusyMarkPasteDestination.genericXmlSource,
+      SourceDocumentFormat.plainText => BusyMarkPasteDestination.plainSource,
+    };
+    final plan = const BusyMarkClipboardPasteResolver().resolve(
+      snapshot: snapshot,
+      mode: mode,
+      destination: destination,
+      markdownMode: target.markdownMode,
+    );
+    if (plan.isEmpty) {
+      return (result: ClipboardPasteResult.unsupported, capture: null);
+    }
+    for (final candidate in plan.candidates) {
+      if (!_isClipboardTargetCurrent(target)) {
+        return (result: ClipboardPasteResult.staleTarget, capture: null);
+      }
+      if (candidate is BusyMarkStructuredPasteCandidate) {
+        final decoded = candidate.fragment;
+        var fragment = decoded.rebase(target.filePath ?? '');
         var assets = const <IngestedAsset>[];
         if (decoded.mediaPaths.isNotEmpty) {
-          if (!payload.mediaComplete) return ClipboardPasteResult.unsupported;
+          if (!snapshot.mediaComplete) continue;
           final prepared = await _prepareRetainedClipboardMedia(
             decoded,
-            payload,
+            snapshot,
             target,
           );
           if (prepared == null) {
-            return _isClipboardTargetCurrent(target)
-                ? ClipboardPasteResult.unsupported
-                : ClipboardPasteResult.staleTarget;
+            if (!_isClipboardTargetCurrent(target)) {
+              return (result: ClipboardPasteResult.staleTarget, capture: null);
+            }
+            continue;
           }
           fragment = prepared.fragment;
           assets = prepared.assets;
         }
-        final result = _insertClipboardText(target, fragment.markdown);
+        final preparation = _pasteEngine.prepareStructured(
+          target: _sourcePasteSnapshot(target),
+          fragment: fragment,
+        );
+        if (preparation is SourcePasteTryNext) {
+          await _deleteUncommittedClipboardAssets(assets);
+          continue;
+        }
+        if (preparation is SourcePasteStop) {
+          await _deleteUncommittedClipboardAssets(assets);
+          return (result: ClipboardPasteResult.unsupported, capture: null);
+        }
+        final edit = (preparation as SourcePasteReady).edit;
+        final result = _insertClipboardText(
+          target,
+          edit.replacement,
+          replacementStart: edit.start,
+          replacementEnd: edit.end,
+          resultingSelectionOffset: edit.caretOffset,
+        );
         if (result != ClipboardPasteResult.inserted) {
           await _deleteUncommittedClipboardAssets(assets);
         }
-        return result;
+        if (result == ClipboardPasteResult.inserted) {
+          await _finalizeInsertedAssets(assets);
+          return (result: result, capture: null);
+        }
+        return (result: result, capture: null);
       }
+      if (candidate is BusyMarkImagePasteCandidate) {
+        final result = await _pasteImageBytes(
+          candidate.bytes,
+          suggestedFileName: candidate.displayName ?? 'clipboard-image.png',
+          target: target,
+        );
+        if (result == ClipboardPasteResult.inserted) {
+          return (result: result, capture: null);
+        }
+        if (result == ClipboardPasteResult.staleTarget) {
+          return (result: result, capture: null);
+        }
+        continue;
+      }
+      if (candidate is BusyMarkNativeImagePasteCandidate) {
+        final native = await _pasteNativeClipboardImage(
+          target,
+          systemIdentity!,
+        );
+        return (result: native.result, capture: native.capture);
+      }
+      final text = switch (candidate) {
+        BusyMarkPlainTextPasteCandidate(:final text) => text,
+        BusyMarkSourceTextPasteCandidate(:final text) => text,
+        _ => null,
+      };
+      if (text == null) continue;
+      if (mode == BusyMarkPasteMode.normal &&
+          candidate is BusyMarkPlainTextPasteCandidate &&
+          _formatSupportsImages(target.format)) {
+        final path = busyMarkLocalImagePathFromClipboardText(text);
+        if (path != null) {
+          Uint8List? retainedBytes;
+          final result = await _pasteImageFile(
+            path,
+            target: target,
+            onInserted: (value) => retainedBytes = value,
+          );
+          if (result == ClipboardPasteResult.inserted) {
+            return (
+              result: result,
+              capture: retainedBytes == null
+                  ? null
+                  : busyMarkClipboardCaptureFromSnapshot(
+                      snapshot,
+                      imageBytes: retainedBytes,
+                      imageMimeType: _sourceClipboardImageMimeType(path),
+                      imageDisplayName: p.basename(path),
+                    ),
+            );
+          }
+          if (result == ClipboardPasteResult.staleTarget) {
+            return (result: result, capture: null);
+          }
+        }
+      }
+      final result = _insertClipboardText(target, text);
+      return (result: result, capture: null);
     }
-    final text = plainText ? payload.text : payload.preferredSourceText;
-    if (text == null) return ClipboardPasteResult.unsupported;
-    return _insertClipboardText(target, text);
+    return (
+      result: _isClipboardTargetCurrent(target)
+          ? ClipboardPasteResult.unsupported
+          : ClipboardPasteResult.staleTarget,
+      capture: null,
+    );
   }
 
-  Future<ClipboardPasteResult> _pasteHistoryImage(
-    BusyMarkClipboardPayload payload,
-    _SourceClipboardOperationTarget target,
-  ) async {
-    final bytes = payload.imageBytes;
-    if (bytes == null || bytes.isEmpty) {
-      return ClipboardPasteResult.unsupported;
-    }
-    if (target.language == SourceSyntaxLanguage.plain) {
-      return ClipboardPasteResult.unsupported;
-    }
-    final alt = context.l10n.image;
-    late final IngestedAsset asset;
+  bool _formatSupportsImages(SourceDocumentFormat format) =>
+      format == SourceDocumentFormat.markdown ||
+      format == SourceDocumentFormat.writersideXmlTopic;
+
+  Future<ClipboardPasteResult> _pasteImageFile(
+    String sourcePath, {
+    required _SourceClipboardOperationTarget target,
+    ValueChanged<Uint8List>? onInserted,
+  }) async {
     try {
-      asset = await widget.assetIngestionService.ingestBytes(
-        bytes: bytes,
-        suggestedFileName: payload.imageDisplayName ?? 'clipboard-image.png',
+      final snapshot = await widget.assetIngestionService.ingestFileSnapshot(
+        sourcePath: sourcePath,
         request: _assetIngestionRequest,
-        origin: AssetIngestionOrigin.screenshotPaste,
+        origin: AssetIngestionOrigin.clipboardImageFile,
       );
-    } on AssetSaveRequiredException {
-      if (!_isClipboardTargetCurrent(target)) {
-        return ClipboardPasteResult.staleTarget;
+      final result = await _insertIngestedImage(snapshot.asset, target);
+      if (result == ClipboardPasteResult.inserted) {
+        onInserted?.call(snapshot.bytes);
       }
+      return result;
+    } on AssetSaveRequiredException {
       widget.onAssetSaveRequired?.call();
-      return ClipboardPasteResult.unsupported;
+      return _isClipboardTargetCurrent(target)
+          ? ClipboardPasteResult.unsupported
+          : ClipboardPasteResult.staleTarget;
     } on AssetIngestionException {
       return _isClipboardTargetCurrent(target)
           ? ClipboardPasteResult.unsupported
@@ -1911,40 +2358,136 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
           ? ClipboardPasteResult.unsupported
           : ClipboardPasteResult.staleTarget;
     }
+  }
+
+  Future<ClipboardPasteResult> _pasteImageBytes(
+    Uint8List bytes, {
+    required String suggestedFileName,
+    required _SourceClipboardOperationTarget target,
+  }) async {
+    try {
+      final asset = await widget.assetIngestionService.ingestBytes(
+        bytes: bytes,
+        suggestedFileName: suggestedFileName,
+        request: _assetIngestionRequest,
+        origin: AssetIngestionOrigin.screenshotPaste,
+      );
+      return await _insertIngestedImage(asset, target);
+    } on AssetSaveRequiredException {
+      widget.onAssetSaveRequired?.call();
+      return _isClipboardTargetCurrent(target)
+          ? ClipboardPasteResult.unsupported
+          : ClipboardPasteResult.staleTarget;
+    } on AssetIngestionException {
+      return _isClipboardTargetCurrent(target)
+          ? ClipboardPasteResult.unsupported
+          : ClipboardPasteResult.staleTarget;
+    } on FileSystemException {
+      return _isClipboardTargetCurrent(target)
+          ? ClipboardPasteResult.unsupported
+          : ClipboardPasteResult.staleTarget;
+    }
+  }
+
+  Future<ClipboardPasteResult> _insertIngestedImage(
+    IngestedAsset asset,
+    _SourceClipboardOperationTarget target,
+  ) async {
     if (!_isClipboardTargetCurrent(target)) {
       await _deleteUncommittedClipboardAssets([asset]);
       return ClipboardPasteResult.staleTarget;
     }
-    final result = _insertClipboardText(target, switch (target.language) {
-      SourceSyntaxLanguage.markdown => SourceCommands.imageReference(
-        alt: alt,
+    final reference = switch (target.format) {
+      SourceDocumentFormat.markdown => SourceCommands.imageReference(
+        alt: context.l10n.image,
         sourceReference: asset.markdownPath,
       ),
-      SourceSyntaxLanguage.xml => SourceCommands.writersideImageReference(
-        alt: alt,
-        sourceReference: asset.markdownPath,
-      ),
-      SourceSyntaxLanguage.plain => throw StateError(
-        'Plain source cannot contain an image reference.',
-      ),
-    });
+      SourceDocumentFormat.writersideXmlTopic =>
+        SourceCommands.writersideImageReference(
+          alt: context.l10n.image,
+          sourceReference: asset.markdownPath,
+        ),
+      SourceDocumentFormat.genericXml || SourceDocumentFormat.plainText => null,
+    };
+    if (reference == null) {
+      await _deleteUncommittedClipboardAssets([asset]);
+      return ClipboardPasteResult.unsupported;
+    }
+    final result = _insertClipboardText(target, reference);
     if (result != ClipboardPasteResult.inserted) {
       await _deleteUncommittedClipboardAssets([asset]);
+    } else {
+      await _finalizeInsertedAssets([asset]);
     }
     return result;
+  }
+
+  Future<({ClipboardPasteResult result, BusyMarkClipboardCapture? capture})>
+  _pasteNativeClipboardImage(
+    _SourceClipboardOperationTarget target,
+    RichClipboardData first,
+  ) async {
+    final input = widget.assetInputService ?? busyMarkAssetInputService;
+    final files = await input.readClipboardImageFiles();
+    Uint8List? png;
+    if (files.isEmpty) png = await input.readClipboardImagePng();
+    final second = await _clipboard.read();
+    if (!_isClipboardTargetCurrent(target) ||
+        !first.sameExternalIdentity(second)) {
+      return (result: ClipboardPasteResult.staleTarget, capture: null);
+    }
+    if (files.isNotEmpty) {
+      Uint8List? bytes;
+      final result = await _pasteImageFile(
+        files.first,
+        target: target,
+        onInserted: (value) => bytes = value,
+      );
+      return (
+        result: result,
+        capture: result == ClipboardPasteResult.inserted && bytes != null
+            ? busyMarkClipboardCaptureFromSnapshot(
+                BusyMarkClipboardSnapshot.fromSystem(first),
+                imageBytes: bytes,
+                imageMimeType: _sourceClipboardImageMimeType(files.first),
+                imageDisplayName: p.basename(files.first),
+              )
+            : null,
+      );
+    }
+    if (png == null || png.isEmpty) {
+      return (result: ClipboardPasteResult.unsupported, capture: null);
+    }
+    final name = 'screenshot-${DateTime.now().millisecondsSinceEpoch}.png';
+    final result = await _pasteImageBytes(
+      png,
+      suggestedFileName: name,
+      target: target,
+    );
+    return (
+      result: result,
+      capture: result == ClipboardPasteResult.inserted
+          ? busyMarkClipboardCaptureFromSnapshot(
+              BusyMarkClipboardSnapshot.fromSystem(first),
+              imageBytes: png,
+              imageMimeType: 'image/png',
+              imageDisplayName: name,
+            )
+          : null,
+    );
   }
 
   Future<({WysiwygClipboardFragment fragment, List<IngestedAsset> assets})?>
   _prepareRetainedClipboardMedia(
     WysiwygClipboardFragment fragment,
-    BusyMarkClipboardPayload payload,
+    BusyMarkClipboardSnapshot snapshot,
     _SourceClipboardOperationTarget target,
   ) async {
     final destinations = <String, String>{};
     final assets = <IngestedAsset>[];
     try {
       for (final entry in fragment.mediaPaths.entries) {
-        final bytes = payload.mediaBytes[entry.key];
+        final bytes = snapshot.mediaBytes[entry.key];
         if (bytes == null || bytes.isEmpty) {
           await _deleteUncommittedClipboardAssets(assets);
           return null;
@@ -1999,33 +2542,53 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
   Future<void> _deleteUncommittedClipboardAssets(
     Iterable<IngestedAsset> assets,
   ) async {
-    for (final asset in assets) {
-      if (asset.reusedExisting) continue;
-      try {
-        await File(asset.absolutePath).delete();
-      } on FileSystemException {
-        // Failed cancellation cleanup must not make the editor unusable.
-      }
+    await widget.assetIngestionService.rollbackAll(assets);
+  }
+
+  Future<void> _finalizeInsertedAssets(Iterable<IngestedAsset> assets) async {
+    try {
+      await widget.assetIngestionService.commitAll(assets);
+    } on Object catch (error) {
+      // Insertion already succeeded. A stale pending record safely protects
+      // the referenced file; rolling it back would corrupt document content.
+      if (!mounted) return;
+      BusyMarkToastOverlay.show(
+        context,
+        message: error is AssetIngestionException
+            ? error.message
+            : context.l10n.clipboardUnavailable,
+        priority: BusyMarkToastPriority.high,
+      );
     }
   }
 
   ClipboardPasteResult _insertClipboardText(
     _SourceClipboardOperationTarget target,
-    String text,
-  ) {
+    String text, {
+    int? replacementStart,
+    int? replacementEnd,
+    int? resultingSelectionOffset,
+  }) {
     if (!_isClipboardTargetCurrent(target)) {
       return ClipboardPasteResult.staleTarget;
     }
     final selection = target.selection.isValid
         ? target.selection
         : TextSelection.collapsed(offset: target.text.length);
-    final start = selection.start.clamp(0, target.text.length).toInt();
-    final end = selection.end.clamp(start, target.text.length).toInt();
+    final start = (replacementStart ?? selection.start)
+        .clamp(0, target.text.length)
+        .toInt();
+    final end = (replacementEnd ?? selection.end)
+        .clamp(start, target.text.length)
+        .toInt();
     _applyFullEditingValue(
       TextEditingValue(
         text: target.text.replaceRange(start, end, text),
-        selection: TextSelection.collapsed(offset: start + text.length),
+        selection: TextSelection.collapsed(
+          offset: resultingSelectionOffset ?? start + text.length,
+        ),
       ),
+      origin: _SourceEditOrigin.paste,
     );
     return ClipboardPasteResult.inserted;
   }
@@ -2204,6 +2767,7 @@ class _SourceEditorFrame extends StatelessWidget {
     required this.foldRegions,
     required this.collapsedRegionKeys,
     required this.diagnosticMarkers,
+    required this.spellingAnnotations,
     required this.layoutCache,
     required this.intrinsicWidthCache,
     required this.onToggleFold,
@@ -2228,6 +2792,7 @@ class _SourceEditorFrame extends StatelessWidget {
   final List<SourceFoldRegion> foldRegions;
   final Set<String> collapsedRegionKeys;
   final List<SourceDiagnosticMarker> diagnosticMarkers;
+  final List<SpellingAnnotation> spellingAnnotations;
   final SourceLineLayoutCache layoutCache;
   final SourceIntrinsicWidthCache intrinsicWidthCache;
   final ValueChanged<SourceFoldRegion> onToggleFold;
@@ -2355,6 +2920,7 @@ class _SourceEditorFrame extends StatelessWidget {
                                 textStyle: textStyle,
                                 strutStyle: strutStyle,
                                 textWidth: textWidth,
+                                spellingAnnotations: spellingAnnotations,
                               ),
                             ),
                             if (collapsedRegionKeys.isNotEmpty)
@@ -2369,6 +2935,7 @@ class _SourceEditorFrame extends StatelessWidget {
                                   foldRegions: foldRegions,
                                   collapsedRegionKeys: collapsedRegionKeys,
                                   diagnosticMarkers: diagnosticMarkers,
+                                  spellingAnnotations: spellingAnnotations,
                                   layoutCache: layoutCache,
                                 ),
                               ),
@@ -2412,13 +2979,14 @@ RenderEditable? _findSourceRenderEditable(RenderObject root) {
   return result;
 }
 
-class _SourceRenderedTextLayer extends StatelessWidget {
+class _SourceRenderedTextLayer extends StatefulWidget {
   const _SourceRenderedTextLayer({
     required this.controller,
     required this.scrollController,
     required this.textStyle,
     required this.strutStyle,
     required this.textWidth,
+    required this.spellingAnnotations,
   });
 
   final BusyMarkSourceEditingController controller;
@@ -2426,17 +2994,27 @@ class _SourceRenderedTextLayer extends StatelessWidget {
   final TextStyle textStyle;
   final StrutStyle? strutStyle;
   final double textWidth;
+  final List<SpellingAnnotation> spellingAnnotations;
+
+  @override
+  State<_SourceRenderedTextLayer> createState() =>
+      _SourceRenderedTextLayerState();
+}
+
+class _SourceRenderedTextLayerState extends State<_SourceRenderedTextLayer> {
+  final _paragraphKey = GlobalKey();
 
   @override
   Widget build(BuildContext context) {
     final renderedText = RichText(
+      key: _paragraphKey,
       textDirection: TextDirection.ltr,
-      text: controller.buildSourceTextSpan(
+      text: widget.controller.buildSourceTextSpan(
         context: context,
-        style: textStyle,
+        style: widget.textStyle,
         hideCollapsedStartLines: true,
       ),
-      strutStyle: strutStyle,
+      strutStyle: widget.strutStyle,
       textHeightBehavior: sourceTextHeightBehavior,
       textScaler: MediaQuery.textScalerOf(context),
       textWidthBasis: TextWidthBasis.parent,
@@ -2444,18 +3022,33 @@ class _SourceRenderedTextLayer extends StatelessWidget {
     return IgnorePointer(
       child: ClipRect(
         child: AnimatedBuilder(
-          animation: scrollController,
+          animation: Listenable.merge([
+            widget.controller,
+            widget.scrollController,
+          ]),
           child: renderedText,
           builder: (context, child) {
-            final scrollOffset = safeScrollOffset(scrollController);
+            final scrollOffset = safeScrollOffset(widget.scrollController);
             return Stack(
               clipBehavior: Clip.none,
               children: [
                 Positioned(
                   top: _SourceEditorFrame.editorPaddingTop - scrollOffset,
                   left: _SourceEditorFrame.editorPaddingLeft,
-                  width: textWidth,
-                  child: child!,
+                  width: widget.textWidth,
+                  child: CustomPaint(
+                    foregroundPainter: _SourceSpellingPainter(
+                      paragraphKey: _paragraphKey,
+                      controller: widget.controller,
+                      document: widget.controller.document,
+                      annotations: widget.spellingAnnotations,
+                      color: busyMarkStatusColor(
+                        context,
+                        BusyMarkStatusKind.error,
+                      ),
+                    ),
+                    child: child!,
+                  ),
                 ),
               ],
             );
@@ -2478,6 +3071,7 @@ class _CollapsedSourceLineOverlay extends StatelessWidget {
     required this.collapsedRegionKeys,
     required this.diagnosticMarkers,
     required this.layoutCache,
+    required this.spellingAnnotations,
   });
 
   final BusyMarkSourceEditingController controller;
@@ -2490,6 +3084,7 @@ class _CollapsedSourceLineOverlay extends StatelessWidget {
   final Set<String> collapsedRegionKeys;
   final List<SourceDiagnosticMarker> diagnosticMarkers;
   final SourceLineLayoutCache layoutCache;
+  final List<SpellingAnnotation> spellingAnnotations;
 
   @override
   Widget build(BuildContext context) {
@@ -2543,6 +3138,9 @@ class _CollapsedSourceLineOverlay extends StatelessWidget {
                       height: layout.height,
                       child: _CollapsedSourceLine(
                         text: _collapsedLineText(fullLine.text),
+                        authoredLength: fullLine.text.trimRight().length,
+                        sourceStart: fullLine.startOffset,
+                        spellingAnnotations: spellingAnnotations,
                         height: lineHeight,
                         textStyle: textStyle,
                       ),
@@ -2559,16 +3157,108 @@ class _CollapsedSourceLineOverlay extends StatelessWidget {
   }
 }
 
+class _SourceSpellingPainter extends CustomPainter {
+  const _SourceSpellingPainter({
+    required this.paragraphKey,
+    required this.controller,
+    required this.document,
+    required this.annotations,
+    required this.color,
+  }) : super(repaint: controller);
+
+  final GlobalKey paragraphKey;
+  final BusyMarkSourceEditingController controller;
+  final SourceDocument document;
+  final List<SpellingAnnotation> annotations;
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paragraph = paragraphKey.currentContext?.findRenderObject();
+    if (paragraph is! RenderParagraph) return;
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = BusyMarkStroke.hairline
+      ..style = PaintingStyle.stroke;
+    for (final annotation in annotations) {
+      if (annotation.target is! SpellingSourceTarget ||
+          annotation.end <= annotation.start ||
+          busyMarkSourceSpellingUnderlineSuppressed(
+            controller,
+            TextRange(start: annotation.start, end: annotation.end),
+          )) {
+        continue;
+      }
+      final mapped = document.fullRangeToVisibleRange(
+        annotation.start,
+        annotation.end,
+      );
+      if (mapped.clippedByHiddenRange || mapped.range.isCollapsed) continue;
+      final boxes = paragraph.getBoxesForSelection(
+        TextSelection(
+          baseOffset: mapped.range.start,
+          extentOffset: mapped.range.end,
+        ),
+        boxHeightStyle: BusyMarkDocumentTextGeometry.selectionHeightStyle,
+        boxWidthStyle: BusyMarkDocumentTextGeometry.selectionWidthStyle,
+      );
+      for (final box in boxes) {
+        _paintSpellingWave(canvas, box.toRect(), paint);
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _SourceSpellingPainter oldDelegate) =>
+      oldDelegate.document != document ||
+      oldDelegate.annotations != annotations ||
+      oldDelegate.controller != controller ||
+      oldDelegate.color != color;
+}
+
+@visibleForTesting
+bool busyMarkSourceSpellingUnderlineSuppressed(
+  BusyMarkSourceEditingController controller,
+  TextRange range,
+) {
+  final composing = controller.fullComposing;
+  return composing.isValid &&
+      !composing.isCollapsed &&
+      range.start < composing.end &&
+      range.end > composing.start;
+}
+
+void _paintSpellingWave(Canvas canvas, Rect rect, Paint paint) {
+  if (rect.width <= 0) return;
+  final y = rect.bottom - 1;
+  const halfWave = 2.0;
+  final path = Path()..moveTo(rect.left, y);
+  var x = rect.left;
+  var up = true;
+  while (x < rect.right) {
+    x = math.min(rect.right, x + halfWave);
+    path.lineTo(x, y + (up ? -1.25 : 1.25));
+    up = !up;
+  }
+  canvas.drawPath(path, paint);
+}
+
 class _CollapsedSourceLine extends StatelessWidget {
   const _CollapsedSourceLine({
     required this.text,
     required this.height,
     required this.textStyle,
+    required this.authoredLength,
+    required this.sourceStart,
+    required this.spellingAnnotations,
   });
 
   final String text;
   final double height;
   final TextStyle textStyle;
+  final int authoredLength;
+  final int sourceStart;
+  final List<SpellingAnnotation> spellingAnnotations;
 
   @override
   Widget build(BuildContext context) {
@@ -2590,12 +3280,23 @@ class _CollapsedSourceLine extends StatelessWidget {
             ),
             child: Align(
               alignment: Alignment.centerLeft,
-              child: Text(
-                text,
-                textDirection: TextDirection.ltr,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: textStyle.copyWith(color: colors.mutedForeground),
+              child: CustomPaint(
+                foregroundPainter: _CollapsedSpellingPainter(
+                  text: text,
+                  authoredLength: authoredLength,
+                  sourceStart: sourceStart,
+                  annotations: spellingAnnotations,
+                  style: textStyle,
+                  color: busyMarkStatusColor(context, BusyMarkStatusKind.error),
+                  textScaler: MediaQuery.textScalerOf(context),
+                ),
+                child: Text(
+                  text,
+                  textDirection: TextDirection.ltr,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: textStyle.copyWith(color: colors.mutedForeground),
+                ),
               ),
             ),
           ),
@@ -2603,6 +3304,69 @@ class _CollapsedSourceLine extends StatelessWidget {
       ),
     );
   }
+}
+
+class _CollapsedSpellingPainter extends CustomPainter {
+  const _CollapsedSpellingPainter({
+    required this.text,
+    required this.authoredLength,
+    required this.sourceStart,
+    required this.annotations,
+    required this.style,
+    required this.color,
+    required this.textScaler,
+  });
+
+  final String text;
+  final int authoredLength;
+  final int sourceStart;
+  final List<SpellingAnnotation> annotations;
+  final TextStyle style;
+  final Color color;
+  final TextScaler textScaler;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (authoredLength <= 0 || size.width <= 0) return;
+    final painter = TextPainter(
+      text: TextSpan(text: text, style: style),
+      textDirection: TextDirection.ltr,
+      textScaler: textScaler,
+      maxLines: 1,
+      ellipsis: '…',
+    )..layout(maxWidth: size.width);
+    final wave = Paint()
+      ..color = color
+      ..strokeWidth = BusyMarkStroke.hairline
+      ..style = PaintingStyle.stroke;
+    for (final annotation in annotations) {
+      if (annotation.target is! SpellingSourceTarget ||
+          annotation.start < sourceStart ||
+          annotation.end > sourceStart + authoredLength) {
+        continue;
+      }
+      final boxes = painter.getBoxesForSelection(
+        TextSelection(
+          baseOffset: annotation.start - sourceStart,
+          extentOffset: annotation.end - sourceStart,
+        ),
+      );
+      for (final box in boxes) {
+        _paintSpellingWave(canvas, box.toRect(), wave);
+      }
+    }
+    painter.dispose();
+  }
+
+  @override
+  bool shouldRepaint(covariant _CollapsedSpellingPainter oldDelegate) =>
+      oldDelegate.text != text ||
+      oldDelegate.authoredLength != authoredLength ||
+      oldDelegate.sourceStart != sourceStart ||
+      oldDelegate.annotations != annotations ||
+      oldDelegate.style != style ||
+      oldDelegate.color != color ||
+      oldDelegate.textScaler != textScaler;
 }
 
 class _SourceSearchPanel extends StatefulWidget {
@@ -2992,16 +3756,24 @@ class _SourceClipboardOperationTarget {
     required this.documentId,
     required this.filePath,
     required this.language,
+    required this.format,
+    required this.markdownMode,
     required this.text,
     required this.selection,
+    required this.composing,
   });
 
   final String documentId;
   final String? filePath;
   final SourceSyntaxLanguage language;
+  final SourceDocumentFormat format;
+  final MarkdownMode markdownMode;
   final String text;
   final TextSelection selection;
+  final TextRange composing;
 }
+
+enum _SourceEditOrigin { userTyping, paste, spellingCorrection }
 
 class _SourceClipboardInsertionTarget
     implements
@@ -3030,41 +3802,77 @@ class _SourceClipboardInsertionTarget
   bool get editable => state.mounted && !state._hasActiveComposition;
 
   @override
-  bool canPaste(BusyMarkClipboardPayload payload, {required bool plainText}) {
+  bool canPaste(
+    BusyMarkClipboardPayload payload, {
+    required BusyMarkPasteMode mode,
+  }) {
     if (!editable) return false;
-    if (plainText) return payload.hasMeaningfulTextRepresentation;
-    if (payload.kind == BusyMarkClipboardContentKind.image) {
-      return state.widget.language != SourceSyntaxLanguage.plain &&
-          payload.imageBytes?.isNotEmpty == true;
-    }
-    if (payload.richFragment != null) {
-      final fragment = WysiwygClipboardFragment.decode(payload.richFragment!);
-      if (fragment == null) return payload.preferredSourceText != null;
-      if (fragment.mediaPaths.isNotEmpty) {
-        return payload.mediaComplete &&
-            fragment.mediaPaths.entries.every((entry) {
-              final bytes = payload.mediaBytes[entry.key];
-              return bytes != null &&
-                  state.widget.assetIngestionService.canIngestMediaBytes(
-                    bytes: bytes,
-                    suggestedFileName: p.basename(entry.value),
-                  );
-            });
+    final snapshot = BusyMarkClipboardSnapshot.fromPayload(payload);
+    final destination = switch (state._documentFormat) {
+      SourceDocumentFormat.markdown => BusyMarkPasteDestination.markdownSource,
+      SourceDocumentFormat.writersideXmlTopic =>
+        BusyMarkPasteDestination.writersideXmlSource,
+      SourceDocumentFormat.genericXml =>
+        BusyMarkPasteDestination.genericXmlSource,
+      SourceDocumentFormat.plainText => BusyMarkPasteDestination.plainSource,
+    };
+    final plan = const BusyMarkClipboardPasteResolver().resolve(
+      snapshot: snapshot,
+      mode: mode,
+      destination: destination,
+      markdownMode: state._destinationMarkdownMode,
+    );
+    final target = state._captureClipboardTarget();
+    for (final candidate in plan.candidates) {
+      if (candidate is BusyMarkStructuredPasteCandidate) {
+        final preparation = state._pasteEngine.prepareStructured(
+          target: state._sourcePasteSnapshot(target),
+          fragment: candidate.fragment,
+        );
+        if (preparation is SourcePasteStop) return false;
+        if (preparation is SourcePasteTryNext) continue;
+        if (!state._structuredMediaCanBePrepared(
+          snapshot,
+          candidate.fragment,
+        )) {
+          continue;
+        }
+        return true;
       }
+      if (candidate is BusyMarkImagePasteCandidate) {
+        if (state.widget.assetIngestionService.canIngestMediaBytes(
+          bytes: candidate.bytes,
+          suggestedFileName: candidate.displayName ?? 'clipboard-image.png',
+        )) {
+          return true;
+        }
+        continue;
+      }
+      if (candidate is BusyMarkNativeImagePasteCandidate) return false;
       return true;
     }
-    return payload.preferredSourceText != null;
+    return false;
   }
 
   @override
   Future<ClipboardPasteResult> paste(
     BusyMarkClipboardPayload payload, {
-    required bool plainText,
-  }) => state._pasteHistoryPayload(payload, plainText: plainText);
+    required BusyMarkPasteMode mode,
+  }) => state._pasteHistoryPayload(payload, mode: mode);
 
   @override
   void requestEditorFocus() => state._focusNode.requestFocus();
 }
+
+String _sourceClipboardImageMimeType(String path) =>
+    switch (p.extension(path).toLowerCase()) {
+      '.jpg' || '.jpeg' => 'image/jpeg',
+      '.gif' => 'image/gif',
+      '.webp' => 'image/webp',
+      '.bmp' => 'image/bmp',
+      '.svg' => 'image/svg+xml',
+      _ => 'image/png',
+    };
 
 class _SourceEditorShortcutIntent extends Intent {
   const _SourceEditorShortcutIntent(this.action);

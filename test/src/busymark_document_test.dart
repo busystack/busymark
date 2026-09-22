@@ -4673,6 +4673,240 @@ void main() {}
     }
   });
 
+  test('link title backslashes use standards-safe character references', () {
+    for (final value in const [
+      (title: r'C:\Temp', encoded: 'C:&#92;Temp'),
+      (title: r'C:\\Temp', encoded: 'C:&#92;&#92;Temp'),
+      (title: r'\* \[ \( \!', encoded: '&#92;* &#92;[ &#92;( &#92;!'),
+      (title: '\\"&copy;\\', encoded: '&#92;\\"&amp;copy;&#92;'),
+    ]) {
+      final link = BusyInline(
+        kind: BusyInlineKind.link,
+        text: 'X',
+        children: const [BusyInline(kind: BusyInlineKind.text, text: 'X')],
+        destination: 'https://example.test',
+        attributes: {'title': value.title},
+      );
+      final expected = '[X](https://example.test "${value.encoded}")';
+      final serializer = const BusyMarkMarkdownSerializer();
+
+      expect(serializer.serializeInlineFragment([link]), expected);
+      final mapped = serializer.serializeInlineFragmentAtTextOffset([
+        link,
+      ], textOffset: 1);
+      expect(mapped.source, expected);
+      expect(mapped.sourceOffset, expected.length);
+
+      final reparsed = parser.parse(
+        filePath: 'topic.md',
+        source: '$expected\n',
+        validateLocalReferences: false,
+      );
+      final reparsedLink = reparsed.busyDocument.blocks.single.inlines.single;
+      expect(reparsedLink.kind, BusyInlineKind.link);
+      expect(reparsedLink.attributes['title'], value.title, reason: expected);
+    }
+  });
+
+  test('inline serialization distinguishes every hard-break run boundary', () {
+    const hardBreak = BusyInline(kind: BusyInlineKind.hardBreak, text: '\n');
+    const serializer = BusyMarkMarkdownSerializer();
+
+    void expectOffsets(
+      List<BusyInline> inlines,
+      String source,
+      Map<int, int> offsets,
+    ) {
+      for (final entry in offsets.entries) {
+        final serialized = serializer.serializeInlineFragmentAtTextOffset(
+          inlines,
+          textOffset: entry.key,
+        );
+        expect(serialized.source, source);
+        expect(
+          serialized.sourceOffset,
+          entry.value,
+          reason: 'logical offset ${entry.key} in $source',
+        );
+      }
+    }
+
+    expectOffsets(
+      const [
+        BusyInline(kind: BusyInlineKind.text, text: 'A'),
+        hardBreak,
+        hardBreak,
+        BusyInline(kind: BusyInlineKind.text, text: 'B'),
+      ],
+      'A\n<br>\n<br>\nB',
+      const {1: 1, 2: 6, 3: 11, 4: 13},
+    );
+    expectOffsets(
+      const [hardBreak, hardBreak],
+      '<br><br>',
+      const {0: 0, 1: 4, 2: 8},
+    );
+    expectOffsets(
+      const [hardBreak, hardBreak, hardBreak],
+      '<br><br>\n<br>',
+      const {0: 0, 1: 4, 2: 8, 3: 13},
+    );
+
+    final nested = BusyInline(
+      kind: BusyInlineKind.link,
+      text: 'A\n\nB',
+      destination: 'https://destination.test',
+      children: const [
+        BusyInline(kind: BusyInlineKind.text, text: 'A'),
+        hardBreak,
+        hardBreak,
+        BusyInline(kind: BusyInlineKind.text, text: 'B'),
+      ],
+    );
+    expectOffsets(
+      [nested],
+      '[A\n<br>\n<br>\nB](https://destination.test)',
+      const {1: 2, 2: 7, 3: 12, 4: 41},
+    );
+    expectOffsets(
+      const [
+        BusyInline(
+          kind: BusyInlineKind.strong,
+          text: 'A\n\n\nB',
+          children: [
+            BusyInline(kind: BusyInlineKind.text, text: 'A'),
+            hardBreak,
+            hardBreak,
+            hardBreak,
+            BusyInline(kind: BusyInlineKind.text, text: 'B'),
+          ],
+        ),
+      ],
+      '**A\n<br>\n<br>\n<br>\nB**',
+      const {1: 3, 2: 8, 3: 13, 4: 18, 5: 22},
+    );
+
+    final markers = [
+      const BusyMarkInlineLineBreakOffset(textOffset: 1),
+      const BusyMarkInlineLineBreakOffset(textOffset: 2),
+    ];
+    final traversals = <int>[];
+    debugBusyMarkInlineSerializationTraversal = traversals.add;
+    addTearDown(() => debugBusyMarkInlineSerializationTraversal = null);
+    final serialized = serializer.serializeInlineFragmentWithOffsets(
+      const [
+        BusyInline(kind: BusyInlineKind.text, text: 'A'),
+        hardBreak,
+        hardBreak,
+        BusyInline(kind: BusyInlineKind.text, text: 'B'),
+      ],
+      textOffset: 2,
+      lineBreakOffsets: markers,
+    );
+    expect(traversals, hasLength(1));
+    expect(serialized.sourceOffset, 6);
+    expect(serialized.lineBreakSourceOffsets[markers.first], 6);
+    expect(serialized.lineBreakSourceOffsets[markers.last], 11);
+  });
+
+  test('link titles round-trip decoded punctuation and line endings', () {
+    for (final title in const [
+      'literal &copy;',
+      r'quote " and backslash \\',
+      'first\nsecond',
+      'first\r\nsecond',
+    ]) {
+      final source = const BusyMarkMarkdownSerializer().serializeInlineFragment(
+        [
+          BusyInline(
+            kind: BusyInlineKind.link,
+            text: 'X',
+            children: [BusyInline(kind: BusyInlineKind.text, text: 'X')],
+            destination: 'https://example.test',
+            attributes: {'title': title},
+          ),
+        ],
+      );
+      final reparsed = parser.parse(
+        filePath: 'topic.md',
+        source: '$source\n',
+        validateLocalReferences: false,
+      );
+      final link = reparsed.busyDocument.blocks.single.inlines.single;
+      expect(link.kind, BusyInlineKind.link, reason: source);
+      expect(link.destination, 'https://example.test', reason: source);
+      expect(link.attributes['title'], title, reason: source);
+    }
+
+    const editorTitle = 'literal &copy; "quoted" \\ first\nsecond';
+    final controller = BusyMarkWysiwygDocumentController(
+      document: const BusyDocument(
+        filePath: 'editor.md',
+        mode: MarkdownMode.gfm,
+        blocks: [
+          BusyBlock(
+            id: 'editor-link-title',
+            kind: BusyBlockKind.paragraph,
+            dirty: true,
+            inlines: [
+              BusyInline(
+                kind: BusyInlineKind.link,
+                text: 'X',
+                destination: 'https://example.test',
+                children: [BusyInline(kind: BusyInlineKind.text, text: 'X')],
+                attributes: {'title': editorTitle},
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+    final editorMarkdown = controller.markdown;
+    controller.dispose();
+    final editorLink = parser
+        .parse(
+          filePath: 'editor.md',
+          source: editorMarkdown,
+          validateLocalReferences: false,
+        )
+        .busyDocument
+        .blocks
+        .single
+        .inlines
+        .single;
+    expect(editorLink.attributes['title'], editorTitle);
+  });
+
+  test('table link titles retain multiline values without physical rows', () {
+    const title = 'first\nsecond &copy;';
+    final link = BusyInline(
+      kind: BusyInlineKind.link,
+      text: 'X',
+      children: const [BusyInline(kind: BusyInlineKind.text, text: 'X')],
+      destination: 'https://example.test',
+      attributes: const {'title': title},
+    );
+    final cell = const BusyMarkMarkdownSerializer().serializeInlineFragment([
+      link,
+    ], tableCell: true);
+    expect(cell, isNot(contains('\n')));
+    final source = '| H |\n| --- |\n| $cell |\n';
+    final reparsed = parser.parse(
+      filePath: 'topic.md',
+      source: source,
+      mode: MarkdownMode.gfm,
+      validateLocalReferences: false,
+    );
+    final table = reparsed.busyDocument.blocks.single;
+    expect(table.kind, BusyBlockKind.table);
+    expect(table.children, hasLength(2));
+    expect(table.children.last.children, hasLength(1));
+    final reparsedLink = table.children.last.children.single.inlines.single;
+    expect(reparsedLink.kind, BusyInlineKind.link);
+    expect(reparsedLink.destination, 'https://example.test');
+    expect(reparsedLink.attributes['title'], title);
+  });
+
   test(
     'serializer preserves fenced code delimiters and trailing whitespace',
     () {

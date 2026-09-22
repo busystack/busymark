@@ -379,8 +379,10 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
     if (!safe) {
       return;
     }
-    await ref.read(workspaceControllerProvider.notifier).createMarkdownFile();
-    if (mounted) {
+    final created = await ref
+        .read(workspaceControllerProvider.notifier)
+        .createMarkdownWorkspace();
+    if (created && mounted) {
       context.go('/workspace');
     }
   }

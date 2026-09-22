@@ -83,6 +83,42 @@
   "workspaceSearchShowMore": "Показать больше результатов",
   "workspaceSearchSkippedFiles": "Поиск неполный. Эти файлы превышают 1 MiB или не могут быть прочитаны:",
   "@@locale": "ru",
+  "spelling": "Правописание",
+  "automaticSpelling": "Автоматическая проверка правописания",
+  "defaultSpellingLanguage": "Язык проверки правописания по умолчанию",
+  "projectSpellingLanguage": "Язык проверки орфографии проекта",
+  "chooseSpellingLanguage": "Выбрать язык правописания",
+  "spellingLanguageUnsetStatus": "Язык…",
+  "spellingOffStatus": "Проверка правописания отключена",
+  "checkSpelling": "Проверить правописание",
+  "ignoreSpellingOnce": "Игнорировать один раз",
+  "ignoreSpellingDocument": "Игнорировать все в этом документе",
+  "addPersonalSpellingWord": "Добавить в личный словарь",
+  "addProjectSpellingWord": "Добавить в словарь проекта",
+  "inheritSpellingLanguage": "Использовать язык проекта или приложения",
+  "disableDocumentSpelling": "Не проверять орфографию",
+  "importSpellingDictionary": "Импортировать словарь",
+  "personalSpellingDictionary": "Личный словарь",
+  "projectSpellingDictionary": "Словарь проекта",
+  "noSpellingErrors": "Орфографических ошибок нет",
+  "noSpellingSuggestions": "Нет вариантов исправления",
+  "spellingWordCheckFailed": "Не удалось проверить это слово",
+  "spellingCheckFailed": "Не удалось проверить правописание",
+  "spellingCheckIncomplete": "Проверка правописания не завершена",
+  "spellingDictionaryNotInstalled": "Словарь не установлен",
+  "spellingDictionaryNotInstalledForLanguage": "Словарь «{dictionary}» не установлен",
+  "spellingDictionaryNotInstalledWithSize": "Не установлен · {size}",
+  "spellingDictionaryInstalled": "Установлен",
+  "installSpellingDictionary": "Установить словарь",
+  "removeSpellingDictionary": "Удалить словарь",
+  "cancelSpellingDictionaryInstall": "Отменить загрузку словаря",
+  "retrySpellingDictionaryInstall": "Повторить установку словаря",
+  "spellingDictionaryDownloading": "Загрузка {size}…",
+  "spellingDictionaryValidating": "Проверка словаря…",
+  "spellingDictionaryInstallFailed": "Не удалось установить словарь — выберите для повтора",
+  "spellingDictionaryInstallPrompt": "Установить {dictionary} ({size})? После установки он будет доступен без сети, пока вы его не удалите.",
+  "spellingDictionaryUnavailable": "Словарь недоступен",
+  "spellingChecking": "Проверка правописания…",
   "reportIssue": "Сообщить о проблеме",
   "feedbackCategory": "Категория",
   "feedbackChooseCategory": "Выберите категорию",
@@ -802,6 +838,7 @@
     "description": "Editor setting description for saving files automatically."
   },
   "wordWrap": "Перенос строк",
+  "wordWrapDescription": "Переносить длинные строки по ширине редактора вместо горизонтальной прокрутки.",
   "@wordWrap": {
     "description": "Word wrap setting label."
   },
@@ -869,6 +906,13 @@
   "@clearGitWorkspaceTrustDescription": {
     "description": "Settings action description for clearing trusted Git workspaces."
   },
+  "settingsEditingButtonsSectionTitle": "Кнопки редактирования",
+  "spellingDictionaries": "Орфографические словари",
+  "spellingDictionariesDescription": "Установка и управление орфографическими словарями",
+  "settingsDictionariesSectionTitle": "Словари",
+  "availableSpellingDictionaries": "Доступные словари",
+  "customSpellingDictionaries": "Пользовательские словари",
+  "spellingDictionaryProblems": "Проблемы со словарями",
   "settingsWindowSectionTitle": "Окно",
   "@settingsWindowSectionTitle": {
     "description": "Settings section title for native window behavior."
@@ -3355,5 +3399,6 @@
   "topicRenameAffectedFiles": "Затронутые файлы",
   "renameTopicFileInstead": "ID тем определяются именами их файлов. Используйте «Переименовать файл темы» в оглавлении или на боковой панели «Файлы».",
   "diagnosticWritersideWebFileNameInvalid": "Экземпляр \"{instanceId}\" публикует недопустимое имя веб-файла \"{webFileName}\" для темы \"{topic}\".",
-  "diagnosticWritersideWebFileNameCollision": "Экземпляр \"{instanceId}\" публикует темы \"{firstTopic}\" и \"{secondTopic}\" под одним именем \"{webFileName}\"."
+  "diagnosticWritersideWebFileNameCollision": "Экземпляр \"{instanceId}\" публикует темы \"{firstTopic}\" и \"{secondTopic}\" под одним именем \"{webFileName}\".",
+  "spellingDictionaryRecoveryConflict": "Орфографический словарь был изменён извне. Резервная копия для восстановления сохранена."
 }

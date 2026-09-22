@@ -950,6 +950,10 @@ class AppLocalizationsEt extends AppLocalizations {
   String get wordWrap => 'Reamurdmine';
 
   @override
+  String get wordWrapDescription =>
+      'Murrab pikad read redaktori laiusele, selle asemel et horisontaalselt kerida.';
+
+  @override
   String get editorFontSize => 'Redaktori fondi suurus';
 
   @override
@@ -1003,6 +1007,28 @@ class AppLocalizationsEt extends AppLocalizations {
   @override
   String get clearGitWorkspaceTrustDescription =>
       'Küsi varem usaldatud tööruumides Giti funktsioonide lubamisel uuesti kinnitust.';
+
+  @override
+  String get settingsEditingButtonsSectionTitle => 'Redigeerimisnupud';
+
+  @override
+  String get spellingDictionaries => 'Õigekirjasõnastikud';
+
+  @override
+  String get spellingDictionariesDescription =>
+      'Õigekirjasõnastike installimine ja haldamine';
+
+  @override
+  String get settingsDictionariesSectionTitle => 'Sõnastikud';
+
+  @override
+  String get availableSpellingDictionaries => 'Saadaolevad sõnastikud';
+
+  @override
+  String get customSpellingDictionaries => 'Kohandatud sõnastikud';
+
+  @override
+  String get spellingDictionaryProblems => 'Sõnastikuprobleemid';
 
   @override
   String get settingsWindowSectionTitle => 'Aken';
@@ -4491,7 +4517,130 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
+  String get spelling => 'Õigekiri';
+
+  @override
+  String get automaticSpelling => 'Automaatne õigekirjakontroll';
+
+  @override
+  String get defaultSpellingLanguage => 'Vaikimisi õigekirjakeel';
+
+  @override
+  String get projectSpellingLanguage => 'Projekti õigekirjakontrolli keel';
+
+  @override
+  String get chooseSpellingLanguage => 'Vali õigekirjakeel';
+
+  @override
+  String get spellingLanguageUnsetStatus => 'Keel…';
+
+  @override
+  String get spellingOffStatus => 'Õigekirjakontroll väljas';
+
+  @override
+  String get checkSpelling => 'Kontrolli õigekirja';
+
+  @override
+  String get ignoreSpellingOnce => 'Eira üks kord';
+
+  @override
+  String get ignoreSpellingDocument => 'Eira selles dokumendis kõiki';
+
+  @override
+  String get addPersonalSpellingWord => 'Lisa isiklikku sõnastikku';
+
+  @override
+  String get addProjectSpellingWord => 'Lisa projekti sõnastikku';
+
+  @override
+  String get inheritSpellingLanguage => 'Kasuta projekti või rakenduse keelt';
+
+  @override
+  String get disableDocumentSpelling => 'Ära kontrolli õigekirja';
+
+  @override
+  String get importSpellingDictionary => 'Impordi sõnastik';
+
+  @override
+  String get personalSpellingDictionary => 'Isiklik sõnastik';
+
+  @override
+  String get projectSpellingDictionary => 'Projekti sõnastik';
+
+  @override
+  String get noSpellingErrors => 'Õigekirjavigu pole';
+
+  @override
+  String get noSpellingSuggestions => 'Õigekirjasoovitusi pole';
+
+  @override
+  String get spellingWordCheckFailed => 'Seda sõna ei saanud kontrollida';
+
+  @override
+  String get spellingCheckFailed => 'Õigekirjakontroll nurjus';
+
+  @override
+  String get spellingCheckIncomplete => 'Õigekirjakontroll on pooleli';
+
+  @override
+  String get spellingDictionaryNotInstalled => 'Sõnastik pole installitud';
+
+  @override
+  String spellingDictionaryNotInstalledForLanguage(String dictionary) {
+    return '$dictionary sõnastik pole installitud';
+  }
+
+  @override
+  String spellingDictionaryNotInstalledWithSize(String size) {
+    return 'Pole installitud · $size';
+  }
+
+  @override
+  String get spellingDictionaryInstalled => 'Installitud';
+
+  @override
+  String get installSpellingDictionary => 'Installi sõnastik';
+
+  @override
+  String get removeSpellingDictionary => 'Eemalda sõnastik';
+
+  @override
+  String get cancelSpellingDictionaryInstall =>
+      'Katkesta sõnastiku allalaadimine';
+
+  @override
+  String get retrySpellingDictionaryInstall =>
+      'Proovi sõnastikku uuesti installida';
+
+  @override
+  String spellingDictionaryDownloading(String size) {
+    return 'Allalaadimine: $size…';
+  }
+
+  @override
+  String get spellingDictionaryValidating => 'Sõnastiku kontrollimine…';
+
+  @override
+  String get spellingDictionaryInstallFailed =>
+      'Sõnastiku installimine nurjus — uuesti proovimiseks vali see';
+
+  @override
+  String spellingDictionaryInstallPrompt(String dictionary, String size) {
+    return 'Kas installida $dictionary ($size)? Pärast installimist on see võrguühenduseta saadaval, kuni selle eemaldad.';
+  }
+
+  @override
+  String get spellingDictionaryUnavailable => 'Sõnastik pole saadaval';
+
+  @override
+  String get spellingChecking => 'Õigekirja kontrollimine…';
+
+  @override
   String exportInvalidRange(String field, String minimum, String maximum) {
     return '$field: sisesta arv vahemikus $minimum kuni $maximum.';
   }
+
+  @override
+  String get spellingDictionaryRecoveryConflict =>
+      'Õigekirjasõnastikku muudeti väliselt. Taastekoopia säilitati.';
 }

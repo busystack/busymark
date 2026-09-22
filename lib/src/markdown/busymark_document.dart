@@ -5,6 +5,10 @@ import 'markdown_model.dart';
 /// Marks an empty WYSIWYG paragraph that must remain a source blank line.
 const busyMarkPreserveEmptyParagraphAttribute = 'preserveEmptyParagraph';
 
+/// Marks text whose trailing or whitespace-only content was accepted as an
+/// intentional edit and must not be removed by document-level canonicalization.
+const busyMarkPreserveTextWhitespaceAttribute = 'preserveTextWhitespace';
+
 /// Marks the editor-only paragraph after a terminal non-paragraph block.
 ///
 /// The Markdown serializer ignores this block while it is empty. The marker is

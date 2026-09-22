@@ -949,6 +949,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get wordWrap => 'Word wrap';
 
   @override
+  String get wordWrapDescription =>
+      'Wrap long lines to fit the editor width instead of scrolling horizontally.';
+
+  @override
   String get editorFontSize => 'Editor font size';
 
   @override
@@ -1000,6 +1004,28 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get clearGitWorkspaceTrustDescription =>
       'Ask before enabling Git features for previously trusted workspaces.';
+
+  @override
+  String get settingsEditingButtonsSectionTitle => 'Editing buttons';
+
+  @override
+  String get spellingDictionaries => 'Spelling Dictionaries';
+
+  @override
+  String get spellingDictionariesDescription =>
+      'Install and manage spelling dictionaries';
+
+  @override
+  String get settingsDictionariesSectionTitle => 'Dictionaries';
+
+  @override
+  String get availableSpellingDictionaries => 'Available Dictionaries';
+
+  @override
+  String get customSpellingDictionaries => 'Custom Dictionaries';
+
+  @override
+  String get spellingDictionaryProblems => 'Dictionary Problems';
 
   @override
   String get settingsWindowSectionTitle => 'Window';
@@ -4509,7 +4535,128 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get spelling => 'Spelling';
+
+  @override
+  String get automaticSpelling => 'Check spelling automatically';
+
+  @override
+  String get defaultSpellingLanguage => 'Default spelling language';
+
+  @override
+  String get projectSpellingLanguage => 'Project spelling language';
+
+  @override
+  String get chooseSpellingLanguage => 'Choose spelling language';
+
+  @override
+  String get spellingLanguageUnsetStatus => 'Language…';
+
+  @override
+  String get spellingOffStatus => 'Spelling Off';
+
+  @override
+  String get checkSpelling => 'Check Spelling';
+
+  @override
+  String get ignoreSpellingOnce => 'Ignore Once';
+
+  @override
+  String get ignoreSpellingDocument => 'Ignore All in This Document';
+
+  @override
+  String get addPersonalSpellingWord => 'Add to Personal Dictionary';
+
+  @override
+  String get addProjectSpellingWord => 'Add to Project Dictionary';
+
+  @override
+  String get inheritSpellingLanguage => 'Use project or application language';
+
+  @override
+  String get disableDocumentSpelling => 'Do not check spelling';
+
+  @override
+  String get importSpellingDictionary => 'Import Dictionary';
+
+  @override
+  String get personalSpellingDictionary => 'Personal Dictionary';
+
+  @override
+  String get projectSpellingDictionary => 'Project Dictionary';
+
+  @override
+  String get noSpellingErrors => 'No spelling errors';
+
+  @override
+  String get noSpellingSuggestions => 'No spelling suggestions';
+
+  @override
+  String get spellingWordCheckFailed => 'Could not check this word';
+
+  @override
+  String get spellingCheckFailed => 'Spelling check failed';
+
+  @override
+  String get spellingCheckIncomplete => 'Spelling check is incomplete';
+
+  @override
+  String get spellingDictionaryNotInstalled => 'Dictionary not installed';
+
+  @override
+  String spellingDictionaryNotInstalledForLanguage(String dictionary) {
+    return '$dictionary dictionary is not installed';
+  }
+
+  @override
+  String spellingDictionaryNotInstalledWithSize(String size) {
+    return 'Not installed · $size';
+  }
+
+  @override
+  String get spellingDictionaryInstalled => 'Installed';
+
+  @override
+  String get installSpellingDictionary => 'Install dictionary';
+
+  @override
+  String get removeSpellingDictionary => 'Remove dictionary';
+
+  @override
+  String get cancelSpellingDictionaryInstall => 'Cancel dictionary download';
+
+  @override
+  String get retrySpellingDictionaryInstall => 'Retry dictionary installation';
+
+  @override
+  String spellingDictionaryDownloading(String size) {
+    return 'Downloading $size…';
+  }
+
+  @override
+  String get spellingDictionaryValidating => 'Validating dictionary…';
+
+  @override
+  String get spellingDictionaryInstallFailed =>
+      'Dictionary installation failed — select to retry';
+
+  @override
+  String spellingDictionaryInstallPrompt(String dictionary, String size) {
+    return 'Install $dictionary ($size)? After installation, it remains available offline until you remove it.';
+  }
+
+  @override
+  String get spellingDictionaryUnavailable => 'Dictionary unavailable';
+
+  @override
+  String get spellingChecking => 'Checking spelling…';
+
+  @override
   String exportInvalidRange(String field, String minimum, String maximum) {
     return '$field: enter a number between $minimum and $maximum.';
   }
+
+  @override
+  String get spellingDictionaryRecoveryConflict =>
+      'The spelling dictionary changed externally. A recovery copy was preserved.';
 }

@@ -83,6 +83,42 @@
   "workspaceSearchShowMore": "Pokaż więcej wyników",
   "workspaceSearchSkippedFiles": "Wyszukiwanie jest niepełne. Te pliki przekraczają 1 MiB lub nie można ich odczytać:",
   "@@locale": "pl",
+  "spelling": "Pisownia",
+  "automaticSpelling": "Automatyczne sprawdzanie pisowni",
+  "defaultSpellingLanguage": "Domyślny język pisowni",
+  "projectSpellingLanguage": "Język sprawdzania pisowni projektu",
+  "chooseSpellingLanguage": "Wybierz język pisowni",
+  "spellingLanguageUnsetStatus": "Język…",
+  "spellingOffStatus": "Pisownia wyłączona",
+  "checkSpelling": "Sprawdź pisownię",
+  "ignoreSpellingOnce": "Ignoruj raz",
+  "ignoreSpellingDocument": "Ignoruj wszystkie w tym dokumencie",
+  "addPersonalSpellingWord": "Dodaj do słownika osobistego",
+  "addProjectSpellingWord": "Dodaj do słownika projektu",
+  "inheritSpellingLanguage": "Użyj języka projektu lub aplikacji",
+  "disableDocumentSpelling": "Nie sprawdzaj pisowni",
+  "importSpellingDictionary": "Importuj słownik",
+  "personalSpellingDictionary": "Słownik osobisty",
+  "projectSpellingDictionary": "Słownik projektu",
+  "noSpellingErrors": "Brak błędów pisowni",
+  "noSpellingSuggestions": "Brak sugestii pisowni",
+  "spellingWordCheckFailed": "Nie można sprawdzić tego słowa",
+  "spellingCheckFailed": "Sprawdzanie pisowni nie powiodło się",
+  "spellingCheckIncomplete": "Sprawdzanie pisowni jest niepełne",
+  "spellingDictionaryNotInstalled": "Słownik nie jest zainstalowany",
+  "spellingDictionaryNotInstalledForLanguage": "Słownik {dictionary} nie jest zainstalowany",
+  "spellingDictionaryNotInstalledWithSize": "Niezainstalowany · {size}",
+  "spellingDictionaryInstalled": "Zainstalowany",
+  "installSpellingDictionary": "Zainstaluj słownik",
+  "removeSpellingDictionary": "Usuń słownik",
+  "cancelSpellingDictionaryInstall": "Anuluj pobieranie słownika",
+  "retrySpellingDictionaryInstall": "Ponów instalację słownika",
+  "spellingDictionaryDownloading": "Pobieranie {size}…",
+  "spellingDictionaryValidating": "Sprawdzanie słownika…",
+  "spellingDictionaryInstallFailed": "Instalacja nie powiodła się — wybierz, aby ponowić",
+  "spellingDictionaryInstallPrompt": "Zainstalować {dictionary} ({size})? Po instalacji będzie dostępny offline do czasu usunięcia.",
+  "spellingDictionaryUnavailable": "Słownik jest niedostępny",
+  "spellingChecking": "Sprawdzanie pisowni…",
   "reportIssue": "Zgłoś problem",
   "feedbackCategory": "Kategoria",
   "feedbackChooseCategory": "Wybierz kategorię",
@@ -802,6 +838,7 @@
     "description": "Editor setting description for saving files automatically."
   },
   "wordWrap": "Zawijanie wierszy",
+  "wordWrapDescription": "Zawijaj długie wiersze do szerokości edytora zamiast przewijać je poziomo.",
   "@wordWrap": {
     "description": "Word wrap setting label."
   },
@@ -869,6 +906,13 @@
   "@clearGitWorkspaceTrustDescription": {
     "description": "Settings action description for clearing trusted Git workspaces."
   },
+  "settingsEditingButtonsSectionTitle": "Przyciski edycji",
+  "spellingDictionaries": "Słowniki pisowni",
+  "spellingDictionariesDescription": "Instaluj słowniki pisowni i zarządzaj nimi",
+  "settingsDictionariesSectionTitle": "Słowniki",
+  "availableSpellingDictionaries": "Dostępne słowniki",
+  "customSpellingDictionaries": "Słowniki niestandardowe",
+  "spellingDictionaryProblems": "Problemy ze słownikami",
   "settingsWindowSectionTitle": "Okno",
   "@settingsWindowSectionTitle": {
     "description": "Settings section title for native window behavior."
@@ -3355,5 +3399,6 @@
   "topicRenameAffectedFiles": "Pliki objęte zmianą",
   "renameTopicFileInstead": "Identyfikatory tematów pochodzą z nazw ich plików. Użyj polecenia Zmień nazwę pliku tematu w spisie treści lub na pasku bocznym Pliki.",
   "diagnosticWritersideWebFileNameInvalid": "Instancja \"{instanceId}\" publikuje nieprawidłową nazwę pliku internetowego \"{webFileName}\" dla tematu \"{topic}\".",
-  "diagnosticWritersideWebFileNameCollision": "Instancja \"{instanceId}\" publikuje zarówno \"{firstTopic}\", jak i \"{secondTopic}\" jako \"{webFileName}\"."
+  "diagnosticWritersideWebFileNameCollision": "Instancja \"{instanceId}\" publikuje zarówno \"{firstTopic}\", jak i \"{secondTopic}\" jako \"{webFileName}\".",
+  "spellingDictionaryRecoveryConflict": "Słownik pisowni został zmieniony zewnętrznie. Zachowano kopię odzyskiwania."
 }

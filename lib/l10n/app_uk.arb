@@ -83,6 +83,42 @@
   "workspaceSearchShowMore": "Показати більше результатів",
   "workspaceSearchSkippedFiles": "Пошук неповний. Ці файли перевищують 1 MiB або їх не вдалося прочитати:",
   "@@locale": "uk",
+  "spelling": "Правопис",
+  "automaticSpelling": "Автоматична перевірка правопису",
+  "defaultSpellingLanguage": "Типова мова перевірки правопису",
+  "projectSpellingLanguage": "Мова перевірки правопису проєкту",
+  "chooseSpellingLanguage": "Вибрати мову правопису",
+  "spellingLanguageUnsetStatus": "Мова…",
+  "spellingOffStatus": "Перевірку правопису вимкнено",
+  "checkSpelling": "Перевірити правопис",
+  "ignoreSpellingOnce": "Ігнорувати один раз",
+  "ignoreSpellingDocument": "Ігнорувати все в цьому документі",
+  "addPersonalSpellingWord": "Додати до особистого словника",
+  "addProjectSpellingWord": "Додати до словника проєкту",
+  "inheritSpellingLanguage": "Використовувати мову проєкту або програми",
+  "disableDocumentSpelling": "Не перевіряти правопис",
+  "importSpellingDictionary": "Імпортувати словник",
+  "personalSpellingDictionary": "Особистий словник",
+  "projectSpellingDictionary": "Словник проєкту",
+  "noSpellingErrors": "Орфографічних помилок немає",
+  "noSpellingSuggestions": "Немає варіантів виправлення",
+  "spellingWordCheckFailed": "Не вдалося перевірити це слово",
+  "spellingCheckFailed": "Не вдалося перевірити правопис",
+  "spellingCheckIncomplete": "Перевірку правопису не завершено",
+  "spellingDictionaryNotInstalled": "Словник не встановлено",
+  "spellingDictionaryNotInstalledForLanguage": "Словник «{dictionary}» не встановлено",
+  "spellingDictionaryNotInstalledWithSize": "Не встановлено · {size}",
+  "spellingDictionaryInstalled": "Встановлено",
+  "installSpellingDictionary": "Встановити словник",
+  "removeSpellingDictionary": "Видалити словник",
+  "cancelSpellingDictionaryInstall": "Скасувати завантаження словника",
+  "retrySpellingDictionaryInstall": "Повторити встановлення словника",
+  "spellingDictionaryDownloading": "Завантаження {size}…",
+  "spellingDictionaryValidating": "Перевірка словника…",
+  "spellingDictionaryInstallFailed": "Не вдалося встановити словник — виберіть, щоб повторити",
+  "spellingDictionaryInstallPrompt": "Встановити {dictionary} ({size})? Після встановлення він буде доступний офлайн, доки ви його не видалите.",
+  "spellingDictionaryUnavailable": "Словник недоступний",
+  "spellingChecking": "Перевірка правопису…",
   "reportIssue": "Повідомити про проблему",
   "feedbackCategory": "Категорія",
   "feedbackChooseCategory": "Виберіть категорію",
@@ -802,6 +838,7 @@
     "description": "Editor setting description for saving files automatically."
   },
   "wordWrap": "Перенесення рядків",
+  "wordWrapDescription": "Переносити довгі рядки за шириною редактора замість горизонтального прокручування.",
   "@wordWrap": {
     "description": "Word wrap setting label."
   },
@@ -869,6 +906,13 @@
   "@clearGitWorkspaceTrustDescription": {
     "description": "Settings action description for clearing trusted Git workspaces."
   },
+  "settingsEditingButtonsSectionTitle": "Кнопки редагування",
+  "spellingDictionaries": "Орфографічні словники",
+  "spellingDictionariesDescription": "Установлення й керування орфографічними словниками",
+  "settingsDictionariesSectionTitle": "Словники",
+  "availableSpellingDictionaries": "Доступні словники",
+  "customSpellingDictionaries": "Власні словники",
+  "spellingDictionaryProblems": "Проблеми зі словниками",
   "settingsWindowSectionTitle": "Вікно",
   "@settingsWindowSectionTitle": {
     "description": "Settings section title for native window behavior."
@@ -3355,5 +3399,6 @@
   "topicRenameAffectedFiles": "Змінені файли",
   "renameTopicFileInstead": "ID тем визначаються іменами їхніх файлів. Скористайтеся командою «Перейменувати файл теми» у змісті або на бічній панелі «Файли».",
   "diagnosticWritersideWebFileNameInvalid": "Екземпляр \"{instanceId}\" публікує неприпустиме ім’я вебфайлу \"{webFileName}\" для теми \"{topic}\".",
-  "diagnosticWritersideWebFileNameCollision": "Екземпляр \"{instanceId}\" публікує теми \"{firstTopic}\" і \"{secondTopic}\" під одним іменем \"{webFileName}\"."
+  "diagnosticWritersideWebFileNameCollision": "Екземпляр \"{instanceId}\" публікує теми \"{firstTopic}\" і \"{secondTopic}\" під одним іменем \"{webFileName}\".",
+  "spellingDictionaryRecoveryConflict": "Орфографічний словник було змінено ззовні. Копію для відновлення збережено."
 }

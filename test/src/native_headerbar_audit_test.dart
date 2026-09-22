@@ -1557,6 +1557,7 @@ void main() {
       'lib/src/platform/native_menu_service.dart',
     ).readAsStringSync();
     final design = File('lib/src/app/busymark_design.dart').readAsStringSync();
+    final probe = File('tools/linux_native_menu_probe.py').readAsStringSync();
     final toolbar = File(
       'lib/src/editor/wysiwyg/wysiwyg_toolbar.dart',
     ).readAsStringSync();
@@ -1582,7 +1583,14 @@ void main() {
     expect(nativeMenu, contains('GMenu* model;'));
     expect(nativeMenu, contains('GSimpleActionGroup* action_group;'));
     expect(nativeMenu, contains('g_simple_action_new_stateful('));
-    expect(nativeMenu, contains('g_menu_item_set_action_and_target_value('));
+    expect(nativeMenu, contains('g_variant_new_boolean(selected)'));
+    expect(nativeMenu, isNot(contains('G_VARIANT_TYPE_STRING')));
+    expect(nativeMenu, isNot(contains('g_variant_new_string(')));
+    expect(
+      nativeMenu,
+      isNot(contains('g_menu_item_set_action_and_target_value(')),
+    );
+    expect(nativeMenu, isNot(contains('select-group-')));
     expect(nativeMenu, isNot(contains('GTK_IS_MODEL_BUTTON')));
     expect(nativeMenu, isNot(contains('style_native_menu_item')));
     expect(nativeMenu, isNot(contains('gtk_menu_button_')));
@@ -1606,7 +1614,8 @@ void main() {
     expect(nativeMenu, contains('set_menu_item_accelerator('));
     expect(nativeMenu, contains('g_menu_item_set_icon(item, icon)'));
     expect(nativeMenu, contains('native_menu_action_activated_cb'));
-    expect(nativeMenu, contains('native_menu_selection_activated_cb'));
+    expect(nativeMenu, contains('native_menu_check_activated_cb'));
+    expect(nativeMenu, isNot(contains('native_menu_selection_activated_cb')));
     expect(nativeMenu, contains('gtk_menu_new_from_model('));
     expect(nativeMenu, contains('GTK_IS_MENU(session->menu)'));
     expect(nativeMenu, contains('gtk_menu_attach_to_widget('));
@@ -1640,6 +1649,8 @@ void main() {
     expect(service, contains("'iconColor': iconColorArgb!"));
     expect(service, contains("'shortcut': shortcut!"));
     expect(service, contains('this.checkable = false'));
+    expect(service, contains('this.mutuallyExclusive = false'));
+    expect(service, contains("'mutuallyExclusive': mutuallyExclusive"));
     expect(service, contains('separator = false'));
     expect(design, contains('NativeMenuEntry.separator()'));
     expect(design, contains('NativeMenuEntry.command('));
@@ -1654,6 +1665,11 @@ void main() {
     expect(nativeMenu, contains('gtk_icon_info_load_symbolic('));
     expect(design, contains('shortcut: item.shortcut'));
     expect(design, contains('checkable: item.trailingCheck'));
+    expect(design, contains('mutuallyExclusive: item.mutuallyExclusive'));
+    expect(probe, contains('command == "assert-check"'));
+    expect(probe, contains('Atspi.Role.CHECK_MENU_ITEM'));
+    expect(probe, contains('Atspi.Role.RADIO_MENU_ITEM'));
+    expect(probe, contains('Atspi.StateType.CHECKED'));
     expect(design, contains('class BusyMarkMenuButton<T>'));
     expect(design, isNot(contains('YaruPopupMenuButton<T>(')));
     for (final shortcut in <String>[
@@ -1852,7 +1868,6 @@ void main() {
       expect(welcome, contains('HeaderBarConfigurationPublisher('));
       expect(welcome, contains('title: context.l10n.appTitle'));
       expect(settings, contains('HeaderBarConfigurationPublisher('));
-      expect(settings, contains('final title = _settingsPageLabel('));
       expect(settings, contains('title: title'));
       expect(
         workspace,

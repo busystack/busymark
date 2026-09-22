@@ -35,6 +35,7 @@ import '../../app/command_registry.dart';
 import '../../app/localization.dart';
 import '../../app/window_control_service.dart';
 import '../../core/busymark_exception.dart';
+import '../../core/atomic_file_writer.dart';
 import '../../core/diagnostic.dart';
 import '../../core/diagnostic_localizations.dart';
 import '../../core/path_utils.dart'
@@ -51,6 +52,7 @@ import '../../editor/document_surface.dart';
 import '../../editor/document_text_geometry.dart';
 import '../../editor/document_text_direction.dart';
 import '../../editor/document_thematic_break.dart';
+import '../../editor/editor_text_context_menu.dart';
 import '../../editor/markdown_image_view.dart';
 import '../../editor/source/source_controller.dart';
 import '../../editor/source/source_autocomplete.dart';
@@ -81,6 +83,11 @@ import '../../platform/linux_header_bar_service.dart';
 import '../../platform/native_writerside_dialog_service.dart';
 import '../../search/search_replace_service.dart';
 import '../../search/workspace_search_scope.dart';
+import '../../spellcheck/spelling_session_controller.dart';
+import '../../spellcheck/spelling_projection.dart';
+import '../../spellcheck/spelling_coordinator.dart';
+import '../../spellcheck/spelling_language.dart';
+import '../../spellcheck/spelling_replacement.dart';
 import '../../visualization/visualization_card.dart';
 import '../../visualization/visualization_models.dart';
 import '../../writerside/writerside_model.dart';
@@ -95,7 +102,7 @@ import '../../writerside/writerside_topic_removal_service.dart';
 import '../../writerside/writerside_video.dart';
 import '../workspace_controller.dart';
 import '../document_buffer.dart';
-import 'document_format_indicator.dart';
+import 'document_status_bar.dart';
 import '../text_format_metadata.dart';
 import '../workspace_glyphs.dart';
 import '../workspace_model.dart';
@@ -400,6 +407,7 @@ class _SidebarShortcutRequestController extends Notifier<_SidebarTab?> {
 class _OutlineNavigationTarget {
   const _OutlineNavigationTarget({
     required this.workspaceId,
+    required this.bufferId,
     required this.filePath,
     required this.headingId,
     required this.line,
@@ -407,6 +415,7 @@ class _OutlineNavigationTarget {
   });
 
   final String workspaceId;
+  final String bufferId;
   final String? filePath;
   final String headingId;
   final int? line;
@@ -416,6 +425,7 @@ class _OutlineNavigationTarget {
 class _OutlineViewportTarget {
   const _OutlineViewportTarget({
     required this.workspaceId,
+    required this.bufferId,
     required this.filePath,
     required this.headingId,
     required this.sourceStartOffset,
@@ -423,6 +433,7 @@ class _OutlineViewportTarget {
   });
 
   final String workspaceId;
+  final String bufferId;
   final String? filePath;
   final String? headingId;
   final int? sourceStartOffset;
@@ -430,6 +441,7 @@ class _OutlineViewportTarget {
 
   bool sameLocationAs(_OutlineViewportTarget other) {
     return workspaceId == other.workspaceId &&
+        bufferId == other.bufferId &&
         filePath == other.filePath &&
         headingId == other.headingId &&
         sourceStartOffset == other.sourceStartOffset &&
@@ -567,10 +579,8 @@ bool _workspaceSearchInputsChanged(
   if (previousWorkspace == null || nextWorkspace == null) {
     return previousWorkspace != nextWorkspace;
   }
-  final previousActivePath =
-      previousWorkspace.activeFilePath ?? previousWorkspace.markdown?.filePath;
-  final nextActivePath =
-      nextWorkspace.activeFilePath ?? nextWorkspace.markdown?.filePath;
+  final previousActivePath = previous.activeBuffer?.filePath;
+  final nextActivePath = next.activeBuffer?.filePath;
   return previousActivePath != nextActivePath ||
       !_sameWorkspaceSearchFiles(previousWorkspace.files, nextWorkspace.files);
 }
@@ -805,8 +815,8 @@ class WorkspaceScreen extends ConsumerWidget {
       });
     }
     final title = state.isDirty
-        ? '*${_activeFileName(context, workspace)}'
-        : _activeFileName(context, workspace);
+        ? '*${_activeFileName(context, workspace, state.activeBuffer)}'
+        : _activeFileName(context, workspace, state.activeBuffer);
     final hasSidebar = _hasWorkspaceSidebar(workspace);
     final headerConfiguration = HeaderBarConfigurationDefaults.of(context)
         .copyWith(
@@ -926,7 +936,11 @@ class WorkspaceScreen extends ConsumerWidget {
                               onEscape: () => _closeSearch(ref),
                             )
                           : _HeaderTitle(
-                              title: _activeFileName(context, workspace),
+                              title: _activeFileName(
+                                context,
+                                workspace,
+                                state.activeBuffer,
+                              ),
                               subtitle: _workspaceKindLabel(
                                 context,
                                 workspace.kind,
@@ -1018,7 +1032,12 @@ class WorkspaceScreen extends ConsumerWidget {
                     ),
               body: Column(
                 children: [
-                  if (state.message != null)
+                  // The recovered document already has a review banner with
+                  // actions. Keep other messages, including recovery damage.
+                  if (state.message != null &&
+                      !(state.message!.code ==
+                              WorkspaceMessageCode.recoveryRestored &&
+                          state.activeBuffer?.recovered == true))
                     BusyMarkStatusBox(
                       message: localizeWorkspaceMessage(
                         context,
@@ -1091,7 +1110,8 @@ class WorkspaceScreen extends ConsumerWidget {
   }
 
   void _selectSidebarShortcut(WidgetRef ref, _SidebarTab tab) {
-    final workspace = ref.read(workspaceControllerProvider).workspace;
+    final state = ref.read(workspaceControllerProvider);
+    final workspace = state.workspace;
     if (workspace == null || !_sidebarTabsFor(workspace.kind).contains(tab)) {
       return;
     }
@@ -1221,15 +1241,16 @@ class WorkspaceScreen extends ConsumerWidget {
     }
   }
 
-  String _activeFileName(BuildContext context, Workspace workspace) {
-    final path = workspace.activeFilePath ?? workspace.markdown?.filePath;
+  String _activeFileName(
+    BuildContext context,
+    Workspace workspace,
+    DocumentBuffer? buffer,
+  ) {
+    final path = buffer?.filePath;
     if (path == null || path.isEmpty) {
-      return switch (workspace.kind) {
-        WorkspaceKind.markdownFolder ||
-        WorkspaceKind.writersideModule => context.l10n.noOpenFile,
-        WorkspaceKind.untitledMarkdown ||
-        WorkspaceKind.singleMarkdown => context.l10n.untitledMarkdownFileName,
-      };
+      return buffer == null
+          ? context.l10n.noOpenFile
+          : context.l10n.untitledMarkdownFileName;
     }
     return p.basename(path);
   }
@@ -1293,12 +1314,13 @@ class WorkspaceScreen extends ConsumerWidget {
     WidgetRef ref,
     _WorkspaceSearchResult result,
   ) async {
-    final workspace = ref.read(workspaceControllerProvider).workspace;
+    final state = ref.read(workspaceControllerProvider);
+    final workspace = state.workspace;
     final searchOptions = ref.read(_workspaceSearchProvider).options;
     if (workspace == null) {
       return;
     }
-    final activePath = workspace.activeFilePath ?? workspace.markdown?.filePath;
+    final activePath = state.activeBuffer?.filePath;
     if (activePath != result.filePath) {
       final opened = await ref
           .read(workspaceControllerProvider.notifier)
@@ -2253,6 +2275,9 @@ class _SidebarState extends ConsumerState<_Sidebar> {
                     ),
                     _SidebarTab.outline => _OutlineTab(
                       workspace: widget.workspace,
+                      bufferId: ref
+                          .watch(workspaceControllerProvider)
+                          .activeBufferId,
                       headings: widget.outline,
                     ),
                     _SidebarTab.git => GitSidebarTab(
@@ -2320,9 +2345,13 @@ class _SidebarState extends ConsumerState<_Sidebar> {
   Future<void> _refineActiveDocumentWithAi(BuildContext context) async {
     final state = ref.read(workspaceControllerProvider);
     final workspace = state.workspace;
+    final buffer = state.activeBuffer;
     if (workspace == null ||
-        !(_activeWorkspaceDocumentKind(workspace)?.supportsAiMarkdownEditing ??
-            false) ||
+        buffer == null ||
+        !resolveWorkspaceDocumentContext(
+          workspace,
+          buffer,
+        ).kind.supportsAiMarkdownEditing ||
         state.activeText.isEmpty) {
       return;
     }
@@ -9253,10 +9282,12 @@ Future<bool> _refineActiveSourceRangesWithAi(
     }
     final state = ref.read(workspaceControllerProvider);
     final workspace = state.workspace;
-    if (workspace == null) {
+    final buffer = state.activeBuffer;
+    if (workspace == null || buffer == null) {
       return false;
     }
-    final path = workspace.activeFilePath ?? workspace.markdown?.filePath;
+    final path = buffer.filePath;
+    final bufferId = buffer.id;
     final source = state.activeText;
     final start = requestedRange.fullDocument ? 0 : requestedRange.start;
     final end = requestedRange.fullDocument
@@ -9276,7 +9307,7 @@ Future<bool> _refineActiveSourceRangesWithAi(
         sourceRevision: ref
             .read(workspaceControllerProvider.notifier)
             .editRevision,
-        targetId: path ?? 'untitled',
+        targetId: bufferId,
         documentPath: path,
         blockTargetAvailable: false,
       ),
@@ -9299,6 +9330,7 @@ Future<bool> _refineActiveSourceRangesWithAi(
         !_isSameActiveDocument(
           ref.read(workspaceControllerProvider),
           workspaceId: workspace.id,
+          bufferId: bufferId,
           activePath: path,
           source: source,
         )) {
@@ -9319,9 +9351,14 @@ Future<bool> _refineActiveSourceRangesWithAi(
 }
 
 class _OutlineTab extends ConsumerStatefulWidget {
-  const _OutlineTab({required this.workspace, required this.headings});
+  const _OutlineTab({
+    required this.workspace,
+    required this.bufferId,
+    required this.headings,
+  });
 
   final Workspace workspace;
+  final String? bufferId;
   final List<DocumentOutlineHeading> headings;
 
   @override
@@ -9344,6 +9381,7 @@ class _OutlineTabState extends ConsumerState<_OutlineTab> {
     super.initState();
     _outlineStateKey = _outlineStateSignature(
       widget.workspace,
+      widget.bufferId,
       widget.headings,
     );
     _expandedNodeKeys = _initialExpandedOutlineNodeKeys(widget.headings);
@@ -9352,7 +9390,11 @@ class _OutlineTabState extends ConsumerState<_OutlineTab> {
   @override
   void didUpdateWidget(covariant _OutlineTab oldWidget) {
     super.didUpdateWidget(oldWidget);
-    final nextKey = _outlineStateSignature(widget.workspace, widget.headings);
+    final nextKey = _outlineStateSignature(
+      widget.workspace,
+      widget.bufferId,
+      widget.headings,
+    );
     if (nextKey != _outlineStateKey) {
       _outlineStateKey = nextKey;
       _expandedNodeKeys = _initialExpandedOutlineNodeKeys(widget.headings);
@@ -9463,19 +9505,18 @@ class _OutlineTabState extends ConsumerState<_OutlineTab> {
   ) async {
     final initialState = ref.read(workspaceControllerProvider);
     final workspace = initialState.workspace;
-    if (workspace == null) {
+    final buffer = initialState.activeBuffer;
+    if (workspace == null || buffer == null) {
       return;
     }
     final workspaceId = workspace.id;
-    final activePath = workspace.activeFilePath ?? workspace.markdown?.filePath;
-    final source = initialState.activeText;
-    final mode =
-        workspace.markdown?.mode ??
-        (workspace.kind == WorkspaceKind.writersideModule
-            ? MarkdownMode.writersideMarkdown
-            : MarkdownMode.commonMark);
+    final bufferId = buffer.id;
+    final documentContext = resolveWorkspaceDocumentContext(workspace, buffer);
+    final activePath = documentContext.diskPath;
+    final source = buffer.text;
+    final mode = documentContext.markdownMode;
     final parsed = await const MarkdownParser().parseAsync(
-      filePath: activePath ?? 'untitled.md',
+      filePath: documentContext.parserPath,
       source: source,
       mode: mode,
       workspaceRoot: workspace.rootPath,
@@ -9485,6 +9526,7 @@ class _OutlineTabState extends ConsumerState<_OutlineTab> {
         !_isSameActiveDocument(
           ref.read(workspaceControllerProvider),
           workspaceId: workspaceId,
+          bufferId: bufferId,
           activePath: activePath,
           source: source,
         )) {
@@ -9553,6 +9595,7 @@ class _OutlineTabState extends ConsumerState<_OutlineTab> {
         !_isSameActiveDocument(
           ref.read(workspaceControllerProvider),
           workspaceId: workspaceId,
+          bufferId: bufferId,
           activePath: activePath,
           source: source,
         )) {
@@ -9577,6 +9620,7 @@ class _OutlineTabState extends ConsumerState<_OutlineTab> {
     final viewportTarget = ref.watch(_outlineViewportTargetProvider);
     final activeNodeKey = _activeVisibleOutlineNodeKey(
       workspace: widget.workspace,
+      bufferId: widget.bufferId,
       headings: headings,
       entries: entries,
       target: viewportTarget,
@@ -9634,6 +9678,7 @@ class _OutlineTabState extends ConsumerState<_OutlineTab> {
               _setOutlineViewportTarget(
                 ref,
                 workspace: widget.workspace,
+                bufferId: widget.bufferId,
                 heading: heading,
               );
               ref
@@ -9641,6 +9686,7 @@ class _OutlineTabState extends ConsumerState<_OutlineTab> {
                   .set(
                     _OutlineNavigationTarget(
                       workspaceId: widget.workspace.id,
+                      bufferId: widget.bufferId ?? '',
                       filePath: widget.workspace.activeFilePath,
                       headingId: heading.id,
                       line: heading.sourceStartLine,
@@ -9820,14 +9866,15 @@ int _resolveParsedOutlineHeadingIndex(
 bool _isSameActiveDocument(
   WorkspaceState state, {
   required String workspaceId,
+  required String bufferId,
   required String? activePath,
   required String source,
 }) {
   final workspace = state.workspace;
   return workspace?.id == workspaceId &&
-      (workspace?.activeFilePath ?? workspace?.markdown?.filePath) ==
-          activePath &&
-      state.activeText == source;
+      state.activeBuffer?.id == bufferId &&
+      state.activeBuffer?.filePath == activePath &&
+      state.activeBuffer?.text == source;
 }
 
 Future<bool> _confirmDeleteOutlineSection(
@@ -9863,6 +9910,7 @@ Future<bool> _confirmDeleteOutlineSection(
 void _setOutlineViewportTarget(
   WidgetRef ref, {
   required Workspace workspace,
+  required String? bufferId,
   required DocumentOutlineHeading? heading,
 }) {
   ref
@@ -9870,7 +9918,8 @@ void _setOutlineViewportTarget(
       .set(
         _OutlineViewportTarget(
           workspaceId: workspace.id,
-          filePath: workspace.activeFilePath ?? workspace.markdown?.filePath,
+          bufferId: bufferId ?? '',
+          filePath: workspace.activeFilePath,
           headingId: heading?.id,
           sourceStartOffset: heading?.sourceStartOffset,
           editorBlockId: heading?.editorBlockId,
@@ -9880,14 +9929,15 @@ void _setOutlineViewportTarget(
 
 String? _activeVisibleOutlineNodeKey({
   required Workspace workspace,
+  required String? bufferId,
   required List<DocumentOutlineHeading> headings,
   required List<_OutlineTreeEntry> entries,
   required _OutlineViewportTarget? target,
 }) {
   if (target == null ||
       target.workspaceId != workspace.id ||
-      target.filePath !=
-          (workspace.activeFilePath ?? workspace.markdown?.filePath)) {
+      target.bufferId != bufferId ||
+      target.filePath != workspace.activeFilePath) {
     return headings.isEmpty ? null : _outlineNodeKey(headings.first);
   }
   final targetIndex = _outlineViewportHeadingIndex(headings, target);
@@ -9939,16 +9989,31 @@ List<DocumentOutlineHeading> _activeDocumentOutline(WorkspaceState state) {
   final workspace = state.workspace;
   if (liveOutline != null &&
       workspace != null &&
-      liveOutline.matches(workspace, state.activeText)) {
+      liveOutline.matches(workspace, state.activeBuffer, state.activeText)) {
     return liveOutline.headings;
   }
   final preview = state.preview;
   if (preview != null) {
     return preview.outline;
   }
+  final buffer = state.activeBuffer;
+  final markdown = workspace?.markdown;
+  if (workspace == null || markdown == null) return const [];
+  if (buffer == null) {
+    if (state.documentBuffers.isNotEmpty) return const [];
+    return [
+      for (final heading in markdown.headings)
+        DocumentOutlineHeading.fromMarkdown(heading),
+    ];
+  }
+  final context = resolveWorkspaceDocumentContext(workspace, buffer);
+  if (!p.equals(markdown.filePath, context.parserPath) ||
+      markdown.source != buffer.text ||
+      markdown.mode != context.markdownMode) {
+    return const [];
+  }
   return [
-    for (final heading
-        in state.workspace?.markdown?.headings ?? const <MarkdownHeading>[])
+    for (final heading in markdown.headings)
       DocumentOutlineHeading.fromMarkdown(heading),
   ];
 }
@@ -10056,11 +10121,13 @@ String _outlineNodeKey(DocumentOutlineHeading heading) {
 
 String _outlineStateSignature(
   Workspace workspace,
+  String? bufferId,
   List<DocumentOutlineHeading> headings,
 ) {
   return [
     workspace.id,
-    workspace.activeFilePath ?? workspace.markdown?.filePath ?? '',
+    bufferId ?? '',
+    workspace.activeFilePath ?? '',
     for (final heading in headings)
       [
         heading.id,
@@ -10166,6 +10233,7 @@ class _EditorTabStrip extends ConsumerWidget {
     }
     final colors = BusyMarkSurfaceColors.of(context);
     return DecoratedBox(
+      key: const ValueKey('editor-tab-strip'),
       decoration: BoxDecoration(
         color: colors.headerbarFlat,
         border: Border(bottom: BorderSide(color: colors.subtleBorder)),
@@ -10208,12 +10276,6 @@ class _EditorTabStrip extends ConsumerWidget {
                 itemCount: entries.length,
               ),
             ),
-            if (gitState.selectedDiffForDisplay == null &&
-                localHistoryState.selectedRevision == null)
-              if (state.activeBuffer case final buffer?) ...[
-                BusyMarkDocumentFormatIndicator(format: buffer.format),
-                const SizedBox(width: BusyMarkSpacing.xs),
-              ],
           ],
         ),
       ),
@@ -11694,6 +11756,18 @@ class _EditorPreviewSplit extends ConsumerStatefulWidget {
       _EditorPreviewSplitState();
 }
 
+final class _SpellingBannerPresentation {
+  const _SpellingBannerPresentation({
+    required this.title,
+    this.actionLabel,
+    this.onAction,
+  });
+
+  final String title;
+  final String? actionLabel;
+  final VoidCallback? onAction;
+}
+
 class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
   final _previewScrollController = ItemScrollController();
   final _previewItemPositionsListener = ItemPositionsListener.create();
@@ -11701,23 +11775,34 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
   List<_PositionedOutlineHeading> _previewOutlineStops = const [];
   _SourceNavigationTarget? _lastSourceNavigationTarget;
   final _sourceEditorKey = GlobalKey<BusyMarkSourceEditorState>();
+  final _wysiwygEditorKey = GlobalKey<BusyMarkWysiwygEditorState>();
+  late final SpellingSessionController _spelling;
   final _previewBlockContexts = <int, BuildContext>{};
   String _lastPath = '';
   var _previewSearchScrollRequest = 0;
   BusyDocument? _cachedWysiwygDocument;
+  String? _cachedWysiwygBufferId;
   String? _cachedWysiwygPath;
   String? _cachedWysiwygSource;
+  MarkdownMode? _cachedWysiwygMode;
   String? _wysiwygScrollHeadingId;
   String? _wysiwygScrollBlockId;
   String? _wysiwygSearchQuery;
   BusyMarkWysiwygSourceRange? _wysiwygSearchRange;
   var _wysiwygScrollRequest = 0;
   var _lastSearchNavigationRequest = 0;
+  String? _pendingSpellingInputIdentity;
+  SpellingSessionInput? _currentSpellingInput;
 
   @override
   void initState() {
     super.initState();
-    _lastPath = widget.state.workspace?.activeFilePath ?? '';
+    _spelling = ref.read(spellingSessionControllerProvider)
+      ..addListener(_handleSpellingChanged);
+    _spelling.synchronizeOpenBuffers(
+      widget.state.documentBuffers.map((buffer) => buffer.id),
+    );
+    _lastPath = widget.state.activeBuffer?.filePath ?? '';
     _previewItemPositionsListener.itemPositions.addListener(
       _handlePreviewVisibleItemsChanged,
     );
@@ -11728,17 +11813,48 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     _previewItemPositionsListener.itemPositions.removeListener(
       _handlePreviewVisibleItemsChanged,
     );
+    _spelling.removeListener(_handleSpellingChanged);
     super.dispose();
+  }
+
+  void _handleSpellingChanged() {
+    if (mounted) setState(() {});
   }
 
   @override
   void didUpdateWidget(covariant _EditorPreviewSplit oldWidget) {
     super.didUpdateWidget(oldWidget);
-    final path = widget.state.workspace?.activeFilePath ?? '';
-    if (path != _lastPath) {
+    final previousBuffer = oldWidget.state.activeBuffer;
+    final nextBuffer = widget.state.activeBuffer;
+    if (previousBuffer != null &&
+        nextBuffer != null &&
+        previousBuffer.id == nextBuffer.id &&
+        previousBuffer.text != nextBuffer.text) {
+      if (identical(
+        previousBuffer.editorState.undoState,
+        nextBuffer.editorState.undoState,
+      )) {
+        _spelling.invalidateBufferAnchors(nextBuffer.id);
+      } else {
+        _translateSpellingAnchors(
+          nextBuffer.text,
+          previousText: previousBuffer.text,
+          bufferId: nextBuffer.id,
+        );
+      }
+    }
+    _spelling.synchronizeOpenBuffers(
+      widget.state.documentBuffers.map((buffer) => buffer.id),
+    );
+    final path = widget.state.activeBuffer?.filePath ?? '';
+    if (path != _lastPath || previousBuffer?.id != nextBuffer?.id) {
       _lastPath = path;
       _clearWysiwygCache();
       _previewBlockContexts.clear();
+      _outlineStopsPreview = null;
+      _previewOutlineStops = const [];
+      _previewSearchScrollRequest = 0;
+      _lastSearchNavigationRequest = 0;
       _wysiwygScrollHeadingId = null;
       _wysiwygScrollBlockId = null;
       _wysiwygSearchQuery = null;
@@ -11795,7 +11911,12 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     if (!mounted || workspace == null) {
       return;
     }
-    _setOutlineViewportTarget(ref, workspace: workspace, heading: heading);
+    _setOutlineViewportTarget(
+      ref,
+      workspace: workspace,
+      bufferId: widget.state.activeBufferId,
+      heading: heading,
+    );
   }
 
   @override
@@ -11807,6 +11928,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
       final workspace = widget.state.workspace;
       if (workspace == null ||
           next.workspaceId != workspace.id ||
+          next.bufferId != widget.state.activeBufferId ||
           next.filePath != workspace.activeFilePath) {
         return;
       }
@@ -11837,6 +11959,23 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     final sourceVisible =
         widget.viewMode != DocumentViewModePreference.preview &&
         !wysiwygVisible;
+    final activeBuffer = widget.state.activeBuffer;
+    final documentKind = _activeDocumentKind(widget.state.workspace);
+    final spellingSupported = documentKind?.supportsSpelling ?? false;
+    if (activeBuffer != null) {
+      _scheduleSpelling(
+        SpellingSessionInput(
+          buffer: activeBuffer,
+          workspace: widget.state.workspace,
+          settings: settings,
+          documentKind: documentKind ?? DocumentKind.unknown,
+          markdownMode: _sourceMarkdownMode(widget.state.workspace),
+          richDocument: wysiwygVisible ? wysiwygDocument : null,
+          richDocumentGeneration:
+              _wysiwygEditorKey.currentState?.spellingDocumentGeneration ?? 0,
+        ),
+      );
+    }
     final sourceTarget = ref.watch(_sourceNavigationTargetProvider);
     if (sourceVisible &&
         sourceTarget != null &&
@@ -11878,7 +12017,17 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
         );
     final activeEditorPath = _activeEditorPath();
     final searchState = ref.watch(_workspaceSearchProvider);
-    final activeBuffer = widget.state.activeBuffer;
+    final spellingBannerPresentation =
+        activeBuffer != null &&
+            spellingSupported &&
+            settings.automaticSpelling &&
+            activeBuffer.editorState.spellingLanguage.kind !=
+                SpellingLanguageOverrideKind.disabled
+        ? _spellingBannerPresentation(context)
+        : null;
+    final spellingLabel = activeBuffer != null && spellingSupported
+        ? _spellingStatusLabel(context, activeBuffer, settings)
+        : null;
     return DecoratedBox(
       decoration: BoxDecoration(color: colors.view),
       child: Column(
@@ -11927,337 +12076,463 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
               ),
               onSaveAs: () => unawaited(saveActiveToNewLocation(context, ref)),
             ),
+          if (activeBuffer != null)
+            BusyMarkBanner(
+              key: const ValueKey('spelling-banner'),
+              title: spellingBannerPresentation?.title ?? '',
+              actionLabel: spellingBannerPresentation?.actionLabel,
+              onAction: spellingBannerPresentation?.onAction,
+              revealed: spellingBannerPresentation != null,
+            ),
           Expanded(
-            child: Row(
+            child: Stack(
               children: [
-                if (wysiwygVisible)
-                  Expanded(
-                    key: const ValueKey('document-wysiwyg-pane'),
-                    child: BusyMarkWysiwygEditor(
-                      document: wysiwygDocument,
-                      documentId: activeBuffer?.id,
-                      clipboardInsertionRegistry: ref.read(
-                        clipboardInsertionRegistryProvider,
-                      ),
-                      onClipboardCaptured: ref
-                          .read(clipboardHistoryControllerProvider.notifier)
-                          .retain,
-                      initialSessionState:
-                          activeBuffer?.editorState.wysiwygState ??
-                          const WysiwygEditorSessionState(),
-                      useExternalUndoHistory: true,
-                      onSessionChanged: (documentId, session) {
-                        final latest = ref
-                            .read(workspaceControllerProvider)
-                            .documentBuffers
-                            .where((buffer) => buffer.id == documentId)
-                            .firstOrNull;
-                        if (latest == null ||
-                            _sameWysiwygSession(
-                              latest.editorState.wysiwygState,
-                              session,
-                            )) {
-                          return;
-                        }
-                        ref
-                            .read(workspaceControllerProvider.notifier)
-                            .updateDocumentEditorState(
-                              documentId,
-                              latest.editorState.copyWith(
-                                wysiwygState: session,
-                              ),
-                            );
-                      },
-                      headerBarService: headerBar,
-                      workspaceRoot: _imageWorkspaceRoot(
-                        widget.state.workspace,
-                      ),
-                      writersideRoot:
-                          widget.state.workspace?.writersideModule?.rootPath,
-                      imagesDir:
-                          widget
-                              .state
-                              .workspace
-                              ?.writersideModule
-                              ?.effectiveImagesDir ??
-                          'images',
-                      assetWorkspaceKind:
-                          switch (widget.state.workspace?.kind) {
-                            WorkspaceKind.writersideModule =>
-                              AssetWorkspaceKind.writerside,
-                            WorkspaceKind.markdownFolder =>
-                              AssetWorkspaceKind.markdownWorkspace,
-                            WorkspaceKind.singleMarkdown =>
-                              AssetWorkspaceKind.standalone,
-                            WorkspaceKind.untitledMarkdown ||
-                            null => AssetWorkspaceKind.standalone,
-                          },
-                      onAssetSaveRequired: () =>
-                          unawaited(saveActiveToNewLocation(context, ref)),
-                      allowRemoteImages: allowRemoteImages,
-                      onRemoteImageBlocked: () =>
-                          unawaited(_showRemoteImagesPrompt(context, ref)),
-                      onDocumentChanged: _cacheWysiwygDocument,
-                      onSourceChanged: _handleWysiwygSourceChanged,
-                      onTransactionalSourceChanged: _handleWysiwygSourceChanged,
-                      toolbarPlacement: widget.editorToolbarPlacement,
-                      toolbarDirection: widget.editorToolbarDirection,
-                      onToolbarPlacementChanged: ref
-                          .read(appSettingsControllerProvider.notifier)
-                          .setEditorToolbarPlacement,
-                      onToolbarDirectionChanged: ref
-                          .read(appSettingsControllerProvider.notifier)
-                          .setEditorToolbarDirection,
-                      scrollToHeadingId: _wysiwygScrollHeadingId,
-                      scrollToBlockId: _wysiwygScrollBlockId,
-                      scrollToSearchQuery: _wysiwygSearchQuery,
-                      scrollToSourceRange: _wysiwygSearchRange,
-                      scrollRequest: _wysiwygScrollRequest,
-                      onVisibleHeadingChanged:
-                          _handleWysiwygVisibleHeadingChanged,
-                      documentLayout: standaloneDocumentLayout,
-                      visualizationRevision: ref
-                          .read(workspaceControllerProvider.notifier)
-                          .editRevision,
-                      onOpenSearch: () => ref
-                          .read(workspaceSearchOpenRequestProvider.notifier)
-                          .request(),
-                      onCloseSearch: () => ref
-                          .read(workspaceSearchCloseRequestProvider.notifier)
-                          .request(),
-                      onUndo: () => ref
-                          .read(workspaceControllerProvider.notifier)
-                          .undoActiveBuffer(),
-                      onRedo: () => ref
-                          .read(workspaceControllerProvider.notifier)
-                          .redoActiveBuffer(),
-                      onAiEdit:
-                          (_activeDocumentKind(
-                                widget.state.workspace,
-                              )?.supportsAiMarkdownEditing ??
-                              false)
-                          ? (snapshot) =>
-                                showBusyMarkAiEdit(context, ref, snapshot)
-                          : null,
-                      onMathDiagnostic: (expressionId, code, sourceSpan) => ref
-                          .read(workspaceControllerProvider.notifier)
-                          .updateMathRenderDiagnostic(
-                            expressionId: expressionId,
-                            code: code,
-                            sourceSpan: sourceSpan,
-                            expectedRevision: activeBuffer?.revision,
-                            expectedFilePath: activeBuffer?.filePath,
-                          ),
-                    ),
-                  ),
-                if (sourceVisible)
-                  Expanded(
-                    key: const ValueKey('document-source-pane'),
-                    child: BusyMarkSourceEditor(
-                      key: _sourceEditorKey,
-                      text: widget.state.activeText,
-                      language: _sourceSyntaxLanguage(widget.state.workspace),
-                      filePath: activeEditorPath,
-                      documentId: activeBuffer?.id,
-                      clipboardInsertionRegistry: ref.read(
-                        clipboardInsertionRegistryProvider,
-                      ),
-                      onClipboardCaptured: ref
-                          .read(clipboardHistoryControllerProvider.notifier)
-                          .retain,
-                      workspaceRoot: _imageWorkspaceRoot(
-                        widget.state.workspace,
-                      ),
-                      writersideRoot:
-                          widget.state.workspace?.writersideModule?.rootPath,
-                      imagesDir:
-                          widget
-                              .state
-                              .workspace
-                              ?.writersideModule
-                              ?.effectiveImagesDir ??
-                          'images',
-                      assetWorkspaceKind:
-                          switch (widget.state.workspace?.kind) {
-                            WorkspaceKind.writersideModule =>
-                              AssetWorkspaceKind.writerside,
-                            WorkspaceKind.markdownFolder =>
-                              AssetWorkspaceKind.markdownWorkspace,
-                            WorkspaceKind.singleMarkdown =>
-                              AssetWorkspaceKind.standalone,
-                            WorkspaceKind.untitledMarkdown ||
-                            null => AssetWorkspaceKind.standalone,
-                          },
-                      onAssetSaveRequired: () =>
-                          unawaited(saveActiveToNewLocation(context, ref)),
-                      diagnostics:
-                          widget.state.workspace?.allDiagnostics ??
-                          const <Diagnostic>[],
-                      onSymbolAction:
-                          widget.state.workspace?.writersideProject == null
-                          ? null
-                          : (action, offset) =>
-                                unawaited(_handleSymbolAction(action, offset)),
-                      autocompleteContext: _sourceAutocompleteContext(
-                        widget.state.workspace,
-                      ),
-                      editorFontSize: widget.editorFontSize,
-                      wordWrap: widget.wordWrap,
-                      searchActive: searchState.active,
-                      searchOptions: searchState.options,
-                      searchReplacement:
-                          activeBuffer?.editorState.searchReplacement ?? '',
-                      onSearchReplacementChanged: activeBuffer == null
-                          ? null
-                          : (replacement) {
+                Positioned.fill(
+                  child: Row(
+                    children: [
+                      if (wysiwygVisible)
+                        Expanded(
+                          key: const ValueKey('document-wysiwyg-pane'),
+                          child: BusyMarkWysiwygEditor(
+                            key: _wysiwygEditorKey,
+                            document: wysiwygDocument,
+                            documentId: activeBuffer?.id,
+                            contentRevision: activeBuffer?.revision,
+                            spellingAnnotations: _spelling.annotations,
+                            onCheckSpelling: () =>
+                                unawaited(_openSpellingReview()),
+                            readSpellingMenuItems: _prepareRichSpellingMenu,
+                            clipboardInsertionRegistry: ref.read(
+                              clipboardInsertionRegistryProvider,
+                            ),
+                            onClipboardCaptured: ref
+                                .read(
+                                  clipboardHistoryControllerProvider.notifier,
+                                )
+                                .retain,
+                            initialSessionState:
+                                activeBuffer?.editorState.wysiwygState ??
+                                const WysiwygEditorSessionState(),
+                            useExternalUndoHistory: true,
+                            onSessionChanged: (documentId, session) {
                               final latest = ref
                                   .read(workspaceControllerProvider)
                                   .documentBuffers
-                                  .where(
-                                    (candidate) =>
-                                        candidate.id == activeBuffer.id,
-                                  )
-                                  .firstOrNull;
-                              if (latest != null) {
-                                ref
-                                    .read(workspaceControllerProvider.notifier)
-                                    .updateDocumentEditorState(
-                                      latest.id,
-                                      latest.editorState.copyWith(
-                                        searchReplacement: replacement,
-                                      ),
-                                    );
-                              }
-                            },
-                      onSearchOptionsChanged: (options) {
-                        final current = ref.read(_workspaceSearchProvider);
-                        ref
-                            .read(_workspaceSearchProvider.notifier)
-                            .set(current.withOptions(options));
-                      },
-                      initialSelection: activeBuffer?.editorState.selection,
-                      initialScrollOffset:
-                          activeBuffer?.editorState.scrollOffset ?? 0,
-                      initialFoldedRegionKeys:
-                          activeBuffer?.editorState.foldedRegionKeys ??
-                          const {},
-                      onSessionChanged: activeBuffer == null
-                          ? null
-                          : (selection, scrollOffset, foldedRegionKeys) {
-                              final latest = ref
-                                  .read(workspaceControllerProvider)
-                                  .documentBuffers
-                                  .where(
-                                    (candidate) =>
-                                        candidate.id == activeBuffer.id,
-                                  )
+                                  .where((buffer) => buffer.id == documentId)
                                   .firstOrNull;
                               if (latest == null ||
-                                  _sameSourceSession(
-                                    latest.editorState,
-                                    selection,
-                                    scrollOffset,
-                                    foldedRegionKeys,
+                                  _sameWysiwygSession(
+                                    latest.editorState.wysiwygState,
+                                    session,
                                   )) {
                                 return;
                               }
                               ref
                                   .read(workspaceControllerProvider.notifier)
                                   .updateDocumentEditorState(
-                                    latest.id,
+                                    documentId,
                                     latest.editorState.copyWith(
-                                      selection: selection,
-                                      scrollOffset: scrollOffset,
-                                      foldedRegionKeys: foldedRegionKeys,
+                                      wysiwygState: session,
                                     ),
                                   );
                             },
-                      onOpenSearch: () => ref
-                          .read(workspaceSearchOpenRequestProvider.notifier)
-                          .request(),
-                      onCloseSearch: () => ref
-                          .read(workspaceSearchCloseRequestProvider.notifier)
-                          .request(),
-                      onVisibleLineChanged: _handleSourceVisibleLineChanged,
-                      onChanged: _handleSourceChanged,
-                      onTransactionalChanged: _handleTransactionalSourceChanged,
-                      onUndo: () {
-                        final controller = ref.read(
-                          workspaceControllerProvider.notifier,
-                        );
-                        if (!controller.undoActiveBuffer()) {
-                          return null;
-                        }
-                        final buffer = ref
-                            .read(workspaceControllerProvider)
-                            .activeBuffer;
-                        return buffer == null
-                            ? null
-                            : TextEditingValue(
-                                text: buffer.text,
-                                selection: buffer.editorState.selection,
+                            headerBarService: headerBar,
+                            workspaceRoot: _imageWorkspaceRoot(
+                              widget.state.workspace,
+                            ),
+                            writersideRoot: widget
+                                .state
+                                .workspace
+                                ?.writersideModule
+                                ?.rootPath,
+                            imagesDir:
+                                widget
+                                    .state
+                                    .workspace
+                                    ?.writersideModule
+                                    ?.effectiveImagesDir ??
+                                'images',
+                            assetWorkspaceKind:
+                                switch (widget.state.workspace?.kind) {
+                                  WorkspaceKind.writersideModule =>
+                                    AssetWorkspaceKind.writerside,
+                                  WorkspaceKind.markdownFolder =>
+                                    AssetWorkspaceKind.markdownWorkspace,
+                                  WorkspaceKind.singleMarkdown =>
+                                    AssetWorkspaceKind.standalone,
+                                  WorkspaceKind.untitledMarkdown ||
+                                  null => AssetWorkspaceKind.standalone,
+                                },
+                            onAssetSaveRequired: () => unawaited(
+                              saveActiveToNewLocation(context, ref),
+                            ),
+                            allowRemoteImages: allowRemoteImages,
+                            onRemoteImageBlocked: () => unawaited(
+                              _showRemoteImagesPrompt(context, ref),
+                            ),
+                            onDocumentChanged: (document) =>
+                                _cacheWysiwygDocument(
+                                  activeBuffer?.id,
+                                  document,
+                                ),
+                            onSourceChanged: (filePath, value) =>
+                                _handleWysiwygSourceChanged(
+                                  activeBuffer?.id,
+                                  filePath,
+                                  value,
+                                ),
+                            onTransactionalSourceChanged:
+                                (filePath, value, [undoGroup]) =>
+                                    _handleWysiwygSourceChanged(
+                                      activeBuffer?.id,
+                                      filePath,
+                                      value,
+                                      undoGroup,
+                                    ),
+                            onSpellingSourceChanged:
+                                (filePath, value, before, after) =>
+                                    _handleWysiwygSpellingSourceChanged(
+                                      activeBuffer?.id,
+                                      filePath,
+                                      value,
+                                      before,
+                                      after,
+                                    ),
+                            toolbarPlacement: widget.editorToolbarPlacement,
+                            toolbarDirection: widget.editorToolbarDirection,
+                            onToolbarPlacementChanged: ref
+                                .read(appSettingsControllerProvider.notifier)
+                                .setEditorToolbarPlacement,
+                            onToolbarDirectionChanged: ref
+                                .read(appSettingsControllerProvider.notifier)
+                                .setEditorToolbarDirection,
+                            scrollToHeadingId: _wysiwygScrollHeadingId,
+                            scrollToBlockId: _wysiwygScrollBlockId,
+                            scrollToSearchQuery: _wysiwygSearchQuery,
+                            scrollToSourceRange: _wysiwygSearchRange,
+                            scrollRequest: _wysiwygScrollRequest,
+                            onVisibleHeadingChanged:
+                                _handleWysiwygVisibleHeadingChanged,
+                            documentLayout: standaloneDocumentLayout,
+                            visualizationRevision: ref
+                                .read(workspaceControllerProvider.notifier)
+                                .editRevision,
+                            onOpenSearch: () => ref
+                                .read(
+                                  workspaceSearchOpenRequestProvider.notifier,
+                                )
+                                .request(),
+                            onCloseSearch: () => ref
+                                .read(
+                                  workspaceSearchCloseRequestProvider.notifier,
+                                )
+                                .request(),
+                            onUndo: () => ref
+                                .read(workspaceControllerProvider.notifier)
+                                .undoActiveBuffer(),
+                            onRedo: () => ref
+                                .read(workspaceControllerProvider.notifier)
+                                .redoActiveBuffer(),
+                            onAiEdit:
+                                (_activeDocumentKind(
+                                      widget.state.workspace,
+                                    )?.supportsAiMarkdownEditing ??
+                                    false)
+                                ? (snapshot) =>
+                                      showBusyMarkAiEdit(context, ref, snapshot)
+                                : null,
+                            onMathDiagnostic:
+                                (expressionId, code, sourceSpan) => ref
+                                    .read(workspaceControllerProvider.notifier)
+                                    .updateMathRenderDiagnostic(
+                                      expressionId: expressionId,
+                                      code: code,
+                                      sourceSpan: sourceSpan,
+                                      expectedRevision: activeBuffer?.revision,
+                                      expectedFilePath: activeBuffer?.filePath,
+                                    ),
+                          ),
+                        ),
+                      if (sourceVisible)
+                        Expanded(
+                          key: const ValueKey('document-source-pane'),
+                          child: BusyMarkSourceEditor(
+                            key: _sourceEditorKey,
+                            text: widget.state.activeText,
+                            language: _sourceSyntaxLanguage(
+                              widget.state.workspace,
+                            ),
+                            documentFormat: _sourceDocumentFormat(
+                              widget.state.workspace,
+                            ),
+                            markdownMode: _sourceMarkdownMode(
+                              widget.state.workspace,
+                            ),
+                            filePath: activeEditorPath,
+                            documentId: activeBuffer?.id,
+                            clipboardInsertionRegistry: ref.read(
+                              clipboardInsertionRegistryProvider,
+                            ),
+                            onClipboardCaptured: ref
+                                .read(
+                                  clipboardHistoryControllerProvider.notifier,
+                                )
+                                .retain,
+                            workspaceRoot: _imageWorkspaceRoot(
+                              widget.state.workspace,
+                            ),
+                            writersideRoot: widget
+                                .state
+                                .workspace
+                                ?.writersideModule
+                                ?.rootPath,
+                            imagesDir:
+                                widget
+                                    .state
+                                    .workspace
+                                    ?.writersideModule
+                                    ?.effectiveImagesDir ??
+                                'images',
+                            assetWorkspaceKind:
+                                switch (widget.state.workspace?.kind) {
+                                  WorkspaceKind.writersideModule =>
+                                    AssetWorkspaceKind.writerside,
+                                  WorkspaceKind.markdownFolder =>
+                                    AssetWorkspaceKind.markdownWorkspace,
+                                  WorkspaceKind.singleMarkdown =>
+                                    AssetWorkspaceKind.standalone,
+                                  WorkspaceKind.untitledMarkdown ||
+                                  null => AssetWorkspaceKind.standalone,
+                                },
+                            onAssetSaveRequired: () => unawaited(
+                              saveActiveToNewLocation(context, ref),
+                            ),
+                            spellingAnnotations: _spelling.annotations,
+                            onCheckSpelling: () =>
+                                unawaited(_openSpellingReview()),
+                            readSpellingMenuItems: _prepareSourceSpellingMenu,
+                            diagnostics:
+                                widget.state.workspace?.allDiagnostics ??
+                                const <Diagnostic>[],
+                            onSymbolAction:
+                                widget.state.workspace?.writersideProject ==
+                                    null
+                                ? null
+                                : (action, offset) => unawaited(
+                                    _handleSymbolAction(action, offset),
+                                  ),
+                            autocompleteContext: _sourceAutocompleteContext(
+                              widget.state.workspace,
+                            ),
+                            editorFontSize: widget.editorFontSize,
+                            wordWrap: widget.wordWrap,
+                            searchActive: searchState.active,
+                            searchOptions: searchState.options,
+                            searchReplacement:
+                                activeBuffer?.editorState.searchReplacement ??
+                                '',
+                            onSearchReplacementChanged: activeBuffer == null
+                                ? null
+                                : (replacement) {
+                                    final latest = ref
+                                        .read(workspaceControllerProvider)
+                                        .documentBuffers
+                                        .where(
+                                          (candidate) =>
+                                              candidate.id == activeBuffer.id,
+                                        )
+                                        .firstOrNull;
+                                    if (latest != null) {
+                                      ref
+                                          .read(
+                                            workspaceControllerProvider
+                                                .notifier,
+                                          )
+                                          .updateDocumentEditorState(
+                                            latest.id,
+                                            latest.editorState.copyWith(
+                                              searchReplacement: replacement,
+                                            ),
+                                          );
+                                    }
+                                  },
+                            onSearchOptionsChanged: (options) {
+                              final current = ref.read(
+                                _workspaceSearchProvider,
                               );
-                      },
-                      onRedo: () {
-                        final controller = ref.read(
-                          workspaceControllerProvider.notifier,
-                        );
-                        if (!controller.redoActiveBuffer()) {
-                          return null;
-                        }
-                        final buffer = ref
-                            .read(workspaceControllerProvider)
-                            .activeBuffer;
-                        return buffer == null
-                            ? null
-                            : TextEditingValue(
-                                text: buffer.text,
-                                selection: buffer.editorState.selection,
+                              ref
+                                  .read(_workspaceSearchProvider.notifier)
+                                  .set(current.withOptions(options));
+                            },
+                            initialSelection:
+                                activeBuffer?.editorState.selection,
+                            initialScrollOffset:
+                                activeBuffer?.editorState.scrollOffset ?? 0,
+                            initialFoldedRegionKeys:
+                                activeBuffer?.editorState.foldedRegionKeys ??
+                                const {},
+                            onSessionChanged: activeBuffer == null
+                                ? null
+                                : (selection, scrollOffset, foldedRegionKeys) {
+                                    final latest = ref
+                                        .read(workspaceControllerProvider)
+                                        .documentBuffers
+                                        .where(
+                                          (candidate) =>
+                                              candidate.id == activeBuffer.id,
+                                        )
+                                        .firstOrNull;
+                                    if (latest == null ||
+                                        _sameSourceSession(
+                                          latest.editorState,
+                                          selection,
+                                          scrollOffset,
+                                          foldedRegionKeys,
+                                        )) {
+                                      return;
+                                    }
+                                    ref
+                                        .read(
+                                          workspaceControllerProvider.notifier,
+                                        )
+                                        .updateDocumentEditorState(
+                                          latest.id,
+                                          latest.editorState.copyWith(
+                                            selection: selection,
+                                            scrollOffset: scrollOffset,
+                                            foldedRegionKeys: foldedRegionKeys,
+                                          ),
+                                        );
+                                  },
+                            onOpenSearch: () => ref
+                                .read(
+                                  workspaceSearchOpenRequestProvider.notifier,
+                                )
+                                .request(),
+                            onCloseSearch: () => ref
+                                .read(
+                                  workspaceSearchCloseRequestProvider.notifier,
+                                )
+                                .request(),
+                            onVisibleLineChanged:
+                                _handleSourceVisibleLineChanged,
+                            onChanged: (value, sourceFilePath) =>
+                                _handleSourceChanged(
+                                  activeBuffer?.id,
+                                  value,
+                                  sourceFilePath,
+                                ),
+                            onTransactionalChanged:
+                                (
+                                  value,
+                                  sourceFilePath,
+                                  previousSelection,
+                                  selection,
+                                  undoGroup,
+                                ) => _handleTransactionalSourceChanged(
+                                  activeBuffer?.id,
+                                  value,
+                                  sourceFilePath,
+                                  previousSelection,
+                                  selection,
+                                  undoGroup,
+                                ),
+                            onUndo: () {
+                              final controller = ref.read(
+                                workspaceControllerProvider.notifier,
                               );
-                      },
-                      editRevision: ref
-                          .read(workspaceControllerProvider.notifier)
-                          .editRevision,
-                      onAiEdit:
-                          (_activeDocumentKind(
-                                widget.state.workspace,
-                              )?.supportsAiMarkdownEditing ??
-                              false)
-                          ? (snapshot) =>
-                                showBusyMarkAiEdit(context, ref, snapshot)
-                          : null,
-                    ),
+                              if (!controller.undoActiveBuffer()) {
+                                return null;
+                              }
+                              final buffer = ref
+                                  .read(workspaceControllerProvider)
+                                  .activeBuffer;
+                              return buffer == null
+                                  ? null
+                                  : TextEditingValue(
+                                      text: buffer.text,
+                                      selection: buffer.editorState.selection,
+                                    );
+                            },
+                            onRedo: () {
+                              final controller = ref.read(
+                                workspaceControllerProvider.notifier,
+                              );
+                              if (!controller.redoActiveBuffer()) {
+                                return null;
+                              }
+                              final buffer = ref
+                                  .read(workspaceControllerProvider)
+                                  .activeBuffer;
+                              return buffer == null
+                                  ? null
+                                  : TextEditingValue(
+                                      text: buffer.text,
+                                      selection: buffer.editorState.selection,
+                                    );
+                            },
+                            editRevision: ref
+                                .read(workspaceControllerProvider.notifier)
+                                .editRevision,
+                            onAiEdit:
+                                (_activeDocumentKind(
+                                      widget.state.workspace,
+                                    )?.supportsAiMarkdownEditing ??
+                                    false)
+                                ? (snapshot) =>
+                                      showBusyMarkAiEdit(context, ref, snapshot)
+                                : null,
+                          ),
+                        ),
+                      if (sourceVisible && previewVisible)
+                        VerticalDivider(
+                          width: BusyMarkStroke.hairline,
+                          color: colors.subtleBorder,
+                        ),
+                      if (previewVisible)
+                        Expanded(
+                          key: const ValueKey('document-preview-pane'),
+                          child: _PreviewPane(
+                            preview: widget.state.preview,
+                            workspace: widget.state.workspace,
+                            activeSource: widget.state.activeText,
+                            editRevision: ref
+                                .read(workspaceControllerProvider.notifier)
+                                .editRevision,
+                            visualizationsEnabled: true,
+                            onVisualizationDiagnostic:
+                                _openVisualizationSourceLine,
+                            onEditVisualizationSource:
+                                _openVisualizationSourceLine,
+                            controller: _previewScrollController,
+                            itemPositionsListener:
+                                _previewItemPositionsListener,
+                            onBlockContextAvailable:
+                                _rememberPreviewBlockContext,
+                            onBlockContextUnavailable:
+                                _forgetPreviewBlockContext,
+                            documentLayout: sourceVisible
+                                ? BusyMarkDocumentLayoutSpec.splitPreview
+                                : standaloneDocumentLayout,
+                          ),
+                        ),
+                    ],
                   ),
-                if (sourceVisible && previewVisible)
-                  VerticalDivider(
-                    width: BusyMarkStroke.hairline,
-                    color: colors.subtleBorder,
-                  ),
-                if (previewVisible)
-                  Expanded(
-                    key: const ValueKey('document-preview-pane'),
-                    child: _PreviewPane(
-                      preview: widget.state.preview,
-                      workspace: widget.state.workspace,
-                      activeSource: widget.state.activeText,
-                      editRevision: ref
-                          .read(workspaceControllerProvider.notifier)
-                          .editRevision,
-                      visualizationsEnabled: true,
-                      onVisualizationDiagnostic: _openVisualizationSourceLine,
-                      onEditVisualizationSource: _openVisualizationSourceLine,
-                      controller: _previewScrollController,
-                      itemPositionsListener: _previewItemPositionsListener,
-                      onBlockContextAvailable: _rememberPreviewBlockContext,
-                      onBlockContextUnavailable: _forgetPreviewBlockContext,
-                      documentLayout: sourceVisible
-                          ? BusyMarkDocumentLayoutSpec.splitPreview
-                          : standaloneDocumentLayout,
-                    ),
-                  ),
+                ),
               ],
             ),
           ),
+          if (activeBuffer != null)
+            BusyMarkDocumentStatusBar(
+              format: activeBuffer.format,
+              spellingLabel: spellingLabel,
+              spellingTooltip: spellingSupported
+                  ? context.l10n.chooseSpellingLanguage
+                  : null,
+              onSpellingPressed: spellingSupported
+                  ? () => unawaited(_chooseDocumentSpellingLanguage())
+                  : null,
+            ),
         ],
       ),
     );
@@ -12372,7 +12647,15 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     }
   }
 
-  void _handleSourceChanged(String value, String? sourceFilePath) {
+  void _handleSourceChanged(
+    String? expectedBufferId,
+    String value,
+    String? sourceFilePath,
+  ) {
+    if (expectedBufferId == null ||
+        widget.state.activeBuffer?.id != expectedBufferId) {
+      return;
+    }
     final activePath = _activeEditorPath();
     if (sourceFilePath != null && sourceFilePath != activePath) {
       return;
@@ -12380,16 +12663,634 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     _clearWysiwygCache();
     ref
         .read(workspaceControllerProvider.notifier)
-        .updateActiveText(value, sourceFilePath: sourceFilePath ?? activePath);
+        .updateActiveText(
+          value,
+          sourceBufferId: expectedBufferId,
+          sourceFilePath: sourceFilePath ?? activePath,
+        );
+  }
+
+  void _scheduleSpelling(SpellingSessionInput input) {
+    if (_pendingSpellingInputIdentity == input.identity) return;
+    _pendingSpellingInputIdentity = input.identity;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || _pendingSpellingInputIdentity != input.identity) return;
+      _pendingSpellingInputIdentity = null;
+      final currentInput = input.withRichDocumentGeneration(
+        _wysiwygEditorKey.currentState?.spellingDocumentGeneration ??
+            input.richDocumentGeneration,
+      );
+      _currentSpellingInput = currentInput;
+      _spelling.update(currentInput);
+    });
+  }
+
+  Future<void> _openSpellingReview() async {
+    var input = _currentSpellingInput;
+    if (input == null) return;
+    if (input.buffer.editorState.spellingLanguage.kind ==
+        SpellingLanguageOverrideKind.disabled) {
+      if (!await _chooseDocumentSpellingLanguage()) return;
+      await WidgetsBinding.instance.endOfFrame;
+      if (!mounted) return;
+      input = _currentSpellingInput;
+      if (input == null) return;
+    }
+    await _spelling.checkNow(
+      input.withRichDocumentGeneration(
+        _wysiwygEditorKey.currentState?.spellingDocumentGeneration ??
+            input.richDocumentGeneration,
+      ),
+    );
+    if (!mounted) return;
+    final state = _spelling.state;
+    if (state.status == SpellingPresentationStatus.languageRequired) {
+      _spelling.endManualReview();
+      if (await _chooseDocumentSpellingLanguage()) {
+        await WidgetsBinding.instance.endOfFrame;
+        if (mounted) unawaited(_openSpellingReview());
+      }
+      return;
+    }
+    if (state.status == SpellingPresentationStatus.dictionaryUnavailable) {
+      BusyMarkToastOverlay.show(
+        context,
+        message: context.l10n.spellingDictionaryUnavailable,
+        priority: BusyMarkToastPriority.high,
+      );
+      _spelling.endManualReview();
+      return;
+    }
+    if (state.status == SpellingPresentationStatus.dictionaryNotInstalled) {
+      final languageId = state.message;
+      _spelling.endManualReview();
+      if (languageId != null &&
+          await _offerDocumentDictionaryInstall(languageId)) {
+        await WidgetsBinding.instance.endOfFrame;
+        if (mounted) unawaited(_openSpellingReview());
+      }
+      return;
+    }
+    if (state.status == SpellingPresentationStatus.failure) {
+      BusyMarkToastOverlay.show(
+        context,
+        message: context.l10n.spellingCheckFailed,
+        priority: BusyMarkToastPriority.high,
+      );
+      _spelling.endManualReview();
+      return;
+    }
+    if (!state.complete &&
+        state.status != SpellingPresentationStatus.checking) {
+      BusyMarkToastOverlay.show(
+        context,
+        message: context.l10n.spellingCheckIncomplete,
+        priority: BusyMarkToastPriority.high,
+      );
+      _spelling.endManualReview();
+      return;
+    }
+    if (state.occurrences.isEmpty && state.complete) {
+      BusyMarkToastOverlay.show(
+        context,
+        message: context.l10n.noSpellingErrors,
+      );
+      _spelling.endManualReview();
+      return;
+    }
+    var initialIndex = 0;
+    if (input.richDocument != null) {
+      initialIndex =
+          _wysiwygEditorKey.currentState?.spellingReviewStartIndex(
+            _spelling.misspellings,
+          ) ??
+          0;
+    } else {
+      final caret = _sourceEditorKey.currentState?.spellingCaretOffset ?? 0;
+      final afterCaret = _spelling.misspellings.indexWhere(
+        (occurrence) => (occurrence.sourceStart ?? -1) >= caret,
+      );
+      if (afterCaret >= 0) initialIndex = afterCaret;
+    }
+    var reopenForLanguage = false;
+    try {
+      if (_spelling.misspellings.isNotEmpty) {
+        _revealSpellingOccurrence(_spelling.misspellings[initialIndex]);
+      }
+      reopenForLanguage =
+          await showBusyMarkModalDialog<bool>(
+            context,
+            builder: (context) => BusyMarkSpellingReviewDialog(
+              spelling: _spelling,
+              initialIndex: initialIndex,
+              onReveal: _revealSpellingOccurrence,
+              onCorrect: _applySpellingCorrection,
+              onChooseLanguage: _chooseDocumentSpellingLanguage,
+            ),
+          ) ??
+          false;
+    } finally {
+      _spelling.endManualReview();
+      _restoreActiveEditorFocus();
+    }
+    if (reopenForLanguage) {
+      await WidgetsBinding.instance.endOfFrame;
+      if (mounted) unawaited(_openSpellingReview());
+    }
+  }
+
+  _SpellingBannerPresentation? _spellingBannerPresentation(
+    BuildContext context,
+  ) {
+    final state = _spelling.state;
+    switch (state.status) {
+      case SpellingPresentationStatus.languageRequired:
+        return null;
+      case SpellingPresentationStatus.dictionaryNotInstalled:
+        final languageId = state.message;
+        final resource = languageId == null
+            ? null
+            : _spelling.catalog?.availableById(languageId);
+        final installStatus = _spelling.dictionaryInstallStatus;
+        final installing =
+            resource != null &&
+            installStatus?.resourceId == resource.resourceId &&
+            installStatus?.phase != SpellingDictionaryInstallPhase.failed;
+        return _SpellingBannerPresentation(
+          title: resource == null
+              ? context.l10n.spellingDictionaryNotInstalled
+              : context.l10n.spellingDictionaryNotInstalledForLanguage(
+                  resource.label,
+                ),
+          actionLabel: context.l10n.installSpellingDictionary,
+          onAction: languageId == null || resource == null || installing
+              ? null
+              : () => unawaited(_installDocumentDictionary(languageId)),
+        );
+      case SpellingPresentationStatus.dictionaryUnavailable:
+        return _SpellingBannerPresentation(
+          title: context.l10n.spellingDictionaryUnavailable,
+          actionLabel: context.l10n.chooseSpellingLanguage,
+          onAction: () => unawaited(_chooseDocumentSpellingLanguage()),
+        );
+      case SpellingPresentationStatus.checking:
+      case SpellingPresentationStatus.ready:
+      case SpellingPresentationStatus.disabled:
+        return null;
+      case SpellingPresentationStatus.failure:
+        return _SpellingBannerPresentation(
+          title: context.l10n.spellingCheckFailed,
+        );
+      case SpellingPresentationStatus.incomplete:
+        return _SpellingBannerPresentation(
+          title: context.l10n.spellingCheckIncomplete,
+        );
+    }
+  }
+
+  String _spellingStatusLabel(
+    BuildContext context,
+    DocumentBuffer buffer,
+    AppSettings settings,
+  ) {
+    final override = buffer.editorState.spellingLanguage;
+    if (!settings.automaticSpelling ||
+        override.kind == SpellingLanguageOverrideKind.disabled) {
+      return context.l10n.spellingOffStatus;
+    }
+    final languageId = resolveSpellingLanguageId(
+      override: override,
+      projectLanguage: _spelling.projectWords.projectLanguage,
+      defaultLanguage: settings.defaultSpellingLanguage,
+    );
+    if (languageId == null) {
+      return context.l10n.spellingLanguageUnsetStatus;
+    }
+    return _spelling.catalog?.byId(languageId)?.label ?? languageId;
+  }
+
+  void _revealSpellingOccurrence(SpellingOccurrence occurrence) {
+    if (occurrence.run.target is SpellingSourceTarget) {
+      final sourceEditor = _sourceEditorKey.currentState;
+      if (sourceEditor != null) {
+        sourceEditor.revealSpellingOccurrence(occurrence);
+      } else {
+        unawaited(_revealSourceSpellingOccurrence(occurrence));
+      }
+    } else {
+      _wysiwygEditorKey.currentState?.revealSpellingOccurrence(occurrence);
+    }
+  }
+
+  Future<void> _revealSourceSpellingOccurrence(
+    SpellingOccurrence occurrence,
+  ) async {
+    final bufferId = occurrence.run.snapshot.bufferId;
+    await ref
+        .read(appSettingsControllerProvider.notifier)
+        .setDocumentViewMode(DocumentViewModePreference.source);
+    await WidgetsBinding.instance.endOfFrame;
+    if (!mounted ||
+        ref.read(workspaceControllerProvider).activeBuffer?.id != bufferId ||
+        !_spelling.isCurrent(occurrence)) {
+      return;
+    }
+    _sourceEditorKey.currentState?.revealSpellingOccurrence(occurrence);
+  }
+
+  Future<SpellingReviewCorrection?> _applySpellingCorrection(
+    SpellingOccurrence occurrence,
+    String suggestion,
+  ) async {
+    if (!_spelling.isCurrent(occurrence)) return null;
+    final sourceEditor = _sourceEditorKey.currentState;
+    final richEditor = _wysiwygEditorKey.currentState;
+    final source = occurrence.run.target is SpellingSourceTarget
+        ? sourceEditor?.spellingSourceSnapshot(occurrence)
+        : null;
+    final field = occurrence.run.target is SpellingSourceTarget
+        ? null
+        : richEditor?.spellingFieldSnapshot(occurrence);
+    if (source == null && field == null) return null;
+    try {
+      final prepared = await prepareSpellingCorrection(
+        occurrence: occurrence,
+        suggestion: suggestion,
+        source: source,
+        field: field,
+      );
+      if (!mounted || !_spelling.isCurrent(occurrence)) return null;
+      final beforeBuffer = ref.read(workspaceControllerProvider).activeBuffer;
+      if (beforeBuffer == null ||
+          beforeBuffer.id != occurrence.run.snapshot.bufferId ||
+          beforeBuffer.revision != occurrence.run.snapshot.contentRevision) {
+        return null;
+      }
+      final plan = prepared.plan;
+      final applied = occurrence.run.target is SpellingSourceTarget
+          ? sourceEditor?.applyPreparedSpellingCorrection(
+                  occurrence: occurrence,
+                  plan: plan,
+                  expectedSource: source!,
+                  replacementSource: prepared.replacementSource!,
+                ) ??
+                false
+          : richEditor?.applyPreparedSpellingCorrection(
+                  occurrence: occurrence,
+                  suggestion: suggestion,
+                  plan: plan,
+                  expectedFieldText: field!,
+                  preparedFieldText: prepared.replacementField,
+                ) ??
+                false;
+      if (!applied) return null;
+      final afterBuffer = ref.read(workspaceControllerProvider).activeBuffer;
+      if (afterBuffer == null ||
+          afterBuffer.id != beforeBuffer.id ||
+          afterBuffer.revision != beforeBuffer.revision + 1 ||
+          afterBuffer.text == beforeBuffer.text) {
+        return null;
+      }
+      final sourceStart = occurrence.sourceStart;
+      final sourceEnd = occurrence.sourceEnd;
+      if (sourceStart != null && sourceEnd != null) {
+        final committed = busyMarkMinimalSourceEdit(
+          beforeBuffer.text,
+          afterBuffer.text,
+        );
+        return SpellingReviewCorrection(
+          coordinateScope: _reviewCoordinateScope(occurrence),
+          start: committed.start,
+          oldEnd: committed.oldEnd,
+          newEnd: committed.newEnd,
+        );
+      }
+      final fieldStart = occurrence.fieldStart;
+      final fieldEnd = occurrence.fieldEnd;
+      if (fieldStart == null || fieldEnd == null) return null;
+      return SpellingReviewCorrection(
+        coordinateScope: _reviewCoordinateScope(occurrence),
+        start: fieldStart,
+        oldEnd: fieldEnd,
+        newEnd: plan.translateFieldOffset(fieldEnd),
+      );
+    } on Object {
+      return null;
+    }
+  }
+
+  void _restoreActiveEditorFocus() {
+    final input = _currentSpellingInput;
+    if (input?.richDocument != null) {
+      _wysiwygEditorKey.currentState?.restoreSpellingFocus();
+    } else {
+      _sourceEditorKey.currentState?.restoreSpellingFocus();
+    }
+  }
+
+  Future<List<BusyMarkEditorSpellingMenuItem>> _prepareSourceSpellingMenu(
+    int offset,
+  ) {
+    final occurrence = _spelling.occurrenceAtSource(offset);
+    return _prepareSpellingMenu(occurrence);
+  }
+
+  Future<List<BusyMarkEditorSpellingMenuItem>> _prepareRichSpellingMenu(
+    SpellingEditorTarget target,
+    int offset,
+  ) {
+    final occurrence = _spelling.occurrenceAtField(
+      target: target,
+      offset: offset,
+    );
+    return _prepareSpellingMenu(occurrence);
+  }
+
+  Future<List<BusyMarkEditorSpellingMenuItem>> _prepareSpellingMenu(
+    SpellingOccurrence? captured,
+  ) async {
+    if (captured == null) return const [];
+    List<String>? suggestions;
+    try {
+      suggestions = await _spelling.suggestions(captured);
+    } on Object {
+      suggestions = null;
+    }
+    if (!mounted || !_spelling.isCurrent(captured)) return const [];
+
+    void ifCurrent(VoidCallback action) {
+      if (_spelling.isCurrent(captured)) action();
+    }
+
+    return [
+      if (suggestions == null)
+        BusyMarkEditorSpellingMenuItem(
+          label: context.l10n.spellingWordCheckFailed,
+          onSelected: () {},
+          enabled: false,
+        )
+      else if (suggestions.isEmpty)
+        BusyMarkEditorSpellingMenuItem(
+          label: context.l10n.noSpellingSuggestions,
+          onSelected: () {},
+          enabled: false,
+        )
+      else
+        for (final suggestion in suggestions.take(8))
+          BusyMarkEditorSpellingMenuItem(
+            label: suggestion,
+            suggestion: true,
+            onSelected: () => ifCurrent(
+              () => unawaited(_applySpellingCorrection(captured, suggestion)),
+            ),
+          ),
+      BusyMarkEditorSpellingMenuItem(
+        label: context.l10n.ignoreSpellingOnce,
+        onSelected: () => ifCurrent(() => _spelling.ignoreOnce(captured)),
+      ),
+      BusyMarkEditorSpellingMenuItem(
+        label: context.l10n.ignoreSpellingDocument,
+        onSelected: () =>
+            ifCurrent(() => _spelling.ignoreAllInDocument(captured)),
+      ),
+      BusyMarkEditorSpellingMenuItem(
+        label: context.l10n.addPersonalSpellingWord,
+        onSelected: () => ifCurrent(
+          () => unawaited(_persistSpellingWord(captured, project: false)),
+        ),
+      ),
+      BusyMarkEditorSpellingMenuItem(
+        label: context.l10n.addProjectSpellingWord,
+        enabled: _spelling.hasProjectScope,
+        onSelected: () => ifCurrent(
+          () => unawaited(_persistSpellingWord(captured, project: true)),
+        ),
+      ),
+      _documentSpellingLanguageMenuItem(),
+    ];
+  }
+
+  BusyMarkEditorSpellingMenuItem _documentSpellingLanguageMenuItem() {
+    final buffer = ref.read(workspaceControllerProvider).activeBuffer;
+    final current = buffer?.editorState.spellingLanguage;
+    final entries = _spelling.catalog?.entries ?? const [];
+    BusyMarkEditorSpellingMenuItem choice(
+      String label,
+      SpellingLanguageOverride requested,
+    ) {
+      return BusyMarkEditorSpellingMenuItem(
+        label: label,
+        checked: current == requested,
+        mutuallyExclusive: true,
+        onSelected: () => unawaited(
+          _applyDocumentSpellingLanguage(
+            requested,
+            expectedBufferId: buffer?.id,
+          ),
+        ),
+      );
+    }
+
+    return BusyMarkEditorSpellingMenuItem.submenu(
+      label: context.l10n.chooseSpellingLanguage,
+      children: [
+        choice(
+          context.l10n.inheritSpellingLanguage,
+          const SpellingLanguageOverride.inherit(),
+        ),
+        choice(
+          context.l10n.disableDocumentSpelling,
+          const SpellingLanguageOverride.disabled(),
+        ),
+        if (entries.isNotEmpty) const BusyMarkEditorSpellingMenuItem.divider(),
+        for (final entry in entries)
+          choice(entry.label, SpellingLanguageOverride.selected(entry.id)),
+      ],
+    );
+  }
+
+  Future<void> _persistSpellingWord(
+    SpellingOccurrence occurrence, {
+    required bool project,
+  }) async {
+    try {
+      if (project) {
+        await _spelling.addProjectWord(occurrence);
+      } else {
+        await _spelling.addPersonalWord(occurrence);
+      }
+    } on Object catch (error) {
+      if (!mounted) return;
+      _showSpellingPersistenceFailure(context, error);
+    }
+  }
+
+  Future<bool> _chooseDocumentSpellingLanguage() async {
+    final initial = ref.read(workspaceControllerProvider).activeBuffer;
+    if (initial == null) return false;
+
+    await _spelling.prepareSettings(widget.state.workspace);
+    if (!mounted) return false;
+
+    final buffer = ref.read(workspaceControllerProvider).activeBuffer;
+    if (buffer == null || buffer.id != initial.id) return false;
+    final entries = _spelling.catalog?.entries ?? const [];
+    if (entries.isEmpty) return false;
+    final current = buffer.editorState.spellingLanguage;
+    Widget selectedIcon(SpellingLanguageOverride candidate) {
+      return candidate == current
+          ? const Icon(BusyMarkGlyphs.check, size: BusyMarkSizes.iconSm)
+          : const SizedBox(width: BusyMarkSizes.iconSm);
+    }
+
+    final selected = await showBusyMarkModalDialog<SpellingLanguageOverride>(
+      context,
+      builder: (dialogContext) => BusyMarkDialogShell(
+        title: dialogContext.l10n.chooseSpellingLanguage,
+        children: [
+          BusyMarkGroupedList(
+            filled: true,
+            children: [
+              BusyMarkActionRow(
+                title: dialogContext.l10n.inheritSpellingLanguage,
+                trailing: selectedIcon(
+                  const SpellingLanguageOverride.inherit(),
+                ),
+                onTap: () => Navigator.of(
+                  dialogContext,
+                ).pop(const SpellingLanguageOverride.inherit()),
+              ),
+              BusyMarkActionRow(
+                title: dialogContext.l10n.disableDocumentSpelling,
+                trailing: selectedIcon(
+                  const SpellingLanguageOverride.disabled(),
+                ),
+                onTap: () => Navigator.of(
+                  dialogContext,
+                ).pop(const SpellingLanguageOverride.disabled()),
+              ),
+              for (final entry in entries)
+                BusyMarkActionRow(
+                  title: entry.label,
+                  trailing: selectedIcon(
+                    SpellingLanguageOverride.selected(entry.id),
+                  ),
+                  onTap: () => Navigator.of(
+                    dialogContext,
+                  ).pop(SpellingLanguageOverride.selected(entry.id)),
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+    if (!mounted || selected == null) return false;
+    final applied = await _applyDocumentSpellingLanguage(
+      selected,
+      expectedBufferId: buffer.id,
+    );
+    return applied && selected.kind != SpellingLanguageOverrideKind.disabled;
+  }
+
+  Future<bool> _applyDocumentSpellingLanguage(
+    SpellingLanguageOverride requested, {
+    String? expectedBufferId,
+  }) async {
+    final buffer = ref.read(workspaceControllerProvider).activeBuffer;
+    if (buffer == null ||
+        (expectedBufferId != null && buffer.id != expectedBufferId)) {
+      return false;
+    }
+    final selectedLanguageId = requested.languageId;
+    if (requested.kind == SpellingLanguageOverrideKind.selected &&
+        selectedLanguageId != null &&
+        _spelling.catalog?.installedById(selectedLanguageId) == null &&
+        !await _offerDocumentDictionaryInstall(selectedLanguageId)) {
+      return false;
+    }
+    if (!mounted) return false;
+    final latest = ref.read(workspaceControllerProvider).activeBuffer;
+    if (latest == null || latest.id != buffer.id) return false;
+    ref
+        .read(workspaceControllerProvider.notifier)
+        .updateDocumentEditorState(
+          latest.id,
+          latest.editorState.copyWith(spellingLanguage: requested),
+        );
+    return true;
+  }
+
+  Future<bool> _offerDocumentDictionaryInstall(String languageId) async {
+    if (_spelling.catalog?.installedById(languageId) != null) return true;
+    final resource = _spelling.catalog?.availableById(languageId);
+    if (resource == null) return false;
+    if (_spelling.catalog?.installationForResource(resource.resourceId) !=
+        null) {
+      return true;
+    }
+    final mebibytes = resource.downloadSize / (1024 * 1024);
+    final size = mebibytes >= 10
+        ? '${mebibytes.toStringAsFixed(0)} MiB'
+        : '${mebibytes.toStringAsFixed(1)} MiB';
+    final accepted = await showBusyMarkModalDialog<bool>(
+      context,
+      builder: (dialogContext) => BusyMarkDialogShell(
+        title: dialogContext.l10n.spellingDictionaryNotInstalled,
+        actions: [
+          BusyMarkDialogButton(
+            label: dialogContext.l10n.cancel,
+            onPressed: () => Navigator.pop(dialogContext, false),
+          ),
+          BusyMarkDialogButton(
+            label: dialogContext.l10n.installSpellingDictionary,
+            suggested: true,
+            onPressed: () => Navigator.pop(dialogContext, true),
+          ),
+        ],
+        children: [
+          Text(
+            dialogContext.l10n.spellingDictionaryInstallPrompt(
+              resource.label,
+              size,
+            ),
+          ),
+        ],
+      ),
+    );
+    if (!mounted || accepted != true) return false;
+    return _installDocumentDictionary(languageId);
+  }
+
+  Future<bool> _installDocumentDictionary(String languageId) async {
+    if (_spelling.catalog?.installedById(languageId) != null) return true;
+    if (_spelling.catalog?.availableById(languageId) == null) return false;
+    try {
+      await _spelling.installDictionary(languageId);
+      return mounted && _spelling.catalog?.installedById(languageId) != null;
+    } on Object {
+      if (mounted) {
+        BusyMarkToastOverlay.show(
+          context,
+          message: context.l10n.spellingDictionaryInstallFailed,
+          priority: BusyMarkToastPriority.high,
+        );
+      }
+      return false;
+    }
   }
 
   void _handleTransactionalSourceChanged(
+    String? expectedBufferId,
     String value,
     String? sourceFilePath,
     TextSelection previousSelection,
     TextSelection selection,
     String? undoGroup,
   ) {
+    if (expectedBufferId == null ||
+        widget.state.activeBuffer?.id != expectedBufferId) {
+      return;
+    }
     final activePath = _activeEditorPath();
     if (sourceFilePath != null && sourceFilePath != activePath) {
       return;
@@ -12399,6 +13300,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
         .read(workspaceControllerProvider.notifier)
         .updateActiveSourceText(
           value,
+          sourceBufferId: expectedBufferId,
           sourceFilePath: sourceFilePath ?? activePath,
           previousSelection: previousSelection,
           selection: selection,
@@ -12407,11 +13309,14 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
   }
 
   void _handleWysiwygSourceChanged(
+    String? expectedBufferId,
     String filePath,
     String value, [
     String? undoGroup,
   ]) {
-    if (filePath != _activeEditorPath()) {
+    if (expectedBufferId == null ||
+        widget.state.activeBuffer?.id != expectedBufferId ||
+        filePath != _activeEditorPath()) {
       return;
     }
     final document = _cachedWysiwygDocument;
@@ -12419,32 +13324,114 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     if (document == null ||
         document.filePath != filePath ||
         document.source != value) {
-      controller.updateActiveText(value, sourceFilePath: filePath);
+      controller.updateActiveText(
+        value,
+        sourceBufferId: expectedBufferId,
+        sourceFilePath: filePath,
+      );
       return;
     }
     controller.updateActiveWysiwygText(
       value,
       document: document,
+      sourceBufferId: expectedBufferId,
       sourceFilePath: filePath,
       undoGroup: undoGroup,
     );
+    _cacheCommittedWysiwygDocument(expectedBufferId, document);
   }
 
-  void _cacheWysiwygDocument(BusyDocument document) {
+  void _handleWysiwygSpellingSourceChanged(
+    String? expectedBufferId,
+    String filePath,
+    String value,
+    WysiwygEditorSessionState beforeSession,
+    WysiwygEditorSessionState afterSession,
+  ) {
+    if (expectedBufferId == null ||
+        widget.state.activeBuffer?.id != expectedBufferId ||
+        filePath != _activeEditorPath()) {
+      return;
+    }
+    final document = _cachedWysiwygDocument;
+    final controller = ref.read(workspaceControllerProvider.notifier);
+    if (document == null ||
+        document.filePath != filePath ||
+        document.source != value) {
+      // A spelling transaction must retain its structured document and rich
+      // selections. Refuse a stale cache instead of taking the generic source
+      // path and losing that state.
+      return;
+    }
+    controller.updateActiveWysiwygText(
+      value,
+      document: document,
+      sourceBufferId: expectedBufferId,
+      sourceFilePath: filePath,
+      undoGroup: null,
+      previousWysiwygState: beforeSession,
+      wysiwygState: afterSession,
+    );
+    _cacheCommittedWysiwygDocument(expectedBufferId, document);
+  }
+
+  void _cacheCommittedWysiwygDocument(String bufferId, BusyDocument document) {
+    final committed = ref.read(workspaceControllerProvider).activeBuffer;
+    if (committed == null || committed.id != bufferId) return;
+    // Workspace final-newline policy can change the emitted Markdown. Rebind
+    // the live tree to that committed source, retaining its editor block IDs.
+    // Reparsing here would give spelling targets IDs the mounted editor never
+    // adopted while handling its own synchronous edit.
+    _cacheWysiwygDocument(bufferId, document.copyWith(source: committed.text));
+  }
+
+  void _translateSpellingAnchors(
+    String value, {
+    String? previousText,
+    String? bufferId,
+  }) {
+    final buffer = ref.read(workspaceControllerProvider).activeBuffer;
+    if (buffer == null && (previousText == null || bufferId == null)) return;
+    final previous = previousText ?? buffer!.text;
+    final resolvedBufferId = bufferId ?? buffer!.id;
+    if (previous == value) return;
+    final committed = busyMarkMinimalSourceEdit(previous, value);
+    _spelling.translateSourceEdit(
+      bufferId: resolvedBufferId,
+      start: committed.start,
+      oldEnd: committed.oldEnd,
+      newEnd: committed.newEnd,
+    );
+  }
+
+  void _cacheWysiwygDocument(String? expectedBufferId, BusyDocument document) {
+    final workspace = widget.state.workspace;
+    final buffer = widget.state.activeBuffer;
+    if (workspace == null || buffer == null || buffer.id != expectedBufferId) {
+      return;
+    }
+    final context = resolveWorkspaceDocumentContext(workspace, buffer);
     _cachedWysiwygDocument = document;
+    _cachedWysiwygBufferId = buffer.id;
     _cachedWysiwygPath = document.filePath;
     _cachedWysiwygSource = document.source;
+    _cachedWysiwygMode = context.markdownMode;
   }
 
   void _clearWysiwygCache() {
     _cachedWysiwygDocument = null;
+    _cachedWysiwygBufferId = null;
     _cachedWysiwygPath = null;
     _cachedWysiwygSource = null;
+    _cachedWysiwygMode = null;
   }
 
   String? _activeEditorPath() {
     final workspace = widget.state.workspace;
-    return workspace?.activeFilePath ?? workspace?.markdown?.filePath;
+    final buffer = widget.state.activeBuffer;
+    return workspace == null || buffer == null
+        ? null
+        : resolveWorkspaceDocumentContext(workspace, buffer).parserPath;
   }
 
   SourceSyntaxLanguage _sourceSyntaxLanguage(Workspace? workspace) {
@@ -12463,6 +13450,31 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
       DocumentKind.unknown ||
       null => SourceSyntaxLanguage.plain,
     };
+  }
+
+  SourceDocumentFormat _sourceDocumentFormat(Workspace? workspace) {
+    return switch (_activeDocumentKind(workspace)) {
+      DocumentKind.markdown ||
+      DocumentKind.writersideMarkdownTopic => SourceDocumentFormat.markdown,
+      DocumentKind.writersideXmlTopic =>
+        SourceDocumentFormat.writersideXmlTopic,
+      DocumentKind.tree ||
+      DocumentKind.config ||
+      DocumentKind.variables ||
+      DocumentKind.categories => SourceDocumentFormat.genericXml,
+      DocumentKind.gitIgnore ||
+      DocumentKind.resource ||
+      DocumentKind.unknown ||
+      DocumentKind.image ||
+      null => SourceDocumentFormat.plainText,
+    };
+  }
+
+  MarkdownMode _sourceMarkdownMode(Workspace? workspace) {
+    final buffer = widget.state.activeBuffer;
+    return workspace == null || buffer == null
+        ? MarkdownMode.commonMark
+        : resolveWorkspaceDocumentContext(workspace, buffer).markdownMode;
   }
 
   Future<void> _handleSymbolAction(
@@ -12613,10 +13625,11 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
   }
 
   DocumentKind? _activeDocumentKind(Workspace? workspace) {
-    if (workspace == null) {
+    final buffer = widget.state.activeBuffer;
+    if (workspace == null || buffer == null) {
       return null;
     }
-    return _activeWorkspaceDocumentKind(workspace);
+    return resolveWorkspaceDocumentContext(workspace, buffer).kind;
   }
 
   void _scrollToOutlineTarget(_OutlineNavigationTarget target) {
@@ -12644,8 +13657,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
           ref.read(_searchNavigationTargetProvider)?.request !=
               target.request ||
           _lastSearchNavigationRequest == target.request ||
-          (target.filePath != widget.state.workspace?.activeFilePath &&
-              target.filePath != widget.state.workspace?.markdown?.filePath)) {
+          target.filePath != widget.state.activeBuffer?.filePath) {
         return;
       }
       _lastSearchNavigationRequest = target.request;
@@ -12899,44 +13911,49 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
 
   BusyDocument? _wysiwygDocument() {
     final workspace = widget.state.workspace;
-    final activePath =
-        workspace?.activeFilePath ?? workspace?.markdown?.filePath;
-    if (workspace == null || activePath == null) {
+    final buffer = widget.state.activeBuffer;
+    if (workspace == null || buffer == null) {
       return null;
     }
-    if (_cachedWysiwygPath == activePath &&
-        _cachedWysiwygSource == widget.state.activeText) {
+    final context = resolveWorkspaceDocumentContext(workspace, buffer);
+    final activePath = context.parserPath;
+    if (_cachedWysiwygBufferId == buffer.id &&
+        _cachedWysiwygPath == activePath &&
+        _cachedWysiwygSource == buffer.text &&
+        _cachedWysiwygMode == context.markdownMode) {
       return _cachedWysiwygDocument;
     }
     final currentMarkdown = workspace.markdown;
     if (currentMarkdown != null &&
         p.equals(currentMarkdown.filePath, activePath) &&
-        currentMarkdown.source == widget.state.activeText) {
+        currentMarkdown.source == buffer.text &&
+        currentMarkdown.mode == context.markdownMode) {
       final document = currentMarkdown.busyDocument;
       _cachedWysiwygDocument = document;
+      _cachedWysiwygBufferId = buffer.id;
       _cachedWysiwygPath = activePath;
-      _cachedWysiwygSource = widget.state.activeText;
+      _cachedWysiwygSource = buffer.text;
+      _cachedWysiwygMode = context.markdownMode;
       return document;
     }
-    final mode = workspace.kind == WorkspaceKind.writersideModule
-        ? MarkdownMode.writersideMarkdown
-        : MarkdownMode.commonMark;
     try {
       final document = const MarkdownParser()
           .parse(
             filePath: activePath,
-            source: widget.state.activeText,
-            mode: mode,
+            source: buffer.text,
+            mode: context.markdownMode,
             workspaceRoot: workspace.rootPath,
             validateLocalReferences: false,
           )
           .busyDocument;
       _cachedWysiwygDocument = document;
+      _cachedWysiwygBufferId = buffer.id;
       _cachedWysiwygPath = activePath;
-      _cachedWysiwygSource = widget.state.activeText;
+      _cachedWysiwygSource = buffer.text;
+      _cachedWysiwygMode = context.markdownMode;
       return document;
     } on Object {
-      return workspace.markdown?.busyDocument;
+      return null;
     }
   }
 }
@@ -14532,8 +15549,7 @@ String? _imageWorkspaceRoot(Workspace? workspace) {
   if (module == null) {
     return workspace.rootPath;
   }
-  final activeFilePath =
-      workspace.activeFilePath ?? workspace.markdown?.filePath;
+  final activeFilePath = workspace.activeFilePath;
   if (activeFilePath == null) {
     return null;
   }
@@ -15207,7 +16223,7 @@ void _navigatePreviewAnchor(
   }
   final state = ref.read(workspaceControllerProvider);
   final workspace = state.workspace;
-  final activePath = workspace?.activeFilePath ?? workspace?.markdown?.filePath;
+  final activePath = state.activeBuffer?.filePath;
   if (workspace == null || activePath != filePath) {
     return;
   }
@@ -15246,6 +16262,7 @@ void _navigatePreviewAnchor(
       .set(
         _OutlineNavigationTarget(
           workspaceId: workspace.id,
+          bufferId: state.activeBufferId ?? '',
           filePath: workspace.activeFilePath,
           headingId: heading?.id ?? element!.attributes['id']!,
           line: heading?.sourceStartLine ?? element?.sourceStartLine,
@@ -15506,6 +16523,643 @@ class _SearchSidebar extends StatelessWidget {
     );
   }
 }
+
+@visibleForTesting
+final class SpellingReviewCorrection {
+  const SpellingReviewCorrection({
+    required this.coordinateScope,
+    required this.start,
+    required this.oldEnd,
+    required this.newEnd,
+  });
+
+  final String coordinateScope;
+  final int start;
+  final int oldEnd;
+  final int newEnd;
+}
+
+/// Returns the one bounding edit that transforms [before] into [after].
+///
+/// Review anchors deliberately use the source committed by the editor rather
+/// than the narrower edit that was planned before rich serialization.
+@visibleForTesting
+({int start, int oldEnd, int newEnd}) busyMarkMinimalSourceEdit(
+  String before,
+  String after,
+) {
+  final sharedLength = math.min(before.length, after.length);
+  var start = 0;
+  while (start < sharedLength &&
+      before.codeUnitAt(start) == after.codeUnitAt(start)) {
+    start++;
+  }
+  var oldEnd = before.length;
+  var newEnd = after.length;
+  while (oldEnd > start &&
+      newEnd > start &&
+      before.codeUnitAt(oldEnd - 1) == after.codeUnitAt(newEnd - 1)) {
+    oldEnd--;
+    newEnd--;
+  }
+  return (start: start, oldEnd: oldEnd, newEnd: newEnd);
+}
+
+@visibleForTesting
+class BusyMarkSpellingReviewDialog extends StatefulWidget {
+  const BusyMarkSpellingReviewDialog({
+    required this.spelling,
+    required this.initialIndex,
+    required this.onReveal,
+    required this.onCorrect,
+    required this.onChooseLanguage,
+  });
+
+  final SpellingSessionController spelling;
+  final int initialIndex;
+  final ValueChanged<SpellingOccurrence> onReveal;
+  final Future<SpellingReviewCorrection?> Function(
+    SpellingOccurrence occurrence,
+    String suggestion,
+  )
+  onCorrect;
+  final Future<bool> Function() onChooseLanguage;
+
+  @override
+  State<BusyMarkSpellingReviewDialog> createState() =>
+      _SpellingReviewDialogState();
+}
+
+class _SpellingReviewDialogState extends State<BusyMarkSpellingReviewDialog> {
+  late int _index = widget.initialIndex;
+  final List<_SpellingReviewVisit> _visited = [];
+  String? _currentOccurrenceId;
+  int? _advanceAnchor;
+  String? _advanceScope;
+  String? _bufferId;
+  bool _actionInProgress = false;
+  bool _closing = false;
+  final _dialogFocus = FocusNode(debugLabel: 'Spelling review dialog');
+  String? _suggestionOccurrenceId;
+  Future<List<String>>? _suggestions;
+
+  List<SpellingOccurrence> get _occurrences {
+    final result = widget.spelling.misspellings
+        .where(
+          (occurrence) =>
+              widget.spelling.isCurrent(occurrence) &&
+              (_bufferId == null ||
+                  occurrence.run.snapshot.bufferId == _bufferId),
+        )
+        .toList(growable: false);
+    final originalOrder = {
+      for (final (index, occurrence) in result.indexed) occurrence: index,
+    };
+    result.sort((left, right) {
+      final leftSource = left.sourceStart;
+      final rightSource = right.sourceStart;
+      if (leftSource != null && rightSource != null) {
+        return leftSource.compareTo(rightSource);
+      }
+      return originalOrder[left]!.compareTo(originalOrder[right]!);
+    });
+    return result;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _bufferId = widget.spelling.misspellings.firstOrNull?.run.snapshot.bufferId;
+    final occurrences = _occurrences;
+    if (occurrences.isNotEmpty) {
+      _index = _index.clamp(0, occurrences.length - 1).toInt();
+      _currentOccurrenceId = occurrences[_index].id;
+    }
+    widget.spelling.addListener(_handleSpellingChanged);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _dialogFocus.requestFocus();
+    });
+  }
+
+  @override
+  void dispose() {
+    widget.spelling.removeListener(_handleSpellingChanged);
+    _dialogFocus.dispose();
+    super.dispose();
+  }
+
+  void _handleSpellingChanged() {
+    if (!mounted || _closing) return;
+    final occurrences = _occurrences;
+    final state = widget.spelling.state;
+    if (_actionInProgress) {
+      setState(() {});
+      return;
+    }
+    if (state.status == SpellingPresentationStatus.ready && state.complete) {
+      if (occurrences.isEmpty) {
+        _requestClose();
+        return;
+      }
+      final current = occurrences.indexWhere(
+        (occurrence) => occurrence.id == _currentOccurrenceId,
+      );
+      if (current >= 0) {
+        _index = current;
+      } else if (!_selectNextUnvisited(occurrences)) {
+        _requestClose();
+        return;
+      }
+    }
+    final occurrence = _selectedOccurrence(occurrences);
+    if (_suggestionOccurrenceId != occurrence?.id) {
+      _suggestionOccurrenceId = null;
+      _suggestions = null;
+    }
+    setState(() {});
+  }
+
+  void _move(int delta) {
+    if (_closing || _actionInProgress) return;
+    final occurrences = _occurrences;
+    if (occurrences.isEmpty) return;
+    final current = _selectedOccurrence(occurrences);
+    if (current == null) return;
+    if (delta > 0) _recordVisited(current);
+    if (delta > 0) {
+      if (!_selectNextUnvisited(occurrences)) {
+        _requestClose();
+        return;
+      }
+    } else {
+      _index = (_index - 1) % occurrences.length;
+      if (_index < 0) _index += occurrences.length;
+      _currentOccurrenceId = occurrences[_index].id;
+    }
+    setState(() {
+      _suggestionOccurrenceId = null;
+      _suggestions = null;
+    });
+    widget.onReveal(occurrences[_index]);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && !_closing) _dialogFocus.requestFocus();
+    });
+  }
+
+  void _requestClose({bool reopenForLanguage = false}) {
+    if (!mounted || _closing) return;
+    _closing = true;
+    Navigator.of(context).pop(reopenForLanguage ? true : null);
+  }
+
+  void _finishRemovedOccurrence(SpellingOccurrence removed) {
+    _recordVisited(removed);
+    final occurrences = _occurrences;
+    if (occurrences.isEmpty) {
+      final state = widget.spelling.state;
+      if (state.status == SpellingPresentationStatus.ready && state.complete) {
+        _requestClose();
+        return;
+      }
+      setState(() {});
+      return;
+    }
+    if (!_selectNextUnvisited(occurrences)) {
+      _requestClose();
+      return;
+    }
+    widget.onReveal(occurrences[_index]);
+    setState(() {
+      _suggestionOccurrenceId = null;
+      _suggestions = null;
+    });
+  }
+
+  void _recordVisited(SpellingOccurrence occurrence) {
+    final visit = _SpellingReviewVisit.fromOccurrence(occurrence);
+    if (!_visited.any((candidate) => candidate.matches(occurrence))) {
+      _visited.add(visit);
+    }
+    _advanceAnchor = _reviewCoordinateEnd(occurrence);
+    _advanceScope = _reviewCoordinateScope(occurrence);
+    _currentOccurrenceId = null;
+  }
+
+  SpellingOccurrence? _selectedOccurrence(
+    List<SpellingOccurrence> occurrences,
+  ) {
+    if (occurrences.isEmpty) return null;
+    final selected = occurrences.indexWhere(
+      (occurrence) => occurrence.id == _currentOccurrenceId,
+    );
+    if (selected < 0) return null;
+    _index = selected;
+    return occurrences[selected];
+  }
+
+  void _translateReviewState(SpellingReviewCorrection correction) {
+    final delta = correction.newEnd - correction.oldEnd;
+    _visited.removeWhere(
+      (visit) =>
+          visit.coordinateScope == correction.coordinateScope &&
+          visit.offset >= correction.start &&
+          visit.offset < correction.oldEnd,
+    );
+    for (final visit in _visited) {
+      if (visit.coordinateScope == correction.coordinateScope &&
+          visit.offset >= correction.oldEnd) {
+        visit.offset += delta;
+      }
+    }
+    if (_advanceScope == correction.coordinateScope &&
+        _advanceAnchor != null &&
+        _advanceAnchor! >= correction.oldEnd) {
+      _advanceAnchor = _advanceAnchor! + delta;
+    }
+  }
+
+  bool _selectNextUnvisited(List<SpellingOccurrence> occurrences) {
+    final anchor = _advanceAnchor;
+    final candidates = <int>[
+      for (var index = 0; index < occurrences.length; index++)
+        if (!_visited.any((visit) => visit.matches(occurrences[index]))) index,
+    ];
+    if (candidates.isEmpty) return false;
+    _index = anchor == null
+        ? candidates.first
+        : candidates.firstWhere(
+            (index) =>
+                _reviewCoordinateScope(occurrences[index]) == _advanceScope &&
+                _reviewCoordinateStart(occurrences[index]) >= anchor,
+            orElse: () => candidates.first,
+          );
+    _currentOccurrenceId = occurrences[_index].id;
+    widget.onReveal(occurrences[_index]);
+    return true;
+  }
+
+  Future<List<String>> _suggestionsFor(SpellingOccurrence occurrence) {
+    if (_suggestionOccurrenceId != occurrence.id || _suggestions == null) {
+      _suggestionOccurrenceId = occurrence.id;
+      _suggestions = widget.spelling.suggestions(occurrence);
+    }
+    return _suggestions!;
+  }
+
+  void _ignore(
+    SpellingOccurrence occurrence,
+    void Function(SpellingOccurrence occurrence) action,
+  ) {
+    if (_closing ||
+        _actionInProgress ||
+        !widget.spelling.isCurrent(occurrence)) {
+      return;
+    }
+    setState(() => _actionInProgress = true);
+    action(occurrence);
+    if (!mounted || _closing) return;
+    final removed = !widget.spelling.isCurrent(occurrence);
+    _actionInProgress = false;
+    if (removed) {
+      _finishRemovedOccurrence(occurrence);
+    } else {
+      setState(() {});
+    }
+  }
+
+  Future<void> _persist(
+    Future<void> Function(SpellingOccurrence occurrence) action,
+    SpellingOccurrence occurrence,
+  ) async {
+    if (_closing || _actionInProgress) return;
+    setState(() => _actionInProgress = true);
+    try {
+      await action(occurrence);
+      if (mounted && !_closing) {
+        _actionInProgress = false;
+        _finishRemovedOccurrence(occurrence);
+      }
+    } on Object catch (error) {
+      if (!mounted || _closing) return;
+      _actionInProgress = false;
+      _reconcileFailedAction(occurrence);
+      _showSpellingPersistenceFailure(context, error);
+    }
+  }
+
+  void _reconcileFailedAction(SpellingOccurrence failed) {
+    final occurrences = _occurrences;
+    final failedScope = _reviewCoordinateScope(failed);
+    final failedStart = _reviewCoordinateStart(failed);
+    final equivalent = occurrences.indexWhere(
+      (occurrence) =>
+          _reviewCoordinateScope(occurrence) == failedScope &&
+          _reviewCoordinateStart(occurrence) == failedStart &&
+          occurrence.word == failed.word,
+    );
+    if (equivalent >= 0) {
+      _index = equivalent;
+      _currentOccurrenceId = occurrences[equivalent].id;
+    } else if (occurrences.isNotEmpty) {
+      _selectNextUnvisited(occurrences);
+    }
+    _suggestionOccurrenceId = null;
+    _suggestions = null;
+    setState(() {});
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final occurrences = _occurrences;
+    final state = widget.spelling.state;
+    final occurrence = _selectedOccurrence(occurrences);
+    return Focus(
+      focusNode: _dialogFocus,
+      autofocus: true,
+      onKeyEvent: (_, event) {
+        if (event is KeyDownEvent &&
+            event.logicalKey == LogicalKeyboardKey.escape) {
+          _requestClose();
+          return KeyEventResult.handled;
+        }
+        return KeyEventResult.ignored;
+      },
+      child: AlertDialog(
+        title: Text(context.l10n.checkSpelling),
+        content: SizedBox(
+          width: 480,
+          child: occurrence == null
+              ? Padding(
+                  padding: const EdgeInsets.all(BusyMarkSpacing.lg),
+                  child: state.status == SpellingPresentationStatus.checking
+                      ? Center(
+                          child: Semantics(
+                            label: context.l10n.spellingChecking,
+                            child: const CircularProgressIndicator(),
+                          ),
+                        )
+                      : Text(_spellingEmptyStateMessage(context, state)),
+                )
+              : Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Semantics(
+                      liveRegion: true,
+                      child: Text(
+                        occurrence.word,
+                        style: Theme.of(context).textTheme.headlineSmall,
+                      ),
+                    ),
+                    const SizedBox(height: BusyMarkSpacing.xs),
+                    Text(
+                      _spellingContext(occurrence),
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: BusyMarkSpacing.md),
+                    FutureBuilder<List<String>>(
+                      future: _suggestionsFor(occurrence),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState != ConnectionState.done) {
+                          return const Center(
+                            child: CircularProgressIndicator(),
+                          );
+                        }
+                        if (snapshot.hasError) {
+                          return Text(context.l10n.spellingWordCheckFailed);
+                        }
+                        final suggestions = snapshot.data ?? const [];
+                        if (suggestions.isEmpty) {
+                          return Text(context.l10n.noSpellingSuggestions);
+                        }
+                        return Wrap(
+                          spacing: BusyMarkSpacing.sm,
+                          runSpacing: BusyMarkSpacing.sm,
+                          children: [
+                            for (final suggestion in suggestions.take(8))
+                              BusyMarkPushButton.standard(
+                                onPressed: _actionInProgress || _closing
+                                    ? null
+                                    : () async {
+                                        setState(
+                                          () => _actionInProgress = true,
+                                        );
+                                        final correction = await widget
+                                            .onCorrect(occurrence, suggestion);
+                                        if (!mounted || _closing) return;
+                                        _actionInProgress = false;
+                                        if (correction != null) {
+                                          _recordVisited(occurrence);
+                                          _translateReviewState(correction);
+                                          _suggestionOccurrenceId = null;
+                                          _suggestions = null;
+                                          final occurrences = _occurrences;
+                                          if (occurrences.isEmpty) {
+                                            final state = widget.spelling.state;
+                                            if (state.status ==
+                                                    SpellingPresentationStatus
+                                                        .ready &&
+                                                state.complete) {
+                                              _requestClose();
+                                              return;
+                                            }
+                                          } else if (!_selectNextUnvisited(
+                                            occurrences,
+                                          )) {
+                                            _requestClose();
+                                            return;
+                                          }
+                                        }
+                                        setState(() {});
+                                      },
+                                child: Text(suggestion),
+                              ),
+                          ],
+                        );
+                      },
+                    ),
+                    const SizedBox(height: BusyMarkSpacing.md),
+                    Wrap(
+                      spacing: BusyMarkSpacing.sm,
+                      runSpacing: BusyMarkSpacing.sm,
+                      children: [
+                        TextButton(
+                          onPressed: _actionInProgress || _closing
+                              ? null
+                              : () => _ignore(
+                                  occurrence,
+                                  widget.spelling.ignoreOnce,
+                                ),
+                          child: Text(context.l10n.ignoreSpellingOnce),
+                        ),
+                        TextButton(
+                          onPressed: _actionInProgress || _closing
+                              ? null
+                              : () => _ignore(
+                                  occurrence,
+                                  widget.spelling.ignoreAllInDocument,
+                                ),
+                          child: Text(context.l10n.ignoreSpellingDocument),
+                        ),
+                        TextButton(
+                          onPressed: _actionInProgress || _closing
+                              ? null
+                              : () => unawaited(
+                                  _persist(
+                                    widget.spelling.addPersonalWord,
+                                    occurrence,
+                                  ),
+                                ),
+                          child: Text(context.l10n.addPersonalSpellingWord),
+                        ),
+                        TextButton(
+                          onPressed:
+                              widget.spelling.hasProjectScope &&
+                                  !_actionInProgress &&
+                                  !_closing
+                              ? () => unawaited(
+                                  _persist(
+                                    widget.spelling.addProjectWord,
+                                    occurrence,
+                                  ),
+                                )
+                              : null,
+                          child: Text(context.l10n.addProjectSpellingWord),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+        ),
+        actions: [
+          if (occurrence != null) ...[
+            TextButton(
+              onPressed: _actionInProgress || _closing
+                  ? null
+                  : () async {
+                      setState(() => _actionInProgress = true);
+                      final selected = await widget.onChooseLanguage();
+                      if (!mounted || _closing) return;
+                      _actionInProgress = false;
+                      if (selected) {
+                        _requestClose(reopenForLanguage: true);
+                      } else {
+                        _handleSpellingChanged();
+                      }
+                    },
+              child: Text(context.l10n.chooseSpellingLanguage),
+            ),
+            TextButton(
+              onPressed: _actionInProgress || _closing ? null : () => _move(-1),
+              child: Text(context.l10n.sourceSearchPreviousMatch),
+            ),
+            TextButton(
+              onPressed: _actionInProgress || _closing ? null : () => _move(1),
+              child: Text(context.l10n.sourceSearchNextMatch),
+            ),
+          ],
+          TextButton(
+            autofocus: true,
+            onPressed: _closing ? null : _requestClose,
+            child: Text(context.l10n.close),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+void _showSpellingPersistenceFailure(BuildContext context, Object error) {
+  if (error is AtomicFileChangedException && error.recoveryPath != null) {
+    final recoveryPath = error.recoveryPath!;
+    BusyMarkToastOverlay.show(
+      context,
+      message: context.l10n.spellingDictionaryRecoveryConflict,
+      actionLabel: context.l10n.copyPath,
+      onAction: () =>
+          unawaited(Clipboard.setData(ClipboardData(text: recoveryPath))),
+      duration: Duration.zero,
+      priority: BusyMarkToastPriority.high,
+    );
+    return;
+  }
+  BusyMarkToastOverlay.show(
+    context,
+    message: context.l10n.commandUnavailableInContext,
+    priority: BusyMarkToastPriority.high,
+  );
+}
+
+String _spellingContext(SpellingOccurrence occurrence) {
+  final text = occurrence.run.text;
+  final start = math.max(0, occurrence.logicalStart - 40);
+  final end = math.min(text.length, occurrence.logicalEnd + 40);
+  return text.substring(start, end).replaceAll(RegExp(r'\s+'), ' ').trim();
+}
+
+String _reviewTargetIdentity(SpellingOccurrence occurrence) =>
+    switch (occurrence.run.target) {
+      SpellingSourceTarget(:final filePath) => 'source:$filePath',
+      SpellingRichBlockTarget(:final blockId) => 'block:$blockId',
+      SpellingRichTableCellTarget(:final tableBlockId, :final cellId) =>
+        'cell:$tableBlockId:$cellId',
+    };
+
+String _reviewCoordinateScope(SpellingOccurrence occurrence) =>
+    occurrence.sourceStart != null && occurrence.sourceEnd != null
+    ? 'document:${occurrence.run.snapshot.bufferId}'
+    : 'field:${_reviewTargetIdentity(occurrence)}';
+
+int _reviewCoordinateStart(SpellingOccurrence occurrence) =>
+    occurrence.sourceStart ?? occurrence.fieldStart ?? -1;
+
+int? _reviewCoordinateEnd(SpellingOccurrence occurrence) =>
+    occurrence.sourceEnd ?? occurrence.fieldEnd;
+
+final class _SpellingReviewVisit {
+  _SpellingReviewVisit({
+    required this.coordinateScope,
+    required this.offset,
+    required this.word,
+  });
+
+  factory _SpellingReviewVisit.fromOccurrence(SpellingOccurrence occurrence) =>
+      _SpellingReviewVisit(
+        coordinateScope: _reviewCoordinateScope(occurrence),
+        offset: _reviewCoordinateStart(occurrence),
+        word: occurrence.word,
+      );
+
+  final String coordinateScope;
+  int offset;
+  final String word;
+
+  bool matches(SpellingOccurrence occurrence) =>
+      coordinateScope == _reviewCoordinateScope(occurrence) &&
+      offset == _reviewCoordinateStart(occurrence) &&
+      word == occurrence.word;
+}
+
+String _spellingEmptyStateMessage(
+  BuildContext context,
+  SpellingPresentationState state,
+) => switch (state.status) {
+  SpellingPresentationStatus.ready when state.complete =>
+    context.l10n.noSpellingErrors,
+  SpellingPresentationStatus.failure => context.l10n.spellingCheckFailed,
+  SpellingPresentationStatus.incomplete => context.l10n.spellingCheckIncomplete,
+  SpellingPresentationStatus.dictionaryNotInstalled =>
+    context.l10n.spellingDictionaryNotInstalled,
+  SpellingPresentationStatus.dictionaryUnavailable =>
+    context.l10n.spellingDictionaryUnavailable,
+  SpellingPresentationStatus.languageRequired =>
+    context.l10n.chooseSpellingLanguage,
+  SpellingPresentationStatus.disabled =>
+    context.l10n.commandUnavailableInContext,
+  SpellingPresentationStatus.checking => context.l10n.spellingChecking,
+  SpellingPresentationStatus.ready => context.l10n.spellingCheckIncomplete,
+};
 
 class _WorkspaceReplacementProgress extends StatefulWidget {
   const _WorkspaceReplacementProgress({
@@ -15935,8 +17589,7 @@ Future<_WorkspaceSearchOutcome> _loadWorkspaceSearchMatches(
     String? text;
     if (buffer != null) {
       text = buffer.text;
-    } else if (file.absolutePath ==
-        (workspace.activeFilePath ?? workspace.markdown?.filePath)) {
+    } else if (file.absolutePath == state.activeBuffer?.filePath) {
       text = state.activeText;
     } else if (file.size > _maxWorkspaceSearchFileBytes) {
       skippedFiles.add(file.relativePath);
@@ -16219,22 +17872,6 @@ class _DiagnosticRow extends ConsumerWidget {
       ),
     );
   }
-}
-
-DocumentKind? _activeWorkspaceDocumentKind(Workspace workspace) {
-  final activePath = workspace.activeFilePath ?? workspace.markdown?.filePath;
-  if (activePath == null) {
-    return null;
-  }
-  for (final file in workspace.files) {
-    if (file.absolutePath == activePath) {
-      return file.kind;
-    }
-  }
-  return workspace.kind == WorkspaceKind.untitledMarkdown ||
-          workspace.kind == WorkspaceKind.singleMarkdown
-      ? DocumentKind.markdown
-      : null;
 }
 
 IconData _diagnosticIconForSeverity(DiagnosticSeverity severity) {

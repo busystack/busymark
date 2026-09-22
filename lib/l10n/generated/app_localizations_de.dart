@@ -965,6 +965,10 @@ class AppLocalizationsDe extends AppLocalizations {
   String get wordWrap => 'Zeilenumbruch';
 
   @override
+  String get wordWrapDescription =>
+      'Lange Zeilen an die Breite des Editors anpassen, anstatt horizontal zu scrollen.';
+
+  @override
   String get editorFontSize => 'Schriftgröße des Editors';
 
   @override
@@ -1020,6 +1024,28 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get clearGitWorkspaceTrustDescription =>
       'Vor dem Aktivieren von Git-Funktionen für zuvor vertrauenswürdige Arbeitsbereiche nachfragen.';
+
+  @override
+  String get settingsEditingButtonsSectionTitle => 'Bearbeitungsschaltflächen';
+
+  @override
+  String get spellingDictionaries => 'Rechtschreibwörterbücher';
+
+  @override
+  String get spellingDictionariesDescription =>
+      'Rechtschreibwörterbücher installieren und verwalten';
+
+  @override
+  String get settingsDictionariesSectionTitle => 'Wörterbücher';
+
+  @override
+  String get availableSpellingDictionaries => 'Verfügbare Wörterbücher';
+
+  @override
+  String get customSpellingDictionaries => 'Benutzerdefinierte Wörterbücher';
+
+  @override
+  String get spellingDictionaryProblems => 'Wörterbuchprobleme';
 
   @override
   String get settingsWindowSectionTitle => 'Fenster';
@@ -4531,7 +4557,132 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
+  String get spelling => 'Rechtschreibung';
+
+  @override
+  String get automaticSpelling => 'Automatische Rechtschreibprüfung';
+
+  @override
+  String get defaultSpellingLanguage => 'Standardsprache für Rechtschreibung';
+
+  @override
+  String get projectSpellingLanguage => 'Projektsprache für Rechtschreibung';
+
+  @override
+  String get chooseSpellingLanguage => 'Rechtschreibsprache auswählen';
+
+  @override
+  String get spellingLanguageUnsetStatus => 'Sprache…';
+
+  @override
+  String get spellingOffStatus => 'Rechtschreibung aus';
+
+  @override
+  String get checkSpelling => 'Rechtschreibung prüfen';
+
+  @override
+  String get ignoreSpellingOnce => 'Einmal ignorieren';
+
+  @override
+  String get ignoreSpellingDocument => 'Alle in diesem Dokument ignorieren';
+
+  @override
+  String get addPersonalSpellingWord =>
+      'Zum persönlichen Wörterbuch hinzufügen';
+
+  @override
+  String get addProjectSpellingWord => 'Zum Projektwörterbuch hinzufügen';
+
+  @override
+  String get inheritSpellingLanguage =>
+      'Projekt- oder Anwendungssprache verwenden';
+
+  @override
+  String get disableDocumentSpelling => 'Rechtschreibung nicht prüfen';
+
+  @override
+  String get importSpellingDictionary => 'Wörterbuch importieren';
+
+  @override
+  String get personalSpellingDictionary => 'Persönliches Wörterbuch';
+
+  @override
+  String get projectSpellingDictionary => 'Projektwörterbuch';
+
+  @override
+  String get noSpellingErrors => 'Keine Rechtschreibfehler';
+
+  @override
+  String get noSpellingSuggestions => 'Keine Rechtschreibvorschläge';
+
+  @override
+  String get spellingWordCheckFailed =>
+      'Dieses Wort konnte nicht geprüft werden';
+
+  @override
+  String get spellingCheckFailed => 'Rechtschreibprüfung fehlgeschlagen';
+
+  @override
+  String get spellingCheckIncomplete => 'Rechtschreibprüfung ist unvollständig';
+
+  @override
+  String get spellingDictionaryNotInstalled => 'Wörterbuch nicht installiert';
+
+  @override
+  String spellingDictionaryNotInstalledForLanguage(String dictionary) {
+    return 'Das Wörterbuch $dictionary ist nicht installiert';
+  }
+
+  @override
+  String spellingDictionaryNotInstalledWithSize(String size) {
+    return 'Nicht installiert · $size';
+  }
+
+  @override
+  String get spellingDictionaryInstalled => 'Installiert';
+
+  @override
+  String get installSpellingDictionary => 'Wörterbuch installieren';
+
+  @override
+  String get removeSpellingDictionary => 'Wörterbuch entfernen';
+
+  @override
+  String get cancelSpellingDictionaryInstall => 'Wörterbuchdownload abbrechen';
+
+  @override
+  String get retrySpellingDictionaryInstall =>
+      'Wörterbuchinstallation wiederholen';
+
+  @override
+  String spellingDictionaryDownloading(String size) {
+    return '$size werden heruntergeladen…';
+  }
+
+  @override
+  String get spellingDictionaryValidating => 'Wörterbuch wird überprüft…';
+
+  @override
+  String get spellingDictionaryInstallFailed =>
+      'Wörterbuchinstallation fehlgeschlagen – zum Wiederholen auswählen';
+
+  @override
+  String spellingDictionaryInstallPrompt(String dictionary, String size) {
+    return '$dictionary ($size) installieren? Danach bleibt es offline verfügbar, bis Sie es entfernen.';
+  }
+
+  @override
+  String get spellingDictionaryUnavailable => 'Wörterbuch nicht verfügbar';
+
+  @override
+  String get spellingChecking => 'Rechtschreibung wird geprüft…';
+
+  @override
   String exportInvalidRange(String field, String minimum, String maximum) {
     return '$field: Geben Sie eine Zahl zwischen $minimum und $maximum ein.';
   }
+
+  @override
+  String get spellingDictionaryRecoveryConflict =>
+      'Das Rechtschreibwörterbuch wurde extern geändert. Eine Wiederherstellungskopie wurde aufbewahrt.';
 }

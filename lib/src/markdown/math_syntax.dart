@@ -1,6 +1,7 @@
 import 'package:markdown/markdown.dart' as md;
 
 import 'markdown_model.dart';
+import 'markdown_source_annotation.dart';
 import 'writerside_variable_syntax.dart';
 
 const busyMarkMathInlineTag = 'busymark-math-inline';
@@ -27,10 +28,14 @@ BusyMathSourceForm busyMathSourceFormFromName(String? value) {
   );
 }
 
-md.Document busyMarkMarkdownDocument(MarkdownMode mode) {
+md.Document busyMarkMarkdownDocument(
+  MarkdownMode mode, {
+  Iterable<md.InlineSyntax> leadingInlineSyntaxes = const [],
+}) {
   return md.Document(
     blockSyntaxes: const [BusyDisplayMathSyntax()],
     inlineSyntaxes: [
+      ...leadingInlineSyntaxes,
       if (mode == MarkdownMode.writersideMarkdown)
         WritersideLiteralPercentSyntax(),
       BusyDollarMathSyntax(),
@@ -39,6 +44,14 @@ md.Document busyMarkMarkdownDocument(MarkdownMode mode) {
     extensionSet: md.ExtensionSet.gitHubWeb,
     encodeHtml: false,
   );
+}
+
+/// Returns the exact key the pinned Markdown parser registers for [label].
+/// This deliberately uses the parser rather than maintaining a second
+/// whitespace or Unicode case-folding implementation in BusyMark.
+String? busyMarkParserReferenceLabel(String label) {
+  final document = md.Document(encodeHtml: false)..parse('[$label]: /');
+  return document.linkReferences.keys.singleOrNull;
 }
 
 class BusyDollarMathSyntax extends md.InlineSyntax {
@@ -65,6 +78,8 @@ class BusyDollarMathSyntax extends md.InlineSyntax {
               expression,
               BusyMathSourceForm.githubDollarBacktick,
               display: false,
+              sourceStart: start,
+              sourceEnd: end + 2,
             ),
           );
           parser.consume(end + 2 - start);
@@ -91,6 +106,8 @@ class BusyDollarMathSyntax extends md.InlineSyntax {
           expression,
           BusyMathSourceForm.dollarInline,
           display: false,
+          sourceStart: start,
+          sourceEnd: end + 1,
         ),
       );
       parser.consume(end + 1 - start);
@@ -188,6 +205,8 @@ class BusyWritersideMathSyntax extends md.InlineSyntax {
         BusyMathSourceForm.writersideElement,
         display: false,
         rawExpression: rawExpression,
+        sourceStart: match.start,
+        sourceEnd: closeEnd,
       ),
     );
     parser.consume(closeEnd - match.start);
@@ -280,6 +299,8 @@ md.Element _mathElement(
   BusyMathSourceForm sourceForm, {
   required bool display,
   String? rawExpression,
+  int? sourceStart,
+  int? sourceEnd,
 }) {
   return md.Element.text(tag, expression)
     ..attributes[busyMarkMathExpressionAttribute] = expression
@@ -288,6 +309,9 @@ md.Element _mathElement(
     ..attributes.addAll({
       if (rawExpression != null)
         busyMarkMathRawExpressionAttribute: rawExpression,
+      if (sourceStart != null)
+        busyMarkSourceMappingStartAttribute: '$sourceStart',
+      if (sourceEnd != null) busyMarkSourceMappingEndAttribute: '$sourceEnd',
     });
 }
 

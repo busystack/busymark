@@ -15,6 +15,11 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   test('basic fixture uses a renderable OpenAPI fence', () {
     final source = File('test/fixtures/markdown/basic.md').readAsStringSync();
+    expect(
+      source,
+      isNot(contains('center centre')),
+      reason: 'The general Markdown fixture is not a spelling-test corpus.',
+    );
     final parsed = const MarkdownParser().parse(
       filePath: 'test/fixtures/markdown/basic.md',
       source: source,

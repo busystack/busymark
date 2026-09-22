@@ -83,6 +83,42 @@
   "workspaceSearchShowMore": "अधिक परिणाम दिखाएँ",
   "workspaceSearchSkippedFiles": "खोज अधूरी है। ये फ़ाइलें 1 MiB से बड़ी हैं या पढ़ी नहीं जा सकीं:",
   "@@locale": "hi",
+  "spelling": "वर्तनी",
+  "automaticSpelling": "स्वचालित वर्तनी जाँच",
+  "defaultSpellingLanguage": "डिफ़ॉल्ट वर्तनी भाषा",
+  "projectSpellingLanguage": "परियोजना की वर्तनी भाषा",
+  "chooseSpellingLanguage": "वर्तनी भाषा चुनें",
+  "spellingLanguageUnsetStatus": "भाषा…",
+  "spellingOffStatus": "वर्तनी बंद",
+  "checkSpelling": "वर्तनी जाँचें",
+  "ignoreSpellingOnce": "एक बार अनदेखा करें",
+  "ignoreSpellingDocument": "इस दस्तावेज़ में सभी अनदेखे करें",
+  "addPersonalSpellingWord": "निजी शब्दकोश में जोड़ें",
+  "addProjectSpellingWord": "परियोजना शब्दकोश में जोड़ें",
+  "inheritSpellingLanguage": "परियोजना या ऐप की भाषा उपयोग करें",
+  "disableDocumentSpelling": "वर्तनी जाँच न करें",
+  "importSpellingDictionary": "शब्दकोश आयात करें",
+  "personalSpellingDictionary": "व्यक्तिगत शब्दकोश",
+  "projectSpellingDictionary": "परियोजना शब्दकोश",
+  "noSpellingErrors": "कोई वर्तनी त्रुटि नहीं",
+  "noSpellingSuggestions": "कोई वर्तनी सुझाव नहीं",
+  "spellingWordCheckFailed": "इस शब्द की जाँच नहीं हो सकी",
+  "spellingCheckFailed": "वर्तनी जाँच विफल रही",
+  "spellingCheckIncomplete": "वर्तनी जाँच अधूरी है",
+  "spellingDictionaryNotInstalled": "शब्दकोश इंस्टॉल नहीं है",
+  "spellingDictionaryNotInstalledForLanguage": "{dictionary} शब्दकोश इंस्टॉल नहीं है",
+  "spellingDictionaryNotInstalledWithSize": "इंस्टॉल नहीं है · {size}",
+  "spellingDictionaryInstalled": "इंस्टॉल है",
+  "installSpellingDictionary": "शब्दकोश इंस्टॉल करें",
+  "removeSpellingDictionary": "शब्दकोश हटाएँ",
+  "cancelSpellingDictionaryInstall": "शब्दकोश डाउनलोड रद्द करें",
+  "retrySpellingDictionaryInstall": "शब्दकोश इंस्टॉलेशन फिर आज़माएँ",
+  "spellingDictionaryDownloading": "{size} डाउनलोड हो रहा है…",
+  "spellingDictionaryValidating": "शब्दकोश सत्यापित हो रहा है…",
+  "spellingDictionaryInstallFailed": "शब्दकोश इंस्टॉलेशन विफल — फिर प्रयास करने के लिए चुनें",
+  "spellingDictionaryInstallPrompt": "{dictionary} ({size}) इंस्टॉल करें? इंस्टॉल होने के बाद यह हटाए जाने तक ऑफ़लाइन उपलब्ध रहेगा।",
+  "spellingDictionaryUnavailable": "शब्दकोश उपलब्ध नहीं है",
+  "spellingChecking": "वर्तनी की जाँच हो रही है…",
   "reportIssue": "समस्या की रिपोर्ट करें",
   "feedbackCategory": "श्रेणी",
   "feedbackChooseCategory": "श्रेणी चुनें",
@@ -802,6 +838,7 @@
     "description": "Editor setting description for saving files automatically."
   },
   "wordWrap": "वर्ड रैप",
+  "wordWrapDescription": "लंबी पंक्तियों को क्षैतिज रूप से स्क्रॉल करने के बजाय संपादक की चौड़ाई में समेटें।",
   "@wordWrap": {
     "description": "Word wrap setting label."
   },
@@ -869,6 +906,13 @@
   "@clearGitWorkspaceTrustDescription": {
     "description": "Settings action description for clearing trusted Git workspaces."
   },
+  "settingsEditingButtonsSectionTitle": "संपादन बटन",
+  "spellingDictionaries": "वर्तनी शब्दकोश",
+  "spellingDictionariesDescription": "वर्तनी शब्दकोश इंस्टॉल और प्रबंधित करें",
+  "settingsDictionariesSectionTitle": "शब्दकोश",
+  "availableSpellingDictionaries": "उपलब्ध शब्दकोश",
+  "customSpellingDictionaries": "कस्टम शब्दकोश",
+  "spellingDictionaryProblems": "शब्दकोश समस्याएँ",
   "settingsWindowSectionTitle": "विंडो",
   "@settingsWindowSectionTitle": {
     "description": "Settings section title for native window behavior."
@@ -3329,5 +3373,6 @@
   "topicRenameAffectedFiles": "प्रभावित फ़ाइलें",
   "renameTopicFileInstead": "विषय ID उनके फ़ाइल नामों से बनते हैं। विषय-सूची या फ़ाइलें साइडबार में ‘विषय फ़ाइल का नाम बदलें’ का उपयोग करें।",
   "diagnosticWritersideWebFileNameInvalid": "इंस्टेंस \"{instanceId}\" विषय \"{topic}\" के लिए अमान्य वेब फ़ाइल नाम \"{webFileName}\" प्रकाशित करता है।",
-  "diagnosticWritersideWebFileNameCollision": "इंस्टेंस \"{instanceId}\" \"{firstTopic}\" और \"{secondTopic}\" दोनों को \"{webFileName}\" के रूप में प्रकाशित करता है।"
+  "diagnosticWritersideWebFileNameCollision": "इंस्टेंस \"{instanceId}\" \"{firstTopic}\" और \"{secondTopic}\" दोनों को \"{webFileName}\" के रूप में प्रकाशित करता है।",
+  "spellingDictionaryRecoveryConflict": "वर्तनी शब्दकोश को बाहरी रूप से बदला गया। पुनर्प्राप्ति प्रति सुरक्षित रखी गई।"
 }

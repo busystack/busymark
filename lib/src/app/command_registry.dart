@@ -268,12 +268,14 @@ abstract final class BusyMarkCommandIds {
   static const textCopy = 'text.copy';
   static const editorCopyPlainText = 'editor.copyPlainText';
   static const textPaste = 'text.paste';
+  static const textPastePlainText = 'text.pastePlainText';
   static const textUndo = 'text.undo';
   static const textRedo = 'text.redo';
   static const textInsertIndentation = 'text.insertIndentation';
   static const textOutdentSource = 'text.outdentSource';
   static const textEscape = 'text.escape';
   static const editorRefineWithAi = 'editor.refineWithAi';
+  static const checkSpelling = 'spelling.check';
   static const sidebarFiles = 'sidebar.files';
   static const sidebarToc = 'sidebar.toc';
   static const sidebarOutline = 'sidebar.outline';
@@ -400,6 +402,20 @@ abstract final class BusyMarkCommandCatalog {
           shortcut: BusyMarkEditorShortcuts.definitions[action],
           description: (context) => _editorDescription(context, action),
         ),
+      command(
+        id: BusyMarkCommandIds.checkSpelling,
+        label: (context) => context.l10n.checkSpelling,
+        category: (context) => context.l10n.shortcutGroupTextEditing,
+        scope: BusyMarkCommandScope.editor,
+        shortcut: const BusyMarkShortcutDefinition(
+          label: 'F7',
+          activator: SingleActivator(
+            LogicalKeyboardKey.f7,
+            includeRepeats: false,
+          ),
+          gtkAccelerator: 'F7',
+        ),
+      ),
       for (final action in BusyMarkSidebarShortcutAction.values)
         command(
           id: _sidebarId(action),
@@ -538,6 +554,8 @@ abstract final class BusyMarkCommandCatalog {
     BusyMarkTextEditingShortcutAction.cut => context.l10n.cut,
     BusyMarkTextEditingShortcutAction.copy => context.l10n.copy,
     BusyMarkTextEditingShortcutAction.paste => context.l10n.paste,
+    BusyMarkTextEditingShortcutAction.pastePlainText =>
+      context.l10n.clipboardPastePlainText,
     BusyMarkTextEditingShortcutAction.undo => context.l10n.undo,
     BusyMarkTextEditingShortcutAction.redo => context.l10n.redo,
     BusyMarkTextEditingShortcutAction.insertIndentation =>
@@ -595,6 +613,8 @@ abstract final class BusyMarkCommandCatalog {
       context.l10n.shortcutCopyDescription,
     BusyMarkTextEditingShortcutAction.paste =>
       context.l10n.shortcutPasteDescription,
+    BusyMarkTextEditingShortcutAction.pastePlainText =>
+      context.l10n.shortcutPastePlainTextDescription,
     BusyMarkTextEditingShortcutAction.undo =>
       context.l10n.shortcutUndoDescription,
     BusyMarkTextEditingShortcutAction.redo =>

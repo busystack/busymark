@@ -7,6 +7,7 @@ import 'package:busymark/src/markdown/busymark_document.dart';
 import 'package:busymark/src/markdown/markdown_ast_adapter.dart';
 import 'package:busymark/src/markdown/markdown_model.dart';
 import 'package:busymark/src/markdown/markdown_parser.dart';
+import 'package:busymark/src/markdown/markdown_source_map.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 
@@ -14,6 +15,688 @@ void main() {
   const parser = MarkdownParser();
 
   String fixture(String name) => 'test/fixtures/markdown/$name';
+
+  test('inline source mapping uses parsed formatting boundaries', () {
+    const marker = '\ue000';
+    final codeSpans = List.filled(30, '`**`').join(' ');
+    final source = '**start $codeSpans left${marker}right $codeSpans end**';
+    final context = const MarkdownSourceMapper().createInlineParserContext(
+      documentSource: source.replaceAll(marker, ''),
+      mode: MarkdownMode.commonMark,
+    );
+
+    final mapped = context.parseMapped(source);
+
+    expect(context.parseInvocations, 1);
+    expect(mapped.inlines, hasLength(1));
+    final strong = mapped.inlines.single;
+    expect(strong.kind, BusyInlineKind.strong);
+    final range = mapped.ranges[strong];
+    expect(range?.start, 0);
+    expect(range?.end, source.length);
+    expect(range?.opening, '**');
+    expect(range?.closing, '**');
+    expect(
+      strong.children.where((inline) => inline.kind == BusyInlineKind.code),
+      hasLength(60),
+    );
+  });
+
+  test('inline source mapping locates partially consumed delimiter runs', () {
+    BusyMarkMappedInlineRange mappedRange(String source, BusyInlineKind kind) {
+      final context = const MarkdownSourceMapper().createInlineParserContext(
+        documentSource: source,
+        mode: MarkdownMode.commonMark,
+      );
+      final mapped = context.parseMapped(source);
+      BusyInline? result;
+      void visit(Iterable<BusyInline> inlines) {
+        for (final inline in inlines) {
+          if (result == null && inline.kind == kind) result = inline;
+          visit(inline.children);
+        }
+      }
+
+      visit(mapped.inlines);
+      expect(result, isNotNull, reason: source);
+      return mapped.ranges[result!]!;
+    }
+
+    for (final delimiter in ['*', '_']) {
+      final partialOpening =
+          '$delimiter$delimiter${delimiter}leftright'
+          '$delimiter$delimiter';
+      final openingRange = mappedRange(partialOpening, BusyInlineKind.strong);
+      expect(openingRange.start, 1, reason: partialOpening);
+      expect(openingRange.end, partialOpening.length, reason: partialOpening);
+
+      final partialClosing =
+          '$delimiter${delimiter}leftright'
+          '$delimiter$delimiter$delimiter';
+      final closingRange = mappedRange(partialClosing, BusyInlineKind.strong);
+      expect(closingRange.start, 0, reason: partialClosing);
+      expect(
+        closingRange.end,
+        partialClosing.length - 1,
+        reason: partialClosing,
+      );
+
+      final nested =
+          '$delimiter$delimiter${delimiter}leftright'
+          '$delimiter$delimiter$delimiter';
+      final strongRange = mappedRange(nested, BusyInlineKind.strong);
+      final emphasisRange = mappedRange(nested, BusyInlineKind.emphasis);
+      expect(strongRange.start, 1, reason: nested);
+      expect(strongRange.end, nested.length - 1, reason: nested);
+      expect(emphasisRange.start, 0, reason: nested);
+      expect(emphasisRange.end, nested.length, reason: nested);
+    }
+  });
+
+  test('inline source mapping retains escaped collapsed references', () {
+    const marker = '\ue000';
+    final marked = '${r'[prefix \[ left'}$marker${r'right][]'}';
+    final context = const MarkdownSourceMapper().createInlineParserContext(
+      documentSource:
+          '${r'[prefix \[ leftright][]'}\n\n'
+          '${r'[prefix \[ leftright]: https://destination.test'}\n',
+      mode: MarkdownMode.commonMark,
+    );
+
+    final mapped = context.parseMapped(
+      marked,
+      ignoredReferenceLabelMarkers: const [marker],
+    );
+
+    expect(context.parseInvocations, 4);
+    expect(mapped.inlines, hasLength(1));
+    final link = mapped.inlines.single;
+    expect(link.kind, BusyInlineKind.link);
+    expect(link.destination, 'https://destination.test');
+    final range = mapped.ranges[link];
+    expect(range?.start, 0);
+    expect(range?.end, marked.length);
+    expect(range?.labelStart, 1);
+    expect(range?.labelEnd, marked.indexOf(']'));
+    expect(range?.isReference, isTrue);
+  });
+
+  test('inline source mapping keeps original autolink semantics', () {
+    const marker = '\ue000';
+    const original = '<https://example.test/leftright>';
+    const marked = '<https://example.test/left${marker}right>';
+    final context = const MarkdownSourceMapper().createInlineParserContext(
+      documentSource: original,
+      mode: MarkdownMode.commonMark,
+    );
+
+    final mapped = context.parseMapped(
+      marked,
+      ignoredReferenceLabelMarkers: const [marker],
+    );
+
+    final link = mapped.inlines.single;
+    expect(link.kind, BusyInlineKind.link);
+    expect(link.plainText, 'https://example.test/left${marker}right');
+    expect(link.destination, 'https://example.test/leftright');
+    expect(link.attributes['href'], 'https://example.test/leftright');
+    expect(mapped.ranges[link]?.isAutolink, isTrue);
+    expect(mapped.ranges[link]?.isReference, isFalse);
+  });
+
+  test('inline source mapping preserves supported autolink variants', () {
+    const cases = <({String original, String marked, String destination})>[
+      (
+        original: '<https://example.test/a%20b-right>',
+        marked: '<https://example.test/a%20b-\ue000right>',
+        destination: 'https://example.test/a%20b-right',
+      ),
+      (
+        original: '<left@example.test>',
+        marked: '<left\ue000@example.test>',
+        destination: 'mailto:left@example.test',
+      ),
+      (
+        original: '<https://example.test/\ue000-%EE%80%80-right>',
+        marked: '<https://example.test/\ue000-%EE%80%80-\ue001right>',
+        destination: 'https://example.test/%EE%80%80-%EE%80%80-right',
+      ),
+    ];
+    for (final value in cases) {
+      final marker = value.marked.contains('\ue001') ? '\ue001' : '\ue000';
+      final context = const MarkdownSourceMapper().createInlineParserContext(
+        documentSource: value.original,
+        mode: MarkdownMode.commonMark,
+      );
+
+      final mapped = context.parseMapped(
+        value.marked,
+        ignoredReferenceLabelMarkers: [marker],
+      );
+
+      final link = mapped.inlines.single;
+      expect(link.kind, BusyInlineKind.link, reason: value.original);
+      expect(link.destination, value.destination, reason: value.original);
+      expect(
+        link.attributes['href'],
+        value.destination,
+        reason: value.original,
+      );
+      expect(
+        mapped.ranges[link]?.originalInline?.destination,
+        value.destination,
+      );
+      expect(mapped.ranges[link]?.isAutolink, isTrue);
+    }
+  });
+
+  test('inline source mapping uses parser case folding for references', () {
+    const marker = '\ue000';
+    const original = '[STRA\u1e9eE][]\n\n[STRASSE]: https://destination.test\n';
+    final parsed = parser.parse(
+      filePath: 'case-folded.md',
+      source: original,
+      validateLocalReferences: false,
+    );
+    expect(
+      parsed.busyDocument.blocks.first.inlines.single.destination,
+      'https://destination.test',
+    );
+    final context = const MarkdownSourceMapper().createInlineParserContext(
+      documentSource: original,
+      mode: MarkdownMode.commonMark,
+    );
+
+    final mapped = context.parseMapped(
+      '[STRA$marker\u1e9eE][]',
+      ignoredReferenceLabelMarkers: const [marker],
+    );
+
+    final link = mapped.inlines.single;
+    expect(link.kind, BusyInlineKind.link);
+    expect(link.destination, 'https://destination.test');
+    expect(link.attributes['href'], 'https://destination.test');
+  });
+
+  test(
+    'ordinary reference parsing retains pinned sharp-S folding behavior',
+    () {
+      for (final link in const ['[STRA\u1e9eE][]', '[STRA\u1e9eE]']) {
+        final parsed = parser.parse(
+          filePath: 'case-folded.md',
+          source: '$link\n\n[STRASSE]: https://destination.test\n',
+          validateLocalReferences: false,
+        );
+        expect(
+          parsed.busyDocument.blocks.first.inlines.single.destination,
+          'https://destination.test',
+          reason: link,
+        );
+      }
+
+      final unsupported = parser.parse(
+        filePath: 'case-folded.md',
+        source: '[stra\u00dfe][]\n\n[STRASSE]: https://destination.test\n',
+        validateLocalReferences: false,
+      );
+      expect(
+        unsupported.busyDocument.blocks.first.inlines.single.kind,
+        BusyInlineKind.text,
+      );
+    },
+  );
+
+  test('invalid email-like text cannot orphan a later mapped link', () {
+    const marker = '\ue000';
+    for (final original in const [
+      'Before <x@-y> and <https://example.test/leftright> after',
+      'Before <https://example.test/leftright> and <x@-y> after',
+      'Before <https://example.test/leftright> and '
+          '<https://example.test/leftright> after',
+    ]) {
+      final target = original.indexOf('leftright');
+      final marked = original.replaceRange(target + 4, target + 4, marker);
+      final context = const MarkdownSourceMapper().createInlineParserContext(
+        documentSource: original,
+        mode: MarkdownMode.commonMark,
+      );
+      final mapped = context.parseMapped(
+        marked,
+        ignoredReferenceLabelMarkers: const [marker],
+      );
+      final links = mapped.inlines
+          .where((inline) => inline.kind == BusyInlineKind.link)
+          .toList();
+      final selected = links.singleWhere(
+        (inline) => inline.plainText.contains(marker),
+      );
+      expect(
+        mapped.ranges[selected]?.originalInline?.destination,
+        'https://example.test/leftright',
+        reason: original,
+      );
+      expect(
+        mapped.inlines.map((inline) => inline.plainText).join(),
+        marked.replaceAllMapped(
+          RegExp(r'<(https://example\.test/[^>]*)>'),
+          (match) => match[1]!,
+        ),
+        reason: original,
+      );
+    }
+  });
+
+  test('block inline mapping projects logical content to container source', () {
+    const marker = '\ue000';
+    const original =
+        '> [left\n'
+        '> right](https://destination.test)';
+    const marked =
+        '> [left$marker\n'
+        '> right](https://destination.test)';
+    final context = const MarkdownSourceMapper().createInlineParserContext(
+      documentSource: original,
+      mode: MarkdownMode.commonMark,
+    );
+
+    final mapped = context.parseMappedBlock(
+      marked,
+      sourceStart: 0,
+      sourceEnd: marked.length,
+      ignoredReferenceLabelMarkers: const [marker],
+    );
+
+    expect(mapped, isNotNull);
+    final link = mapped!.inlines.single;
+    expect(link.kind, BusyInlineKind.link);
+    expect(link.plainText, 'left$marker\nright');
+    expect(link.plainText, isNot(contains('>')));
+    final range = mapped.ranges[link];
+    expect(range?.start, 2);
+    expect(range?.end, marked.length);
+    expect(range?.lineBreaks, hasLength(1));
+    expect(range?.lineBreaks.single.lineEnding, '\n');
+    expect(range?.lineBreaks.single.continuationPrefix, '> ');
+    expect(range?.lineBreaks.single.textOffset, 'left$marker'.length);
+
+    final crlfMapped = context.parseMappedBlock(
+      marked.replaceAll('\n', '\r\n'),
+      sourceStart: 0,
+      sourceEnd: marked.length + 1,
+      ignoredReferenceLabelMarkers: const [marker],
+    );
+    final crlfLink = crlfMapped!.inlines.single;
+    expect(crlfLink.plainText, 'left$marker\nright');
+    expect(crlfMapped.ranges[crlfLink]?.lineBreaks.single.lineEnding, '\r\n');
+    expect(
+      crlfMapped.ranges[crlfLink]?.lineBreaks.single.continuationPrefix,
+      '> ',
+    );
+  });
+
+  test('positioned block mapping accepts a trailing empty logical line', () {
+    const source = '''> ```java
+> record Document(String title, String content) {}
+> ```
+''';
+    final context = const MarkdownSourceMapper().createInlineParserContext(
+      documentSource: source,
+      mode: MarkdownMode.commonMark,
+    );
+
+    final mapped = context.parsePositionedBlocks(source);
+
+    expect(mapped, isNotEmpty);
+    expect(
+      mapped.expand((parse) => parse.inlines).map((inline) => inline.plainText),
+      anyElement(contains('record Document')),
+    );
+  });
+
+  test('block inline mapping ignores title and code-span source breaks', () {
+    const marker = '\ue000';
+    const titleSource =
+        '> [left$marker\n'
+        '> middle\r\n'
+        '> right](https://destination.test "first\n'
+        '> second")';
+    final titleContext = const MarkdownSourceMapper().createInlineParserContext(
+      documentSource: titleSource.replaceAll(marker, ''),
+      mode: MarkdownMode.commonMark,
+    );
+    final titleMapped = titleContext.parseMappedBlock(
+      titleSource,
+      sourceStart: 0,
+      sourceEnd: titleSource.length,
+      ignoredReferenceLabelMarkers: const [marker],
+    )!;
+    final titleLink = titleMapped.inlines.single;
+    expect(titleLink.attributes['title'], 'first\nsecond');
+    expect(titleMapped.ranges[titleLink]?.lineBreaks, hasLength(2));
+    expect(
+      titleMapped.ranges[titleLink]?.lineBreaks.map(
+        (value) => value.lineEnding,
+      ),
+      ['\n', '\r\n'],
+    );
+    expect(
+      titleMapped.ranges[titleLink]?.lineBreaks.map(
+        (value) => value.sourceOffset,
+      ),
+      [titleSource.indexOf('\n'), titleSource.indexOf('\r\n')],
+    );
+
+    const multipleTitleSource =
+        '> [left$marker\r\n'
+        '> right](https://destination.test "first\n'
+        '> second\r\n'
+        '> third")';
+    final multipleTitleContext = const MarkdownSourceMapper()
+        .createInlineParserContext(
+          documentSource: multipleTitleSource.replaceAll(marker, ''),
+          mode: MarkdownMode.commonMark,
+        );
+    final multipleTitleMapped = multipleTitleContext.parseMappedBlock(
+      multipleTitleSource,
+      sourceStart: 0,
+      sourceEnd: multipleTitleSource.length,
+      ignoredReferenceLabelMarkers: const [marker],
+    )!;
+    final multipleTitleLink = multipleTitleMapped.inlines.single;
+    expect(multipleTitleLink.attributes['title'], 'first\nsecond\nthird');
+    expect(
+      multipleTitleMapped.ranges[multipleTitleLink]?.lineBreaks,
+      hasLength(1),
+    );
+    expect(
+      multipleTitleMapped
+          .ranges[multipleTitleLink]
+          ?.lineBreaks
+          .single
+          .lineEnding,
+      '\r\n',
+    );
+
+    const codeSource =
+        '> [left `code\n'
+        '> span`$marker middle\r\n'
+        '> right](https://destination.test)';
+    final codeContext = const MarkdownSourceMapper().createInlineParserContext(
+      documentSource: codeSource.replaceAll(marker, ''),
+      mode: MarkdownMode.commonMark,
+    );
+    final codeMapped = codeContext.parseMappedBlock(
+      codeSource,
+      sourceStart: 0,
+      sourceEnd: codeSource.length,
+      ignoredReferenceLabelMarkers: const [marker],
+    )!;
+    final codeLink = codeMapped.inlines.single;
+    expect(codeLink.plainText, 'left code span$marker middle\nright');
+    expect(codeMapped.ranges[codeLink]?.lineBreaks, hasLength(1));
+    expect(codeMapped.ranges[codeLink]?.lineBreaks.single.lineEnding, '\r\n');
+  });
+
+  test('block inline mapping keeps each hard-break occurrence range', () {
+    const marker = '\ue000';
+    const source =
+        '> [left$marker  \r\n'
+        '> middle  \n'
+        '> right](https://destination.test)';
+    final context = const MarkdownSourceMapper().createInlineParserContext(
+      documentSource: source.replaceAll(marker, ''),
+      mode: MarkdownMode.commonMark,
+    );
+
+    final mapped = context.parseMappedBlock(
+      source,
+      sourceStart: 0,
+      sourceEnd: source.length,
+      ignoredReferenceLabelMarkers: const [marker],
+    )!;
+    final link = mapped.inlines.single;
+    final hardBreaks = link.children
+        .where((inline) => inline.kind == BusyInlineKind.hardBreak)
+        .toList(growable: false);
+    final firstStart = source.indexOf('  \r\n');
+    final secondStart = source.indexOf('  \n');
+
+    expect(hardBreaks, hasLength(2));
+    expect(identical(hardBreaks.first, hardBreaks.last), isFalse);
+    expect(mapped.ranges[hardBreaks.first]?.start, firstStart);
+    expect(mapped.ranges[hardBreaks.first]?.end, firstStart + '  \r\n'.length);
+    expect(mapped.ranges[hardBreaks.last]?.start, secondStart);
+    expect(mapped.ranges[hardBreaks.last]?.end, secondStart + '  \n'.length);
+    expect(
+      mapped.ranges[link]?.lineBreaks.map(
+        (lineBreak) => (
+          lineBreak.textOffset,
+          lineBreak.sourceOffset,
+          lineBreak.lineEnding,
+          lineBreak.continuationPrefix,
+        ),
+      ),
+      [
+        ('left$marker'.length, source.indexOf('\r\n'), '\r\n', '> '),
+        (
+          'left$marker\nmiddle'.length,
+          source.indexOf('\n', source.indexOf('\r\n') + 2),
+          '\n',
+          '> ',
+        ),
+      ],
+    );
+  });
+
+  test('block inline mapping matches standalone HTML break layout', () {
+    const marker = '\ue000';
+    const original =
+        '[A\n'
+        '<br>\n'
+        '<br>\n'
+        'right](https://destination.test) tail';
+    const marked =
+        '[A\n'
+        '<br>\n'
+        '<br>\n'
+        'ri${marker}ght](https://destination.test) tail';
+    final parsed = parser.parse(
+      filePath: 'generated-breaks.md',
+      source: original,
+      validateLocalReferences: false,
+    );
+    final ordinaryLink = parsed.busyDocument.blocks.single.inlines.firstWhere(
+      (inline) => inline.kind == BusyInlineKind.link,
+    );
+    final context = const MarkdownSourceMapper().createInlineParserContext(
+      documentSource: original,
+      mode: MarkdownMode.commonMark,
+    );
+
+    final mapped = context.parseMappedBlock(
+      marked,
+      sourceStart: 0,
+      sourceEnd: marked.length,
+      ignoredReferenceLabelMarkers: const [marker],
+    )!;
+    final mappedLink = mapped.inlines.firstWhere(
+      (inline) => inline.kind == BusyInlineKind.link,
+    );
+    final hardBreaks = mappedLink.children
+        .where((inline) => inline.kind == BusyInlineKind.hardBreak)
+        .toList(growable: false);
+    final firstBreak = marked.indexOf('<br>');
+    final secondBreak = marked.indexOf('<br>', firstBreak + 1);
+
+    expect(ordinaryLink.plainText, 'A\n\nright');
+    expect(mappedLink.plainText.replaceAll(marker, ''), ordinaryLink.plainText);
+    expect(hardBreaks, hasLength(2));
+    expect(mapped.ranges[hardBreaks.first]?.start, firstBreak);
+    expect(mapped.ranges[hardBreaks.first]?.end, firstBreak + '<br>'.length);
+    expect(mapped.ranges[hardBreaks.last]?.start, secondBreak);
+    expect(mapped.ranges[hardBreaks.last]?.end, secondBreak + '<br>'.length);
+    expect(mappedLink.destination, 'https://destination.test');
+    expect(
+      mapped.ranges[mappedLink]?.originalInline?.destination,
+      'https://destination.test',
+    );
+    expect(
+      mapped.ranges[mappedLink]?.lineBreaks.map(
+        (lineBreak) => (
+          lineBreak.lineEnding,
+          lineBreak.continuationPrefix,
+          lineBreak.sourceOffset,
+        ),
+      ),
+      [
+        ('\n', '', original.indexOf('\n', firstBreak)),
+        ('\n', '', original.indexOf('\n', secondBreak)),
+      ],
+    );
+  });
+
+  test(
+    'block inline mapping projects HTML break layout through containers',
+    () {
+      const marker = '\ue000';
+      const original =
+          '> [A\r\n'
+          '> <br>\r\n'
+          '> <br>\r\n'
+          '> right](https://destination.test) tail';
+      const marked =
+          '> [A\r\n'
+          '> <br>\r\n'
+          '> <br>\r\n'
+          '> ri${marker}ght](https://destination.test) tail';
+      final parsed = parser.parse(
+        filePath: 'generated-breaks.md',
+        source: original,
+        validateLocalReferences: false,
+      );
+      final ordinaryLink = parsed
+          .busyDocument
+          .blocks
+          .single
+          .children
+          .single
+          .inlines
+          .firstWhere((inline) => inline.kind == BusyInlineKind.link);
+      final context = const MarkdownSourceMapper().createInlineParserContext(
+        documentSource: original,
+        mode: MarkdownMode.commonMark,
+      );
+
+      final mapped = context.parseMappedBlock(
+        marked,
+        sourceStart: 0,
+        sourceEnd: marked.length,
+        ignoredReferenceLabelMarkers: const [marker],
+      )!;
+      final mappedLink = mapped.inlines.firstWhere(
+        (inline) => inline.kind == BusyInlineKind.link,
+      );
+
+      expect(ordinaryLink.plainText, 'A\n\nright');
+      expect(
+        mappedLink.plainText.replaceAll(marker, ''),
+        ordinaryLink.plainText,
+      );
+      expect(
+        mappedLink.children.where(
+          (inline) => inline.kind == BusyInlineKind.hardBreak,
+        ),
+        hasLength(2),
+      );
+      expect(
+        mapped.ranges[mappedLink]?.lineBreaks.map(
+          (lineBreak) => (lineBreak.lineEnding, lineBreak.continuationPrefix),
+        ),
+        const [('\r\n', '> '), ('\r\n', '> ')],
+      );
+      expect(
+        mapped.ranges[mappedLink]?.originalInline?.destination,
+        'https://destination.test',
+      );
+    },
+  );
+
+  test('HTML break layout mapping preserves soft breaks and literal code', () {
+    const marker = '\ue000';
+    const original =
+        '> [left\n'
+        '> `<br>`\n'
+        '> right](https://destination.test)';
+    const marked =
+        '> [left\n'
+        '> `<br>`\n'
+        '> ri${marker}ght](https://destination.test)';
+    final context = const MarkdownSourceMapper().createInlineParserContext(
+      documentSource: original,
+      mode: MarkdownMode.commonMark,
+    );
+    final ordinary = context.parse('left\n`<br>`\nright');
+
+    final mapped = context.parseMappedBlock(
+      marked,
+      sourceStart: 0,
+      sourceEnd: marked.length,
+      ignoredReferenceLabelMarkers: const [marker],
+    )!;
+    final link = mapped.inlines.single;
+
+    expect(
+      link.plainText.replaceAll(marker, ''),
+      ordinary.map((e) => e.plainText).join(),
+    );
+    expect(link.plainText, 'left\n<br>\nri${marker}ght');
+    expect(
+      link.children.where((inline) => inline.kind == BusyInlineKind.code),
+      hasLength(1),
+    );
+    expect(
+      link.children.where((inline) => inline.kind == BusyInlineKind.hardBreak),
+      isEmpty,
+    );
+    expect(mapped.ranges[link]?.lineBreaks, hasLength(2));
+    expect(mapped.ranges[link]?.originalInline, isNotNull);
+
+    const hardBreakOriginal =
+        '[left  \n'
+        '<br>\n'
+        'right](https://destination.test)';
+    const hardBreakMarked =
+        '[left  \n'
+        '<br>\n'
+        'ri${marker}ght](https://destination.test)';
+    final hardBreakContext = const MarkdownSourceMapper()
+        .createInlineParserContext(
+          documentSource: hardBreakOriginal,
+          mode: MarkdownMode.commonMark,
+        );
+    final hardBreakMapped = hardBreakContext.parseMappedBlock(
+      hardBreakMarked,
+      sourceStart: 0,
+      sourceEnd: hardBreakMarked.length,
+      ignoredReferenceLabelMarkers: const [marker],
+    )!;
+    final hardBreakLink = hardBreakMapped.inlines.single;
+    expect(
+      hardBreakLink.children.where(
+        (inline) => inline.kind == BusyInlineKind.hardBreak,
+      ),
+      hasLength(2),
+    );
+    expect(
+      hardBreakMapped.ranges[hardBreakLink]?.lineBreaks.map(
+        (lineBreak) => lineBreak.sourceOffset,
+      ),
+      [
+        hardBreakOriginal.indexOf('\n'),
+        hardBreakOriginal.indexOf('\n', hardBreakOriginal.indexOf('<br>')),
+      ],
+    );
+  });
 
   test('extracts title, outline, links, images, and code fences', () {
     final path = fixture('basic.md');

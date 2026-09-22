@@ -83,6 +83,42 @@
   "workspaceSearchShowMore": "Daha fazla sonuç göster",
   "workspaceSearchSkippedFiles": "Arama eksik. Bu dosyalar 1 MiB boyutunu aşıyor veya okunamadı:",
   "@@locale": "tr",
+  "spelling": "Yazım",
+  "automaticSpelling": "Otomatik yazım denetimi",
+  "defaultSpellingLanguage": "Varsayılan yazım dili",
+  "projectSpellingLanguage": "Proje yazım denetimi dili",
+  "chooseSpellingLanguage": "Yazım dili seç",
+  "spellingLanguageUnsetStatus": "Dil…",
+  "spellingOffStatus": "Yazım denetimi kapalı",
+  "checkSpelling": "Yazımı Denetle",
+  "ignoreSpellingOnce": "Bir Kez Yoksay",
+  "ignoreSpellingDocument": "Bu Belgede Tümünü Yoksay",
+  "addPersonalSpellingWord": "Kişisel Sözlüğe Ekle",
+  "addProjectSpellingWord": "Proje Sözlüğüne Ekle",
+  "inheritSpellingLanguage": "Proje veya uygulama dilini kullan",
+  "disableDocumentSpelling": "Yazımı denetleme",
+  "importSpellingDictionary": "Sözlük İçe Aktar",
+  "personalSpellingDictionary": "Kişisel Sözlük",
+  "projectSpellingDictionary": "Proje Sözlüğü",
+  "noSpellingErrors": "Yazım hatası yok",
+  "noSpellingSuggestions": "Yazım önerisi yok",
+  "spellingWordCheckFailed": "Bu sözcük denetlenemedi",
+  "spellingCheckFailed": "Yazım denetimi başarısız oldu",
+  "spellingCheckIncomplete": "Yazım denetimi tamamlanmadı",
+  "spellingDictionaryNotInstalled": "Sözlük yüklü değil",
+  "spellingDictionaryNotInstalledForLanguage": "{dictionary} sözlüğü yüklü değil",
+  "spellingDictionaryNotInstalledWithSize": "Yüklü değil · {size}",
+  "spellingDictionaryInstalled": "Yüklü",
+  "installSpellingDictionary": "Sözlüğü yükle",
+  "removeSpellingDictionary": "Sözlüğü kaldır",
+  "cancelSpellingDictionaryInstall": "Sözlük indirmesini iptal et",
+  "retrySpellingDictionaryInstall": "Sözlük yüklemesini yeniden dene",
+  "spellingDictionaryDownloading": "{size} indiriliyor…",
+  "spellingDictionaryValidating": "Sözlük doğrulanıyor…",
+  "spellingDictionaryInstallFailed": "Sözlük yüklenemedi — yeniden denemek için seçin",
+  "spellingDictionaryInstallPrompt": "{dictionary} ({size}) yüklensin mi? Yüklendikten sonra kaldırılana kadar çevrimdışı kullanılabilir.",
+  "spellingDictionaryUnavailable": "Sözlük kullanılamıyor",
+  "spellingChecking": "Yazım denetleniyor…",
   "appTitle": "BusyMark",
   "@appTitle": {
     "description": "Application name."
@@ -932,6 +968,7 @@
     "description": "Editor setting description for saving files automatically."
   },
   "wordWrap": "Satır kaydırma",
+  "wordWrapDescription": "Uzun satırları yatay kaydırmak yerine düzenleyici genişliğine sığacak şekilde kaydırın.",
   "@wordWrap": {
     "description": "Word wrap setting label."
   },
@@ -999,6 +1036,13 @@
   "@clearGitWorkspaceTrustDescription": {
     "description": "Settings action description for clearing trusted Git workspaces."
   },
+  "settingsEditingButtonsSectionTitle": "Düzenleme düğmeleri",
+  "spellingDictionaries": "Yazım sözlükleri",
+  "spellingDictionariesDescription": "Yazım sözlüklerini kurun ve yönetin",
+  "settingsDictionariesSectionTitle": "Sözlükler",
+  "availableSpellingDictionaries": "Kullanılabilir sözlükler",
+  "customSpellingDictionaries": "Özel sözlükler",
+  "spellingDictionaryProblems": "Sözlük sorunları",
   "settingsWindowSectionTitle": "Pencere",
   "@settingsWindowSectionTitle": {
     "description": "Settings section title for native window behavior."
@@ -4868,5 +4912,6 @@
   "topicRenameAffectedFiles": "Etkilenen dosyalar",
   "renameTopicFileInstead": "Konu kimlikleri dosya adlarından gelir. İçindekiler tablosunda veya Dosyalar kenar çubuğunda Konu Dosyasını Yeniden Adlandır'ı kullanın.",
   "diagnosticWritersideWebFileNameInvalid": "\"{instanceId}\" örneği, \"{topic}\" konusu için geçersiz \"{webFileName}\" web dosyası adını yayımlıyor.",
-  "diagnosticWritersideWebFileNameCollision": "\"{instanceId}\" örneği hem \"{firstTopic}\" hem de \"{secondTopic}\" konusunu \"{webFileName}\" olarak yayımlıyor."
+  "diagnosticWritersideWebFileNameCollision": "\"{instanceId}\" örneği hem \"{firstTopic}\" hem de \"{secondTopic}\" konusunu \"{webFileName}\" olarak yayımlıyor.",
+  "spellingDictionaryRecoveryConflict": "Yazım sözlüğü harici olarak değiştirildi. Bir kurtarma kopyası korundu."
 }

@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:markdown/markdown.dart' as md;
 import 'package:xml/xml.dart';
 
@@ -6,6 +8,7 @@ import 'busymark_document.dart';
 import 'markdown_fence.dart';
 import 'markdown_front_matter.dart';
 import 'markdown_model.dart';
+import 'markdown_source_annotation.dart';
 import 'math_syntax.dart';
 import 'raw_html_adapter.dart';
 import 'raw_html_policy.dart';
@@ -13,6 +16,27 @@ import 'writerside_variable_syntax.dart';
 import '../writerside/writerside_schema.dart';
 
 const _rawHtmlAdapter = RawHtmlAdapter();
+
+/// Reports source-boundary entries inspected while building the reusable
+/// lookahead for a mapped Markdown sibling list. Tests use this to guard the
+/// complete AST mapping path against per-node forward rescans.
+void Function(int inspections)? debugBusyMarkSourceMappingBoundaryInspections;
+
+/// Reports genuine source-text fallback searches after exact mapped ranges,
+/// exact text, and cached sibling boundaries could not resolve a node.
+void Function()? debugBusyMarkSourceMappingFallbackSearchCalls;
+
+/// Reports the half-open source interval permitted for each fallback search.
+void Function(int start, int end)?
+debugBusyMarkSourceMappingFallbackSearchRanges;
+
+String _decodeMarkdownAttribute(String value) => value
+    .replaceAll('&#92;', '\\')
+    .replaceAll('&quot;', '"')
+    .replaceAll('&#39;', "'")
+    .replaceAll('&lt;', '<')
+    .replaceAll('&gt;', '>')
+    .replaceAll('&amp;', '&');
 
 class MarkdownAstAdapter {
   const MarkdownAstAdapter();
@@ -268,6 +292,19 @@ class MarkdownAstAdapter {
       final text = rawText.trim();
       if (text.isEmpty) {
         return const [];
+      }
+      if (RegExp(r'^(?:<!--[^]*?-->\s*)+$').hasMatch(text)) {
+        // Block comments are authored markup, not an editable prose field.
+        // Preserve them verbatim, including when another block is serialized.
+        return [
+          BusyBlock(
+            id: nextId(),
+            kind: BusyBlockKind.htmlBlock,
+            rawSource: rawText,
+            preserveRaw: true,
+            attributes: const {'sourceFormat': 'html'},
+          ),
+        ];
       }
       if (mode == MarkdownMode.writersideMarkdown) {
         final writerside = _writersideBlockFromText(
@@ -602,18 +639,26 @@ class MarkdownAstAdapter {
       final contentChildren = _withoutTaskCheckbox(itemChildren);
       final nestedBlocks = <BusyBlock>[];
       final inlineNodes = <md.Node>[];
+      var hasPrimaryContent = false;
       for (final child in contentChildren) {
-        if (child is md.Element &&
+        final blockChild =
+            child is md.Element &&
             (child.tag == 'ul' ||
                 child.tag == 'ol' ||
                 child.tag == 'blockquote' ||
                 child.tag == 'pre' ||
-                child.tag == 'table')) {
+                child.tag == 'table' ||
+                child.tag == 'hr' ||
+                RegExp(r'^h[1-6]$').hasMatch(child.tag) ||
+                (child.tag == 'p' &&
+                    (hasPrimaryContent || nestedBlocks.isNotEmpty)));
+        if (blockChild) {
           nestedBlocks.addAll(
             _blocksFromNode(child, nextId: nextId, mode: mode),
           );
         } else {
           inlineNodes.add(child);
+          hasPrimaryContent = true;
         }
       }
       final attributes = {
@@ -639,11 +684,143 @@ class MarkdownAstAdapter {
     return result;
   }
 
-  List<BusyInline> _inlinesFromNodes(Iterable<md.Node> nodes) {
-    return [for (final node in nodes) ..._inlineFromNode(node)];
+  /// Runs the ordinary semantic converter with optional source annotations.
+  /// Mapping owns the parser policy; this method owns the single set of
+  /// Markdown-node-to-BusyMark semantic switches.
+  List<BusyInline> convertInlineNodes(
+    Iterable<md.Node> nodes, {
+    Map<BusyInline, BusyMarkMappedInlineRange>? sourceMappings,
+    String? mappingSource,
+    int mappingStart = 0,
+    int? mappingEnd,
+    Iterable<String> ignoredPositionMarkers = const [],
+  }) => _inlinesFromNodes(
+    nodes,
+    sourceMappings: sourceMappings,
+    mappingSource: mappingSource,
+    mappingStart: mappingStart,
+    mappingEnd: mappingEnd,
+    ignoredPositionMarkers: ignoredPositionMarkers,
+  );
+
+  List<BusyInline> _inlinesFromNodes(
+    Iterable<md.Node> nodes, {
+    Map<BusyInline, BusyMarkMappedInlineRange>? sourceMappings,
+    String? mappingSource,
+    int mappingStart = 0,
+    int? mappingEnd,
+    Iterable<String> ignoredPositionMarkers = const [],
+  }) {
+    final values = nodes.toList(growable: false);
+    if (sourceMappings == null || mappingSource == null) {
+      return [for (final node in values) ..._inlineFromNode(node)];
+    }
+    final end = (mappingEnd ?? mappingSource.length)
+        .clamp(mappingStart, mappingSource.length)
+        .toInt();
+    final ranges = [for (final node in values) _sourceMappingOffsets(node)];
+    final nextMappedStarts = List<int?>.filled(values.length, null);
+    final nextTextIndices = List<int?>.filled(values.length, null);
+    int? nextMappedStart;
+    int? nextTextIndex;
+    for (var index = values.length - 1; index >= 0; index--) {
+      nextMappedStarts[index] = nextMappedStart;
+      nextTextIndices[index] = nextTextIndex;
+      final range = ranges[index];
+      if (range != null) nextMappedStart = range.start;
+      final node = values[index];
+      if (node is md.Text && node.text.isNotEmpty) nextTextIndex = index;
+    }
+    debugBusyMarkSourceMappingBoundaryInspections?.call(values.length);
+    final result = <BusyInline>[];
+    final fallbackTextStarts = List<int?>.filled(values.length, null);
+    var cursor = mappingStart.clamp(0, end).toInt();
+    for (var index = 0; index < values.length; index++) {
+      final node = values[index];
+      final range = ranges[index];
+      final exactRange =
+          range != null &&
+              range.start >= mappingStart &&
+              range.start >= cursor &&
+              range.end >= range.start &&
+              range.end <= end
+          ? range
+          : null;
+      final cachedFallbackStart = fallbackTextStarts[index];
+      final nodeStart =
+          (exactRange?.start ??
+                  (cachedFallbackStart != null &&
+                          cachedFallbackStart >= cursor &&
+                          cachedFallbackStart <= end
+                      ? cachedFallbackStart
+                      : cursor))
+              .clamp(mappingStart, end)
+              .toInt();
+      final exactTextEnd =
+          node is md.Text &&
+              nodeStart + node.text.length <= end &&
+              mappingSource.startsWith(node.text, nodeStart)
+          ? nodeStart + node.text.length
+          : null;
+      final nextMappedBoundary = nextMappedStarts[index];
+      final cachedMappedEnd =
+          nextMappedBoundary != null &&
+              nextMappedBoundary >= nodeStart &&
+              nextMappedBoundary <= end
+          ? nextMappedBoundary
+          : null;
+      int? fallbackTextEnd;
+      final candidateIndex = nextTextIndices[index];
+      if (exactRange == null &&
+          exactTextEnd == null &&
+          cachedMappedEnd == null &&
+          candidateIndex != null) {
+        final reused = fallbackTextStarts[candidateIndex];
+        if (reused != null && reused >= nodeStart && reused <= end) {
+          fallbackTextEnd = reused;
+        } else {
+          final candidate = values[candidateIndex] as md.Text;
+          debugBusyMarkSourceMappingFallbackSearchCalls?.call();
+          debugBusyMarkSourceMappingFallbackSearchRanges?.call(nodeStart, end);
+          final relative = mappingSource
+              .substring(nodeStart, end)
+              .indexOf(candidate.text);
+          if (relative >= 0) {
+            fallbackTextEnd = nodeStart + relative;
+            fallbackTextStarts[candidateIndex] = fallbackTextEnd;
+          }
+        }
+      }
+      final nodeEnd =
+          (exactRange?.end ??
+                  exactTextEnd ??
+                  cachedMappedEnd ??
+                  fallbackTextEnd ??
+                  end)
+              .clamp(nodeStart, end);
+      result.addAll(
+        _inlineFromNode(
+          node,
+          sourceMappings: sourceMappings,
+          mappingSource: mappingSource,
+          mappingStart: nodeStart,
+          mappingEnd: nodeEnd,
+          ignoredPositionMarkers: ignoredPositionMarkers,
+        ),
+      );
+      cursor = math.max(cursor, nodeEnd);
+    }
+    return result;
   }
 
-  List<BusyInline> _inlineFromNode(md.Node node) {
+  List<BusyInline> _inlineFromNode(
+    md.Node node, {
+    Map<BusyInline, BusyMarkMappedInlineRange>? sourceMappings,
+    String? mappingSource,
+    int? mappingStart,
+    int? mappingEnd,
+    Iterable<String> ignoredPositionMarkers = const [],
+  }) {
     if (node is md.Element &&
         node.attributes[writersideLiteralPercentAttribute] == 'true') {
       return const [
@@ -660,7 +837,47 @@ class MarkdownAstAdapter {
       }
       final htmlInlines = _rawHtmlAdapter.parseRawHtmlInlineFragment(node.text);
       if (htmlInlines != null) {
+        if (sourceMappings != null &&
+            mappingSource != null &&
+            mappingStart != null &&
+            mappingEnd != null) {
+          final rawSource = mappingSource.substring(mappingStart, mappingEnd);
+          final mappedHtml = _rawHtmlAdapter
+              .parseRawHtmlInlineFragmentWithMetadata(
+                node.text,
+                sourceText: rawSource,
+                ignoredPositionMarkers: ignoredPositionMarkers,
+              );
+          if (mappedHtml != null) {
+            for (final entry in mappedHtml.ranges.entries) {
+              final range = entry.value;
+              sourceMappings[entry.key] = BusyMarkMappedInlineRange(
+                start: mappingStart + range.start,
+                end: mappingStart + range.end,
+                opening: range.opening,
+                closing: range.closing,
+                isSourceLineBreak: entry.key.kind == BusyInlineKind.hardBreak,
+                sourceLineBreakOffset: range.sourceLineBreakOffset == null
+                    ? null
+                    : mappingStart + range.sourceLineBreakOffset!,
+              );
+            }
+            return mappedHtml.inlines;
+          }
+        }
         return htmlInlines;
+      }
+      if (sourceMappings != null &&
+          mappingSource != null &&
+          mappingStart != null &&
+          mappingEnd != null &&
+          node.text.contains('\n')) {
+        return _mappedTextWithLineBreaks(
+          node.text,
+          mappingSource.substring(mappingStart, mappingEnd),
+          mappingStart,
+          sourceMappings,
+        );
       }
       return [BusyInline(kind: BusyInlineKind.text, text: node.text)];
     }
@@ -668,9 +885,38 @@ class MarkdownAstAdapter {
       return [BusyInline(kind: BusyInlineKind.unknown, text: node.textContent)];
     }
     final tag = node.tag.toLowerCase();
-    final children = _inlinesFromNodes(node.children ?? const <md.Node>[]);
+    final mappedStart = int.tryParse(
+      node.attributes[busyMarkSourceMappingStartAttribute] ?? '',
+    );
+    final mappedEnd = int.tryParse(
+      node.attributes[busyMarkSourceMappingEndAttribute] ?? '',
+    );
+    final labelStart = int.tryParse(
+      node.attributes[busyMarkSourceMappingLabelStartAttribute] ?? '',
+    );
+    final labelEnd = int.tryParse(
+      node.attributes[busyMarkSourceMappingLabelEndAttribute] ?? '',
+    );
+    final opening = node.attributes[busyMarkSourceMappingOpeningAttribute];
+    final closing = node.attributes[busyMarkSourceMappingClosingAttribute];
+    final childStart =
+        labelStart ??
+        (mappedStart == null
+            ? mappingStart
+            : mappedStart + (opening?.length ?? 0));
+    final childEnd =
+        labelEnd ??
+        (mappedEnd == null ? mappingEnd : mappedEnd - (closing?.length ?? 0));
+    final children = _inlinesFromNodes(
+      node.children ?? const <md.Node>[],
+      sourceMappings: sourceMappings,
+      mappingSource: mappingSource,
+      mappingStart: childStart ?? 0,
+      mappingEnd: childEnd,
+      ignoredPositionMarkers: ignoredPositionMarkers,
+    );
     final text = node.textContent;
-    return switch (tag) {
+    final inlines = switch (tag) {
       busyMarkMathInlineTag => [
         BusyInline(
           kind: BusyInlineKind.math,
@@ -711,7 +957,13 @@ class MarkdownAstAdapter {
           text: text,
           destination: node.attributes['href'],
           children: children,
-          attributes: node.attributes,
+          attributes: {
+            for (final entry in node.attributes.entries)
+              if (!entry.key.startsWith('data-busymark-source-'))
+                entry.key: entry.value,
+            if (node.attributes['title'] case final title?)
+              'title': _decodeMarkdownAttribute(title),
+          },
         ),
       ],
       'img' => [
@@ -722,7 +974,10 @@ class MarkdownAstAdapter {
           attributes: node.attributes,
         ),
       ],
-      'br' => const [BusyInline(kind: BusyInlineKind.hardBreak, text: '\n')],
+      // Source mappings are keyed by inline identity. Each parser occurrence
+      // therefore needs its own object even though every hard break has the
+      // same semantic value.
+      'br' => [BusyInline(kind: BusyInlineKind.hardBreak, text: '\n')],
       'var' => [
         BusyInline(
           kind: BusyInlineKind.writersideVariable,
@@ -740,6 +995,84 @@ class MarkdownAstAdapter {
           ...children,
       ],
     };
+    if (sourceMappings != null && inlines.length == 1) {
+      if (mappedStart != null && mappedEnd != null) {
+        sourceMappings[inlines.single] = BusyMarkMappedInlineRange(
+          start: mappedStart,
+          end: mappedEnd,
+          opening: node.attributes[busyMarkSourceMappingOpeningAttribute],
+          closing: node.attributes[busyMarkSourceMappingClosingAttribute],
+          labelStart: labelStart,
+          labelEnd: labelEnd,
+          isAutolink:
+              node.attributes[busyMarkSourceMappingAutolinkAttribute] == 'true',
+          isReference:
+              node.attributes[busyMarkSourceMappingReferenceAttribute] ==
+              'true',
+          isSourceLineBreak:
+              node.attributes[busyMarkSourceMappingLineBreakAttribute] ==
+              'true',
+          sourceLineBreakOffset: int.tryParse(
+            node.attributes[busyMarkSourceMappingLineBreakOffsetAttribute] ??
+                '',
+          ),
+        );
+      }
+    }
+    return inlines;
+  }
+
+  ({int start, int end})? _sourceMappingOffsets(md.Node node) {
+    if (node is! md.Element) return null;
+    final start = int.tryParse(
+      node.attributes[busyMarkSourceMappingStartAttribute] ?? '',
+    );
+    final end = int.tryParse(
+      node.attributes[busyMarkSourceMappingEndAttribute] ?? '',
+    );
+    return start == null || end == null ? null : (start: start, end: end);
+  }
+
+  List<BusyInline> _mappedTextWithLineBreaks(
+    String semanticText,
+    String rawSource,
+    int sourceBase,
+    Map<BusyInline, BusyMarkMappedInlineRange> sourceMappings,
+  ) {
+    final result = <BusyInline>[];
+    var semanticStart = 0;
+    var rawStart = 0;
+    for (final match in RegExp('\n').allMatches(semanticText)) {
+      if (match.start > semanticStart) {
+        result.add(
+          BusyInline(
+            kind: BusyInlineKind.text,
+            text: semanticText.substring(semanticStart, match.start),
+          ),
+        );
+      }
+      final rawLineFeed = rawSource.indexOf('\n', rawStart);
+      final lineBreak = BusyInline(kind: BusyInlineKind.text, text: '\n');
+      result.add(lineBreak);
+      if (rawLineFeed >= 0) {
+        sourceMappings[lineBreak] = BusyMarkMappedInlineRange(
+          start: sourceBase + rawLineFeed,
+          end: sourceBase + rawLineFeed + 1,
+          isSourceLineBreak: true,
+        );
+        rawStart = rawLineFeed + 1;
+      }
+      semanticStart = match.end;
+    }
+    if (semanticStart < semanticText.length) {
+      result.add(
+        BusyInline(
+          kind: BusyInlineKind.text,
+          text: semanticText.substring(semanticStart),
+        ),
+      );
+    }
+    return result;
   }
 
   BusyBlock? _imageBlockFromParagraph(

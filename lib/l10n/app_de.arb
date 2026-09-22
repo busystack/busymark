@@ -83,6 +83,42 @@
   "workspaceSearchShowMore": "Weitere Ergebnisse anzeigen",
   "workspaceSearchSkippedFiles": "Die Suche ist unvollständig. Diese Dateien sind größer als 1 MiB oder konnten nicht gelesen werden:",
   "@@locale": "de",
+  "spelling": "Rechtschreibung",
+  "automaticSpelling": "Automatische Rechtschreibprüfung",
+  "defaultSpellingLanguage": "Standardsprache für Rechtschreibung",
+  "projectSpellingLanguage": "Projektsprache für Rechtschreibung",
+  "chooseSpellingLanguage": "Rechtschreibsprache auswählen",
+  "spellingLanguageUnsetStatus": "Sprache…",
+  "spellingOffStatus": "Rechtschreibung aus",
+  "checkSpelling": "Rechtschreibung prüfen",
+  "ignoreSpellingOnce": "Einmal ignorieren",
+  "ignoreSpellingDocument": "Alle in diesem Dokument ignorieren",
+  "addPersonalSpellingWord": "Zum persönlichen Wörterbuch hinzufügen",
+  "addProjectSpellingWord": "Zum Projektwörterbuch hinzufügen",
+  "inheritSpellingLanguage": "Projekt- oder Anwendungssprache verwenden",
+  "disableDocumentSpelling": "Rechtschreibung nicht prüfen",
+  "importSpellingDictionary": "Wörterbuch importieren",
+  "personalSpellingDictionary": "Persönliches Wörterbuch",
+  "projectSpellingDictionary": "Projektwörterbuch",
+  "noSpellingErrors": "Keine Rechtschreibfehler",
+  "noSpellingSuggestions": "Keine Rechtschreibvorschläge",
+  "spellingWordCheckFailed": "Dieses Wort konnte nicht geprüft werden",
+  "spellingCheckFailed": "Rechtschreibprüfung fehlgeschlagen",
+  "spellingCheckIncomplete": "Rechtschreibprüfung ist unvollständig",
+  "spellingDictionaryNotInstalled": "Wörterbuch nicht installiert",
+  "spellingDictionaryNotInstalledForLanguage": "Das Wörterbuch {dictionary} ist nicht installiert",
+  "spellingDictionaryNotInstalledWithSize": "Nicht installiert · {size}",
+  "spellingDictionaryInstalled": "Installiert",
+  "installSpellingDictionary": "Wörterbuch installieren",
+  "removeSpellingDictionary": "Wörterbuch entfernen",
+  "cancelSpellingDictionaryInstall": "Wörterbuchdownload abbrechen",
+  "retrySpellingDictionaryInstall": "Wörterbuchinstallation wiederholen",
+  "spellingDictionaryDownloading": "{size} werden heruntergeladen…",
+  "spellingDictionaryValidating": "Wörterbuch wird überprüft…",
+  "spellingDictionaryInstallFailed": "Wörterbuchinstallation fehlgeschlagen – zum Wiederholen auswählen",
+  "spellingDictionaryInstallPrompt": "{dictionary} ({size}) installieren? Danach bleibt es offline verfügbar, bis Sie es entfernen.",
+  "spellingDictionaryUnavailable": "Wörterbuch nicht verfügbar",
+  "spellingChecking": "Rechtschreibung wird geprüft…",
   "reportIssue": "Problem melden",
   "feedbackCategory": "Kategorie",
   "feedbackChooseCategory": "Kategorie auswählen",
@@ -802,6 +838,7 @@
     "description": "Editor setting description for saving files automatically."
   },
   "wordWrap": "Zeilenumbruch",
+  "wordWrapDescription": "Lange Zeilen an die Breite des Editors anpassen, anstatt horizontal zu scrollen.",
   "@wordWrap": {
     "description": "Word wrap setting label."
   },
@@ -869,6 +906,13 @@
   "@clearGitWorkspaceTrustDescription": {
     "description": "Settings action description for clearing trusted Git workspaces."
   },
+  "settingsEditingButtonsSectionTitle": "Bearbeitungsschaltflächen",
+  "spellingDictionaries": "Rechtschreibwörterbücher",
+  "spellingDictionariesDescription": "Rechtschreibwörterbücher installieren und verwalten",
+  "settingsDictionariesSectionTitle": "Wörterbücher",
+  "availableSpellingDictionaries": "Verfügbare Wörterbücher",
+  "customSpellingDictionaries": "Benutzerdefinierte Wörterbücher",
+  "spellingDictionaryProblems": "Wörterbuchprobleme",
   "settingsWindowSectionTitle": "Fenster",
   "@settingsWindowSectionTitle": {
     "description": "Settings section title for native window behavior."
@@ -3329,5 +3373,6 @@
   "topicRenameAffectedFiles": "Betroffene Dateien",
   "renameTopicFileInstead": "Themen-IDs werden aus ihren Dateinamen abgeleitet. Verwenden Sie „Themendatei umbenennen“ im Inhaltsverzeichnis oder in der Seitenleiste „Dateien“.",
   "diagnosticWritersideWebFileNameInvalid": "Instanz \"{instanceId}\" veröffentlicht den ungültigen Webdateinamen \"{webFileName}\" für das Thema \"{topic}\".",
-  "diagnosticWritersideWebFileNameCollision": "Instanz \"{instanceId}\" veröffentlicht sowohl \"{firstTopic}\" als auch \"{secondTopic}\" unter \"{webFileName}\"."
+  "diagnosticWritersideWebFileNameCollision": "Instanz \"{instanceId}\" veröffentlicht sowohl \"{firstTopic}\" als auch \"{secondTopic}\" unter \"{webFileName}\".",
+  "spellingDictionaryRecoveryConflict": "Das Rechtschreibwörterbuch wurde extern geändert. Eine Wiederherstellungskopie wurde aufbewahrt."
 }

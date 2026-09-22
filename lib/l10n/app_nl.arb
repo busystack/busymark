@@ -83,6 +83,42 @@
   "workspaceSearchShowMore": "Meer resultaten tonen",
   "workspaceSearchSkippedFiles": "De zoekopdracht is onvolledig. Deze bestanden zijn groter dan 1 MiB of konden niet worden gelezen:",
   "@@locale": "nl",
+  "spelling": "Spellingcontrole",
+  "automaticSpelling": "Spelling automatisch controleren",
+  "defaultSpellingLanguage": "Standaardtaal voor spelling",
+  "projectSpellingLanguage": "Projecttaal voor spelling",
+  "chooseSpellingLanguage": "Taal voor spelling kiezen",
+  "spellingLanguageUnsetStatus": "Taal…",
+  "spellingOffStatus": "Spelling uit",
+  "checkSpelling": "Spelling controleren",
+  "ignoreSpellingOnce": "Eenmaal negeren",
+  "ignoreSpellingDocument": "Alles in dit document negeren",
+  "addPersonalSpellingWord": "Aan persoonlijk woordenboek toevoegen",
+  "addProjectSpellingWord": "Aan projectwoordenboek toevoegen",
+  "inheritSpellingLanguage": "Project- of toepassingstaal gebruiken",
+  "disableDocumentSpelling": "Spelling niet controleren",
+  "importSpellingDictionary": "Woordenboek importeren",
+  "personalSpellingDictionary": "Persoonlijk woordenboek",
+  "projectSpellingDictionary": "Projectwoordenboek",
+  "noSpellingErrors": "Geen spelfouten",
+  "noSpellingSuggestions": "Geen spellingsuggesties",
+  "spellingWordCheckFailed": "Dit woord kon niet worden gecontroleerd",
+  "spellingCheckFailed": "Spellingcontrole mislukt",
+  "spellingCheckIncomplete": "De spellingcontrole is onvolledig",
+  "spellingDictionaryNotInstalled": "Woordenboek niet geïnstalleerd",
+  "spellingDictionaryNotInstalledForLanguage": "Het woordenboek voor {dictionary} is niet geïnstalleerd",
+  "spellingDictionaryNotInstalledWithSize": "Niet geïnstalleerd · {size}",
+  "spellingDictionaryInstalled": "Geïnstalleerd",
+  "installSpellingDictionary": "Woordenboek installeren",
+  "removeSpellingDictionary": "Woordenboek verwijderen",
+  "cancelSpellingDictionaryInstall": "Download van woordenboek annuleren",
+  "retrySpellingDictionaryInstall": "Installatie van woordenboek opnieuw proberen",
+  "spellingDictionaryDownloading": "{size} downloaden…",
+  "spellingDictionaryValidating": "Woordenboek valideren…",
+  "spellingDictionaryInstallFailed": "Installatie mislukt — selecteer om opnieuw te proberen",
+  "spellingDictionaryInstallPrompt": "{dictionary} ({size}) installeren? Daarna blijft het offline beschikbaar totdat u het verwijdert.",
+  "spellingDictionaryUnavailable": "Woordenboek niet beschikbaar",
+  "spellingChecking": "Spelling controleren…",
   "appTitle": "BusyMark",
   "@appTitle": {
     "description": "Application name."
@@ -932,6 +968,7 @@
     "description": "Editor setting description for saving files automatically."
   },
   "wordWrap": "Regelterugloop",
+  "wordWrapDescription": "Laat lange regels op de editorbreedte doorlopen in plaats van horizontaal te schuiven.",
   "@wordWrap": {
     "description": "Word wrap setting label."
   },
@@ -999,6 +1036,13 @@
   "@clearGitWorkspaceTrustDescription": {
     "description": "Settings action description for clearing trusted Git workspaces."
   },
+  "settingsEditingButtonsSectionTitle": "Bewerkingsknoppen",
+  "spellingDictionaries": "Spellingswoordenboeken",
+  "spellingDictionariesDescription": "Spellingswoordenboeken installeren en beheren",
+  "settingsDictionariesSectionTitle": "Woordenboeken",
+  "availableSpellingDictionaries": "Beschikbare woordenboeken",
+  "customSpellingDictionaries": "Aangepaste woordenboeken",
+  "spellingDictionaryProblems": "Woordenboekproblemen",
   "settingsWindowSectionTitle": "Raam",
   "@settingsWindowSectionTitle": {
     "description": "Settings section title for native window behavior."
@@ -4868,5 +4912,6 @@
   "topicRenameAffectedFiles": "Betrokken bestanden",
   "renameTopicFileInstead": "Onderwerp-ID's zijn afgeleid van de bestandsnamen. Gebruik Onderwerpbestand hernoemen in de inhoudsopgave of de zijbalk Bestanden.",
   "diagnosticWritersideWebFileNameInvalid": "Instantie \"{instanceId}\" publiceert de ongeldige webbestandsnaam \"{webFileName}\" voor onderwerp \"{topic}\".",
-  "diagnosticWritersideWebFileNameCollision": "Instantie \"{instanceId}\" publiceert zowel \"{firstTopic}\" als \"{secondTopic}\" als \"{webFileName}\"."
+  "diagnosticWritersideWebFileNameCollision": "Instantie \"{instanceId}\" publiceert zowel \"{firstTopic}\" als \"{secondTopic}\" als \"{webFileName}\".",
+  "spellingDictionaryRecoveryConflict": "Het spellingwoordenboek is extern gewijzigd. Er is een herstelkopie bewaard."
 }

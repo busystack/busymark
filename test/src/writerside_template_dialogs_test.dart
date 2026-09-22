@@ -134,7 +134,34 @@ void main() {
             1,
           ),
         );
+        final markdown = tester.widget<BusyMarkRadioButton<String>>(
+          find.byKey(const ValueKey('template-format-md')),
+        );
+        final xml = tester.widget<BusyMarkRadioButton<String>>(
+          find.byKey(const ValueKey('template-format-topic')),
+        );
+        expect(markdown.value, 'md');
+        expect(xml.value, 'topic');
+        expect(markdown.groupValue, 'md');
+        expect(xml.groupValue, 'md');
         await tester.tap(find.text('XML (.topic)'));
+        await tester.pump();
+        expect(
+          tester
+              .widget<BusyMarkRadioButton<String>>(
+                find.byKey(const ValueKey('template-format-md')),
+              )
+              .groupValue,
+          'topic',
+        );
+        expect(
+          tester
+              .widget<BusyMarkRadioButton<String>>(
+                find.byKey(const ValueKey('template-format-topic')),
+              )
+              .groupValue,
+          'topic',
+        );
         await tester.enterText(editableUnderKey('template-title'), 'A & B');
         await tester.enterText(
           editableUnderKey('template-filename'),
@@ -183,7 +210,14 @@ void main() {
     expect(find.byType(YaruMasterTile), findsWidgets);
     expect(find.byType(BusyMarkGroupedTextEntry), findsNWidgets(2));
     expect(find.byType(BusyMarkActionRow), findsOneWidget);
-    expect(find.byType(YaruRadioButton<String>), findsNWidgets(2));
+    expect(find.byType(BusyMarkRadioButton<String>), findsNWidgets(2));
+    expect(
+      find.descendant(
+        of: find.byType(BusyMarkRadioButton<String>),
+        matching: find.byType(YaruRadioButton<String>),
+      ),
+      findsNWidgets(2),
+    );
     expect(find.byType(BusyMarkSidebarSurface), findsOneWidget);
     final formatTile = tester.widget<YaruListTile>(
       find.byKey(const ValueKey('template-format')),
@@ -225,6 +259,34 @@ void main() {
           .controller
           .text,
       'Overview',
+    );
+
+    await tester.enterText(
+      editableUnderKey('template-search'),
+      'API quickstart',
+    );
+    await tester.pumpAndSettle();
+    final markdownOnlyTile = find.byKey(
+      const ValueKey('template-api-quickstart/template_api-quickstart.md'),
+    );
+    expect(markdownOnlyTile, findsOneWidget);
+    await tester.tap(markdownOnlyTile);
+    await tester.pumpAndSettle();
+    expect(
+      tester
+          .widget<BusyMarkRadioButton<String>>(
+            find.byKey(const ValueKey('template-format-md')),
+          )
+          .onChanged,
+      isNotNull,
+    );
+    expect(
+      tester
+          .widget<BusyMarkRadioButton<String>>(
+            find.byKey(const ValueKey('template-format-topic')),
+          )
+          .onChanged,
+      isNull,
     );
   });
 

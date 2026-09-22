@@ -961,6 +961,10 @@ class AppLocalizationsIt extends AppLocalizations {
   String get wordWrap => 'A capo automatico';
 
   @override
+  String get wordWrapDescription =>
+      'Adatta le righe lunghe alla larghezza dell’editor invece di scorrerle orizzontalmente.';
+
+  @override
   String get editorFontSize => 'Dimensione del carattere dell\'editor';
 
   @override
@@ -1014,6 +1018,28 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get clearGitWorkspaceTrustDescription =>
       'Chiedi conferma prima di attivare le funzionalità Git per le aree di lavoro considerate attendibili in precedenza.';
+
+  @override
+  String get settingsEditingButtonsSectionTitle => 'Pulsanti di modifica';
+
+  @override
+  String get spellingDictionaries => 'Dizionari ortografici';
+
+  @override
+  String get spellingDictionariesDescription =>
+      'Installa e gestisci i dizionari ortografici';
+
+  @override
+  String get settingsDictionariesSectionTitle => 'Dizionari';
+
+  @override
+  String get availableSpellingDictionaries => 'Dizionari disponibili';
+
+  @override
+  String get customSpellingDictionaries => 'Dizionari personalizzati';
+
+  @override
+  String get spellingDictionaryProblems => 'Problemi dei dizionari';
 
   @override
   String get settingsWindowSectionTitle => 'Finestra';
@@ -4530,7 +4556,131 @@ class AppLocalizationsIt extends AppLocalizations {
   }
 
   @override
+  String get spelling => 'Ortografia';
+
+  @override
+  String get automaticSpelling => 'Controllo ortografico automatico';
+
+  @override
+  String get defaultSpellingLanguage => 'Lingua ortografica predefinita';
+
+  @override
+  String get projectSpellingLanguage =>
+      'Lingua di controllo ortografico del progetto';
+
+  @override
+  String get chooseSpellingLanguage => 'Scegli la lingua ortografica';
+
+  @override
+  String get spellingLanguageUnsetStatus => 'Lingua…';
+
+  @override
+  String get spellingOffStatus => 'Controllo ortografico disattivato';
+
+  @override
+  String get checkSpelling => 'Controlla ortografia';
+
+  @override
+  String get ignoreSpellingOnce => 'Ignora una volta';
+
+  @override
+  String get ignoreSpellingDocument => 'Ignora tutto in questo documento';
+
+  @override
+  String get addPersonalSpellingWord => 'Aggiungi al dizionario personale';
+
+  @override
+  String get addProjectSpellingWord => 'Aggiungi al dizionario del progetto';
+
+  @override
+  String get inheritSpellingLanguage => 'Usa la lingua del progetto o dell’app';
+
+  @override
+  String get disableDocumentSpelling => 'Non controllare l’ortografia';
+
+  @override
+  String get importSpellingDictionary => 'Importa dizionario';
+
+  @override
+  String get personalSpellingDictionary => 'Dizionario personale';
+
+  @override
+  String get projectSpellingDictionary => 'Dizionario del progetto';
+
+  @override
+  String get noSpellingErrors => 'Nessun errore di ortografia';
+
+  @override
+  String get noSpellingSuggestions => 'Nessun suggerimento ortografico';
+
+  @override
+  String get spellingWordCheckFailed => 'Impossibile controllare questa parola';
+
+  @override
+  String get spellingCheckFailed => 'Controllo ortografico non riuscito';
+
+  @override
+  String get spellingCheckIncomplete => 'Il controllo ortografico è incompleto';
+
+  @override
+  String get spellingDictionaryNotInstalled => 'Dizionario non installato';
+
+  @override
+  String spellingDictionaryNotInstalledForLanguage(String dictionary) {
+    return 'Il dizionario $dictionary non è installato';
+  }
+
+  @override
+  String spellingDictionaryNotInstalledWithSize(String size) {
+    return 'Non installato · $size';
+  }
+
+  @override
+  String get spellingDictionaryInstalled => 'Installato';
+
+  @override
+  String get installSpellingDictionary => 'Installa dizionario';
+
+  @override
+  String get removeSpellingDictionary => 'Rimuovi dizionario';
+
+  @override
+  String get cancelSpellingDictionaryInstall =>
+      'Annulla download del dizionario';
+
+  @override
+  String get retrySpellingDictionaryInstall =>
+      'Riprova l’installazione del dizionario';
+
+  @override
+  String spellingDictionaryDownloading(String size) {
+    return 'Download di $size…';
+  }
+
+  @override
+  String get spellingDictionaryValidating => 'Convalida del dizionario…';
+
+  @override
+  String get spellingDictionaryInstallFailed =>
+      'Installazione non riuscita — seleziona per riprovare';
+
+  @override
+  String spellingDictionaryInstallPrompt(String dictionary, String size) {
+    return 'Installare $dictionary ($size)? Dopo l’installazione resterà disponibile offline finché non verrà rimosso.';
+  }
+
+  @override
+  String get spellingDictionaryUnavailable => 'Dizionario non disponibile';
+
+  @override
+  String get spellingChecking => 'Controllo ortografico…';
+
+  @override
   String exportInvalidRange(String field, String minimum, String maximum) {
     return '$field: inserisci un numero tra $minimum e $maximum.';
   }
+
+  @override
+  String get spellingDictionaryRecoveryConflict =>
+      'Il dizionario ortografico è stato modificato esternamente. È stata conservata una copia di ripristino.';
 }

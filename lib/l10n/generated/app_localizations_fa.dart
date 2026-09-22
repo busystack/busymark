@@ -945,6 +945,10 @@ class AppLocalizationsFa extends AppLocalizations {
   String get wordWrap => 'شکستن خودکار خطوط';
 
   @override
+  String get wordWrapDescription =>
+      'سطرهای بلند را به‌جای پیمایش افقی متناسب با عرض ویرایشگر می‌شکند.';
+
+  @override
   String get editorFontSize => 'اندازهٔ قلم ویرایشگر';
 
   @override
@@ -996,6 +1000,28 @@ class AppLocalizationsFa extends AppLocalizations {
   @override
   String get clearGitWorkspaceTrustDescription =>
       'پیش از فعال‌کردن ویژگی‌های Git برای فضاهای کاری که قبلاً مورد اعتماد بوده‌اند، پرسیده شود.';
+
+  @override
+  String get settingsEditingButtonsSectionTitle => 'دکمه‌های ویرایش';
+
+  @override
+  String get spellingDictionaries => 'واژه‌نامه‌های املایی';
+
+  @override
+  String get spellingDictionariesDescription =>
+      'نصب و مدیریت واژه‌نامه‌های املایی';
+
+  @override
+  String get settingsDictionariesSectionTitle => 'واژه‌نامه‌ها';
+
+  @override
+  String get availableSpellingDictionaries => 'واژه‌نامه‌های موجود';
+
+  @override
+  String get customSpellingDictionaries => 'واژه‌نامه‌های سفارشی';
+
+  @override
+  String get spellingDictionaryProblems => 'مشکلات واژه‌نامه';
 
   @override
   String get settingsWindowSectionTitle => 'پنجره';
@@ -4532,7 +4558,128 @@ class AppLocalizationsFa extends AppLocalizations {
   }
 
   @override
+  String get spelling => 'املا';
+
+  @override
+  String get automaticSpelling => 'بررسی خودکار املا';
+
+  @override
+  String get defaultSpellingLanguage => 'زبان پیش‌فرض بررسی املا';
+
+  @override
+  String get projectSpellingLanguage => 'زبان غلط‌یابی پروژه';
+
+  @override
+  String get chooseSpellingLanguage => 'انتخاب زبان املا';
+
+  @override
+  String get spellingLanguageUnsetStatus => 'زبان…';
+
+  @override
+  String get spellingOffStatus => 'بررسی املا خاموش';
+
+  @override
+  String get checkSpelling => 'بررسی املا';
+
+  @override
+  String get ignoreSpellingOnce => 'یک‌بار نادیده بگیر';
+
+  @override
+  String get ignoreSpellingDocument => 'همه را در این سند نادیده بگیر';
+
+  @override
+  String get addPersonalSpellingWord => 'افزودن به واژه‌نامه شخصی';
+
+  @override
+  String get addProjectSpellingWord => 'افزودن به واژه‌نامه پروژه';
+
+  @override
+  String get inheritSpellingLanguage => 'استفاده از زبان پروژه یا برنامه';
+
+  @override
+  String get disableDocumentSpelling => 'املاء بررسی نشود';
+
+  @override
+  String get importSpellingDictionary => 'درون‌ریزی واژه‌نامه';
+
+  @override
+  String get personalSpellingDictionary => 'واژه‌نامه شخصی';
+
+  @override
+  String get projectSpellingDictionary => 'واژه‌نامه پروژه';
+
+  @override
+  String get noSpellingErrors => 'خطای املایی وجود ندارد';
+
+  @override
+  String get noSpellingSuggestions => 'پیشنهاد املایی وجود ندارد';
+
+  @override
+  String get spellingWordCheckFailed => 'بررسی این واژه ممکن نشد';
+
+  @override
+  String get spellingCheckFailed => 'بررسی املا ناموفق بود';
+
+  @override
+  String get spellingCheckIncomplete => 'بررسی املا کامل نیست';
+
+  @override
+  String get spellingDictionaryNotInstalled => 'واژه‌نامه نصب نشده است';
+
+  @override
+  String spellingDictionaryNotInstalledForLanguage(String dictionary) {
+    return 'واژه‌نامهٔ ⁨$dictionary⁩ نصب نشده است';
+  }
+
+  @override
+  String spellingDictionaryNotInstalledWithSize(String size) {
+    return 'نصب‌نشده · ⁨$size⁩';
+  }
+
+  @override
+  String get spellingDictionaryInstalled => 'نصب‌شده';
+
+  @override
+  String get installSpellingDictionary => 'نصب واژه‌نامه';
+
+  @override
+  String get removeSpellingDictionary => 'حذف واژه‌نامه';
+
+  @override
+  String get cancelSpellingDictionaryInstall => 'لغو بارگیری واژه‌نامه';
+
+  @override
+  String get retrySpellingDictionaryInstall => 'تلاش دوباره برای نصب واژه‌نامه';
+
+  @override
+  String spellingDictionaryDownloading(String size) {
+    return 'در حال بارگیری ⁨$size⁩…';
+  }
+
+  @override
+  String get spellingDictionaryValidating => 'در حال اعتبارسنجی واژه‌نامه…';
+
+  @override
+  String get spellingDictionaryInstallFailed =>
+      'نصب واژه‌نامه ناموفق بود — برای تلاش دوباره انتخاب کنید';
+
+  @override
+  String spellingDictionaryInstallPrompt(String dictionary, String size) {
+    return 'واژه‌نامهٔ ⁨$dictionary⁩ (⁨$size⁩) نصب شود؟ پس از نصب تا زمانی که آن را حذف نکنید، آفلاین در دسترس می‌ماند.';
+  }
+
+  @override
+  String get spellingDictionaryUnavailable => 'واژه‌نامه در دسترس نیست';
+
+  @override
+  String get spellingChecking => 'در حال بررسی املا…';
+
+  @override
   String exportInvalidRange(String field, String minimum, String maximum) {
     return '$field: عددی بین $minimum و $maximum وارد کنید.';
   }
+
+  @override
+  String get spellingDictionaryRecoveryConflict =>
+      'فرهنگ لغت املایی به‌صورت خارجی تغییر کرد. یک نسخهٔ بازیابی حفظ شد.';
 }

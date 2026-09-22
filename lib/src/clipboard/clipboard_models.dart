@@ -21,10 +21,11 @@ class BusyMarkClipboardOrigin {
 
 /// An immutable, source-independent clipboard snapshot.
 ///
-/// [sourceText] is the representation inserted into Source mode. [text] is
-/// the interoperable plain-text representation. A rich fragment is an opaque,
-/// validated BusyMark schema and is never reconstructed from plain-text
-/// equality.
+/// [text] is the interoperable plain-text representation. [sourceText] is an
+/// optional authored/source representation. The active paste mode and
+/// destination decide which representation is inserted. A rich fragment is an
+/// opaque, validated BusyMark schema and is never reconstructed from
+/// plain-text equality.
 @immutable
 class BusyMarkClipboardPayload {
   BusyMarkClipboardPayload({
@@ -97,10 +98,14 @@ class BusyMarkClipboardPayload {
   final String fingerprint;
   final int accountedBytes;
 
-  bool get hasMeaningfulTextRepresentation =>
-      sourceText != null || text != null;
+  bool get hasPlainTextRepresentation => text != null && text!.isNotEmpty;
 
-  String? get preferredSourceText => sourceText ?? text;
+  bool get hasSourceOrTextRepresentation =>
+      (sourceText != null && sourceText!.isNotEmpty) ||
+      hasPlainTextRepresentation;
+
+  /// Used only for Clipboard History presentation, never paste policy.
+  String? get displayText => sourceText ?? text;
 
   bool equivalentTo(BusyMarkClipboardPayload other) =>
       fingerprint == other.fingerprint &&
@@ -271,4 +276,10 @@ class ClipboardHistoryPolicy {
 
 enum ClipboardRetentionResult { retained, deduplicated, disabled, oversized }
 
-enum ClipboardPasteResult { inserted, staleTarget, unsupported, unavailable }
+enum ClipboardPasteResult {
+  inserted,
+  cancelled,
+  staleTarget,
+  unsupported,
+  unavailable,
+}

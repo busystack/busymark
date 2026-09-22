@@ -939,6 +939,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get wordWrap => 'التفاف النص';
 
   @override
+  String get wordWrapDescription =>
+      'التفاف السطور الطويلة لتلائم عرض المحرر بدلاً من التمرير أفقيًا.';
+
+  @override
   String get editorFontSize => 'حجم خط المحرر';
 
   @override
@@ -990,6 +994,28 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get clearGitWorkspaceTrustDescription =>
       'طلب التأكيد قبل تمكين ميزات Git لمساحات العمل التي سبق الوثوق بها.';
+
+  @override
+  String get settingsEditingButtonsSectionTitle => 'أزرار التحرير';
+
+  @override
+  String get spellingDictionaries => 'قواميس التدقيق الإملائي';
+
+  @override
+  String get spellingDictionariesDescription =>
+      'تثبيت قواميس التدقيق الإملائي وإدارتها';
+
+  @override
+  String get settingsDictionariesSectionTitle => 'القواميس';
+
+  @override
+  String get availableSpellingDictionaries => 'القواميس المتاحة';
+
+  @override
+  String get customSpellingDictionaries => 'القواميس المخصصة';
+
+  @override
+  String get spellingDictionaryProblems => 'مشكلات القواميس';
 
   @override
   String get settingsWindowSectionTitle => 'النافذة';
@@ -4524,7 +4550,128 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
+  String get spelling => 'الإملاء';
+
+  @override
+  String get automaticSpelling => 'التدقيق الإملائي التلقائي';
+
+  @override
+  String get defaultSpellingLanguage => 'لغة الإملاء الافتراضية';
+
+  @override
+  String get projectSpellingLanguage => 'لغة التدقيق الإملائي للمشروع';
+
+  @override
+  String get chooseSpellingLanguage => 'اختر لغة الإملاء';
+
+  @override
+  String get spellingLanguageUnsetStatus => 'اللغة…';
+
+  @override
+  String get spellingOffStatus => 'التدقيق الإملائي متوقف';
+
+  @override
+  String get checkSpelling => 'تدقيق الإملاء';
+
+  @override
+  String get ignoreSpellingOnce => 'تجاهل مرة واحدة';
+
+  @override
+  String get ignoreSpellingDocument => 'تجاهل الكل في هذا المستند';
+
+  @override
+  String get addPersonalSpellingWord => 'إضافة إلى القاموس الشخصي';
+
+  @override
+  String get addProjectSpellingWord => 'إضافة إلى قاموس المشروع';
+
+  @override
+  String get inheritSpellingLanguage => 'استخدام لغة المشروع أو التطبيق';
+
+  @override
+  String get disableDocumentSpelling => 'عدم التدقيق الإملائي';
+
+  @override
+  String get importSpellingDictionary => 'استيراد قاموس';
+
+  @override
+  String get personalSpellingDictionary => 'القاموس الشخصي';
+
+  @override
+  String get projectSpellingDictionary => 'قاموس المشروع';
+
+  @override
+  String get noSpellingErrors => 'لا توجد أخطاء إملائية';
+
+  @override
+  String get noSpellingSuggestions => 'لا توجد اقتراحات إملائية';
+
+  @override
+  String get spellingWordCheckFailed => 'تعذّر التحقق من هذه الكلمة';
+
+  @override
+  String get spellingCheckFailed => 'فشل التدقيق الإملائي';
+
+  @override
+  String get spellingCheckIncomplete => 'التدقيق الإملائي غير مكتمل';
+
+  @override
+  String get spellingDictionaryNotInstalled => 'القاموس غير مثبّت';
+
+  @override
+  String spellingDictionaryNotInstalledForLanguage(String dictionary) {
+    return 'قاموس ⁨$dictionary⁩ غير مثبّت';
+  }
+
+  @override
+  String spellingDictionaryNotInstalledWithSize(String size) {
+    return 'غير مثبّت · ⁨$size⁩';
+  }
+
+  @override
+  String get spellingDictionaryInstalled => 'مثبّت';
+
+  @override
+  String get installSpellingDictionary => 'تثبيت القاموس';
+
+  @override
+  String get removeSpellingDictionary => 'إزالة القاموس';
+
+  @override
+  String get cancelSpellingDictionaryInstall => 'إلغاء تنزيل القاموس';
+
+  @override
+  String get retrySpellingDictionaryInstall => 'إعادة محاولة تثبيت القاموس';
+
+  @override
+  String spellingDictionaryDownloading(String size) {
+    return 'جارٍ تنزيل ⁨$size⁩…';
+  }
+
+  @override
+  String get spellingDictionaryValidating => 'جارٍ التحقق من القاموس…';
+
+  @override
+  String get spellingDictionaryInstallFailed =>
+      'فشل تثبيت القاموس — حدده لإعادة المحاولة';
+
+  @override
+  String spellingDictionaryInstallPrompt(String dictionary, String size) {
+    return 'هل تريد تثبيت ⁨$dictionary⁩ (⁨$size⁩)؟ بعد التثبيت، يظل متاحًا دون اتصال حتى تزيله.';
+  }
+
+  @override
+  String get spellingDictionaryUnavailable => 'القاموس غير متاح';
+
+  @override
+  String get spellingChecking => 'جارٍ التدقيق الإملائي…';
+
+  @override
   String exportInvalidRange(String field, String minimum, String maximum) {
     return '$field: أدخل رقمًا بين $minimum و$maximum.';
   }
+
+  @override
+  String get spellingDictionaryRecoveryConflict =>
+      'تم تغيير قاموس التدقيق الإملائي خارجيًا. تم الاحتفاظ بنسخة استرداد.';
 }

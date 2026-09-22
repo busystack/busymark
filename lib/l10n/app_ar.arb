@@ -83,6 +83,42 @@
   "workspaceSearchShowMore": "عرض المزيد من النتائج",
   "workspaceSearchSkippedFiles": "البحث غير مكتمل. تجاوز حجم هذه الملفات 1 MiB أو تعذّرت قراءتها:",
   "@@locale": "ar",
+  "spelling": "الإملاء",
+  "automaticSpelling": "التدقيق الإملائي التلقائي",
+  "defaultSpellingLanguage": "لغة الإملاء الافتراضية",
+  "projectSpellingLanguage": "لغة التدقيق الإملائي للمشروع",
+  "chooseSpellingLanguage": "اختر لغة الإملاء",
+  "spellingLanguageUnsetStatus": "اللغة…",
+  "spellingOffStatus": "التدقيق الإملائي متوقف",
+  "checkSpelling": "تدقيق الإملاء",
+  "ignoreSpellingOnce": "تجاهل مرة واحدة",
+  "ignoreSpellingDocument": "تجاهل الكل في هذا المستند",
+  "addPersonalSpellingWord": "إضافة إلى القاموس الشخصي",
+  "addProjectSpellingWord": "إضافة إلى قاموس المشروع",
+  "inheritSpellingLanguage": "استخدام لغة المشروع أو التطبيق",
+  "disableDocumentSpelling": "عدم التدقيق الإملائي",
+  "importSpellingDictionary": "استيراد قاموس",
+  "personalSpellingDictionary": "القاموس الشخصي",
+  "projectSpellingDictionary": "قاموس المشروع",
+  "noSpellingErrors": "لا توجد أخطاء إملائية",
+  "noSpellingSuggestions": "لا توجد اقتراحات إملائية",
+  "spellingWordCheckFailed": "تعذّر التحقق من هذه الكلمة",
+  "spellingCheckFailed": "فشل التدقيق الإملائي",
+  "spellingCheckIncomplete": "التدقيق الإملائي غير مكتمل",
+  "spellingDictionaryNotInstalled": "القاموس غير مثبّت",
+  "spellingDictionaryNotInstalledForLanguage": "قاموس ⁨{dictionary}⁩ غير مثبّت",
+  "spellingDictionaryNotInstalledWithSize": "غير مثبّت · ⁨{size}⁩",
+  "spellingDictionaryInstalled": "مثبّت",
+  "installSpellingDictionary": "تثبيت القاموس",
+  "removeSpellingDictionary": "إزالة القاموس",
+  "cancelSpellingDictionaryInstall": "إلغاء تنزيل القاموس",
+  "retrySpellingDictionaryInstall": "إعادة محاولة تثبيت القاموس",
+  "spellingDictionaryDownloading": "جارٍ تنزيل ⁨{size}⁩…",
+  "spellingDictionaryValidating": "جارٍ التحقق من القاموس…",
+  "spellingDictionaryInstallFailed": "فشل تثبيت القاموس — حدده لإعادة المحاولة",
+  "spellingDictionaryInstallPrompt": "هل تريد تثبيت ⁨{dictionary}⁩ (⁨{size}⁩)؟ بعد التثبيت، يظل متاحًا دون اتصال حتى تزيله.",
+  "spellingDictionaryUnavailable": "القاموس غير متاح",
+  "spellingChecking": "جارٍ التدقيق الإملائي…",
   "reportIssue": "الإبلاغ عن مشكلة",
   "feedbackCategory": "الفئة",
   "feedbackChooseCategory": "اختر فئة",
@@ -802,6 +838,7 @@
     "description": "Editor setting description for saving files automatically."
   },
   "wordWrap": "التفاف النص",
+  "wordWrapDescription": "التفاف السطور الطويلة لتلائم عرض المحرر بدلاً من التمرير أفقيًا.",
   "@wordWrap": {
     "description": "Word wrap setting label."
   },
@@ -869,6 +906,13 @@
   "@clearGitWorkspaceTrustDescription": {
     "description": "Settings action description for clearing trusted Git workspaces."
   },
+  "settingsEditingButtonsSectionTitle": "أزرار التحرير",
+  "spellingDictionaries": "قواميس التدقيق الإملائي",
+  "spellingDictionariesDescription": "تثبيت قواميس التدقيق الإملائي وإدارتها",
+  "settingsDictionariesSectionTitle": "القواميس",
+  "availableSpellingDictionaries": "القواميس المتاحة",
+  "customSpellingDictionaries": "القواميس المخصصة",
+  "spellingDictionaryProblems": "مشكلات القواميس",
   "settingsWindowSectionTitle": "النافذة",
   "@settingsWindowSectionTitle": {
     "description": "Settings section title for native window behavior."
@@ -3329,5 +3373,6 @@
   "topicRenameAffectedFiles": "الملفات المتأثرة",
   "renameTopicFileInstead": "تُشتق معرّفات الموضوعات من أسماء ملفاتها. استخدم «إعادة تسمية ملف الموضوع» في جدول المحتويات أو الشريط الجانبي للملفات.",
   "diagnosticWritersideWebFileNameInvalid": "ينشر المثيل \"{instanceId}\" اسم ملف ويب غير صالح \"{webFileName}\" للموضوع \"{topic}\".",
-  "diagnosticWritersideWebFileNameCollision": "ينشر المثيل \"{instanceId}\" الموضوعين \"{firstTopic}\" و\"{secondTopic}\" باسم \"{webFileName}\"."
+  "diagnosticWritersideWebFileNameCollision": "ينشر المثيل \"{instanceId}\" الموضوعين \"{firstTopic}\" و\"{secondTopic}\" باسم \"{webFileName}\".",
+  "spellingDictionaryRecoveryConflict": "تم تغيير قاموس التدقيق الإملائي خارجيًا. تم الاحتفاظ بنسخة استرداد."
 }

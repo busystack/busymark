@@ -910,6 +910,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get wordWrap => '자동 줄 바꿈';
 
   @override
+  String get wordWrapDescription => '긴 줄을 가로로 스크롤하지 않고 편집기 너비에 맞게 줄 바꿈합니다.';
+
+  @override
   String get editorFontSize => '편집기 글꼴 크기';
 
   @override
@@ -961,6 +964,27 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get clearGitWorkspaceTrustDescription =>
       '이전에 신뢰한 작업공간에서 Git 기능을 활성화하기 전에 확인하도록 설정합니다.';
+
+  @override
+  String get settingsEditingButtonsSectionTitle => '편집 버튼';
+
+  @override
+  String get spellingDictionaries => '맞춤법 검사 사전';
+
+  @override
+  String get spellingDictionariesDescription => '맞춤법 검사 사전 설치 및 관리';
+
+  @override
+  String get settingsDictionariesSectionTitle => '사전';
+
+  @override
+  String get availableSpellingDictionaries => '사용 가능한 사전';
+
+  @override
+  String get customSpellingDictionaries => '사용자 지정 사전';
+
+  @override
+  String get spellingDictionaryProblems => '사전 문제';
 
   @override
   String get settingsWindowSectionTitle => '창';
@@ -4362,7 +4386,127 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
+  String get spelling => '맞춤법';
+
+  @override
+  String get automaticSpelling => '자동 맞춤법 검사';
+
+  @override
+  String get defaultSpellingLanguage => '기본 맞춤법 언어';
+
+  @override
+  String get projectSpellingLanguage => '프로젝트 맞춤법 검사 언어';
+
+  @override
+  String get chooseSpellingLanguage => '맞춤법 언어 선택';
+
+  @override
+  String get spellingLanguageUnsetStatus => '언어…';
+
+  @override
+  String get spellingOffStatus => '맞춤법 검사 끄기';
+
+  @override
+  String get checkSpelling => '맞춤법 검사';
+
+  @override
+  String get ignoreSpellingOnce => '한 번 무시';
+
+  @override
+  String get ignoreSpellingDocument => '이 문서에서 모두 무시';
+
+  @override
+  String get addPersonalSpellingWord => '개인 사전에 추가';
+
+  @override
+  String get addProjectSpellingWord => '프로젝트 사전에 추가';
+
+  @override
+  String get inheritSpellingLanguage => '프로젝트 또는 앱 언어 사용';
+
+  @override
+  String get disableDocumentSpelling => '맞춤법 검사 안 함';
+
+  @override
+  String get importSpellingDictionary => '사전 가져오기';
+
+  @override
+  String get personalSpellingDictionary => '개인 사전';
+
+  @override
+  String get projectSpellingDictionary => '프로젝트 사전';
+
+  @override
+  String get noSpellingErrors => '맞춤법 오류가 없습니다';
+
+  @override
+  String get noSpellingSuggestions => '맞춤법 제안이 없습니다';
+
+  @override
+  String get spellingWordCheckFailed => '이 단어를 확인할 수 없습니다';
+
+  @override
+  String get spellingCheckFailed => '맞춤법 검사에 실패했습니다';
+
+  @override
+  String get spellingCheckIncomplete => '맞춤법 검사가 완료되지 않았습니다';
+
+  @override
+  String get spellingDictionaryNotInstalled => '사전이 설치되지 않음';
+
+  @override
+  String spellingDictionaryNotInstalledForLanguage(String dictionary) {
+    return '$dictionary 사전이 설치되지 않았습니다';
+  }
+
+  @override
+  String spellingDictionaryNotInstalledWithSize(String size) {
+    return '설치되지 않음 · $size';
+  }
+
+  @override
+  String get spellingDictionaryInstalled => '설치됨';
+
+  @override
+  String get installSpellingDictionary => '사전 설치';
+
+  @override
+  String get removeSpellingDictionary => '사전 제거';
+
+  @override
+  String get cancelSpellingDictionaryInstall => '사전 다운로드 취소';
+
+  @override
+  String get retrySpellingDictionaryInstall => '사전 설치 다시 시도';
+
+  @override
+  String spellingDictionaryDownloading(String size) {
+    return '$size 다운로드 중…';
+  }
+
+  @override
+  String get spellingDictionaryValidating => '사전 검증 중…';
+
+  @override
+  String get spellingDictionaryInstallFailed => '사전 설치 실패 — 선택하여 다시 시도';
+
+  @override
+  String spellingDictionaryInstallPrompt(String dictionary, String size) {
+    return '$dictionary($size)을 설치하시겠습니까? 설치 후 제거할 때까지 오프라인에서 사용할 수 있습니다.';
+  }
+
+  @override
+  String get spellingDictionaryUnavailable => '사전을 사용할 수 없습니다';
+
+  @override
+  String get spellingChecking => '맞춤법 검사 중…';
+
+  @override
   String exportInvalidRange(String field, String minimum, String maximum) {
     return '$field: $minimum에서 $maximum 사이의 숫자를 입력하세요.';
   }
+
+  @override
+  String get spellingDictionaryRecoveryConflict =>
+      '맞춤법 사전이 외부에서 변경되었습니다. 복구 사본을 보존했습니다.';
 }

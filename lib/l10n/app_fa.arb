@@ -83,6 +83,42 @@
   "workspaceSearchShowMore": "نمایش نتایج بیشتر",
   "workspaceSearchSkippedFiles": "جستجو کامل نیست. حجم این فایل‌ها بیش از 1 MiB است یا خواندن آن‌ها ممکن نبود:",
   "@@locale": "fa",
+  "spelling": "املا",
+  "automaticSpelling": "بررسی خودکار املا",
+  "defaultSpellingLanguage": "زبان پیش‌فرض بررسی املا",
+  "projectSpellingLanguage": "زبان غلط‌یابی پروژه",
+  "chooseSpellingLanguage": "انتخاب زبان املا",
+  "spellingLanguageUnsetStatus": "زبان…",
+  "spellingOffStatus": "بررسی املا خاموش",
+  "checkSpelling": "بررسی املا",
+  "ignoreSpellingOnce": "یک‌بار نادیده بگیر",
+  "ignoreSpellingDocument": "همه را در این سند نادیده بگیر",
+  "addPersonalSpellingWord": "افزودن به واژه‌نامه شخصی",
+  "addProjectSpellingWord": "افزودن به واژه‌نامه پروژه",
+  "inheritSpellingLanguage": "استفاده از زبان پروژه یا برنامه",
+  "disableDocumentSpelling": "املاء بررسی نشود",
+  "importSpellingDictionary": "درون‌ریزی واژه‌نامه",
+  "personalSpellingDictionary": "واژه‌نامه شخصی",
+  "projectSpellingDictionary": "واژه‌نامه پروژه",
+  "noSpellingErrors": "خطای املایی وجود ندارد",
+  "noSpellingSuggestions": "پیشنهاد املایی وجود ندارد",
+  "spellingWordCheckFailed": "بررسی این واژه ممکن نشد",
+  "spellingCheckFailed": "بررسی املا ناموفق بود",
+  "spellingCheckIncomplete": "بررسی املا کامل نیست",
+  "spellingDictionaryNotInstalled": "واژه‌نامه نصب نشده است",
+  "spellingDictionaryNotInstalledForLanguage": "واژه‌نامهٔ ⁨{dictionary}⁩ نصب نشده است",
+  "spellingDictionaryNotInstalledWithSize": "نصب‌نشده · ⁨{size}⁩",
+  "spellingDictionaryInstalled": "نصب‌شده",
+  "installSpellingDictionary": "نصب واژه‌نامه",
+  "removeSpellingDictionary": "حذف واژه‌نامه",
+  "cancelSpellingDictionaryInstall": "لغو بارگیری واژه‌نامه",
+  "retrySpellingDictionaryInstall": "تلاش دوباره برای نصب واژه‌نامه",
+  "spellingDictionaryDownloading": "در حال بارگیری ⁨{size}⁩…",
+  "spellingDictionaryValidating": "در حال اعتبارسنجی واژه‌نامه…",
+  "spellingDictionaryInstallFailed": "نصب واژه‌نامه ناموفق بود — برای تلاش دوباره انتخاب کنید",
+  "spellingDictionaryInstallPrompt": "واژه‌نامهٔ ⁨{dictionary}⁩ (⁨{size}⁩) نصب شود؟ پس از نصب تا زمانی که آن را حذف نکنید، آفلاین در دسترس می‌ماند.",
+  "spellingDictionaryUnavailable": "واژه‌نامه در دسترس نیست",
+  "spellingChecking": "در حال بررسی املا…",
   "reportIssue": "گزارش مشکل",
   "feedbackCategory": "دسته‌بندی",
   "feedbackChooseCategory": "یک دسته‌بندی انتخاب کنید",
@@ -802,6 +838,7 @@
     "description": "Editor setting description for saving files automatically."
   },
   "wordWrap": "شکستن خودکار خطوط",
+  "wordWrapDescription": "سطرهای بلند را به‌جای پیمایش افقی متناسب با عرض ویرایشگر می‌شکند.",
   "@wordWrap": {
     "description": "Word wrap setting label."
   },
@@ -869,6 +906,13 @@
   "@clearGitWorkspaceTrustDescription": {
     "description": "Settings action description for clearing trusted Git workspaces."
   },
+  "settingsEditingButtonsSectionTitle": "دکمه‌های ویرایش",
+  "spellingDictionaries": "واژه‌نامه‌های املایی",
+  "spellingDictionariesDescription": "نصب و مدیریت واژه‌نامه‌های املایی",
+  "settingsDictionariesSectionTitle": "واژه‌نامه‌ها",
+  "availableSpellingDictionaries": "واژه‌نامه‌های موجود",
+  "customSpellingDictionaries": "واژه‌نامه‌های سفارشی",
+  "spellingDictionaryProblems": "مشکلات واژه‌نامه",
   "settingsWindowSectionTitle": "پنجره",
   "@settingsWindowSectionTitle": {
     "description": "Settings section title for native window behavior."
@@ -3371,5 +3415,6 @@
   "topicRenameAffectedFiles": "فایل‌های تحت تأثیر",
   "renameTopicFileInstead": "شناسه‌های موضوع از نام فایل‌هایشان گرفته می‌شوند. از «تغییر نام فایل موضوع» در فهرست مطالب یا نوار کناری فایل‌ها استفاده کنید.",
   "diagnosticWritersideWebFileNameInvalid": "نمونهٔ \"{instanceId}\" نام فایل وب نامعتبر \"{webFileName}\" را برای موضوع \"{topic}\" منتشر می‌کند.",
-  "diagnosticWritersideWebFileNameCollision": "نمونهٔ \"{instanceId}\" هر دو موضوع \"{firstTopic}\" و \"{secondTopic}\" را با نام \"{webFileName}\" منتشر می‌کند."
+  "diagnosticWritersideWebFileNameCollision": "نمونهٔ \"{instanceId}\" هر دو موضوع \"{firstTopic}\" و \"{secondTopic}\" را با نام \"{webFileName}\" منتشر می‌کند.",
+  "spellingDictionaryRecoveryConflict": "فرهنگ لغت املایی به‌صورت خارجی تغییر کرد. یک نسخهٔ بازیابی حفظ شد."
 }

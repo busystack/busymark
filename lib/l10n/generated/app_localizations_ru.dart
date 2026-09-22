@@ -954,6 +954,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get wordWrap => 'Перенос строк';
 
   @override
+  String get wordWrapDescription =>
+      'Переносить длинные строки по ширине редактора вместо горизонтальной прокрутки.';
+
+  @override
   String get editorFontSize => 'Размер шрифта редактора';
 
   @override
@@ -1008,6 +1012,28 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get clearGitWorkspaceTrustDescription =>
       'Спрашивать перед включением функций Git для ранее доверенных рабочих областей.';
+
+  @override
+  String get settingsEditingButtonsSectionTitle => 'Кнопки редактирования';
+
+  @override
+  String get spellingDictionaries => 'Орфографические словари';
+
+  @override
+  String get spellingDictionariesDescription =>
+      'Установка и управление орфографическими словарями';
+
+  @override
+  String get settingsDictionariesSectionTitle => 'Словари';
+
+  @override
+  String get availableSpellingDictionaries => 'Доступные словари';
+
+  @override
+  String get customSpellingDictionaries => 'Пользовательские словари';
+
+  @override
+  String get spellingDictionaryProblems => 'Проблемы со словарями';
 
   @override
   String get settingsWindowSectionTitle => 'Окно';
@@ -4548,7 +4574,130 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
+  String get spelling => 'Правописание';
+
+  @override
+  String get automaticSpelling => 'Автоматическая проверка правописания';
+
+  @override
+  String get defaultSpellingLanguage =>
+      'Язык проверки правописания по умолчанию';
+
+  @override
+  String get projectSpellingLanguage => 'Язык проверки орфографии проекта';
+
+  @override
+  String get chooseSpellingLanguage => 'Выбрать язык правописания';
+
+  @override
+  String get spellingLanguageUnsetStatus => 'Язык…';
+
+  @override
+  String get spellingOffStatus => 'Проверка правописания отключена';
+
+  @override
+  String get checkSpelling => 'Проверить правописание';
+
+  @override
+  String get ignoreSpellingOnce => 'Игнорировать один раз';
+
+  @override
+  String get ignoreSpellingDocument => 'Игнорировать все в этом документе';
+
+  @override
+  String get addPersonalSpellingWord => 'Добавить в личный словарь';
+
+  @override
+  String get addProjectSpellingWord => 'Добавить в словарь проекта';
+
+  @override
+  String get inheritSpellingLanguage =>
+      'Использовать язык проекта или приложения';
+
+  @override
+  String get disableDocumentSpelling => 'Не проверять орфографию';
+
+  @override
+  String get importSpellingDictionary => 'Импортировать словарь';
+
+  @override
+  String get personalSpellingDictionary => 'Личный словарь';
+
+  @override
+  String get projectSpellingDictionary => 'Словарь проекта';
+
+  @override
+  String get noSpellingErrors => 'Орфографических ошибок нет';
+
+  @override
+  String get noSpellingSuggestions => 'Нет вариантов исправления';
+
+  @override
+  String get spellingWordCheckFailed => 'Не удалось проверить это слово';
+
+  @override
+  String get spellingCheckFailed => 'Не удалось проверить правописание';
+
+  @override
+  String get spellingCheckIncomplete => 'Проверка правописания не завершена';
+
+  @override
+  String get spellingDictionaryNotInstalled => 'Словарь не установлен';
+
+  @override
+  String spellingDictionaryNotInstalledForLanguage(String dictionary) {
+    return 'Словарь «$dictionary» не установлен';
+  }
+
+  @override
+  String spellingDictionaryNotInstalledWithSize(String size) {
+    return 'Не установлен · $size';
+  }
+
+  @override
+  String get spellingDictionaryInstalled => 'Установлен';
+
+  @override
+  String get installSpellingDictionary => 'Установить словарь';
+
+  @override
+  String get removeSpellingDictionary => 'Удалить словарь';
+
+  @override
+  String get cancelSpellingDictionaryInstall => 'Отменить загрузку словаря';
+
+  @override
+  String get retrySpellingDictionaryInstall => 'Повторить установку словаря';
+
+  @override
+  String spellingDictionaryDownloading(String size) {
+    return 'Загрузка $size…';
+  }
+
+  @override
+  String get spellingDictionaryValidating => 'Проверка словаря…';
+
+  @override
+  String get spellingDictionaryInstallFailed =>
+      'Не удалось установить словарь — выберите для повтора';
+
+  @override
+  String spellingDictionaryInstallPrompt(String dictionary, String size) {
+    return 'Установить $dictionary ($size)? После установки он будет доступен без сети, пока вы его не удалите.';
+  }
+
+  @override
+  String get spellingDictionaryUnavailable => 'Словарь недоступен';
+
+  @override
+  String get spellingChecking => 'Проверка правописания…';
+
+  @override
   String exportInvalidRange(String field, String minimum, String maximum) {
     return '$field: введите число от $minimum до $maximum.';
   }
+
+  @override
+  String get spellingDictionaryRecoveryConflict =>
+      'Орфографический словарь был изменён извне. Резервная копия для восстановления сохранена.';
 }

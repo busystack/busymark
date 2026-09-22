@@ -83,6 +83,42 @@
   "workspaceSearchShowMore": "결과 더 보기",
   "workspaceSearchSkippedFiles": "검색이 완료되지 않았습니다. 다음 파일은 1 MiB를 초과하거나 읽을 수 없습니다:",
   "@@locale": "ko",
+  "spelling": "맞춤법",
+  "automaticSpelling": "자동 맞춤법 검사",
+  "defaultSpellingLanguage": "기본 맞춤법 언어",
+  "projectSpellingLanguage": "프로젝트 맞춤법 검사 언어",
+  "chooseSpellingLanguage": "맞춤법 언어 선택",
+  "spellingLanguageUnsetStatus": "언어…",
+  "spellingOffStatus": "맞춤법 검사 끄기",
+  "checkSpelling": "맞춤법 검사",
+  "ignoreSpellingOnce": "한 번 무시",
+  "ignoreSpellingDocument": "이 문서에서 모두 무시",
+  "addPersonalSpellingWord": "개인 사전에 추가",
+  "addProjectSpellingWord": "프로젝트 사전에 추가",
+  "inheritSpellingLanguage": "프로젝트 또는 앱 언어 사용",
+  "disableDocumentSpelling": "맞춤법 검사 안 함",
+  "importSpellingDictionary": "사전 가져오기",
+  "personalSpellingDictionary": "개인 사전",
+  "projectSpellingDictionary": "프로젝트 사전",
+  "noSpellingErrors": "맞춤법 오류가 없습니다",
+  "noSpellingSuggestions": "맞춤법 제안이 없습니다",
+  "spellingWordCheckFailed": "이 단어를 확인할 수 없습니다",
+  "spellingCheckFailed": "맞춤법 검사에 실패했습니다",
+  "spellingCheckIncomplete": "맞춤법 검사가 완료되지 않았습니다",
+  "spellingDictionaryNotInstalled": "사전이 설치되지 않음",
+  "spellingDictionaryNotInstalledForLanguage": "{dictionary} 사전이 설치되지 않았습니다",
+  "spellingDictionaryNotInstalledWithSize": "설치되지 않음 · {size}",
+  "spellingDictionaryInstalled": "설치됨",
+  "installSpellingDictionary": "사전 설치",
+  "removeSpellingDictionary": "사전 제거",
+  "cancelSpellingDictionaryInstall": "사전 다운로드 취소",
+  "retrySpellingDictionaryInstall": "사전 설치 다시 시도",
+  "spellingDictionaryDownloading": "{size} 다운로드 중…",
+  "spellingDictionaryValidating": "사전 검증 중…",
+  "spellingDictionaryInstallFailed": "사전 설치 실패 — 선택하여 다시 시도",
+  "spellingDictionaryInstallPrompt": "{dictionary}({size})을 설치하시겠습니까? 설치 후 제거할 때까지 오프라인에서 사용할 수 있습니다.",
+  "spellingDictionaryUnavailable": "사전을 사용할 수 없습니다",
+  "spellingChecking": "맞춤법 검사 중…",
   "appTitle": "BusyMark",
   "@appTitle": {
     "description": "Application name."
@@ -932,6 +968,7 @@
     "description": "Editor setting description for saving files automatically."
   },
   "wordWrap": "자동 줄 바꿈",
+  "wordWrapDescription": "긴 줄을 가로로 스크롤하지 않고 편집기 너비에 맞게 줄 바꿈합니다.",
   "@wordWrap": {
     "description": "Word wrap setting label."
   },
@@ -999,6 +1036,13 @@
   "@clearGitWorkspaceTrustDescription": {
     "description": "Settings action description for clearing trusted Git workspaces."
   },
+  "settingsEditingButtonsSectionTitle": "편집 버튼",
+  "spellingDictionaries": "맞춤법 검사 사전",
+  "spellingDictionariesDescription": "맞춤법 검사 사전 설치 및 관리",
+  "settingsDictionariesSectionTitle": "사전",
+  "availableSpellingDictionaries": "사용 가능한 사전",
+  "customSpellingDictionaries": "사용자 지정 사전",
+  "spellingDictionaryProblems": "사전 문제",
   "settingsWindowSectionTitle": "창",
   "@settingsWindowSectionTitle": {
     "description": "Settings section title for native window behavior."
@@ -4868,5 +4912,6 @@
   "topicRenameAffectedFiles": "영향을 받는 파일",
   "renameTopicFileInstead": "토픽 ID는 파일 이름에서 생성됩니다. 목차 또는 파일 사이드바에서 토픽 파일 이름 바꾸기를 사용하세요.",
   "diagnosticWritersideWebFileNameInvalid": "인스턴스 \"{instanceId}\"에서 토픽 \"{topic}\"의 웹 파일 이름 \"{webFileName}\"이 올바르지 않습니다.",
-  "diagnosticWritersideWebFileNameCollision": "인스턴스 \"{instanceId}\"에서 \"{firstTopic}\"과 \"{secondTopic}\"이 모두 \"{webFileName}\"으로 게시됩니다."
+  "diagnosticWritersideWebFileNameCollision": "인스턴스 \"{instanceId}\"에서 \"{firstTopic}\"과 \"{secondTopic}\"이 모두 \"{webFileName}\"으로 게시됩니다.",
+  "spellingDictionaryRecoveryConflict": "맞춤법 사전이 외부에서 변경되었습니다. 복구 사본을 보존했습니다."
 }

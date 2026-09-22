@@ -348,22 +348,19 @@ class _GitResetDialogState extends State<_GitResetDialog> {
       children: [
         Text(context.l10n.gitResetCurrentBranchMessage(widget.branch, commit)),
         const SizedBox(height: BusyMarkSpacing.md),
-        RadioGroup<GitResetMode>(
-          groupValue: _mode,
-          onChanged: (mode) => setState(() => _mode = mode),
-          child: Column(
-            children: [
-              for (final mode in GitResetMode.values)
-                RadioListTile<GitResetMode>(
-                  key: ValueKey('git-reset-mode-${mode.name}'),
-                  value: mode,
-                  title: Text(_resetModeLabel(context, mode)),
-                  subtitle: Text(_resetModeDescription(context, mode)),
-                  contentPadding: EdgeInsets.zero,
-                  controlAffinity: ListTileControlAffinity.leading,
-                ),
-            ],
-          ),
+        Column(
+          children: [
+            for (final mode in GitResetMode.values)
+              BusyMarkRadioButton<GitResetMode>(
+                key: ValueKey('git-reset-mode-${mode.name}'),
+                value: mode,
+                groupValue: _mode,
+                onChanged: (mode) => setState(() => _mode = mode),
+                title: Text(_resetModeLabel(context, mode)),
+                subtitle: Text(_resetModeDescription(context, mode)),
+                contentPadding: EdgeInsets.zero,
+              ),
+          ],
         ),
       ],
     );

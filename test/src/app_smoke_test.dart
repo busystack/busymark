@@ -9,6 +9,7 @@ import 'package:busymark/l10n/generated/app_localizations_en.dart';
 import 'package:busymark/l10n/generated/app_localizations_fa.dart';
 import 'package:busymark/l10n/generated/app_localizations_fr.dart';
 import 'package:busymark/src/app/app_metadata.dart';
+import 'package:busymark/src/app/app_router.dart';
 import 'package:busymark/src/app/app_settings.dart';
 import 'package:busymark/src/app/busymark_app.dart';
 import 'package:busymark/src/app/busymark_dialogs.dart';
@@ -23,7 +24,10 @@ import 'package:busymark/src/core/busymark_exception.dart';
 import 'package:busymark/src/core/diagnostic.dart';
 import 'package:busymark/src/core/local_image_resolver.dart';
 import 'package:busymark/src/core/source_span.dart';
+import 'package:busymark/src/clipboard/clipboard_history_controller.dart';
 import 'package:busymark/src/clipboard/clipboard_history_panel.dart';
+import 'package:busymark/src/clipboard/clipboard_insertion.dart';
+import 'package:busymark/src/clipboard/clipboard_models.dart';
 import 'package:busymark/src/editor/document_callout.dart';
 import 'package:busymark/src/editor/document_code_block.dart';
 import 'package:busymark/src/editor/document_layout.dart';
@@ -36,6 +40,7 @@ import 'package:busymark/src/editor/source/source_search.dart';
 import 'package:busymark/src/editor/source_highlighter.dart'
     show BusyMarkSourceEditingController;
 import 'package:busymark/src/editor/source/source_read_only_view.dart';
+import 'package:busymark/src/editor/wysiwyg/wysiwyg_editor.dart';
 import 'package:busymark/src/feedback/presentation/feedback_dialog.dart';
 import 'package:busymark/src/export/export_options_editor.dart';
 import 'package:busymark/src/git/application/git_controller.dart';
@@ -48,6 +53,9 @@ import 'package:busymark/src/markdown/preview_model.dart';
 import 'package:busymark/src/markdown/markdown_model.dart';
 import 'package:busymark/src/markdown/markdown_parser.dart';
 import 'package:busymark/src/platform/linux_header_bar_service.dart';
+import 'package:busymark/src/platform/rich_clipboard_service.dart';
+import 'package:busymark/src/spellcheck/spelling_dictionary_downloader.dart';
+import 'package:busymark/src/spellcheck/spelling_session_controller.dart';
 import 'package:busymark/src/writerside/writerside_model.dart';
 import 'package:busymark/src/writerside/writerside_project.dart';
 import 'package:busymark/src/writerside/writerside_toc_editor.dart';
@@ -56,6 +64,8 @@ import 'package:busymark/src/writerside/writerside_topic_file_editor.dart';
 import 'package:busymark/src/writerside/writerside_topic_removal_service.dart';
 import 'package:busymark/src/workspace/presentation/settings_screen.dart';
 import 'package:busymark/src/workspace/document_buffer.dart';
+import 'package:busymark/src/workspace/recovery_persistence.dart';
+import 'package:busymark/src/workspace/session_persistence.dart';
 import 'package:busymark/src/workspace/workspace_controller.dart';
 import 'package:busymark/src/workspace/workspace_file_monitor.dart';
 import 'package:busymark/src/workspace/workspace_message.dart';
@@ -73,6 +83,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 import 'package:window_manager/window_manager.dart';
 
+import '../support/spelling_test_bundle.dart';
+
 void main() {
   late _FallbackHeaderBarService headerBarService;
   final l10n = AppLocalizationsEn();
@@ -80,6 +92,12 @@ void main() {
   setUp(() {
     final binding = TestWidgetsFlutterBinding.ensureInitialized();
     binding.platformDispatcher.defaultRouteNameTestValue = '/';
+    for (final channelName in ['yaru_window', 'yaru_window/events']) {
+      binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        MethodChannel(channelName),
+        (call) async => call.method == 'state' ? <String, Object?>{} : null,
+      );
+    }
     headerBarService = _FallbackHeaderBarService();
   });
 
@@ -117,11 +135,18 @@ void main() {
         BusyMarkEditorShortcutAction.hardLineBreak: 'Shift+Enter',
       },
     );
+    final pastePlainText = BusyMarkTextEditingShortcuts
+        .definitions[BusyMarkTextEditingShortcutAction.pastePlainText]!;
+    expect(pastePlainText.label, 'Ctrl+Shift+V');
+    final activator = pastePlainText.activator as SingleActivator;
+    expect(activator.trigger, LogicalKeyboardKey.keyV);
+    expect(activator.control, isTrue);
+    expect(activator.shift, isTrue);
     expect(
-      BusyMarkTextEditingShortcuts.definitions.values.map(
-        (definition) => definition.label,
+      BusyMarkTextEditingShortcuts.definitions.values.where(
+        (definition) => definition.activator == activator,
       ),
-      isNot(contains('Ctrl+Shift+V')),
+      hasLength(1),
     );
   });
 
@@ -160,6 +185,275 @@ void main() {
       expect(existingActivators, isNot(contains(definition.activator)));
     }
   });
+
+  testWidgets(
+    'workspace routes paste shortcuts only to editable document views',
+    (tester) async {
+      var generation = 0;
+      var clipboardText = '';
+      var readCount = 0;
+      const clipboardChannel = MethodChannel(richClipboardChannelName);
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        clipboardChannel,
+        (call) async {
+          if (call.method != 'read') return null;
+          readCount += 1;
+          return <String, Object?>{
+            'text': clipboardText,
+            'generation': generation,
+          };
+        },
+      );
+      addTearDown(
+        () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          clipboardChannel,
+          null,
+        ),
+      );
+
+      final settingsStore = _MemorySettingsStore()
+        ..value = AppSettings.defaults()
+            .copyWith(
+              autoSave: false,
+              documentViewMode: DocumentViewModePreference.editor,
+            )
+            .toJson();
+      const service = _SearchWorkspaceService('start');
+      final container = ProviderContainer(
+        overrides: [
+          linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+          localSettingsStoreProvider.overrideWithValue(settingsStore),
+          workspaceServiceProvider.overrideWithValue(service),
+          startupPathProvider.overrideWithValue('/tmp/workspace-paste.md'),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      Future<void> pressPaste(BusyMarkPasteMode mode) async {
+        final useShift = mode == BusyMarkPasteMode.plainText;
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+        if (useShift) {
+          await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+        }
+        await tester.sendKeyEvent(LogicalKeyboardKey.keyV);
+        if (useShift) {
+          await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+        }
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+
+      Future<void> selectView(DocumentViewModePreference mode) async {
+        container
+            .read(workspaceControllerProvider.notifier)
+            .updateActiveEditorMode(mode);
+        await container
+            .read(appSettingsControllerProvider.notifier)
+            .setDocumentViewMode(mode);
+        for (var index = 0; index < 10; index += 1) {
+          await tester.pump(const Duration(milliseconds: 100));
+        }
+      }
+
+      Future<void> focusLastEditableTextField() async {
+        final field = find.byType(TextField).last;
+        await tester.tap(field);
+        await tester.showKeyboard(field);
+        final controller = tester.widget<TextField>(field).controller!;
+        controller.selection = TextSelection.collapsed(
+          offset: controller.text.length,
+        );
+        await tester.pump();
+      }
+
+      Future<void> typeSuffix(String suffix) async {
+        final field = find.byType(TextField).last;
+        final controller = tester.widget<TextField>(field).controller!;
+        await tester.enterText(field, '${controller.text}$suffix');
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+
+      Future<void> expectUndoRedoSequence({
+        required BusyMarkPasteMode mode,
+        BusyMarkClipboardPayload? historyPayload,
+        String pasteText = 'b',
+        bool replaceTypedCharacter = false,
+      }) async {
+        final workspace = container.read(workspaceControllerProvider.notifier);
+        final original = container.read(workspaceControllerProvider).activeText;
+        await typeSuffix('a');
+        final afterTyping = container
+            .read(workspaceControllerProvider)
+            .activeText;
+        if (replaceTypedCharacter) {
+          final field = find.byType(TextField).last;
+          final controller = tester.widget<TextField>(field).controller!;
+          controller.selection = TextSelection(
+            baseOffset: controller.text.length - 1,
+            extentOffset: controller.text.length,
+          );
+          await tester.pump();
+        }
+        if (historyPayload == null) {
+          clipboardText = pasteText;
+          generation += 1;
+          await pressPaste(mode);
+        } else {
+          expect(
+            await container
+                .read(clipboardInsertionRegistryProvider)
+                .paste(historyPayload, mode: mode),
+            ClipboardPasteResult.inserted,
+          );
+          await tester.pump(const Duration(milliseconds: 100));
+        }
+        final afterPaste = container
+            .read(workspaceControllerProvider)
+            .activeText;
+        await typeSuffix('c');
+        final afterFollowingTyping = container
+            .read(workspaceControllerProvider)
+            .activeText;
+
+        workspace.undoActiveBuffer();
+        await tester.pump(const Duration(milliseconds: 100));
+        expect(
+          container.read(workspaceControllerProvider).activeText,
+          afterPaste,
+        );
+        workspace.undoActiveBuffer();
+        await tester.pump(const Duration(milliseconds: 100));
+        expect(
+          container.read(workspaceControllerProvider).activeText,
+          afterTyping,
+        );
+        workspace.undoActiveBuffer();
+        await tester.pump(const Duration(milliseconds: 100));
+        expect(
+          container.read(workspaceControllerProvider).activeText,
+          original,
+        );
+
+        workspace.redoActiveBuffer();
+        await tester.pump(const Duration(milliseconds: 100));
+        expect(
+          container.read(workspaceControllerProvider).activeText,
+          afterTyping,
+        );
+        workspace.redoActiveBuffer();
+        await tester.pump(const Duration(milliseconds: 100));
+        expect(
+          container.read(workspaceControllerProvider).activeText,
+          afterPaste,
+        );
+        workspace.redoActiveBuffer();
+        await tester.pump(const Duration(milliseconds: 100));
+        expect(
+          container.read(workspaceControllerProvider).activeText,
+          afterFollowingTyping,
+        );
+      }
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: const BusyMarkApp(),
+        ),
+      );
+      for (var index = 0; index < 30; index += 1) {
+        await tester.pump(const Duration(milliseconds: 100));
+        if (find
+            .byKey(const ValueKey('document-wysiwyg-pane'))
+            .evaluate()
+            .isNotEmpty) {
+          break;
+        }
+      }
+
+      await focusLastEditableTextField();
+      await expectUndoRedoSequence(mode: BusyMarkPasteMode.normal);
+      await focusLastEditableTextField();
+      await expectUndoRedoSequence(mode: BusyMarkPasteMode.plainText);
+      await focusLastEditableTextField();
+      await expectUndoRedoSequence(
+        mode: BusyMarkPasteMode.normal,
+        historyPayload: BusyMarkClipboardPayload(
+          id: 'workspace-history-paste',
+          acquiredAt: DateTime.utc(2026),
+          kind: BusyMarkClipboardContentKind.text,
+          text: 'b',
+          external: true,
+        ),
+      );
+      await focusLastEditableTextField();
+      await expectUndoRedoSequence(
+        mode: BusyMarkPasteMode.normal,
+        replaceTypedCharacter: true,
+      );
+      await focusLastEditableTextField();
+      await expectUndoRedoSequence(
+        mode: BusyMarkPasteMode.normal,
+        pasteText: 'b\nline',
+      );
+      await focusLastEditableTextField();
+      clipboardText = ' editor-normal';
+      generation += 1;
+      await pressPaste(BusyMarkPasteMode.normal);
+      clipboardText = ' editor-plain';
+      generation += 1;
+      await pressPaste(BusyMarkPasteMode.plainText);
+      expect(
+        container.read(workspaceControllerProvider).activeText,
+        contains('editor-normal editor-plain'),
+      );
+
+      await selectView(DocumentViewModePreference.source);
+      expect(find.byType(BusyMarkSourceEditor), findsOneWidget);
+      await focusLastEditableTextField();
+      await expectUndoRedoSequence(mode: BusyMarkPasteMode.normal);
+      await focusLastEditableTextField();
+      await expectUndoRedoSequence(mode: BusyMarkPasteMode.plainText);
+      await focusLastEditableTextField();
+      clipboardText = ' source-normal';
+      generation += 1;
+      await pressPaste(BusyMarkPasteMode.normal);
+      clipboardText = ' source-plain';
+      generation += 1;
+      await pressPaste(BusyMarkPasteMode.plainText);
+      expect(
+        container.read(workspaceControllerProvider).activeText,
+        contains('source-normal source-plain'),
+      );
+
+      await selectView(DocumentViewModePreference.split);
+      expect(find.byType(BusyMarkSourceEditor), findsOneWidget);
+      await focusLastEditableTextField();
+      clipboardText = ' split-source';
+      generation += 1;
+      await pressPaste(BusyMarkPasteMode.plainText);
+      expect(
+        container.read(workspaceControllerProvider).activeText,
+        endsWith(' split-source'),
+      );
+
+      await selectView(DocumentViewModePreference.preview);
+      expect(find.byType(BusyMarkSourceEditor), findsNothing);
+      expect(container.read(clipboardInsertionRegistryProvider).target, isNull);
+      final readingText = container
+          .read(workspaceControllerProvider)
+          .activeText;
+      final readingReadCount = readCount;
+      clipboardText = ' must-not-insert';
+      generation += 1;
+      await pressPaste(BusyMarkPasteMode.normal);
+      await pressPaste(BusyMarkPasteMode.plainText);
+      expect(
+        container.read(workspaceControllerProvider).activeText,
+        readingText,
+      );
+      expect(readCount, readingReadCount);
+    },
+  );
 
   testWidgets('app wires generated localization delegates and locales', (
     tester,
@@ -255,6 +549,144 @@ void main() {
       findsOneWidget,
     );
   });
+
+  for (final readErrors in [0, 1]) {
+    testWidgets(
+      'recovery shows one actionable notice and preserves damage warnings ($readErrors)',
+      (tester) async {
+        final recoveryStore = MemoryDocumentRecoveryStore()
+          ..value = RecoverySnapshot(
+            cleanShutdown: false,
+            readErrors: readErrors,
+            entries: [
+              DocumentRecoveryEntry.fromBuffer(
+                DocumentBuffer.untitled(
+                  id: 'recovered-draft',
+                  name: 'Recovered draft',
+                  text: '# Recovered draft\n',
+                ),
+                workspacePath: null,
+              ),
+            ],
+          );
+        final container = ProviderContainer(
+          overrides: [
+            linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+            localSettingsStoreProvider.overrideWithValue(
+              _MemorySettingsStore(),
+            ),
+            localHistoryStoreProvider.overrideWithValue(
+              MemoryLocalHistoryStore(),
+            ),
+            documentSessionStoreProvider.overrideWithValue(
+              MemoryDocumentSessionStore(),
+            ),
+            documentRecoveryStoreProvider.overrideWithValue(recoveryStore),
+            startupPathProvider.overrideWithValue(null),
+          ],
+        );
+        addTearDown(container.dispose);
+        await tester.runAsync(() async {
+          await container
+              .read(appSettingsControllerProvider.notifier)
+              .waitUntilLoaded();
+          expect(
+            await container
+                .read(workspaceControllerProvider.notifier)
+                .restorePreviousSession(),
+            isTrue,
+          );
+        });
+        container.read(appRouterProvider).go('/workspace');
+        await tester.pumpWidget(
+          UncontrolledProviderScope(
+            container: container,
+            child: const BusyMarkApp(),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        final buffer = container
+            .read(workspaceControllerProvider)
+            .activeBuffer!;
+        expect(buffer.recovered, isTrue);
+        expect(buffer.text, '# Recovered draft\n');
+        expect(find.text(l10n.workspaceRecoveryRestored(1)), findsNothing);
+        final review = find.text(
+          l10n.recoveredDocumentReview(buffer.displayName),
+        );
+        expect(review, findsOneWidget);
+        final actions = find
+            .ancestor(of: review, matching: find.byType(Row))
+            .first;
+        for (final label in [l10n.save, l10n.saveAs, l10n.discard]) {
+          final button = find.ancestor(
+            of: find.descendant(of: actions, matching: find.text(label)),
+            matching: find.byWidgetPredicate(
+              (widget) => widget is ButtonStyleButton,
+            ),
+          );
+          expect(button, findsOneWidget);
+          expect(tester.widget<ButtonStyleButton>(button).onPressed, isNotNull);
+        }
+        expect(
+          find.text(l10n.workspaceRecoveryDamaged(1)),
+          readErrors > 0 ? findsOneWidget : findsNothing,
+        );
+      },
+    );
+  }
+
+  for (final closeTabFirst in [false, true]) {
+    testWidgets(
+      'Welcome creates a fresh Markdown workspace after leaving basic.md (close tab: $closeTabFirst)',
+      (tester) async {
+        final container = ProviderContainer(
+          overrides: [
+            linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+            localSettingsStoreProvider.overrideWithValue(
+              _MemorySettingsStore(),
+            ),
+            startupPathProvider.overrideWithValue(null),
+          ],
+        );
+        addTearDown(container.dispose);
+        await tester.pumpWidget(
+          UncontrolledProviderScope(
+            container: container,
+            child: const BusyMarkApp(),
+          ),
+        );
+        await tester.pumpAndSettle();
+        final controller = container.read(workspaceControllerProvider.notifier);
+        await tester.runAsync(
+          () => controller.openPath('test/fixtures/markdown/basic.md'),
+        );
+        container.read(appRouterProvider).go('/workspace');
+        await tester.pumpAndSettle();
+        final oldId = container
+            .read(workspaceControllerProvider)
+            .activeBufferId!;
+        if (closeTabFirst) {
+          await tester.runAsync(() => controller.closeDocumentBuffer(oldId));
+          await tester.pumpAndSettle();
+        }
+        await tester.tap(
+          find.byTooltip('${l10n.welcome} (${BusyMarkAppShortcutLabels.back})'),
+        );
+        await tester.pumpAndSettle();
+        expect(find.text(l10n.createMarkdownFile), findsOneWidget);
+        await tester.tap(find.text(l10n.createMarkdownFile));
+        await tester.pumpAndSettle();
+        final state = container.read(workspaceControllerProvider);
+        expect(state.documentBuffers, hasLength(1));
+        expect(state.activeBuffer!.filePath, isNull);
+        expect(state.activeBufferId, isNot(oldId));
+        expect(state.workspace!.kind, WorkspaceKind.untitledMarkdown);
+        expect(state.workspace!.openFilePaths, isEmpty);
+      },
+    );
+  }
 
   testWidgets('main menu and F11 toggle full-screen mode', (tester) async {
     final nativeWindow = _FakeNativeWindowController();
@@ -589,6 +1021,65 @@ void main() {
     await tester.tap(find.text(l10n.editor));
     await tester.pumpAndSettle();
 
+    Finder groupedSection(String title) => find.byWidgetPredicate(
+      (widget) => widget is BusyMarkGroupedList && widget.title == title,
+    );
+    void expectControlInSection(String sectionTitle, String controlTitle) {
+      expect(
+        find.descendant(
+          of: groupedSection(sectionTitle),
+          matching: find.text(controlTitle),
+        ),
+        findsOneWidget,
+      );
+    }
+
+    expect(
+      tester
+          .widgetList<BusyMarkGroupedList>(find.byType(BusyMarkGroupedList))
+          .map((section) => section.title),
+      [
+        l10n.editor,
+        l10n.settingsEditingButtonsSectionTitle,
+        l10n.spelling,
+        l10n.settingsDictionariesSectionTitle,
+      ],
+    );
+    expectControlInSection(l10n.editor, l10n.autoSave);
+    expectControlInSection(l10n.editor, l10n.editorFontSize);
+    expectControlInSection(
+      l10n.settingsEditingButtonsSectionTitle,
+      l10n.editingButtonsPosition,
+    );
+    expectControlInSection(
+      l10n.settingsEditingButtonsSectionTitle,
+      l10n.editingButtonsDirection,
+    );
+    expectControlInSection(l10n.spelling, l10n.automaticSpelling);
+    expectControlInSection(l10n.spelling, l10n.defaultSpellingLanguage);
+    expectControlInSection(l10n.spelling, l10n.projectSpellingLanguage);
+    expectControlInSection(
+      l10n.settingsDictionariesSectionTitle,
+      l10n.spellingDictionaries,
+    );
+    expectControlInSection(
+      l10n.settingsDictionariesSectionTitle,
+      l10n.personalSpellingDictionary,
+    );
+    expectControlInSection(
+      l10n.settingsDictionariesSectionTitle,
+      l10n.projectSpellingDictionary,
+    );
+    final dictionariesSection = tester.widget<BusyMarkGroupedList>(
+      groupedSection(l10n.settingsDictionariesSectionTitle),
+    );
+    expect(dictionariesSection.children, hasLength(3));
+    expect(find.text(l10n.importSpellingDictionary), findsNothing);
+    expect(
+      tester.widget<BusyMarkClamp>(find.byType(BusyMarkClamp)).scrollable,
+      isTrue,
+    );
+
     expect(
       find.byWidgetPredicate((widget) => widget is SegmentedButton),
       findsNothing,
@@ -617,10 +1108,39 @@ void main() {
 
     expect(find.text(l10n.autoSave), findsOneWidget);
     expect(find.text(l10n.autoSaveDescription), findsOneWidget);
+    expect(find.text(l10n.wordWrapDescription), findsOneWidget);
+    final autoSaveRow = find.byWidgetPredicate(
+      (widget) => widget is BusyMarkSwitchRow && widget.title == l10n.autoSave,
+    );
+    expect(autoSaveRow, findsOneWidget);
+    expect(
+      tester.widget<BusyMarkSwitchRow>(autoSaveRow).value,
+      AppSettings.defaults().autoSave,
+    );
+
+    await tester.tap(
+      find.descendant(of: autoSaveRow, matching: find.byType(BusyMarkSwitch)),
+    );
+    await tester.pumpAndSettle();
+    expect(settingsStore.value['autoSave'], isFalse);
+    expect(tester.widget<BusyMarkSwitchRow>(autoSaveRow).value, isFalse);
+
     await tester.tap(find.text(l10n.autoSave));
     await tester.pumpAndSettle();
+    expect(settingsStore.value['autoSave'], isTrue);
+    expect(tester.widget<BusyMarkSwitchRow>(autoSaveRow).value, isTrue);
 
-    expect(settingsStore.value['autoSave'], isFalse);
+    final header = tester.widget<HeaderBarConfigurationPublisher>(
+      find.byType(HeaderBarConfigurationPublisher),
+    );
+    expect(header.configuration.title, l10n.editor);
+    expect(header.configuration.sidebarVisible, isFalse);
+    expect(
+      find.byKey(const ValueKey('settings-page-selector')),
+      findsOneWidget,
+    );
+    expect(find.byType(BusyMarkGroupedList), findsNWidgets(4));
+    expect(find.text(l10n.autoSave), findsOneWidget);
 
     await tester.tap(find.byKey(const ValueKey('settings-page-selector')));
     await tester.pumpAndSettle();
@@ -631,8 +1151,125 @@ void main() {
 
     await tester.tap(find.byKey(const ValueKey('settings-page-selector')));
     await tester.pumpAndSettle();
-    await tester.tap(find.text(l10n.settingsWindowSectionTitle));
+    await tester.tap(find.text(l10n.settingsHistory));
     await tester.pumpAndSettle();
+
+    final historySection = find.byWidgetPredicate(
+      (widget) =>
+          widget is BusyMarkGroupedList && widget.title == l10n.settingsHistory,
+    );
+    expect(historySection, findsOneWidget);
+    expect(
+      find.descendant(
+        of: historySection,
+        matching: find.byType(BusyMarkComboRow<int>),
+      ),
+      findsNWidgets(3),
+    );
+    expect(
+      find.descendant(
+        of: historySection,
+        matching: find.byType(DropdownButton<int>),
+      ),
+      findsNothing,
+    );
+
+    BusyMarkComboRow<int> historyRow(String title) =>
+        tester.widget<BusyMarkComboRow<int>>(
+          find.byWidgetPredicate(
+            (widget) =>
+                widget is BusyMarkComboRow<int> && widget.title == title,
+          ),
+        );
+    expect(historyRow(l10n.settingsHistoryCheckpoint).values, [
+      30,
+      60,
+      120,
+      300,
+      600,
+    ]);
+    expect(historyRow(l10n.settingsHistoryCheckpoint).selected, 60);
+    expect(
+      historyRow(l10n.settingsHistoryCheckpoint).labelFor(60),
+      l10n.settingsSecondsValue(60),
+    );
+    expect(historyRow(l10n.settingsHistoryRetention).values, [7, 30, 90, 365]);
+    expect(historyRow(l10n.settingsHistoryRetention).selected, 30);
+    expect(
+      historyRow(l10n.settingsHistoryRetention).labelFor(30),
+      l10n.settingsDaysValue(30),
+    );
+    expect(historyRow(l10n.settingsHistoryStorage).values, [
+      128,
+      256,
+      512,
+      1024,
+      2048,
+      4096,
+    ]);
+    expect(historyRow(l10n.settingsHistoryStorage).selected, 512);
+    expect(
+      historyRow(l10n.settingsHistoryStorage).labelFor(512),
+      l10n.settingsMebibytesValue(512),
+    );
+
+    await tester.tap(find.byTooltip(l10n.settingsHistoryCheckpoint));
+    await tester.pumpAndSettle();
+    for (final choice in [30, 60, 120, 300, 600]) {
+      expect(find.text(l10n.settingsSecondsValue(choice)), findsWidgets);
+    }
+    expect(find.byType(Radio<int>), findsNothing);
+    expect(find.byType(RadioListTile<int>), findsNothing);
+    await tester.tap(find.text(l10n.settingsSecondsValue(120)).last);
+    await tester.pumpAndSettle();
+    expect(settingsStore.value['localHistoryCheckpointSeconds'], 120);
+    expect(historyRow(l10n.settingsHistoryCheckpoint).selected, 120);
+
+    historyRow(l10n.settingsHistoryRetention).onSelected(90);
+    await tester.pumpAndSettle();
+    expect(settingsStore.value['localHistoryRetentionDays'], 90);
+    expect(historyRow(l10n.settingsHistoryRetention).selected, 90);
+
+    historyRow(l10n.settingsHistoryStorage).onSelected(1024);
+    await tester.pumpAndSettle();
+    expect(settingsStore.value['localHistoryMaximumStorageMiB'], 1024);
+    expect(historyRow(l10n.settingsHistoryStorage).selected, 1024);
+
+    await tester.tap(find.text(l10n.settingsLocalHistoryTitle));
+    await tester.pumpAndSettle();
+    expect(settingsStore.value['localHistoryRecordingEnabled'], isFalse);
+    expect(
+      tester
+          .widgetList<BusyMarkComboRow<int>>(
+            find.descendant(
+              of: historySection,
+              matching: find.byType(BusyMarkComboRow<int>),
+            ),
+          )
+          .every((row) => !row.enabled),
+      isTrue,
+    );
+
+    final clearRecentRow = tester.widget<BusyMarkActionRow>(
+      find.byWidgetPredicate(
+        (widget) =>
+            widget is BusyMarkActionRow &&
+            widget.title == l10n.clearRecentWorkspaces,
+      ),
+    );
+    expect(clearRecentRow.destructive, isTrue);
+    expect(clearRecentRow.onTap, isNotNull);
+    final clearRecentTitle = find.text(l10n.clearRecentWorkspaces);
+    final clearRecentContext = tester.element(clearRecentTitle);
+    expect(
+      tester.widget<Text>(clearRecentTitle).style?.color,
+      busyMarkDestructiveForeground(clearRecentContext),
+    );
+    expect(Theme.of(clearRecentContext).brightness, Brightness.dark);
+    expect(
+      busyMarkDestructiveForeground(clearRecentContext),
+      isNot(Theme.of(clearRecentContext).colorScheme.error),
+    );
 
     expect(
       find.text(l10n.settingsReopenWorkspaceOnStartupTitle),
@@ -641,6 +1278,9 @@ void main() {
     expect(
       find.text(l10n.settingsReopenWorkspaceOnStartupDescription),
       findsOneWidget,
+    );
+    await tester.ensureVisible(
+      find.text(l10n.settingsReopenWorkspaceOnStartupTitle),
     );
     await tester.tap(find.text(l10n.settingsReopenWorkspaceOnStartupTitle));
     await tester.pumpAndSettle();
@@ -655,12 +1295,22 @@ void main() {
       find.text(l10n.settingsConfirmCloseWithUnsavedChangesDescription),
       findsOneWidget,
     );
+    await tester.ensureVisible(
+      find.text(l10n.settingsConfirmCloseWithUnsavedChangesTitle),
+    );
     await tester.tap(
       find.text(l10n.settingsConfirmCloseWithUnsavedChangesTitle),
     );
     await tester.pumpAndSettle();
 
     expect(settingsStore.value['confirmCloseWithUnsavedChanges'], isFalse);
+
+    await tester.tap(
+      find.byTooltip('${l10n.back} (${BusyMarkAppShortcutLabels.back})'),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text(l10n.createMarkdownFile), findsOneWidget);
   });
 
   testWidgets('settings uses the regular split sidebar at desktop width', (
@@ -690,7 +1340,7 @@ void main() {
     expect(find.byType(BusyMarkSidebarNavigation), findsOneWidget);
     expect(
       find.byType(BusyMarkSidebarNavigationTile),
-      findsNWidgets(SettingsPage.values.length),
+      findsNWidgets(SettingsPage.values.length - 1),
     );
     expect(
       tester.getSize(find.byType(BusyMarkSidebarSurface)).width,
@@ -725,13 +1375,646 @@ void main() {
           .selected,
       isTrue,
     );
+    expect(
+      tester
+          .widgetList<BusyMarkGroupedList>(find.byType(BusyMarkGroupedList))
+          .map((section) => section.title),
+      [
+        l10n.editor,
+        l10n.settingsEditingButtonsSectionTitle,
+        l10n.spelling,
+        l10n.settingsDictionariesSectionTitle,
+      ],
+    );
     expect(find.text(l10n.autoSave), findsOneWidget);
     header = tester.widget<HeaderBarConfigurationPublisher>(
       find.byType(HeaderBarConfigurationPublisher),
     );
     expect(header.configuration.sidebarVisible, isTrue);
     expect(header.configuration.title, l10n.editor);
+
+    expect(find.text(l10n.spellingDictionaries), findsOneWidget);
+    expect(find.byType(BusyMarkSidebarSurface), findsOneWidget);
+    expect(find.byKey(const ValueKey('settings-page-selector')), findsNothing);
+    expect(find.byType(Scrollable), findsWidgets);
+    expect(
+      tester.widget<BusyMarkClamp>(find.byType(BusyMarkClamp)).scrollable,
+      isTrue,
+    );
+    header = tester.widget<HeaderBarConfigurationPublisher>(
+      find.byType(HeaderBarConfigurationPublisher),
+    );
+    expect(header.configuration.sidebarVisible, isTrue);
+    expect(header.configuration.title, l10n.editor);
+    expect(
+      tester
+          .widget<BusyMarkSidebarNavigationTile>(
+            find.byKey(const ValueKey('settings-navigation-editor')),
+          )
+          .selected,
+      isTrue,
+    );
+    header = tester.widget<HeaderBarConfigurationPublisher>(
+      find.byType(HeaderBarConfigurationPublisher),
+    );
+    expect(header.configuration.sidebarVisible, isTrue);
+    expect(header.configuration.title, l10n.editor);
+
+    final dictionariesNavigation = find.byKey(
+      const ValueKey('settings-spelling-dictionaries'),
+    );
+    await tester.ensureVisible(dictionariesNavigation);
+    await tester.tap(dictionariesNavigation);
+    await tester.pumpAndSettle();
+
+    expect(find.byType(BusyMarkSidebarSurface), findsOneWidget);
+    expect(find.byKey(const ValueKey('settings-page-selector')), findsNothing);
+    expect(
+      tester
+          .widget<BusyMarkSidebarNavigationTile>(
+            find.byKey(const ValueKey('settings-navigation-editor')),
+          )
+          .selected,
+      isTrue,
+    );
+    header = tester.widget<HeaderBarConfigurationPublisher>(
+      find.byType(HeaderBarConfigurationPublisher),
+    );
+    expect(header.configuration.title, l10n.spellingDictionaries);
+    expect(find.text(l10n.importSpellingDictionary), findsOneWidget);
+    expect(find.text(l10n.spellingDictionaryProblems), findsNothing);
+
+    await tester.tap(
+      find.byTooltip('${l10n.back} (${BusyMarkAppShortcutLabels.back})'),
+    );
+    await tester.pumpAndSettle();
+    header = tester.widget<HeaderBarConfigurationPublisher>(
+      find.byType(HeaderBarConfigurationPublisher),
+    );
+    expect(header.configuration.title, l10n.editor);
+    expect(find.text(l10n.autoSave), findsOneWidget);
   });
+
+  testWidgets(
+    'Spelling Dictionaries page groups downloadable and custom data',
+    (tester) async {
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = const Size(800, 900);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      addTearDown(tester.view.resetPhysicalSize);
+
+      late Directory temporary;
+      late ({String bundle, String storage}) fixture;
+      late SpellingSessionController spelling;
+      await tester.runAsync(() async {
+        temporary = await Directory.systemTemp.createTemp(
+          'busymark-settings-dictionaries-',
+        );
+        fixture = await _createSettingsSpellingFixture(temporary);
+        spelling = SpellingSessionController(
+          bundledRoot: fixture.bundle,
+          applicationSupportRoot: p.join(temporary.path, 'support'),
+          dictionaryStorageRoot: fixture.storage,
+          verifyDictionaryChecksums: false,
+        );
+        await spelling.prepareSettings(null);
+      });
+      final container = ProviderContainer(
+        overrides: [
+          linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+          localSettingsStoreProvider.overrideWithValue(_MemorySettingsStore()),
+          spellingSessionControllerProvider.overrideWith((ref) => spelling),
+        ],
+      );
+      addTearDown(() async {
+        container.dispose();
+        if (await temporary.exists()) {
+          await temporary.delete(recursive: true);
+        }
+      });
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: const BusyMarkApp(),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byTooltip(l10n.mainMenu));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(l10n.settings));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('settings-page-selector')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(l10n.editor));
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.byKey(const ValueKey('settings-spelling-dictionaries')),
+      );
+      await tester.pumpAndSettle();
+
+      final availableGroup = find.byWidgetPredicate(
+        (widget) =>
+            widget is BusyMarkGroupedList &&
+            widget.title == l10n.availableSpellingDictionaries,
+      );
+      final customGroup = find.byWidgetPredicate(
+        (widget) =>
+            widget is BusyMarkGroupedList &&
+            widget.title == l10n.customSpellingDictionaries,
+      );
+      final problemsGroup = find.byWidgetPredicate(
+        (widget) =>
+            widget is BusyMarkGroupedList &&
+            widget.title == l10n.spellingDictionaryProblems,
+      );
+      expect(availableGroup, findsOneWidget);
+      expect(customGroup, findsOneWidget);
+      expect(problemsGroup, findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('settings-page-selector')),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: find.byKey(const ValueKey('settings-page-selector')),
+          matching: find.text(l10n.editor),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        container
+            .read(appRouterProvider)
+            .routerDelegate
+            .currentConfiguration
+            .uri
+            .queryParameters['page'],
+        'spellingDictionaries',
+      );
+      expect(find.byType(Scrollable), findsOneWidget);
+      expect(
+        tester.widget<BusyMarkClamp>(find.byType(BusyMarkClamp)).scrollable,
+        isTrue,
+      );
+      expect(find.text(l10n.importSpellingDictionary), findsOneWidget);
+      expect(find.text('Test English'), findsOneWidget);
+      expect(find.text('Test French'), findsOneWidget);
+      expect(find.text(l10n.spellingDictionaryInstalled), findsOneWidget);
+      expect(find.textContaining('Not installed ·'), findsAtLeastNWidgets(1));
+      expect(find.text('Local Test English'), findsOneWidget);
+      expect(find.text('xx-Test'), findsOneWidget);
+      expect(
+        tester.getTopLeft(find.text('Test English')).dy,
+        lessThan(tester.getTopLeft(find.text('Test French')).dy),
+      );
+      expect(
+        tester.getTopLeft(find.text('Test French')).dy,
+        lessThan(
+          tester.getTopLeft(find.text(l10n.importSpellingDictionary)).dy,
+        ),
+      );
+      expect(
+        tester.getTopLeft(find.text(l10n.importSpellingDictionary)).dy,
+        lessThan(tester.getTopLeft(find.text('Local Test English')).dy),
+      );
+      expect(
+        tester.getTopLeft(find.text('Local Test English')).dy,
+        lessThan(tester.getTopLeft(find.text('xx-Test')).dy),
+      );
+      for (final resourceTitle in ['Test English', 'Test French']) {
+        final row = find.byWidgetPredicate(
+          (widget) =>
+              widget is BusyMarkActionRow && widget.title == resourceTitle,
+        );
+        expect(
+          find.descendant(
+            of: row,
+            matching: find.byType(BusyMarkCompactIconButton),
+          ),
+          findsOneWidget,
+        );
+        final actionRow = tester.widget<BusyMarkActionRow>(row);
+        expect(actionRow.onTap, isNull);
+        expect(actionRow.destructive, isFalse);
+      }
+
+      final importRow = tester.widget<BusyMarkActionRow>(
+        find.byKey(const ValueKey('import-spelling-dictionary')),
+      );
+      expect(importRow.onTap, isNotNull);
+      final importedRow = tester.widget<BusyMarkActionRow>(
+        find.byWidgetPredicate(
+          (widget) =>
+              widget is BusyMarkActionRow &&
+              widget.title == 'Local Test English',
+        ),
+      );
+      expect(importedRow.destructive, isFalse);
+      expect(importedRow.onTap, isNull);
+      final importedRemove = importedRow.trailing! as BusyMarkCompactIconButton;
+      expect(importedRemove.onPressed, isNotNull);
+      expect(
+        importedRemove.foregroundColor,
+        Theme.of(tester.element(customGroup)).colorScheme.error,
+      );
+      final invalidRow = tester.widget<BusyMarkActionRow>(
+        find.byWidgetPredicate(
+          (widget) => widget is BusyMarkActionRow && widget.title == 'xx-Test',
+        ),
+      );
+      expect(invalidRow.destructive, isFalse);
+      expect(invalidRow.onTap, isNull);
+      final invalidRemove = invalidRow.trailing! as BusyMarkCompactIconButton;
+      expect(invalidRemove.onPressed, isNotNull);
+      expect(
+        invalidRemove.foregroundColor,
+        Theme.of(tester.element(problemsGroup)).colorScheme.error,
+      );
+
+      await tester.ensureVisible(find.text('Local Test English'));
+      await tester.tap(find.text('Local Test English'));
+      await tester.pumpAndSettle();
+      expect(
+        spelling.catalog?.installations.any(
+          (entry) => entry.id == 'local-Test' && entry.imported,
+        ),
+        isTrue,
+      );
+    },
+  );
+
+  testWidgets(
+    'import dictionary prompt uses native controls and submits a trimmed ID',
+    (tester) async {
+      final harness = await _pumpSettingsSpellingHarness(
+        tester,
+        headerBarService: headerBarService,
+        settingsStore: _MemorySettingsStore(),
+        downloadFile: _copySettingsDictionaryDownload,
+      );
+      addTearDown(harness.dispose);
+      const fileSelectorChannel = MethodChannel(
+        'plugins.flutter.io/file_selector',
+      );
+      final dictionaryFixture = p.join(
+        Directory.current.path,
+        'packages',
+        'busymark_spellcheck_native',
+        'test',
+        'fixtures',
+      );
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        fileSelectorChannel,
+        (call) async {
+          expect(call.method, 'openFile');
+          expect((call.arguments as Map<Object?, Object?>)['multiple'], isTrue);
+          return <String>[
+            p.join(dictionaryFixture, 'test.aff'),
+            p.join(dictionaryFixture, 'test.dic'),
+          ];
+        },
+      );
+      addTearDown(
+        () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          fileSelectorChannel,
+          null,
+        ),
+      );
+
+      await _openImportDictionaryPrompt(tester);
+
+      final dialog = find.byType(BusyMarkDialogShell);
+      expect(dialog, findsOneWidget);
+      final shell = tester.widget<BusyMarkDialogShell>(dialog);
+      expect(shell.title, l10n.importSpellingDictionary);
+      expect(shell.closable, isFalse);
+      final entryFinder = find.descendant(
+        of: dialog,
+        matching: find.byType(BusyMarkFloatingTextEntry),
+      );
+      expect(entryFinder, findsOneWidget);
+      final entry = tester.widget<BusyMarkFloatingTextEntry>(entryFinder);
+      expect(entry.label, l10n.language);
+      expect(entry.hintText, 'en-US');
+      expect(entry.autofocus, isTrue);
+      expect(entry.textInputAction, TextInputAction.done);
+      expect(entry.minLines, 1);
+      expect(entry.maxLines, 1);
+      final actions = tester
+          .widgetList<BusyMarkDialogButton>(
+            find.descendant(
+              of: dialog,
+              matching: find.byType(BusyMarkDialogButton),
+            ),
+          )
+          .toList(growable: false);
+      expect(actions, hasLength(2));
+      expect(actions.map((action) => action.label), [l10n.cancel, l10n.save]);
+      expect(actions.first.suggested, isFalse);
+      expect(actions.last.suggested, isTrue);
+      expect(find.byType(AlertDialog), findsNothing);
+
+      await tester.enterText(find.byType(TextFormField), '   ');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await _pumpSettingsUi(tester);
+      expect(dialog, findsOneWidget);
+
+      await tester.enterText(find.byType(TextFormField), ' en-GB ');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pump(kThemeAnimationDuration);
+      await _pumpUntilCondition(
+        tester,
+        () => harness.spelling.catalog?.installedById('en-GB') != null,
+      );
+
+      expect(dialog, findsNothing);
+      expect(harness.spelling.catalog?.installedById('en-GB'), isNotNull);
+    },
+  );
+
+  testWidgets('import dictionary prompt cancels and saves without redesign', (
+    tester,
+  ) async {
+    final harness = await _pumpSettingsSpellingHarness(
+      tester,
+      headerBarService: headerBarService,
+      settingsStore: _MemorySettingsStore(),
+      downloadFile: _copySettingsDictionaryDownload,
+    );
+    addTearDown(harness.dispose);
+    const fileSelectorChannel = MethodChannel(
+      'plugins.flutter.io/file_selector',
+    );
+    final dictionaryFixture = p.join(
+      Directory.current.path,
+      'packages',
+      'busymark_spellcheck_native',
+      'test',
+      'fixtures',
+    );
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      fileSelectorChannel,
+      (call) async => <String>[
+        p.join(dictionaryFixture, 'test.aff'),
+        p.join(dictionaryFixture, 'test.dic'),
+      ],
+    );
+    addTearDown(
+      () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        fileSelectorChannel,
+        null,
+      ),
+    );
+
+    await _openImportDictionaryPrompt(tester);
+    await tester.tap(
+      find.byWidgetPredicate(
+        (widget) =>
+            widget is BusyMarkDialogButton && widget.label == l10n.cancel,
+      ),
+    );
+    await _pumpSettingsUi(tester);
+
+    expect(find.byType(BusyMarkDialogShell), findsNothing);
+    expect(harness.spelling.catalog?.installedById('en-GB'), isNull);
+
+    await tester.tap(find.byKey(const ValueKey('import-spelling-dictionary')));
+    await _pumpUntilFound(tester, find.byType(BusyMarkDialogShell));
+    await tester.enterText(find.byType(TextFormField), ' en-GB ');
+    await tester.tap(
+      find.byWidgetPredicate(
+        (widget) => widget is BusyMarkDialogButton && widget.label == l10n.save,
+      ),
+    );
+    await tester.pump(kThemeAnimationDuration);
+    await _pumpUntilCondition(
+      tester,
+      () => harness.spelling.catalog?.installedById('en-GB') != null,
+    );
+
+    expect(find.byType(BusyMarkDialogShell), findsNothing);
+    expect(harness.spelling.catalog?.installedById('en-GB'), isNotNull);
+  });
+
+  testWidgets(
+    'cancelling a default-language install keeps the previous selection',
+    (tester) async {
+      var downloadCount = 0;
+      final settingsStore = _MemorySettingsStore()
+        ..value = AppSettings.defaults()
+            .copyWith(defaultSpellingLanguage: 'en-Test')
+            .toJson();
+      final harness = await _pumpSettingsSpellingHarness(
+        tester,
+        headerBarService: headerBarService,
+        settingsStore: settingsStore,
+        downloadFile:
+            ({
+              required source,
+              required destination,
+              required expectedBytes,
+              required cancellation,
+              required onProgress,
+            }) async {
+              downloadCount += 1;
+              await _copySettingsDictionaryDownload(
+                source: source,
+                destination: destination,
+                expectedBytes: expectedBytes,
+                cancellation: cancellation,
+                onProgress: onProgress,
+              );
+            },
+      );
+      addTearDown(harness.dispose);
+
+      await _selectSpellingLanguage(
+        tester,
+        selectorTooltip: l10n.defaultSpellingLanguage,
+        languageLabel: 'Test French',
+      );
+
+      expect(find.text(l10n.spellingDictionaryNotInstalled), findsOneWidget);
+      expect(find.byType(BusyMarkDialogShell), findsOneWidget);
+      expect(find.byType(AlertDialog), findsNothing);
+      expect(settingsStore.value['defaultSpellingLanguage'], 'en-Test');
+      await tester.tap(find.text(l10n.cancel));
+      await _pumpSettingsUi(tester);
+
+      expect(settingsStore.value['defaultSpellingLanguage'], 'en-Test');
+      expect(
+        _spellingLanguageSelector(tester, l10n.defaultSpellingLanguage).label,
+        'Test English',
+      );
+      expect(downloadCount, 0);
+    },
+  );
+
+  testWidgets(
+    'default language persists only after dictionary installation succeeds',
+    (tester) async {
+      var downloadCount = 0;
+      final allowDownload = Completer<void>();
+      final settingsStore = _MemorySettingsStore()
+        ..value = AppSettings.defaults()
+            .copyWith(defaultSpellingLanguage: 'en-Test')
+            .toJson();
+      final harness = await _pumpSettingsSpellingHarness(
+        tester,
+        headerBarService: headerBarService,
+        settingsStore: settingsStore,
+        downloadFile:
+            ({
+              required source,
+              required destination,
+              required expectedBytes,
+              required cancellation,
+              required onProgress,
+            }) async {
+              downloadCount += 1;
+              await allowDownload.future;
+              await _copySettingsDictionaryDownload(
+                source: source,
+                destination: destination,
+                expectedBytes: expectedBytes,
+                cancellation: cancellation,
+                onProgress: onProgress,
+              );
+            },
+      );
+      addTearDown(harness.dispose);
+
+      await _selectSpellingLanguage(
+        tester,
+        selectorTooltip: l10n.defaultSpellingLanguage,
+        languageLabel: 'Test French',
+      );
+      await tester.tap(find.text(l10n.installSpellingDictionary));
+      await _pumpUntilCondition(tester, () => downloadCount > 0);
+
+      expect(settingsStore.value['defaultSpellingLanguage'], 'en-Test');
+      expect(
+        _spellingLanguageSelector(tester, l10n.defaultSpellingLanguage).label,
+        'Test English',
+      );
+
+      allowDownload.complete();
+      await _pumpUntilCondition(
+        tester,
+        () => settingsStore.value['defaultSpellingLanguage'] == 'fr-Test',
+      );
+
+      expect(harness.spelling.catalog?.installedById('fr-Test'), isNotNull);
+      expect(settingsStore.value['defaultSpellingLanguage'], 'fr-Test');
+      expect(
+        _spellingLanguageSelector(tester, l10n.defaultSpellingLanguage).label,
+        'Test French',
+      );
+      expect(downloadCount, 2);
+    },
+  );
+
+  testWidgets('failed dictionary install keeps the default language', (
+    tester,
+  ) async {
+    var downloadCount = 0;
+    final settingsStore = _MemorySettingsStore()
+      ..value = AppSettings.defaults()
+          .copyWith(defaultSpellingLanguage: 'en-Test')
+          .toJson();
+    final harness = await _pumpSettingsSpellingHarness(
+      tester,
+      headerBarService: headerBarService,
+      settingsStore: settingsStore,
+      downloadFile:
+          ({
+            required source,
+            required destination,
+            required expectedBytes,
+            required cancellation,
+            required onProgress,
+          }) async {
+            downloadCount += 1;
+            throw const SocketException('test dictionary download failure');
+          },
+    );
+    addTearDown(harness.dispose);
+
+    await _selectSpellingLanguage(
+      tester,
+      selectorTooltip: l10n.defaultSpellingLanguage,
+      languageLabel: 'Test French',
+    );
+    await tester.tap(find.text(l10n.installSpellingDictionary));
+    await _pumpUntilCondition(
+      tester,
+      () =>
+          harness.spelling.dictionaryInstallStatus?.phase ==
+          SpellingDictionaryInstallPhase.failed,
+    );
+
+    expect(downloadCount, 1);
+    expect(settingsStore.value['defaultSpellingLanguage'], 'en-Test');
+    expect(
+      _spellingLanguageSelector(tester, l10n.defaultSpellingLanguage).label,
+      'Test English',
+    );
+    expect(find.text(l10n.commandUnavailableInContext), findsOneWidget);
+  });
+
+  testWidgets(
+    'cancelling a project-language install keeps the previous selection',
+    (tester) async {
+      var downloadCount = 0;
+      final harness = await _pumpSettingsSpellingHarness(
+        tester,
+        headerBarService: headerBarService,
+        settingsStore: _MemorySettingsStore(),
+        projectLanguage: 'en-Test',
+        downloadFile:
+            ({
+              required source,
+              required destination,
+              required expectedBytes,
+              required cancellation,
+              required onProgress,
+            }) async {
+              downloadCount += 1;
+              await _copySettingsDictionaryDownload(
+                source: source,
+                destination: destination,
+                expectedBytes: expectedBytes,
+                cancellation: cancellation,
+                onProgress: onProgress,
+              );
+            },
+      );
+      addTearDown(harness.dispose);
+
+      await _selectSpellingLanguage(
+        tester,
+        selectorTooltip: l10n.projectSpellingLanguage,
+        languageLabel: 'Test French',
+      );
+
+      expect(find.text(l10n.spellingDictionaryNotInstalled), findsOneWidget);
+      expect(harness.spelling.projectWords.projectLanguage, 'en-Test');
+      await tester.tap(find.text(l10n.cancel));
+      await _pumpSettingsUi(tester);
+
+      expect(harness.spelling.projectWords.projectLanguage, 'en-Test');
+      expect(
+        _spellingLanguageSelector(tester, l10n.projectSpellingLanguage).label,
+        'Test English',
+      );
+      expect(downloadCount, 0);
+      final persistedSource = await tester.runAsync(
+        () => File(harness.projectSpellingPath!).readAsString(),
+      );
+      final persisted = jsonDecode(persistedSource!);
+      expect((persisted as Map<String, Object?>)['projectLanguage'], 'en-Test');
+    },
+  );
 
   testWidgets('settings main surface matches the headerbar in light and dark', (
     tester,
@@ -1137,6 +2420,7 @@ void main() {
       ...BusyMarkTreeShortcuts.definitions.values.map(
         (definition) => definition.label,
       ),
+      'F7',
       'Ctrl+Shift+Home',
       'Ctrl+Shift+End',
     };
@@ -1703,10 +2987,15 @@ void main() {
     tester,
   ) async {
     final service = _StartupWorkspaceService();
+    final settingsStore = _MemorySettingsStore()
+      ..value = AppSettings.defaults()
+          .copyWith(defaultSpellingLanguage: null)
+          .toJson();
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
           linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+          localSettingsStoreProvider.overrideWithValue(settingsStore),
           workspaceServiceProvider.overrideWithValue(service),
         ],
         child: const BusyMarkApp(),
@@ -1754,6 +3043,17 @@ void main() {
     expect(service.untitledCount, 1);
     expect(find.text(l10n.createMarkdownFile), findsNothing);
     expect(find.text(l10n.workspaceKindUnsavedMarkdown), findsWidgets);
+    expect(find.byKey(const ValueKey('editor-tab-strip')), findsNothing);
+    expect(find.byKey(const ValueKey('document-status-bar')), findsOneWidget);
+    expect(find.text('LF'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('document-spelling-language-status')),
+      findsOneWidget,
+    );
+    expect(find.text(l10n.spellingLanguageUnsetStatus), findsOneWidget);
+    final spellingBanner = find.byKey(const ValueKey('spelling-banner'));
+    expect(spellingBanner, findsOneWidget);
+    expect(tester.widget<BusyMarkBanner>(spellingBanner).revealed, isFalse);
   });
 
   testWidgets('Ctrl+N keeps unsaved documents in independent tabs', (
@@ -1857,6 +3157,192 @@ void main() {
       hasLength(3),
     );
     await tester.pump(const Duration(milliseconds: 800));
+  });
+
+  testWidgets('Ctrl+N creates real CommonMark inside a Writerside workspace', (
+    tester,
+  ) async {
+    const yaruWindowChannel = MethodChannel('yaru_window');
+    const yaruWindowEventsChannel = MethodChannel('yaru_window/events');
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(yaruWindowChannel, (call) async {
+          if (call.method == 'state') return <String, Object?>{};
+          return null;
+        });
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(yaruWindowEventsChannel, (_) async => null);
+    addTearDown(() {
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        ..setMockMethodCallHandler(yaruWindowChannel, null)
+        ..setMockMethodCallHandler(yaruWindowEventsChannel, null);
+    });
+    final binding = TestWidgetsFlutterBinding.ensureInitialized();
+    binding.platformDispatcher.defaultRouteNameTestValue = '/workspace';
+    addTearDown(() {
+      binding.platformDispatcher.defaultRouteNameTestValue = '/';
+    });
+    final root = Directory('test/fixtures/writerside/basic_project').absolute;
+    final container = ProviderContainer(
+      overrides: [
+        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+        localSettingsStoreProvider.overrideWithValue(
+          _MemorySettingsStore()
+            ..value = AppSettings.defaults().copyWith(autoSave: false).toJson(),
+        ),
+        startupPathProvider.overrideWithValue(null),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const BusyMarkApp(),
+      ),
+    );
+    await tester.runAsync(
+      () => container
+          .read(workspaceControllerProvider.notifier)
+          .openPath(root.path),
+    );
+    for (var index = 0; index < 30; index += 1) {
+      await tester.pump(const Duration(milliseconds: 100));
+      if (container.read(workspaceControllerProvider).workspace?.kind ==
+          WorkspaceKind.writersideModule) {
+        break;
+      }
+    }
+    final before = container.read(workspaceControllerProvider);
+    expect(before.workspace?.kind, WorkspaceKind.writersideModule);
+    final topicId = before.activeBuffer!.id;
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.keyN);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.keyN);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+    await tester.tap(
+      find.descendant(
+        of: find.byType(BusyMarkDialogShell),
+        matching: find.text(l10n.createMarkdownFile),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+
+    final controller = container.read(workspaceControllerProvider.notifier);
+    const source = '''# Widget draft
+
+Paragraph with *emphasis*.
+
+- item
+
+```text
+code
+    ```
+''';
+    controller.updateActiveText(source);
+    await tester.runAsync(() => controller.validateActive());
+    for (var index = 0; index < 30; index += 1) {
+      await tester.pump(const Duration(milliseconds: 100));
+      if (container
+              .read(workspaceControllerProvider)
+              .preview
+              ?.blocks
+              .any((block) => block.text == 'Widget draft') ??
+          false) {
+        break;
+      }
+    }
+
+    var state = container.read(workspaceControllerProvider);
+    final untitledId = state.activeBuffer!.id;
+    final resolved = resolveWorkspaceDocumentContext(
+      state.workspace!,
+      state.activeBuffer!,
+    );
+    expect(state.workspace?.kind, WorkspaceKind.writersideModule);
+    expect(state.workspace?.activeFilePath, isNull);
+    expect(resolved.kind, DocumentKind.markdown);
+    expect(resolved.markdownMode, MarkdownMode.commonMark);
+    expect(
+      state.preview?.blocks.map((block) => block.kind),
+      containsAll(<PreviewBlockKind>[
+        PreviewBlockKind.heading,
+        PreviewBlockKind.paragraph,
+        PreviewBlockKind.list,
+        PreviewBlockKind.code,
+      ]),
+    );
+
+    controller.updateActiveEditorMode(DocumentViewModePreference.source);
+    await tester.pump(const Duration(milliseconds: 500));
+    final sourceEditor = tester.widget<BusyMarkSourceEditor>(
+      find.byType(BusyMarkSourceEditor),
+    );
+    expect(sourceEditor.documentId, untitledId);
+    expect(sourceEditor.language.name, 'markdown');
+    expect(sourceEditor.documentFormat?.name, 'markdown');
+    expect(sourceEditor.markdownMode, MarkdownMode.commonMark);
+
+    controller.updateActiveEditorMode(DocumentViewModePreference.editor);
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(find.byKey(const ValueKey('document-wysiwyg-pane')), findsOneWidget);
+    expect(find.byKey(const ValueKey('document-source-pane')), findsNothing);
+
+    expect(
+      await tester.runAsync(() => controller.activateDocumentBuffer(topicId)),
+      isTrue,
+    );
+    expect(
+      await tester.runAsync(
+        () => controller.activateDocumentBuffer(untitledId),
+      ),
+      isTrue,
+    );
+    await tester.pump(const Duration(milliseconds: 500));
+    state = container.read(workspaceControllerProvider);
+    expect(state.activeBuffer?.id, untitledId);
+    expect(
+      resolveWorkspaceDocumentContext(
+        state.workspace!,
+        state.activeBuffer!,
+      ).markdownMode,
+      MarkdownMode.commonMark,
+    );
+    expect(find.byKey(const ValueKey('document-wysiwyg-pane')), findsOneWidget);
+    expect(
+      state.preview?.blocks.any((block) => block.text == 'Widget draft'),
+      isTrue,
+    );
+
+    controller.updateActiveEditorMode(DocumentViewModePreference.source);
+    await tester.pump(const Duration(milliseconds: 300));
+    final staleSourceCallback = tester
+        .widget<BusyMarkSourceEditor>(find.byType(BusyMarkSourceEditor))
+        .onChanged;
+    controller.updateActiveEditorMode(DocumentViewModePreference.editor);
+    await tester.pump(const Duration(milliseconds: 300));
+    final firstWysiwyg = tester.widget<BusyMarkWysiwygEditor>(
+      find.byType(BusyMarkWysiwygEditor),
+    );
+
+    await tester.runAsync(controller.createMarkdownFile);
+    controller.updateActiveText(source);
+    await tester.runAsync(() => controller.validateActive());
+    await tester.pump(const Duration(milliseconds: 500));
+    final secondState = container.read(workspaceControllerProvider);
+    final secondWysiwyg = tester.widget<BusyMarkWysiwygEditor>(
+      find.byType(BusyMarkWysiwygEditor),
+    );
+    expect(secondState.activeBuffer?.id, isNot(untitledId));
+    expect(secondWysiwyg.documentId, secondState.activeBuffer?.id);
+    expect(firstWysiwyg.documentId, untitledId);
+    expect(identical(firstWysiwyg.document, secondWysiwyg.document), isFalse);
+
+    staleSourceCallback('# stale callback\n', '');
+    expect(container.read(workspaceControllerProvider).activeText, source);
   });
 
   testWidgets(
@@ -3262,12 +4748,12 @@ void main() {
       temp.deleteSync(recursive: true);
     });
     final first = File('${temp.path}/a.md')..writeAsStringSync('# A\n');
-    final second = File('${temp.path}/b.md')..writeAsStringSync('# B\n');
+    final second = File('${temp.path}/b.md')..writeAsStringSync('# B\r\n');
     final third = File('${temp.path}/c.md')..writeAsStringSync('# C\n');
     final service = _TabbedWorkspaceService(
       rootPath: temp.path,
       paths: [first.path, second.path, third.path],
-    );
+    ).._sources[second.path] = '# B\r\n';
     final container = ProviderContainer(
       overrides: [
         linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
@@ -3332,6 +4818,18 @@ void main() {
 
     expect(find.text('LF'), findsOneWidget);
     expect(find.text('CRLF'), findsNothing);
+    final tabStrip = find.byKey(const ValueKey('editor-tab-strip'));
+    final statusBar = find.byKey(const ValueKey('document-status-bar'));
+    expect(tabStrip, findsOneWidget);
+    expect(statusBar, findsOneWidget);
+    expect(
+      find.descendant(of: statusBar, matching: find.text('LF')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: tabStrip, matching: find.text('LF')),
+      findsNothing,
+    );
     expect(
       find.ancestor(of: find.text('LF'), matching: find.byType(InkWell)),
       findsNothing,
@@ -3379,6 +4877,16 @@ void main() {
     expect(
       container.read(workspaceControllerProvider).workspace?.openFilePaths,
       [first.path, second.path],
+    );
+    expect(find.text('LF'), findsNothing);
+    expect(find.text('CRLF'), findsOneWidget);
+    expect(
+      find.descendant(of: statusBar, matching: find.text('CRLF')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: tabStrip, matching: find.text('CRLF')),
+      findsNothing,
     );
     await pressControlShortcut(LogicalKeyboardKey.keyW, shift: true);
 
@@ -3487,6 +4995,7 @@ void main() {
       find.textContaining('Guide change', findRichText: true),
       findsWidgets,
     );
+    expect(find.byKey(const ValueKey('document-status-bar')), findsNothing);
 
     await pressControlShortcut(LogicalKeyboardKey.tab);
     expect(
@@ -3501,6 +5010,7 @@ void main() {
       find.textContaining('Guide change', findRichText: true),
       findsNothing,
     );
+    expect(find.byKey(const ValueKey('document-status-bar')), findsOneWidget);
 
     await pressControlShortcut(LogicalKeyboardKey.tab);
     expect(
@@ -3511,6 +5021,7 @@ void main() {
       find.textContaining('Readme change', findRichText: true),
       findsWidgets,
     );
+    expect(find.byKey(const ValueKey('document-status-bar')), findsNothing);
 
     await pressControlShortcut(LogicalKeyboardKey.tab, shift: true);
     expect(
@@ -4734,10 +6245,20 @@ void main() {
     final workspace = (await tester.runAsync(
       () => const WorkspaceService().openPath(root.path),
     ))!;
+    final source = workspace.markdown?.source ?? '';
+    final activePath = workspace.activeFilePath!;
+    final activeBuffer = DocumentBuffer(
+      id: 'writerside-sidebar-active',
+      filePath: activePath,
+      text: source,
+      lastSavedText: source,
+      dirty: false,
+    );
     final controller = _MutableWorkspaceController(
       WorkspaceState(
         workspace: workspace,
-        activeText: workspace.markdown?.source ?? '',
+        documentBuffers: [activeBuffer],
+        activeBufferId: activeBuffer.id,
       ),
     );
     final container = ProviderContainer(
@@ -4781,6 +6302,7 @@ void main() {
     Future<void> setDocumentViewMode(
       DocumentViewModePreference expectedMode,
     ) async {
+      controller.updateActiveEditorMode(expectedMode);
       await container
           .read(appSettingsControllerProvider.notifier)
           .setDocumentViewMode(expectedMode);
@@ -5253,8 +6775,18 @@ void main() {
       final workspace = const WorkspaceService()
           .createUntitledMarkdown(source: '# عنوان\n')
           .copyWith(diagnostics: const [diagnostic]);
+      final activeBuffer = DocumentBuffer.untitled(
+        id: 'arabic-untitled-active',
+        name: ar.untitledMarkdownFileName,
+        text: '# عنوان\n',
+        mode: DocumentViewModePreference.source,
+      );
       final controller = _MutableWorkspaceController(
-        WorkspaceState(workspace: workspace, activeText: '# عنوان\n'),
+        WorkspaceState(
+          workspace: workspace,
+          documentBuffers: [activeBuffer],
+          activeBufferId: activeBuffer.id,
+        ),
       );
       final settingsStore = _MemorySettingsStore()
         ..value = AppSettings.defaults()
@@ -6014,6 +7546,7 @@ void main() {
           .copyWith(
             documentViewMode: DocumentViewModePreference.source,
             localeTag: 'de',
+            automaticSpelling: false,
           )
           .toJson();
     final container = ProviderContainer(
@@ -6395,7 +7928,10 @@ void main() {
 
     final settingsStore = _MemorySettingsStore()
       ..value = AppSettings.defaults()
-          .copyWith(documentViewMode: DocumentViewModePreference.editor)
+          .copyWith(
+            documentViewMode: DocumentViewModePreference.editor,
+            automaticSpelling: false,
+          )
           .toJson();
     const service = _SearchWorkspaceService(
       '# Shared document frame\n\nParagraph line one\nParagraph line two\n',
@@ -6929,7 +8465,10 @@ void main() {
 
     final settingsStore = _MemorySettingsStore()
       ..value = AppSettings.defaults()
-          .copyWith(documentViewMode: DocumentViewModePreference.editor)
+          .copyWith(
+            documentViewMode: DocumentViewModePreference.editor,
+            automaticSpelling: false,
+          )
           .toJson();
     const service = _SearchWorkspaceService('> Shared quote.\n');
     final container = ProviderContainer(
@@ -7033,6 +8572,7 @@ void main() {
           .copyWith(
             localeTag: 'ar',
             documentViewMode: DocumentViewModePreference.editor,
+            automaticSpelling: false,
           )
           .toJson();
     const service = _SearchWorkspaceService('```dart\n$code\n```\n\nمرحبا\n');
@@ -7150,7 +8690,10 @@ void main() {
 
     final settingsStore = _MemorySettingsStore()
       ..value = AppSettings.defaults()
-          .copyWith(documentViewMode: DocumentViewModePreference.editor)
+          .copyWith(
+            documentViewMode: DocumentViewModePreference.editor,
+            automaticSpelling: false,
+          )
           .toJson();
     const headings = ['First', 'Second', 'Third', 'Fourth', 'Fifth', 'Sixth'];
     const service = _SearchWorkspaceService('''
@@ -7354,19 +8897,50 @@ After break.
 
     final settingsStore = _MemorySettingsStore()
       ..value = AppSettings.defaults()
-          .copyWith(documentViewMode: DocumentViewModePreference.editor)
+          .copyWith(
+            documentViewMode: DocumentViewModePreference.editor,
+            automaticSpelling: false,
+          )
           .toJson();
-    const service = _SearchWorkspaceService('''
+    const source = '''
 <warning>Shared warning.</warning>
 
 ![Shared image](missing.png){ width="320" }
-''', writerside: true);
+''';
+    final root = Directory('test/fixtures/writerside/basic_project').absolute;
+    const service = WorkspaceService();
+    final workspace = (await tester.runAsync(
+      () => service.openPath(root.path),
+    ))!;
+    final activeBuffer = DocumentBuffer(
+      id: 'writerside-rich-blocks-active',
+      filePath: workspace.activeFilePath,
+      text: source,
+      lastSavedText: source,
+      dirty: false,
+      editorState: const DocumentEditorState(
+        mode: DocumentViewModePreference.editor,
+      ),
+    );
+    final preview = service.buildDocumentPreview(workspace, activeBuffer);
+    final controller = _MutableWorkspaceController(
+      WorkspaceState(
+        workspace: workspace,
+        preview: preview,
+        documentBuffers: [activeBuffer],
+        activeBufferId: activeBuffer.id,
+      ),
+    );
+    final binding = TestWidgetsFlutterBinding.ensureInitialized();
+    binding.platformDispatcher.defaultRouteNameTestValue = '/workspace';
+    addTearDown(() {
+      binding.platformDispatcher.defaultRouteNameTestValue = '/';
+    });
     final container = ProviderContainer(
       overrides: [
         linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(settingsStore),
-        workspaceServiceProvider.overrideWithValue(service),
-        startupPathProvider.overrideWithValue('/tmp/shared-rich-blocks.md'),
+        workspaceControllerProvider.overrideWith(() => controller),
       ],
     );
     addTearDown(container.dispose);
@@ -7384,6 +8958,10 @@ After break.
         break;
       }
     }
+    await tester.pump(BusyMarkMotion.bannerReveal);
+    final spellingBanner = find.byType(BusyMarkBanner);
+    expect(tester.widget<BusyMarkBanner>(spellingBanner).revealed, isFalse);
+    expect(tester.getSize(spellingBanner).height, 0);
 
     final editorAdmonition = find.byType(BusyMarkDocumentAdmonition);
     final editorImage = find.byType(MarkdownImageView);
@@ -11255,6 +12833,19 @@ class _MutableWorkspaceController extends WorkspaceController {
   @override
   void updateActiveEditorMode(DocumentViewModePreference mode) {
     requestedEditorMode = mode;
+    final activeId = state.activeBufferId;
+    if (activeId == null) return;
+    state = state.copyWith(
+      documentBuffers: [
+        for (final buffer in state.documentBuffers)
+          if (buffer.id == activeId)
+            buffer.copyWith(
+              editorState: buffer.editorState.copyWith(mode: mode),
+            )
+          else
+            buffer,
+      ],
+    );
   }
 
   WritersideTocBatchMoveRequest? dragRequest;
@@ -11760,8 +13351,10 @@ class _TabbedWorkspaceService extends WorkspaceService {
   @override
   Future<WorkspaceFileLoad> loadTextWithSnapshot(String path) async {
     final text = _sources[path] ?? _sourceFor(path);
+    final decoded = decodeUtf8Document(utf8.encode(text));
     return WorkspaceFileLoad(
-      text: text,
+      text: decoded.text,
+      format: decoded.format,
       snapshot: WorkspaceFileSnapshot(
         modifiedAt: DateTime(2026),
         size: text.length,
@@ -11771,7 +13364,10 @@ class _TabbedWorkspaceService extends WorkspaceService {
   }
 
   @override
-  Future<Workspace> reparseActive(Workspace workspace, String source) async {
+  Future<Workspace> reparseDocument(
+    Workspace workspace,
+    DocumentBuffer buffer,
+  ) async {
     return workspace.copyWith(diagnostics: const []);
   }
 
@@ -11995,19 +13591,16 @@ class _SearchRegressionService extends WorkspaceService {
 }
 
 class _SearchWorkspaceService extends WorkspaceService {
-  const _SearchWorkspaceService(this.source, {this.writerside = false});
+  const _SearchWorkspaceService(this.source);
 
   final String source;
-  final bool writerside;
 
   @override
   Future<Workspace> openPath(String path) async {
     final markdown = markdownParser.parse(
       filePath: path,
       source: source,
-      mode: writerside
-          ? MarkdownMode.writersideMarkdown
-          : MarkdownMode.commonMark,
+      mode: MarkdownMode.commonMark,
     );
     return Workspace(
       id: path,
@@ -12020,9 +13613,7 @@ class _SearchWorkspaceService extends WorkspaceService {
         DocumentFile(
           absolutePath: path,
           relativePath: 'search-scroll.md',
-          kind: writerside
-              ? DocumentKind.writersideMarkdownTopic
-              : DocumentKind.markdown,
+          kind: DocumentKind.markdown,
           size: source.length,
           lastModified: DateTime(2026),
         ),
@@ -12476,6 +14067,270 @@ GitDiffFile _gitDiffFile(
     additions: 1,
     deletions: 1,
   );
+}
+
+Future<({String bundle, String storage})> _createSettingsSpellingFixture(
+  Directory temporary,
+) async {
+  final bundle = await createSpellingTestBundle(temporary);
+  final storage = p.join(temporary.path, 'dictionary-storage');
+  final catalogFile = File(p.join(bundle, 'dictionaries.json'));
+  final catalog =
+      jsonDecode(await catalogFile.readAsString()) as Map<String, Object?>;
+  final dictionaries = catalog['dictionaries']! as List<Object?>;
+  final english = Map<String, Object?>.from(
+    dictionaries.single! as Map<Object?, Object?>,
+  );
+  dictionaries.add({
+    ...english,
+    'resourceId': 'fr-Test',
+    'id': 'fr-Test',
+    'locales': ['fr-Test'],
+    'label': 'Test French',
+  });
+  await catalogFile.writeAsString(jsonEncode(catalog));
+
+  final downloaded = Directory(p.join(storage, 'downloaded', 'en-Test'));
+  final installedManifest =
+      jsonDecode(
+            await File(p.join(downloaded.path, 'manifest.json')).readAsString(),
+          )
+          as Map<String, Object?>;
+  final imported = Directory(p.join(storage, 'imported', 'local-Test'));
+  await imported.create(recursive: true);
+  await File(
+    p.join(downloaded.path, 'dictionary.aff'),
+  ).copy(p.join(imported.path, 'dictionary.aff'));
+  await File(
+    p.join(downloaded.path, 'dictionary.dic'),
+  ).copy(p.join(imported.path, 'dictionary.dic'));
+  await File(p.join(imported.path, 'manifest.json')).writeAsString(
+    jsonEncode({
+      ...installedManifest,
+      'kind': 'imported',
+      'resourceId': 'local-Test',
+      'id': 'local-Test',
+      'locales': ['local-Test'],
+      'label': 'Local Test English',
+      'sourceRevision': 'local-import',
+    }),
+  );
+
+  final invalid = Directory(p.join(storage, 'imported', 'xx-Test'));
+  await invalid.create(recursive: true);
+  await File(p.join(invalid.path, 'manifest.json')).writeAsString(
+    jsonEncode({
+      ...installedManifest,
+      'kind': 'imported',
+      'resourceId': 'xx-Test',
+      'id': 'xx-Test',
+      'locales': ['xx-Test'],
+      'label': 'Broken import',
+      'sourceRevision': 'local-import',
+    }),
+  );
+  return (bundle: bundle, storage: storage);
+}
+
+class _SettingsSpellingHarness {
+  _SettingsSpellingHarness({
+    required this.temporary,
+    required this.container,
+    required this.spelling,
+    this.projectSpellingPath,
+  });
+
+  final Directory temporary;
+  final ProviderContainer container;
+  final SpellingSessionController spelling;
+  final String? projectSpellingPath;
+
+  Future<void> dispose() async {
+    container.dispose();
+    if (await temporary.exists()) {
+      await temporary.delete(recursive: true);
+    }
+  }
+}
+
+Future<_SettingsSpellingHarness> _pumpSettingsSpellingHarness(
+  WidgetTester tester, {
+  required LinuxHeaderBarService headerBarService,
+  required _MemorySettingsStore settingsStore,
+  required SpellingDictionaryFileDownload downloadFile,
+  String? projectLanguage,
+}) async {
+  tester.view.devicePixelRatio = 1;
+  tester.view.physicalSize = const Size(800, 900);
+  addTearDown(tester.view.resetDevicePixelRatio);
+  addTearDown(tester.view.resetPhysicalSize);
+
+  late Directory temporary;
+  late SpellingSessionController spelling;
+  Workspace? workspace;
+  String? projectSpellingPath;
+  await tester.runAsync(() async {
+    temporary = await Directory.systemTemp.createTemp(
+      'busymark-settings-language-transaction-',
+    );
+    final fixture = await _createSettingsSpellingFixture(temporary);
+    if (projectLanguage != null) {
+      final projectRoot = Directory(p.join(temporary.path, 'project'));
+      await projectRoot.create(recursive: true);
+      await File(
+        p.join(projectRoot.path, 'document.md'),
+      ).writeAsString('# Project\n');
+      projectSpellingPath = p.join(
+        projectRoot.path,
+        '.busymark',
+        'spelling.json',
+      );
+      final projectFile = File(projectSpellingPath!);
+      await projectFile.parent.create(recursive: true);
+      await projectFile.writeAsString(
+        jsonEncode({
+          'schemaVersion': 1,
+          'revision': 1,
+          'projectLanguage': projectLanguage,
+          'words': <String, Object?>{},
+        }),
+      );
+      workspace = await const WorkspaceService().openPath(projectRoot.path);
+    }
+    spelling = SpellingSessionController(
+      bundledRoot: fixture.bundle,
+      applicationSupportRoot: p.join(temporary.path, 'support'),
+      dictionaryStorageRoot: fixture.storage,
+      verifyDictionaryChecksums: false,
+      dictionaryDownloader: SpellingDictionaryDownloader(
+        downloadFile: downloadFile,
+      ),
+    );
+    await spelling.prepareSettings(workspace);
+  });
+
+  final container = ProviderContainer(
+    overrides: [
+      linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+      localSettingsStoreProvider.overrideWithValue(settingsStore),
+      systemAccentColorProvider.overrideWith((ref) => const Stream.empty()),
+      spellingSessionControllerProvider.overrideWith((ref) => spelling),
+      if (workspace != null)
+        startupPathProvider.overrideWithValue(workspace!.rootPath),
+    ],
+  );
+  await tester.pumpWidget(
+    UncontrolledProviderScope(container: container, child: const BusyMarkApp()),
+  );
+  await tester.pump();
+  for (var attempt = 0; attempt < 20; attempt += 1) {
+    await tester.pump(const Duration(milliseconds: 50));
+  }
+  container.read(appRouterProvider).go('/settings?page=editor');
+  await tester.pump();
+  for (var attempt = 0; attempt < 10; attempt += 1) {
+    await tester.pump(const Duration(milliseconds: 50));
+  }
+  final l10n = AppLocalizationsEn();
+  await _pumpUntilFound(tester, find.byTooltip(l10n.defaultSpellingLanguage));
+
+  return _SettingsSpellingHarness(
+    temporary: temporary,
+    container: container,
+    spelling: spelling,
+    projectSpellingPath: projectSpellingPath,
+  );
+}
+
+Future<void> _selectSpellingLanguage(
+  WidgetTester tester, {
+  required String selectorTooltip,
+  required String languageLabel,
+}) async {
+  await tester.ensureVisible(find.byTooltip(selectorTooltip));
+  await _pumpSettingsUi(tester);
+  final selector = _spellingLanguageSelector(tester, selectorTooltip);
+  final languageId = selector.options
+      .singleWhere((option) => option.label == languageLabel)
+      .value;
+  selector.onSelected(languageId);
+  await _pumpSettingsUi(tester);
+}
+
+Future<void> _openImportDictionaryPrompt(WidgetTester tester) async {
+  final import = find.byKey(const ValueKey('import-spelling-dictionary'));
+  if (import.evaluate().isEmpty) {
+    final dictionariesNavigation = find.byKey(
+      const ValueKey('settings-spelling-dictionaries'),
+    );
+    await tester.ensureVisible(dictionariesNavigation);
+    await tester.tap(dictionariesNavigation);
+    await _pumpUntilFound(tester, import);
+  }
+  await tester.ensureVisible(import);
+  await _pumpSettingsUi(tester);
+  await tester.tap(import);
+  await _pumpUntilFound(tester, find.byType(BusyMarkDialogShell));
+}
+
+BusyMarkPopupSelector<String> _spellingLanguageSelector(
+  WidgetTester tester,
+  String tooltip,
+) {
+  return tester.widget<BusyMarkPopupSelector<String>>(
+    find.byWidgetPredicate(
+      (widget) =>
+          widget is BusyMarkPopupSelector<String> && widget.tooltip == tooltip,
+    ),
+  );
+}
+
+Future<void> _pumpUntilCondition(
+  WidgetTester tester,
+  bool Function() condition,
+) async {
+  for (var attempt = 0; attempt < 200 && !condition(); attempt += 1) {
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 25)),
+    );
+    await tester.pump();
+  }
+  expect(condition(), isTrue);
+  await _pumpSettingsUi(tester);
+}
+
+Future<void> _pumpSettingsUi(WidgetTester tester) async {
+  await tester.pump();
+  for (var attempt = 0; attempt < 6; attempt += 1) {
+    await tester.pump(const Duration(milliseconds: 50));
+  }
+}
+
+Future<void> _copySettingsDictionaryDownload({
+  required Uri source,
+  required File destination,
+  required int expectedBytes,
+  required SpellingDictionaryDownloadCancellation cancellation,
+  required void Function(int receivedBytes) onProgress,
+}) async {
+  cancellation.throwIfCancelled();
+  final fileName = source.path.endsWith('.aff') ? 'test.aff' : 'test.dic';
+  final sourceFile = File(
+    p.join(
+      Directory.current.path,
+      'packages',
+      'busymark_spellcheck_native',
+      'test',
+      'fixtures',
+      fileName,
+    ),
+  );
+  final bytes = await sourceFile.readAsBytes();
+  if (bytes.length != expectedBytes) {
+    throw StateError('Test dictionary size does not match its catalog.');
+  }
+  await destination.writeAsBytes(bytes, flush: true);
+  onProgress(bytes.length);
 }
 
 class _MemorySettingsStore implements LocalSettingsStore {

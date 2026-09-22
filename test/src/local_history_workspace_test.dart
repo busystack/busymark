@@ -35,6 +35,202 @@ void main() {
     if (await root.exists()) await root.delete(recursive: true);
   });
 
+  for (final fileStore in [false, true]) {
+    for (final externalChange in [false, true]) {
+      test('restored promotion reconciles only the saved lineage '
+          '(file=$fileStore external=$externalChange)', () async {
+        final LocalHistoryStore store = fileStore
+            ? FileLocalHistoryStore(
+                rootDirectory: () async =>
+                    Directory(p.join(root.path, 'history')),
+              )
+            : MemoryLocalHistoryStore();
+        final destination = p.join(root.path, 'Untitled.md');
+        final old = await _capture(
+          store,
+          destination,
+          'Old retained contents\n',
+        );
+        final saved = await store.capture(
+          LocalHistoryCaptureRequest(
+            displayName: 'Untitled 1',
+            untitled: true,
+            source: 'Recovered lineage\n',
+            format: TextFormatMetadata.utf8Lf.copyWith(hasFinalNewline: true),
+            capturedAt: DateTime.utc(2026, 1, 1, 0, 0, 10),
+            reason: LocalHistoryCaptureReason.automaticCheckpoint,
+          ),
+          const LocalHistoryPolicy(),
+        );
+        await File(destination).writeAsString(
+          externalChange ? 'External replacement\n' : 'Recovered lineage\n',
+        );
+        final sessions = MemoryDocumentSessionStore()
+          ..value = WorkspaceSessionSnapshot(
+            workspacePath: null,
+            tabs: const [],
+            activeBufferId: null,
+            pendingLocalHistoryAssociations: [
+              PendingLocalHistoryAssociation(
+                bufferId: 'old-closed-buffer',
+                documentId: saved.document.id,
+                destinationPath: destination,
+                displayName: 'Untitled.md',
+              ),
+            ],
+          );
+        final harness = await _harness(
+          store,
+          sessionStore: sessions,
+          recoveryStore: MemoryDocumentRecoveryStore(),
+        );
+        await harness.controller.restorePreviousSession();
+        final history = harness.container.read(
+          localHistoryControllerProvider.notifier,
+        );
+        var snapshot = await store.load();
+        expect(
+          snapshot.documents
+              .singleWhere((d) => d.id == old.document.id)
+              .deleted,
+          !externalChange,
+          reason:
+              'warning=${harness.container.read(localHistoryControllerProvider).warning?.detail}; pending=${history.pendingIdentityPromotions.length}; docs=${snapshot.documents.map((d) => '${d.id}:${d.untitled}:${d.updatedAt}').toList()}',
+        );
+        expect(
+          snapshot.documents
+              .singleWhere((d) => d.id == saved.document.id)
+              .currentPath,
+          externalChange ? isNull : destination,
+        );
+        expect(
+          (await store.readRevision(old.revision!.id))!.source,
+          'Old retained contents\n',
+        );
+        expect(
+          (await store.readRevision(saved.revision!.id))!.source,
+          'Recovered lineage\n',
+        );
+        expect(
+          history.pendingIdentityPromotions,
+          externalChange ? hasLength(1) : isEmpty,
+        );
+        await harness.controller.createMarkdownFile();
+        harness.controller.updateActiveText('New unrelated document\n');
+        await history.flushBuffer(harness.state.activeBuffer!);
+        final warning = harness.container
+            .read(localHistoryControllerProvider)
+            .warning;
+        if (externalChange) {
+          expect(warning?.kind, LocalHistoryWarningKind.pathChange);
+          expect(warning?.detail, destination);
+        } else {
+          expect(warning, isNull);
+          await harness.controller.flushPersistence();
+          expect(sessions.value!.pendingLocalHistoryAssociations, isEmpty);
+        }
+        snapshot = await store.load();
+        expect(snapshot.documents, hasLength(3));
+        expect(
+          await File(destination).readAsString(),
+          externalChange ? 'External replacement\n' : 'Recovered lineage\n',
+        );
+      });
+    }
+  }
+
+  test('first save cannot adopt a deleted path lineage', () async {
+    final store = MemoryLocalHistoryStore();
+    final destination = p.join(root.path, 'Note.md');
+    final old = await _capture(store, destination, 'Old retained history\n');
+    await store.markDeleted(destination, recursive: false);
+    final harness = await _harness(store);
+
+    await harness.controller.createMarkdownFile();
+    harness.controller.updateActiveText('New file contents\n');
+    expect(await harness.controller.saveActiveAs(destination), isTrue);
+
+    final snapshot = await store.load();
+    final oldDocument = snapshot.documents.singleWhere(
+      (document) => document.id == old.document.id,
+    );
+    final active = snapshot.documents.singleWhere(
+      (document) => !document.deleted && document.currentPath == destination,
+    );
+    expect(active.id, isNot(oldDocument.id));
+    expect(oldDocument.deleted, isTrue);
+    expect(
+      await _revisionSources(store, snapshot.revisionsFor(oldDocument.id)),
+      ['Old retained history\n'],
+    );
+    expect(await File(destination).readAsString(), 'New file contents\n');
+    expect(harness.state.activeBuffer!.isDirty, isFalse);
+    expect(
+      harness.container.read(localHistoryControllerProvider).warning?.kind,
+      isNot(LocalHistoryWarningKind.pathChange),
+    );
+  });
+
+  test('vacant first save retires a stale active history owner', () async {
+    final store = MemoryLocalHistoryStore();
+    final destination = p.join(root.path, 'Note.md');
+    final stale = await _capture(store, destination, 'Stale owner\n');
+    expect(await File(destination).exists(), isFalse);
+    final harness = await _harness(store);
+
+    await harness.controller.createMarkdownFile();
+    harness.controller.updateActiveText('Created after vacancy check\n');
+    expect(await harness.controller.saveActiveAs(destination), isTrue);
+
+    final snapshot = await store.load();
+    final retired = snapshot.documents.singleWhere(
+      (document) => document.id == stale.document.id,
+    );
+    final active = snapshot.documents.singleWhere(
+      (document) => !document.deleted && document.currentPath == destination,
+    );
+    expect(retired.deleted, isTrue);
+    expect(active.id, isNot(retired.id));
+    expect(
+      harness.container.read(localHistoryControllerProvider).warning?.kind,
+      isNot(LocalHistoryWarningKind.pathChange),
+    );
+  });
+
+  test(
+    'first save promotes an established untitled lineage over deleted history',
+    () async {
+      final store = MemoryLocalHistoryStore();
+      final destination = p.join(root.path, 'Note.md');
+      final old = await _capture(store, destination, 'Deleted revision\n');
+      await store.markDeleted(destination, recursive: false);
+      final harness = await _harness(store);
+      await harness.controller.createMarkdownFile();
+      harness.controller.updateActiveText('Established untitled revision\n');
+      await Future<void>.delayed(Duration.zero);
+      final history = harness.container.read(
+        localHistoryControllerProvider.notifier,
+      );
+      expect(await history.flushBuffer(harness.state.activeBuffer!), isTrue);
+      final untitledId = history.documentIdForBuffer(
+        harness.state.activeBuffer!.id,
+      );
+
+      expect(await harness.controller.saveActiveAs(destination), isTrue);
+      final snapshot = await store.load();
+      expect(
+        snapshot.documents.singleWhere((document) => !document.deleted).id,
+        untitledId,
+      );
+      expect(
+        snapshot.documents
+            .singleWhere((document) => document.id == old.document.id)
+            .deleted,
+        isTrue,
+      );
+    },
+  );
+
   test(
     'comparison uses unsaved editor source and whole restore is one undo step',
     () async {
@@ -1789,11 +1985,13 @@ class _FailingProtectiveStore implements LocalHistoryStore {
     required String destinationPath,
     required String displayName,
     required DateTime updatedAt,
+    LocalHistoryDocument? staleDestinationOwner,
   }) => delegate.promoteUntitledDocument(
     documentId: documentId,
     destinationPath: destinationPath,
     displayName: displayName,
     updatedAt: updatedAt,
+    staleDestinationOwner: staleDestinationOwner,
   );
 
   @override
@@ -1828,6 +2026,7 @@ class _FailingFirstPromotionStore extends _FailingProtectiveStore {
     required String destinationPath,
     required String displayName,
     required DateTime updatedAt,
+    LocalHistoryDocument? staleDestinationOwner,
   }) {
     if (remainingPromotionFailures > 0) {
       remainingPromotionFailures--;
@@ -1838,6 +2037,7 @@ class _FailingFirstPromotionStore extends _FailingProtectiveStore {
       destinationPath: destinationPath,
       displayName: displayName,
       updatedAt: updatedAt,
+      staleDestinationOwner: staleDestinationOwner,
     );
   }
 }
@@ -1919,8 +2119,11 @@ class _BlockingNextReparseWorkspaceService extends WorkspaceService {
   }
 
   @override
-  Future<Workspace> reparseActive(Workspace workspace, String source) async {
-    final reparsed = await super.reparseActive(workspace, source);
+  Future<Workspace> reparseDocument(
+    Workspace workspace,
+    DocumentBuffer buffer,
+  ) async {
+    final reparsed = await super.reparseDocument(workspace, buffer);
     if (!_pauseNext) return reparsed;
     _pauseNext = false;
     if (!started.isCompleted) started.complete();
@@ -2010,6 +2213,7 @@ class _BlockingPrePromotionCaptureStore extends _FailingProtectiveStore {
     required String destinationPath,
     required String displayName,
     required DateTime updatedAt,
+    LocalHistoryDocument? staleDestinationOwner,
   }) {
     promotionAttempts++;
     return super.promoteUntitledDocument(
@@ -2017,6 +2221,7 @@ class _BlockingPrePromotionCaptureStore extends _FailingProtectiveStore {
       destinationPath: destinationPath,
       displayName: displayName,
       updatedAt: updatedAt,
+      staleDestinationOwner: staleDestinationOwner,
     );
   }
 }

@@ -9,6 +9,7 @@ import 'package:busymark/src/markdown/busymark_document.dart';
 import 'package:busymark/src/markdown/markdown_model.dart';
 import 'package:busymark/src/markdown/markdown_parser.dart';
 import 'package:busymark/src/platform/native_menu_service.dart';
+import 'package:busymark/src/platform/rich_clipboard_service.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -216,6 +217,7 @@ void main() {
         home: Scaffold(
           body: BusyMarkWysiwygEditor(
             document: document,
+            clipboardService: _AiClipboard(),
             visualizationRevision: 5,
             onSourceChanged: (_, value) => changedSource = value,
             onAiEdit: (snapshot) async {
@@ -276,6 +278,9 @@ void main() {
       if (item.type == ContextMenuButtonType.copy) {
         expectedSelectionActions.add('Copy Plain Text');
       }
+      if (item.type == ContextMenuButtonType.paste) {
+        expectedSelectionActions.add('Paste as Plain Text');
+      }
     }
 
     expect(paragraph.controller!.selection.isCollapsed, isFalse);
@@ -304,6 +309,10 @@ void main() {
     expect(_nativeShortcut(nativeEntries!, 'Copy'), 'Ctrl+C');
     expect(_nativeShortcut(nativeEntries!, 'Copy Plain Text'), 'Ctrl+Shift+C');
     expect(_nativeShortcut(nativeEntries!, 'Paste'), 'Ctrl+V');
+    expect(
+      _nativeShortcut(nativeEntries!, 'Paste as Plain Text'),
+      'Ctrl+Shift+V',
+    );
     expect(_nativeShortcut(nativeEntries!, 'Select all'), 'Ctrl+A');
     expect(_nativeShortcut(nativeEntries!, 'Refine with AI'), 'Ctrl+G');
     expect(_nativeIcon(nativeEntries!, 'Cut'), 'edit-cut-symbolic');
@@ -313,6 +322,10 @@ void main() {
       'edit-copy-symbolic',
     );
     expect(_nativeIcon(nativeEntries!, 'Paste'), 'edit-paste-symbolic');
+    expect(
+      _nativeIcon(nativeEntries!, 'Paste as Plain Text'),
+      'edit-paste-symbolic',
+    );
     expect(
       _nativeIcon(nativeEntries!, 'Select all'),
       'edit-select-all-symbolic',
@@ -331,6 +344,14 @@ void main() {
 String? _nativeShortcut(List<Map<Object?, Object?>> entries, String label) {
   return entries.singleWhere((entry) => entry['label'] == label)['shortcut']
       as String?;
+}
+
+class _AiClipboard extends RichClipboardService {
+  _AiClipboard() : super(channel: const MethodChannel('busymark.test/ai'));
+
+  @override
+  Future<RichClipboardData> read() async =>
+      const RichClipboardData(text: 'Paste', generation: 1);
 }
 
 String? _nativeIcon(List<Map<Object?, Object?>> entries, String label) {

@@ -11,6 +11,10 @@ context menu. Search examines each item's complete text. Select an item and use
 **Paste** or **Paste as Plain Text**; Enter and double-click also insert the
 selected item at the latest editable selection.
 
+`Ctrl+Shift+V` invokes that same **Paste as Plain Text** operation in Editor and
+Source. It uses only the clipboard's interoperable plain-text representation;
+Markdown punctuation and whitespace in that representation remain literal.
+
 BusyMark collects successful copy and cut operations from its editors. Supported
 content copied in another application is added after it is successfully pasted
 into BusyMark. Refresh can inspect the current system clipboard without adding
@@ -20,7 +24,15 @@ Entries can contain Source selections, BusyMark rich fragments, supported HTML,
 plain-text alternatives, and images. Rich content retains Markdown structure
 for insertion between BusyMark editors. Supported external HTML goes through
 the same safe conversion as an ordinary paste. Image bytes are retained and are
-added to a document's assets only when you paste them.
+added to a document's assets only when you paste them. A retained local-image
+paste therefore keeps working if the original file is later changed or removed.
+Cancelling image insertion leaves the document, Undo history, assets, and
+Clipboard History unchanged.
+
+Every accepted paste is one discrete Undo operation, separate from typing just
+before and after it. If the destination changes or starts an input-method
+composition while clipboard or image work is in progress, BusyMark rejects the
+paste instead of redirecting it to the new target.
 
 Clipboard History is memory-only and disappears when BusyMark exits. It keeps
 up to 100 entries and 64 MiB in total, evicting the oldest entries first. An

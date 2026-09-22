@@ -2,10 +2,12 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:busymark/src/markdown/markdown_parser.dart';
+import 'package:busymark/src/markdown/markdown_model.dart';
 
 import 'package:busymark/src/app/app_settings.dart';
 import 'package:busymark/src/core/busymark_exception.dart';
 import 'package:busymark/src/core/source_span.dart';
+import 'package:busymark/src/editor/wysiwyg/wysiwyg_session_state.dart';
 import 'package:busymark/src/local_history/local_history_controller.dart';
 import 'package:busymark/src/local_history/local_history_models.dart';
 import 'package:busymark/src/local_history/local_history_store.dart';
@@ -32,6 +34,59 @@ import 'package:path/path.dart' as p;
 import 'package:xml/xml.dart';
 
 void main() {
+  test(
+    'Welcome creation cannot overwrite an edit made during history flush',
+    () async {
+      final harness = await _createControllerHarness();
+      final controller = harness.controller._notifier;
+      await controller.openPath('test/fixtures/markdown/basic.md');
+      final originalId = controller.state.activeBuffer!.id;
+      final pending = controller.createMarkdownWorkspace();
+      controller.updateActiveText('Edit while history is settling');
+      expect(await pending, isFalse);
+      expect(controller.state.documentBuffers, hasLength(1));
+      expect(controller.state.activeBuffer?.id, originalId);
+      expect(
+        controller.state.activeBuffer?.text,
+        'Edit while history is settling',
+      );
+    },
+  );
+
+  test('starting a Welcome workspace cannot discard a dirty buffer', () async {
+    final harness = await _createControllerHarness();
+    final controller = harness.controller._notifier;
+    await controller.openPath('test/fixtures/markdown/basic.md');
+    controller.updateActiveText('Unsaved authoritative content');
+    final previous = controller.state.activeBuffer!;
+    expect(await controller.createMarkdownWorkspace(), isFalse);
+    expect(controller.state.documentBuffers, [previous]);
+    expect(
+      controller.state.activeBuffer?.text,
+      'Unsaved authoritative content',
+    );
+  });
+
+  test(
+    'Welcome replaces clean buffers but workspace New remains additive',
+    () async {
+      final harness = await _createControllerHarness();
+      final controller = harness.controller._notifier;
+      await controller.openPath('test/fixtures/markdown/basic.md');
+      final oldId = controller.state.activeBuffer!.id;
+      expect(await controller.createMarkdownWorkspace(), isTrue);
+      final first = controller.state.activeBuffer!;
+      expect(first.id, isNot(oldId));
+      expect(controller.state.documentBuffers, [first]);
+      expect(controller.state.workspace?.kind, WorkspaceKind.untitledMarkdown);
+      controller.updateActiveText('First draft');
+      await controller.createMarkdownFile();
+      expect(controller.state.documentBuffers, hasLength(2));
+      expect(controller.state.documentBuffers.first.id, first.id);
+      expect(controller.state.documentBuffers.first.text, 'First draft');
+    },
+  );
+
   test(
     'Safe Delete closes the topic buffer, selects a survivor, and records history',
     () async {
@@ -664,6 +719,174 @@ void main() {
     },
   );
 
+  test(
+    'creates CommonMark inside Writerside without replacing project or dirty topic',
+    () async {
+      final service = _RecordingDocumentSourcesWorkspaceService();
+      final harness = await _createControllerHarness(service: service);
+      final controller = harness.controller._notifier;
+      await controller.openPath('test/fixtures/writerside/basic_project');
+      final originalWorkspace = controller.state.workspace!;
+      final topic = controller.state.activeBuffer!;
+      final dirtyTopicText = '${topic.text}\nUnsaved Writerside edit.\n';
+      controller.updateActiveText(dirtyTopicText);
+
+      await controller.createMarkdownFile();
+      final untitled = controller.state.activeBuffer!;
+      const markdown = '''# Draft heading
+
+Paragraph with *emphasis*.
+
+- one
+- two
+
+```text
+code
+```
+''';
+      controller.updateActiveText(markdown);
+      await _waitFor(
+        () =>
+            controller.state.preview?.blocks.any(
+              (block) =>
+                  block.kind == PreviewBlockKind.heading &&
+                  block.text == 'Draft heading',
+            ) ??
+            false,
+      );
+
+      final currentWorkspace = controller.state.workspace!;
+      final resolved = resolveWorkspaceDocumentContext(
+        currentWorkspace,
+        controller.state.activeBuffer!,
+      );
+      expect(currentWorkspace.id, originalWorkspace.id);
+      expect(currentWorkspace.kind, WorkspaceKind.writersideModule);
+      expect(currentWorkspace.writersideProject, isNotNull);
+      expect(currentWorkspace.writersideModule, isNotNull);
+      expect(currentWorkspace.activeFilePath, isNull);
+      expect(untitled.id, isNot(topic.id));
+      expect(resolved.kind, DocumentKind.markdown);
+      expect(resolved.markdownMode, MarkdownMode.commonMark);
+      expect(currentWorkspace.markdown?.mode, MarkdownMode.commonMark);
+      expect(currentWorkspace.markdown?.source, markdown);
+      expect(
+        controller.state.preview!.blocks.map((block) => block.kind),
+        containsAll(<PreviewBlockKind>[
+          PreviewBlockKind.heading,
+          PreviewBlockKind.paragraph,
+          PreviewBlockKind.list,
+          PreviewBlockKind.code,
+        ]),
+      );
+      final preservedTopic = controller.state.documentBuffers.singleWhere(
+        (buffer) => buffer.id == topic.id,
+      );
+      expect(preservedTopic.text, dirtyTopicText);
+      expect(preservedTopic.isDirty, isTrue);
+      expect(service.lastSources[topic.filePath], dirtyTopicText);
+      expect(service.lastSources.keys, isNot(contains('')));
+      expect(service.lastSources, hasLength(1));
+
+      expect(await controller.activateDocumentBuffer(topic.id), isTrue);
+      expect(controller.state.activeText, dirtyTopicText);
+      expect(await controller.activateDocumentBuffer(untitled.id), isTrue);
+      expect(controller.state.activeText, markdown);
+      expect(
+        controller.state.workspace?.markdown?.mode,
+        MarkdownMode.commonMark,
+      );
+      expect(
+        controller.state.preview?.blocks.any(
+          (block) => block.text == 'Draft heading',
+        ),
+        isTrue,
+      );
+    },
+  );
+
+  test('identical untitled buffers remain distinct by buffer id', () async {
+    final harness = await _createControllerHarness();
+    final controller = harness.controller._notifier;
+    await controller.openPath('test/fixtures/writerside/basic_project');
+    const source = '# Same heading\n\nSame text.\n';
+
+    await controller.createMarkdownFile();
+    controller.updateActiveText(source);
+    final first = controller.state.activeBuffer!;
+    controller.updateDocumentEditorState(
+      first.id,
+      first.editorState.copyWith(
+        selection: const TextSelection.collapsed(offset: 2),
+      ),
+    );
+    await controller.createMarkdownFile();
+    controller.updateActiveText(source);
+    final second = controller.state.activeBuffer!;
+    controller.updateDocumentEditorState(
+      second.id,
+      second.editorState.copyWith(
+        selection: const TextSelection.collapsed(offset: 7),
+      ),
+    );
+
+    expect(first.id, isNot(second.id));
+    expect(first.filePath, isNull);
+    expect(second.filePath, isNull);
+    expect(await controller.activateDocumentBuffer(first.id), isTrue);
+    expect(controller.state.activeBuffer?.id, first.id);
+    expect(controller.state.activeBuffer?.editorState.selection.baseOffset, 2);
+    expect(await controller.activateDocumentBuffer(second.id), isTrue);
+    expect(controller.state.activeBuffer?.id, second.id);
+    expect(controller.state.activeBuffer?.editorState.selection.baseOffset, 7);
+    expect(controller.state.workspace?.markdown?.source, source);
+    expect(
+      controller.state.preview?.blocks
+          .singleWhere((block) => block.kind == PreviewBlockKind.heading)
+          .text,
+      'Same heading',
+    );
+  });
+
+  test(
+    'delayed untitled preview cannot publish into another untitled tab',
+    (() async {
+      final service = _BlockingUntitledPreviewWorkspaceService();
+      final harness = await _createControllerHarness(service: service);
+      await harness.settingsController.setValidateOnEdit(false);
+      final controller = harness.controller._notifier;
+      await controller.openPath('test/fixtures/writerside/basic_project');
+      await controller.createMarkdownFile();
+      final firstId = controller.state.activeBuffer!.id;
+      service.blockNext(firstId);
+      controller.updateActiveText('# First delayed\n');
+      await service.started.future;
+
+      await controller.createMarkdownFile();
+      final secondId = controller.state.activeBuffer!.id;
+      controller.updateActiveText('# Second current\n');
+      service.release();
+      await service.finished.future;
+      await _waitFor(
+        () =>
+            controller.state.preview?.blocks.any(
+              (block) => block.text == 'Second current',
+            ) ??
+            false,
+      );
+
+      expect(secondId, isNot(firstId));
+      expect(controller.state.activeBuffer?.id, secondId);
+      expect(controller.state.activeText, '# Second current\n');
+      expect(
+        controller.state.preview?.blocks.any(
+          (block) => block.text == 'First delayed',
+        ),
+        isFalse,
+      );
+    }),
+  );
+
   test('new Markdown files leave preview mode for editor mode', () async {
     final harness = await _createControllerHarness();
     final settingsController = harness.settingsController;
@@ -988,6 +1211,125 @@ void main() {
     settingsController.dispose();
     await directory.delete(recursive: true);
   });
+
+  test(
+    'saving untitled Markdown in Writerside keeps ordinary files CommonMark',
+    (() async {
+      final root = await _createWritableWritersideFixture('ordinary-save');
+      addTearDown(() => root.delete(recursive: true));
+      final harness = await _createControllerHarness();
+      final controller = harness.controller._notifier;
+      await controller.openPath(root.path);
+      await controller.createMarkdownFile();
+      final bufferId = controller.state.activeBuffer!.id;
+      controller.updateActiveText('# Ordinary saved note\n');
+      final destination = p.join(root.path, 'notes.md');
+
+      expect(await controller.saveActiveAs(destination), isTrue);
+
+      final state = controller.state;
+      expect(state.workspace?.kind, WorkspaceKind.writersideModule);
+      expect(state.activeBuffer?.id, bufferId);
+      expect(state.activeBuffer?.filePath, destination);
+      final resolved = resolveWorkspaceDocumentContext(
+        state.workspace!,
+        state.activeBuffer!,
+      );
+      expect(resolved.kind, DocumentKind.markdown);
+      expect(resolved.markdownMode, MarkdownMode.commonMark);
+      expect(state.workspace?.markdown?.mode, MarkdownMode.commonMark);
+    }),
+  );
+
+  test(
+    'Writerside refresh preserves saved Markdown outside the workspace root',
+    (() async {
+      final root = await _createWritableWritersideFixture('external-save');
+      final external = await Directory.systemTemp.createTemp(
+        'busymark-writerside-external-note-',
+      );
+      addTearDown(() => root.delete(recursive: true));
+      addTearDown(() => external.delete(recursive: true));
+      final harness = await _createControllerHarness();
+      final controller = harness.controller;
+      await controller.openPath(root.path);
+      await controller.createMarkdownFile();
+      final bufferId = controller.state.activeBuffer!.id;
+      const source = '''# External note
+
+CommonMark paragraph.
+
+- remains open
+''';
+      controller.updateActiveText(source);
+      final destination = p.join(external.path, 'note.md');
+
+      expect(await controller.saveActiveAs(destination), isTrue);
+      expect(
+        controller.state.workspace!.files.any(
+          (file) => file.absolutePath == destination,
+        ),
+        isFalse,
+      );
+      expect(await controller.refreshWorkspaceFromDisk(), isTrue);
+
+      final state = controller.state;
+      final buffer = state.documentBuffers.singleWhere(
+        (candidate) => candidate.id == bufferId,
+      );
+      expect(state.workspace?.kind, WorkspaceKind.writersideModule);
+      expect(state.activeBuffer?.id, bufferId);
+      expect(buffer.filePath, destination);
+      expect(buffer.diskState, DocumentDiskState.present);
+      expect(buffer.text, source);
+      expect(state.activeText, source);
+      final resolved = resolveWorkspaceDocumentContext(
+        state.workspace!,
+        buffer,
+      );
+      expect(resolved.kind, DocumentKind.markdown);
+      expect(resolved.markdownMode, MarkdownMode.commonMark);
+      expect(state.workspace?.markdown?.mode, MarkdownMode.commonMark);
+      expect(state.workspace?.markdown?.source, source);
+      expect(
+        state.preview?.blocks.map((block) => block.kind),
+        containsAll(<PreviewBlockKind>[
+          PreviewBlockKind.heading,
+          PreviewBlockKind.paragraph,
+          PreviewBlockKind.list,
+        ]),
+      );
+    }),
+  );
+
+  test(
+    'saving untitled Markdown into discovered topics reclassifies it',
+    (() async {
+      final root = await _createWritableWritersideFixture('topic-save');
+      addTearDown(() => root.delete(recursive: true));
+      final harness = await _createControllerHarness();
+      final controller = harness.controller._notifier;
+      await controller.openPath(root.path);
+      await controller.createMarkdownFile();
+      final bufferId = controller.state.activeBuffer!.id;
+      controller.updateActiveText('# Newly discovered topic\n');
+      final destination = p.join(root.path, 'topics', 'new-topic.md');
+
+      expect(await controller.saveActiveAs(destination), isTrue);
+
+      final state = controller.state;
+      expect(state.workspace?.kind, WorkspaceKind.writersideModule);
+      expect(state.activeBuffer?.id, bufferId);
+      expect(state.activeBuffer?.filePath, destination);
+      final resolved = resolveWorkspaceDocumentContext(
+        state.workspace!,
+        state.activeBuffer!,
+      );
+      expect(resolved.kind, DocumentKind.writersideMarkdownTopic);
+      expect(resolved.markdownMode, MarkdownMode.writersideMarkdown);
+      expect(state.workspace?.markdown?.mode, MarkdownMode.writersideMarkdown);
+    }),
+  );
 
   test(
     'saving multiple untitled documents creates normal file buffers',
@@ -2444,6 +2786,78 @@ void main() {
   });
 
   test(
+    'spelling correction undo and redo restore source and rich selections',
+    () async {
+      final directory = await Directory.systemTemp.createTemp(
+        'busymark-spelling-history-',
+      );
+      addTearDown(() => directory.delete(recursive: true));
+      final file = File(p.join(directory.path, 'note.md'));
+      await file.writeAsString('mispelled\n');
+      final harness = await _createControllerHarness();
+      await harness.controller.openPath(file.path);
+      final controller = harness.controller._notifier;
+      final buffer = controller.state.activeBuffer!;
+      controller.updateActiveEditorState(
+        buffer.editorState.copyWith(
+          selection: const TextSelection(baseOffset: 0, extentOffset: 9),
+        ),
+      );
+      const beforeRich = WysiwygEditorSessionState(
+        activeBlockId: 'before-block',
+        anchorBlockId: 'before-block',
+        anchorOffset: 0,
+        extentBlockId: 'before-block',
+        extentOffset: 9,
+      );
+      const afterRich = WysiwygEditorSessionState(
+        activeBlockId: 'after-block',
+        anchorBlockId: 'after-block',
+        anchorOffset: 10,
+        extentBlockId: 'after-block',
+        extentOffset: 10,
+      );
+      final correctedDocument = const MarkdownParser()
+          .parse(filePath: file.path, source: 'misspelled\n')
+          .busyDocument;
+
+      controller.updateActiveWysiwygText(
+        'misspelled\n',
+        document: correctedDocument,
+        sourceFilePath: file.path,
+        previousWysiwygState: beforeRich,
+        wysiwygState: afterRich,
+      );
+      expect(
+        controller.state.activeBuffer!.editorState.undoState.undo,
+        hasLength(1),
+      );
+      expect(
+        controller.state.activeBuffer!.editorState.wysiwygState,
+        afterRich,
+      );
+
+      expect(controller.undoActiveBuffer(), isTrue);
+      expect(controller.state.activeText, 'mispelled\n');
+      expect(
+        controller.state.activeBuffer!.editorState.selection,
+        const TextSelection(baseOffset: 0, extentOffset: 9),
+      );
+      expect(
+        controller.state.activeBuffer!.editorState.wysiwygState,
+        beforeRich,
+      );
+
+      expect(controller.redoActiveBuffer(), isTrue);
+      expect(controller.state.activeText, 'misspelled\n');
+      expect(
+        controller.state.activeBuffer!.editorState.wysiwygState,
+        afterRich,
+      );
+    },
+  );
+
+  test(
     'Keep Mine retains the conflict snapshot until explicit overwrite',
     () async {
       final directory = await Directory.systemTemp.createTemp(
@@ -3325,6 +3739,78 @@ void main() {
     },
   );
 
+  for (final recoveredActive in [true, false]) {
+    test('Writerside session restores recovered untitled CommonMark '
+        '${recoveredActive ? 'active' : 'inactive'}', () async {
+      final root = Directory('test/fixtures/writerside/basic_project').absolute;
+      final topicPath = p.join(root.path, 'topics', 'intro.md');
+      const recoveredId = 'recovered-untitled';
+      const topicId = 'restored-topic';
+      const recoveredText = '# Recovered heading\n\nRecovered *text*.\n';
+      final recoveredBuffer = DocumentBuffer.untitled(
+        id: recoveredId,
+        name: 'Recovered draft',
+        text: recoveredText,
+      );
+      final sessionStore = MemoryDocumentSessionStore()
+        ..value = WorkspaceSessionSnapshot(
+          workspacePath: root.path,
+          activeBufferId: recoveredActive ? recoveredId : topicId,
+          tabs: [
+            DocumentSessionEntry(
+              id: topicId,
+              filePath: topicPath,
+              untitledName: null,
+              editorState: const DocumentEditorState(),
+            ),
+            const DocumentSessionEntry(
+              id: recoveredId,
+              filePath: null,
+              untitledName: 'Recovered draft',
+              editorState: DocumentEditorState(),
+            ),
+          ],
+        );
+      final recoveryStore = MemoryDocumentRecoveryStore()
+        ..value = RecoverySnapshot(
+          cleanShutdown: false,
+          entries: [
+            DocumentRecoveryEntry.fromBuffer(
+              recoveredBuffer,
+              workspacePath: root.path,
+            ),
+          ],
+        );
+      final harness = await _createControllerHarness(
+        sessionStore: sessionStore,
+        recoveryStore: recoveryStore,
+      );
+      final controller = harness.controller._notifier;
+
+      expect(await controller.restorePreviousSession(), isTrue);
+      expect(controller.state.workspace?.kind, WorkspaceKind.writersideModule);
+      expect(controller.state.workspace?.writersideProject, isNotNull);
+      if (!recoveredActive) {
+        expect(controller.state.activeBuffer?.id, topicId);
+        expect(await controller.activateDocumentBuffer(recoveredId), isTrue);
+      }
+      final state = controller.state;
+      expect(state.activeBuffer?.id, recoveredId);
+      expect(state.activeBuffer?.text, recoveredText);
+      final resolved = resolveWorkspaceDocumentContext(
+        state.workspace!,
+        state.activeBuffer!,
+      );
+      expect(resolved.kind, DocumentKind.markdown);
+      expect(resolved.markdownMode, MarkdownMode.commonMark);
+      expect(state.workspace?.markdown?.mode, MarkdownMode.commonMark);
+      expect(
+        state.preview?.blocks.any((block) => block.text == 'Recovered heading'),
+        isTrue,
+      );
+    });
+  }
+
   test('clean marker cannot hide remaining recovery entries', () async {
     final recoveryStore = MemoryDocumentRecoveryStore();
     final sessionStore = MemoryDocumentSessionStore();
@@ -3440,6 +3926,23 @@ void main() {
       expect(restored.controller.state.activeText, 'Remaining untitled text');
     },
   );
+}
+
+Future<Directory> _createWritableWritersideFixture(String suffix) async {
+  final root = await Directory.systemTemp.createTemp(
+    'busymark-writerside-$suffix-',
+  );
+  final topics = Directory(p.join(root.path, 'topics'));
+  await topics.create();
+  await File(p.join(root.path, 'writerside.cfg')).writeAsString(
+    '<ihp><topics dir="topics"/><instance src="guide.tree"/></ihp>',
+  );
+  await File(p.join(root.path, 'guide.tree')).writeAsString(
+    '<instance-profile id="guide" name="Guide" start-page="intro.md">'
+    '<toc-element topic="intro.md"/></instance-profile>',
+  );
+  await File(p.join(topics.path, 'intro.md')).writeAsString('# Intro\n');
+  return root;
 }
 
 Future<void> _waitFor(bool Function() condition) async {
@@ -3826,24 +4329,70 @@ class _PreviewTrackingWorkspaceService extends WorkspaceService {
   }
 
   @override
-  Future<Workspace> reparseActive(Workspace workspace, String source) {
-    reparseCount++;
-    return super.reparseActive(workspace, source);
-  }
-
-  @override
-  PreviewDocument? buildPreview(Workspace workspace, String source) {
-    synchronousPreviewBuildCount++;
-    return super.buildPreview(workspace, source);
-  }
-
-  @override
-  Future<PreviewDocument?> buildPreviewAsync(
+  Future<Workspace> reparseDocument(
     Workspace workspace,
-    String source,
+    DocumentBuffer buffer,
+  ) {
+    reparseCount++;
+    return super.reparseDocument(workspace, buffer);
+  }
+
+  @override
+  PreviewDocument? buildDocumentPreview(
+    Workspace workspace,
+    DocumentBuffer buffer,
+  ) {
+    synchronousPreviewBuildCount++;
+    return super.buildDocumentPreview(workspace, buffer);
+  }
+
+  @override
+  Future<PreviewDocument?> buildDocumentPreviewAsync(
+    Workspace workspace,
+    DocumentBuffer buffer,
   ) {
     asyncPreviewBuildCount++;
-    return super.buildPreviewAsync(workspace, source);
+    return super.buildDocumentPreviewAsync(workspace, buffer);
+  }
+}
+
+class _BlockingUntitledPreviewWorkspaceService extends WorkspaceService {
+  final started = Completer<void>();
+  final finished = Completer<void>();
+  final _release = Completer<void>();
+  String? _blockedBufferId;
+
+  void blockNext(String bufferId) => _blockedBufferId = bufferId;
+
+  void release() {
+    if (!_release.isCompleted) _release.complete();
+  }
+
+  @override
+  Future<PreviewDocument?> buildDocumentPreviewAsync(
+    Workspace workspace,
+    DocumentBuffer buffer,
+  ) async {
+    final preview = await super.buildDocumentPreviewAsync(workspace, buffer);
+    if (_blockedBufferId != buffer.id) return preview;
+    _blockedBufferId = null;
+    if (!started.isCompleted) started.complete();
+    await _release.future;
+    if (!finished.isCompleted) finished.complete();
+    return preview;
+  }
+}
+
+class _RecordingDocumentSourcesWorkspaceService extends WorkspaceService {
+  Map<String, String> lastSources = const {};
+
+  @override
+  Future<Workspace> withDocumentSources(
+    Workspace workspace,
+    Map<String, String> sources,
+  ) {
+    lastSources = Map.unmodifiable(sources);
+    return super.withDocumentSources(workspace, sources);
   }
 }
 
@@ -3932,7 +4481,10 @@ class _AutosaveWorkspaceService extends WorkspaceService {
   }
 
   @override
-  Future<Workspace> reparseActive(Workspace workspace, String source) async {
+  Future<Workspace> reparseDocument(
+    Workspace workspace,
+    DocumentBuffer buffer,
+  ) async {
     return workspace.copyWith(diagnostics: const []);
   }
 
@@ -3950,13 +4502,16 @@ class _ClosingAutosaveWorkspaceService extends _AutosaveWorkspaceService {
   final releaseActivation = Completer<void>();
 
   @override
-  Future<Workspace> reparseActive(Workspace workspace, String source) async {
-    if (pauseActivation && workspace.activeFilePath == bPath) {
+  Future<Workspace> reparseDocument(
+    Workspace workspace,
+    DocumentBuffer buffer,
+  ) async {
+    if (pauseActivation && buffer.filePath == bPath) {
       pauseActivation = false;
       activationStarted.complete();
       await releaseActivation.future;
     }
-    return super.reparseActive(workspace, source);
+    return super.reparseDocument(workspace, buffer);
   }
 }
 
@@ -4052,8 +4607,11 @@ class _DelayedValidationWorkspaceService extends WorkspaceService {
   }
 
   @override
-  Future<Workspace> reparseActive(Workspace workspace, String source) async {
-    if (!_pausedValidation && source == '# Dirty A\n') {
+  Future<Workspace> reparseDocument(
+    Workspace workspace,
+    DocumentBuffer buffer,
+  ) async {
+    if (!_pausedValidation && buffer.text == '# Dirty A\n') {
       _pausedValidation = true;
       validationStarted.complete();
       await _finishValidation.future;
@@ -4180,8 +4738,11 @@ class _BlockingRefreshWorkspaceService extends WorkspaceService {
   }
 
   @override
-  Future<Workspace> reparseActive(Workspace workspace, String source) async {
-    final reparsed = await super.reparseActive(workspace, source);
+  Future<Workspace> reparseDocument(
+    Workspace workspace,
+    DocumentBuffer buffer,
+  ) async {
+    final reparsed = await super.reparseDocument(workspace, buffer);
     if (_pauseReparse) {
       _pauseReparse = false;
       if (!reparseStarted.isCompleted) reparseStarted.complete();

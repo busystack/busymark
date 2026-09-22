@@ -6,6 +6,7 @@ import '../../markdown/busymark_document.dart';
 import '../../markdown/busymark_markdown_serializer.dart';
 import '../../markdown/markdown_model.dart';
 import '../../platform/rich_clipboard_service.dart';
+import '../inline_semantics.dart';
 import 'wysiwyg_document_controller.dart';
 import 'wysiwyg_inline_controller.dart';
 
@@ -32,6 +33,77 @@ class WysiwygClipboardFragment {
   String get markdown => const BusyMarkMarkdownSerializer().serialize(
     BusyDocument(filePath: sourcePath, mode: mode, blocks: documentBlocks),
   );
+
+  String serializeFor({
+    required MarkdownMode destinationMode,
+    required String destinationFilePath,
+  }) => const BusyMarkMarkdownSerializer().serialize(
+    BusyDocument(
+      filePath: destinationFilePath,
+      mode: destinationMode,
+      blocks: [
+        for (final block in documentBlocks)
+          _destinationSerializationBlock(block),
+      ],
+    ),
+  );
+
+  bool get isInlineSourceFragment {
+    final values = documentBlocks;
+    return values.length == 1 &&
+        !busyMarkClipboardRequiresCompleteBlockInsertion(blocks.single) &&
+        values.single.kind == BusyBlockKind.paragraph &&
+        values.single.children.isEmpty &&
+        !values.single.isSourceOnly;
+  }
+
+  String serializeInlineFor({
+    required MarkdownMode destinationMode,
+    required String destinationFilePath,
+    bool tableCell = false,
+    bool atBlockStart = false,
+  }) {
+    final inlines = sourceInsertionInlinesFor(tableCell: tableCell);
+    if (inlines.isEmpty) return '';
+    return const BusyMarkMarkdownSerializer().serializeInlineFragment(
+      inlines,
+      tableCell: tableCell,
+      atBlockStart: atBlockStart,
+      readableHardBreakRuns: !tableCell,
+    );
+  }
+
+  /// Returns the exact semantic inline sequence used for Source insertion.
+  /// Table destinations receive the same flattened, newline-free model as
+  /// Editor table-cell insertion.
+  List<BusyInline> sourceInsertionInlinesFor({required bool tableCell}) {
+    final values = sourceInsertionBlocks;
+    if (tableCell) {
+      return busyMarkTableCellInlinesFromBlocks(values);
+    }
+    if (!isInlineSourceFragment) return const [];
+    return values.single.inlines;
+  }
+
+  List<BusyBlock> get sourceInsertionBlocks => List.unmodifiable([
+    for (final block in documentBlocks) _destinationSerializationBlock(block),
+  ]);
+
+  /// Flattens structured blocks with the same semantics as an Editor table
+  /// cell: block and line boundaries become spaces and inline styles survive.
+  String serializeTableCellFor({
+    required MarkdownMode destinationMode,
+    required String destinationFilePath,
+    bool atBlockStart = false,
+  }) {
+    final inlines = sourceInsertionInlinesFor(tableCell: true);
+    return const BusyMarkMarkdownSerializer().serializeInlineFragment(
+      inlines,
+      tableCell: true,
+      atBlockStart: atBlockStart,
+      readableHardBreakRuns: false,
+    );
+  }
 
   String encode() => jsonEncode({
     'version': 1,
@@ -311,6 +383,22 @@ bool _boundedJsonDepth(String source) {
   }
   return true;
 }
+
+BusyBlock _destinationSerializationBlock(BusyBlock block) => BusyBlock(
+  id: block.id,
+  kind: block.kind,
+  inlines: block.inlines,
+  children: [
+    for (final child in block.children) _destinationSerializationBlock(child),
+  ],
+  attributes: block.attributes,
+  rawSource: block.rawSource,
+  preserveRaw: false,
+  isSourceOnly: block.isSourceOnly,
+  isGenerated: block.isGenerated,
+  isSourceProtected: false,
+  dirty: true,
+);
 
 class _FragmentReader {
   var nodes = 0;

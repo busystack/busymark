@@ -1485,6 +1485,11 @@ void main() {
     );
     expect(resetButton, findsOneWidget);
     expect(tester.widget<BusyMarkDialogButton>(resetButton).onPressed, isNull);
+    expect(
+      find.byType(BusyMarkRadioButton<GitResetMode>),
+      findsNWidgets(GitResetMode.values.length),
+    );
+    expect(find.byType(RadioListTile<GitResetMode>), findsNothing);
 
     await tester.tap(find.text(l10n.gitResetModeMixed));
     await tester.pump();

@@ -1,14 +1,23 @@
 #!/usr/bin/python3
-"""GTK accessibility/X11 driver for the disposable TOC acceptance app.
+"""GTK accessibility driver for the disposable TOC acceptance app.
 
-Run only inside the probe's dedicated Xvfb and D-Bus session. It targets the
-given process, never another BusyMark window or the user's desktop.
+Run only inside the probe's dedicated Xvfb and D-Bus session. A Wayland target
+may be nested in that X server so the probe can keep using the isolated outer
+display for screenshots and keyboard input. It targets the given process,
+never another BusyMark window or the user's desktop.
 """
 import ctypes
 import json
 import os
 import sys
 import time
+
+target_gdk_backend = os.environ.get("GDK_BACKEND")
+if target_gdk_backend == "wayland" and os.environ.get("DISPLAY"):
+    # GDK has no root window on Wayland. The acceptance target remains a
+    # Wayland client, while this separate probe connects to its enclosing Xvfb
+    # display for capture and XTest input through the nested compositor.
+    os.environ["GDK_BACKEND"] = "x11"
 
 import gi
 
@@ -66,8 +75,12 @@ def key(name):
 def main():
     if os.environ.get("BUSYMARK_NATIVE_PROBE") != "1":
         raise RuntimeError("Use an isolated probe session, not the user's desktop")
-    if os.environ.get("GDK_BACKEND") != "x11":
-        raise RuntimeError("Explicit GDK_BACKEND=x11 is required for the isolated display")
+    if target_gdk_backend not in ("x11", "wayland"):
+        raise RuntimeError(
+            "Explicit GDK_BACKEND=x11 or wayland is required for the isolated display"
+        )
+    if target_gdk_backend == "wayland" and not os.environ.get("DISPLAY"):
+        raise RuntimeError("The Wayland probe requires an isolated enclosing X display")
     pid, command, *args = sys.argv[1:]
     app = app_for_pid(int(pid))
     if command == "capture":
@@ -83,6 +96,26 @@ def main():
              "enabled": node.get_state_set().contains(Atspi.StateType.ENABLED)}
             for node in walk(app)
         ], ensure_ascii=False))
+    elif command == "assert-check":
+        matches = [node for node in walk(app)
+                   if node.get_name() == args[0]
+                   and node.get_role() in (Atspi.Role.RADIO_MENU_ITEM,
+                                           Atspi.Role.CHECK_MENU_ITEM)
+                   and node.get_state_set().contains(Atspi.StateType.SHOWING)]
+        if len(matches) != 1:
+            raise RuntimeError(
+                f"Expected one visible checked-style menu item {args[0]!r}, "
+                f"got {len(matches)}")
+        item = matches[0]
+        if item.get_role() != Atspi.Role.CHECK_MENU_ITEM:
+            raise RuntimeError(
+                f"Native menu item uses a radio indicator: {args[0]}")
+        expected = args[1].lower() == "true"
+        checked = item.get_state_set().contains(Atspi.StateType.CHECKED)
+        if checked != expected:
+            raise RuntimeError(
+                f"Native menu item {args[0]!r} checked={checked}, "
+                f"expected {expected}")
     elif command == "choose":
         matches = [node for node in walk(app)
                    if node.get_name() == args[0]

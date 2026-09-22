@@ -83,6 +83,42 @@
   "workspaceSearchShowMore": "Vis flere resultater",
   "workspaceSearchSkippedFiles": "Søket er ufullstendig. Disse filene er større enn 1 MiB eller kunne ikke leses:",
   "@@locale": "nb",
+  "spelling": "Stavekontroll",
+  "automaticSpelling": "Automatisk stavekontroll",
+  "defaultSpellingLanguage": "Standard språk for stavekontroll",
+  "projectSpellingLanguage": "Prosjektspråk for stavekontroll",
+  "chooseSpellingLanguage": "Velg språk for stavekontroll",
+  "spellingLanguageUnsetStatus": "Språk…",
+  "spellingOffStatus": "Stavekontroll av",
+  "checkSpelling": "Kontroller staving",
+  "ignoreSpellingOnce": "Ignorer én gang",
+  "ignoreSpellingDocument": "Ignorer alle i dette dokumentet",
+  "addPersonalSpellingWord": "Legg til i personlig ordliste",
+  "addProjectSpellingWord": "Legg til i prosjektordlisten",
+  "inheritSpellingLanguage": "Bruk prosjekt- eller programspråk",
+  "disableDocumentSpelling": "Ikke kontroller staving",
+  "importSpellingDictionary": "Importer ordliste",
+  "personalSpellingDictionary": "Personlig ordliste",
+  "projectSpellingDictionary": "Prosjektordliste",
+  "noSpellingErrors": "Ingen stavefeil",
+  "noSpellingSuggestions": "Ingen staveforslag",
+  "spellingWordCheckFailed": "Kunne ikke kontrollere dette ordet",
+  "spellingCheckFailed": "Stavekontrollen mislyktes",
+  "spellingCheckIncomplete": "Stavekontrollen er ufullstendig",
+  "spellingDictionaryNotInstalled": "Ordliste er ikke installert",
+  "spellingDictionaryNotInstalledForLanguage": "Ordlisten for {dictionary} er ikke installert",
+  "spellingDictionaryNotInstalledWithSize": "Ikke installert · {size}",
+  "spellingDictionaryInstalled": "Installert",
+  "installSpellingDictionary": "Installer ordliste",
+  "removeSpellingDictionary": "Fjern ordliste",
+  "cancelSpellingDictionaryInstall": "Avbryt nedlasting av ordliste",
+  "retrySpellingDictionaryInstall": "Prøv å installere ordlisten på nytt",
+  "spellingDictionaryDownloading": "Laster ned {size}…",
+  "spellingDictionaryValidating": "Validerer ordliste…",
+  "spellingDictionaryInstallFailed": "Installasjonen mislyktes — velg for å prøve på nytt",
+  "spellingDictionaryInstallPrompt": "Installere {dictionary} ({size})? Etter installering er den tilgjengelig frakoblet til du fjerner den.",
+  "spellingDictionaryUnavailable": "Ordliste utilgjengelig",
+  "spellingChecking": "Kontrollerer staving…",
   "reportIssue": "Rapporter et problem",
   "feedbackCategory": "Kategori",
   "feedbackChooseCategory": "Velg en kategori",
@@ -802,6 +838,7 @@
     "description": "Editor setting description for saving files automatically."
   },
   "wordWrap": "Tekstbryting",
+  "wordWrapDescription": "Bryt lange linjer så de passer til redigeringsbredden i stedet for å rulle vannrett.",
   "@wordWrap": {
     "description": "Word wrap setting label."
   },
@@ -869,6 +906,13 @@
   "@clearGitWorkspaceTrustDescription": {
     "description": "Settings action description for clearing trusted Git workspaces."
   },
+  "settingsEditingButtonsSectionTitle": "Redigeringsknapper",
+  "spellingDictionaries": "Stavekontrollordbøker",
+  "spellingDictionariesDescription": "Installer og administrer stavekontrollordbøker",
+  "settingsDictionariesSectionTitle": "Ordbøker",
+  "availableSpellingDictionaries": "Tilgjengelige ordbøker",
+  "customSpellingDictionaries": "Egendefinerte ordbøker",
+  "spellingDictionaryProblems": "Ordbokproblemer",
   "settingsWindowSectionTitle": "Vindu",
   "@settingsWindowSectionTitle": {
     "description": "Settings section title for native window behavior."
@@ -3329,5 +3373,6 @@
   "topicRenameAffectedFiles": "Berørte filer",
   "renameTopicFileInstead": "Emne-ID-er kommer fra filnavnene. Bruk Gi nytt navn til emnefil i innholdsfortegnelsen eller sidepanelet Filer.",
   "diagnosticWritersideWebFileNameInvalid": "Instansen \"{instanceId}\" publiserer det ugyldige nettfilnavnet \"{webFileName}\" for emnet \"{topic}\".",
-  "diagnosticWritersideWebFileNameCollision": "Instansen \"{instanceId}\" publiserer både \"{firstTopic}\" og \"{secondTopic}\" som \"{webFileName}\"."
+  "diagnosticWritersideWebFileNameCollision": "Instansen \"{instanceId}\" publiserer både \"{firstTopic}\" og \"{secondTopic}\" som \"{webFileName}\".",
+  "spellingDictionaryRecoveryConflict": "Staveordboken ble endret eksternt. En gjenopprettingskopi ble bevart."
 }
