@@ -323,6 +323,7 @@ class _HtmlWriter {
 
 class _HtmlNormalizer {
   var count = 0;
+  static const _formattingTags = ['strong', 'em', 'u', 'del'];
   static const _discard = {
     'script',
     'style',
@@ -351,13 +352,22 @@ class _HtmlNormalizer {
         throw const FormatException('Clipboard HTML node limit');
       }
       if (node is dom.Text) {
-        dom.Node text = dom.Text(node.data);
-        if (node.data.trim().isNotEmpty) {
-          for (final tag in styles) {
-            text = _element(tag, [text]);
-          }
+        final content = node.data.trim();
+        if (content.isEmpty || styles.isEmpty) {
+          out.add(dom.Text(node.data));
+          continue;
+        }
+        // Markdown emphasis cannot open/close against whitespace. Keep that
+        // whitespace as text outside the formatting, not inside delimiters.
+        final start = node.data.length - node.data.trimLeft().length;
+        final end = node.data.trimRight().length;
+        if (start > 0) out.add(dom.Text(node.data.substring(0, start)));
+        dom.Node text = dom.Text(content);
+        for (final tag in _formattingTags.where(styles.contains)) {
+          text = _element(tag, [text]);
         }
         out.add(text);
+        if (end < node.data.length) out.add(dom.Text(node.data.substring(end)));
         continue;
       }
       if (node is! dom.Element) continue;
@@ -371,7 +381,16 @@ class _HtmlNormalizer {
         }
         continue;
       }
-      final inherited = {...styles};
+      tag = switch (tag) {
+        'b' => 'strong',
+        'i' => 'em',
+        's' || 'strike' => 'del',
+        'font' => 'span',
+        _ => tag,
+      };
+      // Semantic tags and CSS contribute to the same set. Wrapping both
+      // produces duplicate emphasis (e.g. ******title******) after paste.
+      final inherited = {...styles, if (_formattingTags.contains(tag)) tag};
       for (final declaration in (node.attributes['style'] ?? '').split(';')) {
         final colon = declaration.indexOf(':');
         if (colon < 0) continue;
@@ -405,13 +424,7 @@ class _HtmlNormalizer {
         }
       }
       final children = nodes(node.nodes, depth + 1, inherited);
-      tag = switch (tag) {
-        'b' => 'strong',
-        'i' => 'em',
-        'strike' => 'del',
-        'font' => 'span',
-        _ => tag,
-      };
+      if (_formattingTags.contains(tag)) tag = 'span';
       if (!isSafeHtmlTag(tag)) {
         out.addAll(children);
         continue;
@@ -426,10 +439,112 @@ class _HtmlNormalizer {
           attrs[name] = entry.value;
         }
       }
-      out.add(
-        _element(tag, children, sanitizeHtmlAttributes(tag, attrs) ?? const {}),
+      final normalized = _element(
+        tag,
+        children,
+        sanitizeHtmlAttributes(tag, attrs) ?? const {},
       );
+      if (tag == 'span' && normalized.attributes.isEmpty) {
+        out.addAll(normalized.nodes.toList());
+      } else if (tag == 'table' && _isLayoutTable(normalized, node)) {
+        // Web pages often use a one-column table to wrap an entire article.
+        // Sending that wrapper to the table adapter flattens its headings,
+        // paragraphs, lists and nested data tables into inline cell text.
+        // Keep each cell as a block container and retain real tables inside it.
+        out.add(
+          _element(
+            'div',
+            [
+              for (final caption in normalized.children.where(
+                (child) => child.localName == 'caption',
+              ))
+                _element('div', caption.nodes.toList()),
+              for (final row in _tableRows(normalized))
+                for (final cell in row.children)
+                  if (cell.localName == 'td' || cell.localName == 'th')
+                    _element('div', cell.nodes.toList(), {
+                      if (cell.attributes['dir'] case final direction?)
+                        'dir': direction,
+                    }),
+            ],
+            {
+              if (normalized.attributes['dir'] case final direction?)
+                'dir': direction,
+            },
+          ),
+        );
+      } else {
+        out.add(normalized);
+      }
     }
-    return out;
+    return _mergeAdjacentFormatting(out);
+  }
+
+  List<dom.Node> _mergeAdjacentFormatting(List<dom.Node> nodes) {
+    final result = <dom.Node>[];
+    for (final node in nodes) {
+      final previous = result.lastOrNull;
+      if (node is dom.Element &&
+          previous is dom.Element &&
+          _formattingTags.contains(node.localName) &&
+          node.localName == previous.localName &&
+          node.attributes.isEmpty &&
+          previous.attributes.isEmpty) {
+        final children = _mergeAdjacentFormatting([
+          ...previous.nodes,
+          ...node.nodes,
+        ]);
+        previous.nodes.clear();
+        previous.nodes.addAll(children);
+      } else {
+        result.add(node);
+      }
+    }
+    return result;
+  }
+
+  Iterable<dom.Element> _tableRows(dom.Element table) sync* {
+    for (final child in table.children) {
+      if (child.localName == 'tr') {
+        yield child;
+      } else if (const {'thead', 'tbody', 'tfoot'}.contains(child.localName)) {
+        yield* child.children.where((row) => row.localName == 'tr');
+      }
+    }
+  }
+
+  bool _isLayoutTable(dom.Element table, dom.Element original) {
+    final normalizedRole = original.attributes['role']?.trim().toLowerCase();
+    if (normalizedRole == 'presentation' || normalizedRole == 'none') {
+      return true;
+    }
+    if (const {'table', 'grid', 'treegrid'}.contains(normalizedRole) ||
+        (int.tryParse(original.attributes['border'] ?? '0') ?? 0) > 0 ||
+        table.children.any(
+          (child) => const {'caption', 'thead'}.contains(child.localName),
+        )) {
+      return false;
+    }
+    final rows = _tableRows(table).toList();
+    if (rows.isEmpty) return false;
+    var hasDocumentContent = false;
+    for (final row in rows) {
+      final cells = row.children
+          .where((cell) => cell.localName == 'td' || cell.localName == 'th')
+          .toList();
+      if (cells.length != 1) return false;
+      final cell = cells.single;
+      if (cell.localName == 'th' ||
+          (int.tryParse(cell.attributes['colspan'] ?? '1') ?? 1) != 1 ||
+          (int.tryParse(cell.attributes['rowspan'] ?? '1') ?? 1) != 1) {
+        return false;
+      }
+      hasDocumentContent =
+          hasDocumentContent ||
+          cell.querySelector('table, h1, h2, h3, h4, h5, h6, ul, ol, pre') !=
+              null ||
+          cell.querySelectorAll('p').length > 1;
+    }
+    return hasDocumentContent;
   }
 }

@@ -51,6 +51,62 @@ import 'package:markdown/markdown.dart' as md;
 import 'package:yaru/yaru.dart';
 
 void main() {
+  testWidgets('Source pastes a web layout table as a complete document', (
+    tester,
+  ) async {
+    final clipboard = _SourceTestClipboard(
+      readData: RichClipboardData(
+        html: File(
+          'test/fixtures/clipboard/layout_table_job.html',
+        ).readAsStringSync(),
+        text: 'Plain job description',
+        generation: 1,
+      ),
+    );
+    final controller = await _pumpClipboardSourceEditor(
+      tester,
+      source: 'Target\n',
+      clipboard: clipboard,
+      markdownMode: MarkdownMode.gfm,
+    );
+    controller.selection = const TextSelection(baseOffset: 0, extentOffset: 6);
+    await _pressControlKey(tester, LogicalKeyboardKey.keyV);
+    await tester.pumpAndSettle();
+    final document = const MarkdownParser()
+        .parse(
+          filePath: '/pasted.md',
+          source: controller.text,
+          mode: MarkdownMode.gfm,
+        )
+        .busyDocument;
+    expect(document.blocks.first.kind, BusyBlockKind.heading);
+    expect(
+      document.blocks.where((block) => block.kind == BusyBlockKind.table),
+      hasLength(1),
+    );
+    expect(
+      document.blocks.where(
+        (block) => block.kind == BusyBlockKind.unorderedListItem,
+      ),
+      hasLength(3),
+    );
+    expect(
+      document.blocks.last.plainText,
+      'Send questions to team@example.test.',
+    );
+    expect(
+      controller.text,
+      contains('Closing invitation with [application details]'),
+    );
+    controller.selection = TextSelection(
+      baseOffset: 0,
+      extentOffset: controller.text.length,
+    );
+    await _pressControlKey(tester, LogicalKeyboardKey.keyV, shift: true);
+    await tester.pumpAndSettle();
+    expect(controller.text, 'Plain job description');
+  });
+
   for (final lookupFinished in [false, true]) {
     for (final findNext in [false, true]) {
       testWidgets(

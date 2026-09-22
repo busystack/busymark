@@ -139,6 +139,91 @@ void main() {
     }
   });
 
+  test(
+    'mixed external HTML preserves every block for Editor and Markdown Source',
+    () {
+      const mixedHtml = '''
+<h1>Release notes</h1>
+<p>Opening paragraph.</p>
+<ul><li>First supported item</li></ul>
+<p>Text before the data.</p>
+<table>
+  <thead><tr><th>Name</th><th>Value</th></tr></thead>
+  <tbody><tr><td>Alpha</td><td>One</td></tr></tbody>
+</table>
+<p>Closing paragraph.</p>
+''';
+      const plainText = 'plain-text fallback only';
+      const expectedKinds = [
+        BusyBlockKind.heading,
+        BusyBlockKind.paragraph,
+        BusyBlockKind.unorderedListItem,
+        BusyBlockKind.paragraph,
+        BusyBlockKind.table,
+        BusyBlockKind.paragraph,
+      ];
+
+      for (final destination in [
+        BusyMarkPasteDestination.editor,
+        BusyMarkPasteDestination.markdownSource,
+      ]) {
+        final plan = resolve(
+          snapshot(html: mixedHtml, text: plainText),
+          destination: destination,
+          markdownMode: MarkdownMode.gfm,
+        );
+        final structured =
+            plan.candidates.first as BusyMarkStructuredPasteCandidate;
+        expect(
+          structured.source,
+          BusyMarkStructuredClipboardSource.html,
+          reason: destination.name,
+        );
+        expect(
+          structured.fragment.documentBlocks.map((block) => block.kind),
+          expectedKinds,
+          reason: destination.name,
+        );
+        final markdown = structured.fragment.serializeFor(
+          destinationMode: MarkdownMode.gfm,
+          destinationFilePath: '/workspace/mixed.md',
+        );
+        expect(
+          markdown.indexOf('# Release notes'),
+          lessThan(markdown.indexOf('Opening paragraph.')),
+        );
+        expect(
+          markdown.indexOf('Opening paragraph.'),
+          lessThan(markdown.indexOf('- First supported item')),
+        );
+        expect(
+          markdown.indexOf('- First supported item'),
+          lessThan(markdown.indexOf('Text before the data.')),
+        );
+        expect(
+          markdown.indexOf('Text before the data.'),
+          lessThan(markdown.indexOf('| Name | Value |')),
+        );
+        expect(
+          markdown.indexOf('| Name | Value |'),
+          lessThan(markdown.indexOf('Closing paragraph.')),
+        );
+
+        final plain = resolve(
+          snapshot(html: mixedHtml, text: plainText),
+          mode: BusyMarkPasteMode.plainText,
+          destination: destination,
+        );
+        expect(plain.candidates, hasLength(1));
+        expect(
+          (plain.candidates.single as BusyMarkPlainTextPasteCandidate).text,
+          plainText,
+          reason: destination.name,
+        );
+      }
+    },
+  );
+
   test('plain mode uses only interoperable text', () {
     final plan = resolve(
       snapshot(

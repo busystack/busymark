@@ -570,6 +570,45 @@ void main() {
       expect(result, contains('**When**'));
     });
 
+    testWidgets('Editor pastes a web layout table as a complete document', (
+      tester,
+    ) async {
+      systemData = {
+        'html': File(
+          'test/fixtures/clipboard/layout_table_job.html',
+        ).readAsStringSync(),
+        'text': 'Plain job description',
+      };
+      var result = 'Target\n';
+      await mount(tester, 'layout-table', result, (value) => result = value);
+      await key(tester, LogicalKeyboardKey.keyA);
+      await key(tester, LogicalKeyboardKey.keyV);
+      await tester.pumpAndSettle();
+      final document = _parser
+          .parse(filePath: '/pasted.md', source: result)
+          .busyDocument;
+      expect(document.blocks.first.kind, BusyBlockKind.heading);
+      expect(
+        document.blocks.where((block) => block.kind == BusyBlockKind.table),
+        hasLength(1),
+      );
+      expect(
+        document.blocks.where(
+          (block) => block.kind == BusyBlockKind.unorderedListItem,
+        ),
+        hasLength(3),
+      );
+      expect(
+        document.blocks.last.plainText,
+        'Send questions to team@example.test.',
+      );
+      expect(result, contains('Closing invitation with [application details]'));
+      await key(tester, LogicalKeyboardKey.keyZ);
+      expect(result, 'Target\n');
+      await key(tester, LogicalKeyboardKey.keyV, shift: true);
+      expect(result.trim(), 'Plain job description');
+    });
+
     testWidgets(
       'complete heading list and code blocks retain structure at every paragraph position',
       (tester) async {
