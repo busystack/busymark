@@ -12831,9 +12831,15 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
       case SpellingPresentationStatus.checking:
       case SpellingPresentationStatus.ready:
       case SpellingPresentationStatus.disabled:
-      case SpellingPresentationStatus.failure:
-      case SpellingPresentationStatus.incomplete:
         return null;
+      case SpellingPresentationStatus.failure:
+        return _SpellingBannerPresentation(
+          title: context.l10n.spellingCheckFailed,
+        );
+      case SpellingPresentationStatus.incomplete:
+        return _SpellingBannerPresentation(
+          title: context.l10n.spellingCheckIncomplete,
+        );
     }
   }
 

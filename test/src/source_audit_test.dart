@@ -308,7 +308,7 @@ void main() {
     expect(switchRow, contains('return YaruSwitchListTile('));
     expect(switchRow, contains('final switchControl = BusyMarkSwitch('));
     expect(switchRow, contains('control: switchControl'));
-    expect(switchRow, isNot(contains('MouseRegion(')));
+    expect(switchRow, isNot(contains('child: Switch(')));
     expect(switchRow, contains('hoverColor: busyMarkRowHoverColor(context)'));
     expect(switchRow, contains('shape: const RoundedRectangleBorder()'));
   });

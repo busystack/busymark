@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -8,6 +9,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:crypto/crypto.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../app/app_settings.dart';
 import '../core/diagnostic.dart';
 import '../editor/source/source_editor.dart';
 import '../editor/source/source_search.dart';
@@ -16,11 +18,13 @@ import '../editor/wysiwyg/wysiwyg_editor.dart';
 import '../markdown/markdown_model.dart';
 import '../markdown/markdown_parser.dart';
 import '../workspace/workspace_controller.dart';
+import '../workspace/document_buffer.dart';
 import '../workspace/workspace_model.dart';
 import 'markdown_spelling_projection.dart';
 import 'spelling_catalog.dart';
 import 'spelling_coordinator.dart';
 import 'spelling_dictionary_downloader.dart';
+import 'spelling_language.dart';
 import 'spelling_projection.dart';
 import 'spelling_replacement.dart';
 import 'spelling_session_controller.dart';
@@ -143,6 +147,65 @@ Future<int> runSpellingReleaseSmoke(String reportPath) async {
     checks['installedDictionaryCount'] = installedCatalog.installations.length;
     if (installedCatalog.installations.length != 1) {
       throw StateError('The smoke profile did not contain exactly one pair.');
+    }
+
+    final session = SpellingSessionController(
+      bundledRoot: bundledRoot,
+      applicationSupportRoot: support.path,
+      dictionaryStorageRoot: dictionaryRoot,
+    );
+    try {
+      final settings = AppSettings.defaults().copyWith(
+        automaticSpelling: true,
+        defaultSpellingLanguage: null,
+      );
+      final unresolved = DocumentBuffer.untitled(
+        id: 'release-language-transition',
+        name: 'release-language-transition.md',
+        text: 'helo',
+      );
+      SpellingSessionInput input(DocumentBuffer buffer) => SpellingSessionInput(
+        buffer: buffer,
+        workspace: null,
+        settings: settings,
+        documentKind: DocumentKind.markdown,
+        markdownMode: MarkdownMode.commonMark,
+      );
+      session.update(input(unresolved));
+      await _waitForSpellingState(
+        session,
+        (state) => state.status == SpellingPresentationStatus.languageRequired,
+      );
+      session.update(
+        input(
+          unresolved.copyWith(
+            editorState: unresolved.editorState.copyWith(
+              spellingLanguage: const SpellingLanguageOverride.selected(
+                'en-US',
+              ),
+            ),
+          ),
+        ),
+      );
+      await _waitForSpellingState(session, (state) {
+        return state.status != SpellingPresentationStatus.languageRequired &&
+            state.status != SpellingPresentationStatus.checking;
+      });
+      if (session.state.status != SpellingPresentationStatus.ready ||
+          !session.state.complete ||
+          session.misspellings.singleOrNull?.word != 'helo' ||
+          session.annotations.isEmpty) {
+        throw StateError(
+          'Installed dictionary session transition failed: '
+          '${session.state.status}, complete=${session.state.complete}, '
+          'message=${session.state.message}, '
+          'misspellings=${session.misspellings.length}, '
+          'annotations=${session.annotations.length}.',
+        );
+      }
+      checks['sessionLanguageTransition'] = true;
+    } finally {
+      session.dispose();
     }
 
     const source = 'This is helo.\n';
@@ -344,6 +407,22 @@ Future<void> _verifyInstalledSpellingInventory(String root) async {
         'Installed spelling resource failed checksum: ${match.group(2)}',
       );
     }
+  }
+}
+
+Future<void> _waitForSpellingState(
+  SpellingSessionController controller,
+  bool Function(SpellingPresentationState state) condition,
+) async {
+  final elapsed = Stopwatch()..start();
+  while (!condition(controller.state)) {
+    if (elapsed.elapsed > const Duration(seconds: 15)) {
+      throw TimeoutException(
+        'Spelling session did not settle: ${controller.state.status}, '
+        'message=${controller.state.message}.',
+      );
+    }
+    await Future<void>.delayed(const Duration(milliseconds: 25));
   }
 }
 

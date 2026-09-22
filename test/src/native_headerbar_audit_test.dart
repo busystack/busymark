@@ -1868,8 +1868,6 @@ void main() {
       expect(welcome, contains('HeaderBarConfigurationPublisher('));
       expect(welcome, contains('title: context.l10n.appTitle'));
       expect(settings, contains('HeaderBarConfigurationPublisher('));
-      expect(settings, contains('final title = _showSpellingDictionaries'));
-      expect(settings, contains(': _settingsPageLabel(context, _page);'));
       expect(settings, contains('title: title'));
       expect(
         workspace,

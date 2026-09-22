@@ -8,6 +8,8 @@ import 'package:busymark/src/app/app_settings.dart';
 import 'package:busymark/src/app/busymark_app.dart';
 import 'package:busymark/src/app/busymark_design.dart';
 import 'package:busymark/src/app/system_accent.dart';
+import 'package:busymark/src/editor/source_highlighter.dart'
+    show BusyMarkSourceEditingController;
 import 'package:busymark/src/editor/source/source_editor.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_block_widgets.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_editor.dart';
@@ -593,6 +595,199 @@ void main() {
     },
   );
 
+  testWidgets('new rich document checks spelling after choosing its language', (
+    tester,
+  ) async {
+    final harness = await _pumpWorkspace(tester, defaultLanguage: null);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyN);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(l10n.createMarkdownFile).last);
+    await _until(
+      tester,
+      () => find.byType(BusyMarkWysiwygEditor).evaluate().isNotEmpty,
+    );
+
+    final editor = find.byType(BusyMarkWysiwygEditor);
+    final field = find.descendant(
+      of: editor,
+      matching: find.byType(EditableText),
+    );
+    await tester.enterText(field, 'helo');
+    await _until(
+      tester,
+      () =>
+          harness.spelling.state.status ==
+          SpellingPresentationStatus.languageRequired,
+    );
+
+    final languageStatus = find.byKey(
+      const ValueKey('document-spelling-language-status'),
+    );
+    expect(
+      find.descendant(of: languageStatus, matching: find.text('Language…')),
+      findsOneWidget,
+    );
+    await tester.tap(languageStatus);
+    await _until(
+      tester,
+      () => find.byType(BusyMarkDialogShell).evaluate().isNotEmpty,
+    );
+    await tester.tap(
+      find.descendant(
+        of: find.byType(BusyMarkDialogShell),
+        matching: find.text('Test English'),
+      ),
+    );
+    await _until(tester, () {
+      final status = harness.spelling.state.status;
+      return status != SpellingPresentationStatus.languageRequired &&
+          status != SpellingPresentationStatus.checking;
+    });
+
+    final state = harness.spelling.state;
+    final diagnostics =
+        'status=${state.status} message=${state.message} '
+        'misspellings=${harness.spelling.misspellings.length} '
+        'annotations=${harness.spelling.annotations.length}';
+    expect(state.status, SpellingPresentationStatus.ready, reason: diagnostics);
+    expect(state.complete, isTrue, reason: diagnostics);
+    expect(
+      harness.spelling.misspellings.single.word,
+      'helo',
+      reason: diagnostics,
+    );
+    expect(harness.spelling.annotations, isNotEmpty, reason: diagnostics);
+
+    final occurrence = harness.spelling.misspellings.single;
+    expect(occurrence.run.target, isA<SpellingRichBlockTarget>());
+    final target = occurrence.run.target as SpellingRichBlockTarget;
+    final editorState = tester.state<BusyMarkWysiwygEditorState>(editor);
+    expect(target.documentGeneration, editorState.spellingDocumentGeneration);
+    final block = tester
+        .widgetList<BusyMarkWysiwygBlockField>(
+          find.byType(BusyMarkWysiwygBlockField),
+        )
+        .singleWhere((candidate) => candidate.block.id == target.blockId);
+    expect(block.spellingRanges, [const TextRange(start: 0, end: 4)]);
+    expect(_spellingUnderlineOverlay(), findsOneWidget);
+  });
+
+  testWidgets(
+    'new source document checks spelling after choosing its language',
+    (tester) async {
+      final harness = await _pumpWorkspace(
+        tester,
+        defaultLanguage: null,
+        viewMode: DocumentViewModePreference.source,
+      );
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyN);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(l10n.createMarkdownFile).last);
+      await _until(
+        tester,
+        () => find.byType(BusyMarkSourceEditor).evaluate().isNotEmpty,
+      );
+
+      final editor = find.byType(BusyMarkSourceEditor);
+      final field = find.descendant(
+        of: editor,
+        matching: find.byType(EditableText),
+      );
+      await tester.enterText(field, 'helo');
+      await _until(
+        tester,
+        () =>
+            harness.spelling.state.status ==
+            SpellingPresentationStatus.languageRequired,
+      );
+
+      final languageStatus = find.byKey(
+        const ValueKey('document-spelling-language-status'),
+      );
+      expect(
+        find.descendant(of: languageStatus, matching: find.text('Language…')),
+        findsOneWidget,
+      );
+      await tester.tap(languageStatus);
+      await _until(
+        tester,
+        () => find.byType(BusyMarkDialogShell).evaluate().isNotEmpty,
+      );
+      await tester.tap(
+        find.descendant(
+          of: find.byType(BusyMarkDialogShell),
+          matching: find.text('Test English'),
+        ),
+      );
+      await _until(tester, () {
+        final status = harness.spelling.state.status;
+        return status != SpellingPresentationStatus.languageRequired &&
+            status != SpellingPresentationStatus.checking;
+      });
+
+      final state = harness.spelling.state;
+      expect(state.status, SpellingPresentationStatus.ready);
+      expect(state.complete, isTrue);
+      expect(harness.spelling.misspellings.single.word, 'helo');
+      expect(
+        harness.spelling.annotations
+            .map(
+              (annotation) =>
+                  TextRange(start: annotation.start, end: annotation.end),
+            )
+            .toList(),
+        [const TextRange(start: 0, end: 4)],
+      );
+      expect(
+        harness.spelling.annotations.single.target,
+        isA<SpellingSourceTarget>(),
+      );
+
+      final controller = tester
+          .widgetList<TextField>(
+            find.descendant(of: editor, matching: find.byType(TextField)),
+          )
+          .map((widget) => widget.controller)
+          .whereType<BusyMarkSourceEditingController>()
+          .single;
+      const range = TextRange(start: 0, end: 4);
+      final painter = find.byWidgetPredicate(
+        (widget) =>
+            widget is CustomPaint &&
+            widget.foregroundPainter.runtimeType.toString() ==
+                '_SourceSpellingPainter',
+      );
+      for (final offset in [0, 2, 4]) {
+        controller.fullSelection = TextSelection.collapsed(offset: offset);
+        await tester.pump();
+        expect(painter, findsOneWidget, reason: 'caret $offset');
+        expect(
+          busyMarkSourceSpellingUnderlineSuppressed(controller, range),
+          isFalse,
+          reason: 'caret $offset',
+        );
+      }
+
+      controller.value = controller.value.copyWith(composing: range);
+      await tester.pump();
+      expect(
+        busyMarkSourceSpellingUnderlineSuppressed(controller, range),
+        isTrue,
+      );
+      controller.value = controller.value.copyWith(composing: TextRange.empty);
+      await tester.pump();
+      expect(painter, findsOneWidget);
+      expect(
+        busyMarkSourceSpellingUnderlineSuppressed(controller, range),
+        isFalse,
+      );
+    },
+  );
+
   for (final viewMode in DocumentViewModePreference.values) {
     testWidgets('uses one document status strip in ${viewMode.name} mode', (
       tester,
@@ -823,6 +1018,51 @@ void main() {
     );
   });
 
+  testWidgets('automatic spelling failure is visible in the compact banner', (
+    tester,
+  ) async {
+    final harness = await _pumpWorkspace(
+      tester,
+      source: 'helo\n',
+      coordinatorStarter: () async =>
+          throw StateError('injected spelling worker failure'),
+    );
+    await _until(
+      tester,
+      () => harness.spelling.state.status == SpellingPresentationStatus.failure,
+    );
+
+    final banner = find.byType(BusyMarkBanner);
+    expect(tester.widget<BusyMarkBanner>(banner).revealed, isTrue);
+    expect(find.text(l10n.spellingCheckFailed), findsOneWidget);
+    expect(
+      find.textContaining('injected spelling worker failure'),
+      findsNothing,
+    );
+  });
+
+  testWidgets(
+    'automatic incomplete projection is visible in the compact banner',
+    (tester) async {
+      final harness = await _pumpWorkspace(
+        tester,
+        source: '<topic><p>helo',
+        writersideXml: true,
+        viewMode: DocumentViewModePreference.source,
+      );
+      await _until(
+        tester,
+        () =>
+            harness.spelling.state.status ==
+            SpellingPresentationStatus.incomplete,
+      );
+
+      final banner = find.byType(BusyMarkBanner);
+      expect(tester.widget<BusyMarkBanner>(banner).revealed, isTrue);
+      expect(find.text(l10n.spellingCheckIncomplete), findsOneWidget);
+    },
+  );
+
   testWidgets('native spelling submenu applies immediate language choices', (
     tester,
   ) async {
@@ -1035,6 +1275,7 @@ Future<_Harness> _pumpWorkspace(
   WidgetTester tester, {
   String? source,
   bool writerside = false,
+  bool writersideXml = false,
   bool dictionaryInstalled = true,
   bool includeSecondLanguage = false,
   DocumentViewModePreference viewMode = DocumentViewModePreference.editor,
@@ -1112,20 +1353,26 @@ Future<_Harness> _pumpWorkspace(
   final controller = container.read(workspaceControllerProvider.notifier);
   if (source != null) {
     await tester.runAsync(() async {
+      final topicName = writersideXml ? 'document.topic' : 'document.md';
       final file = File(
-        p.join(root.path, writerside ? 'topics/document.md' : 'document.md'),
+        p.join(
+          root.path,
+          writerside || writersideXml ? 'topics/$topicName' : topicName,
+        ),
       );
       await file.parent.create(recursive: true);
       await file.writeAsString(source);
-      if (writerside) {
+      if (writerside || writersideXml) {
         await File(p.join(root.path, 'writerside.cfg')).writeAsString(
           '<ihp version="2.0"><topics dir="topics"/><instance src="guide.tree"/></ihp>',
         );
         await File(p.join(root.path, 'guide.tree')).writeAsString(
-          '<instance-profile id="guide" name="Guide" start-page="document.md"><toc-element topic="document.md"/></instance-profile>',
+          '<instance-profile id="guide" name="Guide" start-page="$topicName"><toc-element topic="$topicName"/></instance-profile>',
         );
       }
-      await controller.openPath(writerside ? root.path : file.path);
+      await controller.openPath(
+        writerside || writersideXml ? root.path : file.path,
+      );
     });
     container.read(appRouterProvider).go('/workspace');
     await tester.pumpAndSettle();

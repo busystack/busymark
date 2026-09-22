@@ -2661,6 +2661,71 @@ void main() {
   });
 
   test(
+    'automatic session checks after an unresolved language is selected',
+    () async {
+      final temporary = await Directory.systemTemp.createTemp(
+        'busymark-language-transition-',
+      );
+      addTearDown(() async {
+        if (await temporary.exists()) await temporary.delete(recursive: true);
+      });
+      final bundle = await _createFixtureBundle(temporary);
+      final controller = SpellingSessionController(
+        bundledRoot: bundle,
+        applicationSupportRoot: p.join(temporary.path, 'support'),
+        dictionaryStorageRoot: p.join(temporary.path, 'dictionary-storage'),
+        verifyDictionaryChecksums: false,
+      );
+      addTearDown(controller.dispose);
+      final settings = AppSettings.defaults().copyWith(
+        defaultSpellingLanguage: null,
+        automaticSpelling: true,
+      );
+      final buffer = DocumentBuffer.untitled(
+        id: 'language-transition',
+        name: 'language-transition.md',
+        text: 'helo',
+      );
+      SpellingSessionInput input(DocumentBuffer value) => SpellingSessionInput(
+        buffer: value,
+        workspace: null,
+        settings: settings,
+        documentKind: DocumentKind.markdown,
+        markdownMode: MarkdownMode.commonMark,
+      );
+
+      controller.update(input(buffer));
+      await _waitFor(
+        () =>
+            controller.state.status ==
+            SpellingPresentationStatus.languageRequired,
+      );
+
+      controller.update(
+        input(
+          buffer.copyWith(
+            editorState: buffer.editorState.copyWith(
+              spellingLanguage: const SpellingLanguageOverride.selected(
+                'en-Test',
+              ),
+            ),
+          ),
+        ),
+      );
+      await _waitFor(() {
+        final status = controller.state.status;
+        return status != SpellingPresentationStatus.languageRequired &&
+            status != SpellingPresentationStatus.checking;
+      });
+
+      expect(controller.state.status, SpellingPresentationStatus.ready);
+      expect(controller.state.complete, isTrue);
+      expect(controller.misspellings.single.word, 'helo');
+      expect(controller.annotations, isNotEmpty);
+    },
+  );
+
+  test(
     'an available but absent dictionary is not downloaded implicitly',
     () async {
       final temporary = await Directory.systemTemp.createTemp(

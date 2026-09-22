@@ -120,7 +120,6 @@ abstract final class BusyMarkSizes {
   static const double toolbarPlacementRowWidth = 430;
   static const double settingsControlBreakpoint = 560;
   static const double toolbarPlacementBreakpoint = 620;
-  static const double richListRowMinHeight = 56;
   static const int tableMinColumns = 1;
   static const int tableMaxColumns = 12;
   static const int tableMinRows = 1;
@@ -2943,50 +2942,6 @@ class _BusyMarkSidebarRecordRowState<T>
   }
 }
 
-/// A lazy, unboxed list for spacious Settings-style rows and controls.
-///
-/// This represents GTK's rich-list pattern: the surrounding view remains the
-/// surface owner while this widget provides native row spacing and semantic
-/// separators. Rows retain their own Yaru hover and focus behavior.
-class BusyMarkRichList extends StatelessWidget {
-  const BusyMarkRichList({
-    super.key,
-    required this.itemCount,
-    required this.itemBuilder,
-    this.padding = EdgeInsets.zero,
-  });
-
-  final int itemCount;
-  final IndexedWidgetBuilder itemBuilder;
-  final EdgeInsetsGeometry padding;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = BusyMarkSurfaceColors.of(context);
-    return DefaultTextStyle.merge(
-      style: TextStyle(color: colors.foreground),
-      child: IconTheme.merge(
-        data: IconThemeData(color: colors.foreground),
-        child: ListView.separated(
-          padding: padding,
-          itemCount: itemCount,
-          itemBuilder: (context, index) => ConstrainedBox(
-            constraints: const BoxConstraints(
-              minHeight: BusyMarkSizes.richListRowMinHeight,
-            ),
-            child: itemBuilder(context, index),
-          ),
-          separatorBuilder: (context, index) => Divider(
-            height: BusyMarkStroke.hairline,
-            thickness: BusyMarkStroke.hairline,
-            color: colors.divider,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 /// A native contextual information bar embedded in the surrounding layout.
 ///
 /// This mirrors Libadwaita's banner pattern: the host decides when the banner
@@ -3569,23 +3524,13 @@ class _BusyMarkSwitchState extends State<BusyMarkSwitch> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colors = BusyMarkSurfaceColors.of(context);
     final inheritedSwitchTheme = YaruSwitchTheme.of(context);
     final checkedTrackColor = _busyMarkCheckedSwitchColor(
       theme.colorScheme.primary,
-      theme.colorScheme.onPrimary,
+      brightness: theme.brightness,
       hovered: _hovered,
       pressed: _pressed,
     );
-    final uncheckedTrackColor = _busyMarkUncheckedSwitchColor(
-      colors.foreground,
-      highContrast: theme.colorScheme.isHighContrast,
-      hovered: _hovered,
-      pressed: _pressed,
-    );
-    final uncheckedThumbColor = _hovered || _pressed
-        ? Colors.white
-        : Color.lerp(colors.view, Colors.white, 0.80)!;
 
     return MouseRegion(
       onEnter: (_) => _setHovered(true),
@@ -3596,22 +3541,6 @@ class _BusyMarkSwitchState extends State<BusyMarkSwitch> {
         onPointerCancel: widget.onChanged == null ? null : _handlePointerCancel,
         child: YaruSwitchTheme(
           data: inheritedSwitchTheme.copyWith(
-            color: WidgetStateProperty.resolveWith((states) {
-              if (states.contains(WidgetState.disabled)) {
-                return inheritedSwitchTheme.color?.resolve(states);
-              }
-              return states.contains(WidgetState.selected)
-                  ? checkedTrackColor
-                  : uncheckedTrackColor;
-            }),
-            thumbColor: WidgetStateProperty.resolveWith((states) {
-              if (states.contains(WidgetState.disabled)) {
-                return inheritedSwitchTheme.thumbColor?.resolve(states);
-              }
-              return states.contains(WidgetState.selected)
-                  ? Colors.white
-                  : uncheckedThumbColor;
-            }),
             indicatorColor: const WidgetStatePropertyAll<Color?>(
               Colors.transparent,
             ),
@@ -3619,6 +3548,7 @@ class _BusyMarkSwitchState extends State<BusyMarkSwitch> {
           child: YaruSwitch(
             value: widget.value,
             onChanged: widget.onChanged,
+            selectedColor: checkedTrackColor,
             focusNode: widget.focusNode,
             autofocus: widget.autofocus,
             mouseCursor: widget.mouseCursor,
@@ -3657,30 +3587,22 @@ class _BusyMarkSwitchState extends State<BusyMarkSwitch> {
 }
 
 Color _busyMarkCheckedSwitchColor(
-  Color accent,
-  Color accentForeground, {
+  Color accent, {
+  required Brightness brightness,
   required bool hovered,
   required bool pressed,
 }) {
-  if (pressed) {
-    return Color.alphaBlend(const Color.fromRGBO(0, 0, 6, 0.20), accent);
-  }
-  if (hovered) {
-    return Color.alphaBlend(accentForeground.withValues(alpha: 0.10), accent);
-  }
-  return accent;
-}
-
-Color _busyMarkUncheckedSwitchColor(
-  Color foreground, {
-  required bool highContrast,
-  required bool hovered,
-  required bool pressed,
-}) {
-  final opacity = highContrast
-      ? (pressed ? 0.50 : (hovered ? 0.40 : 0.30))
-      : (pressed ? 0.25 : (hovered ? 0.20 : 0.15));
-  return foreground.withValues(alpha: opacity);
+  final normalLightnessDelta = brightness == Brightness.light ? 0.05 : 0.0;
+  final stateLightnessDelta = pressed ? -0.07 : (hovered ? 0.07 : 0.0);
+  final hsl = HSLColor.fromColor(accent);
+  return hsl
+      .withLightness(
+        (hsl.lightness + normalLightnessDelta + stateLightnessDelta).clamp(
+          0.0,
+          1.0,
+        ),
+      )
+      .toColor();
 }
 
 class BusyMarkSwitchRow extends StatelessWidget {

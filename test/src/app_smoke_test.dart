@@ -920,7 +920,7 @@ void main() {
     expectControlInSection(l10n.spelling, l10n.projectSpellingLanguage);
     expectControlInSection(
       l10n.settingsDictionariesSectionTitle,
-      l10n.spellingDictionaries,
+      l10n.importSpellingDictionary,
     );
     expectControlInSection(
       l10n.settingsDictionariesSectionTitle,
@@ -933,28 +933,11 @@ void main() {
     final dictionariesSection = tester.widget<BusyMarkGroupedList>(
       groupedSection(l10n.settingsDictionariesSectionTitle),
     );
-    expect(dictionariesSection.children, hasLength(3));
-    expect(find.text(l10n.importSpellingDictionary), findsNothing);
-
-    final dictionariesNavigation = find.byKey(
-      const ValueKey('settings-spelling-dictionaries'),
-    );
-    final dictionariesNavigationRow = tester.widget<BusyMarkActionRow>(
-      dictionariesNavigation,
-    );
-    expect(dictionariesNavigationRow.title, l10n.spellingDictionaries);
+    expect(dictionariesSection.children.length, greaterThanOrEqualTo(3));
+    expect(find.text(l10n.importSpellingDictionary), findsOneWidget);
     expect(
-      dictionariesNavigationRow.subtitle,
-      l10n.spellingDictionariesDescription,
-    );
-    expect(dictionariesNavigationRow.onTap, isNotNull);
-    expect(
-      (dictionariesNavigationRow.leading! as Icon).icon,
-      BusyMarkGlyphs.symbols,
-    );
-    expect(
-      (dictionariesNavigationRow.trailing! as Icon).icon,
-      BusyMarkGlyphs.forwardFor(TextDirection.ltr),
+      tester.widget<BusyMarkClamp>(find.byType(BusyMarkClamp)).scrollable,
+      isTrue,
     );
 
     expect(
@@ -1007,42 +990,17 @@ void main() {
     expect(settingsStore.value['autoSave'], isTrue);
     expect(tester.widget<BusyMarkSwitchRow>(autoSaveRow).value, isTrue);
 
-    await tester.ensureVisible(dictionariesNavigation);
-    await tester.tap(dictionariesNavigation);
-    await tester.pumpAndSettle();
-
-    expect(find.byKey(const ValueKey('settings-page-selector')), findsNothing);
-    expect(find.byType(BusyMarkGroupedList), findsNothing);
-    expect(
-      find.byKey(const ValueKey('spelling-dictionaries-list')),
-      findsOneWidget,
-    );
-    expect(find.byType(BusyMarkRichList), findsOneWidget);
-    expect(find.byType(Scrollable), findsOneWidget);
-    expect(
-      tester.widget<BusyMarkClamp>(find.byType(BusyMarkClamp)).scrollable,
-      isFalse,
-    );
-    expect(find.text(l10n.importSpellingDictionary), findsOneWidget);
-    var header = tester.widget<HeaderBarConfigurationPublisher>(
+    final header = tester.widget<HeaderBarConfigurationPublisher>(
       find.byType(HeaderBarConfigurationPublisher),
     );
-    expect(header.configuration.title, l10n.spellingDictionaries);
+    expect(header.configuration.title, l10n.editor);
     expect(header.configuration.sidebarVisible, isFalse);
-
-    await tester.binding.handlePopRoute();
-    await tester.pumpAndSettle();
-
     expect(
       find.byKey(const ValueKey('settings-page-selector')),
       findsOneWidget,
     );
     expect(find.byType(BusyMarkGroupedList), findsNWidgets(4));
     expect(find.text(l10n.autoSave), findsOneWidget);
-    header = tester.widget<HeaderBarConfigurationPublisher>(
-      find.byType(HeaderBarConfigurationPublisher),
-    );
-    expect(header.configuration.title, l10n.editor);
 
     await tester.tap(find.byKey(const ValueKey('settings-page-selector')));
     await tester.pumpAndSettle();
@@ -1299,33 +1257,19 @@ void main() {
     expect(header.configuration.sidebarVisible, isTrue);
     expect(header.configuration.title, l10n.editor);
 
-    final dictionariesNavigation = find.byKey(
-      const ValueKey('settings-spelling-dictionaries'),
-    );
-    await tester.ensureVisible(dictionariesNavigation);
-    await tester.tap(dictionariesNavigation);
-    await tester.pumpAndSettle();
-
-    expect(find.byType(BusyMarkSidebarSurface), findsNothing);
+    expect(find.text(l10n.importSpellingDictionary), findsOneWidget);
+    expect(find.byType(BusyMarkSidebarSurface), findsOneWidget);
     expect(find.byKey(const ValueKey('settings-page-selector')), findsNothing);
+    expect(find.byType(Scrollable), findsWidgets);
     expect(
-      find.byKey(const ValueKey('spelling-dictionaries-list')),
-      findsOneWidget,
+      tester.widget<BusyMarkClamp>(find.byType(BusyMarkClamp)).scrollable,
+      isTrue,
     );
-    expect(find.byType(BusyMarkRichList), findsOneWidget);
-    expect(find.byType(Scrollable), findsOneWidget);
     header = tester.widget<HeaderBarConfigurationPublisher>(
       find.byType(HeaderBarConfigurationPublisher),
     );
-    expect(header.configuration.sidebarVisible, isFalse);
-    expect(header.configuration.title, l10n.spellingDictionaries);
-
-    await tester.tap(
-      find.byTooltip('${l10n.back} (${BusyMarkAppShortcutLabels.back})'),
-    );
-    await tester.pumpAndSettle();
-
-    expect(find.byType(BusyMarkSidebarSurface), findsOneWidget);
+    expect(header.configuration.sidebarVisible, isTrue);
+    expect(header.configuration.title, l10n.editor);
     expect(
       tester
           .widget<BusyMarkSidebarNavigationTile>(
@@ -1341,149 +1285,165 @@ void main() {
     expect(header.configuration.title, l10n.editor);
   });
 
-  testWidgets(
-    'spelling dictionary subpage owns downloadable and imported packages',
-    (tester) async {
-      tester.view.devicePixelRatio = 1;
-      tester.view.physicalSize = const Size(800, 900);
-      addTearDown(tester.view.resetDevicePixelRatio);
-      addTearDown(tester.view.resetPhysicalSize);
+  testWidgets('Dictionaries group owns downloadable and imported packages', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(800, 900);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.view.resetPhysicalSize);
 
-      late Directory temporary;
-      late ({String bundle, String storage}) fixture;
-      late SpellingSessionController spelling;
-      await tester.runAsync(() async {
-        temporary = await Directory.systemTemp.createTemp(
-          'busymark-settings-dictionaries-',
-        );
-        fixture = await _createSettingsSpellingFixture(temporary);
-        spelling = SpellingSessionController(
-          bundledRoot: fixture.bundle,
-          applicationSupportRoot: p.join(temporary.path, 'support'),
-          dictionaryStorageRoot: fixture.storage,
-          verifyDictionaryChecksums: false,
-        );
-        await spelling.prepareSettings(null);
-      });
-      final container = ProviderContainer(
-        overrides: [
-          linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
-          localSettingsStoreProvider.overrideWithValue(_MemorySettingsStore()),
-          spellingSessionControllerProvider.overrideWith((ref) => spelling),
-        ],
+    late Directory temporary;
+    late ({String bundle, String storage}) fixture;
+    late SpellingSessionController spelling;
+    await tester.runAsync(() async {
+      temporary = await Directory.systemTemp.createTemp(
+        'busymark-settings-dictionaries-',
       );
-      addTearDown(() async {
-        container.dispose();
-        if (await temporary.exists()) {
-          await temporary.delete(recursive: true);
-        }
-      });
-      await tester.pumpWidget(
-        UncontrolledProviderScope(
-          container: container,
-          child: const BusyMarkApp(),
-        ),
+      fixture = await _createSettingsSpellingFixture(temporary);
+      spelling = SpellingSessionController(
+        bundledRoot: fixture.bundle,
+        applicationSupportRoot: p.join(temporary.path, 'support'),
+        dictionaryStorageRoot: fixture.storage,
+        verifyDictionaryChecksums: false,
       );
-      await tester.pumpAndSettle();
-
-      await tester.tap(find.byTooltip(l10n.mainMenu));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text(l10n.settings));
-      await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const ValueKey('settings-page-selector')));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text(l10n.editor));
-      await tester.pumpAndSettle();
-
-      expect(find.text(l10n.importSpellingDictionary), findsNothing);
-      expect(find.text('Test English'), findsNothing);
-      expect(find.text('Test French'), findsNothing);
-      expect(find.text('Local Test English'), findsNothing);
-      expect(find.text('xx-Test'), findsNothing);
-
-      final dictionariesNavigation = find.byKey(
-        const ValueKey('settings-spelling-dictionaries'),
-      );
-      await tester.ensureVisible(dictionariesNavigation);
-      await tester.tap(dictionariesNavigation);
-      await tester.pumpAndSettle();
-
-      final list = tester.widget<BusyMarkRichList>(
-        find.byKey(const ValueKey('spelling-dictionaries-list')),
-      );
-      expect(list.itemCount, 5);
-      expect(find.byType(Scrollable), findsOneWidget);
-      expect(find.byType(BusyMarkGroupedList), findsNothing);
-      expect(find.text(l10n.importSpellingDictionary), findsOneWidget);
-      expect(find.text('Test English'), findsOneWidget);
-      expect(find.text('Test French'), findsOneWidget);
-      expect(find.text(l10n.spellingDictionaryInstalled), findsOneWidget);
-      expect(find.textContaining('Not installed ·'), findsAtLeastNWidgets(1));
-      expect(find.text('Local Test English'), findsOneWidget);
-      expect(find.text('xx-Test'), findsOneWidget);
-      expect(
-        tester.getTopLeft(find.text(l10n.importSpellingDictionary)).dy,
-        lessThan(tester.getTopLeft(find.text('Test English')).dy),
-      );
-      expect(
-        tester.getTopLeft(find.text('Test French')).dy,
-        lessThan(tester.getTopLeft(find.text('Local Test English')).dy),
-      );
-      expect(
-        tester.getTopLeft(find.text('Local Test English')).dy,
-        lessThan(tester.getTopLeft(find.text('xx-Test')).dy),
-      );
-
-      final richListContext = tester.element(
-        find.byKey(const ValueKey('spelling-dictionaries-list')),
-      );
-      expect(find.byType(Divider), findsNWidgets(list.itemCount - 1));
-      expect(
-        tester
-            .widgetList<Divider>(find.byType(Divider))
-            .every(
-              (divider) =>
-                  divider.color ==
-                  BusyMarkSurfaceColors.of(richListContext).divider,
-            ),
-        isTrue,
-      );
-      for (final resourceTitle in ['Test English', 'Test French']) {
-        final row = find.byWidgetPredicate(
-          (widget) =>
-              widget is BusyMarkActionRow && widget.title == resourceTitle,
-        );
-        expect(
-          find.descendant(
-            of: row,
-            matching: find.byType(BusyMarkCompactIconButton),
-          ),
-          findsOneWidget,
-        );
+      await spelling.prepareSettings(null);
+    });
+    final container = ProviderContainer(
+      overrides: [
+        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+        localSettingsStoreProvider.overrideWithValue(_MemorySettingsStore()),
+        spellingSessionControllerProvider.overrideWith((ref) => spelling),
+      ],
+    );
+    addTearDown(() async {
+      container.dispose();
+      if (await temporary.exists()) {
+        await temporary.delete(recursive: true);
       }
+    });
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const BusyMarkApp(),
+      ),
+    );
+    await tester.pumpAndSettle();
 
-      final importRow = tester.widget<BusyMarkActionRow>(
-        find.byKey(const ValueKey('import-spelling-dictionary')),
+    await tester.tap(find.byTooltip(l10n.mainMenu));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(l10n.settings));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('settings-page-selector')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(l10n.editor));
+    await tester.pumpAndSettle();
+
+    final dictionariesGroup = find.byWidgetPredicate(
+      (widget) =>
+          widget is BusyMarkGroupedList &&
+          widget.title == l10n.settingsDictionariesSectionTitle,
+    );
+    expect(dictionariesGroup, findsOneWidget);
+    expect(find.byType(Scrollable), findsOneWidget);
+    expect(
+      tester.widget<BusyMarkClamp>(find.byType(BusyMarkClamp)).scrollable,
+      isTrue,
+    );
+    expect(find.text(l10n.importSpellingDictionary), findsOneWidget);
+    expect(find.text('Test English'), findsOneWidget);
+    expect(find.text('Test French'), findsOneWidget);
+    expect(find.text(l10n.spellingDictionaryInstalled), findsOneWidget);
+    expect(find.textContaining('Not installed ·'), findsAtLeastNWidgets(1));
+    expect(find.text('Local Test English'), findsOneWidget);
+    expect(find.text('xx-Test'), findsOneWidget);
+    expect(find.text(l10n.personalSpellingDictionary), findsOneWidget);
+    expect(find.text(l10n.projectSpellingDictionary), findsOneWidget);
+    expect(
+      tester.getTopLeft(find.text('Test English')).dy,
+      lessThan(tester.getTopLeft(find.text('Test French')).dy),
+    );
+    expect(
+      tester.getTopLeft(find.text('Test French')).dy,
+      lessThan(tester.getTopLeft(find.text(l10n.importSpellingDictionary)).dy),
+    );
+    expect(
+      tester.getTopLeft(find.text(l10n.importSpellingDictionary)).dy,
+      lessThan(tester.getTopLeft(find.text('Local Test English')).dy),
+    );
+    expect(
+      tester.getTopLeft(find.text('Local Test English')).dy,
+      lessThan(tester.getTopLeft(find.text('xx-Test')).dy),
+    );
+    expect(
+      tester.getTopLeft(find.text('xx-Test')).dy,
+      lessThan(
+        tester.getTopLeft(find.text(l10n.personalSpellingDictionary)).dy,
+      ),
+    );
+    expect(
+      tester.getTopLeft(find.text(l10n.personalSpellingDictionary)).dy,
+      lessThan(tester.getTopLeft(find.text(l10n.projectSpellingDictionary)).dy),
+    );
+    for (final resourceTitle in ['Test English', 'Test French']) {
+      final row = find.byWidgetPredicate(
+        (widget) =>
+            widget is BusyMarkActionRow && widget.title == resourceTitle,
       );
-      expect(importRow.onTap, isNotNull);
-      final importedRow = tester.widget<BusyMarkActionRow>(
-        find.byWidgetPredicate(
-          (widget) =>
-              widget is BusyMarkActionRow &&
-              widget.title == 'Local Test English',
+      expect(
+        find.descendant(
+          of: row,
+          matching: find.byType(BusyMarkCompactIconButton),
         ),
+        findsOneWidget,
       );
-      expect(importedRow.destructive, isTrue);
-      expect(importedRow.onTap, isNotNull);
-      final invalidRow = tester.widget<BusyMarkActionRow>(
-        find.byWidgetPredicate(
-          (widget) => widget is BusyMarkActionRow && widget.title == 'xx-Test',
-        ),
-      );
-      expect(invalidRow.destructive, isTrue);
-      expect(invalidRow.onTap, isNotNull);
-    },
-  );
+      final actionRow = tester.widget<BusyMarkActionRow>(row);
+      expect(actionRow.onTap, isNull);
+      expect(actionRow.destructive, isFalse);
+    }
+
+    final importRow = tester.widget<BusyMarkActionRow>(
+      find.byKey(const ValueKey('import-spelling-dictionary')),
+    );
+    expect(importRow.onTap, isNotNull);
+    final importedRow = tester.widget<BusyMarkActionRow>(
+      find.byWidgetPredicate(
+        (widget) =>
+            widget is BusyMarkActionRow && widget.title == 'Local Test English',
+      ),
+    );
+    expect(importedRow.destructive, isFalse);
+    expect(importedRow.onTap, isNull);
+    final importedRemove = importedRow.trailing! as BusyMarkCompactIconButton;
+    expect(importedRemove.onPressed, isNotNull);
+    expect(
+      importedRemove.foregroundColor,
+      Theme.of(tester.element(dictionariesGroup)).colorScheme.error,
+    );
+    final invalidRow = tester.widget<BusyMarkActionRow>(
+      find.byWidgetPredicate(
+        (widget) => widget is BusyMarkActionRow && widget.title == 'xx-Test',
+      ),
+    );
+    expect(invalidRow.destructive, isFalse);
+    expect(invalidRow.onTap, isNull);
+    final invalidRemove = invalidRow.trailing! as BusyMarkCompactIconButton;
+    expect(invalidRemove.onPressed, isNotNull);
+    expect(
+      invalidRemove.foregroundColor,
+      Theme.of(tester.element(dictionariesGroup)).colorScheme.error,
+    );
+
+    await tester.ensureVisible(find.text('Local Test English'));
+    await tester.tap(find.text('Local Test English'));
+    await tester.pumpAndSettle();
+    expect(
+      spelling.catalog?.installations.any(
+        (entry) => entry.id == 'local-Test' && entry.imported,
+      ),
+      isTrue,
+    );
+  });
 
   testWidgets(
     'import dictionary prompt uses native controls and submits a trimmed ID',
@@ -14115,17 +14075,10 @@ Future<void> _selectSpellingLanguage(
 }
 
 Future<void> _openImportDictionaryPrompt(WidgetTester tester) async {
-  final dictionariesNavigation = find.byKey(
-    const ValueKey('settings-spelling-dictionaries'),
-  );
-  await tester.ensureVisible(dictionariesNavigation);
+  final import = find.byKey(const ValueKey('import-spelling-dictionary'));
+  await tester.ensureVisible(import);
   await _pumpSettingsUi(tester);
-  await tester.tap(dictionariesNavigation);
-  await _pumpUntilFound(
-    tester,
-    find.byKey(const ValueKey('import-spelling-dictionary')),
-  );
-  await tester.tap(find.byKey(const ValueKey('import-spelling-dictionary')));
+  await tester.tap(import);
   await _pumpUntilFound(tester, find.byType(BusyMarkDialogShell));
 }
 
