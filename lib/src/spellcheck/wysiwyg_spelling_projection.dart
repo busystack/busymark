@@ -193,6 +193,7 @@ final class WysiwygSpellingProjector {
       final ordered = _mergeFieldMappings(
         richRuns: richRuns,
         sourceRuns: sourceProjection.runs,
+        sourceOnlyRegions: _sourceOnlyRegions(currentDocument.blocks),
       );
       if (ordered.allRichRunsMapped) merged = ordered;
     }
@@ -300,16 +301,24 @@ _MergedRichProjection _mergeCurrentSourceMappings({
 _MergedRichProjection _mergeFieldMappings({
   required List<SpellingProseRun> richRuns,
   required List<SpellingProseRun> sourceRuns,
+  List<({int start, int end})> sourceOnlyRegions = const [],
 }) {
   final result = <SpellingProseRun>[];
   var richCursor = 0;
   var complete = true;
-  for (final sourceRun in sourceRuns) {
-    if (_sourceOnlyMetadataRun(sourceRun)) {
+  for (var sourceRun in sourceRuns) {
+    if (_sourceOnlyMetadataRun(sourceRun) ||
+        sourceOnlyRegions.any(
+          (region) => sourceRun.atoms.every(
+            (atom) =>
+                atom.sourceStart >= region.start &&
+                atom.sourceEnd <= region.end,
+          ),
+        )) {
       result.add(sourceRun);
       continue;
     }
-    final richRun = richCursor < richRuns.length ? richRuns[richCursor] : null;
+    var richRun = richCursor < richRuns.length ? richRuns[richCursor] : null;
     if (richRun == null) {
       complete = false;
       result.add(sourceRun);
@@ -319,6 +328,14 @@ _MergedRichProjection _mergeFieldMappings({
     // only an integrity check; a mismatch consumes this pair so it cannot
     // cascade into duplicate/falsely matched runs later in the field.
     richCursor++;
+    if (sourceRun.text != richRun.text &&
+        sourceRun.text.trim() == richRun.text.trim()) {
+      // Boundary HTML breaks can be represented as rich whitespace atoms
+      // but blank lines/indentation in Source. Ignore only that boundary space;
+      // all prose and its source/field intervals must still match exactly.
+      sourceRun = _withoutBoundaryWhitespace(sourceRun);
+      richRun = _withoutBoundaryWhitespace(richRun);
+    }
     if (!_compatibleRuns(sourceRun, richRun)) {
       complete = false;
       result.add(sourceRun);
@@ -355,6 +372,95 @@ _MergedRichProjection _mergeFieldMappings({
   return _MergedRichProjection(
     runs: List.unmodifiable(result),
     allRichRunsMapped: complete,
+  );
+}
+
+// Source-only content (for example protected raw HTML) is still checked, but
+// it has no editable rich field and must not consume the next rich run. Only
+// current parser-provided intervals establish that distinction.
+List<({int start, int end})> _sourceOnlyRegions(List<BusyBlock> blocks) {
+  final result = <({int start, int end})>[];
+  void visit(BusyBlock block) {
+    if (!_eligibleBlockKinds.contains(block.kind) ||
+        block.isSourceProtected ||
+        block.isGenerated ||
+        block.isSourceOnly) {
+      final span = block.sourceSpan;
+      if (span != null) {
+        result.add((start: span.startOffset, end: span.endOffset));
+      }
+      return;
+    }
+    for (final child in block.children) {
+      visit(child);
+    }
+  }
+
+  for (final block in blocks) {
+    visit(block);
+  }
+  return result;
+}
+
+SpellingProseRun _withoutBoundaryWhitespace(SpellingProseRun run) {
+  final text = run.text.trim();
+  if (text == run.text) return run;
+  final start = run.text.length - run.text.trimLeft().length;
+  final end = start + text.length;
+  final atoms = <SpellingSourceAtom>[];
+  for (final atom in run.atoms) {
+    if (atom.logicalEnd <= start) continue;
+    if (atom.logicalStart >= end) break;
+    final keptStart = atom.logicalStart.clamp(start, end);
+    final keptEnd = atom.logicalEnd.clamp(start, end);
+    final source = atom.sourceIntervalFor(keptStart, keptEnd);
+    final field = atom.fieldIntervalFor(keptStart, keptEnd);
+    atoms.add(
+      SpellingSourceAtom(
+        logicalText: atom.logicalText.substring(
+          keptStart - atom.logicalStart,
+          keptEnd - atom.logicalStart,
+        ),
+        logicalStart: keptStart - start,
+        logicalEnd: keptEnd - start,
+        sourceStart: source?.start ?? -1,
+        sourceEnd: source?.end ?? -1,
+        fieldStart: field?.start,
+        fieldEnd: field?.end,
+        richLeafPath: atom.richLeafPath,
+        transformation: atom.transformation,
+        context: atom.context,
+      ),
+    );
+  }
+  return SpellingProseRun(
+    id: run.id,
+    text: text,
+    languageId: run.languageId,
+    atoms: atoms,
+    target: run.target,
+    snapshot: run.snapshot,
+    formattingWrappers: [
+      for (final wrapper in run.formattingWrappers)
+        if (wrapper.logicalStart < end && wrapper.logicalEnd > start)
+          SpellingFormattingWrapper(
+            logicalStart: wrapper.logicalStart.clamp(start, end) - start,
+            logicalEnd: wrapper.logicalEnd.clamp(start, end) - start,
+            openingStart: wrapper.openingStart,
+            openingEnd: wrapper.openingEnd,
+            closingStart: wrapper.closingStart,
+            closingEnd: wrapper.closingEnd,
+            removableWhenLogicallyEmpty: wrapper.removableWhenLogicallyEmpty,
+            fieldOpeningStart: wrapper.fieldOpeningStart,
+            fieldOpeningEnd: wrapper.fieldOpeningEnd,
+            fieldClosingStart: wrapper.fieldClosingStart,
+            fieldClosingEnd: wrapper.fieldClosingEnd,
+            structuralKind: wrapper.structuralKind,
+          ),
+    ],
+    complete: run.complete,
+    tokenizationContext: run.tokenizationContext,
+    tokenizationContextStart: run.tokenizationContextStart + start,
   );
 }
 

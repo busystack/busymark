@@ -4,11 +4,13 @@ import 'package:html/parser.dart' as html;
 
 import '../core/source_span.dart';
 import '../markdown/busymark_document.dart';
+import '../markdown/markdown_fence.dart';
 import '../markdown/markdown_model.dart';
 import '../markdown/markdown_parser.dart';
 import '../markdown/markdown_source_map.dart';
 import '../markdown/markdown_source_structure.dart';
 import 'spelling_projection.dart';
+import 'spelling_text_patterns.dart';
 
 final class MarkdownSpellingProjector {
   const MarkdownSpellingProjector({this.parser = const MarkdownParser()});
@@ -46,6 +48,28 @@ final class MarkdownSpellingProjector {
             block.sourceSpan != null)
           block.sourceSpan!,
     ];
+    final fencedCodeSpans = _fencedCodeSpans(source);
+    final footnoteLabels = <String>{};
+    void collectFootnotes(BusyInline inline) {
+      final destination = inline.destination;
+      if (inline.kind == BusyInlineKind.link &&
+          (inline.attributes['id']?.startsWith('fnref-') ?? false) &&
+          destination != null &&
+          destination.startsWith('#fn-')) {
+        footnoteLabels.add(
+          Uri.decodeComponent(destination.substring(4)).toLowerCase(),
+        );
+      }
+      for (final child in inline.children) {
+        collectFootnotes(child);
+      }
+    }
+
+    for (final block in _walkBlocks(parsed.busyDocument.blocks)) {
+      for (final inline in block.inlines) {
+        collectFootnotes(inline);
+      }
+    }
     final tables = [
       for (final block in _walkBlocks(parsed.busyDocument.blocks))
         if (block.kind == BusyBlockKind.table &&
@@ -72,6 +96,11 @@ final class MarkdownSpellingProjector {
       ], sourceBase: sourceBase);
       final opaqueSyntax = <_SourceInterval>[
         ..._opaqueSyntaxSpans([mapped], sourceBase: sourceBase),
+        for (final span in excludedBlockSpans)
+          if (span.startOffset < sourceLimit && span.endOffset > sourceBase)
+            _SourceInterval(span.startOffset, span.endOffset),
+        for (final span in fencedCodeSpans)
+          if (span.start < sourceLimit && span.end > sourceBase) span,
         if (mode == MarkdownMode.writersideMarkdown)
           for (final variable in parsed.variables)
             if (variable.span.startOffset < sourceLimit &&
@@ -89,6 +118,7 @@ final class MarkdownSpellingProjector {
         end: mappedEnd,
         context: context,
         stripBlockSyntax: stripBlockSyntax,
+        footnoteLabels: footnoteLabels,
         formattingSyntax: formattingSyntax,
         formattingWrappers: _formattingWrappers([
           mapped,
@@ -187,15 +217,57 @@ final class MarkdownSpellingProjector {
     for (final chunk in chunks) {
       if (chunk.sourceOnly ||
           excludedBlockSpans.any((span) => _contains(span, chunk.span)) ||
+          fencedCodeSpans.any(
+            (span) =>
+                span.start <= chunk.span.startOffset &&
+                span.end >= chunk.span.endOffset,
+          ) ||
           _startsExcludedBlock(chunk.rawSource)) {
         continue;
       }
-      final table = tables.where((candidate) {
+      if (chunk.rawSource.trimLeft().startsWith(r'$$')) {
+        final local = parser
+            .parse(
+              filePath: filePath,
+              source: chunk.rawSource,
+              mode: mode,
+              validateLocalReferences: false,
+            )
+            .busyDocument
+            .blocks;
+        if (local.length == 1 && local.single.kind == BusyBlockKind.math) {
+          continue;
+        }
+      }
+      var table = tables.where((candidate) {
         final span = candidate.sourceSpan;
         return span != null && _sameSpan(span, chunk.span);
       }).firstOrNull;
+      if (table == null &&
+          tables.any((candidate) => candidate.sourceSpan == null) &&
+          chunk.rawSource.contains('|')) {
+        // A document-wide AST/scanner mismatch can omit spans from otherwise
+        // ordinary tables. Reparse the already-positioned slice to establish
+        // its structure; never match a table to source by its cell text.
+        final local = parser
+            .parse(
+              filePath: filePath,
+              source: chunk.rawSource,
+              mode: mode,
+              validateLocalReferences: false,
+            )
+            .busyDocument
+            .blocks;
+        if (local.length == 1 && local.single.kind == BusyBlockKind.table) {
+          table = local.single.copyWith(sourceSpan: chunk.span);
+        }
+      }
       if (table != null) {
-        if (!consumedTables.add(table.id)) continue;
+        if (!consumedTables.add(
+          '${chunk.span.startOffset}:${chunk.span.endOffset}',
+        )) {
+          continue;
+        }
         final regions = busyMarkMarkdownTableCellRegions(
           source: source,
           table: table,
@@ -240,12 +312,44 @@ bool _sameSpan(SourceSpan left, SourceSpan right) =>
     left.startOffset == right.startOffset && left.endOffset == right.endOffset;
 
 bool _startsExcludedBlock(String raw) {
-  final trimmed = raw.trimLeft();
+  final trimmed = raw.trimLeft().replaceFirst(RegExp(r'^(?:>[ \t]*)+'), '');
   return RegExp(r'^(?:```|~~~)').hasMatch(trimmed) ||
       RegExp(
         r'^(?:<!--|<\?xml\b|<!DOCTYPE\b)',
         caseSensitive: false,
       ).hasMatch(trimmed);
+}
+
+List<_SourceInterval> _fencedCodeSpans(String source) {
+  final spans = <_SourceInterval>[];
+  MarkdownFence? openFence;
+  var fenceStart = 0;
+  var offset = 0;
+  for (final rawLine in source.split(RegExp('(?<=\n)'))) {
+    var line = rawLine;
+    if (line.endsWith('\n')) line = line.substring(0, line.length - 1);
+    if (line.endsWith('\r')) line = line.substring(0, line.length - 1);
+    var candidate = line;
+    while (true) {
+      final quote = RegExp(r'^ {0,3}>[ \t]?').firstMatch(candidate);
+      if (quote == null) break;
+      candidate = candidate.substring(quote.end);
+    }
+    final activeFence = openFence;
+    if (activeFence == null) {
+      final opening = MarkdownFence.parse(candidate);
+      if (opening != null) {
+        openFence = opening;
+        fenceStart = offset;
+      }
+    } else if (activeFence.closes(candidate)) {
+      spans.add(_SourceInterval(fenceStart, offset + rawLine.length));
+      openFence = null;
+    }
+    offset += rawLine.length;
+  }
+  if (openFence != null) spans.add(_SourceInterval(fenceStart, source.length));
+  return List.unmodifiable(spans);
 }
 
 final class _EmissionGroup {
@@ -287,6 +391,7 @@ final class _MarkdownProseScanner {
     this.formattingSyntax = const [],
     this.formattingWrappers = const [],
     this.opaqueSyntax = const [],
+    this.footnoteLabels = const {},
   });
 
   final String source;
@@ -294,6 +399,7 @@ final class _MarkdownProseScanner {
   final int end;
   final SpellingSourceContext context;
   final bool stripBlockSyntax;
+  final Set<String> footnoteLabels;
   final List<_SourceInterval> formattingSyntax;
   final List<_RawFormattingWrapper> formattingWrappers;
   final List<_SourceInterval> opaqueSyntax;
@@ -311,7 +417,13 @@ final class _MarkdownProseScanner {
       final line = lines[lineIndex];
       var contentStart = line.start;
       var contentEnd = line.contentEnd;
-      if (stripBlockSyntax) {
+      // Positioned leaves already start after their first block prefix. Do
+      // not reinterpret heading text such as "2. Paragraphs" as a list item.
+      // Continuation lines still carry their authored container prefixes.
+      if (stripBlockSyntax &&
+          (lineIndex > 0 ||
+              start == 0 ||
+              source.codeUnitAt(start - 1) == 0x0a)) {
         final rawLine = source.substring(contentStart, contentEnd);
         if (_isSetextOrThematic(rawLine)) {
           _barrier();
@@ -319,11 +431,13 @@ final class _MarkdownProseScanner {
         }
         final prefix = _blockPrefix.firstMatch(rawLine);
         contentStart += prefix?.end ?? 0;
+        var isAtxHeading = false;
         if (source.startsWith('#', contentStart)) {
           final heading = RegExp(
             r'^#{1,6}[ \t]+',
           ).firstMatch(source.substring(contentStart, contentEnd));
           contentStart += heading?.end ?? 0;
+          isAtxHeading = heading != null;
         }
         while (contentEnd > contentStart &&
             _horizontalWhitespace(source.codeUnitAt(contentEnd - 1))) {
@@ -332,7 +446,7 @@ final class _MarkdownProseScanner {
         final closingHeading = RegExp(
           r'[ \t]+#+$',
         ).firstMatch(source.substring(contentStart, contentEnd));
-        if (closingHeading != null) {
+        if (isAtxHeading && closingHeading != null) {
           contentEnd = contentStart + closingHeading.start;
         }
         final attributes = RegExp(
@@ -398,16 +512,19 @@ final class _MarkdownProseScanner {
         if (close < 0 || close >= end) complete = false;
         continue;
       }
-      final plainUrl = _plainUrl.matchAsPrefix(source, cursor);
-      if (plainUrl != null && plainUrl.end <= rangeEnd) {
-        _barrier();
-        cursor = plainUrl.end;
-        continue;
+      var address = spellingPlainAddress.matchAsPrefix(source, cursor);
+      // A link label's boundary can fall inside a greedy URL match (the next
+      // character is its closing bracket). Recheck only that bounded label.
+      var addressEnd = address?.end;
+      if (address != null && address.end > rangeEnd) {
+        address = spellingPlainAddress.matchAsPrefix(
+          source.substring(cursor, rangeEnd),
+        );
+        addressEnd = address == null ? null : cursor + address.end;
       }
-      final plainEmail = _plainEmail.matchAsPrefix(source, cursor);
-      if (plainEmail != null && plainEmail.end <= rangeEnd) {
+      if (address != null) {
         _barrier();
-        cursor = plainEmail.end;
+        cursor = addressEnd!;
         continue;
       }
       final unit = source.codeUnitAt(cursor);
@@ -522,9 +639,7 @@ final class _MarkdownProseScanner {
   bool _isHtmlTagCandidate(int start) {
     if (start + 1 >= end) return false;
     final tail = source.substring(start, math.min(end, start + 128));
-    return RegExp(
-          r'^<\s*/?\s*[A-Za-z][A-Za-z0-9:-]*(?:\s|/?>|$)',
-        ).hasMatch(tail) ||
+    return RegExp(r'^</?[A-Za-z][A-Za-z0-9:-]*(?:\s|/?>|$)').hasMatch(tail) ||
         RegExp(r'^<(?:!|\?)').hasMatch(tail);
   }
 
@@ -555,6 +670,13 @@ final class _MarkdownProseScanner {
     final labelEnd = _matchingBracket(opening, rangeEnd, 0x5b, 0x5d);
     if (labelEnd == null) return null;
     final afterLabel = labelEnd + 1;
+    final label = source.substring(opening + 1, labelEnd);
+    if (!image &&
+        label.startsWith('^') &&
+        footnoteLabels.contains(label.substring(1).toLowerCase())) {
+      _barrier();
+      return afterLabel;
+    }
     var syntaxEnd = afterLabel;
     int? titleStart;
     int? titleEnd;
@@ -813,7 +935,7 @@ List<_MultilineHtmlSpan> _multilineHtmlSpans(
     final opening = source.indexOf('<', cursor);
     if (opening < 0 || opening >= end) break;
     final candidate = RegExp(
-      r'^<\s*/?\s*[A-Za-z][A-Za-z0-9:-]*(?:\s|/?>|$)',
+      r'^</?[A-Za-z][A-Za-z0-9:-]*(?:\s|/?>|$)',
     ).hasMatch(source.substring(opening, math.min(end, opening + 128)));
     if (!candidate) {
       cursor = opening + 1;
@@ -1117,13 +1239,6 @@ final RegExp _entity = RegExp(
 );
 final RegExp _autolink = RegExp(r'^<[A-Za-z][A-Za-z0-9+.-]*:[^ <>]*>$');
 final RegExp _emailAutolink = RegExp(r'^<[^ <>@]+@[^ <>@]+>$');
-final RegExp _plainUrl = RegExp(
-  r'''(?:https?|ftp)://[^\s<>()]+|www\.[^\s<>()]+''',
-  caseSensitive: false,
-);
-final RegExp _plainEmail = RegExp(
-  r'''[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}''',
-);
 final RegExp _humanAttribute = RegExp(
   r'''\b([A-Za-z_:][-A-Za-z0-9_:.]*)\s*=\s*(["'])(.*?)\2''',
   dotAll: true,

@@ -17,6 +17,7 @@ import 'package:busymark/src/local_history/local_history_store.dart';
 import 'package:busymark/src/local_history/local_history_controller.dart';
 import 'package:busymark/src/platform/linux_header_bar_service.dart';
 import 'package:busymark/src/platform/native_menu_service.dart';
+import 'package:busymark/src/platform/rich_clipboard_service.dart';
 import 'package:busymark/src/spellcheck/spelling_dictionary_downloader.dart';
 import 'package:busymark/src/spellcheck/spelling_coordinator.dart';
 import 'package:busymark/src/spellcheck/spelling_language.dart';
@@ -595,6 +596,114 @@ void main() {
     },
   );
 
+  testWidgets('general Markdown fixture finishes automatic rich spelling', (
+    tester,
+  ) async {
+    final source = File('test/fixtures/markdown/basic.md').readAsStringSync();
+    final harness = await _pumpWorkspace(tester, source: source);
+    await _until(
+      tester,
+      () => [
+        SpellingPresentationStatus.ready,
+        SpellingPresentationStatus.incomplete,
+        SpellingPresentationStatus.failure,
+      ].contains(harness.spelling.state.status),
+    );
+    expect(
+      harness.spelling.state.status,
+      SpellingPresentationStatus.ready,
+      reason: harness.spelling.state.message,
+    );
+    expect(harness.spelling.state.complete, isTrue);
+    expect(find.text(l10n.spellingCheckIncomplete), findsNothing);
+    expect(find.text(l10n.spellingCheckFailed), findsNothing);
+    expect(harness.spelling.annotations, isNotEmpty);
+  });
+
+  for (final mode in [
+    DocumentViewModePreference.editor,
+    DocumentViewModePreference.source,
+  ]) {
+    testWidgets(
+      'pasted formatted job finishes automatic spelling in ${mode.name}',
+      (tester) async {
+        final html = File(
+          'test/fixtures/spelling/pasted_job.html',
+        ).readAsStringSync();
+        const channel = MethodChannel(richClipboardChannelName);
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+            .setMockMethodCallHandler(
+              channel,
+              (call) async => call.method == 'read'
+                  ? {'html': html, 'text': 'Plain fallback'}
+                  : null,
+            );
+        addTearDown(
+          () => TestDefaultBinaryMessengerBinding
+              .instance
+              .defaultBinaryMessenger
+              .setMockMethodCallHandler(channel, null),
+        );
+        final harness = await _pumpWorkspace(
+          tester,
+          source: 'Target\n',
+          viewMode: mode,
+        );
+        await tester.tap(find.byType(EditableText).first);
+        for (final key in [LogicalKeyboardKey.keyA, LogicalKeyboardKey.keyV]) {
+          await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+          await tester.sendKeyEvent(key);
+          await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+          await tester.pump();
+        }
+        await _until(
+          tester,
+          () => harness.workspace.activeText.contains('Final helo'),
+        );
+        final source = harness.workspace.activeText;
+        await _until(
+          tester,
+          () =>
+              harness.spelling.misspellings.any((o) => o.word == 'helo') ||
+              [
+                SpellingPresentationStatus.incomplete,
+                SpellingPresentationStatus.failure,
+              ].contains(harness.spelling.state.status),
+        );
+        expect(
+          harness.spelling.state.status,
+          SpellingPresentationStatus.ready,
+          reason: harness.spelling.state.message,
+        );
+        expect(harness.spelling.state.complete, isTrue);
+        expect(find.text(l10n.spellingCheckIncomplete), findsNothing);
+        expect(find.text(l10n.spellingCheckFailed), findsNothing);
+        final occurrence = harness.spelling.misspellings.singleWhere(
+          (o) => o.word == 'helo',
+        );
+        expect(occurrence.sourceStart, source.indexOf('helo'));
+        expect(harness.spelling.annotations, isNotEmpty);
+        if (mode == DocumentViewModePreference.editor) {
+          final target = occurrence.run.target as SpellingRichBlockTarget;
+          final block = tester
+              .widgetList<BusyMarkWysiwygBlockField>(
+                find.byType(BusyMarkWysiwygBlockField),
+              )
+              .singleWhere((field) => field.block.id == target.blockId);
+          expect(
+            block.spellingRanges,
+            contains(
+              TextRange(
+                start: occurrence.fieldStart!,
+                end: occurrence.fieldEnd!,
+              ),
+            ),
+          );
+        }
+      },
+    );
+  }
+
   testWidgets('new rich document checks spelling after choosing its language', (
     tester,
   ) async {
@@ -867,6 +976,7 @@ void main() {
           harness.spelling.state.status == SpellingPresentationStatus.disabled,
     );
     expect(harness.spelling.catalog, isNull);
+    expect(find.text(l10n.spellingOffStatus), findsOneWidget);
 
     await tester.tap(
       find.byKey(const ValueKey('document-spelling-language-status')),

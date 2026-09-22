@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_document_controller.dart';
+import 'package:busymark/src/editor/wysiwyg/wysiwyg_clipboard_html.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_inline_controller.dart';
 import 'package:busymark/src/markdown/busymark_document.dart';
 import 'package:busymark/src/markdown/markdown_model.dart';
@@ -32,6 +35,216 @@ SpellingOccurrence _rejected(SpellingProseRun run, String word) {
 }
 
 void main() {
+  test(
+    'different live prose still reports incomplete instead of guessed mapping',
+    () {
+      final parsed = const MarkdownParser()
+          .parse(
+            filePath: '/changed.md',
+            source: 'Original words\n',
+            mode: MarkdownMode.gfm,
+          )
+          .busyDocument;
+      final changed = parsed.copyWith(
+        blocks: [
+          parsed.blocks.single.copyWith(
+            inlines: const [
+              BusyInline(kind: BusyInlineKind.text, text: 'Different words'),
+            ],
+          ),
+        ],
+      );
+      final projection = const WysiwygSpellingProjector().project(
+        document: changed,
+        languageId: 'en-CA',
+        snapshot: _snapshot,
+        documentGeneration: 1,
+      );
+      expect(projection.complete, isFalse);
+    },
+  );
+
+  test(
+    'general Markdown fixture has complete Source and rich spelling mappings',
+    () {
+      final source = File('test/fixtures/markdown/basic.md').readAsStringSync();
+      final document = const MarkdownParser()
+          .parse(filePath: '/basic.md', source: source, mode: MarkdownMode.gfm)
+          .busyDocument;
+      final sourceProjection = const MarkdownSpellingProjector().project(
+        filePath: '/basic.md',
+        source: source,
+        mode: MarkdownMode.gfm,
+        languageId: 'en-CA',
+        snapshot: _snapshot,
+      );
+      final rich = const WysiwygSpellingProjector().project(
+        document: document,
+        languageId: 'en-CA',
+        snapshot: _snapshot,
+        documentGeneration: 1,
+      );
+      for (final projection in [sourceProjection, rich]) {
+        expect(projection.complete, isTrue, reason: projection.message);
+        final texts = projection.runs.map((run) => run.text);
+        expect(texts, contains('2. Paragraphs'));
+        expect(texts, contains('Less than: <'));
+        expect(texts, contains('Greater than: >'));
+        expect(texts.any((text) => text.contains(r'\frac')), isFalse);
+        expect(texts.any((text) => text.contains('^markdown')), isFalse);
+        expect(texts, contains('28. Document Conclusion'));
+      }
+      expect(
+        rich.runs.firstWhere((run) => run.text == 'Raw HTML block ').target,
+        isA<SpellingSourceTarget>(),
+        reason: 'Protected HTML still gets checked in Source.',
+      );
+      expect(
+        rich.runs
+            .singleWhere((run) => run.text == '28. Document Conclusion')
+            .target,
+        isA<SpellingRichBlockTarget>(),
+      );
+    },
+  );
+
+  test('live HTML paste preserves prose and maps spelling before a reload', () {
+    final html = File(
+      'test/fixtures/spelling/pasted_job.html',
+    ).readAsStringSync();
+    final fragment = const WysiwygClipboardHtml().decode(
+      html,
+      mode: MarkdownMode.gfm,
+    )!;
+    final target = const MarkdownParser()
+        .parse(
+          filePath: '/pasted.md',
+          source: 'Target\n',
+          mode: MarkdownMode.gfm,
+        )
+        .busyDocument;
+    final editor = BusyMarkWysiwygDocumentController(document: target);
+    addTearDown(editor.dispose);
+    editor.insertStyledBlocksAtSelection(
+      blockId: target.blocks.first.id,
+      selectionStart: 0,
+      selectionEnd: 6,
+      blocks: fragment.blocks,
+    );
+    final source = editor.markdown;
+    final live = editor.document.copyWith(source: source);
+    final reloaded = const MarkdownParser()
+        .parse(filePath: '/pasted.md', source: source, mode: MarkdownMode.gfm)
+        .busyDocument;
+    List<String> prose(BusyDocument document) => [
+      for (final block in document.blocks)
+        if (block.plainText.trim().isNotEmpty)
+          block.plainText.trim().replaceAll(RegExp(r'\s+'), ' '),
+    ];
+    expect(
+      prose(reloaded),
+      prose(live),
+      reason: 'Formatting must not reload as literal Markdown markers.',
+    );
+    final projection = const WysiwygSpellingProjector().project(
+      document: live,
+      languageId: 'en-CA',
+      snapshot: _snapshot,
+      documentGeneration: 1,
+    );
+    expect(projection.complete, isTrue, reason: projection.message);
+    final team = projection.runs.singleWhere(
+      (run) => run.text.contains('Team responsibilities'),
+    );
+    final occurrence = _rejected(team, 'responsibilities');
+    final block = live.blocks.singleWhere(
+      (block) => block.id == (team.target as SpellingRichBlockTarget).blockId,
+    );
+    expect(occurrence.fieldStart, block.plainText.indexOf('responsibilities'));
+    final plan = const SpellingReplacementPlanner().build(
+      occurrence: occurrence,
+      suggestion: 'duties',
+    );
+    expect(
+      plan.applyToSource(source),
+      source.replaceFirst('responsibilities', 'duties'),
+    );
+  });
+
+  test('pasted job maps tables, trailing HTML breaks and address barriers', () {
+    final source = File(
+      'test/fixtures/spelling/pasted_job.md',
+    ).readAsStringSync();
+    final document = const MarkdownParser()
+        .parse(filePath: '/pasted.md', source: source, mode: MarkdownMode.gfm)
+        .busyDocument;
+    final sourceProjection = const MarkdownSpellingProjector().project(
+      filePath: '/pasted.md',
+      source: source,
+      mode: MarkdownMode.gfm,
+      languageId: 'en-CA',
+      snapshot: _snapshot,
+    );
+    final rich = const WysiwygSpellingProjector().project(
+      document: document,
+      languageId: 'en-CA',
+      snapshot: _snapshot,
+      documentGeneration: 3,
+    );
+    expect(sourceProjection.complete, isTrue, reason: sourceProjection.message);
+    expect(rich.complete, isTrue, reason: rich.message);
+    for (final projection in [sourceProjection, rich]) {
+      expect(projection.runs.every((run) => run.hasValidMapping), isTrue);
+      final reference = projection.runs.singleWhere(
+        (run) => run.text == 'Reference #',
+      );
+      expect(
+        reference.atoms.first.context,
+        SpellingSourceContext.markdownTableCell,
+      );
+      expect(
+        projection.runs.any((run) => run.text.contains('example.test')),
+        isFalse,
+      );
+      final finalRun = projection.runs.singleWhere(
+        (run) => run.text.contains('helo'),
+      );
+      final plan = const SpellingReplacementPlanner().build(
+        occurrence: _rejected(finalRun, 'helo'),
+        suggestion: 'hello',
+      );
+      expect(plan.applyToSource(source), source.replaceFirst('helo', 'hello'));
+    }
+    final reference = rich.runs.singleWhere((run) => run.text == 'Reference #');
+    expect(reference.target, isA<SpellingRichTableCellTarget>());
+    final finalRun = rich.runs.singleWhere((run) => run.text.contains('helo'));
+    expect(finalRun.target, isA<SpellingRichBlockTarget>());
+    final target = finalRun.target as SpellingRichBlockTarget;
+    expect(target.blockId, document.blocks.last.id);
+    expect(target.documentGeneration, 3);
+    final occurrence = _rejected(finalRun, 'helo');
+    expect(
+      occurrence.fieldStart,
+      document.blocks.last.plainText.indexOf('helo'),
+    );
+    expect(
+      occurrence.fieldEnd,
+      document.blocks.last.plainText.indexOf('helo') + 4,
+    );
+  });
+
+  test('closing hashes are heading syntax only in an ATX heading', () {
+    final projection = const MarkdownSpellingProjector().project(
+      filePath: '/hash.md',
+      source: 'Reference #\n\n## Heading #\n',
+      mode: MarkdownMode.gfm,
+      languageId: 'en-US',
+      snapshot: _snapshot,
+    );
+    expect(projection.complete, isTrue);
+    expect(projection.runs.map((run) => run.text), ['Reference #', 'Heading']);
+  });
+
   group('Markdown spelling projection', () {
     test('maps repeated and formatted prose without searching globally', () {
       const source = 'mispelled\n\n**mispel**led and `hiddenbad` tail\n';
@@ -175,6 +388,27 @@ Beforee %hiddenvariable% afterrr.
       expect(all, isNot(contains('continuedcode')));
       expect(all, isNot(contains('hiddenvariable')));
       expect(all, isNot(contains('hidden.png')));
+    });
+
+    test('excludes a fenced code block nested in a block quote', () {
+      const source = '''> ```java
+> record Document(String title, String content) {}
+> ```
+
+Visiblee prose.
+''';
+      final result = const MarkdownSpellingProjector().project(
+        filePath: '/tmp/quoted-code.md',
+        source: source,
+        mode: MarkdownMode.commonMark,
+        languageId: 'en-CA',
+        snapshot: _snapshot,
+      );
+      final all = result.runs.map((run) => run.text).join('\n');
+
+      expect(result.complete, isTrue, reason: result.message);
+      expect(all, contains('Visiblee prose.'));
+      expect(all, isNot(contains('record Document')));
     });
 
     test('keeps unmatched delimiters and removes only parsed formatting', () {

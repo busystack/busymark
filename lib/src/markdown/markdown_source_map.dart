@@ -1007,6 +1007,7 @@ class _MappedBlockInlineProjection {
     required this.source,
     required this.rawOffsets,
     required this.logicalLineStarts,
+    required this.rawLineStarts,
     required this.sourceLines,
     required this.firstSourceLine,
   });
@@ -1067,6 +1068,7 @@ class _MappedBlockInlineProjection {
       source: source,
       rawOffsets: rawOffsets,
       logicalLineStarts: logicalLineStarts,
+      rawLineStarts: positions,
       sourceLines: sourceLines,
       firstSourceLine: firstSourceLine,
     );
@@ -1155,6 +1157,7 @@ class _MappedBlockInlineProjection {
       source: source,
       rawOffsets: rawOffsets,
       logicalLineStarts: logicalLineStarts,
+      rawLineStarts: positions,
       sourceLines: sourceLines,
       firstSourceLine: firstSourceLine,
     );
@@ -1163,6 +1166,7 @@ class _MappedBlockInlineProjection {
   final String source;
   final List<int> rawOffsets;
   final List<int> logicalLineStarts;
+  final List<int> rawLineStarts;
   final List<_MappedSourceLine> sourceLines;
   final int firstSourceLine;
   int get rawStart => rawOffsets.first;
@@ -1189,8 +1193,7 @@ class _MappedBlockInlineProjection {
     for (var line = 0; line + 1 < logicalLineStarts.length; line++) {
       final newlineOffset = logicalLineStarts[line + 1] - 1;
       final sourceLine = sourceLines[firstSourceLine + line];
-      final nextLogicalOffset = newlineOffset + 1;
-      final nextRawOffset = rawOffsets[nextLogicalOffset];
+      final nextRawOffset = rawLineStarts[line + 1];
       result[newlineOffset] = BusyMarkMappedSourceLineBreak(
         textOffset: newlineOffset,
         lineEnding: source.substring(sourceLine.contentEnd, sourceLine.end),

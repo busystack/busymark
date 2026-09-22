@@ -14,7 +14,9 @@ import '../core/diagnostic.dart';
 import '../editor/source/source_editor.dart';
 import '../editor/source/source_search.dart';
 import '../editor/source_language.dart';
+import '../editor/wysiwyg/wysiwyg_block_widgets.dart';
 import '../editor/wysiwyg/wysiwyg_editor.dart';
+import '../markdown/busymark_document.dart';
 import '../markdown/markdown_model.dart';
 import '../markdown/markdown_parser.dart';
 import '../workspace/workspace_controller.dart';
@@ -164,37 +166,46 @@ Future<int> runSpellingReleaseSmoke(String reportPath) async {
         name: 'release-language-transition.md',
         text: 'helo',
       );
-      SpellingSessionInput input(DocumentBuffer buffer) => SpellingSessionInput(
+      final richDocument = const MarkdownParser()
+          .parse(
+            filePath: unresolved.id,
+            source: unresolved.text,
+            mode: MarkdownMode.commonMark,
+            validateLocalReferences: false,
+          )
+          .busyDocument;
+      SpellingSessionInput input(
+        DocumentBuffer buffer, {
+        BusyDocument? document,
+      }) => SpellingSessionInput(
         buffer: buffer,
         workspace: null,
         settings: settings,
         documentKind: DocumentKind.markdown,
         markdownMode: MarkdownMode.commonMark,
+        richDocument: document,
       );
       session.update(input(unresolved));
       await _waitForSpellingState(
         session,
         (state) => state.status == SpellingPresentationStatus.languageRequired,
       );
-      session.update(
-        input(
-          unresolved.copyWith(
-            editorState: unresolved.editorState.copyWith(
-              spellingLanguage: const SpellingLanguageOverride.selected(
-                'en-US',
-              ),
-            ),
-          ),
+      final selected = unresolved.copyWith(
+        editorState: unresolved.editorState.copyWith(
+          spellingLanguage: const SpellingLanguageOverride.selected('en-US'),
         ),
       );
+      session.update(input(selected, document: richDocument));
       await _waitForSpellingState(session, (state) {
         return state.status != SpellingPresentationStatus.languageRequired &&
             state.status != SpellingPresentationStatus.checking;
       });
+      final richOccurrence = session.misspellings.singleOrNull;
+      final richAnnotation = session.annotations.singleOrNull;
       if (session.state.status != SpellingPresentationStatus.ready ||
           !session.state.complete ||
-          session.misspellings.singleOrNull?.word != 'helo' ||
-          session.annotations.isEmpty) {
+          richOccurrence?.word != 'helo' ||
+          richAnnotation == null) {
         throw StateError(
           'Installed dictionary session transition failed: '
           '${session.state.status}, complete=${session.state.complete}, '
@@ -204,6 +215,117 @@ Future<int> runSpellingReleaseSmoke(String reportPath) async {
         );
       }
       checks['sessionLanguageTransition'] = true;
+
+      final richTarget = richAnnotation.target;
+      if (richTarget is! SpellingRichBlockTarget) {
+        throw StateError(
+          'The real rich session produced ${richTarget.runtimeType}.',
+        );
+      }
+      final richKey = GlobalKey<BusyMarkWysiwygEditorState>();
+      await _mountSmokeEditor(
+        BusyMarkWysiwygEditor(
+          key: richKey,
+          document: richDocument,
+          documentId: selected.id,
+          contentRevision: selected.revision,
+          spellingAnnotations: [richAnnotation],
+          onDocumentChanged: (_) {},
+          onSourceChanged: (_, _) {},
+        ),
+      );
+      final mountedRichBlock = _mountedWidgets<BusyMarkWysiwygBlockField>()
+          .singleWhere((field) => field.block.id == richTarget.blockId);
+      if (richTarget.documentGeneration !=
+              richKey.currentState?.spellingDocumentGeneration ||
+          mountedRichBlock.spellingRanges.length != 1 ||
+          mountedRichBlock.spellingRanges.single !=
+              const TextRange(start: 0, end: 4) ||
+          !_hasMountedSpellingPainter('_SpellingUnderlinePainter')) {
+        throw StateError(
+          'The real rich annotation did not mount its underline: '
+          'target=${richTarget.blockId}/${richTarget.documentGeneration}, '
+          'mounted=${mountedRichBlock.block.id}/'
+          '${richKey.currentState?.spellingDocumentGeneration}, '
+          'ranges=${mountedRichBlock.spellingRanges}.',
+        );
+      }
+      checks['realRichUnderline'] = true;
+      await _unmountSmokeEditor();
+
+      session.update(input(selected));
+      await _waitForSpellingState(session, (state) {
+        return state.status == SpellingPresentationStatus.ready &&
+            session.annotations.singleOrNull?.target is SpellingSourceTarget;
+      });
+      final sourceOccurrence = session.misspellings.singleOrNull;
+      final sourceAnnotation = session.annotations.singleOrNull;
+      if (session.state.status != SpellingPresentationStatus.ready ||
+          !session.state.complete ||
+          sourceOccurrence?.word != 'helo' ||
+          sourceAnnotation == null ||
+          sourceAnnotation.target is! SpellingSourceTarget ||
+          sourceAnnotation.start != 0 ||
+          sourceAnnotation.end != 4) {
+        throw StateError(
+          'The real Source session did not publish the expected annotation.',
+        );
+      }
+      await _mountSmokeEditor(
+        BusyMarkSourceEditor(
+          text: selected.text,
+          language: SourceSyntaxLanguage.markdown,
+          filePath: null,
+          documentId: selected.id,
+          diagnostics: const <Diagnostic>[],
+          editorFontSize: 14,
+          wordWrap: true,
+          searchActive: false,
+          searchOptions: const SourceSearchOptions(),
+          onSearchOptionsChanged: (_) {},
+          onChanged: (_, _) {},
+          onOpenSearch: () {},
+          onCloseSearch: () {},
+          editRevision: selected.revision,
+          spellingAnnotations: [sourceAnnotation],
+        ),
+      );
+      if (!_hasMountedSpellingPainter('_SourceSpellingPainter')) {
+        throw StateError(
+          'The real Source annotation did not mount its underline overlay.',
+        );
+      }
+      checks['realSourceUnderline'] = true;
+      await _unmountSmokeEditor();
+
+      final quotedFence = selected.copyWith(
+        text: '''> ```java
+> zzzzquotedcode
+> ```
+
+helo
+''',
+        revision: selected.revision + 1,
+      );
+      session.update(input(quotedFence));
+      await _waitForSpellingState(session, (state) {
+        return state.status == SpellingPresentationStatus.ready &&
+            state.complete &&
+            session.misspellings.any(
+              (occurrence) =>
+                  occurrence.run.snapshot.contentRevision ==
+                  quotedFence.revision,
+            );
+      });
+      final quotedWords = session.misspellings
+          .map((occurrence) => occurrence.word)
+          .toList(growable: false);
+      if (quotedWords.length != 1 || quotedWords.single != 'helo') {
+        throw StateError(
+          'Quoted fenced code leaked into real spelling prose: $quotedWords.',
+        );
+      }
+      checks['quotedFencedCodeExcluded'] = true;
     } finally {
       session.dispose();
     }
@@ -547,6 +669,26 @@ Future<void> _mountSmokeEditor(Widget editor) async {
 Future<void> _unmountSmokeEditor() async {
   runApp(const SizedBox.shrink());
   await _settleSmokeFrames();
+}
+
+List<T> _mountedWidgets<T extends Widget>() {
+  final widgets = <T>[];
+  void visit(Element element) {
+    final widget = element.widget;
+    if (widget is T) widgets.add(widget);
+    element.visitChildElements(visit);
+  }
+
+  WidgetsBinding.instance.rootElement?.visitChildElements(visit);
+  return widgets;
+}
+
+bool _hasMountedSpellingPainter(String typeName) {
+  return _mountedWidgets<CustomPaint>().any(
+    (paint) =>
+        paint.painter?.runtimeType.toString() == typeName ||
+        paint.foregroundPainter?.runtimeType.toString() == typeName,
+  );
 }
 
 Future<void> _settleSmokeFrames() async {

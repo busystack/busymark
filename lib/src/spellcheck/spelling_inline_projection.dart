@@ -1,5 +1,6 @@
 import '../markdown/busymark_document.dart';
 import 'spelling_projection.dart';
+import 'spelling_text_patterns.dart';
 
 final class SpellingInlineProjection {
   const SpellingInlineProjection({
@@ -103,6 +104,13 @@ List<SpellingInlineProjection> projectSpellingInlineRuns({
   }
 
   void visit(BusyInline inline, List<int> path) {
+    if (inline.kind == BusyInlineKind.link &&
+        (inline.attributes['id']?.startsWith('fnref-') ?? false) &&
+        (inline.destination?.startsWith('#fn-') ?? false)) {
+      barrier();
+      fieldOffset += inline.plainText.length;
+      return;
+    }
     switch (inline.kind) {
       case BusyInlineKind.math:
       case BusyInlineKind.code:
@@ -134,7 +142,26 @@ List<SpellingInlineProjection> projectSpellingInlineRuns({
       case BusyInlineKind.strikethrough:
       case BusyInlineKind.link:
         if (inline.children.isEmpty) {
-          emitLeaf(inline, path);
+          var cursor = 0;
+          for (final address in spellingPlainAddress.allMatches(inline.text)) {
+            if (address.start > cursor) {
+              emitLeaf(
+                inline.copyWith(
+                  text: inline.text.substring(cursor, address.start),
+                ),
+                path,
+              );
+            }
+            barrier();
+            fieldOffset += address.end - address.start;
+            cursor = address.end;
+          }
+          if (cursor < inline.text.length) {
+            emitLeaf(
+              inline.copyWith(text: inline.text.substring(cursor)),
+              path,
+            );
+          }
           return;
         }
         for (final (index, child) in inline.children.indexed) {

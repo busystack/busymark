@@ -334,6 +334,25 @@ void main() {
     );
   });
 
+  test('positioned block mapping accepts a trailing empty logical line', () {
+    const source = '''> ```java
+> record Document(String title, String content) {}
+> ```
+''';
+    final context = const MarkdownSourceMapper().createInlineParserContext(
+      documentSource: source,
+      mode: MarkdownMode.commonMark,
+    );
+
+    final mapped = context.parsePositionedBlocks(source);
+
+    expect(mapped, isNotEmpty);
+    expect(
+      mapped.expand((parse) => parse.inlines).map((inline) => inline.plainText),
+      anyElement(contains('record Document')),
+    );
+  });
+
   test('block inline mapping ignores title and code-span source breaks', () {
     const marker = '\ue000';
     const titleSource =

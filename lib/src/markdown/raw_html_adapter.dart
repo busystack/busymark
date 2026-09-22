@@ -818,9 +818,6 @@ class RawHtmlAdapter {
         node.data,
         ignoredPositionMarkers: mapping?.positionMarkers ?? const [],
       );
-      if (text.trim().isEmpty) {
-        return const [];
-      }
       return [BusyInline(kind: BusyInlineKind.text, text: text)];
     }
     if (node is html.Element) {
@@ -835,12 +832,14 @@ class RawHtmlAdapter {
   }) {
     final tag = element.localName?.toLowerCase() ?? '';
     final attributes = sanitizeHtmlAttributes(tag, element.attributes) ?? {};
-    final children = _trimInlineEdges(
-      _inlinesFromNodes(element.nodes, mapping: mapping),
-      ranges: mapping?.ranges,
-      ignoredPositionMarkers: mapping?.positionMarkers ?? const [],
-    );
+    // Whitespace inside an inline wrapper separates it from adjacent content.
+    // Only the containing block/fragment may trim its outer edges.
+    final children = _inlinesFromNodes(element.nodes, mapping: mapping);
     final text = _plainText(children);
+    if (text.trim().isEmpty &&
+        const {'strong', 'b', 'em', 'i', 'u', 's', 'del'}.contains(tag)) {
+      return children;
+    }
     final List<BusyInline> result = switch (tag) {
       'strong' || 'b' => [
         BusyInline(kind: BusyInlineKind.strong, text: text, children: children),
