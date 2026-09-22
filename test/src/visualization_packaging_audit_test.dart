@@ -161,8 +161,8 @@ void main() {
 
     expect(
       workflow,
-      contains("      - 'Release/**'"),
-      reason: 'Direct release-branch pushes must run the Linux workflow.',
+      isNot(contains("      - 'Release/**'")),
+      reason: 'Linux CI is intentionally limited to main-branch changes.',
     );
     expect(workflow, contains('libwebkit2gtk-4.1-dev'));
     expect(workflow, contains('apparmor-profiles'));
