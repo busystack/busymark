@@ -139,8 +139,8 @@ jobs:
             build/linux/x64/release/bundle/busymark \
             --spelling-release-smoke="$report"
           python3 -c 'import json,sys; report=json.load(open(sys.argv[1], encoding="utf-8")); assert report["ok"], report; assert report["checks"]["bundledDictionaryFileCount"] == 0, report; assert report["checks"]["dictionaryInstalledDuringRun"], report; assert report["checks"]["installedDictionaryCount"] == 1, report' "$report"
-          sudo unshare --net --fork \
-            --setgid "$(id -g)" --setuid "$(id -u)" -- \
+          sudo unshare --net --fork -- \
+            runuser -u "$(id -un)" -- \
             xvfb-run -a -s '-screen 0 1280x1024x24' \
             env GDK_BACKEND=x11 BUSYMARK_RELEASE_SMOKE=1 \
             XDG_DATA_HOME="$profile" LIBGL_ALWAYS_SOFTWARE=1 \
@@ -198,8 +198,8 @@ jobs:
           test -S "$runtime_dir/wayland-99"
           spelling_report="${RUNNER_TEMP}/spelling-release-wayland.json"
           spelling_profile="${RUNNER_TEMP}/spelling-profile"
-          sudo unshare --net --fork \
-            --setgid "$(id -g)" --setuid "$(id -u)" -- \
+          sudo unshare --net --fork -- \
+            runuser -u "$(id -un)" -- \
             env XDG_RUNTIME_DIR="$runtime_dir" WAYLAND_DISPLAY=wayland-99 \
             XDG_DATA_HOME="$spelling_profile" GDK_BACKEND=wayland \
             BUSYMARK_RELEASE_SMOKE=1 LIBGL_ALWAYS_SOFTWARE=1 \
