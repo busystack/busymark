@@ -3527,6 +3527,162 @@ class _BusyMarkActionRowState extends State<BusyMarkActionRow> {
   }
 }
 
+/// A Yaru switch with Libadwaita-style state colors and no external halo.
+class BusyMarkSwitch extends StatefulWidget {
+  const BusyMarkSwitch({
+    super.key,
+    required this.value,
+    required this.onChanged,
+    this.focusNode,
+    this.autofocus = false,
+    this.mouseCursor,
+    this.onOffShapes,
+    this.hasFocusBorder,
+  });
+
+  final bool value;
+  final ValueChanged<bool>? onChanged;
+  final FocusNode? focusNode;
+  final bool autofocus;
+  final MouseCursor? mouseCursor;
+  final bool? onOffShapes;
+  final bool? hasFocusBorder;
+
+  @override
+  State<BusyMarkSwitch> createState() => _BusyMarkSwitchState();
+}
+
+class _BusyMarkSwitchState extends State<BusyMarkSwitch> {
+  bool _hovered = false;
+  int? _pressedPointer;
+
+  bool get _pressed => _pressedPointer != null;
+
+  @override
+  void didUpdateWidget(BusyMarkSwitch oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.onChanged == null) {
+      _pressedPointer = null;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = BusyMarkSurfaceColors.of(context);
+    final inheritedSwitchTheme = YaruSwitchTheme.of(context);
+    final checkedTrackColor = _busyMarkCheckedSwitchColor(
+      theme.colorScheme.primary,
+      theme.colorScheme.onPrimary,
+      hovered: _hovered,
+      pressed: _pressed,
+    );
+    final uncheckedTrackColor = _busyMarkUncheckedSwitchColor(
+      colors.foreground,
+      highContrast: theme.colorScheme.isHighContrast,
+      hovered: _hovered,
+      pressed: _pressed,
+    );
+    final uncheckedThumbColor = _hovered || _pressed
+        ? Colors.white
+        : Color.lerp(colors.view, Colors.white, 0.80)!;
+
+    return MouseRegion(
+      onEnter: (_) => _setHovered(true),
+      onExit: (_) => _setHovered(false),
+      child: Listener(
+        onPointerDown: widget.onChanged == null ? null : _handlePointerDown,
+        onPointerUp: widget.onChanged == null ? null : _handlePointerUp,
+        onPointerCancel: widget.onChanged == null ? null : _handlePointerCancel,
+        child: YaruSwitchTheme(
+          data: inheritedSwitchTheme.copyWith(
+            color: WidgetStateProperty.resolveWith((states) {
+              if (states.contains(WidgetState.disabled)) {
+                return inheritedSwitchTheme.color?.resolve(states);
+              }
+              return states.contains(WidgetState.selected)
+                  ? checkedTrackColor
+                  : uncheckedTrackColor;
+            }),
+            thumbColor: WidgetStateProperty.resolveWith((states) {
+              if (states.contains(WidgetState.disabled)) {
+                return inheritedSwitchTheme.thumbColor?.resolve(states);
+              }
+              return states.contains(WidgetState.selected)
+                  ? Colors.white
+                  : uncheckedThumbColor;
+            }),
+            indicatorColor: const WidgetStatePropertyAll<Color?>(
+              Colors.transparent,
+            ),
+          ),
+          child: YaruSwitch(
+            value: widget.value,
+            onChanged: widget.onChanged,
+            focusNode: widget.focusNode,
+            autofocus: widget.autofocus,
+            mouseCursor: widget.mouseCursor,
+            onOffShapes: widget.onOffShapes,
+            hasFocusBorder: widget.hasFocusBorder,
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _setHovered(bool hovered) {
+    if (_hovered != hovered) {
+      setState(() => _hovered = hovered);
+    }
+  }
+
+  void _handlePointerDown(PointerDownEvent event) {
+    if (_pressedPointer != null || event.buttons != kPrimaryButton) {
+      return;
+    }
+    setState(() => _pressedPointer = event.pointer);
+  }
+
+  void _handlePointerUp(PointerUpEvent event) {
+    if (_pressedPointer == event.pointer) {
+      setState(() => _pressedPointer = null);
+    }
+  }
+
+  void _handlePointerCancel(PointerCancelEvent event) {
+    if (_pressedPointer == event.pointer) {
+      setState(() => _pressedPointer = null);
+    }
+  }
+}
+
+Color _busyMarkCheckedSwitchColor(
+  Color accent,
+  Color accentForeground, {
+  required bool hovered,
+  required bool pressed,
+}) {
+  if (pressed) {
+    return Color.alphaBlend(const Color.fromRGBO(0, 0, 6, 0.20), accent);
+  }
+  if (hovered) {
+    return Color.alphaBlend(accentForeground.withValues(alpha: 0.10), accent);
+  }
+  return accent;
+}
+
+Color _busyMarkUncheckedSwitchColor(
+  Color foreground, {
+  required bool highContrast,
+  required bool hovered,
+  required bool pressed,
+}) {
+  final opacity = highContrast
+      ? (pressed ? 0.50 : (hovered ? 0.40 : 0.30))
+      : (pressed ? 0.25 : (hovered ? 0.20 : 0.15));
+  return foreground.withValues(alpha: opacity);
+}
+
 class BusyMarkSwitchRow extends StatelessWidget {
   const BusyMarkSwitchRow({
     super.key,
@@ -3547,9 +3703,14 @@ class BusyMarkSwitchRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final switchControl = BusyMarkSwitch(
+      value: value,
+      onChanged: enabled ? onChanged : null,
+    );
     return YaruSwitchListTile(
       value: value,
       onChanged: enabled ? onChanged : null,
+      control: switchControl,
       secondary: leading,
       title: Text(title),
       subtitle: subtitle == null

@@ -1,6 +1,6 @@
 # BusyMark Markdown Demo
 
-A comprehensive Markdown document demonstrating common Markdown syntax, GitHub-style extensions, mathematical notation, diagrams, and technical documentation blocks.
+A comprehensive Markdown document demonstrating common Markdown syntax, GitHub-style extensions, mathematical notation, diagrams, and technical documentation blocks. center centre
 
 ---
 

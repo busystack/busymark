@@ -20,6 +20,329 @@ import 'package:yaru/yaru.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
+  testWidgets('switch suppresses state halos and preserves focus borders', (
+    tester,
+  ) async {
+    final focusNode = FocusNode();
+    addTearDown(focusNode.dispose);
+    final theme = buildBusyMarkTheme(
+      brightness: Brightness.light,
+      accentColor: const Color(0xFF3584E4),
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: theme,
+        home: YaruTheme(
+          data: const YaruThemeData(focusBorders: true),
+          child: Theme(
+            data: theme,
+            child: Scaffold(
+              body: BusyMarkSwitch(
+                value: true,
+                onChanged: (_) {},
+                autofocus: true,
+                focusNode: focusNode,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final switchFinder = find.byType(BusyMarkSwitch);
+    final localTheme = _busyMarkSwitchTheme(tester, switchFinder);
+    expect(
+      localTheme.indicatorColor?.resolve({WidgetState.hovered}),
+      Colors.transparent,
+    );
+    expect(
+      localTheme.indicatorColor?.resolve({WidgetState.focused}),
+      Colors.transparent,
+    );
+    expect(focusNode.hasFocus, isTrue);
+    expect(
+      find.descendant(of: switchFinder, matching: find.byType(YaruFocusBorder)),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('checked switch follows native track interaction states', (
+    tester,
+  ) async {
+    const accent = Color(0xFF3584E4);
+    final theme = buildBusyMarkTheme(
+      brightness: Brightness.light,
+      accentColor: accent,
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: theme,
+        home: Scaffold(
+          body: Center(
+            child: BusyMarkSwitch(
+              key: const ValueKey('switch'),
+              value: true,
+              onChanged: (_) {},
+            ),
+          ),
+        ),
+      ),
+    );
+
+    final switchFinder = find.byKey(const ValueKey('switch'));
+    Color selectedTrack() => _busyMarkSwitchTheme(
+      tester,
+      switchFinder,
+    ).color!.resolve({WidgetState.selected})!;
+
+    expect(selectedTrack(), accent);
+
+    final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+    addTearDown(mouse.removePointer);
+    await mouse.addPointer(location: Offset.zero);
+    await mouse.moveTo(tester.getCenter(switchFinder));
+    await tester.pump();
+
+    final hoverColor = Color.alphaBlend(
+      theme.colorScheme.onPrimary.withValues(alpha: 0.10),
+      theme.colorScheme.primary,
+    );
+    expect(selectedTrack(), hoverColor);
+    expect(selectedTrack(), isNot(accent));
+
+    await mouse.down(tester.getCenter(switchFinder));
+    await tester.pump();
+    expect(
+      selectedTrack(),
+      Color.alphaBlend(
+        const Color.fromRGBO(0, 0, 6, 0.20),
+        theme.colorScheme.primary,
+      ),
+    );
+
+    await mouse.up();
+    await tester.pump();
+    expect(selectedTrack(), hoverColor);
+
+    await mouse.moveTo(Offset.zero);
+    await tester.pump();
+    expect(selectedTrack(), accent);
+  });
+
+  for (final highContrast in [false, true]) {
+    testWidgets(
+      'unchecked switch uses native ${highContrast ? 'high-contrast' : 'normal'} '
+      'track and thumb states',
+      (tester) async {
+        final theme = buildBusyMarkTheme(
+          brightness: Brightness.light,
+          accentColor: highContrast ? Colors.black : const Color(0xFF3584E4),
+        );
+        final colors = theme.extension<BusyMarkSurfaceColors>()!;
+
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: theme,
+            home: Scaffold(
+              body: Center(
+                child: BusyMarkSwitch(
+                  key: const ValueKey('switch'),
+                  value: false,
+                  onChanged: (_) {},
+                ),
+              ),
+            ),
+          ),
+        );
+
+        final switchFinder = find.byKey(const ValueKey('switch'));
+        Color uncheckedTrack() =>
+            _busyMarkSwitchTheme(tester, switchFinder).color!.resolve({})!;
+        Color uncheckedThumb() =>
+            _busyMarkSwitchTheme(tester, switchFinder).thumbColor!.resolve({})!;
+        Color checkedThumb() => _busyMarkSwitchTheme(
+          tester,
+          switchFinder,
+        ).thumbColor!.resolve({WidgetState.selected})!;
+
+        expect(
+          uncheckedTrack(),
+          colors.foreground.withValues(alpha: highContrast ? 0.30 : 0.15),
+        );
+        expect(uncheckedThumb(), Color.lerp(colors.view, Colors.white, 0.80));
+        expect(checkedThumb(), Colors.white);
+
+        final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+        addTearDown(mouse.removePointer);
+        await mouse.addPointer(location: Offset.zero);
+        await mouse.moveTo(tester.getCenter(switchFinder));
+        await tester.pump();
+
+        expect(
+          uncheckedTrack(),
+          colors.foreground.withValues(alpha: highContrast ? 0.40 : 0.20),
+        );
+        expect(uncheckedThumb(), Colors.white);
+        expect(checkedThumb(), Colors.white);
+
+        await mouse.down(tester.getCenter(switchFinder));
+        await tester.pump();
+        expect(
+          uncheckedTrack(),
+          colors.foreground.withValues(alpha: highContrast ? 0.50 : 0.25),
+        );
+        expect(uncheckedThumb(), Colors.white);
+
+        await mouse.up();
+        await tester.pump();
+        expect(
+          uncheckedTrack(),
+          colors.foreground.withValues(alpha: highContrast ? 0.40 : 0.20),
+        );
+
+        await mouse.moveTo(Offset.zero);
+        await tester.pump();
+        expect(
+          uncheckedTrack(),
+          colors.foreground.withValues(alpha: highContrast ? 0.30 : 0.15),
+        );
+      },
+    );
+  }
+
+  testWidgets('disabled switch preserves inherited disabled styling', (
+    tester,
+  ) async {
+    const disabledTrack = Color(0xFF595959);
+    const disabledThumb = Color(0xFF9A9A9A);
+    final inheritedTheme = YaruSwitchThemeData(
+      color: WidgetStateProperty.resolveWith(
+        (states) =>
+            states.contains(WidgetState.disabled) ? disabledTrack : null,
+      ),
+      thumbColor: WidgetStateProperty.resolveWith(
+        (states) =>
+            states.contains(WidgetState.disabled) ? disabledThumb : null,
+      ),
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildBusyMarkTheme(
+          brightness: Brightness.dark,
+          accentColor: const Color(0xFFB34CB4),
+        ),
+        home: YaruSwitchTheme(
+          data: inheritedTheme,
+          child: const Scaffold(
+            body: Center(
+              child: BusyMarkSwitch(
+                key: ValueKey('switch'),
+                value: true,
+                onChanged: null,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    final switchFinder = find.byKey(const ValueKey('switch'));
+    Color? disabledSelectedTrack() => _busyMarkSwitchTheme(
+      tester,
+      switchFinder,
+    ).color!.resolve({WidgetState.disabled, WidgetState.selected});
+    Color? disabledSelectedThumb() => _busyMarkSwitchTheme(
+      tester,
+      switchFinder,
+    ).thumbColor!.resolve({WidgetState.disabled, WidgetState.selected});
+
+    expect(disabledSelectedTrack(), disabledTrack);
+    expect(disabledSelectedThumb(), disabledThumb);
+
+    final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+    addTearDown(mouse.removePointer);
+    await mouse.addPointer(location: Offset.zero);
+    await mouse.moveTo(tester.getCenter(switchFinder));
+    await tester.pump();
+
+    expect(disabledSelectedTrack(), disabledTrack);
+    expect(disabledSelectedThumb(), disabledThumb);
+    expect(
+      tester.getSemantics(find.byType(YaruSwitch)).flagsCollection.isEnabled,
+      ui.Tristate.isFalse,
+    );
+  });
+
+  testWidgets('switch row owns its control and activates exactly once', (
+    tester,
+  ) async {
+    final changes = <bool>[];
+
+    Widget buildRow() => MaterialApp(
+      home: Scaffold(
+        body: BusyMarkSwitchRow(
+          title: 'Automatic save',
+          value: false,
+          onChanged: changes.add,
+        ),
+      ),
+    );
+
+    await tester.pumpWidget(buildRow());
+
+    final row = find.byType(BusyMarkSwitchRow);
+    expect(
+      find.descendant(of: row, matching: find.byType(YaruSwitchListTile)),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: row, matching: find.byType(BusyMarkSwitch)),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: row, matching: find.byType(YaruSwitch)),
+      findsOneWidget,
+    );
+    expect(
+      tester
+          .widget<YaruSwitchListTile>(find.byType(YaruSwitchListTile))
+          .control,
+      isA<BusyMarkSwitch>(),
+    );
+
+    await tester.tap(find.byType(YaruSwitch));
+    await tester.pump();
+    expect(changes, [true]);
+
+    changes.clear();
+    await tester.pumpWidget(buildRow());
+    await tester.tap(find.text('Automatic save'));
+    await tester.pump();
+    expect(changes, [true]);
+  });
+
+  testWidgets('switch preserves Yaru drag activation', (tester) async {
+    final changes = <bool>[];
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Center(
+            child: BusyMarkSwitch(value: false, onChanged: changes.add),
+          ),
+        ),
+      ),
+    );
+
+    await tester.drag(find.byType(YaruSwitch), const Offset(40, 0));
+    await tester.pump();
+
+    expect(changes, [true]);
+  });
+
   testWidgets('radio suppresses state halos and preserves focus borders', (
     tester,
   ) async {
@@ -2461,4 +2784,18 @@ class _CapturedPixels {
   final Uint8List bytes;
   final int width;
   final RenderRepaintBoundary boundary;
+}
+
+YaruSwitchThemeData _busyMarkSwitchTheme(
+  WidgetTester tester,
+  Finder switchFinder,
+) {
+  return tester
+      .widget<YaruSwitchTheme>(
+        find.descendant(
+          of: switchFinder,
+          matching: find.byType(YaruSwitchTheme),
+        ),
+      )
+      .data;
 }

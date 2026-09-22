@@ -986,10 +986,26 @@ void main() {
     expect(find.text(l10n.autoSave), findsOneWidget);
     expect(find.text(l10n.autoSaveDescription), findsOneWidget);
     expect(find.text(l10n.wordWrapDescription), findsOneWidget);
+    final autoSaveRow = find.byWidgetPredicate(
+      (widget) => widget is BusyMarkSwitchRow && widget.title == l10n.autoSave,
+    );
+    expect(autoSaveRow, findsOneWidget);
+    expect(
+      tester.widget<BusyMarkSwitchRow>(autoSaveRow).value,
+      AppSettings.defaults().autoSave,
+    );
+
+    await tester.tap(
+      find.descendant(of: autoSaveRow, matching: find.byType(BusyMarkSwitch)),
+    );
+    await tester.pumpAndSettle();
+    expect(settingsStore.value['autoSave'], isFalse);
+    expect(tester.widget<BusyMarkSwitchRow>(autoSaveRow).value, isFalse);
+
     await tester.tap(find.text(l10n.autoSave));
     await tester.pumpAndSettle();
-
-    expect(settingsStore.value['autoSave'], isFalse);
+    expect(settingsStore.value['autoSave'], isTrue);
+    expect(tester.widget<BusyMarkSwitchRow>(autoSaveRow).value, isTrue);
 
     await tester.ensureVisible(dictionariesNavigation);
     await tester.tap(dictionariesNavigation);

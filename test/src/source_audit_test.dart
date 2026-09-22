@@ -292,7 +292,7 @@ void main() {
     expect(helper, isNot(contains('colors.foreground.withValues')));
     expect(design, isNot(contains('class _BusyMarkHoverBackground')));
     final actionRow = RegExp(
-      r'class BusyMarkActionRow[\s\S]*?class BusyMarkSwitchRow',
+      r'class BusyMarkActionRow[\s\S]*?class BusyMarkSwitch extends',
     ).firstMatch(design)!.group(0)!;
     expect(actionRow, contains('final row = YaruListTile.square('));
     expect(actionRow, isNot(contains('MouseRegion(')));
@@ -306,6 +306,8 @@ void main() {
       r'class BusyMarkSwitchRow[\s\S]*?class BusyMarkRadioButton',
     ).firstMatch(design)!.group(0)!;
     expect(switchRow, contains('return YaruSwitchListTile('));
+    expect(switchRow, contains('final switchControl = BusyMarkSwitch('));
+    expect(switchRow, contains('control: switchControl'));
     expect(switchRow, isNot(contains('MouseRegion(')));
     expect(switchRow, contains('hoverColor: busyMarkRowHoverColor(context)'));
     expect(switchRow, contains('shape: const RoundedRectangleBorder()'));
