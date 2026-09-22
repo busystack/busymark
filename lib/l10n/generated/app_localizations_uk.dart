@@ -1032,6 +1032,15 @@ class AppLocalizationsUk extends AppLocalizations {
   String get settingsDictionariesSectionTitle => 'Словники';
 
   @override
+  String get availableSpellingDictionaries => 'Доступні словники';
+
+  @override
+  String get customSpellingDictionaries => 'Власні словники';
+
+  @override
+  String get spellingDictionaryProblems => 'Проблеми зі словниками';
+
+  @override
   String get settingsWindowSectionTitle => 'Вікно';
 
   @override

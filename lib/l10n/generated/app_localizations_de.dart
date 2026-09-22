@@ -1039,6 +1039,15 @@ class AppLocalizationsDe extends AppLocalizations {
   String get settingsDictionariesSectionTitle => 'Wörterbücher';
 
   @override
+  String get availableSpellingDictionaries => 'Verfügbare Wörterbücher';
+
+  @override
+  String get customSpellingDictionaries => 'Benutzerdefinierte Wörterbücher';
+
+  @override
+  String get spellingDictionaryProblems => 'Wörterbuchprobleme';
+
+  @override
   String get settingsWindowSectionTitle => 'Fenster';
 
   @override

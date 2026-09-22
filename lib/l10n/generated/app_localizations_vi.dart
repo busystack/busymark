@@ -1018,6 +1018,15 @@ class AppLocalizationsVi extends AppLocalizations {
   String get settingsDictionariesSectionTitle => 'Từ điển';
 
   @override
+  String get availableSpellingDictionaries => 'Từ điển có sẵn';
+
+  @override
+  String get customSpellingDictionaries => 'Từ điển tùy chỉnh';
+
+  @override
+  String get spellingDictionaryProblems => 'Sự cố từ điển';
+
+  @override
   String get settingsWindowSectionTitle => 'Cửa sổ';
 
   @override

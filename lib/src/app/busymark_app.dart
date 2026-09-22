@@ -536,6 +536,9 @@ class BusyMarkApp extends ConsumerWidget {
     WidgetRef ref,
     GoRouter router,
   ) async {
+    final startsWorkspace =
+        settingsReturnTargetForUri(router.routeInformationProvider.value.uri) ==
+        SettingsReturnTarget.welcome;
     final headerBar = ref.read(linuxHeaderBarServiceProvider);
     final choice = await showBusyMarkModalDialog<_NewChooserChoice>(
       context,
@@ -579,9 +582,15 @@ class BusyMarkApp extends ConsumerWidget {
     }
     switch (choice) {
       case _CreateMarkdownFile():
-        await ref
-            .read(workspaceControllerProvider.notifier)
-            .createMarkdownFile();
+        final controller = ref.read(workspaceControllerProvider.notifier);
+        if (startsWorkspace) {
+          if (!await confirmSafeToContinue(context, ref) || !context.mounted) {
+            return;
+          }
+          if (!await controller.createMarkdownWorkspace()) return;
+        } else {
+          await controller.createMarkdownFile();
+        }
         if (context.mounted) {
           router.go('/workspace');
         }

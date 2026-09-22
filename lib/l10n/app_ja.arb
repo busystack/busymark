@@ -1040,6 +1040,9 @@
   "spellingDictionaries": "スペルチェック辞書",
   "spellingDictionariesDescription": "スペルチェック辞書をインストールして管理",
   "settingsDictionariesSectionTitle": "辞書",
+  "availableSpellingDictionaries": "利用可能な辞書",
+  "customSpellingDictionaries": "カスタム辞書",
+  "spellingDictionaryProblems": "辞書の問題",
   "settingsWindowSectionTitle": "ウィンドウ",
   "@settingsWindowSectionTitle": {
     "description": "Settings section title for native window behavior."

@@ -978,6 +978,15 @@ class AppLocalizationsKo extends AppLocalizations {
   String get settingsDictionariesSectionTitle => '사전';
 
   @override
+  String get availableSpellingDictionaries => '사용 가능한 사전';
+
+  @override
+  String get customSpellingDictionaries => '사용자 지정 사전';
+
+  @override
+  String get spellingDictionaryProblems => '사전 문제';
+
+  @override
   String get settingsWindowSectionTitle => '창';
 
   @override

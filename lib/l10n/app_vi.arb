@@ -1040,6 +1040,9 @@
   "spellingDictionaries": "Từ điển chính tả",
   "spellingDictionariesDescription": "Cài đặt và quản lý từ điển chính tả",
   "settingsDictionariesSectionTitle": "Từ điển",
+  "availableSpellingDictionaries": "Từ điển có sẵn",
+  "customSpellingDictionaries": "Từ điển tùy chỉnh",
+  "spellingDictionaryProblems": "Sự cố từ điển",
   "settingsWindowSectionTitle": "Cửa sổ",
   "@settingsWindowSectionTitle": {
     "description": "Settings section title for native window behavior."

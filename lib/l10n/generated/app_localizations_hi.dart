@@ -1016,6 +1016,15 @@ class AppLocalizationsHi extends AppLocalizations {
   String get settingsDictionariesSectionTitle => 'शब्दकोश';
 
   @override
+  String get availableSpellingDictionaries => 'उपलब्ध शब्दकोश';
+
+  @override
+  String get customSpellingDictionaries => 'कस्टम शब्दकोश';
+
+  @override
+  String get spellingDictionaryProblems => 'शब्दकोश समस्याएँ';
+
+  @override
   String get settingsWindowSectionTitle => 'विंडो';
 
   @override

@@ -910,6 +910,9 @@
   "spellingDictionaries": "Stavekontrollordbøker",
   "spellingDictionariesDescription": "Installer og administrer stavekontrollordbøker",
   "settingsDictionariesSectionTitle": "Ordbøker",
+  "availableSpellingDictionaries": "Tilgjengelige ordbøker",
+  "customSpellingDictionaries": "Egendefinerte ordbøker",
+  "spellingDictionaryProblems": "Ordbokproblemer",
   "settingsWindowSectionTitle": "Vindu",
   "@settingsWindowSectionTitle": {
     "description": "Settings section title for native window behavior."

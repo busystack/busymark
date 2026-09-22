@@ -2011,6 +2011,24 @@ abstract class AppLocalizations {
   /// **'Dictionaries'**
   String get settingsDictionariesSectionTitle;
 
+  /// Settings group title for downloadable spelling dictionaries.
+  ///
+  /// In en, this message translates to:
+  /// **'Available Dictionaries'**
+  String get availableSpellingDictionaries;
+
+  /// Settings group title for imported spelling dictionaries.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom Dictionaries'**
+  String get customSpellingDictionaries;
+
+  /// Settings group title for invalid imported spelling dictionaries.
+  ///
+  /// In en, this message translates to:
+  /// **'Dictionary Problems'**
+  String get spellingDictionaryProblems;
+
   /// Settings section title for native window behavior.
   ///
   /// In en, this message translates to:

@@ -70,6 +70,10 @@ void main() {
   test('settings page routes are explicit and validated', () {
     expect(settingsPageFromRouteValue(null), SettingsPage.appearance);
     expect(settingsPageFromRouteValue('editor'), SettingsPage.editor);
+    expect(
+      settingsPageFromRouteValue('spellingDictionaries'),
+      SettingsPage.spellingDictionaries,
+    );
     expect(settingsPageFromRouteValue('validation'), SettingsPage.validation);
     expect(settingsPageFromRouteValue('ai'), SettingsPage.ai);
     expect(settingsPageFromRouteValue('window'), SettingsPage.window);

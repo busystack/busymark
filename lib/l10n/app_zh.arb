@@ -1040,6 +1040,9 @@
   "spellingDictionaries": "拼写词典",
   "spellingDictionariesDescription": "安装和管理拼写词典",
   "settingsDictionariesSectionTitle": "词典",
+  "availableSpellingDictionaries": "可用词典",
+  "customSpellingDictionaries": "自定义词典",
+  "spellingDictionaryProblems": "词典问题",
   "settingsWindowSectionTitle": "窗口",
   "@settingsWindowSectionTitle": {
     "description": "Settings section title for native window behavior."

@@ -1158,6 +1158,39 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         _sameFileSnapshot(state.activeBuffer?.diskSnapshot, target.snapshot);
   }
 
+  /// Starts a document from Welcome, replacing the previous workspace only
+  /// after its buffers have been resolved and their history has been flushed.
+  Future<bool> createMarkdownWorkspace() async {
+    final previous = state;
+    final previousOperation = _activeDocumentRevision;
+    if (previous.hasUnsavedChanges || previous.isLoading) return false;
+    final historySettled = await _localHistory.flushAll(
+      previous.documentBuffers,
+    );
+    if (!ref.mounted) return false;
+    final liveBuffers = state.documentBuffers;
+    if (_activeDocumentRevision != previousOperation ||
+        !identical(state.workspace, previous.workspace) ||
+        liveBuffers.length != previous.documentBuffers.length ||
+        liveBuffers.indexed.any(
+          (entry) => !identical(entry.$2, previous.documentBuffers[entry.$1]),
+        )) {
+      return false;
+    }
+    _cancelPendingDerivedRefresh();
+    _cancelAllAutoSaves();
+    _invalidateActiveDocumentOperations();
+    state = const WorkspaceState();
+    for (final buffer in previous.documentBuffers) {
+      _localHistory.handleBufferClosed(
+        buffer.id,
+        historySettled: historySettled,
+      );
+    }
+    await createMarkdownFile();
+    return true;
+  }
+
   Future<void> createMarkdownFile() async {
     _cancelPendingDerivedRefresh();
     final operationRevision = _invalidateActiveDocumentOperations();

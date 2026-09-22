@@ -1027,6 +1027,15 @@ class AppLocalizationsRu extends AppLocalizations {
   String get settingsDictionariesSectionTitle => 'Словари';
 
   @override
+  String get availableSpellingDictionaries => 'Доступные словари';
+
+  @override
+  String get customSpellingDictionaries => 'Пользовательские словари';
+
+  @override
+  String get spellingDictionaryProblems => 'Проблемы со словарями';
+
+  @override
   String get settingsWindowSectionTitle => 'Окно';
 
   @override

@@ -910,6 +910,9 @@
   "spellingDictionaries": "Dicionários ortográficos",
   "spellingDictionariesDescription": "Instalar e gerenciar dicionários ortográficos",
   "settingsDictionariesSectionTitle": "Dicionários",
+  "availableSpellingDictionaries": "Dicionários disponíveis",
+  "customSpellingDictionaries": "Dicionários personalizados",
+  "spellingDictionaryProblems": "Problemas de dicionários",
   "settingsWindowSectionTitle": "Janela",
   "@settingsWindowSectionTitle": {
     "description": "Settings section title for native window behavior."

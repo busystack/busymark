@@ -1040,6 +1040,9 @@
   "spellingDictionaries": "Kamus ejaan",
   "spellingDictionariesDescription": "Instal dan kelola kamus ejaan",
   "settingsDictionariesSectionTitle": "Kamus",
+  "availableSpellingDictionaries": "Kamus yang tersedia",
+  "customSpellingDictionaries": "Kamus kustom",
+  "spellingDictionaryProblems": "Masalah kamus",
   "settingsWindowSectionTitle": "Jendela",
   "@settingsWindowSectionTitle": {
     "description": "Settings section title for native window behavior."

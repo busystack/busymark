@@ -1032,7 +1032,12 @@ class WorkspaceScreen extends ConsumerWidget {
                     ),
               body: Column(
                 children: [
-                  if (state.message != null)
+                  // The recovered document already has a review banner with
+                  // actions. Keep other messages, including recovery damage.
+                  if (state.message != null &&
+                      !(state.message!.code ==
+                              WorkspaceMessageCode.recoveryRestored &&
+                          state.activeBuffer?.recovered == true))
                     BusyMarkStatusBox(
                       message: localizeWorkspaceMessage(
                         context,
@@ -12849,7 +12854,8 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     AppSettings settings,
   ) {
     final override = buffer.editorState.spellingLanguage;
-    if (override.kind == SpellingLanguageOverrideKind.disabled) {
+    if (!settings.automaticSpelling ||
+        override.kind == SpellingLanguageOverrideKind.disabled) {
       return context.l10n.spellingOffStatus;
     }
     final languageId = resolveSpellingLanguageId(

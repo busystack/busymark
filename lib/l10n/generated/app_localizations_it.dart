@@ -1033,6 +1033,15 @@ class AppLocalizationsIt extends AppLocalizations {
   String get settingsDictionariesSectionTitle => 'Dizionari';
 
   @override
+  String get availableSpellingDictionaries => 'Dizionari disponibili';
+
+  @override
+  String get customSpellingDictionaries => 'Dizionari personalizzati';
+
+  @override
+  String get spellingDictionaryProblems => 'Problemi dei dizionari';
+
+  @override
   String get settingsWindowSectionTitle => 'Finestra';
 
   @override

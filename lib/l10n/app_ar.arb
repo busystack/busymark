@@ -910,6 +910,9 @@
   "spellingDictionaries": "قواميس التدقيق الإملائي",
   "spellingDictionariesDescription": "تثبيت قواميس التدقيق الإملائي وإدارتها",
   "settingsDictionariesSectionTitle": "القواميس",
+  "availableSpellingDictionaries": "القواميس المتاحة",
+  "customSpellingDictionaries": "القواميس المخصصة",
+  "spellingDictionaryProblems": "مشكلات القواميس",
   "settingsWindowSectionTitle": "النافذة",
   "@settingsWindowSectionTitle": {
     "description": "Settings section title for native window behavior."

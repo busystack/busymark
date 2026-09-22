@@ -1022,6 +1022,15 @@ class AppLocalizationsId extends AppLocalizations {
   String get settingsDictionariesSectionTitle => 'Kamus';
 
   @override
+  String get availableSpellingDictionaries => 'Kamus yang tersedia';
+
+  @override
+  String get customSpellingDictionaries => 'Kamus kustom';
+
+  @override
+  String get spellingDictionaryProblems => 'Masalah kamus';
+
+  @override
   String get settingsWindowSectionTitle => 'Jendela';
 
   @override

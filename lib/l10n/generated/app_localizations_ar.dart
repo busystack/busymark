@@ -1009,6 +1009,15 @@ class AppLocalizationsAr extends AppLocalizations {
   String get settingsDictionariesSectionTitle => 'القواميس';
 
   @override
+  String get availableSpellingDictionaries => 'القواميس المتاحة';
+
+  @override
+  String get customSpellingDictionaries => 'القواميس المخصصة';
+
+  @override
+  String get spellingDictionaryProblems => 'مشكلات القواميس';
+
+  @override
   String get settingsWindowSectionTitle => 'النافذة';
 
   @override

@@ -1015,6 +1015,15 @@ class AppLocalizationsFa extends AppLocalizations {
   String get settingsDictionariesSectionTitle => 'واژه‌نامه‌ها';
 
   @override
+  String get availableSpellingDictionaries => 'واژه‌نامه‌های موجود';
+
+  @override
+  String get customSpellingDictionaries => 'واژه‌نامه‌های سفارشی';
+
+  @override
+  String get spellingDictionaryProblems => 'مشکلات واژه‌نامه';
+
+  @override
   String get settingsWindowSectionTitle => 'پنجره';
 
   @override

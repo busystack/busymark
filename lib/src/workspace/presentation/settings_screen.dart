@@ -192,6 +192,38 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             title: l10n.settingsDictionariesSectionTitle,
             filled: true,
             children: [
+              BusyMarkActionRow(
+                key: const ValueKey('settings-spelling-dictionaries'),
+                title: l10n.spellingDictionaries,
+                subtitle: l10n.spellingDictionariesDescription,
+                leading: const Icon(BusyMarkGlyphs.symbols),
+                trailing: Icon(
+                  BusyMarkGlyphs.forwardFor(Directionality.of(context)),
+                ),
+                onTap: () => _selectPage(SettingsPage.spellingDictionaries),
+              ),
+              _SpellingWordStoreRow(
+                title: l10n.personalSpellingDictionary,
+                snapshot: spelling.personalWords,
+                onRemove: spelling.removePersonalWord,
+              ),
+              _SpellingWordStoreRow(
+                title: l10n.projectSpellingDictionary,
+                snapshot: spelling.projectWords,
+                enabled: spelling.hasProjectScope,
+                onRemove: spelling.removeProjectWord,
+              ),
+            ],
+          ),
+        ],
+      ),
+      SettingsPage.spellingDictionaries => Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          BusyMarkGroupedList(
+            title: l10n.availableSpellingDictionaries,
+            filled: true,
+            children: [
               for (final resource in spellingResources)
                 _SpellingDictionaryResourceRow(
                   resource: resource,
@@ -216,6 +248,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   onRetry: () =>
                       unawaited(_retrySpellingDictionary(context, spelling)),
                 ),
+            ],
+          ),
+          BusyMarkGroupedList(
+            title: l10n.customSpellingDictionaries,
+            filled: true,
+            children: [
               BusyMarkActionRow(
                 key: const ValueKey('import-spelling-dictionary'),
                 title: l10n.importSpellingDictionary,
@@ -241,37 +279,33 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     ),
                   ),
                 ),
-              for (final entry in invalidImportedDictionaries)
-                BusyMarkActionRow(
-                  title: entry.id ?? entry.resourceId ?? entry.directoryPath,
-                  subtitle: entry.error,
-                  leading: const Icon(BusyMarkGlyphs.warning),
-                  trailing: BusyMarkCompactIconButton(
-                    tooltip: l10n.removeAction,
-                    icon: BusyMarkGlyphs.delete,
-                    foregroundColor: Theme.of(context).colorScheme.error,
-                    onPressed: () => unawaited(
-                      _removeInvalidSpellingDictionary(
-                        context,
-                        spelling,
-                        entry,
+            ],
+          ),
+          if (invalidImportedDictionaries.isNotEmpty)
+            BusyMarkGroupedList(
+              title: l10n.spellingDictionaryProblems,
+              filled: true,
+              children: [
+                for (final entry in invalidImportedDictionaries)
+                  BusyMarkActionRow(
+                    title: entry.id ?? entry.resourceId ?? entry.directoryPath,
+                    subtitle: entry.error,
+                    leading: const Icon(BusyMarkGlyphs.warning),
+                    trailing: BusyMarkCompactIconButton(
+                      tooltip: l10n.removeAction,
+                      icon: BusyMarkGlyphs.delete,
+                      foregroundColor: Theme.of(context).colorScheme.error,
+                      onPressed: () => unawaited(
+                        _removeInvalidSpellingDictionary(
+                          context,
+                          spelling,
+                          entry,
+                        ),
                       ),
                     ),
                   ),
-                ),
-              _SpellingWordStoreRow(
-                title: l10n.personalSpellingDictionary,
-                snapshot: spelling.personalWords,
-                onRemove: spelling.removePersonalWord,
-              ),
-              _SpellingWordStoreRow(
-                title: l10n.projectSpellingDictionary,
-                snapshot: spelling.projectWords,
-                enabled: spelling.hasProjectScope,
-                onRemove: spelling.removeProjectWord,
-              ),
-            ],
-          ),
+              ],
+            ),
         ],
       ),
       SettingsPage.validation => BusyMarkGroupedList(
@@ -443,7 +477,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     0,
                   ),
                   child: _SettingsPageSelector(
-                    selected: _page,
+                    selected: _settingsNavigationSelection(_page),
                     onSelected: _selectPage,
                   ),
                 ),
@@ -465,7 +499,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   SizedBox(
                     width: BusyMarkSizes.sidebarWidth,
                     child: _SettingsSidebar(
-                      selected: _page,
+                      selected: _settingsNavigationSelection(_page),
                       onSelected: _selectPage,
                     ),
                   ),
@@ -514,6 +548,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   void _goBack() {
+    if (_page == SettingsPage.spellingDictionaries) {
+      _selectPage(SettingsPage.editor);
+      return;
+    }
     context.go(widget.returnTarget.location);
   }
 
@@ -1196,6 +1234,7 @@ Future<void> _editHistoryExcludedPaths(
 enum SettingsPage {
   appearance,
   editor,
+  spellingDictionaries,
   validation,
   history,
   ai,
@@ -1204,9 +1243,28 @@ enum SettingsPage {
   advanced,
 }
 
+const _primarySettingsPages = <SettingsPage>[
+  SettingsPage.appearance,
+  SettingsPage.editor,
+  SettingsPage.validation,
+  SettingsPage.history,
+  SettingsPage.ai,
+  SettingsPage.window,
+  SettingsPage.privacy,
+  SettingsPage.advanced,
+];
+
+SettingsPage _settingsNavigationSelection(SettingsPage page) {
+  return switch (page) {
+    SettingsPage.spellingDictionaries => SettingsPage.editor,
+    _ => page,
+  };
+}
+
 SettingsPage settingsPageFromRouteValue(String? value) {
   return switch (value) {
     'editor' => SettingsPage.editor,
+    'spellingDictionaries' => SettingsPage.spellingDictionaries,
     'validation' => SettingsPage.validation,
     'history' => SettingsPage.history,
     'ai' => SettingsPage.ai,
@@ -1224,6 +1282,7 @@ String _settingsPageLabel(BuildContext context, SettingsPage page) {
   return switch (page) {
     SettingsPage.appearance => l10n.appearance,
     SettingsPage.editor => l10n.editor,
+    SettingsPage.spellingDictionaries => l10n.spellingDictionaries,
     SettingsPage.validation => l10n.validation,
     SettingsPage.history => l10n.settingsHistory,
     SettingsPage.ai => l10n.ai,
@@ -1237,6 +1296,7 @@ IconData _settingsPageIcon(SettingsPage page) {
   return switch (page) {
     SettingsPage.appearance => BusyMarkGlyphs.appearance,
     SettingsPage.editor => BusyMarkGlyphs.editorView,
+    SettingsPage.spellingDictionaries => BusyMarkGlyphs.symbols,
     SettingsPage.validation => BusyMarkGlyphs.diagnostics,
     SettingsPage.history => BusyMarkGlyphs.documentHistory,
     SettingsPage.ai => BusyMarkGlyphs.ai,
@@ -1257,7 +1317,7 @@ class _SettingsSidebar extends StatelessWidget {
     return BusyMarkSidebarSurface(
       child: BusyMarkSidebarNavigation(
         children: [
-          for (final page in SettingsPage.values)
+          for (final page in _primarySettingsPages)
             BusyMarkSidebarNavigationTile(
               key: ValueKey('settings-navigation-${page.name}'),
               selected: page == selected,
@@ -1289,7 +1349,7 @@ class _SettingsPageSelector extends StatelessWidget {
         tooltip: _settingsPageLabel(context, selected),
         fallbackMenuWidth: BusyMarkSizes.languagePopupMaxWidth,
         items: [
-          for (final page in SettingsPage.values)
+          for (final page in _primarySettingsPages)
             BusyMarkPopupMenuItem<SettingsPage>(
               value: page,
               label: _settingsPageLabel(context, page),

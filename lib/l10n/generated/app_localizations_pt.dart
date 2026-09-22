@@ -1031,6 +1031,15 @@ class AppLocalizationsPt extends AppLocalizations {
   String get settingsDictionariesSectionTitle => 'Dicionários';
 
   @override
+  String get availableSpellingDictionaries => 'Dicionários disponíveis';
+
+  @override
+  String get customSpellingDictionaries => 'Dicionários personalizados';
+
+  @override
+  String get spellingDictionaryProblems => 'Problemas de dicionários';
+
+  @override
   String get settingsWindowSectionTitle => 'Janela';
 
   @override
@@ -5720,6 +5729,15 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get settingsDictionariesSectionTitle => 'Dicionários';
+
+  @override
+  String get availableSpellingDictionaries => 'Dicionários disponíveis';
+
+  @override
+  String get customSpellingDictionaries => 'Dicionários personalizados';
+
+  @override
+  String get spellingDictionaryProblems => 'Problemas de dicionários';
 
   @override
   String get settingsWindowSectionTitle => 'Janela';

@@ -910,6 +910,9 @@
   "spellingDictionaries": "Dizionari ortografici",
   "spellingDictionariesDescription": "Installa e gestisci i dizionari ortografici",
   "settingsDictionariesSectionTitle": "Dizionari",
+  "availableSpellingDictionaries": "Dizionari disponibili",
+  "customSpellingDictionaries": "Dizionari personalizzati",
+  "spellingDictionaryProblems": "Problemi dei dizionari",
   "settingsWindowSectionTitle": "Finestra",
   "@settingsWindowSectionTitle": {
     "description": "Settings section title for native window behavior."

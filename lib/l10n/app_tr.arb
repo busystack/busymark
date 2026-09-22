@@ -1040,6 +1040,9 @@
   "spellingDictionaries": "Yazım sözlükleri",
   "spellingDictionariesDescription": "Yazım sözlüklerini kurun ve yönetin",
   "settingsDictionariesSectionTitle": "Sözlükler",
+  "availableSpellingDictionaries": "Kullanılabilir sözlükler",
+  "customSpellingDictionaries": "Özel sözlükler",
+  "spellingDictionaryProblems": "Sözlük sorunları",
   "settingsWindowSectionTitle": "Pencere",
   "@settingsWindowSectionTitle": {
     "description": "Settings section title for native window behavior."

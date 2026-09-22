@@ -1040,6 +1040,15 @@ class AppLocalizationsFr extends AppLocalizations {
   String get settingsDictionariesSectionTitle => 'Dictionnaires';
 
   @override
+  String get availableSpellingDictionaries => 'Dictionnaires disponibles';
+
+  @override
+  String get customSpellingDictionaries => 'Dictionnaires personnalisés';
+
+  @override
+  String get spellingDictionaryProblems => 'Problèmes de dictionnaires';
+
+  @override
   String get settingsWindowSectionTitle => 'Fenêtre';
 
   @override

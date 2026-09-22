@@ -998,6 +998,9 @@
   "spellingDictionaries": "Õigekirjasõnastikud",
   "spellingDictionariesDescription": "Õigekirjasõnastike installimine ja haldamine",
   "settingsDictionariesSectionTitle": "Sõnastikud",
+  "availableSpellingDictionaries": "Saadaolevad sõnastikud",
+  "customSpellingDictionaries": "Kohandatud sõnastikud",
+  "spellingDictionaryProblems": "Sõnastikuprobleemid",
   "settingsWindowSectionTitle": "Aken",
   "@settingsWindowSectionTitle": {
     "description": "Settings section title for native window behavior."

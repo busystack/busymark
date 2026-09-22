@@ -1025,6 +1025,15 @@ class AppLocalizationsNl extends AppLocalizations {
   String get settingsDictionariesSectionTitle => 'Woordenboeken';
 
   @override
+  String get availableSpellingDictionaries => 'Beschikbare woordenboeken';
+
+  @override
+  String get customSpellingDictionaries => 'Aangepaste woordenboeken';
+
+  @override
+  String get spellingDictionaryProblems => 'Woordenboekproblemen';
+
+  @override
   String get settingsWindowSectionTitle => 'Raam';
 
   @override

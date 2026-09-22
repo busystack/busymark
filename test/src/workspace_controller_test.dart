@@ -35,6 +35,59 @@ import 'package:xml/xml.dart';
 
 void main() {
   test(
+    'Welcome creation cannot overwrite an edit made during history flush',
+    () async {
+      final harness = await _createControllerHarness();
+      final controller = harness.controller._notifier;
+      await controller.openPath('test/fixtures/markdown/basic.md');
+      final originalId = controller.state.activeBuffer!.id;
+      final pending = controller.createMarkdownWorkspace();
+      controller.updateActiveText('Edit while history is settling');
+      expect(await pending, isFalse);
+      expect(controller.state.documentBuffers, hasLength(1));
+      expect(controller.state.activeBuffer?.id, originalId);
+      expect(
+        controller.state.activeBuffer?.text,
+        'Edit while history is settling',
+      );
+    },
+  );
+
+  test('starting a Welcome workspace cannot discard a dirty buffer', () async {
+    final harness = await _createControllerHarness();
+    final controller = harness.controller._notifier;
+    await controller.openPath('test/fixtures/markdown/basic.md');
+    controller.updateActiveText('Unsaved authoritative content');
+    final previous = controller.state.activeBuffer!;
+    expect(await controller.createMarkdownWorkspace(), isFalse);
+    expect(controller.state.documentBuffers, [previous]);
+    expect(
+      controller.state.activeBuffer?.text,
+      'Unsaved authoritative content',
+    );
+  });
+
+  test(
+    'Welcome replaces clean buffers but workspace New remains additive',
+    () async {
+      final harness = await _createControllerHarness();
+      final controller = harness.controller._notifier;
+      await controller.openPath('test/fixtures/markdown/basic.md');
+      final oldId = controller.state.activeBuffer!.id;
+      expect(await controller.createMarkdownWorkspace(), isTrue);
+      final first = controller.state.activeBuffer!;
+      expect(first.id, isNot(oldId));
+      expect(controller.state.documentBuffers, [first]);
+      expect(controller.state.workspace?.kind, WorkspaceKind.untitledMarkdown);
+      controller.updateActiveText('First draft');
+      await controller.createMarkdownFile();
+      expect(controller.state.documentBuffers, hasLength(2));
+      expect(controller.state.documentBuffers.first.id, first.id);
+      expect(controller.state.documentBuffers.first.text, 'First draft');
+    },
+  );
+
+  test(
     'Safe Delete closes the topic buffer, selects a survivor, and records history',
     () async {
       final root = await Directory.systemTemp.createTemp(

@@ -910,6 +910,9 @@
   "spellingDictionaries": "Орфографічні словники",
   "spellingDictionariesDescription": "Установлення й керування орфографічними словниками",
   "settingsDictionariesSectionTitle": "Словники",
+  "availableSpellingDictionaries": "Доступні словники",
+  "customSpellingDictionaries": "Власні словники",
+  "spellingDictionaryProblems": "Проблеми зі словниками",
   "settingsWindowSectionTitle": "Вікно",
   "@settingsWindowSectionTitle": {
     "description": "Settings section title for native window behavior."

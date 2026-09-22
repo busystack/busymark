@@ -967,6 +967,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsDictionariesSectionTitle => '词典';
 
   @override
+  String get availableSpellingDictionaries => '可用词典';
+
+  @override
+  String get customSpellingDictionaries => '自定义词典';
+
+  @override
+  String get spellingDictionaryProblems => '词典问题';
+
+  @override
   String get settingsWindowSectionTitle => '窗口';
 
   @override
@@ -5393,6 +5402,15 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get settingsDictionariesSectionTitle => '词典';
+
+  @override
+  String get availableSpellingDictionaries => '可用词典';
+
+  @override
+  String get customSpellingDictionaries => '自定义词典';
+
+  @override
+  String get spellingDictionaryProblems => '词典问题';
 
   @override
   String get settingsWindowSectionTitle => '窗口';

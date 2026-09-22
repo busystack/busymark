@@ -983,6 +983,15 @@ class AppLocalizationsJa extends AppLocalizations {
   String get settingsDictionariesSectionTitle => '辞書';
 
   @override
+  String get availableSpellingDictionaries => '利用可能な辞書';
+
+  @override
+  String get customSpellingDictionaries => 'カスタム辞書';
+
+  @override
+  String get spellingDictionaryProblems => '辞書の問題';
+
+  @override
   String get settingsWindowSectionTitle => 'ウィンドウ';
 
   @override

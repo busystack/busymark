@@ -1036,6 +1036,15 @@ class AppLocalizationsEs extends AppLocalizations {
   String get settingsDictionariesSectionTitle => 'Diccionarios';
 
   @override
+  String get availableSpellingDictionaries => 'Diccionarios disponibles';
+
+  @override
+  String get customSpellingDictionaries => 'Diccionarios personalizados';
+
+  @override
+  String get spellingDictionaryProblems => 'Problemas de diccionarios';
+
+  @override
   String get settingsWindowSectionTitle => 'Ventana';
 
   @override

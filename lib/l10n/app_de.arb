@@ -910,6 +910,9 @@
   "spellingDictionaries": "Rechtschreibwörterbücher",
   "spellingDictionariesDescription": "Rechtschreibwörterbücher installieren und verwalten",
   "settingsDictionariesSectionTitle": "Wörterbücher",
+  "availableSpellingDictionaries": "Verfügbare Wörterbücher",
+  "customSpellingDictionaries": "Benutzerdefinierte Wörterbücher",
+  "spellingDictionaryProblems": "Wörterbuchprobleme",
   "settingsWindowSectionTitle": "Fenster",
   "@settingsWindowSectionTitle": {
     "description": "Settings section title for native window behavior."

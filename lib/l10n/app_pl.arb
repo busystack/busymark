@@ -910,6 +910,9 @@
   "spellingDictionaries": "Słowniki pisowni",
   "spellingDictionariesDescription": "Instaluj słowniki pisowni i zarządzaj nimi",
   "settingsDictionariesSectionTitle": "Słowniki",
+  "availableSpellingDictionaries": "Dostępne słowniki",
+  "customSpellingDictionaries": "Słowniki niestandardowe",
+  "spellingDictionaryProblems": "Problemy ze słownikami",
   "settingsWindowSectionTitle": "Okno",
   "@settingsWindowSectionTitle": {
     "description": "Settings section title for native window behavior."

@@ -1022,6 +1022,15 @@ class AppLocalizationsEt extends AppLocalizations {
   String get settingsDictionariesSectionTitle => 'Sõnastikud';
 
   @override
+  String get availableSpellingDictionaries => 'Saadaolevad sõnastikud';
+
+  @override
+  String get customSpellingDictionaries => 'Kohandatud sõnastikud';
+
+  @override
+  String get spellingDictionaryProblems => 'Sõnastikuprobleemid';
+
+  @override
   String get settingsWindowSectionTitle => 'Aken';
 
   @override

@@ -1031,6 +1031,15 @@ class AppLocalizationsPl extends AppLocalizations {
   String get settingsDictionariesSectionTitle => 'Słowniki';
 
   @override
+  String get availableSpellingDictionaries => 'Dostępne słowniki';
+
+  @override
+  String get customSpellingDictionaries => 'Słowniki niestandardowe';
+
+  @override
+  String get spellingDictionaryProblems => 'Problemy ze słownikami';
+
+  @override
   String get settingsWindowSectionTitle => 'Okno';
 
   @override

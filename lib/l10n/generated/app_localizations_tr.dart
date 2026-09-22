@@ -1024,6 +1024,15 @@ class AppLocalizationsTr extends AppLocalizations {
   String get settingsDictionariesSectionTitle => 'Sözlükler';
 
   @override
+  String get availableSpellingDictionaries => 'Kullanılabilir sözlükler';
+
+  @override
+  String get customSpellingDictionaries => 'Özel sözlükler';
+
+  @override
+  String get spellingDictionaryProblems => 'Sözlük sorunları';
+
+  @override
   String get settingsWindowSectionTitle => 'Pencere';
 
   @override

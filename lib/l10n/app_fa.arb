@@ -910,6 +910,9 @@
   "spellingDictionaries": "واژه‌نامه‌های املایی",
   "spellingDictionariesDescription": "نصب و مدیریت واژه‌نامه‌های املایی",
   "settingsDictionariesSectionTitle": "واژه‌نامه‌ها",
+  "availableSpellingDictionaries": "واژه‌نامه‌های موجود",
+  "customSpellingDictionaries": "واژه‌نامه‌های سفارشی",
+  "spellingDictionaryProblems": "مشکلات واژه‌نامه",
   "settingsWindowSectionTitle": "پنجره",
   "@settingsWindowSectionTitle": {
     "description": "Settings section title for native window behavior."

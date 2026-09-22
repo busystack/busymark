@@ -1024,6 +1024,15 @@ class AppLocalizationsNb extends AppLocalizations {
   String get settingsDictionariesSectionTitle => 'Ordbøker';
 
   @override
+  String get availableSpellingDictionaries => 'Tilgjengelige ordbøker';
+
+  @override
+  String get customSpellingDictionaries => 'Egendefinerte ordbøker';
+
+  @override
+  String get spellingDictionaryProblems => 'Ordbokproblemer';
+
+  @override
   String get settingsWindowSectionTitle => 'Vindu';
 
   @override

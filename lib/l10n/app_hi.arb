@@ -910,6 +910,9 @@
   "spellingDictionaries": "वर्तनी शब्दकोश",
   "spellingDictionariesDescription": "वर्तनी शब्दकोश इंस्टॉल और प्रबंधित करें",
   "settingsDictionariesSectionTitle": "शब्दकोश",
+  "availableSpellingDictionaries": "उपलब्ध शब्दकोश",
+  "customSpellingDictionaries": "कस्टम शब्दकोश",
+  "spellingDictionaryProblems": "शब्दकोश समस्याएँ",
   "settingsWindowSectionTitle": "विंडो",
   "@settingsWindowSectionTitle": {
     "description": "Settings section title for native window behavior."
