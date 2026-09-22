@@ -106,7 +106,9 @@ jobs:
 
       - name: Test native Hunspell package explicitly
         working-directory: packages/busymark_spellcheck_native
-        run: dart test
+        run: |
+          dart pub get
+          dart test
 
       - name: Prepare all-language spelling test resources
         run: tools/fetch_spelling_dictionaries.sh build/spelling-test
