@@ -325,6 +325,9 @@ while :; do :; done
     expect(cmake, contains('share/licenses/typst'));
     expect(snapcraft, contains('TYPST_FONT_PATHS:'));
     expect(snapcraft, contains('fonts-noto-core'));
+    expect(snapcraft, contains(r'cmp -s "$bundled_font" "$staged_font"'));
+    expect(snapcraft, contains('ln -s ../../usr/share/fonts/truetype/noto'));
+    expect(snapcraft, contains('share/busymark/fonts'));
   });
 }
 

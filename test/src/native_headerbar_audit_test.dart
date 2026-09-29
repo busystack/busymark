@@ -477,15 +477,15 @@ void main() {
     );
     expect(
       snapcraft,
-      contains(
-        r'cp -a "$CRAFT_PRIME/usr/share/themes"/Yaru* "$CRAFT_PRIME/share/themes/"',
-      ),
+      contains(r'ln -s "../../usr/share/$resource_kind/$resource_name"'),
     );
     expect(
       snapcraft,
-      contains(
-        r'cp -a "$CRAFT_PRIME/usr/share/icons"/Yaru* "$CRAFT_PRIME/share/icons/"',
-      ),
+      isNot(contains(r'cp -a "$CRAFT_PRIME/usr/share/themes"/Yaru*')),
+    );
+    expect(
+      snapcraft,
+      isNot(contains(r'cp -a "$CRAFT_PRIME/usr/share/icons"/Yaru*')),
     );
     expect(
       native,
@@ -581,7 +581,148 @@ void main() {
     expect(script, contains('item_indent = match.group(1)'));
     expect(script, contains('f"{item_indent}- {item}\\n"'));
     expect(script, contains('the currently installed snap was not changed'));
+    expect(script, contains('development repack'));
+    expect(script, contains('does not perform a dependency/security refresh'));
+    expect(script, contains('For release/security refreshes'));
+    expect(
+      script.indexOf('NOTICE: this helper creates a development repack'),
+      lessThan(
+        script.indexOf(r'select_project_flutter "$REQUIRED_FLUTTER_VERSION"'),
+      ),
+    );
+
+    final help = Process.runSync('bash', [
+      'tools/build_install_snap_local.sh',
+      '--help',
+    ]);
+    expect(help.exitCode, 0);
+    expect(help.stdout, contains('This is a development repack'));
+    expect(help.stdout, contains('does not refresh dependencies'));
+    expect(help.stdout, contains('clean Snapcraft procedure'));
   });
+
+  test('Snap reuses verified platform libraries and retains private tools', () {
+    final snapcraft = File('snap/snapcraft.yaml').readAsStringSync();
+    final stagePackages = _snapStagePackages(snapcraft);
+
+    expect(snapcraft, contains('extensions: [gnome]'));
+    for (final sharedPackage in {
+      'libhandy-1-0',
+      'libsecret-1-0',
+      'libwebkit2gtk-4.1-0',
+      'libgtk-3-0t64',
+      'libglib2.0-0t64',
+      'libpango-1.0-0',
+      'gstreamer1.0-plugins-base',
+      'gstreamer1.0-plugins-good',
+      'libx11-6',
+      'libxdamage1',
+      'libxext6',
+      'libxfixes3',
+      'libxcb-shm0',
+      'libxcb1',
+      'libwayland-client0',
+      'libwayland-cursor0',
+      'libwayland-egl1',
+    }) {
+      expect(stagePackages, isNot(contains(sharedPackage)));
+    }
+    for (final privatePackage in {
+      'gstreamer1.0-libav',
+      'gstreamer1.0-plugins-bad',
+      'gstreamer1.0-plugins-ugly',
+      'git',
+      'fonts-noto-core',
+      'fonts-noto-mono',
+      'openssh-client',
+      'util-linux',
+      'yaru-theme-gtk',
+      'yaru-theme-icon',
+    }) {
+      expect(stagePackages, contains(privatePackage));
+    }
+
+    for (final buildPackage in {
+      'libhandy-1-dev',
+      'libsecret-1-dev',
+      'libwebkit2gtk-4.1-dev',
+      'libglib2.0-dev',
+      'libpango1.0-dev',
+    }) {
+      expect(snapcraft, contains('- $buildPackage'));
+    }
+  });
+
+  test(
+    'Snap packaging hooks consolidate resources and keep required fixes',
+    () {
+      final snapcraft = File('snap/snapcraft.yaml').readAsStringSync();
+      final exclusions = File(
+        'snap/gnome-46-2404-prime-exclusions.amd64',
+      ).readAsLinesSync();
+
+      expect(snapcraft, contains('missing audited GNOME runtime duplicate'));
+      expect(snapcraft, contains('gnome-46-2404-prime-exclusions.amd64'));
+      expect(exclusions, contains(contains('revision 153')));
+      expect(
+        exclusions,
+        contains('usr/lib/x86_64-linux-gnu/gstreamer-1.0/libgstisomp4.so'),
+      );
+      for (final runtimeLibrary in {
+        'libgdk-3.so.0',
+        'libgtk-3.so.0',
+        'libpango-1.0.so.0',
+        'libpangocairo-1.0.so.0',
+        'libpangoft2-1.0.so.0',
+        'libX11.so.6',
+        'libXdamage.so.1',
+        'libXext.so.6',
+        'libXfixes.so.3',
+        'libxcb-shm.so.0',
+        'libxcb.so.1',
+        'libwayland-client.so.0',
+        'libwayland-cursor.so.0',
+        'libwayland-egl.so.1',
+      }) {
+        expect(
+          exclusions,
+          contains('usr/lib/x86_64-linux-gnu/$runtimeLibrary'),
+        );
+      }
+      expect(exclusions, isNot(contains(contains('libgstlibav.so'))));
+      expect(exclusions, isNot(contains(contains('libgstvideoparsersbad.so'))));
+      expect(exclusions.where((line) => line.contains('*')), isEmpty);
+      expect(snapcraft, contains(r'cmp -s "$bundled_font" "$staged_font"'));
+      expect(snapcraft, contains('ln -s ../../usr/share/fonts/truetype/noto'));
+      expect(
+        snapcraft,
+        contains(r'ln -s "../../usr/share/$resource_kind/$resource_name"'),
+      );
+      expect(
+        snapcraft,
+        contains(
+          r'"$CRAFT_PRIME/usr/lib/x86_64-linux-gnu/libsphinxbase.so.3.0.0"',
+        ),
+      );
+      expect(snapcraft, contains('caca/libgl_plugin.so.0.0.0'));
+      expect(
+        snapcraft,
+        contains(
+          r'rm -f "$CRAFT_PRIME/usr/lib/x86_64-linux-gnu/librsvg-2.so.2"*',
+        ),
+      );
+      expect(
+        snapcraft,
+        isNot(contains('libflutter_secure_storage_linux_plugin.so')),
+      );
+      final workflow = File(
+        '.github/workflows/flutter-linux.yml',
+      ).readAsStringSync();
+      expect(workflow, contains(r'graphics_lib="$SNAP/gpu-2404/usr/lib/'));
+      expect(workflow, contains('libwayland-egl.so.1'));
+      expect(workflow, contains('usr/share/doc/fonts-noto-core/copyright'));
+    },
+  );
 
   test('local snap builder uses the project Flutter toolchain', () {
     final pubspec = File('pubspec.yaml').readAsStringSync();
@@ -1102,7 +1243,7 @@ void main() {
         ),
       );
       expect(snapcraft, contains('- libhandy-1-dev'));
-      expect(snapcraft, contains('- libhandy-1-0'));
+      expect(_snapStagePackages(snapcraft), isNot(contains('libhandy-1-0')));
       expect(readme, contains('sudo apt-get install'));
       expect(readme, contains('libhandy-1-dev'));
       expect(readme, contains('xz-utils'));
@@ -1882,4 +2023,16 @@ void main() {
       expect(native, isNot(contains('update_title_stack_alignment')));
     },
   );
+}
+
+Set<String> _snapStagePackages(String snapcraft) {
+  final match = RegExp(
+    r'^    stage-packages:\n((?:^      - [^\n]+\n)+)',
+    multiLine: true,
+  ).firstMatch(snapcraft);
+  expect(match, isNotNull);
+  return RegExp(
+    r'^      - ([^\s]+)$',
+    multiLine: true,
+  ).allMatches(match!.group(1)!).map((entry) => entry.group(1)!).toSet();
 }
