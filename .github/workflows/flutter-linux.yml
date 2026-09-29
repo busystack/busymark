@@ -230,6 +230,11 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v7
 
+      - name: Prepare clean Snap artifact selection
+        run: |
+          rm -f ./*.snap
+          touch "${RUNNER_TEMP}/busymark-snap-build-start"
+
       - name: Build strict Snap from a clean core24 environment (attempt 1)
         id: snapcraft
         uses: snapcore/action-build@v1
@@ -244,11 +249,27 @@ jobs:
         id: snap-artifact
         env:
           PRIMARY_SNAP: ${{ steps.snapcraft.outputs.snap }}
+          PRIMARY_OUTCOME: ${{ steps.snapcraft.outcome }}
           RETRY_SNAP: ${{ steps.snapcraft-retry.outputs.snap }}
+          RETRY_OUTCOME: ${{ steps.snapcraft-retry.outcome }}
         run: |
-          snap_path="${PRIMARY_SNAP:-$RETRY_SNAP}"
+          if [ "$PRIMARY_OUTCOME" = success ]; then
+            snap_path="$PRIMARY_SNAP"
+          else
+            test "$PRIMARY_OUTCOME" = failure
+            test "$RETRY_OUTCOME" = success
+            snap_path="$RETRY_SNAP"
+          fi
           test -n "$snap_path"
           test -f "$snap_path"
+          test "$snap_path" -nt "${RUNNER_TEMP}/busymark-snap-build-start"
+          snap_path="$(realpath "$snap_path")"
+          case "$snap_path" in
+            "$GITHUB_WORKSPACE"/*.snap) ;;
+            *) echo "Refusing Snap outside the clean checkout: $snap_path" >&2; exit 1 ;;
+          esac
+          test "$(unsquashfs -cat "$snap_path" snap/snapcraft.yaml | sha256sum | cut -d' ' -f1)" = \
+            "$(sha256sum snap/snapcraft.yaml | cut -d' ' -f1)"
           echo "snap=$snap_path" >> "$GITHUB_OUTPUT"
 
       - name: Upload Snap artifact
@@ -275,6 +296,69 @@ jobs:
             query="$SNAP_DESKTOP_RUNTIME/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET/gdk-pixbuf-2.0/gdk-pixbuf-query-loaders"
             loader="$SNAP_DESKTOP_RUNTIME/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET/gdk-pixbuf-2.0/2.10.0/loaders/libpixbufloader_svg.so"
             "$query" "$loader" | grep -q "\"svg\" 6 \"gdk-pixbuf\""
+          '
+
+      - name: Verify shared runtimes, packaged tools, media, and resources
+        run: |
+          snap run --shell busymark -c '
+            set -eu
+            app_lib="$SNAP/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET"
+            for library in \
+              libhandy-1.so.0 libsecret-1.so.0 libwebkit2gtk-4.1.so.0 \
+              libgtk-3.so.0 libglib-2.0.so.0 libpango-1.0.so.0; do
+              test ! -e "$app_lib/$library"
+              ldd "$SNAP/busymark" | grep -F "$library => $SNAP_DESKTOP_RUNTIME/"
+            done
+            graphics_lib="$SNAP/gpu-2404/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET"
+            for library in \
+              libX11.so.6 libXdamage.so.1 libXext.so.6 libXfixes.so.3 \
+              libxcb-shm.so.0 libxcb.so.1 libwayland-client.so.0 \
+              libwayland-cursor.so.0 libwayland-egl.so.1; do
+              test ! -e "$app_lib/$library"
+              test -e "$graphics_lib/$library"
+              ldd "$SNAP/busymark" | grep -F "$library => "
+            done
+            ! ldd "$SNAP/busymark" | grep -q "not found"
+            for helper in WebKitWebProcess WebKitNetworkProcess WebKitGPUProcess; do
+              test -x "$SNAP_DESKTOP_RUNTIME/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET/webkit2gtk-4.1/$helper"
+            done
+            test -x "$SNAP/usr/bin/git"
+            test -x "$SNAP/usr/bin/ssh"
+            test -x "$SNAP/usr/bin/setsid"
+            ! ldd "$SNAP/usr/lib/git-core/git-remote-http" | grep -q "not found"
+            ldd "$SNAP/usr/lib/git-core/git-remote-http" | grep -F "$SNAP/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET/libcurl-gnutls.so.4"
+            GIT_EXEC_PATH="$SNAP/usr/lib/git-core" \
+              "$SNAP/usr/bin/git" --exec-path | grep -Fx "$SNAP/usr/lib/git-core"
+            "$SNAP/usr/bin/ssh" -V
+            provider_plugins="$SNAP_DESKTOP_RUNTIME/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET/gstreamer-1.0"
+            for plugin in libgstavi.so libgstisomp4.so libgstmatroska.so \
+              libgstogg.so libgsttheora.so libgstvpx.so; do
+              test -f "$provider_plugins/$plugin"
+              ! ldd "$provider_plugins/$plugin" | grep -q "not found"
+            done
+            private_plugins="$SNAP/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET/gstreamer-1.0"
+            for plugin in libgstavi.so libgstisomp4.so libgstmatroska.so \
+              libgstogg.so libgsttheora.so libgstvpx.so; do
+              test ! -e "$private_plugins/$plugin"
+            done
+            for plugin in libgstlibav.so libgstvideoparsersbad.so \
+              libgstmpeg2dec.so; do
+              test -f "$private_plugins/$plugin"
+              ! ldd "$private_plugins/$plugin" | grep -q "not found"
+            done
+            test -L "$SNAP/share/busymark/fonts"
+            test "$(readlink "$SNAP/share/busymark/fonts")" = \
+              ../../usr/share/fonts/truetype/noto
+            test -f "$SNAP/share/busymark/fonts/NotoSans-Regular.ttf"
+            test -f "$SNAP/usr/share/doc/fonts-noto-core/copyright"
+            test -f "$SNAP/usr/share/doc/fonts-noto-mono/copyright"
+            for resource_kind in themes icons; do
+              for resource_name in Yaru Yaru-dark; do
+                resource="$SNAP/share/$resource_kind/$resource_name"
+                test -L "$resource"
+                test -e "$resource"
+              done
+            done
           '
 
       - name: Install one strict-Snap dictionary and verify refresh/offline use
