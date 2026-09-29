@@ -8,6 +8,11 @@ Usage: tools/build_install_snap_local.sh [version] [options]
 Build the Flutter Linux release, replace the payload in an installed snap
 scaffold, pack it, install it locally, and optionally run it.
 
+This is a development repack: Ubuntu runtime dependencies and bundled tools
+may be reused from the installed scaffold. It does not refresh dependencies or
+apply snap/snapcraft.yaml package changes. Release and security builds require
+the clean Snapcraft procedure documented in README.md.
+
 Options:
   --no-install         Pack and verify the snap without replacing the installed snap.
   --no-run             Install the snap but do not run it.
@@ -370,6 +375,11 @@ PROJECT_NAME="$(project_value name)"
 VERSION="${VERSION_ARG:-${VERSION:-$(project_value version)}}"
 [[ -n "$VERSION" ]] || fail "could not read version from pubspec.yaml"
 
+echo "NOTICE: this helper creates a development repack from an installed scaffold."
+echo "It may reuse the scaffold's Ubuntu dependencies and bundled tools."
+echo "It does not perform a dependency/security refresh or apply Snap package changes."
+echo "Use the clean Snapcraft procedure in README.md for release/security artifacts."
+
 REQUIRED_FLUTTER_VERSION="$(project_flutter_version)"
 [[ -n "$REQUIRED_FLUTTER_VERSION" ]] || \
   fail "pubspec.yaml must declare an exact environment.flutter version"
@@ -726,7 +736,9 @@ fi
 ! unsquashfs -ll "$OUT" | grep -q \
   'squashfs-root/usr/lib/x86_64-linux-gnu/librsvg-2.so.2'
 
-echo "Built snap: $OUT"
+echo "Built development-repack snap: $OUT"
+echo "Dependencies may have been reused from: $SNAP_SCAFFOLD"
+echo "For release/security refreshes and packaging changes, use clean Snapcraft."
 if [[ "$INSTALL_AFTER_BUILD" == "1" ]]; then
   echo "== Install snap =="
   sudo snap remove --purge "$SNAP_NAME" 2>/dev/null || true
