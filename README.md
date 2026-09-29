@@ -89,6 +89,31 @@ PDF, and sandbox verification. Those packages are not required for an ordinary
 local build; see [the Linux workflow](.github/workflows/flutter-linux.yml) when
 reproducing release verification.
 
+## Snap release and security builds
+
+Release, security-refresh, and packaging-change artifacts must be built from
+the current `snap/snapcraft.yaml` in a clean Ubuntu 24.04 amd64 Snapcraft build
+environment. The authoritative build sequence is:
+
+```bash
+snapcraft --version
+snapcraft expand-extensions
+snapcraft clean
+snapcraft
+sha256sum ./busymark_*.snap
+```
+
+Inspect and test the exact file emitted by the final `snapcraft` command. A
+failed build must not fall back to an older `.snap`. The `snap` job in
+[the Linux workflow](.github/workflows/flutter-linux.yml) follows this route,
+installs that selected artifact, and runs the strict-confinement smoke checks.
+
+`tools/build_install_snap_local.sh` is intentionally different: it replaces
+the Flutter payload in an installed Snap scaffold for quick development and
+may retain that scaffold's Ubuntu libraries and bundled tools. Even with
+`--no-install`, its output is not a dependency refresh and must not be used for
+a release, a security update, or validation of `stage-packages` changes.
+
 ## Screenshots
 
 <table>
