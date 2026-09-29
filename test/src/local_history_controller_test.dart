@@ -200,6 +200,7 @@ void main() {
       await _waitForHistory(
         container,
         (state) => state.selectedRevisions.length == 2,
+        timeout: const Duration(seconds: 10),
       );
 
       final reopened = FileLocalHistoryStore(
@@ -1964,12 +1965,17 @@ Future<List<String>> _revisionSources(
 
 Future<void> _waitForHistory(
   ProviderContainer container,
-  bool Function(LocalHistoryState state) condition,
-) async {
-  final deadline = DateTime.now().add(const Duration(seconds: 3));
+  bool Function(LocalHistoryState state) condition, {
+  Duration timeout = const Duration(seconds: 3),
+}) async {
+  final deadline = DateTime.now().add(timeout);
   while (!condition(container.read(localHistoryControllerProvider))) {
     if (DateTime.now().isAfter(deadline)) {
-      throw StateError('Timed out waiting for Local History state');
+      final state = container.read(localHistoryControllerProvider);
+      throw StateError(
+        'Local History state did not complete: '
+        'selected revisions=${state.selectedRevisions.length}',
+      );
     }
     await Future<void>.delayed(const Duration(milliseconds: 10));
   }

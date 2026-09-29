@@ -24,6 +24,7 @@ Future<Object?> _evaluateInChrome(String htmlPath, String expression) async {
   WebSocket? socket;
   Uri? browserEndpoint;
   final client = HttpClient();
+  final documentUri = Uri.file(htmlPath);
   try {
     final endpoint = Completer<Uri>();
     browser = await Process.start(headlessChromePath!, [
@@ -35,7 +36,7 @@ Future<Object?> _evaluateInChrome(String htmlPath, String expression) async {
       '--user-data-dir=${profile.path}',
       '--proxy-server=http://127.0.0.1:9',
       '--proxy-bypass-list=127.0.0.1;localhost',
-      Uri.file(htmlPath).toString(),
+      documentUri.toString(),
     ]);
     unawaited(browser.stdout.drain<void>());
     browser.stderr
@@ -49,48 +50,77 @@ Future<Object?> _evaluateInChrome(String htmlPath, String expression) async {
         });
     final uri = await endpoint.future.timeout(const Duration(seconds: 15));
     browserEndpoint = uri;
-    final request = await client.getUrl(
-      Uri.http('${uri.host}:${uri.port}', '/json/list'),
-    );
-    final response = await request.close();
-    final targets =
-        jsonDecode(await response.transform(utf8.decoder).join()) as List;
-    final page = targets.cast<Map<String, dynamic>>().firstWhere(
-      (t) => t['type'] == 'page',
-    );
+    // DevTools may appear while Chromium is still displaying its initial
+    // about:blank page. Evaluating there silently returns default CSS values.
+    final deadline = DateTime.now().add(const Duration(seconds: 15));
+    Map<String, dynamic>? page;
+    do {
+      final request = await client.getUrl(
+        Uri.http('${uri.host}:${uri.port}', '/json/list'),
+      );
+      final response = await request.close();
+      final targets =
+          jsonDecode(await response.transform(utf8.decoder).join()) as List;
+      for (final target in targets.cast<Map<String, dynamic>>()) {
+        if (target['type'] == 'page' &&
+            target['url'] == documentUri.toString()) {
+          page = target;
+          break;
+        }
+      }
+      if (page != null) break;
+      await Future<void>.delayed(const Duration(milliseconds: 25));
+    } while (DateTime.now().isBefore(deadline));
+    if (page == null) {
+      throw StateError('Chromium did not load $documentUri');
+    }
     socket = await WebSocket.connect(page['webSocketDebuggerUrl'] as String);
     final messages = StreamIterator<dynamic>(socket);
-    socket.add(
-      jsonEncode({
-        'id': 1,
-        'method': 'Runtime.evaluate',
-        'params': {
-          'expression':
-              '''(async () => {
-          if (document.readyState !== 'complete') {
-            await new Promise(resolve => addEventListener('load', resolve, {once:true}));
-          }
-          return $expression;
-        })()''',
-          'awaitPromise': true,
-          'returnByValue': true,
-        },
-      }),
-    );
-    Future<Object?> readResult() async {
+    final readyDeadline = DateTime.now().add(const Duration(seconds: 15));
+    var nextId = 0;
+    Object? lastPageState;
+    while (DateTime.now().isBefore(readyDeadline)) {
+      final id = ++nextId;
+      socket.add(
+        jsonEncode({
+          'id': id,
+          'method': 'Runtime.evaluate',
+          'params': {
+            'expression':
+                '''(() => {
+              const ready = location.href === ${jsonEncode(documentUri.toString())} &&
+                document.readyState === 'complete' &&
+                document.querySelector('style') !== null;
+              return ready
+                ? {ready: true, value: ($expression)}
+                : {ready: false, url: location.href,
+                   state: document.readyState,
+                   styles: document.querySelectorAll('style').length};
+            })()''',
+            'returnByValue': true,
+          },
+        }),
+      );
       while (await messages.moveNext()) {
         final message = jsonDecode(messages.current as String) as Map;
-        if (message['id'] != 1) continue;
-        if (message['error'] != null ||
-            message['result']['exceptionDetails'] != null) {
-          throw StateError('Browser evaluation failed: $message');
+        if (message['id'] != id) continue;
+        if (message['error'] == null &&
+            message['result']['exceptionDetails'] == null) {
+          final state = message['result']['result']['value'] as Map;
+          if (state['ready'] == true) return state['value'];
+          lastPageState = state;
+        } else {
+          // Navigation can destroy the initial execution context. The next
+          // evaluation runs in the document's new context.
+          lastPageState = message;
         }
-        return message['result']['result']['value'];
+        break;
       }
-      throw StateError('Browser closed before evaluating styles.');
+      await Future<void>.delayed(const Duration(milliseconds: 25));
     }
-
-    return await readResult().timeout(const Duration(seconds: 15));
+    throw StateError(
+      'Chromium did not finish loading $documentUri: $lastPageState',
+    );
   } finally {
     await socket?.close();
     client.close(force: true);

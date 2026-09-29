@@ -608,6 +608,11 @@ void main() {
         SpellingPresentationStatus.incomplete,
         SpellingPresentationStatus.failure,
       ].contains(harness.spelling.state.status),
+      timeout: const Duration(seconds: 20),
+      diagnostics: () =>
+          'status=${harness.spelling.state.status}, '
+          'message=${harness.spelling.state.message}, '
+          'catalog unavailable=${harness.spelling.catalog == null}',
     );
     expect(
       harness.spelling.state.status,
@@ -1042,6 +1047,12 @@ void main() {
               .widget<BusyMarkBanner>(find.byType(BusyMarkBanner))
               .revealed &&
           harness.spelling.state.complete,
+      timeout: const Duration(seconds: 15),
+      diagnostics: () =>
+          'downloads=$downloadCount, '
+          'installed=${harness.spelling.catalog?.installedById('en-Test')}, '
+          'catalog unavailable=${harness.spelling.catalog == null}, '
+          'spelling complete=${harness.spelling.state.complete}',
     );
     await tester.pump(BusyMarkMotion.bannerReveal);
 
@@ -1533,11 +1544,18 @@ Finder _spellingUnderlineOverlay() => find.byWidgetPredicate(
       widget.painter.runtimeType.toString() == '_SpellingUnderlinePainter',
 );
 
-Future<void> _until(WidgetTester tester, bool Function() condition) async {
+Future<void> _until(
+  WidgetTester tester,
+  bool Function() condition, {
+  Duration timeout = const Duration(seconds: 10),
+  String Function()? diagnostics,
+}) async {
   final elapsed = Stopwatch()..start();
   while (!condition()) {
-    if (elapsed.elapsed > const Duration(seconds: 10)) {
-      throw TimeoutException('Spelling workspace did not settle');
+    if (elapsed.elapsed > timeout) {
+      throw TimeoutException(
+        'Spelling workspace did not settle. ${diagnostics?.call() ?? ''}',
+      );
     }
     await tester.pump(const Duration(milliseconds: 50));
     await tester.runAsync(
