@@ -449,6 +449,11 @@ rm -f "$SNAP_ROOT/usr/lib/x86_64-linux-gnu/librsvg-2.so.2"*
 
 echo "== Replace Flutter payload =="
 rm -rf "$SNAP_ROOT/$BINARY_NAME" "$SNAP_ROOT/data" "$SNAP_ROOT/lib"
+# A clean Snap scaffold links this path to its staged Noto packages. Replace
+# the link itself so this development repack uses the newly built bundle fonts.
+if [[ -d "$BUNDLE_DIR/share/busymark/fonts" ]]; then
+  rm -rf -- "$SNAP_ROOT/share/busymark/fonts"
+fi
 cp -a "$BUNDLE_DIR/." "$SNAP_ROOT/"
 
 test -f "$SNAP_ROOT/$BINARY_NAME" || fail "missing staged binary: $SNAP_ROOT/$BINARY_NAME"

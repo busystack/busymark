@@ -48,6 +48,7 @@ apps:
       - network
       - removable-media
       - ssh-keys
+      - password-manager-service
     environment:
       GDK_BACKEND: wayland,x11
       TYPST_FONT_PATHS: $SNAP/usr/share/fonts

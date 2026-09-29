@@ -601,11 +601,54 @@ void main() {
     expect(help.stdout, contains('clean Snapcraft procedure'));
   });
 
+  test('local repack replaces clean-snap font links with new bundle fonts', () {
+    for (final linkedScaffold in [true, false]) {
+      _verifyLocalFontRepack(linkedScaffold: linkedScaffold);
+    }
+  });
+
+  test('confined dependency checks reject missing and wrong resolutions', () {
+    for (final shell in ['/bin/bash', '/bin/sh']) {
+      final success = _runSharedRuntimeValidation('ok', shell);
+      expect(
+        success.exitCode,
+        0,
+        reason: '${success.stdout}\n${success.stderr}',
+      );
+
+      for (final mode in [
+        'missing-zero',
+        'inspection-error',
+        'wrong-gnome',
+        'wrong-mesa',
+        'wrong-curl',
+      ]) {
+        final failure = _runSharedRuntimeValidation(mode, shell);
+        expect(failure.exitCode, isNot(0), reason: '$shell / $mode');
+        expect(failure.stderr, contains('busymark'), reason: '$shell / $mode');
+        expect(
+          failure.stderr,
+          anyOf(
+            contains('Unresolved dependencies'),
+            contains('Dependency inspection failed'),
+            contains('Unexpected resolution'),
+          ),
+          reason: '$shell / $mode: ${failure.stderr}',
+        );
+      }
+    }
+  });
+
   test('Snap reuses verified platform libraries and retains private tools', () {
     final snapcraft = File('snap/snapcraft.yaml').readAsStringSync();
     final stagePackages = _snapStagePackages(snapcraft);
 
     expect(snapcraft, contains('extensions: [gnome]'));
+    expect(snapcraft, contains('      - password-manager-service'));
+    expect(
+      File('docs/snap-confinement.md').readAsStringSync(),
+      contains('snap connect busymark:password-manager-service'),
+    );
     for (final sharedPackage in {
       'libhandy-1-0',
       'libsecret-1-0',
@@ -2035,4 +2078,312 @@ Set<String> _snapStagePackages(String snapcraft) {
     r'^      - ([^\s]+)$',
     multiLine: true,
   ).allMatches(match!.group(1)!).map((entry) => entry.group(1)!).toSet();
+}
+
+void _writeFixtureFile(String path, String contents) {
+  final file = File(path)..createSync(recursive: true);
+  file.writeAsStringSync(contents);
+}
+
+void _writeFixtureExecutable(String path, String contents) {
+  _writeFixtureFile(path, contents);
+  final chmod = Process.runSync('chmod', ['+x', path]);
+  expect(chmod.exitCode, 0, reason: '$path: ${chmod.stderr}');
+}
+
+void _verifyLocalFontRepack({required bool linkedScaffold}) {
+  final fixture = Directory.systemTemp.createTempSync('busymark-repack-font-');
+  try {
+    final project = '${fixture.path}/project';
+    final scaffold = '${fixture.path}/scaffold';
+    final root = '${fixture.path}/root';
+    final tools = '$project/tools';
+    final stubBin = '${fixture.path}/stub-bin';
+    final flutterSdk = '${fixture.path}/flutter-sdk';
+    final fontDir = '$scaffold/share/busymark/fonts';
+    final stagedFont =
+        '$scaffold/usr/share/fonts/truetype/noto/NotoSans-Regular.ttf';
+    Directory(tools).createSync(recursive: true);
+    File(
+      'tools/build_install_snap_local.sh',
+    ).copySync('$tools/build_install_snap_local.sh');
+    _writeFixtureFile(
+      '$project/pubspec.yaml',
+      'name: busymark\nversion: 0.5.1\nenvironment:\n  flutter: 3.47.5\n',
+    );
+    _writeFixtureFile(
+      '$project/snap/snapcraft.yaml',
+      'name: busymark\nicon: icon.svg\napps:\n  busymark:\n    plugs:\n      - home\n',
+    );
+    _writeFixtureFile('$project/icon.svg', '<svg/>\n');
+    _writeFixtureFile(
+      '$project/linux/CMakeLists.txt',
+      'set(BINARY_NAME "busymark")\nset(APPLICATION_ID "io.busystack.busymark")\n',
+    );
+    _writeFixtureFile(
+      '$project/linux/io.busystack.busymark.desktop',
+      '[Desktop Entry]\nType=Application\nName=BusyMark\nIcon=busymark\n',
+    );
+    _writeFixtureFile(
+      '$scaffold/meta/snap.yaml',
+      'name: busymark\nversion: 0.5.0\napps:\n  busymark:\n    command: busymark\n',
+    );
+    _writeFixtureFile(stagedFont, 'scaffold font bytes');
+    if (linkedScaffold) {
+      Directory('$scaffold/share/busymark').createSync(recursive: true);
+      Link(fontDir).createSync('../../usr/share/fonts/truetype/noto');
+    } else {
+      _writeFixtureFile('$fontDir/NotoSans-Regular.ttf', 'old bundle font');
+    }
+    _writeFixtureFile(
+      '$flutterSdk/bin/cache/flutter.version.json',
+      '{"frameworkVersion":"3.47.5"}\n',
+    );
+    _writeFixtureExecutable('$flutterSdk/bin/flutter', r'''#!/bin/sh
+set -eu
+case "$1" in
+  pub) exit 0 ;;
+  build)
+    bundle="$STUB_PROJECT/build/linux/x64/release/bundle"
+    mkdir -p "$bundle/share/busymark/fonts"
+    printf 'new bundle font bytes' > "$bundle/share/busymark/fonts/NotoSans-Regular.ttf"
+    printf '#!/bin/sh\nexit 0\n' > "$bundle/busymark"
+    exit 0 ;;
+esac
+exit 1
+''');
+    _writeFixtureExecutable('$stubBin/snap', r'''#!/bin/sh
+set -eu
+test "$1" = pack
+touch "${3#--filename=}"
+''');
+    _writeFixtureExecutable('$stubBin/unsquashfs', r'''#!/bin/sh
+set -eu
+case "$1" in
+  -cat) cat "$STUB_SNAP_ROOT/meta/snap.yaml" ;;
+  -ll) printf 'squashfs-root/busymark\nsquashfs-root/meta/gui/busymark.desktop\n' ;;
+esac
+''');
+    _writeFixtureExecutable('$stubBin/sudo', r'''#!/bin/sh
+printf 'unexpected installation\n' > "$STUB_INSTALL_MARKER"
+exit 1
+''');
+
+    final installMarker = '${fixture.path}/install-called';
+    final result = Process.runSync(
+      'bash',
+      [
+        '$tools/build_install_snap_local.sh',
+        '--no-install',
+        '--skip-tests',
+        '--skip-bundled-git',
+        '--scaffold',
+        scaffold,
+        '--root',
+        root,
+        '--output',
+        '${fixture.path}/local.snap',
+      ],
+      environment: {
+        ...Platform.environment,
+        'PATH': '$stubBin:${Platform.environment['PATH']}',
+        'BUSYMARK_FLUTTER_BIN': '$flutterSdk/bin/flutter',
+        'BUSYMARK_BUILD_TMP_ROOT': '${fixture.path}/build-tmp',
+        'STUB_PROJECT': project,
+        'STUB_SNAP_ROOT': root,
+        'STUB_INSTALL_MARKER': installMarker,
+      },
+    );
+    expect(
+      result.exitCode,
+      0,
+      reason: 'linked=$linkedScaffold\n${result.stdout}\n${result.stderr}',
+    );
+    expect(File('${fixture.path}/local.snap').existsSync(), isTrue);
+    expect(Link('$root/share/busymark/fonts').existsSync(), isFalse);
+    expect(
+      File(
+        '$root/share/busymark/fonts/NotoSans-Regular.ttf',
+      ).readAsStringSync(),
+      'new bundle font bytes',
+    );
+    expect(
+      File(
+        '$root/usr/share/fonts/truetype/noto/NotoSans-Regular.ttf',
+      ).readAsStringSync(),
+      'scaffold font bytes',
+    );
+    expect(File(stagedFont).readAsStringSync(), 'scaffold font bytes');
+    expect(File(installMarker).existsSync(), isFalse);
+  } finally {
+    fixture.deleteSync(recursive: true);
+  }
+}
+
+String _sharedRuntimeValidationBody() {
+  final workflow = File(
+    '.github/workflows/flutter-linux.yml',
+  ).readAsStringSync();
+  const step =
+      '      - name: Verify shared runtimes, packaged tools, media, and resources';
+  final stepAt = workflow.indexOf(step);
+  expect(stepAt, greaterThanOrEqualTo(0));
+  final bodyAt =
+      workflow.indexOf('        run: |\n', stepAt) + '        run: |\n'.length;
+  final nextStepAt = workflow.indexOf('\n      - name:', bodyAt);
+  expect(nextStepAt, greaterThan(bodyAt));
+  return workflow
+      .substring(bodyAt, nextStepAt)
+      .split('\n')
+      .map((line) {
+        return line.startsWith('          ') ? line.substring(10) : line;
+      })
+      .join('\n');
+}
+
+ProcessResult _runSharedRuntimeValidation(String mode, String shell) {
+  final fixture = Directory.systemTemp.createTempSync(
+    'busymark-runtime-check-',
+  );
+  try {
+    final snap = '${fixture.path}/snap';
+    final gnome = '${fixture.path}/gnome';
+    final triplet = 'x86_64-linux-gnu';
+    final graphics = '$snap/gpu-2404/usr/lib/$triplet';
+    final providerPlugins = '$gnome/usr/lib/$triplet/gstreamer-1.0';
+    final privatePlugins = '$snap/usr/lib/$triplet/gstreamer-1.0';
+    final stubBin = '${fixture.path}/bin';
+    for (final path in [
+      '$snap/busymark',
+      '$snap/usr/lib/git-core/git-remote-http',
+      '$snap/usr/share/fonts/truetype/noto/NotoSans-Regular.ttf',
+      '$snap/usr/share/doc/fonts-noto-core/copyright',
+      '$snap/usr/share/doc/fonts-noto-mono/copyright',
+    ]) {
+      _writeFixtureFile(path, 'fixture');
+    }
+    for (final library in [
+      'libX11.so.6',
+      'libXdamage.so.1',
+      'libXext.so.6',
+      'libXfixes.so.3',
+      'libxcb-shm.so.0',
+      'libxcb.so.1',
+      'libwayland-client.so.0',
+      'libwayland-cursor.so.0',
+      'libwayland-egl.so.1',
+    ]) {
+      _writeFixtureFile('$graphics/$library', 'fixture');
+    }
+    for (final library in [
+      'libhandy-1.so.0',
+      'libsecret-1.so.0',
+      'libwebkit2gtk-4.1.so.0',
+      'libgtk-3.so.0',
+      'libglib-2.0.so.0',
+      'libpango-1.0.so.0',
+    ]) {
+      _writeFixtureFile('$gnome/usr/lib/$triplet/$library', 'fixture');
+    }
+    _writeFixtureFile('$snap/usr/lib/$triplet/libcurl-gnutls.so.4', 'fixture');
+    for (final helper in [
+      'WebKitWebProcess',
+      'WebKitNetworkProcess',
+      'WebKitGPUProcess',
+    ]) {
+      _writeFixtureExecutable(
+        '$gnome/usr/lib/$triplet/webkit2gtk-4.1/$helper',
+        '#!/bin/sh\n',
+      );
+    }
+    for (final plugin in [
+      'libgstavi.so',
+      'libgstisomp4.so',
+      'libgstmatroska.so',
+      'libgstogg.so',
+      'libgsttheora.so',
+      'libgstvpx.so',
+    ]) {
+      _writeFixtureFile('$providerPlugins/$plugin', 'fixture');
+    }
+    for (final plugin in [
+      'libgstlibav.so',
+      'libgstvideoparsersbad.so',
+      'libgstmpeg2dec.so',
+    ]) {
+      _writeFixtureFile('$privatePlugins/$plugin', 'fixture');
+    }
+    Directory('$snap/share/busymark').createSync(recursive: true);
+    Link(
+      '$snap/share/busymark/fonts',
+    ).createSync('../../usr/share/fonts/truetype/noto');
+    for (final kind in ['themes', 'icons']) {
+      for (final name in ['Yaru', 'Yaru-dark']) {
+        Directory('$snap/usr/share/$kind/$name').createSync(recursive: true);
+        Directory('$snap/share/$kind').createSync(recursive: true);
+        Link(
+          '$snap/share/$kind/$name',
+        ).createSync('../../usr/share/$kind/$name');
+      }
+    }
+    _writeFixtureExecutable('$stubBin/snap', r'''#!/bin/sh
+set -eu
+test "$1" = run
+test "$2" = --shell
+test "$4" = -c
+exec "$STUB_INSPECTION_SHELL" -c "$5"
+''');
+    _writeFixtureExecutable('$stubBin/ldd', r'''#!/bin/sh
+set -eu
+object="$1"
+if [ "$STUB_LDD_MODE" = inspection-error ] && [ "$object" = "$SNAP/busymark" ]; then
+  printf 'inspection crashed\n'
+  exit 7
+fi
+if [ "$object" = "$SNAP/busymark" ]; then
+  for library in libhandy-1.so.0 libsecret-1.so.0 libwebkit2gtk-4.1.so.0 libgtk-3.so.0 libglib-2.0.so.0 libpango-1.0.so.0; do
+    path="$SNAP_DESKTOP_RUNTIME/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET/$library"
+    if [ "$STUB_LDD_MODE" = wrong-gnome ] && [ "$library" = libgtk-3.so.0 ]; then path="/unexpected/$library"; fi
+    printf '%s => %s (0x1234)\n' "$library" "$path"
+  done
+  for library in libX11.so.6 libXdamage.so.1 libXext.so.6 libXfixes.so.3 libxcb-shm.so.0 libxcb.so.1 libwayland-client.so.0 libwayland-cursor.so.0 libwayland-egl.so.1; do
+    path="$SNAP/gpu-2404/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET/$library"
+    if [ "$STUB_LDD_MODE" = wrong-mesa ] && [ "$library" = libX11.so.6 ]; then path="/unexpected/$library"; fi
+    printf '%s => %s (0x1234)\n' "$library" "$path"
+  done
+  if [ "$STUB_LDD_MODE" = missing-zero ]; then printf 'libmissing.so.1 => not found\n'; fi
+elif [ "$object" = "$SNAP/usr/lib/git-core/git-remote-http" ]; then
+  path="$SNAP/usr/lib/git-core/../$SNAP_LAUNCHER_ARCH_TRIPLET/libcurl-gnutls.so.4"
+  if [ "$STUB_LDD_MODE" = wrong-curl ]; then path=/unexpected/libcurl-gnutls.so.4; fi
+  printf 'libcurl-gnutls.so.4 => %s (0x1234)\n' "$path"
+else
+  printf 'libgstreamer-1.0.so.0 => %s/usr/lib/%s/libgstreamer-1.0.so.0 (0x1234)\n' "$SNAP_DESKTOP_RUNTIME" "$SNAP_LAUNCHER_ARCH_TRIPLET"
+fi
+''');
+    _writeFixtureExecutable(
+      '$snap/usr/bin/git',
+      '#!/bin/sh\nprintf "%s\\n" "\$GIT_EXEC_PATH"\n',
+    );
+    _writeFixtureExecutable(
+      '$snap/usr/bin/ssh',
+      '#!/bin/sh\nprintf "OpenSSH fixture\\n" >&2\n',
+    );
+    _writeFixtureExecutable('$snap/usr/bin/setsid', '#!/bin/sh\n');
+    final result = Process.runSync(
+      'bash',
+      ['-c', _sharedRuntimeValidationBody()],
+      environment: {
+        ...Platform.environment,
+        'PATH': '$stubBin:${Platform.environment['PATH']}',
+        'SNAP': snap,
+        'SNAP_DESKTOP_RUNTIME': gnome,
+        'SNAP_LAUNCHER_ARCH_TRIPLET': triplet,
+        'STUB_LDD_MODE': mode,
+        'STUB_INSPECTION_SHELL': shell,
+      },
+    );
+    return result;
+  } finally {
+    fixture.deleteSync(recursive: true);
+  }
 }
