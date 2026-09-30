@@ -55,6 +55,52 @@ void main() {
     expect(words, ['helo', 'café', 'don’t', 'state-of-the-art']);
   });
 
+  test('keeps touching Thai word boundaries separate', () {
+    const prose = 'ภาษาไทยภาษาไทย';
+    final ranges = dictionary.tokenize(prose, language: 'th-TH');
+    final utf16 = nativeUtf8BoundaryToUtf16(prose);
+    expect(
+      [
+        for (final range in ranges)
+          prose.substring(utf16[range.utf8Start], utf16[range.utf8End]),
+      ],
+      ['ภาษา', 'ไทย', 'ภาษา', 'ไทย'],
+    );
+    dictionary.add('ภาษา');
+    dictionary.add('ไทย');
+    for (final range in ranges) {
+      expect(
+        dictionary.check(
+          prose.substring(utf16[range.utf8Start], utf16[range.utf8End]),
+        ),
+        NativeSpellResult.accepted,
+      );
+    }
+  });
+
+  test('rejects initial and embedded NUL at every string boundary', () {
+    for (final value in ['\u0000hello', 'hello\u0000wrld']) {
+      expect(
+        () => dictionary.check(value),
+        throwsA(isA<NativeSpellException>()),
+      );
+      expect(
+        () => dictionary.suggest(value),
+        throwsA(isA<NativeSpellException>()),
+      );
+      expect(() => dictionary.add(value), throwsA(isA<NativeSpellException>()));
+      expect(
+        () => dictionary.tokenize(value, language: 'en-US'),
+        throwsA(isA<NativeSpellException>()),
+      );
+      expect(
+        () => dictionary.tokenize('hello', language: value),
+        throwsA(isA<NativeSpellException>()),
+      );
+    }
+    expect(dictionary.check('hello'), NativeSpellResult.accepted);
+  });
+
   test('dictionary word characters do not absorb quotation punctuation', () {
     const prose =
         "C++ C# +lead trail# -dash dash- 'quoted' ‘curly’ -hyphen- "

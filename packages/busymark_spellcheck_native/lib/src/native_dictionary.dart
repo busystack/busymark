@@ -95,6 +95,7 @@ final class NativeSpellDictionary {
 
   NativeSpellResult check(String word) {
     _requireOpen();
+    _rejectEmbeddedNul(word);
     final nativeWord = word.toNativeUtf8();
     final outError = calloc<ffi.Pointer<ffi.Char>>();
     try {
@@ -119,6 +120,7 @@ final class NativeSpellDictionary {
 
   List<String> suggest(String word) {
     _requireOpen();
+    _rejectEmbeddedNul(word);
     final nativeWord = word.toNativeUtf8();
     final outItems = calloc<ffi.Pointer<ffi.Pointer<ffi.Char>>>();
     final outCount = calloc<ffi.Size>();
@@ -153,6 +155,7 @@ final class NativeSpellDictionary {
 
   void add(String word) {
     _requireOpen();
+    _rejectEmbeddedNul(word);
     final nativeWord = word.toNativeUtf8();
     final outError = calloc<ffi.Pointer<ffi.Char>>();
     try {
@@ -173,6 +176,8 @@ final class NativeSpellDictionary {
 
   List<NativeWordRange> tokenize(String prose, {required String language}) {
     _requireOpen();
+    _rejectEmbeddedNul(prose);
+    _rejectEmbeddedNul(language);
     final nativeProse = prose.toNativeUtf8();
     final nativeLanguage = language.toNativeUtf8();
     final outRanges = calloc<ffi.Pointer<bindings.BusySpellTokenRange>>();
@@ -236,6 +241,12 @@ final class NativeSpellDictionary {
     if (outError.value == ffi.nullptr) return;
     bindings.busy_spell_free_string(outError.value);
     outError.value = ffi.nullptr;
+  }
+}
+
+void _rejectEmbeddedNul(String value) {
+  if (value.contains('\u0000')) {
+    throw const NativeSpellException('Input contains an embedded NUL.');
   }
 }
 

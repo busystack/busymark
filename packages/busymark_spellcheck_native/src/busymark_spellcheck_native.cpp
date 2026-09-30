@@ -597,7 +597,7 @@ int busy_spell_tokenize(BusySpellHandle* handle,
     std::vector<Candidate> merged;
     for (const auto candidate : candidates) {
       if (!merged.empty() &&
-          (candidate.start <= merged.back().end ||
+          (candidate.start < merged.back().end ||
            separator_can_join(handle, prose_utf8, offsets, merged.back().end,
                               candidate.start))) {
         merged.back().end = std::max(merged.back().end, candidate.end);
