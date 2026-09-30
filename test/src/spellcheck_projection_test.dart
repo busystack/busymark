@@ -34,6 +34,69 @@ SpellingOccurrence _rejected(SpellingProseRun run, String word) {
   );
 }
 
+void _expectCodeFenceBeforeWrld(String source, List<String> codeWords) {
+  final parsed = const MarkdownParser().parse(
+    filePath: '/tmp/fence-continuation.md',
+    source: source,
+    mode: MarkdownMode.commonMark,
+  );
+  Iterable<BusyBlock> blocks(Iterable<BusyBlock> roots) sync* {
+    for (final block in roots) {
+      yield block;
+      yield* blocks(block.children);
+    }
+  }
+
+  final structured = blocks(parsed.busyDocument.blocks).toList();
+  expect(
+    structured.any(
+      (block) =>
+          block.kind == BusyBlockKind.codeBlock &&
+          codeWords.every(block.plainText.contains),
+    ),
+    isTrue,
+    reason: source,
+  );
+  expect(
+    structured.any(
+      (block) =>
+          block.kind == BusyBlockKind.paragraph &&
+          block.plainText.contains('wrld'),
+    ),
+    isTrue,
+    reason: source,
+  );
+
+  final projected = const MarkdownSpellingProjector().project(
+    filePath: '/tmp/fence-continuation.md',
+    source: source,
+    mode: MarkdownMode.commonMark,
+    languageId: 'en-Test',
+    snapshot: _snapshot,
+  );
+  expect(projected.complete, isTrue, reason: source);
+  expect(projected.runs.every((run) => run.hasValidMapping), isTrue);
+  final visible = projected.runs.map((run) => run.text).join(' ');
+  expect(visible, contains('wrld'), reason: source);
+  for (final word in codeWords) {
+    expect(visible, isNot(contains(word)), reason: source);
+  }
+  final occurrence = _rejected(
+    projected.runs.firstWhere((run) => run.text.contains('wrld')),
+    'wrld',
+  );
+  expect(
+    source.substring(occurrence.sourceStart!, occurrence.sourceEnd!),
+    'wrld',
+  );
+  expect(
+    const SpellingReplacementPlanner()
+        .build(occurrence: occurrence, suggestion: 'world')
+        .applyToSource(source),
+    source.replaceFirst('wrld', 'world'),
+  );
+}
+
 void main() {
   test(
     'different live prose still reports incomplete instead of guessed mapping',
@@ -971,6 +1034,47 @@ Visiblee prose.
           mixed.replaceFirst('wrld', 'world'),
         );
       }
+    });
+
+    test('keeps quoted list fences across blank continuations', () {
+      for (final blank in ['>', '>  ']) {
+        final source =
+            '> - ```\n>   code\n$blank\n>   more\n>   ```\n>\n>   wrld\n';
+        _expectCodeFenceBeforeWrld(source, ['code', 'more']);
+      }
+    });
+
+    test('counts tab columns in list fence continuations', () {
+      const tabbed = '- ```\n\tcode\n  ```\n\n  wrld\n';
+      const spaces = '- ```\n    code\n  ```\n\n  wrld\n';
+      const quoted = '> - ```\n> \tcode\n>   ```\n>\n>   wrld\n';
+      const indentedFence = '- ```\n\t\t```\n  more\n  ```\n\n  wrld\n';
+      expect(tabbed.codeUnitAt(tabbed.indexOf('\n') + 1), 0x09);
+      expect(quoted.codeUnitAt(quoted.indexOf('\n') + 3), 0x09);
+      for (final source in [tabbed, spaces, quoted]) {
+        _expectCodeFenceBeforeWrld(source, ['code']);
+      }
+      _expectCodeFenceBeforeWrld(indentedFence, ['more']);
+      const insufficient = '- > ```\n  code\n\nwrld\n';
+      final parsed = const MarkdownParser().parse(
+        filePath: '/tmp/insufficient-list-indent.md',
+        source: insufficient,
+        mode: MarkdownMode.commonMark,
+      );
+      expect(parsed.busyDocument.blocks.first.plainText.trim(), 'code');
+      expect(parsed.busyDocument.blocks.last.plainText, 'wrld');
+      final projected = const MarkdownSpellingProjector().project(
+        filePath: '/tmp/insufficient-list-indent.md',
+        source: insufficient,
+        mode: MarkdownMode.commonMark,
+        languageId: 'en-Test',
+        snapshot: _snapshot,
+      );
+      expect(projected.complete, isTrue);
+      expect(projected.runs.every((run) => run.hasValidMapping), isTrue);
+      final visible = projected.runs.map((run) => run.text).join(' ');
+      expect(visible, contains('code'));
+      expect(visible, contains('wrld'));
     });
 
     test('keeps unmatched delimiters and removes only parsed formatting', () {

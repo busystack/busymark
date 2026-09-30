@@ -422,12 +422,31 @@ List<_SourceInterval> _fencedCodeSpans(String source, List<BusyBlock> blocks) {
   final quotePrefix = RegExp(r'^ {0,3}>[ \t]?');
   final listPrefix = RegExp(r'^ {0,3}(?:[-+*]|\d+[.)])[ \t]+');
 
+  String expandTabsForFenceScan(String line) {
+    final expanded = StringBuffer();
+    var column = 0;
+    for (final unit in line.codeUnits) {
+      if (unit == 0x09) {
+        final spaces = 4 - column % 4;
+        for (var index = 0; index < spaces; index++) {
+          expanded.write(' ');
+        }
+        column += spaces;
+      } else {
+        expanded.writeCharCode(unit);
+        column++;
+      }
+    }
+    return expanded.toString();
+  }
+
   String? consumePrefixes(
     String line,
     List<({bool quote, int width})> prefixes,
   ) {
     var remaining = line;
-    for (final prefix in prefixes) {
+    for (var index = 0; index < prefixes.length; index++) {
+      final prefix = prefixes[index];
       if (prefix.quote) {
         final match = quotePrefix.firstMatch(remaining);
         if (match == null) return null;
@@ -437,6 +456,12 @@ List<_SourceInterval> _fencedCodeSpans(String source, List<BusyBlock> blocks) {
             !RegExp(
               r'^[ \t]*$',
             ).hasMatch(remaining.substring(0, prefix.width))) {
+          // A blank line may omit the list's content indentation. A quote
+          // deeper in the container route still needs its own marker.
+          if (remaining.trim().isEmpty &&
+              !prefixes.skip(index + 1).any((next) => next.quote)) {
+            return '';
+          }
           return null;
         }
         remaining = remaining.substring(prefix.width);
@@ -454,13 +479,15 @@ List<_SourceInterval> _fencedCodeSpans(String source, List<BusyBlock> blocks) {
     var line = rawLine;
     if (line.endsWith('\n')) line = line.substring(0, line.length - 1);
     if (line.endsWith('\r')) line = line.substring(0, line.length - 1);
+    // Expand only for fence classification; interval offsets remain in source.
+    final candidateLine = expandTabsForFenceScan(line);
     final activeFence = openFence;
     if (activeFence != null) {
-      final content = consumePrefixes(line, activePrefixes);
-      if (content == null && line.trim().isNotEmpty) {
+      final content = consumePrefixes(candidateLine, activePrefixes);
+      if (content == null) {
         spans.add(_SourceInterval(fenceStart, offset));
         openFence = null;
-      } else if (content != null && activeFence.closes(content)) {
+      } else if (activeFence.closes(content)) {
         spans.add(
           _SourceInterval(
             fenceStart,
@@ -476,7 +503,7 @@ List<_SourceInterval> _fencedCodeSpans(String source, List<BusyBlock> blocks) {
       }
     }
     if (openFence == null) {
-      var openingCandidate = line;
+      var openingCandidate = candidateLine;
       final openingPrefixes = <({bool quote, int width})>[];
       while (true) {
         final quote = quotePrefix.firstMatch(openingCandidate);
