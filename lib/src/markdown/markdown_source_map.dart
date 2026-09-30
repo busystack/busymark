@@ -197,6 +197,43 @@ class _SourceMappingLinkSyntax extends md.LinkSyntax {
   }
 }
 
+class _SourceMappingImageSyntax extends md.ImageSyntax {
+  @override
+  Iterable<md.Node>? close(
+    md.InlineParser parser,
+    covariant md.SimpleDelimiter opener,
+    md.Delimiter? closer, {
+    String? tag,
+    required List<md.Node> Function() getChildren,
+  }) {
+    final labelEnd = parser.pos;
+    final result = super.close(
+      parser,
+      opener,
+      closer,
+      tag: tag,
+      getChildren: getChildren,
+    );
+    if (result == null) return null;
+    final nodes = result.toList(growable: false);
+    final isReference =
+        labelEnd + 1 >= parser.source.length ||
+        parser.source.codeUnitAt(labelEnd + 1) != 0x28;
+    for (final node in nodes.whereType<md.Element>()) {
+      if (node.tag != 'img') continue;
+      _setSourceMappingAttributes(
+        node,
+        start: opener.endPos - 2,
+        end: parser.pos + 1,
+        labelStart: opener.endPos,
+        labelEnd: labelEnd,
+        isReference: isReference,
+      );
+    }
+    return nodes;
+  }
+}
+
 class _SourceMappingAutolinkSyntax extends md.InlineSyntax {
   _SourceMappingAutolinkSyntax()
     : super(r'<(([a-zA-Z][a-zA-Z\-\+\.]+):(?://)?[^\s>]*)>');
@@ -318,6 +355,7 @@ List<md.InlineSyntax> _sourceMappingInlineSyntaxes(
     _SourceMappingCodeSyntax(),
     emailSyntax,
     _SourceMappingAutolinkSyntax(),
+    _SourceMappingImageSyntax(),
     _SourceMappingLinkSyntax(),
     _SourceMappingDelimiterSyntax.asterisk(),
     _SourceMappingDelimiterSyntax.underscore(),

@@ -372,7 +372,14 @@ void main() {
 
     test('keeps literal trailing braces in paragraph and heading prose', () {
       for (final mode in MarkdownMode.values) {
-        for (final source in ['Use {wrld}', '# Use {wrld}']) {
+        for (final source in [
+          'Use {wrld}',
+          '# Use {wrld}',
+          '# Use {*wrld*}',
+          '# Use {**wrld**}',
+          '# Use {w&#114;ld}',
+          '# Use {id="anchor"} {wrld}',
+        ]) {
           final result = const MarkdownSpellingProjector().project(
             filePath: '/tmp/braces.md',
             source: source,
@@ -388,6 +395,50 @@ void main() {
           final occurrence = _rejected(run, 'wrld');
           expect(
             source.substring(occurrence.sourceStart!, occurrence.sourceEnd!),
+            source.contains('&#114;') ? 'w&#114;ld' : 'wrld',
+          );
+          expect(
+            const SpellingReplacementPlanner()
+                .build(occurrence: occurrence, suggestion: 'world')
+                .applyToSource(source),
+            source.contains('&#114;')
+                ? '# Use {world}'
+                : source.replaceFirst('wrld', 'world'),
+          );
+        }
+      }
+    });
+
+    test('binds recognized images to their exact source occurrence', () {
+      for (final (revision, source) in [
+        '![helo][wrld] ![helo](image.png)',
+        '![helo](image.png) ![helo][wrld]',
+        '![**helo**](diagrm.png)',
+        '![w&#114;ld](diagrm.png)',
+        '![helo][wrld] ![helo](image.png)\n\n[wrld]: /diagram.png',
+        '![helo][wrld] ![helo](image.png)',
+      ].indexed) {
+        final result = const MarkdownSpellingProjector().project(
+          filePath: '/tmp/images.md',
+          source: source,
+          mode: MarkdownMode.commonMark,
+          languageId: 'en-Test',
+          snapshot: SpellingSnapshotIdentity(
+            bufferId: 'image-revisions',
+            contentRevision: revision,
+            documentKind: DocumentKind.markdown,
+            contextGeneration: 1,
+          ),
+        );
+        expect(result.complete, isTrue, reason: source);
+        expect(result.runs.every((run) => run.hasValidMapping), isTrue);
+        final all = result.runs.map((run) => run.text).join(' ');
+        expect(all, isNot(contains('diagrm.png')), reason: source);
+        expect(all, isNot(contains('image.png')), reason: source);
+        if (source.contains('[wrld]') && !source.contains('[wrld]:')) {
+          expect(all, contains('wrld'), reason: source);
+          final occurrence = _rejected(
+            result.runs.firstWhere((run) => run.text.contains('wrld')),
             'wrld',
           );
           expect(
@@ -395,6 +446,35 @@ void main() {
                 .build(occurrence: occurrence, suggestion: 'world')
                 .applyToSource(source),
             source.replaceFirst('wrld', 'world'),
+          );
+        }
+        if (source.contains('[wrld]:')) {
+          expect(all, isNot(contains('wrld')), reason: source);
+        }
+        if (source.contains('**helo**')) {
+          expect(all, contains('helo'));
+          final occurrence = _rejected(
+            result.runs.firstWhere((run) => run.text.contains('helo')),
+            'helo',
+          );
+          expect(
+            const SpellingReplacementPlanner()
+                .build(occurrence: occurrence, suggestion: 'hello')
+                .applyToSource(source),
+            '![**hello**](diagrm.png)',
+          );
+        }
+        if (source.contains('&#114;')) {
+          expect(all, contains('wrld'));
+          final occurrence = _rejected(
+            result.runs.firstWhere((run) => run.text.contains('wrld')),
+            'wrld',
+          );
+          expect(
+            const SpellingReplacementPlanner()
+                .build(occurrence: occurrence, suggestion: 'world')
+                .applyToSource(source),
+            '![world](diagrm.png)',
           );
         }
       }
@@ -661,9 +741,68 @@ Visiblee prose.
       expect(result.complete, isTrue, reason: result.message);
       expect(all, contains('Visiblee prose.'));
       expect(all, isNot(contains('record Document')));
+      for (final quoted in [
+        '> ```\n> code\n> ```\n>\n> wrld\n',
+        '> > ```\n> > code\n>\n> wrld\n',
+      ]) {
+        final parsed = const MarkdownParser().parse(
+          filePath: '/tmp/quoted-code.md',
+          source: quoted,
+          mode: MarkdownMode.commonMark,
+        );
+        expect(parsed.busyDocument.blocks.first.kind, BusyBlockKind.blockquote);
+        final outer = parsed.busyDocument.blocks.first;
+        if (quoted.startsWith('> >')) {
+          expect(outer.children.first.kind, BusyBlockKind.blockquote);
+          expect(
+            outer.children.first.children.any(
+              (child) => child.kind == BusyBlockKind.codeBlock,
+            ),
+            isTrue,
+          );
+        } else {
+          expect(
+            outer.children.any(
+              (child) => child.kind == BusyBlockKind.codeBlock,
+            ),
+            isTrue,
+          );
+        }
+        expect(
+          outer.children.any(
+            (child) =>
+                child.kind == BusyBlockKind.paragraph &&
+                child.plainText == 'wrld',
+          ),
+          isTrue,
+        );
+        final projected = const MarkdownSpellingProjector().project(
+          filePath: '/tmp/quoted-code.md',
+          source: quoted,
+          mode: MarkdownMode.commonMark,
+          languageId: 'en-Test',
+          snapshot: _snapshot,
+        );
+        expect(projected.complete, isTrue, reason: quoted);
+        expect(projected.runs.every((run) => run.hasValidMapping), isTrue);
+        final visible = projected.runs.map((run) => run.text).join(' ');
+        expect(visible, contains('wrld'), reason: quoted);
+        expect(visible, isNot(contains('code')), reason: quoted);
+        final occurrence = _rejected(
+          projected.runs.firstWhere((run) => run.text.contains('wrld')),
+          'wrld',
+        );
+        expect(
+          const SpellingReplacementPlanner()
+              .build(occurrence: occurrence, suggestion: 'world')
+              .applyToSource(quoted),
+          quoted.replaceFirst('wrld', 'world'),
+        );
+      }
       for (final unclosed in [
         '> ```\n> code\n\nwrld\n',
         '> > ```\n> > code\n\nwrld\n',
+        '> - ```\n>   code\n>\n> wrld\n',
         '- ```\n  code\n\nwrld\n',
         '- > ```\n  > code\n\nwrld\n',
       ]) {

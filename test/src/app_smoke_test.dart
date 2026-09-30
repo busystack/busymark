@@ -14254,6 +14254,19 @@ Future<_SettingsSpellingHarness> _pumpSettingsSpellingHarness(
         startupPathProvider.overrideWithValue(workspace!.rootPath),
     ],
   );
+  final preparedWorkspace = workspace;
+  if (preparedWorkspace != null) {
+    await tester.runAsync(
+      () => container
+          .read(workspaceControllerProvider.notifier)
+          .openPath(preparedWorkspace.rootPath),
+    );
+    expect(
+      container.read(workspaceControllerProvider).workspace?.rootPath,
+      preparedWorkspace.rootPath,
+    );
+  }
+  container.read(appRouterProvider).go('/settings?page=editor');
   await tester.pumpWidget(
     UncontrolledProviderScope(container: container, child: const BusyMarkApp()),
   );
@@ -14268,6 +14281,12 @@ Future<_SettingsSpellingHarness> _pumpSettingsSpellingHarness(
   }
   final l10n = AppLocalizationsEn();
   await _pumpUntilFound(tester, find.byTooltip(l10n.defaultSpellingLanguage));
+  if (preparedWorkspace != null) {
+    expect(
+      container.read(workspaceControllerProvider).workspace?.rootPath,
+      preparedWorkspace.rootPath,
+    );
+  }
 
   return _SettingsSpellingHarness(
     temporary: temporary,

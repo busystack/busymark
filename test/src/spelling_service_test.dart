@@ -6,6 +6,7 @@ import 'package:busymark/l10n/generated/app_localizations.dart';
 import 'package:busymark/l10n/generated/app_localizations_en.dart';
 import 'package:busymark/src/app/app_settings.dart';
 import 'package:busymark/src/app/app_router.dart';
+import 'package:busymark/src/app/busymark_design.dart';
 import 'package:busymark/src/app/busymark_toast.dart';
 import 'package:busymark/src/core/atomic_file_writer.dart';
 import 'package:busymark/src/platform/header_bar_configuration.dart';
@@ -2275,6 +2276,131 @@ void main() {
     expect((await store.read()).wordsFor('en-Test'), isEmpty);
   });
 
+  test(
+    'refresh begun during a personal mutation cannot undo its result',
+    () async {
+      for (final removing in [true, false]) {
+        final temporary = await Directory.systemTemp.createTemp(
+          'busymark-personal-overlap-',
+        );
+        addTearDown(() => temporary.delete(recursive: true));
+        final bundle = await _createFixtureBundle(temporary);
+        final support = p.join(temporary.path, 'support');
+        final store = SpellingWordStore(
+          filePath: p.join(support, 'spelling', 'personal.json'),
+        );
+        if (removing) await store.addWord('en-Test', 'BusyBrand');
+        final writer = _GatedSpellingAtomicFileWriter();
+        final readRelease = Completer<void>();
+        final readEntered = Completer<void>();
+        var holdRead = false;
+        final controller = SpellingSessionController(
+          bundledRoot: bundle,
+          applicationSupportRoot: support,
+          dictionaryStorageRoot: p.join(temporary.path, 'dictionary-storage'),
+          verifyDictionaryChecksums: false,
+          wordStoreFactory: ({required filePath, required projectStore}) =>
+              SpellingWordStore(
+                filePath: filePath,
+                projectStore: projectStore,
+                writer: writer,
+              ),
+          wordStoreReader: (candidate) async {
+            final snapshot = await candidate.read();
+            if (holdRead && !candidate.projectStore) {
+              readEntered.complete();
+              await readRelease.future;
+            }
+            return snapshot;
+          },
+        );
+        addTearDown(controller.dispose);
+        final input = _sessionInput(
+          id: 'overlap',
+          root: temporary.path,
+          text: 'BusyBrand',
+          settings: AppSettings.defaults().copyWith(
+            defaultSpellingLanguage: 'en-Test',
+          ),
+        );
+        await controller.checkNow(input);
+        expect(controller.misspellings.isEmpty, removing);
+        writer.holdNextWrite();
+        final mutation = removing
+            ? controller.removePersonalWord('en-Test', 'BusyBrand')
+            : controller.addPersonalWord(controller.misspellings.single);
+        await writer.entered.future;
+        holdRead = true;
+        final refresh = controller.prepareSettings(null);
+        await readEntered.future;
+        holdRead = false;
+        writer.release.complete();
+        await mutation;
+        readRelease.complete();
+        await refresh;
+        expect(controller.personalWords.wordsFor('en-Test').isEmpty, removing);
+        expect((await store.read()).wordsFor('en-Test').isEmpty, removing);
+        await controller.checkNow(input);
+        expect(controller.misspellings.isEmpty, !removing);
+      }
+    },
+  );
+
+  test(
+    'an older personal refresh cannot replace a newer publication',
+    () async {
+      final temporary = await Directory.systemTemp.createTemp(
+        'busymark-personal-refresh-order-',
+      );
+      addTearDown(() => temporary.delete(recursive: true));
+      final bundle = await _createFixtureBundle(temporary);
+      final support = p.join(temporary.path, 'support');
+      final store = SpellingWordStore(
+        filePath: p.join(support, 'spelling', 'personal.json'),
+      );
+      final firstRelease = Completer<void>();
+      final firstEntered = Completer<void>();
+      var refreshReads = 0;
+      var trackRefresh = false;
+      final controller = SpellingSessionController(
+        bundledRoot: bundle,
+        applicationSupportRoot: support,
+        dictionaryStorageRoot: p.join(temporary.path, 'dictionary-storage'),
+        verifyDictionaryChecksums: false,
+        wordStoreReader: (candidate) async {
+          final snapshot = await candidate.read();
+          if (trackRefresh && !candidate.projectStore && ++refreshReads == 1) {
+            firstEntered.complete();
+            await firstRelease.future;
+          }
+          return snapshot;
+        },
+      );
+      addTearDown(controller.dispose);
+      final input = _sessionInput(
+        id: 'refresh-order',
+        root: temporary.path,
+        text: 'BusyBrand',
+        settings: AppSettings.defaults().copyWith(
+          defaultSpellingLanguage: 'en-Test',
+        ),
+      );
+      await controller.prepareSettings(null);
+      trackRefresh = true;
+      final older = controller.prepareSettings(null);
+      await firstEntered.future;
+      await store.addWord('en-Test', 'BusyBrand');
+      await controller.prepareSettings(null);
+      expect(controller.personalWords.wordsFor('en-Test'), ['BusyBrand']);
+      firstRelease.complete();
+      await older;
+      expect(controller.personalWords.wordsFor('en-Test'), ['BusyBrand']);
+      expect((await store.read()).wordsFor('en-Test'), ['BusyBrand']);
+      await controller.checkNow(input);
+      expect(controller.misspellings, isEmpty);
+    },
+  );
+
   testWidgets('Settings holds a failed preparation until deliberate retry', (
     tester,
   ) async {
@@ -2343,6 +2469,120 @@ void main() {
       () => reads == 2 && controller.catalog != null,
     );
     expect(find.byKey(const ValueKey('retry-spelling-settings')), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('warm no-workspace Settings refreshes personal words once', (
+    tester,
+  ) async {
+    late Directory temporary;
+    late String bundle;
+    await tester.runAsync(() async {
+      temporary = await Directory.systemTemp.createTemp(
+        'busymark-settings-warm-',
+      );
+      bundle = await _createFixtureBundle(temporary);
+    });
+    addTearDown(() => temporary.delete(recursive: true));
+    final support = p.join(temporary.path, 'support');
+    var reads = 0;
+    final controller = SpellingSessionController(
+      bundledRoot: bundle,
+      applicationSupportRoot: support,
+      dictionaryStorageRoot: p.join(temporary.path, 'dictionary-storage'),
+      verifyDictionaryChecksums: false,
+      wordStoreReader: (store) {
+        if (!store.projectStore) reads++;
+        return store.read();
+      },
+    );
+    addTearDown(controller.dispose);
+    SpellingSessionController activeController = controller;
+    await tester.runAsync(() async {
+      await controller.prepareSettings(null);
+      await SpellingWordStore(
+        filePath: p.join(support, 'spelling', 'personal.json'),
+      ).addWord('en-Test', 'BusyBrand');
+    });
+    expect(reads, 1);
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          spellingSessionControllerProvider.overrideWith(
+            (ref) => activeController,
+          ),
+          localSettingsStoreProvider.overrideWithValue(
+            _SpellingMemorySettingsStore(),
+          ),
+        ],
+        child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          builder: (context, child) =>
+              _spellingSettingsHeaderDefaults(context, child!),
+          home: const SettingsScreen(
+            returnTarget: SettingsReturnTarget.welcome,
+            initialPage: SettingsPage.editor,
+          ),
+        ),
+      ),
+    );
+    for (var frame = 0; frame < 8; frame++) {
+      await tester.pump(const Duration(milliseconds: 20));
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 5)),
+      );
+    }
+    expect(reads, 2);
+    expect(controller.personalWords.wordsFor('en-Test'), ['BusyBrand']);
+    BusyMarkActionRow personalRow() => tester.widget<BusyMarkActionRow>(
+      find.ancestor(
+        of: find.text('Personal Dictionary'),
+        matching: find.byType(BusyMarkActionRow),
+      ),
+    );
+    expect(personalRow().subtitle, '1');
+    var nextReads = 0;
+    final nextController = SpellingSessionController(
+      bundledRoot: bundle,
+      applicationSupportRoot: support,
+      dictionaryStorageRoot: p.join(temporary.path, 'dictionary-storage'),
+      verifyDictionaryChecksums: false,
+      wordStoreReader: (store) {
+        if (!store.projectStore) nextReads++;
+        return store.read();
+      },
+    );
+    addTearDown(nextController.dispose);
+    await tester.runAsync(() async {
+      await nextController.prepareSettings(null);
+      await SpellingWordStore(
+        filePath: p.join(support, 'spelling', 'personal.json'),
+      ).addWord('en-Test', 'OtherBrand');
+    });
+    expect(nextReads, 1);
+    activeController = nextController;
+    ProviderScope.containerOf(
+      tester.element(find.byType(SettingsScreen)),
+    ).invalidate(spellingSessionControllerProvider);
+    await _pumpWidgetUntil(
+      tester,
+      () =>
+          nextReads == 2 &&
+          nextController.personalWords
+              .wordsFor('en-Test')
+              .contains('OtherBrand'),
+    );
+    expect(nextController.personalWords.wordsFor('en-Test'), [
+      'BusyBrand',
+      'OtherBrand',
+    ]);
+    expect(personalRow().subtitle, '2');
+    for (var frame = 0; frame < 6; frame++) {
+      await tester.pump(const Duration(milliseconds: 20));
+    }
+    expect(nextReads, 2);
+    await tester.pumpWidget(const MaterialApp(home: SizedBox()));
     expect(tester.takeException(), isNull);
   });
 
@@ -4445,6 +4685,40 @@ final class _ToggleFailAtomicFileWriter extends AtomicFileWriter {
       await File(targetPath).writeAsBytes(destinationBytes, flush: true);
       await File(recoveryPath).writeAsBytes(bytes, flush: true);
       throw AtomicFileChangedException(targetPath, recoveryPath: recoveryPath);
+    }
+    await super.writeBytes(
+      targetPath,
+      bytes,
+      overwrite: overwrite,
+      beforePublish: beforePublish,
+      acceptReplaced: acceptReplaced,
+    );
+  }
+}
+
+final class _GatedSpellingAtomicFileWriter extends AtomicFileWriter {
+  Completer<void> entered = Completer<void>();
+  Completer<void> release = Completer<void>();
+  bool _hold = false;
+
+  void holdNextWrite() {
+    entered = Completer<void>();
+    release = Completer<void>();
+    _hold = true;
+  }
+
+  @override
+  Future<void> writeBytes(
+    String targetPath,
+    List<int> bytes, {
+    required bool overwrite,
+    FutureOr<void> Function()? beforePublish,
+    FutureOr<bool> Function(String replacedPath)? acceptReplaced,
+  }) async {
+    if (_hold) {
+      _hold = false;
+      entered.complete();
+      await release.future;
     }
     await super.writeBytes(
       targetPath,

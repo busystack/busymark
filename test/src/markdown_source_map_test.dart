@@ -50,6 +50,29 @@ void main() {
     }
   });
 
+  test('image ranges identify only resolved source occurrences', () {
+    for (final source in [
+      '![helo][wrld] ![**helo**](image.png)',
+      '![**helo**](image.png) ![helo][wrld]',
+    ]) {
+      final context = mapper.createInlineParserContext(
+        documentSource: source,
+        mode: MarkdownMode.commonMark,
+      );
+      final mapped = context.parsePositionedBlocks(source).single;
+      final images = mapped.ranges.entries
+          .where((entry) => entry.key.kind == BusyInlineKind.image)
+          .toList();
+      expect(images, hasLength(1));
+      final imageStart = source.indexOf('![**helo**]');
+      final range = images.single.value;
+      expect(range.start, imageStart);
+      expect(range.end, imageStart + '![**helo**](image.png)'.length);
+      expect(range.labelStart, imageStart + 2);
+      expect(range.labelEnd, imageStart + 10);
+    }
+  });
+
   test('position records do not change HTML or link semantics', () {
     const marker = '\ue001';
     const source =

@@ -971,7 +971,11 @@ class MarkdownAstAdapter {
           kind: BusyInlineKind.image,
           text: node.attributes['alt'] ?? '',
           destination: node.attributes['src'],
-          attributes: node.attributes,
+          attributes: {
+            for (final entry in node.attributes.entries)
+              if (!entry.key.startsWith('data-busymark-source-'))
+                entry.key: entry.value,
+          },
         ),
       ],
       // Source mappings are keyed by inline identity. Each parser occurrence

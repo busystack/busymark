@@ -128,6 +128,7 @@ final class SpellingSessionController extends ChangeNotifier {
   Future<({SpellingWordStore store, SpellingWordStoreSnapshot snapshot})>?
   _personalStorageLoad;
   int _personalMutationGeneration = 0;
+  int _personalRefreshGeneration = 0;
   String? _requestedProjectRoot;
   int _projectStorageGeneration = 0;
   String _scheduledIdentity = '';
@@ -272,6 +273,7 @@ final class SpellingSessionController extends ChangeNotifier {
     }
     if (!identical(store, _personalStore)) return;
     _personalWords = updated;
+    _personalMutationGeneration++;
     await _refreshAfterPersistentChange();
   }
 
@@ -307,6 +309,7 @@ final class SpellingSessionController extends ChangeNotifier {
     }
     if (!identical(store, _personalStore)) return;
     _personalWords = updated;
+    _personalMutationGeneration++;
     await _refreshAfterPersistentChange();
   }
 
@@ -585,11 +588,16 @@ final class SpellingSessionController extends ChangeNotifier {
 
   Future<void> _reconcilePersonalStoreConflict(SpellingWordStore store) async {
     if (!identical(store, _personalStore)) return;
-    _personalMutationGeneration++;
+    final generation = ++_personalMutationGeneration;
     try {
       final actual = await wordStoreReader(store);
-      if (!identical(store, _personalStore)) return;
+      if (_disposed ||
+          !identical(store, _personalStore) ||
+          generation != _personalMutationGeneration) {
+        return;
+      }
       _personalWords = actual;
+      _personalMutationGeneration++;
       await _refreshAfterPersistentChange();
     } on Object {
       // Reconciliation is best effort; the publication conflict remains the
@@ -851,10 +859,12 @@ final class SpellingSessionController extends ChangeNotifier {
     final store = _personalStore;
     if (_disposed || store == null) return false;
     final mutationGeneration = _personalMutationGeneration;
+    final refreshGeneration = ++_personalRefreshGeneration;
     final snapshot = await wordStoreReader(store);
     if (_disposed ||
         !identical(store, _personalStore) ||
         mutationGeneration != _personalMutationGeneration ||
+        refreshGeneration != _personalRefreshGeneration ||
         _sameWordStoreSnapshot(snapshot, _personalWords)) {
       return false;
     }

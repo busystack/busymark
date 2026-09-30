@@ -61,7 +61,10 @@ final class MarkdownSpellingProjector {
           .trimRight();
       final trailing = RegExp(r'[ \t]+\{[^{}]*\}$').firstMatch(raw);
       if (trailing != null &&
-          !block.plainText.contains(raw.substring(trailing.start).trim())) {
+          _isRecognizedHeadingAttribute(
+            raw.substring(trailing.start).trim(),
+            block.attributes,
+          )) {
         recognizedAttributeSpans.add(
           _SourceInterval(
             span.startOffset + trailing.start,
@@ -112,9 +115,28 @@ final class MarkdownSpellingProjector {
       required SpellingSourceContext context,
     }) {
       final multilineHtml = multilineHtmlSpans;
-      final formattingSyntax = _formattingSyntaxSpans([
-        mapped,
-      ], sourceBase: sourceBase);
+      final imageLabels = [
+        for (final entry in mapped.ranges.entries)
+          if (entry.key.kind == BusyInlineKind.image &&
+              entry.value.labelStart != null &&
+              entry.value.labelEnd != null)
+            (
+              mapped: inlineParser.parseMapped(
+                source.substring(
+                  sourceBase + entry.value.labelStart!,
+                  sourceBase + entry.value.labelEnd!,
+                ),
+              ),
+              sourceBase: sourceBase + entry.value.labelStart!,
+            ),
+      ];
+      final formattingSyntax = <_SourceInterval>[
+        ..._formattingSyntaxSpans([mapped], sourceBase: sourceBase),
+        for (final label in imageLabels)
+          ..._formattingSyntaxSpans([
+            label.mapped,
+          ], sourceBase: label.sourceBase),
+      ];
       final opaqueSyntax = <_SourceInterval>[
         ..._opaqueSyntaxSpans([mapped], sourceBase: sourceBase),
         for (final span in excludedBlockSpans)
@@ -141,9 +163,13 @@ final class MarkdownSpellingProjector {
         stripBlockSyntax: stripBlockSyntax,
         footnoteLabels: footnoteLabels,
         formattingSyntax: formattingSyntax,
-        formattingWrappers: _formattingWrappers([
-          mapped,
-        ], sourceBase: sourceBase),
+        formattingWrappers: [
+          ..._formattingWrappers([mapped], sourceBase: sourceBase),
+          for (final label in imageLabels)
+            ..._formattingWrappers([
+              label.mapped,
+            ], sourceBase: label.sourceBase),
+        ],
         opaqueSyntax: opaqueSyntax,
         recognizedLinks: {
           for (final entry in mapped.ranges.entries)
@@ -151,7 +177,6 @@ final class MarkdownSpellingProjector {
                 entry.key.kind == BusyInlineKind.image)
               sourceBase + entry.value.start: sourceBase + entry.value.end,
         },
-        recognizedImages: parsed.images,
         recognizedAttributeSpans: recognizedAttributeSpans,
       );
       final groups =
@@ -340,13 +365,38 @@ bool _contains(SourceSpan outer, SourceSpan inner) =>
 bool _sameSpan(SourceSpan left, SourceSpan right) =>
     left.startOffset == right.startOffset && left.endOffset == right.endOffset;
 
+bool _isRecognizedHeadingAttribute(
+  String rawAttribute,
+  Map<String, String> parsedAttributes,
+) {
+  // The heading parser records recognized values in the block attributes.
+  // Tie that evidence to this exact trailing source expression: an attribute
+  // elsewhere in the heading must not hide a later literal brace expression.
+  for (final match in RegExp(
+    r'([A-Za-z_:][-A-Za-z0-9_:.]*)\s*=\s*"([^"]*)"',
+  ).allMatches(rawAttribute)) {
+    final name = match.group(1)!;
+    final value = html.parseFragment(match.group(2)!).text ?? '';
+    if (name == 'id') {
+      if (parsedAttributes['generatedId'] == 'false' &&
+          parsedAttributes['id'] == value) {
+        return true;
+      }
+    } else if (name != 'level' &&
+        name != 'generatedId' &&
+        parsedAttributes[name] == value) {
+      return true;
+    }
+  }
+  return false;
+}
+
 bool _startsExcludedBlock(String raw) {
   final trimmed = raw.trimLeft().replaceFirst(RegExp(r'^(?:>[ \t]*)+'), '');
-  return RegExp(r'^(?:```|~~~)').hasMatch(trimmed) ||
-      RegExp(
-        r'^(?:<!--|<\?xml\b|<!DOCTYPE\b)',
-        caseSensitive: false,
-      ).hasMatch(trimmed);
+  return RegExp(
+    r'^(?:<!--|<\?xml\b|<!DOCTYPE\b)',
+    caseSensitive: false,
+  ).hasMatch(trimmed);
 }
 
 List<_SourceInterval> _fencedCodeSpans(String source, List<BusyBlock> blocks) {
@@ -354,6 +404,8 @@ List<_SourceInterval> _fencedCodeSpans(String source, List<BusyBlock> blocks) {
   MarkdownFence? openFence;
   var fenceStart = 0;
   var containerEnd = source.length;
+  var quoteDepth = 0;
+  var listContentIndent = 0;
   var offset = 0;
   for (final rawLine in source.split(RegExp('(?<=\n)'))) {
     if (openFence != null && offset >= containerEnd) {
@@ -364,17 +416,39 @@ List<_SourceInterval> _fencedCodeSpans(String source, List<BusyBlock> blocks) {
     if (line.endsWith('\n')) line = line.substring(0, line.length - 1);
     if (line.endsWith('\r')) line = line.substring(0, line.length - 1);
     var candidate = line;
+    var lineQuoteDepth = 0;
     while (true) {
       final quote = RegExp(r'^ {0,3}>[ \t]?').firstMatch(candidate);
       if (quote == null) break;
       candidate = candidate.substring(quote.end);
+      lineQuoteDepth++;
+    }
+    final lineIndent = RegExp(r'^[ \t]*').firstMatch(candidate)!.end;
+    if (openFence != null &&
+        candidate.trim().isNotEmpty &&
+        (lineQuoteDepth < quoteDepth ||
+            lineQuoteDepth == quoteDepth && lineIndent < listContentIndent)) {
+      spans.add(_SourceInterval(fenceStart, offset));
+      openFence = null;
     }
     final activeFence = openFence;
     if (activeFence == null) {
-      final opening = MarkdownFence.parse(candidate);
+      var openingCandidate = candidate;
+      var openingListIndent = 0;
+      while (true) {
+        final list = RegExp(
+          r'^ {0,3}(?:[-+*]|\d+[.)])[ \t]+',
+        ).firstMatch(openingCandidate);
+        if (list == null) break;
+        openingListIndent += list.end;
+        openingCandidate = openingCandidate.substring(list.end);
+      }
+      final opening = MarkdownFence.parse(openingCandidate);
       if (opening != null) {
         openFence = opening;
         fenceStart = offset;
+        quoteDepth = lineQuoteDepth;
+        listContentIndent = openingListIndent;
         containerEnd = source.length;
         for (final block in _walkBlocks(blocks)) {
           final span = block.sourceSpan;
@@ -389,7 +463,9 @@ List<_SourceInterval> _fencedCodeSpans(String source, List<BusyBlock> blocks) {
           }
         }
       }
-    } else if (activeFence.closes(candidate)) {
+    } else if (activeFence.closes(
+      candidate.substring(math.min(listContentIndent, candidate.length)),
+    )) {
       spans.add(
         _SourceInterval(
           fenceStart,
@@ -444,7 +520,6 @@ final class _MarkdownProseScanner {
     this.formattingWrappers = const [],
     this.opaqueSyntax = const [],
     this.recognizedLinks = const {},
-    this.recognizedImages = const [],
     this.recognizedAttributeSpans = const [],
     this.footnoteLabels = const {},
   });
@@ -459,7 +534,6 @@ final class _MarkdownProseScanner {
   final List<_RawFormattingWrapper> formattingWrappers;
   final List<_SourceInterval> opaqueSyntax;
   final Map<int, int> recognizedLinks;
-  final List<MarkdownImage> recognizedImages;
   final List<_SourceInterval> recognizedAttributeSpans;
   final List<Object> _groups = [];
   StringBuffer _text = StringBuffer();
@@ -736,7 +810,7 @@ final class _MarkdownProseScanner {
       _barrier();
       return afterLabel;
     }
-    if (!image && (recognizedEnd == null || recognizedEnd > rangeEnd)) {
+    if (recognizedEnd == null || recognizedEnd > rangeEnd) {
       return null;
     }
     var syntaxEnd = afterLabel;
@@ -765,20 +839,7 @@ final class _MarkdownProseScanner {
       syntaxEnd = referenceEnd + 1;
     }
 
-    if (image) {
-      final rawDestination = source.substring(afterLabel, syntaxEnd);
-      if (!recognizedImages.any(
-        (recognized) =>
-            recognized.span.startOffset <= cursor &&
-            recognized.span.endOffset >= syntaxEnd &&
-            recognized.alt == label &&
-            (rawDestination.startsWith('[') ||
-                rawDestination.isEmpty ||
-                rawDestination.contains(recognized.destination)),
-      )) {
-        return null;
-      }
-    } else if (syntaxEnd != recognizedEnd) {
+    if (syntaxEnd != recognizedEnd) {
       return null;
     }
     if (image) _barrier();

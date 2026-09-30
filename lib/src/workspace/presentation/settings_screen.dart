@@ -48,6 +48,7 @@ class SettingsScreen extends ConsumerStatefulWidget {
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   late SettingsPage _page = widget.initialPage;
   String? _preparedSpellingWorkspaceId;
+  bool _spellingPreparationSucceeded = false;
   String? _preparationWorkspaceId;
   SpellingSessionController? _preparationController;
   bool _preparingSpelling = false;
@@ -541,13 +542,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       _preparationWorkspaceId = workspaceId;
       _preparationController = spelling;
       _preparedSpellingWorkspaceId = null;
+      _spellingPreparationSucceeded = false;
       _spellingPreparationError = null;
       _preparingSpelling = false;
       _spellingPreparationGeneration++;
     }
     if (_preparingSpelling ||
         _spellingPreparationError != null ||
-        (_preparedSpellingWorkspaceId == workspaceId &&
+        (_spellingPreparationSucceeded &&
+            _preparedSpellingWorkspaceId == workspaceId &&
             spelling.catalog != null)) {
       return;
     }
@@ -561,6 +564,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         );
         if (mounted && generation == _spellingPreparationGeneration) {
           _preparedSpellingWorkspaceId = workspaceId;
+          _spellingPreparationSucceeded = true;
         }
       } on Object catch (error) {
         if (mounted && generation == _spellingPreparationGeneration) {
@@ -586,6 +590,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         onTap: () => setState(() {
           _spellingPreparationError = null;
           _preparedSpellingWorkspaceId = null;
+          _spellingPreparationSucceeded = false;
         }),
       );
 
