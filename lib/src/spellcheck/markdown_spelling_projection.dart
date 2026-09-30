@@ -115,28 +115,36 @@ final class MarkdownSpellingProjector {
       required SpellingSourceContext context,
     }) {
       final multilineHtml = multilineHtmlSpans;
-      final imageLabels = [
-        for (final entry in mapped.ranges.entries)
-          if (entry.key.kind == BusyInlineKind.image &&
-              entry.value.labelStart != null &&
-              entry.value.labelEnd != null)
-            (
-              mapped: inlineParser.parseMapped(
-                source.substring(
-                  sourceBase + entry.value.labelStart!,
-                  sourceBase + entry.value.labelEnd!,
-                ),
-              ),
-              sourceBase: sourceBase + entry.value.labelStart!,
+      final imageLabels =
+          <({BusyMarkMappedInlineParse mapped, int sourceBase})>[];
+      void collectImageLabels(BusyMarkMappedInlineParse parent, int base) {
+        for (final entry in parent.ranges.entries) {
+          if (entry.key.kind != BusyInlineKind.image ||
+              entry.value.labelStart == null ||
+              entry.value.labelEnd == null) {
+            continue;
+          }
+          final labelStart = base + entry.value.labelStart!;
+          final labelEnd = base + entry.value.labelEnd!;
+          final label = (
+            mapped: inlineParser.parseMapped(
+              source.substring(labelStart, labelEnd),
             ),
-      ];
+            sourceBase: labelStart,
+          );
+          imageLabels.add(label);
+          collectImageLabels(label.mapped, label.sourceBase);
+        }
+      }
+
+      collectImageLabels(mapped, sourceBase);
       final formattingSyntax = <_SourceInterval>[
         ..._formattingSyntaxSpans([mapped], sourceBase: sourceBase),
         for (final label in imageLabels)
           ..._formattingSyntaxSpans([
             label.mapped,
           ], sourceBase: label.sourceBase),
-      ];
+      ]..sort((left, right) => left.start.compareTo(right.start));
       final opaqueSyntax = <_SourceInterval>[
         ..._opaqueSyntaxSpans([mapped], sourceBase: sourceBase),
         for (final span in excludedBlockSpans)
@@ -176,6 +184,12 @@ final class MarkdownSpellingProjector {
             if (entry.key.kind == BusyInlineKind.link ||
                 entry.key.kind == BusyInlineKind.image)
               sourceBase + entry.value.start: sourceBase + entry.value.end,
+          for (final label in imageLabels)
+            for (final entry in label.mapped.ranges.entries)
+              if (entry.key.kind == BusyInlineKind.link ||
+                  entry.key.kind == BusyInlineKind.image)
+                label.sourceBase + entry.value.start:
+                    label.sourceBase + entry.value.end,
         },
         recognizedAttributeSpans: recognizedAttributeSpans,
       );
@@ -404,8 +418,33 @@ List<_SourceInterval> _fencedCodeSpans(String source, List<BusyBlock> blocks) {
   MarkdownFence? openFence;
   var fenceStart = 0;
   var containerEnd = source.length;
-  var quoteDepth = 0;
-  var listContentIndent = 0;
+  var activePrefixes = <({bool quote, int width})>[];
+  final quotePrefix = RegExp(r'^ {0,3}>[ \t]?');
+  final listPrefix = RegExp(r'^ {0,3}(?:[-+*]|\d+[.)])[ \t]+');
+
+  String? consumePrefixes(
+    String line,
+    List<({bool quote, int width})> prefixes,
+  ) {
+    var remaining = line;
+    for (final prefix in prefixes) {
+      if (prefix.quote) {
+        final match = quotePrefix.firstMatch(remaining);
+        if (match == null) return null;
+        remaining = remaining.substring(match.end);
+      } else {
+        if (remaining.length < prefix.width ||
+            !RegExp(
+              r'^[ \t]*$',
+            ).hasMatch(remaining.substring(0, prefix.width))) {
+          return null;
+        }
+        remaining = remaining.substring(prefix.width);
+      }
+    }
+    return remaining;
+  }
+
   var offset = 0;
   for (final rawLine in source.split(RegExp('(?<=\n)'))) {
     if (openFence != null && offset >= containerEnd) {
@@ -415,40 +454,50 @@ List<_SourceInterval> _fencedCodeSpans(String source, List<BusyBlock> blocks) {
     var line = rawLine;
     if (line.endsWith('\n')) line = line.substring(0, line.length - 1);
     if (line.endsWith('\r')) line = line.substring(0, line.length - 1);
-    var candidate = line;
-    var lineQuoteDepth = 0;
-    while (true) {
-      final quote = RegExp(r'^ {0,3}>[ \t]?').firstMatch(candidate);
-      if (quote == null) break;
-      candidate = candidate.substring(quote.end);
-      lineQuoteDepth++;
-    }
-    final lineIndent = RegExp(r'^[ \t]*').firstMatch(candidate)!.end;
-    if (openFence != null &&
-        candidate.trim().isNotEmpty &&
-        (lineQuoteDepth < quoteDepth ||
-            lineQuoteDepth == quoteDepth && lineIndent < listContentIndent)) {
-      spans.add(_SourceInterval(fenceStart, offset));
-      openFence = null;
-    }
     final activeFence = openFence;
-    if (activeFence == null) {
-      var openingCandidate = candidate;
-      var openingListIndent = 0;
+    if (activeFence != null) {
+      final content = consumePrefixes(line, activePrefixes);
+      if (content == null && line.trim().isNotEmpty) {
+        spans.add(_SourceInterval(fenceStart, offset));
+        openFence = null;
+      } else if (content != null && activeFence.closes(content)) {
+        spans.add(
+          _SourceInterval(
+            fenceStart,
+            math.min(containerEnd, offset + rawLine.length),
+          ),
+        );
+        openFence = null;
+        offset += rawLine.length;
+        continue;
+      } else {
+        offset += rawLine.length;
+        continue;
+      }
+    }
+    if (openFence == null) {
+      var openingCandidate = line;
+      final openingPrefixes = <({bool quote, int width})>[];
       while (true) {
-        final list = RegExp(
-          r'^ {0,3}(?:[-+*]|\d+[.)])[ \t]+',
-        ).firstMatch(openingCandidate);
-        if (list == null) break;
-        openingListIndent += list.end;
-        openingCandidate = openingCandidate.substring(list.end);
+        final quote = quotePrefix.firstMatch(openingCandidate);
+        if (quote != null) {
+          openingPrefixes.add((quote: true, width: quote.end));
+          openingCandidate = openingCandidate.substring(quote.end);
+          continue;
+        }
+        final list = listPrefix.firstMatch(openingCandidate);
+        if (list != null) {
+          openingPrefixes.add((quote: false, width: list.end));
+          openingCandidate = openingCandidate.substring(list.end);
+          continue;
+        }
+        break;
       }
       final opening = MarkdownFence.parse(openingCandidate);
       if (opening != null) {
         openFence = opening;
         fenceStart = offset;
-        quoteDepth = lineQuoteDepth;
-        listContentIndent = openingListIndent;
+        activePrefixes = openingPrefixes;
         containerEnd = source.length;
         for (final block in _walkBlocks(blocks)) {
           final span = block.sourceSpan;
@@ -463,16 +512,6 @@ List<_SourceInterval> _fencedCodeSpans(String source, List<BusyBlock> blocks) {
           }
         }
       }
-    } else if (activeFence.closes(
-      candidate.substring(math.min(listContentIndent, candidate.length)),
-    )) {
-      spans.add(
-        _SourceInterval(
-          fenceStart,
-          math.min(containerEnd, offset + rawLine.length),
-        ),
-      );
-      openFence = null;
     }
     offset += rawLine.length;
   }

@@ -589,11 +589,13 @@ final class SpellingSessionController extends ChangeNotifier {
   Future<void> _reconcilePersonalStoreConflict(SpellingWordStore store) async {
     if (!identical(store, _personalStore)) return;
     final generation = ++_personalMutationGeneration;
+    final refreshGeneration = ++_personalRefreshGeneration;
     try {
       final actual = await wordStoreReader(store);
       if (_disposed ||
           !identical(store, _personalStore) ||
-          generation != _personalMutationGeneration) {
+          generation != _personalMutationGeneration ||
+          refreshGeneration != _personalRefreshGeneration) {
         return;
       }
       _personalWords = actual;

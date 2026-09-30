@@ -2401,6 +2401,100 @@ void main() {
     },
   );
 
+  test(
+    'a superseded conflict read cannot replace a newer personal refresh',
+    () async {
+      final temporary = await Directory.systemTemp.createTemp(
+        'busymark-personal-conflict-refresh-',
+      );
+      addTearDown(() => temporary.delete(recursive: true));
+      final bundle = await _createFixtureBundle(temporary);
+      final support = p.join(temporary.path, 'support');
+      final personalPath = p.join(support, 'spelling', 'personal.json');
+      final recoveryPath = p.join(temporary.path, 'preserved-personal.json');
+      final writer = _ToggleFailAtomicFileWriter();
+      final readEntered = Completer<void>();
+      final readRelease = Completer<void>();
+      var holdNextRead = false;
+      final controller = SpellingSessionController(
+        bundledRoot: bundle,
+        applicationSupportRoot: support,
+        dictionaryStorageRoot: p.join(temporary.path, 'dictionary-storage'),
+        verifyDictionaryChecksums: false,
+        wordStoreFactory: ({required filePath, required projectStore}) =>
+            SpellingWordStore(
+              filePath: filePath,
+              projectStore: projectStore,
+              writer: writer,
+            ),
+        wordStoreReader: (candidate) async {
+          final snapshot = await candidate.read();
+          if (holdNextRead && !candidate.projectStore) {
+            holdNextRead = false;
+            readEntered.complete();
+            await readRelease.future;
+          }
+          return snapshot;
+        },
+      );
+      addTearDown(controller.dispose);
+      await controller.prepareSettings(null);
+      writer
+        ..conflictRecoveryPath = recoveryPath
+        ..conflictDestinationBytes = utf8.encode(
+          '${jsonEncode({
+            'schemaVersion': 1,
+            'revision': 77,
+            'words': {
+              'en-Test': [
+                {'key': 'external', 'display': 'external'},
+              ],
+            },
+          })}\n',
+        );
+      holdNextRead = true;
+      final mutation = controller.removePersonalWord('en-Test', 'BusyBrand');
+      final conflict = expectLater(
+        mutation,
+        throwsA(
+          isA<AtomicFileChangedException>().having(
+            (error) => error.recoveryPath,
+            'recoveryPath',
+            recoveryPath,
+          ),
+        ),
+      );
+      await readEntered.future;
+      final external = SpellingWordStore(filePath: personalPath);
+      await external.addWord('en-Test', 'newer');
+      await controller.prepareSettings(null);
+      expect(controller.personalWords.wordsFor('en-Test'), [
+        'external',
+        'newer',
+      ]);
+      readRelease.complete();
+      await conflict;
+      expect(controller.personalWords.wordsFor('en-Test'), [
+        'external',
+        'newer',
+      ]);
+      expect((await external.read()).wordsFor('en-Test'), [
+        'external',
+        'newer',
+      ]);
+      final input = _sessionInput(
+        id: 'conflict-refresh',
+        root: temporary.path,
+        text: 'newer',
+        settings: AppSettings.defaults().copyWith(
+          defaultSpellingLanguage: 'en-Test',
+        ),
+      );
+      await controller.checkNow(input);
+      expect(controller.misspellings, isEmpty);
+    },
+  );
+
   testWidgets('Settings holds a failed preparation until deliberate retry', (
     tester,
   ) async {
