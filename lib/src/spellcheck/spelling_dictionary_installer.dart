@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -61,6 +62,8 @@ final class SpellingDictionaryInstallSpec {
 final class SpellingDictionaryPairInstaller {
   const SpellingDictionaryPairInstaller({this.onCommitted});
 
+  static final Map<String, Future<void>> _publicationTails = {};
+
   /// Observes the commit point after the staged directory becomes the
   /// published installation. The callback must not throw.
   final void Function(SpellingDictionaryInstallation installation)? onCommitted;
@@ -105,6 +108,7 @@ final class SpellingDictionaryPairInstaller {
     final staging = await root.createTemp('.busymark-dictionary-');
     final stagedAff = File(p.join(staging.path, 'dictionary.aff'));
     final stagedDic = File(p.join(staging.path, 'dictionary.dic'));
+    var failed = false;
     try {
       await affSource.copy(stagedAff.path);
       await dicSource.copy(stagedDic.path);
@@ -144,46 +148,103 @@ final class SpellingDictionaryPairInstaller {
         flush: true,
       );
       cancellationGuard?.call();
-      Directory? replaced;
-      if (await destination.exists()) {
-        replaced = Directory(
-          p.join(
-            root.path,
-            '.busymark-replaced-${safeSpellingResourceName(spec.resourceId)}-'
-            '${DateTime.now().microsecondsSinceEpoch}',
-          ),
-        );
-        await destination.rename(replaced.path);
-      }
-      try {
-        await staging.rename(destination.path);
-      } on Object {
-        if (replaced != null && await replaced.exists()) {
-          await replaced.rename(destination.path);
+      return await _withPublicationLock(destination.path, () async {
+        cancellationGuard?.call();
+        if (await destination.exists() && !replaceExisting) {
+          throw FileSystemException(
+            'This dictionary resource is already installed',
+            destination.path,
+          );
         }
-        rethrow;
-      }
-      final installation = SpellingDictionaryInstallation(
-        resourceId: spec.resourceId,
-        id: spec.id,
-        locales: List.unmodifiable(spec.locales),
-        label: spec.label,
-        affPath: p.join(destination.path, 'dictionary.aff'),
-        dicPath: p.join(destination.path, 'dictionary.dic'),
-        affSha256: spec.affSha256,
-        dicSha256: spec.dicSha256,
-        kind: spec.kind,
-        directoryPath: destination.path,
-        sourceRevision: spec.sourceRevision,
-      );
-      onCommitted?.call(installation);
-      if (replaced != null && await replaced.exists()) {
-        await replaced.delete(recursive: true);
-      }
-      return installation;
+        Directory? replaced;
+        if (await destination.exists()) {
+          replaced = await root.createTemp(
+            '.busymark-replaced-${safeSpellingResourceName(spec.resourceId)}-',
+          );
+          await replaced.delete();
+          await destination.rename(replaced.path);
+        }
+        try {
+          await staging.rename(destination.path);
+        } on Object {
+          if (replaced != null &&
+              await replaced.exists() &&
+              !await destination.exists()) {
+            await replaced.rename(destination.path);
+          }
+          rethrow;
+        }
+        final installation = SpellingDictionaryInstallation(
+          resourceId: spec.resourceId,
+          id: spec.id,
+          locales: List.unmodifiable(spec.locales),
+          label: spec.label,
+          affPath: p.join(destination.path, 'dictionary.aff'),
+          dicPath: p.join(destination.path, 'dictionary.dic'),
+          affSha256: spec.affSha256,
+          dicSha256: spec.dicSha256,
+          kind: spec.kind,
+          directoryPath: destination.path,
+          sourceRevision: spec.sourceRevision,
+        );
+        onCommitted?.call(installation);
+        if (replaced != null && await replaced.exists()) {
+          await replaced.delete(recursive: true);
+        }
+        return installation;
+      });
+    } on Object {
+      failed = true;
+      rethrow;
     } finally {
-      if (await staging.exists()) {
-        await staging.delete(recursive: true);
+      try {
+        if (await staging.exists()) {
+          await staging.delete(recursive: true);
+        }
+      } on Object {
+        if (!failed) rethrow;
+      }
+    }
+  }
+
+  Future<T> _withPublicationLock<T>(
+    String destinationPath,
+    Future<T> Function() publish,
+  ) async {
+    final previous = _publicationTails[destinationPath] ?? Future<void>.value();
+    final completed = Completer<void>();
+    _publicationTails[destinationPath] = completed.future;
+    try {
+      await previous;
+      final lock = await File(
+        '$destinationPath.lock',
+      ).open(mode: FileMode.append);
+      try {
+        final stopwatch = Stopwatch()..start();
+        while (true) {
+          try {
+            await lock.lock(FileLock.exclusive);
+            break;
+          } on FileSystemException catch (error) {
+            if (error.osError?.errorCode != 11 ||
+                stopwatch.elapsed >= const Duration(seconds: 30)) {
+              rethrow;
+            }
+            await Future<void>.delayed(const Duration(milliseconds: 10));
+          }
+        }
+        try {
+          return await publish();
+        } finally {
+          await lock.unlock();
+        }
+      } finally {
+        await lock.close();
+      }
+    } finally {
+      completed.complete();
+      if (identical(_publicationTails[destinationPath], completed.future)) {
+        _publicationTails.remove(destinationPath);
       }
     }
   }

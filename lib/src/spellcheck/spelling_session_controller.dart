@@ -127,6 +127,7 @@ final class SpellingSessionController extends ChangeNotifier {
   bool _projectStorageInitialized = false;
   Future<({SpellingWordStore store, SpellingWordStoreSnapshot snapshot})>?
   _personalStorageLoad;
+  int _personalMutationGeneration = 0;
   String? _requestedProjectRoot;
   int _projectStorageGeneration = 0;
   String _scheduledIdentity = '';
@@ -164,7 +165,11 @@ final class SpellingSessionController extends ChangeNotifier {
 
   Future<void> prepareSettings(Workspace? workspace) async {
     _settingsWorkspace = workspace;
+    final wasInitialized = _personalStorageInitialized;
     await _initializeStorage(workspace);
+    if (wasInitialized && await _refreshPersonalWords()) {
+      await _refreshAfterPersistentChange();
+    }
     if (!_disposed) notifyListeners();
   }
 
@@ -257,6 +262,7 @@ final class SpellingSessionController extends ChangeNotifier {
     _requireCurrent(occurrence);
     final store = _personalStore;
     if (store == null) throw StateError('Personal dictionary is unavailable.');
+    _personalMutationGeneration++;
     late final SpellingWordStoreSnapshot updated;
     try {
       updated = await store.addWord(occurrence.run.languageId, occurrence.word);
@@ -291,6 +297,7 @@ final class SpellingSessionController extends ChangeNotifier {
   Future<void> removePersonalWord(String languageId, String word) async {
     final store = _personalStore;
     if (store == null) throw StateError('Personal dictionary is unavailable.');
+    _personalMutationGeneration++;
     late final SpellingWordStoreSnapshot updated;
     try {
       updated = await store.removeWord(languageId, word);
@@ -400,48 +407,53 @@ final class SpellingSessionController extends ChangeNotifier {
   }
 
   Future<void> installDictionary(String languageId) async {
-    await _initializeStorage(_latestInput?.workspace ?? _settingsWorkspace);
-    final catalog = _catalog;
-    final resource = catalog?.availableById(languageId);
-    if (resource == null) {
-      throw StateError('Dictionary resource is not in the shipped catalog.');
-    }
-    final existing = catalog!.installationForResource(resource.resourceId);
-    if (existing != null) {
-      if (existing.kind == SpellingDictionaryInstallationKind.downloaded) {
-        return;
-      }
-      throw StateError(
-        'Remove the local import before installing the catalog dictionary.',
-      );
-    }
-    final invalidInstallation = catalog.invalidInstallations
-        .where(
-          (candidate) =>
-              candidate.kind == SpellingDictionaryInstallationKind.downloaded &&
-              (candidate.resourceId == resource.resourceId ||
-                  candidate.matches(resource.resourceId)),
-        )
-        .firstOrNull;
     if (_dictionaryDownloadCancellation != null) {
       throw StateError('Another dictionary installation is in progress.');
     }
-    final dictionaryRoot = await _ensureDictionaryStorageRoot();
-    await _ensureCoordinator();
-    final coordinator = _coordinator;
-    if (coordinator == null) {
-      throw StateError('The spelling service is unavailable.');
-    }
     final cancellation = SpellingDictionaryDownloadCancellation();
     _dictionaryDownloadCancellation = cancellation;
-    _dictionaryInstallStatus = SpellingDictionaryInstallStatus(
-      resourceId: resource.resourceId,
-      phase: SpellingDictionaryInstallPhase.downloading,
-      receivedBytes: 0,
-      totalBytes: resource.downloadSize,
-    );
-    notifyListeners();
+    SpellingDictionaryResource? resource;
     try {
+      await _initializeStorage(_latestInput?.workspace ?? _settingsWorkspace);
+      cancellation.throwIfCancelled();
+      final catalog = _catalog;
+      resource = catalog?.availableById(languageId);
+      if (resource == null) {
+        throw StateError('Dictionary resource is not in the shipped catalog.');
+      }
+      final existing = catalog!.installationForResource(resource.resourceId);
+      if (existing != null) {
+        if (existing.kind == SpellingDictionaryInstallationKind.downloaded) {
+          return;
+        }
+        throw StateError(
+          'Remove the local import before installing the catalog dictionary.',
+        );
+      }
+      final invalidInstallation = catalog.invalidInstallations
+          .where(
+            (candidate) =>
+                candidate.kind ==
+                    SpellingDictionaryInstallationKind.downloaded &&
+                (candidate.resourceId == resource!.resourceId ||
+                    candidate.matches(resource.resourceId)),
+          )
+          .firstOrNull;
+      final dictionaryRoot = await _ensureDictionaryStorageRoot();
+      cancellation.throwIfCancelled();
+      await _ensureCoordinator();
+      cancellation.throwIfCancelled();
+      final coordinator = _coordinator;
+      if (coordinator == null) {
+        throw StateError('The spelling service is unavailable.');
+      }
+      _dictionaryInstallStatus = SpellingDictionaryInstallStatus(
+        resourceId: resource.resourceId,
+        phase: SpellingDictionaryInstallPhase.downloading,
+        receivedBytes: 0,
+        totalBytes: resource.downloadSize,
+      );
+      if (!_disposed) notifyListeners();
       await dictionaryDownloader.install(
         resource: resource,
         downloadedRoot: p.join(dictionaryRoot, 'downloaded'),
@@ -457,7 +469,7 @@ final class SpellingSessionController extends ChangeNotifier {
             return;
           }
           _dictionaryInstallStatus = SpellingDictionaryInstallStatus(
-            resourceId: resource.resourceId,
+            resourceId: resource!.resourceId,
             phase: received >= total
                 ? SpellingDictionaryInstallPhase.validating
                 : SpellingDictionaryInstallPhase.downloading,
@@ -468,20 +480,27 @@ final class SpellingSessionController extends ChangeNotifier {
         },
         replaceExisting: invalidInstallation != null,
       );
-      _dictionaryInstallStatus = null;
+      if (identical(_dictionaryDownloadCancellation, cancellation)) {
+        _dictionaryInstallStatus = null;
+      }
       await _reloadCatalogAndRefresh();
     } on SpellingDictionaryDownloadCancelled {
-      _dictionaryInstallStatus = null;
-      if (!_disposed) notifyListeners();
+      if (identical(_dictionaryDownloadCancellation, cancellation)) {
+        _dictionaryInstallStatus = null;
+        if (!_disposed) notifyListeners();
+      }
     } on Object catch (error) {
-      _dictionaryInstallStatus = SpellingDictionaryInstallStatus(
-        resourceId: resource.resourceId,
-        phase: SpellingDictionaryInstallPhase.failed,
-        receivedBytes: _dictionaryInstallStatus?.receivedBytes ?? 0,
-        totalBytes: resource.downloadSize,
-        error: error.toString(),
-      );
-      if (!_disposed) notifyListeners();
+      if (resource != null &&
+          identical(_dictionaryDownloadCancellation, cancellation)) {
+        _dictionaryInstallStatus = SpellingDictionaryInstallStatus(
+          resourceId: resource.resourceId,
+          phase: SpellingDictionaryInstallPhase.failed,
+          receivedBytes: _dictionaryInstallStatus?.receivedBytes ?? 0,
+          totalBytes: resource.downloadSize,
+          error: error.toString(),
+        );
+        if (!_disposed) notifyListeners();
+      }
       rethrow;
     } finally {
       if (identical(_dictionaryDownloadCancellation, cancellation)) {
@@ -495,6 +514,7 @@ final class SpellingSessionController extends ChangeNotifier {
   }
 
   Future<void> retryDictionaryInstallation() async {
+    if (_dictionaryDownloadCancellation != null) return;
     final status = _dictionaryInstallStatus;
     if (status == null ||
         status.phase != SpellingDictionaryInstallPhase.failed) {
@@ -565,6 +585,7 @@ final class SpellingSessionController extends ChangeNotifier {
 
   Future<void> _reconcilePersonalStoreConflict(SpellingWordStore store) async {
     if (!identical(store, _personalStore)) return;
+    _personalMutationGeneration++;
     try {
       final actual = await wordStoreReader(store);
       if (!identical(store, _personalStore)) return;
@@ -639,8 +660,13 @@ final class SpellingSessionController extends ChangeNotifier {
       return;
     }
     try {
+      final wasInitialized = _personalStorageInitialized;
       await _initializeStorage(input.workspace);
       if (!_isOperationCurrent(operation, input)) return;
+      if (manual && wasInitialized) {
+        await _refreshPersonalWords();
+        if (!_isOperationCurrent(operation, input)) return;
+      }
       final languageId = resolveSpellingLanguageId(
         override: override,
         projectLanguage: _projectWords.projectLanguage,
@@ -753,7 +779,16 @@ final class SpellingSessionController extends ChangeNotifier {
         );
         return (store: store, snapshot: await wordStoreReader(store));
       }();
-      final loaded = await load;
+      late final ({SpellingWordStore store, SpellingWordStoreSnapshot snapshot})
+      loaded;
+      try {
+        loaded = await load;
+      } on Object {
+        if (identical(_personalStorageLoad, load)) {
+          _personalStorageLoad = null;
+        }
+        rethrow;
+      }
       if (!_disposed && !_personalStorageInitialized) {
         _personalStore = loaded.store;
         _personalWords = loaded.snapshot;
@@ -810,6 +845,21 @@ final class SpellingSessionController extends ChangeNotifier {
         );
       }
     }
+  }
+
+  Future<bool> _refreshPersonalWords() async {
+    final store = _personalStore;
+    if (_disposed || store == null) return false;
+    final mutationGeneration = _personalMutationGeneration;
+    final snapshot = await wordStoreReader(store);
+    if (_disposed ||
+        !identical(store, _personalStore) ||
+        mutationGeneration != _personalMutationGeneration ||
+        _sameWordStoreSnapshot(snapshot, _personalWords)) {
+      return false;
+    }
+    _personalWords = snapshot;
+    return true;
   }
 
   Future<String> _ensureStorageRoot() async {

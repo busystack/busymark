@@ -48,7 +48,28 @@ final class MarkdownSpellingProjector {
             block.sourceSpan != null)
           block.sourceSpan!,
     ];
-    final fencedCodeSpans = _fencedCodeSpans(source);
+    final fencedCodeSpans = _fencedCodeSpans(
+      source,
+      parsed.busyDocument.blocks,
+    );
+    final recognizedAttributeSpans = <_SourceInterval>[];
+    for (final block in _walkBlocks(parsed.busyDocument.blocks)) {
+      final span = block.sourceSpan;
+      if (block.kind != BusyBlockKind.heading || span == null) continue;
+      final raw = source
+          .substring(span.startOffset, span.endOffset)
+          .trimRight();
+      final trailing = RegExp(r'[ \t]+\{[^{}]*\}$').firstMatch(raw);
+      if (trailing != null &&
+          !block.plainText.contains(raw.substring(trailing.start).trim())) {
+        recognizedAttributeSpans.add(
+          _SourceInterval(
+            span.startOffset + trailing.start,
+            span.startOffset + trailing.end,
+          ),
+        );
+      }
+    }
     final footnoteLabels = <String>{};
     void collectFootnotes(BusyInline inline) {
       final destination = inline.destination;
@@ -124,6 +145,14 @@ final class MarkdownSpellingProjector {
           mapped,
         ], sourceBase: sourceBase),
         opaqueSyntax: opaqueSyntax,
+        recognizedLinks: {
+          for (final entry in mapped.ranges.entries)
+            if (entry.key.kind == BusyInlineKind.link ||
+                entry.key.kind == BusyInlineKind.image)
+              sourceBase + entry.value.start: sourceBase + entry.value.end,
+        },
+        recognizedImages: parsed.images,
+        recognizedAttributeSpans: recognizedAttributeSpans,
       );
       final groups =
           <_EmissionGroup>[
@@ -320,12 +349,17 @@ bool _startsExcludedBlock(String raw) {
       ).hasMatch(trimmed);
 }
 
-List<_SourceInterval> _fencedCodeSpans(String source) {
+List<_SourceInterval> _fencedCodeSpans(String source, List<BusyBlock> blocks) {
   final spans = <_SourceInterval>[];
   MarkdownFence? openFence;
   var fenceStart = 0;
+  var containerEnd = source.length;
   var offset = 0;
   for (final rawLine in source.split(RegExp('(?<=\n)'))) {
+    if (openFence != null && offset >= containerEnd) {
+      spans.add(_SourceInterval(fenceStart, containerEnd));
+      openFence = null;
+    }
     var line = rawLine;
     if (line.endsWith('\n')) line = line.substring(0, line.length - 1);
     if (line.endsWith('\r')) line = line.substring(0, line.length - 1);
@@ -341,14 +375,32 @@ List<_SourceInterval> _fencedCodeSpans(String source) {
       if (opening != null) {
         openFence = opening;
         fenceStart = offset;
+        containerEnd = source.length;
+        for (final block in _walkBlocks(blocks)) {
+          final span = block.sourceSpan;
+          if (span != null &&
+              (block.kind == BusyBlockKind.blockquote ||
+                  block.kind == BusyBlockKind.unorderedListItem ||
+                  block.kind == BusyBlockKind.orderedListItem) &&
+              span.startOffset <= offset &&
+              span.endOffset > offset &&
+              span.endOffset < containerEnd) {
+            containerEnd = span.endOffset;
+          }
+        }
       }
     } else if (activeFence.closes(candidate)) {
-      spans.add(_SourceInterval(fenceStart, offset + rawLine.length));
+      spans.add(
+        _SourceInterval(
+          fenceStart,
+          math.min(containerEnd, offset + rawLine.length),
+        ),
+      );
       openFence = null;
     }
     offset += rawLine.length;
   }
-  if (openFence != null) spans.add(_SourceInterval(fenceStart, source.length));
+  if (openFence != null) spans.add(_SourceInterval(fenceStart, containerEnd));
   return List.unmodifiable(spans);
 }
 
@@ -391,6 +443,9 @@ final class _MarkdownProseScanner {
     this.formattingSyntax = const [],
     this.formattingWrappers = const [],
     this.opaqueSyntax = const [],
+    this.recognizedLinks = const {},
+    this.recognizedImages = const [],
+    this.recognizedAttributeSpans = const [],
     this.footnoteLabels = const {},
   });
 
@@ -403,6 +458,9 @@ final class _MarkdownProseScanner {
   final List<_SourceInterval> formattingSyntax;
   final List<_RawFormattingWrapper> formattingWrappers;
   final List<_SourceInterval> opaqueSyntax;
+  final Map<int, int> recognizedLinks;
+  final List<MarkdownImage> recognizedImages;
+  final List<_SourceInterval> recognizedAttributeSpans;
   final List<Object> _groups = [];
   StringBuffer _text = StringBuffer();
   final StringBuffer _tokenizationContext = StringBuffer();
@@ -449,11 +507,11 @@ final class _MarkdownProseScanner {
         if (isAtxHeading && closingHeading != null) {
           contentEnd = contentStart + closingHeading.start;
         }
-        final attributes = RegExp(
-          r'[ \t]+\{[^{}]*\}$',
-        ).firstMatch(source.substring(contentStart, contentEnd));
-        if (attributes != null) {
-          contentEnd = contentStart + attributes.start;
+      }
+      for (final attributes in recognizedAttributeSpans) {
+        if (attributes.end == contentEnd && attributes.start >= contentStart) {
+          contentEnd = attributes.start;
+          break;
         }
       }
       if (contentEnd > contentStart) _scanInline(contentStart, contentEnd);
@@ -666,6 +724,7 @@ final class _MarkdownProseScanner {
   }
 
   int? _scanLinkOrImage(int cursor, int rangeEnd, {required bool image}) {
+    final recognizedEnd = recognizedLinks[cursor];
     final opening = cursor + (image ? 1 : 0);
     final labelEnd = _matchingBracket(opening, rangeEnd, 0x5b, 0x5d);
     if (labelEnd == null) return null;
@@ -676,6 +735,9 @@ final class _MarkdownProseScanner {
         footnoteLabels.contains(label.substring(1).toLowerCase())) {
       _barrier();
       return afterLabel;
+    }
+    if (!image && (recognizedEnd == null || recognizedEnd > rangeEnd)) {
+      return null;
     }
     var syntaxEnd = afterLabel;
     int? titleStart;
@@ -701,15 +763,28 @@ final class _MarkdownProseScanner {
       final referenceEnd = source.indexOf(']', afterLabel + 1);
       if (referenceEnd < 0 || referenceEnd >= rangeEnd) return null;
       syntaxEnd = referenceEnd + 1;
-    } else if (image) {
-      return null;
     }
 
+    if (image) {
+      final rawDestination = source.substring(afterLabel, syntaxEnd);
+      if (!recognizedImages.any(
+        (recognized) =>
+            recognized.span.startOffset <= cursor &&
+            recognized.span.endOffset >= syntaxEnd &&
+            recognized.alt == label &&
+            (rawDestination.startsWith('[') ||
+                rawDestination.isEmpty ||
+                rawDestination.contains(recognized.destination)),
+      )) {
+        return null;
+      }
+    } else if (syntaxEnd != recognizedEnd) {
+      return null;
+    }
     if (image) _barrier();
     _scanInline(opening + 1, labelEnd);
     if (image) _barrier();
     if (titleStart != null && titleEnd != null && titleEnd > titleStart) {
-      _barrier();
       final scanner = _MarkdownProseScanner(
         source: source,
         start: titleStart,
@@ -719,7 +794,6 @@ final class _MarkdownProseScanner {
       );
       _groups.addAll(scanner.scan());
       complete = complete && scanner.complete;
-      _barrier();
     }
     return syntaxEnd;
   }
@@ -738,7 +812,6 @@ final class _MarkdownProseScanner {
       final savedContext = quote == "'"
           ? SpellingSourceContext.xmlSingleQuotedAttribute
           : SpellingSourceContext.xmlDoubleQuotedAttribute;
-      _barrier();
       final scanner = _MarkdownProseScanner(
         source: source,
         start: valueStart,
@@ -748,7 +821,6 @@ final class _MarkdownProseScanner {
       );
       _groups.addAll(scanner.scan());
       complete = complete && scanner.complete;
-      _barrier();
     }
   }
 
