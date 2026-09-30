@@ -31,7 +31,7 @@ void main() {
         (_) async => null,
       );
     root = await Directory.systemTemp.createTemp('busymark-template-dialog-');
-    service = WritersideTemplateService(
+    service = _ObservedTemplateService(
       storagePath: p.join(root.path, 'templates.json'),
       loadBundledSource: () =>
           File('assets/writerside/templates.json').readAsString(),
@@ -44,6 +44,7 @@ void main() {
     Widget dialog, {
     TextDirection direction = TextDirection.ltr,
     Size size = const Size(1300, 1000),
+    Finder? ready,
   }) async {
     tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1;
@@ -77,7 +78,22 @@ void main() {
       ),
     );
     await tester.tap(find.text('Open'));
-    await settle(tester);
+    if (ready == null) {
+      await settle(tester);
+    } else {
+      // The editor reads its file-backed template catalog outside FakeAsync.
+      // Wait for the loaded field before asking Flutter to settle animations;
+      // a loading spinner otherwise keeps pumpAndSettle active indefinitely.
+      final deadline = DateTime.now().add(const Duration(seconds: 10));
+      while (ready.evaluate().isEmpty && DateTime.now().isBefore(deadline)) {
+        await tester.runAsync(
+          () => Future<void>.delayed(const Duration(milliseconds: 25)),
+        );
+        await tester.pump();
+      }
+      expect(ready, findsOneWidget);
+      await tester.pumpAndSettle();
+    }
   }
 
   for (final direction in TextDirection.values) {
@@ -366,7 +382,7 @@ void main() {
       '# \${TITLE}\nCustom body',
     );
     await tester.tap(find.text('OK'));
-    await settle(tester);
+    await settleAfterSave(tester, service);
     final saved = (await tester.runAsync(service.read))!.entries;
     expect(
       saved,
@@ -586,7 +602,11 @@ void main() {
       () async => service.save(await service.read(), [override]),
     );
 
-    await show(tester, WritersideTemplatesEditor(selectedId: builtin.id));
+    await show(
+      tester,
+      WritersideTemplatesEditor(selectedId: builtin.id),
+      ready: find.byKey(const ValueKey('template-editor-name')),
+    );
     final nameEntry = tester.widget<BusyMarkGroupedTextEntry>(
       find.byKey(const ValueKey('template-editor-name')),
     );
@@ -617,7 +637,7 @@ void main() {
     await settle(tester);
     await tester.tap(find.widgetWithText(BusyMarkDialogButton, 'Reset'));
     await tester.tap(find.widgetWithText(BusyMarkDialogButton, 'OK'));
-    await settle(tester);
+    await settleAfterSave(tester, service);
     expect((await tester.runAsync(service.read))!.entries, isEmpty);
   });
 
@@ -661,7 +681,7 @@ void main() {
         );
         await tester.pumpAndSettle();
         await tester.tap(find.text('OK'));
-        await settle(tester);
+        await settleAfterSave(tester, service);
         expect(find.text('File and Code Templates'), findsNothing);
         final entries = (await tester.runAsync(service.read))!.entries;
         expect(
@@ -683,6 +703,59 @@ void main() {
 class _FailingTemplateService extends WritersideTemplateService {
   @override
   Future<List<WritersideTemplate>> catalog() async => throw StateError('load');
+}
+
+class _ObservedTemplateService extends WritersideTemplateService {
+  _ObservedTemplateService({super.storagePath, super.loadBundledSource});
+
+  Future<void>? mostRecentSave;
+  bool saveCompleted = false;
+  Object? saveError;
+
+  @override
+  Future<void> save(
+    WritersideTemplateSnapshot expected,
+    List<WritersideTemplate> entries,
+  ) {
+    saveCompleted = false;
+    saveError = null;
+    final pending = super.save(expected, entries);
+    mostRecentSave = pending;
+    pending.then(
+      (_) {
+        saveCompleted = true;
+      },
+      onError: (Object error) {
+        saveError = error;
+        saveCompleted = true;
+      },
+    );
+    return pending;
+  }
+}
+
+Future<void> settleAfterSave(
+  WidgetTester tester,
+  WritersideTemplateService service,
+) async {
+  final observed = service as _ObservedTemplateService;
+  expect(
+    observed.mostRecentSave,
+    isNotNull,
+    reason: 'The Save action must reach the store.',
+  );
+  final deadline = DateTime.now().add(const Duration(seconds: 10));
+  while (!observed.saveCompleted && DateTime.now().isBefore(deadline)) {
+    // Filesystem continuations run outside FakeAsync; their UI callbacks need
+    // a pump before the pending Save future can finish.
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 25)),
+    );
+    await tester.pump(const Duration(milliseconds: 100));
+  }
+  expect(observed.saveCompleted, isTrue, reason: 'Save did not complete.');
+  expect(observed.saveError, isNull);
+  await tester.pumpAndSettle();
 }
 
 Finder editableUnderKey(String key) => find.descendant(

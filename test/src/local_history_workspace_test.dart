@@ -982,7 +982,10 @@ void main() {
 
       await settings.setLocalHistoryRecordingEnabled(true);
       harness.controller.updateActiveText('Only B after cancellation\n');
-      await _waitFor(() => timers.any((timer) => timer.isActive));
+      await _waitFor(
+        () => timers.any((timer) => timer.isActive),
+        operation: 'Save As checkpoint timer',
+      );
       for (final timer in List<_FakeTimer>.of(timers)) {
         timer.fire();
       }
@@ -997,6 +1000,16 @@ void main() {
                       LocalHistoryCaptureReason.automaticCheckpoint &&
                   revision.historicalPath == destinationPath,
             ),
+        timeout: const Duration(seconds: 10),
+        operation: 'Save As automatic checkpoint',
+        diagnostics: () {
+          final snapshot = harness.container
+              .read(localHistoryControllerProvider)
+              .snapshot;
+          return 'active=${harness.state.activeBuffer?.filePath}, '
+              'revision count=${snapshot.revisions.length}, '
+              'active timers=${timers.where((timer) => timer.isActive).length}';
+        },
       );
       final snapshot = await diskStore.load();
       final destination = snapshot.documents.singleWhere(
@@ -1090,7 +1103,10 @@ void main() {
         // Establish history through an editor mutation and its real-policy
         // checkpoint, without manually observing or storing the edit.
         harness.controller.updateActiveText('Original retained draft\n');
-        await _waitFor(() => timers.any((timer) => timer.isActive));
+        await _waitFor(
+          () => timers.any((timer) => timer.isActive),
+          operation: 'first-save checkpoint timer',
+        );
         final firstTimer = timers.singleWhere((timer) => timer.isActive);
         expect(firstTimer.duration, const Duration(seconds: 60));
         now = now.add(firstTimer.duration);
@@ -1099,6 +1115,11 @@ void main() {
           () =>
               history.documentIdForBuffer(bufferId) != null &&
               history.pendingSnapshotForBuffer(bufferId) == null,
+          timeout: const Duration(seconds: 10),
+          operation: 'first-save disk checkpoint',
+          diagnostics: () =>
+              'document id=${history.documentIdForBuffer(bufferId)}, '
+              'pending snapshot=${history.pendingSnapshotForBuffer(bufferId) != null}',
         );
         final original = (await diskStore.load()).documents.single;
         final originalRevisionIds = (await diskStore.load()).revisions
@@ -1855,11 +1876,16 @@ Future<List<String>> _revisionSources(
   return sources;
 }
 
-Future<void> _waitFor(bool Function() condition) async {
-  final deadline = DateTime.now().add(const Duration(seconds: 3));
+Future<void> _waitFor(
+  bool Function() condition, {
+  Duration timeout = const Duration(seconds: 3),
+  String operation = 'workspace state',
+  String Function()? diagnostics,
+}) async {
+  final deadline = DateTime.now().add(timeout);
   while (!condition()) {
     if (DateTime.now().isAfter(deadline)) {
-      fail('Timed out waiting for workspace state');
+      fail('$operation did not complete. ${diagnostics?.call() ?? ''}');
     }
     await Future<void>.delayed(const Duration(milliseconds: 10));
   }

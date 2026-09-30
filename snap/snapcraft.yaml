@@ -48,6 +48,7 @@ apps:
       - network
       - removable-media
       - ssh-keys
+      - password-manager-service
     environment:
       GDK_BACKEND: wayland,x11
       TYPST_FONT_PATHS: $SNAP/usr/share/fonts
@@ -65,7 +66,7 @@ parts:
     flutter-target: lib/main.dart
     flutter-channel: stable
     build-environment:
-      - BUSYMARK_FLUTTER_VERSION: "3.47.4"
+      - BUSYMARK_FLUTTER_VERSION: "3.47.5"
     build-snaps:
       - node/24/stable
     build-packages:
@@ -79,26 +80,9 @@ parts:
       - libwebkit2gtk-4.1-dev
       - xz-utils
     stage-packages:
-      - libhandy-1-0
-      - libsecret-1-0
-      - libwebkit2gtk-4.1-0
-      - libgtk-3-0t64
-      - libglib2.0-0t64
-      - libpango-1.0-0
       - gstreamer1.0-libav
       - gstreamer1.0-plugins-bad
-      - gstreamer1.0-plugins-base
-      - gstreamer1.0-plugins-good
       - gstreamer1.0-plugins-ugly
-      - libx11-6
-      - libxdamage1
-      - libxext6
-      - libxfixes3
-      - libwayland-client0
-      - libwayland-cursor0
-      - libwayland-egl1
-      - libxcb-shm0
-      - libxcb1
       - git
       - fonts-noto-core
       - fonts-noto-mono
@@ -134,8 +118,22 @@ parts:
       - patchelf
     override-prime: |
       craftctl default
-      # Drop a stale plugin that is not part of BusyMark's dependency graph.
-      rm -f "$CRAFT_PRIME/lib/libflutter_secure_storage_linux_plugin.so"
+      # The retained codec packages depend on GNOME/GStreamer packages already
+      # supplied by the connected platform. Remove only the revision-validated
+      # package-owned paths; a missing path signals that this audit is stale.
+      while IFS= read -r runtime_path; do
+        case "$runtime_path" in
+          ""|\#*) continue ;;
+        esac
+        private_path="$CRAFT_PRIME/$runtime_path"
+        if [ ! -e "$private_path" ] && [ ! -L "$private_path" ]; then
+          echo "missing audited GNOME runtime duplicate: $runtime_path" >&2
+          exit 1
+        fi
+        rm -f "$private_path"
+      done < \
+        "$CRAFT_PROJECT_DIR/snap/gnome-46-2404-prime-exclusions.amd64"
+
       # Keep the library's own directory alongside its two BLAS siblings.
       patchelf --set-rpath \
         '$ORIGIN/lapack:$ORIGIN/blas:$ORIGIN:/snap/core24/current/lib/x86_64-linux-gnu' \
@@ -149,9 +147,33 @@ parts:
       # the matching SVG pixbuf loader and a newer librsvg. Let that pair stay
       # together; otherwise every SVG-backed GTK symbolic icon fails to load.
       rm -f "$CRAFT_PRIME/usr/lib/x86_64-linux-gnu/librsvg-2.so.2"*
+
+      # CMake installs the deterministic Typst font set at the bundle-relative
+      # path used by the application. The same files are staged for fontconfig;
+      # require them to be identical before consolidating the bundle copy.
+      for bundled_font in "$CRAFT_PRIME/share/busymark/fonts"/Noto*.ttf; do
+        staged_font="$CRAFT_PRIME/usr/share/fonts/truetype/noto/${bundled_font##*/}"
+        test -f "$staged_font"
+        cmp -s "$bundled_font" "$staged_font"
+      done
+      rm -rf "$CRAFT_PRIME/share/busymark/fonts"
+      ln -s ../../usr/share/fonts/truetype/noto \
+        "$CRAFT_PRIME/share/busymark/fonts"
+
+      # BusyMark checks both standard XDG roots for user-selected Yaru variants.
+      # Preserve both lookup paths without storing a second copy of each theme.
       mkdir -p "$CRAFT_PRIME/share/themes" "$CRAFT_PRIME/share/icons"
-      cp -a "$CRAFT_PRIME/usr/share/themes"/Yaru* "$CRAFT_PRIME/share/themes/"
-      cp -a "$CRAFT_PRIME/usr/share/icons"/Yaru* "$CRAFT_PRIME/share/icons/"
+      for resource_kind in themes icons; do
+        for staged_resource in \
+          "$CRAFT_PRIME/usr/share/$resource_kind"/Yaru*; do
+          test -e "$staged_resource"
+          resource_name="${staged_resource##*/}"
+          linked_resource="$CRAFT_PRIME/share/$resource_kind/$resource_name"
+          rm -rf "$linked_resource"
+          ln -s "../../usr/share/$resource_kind/$resource_name" \
+            "$linked_resource"
+        done
+      done
       install -Dm644 "$CRAFT_PROJECT_DIR/linux/io.busystack.busymark.desktop" \
         "$CRAFT_PRIME/share/applications/io.busystack.busymark.desktop"
       install -Dm644 "$CRAFT_PROJECT_DIR/assets/branding/busymark_logo.svg" \

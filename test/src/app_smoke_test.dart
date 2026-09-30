@@ -1725,6 +1725,21 @@ void main() {
       await _pumpUntilCondition(
         tester,
         () => harness.spelling.catalog?.installedById('en-GB') != null,
+        timeout: const Duration(seconds: 15),
+        diagnostics: () {
+          final imported = Directory(
+            p.join(
+              harness.temporary.path,
+              'dictionary-storage',
+              'imported',
+              'en-GB',
+            ),
+          );
+          return 'imported directory=${imported.existsSync()}, '
+              'installed=${harness.spelling.catalog?.installedById('en-GB')}, '
+              'invalid=${harness.spelling.catalog?.invalidInstallations}, '
+              'dialog visible=${dialog.evaluate().isNotEmpty}';
+        },
       );
 
       expect(dialog, findsNothing);
@@ -1790,6 +1805,20 @@ void main() {
     await _pumpUntilCondition(
       tester,
       () => harness.spelling.catalog?.installedById('en-GB') != null,
+      timeout: const Duration(seconds: 15),
+      diagnostics: () {
+        final imported = Directory(
+          p.join(
+            harness.temporary.path,
+            'dictionary-storage',
+            'imported',
+            'en-GB',
+          ),
+        );
+        return 'imported directory=${imported.existsSync()}, '
+            'catalog unavailable=${harness.spelling.catalog == null}, '
+            'installed=${harness.spelling.catalog?.installedById('en-GB')}';
+      },
     );
 
     expect(find.byType(BusyMarkDialogShell), findsNothing);
@@ -1902,6 +1931,12 @@ void main() {
       await _pumpUntilCondition(
         tester,
         () => settingsStore.value['defaultSpellingLanguage'] == 'fr-Test',
+        timeout: const Duration(seconds: 15),
+        diagnostics: () =>
+            'downloads=$downloadCount, '
+            'installed=${harness.spelling.catalog?.installedById('fr-Test')}, '
+            'catalog unavailable=${harness.spelling.catalog == null}, '
+            'persisted=${settingsStore.value['defaultSpellingLanguage']}',
       );
 
       expect(harness.spelling.catalog?.installedById('fr-Test'), isNotNull);
@@ -14287,15 +14322,18 @@ BusyMarkPopupSelector<String> _spellingLanguageSelector(
 
 Future<void> _pumpUntilCondition(
   WidgetTester tester,
-  bool Function() condition,
-) async {
-  for (var attempt = 0; attempt < 200 && !condition(); attempt += 1) {
+  bool Function() condition, {
+  Duration timeout = const Duration(seconds: 5),
+  String Function()? diagnostics,
+}) async {
+  final deadline = DateTime.now().add(timeout);
+  while (!condition() && DateTime.now().isBefore(deadline)) {
     await tester.runAsync(
       () => Future<void>.delayed(const Duration(milliseconds: 25)),
     );
     await tester.pump();
   }
-  expect(condition(), isTrue);
+  expect(condition(), isTrue, reason: diagnostics?.call());
   await _pumpSettingsUi(tester);
 }
 

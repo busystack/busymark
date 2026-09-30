@@ -471,6 +471,28 @@ void main() {
       await tester.pump();
     }
 
+    Future<void> waitForImageIo(
+      WidgetTester tester,
+      bool Function() complete, {
+      required String operation,
+      String Function()? diagnostics,
+    }) async {
+      // Image ingestion performs real filesystem I/O outside FakeAsync. Pump
+      // until the observable stage completes, retaining a bounded failure.
+      final deadline = DateTime.now().add(const Duration(seconds: 10));
+      while (!complete() && DateTime.now().isBefore(deadline)) {
+        await tester.runAsync(
+          () => Future<void>.delayed(const Duration(milliseconds: 25)),
+        );
+        await tester.pump();
+      }
+      expect(
+        complete(),
+        isTrue,
+        reason: '$operation did not complete. ${diagnostics?.call() ?? ''}',
+      );
+    }
+
     Future<void> mount(
       WidgetTester tester,
       String id,
@@ -1903,6 +1925,7 @@ void main() {
           clipboardHistoryControllerProvider.notifier,
         );
         var changed = '';
+        var published = false;
         await mount(
           tester,
           'image-snapshot',
@@ -1911,20 +1934,27 @@ void main() {
           onCaptured: history.retain,
           filePath: '${root.path}/target.md',
           assetWorkspaceKind: AssetWorkspaceKind.standalone,
+          assetIngestionService: AssetIngestionService(
+            hooks: AssetIngestionHooks(
+              afterPublication: (_) async {
+                published = true;
+              },
+            ),
+          ),
         );
 
         await key(tester, LogicalKeyboardKey.keyV);
-        for (
-          var attempt = 0;
-          attempt < 100 &&
-              find.byKey(BusyMarkImageDialogKeys.submit).evaluate().isEmpty;
-          attempt++
-        ) {
-          await tester.runAsync(
-            () => Future<void>.delayed(const Duration(milliseconds: 5)),
-          );
-          await tester.pump();
-        }
+        await waitForImageIo(
+          tester,
+          () =>
+              find.byKey(BusyMarkImageDialogKeys.submit).evaluate().isNotEmpty,
+          operation: 'external image dialog',
+          diagnostics: () =>
+              'clipboard reads=$readCalls, published=$published, '
+              'source exists=${sourceFile.existsSync()}, '
+              'clipboard=$systemData, editor focus='
+              '${tester.widget<TextField>(find.byType(TextField).first).focusNode?.hasFocus}',
+        );
         expect(find.byKey(BusyMarkImageDialogKeys.submit), findsOneWidget);
         await tester.runAsync(() => sourceFile.writeAsBytes(replacement));
         await tester.tap(find.byKey(BusyMarkImageDialogKeys.submit));
@@ -1961,17 +1991,12 @@ void main() {
           assetWorkspaceKind: AssetWorkspaceKind.standalone,
         );
         final replay = registry.paste(payload);
-        for (
-          var attempt = 0;
-          attempt < 100 &&
-              find.byKey(BusyMarkImageDialogKeys.submit).evaluate().isEmpty;
-          attempt++
-        ) {
-          await tester.runAsync(
-            () => Future<void>.delayed(const Duration(milliseconds: 5)),
-          );
-          await tester.pump();
-        }
+        await waitForImageIo(
+          tester,
+          () =>
+              find.byKey(BusyMarkImageDialogKeys.submit).evaluate().isNotEmpty,
+          operation: 'history replay image dialog',
+        );
         expect(find.byKey(BusyMarkImageDialogKeys.submit), findsOneWidget);
         await tester.tap(find.byKey(BusyMarkImageDialogKeys.submit));
         await tester.pumpAndSettle();
@@ -2000,17 +2025,12 @@ void main() {
           assetWorkspaceKind: AssetWorkspaceKind.standalone,
         );
         final replayAfterDelete = registry.paste(payload);
-        for (
-          var attempt = 0;
-          attempt < 100 &&
-              find.byKey(BusyMarkImageDialogKeys.submit).evaluate().isEmpty;
-          attempt++
-        ) {
-          await tester.runAsync(
-            () => Future<void>.delayed(const Duration(milliseconds: 5)),
-          );
-          await tester.pump();
-        }
+        await waitForImageIo(
+          tester,
+          () =>
+              find.byKey(BusyMarkImageDialogKeys.submit).evaluate().isNotEmpty,
+          operation: 'deleted-source image replay dialog',
+        );
         expect(find.byKey(BusyMarkImageDialogKeys.submit), findsOneWidget);
         await tester.tap(find.byKey(BusyMarkImageDialogKeys.submit));
         await tester.pumpAndSettle();
@@ -2093,6 +2113,7 @@ void main() {
         clipboardHistoryControllerProvider.notifier,
       );
       var changed = 'Target\n';
+      var published = false;
       final document = _parser
           .parse(
             filePath: '${root.path}/target.md',
@@ -2117,6 +2138,13 @@ void main() {
                       clipboardInsertionRegistry: registry,
                       onClipboardCaptured: history.retain,
                       assetWorkspaceKind: AssetWorkspaceKind.standalone,
+                      assetIngestionService: AssetIngestionService(
+                        hooks: AssetIngestionHooks(
+                          afterPublication: (_) async {
+                            published = true;
+                          },
+                        ),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 320, child: ClipboardHistoryPanel()),
@@ -2139,17 +2167,18 @@ void main() {
       await tester.tap(pathRow);
       await tester.pump(const Duration(milliseconds: 50));
       await tester.tap(pathRow);
-      for (
-        var attempt = 0;
-        attempt < 100 &&
-            find.byKey(BusyMarkImageDialogKeys.submit).evaluate().isEmpty;
-        attempt++
-      ) {
-        await tester.runAsync(
-          () => Future<void>.delayed(const Duration(milliseconds: 5)),
-        );
-        await tester.pump();
-      }
+      await waitForImageIo(
+        tester,
+        () => find.byKey(BusyMarkImageDialogKeys.submit).evaluate().isNotEmpty,
+        operation: 'history panel image dialog',
+        diagnostics: () {
+          final state = container.read(clipboardHistoryControllerProvider);
+          final payload = state.currentClipboard;
+          return 'published=$published, source exists=${sourceFile.existsSync()}, '
+              'history entries=${state.entries.length}, '
+              'registry can paste=${payload == null ? null : registry.canPaste(payload, mode: BusyMarkPasteMode.normal)}';
+        },
+      );
       expect(find.byKey(BusyMarkImageDialogKeys.submit), findsOneWidget);
       await tester.tap(find.byKey(BusyMarkImageDialogKeys.submit));
       await tester.pumpAndSettle();
@@ -2281,17 +2310,12 @@ void main() {
       );
 
       Future<void> waitForDialog() async {
-        for (
-          var attempt = 0;
-          attempt < 100 &&
-              find.byKey(BusyMarkImageDialogKeys.cancel).evaluate().isEmpty;
-          attempt++
-        ) {
-          await tester.runAsync(
-            () => Future<void>.delayed(const Duration(milliseconds: 5)),
-          );
-          await tester.pump();
-        }
+        await waitForImageIo(
+          tester,
+          () =>
+              find.byKey(BusyMarkImageDialogKeys.cancel).evaluate().isNotEmpty,
+          operation: 'image cancellation dialog',
+        );
         expect(find.byKey(BusyMarkImageDialogKeys.cancel), findsOneWidget);
       }
 
@@ -2306,16 +2330,11 @@ void main() {
       }
 
       Future<void> waitForRollbackCount(int count) async {
-        for (
-          var attempt = 0;
-          attempt < 100 && completedRollbacks.length < count;
-          attempt++
-        ) {
-          await tester.runAsync(
-            () => Future<void>.delayed(const Duration(milliseconds: 5)),
-          );
-          await tester.pump();
-        }
+        await waitForImageIo(
+          tester,
+          () => completedRollbacks.length >= count,
+          operation: 'image rollback count $count',
+        );
         expect(completedRollbacks, hasLength(count));
       }
 
@@ -2401,12 +2420,11 @@ void main() {
       await waitForDialog();
       await tester.tap(find.byKey(BusyMarkImageDialogKeys.cancel));
       await tester.pumpAndSettle();
-      for (var attempt = 0; attempt < 100 && pasteResult == null; attempt++) {
-        await tester.runAsync(
-          () => Future<void>.delayed(const Duration(milliseconds: 5)),
-        );
-        await tester.pump();
-      }
+      await waitForImageIo(
+        tester,
+        () => pasteResult != null,
+        operation: 'cancelled history paste result',
+      );
       expect(pasteResult, ClipboardPasteResult.cancelled);
       await waitForRollbackCount(3);
       expect(historyResult, 'Target\n');
@@ -2436,8 +2454,10 @@ void main() {
       final published = <IngestedAsset>[];
       final committed = <IngestedAsset>[];
       final rolledBack = <IngestedAsset>[];
+      final reserved = <String>[];
       final ingestion = AssetIngestionService(
         hooks: AssetIngestionHooks(
+          afterDestinationReserved: (path) async => reserved.add(path),
           afterPublication: (asset) async => published.add(asset),
           beforeCommit: (asset) async => committed.add(asset),
           afterRollback: (asset) async => rolledBack.add(asset),
@@ -2457,31 +2477,31 @@ void main() {
       );
 
       Future<void> waitForCount(List<Object> values, int count) async {
-        for (
-          var attempt = 0;
-          attempt < 100 && values.length < count;
-          attempt++
-        ) {
-          await tester.runAsync(
-            () => Future<void>.delayed(const Duration(milliseconds: 5)),
-          );
-          await tester.pump();
-        }
+        await waitForImageIo(
+          tester,
+          () => values.length >= count,
+          operation: 'image publication/rollback count $count',
+          diagnostics: () {
+            final fields = find.byType(TextField);
+            final focused = fields.evaluate().isEmpty
+                ? null
+                : tester.widget<TextField>(fields.first).focusNode?.hasFocus;
+            return 'clipboard reads=$readCalls, reserved=${reserved.length}, '
+                'published=${published.length}, committed=${committed.length}, '
+                'rolled back=${rolledBack.length}, editor focus=$focused, '
+                'clipboard=$systemData';
+          },
+        );
         expect(values.length, greaterThanOrEqualTo(count));
       }
 
       Future<void> waitForDialog() async {
-        for (
-          var attempt = 0;
-          attempt < 100 &&
-              find.byKey(BusyMarkImageDialogKeys.choose).evaluate().isEmpty;
-          attempt++
-        ) {
-          await tester.runAsync(
-            () => Future<void>.delayed(const Duration(milliseconds: 5)),
-          );
-          await tester.pump();
-        }
+        await waitForImageIo(
+          tester,
+          () =>
+              find.byKey(BusyMarkImageDialogKeys.choose).evaluate().isNotEmpty,
+          operation: 'image alternatives dialog',
+        );
         expect(find.byKey(BusyMarkImageDialogKeys.choose), findsOneWidget);
       }
 
@@ -2626,24 +2646,18 @@ void main() {
           hostToasts: true,
         );
         await key(tester, LogicalKeyboardKey.keyV);
-        for (
-          var attempt = 0;
-          attempt < 100 &&
-              find.byKey(BusyMarkImageDialogKeys.submit).evaluate().isEmpty;
-          attempt++
-        ) {
-          await tester.runAsync(
-            () => Future<void>.delayed(const Duration(milliseconds: 5)),
-          );
-          await tester.pump();
-        }
+        await waitForImageIo(
+          tester,
+          () =>
+              find.byKey(BusyMarkImageDialogKeys.submit).evaluate().isNotEmpty,
+          operation: 'finalization image dialog',
+        );
         await tester.tap(find.byKey(BusyMarkImageDialogKeys.submit));
-        for (var attempt = 0; attempt < 100 && commitAttempts == 0; attempt++) {
-          await tester.runAsync(
-            () => Future<void>.delayed(const Duration(milliseconds: 5)),
-          );
-          await tester.pump();
-        }
+        await waitForImageIo(
+          tester,
+          () => commitAttempts > 0,
+          operation: 'failed image commit attempt',
+        );
 
         expect(commitAttempts, 1);
         expect(rollbacks, 0);
@@ -2832,17 +2846,12 @@ void main() {
       addTearDown(registry.dispose);
 
       Future<void> submitImage() async {
-        for (
-          var attempt = 0;
-          attempt < 100 &&
-              find.byKey(BusyMarkImageDialogKeys.submit).evaluate().isEmpty;
-          attempt++
-        ) {
-          await tester.runAsync(
-            () => Future<void>.delayed(const Duration(milliseconds: 5)),
-          );
-          await tester.pump();
-        }
+        await waitForImageIo(
+          tester,
+          () =>
+              find.byKey(BusyMarkImageDialogKeys.submit).evaluate().isNotEmpty,
+          operation: 'history image dialog',
+        );
         expect(find.byKey(BusyMarkImageDialogKeys.submit), findsOneWidget);
         await tester.tap(find.byKey(BusyMarkImageDialogKeys.submit));
         await tester.pumpAndSettle();
@@ -3114,12 +3123,11 @@ void main() {
           composing: TextRange(start: 0, end: 1),
         );
         ingestion.release.complete();
-        for (var attempt = 0; attempt < 100 && pasteResult == null; attempt++) {
-          await tester.runAsync(
-            () => Future<void>.delayed(const Duration(milliseconds: 5)),
-          );
-          await tester.pump();
-        }
+        await waitForImageIo(
+          tester,
+          () => pasteResult != null,
+          operation: 'stale image paste result',
+        );
 
         expect(pasteResult, ClipboardPasteResult.staleTarget);
         expect(result, 'Target\n');

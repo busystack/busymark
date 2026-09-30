@@ -120,7 +120,19 @@ void main() {
       contains('webkit_settings_set_enable_media(settings, FALSE)'),
     );
     expect(snap, contains('confinement: strict'));
-    expect(snap, contains('gstreamer1.0-plugins-good'));
     expect(snap, contains('gstreamer1.0-libav'));
+    expect(snap, contains('gstreamer1.0-plugins-bad'));
+    expect(snap, contains('gstreamer1.0-plugins-ugly'));
+    expect(
+      snap,
+      isNot(
+        contains(
+          RegExp(
+            r'^      - gstreamer1\.0-plugins-(?:base|good)$',
+            multiLine: true,
+          ),
+        ),
+      ),
+    );
   });
 }

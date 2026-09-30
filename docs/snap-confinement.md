@@ -5,10 +5,21 @@ Typst, D2, WebKitGTK, and its other runtime dependencies rather than executing
 arbitrary host programs.
 
 The application plugs the standard desktop, display, audio, network, `home`,
-`removable-media`, and `ssh-keys` interfaces. This supports documentation
-projects in ordinary home-directory locations and connected removable media.
-Interfaces that expose sensitive SSH material are controlled by snapd and may
-require an explicit connection on the installed system.
+`removable-media`, `ssh-keys`, and `password-manager-service` interfaces. This
+supports documentation projects in ordinary home-directory locations and
+connected removable media. Interfaces that expose SSH keys or the system
+credential store are not automatically connected. Connect only the access you
+need on the installed system:
+
+```bash
+sudo snap connect busymark:ssh-keys
+sudo snap connect busymark:password-manager-service
+```
+
+BusyMark's AI provider keys use the system credential store. Saving, reading,
+or removing those keys in a strict Snap requires the second connection. It
+grants access to the session's password manager, so make that choice only on a
+trusted installation.
 
 ## Git author identity
 
