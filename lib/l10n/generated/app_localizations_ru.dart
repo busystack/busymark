@@ -4639,6 +4639,14 @@ class AppLocalizationsRu extends AppLocalizations {
   String get spellingCheckFailed => 'Не удалось проверить правописание';
 
   @override
+  String get spellingSettingsLoadFailed =>
+      'Не удалось загрузить настройки проверки орфографии';
+
+  @override
+  String get retrySpellingSettings =>
+      'Повторить загрузку настроек проверки орфографии';
+
+  @override
   String get spellingCheckIncomplete => 'Проверка правописания не завершена';
 
   @override

@@ -4639,6 +4639,14 @@ class AppLocalizationsPt extends AppLocalizations {
   String get spellingCheckFailed => 'A verificação ortográfica falhou';
 
   @override
+  String get spellingSettingsLoadFailed =>
+      'Não foi possível carregar as definições de verificação ortográfica';
+
+  @override
+  String get retrySpellingSettings =>
+      'Tentar carregar novamente as definições de verificação ortográfica';
+
+  @override
   String get spellingCheckIncomplete =>
       'A verificação ortográfica está incompleta';
 
@@ -9335,6 +9343,14 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get spellingCheckFailed => 'A verificação ortográfica falhou';
+
+  @override
+  String get spellingSettingsLoadFailed =>
+      'Não foi possível carregar as configurações de verificação ortográfica';
+
+  @override
+  String get retrySpellingSettings =>
+      'Tentar carregar novamente as configurações de verificação ortográfica';
 
   @override
   String get spellingCheckIncomplete =>

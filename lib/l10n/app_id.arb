@@ -104,6 +104,8 @@
   "noSpellingSuggestions": "Tidak ada saran ejaan",
   "spellingWordCheckFailed": "Kata ini tidak dapat diperiksa",
   "spellingCheckFailed": "Pemeriksaan ejaan gagal",
+  "spellingSettingsLoadFailed": "Pengaturan pemeriksaan ejaan tidak dapat dimuat",
+  "retrySpellingSettings": "Coba muat ulang pengaturan pemeriksaan ejaan",
   "spellingCheckIncomplete": "Pemeriksaan ejaan belum lengkap",
   "spellingDictionaryNotInstalled": "Kamus belum terpasang",
   "spellingDictionaryNotInstalledForLanguage": "Kamus {dictionary} belum terpasang",

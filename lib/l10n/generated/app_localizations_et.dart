@@ -4580,6 +4580,13 @@ class AppLocalizationsEt extends AppLocalizations {
   String get spellingCheckFailed => 'Õigekirjakontroll nurjus';
 
   @override
+  String get spellingSettingsLoadFailed =>
+      'Õigekirjakontrolli sätteid ei õnnestunud laadida';
+
+  @override
+  String get retrySpellingSettings => 'Laadi õigekirjakontrolli sätted uuesti';
+
+  @override
   String get spellingCheckIncomplete => 'Õigekirjakontroll on pooleli';
 
   @override

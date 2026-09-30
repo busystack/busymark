@@ -104,6 +104,8 @@
   "noSpellingSuggestions": "Geen spellingsuggesties",
   "spellingWordCheckFailed": "Dit woord kon niet worden gecontroleerd",
   "spellingCheckFailed": "Spellingcontrole mislukt",
+  "spellingSettingsLoadFailed": "Instellingen voor spellingcontrole konden niet worden geladen",
+  "retrySpellingSettings": "Instellingen voor spellingcontrole opnieuw laden",
   "spellingCheckIncomplete": "De spellingcontrole is onvolledig",
   "spellingDictionaryNotInstalled": "Woordenboek niet geïnstalleerd",
   "spellingDictionaryNotInstalledForLanguage": "Het woordenboek voor {dictionary} is niet geïnstalleerd",

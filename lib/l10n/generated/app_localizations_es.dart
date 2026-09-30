@@ -4624,6 +4624,14 @@ class AppLocalizationsEs extends AppLocalizations {
   String get spellingCheckFailed => 'La revisión ortográfica falló';
 
   @override
+  String get spellingSettingsLoadFailed =>
+      'No se pudo cargar la configuración ortográfica';
+
+  @override
+  String get retrySpellingSettings =>
+      'Volver a cargar la configuración ortográfica';
+
+  @override
   String get spellingCheckIncomplete =>
       'La revisión ortográfica está incompleta';
 

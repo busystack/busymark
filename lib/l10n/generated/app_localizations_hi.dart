@@ -4573,6 +4573,13 @@ class AppLocalizationsHi extends AppLocalizations {
   String get spellingCheckFailed => 'वर्तनी जाँच विफल रही';
 
   @override
+  String get spellingSettingsLoadFailed =>
+      'वर्तनी जाँच सेटिंग लोड नहीं हो सकीं';
+
+  @override
+  String get retrySpellingSettings => 'वर्तनी जाँच सेटिंग फिर से लोड करें';
+
+  @override
   String get spellingCheckIncomplete => 'वर्तनी जाँच अधूरी है';
 
   @override

@@ -4620,6 +4620,14 @@ class AppLocalizationsIt extends AppLocalizations {
   String get spellingCheckFailed => 'Controllo ortografico non riuscito';
 
   @override
+  String get spellingSettingsLoadFailed =>
+      'Impossibile caricare le impostazioni di controllo ortografico';
+
+  @override
+  String get retrySpellingSettings =>
+      'Riprova a caricare le impostazioni di controllo ortografico';
+
+  @override
   String get spellingCheckIncomplete => 'Il controllo ortografico è incompleto';
 
   @override

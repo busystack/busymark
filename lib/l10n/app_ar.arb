@@ -104,6 +104,8 @@
   "noSpellingSuggestions": "لا توجد اقتراحات إملائية",
   "spellingWordCheckFailed": "تعذّر التحقق من هذه الكلمة",
   "spellingCheckFailed": "فشل التدقيق الإملائي",
+  "spellingSettingsLoadFailed": "تعذّر تحميل إعدادات التدقيق الإملائي",
+  "retrySpellingSettings": "إعادة محاولة تحميل إعدادات التدقيق الإملائي",
   "spellingCheckIncomplete": "التدقيق الإملائي غير مكتمل",
   "spellingDictionaryNotInstalled": "القاموس غير مثبّت",
   "spellingDictionaryNotInstalledForLanguage": "قاموس ⁨{dictionary}⁩ غير مثبّت",

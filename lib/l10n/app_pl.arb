@@ -104,6 +104,8 @@
   "noSpellingSuggestions": "Brak sugestii pisowni",
   "spellingWordCheckFailed": "Nie można sprawdzić tego słowa",
   "spellingCheckFailed": "Sprawdzanie pisowni nie powiodło się",
+  "spellingSettingsLoadFailed": "Nie można wczytać ustawień sprawdzania pisowni",
+  "retrySpellingSettings": "Ponów wczytywanie ustawień sprawdzania pisowni",
   "spellingCheckIncomplete": "Sprawdzanie pisowni jest niepełne",
   "spellingDictionaryNotInstalled": "Słownik nie jest zainstalowany",
   "spellingDictionaryNotInstalledForLanguage": "Słownik {dictionary} nie jest zainstalowany",

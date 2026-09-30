@@ -104,6 +104,8 @@
   "noSpellingSuggestions": "Keine Rechtschreibvorschläge",
   "spellingWordCheckFailed": "Dieses Wort konnte nicht geprüft werden",
   "spellingCheckFailed": "Rechtschreibprüfung fehlgeschlagen",
+  "spellingSettingsLoadFailed": "Rechtschreibeinstellungen konnten nicht geladen werden",
+  "retrySpellingSettings": "Rechtschreibeinstellungen erneut laden",
   "spellingCheckIncomplete": "Rechtschreibprüfung ist unvollständig",
   "spellingDictionaryNotInstalled": "Wörterbuch nicht installiert",
   "spellingDictionaryNotInstalledForLanguage": "Das Wörterbuch {dictionary} ist nicht installiert",

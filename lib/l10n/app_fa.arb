@@ -104,6 +104,8 @@
   "noSpellingSuggestions": "پیشنهاد املایی وجود ندارد",
   "spellingWordCheckFailed": "بررسی این واژه ممکن نشد",
   "spellingCheckFailed": "بررسی املا ناموفق بود",
+  "spellingSettingsLoadFailed": "تنظیمات بررسی املا بارگیری نشد",
+  "retrySpellingSettings": "بارگیری دوبارهٔ تنظیمات بررسی املا",
   "spellingCheckIncomplete": "بررسی املا کامل نیست",
   "spellingDictionaryNotInstalled": "واژه‌نامه نصب نشده است",
   "spellingDictionaryNotInstalledForLanguage": "واژه‌نامهٔ ⁨{dictionary}⁩ نصب نشده است",

@@ -4455,6 +4455,12 @@ class AppLocalizationsJa extends AppLocalizations {
   String get spellingCheckFailed => 'スペルチェックに失敗しました';
 
   @override
+  String get spellingSettingsLoadFailed => 'スペルチェックの設定を読み込めませんでした';
+
+  @override
+  String get retrySpellingSettings => 'スペルチェックの設定を再読み込み';
+
+  @override
   String get spellingCheckIncomplete => 'スペルチェックが完了していません';
 
   @override

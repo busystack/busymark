@@ -4582,6 +4582,14 @@ class AppLocalizationsId extends AppLocalizations {
   String get spellingCheckFailed => 'Pemeriksaan ejaan gagal';
 
   @override
+  String get spellingSettingsLoadFailed =>
+      'Pengaturan pemeriksaan ejaan tidak dapat dimuat';
+
+  @override
+  String get retrySpellingSettings =>
+      'Coba muat ulang pengaturan pemeriksaan ejaan';
+
+  @override
   String get spellingCheckIncomplete => 'Pemeriksaan ejaan belum lengkap';
 
   @override

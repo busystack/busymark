@@ -4626,6 +4626,14 @@ class AppLocalizationsFr extends AppLocalizations {
   String get spellingCheckFailed => 'Échec de la vérification orthographique';
 
   @override
+  String get spellingSettingsLoadFailed =>
+      'Impossible de charger les paramètres de correction orthographique';
+
+  @override
+  String get retrySpellingSettings =>
+      'Réessayer de charger les paramètres de correction orthographique';
+
+  @override
   String get spellingCheckIncomplete =>
       'La vérification orthographique est incomplète';
 

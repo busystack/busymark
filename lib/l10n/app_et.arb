@@ -104,6 +104,8 @@
   "noSpellingSuggestions": "Õigekirjasoovitusi pole",
   "spellingWordCheckFailed": "Seda sõna ei saanud kontrollida",
   "spellingCheckFailed": "Õigekirjakontroll nurjus",
+  "spellingSettingsLoadFailed": "Õigekirjakontrolli sätteid ei õnnestunud laadida",
+  "retrySpellingSettings": "Laadi õigekirjakontrolli sätted uuesti",
   "spellingCheckIncomplete": "Õigekirjakontroll on pooleli",
   "spellingDictionaryNotInstalled": "Sõnastik pole installitud",
   "spellingDictionaryNotInstalledForLanguage": "{dictionary} sõnastik pole installitud",

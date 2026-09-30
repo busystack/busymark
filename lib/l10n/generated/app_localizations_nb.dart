@@ -4581,6 +4581,14 @@ class AppLocalizationsNb extends AppLocalizations {
   String get spellingCheckFailed => 'Stavekontrollen mislyktes';
 
   @override
+  String get spellingSettingsLoadFailed =>
+      'Kunne ikke laste inn innstillinger for stavekontroll';
+
+  @override
+  String get retrySpellingSettings =>
+      'Prøv å laste inn innstillinger for stavekontroll på nytt';
+
+  @override
   String get spellingCheckIncomplete => 'Stavekontrollen er ufullstendig';
 
   @override

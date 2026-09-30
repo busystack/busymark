@@ -104,6 +104,8 @@
   "noSpellingSuggestions": "कोई वर्तनी सुझाव नहीं",
   "spellingWordCheckFailed": "इस शब्द की जाँच नहीं हो सकी",
   "spellingCheckFailed": "वर्तनी जाँच विफल रही",
+  "spellingSettingsLoadFailed": "वर्तनी जाँच सेटिंग लोड नहीं हो सकीं",
+  "retrySpellingSettings": "वर्तनी जाँच सेटिंग फिर से लोड करें",
   "spellingCheckIncomplete": "वर्तनी जाँच अधूरी है",
   "spellingDictionaryNotInstalled": "शब्दकोश इंस्टॉल नहीं है",
   "spellingDictionaryNotInstalledForLanguage": "{dictionary} शब्दकोश इंस्टॉल नहीं है",
