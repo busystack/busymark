@@ -246,6 +246,258 @@ void main() {
   });
 
   group('Markdown spelling projection', () {
+    test('keeps literal unresolved and invalid apparent links checkable', () {
+      for (final source in [
+        '[hello][wrld]',
+        '[hello](wrld text)',
+        'before [hello][wrld] after',
+      ]) {
+        final result = const MarkdownSpellingProjector().project(
+          filePath: '/tmp/literal-links.md',
+          source: source,
+          mode: MarkdownMode.commonMark,
+          languageId: 'en-Test',
+          snapshot: _snapshot,
+        );
+        expect(result.complete, isTrue, reason: source);
+        expect(result.runs.every((run) => run.hasValidMapping), isTrue);
+        final text = result.runs.map((run) => run.text).join(' ');
+        expect(text, contains('hello'), reason: source);
+        expect(text, contains('wrld'), reason: source);
+        final run = result.runs.firstWhere((run) => run.text.contains('wrld'));
+        final occurrence = _rejected(run, 'wrld');
+        expect(
+          source.substring(occurrence.sourceStart!, occurrence.sourceEnd!),
+          'wrld',
+        );
+        expect(
+          const SpellingReplacementPlanner()
+              .build(occurrence: occurrence, suggestion: 'world')
+              .applyToSource(source),
+          source.replaceFirst('wrld', 'world'),
+        );
+      }
+    });
+
+    test(
+      'resolves only parser-recognized links and images across revisions',
+      () {
+        final cases = <({String source, bool literalReference, bool hasTitle})>[
+          (
+            source: '[helo](target "titl")',
+            literalReference: false,
+            hasTitle: true,
+          ),
+          (source: '[helo][wrld]', literalReference: true, hasTitle: false),
+          (
+            source: '[helo][wrld]\n\n[wrld]: /target',
+            literalReference: false,
+            hasTitle: false,
+          ),
+          (source: '[helo][]', literalReference: true, hasTitle: false),
+          (
+            source: '[helo][]\n\n[helo]: /target',
+            literalReference: false,
+            hasTitle: false,
+          ),
+          (source: '[helo]', literalReference: true, hasTitle: false),
+          (
+            source: '[helo]\n\n[helo]: /target',
+            literalReference: false,
+            hasTitle: false,
+          ),
+          (
+            source: '![alttern](path "titl")',
+            literalReference: false,
+            hasTitle: true,
+          ),
+          (
+            source: '![alttern][id]\n\n[id]: /path',
+            literalReference: false,
+            hasTitle: false,
+          ),
+          (source: '![alttern][id]', literalReference: true, hasTitle: false),
+          (source: r'\[helo\][wrld]', literalReference: true, hasTitle: false),
+        ];
+        for (final (index, fixture) in cases.indexed) {
+          final result = const MarkdownSpellingProjector().project(
+            filePath: '/tmp/reference-revision.md',
+            source: fixture.source,
+            mode: MarkdownMode.commonMark,
+            languageId: 'en-Test',
+            snapshot: SpellingSnapshotIdentity(
+              bufferId: 'reference-revision',
+              contentRevision: index,
+              documentKind: DocumentKind.markdown,
+              contextGeneration: 1,
+            ),
+          );
+          expect(result.complete, isTrue, reason: fixture.source);
+          expect(result.runs.every((run) => run.hasValidMapping), isTrue);
+          final all = result.runs.map((run) => run.text).join(' ');
+          expect(
+            all,
+            contains(fixture.source.startsWith('!') ? 'alttern' : 'helo'),
+            reason: fixture.source,
+          );
+          if (fixture.source.contains('[wrld]')) {
+            expect(
+              all.contains('wrld'),
+              fixture.literalReference,
+              reason: fixture.source,
+            );
+          }
+          if (fixture.hasTitle) {
+            expect(all, contains('titl'), reason: fixture.source);
+          }
+          if (fixture.source.contains('/target')) {
+            expect(all, isNot(contains('/target')));
+          }
+          if (fixture.source.contains('/path')) {
+            expect(all, isNot(contains('/path')));
+          }
+          if (fixture.source.contains('![alttern](path')) {
+            expect(all, isNot(contains('path')));
+          }
+          if (fixture.source.startsWith('![alttern][id]')) {
+            expect(
+              all.contains('id'),
+              fixture.literalReference,
+              reason: fixture.source,
+            );
+          }
+        }
+      },
+    );
+
+    test('keeps literal trailing braces in paragraph and heading prose', () {
+      for (final mode in MarkdownMode.values) {
+        for (final source in ['Use {wrld}', '# Use {wrld}']) {
+          final result = const MarkdownSpellingProjector().project(
+            filePath: '/tmp/braces.md',
+            source: source,
+            mode: mode,
+            languageId: 'en-Test',
+            snapshot: _snapshot,
+          );
+          expect(result.complete, isTrue, reason: '$mode: $source');
+          expect(result.runs.every((run) => run.hasValidMapping), isTrue);
+          final run = result.runs.firstWhere(
+            (run) => run.text.contains('wrld'),
+          );
+          final occurrence = _rejected(run, 'wrld');
+          expect(
+            source.substring(occurrence.sourceStart!, occurrence.sourceEnd!),
+            'wrld',
+          );
+          expect(
+            const SpellingReplacementPlanner()
+                .build(occurrence: occurrence, suggestion: 'world')
+                .applyToSource(source),
+            source.replaceFirst('wrld', 'world'),
+          );
+        }
+      }
+    });
+
+    test(
+      'excludes only trailing attributes recognized by the current mode',
+      () {
+        for (final mode in MarkdownMode.values) {
+          for (final source in [
+            'Use {id="wrld"}',
+            '# Use {id="wrld"',
+            '# Use {class="wrld"}',
+          ]) {
+            final result = const MarkdownSpellingProjector().project(
+              filePath: '/tmp/attribute-mode.md',
+              source: source,
+              mode: mode,
+              languageId: 'en-Test',
+              snapshot: _snapshot,
+            );
+            expect(result.complete, isTrue, reason: '$mode: $source');
+            expect(result.runs.every((run) => run.hasValidMapping), isTrue);
+            final containsWord = result.runs.any(
+              (run) => run.text.contains('wrld'),
+            );
+            final recognized =
+                source.startsWith('# Use {class=') &&
+                mode == MarkdownMode.writersideMarkdown;
+            expect(containsWord, !recognized, reason: '$mode: $source');
+          }
+          final recognizedId = const MarkdownSpellingProjector().project(
+            filePath: '/tmp/attribute-mode.md',
+            source: '# Use {id="technical"}',
+            mode: mode,
+            languageId: 'en-Test',
+            snapshot: _snapshot,
+          );
+          expect(recognizedId.complete, isTrue);
+          expect(recognizedId.runs.every((run) => run.hasValidMapping), isTrue);
+          expect(
+            recognizedId.runs.map((run) => run.text).join(' '),
+            isNot(contains('technical')),
+            reason: '$mode',
+          );
+        }
+      },
+    );
+
+    test('metadata does not split a surrounding Markdown word', () {
+      for (final source in [
+        'docu[men](target "titl")tation',
+        'docu<span title="titl">men</span>tation',
+      ]) {
+        final result = const MarkdownSpellingProjector().project(
+          filePath: '/tmp/metadata.md',
+          source: source,
+          mode: MarkdownMode.commonMark,
+          languageId: 'en-Test',
+          snapshot: _snapshot,
+        );
+        expect(result.complete, isTrue, reason: source);
+        expect(result.runs.every((run) => run.hasValidMapping), isTrue);
+        expect(result.runs.map((run) => run.text), contains('documentation'));
+        expect(result.runs.map((run) => run.text), contains('titl'));
+      }
+    });
+
+    test('corrects a Markdown body word across independent metadata', () {
+      for (final source in [
+        'docu[men](target "titl")taton',
+        'docu<span title="titl">men</span>taton',
+      ]) {
+        final result = const MarkdownSpellingProjector().project(
+          filePath: '/tmp/metadata-correction.md',
+          source: source,
+          mode: MarkdownMode.commonMark,
+          languageId: 'en-Test',
+          snapshot: _snapshot,
+        );
+        expect(result.complete, isTrue);
+        expect(result.runs.every((run) => run.hasValidMapping), isTrue);
+        final body = result.runs.singleWhere(
+          (run) => run.text == 'documentaton',
+        );
+        final plan = const SpellingReplacementPlanner().build(
+          occurrence: _rejected(body, 'documentaton'),
+          suggestion: 'documentation',
+        );
+        expect(
+          plan.applyToSource(source),
+          source.replaceFirst('taton', 'tation'),
+        );
+        final title = result.runs.singleWhere((run) => run.text == 'titl');
+        expect(
+          const SpellingReplacementPlanner()
+              .build(occurrence: _rejected(title, 'titl'), suggestion: 'title')
+              .applyToSource(source),
+          source.replaceFirst('"titl"', '"title"'),
+        );
+      }
+    });
+
     test('maps repeated and formatted prose without searching globally', () {
       const source = 'mispelled\n\n**mispel**led and `hiddenbad` tail\n';
       final result = const MarkdownSpellingProjector().project(
@@ -409,6 +661,39 @@ Visiblee prose.
       expect(result.complete, isTrue, reason: result.message);
       expect(all, contains('Visiblee prose.'));
       expect(all, isNot(contains('record Document')));
+      for (final unclosed in [
+        '> ```\n> code\n\nwrld\n',
+        '> > ```\n> > code\n\nwrld\n',
+        '- ```\n  code\n\nwrld\n',
+        '- > ```\n  > code\n\nwrld\n',
+      ]) {
+        final projected = const MarkdownSpellingProjector().project(
+          filePath: '/tmp/unclosed-code.md',
+          source: unclosed,
+          mode: MarkdownMode.commonMark,
+          languageId: 'en-Test',
+          snapshot: _snapshot,
+        );
+        expect(projected.complete, isTrue, reason: unclosed);
+        expect(projected.runs.every((run) => run.hasValidMapping), isTrue);
+        final visible = projected.runs.map((run) => run.text).join(' ');
+        expect(visible, contains('wrld'), reason: unclosed);
+        expect(visible, isNot(contains('code')), reason: unclosed);
+        final run = projected.runs.firstWhere(
+          (run) => run.text.contains('wrld'),
+        );
+        final occurrence = _rejected(run, 'wrld');
+        expect(
+          unclosed.substring(occurrence.sourceStart!, occurrence.sourceEnd!),
+          'wrld',
+        );
+        expect(
+          const SpellingReplacementPlanner()
+              .build(occurrence: occurrence, suggestion: 'world')
+              .applyToSource(unclosed),
+          unclosed.replaceFirst('wrld', 'world'),
+        );
+      }
     });
 
     test('keeps unmatched delimiters and removes only parsed formatting', () {
@@ -862,6 +1147,106 @@ Price \$ 5, mispelled \$ 6 and actual \$hiddenmath\$ tail.
   });
 
   group('Writerside XML spelling projection', () {
+    test('keeps inline body words intact across readable attributes', () {
+      const source =
+          '<topic><p>docu<em title="titl">men</em>tation</p></topic>';
+      final result = const WritersideXmlSpellingProjector().project(
+        filePath: '/tmp/inline.topic',
+        source: source,
+        languageId: 'en-Test',
+        snapshot: const SpellingSnapshotIdentity(
+          bufferId: 'xml-inline',
+          contentRevision: 1,
+          documentKind: DocumentKind.writersideXmlTopic,
+          contextGeneration: 1,
+        ),
+      );
+      expect(result.complete, isTrue);
+      expect(result.runs.every((run) => run.hasValidMapping), isTrue);
+      expect(result.runs.map((run) => run.text), contains('documentation'));
+      expect(result.runs.map((run) => run.text), contains('titl'));
+    });
+
+    test('corrects XML body and encoded metadata independently', () {
+      const source =
+          '<topic><p>docu<em title="titl &amp; titl">men</em>taton</p></topic>';
+      final result = const WritersideXmlSpellingProjector().project(
+        filePath: '/tmp/metadata.topic',
+        source: source,
+        languageId: 'en-Test',
+        snapshot: const SpellingSnapshotIdentity(
+          bufferId: 'xml-metadata',
+          contentRevision: 1,
+          documentKind: DocumentKind.writersideXmlTopic,
+          contextGeneration: 1,
+        ),
+      );
+      expect(result.complete, isTrue);
+      expect(result.runs.every((run) => run.hasValidMapping), isTrue);
+      final body = result.runs.singleWhere((run) => run.text == 'documentaton');
+      expect(
+        const SpellingReplacementPlanner()
+            .build(
+              occurrence: _rejected(body, 'documentaton'),
+              suggestion: 'documentation',
+            )
+            .applyToSource(source),
+        source.replaceFirst('taton', 'tation'),
+      );
+      final attribute = result.runs.singleWhere(
+        (run) => run.text == 'titl & titl',
+      );
+      expect(
+        const SpellingReplacementPlanner()
+            .build(
+              occurrence: _rejected(attribute, 'titl'),
+              suggestion: 'title',
+            )
+            .applyToSource(source),
+        source.replaceFirst('"titl &amp;', '"title &amp;'),
+      );
+    });
+
+    test('excludes visible addresses in encoded text and CDATA', () {
+      for (final body in [
+        'helo https://example.invalid/path wrld',
+        'helo https://examp&amp;le.invalid/path wrld',
+        '<![CDATA[helo https://example.invalid/path wrld]]>',
+      ]) {
+        final source = '<topic><p>$body</p></topic>';
+        final result = const WritersideXmlSpellingProjector().project(
+          filePath: '/tmp/addresses.topic',
+          source: source,
+          languageId: 'en-Test',
+          snapshot: const SpellingSnapshotIdentity(
+            bufferId: 'xml-address',
+            contentRevision: 1,
+            documentKind: DocumentKind.writersideXmlTopic,
+            contextGeneration: 1,
+          ),
+        );
+        expect(result.complete, isTrue, reason: body);
+        expect(result.runs.every((run) => run.hasValidMapping), isTrue);
+        final all = result.runs.map((run) => run.text).join(' ');
+        expect(all, contains('helo'), reason: body);
+        expect(all, contains('wrld'), reason: body);
+        expect(all, isNot(contains('example.invalid')), reason: body);
+        expect(all, isNot(contains('examp&le.invalid')), reason: body);
+        final run = result.runs.firstWhere((run) => run.text.contains('wrld'));
+        final occurrence = _rejected(run, 'wrld');
+        expect(
+          source.substring(occurrence.sourceStart!, occurrence.sourceEnd!),
+          'wrld',
+        );
+        expect(
+          const SpellingReplacementPlanner()
+              .build(occurrence: occurrence, suggestion: 'world')
+              .applyToSource(source),
+          source.replaceFirst('wrld', 'world'),
+        );
+      }
+    });
+
     test('maps text, entities, CDATA, and positive attributes', () {
       const source = '''<topic id="sample" title="Titlle">
   <p>Repeeted &amp; <b>formmatted</b>.</p>
