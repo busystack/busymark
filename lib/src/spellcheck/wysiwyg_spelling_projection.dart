@@ -470,6 +470,7 @@ bool _sourceOnlyMetadataRun(SpellingProseRun run) {
     (atom) => switch (atom.context) {
       SpellingSourceContext.markdownSingleQuotedTitle ||
       SpellingSourceContext.markdownDoubleQuotedTitle ||
+      SpellingSourceContext.markdownParenthesizedTitle ||
       SpellingSourceContext.xmlSingleQuotedAttribute ||
       SpellingSourceContext.xmlDoubleQuotedAttribute => true,
       _ => false,

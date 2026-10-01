@@ -117,6 +117,13 @@ final class SpellingSessionController extends ChangeNotifier {
   );
   SpellingPresentationState _localState =
       const SpellingPresentationState.languageRequired();
+  ({
+    SpellingWordStore store,
+    SpellingPresentationState failure,
+    SpellingPresentationState previous,
+    bool previousUsesLocalState,
+  })?
+  _projectReadFailure;
   SpellingEngineContext? _engineContext;
   SpellingSessionInput? _latestInput;
   String? _projectRoot;
@@ -1125,8 +1132,10 @@ final class SpellingSessionController extends ChangeNotifier {
       return;
     }
     final generation = ++_projectPublicationGeneration;
+    var readCompleted = false;
     try {
       final snapshot = await wordStoreReader(store);
+      readCompleted = true;
       if (_disposed ||
           !identical(store, _projectStore) ||
           root != _projectRoot ||
@@ -1134,7 +1143,22 @@ final class SpellingSessionController extends ChangeNotifier {
           generation != _projectPublicationGeneration) {
         return;
       }
-      if (_sameWordStoreSnapshot(snapshot, _projectWords)) return;
+      final failedRead = _projectReadFailure;
+      final recovering =
+          failedRead != null &&
+          identical(failedRead.store, store) &&
+          _presentationUsesLocalState &&
+          identical(_localState, failedRead.failure);
+      if (identical(failedRead?.store, store)) {
+        _projectReadFailure = null;
+      }
+      if (recovering) {
+        _localState = failedRead.previous;
+        _presentationUsesLocalState = failedRead.previousUsesLocalState;
+      }
+      if (_sameWordStoreSnapshot(snapshot, _projectWords) && !recovering) {
+        return;
+      }
       _projectWords = snapshot;
       await _refreshAfterPersistentChange();
     } on Object catch (error) {
@@ -1145,12 +1169,31 @@ final class SpellingSessionController extends ChangeNotifier {
           generation != _projectPublicationGeneration) {
         return;
       }
-      _localState = SpellingPresentationState(
+      final previousFailure = _projectReadFailure;
+      final repeatedFailure =
+          previousFailure != null &&
+          identical(previousFailure.store, store) &&
+          _presentationUsesLocalState &&
+          identical(_localState, previousFailure.failure);
+      final previousState = repeatedFailure ? previousFailure.previous : state;
+      final previousUsesLocalState = repeatedFailure
+          ? previousFailure.previousUsesLocalState
+          : _presentationUsesLocalState;
+      final failure = SpellingPresentationState(
         status: SpellingPresentationStatus.failure,
         occurrences: const [],
         complete: false,
         message: error.toString(),
       );
+      _projectReadFailure = readCompleted
+          ? null
+          : (
+              store: store,
+              failure: failure,
+              previous: previousState,
+              previousUsesLocalState: previousUsesLocalState,
+            );
+      _localState = failure;
       _presentationUsesLocalState = true;
       notifyListeners();
     }

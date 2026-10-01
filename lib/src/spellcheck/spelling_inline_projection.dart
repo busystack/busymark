@@ -76,6 +76,32 @@ List<SpellingInlineProjection> projectSpellingInlineRuns({
         SpellingTransformationKind.identity,
   }) {
     final fieldValue = inline.text;
+    if (logicalText == null &&
+        (fieldValue.contains('\n') || fieldValue.contains('\r'))) {
+      var cursor = 0;
+      for (final breakMatch in RegExp(r'\r\n|\r|\n').allMatches(fieldValue)) {
+        if (breakMatch.start > cursor) {
+          emitLeaf(
+            inline.copyWith(
+              text: fieldValue.substring(cursor, breakMatch.start),
+            ),
+            path,
+          );
+        }
+        emitLeaf(
+          inline.copyWith(text: breakMatch.group(0)!),
+          path,
+          logicalText: ' ',
+          tokenizationText: '\n',
+          transformation: SpellingTransformationKind.lineBreak,
+        );
+        cursor = breakMatch.end;
+      }
+      if (cursor < fieldValue.length) {
+        emitLeaf(inline.copyWith(text: fieldValue.substring(cursor)), path);
+      }
+      return;
+    }
     final value = logicalText ?? fieldValue;
     if (value.isEmpty) return;
     tokenizationContextStart ??= tokenizationContext.length;

@@ -2507,6 +2507,53 @@ void main() {
     expect(controller.state.message, contains('current project read'));
   });
 
+  test('project watcher recovers after identical dictionary repair', () async {
+    final temporary = await Directory.systemTemp.createTemp(
+      'busymark-project-repair-',
+    );
+    addTearDown(() => temporary.delete(recursive: true));
+    final bundle = await _createFixtureBundle(temporary);
+    final root = p.join(temporary.path, 'project');
+    await Directory(root).create();
+    final filePath = p.join(root, '.busymark', 'spelling.json');
+    final external = SpellingWordStore(filePath: filePath, projectStore: true);
+    await external.addWord('en-Test', 'BusyBrand');
+    final validBytes = await File(filePath).readAsString();
+    final controller = SpellingSessionController(
+      bundledRoot: bundle,
+      applicationSupportRoot: p.join(temporary.path, 'support'),
+      dictionaryStorageRoot: p.join(temporary.path, 'dictionary-storage'),
+      verifyDictionaryChecksums: false,
+    );
+    addTearDown(controller.dispose);
+    final input = _sessionInput(
+      id: 'project-repair',
+      root: root,
+      text: 'BusyBrand',
+      settings: AppSettings.defaults().copyWith(
+        defaultSpellingLanguage: 'en-Test',
+      ),
+    );
+    controller.update(input);
+    await _waitFor(
+      () => controller.state.status == SpellingPresentationStatus.ready,
+    );
+    expect(controller.misspellings, isEmpty);
+    await File(filePath).writeAsString('{ malformed', flush: true);
+    await _waitFor(
+      () => controller.state.status == SpellingPresentationStatus.failure,
+    );
+    expect(controller.state.message, contains('FormatException'));
+    await File(filePath).writeAsString(validBytes, flush: true);
+    await _waitFor(
+      () => controller.state.status == SpellingPresentationStatus.ready,
+    );
+    expect(controller.state.complete, isTrue);
+    expect(controller.projectWords.wordsFor('en-Test'), ['BusyBrand']);
+    expect(controller.misspellings, isEmpty);
+    expect(await File(filePath).readAsString(), validBytes);
+  });
+
   test(
     'failed personal initialization retries after repair and shares first load',
     () async {

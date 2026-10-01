@@ -1615,6 +1615,110 @@ hidden style prose
       }
     });
 
+    test('multiline link labels keep container prefixes out of prose', () {
+      for (final source in [
+        '> [helo\n> wrld](target)\n',
+        '> [helo\r\n> wrld](target)\r\n',
+        '- [helo\n  wrld](target)\n',
+      ]) {
+        final parsed = const MarkdownParser().parse(
+          filePath: '/tmp/multiline-label.md',
+          source: source,
+          mode: MarkdownMode.commonMark,
+        );
+        final projected = const MarkdownSpellingProjector().project(
+          filePath: '/tmp/multiline-label.md',
+          source: source,
+          mode: MarkdownMode.commonMark,
+          languageId: 'en-Test',
+          snapshot: _snapshot,
+        );
+        final rich = const WysiwygSpellingProjector().project(
+          document: parsed.busyDocument,
+          languageId: 'en-Test',
+          snapshot: _snapshot,
+          documentGeneration: 1,
+        );
+        expect(projected.complete, isTrue, reason: source);
+        expect(rich.complete, isTrue, reason: source);
+        expect(projected.runs.every((run) => run.hasValidMapping), isTrue);
+        expect(rich.runs.every((run) => run.hasValidMapping), isTrue);
+        final prose = projected.runs.map((run) => run.text).join(' ');
+        expect(prose, contains('helo'));
+        expect(prose, contains('wrld'));
+        expect(prose, isNot(contains('>')));
+        expect(prose, isNot(contains('target')));
+        expect(rich.runs.map((run) => run.text).join(' '), prose);
+        final word = _rejected(
+          projected.runs.singleWhere((run) => run.text.contains('wrld')),
+          'wrld',
+        );
+        expect(word.sourceStart, source.indexOf('wrld'));
+        expect(
+          const SpellingReplacementPlanner()
+              .build(occurrence: word, suggestion: 'world')
+              .applyToSource(source),
+          source.replaceFirst('wrld', 'world'),
+        );
+        final richWord = _rejected(
+          rich.runs.singleWhere((run) => run.text.contains('wrld')),
+          'wrld',
+        );
+        expect(richWord.run.target, isA<SpellingRichBlockTarget>());
+        expect(richWord.sourceStart, source.indexOf('wrld'));
+        expect(
+          const SpellingReplacementPlanner()
+              .build(occurrence: richWord, suggestion: 'world')
+              .applyToSource(source),
+          source.replaceFirst('wrld', 'world'),
+        );
+      }
+    });
+
+    test('metadata scalar tag-like text remains checkable', () {
+      for (final source in [
+        '[hello](target "Use <code>wrld</code> &amp; more")',
+        '<span title="Use <code>wrld</code> &amp; more">hello</span>',
+      ]) {
+        final result = const MarkdownSpellingProjector().project(
+          filePath: '/tmp/metadata-scalar.md',
+          source: source,
+          mode: MarkdownMode.commonMark,
+          languageId: 'en-Test',
+          snapshot: _snapshot,
+        );
+        expect(result.complete, isTrue, reason: source);
+        expect(result.runs.every((run) => run.hasValidMapping), isTrue);
+        final all = result.runs.map((run) => run.text).join(' ');
+        expect(all, contains('wrld'), reason: source);
+        expect(all, contains('&'), reason: source);
+        final word = _rejected(
+          result.runs.singleWhere((run) => run.text.contains('wrld')),
+          'wrld',
+        );
+        expect(word.sourceStart, source.indexOf('wrld'));
+        expect(
+          const SpellingReplacementPlanner()
+              .build(occurrence: word, suggestion: 'world')
+              .applyToSource(source),
+          source.replaceFirst('wrld', 'world'),
+        );
+      }
+      const bodyCode = 'hello <code>wrld</code> again';
+      final body = const MarkdownSpellingProjector().project(
+        filePath: '/tmp/body-code.md',
+        source: bodyCode,
+        mode: MarkdownMode.commonMark,
+        languageId: 'en-Test',
+        snapshot: _snapshot,
+      );
+      expect(body.complete, isTrue);
+      expect(
+        body.runs.map((run) => run.text).join(' '),
+        isNot(contains('wrld')),
+      );
+    });
+
     test('parenthesized title replacement escapes its own delimiter', () {
       const source = '[hello](target (wrld))';
       final result = const MarkdownSpellingProjector().project(
@@ -2240,6 +2344,54 @@ Price \$ 5, mispelled \$ 6 and actual \$hiddenmath\$ tail.
             .applyToSource(source),
         '![Altternativ](asset.png "Bob\\"s")\n\nRepeeted\n\n**mispel**led\n',
       );
+    });
+
+    test('rich links keep all title delimiters source-only', () {
+      for (final title in ['(wrld)', '"wrld"', "'wrld'"]) {
+        final source = '[helo](target $title)\n\nafter\n';
+        final parsed = const MarkdownParser().parse(
+          filePath: '/tmp/rich-title.md',
+          source: source,
+          mode: MarkdownMode.commonMark,
+        );
+        final sourceProjection = const MarkdownSpellingProjector().project(
+          filePath: '/tmp/rich-title.md',
+          source: source,
+          mode: MarkdownMode.commonMark,
+          languageId: 'en-Test',
+          snapshot: _snapshot,
+        );
+        final rich = const WysiwygSpellingProjector().project(
+          document: parsed.busyDocument,
+          languageId: 'en-Test',
+          snapshot: _snapshot,
+          documentGeneration: 1,
+        );
+        expect(sourceProjection.complete, isTrue, reason: source);
+        expect(rich.complete, isTrue, reason: source);
+        expect(rich.runs.every((run) => run.hasValidMapping), isTrue);
+        final label = rich.runs.singleWhere((run) => run.text == 'helo');
+        final metadata = rich.runs.singleWhere((run) => run.text == 'wrld');
+        final following = rich.runs.singleWhere((run) => run.text == 'after');
+        expect(label.target, isA<SpellingRichBlockTarget>());
+        expect(metadata.target, isA<SpellingSourceTarget>());
+        expect(following.target, isA<SpellingRichBlockTarget>());
+        expect(
+          const SpellingReplacementPlanner()
+              .build(
+                occurrence: _rejected(metadata, 'wrld'),
+                suggestion: 'world',
+              )
+              .applyToSource(source),
+          source.replaceFirst('wrld', 'world'),
+        );
+        expect(
+          const SpellingReplacementPlanner()
+              .build(occurrence: _rejected(label, 'helo'), suggestion: 'hello')
+              .applyToSource(source),
+          source.replaceFirst('helo', 'hello'),
+        );
+      }
     });
 
     test('preserves formatting ownership across leaves', () {

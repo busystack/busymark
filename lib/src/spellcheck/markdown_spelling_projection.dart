@@ -231,6 +231,7 @@ final class MarkdownSpellingProjector {
                     end: attribute.end,
                     context: attribute.context,
                     stripBlockSyntax: false,
+                    interpretHtmlSyntax: false,
                   ).scan(),
           ]..sort((left, right) {
             final leftStart = left.atoms.firstOrNull?.sourceStart ?? 0;
@@ -626,6 +627,7 @@ final class _MarkdownProseScanner {
     required this.end,
     required this.context,
     required this.stripBlockSyntax,
+    this.interpretHtmlSyntax = true,
     this.formattingSyntax = const [],
     this.formattingWrappers = const [],
     this.opaqueSyntax = const [],
@@ -639,6 +641,7 @@ final class _MarkdownProseScanner {
   final int end;
   final SpellingSourceContext context;
   final bool stripBlockSyntax;
+  final bool interpretHtmlSyntax;
   final Set<String> footnoteLabels;
   final List<_SourceInterval> formattingSyntax;
   final List<_RawFormattingWrapper> formattingWrappers;
@@ -755,7 +758,7 @@ final class _MarkdownProseScanner {
         cursor = math.min(rangeEnd, opaqueEnd);
         continue;
       }
-      if (source.startsWith('<!--', cursor)) {
+      if (interpretHtmlSyntax && source.startsWith('<!--', cursor)) {
         final close = source.indexOf('-->', cursor + 4);
         _barrier();
         _opaqueEnd = close < 0 || close >= end ? end : close + 3;
@@ -824,7 +827,7 @@ final class _MarkdownProseScanner {
           continue;
         }
       }
-      if (unit == 0x3c) {
+      if (interpretHtmlSyntax && unit == 0x3c) {
         final tagCandidate = _isHtmlTagCandidate(cursor);
         final autolinkCandidate = _isAutolinkCandidate(cursor);
         if (tagCandidate || autolinkCandidate) {
@@ -938,7 +941,7 @@ final class _MarkdownProseScanner {
       return null;
     }
     if (image) _barrier();
-    _scanInline(recognized.labelStart, recognized.labelEnd);
+    _scanMappedLabel(recognized.labelStart, recognized.labelEnd);
     if (image) _barrier();
     final titleStart = recognized.titleStart;
     final titleEnd = recognized.titleEnd;
@@ -954,12 +957,41 @@ final class _MarkdownProseScanner {
         end: titleEnd,
         context: titleContext,
         stripBlockSyntax: false,
+        interpretHtmlSyntax: false,
       );
       _groups.addAll(scanner.scan());
       complete = complete && scanner.complete;
     }
     _consumedLinkEnd = recognized.end;
     return recognized.end;
+  }
+
+  void _scanMappedLabel(int labelStart, int labelEnd) {
+    final lines = _lines(from: labelStart, until: labelEnd);
+    for (var index = 0; index < lines.length; index++) {
+      final line = lines[index];
+      var contentStart = line.start;
+      if (index > 0) {
+        final prefix = _blockPrefix.firstMatch(
+          source.substring(line.start, line.contentEnd),
+        );
+        contentStart += prefix?.end ?? 0;
+        final previous = lines[index - 1];
+        if (_text.length > 0 &&
+            !(_consumedLinkEnd != null && line.start < _consumedLinkEnd!)) {
+          _emit(
+            ' ',
+            previous.contentEnd,
+            line.start,
+            SpellingTransformationKind.lineBreak,
+            tokenizationLogical: '\n',
+          );
+        }
+      }
+      if (contentStart < line.contentEnd) {
+        _scanInline(contentStart, line.contentEnd);
+      }
+    }
   }
 
   void _scanHumanReadableAttributes(int tagStart, int tagEnd) {
@@ -982,6 +1014,7 @@ final class _MarkdownProseScanner {
         end: valueStart + value.length,
         context: savedContext,
         stripBlockSyntax: false,
+        interpretHtmlSyntax: false,
       );
       _groups.addAll(scanner.scan());
       complete = complete && scanner.complete;
@@ -1073,21 +1106,22 @@ final class _MarkdownProseScanner {
     _tokenizationContextStart = null;
   }
 
-  List<({int start, int contentEnd})> _lines() {
+  List<({int start, int contentEnd})> _lines({int? from, int? until}) {
     final result = <({int start, int contentEnd})>[];
-    var cursor = start;
-    while (cursor < end) {
+    var cursor = from ?? start;
+    final rangeEnd = until ?? end;
+    while (cursor < rangeEnd) {
       var contentEnd = cursor;
-      while (contentEnd < end &&
+      while (contentEnd < rangeEnd &&
           source.codeUnitAt(contentEnd) != 0x0a &&
           source.codeUnitAt(contentEnd) != 0x0d) {
         contentEnd++;
       }
       result.add((start: cursor, contentEnd: contentEnd));
-      if (contentEnd >= end) break;
+      if (contentEnd >= rangeEnd) break;
       cursor = contentEnd + 1;
       if (source.codeUnitAt(contentEnd) == 0x0d &&
-          cursor < end &&
+          cursor < rangeEnd &&
           source.codeUnitAt(cursor) == 0x0a) {
         cursor++;
       }
