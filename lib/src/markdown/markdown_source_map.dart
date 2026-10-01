@@ -988,6 +988,9 @@ class BusyMarkInlineParserContext {
     return BusyMarkMappedInlineParse(
       inlines: mapped.inlines,
       ranges: ranges,
+      positionedLineBreaks: List.unmodifiable(
+        projection._lineBreaksByLogicalOffset.values,
+      ),
       positionRecordsComplete: mapped.positionRecordsComplete,
       sourceStart: projection.rawStart,
       sourceEnd: projection.rawEnd,

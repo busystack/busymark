@@ -1675,6 +1675,73 @@ hidden style prose
       }
     });
 
+    test('multiline mapped labels agree with rich prose and corrections', () {
+      for (final (source, expected) in [
+        ('> - [helo\n>   wrld](target)\n', 'helo wrld'),
+        ('> - [helo\r\n>   wrld](target)\r\n', 'helo wrld'),
+        ('> [helo\\\n> wrld](target)\n', 'helo wrld'),
+        ('> [helo  \n> wrld](target)\n', 'helo wrld'),
+        ('> [helo\\\r\n> wrld](target)\r\n', 'helo wrld'),
+        ('> [helo\n> wrld](target)\n', 'helo wrld'),
+        ('> [helo \n> wrld](target)\n', 'helo wrld'),
+        ('> [helo\\\n> middle \n> wrld](target)\n', 'helo middle wrld'),
+        ('- > [helo\n  > wrld](target)\n', 'helo wrld'),
+        ('> - [**helo**\n>   wrld](target)\n', 'helo wrld'),
+        ('> [helo  there\n> wrld](target)\n', 'helo  there wrld'),
+        ('> ![helo\n> wrld](target)\n', 'helo wrld'),
+        ('> - ![helo\n>   wrld](target)\n', 'helo wrld'),
+        ('> ![helo\\\n> wrld](target)\n', 'helowrld'),
+        ('> - ![helo\\\n>   wrld](target)\n', 'helowrld'),
+        ('> ![helo  \n> wrld](target)\n', 'helowrld'),
+        ('> ![helo  there\n> wrld](target)\n', 'helo  there wrld'),
+        ('> ![helo\\\n> middle \n> wrld](target)\n', 'helomiddle wrld'),
+      ]) {
+        final kind = source.contains('![')
+            ? BusyInlineKind.image
+            : BusyInlineKind.link;
+        expect(_parserHasInline(source, kind), isTrue, reason: source);
+        final parsed = const MarkdownParser().parse(
+          filePath: '/tmp/multiline-label-invariant.md',
+          source: source,
+          mode: MarkdownMode.commonMark,
+        );
+        final projected = const MarkdownSpellingProjector().project(
+          filePath: '/tmp/multiline-label-invariant.md',
+          source: source,
+          mode: MarkdownMode.commonMark,
+          languageId: 'en-Test',
+          snapshot: _snapshot,
+        );
+        final rich = const WysiwygSpellingProjector().project(
+          document: parsed.busyDocument,
+          languageId: 'en-Test',
+          snapshot: _snapshot,
+          documentGeneration: 1,
+        );
+        final sourceText = projected.runs.map((run) => run.text).join(' ');
+        final richText = rich.runs.map((run) => run.text).join(' ');
+        expect(projected.complete, isTrue, reason: source);
+        expect(rich.complete, isTrue, reason: source);
+        expect(projected.runs.every((run) => run.hasValidMapping), isTrue);
+        expect(rich.runs.every((run) => run.hasValidMapping), isTrue);
+        expect(sourceText, expected, reason: source);
+        expect(richText, sourceText, reason: source);
+        expect(sourceText, isNot(contains('target')), reason: source);
+        for (final run in [projected.runs.single, rich.runs.single]) {
+          final word = _rejected(run, 'wrld');
+          expect(word.sourceStart, source.indexOf('wrld'));
+          expect(word.sourceEnd, source.indexOf('wrld') + 4);
+          expect(
+            const SpellingReplacementPlanner()
+                .build(occurrence: word, suggestion: 'world')
+                .applyToSource(source),
+            source.replaceFirst('wrld', 'world'),
+            reason: source,
+          );
+        }
+      }
+    });
+
     test('metadata scalar tag-like text remains checkable', () {
       for (final source in [
         '[hello](target "Use <code>wrld</code> &amp; more")',

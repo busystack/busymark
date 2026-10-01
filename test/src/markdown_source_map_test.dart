@@ -73,6 +73,45 @@ void main() {
     }
   });
 
+  test('positioned label breaks retain raw endings and container prefixes', () {
+    for (final source in [
+      '> - [helo\r\n>   wrld](target)\r\n',
+      '> - ![helo\r\n>   wrld](target)\r\n',
+    ]) {
+      final mapped = mapper
+          .createInlineParserContext(
+            documentSource: source,
+            mode: MarkdownMode.commonMark,
+          )
+          .parsePositionedBlocks(source)
+          .single;
+      final label = mapped.ranges.entries
+          .singleWhere(
+            (entry) =>
+                entry.key.kind == BusyInlineKind.link ||
+                entry.key.kind == BusyInlineKind.image,
+          )
+          .value;
+      final lineBreak = mapped.positionedLineBreaks.singleWhere(
+        (entry) =>
+            entry.sourceOffset! > label.labelStart! &&
+            entry.sourceOffset! < label.labelEnd!,
+      );
+      expect(lineBreak.sourceOffset, source.indexOf('\r\n'));
+      expect(lineBreak.lineEnding, '\r\n');
+      expect(lineBreak.continuationPrefix, '>   ');
+      expect(
+        source.substring(
+          lineBreak.sourceOffset!,
+          lineBreak.sourceOffset! +
+              lineBreak.lineEnding.length +
+              lineBreak.continuationPrefix.length,
+        ),
+        '\r\n>   ',
+      );
+    }
+  });
+
   test('mapped link and image titles retain exact raw boundaries', () {
     for (final (source, kind, delimiter) in [
       ('[hello](diagrm.md (wrld))', BusyInlineKind.link, '('),

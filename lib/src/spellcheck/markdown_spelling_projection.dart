@@ -163,6 +163,31 @@ final class MarkdownSpellingProjector {
         for (final html in multilineHtml)
           _SourceInterval(html.opaqueStart, html.opaqueEnd),
       ]..sort((left, right) => left.start.compareTo(right.start));
+      final positionedLineBreaks = [
+        for (final lineBreak in mapped.positionedLineBreaks)
+          if (lineBreak.sourceOffset != null)
+            BusyMarkMappedSourceLineBreak(
+              textOffset: lineBreak.textOffset,
+              lineEnding: lineBreak.lineEnding,
+              continuationPrefix: lineBreak.continuationPrefix,
+              sourceOffset: sourceBase + lineBreak.sourceOffset!,
+            ),
+      ];
+      final hardBreakSyntax = <_SourceInterval>[
+        for (final entry in mapped.ranges.entries)
+          if (entry.key.kind == BusyInlineKind.hardBreak)
+            _SourceInterval(
+              sourceBase + entry.value.start,
+              sourceBase + entry.value.end,
+            ),
+        for (final label in imageLabels)
+          for (final entry in label.mapped.ranges.entries)
+            if (entry.key.kind == BusyInlineKind.hardBreak)
+              _SourceInterval(
+                label.sourceBase + entry.value.start,
+                label.sourceBase + entry.value.end,
+              ),
+      ];
       final scanner = _MarkdownProseScanner(
         source: source,
         start: mappedStart,
@@ -179,6 +204,8 @@ final class MarkdownSpellingProjector {
             ], sourceBase: label.sourceBase),
         ],
         opaqueSyntax: opaqueSyntax,
+        positionedLineBreaks: positionedLineBreaks,
+        hardBreakSyntax: hardBreakSyntax,
         recognizedLinks: {
           for (final entry in mapped.ranges.entries)
             if (entry.key.kind == BusyInlineKind.link ||
@@ -186,6 +213,8 @@ final class MarkdownSpellingProjector {
               if (entry.value.labelStart != null &&
                   entry.value.labelEnd != null)
                 sourceBase + entry.value.start: _RecognizedLinkOccurrence(
+                  isImage: entry.key.kind == BusyInlineKind.image,
+                  semanticLabelText: entry.key.plainText,
                   end: sourceBase + entry.value.end,
                   labelStart: sourceBase + entry.value.labelStart!,
                   labelEnd: sourceBase + entry.value.labelEnd!,
@@ -205,6 +234,8 @@ final class MarkdownSpellingProjector {
                     entry.value.labelEnd != null)
                   label.sourceBase +
                       entry.value.start: _RecognizedLinkOccurrence(
+                    isImage: entry.key.kind == BusyInlineKind.image,
+                    semanticLabelText: entry.key.plainText,
                     end: label.sourceBase + entry.value.end,
                     labelStart: label.sourceBase + entry.value.labelStart!,
                     labelEnd: label.sourceBase + entry.value.labelEnd!,
@@ -604,6 +635,8 @@ final class _PendingEmissionGroup {
 
 final class _RecognizedLinkOccurrence {
   const _RecognizedLinkOccurrence({
+    required this.isImage,
+    required this.semanticLabelText,
     required this.end,
     required this.labelStart,
     required this.labelEnd,
@@ -612,6 +645,8 @@ final class _RecognizedLinkOccurrence {
     required this.titleDelimiter,
   });
 
+  final bool isImage;
+  final String semanticLabelText;
   final int end;
   final int labelStart;
   final int labelEnd;
@@ -631,6 +666,8 @@ final class _MarkdownProseScanner {
     this.formattingSyntax = const [],
     this.formattingWrappers = const [],
     this.opaqueSyntax = const [],
+    this.positionedLineBreaks = const [],
+    this.hardBreakSyntax = const [],
     this.recognizedLinks = const {},
     this.recognizedAttributeSpans = const [],
     this.footnoteLabels = const {},
@@ -646,6 +683,8 @@ final class _MarkdownProseScanner {
   final List<_SourceInterval> formattingSyntax;
   final List<_RawFormattingWrapper> formattingWrappers;
   final List<_SourceInterval> opaqueSyntax;
+  final List<BusyMarkMappedSourceLineBreak> positionedLineBreaks;
+  final List<_SourceInterval> hardBreakSyntax;
   final Map<int, _RecognizedLinkOccurrence> recognizedLinks;
   final List<_SourceInterval> recognizedAttributeSpans;
   final List<Object> _groups = [];
@@ -941,7 +980,7 @@ final class _MarkdownProseScanner {
       return null;
     }
     if (image) _barrier();
-    _scanMappedLabel(recognized.labelStart, recognized.labelEnd);
+    _scanMappedLabel(recognized);
     if (image) _barrier();
     final titleStart = recognized.titleStart;
     final titleEnd = recognized.titleEnd;
@@ -966,31 +1005,88 @@ final class _MarkdownProseScanner {
     return recognized.end;
   }
 
-  void _scanMappedLabel(int labelStart, int labelEnd) {
-    final lines = _lines(from: labelStart, until: labelEnd);
-    for (var index = 0; index < lines.length; index++) {
-      final line = lines[index];
-      var contentStart = line.start;
-      if (index > 0) {
-        final prefix = _blockPrefix.firstMatch(
-          source.substring(line.start, line.contentEnd),
-        );
-        contentStart += prefix?.end ?? 0;
-        final previous = lines[index - 1];
-        if (_text.length > 0 &&
-            !(_consumedLinkEnd != null && line.start < _consumedLinkEnd!)) {
-          _emit(
-            ' ',
-            previous.contentEnd,
-            line.start,
-            SpellingTransformationKind.lineBreak,
-            tokenizationLogical: '\n',
-          );
+  void _scanMappedLabel(_RecognizedLinkOccurrence recognized) {
+    final labelStart = recognized.labelStart;
+    final labelEnd = recognized.labelEnd;
+    var cursor = labelStart;
+    var semanticCursor = 0;
+    final breaks = positionedLineBreaks.where((lineBreak) {
+      final offset = lineBreak.sourceOffset;
+      return offset != null && offset >= labelStart && offset < labelEnd;
+    }).toList()..sort((a, b) => a.sourceOffset!.compareTo(b.sourceOffset!));
+    for (final lineBreak in breaks) {
+      final breakStart = lineBreak.sourceOffset!;
+      final nextStart =
+          breakStart +
+          lineBreak.lineEnding.length +
+          lineBreak.continuationPrefix.length;
+      _SourceInterval? hardBreak;
+      for (final span in hardBreakSyntax) {
+        if (span.start >= cursor &&
+            span.start <= breakStart &&
+            span.end >= breakStart + lineBreak.lineEnding.length) {
+          hardBreak = span;
+          break;
         }
       }
-      if (contentStart < line.contentEnd) {
-        _scanInline(contentStart, line.contentEnd);
+      if (nextStart > labelEnd || breakStart < cursor) {
+        complete = false;
+        return;
       }
+      final semanticBreak = recognized.isImage && hardBreak != null
+          ? -1
+          : recognized.semanticLabelText.indexOf('\n', semanticCursor);
+      if (semanticBreak < 0 && (!recognized.isImage || hardBreak == null)) {
+        complete = false;
+        return;
+      }
+      var contentEnd = hardBreak?.start ?? breakStart;
+      if (hardBreak == null) {
+        // The parser can omit whitespace immediately before a soft break.
+        // Retain exactly the authored suffix that remains in its label text.
+        var rawWhitespaceStart = contentEnd;
+        while (rawWhitespaceStart > cursor &&
+            (source.codeUnitAt(rawWhitespaceStart - 1) == 0x20 ||
+                source.codeUnitAt(rawWhitespaceStart - 1) == 0x09)) {
+          rawWhitespaceStart--;
+        }
+        var semanticWhitespaceStart = semanticBreak;
+        while (semanticWhitespaceStart > semanticCursor &&
+            (recognized.semanticLabelText.codeUnitAt(
+                      semanticWhitespaceStart - 1,
+                    ) ==
+                    0x20 ||
+                recognized.semanticLabelText.codeUnitAt(
+                      semanticWhitespaceStart - 1,
+                    ) ==
+                    0x09)) {
+          semanticWhitespaceStart--;
+        }
+        final rawCount = contentEnd - rawWhitespaceStart;
+        final semanticCount = semanticBreak - semanticWhitespaceStart;
+        contentEnd -= math.max(0, rawCount - semanticCount);
+      }
+      if (cursor < contentEnd) _scanInline(cursor, contentEnd);
+      if (!recognized.isImage || hardBreak == null) {
+        _emit(
+          ' ',
+          contentEnd,
+          nextStart,
+          SpellingTransformationKind.lineBreak,
+          tokenizationLogical: '\n',
+        );
+      }
+      if (semanticBreak >= 0) semanticCursor = semanticBreak + 1;
+      cursor = nextStart;
+    }
+    if (cursor < labelEnd) {
+      // A positioned break is required to remove raw continuation syntax
+      // without guessing where the parser put the next label character.
+      if (RegExp(r'\r|\n').hasMatch(source.substring(cursor, labelEnd))) {
+        complete = false;
+        return;
+      }
+      _scanInline(cursor, labelEnd);
     }
   }
 

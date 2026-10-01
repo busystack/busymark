@@ -2555,6 +2555,132 @@ void main() {
   });
 
   test(
+    'project repair recovers a later failed preparation at latest revision',
+    () async {
+      final temporary = await Directory.systemTemp.createTemp(
+        'busymark-project-preparation-repair-',
+      );
+      addTearDown(() => temporary.delete(recursive: true));
+      final bundle = await _createFixtureBundle(temporary);
+      final root = p.join(temporary.path, 'project');
+      await Directory(root).create();
+      final filePath = p.join(root, '.busymark', 'spelling.json');
+      final external = SpellingWordStore(
+        filePath: filePath,
+        projectStore: true,
+      );
+      await external.addWord('en-Test', 'BusyBrand');
+      await external.setProjectLanguage('en-Test');
+      final validBytes = await File(filePath).readAsString();
+      var failedProjectReads = 0;
+      final controller = SpellingSessionController(
+        bundledRoot: bundle,
+        applicationSupportRoot: p.join(temporary.path, 'support'),
+        dictionaryStorageRoot: p.join(temporary.path, 'dictionary-storage'),
+        verifyDictionaryChecksums: false,
+        wordStoreReader: (store) async {
+          try {
+            return await store.read();
+          } on FormatException {
+            if (store.projectStore) failedProjectReads++;
+            rethrow;
+          }
+        },
+      );
+      addTearDown(controller.dispose);
+      SpellingSessionInput input(String text, int revision) => _sessionInput(
+        id: 'project-preparation-repair',
+        root: root,
+        text: text,
+        revision: revision,
+        settings: AppSettings.defaults(),
+      );
+      controller.update(input('BusyBrand', 0));
+      await _waitFor(
+        () => controller.state.status == SpellingPresentationStatus.ready,
+      );
+      await File(filePath).writeAsString('{ malformed', flush: true);
+      await _waitFor(
+        () => controller.state.status == SpellingPresentationStatus.failure,
+      );
+      expect(failedProjectReads, greaterThanOrEqualTo(1));
+      final watcherFailure = controller.state;
+      controller.update(input('BusyBrand wrld', 1));
+      await _waitFor(
+        () =>
+            controller.state.status == SpellingPresentationStatus.failure &&
+            !identical(controller.state, watcherFailure),
+      );
+      expect(failedProjectReads, greaterThanOrEqualTo(2));
+      expect(controller.state.message, contains('FormatException'));
+      await File(filePath).writeAsString(validBytes, flush: true);
+      await _waitFor(
+        () => controller.state.status == SpellingPresentationStatus.ready,
+      );
+      expect(controller.state.complete, isTrue);
+      expect(controller.projectWords.wordsFor('en-Test'), ['BusyBrand']);
+      expect(controller.projectWords.projectLanguage, 'en-Test');
+      expect(controller.effectiveLanguage, 'en-Test');
+      expect(controller.misspellings.map((entry) => entry.word), ['wrld']);
+      expect(controller.misspellings.single.run.snapshot.contentRevision, 1);
+      expect(await File(filePath).readAsString(), validBytes);
+    },
+  );
+
+  test(
+    'project reread does not clear an unrelated personal read failure',
+    () async {
+      final temporary = await Directory.systemTemp.createTemp(
+        'busymark-unrelated-project-repair-',
+      );
+      addTearDown(() => temporary.delete(recursive: true));
+      final bundle = await _createFixtureBundle(temporary);
+      final root = p.join(temporary.path, 'project');
+      await Directory(root).create();
+      var failPersonalRead = false;
+      final controller = SpellingSessionController(
+        bundledRoot: bundle,
+        applicationSupportRoot: p.join(temporary.path, 'support'),
+        dictionaryStorageRoot: p.join(temporary.path, 'dictionary-storage'),
+        verifyDictionaryChecksums: false,
+        wordStoreReader: (store) {
+          if (!store.projectStore && failPersonalRead) {
+            throw StateError('unrelated personal read failure');
+          }
+          return store.read();
+        },
+      );
+      addTearDown(controller.dispose);
+      final input = _sessionInput(
+        id: 'unrelated-project-repair',
+        root: root,
+        text: 'wrld',
+        settings: AppSettings.defaults().copyWith(
+          defaultSpellingLanguage: 'en-Test',
+        ),
+      );
+      controller.update(input);
+      await _waitFor(
+        () => controller.state.status == SpellingPresentationStatus.ready,
+      );
+      failPersonalRead = true;
+      await controller.checkNow(input);
+      expect(controller.state.status, SpellingPresentationStatus.failure);
+      expect(
+        controller.state.message,
+        contains('unrelated personal read failure'),
+      );
+      failPersonalRead = false;
+      await controller.prepareSettings(input.workspace);
+      expect(controller.state.status, SpellingPresentationStatus.failure);
+      expect(
+        controller.state.message,
+        contains('unrelated personal read failure'),
+      );
+    },
+  );
+
+  test(
     'failed personal initialization retries after repair and shares first load',
     () async {
       final temporary = await Directory.systemTemp.createTemp(

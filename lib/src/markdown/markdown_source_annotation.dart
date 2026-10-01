@@ -74,6 +74,7 @@ class BusyMarkMappedInlineParse {
   BusyMarkMappedInlineParse({
     required this.inlines,
     required Map<BusyInline, BusyMarkMappedInlineRange> ranges,
+    this.positionedLineBreaks = const [],
     this.positionRecordsComplete = true,
     this.sourceStart,
     this.sourceEnd,
@@ -81,6 +82,10 @@ class BusyMarkMappedInlineParse {
 
   final List<BusyInline> inlines;
   final Map<BusyInline, BusyMarkMappedInlineRange> ranges;
+
+  /// Raw line boundaries and container continuations of a positioned block.
+  /// [BusyMarkMappedInlineRange.lineBreaks] remains relative to inline text.
+  final List<BusyMarkMappedSourceLineBreak> positionedLineBreaks;
   final bool positionRecordsComplete;
   final int? sourceStart;
   final int? sourceEnd;

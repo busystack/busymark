@@ -119,11 +119,11 @@ final class SpellingSessionController extends ChangeNotifier {
       const SpellingPresentationState.languageRequired();
   ({
     SpellingWordStore store,
-    SpellingPresentationState failure,
     SpellingPresentationState previous,
     bool previousUsesLocalState,
   })?
   _projectReadFailure;
+  SpellingWordStore? _localProjectReadFailureStore;
   SpellingEngineContext? _engineContext;
   SpellingSessionInput? _latestInput;
   String? _projectRoot;
@@ -710,9 +710,14 @@ final class SpellingSessionController extends ChangeNotifier {
       _showDisabled();
       return;
     }
+    SpellingWordStore? failedProjectReadStore;
     try {
       final wasInitialized = _personalStorageInitialized;
-      await _initializeStorage(input.workspace);
+      await _initializeStorage(
+        input.workspace,
+        onProjectReadFailure: (store) => failedProjectReadStore = store,
+        scheduleOnProjectRecovery: false,
+      );
       if (!_isOperationCurrent(operation, input)) return;
       if (manual && wasInitialized) {
         await _refreshPersonalWords();
@@ -786,12 +791,38 @@ final class SpellingSessionController extends ChangeNotifier {
       }
     } on Object catch (error) {
       if (!_isOperationCurrent(operation, input)) return;
-      _localState = SpellingPresentationState(
+      final previousFailure = _projectReadFailure;
+      final projectReadFailed =
+          failedProjectReadStore != null &&
+          identical(failedProjectReadStore, _projectStore) &&
+          _projectRoot == _requestedProjectRoot;
+      final previousState =
+          projectReadFailed &&
+              identical(previousFailure?.store, failedProjectReadStore)
+          ? previousFailure!.previous
+          : state;
+      final previousUsesLocalState =
+          projectReadFailed &&
+              identical(previousFailure?.store, failedProjectReadStore)
+          ? previousFailure!.previousUsesLocalState
+          : _presentationUsesLocalState;
+      final failure = SpellingPresentationState(
         status: SpellingPresentationStatus.failure,
         occurrences: const [],
         complete: false,
         message: error.toString(),
       );
+      if (projectReadFailed) {
+        _projectReadFailure = (
+          store: failedProjectReadStore!,
+          previous: previousState,
+          previousUsesLocalState: previousUsesLocalState,
+        );
+        _localProjectReadFailureStore = failedProjectReadStore;
+      } else {
+        _localProjectReadFailureStore = null;
+      }
+      _localState = failure;
       _presentationUsesLocalState = true;
       notifyListeners();
     }
@@ -820,7 +851,11 @@ final class SpellingSessionController extends ChangeNotifier {
     );
   }
 
-  Future<void> _initializeStorage(Workspace? workspace) async {
+  Future<void> _initializeStorage(
+    Workspace? workspace, {
+    void Function(SpellingWordStore store)? onProjectReadFailure,
+    bool scheduleOnProjectRecovery = true,
+  }) async {
     final supportRoot = await _ensureStorageRoot();
     if (!_personalStorageInitialized) {
       final load = _personalStorageLoad ??= () async {
@@ -873,6 +908,7 @@ final class SpellingSessionController extends ChangeNotifier {
             _requestedProjectRoot != nextProjectRoot) {
           return;
         }
+        onProjectReadFailure?.call(nextProjectStore);
         rethrow;
       }
     }
@@ -885,6 +921,11 @@ final class SpellingSessionController extends ChangeNotifier {
       _projectWords = nextProjectWords;
       _projectStorageInitialized = true;
       _watchProjectStore(nextProjectRoot, nextProjectStore?.filePath);
+      if (nextProjectStore != null &&
+          _recoverProjectReadFailure(nextProjectStore) &&
+          scheduleOnProjectRecovery) {
+        await _refreshAfterPersistentChange();
+      }
     }
 
     // Available metadata is shipped with BusyMark. Only application-managed
@@ -1143,19 +1184,7 @@ final class SpellingSessionController extends ChangeNotifier {
           generation != _projectPublicationGeneration) {
         return;
       }
-      final failedRead = _projectReadFailure;
-      final recovering =
-          failedRead != null &&
-          identical(failedRead.store, store) &&
-          _presentationUsesLocalState &&
-          identical(_localState, failedRead.failure);
-      if (identical(failedRead?.store, store)) {
-        _projectReadFailure = null;
-      }
-      if (recovering) {
-        _localState = failedRead.previous;
-        _presentationUsesLocalState = failedRead.previousUsesLocalState;
-      }
+      final recovering = _recoverProjectReadFailure(store);
       if (_sameWordStoreSnapshot(snapshot, _projectWords) && !recovering) {
         return;
       }
@@ -1174,7 +1203,8 @@ final class SpellingSessionController extends ChangeNotifier {
           previousFailure != null &&
           identical(previousFailure.store, store) &&
           _presentationUsesLocalState &&
-          identical(_localState, previousFailure.failure);
+          identical(_localProjectReadFailureStore, store) &&
+          _localState.status == SpellingPresentationStatus.failure;
       final previousState = repeatedFailure ? previousFailure.previous : state;
       final previousUsesLocalState = repeatedFailure
           ? previousFailure.previousUsesLocalState
@@ -1189,14 +1219,32 @@ final class SpellingSessionController extends ChangeNotifier {
           ? null
           : (
               store: store,
-              failure: failure,
               previous: previousState,
               previousUsesLocalState: previousUsesLocalState,
             );
       _localState = failure;
+      _localProjectReadFailureStore = readCompleted ? null : store;
       _presentationUsesLocalState = true;
       notifyListeners();
     }
+  }
+
+  bool _recoverProjectReadFailure(SpellingWordStore store) {
+    final failedRead = _projectReadFailure;
+    if (failedRead == null || !identical(failedRead.store, store)) {
+      return false;
+    }
+    _projectReadFailure = null;
+    final recovering =
+        _presentationUsesLocalState &&
+        identical(_localProjectReadFailureStore, store) &&
+        _localState.status == SpellingPresentationStatus.failure;
+    if (recovering) {
+      _localState = failedRead.previous;
+      _presentationUsesLocalState = failedRead.previousUsesLocalState;
+      _localProjectReadFailureStore = null;
+    }
+    return recovering;
   }
 
   void _forwardCoordinatorChange() => notifyListeners();
@@ -1257,6 +1305,7 @@ final class SpellingSessionController extends ChangeNotifier {
   void _invalidatePresentation() {
     _engineContext = null;
     _presentationUsesLocalState = true;
+    _localProjectReadFailureStore = null;
     _localState = const SpellingPresentationState(
       status: SpellingPresentationStatus.checking,
       occurrences: [],
