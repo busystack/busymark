@@ -155,10 +155,7 @@ final class MarkdownSpellingProjector {
           );
           if (!reparsed.mapped.positionRecordsComplete) complete = false;
           if (reparsed.codes.isNotEmpty &&
-              reparsed.mapped.inlines
-                      .map((inline) => inline.plainText)
-                      .join() !=
-                  entry.key.plainText) {
+              reparsed.mapped.imageDescriptionText != entry.key.plainText) {
             complete = false;
           }
           final label = (
@@ -808,6 +805,7 @@ _ParsedImageLabel _parseMappedImageLabel(
       positionedLineBreaks: inheritedBreaks,
       positionRecordsComplete:
           mapped.positionRecordsComplete && positionsComplete,
+      imageDescriptionText: mapped.imageDescriptionText,
       sourceStart: mapped.sourceStart == null
           ? null
           : rawStartFor(mapped.sourceStart!),

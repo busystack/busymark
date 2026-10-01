@@ -76,6 +76,7 @@ class BusyMarkMappedInlineParse {
     required Map<BusyInline, BusyMarkMappedInlineRange> ranges,
     this.positionedLineBreaks = const [],
     this.positionRecordsComplete = true,
+    this.imageDescriptionText,
     this.sourceStart,
     this.sourceEnd,
   }) : ranges = Map.unmodifiable(ranges);
@@ -87,6 +88,10 @@ class BusyMarkMappedInlineParse {
   /// [BusyMarkMappedInlineRange.lineBreaks] remains relative to inline text.
   final List<BusyMarkMappedSourceLineBreak> positionedLineBreaks;
   final bool positionRecordsComplete;
+
+  /// Text the Markdown image syntax would assign to an alt attribute when
+  /// these parsed nodes are used as an image description.
+  final String? imageDescriptionText;
   final int? sourceStart;
   final int? sourceEnd;
 }

@@ -9,6 +9,37 @@ import 'package:markdown/markdown.dart' as md;
 void main() {
   const mapper = MarkdownSourceMapper();
 
+  test(
+    'mapped image-description text follows Markdown image alt semantics',
+    () {
+      for (final (source, expectedAlt, expectedInline) in [
+        ('hello `wrld`\\\nagain', 'hello wrldagain', 'hello wrld\nagain'),
+        ('hello `wrld`  \nagain', 'hello wrldagain', 'hello wrld\nagain'),
+        ('hello `wrld`\nagain', 'hello wrld\nagain', 'hello wrld\nagain'),
+        ('hello `wrld\nagain`', 'hello wrld again', 'hello wrld again'),
+        ('hello `wrld`<br>again', 'hello wrld<br>again', 'hello wrld\nagain'),
+        (
+          'hello **wrld** ![alt](inner.png)',
+          'hello wrld alt',
+          'hello wrld alt',
+        ),
+      ]) {
+        final mapped = mapper
+            .createInlineParserContext(
+              documentSource: source,
+              mode: MarkdownMode.commonMark,
+            )
+            .parseMapped(source);
+        expect(mapped.imageDescriptionText, expectedAlt, reason: source);
+        expect(
+          mapped.inlines.map((inline) => inline.plainText).join(),
+          expectedInline,
+          reason: source,
+        );
+      }
+    },
+  );
+
   test('annotated parsing has ordinary semantics across supported corpus', () {
     const fixtures = <String>[
       'plain text and  whitespace',

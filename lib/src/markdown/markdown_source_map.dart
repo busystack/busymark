@@ -695,8 +695,15 @@ class BusyMarkInlineParserContext {
     _addReferenceLabelMarkerVariants(_mappingDocument, source, markers);
     parseInvocations += 1;
     final ranges = Map<BusyInline, BusyMarkMappedInlineRange>.identity();
+    final nodes = _mappingDocument.parseInline(source);
+    final imageDescriptionText = nodes.map((node) {
+      if (node is md.Element && node.tag == 'img') {
+        return node.attributes['alt'] ?? '';
+      }
+      return node.textContent;
+    }).join();
     final inlines = const MarkdownAstAdapter().convertInlineNodes(
-      _mappingDocument.parseInline(source),
+      nodes,
       sourceMappings: ranges,
       mappingSource: source,
       ignoredPositionMarkers: markers,
@@ -705,6 +712,7 @@ class BusyMarkInlineParserContext {
       return BusyMarkMappedInlineParse(
         inlines: inlines,
         ranges: ranges,
+        imageDescriptionText: imageDescriptionText,
         sourceStart: 0,
         sourceEnd: source.length,
       );
@@ -800,6 +808,7 @@ class BusyMarkInlineParserContext {
       return BusyMarkMappedInlineParse(
         inlines: original.inlines,
         ranges: originalRangesWithSemantics,
+        imageDescriptionText: original.imageDescriptionText,
         positionRecordsComplete: false,
         sourceStart: 0,
         sourceEnd: source.length,
@@ -808,6 +817,7 @@ class BusyMarkInlineParserContext {
     return BusyMarkMappedInlineParse(
       inlines: reconciled,
       ranges: reconciledRanges,
+      imageDescriptionText: imageDescriptionText,
       sourceStart: 0,
       sourceEnd: source.length,
     );
@@ -988,6 +998,7 @@ class BusyMarkInlineParserContext {
     return BusyMarkMappedInlineParse(
       inlines: mapped.inlines,
       ranges: ranges,
+      imageDescriptionText: mapped.imageDescriptionText,
       positionedLineBreaks: List.unmodifiable(
         projection._lineBreaksByLogicalOffset.values,
       ),

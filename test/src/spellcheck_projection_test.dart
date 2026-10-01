@@ -2021,6 +2021,185 @@ hidden style prose
       expect(ordinaryProjection.runs.map((run) => run.text), ['hello ']);
     });
 
+    test('image code and Markdown hard breaks retain image alt semantics', () {
+      for (final (name, source, expectedAlt) in [
+        (
+          'backslash-after-code',
+          '![hello `wrld`\\\nagain](image.png)',
+          'hello wrldagain',
+        ),
+        (
+          'spaces-after-code',
+          '![hello `wrld`  \nagain](image.png)',
+          'hello wrldagain',
+        ),
+        (
+          'backslash-before-code',
+          '![hello\\\n`wrld` again](image.png)',
+          'hellowrld again',
+        ),
+        (
+          'combined-crlf',
+          '> - ![hello `wrld`\\\r\n>   again](image.png)',
+          'hello wrldagain',
+        ),
+        (
+          'soft-break',
+          '![hello `wrld`\nagain](image.png)',
+          'hello wrld\nagain',
+        ),
+        (
+          'newline-in-code',
+          '![hello `wrld\nagain`](image.png)',
+          'hello wrld again',
+        ),
+      ]) {
+        final parsed = const MarkdownParser().parse(
+          filePath: '/tmp/image-code-break.md',
+          source: source,
+          mode: MarkdownMode.commonMark,
+        );
+        Iterable<BusyInline> descendants(Iterable<BusyInline> roots) sync* {
+          for (final inline in roots) {
+            yield inline;
+            yield* descendants(inline.children);
+          }
+        }
+
+        Iterable<BusyBlock> blocks(Iterable<BusyBlock> roots) sync* {
+          for (final block in roots) {
+            yield block;
+            yield* blocks(block.children);
+          }
+        }
+
+        final image = [
+          for (final block in blocks(parsed.busyDocument.blocks))
+            ...descendants(block.inlines),
+        ].singleWhere((inline) => inline.kind == BusyInlineKind.image);
+        expect(image.text, expectedAlt, reason: name);
+        final projected = const MarkdownSpellingProjector().project(
+          filePath: '/tmp/image-code-break.md',
+          source: source,
+          mode: MarkdownMode.commonMark,
+          languageId: 'en-Test',
+          snapshot: _snapshot,
+        );
+        final rich = const WysiwygSpellingProjector().project(
+          document: parsed.busyDocument,
+          languageId: 'en-Test',
+          snapshot: _snapshot,
+          documentGeneration: 1,
+        );
+        expect(projected.complete, isTrue, reason: name);
+        expect(rich.complete, isTrue, reason: name);
+        expect(
+          projected.runs.every((run) => run.hasValidMapping),
+          isTrue,
+          reason: name,
+        );
+        expect(
+          rich.runs.every((run) => run.hasValidMapping),
+          isTrue,
+          reason: name,
+        );
+        final expectedSpelling = expectedAlt.replaceAll('\n', ' ');
+        expect(projected.runs.single.text, expectedSpelling, reason: name);
+        expect(rich.runs.single.text, expectedSpelling, reason: name);
+        expect(
+          projected.runs.single.text,
+          isNot(contains('image.png')),
+          reason: name,
+        );
+        expect(projected.runs.single.text, isNot(contains('`')), reason: name);
+      }
+    });
+
+    test('image code hard-break corrections retain authored source', () {
+      for (final source in [
+        '![helo `code`\\\nagain wrld](image.png)',
+        '![helo `code`  \nagain wrld](image.png)',
+        '> - ![helo `code`\\\r\n>   again wrld](image.png)',
+      ]) {
+        final parsed = const MarkdownParser().parse(
+          filePath: '/tmp/image-code-break-correction.md',
+          source: source,
+          mode: MarkdownMode.commonMark,
+        );
+        Iterable<BusyInline> descendants(Iterable<BusyInline> roots) sync* {
+          for (final inline in roots) {
+            yield inline;
+            yield* descendants(inline.children);
+          }
+        }
+
+        Iterable<BusyBlock> blocks(Iterable<BusyBlock> roots) sync* {
+          for (final block in roots) {
+            yield block;
+            yield* blocks(block.children);
+          }
+        }
+
+        final image = [
+          for (final block in blocks(parsed.busyDocument.blocks))
+            ...descendants(block.inlines),
+        ].singleWhere((inline) => inline.kind == BusyInlineKind.image);
+        expect(image.text, 'helo codeagain wrld', reason: source);
+        final projected = const MarkdownSpellingProjector().project(
+          filePath: '/tmp/image-code-break-correction.md',
+          source: source,
+          mode: MarkdownMode.commonMark,
+          languageId: 'en-Test',
+          snapshot: _snapshot,
+        );
+        final rich = const WysiwygSpellingProjector().project(
+          document: parsed.busyDocument,
+          languageId: 'en-Test',
+          snapshot: _snapshot,
+          documentGeneration: 1,
+        );
+        expect(projected.complete, isTrue, reason: source);
+        expect(rich.complete, isTrue, reason: source);
+        expect(
+          projected.runs.every((run) => run.hasValidMapping),
+          isTrue,
+          reason: source,
+        );
+        expect(
+          rich.runs.every((run) => run.hasValidMapping),
+          isTrue,
+          reason: source,
+        );
+        expect(projected.runs.single.text, image.text, reason: source);
+        expect(rich.runs.single.text, image.text, reason: source);
+        for (final (word, suggestion) in [
+          ('helo', 'hello'),
+          ('wrld', 'world'),
+        ]) {
+          for (final run in [projected.runs.single, rich.runs.single]) {
+            final occurrence = _rejected(run, word);
+            expect(
+              occurrence.sourceStart,
+              source.indexOf(word),
+              reason: source,
+            );
+            expect(
+              occurrence.sourceEnd,
+              source.indexOf(word) + word.length,
+              reason: source,
+            );
+            expect(
+              const SpellingReplacementPlanner()
+                  .build(occurrence: occurrence, suggestion: suggestion)
+                  .applyToSource(source),
+              source.replaceFirst(word, suggestion),
+              reason: source,
+            );
+          }
+        }
+      }
+    });
+
     for (final (name, source, expectedImage) in [
       ('list', '- ![hello `wrld\n  again`](image.png)', 'hello wrld again'),
       ('quote', '> ![hello `wrld\n> again`](image.png)', 'hello wrld again'),
