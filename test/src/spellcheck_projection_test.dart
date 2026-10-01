@@ -1544,6 +1544,40 @@ hidden style prose
       }
     });
 
+    test('destination-only links and images do not expose a false title', () {
+      for (final (source, kind) in [
+        ('[helo]( (wrld))', BusyInlineKind.link),
+        ('![helo]( (wrld))', BusyInlineKind.image),
+        ('[helo]( ("wrld"))', BusyInlineKind.link),
+        ("![helo]( ('wrld'))", BusyInlineKind.image),
+      ]) {
+        expect(_parserHasInline(source, kind), isTrue, reason: source);
+        final result = const MarkdownSpellingProjector().project(
+          filePath: '/tmp/destination-only.md',
+          source: source,
+          mode: MarkdownMode.commonMark,
+          languageId: 'en-Test',
+          snapshot: _snapshot,
+        );
+        expect(result.complete, isTrue, reason: source);
+        expect(result.runs.every((run) => run.hasValidMapping), isTrue);
+        final all = result.runs.map((run) => run.text).join(' ');
+        expect(all, contains('helo'), reason: source);
+        expect(all, isNot(contains('wrld')), reason: source);
+        final occurrence = _rejected(
+          result.runs.firstWhere((run) => run.text.contains('helo')),
+          'helo',
+        );
+        expect(occurrence.sourceStart, source.indexOf('helo'));
+        expect(
+          const SpellingReplacementPlanner()
+              .build(occurrence: occurrence, suggestion: 'hello')
+              .applyToSource(source),
+          source.replaceFirst('helo', 'hello'),
+        );
+      }
+    });
+
     test('recognized multiline links consume one mapped occurrence', () {
       for (final (source, kind) in [
         ('[hello](\ndiagrm.md\n"wrld"\n)\n', BusyInlineKind.link),
@@ -1596,7 +1630,10 @@ hidden style prose
       );
       for (final (suggestion, expected) in [
         ('world)', r'[hello](target (world\)))'),
+        ('world(', r'[hello](target (world\())'),
+        ('world()', r'[hello](target (world\(\)))'),
         (r'world\done', r'[hello](target (world\\done))'),
+        (r'world\(x)', r'[hello](target (world\\\(x\)))'),
       ]) {
         final corrected = const SpellingReplacementPlanner()
             .build(occurrence: occurrence, suggestion: suggestion)
@@ -1612,6 +1649,7 @@ hidden style prose
         );
         expect(link.destination, 'target');
         expect(link.attributes['title'], suggestion);
+        expect(md.markdownToHtml(corrected), contains('title="$suggestion"'));
       }
     });
 

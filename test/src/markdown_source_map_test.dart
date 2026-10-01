@@ -112,6 +112,49 @@ void main() {
     }
   });
 
+  test('destination-only links and images have no mapped title', () {
+    for (final (source, kind, destination) in [
+      ('[hello]( (wrld))', BusyInlineKind.link, '(wrld)'),
+      ('![hello]( (wrld))', BusyInlineKind.image, '(wrld)'),
+      ('[hello](  (wrld)  )', BusyInlineKind.link, '(wrld)'),
+      ('[hello](\n(wrld)\n)', BusyInlineKind.link, '(wrld)'),
+      ('[hello](\r\n(wrld)\r\n)', BusyInlineKind.link, '(wrld)'),
+      ('[hello]( ("wrld"))', BusyInlineKind.link, '(%22wrld%22)'),
+      ("![hello]( ('wrld'))", BusyInlineKind.image, "('wrld')"),
+      ('[hello]( (wrld) "")', BusyInlineKind.link, '(wrld)'),
+    ]) {
+      final context = mapper.createInlineParserContext(
+        documentSource: source,
+        mode: MarkdownMode.commonMark,
+      );
+      final parsed = context
+          .parse(source)
+          .where((inline) => inline.kind == kind);
+      expect(parsed, hasLength(1), reason: source);
+      expect(parsed.single.destination, destination, reason: source);
+      expect(
+        parsed.single.attributes.containsKey('title'),
+        isFalse,
+        reason: source,
+      );
+      final matches = [
+        for (final mapped in context.parsePositionedBlocks(source))
+          for (final entry in mapped.ranges.entries)
+            if (entry.key.kind == kind) entry,
+      ];
+      expect(matches, hasLength(1), reason: source);
+      final inline = matches.single.key;
+      final range = matches.single.value;
+      expect(inline.destination, destination, reason: source);
+      expect(inline.attributes.containsKey('title'), isFalse, reason: source);
+      expect(source.substring(range.start, range.end), source);
+      expect(source.substring(range.labelStart!, range.labelEnd!), 'hello');
+      expect(range.titleStart, isNull, reason: source);
+      expect(range.titleEnd, isNull, reason: source);
+      expect(range.titleDelimiter, isNull, reason: source);
+    }
+  });
+
   test('position records do not change HTML or link semantics', () {
     const marker = '\ue001';
     const source =

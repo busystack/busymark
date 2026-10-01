@@ -237,11 +237,11 @@ class _SourceMappingLinkSyntax extends md.LinkSyntax {
     final isReference =
         labelEnd + 1 >= parser.source.length ||
         parser.source.codeUnitAt(labelEnd + 1) != 0x28;
-    final title = isReference
-        ? null
-        : _mappedInlineTitle(parser.source, labelEnd, parser.pos + 1);
     for (final node in nodes.whereType<md.Element>()) {
       if (node.tag != 'a') continue;
+      final title = isReference || !node.attributes.containsKey('title')
+          ? null
+          : _mappedInlineTitle(parser.source, labelEnd, parser.pos + 1);
       _setSourceMappingAttributes(
         node,
         start: opener.endPos - 1,
@@ -280,11 +280,11 @@ class _SourceMappingImageSyntax extends md.ImageSyntax {
     final isReference =
         labelEnd + 1 >= parser.source.length ||
         parser.source.codeUnitAt(labelEnd + 1) != 0x28;
-    final title = isReference
-        ? null
-        : _mappedInlineTitle(parser.source, labelEnd, parser.pos + 1);
     for (final node in nodes.whereType<md.Element>()) {
       if (node.tag != 'img') continue;
+      final title = isReference || !node.attributes.containsKey('title')
+          ? null
+          : _mappedInlineTitle(parser.source, labelEnd, parser.pos + 1);
       _setSourceMappingAttributes(
         node,
         start: opener.endPos - 2,
