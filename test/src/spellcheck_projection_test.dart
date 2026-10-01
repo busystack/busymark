@@ -13,6 +13,7 @@ import 'package:busymark/src/spellcheck/writerside_spelling_projection.dart';
 import 'package:busymark/src/spellcheck/wysiwyg_spelling_projection.dart';
 import 'package:busymark/src/workspace/workspace_model.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:markdown/markdown.dart' as md;
 
 const _snapshot = SpellingSnapshotIdentity(
   bufferId: 'buffer-1',
@@ -32,6 +33,19 @@ SpellingOccurrence _rejected(SpellingProseRun run, String word) {
     word: word,
     outcome: SpellingCheckOutcome.rejected,
   );
+}
+
+bool _parserHasInline(String source, BusyInlineKind kind) {
+  final parsed = const MarkdownParser().parse(
+    filePath: '/tmp/recognized-inline.md',
+    source: source,
+    mode: MarkdownMode.commonMark,
+  );
+  bool inInline(BusyInline inline) =>
+      inline.kind == kind || inline.children.any(inInline);
+  bool inBlock(BusyBlock block) =>
+      block.inlines.any(inInline) || block.children.any(inBlock);
+  return parsed.busyDocument.blocks.any(inBlock);
 }
 
 void _expectCodeFenceBeforeWrld(String source, List<String> codeWords) {
@@ -1218,6 +1232,61 @@ hidden style prose
       expect(corrected, source.replaceFirst('mispelled', 'misspelled'));
     });
 
+    test('keeps escaped multiline tag-like prose checkable', () {
+      for (final source in [
+        r'\<span'
+            '\nwrld>\n',
+        r'\\\<span'
+            '\nwrld>\n',
+        r'\<span'
+            '\n title="wrld" data-id="hidden">body\n',
+      ]) {
+        expect(md.markdownToHtml(source), contains('&lt;span'));
+        final result = const MarkdownSpellingProjector().project(
+          filePath: '/tmp/escaped-multiline-tag.md',
+          source: source,
+          mode: MarkdownMode.commonMark,
+          languageId: 'en-Test',
+          snapshot: _snapshot,
+        );
+        expect(result.complete, isTrue, reason: source);
+        expect(result.runs.every((run) => run.hasValidMapping), isTrue);
+        expect(result.runs.map((run) => run.text).join(' '), contains('wrld'));
+        expect(
+          result.runs.where((run) => run.text.contains('wrld')),
+          hasLength(1),
+          reason: source,
+        );
+        final occurrence = _rejected(
+          result.runs.firstWhere((run) => run.text.contains('wrld')),
+          'wrld',
+        );
+        expect(
+          const SpellingReplacementPlanner()
+              .build(occurrence: occurrence, suggestion: 'world')
+              .applyToSource(source),
+          source.replaceFirst('wrld', 'world'),
+        );
+      }
+      const real =
+          r'\\<span'
+          '\n title="wrld" data-id="hidden">body</span>\n';
+      expect(md.markdownToHtml(real), contains('<span\n'));
+      final result = const MarkdownSpellingProjector().project(
+        filePath: '/tmp/real-multiline-tag.md',
+        source: real,
+        mode: MarkdownMode.commonMark,
+        languageId: 'en-Test',
+        snapshot: _snapshot,
+      );
+      expect(result.complete, isTrue);
+      expect(result.runs.every((run) => run.hasValidMapping), isTrue);
+      final all = result.runs.map((run) => run.text).join(' ');
+      expect(all, contains('wrld'));
+      expect(all, contains('body'));
+      expect(all, isNot(contains('hidden')));
+    });
+
     test('removes delimiters when a correction empties formatting', () {
       for (final fixture in <({String source, MarkdownMode mode})>[
         (source: 'he**x**llo\n', mode: MarkdownMode.commonMark),
@@ -1431,6 +1500,120 @@ hidden style prose
         }
       },
     );
+
+    test('recognized link and image titles use their authored boundaries', () {
+      for (final (source, kind) in [
+        ('[hello](diagrm.md (wrld))', BusyInlineKind.link),
+        ('[hello](diagrm.md "wrld)")', BusyInlineKind.link),
+        ('![hello](diagrm.png (wrld))', BusyInlineKind.image),
+        ('[hello](wrld.md "wrld")', BusyInlineKind.link),
+        ('[he`[`llo](diagrm.md "wrld")', BusyInlineKind.link),
+      ]) {
+        expect(_parserHasInline(source, kind), isTrue, reason: source);
+        final result = const MarkdownSpellingProjector().project(
+          filePath: '/tmp/recognized-title.md',
+          source: source,
+          mode: MarkdownMode.commonMark,
+          languageId: 'en-Test',
+          snapshot: _snapshot,
+        );
+        expect(result.complete, isTrue, reason: source);
+        expect(result.runs.every((run) => run.hasValidMapping), isTrue);
+        final all = result.runs.map((run) => run.text).join(' ');
+        if (source.contains('`[`')) {
+          expect(all, contains('he'), reason: source);
+          expect(all, contains('llo'), reason: source);
+        } else {
+          expect(all, contains('hello'), reason: source);
+        }
+        expect(all, contains('wrld'), reason: source);
+        expect(all, isNot(contains('diagrm')), reason: source);
+        expect(all, isNot(contains('wrld.md')), reason: source);
+        final occurrence = _rejected(
+          result.runs.firstWhere((run) => run.text.contains('wrld')),
+          'wrld',
+        );
+        final titleOffset = source.lastIndexOf('wrld');
+        expect(occurrence.sourceStart, titleOffset, reason: source);
+        expect(
+          const SpellingReplacementPlanner()
+              .build(occurrence: occurrence, suggestion: 'world')
+              .applyToSource(source),
+          source.replaceRange(titleOffset, titleOffset + 4, 'world'),
+        );
+      }
+    });
+
+    test('recognized multiline links consume one mapped occurrence', () {
+      for (final (source, kind) in [
+        ('[hello](\ndiagrm.md\n"wrld"\n)\n', BusyInlineKind.link),
+        ('[hello](\r\ndiagrm.md\r\n"wrld"\r\n)\r\n', BusyInlineKind.link),
+        (
+          '> - [hello](\n>   diagrm.md\n>   "wrld"\n>   )\n',
+          BusyInlineKind.link,
+        ),
+        ('![hello](\ndiagrm.png\n"wrld"\n)\n', BusyInlineKind.image),
+      ]) {
+        expect(_parserHasInline(source, kind), isTrue);
+        final result = const MarkdownSpellingProjector().project(
+          filePath: '/tmp/multiline-link.md',
+          source: source,
+          mode: MarkdownMode.commonMark,
+          languageId: 'en-Test',
+          snapshot: _snapshot,
+        );
+        expect(result.complete, isTrue, reason: source);
+        expect(result.runs.every((run) => run.hasValidMapping), isTrue);
+        final all = result.runs.map((run) => run.text).join(' ');
+        expect(all, contains('hello'), reason: source);
+        expect(all, contains('wrld'), reason: source);
+        expect(all, isNot(contains('diagrm')), reason: source);
+        final occurrence = _rejected(
+          result.runs.firstWhere((run) => run.text.contains('wrld')),
+          'wrld',
+        );
+        expect(
+          const SpellingReplacementPlanner()
+              .build(occurrence: occurrence, suggestion: 'world')
+              .applyToSource(source),
+          source.replaceFirst('wrld', 'world'),
+        );
+      }
+    });
+
+    test('parenthesized title replacement escapes its own delimiter', () {
+      const source = '[hello](target (wrld))';
+      final result = const MarkdownSpellingProjector().project(
+        filePath: '/tmp/parenthesized-title.md',
+        source: source,
+        mode: MarkdownMode.commonMark,
+        languageId: 'en-Test',
+        snapshot: _snapshot,
+      );
+      final occurrence = _rejected(
+        result.runs.singleWhere((run) => run.text == 'wrld'),
+        'wrld',
+      );
+      for (final (suggestion, expected) in [
+        ('world)', r'[hello](target (world\)))'),
+        (r'world\done', r'[hello](target (world\\done))'),
+      ]) {
+        final corrected = const SpellingReplacementPlanner()
+            .build(occurrence: occurrence, suggestion: suggestion)
+            .applyToSource(source);
+        expect(corrected, expected);
+        final parsed = const MarkdownParser().parse(
+          filePath: '/tmp/parenthesized-title.md',
+          source: corrected,
+          mode: MarkdownMode.commonMark,
+        );
+        final link = parsed.busyDocument.blocks.single.inlines.singleWhere(
+          (inline) => inline.kind == BusyInlineKind.link,
+        );
+        expect(link.destination, 'target');
+        expect(link.attributes['title'], suggestion);
+      }
+    });
 
     test('semantic leaf blocks define independent complete prose runs', () {
       const source = r'''    hiddenindent

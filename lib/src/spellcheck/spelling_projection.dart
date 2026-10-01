@@ -14,6 +14,7 @@ enum SpellingSourceContext {
   markdownTableCell,
   markdownSingleQuotedTitle,
   markdownDoubleQuotedTitle,
+  markdownParenthesizedTitle,
   xmlText,
   xmlSingleQuotedAttribute,
   xmlDoubleQuotedAttribute,

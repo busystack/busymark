@@ -651,6 +651,8 @@ String _encode(String value, SpellingSourceContext context) {
       value.replaceAll(r'\', r'\\').replaceAll("'", r"\'"),
     SpellingSourceContext.markdownDoubleQuotedTitle =>
       value.replaceAll(r'\', r'\\').replaceAll('"', r'\"'),
+    SpellingSourceContext.markdownParenthesizedTitle =>
+      value.replaceAll(r'\', r'\\').replaceAll(')', r'\)'),
     SpellingSourceContext.xmlText =>
       value
           .replaceAll('&', '&amp;')

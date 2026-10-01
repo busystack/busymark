@@ -2134,6 +2134,380 @@ void main() {
   });
 
   test(
+    'older same-project Settings read cannot undo a newer snapshot',
+    () async {
+      final temporary = await Directory.systemTemp.createTemp(
+        'busymark-project-refresh-order-',
+      );
+      addTearDown(() => temporary.delete(recursive: true));
+      final bundle = await _createFixtureBundle(temporary);
+      final root = p.join(temporary.path, 'project');
+      await Directory(root).create();
+      final input = _sessionInput(
+        id: 'project-refresh-order',
+        root: root,
+        text: 'BusyBrand',
+        settings: AppSettings.defaults().copyWith(
+          defaultSpellingLanguage: 'en-Test',
+        ),
+      );
+      final readEntered = Completer<void>();
+      final readRelease = Completer<void>();
+      var delayNext = false;
+      final controller = SpellingSessionController(
+        bundledRoot: bundle,
+        applicationSupportRoot: p.join(temporary.path, 'support'),
+        dictionaryStorageRoot: p.join(temporary.path, 'dictionary-storage'),
+        verifyDictionaryChecksums: false,
+        wordStoreReader: (store) async {
+          final snapshot = await store.read();
+          if (store.projectStore && delayNext) {
+            delayNext = false;
+            readEntered.complete();
+            await readRelease.future;
+          }
+          return snapshot;
+        },
+      );
+      addTearDown(controller.dispose);
+      await controller.prepareSettings(input.workspace);
+      delayNext = true;
+      final older = controller.prepareSettings(input.workspace);
+      await readEntered.future;
+      final store = SpellingWordStore(
+        filePath: p.join(root, '.busymark', 'spelling.json'),
+        projectStore: true,
+      );
+      await store.addWord('en-Test', 'BusyBrand');
+      await store.setProjectLanguage('en-Test');
+      await controller.prepareSettings(input.workspace);
+      expect(controller.projectWords.wordsFor('en-Test'), ['BusyBrand']);
+      expect(controller.projectWords.projectLanguage, 'en-Test');
+      readRelease.complete();
+      await older;
+      expect(controller.projectWords.wordsFor('en-Test'), ['BusyBrand']);
+      expect(controller.projectWords.projectLanguage, 'en-Test');
+      expect((await store.read()).wordsFor('en-Test'), ['BusyBrand']);
+      await controller.checkNow(input);
+      expect(controller.misspellings, isEmpty);
+    },
+  );
+
+  test('older project watcher read cannot undo Settings publication', () async {
+    final temporary = await Directory.systemTemp.createTemp(
+      'busymark-project-watcher-order-',
+    );
+    addTearDown(() => temporary.delete(recursive: true));
+    final bundle = await _createFixtureBundle(temporary);
+    final root = p.join(temporary.path, 'project');
+    await Directory(root).create();
+    final input = _sessionInput(
+      id: 'project-watcher-order',
+      root: root,
+      text: 'BusyBrand',
+      settings: AppSettings.defaults().copyWith(
+        defaultSpellingLanguage: 'en-Test',
+      ),
+    );
+    final readEntered = Completer<void>();
+    final readRelease = Completer<void>();
+    var delayNext = false;
+    final controller = SpellingSessionController(
+      bundledRoot: bundle,
+      applicationSupportRoot: p.join(temporary.path, 'support'),
+      dictionaryStorageRoot: p.join(temporary.path, 'dictionary-storage'),
+      verifyDictionaryChecksums: false,
+      wordStoreReader: (store) async {
+        final snapshot = await store.read();
+        if (store.projectStore && delayNext) {
+          delayNext = false;
+          readEntered.complete();
+          await readRelease.future;
+        }
+        return snapshot;
+      },
+    );
+    addTearDown(controller.dispose);
+    await controller.prepareSettings(input.workspace);
+    final store = SpellingWordStore(
+      filePath: p.join(root, '.busymark', 'spelling.json'),
+      projectStore: true,
+    );
+    delayNext = true;
+    await store.addWord('en-Test', 'OldWord');
+    await readEntered.future;
+    await const AtomicFileWriter().writeBytes(
+      store.filePath,
+      utf8.encode(
+        '${jsonEncode({
+          'schemaVersion': 1,
+          'revision': 1,
+          'projectLanguage': 'en-Test',
+          'words': {
+            'en-Test': [
+              {'key': 'busybrand', 'display': 'BusyBrand'},
+            ],
+          },
+        })}\n',
+      ),
+      overwrite: true,
+    );
+    await controller.prepareSettings(input.workspace);
+    expect(controller.projectWords.wordsFor('en-Test'), ['BusyBrand']);
+    readRelease.complete();
+    await Future<void>.delayed(Duration.zero);
+    expect(controller.projectWords.wordsFor('en-Test'), ['BusyBrand']);
+    expect(controller.projectWords.projectLanguage, 'en-Test');
+    final persisted = await store.read();
+    expect(persisted.wordsFor('en-Test'), ['BusyBrand']);
+    expect(persisted.projectLanguage, 'en-Test');
+    await controller.checkNow(input);
+    expect(controller.misspellings, isEmpty);
+  });
+
+  test('project read begun during a mutation cannot undo its result', () async {
+    for (final changeLanguage in [false, true]) {
+      final temporary = await Directory.systemTemp.createTemp(
+        'busymark-project-mutation-refresh-',
+      );
+      addTearDown(() => temporary.delete(recursive: true));
+      final bundle = await _createFixtureBundle(temporary);
+      final root = p.join(temporary.path, 'project');
+      await Directory(root).create();
+      final filePath = p.join(root, '.busymark', 'spelling.json');
+      final external = SpellingWordStore(
+        filePath: filePath,
+        projectStore: true,
+      );
+      await external.addWord('en-Test', 'BusyBrand');
+      final writer = _GatedSpellingAtomicFileWriter();
+      final readEntered = Completer<void>();
+      final readRelease = Completer<void>();
+      var holdRead = false;
+      final controller = SpellingSessionController(
+        bundledRoot: bundle,
+        applicationSupportRoot: p.join(temporary.path, 'support'),
+        dictionaryStorageRoot: p.join(temporary.path, 'dictionary-storage'),
+        verifyDictionaryChecksums: false,
+        wordStoreFactory: ({required filePath, required projectStore}) =>
+            SpellingWordStore(
+              filePath: filePath,
+              projectStore: projectStore,
+              writer: projectStore ? writer : const AtomicFileWriter(),
+            ),
+        wordStoreReader: (store) async {
+          final snapshot = await store.read();
+          if (store.projectStore && holdRead) {
+            holdRead = false;
+            readEntered.complete();
+            await readRelease.future;
+          }
+          return snapshot;
+        },
+      );
+      addTearDown(controller.dispose);
+      final input = _sessionInput(
+        id: 'project-mutation-refresh',
+        root: root,
+        text: 'BusyBrand',
+        settings: AppSettings.defaults().copyWith(
+          defaultSpellingLanguage: changeLanguage ? 'fr-CA' : 'en-Test',
+        ),
+      );
+      await controller.prepareSettings(input.workspace);
+      writer.holdNextWrite();
+      final mutation = changeLanguage
+          ? controller.setProjectLanguage('en-Test')
+          : controller.removeProjectWord('en-Test', 'BusyBrand');
+      await writer.entered.future;
+      holdRead = true;
+      final refresh = controller.prepareSettings(input.workspace);
+      await readEntered.future;
+      writer.release.complete();
+      await mutation;
+      readRelease.complete();
+      await refresh;
+      final words = controller.projectWords;
+      expect(words.wordsFor('en-Test').isEmpty, !changeLanguage);
+      expect(words.projectLanguage, changeLanguage ? 'en-Test' : null);
+      final persisted = await external.read();
+      expect(persisted.wordsFor('en-Test').isEmpty, !changeLanguage);
+      expect(persisted.projectLanguage, changeLanguage ? 'en-Test' : null);
+      await controller.checkNow(input);
+      expect(controller.misspellings.isEmpty, changeLanguage);
+      expect(controller.effectiveLanguage, 'en-Test');
+    }
+  });
+
+  test(
+    'superseded project conflict read preserves newer state and error',
+    () async {
+      final temporary = await Directory.systemTemp.createTemp(
+        'busymark-project-conflict-refresh-',
+      );
+      addTearDown(() => temporary.delete(recursive: true));
+      final bundle = await _createFixtureBundle(temporary);
+      final root = p.join(temporary.path, 'project');
+      await Directory(root).create();
+      final filePath = p.join(root, '.busymark', 'spelling.json');
+      final recoveryPath = p.join(temporary.path, 'preserved-project.json');
+      final writer = _ToggleFailAtomicFileWriter();
+      final readEntered = Completer<void>();
+      final readRelease = Completer<void>();
+      var holdNextRead = false;
+      final controller = SpellingSessionController(
+        bundledRoot: bundle,
+        applicationSupportRoot: p.join(temporary.path, 'support'),
+        dictionaryStorageRoot: p.join(temporary.path, 'dictionary-storage'),
+        verifyDictionaryChecksums: false,
+        wordStoreFactory: ({required filePath, required projectStore}) =>
+            SpellingWordStore(
+              filePath: filePath,
+              projectStore: projectStore,
+              writer: projectStore ? writer : const AtomicFileWriter(),
+            ),
+        wordStoreReader: (store) async {
+          final snapshot = await store.read();
+          if (store.projectStore && holdNextRead) {
+            holdNextRead = false;
+            readEntered.complete();
+            await readRelease.future;
+          }
+          return snapshot;
+        },
+      );
+      addTearDown(controller.dispose);
+      final input = _sessionInput(
+        id: 'project-conflict-refresh',
+        root: root,
+        text: 'BusyBrand',
+        settings: AppSettings.defaults().copyWith(
+          defaultSpellingLanguage: 'en-Test',
+        ),
+      );
+      await controller.prepareSettings(input.workspace);
+      writer
+        ..conflictRecoveryPath = recoveryPath
+        ..conflictDestinationBytes = utf8.encode(
+          '${jsonEncode({
+            'schemaVersion': 1,
+            'revision': 77,
+            'projectLanguage': 'en-Test',
+            'words': {
+              'en-Test': [
+                {'key': 'external', 'display': 'external'},
+              ],
+            },
+          })}\n',
+        );
+      holdNextRead = true;
+      final mutation = controller.removeProjectWord('en-Test', 'BusyBrand');
+      final conflict = expectLater(
+        mutation,
+        throwsA(
+          isA<AtomicFileChangedException>().having(
+            (error) => error.recoveryPath,
+            'recoveryPath',
+            recoveryPath,
+          ),
+        ),
+      );
+      await readEntered.future;
+      final external = SpellingWordStore(
+        filePath: filePath,
+        projectStore: true,
+      );
+      await external.addWord('en-Test', 'BusyBrand');
+      await controller.prepareSettings(input.workspace);
+      expect(controller.projectWords.wordsFor('en-Test'), [
+        'BusyBrand',
+        'external',
+      ]);
+      readRelease.complete();
+      await conflict;
+      expect(controller.projectWords.wordsFor('en-Test'), [
+        'BusyBrand',
+        'external',
+      ]);
+      expect(controller.projectWords.projectLanguage, 'en-Test');
+      expect((await external.read()).wordsFor('en-Test'), [
+        'BusyBrand',
+        'external',
+      ]);
+    },
+  );
+
+  test('superseded project watcher error cannot replace valid state', () async {
+    final temporary = await Directory.systemTemp.createTemp(
+      'busymark-project-watcher-error-',
+    );
+    addTearDown(() => temporary.delete(recursive: true));
+    final bundle = await _createFixtureBundle(temporary);
+    final root = p.join(temporary.path, 'project');
+    await Directory(root).create();
+    final input = _sessionInput(
+      id: 'project-watcher-error',
+      root: root,
+      text: 'BusyBrand',
+      settings: AppSettings.defaults().copyWith(
+        defaultSpellingLanguage: 'en-Test',
+      ),
+    );
+    final entered = Completer<void>();
+    final release = Completer<void>();
+    var staleErrorNext = false;
+    var currentErrorNext = false;
+    final controller = SpellingSessionController(
+      bundledRoot: bundle,
+      applicationSupportRoot: p.join(temporary.path, 'support'),
+      dictionaryStorageRoot: p.join(temporary.path, 'dictionary-storage'),
+      verifyDictionaryChecksums: false,
+      wordStoreReader: (store) async {
+        final snapshot = await store.read();
+        if (store.projectStore && staleErrorNext) {
+          staleErrorNext = false;
+          entered.complete();
+          await release.future;
+          throw StateError('superseded project read');
+        }
+        if (store.projectStore && currentErrorNext) {
+          currentErrorNext = false;
+          throw StateError('current project read');
+        }
+        return snapshot;
+      },
+    );
+    addTearDown(controller.dispose);
+    await controller.prepareSettings(input.workspace);
+    final external = SpellingWordStore(
+      filePath: p.join(root, '.busymark', 'spelling.json'),
+      projectStore: true,
+    );
+    staleErrorNext = true;
+    await external.addWord('en-Test', 'OldWord');
+    await entered.future;
+    await external.addWord('en-Test', 'BusyBrand');
+    await controller.prepareSettings(input.workspace);
+    expect(controller.projectWords.wordsFor('en-Test'), [
+      'BusyBrand',
+      'OldWord',
+    ]);
+    release.complete();
+    await Future<void>.delayed(Duration.zero);
+    expect(controller.state.status, isNot(SpellingPresentationStatus.failure));
+    expect(controller.projectWords.wordsFor('en-Test'), [
+      'BusyBrand',
+      'OldWord',
+    ]);
+    currentErrorNext = true;
+    await external.addWord('en-Test', 'AnotherWord');
+    await _waitFor(
+      () => controller.state.status == SpellingPresentationStatus.failure,
+    );
+    expect(controller.state.message, contains('current project read'));
+  });
+
+  test(
     'failed personal initialization retries after repair and shares first load',
     () async {
       final temporary = await Directory.systemTemp.createTemp(

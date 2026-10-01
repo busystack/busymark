@@ -18,6 +18,9 @@ void _setSourceMappingAttributes(
   String? closing,
   int? labelStart,
   int? labelEnd,
+  int? titleStart,
+  int? titleEnd,
+  String? titleDelimiter,
   bool isAutolink = false,
   bool isReference = false,
   bool isSourceLineBreak = false,
@@ -38,6 +41,13 @@ void _setSourceMappingAttributes(
   if (labelEnd != null) {
     element.attributes[busyMarkSourceMappingLabelEndAttribute] = '$labelEnd';
   }
+  if (titleStart != null && titleEnd != null && titleDelimiter != null) {
+    element.attributes[busyMarkSourceMappingTitleStartAttribute] =
+        '$titleStart';
+    element.attributes[busyMarkSourceMappingTitleEndAttribute] = '$titleEnd';
+    element.attributes[busyMarkSourceMappingTitleDelimiterAttribute] =
+        titleDelimiter;
+  }
   if (isAutolink) {
     element.attributes[busyMarkSourceMappingAutolinkAttribute] = 'true';
   }
@@ -51,6 +61,51 @@ void _setSourceMappingAttributes(
     element.attributes[busyMarkSourceMappingLineBreakOffsetAttribute] =
         '$sourceLineBreakOffset';
   }
+}
+
+({int start, int end, String delimiter})? _mappedInlineTitle(
+  String source,
+  int labelEnd,
+  int occurrenceEnd,
+) {
+  if (labelEnd + 1 >= occurrenceEnd || source[labelEnd + 1] != '(') {
+    return null;
+  }
+  final insideStart = labelEnd + 2;
+  var closing = occurrenceEnd - 2;
+  bool whitespace(int offset) =>
+      source.codeUnitAt(offset) == 0x20 ||
+      source.codeUnitAt(offset) == 0x09 ||
+      source.codeUnitAt(offset) == 0x0a ||
+      source.codeUnitAt(offset) == 0x0d ||
+      source.codeUnitAt(offset) == 0x0c;
+  while (closing >= insideStart && whitespace(closing)) {
+    closing--;
+  }
+  if (closing < insideStart) return null;
+  final endDelimiter = source[closing];
+  if (endDelimiter != '"' && endDelimiter != "'" && endDelimiter != ')') {
+    return null;
+  }
+  final openingDelimiter = endDelimiter == ')' ? '(' : endDelimiter;
+  bool escaped(int offset) {
+    var backslashes = 0;
+    for (
+      var index = offset - 1;
+      index >= insideStart && source.codeUnitAt(index) == 0x5c;
+      index--
+    ) {
+      backslashes++;
+    }
+    return backslashes.isOdd;
+  }
+
+  for (var opening = closing - 1; opening >= insideStart; opening--) {
+    if (source[opening] != openingDelimiter || escaped(opening)) continue;
+    if (opening == insideStart || !whitespace(opening - 1)) continue;
+    return (start: opening + 1, end: closing, delimiter: openingDelimiter);
+  }
+  return null;
 }
 
 class _SourceMappingDelimiterPosition {
@@ -182,6 +237,9 @@ class _SourceMappingLinkSyntax extends md.LinkSyntax {
     final isReference =
         labelEnd + 1 >= parser.source.length ||
         parser.source.codeUnitAt(labelEnd + 1) != 0x28;
+    final title = isReference
+        ? null
+        : _mappedInlineTitle(parser.source, labelEnd, parser.pos + 1);
     for (final node in nodes.whereType<md.Element>()) {
       if (node.tag != 'a') continue;
       _setSourceMappingAttributes(
@@ -190,6 +248,9 @@ class _SourceMappingLinkSyntax extends md.LinkSyntax {
         end: parser.pos + 1,
         labelStart: opener.endPos,
         labelEnd: labelEnd,
+        titleStart: title?.start,
+        titleEnd: title?.end,
+        titleDelimiter: title?.delimiter,
         isReference: isReference,
       );
     }
@@ -219,6 +280,9 @@ class _SourceMappingImageSyntax extends md.ImageSyntax {
     final isReference =
         labelEnd + 1 >= parser.source.length ||
         parser.source.codeUnitAt(labelEnd + 1) != 0x28;
+    final title = isReference
+        ? null
+        : _mappedInlineTitle(parser.source, labelEnd, parser.pos + 1);
     for (final node in nodes.whereType<md.Element>()) {
       if (node.tag != 'img') continue;
       _setSourceMappingAttributes(
@@ -227,6 +291,9 @@ class _SourceMappingImageSyntax extends md.ImageSyntax {
         end: parser.pos + 1,
         labelStart: opener.endPos,
         labelEnd: labelEnd,
+        titleStart: title?.start,
+        titleEnd: title?.end,
+        titleDelimiter: title?.delimiter,
         isReference: isReference,
       );
     }
@@ -688,6 +755,9 @@ class BusyMarkInlineParserContext {
           closing: mappedRange.closing,
           labelStart: mappedRange.labelStart,
           labelEnd: mappedRange.labelEnd,
+          titleStart: mappedRange.titleStart,
+          titleEnd: mappedRange.titleEnd,
+          titleDelimiter: mappedRange.titleDelimiter,
           lineBreaks: mappedRange.lineBreaks,
           originalInline: semantic,
           isAutolink: mappedRange.isAutolink,
@@ -716,6 +786,9 @@ class BusyMarkInlineParserContext {
           closing: range.closing,
           labelStart: range.labelStart,
           labelEnd: range.labelEnd,
+          titleStart: range.titleStart,
+          titleEnd: range.titleEnd,
+          titleDelimiter: range.titleDelimiter,
           lineBreaks: range.lineBreaks,
           originalInline: originalSemantics[entry.key],
           isAutolink: range.isAutolink,
@@ -895,6 +968,13 @@ class BusyMarkInlineParserContext {
         labelEnd: range.labelEnd == null
             ? null
             : projection.rawStartFor(range.labelEnd!),
+        titleStart: range.titleStart == null
+            ? null
+            : projection.rawStartFor(range.titleStart!),
+        titleEnd: range.titleEnd == null
+            ? null
+            : projection.rawStartFor(range.titleEnd!),
+        titleDelimiter: range.titleDelimiter,
         lineBreaks: lineBreaks,
         originalInline: range.originalInline,
         isAutolink: range.isAutolink,

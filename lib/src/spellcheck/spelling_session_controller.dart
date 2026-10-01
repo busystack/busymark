@@ -131,6 +131,7 @@ final class SpellingSessionController extends ChangeNotifier {
   int _personalRefreshGeneration = 0;
   String? _requestedProjectRoot;
   int _projectStorageGeneration = 0;
+  int _projectPublicationGeneration = 0;
   String _scheduledIdentity = '';
   String _contextIdentity = '';
   int _contextGeneration = 0;
@@ -284,6 +285,9 @@ final class SpellingSessionController extends ChangeNotifier {
       throw StateError('This document is not associated with a project.');
     }
     final projectRoot = _projectRoot;
+    if (projectRoot == _requestedProjectRoot) {
+      _projectPublicationGeneration++;
+    }
     late final SpellingWordStoreSnapshot updated;
     try {
       updated = await store.addWord(occurrence.run.languageId, occurrence.word);
@@ -291,7 +295,12 @@ final class SpellingSessionController extends ChangeNotifier {
       await _reconcileProjectStoreConflict(store, projectRoot);
       Error.throwWithStackTrace(error, stackTrace);
     }
-    if (!identical(store, _projectStore) || projectRoot != _projectRoot) return;
+    if (!identical(store, _projectStore) ||
+        projectRoot != _projectRoot ||
+        projectRoot != _requestedProjectRoot) {
+      return;
+    }
+    _projectPublicationGeneration++;
     _projectWords = updated;
     await _refreshAfterPersistentChange();
   }
@@ -317,6 +326,9 @@ final class SpellingSessionController extends ChangeNotifier {
     final store = _projectStore;
     if (store == null) throw StateError('Project dictionary is unavailable.');
     final projectRoot = _projectRoot;
+    if (projectRoot == _requestedProjectRoot) {
+      _projectPublicationGeneration++;
+    }
     late final SpellingWordStoreSnapshot updated;
     try {
       updated = await store.removeWord(languageId, word);
@@ -324,7 +336,12 @@ final class SpellingSessionController extends ChangeNotifier {
       await _reconcileProjectStoreConflict(store, projectRoot);
       Error.throwWithStackTrace(error, stackTrace);
     }
-    if (!identical(store, _projectStore) || projectRoot != _projectRoot) return;
+    if (!identical(store, _projectStore) ||
+        projectRoot != _projectRoot ||
+        projectRoot != _requestedProjectRoot) {
+      return;
+    }
+    _projectPublicationGeneration++;
     _projectWords = updated;
     await _refreshAfterPersistentChange();
   }
@@ -574,6 +591,9 @@ final class SpellingSessionController extends ChangeNotifier {
       throw StateError('This workspace has no project spelling scope.');
     }
     final projectRoot = _projectRoot;
+    if (projectRoot == _requestedProjectRoot) {
+      _projectPublicationGeneration++;
+    }
     late final SpellingWordStoreSnapshot updated;
     try {
       updated = await store.setProjectLanguage(languageId);
@@ -581,7 +601,12 @@ final class SpellingSessionController extends ChangeNotifier {
       await _reconcileProjectStoreConflict(store, projectRoot);
       Error.throwWithStackTrace(error, stackTrace);
     }
-    if (!identical(store, _projectStore) || projectRoot != _projectRoot) return;
+    if (!identical(store, _projectStore) ||
+        projectRoot != _projectRoot ||
+        projectRoot != _requestedProjectRoot) {
+      return;
+    }
+    _projectPublicationGeneration++;
     _projectWords = updated;
     await _refreshAfterPersistentChange();
   }
@@ -611,10 +636,19 @@ final class SpellingSessionController extends ChangeNotifier {
     SpellingWordStore store,
     String? projectRoot,
   ) async {
-    if (!identical(store, _projectStore) || projectRoot != _projectRoot) return;
+    if (!identical(store, _projectStore) ||
+        projectRoot != _projectRoot ||
+        projectRoot != _requestedProjectRoot) {
+      return;
+    }
+    final generation = ++_projectPublicationGeneration;
     try {
       final actual = await wordStoreReader(store);
-      if (!identical(store, _projectStore) || projectRoot != _projectRoot) {
+      if (_disposed ||
+          !identical(store, _projectStore) ||
+          projectRoot != _projectRoot ||
+          projectRoot != _requestedProjectRoot ||
+          generation != _projectPublicationGeneration) {
         return;
       }
       _projectWords = actual;
@@ -809,6 +843,7 @@ final class SpellingSessionController extends ChangeNotifier {
     final nextProjectRoot = _projectScopeRoot(workspace);
     _requestedProjectRoot = nextProjectRoot;
     final projectGeneration = ++_projectStorageGeneration;
+    final publicationGeneration = ++_projectPublicationGeneration;
     final nextProjectStore = nextProjectRoot == null
         ? null
         : _projectStorageInitialized && _projectRoot == nextProjectRoot
@@ -817,13 +852,26 @@ final class SpellingSessionController extends ChangeNotifier {
             filePath: p.join(nextProjectRoot, '.busymark', 'spelling.json'),
             projectStore: true,
           );
-    final nextProjectWords =
-        (nextProjectStore == null
-            ? null
-            : await wordStoreReader(nextProjectStore)) ??
-        const SpellingWordStoreSnapshot(revision: 0, wordsByLanguage: {});
+    var nextProjectWords = const SpellingWordStoreSnapshot(
+      revision: 0,
+      wordsByLanguage: {},
+    );
+    if (nextProjectStore != null) {
+      try {
+        nextProjectWords = await wordStoreReader(nextProjectStore);
+      } on Object {
+        if (_disposed ||
+            projectGeneration != _projectStorageGeneration ||
+            publicationGeneration != _projectPublicationGeneration ||
+            _requestedProjectRoot != nextProjectRoot) {
+          return;
+        }
+        rethrow;
+      }
+    }
     if (!_disposed &&
         projectGeneration == _projectStorageGeneration &&
+        publicationGeneration == _projectPublicationGeneration &&
         _requestedProjectRoot == nextProjectRoot) {
       _projectRoot = nextProjectRoot;
       _projectStore = nextProjectStore;
@@ -1070,12 +1118,20 @@ final class SpellingSessionController extends ChangeNotifier {
   Future<void> _reloadProjectWordsFromDisk() async {
     final store = _projectStore;
     final root = _projectRoot;
-    if (_disposed || store == null || root == null) return;
+    if (_disposed ||
+        store == null ||
+        root == null ||
+        root != _requestedProjectRoot) {
+      return;
+    }
+    final generation = ++_projectPublicationGeneration;
     try {
       final snapshot = await wordStoreReader(store);
       if (_disposed ||
           !identical(store, _projectStore) ||
-          root != _projectRoot) {
+          root != _projectRoot ||
+          root != _requestedProjectRoot ||
+          generation != _projectPublicationGeneration) {
         return;
       }
       if (_sameWordStoreSnapshot(snapshot, _projectWords)) return;
@@ -1084,7 +1140,9 @@ final class SpellingSessionController extends ChangeNotifier {
     } on Object catch (error) {
       if (_disposed ||
           !identical(store, _projectStore) ||
-          root != _projectRoot) {
+          root != _projectRoot ||
+          root != _requestedProjectRoot ||
+          generation != _projectPublicationGeneration) {
         return;
       }
       _localState = SpellingPresentationState(

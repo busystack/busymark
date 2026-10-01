@@ -73,6 +73,45 @@ void main() {
     }
   });
 
+  test('mapped link and image titles retain exact raw boundaries', () {
+    for (final (source, kind, delimiter) in [
+      ('[hello](diagrm.md (wrld))', BusyInlineKind.link, '('),
+      ('[hello](diagrm.md "wrld)")', BusyInlineKind.link, '"'),
+      ('![hello](diagrm.png (wrld))', BusyInlineKind.image, '('),
+      (
+        '> - [hello](\n>   diagrm.md\n>   "wrld"\n>   )\n',
+        BusyInlineKind.link,
+        '"',
+      ),
+    ]) {
+      final context = mapper.createInlineParserContext(
+        documentSource: source,
+        mode: MarkdownMode.commonMark,
+      );
+      final ranges = [
+        for (final mapped in context.parsePositionedBlocks(source))
+          for (final entry in mapped.ranges.entries)
+            if (entry.key.kind == kind) entry.value,
+      ];
+      expect(ranges, hasLength(1), reason: source);
+      final range = ranges.single;
+      expect(
+        source
+            .substring(range.start, range.end)
+            .startsWith(kind == BusyInlineKind.image ? '![hello]' : '[hello]'),
+        isTrue,
+        reason: source,
+      );
+      expect(source.substring(range.labelStart!, range.labelEnd!), 'hello');
+      expect(
+        source.substring(range.titleStart!, range.titleEnd!),
+        source.contains('"wrld)"') ? 'wrld)' : 'wrld',
+      );
+      expect(range.titleDelimiter, delimiter);
+      expect(range.end, source.lastIndexOf(')') + 1);
+    }
+  });
+
   test('position records do not change HTML or link semantics', () {
     const marker = '\ue001';
     const source =

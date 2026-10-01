@@ -7,6 +7,11 @@ const busyMarkSourceMappingClosingAttribute = 'data-busymark-source-closing';
 const busyMarkSourceMappingLabelStartAttribute =
     'data-busymark-source-label-start';
 const busyMarkSourceMappingLabelEndAttribute = 'data-busymark-source-label-end';
+const busyMarkSourceMappingTitleStartAttribute =
+    'data-busymark-source-title-start';
+const busyMarkSourceMappingTitleEndAttribute = 'data-busymark-source-title-end';
+const busyMarkSourceMappingTitleDelimiterAttribute =
+    'data-busymark-source-title-delimiter';
 const busyMarkSourceMappingAutolinkAttribute = 'data-busymark-source-autolink';
 const busyMarkSourceMappingReferenceAttribute =
     'data-busymark-source-reference';
@@ -23,6 +28,9 @@ class BusyMarkMappedInlineRange {
     this.closing,
     this.labelStart,
     this.labelEnd,
+    this.titleStart,
+    this.titleEnd,
+    this.titleDelimiter,
     this.lineBreaks = const [],
     this.originalInline,
     this.isAutolink = false,
@@ -37,6 +45,9 @@ class BusyMarkMappedInlineRange {
   final String? closing;
   final int? labelStart;
   final int? labelEnd;
+  final int? titleStart;
+  final int? titleEnd;
+  final String? titleDelimiter;
   final List<BusyMarkMappedSourceLineBreak> lineBreaks;
   final BusyInline? originalInline;
   final bool isAutolink;

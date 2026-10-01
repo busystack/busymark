@@ -183,13 +183,39 @@ final class MarkdownSpellingProjector {
           for (final entry in mapped.ranges.entries)
             if (entry.key.kind == BusyInlineKind.link ||
                 entry.key.kind == BusyInlineKind.image)
-              sourceBase + entry.value.start: sourceBase + entry.value.end,
+              if (entry.value.labelStart != null &&
+                  entry.value.labelEnd != null)
+                sourceBase + entry.value.start: _RecognizedLinkOccurrence(
+                  end: sourceBase + entry.value.end,
+                  labelStart: sourceBase + entry.value.labelStart!,
+                  labelEnd: sourceBase + entry.value.labelEnd!,
+                  titleStart: entry.value.titleStart == null
+                      ? null
+                      : sourceBase + entry.value.titleStart!,
+                  titleEnd: entry.value.titleEnd == null
+                      ? null
+                      : sourceBase + entry.value.titleEnd!,
+                  titleDelimiter: entry.value.titleDelimiter,
+                ),
           for (final label in imageLabels)
             for (final entry in label.mapped.ranges.entries)
               if (entry.key.kind == BusyInlineKind.link ||
                   entry.key.kind == BusyInlineKind.image)
-                label.sourceBase + entry.value.start:
-                    label.sourceBase + entry.value.end,
+                if (entry.value.labelStart != null &&
+                    entry.value.labelEnd != null)
+                  label.sourceBase +
+                      entry.value.start: _RecognizedLinkOccurrence(
+                    end: label.sourceBase + entry.value.end,
+                    labelStart: label.sourceBase + entry.value.labelStart!,
+                    labelEnd: label.sourceBase + entry.value.labelEnd!,
+                    titleStart: entry.value.titleStart == null
+                        ? null
+                        : label.sourceBase + entry.value.titleStart!,
+                    titleEnd: entry.value.titleEnd == null
+                        ? null
+                        : label.sourceBase + entry.value.titleEnd!,
+                    titleDelimiter: entry.value.titleDelimiter,
+                  ),
         },
         recognizedAttributeSpans: recognizedAttributeSpans,
       );
@@ -575,6 +601,24 @@ final class _PendingEmissionGroup {
   final int tokenizationContextStart;
 }
 
+final class _RecognizedLinkOccurrence {
+  const _RecognizedLinkOccurrence({
+    required this.end,
+    required this.labelStart,
+    required this.labelEnd,
+    required this.titleStart,
+    required this.titleEnd,
+    required this.titleDelimiter,
+  });
+
+  final int end;
+  final int labelStart;
+  final int labelEnd;
+  final int? titleStart;
+  final int? titleEnd;
+  final String? titleDelimiter;
+}
+
 final class _MarkdownProseScanner {
   _MarkdownProseScanner({
     required this.source,
@@ -599,7 +643,7 @@ final class _MarkdownProseScanner {
   final List<_SourceInterval> formattingSyntax;
   final List<_RawFormattingWrapper> formattingWrappers;
   final List<_SourceInterval> opaqueSyntax;
-  final Map<int, int> recognizedLinks;
+  final Map<int, _RecognizedLinkOccurrence> recognizedLinks;
   final List<_SourceInterval> recognizedAttributeSpans;
   final List<Object> _groups = [];
   StringBuffer _text = StringBuffer();
@@ -607,6 +651,7 @@ final class _MarkdownProseScanner {
   List<SpellingSourceAtom> _atoms = [];
   int? _tokenizationContextStart;
   int? _opaqueEnd;
+  int? _consumedLinkEnd;
   bool complete = true;
 
   List<_EmissionGroup> scan() {
@@ -655,7 +700,10 @@ final class _MarkdownProseScanner {
         }
       }
       if (contentEnd > contentStart) _scanInline(contentStart, contentEnd);
-      if (lineIndex + 1 < lines.length && _text.length > 0) {
+      if (lineIndex + 1 < lines.length &&
+          _text.length > 0 &&
+          !(_consumedLinkEnd != null &&
+              lines[lineIndex + 1].start < _consumedLinkEnd!)) {
         final next = lines[lineIndex + 1];
         _emit(
           ' ',
@@ -686,6 +734,10 @@ final class _MarkdownProseScanner {
   void _scanInline(int rangeStart, int rangeEnd) {
     var cursor = rangeStart;
     while (cursor < rangeEnd) {
+      if (_consumedLinkEnd case final linkEnd? when cursor < linkEnd) {
+        cursor = math.min(rangeEnd, linkEnd);
+        continue;
+      }
       if (_opaqueEnd case final opaqueEnd? when cursor < opaqueEnd) {
         _barrier();
         cursor = math.min(rangeEnd, opaqueEnd);
@@ -864,65 +916,50 @@ final class _MarkdownProseScanner {
   }
 
   int? _scanLinkOrImage(int cursor, int rangeEnd, {required bool image}) {
-    final recognizedEnd = recognizedLinks[cursor];
+    final recognized = recognizedLinks[cursor];
     final opening = cursor + (image ? 1 : 0);
-    final labelEnd = _matchingBracket(opening, rangeEnd, 0x5b, 0x5d);
-    if (labelEnd == null) return null;
-    final afterLabel = labelEnd + 1;
-    final label = source.substring(opening + 1, labelEnd);
-    if (!image &&
-        label.startsWith('^') &&
-        footnoteLabels.contains(label.substring(1).toLowerCase())) {
-      _barrier();
-      return afterLabel;
-    }
-    if (recognizedEnd == null || recognizedEnd > rangeEnd) {
-      return null;
-    }
-    var syntaxEnd = afterLabel;
-    int? titleStart;
-    int? titleEnd;
-    SpellingSourceContext? titleContext;
-    if (afterLabel < rangeEnd && source.codeUnitAt(afterLabel) == 0x28) {
-      final destinationEnd = _matchingBracket(afterLabel, rangeEnd, 0x28, 0x29);
-      if (destinationEnd == null) return null;
-      syntaxEnd = destinationEnd + 1;
-      final inside = source.substring(afterLabel + 1, destinationEnd);
-      final title = _trailingLinkTitle(inside);
-      if (title != null) {
-        titleContext = title.quote == "'"
-            ? SpellingSourceContext.markdownSingleQuotedTitle
-            : SpellingSourceContext.markdownDoubleQuotedTitle;
-        // The value ends immediately before the closing quote. Derive its
-        // range from those parsed boundaries rather than searching for its
-        // contents, which may also occur in the destination.
-        titleStart = afterLabel + 1 + title.start;
-        titleEnd = afterLabel + 1 + title.end;
+    if (recognized == null) {
+      final labelEnd = _matchingBracket(opening, rangeEnd, 0x5b, 0x5d);
+      if (labelEnd != null && !image) {
+        final label = source.substring(opening + 1, labelEnd);
+        if (label.startsWith('^') &&
+            footnoteLabels.contains(label.substring(1).toLowerCase())) {
+          _barrier();
+          return labelEnd + 1;
+        }
       }
-    } else if (afterLabel < rangeEnd && source.codeUnitAt(afterLabel) == 0x5b) {
-      final referenceEnd = source.indexOf(']', afterLabel + 1);
-      if (referenceEnd < 0 || referenceEnd >= rangeEnd) return null;
-      syntaxEnd = referenceEnd + 1;
+      return null;
     }
-
-    if (syntaxEnd != recognizedEnd) {
+    if (recognized.end > end ||
+        recognized.labelStart < opening + 1 ||
+        recognized.labelEnd < recognized.labelStart ||
+        recognized.labelEnd > recognized.end) {
+      complete = false;
       return null;
     }
     if (image) _barrier();
-    _scanInline(opening + 1, labelEnd);
+    _scanInline(recognized.labelStart, recognized.labelEnd);
     if (image) _barrier();
+    final titleStart = recognized.titleStart;
+    final titleEnd = recognized.titleEnd;
     if (titleStart != null && titleEnd != null && titleEnd > titleStart) {
+      final titleContext = switch (recognized.titleDelimiter) {
+        "'" => SpellingSourceContext.markdownSingleQuotedTitle,
+        '(' => SpellingSourceContext.markdownParenthesizedTitle,
+        _ => SpellingSourceContext.markdownDoubleQuotedTitle,
+      };
       final scanner = _MarkdownProseScanner(
         source: source,
         start: titleStart,
         end: titleEnd,
-        context: titleContext!,
+        context: titleContext,
         stripBlockSyntax: false,
       );
       _groups.addAll(scanner.scan());
       complete = complete && scanner.complete;
     }
-    return syntaxEnd;
+    _consumedLinkEnd = recognized.end;
+    return recognized.end;
   }
 
   void _scanHumanReadableAttributes(int tagStart, int tagEnd) {
@@ -1133,6 +1170,18 @@ List<_MultilineHtmlSpan> _multilineHtmlSpans(
   while (cursor < end) {
     final opening = source.indexOf('<', cursor);
     if (opening < 0 || opening >= end) break;
+    var precedingBackslashes = 0;
+    for (
+      var index = opening - 1;
+      index >= start && source.codeUnitAt(index) == 0x5c;
+      index--
+    ) {
+      precedingBackslashes++;
+    }
+    if (precedingBackslashes.isOdd) {
+      cursor = opening + 1;
+      continue;
+    }
     final candidate = RegExp(
       r'^</?[A-Za-z][A-Za-z0-9:-]*(?:\s|/?>|$)',
     ).hasMatch(source.substring(opening, math.min(end, opening + 128)));
@@ -1205,37 +1254,6 @@ List<_MultilineHtmlSpan> _multilineHtmlSpans(
     cursor = opaqueEnd;
   }
   return List.unmodifiable(result);
-}
-
-({int start, int end, String quote})? _trailingLinkTitle(String value) {
-  var closing = value.length - 1;
-  while (closing >= 0 && _horizontalWhitespace(value.codeUnitAt(closing))) {
-    closing--;
-  }
-  if (closing < 0 || (value[closing] != '"' && value[closing] != "'")) {
-    return null;
-  }
-  final quote = value[closing];
-  bool escaped(int offset) {
-    var slashes = 0;
-    for (
-      var cursor = offset - 1;
-      cursor >= 0 && value.codeUnitAt(cursor) == 0x5c;
-      cursor--
-    ) {
-      slashes++;
-    }
-    return slashes.isOdd;
-  }
-
-  for (var opening = closing - 1; opening >= 0; opening--) {
-    if (value[opening] != quote || escaped(opening)) continue;
-    if (opening > 0 && !_horizontalWhitespace(value.codeUnitAt(opening - 1))) {
-      continue;
-    }
-    return (start: opening + 1, end: closing, quote: quote);
-  }
-  return null;
 }
 
 final class _RawFormattingWrapper {
