@@ -1851,6 +1851,197 @@ hidden style prose
       }
     });
 
+    test('inline HTML breaks in link labels agree with rich prose', () {
+      for (final source in [
+        '[hello<br>wrld](target)',
+        '[hello<br/>text\nwrld](target)',
+        '> - [hello<br/>text\r\n>   wrld](target)',
+      ]) {
+        final parsed = const MarkdownParser().parse(
+          filePath: '/tmp/link-inline-break.md',
+          source: source,
+          mode: MarkdownMode.commonMark,
+        );
+        expect(
+          _parserHasInline(source, BusyInlineKind.hardBreak),
+          isTrue,
+          reason: source,
+        );
+        final projected = const MarkdownSpellingProjector().project(
+          filePath: '/tmp/link-inline-break.md',
+          source: source,
+          mode: MarkdownMode.commonMark,
+          languageId: 'en-Test',
+          snapshot: _snapshot,
+        );
+        final rich = const WysiwygSpellingProjector().project(
+          document: parsed.busyDocument,
+          languageId: 'en-Test',
+          snapshot: _snapshot,
+          documentGeneration: 1,
+        );
+        expect(projected.complete, isTrue, reason: source);
+        expect(rich.complete, isTrue, reason: source);
+        expect(projected.runs.every((run) => run.hasValidMapping), isTrue);
+        expect(rich.runs.every((run) => run.hasValidMapping), isTrue);
+        final sourceText = projected.runs.map((run) => run.text).join(' ');
+        expect(
+          sourceText,
+          source.contains('text') ? 'hello text wrld' : 'hello wrld',
+          reason: source,
+        );
+        expect(
+          rich.runs.map((run) => run.text).join(' '),
+          sourceText,
+          reason: source,
+        );
+        final tagAtoms = [
+          for (final run in projected.runs)
+            for (final atom in run.atoms)
+              if (source
+                  .substring(atom.sourceStart, atom.sourceEnd)
+                  .startsWith('<br'))
+                atom,
+        ];
+        expect(tagAtoms, hasLength(1), reason: source);
+        expect(tagAtoms.single.logicalText, ' ');
+        expect(
+          tagAtoms.single.transformation,
+          SpellingTransformationKind.lineBreak,
+        );
+        for (final run in [
+          projected.runs.singleWhere((run) => run.text.contains('wrld')),
+          rich.runs.singleWhere((run) => run.text.contains('wrld')),
+        ]) {
+          final word = _rejected(run, 'wrld');
+          expect(word.sourceStart, source.indexOf('wrld'));
+          expect(
+            const SpellingReplacementPlanner()
+                .build(occurrence: word, suggestion: 'world')
+                .applyToSource(source),
+            source.replaceFirst('wrld', 'world'),
+          );
+        }
+      }
+    });
+
+    test('code-styled image alternative text agrees with rich image field', () {
+      for (final source in [
+        '![hello `wrld`](image.png)',
+        '![hello `wrld\nagain`](image.png)',
+        '![hello `wrld\r\nagain`](image.png)',
+        '![hello ` wrld `](image.png)',
+        '[before ![hello `wrld`](image.png) after](target)',
+      ]) {
+        final parsed = const MarkdownParser().parse(
+          filePath: '/tmp/image-code-alt.md',
+          source: source,
+          mode: MarkdownMode.commonMark,
+        );
+        expect(
+          _parserHasInline(source, BusyInlineKind.image),
+          isTrue,
+          reason: source,
+        );
+        Iterable<BusyInline> descendants(Iterable<BusyInline> roots) sync* {
+          for (final inline in roots) {
+            yield inline;
+            yield* descendants(inline.children);
+          }
+        }
+
+        final image = [
+          for (final block in parsed.busyDocument.blocks)
+            ...descendants(block.inlines),
+        ].singleWhere((inline) => inline.kind == BusyInlineKind.image);
+        expect(
+          image.text,
+          source.contains('again') ? 'hello wrld again' : 'hello wrld',
+          reason: source,
+        );
+        final projected = const MarkdownSpellingProjector().project(
+          filePath: '/tmp/image-code-alt.md',
+          source: source,
+          mode: MarkdownMode.commonMark,
+          languageId: 'en-Test',
+          snapshot: _snapshot,
+        );
+        final rich = const WysiwygSpellingProjector().project(
+          document: parsed.busyDocument,
+          languageId: 'en-Test',
+          snapshot: _snapshot,
+          documentGeneration: 1,
+        );
+        expect(projected.complete, isTrue, reason: source);
+        expect(rich.complete, isTrue, reason: source);
+        expect(projected.runs.every((run) => run.hasValidMapping), isTrue);
+        expect(rich.runs.every((run) => run.hasValidMapping), isTrue);
+        final sourceText = projected.runs.map((run) => run.text).join(' ');
+        expect(
+          sourceText,
+          rich.runs.map((run) => run.text).join(' '),
+          reason: source,
+        );
+        expect(
+          sourceText,
+          source.contains('before')
+              ? 'before  hello wrld  after'
+              : source.contains('again')
+              ? 'hello wrld again'
+              : 'hello wrld',
+          reason: source,
+        );
+        expect(sourceText, isNot(contains('image.png')));
+        expect(sourceText, isNot(contains('`')));
+        expect(sourceText, contains(image.text), reason: source);
+        for (final run in [
+          projected.runs.singleWhere((run) => run.text.contains('wrld')),
+          rich.runs.singleWhere((run) => run.text.contains('wrld')),
+        ]) {
+          final word = _rejected(run, 'wrld');
+          expect(word.sourceStart, source.indexOf('wrld'));
+          expect(word.sourceEnd, source.indexOf('wrld') + 4);
+          expect(
+            const SpellingReplacementPlanner()
+                .build(occurrence: word, suggestion: 'world')
+                .applyToSource(source),
+            source.replaceFirst('wrld', 'world'),
+          );
+        }
+      }
+      const ordinary = '[hello `wrld`](target)';
+      final ordinaryProjection = const MarkdownSpellingProjector().project(
+        filePath: '/tmp/link-code-control.md',
+        source: ordinary,
+        mode: MarkdownMode.commonMark,
+        languageId: 'en-Test',
+        snapshot: _snapshot,
+      );
+      expect(ordinaryProjection.complete, isTrue);
+      expect(ordinaryProjection.runs.map((run) => run.text), ['hello ']);
+    });
+
+    test('link title keeps literal inline-break markup as scalar text', () {
+      const source = '[hello](target "Use <br> wrld")';
+      final result = const MarkdownSpellingProjector().project(
+        filePath: '/tmp/literal-title-break.md',
+        source: source,
+        mode: MarkdownMode.commonMark,
+        languageId: 'en-Test',
+        snapshot: _snapshot,
+      );
+      expect(result.complete, isTrue);
+      expect(result.runs.every((run) => run.hasValidMapping), isTrue);
+      expect(result.runs.map((run) => run.text), ['hello', 'Use <br> wrld']);
+      final title = result.runs.singleWhere((run) => run.text.contains('wrld'));
+      expect(
+        const SpellingReplacementPlanner()
+            .build(occurrence: _rejected(title, 'wrld'), suggestion: 'world')
+            .applyToSource(source),
+        '[hello](target "Use <br> world")',
+      );
+    });
+
     test('multiline code inside a link label stays opaque', () {
       _expectNestedMultilineLabel(
         source: '[helo `code\nmore` wrld](target)',
@@ -2389,6 +2580,60 @@ Price \$ 5, mispelled \$ 6 and actual \$hiddenmath\$ tail.
   });
 
   group('exact rich correction', () {
+    test('code-styled image alternative corrects through rich controller', () {
+      const source = 'Before ![hello `wrld`](image.png) after';
+      final document = const MarkdownParser()
+          .parse(
+            filePath: '/tmp/image-code-rich.md',
+            source: source,
+            mode: MarkdownMode.commonMark,
+          )
+          .busyDocument;
+      final projection = const WysiwygSpellingProjector().project(
+        document: document,
+        languageId: 'en-Test',
+        snapshot: _snapshot,
+        documentGeneration: 1,
+      );
+      expect(projection.complete, isTrue, reason: projection.message);
+      final run = projection.runs.singleWhere(
+        (candidate) => candidate.text.contains('wrld'),
+      );
+      expect(run.hasValidMapping, isTrue);
+      final target = run.target as SpellingRichBlockTarget;
+      final controller = BusyMarkWysiwygDocumentController(document: document);
+      addTearDown(controller.dispose);
+      final plan = const SpellingReplacementPlanner().build(
+        occurrence: _rejected(run, 'wrld'),
+        suggestion: 'world',
+      );
+      expect(
+        controller.replaceSpellingInBlock(
+          blockId: target.blockId,
+          expectedFieldText: busyMarkWysiwygEditableText(
+            controller.blockById(target.blockId)!,
+          ),
+          plan: plan,
+        ),
+        isTrue,
+      );
+      // The rich image field stores flattened alternative text. Its current
+      // serializer keeps the corrected value and destination, but normalizes
+      // source-only code styling when the rich field is edited.
+      expect(controller.markdown, 'Before ![hello world](image.png) after');
+      final reparsed = const MarkdownParser().parse(
+        filePath: '/tmp/image-code-rich.md',
+        source: controller.markdown,
+        mode: MarkdownMode.commonMark,
+      );
+      expect(
+        reparsed.busyDocument.blocks.first.inlines
+            .singleWhere((inline) => inline.kind == BusyInlineKind.image)
+            .text,
+        'hello world',
+      );
+    });
+
     test('multiline link label correction uses rich controller mapping', () {
       const source = '[helo ![alt\ntext](image.png) wrld](target)';
       final document = const MarkdownParser()
