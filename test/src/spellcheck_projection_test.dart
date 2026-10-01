@@ -48,6 +48,115 @@ bool _parserHasInline(String source, BusyInlineKind kind) {
   return parsed.busyDocument.blocks.any(inBlock);
 }
 
+void _expectNestedMultilineLabel({
+  required String source,
+  required BusyInlineKind nestedKind,
+  required List<String> bodyRuns,
+  String? titleText,
+}) {
+  const filePath = '/tmp/nested-multiline-label.md';
+  final parsed = const MarkdownParser().parse(
+    filePath: filePath,
+    source: source,
+    mode: MarkdownMode.commonMark,
+  );
+  Iterable<BusyInline> inlines(Iterable<BusyInline> roots) sync* {
+    for (final inline in roots) {
+      yield inline;
+      yield* inlines(inline.children);
+    }
+  }
+
+  Iterable<BusyBlock> blocks(Iterable<BusyBlock> roots) sync* {
+    for (final block in roots) {
+      yield block;
+      yield* blocks(block.children);
+    }
+  }
+
+  final allInlines = [
+    for (final block in blocks(parsed.busyDocument.blocks))
+      ...inlines(block.inlines),
+  ];
+  final outerLink = allInlines.singleWhere(
+    (inline) =>
+        inline.kind == BusyInlineKind.link && inline.destination == 'target',
+  );
+  expect(
+    inlines(outerLink.children).any((inline) => inline.kind == nestedKind),
+    isTrue,
+    reason: source,
+  );
+  if (nestedKind == BusyInlineKind.image) {
+    expect(
+      inlines(outerLink.children)
+          .where((inline) => inline.kind == BusyInlineKind.image)
+          .single
+          .destination,
+      contains('image.png'),
+      reason: source,
+    );
+  }
+  final projected = const MarkdownSpellingProjector().project(
+    filePath: filePath,
+    source: source,
+    mode: MarkdownMode.commonMark,
+    languageId: 'en-Test',
+    snapshot: _snapshot,
+  );
+  final rich = const WysiwygSpellingProjector().project(
+    document: parsed.busyDocument,
+    languageId: 'en-Test',
+    snapshot: _snapshot,
+    documentGeneration: 1,
+  );
+  expect(projected.complete, isTrue, reason: source);
+  expect(rich.complete, isTrue, reason: source);
+  expect(projected.runs.every((run) => run.hasValidMapping), isTrue);
+  expect(rich.runs.every((run) => run.hasValidMapping), isTrue);
+
+  List<String> body(List<SpellingProseRun> runs) => [
+    for (final run in runs)
+      if (run.atoms.first.context == SpellingSourceContext.markdownProse)
+        run.text.trim(),
+  ];
+  expect(body(projected.runs), bodyRuns, reason: source);
+  expect(body(rich.runs), bodyRuns, reason: source);
+  final sourceText = projected.runs.map((run) => run.text).join(' ');
+  expect(sourceText, isNot(contains('image.png')), reason: source);
+  expect(sourceText, isNot(contains('target')), reason: source);
+  if (nestedKind == BusyInlineKind.code) {
+    expect(sourceText, isNot(contains('code')), reason: source);
+    expect(sourceText, isNot(contains('more')), reason: source);
+  }
+  if (titleText != null) {
+    final sourceTitle = projected.runs.singleWhere(
+      (run) => run.text == titleText,
+    );
+    final richTitle = rich.runs.singleWhere((run) => run.text == titleText);
+    expect(sourceTitle.target, isA<SpellingSourceTarget>());
+    expect(richTitle.target, isA<SpellingSourceTarget>());
+  }
+  for (final runs in [projected.runs, rich.runs]) {
+    final run = runs.singleWhere(
+      (candidate) => candidate.text.contains('wrld'),
+    );
+    final word = _rejected(run, 'wrld');
+    expect(word.sourceStart, source.indexOf('wrld'));
+    expect(word.sourceEnd, source.indexOf('wrld') + 'wrld'.length);
+    if (identical(runs, rich.runs)) {
+      expect(run.target, isA<SpellingRichBlockTarget>());
+    }
+    expect(
+      const SpellingReplacementPlanner()
+          .build(occurrence: word, suggestion: 'world')
+          .applyToSource(source),
+      source.replaceFirst('wrld', 'world'),
+      reason: source,
+    );
+  }
+}
+
 void _expectCodeFenceBeforeWrld(String source, List<String> codeWords) {
   final parsed = const MarkdownParser().parse(
     filePath: '/tmp/fence-continuation.md',
@@ -1742,6 +1851,88 @@ hidden style prose
       }
     });
 
+    test('multiline code inside a link label stays opaque', () {
+      _expectNestedMultilineLabel(
+        source: '[helo `code\nmore` wrld](target)',
+        nestedKind: BusyInlineKind.code,
+        bodyRuns: ['helo', 'wrld'],
+      );
+    });
+
+    test('multiline nested-image destination stays outside outer prose', () {
+      _expectNestedMultilineLabel(
+        source: '[helo ![alt](\nimage.png) wrld](target)',
+        nestedKind: BusyInlineKind.image,
+        bodyRuns: ['helo', 'alt', 'wrld'],
+      );
+    });
+
+    test('nested label syntax owns its breaks before outer prose resumes', () {
+      for (final fixture in [
+        (
+          source: '[helo `code\nmore` prose\nwrld](target)',
+          kind: BusyInlineKind.code,
+          body: ['helo', 'prose wrld'],
+          title: null,
+        ),
+        (
+          source: '[helo `code\nmore` prose\\\nwrld](target)',
+          kind: BusyInlineKind.code,
+          body: ['helo', 'prose wrld'],
+          title: null,
+        ),
+        (
+          source: '[helo ![alt](\nimage.png) prose\nwrld](target)',
+          kind: BusyInlineKind.image,
+          body: ['helo', 'alt', 'prose wrld'],
+          title: null,
+        ),
+        (
+          source: '[helo ![alt\ntext](image.png) wrld](target)',
+          kind: BusyInlineKind.image,
+          body: ['helo', 'alt text', 'wrld'],
+          title: null,
+        ),
+        (
+          source: '[helo ![alt\ntext](image.png) prose\nwrld](target)',
+          kind: BusyInlineKind.image,
+          body: ['helo', 'alt text', 'prose wrld'],
+          title: null,
+        ),
+        (
+          source: '[helo ![alt](image.png "tit\nle") wrld](target)',
+          kind: BusyInlineKind.image,
+          body: ['helo', 'alt', 'wrld'],
+          title: 'tit le',
+        ),
+        (
+          source: '[helo ![alt](image.png "tit\nle") prose\nwrld](target)',
+          kind: BusyInlineKind.image,
+          body: ['helo', 'alt', 'prose wrld'],
+          title: 'tit le',
+        ),
+        (
+          source: '> - [helo `code\n>   more` wrld](target)',
+          kind: BusyInlineKind.code,
+          body: ['helo', 'wrld'],
+          title: null,
+        ),
+        (
+          source: '> - [helo ![alt](\r\n>   image.png) wrld](target)',
+          kind: BusyInlineKind.image,
+          body: ['helo', 'alt', 'wrld'],
+          title: null,
+        ),
+      ]) {
+        _expectNestedMultilineLabel(
+          source: fixture.source,
+          nestedKind: fixture.kind,
+          bodyRuns: fixture.body,
+          titleText: fixture.title,
+        );
+      }
+    });
+
     test('metadata scalar tag-like text remains checkable', () {
       for (final source in [
         '[hello](target "Use <code>wrld</code> &amp; more")',
@@ -2198,6 +2389,44 @@ Price \$ 5, mispelled \$ 6 and actual \$hiddenmath\$ tail.
   });
 
   group('exact rich correction', () {
+    test('multiline link label correction uses rich controller mapping', () {
+      const source = '[helo ![alt\ntext](image.png) wrld](target)';
+      final document = const MarkdownParser()
+          .parse(
+            filePath: '/tmp/nested-multiline-rich.md',
+            source: source,
+            mode: MarkdownMode.commonMark,
+          )
+          .busyDocument;
+      final projection = const WysiwygSpellingProjector().project(
+        document: document,
+        languageId: 'en-Test',
+        snapshot: _snapshot,
+        documentGeneration: 1,
+      );
+      expect(projection.complete, isTrue, reason: projection.message);
+      final run = projection.runs.singleWhere(
+        (candidate) => candidate.text.contains('wrld'),
+      );
+      final target = run.target as SpellingRichBlockTarget;
+      final controller = BusyMarkWysiwygDocumentController(document: document);
+      addTearDown(controller.dispose);
+      final plan = const SpellingReplacementPlanner().build(
+        occurrence: _rejected(run, 'wrld'),
+        suggestion: 'world',
+      );
+      expect(
+        controller.replaceSpellingInBlock(
+          blockId: target.blockId,
+          expectedFieldText: busyMarkWysiwygEditableText(
+            controller.blockById(target.blockId)!,
+          ),
+          plan: plan,
+        ),
+        isTrue,
+      );
+      expect(controller.markdown, source.replaceFirst('wrld', 'world'));
+    });
     for (final source in [
       '# Introduction\n\n- [Overview](#overview)\n  - [Motivation](#motivation)\n- [Discussion](#discussion)\n<!-- busymark:toc:end -->\n\n## Overview\n\nhelo **world**\n\nhelo world\n',
       '- helo\n  - helo\n\nhelo\n',

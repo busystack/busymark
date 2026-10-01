@@ -147,6 +147,8 @@ final class MarkdownSpellingProjector {
       ]..sort((left, right) => left.start.compareTo(right.start));
       final opaqueSyntax = <_SourceInterval>[
         ..._opaqueSyntaxSpans([mapped], sourceBase: sourceBase),
+        for (final label in imageLabels)
+          ..._opaqueSyntaxSpans([label.mapped], sourceBase: label.sourceBase),
         for (final span in excludedBlockSpans)
           if (span.startOffset < sourceLimit && span.endOffset > sourceBase)
             _SourceInterval(span.startOffset, span.endOffset),
@@ -163,6 +165,19 @@ final class MarkdownSpellingProjector {
         for (final html in multilineHtml)
           _SourceInterval(html.opaqueStart, html.opaqueEnd),
       ]..sort((left, right) => left.start.compareTo(right.start));
+      final opaqueSemanticBreaks = <int, int>{
+        for (final entry in mapped.ranges.entries)
+          if (_opaqueInlineKinds.contains(entry.key.kind))
+            sourceBase + entry.value.start: '\n'
+                .allMatches(entry.key.plainText)
+                .length,
+        for (final label in imageLabels)
+          for (final entry in label.mapped.ranges.entries)
+            if (_opaqueInlineKinds.contains(entry.key.kind))
+              label.sourceBase + entry.value.start: '\n'
+                  .allMatches(entry.key.plainText)
+                  .length,
+      };
       final positionedLineBreaks = [
         for (final lineBreak in mapped.positionedLineBreaks)
           if (lineBreak.sourceOffset != null)
@@ -204,6 +219,7 @@ final class MarkdownSpellingProjector {
             ], sourceBase: label.sourceBase),
         ],
         opaqueSyntax: opaqueSyntax,
+        opaqueSemanticBreaks: opaqueSemanticBreaks,
         positionedLineBreaks: positionedLineBreaks,
         hardBreakSyntax: hardBreakSyntax,
         recognizedLinks: {
@@ -666,6 +682,7 @@ final class _MarkdownProseScanner {
     this.formattingSyntax = const [],
     this.formattingWrappers = const [],
     this.opaqueSyntax = const [],
+    this.opaqueSemanticBreaks = const {},
     this.positionedLineBreaks = const [],
     this.hardBreakSyntax = const [],
     this.recognizedLinks = const {},
@@ -683,6 +700,7 @@ final class _MarkdownProseScanner {
   final List<_SourceInterval> formattingSyntax;
   final List<_RawFormattingWrapper> formattingWrappers;
   final List<_SourceInterval> opaqueSyntax;
+  final Map<int, int> opaqueSemanticBreaks;
   final List<BusyMarkMappedSourceLineBreak> positionedLineBreaks;
   final List<_SourceInterval> hardBreakSyntax;
   final Map<int, _RecognizedLinkOccurrence> recognizedLinks;
@@ -1014,7 +1032,87 @@ final class _MarkdownProseScanner {
       final offset = lineBreak.sourceOffset;
       return offset != null && offset >= labelStart && offset < labelEnd;
     }).toList()..sort((a, b) => a.sourceOffset!.compareTo(b.sourceOffset!));
-    for (final lineBreak in breaks) {
+    var breakIndex = 0;
+    while (cursor < labelEnd) {
+      // Mapped children own their internal line boundaries. Traverse them
+      // before interpreting the next physical boundary as label prose.
+      while (breakIndex < breaks.length &&
+          breaks[breakIndex].sourceOffset! < cursor) {
+        breakIndex++;
+      }
+      final nextBreak = breakIndex < breaks.length
+          ? breaks[breakIndex].sourceOffset
+          : null;
+      ({int start, int end, int semanticBreaks, bool? image})? owner;
+      for (final span in opaqueSyntax) {
+        if (span.start < cursor ||
+            span.end > labelEnd ||
+            span.start >= labelEnd ||
+            (nextBreak != null && span.start > nextBreak)) {
+          continue;
+        }
+        if (owner == null || span.start < owner.start) {
+          owner = (
+            start: span.start,
+            end: span.end,
+            semanticBreaks: opaqueSemanticBreaks[span.start] ?? 0,
+            image: null,
+          );
+        }
+      }
+      for (final entry in recognizedLinks.entries) {
+        final nested = entry.value;
+        if (entry.key < cursor ||
+            nested.end > labelEnd ||
+            entry.key >= labelEnd ||
+            (nextBreak != null && entry.key > nextBreak)) {
+          continue;
+        }
+        if (owner == null || entry.key < owner.start) {
+          owner = (
+            start: entry.key,
+            end: nested.end,
+            semanticBreaks: '\n'.allMatches(nested.semanticLabelText).length,
+            image: nested.isImage,
+          );
+        }
+      }
+      if (owner != null) {
+        if (cursor < owner.start) _scanInline(cursor, owner.start);
+        if (owner.image case final image?) {
+          if (_scanLinkOrImage(owner.start, owner.end, image: image) !=
+              owner.end) {
+            complete = false;
+            return;
+          }
+        } else {
+          _scanInline(owner.start, owner.end);
+        }
+        for (var index = 0; index < owner.semanticBreaks; index++) {
+          final semanticBreak = recognized.semanticLabelText.indexOf(
+            '\n',
+            semanticCursor,
+          );
+          if (semanticBreak < 0) {
+            complete = false;
+            return;
+          }
+          semanticCursor = semanticBreak + 1;
+        }
+        cursor = owner.end;
+        continue;
+      }
+      if (breakIndex >= breaks.length) {
+        // Unmapped raw line boundaries must not silently enter logical prose.
+        if (RegExp(r'\r|\n').hasMatch(source.substring(cursor, labelEnd))) {
+          complete = false;
+          return;
+        }
+        _scanInline(cursor, labelEnd);
+        cursor = labelEnd;
+        break;
+      }
+      final lineBreak = breaks[breakIndex++];
       final breakStart = lineBreak.sourceOffset!;
       final nextStart =
           breakStart +
@@ -1079,14 +1177,8 @@ final class _MarkdownProseScanner {
       if (semanticBreak >= 0) semanticCursor = semanticBreak + 1;
       cursor = nextStart;
     }
-    if (cursor < labelEnd) {
-      // A positioned break is required to remove raw continuation syntax
-      // without guessing where the parser put the next label character.
-      if (RegExp(r'\r|\n').hasMatch(source.substring(cursor, labelEnd))) {
-        complete = false;
-        return;
-      }
-      _scanInline(cursor, labelEnd);
+    if (recognized.semanticLabelText.indexOf('\n', semanticCursor) >= 0) {
+      complete = false;
     }
   }
 
