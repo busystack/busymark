@@ -116,7 +116,13 @@ final class MarkdownSpellingProjector {
     }) {
       final multilineHtml = multilineHtmlSpans;
       final imageLabels =
-          <({BusyMarkMappedInlineParse mapped, int sourceBase})>[];
+          <
+            ({
+              BusyMarkMappedInlineParse mapped,
+              int sourceBase,
+              List<_MappedImageCode> codes,
+            })
+          >[];
       void collectImageLabels(BusyMarkMappedInlineParse parent, int base) {
         for (final entry in parent.ranges.entries) {
           if (entry.key.kind != BusyInlineKind.image ||
@@ -126,12 +132,39 @@ final class MarkdownSpellingProjector {
           }
           final labelStart = base + entry.value.labelStart!;
           final labelEnd = base + entry.value.labelEnd!;
-          final label = (
-            mapped: _parseMappedImageLabel(
-              inlineParser,
-              source.substring(labelStart, labelEnd),
-            ),
+          final reparsed = _parseMappedImageLabel(
+            inlineParser,
+            source.substring(labelStart, labelEnd),
             sourceBase: labelStart,
+            positionedBreaks: [
+              for (final lineBreak in parent.positionedLineBreaks)
+                if (lineBreak.sourceOffset case final offset?)
+                  if (base + offset >= labelStart &&
+                      base +
+                              offset +
+                              lineBreak.lineEnding.length +
+                              lineBreak.continuationPrefix.length <=
+                          labelEnd)
+                    BusyMarkMappedSourceLineBreak(
+                      textOffset: lineBreak.textOffset,
+                      lineEnding: lineBreak.lineEnding,
+                      continuationPrefix: lineBreak.continuationPrefix,
+                      sourceOffset: base + offset - labelStart,
+                    ),
+            ],
+          );
+          if (!reparsed.mapped.positionRecordsComplete) complete = false;
+          if (reparsed.codes.isNotEmpty &&
+              reparsed.mapped.inlines
+                      .map((inline) => inline.plainText)
+                      .join() !=
+                  entry.key.plainText) {
+            complete = false;
+          }
+          final label = (
+            mapped: reparsed.mapped,
+            sourceBase: labelStart,
+            codes: reparsed.codes,
           );
           imageLabels.add(label);
           collectImageLabels(label.mapped, label.sourceBase);
@@ -188,14 +221,7 @@ final class MarkdownSpellingProjector {
                   .length,
       };
       final imageCodeSyntax = <_MappedImageCode>[
-        for (final label in imageLabels)
-          for (final entry in label.mapped.ranges.entries)
-            if (entry.key.kind == BusyInlineKind.code)
-              _MappedImageCode(
-                start: label.sourceBase + entry.value.start,
-                end: label.sourceBase + entry.value.end,
-                semanticText: entry.key.plainText,
-              ),
+        for (final label in imageLabels) ...label.codes,
       ];
       final positionedLineBreaks = [
         for (final lineBreak in mapped.positionedLineBreaks)
@@ -640,96 +666,162 @@ List<_SourceInterval> _fencedCodeSpans(String source, List<BusyBlock> blocks) {
   return List.unmodifiable(spans);
 }
 
-BusyMarkMappedInlineParse _parseMappedImageLabel(
+_ParsedImageLabel _parseMappedImageLabel(
   BusyMarkInlineParserContext parser,
-  String raw,
-) {
-  if (!raw.contains('\r')) return parser.parseMapped(raw);
-
-  // The block parser normalizes line endings before parsing inline code.
-  // Reparse the image description with the same line endings, then translate
-  // every mapped boundary back to the authored source fragment.
-  final normalized = StringBuffer();
-  final rawOffsets = <int>[];
+  String raw, {
+  required int sourceBase,
+  required List<BusyMarkMappedSourceLineBreak> positionedBreaks,
+}) {
+  // The positioned block parse identifies exactly which continuation bytes
+  // were structural. Keep separate start and end coordinates so a range that
+  // ends at a newline does not acquire the following container prefix.
+  final breakByOffset = {
+    for (final lineBreak in positionedBreaks)
+      if (lineBreak.sourceOffset case final offset?) offset: lineBreak,
+  };
+  final logical = StringBuffer();
+  final rawStarts = <int>[];
+  final rawEnds = <int>[];
+  final inheritedBreaks = <BusyMarkMappedSourceLineBreak>[];
+  var positionsComplete = true;
   var cursor = 0;
   while (cursor < raw.length) {
-    rawOffsets.add(cursor);
-    if (raw.codeUnitAt(cursor) == 0x0d) {
-      normalized.write('\n');
-      cursor += cursor + 1 < raw.length && raw.codeUnitAt(cursor + 1) == 0x0a
-          ? 2
-          : 1;
-    } else {
-      normalized.writeCharCode(raw.codeUnitAt(cursor));
-      cursor++;
+    final lineBreak = breakByOffset[cursor];
+    if (lineBreak != null) {
+      final syntax = '${lineBreak.lineEnding}${lineBreak.continuationPrefix}';
+      if (!raw.startsWith(syntax, cursor)) {
+        positionsComplete = false;
+      } else {
+        inheritedBreaks.add(
+          BusyMarkMappedSourceLineBreak(
+            textOffset: rawStarts.length,
+            lineEnding: lineBreak.lineEnding,
+            continuationPrefix: lineBreak.continuationPrefix,
+            sourceOffset: cursor,
+          ),
+        );
+        rawStarts.add(cursor);
+        rawEnds.add(cursor + lineBreak.lineEnding.length);
+        logical.write('\n');
+        cursor += syntax.length;
+        continue;
+      }
     }
+    final lineEnding = raw.startsWith('\r\n', cursor)
+        ? '\r\n'
+        : raw.codeUnitAt(cursor) == 0x0d
+        ? '\r'
+        : raw.codeUnitAt(cursor) == 0x0a
+        ? '\n'
+        : null;
+    rawStarts.add(cursor);
+    if (lineEnding == null) {
+      logical.writeCharCode(raw.codeUnitAt(cursor));
+      cursor++;
+    } else {
+      logical.write('\n');
+      cursor += lineEnding.length;
+    }
+    rawEnds.add(cursor);
   }
-  rawOffsets.add(raw.length);
-  final mapped = parser.parseMapped(normalized.toString());
-  int rawOffset(int offset) => rawOffsets[offset];
+  final logicalSource = logical.toString();
+  final mapped = parser.parseMapped(logicalSource);
+  int rawStartFor(int offset) =>
+      offset < rawStarts.length ? rawStarts[offset] : raw.length;
+  int rawEndFor(int offset) => offset == 0 ? 0 : rawEnds[offset - 1];
 
   BusyMarkMappedSourceLineBreak translateBreak(
     BusyMarkMappedSourceLineBreak value,
   ) {
     final offset = value.sourceOffset;
+    final rawOffset = offset == null ? null : rawStartFor(offset);
+    final inherited = inheritedBreaks
+        .where((breakValue) => breakValue.sourceOffset == rawOffset)
+        .firstOrNull;
     return BusyMarkMappedSourceLineBreak(
       textOffset: value.textOffset,
-      lineEnding: offset == null
-          ? value.lineEnding
-          : raw.substring(
-              rawOffset(offset),
-              rawOffset(offset + value.lineEnding.length),
-            ),
-      continuationPrefix: value.continuationPrefix,
-      sourceOffset: offset == null ? null : rawOffset(offset),
+      lineEnding:
+          inherited?.lineEnding ??
+          (offset == null
+              ? value.lineEnding
+              : raw.substring(rawStartFor(offset), rawEndFor(offset + 1))),
+      continuationPrefix:
+          inherited?.continuationPrefix ?? value.continuationPrefix,
+      sourceOffset: rawOffset,
     );
   }
 
-  return BusyMarkMappedInlineParse(
-    inlines: mapped.inlines,
-    ranges: Map<BusyInline, BusyMarkMappedInlineRange>.identity()
-      ..addEntries([
-        for (final entry in mapped.ranges.entries)
-          MapEntry(
-            entry.key,
-            BusyMarkMappedInlineRange(
-              start: rawOffset(entry.value.start),
-              end: rawOffset(entry.value.end),
-              opening: entry.value.opening,
-              closing: entry.value.closing,
-              labelStart: entry.value.labelStart == null
-                  ? null
-                  : rawOffset(entry.value.labelStart!),
-              labelEnd: entry.value.labelEnd == null
-                  ? null
-                  : rawOffset(entry.value.labelEnd!),
-              titleStart: entry.value.titleStart == null
-                  ? null
-                  : rawOffset(entry.value.titleStart!),
-              titleEnd: entry.value.titleEnd == null
-                  ? null
-                  : rawOffset(entry.value.titleEnd!),
-              titleDelimiter: entry.value.titleDelimiter,
-              lineBreaks: entry.value.lineBreaks.map(translateBreak).toList(),
-              originalInline: entry.value.originalInline,
-              isAutolink: entry.value.isAutolink,
-              isReference: entry.value.isReference,
-              isSourceLineBreak: entry.value.isSourceLineBreak,
-              sourceLineBreakOffset: entry.value.sourceLineBreakOffset == null
-                  ? null
-                  : rawOffset(entry.value.sourceLineBreakOffset!),
-            ),
-          ),
-      ]),
-    positionedLineBreaks: mapped.positionedLineBreaks
-        .map(translateBreak)
-        .toList(),
-    positionRecordsComplete: mapped.positionRecordsComplete,
-    sourceStart: mapped.sourceStart == null
-        ? null
-        : rawOffset(mapped.sourceStart!),
-    sourceEnd: mapped.sourceEnd == null ? null : rawOffset(mapped.sourceEnd!),
+  final ranges = Map<BusyInline, BusyMarkMappedInlineRange>.identity();
+  final codes = <_MappedImageCode>[];
+  for (final entry in mapped.ranges.entries) {
+    final range = entry.value;
+    ranges[entry.key] = BusyMarkMappedInlineRange(
+      start: rawStartFor(range.start),
+      end: rawEndFor(range.end),
+      opening: range.opening,
+      closing: range.closing,
+      labelStart: range.labelStart == null
+          ? null
+          : rawStartFor(range.labelStart!),
+      labelEnd: range.labelEnd == null ? null : rawStartFor(range.labelEnd!),
+      titleStart: range.titleStart == null
+          ? null
+          : rawStartFor(range.titleStart!),
+      titleEnd: range.titleEnd == null ? null : rawStartFor(range.titleEnd!),
+      titleDelimiter: range.titleDelimiter,
+      lineBreaks: range.lineBreaks.map(translateBreak).toList(),
+      originalInline: range.originalInline,
+      isAutolink: range.isAutolink,
+      isReference: range.isReference,
+      isSourceLineBreak: range.isSourceLineBreak,
+      sourceLineBreakOffset: range.sourceLineBreakOffset == null
+          ? null
+          : rawStartFor(range.sourceLineBreakOffset!),
+    );
+    if (entry.key.kind != BusyInlineKind.code) continue;
+    final units = <({String text, int start, int end, bool lineBreak})>[
+      for (var offset = range.start; offset < range.end; offset++)
+        (
+          text: logicalSource.substring(offset, offset + 1),
+          start: sourceBase + rawStartFor(offset),
+          end:
+              sourceBase +
+              (logicalSource.codeUnitAt(offset) == 0x0a
+                  ? rawStartFor(offset + 1)
+                  : rawEndFor(offset + 1)),
+          lineBreak: logicalSource.codeUnitAt(offset) == 0x0a,
+        ),
+    ];
+    codes.add(
+      _MappedImageCode(
+        start: sourceBase + rawStartFor(range.start),
+        end: sourceBase + rawEndFor(range.end),
+        semanticText: entry.key.plainText,
+        units: units,
+      ),
+    );
+  }
+  return _ParsedImageLabel(
+    mapped: BusyMarkMappedInlineParse(
+      inlines: mapped.inlines,
+      ranges: ranges,
+      positionedLineBreaks: inheritedBreaks,
+      positionRecordsComplete:
+          mapped.positionRecordsComplete && positionsComplete,
+      sourceStart: mapped.sourceStart == null
+          ? null
+          : rawStartFor(mapped.sourceStart!),
+      sourceEnd: mapped.sourceEnd == null ? null : rawEndFor(mapped.sourceEnd!),
+    ),
+    codes: codes,
   );
+}
+
+final class _ParsedImageLabel {
+  const _ParsedImageLabel({required this.mapped, required this.codes});
+
+  final BusyMarkMappedInlineParse mapped;
+  final List<_MappedImageCode> codes;
 }
 
 final class _EmissionGroup {
@@ -788,11 +880,13 @@ final class _MappedImageCode {
     required this.start,
     required this.end,
     required this.semanticText,
+    required this.units,
   });
 
   final int start;
   final int end;
   final String semanticText;
+  final List<({String text, int start, int end, bool lineBreak})> units;
 }
 
 final class _MarkdownProseScanner {
@@ -1100,36 +1194,27 @@ final class _MarkdownProseScanner {
       return;
     }
 
-    final units = <({String text, int start, int end, bool lineBreak})>[];
-    var offset = contentStart;
-    while (offset < contentEnd) {
-      final lineBreak = RegExp(r'\r\n|\r|\n').matchAsPrefix(source, offset);
-      if (lineBreak != null && lineBreak.end <= contentEnd) {
-        units.add((
-          text: ' ',
-          start: offset,
-          end: lineBreak.end,
-          lineBreak: true,
-        ));
-        offset = lineBreak.end;
-      } else {
-        units.add((
-          text: source.substring(offset, offset + 1),
-          start: offset,
-          end: offset + 1,
-          lineBreak: false,
-        ));
-        offset++;
-      }
+    final units = code.units;
+    var first = markerLength;
+    var last = units.length - markerLength;
+    if (last <= first ||
+        first >= units.length ||
+        units.first.start != code.start ||
+        units.last.end != code.end ||
+        units[first].start != contentStart ||
+        units[last - 1].end != contentEnd) {
+      complete = false;
+      return;
     }
-    var first = 0;
-    var last = units.length;
-    String logical() =>
-        units.skip(first).take(last - first).map((unit) => unit.text).join();
+    String logical() => units
+        .skip(first)
+        .take(last - first)
+        .map((unit) => unit.lineBreak ? ' ' : unit.text)
+        .join();
     if (logical() != code.semanticText &&
-        units.length >= 2 &&
-        units.first.text == ' ' &&
-        units.last.text == ' ') {
+        last - first >= 2 &&
+        (units[first].lineBreak || units[first].text == ' ') &&
+        (units[last - 1].lineBreak || units[last - 1].text == ' ')) {
       first++;
       last--;
     }
