@@ -7752,6 +7752,18 @@ abstract class AppLocalizations {
   /// **'Spelling check failed'**
   String get spellingCheckFailed;
 
+  /// Settings failure shown when a spelling word store cannot be read.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load spelling settings'**
+  String get spellingSettingsLoadFailed;
+
+  /// Action that deliberately retries failed spelling settings preparation.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry loading spelling settings'**
+  String get retrySpellingSettings;
+
   /// No description provided for @spellingCheckIncomplete.
   ///
   /// In en, this message translates to:

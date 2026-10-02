@@ -4635,6 +4635,14 @@ class AppLocalizationsPl extends AppLocalizations {
   String get spellingCheckFailed => 'Sprawdzanie pisowni nie powiodło się';
 
   @override
+  String get spellingSettingsLoadFailed =>
+      'Nie można wczytać ustawień sprawdzania pisowni';
+
+  @override
+  String get retrySpellingSettings =>
+      'Ponów wczytywanie ustawień sprawdzania pisowni';
+
+  @override
   String get spellingCheckIncomplete => 'Sprawdzanie pisowni jest niepełne';
 
   @override

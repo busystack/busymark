@@ -85,6 +85,7 @@ final class SpellingCoordinator extends ChangeNotifier {
   Timer? _debounce;
   _PendingSpellingCheck? _pending;
   int _presentationGeneration = 0;
+  bool _dictionaryLoadFailed = false;
   bool _running = false;
   bool _closed = false;
   final List<_IgnoredOccurrence> _ignoredOccurrences = [];
@@ -95,6 +96,7 @@ final class SpellingCoordinator extends ChangeNotifier {
   SpellingPresentationState _state =
       const SpellingPresentationState.languageRequired();
   SpellingPresentationState get state => _state;
+  bool get dictionaryLoadFailed => _dictionaryLoadFailed;
 
   List<SpellingOccurrence> get misspellings => _state.occurrences
       .where((item) => item.outcome == SpellingCheckOutcome.rejected)
@@ -129,6 +131,7 @@ final class SpellingCoordinator extends ChangeNotifier {
     _pending?.complete();
     _pending = _PendingSpellingCheck(request);
     _presentationGeneration++;
+    _dictionaryLoadFailed = false;
     _worker.cancelChecks();
     _debounce?.cancel();
     _setState(
@@ -148,6 +151,7 @@ final class SpellingCoordinator extends ChangeNotifier {
     final pending = _PendingSpellingCheck(request, waitForCompletion: true);
     _pending = pending;
     _presentationGeneration++;
+    _dictionaryLoadFailed = false;
     _worker.cancelChecks();
     _debounce?.cancel();
     _setState(
@@ -341,11 +345,7 @@ final class SpellingCoordinator extends ChangeNotifier {
             if (cached == null) {
               uncheckedRuns.add(run);
             } else {
-              occurrences.addAll(
-                cached
-                    .map((item) => item.bind(run))
-                    .whereType<SpellingOccurrence>(),
-              );
+              occurrences.addAll(cached);
             }
           }
           if (_closed || generation != _presentationGeneration) continue;
@@ -354,6 +354,7 @@ final class SpellingCoordinator extends ChangeNotifier {
           }
           var nativeComplete = true;
           String? nativeError;
+          var dictionaryLoadFailed = false;
           const batchSize = 12;
           for (
             var start = 0;
@@ -375,6 +376,8 @@ final class SpellingCoordinator extends ChangeNotifier {
             }
             occurrences.addAll(result.occurrences);
             nativeComplete = nativeComplete && result.complete;
+            dictionaryLoadFailed =
+                dictionaryLoadFailed || result.dictionaryLoadFailed;
             nativeError ??= result.error;
             if (result.complete) {
               for (final run in batch) {
@@ -392,6 +395,7 @@ final class SpellingCoordinator extends ChangeNotifier {
           if (_closed || generation != _presentationGeneration) continue;
           final rejected = _orderedRejected(occurrences, projection.runs);
           final complete = projection.complete && nativeComplete;
+          _dictionaryLoadFailed = dictionaryLoadFailed;
           _setState(
             SpellingPresentationState(
               status: complete
@@ -465,15 +469,21 @@ final class SpellingCoordinator extends ChangeNotifier {
     return List.unmodifiable(rejected);
   }
 
-  List<_CachedRunOccurrence>? _takeCachedRun(
+  List<SpellingOccurrence>? _takeCachedRun(
     SpellingEngineContext context,
     SpellingProseRun run,
   ) {
     final key = _runCacheKey(context, run);
     final cached = _runResultCache.remove(key);
     if (cached == null) return null;
+    final rebound = <SpellingOccurrence>[];
+    for (final item in cached) {
+      final occurrence = item.bind(run);
+      if (occurrence == null) return null;
+      rebound.add(occurrence);
+    }
     _runResultCache[key] = cached;
-    return cached;
+    return rebound;
   }
 
   void _cacheRunResult(
@@ -535,7 +545,8 @@ String _temporaryWordKey(String word) => unicode.nfc(word).toLowerCase();
 
 String _runCacheKey(SpellingEngineContext context, SpellingProseRun run) =>
     '${context.identity}\u0000${run.languageId}\u0000'
-    '${run.tokenizationContextStart}\u0000${run.tokenizationContext}';
+    '${run.tokenizationContextStart}\u0000${run.tokenizationContext}\u0000'
+    '${run.text.length}:${run.text}';
 
 final class _CachedRunOccurrence {
   const _CachedRunOccurrence({
@@ -558,11 +569,12 @@ final class _CachedRunOccurrence {
   SpellingOccurrence? bind(SpellingProseRun run) {
     if (logicalStart < 0 ||
         logicalEnd <= logicalStart ||
-        logicalEnd > run.text.length) {
+        logicalEnd > run.text.length ||
+        (run.atoms.isNotEmpty && !run.hasValidMapping)) {
       return null;
     }
     final word = run.text.substring(logicalStart, logicalEnd);
-    return SpellingOccurrence(
+    final occurrence = SpellingOccurrence(
       id:
           '${run.snapshot.bufferId}:${run.snapshot.contentRevision}:'
           '${run.snapshot.documentKind.name}:'
@@ -574,6 +586,14 @@ final class _CachedRunOccurrence {
       word: word,
       outcome: outcome,
     );
+    if (run.atoms.isNotEmpty &&
+        ((run.target is SpellingSourceTarget &&
+                occurrence.sourceIntervals.isEmpty) ||
+            (run.target is! SpellingSourceTarget &&
+                occurrence.fieldIntervals.isEmpty))) {
+      return null;
+    }
+    return occurrence;
   }
 }
 

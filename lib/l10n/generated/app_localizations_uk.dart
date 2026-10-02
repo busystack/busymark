@@ -4646,6 +4646,14 @@ class AppLocalizationsUk extends AppLocalizations {
   String get spellingCheckFailed => 'Не вдалося перевірити правопис';
 
   @override
+  String get spellingSettingsLoadFailed =>
+      'Не вдалося завантажити налаштування перевірки правопису';
+
+  @override
+  String get retrySpellingSettings =>
+      'Повторити завантаження налаштувань перевірки правопису';
+
+  @override
   String get spellingCheckIncomplete => 'Перевірку правопису не завершено';
 
   @override

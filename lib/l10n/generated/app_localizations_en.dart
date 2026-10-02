@@ -4598,6 +4598,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get spellingCheckFailed => 'Spelling check failed';
 
   @override
+  String get spellingSettingsLoadFailed => 'Could not load spelling settings';
+
+  @override
+  String get retrySpellingSettings => 'Retry loading spelling settings';
+
+  @override
   String get spellingCheckIncomplete => 'Spelling check is incomplete';
 
   @override

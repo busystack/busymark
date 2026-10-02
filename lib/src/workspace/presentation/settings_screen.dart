@@ -48,7 +48,12 @@ class SettingsScreen extends ConsumerStatefulWidget {
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   late SettingsPage _page = widget.initialPage;
   String? _preparedSpellingWorkspaceId;
+  bool _spellingPreparationSucceeded = false;
+  String? _preparationWorkspaceId;
+  SpellingSessionController? _preparationController;
   bool _preparingSpelling = false;
+  Object? _spellingPreparationError;
+  int _spellingPreparationGeneration = 0;
 
   @override
   void didUpdateWidget(covariant SettingsScreen oldWidget) {
@@ -116,6 +121,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             title: l10n.editor,
             filled: true,
             children: [
+              if (_spellingPreparationError != null)
+                _spellingPreparationFailureRow(l10n),
               BusyMarkSwitchRow(
                 title: l10n.autoSave,
                 subtitle: l10n.autoSaveDescription,
@@ -224,6 +231,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             title: l10n.availableSpellingDictionaries,
             filled: true,
             children: [
+              if (_spellingPreparationError != null)
+                _spellingPreparationFailureRow(l10n),
               for (final resource in spellingResources)
                 _SpellingDictionaryResourceRow(
                   resource: resource,
@@ -528,24 +537,62 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     SpellingSessionController spelling,
     String? workspaceId,
   ) {
+    if (_preparationWorkspaceId != workspaceId ||
+        !identical(_preparationController, spelling)) {
+      _preparationWorkspaceId = workspaceId;
+      _preparationController = spelling;
+      _preparedSpellingWorkspaceId = null;
+      _spellingPreparationSucceeded = false;
+      _spellingPreparationError = null;
+      _preparingSpelling = false;
+      _spellingPreparationGeneration++;
+    }
     if (_preparingSpelling ||
-        (_preparedSpellingWorkspaceId == workspaceId &&
+        _spellingPreparationError != null ||
+        (_spellingPreparationSucceeded &&
+            _preparedSpellingWorkspaceId == workspaceId &&
             spelling.catalog != null)) {
       return;
     }
     _preparingSpelling = true;
+    final generation = ++_spellingPreparationGeneration;
     WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted || generation != _spellingPreparationGeneration) return;
       try {
         await spelling.prepareSettings(
           ref.read(workspaceControllerProvider).workspace,
         );
-        _preparedSpellingWorkspaceId = workspaceId;
+        if (mounted && generation == _spellingPreparationGeneration) {
+          _preparedSpellingWorkspaceId = workspaceId;
+          _spellingPreparationSucceeded = true;
+        }
+      } on Object catch (error) {
+        if (mounted && generation == _spellingPreparationGeneration) {
+          _spellingPreparationError = error;
+        }
       } finally {
-        _preparingSpelling = false;
-        if (mounted) setState(() {});
+        if (mounted && generation == _spellingPreparationGeneration) {
+          _preparingSpelling = false;
+          setState(() {});
+        }
       }
     });
   }
+
+  Widget _spellingPreparationFailureRow(AppLocalizations l10n) =>
+      BusyMarkActionRow(
+        key: const ValueKey('retry-spelling-settings'),
+        title: l10n.spellingSettingsLoadFailed,
+        subtitle: _spellingPreparationError.toString(),
+        leading: const Icon(BusyMarkGlyphs.warning),
+        trailing: const Icon(BusyMarkGlyphs.refresh),
+        tooltip: l10n.retrySpellingSettings,
+        onTap: () => setState(() {
+          _spellingPreparationError = null;
+          _preparedSpellingWorkspaceId = null;
+          _spellingPreparationSucceeded = false;
+        }),
+      );
 
   void _goBack() {
     if (_page == SettingsPage.spellingDictionaries) {

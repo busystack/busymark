@@ -4623,6 +4623,13 @@ class AppLocalizationsDe extends AppLocalizations {
   String get spellingCheckFailed => 'Rechtschreibprüfung fehlgeschlagen';
 
   @override
+  String get spellingSettingsLoadFailed =>
+      'Rechtschreibeinstellungen konnten nicht geladen werden';
+
+  @override
+  String get retrySpellingSettings => 'Rechtschreibeinstellungen erneut laden';
+
+  @override
   String get spellingCheckIncomplete => 'Rechtschreibprüfung ist unvollständig';
 
   @override

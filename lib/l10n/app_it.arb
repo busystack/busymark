@@ -104,6 +104,8 @@
   "noSpellingSuggestions": "Nessun suggerimento ortografico",
   "spellingWordCheckFailed": "Impossibile controllare questa parola",
   "spellingCheckFailed": "Controllo ortografico non riuscito",
+  "spellingSettingsLoadFailed": "Impossibile caricare le impostazioni di controllo ortografico",
+  "retrySpellingSettings": "Riprova a caricare le impostazioni di controllo ortografico",
   "spellingCheckIncomplete": "Il controllo ortografico è incompleto",
   "spellingDictionaryNotInstalled": "Dizionario non installato",
   "spellingDictionaryNotInstalledForLanguage": "Il dizionario {dictionary} non è installato",

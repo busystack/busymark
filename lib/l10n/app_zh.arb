@@ -104,6 +104,8 @@
   "noSpellingSuggestions": "没有拼写建议",
   "spellingWordCheckFailed": "无法检查此单词",
   "spellingCheckFailed": "拼写检查失败",
+  "spellingSettingsLoadFailed": "无法加载拼写检查设置",
+  "retrySpellingSettings": "重试加载拼写检查设置",
   "spellingCheckIncomplete": "拼写检查未完成",
   "spellingDictionaryNotInstalled": "尚未安装词典",
   "spellingDictionaryNotInstalledForLanguage": "尚未安装 {dictionary} 词典",

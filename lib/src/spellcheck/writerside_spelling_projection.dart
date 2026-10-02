@@ -4,6 +4,7 @@ import '../writerside/writerside_document.dart';
 import '../writerside/writerside_document_parser.dart';
 import '../writerside/writerside_schema.dart';
 import 'spelling_projection.dart';
+import 'spelling_text_patterns.dart';
 
 final class WritersideXmlSpellingProjector {
   const WritersideXmlSpellingProjector({
@@ -37,7 +38,13 @@ final class WritersideXmlSpellingProjector {
     }
     builder.flush();
     return SpellingProjectionResult(
-      runs: List.unmodifiable(builder.runs),
+      runs: List.unmodifiable(
+        builder.runs..sort(
+          (left, right) => left.atoms.first.sourceStart.compareTo(
+            right.atoms.first.sourceStart,
+          ),
+        ),
+      ),
       complete: builder.complete,
       message: builder.complete
           ? null
@@ -134,10 +141,15 @@ final class _XmlProjectionBuilder {
       final value = element.attributes[name];
       final span = element.attributeSpans[name];
       if (value == null || span == null || value.trim().isEmpty) continue;
-      flush();
       final quoteOffset = span.startOffset - 1;
       final quote = quoteOffset >= 0 ? source[quoteOffset] : '"';
-      _appendEncoded(
+      final attribute = _XmlProjectionBuilder(
+        filePath: filePath,
+        source: source,
+        languageId: languageId,
+        snapshot: snapshot,
+      );
+      attribute._appendEncoded(
         raw: source.substring(span.startOffset, span.endOffset),
         sourceStart: span.startOffset,
         expected: value,
@@ -145,7 +157,22 @@ final class _XmlProjectionBuilder {
             ? SpellingSourceContext.xmlSingleQuotedAttribute
             : SpellingSourceContext.xmlDoubleQuotedAttribute,
       );
-      flush();
+      attribute.flush();
+      complete = complete && attribute.complete;
+      for (final run in attribute.runs) {
+        runs.add(
+          SpellingProseRun(
+            id: 'writerside-xml:${_sequence++}',
+            text: run.text,
+            languageId: languageId,
+            atoms: run.atoms,
+            target: run.target,
+            snapshot: snapshot,
+            tokenizationContext: run.tokenizationContext,
+            tokenizationContextStart: run.tokenizationContextStart,
+          ),
+        );
+      }
     }
   }
 
@@ -204,18 +231,13 @@ final class _XmlProjectionBuilder {
       );
       cursor += width;
     }
-    final variables = [
-      for (final match in _writersideVariable.allMatches(
-        decodedText.toString(),
-      ))
-        if (match.group(1) == null) (start: match.start, end: match.end),
-    ];
+    final excluded = _excludedTextIntervals(decodedText.toString());
     for (final unit in units) {
-      final variable = variables.any(
+      final skip = excluded.any(
         (range) =>
             range.start < unit.logicalEnd && range.end > unit.logicalStart,
       );
-      if (variable) {
+      if (skip) {
         _barrier();
         continue;
       }
@@ -231,19 +253,18 @@ final class _XmlProjectionBuilder {
 
   void _appendCdata(String content, int sourceStart) {
     var cursor = 0;
-    for (final variable in _writersideVariable.allMatches(content)) {
-      if (variable.group(1) != null) continue;
-      if (variable.start > cursor) {
+    for (final excluded in _excludedTextIntervals(content)) {
+      if (excluded.start > cursor) {
         _emit(
-          content.substring(cursor, variable.start),
+          content.substring(cursor, excluded.start),
           sourceStart + cursor,
-          sourceStart + variable.start,
+          sourceStart + excluded.start,
           SpellingTransformationKind.xmlCdata,
           SpellingSourceContext.xmlCdata,
         );
       }
       _barrier();
-      cursor = variable.end;
+      cursor = excluded.end;
     }
     if (cursor < content.length) {
       _emit(
@@ -254,6 +275,28 @@ final class _XmlProjectionBuilder {
         SpellingSourceContext.xmlCdata,
       );
     }
+  }
+
+  List<({int start, int end})> _excludedTextIntervals(String text) {
+    final intervals = <({int start, int end})>[
+      for (final match in _writersideVariable.allMatches(text))
+        if (match.group(1) == null) (start: match.start, end: match.end),
+      for (final match in spellingPlainAddress.allMatches(text))
+        (start: match.start, end: match.end),
+    ]..sort((left, right) => left.start.compareTo(right.start));
+    final merged = <({int start, int end})>[];
+    for (final interval in intervals) {
+      if (merged.isNotEmpty && interval.start <= merged.last.end) {
+        final previous = merged.removeLast();
+        merged.add((
+          start: previous.start,
+          end: interval.end > previous.end ? interval.end : previous.end,
+        ));
+      } else {
+        merged.add(interval);
+      }
+    }
+    return merged;
   }
 
   void _emit(

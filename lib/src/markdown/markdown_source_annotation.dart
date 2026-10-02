@@ -7,6 +7,11 @@ const busyMarkSourceMappingClosingAttribute = 'data-busymark-source-closing';
 const busyMarkSourceMappingLabelStartAttribute =
     'data-busymark-source-label-start';
 const busyMarkSourceMappingLabelEndAttribute = 'data-busymark-source-label-end';
+const busyMarkSourceMappingTitleStartAttribute =
+    'data-busymark-source-title-start';
+const busyMarkSourceMappingTitleEndAttribute = 'data-busymark-source-title-end';
+const busyMarkSourceMappingTitleDelimiterAttribute =
+    'data-busymark-source-title-delimiter';
 const busyMarkSourceMappingAutolinkAttribute = 'data-busymark-source-autolink';
 const busyMarkSourceMappingReferenceAttribute =
     'data-busymark-source-reference';
@@ -23,11 +28,15 @@ class BusyMarkMappedInlineRange {
     this.closing,
     this.labelStart,
     this.labelEnd,
+    this.titleStart,
+    this.titleEnd,
+    this.titleDelimiter,
     this.lineBreaks = const [],
     this.originalInline,
     this.isAutolink = false,
     this.isReference = false,
     this.isSourceLineBreak = false,
+    this.isRawHtmlText = false,
     this.sourceLineBreakOffset,
   });
 
@@ -37,11 +46,17 @@ class BusyMarkMappedInlineRange {
   final String? closing;
   final int? labelStart;
   final int? labelEnd;
+  final int? titleStart;
+  final int? titleEnd;
+  final String? titleDelimiter;
   final List<BusyMarkMappedSourceLineBreak> lineBreaks;
   final BusyInline? originalInline;
   final bool isAutolink;
   final bool isReference;
   final bool isSourceLineBreak;
+
+  /// This inline came from Markdown's literal raw-HTML text node.
+  final bool isRawHtmlText;
   final int? sourceLineBreakOffset;
 }
 
@@ -63,14 +78,24 @@ class BusyMarkMappedInlineParse {
   BusyMarkMappedInlineParse({
     required this.inlines,
     required Map<BusyInline, BusyMarkMappedInlineRange> ranges,
+    this.positionedLineBreaks = const [],
     this.positionRecordsComplete = true,
+    this.imageDescriptionText,
     this.sourceStart,
     this.sourceEnd,
   }) : ranges = Map.unmodifiable(ranges);
 
   final List<BusyInline> inlines;
   final Map<BusyInline, BusyMarkMappedInlineRange> ranges;
+
+  /// Raw line boundaries and container continuations of a positioned block.
+  /// [BusyMarkMappedInlineRange.lineBreaks] remains relative to inline text.
+  final List<BusyMarkMappedSourceLineBreak> positionedLineBreaks;
   final bool positionRecordsComplete;
+
+  /// Text the Markdown image syntax would assign to an alt attribute when
+  /// these parsed nodes are used as an image description.
+  final String? imageDescriptionText;
   final int? sourceStart;
   final int? sourceEnd;
 }

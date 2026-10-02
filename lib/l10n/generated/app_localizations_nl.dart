@@ -4626,6 +4626,14 @@ class AppLocalizationsNl extends AppLocalizations {
   String get spellingCheckFailed => 'Spellingcontrole mislukt';
 
   @override
+  String get spellingSettingsLoadFailed =>
+      'Instellingen voor spellingcontrole konden niet worden geladen';
+
+  @override
+  String get retrySpellingSettings =>
+      'Instellingen voor spellingcontrole opnieuw laden';
+
+  @override
   String get spellingCheckIncomplete => 'De spellingcontrole is onvolledig';
 
   @override

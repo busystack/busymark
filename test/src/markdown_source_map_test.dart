@@ -9,6 +9,37 @@ import 'package:markdown/markdown.dart' as md;
 void main() {
   const mapper = MarkdownSourceMapper();
 
+  test(
+    'mapped image-description text follows Markdown image alt semantics',
+    () {
+      for (final (source, expectedAlt, expectedInline) in [
+        ('hello `wrld`\\\nagain', 'hello wrldagain', 'hello wrld\nagain'),
+        ('hello `wrld`  \nagain', 'hello wrldagain', 'hello wrld\nagain'),
+        ('hello `wrld`\nagain', 'hello wrld\nagain', 'hello wrld\nagain'),
+        ('hello `wrld\nagain`', 'hello wrld again', 'hello wrld again'),
+        ('hello `wrld`<br>again', 'hello wrld<br>again', 'hello wrld\nagain'),
+        (
+          'hello **wrld** ![alt](inner.png)',
+          'hello wrld alt',
+          'hello wrld alt',
+        ),
+      ]) {
+        final mapped = mapper
+            .createInlineParserContext(
+              documentSource: source,
+              mode: MarkdownMode.commonMark,
+            )
+            .parseMapped(source);
+        expect(mapped.imageDescriptionText, expectedAlt, reason: source);
+        expect(
+          mapped.inlines.map((inline) => inline.plainText).join(),
+          expectedInline,
+          reason: source,
+        );
+      }
+    },
+  );
+
   test('annotated parsing has ordinary semantics across supported corpus', () {
     const fixtures = <String>[
       'plain text and  whitespace',
@@ -47,6 +78,150 @@ void main() {
         _semanticTree(ordinary),
         reason: fixture,
       );
+    }
+  });
+
+  test('image ranges identify only resolved source occurrences', () {
+    for (final source in [
+      '![helo][wrld] ![**helo**](image.png)',
+      '![**helo**](image.png) ![helo][wrld]',
+    ]) {
+      final context = mapper.createInlineParserContext(
+        documentSource: source,
+        mode: MarkdownMode.commonMark,
+      );
+      final mapped = context.parsePositionedBlocks(source).single;
+      final images = mapped.ranges.entries
+          .where((entry) => entry.key.kind == BusyInlineKind.image)
+          .toList();
+      expect(images, hasLength(1));
+      final imageStart = source.indexOf('![**helo**]');
+      final range = images.single.value;
+      expect(range.start, imageStart);
+      expect(range.end, imageStart + '![**helo**](image.png)'.length);
+      expect(range.labelStart, imageStart + 2);
+      expect(range.labelEnd, imageStart + 10);
+    }
+  });
+
+  test('positioned label breaks retain raw endings and container prefixes', () {
+    for (final source in [
+      '> - [helo\r\n>   wrld](target)\r\n',
+      '> - ![helo\r\n>   wrld](target)\r\n',
+    ]) {
+      final mapped = mapper
+          .createInlineParserContext(
+            documentSource: source,
+            mode: MarkdownMode.commonMark,
+          )
+          .parsePositionedBlocks(source)
+          .single;
+      final label = mapped.ranges.entries
+          .singleWhere(
+            (entry) =>
+                entry.key.kind == BusyInlineKind.link ||
+                entry.key.kind == BusyInlineKind.image,
+          )
+          .value;
+      final lineBreak = mapped.positionedLineBreaks.singleWhere(
+        (entry) =>
+            entry.sourceOffset! > label.labelStart! &&
+            entry.sourceOffset! < label.labelEnd!,
+      );
+      expect(lineBreak.sourceOffset, source.indexOf('\r\n'));
+      expect(lineBreak.lineEnding, '\r\n');
+      expect(lineBreak.continuationPrefix, '>   ');
+      expect(
+        source.substring(
+          lineBreak.sourceOffset!,
+          lineBreak.sourceOffset! +
+              lineBreak.lineEnding.length +
+              lineBreak.continuationPrefix.length,
+        ),
+        '\r\n>   ',
+      );
+    }
+  });
+
+  test('mapped link and image titles retain exact raw boundaries', () {
+    for (final (source, kind, delimiter) in [
+      ('[hello](diagrm.md (wrld))', BusyInlineKind.link, '('),
+      ('[hello](diagrm.md "wrld)")', BusyInlineKind.link, '"'),
+      ('![hello](diagrm.png (wrld))', BusyInlineKind.image, '('),
+      (
+        '> - [hello](\n>   diagrm.md\n>   "wrld"\n>   )\n',
+        BusyInlineKind.link,
+        '"',
+      ),
+    ]) {
+      final context = mapper.createInlineParserContext(
+        documentSource: source,
+        mode: MarkdownMode.commonMark,
+      );
+      final ranges = [
+        for (final mapped in context.parsePositionedBlocks(source))
+          for (final entry in mapped.ranges.entries)
+            if (entry.key.kind == kind) entry.value,
+      ];
+      expect(ranges, hasLength(1), reason: source);
+      final range = ranges.single;
+      expect(
+        source
+            .substring(range.start, range.end)
+            .startsWith(kind == BusyInlineKind.image ? '![hello]' : '[hello]'),
+        isTrue,
+        reason: source,
+      );
+      expect(source.substring(range.labelStart!, range.labelEnd!), 'hello');
+      expect(
+        source.substring(range.titleStart!, range.titleEnd!),
+        source.contains('"wrld)"') ? 'wrld)' : 'wrld',
+      );
+      expect(range.titleDelimiter, delimiter);
+      expect(range.end, source.lastIndexOf(')') + 1);
+    }
+  });
+
+  test('destination-only links and images have no mapped title', () {
+    for (final (source, kind, destination) in [
+      ('[hello]( (wrld))', BusyInlineKind.link, '(wrld)'),
+      ('![hello]( (wrld))', BusyInlineKind.image, '(wrld)'),
+      ('[hello](  (wrld)  )', BusyInlineKind.link, '(wrld)'),
+      ('[hello](\n(wrld)\n)', BusyInlineKind.link, '(wrld)'),
+      ('[hello](\r\n(wrld)\r\n)', BusyInlineKind.link, '(wrld)'),
+      ('[hello]( ("wrld"))', BusyInlineKind.link, '(%22wrld%22)'),
+      ("![hello]( ('wrld'))", BusyInlineKind.image, "('wrld')"),
+      ('[hello]( (wrld) "")', BusyInlineKind.link, '(wrld)'),
+    ]) {
+      final context = mapper.createInlineParserContext(
+        documentSource: source,
+        mode: MarkdownMode.commonMark,
+      );
+      final parsed = context
+          .parse(source)
+          .where((inline) => inline.kind == kind);
+      expect(parsed, hasLength(1), reason: source);
+      expect(parsed.single.destination, destination, reason: source);
+      expect(
+        parsed.single.attributes.containsKey('title'),
+        isFalse,
+        reason: source,
+      );
+      final matches = [
+        for (final mapped in context.parsePositionedBlocks(source))
+          for (final entry in mapped.ranges.entries)
+            if (entry.key.kind == kind) entry,
+      ];
+      expect(matches, hasLength(1), reason: source);
+      final inline = matches.single.key;
+      final range = matches.single.value;
+      expect(inline.destination, destination, reason: source);
+      expect(inline.attributes.containsKey('title'), isFalse, reason: source);
+      expect(source.substring(range.start, range.end), source);
+      expect(source.substring(range.labelStart!, range.labelEnd!), 'hello');
+      expect(range.titleStart, isNull, reason: source);
+      expect(range.titleEnd, isNull, reason: source);
+      expect(range.titleDelimiter, isNull, reason: source);
     }
   });
 

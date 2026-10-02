@@ -104,6 +104,8 @@
   "noSpellingSuggestions": "Нет вариантов исправления",
   "spellingWordCheckFailed": "Не удалось проверить это слово",
   "spellingCheckFailed": "Не удалось проверить правописание",
+  "spellingSettingsLoadFailed": "Не удалось загрузить настройки проверки орфографии",
+  "retrySpellingSettings": "Повторить загрузку настроек проверки орфографии",
   "spellingCheckIncomplete": "Проверка правописания не завершена",
   "spellingDictionaryNotInstalled": "Словарь не установлен",
   "spellingDictionaryNotInstalledForLanguage": "Словарь «{dictionary}» не установлен",

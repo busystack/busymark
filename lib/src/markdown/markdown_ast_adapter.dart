@@ -857,6 +857,7 @@ class MarkdownAstAdapter {
                 opening: range.opening,
                 closing: range.closing,
                 isSourceLineBreak: entry.key.kind == BusyInlineKind.hardBreak,
+                isRawHtmlText: true,
                 sourceLineBreakOffset: range.sourceLineBreakOffset == null
                     ? null
                     : mappingStart + range.sourceLineBreakOffset!,
@@ -896,6 +897,12 @@ class MarkdownAstAdapter {
     );
     final labelEnd = int.tryParse(
       node.attributes[busyMarkSourceMappingLabelEndAttribute] ?? '',
+    );
+    final titleStart = int.tryParse(
+      node.attributes[busyMarkSourceMappingTitleStartAttribute] ?? '',
+    );
+    final titleEnd = int.tryParse(
+      node.attributes[busyMarkSourceMappingTitleEndAttribute] ?? '',
     );
     final opening = node.attributes[busyMarkSourceMappingOpeningAttribute];
     final closing = node.attributes[busyMarkSourceMappingClosingAttribute];
@@ -971,7 +978,11 @@ class MarkdownAstAdapter {
           kind: BusyInlineKind.image,
           text: node.attributes['alt'] ?? '',
           destination: node.attributes['src'],
-          attributes: node.attributes,
+          attributes: {
+            for (final entry in node.attributes.entries)
+              if (!entry.key.startsWith('data-busymark-source-'))
+                entry.key: entry.value,
+          },
         ),
       ],
       // Source mappings are keyed by inline identity. Each parser occurrence
@@ -1004,6 +1015,10 @@ class MarkdownAstAdapter {
           closing: node.attributes[busyMarkSourceMappingClosingAttribute],
           labelStart: labelStart,
           labelEnd: labelEnd,
+          titleStart: titleStart,
+          titleEnd: titleEnd,
+          titleDelimiter:
+              node.attributes[busyMarkSourceMappingTitleDelimiterAttribute],
           isAutolink:
               node.attributes[busyMarkSourceMappingAutolinkAttribute] == 'true',
           isReference:

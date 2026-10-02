@@ -4574,6 +4574,13 @@ class AppLocalizationsVi extends AppLocalizations {
   String get spellingCheckFailed => 'Kiểm tra chính tả thất bại';
 
   @override
+  String get spellingSettingsLoadFailed =>
+      'Không thể tải cài đặt kiểm tra chính tả';
+
+  @override
+  String get retrySpellingSettings => 'Thử tải lại cài đặt kiểm tra chính tả';
+
+  @override
   String get spellingCheckIncomplete => 'Kiểm tra chính tả chưa hoàn tất';
 
   @override

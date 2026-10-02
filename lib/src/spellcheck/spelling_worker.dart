@@ -99,6 +99,7 @@ final class SpellingWorkerResult {
     required this.cancelled,
     required this.complete,
     this.error,
+    this.dictionaryLoadFailed = false,
   });
 
   final int requestId;
@@ -106,6 +107,7 @@ final class SpellingWorkerResult {
   final bool cancelled;
   final bool complete;
   final String? error;
+  final bool dictionaryLoadFailed;
 }
 
 /// One reusable spelling isolate. It owns the only active native handle and
@@ -200,6 +202,7 @@ final class SpellingWorker {
       cancelled: message['cancelled'] == true,
       complete: message['complete'] == true,
       error: message['error']?.toString(),
+      dictionaryLoadFailed: message['dictionaryLoadFailed'] == true,
     );
   }
 
@@ -436,9 +439,11 @@ final class _WorkerRuntime {
     final occurrences = <Map<String, Object?>>[];
     var complete = true;
     String? firstError;
+    var dictionaryOpened = false;
     try {
       final context = (request['context'] as Map).cast<Object?, Object?>();
       final dictionary = _ensureDictionary(context);
+      dictionaryOpened = true;
       final language = context['languageId'].toString();
       final runs = request['runs'] as List;
       var wordsSinceYield = 0;
@@ -608,6 +613,7 @@ final class _WorkerRuntime {
         'cancelled': false,
         'complete': false,
         'error': error.toString(),
+        if (!dictionaryOpened) 'dictionaryLoadFailed': true,
       });
     }
   }

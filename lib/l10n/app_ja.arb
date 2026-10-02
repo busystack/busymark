@@ -104,6 +104,8 @@
   "noSpellingSuggestions": "スペル候補はありません",
   "spellingWordCheckFailed": "この単語を確認できませんでした",
   "spellingCheckFailed": "スペルチェックに失敗しました",
+  "spellingSettingsLoadFailed": "スペルチェックの設定を読み込めませんでした",
+  "retrySpellingSettings": "スペルチェックの設定を再読み込み",
   "spellingCheckIncomplete": "スペルチェックが完了していません",
   "spellingDictionaryNotInstalled": "辞書がインストールされていません",
   "spellingDictionaryNotInstalledForLanguage": "{dictionary} の辞書がインストールされていません",

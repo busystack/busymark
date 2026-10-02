@@ -104,6 +104,8 @@
   "noSpellingSuggestions": "Немає варіантів виправлення",
   "spellingWordCheckFailed": "Не вдалося перевірити це слово",
   "spellingCheckFailed": "Не вдалося перевірити правопис",
+  "spellingSettingsLoadFailed": "Не вдалося завантажити налаштування перевірки правопису",
+  "retrySpellingSettings": "Повторити завантаження налаштувань перевірки правопису",
   "spellingCheckIncomplete": "Перевірку правопису не завершено",
   "spellingDictionaryNotInstalled": "Словник не встановлено",
   "spellingDictionaryNotInstalledForLanguage": "Словник «{dictionary}» не встановлено",

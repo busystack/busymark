@@ -4382,6 +4382,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get spellingCheckFailed => '拼写检查失败';
 
   @override
+  String get spellingSettingsLoadFailed => '无法加载拼写检查设置';
+
+  @override
+  String get retrySpellingSettings => '重试加载拼写检查设置';
+
+  @override
   String get spellingCheckIncomplete => '拼写检查未完成';
 
   @override
@@ -8817,6 +8823,12 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get spellingCheckFailed => '拼写检查失败';
+
+  @override
+  String get spellingSettingsLoadFailed => '无法加载拼写检查设置';
+
+  @override
+  String get retrySpellingSettings => '重试加载拼写检查设置';
 
   @override
   String get spellingCheckIncomplete => '拼写检查未完成';

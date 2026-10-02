@@ -48,7 +48,31 @@ final class MarkdownSpellingProjector {
             block.sourceSpan != null)
           block.sourceSpan!,
     ];
-    final fencedCodeSpans = _fencedCodeSpans(source);
+    final fencedCodeSpans = _fencedCodeSpans(
+      source,
+      parsed.busyDocument.blocks,
+    );
+    final recognizedAttributeSpans = <_SourceInterval>[];
+    for (final block in _walkBlocks(parsed.busyDocument.blocks)) {
+      final span = block.sourceSpan;
+      if (block.kind != BusyBlockKind.heading || span == null) continue;
+      final raw = source
+          .substring(span.startOffset, span.endOffset)
+          .trimRight();
+      final trailing = RegExp(r'[ \t]+\{[^{}]*\}$').firstMatch(raw);
+      if (trailing != null &&
+          _isRecognizedHeadingAttribute(
+            raw.substring(trailing.start).trim(),
+            block.attributes,
+          )) {
+        recognizedAttributeSpans.add(
+          _SourceInterval(
+            span.startOffset + trailing.start,
+            span.startOffset + trailing.end,
+          ),
+        );
+      }
+    }
     final footnoteLabels = <String>{};
     void collectFootnotes(BusyInline inline) {
       final destination = inline.destination;
@@ -77,6 +101,7 @@ final class MarkdownSpellingProjector {
           block,
     ];
     final runs = <SpellingProseRun>[];
+    final imageDescriptions = <SpellingMappedImageDescription>[];
     final multilineHtmlSpans = _multilineHtmlSpans(source, 0, source.length);
     var complete = true;
     var sequence = 0;
@@ -91,11 +116,98 @@ final class MarkdownSpellingProjector {
       required SpellingSourceContext context,
     }) {
       final multilineHtml = multilineHtmlSpans;
-      final formattingSyntax = _formattingSyntaxSpans([
-        mapped,
-      ], sourceBase: sourceBase);
+      final imageLabels =
+          <
+            ({
+              BusyMarkMappedInlineParse mapped,
+              int sourceBase,
+              List<_MappedImageCode> codes,
+            })
+          >[];
+      final collectedImages = <int>{};
+      void collectImageLabels(BusyMarkMappedInlineParse parent, int base) {
+        for (final entry in parent.ranges.entries) {
+          if (entry.key.kind != BusyInlineKind.image ||
+              entry.value.labelStart == null ||
+              entry.value.labelEnd == null) {
+            continue;
+          }
+          final labelStart = base + entry.value.labelStart!;
+          final labelEnd = base + entry.value.labelEnd!;
+          final reparsed = _parseMappedImageLabel(
+            inlineParser,
+            source.substring(labelStart, labelEnd),
+            sourceBase: labelStart,
+            positionedBreaks: [
+              for (final lineBreak in parent.positionedLineBreaks)
+                if (lineBreak.sourceOffset case final offset?)
+                  if (base + offset >= labelStart &&
+                      base +
+                              offset +
+                              lineBreak.lineEnding.length +
+                              lineBreak.continuationPrefix.length <=
+                          labelEnd)
+                    BusyMarkMappedSourceLineBreak(
+                      textOffset: lineBreak.textOffset,
+                      lineEnding: lineBreak.lineEnding,
+                      continuationPrefix: lineBreak.continuationPrefix,
+                      sourceOffset: base + offset - labelStart,
+                    ),
+            ],
+          );
+          if (!reparsed.mapped.positionRecordsComplete) complete = false;
+          if (reparsed.mapped.imageDescriptionText != entry.key.plainText) {
+            complete = false;
+          }
+          if (collectedImages.add(base + entry.value.start)) {
+            final semanticInlines = _imageFieldInlines(
+              reparsed.mapped,
+              source.substring(labelStart, labelEnd),
+            );
+            if (semanticInlines.map((inline) => inline.plainText).join() !=
+                entry.key.plainText) {
+              complete = false;
+            } else {
+              imageDescriptions.add(
+                SpellingMappedImageDescription(
+                  sourceStart: base + entry.value.start,
+                  sourceEnd: base + entry.value.end,
+                  alternativeText: entry.key.plainText,
+                  destination: entry.key.destination,
+                  inlines: semanticInlines,
+                ),
+              );
+            }
+          }
+          final label = (
+            mapped: reparsed.mapped,
+            sourceBase: labelStart,
+            codes: reparsed.codes,
+          );
+          imageLabels.add(label);
+          collectImageLabels(label.mapped, label.sourceBase);
+        }
+      }
+
+      collectImageLabels(mapped, sourceBase);
+      final formattingSyntax = <_SourceInterval>[
+        ..._formattingSyntaxSpans([mapped], sourceBase: sourceBase),
+        for (final label in imageLabels)
+          ..._formattingSyntaxSpans([
+            label.mapped,
+          ], sourceBase: label.sourceBase),
+      ]..sort((left, right) => left.start.compareTo(right.start));
       final opaqueSyntax = <_SourceInterval>[
         ..._opaqueSyntaxSpans([mapped], sourceBase: sourceBase),
+        for (final label in imageLabels)
+          ..._opaqueSyntaxSpans(
+            [label.mapped],
+            sourceBase: label.sourceBase,
+            excludedKinds: {
+              BusyInlineKind.math,
+              BusyInlineKind.writersideVariable,
+            },
+          ),
         for (final span in excludedBlockSpans)
           if (span.startOffset < sourceLimit && span.endOffset > sourceBase)
             _SourceInterval(span.startOffset, span.endOffset),
@@ -112,6 +224,49 @@ final class MarkdownSpellingProjector {
         for (final html in multilineHtml)
           _SourceInterval(html.opaqueStart, html.opaqueEnd),
       ]..sort((left, right) => left.start.compareTo(right.start));
+      final opaqueSemanticBreaks = <int, int>{
+        for (final entry in mapped.ranges.entries)
+          if (_opaqueInlineKinds.contains(entry.key.kind))
+            sourceBase + entry.value.start: '\n'
+                .allMatches(entry.key.plainText)
+                .length,
+        for (final label in imageLabels)
+          for (final entry in label.mapped.ranges.entries)
+            if (entry.key.kind == BusyInlineKind.math ||
+                entry.key.kind == BusyInlineKind.writersideVariable)
+              label.sourceBase + entry.value.start: '\n'
+                  .allMatches(entry.key.plainText)
+                  .length,
+      };
+      final imageCodeSyntax = <_MappedImageCode>[
+        for (final label in imageLabels) ...label.codes,
+      ];
+      final positionedLineBreaks = [
+        for (final lineBreak in mapped.positionedLineBreaks)
+          if (lineBreak.sourceOffset != null)
+            BusyMarkMappedSourceLineBreak(
+              textOffset: lineBreak.textOffset,
+              lineEnding: lineBreak.lineEnding,
+              continuationPrefix: lineBreak.continuationPrefix,
+              sourceOffset: sourceBase + lineBreak.sourceOffset!,
+            ),
+      ];
+      final hardBreakSyntax = <_SourceInterval>[
+        for (final entry in mapped.ranges.entries)
+          if (entry.key.kind == BusyInlineKind.hardBreak)
+            _SourceInterval(
+              sourceBase + entry.value.start,
+              sourceBase + entry.value.end,
+            ),
+        for (final label in imageLabels)
+          for (final entry in label.mapped.ranges.entries)
+            if (entry.key.kind == BusyInlineKind.hardBreak &&
+                !entry.value.isRawHtmlText)
+              _SourceInterval(
+                label.sourceBase + entry.value.start,
+                label.sourceBase + entry.value.end,
+              ),
+      ];
       final scanner = _MarkdownProseScanner(
         source: source,
         start: mappedStart,
@@ -120,10 +275,61 @@ final class MarkdownSpellingProjector {
         stripBlockSyntax: stripBlockSyntax,
         footnoteLabels: footnoteLabels,
         formattingSyntax: formattingSyntax,
-        formattingWrappers: _formattingWrappers([
-          mapped,
-        ], sourceBase: sourceBase),
+        formattingWrappers: [
+          ..._formattingWrappers([mapped], sourceBase: sourceBase),
+          for (final label in imageLabels)
+            ..._formattingWrappers([
+              label.mapped,
+            ], sourceBase: label.sourceBase),
+        ],
         opaqueSyntax: opaqueSyntax,
+        opaqueSemanticBreaks: opaqueSemanticBreaks,
+        imageCodeSyntax: imageCodeSyntax,
+        positionedLineBreaks: positionedLineBreaks,
+        hardBreakSyntax: hardBreakSyntax,
+        recognizedLinks: {
+          for (final entry in mapped.ranges.entries)
+            if (entry.key.kind == BusyInlineKind.link ||
+                entry.key.kind == BusyInlineKind.image)
+              if (entry.value.labelStart != null &&
+                  entry.value.labelEnd != null)
+                sourceBase + entry.value.start: _RecognizedLinkOccurrence(
+                  isImage: entry.key.kind == BusyInlineKind.image,
+                  semanticLabelText: entry.key.plainText,
+                  end: sourceBase + entry.value.end,
+                  labelStart: sourceBase + entry.value.labelStart!,
+                  labelEnd: sourceBase + entry.value.labelEnd!,
+                  titleStart: entry.value.titleStart == null
+                      ? null
+                      : sourceBase + entry.value.titleStart!,
+                  titleEnd: entry.value.titleEnd == null
+                      ? null
+                      : sourceBase + entry.value.titleEnd!,
+                  titleDelimiter: entry.value.titleDelimiter,
+                ),
+          for (final label in imageLabels)
+            for (final entry in label.mapped.ranges.entries)
+              if (entry.key.kind == BusyInlineKind.link ||
+                  entry.key.kind == BusyInlineKind.image)
+                if (entry.value.labelStart != null &&
+                    entry.value.labelEnd != null)
+                  label.sourceBase +
+                      entry.value.start: _RecognizedLinkOccurrence(
+                    isImage: entry.key.kind == BusyInlineKind.image,
+                    semanticLabelText: entry.key.plainText,
+                    end: label.sourceBase + entry.value.end,
+                    labelStart: label.sourceBase + entry.value.labelStart!,
+                    labelEnd: label.sourceBase + entry.value.labelEnd!,
+                    titleStart: entry.value.titleStart == null
+                        ? null
+                        : label.sourceBase + entry.value.titleStart!,
+                    titleEnd: entry.value.titleEnd == null
+                        ? null
+                        : label.sourceBase + entry.value.titleEnd!,
+                    titleDelimiter: entry.value.titleDelimiter,
+                  ),
+        },
+        recognizedAttributeSpans: recognizedAttributeSpans,
       );
       final groups =
           <_EmissionGroup>[
@@ -137,6 +343,7 @@ final class MarkdownSpellingProjector {
                     end: attribute.end,
                     context: attribute.context,
                     stripBlockSyntax: false,
+                    interpretHtmlSyntax: false,
                   ).scan(),
           ]..sort((left, right) {
             final leftStart = left.atoms.firstOrNull?.sourceStart ?? 0;
@@ -293,8 +500,40 @@ final class MarkdownSpellingProjector {
       runs: List.unmodifiable(runs),
       complete: complete,
       message: complete ? null : 'Some Markdown regions could not be mapped.',
+      imageDescriptions: List.unmodifiable(
+        imageDescriptions..sort(
+          (left, right) => left.sourceStart.compareTo(right.sourceStart),
+        ),
+      ),
     );
   }
+}
+
+List<BusyInline> _imageFieldInlines(
+  BusyMarkMappedInlineParse parsed,
+  String raw,
+) {
+  BusyInline convert(BusyInline inline) {
+    final range = parsed.ranges[inline];
+    if (range?.isRawHtmlText ?? false) {
+      return BusyInline(
+        kind: BusyInlineKind.text,
+        text: raw.substring(range!.start, range.end),
+      );
+    }
+    if (inline.kind == BusyInlineKind.hardBreak) {
+      return const BusyInline(kind: BusyInlineKind.text, text: '');
+    }
+    if (inline.kind == BusyInlineKind.code) return inline;
+    if (inline.children.isEmpty) return inline;
+    return inline.copyWith(
+      children: [for (final child in inline.children) convert(child)],
+    );
+  }
+
+  return List.unmodifiable([
+    for (final inline in parsed.inlines) convert(inline),
+  ]);
 }
 
 Iterable<BusyBlock> _walkBlocks(Iterable<BusyBlock> blocks) sync* {
@@ -311,45 +550,331 @@ bool _contains(SourceSpan outer, SourceSpan inner) =>
 bool _sameSpan(SourceSpan left, SourceSpan right) =>
     left.startOffset == right.startOffset && left.endOffset == right.endOffset;
 
-bool _startsExcludedBlock(String raw) {
-  final trimmed = raw.trimLeft().replaceFirst(RegExp(r'^(?:>[ \t]*)+'), '');
-  return RegExp(r'^(?:```|~~~)').hasMatch(trimmed) ||
-      RegExp(
-        r'^(?:<!--|<\?xml\b|<!DOCTYPE\b)',
-        caseSensitive: false,
-      ).hasMatch(trimmed);
+bool _isRecognizedHeadingAttribute(
+  String rawAttribute,
+  Map<String, String> parsedAttributes,
+) {
+  // The heading parser records recognized values in the block attributes.
+  // Tie that evidence to this exact trailing source expression: an attribute
+  // elsewhere in the heading must not hide a later literal brace expression.
+  for (final match in RegExp(
+    r'([A-Za-z_:][-A-Za-z0-9_:.]*)\s*=\s*"([^"]*)"',
+  ).allMatches(rawAttribute)) {
+    final name = match.group(1)!;
+    final value = html.parseFragment(match.group(2)!).text ?? '';
+    if (name == 'id') {
+      if (parsedAttributes['generatedId'] == 'false' &&
+          parsedAttributes['id'] == value) {
+        return true;
+      }
+    } else if (name != 'level' &&
+        name != 'generatedId' &&
+        parsedAttributes[name] == value) {
+      return true;
+    }
+  }
+  return false;
 }
 
-List<_SourceInterval> _fencedCodeSpans(String source) {
+bool _startsExcludedBlock(String raw) {
+  final trimmed = raw.trimLeft().replaceFirst(RegExp(r'^(?:>[ \t]*)+'), '');
+  return RegExp(
+    r'^(?:<!--|<\?xml\b|<!DOCTYPE\b)',
+    caseSensitive: false,
+  ).hasMatch(trimmed);
+}
+
+List<_SourceInterval> _fencedCodeSpans(String source, List<BusyBlock> blocks) {
   final spans = <_SourceInterval>[];
   MarkdownFence? openFence;
   var fenceStart = 0;
+  var containerEnd = source.length;
+  var activePrefixes = <({bool quote, int width})>[];
+  final quotePrefix = RegExp(r'^ {0,3}>[ \t]?');
+  final listPrefix = RegExp(r'^ {0,3}(?:[-+*]|\d+[.)])[ \t]+');
+
+  String expandTabsForFenceScan(String line) {
+    final expanded = StringBuffer();
+    var column = 0;
+    for (final unit in line.codeUnits) {
+      if (unit == 0x09) {
+        final spaces = 4 - column % 4;
+        for (var index = 0; index < spaces; index++) {
+          expanded.write(' ');
+        }
+        column += spaces;
+      } else {
+        expanded.writeCharCode(unit);
+        column++;
+      }
+    }
+    return expanded.toString();
+  }
+
+  String? consumePrefixes(
+    String line,
+    List<({bool quote, int width})> prefixes,
+  ) {
+    var remaining = line;
+    for (var index = 0; index < prefixes.length; index++) {
+      final prefix = prefixes[index];
+      if (prefix.quote) {
+        final match = quotePrefix.firstMatch(remaining);
+        if (match == null) return null;
+        remaining = remaining.substring(match.end);
+      } else {
+        if (remaining.length < prefix.width ||
+            !RegExp(
+              r'^[ \t]*$',
+            ).hasMatch(remaining.substring(0, prefix.width))) {
+          // A blank line may omit the list's content indentation. A quote
+          // deeper in the container route still needs its own marker.
+          if (remaining.trim().isEmpty &&
+              !prefixes.skip(index + 1).any((next) => next.quote)) {
+            return '';
+          }
+          return null;
+        }
+        remaining = remaining.substring(prefix.width);
+      }
+    }
+    return remaining;
+  }
+
   var offset = 0;
   for (final rawLine in source.split(RegExp('(?<=\n)'))) {
+    if (openFence != null && offset >= containerEnd) {
+      spans.add(_SourceInterval(fenceStart, containerEnd));
+      openFence = null;
+    }
     var line = rawLine;
     if (line.endsWith('\n')) line = line.substring(0, line.length - 1);
     if (line.endsWith('\r')) line = line.substring(0, line.length - 1);
-    var candidate = line;
-    while (true) {
-      final quote = RegExp(r'^ {0,3}>[ \t]?').firstMatch(candidate);
-      if (quote == null) break;
-      candidate = candidate.substring(quote.end);
-    }
+    // Expand only for fence classification; interval offsets remain in source.
+    final candidateLine = expandTabsForFenceScan(line);
     final activeFence = openFence;
-    if (activeFence == null) {
-      final opening = MarkdownFence.parse(candidate);
+    if (activeFence != null) {
+      final content = consumePrefixes(candidateLine, activePrefixes);
+      if (content == null) {
+        spans.add(_SourceInterval(fenceStart, offset));
+        openFence = null;
+      } else if (activeFence.closes(content)) {
+        spans.add(
+          _SourceInterval(
+            fenceStart,
+            math.min(containerEnd, offset + rawLine.length),
+          ),
+        );
+        openFence = null;
+        offset += rawLine.length;
+        continue;
+      } else {
+        offset += rawLine.length;
+        continue;
+      }
+    }
+    if (openFence == null) {
+      var openingCandidate = candidateLine;
+      final openingPrefixes = <({bool quote, int width})>[];
+      while (true) {
+        final quote = quotePrefix.firstMatch(openingCandidate);
+        if (quote != null) {
+          openingPrefixes.add((quote: true, width: quote.end));
+          openingCandidate = openingCandidate.substring(quote.end);
+          continue;
+        }
+        final list = listPrefix.firstMatch(openingCandidate);
+        if (list != null) {
+          openingPrefixes.add((quote: false, width: list.end));
+          openingCandidate = openingCandidate.substring(list.end);
+          continue;
+        }
+        break;
+      }
+      final opening = MarkdownFence.parse(openingCandidate);
       if (opening != null) {
         openFence = opening;
         fenceStart = offset;
+        activePrefixes = openingPrefixes;
+        containerEnd = source.length;
+        for (final block in _walkBlocks(blocks)) {
+          final span = block.sourceSpan;
+          if (span != null &&
+              (block.kind == BusyBlockKind.blockquote ||
+                  block.kind == BusyBlockKind.unorderedListItem ||
+                  block.kind == BusyBlockKind.orderedListItem) &&
+              span.startOffset <= offset &&
+              span.endOffset > offset &&
+              span.endOffset < containerEnd) {
+            containerEnd = span.endOffset;
+          }
+        }
       }
-    } else if (activeFence.closes(candidate)) {
-      spans.add(_SourceInterval(fenceStart, offset + rawLine.length));
-      openFence = null;
     }
     offset += rawLine.length;
   }
-  if (openFence != null) spans.add(_SourceInterval(fenceStart, source.length));
+  if (openFence != null) spans.add(_SourceInterval(fenceStart, containerEnd));
   return List.unmodifiable(spans);
+}
+
+_ParsedImageLabel _parseMappedImageLabel(
+  BusyMarkInlineParserContext parser,
+  String raw, {
+  required int sourceBase,
+  required List<BusyMarkMappedSourceLineBreak> positionedBreaks,
+}) {
+  // The positioned block parse identifies exactly which continuation bytes
+  // were structural. Keep separate start and end coordinates so a range that
+  // ends at a newline does not acquire the following container prefix.
+  final breakByOffset = {
+    for (final lineBreak in positionedBreaks)
+      if (lineBreak.sourceOffset case final offset?) offset: lineBreak,
+  };
+  final logical = StringBuffer();
+  final rawStarts = <int>[];
+  final rawEnds = <int>[];
+  final inheritedBreaks = <BusyMarkMappedSourceLineBreak>[];
+  var positionsComplete = true;
+  var cursor = 0;
+  while (cursor < raw.length) {
+    final lineBreak = breakByOffset[cursor];
+    if (lineBreak != null) {
+      final syntax = '${lineBreak.lineEnding}${lineBreak.continuationPrefix}';
+      if (!raw.startsWith(syntax, cursor)) {
+        positionsComplete = false;
+      } else {
+        inheritedBreaks.add(
+          BusyMarkMappedSourceLineBreak(
+            textOffset: rawStarts.length,
+            lineEnding: lineBreak.lineEnding,
+            continuationPrefix: lineBreak.continuationPrefix,
+            sourceOffset: cursor,
+          ),
+        );
+        rawStarts.add(cursor);
+        rawEnds.add(cursor + lineBreak.lineEnding.length);
+        logical.write('\n');
+        cursor += syntax.length;
+        continue;
+      }
+    }
+    final lineEnding = raw.startsWith('\r\n', cursor)
+        ? '\r\n'
+        : raw.codeUnitAt(cursor) == 0x0d
+        ? '\r'
+        : raw.codeUnitAt(cursor) == 0x0a
+        ? '\n'
+        : null;
+    rawStarts.add(cursor);
+    if (lineEnding == null) {
+      logical.writeCharCode(raw.codeUnitAt(cursor));
+      cursor++;
+    } else {
+      logical.write('\n');
+      cursor += lineEnding.length;
+    }
+    rawEnds.add(cursor);
+  }
+  final logicalSource = logical.toString();
+  final mapped = parser.parseMapped(logicalSource);
+  int rawStartFor(int offset) =>
+      offset < rawStarts.length ? rawStarts[offset] : raw.length;
+  int rawEndFor(int offset) => offset == 0 ? 0 : rawEnds[offset - 1];
+
+  BusyMarkMappedSourceLineBreak translateBreak(
+    BusyMarkMappedSourceLineBreak value,
+  ) {
+    final offset = value.sourceOffset;
+    final rawOffset = offset == null ? null : rawStartFor(offset);
+    final inherited = inheritedBreaks
+        .where((breakValue) => breakValue.sourceOffset == rawOffset)
+        .firstOrNull;
+    return BusyMarkMappedSourceLineBreak(
+      textOffset: value.textOffset,
+      lineEnding:
+          inherited?.lineEnding ??
+          (offset == null
+              ? value.lineEnding
+              : raw.substring(rawStartFor(offset), rawEndFor(offset + 1))),
+      continuationPrefix:
+          inherited?.continuationPrefix ?? value.continuationPrefix,
+      sourceOffset: rawOffset,
+    );
+  }
+
+  final ranges = Map<BusyInline, BusyMarkMappedInlineRange>.identity();
+  final codes = <_MappedImageCode>[];
+  for (final entry in mapped.ranges.entries) {
+    final range = entry.value;
+    ranges[entry.key] = BusyMarkMappedInlineRange(
+      start: rawStartFor(range.start),
+      end: rawEndFor(range.end),
+      opening: range.opening,
+      closing: range.closing,
+      labelStart: range.labelStart == null
+          ? null
+          : rawStartFor(range.labelStart!),
+      labelEnd: range.labelEnd == null ? null : rawStartFor(range.labelEnd!),
+      titleStart: range.titleStart == null
+          ? null
+          : rawStartFor(range.titleStart!),
+      titleEnd: range.titleEnd == null ? null : rawStartFor(range.titleEnd!),
+      titleDelimiter: range.titleDelimiter,
+      lineBreaks: range.lineBreaks.map(translateBreak).toList(),
+      originalInline: range.originalInline,
+      isAutolink: range.isAutolink,
+      isReference: range.isReference,
+      isSourceLineBreak: range.isSourceLineBreak,
+      isRawHtmlText: range.isRawHtmlText,
+      sourceLineBreakOffset: range.sourceLineBreakOffset == null
+          ? null
+          : rawStartFor(range.sourceLineBreakOffset!),
+    );
+    if (entry.key.kind != BusyInlineKind.code || range.isRawHtmlText) continue;
+    final units = <({String text, int start, int end, bool lineBreak})>[
+      for (var offset = range.start; offset < range.end; offset++)
+        (
+          text: logicalSource.substring(offset, offset + 1),
+          start: sourceBase + rawStartFor(offset),
+          end:
+              sourceBase +
+              (logicalSource.codeUnitAt(offset) == 0x0a
+                  ? rawStartFor(offset + 1)
+                  : rawEndFor(offset + 1)),
+          lineBreak: logicalSource.codeUnitAt(offset) == 0x0a,
+        ),
+    ];
+    codes.add(
+      _MappedImageCode(
+        start: sourceBase + rawStartFor(range.start),
+        end: sourceBase + rawEndFor(range.end),
+        semanticText: entry.key.plainText,
+        units: units,
+      ),
+    );
+  }
+  return _ParsedImageLabel(
+    mapped: BusyMarkMappedInlineParse(
+      inlines: mapped.inlines,
+      ranges: ranges,
+      positionedLineBreaks: inheritedBreaks,
+      positionRecordsComplete:
+          mapped.positionRecordsComplete && positionsComplete,
+      imageDescriptionText: mapped.imageDescriptionText,
+      sourceStart: mapped.sourceStart == null
+          ? null
+          : rawStartFor(mapped.sourceStart!),
+      sourceEnd: mapped.sourceEnd == null ? null : rawEndFor(mapped.sourceEnd!),
+    ),
+    codes: codes,
+  );
+}
+
+final class _ParsedImageLabel {
+  const _ParsedImageLabel({required this.mapped, required this.codes});
+
+  final BusyMarkMappedInlineParse mapped;
+  final List<_MappedImageCode> codes;
 }
 
 final class _EmissionGroup {
@@ -381,6 +906,42 @@ final class _PendingEmissionGroup {
   final int tokenizationContextStart;
 }
 
+final class _RecognizedLinkOccurrence {
+  const _RecognizedLinkOccurrence({
+    required this.isImage,
+    required this.semanticLabelText,
+    required this.end,
+    required this.labelStart,
+    required this.labelEnd,
+    required this.titleStart,
+    required this.titleEnd,
+    required this.titleDelimiter,
+  });
+
+  final bool isImage;
+  final String semanticLabelText;
+  final int end;
+  final int labelStart;
+  final int labelEnd;
+  final int? titleStart;
+  final int? titleEnd;
+  final String? titleDelimiter;
+}
+
+final class _MappedImageCode {
+  const _MappedImageCode({
+    required this.start,
+    required this.end,
+    required this.semanticText,
+    required this.units,
+  });
+
+  final int start;
+  final int end;
+  final String semanticText;
+  final List<({String text, int start, int end, bool lineBreak})> units;
+}
+
 final class _MarkdownProseScanner {
   _MarkdownProseScanner({
     required this.source,
@@ -388,9 +949,16 @@ final class _MarkdownProseScanner {
     required this.end,
     required this.context,
     required this.stripBlockSyntax,
+    this.interpretHtmlSyntax = true,
     this.formattingSyntax = const [],
     this.formattingWrappers = const [],
     this.opaqueSyntax = const [],
+    this.opaqueSemanticBreaks = const {},
+    this.imageCodeSyntax = const [],
+    this.positionedLineBreaks = const [],
+    this.hardBreakSyntax = const [],
+    this.recognizedLinks = const {},
+    this.recognizedAttributeSpans = const [],
     this.footnoteLabels = const {},
   });
 
@@ -399,16 +967,25 @@ final class _MarkdownProseScanner {
   final int end;
   final SpellingSourceContext context;
   final bool stripBlockSyntax;
+  final bool interpretHtmlSyntax;
   final Set<String> footnoteLabels;
   final List<_SourceInterval> formattingSyntax;
   final List<_RawFormattingWrapper> formattingWrappers;
   final List<_SourceInterval> opaqueSyntax;
+  final Map<int, int> opaqueSemanticBreaks;
+  final List<_MappedImageCode> imageCodeSyntax;
+  final List<BusyMarkMappedSourceLineBreak> positionedLineBreaks;
+  final List<_SourceInterval> hardBreakSyntax;
+  final Map<int, _RecognizedLinkOccurrence> recognizedLinks;
+  final List<_SourceInterval> recognizedAttributeSpans;
   final List<Object> _groups = [];
   StringBuffer _text = StringBuffer();
   final StringBuffer _tokenizationContext = StringBuffer();
   List<SpellingSourceAtom> _atoms = [];
   int? _tokenizationContextStart;
   int? _opaqueEnd;
+  int? _consumedLinkEnd;
+  bool _inImageLabel = false;
   bool complete = true;
 
   List<_EmissionGroup> scan() {
@@ -449,15 +1026,18 @@ final class _MarkdownProseScanner {
         if (isAtxHeading && closingHeading != null) {
           contentEnd = contentStart + closingHeading.start;
         }
-        final attributes = RegExp(
-          r'[ \t]+\{[^{}]*\}$',
-        ).firstMatch(source.substring(contentStart, contentEnd));
-        if (attributes != null) {
-          contentEnd = contentStart + attributes.start;
+      }
+      for (final attributes in recognizedAttributeSpans) {
+        if (attributes.end == contentEnd && attributes.start >= contentStart) {
+          contentEnd = attributes.start;
+          break;
         }
       }
       if (contentEnd > contentStart) _scanInline(contentStart, contentEnd);
-      if (lineIndex + 1 < lines.length && _text.length > 0) {
+      if (lineIndex + 1 < lines.length &&
+          _text.length > 0 &&
+          !(_consumedLinkEnd != null &&
+              lines[lineIndex + 1].start < _consumedLinkEnd!)) {
         final next = lines[lineIndex + 1];
         _emit(
           ' ',
@@ -488,10 +1068,20 @@ final class _MarkdownProseScanner {
   void _scanInline(int rangeStart, int rangeEnd) {
     var cursor = rangeStart;
     while (cursor < rangeEnd) {
+      if (_consumedLinkEnd case final linkEnd? when cursor < linkEnd) {
+        cursor = math.min(rangeEnd, linkEnd);
+        continue;
+      }
       if (_opaqueEnd case final opaqueEnd? when cursor < opaqueEnd) {
         _barrier();
         cursor = math.min(rangeEnd, opaqueEnd);
         if (cursor >= opaqueEnd) _opaqueEnd = null;
+        continue;
+      }
+      final imageCode = _imageCodeAt(cursor);
+      if (imageCode != null && imageCode.end <= rangeEnd) {
+        _scanImageCode(imageCode);
+        cursor = imageCode.end;
         continue;
       }
       final formattingEnd = _formattingEndAt(cursor);
@@ -505,7 +1095,9 @@ final class _MarkdownProseScanner {
         cursor = math.min(rangeEnd, opaqueEnd);
         continue;
       }
-      if (source.startsWith('<!--', cursor)) {
+      if (interpretHtmlSyntax &&
+          !_inImageLabel &&
+          source.startsWith('<!--', cursor)) {
         final close = source.indexOf('-->', cursor + 4);
         _barrier();
         _opaqueEnd = close < 0 || close >= end ? end : close + 3;
@@ -574,7 +1166,7 @@ final class _MarkdownProseScanner {
           continue;
         }
       }
-      if (unit == 0x3c) {
+      if (interpretHtmlSyntax && !_inImageLabel && unit == 0x3c) {
         final tagCandidate = _isHtmlTagCandidate(cursor);
         final autolinkCandidate = _isAutolinkCandidate(cursor);
         if (tagCandidate || autolinkCandidate) {
@@ -636,6 +1228,93 @@ final class _MarkdownProseScanner {
     }
   }
 
+  _MappedImageCode? _imageCodeAt(int offset) {
+    for (final code in imageCodeSyntax) {
+      if (code.start == offset) return code;
+    }
+    return null;
+  }
+
+  void _scanImageCode(_MappedImageCode code) {
+    var contentStart = code.start;
+    while (contentStart < code.end && source.codeUnitAt(contentStart) == 0x60) {
+      contentStart++;
+    }
+    final markerLength = contentStart - code.start;
+    final contentEnd = code.end - markerLength;
+    if (markerLength == 0 ||
+        contentEnd < contentStart ||
+        source.substring(contentEnd, code.end) !=
+            source.substring(code.start, contentStart)) {
+      complete = false;
+      return;
+    }
+
+    final units = code.units;
+    var first = markerLength;
+    var last = units.length - markerLength;
+    if (last <= first ||
+        first >= units.length ||
+        units.first.start != code.start ||
+        units.last.end != code.end ||
+        units[first].start != contentStart ||
+        units[last - 1].end != contentEnd) {
+      complete = false;
+      return;
+    }
+    String logical() => units
+        .skip(first)
+        .take(last - first)
+        .map((unit) => unit.lineBreak ? ' ' : unit.text)
+        .join();
+    if (logical() != code.semanticText &&
+        last - first >= 2 &&
+        (units[first].lineBreak || units[first].text == ' ') &&
+        (units[last - 1].lineBreak || units[last - 1].text == ' ')) {
+      first++;
+      last--;
+    }
+    if (logical() != code.semanticText) {
+      complete = false;
+      return;
+    }
+
+    var textStart = -1;
+    var textEnd = -1;
+    final text = StringBuffer();
+    void flushText() {
+      if (text.isEmpty) return;
+      _emit(
+        text.toString(),
+        textStart,
+        textEnd,
+        SpellingTransformationKind.identity,
+        sourceContext: SpellingSourceContext.markdownCodeSpan,
+      );
+      text.clear();
+    }
+
+    for (var index = first; index < last; index++) {
+      final unit = units[index];
+      if (unit.lineBreak) {
+        flushText();
+        _emit(
+          ' ',
+          unit.start,
+          unit.end,
+          SpellingTransformationKind.lineBreak,
+          tokenizationLogical: ' ',
+          sourceContext: SpellingSourceContext.markdownCodeSpan,
+        );
+      } else {
+        if (text.isEmpty) textStart = unit.start;
+        textEnd = unit.end;
+        text.write(unit.text);
+      }
+    }
+    flushText();
+  }
+
   bool _isHtmlTagCandidate(int start) {
     if (start + 1 >= end) return false;
     final tail = source.substring(start, math.min(end, start + 128));
@@ -666,62 +1345,273 @@ final class _MarkdownProseScanner {
   }
 
   int? _scanLinkOrImage(int cursor, int rangeEnd, {required bool image}) {
+    final recognized = recognizedLinks[cursor];
     final opening = cursor + (image ? 1 : 0);
-    final labelEnd = _matchingBracket(opening, rangeEnd, 0x5b, 0x5d);
-    if (labelEnd == null) return null;
-    final afterLabel = labelEnd + 1;
-    final label = source.substring(opening + 1, labelEnd);
-    if (!image &&
-        label.startsWith('^') &&
-        footnoteLabels.contains(label.substring(1).toLowerCase())) {
-      _barrier();
-      return afterLabel;
-    }
-    var syntaxEnd = afterLabel;
-    int? titleStart;
-    int? titleEnd;
-    SpellingSourceContext? titleContext;
-    if (afterLabel < rangeEnd && source.codeUnitAt(afterLabel) == 0x28) {
-      final destinationEnd = _matchingBracket(afterLabel, rangeEnd, 0x28, 0x29);
-      if (destinationEnd == null) return null;
-      syntaxEnd = destinationEnd + 1;
-      final inside = source.substring(afterLabel + 1, destinationEnd);
-      final title = _trailingLinkTitle(inside);
-      if (title != null) {
-        titleContext = title.quote == "'"
-            ? SpellingSourceContext.markdownSingleQuotedTitle
-            : SpellingSourceContext.markdownDoubleQuotedTitle;
-        // The value ends immediately before the closing quote. Derive its
-        // range from those parsed boundaries rather than searching for its
-        // contents, which may also occur in the destination.
-        titleStart = afterLabel + 1 + title.start;
-        titleEnd = afterLabel + 1 + title.end;
+    if (recognized == null) {
+      final labelEnd = _matchingBracket(opening, rangeEnd, 0x5b, 0x5d);
+      if (labelEnd != null && !image) {
+        final label = source.substring(opening + 1, labelEnd);
+        if (label.startsWith('^') &&
+            footnoteLabels.contains(label.substring(1).toLowerCase())) {
+          _barrier();
+          return labelEnd + 1;
+        }
       }
-    } else if (afterLabel < rangeEnd && source.codeUnitAt(afterLabel) == 0x5b) {
-      final referenceEnd = source.indexOf(']', afterLabel + 1);
-      if (referenceEnd < 0 || referenceEnd >= rangeEnd) return null;
-      syntaxEnd = referenceEnd + 1;
-    } else if (image) {
       return null;
     }
-
+    if (recognized.end > end ||
+        recognized.labelStart < opening + 1 ||
+        recognized.labelEnd < recognized.labelStart ||
+        recognized.labelEnd > recognized.end) {
+      complete = false;
+      return null;
+    }
     if (image) _barrier();
-    _scanInline(opening + 1, labelEnd);
+    final wasInImageLabel = _inImageLabel;
+    _inImageLabel = _inImageLabel || image;
+    try {
+      _scanMappedLabel(recognized);
+    } finally {
+      _inImageLabel = wasInImageLabel;
+    }
     if (image) _barrier();
+    final titleStart = recognized.titleStart;
+    final titleEnd = recognized.titleEnd;
     if (titleStart != null && titleEnd != null && titleEnd > titleStart) {
-      _barrier();
+      final titleContext = switch (recognized.titleDelimiter) {
+        "'" => SpellingSourceContext.markdownSingleQuotedTitle,
+        '(' => SpellingSourceContext.markdownParenthesizedTitle,
+        _ => SpellingSourceContext.markdownDoubleQuotedTitle,
+      };
       final scanner = _MarkdownProseScanner(
         source: source,
         start: titleStart,
         end: titleEnd,
-        context: titleContext!,
+        context: titleContext,
         stripBlockSyntax: false,
+        interpretHtmlSyntax: false,
       );
       _groups.addAll(scanner.scan());
       complete = complete && scanner.complete;
-      _barrier();
     }
-    return syntaxEnd;
+    _consumedLinkEnd = recognized.end;
+    return recognized.end;
+  }
+
+  void _scanMappedLabel(_RecognizedLinkOccurrence recognized) {
+    final labelStart = recognized.labelStart;
+    final labelEnd = recognized.labelEnd;
+    var cursor = labelStart;
+    var semanticCursor = 0;
+    final breaks = positionedLineBreaks.where((lineBreak) {
+      final offset = lineBreak.sourceOffset;
+      return offset != null && offset >= labelStart && offset < labelEnd;
+    }).toList()..sort((a, b) => a.sourceOffset!.compareTo(b.sourceOffset!));
+    var breakIndex = 0;
+    while (cursor < labelEnd) {
+      // Mapped children own their internal line boundaries. Traverse them
+      // before interpreting the next physical boundary as label prose.
+      while (breakIndex < breaks.length &&
+          breaks[breakIndex].sourceOffset! < cursor) {
+        breakIndex++;
+      }
+      final nextBreak = breakIndex < breaks.length
+          ? breaks[breakIndex].sourceOffset
+          : null;
+      ({
+        int start,
+        int end,
+        int semanticBreaks,
+        bool? image,
+        _MappedImageCode? imageCode,
+        bool inlineBreak,
+      })?
+      owner;
+      for (final span in opaqueSyntax) {
+        if (span.start < cursor ||
+            span.end > labelEnd ||
+            span.start >= labelEnd ||
+            (nextBreak != null && span.start > nextBreak)) {
+          continue;
+        }
+        if (owner == null || span.start < owner.start) {
+          owner = (
+            start: span.start,
+            end: span.end,
+            semanticBreaks: opaqueSemanticBreaks[span.start] ?? 0,
+            image: null,
+            imageCode: null,
+            inlineBreak: false,
+          );
+        }
+      }
+      for (final code in imageCodeSyntax) {
+        if (code.start < cursor ||
+            code.end > labelEnd ||
+            (nextBreak != null && code.start > nextBreak)) {
+          continue;
+        }
+        if (owner == null || code.start < owner.start) {
+          owner = (
+            start: code.start,
+            end: code.end,
+            semanticBreaks: 0,
+            image: null,
+            imageCode: code,
+            inlineBreak: false,
+          );
+        }
+      }
+      for (final span in hardBreakSyntax) {
+        if (span.start < cursor ||
+            span.end > labelEnd ||
+            (nextBreak != null && span.start > nextBreak) ||
+            RegExp(r'\r|\n').hasMatch(source.substring(span.start, span.end))) {
+          continue;
+        }
+        if (owner == null || span.start < owner.start) {
+          owner = (
+            start: span.start,
+            end: span.end,
+            semanticBreaks: 1,
+            image: null,
+            imageCode: null,
+            inlineBreak: true,
+          );
+        }
+      }
+      for (final entry in recognizedLinks.entries) {
+        final nested = entry.value;
+        if (entry.key < cursor ||
+            nested.end > labelEnd ||
+            entry.key >= labelEnd ||
+            (nextBreak != null && entry.key > nextBreak)) {
+          continue;
+        }
+        if (owner == null || entry.key < owner.start) {
+          owner = (
+            start: entry.key,
+            end: nested.end,
+            semanticBreaks: '\n'.allMatches(nested.semanticLabelText).length,
+            image: nested.isImage,
+            imageCode: null,
+            inlineBreak: false,
+          );
+        }
+      }
+      if (owner != null) {
+        if (cursor < owner.start) _scanInline(cursor, owner.start);
+        if (owner.imageCode case final code?) {
+          _scanImageCode(code);
+        } else if (owner.inlineBreak) {
+          _emit(
+            ' ',
+            owner.start,
+            owner.end,
+            SpellingTransformationKind.lineBreak,
+            tokenizationLogical: '\n',
+          );
+        } else if (owner.image case final image?) {
+          if (_scanLinkOrImage(owner.start, owner.end, image: image) !=
+              owner.end) {
+            complete = false;
+            return;
+          }
+        } else {
+          _scanInline(owner.start, owner.end);
+        }
+        for (var index = 0; index < owner.semanticBreaks; index++) {
+          final semanticBreak = recognized.semanticLabelText.indexOf(
+            '\n',
+            semanticCursor,
+          );
+          if (semanticBreak < 0) {
+            complete = false;
+            return;
+          }
+          semanticCursor = semanticBreak + 1;
+        }
+        cursor = owner.end;
+        continue;
+      }
+      if (breakIndex >= breaks.length) {
+        // Unmapped raw line boundaries must not silently enter logical prose.
+        if (RegExp(r'\r|\n').hasMatch(source.substring(cursor, labelEnd))) {
+          complete = false;
+          return;
+        }
+        _scanInline(cursor, labelEnd);
+        cursor = labelEnd;
+        break;
+      }
+      final lineBreak = breaks[breakIndex++];
+      final breakStart = lineBreak.sourceOffset!;
+      final nextStart =
+          breakStart +
+          lineBreak.lineEnding.length +
+          lineBreak.continuationPrefix.length;
+      _SourceInterval? hardBreak;
+      for (final span in hardBreakSyntax) {
+        if (span.start >= cursor &&
+            span.start <= breakStart &&
+            span.end >= breakStart + lineBreak.lineEnding.length) {
+          hardBreak = span;
+          break;
+        }
+      }
+      if (nextStart > labelEnd || breakStart < cursor) {
+        complete = false;
+        return;
+      }
+      final semanticBreak = recognized.isImage && hardBreak != null
+          ? -1
+          : recognized.semanticLabelText.indexOf('\n', semanticCursor);
+      if (semanticBreak < 0 && (!recognized.isImage || hardBreak == null)) {
+        complete = false;
+        return;
+      }
+      var contentEnd = hardBreak?.start ?? breakStart;
+      if (hardBreak == null) {
+        // The parser can omit whitespace immediately before a soft break.
+        // Retain exactly the authored suffix that remains in its label text.
+        var rawWhitespaceStart = contentEnd;
+        while (rawWhitespaceStart > cursor &&
+            (source.codeUnitAt(rawWhitespaceStart - 1) == 0x20 ||
+                source.codeUnitAt(rawWhitespaceStart - 1) == 0x09)) {
+          rawWhitespaceStart--;
+        }
+        var semanticWhitespaceStart = semanticBreak;
+        while (semanticWhitespaceStart > semanticCursor &&
+            (recognized.semanticLabelText.codeUnitAt(
+                      semanticWhitespaceStart - 1,
+                    ) ==
+                    0x20 ||
+                recognized.semanticLabelText.codeUnitAt(
+                      semanticWhitespaceStart - 1,
+                    ) ==
+                    0x09)) {
+          semanticWhitespaceStart--;
+        }
+        final rawCount = contentEnd - rawWhitespaceStart;
+        final semanticCount = semanticBreak - semanticWhitespaceStart;
+        contentEnd -= math.max(0, rawCount - semanticCount);
+      }
+      if (cursor < contentEnd) _scanInline(cursor, contentEnd);
+      if (!recognized.isImage || hardBreak == null) {
+        _emit(
+          ' ',
+          contentEnd,
+          nextStart,
+          SpellingTransformationKind.lineBreak,
+          tokenizationLogical: '\n',
+        );
+      }
+      if (semanticBreak >= 0) semanticCursor = semanticBreak + 1;
+      cursor = nextStart;
+    }
+    if (recognized.semanticLabelText.indexOf('\n', semanticCursor) >= 0) {
+      complete = false;
+    }
   }
 
   void _scanHumanReadableAttributes(int tagStart, int tagEnd) {
@@ -738,17 +1628,16 @@ final class _MarkdownProseScanner {
       final savedContext = quote == "'"
           ? SpellingSourceContext.xmlSingleQuotedAttribute
           : SpellingSourceContext.xmlDoubleQuotedAttribute;
-      _barrier();
       final scanner = _MarkdownProseScanner(
         source: source,
         start: valueStart,
         end: valueStart + value.length,
         context: savedContext,
         stripBlockSyntax: false,
+        interpretHtmlSyntax: false,
       );
       _groups.addAll(scanner.scan());
       complete = complete && scanner.complete;
-      _barrier();
     }
   }
 
@@ -758,6 +1647,7 @@ final class _MarkdownProseScanner {
     int sourceEnd,
     SpellingTransformationKind transformation, {
     String? tokenizationLogical,
+    SpellingSourceContext? sourceContext,
   }) {
     if (logical.isEmpty) return;
     _tokenizationContextStart ??= _tokenizationContext.length;
@@ -772,7 +1662,7 @@ final class _MarkdownProseScanner {
         sourceStart: sourceStart,
         sourceEnd: sourceEnd,
         transformation: transformation,
-        context: context,
+        context: sourceContext ?? context,
       ),
     );
   }
@@ -837,21 +1727,22 @@ final class _MarkdownProseScanner {
     _tokenizationContextStart = null;
   }
 
-  List<({int start, int contentEnd})> _lines() {
+  List<({int start, int contentEnd})> _lines({int? from, int? until}) {
     final result = <({int start, int contentEnd})>[];
-    var cursor = start;
-    while (cursor < end) {
+    var cursor = from ?? start;
+    final rangeEnd = until ?? end;
+    while (cursor < rangeEnd) {
       var contentEnd = cursor;
-      while (contentEnd < end &&
+      while (contentEnd < rangeEnd &&
           source.codeUnitAt(contentEnd) != 0x0a &&
           source.codeUnitAt(contentEnd) != 0x0d) {
         contentEnd++;
       }
       result.add((start: cursor, contentEnd: contentEnd));
-      if (contentEnd >= end) break;
+      if (contentEnd >= rangeEnd) break;
       cursor = contentEnd + 1;
       if (source.codeUnitAt(contentEnd) == 0x0d &&
-          cursor < end &&
+          cursor < rangeEnd &&
           source.codeUnitAt(cursor) == 0x0a) {
         cursor++;
       }
@@ -934,6 +1825,18 @@ List<_MultilineHtmlSpan> _multilineHtmlSpans(
   while (cursor < end) {
     final opening = source.indexOf('<', cursor);
     if (opening < 0 || opening >= end) break;
+    var precedingBackslashes = 0;
+    for (
+      var index = opening - 1;
+      index >= start && source.codeUnitAt(index) == 0x5c;
+      index--
+    ) {
+      precedingBackslashes++;
+    }
+    if (precedingBackslashes.isOdd) {
+      cursor = opening + 1;
+      continue;
+    }
     final candidate = RegExp(
       r'^</?[A-Za-z][A-Za-z0-9:-]*(?:\s|/?>|$)',
     ).hasMatch(source.substring(opening, math.min(end, opening + 128)));
@@ -1006,37 +1909,6 @@ List<_MultilineHtmlSpan> _multilineHtmlSpans(
     cursor = opaqueEnd;
   }
   return List.unmodifiable(result);
-}
-
-({int start, int end, String quote})? _trailingLinkTitle(String value) {
-  var closing = value.length - 1;
-  while (closing >= 0 && _horizontalWhitespace(value.codeUnitAt(closing))) {
-    closing--;
-  }
-  if (closing < 0 || (value[closing] != '"' && value[closing] != "'")) {
-    return null;
-  }
-  final quote = value[closing];
-  bool escaped(int offset) {
-    var slashes = 0;
-    for (
-      var cursor = offset - 1;
-      cursor >= 0 && value.codeUnitAt(cursor) == 0x5c;
-      cursor--
-    ) {
-      slashes++;
-    }
-    return slashes.isOdd;
-  }
-
-  for (var opening = closing - 1; opening >= 0; opening--) {
-    if (value[opening] != quote || escaped(opening)) continue;
-    if (opening > 0 && !_horizontalWhitespace(value.codeUnitAt(opening - 1))) {
-      continue;
-    }
-    return (start: opening + 1, end: closing, quote: quote);
-  }
-  return null;
 }
 
 final class _RawFormattingWrapper {
@@ -1130,11 +2002,12 @@ List<_RawFormattingWrapper> _formattingWrappers(
 List<_SourceInterval> _opaqueSyntaxSpans(
   Iterable<BusyMarkMappedInlineParse> parses, {
   required int sourceBase,
+  Set<BusyInlineKind> excludedKinds = _opaqueInlineKinds,
 }) {
   final spans = <_SourceInterval>[];
   for (final parse in parses) {
     for (final entry in parse.ranges.entries) {
-      if (!_opaqueInlineKinds.contains(entry.key.kind)) continue;
+      if (!excludedKinds.contains(entry.key.kind)) continue;
       final range = entry.value;
       spans.add(
         _SourceInterval(sourceBase + range.start, sourceBase + range.end),

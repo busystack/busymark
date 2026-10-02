@@ -104,6 +104,8 @@
   "noSpellingSuggestions": "Yazım önerisi yok",
   "spellingWordCheckFailed": "Bu sözcük denetlenemedi",
   "spellingCheckFailed": "Yazım denetimi başarısız oldu",
+  "spellingSettingsLoadFailed": "Yazım denetimi ayarları yüklenemedi",
+  "retrySpellingSettings": "Yazım denetimi ayarlarını yeniden yükle",
   "spellingCheckIncomplete": "Yazım denetimi tamamlanmadı",
   "spellingDictionaryNotInstalled": "Sözlük yüklü değil",
   "spellingDictionaryNotInstalledForLanguage": "{dictionary} sözlüğü yüklü değil",

@@ -4613,6 +4613,14 @@ class AppLocalizationsAr extends AppLocalizations {
   String get spellingCheckFailed => 'فشل التدقيق الإملائي';
 
   @override
+  String get spellingSettingsLoadFailed =>
+      'تعذّر تحميل إعدادات التدقيق الإملائي';
+
+  @override
+  String get retrySpellingSettings =>
+      'إعادة محاولة تحميل إعدادات التدقيق الإملائي';
+
+  @override
   String get spellingCheckIncomplete => 'التدقيق الإملائي غير مكتمل';
 
   @override

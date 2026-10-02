@@ -4621,6 +4621,12 @@ class AppLocalizationsFa extends AppLocalizations {
   String get spellingCheckFailed => 'بررسی املا ناموفق بود';
 
   @override
+  String get spellingSettingsLoadFailed => 'تنظیمات بررسی املا بارگیری نشد';
+
+  @override
+  String get retrySpellingSettings => 'بارگیری دوبارهٔ تنظیمات بررسی املا';
+
+  @override
   String get spellingCheckIncomplete => 'بررسی املا کامل نیست';
 
   @override
