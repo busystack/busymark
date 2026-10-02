@@ -36,7 +36,11 @@ List<SpellingInlineProjection> projectSpellingInlineRuns({
   required List<BusyInline> inlines,
   required int sourceBase,
   SpellingSourceContext context = SpellingSourceContext.markdownProse,
-  List<BusyInline>? Function(BusyInline image)? imageDescriptionFor,
+  SpellingMappedImageDescription? Function(
+    BusyInline image,
+    SpellingMappedImageDescription? parent,
+  )?
+  imageDescriptionFor,
 }) {
   final pendingRuns = <_PendingInlineProjection>[];
   var text = StringBuffer();
@@ -137,7 +141,12 @@ List<SpellingInlineProjection> projectSpellingInlineRuns({
     fieldOffset += fieldValue.length;
   }
 
-  void visit(BusyInline inline, List<int> path, {List<int>? imageFieldPath}) {
+  void visit(
+    BusyInline inline,
+    List<int> path, {
+    List<int>? imageFieldPath,
+    SpellingMappedImageDescription? imageOwner,
+  }) {
     if (inline.kind == BusyInlineKind.link &&
         (inline.attributes['id']?.startsWith('fnref-') ?? false) &&
         (inline.destination?.startsWith('#fn-') ?? false)) {
@@ -167,15 +176,15 @@ List<SpellingInlineProjection> projectSpellingInlineRuns({
         return;
       case BusyInlineKind.image:
         barrier();
-        if (imageFieldPath != null) {
-          emitLeaf(inline, imageFieldPath);
-          barrier();
-          return;
-        }
-        final description = imageDescriptionFor?.call(inline);
+        final description = imageDescriptionFor?.call(inline, imageOwner);
         if (description != null) {
-          for (final child in description) {
-            visit(child, path, imageFieldPath: path);
+          for (final child in description.inlines) {
+            visit(
+              child,
+              path,
+              imageFieldPath: imageFieldPath ?? path,
+              imageOwner: description,
+            );
           }
           barrier();
           return;
@@ -242,7 +251,12 @@ List<SpellingInlineProjection> projectSpellingInlineRuns({
           return;
         }
         for (final (index, child) in inline.children.indexed) {
-          visit(child, [...path, index], imageFieldPath: imageFieldPath);
+          visit(
+            child,
+            [...path, index],
+            imageFieldPath: imageFieldPath,
+            imageOwner: imageOwner,
+          );
         }
     }
   }

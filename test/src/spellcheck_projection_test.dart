@@ -2971,6 +2971,375 @@ Price \$ 5, mispelled \$ 6 and actual \$hiddenmath\$ tail.
   });
 
   group('exact rich correction', () {
+    test('nested image descriptions retain recursive spelling policy', () {
+      for (final (source, expectedRuns) in <(String, List<String>)>[
+        (
+          '![outer ![visit https://example.invalid wrld](inner.png) tail](outer.png)',
+          ['outer ', 'visit ', ' wrld', ' tail'],
+        ),
+        (
+          '![outer ![mail test@example.invalid wrld](inner.png) tail](outer.png)',
+          ['outer ', 'mail ', ' wrld', ' tail'],
+        ),
+        (
+          r'![outer ![hello $x$ wrld](inner.png) tail](outer.png)',
+          ['outer ', 'hello ', ' wrld', ' tail'],
+        ),
+        (
+          '![outer ![hello `wrld`](inner.png) tail](outer.png)',
+          ['outer ', 'hello wrld', ' tail'],
+        ),
+        (
+          '![outer ![hello<br>wrld](inner.png) tail](outer.png)',
+          ['outer ', 'hello<br>wrld', ' tail'],
+        ),
+        (
+          '![outer ![hello <code>wrld</code>](inner.png) tail](outer.png)',
+          ['outer ', 'hello <code>wrld</code>', ' tail'],
+        ),
+        (
+          '![outer ![caf&#233; wrld](inner.png) tail](outer.png)',
+          ['outer ', 'café wrld', ' tail'],
+        ),
+        (
+          '![outer ![hello\nwrld](inner.png) tail](outer.png)',
+          ['outer ', 'hello wrld', ' tail'],
+        ),
+        (
+          '> - ![outer ![hello\n>   wrld](inner.png) tail](outer.png)',
+          ['outer ', 'hello wrld', ' tail'],
+        ),
+        (
+          '![outer ![wrld](one.png) middle ![wrld](two.png) tail](outer.png)',
+          ['outer ', 'wrld', ' middle ', 'wrld', ' tail'],
+        ),
+      ]) {
+        final document = const MarkdownParser()
+            .parse(
+              filePath: '/tmp/nested-image-policy.md',
+              source: source,
+              mode: MarkdownMode.commonMark,
+            )
+            .busyDocument;
+        Iterable<BusyInline> blockInlines(Iterable<BusyBlock> blocks) sync* {
+          for (final block in blocks) {
+            yield* block.inlines;
+            yield* blockInlines(block.children);
+          }
+        }
+
+        final outer = blockInlines(
+          document.blocks,
+        ).singleWhere((inline) => inline.kind == BusyInlineKind.image);
+        expect(outer.text, contains('wrld'), reason: source);
+        final sourceResult = const MarkdownSpellingProjector().project(
+          filePath: document.filePath,
+          source: source,
+          mode: document.mode,
+          languageId: 'en-Test',
+          snapshot: _snapshot,
+        );
+        final richResult = const WysiwygSpellingProjector().project(
+          document: document,
+          languageId: 'en-Test',
+          snapshot: _snapshot,
+          documentGeneration: 1,
+        );
+        expect(sourceResult.complete, isTrue, reason: source);
+        final nestedCount = source.contains('one.png') ? 2 : 1;
+        expect(
+          sourceResult.imageDescriptions,
+          hasLength(nestedCount + 1),
+          reason: source,
+        );
+        expect(
+          sourceResult.imageDescriptions.first.inlines.where(
+            (inline) => inline.kind == BusyInlineKind.image,
+          ),
+          hasLength(nestedCount),
+          reason: source,
+        );
+        expect(
+          richResult.complete,
+          isTrue,
+          reason: '$source: ${richResult.message}',
+        );
+        expect(sourceResult.runs.every((run) => run.hasValidMapping), isTrue);
+        expect(richResult.runs.every((run) => run.hasValidMapping), isTrue);
+        expect(
+          sourceResult.runs.map((run) => run.text).toList(),
+          expectedRuns,
+          reason: source,
+        );
+        expect(
+          richResult.runs.map((run) => run.text).toList(),
+          expectedRuns,
+          reason: source,
+        );
+        final richText = richResult.runs.map((run) => run.text).join(' ');
+        expect(richText, isNot(contains('example.invalid')));
+        expect(richText, isNot(contains('test@example.invalid')));
+        expect(richText, isNot(contains('inner.png')));
+        expect(richText, isNot(contains('one.png')));
+        expect(richText, isNot(contains('two.png')));
+        expect(richText, isNot(contains('outer.png')));
+        final runsWithWord = richResult.runs
+            .where((run) => run.text.contains('wrld'))
+            .toList();
+        expect(runsWithWord, hasLength(nestedCount), reason: source);
+        final run = runsWithWord.first;
+        final occurrence = _rejected(run, 'wrld');
+        expect(occurrence.sourceStart, source.indexOf('wrld'));
+        expect(
+          occurrence.fieldStart,
+          outer.text.indexOf('wrld'),
+          reason: source,
+        );
+        final plan = const SpellingReplacementPlanner().build(
+          occurrence: occurrence,
+          suggestion: 'world',
+        );
+        expect(
+          plan.applyToSource(source),
+          source.replaceFirst('wrld', 'world'),
+        );
+        final target = run.target as SpellingRichBlockTarget;
+        final controller = BusyMarkWysiwygDocumentController(
+          document: document,
+        );
+        addTearDown(controller.dispose);
+        final correctionPlan = nestedCount == 2
+            ? const SpellingReplacementPlanner().build(
+                occurrence: _rejected(runsWithWord.last, 'wrld'),
+                suggestion: 'world',
+              )
+            : plan;
+        final correctionStart = nestedCount == 2
+            ? source.lastIndexOf('wrld')
+            : source.indexOf('wrld');
+        final expected = source.replaceRange(
+          correctionStart,
+          correctionStart + 4,
+          'world',
+        );
+        expect(
+          controller.replaceSpellingInBlock(
+            blockId: target.blockId,
+            expectedFieldText: busyMarkWysiwygEditableText(
+              controller.blockById(target.blockId)!,
+            ),
+            plan: correctionPlan,
+            preparedSource: expected,
+          ),
+          isTrue,
+          reason: source,
+        );
+        expect(controller.markdown, expected, reason: source);
+        if (nestedCount == 2) {
+          final second = _rejected(runsWithWord.last, 'wrld');
+          expect(second.sourceStart, source.lastIndexOf('wrld'));
+          expect(second.fieldStart, outer.text.lastIndexOf('wrld'));
+          expect(
+            const SpellingReplacementPlanner()
+                .build(occurrence: second, suggestion: 'world')
+                .applyToSource(source),
+            source.replaceRange(
+              source.lastIndexOf('wrld'),
+              source.lastIndexOf('wrld') + 4,
+              'world',
+            ),
+          );
+        }
+      }
+    });
+
+    test('source-backed rich correction preserves images beside math', () {
+      for (final source in [
+        r'Before ![hello `wrld`](image.png) $x$ after',
+        r'Before ![hello *wrld*](image.png "title") $x$ after',
+        r'Before ![caf&#233; wrld](image.png) $x$ after',
+        'Before ![hello `wrld\nagain`](image.png) \$x\$ after',
+        '> Before ![hello `wrld`](image.png) \$x\$ after',
+        '- Before ![hello `wrld`](image.png) \$x\$ after',
+        r'Before ![outer ![hello `wrld`](inner.png) tail](outer.png) $x$ after',
+        r'Before ![outer ![visit https://example.invalid wrld](inner.png) tail](outer.png) $x$ after',
+      ]) {
+        final document = const MarkdownParser()
+            .parse(
+              filePath: '/tmp/image-math-spelling.md',
+              source: source,
+              mode: MarkdownMode.commonMark,
+            )
+            .busyDocument;
+        final projection = const WysiwygSpellingProjector().project(
+          document: document,
+          languageId: 'en-Test',
+          snapshot: _snapshot,
+          documentGeneration: 1,
+        );
+        expect(
+          projection.complete,
+          isTrue,
+          reason: '$source: ${projection.message}',
+        );
+        final run = projection.runs.singleWhere(
+          (run) => run.text.contains('wrld'),
+        );
+        final occurrence = _rejected(run, 'wrld');
+        final plan = const SpellingReplacementPlanner().build(
+          occurrence: occurrence,
+          suggestion: 'world',
+        );
+        final expected = source.replaceFirst('wrld', 'world');
+        expect(plan.applyToSource(source), expected);
+        final target = run.target as SpellingRichBlockTarget;
+        final controller = BusyMarkWysiwygDocumentController(
+          document: document,
+        );
+        addTearDown(controller.dispose);
+        final fieldText = busyMarkWysiwygEditableText(
+          controller.blockById(target.blockId)!,
+        );
+        if (source.startsWith('> ') || source.startsWith('- ')) {
+          expect(fieldText, startsWith('Before '), reason: source);
+        }
+        expect(
+          controller.replaceSpellingInBlock(
+            blockId: target.blockId,
+            expectedFieldText: fieldText,
+            plan: plan,
+            preparedSource: expected,
+          ),
+          isTrue,
+          reason: source,
+        );
+        expect(controller.markdown, expected, reason: source);
+      }
+    });
+
+    test(
+      'source-backed table image and math correction preserves cell source',
+      () {
+        const source =
+            '| Image |\n| --- |\n| ![hello `wrld`](image.png) \$x\$ |\n';
+        final document = const MarkdownParser()
+            .parse(
+              filePath: '/tmp/table-image-math.md',
+              source: source,
+              mode: MarkdownMode.gfm,
+            )
+            .busyDocument;
+        final projection = const WysiwygSpellingProjector().project(
+          document: document,
+          languageId: 'en-Test',
+          snapshot: _snapshot,
+          documentGeneration: 1,
+        );
+        expect(projection.complete, isTrue, reason: projection.message);
+        final run = projection.runs.singleWhere(
+          (run) => run.text.contains('wrld'),
+        );
+        final occurrence = _rejected(run, 'wrld');
+        expect(occurrence.sourceStart, source.indexOf('wrld'));
+        final plan = const SpellingReplacementPlanner().build(
+          occurrence: occurrence,
+          suggestion: 'world',
+        );
+        final expected = source.replaceFirst('wrld', 'world');
+        expect(plan.applyToSource(source), expected);
+        final target = run.target as SpellingRichTableCellTarget;
+        final controller = BusyMarkWysiwygDocumentController(
+          document: document,
+        );
+        addTearDown(controller.dispose);
+        expect(
+          controller.replaceSpellingInTableCell(
+            tableBlockId: target.tableBlockId,
+            cellId: target.cellId,
+            expectedFieldText: busyMarkWysiwygEditableText(
+              controller.blockById(target.cellId)!,
+            ),
+            plan: plan,
+            preparedSource: expected,
+          ),
+          isTrue,
+        );
+        expect(controller.markdown, expected);
+      },
+    );
+
+    test('neighboring prose in a math image field keeps exact source', () {
+      const source = 'hello ![hello `wrld`](image.png) \$x\$ aftr';
+      final document = const MarkdownParser()
+          .parse(
+            filePath: '/tmp/image-math-neighbor.md',
+            source: source,
+            mode: MarkdownMode.commonMark,
+          )
+          .busyDocument;
+      final projection = const WysiwygSpellingProjector().project(
+        document: document,
+        languageId: 'en-Test',
+        snapshot: _snapshot,
+        documentGeneration: 1,
+      );
+      expect(projection.complete, isTrue, reason: projection.message);
+      final run = projection.runs.singleWhere(
+        (run) => run.text.contains('aftr'),
+      );
+      final occurrence = _rejected(run, 'aftr');
+      expect(occurrence.sourceStart, source.indexOf('aftr'));
+      final plan = const SpellingReplacementPlanner().build(
+        occurrence: occurrence,
+        suggestion: 'after',
+      );
+      const expected = 'hello ![hello `wrld`](image.png) \$x\$ after';
+      expect(plan.applyToSource(source), expected);
+      final target = run.target as SpellingRichBlockTarget;
+      final controller = BusyMarkWysiwygDocumentController(document: document);
+      addTearDown(controller.dispose);
+      expect(
+        controller.replaceSpellingInBlock(
+          blockId: target.blockId,
+          expectedFieldText: busyMarkWysiwygEditableText(
+            controller.blockById(target.blockId)!,
+          ),
+          plan: plan,
+          preparedSource: expected,
+        ),
+        isTrue,
+      );
+      expect(controller.markdown, expected);
+    });
+
+    test('image ownership continues across ordinary and math fields', () {
+      const source =
+          '![hello wrld](one.png)\n\nhello \$x\$ ![hello wrld](two.png)\n\n![hello wrld](three.png)';
+      final document = const MarkdownParser()
+          .parse(
+            filePath: '/tmp/image-math-order.md',
+            source: source,
+            mode: MarkdownMode.commonMark,
+          )
+          .busyDocument;
+      final projected = const WysiwygSpellingProjector().project(
+        document: document,
+        languageId: 'en-Test',
+        snapshot: _snapshot,
+        documentGeneration: 1,
+      );
+      expect(projected.complete, isTrue, reason: projected.message);
+      final occurrences = [
+        for (final run in projected.runs)
+          if (run.text.contains('wrld')) _rejected(run, 'wrld'),
+      ];
+      expect(occurrences, hasLength(3));
+      expect(
+        occurrences.map((item) => item.sourceStart).toList(),
+        RegExp('wrld').allMatches(source).map((match) => match.start).toList(),
+      );
+    });
+
     test('image description spelling agrees across source and rich fields', () {
       for (final (source, expectedAlt) in [
         ('![hello wrld](image.png)', 'hello wrld'),

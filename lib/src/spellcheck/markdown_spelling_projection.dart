@@ -124,6 +124,7 @@ final class MarkdownSpellingProjector {
               List<_MappedImageCode> codes,
             })
           >[];
+      final collectedImages = <int>{};
       void collectImageLabels(BusyMarkMappedInlineParse parent, int base) {
         for (final entry in parent.ranges.entries) {
           if (entry.key.kind != BusyInlineKind.image ||
@@ -158,7 +159,7 @@ final class MarkdownSpellingProjector {
           if (reparsed.mapped.imageDescriptionText != entry.key.plainText) {
             complete = false;
           }
-          if (identical(parent, mapped)) {
+          if (collectedImages.add(base + entry.value.start)) {
             final semanticInlines = _imageFieldInlines(
               reparsed.mapped,
               source.substring(labelStart, labelEnd),

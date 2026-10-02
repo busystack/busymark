@@ -19,6 +19,7 @@ import 'package:busymark/src/workspace/workspace_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 const _sourceSnapshot = SpellingSnapshotIdentity(
   bufferId: 'source-buffer',
@@ -306,6 +307,123 @@ void main() {
     expect(sources.last, 'Before ![hello `world`](image.png) after\n');
   });
 
+  for (final fixture in [
+    (
+      name: 'nested code and math',
+      source:
+          r'Before ![outer ![hello `wrld`](inner.png) tail](outer.png) $x$ after'
+          '\n',
+    ),
+    (
+      name: 'nested address and math',
+      source:
+          r'Before ![outer ![visit https://example.invalid wrld](inner.png) tail](outer.png) $x$ after'
+          '\n',
+    ),
+  ]) {
+    testWidgets('rich ${fixture.name} spelling preserves source and undo', (
+      tester,
+    ) async {
+      final source = fixture.source;
+      final expected = source.replaceFirst('wrld', 'world');
+      final document = const MarkdownParser()
+          .parse(
+            filePath: '/tmp/nested-image-math-undo.md',
+            source: source,
+            mode: MarkdownMode.commonMark,
+          )
+          .busyDocument;
+      const snapshot = SpellingSnapshotIdentity(
+        bufferId: 'nested-image-math-undo',
+        contentRevision: 3,
+        documentKind: DocumentKind.markdown,
+        contextGeneration: 2,
+      );
+      final projection = const WysiwygSpellingProjector().project(
+        document: document,
+        languageId: 'en-Test',
+        snapshot: snapshot,
+        documentGeneration: 0,
+      );
+      expect(projection.complete, isTrue, reason: projection.message);
+      final run = projection.runs.singleWhere(
+        (run) => run.text.contains('wrld'),
+      );
+      final occurrence = _occurrence(
+        run,
+        word: 'wrld',
+        logicalStart: run.text.indexOf('wrld'),
+      );
+      expect(occurrence.sourceStart, source.indexOf('wrld'));
+      final key = GlobalKey<BusyMarkWysiwygEditorState>();
+      final sources = <String>[];
+      await tester.pumpWidget(
+        ProviderScope(
+          child: _testApp(
+            BusyMarkWysiwygEditor(
+              key: key,
+              document: document,
+              documentId: snapshot.bufferId,
+              contentRevision: snapshot.contentRevision,
+              spellingAnnotations: [_annotation(occurrence)],
+              onDocumentChanged: (_) {},
+              onSourceChanged: (_, text) => sources.add(text),
+              onSpellingSourceChanged: (_, text, _, _) => sources.add(text),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      final editor = key.currentState!;
+      final field = editor.spellingFieldSnapshot(occurrence)!;
+      final originalSource = editor.spellingSourceSnapshot(occurrence)!;
+      final prepared = await tester.runAsync(
+        () => prepareSpellingCorrection(
+          occurrence: occurrence,
+          suggestion: 'world',
+          source: originalSource,
+          field: field,
+        ),
+      );
+      expect(
+        editor.applyPreparedSpellingCorrection(
+          occurrence: occurrence,
+          suggestion: 'world',
+          plan: prepared!.plan,
+          expectedFieldText: field,
+          preparedFieldText: prepared.replacementField,
+          expectedSource: originalSource,
+          preparedSource: prepared.replacementSource,
+        ),
+        isTrue,
+      );
+      await tester.pump();
+      expect(sources, [expected]);
+      expect(editor.debugUndoSnapshotCount, 1);
+      final target = occurrence.run.target as SpellingRichBlockTarget;
+      await tester.tap(
+        find.byKey(ValueKey('wysiwyg-rendered-math-${target.blockId}')),
+      );
+      await tester.pump();
+      final editable = find.byType(EditableText).first;
+      await tester.tap(editable);
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyZ);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.pump();
+      expect(sources.last, source);
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyZ);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.pump();
+      expect(sources.last, expected);
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump(const Duration(seconds: 11));
+    });
+  }
+
   testWidgets('rich table image spelling preserves authored cell syntax', (
     tester,
   ) async {
@@ -460,6 +578,89 @@ void main() {
     );
     expect(changes, isEmpty);
     expect(key.currentState!.debugUndoSnapshotCount, 0);
+  });
+
+  testWidgets('delayed math image preparation refuses a newer revision', (
+    tester,
+  ) async {
+    const source = 'hello ![hello `wrld`](image.png) \$x\$\n';
+    const newerSource = 'hello ![hello `wrld`](image.png) \$x\$ again\n';
+    BusyDocument parse(String value) => const MarkdownParser()
+        .parse(
+          filePath: '/tmp/stale-math-image-spelling.md',
+          source: value,
+          mode: MarkdownMode.commonMark,
+        )
+        .busyDocument;
+    final document = parse(source);
+    const snapshot = SpellingSnapshotIdentity(
+      bufferId: 'stale-math-image-spelling',
+      contentRevision: 5,
+      documentKind: DocumentKind.markdown,
+      contextGeneration: 2,
+    );
+    final projection = const WysiwygSpellingProjector().project(
+      document: document,
+      languageId: 'en-Test',
+      snapshot: snapshot,
+      documentGeneration: 0,
+    );
+    expect(projection.complete, isTrue, reason: projection.message);
+    final run = projection.runs.singleWhere((run) => run.text.contains('wrld'));
+    final occurrence = _occurrence(
+      run,
+      word: 'wrld',
+      logicalStart: run.text.indexOf('wrld'),
+    );
+    final key = GlobalKey<BusyMarkWysiwygEditorState>();
+    final changes = <String>[];
+    BusyMarkWysiwygEditor editor(BusyDocument value, int revision) =>
+        BusyMarkWysiwygEditor(
+          key: key,
+          document: value,
+          documentId: snapshot.bufferId,
+          contentRevision: revision,
+          spellingAnnotations: [_annotation(occurrence)],
+          onDocumentChanged: (_) {},
+          onSourceChanged: (_, text) => changes.add(text),
+          onSpellingSourceChanged: (_, text, _, _) => changes.add(text),
+        );
+    await tester.pumpWidget(
+      ProviderScope(child: _testApp(editor(document, 5))),
+    );
+    await tester.pump();
+    final field = key.currentState!.spellingFieldSnapshot(occurrence)!;
+    final expectedSource = key.currentState!.spellingSourceSnapshot(
+      occurrence,
+    )!;
+    final prepared = await tester.runAsync(
+      () => prepareSpellingCorrection(
+        occurrence: occurrence,
+        suggestion: 'world',
+        source: expectedSource,
+        field: field,
+      ),
+    );
+    await tester.pumpWidget(
+      ProviderScope(child: _testApp(editor(parse(newerSource), 6))),
+    );
+    await tester.pump();
+    expect(
+      key.currentState!.applyPreparedSpellingCorrection(
+        occurrence: occurrence,
+        suggestion: 'world',
+        plan: prepared!.plan,
+        expectedFieldText: field,
+        preparedFieldText: prepared.replacementField,
+        expectedSource: expectedSource,
+        preparedSource: prepared.replacementSource,
+      ),
+      isFalse,
+    );
+    expect(changes, isEmpty);
+    expect(key.currentState!.debugUndoSnapshotCount, 0);
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(seconds: 11));
   });
 
   testWidgets(

@@ -173,6 +173,78 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
   });
 
+  for (final fixture in [
+    (
+      name: 'nested code image beside math',
+      source:
+          r'hello ![hello ![hello `wrld`](inner.png) hello](outer.png) $x$ hello'
+          '\n',
+    ),
+    (
+      name: 'nested address image beside math',
+      source:
+          r'hello ![hello ![hello https://example.invalid wrld](inner.png) hello](outer.png) $x$ hello'
+          '\n',
+    ),
+  ]) {
+    testWidgets('rich review preserves ${fixture.name} through undo and redo', (
+      tester,
+    ) async {
+      final source = fixture.source;
+      final corrected = source.replaceFirst('wrld', 'world');
+      final harness = await _pumpWorkspace(tester, source: source);
+      await _until(
+        tester,
+        () =>
+            harness.spelling.state.complete &&
+            harness.spelling.misspellings.any((item) => item.word == 'wrld'),
+      );
+      final initialRevision = harness.workspace.activeBuffer!.revision;
+      final target =
+          harness.spelling.misspellings
+                  .singleWhere((item) => item.word == 'wrld')
+                  .run
+                  .target
+              as SpellingRichBlockTarget;
+      await tester.tap(
+        find.byKey(ValueKey('wysiwyg-rendered-math-${target.blockId}')),
+      );
+      await tester.pump();
+      await tester.sendKeyEvent(LogicalKeyboardKey.f7);
+      final dialog = find.byType(BusyMarkSpellingReviewDialog);
+      await _until(
+        tester,
+        () => find
+            .descendant(of: dialog, matching: find.text('world'))
+            .evaluate()
+            .isNotEmpty,
+        diagnostics: () =>
+            'dialog=${dialog.evaluate().length}; words=${harness.spelling.misspellings.map((item) => item.word).toList()}; texts=${tester.widgetList<Text>(find.byType(Text)).map((item) => item.data).toList()}',
+      );
+      await tester.tap(
+        find.descendant(of: dialog, matching: find.text('world')),
+      );
+      await _until(
+        tester,
+        () =>
+            harness.workspace.activeText == corrected &&
+            dialog.evaluate().isEmpty,
+      );
+      expect(harness.workspace.activeBuffer!.revision, initialRevision + 1);
+      harness.controller.undoActiveBuffer();
+      await _until(tester, () => harness.workspace.activeText == source);
+      harness.controller.redoActiveBuffer();
+      await _until(tester, () => harness.workspace.activeText == corrected);
+      await _until(
+        tester,
+        () =>
+            harness.spelling.state.complete &&
+            harness.spelling.misspellings.every((item) => item.word != 'wrld'),
+      );
+      await tester.pumpWidget(const SizedBox.shrink());
+    });
+  }
+
   testWidgets(
     'Ctrl+N typing paints live spelling targets and corrects with undo',
     (tester) async {

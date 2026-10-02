@@ -688,19 +688,25 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
   }) {
     final source = _document.source;
     if (source == null || source != markdown) return null;
-    if (busyMarkWysiwygBlockContainsMath(current)) return null;
     if (plan.sourceEdits.isEmpty) return false;
     try {
       final replacement = plan.applyToSource(source);
       if (preparedSource != null && preparedSource != replacement) return false;
-      final updatedInlines = _applySpellingLeafEdits(
-        current.inlines,
-        plan.richLeafEdits,
-      );
-      if (updatedInlines == null) return false;
-      final expectedField = busyMarkWysiwygEditableText(
-        current.copyWith(inlines: updatedInlines),
-      );
+      late final String expectedField;
+      if (busyMarkWysiwygBlockContainsMath(current)) {
+        // Math fields expose Markdown source as their editable field. Their
+        // spelling atoms have field offsets, not inline-leaf paths.
+        expectedField = plan.applyToField(busyMarkWysiwygEditableText(current));
+      } else {
+        final updatedInlines = _applySpellingLeafEdits(
+          current.inlines,
+          plan.richLeafEdits,
+        );
+        if (updatedInlines == null) return false;
+        expectedField = busyMarkWysiwygEditableText(
+          current.copyWith(inlines: updatedInlines),
+        );
+      }
       final parsed = const MarkdownParser()
           .parse(
             filePath: _document.filePath,

@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../../app/busymark_design.dart';
 import '../../markdown/busymark_document.dart';
 import '../../markdown/busymark_markdown_serializer.dart';
+import '../../markdown/markdown_model.dart';
+import '../../markdown/markdown_source_map.dart';
 
 bool busyMarkWysiwygBlockContainsMath(BusyBlock block) {
   bool contains(List<BusyInline> inlines) => inlines.any(
@@ -24,6 +26,15 @@ String busyMarkWysiwygEditableText(BusyBlock block) {
     return block.plainText;
   }
   if (block.kind != BusyBlockKind.math && block.inlines.isNotEmpty) {
+    final raw = block.rawSource;
+    if (!block.dirty &&
+        block.sourceSpan != null &&
+        raw != null &&
+        _containsImage(block.inlines)) {
+      if (_authoredMathFieldSource(raw) case final authored?) {
+        return authored;
+      }
+    }
     return const BusyMarkMarkdownSerializer().serializeBlock(
       BusyBlock(
         id: 'wysiwyg-inline-source',
@@ -37,6 +48,59 @@ String busyMarkWysiwygEditableText(BusyBlock block) {
       block.rawSource ??
       const BusyMarkMarkdownSerializer().serializeBlock(block);
   return source.replaceFirst(RegExp(r'(?:\r\n|\r|\n)$'), '');
+}
+
+bool _containsImage(List<BusyInline> inlines) => inlines.any(
+  (inline) =>
+      inline.kind == BusyInlineKind.image || _containsImage(inline.children),
+);
+
+String? _authoredMathFieldSource(String raw) {
+  final mapped = const MarkdownSourceMapper()
+      .createInlineParserContext(
+        documentSource: raw,
+        mode: MarkdownMode.commonMark,
+      )
+      .parsePositionedBlocks(raw);
+  if (mapped.length != 1 || !mapped.single.positionRecordsComplete) {
+    return null;
+  }
+  final content = mapped.single;
+  final start = content.sourceStart;
+  final end = content.sourceEnd;
+  if (start == null ||
+      end == null ||
+      start < 0 ||
+      end <= start ||
+      end > raw.length) {
+    return null;
+  }
+  final breaks = [...content.positionedLineBreaks]
+    ..sort(
+      (left, right) =>
+          (left.sourceOffset ?? -1).compareTo(right.sourceOffset ?? -1),
+    );
+  final field = StringBuffer();
+  var cursor = start;
+  for (final lineBreak in breaks) {
+    final offset = lineBreak.sourceOffset;
+    if (offset == null || offset < cursor || offset >= end) continue;
+    final prefixEnd =
+        offset +
+        lineBreak.lineEnding.length +
+        lineBreak.continuationPrefix.length;
+    if (prefixEnd > end ||
+        !raw.startsWith(
+          '${lineBreak.lineEnding}${lineBreak.continuationPrefix}',
+          offset,
+        )) {
+      return null;
+    }
+    field.write(raw.substring(cursor, offset + lineBreak.lineEnding.length));
+    cursor = prefixEnd;
+  }
+  field.write(raw.substring(cursor, end));
+  return field.toString();
 }
 
 /// Maps an inline Markdown source boundary back to the block's semantic text
