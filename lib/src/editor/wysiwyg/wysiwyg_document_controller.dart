@@ -563,6 +563,7 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     required String expectedFieldText,
     required SpellingReplacementPlan plan,
     String? preparedFieldText,
+    String? preparedSource,
   }) {
     final current = blockById(blockId);
     if (current == null ||
@@ -570,6 +571,13 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
         busyMarkWysiwygEditableText(current) != expectedFieldText) {
       return false;
     }
+    final sourceResult = _replaceSpellingUsingSource(
+      blockId: blockId,
+      current: current,
+      plan: plan,
+      preparedSource: preparedSource,
+    );
+    if (sourceResult != null) return sourceResult;
     if (busyMarkWysiwygBlockContainsMath(current)) {
       late final String updatedSource;
       if (preparedFieldText != null) {
@@ -609,6 +617,7 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     required String expectedFieldText,
     required SpellingReplacementPlan plan,
     String? preparedFieldText,
+    String? preparedSource,
   }) {
     final table = blockById(tableBlockId);
     final current = blockById(cellId);
@@ -618,6 +627,13 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
         busyMarkWysiwygEditableText(current) != expectedFieldText) {
       return false;
     }
+    final sourceResult = _replaceSpellingUsingSource(
+      blockId: cellId,
+      current: current,
+      plan: plan,
+      preparedSource: preparedSource,
+    );
+    if (sourceResult != null) return sourceResult;
     if (busyMarkWysiwygBlockContainsMath(current)) {
       late final String updatedSource;
       if (preparedFieldText != null) {
@@ -662,6 +678,57 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     if (!changed) return false;
     notifyListeners();
     return true;
+  }
+
+  bool? _replaceSpellingUsingSource({
+    required String blockId,
+    required BusyBlock current,
+    required SpellingReplacementPlan plan,
+    required String? preparedSource,
+  }) {
+    final source = _document.source;
+    if (source == null || source != markdown) return null;
+    if (busyMarkWysiwygBlockContainsMath(current)) return null;
+    if (plan.sourceEdits.isEmpty) return false;
+    try {
+      final replacement = plan.applyToSource(source);
+      if (preparedSource != null && preparedSource != replacement) return false;
+      final updatedInlines = _applySpellingLeafEdits(
+        current.inlines,
+        plan.richLeafEdits,
+      );
+      if (updatedInlines == null) return false;
+      final expectedField = busyMarkWysiwygEditableText(
+        current.copyWith(inlines: updatedInlines),
+      );
+      final parsed = const MarkdownParser()
+          .parse(
+            filePath: _document.filePath,
+            source: replacement,
+            mode: _document.mode,
+            validateLocalReferences: false,
+          )
+          .busyDocument;
+      BusyBlock? find(Iterable<BusyBlock> blocks) {
+        for (final block in blocks) {
+          if (block.id == blockId) return block;
+          final child = find(block.children);
+          if (child != null) return child;
+        }
+        return null;
+      }
+
+      final updated = find(parsed.blocks);
+      if (updated == null ||
+          busyMarkWysiwygEditableText(updated) != expectedField ||
+          _serializer.serialize(parsed) != replacement) {
+        return false;
+      }
+      replaceDocument(parsed);
+      return true;
+    } on Object {
+      return false;
+    }
   }
 
   /// A table cell accepts inline formatting; block boundaries become spaces.

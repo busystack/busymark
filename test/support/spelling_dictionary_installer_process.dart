@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:convert';
+import 'package:path/path.dart' as p;
 
 import 'package:busymark/src/spellcheck/spelling_catalog.dart';
 import 'package:busymark/src/spellcheck/spelling_dictionary_installer.dart';
@@ -9,6 +10,26 @@ Future<void> main(List<String> arguments) async {
   final aff = File(arguments[0]);
   final dic = File(arguments[1]);
   final destinationRoot = arguments[2];
+  if (arguments.length > 3 && arguments[3] == 'remove') {
+    final destination = p.join(destinationRoot, 'en-Test');
+    final manifest = File(p.join(destination, 'manifest.json'));
+    final installation = SpellingDictionaryInstallation.fromJson(
+      (jsonDecode(await manifest.readAsString()) as Map)
+          .cast<String, Object?>(),
+      rootPath: destination,
+    );
+    stdout.writeln('ready');
+    await stdin.transform(utf8.decoder).transform(const LineSplitter()).first;
+    try {
+      await const SpellingDictionaryPairInstaller().remove(
+        installation: installation,
+        installationRoot: destinationRoot,
+      );
+    } on StateError {
+      exitCode = 3;
+    }
+    return;
+  }
   final spec = SpellingDictionaryInstallSpec(
     resourceId: 'en-Test',
     id: 'en-Test',

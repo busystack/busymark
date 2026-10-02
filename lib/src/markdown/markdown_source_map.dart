@@ -771,6 +771,7 @@ class BusyMarkInlineParserContext {
           isAutolink: mappedRange.isAutolink,
           isReference: mappedRange.isReference,
           isSourceLineBreak: mappedRange.isSourceLineBreak,
+          isRawHtmlText: mappedRange.isRawHtmlText,
           sourceLineBreakOffset: mappedRange.sourceLineBreakOffset,
         );
       }
@@ -802,6 +803,7 @@ class BusyMarkInlineParserContext {
           isAutolink: range.isAutolink,
           isReference: range.isReference,
           isSourceLineBreak: range.isSourceLineBreak,
+          isRawHtmlText: range.isRawHtmlText,
           sourceLineBreakOffset: range.sourceLineBreakOffset,
         );
       }
@@ -990,6 +992,7 @@ class BusyMarkInlineParserContext {
         isAutolink: range.isAutolink,
         isReference: range.isReference,
         isSourceLineBreak: range.isSourceLineBreak,
+        isRawHtmlText: range.isRawHtmlText,
         sourceLineBreakOffset: range.sourceLineBreakOffset == null
             ? null
             : projection.rawStartFor(range.sourceLineBreakOffset!),

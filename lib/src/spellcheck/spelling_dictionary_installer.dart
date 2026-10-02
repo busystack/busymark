@@ -60,13 +60,19 @@ final class SpellingDictionaryInstallSpec {
 /// directory is always complete and native-loadable; staging directories are
 /// ignored by catalog discovery and removed after failure or cancellation.
 final class SpellingDictionaryPairInstaller {
-  const SpellingDictionaryPairInstaller({this.onCommitted});
+  const SpellingDictionaryPairInstaller({
+    this.onCommitted,
+    this.onReplacementMoved,
+  });
 
   static final Map<String, Future<void>> _publicationTails = {};
 
   /// Observes the commit point after the staged directory becomes the
   /// published installation. The callback must not throw.
   final void Function(SpellingDictionaryInstallation installation)? onCommitted;
+
+  /// Optional transaction observer used to gate publication races in tests.
+  final Future<void> Function()? onReplacementMoved;
 
   Future<SpellingDictionaryInstallation> install({
     required File affSource,
@@ -148,7 +154,7 @@ final class SpellingDictionaryPairInstaller {
         flush: true,
       );
       cancellationGuard?.call();
-      return await _withPublicationLock(destination.path, () async {
+      return await withPublicationLock(destination.path, () async {
         cancellationGuard?.call();
         if (await destination.exists() && !replaceExisting) {
           throw FileSystemException(
@@ -157,14 +163,15 @@ final class SpellingDictionaryPairInstaller {
           );
         }
         Directory? replaced;
-        if (await destination.exists()) {
-          replaced = await root.createTemp(
-            '.busymark-replaced-${safeSpellingResourceName(spec.resourceId)}-',
-          );
-          await replaced.delete();
-          await destination.rename(replaced.path);
-        }
         try {
+          if (await destination.exists()) {
+            replaced = await root.createTemp(
+              '.busymark-replaced-${safeSpellingResourceName(spec.resourceId)}-',
+            );
+            await replaced.delete();
+            await destination.rename(replaced.path);
+            await onReplacementMoved?.call();
+          }
           await staging.rename(destination.path);
         } on Object {
           if (replaced != null &&
@@ -207,7 +214,7 @@ final class SpellingDictionaryPairInstaller {
     }
   }
 
-  Future<T> _withPublicationLock<T>(
+  Future<T> withPublicationLock<T>(
     String destinationPath,
     Future<T> Function() publish,
   ) async {
@@ -259,7 +266,31 @@ final class SpellingDictionaryPairInstaller {
       throw StateError('Dictionary removal escaped its storage root.');
     }
     final directory = Directory(target);
-    if (await directory.exists()) await directory.delete(recursive: true);
+    await withPublicationLock(target, () async {
+      if (!await directory.exists()) return;
+      final manifest = File(p.join(target, 'manifest.json'));
+      if (!await manifest.exists()) {
+        throw StateError('Dictionary installation changed before removal.');
+      }
+      late final SpellingDictionaryInstallation current;
+      try {
+        current = SpellingDictionaryInstallation.fromJson(
+          (jsonDecode(await manifest.readAsString()) as Map)
+              .cast<String, Object?>(),
+          rootPath: target,
+        );
+      } on Object {
+        throw StateError('Dictionary installation changed before removal.');
+      }
+      if (current.resourceId != installation.resourceId ||
+          current.id != installation.id ||
+          current.kind != installation.kind ||
+          current.fingerprint != installation.fingerprint ||
+          current.sourceRevision != installation.sourceRevision) {
+        throw StateError('Dictionary installation changed before removal.');
+      }
+      await directory.delete(recursive: true);
+    });
   }
 
   Future<void> removeInvalid({
@@ -272,7 +303,15 @@ final class SpellingDictionaryPairInstaller {
       throw StateError('Dictionary removal escaped its storage root.');
     }
     final directory = Directory(target);
-    if (await directory.exists()) await directory.delete(recursive: true);
+    await withPublicationLock(target, () async {
+      if (!await directory.exists()) return;
+      if (installation.sourceIdentity == null ||
+          await spellingInstallationDirectoryIdentity(directory) !=
+              installation.sourceIdentity) {
+        throw StateError('Dictionary installation changed before removal.');
+      }
+      await directory.delete(recursive: true);
+    });
   }
 }
 

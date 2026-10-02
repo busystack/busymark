@@ -372,12 +372,26 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     return expectedFieldText;
   }
 
+  String? spellingSourceSnapshot(SpellingOccurrence occurrence) {
+    if (spellingFieldSnapshot(occurrence) == null) return null;
+    final source = _documentController.document.source;
+    if (source == null || source != _documentController.markdown) return null;
+    final start = occurrence.sourceStart;
+    final end = occurrence.sourceEnd;
+    if (start == null || end == null || start < 0 || end > source.length) {
+      return null;
+    }
+    return source;
+  }
+
   bool applyPreparedSpellingCorrection({
     required SpellingOccurrence occurrence,
     required String suggestion,
     required SpellingReplacementPlan plan,
     required String expectedFieldText,
     String? preparedFieldText,
+    String? expectedSource,
+    String? preparedSource,
   }) {
     if (!_isSpellingOccurrenceCurrent(occurrence)) return false;
     final target = occurrence.run.target;
@@ -406,9 +420,15 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
         controller.text != expectedFieldText) {
       return false;
     }
+    if (expectedSource != null &&
+        (expectedSource != _documentController.markdown ||
+            _documentController.document.source != expectedSource ||
+            preparedSource == null)) {
+      return false;
+    }
     final beforeSession = _captureSessionState();
     _continuousTextEdit = null;
-    _recordUndoSnapshot();
+    final beforeDocument = _historySnapshot();
     final changed = switch (target) {
       SpellingRichBlockTarget(:final blockId) =>
         _documentController.replaceSpellingInBlock(
@@ -416,6 +436,7 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
           expectedFieldText: expectedFieldText,
           plan: plan,
           preparedFieldText: preparedFieldText,
+          preparedSource: preparedSource,
         ),
       SpellingRichTableCellTarget(:final tableBlockId, :final cellId) =>
         _documentController.replaceSpellingInTableCell(
@@ -424,10 +445,12 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
           expectedFieldText: expectedFieldText,
           plan: plan,
           preparedFieldText: preparedFieldText,
+          preparedSource: preparedSource,
         ),
       _ => false,
     };
     if (!changed) return false;
+    _recordUndoSnapshot(beforeDocument);
 
     _clearBlockSelection();
     if (target is SpellingRichTableCellTarget) {

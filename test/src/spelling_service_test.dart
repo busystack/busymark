@@ -750,6 +750,190 @@ void main() {
     });
 
     test(
+      'a stale invalid record cannot remove a repaired installation',
+      () async {
+        final root = p.join(temporary.path, 'stale-invalid');
+        final destination = Directory(p.join(root, 'en-Test'));
+        await destination.create(recursive: true);
+        await File(
+          p.join(destination.path, 'manifest.json'),
+        ).writeAsString('malformed');
+        final catalogRoot = Directory(p.join(temporary.path, 'stale-catalog'));
+        await catalogRoot.create();
+        await File(p.join(catalogRoot.path, 'dictionaries.json')).writeAsString(
+          jsonEncode({
+            'schemaVersion': 2,
+            'dictionaries': [_resourceJson(resource)],
+          }),
+        );
+        final invalid = (await SpellingDictionaryCatalog.load(
+          bundledRoot: catalogRoot.path,
+          downloadedRoot: root,
+        )).invalidInstallations.single;
+        final repaired = await const SpellingDictionaryPairInstaller().install(
+          affSource: fixtureAff,
+          dicSource: fixtureDic,
+          spec: SpellingDictionaryInstallSpec.downloaded(resource),
+          destinationRoot: root,
+          validateNativePair: (_, _, _) async => 'UTF-8',
+          replaceExisting: true,
+        );
+        await expectLater(
+          const SpellingDictionaryPairInstaller().removeInvalid(
+            installation: invalid,
+            installationRoot: root,
+          ),
+          throwsStateError,
+        );
+        expect(await File(repaired.affPath).exists(), isTrue);
+        expect(await File(repaired.dicPath).exists(), isTrue);
+      },
+    );
+
+    test(
+      'a stale valid descriptor cannot remove a replacement in another process',
+      () async {
+        final root = p.join(temporary.path, 'process-removal');
+        final installer = const SpellingDictionaryPairInstaller();
+        final old = await installer.install(
+          affSource: fixtureAff,
+          dicSource: fixtureDic,
+          spec: SpellingDictionaryInstallSpec.downloaded(resource),
+          destinationRoot: root,
+          validateNativePair: (_, _, _) async => 'UTF-8',
+        );
+        final flutterRoot = Platform.environment['FLUTTER_ROOT'];
+        final dartExecutable = flutterRoot == null
+            ? 'dart'
+            : p.join(flutterRoot, 'bin', 'cache', 'dart-sdk', 'bin', 'dart');
+        final process = await Process.start(dartExecutable, [
+          '--packages=.dart_tool/package_config.json',
+          p.join(
+            Directory.current.path,
+            'test',
+            'support',
+            'spelling_dictionary_installer_process.dart',
+          ),
+          fixtureAff.path,
+          fixtureDic.path,
+          root,
+          'remove',
+        ], workingDirectory: Directory.current.path);
+        addTearDown(() => process.kill());
+        final errors = process.stderr.transform(utf8.decoder).join();
+        expect(
+          await process.stdout
+              .transform(utf8.decoder)
+              .transform(const LineSplitter())
+              .first,
+          'ready',
+        );
+        final replacement = await installer.install(
+          affSource: fixtureAff,
+          dicSource: fixtureDic,
+          spec: SpellingDictionaryInstallSpec(
+            resourceId: resource.resourceId,
+            id: resource.id,
+            locales: resource.locales,
+            label: resource.label,
+            sourceRevision: 'repaired-fixture',
+            affSha256: resource.affSha256,
+            dicSha256: resource.dicSha256,
+            affSize: resource.affSize,
+            dicSize: resource.dicSize,
+            kind: SpellingDictionaryInstallationKind.downloaded,
+          ),
+          destinationRoot: root,
+          validateNativePair: (_, _, _) async => 'UTF-8',
+          replaceExisting: true,
+        );
+        process.stdin.writeln('go');
+        await process.stdin.close();
+        expect(await process.exitCode, 3, reason: await errors);
+        expect(old.directoryPath, replacement.directoryPath);
+        expect(File(replacement.affPath).existsSync(), isTrue);
+        expect(File(replacement.dicPath).existsSync(), isTrue);
+        final manifest =
+            jsonDecode(
+                  await File(
+                    p.join(replacement.directoryPath, 'manifest.json'),
+                  ).readAsString(),
+                )
+                as Map<String, Object?>;
+        expect(manifest['sourceRevision'], 'repaired-fixture');
+      },
+    );
+
+    test('catalog waits through a replacement publication gap', () async {
+      final root = p.join(temporary.path, 'catalog-publication-gap');
+      final catalogRoot = Directory(p.join(temporary.path, 'gap-catalog'));
+      await catalogRoot.create();
+      await File(p.join(catalogRoot.path, 'dictionaries.json')).writeAsString(
+        jsonEncode({
+          'schemaVersion': 2,
+          'dictionaries': [_resourceJson(resource)],
+        }),
+      );
+      await const SpellingDictionaryPairInstaller().install(
+        affSource: fixtureAff,
+        dicSource: fixtureDic,
+        spec: SpellingDictionaryInstallSpec.downloaded(resource),
+        destinationRoot: root,
+        validateNativePair: (_, _, _) async => 'UTF-8',
+      );
+      final moved = Completer<void>();
+      final release = Completer<void>();
+      final replacement =
+          SpellingDictionaryPairInstaller(
+            onReplacementMoved: () async {
+              moved.complete();
+              await release.future;
+            },
+          ).install(
+            affSource: fixtureAff,
+            dicSource: fixtureDic,
+            spec: SpellingDictionaryInstallSpec(
+              resourceId: resource.resourceId,
+              id: resource.id,
+              locales: resource.locales,
+              label: 'Replaced Test English',
+              sourceRevision: resource.sourceRevision,
+              affSha256: resource.affSha256,
+              dicSha256: resource.dicSha256,
+              affSize: resource.affSize,
+              dicSize: resource.dicSize,
+              kind: SpellingDictionaryInstallationKind.downloaded,
+            ),
+            destinationRoot: root,
+            validateNativePair: (_, _, _) async => 'UTF-8',
+            replaceExisting: true,
+          );
+      await moved.future;
+      final listed = Completer<void>();
+      final catalogFuture = SpellingDictionaryCatalog.load(
+        bundledRoot: catalogRoot.path,
+        downloadedRoot: root,
+        onInstallationListed: (path, entries) {
+          if (path == root && !listed.isCompleted) {
+            expect(
+              entries.any(
+                (name) => name.startsWith('.busymark-replaced-en-Test-'),
+              ),
+              isTrue,
+            );
+            listed.complete();
+          }
+        },
+      );
+      await listed.future;
+      release.complete();
+      await replacement;
+      final catalog = await catalogFuture;
+      expect(catalog.invalidInstallations, isEmpty);
+      expect(catalog.installedById('en-Test')?.label, 'Replaced Test English');
+    });
+
+    test(
       'a late no-replace publisher cannot replace a completed installation',
       () async {
         final root = p.join(temporary.path, 'publisher-race');
@@ -3227,6 +3411,87 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('warm Settings observes an external dictionary removal once', (
+    tester,
+  ) async {
+    late Directory temporary;
+    late String bundle;
+    await tester.runAsync(() async {
+      temporary = await Directory.systemTemp.createTemp(
+        'busymark-settings-catalog-',
+      );
+      bundle = await _createFixtureBundle(temporary);
+    });
+    addTearDown(() => temporary.delete(recursive: true));
+    final storage = p.join(temporary.path, 'dictionary-storage');
+    var loads = 0;
+    final first = SpellingSessionController(
+      bundledRoot: bundle,
+      applicationSupportRoot: p.join(temporary.path, 'first-support'),
+      dictionaryStorageRoot: storage,
+    );
+    final second = SpellingSessionController(
+      bundledRoot: bundle,
+      applicationSupportRoot: p.join(temporary.path, 'second-support'),
+      dictionaryStorageRoot: storage,
+      catalogLoader:
+          ({
+            required bundledRoot,
+            required downloadedRoot,
+            required importedRoot,
+            required verifyChecksums,
+          }) {
+            loads++;
+            return SpellingDictionaryCatalog.load(
+              bundledRoot: bundledRoot,
+              downloadedRoot: downloadedRoot,
+              importedRoot: importedRoot,
+              verifyChecksums: verifyChecksums,
+            );
+          },
+    );
+    addTearDown(first.dispose);
+    addTearDown(second.dispose);
+    await tester.runAsync(() async {
+      await first.prepareSettings(null);
+      await second.prepareSettings(null);
+      await first.removeDownloadedDictionary('en-Test');
+    });
+    expect(loads, 1);
+    expect(second.catalog!.installedById('en-Test'), isNotNull);
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          spellingSessionControllerProvider.overrideWith((ref) => second),
+          localSettingsStoreProvider.overrideWithValue(
+            _SpellingMemorySettingsStore(),
+          ),
+        ],
+        child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          builder: (context, child) =>
+              _spellingSettingsHeaderDefaults(context, child!),
+          home: const SettingsScreen(
+            returnTarget: SettingsReturnTarget.welcome,
+            initialPage: SettingsPage.spellingDictionaries,
+          ),
+        ),
+      ),
+    );
+    await _pumpWidgetUntil(
+      tester,
+      () => loads == 2 && second.catalog!.installedById('en-Test') == null,
+    );
+    expect(find.textContaining('Not installed'), findsWidgets);
+    for (var frame = 0; frame < 6; frame++) {
+      await tester.pump(const Duration(milliseconds: 20));
+    }
+    expect(loads, 2);
+    await tester.pumpWidget(const MaterialApp(home: SizedBox()));
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets(
     'leaving Settings during preparation ignores its late completion',
     (tester) async {
@@ -4375,6 +4640,448 @@ void main() {
         (await personal.read()).wordsFor('en-Test'),
         contains('BusyMarkTerm'),
       );
+    },
+  );
+
+  test(
+    'warm instance refreshes external installation at explicit boundaries',
+    () async {
+      final temporary = await Directory.systemTemp.createTemp(
+        'busymark-external-inventory-',
+      );
+      addTearDown(() async {
+        if (await temporary.exists()) await temporary.delete(recursive: true);
+      });
+      final bundle = await _createFixtureBundle(temporary);
+      final storage = p.join(temporary.path, 'dictionary-storage');
+      SpellingSessionController controller() => SpellingSessionController(
+        bundledRoot: bundle,
+        applicationSupportRoot: p.join(temporary.path, 'support'),
+        dictionaryStorageRoot: storage,
+      );
+      final first = controller();
+      final second = controller();
+      addTearDown(first.dispose);
+      addTearDown(second.dispose);
+      await first.prepareSettings(null);
+      await second.prepareSettings(null);
+      expect(second.catalog!.installedById('en-Test'), isNotNull);
+      await first.removeDownloadedDictionary('en-Test');
+      await second.prepareSettings(null);
+      expect(second.catalog!.installedById('en-Test'), isNull);
+      final input = SpellingSessionInput(
+        buffer: DocumentBuffer.untitled(
+          id: 'external-inventory',
+          name: 'external-inventory.md',
+          text: 'helo',
+        ),
+        workspace: null,
+        settings: AppSettings.defaults().copyWith(
+          defaultSpellingLanguage: 'en-Test',
+        ),
+        documentKind: DocumentKind.markdown,
+        markdownMode: MarkdownMode.commonMark,
+      );
+      await second.checkNow(input);
+      expect(
+        second.state.status,
+        SpellingPresentationStatus.dictionaryNotInstalled,
+      );
+      final fixture = p.join(
+        Directory.current.path,
+        'packages',
+        'busymark_spellcheck_native',
+        'test',
+        'fixtures',
+      );
+      final catalogResource = second.catalog!.availableById('en-Test')!;
+      await const SpellingDictionaryPairInstaller().install(
+        affSource: File(p.join(fixture, 'test.aff')),
+        dicSource: File(p.join(fixture, 'test.dic')),
+        spec: SpellingDictionaryInstallSpec.downloaded(catalogResource),
+        destinationRoot: p.join(storage, 'downloaded'),
+        validateNativePair: (_, _, _) async => 'UTF-8',
+      );
+      await second.checkNow(input);
+      expect(second.catalog!.installedById('en-Test'), isNotNull);
+      expect(second.state.status, SpellingPresentationStatus.ready);
+      expect(second.misspellings.single.word, 'helo');
+      final installation = second.catalog!.installedById('en-Test')!;
+      await File(
+        p.join(installation.directoryPath, 'manifest.json'),
+      ).writeAsString('malformed');
+      await second.prepareSettings(null);
+      expect(second.catalog!.installedById('en-Test'), isNull);
+      expect(second.catalog!.invalidById('en-Test'), isNotNull);
+      await const SpellingDictionaryPairInstaller().install(
+        affSource: File(p.join(fixture, 'test.aff')),
+        dicSource: File(p.join(fixture, 'test.dic')),
+        spec: SpellingDictionaryInstallSpec.downloaded(catalogResource),
+        destinationRoot: p.join(storage, 'downloaded'),
+        validateNativePair: (_, _, _) async => 'UTF-8',
+        replaceExisting: true,
+      );
+      await second.checkNow(input);
+      expect(second.catalog!.invalidById('en-Test'), isNull);
+      expect(second.catalog!.installedById('en-Test'), isNotNull);
+      expect(second.state.status, SpellingPresentationStatus.ready);
+    },
+  );
+
+  test(
+    'warm instance replaces an active imported dictionary fingerprint',
+    () async {
+      final temporary = await Directory.systemTemp.createTemp(
+        'busymark-external-import-',
+      );
+      addTearDown(() async {
+        if (await temporary.exists()) await temporary.delete(recursive: true);
+      });
+      final bundle = await _createFixtureBundle(temporary);
+      final storage = p.join(temporary.path, 'dictionary-storage');
+      final fixture = p.join(
+        Directory.current.path,
+        'packages',
+        'busymark_spellcheck_native',
+        'test',
+        'fixtures',
+      );
+      SpellingSessionController controller(String name) =>
+          SpellingSessionController(
+            bundledRoot: bundle,
+            applicationSupportRoot: p.join(temporary.path, '$name-support'),
+            dictionaryStorageRoot: storage,
+          );
+      final first = controller('first');
+      final second = controller('second');
+      addTearDown(first.dispose);
+      addTearDown(second.dispose);
+      await first.prepareSettings(null);
+      await second.prepareSettings(null);
+      await first.removeDownloadedDictionary('en-Test');
+      await first.importDictionary(
+        affPath: p.join(fixture, 'test.aff'),
+        dicPath: p.join(fixture, 'test.dic'),
+        languageId: 'en-Test',
+        displayLabel: 'Imported English',
+      );
+      final input = SpellingSessionInput(
+        buffer: DocumentBuffer.untitled(
+          id: 'external-import',
+          name: 'external-import.md',
+          text: 'newword helo',
+        ),
+        workspace: null,
+        settings: AppSettings.defaults().copyWith(
+          defaultSpellingLanguage: 'en-Test',
+        ),
+        documentKind: DocumentKind.markdown,
+        markdownMode: MarkdownMode.commonMark,
+      );
+      await second.checkNow(input);
+      expect(second.catalog!.installedById('en-Test')!.imported, isTrue);
+      expect(
+        second.misspellings.map((word) => word.word),
+        containsAll(['newword', 'helo']),
+      );
+      final originalFingerprint = second.catalog!
+          .installedById('en-Test')!
+          .fingerprint;
+      final revised = File(p.join(temporary.path, 'revised.dic'));
+      final originalDic = await File(
+        p.join(fixture, 'test.dic'),
+      ).readAsString();
+      await revised.writeAsString(
+        '${originalDic.replaceFirst('11\n', '12\n')}newword\n',
+      );
+      final aff = File(p.join(fixture, 'test.aff'));
+      final spec = SpellingDictionaryInstallSpec(
+        resourceId: 'en-Test',
+        id: 'en-Test',
+        locales: const ['en-Test'],
+        label: 'Imported English',
+        sourceRevision: 'local-import',
+        affSha256: (await sha256.bind(aff.openRead()).first).toString(),
+        dicSha256: (await sha256.bind(revised.openRead()).first).toString(),
+        affSize: await aff.length(),
+        dicSize: await revised.length(),
+        kind: SpellingDictionaryInstallationKind.imported,
+      );
+      await const SpellingDictionaryPairInstaller().install(
+        affSource: aff,
+        dicSource: revised,
+        spec: spec,
+        destinationRoot: p.join(storage, 'imported'),
+        validateNativePair: (_, _, _) async => 'UTF-8',
+        replaceExisting: true,
+      );
+      await second.checkNow(input);
+      expect(
+        second.catalog!.installedById('en-Test')!.fingerprint,
+        isNot(originalFingerprint),
+      );
+      expect(second.state.status, SpellingPresentationStatus.ready);
+      expect(second.misspellings.map((word) => word.word), ['helo']);
+      await first.prepareSettings(null);
+      await first.removeImportedDictionary('en-Test');
+      await second.checkNow(input);
+      expect(second.catalog!.installedById('en-Test'), isNull);
+      expect(
+        second.state.status,
+        SpellingPresentationStatus.dictionaryNotInstalled,
+      );
+    },
+  );
+
+  test('concurrent warm catalog preparations share one owned read', () async {
+    final temporary = await Directory.systemTemp.createTemp(
+      'busymark-catalog-single-flight-',
+    );
+    addTearDown(() async {
+      if (await temporary.exists()) await temporary.delete(recursive: true);
+    });
+    final bundle = await _createFixtureBundle(temporary);
+    final entered = Completer<void>();
+    final release = Completer<void>();
+    final secondPersonalRefresh = Completer<void>();
+    var loads = 0;
+    var personalReads = 0;
+    final controller = SpellingSessionController(
+      bundledRoot: bundle,
+      applicationSupportRoot: p.join(temporary.path, 'support'),
+      dictionaryStorageRoot: p.join(temporary.path, 'dictionary-storage'),
+      wordStoreReader: (store) async {
+        if (!store.projectStore && ++personalReads == 3) {
+          secondPersonalRefresh.complete();
+        }
+        return store.read();
+      },
+      catalogLoader:
+          ({
+            required bundledRoot,
+            required downloadedRoot,
+            required importedRoot,
+            required verifyChecksums,
+          }) async {
+            loads++;
+            final snapshot = await SpellingDictionaryCatalog.load(
+              bundledRoot: bundledRoot,
+              downloadedRoot: downloadedRoot,
+              importedRoot: importedRoot,
+              verifyChecksums: verifyChecksums,
+            );
+            if (loads == 2) {
+              entered.complete();
+              await release.future;
+            }
+            return snapshot;
+          },
+    );
+    addTearDown(controller.dispose);
+    await controller.prepareSettings(null);
+    final first = controller.prepareSettings(null);
+    await entered.future;
+    final second = controller.prepareSettings(null);
+    await secondPersonalRefresh.future;
+    await Future<void>.delayed(Duration.zero);
+    expect(loads, 2);
+    release.complete();
+    await Future.wait([first, second]);
+    expect(loads, 2);
+    expect(controller.catalog!.installedById('en-Test'), isNotNull);
+  });
+
+  test('a delayed catalog read cannot undo a local installation', () async {
+    final temporary = await Directory.systemTemp.createTemp(
+      'busymark-catalog-install-overlap-',
+    );
+    addTearDown(() async {
+      if (await temporary.exists()) await temporary.delete(recursive: true);
+    });
+    final bundle = await _createFixtureBundle(temporary);
+    final fixture = p.join(
+      Directory.current.path,
+      'packages',
+      'busymark_spellcheck_native',
+      'test',
+      'fixtures',
+    );
+    final downloadEntered = Completer<void>();
+    final releaseDownload = Completer<void>();
+    final readEntered = Completer<void>();
+    final releaseRead = Completer<void>();
+    final published = Completer<void>();
+    var gateNextRead = false;
+    final controller = SpellingSessionController(
+      bundledRoot: bundle,
+      applicationSupportRoot: p.join(temporary.path, 'support'),
+      dictionaryStorageRoot: p.join(temporary.path, 'dictionary-storage'),
+      dictionaryDownloader: SpellingDictionaryDownloader(
+        installer: SpellingDictionaryPairInstaller(
+          onCommitted: (_) => published.complete(),
+        ),
+        downloadFile:
+            ({
+              required source,
+              required destination,
+              required expectedBytes,
+              required cancellation,
+              required onProgress,
+            }) async {
+              if (source.path.endsWith('.aff')) {
+                downloadEntered.complete();
+                await releaseDownload.future;
+              }
+              cancellation.throwIfCancelled();
+              final input = File(
+                p.join(
+                  fixture,
+                  source.path.endsWith('.aff') ? 'test.aff' : 'test.dic',
+                ),
+              );
+              final bytes = await input.readAsBytes();
+              expect(bytes, hasLength(expectedBytes));
+              await destination.writeAsBytes(bytes, flush: true);
+              onProgress(bytes.length);
+            },
+      ),
+      catalogLoader:
+          ({
+            required bundledRoot,
+            required downloadedRoot,
+            required importedRoot,
+            required verifyChecksums,
+          }) async {
+            final snapshot = await SpellingDictionaryCatalog.load(
+              bundledRoot: bundledRoot,
+              downloadedRoot: downloadedRoot,
+              importedRoot: importedRoot,
+              verifyChecksums: verifyChecksums,
+            );
+            if (gateNextRead) {
+              gateNextRead = false;
+              readEntered.complete();
+              await releaseRead.future;
+            }
+            return snapshot;
+          },
+    );
+    addTearDown(controller.dispose);
+    await controller.prepareSettings(null);
+    await controller.removeDownloadedDictionary('en-Test');
+    final installation = controller.installDictionary('en-Test');
+    await downloadEntered.future;
+    gateNextRead = true;
+    final oldRead = controller.prepareSettings(null);
+    await readEntered.future;
+    expect(controller.catalog!.installedById('en-Test'), isNull);
+    releaseDownload.complete();
+    await published.future;
+    releaseRead.complete();
+    await Future.wait([oldRead, installation]);
+    expect(controller.catalog!.installedById('en-Test'), isNotNull);
+    expect(controller.dictionaryInstallStatus, isNull);
+  });
+
+  test('a failed warm catalog refresh remains retryable', () async {
+    final temporary = await Directory.systemTemp.createTemp(
+      'busymark-catalog-refresh-retry-',
+    );
+    addTearDown(() async {
+      if (await temporary.exists()) await temporary.delete(recursive: true);
+    });
+    final bundle = await _createFixtureBundle(temporary);
+    var fail = false;
+    var loads = 0;
+    final controller = SpellingSessionController(
+      bundledRoot: bundle,
+      applicationSupportRoot: p.join(temporary.path, 'support'),
+      dictionaryStorageRoot: p.join(temporary.path, 'dictionary-storage'),
+      catalogLoader:
+          ({
+            required bundledRoot,
+            required downloadedRoot,
+            required importedRoot,
+            required verifyChecksums,
+          }) {
+            loads++;
+            if (fail) throw StateError('injected catalog read failure');
+            return SpellingDictionaryCatalog.load(
+              bundledRoot: bundledRoot,
+              downloadedRoot: downloadedRoot,
+              importedRoot: importedRoot,
+              verifyChecksums: verifyChecksums,
+            );
+          },
+    );
+    addTearDown(controller.dispose);
+    await controller.prepareSettings(null);
+    final original = controller.catalog;
+    fail = true;
+    await expectLater(controller.prepareSettings(null), throwsStateError);
+    expect(controller.catalog, same(original));
+    fail = false;
+    await controller.prepareSettings(null);
+    expect(loads, 3);
+    expect(controller.catalog!.installedById('en-Test'), isNotNull);
+  });
+
+  test(
+    'automatic checking rereads inventory after dictionary load fails',
+    () async {
+      final temporary = await Directory.systemTemp.createTemp(
+        'busymark-catalog-native-open-',
+      );
+      addTearDown(() async {
+        if (await temporary.exists()) await temporary.delete(recursive: true);
+      });
+      final bundle = await _createFixtureBundle(temporary);
+      final startupEntered = Completer<void>();
+      final releaseStartup = Completer<void>();
+      final controller = SpellingSessionController(
+        bundledRoot: bundle,
+        applicationSupportRoot: p.join(temporary.path, 'support'),
+        dictionaryStorageRoot: p.join(temporary.path, 'dictionary-storage'),
+        coordinatorStarter: () async {
+          startupEntered.complete();
+          await releaseStartup.future;
+          return SpellingCoordinator.start();
+        },
+      );
+      addTearDown(controller.dispose);
+      final buffer = DocumentBuffer.untitled(
+        id: 'native-open-race',
+        name: 'native-open-race.md',
+        text: 'helo',
+      );
+      SpellingSessionInput input(DocumentBuffer value) => SpellingSessionInput(
+        buffer: value,
+        workspace: null,
+        settings: AppSettings.defaults().copyWith(
+          defaultSpellingLanguage: 'en-Test',
+        ),
+        documentKind: DocumentKind.markdown,
+        markdownMode: MarkdownMode.commonMark,
+      );
+      controller.update(input(buffer));
+      await startupEntered.future;
+      final installed = controller.catalog!.installedById('en-Test')!;
+      await Directory(installed.directoryPath).delete(recursive: true);
+      releaseStartup.complete();
+      await _waitFor(
+        () =>
+            controller.state.status == SpellingPresentationStatus.failure ||
+            controller.state.status == SpellingPresentationStatus.incomplete,
+      );
+      controller.update(input(buffer.copyWith(text: 'wrld', revision: 1)));
+      await _waitFor(
+        () => controller.state.status != SpellingPresentationStatus.checking,
+      );
+      expect(
+        controller.state.status,
+        SpellingPresentationStatus.dictionaryNotInstalled,
+      );
+      expect(controller.catalog!.installedById('en-Test'), isNull);
     },
   );
 

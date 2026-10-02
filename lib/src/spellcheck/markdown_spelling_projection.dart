@@ -101,6 +101,7 @@ final class MarkdownSpellingProjector {
           block,
     ];
     final runs = <SpellingProseRun>[];
+    final imageDescriptions = <SpellingMappedImageDescription>[];
     final multilineHtmlSpans = _multilineHtmlSpans(source, 0, source.length);
     var complete = true;
     var sequence = 0;
@@ -154,9 +155,28 @@ final class MarkdownSpellingProjector {
             ],
           );
           if (!reparsed.mapped.positionRecordsComplete) complete = false;
-          if (reparsed.codes.isNotEmpty &&
-              reparsed.mapped.imageDescriptionText != entry.key.plainText) {
+          if (reparsed.mapped.imageDescriptionText != entry.key.plainText) {
             complete = false;
+          }
+          if (identical(parent, mapped)) {
+            final semanticInlines = _imageFieldInlines(
+              reparsed.mapped,
+              source.substring(labelStart, labelEnd),
+            );
+            if (semanticInlines.map((inline) => inline.plainText).join() !=
+                entry.key.plainText) {
+              complete = false;
+            } else {
+              imageDescriptions.add(
+                SpellingMappedImageDescription(
+                  sourceStart: base + entry.value.start,
+                  sourceEnd: base + entry.value.end,
+                  alternativeText: entry.key.plainText,
+                  destination: entry.key.destination,
+                  inlines: semanticInlines,
+                ),
+              );
+            }
           }
           final label = (
             mapped: reparsed.mapped,
@@ -239,7 +259,8 @@ final class MarkdownSpellingProjector {
             ),
         for (final label in imageLabels)
           for (final entry in label.mapped.ranges.entries)
-            if (entry.key.kind == BusyInlineKind.hardBreak)
+            if (entry.key.kind == BusyInlineKind.hardBreak &&
+                !entry.value.isRawHtmlText)
               _SourceInterval(
                 label.sourceBase + entry.value.start,
                 label.sourceBase + entry.value.end,
@@ -478,8 +499,40 @@ final class MarkdownSpellingProjector {
       runs: List.unmodifiable(runs),
       complete: complete,
       message: complete ? null : 'Some Markdown regions could not be mapped.',
+      imageDescriptions: List.unmodifiable(
+        imageDescriptions..sort(
+          (left, right) => left.sourceStart.compareTo(right.sourceStart),
+        ),
+      ),
     );
   }
+}
+
+List<BusyInline> _imageFieldInlines(
+  BusyMarkMappedInlineParse parsed,
+  String raw,
+) {
+  BusyInline convert(BusyInline inline) {
+    final range = parsed.ranges[inline];
+    if (range?.isRawHtmlText ?? false) {
+      return BusyInline(
+        kind: BusyInlineKind.text,
+        text: raw.substring(range!.start, range.end),
+      );
+    }
+    if (inline.kind == BusyInlineKind.hardBreak) {
+      return const BusyInline(kind: BusyInlineKind.text, text: '');
+    }
+    if (inline.kind == BusyInlineKind.code) return inline;
+    if (inline.children.isEmpty) return inline;
+    return inline.copyWith(
+      children: [for (final child in inline.children) convert(child)],
+    );
+  }
+
+  return List.unmodifiable([
+    for (final inline in parsed.inlines) convert(inline),
+  ]);
 }
 
 Iterable<BusyBlock> _walkBlocks(Iterable<BusyBlock> blocks) sync* {
@@ -771,11 +824,12 @@ _ParsedImageLabel _parseMappedImageLabel(
       isAutolink: range.isAutolink,
       isReference: range.isReference,
       isSourceLineBreak: range.isSourceLineBreak,
+      isRawHtmlText: range.isRawHtmlText,
       sourceLineBreakOffset: range.sourceLineBreakOffset == null
           ? null
           : rawStartFor(range.sourceLineBreakOffset!),
     );
-    if (entry.key.kind != BusyInlineKind.code) continue;
+    if (entry.key.kind != BusyInlineKind.code || range.isRawHtmlText) continue;
     final units = <({String text, int start, int end, bool lineBreak})>[
       for (var offset = range.start; offset < range.end; offset++)
         (
@@ -930,6 +984,7 @@ final class _MarkdownProseScanner {
   int? _tokenizationContextStart;
   int? _opaqueEnd;
   int? _consumedLinkEnd;
+  bool _inImageLabel = false;
   bool complete = true;
 
   List<_EmissionGroup> scan() {
@@ -1039,7 +1094,9 @@ final class _MarkdownProseScanner {
         cursor = math.min(rangeEnd, opaqueEnd);
         continue;
       }
-      if (interpretHtmlSyntax && source.startsWith('<!--', cursor)) {
+      if (interpretHtmlSyntax &&
+          !_inImageLabel &&
+          source.startsWith('<!--', cursor)) {
         final close = source.indexOf('-->', cursor + 4);
         _barrier();
         _opaqueEnd = close < 0 || close >= end ? end : close + 3;
@@ -1108,7 +1165,7 @@ final class _MarkdownProseScanner {
           continue;
         }
       }
-      if (interpretHtmlSyntax && unit == 0x3c) {
+      if (interpretHtmlSyntax && !_inImageLabel && unit == 0x3c) {
         final tagCandidate = _isHtmlTagCandidate(cursor);
         final autolinkCandidate = _isAutolinkCandidate(cursor);
         if (tagCandidate || autolinkCandidate) {
@@ -1231,6 +1288,7 @@ final class _MarkdownProseScanner {
         textStart,
         textEnd,
         SpellingTransformationKind.identity,
+        sourceContext: SpellingSourceContext.markdownCodeSpan,
       );
       text.clear();
     }
@@ -1245,6 +1303,7 @@ final class _MarkdownProseScanner {
           unit.end,
           SpellingTransformationKind.lineBreak,
           tokenizationLogical: ' ',
+          sourceContext: SpellingSourceContext.markdownCodeSpan,
         );
       } else {
         if (text.isEmpty) textStart = unit.start;
@@ -1307,7 +1366,13 @@ final class _MarkdownProseScanner {
       return null;
     }
     if (image) _barrier();
-    _scanMappedLabel(recognized);
+    final wasInImageLabel = _inImageLabel;
+    _inImageLabel = _inImageLabel || image;
+    try {
+      _scanMappedLabel(recognized);
+    } finally {
+      _inImageLabel = wasInImageLabel;
+    }
     if (image) _barrier();
     final titleStart = recognized.titleStart;
     final titleEnd = recognized.titleEnd;
@@ -1581,6 +1646,7 @@ final class _MarkdownProseScanner {
     int sourceEnd,
     SpellingTransformationKind transformation, {
     String? tokenizationLogical,
+    SpellingSourceContext? sourceContext,
   }) {
     if (logical.isEmpty) return;
     _tokenizationContextStart ??= _tokenizationContext.length;
@@ -1595,7 +1661,7 @@ final class _MarkdownProseScanner {
         sourceStart: sourceStart,
         sourceEnd: sourceEnd,
         transformation: transformation,
-        context: context,
+        context: sourceContext ?? context,
       ),
     );
   }

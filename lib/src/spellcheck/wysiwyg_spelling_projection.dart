@@ -19,6 +19,31 @@ final class WysiwygSpellingProjector {
     final fieldKeysByTarget = <String, String>{};
     var sequence = 0;
     var complete = true;
+    final source = document.source;
+    final sourceProjection = source == null
+        ? null
+        : const MarkdownSpellingProjector().project(
+            filePath: document.filePath,
+            source: source,
+            mode: document.mode,
+            languageId: languageId,
+            snapshot: snapshot,
+          );
+    var imageIndex = 0;
+
+    List<BusyInline>? imageDescription(BusyInline image) {
+      if (sourceProjection == null) return null;
+      if (imageIndex >= sourceProjection.imageDescriptions.length) {
+        complete = false;
+        return null;
+      }
+      final description = sourceProjection.imageDescriptions[imageIndex++];
+      if (description.alternativeText != image.text) {
+        complete = false;
+        return null;
+      }
+      return description.inlines;
+    }
 
     void addOrdinary(BusyBlock block, SpellingEditorTarget target) {
       for (final projection in projectSpellingInlineRuns(
@@ -27,6 +52,7 @@ final class WysiwygSpellingProjector {
         context: target is SpellingRichTableCellTarget
             ? SpellingSourceContext.markdownTableCell
             : SpellingSourceContext.markdownProse,
+        imageDescriptionFor: imageDescription,
       )) {
         final run = SpellingProseRun(
           id: 'wysiwyg:${sequence++}:${block.id}',
@@ -153,7 +179,6 @@ final class WysiwygSpellingProjector {
     for (final (index, block) in document.blocks.indexed) {
       visit(block, [index]);
     }
-    final source = document.source;
     if (source == null) {
       return SpellingProjectionResult(
         runs: List.unmodifiable(richRuns),
@@ -162,13 +187,6 @@ final class WysiwygSpellingProjector {
       );
     }
 
-    final sourceProjection = const MarkdownSpellingProjector().project(
-      filePath: document.filePath,
-      source: source,
-      mode: document.mode,
-      languageId: languageId,
-      snapshot: snapshot,
-    );
     final currentDocument = const MarkdownParser()
         .parse(
           filePath: document.filePath,
@@ -179,7 +197,7 @@ final class WysiwygSpellingProjector {
         .busyDocument;
     var merged = _mergeCurrentSourceMappings(
       richRuns: richRuns,
-      sourceRuns: sourceProjection.runs,
+      sourceRuns: sourceProjection!.runs,
       fieldKeysByTarget: fieldKeysByTarget,
       sourceRegions: _sourceFieldRegions(source, currentDocument.blocks),
     );

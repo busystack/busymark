@@ -30,6 +30,13 @@ typedef SpellingWordStoreFactory =
     });
 typedef SpellingWordStoreReader =
     Future<SpellingWordStoreSnapshot> Function(SpellingWordStore store);
+typedef SpellingCatalogLoader =
+    Future<SpellingDictionaryCatalog> Function({
+      required String bundledRoot,
+      required String downloadedRoot,
+      required String importedRoot,
+      required bool verifyChecksums,
+    });
 
 SpellingWordStore _createSpellingWordStore({
   required String filePath,
@@ -85,6 +92,7 @@ final class SpellingSessionController extends ChangeNotifier {
     this.dictionaryDownloader = const SpellingDictionaryDownloader(),
     this.dictionaryInstaller = const SpellingDictionaryPairInstaller(),
     SpellingCoordinatorStarter? coordinatorStarter,
+    this.catalogLoader = SpellingDictionaryCatalog.load,
     SpellingWordStoreFactory? wordStoreFactory,
     SpellingWordStoreReader? wordStoreReader,
   }) : coordinatorStarter = coordinatorStarter ?? SpellingCoordinator.start,
@@ -99,12 +107,16 @@ final class SpellingSessionController extends ChangeNotifier {
   final SpellingDictionaryDownloader dictionaryDownloader;
   final SpellingDictionaryPairInstaller dictionaryInstaller;
   final SpellingCoordinatorStarter coordinatorStarter;
+  final SpellingCatalogLoader catalogLoader;
   final SpellingWordStoreFactory wordStoreFactory;
   final SpellingWordStoreReader wordStoreReader;
 
   SpellingCoordinator? _coordinator;
   Future<SpellingCoordinator>? _coordinatorStartup;
   SpellingDictionaryCatalog? _catalog;
+  Future<bool>? _catalogRefresh;
+  int _catalogGeneration = 0;
+  bool _catalogNeedsRefresh = false;
   SpellingWordStore? _personalStore;
   SpellingWordStore? _projectStore;
   SpellingWordStoreSnapshot _personalWords = const SpellingWordStoreSnapshot(
@@ -175,8 +187,12 @@ final class SpellingSessionController extends ChangeNotifier {
   Future<void> prepareSettings(Workspace? workspace) async {
     _settingsWorkspace = workspace;
     final wasInitialized = _personalStorageInitialized;
+    final hadCatalog = _catalog != null;
     await _initializeStorage(workspace);
     if (wasInitialized && await _refreshPersonalWords()) {
+      await _refreshAfterPersistentChange();
+    }
+    if (hadCatalog && await _refreshCatalog()) {
       await _refreshAfterPersistentChange();
     }
     if (!_disposed) notifyListeners();
@@ -361,6 +377,7 @@ final class SpellingSessionController extends ChangeNotifier {
   }) async {
     await _ensureStorageRoot();
     await _initializeStorage(_latestInput?.workspace ?? _settingsWorkspace);
+    await _refreshCatalog();
     final normalizedLanguage = normalizeSpellingLanguageId(languageId);
     if (normalizedLanguage == null) {
       throw const FormatException('Choose an explicit valid language tag.');
@@ -406,6 +423,7 @@ final class SpellingSessionController extends ChangeNotifier {
 
   Future<void> removeImportedDictionary(String languageId) async {
     await _initializeStorage(_latestInput?.workspace ?? _settingsWorkspace);
+    await _refreshCatalog();
     final installation = _catalog?.installedById(languageId);
     if (installation != null && installation.imported) {
       await _releaseAndRemoveInstallation(installation);
@@ -422,6 +440,7 @@ final class SpellingSessionController extends ChangeNotifier {
     SpellingInvalidDictionaryInstallation installation,
   ) async {
     await _initializeStorage(_latestInput?.workspace ?? _settingsWorkspace);
+    await _refreshCatalog();
     final current =
         _catalog?.invalidInstallations.any(
           (candidate) =>
@@ -442,6 +461,7 @@ final class SpellingSessionController extends ChangeNotifier {
     SpellingDictionaryResource? resource;
     try {
       await _initializeStorage(_latestInput?.workspace ?? _settingsWorkspace);
+      await _refreshCatalog();
       cancellation.throwIfCancelled();
       final catalog = _catalog;
       resource = catalog?.availableById(languageId);
@@ -557,6 +577,7 @@ final class SpellingSessionController extends ChangeNotifier {
 
   Future<void> removeDownloadedDictionary(String languageId) async {
     await _initializeStorage(_latestInput?.workspace ?? _settingsWorkspace);
+    await _refreshCatalog();
     final catalog = _catalog;
     final resource = catalog?.availableById(languageId);
     final installation = resource == null
@@ -713,12 +734,17 @@ final class SpellingSessionController extends ChangeNotifier {
     SpellingWordStore? failedProjectReadStore;
     try {
       final wasInitialized = _personalStorageInitialized;
+      final hadCatalog = _catalog != null;
       await _initializeStorage(
         input.workspace,
         onProjectReadFailure: (store) => failedProjectReadStore = store,
         scheduleOnProjectRecovery: false,
       );
       if (!_isOperationCurrent(operation, input)) return;
+      if (manual && hadCatalog) {
+        await _refreshCatalog();
+        if (!_isOperationCurrent(operation, input)) return;
+      }
       if (manual && wasInitialized) {
         await _refreshPersonalWords();
         if (!_isOperationCurrent(operation, input)) return;
@@ -930,27 +956,77 @@ final class SpellingSessionController extends ChangeNotifier {
 
     // Available metadata is shipped with BusyMark. Only application-managed
     // installations are opened and checksum-verified.
-    if (_catalog == null) {
-      final resourceRoot =
-          bundledRoot ?? const SpellingResourceLocator().locate();
-      if (resourceRoot == null) {
-        _catalog = const SpellingDictionaryCatalog(
-          availableEntries: [],
-          installations: [],
-          unavailableEntries: {
-            'bundle': 'Dictionary catalog metadata is unavailable.',
-          },
-        );
-      } else {
-        final dictionaryRoot = await _ensureDictionaryStorageRoot();
-        _catalog = await SpellingDictionaryCatalog.load(
-          bundledRoot: resourceRoot,
-          downloadedRoot: p.join(dictionaryRoot, 'downloaded'),
-          importedRoot: p.join(dictionaryRoot, 'imported'),
-          verifyChecksums: verifyDictionaryChecksums,
-        );
+    if (_catalog == null || _catalogNeedsRefresh) await _refreshCatalog();
+  }
+
+  Future<bool> _refreshCatalog({bool forceNew = false}) async {
+    final pending = _catalogRefresh;
+    if (pending != null && !forceNew) return pending;
+    if (pending != null) {
+      // A local mutation owns the next inventory publication. Invalidate the
+      // older read, then wait for its worker-release transaction to finish.
+      ++_catalogGeneration;
+      try {
+        await pending;
+      } on Object {
+        // The new read is the retry and reports its own failure.
       }
     }
+    final generation = ++_catalogGeneration;
+    final operation = _loadAndPublishCatalog(generation);
+    _catalogRefresh = operation;
+    try {
+      return await operation;
+    } finally {
+      if (identical(_catalogRefresh, operation)) _catalogRefresh = null;
+    }
+  }
+
+  Future<bool> _loadAndPublishCatalog(int generation) async {
+    final resourceRoot =
+        bundledRoot ?? const SpellingResourceLocator().locate();
+    final next = resourceRoot == null
+        ? const SpellingDictionaryCatalog(
+            availableEntries: [],
+            installations: [],
+            unavailableEntries: {
+              'bundle': 'Dictionary catalog metadata is unavailable.',
+            },
+          )
+        : await _loadManagedCatalog(resourceRoot);
+    if (_disposed || generation != _catalogGeneration) return false;
+    _catalogNeedsRefresh = false;
+    final previous = _catalog;
+    final changed =
+        previous == null ||
+        _catalogInventoryIdentity(previous) != _catalogInventoryIdentity(next);
+    _catalog = next;
+    final context = _engineContext;
+    if (changed && context != null) {
+      final oldInstallation = previous?.installedById(context.languageId);
+      final newInstallation = next.installedById(context.languageId);
+      if (oldInstallation?.fingerprint != newInstallation?.fingerprint ||
+          oldInstallation?.directoryPath != newInstallation?.directoryPath) {
+        _coordinator?.disablePresentation();
+        await _coordinator?.releaseDictionary();
+        _engineContext = null;
+        _contextIdentity = '';
+      }
+    }
+    if (changed && !_disposed) notifyListeners();
+    return changed;
+  }
+
+  Future<SpellingDictionaryCatalog> _loadManagedCatalog(
+    String resourceRoot,
+  ) async {
+    final dictionaryRoot = await _ensureDictionaryStorageRoot();
+    return catalogLoader(
+      bundledRoot: resourceRoot,
+      downloadedRoot: p.join(dictionaryRoot, 'downloaded'),
+      importedRoot: p.join(dictionaryRoot, 'imported'),
+      verifyChecksums: verifyDictionaryChecksums,
+    );
   }
 
   Future<bool> _refreshPersonalWords() async {
@@ -1037,8 +1113,7 @@ final class SpellingSessionController extends ChangeNotifier {
   }
 
   Future<void> _reloadCatalogAndRefresh() async {
-    _catalog = null;
-    await _initializeStorage(_latestInput?.workspace ?? _settingsWorkspace);
+    await _refreshCatalog(forceNew: true);
     if (!_disposed) notifyListeners();
     await _refreshAfterPersistentChange();
   }
@@ -1247,7 +1322,14 @@ final class SpellingSessionController extends ChangeNotifier {
     return recovering;
   }
 
-  void _forwardCoordinatorChange() => notifyListeners();
+  void _forwardCoordinatorChange() {
+    if (_coordinator?.dictionaryLoadFailed ?? false) {
+      // Retry inventory discovery on the next automatic check. The worker
+      // could not open the installation that the cached catalog described.
+      _catalogNeedsRefresh = true;
+    }
+    notifyListeners();
+  }
 
   void _showLanguageRequired() {
     if (_coordinator case final coordinator?) {
@@ -1449,3 +1531,16 @@ String? _projectScopeRoot(Workspace? workspace) => switch (workspace?.kind) {
   WorkspaceKind.writersideModule => workspace!.rootPath,
   _ => null,
 };
+
+String _catalogInventoryIdentity(SpellingDictionaryCatalog catalog) {
+  final entries = <String>[
+    for (final installation in catalog.installations)
+      'installed:${installation.directoryPath}:${installation.kind.name}:'
+          '${installation.resourceId}:${installation.id}:'
+          '${installation.sourceRevision}:${installation.fingerprint}',
+    for (final invalid in catalog.invalidInstallations)
+      'invalid:${invalid.directoryPath}:${invalid.kind.name}:'
+          '${invalid.sourceIdentity ?? ''}',
+  ]..sort();
+  return entries.join('\n');
+}

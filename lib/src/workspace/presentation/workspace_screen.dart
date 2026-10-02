@@ -12907,7 +12907,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     final richEditor = _wysiwygEditorKey.currentState;
     final source = occurrence.run.target is SpellingSourceTarget
         ? sourceEditor?.spellingSourceSnapshot(occurrence)
-        : null;
+        : richEditor?.spellingSourceSnapshot(occurrence);
     final field = occurrence.run.target is SpellingSourceTarget
         ? null
         : richEditor?.spellingFieldSnapshot(occurrence);
@@ -12941,6 +12941,8 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
                   plan: plan,
                   expectedFieldText: field!,
                   preparedFieldText: prepared.replacementField,
+                  expectedSource: source,
+                  preparedSource: prepared.replacementSource,
                 ) ??
                 false;
       if (!applied) return null;

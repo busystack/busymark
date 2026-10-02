@@ -125,6 +125,54 @@ void main() {
     },
   );
 
+  testWidgets('rich image review preserves authored source through undo and redo', (
+    tester,
+  ) async {
+    const source = 'hello ![hello `wrld`](image.png)\n';
+    const corrected = 'hello ![hello `world`](image.png)\n';
+    final harness = await _pumpWorkspace(tester, source: source);
+    await _until(
+      tester,
+      () =>
+          harness.spelling.state.complete &&
+          harness.spelling.misspellings.any((item) => item.word == 'wrld'),
+    );
+    expect(harness.workspace.activeText, source);
+    await tester.tap(find.byType(EditableText).first);
+    await tester.sendKeyEvent(LogicalKeyboardKey.f7);
+    final dialog = find.byType(BusyMarkSpellingReviewDialog);
+    await _until(
+      tester,
+      () => find
+          .descendant(of: dialog, matching: find.text('world'))
+          .evaluate()
+          .isNotEmpty,
+      diagnostics: () =>
+          'dialog=${dialog.evaluate().length}; '
+          'texts=${tester.widgetList<Text>(find.byType(Text)).map((text) => text.data).toList()}; '
+          'words=${harness.spelling.misspellings.map((word) => word.word).toList()}',
+    );
+    await tester.tap(find.descendant(of: dialog, matching: find.text('world')));
+    await _until(
+      tester,
+      () =>
+          harness.workspace.activeText == corrected &&
+          dialog.evaluate().isEmpty,
+    );
+    expect(harness.workspace.activeBuffer!.revision, greaterThan(0));
+    harness.controller.undoActiveBuffer();
+    await _until(tester, () => harness.workspace.activeText == source);
+    harness.controller.redoActiveBuffer();
+    await _until(tester, () => harness.workspace.activeText == corrected);
+    await _until(
+      tester,
+      () =>
+          harness.spelling.state.complete &&
+          harness.spelling.misspellings.every((item) => item.word != 'wrld'),
+    );
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
   testWidgets(
     'Ctrl+N typing paints live spelling targets and corrects with undo',
     (tester) async {
@@ -223,6 +271,8 @@ void main() {
         () =>
             harness.workspace.activeText == 'hello' &&
             find.byType(BusyMarkSpellingReviewDialog).evaluate().isEmpty,
+        diagnostics: () =>
+            'text=${harness.workspace.activeText}; status=${harness.spelling.state.status}; dialog=${find.byType(BusyMarkSpellingReviewDialog).evaluate().length}',
       );
       harness.controller.undoActiveBuffer();
       await _until(
@@ -425,8 +475,7 @@ void main() {
           () => !harness.workspace.activeText.contains('helo'),
         );
         if (source.contains('&#233;')) {
-          expect(harness.workspace.activeText, contains('café'));
-          expect(harness.workspace.activeText, isNot(contains('&#233;')));
+          expect(harness.workspace.activeText, contains('caf&#233;'));
         }
         // The fixture deliberately does not contain café. Ignore it if present;
         // the previously visited wrld must not become the next review item.

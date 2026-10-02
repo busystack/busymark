@@ -36,6 +36,7 @@ class BusyMarkMappedInlineRange {
     this.isAutolink = false,
     this.isReference = false,
     this.isSourceLineBreak = false,
+    this.isRawHtmlText = false,
     this.sourceLineBreakOffset,
   });
 
@@ -53,6 +54,9 @@ class BusyMarkMappedInlineRange {
   final bool isAutolink;
   final bool isReference;
   final bool isSourceLineBreak;
+
+  /// This inline came from Markdown's literal raw-HTML text node.
+  final bool isRawHtmlText;
   final int? sourceLineBreakOffset;
 }
 

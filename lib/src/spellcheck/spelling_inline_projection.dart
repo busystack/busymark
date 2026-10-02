@@ -36,6 +36,7 @@ List<SpellingInlineProjection> projectSpellingInlineRuns({
   required List<BusyInline> inlines,
   required int sourceBase,
   SpellingSourceContext context = SpellingSourceContext.markdownProse,
+  List<BusyInline>? Function(BusyInline image)? imageDescriptionFor,
 }) {
   final pendingRuns = <_PendingInlineProjection>[];
   var text = StringBuffer();
@@ -74,6 +75,7 @@ List<SpellingInlineProjection> projectSpellingInlineRuns({
     String? tokenizationText,
     SpellingTransformationKind transformation =
         SpellingTransformationKind.identity,
+    SpellingSourceContext? sourceContext,
   }) {
     final fieldValue = inline.text;
     if (logicalText == null &&
@@ -86,6 +88,7 @@ List<SpellingInlineProjection> projectSpellingInlineRuns({
               text: fieldValue.substring(cursor, breakMatch.start),
             ),
             path,
+            sourceContext: sourceContext,
           );
         }
         emitLeaf(
@@ -94,11 +97,16 @@ List<SpellingInlineProjection> projectSpellingInlineRuns({
           logicalText: ' ',
           tokenizationText: '\n',
           transformation: SpellingTransformationKind.lineBreak,
+          sourceContext: sourceContext,
         );
         cursor = breakMatch.end;
       }
       if (cursor < fieldValue.length) {
-        emitLeaf(inline.copyWith(text: fieldValue.substring(cursor)), path);
+        emitLeaf(
+          inline.copyWith(text: fieldValue.substring(cursor)),
+          path,
+          sourceContext: sourceContext,
+        );
       }
       return;
     }
@@ -123,13 +131,13 @@ List<SpellingInlineProjection> projectSpellingInlineRuns({
         fieldEnd: fieldOffset + fieldValue.length,
         richLeafPath: List.unmodifiable(path),
         transformation: transformation,
-        context: context,
+        context: sourceContext ?? context,
       ),
     );
     fieldOffset += fieldValue.length;
   }
 
-  void visit(BusyInline inline, List<int> path) {
+  void visit(BusyInline inline, List<int> path, {List<int>? imageFieldPath}) {
     if (inline.kind == BusyInlineKind.link &&
         (inline.attributes['id']?.startsWith('fnref-') ?? false) &&
         (inline.destination?.startsWith('#fn-') ?? false)) {
@@ -139,23 +147,66 @@ List<SpellingInlineProjection> projectSpellingInlineRuns({
     }
     switch (inline.kind) {
       case BusyInlineKind.math:
-      case BusyInlineKind.code:
       case BusyInlineKind.html:
       case BusyInlineKind.writersideVariable:
       case BusyInlineKind.unknown:
         barrier();
         fieldOffset += inline.plainText.length;
         return;
+      case BusyInlineKind.code:
+        if (imageFieldPath != null) {
+          emitLeaf(
+            inline,
+            imageFieldPath,
+            sourceContext: SpellingSourceContext.markdownCodeSpan,
+          );
+        } else {
+          barrier();
+          fieldOffset += inline.plainText.length;
+        }
+        return;
       case BusyInlineKind.image:
         barrier();
-        emitLeaf(inline, path);
+        if (imageFieldPath != null) {
+          emitLeaf(inline, imageFieldPath);
+          barrier();
+          return;
+        }
+        final description = imageDescriptionFor?.call(inline);
+        if (description != null) {
+          for (final child in description) {
+            visit(child, path, imageFieldPath: path);
+          }
+          barrier();
+          return;
+        }
+        var cursor = 0;
+        for (final address in spellingPlainAddress.allMatches(inline.text)) {
+          if (address.start > cursor) {
+            emitLeaf(
+              inline.copyWith(
+                text: inline.text.substring(cursor, address.start),
+              ),
+              imageFieldPath ?? path,
+            );
+          }
+          barrier();
+          fieldOffset += address.end - address.start;
+          cursor = address.end;
+        }
+        if (cursor < inline.text.length) {
+          emitLeaf(
+            inline.copyWith(text: inline.text.substring(cursor)),
+            imageFieldPath ?? path,
+          );
+        }
         barrier();
         return;
       case BusyInlineKind.softBreak:
       case BusyInlineKind.hardBreak:
         emitLeaf(
           inline,
-          path,
+          imageFieldPath ?? path,
           logicalText: ' ',
           tokenizationText: '\n',
           transformation: SpellingTransformationKind.lineBreak,
@@ -175,7 +226,7 @@ List<SpellingInlineProjection> projectSpellingInlineRuns({
                 inline.copyWith(
                   text: inline.text.substring(cursor, address.start),
                 ),
-                path,
+                imageFieldPath ?? path,
               );
             }
             barrier();
@@ -185,13 +236,13 @@ List<SpellingInlineProjection> projectSpellingInlineRuns({
           if (cursor < inline.text.length) {
             emitLeaf(
               inline.copyWith(text: inline.text.substring(cursor)),
-              path,
+              imageFieldPath ?? path,
             );
           }
           return;
         }
         for (final (index, child) in inline.children.indexed) {
-          visit(child, [...path, index]);
+          visit(child, [...path, index], imageFieldPath: imageFieldPath);
         }
     }
   }

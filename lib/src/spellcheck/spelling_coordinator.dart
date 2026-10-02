@@ -85,6 +85,7 @@ final class SpellingCoordinator extends ChangeNotifier {
   Timer? _debounce;
   _PendingSpellingCheck? _pending;
   int _presentationGeneration = 0;
+  bool _dictionaryLoadFailed = false;
   bool _running = false;
   bool _closed = false;
   final List<_IgnoredOccurrence> _ignoredOccurrences = [];
@@ -95,6 +96,7 @@ final class SpellingCoordinator extends ChangeNotifier {
   SpellingPresentationState _state =
       const SpellingPresentationState.languageRequired();
   SpellingPresentationState get state => _state;
+  bool get dictionaryLoadFailed => _dictionaryLoadFailed;
 
   List<SpellingOccurrence> get misspellings => _state.occurrences
       .where((item) => item.outcome == SpellingCheckOutcome.rejected)
@@ -129,6 +131,7 @@ final class SpellingCoordinator extends ChangeNotifier {
     _pending?.complete();
     _pending = _PendingSpellingCheck(request);
     _presentationGeneration++;
+    _dictionaryLoadFailed = false;
     _worker.cancelChecks();
     _debounce?.cancel();
     _setState(
@@ -148,6 +151,7 @@ final class SpellingCoordinator extends ChangeNotifier {
     final pending = _PendingSpellingCheck(request, waitForCompletion: true);
     _pending = pending;
     _presentationGeneration++;
+    _dictionaryLoadFailed = false;
     _worker.cancelChecks();
     _debounce?.cancel();
     _setState(
@@ -350,6 +354,7 @@ final class SpellingCoordinator extends ChangeNotifier {
           }
           var nativeComplete = true;
           String? nativeError;
+          var dictionaryLoadFailed = false;
           const batchSize = 12;
           for (
             var start = 0;
@@ -371,6 +376,8 @@ final class SpellingCoordinator extends ChangeNotifier {
             }
             occurrences.addAll(result.occurrences);
             nativeComplete = nativeComplete && result.complete;
+            dictionaryLoadFailed =
+                dictionaryLoadFailed || result.dictionaryLoadFailed;
             nativeError ??= result.error;
             if (result.complete) {
               for (final run in batch) {
@@ -388,6 +395,7 @@ final class SpellingCoordinator extends ChangeNotifier {
           if (_closed || generation != _presentationGeneration) continue;
           final rejected = _orderedRejected(occurrences, projection.runs);
           final complete = projection.complete && nativeComplete;
+          _dictionaryLoadFailed = dictionaryLoadFailed;
           _setState(
             SpellingPresentationState(
               status: complete

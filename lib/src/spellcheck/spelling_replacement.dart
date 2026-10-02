@@ -647,6 +647,7 @@ String _encode(String value, SpellingSourceContext context) {
       RegExp(r'([\\`*_{}\[\]()<>#+.!|])'),
       (match) => '\\${match.group(1)}',
     ),
+    SpellingSourceContext.markdownCodeSpan => _encodeMarkdownCode(value),
     SpellingSourceContext.markdownSingleQuotedTitle =>
       value.replaceAll(r'\', r'\\').replaceAll("'", r"\'"),
     SpellingSourceContext.markdownDoubleQuotedTitle =>
@@ -676,6 +677,13 @@ String _encode(String value, SpellingSourceContext context) {
       ']]]]><![CDATA[>',
     ),
   };
+}
+
+String _encodeMarkdownCode(String value) {
+  if (value.contains('`') || value.contains('\n') || value.contains('\r')) {
+    throw StateError('The suggestion cannot be written inside this code span.');
+  }
+  return value;
 }
 
 List<SpellingSourceEdit> _coalesceSourceEdits(List<SpellingSourceEdit> edits) {
