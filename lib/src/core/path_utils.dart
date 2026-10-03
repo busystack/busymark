@@ -193,6 +193,12 @@ Future<WorkspaceScanResult> scanWorkspaceEntities(
       }
     } on Object catch (error) {
       traversalComplete = false;
+      InputObserver.current?.directory(
+        current.path,
+        listing,
+        complete: false,
+        failed: true,
+      );
       diagnostics.add(
         _scanWarning(
           current.path,
@@ -202,7 +208,11 @@ Future<WorkspaceScanResult> scanWorkspaceEntities(
       );
       continue;
     }
-    InputObserver.current?.directory(current.path, listing);
+    InputObserver.current?.directory(
+      current.path,
+      listing,
+      complete: !reachedTreeEntryLimit,
+    );
     listing.sort((a, b) => a.path.compareTo(b.path));
 
     for (final entity in listing) {

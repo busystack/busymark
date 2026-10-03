@@ -231,7 +231,8 @@ class WorkspaceController extends Notifier<WorkspaceState> {
   var _workspaceFileOperationDepth = 0;
   final _deferredFileMonitorEvents = <WorkspaceFileMonitorEvent>[];
   var _untitledSequence = 0;
-  final _intentionallyRemovedPaths = <String>{};
+  final _removalAuthorizations = <String, _RemovalBufferAuthorization>{};
+
   late Future<RecoverySnapshot> _recoveryStart;
   Future<void> _persistenceWrites = Future.value();
 
@@ -763,7 +764,11 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     for (final module
         in workspace.writersideProject?.modules ?? const <WritersideModule>[]) {
       final snapshot = module.inputSnapshot;
-      if (snapshot == null || !snapshot.consistent) continue;
+      if (snapshot == null ||
+          !snapshot.consistent ||
+          !snapshot.discoveryComplete) {
+        continue;
+      }
       for (final input in snapshot.reads.entries) {
         if (!input.value.override) {
           result[input.key] = (exists: true, hash: input.value.hash);
@@ -795,6 +800,13 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     final project = workspace?.writersideProject;
     if (workspace == null ||
         project == null ||
+        !project.moduleDiscoveryComplete ||
+        project.inputSnapshot?.discoveryComplete != true ||
+        project.modules.any(
+          (module) =>
+              !module.topicDiscoveryComplete ||
+              module.inputSnapshot?.discoveryComplete != true,
+        ) ||
         workspace.id != original.id ||
         state.isLoading ||
         !_preparedInputsCurrent(workspace, state.documentBuffers) ||
@@ -1490,6 +1502,10 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       );
       if (buffer != null) unawaited(_localHistory.observeOpened(buffer));
       _recordActivePreviewRevision();
+      if (buffer != null &&
+          _writersideSourceMismatch(loadedWorkspace, buffer)) {
+        _requestDerivedRefresh(rebuildPreview: true);
+      }
       await _startMonitoring(loadedWorkspace);
       _schedulePersistence();
       _resetSaveTracking();
@@ -1560,6 +1576,10 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       );
       if (buffer != null) unawaited(_localHistory.observeOpened(buffer));
       _recordActivePreviewRevision();
+      if (buffer != null &&
+          _writersideSourceMismatch(loadedWorkspace, buffer)) {
+        _requestDerivedRefresh(rebuildPreview: true);
+      }
       await _startMonitoring(loadedWorkspace);
       _schedulePersistence();
       _resetSaveTracking();
@@ -1811,10 +1831,11 @@ class WorkspaceController extends Notifier<WorkspaceState> {
 
   Future<bool> deleteWorkspaceEntity(String path) async {
     if (!await _protectWorkspaceEntityBeforeDelete(path)) return false;
-    _intentionallyRemovedPaths.add(p.normalize(path));
     try {
       final deleted = await _runWorkspaceFileOperation((workspace) async {
+        _authorizeRemovedBuffers(p.normalize(path), workspace);
         await _service.deleteEntity(workspace, path);
+        _removalAuthorizations[p.normalize(path)]?.committed = true;
         return null;
       });
       if (deleted) {
@@ -1822,7 +1843,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       }
       return deleted;
     } finally {
-      _intentionallyRemovedPaths.remove(p.normalize(path));
+      _removalAuthorizations.remove(p.normalize(path));
     }
   }
 
@@ -1913,7 +1934,8 @@ class WorkspaceController extends Notifier<WorkspaceState> {
   }
 
   void _requireCleanWritersideProject(Workspace workspace) {
-    if (state.workspace?.id != workspace.id ||
+    if (!ref.mounted ||
+        state.workspace?.id != workspace.id ||
         state.dirtyBuffers.any(
           (buffer) =>
               buffer.filePath != null &&
@@ -2302,11 +2324,19 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       return null;
     }
     WritersideTopicRemovalResult? result;
-    if (deleting) _intentionallyRemovedPaths.add(deletedPath);
     try {
       final success = await _runWorkspaceFileOperation((workspace) async {
-        void validate(Iterable<String> _) =>
-            _requireCleanWritersideProject(workspace);
+        final removalRevision = _activeDocumentRevision;
+        void validate(Iterable<String> _) {
+          if (!_isCurrentActiveDocumentOperation(removalRevision)) {
+            throw const BusyMarkException(
+              'writerside.topic-file.project-buffers-dirty',
+            );
+          }
+          _requireCleanWritersideProject(workspace);
+          if (deleting) _authorizeRemovedBuffers(deletedPath, workspace);
+        }
+
         validate(const []);
         result = await _service.applyWritersideTopicRemoval(
           workspace,
@@ -2314,13 +2344,16 @@ class WorkspaceController extends Notifier<WorkspaceState> {
           validateBeforeCommit: validate,
         );
         if (result?.deletedFile == true) {
+          _removalAuthorizations[deletedPath]?.committed = true;
           await _localHistory.markDeleted(deletedPath, recursive: false);
         }
         return null;
       });
       return success ? result : null;
     } finally {
-      if (deleting) _intentionallyRemovedPaths.remove(deletedPath);
+      if (deleting) {
+        _removalAuthorizations.remove(deletedPath);
+      }
     }
   }
 
@@ -2590,7 +2623,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     try {
       final prepared = await _service.withDocumentSources(cleared, const {});
       if (prepared.writersideProject != null &&
-          !await prepared.writersideProject!.inputsMatchDisk()) {
+          !await prepared.writersideProject!.observedInputsMatchDisk()) {
         throw WritersideInputsChanged(prepared.rootPath);
       }
       if (ref.mounted &&
@@ -4713,9 +4746,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         if (path == null) {
           continue;
         }
-        if (_intentionallyRemovedPaths.any(
-          (removed) => p.equals(path, removed) || p.isWithin(removed, path),
-        )) {
+        if (_authorizedRemovedBuffer(requested)) {
           continue;
         }
         final exists =
@@ -4920,15 +4951,44 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         state.workspace?.id == workspaceId;
   }
 
+  void _authorizeRemovedBuffers(String path, Workspace workspace) {
+    _removalAuthorizations[path] = _RemovalBufferAuthorization(workspace.id, [
+      for (final b in state.documentBuffers)
+        if (b.filePath != null &&
+            (p.equals(b.filePath!, path) || p.isWithin(path, b.filePath!)))
+          b,
+    ]);
+  }
+
+  bool _authorizedRemovedBuffer(DocumentBuffer buffer) =>
+      _removalAuthorizations.values.any(
+        (authorization) =>
+            authorization.committed &&
+            authorization.workspaceId == state.workspace?.id &&
+            authorization.buffers.any(
+              (authorized) =>
+                  !buffer.isDirty &&
+                  _workspaceRefreshRequestStillMatches(buffer, authorized),
+            ),
+      );
+
   List<DocumentBuffer> _workspaceRefreshLiveBuffers() => [
     for (final buffer in state.documentBuffers)
-      if (buffer.filePath == null ||
-          !_intentionallyRemovedPaths.any(
-            (removed) =>
-                p.equals(buffer.filePath!, removed) ||
-                p.isWithin(removed, buffer.filePath!),
-          ))
-        buffer,
+      if (!_authorizedRemovedBuffer(buffer))
+        // A committed removal authorizes only the captured clean revision.
+        // Edits accepted afterwards remain recoverable, including edits made
+        // while reconciliation is awaiting model work.
+        if (buffer.filePath != null &&
+            _removalAuthorizations.entries.any(
+              (entry) =>
+                  entry.value.committed &&
+                  entry.value.workspaceId == state.workspace?.id &&
+                  (p.equals(buffer.filePath!, entry.key) ||
+                      p.isWithin(entry.key, buffer.filePath!)),
+            ))
+          buffer.copyWith(diskState: DocumentDiskState.deleted)
+        else
+          buffer,
   ];
 
   Future<void> _discardWorkspaceRefreshReplacementsWithStaleDisk(
@@ -4954,6 +5014,15 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     List<DocumentBuffer> buffers,
     DocumentBuffer? activeBuffer,
   ) async {
+    // Use the live selection: another context can be selected while the disk
+    // model is loading. Existing input/revision guards still govern publication.
+    final live = state.workspace;
+    if (live != null && live.id == refreshedWorkspace.id) {
+      refreshedWorkspace = _service.preserveWritersideContext(
+        refreshedWorkspace,
+        live,
+      );
+    }
     final nextWorkspace = refreshedWorkspace.copyWith(
       activeFilePath: activeBuffer?.filePath,
       activeFileSnapshot: activeBuffer?.diskSnapshot,
@@ -4977,7 +5046,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         if (buffer.filePath != null) buffer.filePath!: buffer.text,
     });
     if (prepared.writersideProject != null &&
-        !await prepared.writersideProject!.inputsMatchDisk()) {
+        !await prepared.writersideProject!.observedInputsMatchDisk()) {
       return nextWorkspace.copyWith();
     }
     _preparedInputs[prepared] = inputs;
@@ -5174,7 +5243,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
             if (buffer.filePath != null) buffer.filePath!: buffer.text,
         });
         if (prepared.writersideProject != null &&
-            !await prepared.writersideProject!.inputsMatchDisk()) {
+            !await prepared.writersideProject!.observedInputsMatchDisk()) {
           return workspace.copyWith();
         }
         _preparedInputs[prepared] = inputs;
@@ -5355,15 +5424,17 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     }
   }
 
+  bool _writersideSourceMismatch(Workspace workspace, DocumentBuffer buffer) {
+    final context = resolveWorkspaceDocumentContext(workspace, buffer);
+    final topic = context.writersideModule?.topics
+        .where((topic) => topic.filePath == context.diskPath)
+        .firstOrNull;
+    return topic != null && topic.document.source != buffer.text;
+  }
+
   PreviewDocument? _safePreview(Workspace workspace, DocumentBuffer buffer) {
     try {
-      final context = resolveWorkspaceDocumentContext(workspace, buffer);
-      if (context.isWritersideOwned &&
-          context.writersideTopic != null &&
-          context.writersideTopic!.document.source != buffer.text) {
-        _requestDerivedRefresh(rebuildPreview: true, refreshOutline: false);
-        return null;
-      }
+      if (_writersideSourceMismatch(workspace, buffer)) return null;
       return _service.buildDocumentPreview(workspace, buffer);
     } on Object {
       return PreviewDocument(
@@ -5944,4 +6015,11 @@ class _PendingPreparation {
   final Future<Workspace> Function() run;
   final Workspace fallback;
   final completion = Completer<Workspace>();
+}
+
+class _RemovalBufferAuthorization {
+  _RemovalBufferAuthorization(this.workspaceId, this.buffers);
+  final String workspaceId;
+  final List<DocumentBuffer> buffers;
+  bool committed = false;
 }

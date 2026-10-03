@@ -21,6 +21,9 @@ class WritersideInputSnapshot {
     required this.consistent,
     this.limitedReads = const {},
     this.failedReads = const {},
+    this.discoveryComplete = true,
+    this.incompleteDirectories = const {},
+    this.treeEntryLimit,
   });
 
   final String rootPath;
@@ -33,6 +36,9 @@ class WritersideInputSnapshot {
   final Map<String, ({int bytes, bool atLeast})> limitedReads;
   final Set<String> failedReads;
   final bool consistent;
+  final bool discoveryComplete;
+  final Map<String, ({int count, bool failed})> incompleteDirectories;
+  final int? treeEntryLimit;
 
   WritersideInputSnapshot withDiscovery(WritersideInputSnapshot next) =>
       WritersideInputSnapshot(
@@ -43,16 +49,44 @@ class WritersideInputSnapshot {
         limitedReads: {...limitedReads, ...next.limitedReads},
         failedReads: {...failedReads, ...next.failedReads},
         consistent: consistent && next.consistent,
+        discoveryComplete: discoveryComplete && next.discoveryComplete,
+        incompleteDirectories: {
+          for (final entry in incompleteDirectories.entries)
+            if (!next.directories.containsKey(entry.key))
+              entry.key: entry.value,
+          ...next.incompleteDirectories,
+        },
+        treeEntryLimit: treeEntryLimit ?? next.treeEntryLimit,
       );
 
   Future<bool> isCurrent() =>
       const WritersideExecution().run(_matchSnapshot, this);
 
+  /// Verifies consumed readable inputs for presentation only. This cannot
+  /// establish an exhaustive inventory, authorize removal, acknowledge monitor
+  /// events, or turn a limited result into a complete model.
+  Future<bool> observedInputsCurrent() =>
+      const WritersideExecution().run(_matchObservedSnapshot, this);
+
   Future<bool> matchesDisk({
     bool requireDiskSources = false,
     Set<String> ignoredPaths = const {},
+  }) => _matchesInputs(
+    requireDiskSources: requireDiskSources,
+    ignoredPaths: ignoredPaths,
+  );
+
+  Future<bool> matchesObservedInputs() =>
+      _matchesInputs(allowIncompleteDiscovery: true);
+
+  Future<bool> _matchesInputs({
+    bool requireDiskSources = false,
+    Set<String> ignoredPaths = const {},
+    bool allowIncompleteDiscovery = false,
   }) async {
-    if (!consistent) return false;
+    if (!consistent || (!discoveryComplete && !allowIncompleteDiscovery)) {
+      return false;
+    }
     try {
       final anchor = await captureCanonicalDirectoryAnchor(rootPath);
       if (!p.equals(anchor.rootPath, rootPath)) return false;
@@ -126,9 +160,23 @@ class WritersideInputSnapshot {
           allowRoot: true,
         );
         if (resolution.type != FileSystemEntityType.directory) return false;
-        final entries = await Directory(
-          resolution.path,
-        ).list(followLinks: false).take(entry.value.length + 128).toList();
+        final partial = incompleteDirectories[entry.key];
+        if (partial?.failed == true) {
+          // A failed listing is authoritative only while the bounded attempt
+          // still fails. Successful access must trigger rediscovery.
+          try {
+            await Directory(
+              resolution.path,
+            ).list(followLinks: false).take(partial!.count + 1).toList();
+            return false;
+          } on FileSystemException {
+            continue;
+          }
+        }
+        final entries = await Directory(resolution.path)
+            .list(followLinks: false)
+            .take(partial?.count ?? entry.value.length + 128)
+            .toList();
         if (entries.length >= entry.value.length + 128) return false;
         final ignoredNames = {
           for (final path in ignoredPaths)
@@ -178,10 +226,13 @@ List<String> inputDirectoryEntries(Iterable<FileSystemEntity> entries) => [
 ]..sort();
 
 class WritersideInputRecorder extends InputObserver {
-  WritersideInputRecorder(this.rootPath);
+  WritersideInputRecorder(this.rootPath, {this.treeEntryLimit});
   WritersideInputRecorder.fromSnapshot(WritersideInputSnapshot snapshot)
     : rootPath = snapshot.rootPath,
-      _consistent = snapshot.consistent {
+      _consistent = snapshot.consistent,
+      _discoveryComplete = snapshot.discoveryComplete,
+      treeEntryLimit = snapshot.treeEntryLimit {
+    _incompleteDirectories.addAll(snapshot.incompleteDirectories);
     _types.addAll(snapshot.types);
     _reads.addAll(snapshot.reads);
     _directories.addAll(snapshot.directories);
@@ -190,6 +241,9 @@ class WritersideInputRecorder extends InputObserver {
   }
 
   String rootPath;
+  final int? treeEntryLimit;
+  bool _discoveryComplete = true;
+  final _incompleteDirectories = <String, ({int count, bool failed})>{};
   final _types = <String, FileSystemEntityType>{};
   final _reads =
       <String, ({String hash, int bytes, bool override, String? textHash})>{};
@@ -238,8 +292,17 @@ class WritersideInputRecorder extends InputObserver {
   void readFailed(String path) => _failedReads.add(path);
 
   @override
-  void directory(String path, Iterable<FileSystemEntity> entries) {
-    final value = inputDirectoryEntries(entries);
+  void directory(
+    String path,
+    Iterable<FileSystemEntity> entries, {
+    bool complete = true,
+    bool failed = false,
+  }) {
+    final listing = entries.toList();
+    if (!complete) {
+      _incompleteDirectories[path] = (count: listing.length, failed: failed);
+    }
+    final value = inputDirectoryEntries(listing);
     final before = _directories[path];
     if (before != null && jsonEncode(before) != jsonEncode(value)) {
       _consistent = false;
@@ -248,7 +311,7 @@ class WritersideInputRecorder extends InputObserver {
   }
 
   @override
-  void incomplete() => _consistent = false;
+  void incomplete() => _discoveryComplete = false;
 
   WritersideInputSnapshot get snapshot => WritersideInputSnapshot(
     rootPath: rootPath,
@@ -261,6 +324,9 @@ class WritersideInputRecorder extends InputObserver {
     limitedReads: Map.unmodifiable(_limitedReads),
     failedReads: Set.unmodifiable(_failedReads),
     consistent: _consistent,
+    discoveryComplete: _discoveryComplete,
+    incompleteDirectories: Map.unmodifiable(_incompleteDirectories),
+    treeEntryLimit: treeEntryLimit,
   );
 }
 
@@ -272,3 +338,6 @@ class WritersideInputsChanged extends BusyMarkException {
     : super('writerside.topic-file.tree-changed', args: {'path': rootPath});
   final String rootPath;
 }
+
+Future<bool> _matchObservedSnapshot(WritersideInputSnapshot snapshot) =>
+    snapshot.matchesObservedInputs();

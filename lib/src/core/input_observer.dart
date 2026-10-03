@@ -13,6 +13,11 @@ abstract class InputObserver {
   void read(String path, List<int> bytes, {bool override = false});
   void limitedRead(String path, int bytes, {bool atLeast = false});
   void readFailed(String path);
-  void directory(String path, Iterable<FileSystemEntity> entries);
+  void directory(
+    String path,
+    Iterable<FileSystemEntity> entries, {
+    bool complete = true,
+    bool failed = false,
+  });
   void incomplete();
 }

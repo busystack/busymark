@@ -17,6 +17,175 @@ import 'package:path/path.dart' as p;
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+  test('correction discovery refresh preserves a valid second instance', () async {
+    final root = await syntheticProject();
+    await File(p.join(root.path, 'writerside.cfg')).writeAsString(
+      '<ihp name="Test"><topics dir="topics"/><instance src="guide.tree"/><instance src="second.tree"/></ihp>',
+    );
+    await File(p.join(root.path, 'second.tree')).writeAsString(
+      '<instance-profile id="second" name="Second" start-page="other.md"><toc-element topic="other.md"/></instance-profile>',
+    );
+    await File(p.join(root.path, 'topics/other.md')).writeAsString(
+      '# Other\n\n<if instance="second">Second-only content</if>\n',
+    );
+    const service = WorkspaceService();
+    var workspace = await service.openPath(root.path);
+    workspace = await service.selectWritersideContext(
+      workspace,
+      moduleId: workspace.writersideProject!.activeModuleId!,
+      instanceId: 'second',
+    );
+    final buffer = await responsivenessBuffer(
+      service,
+      p.join(root.path, 'topics/other.md'),
+    );
+    await File(p.join(root.path, 'topics/added.md')).writeAsString('# Added\n');
+    final prepared = await service.prepareDocument(workspace, buffer, {
+      buffer.filePath!: buffer.text,
+    });
+    expect(prepared.writersideProject!.activeInstanceId, 'second');
+    expect(prepared.writersideProject!.activeInstance!.topicFileSet, {
+      'other.md',
+    });
+    expect(
+      service
+          .buildDocumentPreview(prepared, buffer)!
+          .blocks
+          .map((b) => b.text)
+          .join('\n'),
+      contains('Second-only content'),
+    );
+    final first = await service.selectWritersideContext(
+      prepared,
+      moduleId: prepared.writersideProject!.activeModuleId!,
+      instanceId: 'guide',
+    );
+    expect(
+      service
+          .buildDocumentPreview(first, buffer)!
+          .blocks
+          .map((b) => b.text)
+          .join('\n'),
+      isNot(contains('Second-only content')),
+    );
+  });
+
+  for (final change in [
+    'selected instance removed',
+    'intentional selection',
+    'another module',
+  ]) {
+    test('correction discovery selection fallback: $change', () async {
+      final root = await syntheticProject();
+      final config = File(p.join(root.path, 'writerside.cfg'));
+      await config.writeAsString(
+        '<ihp name="Test"><topics dir="topics"/><instance src="guide.tree"/><instance src="second.tree"/></ihp>',
+      );
+      final second = File(p.join(root.path, 'second.tree'));
+      await second.writeAsString(
+        '<instance-profile id="second" start-page="other.md"><toc-element topic="other.md"/></instance-profile>',
+      );
+      const service = WorkspaceService();
+      var workspace = await service.openPath(root.path);
+      workspace = await service.selectWritersideContext(
+        workspace,
+        moduleId: workspace.writersideProject!.activeModuleId!,
+        instanceId: 'second',
+      );
+      var path = p.join(root.path, 'topics/other.md');
+      switch (change) {
+        case 'selected instance removed':
+          await config.writeAsString(
+            '<ihp name="Test"><topics dir="topics"/><instance src="guide.tree"/></ihp>',
+          );
+          await second.delete();
+        case 'intentional selection':
+          workspace = await service.selectWritersideContext(
+            workspace,
+            moduleId: workspace.writersideProject!.activeModuleId!,
+            instanceId: 'guide',
+          );
+          await File(
+            p.join(root.path, 'topics/added.md'),
+          ).writeAsString('# Added\n');
+        case 'another module':
+          final nested = Directory(p.join(root.path, 'nested'));
+          await nested.create();
+          await Directory(p.join(nested.path, 'topics')).create();
+          await File(p.join(nested.path, 'writerside.cfg')).writeAsString(
+            '<ihp name="Nested"><topics dir="topics"/><instance src="nested.tree"/></ihp>',
+          );
+          await File(p.join(nested.path, 'nested.tree')).writeAsString(
+            '<instance-profile id="nested" start-page="nested.md"><toc-element topic="nested.md"/></instance-profile>',
+          );
+          path = p.join(nested.path, 'topics/nested.md');
+          await File(path).writeAsString('# Nested\n');
+      }
+      final buffer = await responsivenessBuffer(service, path);
+      final prepared = await service.prepareDocument(workspace, buffer, {
+        path: buffer.text,
+      });
+      expect(
+        prepared.writersideProject!.activeInstance!.id,
+        change == 'another module' ? 'nested' : 'guide',
+      );
+      expect(
+        prepared.writersideProject!.activeModule!.rootPath,
+        change == 'another module' ? p.join(root.path, 'nested') : root.path,
+      );
+      expect(prepared.markdown!.filePath, path);
+    });
+  }
+  test(
+    'correction incomplete observations are presentation only and reject changed reads',
+    () async {
+      final root = await syntheticProject();
+      final loader = WritersideModuleService(
+        scanOptions: const WorkspaceScanOptions(maxTreeEntries: 2),
+      );
+      final module = await loader.load(root.path);
+      expect(module.topicDiscoveryComplete, isFalse);
+      expect(module.inputSnapshot!.discoveryComplete, isFalse);
+      expect(module.inputSnapshot!.consistent, isTrue);
+      expect(await module.inputSnapshot!.isCurrent(), isFalse);
+      expect(await module.inputSnapshot!.observedInputsCurrent(), isTrue);
+      final file = File(p.join(root.path, 'topics/home.md'));
+      await file.writeAsString('# HOME\n');
+      expect(await module.inputSnapshot!.observedInputsCurrent(), isFalse);
+      final recorder = WritersideInputRecorder(root.path);
+      recorder.source(file.path, 'first');
+      recorder.incomplete();
+      recorder.source(file.path, 'later');
+      expect(recorder.snapshot.consistent, isFalse);
+      expect(await recorder.snapshot.observedInputsCurrent(), isFalse);
+      expect(await recorder.snapshot.isCurrent(), isFalse);
+    },
+  );
+
+  test(
+    'correction limited inventory retains raw counts for excluded Git entries',
+    () async {
+      final root = await syntheticProject();
+      await Directory(p.join(root.path, '.git')).create();
+      final listing = await root.list(followLinks: false).toList();
+      final recorder = WritersideInputRecorder(
+        root.path,
+        treeEntryLimit: listing.length,
+      );
+      recorder.directory(root.path, listing, complete: false);
+      recorder.incomplete();
+      expect(
+        recorder.snapshot.directories[root.path]!.length,
+        listing.length - 1,
+      );
+      expect(
+        recorder.snapshot.incompleteDirectories[root.path]!.count,
+        listing.length,
+      );
+      expect(await recorder.snapshot.observedInputsCurrent(), isTrue);
+      expect(await recorder.snapshot.isCurrent(), isFalse);
+    },
+  );
   test('rejected source size remains an input to freshness checking', () async {
     final root = await syntheticProject();
     final source = File(p.join(root.path, 'topics/example.txt'));

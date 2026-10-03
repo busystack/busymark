@@ -2426,6 +2426,9 @@ class WritersideTopicRemovalService {
       }
       validateBeforeCommit?.call();
       await verifyBeforeCommit?.call();
+      // Disk verification awaits; editor/workspace authorization must be live
+      // at the mutation boundary as well as at the inexpensive early check.
+      validateBeforeCommit?.call();
       final atomicApi = LinuxAtomicFileApi.instance;
       if (atomicApi.isAvailable) {
         final exchangeError = atomicApi.exchange(temporary.path, checked.path);
@@ -2521,6 +2524,7 @@ class WritersideTopicRemovalService {
         try {
           validateBeforeCommit?.call();
           await verifyBeforeCommit?.call();
+          validateBeforeCommit?.call();
           quarantined = await File(resolution.path).rename(candidate.path);
           break;
         } on FileSystemException {
@@ -2552,6 +2556,7 @@ class WritersideTopicRemovalService {
       }
       validateBeforeCommit?.call();
       await verifyBeforeDelete?.call();
+      validateBeforeCommit?.call();
       await quarantined.delete();
       quarantined = null;
     } on Object catch (error, stackTrace) {

@@ -891,6 +891,19 @@ class WritersideProject {
     ),
   );
 
+  /// Consumed-input checks for presenting a limited, diagnostic model. Full
+  /// freshness and mutation checks continue to use inputsMatchDisk.
+  Future<bool> observedInputsMatchDisk() => const WritersideExecution().run(
+    _checkProjectInputs,
+    _ProjectInputs(
+      inputSnapshot,
+      [for (final m in modules) m.inputSnapshot],
+      false,
+      const {},
+      allowIncompleteDiscovery: true,
+    ),
+  );
+
   WritersideModule? get activeModule {
     for (final module in modules) {
       if (_moduleId(module) == activeModuleId) {
@@ -1128,7 +1141,10 @@ class WritersideProjectService {
     String projectRoot, {
     String? preferredModuleRoot,
   }) async {
-    final recorder = WritersideInputRecorder(normalizePath(projectRoot));
+    final recorder = WritersideInputRecorder(
+      normalizePath(projectRoot),
+      treeEntryLimit: scanOptions.maxTreeEntries,
+    );
     final project = await recorder.observe(
       () => _loadHere(projectRoot, preferredModuleRoot: preferredModuleRoot),
     );
@@ -1649,8 +1665,10 @@ class _ProjectInputs {
     this.project,
     this.modules,
     this.requireDiskSources,
-    this.ignoredPaths,
-  );
+    this.ignoredPaths, {
+    this.allowIncompleteDiscovery = false,
+  });
+  final bool allowIncompleteDiscovery;
   final WritersideInputSnapshot? project;
   final List<WritersideInputSnapshot?> modules;
   final bool requireDiskSources;
@@ -1658,21 +1676,15 @@ class _ProjectInputs {
 }
 
 Future<bool> _checkProjectInputs(_ProjectInputs input) async {
-  if (input.project == null ||
-      !await input.project!.matchesDisk(
-        requireDiskSources: input.requireDiskSources,
-        ignoredPaths: input.ignoredPaths,
-      )) {
-    return false;
-  }
-  for (final module in input.modules) {
-    if (module == null ||
-        !await module.matchesDisk(
-          requireDiskSources: input.requireDiskSources,
-          ignoredPaths: input.ignoredPaths,
-        )) {
-      return false;
-    }
+  for (final snapshot in [input.project, ...input.modules]) {
+    if (snapshot == null) return false;
+    final matches = input.allowIncompleteDiscovery
+        ? await snapshot.matchesObservedInputs()
+        : await snapshot.matchesDisk(
+            requireDiskSources: input.requireDiskSources,
+            ignoredPaths: input.ignoredPaths,
+          );
+    if (!matches) return false;
   }
   return true;
 }

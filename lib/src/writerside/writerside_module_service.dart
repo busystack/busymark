@@ -100,7 +100,10 @@ class WritersideModuleService {
     _ModuleLoadInput input, {
     required bool includePlatformSources,
   }) async {
-    final recorder = WritersideInputRecorder(input.rootPath);
+    final recorder = WritersideInputRecorder(
+      input.rootPath,
+      treeEntryLimit: input.options.maxTreeEntries,
+    );
     final loaded = await recorder.observe(
       () => _loadHere(
         input.rootPath,
