@@ -3257,10 +3257,12 @@ void main() {
     await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
     await tester.pump();
     await tester.pump(const Duration(seconds: 1));
-    await tester.tap(
-      find.descendant(
-        of: find.byType(BusyMarkDialogShell),
-        matching: find.text(l10n.createMarkdownFile),
+    await tester.runAsync(
+      () => tester.tap(
+        find.descendant(
+          of: find.byType(BusyMarkDialogShell),
+          matching: find.text(l10n.createMarkdownFile),
+        ),
       ),
     );
     await tester.pump();
@@ -3277,7 +3279,9 @@ Paragraph with *emphasis*.
 code
     ```
 ''';
-    controller.updateActiveText(source);
+    await tester.runAsync(() async {
+      controller.updateActiveText(source);
+    });
     await tester.runAsync(() => controller.validateActive());
     for (var index = 0; index < 30; index += 1) {
       await tester.pump(const Duration(milliseconds: 100));
@@ -3364,7 +3368,9 @@ code
     );
 
     await tester.runAsync(controller.createMarkdownFile);
-    controller.updateActiveText(source);
+    await tester.runAsync(() async {
+      controller.updateActiveText(source);
+    });
     await tester.runAsync(() => controller.validateActive());
     await tester.pump(const Duration(milliseconds: 500));
     final secondState = container.read(workspaceControllerProvider);

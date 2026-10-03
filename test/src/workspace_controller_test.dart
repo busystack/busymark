@@ -24,6 +24,7 @@ import 'package:busymark/src/workspace/workspace_service.dart';
 import 'package:busymark/src/writerside/writerside_project_creator.dart';
 import 'package:busymark/src/writerside/writerside_instance_service.dart';
 import 'package:busymark/src/writerside/writerside_model.dart';
+import '../support/writerside_responsiveness.dart' as responsiveness;
 import 'package:busymark/src/writerside/writerside_topic_creator.dart';
 import 'package:busymark/src/writerside/writerside_topic_file_editor.dart';
 import 'package:busymark/src/writerside/writerside_topic_removal_service.dart';
@@ -34,6 +35,7 @@ import 'package:path/path.dart' as p;
 import 'package:xml/xml.dart';
 
 void main() {
+  _registerResponsivenessTests();
   test(
     'Welcome creation cannot overwrite an edit made during history flush',
     () async {
@@ -4642,6 +4644,7 @@ class _ControlledFileMonitor extends WorkspaceFileMonitor {
   final _events = StreamController<WorkspaceFileMonitorEvent>.broadcast();
   @override
   Stream<WorkspaceFileMonitorEvent> get events => _events.stream;
+  void emitEvent(WorkspaceFileMonitorEvent event) => _events.add(event);
   void emit(String path) => _events.add(
     WorkspaceFileMonitorEvent(
       kind: WorkspaceFileEventKind.workspaceChanged,
@@ -4663,7 +4666,7 @@ class _TocCreationMonitorService extends WorkspaceService {
   _TocCreationMonitorService(this.monitor);
   final _ControlledFileMonitor monitor;
   @override
-  Future<Workspace> createWritersideTopic(
+  Future<WritersideTopicCreateResult> createWritersideTopic(
     Workspace workspace,
     WritersideTopicCreateRequest request, {
     String? instanceTreePath,
@@ -4750,5 +4753,722 @@ class _BlockingRefreshWorkspaceService extends WorkspaceService {
     }
     completedReparseCount++;
     return reparsed;
+  }
+}
+
+Future<void> _waitForPublishedWorkspace(
+  ProviderContainer container,
+  bool Function(WorkspaceState) predicate,
+) async {
+  final completed = Completer<void>();
+  final subscription = container.listen<WorkspaceState>(
+    workspaceControllerProvider,
+    (previous, next) {
+      if (predicate(next) && !completed.isCompleted) {
+        completed.complete();
+      }
+    },
+    fireImmediately: true,
+  );
+  try {
+    await completed.future;
+  } finally {
+    subscription.close();
+  }
+}
+
+void _registerResponsivenessTests() {
+  test(
+    'Writerside tab preparation loads once and current activation loads zero',
+    () async {
+      final root = await responsiveness.syntheticProject();
+      final loader = responsiveness.CountingModule();
+      final harness = await _createControllerHarness(
+        service: WorkspaceService(writersideService: loader),
+        fileMonitor: _ControlledFileMonitor(),
+      );
+      await harness.settingsController.setAutoSave(false);
+      await harness.settingsController.setValidateOnEdit(false);
+      final controller = harness.controller._notifier;
+      await controller.openPath(root.path);
+      loader.loads = 0;
+      expect(
+        await controller.openActiveFile(p.join(root.path, 'topics/other.md')),
+        isTrue,
+      );
+      expect(loader.loads, 1);
+      final other = controller.state.activeBuffer!;
+      loader.loads = 0;
+      expect(
+        await controller.openActiveFile(p.join(root.path, 'topics/home.md')),
+        isTrue,
+      );
+      expect(loader.loads, 0);
+      expect(controller.state.workspace!.markdown!.title, 'Home');
+      expect(controller.state.preview, isNotNull);
+      await controller.closeDocumentBuffer(other.id);
+      expect(
+        controller.state.workspace!.sourceOverrides,
+        isNot(contains(other.filePath)),
+      );
+    },
+  );
+  test(
+    'configuration preview does not reparse in a derived loop and closing all buffers relinquishes overlays',
+    () async {
+      final root = await responsiveness.syntheticProject();
+      final loader = responsiveness.CountingModule();
+      final harness = await _createControllerHarness(
+        service: WorkspaceService(writersideService: loader),
+        fileMonitor: _ControlledFileMonitor(),
+      );
+      await harness.settingsController.setAutoSave(false);
+      await harness.settingsController.setValidateOnEdit(false);
+      final controller = harness.controller._notifier;
+      await controller.openPath(root.path);
+      final homeId = controller.state.activeBuffer!.id;
+      await controller.openActiveFile(p.join(root.path, 'writerside.cfg'));
+      final configId = controller.state.activeBuffer!.id;
+      expect(controller.state.preview, isNotNull);
+      await controller.closeDocumentBuffer(homeId);
+      await controller.closeDocumentBuffer(configId);
+      expect(controller.state.documentBuffers, isEmpty);
+      expect(controller.state.workspace!.sourceOverrides, isEmpty);
+      expect(
+        controller.state.workspace!.writersideModule!.sourceOverrides,
+        isEmpty,
+      );
+    },
+  );
+  test(
+    'closing all Writerside tabs completes override relinquishment',
+    () async {
+      final root = await responsiveness.syntheticProject();
+      final loader = responsiveness.CountingModule();
+      final harness = await _createControllerHarness(
+        service: WorkspaceService(writersideService: loader),
+        fileMonitor: _ControlledFileMonitor(),
+      );
+      final controller = harness.controller._notifier;
+      await controller.openPath(root.path);
+      await controller.openActiveFile(p.join(root.path, 'topics/other.md'));
+      loader.loads = 0;
+      expect(await controller.closeAllOpenFileTabs(), isTrue);
+      expect(controller.state.documentBuffers, isEmpty);
+      expect(controller.state.workspace!.sourceOverrides, isEmpty);
+      expect(
+        controller.state.workspace!.writersideModule!.sourceOverrides,
+        isEmpty,
+      );
+      expect(loader.loads, 1);
+    },
+  );
+  test(
+    'closed-tab reconciliation rejects obsolete disk models and keeps tabs closed',
+    () async {
+      final root = await responsiveness.syntheticProject();
+      final loader = responsiveness.CountingModule();
+      final service = _GatedClosedSourcesService(loader);
+      final harness = await _createControllerHarness(
+        service: service,
+        fileMonitor: _ControlledFileMonitor(),
+      );
+      final controller = harness.controller._notifier;
+      await controller.openPath(root.path);
+      await controller.openActiveFile(p.join(root.path, 'topics/other.md'));
+      final originalModel = controller.state.workspace!.writersideModule;
+      service.pause();
+      final close = controller.closeAllOpenFileTabs();
+      await service.started.future;
+      await File(
+        p.join(root.path, 'topics/other.md'),
+      ).writeAsString('# Latest dependency\n');
+      service.release();
+      expect(await close, isTrue);
+      // A stale closed-buffer completion must not replace the live model.
+      expect(controller.state.workspace!.writersideModule, same(originalModel));
+      expect(
+        controller.state.workspace!.writersideModule!
+            .topicByReference('other.md')!
+            .title,
+        'Other',
+      );
+      await controller.refreshWorkspaceFromDiskPreservingOpenTabs();
+      expect(controller.state.documentBuffers, isEmpty);
+      expect(controller.state.activeBuffer, isNull);
+      expect(controller.state.workspace!.activeFilePath, isNull);
+      expect(
+        controller.state.workspace!.writersideModule!
+            .topicByReference('other.md')!
+            .title,
+        'Latest dependency',
+      );
+      service.pause();
+      final refresh = controller.refreshWorkspaceFromDiskPreservingOpenTabs();
+      await service.started.future;
+      await File(
+        p.join(root.path, 'topics/other.md'),
+      ).writeAsString('# Current dependency\n');
+      service.release();
+      expect(await refresh, isTrue);
+      expect(controller.state.documentBuffers, isEmpty);
+      expect(controller.state.workspace!.activeFilePath, isNull);
+      expect(
+        controller.state.workspace!.writersideModule!
+            .topicByReference('other.md')!
+            .title,
+        'Current dependency',
+      );
+      expect(controller.state.workspace!.sourceOverrides, isEmpty);
+    },
+  );
+  for (final change in [
+    'active',
+    'inactive',
+    'closure',
+    'workspace',
+    'external',
+    'disposal',
+  ]) {
+    test(
+      'Writerside preparation rejects obsolete full input state: $change',
+      () async {
+        final root = await responsiveness.syntheticProject();
+        final monitor = _ControlledFileMonitor();
+        final service = _GatedPreparationService(
+          responsiveness.CountingModule(),
+        );
+        final harness = await _createControllerHarness(
+          service: service,
+          fileMonitor: monitor,
+        );
+        await harness.settingsController.setAutoSave(false);
+        await harness.settingsController.setValidateOnEdit(false);
+        final controller = harness.controller._notifier;
+        final home = p.join(root.path, 'topics/home.md');
+        final other = p.join(root.path, 'topics/other.md');
+        await controller.openPath(root.path);
+        await controller.openActiveFile(other);
+        final otherId = controller.state.activeBuffer!.id;
+        await controller.openActiveFile(home);
+        service.pause();
+        final pending = controller.openActiveFile(other);
+        await service.started.future;
+        switch (change) {
+          case 'active':
+            harness.controller.updateActiveSourceText('# Live active\n');
+          case 'inactive':
+            controller.updateDocumentText(otherId, '# Live inactive\n');
+          case 'closure':
+            await controller.closeDocumentBuffer(otherId);
+          case 'workspace':
+            await controller.openPath('test/fixtures/markdown/basic.md');
+          case 'external':
+            await File(home).writeAsString('# External\n');
+            monitor.emit(home);
+            await Future<void>.delayed(const Duration(milliseconds: 300));
+          case 'disposal':
+            harness._container.dispose();
+        }
+        service.release();
+        await pending;
+        if (change == 'disposal') return;
+        if (change == 'workspace') {
+          expect(controller.state.workspace!.rootPath, isNot(root.path));
+        } else if (change == 'closure') {
+          expect(
+            controller.state.documentBuffers.map((b) => b.id),
+            isNot(contains(otherId)),
+          );
+        } else if (change == 'active' || change == 'inactive') {
+          final changedPath = change == 'active' ? home : other;
+          final expected = change == 'active'
+              ? '# Live active\n'
+              : '# Live inactive\n';
+          expect(
+            controller.state.documentBuffers
+                .singleWhere((b) => b.filePath == changedPath)
+                .text,
+            expected,
+          );
+          final topic = controller.state.workspace!.writersideModule!.topics
+              .singleWhere((t) => t.filePath == changedPath);
+          expect(topic.document.source, expected);
+        } else {
+          await Future<void>.delayed(const Duration(milliseconds: 700));
+          expect(
+            controller.state.documentBuffers
+                .singleWhere((b) => b.filePath == home)
+                .text,
+            '# External\n',
+          );
+        }
+      },
+    );
+  }
+  test(
+    'rapid Writerside activation keeps derived work bounded and publishes the latest request',
+    () async {
+      final root = await responsiveness.syntheticProject();
+      final loader = responsiveness.CountingModule();
+      final service = _GatedPreparationService(loader);
+      final harness = await _createControllerHarness(
+        service: service,
+        fileMonitor: _ControlledFileMonitor(),
+      );
+      await harness.settingsController.setAutoSave(false);
+      await harness.settingsController.setValidateOnEdit(false);
+      final controller = harness.controller._notifier;
+      final home = p.join(root.path, 'topics/home.md');
+      final other = p.join(root.path, 'topics/other.md');
+      await controller.openPath(root.path);
+      await controller.openActiveFile(other);
+      await controller.openActiveFile(home);
+      service.maxRunning = 0;
+      loader.loads = 0;
+      service.pause();
+      final first = controller.openActiveFile(other);
+      await service.started.future;
+      final requests = [
+        for (var i = 0; i < 20; i++)
+          controller.openActiveFile(i.isEven ? home : other),
+      ];
+      service.release();
+      await Future.wait([first, ...requests]);
+      expect(service.maxRunning, lessThanOrEqualTo(2));
+      expect(loader.loads, 0);
+      expect(controller.state.activeBuffer!.filePath, other);
+      expect(controller.state.workspace!.markdown!.filePath, other);
+      expect(controller.state.documentBuffers, hasLength(2));
+    },
+  );
+  test(
+    'covered creation notifications are acknowledged, external same-size writes remain visible',
+    () async {
+      final root = await responsiveness.syntheticProject();
+      final loader = responsiveness.CountingModule();
+      final monitor = _ControlledFileMonitor();
+      final service = _CoveredCreationService(loader, monitor);
+      final harness = await _createControllerHarness(
+        service: service,
+        fileMonitor: monitor,
+      );
+      await harness.settingsController.setAutoSave(false);
+      await harness.settingsController.setValidateOnEdit(false);
+      final controller = harness.controller._notifier;
+      await controller.openPath(root.path);
+      expect(
+        await controller.createWritersideTopic(
+          const WritersideTopicCreateRequest(
+            title: 'Created',
+            fileName: 'created.md',
+          ),
+        ),
+        isTrue,
+      );
+      final count = loader.loads;
+      final topic = p.join(root.path, 'topics/created.md');
+      final tree = p.join(root.path, 'guide.tree');
+      monitor.emit(topic);
+      monitor.emit(tree);
+      monitor.emit(tree);
+      await Future<void>.delayed(const Duration(milliseconds: 700));
+      expect(loader.loads, count);
+      expect(controller.state.activeBuffer!.filePath, topic);
+      final source = await File(topic).readAsString();
+      await File(
+        topic,
+      ).writeAsString(source.replaceFirst('Created', 'Changed'));
+      monitor.emit(topic);
+      await _waitForPublishedWorkspace(
+        harness._container,
+        (state) =>
+            !state.isLoading &&
+            (state.activeBuffer?.text.contains('Changed') == true &&
+                state.workspace?.writersideModule
+                        ?.topicByReference('created.md')
+                        ?.title ==
+                    'Changed'),
+      );
+      expect(loader.loads, greaterThan(count));
+      expect(controller.state.activeBuffer!.text, contains('Changed'));
+      expect(
+        controller.state.workspace!.writersideModule!
+            .topicByReference('created.md')!
+            .title,
+        'Changed',
+      );
+    },
+  );
+  test(
+    'a failed mutation cannot acknowledge its write notifications',
+    () async {
+      final root = await responsiveness.syntheticProject();
+      final loader = responsiveness.CountingModule();
+      final monitor = _ControlledFileMonitor();
+      final harness = await _createControllerHarness(
+        service: _FailedPublicationService(loader, monitor),
+        fileMonitor: monitor,
+      );
+      await harness.settingsController.setAutoSave(false);
+      await harness.settingsController.setValidateOnEdit(false);
+      final controller = harness.controller._notifier;
+      await controller.openPath(root.path);
+      final before = loader.loads;
+      expect(
+        await controller.createWritersideTopic(
+          const WritersideTopicCreateRequest(
+            title: 'Failed',
+            fileName: 'failed.md',
+          ),
+        ),
+        isFalse,
+      );
+      await _waitForPublishedWorkspace(
+        harness._container,
+        (state) =>
+            !state.isLoading &&
+            (state.workspace?.writersideModule?.instances.first.name ==
+                'GUIDE'),
+      );
+      expect(loader.loads, greaterThan(before));
+      expect(
+        await File(p.join(root.path, 'topics/failed.md')).exists(),
+        isFalse,
+      );
+      expect(
+        controller.state.workspace!.writersideModule!.instances.first.name,
+        'GUIDE',
+      );
+    },
+  );
+  test(
+    'quarantine and duplicate delayed deletion events acknowledge incorporated absence',
+    () async {
+      final root = await responsiveness.syntheticProject();
+      final loader = responsiveness.CountingModule();
+      final monitor = _ControlledFileMonitor();
+      final harness = await _createControllerHarness(
+        service: WorkspaceService(writersideService: loader),
+        fileMonitor: monitor,
+      );
+      await harness.settingsController.setAutoSave(false);
+      await harness.settingsController.setValidateOnEdit(false);
+      final controller = harness.controller._notifier;
+      await controller.openPath(root.path);
+      final topic = p.join(root.path, 'topics/other.md');
+      await controller.openActiveFile(topic);
+      final analysis = await controller.analyzeWritersideTopicRemoval(
+        topicPath: topic,
+        mode: WritersideTopicRemovalMode.safeDeleteFile,
+      );
+      expect(
+        await controller.applyWritersideTopicRemoval(
+          WritersideTopicRemovalRequest(
+            analysis: analysis!,
+            updateUsagesAutomatically: true,
+          ),
+        ),
+        isNotNull,
+      );
+      final count = loader.loads;
+      final event = classifyWorkspaceFileMonitorEvent(
+        FileSystemMoveEvent(
+          topic,
+          false,
+          p.join(
+            root.path,
+            'topics/.other.md.busymark-safe-delete-quarantine-1-2-0',
+          ),
+        ),
+        openFilePaths: {topic},
+        workspaceRoot: true,
+      )!;
+      monitor.emitEvent(event);
+      monitor.emitEvent(event);
+      await Future<void>.delayed(const Duration(milliseconds: 700));
+      expect(loader.loads, count);
+      expect(
+        controller.state.documentBuffers.map((b) => b.filePath),
+        isNot(contains(topic)),
+      );
+      await File(topic).writeAsString('# External recreation\n');
+      monitor.emit(topic);
+      await _waitForPublishedWorkspace(
+        harness._container,
+        (state) =>
+            !state.isLoading &&
+            (state.workspace?.writersideModule
+                    ?.topicByReference('other.md')
+                    ?.title ==
+                'External recreation'),
+      );
+      expect(loader.loads, greaterThan(count));
+      expect(
+        controller.state.workspace!.writersideModule!
+            .topicByReference('other.md')!
+            .title,
+        'External recreation',
+      );
+    },
+  );
+  test(
+    'an external same-size write during acknowledgement invalidates the consumed fingerprint',
+    () async {
+      final root = await responsiveness.syntheticProject();
+      final loader = responsiveness.CountingModule();
+      final monitor = _ControlledFileMonitor();
+      final service = _AcknowledgementGateService(loader);
+      final harness = await _createControllerHarness(
+        service: service,
+        fileMonitor: monitor,
+      );
+      await harness.settingsController.setAutoSave(false);
+      await harness.settingsController.setValidateOnEdit(false);
+      final controller = harness.controller._notifier;
+      await controller.openPath(root.path);
+      await controller.createWritersideTopic(
+        const WritersideTopicCreateRequest(
+          title: 'Created',
+          fileName: 'created.md',
+        ),
+      );
+      final count = loader.loads;
+      final tree = File(p.join(root.path, 'guide.tree'));
+      service.gatePath = tree.path;
+      monitor.emit(tree.path);
+      await service.started.future;
+      final previous = await tree.readAsString();
+      await tree.writeAsString(previous.replaceFirst('Guide', 'GUIDE'));
+      service.release.complete();
+      await _waitForPublishedWorkspace(
+        harness._container,
+        (state) =>
+            !state.isLoading &&
+            (state.workspace?.writersideModule?.instances.first.name ==
+                'GUIDE'),
+      );
+      expect(loader.loads, greaterThan(count));
+      expect(
+        controller.state.workspace!.writersideModule!.instances.first.name,
+        'GUIDE',
+      );
+    },
+  );
+  for (final phase in ['anchor', 'disk']) {
+    test(
+      'disposal during covered notification verification is safe: $phase',
+      () async {
+        final root = await responsiveness.syntheticProject();
+        final loader = responsiveness.CountingModule();
+        final monitor = _ControlledFileMonitor();
+        final service = _AcknowledgementGateService(loader);
+        final harness = await _createControllerHarness(
+          service: service,
+          fileMonitor: monitor,
+        );
+        final controller = harness.controller._notifier;
+        await controller.openPath(root.path);
+        await controller.createWritersideTopic(
+          const WritersideTopicCreateRequest(
+            title: 'Created',
+            fileName: 'created.md',
+          ),
+        );
+        final count = loader.loads;
+        final tree = p.join(root.path, 'guide.tree');
+        if (phase == 'disk') service.gatePath = tree;
+        monitor.emit(tree);
+        if (phase == 'disk') {
+          await service.started.future;
+          harness._container.dispose();
+          service.release.complete();
+        } else {
+          // Delivery starts anchor IO in the first microtask. Dispose before its
+          // completion rather than relying on a wall-clock race.
+          final disposed = Completer<void>();
+          scheduleMicrotask(() {
+            harness._container.dispose();
+            disposed.complete();
+          });
+          await disposed.future;
+        }
+        await Future<void>.delayed(const Duration(milliseconds: 30));
+        expect(loader.loads, count);
+      },
+    );
+  }
+  test(
+    'covered TOC removal notifications require no subsequent module processing',
+    () async {
+      final root = await responsiveness.syntheticProject();
+      final loader = responsiveness.CountingModule();
+      final monitor = _ControlledFileMonitor();
+      final harness = await _createControllerHarness(
+        service: WorkspaceService(writersideService: loader),
+        fileMonitor: monitor,
+      );
+      await harness.settingsController.setAutoSave(false);
+      await harness.settingsController.setValidateOnEdit(false);
+      final controller = harness.controller._notifier;
+      await controller.openPath(root.path);
+      final tree = p.join(root.path, 'guide.tree');
+      final analysis = await controller.analyzeWritersideTopicRemoval(
+        topicPath: p.join(root.path, 'topics/other.md'),
+        mode: WritersideTopicRemovalMode.removeFromInstance,
+        treePath: tree,
+        nodePath: [1],
+      );
+      expect(
+        await controller.applyWritersideTopicRemoval(
+          WritersideTopicRemovalRequest(analysis: analysis!),
+        ),
+        isNotNull,
+      );
+      final count = loader.loads;
+      monitor.emit(tree);
+      await Future<void>.delayed(const Duration(milliseconds: 700));
+      expect(loader.loads, count);
+      expect(
+        controller
+            .state
+            .workspace!
+            .writersideModule!
+            .instances
+            .first
+            .topicFileSet,
+        isNot(contains('other.md')),
+      );
+    },
+  );
+}
+
+class _GatedClosedSourcesService extends WorkspaceService {
+  _GatedClosedSourcesService(responsiveness.CountingModule loader)
+    : super(writersideService: loader);
+  Completer<void> started = Completer<void>();
+  Completer<void>? _gate;
+  void pause() {
+    started = Completer<void>();
+    _gate = Completer<void>();
+  }
+
+  void release() => _waiting!.complete();
+  Completer<void>? _waiting;
+  @override
+  Future<Workspace> withDocumentSources(
+    Workspace workspace,
+    Map<String, String> sources,
+  ) async {
+    final result = await super.withDocumentSources(workspace, sources);
+    if (sources.isEmpty && _gate != null) {
+      _waiting = _gate;
+      _gate = null;
+      started.complete();
+      await _waiting!.future;
+    }
+    return result;
+  }
+}
+
+class _GatedPreparationService extends WorkspaceService {
+  _GatedPreparationService(responsiveness.CountingModule loader)
+    : super(writersideService: loader);
+  Completer<void> started = Completer<void>();
+  Completer<void>? _gate;
+  void pause() {
+    started = Completer<void>();
+    _gate = Completer<void>();
+  }
+
+  void release() => _waiting?.complete();
+  Completer<void>? _waiting;
+  int running = 0;
+  int maxRunning = 0;
+  @override
+  Future<Workspace> prepareDocument(
+    Workspace workspace,
+    DocumentBuffer buffer,
+    Map<String, String> sources,
+  ) async {
+    final gate = _gate;
+    _gate = null;
+    running++;
+    if (running > maxRunning) maxRunning = running;
+    try {
+      final result = await super.prepareDocument(workspace, buffer, sources);
+      if (gate != null) {
+        _waiting = gate;
+        started.complete();
+        await gate.future;
+      }
+      return result;
+    } finally {
+      running--;
+    }
+  }
+}
+
+class _CoveredCreationService extends WorkspaceService {
+  _CoveredCreationService(responsiveness.CountingModule loader, this.monitor)
+    : super(writersideService: loader);
+  final _ControlledFileMonitor monitor;
+  @override
+  Future<WritersideTopicCreateResult> createWritersideTopic(
+    Workspace workspace,
+    WritersideTopicCreateRequest request, {
+    String? instanceTreePath,
+    String? initialSource,
+    Future<void> Function()? validateBeforePublish,
+  }) async {
+    final result = await super.createWritersideTopic(
+      workspace,
+      request,
+      instanceTreePath: instanceTreePath,
+      initialSource: initialSource,
+      validateBeforePublish: validateBeforePublish,
+    );
+    monitor.emit(result.topicPath);
+    monitor.emit(p.join(workspace.rootPath, 'guide.tree'));
+    return result;
+  }
+}
+
+class _FailedPublicationService extends WorkspaceService {
+  _FailedPublicationService(responsiveness.CountingModule loader, this.monitor)
+    : super(writersideService: loader);
+  final _ControlledFileMonitor monitor;
+  @override
+  Future<WritersideTopicCreateResult> createWritersideTopic(
+    Workspace workspace,
+    WritersideTopicCreateRequest request, {
+    String? instanceTreePath,
+    String? initialSource,
+    Future<void> Function()? validateBeforePublish,
+  }) async {
+    final tree = File(p.join(workspace.rootPath, 'guide.tree'));
+    await tree.writeAsString(
+      (await tree.readAsString()).replaceFirst('Guide', 'GUIDE'),
+    );
+    monitor.emit(tree.path);
+    throw StateError('Simulated failed mutation');
+  }
+}
+
+class _AcknowledgementGateService extends WorkspaceService {
+  _AcknowledgementGateService(responsiveness.CountingModule loader)
+    : super(writersideService: loader);
+  String? gatePath;
+  final started = Completer<void>();
+  final release = Completer<void>();
+  @override
+  Future<WorkspaceFileSnapshot> fileSnapshot(String path) async {
+    final result = await super.fileSnapshot(path);
+    if (gatePath == path) {
+      gatePath = null;
+      started.complete();
+      await release.future;
+    }
+    return result;
   }
 }

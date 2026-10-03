@@ -229,7 +229,7 @@ class WorkspaceService {
     );
   }
 
-  Future<Workspace> createWritersideTopic(
+  Future<WritersideTopicCreateResult> createWritersideTopic(
     Workspace workspace,
     WritersideTopicCreateRequest request, {
     String? instanceTreePath,
@@ -272,7 +272,7 @@ class WorkspaceService {
       validateTopicIdentityBeforePublish: (validation) =>
           _validateCreatedTopicIdentity(module.rootPath, validation),
     );
-    return _openWriterside(module.rootPath, activeFilePath: result.topicPath);
+    return result;
   }
 
   Future<List<WritersideMarkdownImportCandidate>>
@@ -1019,6 +1019,7 @@ class WorkspaceService {
     }
     return writersideTopicRemovalService.apply(
       request,
+      project: project,
       validateBeforeCommit: validateBeforeCommit,
     );
   }
@@ -1949,8 +1950,18 @@ class WorkspaceService {
     if (project == null) {
       return workspace.copyWith(sourceOverrides: Map.unmodifiable(sources));
     }
+    // A discovery change can introduce another owning module or file symbol.
+    // Reopen only when the recorded discovery inputs changed, never merely
+    // because the active tab changed. Buffer overlays are reapplied below.
     var updated = project;
-    for (final module in project.modules) {
+    if (project.inputSnapshot == null ||
+        !await project.inputSnapshot!.isCurrent()) {
+      updated = await _writersideProjectService.load(
+        project.rootPath,
+        preferredModuleRoot: workspace.writersideModule?.rootPath,
+      );
+    }
+    for (final module in List<WritersideModule>.of(updated.modules)) {
       final overrides = {
         for (final entry in sources.entries)
           if (p.isWithin(module.rootPath, entry.key)) entry.key: entry.value,
@@ -1958,15 +1969,23 @@ class WorkspaceService {
       if (overrides.length == module.sourceOverrides.length &&
           overrides.entries.every(
             (entry) => module.sourceOverrides[entry.key] == entry.value,
-          )) {
+          ) &&
+          module.inputSnapshot != null &&
+          await module.inputSnapshot!.isCurrent()) {
         continue;
       }
-      updated = updated.withModule(
-        await writersideService.load(
-          module.rootPath,
-          options: _useWorkspaceScanOptionsForWriterside ? scanOptions : null,
-          sourceOverrides: overrides,
-        ),
+      final loaded = await writersideService.load(
+        module.rootPath,
+        options: _useWorkspaceScanOptionsForWriterside ? scanOptions : null,
+        sourceOverrides: overrides,
+      );
+      final configChanged =
+          module.inputSnapshot?.reads[module.config.filePath] !=
+          loaded.inputSnapshot?.reads[loaded.config.filePath];
+      updated = await _writersideProjectService.replaceModule(
+        updated,
+        loaded,
+        rediscoverFileSymbols: configChanged,
       );
     }
     return workspace.copyWith(
@@ -1978,6 +1997,40 @@ class WorkspaceService {
         for (final diagnostic in workspace.diagnostics)
           if (!_isProjectDiagnostic(project, diagnostic)) diagnostic,
       ]),
+    );
+  }
+
+  /// Applies the complete editor snapshot once and selects its already-built
+  /// document. Ownership, config-driven symbols and cross-module references
+  /// are prepared by withDocumentSources, rather than a second module load.
+  Future<Workspace> prepareDocument(
+    Workspace workspace,
+    DocumentBuffer buffer,
+    Map<String, String> sources,
+  ) async {
+    final prepared = await withDocumentSources(workspace, sources);
+    final context = resolveWorkspaceDocumentContext(prepared, buffer);
+    final module = context.writersideModule;
+    if (context.diskPath == null ||
+        module == null ||
+        !context.isWritersideOwned) {
+      return reparseDocument(prepared, buffer);
+    }
+    var project = prepared.writersideProject!;
+    final owner = project.modulesByOrigin.entries.firstWhere(
+      (entry) => p.equals(entry.value.rootPath, module.rootPath),
+    );
+    if (!p.equals(project.activeModule?.rootPath ?? '', module.rootPath)) {
+      project = project.withSelection(moduleId: owner.key);
+    }
+    final selected = project.activeModule!;
+    return prepared.copyWith(
+      writersideProject: project,
+      writersideModule: selected,
+      markdown: selected.topics
+          .where((topic) => p.equals(topic.filePath, context.diskPath!))
+          .firstOrNull
+          ?.markdown,
     );
   }
 

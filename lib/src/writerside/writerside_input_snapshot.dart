@@ -1,0 +1,274 @@
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:crypto/crypto.dart';
+import 'package:path/path.dart' as p;
+
+import '../core/anchored_path_guard.dart';
+import '../core/busymark_exception.dart';
+import '../core/busymark_temporary_path.dart';
+import '../core/input_observer.dart';
+import 'writerside_execution.dart';
+
+/// Transient provenance, not a parse cache. Digests are recorded at the reads
+/// that feed parsers, rather than inferred from a later filesystem snapshot.
+class WritersideInputSnapshot {
+  const WritersideInputSnapshot({
+    required this.rootPath,
+    required this.types,
+    required this.reads,
+    required this.directories,
+    required this.consistent,
+    this.limitedReads = const {},
+    this.failedReads = const {},
+  });
+
+  final String rootPath;
+  final Map<String, FileSystemEntityType> types;
+  final Map<String, ({String hash, int bytes, bool override, String? textHash})>
+  reads;
+  final Map<String, List<String>> directories;
+  // A size rejection consumed a stat length or a bounded prefix, rather than
+  // document bytes. Recheck that rejection without reading an oversized file.
+  final Map<String, ({int bytes, bool atLeast})> limitedReads;
+  final Set<String> failedReads;
+  final bool consistent;
+
+  WritersideInputSnapshot withDiscovery(WritersideInputSnapshot next) =>
+      WritersideInputSnapshot(
+        rootPath: rootPath,
+        types: {...types, ...next.types},
+        reads: {...reads, ...next.reads},
+        directories: {...directories, ...next.directories},
+        limitedReads: {...limitedReads, ...next.limitedReads},
+        failedReads: {...failedReads, ...next.failedReads},
+        consistent: consistent && next.consistent,
+      );
+
+  Future<bool> isCurrent() =>
+      const WritersideExecution().run(_matchSnapshot, this);
+
+  Future<bool> matchesDisk({
+    bool requireDiskSources = false,
+    Set<String> ignoredPaths = const {},
+  }) async {
+    if (!consistent) return false;
+    try {
+      final anchor = await captureCanonicalDirectoryAnchor(rootPath);
+      if (!p.equals(anchor.rootPath, rootPath)) return false;
+      for (final entry in types.entries) {
+        if (ignoredPaths.contains(entry.key)) continue;
+        final resolution = await resolveAnchoredPath(
+          anchor,
+          entry.key,
+          allowRoot: true,
+          allowMissingAncestors: true,
+        );
+        if (resolution.type != entry.value) return false;
+      }
+      for (final entry in reads.entries) {
+        if (ignoredPaths.contains(entry.key)) continue;
+        if (entry.value.override && !requireDiskSources) continue;
+        final resolution = await resolveAnchoredPath(
+          anchor,
+          entry.key,
+          allowRoot: false,
+        );
+        if (resolution.type != FileSystemEntityType.file) return false;
+        final bytes = await File(resolution.path)
+            .openRead(0, entry.value.bytes + 1)
+            .fold<List<int>>([], (all, chunk) => all..addAll(chunk));
+        if (bytes.length != entry.value.bytes ||
+            sha256.convert(bytes).toString() != entry.value.hash) {
+          return false;
+        }
+        // A symlink replacement during the read must not validate provenance.
+        await resolveAnchoredPath(anchor, entry.key, allowRoot: false);
+      }
+      for (final entry in limitedReads.entries) {
+        if (ignoredPaths.contains(entry.key)) continue;
+        final resolution = await resolveAnchoredPath(
+          anchor,
+          entry.key,
+          allowRoot: false,
+        );
+        if (resolution.type != FileSystemEntityType.file) return false;
+        final size = await File(resolution.path).length();
+        if (entry.value.atLeast
+            ? size < entry.value.bytes
+            : size != entry.value.bytes) {
+          return false;
+        }
+        await resolveAnchoredPath(anchor, entry.key, allowRoot: false);
+      }
+      for (final path in failedReads) {
+        if (ignoredPaths.contains(path)) continue;
+        final resolution = await resolveAnchoredPath(
+          anchor,
+          path,
+          allowRoot: false,
+        );
+        if (resolution.type != FileSystemEntityType.file) return false;
+        try {
+          // A successful bounded probe means the earlier failure is no longer
+          // authoritative. Never keep reusing a missing/unreadable-source model
+          // after access recovers, nor read a formerly unavailable large file.
+          await File(resolution.path).openRead(0, 1).drain<void>();
+          return false;
+        } on FileSystemException {
+          await resolveAnchoredPath(anchor, path, allowRoot: false);
+        }
+      }
+      for (final entry in directories.entries) {
+        final resolution = await resolveAnchoredPath(
+          anchor,
+          entry.key,
+          allowRoot: true,
+        );
+        if (resolution.type != FileSystemEntityType.directory) return false;
+        final entries = await Directory(
+          resolution.path,
+        ).list(followLinks: false).take(entry.value.length + 128).toList();
+        if (entries.length >= entry.value.length + 128) return false;
+        final ignoredNames = {
+          for (final path in ignoredPaths)
+            if (p.equals(p.dirname(path), entry.key)) p.basename(path),
+        };
+        final current = inputDirectoryEntries(entries)
+            .where(
+              (e) => !ignoredNames.contains(e.substring(0, e.lastIndexOf(':'))),
+            )
+            .toList();
+        final expected = entry.value
+            .where(
+              (e) => !ignoredNames.contains(e.substring(0, e.lastIndexOf(':'))),
+            )
+            .toList();
+        if (current.length != expected.length ||
+            !List.generate(
+              current.length,
+              (i) => current[i] == expected[i],
+            ).every((same) => same)) {
+          return false;
+        }
+      }
+      return true;
+    } on Object {
+      return false;
+    }
+  }
+
+  /// Exact content incorporated for a real file; overrides cannot acknowledge
+  /// a disk notification. Buffer snapshot handling is checked separately.
+  String? diskHash(String path) {
+    final input = reads[path];
+    return input == null || input.override ? null : input.hash;
+  }
+}
+
+List<String> inputDirectoryEntries(Iterable<FileSystemEntity> entries) => [
+  for (final entry in entries)
+    if (!isBusyMarkTopicStagingPath(entry.path) &&
+        !{'.git', '.hg', '.svn'}.contains(p.basename(entry.path)))
+      '${p.basename(entry.path)}:${entry is Directory
+          ? 'directory'
+          : entry is Link
+          ? 'link'
+          : 'file'}',
+]..sort();
+
+class WritersideInputRecorder extends InputObserver {
+  WritersideInputRecorder(this.rootPath);
+  WritersideInputRecorder.fromSnapshot(WritersideInputSnapshot snapshot)
+    : rootPath = snapshot.rootPath,
+      _consistent = snapshot.consistent {
+    _types.addAll(snapshot.types);
+    _reads.addAll(snapshot.reads);
+    _directories.addAll(snapshot.directories);
+    _limitedReads.addAll(snapshot.limitedReads);
+    _failedReads.addAll(snapshot.failedReads);
+  }
+
+  String rootPath;
+  final _types = <String, FileSystemEntityType>{};
+  final _reads =
+      <String, ({String hash, int bytes, bool override, String? textHash})>{};
+  final _directories = <String, List<String>>{};
+  final _limitedReads = <String, ({int bytes, bool atLeast})>{};
+  final _failedReads = <String>{};
+  bool _consistent = true;
+
+  @override
+  void path(String path, FileSystemEntityType type) {
+    if (_types.containsKey(path) && _types[path] != type) _consistent = false;
+    _types[path] = type;
+  }
+
+  @override
+  void read(String path, List<int> bytes, {bool override = false}) {
+    String? textHash;
+    try {
+      textHash = sha256.convert(utf8.encode(utf8.decode(bytes))).toString();
+    } on FormatException {
+      textHash = null;
+    }
+    final value = (
+      hash: sha256.convert(bytes).toString(),
+      bytes: bytes.length,
+      override: override,
+      textHash: textHash,
+    );
+    if (_reads.containsKey(path) && _reads[path] != value) _consistent = false;
+    _reads[path] = value;
+  }
+
+  void source(String path, String source, {bool override = false}) =>
+      read(path, utf8.encode(source), override: override);
+
+  @override
+  void limitedRead(String path, int bytes, {bool atLeast = false}) {
+    final value = (bytes: bytes, atLeast: atLeast);
+    if (_limitedReads.containsKey(path) && _limitedReads[path] != value) {
+      _consistent = false;
+    }
+    _limitedReads[path] = value;
+  }
+
+  @override
+  void readFailed(String path) => _failedReads.add(path);
+
+  @override
+  void directory(String path, Iterable<FileSystemEntity> entries) {
+    final value = inputDirectoryEntries(entries);
+    final before = _directories[path];
+    if (before != null && jsonEncode(before) != jsonEncode(value)) {
+      _consistent = false;
+    }
+    _directories[path] = value;
+  }
+
+  @override
+  void incomplete() => _consistent = false;
+
+  WritersideInputSnapshot get snapshot => WritersideInputSnapshot(
+    rootPath: rootPath,
+    types: Map.unmodifiable(_types),
+    reads: Map.unmodifiable(_reads),
+    directories: Map.unmodifiable({
+      for (final e in _directories.entries)
+        e.key: List<String>.unmodifiable(e.value),
+    }),
+    limitedReads: Map.unmodifiable(_limitedReads),
+    failedReads: Set.unmodifiable(_failedReads),
+    consistent: _consistent,
+  );
+}
+
+Future<bool> _matchSnapshot(WritersideInputSnapshot snapshot) =>
+    snapshot.matchesDisk();
+
+class WritersideInputsChanged extends BusyMarkException {
+  WritersideInputsChanged(this.rootPath)
+    : super('writerside.topic-file.tree-changed', args: {'path': rootPath});
+  final String rootPath;
+}

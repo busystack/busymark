@@ -1,5 +1,7 @@
 import 'dart:io';
 
+import 'input_observer.dart';
+
 import 'package:path/path.dart' as p;
 
 /// A canonical directory boundary captured before path validation.
@@ -128,6 +130,7 @@ Future<AnchoredPathResolution> resolveAnchoredPath(
     );
   }
   if (relative == '.') {
+    InputObserver.current?.path(resolved, rootType);
     return AnchoredPathResolution(
       anchor: anchor,
       path: resolved,
@@ -166,6 +169,7 @@ Future<AnchoredPathResolution> resolveAnchoredPath(
       );
     }
   }
+  InputObserver.current?.path(resolved, currentType);
   return AnchoredPathResolution(
     anchor: anchor,
     path: resolved,

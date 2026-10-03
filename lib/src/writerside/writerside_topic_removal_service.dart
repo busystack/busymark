@@ -476,6 +476,7 @@ class WritersideTopicRemovalService {
 
   Future<WritersideTopicRemovalResult> apply(
     WritersideTopicRemovalRequest request, {
+    WritersideProject? project,
     void Function(Iterable<String>)? validateBeforeCommit,
   }) async {
     final analysis = request.analysis;
@@ -485,7 +486,11 @@ class WritersideTopicRemovalService {
       for (final usage in analysis.usages) usage.filePath,
     };
     validateBeforeCommit?.call(analyzedPaths);
-    final snapshot = await _snapshot(analysis.projectRoot, analysis.topicPath);
+    final snapshot = await _snapshot(
+      analysis.projectRoot,
+      analysis.topicPath,
+      loadedProject: project,
+    );
     if (!_sameStringList(snapshot.moduleRoots, analysis.projectModuleRoots) ||
         snapshot.fingerprint != analysis.fingerprint) {
       throw BusyMarkException(
@@ -806,6 +811,7 @@ class WritersideTopicRemovalService {
           edit.updated,
           expected: edit.original,
           validateBeforeCommit: validate,
+          verifyBeforeCommit: () => _ensureExpectedState(snapshot, applied),
         );
         applied.add(edit);
       }
@@ -817,6 +823,12 @@ class WritersideTopicRemovalService {
           snapshot.topic.filePath,
           expected: snapshot.sources[snapshot.topic.filePath]!,
           validateBeforeCommit: validate,
+          verifyBeforeCommit: () => _ensureExpectedState(snapshot, applied),
+          verifyBeforeDelete: () => _ensureExpectedState(
+            snapshot,
+            applied,
+            ignoredPaths: {snapshot.topic.filePath},
+          ),
         );
       }
     } on Object catch (error, stackTrace) {
@@ -904,6 +916,13 @@ class WritersideTopicRemovalService {
       throw BusyMarkException(
         'writerside.topic-file.not-found',
         args: {'path': safeTopicPath},
+      );
+    }
+
+    if (!await project.inputsMatchDisk(requireDiskSources: true)) {
+      throw BusyMarkException(
+        'writerside.topic-file.tree-changed',
+        args: {'path': project.rootPath},
       );
     }
 
@@ -1046,6 +1065,27 @@ class WritersideTopicRemovalService {
           );
         }
       }
+    }
+    // The reread fingerprint must describe the inputs consumed by the parsed
+    // model, not just a second self-consistent but different filesystem state.
+    for (final candidate in project.modules) {
+      for (final input in candidate.inputSnapshot!.reads.entries) {
+        final source = sources[input.key];
+        if (source != null &&
+            crypto.sha256.convert(utf8.encode(source)).toString() !=
+                input.value.textHash) {
+          throw BusyMarkException(
+            'writerside.topic-file.tree-changed',
+            args: {'path': input.key},
+          );
+        }
+      }
+    }
+    if (!await project.inputsMatchDisk(requireDiskSources: true)) {
+      throw BusyMarkException(
+        'writerside.topic-file.tree-changed',
+        args: {'path': project.rootPath},
+      );
     }
     return _RemovalSnapshot(
       anchor: anchor,
@@ -2293,10 +2333,21 @@ class WritersideTopicRemovalService {
 
   Future<void> _ensureExpectedState(
     _RemovalSnapshot snapshot,
-    List<_SourceEdit> edits,
-  ) async {
+    List<_SourceEdit> edits, {
+    Set<String> ignoredPaths = const {},
+  }) async {
     final edited = {for (final edit in edits) edit.path: edit.updated};
+    if (!await snapshot.project.inputsMatchDisk(
+      requireDiskSources: true,
+      ignoredPaths: {...edited.keys, ...ignoredPaths},
+    )) {
+      throw BusyMarkException(
+        'writerside.topic-file.tree-changed',
+        args: {'path': snapshot.project.rootPath},
+      );
+    }
     for (final entry in snapshot.sources.entries) {
+      if (ignoredPaths.contains(entry.key)) continue;
       final expected = edited[entry.key] ?? entry.value;
       final resolution = await resolveAnchoredPath(
         snapshot.anchor,
@@ -2319,6 +2370,7 @@ class WritersideTopicRemovalService {
     String source, {
     required String expected,
     void Function()? validateBeforeCommit,
+    Future<void> Function()? verifyBeforeCommit,
   }) async {
     final resolution = await resolveAnchoredPath(
       anchor,
@@ -2373,6 +2425,7 @@ class WritersideTopicRemovalService {
         );
       }
       validateBeforeCommit?.call();
+      await verifyBeforeCommit?.call();
       final atomicApi = LinuxAtomicFileApi.instance;
       if (atomicApi.isAvailable) {
         final exchangeError = atomicApi.exchange(temporary.path, checked.path);
@@ -2437,6 +2490,8 @@ class WritersideTopicRemovalService {
     String path, {
     required String expected,
     void Function()? validateBeforeCommit,
+    Future<void> Function()? verifyBeforeCommit,
+    Future<void> Function()? verifyBeforeDelete,
   }) async {
     final resolution = await resolveAnchoredPath(
       anchor,
@@ -2465,6 +2520,7 @@ class WritersideTopicRemovalService {
         }
         try {
           validateBeforeCommit?.call();
+          await verifyBeforeCommit?.call();
           quarantined = await File(resolution.path).rename(candidate.path);
           break;
         } on FileSystemException {
@@ -2495,6 +2551,7 @@ class WritersideTopicRemovalService {
         );
       }
       validateBeforeCommit?.call();
+      await verifyBeforeDelete?.call();
       await quarantined.delete();
       quarantined = null;
     } on Object catch (error, stackTrace) {
