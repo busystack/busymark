@@ -380,21 +380,24 @@ final answer = 42;
         ),
       );
 
-      final topicPath = p.join(updated.rootPath, 'topics', 'install.md');
-      final treeSource = File(
-        p.join(updated.rootPath, 'user-guide.tree'),
-      ).readAsStringSync();
+      final topicPath = p.join(workspace.rootPath, 'topics', 'install.md');
+      final treeSource = File(updated.treePath).readAsStringSync();
 
-      expect(updated.activeFilePath, topicPath);
+      expect(updated.topicPath, topicPath);
       expect(File(topicPath).existsSync(), isTrue);
       expect(
         File(topicPath).readAsStringSync(),
         startsWith('# Install BusyMark'),
       );
       expect(treeSource, contains('topic="install.md"'));
-      expect(updated.markdown?.title, 'Install BusyMark');
+      expect(updated.topicFileName, 'install.md');
+      final reopened = await service.openPath(workspace.rootPath);
       expect(
-        updated.diagnostics.where((item) => item.severity.name == 'error'),
+        reopened.writersideModule!.topicByReference('install.md')!.title,
+        'Install BusyMark',
+      );
+      expect(
+        reopened.diagnostics.where((item) => item.severity.name == 'error'),
         isEmpty,
       );
     },
@@ -623,10 +626,7 @@ final answer = 42;
         File(p.join(root.path, 'first.tree')).readAsStringSync(),
         firstTreeBefore,
       );
-      expect(
-        updated.activeFilePath,
-        p.join(root.path, 'topics', 'second-child.md'),
-      );
+      expect(updated.topicPath, p.join(root.path, 'topics', 'second-child.md'));
     },
   );
 
@@ -668,10 +668,7 @@ final answer = 42;
           fileName: 'different.md',
         ),
       );
-      expect(
-        File(p.join(updated.rootPath, 'topics', 'different.md')).existsSync(),
-        isTrue,
-      );
+      expect(File(updated.topicPath).existsSync(), isTrue);
     },
   );
 

@@ -3,6 +3,8 @@ import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
+import '../core/busymark_temporary_path.dart';
+
 enum WorkspaceFileEventKind { changed, deleted, moved, workspaceChanged }
 
 class WorkspaceFileMonitorEvent {
@@ -108,33 +110,13 @@ class WorkspaceFileMonitor {
   }
 
   void _receive(FileSystemEvent event, {required bool workspaceRoot}) {
-    final path = p.normalize(p.absolute(event.path));
-    if (_isBusyMarkTemporaryPath(path)) {
-      return;
-    }
-    final destination =
-        event is FileSystemMoveEvent && event.destination != null
-        ? p.normalize(p.absolute(event.destination!))
-        : null;
-    final openPath =
-        _openFilePaths.contains(path) ||
-        (destination != null && _openFilePaths.contains(destination));
-    if (!workspaceRoot && !openPath) {
-      return;
-    }
-    final kind = event is FileSystemDeleteEvent
-        ? WorkspaceFileEventKind.deleted
-        : event is FileSystemMoveEvent
-        ? WorkspaceFileEventKind.moved
-        : openPath
-        ? WorkspaceFileEventKind.changed
-        : WorkspaceFileEventKind.workspaceChanged;
-    _pending[path] = WorkspaceFileMonitorEvent(
-      kind: kind,
-      path: path,
-      destinationPath: destination,
-      isDirectory: event.isDirectory,
+    final classified = classifyWorkspaceFileMonitorEvent(
+      event,
+      openFilePaths: _openFilePaths,
+      workspaceRoot: workspaceRoot,
     );
+    if (classified == null) return;
+    _pending[classified.path] = classified;
     _debounceTimer?.cancel();
     _debounceTimer = Timer(debounce, _flush);
   }
@@ -148,17 +130,66 @@ class WorkspaceFileMonitor {
       }
     }
   }
+}
 
-  bool _isBusyMarkTemporaryPath(String path) {
-    final basename = p.basename(path);
-    return basename.contains('.busymark-save-') ||
-        path
-            .split(p.separator)
-            .any(
-              (part) =>
-                  part.startsWith('.busymark-state-') ||
-                  part.startsWith('.busymark-settings-') ||
-                  part.startsWith('.busymark-export-'),
-            );
+WorkspaceFileMonitorEvent? classifyWorkspaceFileMonitorEvent(
+  FileSystemEvent event, {
+  required Set<String> openFilePaths,
+  required bool workspaceRoot,
+}) {
+  var path = p.normalize(p.absolute(event.path));
+  var destination = event is FileSystemMoveEvent && event.destination != null
+      ? p.normalize(p.absolute(event.destination!))
+      : null;
+  final sourceTemporary = _isBusyMarkTemporaryPath(path);
+  final destinationTemporary =
+      destination != null && _isBusyMarkTemporaryPath(destination);
+  WorkspaceFileEventKind? endpointKind;
+  if (sourceTemporary) {
+    if (destination == null || destinationTemporary) return null;
+    // The real destination was published by an internal staging rename.
+    path = destination;
+    destination = null;
+    endpointKind = openFilePaths.contains(path)
+        ? WorkspaceFileEventKind.changed
+        : WorkspaceFileEventKind.workspaceChanged;
+  } else if (destinationTemporary) {
+    // Quarantine removes the real source. Do not expose the private name as
+    // an external rename target for an editor buffer.
+    destination = null;
+    endpointKind = WorkspaceFileEventKind.deleted;
   }
+  final openPath =
+      openFilePaths.contains(path) ||
+      (destination != null && openFilePaths.contains(destination));
+  if (!workspaceRoot && !openPath) return null;
+  final kind =
+      endpointKind ??
+      (event is FileSystemDeleteEvent
+          ? WorkspaceFileEventKind.deleted
+          : event is FileSystemMoveEvent
+          ? WorkspaceFileEventKind.moved
+          : openPath
+          ? WorkspaceFileEventKind.changed
+          : WorkspaceFileEventKind.workspaceChanged);
+  return WorkspaceFileMonitorEvent(
+    kind: kind,
+    path: path,
+    destinationPath: destination,
+    isDirectory: event.isDirectory,
+  );
+}
+
+bool _isBusyMarkTemporaryPath(String path) {
+  final basename = p.basename(path);
+  return isBusyMarkTopicStagingPath(path) ||
+      basename.contains('.busymark-save-') ||
+      path
+          .split(p.separator)
+          .any(
+            (part) =>
+                part.startsWith('.busymark-state-') ||
+                part.startsWith('.busymark-settings-') ||
+                part.startsWith('.busymark-export-'),
+          );
 }

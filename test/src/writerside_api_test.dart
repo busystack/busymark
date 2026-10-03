@@ -1,5 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
+import '../support/writerside_responsiveness.dart';
+import 'package:busymark/src/writerside/writerside_execution.dart';
+import 'package:busymark/src/writerside/writerside_project.dart';
 import 'package:busymark/src/markdown/busymark_document.dart';
 import 'package:busymark/src/writerside/writerside_document_renderer.dart';
 import 'package:busymark/src/writerside/writerside_document_resolver.dart';
@@ -134,6 +137,31 @@ void main() {
         .join('\n');
     return (text(busy.blocks), resolved);
   }
+
+  test(
+    'platform-backed API model remains on the host path and transfers complete semantics',
+    () async {
+      await File(p.join(root.path, 'topics/main.topic')).writeAsString(
+        '<topic id="main"><api-schema openapi-path="api.json" name="Pet"/></topic>',
+      );
+      final foreground = await const WritersideProjectService(
+        moduleService: WritersideModuleService(
+          execution: WritersideExecution(useWorker: false),
+        ),
+      ).load(root.path);
+      final worker = await const WritersideProjectService().load(root.path);
+      expect(parsedSources, [jsonEncode(spec), jsonEncode(spec)]);
+      expect(
+        projectSemanticSnapshot(worker),
+        projectSemanticSnapshot(foreground),
+      );
+      expect(await worker.inputsMatchDisk(), isTrue);
+      await File(
+        p.join(root.path, 'specifications/api.json'),
+      ).writeAsString('{}');
+      expect(await worker.inputsMatchDisk(), isFalse);
+    },
+  );
 
   test(
     'API tags select operations through the existing OpenAPI parser',

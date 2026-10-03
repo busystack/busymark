@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'input_observer.dart';
 
 import 'package:path/path.dart' as p;
 
@@ -155,6 +156,10 @@ Future<WorkspaceScanResult> scanWorkspaceEntities(
 }) async {
   final directory = Directory(rootPath);
   if (!await directory.exists()) {
+    InputObserver.current?.path(
+      normalizePath(rootPath),
+      FileSystemEntityType.notFound,
+    );
     return const WorkspaceScanResult(
       entities: [],
       diagnostics: [],
@@ -188,6 +193,12 @@ Future<WorkspaceScanResult> scanWorkspaceEntities(
       }
     } on Object catch (error) {
       traversalComplete = false;
+      InputObserver.current?.directory(
+        current.path,
+        listing,
+        complete: false,
+        failed: true,
+      );
       diagnostics.add(
         _scanWarning(
           current.path,
@@ -197,6 +208,11 @@ Future<WorkspaceScanResult> scanWorkspaceEntities(
       );
       continue;
     }
+    InputObserver.current?.directory(
+      current.path,
+      listing,
+      complete: !reachedTreeEntryLimit,
+    );
     listing.sort((a, b) => a.path.compareTo(b.path));
 
     for (final entity in listing) {
@@ -253,6 +269,7 @@ Future<WorkspaceScanResult> scanWorkspaceEntities(
     traversalComplete = false;
     diagnostics.add(_scanWarning(rootPath, 'workspace.scan.skipped'));
   }
+  if (!traversalComplete) InputObserver.current?.incomplete();
   entities.sort((a, b) => a.path.compareTo(b.path));
   return WorkspaceScanResult(
     entities: entities,

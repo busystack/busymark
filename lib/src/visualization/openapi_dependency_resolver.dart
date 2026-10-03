@@ -5,6 +5,7 @@ import 'package:crypto/crypto.dart';
 import 'package:path/path.dart' as p;
 
 import '../core/anchored_path_guard.dart';
+import '../core/input_observer.dart';
 import 'visualization_models.dart';
 import 'visualization_renderer.dart';
 import 'web_render_host.dart';
@@ -143,6 +144,7 @@ class OpenApiDependencyResolver {
               ? await file.length()
               : utf8.encode(override).length;
         } on FileSystemException {
+          InputObserver.current?.readFailed(resolution.path);
           throw _referenceError(
             'visualization.openapiReferenceUnavailable',
             'OpenAPI reference could not be read: $referencePath',
@@ -150,6 +152,15 @@ class OpenApiDependencyResolver {
           );
         }
         if (size > maximumFileBytes || totalBytes + size > maximumTotalBytes) {
+          if (override == null) {
+            InputObserver.current?.limitedRead(resolution.path, size);
+          } else {
+            InputObserver.current?.read(
+              resolution.path,
+              utf8.encode(override),
+              override: true,
+            );
+          }
           throw _referenceError(
             'visualization.openapiReferenceTooLarge',
             'OpenAPI local references exceed the size limit.',
@@ -158,7 +169,15 @@ class OpenApiDependencyResolver {
         }
         late String source;
         try {
-          source = override ?? utf8.decode(await file.readAsBytes());
+          final bytes = override == null
+              ? await file.readAsBytes()
+              : utf8.encode(override);
+          InputObserver.current?.read(
+            resolution.path,
+            bytes,
+            override: override != null,
+          );
+          source = utf8.decode(bytes);
         } on FormatException {
           throw _referenceError(
             'visualization.openapiReferenceEncoding',
@@ -166,6 +185,7 @@ class OpenApiDependencyResolver {
             reference,
           );
         } on FileSystemException {
+          InputObserver.current?.readFailed(resolution.path);
           throw _referenceError(
             'visualization.openapiReferenceUnavailable',
             'OpenAPI reference could not be read: $referencePath',

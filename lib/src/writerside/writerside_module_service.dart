@@ -5,6 +5,11 @@ import 'dart:typed_data';
 import 'package:path/path.dart' as p;
 
 import '../core/anchored_path_guard.dart';
+import '../core/input_observer.dart';
+import 'writerside_execution.dart';
+import 'writerside_input_snapshot.dart';
+import 'writerside_document.dart';
+import '../markdown/busymark_document.dart';
 import '../core/diagnostic.dart';
 import '../core/local_image_resolver.dart';
 import '../core/path_utils.dart';
@@ -30,6 +35,7 @@ class WritersideModuleService {
     this.categoriesParser = const WritersideCategoriesParser(),
     this.scanOptions = const WorkspaceScanOptions(),
     this.topicDirectoryLister,
+    this.execution = const WritersideExecution(),
   });
 
   final WritersideConfigParser configParser;
@@ -42,11 +48,87 @@ class WritersideModuleService {
   final WritersideCategoriesParser categoriesParser;
   final WorkspaceScanOptions scanOptions;
   final WorkspaceDirectoryLister? topicDirectoryLister;
+  final WritersideExecution execution;
+
+  // Injected parsers/listers stay on their supplied test execution path; the
+  // normal application always dispatches explicit inputs to the worker.
+  bool get _hasInjectedStages =>
+      topicDirectoryLister != null ||
+      !identical(configParser, const WritersideConfigParser()) ||
+      !identical(buildProfilesParser, const WritersideBuildProfilesParser()) ||
+      !identical(
+        instanceGroupsParser,
+        const WritersideInstanceGroupsParser(),
+      ) ||
+      !identical(treeParser, const WritersideTreeParser()) ||
+      !identical(treeResolver, const WritersideTreeResolver()) ||
+      !identical(topicParser, const WritersideTopicParser()) ||
+      !identical(variablesParser, const WritersideVariablesParser()) ||
+      !identical(categoriesParser, const WritersideCategoriesParser());
 
   Future<WritersideModule> load(
     String rootPath, {
     WorkspaceScanOptions? options,
     Map<String, String> sourceOverrides = const {},
+  }) async {
+    final input = _ModuleLoadInput(
+      normalizePath(rootPath),
+      options ?? scanOptions,
+      Map<String, String>.unmodifiable(sourceOverrides),
+    );
+    if (_hasInjectedStages || !execution.useWorker) {
+      return _loadObserved(input, includePlatformSources: true);
+    }
+    final module = await execution.run(_loadModuleOnWorker, input);
+    if (!_needsPlatformSources(module)) return module;
+    // MethodChannel/OpenAPI host operations are never called from the worker.
+    // Reuse the exact textual sources consumed there, then resolve the enriched
+    // semantic graph in a second coarse pure job.
+    final recorder = WritersideInputRecorder.fromSnapshot(
+      module.inputSnapshot!,
+    );
+    final sources = await recorder.observe(
+      () => const WritersideSourceLoader().loadModule(module),
+    );
+    return execution.run(
+      _finishModuleOnWorker,
+      module.copyWith(sourceFiles: sources, inputSnapshot: recorder.snapshot),
+    );
+  }
+
+  Future<WritersideModule> _loadObserved(
+    _ModuleLoadInput input, {
+    required bool includePlatformSources,
+  }) async {
+    final recorder = WritersideInputRecorder(
+      input.rootPath,
+      treeEntryLimit: input.options.maxTreeEntries,
+    );
+    final loaded = await recorder.observe(
+      () => _loadHere(
+        input.rootPath,
+        options: input.options,
+        sourceOverrides: input.sourceOverrides,
+        includePlatformSources: includePlatformSources,
+      ),
+    );
+    recorder.rootPath = loaded.rootPath;
+    final snapshot = recorder.snapshot;
+    if (loaded.topicDiscoveryComplete &&
+        loaded.unparsedTopicReferences.isEmpty &&
+        loaded.variablesAvailable &&
+        loaded.topics.every((t) => t.document.isWellFormed) &&
+        (!snapshot.consistent || !await snapshot.matchesDisk())) {
+      throw WritersideInputsChanged(loaded.rootPath);
+    }
+    return loaded.copyWith(inputSnapshot: snapshot);
+  }
+
+  Future<WritersideModule> _loadHere(
+    String rootPath, {
+    WorkspaceScanOptions? options,
+    Map<String, String> sourceOverrides = const {},
+    bool includePlatformSources = true,
   }) async {
     final effectiveScanOptions = options ?? scanOptions;
     final normalizedOverrides = Map<String, String>.unmodifiable({
@@ -515,9 +597,13 @@ class WritersideModuleService {
     );
     final loaded = module.copyWith(
       diagnostics: sortDiagnostics(diagnostics),
-      sourceFiles: await const WritersideSourceLoader().loadModule(module),
+      sourceFiles: await const WritersideSourceLoader().loadModule(
+        module,
+        parseApis: includePlatformSources,
+      ),
       referenceData: await WritersideReferenceData.load(module),
     );
+    if (!includePlatformSources && _needsPlatformSources(loaded)) return loaded;
     return loaded.copyWith(
       diagnostics: sortDiagnostics([
         ...loaded.structuralDiagnostics,
@@ -533,6 +619,7 @@ class WritersideModuleService {
       configPath,
       followLinks: false,
     );
+    InputObserver.current?.path(configPath, configType);
     if (configType == FileSystemEntityType.file ||
         configType == FileSystemEntityType.link) {
       return configPath;
@@ -603,7 +690,9 @@ class WritersideModuleService {
     }
     final override = sourceOverrides[normalizePath(file.path)];
     if (override != null) {
-      if (utf8.encode(override).length > maxBytes) {
+      final bytes = utf8.encode(override);
+      InputObserver.current?.read(file.path, bytes, override: true);
+      if (bytes.length > maxBytes) {
         diagnostics.add(_fileTooLargeDiagnostic(file.path));
         return null;
       }
@@ -615,11 +704,21 @@ class WritersideModuleService {
         bytes.add(chunk);
       }
       if (bytes.length > maxBytes) {
+        InputObserver.current?.limitedRead(
+          file.path,
+          bytes.length,
+          atLeast: true,
+        );
         diagnostics.add(_fileTooLargeDiagnostic(file.path));
         return null;
       }
-      return utf8.decode(bytes.takeBytes());
+      final consumed = bytes.takeBytes();
+      InputObserver.current?.read(file.path, consumed);
+      return utf8.decode(consumed);
     } on Object catch (error) {
+      if (error is FileSystemException) {
+        InputObserver.current?.readFailed(file.path);
+      }
       diagnostics.add(
         Diagnostic(
           code: readFailureCode,
@@ -1279,4 +1378,44 @@ class _UnparsedTopicIndex {
     }
     return _baseNames.contains(p.basename(normalized));
   }
+}
+
+class _ModuleLoadInput {
+  const _ModuleLoadInput(this.rootPath, this.options, this.sourceOverrides);
+  final String rootPath;
+  final WorkspaceScanOptions options;
+  final Map<String, String> sourceOverrides;
+}
+
+Future<WritersideModule> _loadModuleOnWorker(_ModuleLoadInput input) =>
+    const WritersideModuleService(
+      execution: WritersideExecution(useWorker: false),
+    )._loadObserved(input, includePlatformSources: false);
+
+Future<WritersideModule> _finishModuleOnWorker(WritersideModule module) async {
+  final finished = module.copyWith(
+    diagnostics: sortDiagnostics([
+      ...module.structuralDiagnostics,
+      ...module.referenceData.diagnostics,
+    ]),
+    semanticDiagnostics: resolveWritersideModuleDiagnostics(module),
+  );
+  if (!await finished.inputSnapshot!.matchesDisk()) {
+    throw WritersideInputsChanged(finished.rootPath);
+  }
+  return finished;
+}
+
+bool _needsPlatformSources(WritersideModule module) {
+  bool blockHasApi(BusyBlock block) =>
+      block.attributes.containsKey('openapi-path') ||
+      block.children.any(blockHasApi);
+  return module.topics.any(
+    (topic) => topic.document.walk().any(
+      (node) =>
+          node is WritersideElementNode &&
+              node.attributes.containsKey('openapi-path') ||
+          node is WritersideMarkdownBlockNode && blockHasApi(node.block),
+    ),
+  );
 }

@@ -22,6 +22,7 @@ import '../writerside/writerside_instance_service.dart';
 import '../writerside/writerside_model.dart';
 import '../writerside/writerside_project_creator.dart';
 import '../writerside/writerside_project.dart';
+import '../writerside/writerside_input_snapshot.dart';
 import '../writerside/writerside_toc_editor.dart';
 import '../writerside/writerside_topic_creator.dart';
 import '../writerside/writerside_topic_file_editor.dart';
@@ -229,7 +230,7 @@ class WorkspaceService {
     );
   }
 
-  Future<Workspace> createWritersideTopic(
+  Future<WritersideTopicCreateResult> createWritersideTopic(
     Workspace workspace,
     WritersideTopicCreateRequest request, {
     String? instanceTreePath,
@@ -272,7 +273,7 @@ class WorkspaceService {
       validateTopicIdentityBeforePublish: (validation) =>
           _validateCreatedTopicIdentity(module.rootPath, validation),
     );
-    return _openWriterside(module.rootPath, activeFilePath: result.topicPath);
+    return result;
   }
 
   Future<List<WritersideMarkdownImportCandidate>>
@@ -1019,6 +1020,7 @@ class WorkspaceService {
     }
     return writersideTopicRemovalService.apply(
       request,
+      project: project,
       validateBeforeCommit: validateBeforeCommit,
     );
   }
@@ -1949,8 +1951,18 @@ class WorkspaceService {
     if (project == null) {
       return workspace.copyWith(sourceOverrides: Map.unmodifiable(sources));
     }
+    // A discovery change can introduce another owning module or file symbol.
+    // Reopen only when the recorded discovery inputs changed, never merely
+    // because the active tab changed. Buffer overlays are reapplied below.
     var updated = project;
-    for (final module in project.modules) {
+    if (!await _canPresentWritersideInputs(project.inputSnapshot)) {
+      updated = await _writersideProjectService.load(
+        project.rootPath,
+        preferredModuleRoot: project.activeModule?.rootPath,
+      );
+      updated = _preserveProjectSelection(updated, project);
+    }
+    for (final module in List<WritersideModule>.of(updated.modules)) {
       final overrides = {
         for (final entry in sources.entries)
           if (p.isWithin(module.rootPath, entry.key)) entry.key: entry.value,
@@ -1958,15 +1970,22 @@ class WorkspaceService {
       if (overrides.length == module.sourceOverrides.length &&
           overrides.entries.every(
             (entry) => module.sourceOverrides[entry.key] == entry.value,
-          )) {
+          ) &&
+          await _canPresentWritersideInputs(module.inputSnapshot)) {
         continue;
       }
-      updated = updated.withModule(
-        await writersideService.load(
-          module.rootPath,
-          options: _useWorkspaceScanOptionsForWriterside ? scanOptions : null,
-          sourceOverrides: overrides,
-        ),
+      final loaded = await writersideService.load(
+        module.rootPath,
+        options: _useWorkspaceScanOptionsForWriterside ? scanOptions : null,
+        sourceOverrides: overrides,
+      );
+      final configChanged =
+          module.inputSnapshot?.reads[module.config.filePath] !=
+          loaded.inputSnapshot?.reads[loaded.config.filePath];
+      updated = await _writersideProjectService.replaceModule(
+        updated,
+        loaded,
+        rediscoverFileSymbols: configChanged,
       );
     }
     return workspace.copyWith(
@@ -1978,6 +1997,103 @@ class WorkspaceService {
         for (final diagnostic in workspace.diagnostics)
           if (!_isProjectDiagnostic(project, diagnostic)) diagnostic,
       ]),
+    );
+  }
+
+  /// A disk reconciliation is not a user context selection. Keep a surviving
+  /// module/instance without changing the active document or reading it again.
+  Workspace preserveWritersideContext(Workspace workspace, Workspace previous) {
+    final project = workspace.writersideProject;
+    final before = previous.writersideProject;
+    if (project == null ||
+        before == null ||
+        !p.equals(project.rootPath, before.rootPath)) {
+      return workspace;
+    }
+    final selected = _preserveProjectSelection(project, before);
+    return workspace.copyWith(
+      writersideProject: selected,
+      writersideModule: selected.activeModule,
+    );
+  }
+
+  WritersideProject _preserveProjectSelection(
+    WritersideProject next,
+    WritersideProject previous,
+  ) {
+    final root = previous.activeModule?.rootPath;
+    final owner = next.modulesByOrigin.entries
+        .where((entry) => p.equals(entry.value.rootPath, root ?? ''))
+        .firstOrNull;
+    if (owner == null) return next;
+    final instance =
+        owner.value.instances.any(
+          (instance) => instance.id == previous.activeInstanceId,
+        )
+        ? previous.activeInstanceId
+        : owner.value.instances
+              .where((instance) => !instance.isLibrary)
+              .firstOrNull
+              ?.id;
+    return next.withSelection(moduleId: owner.key, instanceId: instance);
+  }
+
+  Future<bool> _canPresentWritersideInputs(
+    WritersideInputSnapshot? inputs,
+  ) async {
+    if (inputs == null) return false;
+    if (inputs.discoveryComplete) return inputs.isCurrent();
+    final options = _useWorkspaceScanOptionsForWriterside
+        ? scanOptions
+        : writersideService.scanOptions;
+    // A stable limit can present the observed portion without reparsing on
+    // every tab switch. A changed limit must rediscover, including recovery
+    // to a complete inventory. Full freshness remains false for this result.
+    return inputs.treeEntryLimit == options.maxTreeEntries &&
+        await inputs.observedInputsCurrent();
+  }
+
+  /// Applies the complete editor snapshot once and selects its already-built
+  /// document. Ownership, config-driven symbols and cross-module references
+  /// are prepared by withDocumentSources, rather than a second module load.
+  Future<Workspace> prepareDocument(
+    Workspace workspace,
+    DocumentBuffer buffer,
+    Map<String, String> sources,
+  ) async {
+    final prepared = await withDocumentSources(workspace, sources);
+    return selectPreparedWritersideDocument(prepared, buffer) ??
+        await reparseDocument(prepared, buffer);
+  }
+
+  /// Selects a document from a previously prepared display model. This performs
+  /// no freshness check and cannot authorize publication or a filesystem write.
+  Workspace? selectPreparedWritersideDocument(
+    Workspace prepared,
+    DocumentBuffer buffer,
+  ) {
+    final context = resolveWorkspaceDocumentContext(prepared, buffer);
+    final module = context.writersideModule;
+    if (context.diskPath == null ||
+        module == null ||
+        !context.isWritersideOwned) {
+      return null;
+    }
+    var project = prepared.writersideProject!;
+    final owner = project.modulesByOrigin.entries.firstWhere(
+      (entry) => p.equals(entry.value.rootPath, module.rootPath),
+    );
+    if (!p.equals(project.activeModule?.rootPath ?? '', module.rootPath)) {
+      project = project.withSelection(moduleId: owner.key);
+    }
+    final selected = project.activeModule!;
+    return prepared.copyWith(
+      writersideProject: project,
+      writersideModule: selected,
+      markdown: selected.topics
+          .where((topic) => p.equals(topic.filePath, context.diskPath!))
+          .firstOrNull
+          ?.markdown,
     );
   }
 
