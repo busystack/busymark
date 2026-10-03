@@ -30,6 +30,25 @@ Future<Directory> syntheticProject() async {
   return root;
 }
 
+/// Root discovery observes a limited part of images; symbol discovery revisits
+/// the same directory with a fresh budget and can observe the whole listing.
+Future<Directory> resourceLimitedProject() async {
+  final root = await syntheticProject();
+  await File(p.join(root.path, 'writerside.cfg')).writeAsString(
+    '<ihp name="Test"><topics dir="topics"/><images dir="images"/>'
+    '<resources dir="resources"/><instance src="guide.tree"/></ihp>',
+  );
+  for (final directory in ['images', 'resources']) {
+    await Directory(p.join(root.path, directory)).create();
+    for (var i = 0; i < 6; i++) {
+      await File(
+        p.join(root.path, directory, '$i.png'),
+      ).writeAsString('fixture');
+    }
+  }
+  return root;
+}
+
 class CountingModule extends WritersideModuleService {
   int loads = 0;
   @override

@@ -2062,12 +2062,22 @@ class WorkspaceService {
     Map<String, String> sources,
   ) async {
     final prepared = await withDocumentSources(workspace, sources);
+    return selectPreparedWritersideDocument(prepared, buffer) ??
+        await reparseDocument(prepared, buffer);
+  }
+
+  /// Selects a document from a previously prepared display model. This performs
+  /// no freshness check and cannot authorize publication or a filesystem write.
+  Workspace? selectPreparedWritersideDocument(
+    Workspace prepared,
+    DocumentBuffer buffer,
+  ) {
     final context = resolveWorkspaceDocumentContext(prepared, buffer);
     final module = context.writersideModule;
     if (context.diskPath == null ||
         module == null ||
         !context.isWritersideOwned) {
-      return reparseDocument(prepared, buffer);
+      return null;
     }
     var project = prepared.writersideProject!;
     final owner = project.modulesByOrigin.entries.firstWhere(

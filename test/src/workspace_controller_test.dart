@@ -5479,6 +5479,327 @@ class _AcknowledgementGateService extends WorkspaceService {
 
 void _registerCorrectionBoundaryTests() {
   for (final phase in ['replacement', 'quarantine', 'final deletion']) {
+    for (final returnToOriginal in [false, true]) {
+      test(
+        'remaining removal $phase accepts clean navigation return=$returnToOriginal',
+        () async {
+          final root = await responsiveness.syntheticProject();
+          final target = p.join(root.path, 'topics/other.md');
+          final third = p.join(root.path, 'topics/third.md');
+          await File(third).writeAsString('# Third\n');
+          final tree = File(p.join(root.path, 'guide.tree'));
+          if (phase != 'replacement') {
+            await tree.writeAsString(
+              '<instance-profile id="guide" start-page="home.md"><toc-element topic="home.md"/></instance-profile>',
+            );
+          }
+          final beforeTree = await tree.readAsString();
+          final gate = _RemovalVerificationGate(
+            phase,
+            target,
+            tree.path,
+            beforeTree,
+          );
+          final loader = responsiveness.CountingModule();
+          final harness = await _createControllerHarness(
+            service: WorkspaceService(
+              writersideService: loader,
+              writersideTopicRemovalService: _GatedRemovalVerificationService(
+                gate,
+              ),
+            ),
+            fileMonitor: _ControlledFileMonitor(),
+          );
+          await harness.settingsController.setAutoSave(false);
+          await harness.settingsController.setValidateOnEdit(false);
+          final controller = harness.controller._notifier;
+          await controller.openPath(root.path);
+          await controller.openActiveFile(target);
+          await controller.openActiveFile(third);
+          controller.updateActiveEditorMode(DocumentViewModePreference.source);
+          await controller.createMarkdownFile();
+          controller.updateActiveText('# Unrelated unsaved note\n');
+          final untitled = controller.state.activeBuffer!;
+          await controller.openActiveFile(p.join(root.path, 'topics/home.md'));
+          final original = controller.state.activeBuffer!;
+          final before = List<DocumentBuffer>.of(
+            controller.state.documentBuffers,
+          );
+          final analysis = await controller.analyzeWritersideTopicRemoval(
+            topicPath: target,
+            mode: phase == 'replacement'
+                ? WritersideTopicRemovalMode.removeFromInstance
+                : WritersideTopicRemovalMode.safeDeleteFile,
+            treePath: phase == 'replacement' ? tree.path : null,
+            nodePath: phase == 'replacement' ? [1] : null,
+          );
+          expect(analysis, isNotNull);
+          gate.armed = true;
+          final pending = controller.applyWritersideTopicRemoval(
+            WritersideTopicRemovalRequest(analysis: analysis!),
+          );
+          await gate.started.future;
+          final loads = loader.loads;
+          expect(await controller.openActiveFile(third), isTrue);
+          if (returnToOriginal) {
+            expect(
+              await controller.activateDocumentBuffer(original.id),
+              isTrue,
+            );
+          }
+          final navigationLoads = loader.loads;
+          gate.release.complete();
+          expect(await pending, isNotNull);
+          expect(
+            navigationLoads,
+            loads,
+            reason: 'clean navigation adds no parse',
+          );
+          expect(await File(target).exists(), phase == 'replacement');
+          if (phase == 'replacement') {
+            expect(await tree.readAsString(), isNot(contains('other.md')));
+            expect(controller.state.bufferForPath(target)!.text, '# Other\n');
+          } else {
+            expect(await tree.readAsString(), beforeTree);
+            expect(controller.state.bufferForPath(target), isNull);
+          }
+          for (final saved in before.where((b) => b.filePath != target)) {
+            final live = controller.state.documentBuffers.singleWhere(
+              (b) => b.id == saved.id,
+            );
+            expect(live.text, saved.text);
+            expect(live.revision, saved.revision);
+            expect(live.lastSavedText, saved.lastSavedText);
+            expect(live.isDirty, saved.isDirty);
+            expect(live.diskState, saved.diskState);
+            expect(live.editorState.mode, saved.editorState.mode);
+            expect(live.editorState.selection, saved.editorState.selection);
+            expect(
+              live.editorState.undoState.undo,
+              saved.editorState.undoState.undo,
+            );
+            expect(
+              live.editorState.undoState.redo,
+              saved.editorState.undoState.redo,
+            );
+          }
+          expect(
+            controller.state.activeBuffer!.filePath,
+            returnToOriginal ? original.filePath : third,
+          );
+          expect(
+            controller.state.documentBuffers
+                .singleWhere((b) => b.id == untitled.id)
+                .text,
+            '# Unrelated unsaved note\n',
+          );
+        },
+      );
+    }
+  }
+  for (final phase in ['replacement', 'quarantine', 'final deletion']) {
+    for (final change in [
+      'inactive edit',
+      'reopen',
+      'close all',
+      'dispose',
+      'disk input',
+    ]) {
+      test(
+        'remaining removal $phase rejects $change after clean navigation',
+        () async {
+          final root = await responsiveness.syntheticProject();
+          final target = p.join(root.path, 'topics/other.md');
+          final home = p.join(root.path, 'topics/home.md');
+          final third = p.join(root.path, 'topics/third.md');
+          await File(third).writeAsString('# Third\n');
+          final tree = File(p.join(root.path, 'guide.tree'));
+          if (phase != 'replacement') {
+            await tree.writeAsString(
+              '<instance-profile id="guide" start-page="home.md"><toc-element topic="home.md"/></instance-profile>',
+            );
+          }
+          final beforeTree = await tree.readAsString();
+          final gate = _RemovalVerificationGate(
+            phase,
+            target,
+            tree.path,
+            beforeTree,
+          );
+          final loader = responsiveness.CountingModule();
+          final service = _RemovalNavigationWorkspaceService(loader, gate);
+          final harness = await _createControllerHarness(
+            service: service,
+            fileMonitor: _ControlledFileMonitor(),
+          );
+          await harness.settingsController.setAutoSave(false);
+          await harness.settingsController.setValidateOnEdit(false);
+          final controller = harness.controller._notifier;
+          await controller.openPath(root.path);
+          await controller.openActiveFile(target);
+          final targetBuffer = controller.state.activeBuffer!;
+          await controller.openActiveFile(third);
+          await controller.openActiveFile(home);
+          final analysis = await controller.analyzeWritersideTopicRemoval(
+            topicPath: target,
+            mode: phase == 'replacement'
+                ? WritersideTopicRemovalMode.removeFromInstance
+                : WritersideTopicRemovalMode.safeDeleteFile,
+            treePath: phase == 'replacement' ? tree.path : null,
+            nodePath: phase == 'replacement' ? [1] : null,
+          );
+          gate.armed = true;
+          final pending = controller.applyWritersideTopicRemoval(
+            WritersideTopicRemovalRequest(analysis: analysis!),
+          );
+          await gate.started.future;
+          expect(await controller.openActiveFile(third), isTrue);
+          if (change == 'inactive edit') {
+            controller.updateDocumentText(
+              targetBuffer.id,
+              '# Keep this unsaved edit\n',
+            );
+          } else if (change == 'reopen') {
+            await controller.openPath(root.path);
+          } else if (change == 'close all') {
+            for (final buffer in List<DocumentBuffer>.of(
+              controller.state.documentBuffers,
+            )) {
+              expect(await controller.closeDocumentBuffer(buffer.id), isTrue);
+            }
+          } else if (change == 'dispose') {
+            harness._container.dispose();
+          } else {
+            await File(home).writeAsString('# External disk edit\n');
+          }
+          final preparations = service.preparations;
+          gate.release.complete();
+          expect(await pending, isNull);
+          expect(await File(target).readAsString(), '# Other\n');
+          expect(await tree.readAsString(), beforeTree);
+          expect(
+            await root
+                .list(recursive: true)
+                .where((e) => e.path.contains('safe-delete'))
+                .toList(),
+            isEmpty,
+          );
+          if (change == 'inactive edit') {
+            final live = controller.state.documentBuffers.singleWhere(
+              (b) => b.id == targetBuffer.id,
+            );
+            expect(live.text, '# Keep this unsaved edit\n');
+            expect(live.isDirty, isTrue);
+          } else if (change == 'reopen') {
+            expect(controller.state.activeBuffer!.filePath, home);
+            expect(
+              service.preparations,
+              preparations,
+              reason: 'old navigation must not prepare a reopened workspace',
+            );
+          } else if (change == 'close all') {
+            expect(controller.state.documentBuffers, isEmpty);
+          } else if (change == 'disk input') {
+            expect(await File(home).readAsString(), '# External disk edit\n');
+          }
+        },
+      );
+    }
+  }
+  test('remaining resource discovery presents stable limited inputs', () async {
+    final root = await responsiveness.resourceLimitedProject();
+    final loader = _ResourceLimitCountingModule();
+    final service = WorkspaceService(writersideService: loader);
+    final harness = await _createControllerHarness(
+      service: service,
+      fileMonitor: _ControlledFileMonitor(),
+    );
+    await harness.settingsController.setAutoSave(false);
+    await harness.settingsController.setValidateOnEdit(false);
+    final controller = harness.controller._notifier;
+    await controller.openPath(root.path);
+    var project = controller.state.workspace!.writersideProject!;
+    expect(project.moduleDiscoveryComplete, isFalse);
+    expect(project.inputSnapshot!.consistent, isTrue);
+    expect(
+      project.inputSnapshot!.incompleteDirectories,
+      isNot(contains(p.join(root.path, 'images'))),
+    );
+    expect(await project.observedInputsMatchDisk(), isTrue);
+    expect(await project.inputsMatchDisk(), isFalse);
+    expect(controller.state.activeBuffer!.text, '# Home\n');
+    expect(controller.state.workspace!.markdown!.source, '# Home\n');
+    expect(controller.state.preview!.title, 'Home');
+    expect(
+      controller.state.workspace!.diagnostics.any(
+        (d) => d.code == 'workspace.scan.skipped',
+      ),
+      isTrue,
+    );
+    for (final mode in WritersideTopicRemovalMode.values) {
+      expect(
+        await controller.analyzeWritersideTopicRemoval(
+          topicPath: p.join(root.path, 'topics/other.md'),
+          mode: mode,
+          treePath: mode == WritersideTopicRemovalMode.removeFromInstance
+              ? p.join(root.path, 'guide.tree')
+              : null,
+          nodePath: mode == WritersideTopicRemovalMode.removeFromInstance
+              ? [1]
+              : null,
+        ),
+        isNull,
+      );
+    }
+    controller.updateActiveText('# Current readable content\n');
+    expect((await controller.validateActive()).published, isTrue);
+    expect(controller.state.preview!.title, 'Current readable content');
+    expect(
+      controller.state.workspace!.markdown!.source,
+      '# Current readable content\n',
+    );
+    await controller.openActiveFile(p.join(root.path, 'topics/other.md'));
+    final loads = loader.loads;
+    for (var i = 0; i < 3; i++) {
+      expect(
+        await controller.openActiveFile(p.join(root.path, 'topics/home.md')),
+        isTrue,
+      );
+      expect((await controller.validateActive()).published, isTrue);
+      expect(
+        await controller.openActiveFile(p.join(root.path, 'topics/other.md')),
+        isTrue,
+      );
+    }
+    expect(loader.loads, loads);
+    project = controller.state.workspace!.writersideProject!;
+    expect(await project.observedInputsMatchDisk(), isTrue);
+    expect(await project.inputsMatchDisk(), isFalse);
+    await File(p.join(root.path, 'images/new.png')).writeAsString('new');
+    expect(await project.observedInputsMatchDisk(), isFalse);
+    loader.limit = 10000;
+    expect((await controller.validateActive()).published, isTrue);
+    final complete = controller.state.workspace!.writersideProject!;
+    expect(complete.moduleDiscoveryComplete, isTrue);
+    expect(complete.inputSnapshot!.discoveryComplete, isTrue);
+    expect(await complete.inputsMatchDisk(), isTrue);
+    expect(
+      await controller.refreshWorkspaceFromDiskPreservingOpenTabs(),
+      isTrue,
+    );
+    expect(
+      controller.state.workspace!.diagnostics.any(
+        (d) => d.code == 'workspace.scan.skipped',
+      ),
+      isFalse,
+    );
+    expect(
+      controller.state.bufferForPath(p.join(root.path, 'topics/home.md'))!.text,
+      '# Current readable content\n',
+    );
+    expect(await File(p.join(root.path, 'topics/other.md')).exists(), isTrue);
+  });
+  for (final phase in ['replacement', 'quarantine', 'final deletion']) {
     for (final change in [
       'edit',
       'inactive edit',
@@ -6102,4 +6423,31 @@ class _LimitCountingModule extends responsiveness.CountingModule {
   @override
   WorkspaceScanOptions get scanOptions =>
       WorkspaceScanOptions(maxTreeEntries: complete ? 10000 : limit);
+}
+
+class _ResourceLimitCountingModule extends responsiveness.CountingModule {
+  int limit = 8;
+  @override
+  WorkspaceScanOptions get scanOptions =>
+      WorkspaceScanOptions(maxTreeEntries: limit);
+}
+
+class _RemovalNavigationWorkspaceService extends WorkspaceService {
+  _RemovalNavigationWorkspaceService(
+    responsiveness.CountingModule loader,
+    _RemovalVerificationGate gate,
+  ) : super(
+        writersideService: loader,
+        writersideTopicRemovalService: _GatedRemovalVerificationService(gate),
+      );
+  int preparations = 0;
+  @override
+  Future<Workspace> prepareDocument(
+    Workspace workspace,
+    DocumentBuffer buffer,
+    Map<String, String> sources,
+  ) {
+    preparations++;
+    return super.prepareDocument(workspace, buffer, sources);
+  }
 }

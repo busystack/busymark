@@ -299,15 +299,61 @@ class WritersideInputRecorder extends InputObserver {
     bool failed = false,
   }) {
     final listing = entries.toList();
-    if (!complete) {
-      _incompleteDirectories[path] = (count: listing.length, failed: failed);
-    }
     final value = inputDirectoryEntries(listing);
     final before = _directories[path];
-    if (before != null && jsonEncode(before) != jsonEncode(value)) {
-      _consistent = false;
+    final previous = _incompleteDirectories[path];
+    if (!complete || failed) _discoveryComplete = false;
+    if (before != null) {
+      final retainsBefore = before.every(value.toSet().contains);
+      final retainedByBefore = value.every(before.toSet().contains);
+      if (previous?.failed == true) {
+        // Recovery needs a complete successful listing that accounts for the
+        // actual prefix consumed before the failure. An empty/limited retry
+        // cannot establish that the earlier failed input was unchanged.
+        if (!failed && (!complete || before.isEmpty || !retainsBefore)) {
+          _consistent = false;
+          return;
+        }
+      } else if (failed) {
+        // Losing access after successfully consuming the inventory supersedes
+        // that input state, even if the failing stream emitted the same names.
+        _consistent = false;
+      }
+      if (previous == null && !failed) {
+        if (complete
+            ? !retainsBefore || !retainedByBefore
+            : !retainedByBefore) {
+          _consistent = false;
+          return;
+        }
+        // A bounded retry cannot weaken an already complete inventory proof.
+        if (!complete) return;
+      } else if (!failed && complete) {
+        if (!retainsBefore) {
+          _consistent = false;
+          return;
+        }
+      } else {
+        // Independent scan budgets can expose nested subsets of one listing.
+        // Incomparable observations prove neither a stable inventory nor safe
+        // supersession. Retain the strongest compatible observed portion.
+        if (!retainsBefore && !retainedByBefore) {
+          _consistent = false;
+          return;
+        }
+        if ((!failed || previous?.failed == true) &&
+            retainedByBefore &&
+            (!retainsBefore || listing.length <= previous!.count)) {
+          return;
+        }
+      }
     }
     _directories[path] = value;
+    if (complete && !failed) {
+      _incompleteDirectories.remove(path);
+    } else {
+      _incompleteDirectories[path] = (count: listing.length, failed: failed);
+    }
   }
 
   @override

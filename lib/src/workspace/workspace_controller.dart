@@ -221,6 +221,8 @@ class WorkspaceController extends Notifier<WorkspaceState> {
   var _validationSequence = 0;
   var _editRevision = 0;
   var _activeDocumentRevision = 0;
+  // Removal follows workspace/request lifetime, not active-tab navigation.
+  var _removalOperationRevision = 0;
   var _workspaceRefreshRevision = 0;
   var _workspaceDiskRevision = 0;
   _ReconciledFileNotifications? _reconciledNotifications;
@@ -229,6 +231,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
   int? _acceptedRefreshRevision;
   final _preparedInputs = Expando<_PreparedDocumentInputs>();
   var _workspaceFileOperationDepth = 0;
+  int? _fileOperationNavigationRevision;
   final _deferredFileMonitorEvents = <WorkspaceFileMonitorEvent>[];
   var _untitledSequence = 0;
   final _removalAuthorizations = <String, _RemovalBufferAuthorization>{};
@@ -299,6 +302,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       }
     });
     ref.onDispose(() {
+      _removalOperationRevision++;
       _cancelPendingDerivedRefresh();
       _cancelAllAutoSaves();
       _persistenceDebounce?.cancel();
@@ -1393,6 +1397,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     _cancelPendingDerivedRefresh();
     _cancelAllAutoSaves();
     _invalidateActiveDocumentOperations();
+    _removalOperationRevision++;
     state = const WorkspaceState();
     for (final buffer in previous.documentBuffers) {
       _localHistory.handleBufferClosed(
@@ -1464,6 +1469,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
   }
 
   Future<void> openPath(String path) async {
+    _removalOperationRevision++;
     await _localHistory.flushAll(state.documentBuffers);
     _cancelPendingDerivedRefresh();
     _cancelAllAutoSaves();
@@ -1538,6 +1544,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
   Future<bool> createWritersideProject(
     WritersideProjectCreateRequest request,
   ) async {
+    _removalOperationRevision++;
     await _localHistory.flushAll(state.documentBuffers);
     _cancelPendingDerivedRefresh();
     _cancelAllAutoSaves();
@@ -2317,6 +2324,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
   Future<WritersideTopicRemovalResult?> applyWritersideTopicRemoval(
     WritersideTopicRemovalRequest request,
   ) async {
+    final removalRevision = ++_removalOperationRevision;
     final deleting =
         request.analysis.mode == WritersideTopicRemovalMode.safeDeleteFile;
     final deletedPath = p.normalize(request.analysis.topicPath);
@@ -2326,9 +2334,8 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     WritersideTopicRemovalResult? result;
     try {
       final success = await _runWorkspaceFileOperation((workspace) async {
-        final removalRevision = _activeDocumentRevision;
         void validate(Iterable<String> _) {
-          if (!_isCurrentActiveDocumentOperation(removalRevision)) {
+          if (!ref.mounted || removalRevision != _removalOperationRevision) {
             throw const BusyMarkException(
               'writerside.topic-file.project-buffers-dirty',
             );
@@ -2541,6 +2548,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         if (candidate.id != bufferId) candidate,
     ];
     if (remaining.isEmpty) {
+      _removalOperationRevision++;
       state = const WorkspaceState();
       _fileMonitor.updateOpenFilePaths(const <String>[]);
       _schedulePersistence();
@@ -2589,6 +2597,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       return;
     }
     _cancelPendingDerivedRefresh();
+    _removalOperationRevision++;
     _cancelAllAutoSaves();
     _invalidateActiveDocumentOperations();
     _resetSaveTracking();
@@ -2834,6 +2843,50 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       openFilePaths: openFilePaths,
       markdown: null,
     );
+    final displayInputs = _preparedInputs[workspace];
+    if (_workspaceFileOperationDepth > 0 &&
+        initialBufferIds.contains(targetBufferId) &&
+        displayInputs != null &&
+        displayInputs.workspaceId == state.workspace?.id &&
+        displayInputs.diskRevision == _workspaceDiskRevision &&
+        !buffer.isDirty &&
+        _sameBufferInputs(
+          displayInputs.buffers,
+          _sourceBufferInputs(documentBuffers),
+        ) &&
+        _sameBufferInputs(
+          displayInputs.buffers,
+          _sourceBufferInputs(state.documentBuffers),
+        ) &&
+        resolveWorkspaceDocumentContext(workspace, buffer).writersideTopic !=
+            null &&
+        !_writersideSourceMismatch(workspace, buffer)) {
+      // A mutation can temporarily quarantine an input. Navigate the accepted
+      // display snapshot; the operation still owns authoritative reconciliation.
+      // Carry its original provenance without marking it freshly prepared for
+      // this navigation revision or acknowledging any filesystem notification.
+      final selected = _service.selectPreparedWritersideDocument(
+        nextWorkspace,
+        buffer,
+      );
+      if (selected != null) {
+        _preparedInputs[selected] = displayInputs;
+        _fileOperationNavigationRevision = _removalOperationRevision;
+        state = state.copyWith(
+          workspace: selected,
+          preview: _safePreview(selected, buffer),
+          activeBufferId: buffer.id,
+          clearMessage: true,
+        );
+        _recordActivePreviewRevision();
+        _schedulePersistence();
+        _editRevision = buffer.revision;
+        unawaited(
+          _settingsController.setDocumentViewMode(buffer.editorState.mode),
+        );
+        return true;
+      }
+    }
     List<DocumentBuffer> currentRequestedBuffers() => [
       for (final live in state.documentBuffers)
         if (!intentionallyRemovedBufferIds.contains(live.id)) live,
@@ -5114,6 +5167,16 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       if (!reconciled) _reconciledNotifications = null;
       _workspaceFileOperationDepth--;
       if (_workspaceFileOperationDepth == 0 && ref.mounted) {
+        final navigationRevision = _fileOperationNavigationRevision;
+        _fileOperationNavigationRevision = null;
+        final current = state.workspace;
+        if (navigationRevision == _removalOperationRevision &&
+            current != null &&
+            !_preparedInputsCurrent(current, state.documentBuffers)) {
+          // Failed/rolled-back operations still finish any deferred navigation
+          // preparation through the existing bounded derived-work scheduler.
+          _requestDerivedRefresh(rebuildPreview: true);
+        }
         final pending = List<WorkspaceFileMonitorEvent>.of(
           _deferredFileMonitorEvents,
         );
