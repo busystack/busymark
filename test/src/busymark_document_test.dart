@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'dart:ui' show BoxHeightStyle, CheckedState;
+import 'dart:ui' show CheckedState;
 
 import 'package:busymark/l10n/generated/app_localizations.dart';
 import 'package:busymark/l10n/generated/app_localizations_de.dart';
@@ -2918,52 +2918,39 @@ void main() {}
     );
 
     final paintBox = tester.renderObject<RenderBox>(painterFinder.at(1));
-    final painterText =
-        TextPainter(
-          text: TextSpan(
-            text: firstParagraph,
-            style: painter.style as TextStyle,
-          ),
-          strutStyle: StrutStyle.fromTextStyle(painter.style as TextStyle),
-          textDirection: painter.textDirection as TextDirection,
-          textScaler: painter.textScaler as TextScaler,
-          locale: painter.locale as Locale?,
-        )..layout(
-          maxWidth: paintBox.size.width - (painter.layoutWidthInset as double),
-        );
-    final highlightBoxes = painterText.getBoxesForSelection(
-      TextSelection(
-        baseOffset: exampleStart,
-        extentOffset: exampleStart + 'example.'.length,
-      ),
-      boxHeightStyle: BusyMarkDocumentTextGeometry.selectionHeightStyle,
-      boxWidthStyle: BusyMarkDocumentTextGeometry.selectionWidthStyle,
+    final canvas = TestRecordingCanvas();
+    customPaint.painter!.paint(canvas, paintBox.size);
+    final highlightRects = [
+      for (final call in canvas.invocations)
+        if (call.invocation.memberName == #drawRect)
+          call.invocation.positionalArguments.first as Rect,
+    ];
+    final expectedBoxes = renderEditable.getBoxesForSelection(
+      const TextSelection(baseOffset: 0, extentOffset: firstParagraph.length),
     );
-    final tightHighlightBoxes = painterText.getBoxesForSelection(
-      TextSelection(
-        baseOffset: exampleStart,
-        extentOffset: exampleStart + 'example.'.length,
-      ),
-      boxHeightStyle: BoxHeightStyle.tight,
-      boxWidthStyle: BusyMarkDocumentTextGeometry.selectionWidthStyle,
-    );
-    painterText.dispose();
-
-    expect(highlightBoxes, hasLength(exampleBoxes.length));
-    expect(tightHighlightBoxes, hasLength(highlightBoxes.length));
-    for (var index = 0; index < exampleBoxes.length; index += 1) {
-      expect(highlightBoxes[index].top, closeTo(exampleBoxes[index].top, 0.01));
-      expect(
-        highlightBoxes[index].bottom,
-        closeTo(exampleBoxes[index].bottom, 0.01),
+    expect(highlightRects, hasLength(expectedBoxes.length));
+    for (var index = 0; index < expectedBoxes.length; index += 1) {
+      final box = expectedBoxes[index];
+      final expectedRect = Rect.fromPoints(
+        paintBox.globalToLocal(
+          renderEditable.localToGlobal(Offset(box.left, box.top)),
+        ),
+        paintBox.globalToLocal(
+          renderEditable.localToGlobal(Offset(box.right, box.bottom)),
+        ),
+      );
+      expect(highlightRects[index].left, closeTo(expectedRect.left, 0.01));
+      expect(highlightRects[index].right, closeTo(expectedRect.right, 0.01));
+      expect(highlightRects[index].top, closeTo(expectedRect.top, 0.01));
+      expect(highlightRects[index].bottom, closeTo(expectedRect.bottom, 0.01));
+    }
+    for (final box in exampleBoxes) {
+      final center = paintBox.globalToLocal(
+        renderEditable.localToGlobal(box.toRect().center),
       );
       expect(
-        highlightBoxes[index].top,
-        lessThan(tightHighlightBoxes[index].top),
-      );
-      expect(
-        highlightBoxes[index].bottom,
-        greaterThan(tightHighlightBoxes[index].bottom),
+        highlightRects.any((rect) => rect.inflate(0.01).contains(center)),
+        isTrue,
       );
     }
   });
