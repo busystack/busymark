@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:busymark/src/app/system_accent.dart';
+import 'package:busymark/src/platform/linux_gtk_accent_service.dart';
 import 'package:dbus/dbus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -292,7 +293,13 @@ void main() {
         await Future<void>.delayed(Duration.zero);
         expect(coordinator.color, gtkColor);
         expect(values.last, gtkColor);
-        expect(values.length, gtkFirst ? 5 : 6);
+        expect(values, [
+          busyMarkDefaultAccentColor,
+          gtkColor,
+          YaruVariant.blue.color,
+          const Color(0xff006600),
+          gtkColor,
+        ]);
         await subscription.cancel();
         await coordinator.dispose();
         expect(gtk.listens, 1);
@@ -367,6 +374,273 @@ void main() {
       await Future<void>.delayed(Duration.zero);
       expect(coordinator.color, busyMarkDefaultAccentColor);
       await gtk.events.close();
+    },
+  );
+  testWidgets('valid GTK releases startup while portal reads stay pending', (
+    tester,
+  ) async {
+    final gtk = FakeAccentSource(() async => const Color(0xff336699));
+    final io = FakePortalIO()
+      ..namedRead = Completer<Color?>()
+      ..rgbRead = Completer<Color?>();
+    final coordinator = LinuxAccentCoordinator(
+      sources: [
+        gtk,
+        LinuxPortalAppearance(open: () => io),
+      ],
+    );
+    var initialized = false;
+    coordinator.initialize().then((_) => initialized = true);
+    await tester.pump();
+    expect(initialized, isTrue);
+    expect(coordinator.color, const Color(0xff336699));
+    await tester.runAsync(coordinator.dispose);
+    await gtk.events.close();
+    await io.signals.close();
+  });
+
+  testWidgets(
+    'generic signal cannot resolve startup before pending named read',
+    (tester) async {
+      final gtk = FakeAccentSource(() async => null);
+      final io = FakePortalIO()
+        ..namedRead = Completer<Color?>()
+        ..rgbRead = Completer<Color?>();
+      final coordinator = LinuxAccentCoordinator(
+        sources: [
+          gtk,
+          LinuxPortalAppearance(open: () => io),
+        ],
+      );
+      var initialized = false;
+      coordinator.initialize().then((_) => initialized = true);
+      io.change(
+        LinuxPortalAppearance.freedesktopAppearance,
+        DBusStruct([
+          const DBusDouble(0.2),
+          const DBusDouble(0.4),
+          const DBusDouble(0.6),
+        ]),
+      );
+      await tester.pump();
+      expect(initialized, isFalse);
+      io.namedRead!.complete(YaruVariant.purple.color);
+      await tester.pump();
+      expect(initialized, isTrue);
+      expect(coordinator.color, YaruVariant.purple.color);
+      await tester.runAsync(coordinator.dispose);
+      await gtk.events.close();
+      await io.signals.close();
+    },
+  );
+
+  testWidgets('valid named portal releases startup without pending RGB', (
+    tester,
+  ) async {
+    final gtk = FakeAccentSource(() async => null);
+    final io = FakePortalIO(named: YaruVariant.purple.color)
+      ..rgbRead = Completer<Color?>();
+    final coordinator = LinuxAccentCoordinator(
+      sources: [
+        gtk,
+        LinuxPortalAppearance(open: () => io),
+      ],
+    );
+    var initialized = false;
+    coordinator.initialize().then((_) => initialized = true);
+    await tester.pump();
+    expect(initialized, isTrue);
+    expect(coordinator.color, YaruVariant.purple.color);
+    expect(io.rgbReads, 1);
+    await tester.runAsync(coordinator.dispose);
+    await gtk.events.close();
+    await io.signals.close();
+  });
+
+  testWidgets(
+    'pending GTK blocks ready portal until GTK arrives before deadline',
+    (tester) async {
+      final snapshot = Completer<Color?>();
+      final gtk = FakeAccentSource(() => snapshot.future);
+      final io = FakePortalIO(named: YaruVariant.purple.color);
+      final coordinator = LinuxAccentCoordinator(
+        sources: [
+          gtk,
+          LinuxPortalAppearance(open: () => io),
+        ],
+      );
+      var initialized = false;
+      coordinator.initialize().then((_) => initialized = true);
+      await tester.pump(
+        linuxAccentInitializationDeadline - const Duration(milliseconds: 1),
+      );
+      expect(initialized, isFalse);
+      expect(coordinator.color, busyMarkDefaultAccentColor);
+      snapshot.complete(const Color(0xff336699));
+      await tester.pump();
+      expect(initialized, isTrue);
+      expect(coordinator.color, const Color(0xff336699));
+      await tester.pump(const Duration(seconds: 10));
+      expect(coordinator.color, const Color(0xff336699));
+      await tester.runAsync(coordinator.dispose);
+      await gtk.events.close();
+      await io.signals.close();
+    },
+  );
+
+  for (final namedResolution in ['unavailable', 'failure', 'deadline']) {
+    testWidgets('pending named releases retained RGB on $namedResolution', (
+      tester,
+    ) async {
+      final gtk = FakeAccentSource(() async => null);
+      final io = FakePortalIO()
+        ..namedRead = Completer<Color?>()
+        ..rgbRead = Completer<Color?>();
+      final coordinator = LinuxAccentCoordinator(
+        sources: [
+          gtk,
+          LinuxPortalAppearance(open: () => io),
+        ],
+      );
+      var initialized = false;
+      coordinator.initialize().then((_) => initialized = true);
+      io.change(
+        LinuxPortalAppearance.freedesktopAppearance,
+        portalRgb(0.2, 0.4, 0.6),
+      );
+      io.change(
+        LinuxPortalAppearance.gnomeInterface,
+        const DBusString('purple'),
+        key: 'color-scheme',
+      );
+      io.change('unrelated.namespace', const DBusString('purple'));
+      io.signals.addError(StateError('unrelated delivery failure'));
+      await tester.pump();
+      expect(initialized, isFalse);
+      if (namedResolution == 'deadline') {
+        await tester.pump(linuxAccentInitializationDeadline);
+      } else {
+        if (namedResolution == 'failure') {
+          io.namedRead!.completeError(StateError('missing named setting'));
+        } else {
+          io.namedRead!.complete(null);
+        }
+        await tester.pump();
+      }
+      expect(initialized, isTrue);
+      expect(coordinator.color, const Color(0xff336699));
+      io.change(
+        LinuxPortalAppearance.gnomeInterface,
+        const DBusString('purple'),
+      );
+      await tester.pump();
+      expect(coordinator.color, YaruVariant.purple.color);
+      // Both reads were superseded independently, including explicit unavailability.
+      io.change(
+        LinuxPortalAppearance.gnomeInterface,
+        const DBusString('unknown'),
+      );
+      io.rgbRead!.complete(const Color(0xff000000));
+      if (namedResolution == 'deadline') {
+        io.namedRead!.complete(YaruVariant.orange.color);
+      }
+      await tester.pump(const Duration(seconds: 10));
+      expect(coordinator.color, const Color(0xff336699));
+      await tester.runAsync(coordinator.dispose);
+      expect(io.closes, 1);
+      expect(io.cancels, 1);
+      await gtk.events.close();
+      await io.signals.close();
+    });
+  }
+
+  testWidgets(
+    'all silent sources time out to orange and late sources recover',
+    (tester) async {
+      final snapshot = Completer<Color?>();
+      final io = FakePortalIO()
+        ..namedRead = Completer<Color?>()
+        ..rgbRead = Completer<Color?>();
+      const deadline = Duration(milliseconds: 100);
+      final gtk = FakeAccentSource(
+        () => snapshot.future,
+        initializationDeadline: deadline,
+      );
+      final coordinator = LinuxAccentCoordinator(
+        initializationDeadline: deadline,
+        sources: [
+          gtk,
+          LinuxPortalAppearance(
+            open: () => io,
+            initializationDeadline: deadline,
+          ),
+        ],
+      );
+      var initialized = false;
+      coordinator.initialize().then((_) => initialized = true);
+      await tester.pump(deadline - const Duration(milliseconds: 1));
+      expect(initialized, isFalse);
+      await tester.pump(const Duration(milliseconds: 1));
+      expect(initialized, isTrue);
+      expect(coordinator.color, busyMarkDefaultAccentColor);
+      io.rgbRead!.complete(const Color(0xff112233));
+      await tester.pump();
+      expect(coordinator.color, const Color(0xff112233));
+      io.namedRead!.complete(YaruVariant.purple.color);
+      await tester.pump();
+      expect(coordinator.color, YaruVariant.purple.color);
+      snapshot.complete(const Color(0xff336699));
+      await tester.pump();
+      expect(coordinator.color, const Color(0xff336699));
+      await tester.runAsync(coordinator.dispose);
+      await gtk.events.close();
+      await io.signals.close();
+    },
+  );
+
+  testWidgets(
+    'pending initialization disposal cancels timers and portal session once',
+    (tester) async {
+      final snapshot = Completer<Color?>();
+      final gtk = FakeAccentSource(() => snapshot.future);
+      final io = FakePortalIO()
+        ..namedRead = Completer<Color?>()
+        ..rgbRead = Completer<Color?>();
+      final coordinator = LinuxAccentCoordinator(
+        sources: [
+          gtk,
+          LinuxPortalAppearance(open: () => io),
+        ],
+      );
+      final initialization = coordinator.initialize();
+      expect(identical(initialization, coordinator.initialize()), isTrue);
+      var initialized = false;
+      initialization.then((_) => initialized = true);
+      await tester.pump();
+      expect(initialized, isFalse);
+      await tester.runAsync(() async {
+        await coordinator.dispose();
+        await coordinator.dispose();
+      });
+      await tester.pump();
+      expect(initialized, isTrue);
+      expect(io.closes, 1);
+      expect(io.cancels, 1);
+      expect(io.listens, 1);
+      expect(io.namedReads, 1);
+      expect(io.rgbReads, 1);
+      expect(gtk.listens, 1);
+      expect(gtk.cancels, 1);
+      expect(io.signals.hasListener, isFalse);
+      expect(gtk.events.hasListener, isFalse);
+      snapshot.completeError(StateError('late native failure'));
+      io.namedRead!.completeError(StateError('late portal failure'));
+      io.rgbRead!.complete(const Color(0xff112233));
+      // Do not advance time: testWidgets also rejects any uncancelled deadline.
+      await tester.pump();
+      expect(coordinator.color, busyMarkDefaultAccentColor);
+      await gtk.events.close();
+      await io.signals.close();
     },
   );
 }

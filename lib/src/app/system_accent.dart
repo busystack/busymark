@@ -45,17 +45,24 @@ final systemAccentColorProvider = StreamProvider<Color>((ref) {
 /// Sources stay separate throughout startup and live updates. The list is in
 /// priority order: GTK, then the portal's named-Yaru / generic-RGB fallback.
 class LinuxAccentCoordinator {
-  LinuxAccentCoordinator({required List<LinuxAccentSource> sources})
-    : _sources = sources,
-      _values = List<Color?>.filled(sources.length, null);
+  LinuxAccentCoordinator({
+    required List<LinuxAccentSource> sources,
+    this.initializationDeadline = linuxAccentInitializationDeadline,
+  }) : _sources = sources,
+       _values = List<Color?>.filled(sources.length, null),
+       _resolved = List<bool>.filled(sources.length, false),
+       _deadlines = List<Timer?>.filled(sources.length, null);
 
+  final Duration initializationDeadline;
   final List<LinuxAccentSource> _sources;
   final List<Color?> _values;
+  final List<bool> _resolved;
+  final List<Timer?> _deadlines;
   final _changes = StreamController<Color>.broadcast(sync: true);
   final _subscriptions = <StreamSubscription<Color?>>[];
-  final _ready = <Completer<void>>[];
-  Future<void>? _initialization;
+  final _ready = Completer<void>();
   Future<void>? _disposal;
+  bool _started = false;
   bool _disposed = false;
   Color _color = busyMarkDefaultAccentColor;
   Color get color => _color;
@@ -69,52 +76,73 @@ class LinuxAccentCoordinator {
     listener.onCancel = subscription.cancel;
   });
 
-  Future<void> initialize() => _initialization ??= _initialize();
+  Future<void> initialize() {
+    if (!_started && !_disposed) {
+      _started = true;
+      for (var index = 0; index < _sources.length; index++) {
+        void update(Color? value) {
+          if (_disposed) return;
+          _resolved[index] = true;
+          _values[index] = value;
+          _deadlines[index]?.cancel();
+          _recompute();
+        }
 
-  Future<void> _initialize() async {
-    if (_disposed) return;
-    final ready = <Future<void>>[];
-    for (var index = 0; index < _sources.length; index++) {
-      final first = Completer<void>();
-      _ready.add(first);
-      ready.add(first.future);
-      void update(Color? value) {
-        if (!first.isCompleted) first.complete();
-        if (_disposed) return;
-        _values[index] = value;
-        final resolved =
-            _values.whereType<Color>().firstOrNull ??
-            busyMarkDefaultAccentColor;
-        if (resolved != _color) {
-          _color = resolved;
-          _changes.add(resolved);
+        try {
+          _subscriptions.add(
+            _sources[index].watchAccentColor().listen(
+              update,
+              onError: (Object _, StackTrace _) => update(null),
+              onDone: () {
+                if (!_resolved[index]) update(null);
+              },
+            ),
+          );
+          // Subscribe first: a source's own per-setting deadline must have an
+          // opportunity to publish its retained fallback before this safety net.
+          if (!_resolved[index]) {
+            _deadlines[index] = Timer(initializationDeadline, () {
+              if (!_disposed && !_resolved[index]) update(null);
+            });
+          }
+        } on Object {
+          update(null);
         }
       }
+      _recompute();
+    }
+    return _ready.future;
+  }
 
-      try {
-        _subscriptions.add(
-          _sources[index].watchAccentColor().listen(
-            update,
-            onError: (Object _, StackTrace _) => update(null),
-            onDone: () {
-              if (!first.isCompleted) update(null);
-            },
-          ),
-        );
-      } on Object {
-        update(null);
+  void _recompute() {
+    var ready = true;
+    Color? selected;
+    for (var index = 0; index < _sources.length; index++) {
+      if (!_resolved[index]) {
+        ready = false;
+        break;
+      }
+      if (_values[index] != null) {
+        selected = _values[index];
+        break;
       }
     }
-    await Future.wait(ready);
+    final color = selected ?? busyMarkDefaultAccentColor;
+    if (color != _color) {
+      _color = color;
+      _changes.add(color);
+    }
+    if (ready && !_ready.isCompleted) _ready.complete();
   }
 
   Future<void> dispose() => _disposal ??= _dispose();
 
   Future<void> _dispose() async {
     _disposed = true;
-    for (final first in _ready) {
-      if (!first.isCompleted) first.complete();
+    for (final deadline in _deadlines) {
+      deadline?.cancel();
     }
+    if (!_ready.isCompleted) _ready.complete();
     await Future.wait(
       _subscriptions.map((subscription) => subscription.cancel()),
     );
@@ -131,9 +159,12 @@ abstract interface class LinuxPortalAccentIO {
 }
 
 class LinuxPortalAppearance implements LinuxAccentSource {
-  const LinuxPortalAppearance({LinuxPortalAccentIO Function()? open})
-    : _open = open ?? _openPortal;
+  const LinuxPortalAppearance({
+    LinuxPortalAccentIO Function()? open,
+    this.initializationDeadline = linuxAccentInitializationDeadline,
+  }) : _open = open ?? _openPortal;
   final LinuxPortalAccentIO Function() _open;
+  final Duration initializationDeadline;
 
   static const freedesktopAppearance = 'org.freedesktop.appearance';
   static const gnomeInterface = 'org.gnome.desktop.interface';
@@ -160,56 +191,98 @@ class LinuxPortalAppearance implements LinuxAccentSource {
     subscription;
     Color? named;
     Color? rgb;
+    var namedResolved = false;
+    var rgbResolved = false;
     var namedGeneration = 0;
     var rgbGeneration = 0;
+    Timer? namedDeadline;
+    Timer? rgbDeadline;
     var cancelled = false;
     void publish() {
-      if (!cancelled) controller.add(named ?? rgb);
+      if (cancelled || !namedResolved) return;
+      if (named != null || rgbResolved) controller.add(named ?? rgb);
     }
 
-    Future<void> initialize() async {
+    void resolveNamed(Color? value) {
+      if (cancelled) return;
+      named = value;
+      namedResolved = true;
+      namedDeadline?.cancel();
+      publish();
+    }
+
+    void resolveRgb(Color? value) {
+      if (cancelled) return;
+      rgb = value;
+      rgbResolved = true;
+      rgbDeadline?.cancel();
+      publish();
+    }
+
+    void initialize() {
       try {
         final session = io = _open();
-        // D-Bus installs the signal match before these method calls. Each key
-        // has its own generation so a change cannot be undone by either read.
+        final initialNamedGeneration = namedGeneration;
+        final initialRgbGeneration = rgbGeneration;
         subscription = session.changes.listen(
           (change) {
             if (change.key != 'accent-color') return;
             if (change.namespace == gnomeInterface) {
               namedGeneration++;
-              named = colorFromUbuntuAccentNameValue(change.value);
+              resolveNamed(colorFromUbuntuAccentNameValue(change.value));
             } else if (change.namespace == freedesktopAppearance) {
               rgbGeneration++;
-              rgb = colorFromPortalAccentValue(change.value);
-            } else {
-              return;
+              resolveRgb(colorFromPortalAccentValue(change.value));
             }
-            publish();
           },
           onError: (Object _, StackTrace _) {
-            // A bad signal does not terminate the subscription or native source.
+            // A malformed signal cannot resolve either setting or end native updates.
           },
         );
-        final initialNamedGeneration = namedGeneration;
-        final initialRgbGeneration = rgbGeneration;
-        await Future.wait([
+        namedDeadline = Timer(initializationDeadline, () {
+          if (!cancelled &&
+              !namedResolved &&
+              namedGeneration == initialNamedGeneration) {
+            resolveNamed(null);
+          }
+        });
+        rgbDeadline = Timer(initializationDeadline, () {
+          if (!cancelled &&
+              !rgbResolved &&
+              rgbGeneration == initialRgbGeneration) {
+            resolveRgb(null);
+          }
+        });
+        // Resolve each read independently. A valid named result is ready even
+        // when RGB never responds; generic data waits for named unavailability.
+        unawaited(
           _readAccentSafely(session.readNamed).then((value) {
-            if (namedGeneration == initialNamedGeneration) named = value;
+            if (!cancelled && namedGeneration == initialNamedGeneration) {
+              resolveNamed(value);
+            }
           }),
+        );
+        unawaited(
           _readAccentSafely(session.readRgb).then((value) {
-            if (rgbGeneration == initialRgbGeneration) rgb = value;
+            if (!cancelled && rgbGeneration == initialRgbGeneration) {
+              resolveRgb(value);
+            }
           }),
-        ]);
-        publish();
+        );
       } on Object {
+        namedDeadline?.cancel();
+        rgbDeadline?.cancel();
+        namedResolved = rgbResolved = true;
         publish();
       }
     }
 
     controller = StreamController<Color?>(
-      onListen: () => unawaited(initialize()),
+      onListen: initialize,
       onCancel: () async {
         cancelled = true;
+        namedDeadline?.cancel();
+        rgbDeadline?.cancel();
         try {
           await subscription?.cancel();
         } finally {

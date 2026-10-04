@@ -2,6 +2,12 @@ import 'dart:async';
 
 import 'package:flutter/services.dart';
 
+/// All Linux accent reads start concurrently. Unresolved sources/settings get
+/// five seconds, matching rich_clipboard_service.dart's platform I/O timeout.
+/// Expiry makes them temporarily unavailable; watchers and unsuperseded late
+/// reads remain active and can restore their normal precedence.
+const linuxAccentInitializationDeadline = Duration(seconds: 5);
+
 /// Each subscription owns its initialization and platform listener. Null means
 /// the source currently has no usable accent, rather than a default color.
 abstract interface class LinuxAccentSource {
@@ -14,9 +20,11 @@ class LinuxGtkAccentService implements LinuxAccentSource {
     EventChannel events = const EventChannel(
       'com.busymark.app/gtk_accent/events',
     ),
+    this.initializationDeadline = linuxAccentInitializationDeadline,
   }) : _channel = channel,
        _events = events;
 
+  final Duration initializationDeadline;
   final MethodChannel _channel;
   final EventChannel _events;
 
@@ -31,8 +39,11 @@ class LinuxGtkAccentService implements LinuxAccentSource {
   }
 
   @override
-  Stream<Color?> watchAccentColor() =>
-      watchInitializedAccent(read: readAccentColor, changes: _watchEvents);
+  Stream<Color?> watchAccentColor() => watchInitializedAccent(
+    read: readAccentColor,
+    changes: _watchEvents,
+    initializationDeadline: initializationDeadline,
+  );
 
   Stream<Color?> _watchEvents() {
     // EventChannel.receiveBroadcastStream reports listen/cancel failures to
@@ -98,17 +109,23 @@ Color? colorFromGtkAccentPayload(Object? payload) {
 Stream<Color?> watchInitializedAccent({
   required Future<Color?> Function() read,
   required Stream<Color?> Function() changes,
+  Duration initializationDeadline = linuxAccentInitializationDeadline,
 }) {
   late StreamController<Color?> controller;
   StreamSubscription<Color?>? subscription;
+  Timer? deadline;
+  var resolved = false;
   var generation = 0;
   var cancelled = false;
   void changed(Color? color) {
     generation++;
+    resolved = true;
+    deadline?.cancel();
     if (!cancelled) controller.add(color);
   }
 
   Future<void> initialize() async {
+    final snapshotGeneration = generation;
     try {
       subscription = changes().listen(
         changed,
@@ -117,7 +134,16 @@ Stream<Color?> watchInitializedAccent({
     } on Object {
       changed(null);
     }
-    final snapshotGeneration = generation;
+    if (!resolved) {
+      deadline = Timer(initializationDeadline, () {
+        if (!cancelled && !resolved && generation == snapshotGeneration) {
+          // Do not advance the event generation: an unsuperseded late snapshot
+          // can still recover the source after startup's deadline.
+          resolved = true;
+          controller.add(null);
+        }
+      });
+    }
     Color? snapshot;
     try {
       snapshot = await read();
@@ -125,6 +151,8 @@ Stream<Color?> watchInitializedAccent({
       snapshot = null;
     }
     if (!cancelled && generation == snapshotGeneration) {
+      resolved = true;
+      deadline?.cancel();
       controller.add(snapshot);
     }
   }
@@ -133,6 +161,7 @@ Stream<Color?> watchInitializedAccent({
     onListen: () => unawaited(initialize()),
     onCancel: () async {
       cancelled = true;
+      deadline?.cancel();
       await subscription?.cancel();
     },
   );

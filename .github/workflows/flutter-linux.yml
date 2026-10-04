@@ -89,6 +89,9 @@ jobs:
       - name: Resolve locked dependencies
         run: flutter pub get --enforce-lockfile
 
+      - name: Test production GTK accent lookup and observer
+        run: xvfb-run -a env GDK_BACKEND=x11 bash tools/test_gtk_accent.sh
+
       - name: Generate localizations
         run: flutter gen-l10n
 
@@ -120,6 +123,9 @@ jobs:
 
       - name: Build Linux release
         run: flutter build linux --release
+
+      - name: Test production GTK accent channel host and lifecycle
+        run: xvfb-run -a env GDK_BACKEND=x11 bash tools/test_gtk_accent_host.sh
 
       - name: Verify release ships catalog and notices without language pairs
         run: |

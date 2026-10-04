@@ -52,6 +52,7 @@ import 'package:busymark/src/local_history/local_history_store.dart';
 import 'package:busymark/src/markdown/preview_model.dart';
 import 'package:busymark/src/markdown/markdown_model.dart';
 import 'package:busymark/src/markdown/markdown_parser.dart';
+import 'package:busymark/src/platform/linux_gtk_accent_service.dart';
 import 'package:busymark/src/platform/linux_header_bar_service.dart';
 import 'package:busymark/src/platform/rich_clipboard_service.dart';
 import 'package:busymark/src/spellcheck/spelling_dictionary_downloader.dart';
@@ -221,6 +222,7 @@ void main() {
       const service = _SearchWorkspaceService('start');
       final container = ProviderContainer(
         overrides: [
+          ..._smokeAccentOverrides,
           linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
           localSettingsStoreProvider.overrideWithValue(settingsStore),
           workspaceServiceProvider.overrideWithValue(service),
@@ -461,6 +463,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          ..._smokeAccentOverrides,
           linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         ],
         child: const BusyMarkApp(),
@@ -508,6 +511,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          ..._smokeAccentOverrides,
           linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         ],
         child: const BusyMarkApp(),
@@ -571,6 +575,7 @@ void main() {
           );
         final container = ProviderContainer(
           overrides: [
+            ..._smokeAccentOverrides,
             linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
             localSettingsStoreProvider.overrideWithValue(
               _MemorySettingsStore(),
@@ -643,6 +648,7 @@ void main() {
       (tester) async {
         final container = ProviderContainer(
           overrides: [
+            ..._smokeAccentOverrides,
             linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
             localSettingsStoreProvider.overrideWithValue(
               _MemorySettingsStore(),
@@ -693,6 +699,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          ..._smokeAccentOverrides,
           linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
           nativeWindowControllerProvider.overrideWithValue(nativeWindow),
         ],
@@ -760,6 +767,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          ..._smokeAccentOverrides,
           linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         ],
         child: const BusyMarkApp(),
@@ -789,6 +797,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          ..._smokeAccentOverrides,
           linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         ],
         child: const BusyMarkApp(),
@@ -849,6 +858,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          ..._smokeAccentOverrides,
           linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         ],
         child: const BusyMarkApp(),
@@ -889,6 +899,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          ..._smokeAccentOverrides,
           linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         ],
         child: const BusyMarkApp(),
@@ -955,6 +966,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          ..._smokeAccentOverrides,
           linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
           localSettingsStoreProvider.overrideWithValue(settingsStore),
           nativeWindowControllerProvider.overrideWithValue(nativeWindow),
@@ -1324,6 +1336,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          ..._smokeAccentOverrides,
           linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         ],
         child: const BusyMarkApp(),
@@ -1481,6 +1494,7 @@ void main() {
       });
       final container = ProviderContainer(
         overrides: [
+          ..._smokeAccentOverrides,
           linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
           localSettingsStoreProvider.overrideWithValue(_MemorySettingsStore()),
           spellingSessionControllerProvider.overrideWith((ref) => spelling),
@@ -2072,6 +2086,7 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
+            ..._smokeAccentOverrides,
             linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
             localSettingsStoreProvider.overrideWithValue(settingsStore),
           ],
@@ -2118,6 +2133,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          ..._smokeAccentOverrides,
           linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
           localSettingsStoreProvider.overrideWithValue(settingsStore),
         ],
@@ -2176,6 +2192,7 @@ void main() {
         await tester.pumpWidget(
           ProviderScope(
             overrides: [
+              ..._smokeAccentOverrides,
               linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
               localSettingsStoreProvider.overrideWithValue(settingsStore),
             ],
@@ -2225,6 +2242,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          ..._smokeAccentOverrides,
           linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         ],
         child: const BusyMarkApp(),
@@ -2372,6 +2390,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          ..._smokeAccentOverrides,
           linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         ],
         child: const BusyMarkApp(),
@@ -2526,6 +2545,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          ..._smokeAccentOverrides,
           linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         ],
         child: const BusyMarkApp(),
@@ -2830,6 +2850,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          ..._smokeAccentOverrides,
           linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         ],
         child: const BusyMarkApp(),
@@ -2870,6 +2891,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          ..._smokeAccentOverrides,
           linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
           localSettingsStoreProvider.overrideWithValue(settingsStore),
         ],
@@ -2936,6 +2958,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          ..._smokeAccentOverrides,
           linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
           localSettingsStoreProvider.overrideWithValue(settingsStore),
         ],
@@ -2960,6 +2983,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          ..._smokeAccentOverrides,
           linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         ],
         child: const BusyMarkApp(),
@@ -3029,6 +3053,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          ..._smokeAccentOverrides,
           linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
           localSettingsStoreProvider.overrideWithValue(settingsStore),
           workspaceServiceProvider.overrideWithValue(service),
@@ -3097,6 +3122,7 @@ void main() {
     final service = _StartupWorkspaceService();
     final container = ProviderContainer(
       overrides: [
+        ..._smokeAccentOverrides,
         linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(
           _MemorySettingsStore()
@@ -3219,6 +3245,7 @@ void main() {
     final root = Directory('test/fixtures/writerside/basic_project').absolute;
     final container = ProviderContainer(
       overrides: [
+        ..._smokeAccentOverrides,
         linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(
           _MemorySettingsStore()
@@ -3481,6 +3508,7 @@ code
       final controller = _MutableWorkspaceController(workspaceState);
       final container = ProviderContainer(
         overrides: [
+          ..._smokeAccentOverrides,
           linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
           localSettingsStoreProvider.overrideWithValue(_MemorySettingsStore()),
           workspaceControllerProvider.overrideWith(() => controller),
@@ -4398,6 +4426,7 @@ code
             ..simulateTopicRename = true;
       final container = ProviderContainer(
         overrides: [
+          ..._smokeAccentOverrides,
           linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
           localSettingsStoreProvider.overrideWithValue(_MemorySettingsStore()),
           workspaceControllerProvider.overrideWith(() => controller),
@@ -4714,6 +4743,7 @@ code
             ..simulateTopicRename = true;
       final container = ProviderContainer(
         overrides: [
+          ..._smokeAccentOverrides,
           linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
           localSettingsStoreProvider.overrideWithValue(_MemorySettingsStore()),
           workspaceControllerProvider.overrideWith(() => controller),
@@ -4797,6 +4827,7 @@ code
     ).._sources[second.path] = '# B\r\n';
     final container = ProviderContainer(
       overrides: [
+        ..._smokeAccentOverrides,
         linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(_MemorySettingsStore()),
         workspaceServiceProvider.overrideWithValue(service),
@@ -4978,6 +5009,7 @@ code
 
     final container = ProviderContainer(
       overrides: [
+        ..._smokeAccentOverrides,
         linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(_MemorySettingsStore()),
         workspaceServiceProvider.overrideWithValue(service),
@@ -5444,6 +5476,7 @@ code
             .toJson();
       final container = ProviderContainer(
         overrides: [
+          ..._smokeAccentOverrides,
           linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
           localSettingsStoreProvider.overrideWithValue(settingsStore),
           workspaceServiceProvider.overrideWithValue(service),
@@ -5525,6 +5558,7 @@ code
     );
     final container = ProviderContainer(
       overrides: [
+        ..._smokeAccentOverrides,
         linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(_MemorySettingsStore()),
         workspaceServiceProvider.overrideWithValue(service),
@@ -5605,6 +5639,7 @@ code
           .toJson();
     final container = ProviderContainer(
       overrides: [
+        ..._smokeAccentOverrides,
         linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(settingsStore),
         workspaceServiceProvider.overrideWithValue(service),
@@ -5917,6 +5952,7 @@ code
       final historyStore = MemoryLocalHistoryStore();
       final container = ProviderContainer(
         overrides: [
+          ..._smokeAccentOverrides,
           linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
           localSettingsStoreProvider.overrideWithValue(settingsStore),
           workspaceServiceProvider.overrideWithValue(
@@ -6159,6 +6195,7 @@ code
       final historyStore = MemoryLocalHistoryStore();
       final container = ProviderContainer(
         overrides: [
+          ..._smokeAccentOverrides,
           linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
           localSettingsStoreProvider.overrideWithValue(settingsStore),
           workspaceServiceProvider.overrideWithValue(
@@ -6304,6 +6341,7 @@ code
     );
     final container = ProviderContainer(
       overrides: [
+        ..._smokeAccentOverrides,
         linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(_MemorySettingsStore()),
         workspaceControllerProvider.overrideWith(() => controller),
@@ -6523,6 +6561,7 @@ code
     );
     final container = ProviderContainer(
       overrides: [
+        ..._smokeAccentOverrides,
         linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(_MemorySettingsStore()),
         workspaceServiceProvider.overrideWithValue(service),
@@ -6615,6 +6654,7 @@ code
     );
     final container = ProviderContainer(
       overrides: [
+        ..._smokeAccentOverrides,
         linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(_MemorySettingsStore()),
         workspaceControllerProvider.overrideWith(() => controller),
@@ -6691,6 +6731,7 @@ code
           .toJson();
     final container = ProviderContainer(
       overrides: [
+        ..._smokeAccentOverrides,
         linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(settingsStore),
         workspaceServiceProvider.overrideWithValue(service),
@@ -6755,6 +6796,7 @@ code
           .toJson();
     final container = ProviderContainer(
       overrides: [
+        ..._smokeAccentOverrides,
         linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(settingsStore),
         workspaceServiceProvider.overrideWithValue(service),
@@ -6838,6 +6880,7 @@ code
             .toJson();
       final container = ProviderContainer(
         overrides: [
+          ..._smokeAccentOverrides,
           linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
           localSettingsStoreProvider.overrideWithValue(settingsStore),
           workspaceControllerProvider.overrideWith(() => controller),
@@ -6941,6 +6984,7 @@ code
       ..value = AppSettings.defaults().copyWith(localeTag: 'ar').toJson();
     final container = ProviderContainer(
       overrides: [
+        ..._smokeAccentOverrides,
         linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(settingsStore),
         workspaceControllerProvider.overrideWith(() => controller),
@@ -7079,6 +7123,7 @@ code
     );
     final container = ProviderContainer(
       overrides: [
+        ..._smokeAccentOverrides,
         linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         workspaceControllerProvider.overrideWith(() => controller),
       ],
@@ -7159,6 +7204,7 @@ code
     );
     final container = ProviderContainer(
       overrides: [
+        ..._smokeAccentOverrides,
         linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         workspaceControllerProvider.overrideWith(() => controller),
       ],
@@ -7216,6 +7262,7 @@ code
           .toJson();
     final container = ProviderContainer(
       overrides: [
+        ..._smokeAccentOverrides,
         linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(settingsStore),
         workspaceServiceProvider.overrideWithValue(service),
@@ -7319,6 +7366,7 @@ code
     const service = _SearchWorkspaceService(source);
     final container = ProviderContainer(
       overrides: [
+        ..._smokeAccentOverrides,
         linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(settingsStore),
         workspaceServiceProvider.overrideWithValue(service),
@@ -7470,6 +7518,7 @@ code
     const service = _SearchWorkspaceService(source);
     final container = ProviderContainer(
       overrides: [
+        ..._smokeAccentOverrides,
         linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(settingsStore),
         workspaceServiceProvider.overrideWithValue(service),
@@ -7592,6 +7641,7 @@ code
           .toJson();
     final container = ProviderContainer(
       overrides: [
+        ..._smokeAccentOverrides,
         linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(settingsStore),
         workspaceServiceProvider.overrideWithValue(service),
@@ -7709,6 +7759,7 @@ code
           .toJson();
     final container = ProviderContainer(
       overrides: [
+        ..._smokeAccentOverrides,
         linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(settingsStore),
         workspaceServiceProvider.overrideWithValue(service),
@@ -7786,6 +7837,7 @@ code
       const service = _SearchWorkspaceService('# Editing toolbar\n');
       final container = ProviderContainer(
         overrides: [
+          ..._smokeAccentOverrides,
           linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
           localSettingsStoreProvider.overrideWithValue(settingsStore),
           workspaceServiceProvider.overrideWithValue(service),
@@ -7979,6 +8031,7 @@ code
     );
     final container = ProviderContainer(
       overrides: [
+        ..._smokeAccentOverrides,
         linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(settingsStore),
         workspaceServiceProvider.overrideWithValue(service),
@@ -8179,6 +8232,7 @@ code
       const service = _SearchWorkspaceService(source);
       final container = ProviderContainer(
         overrides: [
+          ..._smokeAccentOverrides,
           linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
           localSettingsStoreProvider.overrideWithValue(settingsStore),
           workspaceServiceProvider.overrideWithValue(service),
@@ -8304,6 +8358,7 @@ code
       const service = _SearchWorkspaceService(source);
       final container = ProviderContainer(
         overrides: [
+          ..._smokeAccentOverrides,
           linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
           localSettingsStoreProvider.overrideWithValue(settingsStore),
           workspaceServiceProvider.overrideWithValue(service),
@@ -8400,6 +8455,7 @@ code
     );
     final container = ProviderContainer(
       overrides: [
+        ..._smokeAccentOverrides,
         linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(settingsStore),
         workspaceServiceProvider.overrideWithValue(service),
@@ -8514,6 +8570,7 @@ code
     const service = _SearchWorkspaceService('> Shared quote.\n');
     final container = ProviderContainer(
       overrides: [
+        ..._smokeAccentOverrides,
         linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(settingsStore),
         workspaceServiceProvider.overrideWithValue(service),
@@ -8619,6 +8676,7 @@ code
     const service = _SearchWorkspaceService('```dart\n$code\n```\n\nمرحبا\n');
     final container = ProviderContainer(
       overrides: [
+        ..._smokeAccentOverrides,
         linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(settingsStore),
         workspaceServiceProvider.overrideWithValue(service),
@@ -8760,6 +8818,7 @@ After break.
 ''');
     final container = ProviderContainer(
       overrides: [
+        ..._smokeAccentOverrides,
         linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(settingsStore),
         workspaceServiceProvider.overrideWithValue(service),
@@ -8979,6 +9038,7 @@ After break.
     });
     final container = ProviderContainer(
       overrides: [
+        ..._smokeAccentOverrides,
         linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(settingsStore),
         workspaceControllerProvider.overrideWith(() => controller),
@@ -9070,6 +9130,7 @@ After break.
 ''');
     final container = ProviderContainer(
       overrides: [
+        ..._smokeAccentOverrides,
         linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(settingsStore),
         workspaceServiceProvider.overrideWithValue(service),
@@ -9175,6 +9236,7 @@ After break.
           .toJson();
     final container = ProviderContainer(
       overrides: [
+        ..._smokeAccentOverrides,
         linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(settingsStore),
         workspaceServiceProvider.overrideWithValue(service),
@@ -9271,6 +9333,7 @@ After break.
     final service = _SearchWorkspaceService('Paragraph\n');
     final container = ProviderContainer(
       overrides: [
+        ..._smokeAccentOverrides,
         linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(settingsStore),
         workspaceServiceProvider.overrideWithValue(service),
@@ -9324,6 +9387,7 @@ After break.
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          ..._smokeAccentOverrides,
           linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
           localSettingsStoreProvider.overrideWithValue(_MemorySettingsStore()),
           nativeWindowControllerProvider.overrideWithValue(nativeWindow),
@@ -9363,6 +9427,7 @@ After break.
     final service = _StartupWorkspaceService();
     final container = ProviderContainer(
       overrides: [
+        ..._smokeAccentOverrides,
         linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(_MemorySettingsStore()),
         nativeWindowControllerProvider.overrideWithValue(nativeWindow),
@@ -9409,6 +9474,7 @@ After break.
     final service = _StartupWorkspaceService();
     final container = ProviderContainer(
       overrides: [
+        ..._smokeAccentOverrides,
         linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(_MemorySettingsStore()),
         workspaceServiceProvider.overrideWithValue(service),
@@ -9504,6 +9570,7 @@ Body.
             .toJson();
       final container = ProviderContainer(
         overrides: [
+          ..._smokeAccentOverrides,
           linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
           localSettingsStoreProvider.overrideWithValue(settingsStore),
           workspaceServiceProvider.overrideWithValue(service),
@@ -9645,6 +9712,7 @@ Gamma body.
     const service = _SearchWorkspaceService(source);
     final container = ProviderContainer(
       overrides: [
+        ..._smokeAccentOverrides,
         linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(settingsStore),
         workspaceServiceProvider.overrideWithValue(service),
@@ -9854,6 +9922,7 @@ Gamma body.
           .toJson();
     final container = ProviderContainer(
       overrides: [
+        ..._smokeAccentOverrides,
         linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(settingsStore),
         workspaceServiceProvider.overrideWithValue(
@@ -10075,6 +10144,7 @@ Gamma body.
           .toJson();
     final container = ProviderContainer(
       overrides: [
+        ..._smokeAccentOverrides,
         linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(settingsStore),
         workspaceServiceProvider.overrideWithValue(service),
@@ -10191,6 +10261,7 @@ Draft paragraph.
           .toJson();
     final container = ProviderContainer(
       overrides: [
+        ..._smokeAccentOverrides,
         linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(settingsStore),
         workspaceServiceProvider.overrideWithValue(service),
@@ -10258,6 +10329,7 @@ Draft paragraph.
           .toJson();
     final container = ProviderContainer(
       overrides: [
+        ..._smokeAccentOverrides,
         linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(settingsStore),
         workspaceServiceProvider.overrideWithValue(service),
@@ -10333,6 +10405,7 @@ Draft paragraph.
           .toJson();
     final container = ProviderContainer(
       overrides: [
+        ..._smokeAccentOverrides,
         linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(settingsStore),
       ],
@@ -10461,6 +10534,7 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
           .toJson();
     final container = ProviderContainer(
       overrides: [
+        ..._smokeAccentOverrides,
         linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(settingsStore),
         workspaceControllerProvider.overrideWith(() => controller),
@@ -10498,6 +10572,7 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
           .toJson();
     final container = ProviderContainer(
       overrides: [
+        ..._smokeAccentOverrides,
         linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(settingsStore),
         workspaceServiceProvider.overrideWithValue(_StartupWorkspaceService()),
@@ -10540,6 +10615,7 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
           .toJson();
     final container = ProviderContainer(
       overrides: [
+        ..._smokeAccentOverrides,
         linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(settingsStore),
         workspaceServiceProvider.overrideWithValue(service),
@@ -10596,6 +10672,7 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
           .toJson();
     final container = ProviderContainer(
       overrides: [
+        ..._smokeAccentOverrides,
         linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(settingsStore),
         workspaceServiceProvider.overrideWithValue(service),
@@ -10670,6 +10747,7 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
           .toJson();
     final container = ProviderContainer(
       overrides: [
+        ..._smokeAccentOverrides,
         linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(settingsStore),
         startupPathProvider.overrideWithValue(null),
@@ -11185,6 +11263,7 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
     final service = _StartupWorkspaceService();
     final container = ProviderContainer(
       overrides: [
+        ..._smokeAccentOverrides,
         linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(_MemorySettingsStore()),
         workspaceServiceProvider.overrideWithValue(service),
@@ -11286,6 +11365,7 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
 
       final container = ProviderContainer(
         overrides: [
+          ..._smokeAccentOverrides,
           linuxHeaderBarServiceProvider.overrideWithValue(
             nativeHeaderBarService,
           ),
@@ -11356,6 +11436,7 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
             .toJson();
       final container = ProviderContainer(
         overrides: [
+          ..._smokeAccentOverrides,
           systemAccentColorProvider.overrideWith((ref) => const Stream.empty()),
           workspaceFileMonitorProvider.overrideWith(
             (ref) => _SearchTestFileMonitor(),
@@ -11871,6 +11952,7 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
     );
     final container = ProviderContainer(
       overrides: [
+        ..._smokeAccentOverrides,
         linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(settingsStore),
         workspaceServiceProvider.overrideWithValue(service),
@@ -11955,6 +12037,7 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
     final service = _SearchWorkspaceService(source);
     final container = ProviderContainer(
       overrides: [
+        ..._smokeAccentOverrides,
         linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(settingsStore),
         workspaceServiceProvider.overrideWithValue(service),
@@ -12032,6 +12115,7 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
     );
     final container = ProviderContainer(
       overrides: [
+        ..._smokeAccentOverrides,
         linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(settingsStore),
         workspaceServiceProvider.overrideWithValue(service),
@@ -12103,6 +12187,7 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
     final service = _SearchWorkspaceService(_fsrsReadmeSearchSource());
     final container = ProviderContainer(
       overrides: [
+        ..._smokeAccentOverrides,
         linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(settingsStore),
         workspaceServiceProvider.overrideWithValue(service),
@@ -12171,6 +12256,7 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
     );
     final container = ProviderContainer(
       overrides: [
+        ..._smokeAccentOverrides,
         linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(settingsStore),
         workspaceServiceProvider.overrideWithValue(service),
@@ -12255,6 +12341,7 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
     );
     final container = ProviderContainer(
       overrides: [
+        ..._smokeAccentOverrides,
         linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(settingsStore),
         workspaceServiceProvider.overrideWithValue(service),
@@ -12299,6 +12386,7 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
     );
     final container = ProviderContainer(
       overrides: [
+        ..._smokeAccentOverrides,
         linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(settingsStore),
         workspaceServiceProvider.overrideWithValue(service),
@@ -12340,6 +12428,7 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
     );
     final container = ProviderContainer(
       overrides: [
+        ..._smokeAccentOverrides,
         linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(settingsStore),
         workspaceServiceProvider.overrideWithValue(service),
@@ -12387,6 +12476,7 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
     final service = _SearchWorkspaceService(_fsrsReadmeSearchSource());
     final container = ProviderContainer(
       overrides: [
+        ..._smokeAccentOverrides,
         linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(settingsStore),
         workspaceServiceProvider.overrideWithValue(service),
@@ -12434,6 +12524,7 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          ..._smokeAccentOverrides,
           linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
           localSettingsStoreProvider.overrideWithValue(_MemorySettingsStore()),
           workspaceServiceProvider.overrideWithValue(service),
@@ -12495,6 +12586,7 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
           .toJson();
     final container = ProviderContainer(
       overrides: [
+        ..._smokeAccentOverrides,
         linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
         localSettingsStoreProvider.overrideWithValue(settingsStore),
         workspaceServiceProvider.overrideWithValue(service),
@@ -13527,6 +13619,7 @@ _pumpSearchRegression(
         .toJson();
   final container = ProviderContainer(
     overrides: [
+      ..._smokeAccentOverrides,
       systemAccentColorProvider.overrideWith((ref) => const Stream.empty()),
       workspaceFileMonitorProvider.overrideWith(
         (ref) => _SearchTestFileMonitor(),
@@ -14252,6 +14345,7 @@ Future<_SettingsSpellingHarness> _pumpSettingsSpellingHarness(
 
   final container = ProviderContainer(
     overrides: [
+      ..._smokeAccentOverrides,
       linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
       localSettingsStoreProvider.overrideWithValue(settingsStore),
       systemAccentColorProvider.overrideWith((ref) => const Stream.empty()),
@@ -14443,4 +14537,22 @@ class _FakeNativeWindowController implements NativeWindowController {
   void removeListener(WindowListener listener) {
     listeners.remove(listener);
   }
+}
+
+// Smoke tests exercise application behavior with deterministic external accent
+// I/O. The production coordinator/provider still run; readiness, deadline and
+// GTK/portal event behavior are covered by the focused Linux accent tests.
+final _smokeAccentOverrides = [
+  linuxGtkAccentSourceProvider.overrideWithValue(
+    const _UnavailableAccentSource(),
+  ),
+  linuxPortalAccentSourceProvider.overrideWithValue(
+    const _UnavailableAccentSource(),
+  ),
+];
+
+class _UnavailableAccentSource implements LinuxAccentSource {
+  const _UnavailableAccentSource();
+  @override
+  Stream<Color?> watchAccentColor() => Stream.value(null);
 }

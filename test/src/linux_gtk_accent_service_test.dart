@@ -200,4 +200,96 @@ void main() {
     expect(values, isEmpty);
     expect(cancels, 1);
   });
+  testWidgets(
+    'silent channels expire locally and unsuperseded late snapshot recovers',
+    (tester) async {
+      const deadline = Duration(milliseconds: 100);
+      const bounded = LinuxGtkAccentService(
+        channel: method,
+        events: events,
+        initializationDeadline: deadline,
+      );
+      final snapshot = Completer<Object?>();
+      final listen = Completer<Object?>();
+      var cancels = 0;
+      binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        method,
+        (_) => snapshot.future,
+      );
+      binding.defaultBinaryMessenger.setMockMethodCallHandler(eventMethod, (
+        call,
+      ) {
+        if (call.method == 'listen') return listen.future;
+        cancels++;
+        return Future<Object?>.value(null);
+      });
+      final values = <Color?>[];
+      final subscription = bounded.watchAccentColor().listen(values.add);
+      await tester.pump(deadline - const Duration(milliseconds: 1));
+      expect(values, isEmpty);
+      await tester.pump(const Duration(milliseconds: 1));
+      expect(values, [null]);
+      snapshot.complete(bluePayload);
+      await tester.pump();
+      expect(values, [null, blue]);
+      listen.complete(null);
+      await subscription.cancel();
+      expect(cancels, 1);
+    },
+  );
+
+  testWidgets('new unavailable event invalidates older read and deadline', (
+    tester,
+  ) async {
+    final snapshot = Completer<Object?>();
+    binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      method,
+      (_) => snapshot.future,
+    );
+    binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      eventMethod,
+      (_) async => null,
+    );
+    final values = <Color?>[];
+    final subscription = service.watchAccentColor().listen(values.add);
+    await tester.pump();
+    await send(greenPayload);
+    await send({'available': false});
+    snapshot.complete(bluePayload);
+    await tester.pump(linuxAccentInitializationDeadline);
+    expect(values, [const Color(0xff009900), null]);
+    await send(bluePayload);
+    await tester.pump();
+    expect(values.last, blue);
+    await subscription.cancel();
+  });
+
+  testWidgets(
+    'cancellation while both native calls pending rejects late errors',
+    (tester) async {
+      final snapshot = Completer<Object?>();
+      final listen = Completer<Object?>();
+      var cancels = 0;
+      binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        method,
+        (_) => snapshot.future,
+      );
+      binding.defaultBinaryMessenger.setMockMethodCallHandler(eventMethod, (
+        call,
+      ) {
+        if (call.method == 'listen') return listen.future;
+        cancels++;
+        return Future<Object?>.value(null);
+      });
+      final values = <Color?>[];
+      final subscription = service.watchAccentColor().listen(values.add);
+      await tester.pump();
+      await subscription.cancel();
+      snapshot.completeError(StateError('late snapshot failure'));
+      listen.completeError(StateError('late listen failure'));
+      await tester.pump(linuxAccentInitializationDeadline);
+      expect(values, isEmpty);
+      expect(cancels, 1);
+    },
+  );
 }
