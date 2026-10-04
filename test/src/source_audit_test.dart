@@ -257,7 +257,7 @@ void main() {
     expect(dialogButton, isNot(contains('minWidth:')));
   });
 
-  test('Writerside topic Flutter fallback uses shared semantic adapters', () {
+  test('Writerside New Topic uses the established modal editor components', () {
     final workspace = File(
       'lib/src/workspace/presentation/workspace_screen.dart',
     ).readAsStringSync();
@@ -268,14 +268,16 @@ void main() {
 
     expect(workspace, contains('BusyMarkPushButton.standardIcon('));
     expect(workspace, isNot(contains('FilledButton.icon(')));
-    expect(createTopicDialog, contains('BusyMarkDialogShell('));
+    expect(createTopicDialog, contains('BusyMarkModalEditorScaffold('));
+    expect(createTopicDialog, isNot(contains('BusyMarkDialogShell(')));
+    expect(workspace, contains('showBusyMarkModalEditorDialog<void>('));
     expect(
       RegExp(
         r'BusyMarkGroupedTextEntry\(',
       ).allMatches(createTopicDialog).length,
       2,
     );
-    expect(workspace, contains('.showCreateTopic('));
+    expect(workspace, isNot(contains('.showCreateTopic(')));
     expect(
       RegExp(r'BusyMarkComboRow<').allMatches(createTopicDialog).length,
       0,

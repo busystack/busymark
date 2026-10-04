@@ -4,119 +4,13 @@ import 'package:path/path.dart' as p;
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../app/busymark_design.dart';
-import '../../app/busymark_dialogs.dart';
 import '../../app/busymark_search_field.dart';
-import '../../platform/native_writerside_dialog_service.dart';
 import '../../app/busymark_glyphs.dart';
 import '../../app/localization.dart';
 import '../../writerside/writerside_model.dart';
 import '../../writerside/writerside_topic_file_name.dart';
 import '../../writerside/writerside_title_editor.dart';
 import '../workspace_service.dart';
-
-Future<WritersideTopicRenameDialogResult?> showWritersideTopicRenameDialog(
-  BuildContext context, {
-  required String currentFileName,
-}) async {
-  String? validate(String value) {
-    try {
-      validateWritersideTopicFileName(
-        value,
-        requiredExtension: p.extension(currentFileName).toLowerCase(),
-      );
-      return null;
-    } on Object {
-      return context.l10n.errorTopicFileNameInvalid;
-    }
-  }
-
-  final native = await showBusyMarkNativeDialog(
-    context,
-    showDialog: () => const NativeWritersideDialogService().showRenameTopic(
-      title: context.l10n.rename,
-      fileNameLabel: context.l10n.fileName,
-      initialValue: currentFileName,
-      cancelLabel: context.l10n.cancel,
-      previewLabel: context.l10n.preview,
-      refactorLabel: context.l10n.tocRefactorMenu,
-      textDirection: Directionality.of(context),
-      validate: validate,
-    ),
-  );
-  if (native?.available != false) {
-    final value = native?.value;
-    return value == null
-        ? null
-        : WritersideTopicRenameDialogResult(
-            fileName: value.fileName,
-            action: value.preview
-                ? WritersideTopicRenameDialogAction.preview
-                : WritersideTopicRenameDialogAction.refactor,
-          );
-  }
-  if (!context.mounted) return null;
-  return showBusyMarkModalDialog(
-    context,
-    barrierDismissible: false,
-    builder: (_) =>
-        WritersideTopicRenameDialog(currentFileName: currentFileName),
-  );
-}
-
-Future<String?> showWritersideTocTextDialog(
-  BuildContext context, {
-  required String title,
-  required String label,
-  bool enterOnly = false,
-}) async {
-  final native = await showBusyMarkNativeDialog(
-    context,
-    showDialog: () => const NativeWritersideDialogService().showTocText(
-      title: title,
-      label: label,
-      enterOnly: enterOnly,
-      cancelLabel: context.l10n.cancel,
-      okLabel: context.l10n.tocOk,
-      requiredError: context.l10n.topicTitleRequired,
-      textDirection: Directionality.of(context),
-    ),
-  );
-  if (native?.available != false) return native?.value;
-  if (!context.mounted) return null;
-  return showBusyMarkModalDialog(
-    context,
-    builder: (_) => WritersideTocTextDialog(
-      title: title,
-      label: label,
-      enterOnly: enterOnly,
-    ),
-  );
-}
-
-Future<WritersideTopic?> showWritersideExistingTopicPicker(
-  BuildContext context, {
-  required List<WritersideTopic> topics,
-}) async {
-  final native = await showBusyMarkNativeDialog(
-    context,
-    showDialog: () =>
-        const NativeWritersideDialogService().showExistingTopicPicker(
-          title: context.l10n.tocSelectExistingTopic,
-          searchLabel: context.l10n.search,
-          fileNames: [for (final topic in topics) topic.fileName],
-          textDirection: Directionality.of(context),
-        ),
-  );
-  if (native?.available != false) {
-    final index = native?.value;
-    return index == null ? null : topics[index];
-  }
-  if (!context.mounted) return null;
-  return showBusyMarkModalDialog(
-    context,
-    builder: (_) => WritersideExistingTopicPicker(topics: topics),
-  );
-}
 
 enum WritersideTopicRenameDialogAction { preview, refactor }
 

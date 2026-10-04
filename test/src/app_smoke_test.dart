@@ -1,5 +1,5 @@
+import 'package:busymark/src/core/path_utils.dart';
 import 'package:busymark/src/platform/native_writerside_dialog_service.dart';
-import '../support/native_writerside_dialog_host.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
@@ -3470,9 +3470,9 @@ code
     expect(container.read(workspaceControllerProvider).activeText, source);
   });
 
-  for (final nativeCreation in [false, true]) {
+  for (final nativeHostAvailable in [false, true]) {
     testWidgets(
-      'Table of Contents creates from selection and exposes nested Writerside actions${nativeCreation ? ' via native dialogs' : ''}',
+      'Table of Contents creates from selection and exposes nested Writerside actions${nativeHostAvailable ? ' with an available native host' : ''}',
       (tester) async {
         const yaruWindowChannel = MethodChannel('yaru_window');
         const yaruWindowEventsChannel = MethodChannel('yaru_window/events');
@@ -3570,9 +3570,8 @@ code
           activeText: '# Nested\n',
         );
         final controller = _MutableWorkspaceController(workspaceState);
-        var cancelNativeCreation = false;
         final nativeCalls = <MethodCall>[];
-        if (nativeCreation) {
+        if (nativeHostAvailable) {
           const channel = MethodChannel(nativeWritersideDialogChannelName);
           tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
             channel,
@@ -3581,22 +3580,7 @@ code
                 throw MissingPluginException();
               }
               nativeCalls.add(call);
-              if (cancelNativeCreation) {
-                cancelNativeCreation = false;
-                return null;
-              }
-              final host = TestNativeWritersideDialogHost()
-                ..arguments = call.arguments as Map<Object?, Object?>;
-              final result =
-                  await host.event({
-                        'event': 'submit',
-                        'title': host.arguments['initialTitle'],
-                        'fileName': host.arguments['initialFileName'],
-                        'fileNameEdited': false,
-                      })
-                      as Map;
-              expect(result['created'], isTrue);
-              return true;
+              return null;
             },
           );
           addTearDown(
@@ -3605,11 +3589,10 @@ code
           );
         }
         Future<void> acceptCreation() async {
-          if (nativeCreation) {
-            expect(find.byType(BusyMarkDialogShell), findsNothing);
-          } else {
-            await tester.tap(find.text(l10n.tocOk));
-          }
+          expect(find.byType(BusyMarkModalEditorScaffold), findsOneWidget);
+          expect(find.byType(Dialog), findsOneWidget);
+          expect(nativeCalls, isEmpty);
+          await tester.tap(find.text(l10n.tocOk));
           await tester.pumpAndSettle();
         }
 
@@ -3970,15 +3953,13 @@ code
         await tester.tap(find.text(l10n.cancel));
         await tester.pumpAndSettle();
 
-        cancelNativeCreation = nativeCreation;
         await openPopup(find.byTooltip(l10n.newTopic));
         await tester.tap(find.text(l10n.tocEmptyMdTopic));
         await tester.pumpAndSettle();
-        if (!nativeCreation) {
-          await tester.sendKeyEvent(LogicalKeyboardKey.escape);
-          await tester.pumpAndSettle();
-        }
-        expect(find.byType(BusyMarkDialogShell), findsNothing);
+        await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+        await tester.pumpAndSettle();
+
+        expect(find.byType(BusyMarkModalEditorScaffold), findsNothing);
         expect(controller.createdTopicRequest, isNull);
 
         await openPopup(find.byTooltip(l10n.newTopic));
@@ -3987,101 +3968,138 @@ code
         await tester.tap(find.text(l10n.tocEmptyMdTopic));
         await tester.pumpAndSettle();
 
-        if (!nativeCreation) {
-          expect(find.text(l10n.newTopic), findsOneWidget);
-          expect(find.byType(BusyMarkDialogShell), findsOneWidget);
-          expect(
-            find.descendant(
-              of: find.byType(BusyMarkDialogShell),
-              matching: find.byType(BusyMarkGroupedTextEntry),
-            ),
-            findsNWidgets(2),
-          );
-          expect(find.text(l10n.topicPlacement), findsNothing);
-        }
-        if (!nativeCreation) {
-          final entries = find.byType(BusyMarkGroupedTextEntry);
-          final title = entries.at(0);
-          final name = entries.at(1);
-          expect(
-            tester.widget<BusyMarkGroupedTextEntry>(title).controller!.text,
-            l10n.defaultNewTopicTitle,
-          );
-          await tester.enterText(title, 'Hello World');
-          await tester.pump();
-          expect(
-            tester.widget<BusyMarkGroupedTextEntry>(name).controller!.text,
-            'hello-world.md',
-          );
-          await tester.enterText(name, 'manual');
-          await tester.enterText(title, 'Changed title');
-          await tester.pump();
-          expect(
-            tester.widget<BusyMarkGroupedTextEntry>(name).controller!.text,
-            'manual',
-          );
-          for (final invalid in [
-            '',
-            '../unsafe.md',
-            'CON.md',
-            'parent.md',
-            'wrong.topic',
-          ]) {
-            await tester.enterText(name, invalid);
-            await tester.pump();
-            expect(
-              tester
-                  .widget<BusyMarkDialogButton>(
-                    find.byWidgetPredicate(
-                      (widget) =>
-                          widget is BusyMarkDialogButton &&
-                          widget.label == l10n.tocOk,
-                    ),
-                  )
-                  .onPressed,
-              isNull,
-            );
-          }
-          await tester.enterText(name, 'root-topic');
-          await tester.enterText(title, ' ');
-          await tester.pump();
-          expect(find.text(l10n.topicTitleRequired), findsOneWidget);
-          await tester.enterText(title, 'Created Root');
-          await tester.pump();
-          final pendingCreation = Completer<bool>();
-          controller.createTopic = (_) => pendingCreation.future;
-          await tester.tap(find.text(l10n.tocOk));
+        expect(find.text(l10n.newTopic), findsOneWidget);
+        expect(find.byType(BusyMarkModalEditorScaffold), findsOneWidget);
+        expect(find.byType(BusyMarkModalEditorSurface), findsOneWidget);
+        expect(
+          tester.getRect(find.byType(Dialog)).bottom -
+              tester.getRect(find.byType(BusyMarkGroupedList)).bottom,
+          greaterThanOrEqualTo(BusyMarkSpacing.lg),
+        );
+        expect(find.byType(BusyMarkEditorHeader), findsOneWidget);
+        expect(find.byType(Dialog), findsOneWidget);
+        expect(find.byType(BusyMarkDialogShell), findsNothing);
+        expect(
+          tester
+              .widget<BusyMarkGroupedList>(find.byType(BusyMarkGroupedList))
+              .filled,
+          isTrue,
+        );
+        expect(nativeCalls, isEmpty);
+        expect(
+          find.descendant(
+            of: find.byType(BusyMarkModalEditorScaffold),
+            matching: find.byType(BusyMarkGroupedTextEntry),
+          ),
+          findsNWidgets(2),
+        );
+        expect(find.text(l10n.topicPlacement), findsNothing);
+
+        final entries = find.byType(BusyMarkGroupedTextEntry);
+        final title = entries.at(0);
+        final name = entries.at(1);
+        expect(
+          tester.widget<BusyMarkGroupedTextEntry>(title).controller!.text,
+          l10n.defaultNewTopicTitle,
+        );
+        await tester.enterText(title, 'Résumé 世界');
+        await tester.pump();
+        expect(
+          tester.widget<BusyMarkGroupedTextEntry>(name).controller!.text,
+          '${slugForHeading('Résumé 世界')}.md',
+        );
+        await tester.enterText(title, 'Hello World');
+        await tester.pump();
+        expect(
+          tester.widget<BusyMarkGroupedTextEntry>(name).controller!.text,
+          'hello-world.md',
+        );
+        await tester.enterText(name, 'manual');
+        await tester.enterText(title, 'Changed title');
+        await tester.pump();
+        expect(
+          tester.widget<BusyMarkGroupedTextEntry>(name).controller!.text,
+          'manual',
+        );
+        for (final invalid in [
+          '',
+          '../unsafe.md',
+          'CON.md',
+          'parent.md',
+          'wrong.topic',
+        ]) {
+          await tester.enterText(name, invalid);
           await tester.pump();
           expect(
             tester
-                .widget<BusyMarkDialogShell>(find.byType(BusyMarkDialogShell))
-                .closable,
-            isFalse,
+                .widget<ElevatedButton>(
+                  find.byWidgetPredicate(
+                    (widget) =>
+                        widget is ElevatedButton &&
+                        widget.child is Text &&
+                        (widget.child! as Text).data == l10n.tocOk,
+                  ),
+                )
+                .onPressed,
+            isNull,
           );
-          expect(
-            tester.widget<BusyMarkGroupedTextEntry>(title).enabled,
-            isFalse,
-          );
-          await tester.sendKeyEvent(LogicalKeyboardKey.escape);
-          await tester.pump();
-          expect(find.byType(BusyMarkDialogShell), findsOneWidget);
-          final count = controller.createTopicCount;
-          await tester.testTextInput.receiveAction(TextInputAction.done);
-          await tester.pump();
-          expect(controller.createTopicCount, count);
-          pendingCreation.complete(false);
-          await tester.pumpAndSettle();
-          expect(find.text(l10n.createWritersideTopicFailed), findsOneWidget);
-          expect(
-            tester.widget<BusyMarkGroupedTextEntry>(title).controller!.text,
-            'Created Root',
-          );
-          expect(
-            tester.widget<BusyMarkGroupedTextEntry>(name).controller!.text,
-            'root-topic',
-          );
-          controller.createTopic = null;
         }
+        await tester.enterText(name, 'root-topic');
+        await tester.enterText(title, ' ');
+        await tester.pump();
+        expect(find.text(l10n.topicTitleRequired), findsOneWidget);
+        await tester.enterText(title, 'Created Root');
+        await tester.pump();
+        final pendingCreation = Completer<bool>();
+        controller.createTopic = (_) => pendingCreation.future;
+        final submissionsBeforeEnter = controller.createTopicCount;
+        await tester.tap(title);
+        await tester.pump();
+        await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+        await tester.pump();
+        expect(controller.createTopicCount, submissionsBeforeEnter);
+        final filenameEditor = tester.widget<EditableText>(
+          find.descendant(of: name, matching: find.byType(EditableText)),
+        );
+        expect(filenameEditor.focusNode.hasFocus, isTrue);
+        await tester.tap(title);
+        await tester.pump();
+        await tester.testTextInput.receiveAction(TextInputAction.next);
+        await tester.pump();
+        expect(controller.createTopicCount, submissionsBeforeEnter);
+        expect(filenameEditor.focusNode.hasFocus, isTrue);
+        await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+        await tester.pump();
+        expect(controller.createTopicCount, submissionsBeforeEnter + 1);
+        expect(
+          tester
+              .widget<BusyMarkModalEditorScaffold>(
+                find.byType(BusyMarkModalEditorScaffold),
+              )
+              .cancelEnabled,
+          isFalse,
+        );
+        expect(tester.widget<BusyMarkGroupedTextEntry>(title).enabled, isFalse);
+        await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+        await tester.pump();
+        expect(find.byType(BusyMarkModalEditorScaffold), findsOneWidget);
+        final count = controller.createTopicCount;
+        await tester.testTextInput.receiveAction(TextInputAction.done);
+        await tester.pump();
+        expect(controller.createTopicCount, count);
+        pendingCreation.complete(false);
+        await tester.pumpAndSettle();
+        expect(find.text(l10n.createWritersideTopicFailed), findsOneWidget);
+        expect(
+          tester.widget<BusyMarkGroupedTextEntry>(title).controller!.text,
+          'Created Root',
+        );
+        expect(
+          tester.widget<BusyMarkGroupedTextEntry>(name).controller!.text,
+          'root-topic',
+        );
+        controller.createTopic = null;
+
         await acceptCreation();
 
         expect(controller.createdTopicRequest, isNotNull);
@@ -4214,7 +4232,7 @@ code
         await tester.pumpAndSettle();
         await tester.tap(find.text(l10n.tocEmptyXmlTopic));
         await tester.pumpAndSettle();
-        if (!nativeCreation) expect(find.text(l10n.newTopic), findsOneWidget);
+        expect(find.text(l10n.newTopic), findsOneWidget);
         await acceptCreation();
         expect(
           controller.createdTopicRequest!.placement,
@@ -4229,7 +4247,7 @@ code
         await tester.pumpAndSettle();
         await tester.tap(find.text(l10n.tocEmptyMdTopic));
         await tester.pumpAndSettle();
-        if (!nativeCreation) expect(find.text(l10n.newTopic), findsOneWidget);
+        expect(find.text(l10n.newTopic), findsOneWidget);
         await acceptCreation();
         expect(
           controller.createdTopicRequest!.placement,

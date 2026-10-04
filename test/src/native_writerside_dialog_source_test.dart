@@ -20,45 +20,54 @@ void main() {
     expect(workspace, contains('.showEditTitle('));
     expect(workspace, contains('.showDuplicateTopic('));
   });
+
+  final nativeDisplay =
+      Platform.environment['BUSYMARK_NATIVE_DIALOG_TEST_DISPLAY'];
   test(
-    'interactive Writerside dialogs reuse the GTK host and Dart callbacks',
-    () {
-      final host = File(
-        'linux/runner/writerside_dialog_host.cc',
-      ).readAsStringSync();
-      final dialogs = File(
-        'lib/src/workspace/presentation/writerside_toc_dialogs.dart',
-      ).readAsStringSync();
-      for (final method in [
-        'showCreateTopic',
-        'showRenameTopic',
-        'showTocText',
-        'showExistingTopicPicker',
-      ]) {
-        expect(host, contains('"$method"'));
-      }
-      expect(
-        host,
-        matches(
-          RegExp(r'GTK_DIALOG_MODAL\s*\|\s*GTK_DIALOG_DESTROY_WITH_PARENT'),
-        ),
+    'GTK Writerside contents follow application direction, filenames stay LTR',
+    () async {
+      final temporary = Directory.systemTemp.createTempSync(
+        'busymark-native-dialog-test-',
       );
-      expect(host, contains('GTK_TEXT_DIR_LTR'));
-      expect(host, contains('writersideDialogEvent'));
-      expect(host, contains('state->pending'));
-      expect(host, contains('gtk_window_set_deletable'));
-      expect(host, contains('G_CALLBACK(interactive_key)'));
-      expect(
-        host,
-        contains('interactive_response(nullptr, GTK_RESPONSE_CANCEL, state)'),
+      addTearDown(() => temporary.deleteSync(recursive: true));
+      final engine = Directory('linux/flutter/ephemeral').absolute.path;
+      final flags = await Process.run('pkg-config', [
+        '--cflags',
+        '--libs',
+        'gtk+-3.0',
+      ]);
+      expect(flags.exitCode, 0, reason: '${flags.stderr}');
+      final binary = '${temporary.path}/writerside-dialog-test';
+      final compiled = await Process.run(Platform.environment['CXX'] ?? 'c++', [
+        '-std=c++14',
+        '-Wall',
+        '-Werror',
+        '-I$engine',
+        'test/support/native_writerside_dialog_host_test.cc',
+        '-L$engine',
+        '-lflutter_linux_gtk',
+        '-Wl,-rpath,$engine',
+        '-Wl,--wrap=fl_method_call_respond_success',
+        ...'${flags.stdout}'.trim().split(RegExp(r'\s+')),
+        '-o',
+        binary,
+      ]);
+      expect(compiled.exitCode, 0, reason: '${compiled.stderr}');
+      final result = await Process.run(
+        binary,
+        const [],
+        environment: {
+          'DISPLAY': nativeDisplay!,
+          'GDK_BACKEND': 'x11',
+          'NO_AT_BRIDGE': '1',
+        },
       );
-      expect(host, contains('g_weak_ref_get'));
-      expect(host, contains('if (state->finished) return;'));
-      expect(host, contains('reply->revision != state->revision'));
-      expect(dialogs, contains('.showRenameTopic('));
-      expect(dialogs, contains('.showTocText('));
-      expect(dialogs, contains('.showExistingTopicPicker('));
-      expect(dialogs, contains('return index == null ? null : topics[index]'));
+      expect(result.exitCode, 0, reason: '${result.stdout}\n${result.stderr}');
     },
+    skip: !Platform.isLinux || nativeDisplay == null
+        ? 'Requires a Linux build and an isolated '
+              'BUSYMARK_NATIVE_DIALOG_TEST_DISPLAY.'
+        : false,
+    timeout: const Timeout(Duration(minutes: 2)),
   );
 }

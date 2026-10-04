@@ -1,4 +1,4 @@
-import 'package:busymark/src/platform/native_writerside_dialog_service.dart';
+import 'package:busymark/src/app/busymark_dialogs.dart';
 import 'package:busymark/src/app/busymark_design.dart';
 import 'package:busymark/src/platform/native_menu_service.dart';
 import 'package:busymark/l10n/generated/app_localizations.dart';
@@ -64,7 +64,7 @@ void main() {
   });
 
   testWidgets(
-    'native picker returns the supplied topic identity without a fallback',
+    'picker returns the supplied topic identity for duplicate names',
     (tester) async {
       final topics = [
         for (final root in ['/first', '/second'])
@@ -74,23 +74,7 @@ void main() {
             topicsRoot: root,
           ),
       ];
-      Object? response = 1;
-      const channel = MethodChannel(nativeWritersideDialogChannelName);
-      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(channel, (
-        call,
-      ) async {
-        expect(call.method, 'showExistingTopicPicker');
-        expect((call.arguments as Map)['fileNames'], ['same.md', 'same.md']);
-        return response;
-      });
-      addTearDown(
-        () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
-          channel,
-          null,
-        ),
-      );
       WritersideTopic? chosen;
-      Object? failure;
       await tester.pumpWidget(
         MaterialApp(
           localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -98,51 +82,34 @@ void main() {
           home: Builder(
             builder: (context) => TextButton(
               child: const Text('Link'),
-              onPressed: () async {
-                try {
-                  chosen = await showWritersideExistingTopicPicker(
+              onPressed: () async =>
+                  chosen = await showBusyMarkModalDialog<WritersideTopic>(
                     context,
-                    topics: topics,
-                  );
-                } catch (error) {
-                  failure = error;
-                }
-              },
+                    builder: (_) =>
+                        WritersideExistingTopicPicker(topics: topics),
+                  ),
             ),
           ),
         ),
       );
       await tester.tap(find.text('Link'));
       await tester.pumpAndSettle();
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pumpAndSettle();
       expect(chosen, same(topics[1]));
-      expect(find.byType(WritersideExistingTopicPicker), findsNothing);
-      response = null;
       await tester.tap(find.text('Link'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), 'SAME');
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
       await tester.pumpAndSettle();
       expect(chosen, isNull);
-      expect(find.byType(WritersideExistingTopicPicker), findsNothing);
-      response = 20;
-      await tester.tap(find.text('Link'));
-      await tester.pumpAndSettle();
-      expect(failure, isA<PlatformException>());
-      expect(find.byType(WritersideExistingTopicPicker), findsNothing);
     },
   );
 
-  testWidgets('Group fallback keeps raw input and Enter-only acceptance', (
+  testWidgets('Group keeps raw input and Enter-only acceptance', (
     tester,
   ) async {
-    const channel = MethodChannel(nativeWritersideDialogChannelName);
-    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
-      channel,
-      (_) async => throw PlatformException(code: 'unavailable'),
-    );
-    addTearDown(
-      () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
-        channel,
-        null,
-      ),
-    );
     String? result;
     await tester.pumpWidget(
       MaterialApp(
@@ -151,12 +118,15 @@ void main() {
         home: Builder(
           builder: (context) => TextButton(
             child: const Text('Launch'),
-            onPressed: () async => result = await showWritersideTocTextDialog(
-              context,
-              title: 'Group',
-              label: 'Title',
-              enterOnly: true,
-            ),
+            onPressed: () async =>
+                result = await showBusyMarkModalDialog<String>(
+                  context,
+                  builder: (_) => const WritersideTocTextDialog(
+                    title: 'Group',
+                    label: 'Title',
+                    enterOnly: true,
+                  ),
+                ),
           ),
         ),
       ),
@@ -178,24 +148,9 @@ void main() {
     expect(result, '  Group name  ');
   });
 
-  testWidgets('native rename preserves Preview and Refactor results', (
+  testWidgets('rename preserves validation and Preview/Refactor results', (
     tester,
   ) async {
-    const channel = MethodChannel(nativeWritersideDialogChannelName);
-    Object? response;
-    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(channel, (
-      call,
-    ) async {
-      expect(call.method, 'showRenameTopic');
-      expect((call.arguments as Map)['initialValue'], 'old.topic');
-      return response;
-    });
-    addTearDown(
-      () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
-        channel,
-        null,
-      ),
-    );
     WritersideTopicRenameDialogResult? result;
     await tester.pumpWidget(
       MaterialApp(
@@ -204,18 +159,44 @@ void main() {
         home: Builder(
           builder: (context) => TextButton(
             child: const Text('Launch'),
-            onPressed: () async =>
-                result = await showWritersideTopicRenameDialog(
+            onPressed: () async => result =
+                await showBusyMarkModalDialog<
+                  WritersideTopicRenameDialogResult
+                >(
                   context,
-                  currentFileName: 'old.topic',
+                  barrierDismissible: false,
+                  builder: (_) => const WritersideTopicRenameDialog(
+                    currentFileName: 'old.topic',
+                  ),
                 ),
           ),
         ),
       ),
     );
     for (final preview in [true, false]) {
-      response = {'value': '  new.topic  ', 'preview': preview};
       await tester.tap(find.text('Launch'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(BusyMarkGroupedTextEntry), 'wrong.md');
+      await tester.pump();
+      final buttons = tester
+          .widgetList<BusyMarkDialogButton>(find.byType(BusyMarkDialogButton))
+          .toList();
+      expect(
+        buttons
+            .where((button) => button.label != 'Cancel')
+            .every((button) => button.onPressed == null),
+        isTrue,
+      );
+      await tester.enterText(
+        find.byType(BusyMarkGroupedTextEntry),
+        '  new.topic  ',
+      );
+      await tester.pump();
+      if (preview) {
+        await tester.tap(find.text('Preview'));
+      } else {
+        await tester.testTextInput.receiveAction(TextInputAction.done);
+      }
       await tester.pumpAndSettle();
       expect(result?.fileName, 'new.topic');
       expect(
@@ -224,13 +205,12 @@ void main() {
             ? WritersideTopicRenameDialogAction.preview
             : WritersideTopicRenameDialogAction.refactor,
       );
-      expect(find.byType(WritersideTopicRenameDialog), findsNothing);
     }
-    response = null;
     await tester.tap(find.text('Launch'));
     await tester.pumpAndSettle();
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
     expect(result, isNull);
-    expect(find.byType(WritersideTopicRenameDialog), findsNothing);
   });
   for (final direction in TextDirection.values) {
     testWidgets('nested menus use the native host in $direction', (
