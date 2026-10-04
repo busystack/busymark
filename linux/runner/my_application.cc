@@ -10,6 +10,7 @@
 #include <cstring>
 
 #include "flutter/generated_plugin_registrant.h"
+#include "gtk_accent_host.h"
 #include "rich_clipboard_host.h"
 #include "secure_credential_host.h"
 #include "video_player_host.h"
@@ -84,6 +85,7 @@ constexpr char kHeaderApplicationBackdropStyleClass[] =
 struct _MyApplication {
   GtkApplication parent_instance;
   char** dart_entrypoint_arguments;
+  BusyMarkGtkAccentHost* gtk_accent_host;
   FlMethodChannel* header_bar_channel;
   FlMethodChannel* native_menu_channel;
   FlMethodChannel* writerside_dialog_channel;
@@ -3155,6 +3157,8 @@ static void my_application_activate(GApplication* application) {
 
   g_signal_connect_swapped(view, "first-frame", G_CALLBACK(first_frame_cb),
                            self);
+  // Register before realizing the view starts Dart execution.
+  self->gtk_accent_host = busymark_gtk_accent_host_new(view, GTK_WIDGET(window));
   gtk_widget_realize(GTK_WIDGET(view));
 
   fl_register_plugins(FL_PLUGIN_REGISTRY(view));
@@ -3218,6 +3222,8 @@ static void my_application_shutdown(GApplication* application) {
 // Implements GObject::dispose.
 static void my_application_dispose(GObject* object) {
   MyApplication* self = MY_APPLICATION(object);
+  busymark_gtk_accent_host_free(self->gtk_accent_host);
+  self->gtk_accent_host = nullptr;
   GdkScreen* screen = gdk_screen_get_default();
   if (screen != nullptr) {
     if (self->header_bar_css_provider != nullptr) {
@@ -3271,6 +3277,7 @@ static void my_application_class_init(MyApplicationClass* klass) {
 
 static void my_application_init(MyApplication* self) {
   self->dart_entrypoint_arguments = nullptr;
+  self->gtk_accent_host = nullptr;
   self->header_bar_channel = nullptr;
   self->native_menu_channel = nullptr;
   self->writerside_dialog_channel = nullptr;

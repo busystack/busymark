@@ -9,6 +9,8 @@ project(runner LANGUAGES CXX)
 add_executable(${BINARY_NAME}
   "main.cc"
   "my_application.cc"
+  "gtk_accent.cc"
+  "gtk_accent_host.cc"
   "rich_clipboard_host.cc"
   "secure_credential_host.cc"
   "video_player_host.cc"
