@@ -5,6 +5,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:ui' as ui;
 
+import 'package:busymark/main.dart' as application;
 import 'package:busymark/l10n/generated/app_localizations.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_block_widgets.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_editor.dart';
@@ -12,15 +13,31 @@ import 'package:busymark/src/editor/wysiwyg/wysiwyg_session_state.dart';
 import 'package:busymark/src/markdown/busymark_document.dart';
 import 'package:busymark/src/markdown/markdown_parser.dart';
 import 'package:busymark/src/platform/rich_clipboard_service.dart';
+import 'package:busymark/src/workspace/workspace_controller.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:window_manager/window_manager.dart';
 
 Future<void> main(List<String> arguments) async {
-  WidgetsFlutterBinding.ensureInitialized();
+  if (arguments.length == 3 && arguments.first == '--application') {
+    final binding = _ApplicationProbeBinding();
+    await application.main([arguments[1]]);
+    unawaited(
+      Future<void>.delayed(const Duration(seconds: 2), () async {
+        await _ApplicationProbeDriver(
+          boundary: binding.boundary,
+          fixture: File(arguments[1]),
+          output: await Directory(arguments[2]).create(recursive: true),
+        ).run();
+      }),
+    );
+    return;
+  }
+  _ProbeBinding();
   if (arguments.length != 2) {
     throw ArgumentError('INPUT_MARKDOWN OUTPUT_DIRECTORY');
   }
@@ -41,6 +58,59 @@ Future<void> main(List<String> arguments) async {
   );
 }
 
+// Observe the real client ID while forwarding every platform request. Text
+// updates below are delivered on the engine's incoming text-input channel;
+// clipboard requests still reach the Linux plugin unchanged.
+class _ProbeBinding extends WidgetsFlutterBinding {
+  @override
+  BinaryMessenger createBinaryMessenger() =>
+      _ProbeMessenger(super.createBinaryMessenger());
+}
+
+class _ApplicationProbeBinding extends _ProbeBinding {
+  final boundary = GlobalKey();
+
+  @override
+  Widget wrapWithDefaultView(Widget rootWidget) => super.wrapWithDefaultView(
+    RepaintBoundary(key: boundary, child: rootWidget),
+  );
+}
+
+class _ProbeMessenger extends BinaryMessenger {
+  _ProbeMessenger(this.delegate);
+  final BinaryMessenger delegate;
+  static int? clientId;
+
+  @override
+  Future<ByteData?>? send(String channel, ByteData? message) {
+    if (channel == SystemChannels.textInput.name && message != null) {
+      final call = SystemChannels.textInput.codec.decodeMethodCall(message);
+      if (call.method == 'TextInput.setClient') {
+        clientId = (call.arguments as List).first as int;
+      }
+      if (call.method == 'TextInput.clearClient') clientId = null;
+    }
+    return delegate.send(channel, message);
+  }
+
+  @override
+  void setMessageHandler(String channel, MessageHandler? handler) =>
+      delegate.setMessageHandler(channel, handler);
+
+  @override
+  Future<void> handlePlatformMessage(
+    String channel,
+    ByteData? data,
+    ui.PlatformMessageResponseCallback? callback,
+  ) async {
+    ServicesBinding.instance.channelBuffers.push(
+      channel,
+      data,
+      callback ?? (_) {},
+    );
+  }
+}
+
 class _Probe extends StatefulWidget {
   const _Probe({required this.document, required this.output});
   final BusyDocument document;
@@ -56,6 +126,13 @@ class _ProbeState extends State<_Probe> {
   WysiwygEditorSessionState _session = const WysiwygEditorSessionState();
   int _pointer = 100;
   int _edits = 0;
+  late BusyDocument _liveDocument = widget.document;
+  late String _liveSource = widget.document.source ?? '';
+  var _editorKey = UniqueKey();
+  bool _editableMode = false;
+  int _acceptedEdits = 0;
+  int _syntheticParses = 0;
+  WysiwygEditorSessionState _initialSession = const WysiwygEditorSessionState();
 
   @override
   void initState() {
@@ -68,10 +145,25 @@ class _ProbeState extends State<_Probe> {
     body: RepaintBoundary(
       key: _boundary,
       child: BusyMarkWysiwygEditor(
-        document: widget.document,
+        key: _editorKey,
+        document: _liveDocument,
         clipboardService: _clipboard,
+        initialSessionState: _initialSession,
         onSessionChanged: (_, session) => _session = session,
-        onSourceChanged: (_, _) => _edits++,
+        onSourceChanged: (_, value) {
+          if (!_editableMode) {
+            _edits++;
+            return;
+          }
+          _acceptedEdits++;
+          setState(() {
+            _liveSource = value;
+            _syntheticParses++;
+            _liveDocument = const MarkdownParser()
+                .parse(filePath: _liveDocument.filePath, source: value)
+                .busyDocument;
+          });
+        },
       ),
     ),
   );
@@ -96,49 +188,21 @@ class _ProbeState extends State<_Probe> {
               as EditableTextState)
           .renderEditable;
 
-  Future<void> _pause() async {
-    await Future<void>.delayed(const Duration(milliseconds: 180));
-    await WidgetsBinding.instance.endOfFrame;
-  }
+  Future<void> _pause() => _ProbeInput.pause();
 
   void _keyData(
     PhysicalKeyboardKey physical,
     LogicalKeyboardKey logical,
     ui.KeyEventType type,
   ) {
-    // Dispatch framework key messages as well as updating HardwareKeyboard.
-    // Synthesized events dispatch immediately without a native raw key event.
-    // ignore: deprecated_member_use
-    ServicesBinding.instance.keyEventManager.handleKeyData(
-      ui.KeyData(
-        timeStamp: Duration.zero,
-        type: type,
-        physical: physical.usbHidUsage,
-        logical: logical.keyId,
-        character: null,
-        synthesized: true,
-      ),
-    );
+    _ProbeInput.keyData(physical, logical, type);
   }
 
   Future<void> _key(
     PhysicalKeyboardKey physical,
-    LogicalKeyboardKey logical,
-  ) async {
-    _keyData(
-      PhysicalKeyboardKey.controlLeft,
-      LogicalKeyboardKey.controlLeft,
-      ui.KeyEventType.down,
-    );
-    _keyData(physical, logical, ui.KeyEventType.down);
-    _keyData(physical, logical, ui.KeyEventType.up);
-    _keyData(
-      PhysicalKeyboardKey.controlLeft,
-      LogicalKeyboardKey.controlLeft,
-      ui.KeyEventType.up,
-    );
-    await _pause();
-  }
+    LogicalKeyboardKey logical, {
+    bool shift = false,
+  }) => _ProbeInput.command(physical, logical, shift: shift);
 
   Future<void> _jump(int index) async {
     final list =
@@ -301,6 +365,7 @@ class _ProbeState extends State<_Probe> {
     String endText,
     int endOffset, {
     int? scrollTo,
+    bool cancel = false,
   }) async {
     final start = _caret(startText, startOffset);
     final pointer = ++_pointer;
@@ -362,12 +427,19 @@ class _ProbeState extends State<_Probe> {
       await _pause();
     }
     GestureBinding.instance.handlePointerEvent(
-      PointerUpEvent(
-        viewId: viewId,
-        pointer: pointer,
-        position: end,
-        kind: PointerDeviceKind.mouse,
-      ),
+      cancel
+          ? PointerCancelEvent(
+              viewId: viewId,
+              pointer: pointer,
+              position: start,
+              kind: PointerDeviceKind.mouse,
+            )
+          : PointerUpEvent(
+              viewId: viewId,
+              pointer: pointer,
+              position: end,
+              kind: PointerDeviceKind.mouse,
+            ),
     );
     await _pause();
   }
@@ -578,6 +650,7 @@ class _ProbeState extends State<_Probe> {
         expectedRange: range(table, 0, table, 0),
         needles: [for (final cell in cells) cell.plainText],
       );
+      await _runEditableCases();
     } catch (error, stack) {
       failure = '$error\n$stack';
       stderr.writeln(failure);
@@ -586,6 +659,10 @@ class _ProbeState extends State<_Probe> {
       const JsonEncoder.withIndent('  ').convert({
         'failure': failure?.toString(),
         'edits': _edits,
+        'acceptedSyntheticEdits': _acceptedEdits,
+        'syntheticParses': _syntheticParses,
+        'inputMethod':
+            'framework-dispatched key/pointer events and engine-channel text-input editing updates; real Linux clipboard',
         'cases': _reports,
       }),
     );
@@ -595,6 +672,702 @@ class _ProbeState extends State<_Probe> {
       ),
     );
     exit(failure == null && _edits == 0 && checksPass ? 0 : 1);
+  }
+
+  static const _syntheticTable =
+      '| Header | Longer header |\n| --- | --- |\n| Short | Body text |\n| Last | End! |\n';
+
+  Future<void> _setSynthetic(String source) async {
+    setState(() {
+      _editableMode = true;
+      _liveSource = source;
+      _syntheticParses++;
+      _liveDocument = const MarkdownParser()
+          .parse(filePath: '${widget.output.path}/synthetic.md', source: source)
+          .busyDocument;
+      _editorKey = UniqueKey();
+      _initialSession = const WysiwygEditorSessionState();
+      _session = const WysiwygEditorSessionState();
+    });
+    await _pause();
+    await _pause();
+  }
+
+  Future<void> _selectSyntheticTable() async {
+    final field = _field('Header').widget as TextField;
+    field.focusNode!.requestFocus();
+    field.controller!.selection = const TextSelection.collapsed(offset: 0);
+    await _pause();
+    await _key(PhysicalKeyboardKey.keyA, LogicalKeyboardKey.keyA);
+    await _key(PhysicalKeyboardKey.keyA, LogicalKeyboardKey.keyA);
+  }
+
+  Future<void> _press(
+    PhysicalKeyboardKey physical,
+    LogicalKeyboardKey logical,
+  ) async {
+    _keyData(physical, logical, ui.KeyEventType.down);
+    _keyData(physical, logical, ui.KeyEventType.up);
+    await _pause();
+  }
+
+  Future<void> _deliverText(
+    String text, {
+    TextRange composing = TextRange.empty,
+    int? caretOffset,
+  }) => _ProbeInput.deliverText(
+    text,
+    composing: composing,
+    caretOffset: caretOffset,
+  );
+
+  Future<void> _recordEdit(
+    String label,
+    String expectedSource,
+    int expectedEdits, {
+    String? caretText,
+    int? caretOffset,
+    bool selectionCleared = true,
+  }) async {
+    final focused = _elements(
+      (w) => w is TextField && w.focusNode?.hasFocus == true,
+    );
+    final field = focused.singleOrNull?.widget as TextField?;
+    final checks = {
+      'source': _liveSource == expectedSource,
+      'editCount': _acceptedEdits == expectedEdits,
+      'selection':
+          selectionCleared ==
+          _elements(
+            (w) => w is BusyMarkWysiwygBlockField && w.selectionRange != null,
+          ).isEmpty,
+      'caret':
+          caretText == null ||
+          (field?.controller?.text == caretText &&
+              field?.controller?.selection.extentOffset == caretOffset),
+      'parsedStructure':
+          caretText == null ||
+          _liveDocument.blocks.every((b) => b.kind == BusyBlockKind.paragraph),
+    };
+    _reports.add({
+      'case': label,
+      'checks': checks,
+      'acceptedSource': _liveSource,
+      'blocks': [
+        for (final b in _liveDocument.blocks)
+          {'kind': b.kind.name, 'text': b.plainText, 'rows': b.children.length},
+      ],
+      'logicalSelection': _session.toJson(),
+      'acceptedEdits': _acceptedEdits,
+      'caretText': field?.controller?.text,
+      'caretOffset': field?.controller?.selection.extentOffset,
+    });
+    await _capture(label);
+    stdout.writeln('$label: $checks');
+    if (checks.values.any((v) => !v)) {
+      throw StateError('$label failed: $checks');
+    }
+  }
+
+  Future<void> _undoSynthetic(String label, String source) async {
+    final expectedEdits = _acceptedEdits + 1;
+    await _key(PhysicalKeyboardKey.keyZ, LogicalKeyboardKey.keyZ);
+    await _recordEdit('$label-undo', source, expectedEdits);
+  }
+
+  Future<void> _runEditableCases() async {
+    await windowManager.setSize(const Size(1100, 950));
+    await _setSynthetic(_syntheticTable);
+    await _selectSyntheticTable();
+    final table = _liveDocument.blocks.single;
+    final range = (
+      anchorId: table.id,
+      anchorOffset: 0,
+      extentId: table.id,
+      extentOffset: 0,
+    );
+    await _record(
+      '14-synthetic-table-select-all',
+      expectedRange: range,
+      needles: ['Header', 'Body text', 'End!'],
+    );
+    final parses = _syntheticParses;
+    await _drag('Header', 0, 'End!', 4, cancel: true);
+    if (_elements(
+      (w) => w is BusyMarkWysiwygBlockField && w.documentSelectionDragging,
+    ).isNotEmpty) {
+      throw StateError('Cancelled table drag retained ownership');
+    }
+    if (_syntheticParses != parses) {
+      throw StateError('Selection reparsed the synthetic source');
+    }
+    await _record(
+      '15-synthetic-table-cancel',
+      expectedRange: range,
+      needles: ['Body text', 'End!'],
+    );
+    final cancelled = _session;
+    setState(() {
+      _initialSession = WysiwygEditorSessionState.fromJson(
+        Map<String, Object?>.from(
+          jsonDecode(jsonEncode(cancelled.toJson())) as Map,
+        ),
+      );
+      _editorKey = UniqueKey();
+    });
+    await _pause();
+    await _pause();
+    await _record(
+      '16-restored-table-selection',
+      expectedRange: range,
+      needles: ['Header', 'Body text', 'End!'],
+    );
+
+    for (final action in [
+      'cut',
+      'delete',
+      'backspace',
+      'enter',
+      'plain-paste',
+      'structured-paste',
+    ]) {
+      await _selectSyntheticTable();
+      final edits = _acceptedEdits + 1;
+      var expectedSource = '';
+      var caret = '';
+      switch (action) {
+        case 'cut':
+          await _key(PhysicalKeyboardKey.keyX, LogicalKeyboardKey.keyX);
+        case 'delete':
+          await _press(PhysicalKeyboardKey.delete, LogicalKeyboardKey.delete);
+        case 'backspace':
+          await _press(
+            PhysicalKeyboardKey.backspace,
+            LogicalKeyboardKey.backspace,
+          );
+        case 'enter':
+          expectedSource = '\n';
+          await _press(PhysicalKeyboardKey.enter, LogicalKeyboardKey.enter);
+        case 'plain-paste':
+          caret = 'Pasted 🧭';
+          expectedSource = '$caret\n';
+          if (!await _clipboard.write(RichClipboardData(text: caret))) {
+            throw StateError('Linux clipboard write failed');
+          }
+          await _key(
+            PhysicalKeyboardKey.keyV,
+            LogicalKeyboardKey.keyV,
+            shift: true,
+          );
+        case 'structured-paste':
+          caret = 'Structured';
+          expectedSource = '**Structured**\n';
+          if (!await _clipboard.write(
+            const RichClipboardData(
+              text: 'Structured',
+              html: '<p><strong>Structured</strong></p>',
+            ),
+          )) {
+            throw StateError('Linux rich clipboard write failed');
+          }
+          await _key(PhysicalKeyboardKey.keyV, LogicalKeyboardKey.keyV);
+      }
+      if (action == 'cut') {
+        final data = await _clipboard.read();
+        if (data.sourceText?.contains('| Short | Body text |') != true) {
+          throw StateError('Linux cut omitted table structure');
+        }
+      }
+      await _recordEdit(
+        '17-table-$action',
+        expectedSource,
+        edits,
+        caretText: caret,
+        caretOffset: caret.length,
+      );
+      await _undoSynthetic('17-table-$action', _syntheticTable);
+    }
+
+    await _selectSyntheticTable();
+    final preeditEdits = _acceptedEdits;
+    await _deliverText('n', composing: const TextRange(start: 0, end: 1));
+    await _deliverText('ni', composing: const TextRange(start: 0, end: 2));
+    await _recordEdit(
+      '18-table-input-preedit',
+      _syntheticTable,
+      preeditEdits,
+      selectionCleared: false,
+    );
+    await _press(PhysicalKeyboardKey.backspace, LogicalKeyboardKey.backspace);
+    await _press(PhysicalKeyboardKey.delete, LogicalKeyboardKey.delete);
+    await _press(PhysicalKeyboardKey.enter, LogicalKeyboardKey.enter);
+    await _recordEdit(
+      '18-table-composition-keys',
+      _syntheticTable,
+      preeditEdits,
+      selectionCleared: false,
+    );
+    await _deliverText('');
+    await _recordEdit(
+      '19-table-input-cancel',
+      _syntheticTable,
+      preeditEdits,
+      selectionCleared: false,
+    );
+    await _deliverText('你', composing: const TextRange(start: 0, end: 1));
+    await _deliverText('你🧭');
+    await _recordEdit(
+      '20-table-input-commit',
+      '你🧭\n',
+      preeditEdits + 1,
+      caretText: '你🧭',
+      caretOffset: 3,
+    );
+    await _deliverText('你🧭 next');
+    await _recordEdit(
+      '21-table-input-continued',
+      '你🧭 next\n',
+      preeditEdits + 2,
+      caretText: '你🧭 next',
+      caretOffset: 8,
+    );
+    await _undoSynthetic('21-table-input-continued', '你🧭\n');
+    await _undoSynthetic('20-table-input-commit', _syntheticTable);
+
+    const surrounded = 'Before stays.\n\n$_syntheticTable\nAfter stays.\n';
+    await _setSynthetic(surrounded);
+    await _drag('Before stays.', 6, 'After stays.', 5, cancel: true);
+    if (_elements(
+      (w) => w is BusyMarkWysiwygBlockField && w.documentSelectionDragging,
+    ).isNotEmpty) {
+      throw StateError('Cancelled cross-block drag retained ownership');
+    }
+    await _record(
+      '22-paragraph-table-paragraph-cancel',
+      expectedRange: (
+        anchorId: _liveDocument.blocks.first.id,
+        anchorOffset: 6,
+        extentId: _liveDocument.blocks.last.id,
+        extentOffset: 5,
+      ),
+      needles: ['Body text'],
+    );
+    final cancelInputEdits = _acceptedEdits + 1;
+    await _deliverText('After🧭 stays.', caretOffset: 7);
+    await _recordEdit(
+      '22-cancel-committed-input',
+      'Before🧭 stays.\n',
+      cancelInputEdits,
+      caretText: 'Before🧭 stays.',
+      caretOffset: 8,
+    );
+    await _undoSynthetic('22-cancel-committed-input', surrounded);
+    await _drag('Before stays.', 6, 'After stays.', 5, cancel: true);
+    final edits = _acceptedEdits + 1;
+    if (!await _clipboard.write(const RichClipboardData(text: 'X'))) {
+      throw StateError('Linux clipboard write failed');
+    }
+    await _key(PhysicalKeyboardKey.keyV, LogicalKeyboardKey.keyV, shift: true);
+    await _recordEdit(
+      '23-partial-table-range-paste',
+      'BeforeX stays.\n',
+      edits,
+      caretText: 'BeforeX stays.',
+      caretOffset: 7,
+    );
+    await _undoSynthetic('23-partial-table-range-paste', surrounded);
+  }
+}
+
+// Runs the actual main entry point and workspace buffer/session/history path.
+// Only the documented disposable synthetic table fixture may be edited.
+class _ApplicationProbeDriver {
+  _ApplicationProbeDriver({
+    required this.boundary,
+    required this.fixture,
+    required this.output,
+  });
+  final GlobalKey boundary;
+  final File fixture;
+  final Directory output;
+  final clipboard = busyMarkRichClipboardService;
+  final reports = <Map<String, Object?>>[];
+
+  List<Element> elements(bool Function(Widget) predicate, [Element? root]) {
+    final found = <Element>[];
+    void visit(Element element) {
+      if (predicate(element.widget)) found.add(element);
+      element.visitChildren(visit);
+    }
+
+    visit(root ?? boundary.currentContext! as Element);
+    return found;
+  }
+
+  Element get editorElement =>
+      elements((w) => w is BusyMarkWysiwygEditor).single;
+  BusyMarkWysiwygEditor get editor =>
+      editorElement.widget as BusyMarkWysiwygEditor;
+  ProviderContainer get container =>
+      ProviderScope.containerOf(editorElement, listen: false);
+  WorkspaceController get controller =>
+      container.read(workspaceControllerProvider.notifier);
+  String get source =>
+      container.read(workspaceControllerProvider).activeBuffer!.text;
+  WysiwygEditorSessionState get session => container
+      .read(workspaceControllerProvider)
+      .activeBuffer!
+      .editorState
+      .wysiwygState;
+  List<BusyMarkWysiwygBlockField> get selected => elements(
+    (w) => w is BusyMarkWysiwygBlockField && w.selectionRange != null,
+  ).map((e) => e.widget as BusyMarkWysiwygBlockField).toList();
+
+  Future<void> settle() async {
+    await Future<void>.delayed(const Duration(milliseconds: 400));
+    await _ProbeInput.pause();
+  }
+
+  Future<void> record(String label, Map<String, bool> checks) async {
+    reports.add({
+      'case': label,
+      'checks': checks,
+      'source': source,
+      'session': session.toJson(),
+      'undoEntries': container
+          .read(workspaceControllerProvider)
+          .activeBuffer!
+          .editorState
+          .undoState
+          .undo
+          .length,
+    });
+    final image =
+        await (boundary.currentContext!.findRenderObject()!
+                as RenderRepaintBoundary)
+            .toImage();
+    final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
+    image.dispose();
+    await File(
+      '${output.path}/$label.png',
+    ).writeAsBytes(bytes!.buffer.asUint8List());
+    stdout.writeln('$label: $checks');
+    if (checks.values.any((v) => !v)) {
+      throw StateError('$label failed: $checks');
+    }
+  }
+
+  Future<void> command(
+    PhysicalKeyboardKey physical,
+    LogicalKeyboardKey logical, {
+    bool shift = false,
+  }) async {
+    await _ProbeInput.command(physical, logical, shift: shift);
+    await settle();
+  }
+
+  Future<void> selectTable() async {
+    final field =
+        elements(
+              (w) => w is TextField && w.controller?.text == 'Header',
+            ).single.widget
+            as TextField;
+    field.focusNode!.requestFocus();
+    field.controller!.selection = const TextSelection.collapsed(offset: 0);
+    await settle();
+    await command(PhysicalKeyboardKey.keyA, LogicalKeyboardKey.keyA);
+    await command(PhysicalKeyboardKey.keyA, LogicalKeyboardKey.keyA);
+  }
+
+  bool get tableSelected =>
+      selected.length == 1 &&
+      selected.single.block.kind == BusyBlockKind.table &&
+      selected.single.selectionRange!.start == 0 &&
+      selected.single.selectionRange!.end == 0;
+
+  Future<void> checkTableCopy(String label) async {
+    await command(PhysicalKeyboardKey.keyC, LogicalKeyboardKey.keyC);
+    final data = await clipboard.read();
+    await File('${output.path}/$label-clipboard-summary.json').writeAsString(
+      jsonEncode({
+        'textLength': data.text?.length,
+        'sourceTextLength': data.sourceText?.length,
+        'htmlLength': data.html?.length,
+        'textContainsHeader': data.text?.contains('Header'),
+        'textContainsEnd': data.text?.contains('End!'),
+        'sourceContainsTable': data.sourceText?.contains(
+          '| Short | Body text |',
+        ),
+      }),
+    );
+    await record(label, {
+      'source': source == _ProbeState._syntheticTable,
+      'selection': tableSelected,
+      'clipboard':
+          data.sourceText?.contains('| Short | Body text |') == true &&
+          data.text?.contains('End!') == true,
+    });
+  }
+
+  Future<void> run() async {
+    Object? failure;
+    try {
+      if (await fixture.readAsString() != _ProbeState._syntheticTable) {
+        throw ArgumentError(
+          'Application probe requires the disposable synthetic table fixture',
+        );
+      }
+      await settle();
+      await selectTable();
+      await checkTableCopy('01-normal-select-all');
+      await command(PhysicalKeyboardKey.keyA, LogicalKeyboardKey.keyA);
+      await checkTableCopy('02-normal-repeat-select-all');
+      final revision = controller.editRevision;
+      final frameBeforeIdle = WidgetsBinding.instance.hasScheduledFrame;
+      await Future<void>.delayed(const Duration(milliseconds: 600));
+      await record('03-normal-idle-selection', {
+        'sourceUnchanged': source == _ProbeState._syntheticTable,
+        'revisionUnchanged': controller.editRevision == revision,
+        'noPerpetualFrame':
+            !frameBeforeIdle && !WidgetsBinding.instance.hasScheduledFrame,
+      });
+
+      final tableBuffer = container
+          .read(workspaceControllerProvider)
+          .activeBuffer!
+          .id;
+      final saved = jsonEncode(session.toJson());
+      if (!await controller.openActiveFile('${fixture.parent.path}/other.md')) {
+        throw StateError('Could not open the other disposable tab');
+      }
+      await settle();
+      await command(PhysicalKeyboardKey.tab, LogicalKeyboardKey.tab);
+      await record('04-normal-tab-restoration', {
+        'activeTab':
+            container.read(workspaceControllerProvider).activeBuffer!.id ==
+            tableBuffer,
+        'tableSelection': tableSelected,
+        'endpoints':
+            session.anchorBlockId ==
+                (jsonDecode(saved) as Map)['anchorBlockId'] &&
+            session.extentBlockId ==
+                (jsonDecode(saved) as Map)['extentBlockId'],
+      });
+      await checkTableCopy('05-normal-restored-copy');
+
+      _ProbeInput.keyData(
+        PhysicalKeyboardKey.delete,
+        LogicalKeyboardKey.delete,
+        ui.KeyEventType.down,
+      );
+      _ProbeInput.keyData(
+        PhysicalKeyboardKey.delete,
+        LogicalKeyboardKey.delete,
+        ui.KeyEventType.up,
+      );
+      await settle();
+      await record('06-normal-table-delete', {
+        // Workspace buffers retain the file's existing final-newline policy.
+        'source': source == '\n',
+        'structure': editor.document.blocks.every(
+          (b) => b.kind == BusyBlockKind.paragraph,
+        ),
+        'selectionCleared': selected.isEmpty,
+        'history':
+            container
+                .read(workspaceControllerProvider)
+                .activeBuffer!
+                .editorState
+                .undoState
+                .undo
+                .length ==
+            1,
+      });
+      await command(PhysicalKeyboardKey.keyZ, LogicalKeyboardKey.keyZ);
+      await checkTableCopy('07-normal-delete-undo');
+      await command(
+        PhysicalKeyboardKey.keyZ,
+        LogicalKeyboardKey.keyZ,
+        shift: true,
+      );
+      await record('08-normal-delete-redo', {'source': source == '\n'});
+      await command(PhysicalKeyboardKey.keyZ, LogicalKeyboardKey.keyZ);
+      await checkTableCopy('09-normal-redo-undo');
+
+      await _ProbeInput.deliverText(
+        'ni',
+        composing: const TextRange(start: 0, end: 2),
+      );
+      await settle();
+      await record('10-normal-preedit', {
+        'source': source == _ProbeState._syntheticTable,
+        'selection': tableSelected,
+      });
+      await _ProbeInput.deliverText('');
+      await settle();
+      await record('11-normal-composition-cancel', {
+        'source': source == _ProbeState._syntheticTable,
+        'selection': tableSelected,
+      });
+      await _ProbeInput.deliverText('你🧭');
+      await settle();
+      await record('12-normal-committed-input', {
+        'source': source == '你🧭\n',
+        'selectionCleared': selected.isEmpty,
+        'history':
+            container
+                .read(workspaceControllerProvider)
+                .activeBuffer!
+                .editorState
+                .undoState
+                .undo
+                .length ==
+            1,
+      });
+      await _ProbeInput.deliverText('你🧭 next');
+      await settle();
+      await record('13-normal-continued-input', {
+        'source': source == '你🧭 next\n',
+        'caret':
+            (elements(
+                      (w) => w is TextField && w.focusNode?.hasFocus == true,
+                    ).single.widget
+                    as TextField)
+                .controller!
+                .selection
+                .extentOffset ==
+            8,
+      });
+      await command(PhysicalKeyboardKey.keyZ, LogicalKeyboardKey.keyZ);
+      await record('14-normal-continued-undo', {'source': source == '你🧭\n'});
+      await command(PhysicalKeyboardKey.keyZ, LogicalKeyboardKey.keyZ);
+      await checkTableCopy('15-normal-input-undo');
+
+      await command(PhysicalKeyboardKey.keyX, LogicalKeyboardKey.keyX);
+      final cut = await clipboard.read();
+      await record('16-normal-cut', {
+        'source': source == '\n',
+        'clipboard': cut.sourceText?.contains('| Last | End! |') == true,
+      });
+      await command(PhysicalKeyboardKey.keyZ, LogicalKeyboardKey.keyZ);
+      await checkTableCopy('17-normal-cut-undo');
+      await clipboard.write(const RichClipboardData(text: 'Pasted 🧭'));
+      await command(
+        PhysicalKeyboardKey.keyV,
+        LogicalKeyboardKey.keyV,
+        shift: true,
+      );
+      await record('18-normal-paste', {
+        'source': source == 'Pasted 🧭\n',
+        'selectionCleared': selected.isEmpty,
+      });
+      await command(PhysicalKeyboardKey.keyZ, LogicalKeyboardKey.keyZ);
+      await checkTableCopy('19-normal-paste-undo');
+      await record('20-normal-fixture-integrity', {
+        'diskUnchanged':
+            await fixture.readAsString() == _ProbeState._syntheticTable,
+      });
+    } catch (error, stack) {
+      failure = '$error\n$stack';
+      stderr.writeln(failure);
+    }
+    await File('${output.path}/report.json').writeAsString(
+      const JsonEncoder.withIndent('  ').convert({
+        'failure': failure?.toString(),
+        'entryPoint': 'lib/main.dart',
+        'inputMethod':
+            'framework-dispatched keys and engine-channel editing updates; native Linux clipboard; actual workspace buffers, tab recreation, and external history',
+        'cases': reports,
+      }),
+    );
+    exit(failure == null ? 0 : 1);
+  }
+}
+
+class _ProbeInput {
+  static Future<void> pause() async {
+    await Future<void>.delayed(const Duration(milliseconds: 180));
+    await WidgetsBinding.instance.endOfFrame;
+  }
+
+  static void keyData(
+    PhysicalKeyboardKey physical,
+    LogicalKeyboardKey logical,
+    ui.KeyEventType type,
+  ) {
+    // Synthesized framework messages also update HardwareKeyboard. These are
+    // intentionally distinct from physical input or X11-generated events.
+    // ignore: deprecated_member_use
+    ServicesBinding.instance.keyEventManager.handleKeyData(
+      ui.KeyData(
+        timeStamp: Duration.zero,
+        type: type,
+        physical: physical.usbHidUsage,
+        logical: logical.keyId,
+        character: null,
+        synthesized: true,
+      ),
+    );
+  }
+
+  static Future<void> command(
+    PhysicalKeyboardKey physical,
+    LogicalKeyboardKey logical, {
+    bool shift = false,
+  }) async {
+    keyData(
+      PhysicalKeyboardKey.controlLeft,
+      LogicalKeyboardKey.controlLeft,
+      ui.KeyEventType.down,
+    );
+    if (shift) {
+      keyData(
+        PhysicalKeyboardKey.shiftLeft,
+        LogicalKeyboardKey.shiftLeft,
+        ui.KeyEventType.down,
+      );
+    }
+    keyData(physical, logical, ui.KeyEventType.down);
+    keyData(physical, logical, ui.KeyEventType.up);
+    if (shift) {
+      keyData(
+        PhysicalKeyboardKey.shiftLeft,
+        LogicalKeyboardKey.shiftLeft,
+        ui.KeyEventType.up,
+      );
+    }
+    keyData(
+      PhysicalKeyboardKey.controlLeft,
+      LogicalKeyboardKey.controlLeft,
+      ui.KeyEventType.up,
+    );
+    await pause();
+  }
+
+  static Future<void> deliverText(
+    String text, {
+    TextRange composing = TextRange.empty,
+    int? caretOffset,
+  }) async {
+    final client = _ProbeMessenger.clientId;
+    if (client == null) throw StateError('No active Linux text-input client');
+    ServicesBinding.instance.channelBuffers.push(
+      SystemChannels.textInput.name,
+      SystemChannels.textInput.codec.encodeMethodCall(
+        MethodCall('TextInputClient.updateEditingState', [
+          client,
+          TextEditingValue(
+            text: text,
+            selection: TextSelection.collapsed(
+              offset: caretOffset ?? text.length,
+            ),
+            composing: composing,
+          ).toJSON(),
+        ]),
+      ),
+      (_) {},
+    );
+    await pause();
   }
 }
 

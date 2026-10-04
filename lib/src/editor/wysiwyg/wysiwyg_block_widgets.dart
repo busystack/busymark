@@ -181,6 +181,7 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
     this.onPointerDown,
     this.onPointerMove,
     this.onPointerUp,
+    this.onPointerCancel,
     this.tableCellController,
     this.tableCellUndoController,
     this.tableCellFocusNode,
@@ -238,6 +239,7 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
   final ValueChanged<PointerDownEvent>? onPointerDown;
   final ValueChanged<PointerMoveEvent>? onPointerMove;
   final ValueChanged<PointerUpEvent>? onPointerUp;
+  final ValueChanged<PointerCancelEvent>? onPointerCancel;
   final TextEditingController Function(BusyBlock cell)? tableCellController;
   final UndoHistoryController Function(BusyBlock cell)? tableCellUndoController;
   final FocusNode Function(BusyBlock cell)? tableCellFocusNode;
@@ -289,6 +291,7 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
       onPointerDown: onPointerDown,
       onPointerMove: onPointerMove,
       onPointerUp: onPointerUp,
+      onPointerCancel: onPointerCancel,
       child: visualization != null
           ? BusyMarkVisualizationCard(
               key: ValueKey('wysiwyg-visualization-${block.id}'),
