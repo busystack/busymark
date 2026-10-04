@@ -123,6 +123,7 @@ class WysiwygClipboardFragment {
                 'end': range.end,
                 'kind': range.kind.name,
                 if (range.destination != null) 'destination': range.destination,
+                if (range.attributes.isNotEmpty) 'attributes': range.attributes,
               },
           ],
           if (block.completeBlock != null)
@@ -171,6 +172,9 @@ class WysiwygClipboardFragment {
               end: end,
               kind: BusyInlineKind.values.byName(reader.string(range['kind'])),
               destination: reader.optionalString(range['destination']),
+              attributes: range['attributes'] == null
+                  ? const {}
+                  : reader.attributes(range['attributes']),
             ),
           );
         }
@@ -299,6 +303,7 @@ class WysiwygClipboardFragment {
                   start: range.start,
                   end: range.end,
                   kind: range.kind,
+                  attributes: range.attributes,
                   destination: destination(
                     range.destination,
                     media: range.kind == BusyInlineKind.image,

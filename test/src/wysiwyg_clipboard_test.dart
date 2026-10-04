@@ -500,6 +500,7 @@ void main() {
       ValueChanged<String> changed, {
       BusyMarkClipboardInsertionRegistry? registry,
       ValueChanged<BusyMarkClipboardCapture>? onCaptured,
+      ValueChanged<BusyDocument>? onDocumentChanged,
       String? filePath,
       String? workspaceRoot,
       AssetWorkspaceKind? assetWorkspaceKind,
@@ -543,6 +544,7 @@ void main() {
                 initialSessionFor?.call(document) ??
                 const WysiwygEditorSessionState(),
             document: document,
+            onDocumentChanged: onDocumentChanged,
             onSourceChanged: (_, value) => changed(value),
           ),
         ),
@@ -563,6 +565,92 @@ void main() {
       field.focusNode!.requestFocus();
       field.controller!.selection = const TextSelection.collapsed(offset: 0);
       await tester.pump();
+    }
+
+    for (final plainText in [false, true]) {
+      testWidgets(
+        'text-only URL paste then ordinary Enter recognizes a live link (plainText=$plainText)',
+        (tester) async {
+          const url = 'https://example.com';
+          systemData = {'text': url};
+          var source = '';
+          BusyDocument? live;
+          await mount(
+            tester,
+            'bare-url-$plainText',
+            source,
+            (value) => source = value,
+            onDocumentChanged: (value) => live = value,
+          );
+          await key(tester, LogicalKeyboardKey.keyV, shift: plainText);
+          await tester.pumpAndSettle();
+          expect(live!.blocks.single.plainText, url);
+          expect(busyInlineStyleRanges(live!.blocks.single.inlines), isEmpty);
+          await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+          await tester.pumpAndSettle();
+          final link = live!.blocks.first.inlines.single;
+          expect(link.kind, BusyInlineKind.link);
+          expect(link.plainText, url);
+          expect(link.destination, url);
+          expect(source, '$url\n\n');
+          final fields = tester
+              .widgetList<TextField>(find.byType(TextField))
+              .toList();
+          expect(fields, hasLength(2));
+          expect(fields.last.controller!.text, '');
+          expect(fields.last.focusNode!.hasFocus, isTrue);
+          expect(
+            fields.last.controller!.selection,
+            const TextSelection.collapsed(offset: 0),
+          );
+          final span = fields.first.controller!.buildTextSpan(
+            context: tester.element(find.byType(TextField).first),
+            withComposing: false,
+          );
+          expect(
+            (span.children!.single as TextSpan).style!.decoration,
+            TextDecoration.underline,
+          );
+          await key(tester, LogicalKeyboardKey.keyZ);
+          expect(live!.blocks, hasLength(1));
+          expect(live!.blocks.single.plainText, url);
+          expect(busyInlineStyleRanges(live!.blocks.single.inlines), isEmpty);
+          await key(tester, LogicalKeyboardKey.keyZ, shift: true);
+          expect(live!.blocks.first.inlines.single.kind, BusyInlineKind.link);
+          expect(source, '$url\n\n');
+          final completedField = tester.widget<TextField>(
+            find.byType(TextField).first,
+          );
+          completedField.focusNode!.requestFocus();
+          completedField.controller!.selection = const TextSelection.collapsed(
+            offset: 8,
+          );
+          await tester.pump();
+          await key(tester, LogicalKeyboardKey.keyK);
+          await tester.pumpAndSettle();
+          final destination = find.byKey(
+            const ValueKey('wysiwyg-link-destination-field'),
+          );
+          expect(destination, findsOneWidget);
+          expect(
+            tester
+                .widget<EditableText>(
+                  find.descendant(
+                    of: destination,
+                    matching: find.byType(EditableText),
+                  ),
+                )
+                .controller
+                .text,
+            url,
+          );
+          await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+          await tester.pumpAndSettle();
+          await key(tester, LogicalKeyboardKey.keyZ);
+          await key(tester, LogicalKeyboardKey.keyZ);
+          expect(live!.blocks.single.plainText, '');
+        },
+      );
     }
 
     Future<void> copyAll(WidgetTester tester, {String source = _source}) async {

@@ -149,12 +149,14 @@ class BusyInlineStyleRange {
     required this.end,
     required this.kind,
     this.destination,
+    this.attributes = const {},
   });
 
   final int start;
   final int end;
   final BusyInlineKind kind;
   final String? destination;
+  final Map<String, String> attributes;
 }
 
 class BusyInlineSemanticAnchor {
@@ -339,7 +341,11 @@ List<BusyInlineStyleRange> busyInlineStyleRanges(List<BusyInline> inlines) {
     final start = offset;
     final children = inline.children;
     final ownStyle = _styledKind(inline.kind)
-        ? _InheritedInlineStyle(inline.kind, inline.destination)
+        ? _InheritedInlineStyle(
+            inline.kind,
+            inline.destination,
+            inline.attributes,
+          )
         : null;
     final effectiveStyles = ownStyle == null
         ? inheritedStyles
@@ -364,6 +370,7 @@ List<BusyInlineStyleRange> busyInlineStyleRanges(List<BusyInline> inlines) {
             end: end,
             kind: style.kind,
             destination: style.destination,
+            attributes: style.attributes,
           ),
         );
       }
@@ -388,6 +395,7 @@ List<BusyInlineStyleRange> _normalizedRanges(
           end: range.end.clamp(0, textLength).toInt(),
           kind: range.kind,
           destination: range.destination,
+          attributes: range.attributes,
         ),
   ].where((range) => range.end > range.start).toList()..sort((a, b) {
     final byStart = a.start.compareTo(b.start);
@@ -430,10 +438,11 @@ int _stylePriority(BusyInlineKind kind) {
 }
 
 class _InheritedInlineStyle {
-  const _InheritedInlineStyle(this.kind, this.destination);
+  const _InheritedInlineStyle(this.kind, this.destination, this.attributes);
 
   final BusyInlineKind kind;
   final String? destination;
+  final Map<String, String> attributes;
 }
 
 bool _styledKind(BusyInlineKind kind) {

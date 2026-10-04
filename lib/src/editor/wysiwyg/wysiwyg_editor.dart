@@ -7799,6 +7799,7 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
             end: (range.end > end ? end : range.end) - start,
             kind: range.kind,
             destination: range.destination,
+            attributes: range.attributes,
           ),
     ];
   }

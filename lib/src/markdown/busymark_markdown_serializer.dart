@@ -690,6 +690,7 @@ class BusyMarkMarkdownSerializer {
     required _InlineTraversalMetrics metrics,
     List<int> pathPrefix = const [],
     int textBase = 0,
+    bool bareUrlText = false,
   }) {
     final totalTextLength = inlines.fold<int>(
       0,
@@ -796,11 +797,13 @@ class BusyMarkMarkdownSerializer {
         readableHardBreakRuns: readableHardBreakRuns,
         followedByLink:
             index + 1 < inlines.length &&
-            inlines[index + 1].kind == BusyInlineKind.link,
+            inlines[index + 1].kind == BusyInlineKind.link &&
+            inlines[index + 1].attributes[busyMarkBareUrlAttribute] != 'true',
         delimiterOverrides: delimiterOverrides,
         metrics: metrics,
         inlinePath: [...pathPrefix, index],
         textBase: textBase + consumedText,
+        bareUrlText: bareUrlText,
       );
       for (final entry in result.sourceOffsets.entries) {
         sourceOffsets.putIfAbsent(
@@ -853,7 +856,13 @@ class BusyMarkMarkdownSerializer {
     required _InlineTraversalMetrics metrics,
     required List<int> inlinePath,
     required int textBase,
+    required bool bareUrlText,
   }) {
+    final bareUrl =
+        inline.kind == BusyInlineKind.link &&
+        inline.attributes[busyMarkBareUrlAttribute] == 'true';
+    final rawText = bareUrlText || bareUrl;
+    final linkOpeningLength = bareUrl ? 0 : 1;
     final length = inline.plainText.length;
     final targets = {
       for (final offset in textOffsets) offset.clamp(0, length).toInt(),
@@ -873,17 +882,23 @@ class BusyMarkMarkdownSerializer {
             metrics: metrics,
             pathPrefix: inlinePath,
             textBase: textBase,
+            bareUrlText: rawText,
           );
     final children = inline.children.isEmpty
-        ? _escapeInlineText(inline.text, atBlockStart: atBlockStart)
+        ? rawText
+              ? inline.text
+              : _escapeInlineText(inline.text, atBlockStart: atBlockStart)
         : childResult!.source;
     final delimiter = delimiterOverrides[inline.kind];
     final source = switch (inline.kind) {
-      BusyInlineKind.text => _escapeInlineText(
-        inline.text,
-        atBlockStart: atBlockStart,
-        escapeTrailingBang: followedByLink,
-      ),
+      BusyInlineKind.text =>
+        rawText
+            ? inline.text
+            : _escapeInlineText(
+                inline.text,
+                atBlockStart: atBlockStart,
+                escapeTrailingBang: followedByLink,
+              ),
       BusyInlineKind.math => _mathInline(inline),
       BusyInlineKind.strong =>
         '${delimiter?.opening ?? '**'}$children${delimiter?.closing ?? '**'}',
@@ -898,7 +913,9 @@ class BusyMarkMarkdownSerializer {
             ? _htmlCodeSpan(inline.text)
             : _codeSpan(inline.text),
       BusyInlineKind.link =>
-        '[${children.isEmpty ? inline.text : children}](${_linkTarget(inline)})',
+        bareUrl
+            ? children
+            : '[${children.isEmpty ? inline.text : children}](${_linkTarget(inline)})',
       BusyInlineKind.image =>
         '![${_escapeInlineText(inline.text)}](${inline.destination ?? ''})',
       BusyInlineKind.softBreak => ' ',
@@ -906,7 +923,9 @@ class BusyMarkMarkdownSerializer {
       BusyInlineKind.writersideVariable => '%${inline.text}%',
       BusyInlineKind.html || BusyInlineKind.unknown => inline.text,
     };
-    final escapedTextOffsets = inline.kind == BusyInlineKind.text
+    final escapedTextOffsets = rawText
+        ? {for (final target in targets) target: target}
+        : inline.kind == BusyInlineKind.text
         ? _escapedInlineTextOffsets(
             inline.text,
             targets,
@@ -936,7 +955,9 @@ class BusyMarkMarkdownSerializer {
               BusyInlineKind.strikethrough =>
                 openingLength + (childResult?.sourceOffsets[target] ?? 0),
               BusyInlineKind.link =>
-                1 + (childResult?.sourceOffsets[target] ?? 0),
+                linkOpeningLength +
+                    (childResult?.sourceOffsets[target] ??
+                        (bareUrl ? target : 0)),
               _ => source.length,
             };
     }
@@ -949,7 +970,7 @@ class BusyMarkMarkdownSerializer {
       }
     } else if (childResult != null) {
       final childOpeningLength = inline.kind == BusyInlineKind.link
-          ? 1
+          ? linkOpeningLength
           : openingLength;
       for (final entry in childResult.lineBreakSourceOffsets.entries) {
         lineBreakSourceOffsets[entry.key] = childOpeningLength + entry.value;
@@ -961,17 +982,19 @@ class BusyMarkMarkdownSerializer {
         inline.kind == BusyInlineKind.image) {
       final value = inline.text;
       final prefix = switch (inline.kind) {
-        BusyInlineKind.link => 1,
+        BusyInlineKind.link => linkOpeningLength,
         BusyInlineKind.image => 2,
         _ => 0,
       };
-      final escapedOffsets = _escapedInlineTextOffsets(
-        value,
-        {for (var index = 0; index <= value.length; index++) index},
-        atBlockStart: inline.kind == BusyInlineKind.text && atBlockStart,
-        escapeTrailingBang:
-            inline.kind == BusyInlineKind.text && followedByLink,
-      );
+      final escapedOffsets = rawText
+          ? {for (var index = 0; index <= value.length; index++) index: index}
+          : _escapedInlineTextOffsets(
+              value,
+              {for (var index = 0; index <= value.length; index++) index},
+              atBlockStart: inline.kind == BusyInlineKind.text && atBlockStart,
+              escapeTrailingBang:
+                  inline.kind == BusyInlineKind.text && followedByLink,
+            );
       var offset = 0;
       for (final rune in value.runes) {
         final width = rune > 0xffff ? 2 : 1;
@@ -991,7 +1014,9 @@ class BusyMarkMarkdownSerializer {
         offset += width;
       }
     } else if (childResult != null) {
-      final prefix = inline.kind == BusyInlineKind.link ? 1 : openingLength;
+      final prefix = inline.kind == BusyInlineKind.link
+          ? linkOpeningLength
+          : openingLength;
       for (final atom in childResult.textAtoms) {
         textAtoms.add(
           BusyMarkSerializedTextAtom(
