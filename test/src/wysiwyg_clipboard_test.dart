@@ -653,6 +653,93 @@ void main() {
       );
     }
 
+    for (final suffix in ['<', '*<', '*']) {
+      testWidgets(
+        'text-only URL suffix $suffix survives Enter, source reload and label edit',
+        (tester) async {
+          const url = 'https://example.com';
+          const changed = 'https://other.com';
+          final text = '$url$suffix';
+          systemData = {'text': text};
+          var source = '';
+          BusyDocument? live;
+          await mount(
+            tester,
+            'url-boundary-$suffix',
+            source,
+            (value) => source = value,
+            onDocumentChanged: (value) => live = value,
+          );
+          await key(tester, LogicalKeyboardKey.keyV);
+          await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+          await tester.pumpAndSettle();
+          expect(live!.blocks.first.plainText, text);
+          final next = tester.widget<TextField>(find.byType(TextField).last);
+          expect(next.focusNode!.hasFocus, isTrue);
+          expect(
+            next.controller!.selection,
+            const TextSelection.collapsed(offset: 0),
+          );
+          expect(source, '$text\n\n');
+          BusyInlineStyleRange link() => busyInlineStyleRanges(
+            live!.blocks.first.inlines,
+          ).where((range) => range.kind == BusyInlineKind.link).single;
+          expect(
+            (link().start, link().end, link().destination),
+            (0, url.length, url),
+          );
+          var first = tester.widget<TextField>(find.byType(TextField).first);
+          final spans = first.controller!
+              .buildTextSpan(
+                context: tester.element(find.byType(TextField).first),
+                withComposing: false,
+              )
+              .children!
+              .cast<TextSpan>();
+          expect(spans.first.style!.decoration, TextDecoration.underline);
+          expect(spans.last.style!.decoration, isNot(TextDecoration.underline));
+          if (suffix == '*') {
+            first.focusNode!.requestFocus();
+            first.controller!.selection = TextSelection(
+              baseOffset: 0,
+              extentOffset: text.length,
+            );
+            await tester.pump();
+            await key(tester, LogicalKeyboardKey.keyB);
+            expect(source, '**[$url]($url)\\***\n\n');
+            expect(
+              link().attributes.containsKey(busyMarkBareUrlAttribute),
+              isFalse,
+            );
+          }
+          final saved = source;
+          await tester.enterText(
+            find.byType(TextField).first,
+            '$changed$suffix',
+          );
+          await tester.pumpAndSettle();
+          final liveDestination = link().destination;
+          final liveSource = source;
+          expect(liveDestination, suffix == '*' ? url : changed);
+          await mount(
+            tester,
+            'url-boundary-reopened-$suffix',
+            saved,
+            (value) => source = value,
+            onDocumentChanged: (value) => live = value,
+          );
+          await tester.enterText(
+            find.byType(TextField).first,
+            '$changed$suffix',
+          );
+          await tester.pumpAndSettle();
+          expect(link().destination, liveDestination);
+          expect(source.trim(), liveSource.trim());
+          expect(live!.blocks.first.plainText, '$changed$suffix');
+        },
+      );
+    }
+
     testWidgets(
       'pasted URL retains live link coverage through split, Backspace and suffix formatting',
       (tester) async {

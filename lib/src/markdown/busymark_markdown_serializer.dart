@@ -59,6 +59,19 @@ class BusyMarkInlineDelimiter {
 class BusyMarkMarkdownSerializer {
   const BusyMarkMarkdownSerializer();
 
+  /// Formatting delimiters beside literal URL punctuation require an explicit
+  /// label. Editing operations must commit that source form in the model so
+  /// subsequent label edits agree with saving and reopening.
+  bool bareUrlNeedsExplicitSource(
+    BusyInline inline,
+    BusyInline? following, {
+    required bool insideFormatting,
+  }) =>
+      insideFormatting &&
+      _canEmitBareUrl(inline) &&
+      following?.kind == BusyInlineKind.text &&
+      _bareUrlLiteralSuffixLength(inline, following!.text) > 0;
+
   /// Serializes an inline fragment without document-level trimming or a final
   /// newline. This is also the single entry point for context-sensitive inline
   /// escaping used by clipboard insertion.
@@ -710,10 +723,14 @@ class BusyMarkMarkdownSerializer {
     var nextAtBlockStart = atBlockStart;
     final sortedTargets = targets.toList()..sort();
     var targetCursor = 0;
+    BusyInline? literalUrl;
+    var literalSuffix = '';
     for (var index = 0; index < inlines.length; index++) {
       final inline = inlines[index];
       metrics.visitedNodes += 1;
       if (inline.kind == BusyInlineKind.hardBreak) {
+        literalUrl = null;
+        literalSuffix = '';
         var runEnd = index + 1;
         while (runEnd < inlines.length &&
             inlines[runEnd].kind == BusyInlineKind.hardBreak) {
@@ -791,6 +808,24 @@ class BusyMarkMarkdownSerializer {
           sortedTargets[targetCursor] <= consumedText + length) {
         localOffsets.add(sortedTargets[targetCursor++] - consumedText);
       }
+      // Literal escapes may parse into several adjacent text nodes. Carry
+      // the URL boundary across them so reopening does not change escaping.
+      final suffix = inline.kind == BusyInlineKind.text
+          ? '$literalSuffix${inline.text}'
+          : '';
+      final suffixPrefixLength =
+          !insideFormatting &&
+              inline.kind == BusyInlineKind.text &&
+              literalUrl != null
+          ? _bareUrlLiteralSuffixLength(literalUrl, suffix)
+          : 0;
+      final literalPrefixLength = (suffixPrefixLength - literalSuffix.length)
+          .clamp(0, inline.text.length)
+          .toInt();
+      final angleEntityOffset =
+          suffixPrefixLength > 0 && suffix[suffixPrefixLength - 1] == '<'
+          ? suffixPrefixLength - literalSuffix.length
+          : -1;
       final result = _inlineAtTextOffsets(
         inline,
         textOffsets: localOffsets,
@@ -806,33 +841,49 @@ class BusyMarkMarkdownSerializer {
         inlinePath: [...pathPrefix, index],
         textBase: textBase + consumedText,
         bareUrlText: bareUrlText,
-        literalPrefixLength:
-            !insideFormatting && inline.kind == BusyInlineKind.text && index > 0
-            ? _bareUrlLiteralSuffixLength(inlines[index - 1], inline.text)
-            : 0,
-        forceExplicitBareUrl:
-            insideFormatting &&
-            index + 1 < inlines.length &&
-            inlines[index + 1].kind == BusyInlineKind.text &&
-            _bareUrlLiteralSuffixLength(inline, inlines[index + 1].text) > 0,
+        literalPrefixLength: literalPrefixLength,
+        forceExplicitBareUrl: bareUrlNeedsExplicitSource(
+          inline,
+          index + 1 < inlines.length ? inlines[index + 1] : null,
+          insideFormatting: insideFormatting,
+        ),
         formattedUrlLabel: formattedUrlLabel,
         insideFormatting: insideFormatting,
-        entityOffsets:
-            // A character reference at a formatting boundary makes it a
-            // punctuation boundary to Markdown while retaining the URL text.
-            // This keeps, for example, com**/path** from being literal text.
-            formattedUrlLabel &&
-                inline.kind == BusyInlineKind.text &&
-                inline.text.isNotEmpty
-            ? {
-                if (index > 0 && _urlFormattingKind(inlines[index - 1].kind)) 0,
-                if (index + 1 < inlines.length &&
-                    _urlFormattingKind(inlines[index + 1].kind))
-                  inline.text.length -
-                      (inline.text.runes.last > 0xffff ? 2 : 1),
-              }
-            : const {},
+        entityOffsets: {
+          // Keep the boundary '<' literal without forming HTML or an angle
+          // autolink. The following reference also keeps this literal slice
+          // distinct from decoded raw HTML in the AST adapter.
+          if (angleEntityOffset >= 0 && angleEntityOffset < inline.text.length)
+            angleEntityOffset,
+          // A reference beside formatting makes it a punctuation boundary
+          // while retaining the displayed URL character.
+          if (formattedUrlLabel &&
+              inline.kind == BusyInlineKind.text &&
+              inline.text.isNotEmpty) ...{
+            // A URL inside label formatting would start after its opening
+            // delimiter. Encode its first character so the autolink grammar
+            // cannot consume the label's closing delimiters and link target.
+            if (insideFormatting)
+              for (final range in busyMarkBareUrlRanges(inline.text))
+                range.start,
+            if (index > 0 && _urlFormattingKind(inlines[index - 1].kind)) 0,
+            if (index + 1 < inlines.length &&
+                _urlFormattingKind(inlines[index + 1].kind))
+              inline.text.length - (inline.text.runes.last > 0xffff ? 2 : 1),
+          },
+        },
       );
+      if (inline.kind == BusyInlineKind.text) {
+        if (suffixPrefixLength > 0 && !suffix.contains(RegExp(r'\s'))) {
+          literalSuffix = suffix;
+        } else {
+          literalUrl = null;
+          literalSuffix = '';
+        }
+      } else {
+        literalUrl = inline;
+        literalSuffix = '';
+      }
       for (final entry in result.sourceOffsets.entries) {
         sourceOffsets.putIfAbsent(
           consumedText + entry.key,
@@ -1361,17 +1412,23 @@ class BusyMarkMarkdownSerializer {
     final whitespace = text.indexOf(RegExp(r'\s'));
     final length = whitespace < 0 ? text.length : whitespace;
     if (length == 0) return 0;
-    // Only delimiter punctuation gets this escape exception. Parser-excluded
-    // HTML or entity text must retain its ordinary literal escaping.
+    // Preserve a parser-excluded '<' boundary as well as delimiter
+    // punctuation. Everything after '<' keeps normal literal escaping, with
+    // its first character encoded to prevent this boundary from opening HTML.
+    final lessThan = text.indexOf('<');
+    final prefixLength = lessThan >= 0 && lessThan < length
+        ? lessThan + 1
+        : length;
     if (text
-        .substring(0, length)
+        .substring(0, prefixLength)
         .codeUnits
         .any(
           (unit) =>
               _inlineSyntaxCharacters.contains(unit) &&
               unit != 0x2a &&
               unit != 0x5f &&
-              unit != 0x7e,
+              unit != 0x7e &&
+              unit != 0x3c,
         )) {
       return 0;
     }
@@ -1385,7 +1442,7 @@ class BusyMarkMarkdownSerializer {
             ranges.single.start == 0 &&
             ranges.single.end == previous.plainText.length &&
             ranges.single.destination == previous.destination
-        ? length
+        ? prefixLength
         : 0;
   }
 

@@ -5,6 +5,8 @@ import 'markdown_model.dart';
 import 'markdown_source_annotation.dart';
 import 'writerside_variable_syntax.dart';
 
+const busyMarkLiteralLessThanTag = 'busymark-literal-less-than';
+
 const busyMarkMathInlineTag = 'busymark-math-inline';
 const busyMarkMathBlockTag = 'busymark-math-block';
 const busyMarkMathExpressionAttribute = 'mathExpression';
@@ -37,6 +39,7 @@ md.Document busyMarkMarkdownDocument(
     blockSyntaxes: const [BusyDisplayMathSyntax()],
     inlineSyntaxes: [
       ...leadingInlineSyntaxes,
+      _LiteralLessThanSyntax(),
       if (mode == MarkdownMode.writersideMarkdown)
         WritersideLiteralPercentSyntax(),
       BusyDollarMathSyntax(),
@@ -77,6 +80,23 @@ List<({int start, int end, String destination})> busyMarkBareUrlRanges(
     offset = end;
   }
   return ranges;
+}
+
+// An escaped '<', or '<' followed by a character reference, is literal
+// Markdown text. Keep it in a distinct node so the HTML adapter cannot turn
+// the decoded text back into markup. The latter form preserves a bare URL's
+// boundary without inserting a backslash that its grammar would consume.
+class _LiteralLessThanSyntax extends md.InlineSyntax {
+  _LiteralLessThanSyntax() : super(r'\\<|<&#[0-9]{1,7};');
+
+  @override
+  bool onMatch(md.InlineParser parser, Match match) {
+    final text = match[0] == r'\<'
+        ? '<'
+        : '<${parser.document.parseInline(match[0]!.substring(1)).map((node) => node.textContent).join()}';
+    parser.addNode(md.Element(busyMarkLiteralLessThanTag, [md.Text(text)]));
+    return true;
+  }
 }
 
 // Delegate matching, punctuation trimming, and destination encoding to the

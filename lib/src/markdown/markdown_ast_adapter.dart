@@ -821,6 +821,9 @@ class MarkdownAstAdapter {
     int? mappingEnd,
     Iterable<String> ignoredPositionMarkers = const [],
   }) {
+    if (node is md.Element && node.tag == busyMarkLiteralLessThanTag) {
+      return [BusyInline(kind: BusyInlineKind.text, text: node.textContent)];
+    }
     if (node is md.Element &&
         node.attributes[writersideLiteralPercentAttribute] == 'true') {
       return const [

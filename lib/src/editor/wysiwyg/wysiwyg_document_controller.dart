@@ -3893,6 +3893,58 @@ List<BusyInline> _wrapBareUrlRange(
   ];
 }
 
+/// Commit explicit source forms required by surrounding formatting, after
+/// reconstruction has merged wrappers. Serialization itself stays read-only.
+List<BusyInline> _commitBareUrlSourceForms(
+  List<BusyInline> inlines, {
+  bool insideFormatting = false,
+}) {
+  const serializer = BusyMarkMarkdownSerializer();
+  return [
+    for (var index = 0; index < inlines.length; index++)
+      _commitBareUrlSourceForm(
+        inlines[index],
+        explicit: serializer.bareUrlNeedsExplicitSource(
+          inlines[index],
+          index + 1 < inlines.length ? inlines[index + 1] : null,
+          insideFormatting: insideFormatting,
+        ),
+        insideFormatting: insideFormatting,
+      ),
+  ];
+}
+
+BusyInline _commitBareUrlSourceForm(
+  BusyInline inline, {
+  required bool explicit,
+  required bool insideFormatting,
+}) {
+  final children = inline.children.isEmpty
+      ? inline.children
+      : _commitBareUrlSourceForms(
+          inline.children,
+          insideFormatting:
+              insideFormatting ||
+              switch (inline.kind) {
+                BusyInlineKind.strong ||
+                BusyInlineKind.emphasis ||
+                BusyInlineKind.strikethrough ||
+                BusyInlineKind.underline => true,
+                _ => false,
+              },
+        );
+  if (!explicit && listEquals(children, inline.children)) return inline;
+  return inline.copyWith(
+    children: children,
+    attributes: explicit
+        ? {
+            for (final entry in inline.attributes.entries)
+              if (entry.key != busyMarkBareUrlAttribute) entry.key: entry.value,
+          }
+        : inline.attributes,
+  );
+}
+
 /// Existing bare links derive their destination from their current text. Edits
 /// and splits may shorten a URL or leave trailing punctuation outside it.
 /// Explicit links keep their independently authored destinations.
@@ -4411,6 +4463,25 @@ String _incrementOrderedMarker(String? marker, int offset) {
 }
 
 BusyDocument _ensureEditableDocument(BusyDocument document) {
+  // Commit source-form changes before notifying listeners, within the edit's
+  // existing transaction. Include dirty imported fragments as well as newly
+  // reconstructed prose; untouched source-backed blocks retain their source.
+  BusyBlock visit(BusyBlock block) {
+    final children = block.children.map(visit).toList();
+    final inlines = block.dirty && _supportsBareUrlRecognition(block)
+        ? _commitBareUrlSourceForms(block.inlines)
+        : block.inlines;
+    if (listEquals(children, block.children) &&
+        listEquals(inlines, block.inlines)) {
+      return block;
+    }
+    return block.copyWith(children: children, inlines: inlines, dirty: true);
+  }
+
+  final blocks = document.blocks.map(visit).toList();
+  if (!listEquals(blocks, document.blocks)) {
+    document = document.copyWith(blocks: blocks);
+  }
   // Source whitespace remains in BusyDocument.source. The Markdown parser,
   // rather than the rich editor, owns whether that whitespace creates blocks.
   final hasEditableBlock = document.blocks.any(
