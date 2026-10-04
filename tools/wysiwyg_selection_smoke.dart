@@ -677,7 +677,10 @@ class _ProbeState extends State<_Probe> {
   static const _syntheticTable =
       '| Header | Longer header |\n| --- | --- |\n| Short | Body text |\n| Last | End! |\n';
 
-  Future<void> _setSynthetic(String source) async {
+  Future<void> _setSynthetic(
+    String source, {
+    WysiwygEditorSessionState session = const WysiwygEditorSessionState(),
+  }) async {
     setState(() {
       _editableMode = true;
       _liveSource = source;
@@ -686,7 +689,7 @@ class _ProbeState extends State<_Probe> {
           .parse(filePath: '${widget.output.path}/synthetic.md', source: source)
           .busyDocument;
       _editorKey = UniqueKey();
-      _initialSession = const WysiwygEditorSessionState();
+      _initialSession = session;
       _session = const WysiwygEditorSessionState();
     });
     await _pause();
@@ -976,6 +979,114 @@ class _ProbeState extends State<_Probe> {
       caretOffset: 7,
     );
     await _undoSynthetic('23-partial-table-range-paste', surrounded);
+    await _runRestoredOrdinaryInput();
+  }
+
+  Future<void> _runRestoredOrdinaryInput() async {
+    for (final fixture in [
+      (
+        name: 'paragraphs',
+        source: 'Before stays.\n\nMiddle selected.\n\nAfter stays.\n',
+        table: false,
+      ),
+      (
+        name: 'mixed',
+        source: 'Before stays.\n\n$_syntheticTable\nAfter stays.\n',
+        table: false,
+      ),
+      (
+        name: 'table-control',
+        source: 'Before stays.\n\n$_syntheticTable',
+        table: true,
+      ),
+    ]) {
+      for (final reverse in [false, true]) {
+        await _setSynthetic(fixture.source);
+        final lastText = fixture.table ? 'End!' : 'After stays.';
+        final lastOffset = fixture.table ? 4 : 5;
+        await _drag(
+          reverse ? lastText : 'Before stays.',
+          reverse ? lastOffset : 6,
+          reverse ? 'Before stays.' : lastText,
+          reverse ? 6 : lastOffset,
+        );
+        final saved = WysiwygEditorSessionState.fromJson(
+          Map<String, Object?>.from(
+            jsonDecode(jsonEncode(_session.toJson())) as Map,
+          ),
+        );
+        final edits = _acceptedEdits;
+        await _setSynthetic('Other document stays unchanged.\n');
+        await _setSynthetic(fixture.source, session: saved);
+        // No focus/selection command intervenes between restoration and input.
+        final tableInput = fixture.table && !reverse;
+        final extentText = reverse ? 'Before stays.' : 'After stays.';
+        final extentOffset = reverse ? 6 : 5;
+        final focused = _elements(
+          (w) => w is TextField && w.focusNode?.hasFocus == true,
+        );
+        final checks = {
+          'source': _liveSource == fixture.source,
+          'noRestorationEdits': _acceptedEdits == edits,
+          'logicalRange':
+              _session.anchorBlockId == saved.anchorBlockId &&
+              _session.anchorOffset == saved.anchorOffset &&
+              _session.extentBlockId == saved.extentBlockId &&
+              _session.extentOffset == saved.extentOffset,
+          'inputClient': _ProbeMessenger.clientId != null,
+          'extentFocus':
+              tableInput ||
+              (focused.singleOrNull?.widget as TextField?)?.controller?.text ==
+                  extentText,
+        };
+        final label = '24-restored-${fixture.name}-reverse-$reverse';
+        _reports.add({
+          'case': '$label-focus',
+          'checks': checks,
+          'logicalSelection': _session.toJson(),
+          'client': _ProbeMessenger.clientId,
+        });
+        if (checks.values.any((v) => !v)) throw StateError('$label: $checks');
+        await _deliverText(
+          tableInput
+              ? '你🧭'
+              : extentText.replaceRange(extentOffset, extentOffset, '你🧭'),
+          caretOffset: tableInput ? 3 : extentOffset + 3,
+        );
+        final suffix = fixture.table ? '' : ' stays.';
+        final replaced = 'Before你🧭$suffix';
+        final continued = 'Before你🧭 next$suffix';
+        await _recordEdit(
+          '$label-commit',
+          '$replaced\n',
+          edits + 1,
+          caretText: replaced,
+          caretOffset: 9,
+        );
+        await _deliverText(continued, caretOffset: 14);
+        await _recordEdit(
+          '$label-continued',
+          '$continued\n',
+          edits + 2,
+          caretText: continued,
+          caretOffset: 14,
+        );
+        await _undoSynthetic('$label-continued', '$replaced\n');
+        await _undoSynthetic('$label-commit', fixture.source);
+        await _key(
+          PhysicalKeyboardKey.keyZ,
+          LogicalKeyboardKey.keyZ,
+          shift: true,
+        );
+        await _recordEdit('$label-commit-redo', '$replaced\n', edits + 5);
+        await _key(
+          PhysicalKeyboardKey.keyZ,
+          LogicalKeyboardKey.keyZ,
+          shift: true,
+        );
+        await _recordEdit('$label-continued-redo', '$continued\n', edits + 6);
+      }
+    }
   }
 }
 
@@ -1267,6 +1378,7 @@ class _ApplicationProbeDriver {
         'diskUnchanged':
             await fixture.readAsString() == _ProbeState._syntheticTable,
       });
+      await runRestoredOrdinaryInput();
     } catch (error, stack) {
       failure = '$error\n$stack';
       stderr.writeln(failure);
@@ -1281,6 +1393,209 @@ class _ApplicationProbeDriver {
       }),
     );
     exit(failure == null ? 0 : 1);
+  }
+
+  Future<void> runRestoredOrdinaryInput() async {
+    for (final name in ['paragraphs', 'mixed']) {
+      final path = '${fixture.parent.path}/$name.md';
+      final original = await File(path).readAsString();
+      final expected = name == 'paragraphs'
+          ? 'Before stays.\n\nMiddle selected.\n\nAfter stays.\n'
+          : 'Before stays.\n\n${_ProbeState._syntheticTable}\nAfter stays.\n';
+      if (original != expected) {
+        throw ArgumentError('Unexpected synthetic fixture: $path');
+      }
+      if (!await controller.openActiveFile(path)) {
+        throw StateError('Could not open $name fixture');
+      }
+      await settle();
+      for (final reverse in [false, true]) {
+        final fromText = reverse ? 'After stays.' : 'Before stays.';
+        final toText = reverse ? 'Before stays.' : 'After stays.';
+        Offset caret(String text, int offset) {
+          final field = elements(
+            (w) => w is TextField && w.controller?.text == text,
+          ).single;
+          final editable =
+              (elements((w) => w is EditableText, field).single
+                          as StatefulElement)
+                      .state
+                  as EditableTextState;
+          return editable.renderEditable.localToGlobal(
+            editable.renderEditable
+                .getLocalRectForCaret(TextPosition(offset: offset))
+                .center,
+          );
+        }
+
+        final start = caret(fromText, reverse ? 5 : 6);
+        final end = caret(toText, reverse ? 6 : 5);
+        final viewId = View.of(editorElement).viewId;
+        final pointer = 500 + (name == 'mixed' ? 2 : 0) + (reverse ? 1 : 0);
+        GestureBinding.instance.handlePointerEvent(
+          PointerDownEvent(
+            viewId: viewId,
+            pointer: pointer,
+            position: start,
+            buttons: kPrimaryMouseButton,
+            kind: PointerDeviceKind.mouse,
+          ),
+        );
+        GestureBinding.instance.handlePointerEvent(
+          PointerMoveEvent(
+            viewId: viewId,
+            pointer: pointer,
+            position: end,
+            delta: end - start,
+            buttons: kPrimaryMouseButton,
+            kind: PointerDeviceKind.mouse,
+          ),
+        );
+        GestureBinding.instance.handlePointerEvent(
+          PointerUpEvent(
+            viewId: viewId,
+            pointer: pointer,
+            position: end,
+            kind: PointerDeviceKind.mouse,
+          ),
+        );
+        await settle();
+        final saved = session;
+        final bufferId = container
+            .read(workspaceControllerProvider)
+            .activeBuffer!
+            .id;
+        final revision = controller.editRevision;
+        final undoBefore = container
+            .read(workspaceControllerProvider)
+            .activeBuffer!
+            .editorState
+            .undoState
+            .undo
+            .length;
+        if (!await controller.openActiveFile(
+          '${fixture.parent.path}/other.md',
+        )) {
+          throw StateError('Could not open other tab');
+        }
+        await settle();
+        final openCount = container
+            .read(workspaceControllerProvider)
+            .documentBuffers
+            .length;
+        for (var attempt = 0; attempt < openCount; attempt++) {
+          await command(PhysicalKeyboardKey.tab, LogicalKeyboardKey.tab);
+          if (container.read(workspaceControllerProvider).activeBuffer!.id ==
+              bufferId) {
+            break;
+          }
+        }
+        final label = '21-normal-restored-$name-reverse-$reverse';
+        final focused =
+            elements(
+                  (w) => w is TextField && w.focusNode?.hasFocus == true,
+                ).singleOrNull?.widget
+                as TextField?;
+        await record('$label-focus', {
+          'activeBuffer':
+              container.read(workspaceControllerProvider).activeBuffer!.id ==
+              bufferId,
+          'logicalRange':
+              session.anchorBlockId == saved.anchorBlockId &&
+              session.anchorOffset == saved.anchorOffset &&
+              session.extentBlockId == saved.extentBlockId &&
+              session.extentOffset == saved.extentOffset,
+          'sourceUnchanged': source == original,
+          'revisionUnchanged': controller.editRevision == revision,
+          'historyUnchanged':
+              container
+                  .read(workspaceControllerProvider)
+                  .activeBuffer!
+                  .editorState
+                  .undoState
+                  .undo
+                  .length ==
+              undoBefore,
+          'extentFocus': focused?.controller?.text == toText,
+          'inputClient': _ProbeMessenger.clientId != null,
+          'selectedBlocks': selected.length == 3,
+        });
+        // Deliver immediately to the restored client; no focus command intervenes.
+        final offset = reverse ? 6 : 5;
+        await _ProbeInput.deliverText(
+          toText.replaceRange(offset, offset, '你🧭'),
+          caretOffset: offset + 3,
+        );
+        await settle();
+        await record('$label-commit', {
+          'source': source == 'Before你🧭 stays.\n',
+          'structure':
+              editor.document.blocks.length == 1 &&
+              editor.document.blocks.single.kind == BusyBlockKind.paragraph,
+          'selectionCleared': selected.isEmpty,
+          'caret':
+              (elements(
+                        (w) => w is TextField && w.focusNode?.hasFocus == true,
+                      ).single.widget
+                      as TextField)
+                  .controller!
+                  .selection
+                  .extentOffset ==
+              9,
+          'history':
+              container
+                  .read(workspaceControllerProvider)
+                  .activeBuffer!
+                  .editorState
+                  .undoState
+                  .undo
+                  .length ==
+              undoBefore + 1,
+        });
+        await _ProbeInput.deliverText('Before你🧭 next stays.', caretOffset: 14);
+        await settle();
+        await record('$label-continued', {
+          'source': source == 'Before你🧭 next stays.\n',
+          'caret':
+              (elements(
+                        (w) => w is TextField && w.focusNode?.hasFocus == true,
+                      ).single.widget
+                      as TextField)
+                  .controller!
+                  .selection
+                  .extentOffset ==
+              14,
+        });
+        await command(PhysicalKeyboardKey.keyZ, LogicalKeyboardKey.keyZ);
+        await record('$label-continued-undo', {
+          'source': source == 'Before你🧭 stays.\n',
+        });
+        await command(PhysicalKeyboardKey.keyZ, LogicalKeyboardKey.keyZ);
+        await record('$label-commit-undo', {'source': source == original});
+        await command(
+          PhysicalKeyboardKey.keyZ,
+          LogicalKeyboardKey.keyZ,
+          shift: true,
+        );
+        await record('$label-commit-redo', {
+          'source': source == 'Before你🧭 stays.\n',
+        });
+        await command(
+          PhysicalKeyboardKey.keyZ,
+          LogicalKeyboardKey.keyZ,
+          shift: true,
+        );
+        await record('$label-continued-redo', {
+          'source': source == 'Before你🧭 next stays.\n',
+        });
+        await command(PhysicalKeyboardKey.keyZ, LogicalKeyboardKey.keyZ);
+        await command(PhysicalKeyboardKey.keyZ, LogicalKeyboardKey.keyZ);
+        await record('$label-integrity', {
+          'source': source == original,
+          'diskUnchanged': await File(path).readAsString() == original,
+        });
+      }
+    }
   }
 }
 

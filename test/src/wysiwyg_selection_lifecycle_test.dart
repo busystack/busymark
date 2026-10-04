@@ -1779,4 +1779,516 @@ void _registerLifecycleMatrix() {
       expect(tester.takeException(), isNull);
     }, variant: TargetPlatformVariant.only(TargetPlatform.linux));
   }
+
+  for (final fixture in [
+    (name: 'paragraphs', source: '$_before\n\nMiddle selected.\n\n$_after\n'),
+    (name: 'mixed paragraph', source: _surrounded),
+    (
+      name: 'list extent',
+      source: '$_before\n\n- Middle selected.\n- $_after\n',
+    ),
+    (name: 'table extent control', source: '$_before\n\n$_table'),
+  ]) {
+    for (final reverse in [false, true]) {
+      for (final lifecycle in ['recreate', 'reuse']) {
+        for (final externalHistory in [false, true]) {
+          testWidgets(
+            'restored direct input ${fixture.name} reverse=$reverse lifecycle=$lifecycle external=$externalHistory',
+            (tester) async {
+              final state = await _mount(
+                tester,
+                fixture.source,
+                MemoryRichClipboard(),
+                externalHistory: externalHistory,
+              );
+              final tableEdge = fixture.name == 'table extent control';
+              final lastText = tableEdge ? 'End!' : _after;
+              final lastOffset = tableEdge ? 4 : 5;
+              final gesture = await tester.startGesture(
+                _caret(
+                  tester,
+                  reverse ? lastText : _before,
+                  reverse ? lastOffset : 6,
+                ),
+                pointer: 301,
+                kind: PointerDeviceKind.mouse,
+              );
+              await gesture.moveTo(
+                _caret(
+                  tester,
+                  reverse ? _before : lastText,
+                  reverse ? 6 : lastOffset,
+                ),
+              );
+              await gesture.up();
+              await tester.pumpAndSettle();
+              final saved = DocumentEditorState.fromJson(
+                Map<String, Object?>.from(
+                  jsonDecode(
+                        jsonEncode(
+                          DocumentEditorState(
+                            wysiwygState: state.session,
+                          ).toJson(),
+                        ),
+                      )
+                      as Map,
+                ),
+              ).wysiwygState;
+              final ranges = [
+                for (final b in _selected(tester))
+                  (b.block.id, b.selectionRange!.start, b.selectionRange!.end),
+              ];
+              if (lifecycle == 'recreate') {
+                state.recreate(saved);
+              } else {
+                state.replaceSource(
+                  'Other document remains.\n',
+                  id: 'other',
+                  restoredSession: const WysiwygEditorSessionState(),
+                );
+                await tester.pumpAndSettle();
+                state.replaceSource(
+                  fixture.source,
+                  id: 'editable',
+                  restoredSession: saved,
+                );
+              }
+              await tester.pumpAndSettle();
+              expect(state.session.anchorBlockId, saved.anchorBlockId);
+              expect(state.session.extentBlockId, saved.extentBlockId);
+              expect(state.session.anchorOffset, saved.anchorOffset);
+              expect(state.session.extentOffset, saved.extentOffset);
+              expect([
+                for (final b in _selected(tester))
+                  (b.block.id, b.selectionRange!.start, b.selectionRange!.end),
+              ], ranges);
+              expect(state.changes, isEmpty);
+              expect(state.parses, lifecycle == 'recreate' ? 1 : 3);
+              expect(state.editorKey.currentState!.debugUndoSnapshotCount, 0);
+              final tableInput = tableEdge && !reverse;
+              final extentText = reverse ? _before : _after;
+              final extentOffset = reverse ? 6 : 5;
+              if (!tableInput) {
+                final field = tester.widget<TextField>(_field(extentText));
+                expect(
+                  field.focusNode!.hasFocus,
+                  isTrue,
+                  reason: 'restored extent must own ordinary input',
+                );
+                expect(
+                  tester.testTextInput.editingState,
+                  field.controller!.value.toJSON(),
+                );
+              }
+              expect(tester.testTextInput.hasAnyClients, isTrue);
+              const committed = '你🧭';
+              tester.testTextInput.updateEditingValue(
+                TextEditingValue(
+                  text: tableInput
+                      ? committed
+                      : extentText.replaceRange(
+                          extentOffset,
+                          extentOffset,
+                          committed,
+                        ),
+                  selection: TextSelection.collapsed(
+                    offset: tableInput
+                        ? committed.length
+                        : extentOffset + committed.length,
+                  ),
+                ),
+              );
+              await tester.pumpAndSettle();
+              final suffix = tableEdge ? '' : ' stays.';
+              final replaced = 'Before$committed$suffix';
+              expect(state.source, '$replaced\n');
+              expect(
+                state.document.blocks.single.kind,
+                BusyBlockKind.paragraph,
+              );
+              expect(state.document.blocks.single.plainText, replaced);
+              expect(state.changes, hasLength(1));
+              expect(_selected(tester), isEmpty);
+              final field = tester.widget<TextField>(_field(replaced));
+              expect(field.focusNode!.hasFocus, isTrue);
+              expect(
+                field.controller!.selection.extentOffset,
+                6 + committed.length,
+              );
+              final continued = 'Before$committed next$suffix';
+              tester.testTextInput.updateEditingValue(
+                TextEditingValue(
+                  text: continued,
+                  selection: TextSelection.collapsed(
+                    offset: 6 + committed.length + 5,
+                  ),
+                ),
+              );
+              await tester.pumpAndSettle();
+              expect(state.source, '$continued\n');
+              expect(state.changes, hasLength(2));
+              await _command(tester, LogicalKeyboardKey.keyZ);
+              expect(state.source, '$replaced\n');
+              await _command(tester, LogicalKeyboardKey.keyZ);
+              expect(state.source, fixture.source);
+              await _command(tester, LogicalKeyboardKey.keyZ, shift: true);
+              expect(state.source, '$replaced\n');
+              await _command(tester, LogicalKeyboardKey.keyZ, shift: true);
+              expect(state.source, '$continued\n');
+            },
+          );
+        }
+      }
+    }
+  }
+
+  for (final mixed in [false, true]) {
+    for (final reverse in [false, true]) {
+      for (final cancel in [false, true]) {
+        testWidgets(
+          'restored ordinary composition matches fresh mixed=$mixed reverse=$reverse cancel=$cancel',
+          (tester) async {
+            final source = mixed
+                ? _surrounded
+                : '$_before\n\nMiddle selected.\n\n$_after\n';
+            final traces = <List<Object?>>[];
+            for (final restored in [false, true]) {
+              await tester.pumpWidget(const SizedBox());
+              final state = await _mount(tester, source, MemoryRichClipboard());
+              final gesture = await tester.startGesture(
+                _caret(tester, reverse ? _after : _before, reverse ? 5 : 6),
+                pointer: 302,
+                kind: PointerDeviceKind.mouse,
+              );
+              await gesture.moveTo(
+                _caret(tester, reverse ? _before : _after, reverse ? 6 : 5),
+              );
+              await gesture.up();
+              await tester.pumpAndSettle();
+              if (restored) {
+                state.recreate(
+                  WysiwygEditorSessionState.fromJson(
+                    Map<String, Object?>.from(
+                      jsonDecode(jsonEncode(state.session.toJson())) as Map,
+                    ),
+                  ),
+                );
+                await tester.pumpAndSettle();
+              }
+              expect(state.changes, isEmpty);
+              final extent = reverse ? _before : _after;
+              final offset = reverse ? 6 : 5;
+              expect(
+                tester.widget<TextField>(_field(extent)).focusNode!.hasFocus,
+                isTrue,
+              );
+              expect(tester.testTextInput.hasAnyClients, isTrue);
+              final trace = <Object?>[];
+              for (final preedit in ['n', 'ni', cancel ? '' : '你🧭']) {
+                final initial = state.changes.isEmpty;
+                final text = initial
+                    ? extent.replaceRange(offset, offset, preedit)
+                    : 'Before$preedit stays.';
+                final caret = initial
+                    ? offset + preedit.length
+                    : 6 + preedit.length;
+                tester.testTextInput.updateEditingValue(
+                  TextEditingValue(
+                    text: text,
+                    selection: TextSelection.collapsed(offset: caret),
+                    composing: preedit == 'n' || preedit == 'ni'
+                        ? TextRange(start: initial ? offset : 6, end: caret)
+                        : TextRange.empty,
+                  ),
+                );
+                await tester.pumpAndSettle();
+                final focused = tester
+                    .widgetList<TextField>(find.byType(TextField))
+                    .singleWhere((f) => f.focusNode!.hasFocus);
+                trace.add((
+                  state.source,
+                  state.changes.length,
+                  _selected(tester).length,
+                  focused.controller!.value,
+                  state.editorKey.currentState!.debugUndoSnapshotCount,
+                ));
+              }
+              final finalText = cancel ? 'Before stays.' : 'Before你🧭 stays.';
+              expect(state.source, '$finalText\n');
+              expect(state.document.blocks.single.plainText, finalText);
+              expect(_selected(tester), isEmpty);
+              // Ordinary fields accept preedit immediately. Cancellation removes
+              // that preedit locally; it does not resurrect the selected blocks.
+              expect(state.changes.first, 'Beforen stays.\n');
+              final accepted = state.changes.length;
+              final focused = tester.widget<TextField>(_field(finalText));
+              tester.testTextInput.updateEditingValue(
+                focused.controller!.value,
+              );
+              await tester.pumpAndSettle();
+              expect(state.changes, hasLength(accepted));
+              await _command(tester, LogicalKeyboardKey.keyZ);
+              trace.add(state.source);
+              await _command(tester, LogicalKeyboardKey.keyZ, shift: true);
+              expect(state.source, '$finalText\n');
+              traces.add(trace);
+            }
+            expect(
+              traces.last,
+              traces.first,
+              reason:
+                  'restoration must preserve the ordinary-field composition contract',
+            );
+          },
+        );
+      }
+    }
+  }
+
+  for (final cell in [false, true]) {
+    testWidgets(
+      'restored local ${cell ? 'cell' : 'paragraph'} accepts immediate Unicode input',
+      (tester) async {
+        final state = await _mount(tester, _surrounded, MemoryRichClipboard());
+        final text = cell ? 'Body text' : _before;
+        await tester.tap(_field(text));
+        tester.widget<TextField>(_field(text)).controller!.selection =
+            const TextSelection(baseOffset: 5, extentOffset: 1);
+        await tester.pumpAndSettle();
+        state.recreate(
+          WysiwygEditorSessionState.fromJson(
+            Map<String, Object?>.from(
+              jsonDecode(jsonEncode(state.session.toJson())) as Map,
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+        expect(_selected(tester), isEmpty);
+        final field = tester.widget<TextField>(_field(text));
+        expect(field.focusNode!.hasFocus, isTrue);
+        expect(tester.testTextInput.hasAnyClients, isTrue);
+        expect(
+          tester.testTextInput.editingState,
+          field.controller!.value.toJSON(),
+        );
+        final next = text.replaceRange(1, 5, '你🧭');
+        tester.testTextInput.updateEditingValue(
+          TextEditingValue(
+            text: next,
+            selection: const TextSelection.collapsed(offset: 4),
+          ),
+        );
+        await tester.pumpAndSettle();
+        expect(state.source, _surrounded.replaceFirst(text, next));
+        expect(
+          state.document.blocks.where((b) => b.kind == BusyBlockKind.table),
+          hasLength(1),
+        );
+        expect(state.changes, hasLength(1));
+        expect(
+          tester
+              .widget<TextField>(_field(next))
+              .controller!
+              .selection
+              .extentOffset,
+          4,
+        );
+        await _command(tester, LogicalKeyboardKey.keyZ);
+        expect(state.source, _surrounded);
+        await _command(tester, LogicalKeyboardKey.keyZ, shift: true);
+        expect(state.source, _surrounded.replaceFirst(text, next));
+      },
+    );
+  }
+
+  for (final superseded in [
+    'caret',
+    'range',
+    'document',
+    'tab replacement',
+    'disposal',
+  ]) {
+    testWidgets(
+      'restored input focus is superseded by $superseded before handoff',
+      (tester) async {
+        const source = 'Before stays.\n\nMiddle selected.\n\nAfter stays.\n';
+        final state = await _mount(tester, source, MemoryRichClipboard());
+        final gesture = await tester.startGesture(
+          _caret(tester, _before, 6),
+          pointer: 303,
+          kind: PointerDeviceKind.mouse,
+        );
+        await gesture.moveTo(_caret(tester, _after, 5));
+        await gesture.up();
+        await tester.pumpAndSettle();
+        final saved = state.session;
+        state.recreate(saved);
+        // This frame installs the restored range and queues its guarded handoff.
+        // Supersede it before the next frame runs that handoff.
+        await tester.pump();
+        switch (superseded) {
+          case 'caret':
+            await tester.tapAt(_caret(tester, 'Middle selected.', 7));
+          case 'range':
+            final newer = await tester.startGesture(
+              _caret(tester, 'Middle selected.', 2),
+              pointer: 304,
+              kind: PointerDeviceKind.mouse,
+            );
+            await newer.moveTo(_caret(tester, _before, 3));
+            await newer.up();
+          case 'document':
+            state.replaceSource(
+              'Current document.\n',
+              id: 'current',
+              restoredSession: const WysiwygEditorSessionState(),
+            );
+          case 'tab replacement':
+            state.replaceSource(
+              'Current document.\n',
+              id: 'current',
+              restoredSession: const WysiwygEditorSessionState(),
+            );
+            state.recreate(const WysiwygEditorSessionState());
+          case 'disposal':
+            await tester.pumpWidget(const SizedBox());
+        }
+        await tester.pumpAndSettle();
+        expect(state.changes, isEmpty);
+        expect(tester.takeException(), isNull);
+        if (superseded == 'disposal') {
+          expect(tester.testTextInput.hasAnyClients, isFalse);
+          return;
+        }
+        final target = superseded == 'caret'
+            ? 'Middle selected.'
+            : superseded == 'range'
+            ? _before
+            : 'Current document.';
+        final field = tester.widget<TextField>(_field(target));
+        expect(field.focusNode!.hasFocus, isTrue);
+        expect(tester.testTextInput.hasAnyClients, isTrue);
+        expect(
+          tester.testTextInput.editingState,
+          field.controller!.value.toJSON(),
+        );
+        if (superseded == 'range') {
+          expect(state.session.anchorBlockId, state.document.blocks[1].id);
+          expect(state.session.extentBlockId, state.document.blocks.first.id);
+          expect(state.session.extentOffset, 3);
+        } else {
+          expect(_selected(tester), isEmpty);
+        }
+        final offset = field.controller!.selection.extentOffset;
+        tester.testTextInput.updateEditingValue(
+          TextEditingValue(
+            text: target.replaceRange(offset, offset, 'X'),
+            selection: TextSelection.collapsed(offset: offset + 1),
+          ),
+        );
+        await tester.pumpAndSettle();
+        expect(
+          state.source,
+          superseded == 'range'
+              ? 'BefXddle selected.\n\nAfter stays.\n'
+              : (superseded == 'caret'
+                    ? source.replaceFirst(
+                        target,
+                        target.replaceRange(offset, offset, 'X'),
+                      )
+                    : '${target.replaceRange(offset, offset, 'X')}\n'),
+        );
+        expect(state.changes, hasLength(1));
+      },
+    );
+  }
+
+  testWidgets('restored ordinary input retains a scrolled viewport', (
+    tester,
+  ) async {
+    final paragraphs = [
+      for (var i = 0; i < 50; i++) 'Paragraph $i with enough text.',
+    ];
+    final source = '${paragraphs.join('\n\n')}\n';
+    final state = await _mount(tester, source, MemoryRichClipboard());
+    final list = tester.widget<ScrollablePositionedList>(
+      find.byType(ScrollablePositionedList),
+    );
+    final gesture = await tester.startGesture(
+      _caret(tester, paragraphs.first, 5),
+      pointer: 305,
+      kind: PointerDeviceKind.mouse,
+    );
+    await gesture.moveTo(_caret(tester, paragraphs[2], 5));
+    await tester.pumpAndSettle();
+    list.itemScrollController!.jumpTo(index: 35, alignment: 0.1);
+    await tester.pumpAndSettle();
+    await gesture.moveTo(_caret(tester, paragraphs[37], 9));
+    await gesture.up();
+    await tester.pumpAndSettle();
+    final saved = WysiwygEditorSessionState.fromJson(
+      Map<String, Object?>.from(
+        jsonDecode(jsonEncode(state.session.toJson())) as Map,
+      ),
+    );
+    final parses = state.parses;
+    state.recreate(saved);
+    await tester.pumpAndSettle();
+    expect(state.session.viewportBlockId, saved.viewportBlockId);
+    expect(
+      state.session.viewportAlignment,
+      closeTo(saved.viewportAlignment, 0.01),
+    );
+    expect(state.session.anchorBlockId, saved.anchorBlockId);
+    expect(state.session.extentBlockId, saved.extentBlockId);
+    final field = tester.widget<TextField>(_field(paragraphs[37]));
+    expect(field.focusNode!.hasFocus, isTrue);
+    expect(tester.testTextInput.hasAnyClients, isTrue);
+    expect(tester.testTextInput.editingState, field.controller!.value.toJSON());
+    expect(state.changes, isEmpty);
+    expect(state.parses, parses);
+    tester.testTextInput.updateEditingValue(
+      TextEditingValue(
+        text: paragraphs[37].replaceRange(9, 9, '你🧭'),
+        selection: const TextSelection.collapsed(offset: 12),
+      ),
+    );
+    await tester.pumpAndSettle();
+    final replacement =
+        '${paragraphs.first.substring(0, 5)}你🧭${paragraphs[37].substring(9)}';
+    expect(
+      state.source,
+      '${[replacement, ...paragraphs.skip(38)].join('\n\n')}\n',
+    );
+    expect(state.changes, hasLength(1));
+  });
+
+  testWidgets('restored ordinary input uses clamped session offsets', (
+    tester,
+  ) async {
+    final state = await _mount(
+      tester,
+      '$_before\n\n$_after\n',
+      MemoryRichClipboard(),
+    );
+    await tester.tap(_field(_before));
+    await _command(tester, LogicalKeyboardKey.keyA);
+    await _command(tester, LogicalKeyboardKey.keyA);
+    final json = Map<String, Object?>.from(
+      jsonDecode(jsonEncode(state.session.toJson())) as Map,
+    );
+    json['anchorOffset'] = -10;
+    json['extentOffset'] = 10000;
+    state.recreate(WysiwygEditorSessionState.fromJson(json));
+    await tester.pumpAndSettle();
+    expect(state.session.anchorOffset, 0);
+    expect(state.session.extentOffset, _after.length);
+    final field = tester.widget<TextField>(_field(_after));
+    expect(field.focusNode!.hasFocus, isTrue);
+    expect(tester.testTextInput.editingState, field.controller!.value.toJSON());
+    expect(state.changes, isEmpty);
+    await _input(tester, '$_after你🧭');
+    expect(state.source, '你🧭\n');
+    expect(state.changes, hasLength(1));
+  });
 }

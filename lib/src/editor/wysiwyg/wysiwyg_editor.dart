@@ -2327,11 +2327,12 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       final activeCellId = _activeCellId;
       if (_hasBlockSelection) {
         _collapseFieldSelections();
-        // Document focus must survive restoration; focusing a cell would
-        // immediately convert the restored table to a local selection.
+        // Keep command focus until the restored extent's editable field or
+        // table input client is mounted, preserving the document range.
         _selectionFocusNode.requestFocus();
         _activeBlockId = _documentSelection!.extent.blockId;
         _activeCellId = null;
+        _scheduleDocumentSelectionExtentFocus();
         _scheduleSessionReport();
       } else if (activeCellId != null) {
         final controller = _tableCellControllers[activeCellId];
