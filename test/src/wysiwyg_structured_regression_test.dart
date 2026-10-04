@@ -20,6 +20,90 @@ void main() {
   const parser = MarkdownParser();
 
   test(
+    'formatting a URL suffix retains the complete live link and round trips',
+    () {
+      const url = 'https://example.com/path';
+      const prefix = 'https://example.com';
+      for (final mode in [
+        MarkdownMode.commonMark,
+        MarkdownMode.writersideMarkdown,
+      ]) {
+        final controller = BusyMarkWysiwygDocumentController(
+          document: parser
+              .parse(filePath: 'topic.md', source: '', mode: mode)
+              .busyDocument,
+        );
+        addTearDown(controller.dispose);
+        final id = controller.document.blocks.single.id;
+        controller.updateBlockText(id, url);
+        controller.applyEnterAt(id, url.length);
+        controller.applyInlineCommand(
+          id,
+          BusyWysiwygInlineCommand.bold,
+          prefix.length,
+          url.length,
+        );
+        void check(BusyBlock block) {
+          expect(block.plainText, url);
+          final ranges = busyInlineStyleRanges(block.inlines);
+          final links = ranges
+              .where((range) => range.kind == BusyInlineKind.link)
+              .toList();
+          expect(links, isNotEmpty);
+          expect(links.first.start, 0);
+          expect(links.last.end, url.length);
+          expect(links.every((range) => range.destination == url), isTrue);
+          final bold = ranges
+              .where((range) => range.kind == BusyInlineKind.strong)
+              .single;
+          expect((bold.start, bold.end), (prefix.length, url.length));
+        }
+
+        check(controller.document.blocks.first);
+        expect(
+          controller.document.blocks.first.inlines.single.attributes
+              .containsKey(busyMarkBareUrlAttribute),
+          isFalse,
+        );
+        expect(
+          controller.markdown,
+          '[https://example.co&#109;**/path**]($url)\n\n',
+        );
+        check(
+          parser
+              .parse(
+                filePath: 'topic.md',
+                source: controller.markdown,
+                mode: mode,
+              )
+              .busyDocument
+              .blocks
+              .first,
+        );
+        final saved = parser
+            .parse(
+              filePath: 'topic.md',
+              source: controller.markdown,
+              mode: mode,
+            )
+            .busyDocument;
+        final reopened = BusyMarkWysiwygDocumentController(document: saved);
+        addTearDown(reopened.dispose);
+        controller.updateBlockText(id, '$url/new');
+        reopened.updateBlockText(saved.blocks.single.id, '$url/new');
+        expect(controller.markdown.trim(), reopened.markdown.trim());
+        for (final edited in [
+          controller.document.blocks.first,
+          reopened.document.blocks.first,
+        ]) {
+          expect(edited.plainText, '$url/new');
+          expect(edited.inlines.single.destination, url);
+        }
+      }
+    },
+  );
+
+  test(
     'Enter URL recognition preserves formatting, literal syntax, anchors, breaks and descendants',
     () {
       const url = 'https://example.com/a_b?q=one&next=two';

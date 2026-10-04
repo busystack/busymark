@@ -5482,7 +5482,7 @@ void main() {}
       expect(controller.document.blocks.first.inlines.last.plainText, '.');
       expect(controller.markdown, '$edited.\n\n');
       controller.updateBlockText(id, edited);
-      final nextId = controller.splitBlockAt(id, url.length)!;
+      final nextId = controller.applyEnterAt(id, url.length)!.blockId;
       expect(controller.blockById(id)!.inlines.single.destination, url);
       expect(
         controller.blockById(nextId)!.plainText,
@@ -5492,6 +5492,17 @@ void main() {}
         busyInlineStyleRanges(controller.blockById(nextId)!.inlines),
         isEmpty,
       );
+      final joined = controller.applyBackspaceAtStart(nextId)!;
+      expect((joined.blockId, joined.offset), (id, url.length));
+      expect(controller.blockById(id)!.plainText, edited);
+      final joinedLink = busyInlineStyleRanges(
+        controller.blockById(id)!.inlines,
+      ).where((range) => range.kind == BusyInlineKind.link).single;
+      expect(
+        (joinedLink.start, joinedLink.end, joinedLink.destination),
+        (0, edited.length, edited),
+      );
+      expect(controller.markdown, '$edited\n\n');
       final splitAgain = controller.splitBlockAt(id, 'https://exa'.length)!;
       expect(busyInlineStyleRanges(controller.blockById(id)!.inlines), isEmpty);
       expect(
@@ -5508,6 +5519,83 @@ void main() {}
       explicit.updateBlockText(explicit.document.blocks.first.id, '$url/path');
       expect(explicit.document.blocks.first.inlines.single.destination, url);
       expect(explicit.markdown, '[$url/path]($url)\n');
+    },
+  );
+
+  test(
+    'rejoining only extends existing bare URLs and preserves code and explicit links',
+    () {
+      const url = 'https://example.com';
+      final plain = BusyMarkWysiwygDocumentController(
+        document: parser.parse(filePath: 'topic.md', source: '').busyDocument,
+      );
+      addTearDown(plain.dispose);
+      final id = plain.document.blocks.single.id;
+      plain.updateBlockText(id, '$url/path');
+      final second = plain.splitBlockAt(id, url.length)!;
+      plain.applyBackspaceAtStart(second);
+      expect(plain.document.blocks.single.plainText, '$url/path');
+      expect(
+        busyInlineStyleRanges(plain.document.blocks.single.inlines),
+        isEmpty,
+      );
+      for (final code in [false, true]) {
+        final document = code
+            ? const BusyDocument(
+                filePath: 'topic.md',
+                mode: MarkdownMode.commonMark,
+                blocks: [
+                  BusyBlock(
+                    id: 'first',
+                    kind: BusyBlockKind.paragraph,
+                    inlines: [
+                      BusyInline(
+                        kind: BusyInlineKind.link,
+                        text: url,
+                        destination: url,
+                        attributes: {busyMarkBareUrlAttribute: 'true'},
+                      ),
+                    ],
+                  ),
+                  BusyBlock(
+                    id: 'second',
+                    kind: BusyBlockKind.paragraph,
+                    inlines: [
+                      BusyInline(kind: BusyInlineKind.code, text: '/path'),
+                    ],
+                  ),
+                ],
+              )
+            : parser
+                  .parse(
+                    filePath: 'topic.md',
+                    source: '[$url]($url)\n\n/path\n',
+                  )
+                  .busyDocument;
+        final controller = BusyMarkWysiwygDocumentController(
+          document: document,
+        );
+        addTearDown(controller.dispose);
+        controller.applyBackspaceAtStart(document.blocks.last.id);
+        final block = controller.document.blocks.single;
+        final ranges = busyInlineStyleRanges(block.inlines);
+        final link = ranges
+            .where((range) => range.kind == BusyInlineKind.link)
+            .single;
+        expect((link.start, link.end, link.destination), (0, url.length, url));
+        expect(block.plainText, '$url/path');
+        if (code) {
+          expect(
+            ranges
+                .where((range) => range.kind == BusyInlineKind.code)
+                .single
+                .start,
+            url.length,
+          );
+        } else {
+          expect(controller.markdown, '[$url]($url)/path\n');
+        }
+      }
     },
   );
 

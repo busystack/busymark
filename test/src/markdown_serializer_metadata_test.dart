@@ -3,10 +3,255 @@ import 'package:busymark/src/markdown/busymark_markdown_serializer.dart';
 import 'package:busymark/src/markdown/markdown_model.dart';
 import 'package:busymark/src/markdown/markdown_parser.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_document_controller.dart';
+import 'package:busymark/src/editor/wysiwyg/wysiwyg_commands.dart';
+import 'package:busymark/src/editor/wysiwyg/wysiwyg_inline_controller.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   const serializer = BusyMarkMarkdownSerializer();
+
+  test(
+    'partially formatted URL source offsets and text atoms survive save and edit',
+    () {
+      const parser = MarkdownParser();
+      const url = 'https://example.com/path';
+      const prefix = 'https://example.com';
+      const source = '[https://example.co&#109;**/path**]($url)';
+      final controller = BusyMarkWysiwygDocumentController(
+        document: parser.parse(filePath: 'topic.md', source: '').busyDocument,
+      );
+      addTearDown(controller.dispose);
+      final id = controller.document.blocks.single.id;
+      controller.updateBlockText(id, url);
+      controller.applyEnterAt(id, url.length);
+      controller.applyInlineCommand(
+        id,
+        BusyWysiwygInlineCommand.bold,
+        prefix.length,
+        url.length,
+      );
+      void check(BusyBlock block) {
+        expect(serializer.serializeInlineFragment(block.inlines), source);
+        for (var offset = 0; offset <= url.length; offset++) {
+          final result = serializer.serializeInlineFragmentWithOffsets(
+            block.inlines,
+            textOffset: offset,
+          );
+          expect(result.source, source);
+          final expectedOffset = offset == 0
+              ? 0
+              : offset == url.length
+              ? source.length
+              : offset < prefix.length
+              ? offset + 1
+              : offset == prefix.length
+              ? offset + 6
+              : offset + 8;
+          expect(result.sourceOffset, expectedOffset, reason: 'offset $offset');
+          expect(result.textAtoms, hasLength(url.length));
+          for (var index = 0; index < url.length; index++) {
+            final atom = result.textAtoms[index];
+            final start = index < prefix.length - 1
+                ? index + 1
+                : index == prefix.length - 1
+                ? index + 1
+                : index + 8;
+            final end = index == prefix.length - 1 ? start + 6 : start + 1;
+            expect((atom.textStart, atom.textEnd), (index, index + 1));
+            expect((atom.sourceStart, atom.sourceEnd), (start, end));
+            expect(atom.text, url[index]);
+            expect(atom.escaped, index == prefix.length - 1);
+            expect(
+              source.substring(start, end),
+              atom.escaped ? '&#109;' : atom.text,
+            );
+          }
+        }
+      }
+
+      check(controller.document.blocks.first);
+      final saved = parser
+          .parse(filePath: 'topic.md', source: controller.markdown)
+          .busyDocument;
+      check(saved.blocks.single);
+      final reopened = BusyMarkWysiwygDocumentController(document: saved);
+      addTearDown(reopened.dispose);
+      reopened.updateBlockText(saved.blocks.single.id, '$url!');
+      final reparsed = parser
+          .parse(filePath: 'topic.md', source: reopened.markdown)
+          .busyDocument
+          .blocks
+          .single;
+      expect(reparsed.plainText, '$url!');
+      expect(
+        busyInlineStyleRanges(reparsed.inlines)
+            .where((range) => range.kind == BusyInlineKind.link)
+            .every((range) => range.destination == url),
+        isTrue,
+      );
+      expect(
+        busyInlineStyleRanges(
+          reparsed.inlines,
+        ).where((range) => range.kind == BusyInlineKind.strong).isNotEmpty,
+        isTrue,
+      );
+    },
+  );
+
+  test(
+    'URL punctuation beside surrounding formatting retains literal and style boundaries',
+    () {
+      const parser = MarkdownParser();
+      const url = 'https://example.com';
+      const link = BusyInline(
+        kind: BusyInlineKind.link,
+        text: url,
+        destination: url,
+        attributes: {busyMarkBareUrlAttribute: 'true'},
+        children: [BusyInline(kind: BusyInlineKind.text, text: url)],
+      );
+      for (final suffix in ['*', '_', '~', '**', '__', '~~', '*_~']) {
+        final literal = BusyInline(kind: BusyInlineKind.text, text: suffix);
+        for (final inside in [false, true]) {
+          final inlines = [
+            BusyInline(
+              kind: BusyInlineKind.strong,
+              text: '',
+              children: [link, if (inside) literal],
+            ),
+            if (!inside) literal,
+          ];
+          final source = serializer.serializeInlineFragment(inlines);
+          final parsed = parser.parseInlineFragment(source: source);
+          expect(
+            parsed.map((inline) => inline.plainText).join(),
+            '$url$suffix',
+            reason: source,
+          );
+          final ranges = busyInlineStyleRanges(parsed);
+          final links = ranges.where(
+            (range) => range.kind == BusyInlineKind.link,
+          );
+          expect(links.single.destination, url, reason: source);
+          final bold = ranges
+              .where((range) => range.kind == BusyInlineKind.strong)
+              .toList();
+          expect(bold.first.start, 0);
+          expect(
+            bold.last.end,
+            inside ? url.length + suffix.length : url.length,
+            reason: source,
+          );
+          for (var offset = 0; offset <= url.length + suffix.length; offset++) {
+            final result = serializer.serializeInlineFragmentWithOffsets(
+              inlines,
+              textOffset: offset,
+            );
+            expect(result.source, source);
+            expect(
+              result.textAtoms.map((atom) => atom.text).join(),
+              '$url$suffix',
+            );
+            if (offset == 0) expect(result.sourceOffset, 0);
+            if (offset == url.length + suffix.length) {
+              expect(result.sourceOffset, source.length);
+            }
+            for (final atom in result.textAtoms) {
+              expect(
+                source.substring(atom.sourceStart, atom.sourceEnd),
+                atom.escaped ? '\\${atom.text}' : atom.text,
+              );
+            }
+          }
+        }
+      }
+    },
+  );
+
+  test(
+    'bare URL trailing literal punctuation survives serialization and reparse',
+    () {
+      const parser = MarkdownParser();
+      const url = 'https://example.com';
+      for (final mode in [
+        MarkdownMode.commonMark,
+        MarkdownMode.writersideMarkdown,
+      ]) {
+        for (final suffix in ['*', '_', '~', '**', '__', '~~', '*_~']) {
+          final text = '$url$suffix';
+          final controller = BusyMarkWysiwygDocumentController(
+            document: parser
+                .parse(filePath: 'topic.md', source: '', mode: mode)
+                .busyDocument,
+          );
+          addTearDown(controller.dispose);
+          final id = controller.document.blocks.single.id;
+          controller.updateBlockText(id, text);
+          controller.applyEnterAt(id, text.length);
+          final block = controller.document.blocks.first;
+          expect(block.inlines.first.destination, url);
+          final saved = parser
+              .parse(
+                filePath: 'topic.md',
+                source: controller.markdown,
+                mode: mode,
+              )
+              .busyDocument
+              .blocks
+              .single;
+          expect(
+            saved.plainText,
+            text,
+            reason: '$mode $suffix: ${controller.markdown}',
+          );
+          expect(saved.inlines.first.destination, url);
+          final ordinary = serializer.serializeInlineFragment(block.inlines);
+          expect(ordinary, text);
+          for (var offset = 0; offset <= text.length; offset++) {
+            final result = serializer.serializeInlineFragmentWithOffsets(
+              block.inlines,
+              textOffset: offset,
+            );
+            expect(result.source, ordinary);
+            expect(result.sourceOffset, offset);
+            expect(result.textAtoms, hasLength(text.length));
+            for (var index = 0; index < text.length; index++) {
+              final atom = result.textAtoms[index];
+              expect((atom.textStart, atom.textEnd), (index, index + 1));
+              expect((atom.sourceStart, atom.sourceEnd), (index, index + 1));
+              expect(atom.text, text[index]);
+              expect(atom.escaped, isFalse);
+            }
+          }
+          final reopened = BusyMarkWysiwygDocumentController(
+            document: parser
+                .parse(
+                  filePath: 'topic.md',
+                  source: controller.markdown,
+                  mode: mode,
+                )
+                .busyDocument,
+          );
+          addTearDown(reopened.dispose);
+          reopened.updateBlockText(
+            reopened.document.blocks.single.id,
+            '$url/path$suffix',
+          );
+          final edited = parser
+              .parse(
+                filePath: 'topic.md',
+                source: reopened.markdown,
+                mode: mode,
+              )
+              .busyDocument
+              .blocks
+              .single;
+          expect(edited.plainText, '$url/path$suffix');
+          expect(edited.inlines.first.destination, '$url/path');
+        }
+      }
+    },
+  );
 
   test('descendant whitespace preservation prevents ancestor trimming', () {
     const preserved = {busyMarkPreserveTextWhitespaceAttribute: 'true'};

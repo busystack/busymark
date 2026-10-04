@@ -1923,10 +1923,18 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     final previousText = previous.plainText;
     final currentText = current.plainText;
     final mergedChildren = [...previous.children, ...current.children];
-    final mergedInlines = _mergeAdjacentInlineStyles([
+    var mergedInlines = _mergeAdjacentInlineStyles([
       ...previous.inlines,
       ...current.inlines,
     ]);
+    if (_supportsBareUrlRecognition(previous) &&
+        _supportsBareUrlRecognition(current)) {
+      mergedInlines = _rejoinBareUrls(
+        mergedInlines,
+        previousText.length,
+        mode: _document.mode,
+      );
+    }
     if (currentText.isEmpty) {
       final updatedPrevious = _withoutSourceSpan(
         previous.copyWith(inlines: mergedInlines, children: mergedChildren),
@@ -3684,6 +3692,7 @@ List<BusyInline> _recognizeBareUrls(
   List<BusyInline> inlines, {
   MarkdownMode mode = MarkdownMode.commonMark,
   Map<String, String> attributes = const {},
+  List<BusyInlineStyleRange>? existingUrls,
 }) {
   final text = inlines.map((inline) => inline.plainText).join();
   final excluded = <({int start, int end})>[];
@@ -3715,11 +3724,16 @@ List<BusyInline> _recognizeBareUrls(
     visit(inline);
   }
   final matches = busyMarkBareUrlRanges(text, mode: mode).where(
-    (match) => !excluded.any(
-      (range) => range.start == range.end
-          ? range.start > match.start && range.start <= match.end
-          : range.start < match.end && range.end > match.start,
-    ),
+    (match) =>
+        (existingUrls == null ||
+            existingUrls.any(
+              (range) => range.start < match.end && range.end > match.start,
+            )) &&
+        !excluded.any(
+          (range) => range.start == range.end
+              ? range.start > match.start && range.start <= match.end
+              : range.start < match.end && range.end > match.start,
+        ),
   );
   var result = inlines;
   // Work backwards so earlier slices retain their original coordinates.
@@ -3729,10 +3743,96 @@ List<BusyInline> _recognizeBareUrls(
       match.start,
       match.end,
       match.destination,
-      attributes,
+      existingUrls
+              ?.firstWhere(
+                (range) => range.start < match.end && range.end > match.start,
+              )
+              .attributes ??
+          attributes,
     );
   }
   return result;
+}
+
+/// Joining a paragraph can extend an already recognized URL into its former
+/// text sibling. Only links touching the join seed recognition; other text
+/// retains its existing semantics.
+List<BusyInline> _rejoinBareUrls(
+  List<BusyInline> inlines,
+  int joinOffset, {
+  required MarkdownMode mode,
+}) {
+  final text = inlines.map((inline) => inline.plainText).join();
+  bool protected(BusyInline inline) => switch (inline.kind) {
+    BusyInlineKind.link =>
+      inline.attributes[busyMarkBareUrlAttribute] != 'true',
+    BusyInlineKind.code ||
+    BusyInlineKind.image ||
+    BusyInlineKind.math ||
+    BusyInlineKind.html ||
+    BusyInlineKind.unknown ||
+    BusyInlineKind.writersideVariable => true,
+    _ => inline.children.any(protected),
+  };
+  final candidates = busyMarkBareUrlRanges(text, mode: mode).where((range) {
+    if (range.start >= joinOffset || range.end <= joinOffset) return false;
+    final prefix = _partitionInlinesForReplacement(
+      inlines,
+      range.start,
+      range.start,
+      refreshUrls: false,
+    );
+    final slice = _partitionInlinesForReplacement(
+      prefix.after,
+      range.end - range.start,
+      range.end - range.start,
+      refreshUrls: false,
+    );
+    return !slice.before.any(protected);
+  }).toList();
+  if (candidates.isEmpty) return inlines;
+  final existing = <BusyInlineStyleRange>[];
+  var offset = 0;
+  List<BusyInline> visit(BusyInline inline) {
+    final start = offset;
+    final end = start + inline.plainText.length;
+    if (inline.kind == BusyInlineKind.link) {
+      offset = end;
+      if (inline.attributes[busyMarkBareUrlAttribute] == 'true' &&
+          start <= joinOffset &&
+          end >= joinOffset &&
+          candidates.any((range) => range.start < end && range.end > start)) {
+        existing.add(
+          BusyInlineStyleRange(
+            start: start,
+            end: end,
+            kind: BusyInlineKind.link,
+            destination: inline.destination,
+            attributes: inline.attributes,
+          ),
+        );
+        return inline.children.isEmpty
+            ? _textInlines(inline.text)
+            : inline.children;
+      }
+      return [inline];
+    }
+    if (inline.children.isNotEmpty) {
+      return [
+        inline.copyWith(
+          children: [for (final child in inline.children) ...visit(child)],
+        ),
+      ];
+    }
+    offset = end;
+    return [inline];
+  }
+
+  final unwrapped = [for (final inline in inlines) ...visit(inline)];
+  if (existing.isEmpty) return inlines;
+  return _mergeAdjacentInlineStyles(
+    _recognizeBareUrls(unwrapped, mode: mode, existingUrls: existing),
+  );
 }
 
 List<BusyInline> _wrapBareUrlRange(
@@ -3769,6 +3869,12 @@ List<BusyInline> _wrapBareUrlRange(
     end - start,
     end - start,
   );
+  // Interior formatting requires an explicit Markdown label. Commit that
+  // source form in the live model too, so later label edits have the same
+  // destination semantics before and after saving/reopening.
+  bool plainUrlText(BusyInline inline) =>
+      inline.kind == BusyInlineKind.text && inline.children.every(plainUrlText);
+  final bare = url.before.every(plainUrlText);
   return [
     ...prefix.before,
     BusyInline(
@@ -3777,8 +3883,9 @@ List<BusyInline> _wrapBareUrlRange(
       destination: destination,
       children: url.before,
       attributes: {
-        ...attributes,
-        busyMarkBareUrlAttribute: 'true',
+        for (final entry in attributes.entries)
+          if (entry.key != busyMarkBareUrlAttribute) entry.key: entry.value,
+        if (bare) busyMarkBareUrlAttribute: 'true',
         if (attributes.containsKey('href')) 'href': destination,
       },
     ),
@@ -4467,7 +4574,9 @@ List<BusyInline> _inlinesFromStyleRanges(
           ),
         ),
   ];
-  return _refreshBareUrlLinks(_mergeAdjacentInlineStyles(segments));
+  return _mergeAdjacentInlineStyles(
+    _refreshBareUrlLinks(_mergeAdjacentInlineStyles(segments)),
+  );
 }
 
 List<BusyInline> _mergeAdjacentInlineStyles(List<BusyInline> inlines) {
@@ -4593,14 +4702,9 @@ BusyInline _inlineForSegment(String text, List<BusyInlineStyleRange> styles) {
 }
 
 int _compareStyleRanges(BusyInlineStyleRange a, BusyInlineStyleRange b) {
-  // Bare URLs stay inside surrounding formatting, letting reconstruction
-  // merge those wrappers without introducing adjacent Markdown delimiters.
-  int priority(BusyInlineStyleRange range) =>
-      range.kind == BusyInlineKind.link &&
-          range.attributes[busyMarkBareUrlAttribute] == 'true'
-      ? 6
-      : _stylePriority(range.kind);
-  return priority(a).compareTo(priority(b));
+  // Keep links whole across interior formatting boundaries. Refreshing a
+  // bare URL subsequently restores any formatting enclosing its entire text.
+  return _stylePriority(a.kind).compareTo(_stylePriority(b.kind));
 }
 
 int _stylePriority(BusyInlineKind kind) {

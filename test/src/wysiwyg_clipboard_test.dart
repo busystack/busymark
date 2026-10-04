@@ -653,6 +653,88 @@ void main() {
       );
     }
 
+    testWidgets(
+      'pasted URL retains live link coverage through split, Backspace and suffix formatting',
+      (tester) async {
+        const url = 'https://example.com/path';
+        const prefix = 'https://example.com';
+        systemData = {'text': url};
+        var source = '';
+        BusyDocument? live;
+        await mount(
+          tester,
+          'url-rejoin-format',
+          source,
+          (value) => source = value,
+          onDocumentChanged: (value) => live = value,
+        );
+        await key(tester, LogicalKeyboardKey.keyV);
+        await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+        await tester.pumpAndSettle();
+        var first = tester.widget<TextField>(find.byType(TextField).first);
+        first.focusNode!.requestFocus();
+        first.controller!.selection = const TextSelection.collapsed(
+          offset: prefix.length,
+        );
+        await tester.pump();
+        await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+        await tester.pumpAndSettle();
+        expect(live!.blocks.first.inlines.single.destination, prefix);
+        expect(live!.blocks[1].plainText, '/path');
+        await tester.sendKeyEvent(LogicalKeyboardKey.backspace);
+        await tester.pumpAndSettle();
+        expect(live!.blocks.first.inlines.single.destination, url);
+        expect(source, '$url\n\n');
+        first = tester.widget<TextField>(find.byType(TextField).first);
+        expect(
+          first.controller!.selection,
+          const TextSelection.collapsed(offset: prefix.length),
+        );
+        expect(first.focusNode!.hasFocus, isTrue);
+        first.controller!.selection = const TextSelection(
+          baseOffset: prefix.length,
+          extentOffset: url.length,
+        );
+        await tester.pump();
+        await key(tester, LogicalKeyboardKey.keyB);
+        void checkFormatted() {
+          final block = live!.blocks.first;
+          expect(block.inlines.single.kind, BusyInlineKind.link);
+          expect(block.inlines.single.plainText, url);
+          expect(block.inlines.single.destination, url);
+          final bold = busyInlineStyleRanges(
+            block.inlines,
+          ).where((range) => range.kind == BusyInlineKind.strong).single;
+          expect((bold.start, bold.end), (prefix.length, url.length));
+          expect(source, '[https://example.co&#109;**/path**]($url)\n\n');
+        }
+
+        checkFormatted();
+        final formattedField = tester.widget<TextField>(
+          find.byType(TextField).first,
+        );
+        final spans = formattedField.controller!
+            .buildTextSpan(
+              context: tester.element(find.byType(TextField).first),
+              withComposing: false,
+            )
+            .children!
+            .cast<TextSpan>();
+        expect(
+          spans.every(
+            (span) => span.style!.decoration == TextDecoration.underline,
+          ),
+          isTrue,
+        );
+        expect(spans.last.style!.fontWeight, FontWeight.w700);
+        await key(tester, LogicalKeyboardKey.keyZ);
+        expect(source, '$url\n\n');
+        expect(live!.blocks.first.inlines.single.destination, url);
+        await key(tester, LogicalKeyboardKey.keyZ, shift: true);
+        checkFormatted();
+      },
+    );
+
     Future<void> copyAll(WidgetTester tester, {String source = _source}) async {
       await mount(tester, 'origin', source, (_) {});
       await key(tester, LogicalKeyboardKey.keyA);
