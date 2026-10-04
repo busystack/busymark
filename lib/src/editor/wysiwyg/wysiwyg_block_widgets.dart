@@ -177,9 +177,11 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
     this.selected = false,
     this.selectionRange,
     this.documentSelectionActive = false,
+    this.documentSelectionDragging = false,
     this.onPointerDown,
     this.onPointerMove,
     this.onPointerUp,
+    this.onPointerCancel,
     this.tableCellController,
     this.tableCellUndoController,
     this.tableCellFocusNode,
@@ -233,9 +235,11 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
   final bool selected;
   final BusyMarkWysiwygSelectionRange? selectionRange;
   final bool documentSelectionActive;
+  final bool documentSelectionDragging;
   final ValueChanged<PointerDownEvent>? onPointerDown;
   final ValueChanged<PointerMoveEvent>? onPointerMove;
   final ValueChanged<PointerUpEvent>? onPointerUp;
+  final ValueChanged<PointerCancelEvent>? onPointerCancel;
   final TextEditingController Function(BusyBlock cell)? tableCellController;
   final UndoHistoryController Function(BusyBlock cell)? tableCellUndoController;
   final FocusNode Function(BusyBlock cell)? tableCellFocusNode;
@@ -287,6 +291,7 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
       onPointerDown: onPointerDown,
       onPointerMove: onPointerMove,
       onPointerUp: onPointerUp,
+      onPointerCancel: onPointerCancel,
       child: visualization != null
           ? BusyMarkVisualizationCard(
               key: ValueKey('wysiwyg-visualization-${block.id}'),
@@ -397,6 +402,8 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
         textDirection: textDirection,
         child: _TableBlockEditor(
           block: block,
+          documentSelected: selectionRange != null,
+          documentSelectionDragging: documentSelectionDragging,
           onFocused: onFocused,
           onCellChanged: onTableCellChanged,
           onCellSourceChanged: onTableCellSourceChanged,
@@ -513,39 +520,9 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
                       )
                     : Stack(
                         children: [
-                          Positioned.fill(
-                            child: IgnorePointer(
-                              child: CustomPaint(
-                                painter: _WysiwygSelectionPainter(
-                                  text: controller.text,
-                                  style: style,
-                                  selectionRange: selectionRange,
-                                  color:
-                                      DefaultSelectionStyle.of(
-                                        context,
-                                      ).selectionColor ??
-                                      Theme.of(
-                                        context,
-                                      ).colorScheme.primary.withValues(
-                                        alpha: BusyMarkDocumentTextGeometry
-                                            .fallbackSelectionAlpha,
-                                      ),
-                                  textDirection: textDirection,
-                                  textScaler: MediaQuery.textScalerOf(context),
-                                  locale: Localizations.maybeLocaleOf(context),
-                                  layoutWidthInset: BusyMarkDocumentTextGeometry
-                                      .editableLayoutInset,
-                                ),
-                              ),
-                            ),
-                          ),
-                          TextSelectionTheme(
-                            data: selectionRange == null
-                                ? Theme.of(context).textSelectionTheme
-                                : Theme.of(context).textSelectionTheme.copyWith(
-                                    selectionColor:
-                                        BusyMarkLinuxPalette.transparent,
-                                  ),
+                          _WysiwygSelectionOverlay(
+                            controller: controller,
+                            selectionRange: selectionRange,
                             child: KeyedSubtree(
                               key: spellingEditableKey,
                               child: TextField(
@@ -555,6 +532,8 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
                                 controller: controller,
                                 undoController: undoController,
                                 focusNode: focusNode,
+                                enableInteractiveSelection:
+                                    !documentSelectionDragging,
                                 maxLines: null,
                                 minLines: 1,
                                 textDirection: textDirection,
@@ -1502,6 +1481,8 @@ String _directionalText(BusyBlock block) {
 class _TableBlockEditor extends StatefulWidget {
   const _TableBlockEditor({
     required this.block,
+    required this.documentSelected,
+    required this.documentSelectionDragging,
     required this.onFocused,
     required this.onCellChanged,
     required this.onCellSourceChanged,
@@ -1532,6 +1513,8 @@ class _TableBlockEditor extends StatefulWidget {
   });
 
   final BusyBlock block;
+  final bool documentSelected;
+  final bool documentSelectionDragging;
   final VoidCallback onFocused;
   final void Function(String cellId, String text) onCellChanged;
   final void Function(String cellId, String source) onCellSourceChanged;
@@ -1704,6 +1687,8 @@ class _TableBlockEditorState extends State<_TableBlockEditor> {
       onEnter: (_) => _activateCell(rowIndex, column),
       child: _TableCellEditor(
         cell: cell,
+        documentSelected: widget.documentSelected,
+        documentSelectionDragging: widget.documentSelectionDragging,
         header: _isHeaderRow(row, rowIndex),
         style: busyMarkDocumentBodyTextStyle(context),
         onFocused: widget.onFocused,
@@ -2091,6 +2076,8 @@ class _TableControlMenuButton extends StatelessWidget {
 class _TableCellEditor extends StatefulWidget {
   const _TableCellEditor({
     required this.cell,
+    required this.documentSelected,
+    required this.documentSelectionDragging,
     required this.header,
     required this.style,
     required this.onFocused,
@@ -2118,6 +2105,8 @@ class _TableCellEditor extends StatefulWidget {
   });
 
   final BusyBlock? cell;
+  final bool documentSelected;
+  final bool documentSelectionDragging;
   final bool header;
   final TextStyle style;
   final VoidCallback onFocused;
@@ -2294,64 +2283,77 @@ class _TableCellEditorState extends State<_TableCellEditor> {
           children: [
             KeyedSubtree(
               key: widget.spellingEditableKey,
-              child: TextField(
-                key: ValueKey(cell.id),
+              child: _WysiwygSelectionOverlay(
                 controller: _controller,
-                focusNode: _focusNode,
-                undoController: widget.undoController,
-                minLines: 1,
-                maxLines: 1,
-                inputFormatters: const [_SingleLineTableCellFormatter()],
-                style: textStyle,
-                textAlign: textAlign,
-                selectionHeightStyle:
-                    BusyMarkDocumentTextGeometry.selectionHeightStyle,
-                selectionWidthStyle:
-                    BusyMarkDocumentTextGeometry.selectionWidthStyle,
-                decoration: InputDecoration(
-                  isCollapsed: true,
-                  border: InputBorder.none,
-                  enabledBorder: InputBorder.none,
-                  focusedBorder: InputBorder.none,
-                  filled: false,
-                  hoverColor: BusyMarkLinuxPalette.transparent,
-                  hintText: widget.header
-                      ? context.l10n.tableHeaderHint
-                      : context.l10n.tableCellHint,
-                  hintStyle: textStyle.copyWith(color: colors.mutedForeground),
-                  contentPadding: EdgeInsets.zero,
+                selectionRange: widget.documentSelected
+                    ? BusyMarkWysiwygSelectionRange(
+                        start: 0,
+                        end: _controller.text.length,
+                      )
+                    : null,
+                child: TextField(
+                  key: ValueKey(cell.id),
+                  controller: _controller,
+                  focusNode: _focusNode,
+                  enableInteractiveSelection: !widget.documentSelectionDragging,
+                  undoController: widget.undoController,
+                  minLines: 1,
+                  maxLines: 1,
+                  inputFormatters: const [_SingleLineTableCellFormatter()],
+                  style: textStyle,
+                  textAlign: textAlign,
+                  selectionHeightStyle:
+                      BusyMarkDocumentTextGeometry.selectionHeightStyle,
+                  selectionWidthStyle:
+                      BusyMarkDocumentTextGeometry.selectionWidthStyle,
+                  decoration: InputDecoration(
+                    isCollapsed: true,
+                    border: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    focusedBorder: InputBorder.none,
+                    filled: false,
+                    hoverColor: BusyMarkLinuxPalette.transparent,
+                    hintText: widget.header
+                        ? context.l10n.tableHeaderHint
+                        : context.l10n.tableCellHint,
+                    hintStyle: textStyle.copyWith(
+                      color: colors.mutedForeground,
+                    ),
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                  contextMenuBuilder: widget.suppressContextMenu
+                      ? (context, editableTextState) => const SizedBox.shrink()
+                      : (context, editableTextState) =>
+                            buildBusyMarkEditorTextContextMenu(
+                              context,
+                              editableTextState,
+                              refineWithAiLabel: context.l10n.aiRefineWithAi,
+                              onCut: widget.onCut,
+                              onCopy: widget.onCopy,
+                              onPaste: widget.onPaste,
+                              onPastePlainText: widget.onPastePlainText,
+                              readPasteAvailability:
+                                  widget.readPasteAvailability,
+                              onCopyPlainText: widget.onCopyPlainText,
+                              readSpellingItems: widget.spellingMenuReader,
+                              onCheckSpelling: widget.onCheckSpelling,
+                            ),
+                  onTap: () {
+                    final onCellFocused = widget.onCellFocused;
+                    if (onCellFocused == null) {
+                      widget.onFocused();
+                    } else {
+                      onCellFocused(cell.id);
+                    }
+                  },
+                  onChanged: (value) {
+                    if (_sourceEditing) {
+                      widget.onSourceChanged(cell.id, value);
+                    } else {
+                      widget.onChanged(cell.id, value);
+                    }
+                  },
                 ),
-                contextMenuBuilder: widget.suppressContextMenu
-                    ? (context, editableTextState) => const SizedBox.shrink()
-                    : (context, editableTextState) =>
-                          buildBusyMarkEditorTextContextMenu(
-                            context,
-                            editableTextState,
-                            refineWithAiLabel: context.l10n.aiRefineWithAi,
-                            onCut: widget.onCut,
-                            onCopy: widget.onCopy,
-                            onPaste: widget.onPaste,
-                            onPastePlainText: widget.onPastePlainText,
-                            readPasteAvailability: widget.readPasteAvailability,
-                            onCopyPlainText: widget.onCopyPlainText,
-                            readSpellingItems: widget.spellingMenuReader,
-                            onCheckSpelling: widget.onCheckSpelling,
-                          ),
-                onTap: () {
-                  final onCellFocused = widget.onCellFocused;
-                  if (onCellFocused == null) {
-                    widget.onFocused();
-                  } else {
-                    onCellFocused(cell.id);
-                  }
-                },
-                onChanged: (value) {
-                  if (_sourceEditing) {
-                    widget.onSourceChanged(cell.id, value);
-                  } else {
-                    widget.onChanged(cell.id, value);
-                  }
-                },
               ),
             ),
             if (widget.spellingRanges.isNotEmpty &&
@@ -2605,72 +2607,166 @@ class _SingleLineTableCellFormatter extends TextInputFormatter {
   }
 }
 
-class _WysiwygSelectionPainter extends CustomPainter {
-  const _WysiwygSelectionPainter({
-    required this.text,
-    required this.style,
+/// Paints document selections using the field's actual rich layout. Keeping a
+/// second plain-text layout here loses styled-run widths, wrapping and scroll
+/// offsets. The foreground layer also keeps opaque inline-code backgrounds
+/// from hiding selected text.
+class _WysiwygSelectionOverlay extends StatefulWidget {
+  const _WysiwygSelectionOverlay({
+    required this.controller,
     required this.selectionRange,
-    required this.color,
-    required this.textDirection,
-    required this.textScaler,
-    required this.locale,
-    required this.layoutWidthInset,
+    required this.child,
   });
 
-  final String text;
-  final TextStyle style;
+  final TextEditingController controller;
+  final BusyMarkWysiwygSelectionRange? selectionRange;
+  final Widget child;
+
+  @override
+  State<_WysiwygSelectionOverlay> createState() =>
+      _WysiwygSelectionOverlayState();
+}
+
+class _WysiwygSelectionOverlayState extends State<_WysiwygSelectionOverlay> {
+  final _editableKey = GlobalKey();
+  final _overlayKey = GlobalKey();
+  final _repaint = ValueNotifier<int>(0);
+  ViewportOffset? _editableOffset;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.controller.addListener(_requestRepaint);
+    _scheduleOffsetBinding();
+  }
+
+  @override
+  void didUpdateWidget(covariant _WysiwygSelectionOverlay oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!identical(oldWidget.controller, widget.controller)) {
+      oldWidget.controller.removeListener(_requestRepaint);
+      widget.controller.addListener(_requestRepaint);
+    }
+    _scheduleOffsetBinding();
+  }
+
+  void _scheduleOffsetBinding() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final offset = _findRenderEditable(
+        _editableKey.currentContext?.findRenderObject(),
+      )?.offset;
+      if (identical(offset, _editableOffset)) return;
+      _editableOffset?.removeListener(_requestRepaint);
+      _editableOffset = offset;
+      _editableOffset?.addListener(_requestRepaint);
+      _requestRepaint();
+    });
+  }
+
+  void _requestRepaint() => _repaint.value++;
+
+  @override
+  void dispose() {
+    widget.controller.removeListener(_requestRepaint);
+    _editableOffset?.removeListener(_requestRepaint);
+    _repaint.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context).textSelectionTheme;
+    return Stack(
+      children: [
+        TextSelectionTheme(
+          data: widget.selectionRange == null
+              ? theme
+              : theme.copyWith(
+                  selectionColor: BusyMarkLinuxPalette.transparent,
+                ),
+          child: KeyedSubtree(key: _editableKey, child: widget.child),
+        ),
+        Positioned.fill(
+          child: IgnorePointer(
+            child: CustomPaint(
+              key: _overlayKey,
+              painter: _WysiwygSelectionPainter(
+                editableKey: _editableKey,
+                overlayKey: _overlayKey,
+                selectionRange: widget.selectionRange,
+                color:
+                    DefaultSelectionStyle.of(context).selectionColor ??
+                    Theme.of(context).colorScheme.primary.withValues(
+                      alpha:
+                          BusyMarkDocumentTextGeometry.fallbackSelectionAlpha,
+                    ),
+                repaint: _repaint,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _WysiwygSelectionPainter extends CustomPainter {
+  _WysiwygSelectionPainter({
+    required this.editableKey,
+    required this.overlayKey,
+    required this.selectionRange,
+    required this.color,
+    required Listenable repaint,
+  }) : super(repaint: repaint);
+
+  final GlobalKey editableKey;
+  final GlobalKey overlayKey;
   final BusyMarkWysiwygSelectionRange? selectionRange;
   final Color color;
-  final TextDirection textDirection;
-  final TextScaler textScaler;
-  final Locale? locale;
-  final double layoutWidthInset;
 
   @override
   void paint(Canvas canvas, Size size) {
     final range = selectionRange;
-    if (range == null || text.isEmpty || size.width <= 0) {
-      return;
-    }
-    final start = range.start.clamp(0, text.length).toInt();
-    final end = range.end.clamp(0, text.length).toInt();
-    if (end <= start) {
-      return;
-    }
-    final maxWidth = size.width - layoutWidthInset;
-    if (maxWidth <= 0) {
-      return;
-    }
-    final textPainter = TextPainter(
-      text: TextSpan(text: text, style: style),
-      strutStyle: StrutStyle.fromTextStyle(style),
-      textDirection: textDirection,
-      textScaler: textScaler,
-      locale: locale,
-    )..layout(maxWidth: maxWidth);
-    final boxes = textPainter.getBoxesForSelection(
+    if (range == null) return;
+    final editable = _findRenderEditable(
+      editableKey.currentContext?.findRenderObject(),
+    );
+    final overlay = overlayKey.currentContext?.findRenderObject();
+    if (editable == null || overlay is! RenderBox || !overlay.hasSize) return;
+    final length = editable.text?.toPlainText().length ?? 0;
+    final start = range.start.clamp(0, length).toInt();
+    final end = range.end.clamp(0, length).toInt();
+    if (end <= start) return;
+    final boxes = editable.getBoxesForSelection(
       TextSelection(baseOffset: start, extentOffset: end),
-      boxHeightStyle: BusyMarkDocumentTextGeometry.selectionHeightStyle,
-      boxWidthStyle: BusyMarkDocumentTextGeometry.selectionWidthStyle,
     );
     final paint = Paint()..color = color;
+    canvas.save();
+    canvas.clipRect(Offset.zero & size);
     for (final box in boxes) {
-      canvas.drawRect(box.toRect(), paint);
+      canvas.drawRect(
+        Rect.fromPoints(
+          overlay.globalToLocal(
+            editable.localToGlobal(Offset(box.left, box.top)),
+          ),
+          overlay.globalToLocal(
+            editable.localToGlobal(Offset(box.right, box.bottom)),
+          ),
+        ),
+        paint,
+      );
     }
+    canvas.restore();
   }
 
   @override
-  bool shouldRepaint(covariant _WysiwygSelectionPainter oldDelegate) {
-    return oldDelegate.text != text ||
-        oldDelegate.style != style ||
-        oldDelegate.selectionRange?.start != selectionRange?.start ||
-        oldDelegate.selectionRange?.end != selectionRange?.end ||
-        oldDelegate.color != color ||
-        oldDelegate.textDirection != textDirection ||
-        oldDelegate.textScaler != textScaler ||
-        oldDelegate.locale != locale ||
-        oldDelegate.layoutWidthInset != layoutWidthInset;
-  }
+  bool shouldRepaint(covariant _WysiwygSelectionPainter oldDelegate) =>
+      oldDelegate.editableKey != editableKey ||
+      oldDelegate.overlayKey != overlayKey ||
+      oldDelegate.selectionRange?.start != selectionRange?.start ||
+      oldDelegate.selectionRange?.end != selectionRange?.end ||
+      oldDelegate.color != color;
 }
 
 class _ImageBlockEditor extends StatelessWidget {
