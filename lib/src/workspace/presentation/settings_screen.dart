@@ -1241,41 +1241,67 @@ Future<void> _editHistoryExcludedPaths(
   List<String> current,
   Future<void> Function(Iterable<String>) save,
 ) async {
-  final controller = TextEditingController(text: current.join('\n'));
   final result = await showBusyMarkModalDialog<String>(
     context,
     barrierDismissible: false,
-    builder: (dialogContext) => AlertDialog(
-      title: Text(dialogContext.l10n.settingsHistoryExcludedPaths),
-      content: SizedBox(
-        width: BusyMarkSizes.settingsWidth,
-        child: TextField(
-          controller: controller,
-          autofocus: true,
-          minLines: 6,
-          maxLines: 12,
-          decoration: InputDecoration(
-            hintText: dialogContext.l10n.settingsHistoryExcludedPathsHint,
-            border: const OutlineInputBorder(),
-          ),
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(dialogContext),
-          child: Text(dialogContext.l10n.cancel),
-        ),
-        FilledButton(
-          onPressed: () => Navigator.pop(dialogContext, controller.text),
-          child: Text(dialogContext.l10n.save),
-        ),
-      ],
-    ),
+    builder: (_) => _HistoryExcludedPathsDialog(current: current),
   );
-  controller.dispose();
-  if (result != null) {
-    await save(result.split(RegExp(r'\r?\n')));
+  if (result != null) await save(result.split(RegExp(r'\r?\n')));
+}
+
+class _HistoryExcludedPathsDialog extends StatefulWidget {
+  const _HistoryExcludedPathsDialog({required this.current});
+  final List<String> current;
+  @override
+  State<_HistoryExcludedPathsDialog> createState() =>
+      _HistoryExcludedPathsDialogState();
+}
+
+class _HistoryExcludedPathsDialogState
+    extends State<_HistoryExcludedPathsDialog> {
+  late final _controller = TextEditingController(
+    text: widget.current.join('\n'),
+  );
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
   }
+
+  @override
+  Widget build(BuildContext context) => BusyMarkDialogShell(
+    title: context.l10n.settingsHistoryExcludedPaths,
+    maxWidth: BusyMarkSizes.settingsWidth,
+    actions: [
+      BusyMarkDialogButton(
+        label: context.l10n.cancel,
+        onPressed: () => Navigator.pop(context),
+      ),
+      BusyMarkDialogButton(
+        label: context.l10n.save,
+        suggested: true,
+        onPressed: () => Navigator.pop(context, _controller.text),
+      ),
+    ],
+    children: [
+      BusyMarkGroupedList(
+        filled: true,
+        children: [
+          BusyMarkGroupedTextEntry(
+            label: context.l10n.settingsHistoryExcludedPaths,
+            hintText: context.l10n.settingsHistoryExcludedPathsHint,
+            controller: _controller,
+            autofocus: true,
+            minLines: 6,
+            maxLines: 12,
+            alignLabelWithHint: true,
+            keyboardType: TextInputType.multiline,
+            textInputAction: TextInputAction.newline,
+          ),
+        ],
+      ),
+    ],
+  );
 }
 
 enum SettingsPage {

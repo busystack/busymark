@@ -1201,10 +1201,10 @@ void main() {
         ),
       );
       await tester.pump();
-      final dialogContext = tester.element(find.byType(AlertDialog));
+      final dialogContext = tester.element(find.byType(BusyMarkDialogShell));
       await tester.tap(
         find.descendant(
-          of: find.byType(AlertDialog),
+          of: find.byType(BusyMarkDialogShell),
           matching: find.text(AppLocalizations.of(dialogContext).delete),
         ),
       );

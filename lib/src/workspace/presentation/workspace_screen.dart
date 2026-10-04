@@ -112,6 +112,7 @@ import '../workspace_tabs.dart';
 import 'welcome_screen.dart';
 import 'writerside_instance_dialog.dart';
 import 'writerside_markdown_import_dialog.dart';
+import 'writerside_topic_creation_form.dart';
 import 'writerside_toc_dialogs.dart';
 import 'writerside_template_dialogs.dart';
 import '../../writerside/writerside_template_service.dart';
@@ -2394,14 +2395,10 @@ class _SidebarState extends ConsumerState<_Sidebar> {
         )
         .firstOrNull;
     if (owner == null) return false;
-    final decision =
-        await showBusyMarkModalDialog<WritersideTopicRenameDialogResult>(
-          context,
-          barrierDismissible: false,
-          builder: (_) => WritersideTopicRenameDialog(
-            currentFileName: p.basename(topicPath),
-          ),
-        );
+    final decision = await showWritersideTopicRenameDialog(
+      this.context,
+      currentFileName: p.basename(topicPath),
+    );
     if (decision == null || !mounted) return false;
     // Use the sidebar State's context rather than the row/menu context that
     // launched the workflow; transient menu entries may already be unmounted.
@@ -3810,7 +3807,7 @@ class _WritersideTopicRemovalDialogState
         if (removeFromInstance)
           Row(
             children: [
-              Checkbox(
+              BusyMarkCheckbox(
                 value: _redirectTarget != null,
                 onChanged: _analysis.redirectTargets.isEmpty
                     ? null
@@ -3841,16 +3838,14 @@ class _WritersideTopicRemovalDialogState
             ],
           ),
         if (!removeFromInstance)
-          CheckboxListTile(
-            contentPadding: EdgeInsets.zero,
-            controlAffinity: ListTileControlAffinity.leading,
-            title: Text(context.l10n.tocSafeDelete),
-            value: true,
-            onChanged: null,
+          BusyMarkActionRow(
+            title: context.l10n.tocSafeDelete,
+            enabled: false,
+            leading: const BusyMarkCheckbox(value: true, onChanged: null),
           ),
         Row(
           children: [
-            Checkbox(
+            BusyMarkCheckbox(
               value: _updateUsagesAutomatically,
               onChanged: _analysis.canUpdateUsagesAutomatically
                   ? (value) => setState(
@@ -6853,13 +6848,11 @@ class _TocTabState extends ConsumerState<_TocTab> {
             ),
           );
         }
-        final title = await showBusyMarkModalDialog<String>(
+        final title = await showWritersideTocTextDialog(
           context,
-          builder: (_) => WritersideTocTextDialog(
-            title: context.l10n.tocNewGroup,
-            label: context.l10n.tocGroupName,
-            enterOnly: true,
-          ),
+          title: context.l10n.tocNewGroup,
+          label: context.l10n.tocGroupName,
+          enterOnly: true,
         );
         if (title == null || !mounted || !context.mounted) return;
         if (!await confirmSafeToChangeWorkspaceFiles(context, ref, [
@@ -7280,23 +7273,75 @@ class _TocTabState extends ConsumerState<_TocTab> {
     if (referenceEntry != null && rawReference == null) {
       return;
     }
+    final referenceIdentity = rawReference == null
+        ? null
+        : WritersideTocNodeIdentity.fromNode(rawReference);
+    final form = WritersideTopicCreationForm(
+      format: format,
+      existingIds: widget.workspace.writersideModule?.reservedTopicIds ?? {},
+      l10n: context.l10n,
+    );
+    final initialTitle = context.l10n.defaultNewTopicTitle;
+    final controller = ref.read(workspaceControllerProvider.notifier);
+    Future<String?> submit(String title, String fileName) async {
+      if (!mounted) return form.l10n.createWritersideTopicFailed;
+      final created = await controller.createWritersideTopic(
+        WritersideTopicCreateRequest(
+          title: title.trim(),
+          fileName: form.effectiveFileName(fileName),
+          format: format,
+          placement: placement,
+          referenceTocPath: placement == WritersideTopicCreatePlacement.root
+              ? null
+              : referenceEntry?.editPath,
+          referenceTopic: placement == WritersideTopicCreatePlacement.root
+              ? null
+              : referenceEntry?.node.topicFileName,
+          referenceTocIdentity: placement == WritersideTopicCreatePlacement.root
+              ? null
+              : referenceIdentity,
+        ),
+        instanceTreePath: instanceTreePath,
+      );
+      if (created) return null;
+      if (!mounted) return form.l10n.createWritersideTopicFailed;
+      final message = ref.read(workspaceControllerProvider).message;
+      return message == null
+          ? form.l10n.createWritersideTopicFailed
+          : localizeWorkspaceMessage(this.context, message);
+    }
+
+    final native = await showBusyMarkNativeDialog(
+      context,
+      showDialog: () => const NativeWritersideDialogService().showCreateTopic(
+        title: context.l10n.newTopic,
+        titleLabel: context.l10n.tocTopicTitleField,
+        fileNameLabel: context.l10n.tocDuplicateFilename,
+        initialTitle: initialTitle,
+        initialFileName: form.fileNameForTitle(initialTitle),
+        cancelLabel: context.l10n.cancel,
+        okLabel: context.l10n.tocOk,
+        textDirection: Directionality.of(context),
+        validate: (title, fileName, edited) {
+          final effective = edited ? fileName : form.fileNameForTitle(title);
+          return NativeWritersideCreateValidation(
+            fileName: effective,
+            titleError: form.titleError(title),
+            fileNameError: form.fileNameError(effective),
+          );
+        },
+        submit: submit,
+      ),
+    );
+    if (!mounted || !context.mounted || native?.available != false) return;
     final headerBar = ref.read(linuxHeaderBarServiceProvider);
     await showBusyMarkModalDialog<void>(
       context,
       headerBarService: headerBar.isAvailable ? headerBar : null,
-      builder: (dialogContext) => _CreateWritersideTopicDialog(
+      builder: (_) => _CreateWritersideTopicDialog(
         workspace: widget.workspace,
-        instanceTreePath: instanceTreePath,
-        placement: placement,
         initialFormat: format,
-        referencePath: referenceEntry?.editPath,
-        referenceTopic: referenceEntry?.node.topicFileName,
-        referenceIdentity: rawReference == null
-            ? null
-            : WritersideTocNodeIdentity.fromNode(rawReference),
-        referenceLabel: referenceEntry == null
-            ? null
-            : _tocNodeDisplayLabel(dialogContext, referenceEntry.node),
+        submit: submit,
       ),
     );
   }
@@ -7652,12 +7697,10 @@ class _TocTabState extends ConsumerState<_TocTab> {
     String? title;
     WritersideTopic? topic;
     if (choice == _TocCreationChoice.emptyGroup) {
-      title = await showBusyMarkModalDialog<String>(
+      title = await showWritersideTocTextDialog(
         context,
-        builder: (_) => WritersideTocTextDialog(
-          title: context.l10n.tocNewEmptyGroup,
-          label: context.l10n.tocTitleField,
-        ),
+        title: context.l10n.tocNewEmptyGroup,
+        label: context.l10n.tocTitleField,
       );
       if (title == null) return;
     } else {
@@ -7674,14 +7717,12 @@ class _TocTabState extends ConsumerState<_TocTab> {
           .map((node) => presenter.present(node).topic?.filePath)
           .nonNulls
           .toSet();
-      topic = await showBusyMarkModalDialog<WritersideTopic>(
+      topic = await showWritersideExistingTopicPicker(
         context,
-        builder: (_) => WritersideExistingTopicPicker(
-          topics: [
-            for (final topic in module.topics)
-              if (!members.contains(topic.filePath)) topic,
-          ],
-        ),
+        topics: [
+          for (final topic in module.topics)
+            if (!members.contains(topic.filePath)) topic,
+        ],
       );
       if (topic == null) return;
     }
@@ -8703,37 +8744,26 @@ WritersideInstanceIconColor _effectiveInstanceIconColor(
   return automaticPalette[index % automaticPalette.length];
 }
 
-class _CreateWritersideTopicDialog extends ConsumerStatefulWidget {
+class _CreateWritersideTopicDialog extends StatefulWidget {
   const _CreateWritersideTopicDialog({
     required this.workspace,
-    required this.instanceTreePath,
-    required this.placement,
-    required this.referencePath,
-    required this.referenceTopic,
-    required this.referenceIdentity,
-    required this.referenceLabel,
+    required this.submit,
     this.initialFormat = WritersideTopicFormat.markdown,
   });
 
   final Workspace workspace;
-  final String instanceTreePath;
-  final WritersideTopicCreatePlacement placement;
-  final List<int>? referencePath;
-  final String? referenceTopic;
-  final WritersideTocNodeIdentity? referenceIdentity;
-  final String? referenceLabel;
+  final Future<String?> Function(String title, String fileName) submit;
   final WritersideTopicFormat initialFormat;
 
   @override
-  ConsumerState<_CreateWritersideTopicDialog> createState() =>
+  State<_CreateWritersideTopicDialog> createState() =>
       _CreateWritersideTopicDialogState();
 }
 
 class _CreateWritersideTopicDialogState
-    extends ConsumerState<_CreateWritersideTopicDialog> {
+    extends State<_CreateWritersideTopicDialog> {
   late final TextEditingController _titleController;
   late final TextEditingController _fileNameController;
-  late WritersideTopicCreatePlacement _placement;
   var _format = WritersideTopicFormat.markdown;
   var _fileNameEdited = false;
   var _syncingFileName = false;
@@ -8744,7 +8774,6 @@ class _CreateWritersideTopicDialogState
   @override
   void initState() {
     super.initState();
-    _placement = widget.placement;
     _format = widget.initialFormat;
     _titleController = TextEditingController()
       ..addListener(_handleTitleChanged);
@@ -8779,6 +8808,7 @@ class _CreateWritersideTopicDialogState
       canPop: !_creating,
       child: BusyMarkDialogShell(
         title: context.l10n.newTopic,
+        closable: !_creating,
         maxWidth: BusyMarkSizes.dialog,
         actions: [
           BusyMarkDialogButton(
@@ -8791,27 +8821,29 @@ class _CreateWritersideTopicDialogState
           ),
         ],
         children: [
-          TextField(
-            controller: _titleController,
-            autofocus: true,
-            textInputAction: TextInputAction.next,
-            decoration: InputDecoration(
-              labelText: context.l10n.tocTopicTitleField,
-              errorText: titleError,
-            ),
-          ),
-          const SizedBox(height: BusyMarkSpacing.md),
-          TextField(
-            controller: _fileNameController,
-            textDirection: TextDirection.ltr,
-            textInputAction: TextInputAction.done,
-            decoration: InputDecoration(
-              labelText: context.l10n.tocDuplicateFilename,
-              errorText: fileNameError,
-            ),
-            onSubmitted: (_) {
-              if (canCreate) _submit();
-            },
+          BusyMarkGroupedList(
+            filled: true,
+            children: [
+              BusyMarkGroupedTextEntry(
+                controller: _titleController,
+                autofocus: true,
+                textInputAction: TextInputAction.next,
+                label: context.l10n.tocTopicTitleField,
+                errorText: titleError,
+                enabled: !_creating,
+              ),
+              BusyMarkGroupedTextEntry(
+                controller: _fileNameController,
+                textDirection: TextDirection.ltr,
+                textInputAction: TextInputAction.done,
+                label: context.l10n.tocDuplicateFilename,
+                errorText: fileNameError,
+                enabled: !_creating,
+                onSubmitted: (_) {
+                  if (canCreate) _submit();
+                },
+              ),
+            ],
           ),
           if (_creationError != null) ...[
             const SizedBox(height: BusyMarkSpacing.md),
@@ -8825,62 +8857,26 @@ class _CreateWritersideTopicDialogState
     );
   }
 
-  String? _titleError(BuildContext context) {
-    if (_titleController.text.trim().isEmpty) {
-      return context.l10n.topicTitleRequired;
-    }
-    return null;
-  }
+  WritersideTopicCreationForm get _form => WritersideTopicCreationForm(
+    format: _format,
+    existingIds: widget.workspace.writersideModule?.reservedTopicIds ?? {},
+    l10n: context.l10n,
+  );
 
-  String? _fileNameError(BuildContext context) {
-    final value = _fileNameController.text.trim();
-    if (value.isEmpty) {
-      return context.l10n.fileNameRequired;
-    }
-    final expectedExtension = _extensionFor(_format);
-    final extension = p.extension(value).toLowerCase();
-    if (extension.isNotEmpty && extension != expectedExtension) {
-      return context.l10n.useExpectedExtension(expectedExtension);
-    }
-    final effective = extension.isEmpty ? '$value$expectedExtension' : value;
-    try {
-      validateWritersideTopicFileName(
-        effective,
-        requiredExtension: expectedExtension,
-      );
-    } on Object {
-      if (value == '.' ||
-          value == '..' ||
-          p.isAbsolute(value) ||
-          value.contains('/') ||
-          value.contains(r'\') ||
-          value.contains('\u0000')) {
-        return context.l10n.useSingleSafeFileName;
-      }
-      return context.l10n.useIdentifierCharacters;
-    }
-    final id = p.basenameWithoutExtension(effective);
-    final existingIds = widget.workspace.writersideModule?.reservedTopicIds;
-    if (existingIds?.contains(id) ?? false) {
-      return context.l10n.topicIdAlreadyExists;
-    }
-    return null;
-  }
+  String? _titleError(BuildContext context) =>
+      _form.titleError(_titleController.text);
 
-  String get _effectiveFileName {
-    final value = _fileNameController.text.trim();
-    if (p.extension(value).isEmpty) {
-      return '$value${_extensionFor(_format)}';
-    }
-    return value;
-  }
+  String? _fileNameError(BuildContext context) =>
+      _form.fileNameError(_fileNameController.text);
+
+  String get _effectiveFileName =>
+      _form.effectiveFileName(_fileNameController.text);
 
   void _handleTitleChanged() {
     _creationError = null;
     if (!_fileNameEdited) {
       _syncingFileName = true;
-      _fileNameController.text =
-          '${_slugTopicName(_titleController.text)}${_extensionFor(_format)}';
+      _fileNameController.text = _form.fileNameForTitle(_titleController.text);
       _syncingFileName = false;
     }
     setState(() {});
@@ -8904,46 +8900,19 @@ class _CreateWritersideTopicDialogState
       _creating = true;
       _creationError = null;
     });
-    final created = await ref
-        .read(workspaceControllerProvider.notifier)
-        .createWritersideTopic(
-          WritersideTopicCreateRequest(
-            title: _titleController.text.trim(),
-            fileName: _effectiveFileName,
-            format: _format,
-            placement: _placement,
-            referenceTocPath: _placement == WritersideTopicCreatePlacement.root
-                ? null
-                : widget.referencePath,
-            referenceTopic: _placement == WritersideTopicCreatePlacement.root
-                ? null
-                : widget.referenceTopic,
-            referenceTocIdentity:
-                _placement == WritersideTopicCreatePlacement.root
-                ? null
-                : widget.referenceIdentity,
-          ),
-          instanceTreePath: widget.instanceTreePath,
-        );
-    if (!mounted) {
-      return;
-    }
-    if (created) {
+    final error = await widget.submit(
+      _titleController.text,
+      _effectiveFileName,
+    );
+    if (!mounted) return;
+    if (error == null) {
       Navigator.pop(context);
       return;
     }
     setState(() {
       _creating = false;
-      final message = ref.read(workspaceControllerProvider).message;
-      _creationError = message == null
-          ? context.l10n.createWritersideTopicFailed
-          : localizeWorkspaceMessage(context, message);
+      _creationError = error;
     });
-  }
-
-  String _slugTopicName(String value) {
-    final slug = slugForHeading(value);
-    return slug.isEmpty ? 'new-topic' : slug;
   }
 
   String _extensionFor(WritersideTopicFormat format) {
@@ -13493,14 +13462,15 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     if (symbol == null) {
       await showBusyMarkModalDialog<void>(
         context,
-        builder: (context) => AlertDialog(
-          content: Text(context.l10n.noResults),
+        builder: (context) => BusyMarkDialogShell(
+          title: context.l10n.findUsages,
           actions: [
-            TextButton(
+            BusyMarkDialogButton(
               onPressed: () => Navigator.pop(context),
-              child: Text(context.l10n.close),
+              label: context.l10n.close,
             ),
           ],
+          children: [Text(context.l10n.noResults)],
         ),
       );
       return;
@@ -13519,35 +13489,35 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
       final usages = index.findUsages(symbol).toList();
       final selected = await showBusyMarkModalDialog<WritersideReference>(
         context,
-        builder: (context) => AlertDialog(
-          title: Text('${context.l10n.findUsages}: ${symbol.name}'),
-          content: SizedBox(
-            width: 600,
-            height: 360,
-            child: usages.isEmpty
-                ? Text(context.l10n.noResults)
-                : ListView(
-                    children: [
-                      for (final usage in usages)
-                        ListTile(
-                          title: Text(
-                            p.relative(
+        builder: (context) => BusyMarkDialogShell(
+          title: '${context.l10n.findUsages}: ${symbol.name}',
+          maxWidth: 650,
+          actions: [
+            BusyMarkDialogButton(
+              onPressed: () => Navigator.pop(context),
+              label: context.l10n.close,
+            ),
+          ],
+          children: [
+            SizedBox(
+              width: 600,
+              height: 360,
+              child: usages.isEmpty
+                  ? Text(context.l10n.noResults)
+                  : ListView(
+                      children: [
+                        for (final usage in usages)
+                          BusyMarkActionRow(
+                            title: p.relative(
                               usage.filePath,
                               from: widget.state.workspace?.rootPath,
                             ),
+                            subtitle:
+                                '${usage.span.startLine}:${usage.span.startColumn}  ${usage.value}',
+                            onTap: () => Navigator.pop(context, usage),
                           ),
-                          subtitle: Text(
-                            '${usage.span.startLine}:${usage.span.startColumn}  ${usage.value}',
-                          ),
-                          onTap: () => Navigator.pop(context, usage),
-                        ),
-                    ],
-                  ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text(context.l10n.close),
+                      ],
+                    ),
             ),
           ],
         ),
@@ -13557,14 +13527,15 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
       if (symbol.kind == WritersideSymbolKind.topic) {
         await showBusyMarkModalDialog<void>(
           context,
-          builder: (context) => AlertDialog(
-            content: Text(context.l10n.renameTopicFileInstead),
+          builder: (context) => BusyMarkDialogShell(
+            title: context.l10n.rename,
             actions: [
-              TextButton(
+              BusyMarkDialogButton(
                 onPressed: () => Navigator.pop(context),
-                child: Text(context.l10n.close),
+                label: context.l10n.close,
               ),
             ],
+            children: [Text(context.l10n.renameTopicFileInstead)],
           ),
         );
         return;
@@ -13572,22 +13543,24 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
       var pendingName = symbol.name;
       final newName = await showBusyMarkModalEditorDialog<String>(
         context,
-        builder: (context) => AlertDialog(
-          title: Text('${context.l10n.rename}: ${symbol.name}'),
-          content: TextFormField(
-            initialValue: pendingName,
-            onChanged: (value) => pendingName = value,
-            autofocus: true,
-            onFieldSubmitted: (value) => Navigator.pop(context, value),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text(context.l10n.cancel),
-            ),
-            TextButton(
-              onPressed: () => Navigator.pop(context, pendingName),
-              child: Text(context.l10n.rename),
+        builder: (context) => BusyMarkModalEditorScaffold(
+          title: '${context.l10n.rename}: ${symbol.name}',
+          cancelLabel: context.l10n.cancel,
+          saveLabel: context.l10n.rename,
+          onCancel: () => Navigator.pop(context),
+          onSave: () => Navigator.pop(context, pendingName),
+          children: [
+            BusyMarkGroupedList(
+              filled: true,
+              children: [
+                BusyMarkGroupedTextEntry(
+                  label: symbol.name,
+                  initialValue: pendingName,
+                  onChanged: (value) => pendingName = value,
+                  autofocus: true,
+                  onSubmitted: (value) => Navigator.pop(context, value),
+                ),
+              ],
             ),
           ],
         ),
@@ -13599,14 +13572,15 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
       if (!applied && mounted) {
         await showBusyMarkModalDialog<void>(
           context,
-          builder: (context) => AlertDialog(
-            content: Text(context.l10n.cannotRenameSymbol),
+          builder: (context) => BusyMarkDialogShell(
+            title: context.l10n.rename,
             actions: [
-              TextButton(
+              BusyMarkDialogButton(
                 onPressed: () => Navigator.pop(context),
-                child: Text(context.l10n.close),
+                label: context.l10n.close,
               ),
             ],
+            children: [Text(context.l10n.cannotRenameSymbol)],
           ),
         );
       }
@@ -16886,157 +16860,13 @@ class _SpellingReviewDialogState extends State<BusyMarkSpellingReviewDialog> {
         }
         return KeyEventResult.ignored;
       },
-      child: AlertDialog(
-        title: Text(context.l10n.checkSpelling),
-        content: SizedBox(
-          width: 480,
-          child: occurrence == null
-              ? Padding(
-                  padding: const EdgeInsets.all(BusyMarkSpacing.lg),
-                  child: state.status == SpellingPresentationStatus.checking
-                      ? Center(
-                          child: Semantics(
-                            label: context.l10n.spellingChecking,
-                            child: const CircularProgressIndicator(),
-                          ),
-                        )
-                      : Text(_spellingEmptyStateMessage(context, state)),
-                )
-              : Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Semantics(
-                      liveRegion: true,
-                      child: Text(
-                        occurrence.word,
-                        style: Theme.of(context).textTheme.headlineSmall,
-                      ),
-                    ),
-                    const SizedBox(height: BusyMarkSpacing.xs),
-                    Text(
-                      _spellingContext(occurrence),
-                      maxLines: 3,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: BusyMarkSpacing.md),
-                    FutureBuilder<List<String>>(
-                      future: _suggestionsFor(occurrence),
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState != ConnectionState.done) {
-                          return const Center(
-                            child: CircularProgressIndicator(),
-                          );
-                        }
-                        if (snapshot.hasError) {
-                          return Text(context.l10n.spellingWordCheckFailed);
-                        }
-                        final suggestions = snapshot.data ?? const [];
-                        if (suggestions.isEmpty) {
-                          return Text(context.l10n.noSpellingSuggestions);
-                        }
-                        return Wrap(
-                          spacing: BusyMarkSpacing.sm,
-                          runSpacing: BusyMarkSpacing.sm,
-                          children: [
-                            for (final suggestion in suggestions.take(8))
-                              BusyMarkPushButton.standard(
-                                onPressed: _actionInProgress || _closing
-                                    ? null
-                                    : () async {
-                                        setState(
-                                          () => _actionInProgress = true,
-                                        );
-                                        final correction = await widget
-                                            .onCorrect(occurrence, suggestion);
-                                        if (!mounted || _closing) return;
-                                        _actionInProgress = false;
-                                        if (correction != null) {
-                                          _recordVisited(occurrence);
-                                          _translateReviewState(correction);
-                                          _suggestionOccurrenceId = null;
-                                          _suggestions = null;
-                                          final occurrences = _occurrences;
-                                          if (occurrences.isEmpty) {
-                                            final state = widget.spelling.state;
-                                            if (state.status ==
-                                                    SpellingPresentationStatus
-                                                        .ready &&
-                                                state.complete) {
-                                              _requestClose();
-                                              return;
-                                            }
-                                          } else if (!_selectNextUnvisited(
-                                            occurrences,
-                                          )) {
-                                            _requestClose();
-                                            return;
-                                          }
-                                        }
-                                        setState(() {});
-                                      },
-                                child: Text(suggestion),
-                              ),
-                          ],
-                        );
-                      },
-                    ),
-                    const SizedBox(height: BusyMarkSpacing.md),
-                    Wrap(
-                      spacing: BusyMarkSpacing.sm,
-                      runSpacing: BusyMarkSpacing.sm,
-                      children: [
-                        TextButton(
-                          onPressed: _actionInProgress || _closing
-                              ? null
-                              : () => _ignore(
-                                  occurrence,
-                                  widget.spelling.ignoreOnce,
-                                ),
-                          child: Text(context.l10n.ignoreSpellingOnce),
-                        ),
-                        TextButton(
-                          onPressed: _actionInProgress || _closing
-                              ? null
-                              : () => _ignore(
-                                  occurrence,
-                                  widget.spelling.ignoreAllInDocument,
-                                ),
-                          child: Text(context.l10n.ignoreSpellingDocument),
-                        ),
-                        TextButton(
-                          onPressed: _actionInProgress || _closing
-                              ? null
-                              : () => unawaited(
-                                  _persist(
-                                    widget.spelling.addPersonalWord,
-                                    occurrence,
-                                  ),
-                                ),
-                          child: Text(context.l10n.addPersonalSpellingWord),
-                        ),
-                        TextButton(
-                          onPressed:
-                              widget.spelling.hasProjectScope &&
-                                  !_actionInProgress &&
-                                  !_closing
-                              ? () => unawaited(
-                                  _persist(
-                                    widget.spelling.addProjectWord,
-                                    occurrence,
-                                  ),
-                                )
-                              : null,
-                          child: Text(context.l10n.addProjectSpellingWord),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-        ),
+      child: BusyMarkDialogShell(
+        title: context.l10n.checkSpelling,
+        closable: false,
+        maxWidth: 560,
         actions: [
           if (occurrence != null) ...[
-            TextButton(
+            BusyMarkDialogButton(
               onPressed: _actionInProgress || _closing
                   ? null
                   : () async {
@@ -17050,21 +16880,173 @@ class _SpellingReviewDialogState extends State<BusyMarkSpellingReviewDialog> {
                         _handleSpellingChanged();
                       }
                     },
-              child: Text(context.l10n.chooseSpellingLanguage),
+              label: context.l10n.chooseSpellingLanguage,
             ),
-            TextButton(
+            BusyMarkDialogButton(
               onPressed: _actionInProgress || _closing ? null : () => _move(-1),
-              child: Text(context.l10n.sourceSearchPreviousMatch),
+              label: context.l10n.sourceSearchPreviousMatch,
             ),
-            TextButton(
+            BusyMarkDialogButton(
               onPressed: _actionInProgress || _closing ? null : () => _move(1),
-              child: Text(context.l10n.sourceSearchNextMatch),
+              label: context.l10n.sourceSearchNextMatch,
             ),
           ],
-          TextButton(
-            autofocus: true,
+          BusyMarkDialogButton(
             onPressed: _closing ? null : _requestClose,
-            child: Text(context.l10n.close),
+            label: context.l10n.close,
+          ),
+        ],
+        children: [
+          SizedBox(
+            width: 480,
+            child: occurrence == null
+                ? Padding(
+                    padding: const EdgeInsets.all(BusyMarkSpacing.lg),
+                    child: state.status == SpellingPresentationStatus.checking
+                        ? Center(
+                            child: Semantics(
+                              label: context.l10n.spellingChecking,
+                              child: const YaruCircularProgressIndicator(),
+                            ),
+                          )
+                        : Text(_spellingEmptyStateMessage(context, state)),
+                  )
+                : Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Semantics(
+                        liveRegion: true,
+                        child: Text(
+                          occurrence.word,
+                          style: Theme.of(context).textTheme.headlineSmall,
+                        ),
+                      ),
+                      const SizedBox(height: BusyMarkSpacing.xs),
+                      Text(
+                        _spellingContext(occurrence),
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: BusyMarkSpacing.md),
+                      FutureBuilder<List<String>>(
+                        future: _suggestionsFor(occurrence),
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState !=
+                              ConnectionState.done) {
+                            return const Center(
+                              child: YaruCircularProgressIndicator(),
+                            );
+                          }
+                          if (snapshot.hasError) {
+                            return Text(context.l10n.spellingWordCheckFailed);
+                          }
+                          final suggestions = snapshot.data ?? const [];
+                          if (suggestions.isEmpty) {
+                            return Text(context.l10n.noSpellingSuggestions);
+                          }
+                          return Wrap(
+                            spacing: BusyMarkSpacing.sm,
+                            runSpacing: BusyMarkSpacing.sm,
+                            children: [
+                              for (final suggestion in suggestions.take(8))
+                                BusyMarkPushButton.standard(
+                                  onPressed: _actionInProgress || _closing
+                                      ? null
+                                      : () async {
+                                          setState(
+                                            () => _actionInProgress = true,
+                                          );
+                                          final correction = await widget
+                                              .onCorrect(
+                                                occurrence,
+                                                suggestion,
+                                              );
+                                          if (!mounted || _closing) return;
+                                          _actionInProgress = false;
+                                          if (correction != null) {
+                                            _recordVisited(occurrence);
+                                            _translateReviewState(correction);
+                                            _suggestionOccurrenceId = null;
+                                            _suggestions = null;
+                                            final occurrences = _occurrences;
+                                            if (occurrences.isEmpty) {
+                                              final state =
+                                                  widget.spelling.state;
+                                              if (state.status ==
+                                                      SpellingPresentationStatus
+                                                          .ready &&
+                                                  state.complete) {
+                                                _requestClose();
+                                                return;
+                                              }
+                                            } else if (!_selectNextUnvisited(
+                                              occurrences,
+                                            )) {
+                                              _requestClose();
+                                              return;
+                                            }
+                                          }
+                                          setState(() {});
+                                        },
+                                  child: Text(suggestion),
+                                ),
+                            ],
+                          );
+                        },
+                      ),
+                      const SizedBox(height: BusyMarkSpacing.md),
+                      Wrap(
+                        spacing: BusyMarkSpacing.sm,
+                        runSpacing: BusyMarkSpacing.sm,
+                        children: [
+                          BusyMarkDialogButton(
+                            onPressed: _actionInProgress || _closing
+                                ? null
+                                : () => _ignore(
+                                    occurrence,
+                                    widget.spelling.ignoreOnce,
+                                  ),
+                            label: context.l10n.ignoreSpellingOnce,
+                          ),
+                          BusyMarkDialogButton(
+                            onPressed: _actionInProgress || _closing
+                                ? null
+                                : () => _ignore(
+                                    occurrence,
+                                    widget.spelling.ignoreAllInDocument,
+                                  ),
+                            label: context.l10n.ignoreSpellingDocument,
+                          ),
+                          BusyMarkDialogButton(
+                            onPressed: _actionInProgress || _closing
+                                ? null
+                                : () => unawaited(
+                                    _persist(
+                                      widget.spelling.addPersonalWord,
+                                      occurrence,
+                                    ),
+                                  ),
+                            label: context.l10n.addPersonalSpellingWord,
+                          ),
+                          BusyMarkDialogButton(
+                            onPressed:
+                                widget.spelling.hasProjectScope &&
+                                    !_actionInProgress &&
+                                    !_closing
+                                ? () => unawaited(
+                                    _persist(
+                                      widget.spelling.addProjectWord,
+                                      occurrence,
+                                    ),
+                                  )
+                                : null,
+                            label: context.l10n.addProjectSpellingWord,
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
           ),
         ],
       ),
@@ -17266,6 +17248,25 @@ class _WorkspaceReplacementReviewDialogState
   ) {
     final ids = file.matches.map((match) => match.id).toSet();
     final selectedCount = ids.intersection(_selected).length;
+    final bool? allSelected = selectedCount == 0
+        ? false
+        : selectedCount == ids.length
+        ? true
+        : null;
+    void selectFile(bool? selected) => setState(() {
+      if (selected == true) {
+        _selected.addAll(ids);
+      } else {
+        _selected.removeAll(ids);
+      }
+    });
+    void selectMatch(String id, bool? selected) => setState(() {
+      if (selected == true) {
+        _selected.add(id);
+      } else {
+        _selected.remove(id);
+      }
+    });
     return BusyMarkGroupedList(
       title: busyMarkLtrIsolateFor(context, file.relativePath),
       description: file.sourceKind == WorkspaceReplacementSourceKind.dirtyBuffer
@@ -17273,41 +17274,28 @@ class _WorkspaceReplacementReviewDialogState
           : context.l10n.workspaceReplaceDiskContent,
       filled: true,
       children: [
-        CheckboxListTile(
-          value: selectedCount == 0
-              ? false
-              : selectedCount == ids.length
-              ? true
-              : null,
-          tristate: true,
-          title: Text(context.l10n.selectFileMatches(file.matches.length)),
-          onChanged: (selected) {
-            setState(() {
-              if (selected == true) {
-                _selected.addAll(ids);
-              } else {
-                _selected.removeAll(ids);
-              }
-            });
-          },
+        BusyMarkActionRow(
+          title: context.l10n.selectFileMatches(file.matches.length),
+          leading: BusyMarkCheckbox(
+            value: allSelected,
+            tristate: true,
+            onChanged: selectFile,
+          ),
+          onTap: () => selectFile(allSelected == false ? true : false),
         ),
         for (final match in file.matches)
-          CheckboxListTile(
-            value: _selected.contains(match.id),
-            title: Text(
+          BusyMarkActionRow(
+            title: '${match.original} → ${match.replacement}',
+            titleWidget: Text(
               '${match.original} → ${match.replacement}',
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
-            onChanged: (selected) {
-              setState(() {
-                if (selected == true) {
-                  _selected.add(match.id);
-                } else {
-                  _selected.remove(match.id);
-                }
-              });
-            },
+            leading: BusyMarkCheckbox(
+              value: _selected.contains(match.id),
+              onChanged: (value) => selectMatch(match.id, value),
+            ),
+            onTap: () => selectMatch(match.id, !_selected.contains(match.id)),
           ),
       ],
     );

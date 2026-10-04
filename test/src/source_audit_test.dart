@@ -257,7 +257,7 @@ void main() {
     expect(dialogButton, isNot(contains('minWidth:')));
   });
 
-  test('Writerside topic controls use shared semantic adapters', () {
+  test('Writerside topic Flutter fallback uses shared semantic adapters', () {
     final workspace = File(
       'lib/src/workspace/presentation/workspace_screen.dart',
     ).readAsStringSync();
@@ -269,7 +269,13 @@ void main() {
     expect(workspace, contains('BusyMarkPushButton.standardIcon('));
     expect(workspace, isNot(contains('FilledButton.icon(')));
     expect(createTopicDialog, contains('BusyMarkDialogShell('));
-    expect(RegExp(r'TextField\(').allMatches(createTopicDialog).length, 2);
+    expect(
+      RegExp(
+        r'BusyMarkGroupedTextEntry\(',
+      ).allMatches(createTopicDialog).length,
+      2,
+    );
+    expect(workspace, contains('.showCreateTopic('));
     expect(
       RegExp(r'BusyMarkComboRow<').allMatches(createTopicDialog).length,
       0,
@@ -277,7 +283,9 @@ void main() {
     expect(createTopicDialog, contains('context.l10n.newTopic'));
     expect(createTopicDialog, isNot(contains('SegmentedButton<')));
     expect(createTopicDialog, isNot(contains('BusyMarkFloatingTextEntry')));
-    expect(createTopicDialog, contains('InputDecoration('));
+    expect(createTopicDialog, contains('BusyMarkGroupedList('));
+    expect(createTopicDialog, isNot(contains('InputDecoration(')));
+    expect(createTopicDialog, isNot(contains('TextField(')));
   });
 
   test('shared grouped surfaces use native card shadow layers', () {

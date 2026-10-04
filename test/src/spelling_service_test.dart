@@ -46,6 +46,17 @@ const _snapshot = SpellingSnapshotIdentity(
 );
 
 void main() {
+  setUp(() {
+    final messenger =
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    for (final name in ['yaru_window', 'yaru_window/events']) {
+      messenger.setMockMethodCallHandler(
+        MethodChannel(name),
+        (call) async => call.method == 'state' ? <String, Object?>{} : null,
+      );
+    }
+  });
+
   test('document kinds expose one authoritative spelling capability', () {
     expect(DocumentKind.markdown.supportsSpelling, isTrue);
     expect(DocumentKind.writersideMarkdownTopic.supportsSpelling, isTrue);
@@ -4011,18 +4022,19 @@ void main() {
       );
       expect(controller.isCurrent(erorOccurrence), isTrue);
       final addPersonal = find.widgetWithText(
-        TextButton,
+        BusyMarkDialogButton,
         l10n.addPersonalSpellingWord,
       );
       await tester.ensureVisible(addPersonal);
       personalWriter.failWrites = true;
-      tester.widget<TextButton>(addPersonal).onPressed!.call();
+      tester.widget<BusyMarkDialogButton>(addPersonal).onPressed!.call();
       await tester.runAsync(
         () => Future<void>.delayed(const Duration(milliseconds: 500)),
       );
       await _pumpWidgetUntil(
         tester,
-        () => tester.widget<TextButton>(addPersonal).onPressed != null,
+        () =>
+            tester.widget<BusyMarkDialogButton>(addPersonal).onPressed != null,
       );
       expect(find.text('eror'), findsOneWidget);
       expect(
@@ -4031,7 +4043,7 @@ void main() {
       );
 
       personalWriter.failWrites = false;
-      tester.widget<TextButton>(addPersonal).onPressed!.call();
+      tester.widget<BusyMarkDialogButton>(addPersonal).onPressed!.call();
       await _pumpWidgetUntil(
         tester,
         () =>
@@ -4196,7 +4208,9 @@ void main() {
           () => find.text(action).evaluate().isNotEmpty,
         );
         final callback = tester
-            .widget<TextButton>(find.widgetWithText(TextButton, action))
+            .widget<BusyMarkDialogButton>(
+              find.widgetWithText(BusyMarkDialogButton, action),
+            )
             .onPressed!;
         callback();
         callback();
@@ -4364,11 +4378,11 @@ void main() {
       expect(controller.isCurrent(occurrence), isTrue);
       final writesBefore = writer.writeCount;
       final addPersonal = find.widgetWithText(
-        TextButton,
+        BusyMarkDialogButton,
         l10n.addPersonalSpellingWord,
       );
       await tester.ensureVisible(addPersonal);
-      tester.widget<TextButton>(addPersonal).onPressed!.call();
+      tester.widget<BusyMarkDialogButton>(addPersonal).onPressed!.call();
       await _pumpWidgetUntil(tester, () => writer.writeCount > writesBefore);
       await _pumpWidgetUntil(
         tester,

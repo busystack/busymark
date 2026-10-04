@@ -218,6 +218,16 @@ Future<T?> _coordinateBusyMarkModal<T>(
   }
 }
 
+/// Coordinates focus and the header bar while the Linux toolkit owns a modal.
+Future<T?> showBusyMarkNativeDialog<T>(
+  BuildContext context, {
+  required Future<T> Function() showDialog,
+}) => _coordinateBusyMarkModal<T>(
+  context,
+  headerBarService: _busyMarkHeaderBarServiceFrom(context),
+  showSurface: showDialog,
+);
+
 Future<T?> _showBusyMarkFlutterDialog<T>(
   BuildContext context, {
   required WidgetBuilder builder,

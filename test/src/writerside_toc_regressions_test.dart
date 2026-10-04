@@ -1,3 +1,4 @@
+import 'package:busymark/src/app/busymark_design.dart';
 import 'dart:io';
 
 import 'package:busymark/src/app/app_settings.dart';
@@ -387,11 +388,11 @@ void main() {
           );
         } else {
           await tester.enterText(
-            find.widgetWithText(TextField, 'Topic title:'),
+            find.widgetWithText(BusyMarkGroupedTextEntry, 'Topic title:'),
             'Created topic',
           );
           await tester.enterText(
-            find.widgetWithText(TextField, 'Topic Filename:'),
+            find.widgetWithText(BusyMarkGroupedTextEntry, 'Topic Filename:'),
             'created-topic',
           );
         }
