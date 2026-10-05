@@ -4651,4 +4651,13 @@ class AppLocalizationsNb extends AppLocalizations {
   @override
   String get spellingDictionaryRecoveryConflict =>
       'Staveordboken ble endret eksternt. En gjenopprettingskopi ble bevart.';
+
+  @override
+  String get windowMinimize => 'Minimer';
+
+  @override
+  String get windowMaximize => 'Maksimer';
+
+  @override
+  String get windowRestore => 'Gjenopprett';
 }

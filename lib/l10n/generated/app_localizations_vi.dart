@@ -4642,4 +4642,13 @@ class AppLocalizationsVi extends AppLocalizations {
   @override
   String get spellingDictionaryRecoveryConflict =>
       'Từ điển chính tả đã được thay đổi từ bên ngoài. Một bản sao khôi phục đã được giữ lại.';
+
+  @override
+  String get windowMinimize => 'Thu nhỏ';
+
+  @override
+  String get windowMaximize => 'Phóng to';
+
+  @override
+  String get windowRestore => 'Khôi phục';
 }

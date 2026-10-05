@@ -4691,4 +4691,13 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get spellingDictionaryRecoveryConflict =>
       'Il dizionario ortografico è stato modificato esternamente. È stata conservata una copia di ripristino.';
+
+  @override
+  String get windowMinimize => 'Riduci';
+
+  @override
+  String get windowMaximize => 'Ingrandisci';
+
+  @override
+  String get windowRestore => 'Ripristina';
 }

@@ -66,11 +66,30 @@ class BusyMarkMarkdownSerializer {
     BusyInline inline,
     BusyInline? following, {
     required bool insideFormatting,
-  }) =>
-      insideFormatting &&
-      _canEmitBareUrl(inline) &&
-      following?.kind == BusyInlineKind.text &&
-      _bareUrlLiteralSuffixLength(inline, following!.text) > 0;
+  }) {
+    if (!_canEmitBareUrl(inline) || following == null) return false;
+    // A following formatting subtree emits its delimiters before the visible
+    // suffix. Those delimiters and the suffix's escapes can enter the URL.
+    // Use its effective content, including nested wrappers, for the boundary.
+    final text = following.plainText;
+    if (_urlFormattingKind(following.kind)) {
+      return text.isNotEmpty && !RegExp(r'^\s').hasMatch(text);
+    }
+    if (following.kind != BusyInlineKind.text || text.isEmpty) return false;
+    if (_bareUrlLiteralSuffixLength(inline, text) > 0) {
+      return insideFormatting;
+    }
+    // Normal literal escaping is still required (especially for '&copy;').
+    // If that source extends the autolink, protect the semantic boundary with
+    // an explicit label rather than expose an escape or decode an entity.
+    final ranges = busyMarkBareUrlRanges(
+      '${inline.plainText}${_escapeInlineText(text)}',
+    );
+    return ranges.isEmpty ||
+        ranges.first.start != 0 ||
+        ranges.first.end != inline.plainText.length ||
+        ranges.first.destination != inline.destination;
+  }
 
   /// Serializes an inline fragment without document-level trimming or a final
   /// newline. This is also the single entry point for context-sensitive inline
@@ -706,6 +725,7 @@ class BusyMarkMarkdownSerializer {
     bool bareUrlText = false,
     bool formattedUrlLabel = false,
     bool insideFormatting = false,
+    bool insideLinkLabel = false,
   }) {
     final totalTextLength = inlines.fold<int>(
       0,
@@ -849,12 +869,20 @@ class BusyMarkMarkdownSerializer {
         ),
         formattedUrlLabel: formattedUrlLabel,
         insideFormatting: insideFormatting,
+        insideLinkLabel: insideLinkLabel,
         entityOffsets: {
           // Keep the boundary '<' literal without forming HTML or an angle
           // autolink. The following reference also keeps this literal slice
           // distinct from decoded raw HTML in the AST adapter.
           if (angleEntityOffset >= 0 && angleEntityOffset < inline.text.length)
             angleEntityOffset,
+          // A plain URL has not acquired link semantics yet. Source history
+          // reparses Markdown, so encode its initial character to prevent an
+          // autolink from consuming literal escapes or recognizing it early.
+          if (!bareUrlText &&
+              !insideLinkLabel &&
+              inline.kind == BusyInlineKind.text)
+            for (final range in busyMarkBareUrlRanges(inline.text)) range.start,
           // A reference beside formatting makes it a punctuation boundary
           // while retaining the displayed URL character.
           if (formattedUrlLabel &&
@@ -940,6 +968,7 @@ class BusyMarkMarkdownSerializer {
     required bool forceExplicitBareUrl,
     required bool formattedUrlLabel,
     required bool insideFormatting,
+    required bool insideLinkLabel,
     required Set<int> entityOffsets,
   }) {
     final bareUrl = _canEmitBareUrl(inline) && !forceExplicitBareUrl;
@@ -976,6 +1005,8 @@ class BusyMarkMarkdownSerializer {
             formattedUrlLabel: formattedUrlLabel || formattedLinkLabel,
             insideFormatting:
                 insideFormatting || _urlFormattingKind(inline.kind),
+            insideLinkLabel:
+                insideLinkLabel || inline.kind == BusyInlineKind.link,
           );
     final children = inline.children.isEmpty
         ? rawText

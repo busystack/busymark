@@ -2806,5 +2806,11 @@
       }
     }
   },
-  "spellingDictionaryRecoveryConflict": "The spelling dictionary changed externally. A recovery copy was preserved."
+  "spellingDictionaryRecoveryConflict": "The spelling dictionary changed externally. A recovery copy was preserved.",
+  "windowMinimize": "Minimize",
+  "@windowMinimize": {"description": "Tooltip and accessibility label for minimizing the application window."},
+  "windowMaximize": "Maximize",
+  "@windowMaximize": {"description": "Tooltip and accessibility label for maximizing the application window."},
+  "windowRestore": "Restore",
+  "@windowRestore": {"description": "Tooltip and accessibility label for restoring a maximized or fullscreen window to its normal size."}
 }

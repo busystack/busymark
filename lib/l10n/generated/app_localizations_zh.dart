@@ -4447,6 +4447,15 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get spellingDictionaryRecoveryConflict => '拼写词典已被外部更改。已保留恢复副本。';
+
+  @override
+  String get windowMinimize => '最小化';
+
+  @override
+  String get windowMaximize => '最大化';
+
+  @override
+  String get windowRestore => '还原';
 }
 
 /// The translations for Chinese, as used in China (`zh_CN`).
@@ -8890,4 +8899,13 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get spellingDictionaryRecoveryConflict => '拼写词典已被外部更改。已保留恢复副本。';
+
+  @override
+  String get windowMinimize => '最小化';
+
+  @override
+  String get windowMaximize => '最大化';
+
+  @override
+  String get windowRestore => '还原';
 }

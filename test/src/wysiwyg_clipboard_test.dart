@@ -740,6 +740,187 @@ void main() {
       );
     }
 
+    for (final suffix in ['&copy;', '&amp;', '&amp;*<tag>']) {
+      testWidgets(
+        'text-only URL character-reference suffix survives Enter and reopening: $suffix',
+        (tester) async {
+          const url = 'https://example.com';
+          final text = '$url$suffix';
+          systemData = {'text': text};
+          var source = '';
+          BusyDocument? live;
+          await mount(
+            tester,
+            'url-reference-$suffix',
+            source,
+            (value) => source = value,
+            onDocumentChanged: (value) => live = value,
+          );
+          await key(tester, LogicalKeyboardKey.keyV);
+          expect(live!.blocks.single.plainText, text);
+          expect(busyInlineStyleRanges(live!.blocks.single.inlines), isEmpty);
+          await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+          await tester.pumpAndSettle();
+          void check(BusyDocument document) {
+            expect(document.blocks.first.plainText, text);
+            final link = busyInlineStyleRanges(
+              document.blocks.first.inlines,
+            ).single;
+            expect(
+              (link.kind, link.start, link.end, link.destination),
+              (BusyInlineKind.link, 0, url.length, url),
+            );
+            expect(document.blocks.first.plainText.substring(link.end), suffix);
+          }
+
+          check(live!);
+          final next = tester.widget<TextField>(find.byType(TextField).last);
+          expect(next.focusNode!.hasFocus, isTrue);
+          expect(
+            next.controller!.selection,
+            const TextSelection.collapsed(offset: 0),
+          );
+          final saved = source;
+          check(
+            _parser
+                .parse(
+                  filePath: 'topic.md',
+                  source: saved,
+                  mode: MarkdownMode.writersideMarkdown,
+                )
+                .busyDocument,
+          );
+          await mount(
+            tester,
+            'url-reference-reopened-$suffix',
+            saved,
+            (value) => source = value,
+            onDocumentChanged: (value) => live = value,
+          );
+          expect(
+            tester
+                .widget<TextField>(find.byType(TextField).first)
+                .controller!
+                .text,
+            text,
+          );
+        },
+      );
+    }
+
+    for (final nested in [false, true]) {
+      testWidgets(
+        'formatting only a pasted URL suffix preserves the boundary (nested=$nested)',
+        (tester) async {
+          const url = 'https://example.com';
+          const text = '$url*';
+          systemData = {'text': text};
+          var source = '';
+          BusyDocument? live;
+          await mount(
+            tester,
+            'formatted-url-suffix-$nested',
+            source,
+            (value) => source = value,
+            onDocumentChanged: (value) => live = value,
+          );
+          await key(tester, LogicalKeyboardKey.keyV);
+          await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+          await tester.pumpAndSettle();
+          final first = tester.widget<TextField>(find.byType(TextField).first);
+          first.focusNode!.requestFocus();
+          first.controller!.selection = const TextSelection(
+            baseOffset: url.length,
+            extentOffset: text.length,
+          );
+          await tester.pump();
+          await key(tester, LogicalKeyboardKey.keyB);
+          if (nested) await key(tester, LogicalKeyboardKey.keyI);
+          await tester.pumpAndSettle();
+
+          void check(BusyDocument document) {
+            final block = document.blocks.first;
+            expect(block.plainText, text);
+            final ranges = busyInlineStyleRanges(block.inlines);
+            final link = ranges
+                .where((range) => range.kind == BusyInlineKind.link)
+                .single;
+            expect(
+              (link.start, link.end, link.destination),
+              (0, url.length, url),
+            );
+            final bold = ranges
+                .where((range) => range.kind == BusyInlineKind.strong)
+                .single;
+            expect((bold.start, bold.end), (url.length, text.length));
+            final italic = ranges.where(
+              (range) => range.kind == BusyInlineKind.emphasis,
+            );
+            if (nested) {
+              expect(
+                (italic.single.start, italic.single.end),
+                (url.length, text.length),
+              );
+            } else {
+              expect(italic, isEmpty);
+            }
+          }
+
+          check(live!);
+          final saved = source;
+          final reparsed = _parser
+              .parse(
+                filePath: 'formatted.md',
+                source: saved,
+                mode: MarkdownMode.writersideMarkdown,
+              )
+              .busyDocument;
+          check(reparsed);
+          final liveLink = busyInlineStyleRanges(
+            live!.blocks.first.inlines,
+          ).where((range) => range.kind == BusyInlineKind.link).single;
+          expect(
+            liveLink.attributes.containsKey(busyMarkBareUrlAttribute),
+            isFalse,
+          );
+          expect(
+            saved,
+            nested ? '[$url]($url)***\\****\n\n' : '[$url]($url)**\\***\n\n',
+          );
+          await tester.enterText(
+            find.byType(TextField).first,
+            'https://other.com*',
+          );
+          await tester.pumpAndSettle();
+          final liveDestination =
+              busyInlineStyleRanges(live!.blocks.first.inlines)
+                  .where((range) => range.kind == BusyInlineKind.link)
+                  .single
+                  .destination;
+          expect(liveDestination, url);
+          await mount(
+            tester,
+            'formatted-url-suffix-reopened-$nested',
+            saved,
+            (value) => source = value,
+            onDocumentChanged: (value) => live = value,
+          );
+          await tester.enterText(
+            find.byType(TextField).first,
+            'https://other.com*',
+          );
+          await tester.pumpAndSettle();
+          expect(
+            busyInlineStyleRanges(live!.blocks.first.inlines)
+                .where((range) => range.kind == BusyInlineKind.link)
+                .single
+                .destination,
+            liveDestination,
+          );
+        },
+      );
+    }
+
     testWidgets(
       'pasted URL retains live link coverage through split, Backspace and suffix formatting',
       (tester) async {

@@ -4697,4 +4697,13 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get spellingDictionaryRecoveryConflict =>
       'Het spellingwoordenboek is extern gewijzigd. Er is een herstelkopie bewaard.';
+
+  @override
+  String get windowMinimize => 'Minimaliseren';
+
+  @override
+  String get windowMaximize => 'Maximaliseren';
+
+  @override
+  String get windowRestore => 'Herstellen';
 }

@@ -4521,4 +4521,13 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String get spellingDictionaryRecoveryConflict =>
       'スペルチェック辞書が外部で変更されました。復旧用コピーを保持しました。';
+
+  @override
+  String get windowMinimize => '最小化';
+
+  @override
+  String get windowMaximize => '最大化';
+
+  @override
+  String get windowRestore => '元に戻す';
 }

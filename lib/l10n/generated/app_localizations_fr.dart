@@ -4698,4 +4698,13 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get spellingDictionaryRecoveryConflict =>
       'Le dictionnaire orthographique a été modifié en externe. Une copie de récupération a été conservée.';
+
+  @override
+  String get windowMinimize => 'Réduire';
+
+  @override
+  String get windowMaximize => 'Agrandir';
+
+  @override
+  String get windowRestore => 'Restaurer';
 }

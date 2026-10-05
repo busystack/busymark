@@ -4688,4 +4688,13 @@ class AppLocalizationsFa extends AppLocalizations {
   @override
   String get spellingDictionaryRecoveryConflict =>
       'فرهنگ لغت املایی به‌صورت خارجی تغییر کرد. یک نسخهٔ بازیابی حفظ شد.';
+
+  @override
+  String get windowMinimize => 'کوچک کردن';
+
+  @override
+  String get windowMaximize => 'بزرگ کردن';
+
+  @override
+  String get windowRestore => 'بازیابی';
 }

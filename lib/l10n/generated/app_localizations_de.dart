@@ -4692,4 +4692,13 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get spellingDictionaryRecoveryConflict =>
       'Das Rechtschreibwörterbuch wurde extern geändert. Eine Wiederherstellungskopie wurde aufbewahrt.';
+
+  @override
+  String get windowMinimize => 'Minimieren';
+
+  @override
+  String get windowMaximize => 'Maximieren';
+
+  @override
+  String get windowRestore => 'Wiederherstellen';
 }

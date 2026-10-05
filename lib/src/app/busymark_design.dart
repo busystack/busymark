@@ -8,6 +8,7 @@ import 'package:flutter/services.dart';
 import 'package:yaru/yaru.dart';
 
 import '../platform/native_menu_service.dart';
+import '../platform/gtk_header_icon_service.dart';
 import 'busymark_glyphs.dart';
 
 /// Resolve an explicit six-digit RGB color chosen in a document/export control.
@@ -51,10 +52,13 @@ abstract final class BusyMarkSizes {
   static const double contentWidth = 760;
   static const double documentContentWidth = contentWidth;
   static const double sidebarWidth = 300;
+  // The workspace header also needs room for document actions and window controls.
+  static const double workspaceSidebarBreakpoint = sidebarWidth + 480;
   static const double sidebarRowHeight = 36;
   static const double settingsWidth = 760;
   static const double settingsSidebarBreakpoint = sidebarWidth + 520;
   static const double toolbarHeight = kYaruTitleBarHeight;
+  static const double headerTitleMinWidth = 120;
   static const double paneHeaderHeight = 38;
   static const double documentStatusBarHeight = 28;
   static const double iconButton = kYaruTitleBarItemHeight;
@@ -261,6 +265,11 @@ String busyMarkBidiIsolateFor(BuildContext context, Object value) {
 }
 
 abstract final class BusyMarkMotion {
+  static const Duration fast = Duration(milliseconds: 100);
+  static const Duration sidebar = Duration(milliseconds: 200);
+  static const Duration search = Duration(milliseconds: 160);
+  static const Duration crossfade = Duration(milliseconds: 140);
+  static const Curve presentationCurve = Curves.easeOutCubic;
   static const Duration dialogInsets = Duration(milliseconds: 160);
   static const Duration bannerReveal = Duration(milliseconds: 250);
   static const Duration sidebarExpand = Duration(milliseconds: 120);
@@ -1078,7 +1087,7 @@ class BusyMarkHeaderIconButton extends StatelessWidget {
     final button = IconButton(
       isSelected: selected,
       tooltip: shortcut == null ? tooltip : '$tooltip ($shortcut)',
-      icon: Icon(icon, size: BusyMarkSizes.iconSm),
+      icon: BusyMarkGtkHeaderIcon(icon),
       padding: EdgeInsets.zero,
       style: style.merge(yaruDefaults),
       onPressed: onPressed,
@@ -2575,9 +2584,14 @@ class BusyMarkGroupedSurface extends StatelessWidget {
 
 /// Shared split-view sidebar surface and reading-direction boundary.
 class BusyMarkSidebarSurface extends StatelessWidget {
-  const BusyMarkSidebarSurface({super.key, required this.child});
+  const BusyMarkSidebarSurface({
+    super.key,
+    required this.child,
+    this.showEndBorder = true,
+  });
 
   final Widget child;
+  final bool showEndBorder;
 
   @override
   Widget build(BuildContext context) {
@@ -2587,12 +2601,14 @@ class BusyMarkSidebarSurface extends StatelessWidget {
       child: DecoratedBox(
         position: DecorationPosition.foreground,
         decoration: BoxDecoration(
-          border: BorderDirectional(
-            end: BorderSide(
-              color: colors.sidebarBorder,
-              width: BusyMarkStroke.hairline,
-            ),
-          ),
+          border: !showEndBorder
+              ? null
+              : BorderDirectional(
+                  end: BorderSide(
+                    color: colors.sidebarBorder,
+                    width: BusyMarkStroke.hairline,
+                  ),
+                ),
         ),
         child: child,
       ),

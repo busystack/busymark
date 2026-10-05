@@ -20,6 +20,7 @@ class BusyMarkSearchField extends StatefulWidget {
     this.onClear,
     this.onEscape,
     this.clearButtonSemanticLabel,
+    this.clearOnEscape = true,
   });
 
   final TextEditingController? controller;
@@ -34,6 +35,7 @@ class BusyMarkSearchField extends StatefulWidget {
   final VoidCallback? onClear;
   final VoidCallback? onEscape;
   final String? clearButtonSemanticLabel;
+  final bool clearOnEscape;
 
   @override
   State<BusyMarkSearchField> createState() => _BusyMarkSearchFieldState();
@@ -120,7 +122,7 @@ class _BusyMarkSearchFieldState extends State<BusyMarkSearchField> {
       onKeyEvent: (_, event) {
         if (event is KeyDownEvent &&
             event.logicalKey == LogicalKeyboardKey.escape) {
-          _clear();
+          if (widget.clearOnEscape) _clear();
           widget.onEscape?.call();
           return KeyEventResult.handled;
         }

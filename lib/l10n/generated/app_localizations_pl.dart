@@ -4704,4 +4704,13 @@ class AppLocalizationsPl extends AppLocalizations {
   @override
   String get spellingDictionaryRecoveryConflict =>
       'Słownik pisowni został zmieniony zewnętrznie. Zachowano kopię odzyskiwania.';
+
+  @override
+  String get windowMinimize => 'Minimalizuj';
+
+  @override
+  String get windowMaximize => 'Maksymalizuj';
+
+  @override
+  String get windowRestore => 'Przywróć';
 }

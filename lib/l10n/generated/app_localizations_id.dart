@@ -4651,4 +4651,13 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get spellingDictionaryRecoveryConflict =>
       'Kamus ejaan diubah secara eksternal. Salinan pemulihan telah disimpan.';
+
+  @override
+  String get windowMinimize => 'Minimalkan';
+
+  @override
+  String get windowMaximize => 'Maksimalkan';
+
+  @override
+  String get windowRestore => 'Pulihkan';
 }
