@@ -14,6 +14,8 @@ import '../export/workspace_export_ui.dart';
 import '../clipboard/clipboard_history_controller.dart';
 import '../git/application/git_controller.dart';
 import '../platform/linux_header_bar_service.dart';
+import '../platform/gtk_animation_settings_service.dart';
+import '../platform/gtk_header_icon_service.dart';
 import '../local_history/local_history_controller.dart';
 import '../workspace/workspace_controller.dart';
 import '../workspace/workspace_model.dart';
@@ -33,6 +35,7 @@ import 'busymark_toast.dart';
 import 'localization.dart';
 import 'system_accent.dart';
 import 'window_control_service.dart';
+import 'linux/linux_window_host.dart';
 
 final busyMarkCommandRegistryProvider = Provider<BusyMarkCommandRegistry>((
   ref,
@@ -111,6 +114,10 @@ class BusyMarkApp extends ConsumerWidget {
     final router = ref.watch(appRouterProvider);
     final settings = ref.watch(appSettingsControllerProvider);
     final windowControls = ref.watch(windowControlServiceProvider);
+    final gtkAnimationsEnabled =
+        ref.watch(gtkAnimationsEnabledProvider).asData?.value ??
+        ref.watch(initialGtkAnimationsEnabledProvider) ??
+        true;
     ref.listen(headerBarActionsProvider, (previous, next) {
       next.whenData((event) {
         if (event.action == HeaderBarAction.fullScreen) {
@@ -416,7 +423,19 @@ class BusyMarkApp extends ConsumerWidget {
         );
         return BusyMarkCommandRegistryScope(
           registry: commandRegistry,
-          child: BusyMarkToastOverlay(child: appContent),
+          child: MediaQuery(
+            data: MediaQuery.of(context).copyWith(
+              disableAnimations:
+                  MediaQuery.disableAnimationsOf(context) ||
+                  !gtkAnimationsEnabled,
+            ),
+            child: GtkHeaderIconScope(
+              service: ref.watch(gtkHeaderIconServiceProvider),
+              child: LinuxWindowHost(
+                child: BusyMarkToastOverlay(child: appContent),
+              ),
+            ),
+          ),
         );
       },
       routerConfig: router,
@@ -826,9 +845,6 @@ class BusyMarkApp extends ConsumerWidget {
     }
     final settings = ref.read(appSettingsControllerProvider);
     final visible = !settings.sidebarVisible;
-    if (!visible) {
-      _clearGitDetailSelection(ref);
-    }
     unawaited(
       ref
           .read(appSettingsControllerProvider.notifier)
@@ -843,17 +859,6 @@ class BusyMarkApp extends ConsumerWidget {
       WorkspaceKind.markdownFolder ||
       WorkspaceKind.writersideModule => true,
     };
-  }
-
-  void _clearGitDetailSelection(WidgetRef ref) {
-    final gitState = ref.read(gitControllerProvider);
-    if (gitState.selectedDiff != null ||
-        gitState.selectedFilePath != null ||
-        gitState.selectedCommitHash != null ||
-        gitState.selectedCommitFilePath != null ||
-        gitState.openDiffFilePaths.isNotEmpty) {
-      ref.read(gitControllerProvider.notifier).clearSelection();
-    }
   }
 
   HeaderBarConfiguration _nativeHeaderBarDefaults(

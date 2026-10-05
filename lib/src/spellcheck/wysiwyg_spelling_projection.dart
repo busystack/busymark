@@ -19,6 +19,42 @@ final class WysiwygSpellingProjector {
     final fieldKeysByTarget = <String, String>{};
     var sequence = 0;
     var complete = true;
+    final source = document.source;
+    final sourceProjection = source == null
+        ? null
+        : const MarkdownSpellingProjector().project(
+            filePath: document.filePath,
+            source: source,
+            mode: document.mode,
+            languageId: languageId,
+            snapshot: snapshot,
+          );
+    var imageIndex = 0;
+
+    SpellingMappedImageDescription? imageDescription(
+      BusyInline image,
+      SpellingMappedImageDescription? parent,
+    ) {
+      if (sourceProjection == null) return null;
+      if (imageIndex >= sourceProjection.imageDescriptions.length) {
+        complete = false;
+        return null;
+      }
+      final description = sourceProjection.imageDescriptions[imageIndex++];
+      if (description.alternativeText != image.text ||
+          !_sameMappedImageDestination(
+            source,
+            description,
+            image.destination,
+          ) ||
+          (parent != null &&
+              (description.sourceStart <= parent.sourceStart ||
+                  description.sourceEnd >= parent.sourceEnd))) {
+        complete = false;
+        return null;
+      }
+      return description;
+    }
 
     void addOrdinary(BusyBlock block, SpellingEditorTarget target) {
       for (final projection in projectSpellingInlineRuns(
@@ -27,6 +63,7 @@ final class WysiwygSpellingProjector {
         context: target is SpellingRichTableCellTarget
             ? SpellingSourceContext.markdownTableCell
             : SpellingSourceContext.markdownProse,
+        imageDescriptionFor: imageDescription,
       )) {
         final run = SpellingProseRun(
           id: 'wysiwyg:${sequence++}:${block.id}',
@@ -59,7 +96,31 @@ final class WysiwygSpellingProjector {
             : SpellingSourceContext.markdownProse,
       );
       complete = complete && projected.complete;
+      if (sourceProjection != null) {
+        for (final fieldImage in projected.imageDescriptions) {
+          if (imageIndex >= sourceProjection.imageDescriptions.length) {
+            complete = false;
+            break;
+          }
+          final authoredImage =
+              sourceProjection.imageDescriptions[imageIndex++];
+          if (authoredImage.alternativeText != fieldImage.alternativeText ||
+              !_sameMappedImageDestination(
+                source,
+                authoredImage,
+                fieldImage.destination,
+              ) ||
+              (block.sourceSpan != null &&
+                  (authoredImage.sourceStart < block.sourceSpan!.startOffset ||
+                      authoredImage.sourceEnd > block.sourceSpan!.endOffset))) {
+            complete = false;
+          }
+        }
+      }
       for (final sourceRun in projected.runs) {
+        // Link/image titles belong to authored source, not the editable math
+        // field, even when that field displays the surrounding Markdown.
+        if (_sourceOnlyMetadataRun(sourceRun)) continue;
         richRuns.add(
           SpellingProseRun(
             id: 'wysiwyg-math:${sequence++}:${block.id}',
@@ -153,7 +214,6 @@ final class WysiwygSpellingProjector {
     for (final (index, block) in document.blocks.indexed) {
       visit(block, [index]);
     }
-    final source = document.source;
     if (source == null) {
       return SpellingProjectionResult(
         runs: List.unmodifiable(richRuns),
@@ -162,13 +222,6 @@ final class WysiwygSpellingProjector {
       );
     }
 
-    final sourceProjection = const MarkdownSpellingProjector().project(
-      filePath: document.filePath,
-      source: source,
-      mode: document.mode,
-      languageId: languageId,
-      snapshot: snapshot,
-    );
     final currentDocument = const MarkdownParser()
         .parse(
           filePath: document.filePath,
@@ -179,7 +232,7 @@ final class WysiwygSpellingProjector {
         .busyDocument;
     var merged = _mergeCurrentSourceMappings(
       richRuns: richRuns,
-      sourceRuns: sourceProjection.runs,
+      sourceRuns: sourceProjection!.runs,
       fieldKeysByTarget: fieldKeysByTarget,
       sourceRegions: _sourceFieldRegions(source, currentDocument.blocks),
     );
@@ -211,6 +264,34 @@ final class WysiwygSpellingProjector {
           : 'Some rich-text fields could not be mapped to the current source.',
     );
   }
+}
+
+bool _sameMappedImageDestination(
+  String? source,
+  SpellingMappedImageDescription description,
+  String? richDestination,
+) {
+  final mappedDestination = description.destination;
+  if (mappedDestination == richDestination) return true;
+  if (source == null ||
+      mappedDestination == null ||
+      richDestination == null ||
+      description.sourceStart < 0 ||
+      description.sourceEnd > source.length ||
+      !source
+          .substring(description.sourceStart, description.sourceEnd)
+          .contains(RegExp(r'\r|\n')) ||
+      !richDestination.endsWith(mappedDestination)) {
+    return false;
+  }
+  // The block AST can retain a continuation's indentation as URI-encoded
+  // leading whitespace; the positioned inline parse removes those structural
+  // bytes. Permit only that precise prefix discrepancy on multiline images.
+  final encodedPrefix = richDestination.substring(
+    0,
+    richDestination.length - mappedDestination.length,
+  );
+  return RegExp(r'^(?:%20|%09)+$').hasMatch(encodedPrefix);
 }
 
 final class _MergedRichProjection {
@@ -470,6 +551,7 @@ bool _sourceOnlyMetadataRun(SpellingProseRun run) {
     (atom) => switch (atom.context) {
       SpellingSourceContext.markdownSingleQuotedTitle ||
       SpellingSourceContext.markdownDoubleQuotedTitle ||
+      SpellingSourceContext.markdownParenthesizedTitle ||
       SpellingSourceContext.xmlSingleQuotedAttribute ||
       SpellingSourceContext.xmlDoubleQuotedAttribute => true,
       _ => false,
@@ -494,21 +576,48 @@ List<SpellingSourceAtom>? _mergeRunAtoms(
   final result = <SpellingSourceAtom>[];
   var richCursor = 0;
   for (final sourceAtom in source.atoms) {
-    while (richCursor < rich.atoms.length &&
-        rich.atoms[richCursor].logicalEnd <= sourceAtom.logicalStart) {
-      richCursor++;
+    int? fieldStart;
+    int? fieldEnd;
+    List<int>? richLeafPath;
+    var pathInitialized = false;
+    var logicalCursor = sourceAtom.logicalStart;
+    while (logicalCursor < sourceAtom.logicalEnd) {
+      while (richCursor < rich.atoms.length &&
+          rich.atoms[richCursor].logicalEnd <= logicalCursor) {
+        richCursor++;
+      }
+      if (richCursor >= rich.atoms.length) return null;
+      final richAtom = rich.atoms[richCursor];
+      if (richAtom.logicalStart > logicalCursor) return null;
+      final segmentEnd = richAtom.logicalEnd < sourceAtom.logicalEnd
+          ? richAtom.logicalEnd
+          : sourceAtom.logicalEnd;
+      if (sourceAtom.logicalText.substring(
+            logicalCursor - sourceAtom.logicalStart,
+            segmentEnd - sourceAtom.logicalStart,
+          ) !=
+          richAtom.logicalText.substring(
+            logicalCursor - richAtom.logicalStart,
+            segmentEnd - richAtom.logicalStart,
+          )) {
+        return null;
+      }
+      final segment = richAtom.fieldIntervalFor(logicalCursor, segmentEnd);
+      if (segment == null ||
+          (fieldEnd != null && fieldEnd != segment.start) ||
+          (pathInitialized &&
+              !_sameLeafPath(richLeafPath, richAtom.richLeafPath))) {
+        return null;
+      }
+      fieldStart ??= segment.start;
+      fieldEnd = segment.end;
+      if (!pathInitialized) {
+        richLeafPath = richAtom.richLeafPath;
+        pathInitialized = true;
+      }
+      logicalCursor = segmentEnd;
     }
-    if (richCursor >= rich.atoms.length) return null;
-    final richAtom = rich.atoms[richCursor];
-    if (richAtom.logicalStart > sourceAtom.logicalStart ||
-        richAtom.logicalEnd < sourceAtom.logicalEnd) {
-      return null;
-    }
-    final fieldRange = richAtom.fieldIntervalFor(
-      sourceAtom.logicalStart,
-      sourceAtom.logicalEnd,
-    );
-    if (fieldRange == null) return null;
+    if (fieldStart == null || fieldEnd == null) return null;
     result.add(
       SpellingSourceAtom(
         logicalText: sourceAtom.logicalText,
@@ -516,15 +625,24 @@ List<SpellingSourceAtom>? _mergeRunAtoms(
         logicalEnd: sourceAtom.logicalEnd,
         sourceStart: sourceAtom.sourceStart,
         sourceEnd: sourceAtom.sourceEnd,
-        fieldStart: fieldRange.start,
-        fieldEnd: fieldRange.end,
-        richLeafPath: richAtom.richLeafPath,
+        fieldStart: fieldStart,
+        fieldEnd: fieldEnd,
+        richLeafPath: richLeafPath,
         transformation: sourceAtom.transformation,
         context: sourceAtom.context,
       ),
     );
   }
   return List.unmodifiable(result);
+}
+
+bool _sameLeafPath(List<int>? left, List<int>? right) {
+  if (left == null || right == null) return left == null && right == null;
+  if (left.length != right.length) return false;
+  for (var index = 0; index < left.length; index++) {
+    if (left[index] != right[index]) return false;
+  }
+  return true;
 }
 
 List<SpellingFormattingWrapper> _mergeFormattingWrappers(

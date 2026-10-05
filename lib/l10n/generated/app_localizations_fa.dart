@@ -4621,6 +4621,12 @@ class AppLocalizationsFa extends AppLocalizations {
   String get spellingCheckFailed => 'بررسی املا ناموفق بود';
 
   @override
+  String get spellingSettingsLoadFailed => 'تنظیمات بررسی املا بارگیری نشد';
+
+  @override
+  String get retrySpellingSettings => 'بارگیری دوبارهٔ تنظیمات بررسی املا';
+
+  @override
   String get spellingCheckIncomplete => 'بررسی املا کامل نیست';
 
   @override
@@ -4682,4 +4688,13 @@ class AppLocalizationsFa extends AppLocalizations {
   @override
   String get spellingDictionaryRecoveryConflict =>
       'فرهنگ لغت املایی به‌صورت خارجی تغییر کرد. یک نسخهٔ بازیابی حفظ شد.';
+
+  @override
+  String get windowMinimize => 'کوچک کردن';
+
+  @override
+  String get windowMaximize => 'بزرگ کردن';
+
+  @override
+  String get windowRestore => 'بازیابی';
 }

@@ -31,9 +31,11 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y \
             apparmor-profiles \
+            at-spi2-core \
             bubblewrap \
             clang \
             cmake \
+            dbus-daemon \
             fonts-noto-core \
             fonts-noto-cjk \
             fonts-noto-mono \
@@ -89,6 +91,9 @@ jobs:
       - name: Resolve locked dependencies
         run: flutter pub get --enforce-lockfile
 
+      - name: Test production GTK accent lookup and observer
+        run: xvfb-run -a env GDK_BACKEND=x11 bash tools/test_gtk_accent.sh
+
       - name: Generate localizations
         run: flutter gen-l10n
 
@@ -120,6 +125,9 @@ jobs:
 
       - name: Build Linux release
         run: flutter build linux --release
+
+      - name: Test production GTK accent channel host and lifecycle
+        run: xvfb-run -a env GDK_BACKEND=x11 bash tools/test_gtk_accent_host.sh
 
       - name: Verify release ships catalog and notices without language pairs
         run: |
@@ -230,6 +238,11 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v7
 
+      - name: Prepare clean Snap artifact selection
+        run: |
+          rm -f ./*.snap
+          touch "${RUNNER_TEMP}/busymark-snap-build-start"
+
       - name: Build strict Snap from a clean core24 environment (attempt 1)
         id: snapcraft
         uses: snapcore/action-build@v1
@@ -244,11 +257,27 @@ jobs:
         id: snap-artifact
         env:
           PRIMARY_SNAP: ${{ steps.snapcraft.outputs.snap }}
+          PRIMARY_OUTCOME: ${{ steps.snapcraft.outcome }}
           RETRY_SNAP: ${{ steps.snapcraft-retry.outputs.snap }}
+          RETRY_OUTCOME: ${{ steps.snapcraft-retry.outcome }}
         run: |
-          snap_path="${PRIMARY_SNAP:-$RETRY_SNAP}"
+          if [ "$PRIMARY_OUTCOME" = success ]; then
+            snap_path="$PRIMARY_SNAP"
+          else
+            test "$PRIMARY_OUTCOME" = failure
+            test "$RETRY_OUTCOME" = success
+            snap_path="$RETRY_SNAP"
+          fi
           test -n "$snap_path"
           test -f "$snap_path"
+          test "$snap_path" -nt "${RUNNER_TEMP}/busymark-snap-build-start"
+          snap_path="$(realpath "$snap_path")"
+          case "$snap_path" in
+            "$GITHUB_WORKSPACE"/*.snap) ;;
+            *) echo "Refusing Snap outside the clean checkout: $snap_path" >&2; exit 1 ;;
+          esac
+          test "$(unsquashfs -cat "$snap_path" snap/snapcraft.yaml | sha256sum | cut -d' ' -f1)" = \
+            "$(sha256sum snap/snapcraft.yaml | cut -d' ' -f1)"
           echo "snap=$snap_path" >> "$GITHUB_OUTPUT"
 
       - name: Upload Snap artifact
@@ -275,6 +304,104 @@ jobs:
             query="$SNAP_DESKTOP_RUNTIME/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET/gdk-pixbuf-2.0/gdk-pixbuf-query-loaders"
             loader="$SNAP_DESKTOP_RUNTIME/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET/gdk-pixbuf-2.0/2.10.0/loaders/libpixbufloader_svg.so"
             "$query" "$loader" | grep -q "\"svg\" 6 \"gdk-pixbuf\""
+          '
+
+      - name: Verify shared runtimes, packaged tools, media, and resources
+        run: |
+          snap run --shell busymark -c '
+            set -eu
+            inspect_dependencies() {
+              dependency_object="$1"
+              if dependency_output="$(ldd "$dependency_object" 2>&1)"; then
+                :
+              else
+                printf "Dependency inspection failed: %s\n%s\n" \
+                  "$dependency_object" "$dependency_output" >&2
+                exit 1
+              fi
+              case "$dependency_output" in
+                *"not found"*)
+                  printf "Unresolved dependencies: %s\n%s\n" \
+                    "$dependency_object" "$dependency_output" >&2
+                  exit 1
+                  ;;
+              esac
+            }
+            require_resolution() {
+              required_library="$1"
+              required_path="$2"
+              resolved_path="$(printf "%s\n" "$dependency_output" | \
+                awk -v name="$required_library" \
+                  "\$1 == name && \$2 == \"=>\" { print \$3; exit }")"
+              if [ -z "$resolved_path" ] || \
+                  ! expected_real="$(readlink -e "$required_path")" || \
+                  ! resolved_real="$(readlink -e "$resolved_path")" || \
+                  [ "$resolved_real" != "$expected_real" ]; then
+                printf "Unexpected resolution for %s in %s; expected %s\n%s\n" \
+                  "$required_library" "$dependency_object" \
+                  "$required_path" "$dependency_output" >&2
+                exit 1
+              fi
+            }
+            app_lib="$SNAP/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET"
+            inspect_dependencies "$SNAP/busymark"
+            for library in \
+              libhandy-1.so.0 libsecret-1.so.0 libwebkit2gtk-4.1.so.0 \
+              libgtk-3.so.0 libglib-2.0.so.0 libpango-1.0.so.0; do
+              test ! -e "$app_lib/$library"
+              require_resolution "$library" \
+                "$SNAP_DESKTOP_RUNTIME/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET/$library"
+            done
+            graphics_lib="$SNAP/gpu-2404/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET"
+            for library in \
+              libX11.so.6 libXdamage.so.1 libXext.so.6 libXfixes.so.3 \
+              libxcb-shm.so.0 libxcb.so.1 libwayland-client.so.0 \
+              libwayland-cursor.so.0 libwayland-egl.so.1; do
+              test ! -e "$app_lib/$library"
+              test -e "$graphics_lib/$library"
+              require_resolution "$library" "$graphics_lib/$library"
+            done
+            for helper in WebKitWebProcess WebKitNetworkProcess WebKitGPUProcess; do
+              test -x "$SNAP_DESKTOP_RUNTIME/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET/webkit2gtk-4.1/$helper"
+            done
+            test -x "$SNAP/usr/bin/git"
+            test -x "$SNAP/usr/bin/ssh"
+            test -x "$SNAP/usr/bin/setsid"
+            inspect_dependencies "$SNAP/usr/lib/git-core/git-remote-http"
+            require_resolution libcurl-gnutls.so.4 \
+              "$app_lib/libcurl-gnutls.so.4"
+            GIT_EXEC_PATH="$SNAP/usr/lib/git-core" \
+              "$SNAP/usr/bin/git" --exec-path | grep -Fx "$SNAP/usr/lib/git-core"
+            "$SNAP/usr/bin/ssh" -V
+            provider_plugins="$SNAP_DESKTOP_RUNTIME/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET/gstreamer-1.0"
+            for plugin in libgstavi.so libgstisomp4.so libgstmatroska.so \
+              libgstogg.so libgsttheora.so libgstvpx.so; do
+              test -f "$provider_plugins/$plugin"
+              inspect_dependencies "$provider_plugins/$plugin"
+            done
+            private_plugins="$SNAP/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET/gstreamer-1.0"
+            for plugin in libgstavi.so libgstisomp4.so libgstmatroska.so \
+              libgstogg.so libgsttheora.so libgstvpx.so; do
+              test ! -e "$private_plugins/$plugin"
+            done
+            for plugin in libgstlibav.so libgstvideoparsersbad.so \
+              libgstmpeg2dec.so; do
+              test -f "$private_plugins/$plugin"
+              inspect_dependencies "$private_plugins/$plugin"
+            done
+            test -L "$SNAP/share/busymark/fonts"
+            test "$(readlink "$SNAP/share/busymark/fonts")" = \
+              ../../usr/share/fonts/truetype/noto
+            test -f "$SNAP/share/busymark/fonts/NotoSans-Regular.ttf"
+            test -f "$SNAP/usr/share/doc/fonts-noto-core/copyright"
+            test -f "$SNAP/usr/share/doc/fonts-noto-mono/copyright"
+            for resource_kind in themes icons; do
+              for resource_name in Yaru Yaru-dark; do
+                resource="$SNAP/share/$resource_kind/$resource_name"
+                test -L "$resource"
+                test -e "$resource"
+              done
+            done
           '
 
       - name: Install one strict-Snap dictionary and verify refresh/offline use

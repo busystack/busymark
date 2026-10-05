@@ -104,6 +104,8 @@
   "noSpellingSuggestions": "Không có đề xuất chính tả",
   "spellingWordCheckFailed": "Không thể kiểm tra từ này",
   "spellingCheckFailed": "Kiểm tra chính tả thất bại",
+  "spellingSettingsLoadFailed": "Không thể tải cài đặt kiểm tra chính tả",
+  "retrySpellingSettings": "Thử tải lại cài đặt kiểm tra chính tả",
   "spellingCheckIncomplete": "Kiểm tra chính tả chưa hoàn tất",
   "spellingDictionaryNotInstalled": "Từ điển chưa được cài đặt",
   "spellingDictionaryNotInstalledForLanguage": "Từ điển {dictionary} chưa được cài đặt",
@@ -4913,5 +4915,8 @@
   "renameTopicFileInstead": "ID chủ đề được tạo từ tên tệp. Hãy dùng Đổi tên tệp chủ đề trong mục lục hoặc thanh bên Tệp.",
   "diagnosticWritersideWebFileNameInvalid": "Phiên bản \"{instanceId}\" xuất bản tên tệp web không hợp lệ \"{webFileName}\" cho chủ đề \"{topic}\".",
   "diagnosticWritersideWebFileNameCollision": "Phiên bản \"{instanceId}\" xuất bản cả \"{firstTopic}\" và \"{secondTopic}\" dưới tên \"{webFileName}\".",
-  "spellingDictionaryRecoveryConflict": "Từ điển chính tả đã được thay đổi từ bên ngoài. Một bản sao khôi phục đã được giữ lại."
+  "spellingDictionaryRecoveryConflict": "Từ điển chính tả đã được thay đổi từ bên ngoài. Một bản sao khôi phục đã được giữ lại.",
+  "windowMinimize": "Thu nhỏ",
+  "windowMaximize": "Phóng to",
+  "windowRestore": "Khôi phục"
 }

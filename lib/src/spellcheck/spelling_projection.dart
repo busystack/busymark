@@ -1,3 +1,4 @@
+import '../markdown/busymark_document.dart';
 import '../workspace/workspace_model.dart';
 
 enum SpellingTransformationKind {
@@ -12,8 +13,10 @@ enum SpellingTransformationKind {
 enum SpellingSourceContext {
   markdownProse,
   markdownTableCell,
+  markdownCodeSpan,
   markdownSingleQuotedTitle,
   markdownDoubleQuotedTitle,
+  markdownParenthesizedTitle,
   xmlText,
   xmlSingleQuotedAttribute,
   xmlDoubleQuotedAttribute,
@@ -358,9 +361,28 @@ final class SpellingProjectionResult {
     required this.runs,
     required this.complete,
     this.message,
+    this.imageDescriptions = const [],
   });
 
   final List<SpellingProseRun> runs;
   final bool complete;
   final String? message;
+  final List<SpellingMappedImageDescription> imageDescriptions;
+}
+
+/// Parser-derived alternative text structure shared by source and rich checks.
+final class SpellingMappedImageDescription {
+  const SpellingMappedImageDescription({
+    required this.sourceStart,
+    required this.sourceEnd,
+    required this.alternativeText,
+    required this.destination,
+    required this.inlines,
+  });
+
+  final int sourceStart;
+  final int sourceEnd;
+  final String alternativeText;
+  final String? destination;
+  final List<BusyInline> inlines;
 }

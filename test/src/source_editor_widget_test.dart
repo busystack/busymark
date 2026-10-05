@@ -8869,6 +8869,7 @@ void main() {
       readData: RichClipboardData(text: sourceFile.path, generation: 42),
     );
     final captures = <BusyMarkClipboardCapture>[];
+    var published = false;
     final controller = await _pumpClipboardSourceEditor(
       tester,
       source: 'Target',
@@ -8876,11 +8877,27 @@ void main() {
       onCaptured: captures.add,
       filePath: '${root.path}/target.md',
       assetWorkspaceKind: AssetWorkspaceKind.standalone,
+      assetIngestionService: AssetIngestionService(
+        hooks: AssetIngestionHooks(
+          afterPublication: (_) async {
+            published = true;
+          },
+        ),
+      ),
     );
     controller.selection = const TextSelection.collapsed(offset: 6);
 
     await _pressControlKey(tester, LogicalKeyboardKey.keyV);
-    await _pumpUntil(tester, () => captures.isNotEmpty);
+    await _pumpUntilRealIo(
+      tester,
+      () => published,
+      operation: 'Source image publication',
+    );
+    await _pumpUntilRealIo(
+      tester,
+      () => captures.isNotEmpty,
+      operation: 'Source clipboard capture after image publication',
+    );
 
     expect(controller.text, contains('![Image](images/original.png)'));
     expect(captures, hasLength(1));
@@ -9332,6 +9349,7 @@ Future<TextEditingController> _pumpClipboardSourceEditor(
   SourceDocumentFormat documentFormat = SourceDocumentFormat.markdown,
   MarkdownMode markdownMode = MarkdownMode.commonMark,
   AssetInputService? assetInputService,
+  AssetIngestionService assetIngestionService = const AssetIngestionService(),
   VoidCallback? onAssetSaveRequired,
 }) async {
   await tester.pumpWidget(
@@ -9356,6 +9374,7 @@ Future<TextEditingController> _pumpClipboardSourceEditor(
             workspaceRoot: workspaceRoot,
             assetWorkspaceKind: assetWorkspaceKind,
             assetInputService: assetInputService,
+            assetIngestionService: assetIngestionService,
             diagnostics: const [],
             editorFontSize: 14,
             wordWrap: true,
@@ -9502,6 +9521,21 @@ Future<void> _pumpUntil(WidgetTester tester, bool Function() condition) async {
     );
   }
   fail('Timed out waiting for asynchronous Source editor work.');
+}
+
+Future<void> _pumpUntilRealIo(
+  WidgetTester tester,
+  bool Function() condition, {
+  required String operation,
+}) async {
+  final deadline = DateTime.now().add(const Duration(seconds: 10));
+  while (!condition() && DateTime.now().isBefore(deadline)) {
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 25)),
+    );
+    await tester.pump();
+  }
+  expect(condition(), isTrue, reason: '$operation did not complete.');
 }
 
 SpellingOccurrence _sourceSpellingOccurrence({

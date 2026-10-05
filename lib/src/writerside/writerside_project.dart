@@ -1,3 +1,5 @@
+import 'writerside_execution.dart';
+import 'writerside_input_snapshot.dart';
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
@@ -863,6 +865,7 @@ class WritersideProject {
     required this.diagnostics,
     this.moduleDiscoveryComplete = true,
     this.moduleDiscoveryDiagnostics = const [],
+    this.inputSnapshot,
   });
 
   final String rootPath;
@@ -873,6 +876,33 @@ class WritersideProject {
   final List<Diagnostic> diagnostics;
   final bool moduleDiscoveryComplete;
   final List<Diagnostic> moduleDiscoveryDiagnostics;
+  final WritersideInputSnapshot? inputSnapshot;
+
+  Future<bool> inputsMatchDisk({
+    bool requireDiskSources = false,
+    Set<String> ignoredPaths = const {},
+  }) => const WritersideExecution().run(
+    _checkProjectInputs,
+    _ProjectInputs(
+      inputSnapshot,
+      [for (final m in modules) m.inputSnapshot],
+      requireDiskSources,
+      ignoredPaths,
+    ),
+  );
+
+  /// Consumed-input checks for presenting a limited, diagnostic model. Full
+  /// freshness and mutation checks continue to use inputsMatchDisk.
+  Future<bool> observedInputsMatchDisk() => const WritersideExecution().run(
+    _checkProjectInputs,
+    _ProjectInputs(
+      inputSnapshot,
+      [for (final m in modules) m.inputSnapshot],
+      false,
+      const {},
+      allowIncompleteDiscovery: true,
+    ),
+  );
 
   WritersideModule? get activeModule {
     for (final module in modules) {
@@ -969,6 +999,7 @@ class WritersideProject {
       diagnostics: diagnostics,
       moduleDiscoveryComplete: moduleDiscoveryComplete,
       moduleDiscoveryDiagnostics: moduleDiscoveryDiagnostics,
+      inputSnapshot: inputSnapshot,
     );
   }
 
@@ -1030,6 +1061,7 @@ class WritersideProject {
       ]),
       moduleDiscoveryComplete: moduleDiscoveryComplete,
       moduleDiscoveryDiagnostics: moduleDiscoveryDiagnostics,
+      inputSnapshot: inputSnapshot,
     );
   }
 }
@@ -1109,40 +1141,46 @@ class WritersideProjectService {
     String projectRoot, {
     String? preferredModuleRoot,
   }) async {
+    final recorder = WritersideInputRecorder(
+      normalizePath(projectRoot),
+      treeEntryLimit: scanOptions.maxTreeEntries,
+    );
+    final project = await recorder.observe(
+      () => _loadHere(projectRoot, preferredModuleRoot: preferredModuleRoot),
+    );
+    final observed = _projectWithInputs(project, recorder.snapshot);
+    if (observed.moduleDiscoveryComplete &&
+        observed.modules.every(
+          (m) =>
+              m.topicDiscoveryComplete &&
+              m.unparsedTopicReferences.isEmpty &&
+              m.variablesAvailable &&
+              m.topics.every((t) => t.document.isWellFormed),
+        ) &&
+        !await observed.inputsMatchDisk()) {
+      throw WritersideInputsChanged(project.rootPath);
+    }
+    return observed;
+  }
+
+  Future<WritersideProject> _loadHere(
+    String projectRoot, {
+    String? preferredModuleRoot,
+  }) async {
     final discovery = await discoverModuleRoots(projectRoot);
     var modules = <WritersideModule>[];
     for (final root in discovery.roots) {
       modules.add(await moduleService.load(root, options: scanOptions));
     }
-    modules = _resolveProjectModules(modules);
-    final index = WritersideProjectIndex.build(
-      modules,
-      fileSymbols: await _discoverFileSymbols(modules),
-    );
-    WritersideModule? active;
-    if (preferredModuleRoot != null) {
-      active = modules
-          .where((module) => p.equals(module.rootPath, preferredModuleRoot))
-          .firstOrNull;
-    }
-    active ??= modules.firstOrNull;
-    final instance = active?.instances
-        .where((candidate) => !candidate.isLibrary)
-        .firstOrNull;
-    return WritersideProject(
-      rootPath: normalizePath(projectRoot),
-      modules: List.unmodifiable(modules),
-      activeModuleId: active == null ? null : _moduleId(active),
-      activeInstanceId: instance?.id,
-      index: index,
-      diagnostics: sortDiagnostics([
-        for (final module in modules) ...module.diagnostics,
-        ...index.diagnostics,
-        ...writersideWebFileNameDiagnostics(modules),
-        ...discovery.diagnostics,
-      ]),
-      moduleDiscoveryComplete: discovery.complete,
-      moduleDiscoveryDiagnostics: discovery.diagnostics,
+    return moduleService.execution.run(
+      _buildProjectOnWorker,
+      _ProjectBuildInput(
+        normalizePath(projectRoot),
+        modules,
+        await _discoverFileSymbols(modules),
+        discovery,
+        preferredModuleRoot,
+      ),
     );
   }
 
@@ -1154,14 +1192,21 @@ class WritersideProjectService {
     WritersideModule module, {
     bool rediscoverFileSymbols = false,
   }) async {
-    final replaced = project.withModule(module);
+    final replaced = await moduleService.execution.run(_replaceModuleOnWorker, (
+      project: project,
+      module: module,
+    ));
     if (!rediscoverFileSymbols || identical(replaced, project)) {
       return replaced;
     }
-    final index = WritersideProjectIndex.build(
-      replaced.modules,
-      fileSymbols: await _discoverFileSymbols(replaced.modules),
+    final recorder = WritersideInputRecorder(project.rootPath);
+    final symbols = await recorder.observe(
+      () => _discoverFileSymbols(replaced.modules),
     );
+    final index = await moduleService.execution.run(_indexProjectOnWorker, (
+      modules: replaced.modules,
+      symbols: symbols,
+    ));
     return WritersideProject(
       rootPath: replaced.rootPath,
       modules: replaced.modules,
@@ -1176,6 +1221,7 @@ class WritersideProjectService {
       ]),
       moduleDiscoveryComplete: replaced.moduleDiscoveryComplete,
       moduleDiscoveryDiagnostics: replaced.moduleDiscoveryDiagnostics,
+      inputSnapshot: replaced.inputSnapshot?.withDiscovery(recorder.snapshot),
     );
   }
 
@@ -1539,4 +1585,106 @@ List<WritersideModule> _resolveProjectModules(List<WritersideModule> modules) {
         ),
       ),
   ];
+}
+
+class _ProjectBuildInput {
+  const _ProjectBuildInput(
+    this.rootPath,
+    this.modules,
+    this.fileSymbols,
+    this.discovery,
+    this.preferredModuleRoot,
+  );
+  final String rootPath;
+  final List<WritersideModule> modules;
+  final List<WritersideSymbol> fileSymbols;
+  final WritersideModuleDiscoveryResult discovery;
+  final String? preferredModuleRoot;
+}
+
+WritersideProject _buildProjectOnWorker(_ProjectBuildInput input) {
+  final modules = _resolveProjectModules(input.modules);
+  final index = WritersideProjectIndex.build(
+    modules,
+    fileSymbols: input.fileSymbols,
+  );
+  WritersideModule? active;
+  if (input.preferredModuleRoot != null) {
+    active = modules
+        .where(
+          (module) => p.equals(module.rootPath, input.preferredModuleRoot!),
+        )
+        .firstOrNull;
+  }
+  active ??= modules.firstOrNull;
+  final instance = active?.instances
+      .where((candidate) => !candidate.isLibrary)
+      .firstOrNull;
+  return WritersideProject(
+    rootPath: input.rootPath,
+    modules: List.unmodifiable(modules),
+    activeModuleId: active == null ? null : _moduleId(active),
+    activeInstanceId: instance?.id,
+    index: index,
+    diagnostics: sortDiagnostics([
+      for (final module in modules) ...module.diagnostics,
+      ...index.diagnostics,
+      ...writersideWebFileNameDiagnostics(modules),
+      ...input.discovery.diagnostics,
+    ]),
+    moduleDiscoveryComplete: input.discovery.complete,
+    moduleDiscoveryDiagnostics: input.discovery.diagnostics,
+  );
+}
+
+WritersideProject _replaceModuleOnWorker(
+  ({WritersideProject project, WritersideModule module}) input,
+) => input.project.withModule(input.module);
+
+WritersideProjectIndex _indexProjectOnWorker(
+  ({List<WritersideModule> modules, List<WritersideSymbol> symbols}) input,
+) => WritersideProjectIndex.build(input.modules, fileSymbols: input.symbols);
+
+WritersideProject _projectWithInputs(
+  WritersideProject project,
+  WritersideInputSnapshot snapshot,
+) => WritersideProject(
+  rootPath: project.rootPath,
+  modules: project.modules,
+  activeModuleId: project.activeModuleId,
+  activeInstanceId: project.activeInstanceId,
+  index: project.index,
+  diagnostics: project.diagnostics,
+  moduleDiscoveryComplete: project.moduleDiscoveryComplete,
+  moduleDiscoveryDiagnostics: project.moduleDiscoveryDiagnostics,
+  inputSnapshot: snapshot,
+);
+
+class _ProjectInputs {
+  const _ProjectInputs(
+    this.project,
+    this.modules,
+    this.requireDiskSources,
+    this.ignoredPaths, {
+    this.allowIncompleteDiscovery = false,
+  });
+  final bool allowIncompleteDiscovery;
+  final WritersideInputSnapshot? project;
+  final List<WritersideInputSnapshot?> modules;
+  final bool requireDiskSources;
+  final Set<String> ignoredPaths;
+}
+
+Future<bool> _checkProjectInputs(_ProjectInputs input) async {
+  for (final snapshot in [input.project, ...input.modules]) {
+    if (snapshot == null) return false;
+    final matches = input.allowIncompleteDiscovery
+        ? await snapshot.matchesObservedInputs()
+        : await snapshot.matchesDisk(
+            requireDiskSources: input.requireDiskSources,
+            ignoredPaths: input.ignoredPaths,
+          );
+    if (!matches) return false;
+  }
+  return true;
 }

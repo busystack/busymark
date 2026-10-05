@@ -1,3 +1,4 @@
+import 'package:busymark/src/app/busymark_design.dart';
 import 'dart:io';
 
 import 'package:busymark/src/app/app_settings.dart';
@@ -387,11 +388,11 @@ void main() {
           );
         } else {
           await tester.enterText(
-            find.widgetWithText(TextField, 'Topic title:'),
+            find.widgetWithText(BusyMarkGroupedTextEntry, 'Topic title:'),
             'Created topic',
           );
           await tester.enterText(
-            find.widgetWithText(TextField, 'Topic Filename:'),
+            find.widgetWithText(BusyMarkGroupedTextEntry, 'Topic Filename:'),
             'created-topic',
           );
         }
@@ -409,6 +410,12 @@ void main() {
                       ?.filePath ==
                   topicPath('created-topic.$extension') ||
               container.read(workspaceControllerProvider).message != null,
+          diagnostics: () {
+            final workspace = container.read(workspaceControllerProvider);
+            return 'active=${workspace.activeBuffer?.filePath}, '
+                'message=${workspace.message?.code}, '
+                'created file=${File(topicPath('created-topic.$extension')).existsSync()}';
+          },
         );
         final after = container.read(workspaceControllerProvider);
         expect(
@@ -461,8 +468,17 @@ Finder _editableUnderKey(String key) => find.descendant(
   matching: find.byType(EditableText),
 );
 
-Future<void> _settle(WidgetTester tester, {bool Function()? until}) async {
-  for (var i = 0; i < (until == null ? 30 : 300); i++) {
+Future<void> _settle(
+  WidgetTester tester, {
+  bool Function()? until,
+  String Function()? diagnostics,
+}) async {
+  final deadline = DateTime.now().add(const Duration(seconds: 10));
+  for (
+    var i = 0;
+    until == null ? i < 30 : DateTime.now().isBefore(deadline);
+    i++
+  ) {
     await tester.runAsync(
       () => Future<void>.delayed(const Duration(milliseconds: 15)),
     );
@@ -473,7 +489,8 @@ Future<void> _settle(WidgetTester tester, {bool Function()? until}) async {
     expect(
       until(),
       isTrue,
-      reason: 'Timed out waiting for workspace operation',
+      reason:
+          'Workspace operation did not complete. ${diagnostics?.call() ?? ''}',
     );
   }
   await tester.pumpAndSettle();

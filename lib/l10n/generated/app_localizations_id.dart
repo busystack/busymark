@@ -4582,6 +4582,14 @@ class AppLocalizationsId extends AppLocalizations {
   String get spellingCheckFailed => 'Pemeriksaan ejaan gagal';
 
   @override
+  String get spellingSettingsLoadFailed =>
+      'Pengaturan pemeriksaan ejaan tidak dapat dimuat';
+
+  @override
+  String get retrySpellingSettings =>
+      'Coba muat ulang pengaturan pemeriksaan ejaan';
+
+  @override
   String get spellingCheckIncomplete => 'Pemeriksaan ejaan belum lengkap';
 
   @override
@@ -4643,4 +4651,13 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get spellingDictionaryRecoveryConflict =>
       'Kamus ejaan diubah secara eksternal. Salinan pemulihan telah disimpan.';
+
+  @override
+  String get windowMinimize => 'Minimalkan';
+
+  @override
+  String get windowMaximize => 'Maksimalkan';
+
+  @override
+  String get windowRestore => 'Pulihkan';
 }

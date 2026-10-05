@@ -11,6 +11,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:path/path.dart' as p;
 
 import '../app/busymark_design.dart';
+import '../app/busymark_dialogs.dart';
 import '../app/busymark_glyphs.dart';
 import '../app/busymark_toast.dart';
 import '../app/localization.dart';
@@ -643,9 +644,10 @@ class _BusyMarkVisualizationCardState
     BuildContext context,
     VisualizationRenderResult result,
   ) {
-    return showDialog<void>(
-      context: context,
-      builder: (_) => Dialog.fullscreen(
+    return showBusyMarkModalDialog<void>(
+      context,
+      builder: (_) => BusyMarkSurfaceScope(
+        role: BusyMarkSurfaceRole.dialog,
         child: _FullScreenDiagram(
           title: widget.descriptor.kind.displayName,
           result: result,
@@ -676,23 +678,27 @@ class _FullScreenDiagramState extends State<_FullScreenDiagram> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.title),
-        leading: IconButton(
-          icon: const Icon(BusyMarkGlyphs.windowClose),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(BusyMarkSpacing.lg),
-        child: Center(
-          child: _DiagramViewport(
-            result: widget.result,
-            transformationController: _transformationController,
-            maximumHeight: double.infinity,
+    return Material(
+      color: busyMarkDialogSurfaceColor(context),
+      child: Column(
+        children: [
+          BusyMarkDialogTitleBar(
+            title: Text(widget.title),
+            closeSemanticLabel: context.l10n.close,
           ),
-        ),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.all(BusyMarkSpacing.lg),
+              child: Center(
+                child: _DiagramViewport(
+                  result: widget.result,
+                  transformationController: _transformationController,
+                  maximumHeight: double.infinity,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

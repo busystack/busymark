@@ -4574,6 +4574,13 @@ class AppLocalizationsVi extends AppLocalizations {
   String get spellingCheckFailed => 'Kiểm tra chính tả thất bại';
 
   @override
+  String get spellingSettingsLoadFailed =>
+      'Không thể tải cài đặt kiểm tra chính tả';
+
+  @override
+  String get retrySpellingSettings => 'Thử tải lại cài đặt kiểm tra chính tả';
+
+  @override
   String get spellingCheckIncomplete => 'Kiểm tra chính tả chưa hoàn tất';
 
   @override
@@ -4635,4 +4642,13 @@ class AppLocalizationsVi extends AppLocalizations {
   @override
   String get spellingDictionaryRecoveryConflict =>
       'Từ điển chính tả đã được thay đổi từ bên ngoài. Một bản sao khôi phục đã được giữ lại.';
+
+  @override
+  String get windowMinimize => 'Thu nhỏ';
+
+  @override
+  String get windowMaximize => 'Phóng to';
+
+  @override
+  String get windowRestore => 'Khôi phục';
 }

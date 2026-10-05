@@ -7752,6 +7752,18 @@ abstract class AppLocalizations {
   /// **'Spelling check failed'**
   String get spellingCheckFailed;
 
+  /// Settings failure shown when a spelling word store cannot be read.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load spelling settings'**
+  String get spellingSettingsLoadFailed;
+
+  /// Action that deliberately retries failed spelling settings preparation.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry loading spelling settings'**
+  String get retrySpellingSettings;
+
   /// No description provided for @spellingCheckIncomplete.
   ///
   /// In en, this message translates to:
@@ -7853,6 +7865,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The spelling dictionary changed externally. A recovery copy was preserved.'**
   String get spellingDictionaryRecoveryConflict;
+
+  /// Tooltip and accessibility label for minimizing the application window.
+  ///
+  /// In en, this message translates to:
+  /// **'Minimize'**
+  String get windowMinimize;
+
+  /// Tooltip and accessibility label for maximizing the application window.
+  ///
+  /// In en, this message translates to:
+  /// **'Maximize'**
+  String get windowMaximize;
+
+  /// Tooltip and accessibility label for restoring a maximized or fullscreen window to its normal size.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore'**
+  String get windowRestore;
 }
 
 class _AppLocalizationsDelegate

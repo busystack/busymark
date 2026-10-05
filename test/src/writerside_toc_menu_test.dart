@@ -1,3 +1,4 @@
+import 'package:busymark/src/app/busymark_dialogs.dart';
 import 'package:busymark/src/app/busymark_design.dart';
 import 'package:busymark/src/platform/native_menu_service.dart';
 import 'package:busymark/l10n/generated/app_localizations.dart';
@@ -55,11 +56,162 @@ void main() {
     expect(chosen?.fileName, 'gamma.md');
     await tester.tap(find.text('Link'));
     await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), 'GAM');
+    await tester.pump();
     await tester.sendKeyEvent(LogicalKeyboardKey.escape);
     await tester.pumpAndSettle();
     expect(chosen, isNull);
   });
 
+  testWidgets(
+    'picker returns the supplied topic identity for duplicate names',
+    (tester) async {
+      final topics = [
+        for (final root in ['/first', '/second'])
+          const WritersideTopicParser().parseMarkdown(
+            filePath: '$root/same.md',
+            source: '# Same\n',
+            topicsRoot: root,
+          ),
+      ];
+      WritersideTopic? chosen;
+      await tester.pumpWidget(
+        MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Builder(
+            builder: (context) => TextButton(
+              child: const Text('Link'),
+              onPressed: () async =>
+                  chosen = await showBusyMarkModalDialog<WritersideTopic>(
+                    context,
+                    builder: (_) =>
+                        WritersideExistingTopicPicker(topics: topics),
+                  ),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.text('Link'));
+      await tester.pumpAndSettle();
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pumpAndSettle();
+      expect(chosen, same(topics[1]));
+      await tester.tap(find.text('Link'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), 'SAME');
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pumpAndSettle();
+      expect(chosen, isNull);
+    },
+  );
+
+  testWidgets('Group keeps raw input and Enter-only acceptance', (
+    tester,
+  ) async {
+    String? result;
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Builder(
+          builder: (context) => TextButton(
+            child: const Text('Launch'),
+            onPressed: () async =>
+                result = await showBusyMarkModalDialog<String>(
+                  context,
+                  builder: (_) => const WritersideTocTextDialog(
+                    title: 'Group',
+                    label: 'Title',
+                    enterOnly: true,
+                  ),
+                ),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('Launch'));
+    await tester.pumpAndSettle();
+    expect(find.byType(WritersideTocTextDialog), findsOneWidget);
+    expect(find.byType(BusyMarkDialogButton), findsNothing);
+    await tester.enterText(find.byType(BusyMarkGroupedTextEntry), '  ');
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pumpAndSettle();
+    expect(find.byType(WritersideTocTextDialog), findsOneWidget);
+    await tester.enterText(
+      find.byType(BusyMarkGroupedTextEntry),
+      '  Group name  ',
+    );
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pumpAndSettle();
+    expect(result, '  Group name  ');
+  });
+
+  testWidgets('rename preserves validation and Preview/Refactor results', (
+    tester,
+  ) async {
+    WritersideTopicRenameDialogResult? result;
+    await tester.pumpWidget(
+      MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Builder(
+          builder: (context) => TextButton(
+            child: const Text('Launch'),
+            onPressed: () async => result =
+                await showBusyMarkModalDialog<
+                  WritersideTopicRenameDialogResult
+                >(
+                  context,
+                  barrierDismissible: false,
+                  builder: (_) => const WritersideTopicRenameDialog(
+                    currentFileName: 'old.topic',
+                  ),
+                ),
+          ),
+        ),
+      ),
+    );
+    for (final preview in [true, false]) {
+      await tester.tap(find.text('Launch'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(BusyMarkGroupedTextEntry), 'wrong.md');
+      await tester.pump();
+      final buttons = tester
+          .widgetList<BusyMarkDialogButton>(find.byType(BusyMarkDialogButton))
+          .toList();
+      expect(
+        buttons
+            .where((button) => button.label != 'Cancel')
+            .every((button) => button.onPressed == null),
+        isTrue,
+      );
+      await tester.enterText(
+        find.byType(BusyMarkGroupedTextEntry),
+        '  new.topic  ',
+      );
+      await tester.pump();
+      if (preview) {
+        await tester.tap(find.text('Preview'));
+      } else {
+        await tester.testTextInput.receiveAction(TextInputAction.done);
+      }
+      await tester.pumpAndSettle();
+      expect(result?.fileName, 'new.topic');
+      expect(
+        result?.action,
+        preview
+            ? WritersideTopicRenameDialogAction.preview
+            : WritersideTopicRenameDialogAction.refactor,
+      );
+    }
+    await tester.tap(find.text('Launch'));
+    await tester.pumpAndSettle();
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
+    expect(result, isNull);
+  });
   for (final direction in TextDirection.values) {
     testWidgets('nested menus use the native host in $direction', (
       tester,

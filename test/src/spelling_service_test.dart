@@ -5,8 +5,11 @@ import 'dart:io';
 import 'package:busymark/l10n/generated/app_localizations.dart';
 import 'package:busymark/l10n/generated/app_localizations_en.dart';
 import 'package:busymark/src/app/app_settings.dart';
+import 'package:busymark/src/app/app_router.dart';
+import 'package:busymark/src/app/busymark_design.dart';
 import 'package:busymark/src/app/busymark_toast.dart';
 import 'package:busymark/src/core/atomic_file_writer.dart';
+import 'package:busymark/src/platform/header_bar_configuration.dart';
 import 'package:busymark/src/markdown/busymark_document.dart';
 import 'package:busymark/src/markdown/markdown_model.dart';
 import 'package:busymark/src/markdown/markdown_parser.dart';
@@ -26,9 +29,11 @@ import 'package:busymark/src/spellcheck/wysiwyg_spelling_projection.dart';
 import 'package:busymark/src/spellcheck/writerside_spelling_projection.dart';
 import 'package:busymark/src/workspace/document_buffer.dart';
 import 'package:busymark/src/workspace/presentation/workspace_screen.dart';
+import 'package:busymark/src/workspace/presentation/settings_screen.dart';
 import 'package:busymark/src/workspace/workspace_model.dart';
 import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
@@ -41,6 +46,17 @@ const _snapshot = SpellingSnapshotIdentity(
 );
 
 void main() {
+  setUp(() {
+    final messenger =
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    for (final name in ['yaru_window', 'yaru_window/events']) {
+      messenger.setMockMethodCallHandler(
+        MethodChannel(name),
+        (call) async => call.method == 'state' ? <String, Object?>{} : null,
+      );
+    }
+  });
+
   test('document kinds expose one authoritative spelling capability', () {
     expect(DocumentKind.markdown.supportsSpelling, isTrue);
     expect(DocumentKind.writersideMarkdownTopic.supportsSpelling, isTrue);
@@ -744,6 +760,295 @@ void main() {
       expect(await _publishedDirectories(afterRoot), hasLength(1));
     });
 
+    test(
+      'a stale invalid record cannot remove a repaired installation',
+      () async {
+        final root = p.join(temporary.path, 'stale-invalid');
+        final destination = Directory(p.join(root, 'en-Test'));
+        await destination.create(recursive: true);
+        await File(
+          p.join(destination.path, 'manifest.json'),
+        ).writeAsString('malformed');
+        final catalogRoot = Directory(p.join(temporary.path, 'stale-catalog'));
+        await catalogRoot.create();
+        await File(p.join(catalogRoot.path, 'dictionaries.json')).writeAsString(
+          jsonEncode({
+            'schemaVersion': 2,
+            'dictionaries': [_resourceJson(resource)],
+          }),
+        );
+        final invalid = (await SpellingDictionaryCatalog.load(
+          bundledRoot: catalogRoot.path,
+          downloadedRoot: root,
+        )).invalidInstallations.single;
+        final repaired = await const SpellingDictionaryPairInstaller().install(
+          affSource: fixtureAff,
+          dicSource: fixtureDic,
+          spec: SpellingDictionaryInstallSpec.downloaded(resource),
+          destinationRoot: root,
+          validateNativePair: (_, _, _) async => 'UTF-8',
+          replaceExisting: true,
+        );
+        await expectLater(
+          const SpellingDictionaryPairInstaller().removeInvalid(
+            installation: invalid,
+            installationRoot: root,
+          ),
+          throwsStateError,
+        );
+        expect(await File(repaired.affPath).exists(), isTrue);
+        expect(await File(repaired.dicPath).exists(), isTrue);
+      },
+    );
+
+    test(
+      'a stale valid descriptor cannot remove a replacement in another process',
+      () async {
+        final root = p.join(temporary.path, 'process-removal');
+        final installer = const SpellingDictionaryPairInstaller();
+        final old = await installer.install(
+          affSource: fixtureAff,
+          dicSource: fixtureDic,
+          spec: SpellingDictionaryInstallSpec.downloaded(resource),
+          destinationRoot: root,
+          validateNativePair: (_, _, _) async => 'UTF-8',
+        );
+        final flutterRoot = Platform.environment['FLUTTER_ROOT'];
+        final dartExecutable = flutterRoot == null
+            ? 'dart'
+            : p.join(flutterRoot, 'bin', 'cache', 'dart-sdk', 'bin', 'dart');
+        final process = await Process.start(dartExecutable, [
+          '--packages=.dart_tool/package_config.json',
+          p.join(
+            Directory.current.path,
+            'test',
+            'support',
+            'spelling_dictionary_installer_process.dart',
+          ),
+          fixtureAff.path,
+          fixtureDic.path,
+          root,
+          'remove',
+        ], workingDirectory: Directory.current.path);
+        addTearDown(() => process.kill());
+        final errors = process.stderr.transform(utf8.decoder).join();
+        expect(
+          await process.stdout
+              .transform(utf8.decoder)
+              .transform(const LineSplitter())
+              .first,
+          'ready',
+        );
+        final replacement = await installer.install(
+          affSource: fixtureAff,
+          dicSource: fixtureDic,
+          spec: SpellingDictionaryInstallSpec(
+            resourceId: resource.resourceId,
+            id: resource.id,
+            locales: resource.locales,
+            label: resource.label,
+            sourceRevision: 'repaired-fixture',
+            affSha256: resource.affSha256,
+            dicSha256: resource.dicSha256,
+            affSize: resource.affSize,
+            dicSize: resource.dicSize,
+            kind: SpellingDictionaryInstallationKind.downloaded,
+          ),
+          destinationRoot: root,
+          validateNativePair: (_, _, _) async => 'UTF-8',
+          replaceExisting: true,
+        );
+        process.stdin.writeln('go');
+        await process.stdin.close();
+        expect(await process.exitCode, 3, reason: await errors);
+        expect(old.directoryPath, replacement.directoryPath);
+        expect(File(replacement.affPath).existsSync(), isTrue);
+        expect(File(replacement.dicPath).existsSync(), isTrue);
+        final manifest =
+            jsonDecode(
+                  await File(
+                    p.join(replacement.directoryPath, 'manifest.json'),
+                  ).readAsString(),
+                )
+                as Map<String, Object?>;
+        expect(manifest['sourceRevision'], 'repaired-fixture');
+      },
+    );
+
+    test('catalog waits through a replacement publication gap', () async {
+      final root = p.join(temporary.path, 'catalog-publication-gap');
+      final catalogRoot = Directory(p.join(temporary.path, 'gap-catalog'));
+      await catalogRoot.create();
+      await File(p.join(catalogRoot.path, 'dictionaries.json')).writeAsString(
+        jsonEncode({
+          'schemaVersion': 2,
+          'dictionaries': [_resourceJson(resource)],
+        }),
+      );
+      await const SpellingDictionaryPairInstaller().install(
+        affSource: fixtureAff,
+        dicSource: fixtureDic,
+        spec: SpellingDictionaryInstallSpec.downloaded(resource),
+        destinationRoot: root,
+        validateNativePair: (_, _, _) async => 'UTF-8',
+      );
+      final moved = Completer<void>();
+      final release = Completer<void>();
+      final replacement =
+          SpellingDictionaryPairInstaller(
+            onReplacementMoved: () async {
+              moved.complete();
+              await release.future;
+            },
+          ).install(
+            affSource: fixtureAff,
+            dicSource: fixtureDic,
+            spec: SpellingDictionaryInstallSpec(
+              resourceId: resource.resourceId,
+              id: resource.id,
+              locales: resource.locales,
+              label: 'Replaced Test English',
+              sourceRevision: resource.sourceRevision,
+              affSha256: resource.affSha256,
+              dicSha256: resource.dicSha256,
+              affSize: resource.affSize,
+              dicSize: resource.dicSize,
+              kind: SpellingDictionaryInstallationKind.downloaded,
+            ),
+            destinationRoot: root,
+            validateNativePair: (_, _, _) async => 'UTF-8',
+            replaceExisting: true,
+          );
+      await moved.future;
+      final listed = Completer<void>();
+      final catalogFuture = SpellingDictionaryCatalog.load(
+        bundledRoot: catalogRoot.path,
+        downloadedRoot: root,
+        onInstallationListed: (path, entries) {
+          if (path == root && !listed.isCompleted) {
+            expect(
+              entries.any(
+                (name) => name.startsWith('.busymark-replaced-en-Test-'),
+              ),
+              isTrue,
+            );
+            listed.complete();
+          }
+        },
+      );
+      await listed.future;
+      release.complete();
+      await replacement;
+      final catalog = await catalogFuture;
+      expect(catalog.invalidInstallations, isEmpty);
+      expect(catalog.installedById('en-Test')?.label, 'Replaced Test English');
+    });
+
+    test(
+      'a late no-replace publisher cannot replace a completed installation',
+      () async {
+        final root = p.join(temporary.path, 'publisher-race');
+        final validating = Completer<void>();
+        final release = Completer<void>();
+        var commits = 0;
+        final installer = SpellingDictionaryPairInstaller(
+          onCommitted: (_) => commits++,
+        );
+        final first = installer.install(
+          affSource: fixtureAff,
+          dicSource: fixtureDic,
+          spec: SpellingDictionaryInstallSpec.downloaded(resource),
+          destinationRoot: root,
+          validateNativePair: (_, _, _) async {
+            validating.complete();
+            await release.future;
+            return 'UTF-8';
+          },
+        );
+        await validating.future;
+        final second = await installer.install(
+          affSource: fixtureAff,
+          dicSource: fixtureDic,
+          spec: SpellingDictionaryInstallSpec.downloaded(resource),
+          destinationRoot: root,
+          validateNativePair: (_, _, _) async => 'UTF-8',
+        );
+        final before = await File(
+          p.join(second.directoryPath, 'manifest.json'),
+        ).readAsBytes();
+        release.complete();
+        await expectLater(first, throwsA(isA<FileSystemException>()));
+        expect(commits, 1);
+        expect(
+          await File(
+            p.join(second.directoryPath, 'manifest.json'),
+          ).readAsBytes(),
+          before,
+        );
+        expect(
+          await File(second.affPath).readAsBytes(),
+          await fixtureAff.readAsBytes(),
+        );
+        expect(
+          await File(second.dicPath).readAsBytes(),
+          await fixtureDic.readAsBytes(),
+        );
+      },
+    );
+
+    test(
+      'independent process observes the published no-replace destination',
+      () async {
+        final root = p.join(temporary.path, 'process-publisher');
+        final flutterRoot = Platform.environment['FLUTTER_ROOT'];
+        final dartExecutable = flutterRoot == null
+            ? 'dart'
+            : p.join(flutterRoot, 'bin', 'cache', 'dart-sdk', 'bin', 'dart');
+        final helper = p.join(
+          Directory.current.path,
+          'test',
+          'support',
+          'spelling_dictionary_installer_process.dart',
+        );
+        final process = await Process.start(dartExecutable, [
+          '--packages=.dart_tool/package_config.json',
+          helper,
+          fixtureAff.path,
+          fixtureDic.path,
+          root,
+        ], workingDirectory: Directory.current.path);
+        addTearDown(() => process.kill());
+        final errors = process.stderr.transform(utf8.decoder).join();
+        expect(
+          await process.stdout
+              .transform(utf8.decoder)
+              .transform(const LineSplitter())
+              .first,
+          'validating',
+        );
+        final installed = await const SpellingDictionaryPairInstaller().install(
+          affSource: fixtureAff,
+          dicSource: fixtureDic,
+          spec: SpellingDictionaryInstallSpec.downloaded(resource),
+          destinationRoot: root,
+          validateNativePair: (_, _, _) async => 'UTF-8',
+        );
+        final manifest = await File(
+          p.join(installed.directoryPath, 'manifest.json'),
+        ).readAsBytes();
+        process.stdin.writeln('go');
+        await process.stdin.close();
+        expect(await process.exitCode, 2, reason: await errors);
+        expect(
+          await File(
+            p.join(installed.directoryPath, 'manifest.json'),
+          ).readAsBytes(),
+          manifest,
+        );
+        expect(await _publishedDirectories(root), hasLength(1));
+      },
+    );
+
     test('stalled response times out, cancels, and permits retry', () async {
       final body = StreamController<List<int>>();
       final cancelled = Completer<void>();
@@ -779,6 +1084,39 @@ void main() {
       );
       expect(await destination.readAsBytes(), [1, 2]);
     });
+
+    test(
+      'asynchronous output sink errors fail the receiver without zone leaks',
+      () async {
+        final destination = Directory(
+          p.join(temporary.path, 'output-is-directory'),
+        );
+        await destination.create();
+        final uncaught = <Object>[];
+        final failure = await runZonedGuarded<Future<Object?>>(() async {
+          try {
+            await receiveSpellingDictionaryBody(
+              bytes: Stream.fromFuture(
+                Future.delayed(
+                  const Duration(milliseconds: 20),
+                  () => <int>[1],
+                ),
+              ),
+              destination: File(destination.path),
+              expectedBytes: 1,
+              cancellation: SpellingDictionaryDownloadCancellation(),
+              onProgress: (_) {},
+            ).timeout(const Duration(seconds: 2));
+            return null;
+          } on Object catch (error) {
+            return error;
+          }
+        }, (error, _) => uncaught.add(error));
+        expect(failure, isA<FileSystemException>());
+        expect(uncaught, isEmpty);
+        expect(await destination.exists(), isTrue);
+      },
+    );
 
     test('a failed replacement cannot damage a working installation', () async {
       final root = p.join(temporary.path, 'working');
@@ -887,6 +1225,176 @@ void main() {
         hasLength(1),
       );
     });
+
+    test(
+      'controller reserves an installation before coordinator startup',
+      () async {
+        final catalogRoot = Directory(
+          p.join(temporary.path, 'admission-catalog'),
+        );
+        await catalogRoot.create();
+        await File(p.join(catalogRoot.path, 'dictionaries.json')).writeAsString(
+          jsonEncode({
+            'schemaVersion': 2,
+            'dictionaries': [_resourceJson(resource)],
+          }),
+        );
+        final entered = Completer<void>();
+        final release = Completer<void>();
+        var downloads = 0;
+        final controller = SpellingSessionController(
+          bundledRoot: catalogRoot.path,
+          applicationSupportRoot: p.join(temporary.path, 'admission-support'),
+          dictionaryStorageRoot: p.join(temporary.path, 'admission-managed'),
+          coordinatorStarter: () async {
+            entered.complete();
+            await release.future;
+            return SpellingCoordinator.start();
+          },
+          dictionaryDownloader: SpellingDictionaryDownloader(
+            downloadFile:
+                ({
+                  required source,
+                  required destination,
+                  required expectedBytes,
+                  required cancellation,
+                  required onProgress,
+                }) async {
+                  downloads++;
+                  await copyDownload(
+                    source: source,
+                    destination: destination,
+                    expectedBytes: expectedBytes,
+                    cancellation: cancellation,
+                    onProgress: onProgress,
+                  );
+                },
+          ),
+        );
+        addTearDown(controller.dispose);
+        await controller.prepareSettings(null);
+        final first = controller.installDictionary(resource.id);
+        final firstAssertion = expectLater(first, completes);
+        await entered.future;
+        final second = controller.installDictionary(resource.id);
+        release.complete();
+        await expectLater(second, throwsA(isA<StateError>()));
+        await firstAssertion;
+        expect(downloads, 2);
+        expect(controller.dictionaryInstallStatus, isNull);
+        expect(controller.catalog?.installedById(resource.id), isNotNull);
+      },
+    );
+
+    test(
+      'controller releases installation ownership after setup failure',
+      () async {
+        final catalogRoot = Directory(p.join(temporary.path, 'setup-catalog'));
+        await catalogRoot.create();
+        await File(p.join(catalogRoot.path, 'dictionaries.json')).writeAsString(
+          jsonEncode({
+            'schemaVersion': 2,
+            'dictionaries': [_resourceJson(resource)],
+          }),
+        );
+        var starts = 0;
+        final controller = SpellingSessionController(
+          bundledRoot: catalogRoot.path,
+          applicationSupportRoot: p.join(temporary.path, 'setup-support'),
+          dictionaryStorageRoot: p.join(temporary.path, 'setup-managed'),
+          coordinatorStarter: () {
+            starts++;
+            if (starts == 1) return Future.error(StateError('startup failed'));
+            return SpellingCoordinator.start();
+          },
+          dictionaryDownloader: SpellingDictionaryDownloader(
+            downloadFile: copyDownload,
+          ),
+        );
+        addTearDown(controller.dispose);
+        await controller.prepareSettings(null);
+        await expectLater(
+          controller.installDictionary(resource.id),
+          throwsA(isA<StateError>()),
+        );
+        expect(
+          controller.dictionaryInstallStatus?.phase,
+          SpellingDictionaryInstallPhase.failed,
+        );
+        await controller.retryDictionaryInstallation();
+        expect(starts, 2);
+        expect(controller.dictionaryInstallStatus, isNull);
+        expect(controller.catalog?.installedById(resource.id), isNotNull);
+      },
+    );
+
+    test(
+      'controller cancellation remains with the reserved startup operation',
+      () async {
+        final catalogRoot = Directory(
+          p.join(temporary.path, 'cancel-startup-catalog'),
+        );
+        await catalogRoot.create();
+        await File(p.join(catalogRoot.path, 'dictionaries.json')).writeAsString(
+          jsonEncode({
+            'schemaVersion': 2,
+            'dictionaries': [_resourceJson(resource)],
+          }),
+        );
+        final entered = Completer<void>();
+        final release = Completer<void>();
+        var downloads = 0;
+        final controller = SpellingSessionController(
+          bundledRoot: catalogRoot.path,
+          applicationSupportRoot: p.join(
+            temporary.path,
+            'cancel-startup-support',
+          ),
+          dictionaryStorageRoot: p.join(
+            temporary.path,
+            'cancel-startup-managed',
+          ),
+          coordinatorStarter: () async {
+            entered.complete();
+            await release.future;
+            return SpellingCoordinator.start();
+          },
+          dictionaryDownloader: SpellingDictionaryDownloader(
+            downloadFile:
+                ({
+                  required source,
+                  required destination,
+                  required expectedBytes,
+                  required cancellation,
+                  required onProgress,
+                }) async {
+                  downloads++;
+                  await copyDownload(
+                    source: source,
+                    destination: destination,
+                    expectedBytes: expectedBytes,
+                    cancellation: cancellation,
+                    onProgress: onProgress,
+                  );
+                },
+          ),
+        );
+        addTearDown(controller.dispose);
+        await controller.prepareSettings(null);
+        final first = controller.installDictionary(resource.id);
+        await entered.future;
+        controller.cancelDictionaryInstallation();
+        await expectLater(
+          controller.installDictionary(resource.id),
+          throwsA(isA<StateError>()),
+        );
+        release.complete();
+        await first;
+        expect(downloads, 0);
+        expect(controller.dictionaryInstallStatus, isNull);
+        expect(controller.catalog?.installedById(resource.id), isNull);
+      },
+    );
   });
 
   test(
@@ -1657,6 +2165,93 @@ void main() {
     );
   });
 
+  test('cached runs cover the complete checked text across edits', () async {
+    final coordinator = await SpellingCoordinator.start();
+    addTearDown(coordinator.dispose);
+    final context = _fixtureContext(project: 'cache-coverage', revision: 0);
+
+    Future<void> check(
+      String source,
+      int revision,
+      List<String> expected,
+    ) async {
+      final snapshot = SpellingSnapshotIdentity(
+        bufferId: 'cache-coverage',
+        contentRevision: revision,
+        documentKind: DocumentKind.markdown,
+        contextGeneration: 1,
+      );
+      await coordinator.checkNow(
+        SpellingCheckRequest(
+          snapshot: snapshot,
+          engineContext: context,
+          automatic: false,
+          project: () async => const MarkdownSpellingProjector().project(
+            filePath: '/tmp/cache-coverage.md',
+            source: source,
+            mode: MarkdownMode.commonMark,
+            languageId: 'en-Test',
+            snapshot: snapshot,
+          ),
+        ),
+      );
+      expect(coordinator.state.complete, isTrue);
+      expect(
+        coordinator.misspellings.map((item) => item.word),
+        expected,
+        reason: source,
+      );
+      for (final occurrence in coordinator.misspellings) {
+        expect(
+          source.substring(occurrence.sourceStart!, occurrence.sourceEnd!),
+          occurrence.word,
+        );
+      }
+    }
+
+    await check('hello `code`wrld', 1, ['wrld']);
+    await check('hello wrld', 2, ['wrld']);
+    await check('hello `code`wrld', 3, ['wrld']);
+    await check('hello wrld', 4, ['wrld']);
+  });
+
+  test(
+    'a NUL suffix cannot complete checking and recovers after correction',
+    () async {
+      final coordinator = await SpellingCoordinator.start();
+      addTearDown(coordinator.dispose);
+      final context = _fixtureContext(project: 'nul-document', revision: 0);
+      Future<void> check(String text, int revision) {
+        final snapshot = SpellingSnapshotIdentity(
+          bufferId: 'nul-document',
+          contentRevision: revision,
+          documentKind: DocumentKind.markdown,
+          contextGeneration: 1,
+        );
+        return coordinator.checkNow(
+          SpellingCheckRequest(
+            snapshot: snapshot,
+            engineContext: context,
+            automatic: false,
+            project: () async => SpellingProjectionResult(
+              runs: [_runFor(text, snapshot: snapshot)],
+              complete: true,
+            ),
+          ),
+        );
+      }
+
+      await check('hello\u0000wrld', 1);
+      expect(coordinator.state.complete, isFalse);
+      expect(coordinator.state.status, SpellingPresentationStatus.incomplete);
+      await check('hello wrld', 2);
+      expect(coordinator.state.complete, isTrue);
+      expect(coordinator.misspellings.single.word, 'wrld');
+      await check('hello helo', 3);
+      expect(coordinator.misspellings.single.word, 'helo');
+    },
+  );
+
   test('project initialization publishes only the latest owner', () async {
     for (final completeLatestFirst in [true, false]) {
       final temporary = await Directory.systemTemp.createTemp(
@@ -1732,6 +2327,1236 @@ void main() {
       controller.dispose();
     }
   });
+
+  test(
+    'older same-project Settings read cannot undo a newer snapshot',
+    () async {
+      final temporary = await Directory.systemTemp.createTemp(
+        'busymark-project-refresh-order-',
+      );
+      addTearDown(() => temporary.delete(recursive: true));
+      final bundle = await _createFixtureBundle(temporary);
+      final root = p.join(temporary.path, 'project');
+      await Directory(root).create();
+      final input = _sessionInput(
+        id: 'project-refresh-order',
+        root: root,
+        text: 'BusyBrand',
+        settings: AppSettings.defaults().copyWith(
+          defaultSpellingLanguage: 'en-Test',
+        ),
+      );
+      final readEntered = Completer<void>();
+      final readRelease = Completer<void>();
+      var delayNext = false;
+      final controller = SpellingSessionController(
+        bundledRoot: bundle,
+        applicationSupportRoot: p.join(temporary.path, 'support'),
+        dictionaryStorageRoot: p.join(temporary.path, 'dictionary-storage'),
+        verifyDictionaryChecksums: false,
+        wordStoreReader: (store) async {
+          final snapshot = await store.read();
+          if (store.projectStore && delayNext) {
+            delayNext = false;
+            readEntered.complete();
+            await readRelease.future;
+          }
+          return snapshot;
+        },
+      );
+      addTearDown(controller.dispose);
+      await controller.prepareSettings(input.workspace);
+      delayNext = true;
+      final older = controller.prepareSettings(input.workspace);
+      await readEntered.future;
+      final store = SpellingWordStore(
+        filePath: p.join(root, '.busymark', 'spelling.json'),
+        projectStore: true,
+      );
+      await store.addWord('en-Test', 'BusyBrand');
+      await store.setProjectLanguage('en-Test');
+      await controller.prepareSettings(input.workspace);
+      expect(controller.projectWords.wordsFor('en-Test'), ['BusyBrand']);
+      expect(controller.projectWords.projectLanguage, 'en-Test');
+      readRelease.complete();
+      await older;
+      expect(controller.projectWords.wordsFor('en-Test'), ['BusyBrand']);
+      expect(controller.projectWords.projectLanguage, 'en-Test');
+      expect((await store.read()).wordsFor('en-Test'), ['BusyBrand']);
+      await controller.checkNow(input);
+      expect(controller.misspellings, isEmpty);
+    },
+  );
+
+  test('older project watcher read cannot undo Settings publication', () async {
+    final temporary = await Directory.systemTemp.createTemp(
+      'busymark-project-watcher-order-',
+    );
+    addTearDown(() => temporary.delete(recursive: true));
+    final bundle = await _createFixtureBundle(temporary);
+    final root = p.join(temporary.path, 'project');
+    await Directory(root).create();
+    final input = _sessionInput(
+      id: 'project-watcher-order',
+      root: root,
+      text: 'BusyBrand',
+      settings: AppSettings.defaults().copyWith(
+        defaultSpellingLanguage: 'en-Test',
+      ),
+    );
+    final readEntered = Completer<void>();
+    final readRelease = Completer<void>();
+    var delayNext = false;
+    final controller = SpellingSessionController(
+      bundledRoot: bundle,
+      applicationSupportRoot: p.join(temporary.path, 'support'),
+      dictionaryStorageRoot: p.join(temporary.path, 'dictionary-storage'),
+      verifyDictionaryChecksums: false,
+      wordStoreReader: (store) async {
+        final snapshot = await store.read();
+        if (store.projectStore && delayNext) {
+          delayNext = false;
+          readEntered.complete();
+          await readRelease.future;
+        }
+        return snapshot;
+      },
+    );
+    addTearDown(controller.dispose);
+    await controller.prepareSettings(input.workspace);
+    final store = SpellingWordStore(
+      filePath: p.join(root, '.busymark', 'spelling.json'),
+      projectStore: true,
+    );
+    delayNext = true;
+    await store.addWord('en-Test', 'OldWord');
+    await readEntered.future;
+    await const AtomicFileWriter().writeBytes(
+      store.filePath,
+      utf8.encode(
+        '${jsonEncode({
+          'schemaVersion': 1,
+          'revision': 1,
+          'projectLanguage': 'en-Test',
+          'words': {
+            'en-Test': [
+              {'key': 'busybrand', 'display': 'BusyBrand'},
+            ],
+          },
+        })}\n',
+      ),
+      overwrite: true,
+    );
+    await controller.prepareSettings(input.workspace);
+    expect(controller.projectWords.wordsFor('en-Test'), ['BusyBrand']);
+    readRelease.complete();
+    await Future<void>.delayed(Duration.zero);
+    expect(controller.projectWords.wordsFor('en-Test'), ['BusyBrand']);
+    expect(controller.projectWords.projectLanguage, 'en-Test');
+    final persisted = await store.read();
+    expect(persisted.wordsFor('en-Test'), ['BusyBrand']);
+    expect(persisted.projectLanguage, 'en-Test');
+    await controller.checkNow(input);
+    expect(controller.misspellings, isEmpty);
+  });
+
+  test('project read begun during a mutation cannot undo its result', () async {
+    for (final changeLanguage in [false, true]) {
+      final temporary = await Directory.systemTemp.createTemp(
+        'busymark-project-mutation-refresh-',
+      );
+      addTearDown(() => temporary.delete(recursive: true));
+      final bundle = await _createFixtureBundle(temporary);
+      final root = p.join(temporary.path, 'project');
+      await Directory(root).create();
+      final filePath = p.join(root, '.busymark', 'spelling.json');
+      final external = SpellingWordStore(
+        filePath: filePath,
+        projectStore: true,
+      );
+      await external.addWord('en-Test', 'BusyBrand');
+      final writer = _GatedSpellingAtomicFileWriter();
+      final readEntered = Completer<void>();
+      final readRelease = Completer<void>();
+      var holdRead = false;
+      final controller = SpellingSessionController(
+        bundledRoot: bundle,
+        applicationSupportRoot: p.join(temporary.path, 'support'),
+        dictionaryStorageRoot: p.join(temporary.path, 'dictionary-storage'),
+        verifyDictionaryChecksums: false,
+        wordStoreFactory: ({required filePath, required projectStore}) =>
+            SpellingWordStore(
+              filePath: filePath,
+              projectStore: projectStore,
+              writer: projectStore ? writer : const AtomicFileWriter(),
+            ),
+        wordStoreReader: (store) async {
+          final snapshot = await store.read();
+          if (store.projectStore && holdRead) {
+            holdRead = false;
+            readEntered.complete();
+            await readRelease.future;
+          }
+          return snapshot;
+        },
+      );
+      addTearDown(controller.dispose);
+      final input = _sessionInput(
+        id: 'project-mutation-refresh',
+        root: root,
+        text: 'BusyBrand',
+        settings: AppSettings.defaults().copyWith(
+          defaultSpellingLanguage: changeLanguage ? 'fr-CA' : 'en-Test',
+        ),
+      );
+      await controller.prepareSettings(input.workspace);
+      writer.holdNextWrite();
+      final mutation = changeLanguage
+          ? controller.setProjectLanguage('en-Test')
+          : controller.removeProjectWord('en-Test', 'BusyBrand');
+      await writer.entered.future;
+      holdRead = true;
+      final refresh = controller.prepareSettings(input.workspace);
+      await readEntered.future;
+      writer.release.complete();
+      await mutation;
+      readRelease.complete();
+      await refresh;
+      final words = controller.projectWords;
+      expect(words.wordsFor('en-Test').isEmpty, !changeLanguage);
+      expect(words.projectLanguage, changeLanguage ? 'en-Test' : null);
+      final persisted = await external.read();
+      expect(persisted.wordsFor('en-Test').isEmpty, !changeLanguage);
+      expect(persisted.projectLanguage, changeLanguage ? 'en-Test' : null);
+      await controller.checkNow(input);
+      expect(controller.misspellings.isEmpty, changeLanguage);
+      expect(controller.effectiveLanguage, 'en-Test');
+    }
+  });
+
+  test(
+    'superseded project conflict read preserves newer state and error',
+    () async {
+      final temporary = await Directory.systemTemp.createTemp(
+        'busymark-project-conflict-refresh-',
+      );
+      addTearDown(() => temporary.delete(recursive: true));
+      final bundle = await _createFixtureBundle(temporary);
+      final root = p.join(temporary.path, 'project');
+      await Directory(root).create();
+      final filePath = p.join(root, '.busymark', 'spelling.json');
+      final recoveryPath = p.join(temporary.path, 'preserved-project.json');
+      final writer = _ToggleFailAtomicFileWriter();
+      final readEntered = Completer<void>();
+      final readRelease = Completer<void>();
+      var holdNextRead = false;
+      final controller = SpellingSessionController(
+        bundledRoot: bundle,
+        applicationSupportRoot: p.join(temporary.path, 'support'),
+        dictionaryStorageRoot: p.join(temporary.path, 'dictionary-storage'),
+        verifyDictionaryChecksums: false,
+        wordStoreFactory: ({required filePath, required projectStore}) =>
+            SpellingWordStore(
+              filePath: filePath,
+              projectStore: projectStore,
+              writer: projectStore ? writer : const AtomicFileWriter(),
+            ),
+        wordStoreReader: (store) async {
+          final snapshot = await store.read();
+          if (store.projectStore && holdNextRead) {
+            holdNextRead = false;
+            readEntered.complete();
+            await readRelease.future;
+          }
+          return snapshot;
+        },
+      );
+      addTearDown(controller.dispose);
+      final input = _sessionInput(
+        id: 'project-conflict-refresh',
+        root: root,
+        text: 'BusyBrand',
+        settings: AppSettings.defaults().copyWith(
+          defaultSpellingLanguage: 'en-Test',
+        ),
+      );
+      await controller.prepareSettings(input.workspace);
+      writer
+        ..conflictRecoveryPath = recoveryPath
+        ..conflictDestinationBytes = utf8.encode(
+          '${jsonEncode({
+            'schemaVersion': 1,
+            'revision': 77,
+            'projectLanguage': 'en-Test',
+            'words': {
+              'en-Test': [
+                {'key': 'external', 'display': 'external'},
+              ],
+            },
+          })}\n',
+        );
+      holdNextRead = true;
+      final mutation = controller.removeProjectWord('en-Test', 'BusyBrand');
+      final conflict = expectLater(
+        mutation,
+        throwsA(
+          isA<AtomicFileChangedException>().having(
+            (error) => error.recoveryPath,
+            'recoveryPath',
+            recoveryPath,
+          ),
+        ),
+      );
+      await readEntered.future;
+      final external = SpellingWordStore(
+        filePath: filePath,
+        projectStore: true,
+      );
+      await external.addWord('en-Test', 'BusyBrand');
+      await controller.prepareSettings(input.workspace);
+      expect(controller.projectWords.wordsFor('en-Test'), [
+        'BusyBrand',
+        'external',
+      ]);
+      readRelease.complete();
+      await conflict;
+      expect(controller.projectWords.wordsFor('en-Test'), [
+        'BusyBrand',
+        'external',
+      ]);
+      expect(controller.projectWords.projectLanguage, 'en-Test');
+      expect((await external.read()).wordsFor('en-Test'), [
+        'BusyBrand',
+        'external',
+      ]);
+    },
+  );
+
+  test('superseded project watcher error cannot replace valid state', () async {
+    final temporary = await Directory.systemTemp.createTemp(
+      'busymark-project-watcher-error-',
+    );
+    addTearDown(() => temporary.delete(recursive: true));
+    final bundle = await _createFixtureBundle(temporary);
+    final root = p.join(temporary.path, 'project');
+    await Directory(root).create();
+    final input = _sessionInput(
+      id: 'project-watcher-error',
+      root: root,
+      text: 'BusyBrand',
+      settings: AppSettings.defaults().copyWith(
+        defaultSpellingLanguage: 'en-Test',
+      ),
+    );
+    final entered = Completer<void>();
+    final release = Completer<void>();
+    var staleErrorNext = false;
+    var currentErrorNext = false;
+    final controller = SpellingSessionController(
+      bundledRoot: bundle,
+      applicationSupportRoot: p.join(temporary.path, 'support'),
+      dictionaryStorageRoot: p.join(temporary.path, 'dictionary-storage'),
+      verifyDictionaryChecksums: false,
+      wordStoreReader: (store) async {
+        final snapshot = await store.read();
+        if (store.projectStore && staleErrorNext) {
+          staleErrorNext = false;
+          entered.complete();
+          await release.future;
+          throw StateError('superseded project read');
+        }
+        if (store.projectStore && currentErrorNext) {
+          currentErrorNext = false;
+          throw StateError('current project read');
+        }
+        return snapshot;
+      },
+    );
+    addTearDown(controller.dispose);
+    await controller.prepareSettings(input.workspace);
+    final external = SpellingWordStore(
+      filePath: p.join(root, '.busymark', 'spelling.json'),
+      projectStore: true,
+    );
+    staleErrorNext = true;
+    await external.addWord('en-Test', 'OldWord');
+    await entered.future;
+    await external.addWord('en-Test', 'BusyBrand');
+    await controller.prepareSettings(input.workspace);
+    expect(controller.projectWords.wordsFor('en-Test'), [
+      'BusyBrand',
+      'OldWord',
+    ]);
+    release.complete();
+    await Future<void>.delayed(Duration.zero);
+    expect(controller.state.status, isNot(SpellingPresentationStatus.failure));
+    expect(controller.projectWords.wordsFor('en-Test'), [
+      'BusyBrand',
+      'OldWord',
+    ]);
+    currentErrorNext = true;
+    await external.addWord('en-Test', 'AnotherWord');
+    await _waitFor(
+      () => controller.state.status == SpellingPresentationStatus.failure,
+    );
+    expect(controller.state.message, contains('current project read'));
+  });
+
+  test('project watcher recovers after identical dictionary repair', () async {
+    final temporary = await Directory.systemTemp.createTemp(
+      'busymark-project-repair-',
+    );
+    addTearDown(() => temporary.delete(recursive: true));
+    final bundle = await _createFixtureBundle(temporary);
+    final root = p.join(temporary.path, 'project');
+    await Directory(root).create();
+    final filePath = p.join(root, '.busymark', 'spelling.json');
+    final external = SpellingWordStore(filePath: filePath, projectStore: true);
+    await external.addWord('en-Test', 'BusyBrand');
+    final validBytes = await File(filePath).readAsString();
+    final controller = SpellingSessionController(
+      bundledRoot: bundle,
+      applicationSupportRoot: p.join(temporary.path, 'support'),
+      dictionaryStorageRoot: p.join(temporary.path, 'dictionary-storage'),
+      verifyDictionaryChecksums: false,
+    );
+    addTearDown(controller.dispose);
+    final input = _sessionInput(
+      id: 'project-repair',
+      root: root,
+      text: 'BusyBrand',
+      settings: AppSettings.defaults().copyWith(
+        defaultSpellingLanguage: 'en-Test',
+      ),
+    );
+    controller.update(input);
+    await _waitFor(
+      () => controller.state.status == SpellingPresentationStatus.ready,
+    );
+    expect(controller.misspellings, isEmpty);
+    await File(filePath).writeAsString('{ malformed', flush: true);
+    await _waitFor(
+      () => controller.state.status == SpellingPresentationStatus.failure,
+    );
+    expect(controller.state.message, contains('FormatException'));
+    await File(filePath).writeAsString(validBytes, flush: true);
+    await _waitFor(
+      () => controller.state.status == SpellingPresentationStatus.ready,
+    );
+    expect(controller.state.complete, isTrue);
+    expect(controller.projectWords.wordsFor('en-Test'), ['BusyBrand']);
+    expect(controller.misspellings, isEmpty);
+    expect(await File(filePath).readAsString(), validBytes);
+  });
+
+  test(
+    'project repair recovers a later failed preparation at latest revision',
+    () async {
+      final temporary = await Directory.systemTemp.createTemp(
+        'busymark-project-preparation-repair-',
+      );
+      addTearDown(() => temporary.delete(recursive: true));
+      final bundle = await _createFixtureBundle(temporary);
+      final root = p.join(temporary.path, 'project');
+      await Directory(root).create();
+      final filePath = p.join(root, '.busymark', 'spelling.json');
+      final external = SpellingWordStore(
+        filePath: filePath,
+        projectStore: true,
+      );
+      await external.addWord('en-Test', 'BusyBrand');
+      await external.setProjectLanguage('en-Test');
+      final validBytes = await File(filePath).readAsString();
+      var failedProjectReads = 0;
+      final controller = SpellingSessionController(
+        bundledRoot: bundle,
+        applicationSupportRoot: p.join(temporary.path, 'support'),
+        dictionaryStorageRoot: p.join(temporary.path, 'dictionary-storage'),
+        verifyDictionaryChecksums: false,
+        wordStoreReader: (store) async {
+          try {
+            return await store.read();
+          } on FormatException {
+            if (store.projectStore) failedProjectReads++;
+            rethrow;
+          }
+        },
+      );
+      addTearDown(controller.dispose);
+      SpellingSessionInput input(String text, int revision) => _sessionInput(
+        id: 'project-preparation-repair',
+        root: root,
+        text: text,
+        revision: revision,
+        settings: AppSettings.defaults(),
+      );
+      controller.update(input('BusyBrand', 0));
+      await _waitFor(
+        () => controller.state.status == SpellingPresentationStatus.ready,
+      );
+      await File(filePath).writeAsString('{ malformed', flush: true);
+      await _waitFor(
+        () => controller.state.status == SpellingPresentationStatus.failure,
+      );
+      expect(failedProjectReads, greaterThanOrEqualTo(1));
+      final watcherFailure = controller.state;
+      controller.update(input('BusyBrand wrld', 1));
+      await _waitFor(
+        () =>
+            controller.state.status == SpellingPresentationStatus.failure &&
+            !identical(controller.state, watcherFailure),
+      );
+      expect(failedProjectReads, greaterThanOrEqualTo(2));
+      expect(controller.state.message, contains('FormatException'));
+      await File(filePath).writeAsString(validBytes, flush: true);
+      await _waitFor(
+        () => controller.state.status == SpellingPresentationStatus.ready,
+      );
+      expect(controller.state.complete, isTrue);
+      expect(controller.projectWords.wordsFor('en-Test'), ['BusyBrand']);
+      expect(controller.projectWords.projectLanguage, 'en-Test');
+      expect(controller.effectiveLanguage, 'en-Test');
+      expect(controller.misspellings.map((entry) => entry.word), ['wrld']);
+      expect(controller.misspellings.single.run.snapshot.contentRevision, 1);
+      expect(await File(filePath).readAsString(), validBytes);
+    },
+  );
+
+  test(
+    'project reread does not clear an unrelated personal read failure',
+    () async {
+      final temporary = await Directory.systemTemp.createTemp(
+        'busymark-unrelated-project-repair-',
+      );
+      addTearDown(() => temporary.delete(recursive: true));
+      final bundle = await _createFixtureBundle(temporary);
+      final root = p.join(temporary.path, 'project');
+      await Directory(root).create();
+      var failPersonalRead = false;
+      final controller = SpellingSessionController(
+        bundledRoot: bundle,
+        applicationSupportRoot: p.join(temporary.path, 'support'),
+        dictionaryStorageRoot: p.join(temporary.path, 'dictionary-storage'),
+        verifyDictionaryChecksums: false,
+        wordStoreReader: (store) {
+          if (!store.projectStore && failPersonalRead) {
+            throw StateError('unrelated personal read failure');
+          }
+          return store.read();
+        },
+      );
+      addTearDown(controller.dispose);
+      final input = _sessionInput(
+        id: 'unrelated-project-repair',
+        root: root,
+        text: 'wrld',
+        settings: AppSettings.defaults().copyWith(
+          defaultSpellingLanguage: 'en-Test',
+        ),
+      );
+      controller.update(input);
+      await _waitFor(
+        () => controller.state.status == SpellingPresentationStatus.ready,
+      );
+      failPersonalRead = true;
+      await controller.checkNow(input);
+      expect(controller.state.status, SpellingPresentationStatus.failure);
+      expect(
+        controller.state.message,
+        contains('unrelated personal read failure'),
+      );
+      failPersonalRead = false;
+      await controller.prepareSettings(input.workspace);
+      expect(controller.state.status, SpellingPresentationStatus.failure);
+      expect(
+        controller.state.message,
+        contains('unrelated personal read failure'),
+      );
+    },
+  );
+
+  test(
+    'failed personal initialization retries after repair and shares first load',
+    () async {
+      final temporary = await Directory.systemTemp.createTemp(
+        'busymark-personal-retry-',
+      );
+      addTearDown(() => temporary.delete(recursive: true));
+      final bundle = await _createFixtureBundle(temporary);
+      final support = p.join(temporary.path, 'support');
+      final gate = Completer<void>();
+      var reads = 0;
+      var fail = true;
+      final controller = SpellingSessionController(
+        bundledRoot: bundle,
+        applicationSupportRoot: support,
+        dictionaryStorageRoot: p.join(temporary.path, 'dictionary-storage'),
+        verifyDictionaryChecksums: false,
+        wordStoreReader: (store) async {
+          if (!store.projectStore) {
+            reads++;
+            if (reads == 1) await gate.future;
+            if (fail) throw const FormatException('Malformed personal words');
+          }
+          return store.read();
+        },
+      );
+      addTearDown(controller.dispose);
+      final first = controller.prepareSettings(null);
+      final concurrent = controller.prepareSettings(null);
+      await _waitFor(() => reads == 1);
+      gate.complete();
+      await expectLater(first, throwsA(isA<FormatException>()));
+      await expectLater(concurrent, throwsA(isA<FormatException>()));
+      expect(reads, 1);
+
+      fail = false;
+      await SpellingWordStore(
+        filePath: p.join(support, 'spelling', 'personal.json'),
+      ).addWord('en-Test', 'RepairedWord');
+      await controller.prepareSettings(null);
+      expect(reads, 2);
+      expect(controller.personalWords.wordsFor('en-Test'), ['RepairedWord']);
+    },
+  );
+
+  test('explicit checks and Settings refresh external personal words', () async {
+    final temporary = await Directory.systemTemp.createTemp(
+      'busymark-personal-fresh-',
+    );
+    addTearDown(() => temporary.delete(recursive: true));
+    final bundle = await _createFixtureBundle(temporary);
+    final support = p.join(temporary.path, 'support');
+    final personalPath = p.join(support, 'spelling', 'personal.json');
+    SpellingSessionController controller() => SpellingSessionController(
+      bundledRoot: bundle,
+      applicationSupportRoot: support,
+      dictionaryStorageRoot: p.join(temporary.path, 'dictionary-storage'),
+      verifyDictionaryChecksums: false,
+    );
+    final first = controller();
+    final second = controller();
+    addTearDown(first.dispose);
+    addTearDown(second.dispose);
+    final input = _sessionInput(
+      id: 'shared-personal',
+      root: temporary.path,
+      text: 'BusyBrand',
+      settings: AppSettings.defaults().copyWith(
+        defaultSpellingLanguage: 'en-Test',
+      ),
+    );
+    await first.checkNow(input);
+    await second.checkNow(input);
+    expect(
+      first.state.status,
+      SpellingPresentationStatus.ready,
+      reason: first.state.message,
+    );
+    expect(
+      second.state.status,
+      SpellingPresentationStatus.ready,
+      reason: second.state.message,
+    );
+    expect(first.misspellings.single.word, 'BusyBrand');
+    await first.addPersonalWord(first.misspellings.single);
+    await second.checkNow(input);
+    expect(second.misspellings, isEmpty);
+    expect(second.personalWords.wordsFor('en-Test'), ['BusyBrand']);
+    await first.removePersonalWord('en-Test', 'BusyBrand');
+    await second.checkNow(input);
+    expect(second.misspellings.single.word, 'BusyBrand');
+
+    await SpellingWordStore(
+      filePath: personalPath,
+    ).addWord('en-Test', 'BusyBrand');
+    await second.prepareSettings(input.workspace);
+    expect(second.personalWords.wordsFor('en-Test'), ['BusyBrand']);
+    await const AtomicFileWriter().writeBytes(
+      personalPath,
+      utf8.encode(
+        '${jsonEncode({'schemaVersion': 1, 'revision': second.personalWords.revision, 'words': {}})}\n',
+      ),
+      overwrite: true,
+    );
+    await second.checkNow(input);
+    expect(second.misspellings.single.word, 'BusyBrand');
+  });
+
+  test('late personal refresh cannot undo a newer local mutation', () async {
+    final temporary = await Directory.systemTemp.createTemp(
+      'busymark-personal-race-',
+    );
+    addTearDown(() => temporary.delete(recursive: true));
+    final bundle = await _createFixtureBundle(temporary);
+    final support = p.join(temporary.path, 'support');
+    final store = SpellingWordStore(
+      filePath: p.join(support, 'spelling', 'personal.json'),
+    );
+    await store.addWord('en-Test', 'BusyBrand');
+    final gate = Completer<SpellingWordStoreSnapshot>();
+    var reads = 0;
+    final controller = SpellingSessionController(
+      bundledRoot: bundle,
+      applicationSupportRoot: support,
+      dictionaryStorageRoot: p.join(temporary.path, 'dictionary-storage'),
+      verifyDictionaryChecksums: false,
+      wordStoreReader: (candidate) {
+        if (!candidate.projectStore && ++reads == 2) return gate.future;
+        return candidate.read();
+      },
+    );
+    addTearDown(controller.dispose);
+    await controller.prepareSettings(null);
+    final stale = controller.personalWords;
+    final refreshing = controller.prepareSettings(null);
+    await _waitFor(() => reads == 2);
+    await controller.removePersonalWord('en-Test', 'BusyBrand');
+    gate.complete(stale);
+    await refreshing;
+    expect(controller.personalWords.wordsFor('en-Test'), isEmpty);
+    expect((await store.read()).wordsFor('en-Test'), isEmpty);
+  });
+
+  test(
+    'refresh begun during a personal mutation cannot undo its result',
+    () async {
+      for (final removing in [true, false]) {
+        final temporary = await Directory.systemTemp.createTemp(
+          'busymark-personal-overlap-',
+        );
+        addTearDown(() => temporary.delete(recursive: true));
+        final bundle = await _createFixtureBundle(temporary);
+        final support = p.join(temporary.path, 'support');
+        final store = SpellingWordStore(
+          filePath: p.join(support, 'spelling', 'personal.json'),
+        );
+        if (removing) await store.addWord('en-Test', 'BusyBrand');
+        final writer = _GatedSpellingAtomicFileWriter();
+        final readRelease = Completer<void>();
+        final readEntered = Completer<void>();
+        var holdRead = false;
+        final controller = SpellingSessionController(
+          bundledRoot: bundle,
+          applicationSupportRoot: support,
+          dictionaryStorageRoot: p.join(temporary.path, 'dictionary-storage'),
+          verifyDictionaryChecksums: false,
+          wordStoreFactory: ({required filePath, required projectStore}) =>
+              SpellingWordStore(
+                filePath: filePath,
+                projectStore: projectStore,
+                writer: writer,
+              ),
+          wordStoreReader: (candidate) async {
+            final snapshot = await candidate.read();
+            if (holdRead && !candidate.projectStore) {
+              readEntered.complete();
+              await readRelease.future;
+            }
+            return snapshot;
+          },
+        );
+        addTearDown(controller.dispose);
+        final input = _sessionInput(
+          id: 'overlap',
+          root: temporary.path,
+          text: 'BusyBrand',
+          settings: AppSettings.defaults().copyWith(
+            defaultSpellingLanguage: 'en-Test',
+          ),
+        );
+        await controller.checkNow(input);
+        expect(controller.misspellings.isEmpty, removing);
+        writer.holdNextWrite();
+        final mutation = removing
+            ? controller.removePersonalWord('en-Test', 'BusyBrand')
+            : controller.addPersonalWord(controller.misspellings.single);
+        await writer.entered.future;
+        holdRead = true;
+        final refresh = controller.prepareSettings(null);
+        await readEntered.future;
+        holdRead = false;
+        writer.release.complete();
+        await mutation;
+        readRelease.complete();
+        await refresh;
+        expect(controller.personalWords.wordsFor('en-Test').isEmpty, removing);
+        expect((await store.read()).wordsFor('en-Test').isEmpty, removing);
+        await controller.checkNow(input);
+        expect(controller.misspellings.isEmpty, !removing);
+      }
+    },
+  );
+
+  test(
+    'an older personal refresh cannot replace a newer publication',
+    () async {
+      final temporary = await Directory.systemTemp.createTemp(
+        'busymark-personal-refresh-order-',
+      );
+      addTearDown(() => temporary.delete(recursive: true));
+      final bundle = await _createFixtureBundle(temporary);
+      final support = p.join(temporary.path, 'support');
+      final store = SpellingWordStore(
+        filePath: p.join(support, 'spelling', 'personal.json'),
+      );
+      final firstRelease = Completer<void>();
+      final firstEntered = Completer<void>();
+      var refreshReads = 0;
+      var trackRefresh = false;
+      final controller = SpellingSessionController(
+        bundledRoot: bundle,
+        applicationSupportRoot: support,
+        dictionaryStorageRoot: p.join(temporary.path, 'dictionary-storage'),
+        verifyDictionaryChecksums: false,
+        wordStoreReader: (candidate) async {
+          final snapshot = await candidate.read();
+          if (trackRefresh && !candidate.projectStore && ++refreshReads == 1) {
+            firstEntered.complete();
+            await firstRelease.future;
+          }
+          return snapshot;
+        },
+      );
+      addTearDown(controller.dispose);
+      final input = _sessionInput(
+        id: 'refresh-order',
+        root: temporary.path,
+        text: 'BusyBrand',
+        settings: AppSettings.defaults().copyWith(
+          defaultSpellingLanguage: 'en-Test',
+        ),
+      );
+      await controller.prepareSettings(null);
+      trackRefresh = true;
+      final older = controller.prepareSettings(null);
+      await firstEntered.future;
+      await store.addWord('en-Test', 'BusyBrand');
+      await controller.prepareSettings(null);
+      expect(controller.personalWords.wordsFor('en-Test'), ['BusyBrand']);
+      firstRelease.complete();
+      await older;
+      expect(controller.personalWords.wordsFor('en-Test'), ['BusyBrand']);
+      expect((await store.read()).wordsFor('en-Test'), ['BusyBrand']);
+      await controller.checkNow(input);
+      expect(controller.misspellings, isEmpty);
+    },
+  );
+
+  test(
+    'a superseded conflict read cannot replace a newer personal refresh',
+    () async {
+      final temporary = await Directory.systemTemp.createTemp(
+        'busymark-personal-conflict-refresh-',
+      );
+      addTearDown(() => temporary.delete(recursive: true));
+      final bundle = await _createFixtureBundle(temporary);
+      final support = p.join(temporary.path, 'support');
+      final personalPath = p.join(support, 'spelling', 'personal.json');
+      final recoveryPath = p.join(temporary.path, 'preserved-personal.json');
+      final writer = _ToggleFailAtomicFileWriter();
+      final readEntered = Completer<void>();
+      final readRelease = Completer<void>();
+      var holdNextRead = false;
+      final controller = SpellingSessionController(
+        bundledRoot: bundle,
+        applicationSupportRoot: support,
+        dictionaryStorageRoot: p.join(temporary.path, 'dictionary-storage'),
+        verifyDictionaryChecksums: false,
+        wordStoreFactory: ({required filePath, required projectStore}) =>
+            SpellingWordStore(
+              filePath: filePath,
+              projectStore: projectStore,
+              writer: writer,
+            ),
+        wordStoreReader: (candidate) async {
+          final snapshot = await candidate.read();
+          if (holdNextRead && !candidate.projectStore) {
+            holdNextRead = false;
+            readEntered.complete();
+            await readRelease.future;
+          }
+          return snapshot;
+        },
+      );
+      addTearDown(controller.dispose);
+      await controller.prepareSettings(null);
+      writer
+        ..conflictRecoveryPath = recoveryPath
+        ..conflictDestinationBytes = utf8.encode(
+          '${jsonEncode({
+            'schemaVersion': 1,
+            'revision': 77,
+            'words': {
+              'en-Test': [
+                {'key': 'external', 'display': 'external'},
+              ],
+            },
+          })}\n',
+        );
+      holdNextRead = true;
+      final mutation = controller.removePersonalWord('en-Test', 'BusyBrand');
+      final conflict = expectLater(
+        mutation,
+        throwsA(
+          isA<AtomicFileChangedException>().having(
+            (error) => error.recoveryPath,
+            'recoveryPath',
+            recoveryPath,
+          ),
+        ),
+      );
+      await readEntered.future;
+      final external = SpellingWordStore(filePath: personalPath);
+      await external.addWord('en-Test', 'newer');
+      await controller.prepareSettings(null);
+      expect(controller.personalWords.wordsFor('en-Test'), [
+        'external',
+        'newer',
+      ]);
+      readRelease.complete();
+      await conflict;
+      expect(controller.personalWords.wordsFor('en-Test'), [
+        'external',
+        'newer',
+      ]);
+      expect((await external.read()).wordsFor('en-Test'), [
+        'external',
+        'newer',
+      ]);
+      final input = _sessionInput(
+        id: 'conflict-refresh',
+        root: temporary.path,
+        text: 'newer',
+        settings: AppSettings.defaults().copyWith(
+          defaultSpellingLanguage: 'en-Test',
+        ),
+      );
+      await controller.checkNow(input);
+      expect(controller.misspellings, isEmpty);
+    },
+  );
+
+  testWidgets('Settings holds a failed preparation until deliberate retry', (
+    tester,
+  ) async {
+    late Directory temporary;
+    late String bundle;
+    await tester.runAsync(() async {
+      temporary = await Directory.systemTemp.createTemp(
+        'busymark-settings-retry-',
+      );
+      bundle = await _createFixtureBundle(temporary);
+    });
+    addTearDown(() => temporary.delete(recursive: true));
+    var reads = 0;
+    var fail = true;
+    final controller = SpellingSessionController(
+      bundledRoot: bundle,
+      applicationSupportRoot: p.join(temporary.path, 'support'),
+      dictionaryStorageRoot: p.join(temporary.path, 'dictionary-storage'),
+      wordStoreReader: (store) async {
+        if (!store.projectStore) {
+          reads++;
+          if (fail) throw const FormatException('malformed personal.json');
+        }
+        return store.read();
+      },
+    );
+    addTearDown(controller.dispose);
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          spellingSessionControllerProvider.overrideWith((ref) => controller),
+          localSettingsStoreProvider.overrideWithValue(
+            _SpellingMemorySettingsStore(),
+          ),
+        ],
+        child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          builder: (context, child) =>
+              _spellingSettingsHeaderDefaults(context, child!),
+          home: const SettingsScreen(
+            returnTarget: SettingsReturnTarget.welcome,
+            initialPage: SettingsPage.editor,
+          ),
+        ),
+      ),
+    );
+    await _pumpWidgetUntil(
+      tester,
+      () => find
+          .byKey(const ValueKey('retry-spelling-settings'))
+          .evaluate()
+          .isNotEmpty,
+    );
+    expect(reads, 1);
+    for (var frame = 0; frame < 6; frame++) {
+      await tester.pump(const Duration(milliseconds: 20));
+    }
+    expect(reads, 1);
+    expect(tester.takeException(), isNull);
+    expect(find.text('Could not load spelling settings'), findsOneWidget);
+    fail = false;
+    await tester.tap(find.byKey(const ValueKey('retry-spelling-settings')));
+    await _pumpWidgetUntil(
+      tester,
+      () => reads == 2 && controller.catalog != null,
+    );
+    expect(find.byKey(const ValueKey('retry-spelling-settings')), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('warm no-workspace Settings refreshes personal words once', (
+    tester,
+  ) async {
+    late Directory temporary;
+    late String bundle;
+    await tester.runAsync(() async {
+      temporary = await Directory.systemTemp.createTemp(
+        'busymark-settings-warm-',
+      );
+      bundle = await _createFixtureBundle(temporary);
+    });
+    addTearDown(() => temporary.delete(recursive: true));
+    final support = p.join(temporary.path, 'support');
+    var reads = 0;
+    final controller = SpellingSessionController(
+      bundledRoot: bundle,
+      applicationSupportRoot: support,
+      dictionaryStorageRoot: p.join(temporary.path, 'dictionary-storage'),
+      verifyDictionaryChecksums: false,
+      wordStoreReader: (store) {
+        if (!store.projectStore) reads++;
+        return store.read();
+      },
+    );
+    addTearDown(controller.dispose);
+    SpellingSessionController activeController = controller;
+    await tester.runAsync(() async {
+      await controller.prepareSettings(null);
+      await SpellingWordStore(
+        filePath: p.join(support, 'spelling', 'personal.json'),
+      ).addWord('en-Test', 'BusyBrand');
+    });
+    expect(reads, 1);
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          spellingSessionControllerProvider.overrideWith(
+            (ref) => activeController,
+          ),
+          localSettingsStoreProvider.overrideWithValue(
+            _SpellingMemorySettingsStore(),
+          ),
+        ],
+        child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          builder: (context, child) =>
+              _spellingSettingsHeaderDefaults(context, child!),
+          home: const SettingsScreen(
+            returnTarget: SettingsReturnTarget.welcome,
+            initialPage: SettingsPage.editor,
+          ),
+        ),
+      ),
+    );
+    for (var frame = 0; frame < 8; frame++) {
+      await tester.pump(const Duration(milliseconds: 20));
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 5)),
+      );
+    }
+    expect(reads, 2);
+    expect(controller.personalWords.wordsFor('en-Test'), ['BusyBrand']);
+    BusyMarkActionRow personalRow() => tester.widget<BusyMarkActionRow>(
+      find.ancestor(
+        of: find.text('Personal Dictionary'),
+        matching: find.byType(BusyMarkActionRow),
+      ),
+    );
+    expect(personalRow().subtitle, '1');
+    var nextReads = 0;
+    final nextController = SpellingSessionController(
+      bundledRoot: bundle,
+      applicationSupportRoot: support,
+      dictionaryStorageRoot: p.join(temporary.path, 'dictionary-storage'),
+      verifyDictionaryChecksums: false,
+      wordStoreReader: (store) {
+        if (!store.projectStore) nextReads++;
+        return store.read();
+      },
+    );
+    addTearDown(nextController.dispose);
+    await tester.runAsync(() async {
+      await nextController.prepareSettings(null);
+      await SpellingWordStore(
+        filePath: p.join(support, 'spelling', 'personal.json'),
+      ).addWord('en-Test', 'OtherBrand');
+    });
+    expect(nextReads, 1);
+    activeController = nextController;
+    ProviderScope.containerOf(
+      tester.element(find.byType(SettingsScreen)),
+    ).invalidate(spellingSessionControllerProvider);
+    await _pumpWidgetUntil(
+      tester,
+      () =>
+          nextReads == 2 &&
+          nextController.personalWords
+              .wordsFor('en-Test')
+              .contains('OtherBrand'),
+    );
+    expect(nextController.personalWords.wordsFor('en-Test'), [
+      'BusyBrand',
+      'OtherBrand',
+    ]);
+    expect(personalRow().subtitle, '2');
+    for (var frame = 0; frame < 6; frame++) {
+      await tester.pump(const Duration(milliseconds: 20));
+    }
+    expect(nextReads, 2);
+    await tester.pumpWidget(const MaterialApp(home: SizedBox()));
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('warm Settings observes an external dictionary removal once', (
+    tester,
+  ) async {
+    late Directory temporary;
+    late String bundle;
+    await tester.runAsync(() async {
+      temporary = await Directory.systemTemp.createTemp(
+        'busymark-settings-catalog-',
+      );
+      bundle = await _createFixtureBundle(temporary);
+    });
+    addTearDown(() => temporary.delete(recursive: true));
+    final storage = p.join(temporary.path, 'dictionary-storage');
+    var loads = 0;
+    final first = SpellingSessionController(
+      bundledRoot: bundle,
+      applicationSupportRoot: p.join(temporary.path, 'first-support'),
+      dictionaryStorageRoot: storage,
+    );
+    final second = SpellingSessionController(
+      bundledRoot: bundle,
+      applicationSupportRoot: p.join(temporary.path, 'second-support'),
+      dictionaryStorageRoot: storage,
+      catalogLoader:
+          ({
+            required bundledRoot,
+            required downloadedRoot,
+            required importedRoot,
+            required verifyChecksums,
+          }) {
+            loads++;
+            return SpellingDictionaryCatalog.load(
+              bundledRoot: bundledRoot,
+              downloadedRoot: downloadedRoot,
+              importedRoot: importedRoot,
+              verifyChecksums: verifyChecksums,
+            );
+          },
+    );
+    addTearDown(first.dispose);
+    addTearDown(second.dispose);
+    await tester.runAsync(() async {
+      await first.prepareSettings(null);
+      await second.prepareSettings(null);
+      await first.removeDownloadedDictionary('en-Test');
+    });
+    expect(loads, 1);
+    expect(second.catalog!.installedById('en-Test'), isNotNull);
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          spellingSessionControllerProvider.overrideWith((ref) => second),
+          localSettingsStoreProvider.overrideWithValue(
+            _SpellingMemorySettingsStore(),
+          ),
+        ],
+        child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          builder: (context, child) =>
+              _spellingSettingsHeaderDefaults(context, child!),
+          home: const SettingsScreen(
+            returnTarget: SettingsReturnTarget.welcome,
+            initialPage: SettingsPage.spellingDictionaries,
+          ),
+        ),
+      ),
+    );
+    await _pumpWidgetUntil(
+      tester,
+      () => loads == 2 && second.catalog!.installedById('en-Test') == null,
+    );
+    expect(find.textContaining('Not installed'), findsWidgets);
+    for (var frame = 0; frame < 6; frame++) {
+      await tester.pump(const Duration(milliseconds: 20));
+    }
+    expect(loads, 2);
+    await tester.pumpWidget(const MaterialApp(home: SizedBox()));
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets(
+    'leaving Settings during preparation ignores its late completion',
+    (tester) async {
+      late Directory temporary;
+      late String bundle;
+      await tester.runAsync(() async {
+        temporary = await Directory.systemTemp.createTemp(
+          'busymark-settings-leave-',
+        );
+        bundle = await _createFixtureBundle(temporary);
+      });
+      addTearDown(() => temporary.delete(recursive: true));
+      final entered = Completer<void>();
+      final release = Completer<void>();
+      final controller = SpellingSessionController(
+        bundledRoot: bundle,
+        applicationSupportRoot: p.join(temporary.path, 'support'),
+        dictionaryStorageRoot: p.join(temporary.path, 'dictionary-storage'),
+        wordStoreReader: (store) async {
+          if (!store.projectStore) {
+            entered.complete();
+            await release.future;
+          }
+          return store.read();
+        },
+      );
+      addTearDown(controller.dispose);
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            spellingSessionControllerProvider.overrideWith((ref) => controller),
+            localSettingsStoreProvider.overrideWithValue(
+              _SpellingMemorySettingsStore(),
+            ),
+          ],
+          child: MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            builder: (context, child) =>
+                _spellingSettingsHeaderDefaults(context, child!),
+            home: const SettingsScreen(
+              returnTarget: SettingsReturnTarget.welcome,
+              initialPage: SettingsPage.editor,
+            ),
+          ),
+        ),
+      );
+      await _pumpWidgetUntil(tester, () => entered.isCompleted);
+      await tester.pumpWidget(const MaterialApp(home: SizedBox()));
+      release.complete();
+      await tester.pump(const Duration(milliseconds: 20));
+      expect(tester.takeException(), isNull);
+    },
+  );
 
   test('concurrent first requests start exactly one worker', () async {
     final temporary = await Directory.systemTemp.createTemp(
@@ -2197,18 +4022,19 @@ void main() {
       );
       expect(controller.isCurrent(erorOccurrence), isTrue);
       final addPersonal = find.widgetWithText(
-        TextButton,
+        BusyMarkDialogButton,
         l10n.addPersonalSpellingWord,
       );
       await tester.ensureVisible(addPersonal);
       personalWriter.failWrites = true;
-      tester.widget<TextButton>(addPersonal).onPressed!.call();
+      tester.widget<BusyMarkDialogButton>(addPersonal).onPressed!.call();
       await tester.runAsync(
         () => Future<void>.delayed(const Duration(milliseconds: 500)),
       );
       await _pumpWidgetUntil(
         tester,
-        () => tester.widget<TextButton>(addPersonal).onPressed != null,
+        () =>
+            tester.widget<BusyMarkDialogButton>(addPersonal).onPressed != null,
       );
       expect(find.text('eror'), findsOneWidget);
       expect(
@@ -2217,7 +4043,7 @@ void main() {
       );
 
       personalWriter.failWrites = false;
-      tester.widget<TextButton>(addPersonal).onPressed!.call();
+      tester.widget<BusyMarkDialogButton>(addPersonal).onPressed!.call();
       await _pumpWidgetUntil(
         tester,
         () =>
@@ -2382,7 +4208,9 @@ void main() {
           () => find.text(action).evaluate().isNotEmpty,
         );
         final callback = tester
-            .widget<TextButton>(find.widgetWithText(TextButton, action))
+            .widget<BusyMarkDialogButton>(
+              find.widgetWithText(BusyMarkDialogButton, action),
+            )
             .onPressed!;
         callback();
         callback();
@@ -2550,11 +4378,11 @@ void main() {
       expect(controller.isCurrent(occurrence), isTrue);
       final writesBefore = writer.writeCount;
       final addPersonal = find.widgetWithText(
-        TextButton,
+        BusyMarkDialogButton,
         l10n.addPersonalSpellingWord,
       );
       await tester.ensureVisible(addPersonal);
-      tester.widget<TextButton>(addPersonal).onPressed!.call();
+      tester.widget<BusyMarkDialogButton>(addPersonal).onPressed!.call();
       await _pumpWidgetUntil(tester, () => writer.writeCount > writesBefore);
       await _pumpWidgetUntil(
         tester,
@@ -2826,6 +4654,448 @@ void main() {
         (await personal.read()).wordsFor('en-Test'),
         contains('BusyMarkTerm'),
       );
+    },
+  );
+
+  test(
+    'warm instance refreshes external installation at explicit boundaries',
+    () async {
+      final temporary = await Directory.systemTemp.createTemp(
+        'busymark-external-inventory-',
+      );
+      addTearDown(() async {
+        if (await temporary.exists()) await temporary.delete(recursive: true);
+      });
+      final bundle = await _createFixtureBundle(temporary);
+      final storage = p.join(temporary.path, 'dictionary-storage');
+      SpellingSessionController controller() => SpellingSessionController(
+        bundledRoot: bundle,
+        applicationSupportRoot: p.join(temporary.path, 'support'),
+        dictionaryStorageRoot: storage,
+      );
+      final first = controller();
+      final second = controller();
+      addTearDown(first.dispose);
+      addTearDown(second.dispose);
+      await first.prepareSettings(null);
+      await second.prepareSettings(null);
+      expect(second.catalog!.installedById('en-Test'), isNotNull);
+      await first.removeDownloadedDictionary('en-Test');
+      await second.prepareSettings(null);
+      expect(second.catalog!.installedById('en-Test'), isNull);
+      final input = SpellingSessionInput(
+        buffer: DocumentBuffer.untitled(
+          id: 'external-inventory',
+          name: 'external-inventory.md',
+          text: 'helo',
+        ),
+        workspace: null,
+        settings: AppSettings.defaults().copyWith(
+          defaultSpellingLanguage: 'en-Test',
+        ),
+        documentKind: DocumentKind.markdown,
+        markdownMode: MarkdownMode.commonMark,
+      );
+      await second.checkNow(input);
+      expect(
+        second.state.status,
+        SpellingPresentationStatus.dictionaryNotInstalled,
+      );
+      final fixture = p.join(
+        Directory.current.path,
+        'packages',
+        'busymark_spellcheck_native',
+        'test',
+        'fixtures',
+      );
+      final catalogResource = second.catalog!.availableById('en-Test')!;
+      await const SpellingDictionaryPairInstaller().install(
+        affSource: File(p.join(fixture, 'test.aff')),
+        dicSource: File(p.join(fixture, 'test.dic')),
+        spec: SpellingDictionaryInstallSpec.downloaded(catalogResource),
+        destinationRoot: p.join(storage, 'downloaded'),
+        validateNativePair: (_, _, _) async => 'UTF-8',
+      );
+      await second.checkNow(input);
+      expect(second.catalog!.installedById('en-Test'), isNotNull);
+      expect(second.state.status, SpellingPresentationStatus.ready);
+      expect(second.misspellings.single.word, 'helo');
+      final installation = second.catalog!.installedById('en-Test')!;
+      await File(
+        p.join(installation.directoryPath, 'manifest.json'),
+      ).writeAsString('malformed');
+      await second.prepareSettings(null);
+      expect(second.catalog!.installedById('en-Test'), isNull);
+      expect(second.catalog!.invalidById('en-Test'), isNotNull);
+      await const SpellingDictionaryPairInstaller().install(
+        affSource: File(p.join(fixture, 'test.aff')),
+        dicSource: File(p.join(fixture, 'test.dic')),
+        spec: SpellingDictionaryInstallSpec.downloaded(catalogResource),
+        destinationRoot: p.join(storage, 'downloaded'),
+        validateNativePair: (_, _, _) async => 'UTF-8',
+        replaceExisting: true,
+      );
+      await second.checkNow(input);
+      expect(second.catalog!.invalidById('en-Test'), isNull);
+      expect(second.catalog!.installedById('en-Test'), isNotNull);
+      expect(second.state.status, SpellingPresentationStatus.ready);
+    },
+  );
+
+  test(
+    'warm instance replaces an active imported dictionary fingerprint',
+    () async {
+      final temporary = await Directory.systemTemp.createTemp(
+        'busymark-external-import-',
+      );
+      addTearDown(() async {
+        if (await temporary.exists()) await temporary.delete(recursive: true);
+      });
+      final bundle = await _createFixtureBundle(temporary);
+      final storage = p.join(temporary.path, 'dictionary-storage');
+      final fixture = p.join(
+        Directory.current.path,
+        'packages',
+        'busymark_spellcheck_native',
+        'test',
+        'fixtures',
+      );
+      SpellingSessionController controller(String name) =>
+          SpellingSessionController(
+            bundledRoot: bundle,
+            applicationSupportRoot: p.join(temporary.path, '$name-support'),
+            dictionaryStorageRoot: storage,
+          );
+      final first = controller('first');
+      final second = controller('second');
+      addTearDown(first.dispose);
+      addTearDown(second.dispose);
+      await first.prepareSettings(null);
+      await second.prepareSettings(null);
+      await first.removeDownloadedDictionary('en-Test');
+      await first.importDictionary(
+        affPath: p.join(fixture, 'test.aff'),
+        dicPath: p.join(fixture, 'test.dic'),
+        languageId: 'en-Test',
+        displayLabel: 'Imported English',
+      );
+      final input = SpellingSessionInput(
+        buffer: DocumentBuffer.untitled(
+          id: 'external-import',
+          name: 'external-import.md',
+          text: 'newword helo',
+        ),
+        workspace: null,
+        settings: AppSettings.defaults().copyWith(
+          defaultSpellingLanguage: 'en-Test',
+        ),
+        documentKind: DocumentKind.markdown,
+        markdownMode: MarkdownMode.commonMark,
+      );
+      await second.checkNow(input);
+      expect(second.catalog!.installedById('en-Test')!.imported, isTrue);
+      expect(
+        second.misspellings.map((word) => word.word),
+        containsAll(['newword', 'helo']),
+      );
+      final originalFingerprint = second.catalog!
+          .installedById('en-Test')!
+          .fingerprint;
+      final revised = File(p.join(temporary.path, 'revised.dic'));
+      final originalDic = await File(
+        p.join(fixture, 'test.dic'),
+      ).readAsString();
+      await revised.writeAsString(
+        '${originalDic.replaceFirst('11\n', '12\n')}newword\n',
+      );
+      final aff = File(p.join(fixture, 'test.aff'));
+      final spec = SpellingDictionaryInstallSpec(
+        resourceId: 'en-Test',
+        id: 'en-Test',
+        locales: const ['en-Test'],
+        label: 'Imported English',
+        sourceRevision: 'local-import',
+        affSha256: (await sha256.bind(aff.openRead()).first).toString(),
+        dicSha256: (await sha256.bind(revised.openRead()).first).toString(),
+        affSize: await aff.length(),
+        dicSize: await revised.length(),
+        kind: SpellingDictionaryInstallationKind.imported,
+      );
+      await const SpellingDictionaryPairInstaller().install(
+        affSource: aff,
+        dicSource: revised,
+        spec: spec,
+        destinationRoot: p.join(storage, 'imported'),
+        validateNativePair: (_, _, _) async => 'UTF-8',
+        replaceExisting: true,
+      );
+      await second.checkNow(input);
+      expect(
+        second.catalog!.installedById('en-Test')!.fingerprint,
+        isNot(originalFingerprint),
+      );
+      expect(second.state.status, SpellingPresentationStatus.ready);
+      expect(second.misspellings.map((word) => word.word), ['helo']);
+      await first.prepareSettings(null);
+      await first.removeImportedDictionary('en-Test');
+      await second.checkNow(input);
+      expect(second.catalog!.installedById('en-Test'), isNull);
+      expect(
+        second.state.status,
+        SpellingPresentationStatus.dictionaryNotInstalled,
+      );
+    },
+  );
+
+  test('concurrent warm catalog preparations share one owned read', () async {
+    final temporary = await Directory.systemTemp.createTemp(
+      'busymark-catalog-single-flight-',
+    );
+    addTearDown(() async {
+      if (await temporary.exists()) await temporary.delete(recursive: true);
+    });
+    final bundle = await _createFixtureBundle(temporary);
+    final entered = Completer<void>();
+    final release = Completer<void>();
+    final secondPersonalRefresh = Completer<void>();
+    var loads = 0;
+    var personalReads = 0;
+    final controller = SpellingSessionController(
+      bundledRoot: bundle,
+      applicationSupportRoot: p.join(temporary.path, 'support'),
+      dictionaryStorageRoot: p.join(temporary.path, 'dictionary-storage'),
+      wordStoreReader: (store) async {
+        if (!store.projectStore && ++personalReads == 3) {
+          secondPersonalRefresh.complete();
+        }
+        return store.read();
+      },
+      catalogLoader:
+          ({
+            required bundledRoot,
+            required downloadedRoot,
+            required importedRoot,
+            required verifyChecksums,
+          }) async {
+            loads++;
+            final snapshot = await SpellingDictionaryCatalog.load(
+              bundledRoot: bundledRoot,
+              downloadedRoot: downloadedRoot,
+              importedRoot: importedRoot,
+              verifyChecksums: verifyChecksums,
+            );
+            if (loads == 2) {
+              entered.complete();
+              await release.future;
+            }
+            return snapshot;
+          },
+    );
+    addTearDown(controller.dispose);
+    await controller.prepareSettings(null);
+    final first = controller.prepareSettings(null);
+    await entered.future;
+    final second = controller.prepareSettings(null);
+    await secondPersonalRefresh.future;
+    await Future<void>.delayed(Duration.zero);
+    expect(loads, 2);
+    release.complete();
+    await Future.wait([first, second]);
+    expect(loads, 2);
+    expect(controller.catalog!.installedById('en-Test'), isNotNull);
+  });
+
+  test('a delayed catalog read cannot undo a local installation', () async {
+    final temporary = await Directory.systemTemp.createTemp(
+      'busymark-catalog-install-overlap-',
+    );
+    addTearDown(() async {
+      if (await temporary.exists()) await temporary.delete(recursive: true);
+    });
+    final bundle = await _createFixtureBundle(temporary);
+    final fixture = p.join(
+      Directory.current.path,
+      'packages',
+      'busymark_spellcheck_native',
+      'test',
+      'fixtures',
+    );
+    final downloadEntered = Completer<void>();
+    final releaseDownload = Completer<void>();
+    final readEntered = Completer<void>();
+    final releaseRead = Completer<void>();
+    final published = Completer<void>();
+    var gateNextRead = false;
+    final controller = SpellingSessionController(
+      bundledRoot: bundle,
+      applicationSupportRoot: p.join(temporary.path, 'support'),
+      dictionaryStorageRoot: p.join(temporary.path, 'dictionary-storage'),
+      dictionaryDownloader: SpellingDictionaryDownloader(
+        installer: SpellingDictionaryPairInstaller(
+          onCommitted: (_) => published.complete(),
+        ),
+        downloadFile:
+            ({
+              required source,
+              required destination,
+              required expectedBytes,
+              required cancellation,
+              required onProgress,
+            }) async {
+              if (source.path.endsWith('.aff')) {
+                downloadEntered.complete();
+                await releaseDownload.future;
+              }
+              cancellation.throwIfCancelled();
+              final input = File(
+                p.join(
+                  fixture,
+                  source.path.endsWith('.aff') ? 'test.aff' : 'test.dic',
+                ),
+              );
+              final bytes = await input.readAsBytes();
+              expect(bytes, hasLength(expectedBytes));
+              await destination.writeAsBytes(bytes, flush: true);
+              onProgress(bytes.length);
+            },
+      ),
+      catalogLoader:
+          ({
+            required bundledRoot,
+            required downloadedRoot,
+            required importedRoot,
+            required verifyChecksums,
+          }) async {
+            final snapshot = await SpellingDictionaryCatalog.load(
+              bundledRoot: bundledRoot,
+              downloadedRoot: downloadedRoot,
+              importedRoot: importedRoot,
+              verifyChecksums: verifyChecksums,
+            );
+            if (gateNextRead) {
+              gateNextRead = false;
+              readEntered.complete();
+              await releaseRead.future;
+            }
+            return snapshot;
+          },
+    );
+    addTearDown(controller.dispose);
+    await controller.prepareSettings(null);
+    await controller.removeDownloadedDictionary('en-Test');
+    final installation = controller.installDictionary('en-Test');
+    await downloadEntered.future;
+    gateNextRead = true;
+    final oldRead = controller.prepareSettings(null);
+    await readEntered.future;
+    expect(controller.catalog!.installedById('en-Test'), isNull);
+    releaseDownload.complete();
+    await published.future;
+    releaseRead.complete();
+    await Future.wait([oldRead, installation]);
+    expect(controller.catalog!.installedById('en-Test'), isNotNull);
+    expect(controller.dictionaryInstallStatus, isNull);
+  });
+
+  test('a failed warm catalog refresh remains retryable', () async {
+    final temporary = await Directory.systemTemp.createTemp(
+      'busymark-catalog-refresh-retry-',
+    );
+    addTearDown(() async {
+      if (await temporary.exists()) await temporary.delete(recursive: true);
+    });
+    final bundle = await _createFixtureBundle(temporary);
+    var fail = false;
+    var loads = 0;
+    final controller = SpellingSessionController(
+      bundledRoot: bundle,
+      applicationSupportRoot: p.join(temporary.path, 'support'),
+      dictionaryStorageRoot: p.join(temporary.path, 'dictionary-storage'),
+      catalogLoader:
+          ({
+            required bundledRoot,
+            required downloadedRoot,
+            required importedRoot,
+            required verifyChecksums,
+          }) {
+            loads++;
+            if (fail) throw StateError('injected catalog read failure');
+            return SpellingDictionaryCatalog.load(
+              bundledRoot: bundledRoot,
+              downloadedRoot: downloadedRoot,
+              importedRoot: importedRoot,
+              verifyChecksums: verifyChecksums,
+            );
+          },
+    );
+    addTearDown(controller.dispose);
+    await controller.prepareSettings(null);
+    final original = controller.catalog;
+    fail = true;
+    await expectLater(controller.prepareSettings(null), throwsStateError);
+    expect(controller.catalog, same(original));
+    fail = false;
+    await controller.prepareSettings(null);
+    expect(loads, 3);
+    expect(controller.catalog!.installedById('en-Test'), isNotNull);
+  });
+
+  test(
+    'automatic checking rereads inventory after dictionary load fails',
+    () async {
+      final temporary = await Directory.systemTemp.createTemp(
+        'busymark-catalog-native-open-',
+      );
+      addTearDown(() async {
+        if (await temporary.exists()) await temporary.delete(recursive: true);
+      });
+      final bundle = await _createFixtureBundle(temporary);
+      final startupEntered = Completer<void>();
+      final releaseStartup = Completer<void>();
+      final controller = SpellingSessionController(
+        bundledRoot: bundle,
+        applicationSupportRoot: p.join(temporary.path, 'support'),
+        dictionaryStorageRoot: p.join(temporary.path, 'dictionary-storage'),
+        coordinatorStarter: () async {
+          startupEntered.complete();
+          await releaseStartup.future;
+          return SpellingCoordinator.start();
+        },
+      );
+      addTearDown(controller.dispose);
+      final buffer = DocumentBuffer.untitled(
+        id: 'native-open-race',
+        name: 'native-open-race.md',
+        text: 'helo',
+      );
+      SpellingSessionInput input(DocumentBuffer value) => SpellingSessionInput(
+        buffer: value,
+        workspace: null,
+        settings: AppSettings.defaults().copyWith(
+          defaultSpellingLanguage: 'en-Test',
+        ),
+        documentKind: DocumentKind.markdown,
+        markdownMode: MarkdownMode.commonMark,
+      );
+      controller.update(input(buffer));
+      await startupEntered.future;
+      final installed = controller.catalog!.installedById('en-Test')!;
+      await Directory(installed.directoryPath).delete(recursive: true);
+      releaseStartup.complete();
+      await _waitFor(
+        () =>
+            controller.state.status == SpellingPresentationStatus.failure ||
+            controller.state.status == SpellingPresentationStatus.incomplete,
+      );
+      controller.update(input(buffer.copyWith(text: 'wrld', revision: 1)));
+      await _waitFor(
+        () => controller.state.status != SpellingPresentationStatus.checking,
+      );
+      expect(
+        controller.state.status,
+        SpellingPresentationStatus.dictionaryNotInstalled,
+      );
+      expect(controller.catalog!.installedById('en-Test'), isNull);
     },
   );
 
@@ -3644,6 +5914,79 @@ Future<void> _pumpWidgetUntil(
   }
 }
 
+final class _SpellingMemorySettingsStore implements LocalSettingsStore {
+  @override
+  Future<Map<String, Object?>> load() async => {};
+
+  @override
+  Future<void> save(Map<String, Object?> json) async {}
+}
+
+Widget _spellingSettingsHeaderDefaults(BuildContext context, Widget child) =>
+    HeaderBarConfigurationDefaults(
+      configuration: HeaderBarConfiguration(
+        title: 'Settings',
+        viewMode: AppViewMode.editor,
+        searchQuery: '',
+        textDirection: TextDirection.ltr,
+        canRefresh: false,
+        documentControlsVisible: false,
+        searchActive: false,
+        searchVisible: false,
+        sidebarVisible: false,
+        sidebarToggleVisible: false,
+        backVisible: true,
+        fullScreen: false,
+        modalBarrierDepth: 0,
+        sidebarWidth: 200,
+        labels: _spellingSettingsHeaderLabels,
+        theme: HeaderBarTheme.fromContext(context),
+      ),
+      child: child,
+    );
+
+const _spellingSettingsHeaderLabels = HeaderBarLabels(
+  editor: 'Editor',
+  source: 'Source',
+  preview: 'Preview',
+  split: 'Split',
+  viewMode: 'View mode',
+  editorShortcut: '',
+  editorGtkAccelerator: '',
+  sourceShortcut: '',
+  sourceGtkAccelerator: '',
+  previewShortcut: '',
+  previewGtkAccelerator: '',
+  splitShortcut: '',
+  splitGtkAccelerator: '',
+  search: 'Search',
+  searchShortcut: '',
+  refresh: 'Refresh',
+  menu: 'Menu',
+  sidebar: 'Sidebar',
+  sidebarShortcut: '',
+  back: 'Back',
+  backShortcut: '',
+  save: 'Save',
+  export: 'Export',
+  exportShortcut: '',
+  exportGtkAccelerator: '',
+  fullScreen: 'Full screen',
+  fullScreenShortcut: '',
+  fullScreenGtkAccelerator: '',
+  settings: 'Settings',
+  settingsShortcut: '',
+  settingsGtkAccelerator: '',
+  keyboardShortcuts: 'Keyboard shortcuts',
+  keyboardShortcutsShortcut: '',
+  keyboardShortcutsGtkAccelerator: '',
+  syntaxReference: 'Syntax reference',
+  syntaxReferenceShortcut: '',
+  syntaxReferenceGtkAccelerator: '',
+  reportIssue: 'Report issue',
+  aboutBusyMark: 'About',
+);
+
 final class _DelayedAtomicFileWriter extends AtomicFileWriter {
   _DelayedAtomicFileWriter();
 
@@ -3704,6 +6047,40 @@ final class _ToggleFailAtomicFileWriter extends AtomicFileWriter {
       await File(targetPath).writeAsBytes(destinationBytes, flush: true);
       await File(recoveryPath).writeAsBytes(bytes, flush: true);
       throw AtomicFileChangedException(targetPath, recoveryPath: recoveryPath);
+    }
+    await super.writeBytes(
+      targetPath,
+      bytes,
+      overwrite: overwrite,
+      beforePublish: beforePublish,
+      acceptReplaced: acceptReplaced,
+    );
+  }
+}
+
+final class _GatedSpellingAtomicFileWriter extends AtomicFileWriter {
+  Completer<void> entered = Completer<void>();
+  Completer<void> release = Completer<void>();
+  bool _hold = false;
+
+  void holdNextWrite() {
+    entered = Completer<void>();
+    release = Completer<void>();
+    _hold = true;
+  }
+
+  @override
+  Future<void> writeBytes(
+    String targetPath,
+    List<int> bytes, {
+    required bool overwrite,
+    FutureOr<void> Function()? beforePublish,
+    FutureOr<bool> Function(String replacedPath)? acceptReplaced,
+  }) async {
+    if (_hold) {
+      _hold = false;
+      entered.complete();
+      await release.future;
     }
     await super.writeBytes(
       targetPath,

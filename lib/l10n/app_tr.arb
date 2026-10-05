@@ -104,6 +104,8 @@
   "noSpellingSuggestions": "Yazım önerisi yok",
   "spellingWordCheckFailed": "Bu sözcük denetlenemedi",
   "spellingCheckFailed": "Yazım denetimi başarısız oldu",
+  "spellingSettingsLoadFailed": "Yazım denetimi ayarları yüklenemedi",
+  "retrySpellingSettings": "Yazım denetimi ayarlarını yeniden yükle",
   "spellingCheckIncomplete": "Yazım denetimi tamamlanmadı",
   "spellingDictionaryNotInstalled": "Sözlük yüklü değil",
   "spellingDictionaryNotInstalledForLanguage": "{dictionary} sözlüğü yüklü değil",
@@ -4913,5 +4915,8 @@
   "renameTopicFileInstead": "Konu kimlikleri dosya adlarından gelir. İçindekiler tablosunda veya Dosyalar kenar çubuğunda Konu Dosyasını Yeniden Adlandır'ı kullanın.",
   "diagnosticWritersideWebFileNameInvalid": "\"{instanceId}\" örneği, \"{topic}\" konusu için geçersiz \"{webFileName}\" web dosyası adını yayımlıyor.",
   "diagnosticWritersideWebFileNameCollision": "\"{instanceId}\" örneği hem \"{firstTopic}\" hem de \"{secondTopic}\" konusunu \"{webFileName}\" olarak yayımlıyor.",
-  "spellingDictionaryRecoveryConflict": "Yazım sözlüğü harici olarak değiştirildi. Bir kurtarma kopyası korundu."
+  "spellingDictionaryRecoveryConflict": "Yazım sözlüğü harici olarak değiştirildi. Bir kurtarma kopyası korundu.",
+  "windowMinimize": "Simge durumuna küçült",
+  "windowMaximize": "Ekranı kapla",
+  "windowRestore": "Geri yükle"
 }

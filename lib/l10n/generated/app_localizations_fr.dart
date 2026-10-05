@@ -4626,6 +4626,14 @@ class AppLocalizationsFr extends AppLocalizations {
   String get spellingCheckFailed => 'Échec de la vérification orthographique';
 
   @override
+  String get spellingSettingsLoadFailed =>
+      'Impossible de charger les paramètres de correction orthographique';
+
+  @override
+  String get retrySpellingSettings =>
+      'Réessayer de charger les paramètres de correction orthographique';
+
+  @override
   String get spellingCheckIncomplete =>
       'La vérification orthographique est incomplète';
 
@@ -4690,4 +4698,13 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get spellingDictionaryRecoveryConflict =>
       'Le dictionnaire orthographique a été modifié en externe. Une copie de récupération a été conservée.';
+
+  @override
+  String get windowMinimize => 'Réduire';
+
+  @override
+  String get windowMaximize => 'Agrandir';
+
+  @override
+  String get windowRestore => 'Restaurer';
 }

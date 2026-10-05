@@ -4573,6 +4573,13 @@ class AppLocalizationsHi extends AppLocalizations {
   String get spellingCheckFailed => 'वर्तनी जाँच विफल रही';
 
   @override
+  String get spellingSettingsLoadFailed =>
+      'वर्तनी जाँच सेटिंग लोड नहीं हो सकीं';
+
+  @override
+  String get retrySpellingSettings => 'वर्तनी जाँच सेटिंग फिर से लोड करें';
+
+  @override
   String get spellingCheckIncomplete => 'वर्तनी जाँच अधूरी है';
 
   @override
@@ -4634,4 +4641,13 @@ class AppLocalizationsHi extends AppLocalizations {
   @override
   String get spellingDictionaryRecoveryConflict =>
       'वर्तनी शब्दकोश को बाहरी रूप से बदला गया। पुनर्प्राप्ति प्रति सुरक्षित रखी गई।';
+
+  @override
+  String get windowMinimize => 'छोटा करें';
+
+  @override
+  String get windowMaximize => 'अधिकतम करें';
+
+  @override
+  String get windowRestore => 'पुनर्स्थापित करें';
 }

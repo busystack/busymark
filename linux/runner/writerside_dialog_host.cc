@@ -37,10 +37,20 @@ GtkTextDirection requested_direction(FlValue* args, GtkWidget* fallback) {
   return gtk_widget_get_direction(fallback);
 }
 
+void set_dialog_direction(GtkWidget* widget, gpointer user_data) {
+  const auto direction = *static_cast<GtkTextDirection*>(user_data);
+  gtk_widget_set_direction(widget, direction);
+  if (GTK_IS_CONTAINER(widget)) {
+    gtk_container_forall(GTK_CONTAINER(widget), set_dialog_direction, user_data);
+  }
+}
+
 void configure_dialog(GtkWidget* dialog,
                       GtkTextDirection direction,
                       gint width) {
-  gtk_widget_set_direction(dialog, direction);
+  // GTK children otherwise keep the desktop's default direction. Configure
+  // the completed tree, including internal dialog/action widgets.
+  set_dialog_direction(dialog, &direction);
   gtk_window_set_resizable(GTK_WINDOW(dialog), FALSE);
   gtk_window_set_default_size(GTK_WINDOW(dialog), width, -1);
   gtk_dialog_set_default_response(GTK_DIALOG(dialog), GTK_RESPONSE_OK);
@@ -167,7 +177,6 @@ void show_duplicate_topic(DialogHandlerData* data,
       static_cast<GtkDialogFlags>(GTK_DIALOG_MODAL |
                                   GTK_DIALOG_DESTROY_WITH_PARENT),
       cancel_label, GTK_RESPONSE_CANCEL, ok_label, GTK_RESPONSE_OK, nullptr);
-  configure_dialog(dialog, requested_direction(args, data->view), 470);
   GtkWidget* ok_button =
       gtk_dialog_get_widget_for_response(GTK_DIALOG(dialog), GTK_RESPONSE_OK);
 
@@ -194,6 +203,8 @@ void show_duplicate_topic(DialogHandlerData* data,
   g_signal_connect(entry, "changed", G_CALLBACK(update_duplicate_validation),
                    &validation);
   update_duplicate_validation(GTK_EDITABLE(entry), &validation);
+  configure_dialog(dialog, requested_direction(args, data->view), 470);
+  gtk_widget_set_direction(entry, GTK_TEXT_DIR_LTR);
   gtk_widget_show_all(dialog);
   gtk_widget_set_visible(error_label,
                          gtk_label_get_text(GTK_LABEL(error_label))[0] != '\0');
@@ -281,7 +292,6 @@ void show_edit_title(DialogHandlerData* data,
                                   GTK_DIALOG_DESTROY_WITH_PARENT),
       lookup_string(args, "cancelLabel"), GTK_RESPONSE_CANCEL,
       lookup_string(args, "okLabel"), GTK_RESPONSE_OK, nullptr);
-  configure_dialog(dialog, requested_direction(args, data->view), 560);
   GtkWidget* ok_button =
       gtk_dialog_get_widget_for_response(GTK_DIALOG(dialog), GTK_RESPONSE_OK);
   GtkWidget* content = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
@@ -342,6 +352,7 @@ void show_edit_title(DialogHandlerData* data,
                    ok_button);
   update_title_inheritance(GTK_EDITABLE(topic_entry), &inheritance);
   update_title_validity(GTK_EDITABLE(topic_entry), ok_button);
+  configure_dialog(dialog, requested_direction(args, data->view), 560);
   gtk_widget_show_all(dialog);
   gtk_widget_grab_focus(topic_entry);
   gtk_editable_select_region(GTK_EDITABLE(topic_entry), 0, -1);

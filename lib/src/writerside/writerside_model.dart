@@ -1,3 +1,4 @@
+import 'writerside_input_snapshot.dart';
 import '../core/diagnostic.dart';
 import '../core/source_span.dart';
 import '../markdown/markdown_model.dart';
@@ -538,6 +539,7 @@ class WritersideModule {
     this.buildProfiles,
     this.instanceGroups,
     this.sourceOverrides = const {},
+    this.inputSnapshot,
     this.sourceFiles = const {},
     this.referenceData = const WritersideReferenceData(),
     this.semanticDiagnostics = const [],
@@ -579,6 +581,7 @@ class WritersideModule {
   /// Unsaved project sources that must win over their on-disk counterparts
   /// when the module is recomputed after another project-file edit.
   final Map<String, String> sourceOverrides;
+  final WritersideInputSnapshot? inputSnapshot;
   final Map<String, WritersideSourceFile> sourceFiles;
   final WritersideReferenceData referenceData;
 
@@ -587,6 +590,7 @@ class WritersideModule {
     List<Diagnostic>? diagnostics,
     List<Diagnostic>? semanticDiagnostics,
     Map<String, String>? sourceOverrides,
+    WritersideInputSnapshot? inputSnapshot,
     Map<String, WritersideSourceFile>? sourceFiles,
     WritersideReferenceData? referenceData,
   }) {
@@ -606,6 +610,7 @@ class WritersideModule {
       buildProfiles: buildProfiles,
       instanceGroups: instanceGroups,
       sourceOverrides: sourceOverrides ?? this.sourceOverrides,
+      inputSnapshot: inputSnapshot ?? this.inputSnapshot,
       sourceFiles: sourceFiles ?? this.sourceFiles,
       referenceData: referenceData ?? this.referenceData,
     );

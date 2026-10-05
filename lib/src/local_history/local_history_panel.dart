@@ -350,26 +350,27 @@ class _LocalHistoryPanelState extends ConsumerState<LocalHistoryPanel> {
     final confirmed = await showBusyMarkModalDialog<bool>(
       context,
       barrierDismissible: false,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(
-          action == _HistoryAction.clearDocument
-              ? dialogContext.l10n.localHistoryClearDocumentTitle
-              : dialogContext.l10n.localHistoryClearAllTitle,
-        ),
-        content: Text(
-          action == _HistoryAction.clearAll
-              ? '${dialogContext.l10n.localHistoryClearAll}.\n\n'
-                    '${dialogContext.l10n.localHistoryClearConfirmation}'
-              : dialogContext.l10n.localHistoryClearConfirmation,
-        ),
+      builder: (dialogContext) => BusyMarkDialogShell(
+        title: action == _HistoryAction.clearDocument
+            ? dialogContext.l10n.localHistoryClearDocumentTitle
+            : dialogContext.l10n.localHistoryClearAllTitle,
         actions: [
-          TextButton(
+          BusyMarkDialogButton(
             onPressed: () => Navigator.pop(dialogContext, false),
-            child: Text(dialogContext.l10n.cancel),
+            label: dialogContext.l10n.cancel,
           ),
-          FilledButton(
+          BusyMarkDialogButton(
+            destructive: true,
             onPressed: () => Navigator.pop(dialogContext, true),
-            child: Text(dialogContext.l10n.delete),
+            label: dialogContext.l10n.delete,
+          ),
+        ],
+        children: [
+          Text(
+            action == _HistoryAction.clearAll
+                ? '${dialogContext.l10n.localHistoryClearAll}.\n\n'
+                      '${dialogContext.l10n.localHistoryClearConfirmation}'
+                : dialogContext.l10n.localHistoryClearConfirmation,
           ),
         ],
       ),

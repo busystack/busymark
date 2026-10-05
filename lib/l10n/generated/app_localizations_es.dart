@@ -4624,6 +4624,14 @@ class AppLocalizationsEs extends AppLocalizations {
   String get spellingCheckFailed => 'La revisión ortográfica falló';
 
   @override
+  String get spellingSettingsLoadFailed =>
+      'No se pudo cargar la configuración ortográfica';
+
+  @override
+  String get retrySpellingSettings =>
+      'Volver a cargar la configuración ortográfica';
+
+  @override
   String get spellingCheckIncomplete =>
       'La revisión ortográfica está incompleta';
 
@@ -4688,4 +4696,13 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get spellingDictionaryRecoveryConflict =>
       'El diccionario ortográfico se modificó externamente. Se conservó una copia de recuperación.';
+
+  @override
+  String get windowMinimize => 'Minimizar';
+
+  @override
+  String get windowMaximize => 'Maximizar';
+
+  @override
+  String get windowRestore => 'Restaurar';
 }

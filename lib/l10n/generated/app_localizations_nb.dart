@@ -4581,6 +4581,14 @@ class AppLocalizationsNb extends AppLocalizations {
   String get spellingCheckFailed => 'Stavekontrollen mislyktes';
 
   @override
+  String get spellingSettingsLoadFailed =>
+      'Kunne ikke laste inn innstillinger for stavekontroll';
+
+  @override
+  String get retrySpellingSettings =>
+      'Prøv å laste inn innstillinger for stavekontroll på nytt';
+
+  @override
   String get spellingCheckIncomplete => 'Stavekontrollen er ufullstendig';
 
   @override
@@ -4643,4 +4651,13 @@ class AppLocalizationsNb extends AppLocalizations {
   @override
   String get spellingDictionaryRecoveryConflict =>
       'Staveordboken ble endret eksternt. En gjenopprettingskopi ble bevart.';
+
+  @override
+  String get windowMinimize => 'Minimer';
+
+  @override
+  String get windowMaximize => 'Maksimer';
+
+  @override
+  String get windowRestore => 'Gjenopprett';
 }

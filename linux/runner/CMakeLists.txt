@@ -9,6 +9,11 @@ project(runner LANGUAGES CXX)
 add_executable(${BINARY_NAME}
   "main.cc"
   "my_application.cc"
+  "gtk_accent.cc"
+  "gtk_accent_host.cc"
+  "gtk_header_icons.cc"
+  "gtk_window_preferences.cc"
+  "linux_chrome_host.cc"
   "rich_clipboard_host.cc"
   "secure_credential_host.cc"
   "video_player_host.cc"
@@ -20,6 +25,7 @@ add_executable(${BINARY_NAME}
 # Apply the standard set of build settings. This can be removed for applications
 # that need different build settings.
 apply_standard_settings(${BINARY_NAME})
+target_compile_features(${BINARY_NAME} PRIVATE cxx_std_17)
 
 # Add preprocessor definitions for the application ID.
 add_definitions(-DAPPLICATION_ID="${APPLICATION_ID}")

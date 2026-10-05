@@ -4598,6 +4598,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get spellingCheckFailed => 'Spelling check failed';
 
   @override
+  String get spellingSettingsLoadFailed => 'Could not load spelling settings';
+
+  @override
+  String get retrySpellingSettings => 'Retry loading spelling settings';
+
+  @override
   String get spellingCheckIncomplete => 'Spelling check is incomplete';
 
   @override
@@ -4659,4 +4665,13 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get spellingDictionaryRecoveryConflict =>
       'The spelling dictionary changed externally. A recovery copy was preserved.';
+
+  @override
+  String get windowMinimize => 'Minimize';
+
+  @override
+  String get windowMaximize => 'Maximize';
+
+  @override
+  String get windowRestore => 'Restore';
 }

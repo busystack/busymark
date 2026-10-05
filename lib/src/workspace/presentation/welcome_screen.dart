@@ -15,6 +15,8 @@ import '../../app/app_settings.dart';
 import '../../app/app_router.dart';
 import '../../app/busymark_dialogs.dart';
 import '../../app/busymark_design.dart';
+import '../../app/linux/linux_page_frame.dart';
+import '../../app/linux/linux_header_style.dart';
 import '../../app/busymark_glyphs.dart';
 import '../../app/busymark_main_menu.dart';
 import '../../app/busymark_shortcuts.dart';
@@ -50,7 +52,6 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
     final settings = ref.watch(appSettingsControllerProvider);
     final headerBar = ref.watch(linuxHeaderBarServiceProvider);
     final colors = BusyMarkSurfaceColors.of(context);
-    final useNativeHeaderBar = headerBar.usesNativeHeaderBar;
     final sidebarVisible = settings.sidebarVisible;
     ref.listen(headerBarActionsProvider, (previous, next) {
       next.whenData((event) {
@@ -98,86 +99,79 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
         onRecentAction: _performRecentAction,
       ),
     );
-    final welcomeContent = Expanded(
-      child: ColoredBox(
-        color: welcomeMainColor,
-        child: BusyMarkClamp(
-          maxWidth: BusyMarkSizes.contentWidth,
-          margin: EdgeInsets.zero,
-          padding: BusyMarkInsets.welcomePage,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              BusyMarkGroupedList(
-                title: context.l10n.create,
-                filled: true,
-                children: [
-                  BusyMarkActionRow(
-                    title: context.l10n.createMarkdownFile,
-                    subtitle: context.l10n.createMarkdownFileDescription,
-                    leading: const Icon(BusyMarkGlyphs.newDocument),
-                    trailing: Icon(
-                      BusyMarkGlyphs.forwardFor(Directionality.of(context)),
-                    ),
-                    onTap: _createMarkdownFile,
+    final welcomeContent = ColoredBox(
+      color: welcomeMainColor,
+      child: BusyMarkClamp(
+        maxWidth: BusyMarkSizes.contentWidth,
+        margin: EdgeInsets.zero,
+        padding: BusyMarkInsets.welcomePage,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            BusyMarkGroupedList(
+              title: context.l10n.create,
+              filled: true,
+              children: [
+                BusyMarkActionRow(
+                  title: context.l10n.createMarkdownFile,
+                  subtitle: context.l10n.createMarkdownFileDescription,
+                  leading: const Icon(BusyMarkGlyphs.newDocument),
+                  trailing: Icon(
+                    BusyMarkGlyphs.forwardFor(Directionality.of(context)),
                   ),
-                  BusyMarkActionRow(
-                    title: context.l10n.createWritersideProject,
-                    subtitle: context.l10n.createWritersideProjectDescription,
-                    leading: const Icon(BusyMarkGlyphs.writersideProject),
-                    trailing: Icon(
-                      BusyMarkGlyphs.forwardFor(Directionality.of(context)),
-                    ),
-                    onTap: _createWritersideProject,
+                  onTap: _createMarkdownFile,
+                ),
+                BusyMarkActionRow(
+                  title: context.l10n.createWritersideProject,
+                  subtitle: context.l10n.createWritersideProjectDescription,
+                  leading: const Icon(BusyMarkGlyphs.writersideProject),
+                  trailing: Icon(
+                    BusyMarkGlyphs.forwardFor(Directionality.of(context)),
                   ),
-                ],
-              ),
-              BusyMarkGroupedList(
-                title: context.l10n.open,
-                filled: true,
-                children: [
-                  BusyMarkActionRow(
-                    title: context.l10n.openMarkdownFile,
-                    subtitle: context.l10n.markdownFileExtensions,
-                    leading: const Icon(BusyMarkGlyphs.markdownFile),
-                    trailing: Icon(
-                      BusyMarkGlyphs.forwardFor(Directionality.of(context)),
-                    ),
-                    onTap: _chooseMarkdownFile,
-                  ),
-                  BusyMarkActionRow(
-                    title: context.l10n.openFolderOrWritersideProject,
-                    subtitle: context.l10n.markdownFolderOrWritersideProject,
-                    leading: const Icon(BusyMarkGlyphs.folder),
-                    trailing: Icon(
-                      BusyMarkGlyphs.forwardFor(Directionality.of(context)),
-                    ),
-                    onTap: () => _chooseDirectory(context.l10n.open),
-                  ),
-                ],
-              ),
-              if (state.isLoading) ...[
-                const SizedBox(height: BusyMarkSpacing.lg),
-                const LinearProgressIndicator(),
-              ],
-              if (state.message != null) ...[
-                const SizedBox(height: BusyMarkSpacing.lg),
-                BusyMarkStatusBox(
-                  message: localizeWorkspaceMessage(context, state.message!),
-                  kind: busyMarkWorkspaceMessageStatusKind(state.message!.code),
+                  onTap: _createWritersideProject,
                 ),
               ],
+            ),
+            BusyMarkGroupedList(
+              title: context.l10n.open,
+              filled: true,
+              children: [
+                BusyMarkActionRow(
+                  title: context.l10n.openMarkdownFile,
+                  subtitle: context.l10n.markdownFileExtensions,
+                  leading: const Icon(BusyMarkGlyphs.markdownFile),
+                  trailing: Icon(
+                    BusyMarkGlyphs.forwardFor(Directionality.of(context)),
+                  ),
+                  onTap: _chooseMarkdownFile,
+                ),
+                BusyMarkActionRow(
+                  title: context.l10n.openFolderOrWritersideProject,
+                  subtitle: context.l10n.markdownFolderOrWritersideProject,
+                  leading: const Icon(BusyMarkGlyphs.folder),
+                  trailing: Icon(
+                    BusyMarkGlyphs.forwardFor(Directionality.of(context)),
+                  ),
+                  onTap: () => _chooseDirectory(context.l10n.open),
+                ),
+              ],
+            ),
+            if (state.isLoading) ...[
+              const SizedBox(height: BusyMarkSpacing.lg),
+              const LinearProgressIndicator(),
             ],
-          ),
+            if (state.message != null) ...[
+              const SizedBox(height: BusyMarkSpacing.lg),
+              BusyMarkStatusBox(
+                message: localizeWorkspaceMessage(context, state.message!),
+                kind: busyMarkWorkspaceMessageStatusKind(state.message!.code),
+              ),
+            ],
+          ],
         ),
       ),
     );
-    final sidebarOnRight = Directionality.of(context) == TextDirection.rtl;
-    final bodyChildren = [
-      if (!sidebarOnRight && sidebarVisible) welcomeSidebar,
-      welcomeContent,
-      if (sidebarOnRight && sidebarVisible) welcomeSidebar,
-    ];
+
     final headerConfiguration = HeaderBarConfigurationDefaults.of(context)
         .copyWith(
           title: context.l10n.appTitle,
@@ -198,36 +192,35 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
       enabled: headerBar.isAvailable,
       child: Scaffold(
         backgroundColor: welcomeMainColor,
-        appBar: useNativeHeaderBar
-            ? null
-            : AppBar(
-                title: Text(
-                  context.l10n.appTitle,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
-                ),
-                actions: [
-                  BusyMarkHeaderIconButton(
-                    tooltip: sidebarVisible
-                        ? context.l10n.hideSidebar
-                        : context.l10n.showSidebar,
-                    icon: BusyMarkGlyphs.sidebar,
-                    selected: sidebarVisible,
-                    shortcut: BusyMarkSidebarShortcutLabels.toggleSidebar,
-                    onPressed: _toggleSidebar,
-                  ),
-                  BusyMarkMainMenuButton(
-                    onSelected: (action) =>
-                        _handleMainMenuAction(context, headerBar, action),
-                  ),
-                  const SizedBox(width: BusyMarkSpacing.sm),
-                ],
+        body: LayoutBuilder(
+          builder: (context, constraints) => LinuxPageFrame(
+            sidebarHeader: const BusyMarkLinuxBrandHeader(),
+            sidebarBody: welcomeSidebar,
+            sidebarAvailable:
+                constraints.maxWidth >=
+                BusyMarkSizes.sidebarWidth + BusyMarkSizes.previewMinWidth,
+            sidebarExpanded: sidebarVisible,
+            sidebarTransitionGeneration: ref.watch(
+              sidebarTransitionGenerationProvider,
+            ),
+            header: BusyMarkLinuxHeaderLayout(
+              leading: BusyMarkHeaderIconButton(
+                tooltip: sidebarVisible
+                    ? context.l10n.hideSidebar
+                    : context.l10n.showSidebar,
+                icon: BusyMarkGlyphs.sidebar,
+                selected: sidebarVisible,
+                shortcut: BusyMarkSidebarShortcutLabels.toggleSidebar,
+                onPressed: _toggleSidebar,
               ),
-        body: Row(
-          textDirection: TextDirection.ltr,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: bodyChildren,
+              title: BusyMarkLinuxHeaderTitle(context.l10n.appTitle),
+              trailing: BusyMarkMainMenuButton(
+                onSelected: (action) =>
+                    _handleMainMenuAction(context, headerBar, action),
+              ),
+            ),
+            body: welcomeContent,
+          ),
         ),
       ),
     );
@@ -506,6 +499,7 @@ class _WelcomeSidebar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BusyMarkSidebarSurface(
+      showEndBorder: false,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [

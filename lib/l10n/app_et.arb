@@ -104,6 +104,8 @@
   "noSpellingSuggestions": "Õigekirjasoovitusi pole",
   "spellingWordCheckFailed": "Seda sõna ei saanud kontrollida",
   "spellingCheckFailed": "Õigekirjakontroll nurjus",
+  "spellingSettingsLoadFailed": "Õigekirjakontrolli sätteid ei õnnestunud laadida",
+  "retrySpellingSettings": "Laadi õigekirjakontrolli sätted uuesti",
   "spellingCheckIncomplete": "Õigekirjakontroll on pooleli",
   "spellingDictionaryNotInstalled": "Sõnastik pole installitud",
   "spellingDictionaryNotInstalledForLanguage": "{dictionary} sõnastik pole installitud",
@@ -3834,5 +3836,8 @@
   "renameTopicFileInstead": "Teema ID-d tuletatakse failinimedest. Kasuta sisukorras või failide külgribal käsku „Nimeta teemafail ümber“.",
   "diagnosticWritersideWebFileNameInvalid": "Eksemplar \"{instanceId}\" avaldab teema \"{topic}\" jaoks sobimatu veebifailinime \"{webFileName}\".",
   "diagnosticWritersideWebFileNameCollision": "Eksemplar \"{instanceId}\" avaldab nii \"{firstTopic}\" kui ka \"{secondTopic}\" nimega \"{webFileName}\".",
-  "spellingDictionaryRecoveryConflict": "Õigekirjasõnastikku muudeti väliselt. Taastekoopia säilitati."
+  "spellingDictionaryRecoveryConflict": "Õigekirjasõnastikku muudeti väliselt. Taastekoopia säilitati.",
+  "windowMinimize": "Minimeeri",
+  "windowMaximize": "Maksimeeri",
+  "windowRestore": "Taasta"
 }

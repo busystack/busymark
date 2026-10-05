@@ -4,6 +4,8 @@ import 'dart:io';
 import 'package:crypto/crypto.dart';
 import 'package:path/path.dart' as p;
 
+import 'spelling_dictionary_installer.dart';
+
 enum SpellingDictionaryInstallationKind { downloaded, imported }
 
 final class SpellingInvalidDictionaryInstallation {
@@ -13,6 +15,7 @@ final class SpellingInvalidDictionaryInstallation {
     required this.error,
     this.resourceId,
     this.id,
+    this.sourceIdentity,
   });
 
   final String directoryPath;
@@ -20,6 +23,9 @@ final class SpellingInvalidDictionaryInstallation {
   final String error;
   final String? resourceId;
   final String? id;
+
+  /// Snapshot of the invalid directory when this record was discovered.
+  final String? sourceIdentity;
 
   bool matches(String value) =>
       resourceId == value || id == value || p.basename(directoryPath) == value;
@@ -300,6 +306,7 @@ final class SpellingDictionaryCatalog {
     String? downloadedRoot,
     String? importedRoot,
     bool verifyChecksums = true,
+    void Function(String rootPath, List<String> entries)? onInstallationListed,
   }) async {
     final available = <SpellingDictionaryResource>[];
     final installations = <SpellingDictionaryInstallation>[];
@@ -318,6 +325,7 @@ final class SpellingDictionaryCatalog {
       entries: installations,
       unavailable: unavailable,
       invalidEntries: invalidInstallations,
+      onInstallationListed: onInstallationListed,
     );
     await _loadInstallations(
       importedRoot,
@@ -327,6 +335,7 @@ final class SpellingDictionaryCatalog {
       entries: installations,
       unavailable: unavailable,
       invalidEntries: invalidInstallations,
+      onInstallationListed: onInstallationListed,
     );
     available.sort((left, right) => left.label.compareTo(right.label));
     installations.sort((left, right) => left.label.compareTo(right.label));
@@ -389,77 +398,137 @@ final class SpellingDictionaryCatalog {
     required List<SpellingDictionaryInstallation> entries,
     required Map<String, String> unavailable,
     required List<SpellingInvalidDictionaryInstallation> invalidEntries,
+    void Function(String rootPath, List<String> entries)? onInstallationListed,
   }) async {
     if (rootPath == null) return;
     final root = Directory(rootPath);
     if (!await root.exists()) return;
-    await for (final entity in root.list()) {
+    var visible = await root.list(followLinks: false).toList();
+    onInstallationListed?.call(root.path, [
+      for (final entity in visible) p.basename(entity.path),
+    ]);
+    // A replacement briefly moves its previous directory to a hidden backup.
+    // A listing taken in that interval must wait for the same destination
+    // lock and then list again, rather than publish a missing installation.
+    for (var attempt = 0; attempt < 3; attempt++) {
+      final backups = visible.where(
+        (entity) =>
+            entity is Directory &&
+            p.basename(entity.path).startsWith('.busymark-replaced-'),
+      );
+      if (backups.isEmpty) break;
+      for (final backup in backups) {
+        final name = p.basename(backup.path);
+        final match = RegExp(
+          r'^\.busymark-replaced-(.+)-[^-]+$',
+        ).firstMatch(name);
+        if (match == null) continue;
+        final destination = p.join(root.path, match.group(1)!);
+        await const SpellingDictionaryPairInstaller().withPublicationLock(
+          destination,
+          () async {},
+        );
+      }
+      visible = await root.list(followLinks: false).toList();
+    }
+    for (final entity in visible) {
       if (entity is! Directory || p.basename(entity.path).startsWith('.')) {
         continue;
       }
-      final manifest = File(p.join(entity.path, 'manifest.json'));
-      String? resourceId;
-      String? id;
-      try {
-        if (!await manifest.exists()) {
-          throw const FormatException('Installation manifest is missing.');
-        }
-        final decoded = jsonDecode(await manifest.readAsString());
-        if (decoded is! Map || decoded['schemaVersion'] != 1) {
-          throw const FormatException('Unsupported installation manifest.');
-        }
-        resourceId = decoded['resourceId']?.toString();
-        id = decoded['id']?.toString();
-        final installation = SpellingDictionaryInstallation.fromJson(
-          decoded.cast<String, Object?>(),
-          rootPath: entity.path,
-        );
-        resourceId = installation.resourceId;
-        id = installation.id;
-        if (installation.kind != expectedKind) {
-          throw const FormatException('Dictionary installation kind mismatch.');
-        }
-        if (expectedKind == SpellingDictionaryInstallationKind.downloaded) {
-          final resource = available
-              .where(
-                (candidate) => candidate.resourceId == installation.resourceId,
-              )
-              .firstOrNull;
-          if (resource == null ||
-              resource.affSha256 != installation.affSha256 ||
-              resource.dicSha256 != installation.dicSha256 ||
-              resource.sourceRevision != installation.sourceRevision) {
-            throw const FormatException(
-              'Downloaded dictionary does not match the shipped catalog.',
+      await const SpellingDictionaryPairInstaller().withPublicationLock(
+        entity.path,
+        () async {
+          if (!await entity.exists()) return;
+          final manifest = File(p.join(entity.path, 'manifest.json'));
+          String? resourceId;
+          String? id;
+          try {
+            if (!await manifest.exists()) {
+              throw const FormatException('Installation manifest is missing.');
+            }
+            final decoded = jsonDecode(await manifest.readAsString());
+            if (decoded is! Map || decoded['schemaVersion'] != 1) {
+              throw const FormatException('Unsupported installation manifest.');
+            }
+            resourceId = decoded['resourceId']?.toString();
+            id = decoded['id']?.toString();
+            final installation = SpellingDictionaryInstallation.fromJson(
+              decoded.cast<String, Object?>(),
+              rootPath: entity.path,
+            );
+            resourceId = installation.resourceId;
+            id = installation.id;
+            if (installation.kind != expectedKind) {
+              throw const FormatException(
+                'Dictionary installation kind mismatch.',
+              );
+            }
+            if (expectedKind == SpellingDictionaryInstallationKind.downloaded) {
+              final resource = available
+                  .where(
+                    (candidate) =>
+                        candidate.resourceId == installation.resourceId,
+                  )
+                  .firstOrNull;
+              if (resource == null ||
+                  resource.affSha256 != installation.affSha256 ||
+                  resource.dicSha256 != installation.dicSha256 ||
+                  resource.sourceRevision != installation.sourceRevision) {
+                throw const FormatException(
+                  'Downloaded dictionary does not match the shipped catalog.',
+                );
+              }
+            }
+            if (entries.any(
+              (candidate) => candidate.resourceId == installation.resourceId,
+            )) {
+              throw FormatException(
+                'Duplicate installed resource ${installation.resourceId}.',
+              );
+            }
+            await _validateInstallationFiles(
+              installation,
+              verifyChecksums: verifyChecksums,
+            );
+            entries.add(installation);
+          } on Object catch (error) {
+            unavailable[entity.path] = error.toString();
+            invalidEntries.add(
+              SpellingInvalidDictionaryInstallation(
+                directoryPath: p.normalize(p.absolute(entity.path)),
+                kind: expectedKind,
+                error: error.toString(),
+                resourceId: resourceId,
+                id: id,
+                sourceIdentity: await spellingInstallationDirectoryIdentity(
+                  entity,
+                ),
+              ),
             );
           }
-        }
-        if (entries.any(
-          (candidate) => candidate.resourceId == installation.resourceId,
-        )) {
-          throw FormatException(
-            'Duplicate installed resource ${installation.resourceId}.',
-          );
-        }
-        await _validateInstallationFiles(
-          installation,
-          verifyChecksums: verifyChecksums,
-        );
-        entries.add(installation);
-      } on Object catch (error) {
-        unavailable[entity.path] = error.toString();
-        invalidEntries.add(
-          SpellingInvalidDictionaryInstallation(
-            directoryPath: p.normalize(p.absolute(entity.path)),
-            kind: expectedKind,
-            error: error.toString(),
-            resourceId: resourceId,
-            id: id,
-          ),
-        );
-      }
+        },
+      );
     }
   }
+}
+
+/// A directory signature for rejecting a stale invalid-installation record.
+/// It is observed again while holding that destination's publication lock.
+Future<String> spellingInstallationDirectoryIdentity(
+  Directory directory,
+) async {
+  final entries = <String>[];
+  final directoryStat = await directory.stat();
+  entries.add('${directoryStat.changed.microsecondsSinceEpoch}');
+  await for (final entity in directory.list(followLinks: false)) {
+    final stat = await entity.stat();
+    entries.add(
+      '${p.basename(entity.path)}:${stat.type}:${stat.size}:'
+      '${stat.changed.microsecondsSinceEpoch}',
+    );
+  }
+  entries.sort();
+  return sha256.convert(utf8.encode(entries.join('\n'))).toString();
 }
 
 String safeSpellingCatalogResourceName(String value) =>

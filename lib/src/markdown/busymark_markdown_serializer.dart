@@ -59,6 +59,38 @@ class BusyMarkInlineDelimiter {
 class BusyMarkMarkdownSerializer {
   const BusyMarkMarkdownSerializer();
 
+  /// Formatting delimiters beside literal URL punctuation require an explicit
+  /// label. Editing operations must commit that source form in the model so
+  /// subsequent label edits agree with saving and reopening.
+  bool bareUrlNeedsExplicitSource(
+    BusyInline inline,
+    BusyInline? following, {
+    required bool insideFormatting,
+  }) {
+    if (!_canEmitBareUrl(inline) || following == null) return false;
+    // A following formatting subtree emits its delimiters before the visible
+    // suffix. Those delimiters and the suffix's escapes can enter the URL.
+    // Use its effective content, including nested wrappers, for the boundary.
+    final text = following.plainText;
+    if (_urlFormattingKind(following.kind)) {
+      return text.isNotEmpty && !RegExp(r'^\s').hasMatch(text);
+    }
+    if (following.kind != BusyInlineKind.text || text.isEmpty) return false;
+    if (_bareUrlLiteralSuffixLength(inline, text) > 0) {
+      return insideFormatting;
+    }
+    // Normal literal escaping is still required (especially for '&copy;').
+    // If that source extends the autolink, protect the semantic boundary with
+    // an explicit label rather than expose an escape or decode an entity.
+    final ranges = busyMarkBareUrlRanges(
+      '${inline.plainText}${_escapeInlineText(text)}',
+    );
+    return ranges.isEmpty ||
+        ranges.first.start != 0 ||
+        ranges.first.end != inline.plainText.length ||
+        ranges.first.destination != inline.destination;
+  }
+
   /// Serializes an inline fragment without document-level trimming or a final
   /// newline. This is also the single entry point for context-sensitive inline
   /// escaping used by clipboard insertion.
@@ -690,6 +722,10 @@ class BusyMarkMarkdownSerializer {
     required _InlineTraversalMetrics metrics,
     List<int> pathPrefix = const [],
     int textBase = 0,
+    bool bareUrlText = false,
+    bool formattedUrlLabel = false,
+    bool insideFormatting = false,
+    bool insideLinkLabel = false,
   }) {
     final totalTextLength = inlines.fold<int>(
       0,
@@ -707,10 +743,14 @@ class BusyMarkMarkdownSerializer {
     var nextAtBlockStart = atBlockStart;
     final sortedTargets = targets.toList()..sort();
     var targetCursor = 0;
+    BusyInline? literalUrl;
+    var literalSuffix = '';
     for (var index = 0; index < inlines.length; index++) {
       final inline = inlines[index];
       metrics.visitedNodes += 1;
       if (inline.kind == BusyInlineKind.hardBreak) {
+        literalUrl = null;
+        literalSuffix = '';
         var runEnd = index + 1;
         while (runEnd < inlines.length &&
             inlines[runEnd].kind == BusyInlineKind.hardBreak) {
@@ -788,6 +828,24 @@ class BusyMarkMarkdownSerializer {
           sortedTargets[targetCursor] <= consumedText + length) {
         localOffsets.add(sortedTargets[targetCursor++] - consumedText);
       }
+      // Literal escapes may parse into several adjacent text nodes. Carry
+      // the URL boundary across them so reopening does not change escaping.
+      final suffix = inline.kind == BusyInlineKind.text
+          ? '$literalSuffix${inline.text}'
+          : '';
+      final suffixPrefixLength =
+          !insideFormatting &&
+              inline.kind == BusyInlineKind.text &&
+              literalUrl != null
+          ? _bareUrlLiteralSuffixLength(literalUrl, suffix)
+          : 0;
+      final literalPrefixLength = (suffixPrefixLength - literalSuffix.length)
+          .clamp(0, inline.text.length)
+          .toInt();
+      final angleEntityOffset =
+          suffixPrefixLength > 0 && suffix[suffixPrefixLength - 1] == '<'
+          ? suffixPrefixLength - literalSuffix.length
+          : -1;
       final result = _inlineAtTextOffsets(
         inline,
         textOffsets: localOffsets,
@@ -796,12 +854,64 @@ class BusyMarkMarkdownSerializer {
         readableHardBreakRuns: readableHardBreakRuns,
         followedByLink:
             index + 1 < inlines.length &&
-            inlines[index + 1].kind == BusyInlineKind.link,
+            inlines[index + 1].kind == BusyInlineKind.link &&
+            !_canEmitBareUrl(inlines[index + 1]),
         delimiterOverrides: delimiterOverrides,
         metrics: metrics,
         inlinePath: [...pathPrefix, index],
         textBase: textBase + consumedText,
+        bareUrlText: bareUrlText,
+        literalPrefixLength: literalPrefixLength,
+        forceExplicitBareUrl: bareUrlNeedsExplicitSource(
+          inline,
+          index + 1 < inlines.length ? inlines[index + 1] : null,
+          insideFormatting: insideFormatting,
+        ),
+        formattedUrlLabel: formattedUrlLabel,
+        insideFormatting: insideFormatting,
+        insideLinkLabel: insideLinkLabel,
+        entityOffsets: {
+          // Keep the boundary '<' literal without forming HTML or an angle
+          // autolink. The following reference also keeps this literal slice
+          // distinct from decoded raw HTML in the AST adapter.
+          if (angleEntityOffset >= 0 && angleEntityOffset < inline.text.length)
+            angleEntityOffset,
+          // A plain URL has not acquired link semantics yet. Source history
+          // reparses Markdown, so encode its initial character to prevent an
+          // autolink from consuming literal escapes or recognizing it early.
+          if (!bareUrlText &&
+              !insideLinkLabel &&
+              inline.kind == BusyInlineKind.text)
+            for (final range in busyMarkBareUrlRanges(inline.text)) range.start,
+          // A reference beside formatting makes it a punctuation boundary
+          // while retaining the displayed URL character.
+          if (formattedUrlLabel &&
+              inline.kind == BusyInlineKind.text &&
+              inline.text.isNotEmpty) ...{
+            // A URL inside label formatting would start after its opening
+            // delimiter. Encode its first character so the autolink grammar
+            // cannot consume the label's closing delimiters and link target.
+            if (insideFormatting)
+              for (final range in busyMarkBareUrlRanges(inline.text))
+                range.start,
+            if (index > 0 && _urlFormattingKind(inlines[index - 1].kind)) 0,
+            if (index + 1 < inlines.length &&
+                _urlFormattingKind(inlines[index + 1].kind))
+              inline.text.length - (inline.text.runes.last > 0xffff ? 2 : 1),
+          },
+        },
       );
+      if (inline.kind == BusyInlineKind.text) {
+        if (suffixPrefixLength > 0 && !suffix.contains(RegExp(r'\s'))) {
+          literalSuffix = suffix;
+        } else {
+          literalUrl = null;
+          literalSuffix = '';
+        }
+      } else {
+        literalUrl = inline;
+        literalSuffix = '';
+      }
       for (final entry in result.sourceOffsets.entries) {
         sourceOffsets.putIfAbsent(
           consumedText + entry.key,
@@ -853,7 +963,25 @@ class BusyMarkMarkdownSerializer {
     required _InlineTraversalMetrics metrics,
     required List<int> inlinePath,
     required int textBase,
+    required bool bareUrlText,
+    required int literalPrefixLength,
+    required bool forceExplicitBareUrl,
+    required bool formattedUrlLabel,
+    required bool insideFormatting,
+    required bool insideLinkLabel,
+    required Set<int> entityOffsets,
   }) {
+    final bareUrl = _canEmitBareUrl(inline) && !forceExplicitBareUrl;
+    final formattedLinkLabel =
+        inline.kind == BusyInlineKind.link &&
+        !bareUrl &&
+        !inline.children.every(_isPlainUrlText) &&
+        (inline.attributes[busyMarkBareUrlAttribute] == 'true' ||
+            busyMarkBareUrlRanges(
+              inline.plainText,
+            ).any((range) => range.start == 0));
+    final rawText = bareUrlText || bareUrl;
+    final linkOpeningLength = bareUrl ? 0 : 1;
     final length = inline.plainText.length;
     final targets = {
       for (final offset in textOffsets) offset.clamp(0, length).toInt(),
@@ -873,17 +1001,30 @@ class BusyMarkMarkdownSerializer {
             metrics: metrics,
             pathPrefix: inlinePath,
             textBase: textBase,
+            bareUrlText: rawText,
+            formattedUrlLabel: formattedUrlLabel || formattedLinkLabel,
+            insideFormatting:
+                insideFormatting || _urlFormattingKind(inline.kind),
+            insideLinkLabel:
+                insideLinkLabel || inline.kind == BusyInlineKind.link,
           );
     final children = inline.children.isEmpty
-        ? _escapeInlineText(inline.text, atBlockStart: atBlockStart)
+        ? rawText
+              ? inline.text
+              : _escapeInlineText(inline.text, atBlockStart: atBlockStart)
         : childResult!.source;
     final delimiter = delimiterOverrides[inline.kind];
     final source = switch (inline.kind) {
-      BusyInlineKind.text => _escapeInlineText(
-        inline.text,
-        atBlockStart: atBlockStart,
-        escapeTrailingBang: followedByLink,
-      ),
+      BusyInlineKind.text =>
+        rawText
+            ? inline.text
+            : _escapeInlineText(
+                inline.text,
+                atBlockStart: atBlockStart,
+                escapeTrailingBang: followedByLink,
+                literalPrefixLength: literalPrefixLength,
+                entityOffsets: entityOffsets,
+              ),
       BusyInlineKind.math => _mathInline(inline),
       BusyInlineKind.strong =>
         '${delimiter?.opening ?? '**'}$children${delimiter?.closing ?? '**'}',
@@ -898,7 +1039,9 @@ class BusyMarkMarkdownSerializer {
             ? _htmlCodeSpan(inline.text)
             : _codeSpan(inline.text),
       BusyInlineKind.link =>
-        '[${children.isEmpty ? inline.text : children}](${_linkTarget(inline)})',
+        bareUrl
+            ? children
+            : '[${children.isEmpty ? inline.text : children}](${_linkTarget(inline)})',
       BusyInlineKind.image =>
         '![${_escapeInlineText(inline.text)}](${inline.destination ?? ''})',
       BusyInlineKind.softBreak => ' ',
@@ -906,12 +1049,16 @@ class BusyMarkMarkdownSerializer {
       BusyInlineKind.writersideVariable => '%${inline.text}%',
       BusyInlineKind.html || BusyInlineKind.unknown => inline.text,
     };
-    final escapedTextOffsets = inline.kind == BusyInlineKind.text
+    final escapedTextOffsets = rawText
+        ? {for (final target in targets) target: target}
+        : inline.kind == BusyInlineKind.text
         ? _escapedInlineTextOffsets(
             inline.text,
             targets,
             atBlockStart: atBlockStart,
             escapeTrailingBang: followedByLink,
+            literalPrefixLength: literalPrefixLength,
+            entityOffsets: entityOffsets,
           )
         : const <int, int>{};
     final openingLength =
@@ -936,7 +1083,9 @@ class BusyMarkMarkdownSerializer {
               BusyInlineKind.strikethrough =>
                 openingLength + (childResult?.sourceOffsets[target] ?? 0),
               BusyInlineKind.link =>
-                1 + (childResult?.sourceOffsets[target] ?? 0),
+                linkOpeningLength +
+                    (childResult?.sourceOffsets[target] ??
+                        (bareUrl ? target : 0)),
               _ => source.length,
             };
     }
@@ -949,7 +1098,7 @@ class BusyMarkMarkdownSerializer {
       }
     } else if (childResult != null) {
       final childOpeningLength = inline.kind == BusyInlineKind.link
-          ? 1
+          ? linkOpeningLength
           : openingLength;
       for (final entry in childResult.lineBreakSourceOffsets.entries) {
         lineBreakSourceOffsets[entry.key] = childOpeningLength + entry.value;
@@ -961,17 +1110,25 @@ class BusyMarkMarkdownSerializer {
         inline.kind == BusyInlineKind.image) {
       final value = inline.text;
       final prefix = switch (inline.kind) {
-        BusyInlineKind.link => 1,
+        BusyInlineKind.link => linkOpeningLength,
         BusyInlineKind.image => 2,
         _ => 0,
       };
-      final escapedOffsets = _escapedInlineTextOffsets(
-        value,
-        {for (var index = 0; index <= value.length; index++) index},
-        atBlockStart: inline.kind == BusyInlineKind.text && atBlockStart,
-        escapeTrailingBang:
-            inline.kind == BusyInlineKind.text && followedByLink,
-      );
+      final escapedOffsets = rawText
+          ? {for (var index = 0; index <= value.length; index++) index: index}
+          : _escapedInlineTextOffsets(
+              value,
+              {for (var index = 0; index <= value.length; index++) index},
+              atBlockStart: inline.kind == BusyInlineKind.text && atBlockStart,
+              escapeTrailingBang:
+                  inline.kind == BusyInlineKind.text && followedByLink,
+              literalPrefixLength: inline.kind == BusyInlineKind.text
+                  ? literalPrefixLength
+                  : 0,
+              entityOffsets: inline.kind == BusyInlineKind.text
+                  ? entityOffsets
+                  : const {},
+            );
       var offset = 0;
       for (final rune in value.runes) {
         final width = rune > 0xffff ? 2 : 1;
@@ -991,7 +1148,9 @@ class BusyMarkMarkdownSerializer {
         offset += width;
       }
     } else if (childResult != null) {
-      final prefix = inline.kind == BusyInlineKind.link ? 1 : openingLength;
+      final prefix = inline.kind == BusyInlineKind.link
+          ? linkOpeningLength
+          : openingLength;
       for (final atom in childResult.textAtoms) {
         textAtoms.add(
           BusyMarkSerializedTextAtom(
@@ -1082,6 +1241,8 @@ class BusyMarkMarkdownSerializer {
     Set<int> offsets, {
     required bool atBlockStart,
     required bool escapeTrailingBang,
+    int literalPrefixLength = 0,
+    Set<int> entityOffsets = const {},
   }) {
     final blockMarkerOffsets = _blockMarkerEscapeOffsets(
       value,
@@ -1097,10 +1258,24 @@ class BusyMarkMarkdownSerializer {
         targetIndex += 1;
       }
       if (index == value.length) break;
+      if (entityOffsets.contains(index)) {
+        final rune = value.substring(index).runes.first;
+        sourceOffset += '&#$rune;'.length;
+        if (rune > 0xffff) {
+          index++;
+          if (targetIndex < targets.length && targets[targetIndex] == index) {
+            result[targets[targetIndex++]] = sourceOffset;
+          }
+        }
+        continue;
+      }
       final unit = value.codeUnitAt(index);
-      if (_inlineSyntaxCharacters.contains(unit) ||
-          (escapeTrailingBang && unit == 0x21 && index == value.length - 1) ||
-          blockMarkerOffsets.contains(index)) {
+      if (index >= literalPrefixLength &&
+          (_inlineSyntaxCharacters.contains(unit) ||
+              (escapeTrailingBang &&
+                  unit == 0x21 &&
+                  index == value.length - 1) ||
+              blockMarkerOffsets.contains(index))) {
         sourceOffset += 1;
       }
       sourceOffset += 1;
@@ -1214,6 +1389,8 @@ class BusyMarkMarkdownSerializer {
     String value, {
     bool atBlockStart = false,
     bool escapeTrailingBang = false,
+    int literalPrefixLength = 0,
+    Set<int> entityOffsets = const {},
   }) {
     final blockMarkerOffsets = _blockMarkerEscapeOffsets(
       value,
@@ -1221,15 +1398,83 @@ class BusyMarkMarkdownSerializer {
     );
     final buffer = StringBuffer();
     for (var index = 0; index < value.length; index++) {
+      if (entityOffsets.contains(index)) {
+        final rune = value.substring(index).runes.first;
+        buffer.write('&#$rune;');
+        if (rune > 0xffff) index++;
+        continue;
+      }
       final unit = value.codeUnitAt(index);
-      if (_inlineSyntaxCharacters.contains(unit) ||
-          (escapeTrailingBang && unit == 0x21 && index == value.length - 1) ||
-          blockMarkerOffsets.contains(index)) {
+      if (index >= literalPrefixLength &&
+          (_inlineSyntaxCharacters.contains(unit) ||
+              (escapeTrailingBang &&
+                  unit == 0x21 &&
+                  index == value.length - 1) ||
+              blockMarkerOffsets.contains(index))) {
         buffer.writeCharCode(0x5c);
       }
       buffer.writeCharCode(unit);
     }
     return buffer.toString();
+  }
+
+  bool _canEmitBareUrl(BusyInline inline) =>
+      inline.kind == BusyInlineKind.link &&
+      inline.attributes[busyMarkBareUrlAttribute] == 'true' &&
+      inline.children.every(_isPlainUrlText);
+
+  bool _urlFormattingKind(BusyInlineKind kind) => switch (kind) {
+    BusyInlineKind.strong ||
+    BusyInlineKind.emphasis ||
+    BusyInlineKind.strikethrough ||
+    BusyInlineKind.underline => true,
+    _ => false,
+  };
+
+  bool _isPlainUrlText(BusyInline inline) =>
+      inline.kind == BusyInlineKind.text &&
+      inline.children.every(_isPlainUrlText);
+
+  int _bareUrlLiteralSuffixLength(BusyInline previous, String text) {
+    if (_urlFormattingKind(previous.kind) && previous.children.isNotEmpty) {
+      return _bareUrlLiteralSuffixLength(previous.children.last, text);
+    }
+    if (!_canEmitBareUrl(previous)) return 0;
+    final whitespace = text.indexOf(RegExp(r'\s'));
+    final length = whitespace < 0 ? text.length : whitespace;
+    if (length == 0) return 0;
+    // Preserve a parser-excluded '<' boundary as well as delimiter
+    // punctuation. Everything after '<' keeps normal literal escaping, with
+    // its first character encoded to prevent this boundary from opening HTML.
+    final lessThan = text.indexOf('<');
+    final prefixLength = lessThan >= 0 && lessThan < length
+        ? lessThan + 1
+        : length;
+    if (text
+        .substring(0, prefixLength)
+        .codeUnits
+        .any(
+          (unit) =>
+              _inlineSyntaxCharacters.contains(unit) &&
+              unit != 0x2a &&
+              unit != 0x5f &&
+              unit != 0x7e &&
+              unit != 0x3c,
+        )) {
+      return 0;
+    }
+    // Escaping a parser-excluded suffix inserts a backslash which the URL
+    // grammar can consume. Keep that suffix literal, using the same grammar
+    // to establish the boundary instead of a separate punctuation rule.
+    final ranges = busyMarkBareUrlRanges(
+      '${previous.plainText}${text.substring(0, length)}',
+    );
+    return ranges.length == 1 &&
+            ranges.single.start == 0 &&
+            ranges.single.end == previous.plainText.length &&
+            ranges.single.destination == previous.destination
+        ? prefixLength
+        : 0;
   }
 
   Set<int> _blockMarkerEscapeOffsets(

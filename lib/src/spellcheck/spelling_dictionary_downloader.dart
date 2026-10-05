@@ -87,6 +87,7 @@ final class SpellingDictionaryDownloader {
     final dic = File(p.join(downloadStage.path, 'download.dic'));
     var affReceived = 0;
     var dicReceived = 0;
+    var failed = false;
     void publishProgress() =>
         onProgress(affReceived + dicReceived, resource.downloadSize);
     try {
@@ -121,9 +122,16 @@ final class SpellingDictionaryDownloader {
         cancellationGuard: cancellation.throwIfCancelled,
         replaceExisting: replaceExisting,
       );
+    } on Object {
+      failed = true;
+      rethrow;
     } finally {
-      if (await downloadStage.exists()) {
-        await downloadStage.delete(recursive: true);
+      try {
+        if (await downloadStage.exists()) {
+          await downloadStage.delete(recursive: true);
+        }
+      } on Object {
+        if (!failed) rethrow;
       }
     }
   }
@@ -191,8 +199,17 @@ Future<void> receiveSpellingDictionaryBody({
   Duration inactivityTimeout = const Duration(seconds: 15),
 }) async {
   IOSink? sink;
+  Object? failure;
+  StackTrace? failureStack;
   try {
     sink = destination.openWrite();
+    // Start the sink's consumer immediately so its asynchronous file-open
+    // failure is connected to done before a delayed response body arrives.
+    sink.add(const <int>[]);
+    final done = sink.done;
+    // IOSink reports asynchronous open/write failures on done, potentially
+    // before the response stream ends. Observe it in the originating zone.
+    unawaited(done.then<void>((_) {}, onError: (Object _, StackTrace _) {}));
     var received = 0;
     await for (final chunk in bytes.timeout(inactivityTimeout)) {
       cancellation.throwIfCancelled();
@@ -203,14 +220,26 @@ Future<void> receiveSpellingDictionaryBody({
       sink.add(chunk);
       onProgress(received);
     }
-    await sink.flush();
+    await Future.any<void>([sink.flush(), done]);
     await sink.close();
     sink = null;
+    await done;
     cancellation.throwIfCancelled();
     if (received != expectedBytes) {
       throw const FormatException('Dictionary download was incomplete.');
     }
+  } on Object catch (error, stackTrace) {
+    failure = error;
+    failureStack = stackTrace;
   } finally {
-    await sink?.close();
+    try {
+      await sink?.close();
+    } on Object catch (error, stackTrace) {
+      failure ??= error;
+      failureStack ??= stackTrace;
+    }
+  }
+  if (failure != null) {
+    Error.throwWithStackTrace(failure, failureStack!);
   }
 }

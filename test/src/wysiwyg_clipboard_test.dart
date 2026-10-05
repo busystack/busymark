@@ -471,6 +471,28 @@ void main() {
       await tester.pump();
     }
 
+    Future<void> waitForImageIo(
+      WidgetTester tester,
+      bool Function() complete, {
+      required String operation,
+      String Function()? diagnostics,
+    }) async {
+      // Image ingestion performs real filesystem I/O outside FakeAsync. Pump
+      // until the observable stage completes, retaining a bounded failure.
+      final deadline = DateTime.now().add(const Duration(seconds: 10));
+      while (!complete() && DateTime.now().isBefore(deadline)) {
+        await tester.runAsync(
+          () => Future<void>.delayed(const Duration(milliseconds: 25)),
+        );
+        await tester.pump();
+      }
+      expect(
+        complete(),
+        isTrue,
+        reason: '$operation did not complete. ${diagnostics?.call() ?? ''}',
+      );
+    }
+
     Future<void> mount(
       WidgetTester tester,
       String id,
@@ -478,6 +500,7 @@ void main() {
       ValueChanged<String> changed, {
       BusyMarkClipboardInsertionRegistry? registry,
       ValueChanged<BusyMarkClipboardCapture>? onCaptured,
+      ValueChanged<BusyDocument>? onDocumentChanged,
       String? filePath,
       String? workspaceRoot,
       AssetWorkspaceKind? assetWorkspaceKind,
@@ -521,6 +544,7 @@ void main() {
                 initialSessionFor?.call(document) ??
                 const WysiwygEditorSessionState(),
             document: document,
+            onDocumentChanged: onDocumentChanged,
             onSourceChanged: (_, value) => changed(value),
           ),
         ),
@@ -542,6 +566,442 @@ void main() {
       field.controller!.selection = const TextSelection.collapsed(offset: 0);
       await tester.pump();
     }
+
+    for (final plainText in [false, true]) {
+      testWidgets(
+        'text-only URL paste then ordinary Enter recognizes a live link (plainText=$plainText)',
+        (tester) async {
+          const url = 'https://example.com';
+          systemData = {'text': url};
+          var source = '';
+          BusyDocument? live;
+          await mount(
+            tester,
+            'bare-url-$plainText',
+            source,
+            (value) => source = value,
+            onDocumentChanged: (value) => live = value,
+          );
+          await key(tester, LogicalKeyboardKey.keyV, shift: plainText);
+          await tester.pumpAndSettle();
+          expect(live!.blocks.single.plainText, url);
+          expect(busyInlineStyleRanges(live!.blocks.single.inlines), isEmpty);
+          await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+          await tester.pumpAndSettle();
+          final link = live!.blocks.first.inlines.single;
+          expect(link.kind, BusyInlineKind.link);
+          expect(link.plainText, url);
+          expect(link.destination, url);
+          expect(source, '$url\n\n');
+          final fields = tester
+              .widgetList<TextField>(find.byType(TextField))
+              .toList();
+          expect(fields, hasLength(2));
+          expect(fields.last.controller!.text, '');
+          expect(fields.last.focusNode!.hasFocus, isTrue);
+          expect(
+            fields.last.controller!.selection,
+            const TextSelection.collapsed(offset: 0),
+          );
+          final span = fields.first.controller!.buildTextSpan(
+            context: tester.element(find.byType(TextField).first),
+            withComposing: false,
+          );
+          expect(
+            (span.children!.single as TextSpan).style!.decoration,
+            TextDecoration.underline,
+          );
+          await key(tester, LogicalKeyboardKey.keyZ);
+          expect(live!.blocks, hasLength(1));
+          expect(live!.blocks.single.plainText, url);
+          expect(busyInlineStyleRanges(live!.blocks.single.inlines), isEmpty);
+          await key(tester, LogicalKeyboardKey.keyZ, shift: true);
+          expect(live!.blocks.first.inlines.single.kind, BusyInlineKind.link);
+          expect(source, '$url\n\n');
+          final completedField = tester.widget<TextField>(
+            find.byType(TextField).first,
+          );
+          completedField.focusNode!.requestFocus();
+          completedField.controller!.selection = const TextSelection.collapsed(
+            offset: 8,
+          );
+          await tester.pump();
+          await key(tester, LogicalKeyboardKey.keyK);
+          await tester.pumpAndSettle();
+          final destination = find.byKey(
+            const ValueKey('wysiwyg-link-destination-field'),
+          );
+          expect(destination, findsOneWidget);
+          expect(
+            tester
+                .widget<EditableText>(
+                  find.descendant(
+                    of: destination,
+                    matching: find.byType(EditableText),
+                  ),
+                )
+                .controller
+                .text,
+            url,
+          );
+          await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+          await tester.pumpAndSettle();
+          await key(tester, LogicalKeyboardKey.keyZ);
+          await key(tester, LogicalKeyboardKey.keyZ);
+          expect(live!.blocks.single.plainText, '');
+        },
+      );
+    }
+
+    for (final suffix in ['<', '*<', '*']) {
+      testWidgets(
+        'text-only URL suffix $suffix survives Enter, source reload and label edit',
+        (tester) async {
+          const url = 'https://example.com';
+          const changed = 'https://other.com';
+          final text = '$url$suffix';
+          systemData = {'text': text};
+          var source = '';
+          BusyDocument? live;
+          await mount(
+            tester,
+            'url-boundary-$suffix',
+            source,
+            (value) => source = value,
+            onDocumentChanged: (value) => live = value,
+          );
+          await key(tester, LogicalKeyboardKey.keyV);
+          await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+          await tester.pumpAndSettle();
+          expect(live!.blocks.first.plainText, text);
+          final next = tester.widget<TextField>(find.byType(TextField).last);
+          expect(next.focusNode!.hasFocus, isTrue);
+          expect(
+            next.controller!.selection,
+            const TextSelection.collapsed(offset: 0),
+          );
+          expect(source, '$text\n\n');
+          BusyInlineStyleRange link() => busyInlineStyleRanges(
+            live!.blocks.first.inlines,
+          ).where((range) => range.kind == BusyInlineKind.link).single;
+          expect(
+            (link().start, link().end, link().destination),
+            (0, url.length, url),
+          );
+          var first = tester.widget<TextField>(find.byType(TextField).first);
+          final spans = first.controller!
+              .buildTextSpan(
+                context: tester.element(find.byType(TextField).first),
+                withComposing: false,
+              )
+              .children!
+              .cast<TextSpan>();
+          expect(spans.first.style!.decoration, TextDecoration.underline);
+          expect(spans.last.style!.decoration, isNot(TextDecoration.underline));
+          if (suffix == '*') {
+            first.focusNode!.requestFocus();
+            first.controller!.selection = TextSelection(
+              baseOffset: 0,
+              extentOffset: text.length,
+            );
+            await tester.pump();
+            await key(tester, LogicalKeyboardKey.keyB);
+            expect(source, '**[$url]($url)\\***\n\n');
+            expect(
+              link().attributes.containsKey(busyMarkBareUrlAttribute),
+              isFalse,
+            );
+          }
+          final saved = source;
+          await tester.enterText(
+            find.byType(TextField).first,
+            '$changed$suffix',
+          );
+          await tester.pumpAndSettle();
+          final liveDestination = link().destination;
+          final liveSource = source;
+          expect(liveDestination, suffix == '*' ? url : changed);
+          await mount(
+            tester,
+            'url-boundary-reopened-$suffix',
+            saved,
+            (value) => source = value,
+            onDocumentChanged: (value) => live = value,
+          );
+          await tester.enterText(
+            find.byType(TextField).first,
+            '$changed$suffix',
+          );
+          await tester.pumpAndSettle();
+          expect(link().destination, liveDestination);
+          expect(source.trim(), liveSource.trim());
+          expect(live!.blocks.first.plainText, '$changed$suffix');
+        },
+      );
+    }
+
+    for (final suffix in ['&copy;', '&amp;', '&amp;*<tag>']) {
+      testWidgets(
+        'text-only URL character-reference suffix survives Enter and reopening: $suffix',
+        (tester) async {
+          const url = 'https://example.com';
+          final text = '$url$suffix';
+          systemData = {'text': text};
+          var source = '';
+          BusyDocument? live;
+          await mount(
+            tester,
+            'url-reference-$suffix',
+            source,
+            (value) => source = value,
+            onDocumentChanged: (value) => live = value,
+          );
+          await key(tester, LogicalKeyboardKey.keyV);
+          expect(live!.blocks.single.plainText, text);
+          expect(busyInlineStyleRanges(live!.blocks.single.inlines), isEmpty);
+          await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+          await tester.pumpAndSettle();
+          void check(BusyDocument document) {
+            expect(document.blocks.first.plainText, text);
+            final link = busyInlineStyleRanges(
+              document.blocks.first.inlines,
+            ).single;
+            expect(
+              (link.kind, link.start, link.end, link.destination),
+              (BusyInlineKind.link, 0, url.length, url),
+            );
+            expect(document.blocks.first.plainText.substring(link.end), suffix);
+          }
+
+          check(live!);
+          final next = tester.widget<TextField>(find.byType(TextField).last);
+          expect(next.focusNode!.hasFocus, isTrue);
+          expect(
+            next.controller!.selection,
+            const TextSelection.collapsed(offset: 0),
+          );
+          final saved = source;
+          check(
+            _parser
+                .parse(
+                  filePath: 'topic.md',
+                  source: saved,
+                  mode: MarkdownMode.writersideMarkdown,
+                )
+                .busyDocument,
+          );
+          await mount(
+            tester,
+            'url-reference-reopened-$suffix',
+            saved,
+            (value) => source = value,
+            onDocumentChanged: (value) => live = value,
+          );
+          expect(
+            tester
+                .widget<TextField>(find.byType(TextField).first)
+                .controller!
+                .text,
+            text,
+          );
+        },
+      );
+    }
+
+    for (final nested in [false, true]) {
+      testWidgets(
+        'formatting only a pasted URL suffix preserves the boundary (nested=$nested)',
+        (tester) async {
+          const url = 'https://example.com';
+          const text = '$url*';
+          systemData = {'text': text};
+          var source = '';
+          BusyDocument? live;
+          await mount(
+            tester,
+            'formatted-url-suffix-$nested',
+            source,
+            (value) => source = value,
+            onDocumentChanged: (value) => live = value,
+          );
+          await key(tester, LogicalKeyboardKey.keyV);
+          await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+          await tester.pumpAndSettle();
+          final first = tester.widget<TextField>(find.byType(TextField).first);
+          first.focusNode!.requestFocus();
+          first.controller!.selection = const TextSelection(
+            baseOffset: url.length,
+            extentOffset: text.length,
+          );
+          await tester.pump();
+          await key(tester, LogicalKeyboardKey.keyB);
+          if (nested) await key(tester, LogicalKeyboardKey.keyI);
+          await tester.pumpAndSettle();
+
+          void check(BusyDocument document) {
+            final block = document.blocks.first;
+            expect(block.plainText, text);
+            final ranges = busyInlineStyleRanges(block.inlines);
+            final link = ranges
+                .where((range) => range.kind == BusyInlineKind.link)
+                .single;
+            expect(
+              (link.start, link.end, link.destination),
+              (0, url.length, url),
+            );
+            final bold = ranges
+                .where((range) => range.kind == BusyInlineKind.strong)
+                .single;
+            expect((bold.start, bold.end), (url.length, text.length));
+            final italic = ranges.where(
+              (range) => range.kind == BusyInlineKind.emphasis,
+            );
+            if (nested) {
+              expect(
+                (italic.single.start, italic.single.end),
+                (url.length, text.length),
+              );
+            } else {
+              expect(italic, isEmpty);
+            }
+          }
+
+          check(live!);
+          final saved = source;
+          final reparsed = _parser
+              .parse(
+                filePath: 'formatted.md',
+                source: saved,
+                mode: MarkdownMode.writersideMarkdown,
+              )
+              .busyDocument;
+          check(reparsed);
+          final liveLink = busyInlineStyleRanges(
+            live!.blocks.first.inlines,
+          ).where((range) => range.kind == BusyInlineKind.link).single;
+          expect(
+            liveLink.attributes.containsKey(busyMarkBareUrlAttribute),
+            isFalse,
+          );
+          expect(
+            saved,
+            nested ? '[$url]($url)***\\****\n\n' : '[$url]($url)**\\***\n\n',
+          );
+          await tester.enterText(
+            find.byType(TextField).first,
+            'https://other.com*',
+          );
+          await tester.pumpAndSettle();
+          final liveDestination =
+              busyInlineStyleRanges(live!.blocks.first.inlines)
+                  .where((range) => range.kind == BusyInlineKind.link)
+                  .single
+                  .destination;
+          expect(liveDestination, url);
+          await mount(
+            tester,
+            'formatted-url-suffix-reopened-$nested',
+            saved,
+            (value) => source = value,
+            onDocumentChanged: (value) => live = value,
+          );
+          await tester.enterText(
+            find.byType(TextField).first,
+            'https://other.com*',
+          );
+          await tester.pumpAndSettle();
+          expect(
+            busyInlineStyleRanges(live!.blocks.first.inlines)
+                .where((range) => range.kind == BusyInlineKind.link)
+                .single
+                .destination,
+            liveDestination,
+          );
+        },
+      );
+    }
+
+    testWidgets(
+      'pasted URL retains live link coverage through split, Backspace and suffix formatting',
+      (tester) async {
+        const url = 'https://example.com/path';
+        const prefix = 'https://example.com';
+        systemData = {'text': url};
+        var source = '';
+        BusyDocument? live;
+        await mount(
+          tester,
+          'url-rejoin-format',
+          source,
+          (value) => source = value,
+          onDocumentChanged: (value) => live = value,
+        );
+        await key(tester, LogicalKeyboardKey.keyV);
+        await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+        await tester.pumpAndSettle();
+        var first = tester.widget<TextField>(find.byType(TextField).first);
+        first.focusNode!.requestFocus();
+        first.controller!.selection = const TextSelection.collapsed(
+          offset: prefix.length,
+        );
+        await tester.pump();
+        await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+        await tester.pumpAndSettle();
+        expect(live!.blocks.first.inlines.single.destination, prefix);
+        expect(live!.blocks[1].plainText, '/path');
+        await tester.sendKeyEvent(LogicalKeyboardKey.backspace);
+        await tester.pumpAndSettle();
+        expect(live!.blocks.first.inlines.single.destination, url);
+        expect(source, '$url\n\n');
+        first = tester.widget<TextField>(find.byType(TextField).first);
+        expect(
+          first.controller!.selection,
+          const TextSelection.collapsed(offset: prefix.length),
+        );
+        expect(first.focusNode!.hasFocus, isTrue);
+        first.controller!.selection = const TextSelection(
+          baseOffset: prefix.length,
+          extentOffset: url.length,
+        );
+        await tester.pump();
+        await key(tester, LogicalKeyboardKey.keyB);
+        void checkFormatted() {
+          final block = live!.blocks.first;
+          expect(block.inlines.single.kind, BusyInlineKind.link);
+          expect(block.inlines.single.plainText, url);
+          expect(block.inlines.single.destination, url);
+          final bold = busyInlineStyleRanges(
+            block.inlines,
+          ).where((range) => range.kind == BusyInlineKind.strong).single;
+          expect((bold.start, bold.end), (prefix.length, url.length));
+          expect(source, '[https://example.co&#109;**/path**]($url)\n\n');
+        }
+
+        checkFormatted();
+        final formattedField = tester.widget<TextField>(
+          find.byType(TextField).first,
+        );
+        final spans = formattedField.controller!
+            .buildTextSpan(
+              context: tester.element(find.byType(TextField).first),
+              withComposing: false,
+            )
+            .children!
+            .cast<TextSpan>();
+        expect(
+          spans.every(
+            (span) => span.style!.decoration == TextDecoration.underline,
+          ),
+          isTrue,
+        );
+        expect(spans.last.style!.fontWeight, FontWeight.w700);
+        await key(tester, LogicalKeyboardKey.keyZ);
+        expect(source, '$url\n\n');
+        expect(live!.blocks.first.inlines.single.destination, url);
+        await key(tester, LogicalKeyboardKey.keyZ, shift: true);
+        checkFormatted();
+      },
+    );
 
     Future<void> copyAll(WidgetTester tester, {String source = _source}) async {
       await mount(tester, 'origin', source, (_) {});
@@ -1903,6 +2363,7 @@ void main() {
           clipboardHistoryControllerProvider.notifier,
         );
         var changed = '';
+        var published = false;
         await mount(
           tester,
           'image-snapshot',
@@ -1911,20 +2372,27 @@ void main() {
           onCaptured: history.retain,
           filePath: '${root.path}/target.md',
           assetWorkspaceKind: AssetWorkspaceKind.standalone,
+          assetIngestionService: AssetIngestionService(
+            hooks: AssetIngestionHooks(
+              afterPublication: (_) async {
+                published = true;
+              },
+            ),
+          ),
         );
 
         await key(tester, LogicalKeyboardKey.keyV);
-        for (
-          var attempt = 0;
-          attempt < 100 &&
-              find.byKey(BusyMarkImageDialogKeys.submit).evaluate().isEmpty;
-          attempt++
-        ) {
-          await tester.runAsync(
-            () => Future<void>.delayed(const Duration(milliseconds: 5)),
-          );
-          await tester.pump();
-        }
+        await waitForImageIo(
+          tester,
+          () =>
+              find.byKey(BusyMarkImageDialogKeys.submit).evaluate().isNotEmpty,
+          operation: 'external image dialog',
+          diagnostics: () =>
+              'clipboard reads=$readCalls, published=$published, '
+              'source exists=${sourceFile.existsSync()}, '
+              'clipboard=$systemData, editor focus='
+              '${tester.widget<TextField>(find.byType(TextField).first).focusNode?.hasFocus}',
+        );
         expect(find.byKey(BusyMarkImageDialogKeys.submit), findsOneWidget);
         await tester.runAsync(() => sourceFile.writeAsBytes(replacement));
         await tester.tap(find.byKey(BusyMarkImageDialogKeys.submit));
@@ -1961,17 +2429,12 @@ void main() {
           assetWorkspaceKind: AssetWorkspaceKind.standalone,
         );
         final replay = registry.paste(payload);
-        for (
-          var attempt = 0;
-          attempt < 100 &&
-              find.byKey(BusyMarkImageDialogKeys.submit).evaluate().isEmpty;
-          attempt++
-        ) {
-          await tester.runAsync(
-            () => Future<void>.delayed(const Duration(milliseconds: 5)),
-          );
-          await tester.pump();
-        }
+        await waitForImageIo(
+          tester,
+          () =>
+              find.byKey(BusyMarkImageDialogKeys.submit).evaluate().isNotEmpty,
+          operation: 'history replay image dialog',
+        );
         expect(find.byKey(BusyMarkImageDialogKeys.submit), findsOneWidget);
         await tester.tap(find.byKey(BusyMarkImageDialogKeys.submit));
         await tester.pumpAndSettle();
@@ -2000,17 +2463,12 @@ void main() {
           assetWorkspaceKind: AssetWorkspaceKind.standalone,
         );
         final replayAfterDelete = registry.paste(payload);
-        for (
-          var attempt = 0;
-          attempt < 100 &&
-              find.byKey(BusyMarkImageDialogKeys.submit).evaluate().isEmpty;
-          attempt++
-        ) {
-          await tester.runAsync(
-            () => Future<void>.delayed(const Duration(milliseconds: 5)),
-          );
-          await tester.pump();
-        }
+        await waitForImageIo(
+          tester,
+          () =>
+              find.byKey(BusyMarkImageDialogKeys.submit).evaluate().isNotEmpty,
+          operation: 'deleted-source image replay dialog',
+        );
         expect(find.byKey(BusyMarkImageDialogKeys.submit), findsOneWidget);
         await tester.tap(find.byKey(BusyMarkImageDialogKeys.submit));
         await tester.pumpAndSettle();
@@ -2093,6 +2551,7 @@ void main() {
         clipboardHistoryControllerProvider.notifier,
       );
       var changed = 'Target\n';
+      var published = false;
       final document = _parser
           .parse(
             filePath: '${root.path}/target.md',
@@ -2117,6 +2576,13 @@ void main() {
                       clipboardInsertionRegistry: registry,
                       onClipboardCaptured: history.retain,
                       assetWorkspaceKind: AssetWorkspaceKind.standalone,
+                      assetIngestionService: AssetIngestionService(
+                        hooks: AssetIngestionHooks(
+                          afterPublication: (_) async {
+                            published = true;
+                          },
+                        ),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 320, child: ClipboardHistoryPanel()),
@@ -2139,17 +2605,18 @@ void main() {
       await tester.tap(pathRow);
       await tester.pump(const Duration(milliseconds: 50));
       await tester.tap(pathRow);
-      for (
-        var attempt = 0;
-        attempt < 100 &&
-            find.byKey(BusyMarkImageDialogKeys.submit).evaluate().isEmpty;
-        attempt++
-      ) {
-        await tester.runAsync(
-          () => Future<void>.delayed(const Duration(milliseconds: 5)),
-        );
-        await tester.pump();
-      }
+      await waitForImageIo(
+        tester,
+        () => find.byKey(BusyMarkImageDialogKeys.submit).evaluate().isNotEmpty,
+        operation: 'history panel image dialog',
+        diagnostics: () {
+          final state = container.read(clipboardHistoryControllerProvider);
+          final payload = state.currentClipboard;
+          return 'published=$published, source exists=${sourceFile.existsSync()}, '
+              'history entries=${state.entries.length}, '
+              'registry can paste=${payload == null ? null : registry.canPaste(payload, mode: BusyMarkPasteMode.normal)}';
+        },
+      );
       expect(find.byKey(BusyMarkImageDialogKeys.submit), findsOneWidget);
       await tester.tap(find.byKey(BusyMarkImageDialogKeys.submit));
       await tester.pumpAndSettle();
@@ -2281,17 +2748,12 @@ void main() {
       );
 
       Future<void> waitForDialog() async {
-        for (
-          var attempt = 0;
-          attempt < 100 &&
-              find.byKey(BusyMarkImageDialogKeys.cancel).evaluate().isEmpty;
-          attempt++
-        ) {
-          await tester.runAsync(
-            () => Future<void>.delayed(const Duration(milliseconds: 5)),
-          );
-          await tester.pump();
-        }
+        await waitForImageIo(
+          tester,
+          () =>
+              find.byKey(BusyMarkImageDialogKeys.cancel).evaluate().isNotEmpty,
+          operation: 'image cancellation dialog',
+        );
         expect(find.byKey(BusyMarkImageDialogKeys.cancel), findsOneWidget);
       }
 
@@ -2306,16 +2768,11 @@ void main() {
       }
 
       Future<void> waitForRollbackCount(int count) async {
-        for (
-          var attempt = 0;
-          attempt < 100 && completedRollbacks.length < count;
-          attempt++
-        ) {
-          await tester.runAsync(
-            () => Future<void>.delayed(const Duration(milliseconds: 5)),
-          );
-          await tester.pump();
-        }
+        await waitForImageIo(
+          tester,
+          () => completedRollbacks.length >= count,
+          operation: 'image rollback count $count',
+        );
         expect(completedRollbacks, hasLength(count));
       }
 
@@ -2401,12 +2858,11 @@ void main() {
       await waitForDialog();
       await tester.tap(find.byKey(BusyMarkImageDialogKeys.cancel));
       await tester.pumpAndSettle();
-      for (var attempt = 0; attempt < 100 && pasteResult == null; attempt++) {
-        await tester.runAsync(
-          () => Future<void>.delayed(const Duration(milliseconds: 5)),
-        );
-        await tester.pump();
-      }
+      await waitForImageIo(
+        tester,
+        () => pasteResult != null,
+        operation: 'cancelled history paste result',
+      );
       expect(pasteResult, ClipboardPasteResult.cancelled);
       await waitForRollbackCount(3);
       expect(historyResult, 'Target\n');
@@ -2436,8 +2892,10 @@ void main() {
       final published = <IngestedAsset>[];
       final committed = <IngestedAsset>[];
       final rolledBack = <IngestedAsset>[];
+      final reserved = <String>[];
       final ingestion = AssetIngestionService(
         hooks: AssetIngestionHooks(
+          afterDestinationReserved: (path) async => reserved.add(path),
           afterPublication: (asset) async => published.add(asset),
           beforeCommit: (asset) async => committed.add(asset),
           afterRollback: (asset) async => rolledBack.add(asset),
@@ -2457,31 +2915,31 @@ void main() {
       );
 
       Future<void> waitForCount(List<Object> values, int count) async {
-        for (
-          var attempt = 0;
-          attempt < 100 && values.length < count;
-          attempt++
-        ) {
-          await tester.runAsync(
-            () => Future<void>.delayed(const Duration(milliseconds: 5)),
-          );
-          await tester.pump();
-        }
+        await waitForImageIo(
+          tester,
+          () => values.length >= count,
+          operation: 'image publication/rollback count $count',
+          diagnostics: () {
+            final fields = find.byType(TextField);
+            final focused = fields.evaluate().isEmpty
+                ? null
+                : tester.widget<TextField>(fields.first).focusNode?.hasFocus;
+            return 'clipboard reads=$readCalls, reserved=${reserved.length}, '
+                'published=${published.length}, committed=${committed.length}, '
+                'rolled back=${rolledBack.length}, editor focus=$focused, '
+                'clipboard=$systemData';
+          },
+        );
         expect(values.length, greaterThanOrEqualTo(count));
       }
 
       Future<void> waitForDialog() async {
-        for (
-          var attempt = 0;
-          attempt < 100 &&
-              find.byKey(BusyMarkImageDialogKeys.choose).evaluate().isEmpty;
-          attempt++
-        ) {
-          await tester.runAsync(
-            () => Future<void>.delayed(const Duration(milliseconds: 5)),
-          );
-          await tester.pump();
-        }
+        await waitForImageIo(
+          tester,
+          () =>
+              find.byKey(BusyMarkImageDialogKeys.choose).evaluate().isNotEmpty,
+          operation: 'image alternatives dialog',
+        );
         expect(find.byKey(BusyMarkImageDialogKeys.choose), findsOneWidget);
       }
 
@@ -2626,24 +3084,18 @@ void main() {
           hostToasts: true,
         );
         await key(tester, LogicalKeyboardKey.keyV);
-        for (
-          var attempt = 0;
-          attempt < 100 &&
-              find.byKey(BusyMarkImageDialogKeys.submit).evaluate().isEmpty;
-          attempt++
-        ) {
-          await tester.runAsync(
-            () => Future<void>.delayed(const Duration(milliseconds: 5)),
-          );
-          await tester.pump();
-        }
+        await waitForImageIo(
+          tester,
+          () =>
+              find.byKey(BusyMarkImageDialogKeys.submit).evaluate().isNotEmpty,
+          operation: 'finalization image dialog',
+        );
         await tester.tap(find.byKey(BusyMarkImageDialogKeys.submit));
-        for (var attempt = 0; attempt < 100 && commitAttempts == 0; attempt++) {
-          await tester.runAsync(
-            () => Future<void>.delayed(const Duration(milliseconds: 5)),
-          );
-          await tester.pump();
-        }
+        await waitForImageIo(
+          tester,
+          () => commitAttempts > 0,
+          operation: 'failed image commit attempt',
+        );
 
         expect(commitAttempts, 1);
         expect(rollbacks, 0);
@@ -2832,17 +3284,12 @@ void main() {
       addTearDown(registry.dispose);
 
       Future<void> submitImage() async {
-        for (
-          var attempt = 0;
-          attempt < 100 &&
-              find.byKey(BusyMarkImageDialogKeys.submit).evaluate().isEmpty;
-          attempt++
-        ) {
-          await tester.runAsync(
-            () => Future<void>.delayed(const Duration(milliseconds: 5)),
-          );
-          await tester.pump();
-        }
+        await waitForImageIo(
+          tester,
+          () =>
+              find.byKey(BusyMarkImageDialogKeys.submit).evaluate().isNotEmpty,
+          operation: 'history image dialog',
+        );
         expect(find.byKey(BusyMarkImageDialogKeys.submit), findsOneWidget);
         await tester.tap(find.byKey(BusyMarkImageDialogKeys.submit));
         await tester.pumpAndSettle();
@@ -3114,12 +3561,11 @@ void main() {
           composing: TextRange(start: 0, end: 1),
         );
         ingestion.release.complete();
-        for (var attempt = 0; attempt < 100 && pasteResult == null; attempt++) {
-          await tester.runAsync(
-            () => Future<void>.delayed(const Duration(milliseconds: 5)),
-          );
-          await tester.pump();
-        }
+        await waitForImageIo(
+          tester,
+          () => pasteResult != null,
+          operation: 'stale image paste result',
+        );
 
         expect(pasteResult, ClipboardPasteResult.staleTarget);
         expect(result, 'Target\n');

@@ -662,6 +662,9 @@ class AppSettingsController extends Notifier<AppSettings> {
   }
 
   Future<void> setSidebarVisible(bool enabled) {
+    if (state.sidebarVisible != enabled) {
+      ref.read(sidebarTransitionGenerationProvider.notifier).increment();
+    }
     return _mutate((settings) => settings.copyWith(sidebarVisible: enabled));
   }
 
@@ -980,6 +983,17 @@ class AppSettingsController extends Notifier<AppSettings> {
 final localSettingsStoreProvider = Provider<LocalSettingsStore>(
   (ref) => const JsonFileLocalSettingsStore(),
 );
+
+final sidebarTransitionGenerationProvider =
+    NotifierProvider<SidebarTransitionGeneration, int>(
+      SidebarTransitionGeneration.new,
+    );
+
+class SidebarTransitionGeneration extends Notifier<int> {
+  @override
+  int build() => 0;
+  void increment() => state++;
+}
 
 final appSettingsControllerProvider =
     NotifierProvider<AppSettingsController, AppSettings>(

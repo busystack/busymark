@@ -104,6 +104,8 @@
   "noSpellingSuggestions": "맞춤법 제안이 없습니다",
   "spellingWordCheckFailed": "이 단어를 확인할 수 없습니다",
   "spellingCheckFailed": "맞춤법 검사에 실패했습니다",
+  "spellingSettingsLoadFailed": "맞춤법 검사 설정을 불러올 수 없습니다",
+  "retrySpellingSettings": "맞춤법 검사 설정 다시 불러오기",
   "spellingCheckIncomplete": "맞춤법 검사가 완료되지 않았습니다",
   "spellingDictionaryNotInstalled": "사전이 설치되지 않음",
   "spellingDictionaryNotInstalledForLanguage": "{dictionary} 사전이 설치되지 않았습니다",
@@ -4913,5 +4915,8 @@
   "renameTopicFileInstead": "토픽 ID는 파일 이름에서 생성됩니다. 목차 또는 파일 사이드바에서 토픽 파일 이름 바꾸기를 사용하세요.",
   "diagnosticWritersideWebFileNameInvalid": "인스턴스 \"{instanceId}\"에서 토픽 \"{topic}\"의 웹 파일 이름 \"{webFileName}\"이 올바르지 않습니다.",
   "diagnosticWritersideWebFileNameCollision": "인스턴스 \"{instanceId}\"에서 \"{firstTopic}\"과 \"{secondTopic}\"이 모두 \"{webFileName}\"으로 게시됩니다.",
-  "spellingDictionaryRecoveryConflict": "맞춤법 사전이 외부에서 변경되었습니다. 복구 사본을 보존했습니다."
+  "spellingDictionaryRecoveryConflict": "맞춤법 사전이 외부에서 변경되었습니다. 복구 사본을 보존했습니다.",
+  "windowMinimize": "최소화",
+  "windowMaximize": "최대화",
+  "windowRestore": "복원"
 }

@@ -1,8 +1,11 @@
 import 'package:markdown/markdown.dart' as md;
 
+import 'busymark_document.dart';
 import 'markdown_model.dart';
 import 'markdown_source_annotation.dart';
 import 'writerside_variable_syntax.dart';
+
+const busyMarkLiteralLessThanTag = 'busymark-literal-less-than';
 
 const busyMarkMathInlineTag = 'busymark-math-inline';
 const busyMarkMathBlockTag = 'busymark-math-block';
@@ -36,14 +39,97 @@ md.Document busyMarkMarkdownDocument(
     blockSyntaxes: const [BusyDisplayMathSyntax()],
     inlineSyntaxes: [
       ...leadingInlineSyntaxes,
+      _LiteralLessThanSyntax(),
       if (mode == MarkdownMode.writersideMarkdown)
         WritersideLiteralPercentSyntax(),
       BusyDollarMathSyntax(),
       if (mode == MarkdownMode.writersideMarkdown) BusyWritersideMathSyntax(),
+      _BareUrlSyntax(),
     ],
     extensionSet: md.ExtensionSet.gitHubWeb,
     encodeHtml: false,
   );
+}
+
+/// Runs only the configured parser's extended autolink grammar. Everything
+/// else remains literal, so recognition in displayed prose cannot interpret
+/// Markdown delimiters, escapes, HTML, or math as newly authored syntax.
+List<({int start, int end, String destination})> busyMarkBareUrlRanges(
+  String text, {
+  MarkdownMode mode = MarkdownMode.commonMark,
+}) {
+  final configured = busyMarkMarkdownDocument(mode);
+  final document = md.Document(
+    inlineSyntaxes: configured.inlineSyntaxes
+        .whereType<md.AutolinkExtensionSyntax>(),
+    withDefaultInlineSyntaxes: false,
+    encodeHtml: false,
+  );
+  final ranges = <({int start, int end, String destination})>[];
+  var offset = 0;
+  for (final node in document.parseInline(text)) {
+    final end = offset + node.textContent.length;
+    if (node is md.Element &&
+        node.attributes[busyMarkBareUrlAttribute] == 'true') {
+      ranges.add((
+        start: offset,
+        end: end,
+        destination: node.attributes['href']!,
+      ));
+    }
+    offset = end;
+  }
+  return ranges;
+}
+
+// An escaped '<', or '<' followed by a character reference, is literal
+// Markdown text. Keep it in a distinct node so the HTML adapter cannot turn
+// the decoded text back into markup. The latter form preserves a bare URL's
+// boundary without inserting a backslash that its grammar would consume.
+class _LiteralLessThanSyntax extends md.InlineSyntax {
+  _LiteralLessThanSyntax() : super(r'\\<|<&#[0-9]{1,7};');
+
+  @override
+  bool onMatch(md.InlineParser parser, Match match) {
+    final text = match[0] == r'\<'
+        ? '<'
+        : '<${parser.document.parseInline(match[0]!.substring(1)).map((node) => node.textContent).join()}';
+    parser.addNode(md.Element(busyMarkLiteralLessThanTag, [md.Text(text)]));
+    return true;
+  }
+}
+
+// Delegate matching, punctuation trimming, and destination encoding to the
+// locked Markdown implementation; attach source form only to bare URLs.
+class _BareUrlSyntax extends md.AutolinkExtensionSyntax {
+  @override
+  bool onMatch(md.InlineParser parser, Match match) {
+    final capture = _AutolinkCaptureParser(parser);
+    super.onMatch(capture, match);
+    final node = capture.node!;
+    if (match[1] != null) {
+      node.attributes[busyMarkBareUrlAttribute] = 'true';
+    }
+    parser
+      ..addNode(node)
+      ..consume(capture.pos - parser.pos);
+    return true;
+  }
+}
+
+class _AutolinkCaptureParser extends md.InlineParser {
+  _AutolinkCaptureParser(md.InlineParser parser)
+    : super(parser.source, parser.document) {
+    pos = parser.pos;
+    start = parser.pos;
+  }
+
+  md.Element? node;
+
+  @override
+  void addNode(md.Node value) {
+    node = value as md.Element;
+  }
 }
 
 /// Returns the exact key the pinned Markdown parser registers for [label].

@@ -21,7 +21,10 @@ void main() {
     expect(credentialHost, isNot(contains('password-manager-service')));
     expect(workflow, contains('libsecret-1-dev'));
     expect(snapcraft, contains('- libsecret-1-dev'));
-    expect(snapcraft, contains('- libsecret-1-0'));
+    expect(snapcraft, contains('extensions: [gnome]'));
+    expect(snapcraft, isNot(contains('- libsecret-1-0')));
+    expect(workflow, contains('libsecret-1.so.0'));
+    expect(workflow, contains(r'$SNAP_DESKTOP_RUNTIME/'));
     expect(snapcraft, contains('confinement: strict'));
   });
 

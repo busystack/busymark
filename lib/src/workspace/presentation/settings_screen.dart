@@ -17,6 +17,9 @@ import '../../app/app_settings.dart';
 import '../../app/app_locale.dart';
 import '../../app/busymark_dialogs.dart';
 import '../../app/busymark_design.dart';
+import '../../app/busymark_motion_widgets.dart';
+import '../../app/linux/linux_page_frame.dart';
+import '../../app/linux/linux_header_style.dart';
 import '../../app/busymark_glyphs.dart';
 import '../../app/busymark_main_menu.dart';
 import '../../app/busymark_shortcuts.dart';
@@ -48,7 +51,12 @@ class SettingsScreen extends ConsumerStatefulWidget {
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   late SettingsPage _page = widget.initialPage;
   String? _preparedSpellingWorkspaceId;
+  bool _spellingPreparationSucceeded = false;
+  String? _preparationWorkspaceId;
+  SpellingSessionController? _preparationController;
   bool _preparingSpelling = false;
+  Object? _spellingPreparationError;
+  int _spellingPreparationGeneration = 0;
 
   @override
   void didUpdateWidget(covariant SettingsScreen oldWidget) {
@@ -87,7 +95,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     _prepareSpellingSettings(spelling, workspace?.id);
     final colors = BusyMarkSurfaceColors.of(context);
     final headerBar = ref.watch(linuxHeaderBarServiceProvider);
-    final useNativeHeaderBar = headerBar.usesNativeHeaderBar;
     final title = _settingsPageLabel(context, _page);
     ref.listen(headerBarActionsProvider, (previous, next) {
       next.whenData((event) {
@@ -116,6 +123,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             title: l10n.editor,
             filled: true,
             children: [
+              if (_spellingPreparationError != null)
+                _spellingPreparationFailureRow(l10n),
               BusyMarkSwitchRow(
                 title: l10n.autoSave,
                 subtitle: l10n.autoSaveDescription,
@@ -224,6 +233,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             title: l10n.availableSpellingDictionaries,
             filled: true,
             children: [
+              if (_spellingPreparationError != null)
+                _spellingPreparationFailureRow(l10n),
               for (final resource in spellingResources)
                 _SpellingDictionaryResourceRow(
                   resource: resource,
@@ -461,13 +472,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              if (!useNativeHeaderBar)
-                _SettingsFallbackHeader(
-                  title: title,
-                  onBack: _goBack,
-                  onMenuSelected: (action) =>
-                      _handleMainMenuAction(context, headerBar, action),
-                ),
               if (!showSidebar)
                 Padding(
                   padding: const EdgeInsets.fromLTRB(
@@ -486,27 +490,31 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   maxWidth: BusyMarkSizes.settingsWidth,
                   margin: EdgeInsets.zero,
                   padding: BusyMarkInsets.settingsPage,
-                  child: pageBody,
+                  child: BusyMarkKeyedCrossfade(
+                    transitionKey: _page,
+                    child: pageBody,
+                  ),
                 ),
               ),
             ],
           ),
         );
-        final body = showSidebar
-            ? Row(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  SizedBox(
-                    width: BusyMarkSizes.sidebarWidth,
-                    child: _SettingsSidebar(
-                      selected: _settingsNavigationSelection(_page),
-                      onSelected: _selectPage,
-                    ),
-                  ),
-                  Expanded(child: content),
-                ],
-              )
-            : content;
+        final body = LinuxPageFrame(
+          header: _SettingsFallbackHeader(
+            title: title,
+            onBack: _goBack,
+            onMenuSelected: (action) =>
+                _handleMainMenuAction(context, headerBar, action),
+          ),
+          sidebarHeader: const BusyMarkLinuxBrandHeader(),
+          sidebarBody: _SettingsSidebar(
+            selected: _settingsNavigationSelection(_page),
+            onSelected: _selectPage,
+          ),
+          sidebarAvailable: showSidebar,
+          sidebarExpanded: true,
+          body: content,
+        );
 
         return PopScope(
           canPop: false,
@@ -528,24 +536,62 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     SpellingSessionController spelling,
     String? workspaceId,
   ) {
+    if (_preparationWorkspaceId != workspaceId ||
+        !identical(_preparationController, spelling)) {
+      _preparationWorkspaceId = workspaceId;
+      _preparationController = spelling;
+      _preparedSpellingWorkspaceId = null;
+      _spellingPreparationSucceeded = false;
+      _spellingPreparationError = null;
+      _preparingSpelling = false;
+      _spellingPreparationGeneration++;
+    }
     if (_preparingSpelling ||
-        (_preparedSpellingWorkspaceId == workspaceId &&
+        _spellingPreparationError != null ||
+        (_spellingPreparationSucceeded &&
+            _preparedSpellingWorkspaceId == workspaceId &&
             spelling.catalog != null)) {
       return;
     }
     _preparingSpelling = true;
+    final generation = ++_spellingPreparationGeneration;
     WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted || generation != _spellingPreparationGeneration) return;
       try {
         await spelling.prepareSettings(
           ref.read(workspaceControllerProvider).workspace,
         );
-        _preparedSpellingWorkspaceId = workspaceId;
+        if (mounted && generation == _spellingPreparationGeneration) {
+          _preparedSpellingWorkspaceId = workspaceId;
+          _spellingPreparationSucceeded = true;
+        }
+      } on Object catch (error) {
+        if (mounted && generation == _spellingPreparationGeneration) {
+          _spellingPreparationError = error;
+        }
       } finally {
-        _preparingSpelling = false;
-        if (mounted) setState(() {});
+        if (mounted && generation == _spellingPreparationGeneration) {
+          _preparingSpelling = false;
+          setState(() {});
+        }
       }
     });
   }
+
+  Widget _spellingPreparationFailureRow(AppLocalizations l10n) =>
+      BusyMarkActionRow(
+        key: const ValueKey('retry-spelling-settings'),
+        title: l10n.spellingSettingsLoadFailed,
+        subtitle: _spellingPreparationError.toString(),
+        leading: const Icon(BusyMarkGlyphs.warning),
+        trailing: const Icon(BusyMarkGlyphs.refresh),
+        tooltip: l10n.retrySpellingSettings,
+        onTap: () => setState(() {
+          _spellingPreparationError = null;
+          _preparedSpellingWorkspaceId = null;
+          _spellingPreparationSucceeded = false;
+        }),
+      );
 
   void _goBack() {
     if (_page == SettingsPage.spellingDictionaries) {
@@ -1194,41 +1240,67 @@ Future<void> _editHistoryExcludedPaths(
   List<String> current,
   Future<void> Function(Iterable<String>) save,
 ) async {
-  final controller = TextEditingController(text: current.join('\n'));
   final result = await showBusyMarkModalDialog<String>(
     context,
     barrierDismissible: false,
-    builder: (dialogContext) => AlertDialog(
-      title: Text(dialogContext.l10n.settingsHistoryExcludedPaths),
-      content: SizedBox(
-        width: BusyMarkSizes.settingsWidth,
-        child: TextField(
-          controller: controller,
-          autofocus: true,
-          minLines: 6,
-          maxLines: 12,
-          decoration: InputDecoration(
-            hintText: dialogContext.l10n.settingsHistoryExcludedPathsHint,
-            border: const OutlineInputBorder(),
-          ),
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(dialogContext),
-          child: Text(dialogContext.l10n.cancel),
-        ),
-        FilledButton(
-          onPressed: () => Navigator.pop(dialogContext, controller.text),
-          child: Text(dialogContext.l10n.save),
-        ),
-      ],
-    ),
+    builder: (_) => _HistoryExcludedPathsDialog(current: current),
   );
-  controller.dispose();
-  if (result != null) {
-    await save(result.split(RegExp(r'\r?\n')));
+  if (result != null) await save(result.split(RegExp(r'\r?\n')));
+}
+
+class _HistoryExcludedPathsDialog extends StatefulWidget {
+  const _HistoryExcludedPathsDialog({required this.current});
+  final List<String> current;
+  @override
+  State<_HistoryExcludedPathsDialog> createState() =>
+      _HistoryExcludedPathsDialogState();
+}
+
+class _HistoryExcludedPathsDialogState
+    extends State<_HistoryExcludedPathsDialog> {
+  late final _controller = TextEditingController(
+    text: widget.current.join('\n'),
+  );
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
   }
+
+  @override
+  Widget build(BuildContext context) => BusyMarkDialogShell(
+    title: context.l10n.settingsHistoryExcludedPaths,
+    maxWidth: BusyMarkSizes.settingsWidth,
+    actions: [
+      BusyMarkDialogButton(
+        label: context.l10n.cancel,
+        onPressed: () => Navigator.pop(context),
+      ),
+      BusyMarkDialogButton(
+        label: context.l10n.save,
+        suggested: true,
+        onPressed: () => Navigator.pop(context, _controller.text),
+      ),
+    ],
+    children: [
+      BusyMarkGroupedList(
+        filled: true,
+        children: [
+          BusyMarkGroupedTextEntry(
+            label: context.l10n.settingsHistoryExcludedPaths,
+            hintText: context.l10n.settingsHistoryExcludedPathsHint,
+            controller: _controller,
+            autofocus: true,
+            minLines: 6,
+            maxLines: 12,
+            alignLabelWithHint: true,
+            keyboardType: TextInputType.multiline,
+            textInputAction: TextInputAction.newline,
+          ),
+        ],
+      ),
+    ],
+  );
 }
 
 enum SettingsPage {
@@ -1309,6 +1381,7 @@ class _SettingsSidebar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BusyMarkSidebarSurface(
+      showEndBorder: false,
       child: BusyMarkSidebarNavigation(
         children: [
           for (final page in _primarySettingsPages)
@@ -1399,37 +1472,15 @@ class _SettingsFallbackHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = BusyMarkSurfaceColors.of(context);
-    return Material(
-      color: colors.window,
-      child: SizedBox(
-        height: BusyMarkSizes.toolbarHeight,
-        child: Row(
-          children: [
-            const SizedBox(width: BusyMarkSpacing.sm),
-            BusyMarkHeaderIconButton(
-              tooltip: context.l10n.back,
-              icon: BusyMarkGlyphs.backFor(Directionality.of(context)),
-              shortcut: BusyMarkAppShortcutLabels.back,
-              onPressed: onBack,
-            ),
-            const SizedBox(width: BusyMarkSpacing.sm),
-            Expanded(
-              child: Text(
-                title,
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(
-                  context,
-                ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
-              ),
-            ),
-            BusyMarkMainMenuButton(onSelected: onMenuSelected),
-            const SizedBox(width: BusyMarkSpacing.sm),
-          ],
-        ),
+    return BusyMarkLinuxHeaderLayout(
+      leading: BusyMarkHeaderIconButton(
+        tooltip: context.l10n.back,
+        icon: BusyMarkGlyphs.backFor(Directionality.of(context)),
+        shortcut: BusyMarkAppShortcutLabels.back,
+        onPressed: onBack,
       ),
+      title: BusyMarkLinuxHeaderTitle(title),
+      trailing: BusyMarkMainMenuButton(onSelected: onMenuSelected),
     );
   }
 }

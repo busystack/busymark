@@ -1,8 +1,37 @@
+import 'dart:async';
+
 import 'package:busymark/src/app/window_control_service.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:window_manager/window_manager.dart';
 
 void main() {
+  test(
+    'button and native close requests share one pending confirmation',
+    () async {
+      final native = _FakeNativeWindowController();
+      final service = WindowControlService(nativeWindow: native);
+      addTearDown(service.dispose);
+      await service.initialize();
+      final confirmation = Completer<void>();
+      var requests = 0;
+      service.registerCloseHandler(() {
+        requests++;
+        return confirmation.future;
+      });
+
+      final first = service.requestClose();
+      final second = service.requestClose();
+      native.listeners.single.onWindowClose();
+      expect(second, same(first));
+      expect(requests, 1);
+
+      confirmation.complete();
+      await first;
+      await service.requestClose();
+      expect(requests, 2);
+      expect(native.closeCount, 0);
+    },
+  );
   test('initializes prevent-close interception', () async {
     final native = _FakeNativeWindowController();
     final service = WindowControlService(nativeWindow: native);

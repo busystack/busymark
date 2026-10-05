@@ -4455,6 +4455,12 @@ class AppLocalizationsJa extends AppLocalizations {
   String get spellingCheckFailed => 'スペルチェックに失敗しました';
 
   @override
+  String get spellingSettingsLoadFailed => 'スペルチェックの設定を読み込めませんでした';
+
+  @override
+  String get retrySpellingSettings => 'スペルチェックの設定を再読み込み';
+
+  @override
   String get spellingCheckIncomplete => 'スペルチェックが完了していません';
 
   @override
@@ -4515,4 +4521,13 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String get spellingDictionaryRecoveryConflict =>
       'スペルチェック辞書が外部で変更されました。復旧用コピーを保持しました。';
+
+  @override
+  String get windowMinimize => '最小化';
+
+  @override
+  String get windowMaximize => '最大化';
+
+  @override
+  String get windowRestore => '元に戻す';
 }

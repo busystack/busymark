@@ -104,6 +104,8 @@
   "noSpellingSuggestions": "没有拼写建议",
   "spellingWordCheckFailed": "无法检查此单词",
   "spellingCheckFailed": "拼写检查失败",
+  "spellingSettingsLoadFailed": "无法加载拼写检查设置",
+  "retrySpellingSettings": "重试加载拼写检查设置",
   "spellingCheckIncomplete": "拼写检查未完成",
   "spellingDictionaryNotInstalled": "尚未安装词典",
   "spellingDictionaryNotInstalledForLanguage": "尚未安装 {dictionary} 词典",
@@ -4913,5 +4915,8 @@
   "renameTopicFileInstead": "主题 ID 来自其文件名。请在目录或“文件”侧边栏中使用“重命名主题文件”。",
   "diagnosticWritersideWebFileNameInvalid": "实例 \"{instanceId}\" 为主题 \"{topic}\" 发布了无效的 Web 文件名 \"{webFileName}\"。",
   "diagnosticWritersideWebFileNameCollision": "实例 \"{instanceId}\" 将 \"{firstTopic}\" 和 \"{secondTopic}\" 都发布为 \"{webFileName}\"。",
-  "spellingDictionaryRecoveryConflict": "拼写词典已被外部更改。已保留恢复副本。"
+  "spellingDictionaryRecoveryConflict": "拼写词典已被外部更改。已保留恢复副本。",
+  "windowMinimize": "最小化",
+  "windowMaximize": "最大化",
+  "windowRestore": "还原"
 }

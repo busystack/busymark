@@ -104,6 +104,8 @@
   "noSpellingSuggestions": "Aucune suggestion orthographique",
   "spellingWordCheckFailed": "Impossible de vérifier ce mot",
   "spellingCheckFailed": "Échec de la vérification orthographique",
+  "spellingSettingsLoadFailed": "Impossible de charger les paramètres de correction orthographique",
+  "retrySpellingSettings": "Réessayer de charger les paramètres de correction orthographique",
   "spellingCheckIncomplete": "La vérification orthographique est incomplète",
   "spellingDictionaryNotInstalled": "Dictionnaire non installé",
   "spellingDictionaryNotInstalledForLanguage": "Le dictionnaire {dictionary} n’est pas installé",
@@ -3374,5 +3376,8 @@
   "renameTopicFileInstead": "Les ID de sujet proviennent de leur nom de fichier. Utilisez « Renommer le fichier de sujet » dans la table des matières ou la barre latérale Fichiers.",
   "diagnosticWritersideWebFileNameInvalid": "L’instance \"{instanceId}\" publie le nom de fichier web non valide \"{webFileName}\" pour le sujet \"{topic}\".",
   "diagnosticWritersideWebFileNameCollision": "L’instance \"{instanceId}\" publie \"{firstTopic}\" et \"{secondTopic}\" sous le nom \"{webFileName}\".",
-  "spellingDictionaryRecoveryConflict": "Le dictionnaire orthographique a été modifié en externe. Une copie de récupération a été conservée."
+  "spellingDictionaryRecoveryConflict": "Le dictionnaire orthographique a été modifié en externe. Une copie de récupération a été conservée.",
+  "windowMinimize": "Réduire",
+  "windowMaximize": "Agrandir",
+  "windowRestore": "Restaurer"
 }

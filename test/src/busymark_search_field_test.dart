@@ -6,6 +6,29 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:yaru/yaru.dart';
 
 void main() {
+  testWidgets('header Escape preserves the query for the next search', (
+    tester,
+  ) async {
+    final controller = TextEditingController(text: 'unfinished search');
+    addTearDown(controller.dispose);
+    var escaped = false;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: BusyMarkSearchField(
+            controller: controller,
+            autofocus: true,
+            clearOnEscape: false,
+            onEscape: () => escaped = true,
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    expect(escaped, isTrue);
+    expect(controller.text, 'unfinished search');
+  });
   testWidgets('search fallback uses the normal Yaru-themed entry geometry', (
     tester,
   ) async {

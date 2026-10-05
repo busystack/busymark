@@ -563,6 +563,7 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     required String expectedFieldText,
     required SpellingReplacementPlan plan,
     String? preparedFieldText,
+    String? preparedSource,
   }) {
     final current = blockById(blockId);
     if (current == null ||
@@ -570,6 +571,13 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
         busyMarkWysiwygEditableText(current) != expectedFieldText) {
       return false;
     }
+    final sourceResult = _replaceSpellingUsingSource(
+      blockId: blockId,
+      current: current,
+      plan: plan,
+      preparedSource: preparedSource,
+    );
+    if (sourceResult != null) return sourceResult;
     if (busyMarkWysiwygBlockContainsMath(current)) {
       late final String updatedSource;
       if (preparedFieldText != null) {
@@ -609,6 +617,7 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     required String expectedFieldText,
     required SpellingReplacementPlan plan,
     String? preparedFieldText,
+    String? preparedSource,
   }) {
     final table = blockById(tableBlockId);
     final current = blockById(cellId);
@@ -618,6 +627,13 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
         busyMarkWysiwygEditableText(current) != expectedFieldText) {
       return false;
     }
+    final sourceResult = _replaceSpellingUsingSource(
+      blockId: cellId,
+      current: current,
+      plan: plan,
+      preparedSource: preparedSource,
+    );
+    if (sourceResult != null) return sourceResult;
     if (busyMarkWysiwygBlockContainsMath(current)) {
       late final String updatedSource;
       if (preparedFieldText != null) {
@@ -662,6 +678,63 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     if (!changed) return false;
     notifyListeners();
     return true;
+  }
+
+  bool? _replaceSpellingUsingSource({
+    required String blockId,
+    required BusyBlock current,
+    required SpellingReplacementPlan plan,
+    required String? preparedSource,
+  }) {
+    final source = _document.source;
+    if (source == null || source != markdown) return null;
+    if (plan.sourceEdits.isEmpty) return false;
+    try {
+      final replacement = plan.applyToSource(source);
+      if (preparedSource != null && preparedSource != replacement) return false;
+      late final String expectedField;
+      if (busyMarkWysiwygBlockContainsMath(current)) {
+        // Math fields expose Markdown source as their editable field. Their
+        // spelling atoms have field offsets, not inline-leaf paths.
+        expectedField = plan.applyToField(busyMarkWysiwygEditableText(current));
+      } else {
+        final updatedInlines = _applySpellingLeafEdits(
+          current.inlines,
+          plan.richLeafEdits,
+        );
+        if (updatedInlines == null) return false;
+        expectedField = busyMarkWysiwygEditableText(
+          current.copyWith(inlines: updatedInlines),
+        );
+      }
+      final parsed = const MarkdownParser()
+          .parse(
+            filePath: _document.filePath,
+            source: replacement,
+            mode: _document.mode,
+            validateLocalReferences: false,
+          )
+          .busyDocument;
+      BusyBlock? find(Iterable<BusyBlock> blocks) {
+        for (final block in blocks) {
+          if (block.id == blockId) return block;
+          final child = find(block.children);
+          if (child != null) return child;
+        }
+        return null;
+      }
+
+      final updated = find(parsed.blocks);
+      if (updated == null ||
+          busyMarkWysiwygEditableText(updated) != expectedField ||
+          _serializer.serialize(parsed) != replacement) {
+        return false;
+      }
+      replaceDocument(parsed);
+      return true;
+    } on Object {
+      return false;
+    }
   }
 
   /// A table cell accepts inline formatting; block boundaries become spaces.
@@ -1689,7 +1762,14 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     return true;
   }
 
-  String? splitBlockAt(String blockId, int offset) {
+  String? splitBlockAt(String blockId, int offset) =>
+      _splitBlockAt(blockId, offset);
+
+  String? _splitBlockAt(
+    String blockId,
+    int offset, {
+    bool recognizeUrls = false,
+  }) {
     final block = blockById(blockId);
     if (block == null) {
       return null;
@@ -1710,6 +1790,8 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
       kind: block.kind,
       inlines: inlinePartition.before.isEmpty
           ? _textInlines('')
+          : recognizeUrls && _supportsBareUrlRecognition(block)
+          ? _recognizeBareUrls(inlinePartition.before, mode: _document.mode)
           : inlinePartition.before,
       children: block.children,
       attributes: _attributesForText(
@@ -1777,7 +1859,7 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
       _replaceBlockWithParagraph(blockId);
       return BusyWysiwygTextSplitResult(blockId: blockId, offset: 0);
     }
-    final nextBlockId = splitBlockAt(blockId, offset);
+    final nextBlockId = _splitBlockAt(blockId, offset, recognizeUrls: true);
     if (nextBlockId == null) {
       return null;
     }
@@ -1841,10 +1923,18 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     final previousText = previous.plainText;
     final currentText = current.plainText;
     final mergedChildren = [...previous.children, ...current.children];
-    final mergedInlines = _mergeAdjacentInlineStyles([
+    var mergedInlines = _mergeAdjacentInlineStyles([
       ...previous.inlines,
       ...current.inlines,
     ]);
+    if (_supportsBareUrlRecognition(previous) &&
+        _supportsBareUrlRecognition(current)) {
+      mergedInlines = _rejoinBareUrls(
+        mergedInlines,
+        previousText.length,
+        mode: _document.mode,
+      );
+    }
     if (currentText.isEmpty) {
       final updatedPrevious = _withoutSourceSpan(
         previous.copyWith(inlines: mergedInlines, children: mergedChildren),
@@ -2031,16 +2121,22 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     final end = selectionEnd.clamp(start, text.length).toInt();
     final beforeText = text.substring(0, start);
     final afterText = text.substring(end);
+    final completeInsertion = blocks.any(
+      busyMarkClipboardRequiresCompleteBlockInsertion,
+    );
     final partition = _partitionInlinesForReplacement(
       block.inlines,
       start,
       end,
+      // Compose an inline replacement before deriving its updated URL. Repair
+      // individual slices immediately for structural block insertion.
+      refreshUrls: blocks.length != 1 || completeInsertion,
     );
     final ownsDestinationStructure =
         replacementScope == BusyWysiwygReplacementScope.documentRange &&
         destinationBlockFullySelected;
 
-    if (blocks.any(busyMarkClipboardRequiresCompleteBlockInsertion)) {
+    if (completeInsertion) {
       return _insertCompleteBlocksAtSelection(
         block: block,
         blockId: blockId,
@@ -2063,11 +2159,13 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
               clipboardBlock.inlines,
               _inlineContextForReplacement(block.inlines, start, end),
             );
-      final mergedInlines = _mergeAdjacentInlineStyles([
-        ...partition.before,
-        ...insertedInlines,
-        ...partition.after,
-      ]);
+      final mergedInlines = _refreshBareUrlLinks(
+        _mergeAdjacentInlineStyles([
+          ...partition.before,
+          ...insertedInlines,
+          ...partition.after,
+        ]),
+      );
       if (ownsDestinationStructure) {
         final structural = _styledBlockToBusyBlock(inserted, rootId: block.id);
         final retainsDescendants = _isBlockContentContainer(structural.kind);
@@ -3063,6 +3161,7 @@ List<BusyInlineStyleRange> _styleRangesForReplacement({
           end: range.end + delta,
           kind: range.kind,
           destination: range.destination,
+          attributes: range.attributes,
         )
       else ...[
         if (range.start < selectionStart)
@@ -3071,6 +3170,7 @@ List<BusyInlineStyleRange> _styleRangesForReplacement({
             end: selectionStart,
             kind: range.kind,
             destination: range.destination,
+            attributes: range.attributes,
           ),
         if (range.end > selectionEnd)
           BusyInlineStyleRange(
@@ -3078,6 +3178,7 @@ List<BusyInlineStyleRange> _styleRangesForReplacement({
             end: range.end + delta,
             kind: range.kind,
             destination: range.destination,
+            attributes: range.attributes,
           ),
       ],
     ],
@@ -3175,7 +3276,12 @@ Map<String, String> _attributesAfterInlineMathEdit(
 }
 
 ({List<BusyInline> before, List<BusyInline> after})
-_partitionInlinesForReplacement(List<BusyInline> inlines, int start, int end) {
+_partitionInlinesForReplacement(
+  List<BusyInline> inlines,
+  int start,
+  int end, {
+  bool refreshUrls = true,
+}) {
   final before = <BusyInline>[];
   final after = <BusyInline>[];
   var offset = 0;
@@ -3198,12 +3304,21 @@ _partitionInlinesForReplacement(List<BusyInline> inlines, int start, int end) {
         inline,
         localStart,
         localEnd,
+        refreshUrls: refreshUrls,
       );
       if (partition.before != null) {
-        before.add(partition.before!);
+        before.addAll(
+          refreshUrls
+              ? _refreshBareUrlLinks([partition.before!])
+              : [partition.before!],
+        );
       }
       if (partition.after != null) {
-        after.add(partition.after!);
+        after.addAll(
+          refreshUrls
+              ? _refreshBareUrlLinks([partition.after!])
+              : [partition.after!],
+        );
       }
     }
     offset = inlineEnd;
@@ -3214,14 +3329,16 @@ _partitionInlinesForReplacement(List<BusyInline> inlines, int start, int end) {
 ({BusyInline? before, BusyInline? after}) _partitionInlineForReplacement(
   BusyInline inline,
   int start,
-  int end,
-) {
+  int end, {
+  required bool refreshUrls,
+}) {
   final length = inline.plainText.length;
   if (inline.children.isNotEmpty) {
     final partition = _partitionInlinesForReplacement(
       inline.children,
       start,
       end,
+      refreshUrls: refreshUrls,
     );
     return (
       before: partition.before.isEmpty
@@ -3555,6 +3672,300 @@ bool _canMergeBlockStructures(BusyBlock previous, BusyBlock current) {
     return false;
   }
   return true;
+}
+
+bool _supportsBareUrlRecognition(BusyBlock block) =>
+    !block.isSourceOnly &&
+    !block.isSourceProtected &&
+    !busyMarkWysiwygBlockContainsMath(block) &&
+    switch (block.kind) {
+      BusyBlockKind.paragraph ||
+      BusyBlockKind.heading ||
+      BusyBlockKind.unorderedListItem ||
+      BusyBlockKind.orderedListItem ||
+      BusyBlockKind.taskListItem => true,
+      _ => false,
+    };
+
+/// Wrap only parser-recognized URL slices, preserving the inline tree itself.
+List<BusyInline> _recognizeBareUrls(
+  List<BusyInline> inlines, {
+  MarkdownMode mode = MarkdownMode.commonMark,
+  Map<String, String> attributes = const {},
+  List<BusyInlineStyleRange>? existingUrls,
+}) {
+  final text = inlines.map((inline) => inline.plainText).join();
+  final excluded = <({int start, int end})>[];
+  var offset = 0;
+  void visit(BusyInline inline) {
+    final start = offset;
+    if (switch (inline.kind) {
+      BusyInlineKind.code ||
+      BusyInlineKind.link ||
+      BusyInlineKind.image ||
+      BusyInlineKind.math ||
+      BusyInlineKind.html ||
+      BusyInlineKind.unknown ||
+      BusyInlineKind.writersideVariable => true,
+      _ => false,
+    }) {
+      offset += inline.plainText.length;
+      excluded.add((start: start, end: offset));
+    } else if (inline.children.isNotEmpty) {
+      for (final child in inline.children) {
+        visit(child);
+      }
+    } else {
+      offset += inline.plainText.length;
+    }
+  }
+
+  for (final inline in inlines) {
+    visit(inline);
+  }
+  final matches = busyMarkBareUrlRanges(text, mode: mode).where(
+    (match) =>
+        (existingUrls == null ||
+            existingUrls.any(
+              (range) => range.start < match.end && range.end > match.start,
+            )) &&
+        !excluded.any(
+          (range) => range.start == range.end
+              ? range.start > match.start && range.start <= match.end
+              : range.start < match.end && range.end > match.start,
+        ),
+  );
+  var result = inlines;
+  // Work backwards so earlier slices retain their original coordinates.
+  for (final match in matches.toList().reversed) {
+    result = _wrapBareUrlRange(
+      result,
+      match.start,
+      match.end,
+      match.destination,
+      existingUrls
+              ?.firstWhere(
+                (range) => range.start < match.end && range.end > match.start,
+              )
+              .attributes ??
+          attributes,
+    );
+  }
+  return result;
+}
+
+/// Joining a paragraph can extend an already recognized URL into its former
+/// text sibling. Only links touching the join seed recognition; other text
+/// retains its existing semantics.
+List<BusyInline> _rejoinBareUrls(
+  List<BusyInline> inlines,
+  int joinOffset, {
+  required MarkdownMode mode,
+}) {
+  final text = inlines.map((inline) => inline.plainText).join();
+  bool protected(BusyInline inline) => switch (inline.kind) {
+    BusyInlineKind.link =>
+      inline.attributes[busyMarkBareUrlAttribute] != 'true',
+    BusyInlineKind.code ||
+    BusyInlineKind.image ||
+    BusyInlineKind.math ||
+    BusyInlineKind.html ||
+    BusyInlineKind.unknown ||
+    BusyInlineKind.writersideVariable => true,
+    _ => inline.children.any(protected),
+  };
+  final candidates = busyMarkBareUrlRanges(text, mode: mode).where((range) {
+    if (range.start >= joinOffset || range.end <= joinOffset) return false;
+    final prefix = _partitionInlinesForReplacement(
+      inlines,
+      range.start,
+      range.start,
+      refreshUrls: false,
+    );
+    final slice = _partitionInlinesForReplacement(
+      prefix.after,
+      range.end - range.start,
+      range.end - range.start,
+      refreshUrls: false,
+    );
+    return !slice.before.any(protected);
+  }).toList();
+  if (candidates.isEmpty) return inlines;
+  final existing = <BusyInlineStyleRange>[];
+  var offset = 0;
+  List<BusyInline> visit(BusyInline inline) {
+    final start = offset;
+    final end = start + inline.plainText.length;
+    if (inline.kind == BusyInlineKind.link) {
+      offset = end;
+      if (inline.attributes[busyMarkBareUrlAttribute] == 'true' &&
+          start <= joinOffset &&
+          end >= joinOffset &&
+          candidates.any((range) => range.start < end && range.end > start)) {
+        existing.add(
+          BusyInlineStyleRange(
+            start: start,
+            end: end,
+            kind: BusyInlineKind.link,
+            destination: inline.destination,
+            attributes: inline.attributes,
+          ),
+        );
+        return inline.children.isEmpty
+            ? _textInlines(inline.text)
+            : inline.children;
+      }
+      return [inline];
+    }
+    if (inline.children.isNotEmpty) {
+      return [
+        inline.copyWith(
+          children: [for (final child in inline.children) ...visit(child)],
+        ),
+      ];
+    }
+    offset = end;
+    return [inline];
+  }
+
+  final unwrapped = [for (final inline in inlines) ...visit(inline)];
+  if (existing.isEmpty) return inlines;
+  return _mergeAdjacentInlineStyles(
+    _recognizeBareUrls(unwrapped, mode: mode, existingUrls: existing),
+  );
+}
+
+List<BusyInline> _wrapBareUrlRange(
+  List<BusyInline> inlines,
+  int start,
+  int end,
+  String destination,
+  Map<String, String> attributes,
+) {
+  var offset = 0;
+  for (var index = 0; index < inlines.length; index++) {
+    final inline = inlines[index];
+    final inlineEnd = offset + inline.plainText.length;
+    if (inline.children.isNotEmpty && start >= offset && end <= inlineEnd) {
+      return [
+        ...inlines.take(index),
+        inline.copyWith(
+          children: _wrapBareUrlRange(
+            inline.children,
+            start - offset,
+            end - offset,
+            destination,
+            attributes,
+          ),
+        ),
+        ...inlines.skip(index + 1),
+      ];
+    }
+    offset = inlineEnd;
+  }
+  final prefix = _partitionInlinesForReplacement(inlines, start, start);
+  final url = _partitionInlinesForReplacement(
+    prefix.after,
+    end - start,
+    end - start,
+  );
+  // Interior formatting requires an explicit Markdown label. Commit that
+  // source form in the live model too, so later label edits have the same
+  // destination semantics before and after saving/reopening.
+  bool plainUrlText(BusyInline inline) =>
+      inline.kind == BusyInlineKind.text && inline.children.every(plainUrlText);
+  final bare = url.before.every(plainUrlText);
+  return [
+    ...prefix.before,
+    BusyInline(
+      kind: BusyInlineKind.link,
+      text: url.before.map((inline) => inline.plainText).join(),
+      destination: destination,
+      children: url.before,
+      attributes: {
+        for (final entry in attributes.entries)
+          if (entry.key != busyMarkBareUrlAttribute) entry.key: entry.value,
+        if (bare) busyMarkBareUrlAttribute: 'true',
+        if (attributes.containsKey('href')) 'href': destination,
+      },
+    ),
+    ...url.after,
+  ];
+}
+
+/// Commit explicit source forms required by surrounding formatting, after
+/// reconstruction has merged wrappers. Serialization itself stays read-only.
+List<BusyInline> _commitBareUrlSourceForms(
+  List<BusyInline> inlines, {
+  bool insideFormatting = false,
+}) {
+  const serializer = BusyMarkMarkdownSerializer();
+  return [
+    for (var index = 0; index < inlines.length; index++)
+      _commitBareUrlSourceForm(
+        inlines[index],
+        explicit: serializer.bareUrlNeedsExplicitSource(
+          inlines[index],
+          index + 1 < inlines.length ? inlines[index + 1] : null,
+          insideFormatting: insideFormatting,
+        ),
+        insideFormatting: insideFormatting,
+      ),
+  ];
+}
+
+BusyInline _commitBareUrlSourceForm(
+  BusyInline inline, {
+  required bool explicit,
+  required bool insideFormatting,
+}) {
+  final children = inline.children.isEmpty
+      ? inline.children
+      : _commitBareUrlSourceForms(
+          inline.children,
+          insideFormatting:
+              insideFormatting ||
+              switch (inline.kind) {
+                BusyInlineKind.strong ||
+                BusyInlineKind.emphasis ||
+                BusyInlineKind.strikethrough ||
+                BusyInlineKind.underline => true,
+                _ => false,
+              },
+        );
+  if (!explicit && listEquals(children, inline.children)) return inline;
+  return inline.copyWith(
+    children: children,
+    attributes: explicit
+        ? {
+            for (final entry in inline.attributes.entries)
+              if (entry.key != busyMarkBareUrlAttribute) entry.key: entry.value,
+          }
+        : inline.attributes,
+  );
+}
+
+/// Existing bare links derive their destination from their current text. Edits
+/// and splits may shorten a URL or leave trailing punctuation outside it.
+/// Explicit links keep their independently authored destinations.
+List<BusyInline> _refreshBareUrlLinks(List<BusyInline> inlines) => [
+  for (final inline in inlines)
+    if (inline.kind == BusyInlineKind.link &&
+        inline.attributes[busyMarkBareUrlAttribute] == 'true')
+      ..._recognizeBareUrls(
+        inline.children.isEmpty ? _textInlines(inline.text) : inline.children,
+        attributes: inline.attributes,
+      )
+    else if (inline.children.isNotEmpty)
+      _refreshBareUrlChildren(inline)
+    else
+      inline,
+];
+
+BusyInline _refreshBareUrlChildren(BusyInline inline) {
+  final children = _refreshBareUrlLinks(inline.children);
+  if (listEquals(children, inline.children)) return inline;
+  return inline.copyWith(children: children);
 }
 
 BusyBlock _blockWithEditedText(
@@ -3953,6 +4364,7 @@ List<BusyInlineStyleRange> _remapRangesForTextEdit({
           end: range.end + delta,
           kind: range.kind,
           destination: range.destination,
+          attributes: range.attributes,
         ),
       );
       continue;
@@ -3976,6 +4388,7 @@ List<BusyInlineStyleRange> _remapRangesForTextEdit({
             end: range.end + delta,
             kind: range.kind,
             destination: range.destination,
+            attributes: range.attributes,
           ),
         );
       }
@@ -3991,6 +4404,7 @@ List<BusyInlineStyleRange> _remapRangesForTextEdit({
           end: end,
           kind: range.kind,
           destination: range.destination,
+          attributes: range.attributes,
         ),
       );
     }
@@ -4049,6 +4463,25 @@ String _incrementOrderedMarker(String? marker, int offset) {
 }
 
 BusyDocument _ensureEditableDocument(BusyDocument document) {
+  // Commit source-form changes before notifying listeners, within the edit's
+  // existing transaction. Include dirty imported fragments as well as newly
+  // reconstructed prose; untouched source-backed blocks retain their source.
+  BusyBlock visit(BusyBlock block) {
+    final children = block.children.map(visit).toList();
+    final inlines = block.dirty && _supportsBareUrlRecognition(block)
+        ? _commitBareUrlSourceForms(block.inlines)
+        : block.inlines;
+    if (listEquals(children, block.children) &&
+        listEquals(inlines, block.inlines)) {
+      return block;
+    }
+    return block.copyWith(children: children, inlines: inlines, dirty: true);
+  }
+
+  final blocks = document.blocks.map(visit).toList();
+  if (!listEquals(blocks, document.blocks)) {
+    document = document.copyWith(blocks: blocks);
+  }
   // Source whitespace remains in BusyDocument.source. The Markdown parser,
   // rather than the rich editor, owns whether that whitespace creates blocks.
   final hasEditableBlock = document.blocks.any(
@@ -4172,6 +4605,7 @@ List<BusyInlineStyleRange> _preservedRangeParts(
         end: selectionStart,
         kind: range.kind,
         destination: range.destination,
+        attributes: range.attributes,
       ),
     if (range.end > selectionEnd)
       BusyInlineStyleRange(
@@ -4179,6 +4613,7 @@ List<BusyInlineStyleRange> _preservedRangeParts(
         end: range.end,
         kind: range.kind,
         destination: range.destination,
+        attributes: range.attributes,
       ),
   ];
 }
@@ -4210,7 +4645,9 @@ List<BusyInline> _inlinesFromStyleRanges(
           ),
         ),
   ];
-  return _mergeAdjacentInlineStyles(segments);
+  return _mergeAdjacentInlineStyles(
+    _refreshBareUrlLinks(_mergeAdjacentInlineStyles(segments)),
+  );
 }
 
 List<BusyInline> _mergeAdjacentInlineStyles(List<BusyInline> inlines) {
@@ -4245,7 +4682,9 @@ List<BusyInline> _mergeAdjacentInlineStyles(List<BusyInline> inlines) {
 }
 
 bool _canMergeInlineStyles(BusyInline left, BusyInline right) {
-  if (left.kind != right.kind || left.destination != right.destination) {
+  if (left.kind != right.kind ||
+      left.destination != right.destination ||
+      !mapEquals(left.attributes, right.attributes)) {
     return false;
   }
   if (left.kind == BusyInlineKind.text) {
@@ -4279,6 +4718,7 @@ List<BusyInlineStyleRange> _styleRangesForSlice(
           end: (range.end > end ? end : range.end) - start,
           kind: range.kind,
           destination: range.destination,
+          attributes: range.attributes,
         ),
   ];
 }
@@ -4295,6 +4735,7 @@ List<BusyInlineStyleRange> _normalizedStyleRanges(
           end: range.end.clamp(0, textLength).toInt(),
           kind: range.kind,
           destination: range.destination,
+          attributes: range.attributes,
         ),
   ].where((range) => range.end > range.start).toList();
 }
@@ -4320,6 +4761,7 @@ BusyInline _inlineForSegment(String text, List<BusyInlineStyleRange> styles) {
       kind: style.kind,
       text: inline.plainText,
       destination: style.destination,
+      attributes: style.attributes,
       children:
           style.kind == BusyInlineKind.code ||
               style.kind == BusyInlineKind.image
@@ -4331,6 +4773,8 @@ BusyInline _inlineForSegment(String text, List<BusyInlineStyleRange> styles) {
 }
 
 int _compareStyleRanges(BusyInlineStyleRange a, BusyInlineStyleRange b) {
+  // Keep links whole across interior formatting boundaries. Refreshing a
+  // bare URL subsequently restores any formatting enclosing its entire text.
   return _stylePriority(a.kind).compareTo(_stylePriority(b.kind));
 }
 

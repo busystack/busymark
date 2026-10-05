@@ -4639,6 +4639,14 @@ class AppLocalizationsPt extends AppLocalizations {
   String get spellingCheckFailed => 'A verificação ortográfica falhou';
 
   @override
+  String get spellingSettingsLoadFailed =>
+      'Não foi possível carregar as definições de verificação ortográfica';
+
+  @override
+  String get retrySpellingSettings =>
+      'Tentar carregar novamente as definições de verificação ortográfica';
+
+  @override
   String get spellingCheckIncomplete =>
       'A verificação ortográfica está incompleta';
 
@@ -4703,6 +4711,15 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get spellingDictionaryRecoveryConflict =>
       'O dicionário ortográfico foi alterado externamente. Foi preservada uma cópia de recuperação.';
+
+  @override
+  String get windowMinimize => 'Minimizar';
+
+  @override
+  String get windowMaximize => 'Maximizar';
+
+  @override
+  String get windowRestore => 'Restaurar';
 }
 
 /// The translations for Portuguese, as used in Brazil (`pt_BR`).
@@ -9337,6 +9354,14 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   String get spellingCheckFailed => 'A verificação ortográfica falhou';
 
   @override
+  String get spellingSettingsLoadFailed =>
+      'Não foi possível carregar as configurações de verificação ortográfica';
+
+  @override
+  String get retrySpellingSettings =>
+      'Tentar carregar novamente as configurações de verificação ortográfica';
+
+  @override
   String get spellingCheckIncomplete =>
       'A verificação ortográfica está incompleta';
 
@@ -9401,4 +9426,13 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   @override
   String get spellingDictionaryRecoveryConflict =>
       'O dicionário ortográfico foi alterado externamente. Uma cópia de recuperação foi preservada.';
+
+  @override
+  String get windowMinimize => 'Minimizar';
+
+  @override
+  String get windowMaximize => 'Maximizar';
+
+  @override
+  String get windowRestore => 'Restaurar';
 }

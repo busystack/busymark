@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 
 import '../core/anchored_path_guard.dart';
+import '../core/input_observer.dart';
 import '../markdown/busymark_document.dart';
 import '../visualization/visualization_models.dart';
 import '../visualization/visualization_renderer.dart';
@@ -57,6 +58,7 @@ class WritersideSourceLoader {
         for (final directory in directories)
           p.normalize(p.join(workspaceRoot, directory, value)),
       }) {
+        String? readPath;
         try {
           final resolved = await resolveAnchoredPath(
             anchor,
@@ -68,17 +70,26 @@ class WritersideSourceLoader {
             continue;
           }
           if (!readText) return WritersideSourceFile(path: resolved.path);
+          readPath = resolved.path;
           if (override != null) {
+            InputObserver.current?.read(
+              resolved.path,
+              utf8.encode(override),
+              override: true,
+            );
             if (utf8.encode(override).length > maximumBytes) {
               return const WritersideSourceFile(failure: 'too-large');
             }
             return WritersideSourceFile(path: resolved.path, text: override);
           }
           final file = File(resolved.path);
-          if (await file.length() > maximumBytes) {
+          final size = await file.length();
+          if (size > maximumBytes) {
+            InputObserver.current?.limitedRead(resolved.path, size);
             return const WritersideSourceFile(failure: 'too-large');
           }
           final bytes = await file.readAsBytes();
+          InputObserver.current?.read(resolved.path, bytes);
           if (bytes.length > maximumBytes) {
             return const WritersideSourceFile(failure: 'too-large');
           }
@@ -92,6 +103,7 @@ class WritersideSourceLoader {
           }
           return const WritersideSourceFile(failure: 'outside-workspace');
         } on FileSystemException {
+          if (readPath != null) InputObserver.current?.readFailed(readPath);
           continue;
         } on FormatException {
           return const WritersideSourceFile(failure: 'invalid-utf8');
@@ -106,9 +118,10 @@ class WritersideSourceLoader {
   }
 
   Future<Map<String, WritersideSourceFile>> loadModule(
-    WritersideModule module,
-  ) async {
-    final result = <String, WritersideSourceFile>{};
+    WritersideModule module, {
+    bool parseApis = true,
+  }) async {
+    final result = <String, WritersideSourceFile>{...module.sourceFiles};
     Future<void> add(String path, Map<String, String> attributes) async {
       final reference = attributes['openapi-path'] ?? attributes['src'];
       if (reference == null || reference.isEmpty) return;
@@ -129,7 +142,9 @@ class WritersideSourceLoader {
         overrides: module.sourceOverrides,
       );
       final loaded = result[identity]!;
-      if (attributes.containsKey('openapi-path') && loaded.text != null) {
+      if (parseApis &&
+          attributes.containsKey('openapi-path') &&
+          loaded.text != null) {
         try {
           final token = VisualizationCancellationToken();
           final request =

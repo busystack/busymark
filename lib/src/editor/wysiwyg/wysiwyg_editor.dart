@@ -214,7 +214,13 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   int _undoGroupSequence = 0;
   _ContinuousTextEdit? _continuousTextEdit;
   _DocumentTextSelection? _documentSelection;
+  _DocumentTextSelection? _documentInputSelection;
+  TextEditingValue _documentInputValue = TextEditingValue.empty;
   _DocumentTextPosition? _pointerSelectionAnchor;
+  String? _pointerSelectionCellId;
+  int? _selectionPointer;
+  int _selectionGestureGeneration = 0;
+  String? _cellSelectAllTarget;
   int? _documentSelectionContextPointer;
   _DocumentTextSelection? _documentSelectionContextSnapshot;
   VerticalCaretMovementRun? _verticalCaretMovement;
@@ -372,12 +378,26 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     return expectedFieldText;
   }
 
+  String? spellingSourceSnapshot(SpellingOccurrence occurrence) {
+    if (spellingFieldSnapshot(occurrence) == null) return null;
+    final source = _documentController.document.source;
+    if (source == null || source != _documentController.markdown) return null;
+    final start = occurrence.sourceStart;
+    final end = occurrence.sourceEnd;
+    if (start == null || end == null || start < 0 || end > source.length) {
+      return null;
+    }
+    return source;
+  }
+
   bool applyPreparedSpellingCorrection({
     required SpellingOccurrence occurrence,
     required String suggestion,
     required SpellingReplacementPlan plan,
     required String expectedFieldText,
     String? preparedFieldText,
+    String? expectedSource,
+    String? preparedSource,
   }) {
     if (!_isSpellingOccurrenceCurrent(occurrence)) return false;
     final target = occurrence.run.target;
@@ -406,9 +426,15 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
         controller.text != expectedFieldText) {
       return false;
     }
+    if (expectedSource != null &&
+        (expectedSource != _documentController.markdown ||
+            _documentController.document.source != expectedSource ||
+            preparedSource == null)) {
+      return false;
+    }
     final beforeSession = _captureSessionState();
     _continuousTextEdit = null;
-    _recordUndoSnapshot();
+    final beforeDocument = _historySnapshot();
     final changed = switch (target) {
       SpellingRichBlockTarget(:final blockId) =>
         _documentController.replaceSpellingInBlock(
@@ -416,6 +442,7 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
           expectedFieldText: expectedFieldText,
           plan: plan,
           preparedFieldText: preparedFieldText,
+          preparedSource: preparedSource,
         ),
       SpellingRichTableCellTarget(:final tableBlockId, :final cellId) =>
         _documentController.replaceSpellingInTableCell(
@@ -424,10 +451,12 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
           expectedFieldText: expectedFieldText,
           plan: plan,
           preparedFieldText: preparedFieldText,
+          preparedSource: preparedSource,
         ),
       _ => false,
     };
     if (!changed) return false;
+    _recordUndoSnapshot(beforeDocument);
 
     _clearBlockSelection();
     if (target is SpellingRichTableCellTarget) {
@@ -510,6 +539,8 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     final fileChanged = oldDocumentId != _documentId;
     final sourceChanged = oldWidget.document.source != widget.document.source;
     if (fileChanged || (sourceChanged && !_internalChange)) {
+      _releaseSelectionDrag(rebuild: false);
+      _pendingTextFocus = null;
       _hasReportedVisibleHeading = false;
       if (fileChanged) {
         _reportSessionNow(
@@ -521,6 +552,7 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
         _internalChange = false;
         _resetPerDocumentState();
       }
+      _documentSelection = null;
       _documentController.replaceDocument(widget.document);
       _initialFocusScheduled = false;
       _scheduleSessionRestore(widget.initialSessionState);
@@ -538,6 +570,8 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
 
   @override
   void dispose() {
+    _releaseSelectionDrag(rebuild: false);
+    _pendingTextFocus = null;
     widget.clipboardInsertionRegistry?.unregister(_historyInsertionTarget);
     unawaited(_assetDropSubscription?.cancel());
     _itemPositionsListener.itemPositions.removeListener(
@@ -595,7 +629,8 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     _collapsibleExpansion.clear();
     _continuousTextEdit = null;
     _documentSelection = null;
-    _pointerSelectionAnchor = null;
+    _releaseSelectionDrag(rebuild: false);
+    _cellSelectAllTarget = null;
     _resetVerticalCaretMovement();
   }
 
@@ -817,6 +852,7 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
                       child: GestureDetector(
                         behavior: HitTestBehavior.translucent,
                         onTap: () {
+                          if (_selectionPointer != null) return;
                           _clearBlockSelection();
                           _focusActiveOrFirstBlock();
                         },
@@ -842,6 +878,30 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
                       ),
                     ),
                   ),
+                  if (_documentSelection case final selection?
+                      when _selectionPointer == null &&
+                          _documentController
+                                  .blockById(selection.extent.blockId)
+                                  ?.kind ==
+                              BusyBlockKind.table)
+                    Positioned(
+                      left: 0,
+                      top: 0,
+                      width: 1,
+                      height: 1,
+                      child: ExcludeSemantics(
+                        child: IgnorePointer(
+                          child: _DocumentSelectionTextInput(
+                            key: ObjectKey(selection),
+                            isCurrent: _documentSelectionInputGuard(selection),
+                            onKeyEvent: _handleDocumentSelectionKeyEvent,
+                            onEditingValue: _documentSelectionInputHandler(
+                              selection,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
                   _FloatingWysiwygToolbar(
                     placement: widget.toolbarPlacement,
                     direction: widget.toolbarDirection,
@@ -1169,9 +1229,14 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       selected: selectedBlockIds.contains(block.id),
       selectionRange: selectionRangesByBlockId[block.id],
       documentSelectionActive: _hasBlockSelection,
+      // The originating field must stop its local drag once the document owns
+      // it; otherwise EditableText refocuses and scrolls that field's caret.
+      documentSelectionDragging:
+          _hasBlockSelection && _pointerSelectionAnchor != null,
       onPointerDown: (event) => _handleBlockPointerDown(block.id, event),
       onPointerMove: _handleBlockPointerMove,
       onPointerUp: _handleBlockPointerUp,
+      onPointerCancel: _handleBlockPointerCancel,
       onFocused: () => _handleBlockFocused(block.id),
       onCut: _cutCurrentSelection,
       onCopy: _copyCurrentSelection,
@@ -1409,6 +1474,7 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     String targetId,
     TextEditingController controller,
   ) {
+    if (_cellSelectAllTarget == targetId) _cellSelectAllTarget = null;
     _scheduleSessionReport();
     final continuous = _continuousTextEdit;
     if (continuous == null || continuous.targetId != targetId) {
@@ -1654,6 +1720,16 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   }
 
   void _handleTableCellFocused(String tableBlockId, String cellId) {
+    if (_selectionPointer != null && _hasBlockSelection) {
+      _selectionFocusNode.requestFocus();
+      return;
+    }
+    if (_preserveSelectionFocusCallbacks > 0 && _hasBlockSelection) {
+      _preserveSelectionFocusCallbacks--;
+      _setActiveBlock(tableBlockId);
+      return;
+    }
+    _cellSelectAllTarget = null;
     _clearBlockSelection();
     _collapseFieldSelections(exceptBlockId: cellId);
     _setActiveTableCell(tableBlockId, cellId);
@@ -1663,10 +1739,53 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     FocusNode node,
     KeyEvent event,
   ) {
+    final key = event.logicalKey;
+    if (_hasDocumentInputComposition &&
+        (key == LogicalKeyboardKey.backspace ||
+            key == LogicalKeyboardKey.delete ||
+            key == LogicalKeyboardKey.enter ||
+            key == LogicalKeyboardKey.arrowLeft ||
+            key == LogicalKeyboardKey.arrowRight ||
+            key == LogicalKeyboardKey.arrowUp ||
+            key == LogicalKeyboardKey.arrowDown ||
+            key == LogicalKeyboardKey.home ||
+            key == LogicalKeyboardKey.end)) {
+      // Leave composition editing to the platform IME, including its commit
+      // key. Neither document commands nor Flutter shortcuts may replace it.
+      return KeyEventResult.skipRemainingHandlers;
+    }
     final blockId = _documentSelection?.extent.blockId ?? _activeBlockId;
     return blockId == null
         ? KeyEventResult.ignored
         : _handleBlockKeyEvent(blockId, event);
+  }
+
+  bool Function(TextEditingValue) _documentSelectionInputHandler(
+    _DocumentTextSelection selection,
+  ) {
+    final isCurrent = _documentSelectionInputGuard(selection);
+    return (value) {
+      if (!isCurrent()) return false;
+      _documentInputSelection = selection;
+      _documentInputValue = value;
+      if (_hasComposingValue(value) || value.text.isEmpty) return true;
+      final accepted = _replaceDocumentSelectionWithText(value.text);
+      if (!accepted) _documentInputValue = TextEditingValue.empty;
+      return accepted;
+    };
+  }
+
+  bool Function() _documentSelectionInputGuard(
+    _DocumentTextSelection selection,
+  ) {
+    final generation = _documentGeneration;
+    final documentId = _documentId;
+    return () =>
+        mounted &&
+        generation == _documentGeneration &&
+        documentId == _documentId &&
+        identical(selection, _documentSelection) &&
+        _selectionPointer == null;
   }
 
   BusyDocument _historySnapshot() {
@@ -1759,6 +1878,10 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   }
 
   void _handleBlockFocused(String blockId) {
+    if (_selectionPointer != null && _hasBlockSelection) {
+      _selectionFocusNode.requestFocus();
+      return;
+    }
     if (_preserveSelectionFocusCallbacks > 0 && _hasBlockSelection) {
       _preserveSelectionFocusCallbacks--;
       _setActiveBlock(blockId);
@@ -1783,9 +1906,13 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
         selectedDocumentText.extent.blockId == blockId) {
       final oldText = _documentController.blockText(blockId);
       final replacement = _replacementTextForFieldEdit(oldText, value);
-      if (_replaceDocumentSelectionWithText(replacement)) {
-        return;
+      if (!_replaceDocumentSelectionWithText(replacement)) {
+        // A rejected document edit must not become a local field edit.
+        _textControllers[blockId]?.updateFromBlock(
+          _documentController.blockById(blockId)!,
+        );
       }
+      return;
     }
     _clearBlockSelection();
     _setActiveBlock(blockId);
@@ -2092,8 +2219,9 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       return;
     }
     _initialFocusScheduled = true;
+    final generation = _documentGeneration;
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) {
+      if (!mounted || generation != _documentGeneration) {
         return;
       }
       final firstPlainBlock = _focusableBlocks()
@@ -2115,10 +2243,15 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       return;
     }
     _initialFocusScheduled = true;
+    final generation = _documentGeneration;
+    final documentId = _documentId;
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) {
+      if (!mounted ||
+          generation != _documentGeneration ||
+          documentId != _documentId) {
         return;
       }
+      _documentSelection = null;
       final activeBlock = session.activeBlockId == null
           ? null
           : _documentController.blockById(session.activeBlockId!);
@@ -2135,7 +2268,8 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
         final anchor = _documentController.blockById(anchorBlockId);
         final extent = _documentController.blockById(extentBlockId);
         if (anchor != null && extent != null) {
-          if (anchorBlockId == extentBlockId) {
+          if (anchorBlockId == extentBlockId &&
+              anchor.kind != BusyBlockKind.table) {
             final controller =
                 _tableCellControllers[anchorBlockId] ??
                 _textControllers[anchorBlockId];
@@ -2150,20 +2284,24 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
               );
             }
           } else {
-            _documentSelection = _DocumentTextSelection(
-              anchor: _DocumentTextPosition(
+            final start = _clampDocumentPosition(
+              _DocumentTextPosition(
                 blockId: anchorBlockId,
-                offset: session.anchorOffset
-                    .clamp(0, anchor.plainText.length)
-                    .toInt(),
-              ),
-              extent: _DocumentTextPosition(
-                blockId: extentBlockId,
-                offset: session.extentOffset
-                    .clamp(0, extent.plainText.length)
-                    .toInt(),
+                offset: session.anchorOffset,
               ),
             );
+            final end = _clampDocumentPosition(
+              _DocumentTextPosition(
+                blockId: extentBlockId,
+                offset: session.extentOffset,
+              ),
+            );
+            if (start != null && end != null) {
+              _documentSelection = _DocumentTextSelection(
+                anchor: start,
+                extent: end,
+              );
+            }
           }
         }
       }
@@ -2187,7 +2325,16 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
         _jumpToBlock(viewportBlockId, alignment: alignment);
       }
       final activeCellId = _activeCellId;
-      if (activeCellId != null) {
+      if (_hasBlockSelection) {
+        _collapseFieldSelections();
+        // Keep command focus until the restored extent's editable field or
+        // table input client is mounted, preserving the document range.
+        _selectionFocusNode.requestFocus();
+        _activeBlockId = _documentSelection!.extent.blockId;
+        _activeCellId = null;
+        _scheduleDocumentSelectionExtentFocus();
+        _scheduleSessionReport();
+      } else if (activeCellId != null) {
         final controller = _tableCellControllers[activeCellId];
         final focusNode = _tableCellFocusNodes[activeCellId];
         if (controller != null && focusNode != null) {
@@ -2728,11 +2875,32 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
 
   void _focusActiveOrFirstBlock({int? initialSelectionOffset}) {
     final blocks = _focusableBlocks();
+    final activeBlock = _activeBlockId == null
+        ? null
+        : _documentController.blockById(_activeBlockId!);
+    if (activeBlock?.kind == BusyBlockKind.table || blocks.isEmpty) {
+      final cells = _tableCellEntries(_documentController.document.blocks);
+      final cell =
+          cells.where((entry) => entry.cell.id == _activeCellId).firstOrNull ??
+          cells
+              .where((entry) => entry.table.id == activeBlock?.id)
+              .firstOrNull ??
+          (blocks.isEmpty ? cells.firstOrNull : null);
+      if (cell != null) {
+        final selection = _tableCellControllers[cell.cell.id]?.selection;
+        _focusTextTargetAfterFrame(
+          cell.cell.id,
+          offset:
+              initialSelectionOffset ??
+              (selection?.isValid == true ? selection!.extentOffset : 0),
+        );
+        return;
+      }
+    }
     if (blocks.isEmpty) {
       return;
     }
-    final blockId =
-        _activeBlockId != null && _focusNodes[_activeBlockId] != null
+    final blockId = blocks.any((block) => block.id == _activeBlockId)
         ? _activeBlockId!
         : blocks.first.id;
     final focusNode = _focusNodes[blockId];
@@ -2905,6 +3073,9 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
         !keyboard.isMetaPressed &&
         (key == LogicalKeyboardKey.arrowLeft ||
             key == LogicalKeyboardKey.arrowRight)) {
+      if (_hasBlockSelection && !keyboard.isShiftPressed) {
+        return _collapseDocumentSelectionForArrow(key);
+      }
       final boundaryResult = keyboard.isShiftPressed
           ? _extendKeyboardSelectionByWord(blockId, key)
           : _moveWordCaretAcrossBlockBoundary(blockId, key);
@@ -2917,19 +3088,14 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     }
     if ((key == LogicalKeyboardKey.backspace ||
             key == LogicalKeyboardKey.delete) &&
-        _deleteBlockSelection()) {
+        _hasBlockSelection) {
+      _deleteBlockSelection();
       return KeyEventResult.handled;
     }
-    if (key == LogicalKeyboardKey.enter &&
-        _hasBlockSelection &&
-        _replaceDocumentSelectionWithText('\n')) {
+    if (key == LogicalKeyboardKey.enter && _hasBlockSelection) {
+      _replaceDocumentSelectionWithText('\n');
       return KeyEventResult.handled;
     }
-    final controller = _textControllers[blockId];
-    if (controller == null || !controller.selection.isValid) {
-      return KeyEventResult.ignored;
-    }
-    final selection = controller.selection;
     final shiftPressed = HardwareKeyboard.instance.isShiftPressed;
     final isArrowKey =
         key == LogicalKeyboardKey.arrowUp ||
@@ -2948,6 +3114,11 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     if (!shiftPressed && isArrowKey && _hasBlockSelection) {
       return _collapseDocumentSelectionForArrow(key);
     }
+    final controller = _textControllers[blockId];
+    if (controller == null || !controller.selection.isValid) {
+      return KeyEventResult.ignored;
+    }
+    final selection = controller.selection;
     if (!selection.isCollapsed) {
       if (key == LogicalKeyboardKey.enter && !shiftPressed) {
         final start = math
@@ -3234,6 +3405,8 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     _resetVerticalCaretMovement();
     _applyKeyboardSelection(
       _DocumentTextSelection(anchor: target, extent: target),
+      collapse: true,
+      towardStart: target.offset == 0,
     );
     return KeyEventResult.handled;
   }
@@ -3275,12 +3448,12 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     final extent = selection.extent;
     final _DocumentTextPosition? target;
     if (key == LogicalKeyboardKey.arrowUp) {
-      target = _verticalCaretTarget(extent, -1);
+      target = _verticalCaretTarget(extent, -1, selecting: true);
     } else if (key == LogicalKeyboardKey.arrowDown) {
-      target = _verticalCaretTarget(extent, 1);
+      target = _verticalCaretTarget(extent, 1, selecting: true);
     } else if (key == LogicalKeyboardKey.arrowLeft ||
         key == LogicalKeyboardKey.arrowRight) {
-      target = _horizontalCaretTarget(extent, key);
+      target = _horizontalCaretTarget(extent, key, selecting: true);
     } else {
       target = null;
     }
@@ -3337,8 +3510,9 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
 
   _DocumentTextPosition? _horizontalCaretTarget(
     _DocumentTextPosition position,
-    LogicalKeyboardKey key,
-  ) {
+    LogicalKeyboardKey key, {
+    bool selecting = false,
+  }) {
     final block = _documentController.blockById(position.blockId);
     final controller = _textControllers[position.blockId];
     if (block == null || controller == null) {
@@ -3368,17 +3542,17 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
         offset: boundary.getLeadingTextBoundaryAt(offset - 1) ?? 0,
       );
     }
-    final nextBlock = _relativeFocusableBlock(
-      position.blockId,
-      forward ? 1 : -1,
-    );
+    final nextBlock = selecting
+        ? _relativeSelectionBlock(position.blockId, forward ? 1 : -1)
+        : _relativeFocusableBlock(position.blockId, forward ? 1 : -1);
     if (nextBlock == null) {
       return position;
     }
-    final nextController = _textControllerFor(nextBlock);
     return _DocumentTextPosition(
       blockId: nextBlock.id,
-      offset: forward ? 0 : nextController.text.length,
+      offset: forward || nextBlock.kind == BusyBlockKind.table
+          ? 0
+          : _textControllerFor(nextBlock).text.length,
     );
   }
 
@@ -3416,17 +3590,18 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
             : wordBoundary.getLeadingTextBoundaryAt(offset - 1) ?? 0,
       );
     }
-    final nextBlock = _relativeFocusableBlock(
+    final nextBlock = _relativeSelectionBlock(
       position.blockId,
       forward ? 1 : -1,
     );
     if (nextBlock == null) {
       return position;
     }
-    final nextController = _textControllerFor(nextBlock);
     return _DocumentTextPosition(
       blockId: nextBlock.id,
-      offset: forward ? 0 : nextController.text.length,
+      offset: forward || nextBlock.kind == BusyBlockKind.table
+          ? 0
+          : _textControllerFor(nextBlock).text.length,
     );
   }
 
@@ -3455,8 +3630,19 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
 
   _DocumentTextPosition? _verticalCaretTarget(
     _DocumentTextPosition position,
-    int direction,
-  ) {
+    int direction, {
+    bool selecting = false,
+  }) {
+    final block = _documentController.blockById(position.blockId);
+    if (block?.kind == BusyBlockKind.table) {
+      final next = _relativeSelectionBlock(position.blockId, direction);
+      return next == null
+          ? position
+          : _DocumentTextPosition(
+              blockId: next.id,
+              offset: direction < 0 ? next.plainText.length : 0,
+            );
+    }
     final controller = _textControllers[position.blockId];
     if (controller == null) {
       return null;
@@ -3495,7 +3681,9 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       }
     }
 
-    final nextBlock = _relativeFocusableBlock(position.blockId, direction);
+    final nextBlock = selecting
+        ? _relativeSelectionBlock(position.blockId, direction)
+        : _relativeFocusableBlock(position.blockId, direction);
     if (nextBlock == null) {
       final boundaryOffset = direction < 0 ? 0 : controller.text.length;
       final target = _DocumentTextPosition(
@@ -3504,6 +3692,10 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       );
       _verticalCaretMovementPosition = TextPosition(offset: boundaryOffset);
       return target;
+    }
+    if (nextBlock.kind == BusyBlockKind.table) {
+      _resetVerticalCaretMovement();
+      return _DocumentTextPosition(blockId: nextBlock.id, offset: 0);
     }
     final nextController = _textControllerFor(nextBlock);
     final nextRenderEditable = _renderEditableForBlock(nextBlock.id);
@@ -3551,6 +3743,20 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
         : blocks[targetIndex];
   }
 
+  BusyBlock? _relativeSelectionBlock(String blockId, int direction) {
+    final blocks = _editableBlocks(_documentController.document.blocks)
+        .where(
+          (block) =>
+              _isFocusableTextBlock(block) || block.kind == BusyBlockKind.table,
+        )
+        .toList();
+    final index = blocks.indexWhere((block) => block.id == blockId);
+    final target = index + direction;
+    return index < 0 || target < 0 || target >= blocks.length
+        ? null
+        : blocks[target];
+  }
+
   RenderEditable? _renderEditableForBlock(String blockId) {
     final renderObject = _blockKeys[blockId]?.currentContext
         ?.findRenderObject();
@@ -3568,7 +3774,11 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     return result;
   }
 
-  void _applyKeyboardSelection(_DocumentTextSelection selection) {
+  void _applyKeyboardSelection(
+    _DocumentTextSelection selection, {
+    bool collapse = false,
+    bool towardStart = true,
+  }) {
     final anchor = _clampDocumentPosition(selection.anchor);
     final extent = _clampDocumentPosition(selection.extent);
     if (anchor == null || extent == null) {
@@ -3582,10 +3792,23 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     if (extentBlock == null) {
       return;
     }
-    final controller = _textControllerFor(extentBlock);
-    final focusNode = _focusNodeFor(extentBlock);
     _activeBlockId = extent.blockId;
-    if (anchor.blockId == extent.blockId) {
+    if (collapse && extentBlock.kind == BusyBlockKind.table) {
+      _clearBlockSelection();
+      final cells = [for (final row in extentBlock.children) ...row.children];
+      final cell = towardStart ? cells.firstOrNull : cells.lastOrNull;
+      if (cell != null) {
+        _focusTextTargetAfterFrame(
+          cell.id,
+          offset: towardStart ? 0 : cell.plainText.length,
+        );
+      }
+      return;
+    }
+    if (anchor.blockId == extent.blockId &&
+        extentBlock.kind != BusyBlockKind.table) {
+      final controller = _textControllerFor(extentBlock);
+      final focusNode = _focusNodeFor(extentBlock);
       if (_documentSelection != null) {
         setState(() => _documentSelection = null);
       }
@@ -3599,26 +3822,38 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       return;
     }
     setState(() => _documentSelection = nextSelection);
-    if (!_selectionFocusNode.hasPrimaryFocus) {
-      focusNode.requestFocus();
+    if (extentBlock.kind == BusyBlockKind.table) {
+      _focusDocumentSelectionExtent();
+    } else {
+      final controller = _textControllerFor(extentBlock);
+      final focusNode = _focusNodeFor(extentBlock);
+      if (!_selectionFocusNode.hasPrimaryFocus) {
+        focusNode.requestFocus();
+      }
+      controller.selection = TextSelection.collapsed(
+        offset: extent.offset,
+        affinity: extent.affinity,
+      );
+      _collapseInactiveFieldSelections(extent.blockId);
     }
-    controller.selection = TextSelection.collapsed(
-      offset: extent.offset,
-      affinity: extent.affinity,
-    );
-    _collapseInactiveFieldSelections(extent.blockId);
   }
 
   _DocumentTextPosition? _clampDocumentPosition(
     _DocumentTextPosition position,
   ) {
-    final controller = _textControllers[position.blockId];
-    if (controller == null) {
+    final block = _editableBlocks(
+      _documentController.document.blocks,
+    ).where((block) => block.id == position.blockId).firstOrNull;
+    if (block == null) {
       return null;
     }
     return _DocumentTextPosition(
       blockId: position.blockId,
-      offset: position.offset.clamp(0, controller.text.length).toInt(),
+      offset: block.kind == BusyBlockKind.table
+          ? 0
+          : position.offset
+                .clamp(0, _textControllerFor(block).text.length)
+                .toInt(),
       affinity: position.affinity,
     );
   }
@@ -3649,6 +3884,8 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     _resetVerticalCaretMovement();
     _applyKeyboardSelection(
       _DocumentTextSelection(anchor: target, extent: target),
+      collapse: true,
+      towardStart: towardStart,
     );
     return KeyEventResult.handled;
   }
@@ -3656,7 +3893,7 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   _OrderedDocumentSelection? _orderedDocumentSelection(
     _DocumentTextSelection selection,
   ) {
-    final blocks = _focusableBlocks();
+    final blocks = _editableBlocks(_documentController.document.blocks);
     final anchorIndex = blocks.indexWhere(
       (block) => block.id == selection.anchor.blockId,
     );
@@ -3687,13 +3924,14 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     _activeBlockId = blockId;
     final pending = _PendingTextFocus(targetId: blockId, offset: offset);
     _pendingTextFocus = pending;
+    final generation = _documentGeneration;
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (identical(_pendingTextFocus, pending)) {
-        _pendingTextFocus = null;
-      }
-      if (!mounted) {
+      if (!mounted ||
+          !identical(_pendingTextFocus, pending) ||
+          generation != _documentGeneration) {
         return;
       }
+      _pendingTextFocus = null;
       final block = _documentController.blockById(blockId);
       if (block == null) {
         return;
@@ -3717,13 +3955,14 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     _activeCellId = targetId;
     final pending = _PendingTextFocus(targetId: targetId, offset: offset);
     _pendingTextFocus = pending;
+    final generation = _documentGeneration;
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (identical(_pendingTextFocus, pending)) {
-        _pendingTextFocus = null;
-      }
-      if (!mounted) {
+      if (!mounted ||
+          !identical(_pendingTextFocus, pending) ||
+          generation != _documentGeneration) {
         return;
       }
+      _pendingTextFocus = null;
       final controller = _tableCellControllers[targetId];
       final focusNode = _tableCellFocusNodes[targetId];
       if (controller == null || focusNode == null) {
@@ -4879,12 +5118,11 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     if (!_isClipboardTargetCurrent(captured) || text.isEmpty) {
       return false;
     }
-    if (_hasBlockSelection &&
-        _replaceDocumentSelectionWithText(
-          text,
-          origin: _WysiwygTextEditOrigin.paste,
-        )) {
-      return true;
+    if (_hasBlockSelection) {
+      return _replaceDocumentSelectionWithText(
+        text,
+        origin: _WysiwygTextEditOrigin.paste,
+      );
     }
     if (_activeCellId != null) {
       return _replaceActiveTableCellSelection(
@@ -6306,7 +6544,7 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
         endOffset: selection.extent.offset.clamp(0, textLength).toInt(),
         forward: forward,
       );
-      if (range != null && (includeEmptyRanges || range.end > range.start)) {
+      if (range != null && (includeEmptyRanges || !range.isEmpty)) {
         ranges.add(range);
       }
     }
@@ -6393,10 +6631,14 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   }
 
   void _handleBlockPointerDown(String blockId, PointerDownEvent event) {
-    if (event.buttons != kPrimaryMouseButton) {
+    if (event.buttons != kPrimaryMouseButton || _selectionPointer != null) {
       return;
     }
     _resetVerticalCaretMovement();
+    _selectionGestureGeneration++;
+    _selectionPointer = event.pointer;
+    _pendingTextFocus = null;
+    _pointerSelectionCellId = _tableCellIdAtGlobalPosition(event.position);
     final offset = _textOffsetAtGlobalPosition(blockId, event.position);
     if (HardwareKeyboard.instance.isShiftPressed) {
       final anchor = _selectionAnchorForBlock(_activeBlockId ?? blockId);
@@ -6415,7 +6657,7 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
         return;
       }
     }
-    _clearBlockSelection();
+    _clearBlockSelection(releaseDrag: false);
     _collapseInactiveFieldSelections(blockId);
     _pointerSelectionAnchor = _DocumentTextPosition(
       blockId: blockId,
@@ -6451,6 +6693,7 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   }
 
   void _handleDocumentSelectionContextPointerCancel(PointerCancelEvent event) {
+    _handleBlockPointerCancel(event);
     if (_documentSelectionContextPointer == event.pointer) {
       _documentSelectionContextPointer = null;
       _documentSelectionContextSnapshot = null;
@@ -6461,12 +6704,17 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     Offset position,
     _DocumentTextSelection snapshot,
   ) async {
+    final target = _captureDialogTarget();
     _preserveSelectionFocusCallbacks = math.max(
       _preserveSelectionFocusCallbacks,
       4,
     );
     final pasteAvailability = await _readContextMenuPasteAvailability();
-    if (!mounted || snapshot != _documentSelection) return;
+    if (!mounted ||
+        !_isDialogTargetCurrent(target) ||
+        snapshot != _documentSelection) {
+      return;
+    }
     final commands =
         BusyMarkCommandRegistryScope.maybeOf(context) ??
         BusyMarkCommandCatalog.metadata;
@@ -6540,7 +6788,9 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
         ),
       ],
     );
-    if (!mounted || action == null || snapshot != _documentSelection) {
+    if (!_isDialogTargetCurrent(target) ||
+        action == null ||
+        snapshot != _documentSelection) {
       return;
     }
     switch (action) {
@@ -6566,7 +6816,8 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   }
 
   void _handleBlockPointerMove(PointerMoveEvent event) {
-    if (_pointerSelectionAnchor == null ||
+    if (event.pointer != _selectionPointer ||
+        _pointerSelectionAnchor == null ||
         event.buttons != kPrimaryMouseButton) {
       return;
     }
@@ -6582,7 +6833,12 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     if (targetBlockId == null) {
       return false;
     }
-    if (targetBlockId == anchor.blockId && _documentSelection == null) {
+    final crossesTableCells =
+        _pointerSelectionCellId != null &&
+        _tableCellIdAtGlobalPosition(position) != _pointerSelectionCellId;
+    if (targetBlockId == anchor.blockId &&
+        _documentSelection == null &&
+        !crossesTableCells) {
       return false;
     }
     final endOffset = _textOffsetAtGlobalPosition(targetBlockId, position);
@@ -6602,20 +6858,60 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   }
 
   void _handleBlockPointerUp(PointerUpEvent event) {
+    if (event.pointer != _selectionPointer) return;
     _updateBlockSelectionDrag(event.position);
-    _pointerSelectionAnchor = null;
+    final focusCallbacks = _preserveSelectionFocusCallbacks;
+    _releaseSelectionDrag();
+    if (_collapseEmptyDocumentSelection()) return;
     if (_hasBlockSelection) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          _focusDocumentSelectionExtent();
-        }
-      });
+      // The field's tap callback is dispatched after pointer-up. Preserve a
+      // Shift-click range through that callback, then release the tap guard.
+      _preserveSelectionFocusCallbacks = focusCallbacks;
+      _scheduleDocumentSelectionExtentFocus();
     }
-    if (_preserveSelectionFocusCallbacks > 0) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
+  }
+
+  void _handleBlockPointerCancel(PointerCancelEvent event) {
+    if (event.pointer != _selectionPointer) return;
+    // Cancellation preserves the last valid endpoint; its position is not a
+    // selection update.
+    _releaseSelectionDrag();
+    if (!_collapseEmptyDocumentSelection()) {
+      _scheduleDocumentSelectionExtentFocus();
+    }
+  }
+
+  void _scheduleDocumentSelectionExtentFocus() {
+    final selection = _documentSelection;
+    if (selection == null) return;
+    final gesture = _selectionGestureGeneration;
+    final generation = _documentGeneration;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted &&
+          gesture == _selectionGestureGeneration &&
+          generation == _documentGeneration &&
+          identical(selection, _documentSelection)) {
+        _focusDocumentSelectionExtent();
         _preserveSelectionFocusCallbacks = 0;
-      });
-    }
+      }
+    });
+  }
+
+  bool _collapseEmptyDocumentSelection() {
+    final ranges = _selectedTextRanges(null, true);
+    if (ranges.length != 1 || !ranges.single.isEmpty) return false;
+    _applyKeyboardSelection(_documentSelection!);
+    return true;
+  }
+
+  void _releaseSelectionDrag({bool rebuild = true}) {
+    final active = _selectionPointer != null;
+    _selectionPointer = null;
+    _pointerSelectionAnchor = null;
+    _pointerSelectionCellId = null;
+    _preserveSelectionFocusCallbacks = 0;
+    _selectionGestureGeneration++;
+    if (active && rebuild && mounted) setState(() {});
   }
 
   String? _blockIdAtGlobalPosition(Offset position) {
@@ -6643,6 +6939,20 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     return nearestDistance <= 80 ? nearestBlockId : null;
   }
 
+  String? _tableCellIdAtGlobalPosition(Offset position) {
+    for (final entry in _tableCellKeys.entries) {
+      final render = entry.value.currentContext?.findRenderObject();
+      if (render is RenderBox &&
+          render.hasSize &&
+          (render.localToGlobal(Offset.zero) & render.size).contains(
+            position,
+          )) {
+        return entry.key;
+      }
+    }
+    return null;
+  }
+
   void _collapseInactiveFieldSelections(String activeBlockId) {
     _collapseFieldSelections(exceptBlockId: activeBlockId);
   }
@@ -6666,11 +6976,15 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     }
   }
 
-  void _clearBlockSelection({bool collapseFields = true}) {
+  void _clearBlockSelection({
+    bool collapseFields = true,
+    bool releaseDrag = true,
+  }) {
     if (!_hasBlockSelection) {
       _documentSelection = null;
       return;
     }
+    if (releaseDrag) _releaseSelectionDrag(rebuild: false);
     setState(() {
       _documentSelection = null;
     });
@@ -6680,6 +6994,10 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   }
 
   void _selectAllForActiveBlock() {
+    if (_hasBlockSelection) {
+      _selectWholeDocumentText();
+      return;
+    }
     final target = _activeTextTarget();
     if (target == null) {
       final blocks = _focusableBlocks();
@@ -6689,12 +7007,21 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       return;
     }
     if (_activeCellId != null) {
+      final selection = target.controller.selection;
+      if (_cellSelectAllTarget == _activeCellId &&
+          selection.isValid &&
+          selection.start == 0 &&
+          selection.end == target.controller.text.length) {
+        _selectWholeDocumentText();
+        return;
+      }
       _clearBlockSelection();
       target.focusNode.requestFocus();
       target.controller.selection = TextSelection(
         baseOffset: 0,
         extentOffset: target.controller.text.length,
       );
+      _cellSelectAllTarget = _activeCellId;
       return;
     }
     _selectAllForBlock(target.targetId);
@@ -6707,7 +7034,7 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       return;
     }
     _activeBlockId = blockId;
-    if (_isWholeBlockSelected(blockId)) {
+    if (_hasBlockSelection || _isWholeBlockSelected(blockId)) {
       _selectWholeDocumentText();
       return;
     }
@@ -6736,7 +7063,7 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   }
 
   void _selectWholeDocumentText() {
-    final blocks = _focusableBlocks();
+    final blocks = _editableBlocks(_documentController.document.blocks);
     if (blocks.isEmpty) {
       return;
     }
@@ -6764,6 +7091,12 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     if (block == null) {
       return;
     }
+    if (!_isFocusableTextBlock(block)) {
+      _setActiveBlock(block.id);
+      _selectionFocusNode.requestFocus();
+      _scheduleSessionReport();
+      return;
+    }
     final controller = _textControllerFor(block);
     _activeBlockId = extent.blockId;
     _focusNodeFor(block).requestFocus();
@@ -6781,10 +7114,10 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     }
     final first = ranges.first;
     final last = ranges.last;
-    if (first.block.id == last.block.id && first.start == last.end) {
+    if (ranges.length == 1 && first.isEmpty) {
       return false;
     }
-    _recordUndoSnapshot();
+    final undoSnapshot = _historySnapshot();
     final result = _documentController.deleteTextSelection(
       firstBlockId: first.block.id,
       firstStartOffset: first.start,
@@ -6795,6 +7128,7 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     if (result == null) {
       return false;
     }
+    _recordUndoSnapshot(undoSnapshot);
     _clearBlockSelection(collapseFields: false);
     _emitMarkdown();
     _focusBlockAfterFrame(result.blockId, offset: result.offset);
@@ -6811,7 +7145,7 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     }
     final first = ranges.first;
     final last = ranges.last;
-    if (first.block.id == last.block.id && first.start == last.end) {
+    if (ranges.length == 1 && first.isEmpty) {
       return false;
     }
     final normalizedReplacement = replacementText
@@ -6858,7 +7192,7 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     }
     final first = ranges.first;
     final last = ranges.last;
-    if (first.block.id == last.block.id && first.start == last.end) {
+    if (ranges.length == 1 && first.isEmpty) {
       return false;
     }
     final undoSnapshot = _historySnapshot();
@@ -7256,14 +7590,26 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   }
 
   bool _hasActiveComposition(TextEditingController controller) {
-    final composing = controller.value.composing;
+    return _hasComposingValue(controller.value);
+  }
+
+  bool _hasComposingValue(TextEditingValue value) {
+    final composing = value.composing;
     return composing.isValid &&
         composing.isNormalized &&
         !composing.isCollapsed &&
-        composing.end <= controller.text.length;
+        composing.end <= value.text.length;
   }
 
+  bool get _hasDocumentInputComposition =>
+      _documentSelection != null &&
+      identical(_documentInputSelection, _documentSelection) &&
+      _hasComposingValue(_documentInputValue);
+
   bool get _hasActiveClipboardComposition {
+    if (_hasDocumentInputComposition) {
+      return true;
+    }
     final targetIds = <String>{
       if (_activeBlockId case final id?) id,
       if (_activeCellId case final id?) id,
@@ -7307,10 +7653,12 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   ) {
     var start = 0;
     var end = ranges.length;
-    while (start < end && ranges[start].start == ranges[start].end) {
+    // Tables have no block-local inline text: their document range denotes
+    // the complete structured block, including all child rows and cells.
+    while (start < end && ranges[start].isEmpty) {
       start++;
     }
-    while (end > start && ranges[end - 1].start == ranges[end - 1].end) {
+    while (end > start && ranges[end - 1].isEmpty) {
       end--;
     }
     return ranges.sublist(start, end);
@@ -7451,6 +7799,7 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
             end: (range.end > end ? end : range.end) - start,
             kind: range.kind,
             destination: range.destination,
+            attributes: range.attributes,
           ),
     ];
   }
@@ -7460,6 +7809,14 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     final controller = _textControllers[blockId];
     if (block == null || controller == null || controller.text.isEmpty) {
       return 0;
+    }
+    final editable = _renderEditableForBlock(blockId);
+    if (editable != null && editable.hasSize) {
+      return editable
+          .getPositionForPoint(globalPosition)
+          .offset
+          .clamp(0, controller.text.length)
+          .toInt();
     }
     final keyContext = _blockKeys[blockId]?.currentContext;
     final renderObject = keyContext?.findRenderObject();
@@ -7503,7 +7860,11 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
         .clamp(0.0, renderObject.size.height)
         .toDouble();
     final textPainter = TextPainter(
-      text: TextSpan(text: controller.text, style: _textStyleForBlock(block)),
+      text: controller.buildTextSpan(
+        context: context,
+        style: _textStyleForBlock(block),
+        withComposing: false,
+      ),
       textDirection: textDirection,
       textScaler: MediaQuery.textScalerOf(context),
       locale: Localizations.maybeLocaleOf(context),
@@ -7532,6 +7893,76 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   }
 }
 
+/// Supplies a real IME client while a complete table is the document extent.
+/// Its preedit stays outside the document and only committed text replaces the
+/// captured range. A new selection gets a new client and closes the old one.
+class _DocumentSelectionTextInput extends StatefulWidget {
+  const _DocumentSelectionTextInput({
+    super.key,
+    required this.isCurrent,
+    required this.onEditingValue,
+    required this.onKeyEvent,
+  });
+
+  final bool Function() isCurrent;
+  final bool Function(TextEditingValue) onEditingValue;
+  final KeyEventResult Function(FocusNode, KeyEvent) onKeyEvent;
+
+  @override
+  State<_DocumentSelectionTextInput> createState() =>
+      _DocumentSelectionTextInputState();
+}
+
+class _DocumentSelectionTextInputState
+    extends State<_DocumentSelectionTextInput> {
+  final _controller = TextEditingController();
+  late final _focusNode = FocusNode(
+    debugLabel: 'BusyMark WYSIWYG document selection input',
+    onKeyEvent: (node, event) => widget.onKeyEvent(node, event),
+  );
+  bool _resetting = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller.addListener(_handleEditingValue);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && widget.isCurrent()) _focusNode.requestFocus();
+    });
+  }
+
+  void _handleEditingValue() {
+    if (_resetting || widget.onEditingValue(_controller.value)) return;
+    _resetting = true;
+    _controller.value = TextEditingValue.empty;
+    _resetting = false;
+  }
+
+  @override
+  void dispose() {
+    _controller.removeListener(_handleEditingValue);
+    _controller.dispose();
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => EditableText(
+    controller: _controller,
+    focusNode: _focusNode,
+    style: const TextStyle(
+      fontSize: 1,
+      color: BusyMarkLinuxPalette.transparent,
+    ),
+    cursorColor: BusyMarkLinuxPalette.transparent,
+    backgroundCursorColor: BusyMarkLinuxPalette.transparent,
+    showCursor: false,
+    enableInteractiveSelection: false,
+    maxLines: null,
+    keyboardType: TextInputType.multiline,
+  );
+}
+
 class _SelectedTextRange {
   const _SelectedTextRange({
     required this.block,
@@ -7542,6 +7973,10 @@ class _SelectedTextRange {
   final BusyBlock block;
   final int start;
   final int end;
+
+  // A document table range owns its rows/cells, even though the container has
+  // no inline text. Cell-local and ordinary collapsed ranges remain empty.
+  bool get isEmpty => start == end && block.kind != BusyBlockKind.table;
 
   bool get coversWholeBlock => start <= 0 && end >= block.plainText.length;
 }

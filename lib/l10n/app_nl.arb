@@ -104,6 +104,8 @@
   "noSpellingSuggestions": "Geen spellingsuggesties",
   "spellingWordCheckFailed": "Dit woord kon niet worden gecontroleerd",
   "spellingCheckFailed": "Spellingcontrole mislukt",
+  "spellingSettingsLoadFailed": "Instellingen voor spellingcontrole konden niet worden geladen",
+  "retrySpellingSettings": "Instellingen voor spellingcontrole opnieuw laden",
   "spellingCheckIncomplete": "De spellingcontrole is onvolledig",
   "spellingDictionaryNotInstalled": "Woordenboek niet geïnstalleerd",
   "spellingDictionaryNotInstalledForLanguage": "Het woordenboek voor {dictionary} is niet geïnstalleerd",
@@ -4913,5 +4915,8 @@
   "renameTopicFileInstead": "Onderwerp-ID's zijn afgeleid van de bestandsnamen. Gebruik Onderwerpbestand hernoemen in de inhoudsopgave of de zijbalk Bestanden.",
   "diagnosticWritersideWebFileNameInvalid": "Instantie \"{instanceId}\" publiceert de ongeldige webbestandsnaam \"{webFileName}\" voor onderwerp \"{topic}\".",
   "diagnosticWritersideWebFileNameCollision": "Instantie \"{instanceId}\" publiceert zowel \"{firstTopic}\" als \"{secondTopic}\" als \"{webFileName}\".",
-  "spellingDictionaryRecoveryConflict": "Het spellingwoordenboek is extern gewijzigd. Er is een herstelkopie bewaard."
+  "spellingDictionaryRecoveryConflict": "Het spellingwoordenboek is extern gewijzigd. Er is een herstelkopie bewaard.",
+  "windowMinimize": "Minimaliseren",
+  "windowMaximize": "Maximaliseren",
+  "windowRestore": "Herstellen"
 }

@@ -4620,6 +4620,14 @@ class AppLocalizationsIt extends AppLocalizations {
   String get spellingCheckFailed => 'Controllo ortografico non riuscito';
 
   @override
+  String get spellingSettingsLoadFailed =>
+      'Impossibile caricare le impostazioni di controllo ortografico';
+
+  @override
+  String get retrySpellingSettings =>
+      'Riprova a caricare le impostazioni di controllo ortografico';
+
+  @override
   String get spellingCheckIncomplete => 'Il controllo ortografico è incompleto';
 
   @override
@@ -4683,4 +4691,13 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get spellingDictionaryRecoveryConflict =>
       'Il dizionario ortografico è stato modificato esternamente. È stata conservata una copia di ripristino.';
+
+  @override
+  String get windowMinimize => 'Riduci';
+
+  @override
+  String get windowMaximize => 'Ingrandisci';
+
+  @override
+  String get windowRestore => 'Ripristina';
 }

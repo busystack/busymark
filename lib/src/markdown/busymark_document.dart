@@ -9,6 +9,10 @@ const busyMarkPreserveEmptyParagraphAttribute = 'preserveEmptyParagraph';
 /// intentional edit and must not be removed by document-level canonicalization.
 const busyMarkPreserveTextWhitespaceAttribute = 'preserveTextWhitespace';
 
+/// A URL recognized by the Markdown autolink extension, emitted without link
+/// delimiters. Its destination is derived from its visible URL text.
+const busyMarkBareUrlAttribute = 'bareUrl';
+
 /// Marks the editor-only paragraph after a terminal non-paragraph block.
 ///
 /// The Markdown serializer ignores this block while it is empty. The marker is

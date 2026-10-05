@@ -4449,6 +4449,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get spellingCheckFailed => '맞춤법 검사에 실패했습니다';
 
   @override
+  String get spellingSettingsLoadFailed => '맞춤법 검사 설정을 불러올 수 없습니다';
+
+  @override
+  String get retrySpellingSettings => '맞춤법 검사 설정 다시 불러오기';
+
+  @override
   String get spellingCheckIncomplete => '맞춤법 검사가 완료되지 않았습니다';
 
   @override
@@ -4509,4 +4515,13 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get spellingDictionaryRecoveryConflict =>
       '맞춤법 사전이 외부에서 변경되었습니다. 복구 사본을 보존했습니다.';
+
+  @override
+  String get windowMinimize => '최소화';
+
+  @override
+  String get windowMaximize => '최대화';
+
+  @override
+  String get windowRestore => '복원';
 }

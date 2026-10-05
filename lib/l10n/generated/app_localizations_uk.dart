@@ -4646,6 +4646,14 @@ class AppLocalizationsUk extends AppLocalizations {
   String get spellingCheckFailed => 'Не вдалося перевірити правопис';
 
   @override
+  String get spellingSettingsLoadFailed =>
+      'Не вдалося завантажити налаштування перевірки правопису';
+
+  @override
+  String get retrySpellingSettings =>
+      'Повторити завантаження налаштувань перевірки правопису';
+
+  @override
   String get spellingCheckIncomplete => 'Перевірку правопису не завершено';
 
   @override
@@ -4709,4 +4717,13 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get spellingDictionaryRecoveryConflict =>
       'Орфографічний словник було змінено ззовні. Копію для відновлення збережено.';
+
+  @override
+  String get windowMinimize => 'Згорнути';
+
+  @override
+  String get windowMaximize => 'Розгорнути';
+
+  @override
+  String get windowRestore => 'Відновити';
 }

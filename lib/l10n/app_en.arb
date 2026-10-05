@@ -2768,6 +2768,10 @@
   "noSpellingSuggestions": "No spelling suggestions",
   "spellingWordCheckFailed": "Could not check this word",
   "spellingCheckFailed": "Spelling check failed",
+  "spellingSettingsLoadFailed": "Could not load spelling settings",
+  "@spellingSettingsLoadFailed": {"description": "Settings failure shown when a spelling word store cannot be read."},
+  "retrySpellingSettings": "Retry loading spelling settings",
+  "@retrySpellingSettings": {"description": "Action that deliberately retries failed spelling settings preparation."},
   "spellingCheckIncomplete": "Spelling check is incomplete",
   "spellingDictionaryNotInstalled": "Dictionary not installed",
   "spellingDictionaryNotInstalledForLanguage": "{dictionary} dictionary is not installed",
@@ -2802,5 +2806,11 @@
       }
     }
   },
-  "spellingDictionaryRecoveryConflict": "The spelling dictionary changed externally. A recovery copy was preserved."
+  "spellingDictionaryRecoveryConflict": "The spelling dictionary changed externally. A recovery copy was preserved.",
+  "windowMinimize": "Minimize",
+  "@windowMinimize": {"description": "Tooltip and accessibility label for minimizing the application window."},
+  "windowMaximize": "Maximize",
+  "@windowMaximize": {"description": "Tooltip and accessibility label for maximizing the application window."},
+  "windowRestore": "Restore",
+  "@windowRestore": {"description": "Tooltip and accessibility label for restoring a maximized or fullscreen window to its normal size."}
 }

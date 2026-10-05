@@ -19,6 +19,264 @@ import '../support/memory_rich_clipboard.dart';
 void main() {
   const parser = MarkdownParser();
 
+  test(
+    'formatting a URL suffix retains the complete live link and round trips',
+    () {
+      const url = 'https://example.com/path';
+      const prefix = 'https://example.com';
+      for (final mode in [
+        MarkdownMode.commonMark,
+        MarkdownMode.writersideMarkdown,
+      ]) {
+        final controller = BusyMarkWysiwygDocumentController(
+          document: parser
+              .parse(filePath: 'topic.md', source: '', mode: mode)
+              .busyDocument,
+        );
+        addTearDown(controller.dispose);
+        final id = controller.document.blocks.single.id;
+        controller.updateBlockText(id, url);
+        controller.applyEnterAt(id, url.length);
+        controller.applyInlineCommand(
+          id,
+          BusyWysiwygInlineCommand.bold,
+          prefix.length,
+          url.length,
+        );
+        void check(BusyBlock block) {
+          expect(block.plainText, url);
+          final ranges = busyInlineStyleRanges(block.inlines);
+          final links = ranges
+              .where((range) => range.kind == BusyInlineKind.link)
+              .toList();
+          expect(links, isNotEmpty);
+          expect(links.first.start, 0);
+          expect(links.last.end, url.length);
+          expect(links.every((range) => range.destination == url), isTrue);
+          final bold = ranges
+              .where((range) => range.kind == BusyInlineKind.strong)
+              .single;
+          expect((bold.start, bold.end), (prefix.length, url.length));
+        }
+
+        check(controller.document.blocks.first);
+        expect(
+          controller.document.blocks.first.inlines.single.attributes
+              .containsKey(busyMarkBareUrlAttribute),
+          isFalse,
+        );
+        expect(
+          controller.markdown,
+          '[https://example.co&#109;**/path**]($url)\n\n',
+        );
+        check(
+          parser
+              .parse(
+                filePath: 'topic.md',
+                source: controller.markdown,
+                mode: mode,
+              )
+              .busyDocument
+              .blocks
+              .first,
+        );
+        final saved = parser
+            .parse(
+              filePath: 'topic.md',
+              source: controller.markdown,
+              mode: mode,
+            )
+            .busyDocument;
+        final reopened = BusyMarkWysiwygDocumentController(document: saved);
+        addTearDown(reopened.dispose);
+        controller.updateBlockText(id, '$url/new');
+        reopened.updateBlockText(saved.blocks.single.id, '$url/new');
+        expect(controller.markdown.trim(), reopened.markdown.trim());
+        for (final edited in [
+          controller.document.blocks.first,
+          reopened.document.blocks.first,
+        ]) {
+          expect(edited.plainText, '$url/new');
+          expect(edited.inlines.single.destination, url);
+        }
+      }
+    },
+  );
+
+  test(
+    'Enter URL recognition preserves formatting, literal syntax, anchors, breaks and descendants',
+    () {
+      const url = 'https://example.com/a_b?q=one&next=two';
+      const literal = '*literal* _literal_ `literal` <tag> &copy;';
+      const strong = BusyInline(
+        kind: BusyInlineKind.strong,
+        text: 'bold',
+        attributes: {'retained': 'strong'},
+        children: [BusyInline(kind: BusyInlineKind.text, text: 'bold')],
+      );
+      const image = BusyInline(
+        kind: BusyInlineKind.image,
+        text: '',
+        destination: 'image.png',
+        attributes: {'retained': 'image'},
+      );
+      const child = BusyBlock(
+        id: 'child',
+        kind: BusyBlockKind.paragraph,
+        inlines: [BusyInline(kind: BusyInlineKind.text, text: 'Child')],
+      );
+      const block = BusyBlock(
+        id: 'paragraph',
+        kind: BusyBlockKind.paragraph,
+        attributes: {'retained': 'block'},
+        children: [child],
+        inlines: [
+          strong,
+          image,
+          BusyInline(
+            kind: BusyInlineKind.text,
+            text: ' $literal',
+            attributes: {'retained': 'text'},
+          ),
+          BusyInline(
+            kind: BusyInlineKind.hardBreak,
+            text: '\n',
+            attributes: {'retained': 'break'},
+          ),
+          BusyInline(kind: BusyInlineKind.text, text: url),
+        ],
+      );
+      final controller = BusyMarkWysiwygDocumentController(
+        document: const BusyDocument(
+          filePath: 'topic.md',
+          mode: MarkdownMode.commonMark,
+          blocks: [block],
+        ),
+      );
+      addTearDown(controller.dispose);
+      controller.applyEnterAt(block.id, block.plainText.length);
+      final completed = controller.document.blocks.first;
+      expect(completed.plainText, block.plainText);
+      expect(completed.children.single, same(child));
+      expect(completed.attributes['retained'], 'block');
+      expect(completed.inlines.first, same(strong));
+      expect(completed.inlines[1], same(image));
+      expect(completed.inlines[2].attributes['retained'], 'text');
+      expect(completed.inlines[3].kind, BusyInlineKind.hardBreak);
+      expect(completed.inlines[3].attributes['retained'], 'break');
+      expect(completed.inlines.last.kind, BusyInlineKind.link);
+      expect(completed.inlines.last.destination, url);
+      final ranges = busyInlineStyleRanges(completed.inlines);
+      expect(
+        ranges.where((range) => range.kind == BusyInlineKind.link).single.start,
+        block.plainText.length - url.length,
+      );
+      expect(
+        ranges.where((range) => range.kind == BusyInlineKind.strong).single.end,
+        4,
+      );
+      final reparsed = parser
+          .parse(filePath: 'topic.md', source: controller.markdown)
+          .busyDocument;
+      expect(reparsed.blocks.first.plainText, block.plainText);
+      expect(
+        busyInlineStyleRanges(reparsed.blocks.first.inlines)
+            .where((range) => range.kind == BusyInlineKind.link)
+            .single
+            .destination,
+        url,
+      );
+      expect(controller.markdown, contains('![](image.png)'));
+      expect(controller.markdown, contains('  \n$url'));
+    },
+  );
+
+  test(
+    'Enter recognition preserves formatting within a URL and does not enter math fields',
+    () {
+      const url = 'https://example.com/path';
+      const formatted = BusyBlock(
+        id: 'formatted',
+        kind: BusyBlockKind.paragraph,
+        inlines: [
+          BusyInline(
+            kind: BusyInlineKind.strong,
+            text: 'prefix $url suffix',
+            attributes: {'retained': 'value'},
+            children: [
+              BusyInline(kind: BusyInlineKind.text, text: 'prefix $url suffix'),
+            ],
+          ),
+        ],
+      );
+      final controller = BusyMarkWysiwygDocumentController(
+        document: const BusyDocument(
+          filePath: 'topic.md',
+          mode: MarkdownMode.commonMark,
+          blocks: [formatted],
+        ),
+      );
+      addTearDown(controller.dispose);
+      controller.applyEnterAt(formatted.id, formatted.plainText.length);
+      var block = controller.document.blocks.first;
+      expect(block.plainText, formatted.plainText);
+      final link = block.inlines.single.children.singleWhere(
+        (inline) => inline.kind == BusyInlineKind.link,
+      );
+      expect(link.destination, url);
+      expect(block.inlines.single.kind, BusyInlineKind.strong);
+      expect(block.inlines.single.attributes['retained'], 'value');
+      controller.updateBlockText(block.id, 'prefix $url/new suffix');
+      block = controller.document.blocks.first;
+      expect(
+        busyInlineStyleRanges(block.inlines)
+            .where((range) => range.kind == BusyInlineKind.link)
+            .single
+            .destination,
+        '$url/new',
+      );
+      final reloaded = parser
+          .parse(filePath: 'topic.md', source: controller.markdown)
+          .busyDocument
+          .blocks
+          .first;
+      expect(reloaded.plainText, block.plainText);
+      expect(
+        busyInlineStyleRanges(reloaded.inlines)
+            .where((range) => range.kind == BusyInlineKind.link)
+            .single
+            .destination,
+        '$url/new',
+      );
+
+      const math = BusyBlock(
+        id: 'math',
+        kind: BusyBlockKind.paragraph,
+        inlines: [
+          BusyInline(kind: BusyInlineKind.math, text: 'x'),
+          BusyInline(kind: BusyInlineKind.text, text: ' $url'),
+        ],
+      );
+      final mathController = BusyMarkWysiwygDocumentController(
+        document: const BusyDocument(
+          filePath: 'math.md',
+          mode: MarkdownMode.commonMark,
+          blocks: [math],
+        ),
+      );
+      addTearDown(mathController.dispose);
+      mathController.applyEnterAt(math.id, math.plainText.length);
+      expect(
+        busyInlineStyleRanges(mathController.document.blocks.first.inlines),
+        isEmpty,
+      );
+      expect(
+        mathController.document.blocks.first.inlines.first.kind,
+        BusyInlineKind.math,
+      );
+    },
+  );
+
   test('text whitespace preservation metadata follows pasted whitespace', () {
     final document = parser
         .parse(filePath: 'topic.md', source: 'Target\n')

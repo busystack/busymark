@@ -104,6 +104,8 @@
   "noSpellingSuggestions": "Sem sugestões ortográficas",
   "spellingWordCheckFailed": "Não foi possível verificar esta palavra",
   "spellingCheckFailed": "A verificação ortográfica falhou",
+  "spellingSettingsLoadFailed": "Não foi possível carregar as definições de verificação ortográfica",
+  "retrySpellingSettings": "Tentar carregar novamente as definições de verificação ortográfica",
   "spellingCheckIncomplete": "A verificação ortográfica está incompleta",
   "spellingDictionaryNotInstalled": "Dicionário não instalado",
   "spellingDictionaryNotInstalledForLanguage": "O dicionário de {dictionary} não está instalado",
@@ -3374,5 +3376,8 @@
   "renameTopicFileInstead": "Os IDs dos tópicos provêm dos nomes dos ficheiros. Utilize Mudar o nome do ficheiro de tópico no índice ou na barra lateral Ficheiros.",
   "diagnosticWritersideWebFileNameInvalid": "A instância \"{instanceId}\" publica o nome de ficheiro Web inválido \"{webFileName}\" para o tópico \"{topic}\".",
   "diagnosticWritersideWebFileNameCollision": "A instância \"{instanceId}\" publica \"{firstTopic}\" e \"{secondTopic}\" como \"{webFileName}\".",
-  "spellingDictionaryRecoveryConflict": "O dicionário ortográfico foi alterado externamente. Foi preservada uma cópia de recuperação."
+  "spellingDictionaryRecoveryConflict": "O dicionário ortográfico foi alterado externamente. Foi preservada uma cópia de recuperação.",
+  "windowMinimize": "Minimizar",
+  "windowMaximize": "Maximizar",
+  "windowRestore": "Restaurar"
 }

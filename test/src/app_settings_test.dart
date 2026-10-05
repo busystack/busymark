@@ -9,6 +9,28 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 
 void main() {
+  test(
+    'hydration and redundant sidebar requests do not count as user transitions',
+    () async {
+      final store = _MemorySettingsStore();
+      store.value['sidebarVisible'] = false;
+      final container = ProviderContainer(
+        overrides: [localSettingsStoreProvider.overrideWithValue(store)],
+      );
+      addTearDown(container.dispose);
+      final controller = container.read(appSettingsControllerProvider.notifier);
+      await controller.waitUntilLoaded();
+      expect(container.read(sidebarTransitionGenerationProvider), 0);
+      await controller.setSidebarVisible(false);
+      expect(container.read(sidebarTransitionGenerationProvider), 0);
+      await controller.setSidebarVisible(true);
+      expect(container.read(sidebarTransitionGenerationProvider), 1);
+      await controller.setSidebarVisible(true);
+      expect(container.read(sidebarTransitionGenerationProvider), 1);
+      await controller.setSidebarVisible(false);
+      expect(container.read(sidebarTransitionGenerationProvider), 2);
+    },
+  );
   test('window behavior defaults protect unsaved changes', () {
     final settings = AppSettings.defaults();
 

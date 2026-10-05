@@ -29,10 +29,10 @@ void main() {
       'linux/io.busystack.busymark.metainfo.xml',
     ).readAsStringSync();
 
-    expect(pubspec, contains(RegExp(r'^version: 0\.5\.0$', multiLine: true)));
+    expect(pubspec, contains(RegExp(r'^version: 0\.5\.1$', multiLine: true)));
     expect(
       snapcraft,
-      contains(RegExp(r'^version: "0\.5\.0"$', multiLine: true)),
+      contains(RegExp(r'^version: "0\.5\.1"$', multiLine: true)),
     );
     expect(snapcraft, contains(RegExp(r'^grade: stable$', multiLine: true)));
     expect(
@@ -57,9 +57,9 @@ void main() {
         ),
       ),
     );
-    expect(metainfo, contains('<release version="0.5.0"'));
-    expect(pubspec, isNot(contains('0.5.01')));
-    expect(snapcraft, isNot(contains('0.5.01')));
+    expect(metainfo, contains('<release version="0.5.1"'));
+    expect(pubspec, isNot(contains('0.5.11')));
+    expect(snapcraft, isNot(contains('0.5.11')));
   });
 
   test(
@@ -199,7 +199,15 @@ void main() {
     );
     expect(workflow, contains('snapcore/action-build@v1'));
     expect(workflow, contains("if: steps.snapcraft.outcome == 'failure'"));
-    expect(workflow, contains(r'${PRIMARY_SNAP:-$RETRY_SNAP}'));
+    expect(workflow, isNot(contains(r'${PRIMARY_SNAP:-$RETRY_SNAP}')));
+    expect(workflow, contains(r'test "$PRIMARY_OUTCOME" = failure'));
+    expect(workflow, contains(r'test "$RETRY_OUTCOME" = success'));
+    expect(workflow, contains('busymark-snap-build-start'));
+    expect(workflow, contains('Refusing Snap outside the clean checkout'));
+    expect(
+      workflow,
+      contains(r'unsquashfs -cat "$snap_path" snap/snapcraft.yaml'),
+    );
     expect(workflow, contains('steps.snap-artifact.outputs.snap'));
     expect(workflow, contains('sudo snap install --dangerous'));
     expect(workflow, isNot(contains('--dangerous --classic')));
@@ -362,7 +370,13 @@ void main() {
       expect(scalar, contains('withDefaultFonts: false'));
       expect(scalar, contains('Network access is disabled'));
       expect(snapcraft, contains('libwebkit2gtk-4.1-dev'));
-      expect(snapcraft, contains('libwebkit2gtk-4.1-0'));
+      expect(
+        snapcraft,
+        isNot(
+          contains(RegExp(r'^      - libwebkit2gtk-4\.1-0$', multiLine: true)),
+        ),
+      );
+      expect(snapcraft, contains('extensions: [gnome]'));
       expect(snapcraft, contains('interface: browser-support'));
       expect(snapcraft, contains('allow-sandbox: false'));
       expect(snapcraft, contains('node/24/stable'));

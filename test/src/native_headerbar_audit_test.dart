@@ -3,114 +3,57 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  test('Linux runner owns one native GTK headerbar', () {
-    final source = File('linux/runner/my_application.cc').readAsStringSync();
+  test(
+    'Flutter owns application chrome; native bridge carries no split geometry',
+    () {
+      final native = File('linux/runner/my_application.cc').readAsStringSync();
+      final chrome = File(
+        'linux/runner/linux_chrome_host.cc',
+      ).readAsStringSync();
+      expect(native, isNot(contains('hdy_header_bar_new')));
+      expect(native, isNot(contains('gtk_header_bar_new')));
+      expect(native, isNot(contains('create_header_bar')));
+      expect(native, isNot(contains('busymark/headerbar')));
+      expect(chrome, isNot(contains('sidebarWidth')));
+      expect(chrome, isNot(contains('sidebarVisible')));
+      expect(native, contains('busymark_linux_chrome_host_new'));
+      expect(chrome, contains('getGtkWindowPreferences'));
+      expect(chrome, contains('getGtkAnimationsEnabled'));
+      expect(chrome, contains('loadIcons'));
+    },
+  );
 
-    expect(source, contains('#include <handy.h>'));
-    expect(source, contains('hdy_init()'));
-    expect(source, contains('hdy_application_window_new()'));
-    expect(source, contains('hdy_window_handle_new()'));
-    expect(source, contains('gtk_header_bar_new()'));
-    expect(source, contains('gtk_header_bar_set_show_close_button'));
-    expect(source, isNot(contains('gtk_window_set_titlebar')));
-    expect(source, contains('gtk_menu_button_set_menu_model'));
-    expect(source, contains('kLegacyYaruWindowShadowCompatibilityCss'));
-    expect(source, contains('fl_view_set_background_color'));
-    expect(source, contains('"#00000000"'));
-    expect(source, contains('kHeaderBarChannel'));
-    expect(source, contains('setModalBarrierVisible'));
-    expect(source, contains('setModalBarrierDepth'));
-    expect(source, contains('modal_barrier_color_for_depth'));
-    expect(
-      source,
-      contains('1.0 - std::pow(1.0 - barrier.alpha, effective_depth)'),
-    );
-    expect(source, contains('gtk_overlay_new()'));
-    expect(source, contains('gtk_overlay_add_overlay'));
-    expect(source, contains('gtk_event_box_new()'));
-    expect(source, contains('"busymark-modal-scrim"'));
-    expect(source, contains('set_widget_visible(self->modal_scrim, visible)'));
-    expect(source, contains('set_widget_visible(self->modal_scrim, FALSE)'));
-    expect(source, contains('gtk_widget_show_all(widget)'));
-    expect(source, isNot(contains('gtk_widget_set_visible(widget, visible)')));
-    expect(source, contains('G_CALLBACK(stop_modal_scrim_event)'));
-    expect(
-      source,
-      isNot(
-        contains('gtk_widget_set_sensitive(self->titlebar_handle, !visible)'),
-      ),
-    );
-    expect(
-      source,
-      contains('gtk_widget_set_vexpand(self->modal_scrim, FALSE)'),
-    );
-    expect(
-      source,
-      isNot(contains('gtk_widget_set_vexpand(self->modal_scrim, TRUE)')),
-    );
-    expect(source, contains('setSidebarWidth'));
-    expect(source, contains('setSidebarToggleVisible'));
-    expect(source, contains('setTextDirection'));
-    expect(source, contains('setDocumentControlsVisible'));
-    expect(source, contains('setLocalizedLabels'));
-    expect(source, contains('setTheme'));
-    expect(source, contains('applyConfiguration'));
-    expect(source, contains('header_configuration_session_id'));
-    expect(source, contains('header_configuration_revision'));
-    expect(source, contains('busymark-sidebar-header'));
-    expect(source, contains('self->sidebar_width'));
-    expect(source, isNot(contains('self->save_button')));
-    expect(
-      source,
-      isNot(contains('connect_header_action(self, self->save_button, "save")')),
-    );
-    expect(source, isNot(contains('window-close-symbolic')));
-    expect(source, isNot(contains('window-minimize-symbolic')));
-    expect(source, isNot(contains('window-maximize-symbolic')));
-  });
-
-  test('native header configuration is atomic and latest-wins', () {
-    final source = File('linux/runner/my_application.cc').readAsStringSync();
-
-    expect(source, contains('struct HeaderBarConfiguration'));
-    expect(source, contains('decode_header_bar_configuration'));
-    expect(source, contains('apply_header_bar_configuration'));
-    expect(source, contains('begin_header_configuration_session'));
-    expect(source, contains('strcmp(method, "applyConfiguration")'));
-    expect(source, contains('fl_lookup_string_arg(args, "sessionId")'));
-    expect(source, contains('fl_lookup_int64_arg(args, "revision"'));
-    expect(source, contains('active Dart session'));
-    expect(source, contains('configuration.revision <='));
-    expect(source, contains('self->header_configuration_revision'));
-    expect(source, contains('g_object_freeze_notify'));
-    expect(source, contains('g_object_thaw_notify'));
-    expect(source, contains('self->suppress_header_actions = TRUE'));
-    for (final key in <String>[
-      'sessionId',
-      'title',
-      'viewMode',
-      'canRefresh',
-      'canExportPdf',
-      'canExportHtml',
-      'documentControlsVisible',
-      'searchActive',
-      'searchVisible',
-      'searchQuery',
-      'sidebarVisible',
-      'sidebarToggleVisible',
-      'sidebarWidth',
-      'textDirection',
-      'backVisible',
-      'fullScreen',
-      'modalBarrierVisible',
-      'modalBarrierDepth',
-      'labels',
-      'theme',
+  test('Workspace, Welcome and Settings use the shared full-height frame', () {
+    for (final page in [
+      'workspace_screen',
+      'welcome_screen',
+      'settings_screen',
     ]) {
-      expect(source, contains('"$key"'), reason: key);
+      final source = File(
+        'lib/src/workspace/presentation/$page.dart',
+      ).readAsStringSync();
+      expect(source, contains('LinuxPageFrame('), reason: page);
+      expect(source, contains('sidebarBody:'), reason: page);
+      expect(source, isNot(contains('useNativeHeaderBar')), reason: page);
+      expect(source, isNot(contains('showEndBorder: true')), reason: page);
     }
   });
 
+  test(
+    'native clipboard, menus, Writerside media and rendering hosts remain registered',
+    () {
+      final native = File('linux/runner/my_application.cc').readAsStringSync();
+      for (final registration in [
+        'busymark_rich_clipboard_channel_new',
+        'busymark_writerside_dialog_channel_new',
+        'busymark_video_player_host_register_channel',
+        'busymark_web_render_host_register_channel',
+      ]) {
+        expect(native, contains(registration));
+      }
+      expect(native, contains('gtk_menu_popup_at_rect('));
+    },
+  );
   test('Linux desktop identity uses the standard Snap launcher mapping', () {
     final native = File('linux/runner/my_application.cc').readAsStringSync();
     final cmake = File('linux/CMakeLists.txt').readAsStringSync();
@@ -166,351 +109,6 @@ void main() {
       contains(r'[[ "$PACKED_DESKTOP_MANIFEST" == "${SNAP_NAME}.desktop" ]]'),
     );
     expect(localSnapBuilder, isNot(contains('ensure_desktop_file_id')));
-  });
-
-  test('native labels are supplied by Dart rather than hardcoded in C++', () {
-    final source = File('linux/runner/my_application.cc').readAsStringSync();
-
-    expect(source, isNot(contains('"Today"')));
-    expect(source, isNot(contains('"Day"')));
-    expect(source, isNot(contains('"Week"')));
-    expect(source, isNot(contains('"Month"')));
-    expect(source, isNot(contains('"Agenda"')));
-    expect(source, isNot(contains('"Source"')));
-    expect(source, isNot(contains('"Preview"')));
-    expect(source, isNot(contains('"Split"')));
-    expect(source, isNot(contains('"Print"')));
-    expect(source, isNot(contains('"Settings"')));
-    expect(source, isNot(contains('"Keyboard Shortcuts"')));
-    expect(source, isNot(contains('"Markdown and HTML"')));
-    expect(source, isNot(contains('markdownAndHtml')));
-    expect(source, isNot(contains('"About BusyMark"')));
-  });
-
-  test('native main menu exposes shared application actions', () {
-    final service = File(
-      'lib/src/platform/linux_header_bar_service.dart',
-    ).readAsStringSync();
-    final app = File('lib/src/app/busymark_app.dart').readAsStringSync();
-    final dialogs = File(
-      'lib/src/app/busymark_dialogs.dart',
-    ).readAsStringSync();
-    final shortcuts = File(
-      'lib/src/app/busymark_shortcuts.dart',
-    ).readAsStringSync();
-    final workspace = File(
-      'lib/src/workspace/presentation/workspace_screen.dart',
-    ).readAsStringSync();
-    final settings = File(
-      'lib/src/workspace/presentation/settings_screen.dart',
-    ).readAsStringSync();
-    final welcome = File(
-      'lib/src/workspace/presentation/welcome_screen.dart',
-    ).readAsStringSync();
-    final mainMenu = File(
-      'lib/src/app/busymark_main_menu.dart',
-    ).readAsStringSync();
-    final native = File('linux/runner/my_application.cc').readAsStringSync();
-
-    expect(service, contains('keyboardShortcuts'));
-    expect(service, contains('syntaxReference'));
-    expect(service, contains('reportIssue'));
-    expect(service, contains('fullScreen'));
-    expect(service, contains("'export' => HeaderBarAction.export"));
-    expect(app, contains('menu: l10n.mainMenu'));
-    expect(app, contains('export: label(BusyMarkCommandIds.export)'));
-    expect(app, contains('settings: label(BusyMarkCommandIds.settings)'));
-    expect(
-      app,
-      contains(
-        'keyboardShortcuts: label(BusyMarkCommandIds.keyboardShortcuts)',
-      ),
-    );
-    expect(
-      app,
-      contains('syntaxReference: label(BusyMarkCommandIds.syntaxReference)'),
-    );
-    expect(app, contains('reportIssue: l10n.reportIssue'));
-    expect(app, contains('fullScreen: label(BusyMarkCommandIds.fullScreen)'));
-    expect(app, contains('aboutBusyMark: l10n.aboutBusyMark'));
-    expect(dialogs, contains('showBusyMarkKeyboardShortcutsDialog'));
-    expect(dialogs, contains('showBusyMarkSyntaxReferenceDialog'));
-    expect(dialogs, contains('BusyMarkAppShortcutLabels.newDocument'));
-    expect(dialogs, contains('BusyMarkAppShortcutLabels.save'));
-    expect(dialogs, contains('BusyMarkTextEditingShortcutLabels.undo'));
-    expect(dialogs, contains('BusyMarkTextEditingShortcutLabels.redo'));
-    expect(shortcuts, contains("newDocumentLabel = 'Ctrl+N'"));
-    expect(shortcuts, contains("saveLabel = 'Ctrl+S'"));
-    expect(shortcuts, contains("fullScreenLabel = 'F11'"));
-    expect(shortcuts, contains("backLabel = 'Alt+Left'"));
-    expect(shortcuts, contains("undoLabel = 'Ctrl+Z'"));
-    expect(shortcuts, contains("redoLabel = 'Ctrl+Shift+Z'"));
-    expect(workspace, contains('case HeaderBarAction.keyboardShortcuts:'));
-    expect(workspace, contains('case HeaderBarAction.syntaxReference:'));
-    expect(workspace, contains('case HeaderBarAction.reportIssue:'));
-    expect(workspace, contains('case HeaderBarAction.export:'));
-    expect(settings, contains('case HeaderBarAction.keyboardShortcuts:'));
-    expect(settings, contains('case HeaderBarAction.syntaxReference:'));
-    expect(settings, contains('case HeaderBarAction.reportIssue:'));
-    expect(welcome, contains('case HeaderBarAction.keyboardShortcuts:'));
-    expect(welcome, contains('case HeaderBarAction.syntaxReference:'));
-    expect(welcome, contains('case HeaderBarAction.reportIssue:'));
-    expect(welcome, contains('BusyMarkMainMenuButton('));
-    expect(mainMenu, contains('BusyMarkHeaderPopupMenuButton'));
-    expect(mainMenu, isNot(contains('BusyMarkPopupSubmenu')));
-    expect(mainMenu, contains('tooltip: l10n.mainMenu'));
-    expect(mainMenu, contains('label: l10n.reportIssue'));
-    expect(
-      mainMenu,
-      contains('label: command(BusyMarkCommandIds.fullScreen).label(context)'),
-    );
-    expect(
-      mainMenu,
-      contains('label: command(BusyMarkCommandIds.export).label(context)'),
-    );
-    expect(mainMenu, contains('enabled: canExport'));
-    for (final removed in [
-      'BusyMarkCommandIds.clipboardHistory',
-      'BusyMarkCommandIds.localHistory',
-      'BusyMarkCommandIds.findLocalHistory',
-    ]) {
-      expect(mainMenu, isNot(contains(removed)), reason: removed);
-    }
-    expect(native, contains('GtkWidget* main_menu_button;'));
-    expect(native, contains('GMenu* main_menu_model;'));
-    expect(native, contains('GSimpleActionGroup* header_action_group;'));
-    expect(native, contains('rebuild_main_menu_model'));
-    final mainMenuBuilder = RegExp(
-      r'static void rebuild_main_menu_model[\s\S]*?(?=\nstatic )',
-    ).firstMatch(native)!.group(0)!;
-    expect(mainMenuBuilder, isNot(contains('g_menu_item_new_submenu')));
-    expect(native, contains('localized_label_or(labels, "export", "")'));
-    expect(native, contains('"header.keyboard-shortcuts"'));
-    expect(native, contains('"header.export"'));
-    expect(native, isNot(contains('"header.export-pdf"')));
-    expect(native, isNot(contains('"header.export-html"')));
-    expect(native, contains('"header.full-screen"'));
-    expect(native, contains('full_screen_gaction_activated_cb'));
-    expect(native, contains('configuration.full_screen'));
-    expect(native, contains('configuration.can_export_pdf'));
-    expect(native, contains('configuration.can_export_html'));
-    expect(native, isNot(contains('"header.clipboard-history"')));
-    expect(native, isNot(contains('"header.local-history"')));
-    expect(native, isNot(contains('"header.find-local-history"')));
-    expect(native, contains('"header.syntax-reference"'));
-    expect(native, isNot(contains('"header.markdown-and-html"')));
-    expect(native, contains('"header.report-issue"'));
-    expect(native, contains('static const gchar* main_menu_icon_name'));
-    expect(native, contains('"preferences-system-symbolic"'));
-    expect(native, contains('"input-keyboard-symbolic"'));
-    expect(native, contains('"text-x-generic-symbolic"'));
-    expect(native, contains('"dialog-warning-symbolic"'));
-    expect(native, contains('"help-about-symbolic"'));
-    final reportIssuePack = native.indexOf(
-      'localized_label_or(labels, "reportIssue", "")',
-    );
-    final aboutPack = native.indexOf(
-      'localized_label_or(labels, "aboutBusyMark", "")',
-    );
-    expect(reportIssuePack, isNonNegative);
-    expect(aboutPack, isNonNegative);
-    expect(reportIssuePack, lessThan(aboutPack));
-    expect(native, contains('g_menu_item_set_icon(item, icon)'));
-    expect(native, contains('kMenuAccelAttribute'));
-    expect(native, contains('set_menu_item_accelerator'));
-    expect(native, isNot(contains('gtk_accelerator_get_label')));
-    expect(native, contains('g_action_map_add_action'));
-    expect(native, contains('gtk_widget_insert_action_group'));
-    expect(native, isNot(contains('static GtkWidget* create_menu_item')));
-    expect(native, isNot(contains('"busymark-menu-row"')));
-  });
-
-  test(
-    'Flutter top bars are fallback-only when native headerbar is available',
-    () {
-      final files = [
-        File('lib/src/workspace/presentation/workspace_screen.dart'),
-        File('lib/src/workspace/presentation/welcome_screen.dart'),
-        File('lib/src/workspace/presentation/settings_screen.dart'),
-      ];
-
-      for (final file in files) {
-        final source = file.readAsStringSync();
-        expect(source, contains('useNativeHeaderBar'));
-        expect(source, contains('usesNativeHeaderBar'));
-        expect(source, contains('linuxHeaderBarServiceProvider'));
-        expect(source, contains('headerBarActionsProvider'));
-      }
-      for (final file in files.take(2)) {
-        expect(file.readAsStringSync(), contains('appBar: useNativeHeaderBar'));
-      }
-      final settings = files.last.readAsStringSync();
-      expect(settings, contains('if (!useNativeHeaderBar)'));
-      expect(settings, contains('_SettingsFallbackHeader('));
-    },
-  );
-
-  test('native modal barrier and semantic theme are centralized', () {
-    final configuration = File(
-      'lib/src/platform/header_bar_configuration.dart',
-    ).readAsStringSync();
-    final service = File(
-      'lib/src/platform/linux_header_bar_service.dart',
-    ).readAsStringSync();
-    final dialogs = File(
-      'lib/src/app/busymark_dialogs.dart',
-    ).readAsStringSync();
-
-    expect(configuration, contains('class HeaderBarTheme'));
-    expect(configuration, contains('HeaderBarTheme.fromContext'));
-    expect(configuration, contains('BusyMarkSurfaceColors.of(context)'));
-    expect(configuration, contains('modalBarrierDepth: _modalBarrierDepth'));
-    expect(configuration, contains('setModalBarrierDepth(int depth)'));
-    expect(configuration, contains('setModalBarrierVisible(bool visible)'));
-    expect(service, contains('setModalBarrierDepth'));
-    expect(service, contains('setModalBarrierVisible'));
-    expect(
-      service,
-      contains('configurationSynchronizer.setModalBarrierDepth(depth)'),
-    );
-    expect(dialogs, contains('showBusyMarkModalDialog'));
-    expect(dialogs, contains('busyMarkModalBarrierColor'));
-    expect(dialogs, contains('BusyMarkModalEditorSurface'));
-  });
-
-  test('native GTK theme follows brightness without replacing a valid user theme', () {
-    final configuration = File(
-      'lib/src/platform/header_bar_configuration.dart',
-    ).readAsStringSync();
-    final native = File('linux/runner/my_application.cc').readAsStringSync();
-    final snapcraft = File('snap/snapcraft.yaml').readAsStringSync();
-
-    expect(configuration, contains('preferDark: theme.brightness'));
-    expect(configuration, contains("'preferDark': preferDark"));
-    expect(native, contains('static void set_gtk_theme_preference'));
-    expect(native, contains('gtk_settings_get_default()'));
-    expect(
-      native,
-      contains('"gtk-application-prefer-dark-theme", prefer_dark'),
-    );
-    expect(native, contains('"gtk-theme-name"'));
-    expect(native, contains('gtk_theme_exists'));
-    expect(native, contains('available_gtk_theme_fallback'));
-    expect(
-      native,
-      contains(
-        'const gchar* fallback = available_gtk_theme_fallback(prefer_dark);',
-      ),
-    );
-    expect(
-      native,
-      contains('fallback != nullptr && !gtk_theme_exists(theme_name)'),
-    );
-    expect(native, isNot(contains('g_strcmp0(theme_name, fallback) != 0')));
-    expect(
-      native,
-      contains('g_object_set(settings, "gtk-theme-name", fallback, nullptr);'),
-    );
-    expect(native, contains('"Yaru-dark"'));
-    expect(native, contains('"Adwaita-dark"'));
-    expect(native, contains('"gtk-icon-theme-name"'));
-    expect(native, contains('icon_theme_exists'));
-    expect(native, contains('available_icon_theme_fallback'));
-    expect(
-      native,
-      contains(
-        'const gchar* icon_fallback = available_icon_theme_fallback(prefer_dark);',
-      ),
-    );
-    expect(
-      native,
-      contains(
-        'icon_fallback != nullptr && !icon_theme_exists(icon_theme_name)',
-      ),
-    );
-    expect(
-      native,
-      isNot(contains('g_strcmp0(icon_theme_name, icon_fallback) != 0')),
-    );
-    expect(
-      native,
-      contains(
-        'g_object_set(settings, "gtk-icon-theme-name", icon_fallback, nullptr);',
-      ),
-    );
-    expect(native, isNot(contains('gtk_icon_theme_set_custom_theme')));
-    expect(native, isNot(contains('gtk_accent_css_provider')));
-    expect(native, isNot(contains('@define-color theme_selected_bg_color')));
-    expect(native, isNot(contains('@define-color accent_bg_color')));
-    expect(native, isNot(contains('treeview.view:selected')));
-    expect(native, isNot(contains('button.suggested-action')));
-    expect(
-      native,
-      isNot(contains('GTK_STYLE_PROVIDER_PRIORITY_APPLICATION + 1')),
-    );
-    expect(native, isNot(contains('gtk_theme_name_for_preference')));
-    expect(native, isNot(contains('icon_theme_name_for_preference')));
-    expect(native, contains('fl_lookup_optional_bool_arg'));
-    expect(native, contains('fl_lookup_optional_bool_arg(args, "preferDark"'));
-    expect(native, contains('set_gtk_theme_preference(prefer_dark);'));
-    expect(native, isNot(contains('prefer_dark_gtk_theme')));
-    expect(native, isNot(contains('set_gtk_theme_preference(TRUE)')));
-    expect(
-      native,
-      isNot(contains('fl_lookup_bool_arg(args, "preferDark", TRUE)')),
-    );
-    expect(snapcraft, contains('yaru-theme-gtk'));
-    expect(snapcraft, contains('yaru-theme-icon'));
-    expect(snapcraft, contains('override-build:'));
-    expect(snapcraft, contains(r'rm -rf "$CRAFT_PART_BUILD/build"'));
-    expect(snapcraft, contains(r'rm -rf "$CRAFT_PART_BUILD/.dart_tool"'));
-    expect(snapcraft, contains('export CI=true'));
-    expect(
-      snapcraft,
-      contains(
-        r'"$flutter_sdk/bin/flutter" --no-version-check precache --linux',
-      ),
-    );
-    expect(
-      snapcraft,
-      contains(r'"$flutter_sdk/bin/flutter" --no-version-check pub get'),
-    );
-    expect(
-      snapcraft,
-      contains(
-        r'cp -a "$CRAFT_PRIME/usr/share/themes"/Yaru* "$CRAFT_PRIME/share/themes/"',
-      ),
-    );
-    expect(
-      snapcraft,
-      contains(
-        r'cp -a "$CRAFT_PRIME/usr/share/icons"/Yaru* "$CRAFT_PRIME/share/icons/"',
-      ),
-    );
-    expect(
-      native,
-      isNot(
-        matches(
-          RegExp(
-            r'static void my_application_startup[\s\S]*'
-            r'G_APPLICATION_CLASS\(my_application_parent_class\)->startup\(application\);[\s\S]*'
-            r'set_gtk_theme_preference',
-          ),
-        ),
-      ),
-    );
-    expect(
-      native,
-      isNot(
-        matches(
-          RegExp(
-            r'static void my_application_activate\(GApplication\* application\) \{[\s\S]*'
-            r'set_gtk_theme_preference[\s\S]*'
-            r'gtk_application_window_new',
-          ),
-        ),
-      ),
-    );
   });
 
   test('strict Snap keeps the GTK SVG loader ABI-aligned with GNOME', () {
@@ -581,6 +179,119 @@ void main() {
     expect(script, contains('item_indent = match.group(1)'));
     expect(script, contains('f"{item_indent}- {item}\\n"'));
     expect(script, contains('the currently installed snap was not changed'));
+    expect(script, contains('development repack'));
+    expect(script, contains('does not perform a dependency/security refresh'));
+    expect(script, contains('For release/security refreshes'));
+    expect(
+      script.indexOf('NOTICE: this helper creates a development repack'),
+      lessThan(
+        script.indexOf(r'select_project_flutter "$REQUIRED_FLUTTER_VERSION"'),
+      ),
+    );
+
+    final help = Process.runSync('bash', [
+      'tools/build_install_snap_local.sh',
+      '--help',
+    ]);
+    expect(help.exitCode, 0);
+    expect(help.stdout, contains('This is a development repack'));
+    expect(help.stdout, contains('does not refresh dependencies'));
+    expect(help.stdout, contains('clean Snapcraft procedure'));
+  });
+
+  test('local repack replaces clean-snap font links with new bundle fonts', () {
+    for (final linkedScaffold in [true, false]) {
+      _verifyLocalFontRepack(linkedScaffold: linkedScaffold);
+    }
+  });
+
+  test('confined dependency checks reject missing and wrong resolutions', () {
+    for (final shell in ['/bin/bash', '/bin/sh']) {
+      final success = _runSharedRuntimeValidation('ok', shell);
+      expect(
+        success.exitCode,
+        0,
+        reason: '${success.stdout}\n${success.stderr}',
+      );
+
+      for (final mode in [
+        'missing-zero',
+        'inspection-error',
+        'wrong-gnome',
+        'wrong-mesa',
+        'wrong-curl',
+      ]) {
+        final failure = _runSharedRuntimeValidation(mode, shell);
+        expect(failure.exitCode, isNot(0), reason: '$shell / $mode');
+        expect(failure.stderr, contains('busymark'), reason: '$shell / $mode');
+        expect(
+          failure.stderr,
+          anyOf(
+            contains('Unresolved dependencies'),
+            contains('Dependency inspection failed'),
+            contains('Unexpected resolution'),
+          ),
+          reason: '$shell / $mode: ${failure.stderr}',
+        );
+      }
+    }
+  });
+
+  test('Snap reuses verified platform libraries and retains private tools', () {
+    final snapcraft = File('snap/snapcraft.yaml').readAsStringSync();
+    final stagePackages = _snapStagePackages(snapcraft);
+
+    expect(snapcraft, contains('extensions: [gnome]'));
+    expect(snapcraft, contains('      - password-manager-service'));
+    expect(
+      File('docs/snap-confinement.md').readAsStringSync(),
+      contains('snap connect busymark:password-manager-service'),
+    );
+    for (final sharedPackage in {
+      'libhandy-1-0',
+      'libsecret-1-0',
+      'libwebkit2gtk-4.1-0',
+      'libgtk-3-0t64',
+      'libglib2.0-0t64',
+      'libpango-1.0-0',
+      'gstreamer1.0-plugins-base',
+      'gstreamer1.0-plugins-good',
+      'libx11-6',
+      'libxdamage1',
+      'libxext6',
+      'libxfixes3',
+      'libxcb-shm0',
+      'libxcb1',
+      'libwayland-client0',
+      'libwayland-cursor0',
+      'libwayland-egl1',
+    }) {
+      expect(stagePackages, isNot(contains(sharedPackage)));
+    }
+    for (final privatePackage in {
+      'gstreamer1.0-libav',
+      'gstreamer1.0-plugins-bad',
+      'gstreamer1.0-plugins-ugly',
+      'git',
+      'fonts-noto-core',
+      'fonts-noto-mono',
+      'openssh-client',
+      'util-linux',
+      'yaru-theme-gtk',
+      'yaru-theme-icon',
+    }) {
+      expect(stagePackages, contains(privatePackage));
+    }
+
+    for (final buildPackage in {
+      'libhandy-1-dev',
+      'libsecret-1-dev',
+      'libwebkit2gtk-4.1-dev',
+      'libglib2.0-dev',
+      'libpango1.0-dev',
+    }) {
+      expect(snapcraft, contains('- $buildPackage'));
+    }
   });
 
   test('local snap builder uses the project Flutter toolchain', () {
@@ -635,922 +346,6 @@ void main() {
     expect(script, contains('trap cleanup_build_tmp EXIT'));
   });
 
-  test('native headerbar uses the shared tooltip visuals', () {
-    final native = File('linux/runner/my_application.cc').readAsStringSync();
-
-    expect(native, contains('gtk_widget_set_tooltip_text'));
-    expect(native, contains('kDefaultTooltipBackground'));
-    expect(native, contains('kDefaultTooltipForeground'));
-    expect(native, contains('kDefaultTooltipBorder'));
-    expect(native, contains('kDefaultTooltipRadius'));
-    expect(native, contains('kTooltipBorderWidth'));
-    expect(native, contains('kGtkTooltipContainerInset'));
-    expect(native, contains('"tooltip,"'));
-    expect(native, contains('"tooltip.background {"'));
-    expect(native, contains('"tooltip decoration,"'));
-    expect(native, contains('"tooltip.csd decoration {"'));
-    expect(native, contains('"tooltip box,"'));
-    expect(native, contains('"tooltip.background box {"'));
-    expect(native, contains('"tooltip label,"'));
-    expect(native, contains('"tooltip.background label {"'));
-    expect(native, contains('"min-width: 0;"'));
-    expect(native, contains('"border-radius: %.2fpx;"'));
-    expect(native, contains('tooltip_label_horizontal_padding'));
-    expect(native, contains('tooltip_label_vertical_padding'));
-    expect(native, contains('tooltip_label_minimum_height'));
-    expect(native, contains('self->tooltip_minimum_height -'));
-    expect(native, contains('kGtkTooltipContainerInset * 2'));
-    expect(native, contains('tooltip_label_vertical_padding * 2'));
-    expect(native, contains('fl_lookup_map_arg(args, "tooltip")'));
-    expect(native, contains('"backgroundColor"'));
-    expect(native, contains('"foregroundColor"'));
-    expect(native, contains('"borderColor"'));
-    expect(native, contains('"borderRadius"'));
-    expect(native, contains('"fontSize"'));
-    expect(native, contains('"horizontalPadding"'));
-    expect(native, contains('"verticalPadding"'));
-    expect(native, contains('"minimumHeight"'));
-    expect(native, contains('"font-family: Ubuntu;"'));
-    expect(native, contains('"font-weight: 400;"'));
-  });
-
-  test(
-    'native headerbar refreshes focus state when window activation changes',
-    () {
-      final native = File('linux/runner/my_application.cc').readAsStringSync();
-
-      expect(native, contains('kHeaderApplicationActiveStyleClass'));
-      expect(native, contains('kHeaderApplicationBackdropStyleClass'));
-      expect(native, contains('"notify::is-active"'));
-      expect(
-        native,
-        contains('G_CALLBACK(header_focus_window_is_active_notify_cb), self'),
-      );
-      expect(
-        native,
-        contains('schedule_header_bar_focus_state_refresh(self);'),
-      );
-      expect(native, contains('gtk_window_is_active(self->main_window)'));
-      expect(
-        native,
-        contains('gtk_widget_reset_style(self->titlebar_handle);'),
-      );
-      expect(native, contains('gtk_widget_queue_draw(self->titlebar_handle);'));
-      expect(native, contains('G_PRIORITY_DEFAULT_IDLE'));
-      expect(native, contains('g_object_ref(self)'));
-      expect(native, contains('g_object_unref'));
-    },
-  );
-
-  test(
-    'native sidebar header uses the same semantic surface as the sidebar',
-    () {
-      final native = File('linux/runner/my_application.cc').readAsStringSync();
-
-      expect(
-        native,
-        contains(
-          '".busymark-sidebar-header,"'
-          '\n      '
-          '".busymark-sidebar-header:backdrop {"',
-        ),
-      );
-      expect(
-        native,
-        contains(
-          'css_color_or(self->sidebar_background_color, '
-          'kDefaultSidebarBackground)',
-        ),
-      );
-    },
-  );
-
-  test('native header CSS is balanced and narrowly semantic', () {
-    final native = File('linux/runner/my_application.cc').readAsStringSync();
-    final refreshFunction = RegExp(
-      r'static void refresh_header_bar_css[\s\S]*?'
-      r'(?=static void set_header_bar_theme)',
-    ).firstMatch(native)?.group(0);
-    expect(refreshFunction, isNotNull);
-
-    final formatArguments = RegExp(
-      r'g_strdup_printf\(([\s\S]*?)\);\s*'
-      r'g_autoptr\(GError\)',
-    ).firstMatch(refreshFunction!)?.group(1);
-    expect(formatArguments, isNotNull);
-
-    final css = RegExp(
-      r'"((?:\\.|[^"\\])*)"',
-    ).allMatches(formatArguments!).map((match) => match.group(1)!).join();
-    var braceDepth = 0;
-    for (final codeUnit in css.codeUnits) {
-      if (codeUnit == 0x7B) {
-        braceDepth++;
-      } else if (codeUnit == 0x7D) {
-        braceDepth--;
-        expect(
-          braceDepth,
-          isNonNegative,
-          reason: 'premature CSS closing brace',
-        );
-      }
-    }
-    expect(braceDepth, 0, reason: 'unbalanced structural CSS blocks');
-    expect(css, contains('.busymark-modal-scrim'));
-    expect(css, contains('.busymark-header-control'));
-    expect(css, contains('background-color: alpha(currentColor, 0.07)'));
-    expect(css, contains('background-color: alpha(currentColor, 0.16)'));
-    expect(css, contains('background-color: alpha(currentColor, 0.10)'));
-    expect(css, isNot(contains('popover.background.')));
-    expect(css, isNot(contains('modelbutton:hover:not(:disabled)')));
-    expect(css, isNot(contains('row:hover:not(:disabled)')));
-    expect(css, isNot(contains('.%s:hover:not(:disabled)')));
-    expect(css, isNot(contains('.%s:focus:not(:disabled)')));
-    expect(css, contains('border-color: transparent'));
-    expect(css, isNot(contains('outline-width: 0')));
-    expect(css, isNot(contains('font-size: 0.92em')));
-    expect(css, isNot(contains('padding: 2px 6px')));
-    expect(css, isNot(contains('modelbutton.%s.%s:not(:disabled)')));
-    expect(css, isNot(contains('box-shadow: 0 1px 3px')));
-    expect(css, contains('tooltip.background'));
-    expect(css, contains('tooltip decoration'));
-    for (final interactionSelector in <String>['@define-color']) {
-      expect(css, isNot(contains(interactionSelector)));
-    }
-  });
-
-  test('native headerbar uses split sidebar and main content surfaces', () {
-    final configuration = File(
-      'lib/src/platform/header_bar_configuration.dart',
-    ).readAsStringSync();
-    final native = File('linux/runner/my_application.cc').readAsStringSync();
-    final workspace = File(
-      'lib/src/workspace/presentation/workspace_screen.dart',
-    ).readAsStringSync();
-
-    expect(configuration, contains('backgroundColor: colors.view'));
-    expect(configuration, contains('sidebarBackgroundColor: colors.sidebar'));
-    expect(configuration, contains('foregroundColor: colors.foreground'));
-    expect(configuration, isNot(contains('popoverBackgroundColor:')));
-    expect(configuration, isNot(contains('menuHoverColor:')));
-    expect(configuration, isNot(contains('popoverShadowColor:')));
-    expect(configuration, isNot(contains('borderColor: colors.')));
-    expect(configuration, isNot(contains('floatingBorderColor')));
-    expect(native, contains('kDefaultHeaderbarBackground[] = "#272727"'));
-    expect(native, contains('kDefaultSidebarBackground[] = "#393939"'));
-    expect(native, contains('kDefaultSidebarBorder[] = "rgba(16,16,16,0.35)"'));
-    expect(
-      native,
-      contains('fl_lookup_string_arg(args, "sidebarBorderColor")'),
-    );
-    expect(native, isNot(contains('"popoverBackgroundColor"')));
-    expect(native, isNot(contains('"menuHoverColor"')));
-    expect(native, isNot(contains('"popoverShadowColor"')));
-    expect(native, isNot(contains('"floatingBorderColor"')));
-    expect(
-      native,
-      contains(
-        'css_color_or(self->sidebar_border_color, kDefaultSidebarBorder)',
-      ),
-    );
-    expect(native, isNot(contains('kNativePopoverStyleClass')));
-    expect(native, isNot(contains('kHeaderMenuDepthStyleClass')));
-    expect(native, isNot(contains('style_header_menu_popover')));
-    expect(native, isNot(contains('style_native_popover')));
-    expect(native, isNot(contains('gtk_popover_')));
-    expect(
-      native,
-      contains(
-        'gtk_menu_button_set_use_popover(GTK_MENU_BUTTON(button), FALSE)',
-      ),
-    );
-    expect(native, contains('gtk_menu_button_get_popup'));
-    expect(native, contains('GTK_IS_MENU(menu)'));
-    expect(native, contains('gtk_menu_shell_deactivate'));
-    expect(native, contains('".busymark-sidebar-header:backdrop {"'));
-    expect(native, contains('background-color: %s;'));
-    expect(native, contains('".busymark-sidebar-header label {"'));
-    expect(native, contains('"font-weight: 800;"'));
-    expect(native, contains('".busymark-sidebar-header label:backdrop {"'));
-    expect(native, contains('kHeaderBackdropForegroundOpacity = 0.50'));
-    expect(
-      native,
-      contains(
-        'self->sidebar_header_box =\n'
-        '      gtk_box_new(GTK_ORIENTATION_HORIZONTAL, kHeaderButtonSpacing)',
-      ),
-    );
-    expect(native, contains('GtkWidget* sidebar_title_box ='));
-    expect(
-      native,
-      contains(
-        'gtk_box_pack_start(GTK_BOX(self->sidebar_header_box), '
-        'sidebar_title_box,',
-      ),
-    );
-    expect(
-      native,
-      isNot(contains('self->sidebar_header_box = gtk_overlay_new()')),
-    );
-    expect(
-      native,
-      contains(
-        'gtk_widget_get_style_context(self->titlebar_handle),\n'
-        '      "busymark-titlebar"',
-      ),
-    );
-    final headerbarBlock = RegExp(
-      r'"headerbar\.busymark-headerbar,"(.*?)"\}',
-      dotAll: true,
-    ).firstMatch(native)!.group(1)!;
-    expect(headerbarBlock, contains('"background-color: %s;"'));
-    expect(headerbarBlock, contains('"background-image: none;"'));
-    expect(headerbarBlock, contains('"border: none;"'));
-    expect(headerbarBlock, contains('"box-shadow: none;"'));
-    expect(headerbarBlock, isNot(contains('border-radius')));
-    expect(headerbarBlock, isNot(contains('"padding-left: 0;"')));
-    expect(headerbarBlock, isNot(contains('"padding-right: 0;"')));
-    expect(native, contains('".busymark-sidebar-header:dir(ltr) {"'));
-    expect(native, contains('"border-right: 1px solid %s;"'));
-    expect(native, contains('".busymark-sidebar-header:dir(rtl) {"'));
-    expect(native, contains('"border-left: 1px solid %s;"'));
-    expect(native, contains('".busymark-modal-scrim {"'));
-    expect(native, contains('create_busymark_titlebar_overlay'));
-    expect(native, contains('gtk_overlay_set_overlay_pass_through'));
-    expect(native, isNot(contains('busymark-titlebar.busymark-modal-barrier')));
-    expect(native, isNot(contains('modal_sidebar_border_css_color')));
-    expect(native, isNot(contains('composite_rgba')));
-    expect(native, isNot(contains('"border-right-color: %s;"')));
-    expect(native, isNot(contains('"border-left-color: %s;"')));
-    expect(native, contains('G_CALLBACK(stop_modal_scrim_event)'));
-    expect(
-      native,
-      isNot(
-        contains('gtk_widget_set_sensitive(self->titlebar_handle, !visible)'),
-      ),
-    );
-    expect(workspace, isNot(contains('Border(right:')));
-  });
-
-  test('native headerbar preserves the themed outer window inset', () {
-    final native = File('linux/runner/my_application.cc').readAsStringSync();
-    final ltrPaddingBlock = RegExp(
-      r'"headerbar\.busymark-headerbar:dir\(ltr\) \{"(.*?)"\}',
-      dotAll: true,
-    ).firstMatch(native)?.group(1);
-    final rtlPaddingBlock = RegExp(
-      r'"headerbar\.busymark-headerbar:dir\(rtl\) \{"(.*?)"\}',
-      dotAll: true,
-    ).firstMatch(native)?.group(1);
-
-    expect(ltrPaddingBlock, isNotNull);
-    expect(ltrPaddingBlock, contains('"padding-left: 0;"'));
-    expect(ltrPaddingBlock, isNot(contains('"padding-right: 0;"')));
-    expect(rtlPaddingBlock, isNotNull);
-    expect(rtlPaddingBlock, contains('"padding-right: 0;"'));
-    expect(rtlPaddingBlock, isNot(contains('"padding-left: 0;"')));
-  });
-
-  test('native headerbar mirrors sidebar surface for text direction', () {
-    final configuration = File(
-      'lib/src/platform/header_bar_configuration.dart',
-    ).readAsStringSync();
-    final app = File('lib/src/app/busymark_app.dart').readAsStringSync();
-    final settings = File(
-      'lib/src/workspace/presentation/settings_screen.dart',
-    ).readAsStringSync();
-    final welcome = File(
-      'lib/src/workspace/presentation/welcome_screen.dart',
-    ).readAsStringSync();
-    final workspace = File(
-      'lib/src/workspace/presentation/workspace_screen.dart',
-    ).readAsStringSync();
-    final native = File('linux/runner/my_application.cc').readAsStringSync();
-
-    expect(configuration, contains('final TextDirection textDirection;'));
-    expect(
-      configuration,
-      contains(
-        "'textDirection': textDirection == TextDirection.rtl ? 'rtl' : 'ltr'",
-      ),
-    );
-    expect(app, contains('Directionality.maybeOf(context)'));
-    expect(app, contains('textDirection: textDirection'));
-    for (final screen in [settings, welcome, workspace]) {
-      expect(screen, contains('HeaderBarConfigurationDefaults.of(context)'));
-      expect(screen, contains('HeaderBarConfigurationPublisher('));
-    }
-    expect(native, contains('gboolean text_direction_rtl;'));
-    expect(native, contains('static void update_titlebar_direction'));
-    expect(native, contains('set_widget_direction(self->main_menu'));
-    expect(native, contains('set_widget_direction(self->view_mode_menu'));
-    expect(native, contains('set_widget_direction(self->search_button'));
-    expect(native, contains('kLtrIsolateStart'));
-    expect(native, contains('kBidiIsolateEnd'));
-    expect(native, contains('gtk_box_reorder_child'));
-    expect(native, contains('static void set_text_direction'));
-    expect(
-      native,
-      contains('set_text_direction(self, configuration.text_direction)'),
-    );
-    expect(native, contains('g_strcmp0(value, "rtl") == 0'));
-  });
-
-  test('native headerbar reapplies owned insets after direction changes', () {
-    final native = File('linux/runner/my_application.cc').readAsStringSync();
-    final marginHelper = RegExp(
-      r'static void set_widget_horizontal_margins[\s\S]*?^}',
-      multiLine: true,
-    ).firstMatch(native)?.group(0);
-    final directionUpdate = RegExp(
-      r'static void update_titlebar_direction[\s\S]*?(?=^static void refresh_header_bar_css)',
-      multiLine: true,
-    ).firstMatch(native)?.group(0);
-
-    expect(marginHelper, isNotNull);
-    expect(marginHelper, contains('gtk_widget_set_margin_start'));
-    expect(marginHelper, contains('gtk_widget_set_margin_end'));
-    expect(native, isNot(contains('kHeaderWindowControlsBalanceWidth')));
-    expect(native, isNot(contains('update_title_stack_alignment')));
-    expect(directionUpdate, isNotNull);
-    expect(
-      directionUpdate,
-      matches(
-        RegExp(
-          r'set_widget_horizontal_margins\(\s*self->header_start_box,\s*'
-          r'kHeaderSidebarInset,\s*0\);',
-        ),
-      ),
-    );
-
-    for (final widget in <String>['header_start_box']) {
-      final directionOffset = directionUpdate!.indexOf(
-        'set_widget_direction(self->$widget, direction)',
-      );
-      final marginOffset = directionUpdate.indexOf(
-        'set_widget_horizontal_margins(self->$widget,',
-      );
-      expect(directionOffset, isNonNegative, reason: widget);
-      expect(marginOffset, greaterThan(directionOffset), reason: widget);
-    }
-
-    expect(
-      native,
-      isNot(contains('gtk_widget_set_margin_start(self->header_start_box')),
-    );
-  });
-
-  test(
-    'sidebar visibility updates split geometry without corner emulation',
-    () {
-      final native = File('linux/runner/my_application.cc').readAsStringSync();
-
-      expect(native, contains('sidebar_background'));
-      expect(native, contains('update_sidebar_header_geometry(self);'));
-      expect(native, contains('refresh_header_bar_css(self);'));
-      expect(native, isNot(contains('headerbar_left_radius')));
-      expect(native, isNot(contains('headerbar_right_radius')));
-      expect(native, isNot(contains('sidebar_left_radius')));
-      expect(native, isNot(contains('sidebar_right_radius')));
-      expect(native, isNot(contains('"border-top-left-radius:')));
-      expect(native, isNot(contains('"border-top-right-radius:')));
-    },
-  );
-
-  test(
-    'Handy owns window shape while Yaru receives a scoped frame adapter',
-    () {
-      final native = File('linux/runner/my_application.cc').readAsStringSync();
-      final linuxCmake = File('linux/CMakeLists.txt').readAsStringSync();
-      final runnerCmake = File(
-        'linux/runner/CMakeLists.txt',
-      ).readAsStringSync();
-      final snapcraft = File('snap/snapcraft.yaml').readAsStringSync();
-      final readme = File('README.md').readAsStringSync();
-      final compatibilityCss = RegExp(
-        r'constexpr char kLegacyYaruWindowShadowCompatibilityCss\[\][\s\S]*?'
-        r'constexpr char kLtrIsolateStart',
-      ).firstMatch(native)!.group(0)!;
-
-      expect(native, contains('#include <handy.h>'));
-      expect(native, contains('hdy_application_window_new()'));
-      expect(native, contains('hdy_window_handle_new()'));
-      expect(native, contains('GtkWidget* titlebar_handle;'));
-      expect(native, contains('GtkWidget* titlebar_overlay;'));
-      expect(native, contains('GtkWidget* modal_scrim;'));
-      expect(
-        native,
-        contains('gtk_widget_set_vexpand(self->titlebar_handle, FALSE)'),
-      );
-      expect(
-        native,
-        contains('gtk_widget_set_vexpand(self->titlebar_overlay, FALSE)'),
-      );
-      expect(native, contains('G_CALLBACK(stop_modal_scrim_event)'));
-      expect(
-        native,
-        isNot(
-          contains('gtk_widget_set_sensitive(self->titlebar_handle, !visible)'),
-        ),
-      );
-      expect(native, contains('uses_legacy_yaru_window_shadow()'));
-      expect(native, contains('g_strcmp0(normalized_theme, "yaru")'));
-      expect(native, contains('g_str_has_prefix(normalized_theme, "yaru-")'));
-      expect(native, contains('strstr(normalized_theme, "highcontrast")'));
-      expect(native, contains('"notify::gtk-theme-name"'));
-      expect(native, contains('G_CALLBACK(gtk_theme_name_changed_cb)'));
-      expect(native, contains('g_signal_connect_object('));
-      expect(native, isNot(contains('gtk_window_set_titlebar(')));
-      expect(native, isNot(contains('gtk_application_window_new(')));
-      expect(
-        compatibilityCss,
-        contains('box-shadow: 0 3px 9px 1px rgba(0,0,0,0.5)'),
-      );
-      expect(
-        compatibilityCss,
-        contains(
-          '0 3px 9px 1px transparent,'
-          '"\n    "0 2px 6px 2px rgba(0,0,0,0.2)',
-        ),
-      );
-      expect(compatibilityCss, contains(':not(.solid-csd)'));
-      expect(compatibilityCss, contains(':not(.maximized)'));
-      expect(compatibilityCss, contains('not(.fullscreen)'));
-      expect(
-        RegExp(r'not\(\.maximized\)').allMatches(compatibilityCss),
-        hasLength(7),
-      );
-      expect(
-        RegExp(r'not\(\.fullscreen\)').allMatches(compatibilityCss),
-        hasLength(7),
-      );
-      expect(compatibilityCss, contains('0 0 0 20px transparent'));
-      expect(compatibilityCss, isNot(contains('0 0 0 1px')));
-      expect(compatibilityCss, isNot(contains('border-radius')));
-      expect(compatibilityCss, isNot(contains('border-color')));
-      expect(native, isNot(contains('"window#busymark-window decoration,"')));
-      expect(
-        linuxCmake,
-        contains(
-          'pkg_check_modules(HANDY REQUIRED IMPORTED_TARGET libhandy-1)',
-        ),
-      );
-      expect(
-        runnerCmake,
-        contains(
-          r'target_link_libraries(${BINARY_NAME} PRIVATE PkgConfig::HANDY)',
-        ),
-      );
-      expect(snapcraft, contains('- libhandy-1-dev'));
-      expect(snapcraft, contains('- libhandy-1-0'));
-      expect(readme, contains('sudo apt-get install'));
-      expect(readme, contains('libhandy-1-dev'));
-      expect(readme, contains('xz-utils'));
-      expect(native, isNot(contains('kHeaderWindowRadius')));
-      expect(native, isNot(contains('create_rounded_window_region')));
-      expect(native, isNot(contains('gdk_window_shape_combine_region')));
-      expect(native, isNot(contains('rounded_window_configure_event_cb')));
-      expect(native, isNot(contains('configure_transparent_window_backing')));
-      expect(native, isNot(contains('gtk_widget_set_app_paintable')));
-      expect(native, isNot(contains('CAIRO_OPERATOR_CLEAR')));
-      expect(native, isNot(contains('#include <cairo.h>')));
-      expect(
-        RegExp(r'"border-radius:').allMatches(native),
-        hasLength(2),
-        reason: 'Only the tooltip surface and native window clip own a radius',
-      );
-    },
-  );
-
-  test('native header controls preserve GTK geometry with neutral states', () {
-    final native = File('linux/runner/my_application.cc').readAsStringSync();
-    final contentMenuStart = native.indexOf(
-      'constexpr char kNativeMenuActionNamespace',
-    );
-    expect(contentMenuStart, isNonNegative);
-    final headerOnly = native.substring(0, contentMenuStart);
-
-    expect(native, contains('kHeaderButtonHeight = 32'));
-    expect(native, contains('kHeaderButtonSpacing = 8'));
-    expect(native, contains('self->search_entry = gtk_search_entry_new()'));
-    expect(
-      native,
-      contains('gtk_widget_set_hexpand(self->search_entry, TRUE)'),
-    );
-    expect(
-      native,
-      isNot(contains('gtk_widget_set_size_request(self->search_entry')),
-    );
-    expect(
-      native,
-      isNot(
-        contains('".busymark-titlebar entry.busymark-search-entry:focus {"'),
-      ),
-    );
-    expect(native, isNot(contains('button.busymark-header-button:hover')));
-    expect(native, isNot(contains('button.busymark-header-button:checked')));
-    expect(native, isNot(contains('button.busymark-header-button:focus')));
-    expect(headerOnly, isNot(contains('GTK_RELIEF_NONE')));
-    expect(headerOnly, isNot(contains('GTK_STYLE_CLASS_FLAT')));
-    expect(native, contains('"busymark-header-control"'));
-    expect(native, isNot(contains('"busymark-header-icon-button"')));
-    expect(native, contains('alpha(currentColor, 0.07)'));
-    expect(native, contains('alpha(currentColor, 0.16)'));
-    expect(native, contains('alpha(currentColor, 0.10)'));
-    expect(native, contains('alpha(currentColor, 0.13)'));
-    expect(native, contains('alpha(currentColor, 0.19)'));
-    expect(native, isNot(contains('"outline-width: 2px;"')));
-    expect(native, isNot(contains('"outline-width: 0;"')));
-    expect(native, contains('"searchSubmitted"'));
-    expect(
-      native,
-      contains('invoke_header_bar_string_action(self, "searchSubmitted"'),
-    );
-    expect(native, contains('gtk_widget_set_focus_on_click(button, FALSE)'));
-    expect(native, contains('"stop-search"'));
-    expect(native, contains('"searchFocusChanged"'));
-    expect(native, contains('"searchCleared"'));
-    expect(native, contains('"searchEscapePressed"'));
-    expect(native, contains('sidebar_shortcut_action_for_key'));
-    expect(native, contains('GDK_KEY_KP_1'));
-    expect(native, contains('GDK_KEY_KP_4'));
-    expect(native, contains('GDK_KEY_KP_5'));
-    expect(native, contains('GDK_KEY_KP_6'));
-    expect(native, contains('"sidebarFiles"'));
-    expect(native, contains('"sidebarGit"'));
-    expect(native, contains('"sidebarLocalHistory"'));
-    expect(native, contains('"sidebarClipboardHistory"'));
-    expect(native, contains('modifiers != GDK_CONTROL_MASK'));
-    expect(
-      native,
-      contains('g_signal_connect(self->search_entry, "key-press-event",'),
-    );
-    expect(native, contains('strcmp(method, "focusSearch") == 0'));
-    expect(native, contains('enum class SearchQueryUpdateDisposition'));
-    expect(native, contains('resolve_search_query_update(false, true)'));
-    expect(
-      native,
-      contains('SearchQueryUpdateDisposition::kPreserveNativeText'),
-    );
-    expect(
-      native,
-      contains(
-        'A newer focused native edit must survive a delayed Dart snapshot',
-      ),
-    );
-    expect(native, contains('native_entry_has_authority'));
-    expect(native, isNot(contains('echoes_last_native_query')));
-    expect(
-      RegExp(r'"key-press-event"').allMatches(native),
-      hasLength(1),
-      reason: 'Only the native-focus shortcut bridge handles raw keys.',
-    );
-  });
-
-  test(
-    'native window controls retain GTK geometry with synchronized focus color',
-    () {
-      final native = File('linux/runner/my_application.cc').readAsStringSync();
-
-      expect(native, contains('headerbar button.titlebutton:not(:disabled)'));
-      expect(native, contains('headerbar button.titlebutton:disabled'));
-      expect(native, isNot(contains('const gchar* title_button =')));
-      expect(
-        native,
-        isNot(contains('css_color_or(self->title_button_color, control)')),
-      );
-      expect(native, isNot(contains('button.titlebutton {background')));
-      expect(native, isNot(contains('-gtk-gradient')));
-    },
-  );
-
-  test('native sidebar header contains branding but no action buttons', () {
-    final native = File('linux/runner/my_application.cc').readAsStringSync();
-
-    expect(native, contains('self->sidebar_title_label = gtk_label_new('));
-    expect(native, isNot(contains('sidebar_search_button')));
-    expect(native, isNot(contains('sidebar_menu_button')));
-    expect(native, isNot(contains('busymark-sidebar-action-button')));
-  });
-
-  test(
-    'native document controls stay hidden on welcome and settings screens',
-    () {
-      final native = File('linux/runner/my_application.cc').readAsStringSync();
-
-      expect(native, contains('self->document_controls_visible = visible'));
-      expect(native, contains('visible && !self->search_active'));
-      expect(native, contains('self->document_controls_visible && !active'));
-      expect(native, contains('set_document_controls_visible(self, FALSE)'));
-    },
-  );
-
-  test('search and main menu stay in the main header', () {
-    final native = File('linux/runner/my_application.cc').readAsStringSync();
-
-    expect(native, contains('GtkWidget* search_button;'));
-    expect(native, contains('GtkWidget* main_menu_button;'));
-    expect(native, isNot(contains('adaptive_search_button')));
-    expect(native, isNot(contains('adaptive_menu_button')));
-    expect(
-      native,
-      contains('set_toggle_button_active(self, self->search_button, active)'),
-    );
-    expect(
-      native,
-      contains(
-        'gtk_box_pack_start(GTK_BOX(end_box), self->search_button, FALSE, FALSE, 0)',
-      ),
-    );
-    expect(
-      native,
-      contains(
-        'gtk_box_pack_start(GTK_BOX(end_box), self->main_menu_button, FALSE, FALSE',
-      ),
-    );
-    expect(
-      native,
-      contains('G_MENU_MODEL(self->main_menu_model), "open-menu-symbolic"'),
-    );
-  });
-
-  test(
-    'native fallback surfaces are neutral grays, not blue-tinted colors',
-    () {
-      final native = File('linux/runner/my_application.cc').readAsStringSync();
-
-      int fallbackValue(String constantName) {
-        final match = RegExp(
-          'constexpr char $constantName\\[\\] = "#([0-9A-Fa-f]{6})";',
-        ).firstMatch(native);
-        expect(match, isNotNull, reason: constantName);
-        return int.parse(match!.group(1)!, radix: 16);
-      }
-
-      void expectNeutral(String constantName, int value) {
-        final red = (value >> 16) & 0xFF;
-        final green = (value >> 8) & 0xFF;
-        final blue = value & 0xFF;
-        expect(red, green, reason: constantName);
-        expect(green, blue, reason: constantName);
-      }
-
-      final header = fallbackValue('kDefaultHeaderbarBackground');
-      final sidebar = fallbackValue('kDefaultSidebarBackground');
-      expectNeutral('kDefaultHeaderbarBackground', header);
-      expectNeutral('kDefaultSidebarBackground', sidebar);
-      expect(sidebar, greaterThan(header));
-      expect(native, isNot(contains('"#1D1D20"')));
-      expect(native, isNot(contains('"#2E2E32"')));
-    },
-  );
-
-  test('native document commands are explicit workspace actions', () {
-    final service = File(
-      'lib/src/platform/linux_header_bar_service.dart',
-    ).readAsStringSync();
-    final workspace = File(
-      'lib/src/workspace/presentation/workspace_screen.dart',
-    ).readAsStringSync();
-    final native = File('linux/runner/my_application.cc').readAsStringSync();
-
-    expect(service, contains('save,'));
-    expect(service, contains("'save' => HeaderBarAction.save"));
-    expect(service, isNot(contains('problems,')));
-    expect(service, isNot(contains("'problems' => HeaderBarAction.problems")));
-    expect(workspace, contains('case HeaderBarAction.save:'));
-    expect(workspace, isNot(contains('case HeaderBarAction.problems:')));
-    expect(workspace, isNot(contains('saveActiveWithOverwriteConfirmation')));
-    expect(workspace, contains('_showProblemsDialog(context, ref)'));
-    expect(workspace, contains('_validateActiveAndShowProblems'));
-    expect(workspace, contains('HeaderBarConfigurationPublisher('));
-    expect(workspace, isNot(contains('headerBar.setCanSave')));
-    expect(workspace, isNot(contains('accented: state.isDirty')));
-    expect(native, isNot(contains('gboolean can_save;')));
-    expect(native, isNot(contains('gboolean can_undo;')));
-    expect(native, isNot(contains('gboolean can_redo;')));
-    expect(native, isNot(contains('strcmp(method, "setCanSave")')));
-    expect(native, isNot(contains('strcmp(method, "setCanUndo")')));
-    expect(native, isNot(contains('strcmp(method, "setCanRedo")')));
-    expect(
-      native,
-      isNot(contains('create_header_icon_button("emblem-ok-symbolic")')),
-    );
-    expect(native, isNot(contains('busymark-save-button')));
-    expect(native, isNot(contains('busymark-save-dirty')));
-    expect(
-      native,
-      isNot(contains('set_save_dirty(self, fl_method_bool_arg(args))')),
-    );
-    expect(
-      native,
-      contains('create_header_icon_button("tools-check-spelling-symbolic")'),
-    );
-    expect(
-      native,
-      isNot(contains('create_header_icon_button("dialog-warning-symbolic")')),
-    );
-    expect(
-      native,
-      isNot(contains('create_header_icon_button("view-refresh-symbolic")')),
-    );
-    expect(
-      native,
-      isNot(
-        contains(
-          'connect_header_action(self, self->problems_button, "problems")',
-        ),
-      ),
-    );
-    expect(native, isNot(contains('fl_lookup_string_arg(args, "problems")')));
-  });
-
-  test('native headerbar starts with sidebar toggle before back', () {
-    final native = File('linux/runner/my_application.cc').readAsStringSync();
-
-    expect(
-      native,
-      matches(
-        RegExp(
-          r'gtk_box_pack_start\(GTK_BOX\(self->header_start_box\), self->sidebar_toggle_button[\s\S]*'
-          r'gtk_box_pack_start\(GTK_BOX\(self->header_start_box\), self->back_button',
-        ),
-      ),
-    );
-  });
-
-  test('native document view mode dropdown uses checked rows', () {
-    final service = File(
-      'lib/src/platform/linux_header_bar_service.dart',
-    ).readAsStringSync();
-    final configuration = File(
-      'lib/src/platform/header_bar_configuration.dart',
-    ).readAsStringSync();
-    final app = File('lib/src/app/busymark_app.dart').readAsStringSync();
-    final workspace = File(
-      'lib/src/workspace/presentation/workspace_screen.dart',
-    ).readAsStringSync();
-    final native = File('linux/runner/my_application.cc').readAsStringSync();
-
-    expect(
-      configuration,
-      contains('enum AppViewMode { editor, source, preview, split }'),
-    );
-    expect(service, contains('viewModeEditor'));
-    expect(service, contains('viewModeSource'));
-    expect(service, contains('viewModePreview'));
-    expect(service, contains('viewModeSplit'));
-    expect(app, contains('editor: label(BusyMarkCommandIds.viewEditor)'));
-    expect(app, contains('source: label(BusyMarkCommandIds.viewSource)'));
-    expect(app, contains('preview: label(BusyMarkCommandIds.viewReading)'));
-    expect(app, contains('split: label(BusyMarkCommandIds.viewSplit)'));
-    expect(
-      app,
-      contains('editorShortcut: shortcut(BusyMarkCommandIds.viewEditor)'),
-    );
-    expect(app, contains('editorGtkAccelerator:'));
-    expect(app, contains('accelerator(BusyMarkCommandIds.viewEditor)'));
-    expect(
-      app,
-      contains('sourceShortcut: shortcut(BusyMarkCommandIds.viewSource)'),
-    );
-    expect(
-      app,
-      contains('previewShortcut: shortcut(BusyMarkCommandIds.viewReading)'),
-    );
-    expect(
-      app,
-      contains('splitShortcut: shortcut(BusyMarkCommandIds.viewSplit)'),
-    );
-    expect(
-      app,
-      contains('sidebarShortcut: shortcut(BusyMarkCommandIds.toggleSidebar)'),
-    );
-    expect(
-      app,
-      contains('searchShortcut: shortcut(BusyMarkCommandIds.search)'),
-    );
-    expect(workspace, contains('case HeaderBarAction.viewModeEditor:'));
-    expect(workspace, contains('case HeaderBarAction.viewModeSource:'));
-    expect(workspace, contains('case HeaderBarAction.viewModePreview:'));
-    expect(workspace, contains('case HeaderBarAction.viewModeSplit:'));
-    expect(workspace, contains('setDocumentViewMode('));
-    expect(workspace, contains('HeaderBarConfigurationPublisher('));
-    expect(
-      workspace,
-      contains('viewMode: _headerBarViewMode(settings.documentViewMode)'),
-    );
-    expect(workspace, isNot(contains('headerBar.setViewMode')));
-    expect(service, contains("('setViewMode', configuration.viewMode.name)"));
-    expect(native, contains('GMenu* view_mode_menu_model;'));
-    expect(native, contains('GSimpleAction* view_mode_action;'));
-    expect(native, contains('g_simple_action_new_stateful('));
-    expect(native, contains('"view-mode", G_VARIANT_TYPE_STRING'));
-    expect(native, contains('g_menu_item_set_action_and_target('));
-    expect(native, contains('"header.view-mode"'));
-    expect(native, contains('g_simple_action_set_state('));
-    expect(native, contains('append_view_mode_menu_item('));
-    for (final mode in <String>['editor', 'source', 'preview', 'split']) {
-      expect(
-        native,
-        contains('localized_label_or(labels, "$mode", "")'),
-        reason: mode,
-      );
-    }
-    expect(native, contains('view_mode_icon_name(mode)'));
-    expect(native, contains('view_mode_icon_name("split")'));
-    expect(native, isNot(contains('modelbutton:hover:not(:disabled)')));
-    expect(native, isNot(contains('modelbutton.%s:hover:not(:disabled)')));
-    expect(native, isNot(contains('kNativeMenuItemStyleClass')));
-    expect(native, isNot(contains('style_native_menu_item(widget)')));
-    expect(native, isNot(contains('kNativeMenuItemHoverStyleClass')));
-    expect(native, isNot(contains('native_menu_item_enter_cb')));
-    expect(native, isNot(contains('native_menu_item_motion_cb')));
-    expect(native, isNot(contains('native_menu_item_leave_cb')));
-    expect(
-      native,
-      isNot(contains('native_menu_popover_hidden_reset_hover_cb')),
-    );
-    expect(native, isNot(contains('modelbutton:focus')));
-    expect(native, isNot(contains('modelbutton:active')));
-    expect(native, isNot(contains('outline-width: 0;')));
-    expect(native, contains('static GtkWidget* create_model_menu_button'));
-    expect(
-      native,
-      contains(
-        'gtk_menu_button_set_use_popover(GTK_MENU_BUTTON(button), FALSE)',
-      ),
-    );
-    expect(native, contains('gtk_menu_button_set_menu_model'));
-    expect(native, contains('gtk_menu_button_get_popup'));
-    expect(native, contains('GTK_IS_MENU(menu)'));
-    expect(
-      native,
-      contains('gtk_image_set_from_icon_name(GTK_IMAGE(self->view_mode_icon)'),
-    );
-    expect(
-      native,
-      contains('gtk_button_get_image(GTK_BUTTON(self->view_mode_button))'),
-    );
-    expect(native, isNot(contains('create_view_mode_item')));
-    expect(native, isNot(contains('set_menu_item_checked')));
-    expect(native, isNot(contains('self->view_mode_label')));
-    expect(
-      native,
-      contains(
-        'set_widget_tooltip_with_shortcut(self->sidebar_toggle_button, sidebar',
-      ),
-    );
-    expect(native, contains('view_mode_shortcut_label(self, args)'));
-    expect(
-      native,
-      contains(
-        'set_widget_tooltip_with_shortcut(\n'
-        '      self->view_mode_button',
-      ),
-    );
-    expect(native, contains('rebuild_view_mode_menu_model(self, args)'));
-    expect(
-      native,
-      contains('set_widget_visible(self->view_mode_box, effective_visible)'),
-    );
-    expect(native, isNot(contains('viewModeDay')));
-    expect(native, isNot(contains('viewModeWeek')));
-    expect(native, isNot(contains('viewModeMonth')));
-    expect(native, isNot(contains('viewModeAgenda')));
-  });
-
-  test('native GTK menus use standard icon and accelerator attributes', () {
-    final native = File('linux/runner/my_application.cc').readAsStringSync();
-
-    expect(native, contains('kMenuAccelAttribute'));
-    expect(native, contains('constexpr char kMenuAccelAttribute[] = "accel"'));
-    expect(native, contains('gtk_accelerator_from_shortcut_label'));
-    expect(native, contains('set_menu_item_accelerator'));
-    expect(native, contains('gtk_accelerator_parse(accelerator'));
-    expect(
-      native,
-      contains(
-        'g_menu_item_set_attribute(item, kMenuAccelAttribute, "s", accelerator)',
-      ),
-    );
-    expect(native, contains('g_menu_item_set_icon(item, icon)'));
-    expect(native, contains('gtk_menu_button_set_menu_model'));
-    expect(native, isNot(contains('GTK_IS_MODEL_BUTTON')));
-    expect(native, isNot(contains('gtk_accelerator_get_label')));
-    expect(native, isNot(contains('gtk_label_new(shortcut)')));
-    expect(native, isNot(contains('decorate_model_menu_accelerators')));
-    expect(native, isNot(contains('busymark-shortcut-widget')));
-    expect(native, isNot(contains('busymark-menu-row')));
-    expect(
-      native,
-      contains(
-        'set_widget_tooltip_with_shortcut(\n'
-        '      self->view_mode_button',
-      ),
-    );
-  });
-
   test('Flutter content menus use native GTK popup menu semantics', () {
     final native = File('linux/runner/my_application.cc').readAsStringSync();
     final service = File(
@@ -1566,7 +361,7 @@ void main() {
     );
     final nativeMenuEnd = native.indexOf(
       'static void my_application_activate',
-      nativeMenuStart,
+      native.indexOf('struct NativeMenuSession', nativeMenuStart),
     );
     expect(nativeMenuStart, isNonNegative);
     expect(nativeMenuEnd, greaterThan(nativeMenuStart));
@@ -1688,37 +483,6 @@ void main() {
     }
   });
 
-  test('content menu consolidation leaves GTK headerbar menus intact', () {
-    final native = File('linux/runner/my_application.cc').readAsStringSync();
-    final nativeMenuStart = native.indexOf(
-      'constexpr char kNativeMenuActionNamespace',
-    );
-    final nativeMenuEnd = native.indexOf(
-      'static void my_application_activate',
-      nativeMenuStart,
-    );
-    expect(nativeMenuStart, isNonNegative);
-    expect(nativeMenuEnd, greaterThan(nativeMenuStart));
-
-    final headerbar = native.substring(0, nativeMenuStart);
-    final contentMenu = native.substring(nativeMenuStart, nativeMenuEnd);
-    expect(headerbar, contains('static GtkWidget* create_model_menu_button'));
-    expect(
-      headerbar,
-      contains(
-        'gtk_menu_button_set_use_popover(GTK_MENU_BUTTON(button), FALSE)',
-      ),
-    );
-    expect(headerbar, contains('gtk_menu_button_set_menu_model('));
-    expect(headerbar, contains('gtk_menu_button_get_popup('));
-    expect(headerbar, isNot(contains('GTK_IS_MODEL_BUTTON')));
-    expect(contentMenu, contains('gtk_menu_new_from_model('));
-    expect(contentMenu, contains('gtk_menu_popup_at_rect('));
-    expect(contentMenu, isNot(contains('gtk_menu_button_')));
-    expect(contentMenu, isNot(contains('GTK_IS_MODEL_BUTTON')));
-    expect(contentMenu, isNot(contains('create_model_menu_button(')));
-  });
-
   test('native content menus clean up direct GTK popup sessions', () {
     final native = File('linux/runner/my_application.cc').readAsStringSync();
 
@@ -1764,122 +528,528 @@ void main() {
     expect(respondIndex, greaterThan(detachIndex));
     expect(freeIndex, greaterThan(respondIndex));
   });
+  test(
+    'Snap packaging hooks consolidate resources and keep required fixes',
+    () {
+      final snapcraft = File('snap/snapcraft.yaml').readAsStringSync();
+      final exclusions = File(
+        'snap/gnome-46-2404-prime-exclusions.amd64',
+      ).readAsLinesSync();
 
-  test('welcome page has a sidebar but no document controls', () {
-    final welcome = File(
-      'lib/src/workspace/presentation/welcome_screen.dart',
-    ).readAsStringSync();
-    final workspace = File(
-      'lib/src/workspace/presentation/workspace_screen.dart',
-    ).readAsStringSync();
+      expect(snapcraft, contains('missing audited GNOME runtime duplicate'));
+      expect(snapcraft, contains('gnome-46-2404-prime-exclusions.amd64'));
+      expect(exclusions, contains(contains('revision 153')));
+      expect(
+        exclusions,
+        contains('usr/lib/x86_64-linux-gnu/gstreamer-1.0/libgstisomp4.so'),
+      );
+      for (final runtimeLibrary in {
+        'libgdk-3.so.0',
+        'libgtk-3.so.0',
+        'libpango-1.0.so.0',
+        'libpangocairo-1.0.so.0',
+        'libpangoft2-1.0.so.0',
+        'libX11.so.6',
+        'libXdamage.so.1',
+        'libXext.so.6',
+        'libXfixes.so.3',
+        'libxcb-shm.so.0',
+        'libxcb.so.1',
+        'libwayland-client.so.0',
+        'libwayland-cursor.so.0',
+        'libwayland-egl.so.1',
+      }) {
+        expect(
+          exclusions,
+          contains('usr/lib/x86_64-linux-gnu/$runtimeLibrary'),
+        );
+      }
+      expect(exclusions, isNot(contains(contains('libgstlibav.so'))));
+      expect(exclusions, isNot(contains(contains('libgstvideoparsersbad.so'))));
+      expect(exclusions.where((line) => line.contains('*')), isEmpty);
+      expect(snapcraft, contains(r'cmp -s "$bundled_font" "$staged_font"'));
+      expect(snapcraft, contains('ln -s ../../usr/share/fonts/truetype/noto'));
+      expect(
+        snapcraft,
+        contains(r'ln -s "../../usr/share/$resource_kind/$resource_name"'),
+      );
+      expect(
+        snapcraft,
+        contains(
+          r'"$CRAFT_PRIME/usr/lib/x86_64-linux-gnu/libsphinxbase.so.3.0.0"',
+        ),
+      );
+      expect(snapcraft, contains('caca/libgl_plugin.so.0.0.0'));
+      expect(
+        snapcraft,
+        contains(
+          r'rm -f "$CRAFT_PRIME/usr/lib/x86_64-linux-gnu/librsvg-2.so.2"*',
+        ),
+      );
+      expect(
+        snapcraft,
+        isNot(contains('libflutter_secure_storage_linux_plugin.so')),
+      );
+      final workflow = File(
+        '.github/workflows/flutter-linux.yml',
+      ).readAsStringSync();
+      expect(workflow, contains(r'graphics_lib="$SNAP/gpu-2404/usr/lib/'));
+      expect(workflow, contains('libwayland-egl.so.1'));
+      expect(workflow, contains('usr/share/doc/fonts-noto-core/copyright'));
+    },
+  );
+  test('native GTK theme follows brightness without replacing a valid user theme', () {
     final configuration = File(
-      'lib/src/platform/header_bar_configuration.dart',
+      'lib/src/app/linux/linux_window_host.dart',
     ).readAsStringSync();
     final native = File('linux/runner/my_application.cc').readAsStringSync();
-    final design = File('lib/src/app/busymark_design.dart').readAsStringSync();
+    final snapcraft = File('snap/snapcraft.yaml').readAsStringSync();
 
-    expect(welcome, contains('_WelcomeSidebar'));
-    expect(
-      welcome,
-      contains('BusyMarkSidebarRecordRow<_RecentWorkspaceAction>'),
-    );
-    expect(welcome, contains('WorkspaceGlyphs.forRecent(recent)'));
-    expect(welcome, contains('BusyMarkGlyphs.markdownFile'));
-    expect(welcome, contains('BusyMarkGlyphs.folder'));
-    expect(welcome, contains('BusyMarkGlyphs.writersideProject'));
-    expect(design, contains('class BusyMarkSidebarRecordRow<T>'));
-    expect(design, contains('BorderRadius.circular(BusyMarkRadius.md)'));
-    expect(welcome, contains('if (!sidebarOnRight && sidebarVisible)'));
-    expect(welcome, contains('if (sidebarOnRight && sidebarVisible)'));
-    expect(welcome, contains('welcomeMainColor = colors.view'));
-    expect(welcome, contains('backgroundColor: welcomeMainColor'));
-    expect(welcome, contains('crossAxisAlignment: CrossAxisAlignment.stretch'));
-    expect(welcome, contains('HeaderBarConfigurationPublisher('));
-    expect(welcome, contains('documentControlsVisible: false'));
-    expect(welcome, contains('searchVisible: false'));
-    expect(welcome, contains('sidebarVisible: sidebarVisible'));
-    expect(welcome, contains('sidebarToggleVisible: true'));
-    expect(welcome, contains('case HeaderBarAction.sidebarToggle:'));
-    expect(welcome, contains('setSidebarVisible(!settings.sidebarVisible)'));
-    expect(workspace, contains('HeaderBarConfigurationPublisher('));
-    expect(workspace, contains('sidebarVisible: sidebarVisible'));
-    expect(workspace, contains('sidebarToggleVisible: hasSidebar'));
-    expect(workspace, contains('searchVisible: true'));
-    expect(workspace, contains('documentControlsVisible: true'));
-    expect(configuration, contains('final bool documentControlsVisible;'));
-    expect(configuration, contains('final bool sidebarToggleVisible;'));
-    expect(configuration, contains('final bool searchVisible;'));
-    expect(native, contains('set_document_controls_visible'));
-    expect(native, contains('set_sidebar_toggle_visible'));
-    expect(native, contains('set_search_visible'));
+    expect(configuration, contains('setPreferDark('));
+    expect(configuration, contains('brightness == Brightness.dark'));
+    final chrome = File('linux/runner/linux_chrome_host.cc').readAsStringSync();
+    expect(chrome, contains('setPreferDark'));
+    expect(chrome, contains('host->set_theme('));
+    expect(native, contains('static void set_gtk_theme_preference'));
+    expect(native, contains('gtk_settings_get_default()'));
     expect(
       native,
-      contains('set_widget_visible(self->sidebar_toggle_button, visible)'),
+      contains('"gtk-application-prefer-dark-theme", prefer_dark'),
+    );
+    expect(native, contains('"gtk-theme-name"'));
+    expect(native, contains('gtk_theme_exists'));
+    expect(native, contains('available_gtk_theme_fallback'));
+    expect(
+      native,
+      contains(
+        'const gchar* fallback = available_gtk_theme_fallback(prefer_dark);',
+      ),
+    );
+    expect(
+      native,
+      contains('fallback != nullptr && !gtk_theme_exists(theme_name)'),
+    );
+    expect(native, isNot(contains('g_strcmp0(theme_name, fallback) != 0')));
+    expect(
+      native,
+      contains('g_object_set(settings, "gtk-theme-name", fallback, nullptr);'),
+    );
+    expect(native, contains('"Yaru-dark"'));
+    expect(native, contains('"Adwaita-dark"'));
+    expect(native, contains('"gtk-icon-theme-name"'));
+    expect(native, contains('icon_theme_exists'));
+    expect(native, contains('available_icon_theme_fallback'));
+    expect(
+      native,
+      contains(
+        'const gchar* icon_fallback = available_icon_theme_fallback(prefer_dark);',
+      ),
+    );
+    expect(
+      native,
+      contains(
+        'icon_fallback != nullptr && !icon_theme_exists(icon_theme_name)',
+      ),
+    );
+    expect(
+      native,
+      isNot(contains('g_strcmp0(icon_theme_name, icon_fallback) != 0')),
+    );
+    expect(
+      native,
+      contains(
+        'g_object_set(settings, "gtk-icon-theme-name", icon_fallback, nullptr);',
+      ),
+    );
+    expect(native, isNot(contains('gtk_icon_theme_set_custom_theme')));
+    expect(native, isNot(contains('gtk_accent_css_provider')));
+    expect(native, isNot(contains('@define-color theme_selected_bg_color')));
+    expect(native, isNot(contains('@define-color accent_bg_color')));
+    expect(native, isNot(contains('treeview.view:selected')));
+    expect(native, isNot(contains('button.suggested-action')));
+    expect(
+      native,
+      isNot(contains('GTK_STYLE_PROVIDER_PRIORITY_APPLICATION + 1')),
+    );
+    expect(native, isNot(contains('gtk_theme_name_for_preference')));
+    expect(native, isNot(contains('icon_theme_name_for_preference')));
+    expect(native, isNot(contains('prefer_dark_gtk_theme')));
+    expect(native, isNot(contains('set_gtk_theme_preference(TRUE)')));
+    expect(
+      native,
+      isNot(contains('fl_lookup_bool_arg(args, "preferDark", TRUE)')),
+    );
+    expect(snapcraft, contains('yaru-theme-gtk'));
+    expect(snapcraft, contains('yaru-theme-icon'));
+    expect(snapcraft, contains('override-build:'));
+    expect(snapcraft, contains(r'rm -rf "$CRAFT_PART_BUILD/build"'));
+    expect(snapcraft, contains(r'rm -rf "$CRAFT_PART_BUILD/.dart_tool"'));
+    expect(snapcraft, contains('export CI=true'));
+    expect(
+      snapcraft,
+      contains(
+        r'"$flutter_sdk/bin/flutter" --no-version-check precache --linux',
+      ),
+    );
+    expect(
+      snapcraft,
+      contains(r'"$flutter_sdk/bin/flutter" --no-version-check pub get'),
+    );
+    expect(
+      snapcraft,
+      contains(r'ln -s "../../usr/share/$resource_kind/$resource_name"'),
+    );
+    expect(
+      snapcraft,
+      isNot(contains(r'cp -a "$CRAFT_PRIME/usr/share/themes"/Yaru*')),
+    );
+    expect(
+      snapcraft,
+      isNot(contains(r'cp -a "$CRAFT_PRIME/usr/share/icons"/Yaru*')),
     );
     expect(
       native,
       isNot(
-        contains('set_widget_visible(self->save_button, effective_visible)'),
+        matches(
+          RegExp(
+            r'static void my_application_startup[\s\S]*'
+            r'G_APPLICATION_CLASS\(my_application_parent_class\)->startup\(application\);[\s\S]*'
+            r'set_gtk_theme_preference',
+          ),
+        ),
       ),
     );
     expect(
       native,
-      contains('set_widget_visible(self->refresh_button, effective_visible)'),
-    );
-    expect(
-      native,
-      isNot(contains('set_widget_visible(self->problems_button, visible)')),
-    );
-  });
-
-  test('settings page matches the native header surface and split shell', () {
-    final settings = File(
-      'lib/src/workspace/presentation/settings_screen.dart',
-    ).readAsStringSync();
-
-    expect(settings, contains('backgroundColor: colors.view'));
-    expect(settings, contains('color: colors.view'));
-    expect(settings, contains('BusyMarkSidebarSurface('));
-    expect(settings, contains('BusyMarkSidebarNavigation('));
-    expect(settings, contains('sidebarVisible: showSidebar'));
-    expect(settings, contains('sidebarToggleVisible: false'));
-    expect(
-      settings,
-      contains(
-        'constraints.maxWidth >= BusyMarkSizes.settingsSidebarBreakpoint',
+      isNot(
+        matches(
+          RegExp(
+            r'static void my_application_activate\(GApplication\* application\) \{[\s\S]*'
+            r'set_gtk_theme_preference[\s\S]*'
+            r'gtk_application_window_new',
+          ),
+        ),
       ),
     );
   });
+}
 
-  test(
-    'native main header title is contextual, not duplicate app branding',
-    () {
-      final welcome = File(
-        'lib/src/workspace/presentation/welcome_screen.dart',
-      ).readAsStringSync();
-      final settings = File(
-        'lib/src/workspace/presentation/settings_screen.dart',
-      ).readAsStringSync();
-      final workspace = File(
-        'lib/src/workspace/presentation/workspace_screen.dart',
-      ).readAsStringSync();
-      final native = File('linux/runner/my_application.cc').readAsStringSync();
+Set<String> _snapStagePackages(String snapcraft) {
+  final match = RegExp(
+    r'^    stage-packages:\n((?:^      - [^\n]+\n)+)',
+    multiLine: true,
+  ).firstMatch(snapcraft);
+  expect(match, isNotNull);
+  return RegExp(
+    r'^      - ([^\s]+)$',
+    multiLine: true,
+  ).allMatches(match!.group(1)!).map((entry) => entry.group(1)!).toSet();
+}
 
-      expect(welcome, contains('HeaderBarConfigurationPublisher('));
-      expect(welcome, contains('title: context.l10n.appTitle'));
-      expect(settings, contains('HeaderBarConfigurationPublisher('));
-      expect(settings, contains('title: title'));
-      expect(
-        workspace,
-        contains('title: busyMarkBidiIsolateFor(context, title)'),
-      );
-      expect(settings, isNot(contains("setTitleRange('BusyMark Settings')")));
-      expect(
-        native,
-        contains('gtk_header_bar_set_custom_title(self->header_bar'),
-      );
-      expect(native, isNot(contains('kHeaderWindowControlsBalanceWidth')));
-      expect(native, isNot(contains('update_title_stack_alignment')));
-    },
+void _writeFixtureFile(String path, String contents) {
+  final file = File(path)..createSync(recursive: true);
+  file.writeAsStringSync(contents);
+}
+
+void _writeFixtureExecutable(String path, String contents) {
+  _writeFixtureFile(path, contents);
+  final chmod = Process.runSync('chmod', ['+x', path]);
+  expect(chmod.exitCode, 0, reason: '$path: ${chmod.stderr}');
+}
+
+void _verifyLocalFontRepack({required bool linkedScaffold}) {
+  final fixture = Directory.systemTemp.createTempSync('busymark-repack-font-');
+  try {
+    final project = '${fixture.path}/project';
+    final scaffold = '${fixture.path}/scaffold';
+    final root = '${fixture.path}/root';
+    final tools = '$project/tools';
+    final stubBin = '${fixture.path}/stub-bin';
+    final flutterSdk = '${fixture.path}/flutter-sdk';
+    final fontDir = '$scaffold/share/busymark/fonts';
+    final stagedFont =
+        '$scaffold/usr/share/fonts/truetype/noto/NotoSans-Regular.ttf';
+    Directory(tools).createSync(recursive: true);
+    File(
+      'tools/build_install_snap_local.sh',
+    ).copySync('$tools/build_install_snap_local.sh');
+    _writeFixtureFile(
+      '$project/pubspec.yaml',
+      'name: busymark\nversion: 0.5.1\nenvironment:\n  flutter: 3.47.5\n',
+    );
+    _writeFixtureFile(
+      '$project/snap/snapcraft.yaml',
+      'name: busymark\nicon: icon.svg\napps:\n  busymark:\n    plugs:\n      - home\n',
+    );
+    _writeFixtureFile('$project/icon.svg', '<svg/>\n');
+    _writeFixtureFile(
+      '$project/linux/CMakeLists.txt',
+      'set(BINARY_NAME "busymark")\nset(APPLICATION_ID "io.busystack.busymark")\n',
+    );
+    _writeFixtureFile(
+      '$project/linux/io.busystack.busymark.desktop',
+      '[Desktop Entry]\nType=Application\nName=BusyMark\nIcon=busymark\n',
+    );
+    _writeFixtureFile(
+      '$scaffold/meta/snap.yaml',
+      'name: busymark\nversion: 0.5.0\napps:\n  busymark:\n    command: busymark\n',
+    );
+    _writeFixtureFile(stagedFont, 'scaffold font bytes');
+    if (linkedScaffold) {
+      Directory('$scaffold/share/busymark').createSync(recursive: true);
+      Link(fontDir).createSync('../../usr/share/fonts/truetype/noto');
+    } else {
+      _writeFixtureFile('$fontDir/NotoSans-Regular.ttf', 'old bundle font');
+    }
+    _writeFixtureFile(
+      '$flutterSdk/bin/cache/flutter.version.json',
+      '{"frameworkVersion":"3.47.5"}\n',
+    );
+    _writeFixtureExecutable('$flutterSdk/bin/flutter', r'''#!/bin/sh
+set -eu
+case "$1" in
+  pub) exit 0 ;;
+  build)
+    bundle="$STUB_PROJECT/build/linux/x64/release/bundle"
+    mkdir -p "$bundle/share/busymark/fonts"
+    printf 'new bundle font bytes' > "$bundle/share/busymark/fonts/NotoSans-Regular.ttf"
+    printf '#!/bin/sh\nexit 0\n' > "$bundle/busymark"
+    exit 0 ;;
+esac
+exit 1
+''');
+    _writeFixtureExecutable('$stubBin/snap', r'''#!/bin/sh
+set -eu
+test "$1" = pack
+touch "${3#--filename=}"
+''');
+    _writeFixtureExecutable('$stubBin/unsquashfs', r'''#!/bin/sh
+set -eu
+case "$1" in
+  -cat) cat "$STUB_SNAP_ROOT/meta/snap.yaml" ;;
+  -ll) printf 'squashfs-root/busymark\nsquashfs-root/meta/gui/busymark.desktop\n' ;;
+esac
+''');
+    _writeFixtureExecutable('$stubBin/sudo', r'''#!/bin/sh
+printf 'unexpected installation\n' > "$STUB_INSTALL_MARKER"
+exit 1
+''');
+
+    final installMarker = '${fixture.path}/install-called';
+    final result = Process.runSync(
+      'bash',
+      [
+        '$tools/build_install_snap_local.sh',
+        '--no-install',
+        '--skip-tests',
+        '--skip-bundled-git',
+        '--scaffold',
+        scaffold,
+        '--root',
+        root,
+        '--output',
+        '${fixture.path}/local.snap',
+      ],
+      environment: {
+        ...Platform.environment,
+        'PATH': '$stubBin:${Platform.environment['PATH']}',
+        'BUSYMARK_FLUTTER_BIN': '$flutterSdk/bin/flutter',
+        'BUSYMARK_BUILD_TMP_ROOT': '${fixture.path}/build-tmp',
+        'STUB_PROJECT': project,
+        'STUB_SNAP_ROOT': root,
+        'STUB_INSTALL_MARKER': installMarker,
+      },
+    );
+    expect(
+      result.exitCode,
+      0,
+      reason: 'linked=$linkedScaffold\n${result.stdout}\n${result.stderr}',
+    );
+    expect(File('${fixture.path}/local.snap').existsSync(), isTrue);
+    expect(Link('$root/share/busymark/fonts').existsSync(), isFalse);
+    expect(
+      File(
+        '$root/share/busymark/fonts/NotoSans-Regular.ttf',
+      ).readAsStringSync(),
+      'new bundle font bytes',
+    );
+    expect(
+      File(
+        '$root/usr/share/fonts/truetype/noto/NotoSans-Regular.ttf',
+      ).readAsStringSync(),
+      'scaffold font bytes',
+    );
+    expect(File(stagedFont).readAsStringSync(), 'scaffold font bytes');
+    expect(File(installMarker).existsSync(), isFalse);
+  } finally {
+    fixture.deleteSync(recursive: true);
+  }
+}
+
+String _sharedRuntimeValidationBody() {
+  final workflow = File(
+    '.github/workflows/flutter-linux.yml',
+  ).readAsStringSync();
+  const step =
+      '      - name: Verify shared runtimes, packaged tools, media, and resources';
+  final stepAt = workflow.indexOf(step);
+  expect(stepAt, greaterThanOrEqualTo(0));
+  final bodyAt =
+      workflow.indexOf('        run: |\n', stepAt) + '        run: |\n'.length;
+  final nextStepAt = workflow.indexOf('\n      - name:', bodyAt);
+  expect(nextStepAt, greaterThan(bodyAt));
+  return workflow
+      .substring(bodyAt, nextStepAt)
+      .split('\n')
+      .map((line) {
+        return line.startsWith('          ') ? line.substring(10) : line;
+      })
+      .join('\n');
+}
+
+ProcessResult _runSharedRuntimeValidation(String mode, String shell) {
+  final fixture = Directory.systemTemp.createTempSync(
+    'busymark-runtime-check-',
   );
+  try {
+    final snap = '${fixture.path}/snap';
+    final gnome = '${fixture.path}/gnome';
+    final triplet = 'x86_64-linux-gnu';
+    final graphics = '$snap/gpu-2404/usr/lib/$triplet';
+    final providerPlugins = '$gnome/usr/lib/$triplet/gstreamer-1.0';
+    final privatePlugins = '$snap/usr/lib/$triplet/gstreamer-1.0';
+    final stubBin = '${fixture.path}/bin';
+    for (final path in [
+      '$snap/busymark',
+      '$snap/usr/lib/git-core/git-remote-http',
+      '$snap/usr/share/fonts/truetype/noto/NotoSans-Regular.ttf',
+      '$snap/usr/share/doc/fonts-noto-core/copyright',
+      '$snap/usr/share/doc/fonts-noto-mono/copyright',
+    ]) {
+      _writeFixtureFile(path, 'fixture');
+    }
+    for (final library in [
+      'libX11.so.6',
+      'libXdamage.so.1',
+      'libXext.so.6',
+      'libXfixes.so.3',
+      'libxcb-shm.so.0',
+      'libxcb.so.1',
+      'libwayland-client.so.0',
+      'libwayland-cursor.so.0',
+      'libwayland-egl.so.1',
+    ]) {
+      _writeFixtureFile('$graphics/$library', 'fixture');
+    }
+    for (final library in [
+      'libhandy-1.so.0',
+      'libsecret-1.so.0',
+      'libwebkit2gtk-4.1.so.0',
+      'libgtk-3.so.0',
+      'libglib-2.0.so.0',
+      'libpango-1.0.so.0',
+    ]) {
+      _writeFixtureFile('$gnome/usr/lib/$triplet/$library', 'fixture');
+    }
+    _writeFixtureFile('$snap/usr/lib/$triplet/libcurl-gnutls.so.4', 'fixture');
+    for (final helper in [
+      'WebKitWebProcess',
+      'WebKitNetworkProcess',
+      'WebKitGPUProcess',
+    ]) {
+      _writeFixtureExecutable(
+        '$gnome/usr/lib/$triplet/webkit2gtk-4.1/$helper',
+        '#!/bin/sh\n',
+      );
+    }
+    for (final plugin in [
+      'libgstavi.so',
+      'libgstisomp4.so',
+      'libgstmatroska.so',
+      'libgstogg.so',
+      'libgsttheora.so',
+      'libgstvpx.so',
+    ]) {
+      _writeFixtureFile('$providerPlugins/$plugin', 'fixture');
+    }
+    for (final plugin in [
+      'libgstlibav.so',
+      'libgstvideoparsersbad.so',
+      'libgstmpeg2dec.so',
+    ]) {
+      _writeFixtureFile('$privatePlugins/$plugin', 'fixture');
+    }
+    Directory('$snap/share/busymark').createSync(recursive: true);
+    Link(
+      '$snap/share/busymark/fonts',
+    ).createSync('../../usr/share/fonts/truetype/noto');
+    for (final kind in ['themes', 'icons']) {
+      for (final name in ['Yaru', 'Yaru-dark']) {
+        Directory('$snap/usr/share/$kind/$name').createSync(recursive: true);
+        Directory('$snap/share/$kind').createSync(recursive: true);
+        Link(
+          '$snap/share/$kind/$name',
+        ).createSync('../../usr/share/$kind/$name');
+      }
+    }
+    _writeFixtureExecutable('$stubBin/snap', r'''#!/bin/sh
+set -eu
+test "$1" = run
+test "$2" = --shell
+test "$4" = -c
+exec "$STUB_INSPECTION_SHELL" -c "$5"
+''');
+    _writeFixtureExecutable('$stubBin/ldd', r'''#!/bin/sh
+set -eu
+object="$1"
+if [ "$STUB_LDD_MODE" = inspection-error ] && [ "$object" = "$SNAP/busymark" ]; then
+  printf 'inspection crashed\n'
+  exit 7
+fi
+if [ "$object" = "$SNAP/busymark" ]; then
+  for library in libhandy-1.so.0 libsecret-1.so.0 libwebkit2gtk-4.1.so.0 libgtk-3.so.0 libglib-2.0.so.0 libpango-1.0.so.0; do
+    path="$SNAP_DESKTOP_RUNTIME/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET/$library"
+    if [ "$STUB_LDD_MODE" = wrong-gnome ] && [ "$library" = libgtk-3.so.0 ]; then path="/unexpected/$library"; fi
+    printf '%s => %s (0x1234)\n' "$library" "$path"
+  done
+  for library in libX11.so.6 libXdamage.so.1 libXext.so.6 libXfixes.so.3 libxcb-shm.so.0 libxcb.so.1 libwayland-client.so.0 libwayland-cursor.so.0 libwayland-egl.so.1; do
+    path="$SNAP/gpu-2404/usr/lib/$SNAP_LAUNCHER_ARCH_TRIPLET/$library"
+    if [ "$STUB_LDD_MODE" = wrong-mesa ] && [ "$library" = libX11.so.6 ]; then path="/unexpected/$library"; fi
+    printf '%s => %s (0x1234)\n' "$library" "$path"
+  done
+  if [ "$STUB_LDD_MODE" = missing-zero ]; then printf 'libmissing.so.1 => not found\n'; fi
+elif [ "$object" = "$SNAP/usr/lib/git-core/git-remote-http" ]; then
+  path="$SNAP/usr/lib/git-core/../$SNAP_LAUNCHER_ARCH_TRIPLET/libcurl-gnutls.so.4"
+  if [ "$STUB_LDD_MODE" = wrong-curl ]; then path=/unexpected/libcurl-gnutls.so.4; fi
+  printf 'libcurl-gnutls.so.4 => %s (0x1234)\n' "$path"
+else
+  printf 'libgstreamer-1.0.so.0 => %s/usr/lib/%s/libgstreamer-1.0.so.0 (0x1234)\n' "$SNAP_DESKTOP_RUNTIME" "$SNAP_LAUNCHER_ARCH_TRIPLET"
+fi
+''');
+    _writeFixtureExecutable(
+      '$snap/usr/bin/git',
+      '#!/bin/sh\nprintf "%s\\n" "\$GIT_EXEC_PATH"\n',
+    );
+    _writeFixtureExecutable(
+      '$snap/usr/bin/ssh',
+      '#!/bin/sh\nprintf "OpenSSH fixture\\n" >&2\n',
+    );
+    _writeFixtureExecutable('$snap/usr/bin/setsid', '#!/bin/sh\n');
+    final result = Process.runSync(
+      'bash',
+      ['-c', _sharedRuntimeValidationBody()],
+      environment: {
+        ...Platform.environment,
+        'PATH': '$stubBin:${Platform.environment['PATH']}',
+        'SNAP': snap,
+        'SNAP_DESKTOP_RUNTIME': gnome,
+        'SNAP_LAUNCHER_ARCH_TRIPLET': triplet,
+        'STUB_LDD_MODE': mode,
+        'STUB_INSPECTION_SHELL': shell,
+      },
+    );
+    return result;
+  } finally {
+    fixture.deleteSync(recursive: true);
+  }
 }

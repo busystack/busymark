@@ -4,6 +4,7 @@ import 'package:path/path.dart' as p;
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../app/busymark_design.dart';
+import '../../app/busymark_search_field.dart';
 import '../../app/busymark_glyphs.dart';
 import '../../app/localization.dart';
 import '../../writerside/writerside_model.dart';
@@ -94,15 +95,20 @@ class _WritersideTopicRenameDialogState
     children: [
       Text(widget.currentFileName),
       const SizedBox(height: BusyMarkSpacing.sm),
-      TextField(
-        controller: _controller,
-        autofocus: true,
-        decoration: InputDecoration(
-          labelText: context.l10n.fileName,
-          errorText: _error,
-        ),
-        onChanged: (_) => setState(() {}),
-        onSubmitted: (_) => _submit(WritersideTopicRenameDialogAction.refactor),
+      BusyMarkGroupedList(
+        filled: true,
+        children: [
+          BusyMarkGroupedTextEntry(
+            controller: _controller,
+            autofocus: true,
+            label: context.l10n.fileName,
+            errorText: _error,
+            textDirection: TextDirection.ltr,
+            onChanged: (_) => setState(() {}),
+            onSubmitted: (_) =>
+                _submit(WritersideTopicRenameDialogAction.refactor),
+          ),
+        ],
       ),
     ],
   );
@@ -321,12 +327,18 @@ class _WritersideTocTextDialogState extends State<WritersideTocTextDialog> {
             ),
           ],
     children: [
-      TextField(
-        controller: _controller,
-        autofocus: true,
-        decoration: InputDecoration(labelText: widget.label, errorText: _error),
-        onChanged: (_) => setState(() {}),
-        onSubmitted: (_) => _submit(),
+      BusyMarkGroupedList(
+        filled: true,
+        children: [
+          BusyMarkGroupedTextEntry(
+            controller: _controller,
+            autofocus: true,
+            label: widget.label,
+            errorText: _error,
+            onChanged: (_) => setState(() {}),
+            onSubmitted: (_) => _submit(),
+          ),
+        ],
       ),
     ],
   );
@@ -390,9 +402,10 @@ class _WritersideExistingTopicPickerState
             }
             return KeyEventResult.handled;
           },
-          child: TextField(
+          child: BusyMarkSearchField(
             autofocus: true,
-            decoration: InputDecoration(hintText: context.l10n.search),
+            hintText: context.l10n.search,
+            onEscape: () => Navigator.pop(context),
             onChanged: (value) => setState(() {
               _query = value;
               _selected = 0;
@@ -409,10 +422,14 @@ class _WritersideExistingTopicPickerState
             itemExtent: 48,
             children: [
               for (var index = 0; index < topics.length; index++)
-                ListTile(
-                  selected: index == _selected,
-                  title: Text(topics[index].fileName),
-                  onTap: () => Navigator.pop(context, topics[index]),
+                ColoredBox(
+                  color: index == _selected
+                      ? Theme.of(context).colorScheme.secondaryContainer
+                      : BusyMarkLinuxPalette.transparent,
+                  child: BusyMarkActionRow(
+                    title: topics[index].fileName,
+                    onTap: () => Navigator.pop(context, topics[index]),
+                  ),
                 ),
             ],
           ),

@@ -75,6 +75,7 @@ class WindowControlService extends ChangeNotifier {
   final NativeWindowController _nativeWindow;
   WindowListener? _listener;
   Future<void> Function()? _onCloseRequest;
+  Future<void>? _pendingCloseRequest;
   var _closeInProgress = false;
   var _initialized = false;
   var _disposed = false;
@@ -169,12 +170,21 @@ class WindowControlService extends ChangeNotifier {
     await _nativeWindow.close();
   }
 
-  void _handleNativeCloseRequest() {
+  Future<void> requestClose() {
+    if (_disposed) return Future<void>.value();
+    final pending = _pendingCloseRequest;
+    if (pending != null) return pending;
     final handler = _onCloseRequest;
-    if (handler != null) {
-      unawaited(handler());
-    }
+    if (handler == null) return Future<void>.value();
+    late final Future<void> request;
+    request = Future<void>.sync(handler).whenComplete(() {
+      if (identical(_pendingCloseRequest, request)) _pendingCloseRequest = null;
+    });
+    _pendingCloseRequest = request;
+    return request;
   }
+
+  void _handleNativeCloseRequest() => unawaited(requestClose());
 
   void _setFullScreen(bool value) {
     if (_disposed || _fullScreen == value) {

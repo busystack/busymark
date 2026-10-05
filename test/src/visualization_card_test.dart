@@ -1,5 +1,8 @@
+import 'package:busymark/src/app/busymark_design.dart';
+import 'package:busymark/src/app/busymark_dialogs.dart';
+import 'package:busymark/src/platform/linux_header_bar_service.dart';
+import 'package:flutter/services.dart';
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:busymark/l10n/generated/app_localizations.dart';
 import 'package:busymark/src/visualization/visualization_cache.dart';
@@ -27,6 +30,75 @@ void main() {
     }
   });
 
+  testWidgets(
+    'full-screen diagram coordinates its modal and preserves pan/zoom',
+    (tester) async {
+      final coordinator = VisualizationCoordinator(
+        renderers: const [_CardRenderer()],
+        cache: _MemoryVisualizationCache(cacheDirectory),
+      );
+      addTearDown(coordinator.dispose);
+      final barrier = _VisualizationModalBarrier();
+      final previousFocus = FocusNode();
+      addTearDown(previousFocus.dispose);
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            visualizationCoordinatorProvider.overrideWithValue(coordinator),
+            linuxHeaderBarServiceProvider.overrideWithValue(barrier),
+          ],
+          child: _App(
+            child: Focus(
+              focusNode: previousFocus,
+              child: _CardHarness(onDiagnosticSelected: (_) {}),
+            ),
+          ),
+        ),
+      );
+      await _pumpUntilFound(tester, find.byType(SvgPicture));
+      previousFocus.requestFocus();
+      await tester.pump();
+      final preview = tester.widget<InteractiveViewer>(
+        find.byType(InteractiveViewer),
+      );
+      final previewTransform = preview.transformationController!.value.clone();
+      await tester.tap(find.byTooltip('Full Screen'));
+      await tester.pumpAndSettle();
+      expect(barrier.depths, [1]);
+      expect(find.byType(BusyMarkModalShortcutBoundary), findsOneWidget);
+      expect(find.byType(BusyMarkDialogTitleBar), findsOneWidget);
+      final viewer = tester.widget<InteractiveViewer>(
+        find.byType(InteractiveViewer).last,
+      );
+      expect(viewer.panEnabled, isTrue);
+      expect(viewer.scaleEnabled, isTrue);
+      expect(
+        tester.getSize(find.byType(BusyMarkDialogTitleBar)).width,
+        tester.view.physicalSize.width / tester.view.devicePixelRatio,
+      );
+      expect(
+        tester.getSize(find.byType(InteractiveViewer).last).height,
+        greaterThan(140),
+      );
+      viewer.transformationController!.value = Matrix4.diagonal3Values(2, 2, 1);
+      await tester.pump();
+      expect(viewer.transformationController!.value.getMaxScaleOnAxis(), 2);
+      await tester.tap(find.bySemanticsLabel('Close').last);
+      await tester.pumpAndSettle();
+      expect(barrier.depths, [1, 0]);
+      expect(find.byType(BusyMarkDialogTitleBar), findsNothing);
+      expect(preview.transformationController!.value, previewTransform);
+      expect(previousFocus.hasFocus, isTrue);
+      expect(tester.takeException(), isNull);
+      await tester.tap(find.byTooltip('Full Screen'));
+      await tester.pumpAndSettle();
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pumpAndSettle();
+      expect(barrier.depths, [1, 0, 1, 0]);
+      expect(find.byType(InteractiveViewer), findsOneWidget);
+      expect(previousFocus.hasFocus, isTrue);
+    },
+  );
   testWidgets('retains the last valid diagram and navigates new diagnostics', (
     tester,
   ) async {
@@ -445,4 +517,10 @@ class _OpenReferenceHost implements WebRenderHost {
     required VisualizationTheme theme,
     required VisualizationCancellationToken cancellationToken,
   }) => throw UnimplementedError();
+}
+
+class _VisualizationModalBarrier extends LinuxHeaderBarService {
+  final depths = <int>[];
+  @override
+  Future<void> setModalBarrierDepth(int value) async => depths.add(value);
 }

@@ -4583,6 +4583,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get spellingCheckFailed => 'Yazım denetimi başarısız oldu';
 
   @override
+  String get spellingSettingsLoadFailed =>
+      'Yazım denetimi ayarları yüklenemedi';
+
+  @override
+  String get retrySpellingSettings => 'Yazım denetimi ayarlarını yeniden yükle';
+
+  @override
   String get spellingCheckIncomplete => 'Yazım denetimi tamamlanmadı';
 
   @override
@@ -4645,4 +4652,13 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get spellingDictionaryRecoveryConflict =>
       'Yazım sözlüğü harici olarak değiştirildi. Bir kurtarma kopyası korundu.';
+
+  @override
+  String get windowMinimize => 'Simge durumuna küçült';
+
+  @override
+  String get windowMaximize => 'Ekranı kapla';
+
+  @override
+  String get windowRestore => 'Geri yükle';
 }

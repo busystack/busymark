@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'dart:ui' show BoxHeightStyle, CheckedState;
+import 'dart:ui' show CheckedState;
 
 import 'package:busymark/l10n/generated/app_localizations.dart';
 import 'package:busymark/l10n/generated/app_localizations_de.dart';
@@ -2918,52 +2918,39 @@ void main() {}
     );
 
     final paintBox = tester.renderObject<RenderBox>(painterFinder.at(1));
-    final painterText =
-        TextPainter(
-          text: TextSpan(
-            text: firstParagraph,
-            style: painter.style as TextStyle,
-          ),
-          strutStyle: StrutStyle.fromTextStyle(painter.style as TextStyle),
-          textDirection: painter.textDirection as TextDirection,
-          textScaler: painter.textScaler as TextScaler,
-          locale: painter.locale as Locale?,
-        )..layout(
-          maxWidth: paintBox.size.width - (painter.layoutWidthInset as double),
-        );
-    final highlightBoxes = painterText.getBoxesForSelection(
-      TextSelection(
-        baseOffset: exampleStart,
-        extentOffset: exampleStart + 'example.'.length,
-      ),
-      boxHeightStyle: BusyMarkDocumentTextGeometry.selectionHeightStyle,
-      boxWidthStyle: BusyMarkDocumentTextGeometry.selectionWidthStyle,
+    final canvas = TestRecordingCanvas();
+    customPaint.painter!.paint(canvas, paintBox.size);
+    final highlightRects = [
+      for (final call in canvas.invocations)
+        if (call.invocation.memberName == #drawRect)
+          call.invocation.positionalArguments.first as Rect,
+    ];
+    final expectedBoxes = renderEditable.getBoxesForSelection(
+      const TextSelection(baseOffset: 0, extentOffset: firstParagraph.length),
     );
-    final tightHighlightBoxes = painterText.getBoxesForSelection(
-      TextSelection(
-        baseOffset: exampleStart,
-        extentOffset: exampleStart + 'example.'.length,
-      ),
-      boxHeightStyle: BoxHeightStyle.tight,
-      boxWidthStyle: BusyMarkDocumentTextGeometry.selectionWidthStyle,
-    );
-    painterText.dispose();
-
-    expect(highlightBoxes, hasLength(exampleBoxes.length));
-    expect(tightHighlightBoxes, hasLength(highlightBoxes.length));
-    for (var index = 0; index < exampleBoxes.length; index += 1) {
-      expect(highlightBoxes[index].top, closeTo(exampleBoxes[index].top, 0.01));
-      expect(
-        highlightBoxes[index].bottom,
-        closeTo(exampleBoxes[index].bottom, 0.01),
+    expect(highlightRects, hasLength(expectedBoxes.length));
+    for (var index = 0; index < expectedBoxes.length; index += 1) {
+      final box = expectedBoxes[index];
+      final expectedRect = Rect.fromPoints(
+        paintBox.globalToLocal(
+          renderEditable.localToGlobal(Offset(box.left, box.top)),
+        ),
+        paintBox.globalToLocal(
+          renderEditable.localToGlobal(Offset(box.right, box.bottom)),
+        ),
+      );
+      expect(highlightRects[index].left, closeTo(expectedRect.left, 0.01));
+      expect(highlightRects[index].right, closeTo(expectedRect.right, 0.01));
+      expect(highlightRects[index].top, closeTo(expectedRect.top, 0.01));
+      expect(highlightRects[index].bottom, closeTo(expectedRect.bottom, 0.01));
+    }
+    for (final box in exampleBoxes) {
+      final center = paintBox.globalToLocal(
+        renderEditable.localToGlobal(box.toRect().center),
       );
       expect(
-        highlightBoxes[index].top,
-        lessThan(tightHighlightBoxes[index].top),
-      );
-      expect(
-        highlightBoxes[index].bottom,
-        greaterThan(tightHighlightBoxes[index].bottom),
+        highlightRects.any((rect) => rect.inflate(0.01).contains(center)),
+        isTrue,
       );
     }
   });
@@ -5296,6 +5283,390 @@ void main() {}
       debugNetworkImageHttpClientProvider = previousHttpClientProvider;
     }
   });
+
+  for (final mode in MarkdownMode.values) {
+    test('WYSIWYG Enter recognizes a pasted bare URL in ${mode.name}', () {
+      const url = 'https://example.com';
+      final parsed = parser.parseInlineFragment(source: url, mode: mode);
+      expect(parsed.single.kind, BusyInlineKind.link);
+      expect(parsed.single.plainText, url);
+      expect(parsed.single.destination, url);
+
+      final controller = BusyMarkWysiwygDocumentController(
+        document: parser
+            .parse(filePath: 'topic.md', source: '', mode: mode)
+            .busyDocument,
+      );
+      addTearDown(controller.dispose);
+      final id = controller.document.blocks.single.id;
+      controller.updateBlockText(id, url);
+      expect(
+        busyInlineStyleRanges(controller.document.blocks.single.inlines),
+        isEmpty,
+      );
+
+      final result = controller.applyEnterAt(id, url.length)!;
+      final completed = controller.document.blocks.first;
+      final link = completed.inlines.single;
+      expect(link.kind, BusyInlineKind.link);
+      expect(link.plainText, url);
+      expect(link.destination, url);
+      final range = busyInlineStyleRanges(completed.inlines).single;
+      expect(range.kind, BusyInlineKind.link);
+      expect((range.start, range.end), (0, url.length));
+      final next = controller.document.blocks.last;
+      expect(next.kind, BusyBlockKind.paragraph);
+      expect(next.plainText, isEmpty);
+      expect(busyInlineStyleRanges(next.inlines), isEmpty);
+      expect(result.blockId, next.id);
+      expect(result.offset, 0);
+      expect(controller.markdown, '$url\n\n');
+    });
+  }
+
+  test(
+    'WYSIWYG Enter uses parser URL boundaries without parsing other syntax',
+    () {
+      for (final mode in [
+        MarkdownMode.commonMark,
+        MarkdownMode.writersideMarkdown,
+      ]) {
+        for (final text in [
+          'https://example.com.',
+          '(https://example.com/a_(b)).',
+          'https://example.com/a_b?q=x&next=y#part',
+          'https://example.com/a%20b?x=1&y=two+words',
+          'https://example.com/a*b?q=_value_&next=ok',
+          'www.example.com/path,',
+          'ftp://example.com/path!',
+          'prefixhttps://example.com',
+        ]) {
+          final expected = busyInlineStyleRanges(
+            parser.parseInlineFragment(source: text, mode: mode),
+          ).where((range) => range.kind == BusyInlineKind.link).toList();
+          final controller = BusyMarkWysiwygDocumentController(
+            document: parser
+                .parse(filePath: 'topic.md', source: '', mode: mode)
+                .busyDocument,
+          );
+          addTearDown(controller.dispose);
+          final id = controller.document.blocks.single.id;
+          controller.updateBlockText(id, text);
+          controller.applyEnterAt(id, text.length);
+          final actual = busyInlineStyleRanges(
+            controller.document.blocks.first.inlines,
+          );
+          expect(controller.document.blocks.first.plainText, text);
+          expect(
+            actual.map((range) => (range.start, range.end, range.destination)),
+            expected.map(
+              (range) => (range.start, range.end, range.destination),
+            ),
+            reason: text,
+          );
+        }
+      }
+    },
+  );
+
+  test(
+    'WYSIWYG Enter excludes code and keeps explicit equal-label links explicit',
+    () {
+      const url = 'https://example.com';
+      const source = '`$url` [$url]($url) [other](https://other.example)';
+      final controller = BusyMarkWysiwygDocumentController(
+        document: parser
+            .parse(filePath: 'topic.md', source: '$source\n')
+            .busyDocument,
+      );
+      addTearDown(controller.dispose);
+      final block = controller.document.blocks.single;
+      controller.applyEnterAt(block.id, block.plainText.length);
+      final inlines = controller.document.blocks.first.inlines;
+      expect(inlines.first.kind, BusyInlineKind.code);
+      final links = inlines
+          .where((inline) => inline.kind == BusyInlineKind.link)
+          .toList();
+      expect(links, hasLength(2));
+      expect(
+        busyInlineStyleRanges(
+          inlines,
+        ).where((range) => range.kind == BusyInlineKind.link),
+        hasLength(2),
+      );
+      expect(links.first.plainText, url);
+      expect(links.first.destination, url);
+      expect(
+        links.every(
+          (link) => !link.attributes.containsKey(busyMarkBareUrlAttribute),
+        ),
+        isTrue,
+      );
+      expect(controller.markdown, '$source\n\n');
+      final anchored = BusyMarkWysiwygDocumentController(
+        document: const BusyDocument(
+          filePath: 'anchor.md',
+          mode: MarkdownMode.commonMark,
+          blocks: [
+            BusyBlock(
+              id: 'anchor',
+              kind: BusyBlockKind.paragraph,
+              inlines: [
+                BusyInline(kind: BusyInlineKind.text, text: url),
+                BusyInline(
+                  kind: BusyInlineKind.link,
+                  text: '',
+                  destination: 'docs.md',
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
+      addTearDown(anchored.dispose);
+      anchored.applyEnterAt('anchor', url.length);
+      final anchoredInlines = anchored.document.blocks.first.inlines;
+      expect(anchoredInlines.first.kind, BusyInlineKind.text);
+      expect(anchoredInlines.last.kind, BusyInlineKind.link);
+      expect(anchoredInlines.last.destination, 'docs.md');
+
+      controller.updateBlockText(block.id, '${block.plainText}!');
+      expect(controller.markdown, contains('[$url]($url)'));
+      expect(
+        controller.document.blocks.first.inlines
+            .where((inline) => inline.kind == BusyInlineKind.link)
+            .first
+            .destination,
+        url,
+      );
+
+      final code = BusyMarkWysiwygDocumentController(
+        document: parser
+            .parse(filePath: 'code.md', source: '```text\n$url\n```\n')
+            .busyDocument,
+      );
+      addTearDown(code.dispose);
+      final codeBlock = code.document.blocks.first;
+      final result = code.applyEnterAt(codeBlock.id, url.length)!;
+      expect(result.blockId, codeBlock.id);
+      expect(result.offset, url.length + 1);
+      expect(code.document.blocks.first.plainText, '$url\n');
+      expect(
+        busyInlineStyleRanges(code.document.blocks.first.inlines),
+        isEmpty,
+      );
+    },
+  );
+
+  test(
+    'bare URL destinations follow edits and splits while explicit destinations stay authored',
+    () {
+      const url = 'https://example.com';
+      final controller = BusyMarkWysiwygDocumentController(
+        document: parser.parse(filePath: 'topic.md', source: '').busyDocument,
+      );
+      addTearDown(controller.dispose);
+      final id = controller.document.blocks.single.id;
+      controller.updateBlockText(id, url);
+      controller.applyEnterAt(id, url.length);
+      const edited = '$url/path?q=one&next=two#part';
+      controller.updateBlockText(id, edited);
+      var link = controller.document.blocks.first.inlines.single;
+      expect(link.destination, edited);
+      expect(link.attributes[busyMarkBareUrlAttribute], 'true');
+      expect(controller.markdown, '$edited\n\n');
+      controller.updateBlockText(id, '$edited.');
+      link = controller.document.blocks.first.inlines.first;
+      expect(link.plainText, edited);
+      expect(link.destination, edited);
+      expect(controller.document.blocks.first.inlines.last.plainText, '.');
+      expect(controller.markdown, '$edited.\n\n');
+      controller.updateBlockText(id, edited);
+      final nextId = controller.applyEnterAt(id, url.length)!.blockId;
+      expect(controller.blockById(id)!.inlines.single.destination, url);
+      expect(
+        controller.blockById(nextId)!.plainText,
+        '/path?q=one&next=two#part',
+      );
+      expect(
+        busyInlineStyleRanges(controller.blockById(nextId)!.inlines),
+        isEmpty,
+      );
+      final joined = controller.applyBackspaceAtStart(nextId)!;
+      expect((joined.blockId, joined.offset), (id, url.length));
+      expect(controller.blockById(id)!.plainText, edited);
+      final joinedLink = busyInlineStyleRanges(
+        controller.blockById(id)!.inlines,
+      ).where((range) => range.kind == BusyInlineKind.link).single;
+      expect(
+        (joinedLink.start, joinedLink.end, joinedLink.destination),
+        (0, edited.length, edited),
+      );
+      expect(controller.markdown, '$edited\n\n');
+      final splitAgain = controller.splitBlockAt(id, 'https://exa'.length)!;
+      expect(busyInlineStyleRanges(controller.blockById(id)!.inlines), isEmpty);
+      expect(
+        busyInlineStyleRanges(controller.blockById(splitAgain)!.inlines),
+        isEmpty,
+      );
+
+      final explicit = BusyMarkWysiwygDocumentController(
+        document: parser
+            .parse(filePath: 'explicit.md', source: '[$url]($url)\n')
+            .busyDocument,
+      );
+      addTearDown(explicit.dispose);
+      explicit.updateBlockText(explicit.document.blocks.first.id, '$url/path');
+      expect(explicit.document.blocks.first.inlines.single.destination, url);
+      expect(explicit.markdown, '[$url/path]($url)\n');
+    },
+  );
+
+  test(
+    'rejoining only extends existing bare URLs and preserves code and explicit links',
+    () {
+      const url = 'https://example.com';
+      final plain = BusyMarkWysiwygDocumentController(
+        document: parser.parse(filePath: 'topic.md', source: '').busyDocument,
+      );
+      addTearDown(plain.dispose);
+      final id = plain.document.blocks.single.id;
+      plain.updateBlockText(id, '$url/path');
+      final second = plain.splitBlockAt(id, url.length)!;
+      plain.applyBackspaceAtStart(second);
+      expect(plain.document.blocks.single.plainText, '$url/path');
+      expect(
+        busyInlineStyleRanges(plain.document.blocks.single.inlines),
+        isEmpty,
+      );
+      for (final code in [false, true]) {
+        final document = code
+            ? const BusyDocument(
+                filePath: 'topic.md',
+                mode: MarkdownMode.commonMark,
+                blocks: [
+                  BusyBlock(
+                    id: 'first',
+                    kind: BusyBlockKind.paragraph,
+                    inlines: [
+                      BusyInline(
+                        kind: BusyInlineKind.link,
+                        text: url,
+                        destination: url,
+                        attributes: {busyMarkBareUrlAttribute: 'true'},
+                      ),
+                    ],
+                  ),
+                  BusyBlock(
+                    id: 'second',
+                    kind: BusyBlockKind.paragraph,
+                    inlines: [
+                      BusyInline(kind: BusyInlineKind.code, text: '/path'),
+                    ],
+                  ),
+                ],
+              )
+            : parser
+                  .parse(
+                    filePath: 'topic.md',
+                    source: '[$url]($url)\n\n/path\n',
+                  )
+                  .busyDocument;
+        final controller = BusyMarkWysiwygDocumentController(
+          document: document,
+        );
+        addTearDown(controller.dispose);
+        controller.applyBackspaceAtStart(document.blocks.last.id);
+        final block = controller.document.blocks.single;
+        final ranges = busyInlineStyleRanges(block.inlines);
+        final link = ranges
+            .where((range) => range.kind == BusyInlineKind.link)
+            .single;
+        expect((link.start, link.end, link.destination), (0, url.length, url));
+        expect(block.plainText, '$url/path');
+        if (code) {
+          expect(
+            ranges
+                .where((range) => range.kind == BusyInlineKind.code)
+                .single
+                .start,
+            url.length,
+          );
+        } else {
+          expect(controller.markdown, '[$url]($url)/path\n');
+        }
+      }
+    },
+  );
+
+  test(
+    'structural URL slices update derived destinations and link editing authors an explicit destination',
+    () {
+      const url = 'https://example.com';
+      final controller = BusyMarkWysiwygDocumentController(
+        document: parser
+            .parse(filePath: 'topic.md', source: '$url/path\n')
+            .busyDocument,
+      );
+      addTearDown(controller.dispose);
+      final id = controller.document.blocks.single.id;
+      controller.insertStyledBlocksAtSelection(
+        blockId: id,
+        selectionStart: url.length,
+        selectionEnd: '$url/path'.length,
+        blocks: const [
+          BusyWysiwygStyledBlock(
+            kind: BusyBlockKind.paragraph,
+            text: ' suffix',
+            ranges: [],
+          ),
+        ],
+      );
+      final link = controller.document.blocks.single.inlines.first;
+      expect(link.kind, BusyInlineKind.link);
+      expect(link.plainText, url);
+      expect(link.destination, url);
+      expect(controller.markdown, '$url suffix\n');
+      expect(
+        busyInlineStyleRanges(controller.document.blocks.single.inlines),
+        hasLength(1),
+      );
+      controller.applyInlineCommand(
+        id,
+        BusyWysiwygInlineCommand.link,
+        0,
+        url.length,
+        destination: 'https://edited.example',
+      );
+      final authored = controller.document.blocks.single.inlines.first;
+      expect(authored.destination, 'https://edited.example');
+      expect(authored.attributes, isNot(contains(busyMarkBareUrlAttribute)));
+      expect(controller.markdown, '[$url](https://edited.example) suffix\n');
+      final rich = BusyMarkWysiwygDocumentController(
+        document: parser
+            .parse(filePath: 'rich.md', source: '$url/path\n')
+            .busyDocument,
+      );
+      addTearDown(rich.dispose);
+      rich.insertStyledBlocksAtSelection(
+        blockId: rich.document.blocks.single.id,
+        selectionStart: url.length,
+        selectionEnd: '$url/path'.length,
+        blocks: const [
+          BusyWysiwygStyledBlock(
+            kind: BusyBlockKind.paragraph,
+            text: '/new?q=x&next=y',
+            ranges: [],
+          ),
+        ],
+      );
+      expect(
+        rich.document.blocks.single.inlines.single.destination,
+        '$url/new?q=x&next=y',
+      );
+      expect(rich.markdown, '$url/new?q=x&next=y\n');
+    },
+  );
 
   test('WYSIWYG Enter splits one block into separate Markdown paragraphs', () {
     final parsed = parser.parse(filePath: 'topic.md', source: 'FirstSecond\n');

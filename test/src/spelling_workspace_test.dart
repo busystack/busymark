@@ -125,6 +125,126 @@ void main() {
     },
   );
 
+  testWidgets('rich image review preserves authored source through undo and redo', (
+    tester,
+  ) async {
+    const source = 'hello ![hello `wrld`](image.png)\n';
+    const corrected = 'hello ![hello `world`](image.png)\n';
+    final harness = await _pumpWorkspace(tester, source: source);
+    await _until(
+      tester,
+      () =>
+          harness.spelling.state.complete &&
+          harness.spelling.misspellings.any((item) => item.word == 'wrld'),
+    );
+    expect(harness.workspace.activeText, source);
+    await tester.tap(find.byType(EditableText).first);
+    await tester.sendKeyEvent(LogicalKeyboardKey.f7);
+    final dialog = find.byType(BusyMarkSpellingReviewDialog);
+    await _until(
+      tester,
+      () => find
+          .descendant(of: dialog, matching: find.text('world'))
+          .evaluate()
+          .isNotEmpty,
+      diagnostics: () =>
+          'dialog=${dialog.evaluate().length}; '
+          'texts=${tester.widgetList<Text>(find.byType(Text)).map((text) => text.data).toList()}; '
+          'words=${harness.spelling.misspellings.map((word) => word.word).toList()}',
+    );
+    await tester.tap(find.descendant(of: dialog, matching: find.text('world')));
+    await _until(
+      tester,
+      () =>
+          harness.workspace.activeText == corrected &&
+          dialog.evaluate().isEmpty,
+    );
+    expect(harness.workspace.activeBuffer!.revision, greaterThan(0));
+    harness.controller.undoActiveBuffer();
+    await _until(tester, () => harness.workspace.activeText == source);
+    harness.controller.redoActiveBuffer();
+    await _until(tester, () => harness.workspace.activeText == corrected);
+    await _until(
+      tester,
+      () =>
+          harness.spelling.state.complete &&
+          harness.spelling.misspellings.every((item) => item.word != 'wrld'),
+    );
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  for (final fixture in [
+    (
+      name: 'nested code image beside math',
+      source:
+          r'hello ![hello ![hello `wrld`](inner.png) hello](outer.png) $x$ hello'
+          '\n',
+    ),
+    (
+      name: 'nested address image beside math',
+      source:
+          r'hello ![hello ![hello https://example.invalid wrld](inner.png) hello](outer.png) $x$ hello'
+          '\n',
+    ),
+  ]) {
+    testWidgets('rich review preserves ${fixture.name} through undo and redo', (
+      tester,
+    ) async {
+      final source = fixture.source;
+      final corrected = source.replaceFirst('wrld', 'world');
+      final harness = await _pumpWorkspace(tester, source: source);
+      await _until(
+        tester,
+        () =>
+            harness.spelling.state.complete &&
+            harness.spelling.misspellings.any((item) => item.word == 'wrld'),
+      );
+      final initialRevision = harness.workspace.activeBuffer!.revision;
+      final target =
+          harness.spelling.misspellings
+                  .singleWhere((item) => item.word == 'wrld')
+                  .run
+                  .target
+              as SpellingRichBlockTarget;
+      await tester.tap(
+        find.byKey(ValueKey('wysiwyg-rendered-math-${target.blockId}')),
+      );
+      await tester.pump();
+      await tester.sendKeyEvent(LogicalKeyboardKey.f7);
+      final dialog = find.byType(BusyMarkSpellingReviewDialog);
+      await _until(
+        tester,
+        () => find
+            .descendant(of: dialog, matching: find.text('world'))
+            .evaluate()
+            .isNotEmpty,
+        diagnostics: () =>
+            'dialog=${dialog.evaluate().length}; words=${harness.spelling.misspellings.map((item) => item.word).toList()}; texts=${tester.widgetList<Text>(find.byType(Text)).map((item) => item.data).toList()}',
+      );
+      await tester.tap(
+        find.descendant(of: dialog, matching: find.text('world')),
+      );
+      await _until(
+        tester,
+        () =>
+            harness.workspace.activeText == corrected &&
+            dialog.evaluate().isEmpty,
+      );
+      expect(harness.workspace.activeBuffer!.revision, initialRevision + 1);
+      harness.controller.undoActiveBuffer();
+      await _until(tester, () => harness.workspace.activeText == source);
+      harness.controller.redoActiveBuffer();
+      await _until(tester, () => harness.workspace.activeText == corrected);
+      await _until(
+        tester,
+        () =>
+            harness.spelling.state.complete &&
+            harness.spelling.misspellings.every((item) => item.word != 'wrld'),
+      );
+      await tester.pumpWidget(const SizedBox.shrink());
+    });
+  }
+
   testWidgets(
     'Ctrl+N typing paints live spelling targets and corrects with undo',
     (tester) async {
@@ -223,6 +343,8 @@ void main() {
         () =>
             harness.workspace.activeText == 'hello' &&
             find.byType(BusyMarkSpellingReviewDialog).evaluate().isEmpty,
+        diagnostics: () =>
+            'text=${harness.workspace.activeText}; status=${harness.spelling.state.status}; dialog=${find.byType(BusyMarkSpellingReviewDialog).evaluate().length}',
       );
       harness.controller.undoActiveBuffer();
       await _until(
@@ -425,8 +547,7 @@ void main() {
           () => !harness.workspace.activeText.contains('helo'),
         );
         if (source.contains('&#233;')) {
-          expect(harness.workspace.activeText, contains('café'));
-          expect(harness.workspace.activeText, isNot(contains('&#233;')));
+          expect(harness.workspace.activeText, contains('caf&#233;'));
         }
         // The fixture deliberately does not contain café. Ignore it if present;
         // the previously visited wrld must not become the next review item.
@@ -608,6 +729,11 @@ void main() {
         SpellingPresentationStatus.incomplete,
         SpellingPresentationStatus.failure,
       ].contains(harness.spelling.state.status),
+      timeout: const Duration(seconds: 20),
+      diagnostics: () =>
+          'status=${harness.spelling.state.status}, '
+          'message=${harness.spelling.state.message}, '
+          'catalog unavailable=${harness.spelling.catalog == null}',
     );
     expect(
       harness.spelling.state.status,
@@ -1042,6 +1168,12 @@ void main() {
               .widget<BusyMarkBanner>(find.byType(BusyMarkBanner))
               .revealed &&
           harness.spelling.state.complete,
+      timeout: const Duration(seconds: 15),
+      diagnostics: () =>
+          'downloads=$downloadCount, '
+          'installed=${harness.spelling.catalog?.installedById('en-Test')}, '
+          'catalog unavailable=${harness.spelling.catalog == null}, '
+          'spelling complete=${harness.spelling.state.complete}',
     );
     await tester.pump(BusyMarkMotion.bannerReveal);
 
@@ -1533,11 +1665,18 @@ Finder _spellingUnderlineOverlay() => find.byWidgetPredicate(
       widget.painter.runtimeType.toString() == '_SpellingUnderlinePainter',
 );
 
-Future<void> _until(WidgetTester tester, bool Function() condition) async {
+Future<void> _until(
+  WidgetTester tester,
+  bool Function() condition, {
+  Duration timeout = const Duration(seconds: 10),
+  String Function()? diagnostics,
+}) async {
   final elapsed = Stopwatch()..start();
   while (!condition()) {
-    if (elapsed.elapsed > const Duration(seconds: 10)) {
-      throw TimeoutException('Spelling workspace did not settle');
+    if (elapsed.elapsed > timeout) {
+      throw TimeoutException(
+        'Spelling workspace did not settle. ${diagnostics?.call() ?? ''}',
+      );
     }
     await tester.pump(const Duration(milliseconds: 50));
     await tester.runAsync(

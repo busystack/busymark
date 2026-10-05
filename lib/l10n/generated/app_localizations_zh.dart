@@ -4382,6 +4382,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get spellingCheckFailed => '拼写检查失败';
 
   @override
+  String get spellingSettingsLoadFailed => '无法加载拼写检查设置';
+
+  @override
+  String get retrySpellingSettings => '重试加载拼写检查设置';
+
+  @override
   String get spellingCheckIncomplete => '拼写检查未完成';
 
   @override
@@ -4441,6 +4447,15 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get spellingDictionaryRecoveryConflict => '拼写词典已被外部更改。已保留恢复副本。';
+
+  @override
+  String get windowMinimize => '最小化';
+
+  @override
+  String get windowMaximize => '最大化';
+
+  @override
+  String get windowRestore => '还原';
 }
 
 /// The translations for Chinese, as used in China (`zh_CN`).
@@ -8819,6 +8834,12 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get spellingCheckFailed => '拼写检查失败';
 
   @override
+  String get spellingSettingsLoadFailed => '无法加载拼写检查设置';
+
+  @override
+  String get retrySpellingSettings => '重试加载拼写检查设置';
+
+  @override
   String get spellingCheckIncomplete => '拼写检查未完成';
 
   @override
@@ -8878,4 +8899,13 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get spellingDictionaryRecoveryConflict => '拼写词典已被外部更改。已保留恢复副本。';
+
+  @override
+  String get windowMinimize => '最小化';
+
+  @override
+  String get windowMaximize => '最大化';
+
+  @override
+  String get windowRestore => '还原';
 }

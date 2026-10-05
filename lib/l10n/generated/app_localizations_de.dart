@@ -4623,6 +4623,13 @@ class AppLocalizationsDe extends AppLocalizations {
   String get spellingCheckFailed => 'Rechtschreibprüfung fehlgeschlagen';
 
   @override
+  String get spellingSettingsLoadFailed =>
+      'Rechtschreibeinstellungen konnten nicht geladen werden';
+
+  @override
+  String get retrySpellingSettings => 'Rechtschreibeinstellungen erneut laden';
+
+  @override
   String get spellingCheckIncomplete => 'Rechtschreibprüfung ist unvollständig';
 
   @override
@@ -4685,4 +4692,13 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get spellingDictionaryRecoveryConflict =>
       'Das Rechtschreibwörterbuch wurde extern geändert. Eine Wiederherstellungskopie wurde aufbewahrt.';
+
+  @override
+  String get windowMinimize => 'Minimieren';
+
+  @override
+  String get windowMaximize => 'Maximieren';
+
+  @override
+  String get windowRestore => 'Wiederherstellen';
 }
