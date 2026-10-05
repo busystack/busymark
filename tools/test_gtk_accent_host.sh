@@ -16,4 +16,7 @@ trap 'rm -rf "$fixture_root"' EXIT
   -L"$engine_root" -lflutter_linux_gtk -Wl,-rpath,"$engine_root" \
   -Wl,--wrap=fl_engine_get_binary_messenger \
   -o "$fixture_root/probe"
-G_DEBUG=fatal-warnings "$fixture_root/probe" "$fixture_root/data"
+# The probe enables the AT-SPI bridge and keeps GTK warnings fatal. Give its
+# accessibility service (at-spi2-core) a private bus, including on headless CI.
+dbus-run-session -- env G_DEBUG=fatal-warnings \
+  "$fixture_root/probe" "$fixture_root/data"

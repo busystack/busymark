@@ -31,9 +31,11 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y \
             apparmor-profiles \
+            at-spi2-core \
             bubblewrap \
             clang \
             cmake \
+            dbus-daemon \
             fonts-noto-core \
             fonts-noto-cjk \
             fonts-noto-mono \
