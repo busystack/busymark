@@ -4682,4 +4682,13 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get spellingDictionaryRecoveryConflict =>
       'تم تغيير قاموس التدقيق الإملائي خارجيًا. تم الاحتفاظ بنسخة استرداد.';
+
+  @override
+  String get windowMinimize => 'تصغير';
+
+  @override
+  String get windowMaximize => 'تكبير';
+
+  @override
+  String get windowRestore => 'استعادة';
 }

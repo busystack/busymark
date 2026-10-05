@@ -7865,6 +7865,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The spelling dictionary changed externally. A recovery copy was preserved.'**
   String get spellingDictionaryRecoveryConflict;
+
+  /// Tooltip and accessibility label for minimizing the application window.
+  ///
+  /// In en, this message translates to:
+  /// **'Minimize'**
+  String get windowMinimize;
+
+  /// Tooltip and accessibility label for maximizing the application window.
+  ///
+  /// In en, this message translates to:
+  /// **'Maximize'**
+  String get windowMaximize;
+
+  /// Tooltip and accessibility label for restoring a maximized or fullscreen window to its normal size.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore'**
+  String get windowRestore;
 }
 
 class _AppLocalizationsDelegate

@@ -33,14 +33,14 @@ void main() {
     enabled = true;
     expect(await registry.execute(BusyMarkCommandIds.export), isTrue);
     expect(calls, 1);
-    final native = File('linux/runner/my_application.cc').readAsStringSync();
-    expect(native, contains('"header.export"'));
-    expect(native, isNot(contains('"header.export-html"')));
-    expect(native, isNot(contains('"header.export-pdf"')));
-    expect(native, contains('configuration.can_export_pdf'));
-    expect(native, contains('configuration.can_export_html'));
-    expect(native, contains('"setCanExportPdf"'));
-    expect(native, contains('"setCanExportHtml"'));
+    // The Flutter-owned header uses the shared command registry and menu;
+    // GTK now transports popups rather than defining Export header actions.
+    expect(
+      registry.commands
+          .where((command) => command.id.startsWith(BusyMarkCommandIds.export))
+          .map((command) => command.id),
+      [BusyMarkCommandIds.export],
+    );
   });
 
   testWidgets('Flutter Main menu exposes document export', (tester) async {

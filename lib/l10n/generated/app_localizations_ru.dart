@@ -4708,4 +4708,13 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get spellingDictionaryRecoveryConflict =>
       'Орфографический словарь был изменён извне. Резервная копия для восстановления сохранена.';
+
+  @override
+  String get windowMinimize => 'Свернуть';
+
+  @override
+  String get windowMaximize => 'Развернуть';
+
+  @override
+  String get windowRestore => 'Восстановить';
 }

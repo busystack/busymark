@@ -4711,6 +4711,15 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get spellingDictionaryRecoveryConflict =>
       'O dicionário ortográfico foi alterado externamente. Foi preservada uma cópia de recuperação.';
+
+  @override
+  String get windowMinimize => 'Minimizar';
+
+  @override
+  String get windowMaximize => 'Maximizar';
+
+  @override
+  String get windowRestore => 'Restaurar';
 }
 
 /// The translations for Portuguese, as used in Brazil (`pt_BR`).
@@ -9417,4 +9426,13 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   @override
   String get spellingDictionaryRecoveryConflict =>
       'O dicionário ortográfico foi alterado externamente. Uma cópia de recuperação foi preservada.';
+
+  @override
+  String get windowMinimize => 'Minimizar';
+
+  @override
+  String get windowMaximize => 'Maximizar';
+
+  @override
+  String get windowRestore => 'Restaurar';
 }

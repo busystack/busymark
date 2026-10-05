@@ -17,6 +17,9 @@ import '../../app/app_settings.dart';
 import '../../app/app_locale.dart';
 import '../../app/busymark_dialogs.dart';
 import '../../app/busymark_design.dart';
+import '../../app/busymark_motion_widgets.dart';
+import '../../app/linux/linux_page_frame.dart';
+import '../../app/linux/linux_header_style.dart';
 import '../../app/busymark_glyphs.dart';
 import '../../app/busymark_main_menu.dart';
 import '../../app/busymark_shortcuts.dart';
@@ -92,7 +95,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     _prepareSpellingSettings(spelling, workspace?.id);
     final colors = BusyMarkSurfaceColors.of(context);
     final headerBar = ref.watch(linuxHeaderBarServiceProvider);
-    final useNativeHeaderBar = headerBar.usesNativeHeaderBar;
     final title = _settingsPageLabel(context, _page);
     ref.listen(headerBarActionsProvider, (previous, next) {
       next.whenData((event) {
@@ -470,13 +472,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              if (!useNativeHeaderBar)
-                _SettingsFallbackHeader(
-                  title: title,
-                  onBack: _goBack,
-                  onMenuSelected: (action) =>
-                      _handleMainMenuAction(context, headerBar, action),
-                ),
               if (!showSidebar)
                 Padding(
                   padding: const EdgeInsets.fromLTRB(
@@ -495,27 +490,31 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   maxWidth: BusyMarkSizes.settingsWidth,
                   margin: EdgeInsets.zero,
                   padding: BusyMarkInsets.settingsPage,
-                  child: pageBody,
+                  child: BusyMarkKeyedCrossfade(
+                    transitionKey: _page,
+                    child: pageBody,
+                  ),
                 ),
               ),
             ],
           ),
         );
-        final body = showSidebar
-            ? Row(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  SizedBox(
-                    width: BusyMarkSizes.sidebarWidth,
-                    child: _SettingsSidebar(
-                      selected: _settingsNavigationSelection(_page),
-                      onSelected: _selectPage,
-                    ),
-                  ),
-                  Expanded(child: content),
-                ],
-              )
-            : content;
+        final body = LinuxPageFrame(
+          header: _SettingsFallbackHeader(
+            title: title,
+            onBack: _goBack,
+            onMenuSelected: (action) =>
+                _handleMainMenuAction(context, headerBar, action),
+          ),
+          sidebarHeader: const BusyMarkLinuxBrandHeader(),
+          sidebarBody: _SettingsSidebar(
+            selected: _settingsNavigationSelection(_page),
+            onSelected: _selectPage,
+          ),
+          sidebarAvailable: showSidebar,
+          sidebarExpanded: true,
+          body: content,
+        );
 
         return PopScope(
           canPop: false,
@@ -1382,6 +1381,7 @@ class _SettingsSidebar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BusyMarkSidebarSurface(
+      showEndBorder: false,
       child: BusyMarkSidebarNavigation(
         children: [
           for (final page in _primarySettingsPages)
@@ -1472,37 +1472,15 @@ class _SettingsFallbackHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = BusyMarkSurfaceColors.of(context);
-    return Material(
-      color: colors.window,
-      child: SizedBox(
-        height: BusyMarkSizes.toolbarHeight,
-        child: Row(
-          children: [
-            const SizedBox(width: BusyMarkSpacing.sm),
-            BusyMarkHeaderIconButton(
-              tooltip: context.l10n.back,
-              icon: BusyMarkGlyphs.backFor(Directionality.of(context)),
-              shortcut: BusyMarkAppShortcutLabels.back,
-              onPressed: onBack,
-            ),
-            const SizedBox(width: BusyMarkSpacing.sm),
-            Expanded(
-              child: Text(
-                title,
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(
-                  context,
-                ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
-              ),
-            ),
-            BusyMarkMainMenuButton(onSelected: onMenuSelected),
-            const SizedBox(width: BusyMarkSpacing.sm),
-          ],
-        ),
+    return BusyMarkLinuxHeaderLayout(
+      leading: BusyMarkHeaderIconButton(
+        tooltip: context.l10n.back,
+        icon: BusyMarkGlyphs.backFor(Directionality.of(context)),
+        shortcut: BusyMarkAppShortcutLabels.back,
+        onPressed: onBack,
       ),
+      title: BusyMarkLinuxHeaderTitle(title),
+      trailing: BusyMarkMainMenuButton(onSelected: onMenuSelected),
     );
   }
 }

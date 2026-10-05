@@ -27,6 +27,9 @@ import '../../app/app_settings.dart';
 import '../../app/app_router.dart';
 import '../../app/busymark_dialogs.dart';
 import '../../app/busymark_design.dart';
+import '../../app/busymark_motion_widgets.dart';
+import '../../app/linux/linux_page_frame.dart';
+import '../../app/linux/linux_header_style.dart';
 import '../../app/busymark_glyphs.dart';
 import '../../app/busymark_main_menu.dart';
 import '../../app/busymark_search_field.dart';
@@ -642,6 +645,32 @@ class _SelectSidebarTabIntent extends Intent {
   final _SidebarTab tab;
 }
 
+final _headerSearchFocusRequestProvider =
+    NotifierProvider<_HeaderSearchFocusRequest, int>(
+      _HeaderSearchFocusRequest.new,
+    );
+
+class _HeaderSearchFocusRequest extends Notifier<int> {
+  @override
+  int build() => 0;
+  void request() => state++;
+}
+
+final _searchReturnFocusProvider = Provider<_SearchReturnFocus>(
+  (ref) => _SearchReturnFocus(),
+);
+
+class _SearchReturnFocus {
+  FocusNode? node;
+  void restore() {
+    final target = node;
+    node = null;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (target?.context?.mounted == true) target!.requestFocus();
+    });
+  }
+}
+
 class WorkspaceScreen extends ConsumerWidget {
   const WorkspaceScreen({super.key});
 
@@ -662,7 +691,6 @@ class WorkspaceScreen extends ConsumerWidget {
 
     final colors = BusyMarkSurfaceColors.of(context);
     final headerBar = ref.watch(linuxHeaderBarServiceProvider);
-    final useNativeHeaderBar = headerBar.usesNativeHeaderBar;
     final settingsController = ref.read(appSettingsControllerProvider.notifier);
     final sidebarVisible =
         settings.sidebarVisible && _hasWorkspaceSidebar(workspace);
@@ -672,6 +700,7 @@ class WorkspaceScreen extends ConsumerWidget {
     final sidebar = SizedBox(
       width: BusyMarkSizes.sidebarWidth,
       child: _Sidebar(
+        key: ValueKey(workspace.id),
         workspace: workspace,
         outline: documentOutline,
         searchState: searchState,
@@ -679,59 +708,51 @@ class WorkspaceScreen extends ConsumerWidget {
         onOpenSearchResult: (result) => _openSearchResult(context, ref, result),
       ),
     );
-    final workspaceContent = Expanded(
-      child: Column(
-        children: [
-          if (_shouldShowEditorTabs(state, gitState, localHistoryState))
-            _EditorTabStrip(
-              state: state,
-              gitState: gitState,
-              localHistoryState: localHistoryState,
-            ),
-          Expanded(
-            child: localHistoryState.selectedRevision != null
-                ? const LocalHistoryComparisonView()
-                : gitState.selectedDiffForDisplay == null
-                ? _EditorPreviewSplit(
-                    state: state,
-                    outline: documentOutline,
-                    viewMode: documentViewMode,
-                    editorFontSize: settings.editorFontSize,
-                    editorToolbarPlacement: settings.editorToolbarPlacement,
-                    editorToolbarDirection: settings.editorToolbarDirection,
-                    wordWrap: settings.wordWrap,
-                  )
-                : _GitDiffDocumentView(
-                    diff: gitState.selectedDiffForDisplay,
-                    comparisonLabel: _gitDiffComparisonLabel(context, gitState),
-                    comparisonType: gitState.selectedView == GitView.fileHistory
-                        ? gitState.fileHistory.comparisonType
-                        : null,
-                    comparisonEnabled: !gitState.isRunningOperation,
-                    onComparisonTypeChanged:
-                        gitState.selectedView == GitView.fileHistory
-                        ? (comparison) => unawaited(
-                            _selectFileHistoryComparison(ref, comparison),
-                          )
-                        : null,
-                    openFilePath: gitState.selectedDiffOpenFilePath,
-                    workspace: workspace,
-                    viewMode: documentViewMode,
-                    hasUnsavedEditorChanges: state.isDirty,
-                    editorFontSize: settings.editorFontSize,
-                    onOpenFile: (relativePath) =>
-                        _openGitDiffFile(context, ref, relativePath),
-                  ),
+    final workspaceContent = Column(
+      children: [
+        if (_shouldShowEditorTabs(state, gitState, localHistoryState))
+          _EditorTabStrip(
+            state: state,
+            gitState: gitState,
+            localHistoryState: localHistoryState,
           ),
-        ],
-      ),
+        Expanded(
+          child: localHistoryState.selectedRevision != null
+              ? const LocalHistoryComparisonView()
+              : gitState.selectedDiffForDisplay == null
+              ? _EditorPreviewSplit(
+                  state: state,
+                  outline: documentOutline,
+                  viewMode: documentViewMode,
+                  editorFontSize: settings.editorFontSize,
+                  editorToolbarPlacement: settings.editorToolbarPlacement,
+                  editorToolbarDirection: settings.editorToolbarDirection,
+                  wordWrap: settings.wordWrap,
+                )
+              : _GitDiffDocumentView(
+                  diff: gitState.selectedDiffForDisplay,
+                  comparisonLabel: _gitDiffComparisonLabel(context, gitState),
+                  comparisonType: gitState.selectedView == GitView.fileHistory
+                      ? gitState.fileHistory.comparisonType
+                      : null,
+                  comparisonEnabled: !gitState.isRunningOperation,
+                  onComparisonTypeChanged:
+                      gitState.selectedView == GitView.fileHistory
+                      ? (comparison) => unawaited(
+                          _selectFileHistoryComparison(ref, comparison),
+                        )
+                      : null,
+                  openFilePath: gitState.selectedDiffOpenFilePath,
+                  workspace: workspace,
+                  viewMode: documentViewMode,
+                  hasUnsavedEditorChanges: state.isDirty,
+                  editorFontSize: settings.editorFontSize,
+                  onOpenFile: (relativePath) =>
+                      _openGitDiffFile(context, ref, relativePath),
+                ),
+        ),
+      ],
     );
-    final sidebarOnRight = Directionality.of(context) == TextDirection.rtl;
-    final workspaceChildren = [
-      if (!sidebarOnRight && sidebarVisible) sidebar,
-      workspaceContent,
-      if (sidebarOnRight && sidebarVisible) sidebar,
-    ];
     ref.listen(headerBarActionsProvider, (previous, next) {
       next.whenData((event) {
         _handleHeaderBarAction(context, ref, event.action);
@@ -821,7 +842,7 @@ class WorkspaceScreen extends ConsumerWidget {
     final headerConfiguration = HeaderBarConfigurationDefaults.of(context)
         .copyWith(
           title: busyMarkBidiIsolateFor(context, title),
-          viewMode: _headerBarViewMode(settings.documentViewMode),
+          viewMode: _headerBarViewMode(documentViewMode),
           searchQuery: searchState.query,
           canRefresh: true,
           canExportPdf: canExportPdf,
@@ -901,167 +922,185 @@ class WorkspaceScreen extends ConsumerWidget {
             autofocus: true,
             child: Scaffold(
               backgroundColor: colors.window,
-              appBar: useNativeHeaderBar
-                  ? null
-                  : AppBar(
-                      automaticallyImplyLeading: false,
-                      leading: searchState.active
-                          ? null
-                          : Center(
-                              child: BusyMarkHeaderIconButton(
-                                tooltip: context.l10n.welcome,
-                                icon: BusyMarkGlyphs.home,
-                                shortcut:
-                                    commandRegistry[BusyMarkCommandIds.back]
-                                        ?.shortcut
-                                        ?.label,
-                                onPressed: () async {
-                                  final router = GoRouter.of(context);
-                                  if (await confirmSafeToContinue(
-                                    context,
-                                    ref,
-                                  )) {
-                                    router.go('/');
-                                  }
-                                },
-                              ),
-                            ),
-                      title: searchState.active
-                          ? _HeaderSearchField(
-                              query: searchState.query,
-                              onChanged: (query) => _setSearchQuery(ref, query),
-                              onClear: () => _clearSearchQuery(ref),
-                              onSubmitted: () =>
-                                  unawaited(_submitSearch(context, ref)),
-                              onEscape: () => _closeSearch(ref),
-                            )
-                          : _HeaderTitle(
-                              title: _activeFileName(
-                                context,
-                                workspace,
-                                state.activeBuffer,
-                              ),
-                              subtitle: _workspaceKindLabel(
-                                context,
-                                workspace.kind,
-                              ),
-                              dirty: state.isDirty,
-                            ),
-                      actions: [
-                        if (!searchState.active) ...[
-                          const SizedBox(width: BusyMarkSpacing.sm),
+              body: LayoutBuilder(
+                builder: (context, constraints) {
+                  final sidebarAvailable =
+                      constraints.maxWidth >=
+                      BusyMarkSizes.workspaceSidebarBreakpoint;
+                  return LinuxPageFrame(
+                    key: const ValueKey('workspace-page-frame'),
+                    sidebarHeader: const BusyMarkLinuxBrandHeader(),
+                    sidebarBody: sidebar,
+                    sidebarAvailable: sidebarAvailable,
+                    sidebarExpanded: sidebarVisible,
+                    sidebarTransitionGeneration: ref.watch(
+                      sidebarTransitionGenerationProvider,
+                    ),
+                    header: BusyMarkLinuxHeaderLayout(
+                      centerAllocation: searchState.active
+                          ? BusyMarkLinuxHeaderCenterAllocation
+                                .fillBetweenControls
+                          : BusyMarkLinuxHeaderCenterAllocation.centered,
+                      leading: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
                           BusyMarkHeaderIconButton(
-                            tooltip: context.l10n.validate,
-                            icon: BusyMarkGlyphs.diagnostics,
-                            onPressed: () => unawaited(
-                              _validateActiveAndShowProblems(context, ref),
-                            ),
+                            tooltip: sidebarAvailable && settings.sidebarVisible
+                                ? context.l10n.hideSidebar
+                                : context.l10n.showSidebar,
+                            icon: BusyMarkGlyphs.sidebar,
+                            selected:
+                                sidebarAvailable && settings.sidebarVisible,
+                            shortcut:
+                                commandRegistry[BusyMarkCommandIds
+                                        .toggleSidebar]
+                                    ?.shortcut
+                                    ?.label,
+                            onPressed: !sidebarAvailable
+                                ? null
+                                : () {
+                                    final visible = !settings.sidebarVisible;
+                                    unawaited(
+                                      settingsController.setSidebarVisible(
+                                        visible,
+                                      ),
+                                    );
+                                  },
                           ),
-                          const _HeaderSeparator(),
-                        ],
-                        BusyMarkHeaderIconButton(
-                          tooltip: settings.sidebarVisible
-                              ? context.l10n.hideSidebar
-                              : context.l10n.showSidebar,
-                          icon: BusyMarkGlyphs.sidebar,
-                          selected: settings.sidebarVisible,
-                          shortcut:
-                              commandRegistry[BusyMarkCommandIds.toggleSidebar]
+                          if (!searchState.active)
+                            BusyMarkHeaderIconButton(
+                              tooltip: context.l10n.welcome,
+                              icon: BusyMarkGlyphs.home,
+                              shortcut: commandRegistry[BusyMarkCommandIds.back]
                                   ?.shortcut
                                   ?.label,
-                          onPressed: () {
-                            final visible = !settings.sidebarVisible;
-                            if (!visible) {
-                              _clearGitDetailSelection(ref);
-                            }
-                            unawaited(
-                              settingsController.setSidebarVisible(visible),
-                            );
-                          },
-                        ),
-                        BusyMarkHeaderIconButton(
-                          tooltip: context.l10n.search,
-                          icon: BusyMarkGlyphs.search,
-                          selected: searchState.active,
-                          shortcut: commandRegistry[BusyMarkCommandIds.search]
-                              ?.shortcut
-                              ?.label,
-                          onPressed: () => _toggleSearch(ref),
-                        ),
-                        if (!searchState.active)
-                          BusyMarkHeaderPopupMenuButton<
-                            DocumentViewModePreference
-                          >(
-                            tooltip: context.l10n.viewMode,
-                            icon: _documentViewModeIcon(documentViewMode),
-                            shortcut: _documentViewModeShortcut(
-                              documentViewMode,
-                              commandRegistry,
+                              onPressed: () async {
+                                if (await confirmSafeToContinue(context, ref) &&
+                                    context.mounted) {
+                                  context.go('/');
+                                }
+                              },
                             ),
-                            itemBuilder: (context) => [
-                              for (final mode
-                                  in DocumentViewModePreference.values)
-                                BusyMarkPopupMenuItem(
-                                  value: mode,
-                                  label: _documentViewModeLabel(context, mode),
-                                  icon: _documentViewModeIcon(mode),
-                                  shortcut: _documentViewModeShortcut(
-                                    mode,
-                                    commandRegistry,
-                                  ),
-                                  checked: mode == documentViewMode,
-                                  trailingCheck: true,
-                                ),
-                            ],
-                            onSelected: (mode) {
-                              ref
-                                  .read(workspaceControllerProvider.notifier)
-                                  .updateActiveEditorMode(mode);
-                              unawaited(
-                                settingsController.setDocumentViewMode(mode),
-                              );
-                            },
+                        ],
+                      ),
+                      title: BusyMarkRetainedCrossfade(
+                        index: searchState.active ? 1 : 0,
+                        duration: BusyMarkMotion.search,
+                        children: [
+                          BusyMarkLinuxHeaderTitle(title),
+                          _HeaderSearchField(
+                            active: searchState.active,
+                            focusRequest: ref.watch(
+                              _headerSearchFocusRequestProvider,
+                            ),
+                            query: searchState.query,
+                            onChanged: (query) => _setSearchQuery(ref, query),
+                            onClear: () => _clearSearchQuery(ref),
+                            onSubmitted: () =>
+                                unawaited(_submitSearch(context, ref)),
+                            onEscape: () => _closeSearch(ref),
                           ),
-                        BusyMarkMainMenuButton(
-                          canExport: canExportPdf || canExportHtml,
-                          onSelected: (action) =>
-                              _handleMainMenuAction(context, ref, action),
-                        ),
-                        const SizedBox(width: BusyMarkSpacing.sm),
+                        ],
+                      ),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (!searchState.active) ...[
+                            const SizedBox(width: BusyMarkSpacing.sm),
+                            BusyMarkHeaderIconButton(
+                              tooltip: context.l10n.validate,
+                              icon: BusyMarkGlyphs.diagnostics,
+                              onPressed: () => unawaited(
+                                _validateActiveAndShowProblems(context, ref),
+                              ),
+                            ),
+                            const _HeaderSeparator(),
+                          ],
+                          BusyMarkHeaderIconButton(
+                            tooltip: context.l10n.search,
+                            icon: BusyMarkGlyphs.search,
+                            selected: searchState.active,
+                            shortcut: commandRegistry[BusyMarkCommandIds.search]
+                                ?.shortcut
+                                ?.label,
+                            onPressed: () => _toggleSearch(ref),
+                          ),
+                          if (!searchState.active)
+                            BusyMarkHeaderPopupMenuButton<
+                              DocumentViewModePreference
+                            >(
+                              tooltip: context.l10n.viewMode,
+                              icon: _documentViewModeIcon(documentViewMode),
+                              shortcut: _documentViewModeShortcut(
+                                documentViewMode,
+                                commandRegistry,
+                              ),
+                              itemBuilder: (context) => [
+                                for (final mode
+                                    in DocumentViewModePreference.values)
+                                  BusyMarkPopupMenuItem(
+                                    value: mode,
+                                    label: _documentViewModeLabel(
+                                      context,
+                                      mode,
+                                    ),
+                                    icon: _documentViewModeIcon(mode),
+                                    shortcut: _documentViewModeShortcut(
+                                      mode,
+                                      commandRegistry,
+                                    ),
+                                    checked: mode == documentViewMode,
+                                    trailingCheck: true,
+                                  ),
+                              ],
+                              onSelected: (mode) {
+                                ref
+                                    .read(workspaceControllerProvider.notifier)
+                                    .updateActiveEditorMode(mode);
+                                unawaited(
+                                  settingsController.setDocumentViewMode(mode),
+                                );
+                              },
+                            ),
+                          BusyMarkMainMenuButton(
+                            canExport: canExportPdf || canExportHtml,
+                            onSelected: (action) =>
+                                _handleMainMenuAction(context, ref, action),
+                          ),
+                          const SizedBox(width: BusyMarkSpacing.sm),
+                        ],
+                      ),
+                    ),
+                    body: Column(
+                      children: [
+                        // The recovered document already has a review banner with
+                        // actions. Keep other messages, including recovery damage.
+                        if (state.message != null &&
+                            !(state.message!.code ==
+                                    WorkspaceMessageCode.recoveryRestored &&
+                                state.activeBuffer?.recovered == true))
+                          BusyMarkStatusBox(
+                            message: localizeWorkspaceMessage(
+                              context,
+                              state.message!,
+                            ),
+                            kind: busyMarkWorkspaceMessageStatusKind(
+                              state.message!.code,
+                            ),
+                          ),
+                        if (localHistoryState.warning != null)
+                          BusyMarkStatusBox(
+                            message: localizeLocalHistoryWarning(
+                              context,
+                              localHistoryState.warning!,
+                            ),
+                            kind: BusyMarkStatusKind.warning,
+                          ),
+                        Expanded(child: workspaceContent),
                       ],
                     ),
-              body: Column(
-                children: [
-                  // The recovered document already has a review banner with
-                  // actions. Keep other messages, including recovery damage.
-                  if (state.message != null &&
-                      !(state.message!.code ==
-                              WorkspaceMessageCode.recoveryRestored &&
-                          state.activeBuffer?.recovered == true))
-                    BusyMarkStatusBox(
-                      message: localizeWorkspaceMessage(
-                        context,
-                        state.message!,
-                      ),
-                      kind: busyMarkWorkspaceMessageStatusKind(
-                        state.message!.code,
-                      ),
-                    ),
-                  if (localHistoryState.warning != null)
-                    BusyMarkStatusBox(
-                      message: localizeLocalHistoryWarning(
-                        context,
-                        localHistoryState.warning!,
-                      ),
-                      kind: BusyMarkStatusKind.warning,
-                    ),
-                  Expanded(
-                    child: Row(
-                      textDirection: TextDirection.ltr,
-                      children: workspaceChildren,
-                    ),
-                  ),
-                ],
+                  );
+                },
               ),
             ),
           ),
@@ -1081,13 +1120,17 @@ class WorkspaceScreen extends ConsumerWidget {
 
   void _openSearch(WidgetRef ref) {
     final search = ref.read(_workspaceSearchProvider);
+    ref.read(_headerSearchFocusRequestProvider.notifier).request();
+    if (!search.active) {
+      ref.read(_searchReturnFocusProvider).node =
+          FocusManager.instance.primaryFocus;
+    }
     if (search.active) {
       unawaited(
         ref
             .read(appSettingsControllerProvider.notifier)
             .setSidebarVisible(true),
       );
-      unawaited(ref.read(linuxHeaderBarServiceProvider).focusSearch());
       return;
     }
     _clearGitDetailSelection(ref);
@@ -1107,6 +1150,7 @@ class WorkspaceScreen extends ConsumerWidget {
     ref
         .read(_workspaceSearchProvider.notifier)
         .set(search.copyWith(active: false));
+    ref.read(_searchReturnFocusProvider).restore();
   }
 
   void _selectSidebarShortcut(WidgetRef ref, _SidebarTab tab) {
@@ -1253,17 +1297,6 @@ class WorkspaceScreen extends ConsumerWidget {
           : context.l10n.untitledMarkdownFileName;
     }
     return p.basename(path);
-  }
-
-  String _workspaceKindLabel(BuildContext context, WorkspaceKind kind) {
-    return switch (kind) {
-      WorkspaceKind.untitledMarkdown =>
-        context.l10n.workspaceKindUnsavedMarkdown,
-      WorkspaceKind.singleMarkdown => context.l10n.workspaceKindSingleMarkdown,
-      WorkspaceKind.markdownFolder => context.l10n.workspaceKindMarkdownFolder,
-      WorkspaceKind.writersideModule =>
-        context.l10n.workspaceKindWritersideModule,
-    };
   }
 
   AppViewMode _headerBarViewMode(DocumentViewModePreference mode) {
@@ -2001,50 +2034,6 @@ class _GitFileList extends StatelessWidget {
   }
 }
 
-class _HeaderTitle extends StatelessWidget {
-  const _HeaderTitle({
-    required this.title,
-    required this.subtitle,
-    required this.dirty,
-  });
-
-  final String title;
-  final String subtitle;
-  final bool dirty;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = BusyMarkSurfaceColors.of(context);
-    return Row(
-      children: [
-        Flexible(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                dirty ? '*$title' : title,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  color: colors.foreground,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              Text(
-                subtitle,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.labelSmall,
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
-
 class _HeaderSearchField extends StatefulWidget {
   const _HeaderSearchField({
     required this.query,
@@ -2052,8 +2041,12 @@ class _HeaderSearchField extends StatefulWidget {
     required this.onClear,
     required this.onSubmitted,
     required this.onEscape,
+    this.active = true,
+    this.focusRequest = 0,
   });
 
+  final bool active;
+  final int focusRequest;
   final String query;
   final ValueChanged<String> onChanged;
   final VoidCallback onClear;
@@ -2066,6 +2059,7 @@ class _HeaderSearchField extends StatefulWidget {
 
 class _HeaderSearchFieldState extends State<_HeaderSearchField> {
   late final TextEditingController _controller;
+  var _focusRequest = 0;
 
   @override
   void initState() {
@@ -2076,6 +2070,10 @@ class _HeaderSearchFieldState extends State<_HeaderSearchField> {
   @override
   void didUpdateWidget(covariant _HeaderSearchField oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (widget.active &&
+        (!oldWidget.active || widget.focusRequest != oldWidget.focusRequest)) {
+      _focusRequest++;
+    }
     if (widget.query != _controller.text) {
       _controller.value = TextEditingValue(
         text: widget.query,
@@ -2095,7 +2093,9 @@ class _HeaderSearchFieldState extends State<_HeaderSearchField> {
     return BusyMarkSearchField(
       controller: _controller,
       hintText: context.l10n.search,
-      autofocus: true,
+      autofocus: widget.active,
+      clearOnEscape: false,
+      focusRequest: _focusRequest,
       onChanged: widget.onChanged,
       onSubmitted: (_) => widget.onSubmitted(),
       onClear: widget.onClear,
@@ -2120,6 +2120,7 @@ class _HeaderSeparator extends StatelessWidget {
 
 class _Sidebar extends ConsumerStatefulWidget {
   const _Sidebar({
+    super.key,
     required this.workspace,
     required this.outline,
     required this.searchState,
@@ -2213,6 +2214,7 @@ class _SidebarState extends ConsumerState<_Sidebar> {
         : _tab.clamp(0, tabs.length - 1).toInt();
     final selectedTab = tabs.isEmpty ? null : tabs[selectedIndex];
     return BusyMarkSidebarSurface(
+      showEndBorder: false,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -2231,81 +2233,92 @@ class _SidebarState extends ConsumerState<_Sidebar> {
                 unawaited(_refineActiveDocumentWithAi(context)),
           ),
           Expanded(
-            child: widget.searchState.active
-                ? _SearchSidebar(
-                    query: widget.searchState.query,
-                    results: widget.searchResults,
-                    searching: widget.searchState.searching,
-                    state: widget.searchState,
-                    onShowMore: () =>
-                        ref.read(_workspaceSearchProvider.notifier).showMore(),
-                    onOpenResult: widget.onOpenSearchResult,
-                    onReviewReplacement: _reviewWorkspaceReplacement,
-                  )
-                : _topicRenameReview != null
-                ? _WritersideTopicRenameSidebar(
-                    plan: _topicRenameReview!,
-                    onBack: () => setState(() => _topicRenameReview = null),
-                    onDoRefactor: () => _applyReviewedTopicRename(context),
-                  )
-                : _topicUsageReview != null
-                ? _WritersideTopicUsagesSidebar(
-                    review: _topicUsageReview!,
-                    onBack: _closeTopicUsageReview,
-                    onOpenUsage: (usage) =>
-                        _openWritersideTopicUsage(context, usage),
-                    onDoRefactor: () => _resumeWritersideTopicRemoval(context),
-                  )
-                : switch (selectedTab) {
-                    _SidebarTab.files => _FilesTab(
-                      workspace: widget.workspace,
-                      onShowFileHistory: _showFileHistory,
-                      onRenameTopic: (path) =>
-                          _startWritersideTopicRename(context, path),
-                      onRequestTopicRemoval: (target) =>
-                          _runWritersideTopicRemoval(context, target),
-                    ),
-                    _SidebarTab.toc => _TocTab(
-                      workspace: widget.workspace,
-                      onShowFileHistory: _showFileHistory,
-                      onRenameTopic: (path) =>
-                          _startWritersideTopicRename(context, path),
-                      onRequestTopicRemoval: (target) =>
-                          _runWritersideTopicRemoval(context, target),
-                    ),
-                    _SidebarTab.outline => _OutlineTab(
-                      workspace: widget.workspace,
-                      bufferId: ref
-                          .watch(workspaceControllerProvider)
-                          .activeBufferId,
-                      headings: widget.outline,
-                    ),
-                    _SidebarTab.git => GitSidebarTab(
-                      workspace: widget.workspace,
-                      onOpenFile: (relativePath) =>
-                          _openGitDiffFile(context, ref, relativePath),
-                      onConfirmDiscard: (files) =>
-                          _confirmDiscardGitFiles(context, ref, files),
-                      onAfterWorkspaceFilesChanged: () =>
-                          _refreshWorkspaceAfterGitFileChanges(ref),
-                      onConfirmSwitchBranch: (branchName) =>
-                          _confirmSwitchGitBranch(context, ref, branchName),
-                      onConfirmPushSetUpstream: () =>
-                          _confirmGitPushSetUpstream(context, ref),
-                    ),
-                    _SidebarTab.clipboard => ClipboardHistoryPanel(
-                      onEscape: () => ref
-                          .read(clipboardInsertionRegistryProvider)
-                          .target
-                          ?.requestEditorFocus(),
-                    ),
-                    _SidebarTab.localHistory => LocalHistoryPanel(
-                      focusSearchRequest: ref.watch(
-                        localHistoryFindRequestProvider,
+            child: BusyMarkKeyedCrossfade(
+              transitionKey: widget.searchState.active
+                  ? 'search'
+                  : _topicRenameReview != null
+                  ? 'rename'
+                  : _topicUsageReview != null
+                  ? 'usages'
+                  : selectedTab ?? 'empty',
+              child: widget.searchState.active
+                  ? _SearchSidebar(
+                      query: widget.searchState.query,
+                      results: widget.searchResults,
+                      searching: widget.searchState.searching,
+                      state: widget.searchState,
+                      onShowMore: () => ref
+                          .read(_workspaceSearchProvider.notifier)
+                          .showMore(),
+                      onOpenResult: widget.onOpenSearchResult,
+                      onReviewReplacement: _reviewWorkspaceReplacement,
+                    )
+                  : _topicRenameReview != null
+                  ? _WritersideTopicRenameSidebar(
+                      plan: _topicRenameReview!,
+                      onBack: () => setState(() => _topicRenameReview = null),
+                      onDoRefactor: () => _applyReviewedTopicRename(context),
+                    )
+                  : _topicUsageReview != null
+                  ? _WritersideTopicUsagesSidebar(
+                      review: _topicUsageReview!,
+                      onBack: _closeTopicUsageReview,
+                      onOpenUsage: (usage) =>
+                          _openWritersideTopicUsage(context, usage),
+                      onDoRefactor: () =>
+                          _resumeWritersideTopicRemoval(context),
+                    )
+                  : switch (selectedTab) {
+                      _SidebarTab.files => _FilesTab(
+                        workspace: widget.workspace,
+                        onShowFileHistory: _showFileHistory,
+                        onRenameTopic: (path) =>
+                            _startWritersideTopicRename(context, path),
+                        onRequestTopicRemoval: (target) =>
+                            _runWritersideTopicRemoval(context, target),
                       ),
-                    ),
-                    null => const SizedBox.shrink(),
-                  },
+                      _SidebarTab.toc => _TocTab(
+                        workspace: widget.workspace,
+                        onShowFileHistory: _showFileHistory,
+                        onRenameTopic: (path) =>
+                            _startWritersideTopicRename(context, path),
+                        onRequestTopicRemoval: (target) =>
+                            _runWritersideTopicRemoval(context, target),
+                      ),
+                      _SidebarTab.outline => _OutlineTab(
+                        workspace: widget.workspace,
+                        bufferId: ref
+                            .watch(workspaceControllerProvider)
+                            .activeBufferId,
+                        headings: widget.outline,
+                      ),
+                      _SidebarTab.git => GitSidebarTab(
+                        workspace: widget.workspace,
+                        onOpenFile: (relativePath) =>
+                            _openGitDiffFile(context, ref, relativePath),
+                        onConfirmDiscard: (files) =>
+                            _confirmDiscardGitFiles(context, ref, files),
+                        onAfterWorkspaceFilesChanged: () =>
+                            _refreshWorkspaceAfterGitFileChanges(ref),
+                        onConfirmSwitchBranch: (branchName) =>
+                            _confirmSwitchGitBranch(context, ref, branchName),
+                        onConfirmPushSetUpstream: () =>
+                            _confirmGitPushSetUpstream(context, ref),
+                      ),
+                      _SidebarTab.clipboard => ClipboardHistoryPanel(
+                        onEscape: () => ref
+                            .read(clipboardInsertionRegistryProvider)
+                            .target
+                            ?.requestEditorFocus(),
+                      ),
+                      _SidebarTab.localHistory => LocalHistoryPanel(
+                        focusSearchRequest: ref.watch(
+                          localHistoryFindRequestProvider,
+                        ),
+                      ),
+                      null => const SizedBox.shrink(),
+                    },
+            ),
           ),
         ],
       ),
@@ -5207,7 +5220,9 @@ class _SidebarTreeRowState extends State<_SidebarTreeRow> {
                                 ? -0.25
                                 : 0.25
                           : 0,
-                      duration: BusyMarkMotion.sidebarExpand,
+                      duration: MediaQuery.disableAnimationsOf(context)
+                          ? Duration.zero
+                          : BusyMarkMotion.sidebarExpand,
                       child: Icon(
                         BusyMarkGlyphs.collapsedTreeArrowFor(direction),
                         size: BusyMarkSizes.sidebarTreeArrow,
@@ -12042,321 +12057,385 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     final spellingLabel = activeBuffer != null && spellingSupported
         ? _spellingStatusLabel(context, activeBuffer, settings)
         : null;
-    return DecoratedBox(
-      decoration: BoxDecoration(color: colors.view),
-      child: Column(
-        children: [
-          if (activeBuffer?.recovered == true)
-            _RecoveredDocumentBanner(
-              buffer: activeBuffer!,
-              onSave: () => unawaited(
-                (BusyMarkCommandRegistryScope.read(context) ??
-                        BusyMarkCommandCatalog.metadata)
-                    .execute(BusyMarkCommandIds.save),
+    return BusyMarkSemanticFade(
+      transitionKey: widget.viewMode,
+      child: DecoratedBox(
+        decoration: BoxDecoration(color: colors.view),
+        child: Column(
+          children: [
+            if (activeBuffer?.recovered == true)
+              _RecoveredDocumentBanner(
+                buffer: activeBuffer!,
+                onSave: () => unawaited(
+                  (BusyMarkCommandRegistryScope.read(context) ??
+                          BusyMarkCommandCatalog.metadata)
+                      .execute(BusyMarkCommandIds.save),
+                ),
+                onSaveAs: () =>
+                    unawaited(saveActiveToNewLocation(context, ref)),
+                onDiscard: () => unawaited(
+                  activeBuffer.deletedOnDisk
+                      ? ref
+                            .read(workspaceControllerProvider.notifier)
+                            .closeDocumentBuffer(activeBuffer.id, discard: true)
+                      : ref
+                            .read(workspaceControllerProvider.notifier)
+                            .discardActiveChanges(),
+                ),
               ),
-              onSaveAs: () => unawaited(saveActiveToNewLocation(context, ref)),
-              onDiscard: () => unawaited(
-                activeBuffer.deletedOnDisk
-                    ? ref
-                          .read(workspaceControllerProvider.notifier)
-                          .closeDocumentBuffer(activeBuffer.id, discard: true)
-                    : ref
-                          .read(workspaceControllerProvider.notifier)
-                          .discardActiveChanges(),
+            if (activeBuffer != null &&
+                activeBuffer.diskState != DocumentDiskState.present &&
+                activeBuffer.diskState != DocumentDiskState.changed)
+              _ExternalFileBanner(
+                buffer: activeBuffer,
+                onCompare: activeBuffer.diskVersionText == null
+                    ? null
+                    : () => _showExternalFileComparison(context, activeBuffer),
+                onReload: activeBuffer.filePath == null
+                    ? null
+                    : () => unawaited(
+                        ref
+                            .read(workspaceControllerProvider.notifier)
+                            .reloadBufferFromDisk(activeBuffer.id),
+                      ),
+                onKeepMine: () => ref
+                    .read(workspaceControllerProvider.notifier)
+                    .keepBufferVersion(activeBuffer.id),
+                onSave: () => unawaited(
+                  (BusyMarkCommandRegistryScope.read(context) ??
+                          BusyMarkCommandCatalog.metadata)
+                      .execute(BusyMarkCommandIds.save),
+                ),
+                onSaveAs: () =>
+                    unawaited(saveActiveToNewLocation(context, ref)),
               ),
-            ),
-          if (activeBuffer != null &&
-              activeBuffer.diskState != DocumentDiskState.present &&
-              activeBuffer.diskState != DocumentDiskState.changed)
-            _ExternalFileBanner(
-              buffer: activeBuffer,
-              onCompare: activeBuffer.diskVersionText == null
-                  ? null
-                  : () => _showExternalFileComparison(context, activeBuffer),
-              onReload: activeBuffer.filePath == null
-                  ? null
-                  : () => unawaited(
-                      ref
-                          .read(workspaceControllerProvider.notifier)
-                          .reloadBufferFromDisk(activeBuffer.id),
-                    ),
-              onKeepMine: () => ref
-                  .read(workspaceControllerProvider.notifier)
-                  .keepBufferVersion(activeBuffer.id),
-              onSave: () => unawaited(
-                (BusyMarkCommandRegistryScope.read(context) ??
-                        BusyMarkCommandCatalog.metadata)
-                    .execute(BusyMarkCommandIds.save),
+            if (activeBuffer != null)
+              BusyMarkBanner(
+                key: const ValueKey('spelling-banner'),
+                title: spellingBannerPresentation?.title ?? '',
+                actionLabel: spellingBannerPresentation?.actionLabel,
+                onAction: spellingBannerPresentation?.onAction,
+                revealed: spellingBannerPresentation != null,
               ),
-              onSaveAs: () => unawaited(saveActiveToNewLocation(context, ref)),
-            ),
-          if (activeBuffer != null)
-            BusyMarkBanner(
-              key: const ValueKey('spelling-banner'),
-              title: spellingBannerPresentation?.title ?? '',
-              actionLabel: spellingBannerPresentation?.actionLabel,
-              onAction: spellingBannerPresentation?.onAction,
-              revealed: spellingBannerPresentation != null,
-            ),
-          Expanded(
-            child: Stack(
-              children: [
-                Positioned.fill(
-                  child: Row(
-                    children: [
-                      if (wysiwygVisible)
-                        Expanded(
-                          key: const ValueKey('document-wysiwyg-pane'),
-                          child: BusyMarkWysiwygEditor(
-                            key: _wysiwygEditorKey,
-                            document: wysiwygDocument,
-                            documentId: activeBuffer?.id,
-                            contentRevision: activeBuffer?.revision,
-                            spellingAnnotations: _spelling.annotations,
-                            onCheckSpelling: () =>
-                                unawaited(_openSpellingReview()),
-                            readSpellingMenuItems: _prepareRichSpellingMenu,
-                            clipboardInsertionRegistry: ref.read(
-                              clipboardInsertionRegistryProvider,
-                            ),
-                            onClipboardCaptured: ref
-                                .read(
-                                  clipboardHistoryControllerProvider.notifier,
-                                )
-                                .retain,
-                            initialSessionState:
-                                activeBuffer?.editorState.wysiwygState ??
-                                const WysiwygEditorSessionState(),
-                            useExternalUndoHistory: true,
-                            onSessionChanged: (documentId, session) {
-                              final latest = ref
-                                  .read(workspaceControllerProvider)
-                                  .documentBuffers
-                                  .where((buffer) => buffer.id == documentId)
-                                  .firstOrNull;
-                              if (latest == null ||
-                                  _sameWysiwygSession(
-                                    latest.editorState.wysiwygState,
-                                    session,
-                                  )) {
-                                return;
-                              }
-                              ref
-                                  .read(workspaceControllerProvider.notifier)
-                                  .updateDocumentEditorState(
-                                    documentId,
-                                    latest.editorState.copyWith(
-                                      wysiwygState: session,
-                                    ),
-                                  );
-                            },
-                            headerBarService: headerBar,
-                            workspaceRoot: _imageWorkspaceRoot(
-                              widget.state.workspace,
-                            ),
-                            writersideRoot: widget
-                                .state
-                                .workspace
-                                ?.writersideModule
-                                ?.rootPath,
-                            imagesDir:
-                                widget
-                                    .state
-                                    .workspace
-                                    ?.writersideModule
-                                    ?.effectiveImagesDir ??
-                                'images',
-                            assetWorkspaceKind:
-                                switch (widget.state.workspace?.kind) {
-                                  WorkspaceKind.writersideModule =>
-                                    AssetWorkspaceKind.writerside,
-                                  WorkspaceKind.markdownFolder =>
-                                    AssetWorkspaceKind.markdownWorkspace,
-                                  WorkspaceKind.singleMarkdown =>
-                                    AssetWorkspaceKind.standalone,
-                                  WorkspaceKind.untitledMarkdown ||
-                                  null => AssetWorkspaceKind.standalone,
-                                },
-                            onAssetSaveRequired: () => unawaited(
-                              saveActiveToNewLocation(context, ref),
-                            ),
-                            allowRemoteImages: allowRemoteImages,
-                            onRemoteImageBlocked: () => unawaited(
-                              _showRemoteImagesPrompt(context, ref),
-                            ),
-                            onDocumentChanged: (document) =>
-                                _cacheWysiwygDocument(
-                                  activeBuffer?.id,
-                                  document,
-                                ),
-                            onSourceChanged: (filePath, value) =>
-                                _handleWysiwygSourceChanged(
-                                  activeBuffer?.id,
-                                  filePath,
-                                  value,
-                                ),
-                            onTransactionalSourceChanged:
-                                (filePath, value, [undoGroup]) =>
-                                    _handleWysiwygSourceChanged(
-                                      activeBuffer?.id,
-                                      filePath,
-                                      value,
-                                      undoGroup,
-                                    ),
-                            onSpellingSourceChanged:
-                                (filePath, value, before, after) =>
-                                    _handleWysiwygSpellingSourceChanged(
-                                      activeBuffer?.id,
-                                      filePath,
-                                      value,
-                                      before,
-                                      after,
-                                    ),
-                            toolbarPlacement: widget.editorToolbarPlacement,
-                            toolbarDirection: widget.editorToolbarDirection,
-                            onToolbarPlacementChanged: ref
-                                .read(appSettingsControllerProvider.notifier)
-                                .setEditorToolbarPlacement,
-                            onToolbarDirectionChanged: ref
-                                .read(appSettingsControllerProvider.notifier)
-                                .setEditorToolbarDirection,
-                            scrollToHeadingId: _wysiwygScrollHeadingId,
-                            scrollToBlockId: _wysiwygScrollBlockId,
-                            scrollToSearchQuery: _wysiwygSearchQuery,
-                            scrollToSourceRange: _wysiwygSearchRange,
-                            scrollRequest: _wysiwygScrollRequest,
-                            onVisibleHeadingChanged:
-                                _handleWysiwygVisibleHeadingChanged,
-                            documentLayout: standaloneDocumentLayout,
-                            visualizationRevision: ref
-                                .read(workspaceControllerProvider.notifier)
-                                .editRevision,
-                            onOpenSearch: () => ref
-                                .read(
-                                  workspaceSearchOpenRequestProvider.notifier,
-                                )
-                                .request(),
-                            onCloseSearch: () => ref
-                                .read(
-                                  workspaceSearchCloseRequestProvider.notifier,
-                                )
-                                .request(),
-                            onUndo: () => ref
-                                .read(workspaceControllerProvider.notifier)
-                                .undoActiveBuffer(),
-                            onRedo: () => ref
-                                .read(workspaceControllerProvider.notifier)
-                                .redoActiveBuffer(),
-                            onAiEdit:
-                                (_activeDocumentKind(
-                                      widget.state.workspace,
-                                    )?.supportsAiMarkdownEditing ??
-                                    false)
-                                ? (snapshot) =>
-                                      showBusyMarkAiEdit(context, ref, snapshot)
-                                : null,
-                            onMathDiagnostic:
-                                (expressionId, code, sourceSpan) => ref
+            Expanded(
+              child: Stack(
+                children: [
+                  Positioned.fill(
+                    child: Row(
+                      children: [
+                        if (wysiwygVisible)
+                          Expanded(
+                            key: const ValueKey('document-wysiwyg-pane'),
+                            child: BusyMarkWysiwygEditor(
+                              key: _wysiwygEditorKey,
+                              document: wysiwygDocument,
+                              documentId: activeBuffer?.id,
+                              contentRevision: activeBuffer?.revision,
+                              spellingAnnotations: _spelling.annotations,
+                              onCheckSpelling: () =>
+                                  unawaited(_openSpellingReview()),
+                              readSpellingMenuItems: _prepareRichSpellingMenu,
+                              clipboardInsertionRegistry: ref.read(
+                                clipboardInsertionRegistryProvider,
+                              ),
+                              onClipboardCaptured: ref
+                                  .read(
+                                    clipboardHistoryControllerProvider.notifier,
+                                  )
+                                  .retain,
+                              initialSessionState:
+                                  activeBuffer?.editorState.wysiwygState ??
+                                  const WysiwygEditorSessionState(),
+                              useExternalUndoHistory: true,
+                              onSessionChanged: (documentId, session) {
+                                final latest = ref
+                                    .read(workspaceControllerProvider)
+                                    .documentBuffers
+                                    .where((buffer) => buffer.id == documentId)
+                                    .firstOrNull;
+                                if (latest == null ||
+                                    _sameWysiwygSession(
+                                      latest.editorState.wysiwygState,
+                                      session,
+                                    )) {
+                                  return;
+                                }
+                                ref
                                     .read(workspaceControllerProvider.notifier)
-                                    .updateMathRenderDiagnostic(
-                                      expressionId: expressionId,
-                                      code: code,
-                                      sourceSpan: sourceSpan,
-                                      expectedRevision: activeBuffer?.revision,
-                                      expectedFilePath: activeBuffer?.filePath,
-                                    ),
-                          ),
-                        ),
-                      if (sourceVisible)
-                        Expanded(
-                          key: const ValueKey('document-source-pane'),
-                          child: BusyMarkSourceEditor(
-                            key: _sourceEditorKey,
-                            text: widget.state.activeText,
-                            language: _sourceSyntaxLanguage(
-                              widget.state.workspace,
-                            ),
-                            documentFormat: _sourceDocumentFormat(
-                              widget.state.workspace,
-                            ),
-                            markdownMode: _sourceMarkdownMode(
-                              widget.state.workspace,
-                            ),
-                            filePath: activeEditorPath,
-                            documentId: activeBuffer?.id,
-                            clipboardInsertionRegistry: ref.read(
-                              clipboardInsertionRegistryProvider,
-                            ),
-                            onClipboardCaptured: ref
-                                .read(
-                                  clipboardHistoryControllerProvider.notifier,
-                                )
-                                .retain,
-                            workspaceRoot: _imageWorkspaceRoot(
-                              widget.state.workspace,
-                            ),
-                            writersideRoot: widget
-                                .state
-                                .workspace
-                                ?.writersideModule
-                                ?.rootPath,
-                            imagesDir:
-                                widget
-                                    .state
-                                    .workspace
-                                    ?.writersideModule
-                                    ?.effectiveImagesDir ??
-                                'images',
-                            assetWorkspaceKind:
-                                switch (widget.state.workspace?.kind) {
-                                  WorkspaceKind.writersideModule =>
-                                    AssetWorkspaceKind.writerside,
-                                  WorkspaceKind.markdownFolder =>
-                                    AssetWorkspaceKind.markdownWorkspace,
-                                  WorkspaceKind.singleMarkdown =>
-                                    AssetWorkspaceKind.standalone,
-                                  WorkspaceKind.untitledMarkdown ||
-                                  null => AssetWorkspaceKind.standalone,
-                                },
-                            onAssetSaveRequired: () => unawaited(
-                              saveActiveToNewLocation(context, ref),
-                            ),
-                            spellingAnnotations: _spelling.annotations,
-                            onCheckSpelling: () =>
-                                unawaited(_openSpellingReview()),
-                            readSpellingMenuItems: _prepareSourceSpellingMenu,
-                            diagnostics:
-                                widget.state.workspace?.allDiagnostics ??
-                                const <Diagnostic>[],
-                            onSymbolAction:
-                                widget.state.workspace?.writersideProject ==
-                                    null
-                                ? null
-                                : (action, offset) => unawaited(
-                                    _handleSymbolAction(action, offset),
+                                    .updateDocumentEditorState(
+                                      documentId,
+                                      latest.editorState.copyWith(
+                                        wysiwygState: session,
+                                      ),
+                                    );
+                              },
+                              headerBarService: headerBar,
+                              workspaceRoot: _imageWorkspaceRoot(
+                                widget.state.workspace,
+                              ),
+                              writersideRoot: widget
+                                  .state
+                                  .workspace
+                                  ?.writersideModule
+                                  ?.rootPath,
+                              imagesDir:
+                                  widget
+                                      .state
+                                      .workspace
+                                      ?.writersideModule
+                                      ?.effectiveImagesDir ??
+                                  'images',
+                              assetWorkspaceKind:
+                                  switch (widget.state.workspace?.kind) {
+                                    WorkspaceKind.writersideModule =>
+                                      AssetWorkspaceKind.writerside,
+                                    WorkspaceKind.markdownFolder =>
+                                      AssetWorkspaceKind.markdownWorkspace,
+                                    WorkspaceKind.singleMarkdown =>
+                                      AssetWorkspaceKind.standalone,
+                                    WorkspaceKind.untitledMarkdown ||
+                                    null => AssetWorkspaceKind.standalone,
+                                  },
+                              onAssetSaveRequired: () => unawaited(
+                                saveActiveToNewLocation(context, ref),
+                              ),
+                              allowRemoteImages: allowRemoteImages,
+                              onRemoteImageBlocked: () => unawaited(
+                                _showRemoteImagesPrompt(context, ref),
+                              ),
+                              onDocumentChanged: (document) =>
+                                  _cacheWysiwygDocument(
+                                    activeBuffer?.id,
+                                    document,
                                   ),
-                            autocompleteContext: _sourceAutocompleteContext(
-                              widget.state.workspace,
+                              onSourceChanged: (filePath, value) =>
+                                  _handleWysiwygSourceChanged(
+                                    activeBuffer?.id,
+                                    filePath,
+                                    value,
+                                  ),
+                              onTransactionalSourceChanged:
+                                  (filePath, value, [undoGroup]) =>
+                                      _handleWysiwygSourceChanged(
+                                        activeBuffer?.id,
+                                        filePath,
+                                        value,
+                                        undoGroup,
+                                      ),
+                              onSpellingSourceChanged:
+                                  (filePath, value, before, after) =>
+                                      _handleWysiwygSpellingSourceChanged(
+                                        activeBuffer?.id,
+                                        filePath,
+                                        value,
+                                        before,
+                                        after,
+                                      ),
+                              toolbarPlacement: widget.editorToolbarPlacement,
+                              toolbarDirection: widget.editorToolbarDirection,
+                              onToolbarPlacementChanged: ref
+                                  .read(appSettingsControllerProvider.notifier)
+                                  .setEditorToolbarPlacement,
+                              onToolbarDirectionChanged: ref
+                                  .read(appSettingsControllerProvider.notifier)
+                                  .setEditorToolbarDirection,
+                              scrollToHeadingId: _wysiwygScrollHeadingId,
+                              scrollToBlockId: _wysiwygScrollBlockId,
+                              scrollToSearchQuery: _wysiwygSearchQuery,
+                              scrollToSourceRange: _wysiwygSearchRange,
+                              scrollRequest: _wysiwygScrollRequest,
+                              onVisibleHeadingChanged:
+                                  _handleWysiwygVisibleHeadingChanged,
+                              documentLayout: standaloneDocumentLayout,
+                              visualizationRevision: ref
+                                  .read(workspaceControllerProvider.notifier)
+                                  .editRevision,
+                              onOpenSearch: () => ref
+                                  .read(
+                                    workspaceSearchOpenRequestProvider.notifier,
+                                  )
+                                  .request(),
+                              onCloseSearch: () => ref
+                                  .read(
+                                    workspaceSearchCloseRequestProvider
+                                        .notifier,
+                                  )
+                                  .request(),
+                              onUndo: () => ref
+                                  .read(workspaceControllerProvider.notifier)
+                                  .undoActiveBuffer(),
+                              onRedo: () => ref
+                                  .read(workspaceControllerProvider.notifier)
+                                  .redoActiveBuffer(),
+                              onAiEdit:
+                                  (_activeDocumentKind(
+                                        widget.state.workspace,
+                                      )?.supportsAiMarkdownEditing ??
+                                      false)
+                                  ? (snapshot) => showBusyMarkAiEdit(
+                                      context,
+                                      ref,
+                                      snapshot,
+                                    )
+                                  : null,
+                              onMathDiagnostic:
+                                  (expressionId, code, sourceSpan) => ref
+                                      .read(
+                                        workspaceControllerProvider.notifier,
+                                      )
+                                      .updateMathRenderDiagnostic(
+                                        expressionId: expressionId,
+                                        code: code,
+                                        sourceSpan: sourceSpan,
+                                        expectedRevision:
+                                            activeBuffer?.revision,
+                                        expectedFilePath:
+                                            activeBuffer?.filePath,
+                                      ),
                             ),
-                            editorFontSize: widget.editorFontSize,
-                            wordWrap: widget.wordWrap,
-                            searchActive: searchState.active,
-                            searchOptions: searchState.options,
-                            searchReplacement:
-                                activeBuffer?.editorState.searchReplacement ??
-                                '',
-                            onSearchReplacementChanged: activeBuffer == null
-                                ? null
-                                : (replacement) {
-                                    final latest = ref
-                                        .read(workspaceControllerProvider)
-                                        .documentBuffers
-                                        .where(
-                                          (candidate) =>
-                                              candidate.id == activeBuffer.id,
-                                        )
-                                        .firstOrNull;
-                                    if (latest != null) {
+                          ),
+                        if (sourceVisible)
+                          Expanded(
+                            key: const ValueKey('document-source-pane'),
+                            child: BusyMarkSourceEditor(
+                              key: _sourceEditorKey,
+                              text: widget.state.activeText,
+                              language: _sourceSyntaxLanguage(
+                                widget.state.workspace,
+                              ),
+                              documentFormat: _sourceDocumentFormat(
+                                widget.state.workspace,
+                              ),
+                              markdownMode: _sourceMarkdownMode(
+                                widget.state.workspace,
+                              ),
+                              filePath: activeEditorPath,
+                              documentId: activeBuffer?.id,
+                              clipboardInsertionRegistry: ref.read(
+                                clipboardInsertionRegistryProvider,
+                              ),
+                              onClipboardCaptured: ref
+                                  .read(
+                                    clipboardHistoryControllerProvider.notifier,
+                                  )
+                                  .retain,
+                              workspaceRoot: _imageWorkspaceRoot(
+                                widget.state.workspace,
+                              ),
+                              writersideRoot: widget
+                                  .state
+                                  .workspace
+                                  ?.writersideModule
+                                  ?.rootPath,
+                              imagesDir:
+                                  widget
+                                      .state
+                                      .workspace
+                                      ?.writersideModule
+                                      ?.effectiveImagesDir ??
+                                  'images',
+                              assetWorkspaceKind:
+                                  switch (widget.state.workspace?.kind) {
+                                    WorkspaceKind.writersideModule =>
+                                      AssetWorkspaceKind.writerside,
+                                    WorkspaceKind.markdownFolder =>
+                                      AssetWorkspaceKind.markdownWorkspace,
+                                    WorkspaceKind.singleMarkdown =>
+                                      AssetWorkspaceKind.standalone,
+                                    WorkspaceKind.untitledMarkdown ||
+                                    null => AssetWorkspaceKind.standalone,
+                                  },
+                              onAssetSaveRequired: () => unawaited(
+                                saveActiveToNewLocation(context, ref),
+                              ),
+                              spellingAnnotations: _spelling.annotations,
+                              onCheckSpelling: () =>
+                                  unawaited(_openSpellingReview()),
+                              readSpellingMenuItems: _prepareSourceSpellingMenu,
+                              diagnostics:
+                                  widget.state.workspace?.allDiagnostics ??
+                                  const <Diagnostic>[],
+                              onSymbolAction:
+                                  widget.state.workspace?.writersideProject ==
+                                      null
+                                  ? null
+                                  : (action, offset) => unawaited(
+                                      _handleSymbolAction(action, offset),
+                                    ),
+                              autocompleteContext: _sourceAutocompleteContext(
+                                widget.state.workspace,
+                              ),
+                              editorFontSize: widget.editorFontSize,
+                              wordWrap: widget.wordWrap,
+                              searchActive: searchState.active,
+                              searchOptions: searchState.options,
+                              searchReplacement:
+                                  activeBuffer?.editorState.searchReplacement ??
+                                  '',
+                              onSearchReplacementChanged: activeBuffer == null
+                                  ? null
+                                  : (replacement) {
+                                      final latest = ref
+                                          .read(workspaceControllerProvider)
+                                          .documentBuffers
+                                          .where(
+                                            (candidate) =>
+                                                candidate.id == activeBuffer.id,
+                                          )
+                                          .firstOrNull;
+                                      if (latest != null) {
+                                        ref
+                                            .read(
+                                              workspaceControllerProvider
+                                                  .notifier,
+                                            )
+                                            .updateDocumentEditorState(
+                                              latest.id,
+                                              latest.editorState.copyWith(
+                                                searchReplacement: replacement,
+                                              ),
+                                            );
+                                      }
+                                    },
+                              onSearchOptionsChanged: (options) {
+                                final current = ref.read(
+                                  _workspaceSearchProvider,
+                                );
+                                ref
+                                    .read(_workspaceSearchProvider.notifier)
+                                    .set(current.withOptions(options));
+                              },
+                              initialSelection:
+                                  activeBuffer?.editorState.selection,
+                              initialScrollOffset:
+                                  activeBuffer?.editorState.scrollOffset ?? 0,
+                              initialFoldedRegionKeys:
+                                  activeBuffer?.editorState.foldedRegionKeys ??
+                                  const {},
+                              onSessionChanged: activeBuffer == null
+                                  ? null
+                                  : (
+                                      selection,
+                                      scrollOffset,
+                                      foldedRegionKeys,
+                                    ) {
+                                      final latest = ref
+                                          .read(workspaceControllerProvider)
+                                          .documentBuffers
+                                          .where(
+                                            (candidate) =>
+                                                candidate.id == activeBuffer.id,
+                                          )
+                                          .firstOrNull;
+                                      if (latest == null ||
+                                          _sameSourceSession(
+                                            latest.editorState,
+                                            selection,
+                                            scrollOffset,
+                                            foldedRegionKeys,
+                                          )) {
+                                        return;
+                                      }
                                       ref
                                           .read(
                                             workspaceControllerProvider
@@ -12365,189 +12444,148 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
                                           .updateDocumentEditorState(
                                             latest.id,
                                             latest.editorState.copyWith(
-                                              searchReplacement: replacement,
+                                              selection: selection,
+                                              scrollOffset: scrollOffset,
+                                              foldedRegionKeys:
+                                                  foldedRegionKeys,
                                             ),
                                           );
-                                    }
-                                  },
-                            onSearchOptionsChanged: (options) {
-                              final current = ref.read(
-                                _workspaceSearchProvider,
-                              );
-                              ref
-                                  .read(_workspaceSearchProvider.notifier)
-                                  .set(current.withOptions(options));
-                            },
-                            initialSelection:
-                                activeBuffer?.editorState.selection,
-                            initialScrollOffset:
-                                activeBuffer?.editorState.scrollOffset ?? 0,
-                            initialFoldedRegionKeys:
-                                activeBuffer?.editorState.foldedRegionKeys ??
-                                const {},
-                            onSessionChanged: activeBuffer == null
-                                ? null
-                                : (selection, scrollOffset, foldedRegionKeys) {
-                                    final latest = ref
-                                        .read(workspaceControllerProvider)
-                                        .documentBuffers
-                                        .where(
-                                          (candidate) =>
-                                              candidate.id == activeBuffer.id,
-                                        )
-                                        .firstOrNull;
-                                    if (latest == null ||
-                                        _sameSourceSession(
-                                          latest.editorState,
-                                          selection,
-                                          scrollOffset,
-                                          foldedRegionKeys,
-                                        )) {
-                                      return;
-                                    }
-                                    ref
-                                        .read(
-                                          workspaceControllerProvider.notifier,
-                                        )
-                                        .updateDocumentEditorState(
-                                          latest.id,
-                                          latest.editorState.copyWith(
-                                            selection: selection,
-                                            scrollOffset: scrollOffset,
-                                            foldedRegionKeys: foldedRegionKeys,
-                                          ),
-                                        );
-                                  },
-                            onOpenSearch: () => ref
-                                .read(
-                                  workspaceSearchOpenRequestProvider.notifier,
-                                )
-                                .request(),
-                            onCloseSearch: () => ref
-                                .read(
-                                  workspaceSearchCloseRequestProvider.notifier,
-                                )
-                                .request(),
-                            onVisibleLineChanged:
-                                _handleSourceVisibleLineChanged,
-                            onChanged: (value, sourceFilePath) =>
-                                _handleSourceChanged(
-                                  activeBuffer?.id,
-                                  value,
-                                  sourceFilePath,
-                                ),
-                            onTransactionalChanged:
-                                (
-                                  value,
-                                  sourceFilePath,
-                                  previousSelection,
-                                  selection,
-                                  undoGroup,
-                                ) => _handleTransactionalSourceChanged(
-                                  activeBuffer?.id,
-                                  value,
-                                  sourceFilePath,
-                                  previousSelection,
-                                  selection,
-                                  undoGroup,
-                                ),
-                            onUndo: () {
-                              final controller = ref.read(
-                                workspaceControllerProvider.notifier,
-                              );
-                              if (!controller.undoActiveBuffer()) {
-                                return null;
-                              }
-                              final buffer = ref
-                                  .read(workspaceControllerProvider)
-                                  .activeBuffer;
-                              return buffer == null
-                                  ? null
-                                  : TextEditingValue(
-                                      text: buffer.text,
-                                      selection: buffer.editorState.selection,
-                                    );
-                            },
-                            onRedo: () {
-                              final controller = ref.read(
-                                workspaceControllerProvider.notifier,
-                              );
-                              if (!controller.redoActiveBuffer()) {
-                                return null;
-                              }
-                              final buffer = ref
-                                  .read(workspaceControllerProvider)
-                                  .activeBuffer;
-                              return buffer == null
-                                  ? null
-                                  : TextEditingValue(
-                                      text: buffer.text,
-                                      selection: buffer.editorState.selection,
-                                    );
-                            },
-                            editRevision: ref
-                                .read(workspaceControllerProvider.notifier)
-                                .editRevision,
-                            onAiEdit:
-                                (_activeDocumentKind(
-                                      widget.state.workspace,
-                                    )?.supportsAiMarkdownEditing ??
-                                    false)
-                                ? (snapshot) =>
-                                      showBusyMarkAiEdit(context, ref, snapshot)
-                                : null,
+                                    },
+                              onOpenSearch: () => ref
+                                  .read(
+                                    workspaceSearchOpenRequestProvider.notifier,
+                                  )
+                                  .request(),
+                              onCloseSearch: () => ref
+                                  .read(
+                                    workspaceSearchCloseRequestProvider
+                                        .notifier,
+                                  )
+                                  .request(),
+                              onVisibleLineChanged:
+                                  _handleSourceVisibleLineChanged,
+                              onChanged: (value, sourceFilePath) =>
+                                  _handleSourceChanged(
+                                    activeBuffer?.id,
+                                    value,
+                                    sourceFilePath,
+                                  ),
+                              onTransactionalChanged:
+                                  (
+                                    value,
+                                    sourceFilePath,
+                                    previousSelection,
+                                    selection,
+                                    undoGroup,
+                                  ) => _handleTransactionalSourceChanged(
+                                    activeBuffer?.id,
+                                    value,
+                                    sourceFilePath,
+                                    previousSelection,
+                                    selection,
+                                    undoGroup,
+                                  ),
+                              onUndo: () {
+                                final controller = ref.read(
+                                  workspaceControllerProvider.notifier,
+                                );
+                                if (!controller.undoActiveBuffer()) {
+                                  return null;
+                                }
+                                final buffer = ref
+                                    .read(workspaceControllerProvider)
+                                    .activeBuffer;
+                                return buffer == null
+                                    ? null
+                                    : TextEditingValue(
+                                        text: buffer.text,
+                                        selection: buffer.editorState.selection,
+                                      );
+                              },
+                              onRedo: () {
+                                final controller = ref.read(
+                                  workspaceControllerProvider.notifier,
+                                );
+                                if (!controller.redoActiveBuffer()) {
+                                  return null;
+                                }
+                                final buffer = ref
+                                    .read(workspaceControllerProvider)
+                                    .activeBuffer;
+                                return buffer == null
+                                    ? null
+                                    : TextEditingValue(
+                                        text: buffer.text,
+                                        selection: buffer.editorState.selection,
+                                      );
+                              },
+                              editRevision: ref
+                                  .read(workspaceControllerProvider.notifier)
+                                  .editRevision,
+                              onAiEdit:
+                                  (_activeDocumentKind(
+                                        widget.state.workspace,
+                                      )?.supportsAiMarkdownEditing ??
+                                      false)
+                                  ? (snapshot) => showBusyMarkAiEdit(
+                                      context,
+                                      ref,
+                                      snapshot,
+                                    )
+                                  : null,
+                            ),
                           ),
-                        ),
-                      if (sourceVisible && previewVisible)
-                        VerticalDivider(
-                          width: BusyMarkStroke.hairline,
-                          color: colors.subtleBorder,
-                        ),
-                      if (previewVisible)
-                        Expanded(
-                          key: const ValueKey('document-preview-pane'),
-                          child: _PreviewPane(
-                            preview: widget.state.preview,
-                            workspace: widget.state.workspace,
-                            activeSource: widget.state.activeText,
-                            editRevision: ref
-                                .read(workspaceControllerProvider.notifier)
-                                .editRevision,
-                            visualizationsEnabled: true,
-                            onVisualizationDiagnostic:
-                                _openVisualizationSourceLine,
-                            onEditVisualizationSource:
-                                _openVisualizationSourceLine,
-                            controller: _previewScrollController,
-                            itemPositionsListener:
-                                _previewItemPositionsListener,
-                            onBlockContextAvailable:
-                                _rememberPreviewBlockContext,
-                            onBlockContextUnavailable:
-                                _forgetPreviewBlockContext,
-                            documentLayout: sourceVisible
-                                ? BusyMarkDocumentLayoutSpec.splitPreview
-                                : standaloneDocumentLayout,
+                        if (sourceVisible && previewVisible)
+                          VerticalDivider(
+                            width: BusyMarkStroke.hairline,
+                            color: colors.subtleBorder,
                           ),
-                        ),
-                    ],
+                        if (previewVisible)
+                          Expanded(
+                            key: const ValueKey('document-preview-pane'),
+                            child: _PreviewPane(
+                              preview: widget.state.preview,
+                              workspace: widget.state.workspace,
+                              activeSource: widget.state.activeText,
+                              editRevision: ref
+                                  .read(workspaceControllerProvider.notifier)
+                                  .editRevision,
+                              visualizationsEnabled: true,
+                              onVisualizationDiagnostic:
+                                  _openVisualizationSourceLine,
+                              onEditVisualizationSource:
+                                  _openVisualizationSourceLine,
+                              controller: _previewScrollController,
+                              itemPositionsListener:
+                                  _previewItemPositionsListener,
+                              onBlockContextAvailable:
+                                  _rememberPreviewBlockContext,
+                              onBlockContextUnavailable:
+                                  _forgetPreviewBlockContext,
+                              documentLayout: sourceVisible
+                                  ? BusyMarkDocumentLayoutSpec.splitPreview
+                                  : standaloneDocumentLayout,
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          if (activeBuffer != null)
-            BusyMarkDocumentStatusBar(
-              format: activeBuffer.format,
-              spellingLabel: spellingLabel,
-              spellingTooltip: spellingSupported
-                  ? context.l10n.chooseSpellingLanguage
-                  : null,
-              onSpellingPressed: spellingSupported
-                  ? () => unawaited(_chooseDocumentSpellingLanguage())
-                  : null,
-            ),
-        ],
+            if (activeBuffer != null)
+              BusyMarkDocumentStatusBar(
+                format: activeBuffer.format,
+                spellingLabel: spellingLabel,
+                spellingTooltip: spellingSupported
+                    ? context.l10n.chooseSpellingLanguage
+                    : null,
+                onSpellingPressed: spellingSupported
+                    ? () => unawaited(_chooseDocumentSpellingLanguage())
+                    : null,
+              ),
+          ],
+        ),
       ),
     );
   }

@@ -4641,4 +4641,13 @@ class AppLocalizationsHi extends AppLocalizations {
   @override
   String get spellingDictionaryRecoveryConflict =>
       'वर्तनी शब्दकोश को बाहरी रूप से बदला गया। पुनर्प्राप्ति प्रति सुरक्षित रखी गई।';
+
+  @override
+  String get windowMinimize => 'छोटा करें';
+
+  @override
+  String get windowMaximize => 'अधिकतम करें';
+
+  @override
+  String get windowRestore => 'पुनर्स्थापित करें';
 }

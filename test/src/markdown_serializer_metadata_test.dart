@@ -537,6 +537,201 @@ void main() {
     },
   );
 
+  for (final mode in [
+    MarkdownMode.commonMark,
+    MarkdownMode.writersideMarkdown,
+  ]) {
+    for (final suffix in ['&copy;', '&amp;', '&amp;*<tag>']) {
+      test(
+        'bare URL character-reference suffix round-trips in $mode: $suffix',
+        () {
+          const parser = MarkdownParser();
+          const url = 'https://example.com';
+          const linkSource = '[$url]($url)';
+          final suffixUnits = [
+            for (final character in suffix.split(''))
+              if ('&*<'.contains(character)) '\\$character' else character,
+          ];
+          final source = '$linkSource${suffixUnits.join()}';
+          final text = '$url$suffix';
+          final controller = BusyMarkWysiwygDocumentController(
+            document: parser
+                .parse(filePath: 'topic.md', source: '', mode: mode)
+                .busyDocument,
+          );
+          addTearDown(controller.dispose);
+          final id = controller.document.blocks.single.id;
+          controller.updateBlockText(id, text);
+          final next = controller.applyEnterAt(id, text.length)!;
+          expect(next.offset, 0);
+
+          void check(BusyBlock block) {
+            expect(block.plainText, text);
+            final ranges = busyInlineStyleRanges(block.inlines);
+            final link = ranges
+                .where((range) => range.kind == BusyInlineKind.link)
+                .single;
+            expect(
+              (link.start, link.end, link.destination),
+              (0, url.length, url),
+            );
+            expect(
+              ranges.where((range) => range.kind != BusyInlineKind.link),
+              isEmpty,
+            );
+            expect(block.plainText.substring(link.end), suffix);
+            expect(serializer.serializeInlineFragment(block.inlines), source);
+            final suffixBoundaries = [linkSource.length];
+            for (final unit in suffixUnits) {
+              suffixBoundaries.add(suffixBoundaries.last + unit.length);
+            }
+            for (var offset = 0; offset <= text.length; offset++) {
+              final result = serializer.serializeInlineFragmentWithOffsets(
+                block.inlines,
+                textOffset: offset,
+              );
+              expect(result.source, source);
+              expect(
+                result.sourceOffset,
+                offset == 0
+                    ? 0
+                    : offset < url.length
+                    ? offset + 1
+                    : suffixBoundaries[offset - url.length],
+              );
+              expect(result.textAtoms, hasLength(text.length));
+              for (var index = 0; index < text.length; index++) {
+                final atom = result.textAtoms[index];
+                final start = index < url.length
+                    ? index + 1
+                    : suffixBoundaries[index - url.length];
+                final end = index < url.length
+                    ? start + 1
+                    : suffixBoundaries[index - url.length + 1];
+                expect((atom.textStart, atom.textEnd), (index, index + 1));
+                expect((atom.sourceStart, atom.sourceEnd), (start, end));
+                expect(atom.text, text[index]);
+                expect(atom.escaped, end - start > 1);
+                expect(
+                  source.substring(start, end),
+                  index < url.length
+                      ? text[index]
+                      : suffixUnits[index - url.length],
+                );
+              }
+            }
+          }
+
+          // Check the live extent before demonstrating the saved-source failure.
+          final live = controller.document.blocks.first;
+          final liveLink = busyInlineStyleRanges(
+            live.inlines,
+          ).where((range) => range.kind == BusyInlineKind.link).single;
+          expect(
+            (liveLink.start, liveLink.end, liveLink.destination),
+            (0, url.length, url),
+          );
+          expect(live.plainText, text);
+          final saved = parser
+              .parse(
+                filePath: 'topic.md',
+                source: controller.markdown,
+                mode: mode,
+              )
+              .busyDocument;
+          check(saved.blocks.single);
+          check(live);
+          expect(controller.markdown, '$source\n\n');
+          check(
+            live.copyWith(
+              inlines: parser.parseInlineFragment(source: source, mode: mode),
+            ),
+          );
+          final reopened = BusyMarkWysiwygDocumentController(document: saved);
+          addTearDown(reopened.dispose);
+          expect(reopened.markdown, controller.markdown);
+        },
+      );
+    }
+  }
+
+  for (final mode in [
+    MarkdownMode.commonMark,
+    MarkdownMode.writersideMarkdown,
+  ]) {
+    test(
+      'unrecognized URL source preserves literal text and metadata in $mode',
+      () {
+        const parser = MarkdownParser();
+        const text = 'https://example.com*';
+        const source = r'&#104;ttps://example.com\*';
+        final units = [
+          '&#104;',
+          ...text.substring(1, text.length - 1).split(''),
+          r'\*',
+        ];
+        final boundaries = [0];
+        for (final unit in units) {
+          boundaries.add(boundaries.last + unit.length);
+        }
+        final controller = BusyMarkWysiwygDocumentController(
+          document: parser
+              .parse(filePath: 'topic.md', source: '', mode: mode)
+              .busyDocument,
+        );
+        addTearDown(controller.dispose);
+        final id = controller.document.blocks.single.id;
+        controller.updateBlockText(id, text);
+        void check(BusyBlock block) {
+          expect(block.plainText, text);
+          expect(busyInlineStyleRanges(block.inlines), isEmpty);
+          for (var offset = 0; offset <= text.length; offset++) {
+            final result = serializer.serializeInlineFragmentWithOffsets(
+              block.inlines,
+              textOffset: offset,
+            );
+            expect(result.source, source);
+            expect(result.sourceOffset, boundaries[offset]);
+            expect(result.textAtoms, hasLength(text.length));
+            for (var index = 0; index < text.length; index++) {
+              final atom = result.textAtoms[index];
+              expect((atom.textStart, atom.textEnd), (index, index + 1));
+              expect(
+                (atom.sourceStart, atom.sourceEnd),
+                (boundaries[index], boundaries[index + 1]),
+              );
+              expect(atom.text, text[index]);
+              expect(atom.escaped, units[index].length > 1);
+              expect(
+                source.substring(atom.sourceStart, atom.sourceEnd),
+                units[index],
+              );
+            }
+          }
+        }
+
+        check(controller.document.blocks.single);
+        expect(controller.markdown, '$source\n');
+        check(
+          parser
+              .parse(
+                filePath: 'topic.md',
+                source: controller.markdown,
+                mode: mode,
+              )
+              .busyDocument
+              .blocks
+              .single,
+        );
+        check(
+          controller.document.blocks.single.copyWith(
+            inlines: parser.parseInlineFragment(source: source, mode: mode),
+          ),
+        );
+      },
+    );
+  }
+
   test('descendant whitespace preservation prevents ancestor trimming', () {
     const preserved = {busyMarkPreserveTextWhitespaceAttribute: 'true'};
     const whitespace = BusyBlock(

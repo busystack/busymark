@@ -4650,4 +4650,13 @@ class AppLocalizationsEt extends AppLocalizations {
   @override
   String get spellingDictionaryRecoveryConflict =>
       'Õigekirjasõnastikku muudeti väliselt. Taastekoopia säilitati.';
+
+  @override
+  String get windowMinimize => 'Minimeeri';
+
+  @override
+  String get windowMaximize => 'Maksimeeri';
+
+  @override
+  String get windowRestore => 'Taasta';
 }

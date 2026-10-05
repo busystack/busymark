@@ -4665,4 +4665,13 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get spellingDictionaryRecoveryConflict =>
       'The spelling dictionary changed externally. A recovery copy was preserved.';
+
+  @override
+  String get windowMinimize => 'Minimize';
+
+  @override
+  String get windowMaximize => 'Maximize';
+
+  @override
+  String get windowRestore => 'Restore';
 }

@@ -43,6 +43,8 @@ import 'package:busymark/src/editor/source_highlighter.dart'
     show BusyMarkSourceEditingController;
 import 'package:busymark/src/editor/source/source_read_only_view.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_editor.dart';
+import 'package:busymark/src/editor/wysiwyg/wysiwyg_inline_controller.dart';
+import 'package:busymark/src/markdown/busymark_document.dart';
 import 'package:busymark/src/feedback/presentation/feedback_dialog.dart';
 import 'package:busymark/src/export/export_options_editor.dart';
 import 'package:busymark/src/git/application/git_controller.dart';
@@ -156,6 +158,66 @@ void main() {
       hasLength(1),
     );
   });
+
+  testWidgets(
+    'workspace resize retains the sidebar and leaves room for header controls',
+    (tester) async {
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = const Size(1280, 720);
+      addTearDown(tester.view.reset);
+      final container = ProviderContainer(
+        overrides: [
+          ..._smokeAccentOverrides,
+          linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+          localSettingsStoreProvider.overrideWithValue(_MemorySettingsStore()),
+          workspaceServiceProvider.overrideWithValue(
+            _StartupWorkspaceService(),
+          ),
+          startupPathProvider.overrideWithValue(
+            'test/fixtures/markdown/basic.md',
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: const BusyMarkApp(),
+        ),
+      );
+      await _pumpUntilFound(
+        tester,
+        find.byKey(const ValueKey('workspace-page-frame')),
+      );
+      await tester.pumpAndSettle();
+      final sidebarKey = ValueKey(
+        container.read(workspaceControllerProvider).workspace!.id,
+      );
+      final sidebarState = tester.state(find.byKey(sidebarKey));
+      final generation = container.read(sidebarTransitionGenerationProvider);
+      final viewport = find.byKey(const ValueKey('linux-sidebar-viewport'));
+      expect(tester.getSize(viewport).width, BusyMarkSizes.sidebarWidth);
+
+      tester.view.physicalSize = const Size(700, 720);
+      await tester.pump();
+      expect(tester.getSize(viewport).width, 0);
+      expect(
+        tester.state(find.byKey(sidebarKey, skipOffstage: false)),
+        same(sidebarState),
+      );
+      expect(
+        container.read(appSettingsControllerProvider).sidebarVisible,
+        isTrue,
+      );
+      expect(container.read(sidebarTransitionGenerationProvider), generation);
+
+      tester.view.physicalSize = const Size(1280, 720);
+      await tester.pump();
+      expect(tester.getSize(viewport).width, BusyMarkSizes.sidebarWidth);
+      expect(tester.state(find.byKey(sidebarKey)), same(sidebarState));
+      expect(container.read(sidebarTransitionGenerationProvider), generation);
+    },
+  );
 
   test('document view shortcuts are distinct from existing commands', () {
     expect(
@@ -460,6 +522,148 @@ void main() {
         readingText,
       );
       expect(readCount, readingReadCount);
+    },
+  );
+
+  testWidgets(
+    'workspace source history restores a pasted URL suffix through undo and redo',
+    (tester) async {
+      const url = 'https://example.com';
+      const text = '$url*';
+      const clipboardChannel = MethodChannel(richClipboardChannelName);
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        clipboardChannel,
+        (call) async => call.method == 'read'
+            ? <String, Object?>{'text': text, 'generation': 1}
+            : null,
+      );
+      addTearDown(
+        () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          clipboardChannel,
+          null,
+        ),
+      );
+      final settings = _MemorySettingsStore()
+        ..value = AppSettings.defaults()
+            .copyWith(
+              autoSave: false,
+              documentViewMode: DocumentViewModePreference.editor,
+            )
+            .toJson();
+      final container = ProviderContainer(
+        overrides: [
+          ..._smokeAccentOverrides,
+          linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+          localSettingsStoreProvider.overrideWithValue(settings),
+          workspaceServiceProvider.overrideWithValue(
+            const _SearchWorkspaceService(''),
+          ),
+          startupPathProvider.overrideWithValue('/tmp/workspace-url-undo.md'),
+        ],
+      );
+      addTearDown(container.dispose);
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: const BusyMarkApp(),
+        ),
+      );
+      for (var index = 0; index < 30; index++) {
+        await tester.pump(const Duration(milliseconds: 100));
+        if (find.byType(BusyMarkWysiwygEditor).evaluate().isNotEmpty) break;
+      }
+      Future<void> shortcut(
+        LogicalKeyboardKey key, {
+        bool shift = false,
+      }) async {
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+        if (shift) await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+        await tester.sendKeyEvent(key);
+        if (shift) await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+
+      BusyDocument live() => tester
+          .widget<BusyMarkWysiwygEditor>(find.byType(BusyMarkWysiwygEditor))
+          .document;
+      TextField first() => tester.widget<TextField>(
+        find
+            .descendant(
+              of: find.byType(BusyMarkWysiwygEditor),
+              matching: find.byType(TextField),
+            )
+            .first,
+      );
+      String source() => container.read(workspaceControllerProvider).activeText;
+      void check({required bool recognized}) {
+        expect(first().controller!.text, text);
+        expect(first().controller!.text, isNot(contains(r'\')));
+        expect(live().blocks.first.plainText, text);
+        final ranges = busyInlineStyleRanges(live().blocks.first.inlines);
+        if (recognized) {
+          final link = ranges.single;
+          expect(
+            (link.kind, link.start, link.end, link.destination),
+            (BusyInlineKind.link, 0, url.length, url),
+          );
+          expect(link.attributes[busyMarkBareUrlAttribute], 'true');
+        } else {
+          expect(ranges, isEmpty);
+        }
+      }
+
+      first().focusNode!.requestFocus();
+      first().controller!.selection = const TextSelection.collapsed(offset: 0);
+      await tester.pump();
+      await shortcut(LogicalKeyboardKey.keyV);
+      check(recognized: false);
+      final beforeEnter = source();
+      expect(beforeEnter, r'&#104;ttps://example.com\*');
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pump(const Duration(milliseconds: 100));
+      check(recognized: true);
+      final afterEnter = source();
+      // This workspace fixture has no final newline, so the buffer strips
+      // trailing document separators while retaining the live new paragraph.
+      expect(afterEnter, text);
+      final fields = tester
+          .widgetList<TextField>(
+            find.descendant(
+              of: find.byType(BusyMarkWysiwygEditor),
+              matching: find.byType(TextField),
+            ),
+          )
+          .toList();
+      expect(fields.last.focusNode!.hasFocus, isTrue);
+      expect(
+        fields.last.controller!.selection,
+        const TextSelection.collapsed(offset: 0),
+      );
+      expect(
+        tester
+            .state<BusyMarkWysiwygEditorState>(
+              find.byType(BusyMarkWysiwygEditor),
+            )
+            .debugUndoSnapshotCount,
+        0,
+      );
+      await shortcut(LogicalKeyboardKey.keyZ);
+      expect(source(), beforeEnter);
+      check(recognized: false);
+      await shortcut(LogicalKeyboardKey.keyZ, shift: true);
+      expect(source(), afterEnter);
+      check(recognized: true);
+      await shortcut(LogicalKeyboardKey.keyZ);
+      check(recognized: false);
+      await shortcut(LogicalKeyboardKey.keyZ);
+      expect(first().controller!.text, '');
+      await shortcut(LogicalKeyboardKey.keyZ, shift: true);
+      expect(source(), beforeEnter);
+      check(recognized: false);
+      await shortcut(LogicalKeyboardKey.keyZ, shift: true);
+      expect(source(), afterEnter);
+      check(recognized: true);
     },
   );
 
@@ -3159,7 +3363,7 @@ void main() {
 
     expect(service.untitledCount, 1);
     expect(find.text(l10n.createMarkdownFile), findsNothing);
-    expect(find.text(l10n.workspaceKindUnsavedMarkdown), findsWidgets);
+    expect(find.text(l10n.untitledMarkdownFileName), findsWidgets);
     expect(find.byKey(const ValueKey('editor-tab-strip')), findsNothing);
     expect(find.byKey(const ValueKey('document-status-bar')), findsOneWidget);
     expect(find.text('LF'), findsOneWidget);
@@ -5363,7 +5567,32 @@ code
       findsWidgets,
     );
 
-    await tester.tap(find.text('current.md').at(1));
+    final selectedDiff = container
+        .read(gitControllerProvider)
+        .selectedCommitFilePath;
+    await tester.sendKeyEvent(LogicalKeyboardKey.f9);
+    await tester.pumpAndSettle();
+    expect(
+      container.read(gitControllerProvider).selectedCommitFilePath,
+      selectedDiff,
+    );
+    expect(
+      find.textContaining('Guide change', findRichText: true),
+      findsWidgets,
+    );
+    await tester.sendKeyEvent(LogicalKeyboardKey.f9);
+    await tester.pumpAndSettle();
+    expect(
+      container.read(gitControllerProvider).selectedCommitFilePath,
+      selectedDiff,
+    );
+
+    await tester.tap(
+      find.descendant(
+        of: find.byKey(const ValueKey('editor-tab-strip')),
+        matching: find.text('current.md'),
+      ),
+    );
     await tester.pump();
 
     expect(find.text('README.md'), findsWidgets);
@@ -5966,8 +6195,8 @@ code
       await tester.sendKeyDownEvent(key);
       await tester.sendKeyUpEvent(key);
       await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
-      await tester.pump(const Duration(milliseconds: 100));
-      await tester.pump(const Duration(milliseconds: 100));
+      await tester.pumpAndSettle();
+      await tester.pumpAndSettle();
     }
 
     Future<void> setDocumentViewMode(
@@ -5976,8 +6205,8 @@ code
       await container
           .read(appSettingsControllerProvider.notifier)
           .setDocumentViewMode(expectedMode);
-      await tester.pump(const Duration(milliseconds: 100));
-      await tester.pump(const Duration(milliseconds: 100));
+      await tester.pumpAndSettle();
+      await tester.pumpAndSettle();
       expect(
         container.read(appSettingsControllerProvider).documentViewMode,
         expectedMode,
@@ -5995,11 +6224,16 @@ code
       if (container.read(workspaceControllerProvider).workspace != null) {
         break;
       }
-      await tester.pump(const Duration(milliseconds: 100));
+      await tester.pumpAndSettle();
     }
     await tester.pumpAndSettle();
 
     expect(find.text('Api.md'), findsOneWidget);
+
+    final sidebarKey = ValueKey(
+      container.read(workspaceControllerProvider).workspace!.id,
+    );
+    final sidebarState = tester.state(find.byKey(sidebarKey));
 
     expect(
       find.byTooltip(
@@ -6008,8 +6242,12 @@ code
       findsOneWidget,
     );
     await tester.sendKeyEvent(LogicalKeyboardKey.f9);
-    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pumpAndSettle();
     expect(find.byTooltip(l10n.sidebarViewMenu), findsNothing);
+    expect(
+      tester.state(find.byKey(sidebarKey, skipOffstage: false)),
+      same(sidebarState),
+    );
     expect(
       find.byTooltip(
         '${l10n.showSidebar} (${BusyMarkSidebarShortcutLabels.toggleSidebar})',
@@ -6018,8 +6256,9 @@ code
     );
 
     await tester.sendKeyEvent(LogicalKeyboardKey.f9);
-    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pumpAndSettle();
     expect(find.byTooltip(l10n.sidebarViewMenu), findsOneWidget);
+    expect(tester.state(find.byKey(sidebarKey)), same(sidebarState));
 
     final activeEditorField = find.byWidgetPredicate(
       (widget) =>
@@ -11594,14 +11833,22 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
     );
     await tester.pump();
     for (var i = 0; i < 20; i += 1) {
-      await tester.pump(const Duration(milliseconds: 100));
-      if (find.text(l10n.workspaceKindSingleMarkdown).evaluate().isNotEmpty) {
+      await tester.pumpAndSettle();
+      if (find
+          .byKey(const ValueKey('workspace-page-frame'))
+          .evaluate()
+          .isNotEmpty) {
         break;
       }
     }
-    expect(find.text(l10n.workspaceKindSingleMarkdown), findsWidgets);
+    expect(find.byKey(const ValueKey('workspace-page-frame')), findsWidgets);
 
     final initialTextFields = find.byType(TextField).evaluate().length;
+    final editorFocus = tester
+        .widget<EditableText>(find.byType(EditableText).first)
+        .focusNode;
+    editorFocus.requestFocus();
+    await tester.pump();
     Finder headerButton(String tooltip) => find.byWidgetPredicate(
       (widget) =>
           widget is IconButton &&
@@ -11613,33 +11860,35 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
     await tester.sendKeyDownEvent(LogicalKeyboardKey.keyF);
     await tester.sendKeyUpEvent(LogicalKeyboardKey.keyF);
     await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
-    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pumpAndSettle();
     expect(find.byType(TextField).evaluate().length, initialTextFields + 1);
     expect(headerButton(l10n.welcome), findsNothing);
     expect(headerButton(l10n.validate), findsNothing);
     expect(headerButton(l10n.viewMode), findsNothing);
 
     await tester.tap(headerButton(l10n.search));
-    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pumpAndSettle();
     expect(find.byType(TextField).evaluate().length, initialTextFields);
     expect(headerButton(l10n.welcome), findsOneWidget);
+    expect(editorFocus.hasFocus, isTrue);
     expect(headerButton(l10n.validate), findsOneWidget);
     expect(headerButton(l10n.viewMode), findsOneWidget);
 
     await tester.tap(headerButton(l10n.search));
-    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pumpAndSettle();
     expect(find.byType(TextField).evaluate().length, initialTextFields + 1);
 
     await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
     await tester.sendKeyDownEvent(LogicalKeyboardKey.keyF);
     await tester.sendKeyUpEvent(LogicalKeyboardKey.keyF);
     await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
-    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pumpAndSettle();
     expect(find.byType(TextField).evaluate().length, initialTextFields + 1);
 
     await tester.sendKeyEvent(LogicalKeyboardKey.escape);
-    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pumpAndSettle();
     expect(find.byType(TextField).evaluate().length, initialTextFields);
+    expect(editorFocus.hasFocus, isTrue);
   });
 
   testWidgets(
@@ -11701,7 +11950,10 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
       await tester.pump();
       for (var i = 0; i < 20; i += 1) {
         await tester.pump(const Duration(milliseconds: 100));
-        if (find.text(l10n.workspaceKindSingleMarkdown).evaluate().isNotEmpty) {
+        if (find
+            .byKey(const ValueKey('workspace-page-frame'))
+            .evaluate()
+            .isNotEmpty) {
           break;
         }
       }
@@ -11771,7 +12023,10 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
       );
       for (var i = 0; i < 20; i += 1) {
         await tester.pump(const Duration(milliseconds: 100));
-        if (find.text(l10n.workspaceKindSingleMarkdown).evaluate().isNotEmpty) {
+        if (find
+            .byKey(const ValueKey('workspace-page-frame'))
+            .evaluate()
+            .isNotEmpty) {
           break;
         }
       }
@@ -12305,7 +12560,10 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
     );
     for (var i = 0; i < 20; i += 1) {
       await tester.pump(const Duration(milliseconds: 100));
-      if (find.text(l10n.workspaceKindSingleMarkdown).evaluate().isNotEmpty) {
+      if (find
+          .byKey(const ValueKey('workspace-page-frame'))
+          .evaluate()
+          .isNotEmpty) {
         break;
       }
     }
@@ -12468,7 +12726,10 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
     );
     for (var i = 0; i < 20; i += 1) {
       await tester.pump(const Duration(milliseconds: 100));
-      if (find.text(l10n.workspaceKindSingleMarkdown).evaluate().isNotEmpty) {
+      if (find
+          .byKey(const ValueKey('workspace-page-frame'))
+          .evaluate()
+          .isNotEmpty) {
         break;
       }
     }
@@ -12540,7 +12801,10 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
     );
     for (var i = 0; i < 20; i += 1) {
       await tester.pump(const Duration(milliseconds: 100));
-      if (find.text(l10n.workspaceKindSingleMarkdown).evaluate().isNotEmpty) {
+      if (find
+          .byKey(const ValueKey('workspace-page-frame'))
+          .evaluate()
+          .isNotEmpty) {
         break;
       }
     }
@@ -12694,7 +12958,10 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
     );
     for (var i = 0; i < 20; i += 1) {
       await tester.pump(const Duration(milliseconds: 100));
-      if (find.text(l10n.workspaceKindSingleMarkdown).evaluate().isNotEmpty) {
+      if (find
+          .byKey(const ValueKey('workspace-page-frame'))
+          .evaluate()
+          .isNotEmpty) {
         break;
       }
     }
@@ -12739,7 +13006,10 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
     );
     for (var i = 0; i < 20; i += 1) {
       await tester.pump(const Duration(milliseconds: 100));
-      if (find.text(l10n.workspaceKindSingleMarkdown).evaluate().isNotEmpty) {
+      if (find
+          .byKey(const ValueKey('workspace-page-frame'))
+          .evaluate()
+          .isNotEmpty) {
         break;
       }
     }
@@ -12829,7 +13099,10 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
     );
     for (var i = 0; i < 20; i += 1) {
       await tester.pump(const Duration(milliseconds: 100));
-      if (find.text(l10n.workspaceKindSingleMarkdown).evaluate().isNotEmpty) {
+      if (find
+          .byKey(const ValueKey('workspace-page-frame'))
+          .evaluate()
+          .isNotEmpty) {
         break;
       }
     }

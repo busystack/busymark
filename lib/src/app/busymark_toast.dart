@@ -174,8 +174,12 @@ class _BusyMarkToastOverlayState extends State<BusyMarkToastOverlay> {
                   alignment: Alignment.bottomCenter,
                   heightFactor: 1,
                   child: AnimatedSwitcher(
-                    duration: _transitionDuration,
-                    reverseDuration: _transitionDuration,
+                    duration: MediaQuery.disableAnimationsOf(context)
+                        ? Duration.zero
+                        : _transitionDuration,
+                    reverseDuration: MediaQuery.disableAnimationsOf(context)
+                        ? Duration.zero
+                        : _transitionDuration,
                     switchInCurve: Curves.easeOutCubic,
                     switchOutCurve: Curves.easeInCubic,
                     transitionBuilder: (child, animation) => FadeTransition(
