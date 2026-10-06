@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:busymark/src/app/app_settings.dart';
+import 'package:busymark/src/local_history/local_history_models.dart';
 import 'package:busymark/src/workspace/document_buffer.dart';
 import 'package:busymark/src/workspace/recovery_persistence.dart';
 import 'package:busymark/src/workspace/session_persistence.dart';
@@ -78,6 +79,62 @@ void main() {
             displayName: 'first.md',
           ),
         ],
+        pendingLocalHistoryClears: const [
+          LocalHistoryPendingClear(
+            operationId: 'history-clear-pending',
+            documentId: 'history-document',
+          ),
+        ],
+        pendingLocalHistoryReconciliations: const [
+          LocalHistoryPathReconciliation.remap(
+            operationId: 'prepared-remap',
+            sourcePath: '/workspace/old.md',
+            destinationPath: '/workspace/new.md',
+            phase: LocalHistoryPathReconciliationPhase.prepared,
+            targets: [
+              LocalHistoryPathTarget(
+                documentId: 'history-document',
+                expectedPath: '/workspace/old.md',
+                versionToken: 'old-version',
+              ),
+            ],
+          ),
+          LocalHistoryPathReconciliation.deletion(
+            sourcePath: '/workspace/removed',
+            recursive: true,
+            targets: [
+              LocalHistoryPathTarget(
+                documentId: 'nested-history-document',
+                expectedPath: '/workspace/removed/nested.md',
+                versionToken: 'nested-version',
+              ),
+            ],
+          ),
+        ],
+        retainedLocalHistoryCaptures: const [
+          LocalHistoryRetainedCapture(
+            ownerId: 'history-capture:first:1',
+            documentId: 'history-document',
+            pending: LocalHistoryRetainedSnapshot(
+              displayName: 'old.md',
+              source: 'retained source',
+              format: TextFormatMetadata.utf8Lf,
+              revision: 7,
+              path: '/workspace/old.md',
+            ),
+          ),
+          LocalHistoryRetainedCapture(
+            ownerId: 'history-promotion:history-document',
+            documentId: 'history-document',
+            pending: LocalHistoryRetainedSnapshot(
+              displayName: 'first.md',
+              source: 'retained promotion source',
+              format: TextFormatMetadata.utf8Lf,
+              revision: 8,
+              path: '/workspace/first.md',
+            ),
+          ),
+        ],
       );
 
       await store.save(snapshot);
@@ -89,6 +146,35 @@ void main() {
       expect(
         restored?.pendingLocalHistoryAssociations.single.documentId,
         'history-document',
+      );
+      expect(restored?.pendingLocalHistoryReconciliations, hasLength(2));
+      expect(
+        restored?.pendingLocalHistoryClears.single.documentId,
+        'history-document',
+      );
+      expect(
+        restored?.pendingLocalHistoryReconciliations.first.phase,
+        LocalHistoryPathReconciliationPhase.prepared,
+      );
+      expect(
+        restored?.pendingLocalHistoryReconciliations.first.operationId,
+        'prepared-remap',
+      );
+      expect(restored?.retainedLocalHistoryCaptures, hasLength(2));
+      expect(
+        restored?.retainedLocalHistoryCaptures.first.pending?.source,
+        'retained source',
+      );
+      expect(
+        restored?.retainedLocalHistoryCaptures.last.ownerId,
+        'history-promotion:history-document',
+      );
+      expect(restored?.pendingLocalHistoryReconciliations.first.documentIds, [
+        'history-document',
+      ]);
+      expect(
+        restored?.pendingLocalHistoryReconciliations.last.recursive,
+        isTrue,
       );
       expect(
         restored?.tabs.first.editorState.mode,
@@ -117,6 +203,60 @@ void main() {
         await File(p.join(directory.path, 'session.json')).readAsString(),
         isNot(contains('# First')),
       );
+    },
+  );
+
+  test(
+    'session merge keys first-save promotions by durable operation owner',
+    () async {
+      final store = MemoryDocumentSessionStore();
+      const first = PendingLocalHistoryAssociation(
+        bufferId: 'shared-buffer',
+        documentId: 'document-a',
+        destinationPath: '/workspace/A.md',
+        displayName: 'A.md',
+        operationOwnerId: 'history-promotion:owner-a:1',
+      );
+      const second = PendingLocalHistoryAssociation(
+        bufferId: 'shared-buffer',
+        documentId: 'document-b',
+        destinationPath: '/workspace/B.md',
+        displayName: 'B.md',
+        operationOwnerId: 'history-promotion:owner-b:1',
+      );
+      await store.save(
+        const WorkspaceSessionSnapshot(
+          workspacePath: null,
+          tabs: [],
+          activeBufferId: null,
+          pendingLocalHistoryAssociations: [first],
+        ),
+      );
+      await store.save(
+        const WorkspaceSessionSnapshot(
+          workspacePath: null,
+          tabs: [],
+          activeBufferId: null,
+          pendingLocalHistoryAssociations: [second],
+        ),
+      );
+
+      expect(
+        store.value?.pendingLocalHistoryAssociations
+            .map((association) => association.operationOwnerId)
+            .toSet(),
+        {first.operationOwnerId, second.operationOwnerId},
+      );
+
+      await store.save(
+        const WorkspaceSessionSnapshot(
+          workspacePath: null,
+          tabs: [],
+          activeBufferId: null,
+          retiredLocalHistoryWorkOwnerIds: ['history-promotion:owner-a:1'],
+        ),
+      );
+      expect(store.value?.pendingLocalHistoryAssociations, [second]);
     },
   );
 
@@ -192,6 +332,101 @@ void main() {
       expect(recovered.readErrors, 1);
     },
   );
+
+  test(
+    'recovery ownership keeps same buffer IDs isolated by process',
+    () async {
+      final directory = await Directory.systemTemp.createTemp(
+        'busymark-recovery-owners-',
+      );
+      addTearDown(() => directory.delete(recursive: true));
+      final path = p.join(directory.path, 'recovery.json');
+      final first = JsonDocumentRecoveryStore(filePathOverride: path);
+      final second = JsonDocumentRecoveryStore(filePathOverride: path);
+      final firstBuffer = DocumentBuffer.untitled(
+        id: 'untitled:shared',
+        name: 'First',
+        text: 'first process',
+      );
+      final secondBuffer = DocumentBuffer.untitled(
+        id: 'untitled:shared',
+        name: 'Second',
+        text: 'second process',
+      );
+
+      await first.writeEntries([
+        DocumentRecoveryEntry.fromBuffer(firstBuffer, workspacePath: null),
+      ]);
+      await second.writeEntries([
+        DocumentRecoveryEntry.fromBuffer(secondBuffer, workspacePath: null),
+      ]);
+      var recovered = await JsonDocumentRecoveryStore(
+        filePathOverride: path,
+      ).beginRun();
+      expect(recovered.entries.map((entry) => entry.text).toSet(), {
+        'first process',
+        'second process',
+      });
+      expect(
+        recovered.entries.map((entry) => entry.ownerId).toSet(),
+        hasLength(2),
+      );
+
+      // A subsequent write by the second process owns only its entry. It must
+      // not claim and then remove the first process's recovery record merely
+      // because both were present in an earlier merged read/write.
+      await second.writeEntries([
+        DocumentRecoveryEntry.fromBuffer(
+          secondBuffer.edited('second process updated'),
+          workspacePath: null,
+        ),
+      ]);
+      recovered = await JsonDocumentRecoveryStore(
+        filePathOverride: path,
+      ).beginRun();
+      expect(recovered.entries.map((entry) => entry.text).toSet(), {
+        'first process',
+        'second process updated',
+      });
+
+      await first.writeEntries(const []);
+      recovered = await JsonDocumentRecoveryStore(
+        filePathOverride: path,
+      ).beginRun();
+      expect(recovered.entries.map((entry) => entry.text), [
+        'second process updated',
+      ]);
+    },
+  );
+
+  test('restored dead-owner recovery is adopted and can be retired', () async {
+    final directory = await Directory.systemTemp.createTemp(
+      'busymark-recovery-adoption-',
+    );
+    addTearDown(() => directory.delete(recursive: true));
+    final path = p.join(directory.path, 'recovery.json');
+    final crashed = JsonDocumentRecoveryStore(filePathOverride: path);
+    final buffer = DocumentBuffer.untitled(
+      id: 'untitled:adopted',
+      name: 'Recovered',
+      text: 'unsaved work',
+    );
+    await crashed.writeEntries([
+      DocumentRecoveryEntry.fromBuffer(buffer, workspacePath: null),
+    ]);
+
+    final restarted = JsonDocumentRecoveryStore(filePathOverride: path);
+    final previous = await restarted.beginRun();
+    final adopted = await restarted.adoptEntries(previous.entries);
+    expect(adopted, hasLength(1));
+    expect(adopted.single.sourceOwnerId, crashed.ownerId);
+    expect(adopted.single.entry.ownerId, restarted.ownerId);
+
+    await restarted.writeEntries([adopted.single.entry]);
+    await restarted.writeEntries(const []);
+    final nextRun = JsonDocumentRecoveryStore(filePathOverride: path);
+    expect((await nextRun.beginRun()).entries, isEmpty);
+  });
 
   test('recovery state is written with private POSIX permissions', () async {
     final directory = await Directory.systemTemp.createTemp(

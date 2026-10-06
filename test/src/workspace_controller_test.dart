@@ -151,6 +151,96 @@ void main() {
   );
 
   test(
+    'Safe Delete journal removes the deleted tab after refresh failure restart',
+    () async {
+      final root = await Directory.systemTemp.createTemp(
+        'busymark-topic-removal-restart-',
+      );
+      addTearDown(() => root.delete(recursive: true));
+      await Directory(p.join(root.path, 'topics')).create();
+      await File(p.join(root.path, 'writerside.cfg')).writeAsString(
+        '<ihp><topics dir="topics"/><instance src="guide.tree"/></ihp>',
+      );
+      await File(p.join(root.path, 'guide.tree')).writeAsString('''
+<instance-profile id="guide" start-page="survivor.md">
+  <toc-element topic="survivor.md"/>
+  <toc-element topic="doomed.md"/>
+</instance-profile>
+''');
+      final survivor = File(p.join(root.path, 'topics', 'survivor.md'));
+      final doomed = File(p.join(root.path, 'topics', 'doomed.md'));
+      await survivor.writeAsString('# Survivor\n');
+      await doomed.writeAsString('# Doomed\n');
+      final sessions = MemoryDocumentSessionStore();
+      final recovery = MemoryDocumentRecoveryStore();
+      final historyStore = MemoryLocalHistoryStore();
+      final service = _FailingPostDeleteRefreshService(doomed.path);
+      final harness = await _createControllerHarness(
+        service: service,
+        sessionStore: sessions,
+        recoveryStore: recovery,
+        localHistoryStore: historyStore,
+      );
+      final controller = harness.controller._notifier;
+      await harness.settingsController.setAutoSave(false);
+      await controller.openPath(root.path);
+      await controller.openActiveFile(survivor.path);
+      await controller.openActiveFile(doomed.path);
+      final history = harness._container.read(
+        localHistoryControllerProvider.notifier,
+      );
+      expect(await history.flushBuffer(controller.state.activeBuffer!), isTrue);
+      final documentId = history.documentIdForBuffer(
+        controller.state.activeBuffer!.id,
+      )!;
+      final analysis = await controller.analyzeWritersideTopicRemoval(
+        topicPath: doomed.path,
+        mode: WritersideTopicRemovalMode.safeDeleteFile,
+      );
+      service.failAfterDeletion = true;
+
+      expect(
+        await controller.applyWritersideTopicRemoval(
+          WritersideTopicRemovalRequest(analysis: analysis!),
+        ),
+        isNull,
+      );
+      expect(doomed.existsSync(), isFalse);
+      expect(sessions.value?.pendingLocalHistoryReconciliations, isNotEmpty);
+      expect(
+        sessions.value?.tabs.map((entry) => entry.filePath),
+        contains(doomed.path),
+      );
+      harness._container.dispose();
+
+      final reopened = await _createControllerHarness(
+        sessionStore: sessions,
+        recoveryStore: recovery,
+        localHistoryStore: historyStore,
+      );
+      expect(
+        await reopened.controller._notifier.restoreStartupSession(
+          reopenCleanSession: false,
+        ),
+        isTrue,
+      );
+      expect(
+        reopened.controller.state.documentBuffers.map(
+          (buffer) => buffer.filePath,
+        ),
+        isNot(contains(doomed.path)),
+      );
+      final snapshot = await historyStore.load();
+      expect(
+        snapshot.documents
+            .singleWhere((document) => document.id == documentId)
+            .deleted,
+        isTrue,
+      );
+    },
+  );
+
+  test(
     'TOC writes reject an inactive dirty tree without discarding either buffer',
     () async {
       final root = await Directory.systemTemp.createTemp('busymark-toc-dirty-');
@@ -1405,10 +1495,11 @@ CommonMark paragraph.
       expect(controller.state.isDirty, isTrue);
       expect(controller.state.message?.code, WorkspaceMessageCode.saveFailed);
 
-      expect(
-        await controller.saveActiveAs(file.path, overwriteExisting: true),
-        isTrue,
+      final overwritten = await controller.saveActiveAs(
+        file.path,
+        overwriteExisting: true,
       );
+      expect(overwritten, isTrue);
       expect(await file.readAsString(), '# Draft\n');
 
       controller.dispose();
@@ -4293,12 +4384,16 @@ class _DelayedSaveAsWorkspaceService extends WorkspaceService {
   final _releaseOpen = Completer<void>();
 
   @override
-  Future<WorkspaceFileSnapshot> saveNewText(String path, String text) async {
+  Future<WorkspaceFileSnapshot> saveNewText(
+    String path,
+    String text, {
+    Future<void> Function()? onPublished,
+  }) async {
     writeStarted.complete();
     if (pauseWrite) {
       await _releaseWrite.future;
     }
-    return super.saveNewText(path, text);
+    return super.saveNewText(path, text, onPublished: onPublished);
   }
 
   @override
@@ -4465,8 +4560,23 @@ class _AutosaveWorkspaceService extends WorkspaceService {
   }
 
   @override
-  Future<WorkspaceFileSnapshot> saveNewText(String path, String text) async {
+  Future<WorkspaceFileSnapshot> saveTextIfUnchanged(
+    String path,
+    String text, {
+    required WorkspaceFileSnapshot expectedSnapshot,
+  }) async {
     return _recordSave(text);
+  }
+
+  @override
+  Future<WorkspaceFileSnapshot> saveNewText(
+    String path,
+    String text, {
+    Future<void> Function()? onPublished,
+  }) async {
+    final result = await _recordSave(text);
+    await onPublished?.call();
+    return result;
   }
 
   Future<WorkspaceFileSnapshot> _recordSave(String text) async {
@@ -4528,6 +4638,21 @@ class _FailingRefreshAutosaveWorkspaceService
   @override
   Future<Workspace> openPath(String path) {
     if (failRefresh) throw StateError('injected refresh failure');
+    return super.openPath(path);
+  }
+}
+
+class _FailingPostDeleteRefreshService extends WorkspaceService {
+  _FailingPostDeleteRefreshService(this.deletedPath);
+
+  final String deletedPath;
+  var failAfterDeletion = false;
+
+  @override
+  Future<Workspace> openPath(String path) {
+    if (failAfterDeletion && !File(deletedPath).existsSync()) {
+      throw StateError('injected post-delete refresh failure');
+    }
     return super.openPath(path);
   }
 }
@@ -4610,6 +4735,15 @@ class _DelayedValidationWorkspaceService extends WorkspaceService {
     _documents[path] = text;
     _snapshots[path] = snapshot;
     return snapshot;
+  }
+
+  @override
+  Future<WorkspaceFileSnapshot> saveTextIfUnchanged(
+    String path,
+    String text, {
+    required WorkspaceFileSnapshot expectedSnapshot,
+  }) async {
+    return saveText(path, text);
   }
 
   @override

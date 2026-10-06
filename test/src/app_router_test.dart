@@ -158,7 +158,7 @@ void main() {
     for (var index = 0; index < 30; index += 1) {
       await tester.pump(const Duration(milliseconds: 100));
       if (find
-          .byTooltip('${l10n.welcome} (${BusyMarkAppShortcutLabels.back})')
+          .byTooltip('${l10n.back} (${BusyMarkAppShortcutLabels.back})')
           .evaluate()
           .isNotEmpty) {
         break;
@@ -166,18 +166,18 @@ void main() {
     }
 
     expect(
-      find.byTooltip('${l10n.welcome} (${BusyMarkAppShortcutLabels.back})'),
+      find.byTooltip('${l10n.back} (${BusyMarkAppShortcutLabels.back})'),
       findsOneWidget,
     );
     await tester.tap(
-      find.byTooltip('${l10n.welcome} (${BusyMarkAppShortcutLabels.back})'),
+      find.byTooltip('${l10n.back} (${BusyMarkAppShortcutLabels.back})'),
     );
     await tester.pumpAndSettle();
     await tester.pump(const Duration(milliseconds: 500));
 
     expect(find.text(l10n.createMarkdownFile), findsOneWidget);
     expect(
-      find.byTooltip('${l10n.welcome} (${BusyMarkAppShortcutLabels.back})'),
+      find.byTooltip('${l10n.back} (${BusyMarkAppShortcutLabels.back})'),
       findsNothing,
     );
   });

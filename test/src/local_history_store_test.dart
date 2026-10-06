@@ -1,10 +1,15 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
 import 'package:busymark/src/local_history/local_history_models.dart';
+import 'package:busymark/src/local_history/local_history_controller.dart';
+import 'package:busymark/src/app/app_settings.dart';
+import 'package:busymark/src/workspace/document_buffer.dart';
 import 'package:busymark/src/local_history/local_history_store.dart';
 import 'package:busymark/src/workspace/text_format_metadata.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 
 void main() {
@@ -33,6 +38,7 @@ void main() {
     String path = '/workspace/guide.md',
     LocalHistoryCaptureReason reason = LocalHistoryCaptureReason.saved,
     bool force = false,
+    bool Function()? commitGuard,
   }) => LocalHistoryCaptureRequest(
     path: path,
     displayName: p.basename(path),
@@ -41,11 +47,387 @@ void main() {
     capturedAt: time,
     reason: reason,
     force: force,
+    commitGuard: commitGuard,
   );
 
   const policy = LocalHistoryPolicy(
     retentionAge: Duration(days: 30),
     maximumBytes: 16 * 1024 * 1024,
+  );
+
+  for (final memory in [false, true]) {
+    test(
+      'capture commit guard rejects stale policy (memory=$memory)',
+      () async {
+        final target = memory ? MemoryLocalHistoryStore() : store;
+
+        await expectLater(
+          target.capture(
+            request(
+              'excluded before commit',
+              DateTime.utc(2026, 1, 1),
+              commitGuard: () => false,
+            ),
+            policy,
+          ),
+          throwsA(isA<LocalHistoryCaptureCancelled>()),
+        );
+
+        final snapshot = await target.load();
+        expect(snapshot.documents, isEmpty);
+        expect(snapshot.revisions, isEmpty);
+      },
+    );
+  }
+
+  test(
+    'real process contention waits and captures without a warning',
+    () async {
+      final holder = await _HistoryProcess.start(root, 'hold', 'holder');
+      addTearDown(holder.close);
+      await holder.ready();
+      final contended = Completer<void>();
+      final realStore = FileLocalHistoryStore.testing(
+        rootDirectory: () async => root,
+        acquireLock: (handle) async {
+          try {
+            await handle.lock(FileLock.exclusive);
+          } on FileSystemException {
+            if (!contended.isCompleted) contended.complete();
+            rethrow;
+          }
+        },
+      );
+      final container = ProviderContainer(
+        overrides: [
+          localHistoryStoreProvider.overrideWithValue(realStore),
+          localSettingsStoreProvider.overrideWithValue(_LockSettingsStore()),
+          localHistoryTimerFactoryProvider.overrideWithValue(
+            (delay, callback) => Timer(delay, callback),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+      final controller = container.read(
+        localHistoryControllerProvider.notifier,
+      );
+      var completed = false;
+      final capture = controller
+          .observeOpened(
+            DocumentBuffer.untitled(
+              id: 'contended',
+              name: 'Draft.md',
+              text: 'retained across contention',
+            ),
+          )
+          .then((_) => completed = true);
+      // Drain accepted storage work before the fixture directory is removed,
+      // including when a bounded assertion above fails under runner load.
+      addTearDown(() async {
+        await holder.close();
+        await capture;
+      });
+      await contended.future.timeout(const Duration(seconds: 5));
+      await Future<void>.delayed(const Duration(milliseconds: 30));
+      expect(completed, isFalse);
+      expect(container.read(localHistoryControllerProvider).warning, isNull);
+      await holder.release();
+      await capture.timeout(const Duration(seconds: 30));
+      expect(container.read(localHistoryControllerProvider).warning, isNull);
+      final snapshot = await realStore.load();
+      expect(snapshot.revisions, hasLength(1));
+      expect(
+        (await realStore.readRevision(snapshot.revisions.single.id))!.source,
+        'retained across contention',
+      );
+    },
+    timeout: const Timeout(Duration(seconds: 90)),
+  );
+
+  test(
+    'lock timeout closes acquisition and queues recover without late capture',
+    () async {
+      final holder = await _HistoryProcess.start(root, 'hold', 'timeout');
+      addTearDown(holder.close);
+      await holder.ready();
+      var bodyCalls = 0;
+      final handles = <RandomAccessFile>[];
+      final timedStore = FileLocalHistoryStore.testing(
+        rootDirectory: () async => root,
+        lockBudget: const Duration(milliseconds: 60),
+        lockDelay: const Duration(milliseconds: 5),
+        createId: () => 'timeout_identity_${++bodyCalls}',
+        acquireLock: (handle) async {
+          if (!handles.contains(handle)) handles.add(handle);
+          await handle.lock(FileLock.exclusive);
+        },
+      );
+      await expectLater(
+        timedStore.capture(
+          request('must never execute', DateTime.utc(2026)),
+          policy,
+        ),
+        throwsA(isA<FileSystemException>()),
+      );
+      expect(bodyCalls, 0);
+      expect(handles, hasLength(1));
+      await expectLater(
+        handles.single.length(),
+        throwsA(isA<FileSystemException>()),
+      );
+      await holder.release();
+      final recovery = timedStore.capture(
+        request('later succeeds', DateTime.utc(2026)),
+        policy,
+      );
+      addTearDown(() async => recovery);
+      // This includes disk publication under full-suite CPU/IO load, not
+      // acquisition waiting; the injected contention budget stays 60ms.
+      await recovery.timeout(const Duration(seconds: 30));
+      final snapshot = await timedStore.load();
+      expect(snapshot.revisions, hasLength(1));
+      expect(
+        (await timedStore.readRevision(snapshot.revisions.single.id))!.source,
+        'later succeeds',
+      );
+      expect(bodyCalls, greaterThan(0));
+    },
+    timeout: const Timeout(Duration(seconds: 90)),
+  );
+
+  test(
+    'non-contention acquisition failure is prompt and closes the handle',
+    () async {
+      var attempts = 0;
+      RandomAccessFile? handle;
+      var fail = true;
+      final target = FileLocalHistoryStore.testing(
+        rootDirectory: () async => root,
+        acquireLock: (file) async {
+          attempts++;
+          handle = file;
+          if (fail) {
+            throw const FileSystemException(
+              'injected permission failure',
+              '',
+              OSError('', 1),
+            );
+          }
+          await file.lock(FileLock.exclusive);
+        },
+      );
+      final clock = Stopwatch()..start();
+      await expectLater(
+        target.load(),
+        throwsA(
+          isA<FileSystemException>().having(
+            (e) => e.osError?.errorCode,
+            'code',
+            1,
+          ),
+        ),
+      );
+      expect(clock.elapsed, lessThan(const Duration(seconds: 1)));
+      expect(attempts, 1);
+      await expectLater(handle!.length(), throwsA(isA<FileSystemException>()));
+      fail = false;
+      expect((await target.load()).revisions, isEmpty);
+    },
+  );
+
+  test('body contention-shaped error never replays the transaction', () async {
+    var calls = 0;
+    var fail = true;
+    final target = FileLocalHistoryStore(
+      rootDirectory: () async => root,
+      createId: () {
+        calls++;
+        if (fail) {
+          throw const FileSystemException('body failure', '', OSError('', 11));
+        }
+        return 'body_identity_$calls';
+      },
+    );
+    await expectLater(
+      target.capture(request('first', DateTime.utc(2026)), policy),
+      throwsA(isA<FileSystemException>()),
+    );
+    expect(calls, 1);
+    fail = false;
+    await target.capture(request('second', DateTime.utc(2026)), policy);
+    expect((await target.load()).revisions, hasLength(1));
+    expect(calls, greaterThan(1));
+  });
+
+  test(
+    'independent production writers preserve both identities and revisions',
+    () async {
+      final first = await _HistoryProcess.start(root, 'write', 'first');
+      addTearDown(first.close);
+      final second = await _HistoryProcess.start(root, 'write', 'second');
+      addTearDown(second.close);
+      await Future.wait([first.ready(), second.ready()]);
+      await Future.wait([first.release(), second.release()]);
+      final snapshot = await store.load();
+      expect(snapshot.documents, hasLength(2));
+      expect(snapshot.documents.map((d) => d.id).toSet(), hasLength(2));
+      expect(snapshot.warning, isNull);
+      expect(snapshot.revisions, hasLength(16));
+      for (final owner in ['first', 'second']) {
+        final document = snapshot.documents.singleWhere(
+          (d) => d.currentPath == '/workspace/$owner.md',
+        );
+        final revisions = snapshot.revisionsFor(document.id);
+        expect(revisions, hasLength(8));
+        final sources = await Future.wait(
+          revisions.map((r) async => (await store.readRevision(r.id))!.source),
+        );
+        expect(sources.toSet(), {
+          for (var i = 0; i < 8; i++) '$owner revision $i',
+        });
+      }
+      final index =
+          jsonDecode(await File(p.join(root.path, 'index.json')).readAsString())
+              as Map;
+      expect(index['documents'], hasLength(2));
+    },
+    timeout: const Timeout(Duration(seconds: 120)),
+  );
+
+  test(
+    'identity-targeted reconciliation cannot mutate process replacements',
+    () async {
+      final oldRemap = await store.capture(
+        request(
+          'old remap',
+          DateTime.utc(2026),
+          path: '/workspace/reconcile-a.md',
+        ),
+        policy,
+      );
+      await store.capture(
+        request(
+          'old delete',
+          DateTime.utc(2026),
+          path: '/workspace/reconcile-d.md',
+        ),
+        policy,
+      );
+      final remapTargets = await store.resolvePathTargets(
+        '/workspace/reconcile-a.md',
+        recursive: false,
+      );
+      final deleteTargets = await store.resolvePathTargets(
+        '/workspace/reconcile-d.md',
+        recursive: false,
+      );
+      final replacer = await _HistoryProcess.start(
+        root,
+        'replace-paths',
+        'reconciler',
+      );
+      addTearDown(replacer.close);
+      await replacer.ready();
+      final replacementIds = (await File(
+        '${replacer.signal}.result',
+      ).readAsLines()).toSet();
+      expect(replacementIds, hasLength(2));
+
+      await expectLater(
+        store.reconcilePath(
+          LocalHistoryPathReconciliation.remap(
+            sourcePath: '/workspace/reconcile-a.md',
+            destinationPath: '/workspace/reconcile-b.md',
+            targets: remapTargets,
+          ),
+        ),
+        throwsA(isA<LocalHistoryReconciliationConflict>()),
+      );
+      await store.reconcilePath(
+        LocalHistoryPathReconciliation.deletion(
+          sourcePath: '/workspace/reconcile-d.md',
+          recursive: false,
+          targets: deleteTargets,
+        ),
+      );
+      final snapshot = await store.load();
+      final replacements = snapshot.documents.where(
+        (document) => replacementIds.contains(document.id),
+      );
+      expect(replacements, hasLength(2));
+      expect(
+        replacements
+            .singleWhere(
+              (document) => document.currentPath == '/workspace/reconcile-b.md',
+            )
+            .deleted,
+        isFalse,
+      );
+      expect(
+        replacements
+            .singleWhere(
+              (document) => document.currentPath == '/workspace/reconcile-d.md',
+            )
+            .deleted,
+        isFalse,
+      );
+      expect(
+        snapshot.documents
+            .singleWhere((document) => document.id == oldRemap.document.id)
+            .currentPath,
+        '/workspace/reconcile-a.md',
+      );
+      await replacer.release();
+    },
+    timeout: const Timeout(Duration(seconds: 120)),
+  );
+
+  test(
+    'identity-targeted reconciliation rejects an intervening process checkpoint',
+    () async {
+      final original = await store.capture(
+        request(
+          'original same identity',
+          DateTime.utc(2026),
+          path: '/workspace/reconcile-same-id.md',
+        ),
+        policy,
+      );
+      final targets = await store.resolvePathTargets(
+        '/workspace/reconcile-same-id.md',
+        recursive: false,
+      );
+      final replacer = await _HistoryProcess.start(
+        root,
+        'recapture-id',
+        original.document.id,
+      );
+      addTearDown(replacer.close);
+      await replacer.ready();
+
+      await expectLater(
+        store.reconcilePath(
+          LocalHistoryPathReconciliation.deletion(
+            sourcePath: '/workspace/reconcile-same-id.md',
+            recursive: false,
+            targets: targets,
+          ),
+        ),
+        throwsA(isA<LocalHistoryReconciliationConflict>()),
+      );
+      final snapshot = await store.load();
+      final document = snapshot.documents.singleWhere(
+        (candidate) => candidate.id == original.document.id,
+      );
+      expect(document.deleted, isFalse);
+      expect(document.currentPath, '/workspace/reconcile-same-id.md');
+      final sources = await Future.wait([
+        for (final revision in snapshot.revisionsFor(document.id))
+          store.readRevision(revision.id).then((value) => value!.source),
+      ]);
+      expect(sources, contains('replacement under reused identity'));
+    },
+    timeout: const Timeout(Duration(seconds: 120)),
   );
 
   for (final inMemory in [false, true]) {
@@ -348,6 +730,197 @@ void main() {
     );
     expect((await store.load()).revisions, hasLength(2));
   });
+
+  test('stable capture identity makes a protective retry idempotent', () async {
+    final time = DateTime.utc(2026, 1, 1);
+    const captureId = 'capture_retry_00000001';
+    final first = await store.capture(
+      LocalHistoryCaptureRequest(
+        path: '/workspace/protected.md',
+        displayName: 'protected.md',
+        source: 'protected source',
+        format: TextFormatMetadata.utf8Lf,
+        capturedAt: time,
+        reason: LocalHistoryCaptureReason.beforeDiscard,
+        force: true,
+        captureId: captureId,
+      ),
+      policy,
+    );
+    final retry = await store.capture(
+      LocalHistoryCaptureRequest(
+        documentId: first.document.id,
+        path: '/workspace/protected.md',
+        displayName: 'protected.md',
+        source: 'protected source',
+        format: TextFormatMetadata.utf8Lf,
+        capturedAt: time.add(const Duration(seconds: 1)),
+        reason: LocalHistoryCaptureReason.beforeDiscard,
+        force: true,
+        captureId: captureId,
+      ),
+      policy,
+    );
+
+    expect(retry.deduplicated, isTrue);
+    expect(retry.revision?.id, captureId);
+    expect((await store.load()).revisions, hasLength(1));
+  });
+
+  test(
+    'idempotent capture stays complete after its lineage advances',
+    () async {
+      for (final entry in <({String name, LocalHistoryStore store})>[
+        (name: 'file', store: store),
+        (name: 'memory', store: MemoryLocalHistoryStore()),
+      ]) {
+        final initial = await entry.store.capture(
+          request(
+            'initial',
+            DateTime.utc(2026),
+            path: '/workspace/${entry.name}-capture-b.md',
+          ),
+          policy,
+        );
+        final target = (await entry.store.resolvePathTargets(
+          initial.document.currentPath!,
+          recursive: false,
+        )).single;
+        const captureId = 'advanced_capture_retry_0001';
+        final capture = LocalHistoryCaptureRequest(
+          documentId: initial.document.id,
+          path: initial.document.currentPath,
+          displayName: '${entry.name}-capture-b.md',
+          source: 'durably captured',
+          format: TextFormatMetadata.utf8Lf,
+          capturedAt: DateTime.utc(2026, 1, 2),
+          reason: LocalHistoryCaptureReason.saved,
+          captureId: captureId,
+          expectedTarget: target,
+        );
+        await entry.store.capture(capture, policy);
+        await entry.store.remapPath(
+          initial.document.currentPath!,
+          '/workspace/${entry.name}-capture-c.md',
+        );
+
+        final retried = await entry.store.capture(capture, policy);
+        expect(retried.deduplicated, isTrue, reason: entry.name);
+        expect(retried.revision?.id, captureId, reason: entry.name);
+      }
+    },
+  );
+
+  test('promotion retry accepts the same lineage after a later move', () async {
+    for (final entry in <({String name, LocalHistoryStore store})>[
+      (name: 'file', store: store),
+      (name: 'memory', store: MemoryLocalHistoryStore()),
+    ]) {
+      final draft = await entry.store.capture(
+        LocalHistoryCaptureRequest(
+          displayName: 'Draft.md',
+          source: 'draft',
+          format: TextFormatMetadata.utf8Lf,
+          capturedAt: DateTime.utc(2026),
+          reason: LocalHistoryCaptureReason.baseline,
+          untitled: true,
+        ),
+        policy,
+      );
+      final firstPath = '/workspace/${entry.name}-promoted-b.md';
+      final laterPath = '/workspace/${entry.name}-promoted-c.md';
+      await entry.store.promoteUntitledDocument(
+        documentId: draft.document.id,
+        destinationPath: firstPath,
+        displayName: p.basename(firstPath),
+        updatedAt: DateTime.utc(2026, 1, 2),
+      );
+      await entry.store.remapPath(firstPath, laterPath);
+
+      final retried = await entry.store.promoteUntitledDocument(
+        documentId: draft.document.id,
+        destinationPath: firstPath,
+        displayName: p.basename(firstPath),
+        updatedAt: DateTime.utc(2026, 1, 3),
+      );
+      expect(retried?.id, draft.document.id, reason: entry.name);
+      expect(retried?.currentPath, laterPath, reason: entry.name);
+    }
+  });
+
+  test(
+    'atomic path preflight accepts the same target already reconciled elsewhere',
+    () async {
+      for (final entry in <({String name, LocalHistoryStore store})>[
+        (name: 'file', store: store),
+        (name: 'memory', store: MemoryLocalHistoryStore()),
+      ]) {
+        final source = '/workspace/${entry.name}-concurrent-a.md';
+        final destination = '/workspace/${entry.name}-concurrent-b.md';
+        await entry.store.capture(
+          request('shared lineage', DateTime.utc(2026), path: source),
+          policy,
+        );
+        final targets = await entry.store.resolvePathTargets(
+          source,
+          recursive: false,
+        );
+        Future<bool> apply() => entry.store.runPathReconciliation(
+          kind: LocalHistoryPathReconciliationKind.remap,
+          sourcePath: source,
+          destinationPath: destination,
+          recursive: false,
+          preparedTargets: targets,
+          operation: (_) async => true,
+          didCommit: (value) => value,
+        );
+
+        expect(await apply(), isTrue, reason: entry.name);
+        expect(await apply(), isTrue, reason: entry.name);
+        final snapshot = await entry.store.load();
+        expect(snapshot.documents.single.currentPath, destination);
+      }
+    },
+  );
+
+  test(
+    'clearing one identity does not poison another identity capture',
+    () async {
+      final first = await store.capture(
+        request('first', DateTime.utc(2026), path: '/workspace/first.md'),
+        policy,
+      );
+      final second = await store.capture(
+        request('second', DateTime.utc(2026), path: '/workspace/second.md'),
+        policy,
+      );
+      final clearer = FileLocalHistoryStore(rootDirectory: () async => root);
+      await clearer.clearDocument(first.document.id);
+
+      await store.capture(
+        LocalHistoryCaptureRequest(
+          documentId: second.document.id,
+          path: '/workspace/second.md',
+          displayName: 'second.md',
+          source: 'second after unrelated clear',
+          format: TextFormatMetadata.utf8Lf,
+          capturedAt: DateTime.utc(2026, 1, 2),
+          reason: LocalHistoryCaptureReason.saved,
+        ),
+        policy,
+      );
+
+      final snapshot = await store.load();
+      expect(snapshot.documents.map((document) => document.id), [
+        second.document.id,
+      ]);
+      final sources = <String?>[
+        for (final revision in snapshot.revisions)
+          (await store.readRevision(revision.id))?.source,
+      ];
+      expect(sources, contains('second after unrelated clear'));
+    },
+  );
 
   test(
     'repairs a damaged index from intact independently checksummed records',
@@ -656,6 +1229,259 @@ void main() {
     expect(repaired.revisions, isEmpty);
   });
 
+  test('durable Clear All replay cannot erase post-clear history', () async {
+    const operationId = 'clear_operation_00000001';
+    await store.capture(
+      request('before clear', DateTime.utc(2026, 1, 1)),
+      policy,
+    );
+    await store.clearAllOnce(operationId: operationId);
+    final replacement = await store.capture(
+      request(
+        'after clear',
+        DateTime.utc(2026, 1, 2),
+        path: '/workspace/replacement.md',
+      ),
+      policy,
+    );
+
+    final reopened = FileLocalHistoryStore(
+      rootDirectory: () async => root,
+      createId: () => 'reopened_${(++ids).toString().padLeft(12, '0')}',
+    );
+    await reopened.clearAllOnce(operationId: operationId);
+
+    final snapshot = await reopened.load();
+    expect(snapshot.documents, hasLength(1));
+    expect(snapshot.documents.single.id, replacement.document.id);
+    expect(
+      (await reopened.readRevision(snapshot.revisions.single.id))?.source,
+      'after clear',
+    );
+  });
+
+  test(
+    'durable Clear Document replay cannot erase replacement history',
+    () async {
+      const operationId = 'clear_document_operation_01';
+      final original = await store.capture(
+        request('original', DateTime.utc(2026, 1, 1)),
+        policy,
+      );
+      await store.clearDocumentOnce(
+        operationId: operationId,
+        documentId: original.document.id,
+      );
+      final replacement = await store.capture(
+        request('replacement', DateTime.utc(2026, 1, 2)),
+        policy,
+      );
+
+      final reopened = FileLocalHistoryStore(rootDirectory: () async => root);
+      await reopened.clearDocumentOnce(
+        operationId: operationId,
+        documentId: original.document.id,
+      );
+
+      final snapshot = await reopened.load();
+      expect(snapshot.documents, hasLength(1));
+      expect(snapshot.documents.single.id, replacement.document.id);
+    },
+  );
+
+  for (final memory in [false, true]) {
+    test('clear barrier rejects accepted pathless work from its lineage '
+        '(memory=$memory)', () async {
+      final targetStore = memory ? MemoryLocalHistoryStore() : store;
+      final original = await targetStore.capture(
+        LocalHistoryCaptureRequest(
+          displayName: 'Untitled',
+          source: 'before clear',
+          format: TextFormatMetadata.utf8Lf,
+          capturedAt: DateTime.utc(2026, 1, 1),
+          reason: LocalHistoryCaptureReason.baseline,
+          untitled: true,
+        ),
+        policy,
+      );
+      final acceptedEpoch = (await targetStore.load()).clearEpoch;
+      final acceptedAt = DateTime.now().toUtc();
+      await targetStore.clearDocument(original.document.id);
+
+      await expectLater(
+        targetStore.capture(
+          LocalHistoryCaptureRequest(
+            displayName: 'Untitled',
+            source: 'queued during clear',
+            format: TextFormatMetadata.utf8Lf,
+            capturedAt: DateTime.utc(2026, 1, 2),
+            reason: LocalHistoryCaptureReason.automaticCheckpoint,
+            untitled: true,
+            acceptedClearEpoch: acceptedEpoch,
+            acceptedAt: acceptedAt,
+            acceptedDocumentId: original.document.id,
+          ),
+          policy,
+        ),
+        throwsA(isA<LocalHistoryClearConflict>()),
+      );
+      expect((await targetStore.load()).documents, isEmpty);
+    });
+
+    test('clear barrier retains a deleted document path without a replacement '
+        '(memory=$memory)', () async {
+      final targetStore = memory ? MemoryLocalHistoryStore() : store;
+      const path = '/workspace/deleted.md';
+      final original = await targetStore.capture(
+        request('before deletion', DateTime.utc(2026, 1, 1), path: path),
+        policy,
+      );
+      final acceptedEpoch = (await targetStore.load()).clearEpoch;
+      final acceptedAt = DateTime.now().toUtc();
+      final targets = await targetStore.resolvePathTargets(
+        path,
+        recursive: false,
+      );
+      await targetStore.reconcilePath(
+        LocalHistoryPathReconciliation.deletion(
+          sourcePath: path,
+          recursive: false,
+          targets: targets,
+        ),
+      );
+      await targetStore.clearDocument(original.document.id);
+
+      await expectLater(
+        targetStore.capture(
+          LocalHistoryCaptureRequest(
+            path: path,
+            displayName: 'deleted.md',
+            source: 'stale queued work',
+            format: TextFormatMetadata.utf8Lf,
+            capturedAt: DateTime.utc(2026, 1, 2),
+            reason: LocalHistoryCaptureReason.automaticCheckpoint,
+            acceptedClearEpoch: acceptedEpoch,
+            acceptedAt: acceptedAt,
+          ),
+          policy,
+        ),
+        throwsA(isA<LocalHistoryClearConflict>()),
+      );
+      expect((await targetStore.load()).documents, isEmpty);
+    });
+  }
+
+  for (final memory in [false, true]) {
+    test('stable capture replay resolves identity before path checks '
+        '(memory=$memory)', () async {
+      final targetStore = memory ? MemoryLocalHistoryStore() : store;
+      const captureId = 'capture_operation_000001';
+      final original = await targetStore.capture(
+        LocalHistoryCaptureRequest(
+          path: '/workspace/source.md',
+          displayName: 'source.md',
+          source: 'fork source',
+          format: TextFormatMetadata.utf8Lf,
+          capturedAt: DateTime.utc(2026, 1, 1),
+          reason: LocalHistoryCaptureReason.automaticCheckpoint,
+          force: true,
+          createDetachedLineage: true,
+          captureId: captureId,
+        ),
+        policy,
+      );
+      await targetStore.capture(
+        request(
+          'replacement owner',
+          DateTime.utc(2026, 1, 2),
+          path: '/workspace/source.md',
+        ),
+        policy,
+      );
+
+      final replay = await targetStore.capture(
+        LocalHistoryCaptureRequest(
+          path: '/workspace/source.md',
+          displayName: 'source.md',
+          source: 'fork source',
+          format: TextFormatMetadata.utf8Lf,
+          capturedAt: DateTime.utc(2026, 1, 1),
+          reason: LocalHistoryCaptureReason.automaticCheckpoint,
+          force: true,
+          requireVacantPath: true,
+          createDetachedLineage: true,
+          captureId: captureId,
+        ),
+        policy,
+      );
+
+      expect(replay.deduplicated, isTrue);
+      expect(replay.document.id, original.document.id);
+      final snapshot = await targetStore.load();
+      expect(
+        snapshot.revisions.where((revision) => revision.id == captureId),
+        hasLength(1),
+      );
+    });
+  }
+
+  test(
+    'file capture rolls back cancellation during revision publication',
+    () async {
+      var guardChecks = 0;
+
+      await expectLater(
+        store.capture(
+          request(
+            'cancel during revision publication',
+            DateTime.utc(2026, 1, 1),
+            commitGuard: () => ++guardChecks < 3,
+          ),
+          policy,
+        ),
+        throwsA(isA<LocalHistoryCaptureCancelled>()),
+      );
+
+      final reopened = FileLocalHistoryStore(rootDirectory: () async => root);
+      final snapshot = await reopened.load();
+      expect(snapshot.documents, isEmpty);
+      expect(snapshot.revisions, isEmpty);
+    },
+  );
+
+  test(
+    'file dedup capture rolls back cancellation during index publication',
+    () async {
+      final initial = await store.capture(
+        request('same source', DateTime.utc(2026, 1, 1)),
+        policy,
+      );
+      var guardChecks = 0;
+
+      await expectLater(
+        store.capture(
+          LocalHistoryCaptureRequest(
+            documentId: initial.document.id,
+            path: '/workspace/guide.md',
+            displayName: 'Changed.md',
+            source: 'same source',
+            format: TextFormatMetadata.utf8Lf,
+            capturedAt: DateTime.utc(2026, 1, 1, 0, 1),
+            reason: LocalHistoryCaptureReason.saved,
+            commitGuard: () => ++guardChecks < 3,
+          ),
+          policy,
+        ),
+        throwsA(isA<LocalHistoryCaptureCancelled>()),
+      );
+
+      final reopened = FileLocalHistoryStore(rootDirectory: () async => root);
+      final snapshot = await reopened.load();
+      expect(snapshot.documents.single.displayName, 'guide.md');
+      expect(snapshot.revisions, hasLength(1));
+    },
+  );
+
   test(
     'multiple store instances coordinate concurrent index publication',
     () async {
@@ -712,4 +1538,103 @@ void main() {
     expect(windowsPolicy.excludes(r'c:\WORKSPACE\PRIVATE\secret.md'), isTrue);
     expect(windowsPolicy.excludes(r'C:\workspace\public\guide.md'), isFalse);
   });
+}
+
+class _LockSettingsStore implements LocalSettingsStore {
+  @override
+  Future<Map<String, Object?>> load() async => {};
+  @override
+  Future<void> save(Map<String, Object?> json) async {}
+}
+
+class _HistoryProcess {
+  _HistoryProcess(this.process, this.signal, this.output);
+  final Process process;
+  final String signal;
+  final Future<List<String>> output;
+  bool exited = false;
+
+  static Future<_HistoryProcess> start(
+    Directory root,
+    String mode,
+    String owner,
+  ) async {
+    final config =
+        jsonDecode(await File('.dart_tool/package_config.json').readAsString())
+            as Map;
+    final packages = config['packages'] as List;
+    final flutter = packages.cast<Map>().singleWhere(
+      (entry) => entry['name'] == 'flutter',
+    );
+    final packageRoot = File(
+      '.dart_tool/package_config.json',
+    ).absolute.uri.resolve(flutter['rootUri'] as String).toFilePath();
+    final sdk = p.dirname(p.dirname(p.normalize(packageRoot)));
+    final signal = p.join(root.path, 'process-$owner');
+    final process = await Process.start(
+      p.join(
+        sdk,
+        'bin',
+        'cache',
+        'dart-sdk',
+        'bin',
+        Platform.isWindows ? 'dart.exe' : 'dart',
+      ),
+      [
+        p.join(sdk, 'bin', 'cache', 'flutter_tools.snapshot'),
+        'test',
+        '--no-pub',
+        '--concurrency=1',
+        '--reporter=expanded',
+        'test/support/local_history_store_process.dart',
+      ],
+      workingDirectory: Directory.current.path,
+      environment: {
+        'BUSYMARK_HISTORY_PROCESS_ROOT': root.path,
+        'BUSYMARK_HISTORY_PROCESS_SIGNAL': signal,
+        'BUSYMARK_HISTORY_PROCESS_MODE': mode,
+        'BUSYMARK_HISTORY_PROCESS_OWNER': owner,
+      },
+    );
+    final output = Future.wait([
+      process.stdout.transform(utf8.decoder).join(),
+      process.stderr.transform(utf8.decoder).join(),
+    ]);
+    return _HistoryProcess(process, signal, output);
+  }
+
+  Future<void> ready() async {
+    final deadline = Stopwatch()..start();
+    while (!await File('$signal.ready').exists()) {
+      if (deadline.elapsed > const Duration(seconds: 60)) {
+        throw TimeoutException('History child was not ready');
+      }
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+    }
+  }
+
+  Future<void> release() async {
+    await File('$signal.release').writeAsString('release');
+    final code = await process.exitCode.timeout(const Duration(seconds: 30));
+    exited = true;
+    expect(code, 0, reason: (await output).join('\n'));
+  }
+
+  Future<void> close() async {
+    if (exited) return;
+    await File('$signal.release').writeAsString('cleanup');
+    try {
+      await process.exitCode.timeout(const Duration(seconds: 10));
+    } on TimeoutException {
+      // Only this helper's recorded runtime and launcher are targets.
+      final pidFile = File('$signal.pid');
+      if (await pidFile.exists()) {
+        Process.killPid(int.parse(await pidFile.readAsString()));
+      }
+      process.kill();
+      await process.exitCode.timeout(const Duration(seconds: 5));
+    }
+    await output;
+    exited = true;
+  }
 }

@@ -31,14 +31,20 @@ class WorkspaceFileMonitor {
   final _pending = <String, WorkspaceFileMonitorEvent>{};
   Set<String> _openFilePaths = const {};
   String? _rootPath;
+  var _disposed = false;
 
   Stream<WorkspaceFileMonitorEvent> get events => _controller.stream;
+  bool get isRunning => _rootPath != null;
 
   Future<void> start({
     required String rootPath,
     required Iterable<String> openFilePaths,
   }) async {
+    if (_disposed) return;
     await stop();
+    // dispose() can overtake the asynchronous stop above. A stale start must
+    // not recreate filesystem subscriptions after the event stream closes.
+    if (_disposed) return;
     _rootPath = p.normalize(p.absolute(rootPath));
     _openFilePaths = {
       for (final path in openFilePaths) p.normalize(p.absolute(path)),
@@ -47,6 +53,7 @@ class WorkspaceFileMonitor {
   }
 
   void updateOpenFilePaths(Iterable<String> paths) {
+    if (_disposed) return;
     _openFilePaths = {for (final path in paths) p.normalize(p.absolute(path))};
     _syncSubscriptions();
   }
@@ -65,6 +72,8 @@ class WorkspaceFileMonitor {
   }
 
   Future<void> dispose() async {
+    if (_disposed) return;
+    _disposed = true;
     await stop();
     await _controller.close();
   }

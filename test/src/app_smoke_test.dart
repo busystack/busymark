@@ -14,6 +14,7 @@ import 'package:busymark/src/app/app_metadata.dart';
 import 'package:busymark/src/app/app_router.dart';
 import 'package:busymark/src/app/app_settings.dart';
 import 'package:busymark/src/app/busymark_app.dart';
+import 'package:busymark/src/app/command_registry.dart';
 import 'package:busymark/src/app/busymark_dialogs.dart';
 import 'package:busymark/src/app/busymark_design.dart';
 import 'package:busymark/src/app/busymark_dialog_identity.dart';
@@ -54,6 +55,7 @@ import 'package:busymark/src/git/presentation/git_diff_viewer.dart';
 import 'package:busymark/src/local_history/local_history_controller.dart';
 import 'package:busymark/src/local_history/local_history_panel.dart';
 import 'package:busymark/src/local_history/local_history_store.dart';
+import 'package:busymark/src/local_history/local_history_models.dart';
 import 'package:busymark/src/markdown/preview_model.dart';
 import 'package:busymark/src/markdown/markdown_model.dart';
 import 'package:busymark/src/markdown/markdown_parser.dart';
@@ -1035,6 +1037,174 @@ void main() {
     expect(find.text(l10n.createMarkdownFile), findsOneWidget);
     expect(find.byKey(const ValueKey('settings-page-selector')), findsNothing);
   });
+
+  testWidgets(
+    'restored capture failure stays owned across Back create discard create',
+    (tester) async {
+      final root = (await tester.runAsync(
+        () => Directory.systemTemp.createTemp('busymark-history-navigation-'),
+      ))!;
+      addTearDown(() => root.delete(recursive: true));
+      final path = p.join(root.path, 'Restored.md');
+      await tester.runAsync(
+        () => File(path).writeAsString('original restored source'),
+      );
+      final store = _NavigationHistoryStore();
+      final sessions = MemoryDocumentSessionStore()
+        ..value = WorkspaceSessionSnapshot(
+          workspacePath: root.path,
+          tabs: [
+            DocumentSessionEntry(
+              id: 'restored',
+              filePath: path,
+              untitledName: null,
+              editorState: const DocumentEditorState(),
+            ),
+          ],
+          activeBufferId: 'restored',
+        );
+      final settings = _MemorySettingsStore()
+        ..value = AppSettings.defaults().copyWith(autoSave: false).toJson();
+      final container = ProviderContainer(
+        overrides: [
+          ..._smokeAccentOverrides,
+          linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+          localSettingsStoreProvider.overrideWithValue(settings),
+          localHistoryStoreProvider.overrideWithValue(store),
+          localHistoryTimerFactoryProvider.overrideWithValue(
+            (delay, callback) => _HistoryTestTimer(delay, callback),
+          ),
+          documentSessionStoreProvider.overrideWithValue(sessions),
+          documentRecoveryStoreProvider.overrideWithValue(
+            MemoryDocumentRecoveryStore(),
+          ),
+          startupPathProvider.overrideWithValue(null),
+        ],
+      );
+      addTearDown(container.dispose);
+      await tester.runAsync(() async {
+        await container
+            .read(appSettingsControllerProvider.notifier)
+            .waitUntilLoaded();
+        expect(
+          await container
+              .read(workspaceControllerProvider.notifier)
+              .restorePreviousSession(),
+          isTrue,
+        );
+        await container
+            .read(localHistoryControllerProvider.notifier)
+            .flushAll(
+              container.read(workspaceControllerProvider).documentBuffers,
+            );
+      });
+      final history = container.read(localHistoryControllerProvider.notifier);
+      final originalId = container
+          .read(workspaceControllerProvider)
+          .activeBuffer!
+          .id;
+      expect(
+        history.warningForBuffer(originalId)?.kind,
+        LocalHistoryWarningKind.capture,
+      );
+      container.read(appRouterProvider).go('/workspace');
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: const BusyMarkApp(),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.textContaining('could not capture'), findsOneWidget);
+      Future<void> back() async {
+        await container
+            .read(busyMarkCommandRegistryProvider)
+            .execute(BusyMarkCommandIds.back);
+        await tester.pumpAndSettle();
+      }
+
+      await back();
+      expect(find.text(l10n.createMarkdownFile), findsOneWidget);
+      await tester.tap(find.text(l10n.createMarkdownFile));
+      await _pumpUntilCondition(
+        tester,
+        () =>
+            container
+                .read(appRouterProvider)
+                .routeInformationProvider
+                .value
+                .uri
+                .path ==
+            '/workspace',
+      );
+      await tester.pumpAndSettle();
+      final firstDraft = container
+          .read(workspaceControllerProvider)
+          .activeBuffer!;
+      expect(firstDraft.id, isNot(originalId));
+      expect(history.warningForBuffer(firstDraft.id), isNull);
+      expect(find.textContaining('could not capture'), findsNothing);
+      await back();
+      expect(find.text(l10n.discard), findsOneWidget);
+      await tester.tap(find.text(l10n.discard));
+      await tester.pumpAndSettle();
+      expect(find.text(l10n.createMarkdownFile), findsOneWidget);
+      await tester.tap(find.text(l10n.createMarkdownFile));
+      await tester.pumpAndSettle();
+      await _pumpUntilCondition(
+        tester,
+        () =>
+            container
+                .read(appRouterProvider)
+                .routeInformationProvider
+                .value
+                .uri
+                .path ==
+            '/workspace',
+      );
+      expect(
+        history.warningForBuffer(
+          container.read(workspaceControllerProvider).activeBuffer!.id,
+        ),
+        isNull,
+      );
+      expect(find.textContaining('could not capture'), findsNothing);
+      expect(store.protectiveAttempts, 0);
+      expect(
+        container.read(localHistoryControllerProvider).warning?.ownerBufferId,
+        originalId,
+      );
+      store.available = true;
+      // Drain UI-zone persistence before runAsync waits on a Local History
+      // retry that durably chains another session write behind it.
+      var persistenceDrained = false;
+      final persistence = container
+          .read(workspaceControllerProvider.notifier)
+          .flushPersistence()
+          .whenComplete(() => persistenceDrained = true);
+      await _pumpUntilCondition(tester, () => persistenceDrained);
+      await persistence;
+      var historyFlushed = false;
+      var historySettled = false;
+      final flush = history
+          .flushAll(container.read(workspaceControllerProvider).documentBuffers)
+          .then((settled) {
+            historySettled = settled;
+            historyFlushed = true;
+          });
+      await _pumpUntilCondition(tester, () => historyFlushed);
+      await flush;
+      expect(historySettled, isTrue);
+      final snapshot = await store.load();
+      expect(snapshot.revisions, hasLength(1));
+      expect(
+        (await store.readRevision(snapshot.revisions.single.id))!.source,
+        'original restored source',
+      );
+      expect(container.read(localHistoryControllerProvider).warning, isNull);
+      expect(tester.takeException(), isNull);
+    },
+  );
 
   testWidgets('Escape closes header popup menus', (tester) async {
     await tester.pumpWidget(
@@ -13711,6 +13881,26 @@ TapGestureRecognizer? _firstTapRecognizer(InlineSpan span) {
   return null;
 }
 
+class _NavigationHistoryStore extends MemoryLocalHistoryStore {
+  var available = false;
+  var protectiveAttempts = 0;
+  @override
+  Future<LocalHistoryCaptureResult> capture(
+    LocalHistoryCaptureRequest request,
+    LocalHistoryPolicy policy,
+  ) async {
+    if (request.force) protectiveAttempts++;
+    if (!available) {
+      throw const FileSystemException(
+        'injected capture contention',
+        '',
+        OSError('', 11),
+      );
+    }
+    return super.capture(request, policy);
+  }
+}
+
 class _FallbackHeaderBarService extends LinuxHeaderBarService {
   _FallbackHeaderBarService()
     : super(channel: const MethodChannel('test.busymark/headerbar'));
@@ -14268,16 +14458,32 @@ class _StartupWorkspaceService extends WorkspaceService {
   }
 
   @override
-  Future<WorkspaceFileSnapshot> saveNewText(String path, String text) {
-    return saveText(path, text);
+  Future<WorkspaceFileSnapshot> saveTextIfUnchanged(
+    String path,
+    String text, {
+    required WorkspaceFileSnapshot expectedSnapshot,
+  }) => saveText(path, text);
+
+  @override
+  Future<WorkspaceFileSnapshot> saveNewText(
+    String path,
+    String text, {
+    Future<void> Function()? onPublished,
+  }) async {
+    final result = await saveText(path, text);
+    await onPublished?.call();
+    return result;
   }
 
   @override
   Future<WorkspaceFileSnapshot> saveTextReplacingPath(
     String path,
-    String text,
-  ) {
-    return saveText(path, text);
+    String text, {
+    Future<void> Function()? onPublished,
+  }) async {
+    final result = await saveText(path, text);
+    await onPublished?.call();
+    return result;
   }
 }
 
@@ -14359,6 +14565,13 @@ class _TabbedWorkspaceService extends WorkspaceService {
       contentHash: text,
     );
   }
+
+  @override
+  Future<WorkspaceFileSnapshot> saveTextIfUnchanged(
+    String path,
+    String text, {
+    required WorkspaceFileSnapshot expectedSnapshot,
+  }) => saveText(path, text);
 
   String _sourceFor(String path) => '# ${path.split('/').last}\n';
 }

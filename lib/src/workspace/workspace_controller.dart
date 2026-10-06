@@ -10,6 +10,7 @@ import '../app/app_settings.dart';
 import '../comparison/source_comparison.dart';
 import '../core/debug_log.dart';
 import '../core/anchored_path_guard.dart';
+import '../core/atomic_file_writer.dart';
 import '../core/busymark_temporary_path.dart';
 import '../core/busymark_exception.dart';
 import '../core/diagnostic.dart';
@@ -110,6 +111,13 @@ final workspaceFileMonitorProvider = Provider<WorkspaceFileMonitor>((ref) {
   ref.onDispose(() => unawaited(monitor.dispose()));
   return monitor;
 });
+
+class _QueuedFileMonitorEvent {
+  const _QueuedFileMonitorEvent(this.event, this.workspaceGeneration);
+
+  final WorkspaceFileMonitorEvent event;
+  final int workspaceGeneration;
+}
 
 final workspaceControllerProvider =
     NotifierProvider<WorkspaceController, WorkspaceState>(
@@ -226,7 +234,13 @@ class WorkspaceController extends Notifier<WorkspaceState> {
   final _remoteSyncRequested = <String>{};
   final _remoteRetryTimers = <String, Timer>{};
   final _remoteRetryCounts = <String, int>{};
+  final _remoteDurabilityWrites = <String, int>{};
+  var _restoringLocalHistorySession = false;
   StreamSubscription<WorkspaceFileMonitorEvent>? _fileMonitorSubscription;
+  Future<void>? _fileMonitorLifecycle;
+  final _pendingFileMonitorEvents = <_QueuedFileMonitorEvent>[];
+  Timer? _fileMonitorDrainTimer;
+  var _fileMonitorDrainRunning = false;
   final _autoSaveDebounces = <String, Timer>{};
   final _bufferWriteQueues = <String, Future<void>>{};
   Timer? _persistenceDebounce;
@@ -244,6 +258,8 @@ class WorkspaceController extends Notifier<WorkspaceState> {
   var _removalOperationRevision = 0;
   var _workspaceRefreshRevision = 0;
   var _workspaceDiskRevision = 0;
+  var _fileMonitorWorkspaceGeneration = 0;
+  var _acceptFileMonitorEvents = false;
   _ReconciledFileNotifications? _reconciledNotifications;
   int _preparationsRunning = 0;
   _PendingPreparation? _pendingPreparation;
@@ -251,9 +267,13 @@ class WorkspaceController extends Notifier<WorkspaceState> {
   final _preparedInputs = Expando<_PreparedDocumentInputs>();
   var _workspaceFileOperationDepth = 0;
   int? _fileOperationNavigationRevision;
-  final _deferredFileMonitorEvents = <WorkspaceFileMonitorEvent>[];
+  final _deferredFileMonitorEvents = <_QueuedFileMonitorEvent>[];
   var _untitledSequence = 0;
   final _removalAuthorizations = <String, _RemovalBufferAuthorization>{};
+  final _historyOperationsAwaitingWorkspaceRefresh = <String>{};
+  final _saveAsSessionBindings =
+      <String, ({String operationId, String workspaceId})>{};
+  final _restoredRecoveryOwnerIdsByBuffer = <String, String>{};
 
   late Future<RecoverySnapshot> _recoveryStart;
   Future<void> _persistenceWrites = Future.value();
@@ -311,8 +331,13 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     _recoveryStore = ref.read(documentRecoveryStoreProvider);
     _fileMonitor = ref.read(workspaceFileMonitorProvider);
     _localHistory = ref.read(localHistoryControllerProvider.notifier);
+    _localHistory.setDurableStatePersistence(() async {
+      if (!ref.mounted || _restoringLocalHistorySession) return false;
+      await flushPersistence();
+      return true;
+    });
     _fileMonitorSubscription = _fileMonitor.events.listen(
-      (event) => unawaited(_handleFileMonitorEvent(event)),
+      _queueFileMonitorEvent,
     );
     _recoveryStart = _recoveryStore.beginRun();
     ref.listen<AppSettings>(appSettingsControllerProvider, (previous, next) {
@@ -325,11 +350,15 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       }
     });
     ref.onDispose(() {
+      _fileMonitorWorkspaceGeneration++;
       _removalOperationRevision++;
       _cancelPendingDerivedRefresh();
       _cancelAllAutoSaves();
       _persistenceDebounce?.cancel();
       _workspaceRefreshDebounce?.cancel();
+      _fileMonitorDrainTimer?.cancel();
+      _pendingFileMonitorEvents.clear();
+      _restoredRecoveryOwnerIdsByBuffer.clear();
       unawaited(_fileMonitorSubscription?.cancel());
       unawaited(_notesSubscription?.cancel());
       for (final timer in _remoteRetryTimers.values) {
@@ -337,6 +366,84 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       }
     });
     return const WorkspaceState();
+  }
+
+  void _queueFileMonitorEvent(WorkspaceFileMonitorEvent event) {
+    if (!_acceptFileMonitorEvents) return;
+    _queueCapturedFileMonitorEvent(
+      _QueuedFileMonitorEvent(event, _fileMonitorWorkspaceGeneration),
+    );
+  }
+
+  void _queueCapturedFileMonitorEvent(_QueuedFileMonitorEvent event) {
+    if (!_fileMonitorOperationIsCurrent(event.workspaceGeneration)) return;
+    _pendingFileMonitorEvents.add(event);
+    if (_fileMonitorDrainRunning || _fileMonitorDrainTimer != null) return;
+    _fileMonitorDrainTimer = Timer(Duration.zero, () {
+      _fileMonitorDrainTimer = null;
+      unawaited(_drainFileMonitorEvents());
+    });
+  }
+
+  Future<void> _drainFileMonitorEvents() async {
+    if (_fileMonitorDrainRunning) return;
+    _fileMonitorDrainRunning = true;
+    try {
+      while (ref.mounted && _pendingFileMonitorEvents.isNotEmpty) {
+        var queued = _pendingFileMonitorEvents.removeAt(0);
+        var event = queued.event;
+        while (event.kind == WorkspaceFileEventKind.moved &&
+            event.destinationPath != null &&
+            _pendingFileMonitorEvents.isNotEmpty) {
+          // WorkspaceFileMonitor preserves insertion order by source path, so
+          // an event in another namespace may sit between two legs of one
+          // already-committed move chain. Follow the first queued event whose
+          // source is the current destination without consuming unrelated
+          // work; otherwise A -> B can be treated as a deletion after the
+          // filesystem has already advanced B -> C.
+          final nextIndex = _pendingFileMonitorEvents.indexWhere(
+            (candidate) =>
+                candidate.workspaceGeneration == queued.workspaceGeneration &&
+                candidate.event.isDirectory == event.isDirectory &&
+                p.equals(candidate.event.path, event.destinationPath!) &&
+                (candidate.event.kind == WorkspaceFileEventKind.moved ||
+                    candidate.event.kind == WorkspaceFileEventKind.deleted),
+          );
+          if (nextIndex < 0) break;
+          final next = _pendingFileMonitorEvents[nextIndex].event;
+          if (next.kind == WorkspaceFileEventKind.moved &&
+              next.destinationPath != null) {
+            _pendingFileMonitorEvents.removeAt(nextIndex);
+            event = WorkspaceFileMonitorEvent(
+              kind: WorkspaceFileEventKind.moved,
+              path: event.path,
+              destinationPath: next.destinationPath,
+              isDirectory: event.isDirectory,
+            );
+          } else if (next.kind == WorkspaceFileEventKind.deleted) {
+            _pendingFileMonitorEvents.removeAt(nextIndex);
+            event = WorkspaceFileMonitorEvent(
+              kind: WorkspaceFileEventKind.deleted,
+              path: event.path,
+              isDirectory: event.isDirectory,
+            );
+          } else {
+            break;
+          }
+        }
+        await _handleFileMonitorEvent(event, queued.workspaceGeneration);
+      }
+    } finally {
+      _fileMonitorDrainRunning = false;
+      if (ref.mounted &&
+          _pendingFileMonitorEvents.isNotEmpty &&
+          _fileMonitorDrainTimer == null) {
+        _fileMonitorDrainTimer = Timer(Duration.zero, () {
+          _fileMonitorDrainTimer = null;
+          unawaited(_drainFileMonitorEvents());
+        });
+      }
+    }
   }
 
   Future<NotesRepository> _ensureNotesRepository() async {
@@ -508,7 +615,10 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       _invalidateActiveDocumentOperations();
       await _fileMonitor.stop();
       for (final buffer in prior.documentBuffers) {
-        _localHistory.handleBufferClosed(buffer.id, historySettled: settled);
+        await _localHistory.handleBufferClosed(
+          buffer.id,
+          historySettled: settled,
+        );
       }
       final workspace = Workspace.nextcloudNotes(accountId);
       final buffers = <DocumentBuffer>[];
@@ -635,9 +745,15 @@ class WorkspaceController extends Notifier<WorkspaceState> {
   Future<bool> _saveRemoteBufferSnapshot(
     DocumentBuffer target, {
     bool scheduleSync = true,
+    bool captureHistory = true,
   }) async {
     final reference = target.remoteNote;
     if (reference == null) return false;
+    _remoteDurabilityWrites.update(
+      target.id,
+      (count) => count + 1,
+      ifAbsent: () => 1,
+    );
     try {
       final repository = await _ensureNotesRepository();
       final saved = await repository.save(
@@ -684,11 +800,13 @@ class WorkspaceController extends Notifier<WorkspaceState> {
           );
         }
       }
-      await _localHistory.captureSaved(
-        LocalHistoryBufferSnapshot.fromBuffer(
-          target.copyWith(text: saved.content, remoteTitle: saved.title),
-        ),
-      );
+      if (captureHistory) {
+        await _localHistory.captureSaved(
+          LocalHistoryBufferSnapshot.fromBuffer(
+            target.copyWith(text: saved.content, remoteTitle: saved.title),
+          ),
+        );
+      }
       if (scheduleSync) {
         _scheduleRemoteSync(reference.accountId);
       }
@@ -703,6 +821,13 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         );
       }
       return false;
+    } finally {
+      final remaining = (_remoteDurabilityWrites[target.id] ?? 1) - 1;
+      if (remaining == 0) {
+        _remoteDurabilityWrites.remove(target.id);
+      } else {
+        _remoteDurabilityWrites[target.id] = remaining;
+      }
     }
   }
 
@@ -959,7 +1084,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     _remoteRetryTimers.remove(accountId)?.cancel();
     _remoteRetryCounts.remove(accountId);
     for (final buffer in state.documentBuffers) {
-      _localHistory.handleBufferClosed(buffer.id, historySettled: true);
+      await _localHistory.handleBufferClosed(buffer.id, historySettled: true);
     }
     await _fileMonitor.stop();
     state = const WorkspaceState();
@@ -972,183 +1097,930 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     }
     final recovery = await _recoveryStart;
     final session = await _sessionStore.load();
-    if (session?.nextcloudAccountId case final accountId?) {
-      return openNextcloudWorkspace(
-        accountId,
-        restoredTabs: session!.tabs,
-        activeBufferId: session.activeBufferId,
+    late final List<LocalHistoryPathReconciliation> restoredPathReconciliations;
+    late List<LocalHistoryPendingSaveAs> restoredSaveAsOperations;
+    late List<DocumentSessionEntry> sessionEntries;
+    _restoringLocalHistorySession = true;
+    _restoredRecoveryOwnerIdsByBuffer.clear();
+    try {
+      // The controller's initial refresh is intentionally asynchronous. Load
+      // an authoritative snapshot before consuming any durable journal: an
+      // early failure must leave the persisted workspace and its obligations
+      // untouched for the next startup.
+      if (!await _localHistory.refresh()) return false;
+      if (session?.pendingLocalHistoryReconciliations.any(
+            (operation) => _localHistoryOperationOwnerIsLiveOtherProcess(
+              operation.operationId,
+            ),
+          ) ??
+          false) {
+        // The owner is still publishing the matching recovery and workspace
+        // paths. Do not consume, mirror, or rewrite its shared session. A
+        // later startup can reconcile the journal after that owner retires.
+        return false;
+      }
+      _localHistory.restoreRetiredPathReconciliationIds(
+        session?.retiredLocalHistoryReconciliationIds ?? const <String>[],
       );
-    }
-    for (final association
-        in session?.pendingLocalHistoryAssociations ??
-            const <PendingLocalHistoryAssociation>[]) {
-      _localHistory.restorePendingIdentityPromotion(
-        LocalHistoryPendingIdentityPromotion(
-          bufferId: association.bufferId,
-          documentId: association.documentId,
-          destinationPath: association.destinationPath,
-          displayName: association.displayName,
-        ),
+      _localHistory.restoreRetiredDurableWorkOwnerIds(
+        session?.retiredLocalHistoryWorkOwnerIds ?? const <String>[],
       );
-    }
-    await _localHistory.flushPendingIdentityPromotions();
-    // Entries are authoritative even if the last shutdown was marked clean.
-    // This protects users when close confirmation is disabled while dirty
-    // buffers still exist.
-    final recoverEntries = recovery.entries;
-    if (session == null && recoverEntries.isEmpty) {
-      if (recovery.readErrors > 0) {
-        state = state.copyWith(
-          message: WorkspaceMessage(
-            WorkspaceMessageCode.recoveryDamaged,
-            error: recovery.readErrors,
+      if (!await _localHistory.restorePendingClearOperations(
+        session?.pendingLocalHistoryClears ??
+            const <LocalHistoryPendingClear>[],
+      )) {
+        return false;
+      }
+      _localHistory.restorePendingSaveAsOperations(
+        session?.pendingLocalHistorySaveAs ??
+            const <LocalHistoryPendingSaveAs>[],
+      );
+      restoredSaveAsOperations = await _resolveRestoredSaveAsOperations(
+        session?.pendingLocalHistorySaveAs ??
+            const <LocalHistoryPendingSaveAs>[],
+      );
+      _localHistory.restoreRetainedDetachedCaptures(
+        session?.retainedLocalHistoryCaptures ??
+            const <LocalHistoryRetainedCapture>[],
+      );
+      restoredPathReconciliations = await _resolveRestoredPathReconciliations(
+        session?.pendingLocalHistoryReconciliations ??
+            const <LocalHistoryPathReconciliation>[],
+        restoredSaveAsOperations,
+      );
+      await _localHistory.restorePendingPathReconciliations(
+        restoredPathReconciliations,
+      );
+      // A committed Save As to a new filesystem path can have a committed
+      // cleanup operation for a stale destination history owner. Publish that
+      // identity-targeted cleanup before resolving the Save As destination;
+      // otherwise the stale owner makes every startup reject the recovery.
+      final originalSessionEntries =
+          session?.tabs ?? const <DocumentSessionEntry>[];
+      for (final operation in restoredSaveAsOperations) {
+        await _localHistory.recoverCommittedSaveAs(
+          operation,
+          sourceRetainsUntitledLineage:
+              _restoredSaveAsSourceRetainsUntitledLineage(
+                operation,
+                originalSessionEntries,
+              ),
+        );
+      }
+      sessionEntries = _reconcileRestoredSessionEntries(
+        originalSessionEntries,
+        restoredPathReconciliations,
+        restoredSaveAsOperations,
+      );
+      for (final association
+          in session?.pendingLocalHistoryAssociations ??
+              const <PendingLocalHistoryAssociation>[]) {
+        _localHistory.restorePendingIdentityPromotion(
+          LocalHistoryPendingIdentityPromotion(
+            bufferId: association.bufferId,
+            documentId: association.documentId,
+            destinationPath: association.destinationPath,
+            displayName: association.displayName,
+            acceptedClearEpoch: association.acceptedClearEpoch,
+            operationOwnerId: association.operationOwnerId,
           ),
         );
       }
-      return false;
-    }
-    final workspacePath =
-        session?.workspacePath ??
-        recoverEntries
-            .map((entry) => entry.workspacePath)
-            .whereType<String>()
-            .firstOrNull ??
-        recoverEntries
-            .map((entry) => entry.filePath)
-            .whereType<String>()
+      await _localHistory.flushPendingIdentityPromotions();
+      await _localHistory.flushAll(const []);
+      for (final entry in sessionEntries) {
+        if (entry.localHistoryDocumentId case final documentId?) {
+          _localHistory.restoreBufferDocumentIdentity(
+            bufferId: entry.id,
+            documentId: documentId,
+            path: entry.filePath,
+          );
+        }
+      }
+      if (session?.nextcloudAccountId case final accountId?) {
+        // Restore and settle the durable Local History journal before opening
+        // remote tabs. This preserves path/clear obligations even though a
+        // Nextcloud workspace has no filesystem recovery payload.
+        await _persistRestoredLocalHistoryJournal(
+          session!,
+          workspacePath: null,
+          tabs: sessionEntries,
+          recoveryEntries: const [],
+          persistRecovery: false,
+        );
+        final restored = await openNextcloudWorkspace(
+          accountId,
+          restoredTabs: sessionEntries,
+          activeBufferId: session.activeBufferId,
+        );
+        if (restored) await flushPersistence();
+        return restored;
+      }
+      // Entries are authoritative even if the last shutdown was marked clean.
+      // This protects users when close confirmation is disabled while dirty
+      // buffers still exist.
+      final adoptableRecoveryEntries =
+          recovery.entries
+              .where(
+                (entry) =>
+                    !_recoveryStore.ownerIsLiveOtherProcess(entry.ownerId),
+              )
+              .toList(growable: false)
+            ..sort((left, right) {
+              bool hasSessionOwner(DocumentRecoveryEntry entry) =>
+                  session?.tabs.any(
+                    (tab) =>
+                        tab.id == entry.id &&
+                        (tab.recoveryOwnerId == null ||
+                            tab.recoveryOwnerId == entry.ownerId),
+                  ) ??
+                  false;
+              return (hasSessionOwner(right) ? 1 : 0) -
+                  (hasSessionOwner(left) ? 1 : 0);
+            });
+      final recoveryAdoptions = await _recoveryStore.adoptEntries(
+        adoptableRecoveryEntries,
+      );
+      var recoveryAdoptionsCommitted = false;
+      sessionEntries = _adoptSessionRecoveryOwnership(
+        sessionEntries,
+        recoveryAdoptions,
+      );
+      restoredSaveAsOperations = _adoptSaveAsRecoveryOwnership(
+        restoredSaveAsOperations,
+        recoveryAdoptions,
+      );
+      final recoverEntries = await _reconcileRestoredRecoveryEntries(
+        recoveryAdoptions,
+        session?.tabs ?? const <DocumentSessionEntry>[],
+        restoredPathReconciliations,
+        restoredSaveAsOperations,
+      );
+      var persistedWorkspacePath = _reconcileRestoredSessionPath(
+        session?.workspacePath,
+        restoredPathReconciliations,
+        operationIds:
+            session?.workspaceLocalHistoryReconciliationIds.toSet() ?? const {},
+      );
+      for (final operation in restoredSaveAsOperations) {
+        final destination = operation.destination.path;
+        if (destination == null) continue;
+        final activeEntry = session?.tabs
+            .where((entry) => entry.id == session.activeBufferId)
             .firstOrNull;
-    final sessionEntries = session?.tabs ?? const <DocumentSessionEntry>[];
-    try {
-      late final Workspace workspace;
-      if (workspacePath == null) {
-        workspace = _service.createUntitledMarkdown();
-      } else if (await _service.pathExists(workspacePath)) {
-        workspace = await _service.openPath(workspacePath);
-      } else {
-        final activeEntry = sessionEntries
-            .where((entry) => entry.id == session?.activeBufferId)
-            .firstOrNull;
-        final activeRecovery = recoverEntries
-            .where((entry) => entry.id == session?.activeBufferId)
-            .firstOrNull;
-        final activePath =
-            activeEntry?.filePath ??
-            activeRecovery?.filePath ??
-            sessionEntries
-                .map((entry) => entry.filePath)
-                .whereType<String>()
-                .firstOrNull ??
-            recoverEntries
-                .map((entry) => entry.filePath)
-                .whereType<String>()
-                .firstOrNull;
-        final seedText = activeRecovery?.text ?? '';
-        final parsed = _service.createUntitledMarkdown(source: seedText);
-        final standalone = p.extension(workspacePath).isNotEmpty;
-        workspace = Workspace(
-          id: 'missing:$workspacePath',
-          rootPath: workspacePath,
-          kind: standalone
-              ? WorkspaceKind.singleMarkdown
-              : WorkspaceKind.markdownFolder,
-          openedAt: DateTime.now(),
-          activeFilePath: activePath,
-          openFilePaths: [
-            for (final entry in sessionEntries)
-              if (entry.filePath != null) entry.filePath!,
-            for (final entry in recoverEntries)
-              if (entry.filePath != null) entry.filePath!,
-          ],
-          files: const [],
-          diagnostics: parsed.diagnostics,
-          markdown: parsed.markdown,
+        final sessionOwnsOperation =
+            activeEntry?.pendingLocalHistorySaveAsOperationId ==
+            operation.operationId;
+        if ((persistedWorkspacePath == null && sessionOwnsOperation) ||
+            (persistedWorkspacePath != null &&
+                sessionOwnsOperation &&
+                operation.source.path != null &&
+                p.equals(persistedWorkspacePath, operation.source.path!))) {
+          persistedWorkspacePath = destination;
+        }
+      }
+      if (session != null) {
+        await _persistRestoredLocalHistoryJournal(
+          session,
+          workspacePath: persistedWorkspacePath,
+          tabs: sessionEntries,
+          recoveryEntries: recoverEntries,
         );
       }
-      final recoveryById = {
-        for (final entry in recoverEntries) entry.id: entry,
-      };
-      final recoveryByPath = {
-        for (final entry in recoverEntries)
-          if (entry.filePath != null) entry.filePath!: entry,
-      };
-      final buffers = <DocumentBuffer>[];
-      for (final entry in sessionEntries) {
-        final recovered =
-            recoveryById[entry.id] ??
-            (entry.filePath == null ? null : recoveryByPath[entry.filePath]);
-        final buffer = await _restoreSessionBuffer(entry, recovered);
-        if (buffer != null) {
-          buffers.add(buffer);
+      final sessionHasRestorableState =
+          session != null &&
+          (persistedWorkspacePath != null ||
+              sessionEntries.isNotEmpty ||
+              _localHistory.pendingIdentityPromotions.isNotEmpty ||
+              _localHistory.pendingPathReconciliations.isNotEmpty ||
+              _localHistory.pendingClearOperations.isNotEmpty ||
+              _localHistory.pendingSaveAsOperations.isNotEmpty ||
+              _localHistory.retainedDetachedCaptures.isNotEmpty);
+      if (!sessionHasRestorableState && recoverEntries.isEmpty) {
+        await _recoveryStore.releaseAdoptions(recoveryAdoptions);
+        if (session != null) {
+          await _persistRestoredLocalHistoryJournal(
+            session,
+            workspacePath: session.workspacePath,
+            tabs: session.tabs,
+            recoveryEntries: const [],
+            persistRecovery: false,
+          );
         }
-      }
-      for (final recovered in recoverEntries) {
-        if (buffers.any((buffer) => buffer.id == recovered.id)) {
-          continue;
+        if (recovery.readErrors > 0) {
+          state = state.copyWith(
+            message: WorkspaceMessage(
+              WorkspaceMessageCode.recoveryDamaged,
+              error: recovery.readErrors,
+            ),
+          );
         }
-        final buffer = await _restoreRecoveryBuffer(recovered);
-        if (buffer != null) {
-          buffers.add(buffer);
-        }
-      }
-      if (buffers.isEmpty) {
         return false;
       }
-      final activeId =
-          buffers.any((buffer) => buffer.id == session?.activeBufferId)
-          ? session!.activeBufferId!
-          : buffers.first.id;
-      final active = buffers.firstWhere((buffer) => buffer.id == activeId);
-      final openPaths = [
-        for (final buffer in buffers)
-          if (buffer.filePath != null) buffer.filePath!,
-      ];
-      final nextWorkspace = workspace.copyWith(
-        activeFilePath: active.filePath,
-        activeFileSnapshot: active.diskSnapshot,
-        openFilePaths: openPaths,
-      );
-      final reparsed = await _reparseWithDocumentBuffers(
-        nextWorkspace,
-        active,
-        buffers: buffers,
-      );
-      if (!ref.mounted || !_preparedInputsCurrent(reparsed, buffers)) {
+      final workspacePath =
+          persistedWorkspacePath ??
+          recoverEntries
+              .map((entry) => entry.workspacePath)
+              .whereType<String>()
+              .firstOrNull ??
+          recoverEntries
+              .map((entry) => entry.filePath)
+              .whereType<String>()
+              .firstOrNull;
+      try {
+        late final Workspace workspace;
+        if (workspacePath == null) {
+          workspace = _service.createUntitledMarkdown();
+        } else if (await _service.pathExists(workspacePath)) {
+          workspace = await _service.openPath(workspacePath);
+        } else {
+          final activeEntry = sessionEntries
+              .where((entry) => entry.id == session?.activeBufferId)
+              .firstOrNull;
+          final activeRecovery = recoverEntries
+              .where((entry) => entry.id == session?.activeBufferId)
+              .firstOrNull;
+          final activePath =
+              activeEntry?.filePath ??
+              activeRecovery?.filePath ??
+              sessionEntries
+                  .map((entry) => entry.filePath)
+                  .whereType<String>()
+                  .firstOrNull ??
+              recoverEntries
+                  .map((entry) => entry.filePath)
+                  .whereType<String>()
+                  .firstOrNull;
+          final seedText = activeRecovery?.text ?? '';
+          final parsed = _service.createUntitledMarkdown(source: seedText);
+          final standalone = p.extension(workspacePath).isNotEmpty;
+          workspace = Workspace(
+            id: 'missing:$workspacePath',
+            rootPath: workspacePath,
+            kind: standalone
+                ? WorkspaceKind.singleMarkdown
+                : WorkspaceKind.markdownFolder,
+            openedAt: DateTime.now(),
+            activeFilePath: activePath,
+            openFilePaths: [
+              for (final entry in sessionEntries)
+                if (entry.filePath != null) entry.filePath!,
+              for (final entry in recoverEntries)
+                if (entry.filePath != null) entry.filePath!,
+            ],
+            files: const [],
+            diagnostics: parsed.diagnostics,
+            markdown: parsed.markdown,
+          );
+        }
+        final buffers = <DocumentBuffer>[];
+        final consumedRecoveries = <(String?, String)>{};
+        for (final entry in sessionEntries) {
+          final ownedById = recoverEntries
+              .where(
+                (recovery) =>
+                    recovery.id == entry.id &&
+                    (entry.recoveryOwnerId == null ||
+                        recovery.ownerId == entry.recoveryOwnerId),
+              )
+              .toList(growable: false);
+          final ownedByPath = entry.filePath == null
+              ? const <DocumentRecoveryEntry>[]
+              : recoverEntries
+                    .where(
+                      (recovery) =>
+                          recovery.filePath == entry.filePath &&
+                          (entry.recoveryOwnerId == null ||
+                              recovery.ownerId == entry.recoveryOwnerId),
+                    )
+                    .toList(growable: false);
+          final recovered = ownedById.length == 1
+              ? ownedById.single
+              : ownedById.isEmpty && ownedByPath.length == 1
+              ? ownedByPath.single
+              : null;
+          final buffer = await _restoreSessionBuffer(entry, recovered);
+          if (buffer != null) {
+            buffers.add(buffer);
+            if (recovered != null) {
+              consumedRecoveries.add((recovered.ownerId, recovered.id));
+            }
+          }
+        }
+        for (final recovered in recoverEntries) {
+          if (consumedRecoveries.contains((recovered.ownerId, recovered.id))) {
+            continue;
+          }
+          var restoredId = recovered.id;
+          var suffix = 1;
+          while (buffers.any((buffer) => buffer.id == restoredId)) {
+            restoredId = '${recovered.id}:recovered:${suffix++}';
+          }
+          final pathAlreadyOpen =
+              recovered.filePath != null &&
+              buffers.any(
+                (buffer) =>
+                    buffer.filePath != null &&
+                    p.equals(buffer.filePath!, recovered.filePath!),
+              );
+          final buffer = await _restoreRecoveryBuffer(
+            recovered,
+            idOverride: restoredId,
+            detachFromPath: pathAlreadyOpen,
+          );
+          if (buffer != null) {
+            buffers.add(buffer);
+          }
+        }
+        if (buffers.isEmpty) {
+          return false;
+        }
+        final activeId =
+            buffers.any((buffer) => buffer.id == session?.activeBufferId)
+            ? session!.activeBufferId!
+            : buffers.first.id;
+        final active = buffers.firstWhere((buffer) => buffer.id == activeId);
+        final openPaths = [
+          for (final buffer in buffers)
+            if (buffer.filePath != null) buffer.filePath!,
+        ];
+        final nextWorkspace = workspace.copyWith(
+          activeFilePath: active.filePath,
+          activeFileSnapshot: active.diskSnapshot,
+          openFilePaths: openPaths,
+        );
+        final reparsed = await _reparseWithDocumentBuffers(
+          nextWorkspace,
+          active,
+          buffers: buffers,
+        );
+        if (!ref.mounted || !_preparedInputsCurrent(reparsed, buffers)) {
+          return false;
+        }
+        state = WorkspaceState(
+          workspace: reparsed,
+          preview: _safePreview(reparsed, active),
+          documentBuffers: buffers,
+          activeBufferId: active.id,
+          message: recovery.readErrors > 0
+              ? WorkspaceMessage(
+                  WorkspaceMessageCode.recoveryDamaged,
+                  error: recovery.readErrors,
+                )
+              : recoverEntries.isNotEmpty
+              ? WorkspaceMessage(
+                  WorkspaceMessageCode.recoveryRestored,
+                  error: recoverEntries.length,
+                )
+              : null,
+        );
+        for (final entry in sessionEntries) {
+          final recoveryOwnerId = entry.recoveryOwnerId;
+          if (recoveryOwnerId != null &&
+              buffers.any((buffer) => buffer.id == entry.id)) {
+            _restoredRecoveryOwnerIdsByBuffer[entry.id] = recoveryOwnerId;
+          }
+        }
+        for (final buffer in buffers) {
+          unawaited(_localHistory.observeOpened(buffer));
+        }
+        _recordActivePreviewRevision();
+        _editRevision = active.revision;
+        await _startMonitoring(reparsed);
+        await _settingsController.setDocumentViewMode(active.editorState.mode);
+        await flushPersistence();
+        recoveryAdoptionsCommitted = true;
+        return true;
+      } on Object catch (error, stackTrace) {
+        busyMarkDebugLogError(
+          '[BusyMark] Session restore failed',
+          error,
+          stackTrace,
+        );
         return false;
+      } finally {
+        if (!recoveryAdoptionsCommitted) {
+          await _recoveryStore.releaseAdoptions(recoveryAdoptions);
+          if (session != null) {
+            await _persistRestoredLocalHistoryJournal(
+              session,
+              workspacePath: session.workspacePath,
+              tabs: session.tabs,
+              recoveryEntries: const [],
+              persistRecovery: false,
+            );
+          }
+        }
       }
-      state = WorkspaceState(
-        workspace: reparsed,
-        preview: _safePreview(reparsed, active),
-        documentBuffers: buffers,
-        activeBufferId: active.id,
-        message: recovery.readErrors > 0
-            ? WorkspaceMessage(
-                WorkspaceMessageCode.recoveryDamaged,
-                error: recovery.readErrors,
-              )
-            : recoverEntries.isNotEmpty
-            ? WorkspaceMessage(
-                WorkspaceMessageCode.recoveryRestored,
-                error: recoverEntries.length,
-              )
-            : null,
-      );
-      for (final buffer in buffers) {
-        unawaited(_localHistory.observeOpened(buffer));
+    } finally {
+      // Local History retries may request durable persistence while recovery
+      // ownership is adopted and the workspace is still being reconstructed.
+      // Keep empty-state persistence suppressed until reconstruction commits
+      // or every adoption has been released on failure.
+      _restoringLocalHistorySession = false;
+    }
+  }
+
+  Future<List<LocalHistoryPathReconciliation>>
+  _resolveRestoredPathReconciliations(
+    Iterable<LocalHistoryPathReconciliation> reconciliations,
+    Iterable<LocalHistoryPendingSaveAs> committedSaveAsOperations,
+  ) async {
+    final resolved = <LocalHistoryPathReconciliation>[];
+    for (final reconciliation in reconciliations) {
+      // A live owner may already have committed the shared-store mutation but
+      // still be publishing newer editor recovery and workspace paths. Leave
+      // its journal in the session merge until that owner acknowledges it;
+      // consuming it here would retire the only durable relationship between
+      // the old recovery path and the committed filesystem operation.
+      if (_localHistoryOperationOwnerIsLiveOtherProcess(
+        reconciliation.operationId,
+      )) {
+        // Startup normally returns before reaching this point. Retain a
+        // conservative guard in case ownership changes during restoration.
+        continue;
       }
-      _recordActivePreviewRevision();
-      _editRevision = active.revision;
-      await _startMonitoring(reparsed);
-      await _settingsController.setDocumentViewMode(active.editorState.mode);
-      _schedulePersistence();
-      return true;
-    } on Object catch (error, stackTrace) {
-      busyMarkDebugLogError(
-        '[BusyMark] Session restore failed',
-        error,
-        stackTrace,
-      );
+      if (reconciliation.phase ==
+          LocalHistoryPathReconciliationPhase.committed) {
+        resolved.add(reconciliation);
+        continue;
+      }
+      if (reconciliation.phase ==
+          LocalHistoryPathReconciliationPhase.prepared) {
+        // The execution phase is persisted before the filesystem call, so a
+        // prepared operation from a dead owner is known not to have started.
+        // A different live BusyMark process may still be between its prepared
+        // and executing session writes, so never tombstone that operation.
+        if (_localHistoryOperationOwnerIsDefinitelyDead(
+          reconciliation.operationId,
+        )) {
+          await _localHistory.retirePreparedPathReconciliation(
+            reconciliation.operationId,
+          );
+        } else {
+          resolved.add(reconciliation);
+        }
+        continue;
+      }
+      try {
+        final sourceExists = await _service.pathExists(
+          reconciliation.sourcePath,
+        );
+        final commitEvidence = reconciliation.commitEvidenceOperationId;
+        final committedBySaveAs =
+            commitEvidence != null &&
+            committedSaveAsOperations.any(
+              (operation) => operation.operationId == commitEvidence,
+            );
+        final committed = switch (reconciliation.kind) {
+          LocalHistoryPathReconciliationKind.deletion =>
+            committedBySaveAs || !sourceExists,
+          LocalHistoryPathReconciliationKind.remap =>
+            !sourceExists &&
+                await _service.pathExists(reconciliation.destinationPath!),
+        };
+        if (committed) {
+          resolved.add(
+            reconciliation.withPhase(
+              LocalHistoryPathReconciliationPhase.committed,
+            ),
+          );
+        } else if (sourceExists) {
+          // Execution began but the process stopped before recording its
+          // outcome. A same-path replacement is indistinguishable here, so
+          // retain the namespace block for deliberate recovery.
+          resolved.add(reconciliation);
+        } else {
+          // The namespace is ambiguous (for example, another process already
+          // recreated the source). Keep it blocked for deliberate recovery.
+          resolved.add(reconciliation);
+        }
+      } on Object {
+        resolved.add(reconciliation);
+      }
+    }
+    return List.unmodifiable(resolved);
+  }
+
+  Future<List<LocalHistoryPendingSaveAs>> _resolveRestoredSaveAsOperations(
+    Iterable<LocalHistoryPendingSaveAs> operations,
+  ) async {
+    final committed = <LocalHistoryPendingSaveAs>[];
+    for (final operation in operations) {
+      if (_localHistoryOperationOwnerIsLiveOtherProcess(
+        operation.operationId,
+      )) {
+        _localHistory.leavePendingSaveAsOwnedExternally(operation.operationId);
+        continue;
+      }
+      if (operation.phase == LocalHistoryPathReconciliationPhase.prepared) {
+        if (_localHistoryOperationOwnerIsDefinitelyDead(
+          operation.operationId,
+        )) {
+          await _localHistory.discardPendingSaveAsRecovery(
+            operation.operationId,
+          );
+        }
+        continue;
+      }
+      if (operation.phase == LocalHistoryPathReconciliationPhase.committed) {
+        committed.add(operation);
+        continue;
+      }
+      // `executing` is deliberately retained. The process persisted it before
+      // entering the filesystem call, so neither equal nor different current
+      // destination bytes prove whether the call committed. Guessing here can
+      // steal another process's in-flight journal or publish a false fork.
+    }
+    return List.unmodifiable(committed);
+  }
+
+  bool _localHistoryOperationOwnerIsDefinitelyDead(String operationId) {
+    return _localHistory.operationOwnerIsDefinitelyDead(operationId);
+  }
+
+  bool _localHistoryOperationOwnerIsLiveOtherProcess(String operationId) {
+    return _localHistory.operationOwnerIsLiveOtherProcess(operationId);
+  }
+
+  String? _reconcileRestoredSessionPath(
+    String? path,
+    Iterable<LocalHistoryPathReconciliation> reconciliations, {
+    String? documentId,
+    String? ownerId,
+    Set<String>? operationIds,
+  }) {
+    if (path == null) return null;
+    var result = p.normalize(path);
+    for (final reconciliation in reconciliations) {
+      if (reconciliation.phase !=
+          LocalHistoryPathReconciliationPhase.committed) {
+        continue;
+      }
+      final appliesByOperation =
+          operationIds?.contains(reconciliation.operationId) ?? false;
+      final appliesByDocument =
+          documentId != null && reconciliation.documentIds.contains(documentId);
+      final appliesByOwner =
+          ownerId != null && reconciliation.ownerIds.contains(ownerId);
+      if ((operationIds != null || documentId != null || ownerId != null) &&
+          !appliesByOperation &&
+          !appliesByDocument &&
+          !appliesByOwner) {
+        continue;
+      }
+      switch (reconciliation.kind) {
+        case LocalHistoryPathReconciliationKind.remap:
+          if (p.equals(result, reconciliation.sourcePath)) {
+            result = reconciliation.destinationPath!;
+          } else if (p.isWithin(reconciliation.sourcePath, result)) {
+            result = p.join(
+              reconciliation.destinationPath!,
+              p.relative(result, from: reconciliation.sourcePath),
+            );
+          }
+        case LocalHistoryPathReconciliationKind.deletion:
+          if (p.equals(result, reconciliation.sourcePath) ||
+              reconciliation.recursive &&
+                  p.isWithin(reconciliation.sourcePath, result)) {
+            return null;
+          }
+      }
+    }
+    return result;
+  }
+
+  LocalHistoryPathReconciliation? _committedRestoredDeletion(
+    String path,
+    Iterable<LocalHistoryPathReconciliation> reconciliations, {
+    String? documentId,
+    String? ownerId,
+    Set<String>? operationIds,
+  }) => reconciliations
+      .where(
+        (reconciliation) =>
+            reconciliation.phase ==
+                LocalHistoryPathReconciliationPhase.committed &&
+            reconciliation.kind ==
+                LocalHistoryPathReconciliationKind.deletion &&
+            ((operationIds?.contains(reconciliation.operationId) ?? false) ||
+                documentId != null &&
+                    reconciliation.documentIds.contains(documentId) ||
+                ownerId != null && reconciliation.ownerIds.contains(ownerId)) &&
+            (p.equals(path, reconciliation.sourcePath) ||
+                reconciliation.recursive &&
+                    p.isWithin(reconciliation.sourcePath, path)),
+      )
+      .lastOrNull;
+
+  List<DocumentSessionEntry> _reconcileRestoredSessionEntries(
+    Iterable<DocumentSessionEntry> entries,
+    Iterable<LocalHistoryPathReconciliation> reconciliations,
+    Iterable<LocalHistoryPendingSaveAs> saveAsOperations,
+  ) {
+    final original = entries.toList(growable: false);
+    final saveAs = saveAsOperations.toList(growable: false);
+    return List.unmodifiable([
+      for (final entry in original)
+        if (entry.filePath == null ||
+            _reconcileRestoredSessionPath(
+                  entry.filePath,
+                  reconciliations,
+                  documentId: entry.localHistoryDocumentId,
+                  ownerId: entry.id,
+                  operationIds: entry.localHistoryPathReconciliationIds.toSet(),
+                ) !=
+                null)
+          (() {
+            final operation = saveAs
+                .where(
+                  (operation) =>
+                      operation.operationId ==
+                      entry.pendingLocalHistorySaveAsOperationId,
+                )
+                .lastOrNull;
+            final sourceKeepsUntitled =
+                operation != null &&
+                _restoredSaveAsSourceRetainsUntitledLineage(
+                  operation,
+                  original,
+                );
+            return DocumentSessionEntry(
+              id: entry.id,
+              filePath:
+                  (!sourceKeepsUntitled ? operation?.destination.path : null) ??
+                  _reconcileRestoredSessionPath(
+                    entry.filePath,
+                    reconciliations,
+                    documentId: entry.localHistoryDocumentId,
+                    ownerId: entry.id,
+                    operationIds: entry.localHistoryPathReconciliationIds
+                        .toSet(),
+                  ),
+              untitledName: operation != null && !sourceKeepsUntitled
+                  ? null
+                  : entry.untitledName,
+              editorState: entry.editorState,
+              localHistoryDocumentId: entry.localHistoryDocumentId,
+              pendingLocalHistorySaveAsOperationId: sourceKeepsUntitled
+                  ? null
+                  : entry.pendingLocalHistorySaveAsOperationId,
+              localHistoryPathReconciliationIds:
+                  entry.localHistoryPathReconciliationIds,
+              recoveryOwnerId: entry.recoveryOwnerId,
+              remoteNote: entry.remoteNote,
+            );
+          })(),
+    ]);
+  }
+
+  bool _restoredSaveAsSourceRetainsUntitledLineage(
+    LocalHistoryPendingSaveAs operation,
+    Iterable<DocumentSessionEntry> entries,
+  ) {
+    final destinationPath = operation.destination.path;
+    if (!operation.firstSaveLineageTransition ||
+        !operation.source.untitled ||
+        destinationPath == null) {
       return false;
     }
+    final sourceEntry = entries
+        .where(
+          (entry) =>
+              entry.id == operation.bufferId &&
+              entry.pendingLocalHistorySaveAsOperationId ==
+                  operation.operationId,
+        )
+        .firstOrNull;
+    if (sourceEntry == null || sourceEntry.filePath != null) return false;
+    return entries.any(
+      (entry) =>
+          !identical(entry, sourceEntry) &&
+          entry.filePath != null &&
+          p.equals(entry.filePath!, destinationPath),
+    );
+  }
+
+  Future<List<DocumentRecoveryEntry>> _reconcileRestoredRecoveryEntries(
+    Iterable<DocumentRecoveryAdoption> adoptions,
+    Iterable<DocumentSessionEntry> originalSessionEntries,
+    Iterable<LocalHistoryPathReconciliation> reconciliations,
+    Iterable<LocalHistoryPendingSaveAs> saveAsOperations,
+  ) async {
+    final result = <DocumentRecoveryEntry>[];
+    for (final adoption in adoptions) {
+      final entry = adoption.entry;
+      final sessionEntry = originalSessionEntries
+          .where(
+            (candidate) =>
+                candidate.id == adoption.sourceId &&
+                (candidate.recoveryOwnerId == null ||
+                    adoption.sourceOwnerId == null ||
+                    candidate.recoveryOwnerId == adoption.sourceOwnerId),
+          )
+          .firstOrNull;
+      final operationIds =
+          sessionEntry?.localHistoryPathReconciliationIds.toSet() ?? const {};
+      var detachUncapturedDeletionRecovery = false;
+      if (entry.filePath case final recoveryPath?) {
+        final deletion = _committedRestoredDeletion(
+          recoveryPath,
+          reconciliations,
+          documentId: sessionEntry?.localHistoryDocumentId,
+          ownerId: adoption.sourceId,
+          operationIds: operationIds,
+        );
+        if (deletion != null) {
+          final sessionDocumentId = sessionEntry?.localHistoryDocumentId;
+          final evidenceDocumentIds =
+              sessionDocumentId != null &&
+                  deletion.documentIds.contains(sessionDocumentId)
+              ? <String>[sessionDocumentId]
+              : <String>[
+                  for (final target in deletion.targets)
+                    if (p.equals(target.expectedPath, recoveryPath))
+                      target.documentId,
+                ];
+          final safelyCaptured = await _localHistory.hasExactStoredRevision(
+            documentIds: evidenceDocumentIds,
+            source: entry.text,
+            format: entry.format,
+          );
+          if (safelyCaptured) {
+            // The exact recovery payload is already in the deleted lineage.
+            continue;
+          }
+          // The filesystem deletion committed before this newer editor state
+          // reached history. Preserve it as a detached recovery document so
+          // startup cannot discard it or recreate a live owner at the deleted
+          // pathname.
+          detachUncapturedDeletionRecovery = true;
+        }
+      }
+      var workspacePath = _reconcileRestoredRecoveryPath(
+        entry.workspacePath,
+        reconciliations,
+        documentId: sessionEntry?.localHistoryDocumentId,
+        ownerId: adoption.sourceId,
+        operationIds: operationIds,
+      );
+      var filePath = _reconcileRestoredRecoveryPath(
+        entry.filePath,
+        reconciliations,
+        documentId: sessionEntry?.localHistoryDocumentId,
+        ownerId: adoption.sourceId,
+        operationIds: operationIds,
+      );
+      var untitledName = entry.untitledName;
+      var lastSavedText = entry.lastSavedText;
+      var diskSnapshot = entry.diskSnapshot;
+      if (detachUncapturedDeletionRecovery) {
+        filePath = null;
+        untitledName = entry.filePath == null
+            ? entry.untitledName
+            : '${p.basename(entry.filePath!)} (Recovered)';
+        diskSnapshot = null;
+      }
+      final saveAs = saveAsOperations
+          .where(
+            (operation) =>
+                operation.operationId ==
+                    sessionEntry?.pendingLocalHistorySaveAsOperationId ||
+                operation.recoveryOwnerId != null &&
+                    operation.recoveryOwnerId == entry.ownerId &&
+                    operation.bufferId == entry.id,
+          )
+          .lastOrNull;
+      final destination = saveAs?.destination.path;
+      final sourceKeepsUntitled =
+          saveAs != null &&
+          _restoredSaveAsSourceRetainsUntitledLineage(
+            saveAs,
+            originalSessionEntries,
+          );
+      if (saveAs != null && destination != null && !sourceKeepsUntitled) {
+        filePath = destination;
+        workspacePath ??= destination;
+        untitledName = null;
+        lastSavedText = saveAs.destination.source;
+        try {
+          final bytes = await File(destination).readAsBytes();
+          final disk = await _service.loadTextWithSnapshot(destination);
+          final exactDestination = _sameBytes(
+            bytes,
+            saveAs.destination.format.encode(saveAs.destination.source),
+          );
+          if (exactDestination && entry.text == saveAs.destination.source) {
+            // The committed Save As made this formerly dirty/untitled entry
+            // clean. Let the reconciled session tab load B normally.
+            continue;
+          }
+          diskSnapshot = exactDestination ? disk.snapshot : null;
+        } on Object {
+          diskSnapshot = null;
+        }
+      }
+      result.add(
+        DocumentRecoveryEntry(
+          id: entry.id,
+          workspacePath: workspacePath,
+          filePath: filePath,
+          untitledName: untitledName,
+          text: entry.text,
+          lastSavedText: lastSavedText,
+          diskSnapshot: diskSnapshot,
+          format: entry.format,
+          editorState: entry.editorState,
+          revision: entry.revision,
+          ownerId: entry.ownerId,
+        ),
+      );
+    }
+    return List.unmodifiable(result);
+  }
+
+  List<DocumentSessionEntry> _adoptSessionRecoveryOwnership(
+    Iterable<DocumentSessionEntry> entries,
+    Iterable<DocumentRecoveryAdoption> adoptions,
+  ) => List.unmodifiable([
+    for (final entry in entries)
+      if (adoptions
+              .where(
+                (adoption) =>
+                    adoption.sourceId == entry.id &&
+                    (entry.recoveryOwnerId == null ||
+                        adoption.sourceOwnerId == entry.recoveryOwnerId),
+              )
+              .firstOrNull
+          case final adoption?)
+        DocumentSessionEntry(
+          id: adoption.entry.id,
+          filePath: entry.filePath,
+          untitledName: entry.untitledName,
+          editorState: entry.editorState,
+          localHistoryDocumentId: entry.localHistoryDocumentId,
+          pendingLocalHistorySaveAsOperationId:
+              entry.pendingLocalHistorySaveAsOperationId,
+          localHistoryPathReconciliationIds:
+              entry.localHistoryPathReconciliationIds,
+          recoveryOwnerId: adoption.entry.ownerId,
+          remoteNote: entry.remoteNote,
+        )
+      else
+        entry,
+  ]);
+
+  List<LocalHistoryPendingSaveAs> _adoptSaveAsRecoveryOwnership(
+    Iterable<LocalHistoryPendingSaveAs> operations,
+    Iterable<DocumentRecoveryAdoption> adoptions,
+  ) => List.unmodifiable([
+    for (final operation in operations)
+      if (adoptions
+              .where(
+                (adoption) =>
+                    adoption.sourceId == operation.bufferId &&
+                    operation.recoveryOwnerId != null &&
+                    adoption.sourceOwnerId == operation.recoveryOwnerId,
+              )
+              .firstOrNull
+          case final adoption?)
+        operation.withRecoveryIdentity(
+          recoveryOwnerId: adoption.entry.ownerId!,
+          bufferId: adoption.entry.id,
+        )
+      else
+        operation,
+  ]);
+
+  String? _reconcileRestoredRecoveryPath(
+    String? path,
+    Iterable<LocalHistoryPathReconciliation> reconciliations, {
+    String? documentId,
+    String? ownerId,
+    Set<String>? operationIds,
+  }) {
+    if (path == null) return null;
+    var result = p.normalize(path);
+    for (final reconciliation in reconciliations) {
+      if (reconciliation.phase !=
+              LocalHistoryPathReconciliationPhase.committed ||
+          reconciliation.kind != LocalHistoryPathReconciliationKind.remap ||
+          !((operationIds?.contains(reconciliation.operationId) ?? false) ||
+              documentId != null &&
+                  reconciliation.documentIds.contains(documentId) ||
+              ownerId != null && reconciliation.ownerIds.contains(ownerId))) {
+        continue;
+      }
+      if (p.equals(result, reconciliation.sourcePath)) {
+        result = reconciliation.destinationPath!;
+      } else if (p.isWithin(reconciliation.sourcePath, result)) {
+        result = p.join(
+          reconciliation.destinationPath!,
+          p.relative(result, from: reconciliation.sourcePath),
+        );
+      }
+    }
+    return result;
   }
 
   /// Restores startup state when the previous run needs recovery, or when the
@@ -1161,6 +2033,51 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       return false;
     }
     return restorePreviousSession();
+  }
+
+  Future<void> _persistRestoredLocalHistoryJournal(
+    WorkspaceSessionSnapshot original, {
+    required String? workspacePath,
+    required List<DocumentSessionEntry> tabs,
+    required List<DocumentRecoveryEntry> recoveryEntries,
+    bool persistRecovery = true,
+  }) async {
+    // Publish reconciled recovery paths before retiring the journal that made
+    // them authoritative. A crash can replay an old journal over new paths;
+    // it cannot reconstruct new paths after the only journal is retired.
+    if (persistRecovery) {
+      await _recoveryStore.writeEntries(recoveryEntries);
+    }
+    await _sessionStore.save(
+      WorkspaceSessionSnapshot(
+        workspacePath: workspacePath,
+        nextcloudAccountId: original.nextcloudAccountId,
+        tabs: tabs,
+        activeBufferId: original.activeBufferId,
+        workspaceLocalHistoryReconciliationIds:
+            original.workspaceLocalHistoryReconciliationIds,
+        pendingLocalHistoryAssociations: [
+          for (final promotion in _localHistory.pendingIdentityPromotions)
+            PendingLocalHistoryAssociation(
+              bufferId: promotion.bufferId,
+              documentId: promotion.documentId,
+              destinationPath: promotion.destinationPath,
+              displayName: promotion.displayName,
+              acceptedClearEpoch: promotion.acceptedClearEpoch,
+              operationOwnerId: promotion.operationOwnerId,
+            ),
+        ],
+        pendingLocalHistoryReconciliations:
+            _localHistory.pendingPathReconciliations,
+        retiredLocalHistoryReconciliationIds:
+            _localHistory.retiredPathReconciliationIds,
+        retiredLocalHistoryWorkOwnerIds:
+            _localHistory.retiredDurableWorkOwnerIds,
+        pendingLocalHistoryClears: _localHistory.pendingClearOperations,
+        pendingLocalHistorySaveAs: _localHistory.pendingSaveAsOperations,
+        retainedLocalHistoryCaptures: _localHistory.retainedDetachedCaptures,
+      ),
+    );
   }
 
   Future<DocumentBuffer?> _restoreSessionBuffer(
@@ -1198,16 +2115,28 @@ class WorkspaceController extends Notifier<WorkspaceState> {
   Future<DocumentBuffer?> _restoreRecoveryBuffer(
     DocumentRecoveryEntry recovery, {
     DocumentEditorState? editorState,
+    String? idOverride,
+    bool detachFromPath = false,
   }) async {
-    final path = recovery.filePath;
+    final bufferId = idOverride ?? recovery.id;
+    final path = detachFromPath ? null : recovery.filePath;
     if (path == null) {
       return DocumentBuffer.untitled(
-        id: recovery.id,
-        name: recovery.untitledName ?? 'Untitled',
+        id: bufferId,
+        name:
+            recovery.untitledName ??
+            (recovery.filePath == null
+                ? 'Untitled'
+                : '${p.basename(recovery.filePath!)} (Recovered)'),
         text: recovery.text,
         mode: (editorState ?? recovery.editorState).mode,
       ).copyWith(
         editorState: editorState ?? recovery.editorState,
+        lastSavedText: recovery.lastSavedText,
+        // Recovery ownership itself is unsaved state. Even an empty payload
+        // may represent an edited-empty document and must pass through the
+        // protective-discard boundary before it can be removed.
+        dirty: true,
         format: recovery.format,
         revision: recovery.revision,
         recovered: true,
@@ -1215,7 +2144,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     }
     if (!await _service.pathExists(path)) {
       return DocumentBuffer(
-        id: recovery.id,
+        id: bufferId,
         filePath: path,
         text: recovery.text,
         lastSavedText: recovery.lastSavedText,
@@ -1233,7 +2162,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         recovery.diskSnapshot == null ||
         disk.snapshot.differsFrom(recovery.diskSnapshot!);
     return DocumentBuffer(
-      id: recovery.id,
+      id: bufferId,
       filePath: path,
       text: recovery.text,
       lastSavedText: recovery.lastSavedText,
@@ -1262,17 +2191,9 @@ class WorkspaceController extends Notifier<WorkspaceState> {
   }
 
   Future<void> flushPersistence() {
+    if (!ref.mounted) return Future<void>.value();
     _persistenceDebounce?.cancel();
     final snapshot = state;
-    final prior = _persistenceWrites.then<void>((_) {}, onError: (_, _) {});
-    final write = prior.then((_) => _persistSnapshot(snapshot));
-    _persistenceWrites = write;
-    return write;
-  }
-
-  Future<void> _persistSnapshot(WorkspaceState snapshot) async {
-    await _recoveryStart;
-    final workspace = snapshot.workspace;
     final pendingHistoryAssociations = [
       for (final promotion in _localHistory.pendingIdentityPromotions)
         PendingLocalHistoryAssociation(
@@ -1280,19 +2201,85 @@ class WorkspaceController extends Notifier<WorkspaceState> {
           documentId: promotion.documentId,
           destinationPath: promotion.destinationPath,
           displayName: promotion.displayName,
+          acceptedClearEpoch: promotion.acceptedClearEpoch,
+          operationOwnerId: promotion.operationOwnerId,
         ),
     ];
+    final pendingHistoryReconciliations =
+        _localHistory.pendingPathReconciliations;
+    final retiredHistoryReconciliationIds =
+        _localHistory.retiredPathReconciliationIds;
+    final retiredHistoryWorkOwnerIds = _localHistory.retiredDurableWorkOwnerIds;
+    final pendingHistoryClears = _localHistory.pendingClearOperations;
+    final pendingHistorySaveAs = _localHistory.pendingSaveAsOperations;
+    final retainedHistoryCaptures = _localHistory.retainedDetachedCaptures;
+    final prior = _persistenceWrites.then<void>((_) {}, onError: (_, _) {});
+    final write = prior.then(
+      (_) => _persistSnapshot(
+        snapshot,
+        pendingHistoryAssociations: pendingHistoryAssociations,
+        pendingHistoryReconciliations: pendingHistoryReconciliations,
+        retiredHistoryReconciliationIds: retiredHistoryReconciliationIds,
+        retiredHistoryWorkOwnerIds: retiredHistoryWorkOwnerIds,
+        pendingHistoryClears: pendingHistoryClears,
+        pendingHistorySaveAs: pendingHistorySaveAs,
+        retainedHistoryCaptures: retainedHistoryCaptures,
+      ),
+    );
+    _persistenceWrites = write;
+    return write;
+  }
+
+  Future<void> _persistPendingHistoryReconciliation() async {
+    try {
+      await flushPersistence();
+    } on Object catch (error, stackTrace) {
+      busyMarkDebugLogError(
+        '[BusyMark] Pending Local History reconciliation persistence failed',
+        error,
+        stackTrace,
+      );
+      _schedulePersistence();
+    }
+  }
+
+  Future<void> _persistSnapshot(
+    WorkspaceState snapshot, {
+    required List<PendingLocalHistoryAssociation> pendingHistoryAssociations,
+    required List<LocalHistoryPathReconciliation> pendingHistoryReconciliations,
+    required List<String> retiredHistoryReconciliationIds,
+    required List<String> retiredHistoryWorkOwnerIds,
+    required List<LocalHistoryPendingClear> pendingHistoryClears,
+    required List<LocalHistoryPendingSaveAs> pendingHistorySaveAs,
+    required List<LocalHistoryRetainedCapture> retainedHistoryCaptures,
+  }) async {
+    await _recoveryStart;
+    final workspace = snapshot.workspace;
     if (workspace == null) {
-      await _recoveryStore.writeEntries(const []);
-      if (pendingHistoryAssociations.isEmpty) {
+      if (pendingHistoryAssociations.isEmpty &&
+          pendingHistoryReconciliations.isEmpty &&
+          retiredHistoryReconciliationIds.isEmpty &&
+          retiredHistoryWorkOwnerIds.isEmpty &&
+          pendingHistoryClears.isEmpty &&
+          pendingHistorySaveAs.isEmpty &&
+          retainedHistoryCaptures.isEmpty) {
+        await _recoveryStore.writeEntries(const []);
         await _sessionStore.clear();
       } else {
+        await _recoveryStore.writeEntries(const []);
         await _sessionStore.save(
           WorkspaceSessionSnapshot(
             workspacePath: null,
             tabs: const [],
             activeBufferId: null,
             pendingLocalHistoryAssociations: pendingHistoryAssociations,
+            pendingLocalHistoryReconciliations: pendingHistoryReconciliations,
+            retiredLocalHistoryReconciliationIds:
+                retiredHistoryReconciliationIds,
+            retiredLocalHistoryWorkOwnerIds: retiredHistoryWorkOwnerIds,
+            pendingLocalHistoryClears: pendingHistoryClears,
+            pendingLocalHistorySaveAs: pendingHistorySaveAs,
+            retainedLocalHistoryCaptures: retainedHistoryCaptures,
           ),
         );
       }
@@ -1311,15 +2298,27 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     // Remote recovery and the outbox share one transactional authority. Never
     // serialize a second pending-content copy into the path-based recovery file.
     for (final buffer in snapshot.documentBuffers) {
-      if (buffer.isRemote && buffer.isDirty) {
+      if (buffer.isRemote &&
+          buffer.isDirty &&
+          !_remoteDurabilityWrites.containsKey(buffer.id)) {
         final saved = await _enqueueBufferWrite(
           buffer.id,
           () => _saveRemoteBufferSnapshot(
             buffer,
             scheduleSync: _settingsController.state.autoSave,
+            captureHistory: false,
           ),
         );
         if (!saved) throw StateError('Could not durably store Nextcloud note');
+      }
+    }
+    // Recovery content is the data side of the session transaction. Publish
+    // it before a session can retire a Save As/path journal; after a crash an
+    // older session may safely coexist with newer recovery, while the reverse
+    // ordering could resurrect stale untitled/source content with no journal.
+    for (final buffer in snapshot.documentBuffers) {
+      if (!buffer.isRemote && (buffer.isDirty || buffer.isUntitled)) {
+        _restoredRecoveryOwnerIdsByBuffer[buffer.id] = _recoveryStore.ownerId;
       }
     }
     await _recoveryStore.writeEntries([
@@ -1328,6 +2327,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
           DocumentRecoveryEntry.fromBuffer(
             buffer,
             workspacePath: workspacePath,
+            ownerId: _recoveryStore.ownerId,
           ),
     ]);
     await _sessionStore.save(
@@ -1335,6 +2335,19 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         workspacePath: workspacePath,
         nextcloudAccountId: workspace.nextcloudAccountId,
         activeBufferId: snapshot.activeBufferId,
+        workspaceLocalHistoryReconciliationIds: [
+          for (final operation in pendingHistoryReconciliations)
+            if (operation.operationId.isNotEmpty &&
+                snapshot.documentBuffers.any((buffer) {
+                  final documentId = _localHistory.documentIdForBuffer(
+                    buffer.id,
+                  );
+                  return operation.ownerIds.contains(buffer.id) ||
+                      documentId != null &&
+                          operation.documentIds.contains(documentId);
+                }))
+              operation.operationId,
+        ],
         tabs: [
           for (final buffer in snapshot.documentBuffers)
             DocumentSessionEntry(
@@ -1342,10 +2355,39 @@ class WorkspaceController extends Notifier<WorkspaceState> {
               filePath: buffer.filePath,
               untitledName: buffer.untitledName,
               editorState: buffer.editorState,
+              localHistoryDocumentId: _localHistory.documentIdForBuffer(
+                buffer.id,
+              ),
+              pendingLocalHistorySaveAsOperationId:
+                  switch (_saveAsSessionBindings[buffer.id]) {
+                    final binding?
+                        when snapshot.workspace?.id == binding.workspaceId =>
+                      binding.operationId,
+                    _ => null,
+                  },
+              localHistoryPathReconciliationIds: [
+                for (final operation in pendingHistoryReconciliations)
+                  if (operation.operationId.isNotEmpty &&
+                      (operation.ownerIds.contains(buffer.id) ||
+                          operation.documentIds.contains(
+                            _localHistory.documentIdForBuffer(buffer.id),
+                          )))
+                    operation.operationId,
+              ],
+              recoveryOwnerId: buffer.isRemote
+                  ? null
+                  : _restoredRecoveryOwnerIdsByBuffer[buffer.id] ??
+                        _recoveryStore.ownerId,
               remoteNote: buffer.remoteNote,
             ),
         ],
         pendingLocalHistoryAssociations: pendingHistoryAssociations,
+        pendingLocalHistoryReconciliations: pendingHistoryReconciliations,
+        retiredLocalHistoryReconciliationIds: retiredHistoryReconciliationIds,
+        retiredLocalHistoryWorkOwnerIds: retiredHistoryWorkOwnerIds,
+        pendingLocalHistoryClears: pendingHistoryClears,
+        pendingLocalHistorySaveAs: pendingHistorySaveAs,
+        retainedLocalHistoryCaptures: retainedHistoryCaptures,
       ),
     );
   }
@@ -1361,7 +2403,9 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       // Keep the run unclean while recovery data is still needed.
       return;
     }
-    await _recoveryStore.markCleanShutdown();
+    await _sessionStore.runIfNoPendingLocalHistoryWork(
+      _recoveryStore.markCleanShutdown,
+    );
   }
 
   Future<void> discardRecoveryForShutdown() async {
@@ -1386,41 +2430,128 @@ class WorkspaceController extends Notifier<WorkspaceState> {
   }
 
   Future<void> _startMonitoring(Workspace workspace) async {
-    if (workspace.isRemote ||
-        workspace.kind == WorkspaceKind.untitledMarkdown ||
-        workspace.rootPath.isEmpty ||
-        !Directory(workspace.rootPath).existsSync()) {
-      await _fileMonitor.stop();
-      return;
-    }
-    await _fileMonitor.start(
-      rootPath: workspace.rootPath,
-      openFilePaths: state.documentBuffers
-          .map((buffer) => buffer.filePath)
-          .whereType<String>(),
-    );
+    final workspaceGeneration = _fileMonitorWorkspaceGeneration;
+    final lifecycle = _runFileMonitorLifecycle(() async {
+      if (!_fileMonitorWorkspaceIsCurrent(workspace, workspaceGeneration)) {
+        return;
+      }
+      if (workspace.isRemote ||
+          workspace.kind == WorkspaceKind.untitledMarkdown ||
+          workspace.rootPath.isEmpty ||
+          !Directory(workspace.rootPath).existsSync()) {
+        await _fileMonitor.stop();
+        return;
+      }
+      await _fileMonitor.start(
+        rootPath: workspace.rootPath,
+        openFilePaths: state.documentBuffers
+            .map((buffer) => buffer.filePath)
+            .whereType<String>(),
+      );
+      if (_fileMonitorWorkspaceIsCurrent(workspace, workspaceGeneration)) {
+        _acceptFileMonitorEvents = true;
+      }
+    });
+    await lifecycle;
   }
 
-  Future<void> _handleFileMonitorEvent(WorkspaceFileMonitorEvent event) async {
-    if (!ref.mounted || state.workspace?.isRemote == true) return;
-    if (_workspaceFileOperationDepth > 0) {
-      _deferredFileMonitorEvents.add(event);
+  Future<void> _runFileMonitorLifecycle(Future<void> Function() operation) {
+    final prior = _fileMonitorLifecycle;
+    // Start the first operation in the caller's zone. A synthetic
+    // Future.value() created while a widget-test fake clock is active cannot
+    // complete for a caller awaiting from runAsync, which would deadlock the
+    // first monitor transition. Later transitions still serialize on the
+    // real operation tail.
+    final result = prior == null
+        ? Future.sync(operation)
+        : prior.then((_) => operation());
+    // A monitor backend failure belongs to the transition that observed it.
+    // Keep the serialized tail usable so a later workspace can stop/restart
+    // monitoring instead of inheriting one permanently failed Future.
+    _fileMonitorLifecycle = result.then<void>(
+      (_) {},
+      onError: (Object error, StackTrace stackTrace) {
+        busyMarkDebugLogError(
+          '[BusyMark] File monitor lifecycle failed',
+          error,
+          stackTrace,
+        );
+      },
+    );
+    return result;
+  }
+
+  Future<void> _handleFileMonitorEvent(
+    WorkspaceFileMonitorEvent event,
+    int workspaceGeneration,
+  ) async {
+    if (!_fileMonitorOperationIsCurrent(workspaceGeneration) ||
+        state.workspace?.isRemote == true) {
       return;
     }
-    if (await _acknowledgeReconciledNotification(event)) return;
-    if (!ref.mounted) return;
+    if (_workspaceFileOperationDepth > 0) {
+      _deferredFileMonitorEvents.add(
+        _QueuedFileMonitorEvent(event, workspaceGeneration),
+      );
+      return;
+    }
+    final reconcilesHistory =
+        event.kind == WorkspaceFileEventKind.moved ||
+        event.kind == WorkspaceFileEventKind.deleted;
+    final historyTargets = reconcilesHistory
+        ? _localHistory.snapshotPathReconciliationTargets(
+            event.path,
+            recursive: event.isDirectory,
+          )
+        : null;
+    if (await _acknowledgeReconciledNotification(event, workspaceGeneration)) {
+      return;
+    }
+    if (!_fileMonitorOperationIsCurrent(workspaceGeneration)) return;
     _workspaceDiskRevision++;
     _reconciledNotifications = null;
     final matching = state.documentBuffers.where((buffer) {
       final path = buffer.filePath;
       return path != null &&
           (p.equals(path, event.path) ||
+              event.isDirectory && p.isWithin(event.path, path) ||
               (event.destinationPath != null &&
-                  p.equals(path, event.destinationPath!)));
+                  (p.equals(path, event.destinationPath!) ||
+                      event.isDirectory &&
+                          p.isWithin(event.destinationPath!, path))));
     }).toList();
-    for (final buffer in matching) {
-      await _applyExternalFileState(buffer, event);
-      if (!ref.mounted) return;
+    if (event.isDirectory &&
+        (event.kind == WorkspaceFileEventKind.moved ||
+            event.kind == WorkspaceFileEventKind.deleted)) {
+      await _applyExternalDirectoryState(
+        event,
+        matching,
+        historyTargets ?? const <LocalHistoryPathTarget>[],
+        workspaceGeneration,
+      );
+      if (!_fileMonitorOperationIsCurrent(workspaceGeneration)) return;
+    } else {
+      final sourceMatching = matching.where(
+        (buffer) =>
+            buffer.filePath != null && p.equals(buffer.filePath!, event.path),
+      );
+      if (reconcilesHistory && sourceMatching.isEmpty) {
+        await _applyExternalClosedFileState(
+          event,
+          historyTargets ?? const <LocalHistoryPathTarget>[],
+          workspaceGeneration,
+        );
+        if (!_fileMonitorOperationIsCurrent(workspaceGeneration)) return;
+      }
+      for (final buffer in matching) {
+        await _applyExternalFileState(
+          buffer,
+          event,
+          historyTargets: historyTargets,
+          workspaceGeneration: workspaceGeneration,
+        );
+        if (!_fileMonitorOperationIsCurrent(workspaceGeneration)) return;
+      }
     }
     final workspaceRoot = state.workspace?.filesystemRootPath;
     if (workspaceRoot == null ||
@@ -1527,7 +2658,9 @@ class WorkspaceController extends Notifier<WorkspaceState> {
 
   Future<bool> _acknowledgeReconciledNotification(
     WorkspaceFileMonitorEvent event,
+    int workspaceGeneration,
   ) async {
+    if (!_fileMonitorOperationIsCurrent(workspaceGeneration)) return false;
     final coverage = _reconciledNotifications;
     final workspace = state.workspace;
     if (coverage == null || workspace == null) return false;
@@ -1554,7 +2687,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     } on Object {
       return false;
     }
-    if (!ref.mounted) {
+    if (!_fileMonitorOperationIsCurrent(workspaceGeneration)) {
       return false;
     }
     for (final path in paths) {
@@ -1593,7 +2726,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       } on Object {
         return false;
       }
-      if (!ref.mounted ||
+      if (!_fileMonitorOperationIsCurrent(workspaceGeneration) ||
           !identical(coverage, _reconciledNotifications) ||
           state.workspace?.id != coverage.workspaceId ||
           !_preparedInputsCurrent(state.workspace!, state.documentBuffers) ||
@@ -1639,8 +2772,11 @@ class WorkspaceController extends Notifier<WorkspaceState> {
 
   Future<void> _applyExternalFileState(
     DocumentBuffer original,
-    WorkspaceFileMonitorEvent event,
-  ) async {
+    WorkspaceFileMonitorEvent event, {
+    List<LocalHistoryPathTarget>? historyTargets,
+    required int workspaceGeneration,
+  }) async {
+    if (!_fileMonitorOperationIsCurrent(workspaceGeneration)) return;
     final current = state.documentBuffers
         .where((buffer) => buffer.id == original.id)
         .firstOrNull;
@@ -1652,30 +2788,30 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     if (event.kind == WorkspaceFileEventKind.moved &&
         destinationPath != null &&
         p.equals(path, event.path)) {
-      await _applyExternalMove(current, destinationPath);
+      await _applyExternalMove(
+        current,
+        destinationPath,
+        preparedTargets: historyTargets,
+        workspaceGeneration: workspaceGeneration,
+      );
       return;
     }
-    if (event.kind == WorkspaceFileEventKind.deleted &&
-        !await _service.pathExists(path)) {
-      var latest = _externalOperationBuffer(current, path);
-      if (latest == null) return;
-      await _localHistory.captureBeforeLoss(
-        LocalHistoryBufferSnapshot.fromBuffer(latest),
-        LocalHistoryCaptureReason.beforeDelete,
-      );
-      latest = _externalOperationBuffer(current, path);
-      if (latest == null) return;
-      await _localHistory.markDeleted(path, recursive: false);
-      latest = _externalOperationBuffer(current, path);
-      if (latest == null) return;
-      _updateBufferFromMonitor(
-        latest.copyWith(diskState: DocumentDiskState.deleted),
+    if (event.kind == WorkspaceFileEventKind.deleted) {
+      await _applyExternalDeletion(
+        current,
+        path,
+        preparedTargets: historyTargets,
+        workspaceGeneration: workspaceGeneration,
       );
       return;
     }
     try {
       final disk = await _service.loadTextWithSnapshot(path);
-      var latest = _externalOperationBuffer(current, path);
+      var latest = _externalOperationBuffer(
+        current,
+        path,
+        workspaceGeneration: workspaceGeneration,
+      );
       if (latest == null) return;
       if (_sameFileSnapshot(current.diskSnapshot, disk.snapshot)) {
         return;
@@ -1686,7 +2822,11 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         format: disk.format,
         reason: LocalHistoryCaptureReason.externalChange,
       );
-      latest = _externalOperationBuffer(current, path);
+      latest = _externalOperationBuffer(
+        current,
+        path,
+        workspaceGeneration: workspaceGeneration,
+      );
       if (latest == null) return;
       if (latest.isDirty) {
         _localHistory.observeEdit(
@@ -1699,6 +2839,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
             diskVersionText: disk.text,
             diskVersionSnapshot: disk.snapshot,
           ),
+          workspaceGeneration: workspaceGeneration,
         );
         return;
       }
@@ -1713,13 +2854,17 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         diskVersionText: null,
         diskVersionSnapshot: null,
       );
-      _updateBufferFromMonitor(reloaded);
+      _updateBufferFromMonitor(
+        reloaded,
+        workspaceGeneration: workspaceGeneration,
+      );
       if (state.activeBufferId == reloaded.id && state.workspace != null) {
         final workspace = state.workspace!.copyWith(
           activeFileSnapshot: disk.snapshot,
         );
         final reparsed = await _reparseWithDocumentBuffers(workspace, reloaded);
-        if (state.activeBufferId == reloaded.id &&
+        if (_fileMonitorOperationIsCurrent(workspaceGeneration) &&
+            state.activeBufferId == reloaded.id &&
             state.activeBuffer?.revision == reloaded.revision &&
             _preparedInputsCurrent(reparsed, state.documentBuffers)) {
           state = state.copyWith(
@@ -1730,23 +2875,248 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         }
       }
     } on FileSystemException {
-      final latest = _externalOperationBuffer(current, path);
-      if (latest == null) return;
-      await _localHistory.markDeleted(path, recursive: false);
-      final afterHistory = _externalOperationBuffer(current, path);
-      if (afterHistory == null) return;
-      _updateBufferFromMonitor(
-        afterHistory.copyWith(diskState: DocumentDiskState.deleted),
+      await _applyExternalDeletion(
+        current,
+        path,
+        preparedTargets: historyTargets,
+        workspaceGeneration: workspaceGeneration,
       );
     } on FormatException {
       // Invalid UTF-8 remains on disk and must not replace an editable buffer.
     }
   }
 
+  Future<void> _applyExternalDirectoryState(
+    WorkspaceFileMonitorEvent event,
+    List<DocumentBuffer> matching,
+    List<LocalHistoryPathTarget> historyTargets,
+    int workspaceGeneration,
+  ) async {
+    if (!_fileMonitorOperationIsCurrent(workspaceGeneration)) return;
+    final sourcePath = event.path;
+    final destinationPath = event.destinationPath;
+    final transitions = <LocalHistoryBufferPathTransition>[];
+    if (event.kind == WorkspaceFileEventKind.moved && destinationPath != null) {
+      for (final buffer in matching) {
+        final path = buffer.filePath;
+        if (path == null || !p.isWithin(sourcePath, path)) continue;
+        transitions.add(
+          _localHistory.beginBufferPathTransition(
+            bufferId: buffer.id,
+            sourcePath: path,
+            destinationPath: p.join(
+              destinationPath,
+              p.relative(path, from: sourcePath),
+            ),
+          ),
+        );
+      }
+    }
+    String? historyOperationId;
+    var historyCommitted = false;
+    var buffersPublished = false;
+    try {
+      if (event.kind == WorkspaceFileEventKind.moved &&
+          destinationPath != null) {
+        historyCommitted = await _localHistory.runStagedPathRemap(
+          sourcePath: sourcePath,
+          destinationPath: destinationPath,
+          preparedTargets: historyTargets,
+          filesystemAlreadyCommitted: true,
+          filesystemOperation: () async {
+            if (!_fileMonitorOperationIsCurrent(workspaceGeneration)) {
+              return false;
+            }
+            final sourceExists = await _service.pathExists(sourcePath);
+            if (!_fileMonitorOperationIsCurrent(workspaceGeneration)) {
+              return false;
+            }
+            final destinationExists = await _service.pathExists(
+              destinationPath,
+            );
+            return _fileMonitorOperationIsCurrent(workspaceGeneration) &&
+                !sourceExists &&
+                destinationExists;
+          },
+          didCommit: (value) => value,
+          onOperationStaged: (value) => historyOperationId = value,
+        );
+        if (!historyCommitted ||
+            !_fileMonitorOperationIsCurrent(workspaceGeneration)) {
+          return;
+        }
+        buffersPublished = true;
+        for (final original in matching) {
+          final oldPath = original.filePath;
+          if (oldPath == null || !p.isWithin(sourcePath, oldPath)) continue;
+          final movedPath = p.join(
+            destinationPath,
+            p.relative(oldPath, from: sourcePath),
+          );
+          if (!await _applyExternalMove(
+            original,
+            movedPath,
+            reconcileHistory: false,
+            workspaceGeneration: workspaceGeneration,
+          )) {
+            if (!_fileMonitorOperationIsCurrent(workspaceGeneration)) return;
+            final live = state.documentBuffers
+                .where((buffer) => buffer.id == original.id)
+                .firstOrNull;
+            // Closing the tab while its destination is loading completes the
+            // editor-publication obligation for that member. The stable store
+            // lineage was already moved by the directory-wide operation.
+            if (live == null ||
+                (live.filePath != null &&
+                    p.equals(live.filePath!, movedPath))) {
+              continue;
+            }
+            buffersPublished = false;
+          }
+        }
+      } else if (event.kind == WorkspaceFileEventKind.deleted) {
+        for (final original in matching) {
+          final path = original.filePath;
+          if (path == null || !p.isWithin(sourcePath, path)) continue;
+          final latest = _externalOperationBuffer(original, path);
+          if (!_fileMonitorOperationIsCurrent(workspaceGeneration)) return;
+          if (latest == null) continue;
+          final protected = await _localHistory.captureBeforeLoss(
+            LocalHistoryBufferSnapshot.fromBuffer(latest),
+            LocalHistoryCaptureReason.beforeDelete,
+          );
+          if (!protected) {
+            _localHistory.retainBufferWorkAfterCommittedPathLoss(latest.id);
+          }
+        }
+        historyCommitted = await _localHistory.runStagedPathDeletion(
+          path: sourcePath,
+          recursive: true,
+          preparedTargets: historyTargets,
+          filesystemAlreadyCommitted: true,
+          filesystemOperation: () async {
+            if (!_fileMonitorOperationIsCurrent(workspaceGeneration)) {
+              return false;
+            }
+            final exists = await _service.pathExists(sourcePath);
+            return _fileMonitorOperationIsCurrent(workspaceGeneration) &&
+                !exists;
+          },
+          didCommit: (value) => value,
+          onOperationStaged: (value) => historyOperationId = value,
+        );
+        if (!historyCommitted ||
+            !_fileMonitorOperationIsCurrent(workspaceGeneration)) {
+          return;
+        }
+        for (final original in matching) {
+          final path = original.filePath;
+          if (path == null || !p.isWithin(sourcePath, path)) continue;
+          final latest = _externalOperationBuffer(
+            original,
+            path,
+            workspaceGeneration: workspaceGeneration,
+          );
+          if (latest != null) {
+            _updateBufferFromMonitor(
+              latest.copyWith(diskState: DocumentDiskState.deleted),
+              workspaceGeneration: workspaceGeneration,
+            );
+          }
+        }
+        buffersPublished = true;
+      }
+      if (buffersPublished) {
+        await _localHistory.acknowledgeStagedPathOperation(historyOperationId);
+      }
+    } finally {
+      if (!historyCommitted) {
+        await _localHistory.cancelStagedPathOperation(historyOperationId);
+      }
+      for (final transition in transitions) {
+        await _localHistory.finishBufferPathTransition(
+          transition,
+          committed: buffersPublished,
+        );
+      }
+      await _persistPendingHistoryReconciliation();
+    }
+  }
+
+  Future<void> _applyExternalClosedFileState(
+    WorkspaceFileMonitorEvent event,
+    List<LocalHistoryPathTarget> historyTargets,
+    int workspaceGeneration,
+  ) async {
+    if (!_fileMonitorOperationIsCurrent(workspaceGeneration)) return;
+    final destinationPath = event.destinationPath;
+    String? historyOperationId;
+    var committed = false;
+    try {
+      if (event.kind == WorkspaceFileEventKind.moved &&
+          destinationPath != null) {
+        committed = await _localHistory.runStagedPathRemap(
+          sourcePath: event.path,
+          destinationPath: destinationPath,
+          preparedTargets: historyTargets,
+          filesystemAlreadyCommitted: true,
+          filesystemOperation: () async {
+            if (!_fileMonitorOperationIsCurrent(workspaceGeneration)) {
+              return false;
+            }
+            final sourceExists = await _service.pathExists(event.path);
+            if (!_fileMonitorOperationIsCurrent(workspaceGeneration)) {
+              return false;
+            }
+            final destinationExists = await _service.pathExists(
+              destinationPath,
+            );
+            return _fileMonitorOperationIsCurrent(workspaceGeneration) &&
+                !sourceExists &&
+                destinationExists;
+          },
+          didCommit: (value) => value,
+          onOperationStaged: (value) => historyOperationId = value,
+        );
+      } else if (event.kind == WorkspaceFileEventKind.deleted) {
+        committed = await _localHistory.runStagedPathDeletion(
+          path: event.path,
+          recursive: false,
+          preparedTargets: historyTargets,
+          filesystemAlreadyCommitted: true,
+          filesystemOperation: () async {
+            if (!_fileMonitorOperationIsCurrent(workspaceGeneration)) {
+              return false;
+            }
+            final exists = await _service.pathExists(event.path);
+            return _fileMonitorOperationIsCurrent(workspaceGeneration) &&
+                !exists;
+          },
+          didCommit: (value) => value,
+          onOperationStaged: (value) => historyOperationId = value,
+        );
+      }
+      if (committed) {
+        await _localHistory.acknowledgeStagedPathOperation(historyOperationId);
+      }
+    } finally {
+      if (!committed) {
+        await _localHistory.cancelStagedPathOperation(historyOperationId);
+      }
+      await _persistPendingHistoryReconciliation();
+    }
+  }
+
   DocumentBuffer? _externalOperationBuffer(
     DocumentBuffer anchor,
-    String expectedPath,
-  ) {
+    String expectedPath, {
+    int? workspaceGeneration,
+  }) {
+    if (!ref.mounted ||
+        (workspaceGeneration != null &&
+            !_fileMonitorOperationIsCurrent(workspaceGeneration))) {
+      return null;
+    }
     final current = state.documentBuffers
         .where((buffer) => buffer.id == anchor.id)
         .firstOrNull;
@@ -1758,30 +3128,139 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     return current;
   }
 
-  Future<void> _applyExternalMove(
+  Future<void> _applyExternalDeletion(
     DocumentBuffer current,
-    String destinationPath,
-  ) async {
-    final oldPath = current.filePath;
-    if (oldPath == null) {
+    String path, {
+    List<LocalHistoryPathTarget>? preparedTargets,
+    required int workspaceGeneration,
+  }) async {
+    if (!_fileMonitorOperationIsCurrent(workspaceGeneration) ||
+        await _service.pathExists(path) ||
+        !_fileMonitorOperationIsCurrent(workspaceGeneration)) {
       return;
     }
-    final historyTransition = _localHistory.beginBufferPathTransition(
-      bufferId: current.id,
-      sourcePath: oldPath,
-      destinationPath: destinationPath,
+    var latest = _externalOperationBuffer(
+      current,
+      path,
+      workspaceGeneration: workspaceGeneration,
     );
+    if (latest == null) return;
+    final protected = await _localHistory.captureBeforeLoss(
+      LocalHistoryBufferSnapshot.fromBuffer(latest),
+      LocalHistoryCaptureReason.beforeDelete,
+    );
+    if (!protected) {
+      _localHistory.retainBufferWorkAfterCommittedPathLoss(latest.id);
+    }
+    latest = _externalOperationBuffer(
+      current,
+      path,
+      workspaceGeneration: workspaceGeneration,
+    );
+    if (latest == null) return;
+    if (await _service.pathExists(path) ||
+        !_fileMonitorOperationIsCurrent(workspaceGeneration)) {
+      _scheduleMonitoredWorkspaceRefresh();
+      return;
+    }
+    String? historyOperationId;
+    final committed = await _localHistory.runStagedPathDeletion(
+      path: path,
+      recursive: false,
+      preparedTargets: preparedTargets,
+      boundBufferId: protected ? latest.id : null,
+      filesystemAlreadyCommitted: true,
+      filesystemOperation: () async =>
+          _externalOperationBuffer(
+                current,
+                path,
+                workspaceGeneration: workspaceGeneration,
+              ) !=
+              null &&
+          !await _service.pathExists(path) &&
+          _fileMonitorOperationIsCurrent(workspaceGeneration),
+      didCommit: (value) => value,
+      onOperationStaged: (value) => historyOperationId = value,
+    );
+    if (!committed) {
+      _scheduleMonitoredWorkspaceRefresh();
+      return;
+    }
+    final afterHistory = _externalOperationBuffer(
+      current,
+      path,
+      workspaceGeneration: workspaceGeneration,
+    );
+    if (afterHistory == null) return;
+    _updateBufferFromMonitor(
+      afterHistory.copyWith(diskState: DocumentDiskState.deleted),
+      workspaceGeneration: workspaceGeneration,
+    );
+    await _localHistory.acknowledgeStagedPathOperation(historyOperationId);
+  }
+
+  Future<bool> _applyExternalMove(
+    DocumentBuffer current,
+    String destinationPath, {
+    bool reconcileHistory = true,
+    List<LocalHistoryPathTarget>? preparedTargets,
+    required int workspaceGeneration,
+  }) async {
+    if (!_fileMonitorOperationIsCurrent(workspaceGeneration)) return false;
+    final oldPath = current.filePath;
+    if (oldPath == null) {
+      return false;
+    }
+    final historyTransition = reconcileHistory
+        ? _localHistory.beginBufferPathTransition(
+            bufferId: current.id,
+            sourcePath: oldPath,
+            destinationPath: destinationPath,
+          )
+        : null;
     var historyPathCommitted = false;
     var historyTransitionFinished = false;
+    String? historyOperationId;
+    var historyOperationCommitted = false;
     try {
-      final disk = await _service.loadTextWithSnapshot(destinationPath);
-      if (_externalOperationBuffer(current, oldPath) == null) return;
+      final disk = reconcileHistory
+          ? await _localHistory.runStagedPathRemap(
+              sourcePath: oldPath,
+              destinationPath: destinationPath,
+              preparedTargets: preparedTargets,
+              boundBufferId: current.id,
+              filesystemAlreadyCommitted: true,
+              filesystemOperation: () async {
+                final loaded = await _service.loadTextWithSnapshot(
+                  destinationPath,
+                );
+                return _externalOperationBuffer(
+                          current,
+                          oldPath,
+                          workspaceGeneration: workspaceGeneration,
+                        ) ==
+                        null
+                    ? null
+                    : loaded;
+              },
+              didCommit: (value) => value != null,
+              onOperationStaged: (value) => historyOperationId = value,
+            )
+          : await _service.loadTextWithSnapshot(destinationPath);
+      if (disk == null) return false;
       final contentChanged = !_sameFileSnapshot(
         current.diskSnapshot,
         disk.snapshot,
       );
-      await _localHistory.remapPath(oldPath, destinationPath);
-      if (_externalOperationBuffer(current, oldPath) == null) return;
+      historyOperationCommitted = reconcileHistory;
+      if (_externalOperationBuffer(
+            current,
+            oldPath,
+            workspaceGeneration: workspaceGeneration,
+          ) ==
+          null) {
+        return false;
+      }
       if (contentChanged) {
         await _localHistory.capturePath(
           path: destinationPath,
@@ -1790,8 +3269,12 @@ class WorkspaceController extends Notifier<WorkspaceState> {
           reason: LocalHistoryCaptureReason.externalChange,
         );
       }
-      final latest = _externalOperationBuffer(current, oldPath);
-      if (latest == null) return;
+      final latest = _externalOperationBuffer(
+        current,
+        oldPath,
+        workspaceGeneration: workspaceGeneration,
+      );
+      if (latest == null) return false;
       final remapped = latest.copyWith(
         filePath: destinationPath,
         text: latest.isDirty || !contentChanged ? latest.text : disk.text,
@@ -1838,11 +3321,16 @@ class WorkspaceController extends Notifier<WorkspaceState> {
             .map((buffer) => buffer.filePath)
             .whereType<String>(),
       );
-      await _localHistory.finishBufferPathTransition(
-        historyTransition,
-        committed: true,
-      );
-      historyTransitionFinished = true;
+      if (historyTransition != null) {
+        await _localHistory.finishBufferPathTransition(
+          historyTransition,
+          committed: true,
+        );
+        historyTransitionFinished = true;
+      }
+      if (reconcileHistory) {
+        await _localHistory.acknowledgeStagedPathOperation(historyOperationId);
+      }
       final derivedWorkspace = state.workspace;
       final derivedOperationRevision = _activeDocumentRevision;
       if (active &&
@@ -1879,26 +3367,126 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         }
       }
       _schedulePersistence();
+      return true;
     } on FileSystemException {
-      final latest = _externalOperationBuffer(current, oldPath);
+      if (!reconcileHistory) {
+        return _publishExternalMoveAfterHistoryCommit(
+          current,
+          oldPath,
+          destinationPath,
+          workspaceGeneration,
+        );
+      }
+      final latest = _externalOperationBuffer(
+        current,
+        oldPath,
+        workspaceGeneration: workspaceGeneration,
+      );
       if (latest != null) {
         _updateBufferFromMonitor(
           latest.copyWith(diskState: DocumentDiskState.deleted),
+          workspaceGeneration: workspaceGeneration,
         );
       }
+      return false;
     } on FormatException {
-      // Keep the old buffer and path when the move target cannot be decoded.
+      if (!reconcileHistory) {
+        return _publishExternalMoveAfterHistoryCommit(
+          current,
+          oldPath,
+          destinationPath,
+          workspaceGeneration,
+        );
+      }
+      // A single-file reconciliation has not committed history when decoding
+      // fails inside its atomic store operation, so retain the old binding.
+      return false;
     } finally {
-      if (!historyTransitionFinished) {
+      if (reconcileHistory && !historyOperationCommitted) {
+        await _localHistory.cancelStagedPathOperation(historyOperationId);
+      }
+      if (historyTransition != null && !historyTransitionFinished) {
         await _localHistory.finishBufferPathTransition(
           historyTransition,
           committed: historyPathCommitted,
         );
       }
+      await _persistPendingHistoryReconciliation();
     }
   }
 
-  void _updateBufferFromMonitor(DocumentBuffer buffer) {
+  bool _publishExternalMoveAfterHistoryCommit(
+    DocumentBuffer original,
+    String oldPath,
+    String destinationPath,
+    int workspaceGeneration,
+  ) {
+    final latest = _externalOperationBuffer(
+      original,
+      oldPath,
+      workspaceGeneration: workspaceGeneration,
+    );
+    if (latest == null) return false;
+    final remapped = latest.copyWith(
+      filePath: destinationPath,
+      diskSnapshot: null,
+      diskState: DocumentDiskState.changed,
+      diskVersionText: null,
+      diskVersionSnapshot: null,
+    );
+    final workspace = state.workspace;
+    final active = state.activeBufferId == latest.id;
+    state = state.copyWith(
+      documentBuffers: _replaceBuffer(state.documentBuffers, remapped),
+      workspace: workspace?.copyWith(
+        activeFilePath: active ? destinationPath : workspace.activeFilePath,
+        activeFileSnapshot: active ? null : workspace.activeFileSnapshot,
+        openFilePaths: [
+          for (final path in workspace.openFilePaths)
+            p.equals(path, oldPath) ? destinationPath : path,
+        ],
+      ),
+    );
+    _fileMonitor.updateOpenFilePaths(
+      state.documentBuffers
+          .map((buffer) => buffer.filePath)
+          .whereType<String>(),
+    );
+    _schedulePersistence();
+    _scheduleMonitoredWorkspaceRefresh();
+    return true;
+  }
+
+  bool _fileMonitorOperationIsCurrent(int workspaceGeneration) =>
+      ref.mounted && workspaceGeneration == _fileMonitorWorkspaceGeneration;
+
+  bool _fileMonitorWorkspaceIsCurrent(
+    Workspace workspace,
+    int workspaceGeneration,
+  ) {
+    if (!_fileMonitorOperationIsCurrent(workspaceGeneration)) return false;
+    final current = state.workspace;
+    return current != null && current.id == workspace.id;
+  }
+
+  void _invalidateFileMonitorWorkspace() {
+    _acceptFileMonitorEvents = false;
+    _fileMonitorWorkspaceGeneration++;
+    _pendingFileMonitorEvents.clear();
+    _deferredFileMonitorEvents.clear();
+    _reconciledNotifications = null;
+    unawaited(_runFileMonitorLifecycle(_fileMonitor.stop));
+  }
+
+  void _updateBufferFromMonitor(
+    DocumentBuffer buffer, {
+    int? workspaceGeneration,
+  }) {
+    if (!ref.mounted ||
+        (workspaceGeneration != null &&
+            !_fileMonitorOperationIsCurrent(workspaceGeneration))) {
+      return;
+    }
     state = state.copyWith(
       documentBuffers: _replaceBuffer(state.documentBuffers, buffer),
       workspace: state.activeBufferId == buffer.id
@@ -2070,13 +3658,15 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         )) {
       return false;
     }
+    _invalidateFileMonitorWorkspace();
     _cancelPendingDerivedRefresh();
     _cancelAllAutoSaves();
     _invalidateActiveDocumentOperations();
     _removalOperationRevision++;
+    _restoredRecoveryOwnerIdsByBuffer.clear();
     state = const WorkspaceState();
     for (final buffer in previous.documentBuffers) {
-      _localHistory.handleBufferClosed(
+      await _localHistory.handleBufferClosed(
         buffer.id,
         historySettled: historySettled,
       );
@@ -2149,13 +3739,22 @@ class WorkspaceController extends Notifier<WorkspaceState> {
   }
 
   Future<void> openPath(String path) async {
+    _invalidateFileMonitorWorkspace();
     _removalOperationRevision++;
-    await _localHistory.flushAll(state.documentBuffers);
+    final closingBuffers = state.documentBuffers;
+    final historySettled = await _localHistory.flushAll(closingBuffers);
     _cancelPendingDerivedRefresh();
     _cancelAllAutoSaves();
     final operationRevision = _invalidateActiveDocumentOperations();
     _resetSaveTracking();
+    _restoredRecoveryOwnerIdsByBuffer.clear();
     state = const WorkspaceState(isLoading: true);
+    for (final buffer in closingBuffers) {
+      await _localHistory.handleBufferClosed(
+        buffer.id,
+        historySettled: historySettled,
+      );
+    }
     try {
       final workspace = await _service.openPath(path);
       final active = workspace.activeFilePath;
@@ -2224,13 +3823,22 @@ class WorkspaceController extends Notifier<WorkspaceState> {
   Future<bool> createWritersideProject(
     WritersideProjectCreateRequest request,
   ) async {
+    _invalidateFileMonitorWorkspace();
     _removalOperationRevision++;
-    await _localHistory.flushAll(state.documentBuffers);
+    final closingBuffers = state.documentBuffers;
+    final historySettled = await _localHistory.flushAll(closingBuffers);
     _cancelPendingDerivedRefresh();
     _cancelAllAutoSaves();
     final operationRevision = _invalidateActiveDocumentOperations();
     _resetSaveTracking();
+    _restoredRecoveryOwnerIdsByBuffer.clear();
     state = const WorkspaceState(isLoading: true);
+    for (final buffer in closingBuffers) {
+      await _localHistory.handleBufferClosed(
+        buffer.id,
+        historySettled: historySettled,
+      );
+    }
     try {
       final workspace = await _service.createWritersideProject(request);
       final active = workspace.activeFilePath;
@@ -2448,7 +4056,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     }
     await _clearOpenFileTabs(workspace);
     for (final buffer in closingBuffers) {
-      _localHistory.handleBufferClosed(
+      await _localHistory.handleBufferClosed(
         buffer.id,
         historySettled: historySettled,
       );
@@ -2472,15 +4080,30 @@ class WorkspaceController extends Notifier<WorkspaceState> {
   Future<bool> renameWorkspaceEntity(String path, String newName) async {
     final activeFilePath = state.workspace?.activeFilePath;
     return _runWorkspaceFileOperation((workspace) async {
-      final target = await _service.renameEntity(workspace, path, newName);
-      final transitions = _beginLocalHistoryPathTransitions(path, target);
+      final expectedTarget = p.normalize(p.join(p.dirname(path), newName));
+      final transitions = _beginLocalHistoryPathTransitions(
+        path,
+        expectedTarget,
+      );
       var committed = false;
+      String? historyOperationId;
       try {
-        await _localHistory.remapPath(path, target);
-        _remapOpenWorkspacePaths(workspace, path, target);
+        final target = await _localHistory.runStagedPathRemap(
+          sourcePath: path,
+          destinationPath: expectedTarget,
+          filesystemOperation: () =>
+              _service.renameEntity(workspace, path, newName),
+          didCommit: (_) => true,
+          onOperationStaged: (value) => historyOperationId = value,
+        );
         committed = true;
+        _remapOpenWorkspacePaths(workspace, path, target);
+        await _localHistory.acknowledgeStagedPathOperation(historyOperationId);
         return _remapMovedPath(activeFilePath, path, target);
       } finally {
+        if (!committed) {
+          await _localHistory.cancelStagedPathOperation(historyOperationId);
+        }
         await _finishLocalHistoryPathTransitions(
           transitions,
           committed: committed,
@@ -2495,19 +4118,32 @@ class WorkspaceController extends Notifier<WorkspaceState> {
   ) async {
     final activeFilePath = state.workspace?.activeFilePath;
     return _runWorkspaceFileOperation((workspace) async {
-      final target = await _service.moveEntity(
-        workspace,
-        sourcePath,
-        targetDirectoryPath,
+      final expectedTarget = p.normalize(
+        p.join(targetDirectoryPath, p.basename(sourcePath)),
       );
-      final transitions = _beginLocalHistoryPathTransitions(sourcePath, target);
+      final transitions = _beginLocalHistoryPathTransitions(
+        sourcePath,
+        expectedTarget,
+      );
       var committed = false;
+      String? historyOperationId;
       try {
-        await _localHistory.remapPath(sourcePath, target);
-        _remapOpenWorkspacePaths(workspace, sourcePath, target);
+        final target = await _localHistory.runStagedPathRemap(
+          sourcePath: sourcePath,
+          destinationPath: expectedTarget,
+          filesystemOperation: () =>
+              _service.moveEntity(workspace, sourcePath, targetDirectoryPath),
+          didCommit: (_) => true,
+          onOperationStaged: (value) => historyOperationId = value,
+        );
         committed = true;
+        _remapOpenWorkspacePaths(workspace, sourcePath, target);
+        await _localHistory.acknowledgeStagedPathOperation(historyOperationId);
         return _remapMovedPath(activeFilePath, sourcePath, target);
       } finally {
+        if (!committed) {
+          await _localHistory.cancelStagedPathOperation(historyOperationId);
+        }
         await _finishLocalHistoryPathTransitions(
           transitions,
           committed: committed,
@@ -2518,18 +4154,36 @@ class WorkspaceController extends Notifier<WorkspaceState> {
 
   Future<bool> deleteWorkspaceEntity(String path) async {
     if (!await _protectWorkspaceEntityBeforeDelete(path)) return false;
+    String? historyOperationId;
+    var committed = false;
     try {
       final deleted = await _runWorkspaceFileOperation((workspace) async {
-        _authorizeRemovedBuffers(p.normalize(path), workspace);
-        await _service.deleteEntity(workspace, path);
-        _removalAuthorizations[p.normalize(path)]?.committed = true;
+        committed = await _localHistory.runStagedPathDeletion(
+          path: path,
+          recursive: true,
+          filesystemOperation: () async {
+            _authorizeRemovedBuffers(p.normalize(path), workspace);
+            await _service.deleteEntity(workspace, path);
+            _removalAuthorizations[p.normalize(path)]?.committed = true;
+            return true;
+          },
+          didCommit: (value) => value,
+          onOperationStaged: (value) => historyOperationId = value,
+        );
+        if (committed && historyOperationId != null) {
+          _historyOperationsAwaitingWorkspaceRefresh.add(historyOperationId!);
+        }
         return null;
       });
       if (deleted) {
-        await _localHistory.markDeleted(path, recursive: true);
+        await _localHistory.acknowledgeStagedPathOperation(historyOperationId);
+        _historyOperationsAwaitingWorkspaceRefresh.remove(historyOperationId);
       }
       return deleted;
     } finally {
+      if (!committed) {
+        await _localHistory.cancelStagedPathOperation(historyOperationId);
+      }
       _removalAuthorizations.remove(p.normalize(path));
     }
   }
@@ -2934,22 +4588,32 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       void validate(Iterable<String> _) =>
           _requireCleanWritersideProject(workspace);
       validate(plan.affectedPaths);
-      final result = await _service.applyWritersideTopicRename(
-        plan,
-        validateBeforePublish: validate,
-      );
-      final target = result.newTopicPath;
       final transitions = _beginLocalHistoryPathTransitions(
         plan.oldTopicPath,
-        target,
+        plan.newTopicPath,
       );
       var committed = false;
+      String? historyOperationId;
       try {
-        await _localHistory.remapPath(plan.oldTopicPath, target);
-        _remapOpenWorkspacePaths(workspace, plan.oldTopicPath, target);
+        final result = await _localHistory.runStagedPathRemap(
+          sourcePath: plan.oldTopicPath,
+          destinationPath: plan.newTopicPath,
+          filesystemOperation: () => _service.applyWritersideTopicRename(
+            plan,
+            validateBeforePublish: validate,
+          ),
+          didCommit: (_) => true,
+          onOperationStaged: (value) => historyOperationId = value,
+        );
+        final target = result.newTopicPath;
         committed = true;
+        _remapOpenWorkspacePaths(workspace, plan.oldTopicPath, target);
+        await _localHistory.acknowledgeStagedPathOperation(historyOperationId);
         return _remapMovedPath(activeFilePath, plan.oldTopicPath, target);
       } finally {
+        if (!committed) {
+          await _localHistory.cancelStagedPathOperation(historyOperationId);
+        }
         await _finishLocalHistoryPathTransitions(
           transitions,
           committed: committed,
@@ -3012,6 +4676,8 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       return null;
     }
     WritersideTopicRemovalResult? result;
+    String? historyOperationId;
+    var historyCommitted = false;
     try {
       final success = await _runWorkspaceFileOperation((workspace) async {
         void validate(Iterable<String> _) {
@@ -3025,20 +4691,42 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         }
 
         validate(const []);
-        result = await _service.applyWritersideTopicRemoval(
-          workspace,
-          request,
-          validateBeforeCommit: validate,
-        );
+        result = deleting
+            ? await _localHistory.runStagedPathDeletion(
+                path: deletedPath,
+                recursive: false,
+                filesystemOperation: () => _service.applyWritersideTopicRemoval(
+                  workspace,
+                  request,
+                  validateBeforeCommit: validate,
+                ),
+                didCommit: (value) => value?.deletedFile == true,
+                onOperationStaged: (value) => historyOperationId = value,
+              )
+            : await _service.applyWritersideTopicRemoval(
+                workspace,
+                request,
+                validateBeforeCommit: validate,
+              );
         if (result?.deletedFile == true) {
           _removalAuthorizations[deletedPath]?.committed = true;
-          await _localHistory.markDeleted(deletedPath, recursive: false);
+          historyCommitted = true;
+          if (historyOperationId != null) {
+            // The filesystem and history mutation are committed, but the
+            // pre-delete workspace/session still names this tab until the
+            // refresh publishes. Keep the durable journal through that
+            // boundary so a crash cannot restore a replacement lineage.
+            _historyOperationsAwaitingWorkspaceRefresh.add(historyOperationId!);
+          }
         }
         return null;
       });
       return success ? result : null;
     } finally {
       if (deleting) {
+        if (!historyCommitted) {
+          await _localHistory.cancelStagedPathOperation(historyOperationId);
+        }
         _removalAuthorizations.remove(deletedPath);
       }
     }
@@ -3096,7 +4784,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       if (nextUntitled == null) {
         await _clearOpenFileTabs(closingWorkspace);
         if (closingBuffer != null) {
-          _localHistory.handleBufferClosed(
+          await _localHistory.handleBufferClosed(
             closingBuffer.id,
             historySettled: historySettled,
           );
@@ -3110,7 +4798,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         );
         if (!closed) return false;
         if (closingBuffer != null) {
-          _localHistory.handleBufferClosed(
+          await _localHistory.handleBufferClosed(
             closingBuffer.id,
             historySettled: historySettled,
           );
@@ -3125,7 +4813,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         clearMessage: true,
       );
       if (closingBuffer != null) {
-        _localHistory.handleBufferClosed(
+        await _localHistory.handleBufferClosed(
           closingBuffer.id,
           historySettled: historySettled,
         );
@@ -3142,7 +4830,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       documentBuffers: remainingBuffers,
     );
     if (closed && closingBuffer != null) {
-      _localHistory.handleBufferClosed(
+      await _localHistory.handleBufferClosed(
         closingBuffer.id,
         historySettled: historySettled,
       );
@@ -3187,6 +4875,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       return false;
     }
     if (buffer.isDirty &&
+        !_localHistory.canDiscardPristineDraft(buffer) &&
         !await _localHistory.captureBeforeLoss(
           LocalHistoryBufferSnapshot.fromBuffer(buffer),
           LocalHistoryCaptureReason.beforeDiscard,
@@ -3234,7 +4923,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
           : const WorkspaceState();
       _fileMonitor.updateOpenFilePaths(const <String>[]);
       _schedulePersistence();
-      _localHistory.handleBufferClosed(
+      await _localHistory.handleBufferClosed(
         bufferId,
         historySettled: historySettled,
       );
@@ -3247,7 +4936,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       openFilePaths: workspace.openFilePaths,
     );
     if (closed) {
-      _localHistory.handleBufferClosed(
+      await _localHistory.handleBufferClosed(
         bufferId,
         historySettled: historySettled,
       );
@@ -3390,6 +5079,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         load,
         mode: _settingsController.state.documentViewMode,
       );
+      _restoredRecoveryOwnerIdsByBuffer.remove(buffer.id);
       var reparsed = await _reparseWithDocumentBuffers(
         nextWorkspace,
         buffer,
@@ -3657,6 +5347,12 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       activeBufferId: liveBuffer.id,
       clearMessage: true,
     );
+    for (final removedId in intentionallyRemovedBufferIds) {
+      _restoredRecoveryOwnerIdsByBuffer.remove(removedId);
+    }
+    for (final added in intentionallyAddedBuffers) {
+      _restoredRecoveryOwnerIdsByBuffer.remove(added.id);
+    }
     if (sourceStayedCurrent) {
       _recordActivePreviewRevision();
     } else {
@@ -4379,6 +6075,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       }
       return false;
     }
+    WorkspaceFileSnapshot expectedSnapshot = target.snapshot!;
     if (!overwriteExternalChanges) {
       final changedOnDisk = await _service.fileChangedSince(
         active,
@@ -4395,17 +6092,32 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         );
         return false;
       }
+    } else {
+      final current = await _service.loadTextWithSnapshot(active);
+      if (!_isBufferSaveTargetCurrent(target)) return false;
+      expectedSnapshot = current.snapshot;
+      if (target.snapshot == null ||
+          current.snapshot.differsFrom(target.snapshot!)) {
+        final protected = await _localHistory.capturePathBeforeLoss(
+          path: active,
+          text: current.text,
+          format: current.format,
+          reason: LocalHistoryCaptureReason.beforeDiscard,
+        );
+        if (!protected || !_isBufferSaveTargetCurrent(target)) return false;
+      }
     }
     if (!_isBufferSaveTargetCurrent(target)) {
       return false;
     }
     try {
-      final snapshot = await _service.saveText(
+      final snapshot = await _service.saveTextIfUnchanged(
         active,
         target.format.formattedText(
           target.text,
           mixedNormalization: mixedLineEndingNormalization,
         ),
+        expectedSnapshot: expectedSnapshot,
       );
       final currentWorkspace = state.workspace;
       final currentBuffer = state.documentBuffers
@@ -4469,12 +6181,14 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       );
       return true;
     } on Object catch (error) {
-      if (_workspaceContainsBuffer(target.workspaceId, target.bufferId)) {
+      if (ref.mounted &&
+          _workspaceContainsBuffer(target.workspaceId, target.bufferId)) {
         state = state.copyWith(
-          message: WorkspaceMessage(
-            WorkspaceMessageCode.saveFailed,
-            error: error,
-          ),
+          message: error is AtomicFileChangedException
+              ? const WorkspaceMessage(
+                  WorkspaceMessageCode.saveBlockedFileChangedOnDisk,
+                )
+              : WorkspaceMessage(WorkspaceMessageCode.saveFailed, error: error),
         );
       }
       return false;
@@ -4700,6 +6414,22 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     });
   }
 
+  Future<bool> _commitSavedAsSourceRecoveryAfterPublication(
+    String? operationId,
+  ) async {
+    if (operationId == null) return false;
+    try {
+      if (await _localHistory.commitSavedAsSourceRecovery(operationId)) {
+        return true;
+      }
+    } on Object {
+      // The destination is already atomically published. The session journal
+      // is an independent durable fallback when the controller operation was
+      // disposed or its normal persistence write failed at this boundary.
+    }
+    return _sessionStore.markPendingLocalHistorySaveAsCommitted(operationId);
+  }
+
   Future<bool> _saveActiveAsNow(
     String path, {
     required ActiveDocumentSaveTarget target,
@@ -4736,6 +6466,16 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         return false;
       }
     }
+    bool destinationOwnedByAnotherBuffer() => state.documentBuffers.any(
+      (buffer) =>
+          buffer.id != target.bufferId &&
+          buffer.filePath != null &&
+          p.equals(buffer.filePath!, path),
+    );
+    // One editor owner per filesystem path is a prerequisite for Save As
+    // history partitioning. A missing/deleted destination tab can still own
+    // dirty recovery and must not be folded into this buffer's cleanup journal.
+    if (destinationOwnedByAnotherBuffer()) return false;
     LocalHistoryBufferPathTransition? historyTransition = _localHistory
         .beginBufferPathTransition(
           bufferId: target.bufferId,
@@ -4744,12 +6484,18 @@ class WorkspaceController extends Notifier<WorkspaceState> {
           kind: LocalHistoryBufferPathTransitionKind.saveAs,
         );
     var historyPathCommitted = false;
+    var bufferPathPublished = false;
+    var historySaveAsStillCurrent = false;
+    String? savedAsSourceRecoveryOwner;
+    String? destinationCleanupOperationId;
+    WorkspaceFileSnapshot? protectedDestinationSnapshot;
     try {
       final destinationExisted =
           overwriteExisting && await _service.pathExists(path);
       if (destinationExisted) {
         try {
           final destination = await _service.loadTextWithSnapshot(path);
+          protectedDestinationSnapshot = destination.snapshot;
           if (!await _localHistory.capturePathBeforeLoss(
             path: path,
             text: destination.text,
@@ -4759,27 +6505,132 @@ class WorkspaceController extends Notifier<WorkspaceState> {
             return false;
           }
         } on Object {
-          // The save result remains truthful. Local History exposes its own
-          // persistent status warning when capture fails.
+          // Overwrite protection must settle durably before destination bytes
+          // can be replaced.
+          return false;
         }
       }
-      late final WorkspaceFileSnapshot savedSnapshot;
-      if (overwriteExisting) {
-        savedSnapshot = await _service.saveTextReplacingPath(
-          path,
-          target.format.formattedText(
-            target.text,
-            mixedNormalization: mixedLineEndingNormalization,
-          ),
+      final savedFormat =
+          target.format.hasMixedLineEndings &&
+              mixedLineEndingNormalization != null
+          ? target.format.normalized(mixedLineEndingNormalization)
+          : target.format;
+      final sourceHistorySnapshot = LocalHistoryBufferSnapshot(
+        bufferId: target.bufferId,
+        displayName: target.path == null
+            ? state.documentBuffers
+                      .where((buffer) => buffer.id == target.bufferId)
+                      .firstOrNull
+                      ?.displayName ??
+                  p.basename(path)
+            : p.basename(target.path!),
+        text: target.text,
+        format: target.format,
+        revision: target.editRevision,
+        path: target.path,
+        untitled: target.path == null,
+      );
+      savedAsSourceRecoveryOwner = await _localHistory
+          .stageSavedAsSourceRecovery(
+            sourceHistorySnapshot,
+            destination: LocalHistoryBufferSnapshot(
+              bufferId: target.bufferId,
+              displayName: p.basename(path),
+              text: target.text,
+              format: savedFormat,
+              revision: target.editRevision,
+              path: path,
+            ),
+            destinationExisted: destinationExisted,
+            recoveryOwnerId: _recoveryStore.ownerId,
+          );
+      if (savedAsSourceRecoveryOwner case final operationId?) {
+        _saveAsSessionBindings[target.bufferId] = (
+          operationId: operationId,
+          workspaceId: target.workspaceId,
         );
-      } else {
-        savedSnapshot = await _service.saveNewText(
-          path,
-          target.format.formattedText(
-            target.text,
-            mixedNormalization: mixedLineEndingNormalization,
-          ),
+        await flushPersistence();
+      }
+      if (!await _localHistory.beginSavedAsSourceRecovery(
+        savedAsSourceRecoveryOwner,
+      )) {
+        return false;
+      }
+      if (destinationOwnedByAnotherBuffer()) return false;
+      WorkspaceFileSnapshot? savedSnapshot;
+      try {
+        if (overwriteExisting) {
+          savedSnapshot = await _service.saveTextReplacingPathIfUnchanged(
+            path,
+            target.format.formattedText(
+              target.text,
+              mixedNormalization: mixedLineEndingNormalization,
+            ),
+            expectedSnapshot: protectedDestinationSnapshot!,
+            onPublished: () async {
+              historyPathCommitted = true;
+              historySaveAsStillCurrent =
+                  await _commitSavedAsSourceRecoveryAfterPublication(
+                    savedAsSourceRecoveryOwner,
+                  );
+            },
+          );
+        } else {
+          savedSnapshot = await _localHistory.runStagedPathDeletion(
+            path: path,
+            recursive: false,
+            filesystemOperation: () => _service.saveNewText(
+              path,
+              target.format.formattedText(
+                target.text,
+                mixedNormalization: mixedLineEndingNormalization,
+              ),
+              onPublished: () async {
+                historyPathCommitted = true;
+                historySaveAsStillCurrent =
+                    await _commitSavedAsSourceRecoveryAfterPublication(
+                      savedAsSourceRecoveryOwner,
+                    );
+              },
+            ),
+            didCommit: (_) => true,
+            committedAfterError: () async => historyPathCommitted,
+            commitEvidenceOperationId: savedAsSourceRecoveryOwner,
+            onOperationStaged: (value) => destinationCleanupOperationId = value,
+          );
+        }
+      } on Object {
+        if (!historyPathCommitted) rethrow;
+        // The atomic file publication is the Save As commit boundary. A
+        // failing journal callback or trailing stat must not leave the editor
+        // bound to the old path. Recover the published snapshot and continue;
+        // unresolved journal persistence remains durable retry work.
+        savedSnapshot = (await _service.loadTextWithSnapshot(path)).snapshot;
+      }
+      historyPathCommitted = true;
+      if (destinationCleanupOperationId != null) {
+        _historyOperationsAwaitingWorkspaceRefresh.add(
+          destinationCleanupOperationId!,
         );
+      }
+      // The destination may have been opened while the atomic filesystem
+      // publication was in flight. Its buffer now owns that path and content;
+      // leave the source buffer on its original lineage instead of publishing
+      // a second live editor owner for the same file.
+      if (destinationOwnedByAnotherBuffer()) return false;
+      if (!historySaveAsStillCurrent) {
+        try {
+          historySaveAsStillCurrent =
+              await _commitSavedAsSourceRecoveryAfterPublication(
+                savedAsSourceRecoveryOwner,
+              );
+        } on Object {
+          historySaveAsStillCurrent =
+              _localHistory
+                  .pendingSaveAsOperation(savedAsSourceRecoveryOwner)
+                  ?.phase ==
+              LocalHistoryPathReconciliationPhase.committed;
+        }
       }
       var currentWorkspace = state.workspace;
       var currentBuffer = state.documentBuffers
@@ -4807,14 +6658,13 @@ class WorkspaceController extends Notifier<WorkspaceState> {
           currentBuffer.filePath != target.path) {
         return false;
       }
+      // Opening the new path for a first-save workspace is asynchronous. A
+      // separate tab may claim the destination while that load is in flight,
+      // so validate path ownership at the final editor publication boundary.
+      if (destinationOwnedByAnotherBuffer()) return false;
       final hasNewerEdits =
           currentBuffer.revision != target.editRevision ||
           currentBuffer.text != target.text;
-      final savedFormat =
-          target.format.hasMixedLineEndings &&
-              mixedLineEndingNormalization != null
-          ? target.format.normalized(mixedLineEndingNormalization)
-          : target.format;
       final savedBuffer = currentBuffer.copyWith(
         filePath: path,
         untitledName: null,
@@ -4851,31 +6701,62 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         documentBuffers: buffers,
         clearMessage: true,
       );
-      historyPathCommitted = true;
-      await _localHistory.captureSavedAs(
-        LocalHistoryBufferSnapshot(
-          bufferId: target.bufferId,
-          displayName: target.path == null
-              ? state.documentBuffers
-                        .where((buffer) => buffer.id == target.bufferId)
-                        .firstOrNull
-                        ?.displayName ??
-                    p.basename(path)
-              : p.basename(target.path!),
-          text: target.text,
-          format: savedFormat,
-          revision: target.editRevision,
-          path: target.path,
-          untitled: target.path == null,
-        ),
-        path,
-        destinationExisted: destinationExisted,
+      bufferPathPublished = true;
+      final saveAsOperation = _localHistory.pendingSaveAsOperation(
+        savedAsSourceRecoveryOwner,
       );
+      if (historySaveAsStillCurrent) {
+        await _localHistory.captureSavedAs(
+          sourceHistorySnapshot,
+          path,
+          destinationExisted: destinationExisted,
+          destinationFormat: savedFormat,
+          recordSourceHistory: saveAsOperation?.recordSourceHistory,
+          recordDestinationHistory: saveAsOperation?.recordDestinationHistory,
+          destinationDocumentId: saveAsOperation?.destinationDocumentId,
+          destinationTarget: saveAsOperation?.destinationTarget,
+          sourceCaptureId: saveAsOperation?.source.captureId,
+          destinationCaptureId: saveAsOperation?.destination.captureId,
+          sourceAcceptedClearEpoch: saveAsOperation?.source.acceptedClearEpoch,
+          destinationAcceptedClearEpoch:
+              saveAsOperation?.destination.acceptedClearEpoch,
+          sourceAcceptedAt: saveAsOperation?.source.acceptedAt,
+          destinationAcceptedAt: saveAsOperation?.destination.acceptedAt,
+          sourceAcceptedDocumentId: saveAsOperation?.source.acceptedDocumentId,
+          destinationAcceptedDocumentId:
+              saveAsOperation?.destination.acceptedDocumentId,
+          saveAsOperationId: savedAsSourceRecoveryOwner,
+          firstSaveLineageTransition:
+              saveAsOperation?.firstSaveLineageTransition,
+        );
+        // captureSavedAs has now either persisted the destination revision or
+        // durably partitioned every retained source/destination obligation.
+        // The earlier fork journal no longer owns that work.
+        await _localHistory.completeSavedAsSourceRecovery(
+          savedAsSourceRecoveryOwner,
+        );
+      } else if (saveAsOperation != null &&
+          (saveAsOperation.historyCancelled ||
+              (!saveAsOperation.recordSourceHistory &&
+                  !saveAsOperation.recordDestinationHistory))) {
+        // The clear/policy action cancelled revision work, but the published
+        // path transition is now represented by the live B-bound session.
+        await _localHistory.completeSavedAsSourceRecovery(
+          savedAsSourceRecoveryOwner,
+        );
+      }
       await _localHistory.finishBufferPathTransition(
         historyTransition,
         committed: true,
       );
       historyTransition = null;
+      await _localHistory.acknowledgeStagedPathOperation(
+        destinationCleanupOperationId,
+      );
+      _historyOperationsAwaitingWorkspaceRefresh.remove(
+        destinationCleanupOperationId,
+      );
+      await _persistPendingHistoryReconciliation();
       await _startMonitoring(savedWorkspace);
       if (hasNewerEdits) {
         if (state.activeBufferId == savedBuffer.id &&
@@ -4904,7 +6785,8 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       _schedulePersistence();
       return true;
     } on Object catch (error) {
-      if (_workspaceContainsBuffer(target.workspaceId, target.bufferId)) {
+      if (ref.mounted &&
+          _workspaceContainsBuffer(target.workspaceId, target.bufferId)) {
         state = state.copyWith(
           message: WorkspaceMessage(
             WorkspaceMessageCode.saveFailed,
@@ -4912,14 +6794,61 @@ class WorkspaceController extends Notifier<WorkspaceState> {
           ),
         );
       }
-      return false;
+      return bufferPathPublished;
     } finally {
-      final unfinishedTransition = historyTransition;
-      if (unfinishedTransition != null) {
-        await _localHistory.finishBufferPathTransition(
-          unfinishedTransition,
-          committed: historyPathCommitted,
-        );
+      if (ref.mounted) {
+        if (!historyPathCommitted) {
+          await _localHistory.cancelSavedAsSourceRecovery(
+            savedAsSourceRecoveryOwner,
+          );
+        } else if (_localHistory.pendingSaveAsOperation(
+              savedAsSourceRecoveryOwner,
+            )
+            case final operation?
+            when operation.phase ==
+                LocalHistoryPathReconciliationPhase.committed) {
+          // The filesystem fork is already real. If the originating workspace
+          // vanished or a later step failed, transfer both still-enabled sides
+          // to detached retry owners now instead of waiting for app restart.
+          try {
+            final liveSource = state.documentBuffers
+                .where((buffer) => buffer.id == target.bufferId)
+                .firstOrNull;
+            await _localHistory.recoverCommittedSaveAs(
+              operation,
+              sourceRetainsUntitledLineage:
+                  target.path == null && liveSource?.filePath == null,
+            );
+          } on Object catch (error, stackTrace) {
+            busyMarkDebugLogError(
+              '[BusyMark] Committed Save As history recovery remains pending',
+              error,
+              stackTrace,
+            );
+          }
+        }
+        final unfinishedTransition = historyTransition;
+        if (unfinishedTransition != null) {
+          await _localHistory.finishBufferPathTransition(
+            unfinishedTransition,
+            committed: bufferPathPublished,
+          );
+        }
+        final binding = _saveAsSessionBindings[target.bufferId];
+        final operationStillPending =
+            savedAsSourceRecoveryOwner != null &&
+            _localHistory.pendingSaveAsOperations.any(
+              (operation) =>
+                  operation.operationId == savedAsSourceRecoveryOwner,
+            );
+        final originalBufferStillPresent =
+            state.workspace?.id == target.workspaceId &&
+            state.documentBuffers.any((buffer) => buffer.id == target.bufferId);
+        if (binding?.operationId == savedAsSourceRecoveryOwner &&
+            (!operationStillPending || !originalBufferStillPresent)) {
+          _saveAsSessionBindings.remove(target.bufferId);
+          await _persistPendingHistoryReconciliation();
+        }
       }
     }
   }
@@ -5931,6 +7860,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     var reconciled = false;
     try {
       final preferredActivePath = await operation(workspace);
+      await _persistPendingHistoryReconciliation();
       if (!ref.mounted || state.workspace?.id != workspace.id) {
         return false;
       }
@@ -5938,6 +7868,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       if (!refreshed) {
         return false;
       }
+      await _acknowledgeHistoryOperationsAfterWorkspaceRefresh();
       if (preferredActivePath != null) {
         final opened = await _openActiveFile(preferredActivePath);
         if (opened &&
@@ -5988,19 +7919,26 @@ class WorkspaceController extends Notifier<WorkspaceState> {
           // preparation through the existing bounded derived-work scheduler.
           _requestDerivedRefresh(rebuildPreview: true);
         }
-        final pending = List<WorkspaceFileMonitorEvent>.of(
+        final pending = List<_QueuedFileMonitorEvent>.of(
           _deferredFileMonitorEvents,
         );
         _deferredFileMonitorEvents.clear();
         // Observe notifications only after reconciliation/opening completes.
         // Own writes then match the refreshed snapshots, while unrelated
         // external changes retain their normal monitoring behavior.
-        unawaited(() async {
-          for (final event in pending) {
-            await _handleFileMonitorEvent(event);
-          }
-        }());
+        for (final event in pending) {
+          _queueCapturedFileMonitorEvent(event);
+        }
       }
+    }
+  }
+
+  Future<void> _acknowledgeHistoryOperationsAfterWorkspaceRefresh() async {
+    for (final operationId in _historyOperationsAwaitingWorkspaceRefresh.toList(
+      growable: false,
+    )) {
+      await _localHistory.acknowledgeStagedPathOperation(operationId);
+      _historyOperationsAwaitingWorkspaceRefresh.remove(operationId);
     }
   }
 
@@ -6774,6 +8712,14 @@ bool _sameFileSnapshot(
     return true;
   }
   return first != null && second != null && !first.differsFrom(second);
+}
+
+bool _sameBytes(List<int> left, List<int> right) {
+  if (left.length != right.length) return false;
+  for (var index = 0; index < left.length; index++) {
+    if (left[index] != right[index]) return false;
+  }
+  return true;
 }
 
 bool _isEligibleLocalHistoryPath(String path) {

@@ -2,6 +2,7 @@ import 'package:busymark/src/local_history/local_history_models.dart';
 import 'package:busymark/src/local_history/local_history_store.dart';
 import 'package:busymark/src/workspace/document_buffer.dart';
 import 'package:busymark/src/workspace/session_persistence.dart';
+import 'package:busymark/src/workspace/text_format_metadata.dart';
 import 'package:busymark/src/workspace/workspace_model.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -71,7 +72,21 @@ void main() {
             filePath: null,
             untitledName: null,
             remoteNote: reference,
+            localHistoryDocumentId: 'remote-history',
             editorState: const DocumentEditorState(scrollOffset: 42),
+          ),
+        ],
+        retainedLocalHistoryCaptures: const [
+          LocalHistoryRetainedCapture(
+            ownerId: 'history-capture:remote-note',
+            documentId: 'remote-history',
+            pending: LocalHistoryRetainedSnapshot(
+              displayName: 'Note',
+              source: 'durable remote edit',
+              format: TextFormatMetadata.utf8Lf,
+              revision: 7,
+              remoteNote: reference,
+            ),
           ),
         ],
       );
@@ -81,7 +96,12 @@ void main() {
       final restored = WorkspaceSessionSnapshot.fromJson(json);
       expect(restored.nextcloudAccountId, reference.accountId);
       expect(restored.tabs.single.remoteNote, reference);
+      expect(restored.tabs.single.localHistoryDocumentId, 'remote-history');
       expect(restored.tabs.single.editorState.scrollOffset, 42);
+      expect(
+        restored.retainedLocalHistoryCaptures.single.pending?.remoteNote,
+        reference,
+      );
       final legacy = WorkspaceSessionSnapshot.fromJson({
         'version': 1,
         'workspacePath': '/old',

@@ -1138,6 +1138,13 @@ class _IdentityWorkspaceService extends WorkspaceService {
     return _snapshot(text);
   }
 
+  @override
+  Future<WorkspaceFileSnapshot> saveTextIfUnchanged(
+    String path,
+    String text, {
+    required WorkspaceFileSnapshot expectedSnapshot,
+  }) => saveText(path, text);
+
   void releaseFirstSave() {
     if (!_releaseFirstSave.isCompleted) {
       _releaseFirstSave.complete();
@@ -1147,10 +1154,21 @@ class _IdentityWorkspaceService extends WorkspaceService {
   @override
   Future<WorkspaceFileSnapshot> saveTextReplacingPath(
     String path,
-    String text,
-  ) {
-    return saveText(path, text);
+    String text, {
+    Future<void> Function()? onPublished,
+  }) async {
+    final result = await saveText(path, text);
+    await onPublished?.call();
+    return result;
   }
+
+  @override
+  Future<WorkspaceFileSnapshot> saveTextReplacingPathIfUnchanged(
+    String path,
+    String text, {
+    required WorkspaceFileSnapshot expectedSnapshot,
+    Future<void> Function()? onPublished,
+  }) => saveTextReplacingPath(path, text, onPublished: onPublished);
 
   @override
   Future<Workspace> reparseDocument(

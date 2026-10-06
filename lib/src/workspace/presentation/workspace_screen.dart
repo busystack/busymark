@@ -1089,11 +1089,14 @@ class WorkspaceScreen extends ConsumerWidget {
                               state.message!.code,
                             ),
                           ),
-                        if (localHistoryState.warning != null)
+                        if (ref
+                                .read(localHistoryControllerProvider.notifier)
+                                .warningForBuffer(state.activeBuffer?.id)
+                            case final historyWarning?)
                           BusyMarkStatusBox(
                             message: localizeLocalHistoryWarning(
                               context,
-                              localHistoryState.warning!,
+                              historyWarning,
                             ),
                             kind: BusyMarkStatusKind.warning,
                           ),

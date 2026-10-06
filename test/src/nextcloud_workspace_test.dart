@@ -76,6 +76,26 @@ void main() {
     },
   );
 
+  test('immediate persistence cannot deadlock a remote save', () async {
+    final harness = await _Harness.create(persistenceDelay: Duration.zero);
+    addTearDown(harness.dispose);
+    final controller = harness.controller;
+    expect(await controller.openNextcloudWorkspace(_accountId), isTrue);
+    controller.updateActiveText('# Immediate durable edit');
+
+    expect(
+      await controller.saveActive().timeout(const Duration(seconds: 5)),
+      isTrue,
+    );
+    await controller.flushPersistence().timeout(const Duration(seconds: 5));
+
+    expect(
+      (await harness.repository.store.notes()).single.content,
+      '# Immediate durable edit',
+    );
+    expect(harness.session.value?.nextcloudAccountId, _accountId);
+  });
+
   for (final duringRefresh in [false, true]) {
     test(
       'unsaved editor base survives refresh (in flight: $duringRefresh)',
@@ -353,6 +373,7 @@ class _Harness {
     http.Client? client,
     bool seedLocal = true,
     bool deferPersistence = false,
+    Duration? persistenceDelay,
   }) async {
     final directory =
         root ??
@@ -393,7 +414,9 @@ class _Harness {
     final monitor = _Monitor();
     final container = ProviderContainer(
       overrides: [
-        if (deferPersistence)
+        if (persistenceDelay != null)
+          documentPersistenceDelayProvider.overrideWithValue(persistenceDelay)
+        else if (deferPersistence)
           documentPersistenceDelayProvider.overrideWithValue(
             const Duration(hours: 1),
           ),
