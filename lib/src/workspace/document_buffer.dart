@@ -6,8 +6,12 @@ import '../app/app_settings.dart';
 import '../editor/source/source_search.dart';
 import '../editor/wysiwyg/wysiwyg_session_state.dart';
 import '../spellcheck/spelling_language.dart';
+import '../nextcloud_notes/domain/notes_models.dart';
 import 'text_format_metadata.dart';
 import 'workspace_file_snapshot.dart';
+import 'document_origin.dart';
+
+export 'document_origin.dart';
 
 const Object _bufferUnset = Object();
 
@@ -183,7 +187,11 @@ class DocumentBuffer {
     this.diskVersionText,
     this.diskVersionSnapshot,
     this.recovered = false,
-  });
+    this.remoteNote,
+    this.remoteTitle,
+    this.remoteEditBase,
+    this.readonly = false,
+  }) : assert(remoteNote == null || filePath == null);
 
   factory DocumentBuffer.file({
     required String id,
@@ -221,6 +229,27 @@ class DocumentBuffer {
     );
   }
 
+  factory DocumentBuffer.nextcloud({
+    required NextcloudNoteReference reference,
+    required String title,
+    required String content,
+    int revision = 0,
+    NotesEditorBase? editBase,
+    bool readonly = false,
+    DocumentEditorState editorState = const DocumentEditorState(),
+  }) => DocumentBuffer(
+    id: reference.identity,
+    remoteNote: reference,
+    remoteTitle: title,
+    remoteEditBase: editBase,
+    text: content,
+    lastSavedText: content,
+    dirty: false,
+    revision: revision,
+    readonly: readonly,
+    editorState: editorState,
+  );
+
   final String id;
   final String? filePath;
   final String? untitledName;
@@ -235,13 +264,25 @@ class DocumentBuffer {
   final String? diskVersionText;
   final WorkspaceFileSnapshot? diskVersionSnapshot;
   final bool recovered;
+  final NextcloudNoteReference? remoteNote;
+  final String? remoteTitle;
+  final NotesEditorBase? remoteEditBase;
+  final bool readonly;
 
-  bool get isUntitled => filePath == null;
+  DocumentOrigin get origin => remoteNote != null
+      ? DocumentOrigin.nextcloudNote
+      : filePath != null
+      ? DocumentOrigin.localFile
+      : DocumentOrigin.untitled;
+  bool get isRemote => origin == DocumentOrigin.nextcloudNote;
+
+  bool get isUntitled => origin == DocumentOrigin.untitled;
   bool get isDirty => dirty;
   bool get hasConflict => diskState == DocumentDiskState.conflict;
   bool get deletedOnDisk => diskState == DocumentDiskState.deleted;
-  String get identity => filePath ?? id;
-  String get displayName => untitledName ?? filePath?.split('/').last ?? id;
+  String get identity => remoteNote?.identity ?? filePath ?? id;
+  String get displayName =>
+      remoteTitle ?? untitledName ?? filePath?.split('/').last ?? id;
 
   DocumentBuffer edited(
     String nextText, {
@@ -251,7 +292,7 @@ class DocumentBuffer {
     WysiwygEditorSessionState? previousWysiwygState,
     WysiwygEditorSessionState? nextWysiwygState,
   }) {
-    if (nextText == text) {
+    if (nextText == text || (isRemote && readonly)) {
       return this;
     }
     final historicalSelection = _selectionForText(
@@ -296,6 +337,10 @@ class DocumentBuffer {
     Object? diskVersionText = _bufferUnset,
     Object? diskVersionSnapshot = _bufferUnset,
     bool? recovered,
+    Object? remoteNote = _bufferUnset,
+    Object? remoteTitle = _bufferUnset,
+    NotesEditorBase? remoteEditBase,
+    bool? readonly,
   }) {
     return DocumentBuffer(
       id: id,
@@ -322,6 +367,14 @@ class DocumentBuffer {
           ? this.diskVersionSnapshot
           : diskVersionSnapshot as WorkspaceFileSnapshot?,
       recovered: recovered ?? this.recovered,
+      remoteNote: identical(remoteNote, _bufferUnset)
+          ? this.remoteNote
+          : remoteNote as NextcloudNoteReference?,
+      remoteTitle: identical(remoteTitle, _bufferUnset)
+          ? this.remoteTitle
+          : remoteTitle as String?,
+      remoteEditBase: remoteEditBase ?? this.remoteEditBase,
+      readonly: readonly ?? this.readonly,
     );
   }
 }

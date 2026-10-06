@@ -4701,4 +4701,92 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get windowRestore => 'Wiederherstellen';
+
+  @override
+  String get nextcloudNotes => 'Nextcloud Notes';
+
+  @override
+  String get nextcloudConnect => 'Verbinden';
+
+  @override
+  String get nextcloudReconnect => 'Erneut verbinden';
+
+  @override
+  String get nextcloudDisconnect => 'Trennen';
+
+  @override
+  String get nextcloudServer => 'Server-URL';
+
+  @override
+  String get nextcloudSignInBrowser =>
+      'Schließen Sie die Anmeldung im Browser ab.';
+
+  @override
+  String get nextcloudFavorites => 'Favoriten';
+
+  @override
+  String get nextcloudNewNote => 'Neue Notiz';
+
+  @override
+  String get nextcloudSavedLocally =>
+      'Lokal gespeichert · Synchronisierung ausstehend';
+
+  @override
+  String get nextcloudSyncing => 'Wird synchronisiert';
+
+  @override
+  String get nextcloudSynced => 'Synchronisiert';
+
+  @override
+  String get nextcloudOffline => 'Nicht verbunden';
+
+  @override
+  String get nextcloudLocked => 'Vom Server gesperrt';
+
+  @override
+  String get nextcloudReconnectRequired => 'Erneute Verbindung erforderlich';
+
+  @override
+  String get nextcloudCreationUncertain => 'Ergebnis der Erstellung ungewiss';
+
+  @override
+  String get nextcloudReadOnly => 'Schreibgeschützt';
+
+  @override
+  String get nextcloudTakeRemote => 'Serverversion übernehmen';
+
+  @override
+  String get nextcloudMerge => 'Zusammenführen';
+
+  @override
+  String get nextcloudDeleteNote => 'Notiz löschen?';
+
+  @override
+  String get nextcloudWorkspaceReplaceUnavailable =>
+      'Arbeitsbereichsweites Ersetzen ist für Nextcloud Notes nicht verfügbar. Ersetzen Sie Inhalte in einzelnen Notizen.';
+
+  @override
+  String get nextcloudSaveLocalCopy => 'Lokale Kopie speichern…';
+
+  @override
+  String get nextcloudDisconnectWarning =>
+      'Das Entfernen dieses Kontos löscht zwischengespeicherte Notizen und ausstehende Änderungen auf diesem Gerät. Synchronisieren Sie zuvor, um ausstehende Arbeit auf dem Server zu erhalten.';
+
+  @override
+  String get nextcloudAttachmentRetryWarning =>
+      'Wenn der vorherige Upload erfolgreich war, kann dieser erneute Versuch einen ungenutzten Anhang auf dem Server hinterlassen.';
+
+  @override
+  String get nextcloudAttachmentReference => 'Anhangreferenz auf dem Server';
+
+  @override
+  String get nextcloudAddAttachment => 'Anhang hinzufügen…';
+
+  @override
+  String get nextcloudDeleteAttachmentWarning =>
+      'Durch Löschen des Anhangs sind seine Links in der Notiz nicht mehr verfügbar. Aufbewahrte Daten können über den lokalen Verlauf wiederhergestellt werden.';
+
+  @override
+  String get nextcloudChooseConflictingAttributes =>
+      'Wählen Sie jeden widersprüchlichen Wert.';
 }

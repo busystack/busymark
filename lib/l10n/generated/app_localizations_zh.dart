@@ -4456,6 +4456,90 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get windowRestore => '还原';
+
+  @override
+  String get nextcloudNotes => 'Nextcloud Notes';
+
+  @override
+  String get nextcloudConnect => '连接';
+
+  @override
+  String get nextcloudReconnect => '重新连接';
+
+  @override
+  String get nextcloudDisconnect => '断开连接';
+
+  @override
+  String get nextcloudServer => '服务器地址';
+
+  @override
+  String get nextcloudSignInBrowser => '请在浏览器中完成登录。';
+
+  @override
+  String get nextcloudFavorites => '收藏';
+
+  @override
+  String get nextcloudNewNote => '新建笔记';
+
+  @override
+  String get nextcloudSavedLocally => '已保存到本地 · 等待同步';
+
+  @override
+  String get nextcloudSyncing => '正在同步';
+
+  @override
+  String get nextcloudSynced => '已同步';
+
+  @override
+  String get nextcloudOffline => '离线';
+
+  @override
+  String get nextcloudLocked => '被服务器锁定';
+
+  @override
+  String get nextcloudReconnectRequired => '需要重新连接';
+
+  @override
+  String get nextcloudCreationUncertain => '创建结果不确定';
+
+  @override
+  String get nextcloudReadOnly => '只读';
+
+  @override
+  String get nextcloudTakeRemote => '使用服务器版本';
+
+  @override
+  String get nextcloudMerge => '合并';
+
+  @override
+  String get nextcloudDeleteNote => '删除笔记？';
+
+  @override
+  String get nextcloudWorkspaceReplaceUnavailable =>
+      'Nextcloud Notes不支持工作区整体替换。请在每条笔记中替换。';
+
+  @override
+  String get nextcloudSaveLocalCopy => '保存本地副本…';
+
+  @override
+  String get nextcloudDisconnectWarning =>
+      '移除此账户将删除此设备上缓存的笔记和待同步的更改。请先同步，将工作保留在服务器上。';
+
+  @override
+  String get nextcloudAttachmentRetryWarning => '如果上次上传成功，重试可能会在服务器上留下未使用的附件。';
+
+  @override
+  String get nextcloudAttachmentReference => '服务器上的附件引用';
+
+  @override
+  String get nextcloudAddAttachment => '添加附件…';
+
+  @override
+  String get nextcloudDeleteAttachmentWarning =>
+      '删除此附件后，笔记中指向它的链接将不可用。保留的数据可通过本地历史记录恢复。';
+
+  @override
+  String get nextcloudChooseConflictingAttributes => '为每个冲突属性选择一个值。';
 }
 
 /// The translations for Chinese, as used in China (`zh_CN`).
@@ -8908,4 +8992,88 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get windowRestore => '还原';
+
+  @override
+  String get nextcloudNotes => 'Nextcloud Notes';
+
+  @override
+  String get nextcloudConnect => '连接';
+
+  @override
+  String get nextcloudReconnect => '重新连接';
+
+  @override
+  String get nextcloudDisconnect => '断开连接';
+
+  @override
+  String get nextcloudServer => '服务器地址';
+
+  @override
+  String get nextcloudSignInBrowser => '请在浏览器中完成登录。';
+
+  @override
+  String get nextcloudFavorites => '收藏';
+
+  @override
+  String get nextcloudNewNote => '新建笔记';
+
+  @override
+  String get nextcloudSavedLocally => '已保存到本地 · 等待同步';
+
+  @override
+  String get nextcloudSyncing => '正在同步';
+
+  @override
+  String get nextcloudSynced => '已同步';
+
+  @override
+  String get nextcloudOffline => '离线';
+
+  @override
+  String get nextcloudLocked => '被服务器锁定';
+
+  @override
+  String get nextcloudReconnectRequired => '需要重新连接';
+
+  @override
+  String get nextcloudCreationUncertain => '创建结果不确定';
+
+  @override
+  String get nextcloudReadOnly => '只读';
+
+  @override
+  String get nextcloudTakeRemote => '使用服务器版本';
+
+  @override
+  String get nextcloudMerge => '合并';
+
+  @override
+  String get nextcloudDeleteNote => '删除笔记？';
+
+  @override
+  String get nextcloudWorkspaceReplaceUnavailable =>
+      'Nextcloud Notes不支持工作区整体替换。请在每条笔记中替换。';
+
+  @override
+  String get nextcloudSaveLocalCopy => '保存本地副本…';
+
+  @override
+  String get nextcloudDisconnectWarning =>
+      '移除此账户将删除此设备上缓存的笔记和待同步的更改。请先同步，将工作保留在服务器上。';
+
+  @override
+  String get nextcloudAttachmentRetryWarning => '如果上次上传成功，重试可能会在服务器上留下未使用的附件。';
+
+  @override
+  String get nextcloudAttachmentReference => '服务器上的附件引用';
+
+  @override
+  String get nextcloudAddAttachment => '添加附件…';
+
+  @override
+  String get nextcloudDeleteAttachmentWarning =>
+      '删除此附件后，笔记中指向它的链接将不可用。保留的数据可通过本地历史记录恢复。';
+
+  @override
+  String get nextcloudChooseConflictingAttributes => '为每个冲突属性选择一个值。';
 }

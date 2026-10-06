@@ -118,6 +118,15 @@ parts:
       - patchelf
     override-prime: |
       craftctl default
+      # Snapcraft's ELF patcher uses RPATH, which takes precedence over the
+      # GNOME/Mesa launcher's library selection. Preserve the patched paths as
+      # RUNPATH so the connected platform supplies its matching shared runtime.
+      for bundled_elf in "$CRAFT_PRIME/busymark" "$CRAFT_PRIME/lib"/*.so; do
+        existing_rpath="$(patchelf --print-rpath "$bundled_elf")"
+        if [ -n "$existing_rpath" ]; then
+          patchelf --set-rpath "$existing_rpath" "$bundled_elf"
+        fi
+      done
       # The retained codec packages depend on GNOME/GStreamer packages already
       # supplied by the connected platform. Remove only the revision-validated
       # package-owned paths; a missing path signals that this audit is stale.

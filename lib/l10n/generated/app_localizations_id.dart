@@ -4660,4 +4660,90 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get windowRestore => 'Pulihkan';
+
+  @override
+  String get nextcloudNotes => 'Nextcloud Notes';
+
+  @override
+  String get nextcloudConnect => 'Hubungkan';
+
+  @override
+  String get nextcloudReconnect => 'Hubungkan kembali';
+
+  @override
+  String get nextcloudDisconnect => 'Putuskan koneksi';
+
+  @override
+  String get nextcloudServer => 'URL server';
+
+  @override
+  String get nextcloudSignInBrowser => 'Selesaikan masuk di peramban.';
+
+  @override
+  String get nextcloudFavorites => 'Favorit';
+
+  @override
+  String get nextcloudNewNote => 'Catatan baru';
+
+  @override
+  String get nextcloudSavedLocally => 'Disimpan lokal · sinkronisasi tertunda';
+
+  @override
+  String get nextcloudSyncing => 'Menyinkronkan';
+
+  @override
+  String get nextcloudSynced => 'Tersinkron';
+
+  @override
+  String get nextcloudOffline => 'Luring';
+
+  @override
+  String get nextcloudLocked => 'Dikunci server';
+
+  @override
+  String get nextcloudReconnectRequired => 'Perlu menghubungkan kembali';
+
+  @override
+  String get nextcloudCreationUncertain => 'Hasil pembuatan belum pasti';
+
+  @override
+  String get nextcloudReadOnly => 'Hanya baca';
+
+  @override
+  String get nextcloudTakeRemote => 'Gunakan versi server';
+
+  @override
+  String get nextcloudMerge => 'Gabungkan';
+
+  @override
+  String get nextcloudDeleteNote => 'Hapus catatan?';
+
+  @override
+  String get nextcloudWorkspaceReplaceUnavailable =>
+      'Penggantian ruang kerja tidak tersedia untuk Nextcloud Notes. Ganti dalam setiap catatan.';
+
+  @override
+  String get nextcloudSaveLocalCopy => 'Simpan salinan lokal…';
+
+  @override
+  String get nextcloudDisconnectWarning =>
+      'Menghapus akun ini menghapus catatan tersimpan dan perubahan tertunda dari perangkat. Sinkronkan dahulu untuk menyimpan pekerjaan di server.';
+
+  @override
+  String get nextcloudAttachmentRetryWarning =>
+      'Jika unggahan sebelumnya berhasil, mencoba lagi dapat meninggalkan lampiran yang tidak digunakan di server.';
+
+  @override
+  String get nextcloudAttachmentReference => 'Referensi lampiran di server';
+
+  @override
+  String get nextcloudAddAttachment => 'Tambahkan lampiran…';
+
+  @override
+  String get nextcloudDeleteAttachmentWarning =>
+      'Menghapus lampiran ini membuat tautannya dalam catatan tidak tersedia. Data yang disimpan dapat dipulihkan melalui riwayat lokal.';
+
+  @override
+  String get nextcloudChooseConflictingAttributes =>
+      'Pilih setiap atribut yang berkonflik.';
 }

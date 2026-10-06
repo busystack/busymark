@@ -8,6 +8,7 @@ import 'package:path/path.dart' as p;
 import 'package:xml/xml.dart' as xml;
 
 import '../core/atomic_file_writer.dart';
+import 'asset_limits.dart';
 
 enum AssetIngestionOrigin {
   imagePicker,
@@ -98,7 +99,7 @@ class IngestedAssetSnapshot {
 
 class AssetIngestionService {
   const AssetIngestionService({
-    this.maximumAssetBytes = 100 * 1024 * 1024,
+    this.maximumAssetBytes = maximumManagedAssetBytes,
     this.hooks,
   });
 

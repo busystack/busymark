@@ -4705,4 +4705,93 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get windowRestore => 'Restaurar';
+
+  @override
+  String get nextcloudNotes => 'Nextcloud Notes';
+
+  @override
+  String get nextcloudConnect => 'Conectar';
+
+  @override
+  String get nextcloudReconnect => 'Volver a conectar';
+
+  @override
+  String get nextcloudDisconnect => 'Desconectar';
+
+  @override
+  String get nextcloudServer => 'URL del servidor';
+
+  @override
+  String get nextcloudSignInBrowser =>
+      'Complete el inicio de sesión en el navegador.';
+
+  @override
+  String get nextcloudFavorites => 'Favoritos';
+
+  @override
+  String get nextcloudNewNote => 'Nueva nota';
+
+  @override
+  String get nextcloudSavedLocally =>
+      'Guardado localmente · sincronización pendiente';
+
+  @override
+  String get nextcloudSyncing => 'Sincronizando';
+
+  @override
+  String get nextcloudSynced => 'Sincronizado';
+
+  @override
+  String get nextcloudOffline => 'Sin conexión';
+
+  @override
+  String get nextcloudLocked => 'Bloqueado por el servidor';
+
+  @override
+  String get nextcloudReconnectRequired => 'Es necesario volver a conectar';
+
+  @override
+  String get nextcloudCreationUncertain => 'Resultado de creación incierto';
+
+  @override
+  String get nextcloudReadOnly => 'Solo lectura';
+
+  @override
+  String get nextcloudTakeRemote => 'Usar versión remota';
+
+  @override
+  String get nextcloudMerge => 'Combinar';
+
+  @override
+  String get nextcloudDeleteNote => '¿Eliminar nota?';
+
+  @override
+  String get nextcloudWorkspaceReplaceUnavailable =>
+      'El reemplazo del espacio de trabajo no está disponible para Nextcloud Notes. Reemplace dentro de cada nota.';
+
+  @override
+  String get nextcloudSaveLocalCopy => 'Guardar copia local…';
+
+  @override
+  String get nextcloudDisconnectWarning =>
+      'Eliminar esta cuenta borra sus notas en caché y cambios pendientes de este dispositivo. Sincronice primero para conservar el trabajo pendiente en el servidor.';
+
+  @override
+  String get nextcloudAttachmentRetryWarning =>
+      'Si la carga anterior se completó, reintentar puede dejar un archivo adjunto sin usar en el servidor.';
+
+  @override
+  String get nextcloudAttachmentReference =>
+      'Referencia del archivo adjunto en el servidor';
+
+  @override
+  String get nextcloudAddAttachment => 'Añadir archivo adjunto…';
+
+  @override
+  String get nextcloudDeleteAttachmentWarning =>
+      'Al eliminar este archivo adjunto, sus enlaces en la nota dejarán de estar disponibles. Los datos conservados se pueden recuperar mediante el historial local.';
+
+  @override
+  String get nextcloudChooseConflictingAttributes =>
+      'Elige cada atributo en conflicto.';
 }

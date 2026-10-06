@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
 
 import '../app/busymark_design.dart';
+import '../assets/document_media_context.dart';
 import '../app/busymark_glyphs.dart';
 import '../app/localization.dart';
 import '../writerside/writerside_video.dart';
@@ -102,17 +103,43 @@ class _BusyMarkWritersideVideoViewState
 
   @override
   Widget build(BuildContext context) {
+    final media = DocumentMediaScope.of(context);
+    if (media != null) {
+      final hosted = resolveWritersideHostedVideoSource(widget.source);
+      if (hosted != null) return _buildVideo(context, hosted);
+      return FutureBuilder<String?>(
+        future: media.resolve(widget.source),
+        builder: (context, snapshot) => _buildVideo(
+          context,
+          snapshot.data == null
+              ? null
+              : WritersideVideoPlaybackSource(
+                  kind: WritersideVideoPlaybackKind.localFile,
+                  value: snapshot.data!,
+                ),
+        ),
+      );
+    }
+    return _buildVideo(
+      context,
+      resolveWritersideVideoPlaybackSource(
+        source: widget.source,
+        activeFilePath: widget.activeFilePath,
+        workspaceRoot: widget.workspaceRoot,
+        writersideRoot: widget.writersideRoot,
+        imagesDir: widget.imagesDir,
+      ),
+    );
+  }
+
+  Widget _buildVideo(
+    BuildContext context,
+    WritersideVideoPlaybackSource? target,
+  ) {
     final colors = BusyMarkSurfaceColors.of(context);
     final authoredPoster = writersideVideoPreviewSource(
       widget.source,
       widget.previewSource,
-    );
-    final target = resolveWritersideVideoPlaybackSource(
-      source: widget.source,
-      activeFilePath: widget.activeFilePath,
-      workspaceRoot: widget.workspaceRoot,
-      writersideRoot: widget.writersideRoot,
-      imagesDir: widget.imagesDir,
     );
     final radius = widget.borderEffect == 'rounded'
         ? BusyMarkRadius.md

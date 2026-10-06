@@ -68,7 +68,7 @@ abstract final class BusyMarkGlyphs {
   static const IconData paragraph = YaruIcons.insert_text;
   static const IconData paste = YaruIcons.paste;
   static const IconData preview = YaruIcons.eye;
-  static const IconData previewView = YaruIcons.eye;
+  static const IconData previewView = YaruIcons.book_filled;
   static const IconData privacy = YaruIcons.shield_warning;
   static const IconData pull = YaruIcons.download;
   static const IconData push = YaruIcons.send;
@@ -84,7 +84,7 @@ abstract final class BusyMarkGlyphs {
   static const IconData startTopic = YaruIcons.document;
   static const IconData strikethrough = YaruIcons.strikethrough;
   static const IconData sourceView = YaruIcons.code;
-  static const IconData splitView = YaruIcons.panel_look;
+  static const IconData splitView = YaruIcons.sidebar_right;
   static const IconData symbols = YaruIcons.symbols;
   static const IconData tab = YaruIcons.tab_new;
   static const IconData table = YaruIcons.office_spreadsheet;
@@ -260,8 +260,11 @@ abstract final class BusyMarkGlyphs {
     if (icon == play) {
       return 'media-playback-start-symbolic';
     }
-    if (icon == preview || icon == previewView) {
+    if (icon == preview) {
       return 'image-viewer-symbolic';
+    }
+    if (icon == previewView) {
+      return 'view-dual-symbolic';
     }
     if (icon == privacy) {
       return 'security-high-symbolic';
@@ -300,7 +303,7 @@ abstract final class BusyMarkGlyphs {
       return 'format-text-strikethrough-symbolic';
     }
     if (icon == splitView) {
-      return 'panel-right-symbolic';
+      return 'sidebar-show-right-symbolic';
     }
     if (icon == table) {
       return 'x-office-spreadsheet-symbolic';
@@ -343,6 +346,14 @@ abstract final class BusyMarkGlyphs {
     return direction == TextDirection.rtl
         ? YaruIcons.arrow_right
         : YaruIcons.arrow_left;
+  }
+
+  /// Compact application-header Back glyph matching GTK's
+  /// `go-previous-symbolic`, rather than the full navigation arrow.
+  static IconData headerBackFor(TextDirection direction) {
+    return direction == TextDirection.rtl
+        ? YaruIcons.go_next
+        : YaruIcons.go_previous;
   }
 
   static IconData forwardFor(TextDirection direction) {

@@ -4707,4 +4707,93 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get windowRestore => 'Restaurer';
+
+  @override
+  String get nextcloudNotes => 'Nextcloud Notes';
+
+  @override
+  String get nextcloudConnect => 'Se connecter';
+
+  @override
+  String get nextcloudReconnect => 'Se reconnecter';
+
+  @override
+  String get nextcloudDisconnect => 'Se déconnecter';
+
+  @override
+  String get nextcloudServer => 'URL du serveur';
+
+  @override
+  String get nextcloudSignInBrowser =>
+      'Terminez la connexion dans votre navigateur.';
+
+  @override
+  String get nextcloudFavorites => 'Favoris';
+
+  @override
+  String get nextcloudNewNote => 'Nouvelle note';
+
+  @override
+  String get nextcloudSavedLocally =>
+      'Enregistré localement · synchronisation en attente';
+
+  @override
+  String get nextcloudSyncing => 'Synchronisation';
+
+  @override
+  String get nextcloudSynced => 'Synchronisé';
+
+  @override
+  String get nextcloudOffline => 'Hors ligne';
+
+  @override
+  String get nextcloudLocked => 'Verrouillé par le serveur';
+
+  @override
+  String get nextcloudReconnectRequired => 'Reconnexion nécessaire';
+
+  @override
+  String get nextcloudCreationUncertain => 'Résultat de création incertain';
+
+  @override
+  String get nextcloudReadOnly => 'Lecture seule';
+
+  @override
+  String get nextcloudTakeRemote => 'Utiliser la version distante';
+
+  @override
+  String get nextcloudMerge => 'Fusionner';
+
+  @override
+  String get nextcloudDeleteNote => 'Supprimer la note ?';
+
+  @override
+  String get nextcloudWorkspaceReplaceUnavailable =>
+      'Le remplacement dans l’espace de travail est indisponible pour Nextcloud Notes. Remplacez dans chaque note.';
+
+  @override
+  String get nextcloudSaveLocalCopy => 'Enregistrer une copie locale…';
+
+  @override
+  String get nextcloudDisconnectWarning =>
+      'Supprimer ce compte efface ses notes en cache et ses modifications en attente sur cet appareil. Synchronisez d’abord pour conserver le travail en attente sur le serveur.';
+
+  @override
+  String get nextcloudAttachmentRetryWarning =>
+      'Si l’envoi précédent a réussi, réessayer peut laisser une pièce jointe inutilisée sur le serveur.';
+
+  @override
+  String get nextcloudAttachmentReference =>
+      'Référence de la pièce jointe sur le serveur';
+
+  @override
+  String get nextcloudAddAttachment => 'Ajouter une pièce jointe…';
+
+  @override
+  String get nextcloudDeleteAttachmentWarning =>
+      'Supprimer cette pièce jointe rend ses liens dans la note indisponibles. Les données conservées peuvent être récupérées dans l’historique local.';
+
+  @override
+  String get nextcloudChooseConflictingAttributes =>
+      'Choisissez chaque attribut en conflit.';
 }

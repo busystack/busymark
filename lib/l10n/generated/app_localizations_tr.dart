@@ -4661,4 +4661,91 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get windowRestore => 'Geri yükle';
+
+  @override
+  String get nextcloudNotes => 'Nextcloud Notes';
+
+  @override
+  String get nextcloudConnect => 'Bağlan';
+
+  @override
+  String get nextcloudReconnect => 'Yeniden bağlan';
+
+  @override
+  String get nextcloudDisconnect => 'Bağlantıyı kes';
+
+  @override
+  String get nextcloudServer => 'Sunucu adresi';
+
+  @override
+  String get nextcloudSignInBrowser =>
+      'Tarayıcınızda oturum açmayı tamamlayın.';
+
+  @override
+  String get nextcloudFavorites => 'Sık kullanılanlar';
+
+  @override
+  String get nextcloudNewNote => 'Yeni not';
+
+  @override
+  String get nextcloudSavedLocally => 'Yerel kaydedildi · eşitleme bekliyor';
+
+  @override
+  String get nextcloudSyncing => 'Eşitleniyor';
+
+  @override
+  String get nextcloudSynced => 'Eşitlendi';
+
+  @override
+  String get nextcloudOffline => 'Çevrimdışı';
+
+  @override
+  String get nextcloudLocked => 'Sunucu tarafından kilitlendi';
+
+  @override
+  String get nextcloudReconnectRequired => 'Yeniden bağlantı gerekli';
+
+  @override
+  String get nextcloudCreationUncertain => 'Oluşturma sonucu belirsiz';
+
+  @override
+  String get nextcloudReadOnly => 'Salt okunur';
+
+  @override
+  String get nextcloudTakeRemote => 'Sunucu sürümünü kullan';
+
+  @override
+  String get nextcloudMerge => 'Birleştir';
+
+  @override
+  String get nextcloudDeleteNote => 'Not silinsin mi?';
+
+  @override
+  String get nextcloudWorkspaceReplaceUnavailable =>
+      'Nextcloud Notes için çalışma alanında değiştirme kullanılamaz. Her not içinde değiştirin.';
+
+  @override
+  String get nextcloudSaveLocalCopy => 'Yerel kopyayı kaydet…';
+
+  @override
+  String get nextcloudDisconnectWarning =>
+      'Bu hesabı kaldırmak önbellekteki notları ve bekleyen değişiklikleri bu cihazdan siler. Çalışmayı sunucuda tutmak için önce eşitleyin.';
+
+  @override
+  String get nextcloudAttachmentRetryWarning =>
+      'Önceki yükleme başarılı olduysa yeniden denemek sunucuda kullanılmayan bir ek bırakabilir.';
+
+  @override
+  String get nextcloudAttachmentReference => 'Sunucudaki ek başvurusu';
+
+  @override
+  String get nextcloudAddAttachment => 'Ek ekle…';
+
+  @override
+  String get nextcloudDeleteAttachmentWarning =>
+      'Bu eki silmek, nottaki bağlantılarını kullanılamaz hale getirir. Saklanan veriler yerel geçmişten kurtarılabilir.';
+
+  @override
+  String get nextcloudChooseConflictingAttributes =>
+      'Çakışan her öznitelik için bir değer seçin.';
 }

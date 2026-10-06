@@ -10,45 +10,53 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  testWidgets(
-    'narrow title allocation stays continuous while the sidebar changes width',
-    (tester) async {
-      Widget build(double width) => MaterialApp(
-        home: Align(
-          alignment: Alignment.topLeft,
-          child: SizedBox(
-            width: width,
-            height: BusyMarkSizes.toolbarHeight,
-            child: const LinuxPageHeaderInsetsScope(
-              leftObstruction: 0,
-              rightObstruction: 120,
-              child: BusyMarkLinuxHeaderLayout(
-                leading: SizedBox(width: 68, height: 34),
-                title: SizedBox(
-                  key: ValueKey('continuous-title'),
-                  width: 300,
-                  height: 16,
-                ),
-                trailing: SizedBox(width: 160, height: 34),
+  testWidgets('narrow title stays centered between the controls when resized', (
+    tester,
+  ) async {
+    Widget build(double width) => MaterialApp(
+      home: Align(
+        alignment: Alignment.topLeft,
+        child: SizedBox(
+          width: width,
+          height: BusyMarkSizes.toolbarHeight,
+          child: const LinuxPageHeaderInsetsScope(
+            leftObstruction: 0,
+            rightObstruction: 120,
+            child: BusyMarkLinuxHeaderLayout(
+              leading: SizedBox(
+                key: ValueKey('leading-controls'),
+                width: 68,
+                height: 34,
+              ),
+              title: SizedBox(
+                key: ValueKey('continuous-title'),
+                width: 300,
+                height: 16,
+              ),
+              trailing: SizedBox(
+                key: ValueKey('trailing-controls'),
+                width: 160,
+                height: 34,
               ),
             ),
           ),
         ),
-      );
-      final title = find.byKey(const ValueKey('continuous-title'));
-      await tester.pumpWidget(build(600));
-      final before = tester.getCenter(title).dx;
-      await tester.pumpWidget(build(590));
-      expect(
-        (tester.getCenter(title).dx - before).abs(),
-        lessThanOrEqualTo(10),
-      );
-      expect(
-        tester.getSize(title).width,
-        greaterThanOrEqualTo(BusyMarkSizes.headerTitleMinWidth),
-      );
-    },
-  );
+      ),
+    );
+    final title = find.byKey(const ValueKey('continuous-title'));
+    double controlGapCenter() =>
+        (tester.getRect(find.byKey(const ValueKey('leading-controls'))).right +
+            tester
+                .getRect(find.byKey(const ValueKey('trailing-controls')))
+                .left) /
+        2;
+    await tester.pumpWidget(build(600));
+    final beforeWidth = tester.getSize(title).width;
+    expect(tester.getCenter(title).dx, controlGapCenter());
+    await tester.pumpWidget(build(590));
+    expect(tester.getCenter(title).dx, controlGapCenter());
+    expect(tester.getSize(title).width, lessThan(beforeWidth));
+  });
   for (final width in [500.0, 800.0]) {
     for (final direction in TextDirection.values) {
       testWidgets(
@@ -95,27 +103,38 @@ void main() {
             find.byKey(const ValueKey('header-title')),
           );
           expect(title.width, greaterThan(0));
-          expect(
-            title.overlaps(
-              tester.getRect(find.byKey(const ValueKey('leading-controls'))),
-            ),
-            isFalse,
+          final leading = tester.getRect(
+            find.byKey(const ValueKey('leading-controls')),
+          );
+          final trailing = tester.getRect(
+            find.byKey(const ValueKey('trailing-controls')),
           );
           expect(
-            title.overlaps(
-              tester.getRect(find.byKey(const ValueKey('trailing-controls'))),
-            ),
-            isFalse,
+            title
+                .intersect(
+                  tester.getRect(
+                    find.byKey(const ValueKey('leading-controls')),
+                  ),
+                )
+                .isEmpty,
+            isTrue,
           );
-          if (width == 800) {
-            expect(
-              title.center.dx,
-              tester
-                  .getRect(find.byKey(const ValueKey('header-layout')))
-                  .center
-                  .dx,
-            );
-          }
+          expect(
+            title
+                .intersect(
+                  tester.getRect(
+                    find.byKey(const ValueKey('trailing-controls')),
+                  ),
+                )
+                .isEmpty,
+            isTrue,
+          );
+          expect(
+            title.center.dx,
+            rtl
+                ? (trailing.right + leading.left) / 2
+                : (leading.right + trailing.left) / 2,
+          );
           expect(tester.takeException(), isNull);
         },
       );

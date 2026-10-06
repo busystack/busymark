@@ -2143,7 +2143,8 @@ class WorkspaceService {
       filePath: context.parserPath,
       source: buffer.text,
       mode: context.markdownMode,
-      workspaceRoot: workspace.rootPath,
+      workspaceRoot: workspace.filesystemRootPath,
+      validateLocalReferences: !buffer.isRemote,
       sourceOverrides: workspace.sourceOverrides,
     );
     return workspace.copyWith(
@@ -2227,7 +2228,7 @@ class WorkspaceService {
       filePath: context.parserPath,
       source: buffer.text,
       mode: context.markdownMode,
-      workspaceRoot: workspace.rootPath,
+      workspaceRoot: workspace.filesystemRootPath,
       validateLocalReferences: false,
     );
     return previewBuilder.build(parsed);
@@ -2254,7 +2255,7 @@ class WorkspaceService {
         filePath: context.parserPath,
         source: buffer.text,
         mode: context.markdownMode,
-        workspaceRoot: workspace.rootPath,
+        workspaceRoot: workspace.filesystemRootPath,
         validateLocalReferences: false,
       );
       return List.unmodifiable([
@@ -2293,7 +2294,7 @@ class WorkspaceService {
       filePath: context.parserPath,
       source: buffer.text,
       mode: context.markdownMode,
-      workspaceRoot: workspace.rootPath,
+      workspaceRoot: workspace.filesystemRootPath,
       validateLocalReferences: false,
     );
     return previewBuilder.build(parsed);

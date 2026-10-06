@@ -55,11 +55,8 @@ extension BusyMarkLinuxHeaderIconNames on BusyMarkLinuxHeaderIcon {
     BusyMarkLinuxHeaderIcon.validate => const ['tools-check-spelling-symbolic'],
     BusyMarkLinuxHeaderIcon.viewEditor => const ['document-edit-symbolic'],
     BusyMarkLinuxHeaderIcon.viewSource => const ['text-x-generic-symbolic'],
-    BusyMarkLinuxHeaderIcon.viewPreview => const [
-      'view-reader-symbolic',
-      'document-open-symbolic',
-    ],
-    BusyMarkLinuxHeaderIcon.viewSplit => const ['view-dual-symbolic'],
+    BusyMarkLinuxHeaderIcon.viewPreview => const ['view-dual-symbolic'],
+    BusyMarkLinuxHeaderIcon.viewSplit => const ['sidebar-show-right-symbolic'],
     BusyMarkLinuxHeaderIcon.viewMenuArrow => const ['pan-down-symbolic'],
   };
   bool get directionSensitive =>
@@ -84,11 +81,13 @@ BusyMarkLinuxHeaderIcon? _nativeHeaderIcon(IconData glyph) => switch (glyph) {
 
 /// Native symbolic artwork, with the existing Yaru glyph as a test/platform fallback.
 class BusyMarkGtkHeaderIcon extends StatelessWidget {
-  const BusyMarkGtkHeaderIcon(this.glyph, {super.key});
+  const BusyMarkGtkHeaderIcon(this.glyph, {super.key, this.nativeIcon});
   final IconData glyph;
+  final BusyMarkLinuxHeaderIcon? nativeIcon;
+
   @override
   Widget build(BuildContext context) {
-    final icon = _nativeHeaderIcon(glyph);
+    final icon = nativeIcon ?? _nativeHeaderIcon(glyph);
     final asset = icon == null
         ? null
         : GtkHeaderIconScope.of(

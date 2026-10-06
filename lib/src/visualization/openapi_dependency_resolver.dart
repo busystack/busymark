@@ -52,6 +52,17 @@ class OpenApiDependencyResolver {
         }),
       );
     }
+    if (!request.allowLocalFiles) {
+      final reference = initialReferences.firstWhere(
+        (item) => !_isInternalReference(item),
+      );
+      throw OpenApiDependencyException(
+        'visualization.openapiUnsafeReference',
+        'Remote notes cannot load filesystem OpenAPI references. Use an inline specification with internal references.',
+        line: reference.line,
+        column: reference.column,
+      );
+    }
     if (documentPath.isEmpty || requestedRoot.isEmpty) {
       final reference = initialReferences.firstWhere(
         (item) => !_isInternalReference(item),

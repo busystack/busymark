@@ -19,6 +19,7 @@ import 'package:busymark/src/app/busymark_design.dart';
 import 'package:busymark/src/app/busymark_dialog_identity.dart';
 import 'package:busymark/src/app/busymark_glyphs.dart';
 import 'package:busymark/src/app/busymark_shortcuts.dart';
+import 'package:busymark/src/app/linux/linux_header_style.dart';
 import 'package:busymark/src/app/startup_path.dart';
 import 'package:busymark/src/app/system_accent.dart';
 import 'package:busymark/src/app/window_control_service.dart';
@@ -57,6 +58,7 @@ import 'package:busymark/src/markdown/preview_model.dart';
 import 'package:busymark/src/markdown/markdown_model.dart';
 import 'package:busymark/src/markdown/markdown_parser.dart';
 import 'package:busymark/src/platform/linux_gtk_accent_service.dart';
+import 'package:busymark/src/platform/gtk_header_icon_service.dart';
 import 'package:busymark/src/platform/linux_header_bar_service.dart';
 import 'package:busymark/src/platform/rich_clipboard_service.dart';
 import 'package:busymark/src/spellcheck/spelling_dictionary_downloader.dart';
@@ -734,6 +736,11 @@ void main() {
     expect(find.text(l10n.createWritersideProject), findsOneWidget);
     expect(find.text(l10n.openMarkdownFile), findsOneWidget);
     expect(find.text(l10n.markdownFolderOrWritersideProject), findsOneWidget);
+    expect(find.text(l10n.nextcloudNotes), findsOneWidget);
+    expect(
+      tester.getTopLeft(find.text(l10n.markdownFolderOrWritersideProject)).dy,
+      lessThan(tester.getTopLeft(find.text(l10n.nextcloudNotes)).dy),
+    );
     expect(find.text('File or folder path'), findsNothing);
     expect(find.textContaining('sign in'), findsNothing);
     expect(
@@ -742,6 +749,12 @@ void main() {
       ),
       findsOneWidget,
     );
+    _expectNeutralSidebarToggle(
+      tester,
+      '${l10n.hideSidebar} (${BusyMarkSidebarShortcutLabels.toggleSidebar})',
+      selected: true,
+    );
+    _expectHeaderGeometry(tester);
 
     await tester.sendKeyEvent(LogicalKeyboardKey.f9);
     await tester.pump(const Duration(milliseconds: 100));
@@ -752,6 +765,11 @@ void main() {
       ),
       findsOneWidget,
     );
+    _expectNeutralSidebarToggle(
+      tester,
+      '${l10n.showSidebar} (${BusyMarkSidebarShortcutLabels.toggleSidebar})',
+      selected: false,
+    );
 
     await tester.sendKeyEvent(LogicalKeyboardKey.f9);
     await tester.pump(const Duration(milliseconds: 100));
@@ -761,6 +779,11 @@ void main() {
         '${l10n.hideSidebar} (${BusyMarkSidebarShortcutLabels.toggleSidebar})',
       ),
       findsOneWidget,
+    );
+    _expectNeutralSidebarToggle(
+      tester,
+      '${l10n.hideSidebar} (${BusyMarkSidebarShortcutLabels.toggleSidebar})',
+      selected: true,
     );
   });
 
@@ -888,7 +911,7 @@ void main() {
           await tester.pumpAndSettle();
         }
         await tester.tap(
-          find.byTooltip('${l10n.welcome} (${BusyMarkAppShortcutLabels.back})'),
+          find.byTooltip('${l10n.back} (${BusyMarkAppShortcutLabels.back})'),
         );
         await tester.pumpAndSettle();
         expect(find.text(l10n.createMarkdownFile), findsOneWidget);
@@ -993,6 +1016,16 @@ void main() {
       find.byTooltip('${l10n.back} (${BusyMarkAppShortcutLabels.back})'),
       findsOneWidget,
     );
+    final backButton = tester.widget<BusyMarkLinuxHeaderIconButton>(
+      find.byWidgetPredicate(
+        (widget) =>
+            widget is BusyMarkLinuxHeaderIconButton &&
+            widget.tooltip == l10n.back,
+      ),
+    );
+    expect(backButton.nativeIcon, BusyMarkLinuxHeaderIcon.back);
+    expect(backButton.icon, BusyMarkGlyphs.headerBackFor(TextDirection.ltr));
+    _expectHeaderGeometry(tester);
 
     await tester.sendKeyDownEvent(LogicalKeyboardKey.altLeft);
     await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
@@ -6241,6 +6274,73 @@ code
       ),
       findsOneWidget,
     );
+    _expectNeutralSidebarToggle(
+      tester,
+      '${l10n.hideSidebar} (${BusyMarkSidebarShortcutLabels.toggleSidebar})',
+      selected: true,
+    );
+    _expectHeaderControlGap(
+      tester,
+      leftTooltip: l10n.hideSidebar,
+      rightTooltip: l10n.back,
+    );
+    _expectHeaderControlGap(
+      tester,
+      leftTooltip: l10n.viewMode,
+      rightTooltip: l10n.validate,
+    );
+    _expectHeaderControlGap(
+      tester,
+      leftTooltip: l10n.validate,
+      rightTooltip: l10n.search,
+    );
+    _expectHeaderControlGap(
+      tester,
+      leftTooltip: l10n.search,
+      rightTooltip: l10n.mainMenu,
+    );
+    _expectHeaderGeometry(tester);
+    for (final tooltip in [
+      l10n.back,
+      l10n.viewMode,
+      l10n.validate,
+      l10n.search,
+      l10n.mainMenu,
+    ]) {
+      _expectNeutralHeaderControl(tester, tooltip, selected: false);
+    }
+    expect(
+      tester.widget<IconButton>(_headerIconButton(l10n.viewMode)).tooltip,
+      l10n.viewMode,
+    );
+    await tester.tap(_headerIconButton(l10n.viewMode));
+    await tester.pumpAndSettle();
+    _expectNeutralHeaderControl(tester, l10n.viewMode, selected: true);
+    final viewItems = tester
+        .widgetList<BusyMarkPopupMenuItem<DocumentViewModePreference>>(
+          find.byType(BusyMarkPopupMenuItem<DocumentViewModePreference>),
+        )
+        .toList();
+    expect(viewItems, hasLength(4));
+    expect(
+      viewItems.every((item) => item.shortcut?.isNotEmpty == true),
+      isTrue,
+    );
+    expect(
+      viewItems.singleWhere((item) => item.label == l10n.reading).icon,
+      BusyMarkGlyphs.previewView,
+    );
+    expect(
+      viewItems.singleWhere((item) => item.label == l10n.split).icon,
+      BusyMarkGlyphs.splitView,
+    );
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
+    await tester.tap(_headerIconButton(l10n.mainMenu));
+    await tester.pumpAndSettle();
+    _expectNeutralHeaderControl(tester, l10n.mainMenu, selected: true);
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
     await tester.sendKeyEvent(LogicalKeyboardKey.f9);
     await tester.pumpAndSettle();
     expect(find.byTooltip(l10n.sidebarViewMenu), findsNothing);
@@ -6254,11 +6354,22 @@ code
       ),
       findsOneWidget,
     );
+    _expectNeutralSidebarToggle(
+      tester,
+      '${l10n.showSidebar} (${BusyMarkSidebarShortcutLabels.toggleSidebar})',
+      selected: false,
+    );
 
     await tester.sendKeyEvent(LogicalKeyboardKey.f9);
     await tester.pumpAndSettle();
     expect(find.byTooltip(l10n.sidebarViewMenu), findsOneWidget);
     expect(tester.state(find.byKey(sidebarKey)), same(sidebarState));
+    _expectNeutralSidebarToggle(
+      tester,
+      '${l10n.hideSidebar} (${BusyMarkSidebarShortcutLabels.toggleSidebar})',
+      selected: true,
+    );
+    _expectHeaderGeometry(tester);
 
     final activeEditorField = find.byWidgetPredicate(
       (widget) =>
@@ -11862,14 +11973,15 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
     await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
     await tester.pumpAndSettle();
     expect(find.byType(TextField).evaluate().length, initialTextFields + 1);
-    expect(headerButton(l10n.welcome), findsNothing);
+    expect(headerButton(l10n.back), findsNothing);
     expect(headerButton(l10n.validate), findsNothing);
     expect(headerButton(l10n.viewMode), findsNothing);
+    _expectNeutralHeaderControl(tester, l10n.search, selected: true);
 
     await tester.tap(headerButton(l10n.search));
     await tester.pumpAndSettle();
     expect(find.byType(TextField).evaluate().length, initialTextFields);
-    expect(headerButton(l10n.welcome), findsOneWidget);
+    expect(headerButton(l10n.back), findsOneWidget);
     expect(editorFocus.hasFocus, isTrue);
     expect(headerButton(l10n.validate), findsOneWidget);
     expect(headerButton(l10n.viewMode), findsOneWidget);
@@ -13308,6 +13420,115 @@ _taskMarkerVisual(WidgetTester tester, {required bool checked}) {
     glyphSize: icon.size ?? iconTheme.size,
     onTaskChanged: marker.onTaskChanged,
   );
+}
+
+void _expectNeutralSidebarToggle(
+  WidgetTester tester,
+  String tooltip, {
+  required bool selected,
+}) {
+  _expectNeutralHeaderControl(tester, tooltip, selected: selected);
+}
+
+void _expectNeutralHeaderControl(
+  WidgetTester tester,
+  String tooltip, {
+  required bool selected,
+}) {
+  final finder = _headerIconButton(tooltip);
+  expect(finder, findsOneWidget);
+  final button = tester.widget<IconButton>(finder);
+  final context = tester.element(finder);
+  final colors = BusyMarkSurfaceColors.of(context);
+  final states = selected
+      ? const <WidgetState>{WidgetState.selected}
+      : const <WidgetState>{};
+  final foreground = button.style?.foregroundColor?.resolve(states);
+
+  expect(button.isSelected, selected);
+  expect(foreground, colors.foreground);
+  expect(foreground, isNot(Theme.of(context).colorScheme.primary));
+  for (final interaction in [WidgetState.hovered, WidgetState.pressed]) {
+    expect(
+      button.style?.foregroundColor?.resolve({...states, interaction}),
+      foreground,
+    );
+  }
+  expect(
+    button.style?.backgroundColor?.resolve(states),
+    selected
+        ? colors.foreground.withValues(alpha: colors.foreground.a * .10)
+        : Colors.transparent,
+  );
+}
+
+Finder _headerIconButton(String tooltip) => find.byWidgetPredicate(
+  (widget) =>
+      widget is IconButton &&
+      (widget.tooltip == tooltip ||
+          widget.tooltip?.startsWith('$tooltip (') == true),
+);
+
+void _expectHeaderControlGap(
+  WidgetTester tester, {
+  required String leftTooltip,
+  required String rightTooltip,
+}) {
+  final left = _headerIconButton(leftTooltip);
+  final right = _headerIconButton(rightTooltip);
+  expect(left, findsOneWidget);
+  expect(right, findsOneWidget);
+  expect(
+    tester.getRect(right).left - tester.getRect(left).right,
+    BusyMarkSpacing.headerInset,
+  );
+}
+
+void _expectHeaderGeometry(WidgetTester tester) {
+  final header = find.byType(BusyMarkLinuxHeaderLayout);
+  expect(header, findsOneWidget);
+  final headerRect = tester.getRect(header);
+  final insets = LinuxPageHeaderInsetsScope.of(tester.element(header));
+  final groups = find.descendant(
+    of: header,
+    matching: find.byType(BusyMarkLinuxHeaderControlGroup),
+  );
+  expect(groups, findsNWidgets(2));
+  final groupRects = groups.evaluate().map((element) {
+    return tester.getRect(find.byElementPredicate((other) => other == element));
+  }).toList()..sort((left, right) => left.left.compareTo(right.left));
+  expect(
+    groupRects.first.left - headerRect.left - insets.leftObstruction,
+    BusyMarkSpacing.headerInset,
+  );
+  expect(
+    headerRect.right - groupRects.last.right - insets.rightObstruction,
+    BusyMarkSpacing.headerInset,
+  );
+  final title = find.descendant(
+    of: header,
+    matching: find.byType(BusyMarkLinuxHeaderTitle),
+  );
+  expect(
+    tester.getCenter(title).dx,
+    closeTo((groupRects.first.right + groupRects.last.left) / 2, .01),
+  );
+  for (final button
+      in find
+          .descendant(of: groups, matching: find.byType(IconButton))
+          .evaluate()) {
+    final finder = find.byElementPredicate((element) => element == button);
+    final rect = tester.getRect(finder);
+    expect(rect.size, const Size.square(BusyMarkSizes.iconButton));
+    expect(rect.top - headerRect.top, BusyMarkSpacing.headerInset);
+    expect(headerRect.bottom - rect.bottom, BusyMarkSpacing.headerInset);
+    final icon = find.descendant(
+      of: finder,
+      matching: find.byType(BusyMarkGtkHeaderIcon),
+    );
+    expect(tester.getSize(icon), const Size.square(BusyMarkSizes.iconSm));
+    expect(tester.getCenter(icon), rect.center);
+  }
 }
 
 Future<void> _pumpUntilFound(WidgetTester tester, Finder finder) async {

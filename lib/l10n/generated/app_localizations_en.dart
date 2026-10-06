@@ -4674,4 +4674,90 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get windowRestore => 'Restore';
+
+  @override
+  String get nextcloudNotes => 'Nextcloud Notes';
+
+  @override
+  String get nextcloudConnect => 'Connect';
+
+  @override
+  String get nextcloudReconnect => 'Reconnect';
+
+  @override
+  String get nextcloudDisconnect => 'Disconnect';
+
+  @override
+  String get nextcloudServer => 'Server URL';
+
+  @override
+  String get nextcloudSignInBrowser => 'Complete sign-in in your browser.';
+
+  @override
+  String get nextcloudFavorites => 'Favorites';
+
+  @override
+  String get nextcloudNewNote => 'New note';
+
+  @override
+  String get nextcloudSavedLocally => 'Saved locally · sync pending';
+
+  @override
+  String get nextcloudSyncing => 'Syncing';
+
+  @override
+  String get nextcloudSynced => 'Synced';
+
+  @override
+  String get nextcloudOffline => 'Offline';
+
+  @override
+  String get nextcloudLocked => 'Locked by server';
+
+  @override
+  String get nextcloudReconnectRequired => 'Reconnect required';
+
+  @override
+  String get nextcloudCreationUncertain => 'Creation outcome uncertain';
+
+  @override
+  String get nextcloudReadOnly => 'Read only';
+
+  @override
+  String get nextcloudTakeRemote => 'Take remote';
+
+  @override
+  String get nextcloudMerge => 'Merge';
+
+  @override
+  String get nextcloudDeleteNote => 'Delete note?';
+
+  @override
+  String get nextcloudWorkspaceReplaceUnavailable =>
+      'Workspace replacement is unavailable for Nextcloud Notes. Replace within each note instead.';
+
+  @override
+  String get nextcloudSaveLocalCopy => 'Save local copy…';
+
+  @override
+  String get nextcloudDisconnectWarning =>
+      'Removing this account deletes its cached notes and pending changes from this device. Synchronize first to retain pending work on the server.';
+
+  @override
+  String get nextcloudAttachmentRetryWarning =>
+      'Retrying this attachment can leave an unused attachment on the server if the previous upload succeeded.';
+
+  @override
+  String get nextcloudAttachmentReference => 'Attachment reference on server';
+
+  @override
+  String get nextcloudAddAttachment => 'Add attachment…';
+
+  @override
+  String get nextcloudDeleteAttachmentWarning =>
+      'Deleting this attachment makes its links in the note unavailable. Retained bytes can be recovered through local history.';
+
+  @override
+  String get nextcloudChooseConflictingAttributes =>
+      'Choose each conflicting attribute.';
 }

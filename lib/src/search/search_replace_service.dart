@@ -77,6 +77,7 @@ class TextReplacementPreview {
 enum WorkspaceReplacementSourceKind { disk, dirtyBuffer }
 
 enum WorkspaceReplacementIssueKind {
+  remoteWorkspaceUnsupported,
   cancelled,
   invalidRegex,
   zeroLengthMatches,
@@ -322,6 +323,19 @@ class SearchReplacementService {
     final operation = cancellation ?? WorkspaceReplacementCancellation();
     try {
       final workspace = state.workspace;
+      if (workspace?.kind == WorkspaceKind.nextcloudNotes) {
+        return WorkspaceReplacementPreview(
+          options: options,
+          replacement: replacement,
+          files: const [],
+          issues: const [
+            WorkspaceReplacementIssue(
+              kind: WorkspaceReplacementIssueKind.remoteWorkspaceUnsupported,
+              filePath: '',
+            ),
+          ],
+        );
+      }
       if (workspace == null || options.query.isEmpty) {
         return WorkspaceReplacementPreview(
           options: options,
@@ -504,6 +518,18 @@ class SearchReplacementService {
       );
     }
     final state = currentState();
+    if (state.workspace?.kind == WorkspaceKind.nextcloudNotes) {
+      return const WorkspaceReplacementApplyResult(
+        appliedFiles: 0,
+        appliedMatches: 0,
+        issues: [
+          WorkspaceReplacementIssue(
+            kind: WorkspaceReplacementIssueKind.remoteWorkspaceUnsupported,
+            filePath: '',
+          ),
+        ],
+      );
+    }
     final operations = <_WorkspaceReplacementOperation>[];
     for (final file in preview.files) {
       final selected = {

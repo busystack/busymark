@@ -1,4 +1,5 @@
 import '../writerside/writerside_source_loader.dart';
+import '../assets/document_media_context.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
@@ -52,6 +53,7 @@ class MarkdownVisualizationExportRenderer {
     required String documentPath,
     required String workspaceRoot,
     required MarkdownPdfCancellationToken cancellationToken,
+    DocumentMediaContext? media,
   }) async {
     final candidates = _visualizationBlocks(document.blocks).toList();
     if (candidates.isEmpty) {
@@ -79,6 +81,7 @@ class MarkdownVisualizationExportRenderer {
             documentPath: documentPath,
             workspaceRoot: workspaceRoot,
             cancellationToken: cancellationToken,
+            media: media,
           ),
       ]);
     } finally {
@@ -145,6 +148,7 @@ class MarkdownVisualizationExportRenderer {
     required String documentPath,
     required String workspaceRoot,
     required MarkdownPdfCancellationToken cancellationToken,
+    DocumentMediaContext? media,
   }) async {
     final descriptor = VisualizationDescriptor.forFenceLanguage(
       block.attributes['language'],
@@ -154,11 +158,13 @@ class MarkdownVisualizationExportRenderer {
       final sourceReference = block.attributes['src']?.trim() ?? '';
       if (sourceReference.isNotEmpty &&
           !block.attributes.containsKey(writersideResolvedSourceAttribute)) {
-        source = await diagramSourceLoader.load(
-          reference: sourceReference,
-          documentPath: documentPath,
-          workspaceRoot: workspaceRoot,
-        );
+        source = media != null
+            ? await loadDocumentMediaText(media, sourceReference)
+            : await diagramSourceLoader.load(
+                reference: sourceReference,
+                documentPath: documentPath,
+                workspaceRoot: workspaceRoot,
+              );
       }
       final result = await coordinator.render(
         VisualizationRenderRequest(
@@ -173,6 +179,7 @@ class MarkdownVisualizationExportRenderer {
           engineVersion: descriptor.kind.engineVersion,
           editRevision: 0,
           priority: VisualizationRenderPriority.export,
+          allowLocalFiles: media == null,
         ),
       );
       cancellationToken.throwIfCancelled();

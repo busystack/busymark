@@ -78,12 +78,13 @@ class FileLocalHistoryStore implements LocalHistoryStore {
       var index = await _loadIndexUnlocked(root, repair: true);
       var document = _resolveDocument(index.documents, request);
       document ??= LocalHistoryDocument(
-        id: _safeNewId(),
+        id: request.remoteDocumentId ?? _safeNewId(),
         displayName: request.displayName,
         currentPath: request.path,
         historicalPaths: request.path == null ? const [] : [request.path!],
         updatedAt: request.capturedAt.toUtc(),
         untitled: request.untitled,
+        remoteNote: request.remoteNote,
       );
       final identity = _captureIdentity(document, request);
       document = _updatedDocument(
@@ -754,7 +755,7 @@ LocalHistoryDocument? _resolveDocument(
   List<LocalHistoryDocument> documents,
   LocalHistoryCaptureRequest request,
 ) {
-  final requestedId = request.documentId;
+  final requestedId = request.documentId ?? request.remoteDocumentId;
   if (requestedId != null) {
     final byId = documents.where((document) => document.id == requestedId);
     if (byId.isNotEmpty) return byId.first;
@@ -898,12 +899,13 @@ class MemoryLocalHistoryStore implements LocalHistoryStore {
     policy.validate();
     var document = _resolveDocument(_documents.values.toList(), request);
     document ??= LocalHistoryDocument(
-      id: _id('document_'),
+      id: request.remoteDocumentId ?? _id('document_'),
       displayName: request.displayName,
       currentPath: request.path,
       historicalPaths: request.path == null ? const [] : [request.path!],
       updatedAt: request.capturedAt.toUtc(),
       untitled: request.untitled,
+      remoteNote: request.remoteNote,
     );
     final identity = _captureIdentity(document, request);
     document = _updatedDocument(

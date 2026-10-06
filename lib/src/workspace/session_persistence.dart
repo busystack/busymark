@@ -12,18 +12,26 @@ class DocumentSessionEntry {
     required this.filePath,
     required this.untitledName,
     required this.editorState,
+    this.remoteNote,
   });
 
   final String id;
   final String? filePath;
   final String? untitledName;
   final DocumentEditorState editorState;
+  final NextcloudNoteReference? remoteNote;
 
   Map<String, Object?> toJson() => {
     'id': id,
     'filePath': filePath,
     'untitledName': untitledName,
     'editorState': editorState.toJson(),
+    'origin': remoteNote != null
+        ? DocumentOrigin.nextcloudNote.name
+        : filePath != null
+        ? DocumentOrigin.localFile.name
+        : DocumentOrigin.untitled.name,
+    'remoteNote': remoteNote?.toJson(),
   };
 
   factory DocumentSessionEntry.fromJson(Map<String, Object?> json) {
@@ -34,6 +42,7 @@ class DocumentSessionEntry {
       editorState: DocumentEditorState.fromJson(
         (json['editorState'] as Map?)?.cast<String, Object?>() ?? const {},
       ),
+      remoteNote: NextcloudNoteReference.fromJson(json['remoteNote']),
     );
   }
 }
@@ -74,17 +83,21 @@ class WorkspaceSessionSnapshot {
     required this.tabs,
     required this.activeBufferId,
     this.pendingLocalHistoryAssociations = const [],
+    this.nextcloudAccountId,
   });
 
   final String? workspacePath;
   final List<DocumentSessionEntry> tabs;
   final String? activeBufferId;
   final List<PendingLocalHistoryAssociation> pendingLocalHistoryAssociations;
+  final String? nextcloudAccountId;
 
   Map<String, Object?> toJson() => {
-    'version': 1,
+    'version': 2,
     'workspacePath': workspacePath,
     'activeBufferId': activeBufferId,
+    'workspaceOrigin': nextcloudAccountId == null ? 'local' : 'nextcloudNotes',
+    'nextcloudAccountId': nextcloudAccountId,
     'tabs': tabs.map((entry) => entry.toJson()).toList(),
     'pendingLocalHistoryAssociations': pendingLocalHistoryAssociations
         .map((entry) => entry.toJson())
@@ -94,6 +107,7 @@ class WorkspaceSessionSnapshot {
   factory WorkspaceSessionSnapshot.fromJson(Map<String, Object?> json) {
     return WorkspaceSessionSnapshot(
       workspacePath: json['workspacePath']?.toString(),
+      nextcloudAccountId: json['nextcloudAccountId']?.toString(),
       tabs:
           (json['tabs'] as List?)
               ?.whereType<Map>()

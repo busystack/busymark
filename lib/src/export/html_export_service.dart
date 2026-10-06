@@ -1,3 +1,4 @@
+import '../assets/document_media_context.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/services.dart';
@@ -99,6 +100,7 @@ class HtmlExportService {
       warnings: warnings,
       token: token,
       onProgress: onProgress,
+      media: request.media,
     );
   }
 
@@ -173,6 +175,7 @@ class HtmlExportService {
     required bool overwrite,
     required List<String> roots,
     List<WritersideModule> modules = const [],
+    DocumentMediaContext? media,
     required List<HtmlExportWarning> warnings,
     required HtmlExportCancellationToken token,
     HtmlExportProgress? onProgress,
@@ -195,6 +198,7 @@ class HtmlExportService {
         directory: Directory(p.join(stage.path, assetName)),
         urlDirectory: assetName,
         packaging: options.packaging,
+        media: media,
         allowedRoots: canonicalRoots,
         token: token,
         warnings: warnings,

@@ -4713,4 +4713,92 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get windowRestore => 'Przywróć';
+
+  @override
+  String get nextcloudNotes => 'Nextcloud Notes';
+
+  @override
+  String get nextcloudConnect => 'Połącz';
+
+  @override
+  String get nextcloudReconnect => 'Połącz ponownie';
+
+  @override
+  String get nextcloudDisconnect => 'Rozłącz';
+
+  @override
+  String get nextcloudServer => 'Adres serwera';
+
+  @override
+  String get nextcloudSignInBrowser => 'Dokończ logowanie w przeglądarce.';
+
+  @override
+  String get nextcloudFavorites => 'Ulubione';
+
+  @override
+  String get nextcloudNewNote => 'Nowa notatka';
+
+  @override
+  String get nextcloudSavedLocally =>
+      'Zapisano lokalnie · oczekuje na synchronizację';
+
+  @override
+  String get nextcloudSyncing => 'Synchronizowanie';
+
+  @override
+  String get nextcloudSynced => 'Zsynchronizowano';
+
+  @override
+  String get nextcloudOffline => 'Bez połączenia';
+
+  @override
+  String get nextcloudLocked => 'Zablokowane przez serwer';
+
+  @override
+  String get nextcloudReconnectRequired => 'Wymagane ponowne połączenie';
+
+  @override
+  String get nextcloudCreationUncertain => 'Niepewny wynik utworzenia';
+
+  @override
+  String get nextcloudReadOnly => 'Tylko do odczytu';
+
+  @override
+  String get nextcloudTakeRemote => 'Użyj wersji z serwera';
+
+  @override
+  String get nextcloudMerge => 'Scal';
+
+  @override
+  String get nextcloudDeleteNote => 'Usunąć notatkę?';
+
+  @override
+  String get nextcloudWorkspaceReplaceUnavailable =>
+      'Zastępowanie w obszarze roboczym nie jest dostępne dla Nextcloud Notes. Zastępuj w poszczególnych notatkach.';
+
+  @override
+  String get nextcloudSaveLocalCopy => 'Zapisz kopię lokalną…';
+
+  @override
+  String get nextcloudDisconnectWarning =>
+      'Usunięcie konta usuwa notatki w pamięci podręcznej i oczekujące zmiany z urządzenia. Najpierw zsynchronizuj, aby zachować pracę na serwerze.';
+
+  @override
+  String get nextcloudAttachmentRetryWarning =>
+      'Jeśli poprzednie przesyłanie się powiodło, ponowienie może pozostawić nieużywany załącznik na serwerze.';
+
+  @override
+  String get nextcloudAttachmentReference =>
+      'Odnośnik do załącznika na serwerze';
+
+  @override
+  String get nextcloudAddAttachment => 'Dodaj załącznik…';
+
+  @override
+  String get nextcloudDeleteAttachmentWarning =>
+      'Usunięcie tego załącznika spowoduje, że jego odnośniki w notatce będą niedostępne. Zachowane dane można odzyskać z lokalnej historii.';
+
+  @override
+  String get nextcloudChooseConflictingAttributes =>
+      'Wybierz wartość każdego sprzecznego atrybutu.';
 }

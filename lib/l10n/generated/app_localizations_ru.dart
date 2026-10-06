@@ -4717,4 +4717,91 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get windowRestore => 'Восстановить';
+
+  @override
+  String get nextcloudNotes => 'Nextcloud Notes';
+
+  @override
+  String get nextcloudConnect => 'Подключить';
+
+  @override
+  String get nextcloudReconnect => 'Подключить снова';
+
+  @override
+  String get nextcloudDisconnect => 'Отключить';
+
+  @override
+  String get nextcloudServer => 'Адрес сервера';
+
+  @override
+  String get nextcloudSignInBrowser => 'Завершите вход в браузере.';
+
+  @override
+  String get nextcloudFavorites => 'Избранное';
+
+  @override
+  String get nextcloudNewNote => 'Новая заметка';
+
+  @override
+  String get nextcloudSavedLocally =>
+      'Сохранено локально · ожидает синхронизации';
+
+  @override
+  String get nextcloudSyncing => 'Синхронизация';
+
+  @override
+  String get nextcloudSynced => 'Синхронизировано';
+
+  @override
+  String get nextcloudOffline => 'Нет сети';
+
+  @override
+  String get nextcloudLocked => 'Заблокировано сервером';
+
+  @override
+  String get nextcloudReconnectRequired => 'Требуется повторное подключение';
+
+  @override
+  String get nextcloudCreationUncertain => 'Результат создания неизвестен';
+
+  @override
+  String get nextcloudReadOnly => 'Только чтение';
+
+  @override
+  String get nextcloudTakeRemote => 'Принять версию сервера';
+
+  @override
+  String get nextcloudMerge => 'Объединить';
+
+  @override
+  String get nextcloudDeleteNote => 'Удалить заметку?';
+
+  @override
+  String get nextcloudWorkspaceReplaceUnavailable =>
+      'Замена по рабочей области недоступна для Nextcloud Notes. Используйте замену в отдельных заметках.';
+
+  @override
+  String get nextcloudSaveLocalCopy => 'Сохранить локальную копию…';
+
+  @override
+  String get nextcloudDisconnectWarning =>
+      'Удаление учётной записи удалит кеш заметок и ожидающие изменения с этого устройства. Сначала синхронизируйте их, чтобы сохранить работу на сервере.';
+
+  @override
+  String get nextcloudAttachmentRetryWarning =>
+      'Если предыдущая загрузка завершилась успешно, повторная попытка может оставить неиспользуемое вложение на сервере.';
+
+  @override
+  String get nextcloudAttachmentReference => 'Ссылка на вложение на сервере';
+
+  @override
+  String get nextcloudAddAttachment => 'Добавить вложение…';
+
+  @override
+  String get nextcloudDeleteAttachmentWarning =>
+      'После удаления этого вложения ссылки на него в заметке станут недоступны. Сохранённые данные можно восстановить через локальную историю.';
+
+  @override
+  String get nextcloudChooseConflictingAttributes =>
+      'Выберите значение каждого конфликтующего атрибута.';
 }

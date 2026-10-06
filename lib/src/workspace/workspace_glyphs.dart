@@ -12,6 +12,7 @@ abstract final class WorkspaceGlyphs {
     return switch (kind) {
       WorkspaceKind.untitledMarkdown ||
       WorkspaceKind.singleMarkdown => BusyMarkGlyphs.markdownFile,
+      WorkspaceKind.nextcloudNotes => BusyMarkGlyphs.documentHistory,
       WorkspaceKind.markdownFolder => BusyMarkGlyphs.folder,
       WorkspaceKind.writersideModule => BusyMarkGlyphs.writersideProject,
     };
@@ -25,6 +26,7 @@ abstract final class WorkspaceGlyphs {
     return switch (kind) {
       WorkspaceKind.untitledMarkdown ||
       WorkspaceKind.singleMarkdown => BusyMarkGlyphs.markdownFile,
+      WorkspaceKind.nextcloudNotes => BusyMarkGlyphs.documentHistory,
       WorkspaceKind.markdownFolder ||
       WorkspaceKind.writersideModule => BusyMarkGlyphs.folder,
     };

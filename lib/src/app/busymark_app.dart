@@ -857,6 +857,7 @@ class BusyMarkApp extends ConsumerWidget {
       WorkspaceKind.untitledMarkdown ||
       WorkspaceKind.singleMarkdown ||
       WorkspaceKind.markdownFolder ||
+      WorkspaceKind.nextcloudNotes ||
       WorkspaceKind.writersideModule => true,
     };
   }

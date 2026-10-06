@@ -1,3 +1,4 @@
+import '../../assets/document_media_context.dart';
 import 'dart:async';
 import 'dart:io';
 import 'dart:math' as math;
@@ -6033,6 +6034,11 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     WysiwygEditorSessionState? beforeSpellingSession,
     WysiwygEditorSessionState? afterSpellingSession,
   }) {
+    if (DocumentReadOnlyScope.of(context)) {
+      _documentController.replaceDocument(widget.document);
+      setState(() {});
+      return;
+    }
     if (undoGroup == null) {
       _continuousTextEdit = null;
     }
@@ -6223,7 +6229,7 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       selectionEnd: selectionEnd,
       anchorOffset: mappedAnchor ?? selectionStart,
       sourceRevision: widget.visualizationRevision,
-      targetId: _documentController.document.filePath,
+      targetId: widget.documentId ?? _documentController.document.filePath,
       documentPath: _documentController.document.filePath,
     );
   }
@@ -7547,15 +7553,18 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     }
     final resolved = <String, String>{};
     for (final value in references.take(256)) {
-      if (Uri.tryParse(value)?.hasScheme == true) continue;
-      final path = resolveLocalMediaPath(
-        activeFilePath: _documentController.document.filePath,
-        destination: value,
-        workspaceRoot: widget.workspaceRoot,
-        writersideRoot: widget.writersideRoot,
-        imagesDir: widget.imagesDir,
-        maxRecursiveEntries: 1000,
-      );
+      final media = DocumentMediaScope.of(context);
+      if (media == null && Uri.tryParse(value)?.hasScheme == true) continue;
+      final path = media != null
+          ? media.resolveCached(value)
+          : resolveLocalMediaPath(
+              activeFilePath: _documentController.document.filePath,
+              destination: value,
+              workspaceRoot: widget.workspaceRoot,
+              writersideRoot: widget.writersideRoot,
+              imagesDir: widget.imagesDir,
+              maxRecursiveEntries: 1000,
+            );
       if (path != null) resolved[value] = path;
     }
     return resolved;
@@ -7948,6 +7957,7 @@ class _DocumentSelectionTextInputState
 
   @override
   Widget build(BuildContext context) => EditableText(
+    readOnly: DocumentReadOnlyScope.of(context),
     controller: _controller,
     focusNode: _focusNode,
     style: const TextStyle(

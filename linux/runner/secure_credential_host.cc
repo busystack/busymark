@@ -1,4 +1,5 @@
 #include "secure_credential_host.h"
+#include "credential_key_policy.h"
 
 #include <libsecret/secret.h>
 
@@ -8,7 +9,6 @@ namespace {
 
 constexpr char kChannelName[] = "com.busymark.app/secure_credentials";
 constexpr char kOpenAiCredential[] = "busymark.ai.provider-key.openai";
-constexpr char kGeminiCredential[] = "busymark.ai.provider-key.gemini";
 constexpr gsize kMaximumCredentialBytes = 16 * 1024;
 
 struct CredentialRequest {
@@ -17,7 +17,13 @@ struct CredentialRequest {
   gchar* secret;
 };
 
-SecretSchema* credential_schema() {
+SecretSchema* credential_schema(const gchar* key) {
+  if (busymark_credentials::is_nextcloud_key(key)) {
+    static SecretSchema* nextcloud_schema = secret_schema_new(
+        "io.busystack.busymark.nextcloud.credentials", SECRET_SCHEMA_NONE,
+        "account", SECRET_SCHEMA_ATTRIBUTE_STRING, nullptr);
+    return nextcloud_schema;
+  }
   static SecretSchema* schema =
       secret_schema_new("io.busystack.busymark.ai.credentials",
                         SECRET_SCHEMA_NONE, "credential",
@@ -26,11 +32,23 @@ SecretSchema* credential_schema() {
 }
 
 bool is_allowed_key(const gchar* key) {
-  return g_strcmp0(key, kOpenAiCredential) == 0 ||
-         g_strcmp0(key, kGeminiCredential) == 0;
+  return busymark_credentials::is_allowed_key(key);
+}
+
+const gchar* credential_attribute(const gchar* key) {
+  return busymark_credentials::is_nextcloud_key(key) ? "account" : "credential";
+}
+
+const gchar* credential_identifier(const gchar* key) {
+  return busymark_credentials::is_nextcloud_key(key)
+             ? key + sizeof(busymark_credentials::kNextcloudPrefix) - 1
+             : key;
 }
 
 const gchar* credential_label(const gchar* key) {
+  if (busymark_credentials::is_nextcloud_key(key)) {
+    return "BusyMark Nextcloud Notes app password";
+  }
   if (g_strcmp0(key, kOpenAiCredential) == 0) {
     return "BusyMark OpenAI API key";
   }
@@ -149,8 +167,9 @@ void secure_credential_method_call_cb(FlMethodChannel*,
 
   if (std::strcmp(method, "read") == 0) {
     auto* request = credential_request_new(method_call, key);
-    secret_password_lookup(credential_schema(), nullptr, lookup_finished,
-                           request, "credential", key, nullptr);
+    secret_password_lookup(credential_schema(key), nullptr, lookup_finished,
+                           request, credential_attribute(key),
+                           credential_identifier(key), nullptr);
     return;
   }
 
@@ -163,17 +182,19 @@ void secure_credential_method_call_cb(FlMethodChannel*,
       return;
     }
     auto* request = credential_request_new(method_call, key, secret);
-    secret_password_store(credential_schema(), SECRET_COLLECTION_DEFAULT,
+    secret_password_store(credential_schema(key), SECRET_COLLECTION_DEFAULT,
                           credential_label(key), request->secret, nullptr,
-                          store_finished, request, "credential", key,
+                          store_finished, request, credential_attribute(key),
+                          credential_identifier(key),
                           nullptr);
     return;
   }
 
   if (std::strcmp(method, "delete") == 0) {
     auto* request = credential_request_new(method_call, key);
-    secret_password_clear(credential_schema(), nullptr, clear_finished,
-                          request, "credential", key, nullptr);
+    secret_password_clear(credential_schema(key), nullptr, clear_finished,
+                          request, credential_attribute(key),
+                          credential_identifier(key), nullptr);
     return;
   }
 

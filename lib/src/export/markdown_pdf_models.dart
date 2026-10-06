@@ -1,3 +1,4 @@
+import '../assets/document_media_context.dart';
 import 'package:flutter/foundation.dart';
 
 import '../markdown/markdown_model.dart';
@@ -42,8 +43,10 @@ class MarkdownPdfExportRequest {
     this.mode = MarkdownMode.commonMark,
     this.document,
     this.titlePage,
+    this.media,
   });
 
+  final DocumentMediaContext? media;
   final String source;
   final String filePath;
   final String workspaceRoot;

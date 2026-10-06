@@ -862,7 +862,11 @@ class _AiProposalDialogState extends ConsumerState<_AiProposalDialog> {
         (!widget.invocation.enforceDocumentRevision ||
             (ref.read(workspaceControllerProvider.notifier).editRevision ==
                     widget.invocation.sourceRevision &&
-                currentPath == widget.invocation.documentPath));
+                (workspaceState.activeBuffer?.isRemote == true
+                    ? widget.invocation.targetId.startsWith(
+                        '${workspaceState.activeBuffer!.id}:',
+                      )
+                    : currentPath == widget.invocation.documentPath)));
     final proposal = _output.toString();
     return BusyMarkDialogShell(
       title: context.l10n.aiProposal,

@@ -173,6 +173,7 @@ class LocalHistoryBufferSnapshot {
     required this.revision,
     this.path,
     this.untitled = false,
+    this.remoteNote,
   });
 
   factory LocalHistoryBufferSnapshot.fromBuffer(DocumentBuffer buffer) =>
@@ -184,6 +185,7 @@ class LocalHistoryBufferSnapshot {
         revision: buffer.revision,
         path: buffer.filePath,
         untitled: buffer.isUntitled,
+        remoteNote: buffer.remoteNote,
       );
 
   final String bufferId;
@@ -193,6 +195,7 @@ class LocalHistoryBufferSnapshot {
   final int revision;
   final String? path;
   final bool untitled;
+  final NextcloudNoteReference? remoteNote;
 
   LocalHistoryBufferSnapshot atPath(String destinationPath) =>
       LocalHistoryBufferSnapshot(
@@ -212,6 +215,7 @@ class LocalHistoryBufferSnapshot {
     revision: revision,
     path: path,
     untitled: untitled,
+    remoteNote: remoteNote,
   );
 }
 
@@ -1433,6 +1437,7 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
           documentId: ignoreBinding
               ? null
               : _documentIdsByBuffer[snapshot.bufferId],
+          remoteNote: snapshot.remoteNote,
           path: snapshot.path,
           displayName: snapshot.displayName,
           source: snapshot.text,

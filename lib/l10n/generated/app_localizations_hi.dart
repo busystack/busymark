@@ -4650,4 +4650,90 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get windowRestore => 'पुनर्स्थापित करें';
+
+  @override
+  String get nextcloudNotes => 'Nextcloud Notes';
+
+  @override
+  String get nextcloudConnect => 'कनेक्ट करें';
+
+  @override
+  String get nextcloudReconnect => 'फिर कनेक्ट करें';
+
+  @override
+  String get nextcloudDisconnect => 'डिस्कनेक्ट करें';
+
+  @override
+  String get nextcloudServer => 'सर्वर का पता';
+
+  @override
+  String get nextcloudSignInBrowser => 'अपने ब्राउज़र में साइन इन पूरा करें।';
+
+  @override
+  String get nextcloudFavorites => 'पसंदीदा';
+
+  @override
+  String get nextcloudNewNote => 'नया नोट';
+
+  @override
+  String get nextcloudSavedLocally => 'स्थानीय रूप से सहेजा · सिंक लंबित';
+
+  @override
+  String get nextcloudSyncing => 'सिंक हो रहा है';
+
+  @override
+  String get nextcloudSynced => 'सिंक हो गया';
+
+  @override
+  String get nextcloudOffline => 'ऑफ़लाइन';
+
+  @override
+  String get nextcloudLocked => 'सर्वर द्वारा लॉक';
+
+  @override
+  String get nextcloudReconnectRequired => 'फिर कनेक्ट करना आवश्यक';
+
+  @override
+  String get nextcloudCreationUncertain => 'बनाने का परिणाम अनिश्चित';
+
+  @override
+  String get nextcloudReadOnly => 'केवल पढ़ने योग्य';
+
+  @override
+  String get nextcloudTakeRemote => 'सर्वर संस्करण लें';
+
+  @override
+  String get nextcloudMerge => 'मिलाएँ';
+
+  @override
+  String get nextcloudDeleteNote => 'नोट हटाएँ?';
+
+  @override
+  String get nextcloudWorkspaceReplaceUnavailable =>
+      'Nextcloud Notes में कार्यक्षेत्र भर में बदलना उपलब्ध नहीं है। प्रत्येक नोट के भीतर बदलें।';
+
+  @override
+  String get nextcloudSaveLocalCopy => 'स्थानीय प्रति सहेजें…';
+
+  @override
+  String get nextcloudDisconnectWarning =>
+      'इस खाते को हटाने से इस डिवाइस के कैश किए गए नोट और लंबित बदलाव हट जाते हैं। सर्वर पर काम सुरक्षित रखने के लिए पहले सिंक करें।';
+
+  @override
+  String get nextcloudAttachmentRetryWarning =>
+      'यदि पिछला अपलोड सफल हुआ था, तो फिर प्रयास करने से सर्वर पर एक अप्रयुक्त संलग्नक रह सकता है।';
+
+  @override
+  String get nextcloudAttachmentReference => 'सर्वर पर संलग्नक का संदर्भ';
+
+  @override
+  String get nextcloudAddAttachment => 'अटैचमेंट जोड़ें…';
+
+  @override
+  String get nextcloudDeleteAttachmentWarning =>
+      'यह अटैचमेंट हटाने पर नोट में इसके लिंक उपलब्ध नहीं रहेंगे। सुरक्षित रखे गए डेटा को स्थानीय इतिहास से पुनर्प्राप्त किया जा सकता है।';
+
+  @override
+  String get nextcloudChooseConflictingAttributes =>
+      'हर परस्पर विरोधी विशेषता का मान चुनें।';
 }

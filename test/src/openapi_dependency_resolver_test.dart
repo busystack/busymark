@@ -26,6 +26,30 @@ void main() {
   });
 
   test(
+    'remote requests reject existing local references before reading dependencies',
+    () async {
+      const secret = 'private-machine-content';
+      await File(
+        p.join(workspace.path, 'components.yaml'),
+      ).writeAsString(secret);
+      final host = _ReferenceHost({
+        'entry-source': ['components.yaml#/components/schemas/Node'],
+        secret: <String>[],
+      });
+      final local = _request(document, workspace, 'entry-source');
+      final remote = local.copyWith(allowLocalFiles: false);
+      expect(remote.cacheKey, isNot(local.cacheKey));
+      await expectLater(
+        OpenApiDependencyResolver(
+          host: host,
+        ).resolve(remote, VisualizationCancellationToken()),
+        throwsA(isA<OpenApiDependencyException>()),
+      );
+      expect(host.inspectedSources, ['entry-source']);
+    },
+  );
+
+  test(
     'resolves local files, hashes them, and terminates circular schemas',
     () async {
       final component = File(p.join(workspace.path, 'components.yaml'));

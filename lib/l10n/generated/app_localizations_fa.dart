@@ -4697,4 +4697,90 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get windowRestore => 'بازیابی';
+
+  @override
+  String get nextcloudNotes => 'Nextcloud Notes';
+
+  @override
+  String get nextcloudConnect => 'اتصال';
+
+  @override
+  String get nextcloudReconnect => 'اتصال دوباره';
+
+  @override
+  String get nextcloudDisconnect => 'قطع اتصال';
+
+  @override
+  String get nextcloudServer => 'نشانی سرور';
+
+  @override
+  String get nextcloudSignInBrowser => 'ورود را در مرورگر تکمیل کنید.';
+
+  @override
+  String get nextcloudFavorites => 'علاقه‌مندی‌ها';
+
+  @override
+  String get nextcloudNewNote => 'یادداشت جدید';
+
+  @override
+  String get nextcloudSavedLocally => 'ذخیرهٔ محلی · در انتظار همگام‌سازی';
+
+  @override
+  String get nextcloudSyncing => 'در حال همگام‌سازی';
+
+  @override
+  String get nextcloudSynced => 'همگام شده';
+
+  @override
+  String get nextcloudOffline => 'بدون اتصال';
+
+  @override
+  String get nextcloudLocked => 'قفل‌شده توسط سرور';
+
+  @override
+  String get nextcloudReconnectRequired => 'اتصال دوباره لازم است';
+
+  @override
+  String get nextcloudCreationUncertain => 'نتیجهٔ ایجاد نامشخص است';
+
+  @override
+  String get nextcloudReadOnly => 'فقط خواندنی';
+
+  @override
+  String get nextcloudTakeRemote => 'استفاده از نسخهٔ سرور';
+
+  @override
+  String get nextcloudMerge => 'ادغام';
+
+  @override
+  String get nextcloudDeleteNote => 'یادداشت حذف شود؟';
+
+  @override
+  String get nextcloudWorkspaceReplaceUnavailable =>
+      'جایگزینی در فضای کاری برای یادداشت‌های Nextcloud در دسترس نیست. در هر یادداشت جداگانه جایگزین کنید.';
+
+  @override
+  String get nextcloudSaveLocalCopy => 'ذخیرهٔ نسخهٔ محلی…';
+
+  @override
+  String get nextcloudDisconnectWarning =>
+      'حذف حساب، یادداشت‌های ذخیره‌شده و تغییرات در انتظار را از این دستگاه حذف می‌کند. ابتدا همگام‌سازی کنید تا کار روی سرور حفظ شود.';
+
+  @override
+  String get nextcloudAttachmentRetryWarning =>
+      'اگر بارگذاری قبلی موفق بوده باشد، تلاش دوباره ممکن است پیوستی بدون استفاده روی سرور باقی بگذارد.';
+
+  @override
+  String get nextcloudAttachmentReference => 'مرجع پیوست روی سرور';
+
+  @override
+  String get nextcloudAddAttachment => 'افزودن پیوست…';
+
+  @override
+  String get nextcloudDeleteAttachmentWarning =>
+      'با حذف این پیوست، پیوندهای آن در یادداشت دیگر در دسترس نخواهند بود. داده‌های نگه‌داری‌شده را می‌توان از تاریخچهٔ محلی بازیابی کرد.';
+
+  @override
+  String get nextcloudChooseConflictingAttributes =>
+      'مقدار هر ویژگی متعارض را انتخاب کنید.';
 }

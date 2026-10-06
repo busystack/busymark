@@ -351,6 +351,12 @@ class GitController extends Notifier<GitState> {
     if (state.attachedWorkspace?.id != workspace.id) {
       _workspaceEpoch++;
     }
+    if (workspace.isRemote) {
+      _debounce?.cancel();
+      _knownHashes = {};
+      state = const GitState();
+      return;
+    }
     if (_gateway is UnavailableGitRepositoryGateway) {
       _debounce?.cancel();
       _knownHashes = {};
@@ -362,7 +368,8 @@ class GitController extends Notifier<GitState> {
       );
       return;
     }
-    if (workspace.kind == WorkspaceKind.untitledMarkdown ||
+    if (workspace.kind == WorkspaceKind.nextcloudNotes ||
+        workspace.kind == WorkspaceKind.untitledMarkdown ||
         workspace.kind == WorkspaceKind.singleMarkdown) {
       _debounce?.cancel();
       _knownHashes = {};
@@ -384,6 +391,7 @@ class GitController extends Notifier<GitState> {
   Future<void> refresh() async {
     final workspace = state.attachedWorkspace;
     if (workspace == null ||
+        workspace.kind == WorkspaceKind.nextcloudNotes ||
         workspace.kind == WorkspaceKind.untitledMarkdown ||
         workspace.kind == WorkspaceKind.singleMarkdown) {
       return;
@@ -1265,6 +1273,7 @@ class GitController extends Notifier<GitState> {
     if (workspace == null ||
         context == null ||
         trustedWorkspacePath == null ||
+        workspace.kind == WorkspaceKind.nextcloudNotes ||
         workspace.kind == WorkspaceKind.untitledMarkdown ||
         workspace.kind == WorkspaceKind.singleMarkdown) {
       return;
@@ -1769,6 +1778,7 @@ class GitController extends Notifier<GitState> {
   }
 
   String? _trustedWorkspaceGitPath(Workspace workspace) {
+    if (workspace.isRemote) return null;
     if (!_gateway.requiresWorkspaceTrust) {
       return workspace.rootPath;
     }

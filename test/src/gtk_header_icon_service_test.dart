@@ -34,11 +34,10 @@ void main() {
       'text-x-generic-symbolic',
     ]);
     expect(BusyMarkLinuxHeaderIcon.viewPreview.gtkNames, const [
-      'view-reader-symbolic',
-      'document-open-symbolic',
+      'view-dual-symbolic',
     ]);
     expect(BusyMarkLinuxHeaderIcon.viewSplit.gtkNames, const [
-      'view-dual-symbolic',
+      'sidebar-show-right-symbolic',
     ]);
     expect(BusyMarkLinuxHeaderIcon.viewMenuArrow.gtkNames, const [
       'pan-down-symbolic',
@@ -83,10 +82,7 @@ void main() {
       final preview = observedRequests.singleWhere(
         (request) => request['key'] == 'viewPreview.ltr',
       );
-      expect(preview['names'], const [
-        'view-reader-symbolic',
-        'document-open-symbolic',
-      ]);
+      expect(preview['names'], const ['view-dual-symbolic']);
       expect(preview['direction'], 'ltr');
       expect(
         observedRequests.every((request) => request['allowMissing'] == true),
@@ -114,7 +110,7 @@ void main() {
   );
 
   testWidgets(
-    'theme and scale invalidation atomically replaces one cached catalog',
+    'explicit Back role survives atomic theme and scale catalog replacement',
     (tester) async {
       final invalidations = StreamController<Object?>.broadcast(sync: true);
       final replacement = Completer<Object?>();
@@ -139,10 +135,21 @@ void main() {
       await tester.pumpWidget(
         GtkHeaderIconScope(
           service: service,
-          child: const MaterialApp(
-            home: Center(child: BusyMarkGtkHeaderIcon(BusyMarkGlyphs.search)),
+          child: MaterialApp(
+            home: Center(
+              child: BusyMarkGtkHeaderIcon(
+                BusyMarkGlyphs.headerBackFor(TextDirection.ltr),
+                nativeIcon: BusyMarkLinuxHeaderIcon.back,
+              ),
+            ),
           ),
         ),
+      );
+      expect(
+        tester
+            .widget<BusyMarkGtkHeaderIcon>(find.byType(BusyMarkGtkHeaderIcon))
+            .nativeIcon,
+        BusyMarkLinuxHeaderIcon.back,
       );
       expect(
         tester.getSize(find.byType(BusyMarkGtkHeaderIcon)),

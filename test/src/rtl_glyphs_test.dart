@@ -10,6 +10,11 @@ void main() {
   test('navigation glyphs resolve for both reading directions', () {
     expect(BusyMarkGlyphs.backFor(TextDirection.ltr), YaruIcons.arrow_left);
     expect(BusyMarkGlyphs.backFor(TextDirection.rtl), YaruIcons.arrow_right);
+    expect(
+      BusyMarkGlyphs.headerBackFor(TextDirection.ltr),
+      YaruIcons.go_previous,
+    );
+    expect(BusyMarkGlyphs.headerBackFor(TextDirection.rtl), YaruIcons.go_next);
     expect(BusyMarkGlyphs.forwardFor(TextDirection.ltr), YaruIcons.go_next);
     expect(BusyMarkGlyphs.forwardFor(TextDirection.rtl), YaruIcons.go_previous);
     expect(

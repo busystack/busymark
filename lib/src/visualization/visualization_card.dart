@@ -15,6 +15,7 @@ import '../app/busymark_dialogs.dart';
 import '../app/busymark_glyphs.dart';
 import '../app/busymark_toast.dart';
 import '../app/localization.dart';
+import '../assets/document_media_context.dart';
 import '../writerside/writerside_diagram_source_loader.dart';
 import 'visualization_coordinator.dart';
 import 'visualization_models.dart';
@@ -150,15 +151,18 @@ class _BusyMarkVisualizationCardState
     final serial = _requestSerial;
     final theme = _theme ?? VisualizationTheme.light;
     var source = widget.source;
+    final media = DocumentMediaScope.of(context);
     final sourceReference = widget.sourceReference?.trim() ?? '';
     if (sourceReference.isNotEmpty) {
       try {
-        source = await const WritersideDiagramSourceLoader().load(
-          reference: sourceReference,
-          documentPath: widget.documentPath,
-          workspaceRoot: widget.workspaceRoot,
-        );
-      } on WritersideDiagramSourceException {
+        source = media != null
+            ? await loadDocumentMediaText(media, sourceReference)
+            : await const WritersideDiagramSourceLoader().load(
+                reference: sourceReference,
+                documentPath: widget.documentPath,
+                workspaceRoot: widget.workspaceRoot,
+              );
+      } on Object {
         if (!mounted || serial != _requestSerial) {
           return;
         }
@@ -187,6 +191,7 @@ class _BusyMarkVisualizationCardState
       engineVersion: widget.descriptor.kind.engineVersion,
       editRevision: widget.editRevision,
       priority: widget.priority,
+      allowLocalFiles: media == null,
     );
     try {
       final result = await _coordinator.render(request);

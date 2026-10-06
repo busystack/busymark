@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
 
 import '../workspace/text_format_metadata.dart';
+import '../workspace/document_origin.dart';
 
 enum LocalHistoryCaptureReason {
   baseline,
@@ -74,6 +75,7 @@ class LocalHistoryDocument {
     this.historicalPaths = const [],
     this.deleted = false,
     this.untitled = false,
+    this.remoteNote,
   });
 
   final String id;
@@ -83,6 +85,7 @@ class LocalHistoryDocument {
   final DateTime updatedAt;
   final bool deleted;
   final bool untitled;
+  final NextcloudNoteReference? remoteNote;
 
   LocalHistoryDocument copyWith({
     String? displayName,
@@ -91,6 +94,7 @@ class LocalHistoryDocument {
     DateTime? updatedAt,
     bool? deleted,
     bool? untitled,
+    NextcloudNoteReference? remoteNote,
   }) => LocalHistoryDocument(
     id: id,
     displayName: displayName ?? this.displayName,
@@ -101,6 +105,7 @@ class LocalHistoryDocument {
     updatedAt: updatedAt ?? this.updatedAt,
     deleted: deleted ?? this.deleted,
     untitled: untitled ?? this.untitled,
+    remoteNote: remoteNote ?? this.remoteNote,
   );
 
   Map<String, Object?> toJson() => {
@@ -111,6 +116,7 @@ class LocalHistoryDocument {
     'updatedAt': updatedAt.toUtc().toIso8601String(),
     'deleted': deleted,
     'untitled': untitled,
+    'remoteNote': remoteNote?.toJson(),
   };
 
   factory LocalHistoryDocument.fromJson(Map<String, Object?> json) {
@@ -126,6 +132,7 @@ class LocalHistoryDocument {
       updatedAt: DateTime.parse(json['updatedAt'].toString()).toUtc(),
       deleted: json['deleted'] as bool? ?? false,
       untitled: json['untitled'] as bool? ?? false,
+      remoteNote: NextcloudNoteReference.fromJson(json['remoteNote']),
     );
   }
 }
@@ -225,9 +232,13 @@ class LocalHistoryCaptureRequest {
     this.untitled = false,
     this.force = false,
     this.allowPathChange = false,
+    this.remoteNote,
   });
 
   final String? documentId;
+  final NextcloudNoteReference? remoteNote;
+  String? get remoteDocumentId =>
+      remoteNote == null ? null : 'nc_${sourceChecksum(remoteNote!.identity)}';
   final String? path;
   final String displayName;
   final String source;

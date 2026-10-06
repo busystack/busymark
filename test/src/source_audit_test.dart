@@ -51,15 +51,33 @@ void main() {
         ),
       ),
     );
-    expect(
-      combined.toLowerCase(),
-      isNot(
-        contains(
-          'sign'
-          '-in',
+    // Browser authentication is scoped to the dedicated Notes integration.
+    // Keep the removed-domain ban everywhere else, including other l10n keys.
+    for (final file in files) {
+      if (file.path.startsWith('lib/src/nextcloud_notes/')) continue;
+      var source = file.readAsStringSync().toLowerCase();
+      if ({
+        'lib/l10n/app_en.arb',
+        'lib/l10n/generated/app_localizations.dart',
+        'lib/l10n/generated/app_localizations_en.dart',
+      }.contains(file.path)) {
+        source = source.replaceAll(
+          'complete sign'
+              '-in in your browser.',
+          '',
+        );
+      }
+      expect(
+        source,
+        isNot(
+          contains(
+            'sign'
+            '-in',
+          ),
         ),
-      ),
-    );
+        reason: file.path,
+      );
+    }
     expect(
       combined.toLowerCase(),
       isNot(
@@ -509,7 +527,7 @@ void main() {
     expect(workspace, contains('class _HeaderSearchField'));
     expect(workspace, contains('return BusyMarkSearchField('));
     final searchField = RegExp(
-      r'class _HeaderSearchField[\s\S]*?class _HeaderSeparator',
+      r'class _HeaderSearchField[\s\S]*?class _Sidebar ',
     ).firstMatch(workspace)!.group(0)!;
     expect(searchField, isNot(contains('TextField(')));
     expect(searchField, isNot(contains('OutlineInputBorder(')));
@@ -996,7 +1014,7 @@ void main() {
       r'Future<_PathMenuAction\?> _showSidebarPathMenu',
     ).firstMatch(workspace)!.group(0)!;
     final outlineHeader = RegExp(
-      r'class _SidebarHeader extends StatelessWidget[\s\S]*?'
+      r'class _SidebarHeader extends ConsumerWidget[\s\S]*?'
       r'class _SidebarHeaderRow',
     ).firstMatch(workspace)!.group(0)!;
     final outlineActions = '$outlineMenu\n$outlineHeader';
@@ -1087,7 +1105,13 @@ void main() {
     ).firstMatch(workspace)?.group(0);
     expect(pathMenu, contains('highlightWhenOpen: false'));
     expect(workspace, isNot(contains('SystemMouseCursors.contextMenu')));
-    expect(workspace, contains('onSecondaryTapUp: (lineContext, details)'));
+    expect(
+      RegExp(
+        r'onSecondaryTapUp:\s*workspace.isRemote\s*\?\s*null\s*'
+        r':\s*\(lineContext, details\)',
+      ).allMatches(workspace),
+      hasLength(2),
+    );
     expect(workspace, contains('position: details.globalPosition'));
     expect(
       workspace,
