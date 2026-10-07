@@ -1255,6 +1255,7 @@ const _nativeGtkUserFacingPatterns = <_LiteralPattern>[
 ];
 
 const _sharedEnglishMatches = <String>{
+  'nextcloudNotes', // Official service name, unchanged across locales.
   'tocTemplateMarkdown', // Format names and literal file extensions.
   'tocTemplateXml',
   'tocOk', // Standard confirmation caption in the reviewed locales.

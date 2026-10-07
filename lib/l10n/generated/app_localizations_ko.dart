@@ -4524,4 +4524,89 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get windowRestore => '복원';
+
+  @override
+  String get nextcloudNotes => 'Nextcloud Notes';
+
+  @override
+  String get nextcloudConnect => '연결';
+
+  @override
+  String get nextcloudReconnect => '다시 연결';
+
+  @override
+  String get nextcloudDisconnect => '연결 해제';
+
+  @override
+  String get nextcloudServer => '서버 주소';
+
+  @override
+  String get nextcloudSignInBrowser => '브라우저에서 로그인을 완료하세요.';
+
+  @override
+  String get nextcloudFavorites => '즐겨찾기';
+
+  @override
+  String get nextcloudNewNote => '새 노트';
+
+  @override
+  String get nextcloudSavedLocally => '로컬에 저장됨 · 동기화 대기';
+
+  @override
+  String get nextcloudSyncing => '동기화 중';
+
+  @override
+  String get nextcloudSynced => '동기화됨';
+
+  @override
+  String get nextcloudOffline => '오프라인';
+
+  @override
+  String get nextcloudLocked => '서버에서 잠김';
+
+  @override
+  String get nextcloudReconnectRequired => '다시 연결 필요';
+
+  @override
+  String get nextcloudCreationUncertain => '생성 결과 불확실';
+
+  @override
+  String get nextcloudReadOnly => '읽기 전용';
+
+  @override
+  String get nextcloudTakeRemote => '서버 버전 사용';
+
+  @override
+  String get nextcloudMerge => '병합';
+
+  @override
+  String get nextcloudDeleteNote => '노트를 삭제할까요?';
+
+  @override
+  String get nextcloudWorkspaceReplaceUnavailable =>
+      'Nextcloud Notes에서는 작업 공간 전체 바꾸기를 사용할 수 없습니다. 각 노트에서 바꾸세요.';
+
+  @override
+  String get nextcloudSaveLocalCopy => '로컬 사본 저장…';
+
+  @override
+  String get nextcloudDisconnectWarning =>
+      '이 계정을 제거하면 이 기기의 캐시된 노트와 보류 중인 변경 사항이 삭제됩니다. 작업을 서버에 보관하려면 먼저 동기화하세요.';
+
+  @override
+  String get nextcloudAttachmentRetryWarning =>
+      '이전 업로드가 성공했다면 다시 시도할 때 사용하지 않는 첨부 파일이 서버에 남을 수 있습니다.';
+
+  @override
+  String get nextcloudAttachmentReference => '서버의 첨부 파일 참조';
+
+  @override
+  String get nextcloudAddAttachment => '첨부 파일 추가…';
+
+  @override
+  String get nextcloudDeleteAttachmentWarning =>
+      '이 첨부 파일을 삭제하면 노트 안의 해당 링크를 사용할 수 없습니다. 보관된 데이터는 로컬 기록에서 복구할 수 있습니다.';
+
+  @override
+  String get nextcloudChooseConflictingAttributes => '충돌하는 각 속성의 값을 선택하세요.';
 }

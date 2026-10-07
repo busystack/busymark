@@ -4651,4 +4651,91 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get windowRestore => 'Khôi phục';
+
+  @override
+  String get nextcloudNotes => 'Nextcloud Notes';
+
+  @override
+  String get nextcloudConnect => 'Kết nối';
+
+  @override
+  String get nextcloudReconnect => 'Kết nối lại';
+
+  @override
+  String get nextcloudDisconnect => 'Ngắt kết nối';
+
+  @override
+  String get nextcloudServer => 'Địa chỉ máy chủ';
+
+  @override
+  String get nextcloudSignInBrowser => 'Hoàn tất đăng nhập trong trình duyệt.';
+
+  @override
+  String get nextcloudFavorites => 'Yêu thích';
+
+  @override
+  String get nextcloudNewNote => 'Ghi chú mới';
+
+  @override
+  String get nextcloudSavedLocally => 'Đã lưu cục bộ · chờ đồng bộ';
+
+  @override
+  String get nextcloudSyncing => 'Đang đồng bộ';
+
+  @override
+  String get nextcloudSynced => 'Đã đồng bộ';
+
+  @override
+  String get nextcloudOffline => 'Ngoại tuyến';
+
+  @override
+  String get nextcloudLocked => 'Máy chủ đã khóa';
+
+  @override
+  String get nextcloudReconnectRequired => 'Cần kết nối lại';
+
+  @override
+  String get nextcloudCreationUncertain => 'Kết quả tạo chưa rõ';
+
+  @override
+  String get nextcloudReadOnly => 'Chỉ đọc';
+
+  @override
+  String get nextcloudTakeRemote => 'Dùng bản trên máy chủ';
+
+  @override
+  String get nextcloudMerge => 'Hợp nhất';
+
+  @override
+  String get nextcloudDeleteNote => 'Xóa ghi chú?';
+
+  @override
+  String get nextcloudWorkspaceReplaceUnavailable =>
+      'Không thể thay thế toàn bộ không gian làm việc với Nextcloud Notes. Hãy thay thế trong từng ghi chú.';
+
+  @override
+  String get nextcloudSaveLocalCopy => 'Lưu bản sao cục bộ…';
+
+  @override
+  String get nextcloudDisconnectWarning =>
+      'Xóa tài khoản này sẽ xóa ghi chú đã lưu và thay đổi đang chờ trên thiết bị. Hãy đồng bộ trước để giữ công việc trên máy chủ.';
+
+  @override
+  String get nextcloudAttachmentRetryWarning =>
+      'Nếu lần tải lên trước đã thành công, thử lại có thể để lại tệp đính kèm không dùng trên máy chủ.';
+
+  @override
+  String get nextcloudAttachmentReference =>
+      'Tham chiếu tệp đính kèm trên máy chủ';
+
+  @override
+  String get nextcloudAddAttachment => 'Thêm tệp đính kèm…';
+
+  @override
+  String get nextcloudDeleteAttachmentWarning =>
+      'Xóa tệp đính kèm này sẽ khiến các liên kết đến tệp trong ghi chú không còn khả dụng. Dữ liệu được giữ lại có thể khôi phục qua lịch sử cục bộ.';
+
+  @override
+  String get nextcloudChooseConflictingAttributes =>
+      'Chọn giá trị cho từng thuộc tính xung đột.';
 }

@@ -347,6 +347,7 @@ class _LocalHistoryPanelState extends ConsumerState<LocalHistoryPanel> {
   }
 
   Future<void> _confirmClear(_HistoryAction action, String? documentId) async {
+    final controller = ref.read(localHistoryControllerProvider.notifier);
     final confirmed = await showBusyMarkModalDialog<bool>(
       context,
       barrierDismissible: false,
@@ -375,8 +376,7 @@ class _LocalHistoryPanelState extends ConsumerState<LocalHistoryPanel> {
         ],
       ),
     );
-    if (confirmed != true || !mounted) return;
-    final controller = ref.read(localHistoryControllerProvider.notifier);
+    if (confirmed != true) return;
     if (action == _HistoryAction.clearDocument && documentId != null) {
       await controller.clearDocument(documentId);
     } else {
@@ -521,7 +521,9 @@ String localizeLocalHistoryWarning(
   LocalHistoryWarning warning,
 ) {
   final l10n = context.l10n;
-  final detail = warning.detail ?? '';
+  final detail = warning.ownerDisplayName == null
+      ? warning.detail ?? ''
+      : '${warning.ownerDisplayName}: ${warning.detail ?? ''}';
   return switch (warning.kind) {
     LocalHistoryWarningKind.indexRebuilt =>
       l10n.localHistoryWarningIndexRebuilt,

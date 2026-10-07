@@ -1,3 +1,4 @@
+import '../assets/document_media_context.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'package:crypto/crypto.dart';
@@ -18,8 +19,10 @@ class HtmlExportAssets {
     required this.warnings,
     this.limits = const HtmlExportLimits(),
     this.packaging = HtmlPackaging.assetsDirectory,
+    this.media,
   });
   final HtmlPackaging packaging;
+  final DocumentMediaContext? media;
   final Map<String, String> _embedded = {};
   final Set<String> _ownedEmbeddedUrls = {};
   bool ownsEmbeddedUrl(String url) => _ownedEmbeddedUrls.contains(url);
@@ -48,6 +51,27 @@ class HtmlExportAssets {
     if (_references.containsKey(key)) return _references[key];
     String? result;
     try {
+      if (media != null) {
+        final path = await media!.resolve(reference);
+        if (path == null) {
+          throw const HtmlExportException(
+            'Resource is not an available attachment of this note.',
+          );
+        }
+        final file = File(path);
+        if (await file.length() > limits.assetBytes) {
+          throw const HtmlExportException(
+            'Resource exceeds the asset size limit.',
+          );
+        }
+        result = await bytesAsset(
+          await file.readAsBytes(),
+          p.extension(path).toLowerCase(),
+          download: download,
+        );
+        _references[key] = result;
+        return result;
+      }
       final uri = Uri.tryParse(reference);
       if (uri == null ||
           (uri.hasScheme && uri.scheme != 'file') ||
@@ -142,15 +166,16 @@ class HtmlExportAssets {
             bytes[3] == 0xa3);
     final attachment =
         download &&
-        const {
-          '.pdf',
-          '.zip',
-          '.txt',
-          '.csv',
-          '.json',
-          '.yaml',
-          '.yml',
-        }.contains(extension);
+        (this.media != null ||
+            const {
+              '.pdf',
+              '.zip',
+              '.txt',
+              '.csv',
+              '.json',
+              '.yaml',
+              '.yml',
+            }.contains(extension));
     if (!signature && !media && !attachment) {
       throw const HtmlExportException(
         'Unsupported or invalid resource format.',
@@ -178,7 +203,7 @@ class HtmlExportAssets {
           '.zip' => 'application/zip',
           '.json' => 'application/json',
           '.csv' => 'text/csv',
-          _ => 'text/plain',
+          _ => this.media != null ? 'application/octet-stream' : 'text/plain',
         };
         final url = 'data:$mime;base64,${base64.encode(bytes)}';
         _embedded[name] = url;

@@ -24,6 +24,7 @@ enum WorkspaceKind {
   singleMarkdown,
   markdownFolder,
   writersideModule,
+  nextcloudNotes,
 }
 
 enum DocumentKind {
@@ -94,6 +95,7 @@ class WorkspaceDocumentContext {
     required this.parserPath,
     this.writersideModule,
     this.writersideTopic,
+    this.remoteNote,
   });
 
   final DocumentKind kind;
@@ -102,6 +104,7 @@ class WorkspaceDocumentContext {
   final String parserPath;
   final WritersideModule? writersideModule;
   final WritersideTopic? writersideTopic;
+  final NextcloudNoteReference? remoteNote;
 
   bool get isWritersideOwned =>
       writersideTopic != null ||
@@ -118,6 +121,15 @@ WorkspaceDocumentContext resolveWorkspaceDocumentContext(
   Workspace workspace,
   DocumentBuffer buffer,
 ) {
+  if (buffer.remoteNote case final reference?) {
+    return WorkspaceDocumentContext(
+      kind: DocumentKind.markdown,
+      markdownMode: MarkdownMode.commonMark,
+      diskPath: null,
+      parserPath: '${reference.identity}.md',
+      remoteNote: reference,
+    );
+  }
   final path = buffer.filePath;
   if (path == null) {
     return const WorkspaceDocumentContext(
@@ -261,7 +273,7 @@ class WorkspaceDirectory {
 class Workspace {
   Workspace({
     required this.id,
-    required this.rootPath,
+    required String? rootPath,
     required this.kind,
     required this.openedAt,
     required this.files,
@@ -276,12 +288,31 @@ class Workspace {
     this.markdown,
     this.writersideModule,
     this.writersideProject,
-  }) : openFilePaths = _normalizedOpenFilePaths(openFilePaths, activeFilePath),
+    this.nextcloudAccountId,
+  }) : filesystemRootPath = rootPath,
+       openFilePaths = _normalizedOpenFilePaths(openFilePaths, activeFilePath),
        activeFileModifiedAt =
            activeFileModifiedAt ?? activeFileSnapshot?.modifiedAt;
 
   final String id;
-  final String rootPath;
+  final String? filesystemRootPath;
+
+  /// Kept for existing local workflows. Remote workspaces have no disk root.
+  String get rootPath =>
+      filesystemRootPath ??
+      (throw StateError('A remote Notes workspace has no filesystem root'));
+  final String? nextcloudAccountId;
+  bool get isRemote => kind == WorkspaceKind.nextcloudNotes;
+
+  factory Workspace.nextcloudNotes(String accountId) => Workspace(
+    id: 'nextcloud:$accountId',
+    rootPath: null,
+    kind: WorkspaceKind.nextcloudNotes,
+    openedAt: DateTime.now(),
+    files: const [],
+    diagnostics: const [],
+    nextcloudAccountId: accountId,
+  );
   final WorkspaceKind kind;
   final DateTime openedAt;
   final String? activeFilePath;
@@ -337,7 +368,7 @@ class Workspace {
         : writersideProject as WritersideProject?;
     return Workspace(
       id: id,
-      rootPath: rootPath,
+      rootPath: filesystemRootPath,
       kind: kind,
       openedAt: openedAt,
       activeFilePath: nextActiveFilePath,
@@ -352,6 +383,7 @@ class Workspace {
       markdown: nextMarkdown,
       writersideModule: nextWritersideModule,
       writersideProject: nextWritersideProject,
+      nextcloudAccountId: nextcloudAccountId,
     );
   }
 }

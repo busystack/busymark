@@ -1,3 +1,4 @@
+import '../assets/document_media_context.dart';
 import '../markdown/markdown_model.dart';
 import 'export_options.dart';
 export 'export_options.dart';
@@ -85,7 +86,9 @@ class MarkdownHtmlExportRequest {
     this.mode = MarkdownMode.commonMark,
     this.document,
     this.options = const HtmlExportOptions(),
+    this.media,
   });
+  final DocumentMediaContext? media;
   final String source, filePath, workspaceRoot, destinationPath;
   final bool overwrite;
   final MarkdownMode mode;

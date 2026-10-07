@@ -4706,4 +4706,91 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get windowRestore => 'Herstellen';
+
+  @override
+  String get nextcloudNotes => 'Nextcloud Notes';
+
+  @override
+  String get nextcloudConnect => 'Verbinden';
+
+  @override
+  String get nextcloudReconnect => 'Opnieuw verbinden';
+
+  @override
+  String get nextcloudDisconnect => 'Verbinding verbreken';
+
+  @override
+  String get nextcloudServer => 'Server-URL';
+
+  @override
+  String get nextcloudSignInBrowser => 'Voltooi het aanmelden in uw browser.';
+
+  @override
+  String get nextcloudFavorites => 'Favorieten';
+
+  @override
+  String get nextcloudNewNote => 'Nieuwe notitie';
+
+  @override
+  String get nextcloudSavedLocally =>
+      'Lokaal opgeslagen · synchronisatie in behandeling';
+
+  @override
+  String get nextcloudSyncing => 'Synchroniseren';
+
+  @override
+  String get nextcloudSynced => 'Gesynchroniseerd';
+
+  @override
+  String get nextcloudOffline => 'Geen verbinding';
+
+  @override
+  String get nextcloudLocked => 'Vergrendeld door server';
+
+  @override
+  String get nextcloudReconnectRequired => 'Opnieuw verbinden vereist';
+
+  @override
+  String get nextcloudCreationUncertain => 'Resultaat van aanmaken onzeker';
+
+  @override
+  String get nextcloudReadOnly => 'Alleen lezen';
+
+  @override
+  String get nextcloudTakeRemote => 'Externe versie gebruiken';
+
+  @override
+  String get nextcloudMerge => 'Samenvoegen';
+
+  @override
+  String get nextcloudDeleteNote => 'Notitie verwijderen?';
+
+  @override
+  String get nextcloudWorkspaceReplaceUnavailable =>
+      'Vervangen in de werkruimte is niet beschikbaar voor Nextcloud Notes. Vervang binnen elke notitie.';
+
+  @override
+  String get nextcloudSaveLocalCopy => 'Lokale kopie opslaan…';
+
+  @override
+  String get nextcloudDisconnectWarning =>
+      'Dit account verwijderen wist de opgeslagen notities en wijzigingen in behandeling op dit apparaat. Synchroniseer eerst om dit werk op de server te bewaren.';
+
+  @override
+  String get nextcloudAttachmentRetryWarning =>
+      'Als de vorige upload is gelukt, kan opnieuw proberen een ongebruikte bijlage op de server achterlaten.';
+
+  @override
+  String get nextcloudAttachmentReference => 'Bijlageverwijzing op de server';
+
+  @override
+  String get nextcloudAddAttachment => 'Bijlage toevoegen…';
+
+  @override
+  String get nextcloudDeleteAttachmentWarning =>
+      'Als u deze bijlage verwijdert, zijn de links ernaar in de notitie niet meer beschikbaar. Bewaarde gegevens kunnen via de lokale geschiedenis worden hersteld.';
+
+  @override
+  String get nextcloudChooseConflictingAttributes =>
+      'Kies voor elk conflicterend kenmerk een waarde.';
 }

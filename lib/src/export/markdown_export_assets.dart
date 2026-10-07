@@ -1,3 +1,4 @@
+import '../assets/document_media_context.dart';
 import 'dart:convert';
 import 'dart:io';
 
@@ -38,6 +39,7 @@ class MarkdownExportAssetStager {
     required String activeFilePath,
     required String workspaceRoot,
     required MarkdownPdfCancellationToken cancellationToken,
+    DocumentMediaContext? media,
   }) async {
     final assetDirectory = Directory(p.join(exportRoot.path, 'assets'));
     await assetDirectory.create();
@@ -68,7 +70,7 @@ class MarkdownExportAssetStager {
         );
         continue;
       }
-      if (uri != null && uri.scheme.toLowerCase() != 'file') {
+      if (media == null && uri != null && uri.scheme.toLowerCase() != 'file') {
         warnings.add(
           MarkdownPdfWarning(
             MarkdownPdfWarningCode.imageUnsupported,
@@ -81,7 +83,9 @@ class MarkdownExportAssetStager {
       final resolverDestination = uri?.scheme.toLowerCase() == 'file'
           ? _fileUriPath(uri!)
           : destination;
-      final resolved = resolverDestination == null
+      final resolved = media != null
+          ? await media.resolve(destination)
+          : resolverDestination == null
           ? null
           : resolveLocalImagePath(
               activeFilePath: activeFilePath,

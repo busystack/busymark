@@ -115,6 +115,15 @@ class HtmlExportLinks {
       );
       return url == null ? null : _attachment(url, destination);
     }
+    if (assets.media != null && !destination.startsWith('#')) {
+      final url = await assets.local(
+        destination,
+        sourcePath: origin,
+        line: line,
+        download: true,
+      );
+      return url == null ? null : _attachment(url, destination);
+    }
     final uri = Uri.tryParse(destination);
     if (uri == null ||
         uri.hasScheme ||
@@ -191,8 +200,8 @@ class HtmlExportLinks {
   HtmlResolvedLink _attachment(String url, String destination) =>
       HtmlResolvedLink(
         url,
-        downloadName: p.basename(
-          Uri.decodeComponent(Uri.parse(destination).path),
-        ),
+        downloadName: destination.startsWith('busymark-attachment:')
+            ? 'attachment'
+            : p.basename(Uri.decodeComponent(Uri.parse(destination).path)),
       );
 }

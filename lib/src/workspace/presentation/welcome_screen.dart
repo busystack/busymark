@@ -1,3 +1,4 @@
+import '../../nextcloud_notes/application/nextcloud_connection.dart';
 import 'dart:async';
 import 'dart:io';
 
@@ -26,6 +27,7 @@ import '../../app/window_control_service.dart';
 import '../../core/debug_log.dart';
 import '../../core/path_utils.dart';
 import '../../feedback/presentation/feedback_dialog.dart';
+import '../../platform/gtk_header_icon_service.dart';
 import '../../platform/linux_header_bar_service.dart';
 import '../../writerside/writerside_project_creator.dart';
 import '../workspace_controller.dart';
@@ -154,6 +156,33 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                   ),
                   onTap: () => _chooseDirectory(context.l10n.open),
                 ),
+                BusyMarkActionRow(
+                  key: const ValueKey('welcome-nextcloud-notes'),
+                  title: context.l10n.nextcloudNotes,
+                  leading: const Icon(BusyMarkGlyphs.documentHistory),
+                  trailing: Icon(
+                    BusyMarkGlyphs.forwardFor(Directionality.of(context)),
+                  ),
+                  onTap: () async {
+                    final account = ref
+                        .read(nextcloudConnectionProvider)
+                        .account;
+                    if (account == null) {
+                      context.go(
+                        '${settingsLocation(SettingsReturnTarget.welcome)}&page=nextcloudNotes',
+                      );
+                    } else {
+                      if (!await confirmSafeToContinue(context, ref) ||
+                          !context.mounted) {
+                        return;
+                      }
+                      final opened = await ref
+                          .read(workspaceControllerProvider.notifier)
+                          .openNextcloudWorkspace(account.id);
+                      if (opened && context.mounted) context.go('/workspace');
+                    }
+                  },
+                ),
               ],
             ),
             if (state.isLoading) ...[
@@ -204,19 +233,28 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
               sidebarTransitionGenerationProvider,
             ),
             header: BusyMarkLinuxHeaderLayout(
-              leading: BusyMarkHeaderIconButton(
-                tooltip: sidebarVisible
-                    ? context.l10n.hideSidebar
-                    : context.l10n.showSidebar,
-                icon: BusyMarkGlyphs.sidebar,
-                selected: sidebarVisible,
-                shortcut: BusyMarkSidebarShortcutLabels.toggleSidebar,
-                onPressed: _toggleSidebar,
+              leading: BusyMarkLinuxHeaderControlGroup(
+                children: [
+                  BusyMarkLinuxHeaderIconButton(
+                    tooltip: sidebarVisible
+                        ? context.l10n.hideSidebar
+                        : context.l10n.showSidebar,
+                    icon: BusyMarkGlyphs.sidebar,
+                    nativeIcon: BusyMarkLinuxHeaderIcon.sidebar,
+                    selected: sidebarVisible,
+                    shortcut: BusyMarkSidebarShortcutLabels.toggleSidebar,
+                    onPressed: _toggleSidebar,
+                  ),
+                ],
               ),
               title: BusyMarkLinuxHeaderTitle(context.l10n.appTitle),
-              trailing: BusyMarkMainMenuButton(
-                onSelected: (action) =>
-                    _handleMainMenuAction(context, headerBar, action),
+              trailing: BusyMarkLinuxHeaderControlGroup(
+                children: [
+                  BusyMarkMainMenuButton(
+                    onSelected: (action) =>
+                        _handleMainMenuAction(context, headerBar, action),
+                  ),
+                ],
               ),
             ),
             body: welcomeContent,

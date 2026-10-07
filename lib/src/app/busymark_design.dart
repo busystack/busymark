@@ -58,7 +58,6 @@ abstract final class BusyMarkSizes {
   static const double settingsWidth = 760;
   static const double settingsSidebarBreakpoint = sidebarWidth + 520;
   static const double toolbarHeight = kYaruTitleBarHeight;
-  static const double headerTitleMinWidth = 120;
   static const double paneHeaderHeight = 38;
   static const double documentStatusBarHeight = 28;
   static const double iconButton = kYaruTitleBarItemHeight;
@@ -1012,25 +1011,57 @@ Widget _busyMarkGroupedRowSubtitle(
   );
 }
 
+class BusyMarkHeaderControlStyleScope extends InheritedWidget {
+  const BusyMarkHeaderControlStyleScope({
+    super.key,
+    required this.foregroundColor,
+    required this.disabledForegroundColor,
+    required this.backgroundColor,
+    required this.overlayColor,
+    required super.child,
+  });
+
+  final Color foregroundColor;
+  final Color disabledForegroundColor;
+  final WidgetStateProperty<Color?> backgroundColor;
+  final WidgetStateProperty<Color?> overlayColor;
+
+  static BusyMarkHeaderControlStyleScope? maybeOf(
+    BuildContext context,
+  ) => context
+      .dependOnInheritedWidgetOfExactType<BusyMarkHeaderControlStyleScope>();
+
+  @override
+  bool updateShouldNotify(BusyMarkHeaderControlStyleScope oldWidget) =>
+      foregroundColor != oldWidget.foregroundColor ||
+      disabledForegroundColor != oldWidget.disabledForegroundColor ||
+      backgroundColor != oldWidget.backgroundColor ||
+      overlayColor != oldWidget.overlayColor;
+}
+
 class BusyMarkHeaderIconButton extends StatelessWidget {
   const BusyMarkHeaderIconButton({
     super.key,
     required this.tooltip,
     required this.icon,
     required this.onPressed,
+    this.nativeIcon,
     this.selected = false,
     this.accented = false,
     this.transparent = true,
     this.elevated = false,
     this.shortcut,
     this.foregroundColor,
+    this.disabledForegroundColor,
     this.backgroundColor,
+    this.overlayColor,
     this.borderRadius = BusyMarkRadius.headerButton,
   });
 
   final String tooltip;
   final IconData icon;
   final VoidCallback? onPressed;
+  final BusyMarkLinuxHeaderIcon? nativeIcon;
   final bool selected;
   final bool accented;
   final bool transparent;
@@ -1040,7 +1071,9 @@ class BusyMarkHeaderIconButton extends StatelessWidget {
   final bool elevated;
   final String? shortcut;
   final Color? foregroundColor;
+  final Color? disabledForegroundColor;
   final WidgetStateProperty<Color?>? backgroundColor;
+  final WidgetStateProperty<Color?>? overlayColor;
   final double borderRadius;
 
   @override
@@ -1048,10 +1081,17 @@ class BusyMarkHeaderIconButton extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final colors = BusyMarkSurfaceColors.of(context);
+    final inheritedStyle = accented
+        ? null
+        : BusyMarkHeaderControlStyleScope.maybeOf(context);
     final semanticStyle = busyMarkHeaderIconButtonStyle(
       foregroundColor:
-          foregroundColor ?? (accented ? colorScheme.onPrimary : null),
-      disabledForegroundColor: colors.disabledForeground,
+          foregroundColor ??
+          (accented ? colorScheme.onPrimary : inheritedStyle?.foregroundColor),
+      disabledForegroundColor:
+          disabledForegroundColor ??
+          inheritedStyle?.disabledForegroundColor ??
+          colors.disabledForeground,
       backgroundColor:
           backgroundColor ??
           (accented
@@ -1061,9 +1101,11 @@ class BusyMarkHeaderIconButton extends StatelessWidget {
                   }
                   return colorScheme.primary;
                 })
-              : elevated || !transparent
-              ? busyMarkHeaderButtonBackground(context)
-              : null),
+              : inheritedStyle?.backgroundColor ??
+                    (elevated || !transparent
+                        ? busyMarkHeaderButtonBackground(context)
+                        : null)),
+      overlayColor: overlayColor ?? inheritedStyle?.overlayColor,
       borderRadius: borderRadius,
     );
     final style = elevated
@@ -1087,7 +1129,7 @@ class BusyMarkHeaderIconButton extends StatelessWidget {
     final button = IconButton(
       isSelected: selected,
       tooltip: shortcut == null ? tooltip : '$tooltip ($shortcut)',
-      icon: BusyMarkGtkHeaderIcon(icon),
+      icon: BusyMarkGtkHeaderIcon(icon, nativeIcon: nativeIcon),
       padding: EdgeInsets.zero,
       style: style.merge(yaruDefaults),
       onPressed: onPressed,

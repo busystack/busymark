@@ -10,12 +10,123 @@ import 'package:busymark/src/ai/ai_secret_store.dart';
 import 'package:busymark/src/app/app_settings.dart';
 import 'package:busymark/src/app/app_theme.dart';
 import 'package:busymark/src/app/busymark_design.dart';
+import 'package:busymark/src/editor/source/source_editor.dart';
+import 'package:busymark/src/editor/source/source_search.dart';
+import 'package:busymark/src/editor/source_language.dart';
+import 'package:busymark/src/editor/wysiwyg/wysiwyg_editor.dart';
+import 'package:busymark/src/markdown/markdown_parser.dart';
+import 'package:busymark/src/workspace/document_buffer.dart';
+import 'package:busymark/src/workspace/workspace_controller.dart';
+import 'package:busymark/src/workspace/workspace_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  for (final rich in [false, true]) {
+    testWidgets(
+      'remote ${rich ? "WYSIWYG" : "source"} AI proposal applies with logical identity',
+      (tester) async {
+        final container = _aiContainer(remote: true);
+        addTearDown(container.dispose);
+        final state = container.read(workspaceControllerProvider);
+        final buffer = state.activeBuffer!;
+        final parserPath = state.workspace!.markdown!.filePath;
+        AiEditorSnapshot? captured;
+        String? changed;
+        await tester.pumpWidget(
+          UncontrolledProviderScope(
+            container: container,
+            child: MaterialApp(
+              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              supportedLocales: AppLocalizations.supportedLocales,
+              home: Scaffold(
+                body: Consumer(
+                  builder: (context, ref, _) {
+                    Future<AiEditApplication?> edit(AiEditorSnapshot snapshot) {
+                      captured = snapshot;
+                      return showBusyMarkAiEdit(context, ref, snapshot);
+                    }
+
+                    return rich
+                        ? BusyMarkWysiwygEditor(
+                            document: state.workspace!.markdown!.busyDocument,
+                            documentId: buffer.id,
+                            visualizationRevision: 5,
+                            onSourceChanged: (_, text) => changed = text,
+                            onAiEdit: edit,
+                          )
+                        : BusyMarkSourceEditor(
+                            text: buffer.text,
+                            filePath: parserPath,
+                            documentId: buffer.id,
+                            editRevision: 5,
+                            language: SourceSyntaxLanguage.markdown,
+                            diagnostics: const [],
+                            editorFontSize: 16,
+                            wordWrap: true,
+                            searchActive: false,
+                            searchOptions: const SourceSearchOptions(),
+                            onSearchOptionsChanged: (_) {},
+                            onChanged: (text, _) => changed = text,
+                            onOpenSearch: () {},
+                            onCloseSearch: () {},
+                            onAiEdit: edit,
+                          );
+                  },
+                ),
+              ),
+            ),
+          ),
+        );
+        await _pumpSettings(tester, container);
+        await tester.pumpAndSettle();
+        final field = find.byType(TextField).first;
+        await tester.tap(field);
+        tester.widget<TextField>(field).controller!.selection =
+            const TextSelection(baseOffset: 0, extentOffset: 15);
+        await tester.pump();
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+        await tester.sendKeyEvent(LogicalKeyboardKey.keyG);
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+        await tester.pumpAndSettle();
+        expect(captured!.targetId, buffer.id);
+        expect(captured!.documentPath, parserPath);
+        await tester.enterText(
+          find.byKey(const ValueKey('ai-edit-instruction')),
+          'Improve this',
+        );
+        tester
+            .widget<BusyMarkComboRow<String>>(
+              find.byKey(const ValueKey('ai-edit-model')),
+            )
+            .onSelected('test-model');
+        await tester.pump();
+        await tester.tap(find.text('Generate proposal'));
+        await tester.pumpAndSettle();
+        final apply = find.widgetWithText(
+          BusyMarkDialogButton,
+          'Apply proposal',
+        );
+        expect(tester.widget<BusyMarkDialogButton>(apply).onPressed, isNotNull);
+        // A different remote tab with the same revision must still be stale.
+        final controller =
+            container.read(workspaceControllerProvider.notifier)
+                as _RemoteWorkspace;
+        controller.selectOther();
+        await tester.pump();
+        expect(tester.widget<BusyMarkDialogButton>(apply).onPressed, isNull);
+        controller.restore(state);
+        await tester.pump();
+        await tester.tap(find.text('Apply proposal'));
+        await tester.pumpAndSettle();
+        expect(changed, contains('Improve documentation'));
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
+
   testWidgets('document-only AI snapshot opens a usable configuration', (
     tester,
   ) async {
@@ -725,12 +836,17 @@ class _MemoryAiSecretStore implements AiSecretStore {
   }
 }
 
-ProviderContainer _aiContainer({Map<AiProviderKind, String>? secrets}) {
+ProviderContainer _aiContainer({
+  Map<AiProviderKind, String>? secrets,
+  bool remote = false,
+}) {
   final settings = AppSettings.defaults().copyWith(
     aiProviderPreference: AiProviderPreference.ollamaLocal,
   );
   final container = ProviderContainer(
     overrides: [
+      if (remote)
+        workspaceControllerProvider.overrideWith(_RemoteWorkspace.new),
       localSettingsStoreProvider.overrideWithValue(
         _MemorySettingsStore(settings.toJson()),
       ),
@@ -752,4 +868,47 @@ ProviderContainer _aiContainer({Map<AiProviderKind, String>? secrets}) {
   );
   container.read(appSettingsControllerProvider);
   return container;
+}
+
+class _RemoteWorkspace extends WorkspaceController {
+  @override
+  int get editRevision => 5;
+  @override
+  WorkspaceState build() {
+    final buffer = DocumentBuffer.nextcloud(
+      reference: const NextcloudNoteReference(
+        accountId: 'account',
+        localId: 'note',
+      ),
+      title: 'Note',
+      content: 'Text to refine.\n',
+      revision: 5,
+    );
+    return WorkspaceState(
+      workspace: Workspace.nextcloudNotes('account').copyWith(
+        markdown: const MarkdownParser().parse(
+          filePath: '${buffer.identity}.md',
+          source: buffer.text,
+          validateLocalReferences: false,
+        ),
+      ),
+      documentBuffers: [buffer],
+      activeBufferId: buffer.id,
+    );
+  }
+
+  void selectOther() {
+    final other = DocumentBuffer.nextcloud(
+      reference: const NextcloudNoteReference(
+        accountId: 'account',
+        localId: 'other',
+      ),
+      title: 'Other',
+      content: state.activeText,
+      revision: 5,
+    );
+    state = state.copyWith(documentBuffers: [other], activeBufferId: other.id);
+  }
+
+  void restore(WorkspaceState value) => state = value;
 }

@@ -7,6 +7,7 @@ import 'dart:io';
 import 'dart:ui' as ui;
 
 import 'package:busymark/src/app/app_settings.dart';
+import 'package:busymark/src/app/app_router.dart';
 import 'package:busymark/src/app/busymark_app.dart';
 import 'package:busymark/src/app/command_registry.dart';
 import 'package:busymark/src/app/startup_path.dart';
@@ -27,6 +28,7 @@ import 'package:busymark/src/platform/rich_clipboard_service.dart';
 import 'package:busymark/src/workspace/recovery_persistence.dart';
 import 'package:busymark/src/workspace/session_persistence.dart';
 import 'package:busymark/src/workspace/workspace_controller.dart';
+import 'package:busymark/src/workspace/document_buffer.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
@@ -57,6 +59,44 @@ Future<void> main(List<String> arguments) async {
   await output.create(recursive: true);
   final realPolicyTimer =
       Platform.environment['BUSYMARK_HISTORY_REAL_POLICY'] == '1';
+  final repairMode = Platform.environment['BUSYMARK_HISTORY_REPAIR'] == '1';
+  final historyRoot = Directory(p.join(output.path, 'store'));
+  await historyRoot.create(recursive: true);
+  var contentions = 0;
+  final historyStore = repairMode
+      // This disposable desktop verification target uses the internal seam.
+      // ignore: invalid_use_of_visible_for_testing_member
+      ? FileLocalHistoryStore.testing(
+          rootDirectory: () async => historyRoot,
+          lockBudget: const Duration(milliseconds: 400),
+          acquireLock: (handle) async {
+            try {
+              await handle.lock(FileLock.exclusive);
+            } on FileSystemException {
+              contentions++;
+              rethrow;
+            }
+          },
+        )
+      : FileLocalHistoryStore(rootDirectory: () async => historyRoot);
+  final holder = repairMode
+      ? await _DesktopLockHolder.start(historyRoot)
+      : null;
+  final sessions = MemoryDocumentSessionStore();
+  if (repairMode) {
+    sessions.value = WorkspaceSessionSnapshot(
+      workspacePath: workspacePath,
+      tabs: [
+        DocumentSessionEntry(
+          id: 'restored-desktop',
+          filePath: primaryPath,
+          untitledName: null,
+          editorState: const DocumentEditorState(),
+        ),
+      ],
+      activeBufferId: 'restored-desktop',
+    );
+  }
 
   await windowManager.ensureInitialized();
   await LinuxHeaderBarService.instance.initialize();
@@ -69,14 +109,16 @@ Future<void> main(List<String> arguments) async {
     previewVisible: false,
     editorFontSize: mode == 'writerside' ? 20 : 15,
     autoSave: false,
-    reopenPreviousWorkspaceOnStartup: false,
+    reopenPreviousWorkspaceOnStartup: repairMode,
     confirmCloseWithUnsavedChanges: false,
   );
   final boundaryKey = GlobalKey();
   runApp(
     ProviderScope(
       overrides: [
-        startupPathProvider.overrideWithValue(workspacePath),
+        startupPathProvider.overrideWithValue(
+          repairMode ? null : workspacePath,
+        ),
         initialSystemAccentColorProvider.overrideWithValue(
           busyMarkDefaultAccentColor,
         ),
@@ -84,21 +126,15 @@ Future<void> main(List<String> arguments) async {
         localSettingsStoreProvider.overrideWithValue(
           _MemorySettingsStore(settings.toJson()),
         ),
-        documentSessionStoreProvider.overrideWithValue(
-          MemoryDocumentSessionStore(),
-        ),
+        documentSessionStoreProvider.overrideWithValue(sessions),
         documentRecoveryStoreProvider.overrideWithValue(
           MemoryDocumentRecoveryStore(),
         ),
         richClipboardServiceProvider.overrideWithValue(
           _RuntimeExternalClipboardService(),
         ),
-        localHistoryStoreProvider.overrideWithValue(
-          FileLocalHistoryStore(
-            rootDirectory: () async => Directory(p.join(output.path, 'store')),
-          ),
-        ),
-        if (!realPolicyTimer)
+        localHistoryStoreProvider.overrideWithValue(historyStore),
+        if (!realPolicyTimer && !repairMode)
           localHistoryTimerFactoryProvider.overrideWithValue(
             (_, callback) => Timer(const Duration(seconds: 2), callback),
           ),
@@ -110,6 +146,9 @@ Future<void> main(List<String> arguments) async {
         output: output,
         boundaryKey: boundaryKey,
         realPolicyTimer: realPolicyTimer,
+        initialHolder: holder,
+        contentions: () => contentions,
+        repairStore: historyStore,
       ),
     ),
   );
@@ -130,6 +169,9 @@ class _HistoryVisualHarness extends ConsumerStatefulWidget {
     required this.output,
     required this.boundaryKey,
     required this.realPolicyTimer,
+    this.initialHolder,
+    this.contentions,
+    this.repairStore,
   });
 
   final String mode;
@@ -138,6 +180,9 @@ class _HistoryVisualHarness extends ConsumerStatefulWidget {
   final Directory output;
   final GlobalKey boundaryKey;
   final bool realPolicyTimer;
+  final _DesktopLockHolder? initialHolder;
+  final int Function()? contentions;
+  final FileLocalHistoryStore? repairStore;
 
   @override
   ConsumerState<_HistoryVisualHarness> createState() =>
@@ -182,6 +227,11 @@ class _HistoryVisualHarnessState extends ConsumerState<_HistoryVisualHarness> {
         'workspace sidebar listeners',
       );
       await Future<void>.delayed(const Duration(milliseconds: 500));
+
+      if (widget.initialHolder != null) {
+        await _runRepair();
+        return;
+      }
 
       await _seedClipboard();
       _check(
@@ -356,6 +406,247 @@ class _HistoryVisualHarnessState extends ConsumerState<_HistoryVisualHarness> {
       ).writeAsString('$error\n$stackTrace');
       exit(1);
     }
+  }
+
+  Future<void> _runRepair() async {
+    final workspace = ref.read(workspaceControllerProvider.notifier);
+    final history = ref.read(localHistoryControllerProvider.notifier);
+    final store = widget.repairStore!;
+    final root = Directory(p.join(widget.output.path, 'store'));
+    _DesktopLockHolder? holder = widget.initialHolder;
+    bool draftStillPresent(DocumentBuffer expected) {
+      final current = ref.read(workspaceControllerProvider).activeBuffer;
+      return current?.id == expected.id &&
+          current?.revision == expected.revision &&
+          current?.text == expected.text &&
+          current?.isDirty == expected.isDirty;
+    }
+
+    try {
+      final original = ref.read(workspaceControllerProvider).activeBuffer!;
+      await _waitFor(
+        () =>
+            history.warningForBuffer(original.id)?.kind ==
+            LocalHistoryWarningKind.capture,
+        'restored capture failure',
+      );
+      _check(
+        widget.contentions!() > 0,
+        'startup encountered actual cross-process contention',
+      );
+      await holder!.release();
+      holder = null;
+      await history.refresh();
+      _check(
+        history.warningForBuffer(original.id)?.kind ==
+            LocalHistoryWarningKind.capture,
+        'refresh does not erase unresolved baseline',
+      );
+
+      holder = await _DesktopLockHolder.start(root);
+      await ref
+          .read(busyMarkCommandRegistryProvider)
+          .execute(BusyMarkCommandIds.back);
+      await _waitFor(
+        () =>
+            ref
+                .read(appRouterProvider)
+                .routeInformationProvider
+                .value
+                .uri
+                .path ==
+            '/',
+        'Back to welcome',
+      );
+      await _activateLabel('Create Markdown File');
+      await _waitFor(
+        () =>
+            ref.read(workspaceControllerProvider).activeBuffer?.id !=
+                original.id &&
+            ref
+                    .read(appRouterProvider)
+                    .routeInformationProvider
+                    .value
+                    .uri
+                    .path ==
+                '/workspace',
+        'first new draft',
+      );
+      var draft = ref.read(workspaceControllerProvider).activeBuffer!;
+      _check(
+        history.warningForBuffer(draft.id) == null,
+        'old failure does not become the new editor banner',
+      );
+      _check(
+        ref.read(localHistoryControllerProvider).warning?.ownerBufferId ==
+            original.id,
+        'retained failure identifies its closed owner',
+      );
+      await _capture('repair-new-draft.png');
+
+      await ref
+          .read(busyMarkCommandRegistryProvider)
+          .execute(BusyMarkCommandIds.back);
+      await _activateLabel('Discard');
+      await _waitFor(
+        () =>
+            ref
+                .read(appRouterProvider)
+                .routeInformationProvider
+                .value
+                .uri
+                .path ==
+            '/',
+        'Back after pristine discard',
+      );
+      await _activateLabel('Create Markdown File');
+      await _waitFor(
+        () =>
+            ref.read(workspaceControllerProvider).activeBuffer?.id !=
+                draft.id &&
+            ref
+                    .read(appRouterProvider)
+                    .routeInformationProvider
+                    .value
+                    .uri
+                    .path ==
+                '/workspace',
+        'second new draft',
+      );
+      draft = ref.read(workspaceControllerProvider).activeBuffer!;
+      _check(
+        draft.text.isEmpty && history.warningForBuffer(draft.id) == null,
+        'reported sequence ends with a clean new editor',
+      );
+      await holder.release();
+      holder = null;
+      _check(
+        await history.flushAll(
+          ref.read(workspaceControllerProvider).documentBuffers,
+        ),
+        'closed baseline recovers and settles',
+      );
+      var snapshot = await store.load();
+      _check(
+        snapshot.revisions.length == 1,
+        'pristine discard made no protective write',
+      );
+      _check(
+        (await store.readRevision(snapshot.revisions.single.id))!.source ==
+            original.text,
+        'original restored source retained exactly',
+      );
+
+      workspace.updateActiveText('Transiently protected desktop draft');
+      draft = ref.read(workspaceControllerProvider).activeBuffer!;
+      holder = await _DesktopLockHolder.start(root);
+      final before = widget.contentions!();
+      var finished = false;
+      final protecting = history
+          .captureBeforeLoss(
+            LocalHistoryBufferSnapshot.fromBuffer(draft),
+            LocalHistoryCaptureReason.beforeDiscard,
+          )
+          .then((result) {
+            finished = true;
+            return result;
+          });
+      await _waitFor(
+        () => widget.contentions!() > before,
+        'protective acquisition contention',
+      );
+      _check(
+        !finished,
+        'protective work remains pending during transient contention',
+      );
+      await holder.release();
+      holder = null;
+      _check(
+        await protecting,
+        'transient contention recovers without capture failure',
+      );
+      _check(
+        history.warningForBuffer(draft.id) == null,
+        'transient recovery has no stale warning',
+      );
+
+      workspace.updateActiveText('Keep this nonempty desktop draft');
+      draft = ref.read(workspaceControllerProvider).activeBuffer!;
+      holder = await _DesktopLockHolder.start(root);
+      _check(
+        !await workspace.closeDocumentBuffer(draft.id, discard: true),
+        'failed protection rejects nonempty discard',
+      );
+      _check(
+        draftStillPresent(draft),
+        'failed discard retains exact buffer and contents',
+      );
+      await _capture('repair-failed-nonempty-discard.png');
+      await holder.release();
+      holder = null;
+      _check(
+        await history.flushAll(
+          ref.read(workspaceControllerProvider).documentBuffers,
+        ),
+        'failed protective work recovers',
+      );
+      _check(
+        draftStillPresent(draft),
+        'background recovery does not execute the rejected discard',
+      );
+      snapshot = await store.load();
+      final sources = <String>[];
+      for (final revision in snapshot.revisions) {
+        sources.add((await store.readRevision(revision.id))!.source);
+      }
+      _check(
+        sources.contains(original.text) &&
+            sources.contains('Transiently protected desktop draft') &&
+            sources.contains(draft.text),
+        'all retained revision contents verified',
+      );
+      await File(
+        p.join(widget.output.path, 'repair-report.json'),
+      ).writeAsString(
+        const JsonEncoder.withIndent('  ').convert({
+          'passed': _checks.values.every((value) => value),
+          'checks': _checks,
+          'revisionSources': sources,
+          'screenshots': _screenshots,
+          'contentions': widget.contentions!(),
+        }),
+      );
+      await SystemNavigator.pop();
+    } finally {
+      await holder?.release();
+    }
+  }
+
+  Future<void> _activateLabel(String label) async {
+    VoidCallback? callback;
+    await _waitFor(() {
+      void visit(Element element) {
+        if (element.widget case Text(:final data) when data == label) {
+          element.visitAncestorElements((ancestor) {
+            final widget = ancestor.widget;
+            if (widget is ButtonStyleButton && widget.onPressed != null) {
+              callback = widget.onPressed;
+              return false;
+            }
+            if (widget is InkWell && widget.onTap != null) {
+              callback = widget.onTap;
+              return false;
+            }
+            return true;
+          });
+        }
+        element.visitChildren(visit);
+      }
+
+      WidgetsBinding.instance.rootElement?.visitChildren(visit);
+      return callback != null;
+    }, 'visible $label action');
+    callback!();
   }
 
   Future<void> _seedClipboard() async {
@@ -678,6 +969,51 @@ class _HistoryVisualHarnessState extends ConsumerState<_HistoryVisualHarness> {
   void _check(bool condition, String description) {
     _checks[description] = condition;
     if (!condition) throw StateError('$description failed.');
+  }
+}
+
+class _DesktopLockHolder {
+  _DesktopLockHolder(this.process, this.errors);
+  final Process process;
+  final Future<String> errors;
+  bool released = false;
+
+  static Future<_DesktopLockHolder> start(Directory root) async {
+    final process = await Process.start('/usr/bin/python3', [
+      '-c',
+      'import fcntl,sys,select\nf=open(sys.argv[1],"a+b")\nfcntl.lockf(f,fcntl.LOCK_EX|fcntl.LOCK_NB)\nprint("locked",flush=True)\nselect.select([sys.stdin],[],[],30)\nf.close()',
+      p.join(root.path, '.store.lock'),
+    ]);
+    final errors = process.stderr.transform(utf8.decoder).join();
+    try {
+      final ready = await process.stdout
+          .transform(utf8.decoder)
+          .transform(const LineSplitter())
+          .first
+          .timeout(const Duration(seconds: 5));
+      if (ready != 'locked') throw StateError('Desktop lock holder failed');
+      return _DesktopLockHolder(process, errors);
+    } on Object {
+      process.kill();
+      await process.exitCode.timeout(const Duration(seconds: 5));
+      rethrow;
+    }
+  }
+
+  Future<void> release() async {
+    if (released) return;
+    released = true;
+    int code;
+    try {
+      process.stdin.writeln('release');
+      await process.stdin.close();
+      code = await process.exitCode.timeout(const Duration(seconds: 5));
+    } on Object {
+      process.kill();
+      await process.exitCode.timeout(const Duration(seconds: 5));
+      rethrow;
+    }
+    if (code != 0) throw StateError('Desktop holder: ${await errors}');
   }
 }
 

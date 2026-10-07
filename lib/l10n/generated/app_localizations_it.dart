@@ -4700,4 +4700,91 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get windowRestore => 'Ripristina';
+
+  @override
+  String get nextcloudNotes => 'Nextcloud Notes';
+
+  @override
+  String get nextcloudConnect => 'Connetti';
+
+  @override
+  String get nextcloudReconnect => 'Riconnetti';
+
+  @override
+  String get nextcloudDisconnect => 'Disconnetti';
+
+  @override
+  String get nextcloudServer => 'URL del server';
+
+  @override
+  String get nextcloudSignInBrowser => 'Completa l’accesso nel browser.';
+
+  @override
+  String get nextcloudFavorites => 'Preferiti';
+
+  @override
+  String get nextcloudNewNote => 'Nuova nota';
+
+  @override
+  String get nextcloudSavedLocally =>
+      'Salvato localmente · sincronizzazione in attesa';
+
+  @override
+  String get nextcloudSyncing => 'Sincronizzazione';
+
+  @override
+  String get nextcloudSynced => 'Sincronizzato';
+
+  @override
+  String get nextcloudOffline => 'Non in linea';
+
+  @override
+  String get nextcloudLocked => 'Bloccato dal server';
+
+  @override
+  String get nextcloudReconnectRequired => 'Riconnessione necessaria';
+
+  @override
+  String get nextcloudCreationUncertain => 'Esito della creazione incerto';
+
+  @override
+  String get nextcloudReadOnly => 'Sola lettura';
+
+  @override
+  String get nextcloudTakeRemote => 'Usa versione remota';
+
+  @override
+  String get nextcloudMerge => 'Unisci';
+
+  @override
+  String get nextcloudDeleteNote => 'Eliminare la nota?';
+
+  @override
+  String get nextcloudWorkspaceReplaceUnavailable =>
+      'La sostituzione nell’area di lavoro non è disponibile per Nextcloud Notes. Sostituisci in ogni nota.';
+
+  @override
+  String get nextcloudSaveLocalCopy => 'Salva copia locale…';
+
+  @override
+  String get nextcloudDisconnectWarning =>
+      'Rimuovendo questo account si eliminano note memorizzate e modifiche in attesa dal dispositivo. Sincronizza prima per conservare il lavoro sul server.';
+
+  @override
+  String get nextcloudAttachmentRetryWarning =>
+      'Se il caricamento precedente è riuscito, il nuovo tentativo può lasciare un allegato inutilizzato sul server.';
+
+  @override
+  String get nextcloudAttachmentReference => 'Riferimento allegato sul server';
+
+  @override
+  String get nextcloudAddAttachment => 'Aggiungi allegato…';
+
+  @override
+  String get nextcloudDeleteAttachmentWarning =>
+      'Eliminando questo allegato, i suoi collegamenti nella nota non saranno più disponibili. I dati conservati possono essere recuperati dalla cronologia locale.';
+
+  @override
+  String get nextcloudChooseConflictingAttributes =>
+      'Scegli ogni attributo in conflitto.';
 }

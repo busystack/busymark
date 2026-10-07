@@ -1,3 +1,4 @@
+import '../../assets/document_media_context.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
@@ -526,6 +527,7 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
                             child: KeyedSubtree(
                               key: spellingEditableKey,
                               child: TextField(
+                                readOnly: DocumentReadOnlyScope.of(context),
                                 key: ValueKey(
                                   'wysiwyg-field-$documentFilePath-${block.id}',
                                 ),
@@ -2292,6 +2294,7 @@ class _TableCellEditorState extends State<_TableCellEditor> {
                       )
                     : null,
                 child: TextField(
+                  readOnly: DocumentReadOnlyScope.of(context),
                   key: ValueKey(cell.id),
                   controller: _controller,
                   focusNode: _focusNode,

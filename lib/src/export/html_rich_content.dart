@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import '../assets/document_media_context.dart';
 import '../math/math_coordinator.dart';
 import '../math/math_models.dart';
 import '../math/math_svg_preprocessor.dart';
@@ -69,11 +70,13 @@ class HtmlRichContent {
           when !block.attributes.containsKey(
             writersideResolvedSourceAttribute,
           )) {
-        source = await const WritersideDiagramSourceLoader().load(
-          reference: reference,
-          documentPath: sourcePath,
-          workspaceRoot: root,
-        );
+        source = assets.media != null
+            ? await loadDocumentMediaText(assets.media!, reference)
+            : await const WritersideDiagramSourceLoader().load(
+                reference: reference,
+                documentPath: sourcePath,
+                workspaceRoot: root,
+              );
       }
       final request = VisualizationRenderRequest(
         blockKey: 'html:$exportId:$occurrenceId',
@@ -87,6 +90,7 @@ class HtmlRichContent {
         engineVersion: descriptor.kind.engineVersion,
         editRevision: 0,
         priority: VisualizationRenderPriority.export,
+        allowLocalFiles: assets.media == null,
       );
       _captured[occurrenceId] = await visualization
           ?.capture(request, cancellation)

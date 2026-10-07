@@ -1,3 +1,8 @@
+import '../../assets/provider_asset_ingestion_service.dart';
+import '../../assets/document_media_context.dart';
+import '../../nextcloud_notes/application/nextcloud_connection.dart';
+import '../../nextcloud_notes/application/notes_media.dart';
+import '../../nextcloud_notes/presentation/notes_sidebar.dart';
 import 'dart:convert';
 import '../../writerside/writerside_table_view.dart';
 import '../../writerside/writerside_tabs_view.dart';
@@ -82,6 +87,7 @@ import '../../math/math_widget.dart';
 import '../../local_history/local_history_comparison_view.dart';
 import '../../local_history/local_history_controller.dart';
 import '../../local_history/local_history_panel.dart';
+import '../../platform/gtk_header_icon_service.dart';
 import '../../platform/linux_header_bar_service.dart';
 import '../../platform/native_writerside_dialog_service.dart';
 import '../../search/search_replace_service.dart';
@@ -373,7 +379,7 @@ class _WorkspaceSearchController extends Notifier<_WorkspaceSearchState> {
       state = state.copyWith(
         matches: const [],
         searching: false,
-        skippedFiles: [workspaceState.workspace?.rootPath ?? ''],
+        skippedFiles: [workspaceState.workspace?.filesystemRootPath ?? ''],
       );
     }
   }
@@ -940,15 +946,16 @@ class WorkspaceScreen extends ConsumerWidget {
                       centerAllocation: searchState.active
                           ? BusyMarkLinuxHeaderCenterAllocation
                                 .fillBetweenControls
-                          : BusyMarkLinuxHeaderCenterAllocation.centered,
-                      leading: Row(
-                        mainAxisSize: MainAxisSize.min,
+                          : BusyMarkLinuxHeaderCenterAllocation
+                                .centeredBetweenControls,
+                      leading: BusyMarkLinuxHeaderControlGroup(
                         children: [
-                          BusyMarkHeaderIconButton(
+                          BusyMarkLinuxHeaderIconButton(
                             tooltip: sidebarAvailable && settings.sidebarVisible
                                 ? context.l10n.hideSidebar
                                 : context.l10n.showSidebar,
                             icon: BusyMarkGlyphs.sidebar,
+                            nativeIcon: BusyMarkLinuxHeaderIcon.sidebar,
                             selected:
                                 sidebarAvailable && settings.sidebarVisible,
                             shortcut:
@@ -968,9 +975,12 @@ class WorkspaceScreen extends ConsumerWidget {
                                   },
                           ),
                           if (!searchState.active)
-                            BusyMarkHeaderIconButton(
-                              tooltip: context.l10n.welcome,
-                              icon: BusyMarkGlyphs.home,
+                            BusyMarkLinuxHeaderIconButton(
+                              tooltip: context.l10n.back,
+                              icon: BusyMarkGlyphs.headerBackFor(
+                                Directionality.of(context),
+                              ),
+                              nativeIcon: BusyMarkLinuxHeaderIcon.back,
                               shortcut: commandRegistry[BusyMarkCommandIds.back]
                                   ?.shortcut
                                   ?.label,
@@ -1002,39 +1012,14 @@ class WorkspaceScreen extends ConsumerWidget {
                           ),
                         ],
                       ),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
+                      trailing: BusyMarkLinuxHeaderControlGroup(
                         children: [
                           if (!searchState.active) ...[
-                            const SizedBox(width: BusyMarkSpacing.sm),
-                            BusyMarkHeaderIconButton(
-                              tooltip: context.l10n.validate,
-                              icon: BusyMarkGlyphs.diagnostics,
-                              onPressed: () => unawaited(
-                                _validateActiveAndShowProblems(context, ref),
-                              ),
-                            ),
-                            const _HeaderSeparator(),
-                          ],
-                          BusyMarkHeaderIconButton(
-                            tooltip: context.l10n.search,
-                            icon: BusyMarkGlyphs.search,
-                            selected: searchState.active,
-                            shortcut: commandRegistry[BusyMarkCommandIds.search]
-                                ?.shortcut
-                                ?.label,
-                            onPressed: () => _toggleSearch(ref),
-                          ),
-                          if (!searchState.active)
                             BusyMarkHeaderPopupMenuButton<
                               DocumentViewModePreference
                             >(
                               tooltip: context.l10n.viewMode,
                               icon: _documentViewModeIcon(documentViewMode),
-                              shortcut: _documentViewModeShortcut(
-                                documentViewMode,
-                                commandRegistry,
-                              ),
                               itemBuilder: (context) => [
                                 for (final mode
                                     in DocumentViewModePreference.values)
@@ -1062,12 +1047,28 @@ class WorkspaceScreen extends ConsumerWidget {
                                 );
                               },
                             ),
+                            BusyMarkHeaderIconButton(
+                              tooltip: context.l10n.validate,
+                              icon: BusyMarkGlyphs.diagnostics,
+                              onPressed: () => unawaited(
+                                _validateActiveAndShowProblems(context, ref),
+                              ),
+                            ),
+                          ],
+                          BusyMarkHeaderIconButton(
+                            tooltip: context.l10n.search,
+                            icon: BusyMarkGlyphs.search,
+                            selected: searchState.active,
+                            shortcut: commandRegistry[BusyMarkCommandIds.search]
+                                ?.shortcut
+                                ?.label,
+                            onPressed: () => _toggleSearch(ref),
+                          ),
                           BusyMarkMainMenuButton(
                             canExport: canExportPdf || canExportHtml,
                             onSelected: (action) =>
                                 _handleMainMenuAction(context, ref, action),
                           ),
-                          const SizedBox(width: BusyMarkSpacing.sm),
                         ],
                       ),
                     ),
@@ -1088,11 +1089,14 @@ class WorkspaceScreen extends ConsumerWidget {
                               state.message!.code,
                             ),
                           ),
-                        if (localHistoryState.warning != null)
+                        if (ref
+                                .read(localHistoryControllerProvider.notifier)
+                                .warningForBuffer(state.activeBuffer?.id)
+                            case final historyWarning?)
                           BusyMarkStatusBox(
                             message: localizeLocalHistoryWarning(
                               context,
-                              localHistoryState.warning!,
+                              historyWarning,
                             ),
                             kind: BusyMarkStatusKind.warning,
                           ),
@@ -1156,6 +1160,9 @@ class WorkspaceScreen extends ConsumerWidget {
   void _selectSidebarShortcut(WidgetRef ref, _SidebarTab tab) {
     final state = ref.read(workspaceControllerProvider);
     final workspace = state.workspace;
+    if (workspace?.isRemote == true && tab == _SidebarTab.files) {
+      tab = _SidebarTab.notes;
+    }
     if (workspace == null || !_sidebarTabsFor(workspace.kind).contains(tab)) {
       return;
     }
@@ -1290,6 +1297,7 @@ class WorkspaceScreen extends ConsumerWidget {
     Workspace workspace,
     DocumentBuffer? buffer,
   ) {
+    if (buffer?.isRemote == true) return buffer!.displayName;
     final path = buffer?.filePath;
     if (path == null || path.isEmpty) {
       return buffer == null
@@ -1846,6 +1854,7 @@ List<PopupMenuEntry<_PathMenuAction>> _sidebarPathMenuItems(
 List<PopupMenuEntry<_OutlineDocumentAction>> _outlineDocumentMenuItems(
   BuildContext context, {
   required bool pathActionsEnabled,
+  bool remote = false,
 }) {
   return [
     BusyMarkPopupMenuItem(
@@ -1853,18 +1862,20 @@ List<PopupMenuEntry<_OutlineDocumentAction>> _outlineDocumentMenuItems(
       label: context.l10n.copyFileName,
       icon: BusyMarkGlyphs.copy,
     ),
-    BusyMarkPopupMenuItem(
-      value: _OutlineDocumentAction.copyPath,
-      label: context.l10n.copyPath,
-      icon: BusyMarkGlyphs.copy,
-      enabled: pathActionsEnabled,
-    ),
-    BusyMarkPopupMenuItem(
-      value: _OutlineDocumentAction.openInFiles,
-      label: context.l10n.openInFiles,
-      icon: BusyMarkGlyphs.folderOpen,
-      enabled: pathActionsEnabled,
-    ),
+    if (!remote)
+      BusyMarkPopupMenuItem(
+        value: _OutlineDocumentAction.copyPath,
+        label: context.l10n.copyPath,
+        icon: BusyMarkGlyphs.copy,
+        enabled: pathActionsEnabled,
+      ),
+    if (!remote)
+      BusyMarkPopupMenuItem(
+        value: _OutlineDocumentAction.openInFiles,
+        label: context.l10n.openInFiles,
+        icon: BusyMarkGlyphs.folderOpen,
+        enabled: pathActionsEnabled,
+      ),
     BusyMarkPopupMenuItem(
       value: _OutlineDocumentAction.refineWithAi,
       label: context.l10n.aiRefineWithAi,
@@ -2104,20 +2115,6 @@ class _HeaderSearchFieldState extends State<_HeaderSearchField> {
   }
 }
 
-class _HeaderSeparator extends StatelessWidget {
-  const _HeaderSeparator();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: BusyMarkStroke.hairline,
-      height: BusyMarkSizes.sidebarSeparatorHeight,
-      margin: const EdgeInsets.symmetric(horizontal: BusyMarkSpacing.xs),
-      color: BusyMarkSurfaceColors.of(context).subtleBorder,
-    );
-  }
-}
-
 class _Sidebar extends ConsumerStatefulWidget {
   const _Sidebar({
     super.key,
@@ -2269,6 +2266,9 @@ class _SidebarState extends ConsumerState<_Sidebar> {
                           _resumeWritersideTopicRemoval(context),
                     )
                   : switch (selectedTab) {
+                      _SidebarTab.notes => NextcloudNotesSidebar(
+                        accountId: widget.workspace.nextcloudAccountId!,
+                      ),
                       _SidebarTab.files => _FilesTab(
                         workspace: widget.workspace,
                         onShowFileHistory: _showFileHistory,
@@ -2907,7 +2907,7 @@ class _SidebarState extends ConsumerState<_Sidebar> {
   }
 }
 
-enum _SidebarTab { files, toc, outline, git, localHistory, clipboard }
+enum _SidebarTab { notes, files, toc, outline, git, localHistory, clipboard }
 
 int _preferredSidebarTabIndex(Workspace workspace) {
   final tabs = _sidebarTabsFor(workspace.kind);
@@ -2930,6 +2930,12 @@ bool _hasWorkspaceSidebar(Workspace workspace) {
 
 List<_SidebarTab> _sidebarTabsFor(WorkspaceKind kind) {
   return switch (kind) {
+    WorkspaceKind.nextcloudNotes => const [
+      _SidebarTab.notes,
+      _SidebarTab.outline,
+      _SidebarTab.localHistory,
+      _SidebarTab.clipboard,
+    ],
     WorkspaceKind.untitledMarkdown => const [
       _SidebarTab.outline,
       _SidebarTab.localHistory,
@@ -2960,6 +2966,7 @@ List<_SidebarTab> _sidebarTabsFor(WorkspaceKind kind) {
 
 String _sidebarTabLabel(BuildContext context, _SidebarTab tab) {
   return switch (tab) {
+    _SidebarTab.notes => context.l10n.nextcloudNotes,
     _SidebarTab.files => context.l10n.files,
     _SidebarTab.toc => context.l10n.toc,
     _SidebarTab.outline => context.l10n.outline,
@@ -2971,6 +2978,7 @@ String _sidebarTabLabel(BuildContext context, _SidebarTab tab) {
 
 IconData _sidebarTabIcon(_SidebarTab tab, TextDirection direction) {
   return switch (tab) {
+    _SidebarTab.notes => BusyMarkGlyphs.documentHistory,
     _SidebarTab.files => BusyMarkGlyphs.documentOpen,
     _SidebarTab.toc => BusyMarkGlyphs.orderedList,
     _SidebarTab.outline => BusyMarkGlyphs.indentFor(direction),
@@ -2985,6 +2993,7 @@ String? _sidebarTabShortcut(BuildContext context, _SidebarTab tab) {
       BusyMarkCommandRegistryScope.read(context) ??
       BusyMarkCommandCatalog.metadata;
   final id = switch (tab) {
+    _SidebarTab.notes => BusyMarkCommandIds.sidebarFiles,
     _SidebarTab.files => BusyMarkCommandIds.sidebarFiles,
     _SidebarTab.toc => BusyMarkCommandIds.sidebarToc,
     _SidebarTab.outline => BusyMarkCommandIds.sidebarOutline,
@@ -3048,7 +3057,7 @@ Future<void> _selectFileHistoryComparison(
   }
 }
 
-class _SidebarHeader extends StatelessWidget {
+class _SidebarHeader extends ConsumerWidget {
   const _SidebarHeader({
     required this.workspace,
     required this.tabs,
@@ -3077,13 +3086,17 @@ class _SidebarHeader extends StatelessWidget {
   final VoidCallback onRefineActiveDocument;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final colors = BusyMarkSurfaceColors.of(context);
     final path = _workspacePath(workspace);
     final activeDocumentPath =
         workspace.activeFilePath ?? workspace.markdown?.filePath ?? '';
-    final hasActiveDocumentPath = activeDocumentPath.isNotEmpty;
-    final activeDocumentName = hasActiveDocumentPath
+    final hasActiveDocumentPath =
+        !workspace.isRemote && activeDocumentPath.isNotEmpty;
+    final activeDocumentName = workspace.isRemote
+        ? ref.watch(workspaceControllerProvider).activeBuffer?.displayName ??
+              context.l10n.nextcloudNotes
+        : hasActiveDocumentPath
         ? _fileNameFromPath(activeDocumentPath)
         : context.l10n.untitledMarkdownFileName;
     final activeDocumentFile = hasActiveDocumentPath
@@ -3163,13 +3176,14 @@ class _SidebarHeader extends StatelessWidget {
                       style: detailsStyle,
                       leadingEllipsis: true,
                       tooltip: busyMarkLtrIsolateFor(context, path),
-                      onSecondaryTapUp: (lineContext, details) =>
-                          _showWorkspacePathMenu(
-                            lineContext,
-                            name: _workspaceName(context, workspace),
-                            path: path,
-                            position: details.globalPosition,
-                          ),
+                      onSecondaryTapUp: workspace.isRemote
+                          ? null
+                          : (lineContext, details) => _showWorkspacePathMenu(
+                              lineContext,
+                              name: _workspaceName(context, workspace),
+                              path: path,
+                              position: details.globalPosition,
+                            ),
                     ),
                   ),
                   const SizedBox(width: BusyMarkSpacing.sm),
@@ -3213,15 +3227,16 @@ class _SidebarHeader extends StatelessWidget {
                       tooltip: hasActiveDocumentPath
                           ? busyMarkLtrIsolateFor(context, activeDocumentPath)
                           : null,
-                      onSecondaryTapUp: (lineContext, details) =>
-                          _showWorkspacePathMenu(
-                            lineContext,
-                            name: activeDocumentName,
-                            path: activeDocumentPath,
-                            position: details.globalPosition,
-                            copyNameLabel: lineContext.l10n.copyFileName,
-                            pathActionsEnabled: hasActiveDocumentPath,
-                          ),
+                      onSecondaryTapUp: workspace.isRemote
+                          ? null
+                          : (lineContext, details) => _showWorkspacePathMenu(
+                              lineContext,
+                              name: activeDocumentName,
+                              path: activeDocumentPath,
+                              position: details.globalPosition,
+                              copyNameLabel: lineContext.l10n.copyFileName,
+                              pathActionsEnabled: hasActiveDocumentPath,
+                            ),
                     ),
                   ),
                   const SizedBox(width: BusyMarkSpacing.sm),
@@ -3235,6 +3250,7 @@ class _SidebarHeader extends StatelessWidget {
                     itemBuilder: (menuContext) => _outlineDocumentMenuItems(
                       menuContext,
                       pathActionsEnabled: hasActiveDocumentPath,
+                      remote: workspace.isRemote,
                     ),
                     onSelected: (action) {
                       switch (action) {
@@ -3311,6 +3327,7 @@ class _SidebarHeader extends StatelessWidget {
   }
 
   String _workspaceName(BuildContext context, Workspace workspace) {
+    if (workspace.isRemote) return context.l10n.nextcloudNotes;
     if (workspace.kind == WorkspaceKind.untitledMarkdown) {
       final filePath = workspace.markdown?.filePath;
       return filePath == null || filePath.isEmpty
@@ -3341,9 +3358,9 @@ class _SidebarHeader extends StatelessWidget {
     if (workspace.kind == WorkspaceKind.singleMarkdown) {
       return workspace.activeFilePath ??
           workspace.markdown?.filePath ??
-          workspace.rootPath;
+          (workspace.filesystemRootPath ?? '');
     }
-    return workspace.rootPath;
+    return (workspace.filesystemRootPath ?? '');
   }
 }
 
@@ -4449,7 +4466,7 @@ class _FilesTabState extends ConsumerState<_FilesTab> {
 
   String _fileTreeEntryPath(_FileTreeEntry entry, Workspace workspace) {
     return entry.node.file?.absolutePath ??
-        p.join(workspace.rootPath, entry.node.relativePath);
+        p.join((workspace.filesystemRootPath ?? ''), entry.node.relativePath);
   }
 
   Future<void> _showFileContextMenu(
@@ -4684,7 +4701,10 @@ class _FilesTabState extends ConsumerState<_FilesTab> {
   Iterable<String> _directoryAncestorPaths(String absoluteDirectory) {
     final relative = p
         .normalize(
-          p.relative(absoluteDirectory, from: widget.workspace.rootPath),
+          p.relative(
+            absoluteDirectory,
+            from: (widget.workspace.filesystemRootPath ?? ''),
+          ),
         )
         .replaceAll(r'\', '/');
     if (relative == '.' || relative.isEmpty || relative.startsWith('../')) {
@@ -5375,7 +5395,7 @@ class _FileTreeVcsStatusColors {
     if (snapshot == null || snapshot.files.isEmpty) {
       return const _FileTreeVcsStatusColors.empty();
     }
-    final workspaceRoot = p.normalize(workspace.rootPath);
+    final workspaceRoot = p.normalize((workspace.filesystemRootPath ?? ''));
     final files = <String, BusyMarkVcsFileColor>{};
     final folders = <String, BusyMarkVcsFileColor>{};
 
@@ -5748,7 +5768,7 @@ class _TocTabState extends ConsumerState<_TocTab> {
   }) {
     final storedId = ref
         .read(appSettingsControllerProvider)
-        .selectedWritersideInstanceId(workspace.rootPath);
+        .selectedWritersideInstanceId((workspace.filesystemRootPath ?? ''));
     if (currentTreePath == null && storedId != null) {
       final stored = workspace.writersideModule?.instances
           .where((instance) => instance.id == storedId)
@@ -5793,7 +5813,7 @@ class _TocTabState extends ConsumerState<_TocTab> {
       final item = module.instances[index];
       instanceColors[item.sourceTreePath] = _effectiveInstanceIconColor(
         appSettings.writersideInstanceIconColor(
-          widget.workspace.rootPath,
+          (widget.workspace.filesystemRootPath ?? ''),
           item.id,
         ),
         index,
@@ -5965,7 +5985,7 @@ class _TocTabState extends ConsumerState<_TocTab> {
                         ref
                             .read(appSettingsControllerProvider.notifier)
                             .selectWritersideInstance(
-                              widget.workspace.rootPath,
+                              (widget.workspace.filesystemRootPath ?? ''),
                               selected.id,
                             ),
                       );
@@ -7145,17 +7165,20 @@ class _TocTabState extends ConsumerState<_TocTab> {
     final previousId = result.previousId;
     if (previousId != null && previousId != id) {
       await settings.renameWritersideInstancePreferences(
-        widget.workspace.rootPath,
+        (widget.workspace.filesystemRootPath ?? ''),
         previousId,
         id,
       );
     }
     await settings.setWritersideInstanceIconColor(
-      widget.workspace.rootPath,
+      (widget.workspace.filesystemRootPath ?? ''),
       id,
       dialogResult.iconColor,
     );
-    await settings.selectWritersideInstance(widget.workspace.rootPath, id);
+    await settings.selectWritersideInstance(
+      (widget.workspace.filesystemRootPath ?? ''),
+      id,
+    );
     if (mounted) {
       setState(() {
         _selectedInstanceTreePath = result.treePath;
@@ -7532,7 +7555,7 @@ class _TocTabState extends ConsumerState<_TocTab> {
         : WritersideTocNodeIdentity.fromNode(raw);
     if (choice == _TocCreationChoice.importMarkdown) {
       final sourcePath = await getDirectoryPath(
-        initialDirectory: widget.workspace.rootPath,
+        initialDirectory: (widget.workspace.filesystemRootPath ?? ''),
         confirmButtonText: context.l10n.open,
         canCreateDirectories: false,
       );
@@ -9548,7 +9571,7 @@ class _OutlineTabState extends ConsumerState<_OutlineTab> {
       filePath: documentContext.parserPath,
       source: source,
       mode: mode,
-      workspaceRoot: workspace.rootPath,
+      workspaceRoot: (workspace.filesystemRootPath ?? ''),
       validateLocalReferences: false,
     );
     if (!mounted ||
@@ -10316,6 +10339,12 @@ class _EditorTabStrip extends ConsumerWidget {
     Workspace workspace,
     WorkspaceTabEntry entry,
   ) {
+    if (entry.kind == WorkspaceTabKind.file) {
+      final buffer = state.documentBuffers
+          .where((buffer) => buffer.id == entry.bufferId)
+          .firstOrNull;
+      if (buffer?.isRemote == true) return buffer!.displayName;
+    }
     return switch (entry.kind) {
       WorkspaceTabKind.file =>
         entry.untitledName ?? _relativeDocumentPath(workspace, entry.path),
@@ -11355,7 +11384,7 @@ PreviewDocument _parsePreviewDocument({
     filePath: filePath,
     source: source,
     mode: mode,
-    workspaceRoot: workspace.rootPath,
+    workspaceRoot: (workspace.filesystemRootPath ?? ''),
     validateLocalReferences: false,
   );
   return const MarkdownPreviewBuilder().build(parsed);
@@ -11808,6 +11837,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
   late final SpellingSessionController _spelling;
   final _previewBlockContexts = <int, BuildContext>{};
   String _lastPath = '';
+  final _remoteMedia = <String, NextcloudDocumentMedia>{};
   var _previewSearchScrollRequest = 0;
   BusyDocument? _cachedWysiwygDocument;
   String? _cachedWysiwygBufferId;
@@ -11989,6 +12019,21 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
         widget.viewMode != DocumentViewModePreference.preview &&
         !wysiwygVisible;
     final activeBuffer = widget.state.activeBuffer;
+    final remoteRef = activeBuffer?.remoteNote;
+    final repository = remoteRef == null
+        ? null
+        : ref.watch(nextcloudNotesRepositoryProvider).value;
+    final media = remoteRef == null || repository == null
+        ? null
+        : _remoteMedia.putIfAbsent(
+            remoteRef.identity,
+            () => NextcloudDocumentMedia(
+              repository,
+              remoteRef.accountId,
+              remoteRef.localId,
+            ),
+          );
+
     final documentKind = _activeDocumentKind(widget.state.workspace);
     final spellingSupported = documentKind?.supportsSpelling ?? false;
     if (activeBuffer != null) {
@@ -12057,12 +12102,17 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     final spellingLabel = activeBuffer != null && spellingSupported
         ? _spellingStatusLabel(context, activeBuffer, settings)
         : null;
-    return BusyMarkSemanticFade(
+    final editor = BusyMarkSemanticFade(
       transitionKey: widget.viewMode,
       child: DecoratedBox(
         decoration: BoxDecoration(color: colors.view),
         child: Column(
           children: [
+            if (remoteRef != null)
+              NextcloudNoteStatus(
+                localId: remoteRef.localId,
+                unsaved: activeBuffer!.isDirty,
+              ),
             if (activeBuffer?.recovered == true)
               _RecoveredDocumentBanner(
                 buffer: activeBuffer!,
@@ -12084,6 +12134,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
                 ),
               ),
             if (activeBuffer != null &&
+                !activeBuffer.isRemote &&
                 activeBuffer.diskState != DocumentDiskState.present &&
                 activeBuffer.diskState != DocumentDiskState.changed)
               _ExternalFileBanner(
@@ -12194,8 +12245,14 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
                                     WorkspaceKind.singleMarkdown =>
                                       AssetWorkspaceKind.standalone,
                                     WorkspaceKind.untitledMarkdown ||
+                                    WorkspaceKind.nextcloudNotes ||
                                     null => AssetWorkspaceKind.standalone,
                                   },
+                              assetIngestionService: remoteRef == null
+                                  ? const AssetIngestionService()
+                                  : media?.ingestion ??
+                                        ProviderAssetIngestionService
+                                            .unavailable,
                               onAssetSaveRequired: () => unawaited(
                                 saveActiveToNewLocation(context, ref),
                               ),
@@ -12343,8 +12400,14 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
                                     WorkspaceKind.singleMarkdown =>
                                       AssetWorkspaceKind.standalone,
                                     WorkspaceKind.untitledMarkdown ||
+                                    WorkspaceKind.nextcloudNotes ||
                                     null => AssetWorkspaceKind.standalone,
                                   },
+                              assetIngestionService: remoteRef == null
+                                  ? const AssetIngestionService()
+                                  : media?.ingestion ??
+                                        ProviderAssetIngestionService
+                                            .unavailable,
                               onAssetSaveRequired: () => unawaited(
                                 saveActiveToNewLocation(context, ref),
                               ),
@@ -12586,6 +12649,15 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
               ),
           ],
         ),
+      ),
+    );
+    return DocumentMediaScope(
+      media: remoteRef == null
+          ? null
+          : media?.context ?? DocumentMediaContext.unavailable,
+      child: DocumentReadOnlyScope(
+        readOnly: activeBuffer?.readonly ?? false,
+        child: editor,
       ),
     );
   }
@@ -13593,7 +13665,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
                           BusyMarkActionRow(
                             title: p.relative(
                               usage.filePath,
-                              from: widget.state.workspace?.rootPath,
+                              from: widget.state.workspace?.filesystemRootPath,
                             ),
                             subtitle:
                                 '${usage.span.startLine}:${usage.span.startColumn}  ${usage.value}',
@@ -14001,7 +14073,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
             filePath: activePath,
             source: buffer.text,
             mode: context.markdownMode,
-            workspaceRoot: workspace.rootPath,
+            workspaceRoot: (workspace.filesystemRootPath ?? ''),
             validateLocalReferences: false,
           )
           .busyDocument;
@@ -14889,7 +14961,7 @@ class _PreviewBlockView extends ConsumerWidget {
           : block.attributes['src'],
       sourceFence: _visualizationSourceFence(block, descriptor),
       documentPath: documentPath,
-      workspaceRoot: workspace?.rootPath ?? '',
+      workspaceRoot: workspace?.filesystemRootPath ?? '',
       sourceStartLine: block.sourceStartLine ?? 1,
       editRevision: editRevision,
       blockKey: 'preview:${workspace?.id ?? ''}:$documentPath:$blockIdentity',
@@ -15606,7 +15678,7 @@ String? _imageWorkspaceRoot(Workspace? workspace) {
   }
   final module = workspace.writersideModule;
   if (module == null) {
-    return workspace.rootPath;
+    return (workspace.filesystemRootPath ?? '');
   }
   final activeFilePath = workspace.activeFilePath;
   if (activeFilePath == null) {
@@ -16122,6 +16194,36 @@ Future<void> _openPreviewLink(
     return;
   }
   final uri = parseSchemedUri(target);
+  final remoteState = ref.read(workspaceControllerProvider);
+  if (remoteState.workspace?.isRemote == true &&
+      (uri == null || !isLaunchableExternalUri(uri))) {
+    if (target.startsWith('#')) {
+      _navigatePreviewAnchor(context, ref, '', target);
+      return;
+    }
+    final note = remoteState.activeBuffer?.remoteNote;
+    final repository = ref.read(nextcloudNotesRepositoryProvider).value;
+    try {
+      if (note != null && repository != null) {
+        final path = await repository.resolveMedia(
+          note.accountId,
+          note.localId,
+          target,
+        );
+        if (path != null) {
+          await launchUrl(Uri.file(path), mode: LaunchMode.externalApplication);
+          return;
+        }
+      }
+    } on Object {
+      // Provider failures never enter local link resolution.
+    }
+    if (context.mounted) {
+      _showPreviewLinkMessage(context, context.l10n.couldNotOpenTarget(target));
+    }
+    return;
+  }
+
   if (uri != null) {
     var isResource = false;
     if (uri.scheme == 'file') {
@@ -16283,7 +16385,7 @@ void _navigatePreviewAnchor(
   final state = ref.read(workspaceControllerProvider);
   final workspace = state.workspace;
   final activePath = state.activeBuffer?.filePath;
-  if (workspace == null || activePath != filePath) {
+  if (workspace == null || (!workspace.isRemote && activePath != filePath)) {
     return;
   }
   final normalizedAnchor = anchor.startsWith('#')
@@ -16400,7 +16502,7 @@ String? _remoteImageWorkspacePath(Workspace? workspace) {
   if (workspace == null) {
     return null;
   }
-  final root = workspace.rootPath.trim();
+  final root = (workspace.filesystemRootPath ?? '').trim();
   if (root.isNotEmpty) {
     return root;
   }
@@ -17390,6 +17492,8 @@ String _workspaceReplacementIssueLabel(
   WorkspaceReplacementIssue issue,
 ) {
   return switch (issue.kind) {
+    WorkspaceReplacementIssueKind.remoteWorkspaceUnsupported =>
+      context.l10n.nextcloudWorkspaceReplaceUnavailable,
     WorkspaceReplacementIssueKind.cancelled => context.l10n.cancel,
     WorkspaceReplacementIssueKind.invalidRegex =>
       context.l10n.sourceSearchInvalidRegex,

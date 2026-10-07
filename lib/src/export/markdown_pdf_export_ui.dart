@@ -1,3 +1,5 @@
+import '../nextcloud_notes/application/nextcloud_connection.dart';
+import '../nextcloud_notes/application/notes_media.dart';
 import 'dart:async';
 import 'dart:io';
 
@@ -44,7 +46,9 @@ bool canExportActiveMarkdown(WorkspaceState state) {
     return false;
   }
   return switch (workspace.kind) {
-    WorkspaceKind.untitledMarkdown || WorkspaceKind.singleMarkdown => true,
+    WorkspaceKind.untitledMarkdown ||
+    WorkspaceKind.singleMarkdown ||
+    WorkspaceKind.nextcloudNotes => true,
     WorkspaceKind.markdownFolder =>
       workspace.activeFilePath != null &&
           workspace.files.any(
@@ -99,6 +103,16 @@ Future<void> exportActiveMarkdownToPdf(
     return;
   }
   final workspace = snapshot.workspace!;
+  final remoteRef = snapshot.activeBuffer?.remoteNote;
+  final media = remoteRef == null
+      ? null
+      : NextcloudDocumentMedia(
+          await ref.read(nextcloudNotesRepositoryProvider.future),
+          remoteRef.accountId,
+          remoteRef.localId,
+        ).context;
+  if (!context.mounted) return;
+
   final headerBar = ref.read(linuxHeaderBarServiceProvider);
   final document =
       documentSnapshot ?? await prepareMarkdownPdfSnapshot(snapshot);
@@ -115,7 +129,9 @@ Future<void> exportActiveMarkdownToPdf(
   final options = selected.pdf!;
 
   final activePath = workspace.activeFilePath ?? workspace.markdown?.filePath;
-  final baseName = activePath == null || activePath.isEmpty
+  final baseName = remoteRef != null
+      ? snapshot.activeBuffer!.displayName
+      : activePath == null || activePath.isEmpty
       ? context.l10n.untitledMarkdownFileName
       : p.basename(activePath);
   final location = await getSaveLocation(
@@ -161,8 +177,9 @@ Future<void> exportActiveMarkdownToPdf(
   final cancellationToken = MarkdownPdfCancellationToken();
   final request = MarkdownPdfExportRequest(
     source: snapshot.activeText,
+    media: media,
     filePath: activePath ?? '',
-    workspaceRoot: workspace.rootPath,
+    workspaceRoot: (workspace.filesystemRootPath ?? ''),
     destinationPath: destinationPath,
     options: options,
     overwrite: overwrite,
@@ -214,7 +231,9 @@ Future<BusyDocument> prepareMarkdownPdfSnapshot(WorkspaceState snapshot) async {
   return (await const MarkdownParser().parseAsync(
     source: snapshot.activeText,
     filePath: workspace.activeFilePath ?? workspace.markdown?.filePath ?? '',
-    workspaceRoot: workspace.rootPath.isEmpty ? null : workspace.rootPath,
+    workspaceRoot: (workspace.filesystemRootPath ?? '').isEmpty
+        ? null
+        : (workspace.filesystemRootPath ?? ''),
     mode: workspace.markdown!.mode,
     validateLocalReferences: false,
   )).busyDocument;
@@ -224,7 +243,9 @@ String? _initialDirectory(Workspace workspace, String? activePath) {
   if (activePath != null && activePath.isNotEmpty) {
     return p.dirname(activePath);
   }
-  return workspace.rootPath.isEmpty ? null : workspace.rootPath;
+  return (workspace.filesystemRootPath ?? '').isEmpty
+      ? null
+      : (workspace.filesystemRootPath ?? '');
 }
 
 String _withPdfExtension(String path) {

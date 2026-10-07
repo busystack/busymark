@@ -2,8 +2,21 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../../platform/gtk_header_icon_service.dart';
 import '../busymark_design.dart';
 import 'linux_window_host.dart';
+
+abstract final class BusyMarkLinuxHeaderStyle {
+  static const double activeForegroundOpacity = 1;
+  static const double inactiveForegroundOpacity = .50;
+  static const double disabledActiveForegroundOpacity = .38;
+  static const double disabledInactiveForegroundOpacity = .19;
+  static const double hoverBackgroundStrength = .07;
+  static const double pressedBackgroundStrength = .16;
+  static const double selectedBackgroundStrength = .10;
+  static const double selectedHoverBackgroundStrength = .13;
+  static const double selectedPressedBackgroundStrength = .19;
+}
 
 class LinuxPageHeaderInsetsScope extends InheritedWidget {
   const LinuxPageHeaderInsetsScope({
@@ -33,12 +46,131 @@ class LinuxPageHeaderInsetsScope extends InheritedWidget {
       rightObstruction != oldWidget.rightObstruction;
 }
 
-TextStyle busyMarkLinuxHeaderTitleStyle(BuildContext context) {
-  final colors = BusyMarkSurfaceColors.of(context);
+Color busyMarkLinuxHeaderForeground(
+  BuildContext context, {
+  bool disabled = false,
+}) {
   final active = LinuxWindowMetricsScope.of(context).windowActive;
+  final opacity = switch ((active, disabled)) {
+    (true, false) => BusyMarkLinuxHeaderStyle.activeForegroundOpacity,
+    (false, false) => BusyMarkLinuxHeaderStyle.inactiveForegroundOpacity,
+    (true, true) => BusyMarkLinuxHeaderStyle.disabledActiveForegroundOpacity,
+    (false, true) => BusyMarkLinuxHeaderStyle.disabledInactiveForegroundOpacity,
+  };
+  final foreground = BusyMarkSurfaceColors.of(context).foreground;
+  return foreground.withValues(alpha: foreground.a * opacity);
+}
+
+WidgetStateProperty<Color?> busyMarkLinuxHeaderControlBackground(
+  BuildContext context,
+) {
+  final foreground = busyMarkLinuxHeaderForeground(context);
+  Color layer(double strength) =>
+      foreground.withValues(alpha: foreground.a * strength);
+  return WidgetStateProperty.resolveWith((states) {
+    if (states.contains(WidgetState.disabled)) {
+      return BusyMarkLinuxPalette.transparent;
+    }
+    final selected = states.contains(WidgetState.selected);
+    final pressed = states.contains(WidgetState.pressed);
+    final hovered = states.contains(WidgetState.hovered);
+    if (selected && pressed) {
+      return layer(BusyMarkLinuxHeaderStyle.selectedPressedBackgroundStrength);
+    }
+    if (selected && hovered) {
+      return layer(BusyMarkLinuxHeaderStyle.selectedHoverBackgroundStrength);
+    }
+    if (pressed) {
+      return layer(BusyMarkLinuxHeaderStyle.pressedBackgroundStrength);
+    }
+    if (selected) {
+      return layer(BusyMarkLinuxHeaderStyle.selectedBackgroundStrength);
+    }
+    if (hovered) {
+      return layer(BusyMarkLinuxHeaderStyle.hoverBackgroundStrength);
+    }
+    return BusyMarkLinuxPalette.transparent;
+  });
+}
+
+/// An application-header icon button with neutral GTK-style state layers.
+///
+/// Selection remains available to semantics and paints a subtle neutral
+/// background, but never changes the symbolic icon to the accent color.
+class BusyMarkLinuxHeaderIconButton extends StatelessWidget {
+  const BusyMarkLinuxHeaderIconButton({
+    super.key,
+    required this.tooltip,
+    required this.icon,
+    required this.onPressed,
+    this.nativeIcon,
+    this.selected = false,
+    this.shortcut,
+  });
+
+  final String tooltip;
+  final IconData icon;
+  final VoidCallback? onPressed;
+  final BusyMarkLinuxHeaderIcon? nativeIcon;
+  final bool selected;
+  final String? shortcut;
+
+  @override
+  Widget build(BuildContext context) {
+    return BusyMarkHeaderIconButton(
+      tooltip: tooltip,
+      icon: icon,
+      nativeIcon: nativeIcon,
+      selected: selected,
+      shortcut: shortcut,
+      foregroundColor: busyMarkLinuxHeaderForeground(context),
+      disabledForegroundColor: busyMarkLinuxHeaderForeground(
+        context,
+        disabled: true,
+      ),
+      backgroundColor: busyMarkLinuxHeaderControlBackground(context),
+      overlayColor: const WidgetStatePropertyAll(
+        BusyMarkLinuxPalette.transparent,
+      ),
+      onPressed: onPressed,
+    );
+  }
+}
+
+class BusyMarkLinuxHeaderControlGroup extends StatelessWidget {
+  const BusyMarkLinuxHeaderControlGroup({super.key, required this.children});
+
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    return BusyMarkHeaderControlStyleScope(
+      foregroundColor: busyMarkLinuxHeaderForeground(context),
+      disabledForegroundColor: busyMarkLinuxHeaderForeground(
+        context,
+        disabled: true,
+      ),
+      backgroundColor: busyMarkLinuxHeaderControlBackground(context),
+      overlayColor: const WidgetStatePropertyAll(
+        BusyMarkLinuxPalette.transparent,
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (var index = 0; index < children.length; index++) ...[
+            if (index > 0) const SizedBox(width: BusyMarkSpacing.headerInset),
+            children[index],
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+TextStyle busyMarkLinuxHeaderTitleStyle(BuildContext context) {
   return Theme.of(context).textTheme.titleSmall!.copyWith(
     fontWeight: FontWeight.w600,
-    color: colors.foreground.withValues(alpha: active ? 1 : .5),
+    color: busyMarkLinuxHeaderForeground(context),
   );
 }
 
@@ -49,7 +181,10 @@ TextStyle busyMarkLinuxHeaderBrandStyle(BuildContext context) =>
 
 enum _BusyMarkLinuxHeaderSlot { leading, title, trailing }
 
-enum BusyMarkLinuxHeaderCenterAllocation { centered, fillBetweenControls }
+enum BusyMarkLinuxHeaderCenterAllocation {
+  centeredBetweenControls,
+  fillBetweenControls,
+}
 
 /// GTK-style application header geometry with an explicit center allocation.
 class BusyMarkLinuxHeaderLayout extends StatelessWidget {
@@ -59,7 +194,8 @@ class BusyMarkLinuxHeaderLayout extends StatelessWidget {
     required this.title,
     required this.trailing,
     this.maxContentWidth,
-    this.centerAllocation = BusyMarkLinuxHeaderCenterAllocation.centered,
+    this.centerAllocation =
+        BusyMarkLinuxHeaderCenterAllocation.centeredBetweenControls,
   });
 
   final Widget leading;
@@ -167,40 +303,24 @@ class _BusyMarkLinuxHeaderLayoutDelegate extends MultiChildLayoutDelegate {
 
     final safeLeftEdge = leftOccupiedEdge + BusyMarkSpacing.headerInset;
     final safeRightEdge = rightOccupiedEdge - BusyMarkSpacing.headerInset;
+    final availableWidth = math.max(0.0, safeRightEdge - safeLeftEdge);
     switch (centerAllocation) {
-      case BusyMarkLinuxHeaderCenterAllocation.centered:
-        final centerX = size.width / 2;
-        final availableWidth = math.max(0.0, safeRightEdge - safeLeftEdge);
-        final minimumHalfWidth =
-            math.min(BusyMarkSizes.headerTitleMinWidth, availableWidth) / 2;
-        // Clamp continuously into the safe control gap as the sidebar moves.
-        // Wide headers keep absolute centering; narrow headers keep a readable
-        // title without jumping between two allocation policies.
-        final titleCenter = availableWidth == 0
-            ? (safeLeftEdge + safeRightEdge) / 2
-            : centerX
-                  .clamp(
-                    safeLeftEdge + minimumHalfWidth,
-                    safeRightEdge - minimumHalfWidth,
-                  )
-                  .toDouble();
-        final safeHalfWidth = math.max(
-          0.0,
-          math.min(titleCenter - safeLeftEdge, safeRightEdge - titleCenter),
-        );
+      case BusyMarkLinuxHeaderCenterAllocation.centeredBetweenControls:
+        // Center in the actual control gap, including asymmetric button groups
+        // and the space reserved for the window controls.
+        final centerX = (safeLeftEdge + safeRightEdge) / 2;
         final titleSize = layoutChild(
           _BusyMarkLinuxHeaderSlot.title,
-          BoxConstraints.loose(Size(safeHalfWidth * 2, size.height)),
+          BoxConstraints.loose(Size(availableWidth, size.height)),
         );
         positionChild(
           _BusyMarkLinuxHeaderSlot.title,
           Offset(
-            titleCenter - titleSize.width / 2,
+            centerX - titleSize.width / 2,
             (size.height - titleSize.height) / 2,
           ),
         );
       case BusyMarkLinuxHeaderCenterAllocation.fillBetweenControls:
-        final availableWidth = math.max(0.0, safeRightEdge - safeLeftEdge);
         final titleSize = layoutChild(
           _BusyMarkLinuxHeaderSlot.title,
           BoxConstraints(

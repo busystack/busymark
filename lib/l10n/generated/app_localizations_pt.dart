@@ -4720,6 +4720,94 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get windowRestore => 'Restaurar';
+
+  @override
+  String get nextcloudNotes => 'Nextcloud Notes';
+
+  @override
+  String get nextcloudConnect => 'Ligar';
+
+  @override
+  String get nextcloudReconnect => 'Voltar a ligar';
+
+  @override
+  String get nextcloudDisconnect => 'Desligar';
+
+  @override
+  String get nextcloudServer => 'URL do servidor';
+
+  @override
+  String get nextcloudSignInBrowser =>
+      'Conclua o início de sessão no navegador.';
+
+  @override
+  String get nextcloudFavorites => 'Favoritos';
+
+  @override
+  String get nextcloudNewNote => 'Nova nota';
+
+  @override
+  String get nextcloudSavedLocally =>
+      'Guardado localmente · sincronização pendente';
+
+  @override
+  String get nextcloudSyncing => 'A sincronizar';
+
+  @override
+  String get nextcloudSynced => 'Sincronizado';
+
+  @override
+  String get nextcloudOffline => 'Sem ligação';
+
+  @override
+  String get nextcloudLocked => 'Bloqueado pelo servidor';
+
+  @override
+  String get nextcloudReconnectRequired => 'É necessário voltar a ligar';
+
+  @override
+  String get nextcloudCreationUncertain => 'Resultado da criação incerto';
+
+  @override
+  String get nextcloudReadOnly => 'Só de leitura';
+
+  @override
+  String get nextcloudTakeRemote => 'Usar versão remota';
+
+  @override
+  String get nextcloudMerge => 'Unir';
+
+  @override
+  String get nextcloudDeleteNote => 'Eliminar nota?';
+
+  @override
+  String get nextcloudWorkspaceReplaceUnavailable =>
+      'A substituição no espaço de trabalho não está disponível para Nextcloud Notes. Substitua em cada nota.';
+
+  @override
+  String get nextcloudSaveLocalCopy => 'Guardar cópia local…';
+
+  @override
+  String get nextcloudDisconnectWarning =>
+      'Remover esta conta elimina as notas em cache e alterações pendentes deste dispositivo. Sincronize primeiro para guardar o trabalho no servidor.';
+
+  @override
+  String get nextcloudAttachmentRetryWarning =>
+      'Se o envio anterior foi concluído, tentar novamente pode deixar um anexo não utilizado no servidor.';
+
+  @override
+  String get nextcloudAttachmentReference => 'Referência do anexo no servidor';
+
+  @override
+  String get nextcloudAddAttachment => 'Adicionar anexo…';
+
+  @override
+  String get nextcloudDeleteAttachmentWarning =>
+      'Ao eliminar este anexo, as suas ligações na nota deixam de estar disponíveis. Os dados conservados podem ser recuperados através do histórico local.';
+
+  @override
+  String get nextcloudChooseConflictingAttributes =>
+      'Escolha cada atributo em conflito.';
 }
 
 /// The translations for Portuguese, as used in Brazil (`pt_BR`).
@@ -9435,4 +9523,91 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get windowRestore => 'Restaurar';
+
+  @override
+  String get nextcloudNotes => 'Nextcloud Notes';
+
+  @override
+  String get nextcloudConnect => 'Conectar';
+
+  @override
+  String get nextcloudReconnect => 'Reconectar';
+
+  @override
+  String get nextcloudDisconnect => 'Desconectar';
+
+  @override
+  String get nextcloudServer => 'URL do servidor';
+
+  @override
+  String get nextcloudSignInBrowser => 'Conclua o login no navegador.';
+
+  @override
+  String get nextcloudFavorites => 'Favoritos';
+
+  @override
+  String get nextcloudNewNote => 'Nova nota';
+
+  @override
+  String get nextcloudSavedLocally =>
+      'Salvo localmente · sincronização pendente';
+
+  @override
+  String get nextcloudSyncing => 'Sincronizando';
+
+  @override
+  String get nextcloudSynced => 'Sincronizado';
+
+  @override
+  String get nextcloudOffline => 'Sem conexão';
+
+  @override
+  String get nextcloudLocked => 'Bloqueado pelo servidor';
+
+  @override
+  String get nextcloudReconnectRequired => 'Reconexão necessária';
+
+  @override
+  String get nextcloudCreationUncertain => 'Resultado da criação incerto';
+
+  @override
+  String get nextcloudReadOnly => 'Somente leitura';
+
+  @override
+  String get nextcloudTakeRemote => 'Usar versão remota';
+
+  @override
+  String get nextcloudMerge => 'Mesclar';
+
+  @override
+  String get nextcloudDeleteNote => 'Excluir nota?';
+
+  @override
+  String get nextcloudWorkspaceReplaceUnavailable =>
+      'A substituição no espaço de trabalho está indisponível para Nextcloud Notes. Substitua em cada nota.';
+
+  @override
+  String get nextcloudSaveLocalCopy => 'Salvar cópia local…';
+
+  @override
+  String get nextcloudDisconnectWarning =>
+      'Remover esta conta exclui notas em cache e alterações pendentes deste dispositivo. Sincronize primeiro para conservar o trabalho no servidor.';
+
+  @override
+  String get nextcloudAttachmentRetryWarning =>
+      'Se o envio anterior foi concluído, tentar novamente pode deixar um anexo não utilizado no servidor.';
+
+  @override
+  String get nextcloudAttachmentReference => 'Referência do anexo no servidor';
+
+  @override
+  String get nextcloudAddAttachment => 'Adicionar anexo…';
+
+  @override
+  String get nextcloudDeleteAttachmentWarning =>
+      'Excluir este anexo torna seus links na nota indisponíveis. Os dados preservados podem ser recuperados pelo histórico local.';
+
+  @override
+  String get nextcloudChooseConflictingAttributes =>
+      'Escolha cada atributo em conflito.';
 }

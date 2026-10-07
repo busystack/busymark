@@ -4691,4 +4691,90 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get windowRestore => 'استعادة';
+
+  @override
+  String get nextcloudNotes => 'Nextcloud Notes';
+
+  @override
+  String get nextcloudConnect => 'اتصال';
+
+  @override
+  String get nextcloudReconnect => 'إعادة الاتصال';
+
+  @override
+  String get nextcloudDisconnect => 'قطع الاتصال';
+
+  @override
+  String get nextcloudServer => 'عنوان الخادم';
+
+  @override
+  String get nextcloudSignInBrowser => 'أكمل تسجيل الدخول في المتصفح.';
+
+  @override
+  String get nextcloudFavorites => 'المفضلة';
+
+  @override
+  String get nextcloudNewNote => 'ملاحظة جديدة';
+
+  @override
+  String get nextcloudSavedLocally => 'محفوظ محليًا · المزامنة معلقة';
+
+  @override
+  String get nextcloudSyncing => 'جارٍ المزامنة';
+
+  @override
+  String get nextcloudSynced => 'تمت المزامنة';
+
+  @override
+  String get nextcloudOffline => 'غير متصل';
+
+  @override
+  String get nextcloudLocked => 'مقفل بواسطة الخادم';
+
+  @override
+  String get nextcloudReconnectRequired => 'تجب إعادة الاتصال';
+
+  @override
+  String get nextcloudCreationUncertain => 'نتيجة الإنشاء غير مؤكدة';
+
+  @override
+  String get nextcloudReadOnly => 'للقراءة فقط';
+
+  @override
+  String get nextcloudTakeRemote => 'استخدام نسخة الخادم';
+
+  @override
+  String get nextcloudMerge => 'دمج';
+
+  @override
+  String get nextcloudDeleteNote => 'حذف الملاحظة؟';
+
+  @override
+  String get nextcloudWorkspaceReplaceUnavailable =>
+      'الاستبدال في مساحة العمل غير متاح لملاحظات Nextcloud. استخدم الاستبدال داخل كل ملاحظة.';
+
+  @override
+  String get nextcloudSaveLocalCopy => 'حفظ نسخة محلية…';
+
+  @override
+  String get nextcloudDisconnectWarning =>
+      'تؤدي إزالة الحساب إلى حذف الملاحظات المخزنة مؤقتًا والتغييرات المعلقة من هذا الجهاز. زامن أولًا للاحتفاظ بالعمل على الخادم.';
+
+  @override
+  String get nextcloudAttachmentRetryWarning =>
+      'قد تترك إعادة المحاولة مرفقًا غير مستخدم على الخادم إذا نجح التحميل السابق.';
+
+  @override
+  String get nextcloudAttachmentReference => 'مرجع المرفق على الخادم';
+
+  @override
+  String get nextcloudAddAttachment => 'إضافة مرفق…';
+
+  @override
+  String get nextcloudDeleteAttachmentWarning =>
+      'سيؤدي حذف المرفق إلى جعل روابطه في الملاحظة غير متاحة. يمكن استعادة البيانات المحتفَظ بها من السجل المحلي.';
+
+  @override
+  String get nextcloudChooseConflictingAttributes =>
+      'اختر قيمة لكل سمة متعارضة.';
 }

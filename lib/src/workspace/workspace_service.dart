@@ -5,6 +5,7 @@ import 'package:crypto/crypto.dart' as crypto;
 import 'package:path/path.dart' as p;
 
 import '../core/anchored_path_guard.dart';
+import '../core/atomic_file_writer.dart';
 import '../core/busymark_exception.dart';
 import '../core/debug_log.dart';
 import '../core/diagnostic.dart';
@@ -1240,8 +1241,12 @@ class WorkspaceService {
   /// published with Linux's atomic no-replace rename operation (or an atomic
   /// hard-link fallback). It fails if any filesystem entity already has the
   /// final name.
-  Future<WorkspaceFileSnapshot> saveNewText(String path, String text) {
-    return saveNewFormattedText(path, text);
+  Future<WorkspaceFileSnapshot> saveNewText(
+    String path,
+    String text, {
+    Future<void> Function()? onPublished,
+  }) {
+    return saveNewFormattedText(path, text, onPublished: onPublished);
   }
 
   Future<WorkspaceFileSnapshot> saveNewFormattedText(
@@ -1249,6 +1254,7 @@ class WorkspaceService {
     String text, {
     TextFormatMetadata? format,
     LineEndingNormalization? mixedNormalization,
+    Future<void> Function()? onPublished,
   }) async {
     final bytes = _encodeDocumentText(
       text,
@@ -1260,6 +1266,7 @@ class WorkspaceService {
       final stat = await staged.file.stat();
       await _beforeNewFilePublish?.call(path);
       await _publishNewFileWithoutReplace(staged.file, path);
+      await onPublished?.call();
       return _snapshotFromBytes(stat, bytes);
     } finally {
       await _deleteStagedSaveBestEffort(staged);
@@ -1271,16 +1278,31 @@ class WorkspaceService {
   /// overwrite for that displayed path.
   Future<WorkspaceFileSnapshot> saveTextReplacingPath(
     String path,
-    String text,
-  ) {
-    return saveFormattedTextReplacingPath(path, text);
+    String text, {
+    Future<void> Function()? onPublished,
+  }) {
+    return saveFormattedTextReplacingPath(path, text, onPublished: onPublished);
   }
+
+  Future<WorkspaceFileSnapshot> saveTextReplacingPathIfUnchanged(
+    String path,
+    String text, {
+    required WorkspaceFileSnapshot expectedSnapshot,
+    Future<void> Function()? onPublished,
+  }) => saveFormattedTextReplacingPath(
+    path,
+    text,
+    expectedSnapshot: expectedSnapshot,
+    onPublished: onPublished,
+  );
 
   Future<WorkspaceFileSnapshot> saveFormattedTextReplacingPath(
     String path,
     String text, {
     TextFormatMetadata? format,
     LineEndingNormalization? mixedNormalization,
+    WorkspaceFileSnapshot? expectedSnapshot,
+    Future<void> Function()? onPublished,
   }) async {
     final bytes = _encodeDocumentText(
       text,
@@ -1288,28 +1310,133 @@ class WorkspaceService {
       mixedNormalization: mixedNormalization,
     );
     final staged = await _stageNewSave(path, bytes);
+    var preserveStagedFile = false;
     try {
       final targetType = await FileSystemEntity.type(path, followLinks: false);
+      final expectedLinkTarget = targetType == FileSystemEntityType.link
+          ? await Link(path).target()
+          : null;
+      final expectedLinkResolvedPath = targetType == FileSystemEntityType.link
+          ? await Link(path).resolveSymbolicLinks()
+          : null;
       if (targetType == FileSystemEntityType.file) {
         await _copyFileMode(await File(path).stat(), staged.file);
       }
+      await _validateExpectedSnapshot(path, expectedSnapshot);
       final target = File(p.absolute(path));
-      await staged.file.rename(target.path);
+      await _beforeNewFilePublish?.call(path);
+      if (expectedSnapshot != null) {
+        final atomicApi = LinuxAtomicFileApi.instance;
+        if (!Platform.isLinux || !atomicApi.isAvailable) {
+          throw UnsupportedError(
+            'Conflict-safe replacement requires Linux renameat2.',
+          );
+        }
+        final exchangeError = atomicApi.exchange(
+          staged.file.absolute.path,
+          target.absolute.path,
+        );
+        if (exchangeError != null) {
+          throw FileSystemException(
+            'Could not commit conditional file replacement',
+            path,
+            OSError('atomic exchange failed', exchangeError),
+          );
+        }
+        if (!await _displacedEntryMatchesExpected(
+          staged.file.path,
+          expectedType: targetType,
+          expectedLinkTarget: expectedLinkTarget,
+          expectedLinkResolvedPath: expectedLinkResolvedPath,
+          expectedSnapshot: expectedSnapshot,
+        )) {
+          preserveStagedFile = !await _rollbackConditionalReplacement(
+            staged: staged.file,
+            target: target,
+            publishedBytes: bytes,
+          );
+          throw AtomicFileChangedException(
+            path,
+            recoveryPath: preserveStagedFile ? staged.file.path : null,
+          );
+        }
+      } else {
+        await staged.file.rename(target.path);
+      }
+      await onPublished?.call();
       return _snapshotFromBytes(await target.stat(), bytes);
     } finally {
-      await _deleteStagedSaveBestEffort(staged);
+      if (!preserveStagedFile) await _deleteStagedSaveBestEffort(staged);
     }
+  }
+
+  Future<bool> _displacedEntryMatchesExpected(
+    String path, {
+    required FileSystemEntityType expectedType,
+    required String? expectedLinkTarget,
+    required String? expectedLinkResolvedPath,
+    required WorkspaceFileSnapshot expectedSnapshot,
+  }) async {
+    try {
+      final displacedType = await FileSystemEntity.type(
+        path,
+        followLinks: false,
+      );
+      if (expectedType == FileSystemEntityType.link) {
+        return displacedType == FileSystemEntityType.link &&
+            expectedLinkTarget != null &&
+            expectedLinkResolvedPath != null &&
+            await Link(path).target() == expectedLinkTarget &&
+            !(await fileSnapshot(
+              expectedLinkResolvedPath,
+            )).differsFrom(expectedSnapshot);
+      }
+      if (expectedType != FileSystemEntityType.file ||
+          displacedType != FileSystemEntityType.file) {
+        return false;
+      }
+      return !(await fileSnapshot(path)).differsFrom(expectedSnapshot);
+    } on Object {
+      return false;
+    }
+  }
+
+  Future<bool> _rollbackConditionalReplacement({
+    required File staged,
+    required File target,
+    required List<int> publishedBytes,
+  }) async {
+    if (!await _fileMatchesBytes(target, publishedBytes)) return false;
+    final atomicApi = LinuxAtomicFileApi.instance;
+    final rollbackError = atomicApi.exchange(
+      staged.absolute.path,
+      target.absolute.path,
+    );
+    if (rollbackError != null) return false;
+    if (await _fileMatchesBytes(staged, publishedBytes)) return true;
+
+    // A third writer changed the target after validation but before rollback.
+    // Restore that latest entry and retain the originally displaced one.
+    atomicApi.exchange(staged.absolute.path, target.absolute.path);
+    return false;
   }
 
   Future<WorkspaceFileSnapshot> saveText(String path, String text) {
     return saveFormattedText(path, text);
   }
 
+  Future<WorkspaceFileSnapshot> saveTextIfUnchanged(
+    String path,
+    String text, {
+    required WorkspaceFileSnapshot expectedSnapshot,
+  }) => saveFormattedText(path, text, expectedSnapshot: expectedSnapshot);
+
   Future<WorkspaceFileSnapshot> saveFormattedText(
     String path,
     String text, {
     TextFormatMetadata? format,
     LineEndingNormalization? mixedNormalization,
+    WorkspaceFileSnapshot? expectedSnapshot,
   }) async {
     final savePath = await _saveTargetPath(path);
     final target = File(savePath);
@@ -1326,6 +1453,7 @@ class WorkspaceService {
       if (existingStat.type != FileSystemEntityType.notFound) {
         await _copyFileMode(existingStat, temp);
       }
+      await _validateExpectedSnapshot(savePath, expectedSnapshot);
       await temp.rename(savePath);
       renamed = true;
       final stat = await target.stat();
@@ -1335,6 +1463,17 @@ class WorkspaceService {
         await _deleteSaveArtifactBestEffort(temp);
       }
       rethrow;
+    }
+  }
+
+  Future<void> _validateExpectedSnapshot(
+    String path,
+    WorkspaceFileSnapshot? expected,
+  ) async {
+    if (expected == null) return;
+    final current = await fileSnapshot(path);
+    if (current.differsFrom(expected)) {
+      throw AtomicFileChangedException(path);
     }
   }
 
@@ -1929,7 +2068,10 @@ class WorkspaceService {
 
   Future<void> _deleteSaveArtifactBestEffort(File file) async {
     try {
-      if (await file.exists()) {
+      final type = await FileSystemEntity.type(file.path, followLinks: false);
+      if (type == FileSystemEntityType.link) {
+        await Link(file.path).delete();
+      } else if (type == FileSystemEntityType.file) {
         await file.delete();
       }
     } on Object {
@@ -2143,7 +2285,8 @@ class WorkspaceService {
       filePath: context.parserPath,
       source: buffer.text,
       mode: context.markdownMode,
-      workspaceRoot: workspace.rootPath,
+      workspaceRoot: workspace.filesystemRootPath,
+      validateLocalReferences: !buffer.isRemote,
       sourceOverrides: workspace.sourceOverrides,
     );
     return workspace.copyWith(
@@ -2227,7 +2370,7 @@ class WorkspaceService {
       filePath: context.parserPath,
       source: buffer.text,
       mode: context.markdownMode,
-      workspaceRoot: workspace.rootPath,
+      workspaceRoot: workspace.filesystemRootPath,
       validateLocalReferences: false,
     );
     return previewBuilder.build(parsed);
@@ -2254,7 +2397,7 @@ class WorkspaceService {
         filePath: context.parserPath,
         source: buffer.text,
         mode: context.markdownMode,
-        workspaceRoot: workspace.rootPath,
+        workspaceRoot: workspace.filesystemRootPath,
         validateLocalReferences: false,
       );
       return List.unmodifiable([
@@ -2293,7 +2436,7 @@ class WorkspaceService {
       filePath: context.parserPath,
       source: buffer.text,
       mode: context.markdownMode,
-      workspaceRoot: workspace.rootPath,
+      workspaceRoot: workspace.filesystemRootPath,
       validateLocalReferences: false,
     );
     return previewBuilder.build(parsed);

@@ -13,6 +13,7 @@ import '../app/busymark_design.dart';
 import '../app/busymark_glyphs.dart';
 import '../app/localization.dart';
 import '../core/local_image_resolver.dart';
+import '../assets/document_media_context.dart';
 
 /// Resolves an authored image width using the shared document-view bounds.
 double? busyMarkDocumentImageWidth(Map<String, String> attributes) {
@@ -92,6 +93,23 @@ class MarkdownImageView extends StatelessWidget {
       return null;
     }
     final uri = Uri.tryParse(source);
+    final media = DocumentMediaScope.of(context);
+    if (media != null && !(uri?.scheme == 'http' || uri?.scheme == 'https')) {
+      return FutureBuilder<String?>(
+        key: ValueKey('${media.identity}:$source'),
+        future: media.resolve(source),
+        builder: (context, snapshot) {
+          final path = snapshot.data;
+          return path == null
+              ? _MarkdownImagePlaceholder(
+                  source: source,
+                  alt: alt,
+                  height: height ?? 120,
+                )
+              : _fileImage(File(path), source, _isSvgPath(path));
+        },
+      );
+    }
     if (uri != null && uri.hasScheme) {
       if (uri.scheme == 'file') {
         final resolvedPath = resolveLocalImagePath(

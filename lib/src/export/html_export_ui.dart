@@ -1,3 +1,5 @@
+import '../nextcloud_notes/application/nextcloud_connection.dart';
+import '../nextcloud_notes/application/notes_media.dart';
 import 'dart:async';
 import 'dart:io';
 import 'package:file_selector/file_selector.dart';
@@ -44,6 +46,16 @@ Future<void> exportWorkspaceToHtml(
     snapshot = ref.read(workspaceControllerProvider);
   }
   final workspace = snapshot.workspace!;
+  final remoteRef = snapshot.activeBuffer?.remoteNote;
+  final media = remoteRef == null
+      ? null
+      : NextcloudDocumentMedia(
+          await ref.read(nextcloudNotesRepositoryProvider.future),
+          remoteRef.accountId,
+          remoteRef.localId,
+        ).context;
+  if (!context.mounted) return;
+
   final headerBar = ref.read(linuxHeaderBarServiceProvider);
   final configuration =
       configuredSelection ??
@@ -57,7 +69,7 @@ Future<void> exportWorkspaceToHtml(
                   .where((i) => !i.isLibrary)
                   .toList()
             : const [],
-        workspaceRoot: site ? workspace.rootPath : null,
+        workspaceRoot: site ? (workspace.filesystemRootPath ?? '') : null,
       );
   if (configuration == null || configuration.html == null || !context.mounted) {
     return;
@@ -65,14 +77,18 @@ Future<void> exportWorkspaceToHtml(
   final instance = configuration.instance;
   final options = configuration.html!;
   final path = workspace.activeFilePath ?? workspace.markdown?.filePath ?? '';
-  final name = path.isEmpty
+  final name = remoteRef != null
+      ? snapshot.activeBuffer!.displayName
+      : path.isEmpty
       ? context.l10n.untitledMarkdownFileName
       : p.basename(path);
   final location = await getSaveLocation(
     suggestedName: site
         ? '${instance!.id}-html'
         : '${p.basenameWithoutExtension(name)}.html',
-    initialDirectory: workspace.rootPath.isEmpty ? null : workspace.rootPath,
+    initialDirectory: (workspace.filesystemRootPath ?? '').isEmpty
+        ? null
+        : (workspace.filesystemRootPath ?? ''),
     acceptedTypeGroups: site
         ? const []
         : [
@@ -125,8 +141,9 @@ Future<void> exportWorkspaceToHtml(
   final service = ref.read(htmlExportServiceProvider);
   final request = MarkdownHtmlExportRequest(
     source: snapshot.activeText,
+    media: media,
     filePath: path,
-    workspaceRoot: workspace.rootPath,
+    workspaceRoot: (workspace.filesystemRootPath ?? ''),
     destinationPath: destination,
     overwrite: overwrite,
     options: options,
@@ -142,7 +159,7 @@ Future<void> exportWorkspaceToHtml(
       token: token,
       operation: (progress) => site
           ? service.exportWriterside(
-              projectRoot: workspace.rootPath,
+              projectRoot: (workspace.filesystemRootPath ?? ''),
               moduleRoot: workspace.writersideModule!.rootPath,
               instanceId: selected!.id,
               destinationPath: destination,

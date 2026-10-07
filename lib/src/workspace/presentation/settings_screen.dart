@@ -1,3 +1,4 @@
+import '../../nextcloud_notes/presentation/nextcloud_settings.dart';
 import 'dart:async';
 import 'dart:convert';
 
@@ -28,6 +29,7 @@ import '../../app/localization.dart';
 import '../../app/window_control_service.dart';
 import '../../core/atomic_file_writer.dart';
 import '../../feedback/presentation/feedback_dialog.dart';
+import '../../platform/gtk_header_icon_service.dart';
 import '../../platform/linux_header_bar_service.dart';
 import '../../spellcheck/spelling_catalog.dart';
 import '../../spellcheck/spelling_session_controller.dart';
@@ -419,6 +421,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
         ],
       ),
+      SettingsPage.nextcloudNotes => const NextcloudNotesSettings(),
       SettingsPage.ai => const _AiSettingsPage(),
       SettingsPage.privacy => BusyMarkGroupedList(
         title: l10n.privacy,
@@ -1310,6 +1313,7 @@ enum SettingsPage {
   validation,
   history,
   ai,
+  nextcloudNotes,
   privacy,
 }
 
@@ -1319,6 +1323,7 @@ const _primarySettingsPages = <SettingsPage>[
   SettingsPage.validation,
   SettingsPage.history,
   SettingsPage.ai,
+  SettingsPage.nextcloudNotes,
   SettingsPage.privacy,
 ];
 
@@ -1335,6 +1340,7 @@ SettingsPage settingsPageFromRouteValue(String? value) {
     'spellingDictionaries' => SettingsPage.spellingDictionaries,
     'validation' => SettingsPage.validation,
     'history' => SettingsPage.history,
+    'nextcloudNotes' => SettingsPage.nextcloudNotes,
     'ai' => SettingsPage.ai,
     // Preserve links to the former Window settings page.
     'window' => SettingsPage.history,
@@ -1355,6 +1361,7 @@ String _settingsPageLabel(BuildContext context, SettingsPage page) {
     SettingsPage.spellingDictionaries => l10n.spellingDictionaries,
     SettingsPage.validation => l10n.validation,
     SettingsPage.history => l10n.settingsHistory,
+    SettingsPage.nextcloudNotes => l10n.nextcloudNotes,
     SettingsPage.ai => l10n.ai,
     SettingsPage.privacy => l10n.privacy,
   };
@@ -1367,6 +1374,7 @@ IconData _settingsPageIcon(SettingsPage page) {
     SettingsPage.spellingDictionaries => BusyMarkGlyphs.symbols,
     SettingsPage.validation => BusyMarkGlyphs.diagnostics,
     SettingsPage.history => BusyMarkGlyphs.documentHistory,
+    SettingsPage.nextcloudNotes => BusyMarkGlyphs.documentHistory,
     SettingsPage.ai => BusyMarkGlyphs.ai,
     SettingsPage.privacy => BusyMarkGlyphs.privacy,
   };
@@ -1473,14 +1481,21 @@ class _SettingsFallbackHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BusyMarkLinuxHeaderLayout(
-      leading: BusyMarkHeaderIconButton(
-        tooltip: context.l10n.back,
-        icon: BusyMarkGlyphs.backFor(Directionality.of(context)),
-        shortcut: BusyMarkAppShortcutLabels.back,
-        onPressed: onBack,
+      leading: BusyMarkLinuxHeaderControlGroup(
+        children: [
+          BusyMarkLinuxHeaderIconButton(
+            tooltip: context.l10n.back,
+            icon: BusyMarkGlyphs.headerBackFor(Directionality.of(context)),
+            nativeIcon: BusyMarkLinuxHeaderIcon.back,
+            shortcut: BusyMarkAppShortcutLabels.back,
+            onPressed: onBack,
+          ),
+        ],
       ),
       title: BusyMarkLinuxHeaderTitle(title),
-      trailing: BusyMarkMainMenuButton(onSelected: onMenuSelected),
+      trailing: BusyMarkLinuxHeaderControlGroup(
+        children: [BusyMarkMainMenuButton(onSelected: onMenuSelected)],
+      ),
     );
   }
 }

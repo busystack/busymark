@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:busymark/src/core/busymark_exception.dart';
+import 'package:busymark/src/core/atomic_file_writer.dart';
 import 'package:busymark/src/core/path_utils.dart';
 import 'package:busymark/src/markdown/markdown_model.dart';
 import 'package:busymark/src/markdown/markdown_parser.dart';
@@ -1236,6 +1237,249 @@ final answer = 42;
       expect(snapshot.size, '# Replacement\n'.length);
     },
     skip: Platform.isWindows ? 'POSIX symlink behavior only.' : false,
+  );
+
+  test(
+    'conditional replacement cannot overwrite a post-validation writer',
+    () async {
+      final directory = await Directory.systemTemp.createTemp(
+        'busymark-conditional-replace-race-',
+      );
+      addTearDown(() async {
+        if (await directory.exists()) {
+          await directory.delete(recursive: true);
+        }
+      });
+      final destination = File(p.join(directory.path, 'note.md'));
+      await destination.writeAsString('version one\n', flush: true);
+      final expected = await service.fileSnapshot(destination.path);
+      final racingService = WorkspaceService(
+        beforeNewFilePublish: (targetPath) async {
+          await File(targetPath).writeAsString('version two\n', flush: true);
+        },
+      );
+
+      await expectLater(
+        racingService.saveTextReplacingPathIfUnchanged(
+          destination.path,
+          'BusyMark replacement\n',
+          expectedSnapshot: expected,
+        ),
+        throwsA(isA<AtomicFileChangedException>()),
+      );
+
+      expect(await destination.readAsString(), 'version two\n');
+      expect(
+        await directory
+            .list()
+            .where(
+              (entity) => p.basename(entity.path).startsWith('.busymark-save-'),
+            )
+            .toList(),
+        isEmpty,
+      );
+    },
+    skip: !Platform.isLinux
+        ? 'The application currently supports Linux desktop only.'
+        : false,
+  );
+
+  test(
+    'conditional replacement validates a displaced relative symlink',
+    () async {
+      final directory = await Directory.systemTemp.createTemp(
+        'busymark-conditional-relative-link-',
+      );
+      addTearDown(() async {
+        if (await directory.exists()) {
+          await directory.delete(recursive: true);
+        }
+      });
+      final target = File(p.join(directory.path, 'target.md'));
+      final link = Link(p.join(directory.path, 'note.md'));
+      await target.writeAsString('relative target\n', flush: true);
+      await link.create('target.md');
+      final expected = await service.fileSnapshot(link.path);
+
+      await service.saveTextReplacingPathIfUnchanged(
+        link.path,
+        'BusyMark replacement\n',
+        expectedSnapshot: expected,
+      );
+
+      expect(
+        await FileSystemEntity.type(link.path, followLinks: false),
+        FileSystemEntityType.file,
+      );
+      expect(await File(link.path).readAsString(), 'BusyMark replacement\n');
+      expect(await target.readAsString(), 'relative target\n');
+      expect(
+        await directory
+            .list()
+            .where(
+              (entity) => p.basename(entity.path).startsWith('.busymark-save-'),
+            )
+            .toList(),
+        isEmpty,
+      );
+    },
+    skip: !Platform.isLinux
+        ? 'The application currently supports Linux desktop only.'
+        : false,
+  );
+
+  test(
+    'conditional replacement detects a changed relative symlink target',
+    () async {
+      final directory = await Directory.systemTemp.createTemp(
+        'busymark-conditional-relative-link-race-',
+      );
+      addTearDown(() async {
+        if (await directory.exists()) {
+          await directory.delete(recursive: true);
+        }
+      });
+      final target = File(p.join(directory.path, 'target.md'));
+      final link = Link(p.join(directory.path, 'note.md'));
+      await target.writeAsString('version one\n', flush: true);
+      await link.create('target.md');
+      final expected = await service.fileSnapshot(link.path);
+      final racingService = WorkspaceService(
+        beforeNewFilePublish: (_) async {
+          await target.writeAsString('version two\n', flush: true);
+        },
+      );
+
+      await expectLater(
+        racingService.saveTextReplacingPathIfUnchanged(
+          link.path,
+          'BusyMark replacement\n',
+          expectedSnapshot: expected,
+        ),
+        throwsA(isA<AtomicFileChangedException>()),
+      );
+
+      expect(
+        await FileSystemEntity.type(link.path, followLinks: false),
+        FileSystemEntityType.link,
+      );
+      expect(await link.target(), 'target.md');
+      expect(await target.readAsString(), 'version two\n');
+      expect(
+        await directory
+            .list()
+            .where(
+              (entity) => p.basename(entity.path).startsWith('.busymark-save-'),
+            )
+            .toList(),
+        isEmpty,
+      );
+    },
+    skip: !Platform.isLinux
+        ? 'The application currently supports Linux desktop only.'
+        : false,
+  );
+
+  test(
+    'conditional replacement restores a post-validation directory',
+    () async {
+      final directory = await Directory.systemTemp.createTemp(
+        'busymark-conditional-directory-race-',
+      );
+      addTearDown(() async {
+        if (await directory.exists()) {
+          await directory.delete(recursive: true);
+        }
+      });
+      final destination = File(p.join(directory.path, 'note.md'));
+      await destination.writeAsString('version one\n', flush: true);
+      final expected = await service.fileSnapshot(destination.path);
+      final racingService = WorkspaceService(
+        beforeNewFilePublish: (targetPath) async {
+          await File(targetPath).delete();
+          await Directory(targetPath).create();
+        },
+      );
+
+      await expectLater(
+        racingService.saveTextReplacingPathIfUnchanged(
+          destination.path,
+          'BusyMark replacement\n',
+          expectedSnapshot: expected,
+        ),
+        throwsA(isA<AtomicFileChangedException>()),
+      );
+
+      expect(
+        await FileSystemEntity.type(destination.path, followLinks: false),
+        FileSystemEntityType.directory,
+      );
+      expect(await Directory(destination.path).list().toList(), isEmpty);
+      expect(
+        await directory
+            .list()
+            .where(
+              (entity) => p.basename(entity.path).startsWith('.busymark-save-'),
+            )
+            .toList(),
+        isEmpty,
+      );
+    },
+    skip: !Platform.isLinux
+        ? 'The application currently supports Linux desktop only.'
+        : false,
+  );
+
+  test(
+    'conditional replacement restores a post-validation FIFO without reading',
+    () async {
+      final directory = await Directory.systemTemp.createTemp(
+        'busymark-conditional-fifo-race-',
+      );
+      addTearDown(() async {
+        if (await directory.exists()) {
+          await directory.delete(recursive: true);
+        }
+      });
+      final destination = File(p.join(directory.path, 'note.md'));
+      await destination.writeAsString('version one\n', flush: true);
+      final expected = await service.fileSnapshot(destination.path);
+      final racingService = WorkspaceService(
+        beforeNewFilePublish: (targetPath) async {
+          await File(targetPath).delete();
+          final result = await Process.run('mkfifo', [targetPath]);
+          if (result.exitCode != 0) {
+            throw StateError('mkfifo failed: ${result.stderr}');
+          }
+        },
+      );
+
+      await expectLater(
+        racingService.saveTextReplacingPathIfUnchanged(
+          destination.path,
+          'BusyMark replacement\n',
+          expectedSnapshot: expected,
+        ),
+        throwsA(isA<AtomicFileChangedException>()),
+      );
+
+      expect(
+        await FileSystemEntity.type(destination.path, followLinks: false),
+        FileSystemEntityType.pipe,
+      );
+      expect(
+        await directory
+            .list()
+            .where(
+              (entity) => p.basename(entity.path).startsWith('.busymark-save-'),
+            )
+            .toList(),
+        isEmpty,
+      );
+    },
+    skip: !Platform.isLinux
+        ? 'The application currently supports Linux desktop only.'
+        : false,
   );
 
   test(

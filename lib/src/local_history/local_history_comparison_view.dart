@@ -13,6 +13,8 @@ import '../comparison/source_comparison.dart';
 import '../workspace/document_buffer.dart';
 import '../workspace/workspace_controller.dart';
 import '../workspace/workspace_safety.dart';
+import '../nextcloud_notes/application/nextcloud_connection.dart';
+import '../nextcloud_notes/domain/notes_models.dart';
 import 'local_history_controller.dart';
 import 'local_history_models.dart';
 
@@ -69,13 +71,24 @@ class _LocalHistoryComparisonViewState
     final matchingBuffer = ref
         .read(workspaceControllerProvider.notifier)
         .localHistoryBufferForDocument(document, revision);
+    final retainedNote = document.remoteNote == null
+        ? null
+        : ref
+              .watch(nextcloudNotesRepositoryProvider)
+              .value
+              ?.noteById(document.remoteNote!.localId);
+    final cachedNote = retainedNote?.syncState == NoteSyncState.deletedRemotely
+        ? null
+        : retainedNote;
     final request = _ComparisonRequest(
       documentId: document.id,
       revisionId: revision.summary.id,
       revisionVersion: revision.summary.capturedAt.microsecondsSinceEpoch,
-      currentBufferId: matchingBuffer?.id,
-      currentSourceVersion: matchingBuffer?.revision,
-      currentSource: matchingBuffer?.text,
+      currentBufferId:
+          matchingBuffer?.id ??
+          (cachedNote == null ? null : document.remoteNote!.identity),
+      currentSourceVersion: matchingBuffer?.revision ?? cachedNote?.revision,
+      currentSource: matchingBuffer?.text ?? cachedNote?.content,
       currentPath: document.currentPath,
     );
     if (_request != request) {
@@ -106,6 +119,7 @@ class _LocalHistoryComparisonViewState
             );
         return _ComparisonBody(
           snapshot: data,
+          remoteRecovery: document.remoteNote != null,
           onClose: () => ref
               .read(localHistoryControllerProvider.notifier)
               .clearComparison(),
@@ -121,17 +135,20 @@ class _LocalHistoryComparisonViewState
                 )
               : null,
           onRestoreOriginal:
-              actionsAreCurrent &&
-                  data.missing &&
-                  (document.currentPath ?? revision.summary.historicalPath) !=
-                      null
+              document.remoteNote != null && actionsAreCurrent && data.missing
+              ? () => unawaited(_recoverRemote(document, revision))
+              : actionsAreCurrent &&
+                    data.missing &&
+                    (document.currentPath ?? revision.summary.historicalPath) !=
+                        null
               ? () => _restoreMissing(
                   document,
                   revision,
                   document.currentPath ?? revision.summary.historicalPath!,
                 )
               : null,
-          onRestoreNewLocation: actionsAreCurrent && data.missing
+          onRestoreNewLocation:
+              document.remoteNote == null && actionsAreCurrent && data.missing
               ? () => _chooseRestoreLocation(document, revision)
               : null,
         );
@@ -224,6 +241,19 @@ class _LocalHistoryComparisonViewState
     if (location != null && mounted) {
       await _restoreMissing(document, revision, location.path);
     }
+  }
+
+  Future<void> _recoverRemote(
+    LocalHistoryDocument document,
+    LocalHistoryRevision revision,
+  ) async {
+    if (!await confirmSafeToContinue(context, ref) || !mounted) return;
+    await ref
+        .read(workspaceControllerProvider.notifier)
+        .recoverNextcloudHistoryRevision(
+          document: document,
+          revision: revision,
+        );
   }
 
   Future<void> _restoreMissing(
@@ -337,7 +367,12 @@ class _ComparisonSnapshot {
             revision.summary.capturedAt.microsecondsSinceEpoch) {
       return false;
     }
-    if (currentBuffer == null) return request.currentBufferId == null;
+    if (currentBuffer == null) {
+      return request.currentBufferId == null ||
+          (comparison.currentInput.id == request.currentBufferId &&
+              comparison.currentInput.version == request.currentSourceVersion &&
+              comparison.currentInput.source == request.currentSource);
+    }
     return comparison.currentInput.id == currentBuffer.id &&
         comparison.currentInput.version == currentBuffer.revision &&
         comparison.currentInput.source == currentBuffer.text &&
@@ -353,6 +388,7 @@ class _ComparisonBody extends StatelessWidget {
     required this.onRestoreChange,
     required this.onRestoreOriginal,
     required this.onRestoreNewLocation,
+    this.remoteRecovery = false,
   });
 
   final _ComparisonSnapshot snapshot;
@@ -361,6 +397,7 @@ class _ComparisonBody extends StatelessWidget {
   final ValueChanged<SourceComparisonChange>? onRestoreChange;
   final VoidCallback? onRestoreOriginal;
   final VoidCallback? onRestoreNewLocation;
+  final bool remoteRecovery;
 
   @override
   Widget build(BuildContext context) {
@@ -403,12 +440,18 @@ class _ComparisonBody extends StatelessWidget {
         ),
         if (snapshot.missing)
           _ComparisonNotice(
-            text: context.l10n.localHistoryMissingFile,
+            text: remoteRecovery
+                ? context.l10n.localHistoryDeleted
+                : context.l10n.localHistoryMissingFile,
             actions: [
               if (onRestoreOriginal != null)
                 OutlinedButton(
                   onPressed: onRestoreOriginal,
-                  child: Text(context.l10n.localHistoryRestoreOriginalLocation),
+                  child: Text(
+                    remoteRecovery
+                        ? context.l10n.nextcloudNewNote
+                        : context.l10n.localHistoryRestoreOriginalLocation,
+                  ),
                 ),
               if (onRestoreNewLocation != null)
                 OutlinedButton(

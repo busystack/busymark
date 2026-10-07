@@ -1,3 +1,4 @@
+import '../../assets/document_media_context.dart';
 import 'dart:async';
 import 'dart:io';
 import 'dart:math' as math;
@@ -868,6 +869,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
                       child: DefaultTextHeightBehavior(
                         textHeightBehavior: sourceTextHeightBehavior,
                         child: TextField(
+                          readOnly: DocumentReadOnlyScope.of(context),
                           controller: _controller,
                           undoController: _undoController,
                           focusNode: _focusNode,
@@ -1068,7 +1070,7 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
         selectionEnd: selection.end,
         anchorOffset: anchorOffset,
         sourceRevision: widget.editRevision,
-        targetId: widget.filePath ?? 'untitled',
+        targetId: widget.documentId ?? widget.filePath ?? 'untitled',
         documentPath: widget.filePath,
       ),
     );
@@ -1487,6 +1489,10 @@ class BusyMarkSourceEditorState extends State<BusyMarkSourceEditor> {
   void _handleSourceChanged({
     _SourceEditOrigin origin = _SourceEditOrigin.userTyping,
   }) {
+    if (DocumentReadOnlyScope.of(context)) {
+      _controller.setFullText(widget.text);
+      return;
+    }
     _replacementWorker.cancel();
     // Sidebar offsets belong to the pre-edit document. Once the user edits,
     // resume normal search on the new text instead of awaiting the old range.

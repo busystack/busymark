@@ -127,6 +127,7 @@ class VisualizationRenderRequest {
     this.options = const VisualizationRendererOptions({}),
     this.dependencies = const [],
     this.priority = VisualizationRenderPriority.visible,
+    this.allowLocalFiles = true,
   });
 
   final String blockKey;
@@ -142,6 +143,7 @@ class VisualizationRenderRequest {
   final VisualizationRendererOptions options;
   final List<VisualizationDependency> dependencies;
   final VisualizationRenderPriority priority;
+  final bool allowLocalFiles;
 
   String get cacheKey {
     final sortedDependencies = dependencies.toList()
@@ -162,6 +164,7 @@ class VisualizationRenderRequest {
         for (final dependency in sortedDependencies)
           {'id': dependency.id, 'hash': dependency.hash},
       ],
+      if (!allowLocalFiles) 'allowLocalFiles': false,
     };
     return sha256.convert(utf8.encode(jsonEncode(payload))).toString();
   }
@@ -170,6 +173,7 @@ class VisualizationRenderRequest {
     VisualizationRendererOptions? options,
     List<VisualizationDependency>? dependencies,
     VisualizationRenderPriority? priority,
+    bool? allowLocalFiles,
   }) {
     return VisualizationRenderRequest(
       blockKey: blockKey,
@@ -185,6 +189,7 @@ class VisualizationRenderRequest {
       options: options ?? this.options,
       dependencies: dependencies ?? this.dependencies,
       priority: priority ?? this.priority,
+      allowLocalFiles: allowLocalFiles ?? this.allowLocalFiles,
     );
   }
 }

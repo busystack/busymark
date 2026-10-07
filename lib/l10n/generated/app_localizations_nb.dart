@@ -4660,4 +4660,92 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String get windowRestore => 'Gjenopprett';
+
+  @override
+  String get nextcloudNotes => 'Nextcloud Notes';
+
+  @override
+  String get nextcloudConnect => 'Koble til';
+
+  @override
+  String get nextcloudReconnect => 'Koble til på nytt';
+
+  @override
+  String get nextcloudDisconnect => 'Koble fra';
+
+  @override
+  String get nextcloudServer => 'Serveradresse';
+
+  @override
+  String get nextcloudSignInBrowser => 'Fullfør innloggingen i nettleseren.';
+
+  @override
+  String get nextcloudFavorites => 'Favoritter';
+
+  @override
+  String get nextcloudNewNote => 'Nytt notat';
+
+  @override
+  String get nextcloudSavedLocally =>
+      'Lagret lokalt · venter på synkronisering';
+
+  @override
+  String get nextcloudSyncing => 'Synkroniserer';
+
+  @override
+  String get nextcloudSynced => 'Synkronisert';
+
+  @override
+  String get nextcloudOffline => 'Frakoblet';
+
+  @override
+  String get nextcloudLocked => 'Låst av serveren';
+
+  @override
+  String get nextcloudReconnectRequired => 'Ny tilkobling kreves';
+
+  @override
+  String get nextcloudCreationUncertain =>
+      'Resultatet av opprettelsen er usikkert';
+
+  @override
+  String get nextcloudReadOnly => 'Skrivebeskyttet';
+
+  @override
+  String get nextcloudTakeRemote => 'Bruk ekstern versjon';
+
+  @override
+  String get nextcloudMerge => 'Slå sammen';
+
+  @override
+  String get nextcloudDeleteNote => 'Slette notatet?';
+
+  @override
+  String get nextcloudWorkspaceReplaceUnavailable =>
+      'Erstatning i arbeidsområdet er utilgjengelig for Nextcloud Notes. Erstatt i hvert enkelt notat.';
+
+  @override
+  String get nextcloudSaveLocalCopy => 'Lagre lokal kopi…';
+
+  @override
+  String get nextcloudDisconnectWarning =>
+      'Fjerning av kontoen sletter mellomlagrede notater og ventende endringer fra denne enheten. Synkroniser først for å beholde arbeidet på serveren.';
+
+  @override
+  String get nextcloudAttachmentRetryWarning =>
+      'Hvis forrige opplasting lyktes, kan et nytt forsøk etterlate et ubrukt vedlegg på serveren.';
+
+  @override
+  String get nextcloudAttachmentReference => 'Vedleggsreferanse på serveren';
+
+  @override
+  String get nextcloudAddAttachment => 'Legg til vedlegg…';
+
+  @override
+  String get nextcloudDeleteAttachmentWarning =>
+      'Når du sletter dette vedlegget, blir lenkene til det i notatet utilgjengelige. Lagrede data kan gjenopprettes fra lokal historikk.';
+
+  @override
+  String get nextcloudChooseConflictingAttributes =>
+      'Velg hver motstridende egenskap.';
 }

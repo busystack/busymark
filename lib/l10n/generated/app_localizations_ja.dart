@@ -4530,4 +4530,89 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get windowRestore => '元に戻す';
+
+  @override
+  String get nextcloudNotes => 'Nextcloud Notes';
+
+  @override
+  String get nextcloudConnect => '接続';
+
+  @override
+  String get nextcloudReconnect => '再接続';
+
+  @override
+  String get nextcloudDisconnect => '切断';
+
+  @override
+  String get nextcloudServer => 'サーバーURL';
+
+  @override
+  String get nextcloudSignInBrowser => 'ブラウザーでログインを完了してください。';
+
+  @override
+  String get nextcloudFavorites => 'お気に入り';
+
+  @override
+  String get nextcloudNewNote => '新しいメモ';
+
+  @override
+  String get nextcloudSavedLocally => 'ローカルに保存済み・同期待ち';
+
+  @override
+  String get nextcloudSyncing => '同期中';
+
+  @override
+  String get nextcloudSynced => '同期済み';
+
+  @override
+  String get nextcloudOffline => 'オフライン';
+
+  @override
+  String get nextcloudLocked => 'サーバーでロック中';
+
+  @override
+  String get nextcloudReconnectRequired => '再接続が必要';
+
+  @override
+  String get nextcloudCreationUncertain => '作成結果が不明';
+
+  @override
+  String get nextcloudReadOnly => '読み取り専用';
+
+  @override
+  String get nextcloudTakeRemote => 'サーバー版を使用';
+
+  @override
+  String get nextcloudMerge => '統合';
+
+  @override
+  String get nextcloudDeleteNote => 'メモを削除しますか？';
+
+  @override
+  String get nextcloudWorkspaceReplaceUnavailable =>
+      'Nextcloud Notesではワークスペース全体の置換は利用できません。各メモ内で置換してください。';
+
+  @override
+  String get nextcloudSaveLocalCopy => 'ローカルコピーを保存…';
+
+  @override
+  String get nextcloudDisconnectWarning =>
+      'このアカウントを削除すると、この端末のキャッシュ済みメモと未同期の変更が削除されます。先に同期してサーバーに作業を保存してください。';
+
+  @override
+  String get nextcloudAttachmentRetryWarning =>
+      '前回のアップロードが成功していた場合、再試行により未使用の添付ファイルがサーバーに残ることがあります。';
+
+  @override
+  String get nextcloudAttachmentReference => 'サーバー上の添付ファイル参照';
+
+  @override
+  String get nextcloudAddAttachment => '添付ファイルを追加…';
+
+  @override
+  String get nextcloudDeleteAttachmentWarning =>
+      'この添付ファイルを削除すると、ノート内のリンクは利用できなくなります。保持されたデータはローカル履歴から復元できます。';
+
+  @override
+  String get nextcloudChooseConflictingAttributes => '競合する各属性の値を選択してください。';
 }

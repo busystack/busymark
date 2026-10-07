@@ -7883,6 +7883,168 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Restore'**
   String get windowRestore;
+
+  /// No description provided for @nextcloudNotes.
+  ///
+  /// In en, this message translates to:
+  /// **'Nextcloud Notes'**
+  String get nextcloudNotes;
+
+  /// No description provided for @nextcloudConnect.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect'**
+  String get nextcloudConnect;
+
+  /// No description provided for @nextcloudReconnect.
+  ///
+  /// In en, this message translates to:
+  /// **'Reconnect'**
+  String get nextcloudReconnect;
+
+  /// No description provided for @nextcloudDisconnect.
+  ///
+  /// In en, this message translates to:
+  /// **'Disconnect'**
+  String get nextcloudDisconnect;
+
+  /// No description provided for @nextcloudServer.
+  ///
+  /// In en, this message translates to:
+  /// **'Server URL'**
+  String get nextcloudServer;
+
+  /// No description provided for @nextcloudSignInBrowser.
+  ///
+  /// In en, this message translates to:
+  /// **'Complete sign-in in your browser.'**
+  String get nextcloudSignInBrowser;
+
+  /// No description provided for @nextcloudFavorites.
+  ///
+  /// In en, this message translates to:
+  /// **'Favorites'**
+  String get nextcloudFavorites;
+
+  /// No description provided for @nextcloudNewNote.
+  ///
+  /// In en, this message translates to:
+  /// **'New note'**
+  String get nextcloudNewNote;
+
+  /// No description provided for @nextcloudSavedLocally.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved locally · sync pending'**
+  String get nextcloudSavedLocally;
+
+  /// No description provided for @nextcloudSyncing.
+  ///
+  /// In en, this message translates to:
+  /// **'Syncing'**
+  String get nextcloudSyncing;
+
+  /// No description provided for @nextcloudSynced.
+  ///
+  /// In en, this message translates to:
+  /// **'Synced'**
+  String get nextcloudSynced;
+
+  /// No description provided for @nextcloudOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'Offline'**
+  String get nextcloudOffline;
+
+  /// No description provided for @nextcloudLocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Locked by server'**
+  String get nextcloudLocked;
+
+  /// No description provided for @nextcloudReconnectRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Reconnect required'**
+  String get nextcloudReconnectRequired;
+
+  /// No description provided for @nextcloudCreationUncertain.
+  ///
+  /// In en, this message translates to:
+  /// **'Creation outcome uncertain'**
+  String get nextcloudCreationUncertain;
+
+  /// No description provided for @nextcloudReadOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Read only'**
+  String get nextcloudReadOnly;
+
+  /// No description provided for @nextcloudTakeRemote.
+  ///
+  /// In en, this message translates to:
+  /// **'Take remote'**
+  String get nextcloudTakeRemote;
+
+  /// No description provided for @nextcloudMerge.
+  ///
+  /// In en, this message translates to:
+  /// **'Merge'**
+  String get nextcloudMerge;
+
+  /// No description provided for @nextcloudDeleteNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete note?'**
+  String get nextcloudDeleteNote;
+
+  /// No description provided for @nextcloudWorkspaceReplaceUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Workspace replacement is unavailable for Nextcloud Notes. Replace within each note instead.'**
+  String get nextcloudWorkspaceReplaceUnavailable;
+
+  /// No description provided for @nextcloudSaveLocalCopy.
+  ///
+  /// In en, this message translates to:
+  /// **'Save local copy…'**
+  String get nextcloudSaveLocalCopy;
+
+  /// No description provided for @nextcloudDisconnectWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'Removing this account deletes its cached notes and pending changes from this device. Synchronize first to retain pending work on the server.'**
+  String get nextcloudDisconnectWarning;
+
+  /// No description provided for @nextcloudAttachmentRetryWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'Retrying this attachment can leave an unused attachment on the server if the previous upload succeeded.'**
+  String get nextcloudAttachmentRetryWarning;
+
+  /// No description provided for @nextcloudAttachmentReference.
+  ///
+  /// In en, this message translates to:
+  /// **'Attachment reference on server'**
+  String get nextcloudAttachmentReference;
+
+  /// No description provided for @nextcloudAddAttachment.
+  ///
+  /// In en, this message translates to:
+  /// **'Add attachment…'**
+  String get nextcloudAddAttachment;
+
+  /// No description provided for @nextcloudDeleteAttachmentWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'Deleting this attachment makes its links in the note unavailable. Retained bytes can be recovered through local history.'**
+  String get nextcloudDeleteAttachmentWarning;
+
+  /// No description provided for @nextcloudChooseConflictingAttributes.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose each conflicting attribute.'**
+  String get nextcloudChooseConflictingAttributes;
 }
 
 class _AppLocalizationsDelegate

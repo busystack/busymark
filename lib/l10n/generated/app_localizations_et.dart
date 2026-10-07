@@ -4659,4 +4659,91 @@ class AppLocalizationsEt extends AppLocalizations {
 
   @override
   String get windowRestore => 'Taasta';
+
+  @override
+  String get nextcloudNotes => 'Nextcloud Notes';
+
+  @override
+  String get nextcloudConnect => 'Ühenda';
+
+  @override
+  String get nextcloudReconnect => 'Ühenda uuesti';
+
+  @override
+  String get nextcloudDisconnect => 'Katkesta ühendus';
+
+  @override
+  String get nextcloudServer => 'Serveri aadress';
+
+  @override
+  String get nextcloudSignInBrowser => 'Lõpeta sisselogimine brauseris.';
+
+  @override
+  String get nextcloudFavorites => 'Lemmikud';
+
+  @override
+  String get nextcloudNewNote => 'Uus märge';
+
+  @override
+  String get nextcloudSavedLocally =>
+      'Salvestatud kohalikult · sünkroonimine ootel';
+
+  @override
+  String get nextcloudSyncing => 'Sünkroonimine';
+
+  @override
+  String get nextcloudSynced => 'Sünkroonitud';
+
+  @override
+  String get nextcloudOffline => 'Ühenduseta';
+
+  @override
+  String get nextcloudLocked => 'Serveri lukustatud';
+
+  @override
+  String get nextcloudReconnectRequired => 'Vajalik uus ühendus';
+
+  @override
+  String get nextcloudCreationUncertain => 'Loomise tulemus on ebakindel';
+
+  @override
+  String get nextcloudReadOnly => 'Kirjutuskaitstud';
+
+  @override
+  String get nextcloudTakeRemote => 'Kasuta serveri versiooni';
+
+  @override
+  String get nextcloudMerge => 'Ühenda sisu';
+
+  @override
+  String get nextcloudDeleteNote => 'Kustutada märge?';
+
+  @override
+  String get nextcloudWorkspaceReplaceUnavailable =>
+      'Tööruumi asendamine pole Nextcloud Notesi jaoks saadaval. Asenda igas märkmes eraldi.';
+
+  @override
+  String get nextcloudSaveLocalCopy => 'Salvesta kohalik koopia…';
+
+  @override
+  String get nextcloudDisconnectWarning =>
+      'Konto eemaldamine kustutab sellest seadmest puhverdatud märkmed ja ootel muudatused. Sünkrooni esmalt, et töö serveris säiliks.';
+
+  @override
+  String get nextcloudAttachmentRetryWarning =>
+      'Kui eelmine üleslaadimine õnnestus, võib uus katse jätta serverisse kasutamata manuse.';
+
+  @override
+  String get nextcloudAttachmentReference => 'Manuse viide serveris';
+
+  @override
+  String get nextcloudAddAttachment => 'Lisa manus…';
+
+  @override
+  String get nextcloudDeleteAttachmentWarning =>
+      'Manuse kustutamine muudab selle lingid märkmes kättesaamatuks. Säilitatud andmed saab taastada kohalikust ajaloost.';
+
+  @override
+  String get nextcloudChooseConflictingAttributes =>
+      'Valige iga vastuolulise atribuudi väärtus.';
 }

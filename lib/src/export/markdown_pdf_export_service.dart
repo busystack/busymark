@@ -104,6 +104,7 @@ class MarkdownPdfExportService {
               documentPath: effectiveFilePath,
               workspaceRoot: request.workspaceRoot,
               cancellationToken: token,
+              media: request.media,
             );
       token.throwIfCancelled();
       final mappedDocument = mapper.map(
@@ -129,6 +130,7 @@ class MarkdownPdfExportService {
         activeFilePath: effectiveFilePath,
         workspaceRoot: request.workspaceRoot,
         cancellationToken: token,
+        media: request.media,
       );
       final payload = payloadBuilder.build(
         document: document,
