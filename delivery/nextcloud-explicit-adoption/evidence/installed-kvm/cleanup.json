@@ -1,9 +1,0 @@
-{
-  "vmStopped": true,
-  "privateDiskRemoved": true,
-  "privateSshKeyRemoved": true,
-  "seedConfigurationRemoved": true,
-  "productionProfilesModified": false,
-  "additionalNextcloudAccountsCreated": false,
-  "sanitizedEvidenceRetained": true
-}

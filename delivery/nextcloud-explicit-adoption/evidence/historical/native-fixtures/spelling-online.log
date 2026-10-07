@@ -1,7 +1,0 @@
-[IMPORTANT:flutter/shell/platform/embedder/embedder_surface_gl_impeller.cc(126)] Using the Impeller rendering backend (OpenGLESSDF).
-
-(process:2): GLib-GIO-CRITICAL **: 10:54:38.174: Error while sending AddMatch() message: The connection is closed
-
-(process:2): GLib-GIO-CRITICAL **: 10:54:38.178: Error while sending GetNameOwner() message: The connection is closed
-
-(process:2): GLib-GIO-CRITICAL **: 10:54:38.178: Error while sending AddMatch() message: The connection is closed

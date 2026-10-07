@@ -11,15 +11,16 @@ use a host-installed Hunspell library or dictionary.
 
 ## Project structure
 
-This template uses the following structure:
+The package uses the following structure:
 
-* `src`: Contains the native source code, and a CmakeFile.txt file for building
-  that source code into a dynamic library.
+* `src`: Contains BusyMark's C++ wrapper and C API header.
 
 * `lib`: Contains the Dart code that defines the API of the plugin, and which
   calls into the native code using `dart:ffi`.
 
 * `hook`: Contains `build.dart`, which performs the native-assets build.
+
+* `third_party/hunspell`: Contains the pinned engine source and licenses.
 
 ## Building and bundling native code
 
@@ -39,9 +40,3 @@ Regenerate the bindings by running `dart run ffigen --config ffigen.yaml`.
 Very short-running native functions can be directly invoked from any isolate.
 BusyMark owns handles on its long-lived spelling isolate. Callers copy returned
 suggestions into Dart strings before the wrapper releases their native storage.
-
-## Flutter help
-
-For help getting started with Flutter, view our
-[online documentation](https://docs.flutter.dev), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.

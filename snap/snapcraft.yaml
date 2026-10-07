@@ -9,6 +9,8 @@ description: |
 
   Open individual Markdown files, documentation folders, and Writerside-style project structures. Edit local files, preview Markdown, navigate project files, inspect document outlines, and save changes in a native-feeling Linux desktop workspace.
 
+  Connect Nextcloud Notes remote workspaces with offline-safe synchronization, categories, favorites, and attachments.
+
 license: Apache-2.0
 base: core24
 grade: stable

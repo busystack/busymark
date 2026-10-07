@@ -1,7 +1,0 @@
-Analyzing busymark...                                           
-
-   info • Statements in an if should be enclosed in a block. Try wrapping the statement in a block • lib/src/nextcloud_notes/application/notes_repository.dart:425:7 • curly_braces_in_flow_control_structures
-   info • Statements in an if should be enclosed in a block. Try wrapping the statement in a block • lib/src/nextcloud_notes/application/notes_repository.dart:1300:13 • curly_braces_in_flow_control_structures
-   info • The 'children' argument should be last in widget constructor invocations. Try moving the argument to the end of the argument list • lib/src/nextcloud_notes/presentation/notes_sidebar.dart:732:9 • sort_child_properties_last
-
-3 issues found. (ran in 2.5s)
