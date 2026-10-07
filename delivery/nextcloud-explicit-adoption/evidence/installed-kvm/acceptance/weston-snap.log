@@ -1,0 +1,62 @@
+Date: 2026-10-07 UTC
+[18:54:21.109] weston 13.0.0
+               https://wayland.freedesktop.org
+               Bug reports to: https://gitlab.freedesktop.org/wayland/weston/issues/
+               Build: 13.0.0
+[18:54:21.109] Command line: weston --backend=headless-backend.so --socket=wayland-99 --idle-time=0 --log=/home/tester/acceptance/weston-snap.log
+[18:54:21.109] OS: Linux, 6.8.0-142-generic, #142-Ubuntu SMP PREEMPT_DYNAMIC Wed Sep  2 14:24:27 UTC 2026, x86_64
+[18:54:21.109] Flight recorder: enabled
+[18:54:21.110] Starting with no config file.
+[18:54:21.110] Output repaint window is 7 ms maximum.
+[18:54:21.110] Loading module '/usr/lib/x86_64-linux-gnu/libweston-13/headless-backend.so'
+[18:54:21.119] Registered plugin API 'weston_windowed_output_api_v2' of size 16
+[18:54:21.119] Color manager: no-op
+[18:54:21.119] Output 'headless' attempts EOTF mode: SDR
+[18:54:21.119] Output 'headless' using color profile: stock sRGB color profile
+[18:54:21.119] Output 'headless' enabled with head(s) headless
+[18:54:21.119] Compositor capabilities:
+               arbitrary surface rotation: no
+               screen capture uses y-flip: no
+               cursor planes: no
+               arbitrary resolutions: no
+               view mask clipping: no
+               explicit sync: no
+               color operations: no
+               presentation clock: CLOCK_MONOTONIC_RAW, id 4
+               presentation clock resolution: 0.000000001 s
+[18:54:21.120] Loading module '/usr/lib/x86_64-linux-gnu/weston/desktop-shell.so'
+[18:54:21.120] launching '/usr/libexec/weston-keyboard'
+[18:54:21.121] launching '/usr/libexec/weston-desktop-shell'
+[18:54:37.465] caught signal 15
+[18:54:37.466] no-op renderer SHM seed: 77
+Date: 2026-10-07 UTC
+[18:56:16.863] weston 13.0.0
+               https://wayland.freedesktop.org
+               Bug reports to: https://gitlab.freedesktop.org/wayland/weston/issues/
+               Build: 13.0.0
+[18:56:16.863] Command line: weston --backend=headless-backend.so --socket=wayland-99 --idle-time=0 --log=/home/tester/acceptance/weston-snap.log
+[18:56:16.863] OS: Linux, 6.8.0-142-generic, #142-Ubuntu SMP PREEMPT_DYNAMIC Wed Sep  2 14:24:27 UTC 2026, x86_64
+[18:56:16.863] Flight recorder: enabled
+[18:56:16.863] Starting with no config file.
+[18:56:16.863] Output repaint window is 7 ms maximum.
+[18:56:16.863] Loading module '/usr/lib/x86_64-linux-gnu/libweston-13/headless-backend.so'
+[18:56:16.867] Registered plugin API 'weston_windowed_output_api_v2' of size 16
+[18:56:16.867] Color manager: no-op
+[18:56:16.867] Output 'headless' attempts EOTF mode: SDR
+[18:56:16.867] Output 'headless' using color profile: stock sRGB color profile
+[18:56:16.867] Output 'headless' enabled with head(s) headless
+[18:56:16.867] Compositor capabilities:
+               arbitrary surface rotation: no
+               screen capture uses y-flip: no
+               cursor planes: no
+               arbitrary resolutions: no
+               view mask clipping: no
+               explicit sync: no
+               color operations: no
+               presentation clock: CLOCK_MONOTONIC_RAW, id 4
+               presentation clock resolution: 0.000000001 s
+[18:56:16.867] Loading module '/usr/lib/x86_64-linux-gnu/weston/desktop-shell.so'
+[18:56:16.867] launching '/usr/libexec/weston-keyboard'
+[18:56:16.867] launching '/usr/libexec/weston-desktop-shell'
+[18:56:34.537] caught signal 15
+[18:56:34.537] no-op renderer SHM seed: 77

@@ -1,0 +1,8 @@
+dbus-daemon[7530]: [session uid=1000 pid=7530] Activating service name='org.freedesktop.portal.Documents' requested by ':1.0' (uid=1000 pid=7537 comm="snap run --shell busymark -c ?  test ! -e \?    "$" label="unconfined")
+dbus-daemon[7530]: [session uid=1000 pid=7530] Activating service name='org.freedesktop.impl.portal.PermissionStore' requested by ':1.1' (uid=1000 pid=7560 comm="/usr/libexec/xdg-document-portal" label="unconfined")
+dbus-daemon[7530]: [session uid=1000 pid=7530] Successfully activated service 'org.freedesktop.impl.portal.PermissionStore'
+dbus-daemon[7530]: [session uid=1000 pid=7530] Successfully activated service 'org.freedesktop.portal.Documents'
+Ignoring invalid max threads value 4294967295 > max (100000).
+dbus-daemon[7530]: [session uid=1000 pid=7530] Activating service name='org.freedesktop.systemd1' requested by ':1.0' (uid=1000 pid=7537 comm="snap run --shell busymark -c ?  test ! -e \?    "$" label="unconfined")
+dbus-daemon[7530]: [session uid=1000 pid=7530] Activated service 'org.freedesktop.systemd1' failed: Process org.freedesktop.systemd1 exited with status 1
+01-verify-gtk-svg-icon-loader	1	0

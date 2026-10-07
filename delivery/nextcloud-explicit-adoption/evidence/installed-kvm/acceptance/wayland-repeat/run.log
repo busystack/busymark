@@ -1,0 +1,52 @@
+could not load cursor 'dnd-move'
+could not load cursor 'dnd-move'
+could not load cursor 'dnd-copy'
+could not load cursor 'dnd-copy'
+could not load cursor 'dnd-none'
+could not load cursor 'dnd-none'
+
+(io.busystack.busymark:13774): Gdk-CRITICAL **: 18:56:17.807: gdk_seat_get_keyboard: assertion 'GDK_IS_SEAT (seat)' failed
+
+(io.busystack.busymark:13774): Gdk-CRITICAL **: 18:56:17.949: gdk_seat_get_keyboard: assertion 'GDK_IS_SEAT (seat)' failed
+[IMPORTANT:flutter/shell/platform/embedder/embedder_surface_gl_impeller.cc(126)] Using the Impeller rendering backend (OpenGLESSDF).
+
+(io.busystack.busymark:13774): Gdk-CRITICAL **: 18:56:18.056: gdk_seat_get_keyboard: assertion 'GDK_IS_SEAT (seat)' failed
+
+(io.busystack.busymark:13774): IBUS-WARNING **: 18:56:18.058: Failed to mkdir /home/tester/snap/busymark/x2/.config/ibus/bus: Not a directory
+Gdk-Message: 18:56:18.058: Unable to load  from the cursor theme
+
+(io.busystack.busymark:13774): Gdk-CRITICAL **: 18:56:18.102: gdk_seat_get_keyboard: assertion 'GDK_IS_SEAT (seat)' failed
+
+** (io.busystack.busymark:13774): WARNING **: 18:56:18.103: Could not open /sys/class/dmi/id/chassis_type: Failed to open file “/sys/class/dmi/id/chassis_type”: Permission denied
+
+** (io.busystack.busymark:13774): WARNING **: 18:56:18.103: Could not open /sys/firmware/acpi/pm_profile: Failed to open file “/sys/firmware/acpi/pm_profile”: Permission denied
+
+(process:13907): GLib-GIO-WARNING **: 18:56:18.214: GDBus.Error:org.freedesktop.portal.Error.NotAllowed: This call is not available inside the sandbox
+
+(process:13932): GLib-GIO-WARNING **: 18:56:18.243: GDBus.Error:org.freedesktop.portal.Error.NotAllowed: This call is not available inside the sandbox
+
+(io.busystack.busymark:13774): Gdk-CRITICAL **: 18:56:18.621: gdk_seat_get_keyboard: assertion 'GDK_IS_SEAT (seat)' failed
+
+(io.busystack.busymark:14086): Gdk-CRITICAL **: 18:56:22.477: gdk_seat_get_keyboard: assertion 'GDK_IS_SEAT (seat)' failed
+
+(io.busystack.busymark:14086): Gdk-CRITICAL **: 18:56:22.701: gdk_seat_get_keyboard: assertion 'GDK_IS_SEAT (seat)' failed
+[IMPORTANT:flutter/shell/platform/embedder/embedder_surface_gl_impeller.cc(126)] Using the Impeller rendering backend (OpenGLESSDF).
+
+(io.busystack.busymark:14086): Gdk-CRITICAL **: 18:56:22.869: gdk_seat_get_keyboard: assertion 'GDK_IS_SEAT (seat)' failed
+
+(io.busystack.busymark:14086): IBUS-WARNING **: 18:56:22.871: Failed to mkdir /home/tester/snap/busymark/x2/.config/ibus/bus: Not a directory
+Gdk-Message: 18:56:22.872: Unable to load  from the cursor theme
+
+(io.busystack.busymark:14086): Gdk-CRITICAL **: 18:56:22.961: gdk_seat_get_keyboard: assertion 'GDK_IS_SEAT (seat)' failed
+
+** (io.busystack.busymark:14086): WARNING **: 18:56:22.963: Could not open /sys/class/dmi/id/chassis_type: Failed to open file “/sys/class/dmi/id/chassis_type”: Permission denied
+
+** (io.busystack.busymark:14086): WARNING **: 18:56:22.963: Could not open /sys/firmware/acpi/pm_profile: Failed to open file “/sys/firmware/acpi/pm_profile”: Permission denied
+
+(process:14215): GLib-GIO-WARNING **: 18:56:23.131: GDBus.Error:org.freedesktop.portal.Error.NotAllowed: This call is not available inside the sandbox
+
+(process:14240): GLib-GIO-WARNING **: 18:56:23.184: GDBus.Error:org.freedesktop.portal.Error.NotAllowed: This call is not available inside the sandbox
+
+(io.busystack.busymark:14086): Gdk-CRITICAL **: 18:56:23.492: gdk_seat_get_keyboard: assertion 'GDK_IS_SEAT (seat)' failed
+
+(io.busystack.busymark:14086): Gdk-CRITICAL **: 18:56:25.816: gdk_seat_get_keyboard: assertion 'GDK_IS_SEAT (seat)' failed
