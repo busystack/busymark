@@ -3626,6 +3626,677 @@ void main() {
     },
   );
 
+  for (final scenario in [
+    (
+      deletion: false,
+      recursive: false,
+      source: '/workspace/A.md',
+      destination: '/workspace/Z.md',
+      dependent: true,
+    ),
+    (
+      deletion: false,
+      recursive: false,
+      source: '/workspace/B.md',
+      destination: '/workspace/Z.md',
+      dependent: true,
+    ),
+    (
+      deletion: false,
+      recursive: false,
+      source: '/workspace/C.md',
+      destination: '/workspace/A.md',
+      dependent: true,
+    ),
+    (
+      deletion: false,
+      recursive: false,
+      source: '/workspace/C.md',
+      destination: '/workspace/B.md',
+      dependent: true,
+    ),
+    (
+      deletion: false,
+      recursive: false,
+      source: '/workspace/dirA/nested/C.md',
+      destination: '/workspace/Z.md',
+      dependent: true,
+    ),
+    (
+      deletion: false,
+      recursive: false,
+      source: '/workspace/dirB/nested/C.md',
+      destination: '/workspace/Z.md',
+      dependent: true,
+    ),
+    (
+      deletion: false,
+      recursive: false,
+      source: '/workspace/C.md',
+      destination: '/workspace/dirA/nested/C.md',
+      dependent: true,
+    ),
+    (
+      deletion: false,
+      recursive: false,
+      source: '/workspace/C.md',
+      destination: '/workspace/dirB/nested/C.md',
+      dependent: true,
+    ),
+    (
+      deletion: false,
+      recursive: false,
+      source: '/workspace',
+      destination: '/other',
+      dependent: true,
+    ),
+    (
+      deletion: false,
+      recursive: false,
+      source: '/other',
+      destination: '/workspace',
+      dependent: true,
+    ),
+    (
+      deletion: false,
+      recursive: false,
+      source: '/workspace/dirA-sibling/C.md',
+      destination: '/workspace/dirB-sibling/C.md',
+      dependent: false,
+    ),
+    (
+      deletion: false,
+      recursive: false,
+      source: '/workspace/C.md',
+      destination: '/workspace/D.md',
+      dependent: false,
+    ),
+    (
+      deletion: true,
+      recursive: true,
+      source: '/workspace/dirA/nested/C.md',
+      destination: '/workspace/Z.md',
+      dependent: true,
+    ),
+    (
+      deletion: true,
+      recursive: true,
+      source: '/workspace/C.md',
+      destination: '/workspace/dirA/nested/C.md',
+      dependent: true,
+    ),
+    (
+      deletion: true,
+      recursive: true,
+      source: '/workspace',
+      destination: '/other',
+      dependent: true,
+    ),
+    (
+      deletion: true,
+      recursive: true,
+      source: '/workspace/C.md',
+      destination: '/workspace/D.md',
+      dependent: false,
+    ),
+    (
+      deletion: true,
+      recursive: false,
+      source: '/workspace/A.md',
+      destination: '/workspace/Z.md',
+      dependent: true,
+    ),
+    (
+      deletion: true,
+      recursive: false,
+      source: '/workspace/C.md',
+      destination: '/workspace/D.md',
+      dependent: false,
+    ),
+  ]) {
+    test('path dependency namespaces $scenario', () async {
+      final store = _ControllableRemapStore();
+      final container = _historyContainer(store, <_FakeTimer>[]);
+      addTearDown(container.dispose);
+      final controller = container.read(
+        localHistoryControllerProvider.notifier,
+      );
+      await Future<void>.delayed(Duration.zero);
+      final directory =
+          scenario.recursive ||
+          scenario.source.contains('dir') ||
+          scenario.destination.contains('dir');
+      final pendingSource = directory ? '/workspace/dirA' : '/workspace/A.md';
+      final pendingDestination = directory
+          ? '/workspace/dirB'
+          : '/workspace/B.md';
+      final original = _fileBuffer(
+        'pending-owner',
+        directory ? '$pendingSource/original.md' : pendingSource,
+        'original history',
+      );
+      await controller.observeOpened(original);
+      expect(await controller.flushBuffer(original), isTrue);
+      final targets = await store.resolvePathTargets(
+        pendingSource,
+        recursive: true,
+      );
+      store.failingReconciliationSources.add(pendingSource);
+      final pending = scenario.deletion
+          ? LocalHistoryPathReconciliation.deletion(
+              operationId: 'pending-deletion',
+              sourcePath: pendingSource,
+              recursive: scenario.recursive,
+              targets: targets,
+            )
+          : LocalHistoryPathReconciliation.remap(
+              operationId: 'pending-remap',
+              sourcePath: pendingSource,
+              destinationPath: pendingDestination,
+              targets: targets,
+            );
+      expect(
+        await controller.restorePendingPathReconciliations([pending]),
+        isFalse,
+      );
+      final retainedPending = controller.pendingPathReconciliations.single;
+      final attempts = store.reconciliationAttempts.length;
+      var filesystemCalled = false;
+      final operation = controller.runStagedPathRemap(
+        sourcePath: scenario.source,
+        destinationPath: scenario.destination,
+        filesystemOperation: () async {
+          filesystemCalled = true;
+          return true;
+        },
+        didCommit: (value) => value,
+      );
+      if (scenario.dependent) {
+        await expectLater(
+          operation,
+          throwsA(isA<LocalHistoryStorageException>()),
+        );
+      } else {
+        expect(await operation, isTrue);
+        expect(
+          store.reconciliationAttempts.skip(attempts),
+          isNot(contains(pendingSource)),
+        );
+      }
+      expect(filesystemCalled, !scenario.dependent);
+      expect(
+        controller.pendingPathReconciliations.single.toJson(),
+        retainedPending.toJson(),
+      );
+      expect(
+        (await store.load()).documents.single.currentPath,
+        original.filePath,
+      );
+    });
+  }
+
+  for (final binding in [
+    'prepared target',
+    'bound identity',
+    'destination identity',
+  ]) {
+    test('path dependency uses $binding with different paths', () async {
+      final store = _ControllableRemapStore();
+      final container = _historyContainer(store, <_FakeTimer>[]);
+      addTearDown(container.dispose);
+      final controller = container.read(
+        localHistoryControllerProvider.notifier,
+      );
+      await Future<void>.delayed(Duration.zero);
+      final original = _fileBuffer(
+        'identity-owner',
+        '/elsewhere/X.md',
+        'same identity',
+      );
+      await controller.observeOpened(original);
+      expect(await controller.flushBuffer(original), isTrue);
+      final target = (await store.resolvePathTargets(
+        original.filePath!,
+        recursive: false,
+      )).single;
+      final pending = LocalHistoryPathReconciliation.remap(
+        operationId: 'pending-identity-remap',
+        sourcePath: '/workspace/A.md',
+        destinationPath: '/workspace/B.md',
+        targets: [target.atPath('/workspace/A.md')],
+      );
+      store.failingReconciliationSources.add(pending.sourcePath);
+      expect(
+        await controller.restorePendingPathReconciliations([pending]),
+        isFalse,
+      );
+      var filesystemCalled = false;
+      await expectLater(
+        controller.runStagedPathRemap(
+          sourcePath: '/unrelated/C.md',
+          destinationPath: binding == 'destination identity'
+              ? original.filePath!
+              : '/unrelated/D.md',
+          preparedTargets: binding == 'prepared target' ? [target] : null,
+          boundBufferId: binding == 'bound identity' ? original.id : null,
+          filesystemOperation: () async {
+            filesystemCalled = true;
+            return true;
+          },
+          didCommit: (value) => value,
+        ),
+        throwsA(isA<LocalHistoryStorageException>()),
+      );
+      expect(filesystemCalled, isFalse);
+      expect(
+        controller.pendingPathReconciliations.single.toJson(),
+        pending.toJson(),
+      );
+    });
+  }
+
+  test(
+    'path dependency checks promotion destination identity at a different path',
+    () async {
+      final root = await Directory.systemTemp.createTemp(
+        'history-promotion-dependency-',
+      );
+      addTearDown(() => root.delete(recursive: true));
+      final destination = p.join(root.path, 'C.md');
+      const newText = 'new first-save lineage';
+      await File(destination).writeAsString(newText);
+      final store = _ControllableRemapStore();
+      final old = await store.capture(
+        LocalHistoryCaptureRequest(
+          path: destination,
+          displayName: 'C.md',
+          source: 'older destination lineage\n',
+          format: TextFormatMetadata.utf8Lf,
+          capturedAt: DateTime.utc(2026, 1, 1),
+          reason: LocalHistoryCaptureReason.baseline,
+        ),
+        const LocalHistoryPolicy(),
+      );
+      final container = _historyContainer(store, <_FakeTimer>[]);
+      addTearDown(container.dispose);
+      final controller = container.read(
+        localHistoryControllerProvider.notifier,
+      );
+      await Future<void>.delayed(Duration.zero);
+      final untitled = DocumentBuffer.untitled(
+        id: 'promotion-owner',
+        name: 'Untitled',
+        text: newText,
+      );
+      await controller.observeOpened(untitled);
+      final sourceId = controller.documentIdForBuffer(untitled.id)!;
+      final target = (await store.resolvePathTargets(
+        destination,
+        recursive: false,
+      )).single;
+      final pending = LocalHistoryPathReconciliation.remap(
+        operationId: 'old-destination-identity',
+        sourcePath: p.join(root.path, 'A.md'),
+        destinationPath: p.join(root.path, 'B.md'),
+        targets: [target.atPath(p.join(root.path, 'A.md'))],
+      );
+      store.failingReconciliationSources.add(pending.sourcePath);
+      expect(
+        await controller.restorePendingPathReconciliations([pending]),
+        isFalse,
+      );
+      store.reconciliationAttempts.clear();
+      expect(
+        await controller.captureSavedAs(
+          LocalHistoryBufferSnapshot.fromBuffer(untitled),
+          destination,
+          destinationExisted: false,
+        ),
+        isFalse,
+      );
+      expect(store.reconciliationAttempts, [pending.sourcePath]);
+      // The retained promotion's retry must enforce the same dependency.
+      expect(await controller.flushBuffer(untitled), isFalse);
+      final snapshot = await store.load();
+      final destinationOwner = snapshot.documents.singleWhere(
+        (d) => d.id == old.document.id,
+      );
+      expect(destinationOwner.deleted, isFalse);
+      expect(destinationOwner.currentPath, destination);
+      expect(
+        snapshot.documents.singleWhere((d) => d.id == sourceId).untitled,
+        isTrue,
+      );
+      expect(
+        controller.pendingPathReconciliations.single.toJson(),
+        pending.toJson(),
+      );
+    },
+  );
+
+  test(
+    'path dependency settles only conflicting entries behind an unresolved head',
+    () async {
+      final store = _ControllableRemapStore();
+      final container = _historyContainer(store, <_FakeTimer>[]);
+      addTearDown(container.dispose);
+      final controller = container.read(
+        localHistoryControllerProvider.notifier,
+      );
+      await Future<void>.delayed(Duration.zero);
+      final a = _fileBuffer('a-owner', '/workspace/A.md', 'A history');
+      final x = _fileBuffer('x-owner', '/workspace/X.md', 'X history');
+      await controller.observeOpened(a);
+      await controller.observeOpened(x);
+      final pendingA = LocalHistoryPathReconciliation.remap(
+        operationId: 'pending-a',
+        sourcePath: a.filePath!,
+        destinationPath: '/workspace/B.md',
+        targets: await store.resolvePathTargets(a.filePath!, recursive: false),
+      );
+      final pendingX = LocalHistoryPathReconciliation.remap(
+        operationId: 'pending-x',
+        sourcePath: x.filePath!,
+        destinationPath: '/workspace/Y.md',
+        targets: await store.resolvePathTargets(x.filePath!, recursive: false),
+      );
+      store.failingReconciliationSources.addAll([
+        pendingA.sourcePath,
+        pendingX.sourcePath,
+      ]);
+      expect(
+        await controller.restorePendingPathReconciliations([
+          pendingA,
+          pendingX,
+        ]),
+        isFalse,
+      );
+      final retainedA = controller.pendingPathReconciliations.first;
+      store.reconciliationAttempts.clear();
+      var filesystemCalls = 0;
+      Future<bool> moveY() => controller.runStagedPathRemap(
+        sourcePath: '/workspace/Y.md',
+        destinationPath: '/workspace/Z.md',
+        filesystemOperation: () async {
+          filesystemCalls++;
+          return true;
+        },
+        didCommit: (value) => value,
+      );
+      await expectLater(moveY(), throwsA(isA<LocalHistoryStorageException>()));
+      expect(filesystemCalls, 0);
+      expect(store.reconciliationAttempts, [pendingX.sourcePath]);
+      expect(
+        controller.pendingPathReconciliations.map((op) => op.operationId),
+        ['pending-a', 'pending-x'],
+      );
+      store.failingReconciliationSources.remove(pendingX.sourcePath);
+      store.reconciliationAttempts.clear();
+      expect(await moveY(), isTrue);
+      expect(filesystemCalls, 1);
+      expect(store.reconciliationAttempts, [
+        pendingX.sourcePath,
+        '/workspace/Y.md',
+      ]);
+      expect(
+        controller.pendingPathReconciliations.first.toJson(),
+        retainedA.toJson(),
+      );
+      final snapshot = await store.load();
+      expect(
+        snapshot.documents
+            .singleWhere((d) => d.id == pendingA.documentIds.single)
+            .currentPath,
+        a.filePath,
+      );
+      expect(
+        snapshot.documents
+            .singleWhere((d) => d.id == pendingX.documentIds.single)
+            .currentPath,
+        '/workspace/Z.md',
+      );
+    },
+  );
+
+  for (final promotion in [false, true]) {
+    test(
+      'path dependency recomputes identities after settling namespace prerequisites '
+      '(promotion=$promotion)',
+      () async {
+        final store = _ControllableRemapStore();
+        final container = _historyContainer(store, <_FakeTimer>[]);
+        addTearDown(container.dispose);
+        final controller = container.read(
+          localHistoryControllerProvider.notifier,
+        );
+        await Future<void>.delayed(Duration.zero);
+        final a = _fileBuffer(
+          'old-path-owner',
+          '/workspace/A.md',
+          'moved identity',
+        );
+        await controller.observeOpened(a);
+        final target = (await store.resolvePathTargets(
+          a.filePath!,
+          recursive: false,
+        )).single;
+        final first = LocalHistoryPathReconciliation.remap(
+          operationId: 'move-a-to-b',
+          sourcePath: '/workspace/A.md',
+          destinationPath: '/workspace/B.md',
+          targets: [target],
+        );
+        final second = LocalHistoryPathReconciliation.remap(
+          operationId: 'move-b-to-d',
+          sourcePath: '/workspace/B.md',
+          destinationPath: '/workspace/D.md',
+          targets: [target.atPath('/workspace/B.md')],
+        );
+        store.failingReconciliationSources.addAll([
+          first.sourcePath,
+          second.sourcePath,
+        ]);
+        expect(
+          await controller.restorePendingPathReconciliations([first, second]),
+          isFalse,
+        );
+        store.failingReconciliationSources.remove(first.sourcePath);
+        store.reconciliationAttempts.clear();
+        var filesystemCalled = false;
+        if (promotion) {
+          final untitled = DocumentBuffer.untitled(
+            id: 'new-owner',
+            name: 'New',
+            text: 'new independent identity',
+          );
+          await controller.observeOpened(untitled);
+          expect(
+            await controller.captureSavedAs(
+              LocalHistoryBufferSnapshot.fromBuffer(untitled),
+              a.filePath!,
+              destinationExisted: false,
+            ),
+            isTrue,
+          );
+          final created = (await store.load()).documents.singleWhere(
+            (d) => d.currentPath == a.filePath,
+          );
+          expect(created.id, isNot(target.documentId));
+          expect(controller.documentIdForBuffer(untitled.id), created.id);
+        } else {
+          expect(
+            await controller.runStagedPathDeletion(
+              path: '/workspace/A.md',
+              recursive: false,
+              filesystemOperation: () async {
+                filesystemCalled = true;
+                return true;
+              },
+              didCommit: (value) => value,
+            ),
+            isTrue,
+          );
+          expect(filesystemCalled, isTrue);
+        }
+        expect(
+          store.reconciliationAttempts.where(
+            (path) => path == second.sourcePath,
+          ),
+          isEmpty,
+        );
+        expect(
+          controller.pendingPathReconciliations.single.operationId,
+          second.operationId,
+        );
+        expect(controller.pendingPathReconciliations.single.documentIds, [
+          target.documentId,
+        ]);
+        final document = (await store.load()).documents.singleWhere(
+          (d) => d.id == target.documentId,
+        );
+        expect(document.id, target.documentId);
+        expect(document.currentPath, '/workspace/B.md');
+        expect(document.deleted, isFalse);
+      },
+    );
+  }
+
+  test('path dependency preserves transitive queue ordering', () async {
+    final store = _ControllableRemapStore();
+    final container = _historyContainer(store, <_FakeTimer>[]);
+    addTearDown(container.dispose);
+    final controller = container.read(localHistoryControllerProvider.notifier);
+    await Future<void>.delayed(Duration.zero);
+    final a = _fileBuffer('chain-owner', '/workspace/A.md', 'chain history');
+    await controller.observeOpened(a);
+    final target = (await store.resolvePathTargets(
+      a.filePath!,
+      recursive: false,
+    )).single;
+    final first = LocalHistoryPathReconciliation.remap(
+      operationId: 'chain-first',
+      sourcePath: '/workspace/A.md',
+      destinationPath: '/workspace/B.md',
+      targets: [target],
+    );
+    final second = LocalHistoryPathReconciliation.remap(
+      operationId: 'chain-second',
+      sourcePath: '/workspace/B.md',
+      destinationPath: '/workspace/C.md',
+      targets: [target.atPath('/workspace/B.md')],
+    );
+    store.failingReconciliationSources.add(first.sourcePath);
+    expect(
+      await controller.restorePendingPathReconciliations([first, second]),
+      isFalse,
+    );
+    store.reconciliationAttempts.clear();
+    var filesystemCalled = false;
+    Future<bool> deleteC() => controller.runStagedPathDeletion(
+      path: '/workspace/C.md',
+      recursive: false,
+      filesystemOperation: () async {
+        filesystemCalled = true;
+        return true;
+      },
+      didCommit: (value) => value,
+    );
+    await expectLater(deleteC(), throwsA(isA<LocalHistoryStorageException>()));
+    expect(filesystemCalled, isFalse);
+    expect(store.reconciliationAttempts, [first.sourcePath]);
+    expect(controller.pendingPathReconciliations.map((op) => op.operationId), [
+      'chain-first',
+      'chain-second',
+    ]);
+    store.failingReconciliationSources.clear();
+    expect(await deleteC(), isTrue);
+    expect((await store.load()).documents.single.deleted, isTrue);
+    expect(
+      (await store.load()).documents.single.currentPath,
+      '/workspace/C.md',
+    );
+  });
+
+  for (final executingHead in [false, true]) {
+    test('path dependency retries independent work behind retained head '
+        '(executing=$executingHead)', () async {
+      final store = _ControllableRemapStore();
+      final timers = <_FakeTimer>[];
+      final container = _historyContainer(store, timers);
+      addTearDown(container.dispose);
+      final controller = container.read(
+        localHistoryControllerProvider.notifier,
+      );
+      await Future<void>.delayed(Duration.zero);
+      if (executingHead) {
+        expect(
+          await controller.restorePendingPathReconciliations([
+            const LocalHistoryPathReconciliation.remap(
+              operationId: 'executing-head',
+              sourcePath: '/workspace/A.md',
+              destinationPath: '/workspace/B.md',
+              targets: [],
+              ownerIds: ['unknown-outcome-owner'],
+              phase: LocalHistoryPathReconciliationPhase.executing,
+            ),
+          ]),
+          isFalse,
+        );
+      } else {
+        final a = _fileBuffer(
+          'applied-head-owner',
+          '/workspace/A.md',
+          'A history',
+        );
+        await controller.observeOpened(a);
+        expect(
+          await controller.runStagedPathRemap(
+            sourcePath: a.filePath!,
+            destinationPath: '/workspace/B.md',
+            filesystemOperation: () async => true,
+            didCommit: (value) => value,
+          ),
+          isTrue,
+        );
+      }
+      final head = controller.pendingPathReconciliations.single;
+      final x = _fileBuffer('retry-owner', '/workspace/X.md', 'X history');
+      await controller.observeOpened(x);
+      final deletion = LocalHistoryPathReconciliation.deletion(
+        operationId: 'retry-independent',
+        sourcePath: x.filePath!,
+        recursive: false,
+        targets: await store.resolvePathTargets(x.filePath!, recursive: false),
+      );
+      store.failingReconciliationSources.add(deletion.sourcePath);
+      expect(
+        await controller.restorePendingPathReconciliations([deletion]),
+        isFalse,
+      );
+      expect(controller.pendingPathReconciliations, hasLength(2));
+      store.failingReconciliationSources.clear();
+      store.reconciliationAttempts.clear();
+      for (final timer in timers.toList()) {
+        timer.fire();
+      }
+      await _waitForHistory(
+        container,
+        (_) => controller.pendingPathReconciliations.length == 1,
+      );
+      expect(store.reconciliationAttempts, [deletion.sourcePath]);
+      expect(
+        controller.pendingPathReconciliations.single.toJson(),
+        head.toJson(),
+      );
+      expect(
+        (await store.load()).documents
+            .singleWhere((d) => d.currentPath == x.filePath)
+            .deleted,
+        isTrue,
+      );
+    });
+  }
+
   test(
     'staged path commit survives refresh failure until workspace acknowledgement',
     () async {
@@ -5409,6 +6080,8 @@ class _RepairStore extends MemoryLocalHistoryStore {
 }
 
 class _ControllableRemapStore extends MemoryLocalHistoryStore {
+  final failingReconciliationSources = <String>{};
+  final reconciliationAttempts = <String>[];
   var failRemaps = false;
   var blockNextRemap = false;
   var failDeletions = false;
@@ -5458,6 +6131,12 @@ class _ControllableRemapStore extends MemoryLocalHistoryStore {
   Future<void> reconcilePath(
     LocalHistoryPathReconciliation reconciliation,
   ) async {
+    reconciliationAttempts.add(reconciliation.sourcePath);
+    if (failingReconciliationSources.contains(reconciliation.sourcePath)) {
+      throw const LocalHistoryStorageException(
+        'Injected path-specific reconciliation failure',
+      );
+    }
     if (reconciliation.kind == LocalHistoryPathReconciliationKind.remap) {
       remapAttempts++;
       if (blockNextRemap) {

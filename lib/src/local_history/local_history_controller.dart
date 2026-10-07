@@ -1041,7 +1041,11 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
           final existingSourceId = _documentIdsByBuffer[source.bufferId];
           // Save As freezes and retires any stale destination owner under the
           // shared store lock before writing the new file.
-          if (!await _enqueue(_pathRemapOwner, _settlePendingPathOperations)) {
+          if (!await _settlePromotionPathDependencies(
+            source.bufferId,
+            existingSourceId,
+            destinationPath,
+          )) {
             if (ref.mounted &&
                 existingSourceId != null &&
                 _documentIdsByBuffer[source.bufferId] == existingSourceId &&
@@ -2291,13 +2295,14 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
       }
     }
     if (_pendingPathOperations.isEmpty) return true;
-    if (!_pendingPathOperations.first.committed) {
-      _pendingPathOperations.first
+    for (final operation in _pendingPathOperations.where(
+      (op) => !op.committed,
+    )) {
+      operation
         ..retryable = false
         ..errorDetail = 'Filesystem outcome requires reconciliation.';
-      _showCaptureFailure();
-      return false;
     }
+    _showCaptureFailure();
     final settled = await _enqueue(
       _pathRemapOwner,
       _settlePendingPathOperations,
@@ -2400,7 +2405,7 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
   }) async {
     if (id == _pathRemapOwner) {
       if (!automatic || _hasRetryableWork(id)) {
-        await _settlePendingPathOperations();
+        await _settlePendingPathOperations(automatic: automatic);
       }
       return;
     }
@@ -2758,8 +2763,59 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
         ? null
         : p.normalize(destinationPath);
     final frozenPreparedTargets = preparedTargets?.toList(growable: false);
-    if (_pendingPathOperations.isNotEmpty &&
-        !await _enqueue(_pathRemapOwner, _settlePendingPathOperations)) {
+    // Settle namespace and explicitly frozen identity dependencies before
+    // resolving current path owners. Those predecessors can move an identity
+    // away from this path, making a later operation on it independent.
+    if (!await _settlePathOperationDependencies(
+      _LocalHistoryPathScope(
+        kind: kind,
+        sourcePath: normalizedSource,
+        destinationPath: normalizedDestination,
+        recursive: recursive,
+        targets: frozenPreparedTargets ?? const [],
+        documentIds: {
+          if (boundBufferId != null)
+            if (_documentIdsByBuffer[boundBufferId] case final documentId?)
+              documentId,
+        },
+        ownerIds: {if (boundBufferId != null) boundBufferId},
+      ),
+    )) {
+      throw const LocalHistoryStorageException(
+        'An earlier Local History path reconciliation is still pending.',
+      );
+    }
+    final dependencyOwners = <String>{
+      ..._ownersAssociatedWithPath(normalizedSource),
+      if (normalizedDestination != null)
+        ..._ownersAssociatedWithPath(normalizedDestination),
+      if (boundBufferId != null) boundBufferId,
+    };
+    final dependencyTargets = <LocalHistoryPathTarget>[
+      ...?frozenPreparedTargets,
+      ...await _store.resolvePathTargets(
+        normalizedSource,
+        recursive: recursive,
+      ),
+      if (normalizedDestination != null)
+        ...await _store.resolvePathTargets(
+          normalizedDestination,
+          recursive: recursive,
+        ),
+    ];
+    final dependencyScope = _LocalHistoryPathScope(
+      kind: kind,
+      sourcePath: normalizedSource,
+      destinationPath: normalizedDestination,
+      recursive: recursive,
+      targets: dependencyTargets,
+      documentIds: {
+        for (final owner in dependencyOwners)
+          if (_documentIdsByBuffer[owner] case final documentId?) documentId,
+      },
+      ownerIds: dependencyOwners,
+    );
+    if (!await _settlePathOperationDependencies(dependencyScope)) {
       throw const LocalHistoryStorageException(
         'An earlier Local History path reconciliation is still pending.',
       );
@@ -2855,6 +2911,33 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
         preparedTargets: effectiveTargets,
         operation: (targets) async {
           final owners = _ownersAssociatedWithPath(normalizedSource);
+          // Source settlement can bind a previously unknown identity, and
+          // another caller can queue work while the store lock is awaited.
+          // Recheck the actual frozen targets before publishing filesystem
+          // changes; reconciliation cannot be retried inside the store lock.
+          final actualScope = _LocalHistoryPathScope(
+            kind: kind,
+            sourcePath: normalizedSource,
+            destinationPath: normalizedDestination,
+            recursive: recursive,
+            targets: [...dependencyTargets, ...targets],
+            documentIds: {
+              ...dependencyScope.documentIds,
+              if (boundBufferId != null)
+                if (_documentIdsByBuffer[boundBufferId] case final documentId?)
+                  documentId,
+            },
+            ownerIds: {...dependencyOwners, ...owners},
+          );
+          if (_pendingPathOperations.any(
+            (operation) =>
+                !operation.settled &&
+                operation.scope.conflictsWith(actualScope),
+          )) {
+            throw const LocalHistoryStorageException(
+              'An earlier Local History path reconciliation is still pending.',
+            );
+          }
           staged = switch (kind) {
             LocalHistoryPathReconciliationKind.remap => _LocalHistoryPathRemap(
               operationId: _newPathOperationId(),
@@ -3564,36 +3647,111 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
     if (operationId.isNotEmpty) _retiredPathOperationIds.add(operationId);
   }
 
-  Future<bool> _settlePendingPathOperations() async {
-    while (_pendingPathOperations.isNotEmpty) {
-      final operation = _pendingPathOperations.first;
-      if (!operation.committed) return false;
+  Future<bool> _settlePathOperationDependencies(_LocalHistoryPathScope scope) {
+    if (_pendingPathOperations.isEmpty) return Future.value(true);
+    return _enqueue(
+      _pathRemapOwner,
+      () => _settlePendingPathOperations(requiredBy: scope),
+    );
+  }
+
+  Future<bool> _settlePromotionPathDependencies(
+    String bufferId,
+    String? documentId,
+    String destinationPath,
+  ) async {
+    if (_pendingPathOperations.isEmpty) return true;
+    if (!await _settlePathOperationDependencies(
+      _LocalHistoryPathScope(
+        kind: LocalHistoryPathReconciliationKind.deletion,
+        sourcePath: destinationPath,
+        recursive: false,
+        documentIds: {if (documentId != null) documentId},
+        ownerIds: {bufferId},
+      ),
+    )) {
+      return false;
+    }
+    if (_pendingPathOperations.isEmpty) return true;
+    return _settlePathOperationDependencies(
+      _LocalHistoryPathScope(
+        kind: LocalHistoryPathReconciliationKind.deletion,
+        sourcePath: destinationPath,
+        recursive: false,
+        targets: await _store.resolvePathTargets(
+          destinationPath,
+          recursive: false,
+        ),
+        documentIds: {if (documentId != null) documentId},
+        ownerIds: {bufferId},
+      ),
+    );
+  }
+
+  Future<bool> _settlePendingPathOperations({
+    _LocalHistoryPathScope? requiredBy,
+    bool automatic = false,
+  }) async {
+    final queued = _pendingPathOperations.toList(growable: false);
+    final required = <_LocalHistoryPathOperation>{};
+    if (requiredBy != null) {
+      // Include transitive prerequisites, in reverse queue order. A later
+      // operation must never overtake an unresolved predecessor on which it
+      // depends, even when that predecessor does not touch the new operation.
+      final scopes = [requiredBy];
+      for (final operation in queued.reversed) {
+        if (!operation.settled && scopes.any(operation.scope.conflictsWith)) {
+          required.add(operation);
+          scopes.add(operation.scope);
+        }
+      }
+    }
+    for (final operation in queued) {
+      if (requiredBy != null && !required.contains(operation)) continue;
+      final index = _pendingPathOperations.indexOf(operation);
+      if (index < 0) continue;
+      if (automatic && !operation.retryable) continue;
+      if (_pendingPathOperations
+          .take(index)
+          .any(
+            (earlier) =>
+                !earlier.settled &&
+                earlier.scope.conflictsWith(operation.scope),
+          )) {
+        continue;
+      }
+      if (!operation.committed) continue;
+      if (operation.settled &&
+          operation.retainUntilAcknowledged &&
+          !operation.acknowledgementRequested) {
+        continue;
+      }
       if (!operation.applied) {
         try {
           await operation.apply(_store);
         } on Object catch (error) {
-          if (identical(_pendingPathOperations.firstOrNull, operation)) {
+          if (_pendingPathOperations.contains(operation)) {
             operation.retryable = _captureErrorIsRetryable(error);
             operation.errorDetail = error.toString();
             _showCaptureFailure();
             if (operation.retryable) _scheduleCheckpoint(_pathRemapOwner);
           }
-          return false;
+          continue;
         }
       }
-      if (!identical(_pendingPathOperations.firstOrNull, operation)) {
-        return false;
-      }
+      if (!_pendingPathOperations.contains(operation)) continue;
       operation
         ..applied = true
         ..retryable = true
         ..errorDetail = null;
       _showCaptureFailure();
       if (!await refresh()) {
-        if (identical(_pendingPathOperations.firstOrNull, operation)) {
+        if (_pendingPathOperations.contains(operation)) {
+          operation.errorDetail =
+              'Committed Local History reconciliation refresh pending.';
           _scheduleCheckpoint(_pathRemapOwner);
         }
-        return false;
+        continue;
       }
       _rebaseQueuedPathTargetsAfter(operation);
       if (operation is _LocalHistoryPathDeletion) {
@@ -3606,9 +3764,9 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
       }
       if (operation.retainUntilAcknowledged &&
           !operation.acknowledgementRequested) {
-        return true;
+        continue;
       }
-      _pendingPathOperations.removeAt(0);
+      _pendingPathOperations.remove(operation);
       _rememberRetiredPathOperation(operation.operationId);
       for (final owner in operation.affectedOwners) {
         if (_closedBuffers.contains(owner) && !_hasOutstandingWork(owner)) {
@@ -3618,7 +3776,10 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
         }
       }
     }
-    return true;
+    return (requiredBy == null ? _pendingPathOperations : required).every(
+      (operation) =>
+          !_pendingPathOperations.contains(operation) || operation.settled,
+    );
   }
 
   void _rebaseQueuedPathTargetsAfter(_LocalHistoryPathOperation committed) {
@@ -5068,8 +5229,12 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
     )) {
       return true;
     }
-    if (_pathOperationBlocksOwner(bufferId, promotion.destinationPath) &&
-        !await _enqueue(_pathRemapOwner, _settlePendingPathOperations)) {
+    _pathOperationBlocksOwner(bufferId, promotion.destinationPath);
+    if (!await _settlePromotionPathDependencies(
+      bufferId,
+      promotion.documentId,
+      promotion.destinationPath,
+    )) {
       return false;
     }
     if (!_operationIsCurrent(
@@ -5616,7 +5781,22 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
 
   bool _hasRetryableWork(String id) {
     if (id == _pathRemapOwner) {
-      return _pendingPathOperations.firstOrNull?.retryable == true;
+      for (var index = 0; index < _pendingPathOperations.length; index++) {
+        final operation = _pendingPathOperations[index];
+        if (operation.settled || !operation.retryable || !operation.committed) {
+          continue;
+        }
+        if (!_pendingPathOperations
+            .take(index)
+            .any(
+              (earlier) =>
+                  !earlier.settled &&
+                  earlier.scope.conflictsWith(operation.scope),
+            )) {
+          return true;
+        }
+      }
+      return false;
     }
     bool retryable(_LocalHistoryFailureStage stage) =>
         _failure(id, stage)?.retryable != false;
@@ -6003,6 +6183,54 @@ class _LocalHistoryCaptureFailure {
   };
 }
 
+/// The namespaces reserved by a reconciliation and the stable identities it
+/// can change. Remaps always include descendants, regardless of the serialized
+/// `recursive` flag (which is only used by deletions).
+class _LocalHistoryPathScope {
+  _LocalHistoryPathScope({
+    required LocalHistoryPathReconciliationKind kind,
+    required String sourcePath,
+    String? destinationPath,
+    required bool recursive,
+    Iterable<LocalHistoryPathTarget> targets = const [],
+    Set<String> documentIds = const {},
+    this.ownerIds = const {},
+  }) : documentIds = {
+         ...documentIds,
+         for (final target in targets) target.documentId,
+       },
+       namespaces = [
+         (
+           path: p.normalize(sourcePath),
+           recursive:
+               kind == LocalHistoryPathReconciliationKind.remap || recursive,
+         ),
+         if (destinationPath != null)
+           (
+             path: p.normalize(destinationPath),
+             recursive: kind == LocalHistoryPathReconciliationKind.remap,
+           ),
+         for (final target in targets)
+           (path: p.normalize(target.expectedPath), recursive: false),
+       ];
+
+  final Set<String> documentIds;
+  final Set<String> ownerIds;
+  final List<({String path, bool recursive})> namespaces;
+
+  bool conflictsWith(_LocalHistoryPathScope other) =>
+      documentIds.any(other.documentIds.contains) ||
+      ownerIds.any(other.ownerIds.contains) ||
+      namespaces.any(
+        (left) => other.namespaces.any(
+          (right) =>
+              p.equals(left.path, right.path) ||
+              left.recursive && p.isWithin(left.path, right.path) ||
+              right.recursive && p.isWithin(right.path, left.path),
+        ),
+      );
+}
+
 abstract class _LocalHistoryPathOperation {
   _LocalHistoryPathOperation(
     Set<String> affectedOwners,
@@ -6048,6 +6276,7 @@ abstract class _LocalHistoryPathOperation {
   final bool retainUntilAcknowledged;
   final String? commitEvidenceOperationId;
   bool applied = false;
+  bool get settled => applied && errorDetail == null;
   bool acknowledgementRequested = false;
   Set<String> get documentIds => targets.keys.toSet();
   bool retryable = true;
@@ -6056,6 +6285,18 @@ abstract class _LocalHistoryPathOperation {
   LocalHistoryWarningKind get warningKind;
   String get warningPath;
   LocalHistoryPathReconciliation get reconciliation;
+  _LocalHistoryPathScope get scope {
+    final value = reconciliation;
+    return _LocalHistoryPathScope(
+      kind: value.kind,
+      sourcePath: value.sourcePath,
+      destinationPath: value.destinationPath,
+      recursive: value.recursive,
+      targets: targets.values,
+      ownerIds: affectedOwners,
+    );
+  }
+
   bool blocksPath(String path);
   Future<void> apply(LocalHistoryStore store) =>
       store.reconcilePath(reconciliation);
