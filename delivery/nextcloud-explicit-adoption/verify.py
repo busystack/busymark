@@ -35,6 +35,17 @@ def main():
             identity = json.loads((tree / 'delivery/nextcloud-explicit-adoption/evidence' / evidence).read_text())
             for name, digest in identity.get('compiledInputs', identity.get('buildSourceFiles', {})).items():
                 assert sha(tree / name) == digest, (evidence, name)
+        if manifest.get('releaseAcceptanceComplete'):
+            evidence_root = tree / 'delivery/nextcloud-explicit-adoption/evidence'
+            installed = json.loads((evidence_root / 'snap-acceptance-results.json').read_text())
+            assert installed['complete'] and installed['strictInstalled']
+            assert installed['enforcedAppArmorVerified'] and installed['installedSha256Verified']
+            snap_artifacts = [a for a in manifest['artifacts'] if a['path'].endswith('.snap')]
+            assert len(snap_artifacts) == 1
+            assert installed['snapSha256'] == snap_artifacts[0]['sha256']
+            for name, path in installed['visualization']['reports'].items():
+                report = json.loads((evidence_root / path).read_text())
+                assert report['ok'] and len(report['checks']) == 23, name
         repository = (tree / 'lib/src/nextcloud_notes/application/notes_repository.dart').read_text()
         discovery = repository.split('Future<void> _applyList(', 1)[1].split('NextcloudNote _fromRemote(', 1)[0]
         assert '_adoptCreation(' not in discovery

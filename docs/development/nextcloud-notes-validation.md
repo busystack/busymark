@@ -735,10 +735,11 @@ denied-network X11 spelling passed. Its visualization run failed in WebKit
 experimental Promise-retention change did not fix acceptance and was reverted.
 Installed-Snap Wayland spelling subsequently passed all 20 checks with network
 access denied. Wayland visualization failed during Mermaid/Typst export after
-13 checks. Passing installed visualization acceptance remains outstanding.
+13 checks. At that stage, passing installed visualization acceptance remained outstanding.
 Automatic approval review rejected uploading the source to public GitHub for
 the Ubuntu CI run; explicit export approval was requested. These failed VM
-checks are not counted as passing acceptance.
+checks are not counted as passing acceptance. The final KVM acceptance below
+supersedes that incomplete release status while retaining these failed results.
 
 The VM is Ubuntu **24.04.5**, kernel **6.8.0-142**, snapd **2.77.1**, software QEMU
 TCG (2 CPUs, 4 GiB), Xvfb/Openbox and Weston headless. Its desktop portal has the
@@ -797,3 +798,60 @@ do not enter compilation; the manifest and extracted-archive verification tie
 their final bytes to the committed source and final test logs. The delivered
 source archive is generated from that commit, with a fresh extraction checked
 byte-for-byte and the complete Nextcloud regression set rerun there.
+
+## Final installed acceptance and delivery, 7 October 2026
+
+The original recipe-built Snap, SHA-256
+`2b7c2a7b91a9aa7cbb7f23d35186e59a46173446b95ca9a14ddb5f667ca592ce`,
+passed installed visualization on **X11 and Wayland: 23 checks each**, with a
+second successful run on each backend. The repeat X11 command took 10 seconds;
+the combined Wayland spelling/visualization command took 18 seconds. Installed
+spelling passed **20 checks per run**, including fresh dictionary installation,
+Snap revision refresh, and X11/Wayland restart with `busymark:network`
+disconnected. Wayland visualization also ran with that interface disconnected.
+The original assertions and timeouts were retained.
+
+This fresh disposable VM uses **KVM, 4 CPUs, 4 GiB RAM**, Ubuntu **24.04.5**,
+kernel **6.8.0-142**, snapd **2.77.1**, core24 revision **2124**, GNOME revision
+**168** and Mesa revision **1839**. The content runtimes match the earlier TCG
+fixture. The installed root-owned Snap hash, embedded recipe hash, AOT hash,
+interfaces and enforced AppArmor profile were rechecked. The package and all
+568 recorded compilation inputs are unchanged; no renderer workaround was
+shipped and no executable was replaced during tests.
+
+The fresh headless VM initially lacked a usable desktop activation environment.
+A temporary D-Bus session could not create Snap's cgroup; its normal systemd
+user session fixed that. GTK portal activation then waited on a missing display
+and the first visualization attempt timed out. A persistent Xvfb display,
+`dbus-update-activation-environment --systemd DISPLAY=:97 XDG_CURRENT_DESKTOP=GNOME`,
+and explicit GTK portal selection provided a working Settings portal. Both
+backends then passed repeatedly without the experimental `NO_AT_BRIDGE`
+override. These observations explain the new fixture failures; they do not
+establish the cause of every historical TCG `Unsupported result type` error.
+All failures remain labelled in the evidence.
+
+The installed commands were extracted from `.github/workflows/flutter-linux.yml`:
+GTK SVG loading; shared-runtime/tool/media/resource inspection; dictionary
+install/refresh/offline use; X11 visualization/PDF; and Wayland
+spelling/visualization. Their only substitutions are the private report directory
+and the exact package path. Scripts, logs, reports, exported HTML/PDF, desktop
+configuration and kernel audit evidence are retained in
+`delivery/nextcloud-explicit-adoption/evidence/installed-kvm/`.
+
+Public source publication was explicitly approved after the initial automatic
+review rejection. GitHub then returned **403, Resource not accessible by
+integration**, and the existing SSH identity could not authenticate. No branch
+or draft PR was created and no CI result is claimed. The authorized disposable
+VM completed the installed-package checks instead.
+
+Release acceptance is complete for the recorded source and artifacts: full
+Flutter **3,638 passed / 0 failed / 0 skipped**, complete Nextcloud **216 passed**,
+the earlier native/Writerside checks, real HTTPS Notes **6.0.1 and 6.1.0**,
+real 423 isolation, actual browser/libsecret/application/offline adoption, and
+the installed strict-Snap checks above. The application and test source remains
+code commit `d55b41ddf47ef716d5113c89da8a3a2f3b80e819`; the final delivery commit
+adds evidence and documentation. The final manifest names that commit and the
+archives generated directly from it. Fresh extraction verifies every committed
+file and build input, then reruns all 216 Nextcloud tests, including the top-level
+files. Test accounts were revoked; the acceptance VM and private keys are removed
+after evidence collection.

@@ -335,5 +335,7 @@ native API would require a separate product decision.
 
 The 7 October explicit-adoption source, regression, live HTTPS and application
 evidence is recorded in [the validation report](nextcloud-notes-validation.md).
-Installed-Snap visualization acceptance remains outstanding there; passing
-Notes acceptance alone does not establish full release completion.
+Installed-Snap X11 and Wayland visualization acceptance subsequently passed on
+the same recipe-built package in a disposable KVM desktop, including repeated
+runs. The validation report records the environment, historical failures and
+final committed-source archive verification.

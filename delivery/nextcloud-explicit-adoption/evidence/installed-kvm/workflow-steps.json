@@ -1,0 +1,22 @@
+[
+  {
+    "name": "Verify GTK SVG icon loader",
+    "script": "01-verify-gtk-svg-icon-loader.sh"
+  },
+  {
+    "name": "Verify shared runtimes, packaged tools, media, and resources",
+    "script": "02-verify-shared-runtimes-packaged-tools-media-and-resources.sh"
+  },
+  {
+    "name": "Install one strict-Snap dictionary and verify refresh/offline use",
+    "script": "03-install-one-strict-snap-dictionary-and-verify-refresh-offline-use.sh"
+  },
+  {
+    "name": "Exercise strict Snap visualization and PDF paths under X11",
+    "script": "04-exercise-strict-snap-visualization-and-pdf-paths-under-x11.sh"
+  },
+  {
+    "name": "Exercise strict Snap spelling and visualization under Wayland",
+    "script": "05-exercise-strict-snap-spelling-and-visualization-under-wayland.sh"
+  }
+]

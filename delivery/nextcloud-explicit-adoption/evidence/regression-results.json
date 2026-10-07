@@ -44,7 +44,7 @@
   },
   "linuxRunnerSha256": "ddd5b6fc361e697cab18f195b6afd47f4bae64ff19dfdd49a6495a341528f32b",
   "linuxAotSha256": "9e0ccfd3e1f8164c5d218dd0b5bfbbf8b8b1c07bbf86b5295dd5a9c2f7b5815d",
-  "releaseAcceptanceComplete": false,
+  "releaseAcceptanceComplete": true,
   "installedSnapResults": "snap-acceptance-results.json",
   "validatedCodeCommit": "d55b41ddf47ef716d5113c89da8a3a2f3b80e819"
 }

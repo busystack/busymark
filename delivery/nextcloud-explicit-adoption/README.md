@@ -17,11 +17,18 @@ proof, recipe build provenance, installed interface/payload verification, and
 credential revocation. `selected-logs.json` identifies retained command logs.
 Historical failures and the reverted renderer experiment are explicitly labelled.
 
-Release acceptance is **incomplete**: installed-Snap visualization failed on
-X11 and Wayland. Both native visualization backends passed, and installed Snap
-spelling, browser/keyring restart, offline durability, explicit adoption and
-attachment publication passed. See `evidence/snap-acceptance-results.json` and
-the development validation document for the exact failures. Public GitHub
-source export for Ubuntu CI was rejected by automatic approval review;
-explicit user approval was requested. No failed or blocked check is counted as
-passing. Credentials and private VM/HTTPS fixture files are excluded.
+Release acceptance is **complete**. The same recipe-built strict Snap passed
+installed X11 and Wayland visualization (23 checks each, repeated successfully)
+in a disposable Ubuntu KVM desktop. Installed spelling passed 20 checks per
+run, including refresh and denied-network restart. Browser/keyring restart,
+offline durability, explicit adoption and attachment publication had already
+passed against this identical package. See `evidence/installed-kvm/README.md`
+for the desktop setup, commands and results. Earlier failures remain historical
+evidence and are not counted as passes.
+
+Public CI publication was explicitly approved, but the GitHub integration
+returned HTTP 403 and existing SSH authentication was unavailable. No branch
+or PR was created. The authorized disposable VM completed installed acceptance.
+Credentials and private VM/HTTPS fixture files are excluded. `artifacts/manifest.json`
+identifies the final commit, current archives, exact build hashes and checks;
+superseded archives are kept separately under `artifacts/historical/`.

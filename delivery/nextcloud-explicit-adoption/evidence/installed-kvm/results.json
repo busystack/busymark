@@ -1,0 +1,44 @@
+{
+  "complete": true,
+  "sourceCodeCommit": "d55b41ddf47ef716d5113c89da8a3a2f3b80e819",
+  "snapSha256": "2b7c2a7b91a9aa7cbb7f23d35186e59a46173446b95ca9a14ddb5f667ca592ce",
+  "environment": {
+    "distribution": "Ubuntu 24.04.5",
+    "kernel": "6.8.0-142-generic",
+    "virtualization": "KVM",
+    "cpus": 4,
+    "memoryGiB": 4,
+    "snapd": "2.77.1",
+    "core24Revision": 2124,
+    "gnomeRevision": 168,
+    "mesaRevision": 1839,
+    "cloudImageSha256": "6a81c37564db9b1ee84e141922625e1d7c5b389b99bb3c572e0243607d5bb4d2"
+  },
+  "reports": {
+    "x11-configured-desktop": {
+      "passed": true,
+      "checks": 23,
+      "report": "acceptance/x11-configured-desktop/visualization-release-x11.json"
+    },
+    "x11-repeat": {
+      "passed": true,
+      "checks": 23,
+      "report": "acceptance/x11-repeat/visualization-release-x11.json"
+    },
+    "wayland-configured-desktop": {
+      "passed": true,
+      "checks": 23,
+      "report": "acceptance/wayland-configured-desktop/visualization-release-wayland.json"
+    },
+    "wayland-repeat": {
+      "passed": true,
+      "checks": 23,
+      "report": "acceptance/wayland-repeat/visualization-release-wayland.json"
+    },
+    "spellingChecksPerRun": 20
+  },
+  "confinement": "strict; enforced AppArmor profile verified; network disconnected for offline spelling and Wayland visualization",
+  "installedIdentity": "acceptance/installed-identity-final.log",
+  "headlessDesktop": "Normal systemd user session, persistent Xvfb display for GTK portal; portal activation environment and preferred backend configured. Final tests use no NO_AT_BRIDGE override.",
+  "historicalFailures": "Original TCG failures remain retained. Initial KVM session/cgroup and portal failures are retained and are not passing checks. Their causes do not prove the cause of every historical TCG WebKit error."
+}
