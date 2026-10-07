@@ -1,0 +1,6 @@
+Name           Version                         Rev    Tracking       Publisher    Notes
+core24         20260824                        2124   latest/stable  canonical**  base
+gnome-46-2404  0+git.b31ceab-sdk0+git.f80dd8b  168    latest/stable  canonical**  -
+mesa-2404      25.2.8-snap288                  1839   latest/stable  canonical**  -
+snapd          2.77.1                          28254  latest/stable  canonical**  snapd
+status: done

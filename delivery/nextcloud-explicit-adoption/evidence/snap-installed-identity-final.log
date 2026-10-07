@@ -1,0 +1,31 @@
+Name      Version  Rev  Tracking  Publisher  Notes
+busymark  0.6.1    x5   -         -          -
+sha256sum: /var/lib/snapd/snaps/busymark_x5.snap: Permission denied
+87acd7e0dc6ebe33a6c06a9d57d22954cfb5db18e7e99a2537908055ee7e8013  /snap/busymark/current/lib/libapp.so
+c337fa68d95a589562aa10ab1c63e809b900c711ff53466fd79a9ffd53bc7d1d  /snap/busymark/current/snap/snapcraft.yaml
+Interface                 Plug                               Slot                            Notes
+audio-playback            busymark:audio-playback            :audio-playback                 -
+browser-support           busymark:browser-support           :browser-support                -
+content[gnome-46-2404]    busymark:gnome-46-2404             gnome-46-2404:gnome-46-2404     -
+content[gpu-2404]         busymark:gpu-2404                  mesa-2404:gpu-2404              -
+content[gtk-3-themes]     busymark:gtk-3-themes              gtk-common-themes:gtk-3-themes  -
+content[icon-themes]      busymark:icon-themes               gtk-common-themes:icon-themes   -
+content[sound-themes]     busymark:sound-themes              gtk-common-themes:sound-themes  -
+desktop                   busymark:desktop                   :desktop                        -
+desktop-legacy            busymark:desktop-legacy            :desktop-legacy                 -
+gsettings                 busymark:gsettings                 :gsettings                      -
+home                      busymark:home                      :home                           -
+network                   busymark:network                   :network                        manual
+opengl                    busymark:opengl                    :opengl                         -
+password-manager-service  busymark:password-manager-service  :password-manager-service       manual
+removable-media           busymark:removable-media           -                               -
+ssh-keys                  busymark:ssh-keys                  -                               -
+wayland                   busymark:wayland                   :wayland                        -
+x11                       busymark:x11                       :x11                            -
+bash: line 1: rg: command not found
+   snap.busymark.busymark
+   snap.busymark.hook.configure
+sha256sum: /var/lib/snapd/snaps/busymark_x5.snap: Permission denied
+2b7c2a7b91a9aa7cbb7f23d35186e59a46173446b95ca9a14ddb5f667ca592ce  /var/lib/snapd/snaps/busymark_x5.snap
+   snap.busymark.busymark
+   snap.busymark.hook.configure

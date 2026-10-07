@@ -694,7 +694,7 @@ file). The native spelling package passed 13 tests.
 Final regression validation used Flutter **3.47.5**, Dart **3.13.4**, the frozen
 Linux release bundle and the CI spelling resources. The complete Nextcloud set
 passed **216 tests**; the entire Flutter suite passed **3,638 tests, zero failures
-and zero skips** in 17:58. The unchanged Welcome restoration assertion passed in
+and zero skips** in 18:21. The unchanged Welcome restoration assertion passed in
 the full suite. Localization audit passed 21 tests, actual dictionary integration
 passed 3, the native spell package passed 13 and Writerside conformance passed 181.
 Formatting reported 544 files with zero changes; analysis reported no issues.
@@ -733,9 +733,12 @@ and real WebKit smoke runs passed on both backends. Installed-Snap online and
 denied-network X11 spelling passed. Its visualization run failed in WebKit
 (`Unsupported result type`, with another run failing MathJax recovery). An
 experimental Promise-retention change did not fix acceptance and was reverted.
-Installed-Snap Wayland and combined visualization acceptance remain pending
-while the unchanged workflow is exercised on an Ubuntu CI runner. These failed
-VM checks are not counted as passing acceptance.
+Installed-Snap Wayland spelling subsequently passed all 20 checks with network
+access denied. Wayland visualization failed during Mermaid/Typst export after
+13 checks. Passing installed visualization acceptance remains outstanding.
+Automatic approval review rejected uploading the source to public GitHub for
+the Ubuntu CI run; explicit export approval was requested. These failed VM
+checks are not counted as passing acceptance.
 
 The VM is Ubuntu **24.04.5**, kernel **6.8.0-142**, snapd **2.77.1**, software QEMU
 TCG (2 CPUs, 4 GiB), Xvfb/Openbox and Weston headless. Its desktop portal has the
@@ -755,6 +758,11 @@ payload checks verify SVG loading, GTK/WebKit/GNOME/Mesa libraries, fonts, media
 Git/SSH/session tools and Yaru assets. Required desktop, X11/Wayland, network,
 content and manually connected password-manager interfaces were inspected.
 The installed package SHA-256 matches the delivered recipe-built artifact.
+
+The disposable accounts were deleted after application acceptance; both
+HTTPS APIs returned 401 for their revoked credentials. All grants belonging
+to those accounts, including application Login Flow grants, were invalidated.
+Private fixture credentials, keys and Login Flow URLs are excluded.
 
 Exact commands and final reports are under
 `delivery/nextcloud-explicit-adoption/evidence/`. Key invocations were:

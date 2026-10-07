@@ -1,0 +1,13 @@
+** (io.busystack.busymark:25544): WARNING **: 11:59:35.059: Could not open /sys/firmware/acpi/pm_profile: Failed to open file “/sys/firmware/acpi/pm_profile”: Permission denied
+GTK header-icon catalog preload failed: TimeoutException after 0:00:05.000000: Future not completed
+
+(process:25750): GLib-GIO-WARNING **: 11:59:47.832: GDBus.Error:org.freedesktop.portal.Error.NotAllowed: This call is not available inside the sandbox
+
+(process:25786): GLib-GIO-WARNING **: 11:59:49.144: GDBus.Error:org.freedesktop.portal.Error.NotAllowed: This call is not available inside the sandbox
+
+** (io.busystack.busymark:25544): WARNING **: 11:59:59.659: Timed out waiting for OpenGL frame of size 1270x720 (have 1280x720)
+Oct 07 12:00:11 busymark-acceptance kernel: audit: type=1400 audit(1791374411.053:2783): apparmor="DENIED" operation="create" class="net" profile="snap.busymark.busymark" pid=25544 comm="busymark" family="inet" sock_type="stream" protocol=0 requested="create" denied="create"
+Oct 07 12:00:16 busymark-acceptance kernel: audit: type=1400 audit(1791374416.194:2785): apparmor="DENIED" operation="create" class="net" profile="snap.busymark.busymark" pid=25544 comm="busymark" family="inet" sock_type="stream" protocol=0 requested="create" denied="create"
+Oct 07 12:00:27 busymark-acceptance kernel: audit: type=1400 audit(1791374426.264:2788): apparmor="DENIED" operation="create" class="net" profile="snap.busymark.busymark" pid=25544 comm="busymark" family="inet" sock_type="stream" protocol=0 requested="create" denied="create"
+Oct 07 12:00:46 busymark-acceptance kernel: audit: type=1400 audit(1791374446.386:2793): apparmor="DENIED" operation="create" class="net" profile="snap.busymark.busymark" pid=25544 comm="busymark" family="inet" sock_type="stream" protocol=0 requested="create" denied="create"
+Oct 07 12:01:26 busymark-acceptance kernel: audit: type=1400 audit(1791374486.424:2802): apparmor="DENIED" operation="create" class="net" profile="snap.busymark.busymark" pid=25544 comm="busymark" family="inet" sock_type="stream" protocol=0 requested="create" denied="create"

@@ -1,0 +1,14 @@
+00:00 +0: loading /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_repository_test.dart
+00:00 +0: uncertain creation discovery preserves later edits until deliberate adoption
+00:01 +0 -1: uncertain creation discovery preserves later edits until deliberate adoption [E]
+  Expected: null
+    Actual: <1>
+  
+  package:matcher                                            expect
+  package:flutter_test/src/widget_tester.dart 473:18         expect
+  test/src/nextcloud_notes/notes_repository_test.dart 130:7  main.<fn>
+  
+00:01 +0 -1: Some tests failed.
+
+Failing tests:
+  /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_repository_test.dart: uncertain creation discovery preserves later edits until deliberate adoption

@@ -1,0 +1,7 @@
+PASS older-only lookup: #336699 (modern symbol absent)
+PASS listener attachment replays current modern color
+PASS runtime theme-name and dark-preference notifications read refreshed CSS
+PASS transparent and missing lookups remain unavailable; duplicates suppressed
+PASS header CSS refresh produces no accent feedback
+PASS cancellation, resubscription and queued-callback cleanup
+GTK 3.24.41; backend=GdkX11Display; fixture package=unpackaged native probe

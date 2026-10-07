@@ -1,0 +1,11 @@
+[IMPORTANT:flutter/shell/platform/embedder/embedder_surface_gl_impeller.cc(126)] Using the Impeller rendering backend (OpenGLESSDF).
+
+(io.busystack.busymark:30203): IBUS-WARNING **: 12:30:09.290: Failed to mkdir /home/tester/snap/busymark/x2/.config/ibus/bus: Not a directory
+
+** (io.busystack.busymark:30203): WARNING **: 12:30:09.865: Could not open /sys/class/dmi/id/chassis_type: Failed to open file “/sys/class/dmi/id/chassis_type”: Permission denied
+
+** (io.busystack.busymark:30203): WARNING **: 12:30:09.866: Could not open /sys/firmware/acpi/pm_profile: Failed to open file “/sys/firmware/acpi/pm_profile”: Permission denied
+
+(process:30359): GLib-GIO-WARNING **: 12:30:16.141: GDBus.Error:org.freedesktop.portal.Error.NotAllowed: This call is not available inside the sandbox
+
+(process:30379): GLib-GIO-WARNING **: 12:30:17.497: GDBus.Error:org.freedesktop.portal.Error.NotAllowed: This call is not available inside the sandbox

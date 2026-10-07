@@ -1,0 +1,15 @@
+Running build hooks...Running build hooks...00:00 +0: loading test/busymark_spellcheck_native_test.dart
+00:00 +0: test/busymark_spellcheck_native_test.dart: checks roots, affixes, compounds, and casing
+00:00 +1: test/busymark_spellcheck_native_test.dart: copies suggestions before releasing the Hunspell list
+00:00 +2: test/busymark_spellcheck_native_test.dart: custom words participate in checking and suggestions
+00:00 +3: test/busymark_spellcheck_native_test.dart: tokenization reports UTF-8 and character boundaries separately
+00:00 +4: test/busymark_spellcheck_native_test.dart: keeps touching Thai word boundaries separate
+00:00 +5: test/busymark_spellcheck_native_test.dart: rejects initial and embedded NUL at every string boundary
+00:00 +6: test/busymark_spellcheck_native_test.dart: dictionary word characters do not absorb quotation punctuation
+00:00 +7: test/busymark_spellcheck_native_test.dart: quotation punctuation stays outside tokens across phrases
+00:00 +8: test/busymark_spellcheck_native_test.dart: standalone elisions and possessives retain lexical apostrophes
+00:00 +9: test/busymark_spellcheck_native_test.dart: closed handles report an unchecked failure
+00:00 +10: test/busymark_spellcheck_native_test.dart: missing dictionary is reported without leaking a handle
+00:00 +11: test/busymark_spellcheck_native_test.dart: rejects a dictionary that claims records but loads none
+00:00 +12: test/busymark_spellcheck_native_test.dart: accepts a valid dictionary whose stems require affixes
+00:00 +13: All tests passed!

@@ -212,8 +212,8 @@ operations block consolidation. Every workspace controller also registers an
 open-tab guard; candidate tabs must be closed after preserving their work.
 Reserved candidates cannot be opened during confirmation. The same commit-time
 editor guard rejects unsaved draft edits that arrived during the confirmation
-GET, requiring another review. Newer draft edits and staged bytes remain pending through the existing ordered attachment/update
-pipeline, and subsequent PUTs retain If-Match protection.
+GET, requiring another review. Newer draft edits and staged bytes remain
+pending through the existing ordered attachment/update pipeline, and subsequent PUTs retain If-Match protection.
 
 **Create a separate note** warns that the first request may already have created
 a server note. The explicit decision durably records one replacement identity
@@ -332,3 +332,8 @@ The current [Text source](https://github.com/nextcloud/text) and
 describe web-editor ownership and internal collaborative machinery, not a
 documented supported external native collaboration API. A future official
 native API would require a separate product decision.
+
+The 7 October explicit-adoption source, regression, live HTTPS and application
+evidence is recorded in [the validation report](nextcloud-notes-validation.md).
+Installed-Snap visualization acceptance remains outstanding there; passing
+Notes acceptance alone does not establish full release completion.

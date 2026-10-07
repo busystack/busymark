@@ -1,0 +1,3 @@
+[IMPORTANT:flutter/shell/platform/embedder/embedder_surface_gl_impeller.cc(126)] Using the Impeller rendering backend (OpenGLESSDF).
+
+(process:2): GLib-GIO-WARNING **: 12:26:27.693: Error releasing name io.busystack.busymark.Sandboxed.WebProcess-13bfb086-7cb6-4532-92ca-94a52a7dbceb: The connection is closed

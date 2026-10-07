@@ -1,0 +1,232 @@
+00:00 +0: loading /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_creation_policy_test.dart
+00:00 +0: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_creation_policy_test.dart: exact discovery across refresh reconnect and restart cannot bind or mutate draft
+00:05 +1: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_creation_policy_test.dart: sanitized discovery across refresh reconnect and restart cannot bind or mutate draft
+00:06 +2: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_creation_policy_test.dart: multiple discovery across refresh reconnect and restart cannot bind or mutate draft
+00:06 +3: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_creation_policy_test.dart: none discovery across refresh reconnect and restart cannot bind or mutate draft
+00:07 +4: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_creation_policy_test.dart: empty discovery across refresh reconnect and restart cannot bind or mutate draft
+00:07 +5: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_creation_policy_test.dart: other actor discovery across refresh reconnect and restart cannot bind or mutate draft
+00:07 +6: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_creation_policy_test.dart: confirmation rejects content candidate and retains unresolved work
+00:07 +7: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_creation_policy_test.dart: confirmation rejects readonly candidate and retains unresolved work
+00:08 +8: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_creation_policy_test.dart: confirmation rejects error candidate and retains unresolved work
+00:08 +9: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_creation_policy_test.dart: confirmation rejects deleted candidate and retains unresolved work
+00:08 +10: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_creation_policy_test.dart: confirmation rejects unavailable candidate and retains unresolved work
+00:08 +11: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_creation_policy_test.dart: confirmation revalidates local edit during authenticated GET
+00:08 +12: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_creation_policy_test.dart: confirmation revalidates account removal during authenticated GET
+00:08 +13: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_creation_policy_test.dart: confirmation revalidates repeat confirmation during authenticated GET
+00:09 +14: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_creation_policy_test.dart: binding protects downloaded candidate with durable edit
+00:09 +15: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_creation_policy_test.dart: binding protects downloaded candidate with pending attachment
+00:09 +16: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_creation_policy_test.dart: binding protects downloaded candidate with open editor
+00:09 +17: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_creation_policy_test.dart: failed adoption transaction rolls back binding and downloaded identity
+00:09 +18: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_creation_policy_test.dart: separate-note decision is durable and repeated confirmation makes one replacement
+00:09 +19: loading /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_repository_test.dart
+00:10 +19: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_repository_test.dart: v1 data migrates without losing pending content or inventing an attempt
+00:11 +20: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_repository_test.dart: uncertain creation discovery preserves later edits until deliberate adoption
+00:12 +21: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_repository_test.dart: unsupported attachment cleanup queues nothing and core updates still sync
+00:12 +22: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_repository_test.dart: lost create response requires deliberate adoption for ordinary
+00:12 +23: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_repository_test.dart: lost create response requires deliberate adoption for attachment
+00:12 +24: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_repository_test.dart: lost create response requires deliberate adoption for sanitized title
+00:12 +25: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_repository_test.dart: lost create response requires deliberate adoption for sanitized category
+00:12 +26: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_repository_test.dart: lost create response requires deliberate adoption for sanitized attachment
+00:13 +27: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_repository_test.dart: lost create response requires deliberate adoption for restart
+00:13 +28: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_repository_test.dart: lost create response requires deliberate adoption for restart attachment
+00:13 +29: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_repository_test.dart: lost create response requires deliberate adoption for restart sanitized attachment
+00:14 +30: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_repository_test.dart: lost create response requires deliberate adoption for ambiguous
+00:14 +31: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_repository_test.dart: uncertain creation excludes preexisting IDs and empty weak matches
+00:14 +32: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_repository_test.dart: an exact candidate is not auto-adopted by one of two plausible attempts
+00:14 +33: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_repository_test.dart: three-way merge preserves remote favorite and independent local edit
+00:14 +34: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_repository_test.dart: three-way merge preserves remote title and independent local edit
+00:14 +35: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_repository_test.dart: three-way merge preserves remote content and independent local edit
+00:14 +36: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_repository_test.dart: divergent NotesMergeAttribute.title requires explicit choice
+00:14 +37: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_repository_test.dart: divergent NotesMergeAttribute.category requires explicit choice
+00:15 +38: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_repository_test.dart: 412 merge keeps remote protected fields and local favorite on readonly note
+00:15 +39: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_repository_test.dart: readonly conflict accepts an explicit favorite choice when base is absent
+00:15 +40: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_repository_test.dart: schema migration, foreign-key transaction rollback and Linux permissions
+00:15 +41: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_repository_test.dart: durable new note survives restart before any HTTP request
+00:15 +42: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_repository_test.dart: older capture cannot overwrite a newer durable editor revision
+00:15 +43: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_repository_test.dart: metadata revision does not invalidate a new editor capture
+00:15 +44: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_repository_test.dart: account failure is visible even with only synchronized cached notes
+00:15 +45: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_repository_test.dart: attachment delete operation survives offline restart and retains history bytes
+00:15 +46: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_repository_test.dart: taking remote cannot discard a local edit made while fresh GET is pending
+00:16 +47: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_repository_test.dart: revision 10 acknowledgment leaves edit 11 pending during flight
+00:16 +48: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_repository_test.dart: 412 preserves base/local/current remote without overwrite
+00:16 +49: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_repository_test.dart: locked note does not block unrelated synchronization
+00:16 +50: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_repository_test.dart: interrupted chunks preserve notes and previous checkpoint atomically
+00:16 +51: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_repository_test.dart: complete remote disappearance retains dirty content for recovery
+00:16 +52: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_repository_test.dart: server error-state content never replaces known good cached content
+00:16 +53: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_repository_test.dart: pretransition editor capture remains durable when server becomes readonly
+00:16 +54: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_repository_test.dart: uncertain creation never blindly repeats POST after restart
+00:17 +55: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_repository_test.dart: crash-marked create is recovered as uncertain without POST
+00:17 +56: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_repository_test.dart: delete checks fresh state; failed DELETE retains durable content
+00:17 +57: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_repository_test.dart: new offline attachment restart creates/uploads/publishes authoritative path
+00:17 +58: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_repository_test.dart: uploaded attachment stage survives restart and is not uploaded twice
+00:17 +59: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_repository_test.dart: concurrent contexts share one cache owner and deletion invalidates all media
+00:17 +60: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_repository_test.dart: a deliberate re-upload can reuse a deleted attachment filename
+00:18 +61: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_repository_test.dart: own upload acknowledgment does not stale a newer editor capture
+00:18 +62: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_repository_test.dart: media rejects invalid logical IDs and symbolic-link parent
+00:18 +63: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_repository_test.dart: recovery clones durable pending attachments without rewriting prose or code
+00:18 +64: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_repository_test.dart: recovery rewrites shared attachment definitions and refuses unavailable bytes atomically
+00:18 +65: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_repository_test.dart: discard after confirmed remote deletion retains tombstone content and cached bytes
+00:18 +66: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_repository_test.dart: history restoration restages deleted bytes before editing and survives restart
+00:18 +67: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_repository_test.dart: readonly attachment deletion preserves content and attachment bytes
+00:18 +68: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_repository_test.dart: ordinary Save atomically restages a deleted attachment restored by undo
+00:19 +69: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_repository_test.dart: unrelated edits preserve explicit attachment deletion; newly restored links restage
+00:19 +70: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_repository_test.dart: explicit unpublished deletion can retain recovery bytes without uploading
+00:19 +71: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_repository_test.dart: literal private namespace in a new note does not create pending publication
+00:19 +72: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_repository_test.dart: merge and keep-local reject a local edit made during fresh GET
+00:19 +73: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_repository_test.dart: conflict overwrite requires review again when remote changes after comparison
+00:20 +74: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_repository_test.dart: uncertain creation adoption preserves a durably edited downloaded twin
+00:20 +75: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_repository_test.dart: list checkpoint preserves account capabilities refreshed during HTTP
+00:20 +76: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_repository_test.dart: readonly acknowledgment exposes recovery for a newer in-flight local edit
+00:20 +77: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_repository_test.dart: same-ETag readonly transition preserves base/local and exposes recovery
+00:20 +78: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_repository_test.dart: readonly transition still synchronizes a favorite-only pending change
+00:20 +79: loading /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_conflict_test.dart
+00:21 +79: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_conflict_test.dart: identical changes do not need a choice
+00:21 +80: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_conflict_test.dart: boolean three-way truth table preserves all independent changes
+00:21 +81: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_conflict_test.dart: favorite without a known base requires an explicit choice
+00:21 +82: loading /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_attachment_stream_test.dart
+00:23 +82: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_attachment_stream_test.dart: streams attachment with content length null including empty
+00:23 +83: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_attachment_stream_test.dart: streams attachment with content length 3 including empty
+00:23 +84: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_attachment_stream_test.dart: streams attachment with content length 0 including empty
+00:23 +85: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_attachment_stream_test.dart: rejects oversized advertised length before consuming body
+00:24 +86: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_attachment_stream_test.dart: counts bytes beyond limit with absent/dishonest length null
+00:24 +87: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_attachment_stream_test.dart: counts bytes beyond limit with absent/dishonest length 1
+00:24 +88: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_attachment_stream_test.dart: network leaves neither valid attachment nor partial file
+00:24 +89: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_attachment_stream_test.dart: truncated leaves neither valid attachment nor partial file
+00:24 +90: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_attachment_stream_test.dart: dishonest leaves neither valid attachment nor partial file
+00:24 +91: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_attachment_stream_test.dart: cancel leaves neither valid attachment nor partial file
+00:24 +92: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_attachment_stream_test.dart: cancellation before request makes no HTTP call
+00:24 +93: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_attachment_stream_test.dart: authenticated attachment redirect never follows another origin
+00:24 +94: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_attachment_stream_test.dart: symlink destination remains untouched
+00:24 +95: loading /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_attachment_references_test.dart
+00:25 +95: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_attachment_references_test.dart: attachment recovery finds positioned inline and reference destinations
+00:25 +96: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_attachment_references_test.dart: authored HTML attachments retain exact attribute positions
+00:25 +97: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_attachment_references_test.dart: literal code, comments and prose do not become attachment operations
+00:25 +98: loading /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_api_test.dart
+00:26 +98: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_api_test.dart: API 1.4 uploads/downloads on 6.0.0; DELETE independently gated
+00:27 +99: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_api_test.dart: API 1.4 uploads/downloads on 6.0.1; DELETE independently gated
+00:27 +100: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_api_test.dart: API 1.4 uploads/downloads on 6.1.0; DELETE independently gated
+00:27 +101: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_api_test.dart: API 1.4 uploads/downloads on 6.1.4; DELETE independently gated
+00:27 +102: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_api_test.dart: API 1.4 uploads/downloads on ; DELETE independently gated
+00:27 +103: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_api_test.dart: API 1.4 uploads/downloads on unknown; DELETE independently gated
+00:27 +104: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_api_test.dart: API 1.4 uploads/downloads on 6.1.0-rc1; DELETE independently gated
+00:28 +105: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_api_test.dart: API 1.4 uploads/downloads on 999999999999999999999.0.0; DELETE independently gated
+00:28 +106: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_api_test.dart: persisted HTTP account cannot issue an authenticated request
+00:28 +107: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_api_test.dart: pruned IDs tolerate future fields and filename URI escaping is reversible
+00:28 +108: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_api_test.dart: decodes future fields/read-only/error without exception text as content
+00:28 +109: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_api_test.dart: CRUD preserves installation prefix and sends exactly quoted If-Match
+00:28 +110: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_api_test.dart: canonical title/category write response is adopted
+00:28 +111: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_api_test.dart: 412 carries complete fresh remote conflict state
+00:28 +112: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_api_test.dart: classifies HTTP 401 preserving future-code compatibility
+00:28 +113: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_api_test.dart: classifies HTTP 403 preserving future-code compatibility
+00:28 +114: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_api_test.dart: classifies HTTP 404 preserving future-code compatibility
+00:28 +115: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_api_test.dart: classifies HTTP 423 preserving future-code compatibility
+00:28 +116: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_api_test.dart: classifies HTTP 507 preserving future-code compatibility
+00:28 +117: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_api_test.dart: classifies HTTP 500 preserving future-code compatibility
+00:28 +118: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_api_test.dart: classifies HTTP 429 preserving future-code compatibility
+00:28 +119: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_api_test.dart: classifies HTTP 599 preserving future-code compatibility
+00:28 +120: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_api_test.dart: never follows cross-origin authenticated redirects
+00:28 +121: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_api_test.dart: incremental chunk list uses server Last-Modified and final complete ids
+00:28 +122: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_api_test.dart: 304 returns unchanged checkpoint outcome without parsing a body
+00:28 +123: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_api_test.dart: interrupted chunks do not return partial deletion evidence
+00:28 +124: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_api_test.dart: attachment upload uses authoritative renamed relative path
+00:28 +125: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_api_test.dart: attachment upload rejects a filename outside the current note
+00:28 +126: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_api_test.dart: attachment fetch rejects URLs and traversal without sending credentials
+00:28 +127: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_api_test.dart: attachment delete gates app version independently of API 1.4
+00:28 +128: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_api_test.dart: create does not publish private staging references
+00:28 +129: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_api_test.dart: update never publishes an unresolved private attachment reference
+00:28 +130: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_api_test.dart: private namespace text in prose and code is preserved by create and update
+00:28 +131: loading /home/albert/busystack/busymark/test/src/nextcloud_capabilities_test.dart
+00:29 +131: /home/albert/busystack/busymark/test/src/nextcloud_capabilities_test.dart: accepts stable baseline and ignores future capability fields
+00:29 +132: /home/albert/busystack/busymark/test/src/nextcloud_capabilities_test.dart: API 1.4 accepted independently of app version 6.0.0
+00:29 +133: /home/albert/busystack/busymark/test/src/nextcloud_capabilities_test.dart: API 1.4 accepted independently of app version 6.0.1
+00:29 +134: /home/albert/busystack/busymark/test/src/nextcloud_capabilities_test.dart: API 1.4 accepted independently of app version 6.1.0
+00:29 +135: /home/albert/busystack/busymark/test/src/nextcloud_capabilities_test.dart: API 1.4 accepted independently of app version 6.1.2
+00:29 +136: /home/albert/busystack/busymark/test/src/nextcloud_capabilities_test.dart: API 1.4 accepted independently of app version null
+00:29 +137: /home/albert/busystack/busymark/test/src/nextcloud_capabilities_test.dart: API 1.4 accepted independently of app version 
+00:29 +138: /home/albert/busystack/busymark/test/src/nextcloud_capabilities_test.dart: API 1.4 accepted independently of app version malformed
+00:29 +139: /home/albert/busystack/busymark/test/src/nextcloud_capabilities_test.dart: API 1.4 accepted independently of app version 42
+00:29 +140: /home/albert/busystack/busymark/test/src/nextcloud_capabilities_test.dart: rejects missing Notes and unavailable/old API accurately
+00:29 +141: /home/albert/busystack/busymark/test/src/nextcloud_capabilities_test.dart: requests OCS capabilities under prefix with proper Basic and headers
+00:29 +142: /home/albert/busystack/busymark/test/src/nextcloud_capabilities_test.dart: authenticated redirects are rejected without following another origin
+00:29 +143: /home/albert/busystack/busymark/test/src/nextcloud_capabilities_test.dart: revocation uses documented DELETE and is best effort on non-200
+00:29 +144: loading /home/albert/busystack/busymark/test/src/nextcloud_connection_test.dart
+00:29 +144: /home/albert/busystack/busymark/test/src/nextcloud_connection_test.dart: setup stores password only in secret service and metadata in SQLite
+00:31 +145: /home/albert/busystack/busymark/test/src/nextcloud_connection_test.dart: locked keyring fails setup without a plaintext account fallback
+00:31 +146: /home/albert/busystack/busymark/test/src/nextcloud_connection_test.dart: Notes 6.0.1 connects with API 1.4
+00:31 +147: /home/albert/busystack/busymark/test/src/nextcloud_connection_test.dart: production setup preserves the HTTPS-specific validation error
+00:31 +148: /home/albert/busystack/busymark/test/src/nextcloud_connection_test.dart: unsupported API rolls back secret and revokes new token
+00:32 +149: /home/albert/busystack/busymark/test/src/nextcloud_connection_test.dart: setup revokes the grant even if keyring cleanup fails
+00:32 +150: /home/albert/busystack/busymark/test/src/nextcloud_connection_test.dart: reconnect preserves stable account identity and pending note cache
+00:32 +151: /home/albert/busystack/busymark/test/src/nextcloud_connection_test.dart: different returned login cannot inherit the existing account outbox
+00:32 +152: /home/albert/busystack/busymark/test/src/nextcloud_connection_test.dart: failed remote revocation still removes local account and secret
+00:32 +153: /home/albert/busystack/busymark/test/src/nextcloud_connection_test.dart: locked keyring during removal retains account for explicit retry
+00:32 +154: loading /home/albert/busystack/busymark/test/src/nextcloud_document_model_test.dart
+00:34 +154: /home/albert/busystack/busymark/test/src/nextcloud_document_model_test.dart: remote identity is independent of paths, title and publication
+00:34 +155: /home/albert/busystack/busymark/test/src/nextcloud_document_model_test.dart: remote context stays Markdown and has no disk root or disk path
+00:34 +156: /home/albert/busystack/busymark/test/src/nextcloud_document_model_test.dart: session v2 stores remote identity and editor state without content
+00:34 +157: /home/albert/busystack/busymark/test/src/nextcloud_document_model_test.dart: remote history binds reopened and renamed notes to one logical document
+00:34 +158: loading /home/albert/busystack/busymark/test/src/nextcloud_editor_boundary_test.dart
+00:36 +158: /home/albert/busystack/busymark/test/src/nextcloud_editor_boundary_test.dart: remote read-only source blocks typing and formatting mutations
+00:37 +159: /home/albert/busystack/busymark/test/src/nextcloud_editor_boundary_test.dart: remote read-only WYSIWYG blocks typing and formatting emissions
+00:38 +160: loading /home/albert/busystack/busymark/test/src/nextcloud_login_flow_test.dart
+00:39 +160: /home/albert/busystack/busymark/test/src/nextcloud_login_flow_test.dart: Nextcloud installation URLs normalizes the root URL and preserves installation prefixes
+00:39 +161: /home/albert/busystack/busymark/test/src/nextcloud_login_flow_test.dart: Nextcloud installation URLs rejects malformed and unsafe installation URLs
+00:39 +162: /home/albert/busystack/busymark/test/src/nextcloud_login_flow_test.dart: Nextcloud installation URLs routes cannot reset a prefix or change origin
+00:39 +163: /home/albert/busystack/busymark/test/src/nextcloud_login_flow_test.dart: Login Flow v2 anonymous start, browser, pending poll and canonical exact success
+00:40 +164: /home/albert/busystack/busymark/test/src/nextcloud_login_flow_test.dart: Login Flow v2 production login rejects HTTP before network or browser
+00:40 +165: /home/albert/busystack/busymark/test/src/nextcloud_login_flow_test.dart: Login Flow v2 token expires at twenty minutes without extra poll
+00:40 +166: /home/albert/busystack/busymark/test/src/nextcloud_login_flow_test.dart: Login Flow v2 user can cancel while waiting without another poll
+00:40 +167: /home/albert/busystack/busymark/test/src/nextcloud_login_flow_test.dart: Login Flow v2 cancel racing a success revokes the returned app password
+00:40 +168: /home/albert/busystack/busymark/test/src/nextcloud_login_flow_test.dart: Login Flow v2 failed external browser launch does not begin polling
+00:40 +169: /home/albert/busystack/busymark/test/src/nextcloud_login_flow_test.dart: Login Flow v2 rejects malformed responses and unsafe returned flow endpoints
+00:40 +170: /home/albert/busystack/busymark/test/src/nextcloud_login_flow_test.dart: Login Flow v2 pending status is only 404; other status and redirects are errors
+00:40 +171: /home/albert/busystack/busymark/test/src/nextcloud_login_flow_test.dart: Login Flow v2 malformed credentials never become an account
+00:40 +172: /home/albert/busystack/busymark/test/src/nextcloud_login_flow_test.dart: Login Flow v2 network failures have sanitized diagnostics
+00:40 +173: loading /home/albert/busystack/busymark/test/src/nextcloud_media_export_test.dart
+00:42 +173: /home/albert/busystack/busymark/test/src/nextcloud_media_export_test.dart: remote authored absolute and file image paths never enter local resolver
+00:43 +174: /home/albert/busystack/busymark/test/src/nextcloud_media_export_test.dart: managed attachment renderer resolves through provider
+00:43 +175: /home/albert/busystack/busymark/test/src/nextcloud_media_export_test.dart: provider publication accepts a remote note with no file path and rolls back through provider
+00:43 +176: /home/albert/busystack/busymark/test/src/nextcloud_media_export_test.dart: HTML and PDF remote assets cannot read authored machine files
+00:43 +177: /home/albert/busystack/busymark/test/src/nextcloud_media_export_test.dart: Markdown local copy owns portable attachments and preserves code and ordinary text
+00:46 +178: /home/albert/busystack/busymark/test/src/nextcloud_media_export_test.dart: Markdown export rewrites exact prefix-sharing destinations
+00:46 +179: /home/albert/busystack/busymark/test/src/nextcloud_media_export_test.dart: generic attachment links are escaped and exported as portable HTML downloads
+00:46 +180: /home/albert/busystack/busymark/test/src/nextcloud_media_export_test.dart: unavailable published attachment cannot silently export a broken copy
+00:46 +181: /home/albert/busystack/busymark/test/src/nextcloud_media_export_test.dart: unavailable pending attachment cannot produce a broken local copy
+00:46 +182: loading /home/albert/busystack/busymark/test/src/nextcloud_notes_ui_test.dart
+00:50 +182: /home/albert/busystack/busymark/test/src/nextcloud_notes_ui_test.dart: Nextcloud settings route selects its dedicated page
+00:52 +183: /home/albert/busystack/busymark/test/src/nextcloud_notes_ui_test.dart: remote editor tabs retain note titles through metadata rename
+00:56 +184: /home/albert/busystack/busymark/test/src/nextcloud_notes_ui_test.dart: cached note list searches content and excludes clean deletion tombstones
+00:57 +185: /home/albert/busystack/busymark/test/src/nextcloud_notes_ui_test.dart: favorites and ancestor category filtering operate on cached notes
+00:58 +186: /home/albert/busystack/busymark/test/src/nextcloud_notes_ui_test.dart: moving the last selected category note clears its filter
+00:58 +187: /home/albert/busystack/busymark/test/src/nextcloud_notes_ui_test.dart: the final category can disappear without hiding uncategorized notes
+00:58 +188: /home/albert/busystack/busymark/test/src/nextcloud_notes_ui_test.dart: uncertain attachment controls remain available with fetched remote state
+00:59 +189: /home/albert/busystack/busymark/test/src/nextcloud_notes_ui_test.dart: read-only metadata stays read-only while favorite is writable and export is explicit
+00:59 +190: /home/albert/busystack/busymark/test/src/nextcloud_notes_ui_test.dart: attachment deletion warns about links and cancellation retains the file
+01:00 +191: /home/albert/busystack/busymark/test/src/nextcloud_notes_ui_test.dart: remote deletion offers explicit discard with a second confirmation
+01:04 +192: /home/albert/busystack/busymark/test/src/nextcloud_notes_ui_test.dart: merge requires explicit choices for divergent scalar metadata
+01:04 +193: /home/albert/busystack/busymark/test/src/nextcloud_notes_ui_test.dart: read-only favorite conflict offers a safe merge
+01:05 +194: /home/albert/busystack/busymark/test/src/nextcloud_notes_ui_test.dart: uncertain creation lets the user select a candidate
+01:05 +195: /home/albert/busystack/busymark/test/src/nextcloud_notes_ui_test.dart: selecting and confirming candidate binds draft and retains newer edits
+01:11 +196: /home/albert/busystack/busymark/test/src/nextcloud_notes_ui_test.dart: forbidden pending changes offer recovery without overwrite
+01:11 +197: /home/albert/busystack/busymark/test/src/nextcloud_notes_ui_test.dart: unavailable pending changes offer recovery without overwrite
+01:12 +198: loading /home/albert/busystack/busymark/test/src/nextcloud_secret_store_test.dart
+01:12 +198: /home/albert/busystack/busymark/test/src/nextcloud_secret_store_test.dart: reads exact app password in dedicated stable account namespace
+01:12 +199: /home/albert/busystack/busymark/test/src/nextcloud_secret_store_test.dart: writes and deletes only the selected account secret
+01:12 +200: /home/albert/busystack/busymark/test/src/nextcloud_secret_store_test.dart: rejects app passwords that cannot be stored as an exact C string
+01:12 +201: /home/albert/busystack/busymark/test/src/nextcloud_secret_store_test.dart: rejects caller-controlled keys and non-random UUIDs before native calls
+01:12 +202: /home/albert/busystack/busymark/test/src/nextcloud_secret_store_test.dart: unavailable keyring fails safely without plaintext fallback
+01:13 +203: loading /home/albert/busystack/busymark/test/src/nextcloud_workspace_test.dart
+01:15 +203: /home/albert/busystack/busymark/test/src/nextcloud_workspace_test.dart: unsaved draft edits during confirmation require another review
+01:17 +204: /home/albert/busystack/busymark/test/src/nextcloud_workspace_test.dart: an unsaved independently opened candidate blocks consolidation without orphaning its tab
+01:17 +205: /home/albert/busystack/busymark/test/src/nextcloud_workspace_test.dart: Save, Save All, autosave and shutdown durably retain offline notes
+01:17 +206: /home/albert/busystack/busymark/test/src/nextcloud_workspace_test.dart: immediate persistence cannot deadlock a remote save
+01:17 +207: /home/albert/busystack/busymark/test/src/nextcloud_workspace_test.dart: unsaved editor base survives refresh (in flight: false)
+01:17 +208: /home/albert/busystack/busymark/test/src/nextcloud_workspace_test.dart: unsaved editor base survives refresh (in flight: true)
+01:17 +209: /home/albert/busystack/busymark/test/src/nextcloud_workspace_test.dart: removed active note activates remaining tab (explicit: false)
+01:18 +210: /home/albert/busystack/busymark/test/src/nextcloud_workspace_test.dart: removed active note activates remaining tab (explicit: true)
+01:18 +211: /home/albert/busystack/busymark/test/src/nextcloud_workspace_test.dart: remote session restores content and pending sync from SQLite after restart
+01:18 +212: /home/albert/busystack/busymark/test/src/nextcloud_workspace_test.dart: remote Save As keeps account, buffer identity and pending operation
+01:18 +213: /home/albert/busystack/busymark/test/src/nextcloud_workspace_test.dart: closing the final remote tab leaves its Notes workspace and outbox
+01:18 +214: /home/albert/busystack/busymark/test/src/nextcloud_workspace_test.dart: remote history restore is a durable new local edit
+01:18 +215: /home/albert/busystack/busymark/test/src/nextcloud_workspace_test.dart: removing an open remote account clears its session
+01:18 +216: All tests passed!

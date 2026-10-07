@@ -1,0 +1,28 @@
+--- a/linux/runner/web_render_host.cc
++++ b/linux/runner/web_render_host.cc
+@@ -486,7 +486,13 @@
+   self->active_cancellable = g_cancellable_new();
+   g_autoptr(GVariant) arguments =
+       javascript_arguments(request->operation, request->arguments_json);
++  // WebKit can lose an async function's result when its pending Promise is
++  // collected. Keep the complete render task reachable until it settles,
++  // including harness readiness and font/layout waits during HTML exports.
+   constexpr char kBody[] =
++      "const pending = window.busymarkPendingTasks ||"
++      "(window.busymarkPendingTasks = new Set());"
++      "const task = (async () => {"
+       "if (typeof window.busymarkRender !== 'function') {"
+       "await new Promise((resolve, reject) => {"
+       "const timer = window.setTimeout(() => reject(new Error("
+@@ -498,7 +504,10 @@
+       "}"
+       "const request = JSON.parse(requestJson);"
+       "request.operation = operation;"
+-      "return JSON.stringify(await window.busymarkRender(request));";
++      "return JSON.stringify(await window.busymarkRender(request));"
++      "})();"
++      "pending.add(task);"
++      "try { return await task; } finally { pending.delete(task); }";
+   webkit_web_view_call_async_javascript_function(
+       self->web_view, kBody, -1, arguments, nullptr, kHarnessUri,
+       self->active_cancellable, javascript_finished_cb, request);

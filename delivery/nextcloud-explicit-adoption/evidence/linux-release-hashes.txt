@@ -1,0 +1,3 @@
+ddd5b6fc361e697cab18f195b6afd47f4bae64ff19dfdd49a6495a341528f32b  build/linux/x64/release/bundle/busymark
+9e0ccfd3e1f8164c5d218dd0b5bfbbf8b8b1c07bbf86b5295dd5a9c2f7b5815d  build/linux/x64/release/bundle/lib/libapp.so
+6da9cfe58839eab6a70aad4f15cdc824dab9418f7f22d0deb02b5f1f50ff8118  delivery/nextcloud-explicit-adoption/artifacts/busymark-linux-release.tar.gz

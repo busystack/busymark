@@ -1,0 +1,35 @@
+00:00 +0: loading /home/albert/busystack/busymark/test/src/nextcloud_workspace_test.dart
+00:00 +0: /home/albert/busystack/busymark/test/src/nextcloud_workspace_test.dart: unsaved draft edits during confirmation require another review
+00:01 +1: /home/albert/busystack/busymark/test/src/nextcloud_workspace_test.dart: an unsaved independently opened candidate blocks consolidation without orphaning its tab
+00:02 +2: /home/albert/busystack/busymark/test/src/nextcloud_workspace_test.dart: Save, Save All, autosave and shutdown durably retain offline notes
+00:02 +3: /home/albert/busystack/busymark/test/src/nextcloud_workspace_test.dart: immediate persistence cannot deadlock a remote save
+00:02 +4: /home/albert/busystack/busymark/test/src/nextcloud_workspace_test.dart: unsaved editor base survives refresh (in flight: false)
+00:02 +5: /home/albert/busystack/busymark/test/src/nextcloud_workspace_test.dart: unsaved editor base survives refresh (in flight: true)
+00:02 +6: /home/albert/busystack/busymark/test/src/nextcloud_workspace_test.dart: removed active note activates remaining tab (explicit: false)
+00:02 +7: /home/albert/busystack/busymark/test/src/nextcloud_workspace_test.dart: removed active note activates remaining tab (explicit: true)
+00:02 +8: /home/albert/busystack/busymark/test/src/nextcloud_workspace_test.dart: remote session restores content and pending sync from SQLite after restart
+00:03 +9: /home/albert/busystack/busymark/test/src/nextcloud_workspace_test.dart: remote Save As keeps account, buffer identity and pending operation
+00:03 +10: /home/albert/busystack/busymark/test/src/nextcloud_workspace_test.dart: closing the final remote tab leaves its Notes workspace and outbox
+00:03 +11: /home/albert/busystack/busymark/test/src/nextcloud_workspace_test.dart: remote history restore is a durable new local edit
+00:03 +12: /home/albert/busystack/busymark/test/src/nextcloud_workspace_test.dart: removing an open remote account clears its session
+00:03 +13: loading /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_creation_policy_test.dart
+00:05 +13: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_creation_policy_test.dart: exact discovery across refresh reconnect and restart cannot bind or mutate draft
+00:06 +14: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_creation_policy_test.dart: sanitized discovery across refresh reconnect and restart cannot bind or mutate draft
+00:06 +15: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_creation_policy_test.dart: multiple discovery across refresh reconnect and restart cannot bind or mutate draft
+00:06 +16: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_creation_policy_test.dart: none discovery across refresh reconnect and restart cannot bind or mutate draft
+00:07 +17: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_creation_policy_test.dart: empty discovery across refresh reconnect and restart cannot bind or mutate draft
+00:07 +18: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_creation_policy_test.dart: other actor discovery across refresh reconnect and restart cannot bind or mutate draft
+00:07 +19: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_creation_policy_test.dart: confirmation rejects content candidate and retains unresolved work
+00:07 +20: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_creation_policy_test.dart: confirmation rejects readonly candidate and retains unresolved work
+00:07 +21: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_creation_policy_test.dart: confirmation rejects error candidate and retains unresolved work
+00:07 +22: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_creation_policy_test.dart: confirmation rejects deleted candidate and retains unresolved work
+00:08 +23: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_creation_policy_test.dart: confirmation rejects unavailable candidate and retains unresolved work
+00:08 +24: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_creation_policy_test.dart: confirmation revalidates local edit during authenticated GET
+00:08 +25: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_creation_policy_test.dart: confirmation revalidates account removal during authenticated GET
+00:08 +26: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_creation_policy_test.dart: confirmation revalidates repeat confirmation during authenticated GET
+00:08 +27: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_creation_policy_test.dart: binding protects downloaded candidate with durable edit
+00:08 +28: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_creation_policy_test.dart: binding protects downloaded candidate with pending attachment
+00:08 +29: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_creation_policy_test.dart: binding protects downloaded candidate with open editor
+00:08 +30: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_creation_policy_test.dart: failed adoption transaction rolls back binding and downloaded identity
+00:09 +31: /home/albert/busystack/busymark/test/src/nextcloud_notes/notes_creation_policy_test.dart: separate-note decision is durable and repeated confirmation makes one replacement
+00:09 +32: All tests passed!

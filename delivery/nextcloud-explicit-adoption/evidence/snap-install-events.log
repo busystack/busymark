@@ -1,0 +1,6 @@
+Oct 07 11:02:02 busymark-acceptance snapd[5306]: cache.go:320: removed 0 entries/    0 from downloads cache
+Oct 07 11:02:56 busymark-acceptance snapd[5306]: cache.go:320: removed 0 entries/    0 from downloads cache
+Oct 07 11:04:25 busymark-acceptance snapd[5306]: spec.go:312: renaming mount entry for directory "/snap/busymark/x1/gpu-2404" to "/snap/busymark/x1/gpu-2404-2" to avoid a clash
+Oct 07 11:04:26 busymark-acceptance snapd[5306]: backend.go:285: reloading profiles of snap-confine provided by the system snap
+Oct 07 11:05:29 busymark-acceptance snapd[5306]: backend.go:285: reloading profiles of snap-confine provided by the system snap
+Oct 07 11:05:29 busymark-acceptance snapd[5306]: spec.go:312: renaming mount entry for directory "/snap/busymark/x1/gpu-2404" to "/snap/busymark/x1/gpu-2404-2" to avoid a clash

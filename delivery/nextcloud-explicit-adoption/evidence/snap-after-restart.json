@@ -1,0 +1,83 @@
+{
+  "schema": 2,
+  "integrity": "ok",
+  "accountCount": 1,
+  "notes": [
+    {
+      "localId": "7ae4626b-cc28-4c7b-be63-4d0a16fcc291",
+      "accountId": "ff21736a-1572-4b11-9006-658c35f00037",
+      "serverId": 184,
+      "content": "BusyMark GUI submitted\n\n[attachment.bin](.attachments.184/attachment.bin)\nNewer local GUI edit",
+      "title": "New note (2)",
+      "category": "",
+      "favorite": false,
+      "readonly": false,
+      "error": false,
+      "modified": 1791373094,
+      "etag": "fc8c55106bb2b911e42e153c58ab29eb",
+      "base": {
+        "id": 184,
+        "etag": "fc8c55106bb2b911e42e153c58ab29eb",
+        "content": "BusyMark GUI submitted\n\n[attachment.bin](.attachments.184/attachment.bin)\nNewer local GUI edit",
+        "title": "New note (2)",
+        "category": "",
+        "favorite": false,
+        "readonly": false,
+        "modified": 1791373094,
+        "error": false
+      },
+      "remote": null,
+      "creationAttempt": null,
+      "revision": 1,
+      "ackRevision": 1,
+      "editorRevision": 0,
+      "editorContentDigest": null,
+      "syncState": "synced",
+      "errorMessage": null
+    },
+    {
+      "localId": "c633bbbb-3c0b-46d1-87e6-23122585d4da",
+      "accountId": "ff21736a-1572-4b11-9006-658c35f00037",
+      "serverId": 223,
+      "content": "BusyMark GUI submitted Snap\n\n[attachment.bin](.attachments.223/attachment.bin)\n\nNewer local Snap edit",
+      "title": "New note (3)",
+      "category": "",
+      "favorite": false,
+      "readonly": false,
+      "error": false,
+      "modified": 1791375526,
+      "etag": "d8cdb2b81ad3fa1ff05017c1b6576a22",
+      "base": {
+        "id": 223,
+        "etag": "d8cdb2b81ad3fa1ff05017c1b6576a22",
+        "content": "BusyMark GUI submitted Snap\n\n[attachment.bin](.attachments.223/attachment.bin)\n\nNewer local Snap edit",
+        "title": "New note (3)",
+        "category": "",
+        "favorite": false,
+        "readonly": false,
+        "modified": 1791375526,
+        "error": false
+      },
+      "remote": null,
+      "creationAttempt": null,
+      "revision": 67,
+      "ackRevision": 67,
+      "editorRevision": 66,
+      "editorContentDigest": "11546c64358c13cb52bf1ce8bfc63be9bc7321bf857b9e43267af9c54a96e47b",
+      "syncState": "synced",
+      "errorMessage": null
+    }
+  ],
+  "attachments": [
+    {
+      "id": "2875b68e-250c-41f9-a951-b4b85a792096",
+      "noteId": "c633bbbb-3c0b-46d1-87e6-23122585d4da",
+      "filename": "attachment.bin",
+      "reference": "busymark-attachment:ff21736a-1572-4b11-9006-658c35f00037:c633bbbb-3c0b-46d1-87e6-23122585d4da:2875b68e-250c-41f9-a951-b4b85a792096",
+      "remotePath": ".attachments.223/attachment.bin",
+      "state": "uploaded",
+      "bytesSha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+      "byteCount": 1024
+    }
+  ]
+}
