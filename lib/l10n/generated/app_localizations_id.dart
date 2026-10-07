@@ -4746,4 +4746,29 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get nextcloudChooseConflictingAttributes =>
       'Pilih setiap atribut yang berkonflik.';
+
+  @override
+  String get nextcloudUseServerNote => 'Gunakan catatan server ini';
+
+  @override
+  String get nextcloudUseServerNoteExplanation =>
+      'Menautkan draf ini ke catatan server yang dipilih, lalu menyinkronkan perubahan lokal yang dipertahankan. Permintaan yang cocok tidak memastikan siapa yang membuat catatan.';
+
+  @override
+  String get nextcloudExactCandidate =>
+      'Sama persis dengan permintaan; identitas belum dikonfirmasi.';
+
+  @override
+  String get nextcloudPossibleCandidate =>
+      'Kemungkinan cocok setelah permintaan disanitasi; identitas belum dikonfirmasi.';
+
+  @override
+  String get nextcloudSelectCandidate => 'Pilih catatan server untuk ditinjau';
+
+  @override
+  String get nextcloudCreateSeparate => 'Buat catatan terpisah';
+
+  @override
+  String get nextcloudCreateSeparateWarning =>
+      'Permintaan pertama mungkin sudah membuat catatan server. Ini membuat catatan terpisah dengan pekerjaan lokal yang dipertahankan. Tidak ada dugaan duplikat yang akan dihapus.';
 }

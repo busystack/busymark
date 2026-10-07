@@ -4945,5 +4945,12 @@
   "nextcloudAttachmentReference": "Bijlageverwijzing op de server",
   "nextcloudAddAttachment": "Bijlage toevoegen…",
   "nextcloudDeleteAttachmentWarning": "Als u deze bijlage verwijdert, zijn de links ernaar in de notitie niet meer beschikbaar. Bewaarde gegevens kunnen via de lokale geschiedenis worden hersteld.",
-  "nextcloudChooseConflictingAttributes": "Kies voor elk conflicterend kenmerk een waarde."
+  "nextcloudChooseConflictingAttributes": "Kies voor elk conflicterend kenmerk een waarde.",
+  "nextcloudUseServerNote": "Deze servernotitie gebruiken",
+  "nextcloudUseServerNoteExplanation": "Koppelt dit concept aan de geselecteerde servernotitie en synchroniseert daarna de behouden lokale wijzigingen. Een overeenkomend verzoek bevestigt niet wie de notitie heeft gemaakt.",
+  "nextcloudExactCandidate": "Exacte overeenkomst met het verzoek; identiteit onbevestigd.",
+  "nextcloudPossibleCandidate": "Mogelijke overeenkomst na normalisatie; identiteit onbevestigd.",
+  "nextcloudSelectCandidate": "Selecteer een servernotitie om te bekijken",
+  "nextcloudCreateSeparate": "Een afzonderlijke notitie maken",
+  "nextcloudCreateSeparateWarning": "Het eerste verzoek heeft mogelijk al een servernotitie gemaakt. Dit maakt een afzonderlijke notitie met uw behouden lokale werk. Vermoedelijke duplicaten worden niet verwijderd."
 }

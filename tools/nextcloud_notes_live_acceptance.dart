@@ -17,6 +17,12 @@ class _Connection extends http.BaseClient {
   final http.Client _client;
   bool offline = false;
   bool loseNextCreateResponse = false;
+  bool discardNextCreate = false;
+  Map<String, dynamic>? discardedCreation;
+  int attachmentUploads = 0;
+  int noteUpdates = 0;
+  final noteUpdatesById = <int, int>{};
+  final attachmentUploadsById = <int, int>{};
   int noteCreates = 0;
   int chunkRequests = 0;
   @override
@@ -26,6 +32,24 @@ class _Connection extends http.BaseClient {
     final creation =
         request.method == 'POST' && request.url.path.endsWith('/v1/notes');
     if (creation) noteCreates++;
+    if (request.method == 'POST' && request.url.path.contains('/attachment/')) {
+      attachmentUploads++;
+      final id = int.parse(request.url.pathSegments.last);
+      attachmentUploadsById.update(id, (v) => v + 1, ifAbsent: () => 1);
+    }
+    if (request.method == 'PUT' && request.url.path.contains('/notes/')) {
+      noteUpdates++;
+      final id = int.parse(request.url.pathSegments.last);
+      noteUpdatesById.update(id, (v) => v + 1, ifAbsent: () => 1);
+    }
+    if (creation && discardNextCreate) {
+      discardNextCreate = false;
+      discardedCreation =
+          jsonDecode((request as http.Request).body) as Map<String, dynamic>;
+      throw http.ClientException(
+        'Intentional nondelivery of creation request.',
+      );
+    }
     final response = await _client.send(request);
     if (creation && loseNextCreateResponse) {
       loseNextCreateResponse = false;
@@ -334,6 +358,35 @@ Future<void> main(List<String> arguments) async {
       uncertain.localId,
       content: '${pending.content}\nNewer local edit',
     );
+    for (var i = 0; i < 3; i++) {
+      await repository.synchronize(account.id);
+    }
+    final unresolved = repository.noteById(uncertain.localId)!;
+    _require(
+      unresolved.serverId == null &&
+          unresolved.syncState == NoteSyncState.creationUncertain,
+      'Discovery adopted the uncertain draft without confirmation.',
+    );
+    final candidate = repository
+        .uncertainCreationCandidates(uncertain.localId)
+        .single
+        .base!;
+    createdIds.add(candidate.id);
+    final unchangedCandidate = await api(account).get(candidate.id);
+    _require(
+      jsonEncode(unchangedCandidate.toJson()) ==
+              jsonEncode(candidate.toJson()) &&
+          (connection.attachmentUploadsById[candidate.id] ?? 0) == 0 &&
+          (connection.noteUpdatesById[candidate.id] ?? 0) == 0 &&
+          connection.noteCreates == beforeCreates + 1,
+      'Discovery mutated the candidate or published an attachment.',
+    );
+    await repository.resolveConflict(
+      uncertain.localId,
+      NoteConflictResolution.useServerNote,
+      creationCandidateServerId: candidate.id,
+      creationReview: repository.creationReview(uncertain.localId, candidate),
+    );
     await repository.synchronize(account.id);
     final adopted = repository.noteById(uncertain.localId)!;
     _require(
@@ -356,8 +409,76 @@ Future<void> main(List<String> arguments) async {
           adopted.category != pending.category,
       'Reconciliation failed to adopt sanitized title/category and published content.',
     );
-    checks['uncertainCreateStagedAttachmentSanitizationRestartNoDuplicate'] =
-        true;
+    final adoptedAttachment = (await repository.attachments(
+      uncertain.localId,
+    )).single;
+    final received = await (await api(account).fetchAttachment(
+      adopted.serverId!,
+      adoptedAttachment.remotePath!,
+      destination: File('${directory.path}/adopted-attachment'),
+    )).readAsBytes();
+    final stagedBytes = await repository.store.attachmentBytes(
+      adoptedAttachment.id,
+    );
+    _require(
+      base64Encode(received) == base64Encode(stagedBytes!),
+      'Adopted attachment bytes differ.',
+    );
+    await repository.dispose();
+    repository = await reopen();
+    final durableBinding = repository.noteById(uncertain.localId)!;
+    _require(
+      durableBinding.serverId == adopted.serverId &&
+          !durableBinding.hasPendingChanges &&
+          durableBinding.creationAttempt == null,
+      'Adopted binding did not survive restart.',
+    );
+    checks['uncertainCreateExplicitAdoptionAttachmentRestart'] = true;
+
+    connection.discardNextCreate = true;
+    final counterexample = await repository.create(
+      account.id,
+      title: 'Independent identical candidate',
+      content: '# Independent identical content',
+    );
+    await repository.synchronize(account.id);
+    final wire = connection.discardedCreation!;
+    final actor = api(account);
+    final independent = await actor.create(
+      NextcloudNote(
+        localId: 'independent',
+        accountId: account.id,
+        title: wire['title'] as String,
+        content: wire['content'] as String,
+        category: wire['category'] as String,
+        favorite: wire['favorite'] as bool,
+        creationAttempt: NotesCreationAttempt(
+          id: 'actor',
+          revision: 1,
+          localContent: wire['content'] as String,
+          wireBody: jsonEncode(wire),
+          knownServerIds: {},
+        ),
+      ),
+    );
+    createdIds.add(independent.id);
+    final beforeIndependentUpdates =
+        connection.noteUpdatesById[independent.id] ?? 0;
+    for (var i = 0; i < 3; i++) {
+      await repository.synchronize(account.id);
+    }
+    _require(
+      repository.noteById(counterexample.localId)!.serverId == null &&
+          repository
+              .uncertainCreationCandidates(counterexample.localId)
+              .any((n) => n.serverId == independent.id) &&
+          (connection.noteUpdatesById[independent.id] ?? 0) ==
+              beforeIndependentUpdates &&
+          jsonEncode((await actor.get(independent.id)).toJson()) ==
+              jsonEncode(independent.toJson()),
+      'An independently created identical note was adopted or mutated.',
+    );
+    checks['independentIdenticalCandidateRequiresConfirmation'] = true;
 
     final chunked = await api(account).list(chunkSize: 1);
     _require(

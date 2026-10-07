@@ -2839,5 +2839,12 @@
   "nextcloudAttachmentReference": "Attachment reference on server",
   "nextcloudAddAttachment": "Add attachment…",
   "nextcloudDeleteAttachmentWarning": "Deleting this attachment makes its links in the note unavailable. Retained bytes can be recovered through local history.",
-  "nextcloudChooseConflictingAttributes": "Choose each conflicting attribute."
+  "nextcloudChooseConflictingAttributes": "Choose each conflicting attribute.",
+  "nextcloudUseServerNote": "Use this server note",
+  "nextcloudUseServerNoteExplanation": "Links this draft to the selected server note, then synchronizes retained local changes. A matching request does not confirm who created the note.",
+  "nextcloudExactCandidate": "Exact request match; identity is unconfirmed.",
+  "nextcloudPossibleCandidate": "Possible sanitized request match; identity is unconfirmed.",
+  "nextcloudSelectCandidate": "Select a server note to review",
+  "nextcloudCreateSeparate": "Create a separate note",
+  "nextcloudCreateSeparateWarning": "The first request may already have created a server note. This creates a separate note with your retained local work. No suspected duplicate will be deleted."
 }

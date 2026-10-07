@@ -86,7 +86,7 @@ void main() {
   );
 
   test(
-    'uncertain creation adopts wire revision and preserves later edits',
+    'uncertain creation discovery preserves later edits until deliberate adoption',
     () async {
       Map<String, dynamic>? remote;
       var posts = 0;
@@ -109,7 +109,9 @@ void main() {
           }
           return http.Response(
             jsonEncode(
-              request.method == 'GET' ? [if (remote != null) remote] : remote,
+              request.method == 'GET' && request.url.path.endsWith('/notes')
+                  ? [if (remote != null) remote]
+                  : remote,
             ),
             200,
           );
@@ -121,6 +123,25 @@ void main() {
       );
       await repository.synchronize(local.accountId);
       await repository.save(local.localId, content: 'newer local content');
+      for (var i = 0; i < 3; i++) {
+        await repository.synchronize(local.accountId);
+      }
+      final unresolved = repository.noteById(local.localId)!;
+      expect(unresolved.serverId, isNull);
+      expect(unresolved.syncState, NoteSyncState.creationUncertain);
+      expect(unresolved.creationAttempt!.candidateServerIds, {1});
+      expect(unresolved.ackRevision, 0);
+      expect(posts, 1);
+      expect(puts, 0);
+      await repository.resolveConflict(
+        local.localId,
+        NoteConflictResolution.useServerNote,
+        creationCandidateServerId: 1,
+        creationReview: repository.creationReview(
+          local.localId,
+          repository.noteById(local.localId)!.remote!,
+        ),
+      );
       await repository.synchronize(local.accountId);
       expect(
         repository.noteById(local.localId)!.content,
@@ -203,7 +224,7 @@ void main() {
     'ambiguous',
   ]) {
     test(
-      'lost create response reconciles $scenario without another POST',
+      'lost create response requires deliberate adoption for $scenario',
       () async {
         late NotesRepository repository;
         Map<String, dynamic>? remote;
@@ -212,11 +233,15 @@ void main() {
         final client = MockClient((request) async {
           if (request.method == 'GET') {
             return http.Response(
-              jsonEncode([
-                if (remote != null) remote,
-                if (remote != null && scenario == 'ambiguous')
-                  {...remote!, 'id': 2},
-              ]),
+              jsonEncode(
+                request.url.path.endsWith('/notes')
+                    ? [
+                        if (remote != null) remote,
+                        if (remote != null && scenario == 'ambiguous')
+                          {...remote!, 'id': 2},
+                      ]
+                    : remote,
+              ),
               200,
             );
           }
@@ -299,9 +324,7 @@ void main() {
           repository = await open(client, addAccount: false);
           reconciled = repository.noteById(note.localId)!;
         }
-        final requiresAdoption =
-            scenario.contains('sanitized') || scenario == 'ambiguous';
-        if (requiresAdoption) {
+        {
           expect(reconciled.serverId, isNull);
           expect(reconciled.syncState, NoteSyncState.creationUncertain);
           expect(
@@ -311,8 +334,15 @@ void main() {
           expect(reconciled.remote?.id, scenario == 'ambiguous' ? isNull : 1);
           await repository.resolveConflict(
             note.localId,
-            NoteConflictResolution.takeRemote,
-            creationCandidateServerId: scenario == 'ambiguous' ? 1 : null,
+            NoteConflictResolution.useServerNote,
+            creationCandidateServerId: 1,
+            creationReview: repository.creationReview(
+              note.localId,
+              repository
+                  .uncertainCreationCandidates(note.localId)
+                  .firstWhere((n) => n.serverId == 1)
+                  .base!,
+            ),
           );
           await repository.synchronize(note.accountId);
           reconciled = repository.noteById(note.localId)!;
@@ -1989,7 +2019,9 @@ void main() {
       await store.commit(notes: [original, twin]);
       await store.close();
       final repository = await open(
-        MockClient((_) async => throw StateError('Adoption needs no HTTP')),
+        MockClient(
+          (_) async => http.Response(jsonEncode(remote.toJson()), 200),
+        ),
         addAccount: false,
       );
       await repository.save(

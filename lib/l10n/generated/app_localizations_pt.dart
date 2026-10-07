@@ -4808,6 +4808,32 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get nextcloudChooseConflictingAttributes =>
       'Escolha cada atributo em conflito.';
+
+  @override
+  String get nextcloudUseServerNote => 'Usar esta nota do servidor';
+
+  @override
+  String get nextcloudUseServerNoteExplanation =>
+      'Associa este rascunho à nota selecionada no servidor e depois sincroniza as alterações locais preservadas. Um pedido correspondente não confirma quem criou a nota.';
+
+  @override
+  String get nextcloudExactCandidate =>
+      'Correspondência exata com o pedido; identidade não confirmada.';
+
+  @override
+  String get nextcloudPossibleCandidate =>
+      'Possível correspondência após normalização; identidade não confirmada.';
+
+  @override
+  String get nextcloudSelectCandidate =>
+      'Selecionar uma nota do servidor para rever';
+
+  @override
+  String get nextcloudCreateSeparate => 'Criar uma nota separada';
+
+  @override
+  String get nextcloudCreateSeparateWarning =>
+      'O primeiro pedido pode já ter criado uma nota no servidor. Isto cria uma nota separada com o trabalho local preservado. Nenhum possível duplicado será eliminado.';
 }
 
 /// The translations for Portuguese, as used in Brazil (`pt_BR`).
@@ -9610,4 +9636,30 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   @override
   String get nextcloudChooseConflictingAttributes =>
       'Escolha cada atributo em conflito.';
+
+  @override
+  String get nextcloudUseServerNote => 'Usar esta nota do servidor';
+
+  @override
+  String get nextcloudUseServerNoteExplanation =>
+      'Vincula este rascunho à nota selecionada no servidor e depois sincroniza as alterações locais preservadas. Uma solicitação correspondente não confirma quem criou a nota.';
+
+  @override
+  String get nextcloudExactCandidate =>
+      'Correspondência exata com a solicitação; identidade não confirmada.';
+
+  @override
+  String get nextcloudPossibleCandidate =>
+      'Possível correspondência após normalização; identidade não confirmada.';
+
+  @override
+  String get nextcloudSelectCandidate =>
+      'Selecionar uma nota do servidor para revisar';
+
+  @override
+  String get nextcloudCreateSeparate => 'Criar uma nota separada';
+
+  @override
+  String get nextcloudCreateSeparateWarning =>
+      'A primeira solicitação pode já ter criado uma nota no servidor. Isso cria uma nota separada com o trabalho local preservado. Nenhuma possível duplicata será excluída.';
 }

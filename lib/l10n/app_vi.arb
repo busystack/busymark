@@ -4945,5 +4945,12 @@
   "nextcloudAttachmentReference": "Tham chiếu tệp đính kèm trên máy chủ",
   "nextcloudAddAttachment": "Thêm tệp đính kèm…",
   "nextcloudDeleteAttachmentWarning": "Xóa tệp đính kèm này sẽ khiến các liên kết đến tệp trong ghi chú không còn khả dụng. Dữ liệu được giữ lại có thể khôi phục qua lịch sử cục bộ.",
-  "nextcloudChooseConflictingAttributes": "Chọn giá trị cho từng thuộc tính xung đột."
+  "nextcloudChooseConflictingAttributes": "Chọn giá trị cho từng thuộc tính xung đột.",
+  "nextcloudUseServerNote": "Dùng ghi chú trên máy chủ này",
+  "nextcloudUseServerNoteExplanation": "Liên kết bản nháp này với ghi chú đã chọn trên máy chủ, rồi đồng bộ các thay đổi cục bộ được giữ lại. Yêu cầu trùng khớp không xác nhận ai đã tạo ghi chú.",
+  "nextcloudExactCandidate": "Khớp chính xác với yêu cầu; chưa xác nhận danh tính.",
+  "nextcloudPossibleCandidate": "Có thể khớp sau khi chuẩn hóa yêu cầu; chưa xác nhận danh tính.",
+  "nextcloudSelectCandidate": "Chọn ghi chú trên máy chủ để xem xét",
+  "nextcloudCreateSeparate": "Tạo ghi chú riêng",
+  "nextcloudCreateSeparateWarning": "Yêu cầu đầu tiên có thể đã tạo ghi chú trên máy chủ. Thao tác này tạo ghi chú riêng với công việc cục bộ được giữ lại. Không xóa ghi chú nào bị nghi trùng lặp."
 }

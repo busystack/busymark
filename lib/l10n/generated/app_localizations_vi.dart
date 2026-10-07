@@ -4738,4 +4738,29 @@ class AppLocalizationsVi extends AppLocalizations {
   @override
   String get nextcloudChooseConflictingAttributes =>
       'Chọn giá trị cho từng thuộc tính xung đột.';
+
+  @override
+  String get nextcloudUseServerNote => 'Dùng ghi chú trên máy chủ này';
+
+  @override
+  String get nextcloudUseServerNoteExplanation =>
+      'Liên kết bản nháp này với ghi chú đã chọn trên máy chủ, rồi đồng bộ các thay đổi cục bộ được giữ lại. Yêu cầu trùng khớp không xác nhận ai đã tạo ghi chú.';
+
+  @override
+  String get nextcloudExactCandidate =>
+      'Khớp chính xác với yêu cầu; chưa xác nhận danh tính.';
+
+  @override
+  String get nextcloudPossibleCandidate =>
+      'Có thể khớp sau khi chuẩn hóa yêu cầu; chưa xác nhận danh tính.';
+
+  @override
+  String get nextcloudSelectCandidate => 'Chọn ghi chú trên máy chủ để xem xét';
+
+  @override
+  String get nextcloudCreateSeparate => 'Tạo ghi chú riêng';
+
+  @override
+  String get nextcloudCreateSeparateWarning =>
+      'Yêu cầu đầu tiên có thể đã tạo ghi chú trên máy chủ. Thao tác này tạo ghi chú riêng với công việc cục bộ được giữ lại. Không xóa ghi chú nào bị nghi trùng lặp.';
 }

@@ -35,6 +35,39 @@ class NotesRepository {
   final _accountErrors = <String, NotesException>{};
   final _syncs = <String, Future<void>>{};
   final _removing = <String>{};
+  final _creationResolutions = <String>{};
+  final _bindingCandidates = <String>{};
+  final _creationBindingGuards = <bool Function(String, Set<String>)>{};
+
+  /// Every controller registers its open tabs, including unsaved candidate tabs.
+  void addCreationBindingGuard(bool Function(String, Set<String>) guard) =>
+      _creationBindingGuards.add(guard);
+  void removeCreationBindingGuard(bool Function(String, Set<String>) guard) =>
+      _creationBindingGuards.remove(guard);
+  bool isCreationCandidateBinding(String localId) =>
+      _bindingCandidates.contains(localId);
+
+  NotesCreationReview creationReview(String localId, NoteState candidate) {
+    final note = _require(localId);
+    final attempt = note.creationAttempt;
+    if (note.serverId != null ||
+        note.syncState != NoteSyncState.creationUncertain ||
+        attempt == null ||
+        !attempt.candidateServerIds.contains(candidate.id)) {
+      throw const NotesException(
+        NotesFailureCode.conflict,
+        'Refresh and review the uncertain creation again.',
+      );
+    }
+    return NotesCreationReview(
+      localId: localId,
+      accountId: note.accountId,
+      attemptId: attempt.id,
+      revision: note.revision,
+      candidate: candidate,
+    );
+  }
+
   final _uuid = const Uuid();
   Future<void> _mutations = Future.value();
   Future<void>? _initialization;
@@ -341,6 +374,16 @@ class NotesRepository {
                 'Nextcloud may have created this note. Refresh and resolve the uncertain result before creating another.',
               );
             } else {
+              // A definitive rejection establishes that this request created no note.
+              await _mutate(() async {
+                final current = _require(id);
+                if (current.creationAttempt?.id != sent.creationAttempt?.id) {
+                  return;
+                }
+                final rejected = current.copyWith(creationAttempt: null);
+                await store.saveNote(rejected);
+                _notes[id] = rejected;
+              });
               await _recordError(id, error);
             }
             continue;
@@ -365,6 +408,7 @@ class NotesRepository {
   }
 
   bool _isBlocked(NextcloudNote note) =>
+      (note.serverId == null && note.creationAttempt != null) ||
       note.error ||
       (note.readonly &&
           (note.base == null ||
@@ -388,6 +432,9 @@ class NotesRepository {
     NextcloudAccount account,
     NotesListResult list,
   ) => _mutate(() async {
+    if (_removing.contains(account.id) || !_accounts.containsKey(account.id)) {
+      return;
+    }
     final updated = <NextcloudNote>[];
     final existing = <int, NextcloudNote>{
       for (final n in _notes.values.where(
@@ -402,48 +449,29 @@ class NotesRepository {
               n.syncState == NoteSyncState.creationUncertain,
         )
         .toList();
-    final adoptedIds = <int>{};
     for (final note in uncertain) {
       final attempt = note.creationAttempt;
-      if (attempt == null) {
-        continue; // Older uncertain operations need user resolution.
-      }
-      final matches = list.notes.where(attempt.matches).toList();
-      final plausible = list.notes.where(attempt.plausiblyMatches).toList();
-      final candidate = matches.length == 1 ? matches.single : null;
-      final twin = candidate == null ? null : existing[candidate.id];
-      final uniqueAttempt =
-          candidate != null &&
-          uncertain
-                  .where(
-                    (n) =>
-                        n.creationAttempt?.plausiblyMatches(candidate) ?? false,
-                  )
-                  .length ==
-              1;
-      // Empty content plus a second-resolution timestamp is weak evidence.
-      // Likewise, never absorb another locally edited instance of a candidate.
-      if (uniqueAttempt && candidate.content.isNotEmpty && twin == null) {
-        updated.add(_adoptCreation(note, candidate));
-        adoptedIds.add(candidate.id);
-      } else {
-        updated.add(
-          note.copyWith(
-            remote: plausible.length == 1 ? plausible.single : null,
-            creationAttempt: attempt.withCandidateServerIds(
-              plausible.map((value) => value.id),
-            ),
-            errorMessage: plausible.isEmpty
-                ? note.errorMessage
-                : plausible.length == 1
-                ? 'A possible server note was found. Review and deliberately adopt it or create a separate note.'
-                : '${plausible.length} possible server notes were found. Select one deliberately or create a separate note.',
+      if (attempt == null) continue;
+      // Payload equality is correlation evidence, never proof of identity.
+      final plausible = list.notes.where(attempt.plausiblyMatches).toList()
+        ..sort(
+          (a, b) => (attempt.matches(b) ? 1 : 0).compareTo(
+            attempt.matches(a) ? 1 : 0,
           ),
         );
-      }
+      updated.add(
+        note.copyWith(
+          remote: plausible.length == 1 ? plausible.single : null,
+          creationAttempt: attempt.withCandidateServerIds(
+            plausible.map((n) => n.id),
+          ),
+          errorMessage: plausible.isEmpty
+              ? 'The creation outcome remains unknown. No matching note was found; this does not prove the request failed.'
+              : 'Possible server notes were found. Review and deliberately use one or create a separate note.',
+        ),
+      );
     }
     for (final remote in list.notes) {
-      if (adoptedIds.contains(remote.id)) continue;
       final current = existing[remote.id];
       if (current == null) {
         updated.add(_fromRemote(_uuid.v4(), account.id, remote));
@@ -561,6 +589,14 @@ class NotesRepository {
 
   Future<NextcloudNote> _markCreationSending(String id) => _mutate(() async {
     final current = _require(id);
+    if (current.serverId != null ||
+        current.creationAttempt != null ||
+        _isBlocked(current)) {
+      throw const NotesException(
+        NotesFailureCode.conflict,
+        'Resolve the previous creation attempt before creating another.',
+      );
+    }
     final attributes = await NotesApiClient.creationAttributes(current);
     final attempt = NotesCreationAttempt(
       id: _uuid.v4(),
@@ -590,13 +626,13 @@ class NotesRepository {
     final attempt = current.creationAttempt!;
     final wire = attempt.attributes;
     final latest = current.revision == attempt.revision;
-    final staged = current.content != wire['content'];
+    final staged = current.content != remote.content;
     final adopted = current.copyWith(
       serverId: remote.id,
       etag: remote.etag,
       base: remote,
       remote: null,
-      content: latest && !staged ? remote.content : current.content,
+      content: current.content,
       title: current.title == wire['title'] ? remote.title : current.title,
       category: current.category == wire['category']
           ? remote.category
@@ -639,6 +675,17 @@ class NotesRepository {
     NoteState remote,
   ) => _mutate(() async {
     final current = _require(sent.localId);
+    if (_removing.contains(current.accountId) ||
+        !_accounts.containsKey(current.accountId) ||
+        (sent.serverId == null &&
+            (current.serverId != null ||
+                current.creationAttempt?.id != sent.creationAttempt?.id)) ||
+        (sent.serverId != null && current.serverId != sent.serverId)) {
+      throw const NotesException(
+        NotesFailureCode.conflict,
+        'This response no longer belongs to the active request.',
+      );
+    }
     if (remote.error) {
       final unavailable = current.copyWith(
         serverId: remote.id,
@@ -761,8 +808,19 @@ class NotesRepository {
     String originalLocalId, {
     String? content,
     String? title,
+    bool creationDecision = false,
   }) async {
     final original = _require(originalLocalId);
+    final separateId = original.creationAttempt?.separateNoteLocalId;
+    if (creationDecision && separateId != null) return _require(separateId);
+    if (creationDecision &&
+        (original.serverId != null ||
+            original.syncState != NoteSyncState.creationUncertain)) {
+      throw const NotesException(
+        NotesFailureCode.conflict,
+        'Review the creation outcome again.',
+      );
+    }
     final source = content ?? original.content;
     final references = await scanNotesAttachmentReferences(source);
     final originals = await store.attachments(originalLocalId);
@@ -853,7 +911,32 @@ class NotesRepository {
       content: rewritten,
     );
     return _mutate(() async {
-      await store.createWithAttachments(recovered, copied.values.toList());
+      final current = _require(originalLocalId);
+      if (_removing.contains(original.accountId) ||
+          !_accounts.containsKey(original.accountId) ||
+          current.revision != original.revision ||
+          current.creationAttempt?.id != original.creationAttempt?.id ||
+          (creationDecision && current.serverId != null)) {
+        throw const NotesException(
+          NotesFailureCode.conflict,
+          'Local work or the account changed during recovery. Review again.',
+        );
+      }
+      final existingId = current.creationAttempt?.separateNoteLocalId;
+      if (creationDecision && existingId != null) return _require(existingId);
+      final decided = creationDecision && current.creationAttempt != null
+          ? current.copyWith(
+              creationAttempt: current.creationAttempt!.withSeparateNote(
+                localId,
+              ),
+            )
+          : null;
+      await store.createWithAttachments(
+        recovered,
+        copied.values.toList(),
+        additionalNotes: [if (decided != null) decided],
+      );
+      if (decided != null) _notes[originalLocalId] = decided;
       _notes[localId] = recovered;
       _notify();
       return recovered;
@@ -1021,6 +1104,7 @@ class NotesRepository {
     Map<NotesMergeAttribute, NotesMergeChoice> metadataChoices = const {},
     int? expectedRevision,
     int? creationCandidateServerId,
+    NotesCreationReview? creationReview,
   }) async {
     final original = _require(localId);
     if (expectedRevision != null && original.revision != expectedRevision) {
@@ -1030,93 +1114,38 @@ class NotesRepository {
       );
     }
     if (resolution == NoteConflictResolution.saveAsNew) {
-      await recoverAsNew(localId);
+      if (!_creationResolutions.add(localId)) {
+        throw const NotesException(
+          NotesFailureCode.conflict,
+          'A creation decision is already in progress.',
+        );
+      }
+      try {
+        await recoverAsNew(
+          localId,
+          creationDecision: original.serverId == null,
+        );
+      } finally {
+        _creationResolutions.remove(localId);
+      }
+      return;
+    }
+    if (resolution == NoteConflictResolution.useServerNote) {
+      if (creationReview == null ||
+          creationCandidateServerId != creationReview.candidate.id) {
+        throw const NotesException(
+          NotesFailureCode.conflict,
+          'Select and review a server note before confirming adoption.',
+        );
+      }
+      await _resolveCreation(original, creationReview);
       return;
     }
     if (original.serverId == null) {
-      NoteState? selectedRemote = original.remote;
-      if (creationCandidateServerId != null) {
-        if (!(original.creationAttempt?.candidateServerIds.contains(
-              creationCandidateServerId,
-            ) ??
-            false)) {
-          throw const NotesException(
-            NotesFailureCode.conflict,
-            'That note is not a current creation candidate. Refresh and review the possible matches again.',
-          );
-        }
-        selectedRemote = _notes.values
-            .where(
-              (candidate) =>
-                  candidate.accountId == original.accountId &&
-                  candidate.serverId == creationCandidateServerId,
-            )
-            .map((candidate) => candidate.base)
-            .whereType<NoteState>()
-            .firstOrNull;
-      }
-      if (resolution != NoteConflictResolution.takeRemote ||
-          selectedRemote == null) {
-        throw const NotesException(
-          NotesFailureCode.conflict,
-          'An uncertain creation must be deliberately adopted or recovered as a new note.',
-        );
-      }
-      await _mutate(() async {
-        if (_require(localId).revision != original.revision) {
-          throw const NotesException(
-            NotesFailureCode.conflict,
-            'New local edits appeared while resolving this note. Review them before adoption.',
-          );
-        }
-        final remote = selectedRemote!;
-        final duplicate = _notes.values
-            .where(
-              (n) =>
-                  n.accountId == original.accountId &&
-                  n.serverId == remote.id &&
-                  n.localId != original.localId,
-            )
-            .toList();
-        for (final twin in duplicate) {
-          final attachments = await store.attachments(twin.localId);
-          final pendingAttachments = attachments.any(
-            (attachment) => {
-              'pending',
-              'uploading',
-              'uncertain',
-              'uploaded',
-              'deletePending',
-            }.contains(attachment.state),
-          );
-          if (twin.hasPendingChanges || pendingAttachments) {
-            throw const NotesException(
-              NotesFailureCode.conflict,
-              'The downloaded instance of this note contains durable local changes or pending attachments. Preserve or resolve those changes before adopting it.',
-            );
-          }
-        }
-        // Adopt into the stable logical identity atomically, remove downloaded twin.
-        final adopted = original.creationAttempt != null
-            ? _adoptCreation(original, remote)
-            : _fromRemote(
-                original.localId,
-                original.accountId,
-                remote,
-                revision: original.revision,
-                previous: original,
-              );
-        await store.commit(
-          notes: [adopted],
-          removeNotes: duplicate.map((n) => n.localId).toList(),
-        );
-        for (final n in duplicate) {
-          _notes.remove(n.localId);
-        }
-        _notes[localId] = adopted;
-        _notify();
-      });
-      return;
+      throw const NotesException(
+        NotesFailureCode.conflict,
+        'An uncertain creation needs explicit server-note confirmation or a separate note.',
+      );
     }
     final client = await _clientForAccount(_accounts[original.accountId]!);
     late NoteState fresh;
@@ -1219,6 +1248,157 @@ class NotesRepository {
       _notes[localId] = resolved;
       _notify();
     });
+  }
+
+  Future<void> _resolveCreation(
+    NextcloudNote original,
+    NotesCreationReview review,
+  ) async {
+    if (!_creationResolutions.add(original.localId)) {
+      throw const NotesException(
+        NotesFailureCode.conflict,
+        'A creation decision is already in progress.',
+      );
+    }
+    final candidateIds = _notes.values
+        .where(
+          (n) =>
+              n.accountId == original.accountId &&
+              n.serverId == review.candidate.id,
+        )
+        .map((n) => n.localId)
+        .toSet();
+    _bindingCandidates.addAll(candidateIds);
+    try {
+      final account = _accounts[original.accountId];
+      void validate() {
+        final current = _require(original.localId);
+        if (account == null ||
+            _removing.contains(original.accountId) ||
+            _accounts[original.accountId]?.server != account.server ||
+            _accounts[original.accountId]?.loginName != account.loginName ||
+            current.serverId != null ||
+            current.syncState != NoteSyncState.creationUncertain ||
+            review.localId != current.localId ||
+            review.accountId != current.accountId ||
+            current.creationAttempt?.id != review.attemptId ||
+            current.creationAttempt?.separateNoteLocalId != null ||
+            current.revision != review.revision ||
+            !(current.creationAttempt?.candidateServerIds.contains(
+                  review.candidate.id,
+                ) ??
+                false)) {
+          throw const NotesException(
+            NotesFailureCode.conflict,
+            'The account, local edits or creation decision changed. Review again.',
+          );
+        }
+      }
+
+      validate();
+      final running = _syncs[original.accountId];
+      if (running != null) await running;
+      validate();
+      final client = await _clientForAccount(account!);
+      late NoteState fresh;
+      try {
+        fresh = await client.get(review.candidate.id);
+      } on NotesException catch (error) {
+        await _mutate(() async {
+          validate();
+          final current = _require(original.localId);
+          final ids = {...current.creationAttempt!.candidateServerIds};
+          if (error.code == NotesFailureCode.missing) {
+            ids.remove(review.candidate.id);
+          }
+          final unresolved = current.copyWith(
+            remote: null,
+            creationAttempt: current.creationAttempt!.withCandidateServerIds(
+              ids,
+            ),
+            errorMessage:
+                'The selected server note is unavailable. Refresh and review again.',
+          );
+          await store.saveNote(unresolved);
+          _notes[current.localId] = unresolved;
+          _notify();
+        });
+        rethrow;
+      }
+      await _mutate(() async {
+        validate();
+        final current = _require(original.localId);
+        if (jsonEncode(fresh.toJson()) !=
+                jsonEncode(review.candidate.toJson()) ||
+            fresh.error ||
+            fresh.readonly) {
+          final unresolved = current.copyWith(
+            remote: fresh,
+            errorMessage:
+                'The selected server note changed or is read-only. Review its current state before deciding.',
+          );
+          await store.saveNote(unresolved);
+          _notes[current.localId] = unresolved;
+          _notify();
+          throw NotesException(
+            NotesFailureCode.conflict,
+            unresolved.errorMessage!,
+            remote: fresh,
+          );
+        }
+        final duplicates = _notes.values
+            .where(
+              (n) =>
+                  n.accountId == current.accountId &&
+                  n.serverId == fresh.id &&
+                  n.localId != current.localId,
+            )
+            .toList();
+        candidateIds.addAll(duplicates.map((n) => n.localId));
+        _bindingCandidates.addAll(candidateIds);
+        for (final twin in duplicates) {
+          final attachments = await store.attachments(twin.localId);
+          if (twin.hasPendingChanges ||
+              attachments.any(
+                (a) => {
+                  'pending',
+                  'uploading',
+                  'uncertain',
+                  'uploaded',
+                  'deletePending',
+                }.contains(a.state),
+              )) {
+            throw const NotesException(
+              NotesFailureCode.conflict,
+              'The downloaded candidate has local changes or pending attachments. Preserve or resolve them first.',
+            );
+          }
+        }
+        validate();
+        final ids = duplicates.map((n) => n.localId).toSet();
+        if (_creationBindingGuards.any(
+          (guard) => !guard(current.localId, ids),
+        )) {
+          throw const NotesException(
+            NotesFailureCode.conflict,
+            'New editor changes appeared or a downloaded candidate is still open. Preserve those edits, close candidate tabs, and review again.',
+          );
+        }
+        final adopted = _adoptCreation(current, fresh);
+        // Binding/outbox and clean-twin removal are a single SQLite transaction.
+        await store.commit(notes: [adopted], removeNotes: ids.toList());
+        for (final id in ids) {
+          _notes.remove(id);
+        }
+        _notes[current.localId] = adopted;
+        _baseGenerations[current.localId] =
+            (_baseGenerations[current.localId] ?? 0) + 1;
+        _notify();
+      });
+    } finally {
+      _bindingCandidates.removeAll(candidateIds);
+      _creationResolutions.remove(original.localId);
+    }
   }
 
   /// Online refresh plus explicit action only. The API has no atomic conditional DELETE.

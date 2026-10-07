@@ -3432,5 +3432,12 @@
   "nextcloudAttachmentReference": "Odnośnik do załącznika na serwerze",
   "nextcloudAddAttachment": "Dodaj załącznik…",
   "nextcloudDeleteAttachmentWarning": "Usunięcie tego załącznika spowoduje, że jego odnośniki w notatce będą niedostępne. Zachowane dane można odzyskać z lokalnej historii.",
-  "nextcloudChooseConflictingAttributes": "Wybierz wartość każdego sprzecznego atrybutu."
+  "nextcloudChooseConflictingAttributes": "Wybierz wartość każdego sprzecznego atrybutu.",
+  "nextcloudUseServerNote": "Użyj tej notatki z serwera",
+  "nextcloudUseServerNoteExplanation": "Łączy ten szkic z wybraną notatką na serwerze, a następnie synchronizuje zachowane zmiany lokalne. Zgodne żądanie nie potwierdza, kto utworzył notatkę.",
+  "nextcloudExactCandidate": "Dokładna zgodność z żądaniem; tożsamość niepotwierdzona.",
+  "nextcloudPossibleCandidate": "Możliwa zgodność po normalizacji żądania; tożsamość niepotwierdzona.",
+  "nextcloudSelectCandidate": "Wybierz notatkę z serwera do sprawdzenia",
+  "nextcloudCreateSeparate": "Utwórz osobną notatkę",
+  "nextcloudCreateSeparateWarning": "Pierwsze żądanie mogło już utworzyć notatkę na serwerze. Ta czynność tworzy osobną notatkę z zachowaną pracą lokalną. Żadne podejrzane duplikaty nie zostaną usunięte."
 }

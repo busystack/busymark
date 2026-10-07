@@ -3406,5 +3406,12 @@
   "nextcloudAttachmentReference": "مرجع المرفق على الخادم",
   "nextcloudAddAttachment": "إضافة مرفق…",
   "nextcloudDeleteAttachmentWarning": "سيؤدي حذف المرفق إلى جعل روابطه في الملاحظة غير متاحة. يمكن استعادة البيانات المحتفَظ بها من السجل المحلي.",
-  "nextcloudChooseConflictingAttributes": "اختر قيمة لكل سمة متعارضة."
+  "nextcloudChooseConflictingAttributes": "اختر قيمة لكل سمة متعارضة.",
+  "nextcloudUseServerNote": "استخدام هذه الملاحظة على الخادم",
+  "nextcloudUseServerNoteExplanation": "يربط هذه المسودة بالملاحظة المحددة على الخادم، ثم يزامن التغييرات المحلية المحفوظة. تطابق الطلب لا يؤكد من أنشأ الملاحظة.",
+  "nextcloudExactCandidate": "تطابق تام مع الطلب؛ الهوية غير مؤكدة.",
+  "nextcloudPossibleCandidate": "تطابق محتمل بعد تنقية الطلب؛ الهوية غير مؤكدة.",
+  "nextcloudSelectCandidate": "اختر ملاحظة على الخادم لمراجعتها",
+  "nextcloudCreateSeparate": "إنشاء ملاحظة منفصلة",
+  "nextcloudCreateSeparateWarning": "قد يكون الطلب الأول قد أنشأ ملاحظة على الخادم بالفعل. ينشئ هذا ملاحظة منفصلة بعملك المحلي المحفوظ. لن تُحذف أي ملاحظة يُشتبه بأنها مكررة."
 }

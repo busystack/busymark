@@ -4804,4 +4804,30 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get nextcloudChooseConflictingAttributes =>
       'Выберите значение каждого конфликтующего атрибута.';
+
+  @override
+  String get nextcloudUseServerNote => 'Использовать эту заметку на сервере';
+
+  @override
+  String get nextcloudUseServerNoteExplanation =>
+      'Связывает этот черновик с выбранной заметкой на сервере, затем синхронизирует сохранённые локальные изменения. Совпадение запроса не подтверждает, кто создал заметку.';
+
+  @override
+  String get nextcloudExactCandidate =>
+      'Точное совпадение с запросом; идентичность не подтверждена.';
+
+  @override
+  String get nextcloudPossibleCandidate =>
+      'Возможное совпадение после нормализации; идентичность не подтверждена.';
+
+  @override
+  String get nextcloudSelectCandidate =>
+      'Выберите заметку на сервере для проверки';
+
+  @override
+  String get nextcloudCreateSeparate => 'Создать отдельную заметку';
+
+  @override
+  String get nextcloudCreateSeparateWarning =>
+      'Первый запрос мог уже создать заметку на сервере. Будет создана отдельная заметка с сохранённой локальной работой. Предполагаемые дубликаты не будут удалены.';
 }

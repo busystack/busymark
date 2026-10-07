@@ -55,6 +55,9 @@ def main():
         browser = playwright.chromium.launch(
             executable_path=os.getenv("BUSYMARK_CHROME_PATH", "/usr/bin/google-chrome"),
             headless=True,
+            # Disposable acceptance only: trust the explicitly supplied leaf key.
+            args=(["--ignore-certificate-errors-spki-list=" + os.environ["BUSYMARK_TEST_TLS_SPKI"]]
+                  if "BUSYMARK_TEST_TLS_SPKI" in os.environ else []),
         )
         try:
             page = browser.new_page()

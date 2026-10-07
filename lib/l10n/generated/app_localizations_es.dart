@@ -4794,4 +4794,30 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get nextcloudChooseConflictingAttributes =>
       'Elige cada atributo en conflicto.';
+
+  @override
+  String get nextcloudUseServerNote => 'Usar esta nota del servidor';
+
+  @override
+  String get nextcloudUseServerNoteExplanation =>
+      'Vincula este borrador con la nota seleccionada del servidor y luego sincroniza los cambios locales conservados. Una solicitud coincidente no confirma quién creó la nota.';
+
+  @override
+  String get nextcloudExactCandidate =>
+      'Coincidencia exacta con la solicitud; identidad sin confirmar.';
+
+  @override
+  String get nextcloudPossibleCandidate =>
+      'Posible coincidencia con la solicitud saneada; identidad sin confirmar.';
+
+  @override
+  String get nextcloudSelectCandidate =>
+      'Seleccionar una nota del servidor para revisarla';
+
+  @override
+  String get nextcloudCreateSeparate => 'Crear una nota aparte';
+
+  @override
+  String get nextcloudCreateSeparateWarning =>
+      'La primera solicitud puede haber creado ya una nota en el servidor. Esto crea una nota aparte con su trabajo local conservado. No se eliminará ningún posible duplicado.';
 }

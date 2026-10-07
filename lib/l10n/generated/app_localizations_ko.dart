@@ -4609,4 +4609,28 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get nextcloudChooseConflictingAttributes => '충돌하는 각 속성의 값을 선택하세요.';
+
+  @override
+  String get nextcloudUseServerNote => '이 서버 노트 사용';
+
+  @override
+  String get nextcloudUseServerNoteExplanation =>
+      '이 초안을 선택한 서버 노트에 연결한 다음 보존된 로컬 변경 사항을 동기화합니다. 요청이 일치해도 누가 노트를 만들었는지는 확인되지 않습니다.';
+
+  @override
+  String get nextcloudExactCandidate => '요청과 정확히 일치합니다. 동일한 노트인지 확인되지 않았습니다.';
+
+  @override
+  String get nextcloudPossibleCandidate =>
+      '정리된 요청과 일치할 수 있습니다. 동일한 노트인지 확인되지 않았습니다.';
+
+  @override
+  String get nextcloudSelectCandidate => '검토할 서버 노트 선택';
+
+  @override
+  String get nextcloudCreateSeparate => '별도 노트 만들기';
+
+  @override
+  String get nextcloudCreateSeparateWarning =>
+      '첫 요청으로 서버 노트가 이미 만들어졌을 수 있습니다. 보존된 로컬 작업으로 별도 노트를 만듭니다. 중복으로 의심되는 노트는 삭제하지 않습니다.';
 }

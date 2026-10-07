@@ -3406,5 +3406,12 @@
   "nextcloudAttachmentReference": "Referencia del archivo adjunto en el servidor",
   "nextcloudAddAttachment": "Añadir archivo adjunto…",
   "nextcloudDeleteAttachmentWarning": "Al eliminar este archivo adjunto, sus enlaces en la nota dejarán de estar disponibles. Los datos conservados se pueden recuperar mediante el historial local.",
-  "nextcloudChooseConflictingAttributes": "Elige cada atributo en conflicto."
+  "nextcloudChooseConflictingAttributes": "Elige cada atributo en conflicto.",
+  "nextcloudUseServerNote": "Usar esta nota del servidor",
+  "nextcloudUseServerNoteExplanation": "Vincula este borrador con la nota seleccionada del servidor y luego sincroniza los cambios locales conservados. Una solicitud coincidente no confirma quién creó la nota.",
+  "nextcloudExactCandidate": "Coincidencia exacta con la solicitud; identidad sin confirmar.",
+  "nextcloudPossibleCandidate": "Posible coincidencia con la solicitud saneada; identidad sin confirmar.",
+  "nextcloudSelectCandidate": "Seleccionar una nota del servidor para revisarla",
+  "nextcloudCreateSeparate": "Crear una nota aparte",
+  "nextcloudCreateSeparateWarning": "La primera solicitud puede haber creado ya una nota en el servidor. Esto crea una nota aparte con su trabajo local conservado. No se eliminará ningún posible duplicado."
 }

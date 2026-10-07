@@ -3406,5 +3406,12 @@
   "nextcloudAttachmentReference": "Anhangreferenz auf dem Server",
   "nextcloudAddAttachment": "Anhang hinzufügen…",
   "nextcloudDeleteAttachmentWarning": "Durch Löschen des Anhangs sind seine Links in der Notiz nicht mehr verfügbar. Aufbewahrte Daten können über den lokalen Verlauf wiederhergestellt werden.",
-  "nextcloudChooseConflictingAttributes": "Wählen Sie jeden widersprüchlichen Wert."
+  "nextcloudChooseConflictingAttributes": "Wählen Sie jeden widersprüchlichen Wert.",
+  "nextcloudUseServerNote": "Diese Servernotiz verwenden",
+  "nextcloudUseServerNoteExplanation": "Verknüpft diesen Entwurf mit der ausgewählten Servernotiz und synchronisiert anschließend die behaltenen lokalen Änderungen. Ein passender Antrag bestätigt nicht, wer die Notiz erstellt hat.",
+  "nextcloudExactCandidate": "Exakte Übereinstimmung mit der Anfrage; Identität unbestätigt.",
+  "nextcloudPossibleCandidate": "Mögliche Übereinstimmung nach Bereinigung der Anfrage; Identität unbestätigt.",
+  "nextcloudSelectCandidate": "Servernotiz zur Prüfung auswählen",
+  "nextcloudCreateSeparate": "Separate Notiz erstellen",
+  "nextcloudCreateSeparateWarning": "Die erste Anfrage hat möglicherweise bereits eine Servernotiz erstellt. Dies erstellt eine separate Notiz mit Ihrer behaltenen lokalen Arbeit. Vermutete Duplikate werden nicht gelöscht."
 }

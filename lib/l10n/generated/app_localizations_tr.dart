@@ -4748,4 +4748,29 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get nextcloudChooseConflictingAttributes =>
       'Çakışan her öznitelik için bir değer seçin.';
+
+  @override
+  String get nextcloudUseServerNote => 'Bu sunucu notunu kullan';
+
+  @override
+  String get nextcloudUseServerNoteExplanation =>
+      'Bu taslağı seçilen sunucu notuna bağlar, ardından korunan yerel değişiklikleri eşitler. Eşleşen bir istek, notu kimin oluşturduğunu doğrulamaz.';
+
+  @override
+  String get nextcloudExactCandidate =>
+      'İstekle tam eşleşme; kimlik doğrulanmadı.';
+
+  @override
+  String get nextcloudPossibleCandidate =>
+      'Düzenlenmiş istekle olası eşleşme; kimlik doğrulanmadı.';
+
+  @override
+  String get nextcloudSelectCandidate => 'İncelemek için bir sunucu notu seçin';
+
+  @override
+  String get nextcloudCreateSeparate => 'Ayrı bir not oluştur';
+
+  @override
+  String get nextcloudCreateSeparateWarning =>
+      'İlk istek sunucuda zaten bir not oluşturmuş olabilir. Bu işlem korunan yerel çalışmanızla ayrı bir not oluşturur. Olası kopyalar silinmez.';
 }

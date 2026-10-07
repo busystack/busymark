@@ -4814,4 +4814,30 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get nextcloudChooseConflictingAttributes =>
       'Виберіть значення кожного конфліктного атрибута.';
+
+  @override
+  String get nextcloudUseServerNote => 'Використати цю нотатку на сервері';
+
+  @override
+  String get nextcloudUseServerNoteExplanation =>
+      'Пов’язує цю чернетку з вибраною нотаткою на сервері, а потім синхронізує збережені локальні зміни. Збіг запиту не підтверджує, хто створив нотатку.';
+
+  @override
+  String get nextcloudExactCandidate =>
+      'Точний збіг із запитом; тотожність не підтверджено.';
+
+  @override
+  String get nextcloudPossibleCandidate =>
+      'Можливий збіг після нормалізації; тотожність не підтверджено.';
+
+  @override
+  String get nextcloudSelectCandidate =>
+      'Виберіть нотатку на сервері для перегляду';
+
+  @override
+  String get nextcloudCreateSeparate => 'Створити окрему нотатку';
+
+  @override
+  String get nextcloudCreateSeparateWarning =>
+      'Перший запит міг уже створити нотатку на сервері. Буде створено окрему нотатку зі збереженою локальною роботою. Ймовірні дублікати не буде видалено.';
 }

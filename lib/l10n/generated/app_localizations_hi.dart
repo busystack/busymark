@@ -4736,4 +4736,29 @@ class AppLocalizationsHi extends AppLocalizations {
   @override
   String get nextcloudChooseConflictingAttributes =>
       'हर परस्पर विरोधी विशेषता का मान चुनें।';
+
+  @override
+  String get nextcloudUseServerNote => 'सर्वर के इस नोट का उपयोग करें';
+
+  @override
+  String get nextcloudUseServerNoteExplanation =>
+      'इस मसौदे को सर्वर के चुने हुए नोट से जोड़ता है, फिर सुरक्षित स्थानीय बदलाव समन्वयित करता है। अनुरोध का मिलना यह पुष्टि नहीं करता कि नोट किसने बनाया था।';
+
+  @override
+  String get nextcloudExactCandidate =>
+      'अनुरोध से पूरी तरह मेल; पहचान की पुष्टि नहीं हुई है।';
+
+  @override
+  String get nextcloudPossibleCandidate =>
+      'संशोधित अनुरोध से संभावित मेल; पहचान की पुष्टि नहीं हुई है।';
+
+  @override
+  String get nextcloudSelectCandidate => 'समीक्षा के लिए सर्वर का नोट चुनें';
+
+  @override
+  String get nextcloudCreateSeparate => 'अलग नोट बनाएँ';
+
+  @override
+  String get nextcloudCreateSeparateWarning =>
+      'पहले अनुरोध ने सर्वर पर पहले ही नोट बना दिया हो सकता है। यह आपके सुरक्षित स्थानीय काम के साथ अलग नोट बनाता है। किसी संभावित प्रतिलिपि को हटाया नहीं जाएगा।';
 }

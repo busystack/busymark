@@ -4945,5 +4945,12 @@
   "nextcloudAttachmentReference": "服务器上的附件引用",
   "nextcloudAddAttachment": "添加附件…",
   "nextcloudDeleteAttachmentWarning": "删除此附件后，笔记中指向它的链接将不可用。保留的数据可通过本地历史记录恢复。",
-  "nextcloudChooseConflictingAttributes": "为每个冲突属性选择一个值。"
+  "nextcloudChooseConflictingAttributes": "为每个冲突属性选择一个值。",
+  "nextcloudUseServerNote": "使用此服务器笔记",
+  "nextcloudUseServerNoteExplanation": "将此草稿关联到选定的服务器笔记，然后同步保留的本地更改。请求匹配并不能确认笔记由谁创建。",
+  "nextcloudExactCandidate": "与请求完全匹配；身份尚未确认。",
+  "nextcloudPossibleCandidate": "可能与规范化后的请求匹配；身份尚未确认。",
+  "nextcloudSelectCandidate": "选择要检查的服务器笔记",
+  "nextcloudCreateSeparate": "创建独立笔记",
+  "nextcloudCreateSeparateWarning": "首次请求可能已在服务器上创建笔记。此操作将使用保留的本地工作创建独立笔记。不会删除任何疑似重复的笔记。"
 }

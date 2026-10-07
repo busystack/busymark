@@ -4789,4 +4789,29 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get nextcloudChooseConflictingAttributes =>
       'Wählen Sie jeden widersprüchlichen Wert.';
+
+  @override
+  String get nextcloudUseServerNote => 'Diese Servernotiz verwenden';
+
+  @override
+  String get nextcloudUseServerNoteExplanation =>
+      'Verknüpft diesen Entwurf mit der ausgewählten Servernotiz und synchronisiert anschließend die behaltenen lokalen Änderungen. Ein passender Antrag bestätigt nicht, wer die Notiz erstellt hat.';
+
+  @override
+  String get nextcloudExactCandidate =>
+      'Exakte Übereinstimmung mit der Anfrage; Identität unbestätigt.';
+
+  @override
+  String get nextcloudPossibleCandidate =>
+      'Mögliche Übereinstimmung nach Bereinigung der Anfrage; Identität unbestätigt.';
+
+  @override
+  String get nextcloudSelectCandidate => 'Servernotiz zur Prüfung auswählen';
+
+  @override
+  String get nextcloudCreateSeparate => 'Separate Notiz erstellen';
+
+  @override
+  String get nextcloudCreateSeparateWarning =>
+      'Die erste Anfrage hat möglicherweise bereits eine Servernotiz erstellt. Dies erstellt eine separate Notiz mit Ihrer behaltenen lokalen Arbeit. Vermutete Duplikate werden nicht gelöscht.';
 }

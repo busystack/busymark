@@ -452,6 +452,14 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     await repository.initialize();
     if (!ref.mounted) throw StateError('Workspace closed');
     _notesRepository = repository;
+    bool bindingGuard(String localId, Set<String> ids) =>
+        !state.documentBuffers.any(
+          (b) =>
+              ids.contains(b.remoteNote?.localId) ||
+              (b.remoteNote?.localId == localId && b.isDirty),
+        );
+    repository.addCreationBindingGuard(bindingGuard);
+    ref.onDispose(() => repository.removeCreationBindingGuard(bindingGuard));
     _notesSubscription = repository.changes.listen((_) => _notesChanged());
     return repository;
   }
@@ -681,7 +689,9 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     final repository = await _ensureNotesRepository();
     final note = repository.noteById(localId);
     final workspace = state.workspace;
-    if (note == null || workspace?.nextcloudAccountId != note.accountId) {
+    if (note == null ||
+        repository.isCreationCandidateBinding(localId) ||
+        workspace?.nextcloudAccountId != note.accountId) {
       return false;
     }
     final existing = state.documentBuffers
@@ -1005,9 +1015,28 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     Map<NotesMergeAttribute, NotesMergeChoice> metadataChoices = const {},
     int? expectedRevision,
     int? creationCandidateServerId,
+    NotesCreationReview? creationReview,
   }) async {
     try {
       final repository = await _ensureNotesRepository();
+      if (resolution == NoteConflictResolution.useServerNote) {
+        final candidateIds = repository.notes
+            .where(
+              (n) =>
+                  n.accountId == creationReview?.accountId &&
+                  n.serverId == creationCandidateServerId,
+            )
+            .map((n) => n.localId)
+            .toSet();
+        if (state.documentBuffers.any(
+          (b) => candidateIds.contains(b.remoteNote?.localId),
+        )) {
+          throw const NotesException(
+            NotesFailureCode.conflict,
+            'Close the downloaded candidate’s editor tabs after preserving their changes, then review again.',
+          );
+        }
+      }
       final buffer = state.documentBuffers
           .where((b) => b.remoteNote?.localId == localId)
           .firstOrNull;
@@ -1037,6 +1066,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         metadataChoices: metadataChoices,
         expectedRevision: expectedRevision,
         creationCandidateServerId: creationCandidateServerId,
+        creationReview: creationReview,
       );
       final accountId = repository.noteById(localId)?.accountId;
       if (accountId != null) _scheduleRemoteSync(accountId);

@@ -3406,5 +3406,12 @@
   "nextcloudAttachmentReference": "Vedleggsreferanse på serveren",
   "nextcloudAddAttachment": "Legg til vedlegg…",
   "nextcloudDeleteAttachmentWarning": "Når du sletter dette vedlegget, blir lenkene til det i notatet utilgjengelige. Lagrede data kan gjenopprettes fra lokal historikk.",
-  "nextcloudChooseConflictingAttributes": "Velg hver motstridende egenskap."
+  "nextcloudChooseConflictingAttributes": "Velg hver motstridende egenskap.",
+  "nextcloudUseServerNote": "Bruk dette servernotatet",
+  "nextcloudUseServerNoteExplanation": "Knytter dette utkastet til det valgte servernotatet og synkroniserer deretter beholdte lokale endringer. En samsvarende forespørsel bekrefter ikke hvem som opprettet notatet.",
+  "nextcloudExactCandidate": "Nøyaktig samsvar med forespørselen; identiteten er ubekreftet.",
+  "nextcloudPossibleCandidate": "Mulig samsvar etter normalisering; identiteten er ubekreftet.",
+  "nextcloudSelectCandidate": "Velg et servernotat som skal gjennomgås",
+  "nextcloudCreateSeparate": "Opprett et separat notat",
+  "nextcloudCreateSeparateWarning": "Den første forespørselen kan allerede ha opprettet et servernotat. Dette oppretter et separat notat med ditt beholdte lokale arbeid. Ingen antatte duplikater slettes."
 }

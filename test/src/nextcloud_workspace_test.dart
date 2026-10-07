@@ -28,6 +28,139 @@ const _accountId = 'ba6d02cd-42fe-4e14-a577-3e2c13822459';
 
 void main() {
   test(
+    'unsaved draft edits during confirmation require another review',
+    () async {
+      Map<String, dynamic>? remote;
+      final started = Completer<void>();
+      final release = Completer<void>();
+      var confirming = false;
+      final harness = await _Harness.create(
+        seedLocal: false,
+        deferPersistence: true,
+        client: MockClient((request) async {
+          if (request.method == 'POST') {
+            remote = {...serverNote(1), ...jsonDecode(request.body) as Map};
+            throw http.ClientException('lost response');
+          }
+          if (confirming && request.url.path.endsWith('/notes/1')) {
+            started.complete();
+            await release.future;
+            confirming = false;
+          }
+          return http.Response(
+            jsonEncode(
+              request.url.path.endsWith('/notes')
+                  ? [if (remote != null) remote]
+                  : remote,
+            ),
+            200,
+          );
+        }),
+      );
+      addTearDown(harness.dispose);
+      final repository = harness.repository;
+      final draft = await repository.create(_accountId, content: 'submitted');
+      await repository.synchronize(_accountId);
+      await repository.synchronize(_accountId);
+      await harness.controller.openNextcloudWorkspace(_accountId);
+      await harness.controller.openNextcloudNote(draft.localId);
+      await harness.container
+          .read(appSettingsControllerProvider.notifier)
+          .setAutoSave(false);
+      final reviewed = repository.creationReview(
+        draft.localId,
+        repository.noteById(draft.localId)!.remote!,
+      );
+      confirming = true;
+      final decision = harness.controller.resolveNextcloudConflict(
+        draft.localId,
+        NoteConflictResolution.useServerNote,
+        expectedRevision: reviewed.revision,
+        creationCandidateServerId: 1,
+        creationReview: reviewed,
+      );
+      await started.future;
+      harness.controller.updateActiveText('unsaved newer draft edit');
+      release.complete();
+      await decision;
+      expect(repository.noteById(draft.localId)!.serverId, isNull);
+      expect(repository.noteById(draft.localId)!.creationAttempt, isNotNull);
+      expect(harness.state.activeBuffer!.text, 'unsaved newer draft edit');
+      expect(harness.state.activeBuffer!.isDirty, isTrue);
+      expect(harness.state.message, isNotNull);
+    },
+  );
+
+  test(
+    'an unsaved independently opened candidate blocks consolidation without orphaning its tab',
+    () async {
+      Map<String, dynamic>? remote;
+      final harness = await _Harness.create(
+        seedLocal: false,
+        deferPersistence: true,
+        client: MockClient((request) async {
+          if (request.method == 'POST') {
+            remote = {...serverNote(1), ...jsonDecode(request.body) as Map};
+            throw http.ClientException('lost response');
+          }
+          return http.Response(
+            jsonEncode(
+              request.url.path.endsWith('/notes')
+                  ? [if (remote != null) remote]
+                  : remote,
+            ),
+            200,
+          );
+        }),
+      );
+      addTearDown(harness.dispose);
+      final repository = harness.repository;
+      final draft = await repository.create(
+        _accountId,
+        content: 'wire content',
+      );
+      await repository.synchronize(_accountId);
+      await repository.synchronize(_accountId);
+      final twin = repository.notes.firstWhere((n) => n.serverId == 1);
+      final reviewed = repository.creationReview(
+        draft.localId,
+        repository.noteById(draft.localId)!.remote!,
+      );
+      expect(
+        await harness.controller.openNextcloudWorkspace(_accountId),
+        isTrue,
+      );
+      expect(await harness.controller.openNextcloudNote(twin.localId), isTrue);
+      expect(harness.state.activeBuffer!.remoteNote!.localId, twin.localId);
+      await harness.container
+          .read(appSettingsControllerProvider.notifier)
+          .setAutoSave(false);
+      harness.controller.updateActiveText('unsaved candidate edit');
+      expect(harness.state.activeBuffer!.text, 'unsaved candidate edit');
+      await harness.controller.resolveNextcloudConflict(
+        draft.localId,
+        NoteConflictResolution.useServerNote,
+        expectedRevision: reviewed.revision,
+        creationCandidateServerId: 1,
+        creationReview: reviewed,
+      );
+      expect(repository.noteById(draft.localId)!.serverId, isNull);
+      expect(repository.noteById(twin.localId), isNotNull);
+      final tab = harness.state.documentBuffers.firstWhere(
+        (b) => b.remoteNote?.localId == twin.localId,
+      );
+      expect(tab.text, 'unsaved candidate edit');
+      expect(tab.isDirty, isTrue);
+      expect(harness.state.message, isNotNull);
+      expect(await harness.controller.saveActive(), isTrue);
+      expect(
+        repository.noteById(twin.localId)!.content,
+        'unsaved candidate edit',
+      );
+    },
+  );
+
+  test(
     'Save, Save All, autosave and shutdown durably retain offline notes',
     () async {
       final harness = await _Harness.create();
