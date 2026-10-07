@@ -1,0 +1,52 @@
+
+(visualization_smoke.py:849701): Gdk-CRITICAL **: 03:38:25.633: gdk_seat_get_keyboard: assertion 'GDK_IS_SEAT (seat)' failed
+
+(visualization_smoke.py:849701): dbind-WARNING **: 03:38:25.679: Couldn't connect to accessibility bus: Failed to connect to socket /run/user/1000/at-spi/bus_1: No such file or directory
+PASS D2 vector
+PASS D2 foreignObject
+
+(visualization_smoke.py:849701): Gdk-CRITICAL **: 03:38:26.072: gdk_seat_get_keyboard: assertion 'GDK_IS_SEAT (seat)' failed
+
+** (process:2): WARNING **: 03:38:26.172: Failed to connect to bus: Could not connect: No such file or directory
+
+** (process:2): WARNING **: 03:38:26.249: Can't connect to a11y bus: Error receiving data: Connection reset by peer
+PASS Mermaid
+PASS Mermaid dark theme
+PASS WebKit process termination and recovery
+
+(visualization_smoke.py:849701): Gdk-CRITICAL **: 03:38:28.358: gdk_seat_get_keyboard: assertion 'GDK_IS_SEAT (seat)' failed
+
+** (process:2): WARNING **: 03:38:28.464: Failed to connect to bus: Could not connect: No such file or directory
+
+** (process:2): WARNING **: 03:38:28.466: Can't connect to a11y bus: Error receiving data: Connection reset by peer
+PASS MathJax NewCM double-struck
+PASS MathJax NewCM sequential calligraphic
+PASS MathJax scientific package profile
+PASS MathJax partial failure
+PASS MathJax unsafe and dynamic commands
+PASS MathJax local newcommand
+PASS MathJax expression isolation
+PASS D2 WebKit raster fallback visual snapshot
+PASS Responsive SVG raster scaling visual snapshot
+PASS PlantUML 1/13
+PASS PlantUML 2/13
+PASS PlantUML 3/13
+PASS PlantUML 4/13
+PASS PlantUML 5/13
+PASS PlantUML 6/13
+PASS PlantUML 7/13
+PASS PlantUML 8/13
+PASS PlantUML 9/13
+PASS PlantUML 10/13
+PASS PlantUML 11/13
+PASS PlantUML 12/13
+PASS PlantUML 13/13
+PASS PlantUML dark theme
+PASS OpenAPI parser
+PASS OpenAPI local reference inspection
+PASS OpenAPI local circular reference
+PASS OpenAPI validation source location
+PASS OpenAPI parse source location
+PASS OpenAPI dependency source location
+PASS Scalar API Reference
+PASS Scalar local circular reference

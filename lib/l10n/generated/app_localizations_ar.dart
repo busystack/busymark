@@ -4777,4 +4777,28 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get nextcloudChooseConflictingAttributes =>
       'اختر قيمة لكل سمة متعارضة.';
+
+  @override
+  String get nextcloudUseServerNote => 'استخدام هذه الملاحظة على الخادم';
+
+  @override
+  String get nextcloudUseServerNoteExplanation =>
+      'يربط هذه المسودة بالملاحظة المحددة على الخادم، ثم يزامن التغييرات المحلية المحفوظة. تطابق الطلب لا يؤكد من أنشأ الملاحظة.';
+
+  @override
+  String get nextcloudExactCandidate => 'تطابق تام مع الطلب؛ الهوية غير مؤكدة.';
+
+  @override
+  String get nextcloudPossibleCandidate =>
+      'تطابق محتمل بعد تنقية الطلب؛ الهوية غير مؤكدة.';
+
+  @override
+  String get nextcloudSelectCandidate => 'اختر ملاحظة على الخادم لمراجعتها';
+
+  @override
+  String get nextcloudCreateSeparate => 'إنشاء ملاحظة منفصلة';
+
+  @override
+  String get nextcloudCreateSeparateWarning =>
+      'قد يكون الطلب الأول قد أنشأ ملاحظة على الخادم بالفعل. ينشئ هذا ملاحظة منفصلة بعملك المحلي المحفوظ. لن تُحذف أي ملاحظة يُشتبه بأنها مكررة.';
 }

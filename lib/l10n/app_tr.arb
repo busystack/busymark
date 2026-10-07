@@ -4945,5 +4945,12 @@
   "nextcloudAttachmentReference": "Sunucudaki ek başvurusu",
   "nextcloudAddAttachment": "Ek ekle…",
   "nextcloudDeleteAttachmentWarning": "Bu eki silmek, nottaki bağlantılarını kullanılamaz hale getirir. Saklanan veriler yerel geçmişten kurtarılabilir.",
-  "nextcloudChooseConflictingAttributes": "Çakışan her öznitelik için bir değer seçin."
+  "nextcloudChooseConflictingAttributes": "Çakışan her öznitelik için bir değer seçin.",
+  "nextcloudUseServerNote": "Bu sunucu notunu kullan",
+  "nextcloudUseServerNoteExplanation": "Bu taslağı seçilen sunucu notuna bağlar, ardından korunan yerel değişiklikleri eşitler. Eşleşen bir istek, notu kimin oluşturduğunu doğrulamaz.",
+  "nextcloudExactCandidate": "İstekle tam eşleşme; kimlik doğrulanmadı.",
+  "nextcloudPossibleCandidate": "Düzenlenmiş istekle olası eşleşme; kimlik doğrulanmadı.",
+  "nextcloudSelectCandidate": "İncelemek için bir sunucu notu seçin",
+  "nextcloudCreateSeparate": "Ayrı bir not oluştur",
+  "nextcloudCreateSeparateWarning": "İlk istek sunucuda zaten bir not oluşturmuş olabilir. Bu işlem korunan yerel çalışmanızla ayrı bir not oluşturur. Olası kopyalar silinmez."
 }

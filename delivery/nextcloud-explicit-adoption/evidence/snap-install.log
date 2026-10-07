@@ -1,0 +1,170 @@
+busymark 0.6.1 installed
+Name               Version                         Rev    Tracking       Publisher    Notes
+bare               1.0                             5      latest/stable  canonical**  base
+busymark           0.6.1                           x1     -              -            -
+core24             20260824                        2124   latest/stable  canonical**  base
+gnome-46-2404      0+git.b31ceab-sdk0+git.f80dd8b  168    latest/stable  canonical**  -
+gtk-common-themes  0.1-81-g442e511                 1535   latest/stable  canonical**  -
+mesa-2404          25.2.8-snap288                  1839   latest/stable  canonical**  -
+snapd              2.77.1                          28254  latest/stable  canonical**  snapd
+Interface                 Plug                               Slot                            Notes
+audio-playback            busymark:audio-playback            :audio-playback                 -
+browser-support           busymark:browser-support           :browser-support                -
+content[gnome-46-2404]    busymark:gnome-46-2404             gnome-46-2404:gnome-46-2404     -
+content[gpu-2404]         busymark:gpu-2404                  mesa-2404:gpu-2404              -
+content[gtk-3-themes]     busymark:gtk-3-themes              gtk-common-themes:gtk-3-themes  -
+content[icon-themes]      busymark:icon-themes               gtk-common-themes:icon-themes   -
+content[sound-themes]     busymark:sound-themes              gtk-common-themes:sound-themes  -
+desktop                   busymark:desktop                   :desktop                        -
+desktop-legacy            busymark:desktop-legacy            :desktop-legacy                 -
+gsettings                 busymark:gsettings                 :gsettings                      -
+home                      busymark:home                      :home                           -
+network                   busymark:network                   :network                        -
+opengl                    busymark:opengl                    :opengl                         -
+password-manager-service  busymark:password-manager-service  :password-manager-service       manual
+removable-media           busymark:removable-media           -                               -
+ssh-keys                  busymark:ssh-keys                  -                               -
+wayland                   busymark:wayland                   :wayland                        -
+x11                       busymark:x11                       :x11                            -
+apparmor module is loaded.
+127 profiles are loaded.
+33 profiles are in enforce mode.
+   /snap/snapd/28254/usr/lib/snapd/snap-confine
+   /usr/bin/man
+   /usr/lib/snapd/snap-confine
+   lsb_release
+   man_filter
+   man_groff
+   nvidia_modprobe
+   nvidia_modprobe//kmod
+   plasmashell
+   plasmashell//QtWebEngineProcess
+   rsyslogd
+   snap-update-ns.busymark
+   snap-update-ns.mesa-2404
+   snap.busymark.busymark
+   snap.busymark.hook.configure
+   snap.mesa-2404.component-monitor
+   snap.mesa-2404.hook.connect-plug-kernel-gpu-2404
+   snap.mesa-2404.hook.disconnect-plug-kernel-gpu-2404
+   snap.mesa-2404.hook.install
+   snap.mesa-2404.hook.post-refresh
+   tcpdump
+   ubuntu_pro_apt_news
+   ubuntu_pro_esm_cache
+   ubuntu_pro_esm_cache//apt_methods
+   ubuntu_pro_esm_cache//apt_methods_gpgv
+   ubuntu_pro_esm_cache//cloud_id
+   ubuntu_pro_esm_cache//dpkg
+   ubuntu_pro_esm_cache//ps
+   ubuntu_pro_esm_cache//ubuntu_distro_info
+   ubuntu_pro_esm_cache_systemctl
+   ubuntu_pro_esm_cache_systemd_detect_virt
+   unix-chkpwd
+   unprivileged_userns
+4 profiles are in complain mode.
+   transmission-cli
+   transmission-daemon
+   transmission-gtk
+   transmission-qt
+0 profiles are in prompt mode.
+0 profiles are in kill mode.
+90 profiles are in unconfined mode.
+   1password
+   Discord
+   MongoDB Compass
+   QtWebEngineProcess
+   balena-etcher
+   brave
+   buildah
+   cam
+   ch-checkns
+   ch-run
+   chrome
+   crun
+   devhelp
+   element-desktop
+   epiphany
+   evolution
+   firefox
+   flatpak
+   foliate
+   geary
+   github-desktop
+   goldendict
+   ipa_verify
+   kchmviewer
+   keybase
+   lc-compliance
+   libcamerify
+   linux-sandbox
+   loupe
+   lxc-attach
+   lxc-create
+   lxc-destroy
+   lxc-execute
+   lxc-stop
+   lxc-unshare
+   lxc-usernsexec
+   mmdebstrap
+   msedge
+   nautilus
+   notepadqq
+   obsidian
+   opam
+   opera
+   pageedit
+   podman
+   polypane
+   privacybrowser
+   qcam
+   qmapshack
+   qutebrowser
+   rootlesskit
+   rpm
+   rssguard
+   runc
+   sbuild
+   sbuild-abort
+   sbuild-adduser
+   sbuild-apt
+   sbuild-checkpackages
+   sbuild-clean
+   sbuild-createchroot
+   sbuild-destroychroot
+   sbuild-distupgrade
+   sbuild-hold
+   sbuild-shell
+   sbuild-unhold
+   sbuild-update
+   sbuild-upgrade
+   scide
+   signal-desktop
+   slack
+   slirp4netns
+   steam
+   stress-ng
+   surfshark
+   systemd-coredump
+   thunderbird
+   toybox
+   trinity
+   tup
+   tuxedo-control-center
+   userbindmount
+   uwsgi-core
+   vdens
+   virtiofsd
+   vivaldi-bin
+   vpnns
+   vscode
+   wike
+   wpcom
+1 processes have profiles defined.
+1 processes are in enforce mode.
+   /usr/sbin/rsyslogd (906) rsyslogd
+0 processes are in complain mode.
+0 processes are in prompt mode.
+0 processes are in kill mode.
+0 processes are unconfined but have a profile defined.
+0 processes are in mixed mode.

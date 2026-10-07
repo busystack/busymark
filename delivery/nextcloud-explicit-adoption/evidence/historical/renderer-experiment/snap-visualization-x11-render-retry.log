@@ -1,0 +1,13 @@
+[IMPORTANT:flutter/shell/platform/embedder/embedder_surface_gl_impeller.cc(126)] Using the Impeller rendering backend (OpenGLESSDF).
+
+(io.busystack.busymark:36321): IBUS-WARNING **: 13:33:47.737: Failed to mkdir /home/tester/snap/busymark/x4/.config/ibus/bus: Not a directory
+
+** (io.busystack.busymark:36321): WARNING **: 13:33:48.383: Could not open /sys/class/dmi/id/chassis_type: Failed to open file “/sys/class/dmi/id/chassis_type”: Permission denied
+
+** (io.busystack.busymark:36321): WARNING **: 13:33:48.385: Could not open /sys/firmware/acpi/pm_profile: Failed to open file “/sys/firmware/acpi/pm_profile”: Permission denied
+
+(process:36426): GLib-GIO-WARNING **: 13:33:55.365: GDBus.Error:org.freedesktop.portal.Error.NotAllowed: This call is not available inside the sandbox
+
+(process:36441): GLib-GIO-WARNING **: 13:33:56.938: GDBus.Error:org.freedesktop.portal.Error.NotAllowed: This call is not available inside the sandbox
+
+(process:36583): GLib-GIO-WARNING **: 13:34:19.442: Error releasing name io.busystack.busymark.Sandboxed.WebProcess-21fbd502-7ce7-4477-9638-98f3a384e64b: GDBus.Error:org.freedesktop.DBus.Error.AccessDenied: An AppArmor policy prevents this sender from sending this message to this recipient; type="method_call", sender=":1.62" (uid=1000 pid=36583 comm="/usr/lib/x86_64-linux-gnu/webkit2gtk-4.1/WebKitWeb" label="snap.busymark.busymark (enforce)") interface="org.freedesktop.DBus" member="ReleaseName" error name="(unset)" requested_reply="0" destination="org.freedesktop.DBus" (bus)

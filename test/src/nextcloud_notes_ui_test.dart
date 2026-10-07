@@ -1,4 +1,9 @@
 import 'dart:io';
+import 'dart:convert';
+
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
+import 'package:busymark/src/nextcloud_notes/data/notes_api_client.dart';
 
 import 'package:busymark/l10n/generated/app_localizations.dart';
 import 'package:busymark/src/app/app_settings.dart';
@@ -733,7 +738,8 @@ void main() {
     await tester.pumpAndSettle();
     final takeRemote = find.byWidgetPredicate(
       (widget) =>
-          widget is BusyMarkDialogButton && widget.label == 'Take remote',
+          widget is BusyMarkDialogButton &&
+          widget.label == 'Use this server note',
     );
     expect(takeRemote, findsNothing);
     final candidates = find.byType(DropdownButton<int>);
@@ -744,8 +750,110 @@ void main() {
     expect(find.textContaining('Sanitized A'), findsWidgets);
     await tester.tap(find.text('Cancel'));
     await tester.pumpAndSettle();
+    expect(repository.noteById('uncertain-create')!.serverId, isNull);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets(
+    'selecting and confirming candidate binds draft and retains newer edits',
+    (tester) async {
+      for (final channelName in ['yaru_window', 'yaru_window/events']) {
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+            .setMockMethodCallHandler(
+              MethodChannel(channelName),
+              (call) async =>
+                  call.method == 'state' ? <String, Object?>{} : null,
+            );
+      }
+      await tester.runAsync(
+        () => repository.save(
+          'uncertain-create',
+          content: 'newer editor content',
+        ),
+      );
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            nextcloudNotesRepositoryProvider.overrideWith(
+              (ref) async => repository,
+            ),
+            localSettingsStoreProvider.overrideWithValue(_TabSettings()),
+            localHistoryStoreProvider.overrideWithValue(
+              MemoryLocalHistoryStore(),
+            ),
+            documentSessionStoreProvider.overrideWithValue(
+              MemoryDocumentSessionStore(),
+            ),
+            documentRecoveryStoreProvider.overrideWithValue(
+              MemoryDocumentRecoveryStore(),
+            ),
+          ],
+          child: MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: const Scaffold(
+              body: NextcloudNoteStatus(
+                localId: 'uncertain-create',
+                unsaved: false,
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.runAsync(() => tester.tap(find.text('Compare')));
+      for (
+        var i = 0;
+        i < 100 && find.byType(DropdownButton<int>).evaluate().isEmpty;
+        i++
+      ) {
+        await tester.runAsync(
+          () => Future<void>.delayed(const Duration(milliseconds: 10)),
+        );
+        await tester.pump(const Duration(milliseconds: 50));
+      }
+      await tester.tap(find.byType(DropdownButton<int>));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Sanitized A (#10)').last);
+      await tester.pumpAndSettle();
+      expect(find.textContaining('identity is unconfirmed'), findsOneWidget);
+      expect(find.textContaining('#10'), findsWidgets);
+      await tester.runAsync(
+        () => tester.tap(find.text('Use this server note')),
+      );
+      final confirmationDeadline = Stopwatch()..start();
+      while (repository.noteById('uncertain-create')!.serverId == null &&
+          confirmationDeadline.elapsed < const Duration(seconds: 30)) {
+        // Modal dismissal needs widget frames; SQLite needs real async time.
+        await tester.pump(const Duration(milliseconds: 50));
+        await tester.runAsync(
+          () => Future<void>.delayed(const Duration(milliseconds: 20)),
+        );
+      }
+      await tester.pump(const Duration(milliseconds: 250));
+      final uiContainer = ProviderScope.containerOf(
+        tester.element(find.byType(NextcloudNoteStatus)),
+      );
+      expect(
+        repository.noteById('uncertain-create')!.serverId,
+        10,
+        reason:
+            '${uiContainer.read(workspaceControllerProvider).message?.error}',
+      );
+      expect(
+        repository.noteById('uncertain-create')!.content,
+        'newer editor content',
+      );
+      expect(
+        repository.noteById('uncertain-create')!.hasPendingChanges,
+        isTrue,
+      );
+      expect(repository.noteById('creation-candidate-10'), isNull);
+      expect(repository.noteById('creation-candidate-11'), isNotNull);
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox.shrink());
+    },
+  );
 
   for (final state in [NoteSyncState.forbidden, NoteSyncState.unavailable]) {
     testWidgets(
@@ -793,7 +901,19 @@ class _TabSettings implements LocalSettingsStore {
 
 class _CachedNotesRepository extends NotesRepository {
   _CachedNotesRepository({required super.store})
-    : super(clientForAccount: (_) async => throw StateError('Cached UI only'));
+    : super(
+        clientForAccount: (account) async => NotesApiClient(
+          client: MockClient((request) async {
+            final id = int.parse(request.url.pathSegments.last);
+            final candidate = (await store.notes()).firstWhere(
+              (n) => n.serverId == id,
+            );
+            return http.Response(jsonEncode(candidate.base!.toJson()), 200);
+          }),
+          account: account,
+          appPassword: 'fixture',
+        ),
+      );
 
   @override
   Future<void> synchronize(String accountId) async {}

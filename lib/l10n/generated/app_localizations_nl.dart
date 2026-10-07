@@ -4793,4 +4793,30 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get nextcloudChooseConflictingAttributes =>
       'Kies voor elk conflicterend kenmerk een waarde.';
+
+  @override
+  String get nextcloudUseServerNote => 'Deze servernotitie gebruiken';
+
+  @override
+  String get nextcloudUseServerNoteExplanation =>
+      'Koppelt dit concept aan de geselecteerde servernotitie en synchroniseert daarna de behouden lokale wijzigingen. Een overeenkomend verzoek bevestigt niet wie de notitie heeft gemaakt.';
+
+  @override
+  String get nextcloudExactCandidate =>
+      'Exacte overeenkomst met het verzoek; identiteit onbevestigd.';
+
+  @override
+  String get nextcloudPossibleCandidate =>
+      'Mogelijke overeenkomst na normalisatie; identiteit onbevestigd.';
+
+  @override
+  String get nextcloudSelectCandidate =>
+      'Selecteer een servernotitie om te bekijken';
+
+  @override
+  String get nextcloudCreateSeparate => 'Een afzonderlijke notitie maken';
+
+  @override
+  String get nextcloudCreateSeparateWarning =>
+      'Het eerste verzoek heeft mogelijk al een servernotitie gemaakt. Dit maakt een afzonderlijke notitie met uw behouden lokale werk. Vermoedelijke duplicaten worden niet verwijderd.';
 }

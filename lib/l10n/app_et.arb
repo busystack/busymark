@@ -3866,5 +3866,12 @@
   "nextcloudAttachmentReference": "Manuse viide serveris",
   "nextcloudAddAttachment": "Lisa manus…",
   "nextcloudDeleteAttachmentWarning": "Manuse kustutamine muudab selle lingid märkmes kättesaamatuks. Säilitatud andmed saab taastada kohalikust ajaloost.",
-  "nextcloudChooseConflictingAttributes": "Valige iga vastuolulise atribuudi väärtus."
+  "nextcloudChooseConflictingAttributes": "Valige iga vastuolulise atribuudi väärtus.",
+  "nextcloudUseServerNote": "Kasuta seda serverimärkust",
+  "nextcloudUseServerNoteExplanation": "Seob mustandi valitud serverimärkusega ja sünkroonib seejärel säilitatud kohalikud muudatused. Päringu vastavus ei kinnita märkuse loojat.",
+  "nextcloudExactCandidate": "Täpne päringu vaste; identiteet on kinnitamata.",
+  "nextcloudPossibleCandidate": "Võimalik puhastatud päringu vaste; identiteet on kinnitamata.",
+  "nextcloudSelectCandidate": "Vali ülevaatamiseks serverimärkus",
+  "nextcloudCreateSeparate": "Loo eraldi märkus",
+  "nextcloudCreateSeparateWarning": "Esimene päring võis serveris juba märkuse luua. See loob eraldi märkuse koos säilitatud kohaliku tööga. Võimalikke duplikaate ei kustutata."
 }

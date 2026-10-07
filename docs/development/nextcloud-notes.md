@@ -188,22 +188,41 @@ from the recorded wire content. There is no hidden Markdown marker.
 There is no documented create idempotency key. A transport failure, malformed
 response or 5xx after creation enters `creationUncertain`; restart after an
 in-flight create does the same. Reconciliation requests an unpruned collection.
-A plausible candidate must have an unseen ID and equal wire content, favorite
-and modified. Automatic adoption additionally requires exact wire title and
-category, exactly one match, exactly one matching local attempt, nonempty
-content, and no existing downloaded local instance. A title or category changed
-by server sanitization/deduplication remains an unresolved candidate for the user
-to adopt deliberately. Candidate IDs survive restart, and the comparison UI can
-select among multiple plausible notes. Empty-content matches, missing evidence,
-or an existing instance also require deliberate resolution. Timestamps alone
-are never identity. These are conservative correlation checks, not a server
-idempotency guarantee; an independently created fully identical note cannot be
-proven distinct. BusyMark never automatically retries an uncertain POST.
+A plausible candidate has an unseen ID and equal wire content, favorite and
+modified. Exact and sanitized payload matches only rank possible candidates;
+they never establish identity. Every uncertain outcome remains blocked across
+refresh, reconnect, autosave and restart, including a single identical nonempty
+candidate and an empty result. Discovery persists candidates without binding,
+acknowledgment, clearing the attempt or permitting PUT, DELETE or publication.
+An independently created identical note cannot be distinguished by its payload.
 
-Adoption preserves the logical identity and any newer local revision, adopts the
-server ID/base/ETag, and retains pending attachment bytes/references. Attachment
-publication then resumes through the existing durable upload/update sequence.
-Recovery as a new note is an explicit user decision.
+The comparison presents the selected server ID, title, category, modification
+time and content. **Use this server note** explicitly links the draft and then
+synchronizes retained local edits. Confirmation supplies an immutable review
+containing the draft revision, account, attempt identity and selected state.
+The repository fetches that ID through the authenticated account and compares
+all state fields, including permissions. Changed, unavailable, missing or
+read-only candidates stay unresolved and need another review. Account removal,
+new local revisions and repeated confirmation invalidate the decision.
+
+Binding preserves the draft's logical identity and history. The fresh server
+ID/base/ETag and outbox commit with removal of a clean downloaded duplicate in
+one SQLite transaction. Durable duplicate edits and pending attachment
+operations block consolidation. Every workspace controller also registers an
+open-tab guard; candidate tabs must be closed after preserving their work.
+Reserved candidates cannot be opened during confirmation. The same commit-time
+editor guard rejects unsaved draft edits that arrived during the confirmation
+GET, requiring another review. Newer draft edits and staged bytes remain
+pending through the existing ordered attachment/update pipeline, and subsequent PUTs retain If-Match protection.
+
+**Create a separate note** warns that the first request may already have created
+a server note. The explicit decision durably records one replacement identity
+and copies recoverable work and attachment bytes atomically. Concurrent clicks
+are rejected and repeated confirmation reuses that replacement. The original
+uncertain draft remains recoverable and blocked. Cancel and dismissal leave it
+untouched. No suspected server duplicate is automatically deleted. Legacy
+uncertain records without creation evidence cannot be adopted by guessing;
+the existing database migrations and startup recovery remain unchanged.
 
 Read-only notes block content/title/category editing while favorite remains
 writable under the documented contract. A note becoming read-only does not
@@ -313,3 +332,10 @@ The current [Text source](https://github.com/nextcloud/text) and
 describe web-editor ownership and internal collaborative machinery, not a
 documented supported external native collaboration API. A future official
 native API would require a separate product decision.
+
+The 7 October explicit-adoption source, regression, live HTTPS and application
+evidence is recorded in [the validation report](nextcloud-notes-validation.md).
+Installed-Snap X11 and Wayland visualization acceptance subsequently passed on
+the same recipe-built package in a disposable KVM desktop, including repeated
+runs. The validation report records the environment, historical failures and
+final committed-source archive verification.

@@ -1,0 +1,34 @@
+........................................................................................................................................................................................................status: done
+package.snap: OK
+2026-10-07T18:39:23Z INFO Waiting for automatic snapd restart...
+2026-10-07T18:39:24Z INFO Waiting for automatic snapd restart...
+2026-10-07T18:39:25Z INFO Waiting for automatic snapd restart...
+2026-10-07T18:39:26Z INFO Waiting for automatic snapd restart...
+busymark 0.6.1 installed
+Name               Version                         Rev    Tracking       Publisher    Notes
+bare               1.0                             5      latest/stable  canonical**  base
+busymark           0.6.1                           x1     -              -            -
+core24             20260824                        2124   latest/stable  canonical**  base
+gnome-46-2404      0+git.b31ceab-sdk0+git.f80dd8b  168    latest/stable  canonical**  -
+gtk-common-themes  0.1-81-g442e511                 1535   latest/stable  canonical**  -
+mesa-2404          25.2.8-snap288                  1839   latest/stable  canonical**  -
+snapd              2.77.1                          28254  latest/stable  canonical**  snapd
+Interface                 Plug                               Slot                            Notes
+audio-playback            busymark:audio-playback            :audio-playback                 -
+browser-support           busymark:browser-support           :browser-support                -
+content[gnome-46-2404]    busymark:gnome-46-2404             gnome-46-2404:gnome-46-2404     -
+content[gpu-2404]         busymark:gpu-2404                  mesa-2404:gpu-2404              -
+content[gtk-3-themes]     busymark:gtk-3-themes              gtk-common-themes:gtk-3-themes  -
+content[icon-themes]      busymark:icon-themes               gtk-common-themes:icon-themes   -
+content[sound-themes]     busymark:sound-themes              gtk-common-themes:sound-themes  -
+desktop                   busymark:desktop                   :desktop                        -
+desktop-legacy            busymark:desktop-legacy            :desktop-legacy                 -
+gsettings                 busymark:gsettings                 :gsettings                      -
+home                      busymark:home                      :home                           -
+network                   busymark:network                   :network                        -
+opengl                    busymark:opengl                    :opengl                         -
+password-manager-service  busymark:password-manager-service  :password-manager-service       manual
+removable-media           busymark:removable-media           -                               -
+ssh-keys                  busymark:ssh-keys                  -                               -
+wayland                   busymark:wayland                   :wayland                        -
+x11                       busymark:x11                       :x11                            -

@@ -1,0 +1,26 @@
+
+(io.busystack.busymark:797586): Gdk-CRITICAL **: 03:22:47.451: gdk_seat_get_keyboard: assertion 'GDK_IS_SEAT (seat)' failed
+
+(io.busystack.busymark:797586): dbind-WARNING **: 03:22:47.456: Couldn't connect to accessibility bus: Failed to connect to socket /run/user/1000/at-spi/bus_1: No such file or directory
+
+(io.busystack.busymark:797586): Gdk-CRITICAL **: 03:22:47.617: gdk_seat_get_keyboard: assertion 'GDK_IS_SEAT (seat)' failed
+
+(io.busystack.busymark:797586): Atk-CRITICAL **: 03:22:47.618: atk_socket_embed: assertion 'plug_id != NULL' failed
+[IMPORTANT:flutter/shell/platform/embedder/embedder_surface_gl_impeller.cc(126)] Using the Impeller rendering backend (OpenGLESSDF).
+
+(io.busystack.busymark:797586): Gdk-CRITICAL **: 03:22:47.742: gdk_seat_get_keyboard: assertion 'GDK_IS_SEAT (seat)' failed
+Gdk-Message: 03:22:47.744: Unable to load  from the cursor theme
+
+(io.busystack.busymark:797586): Gdk-CRITICAL **: 03:22:47.869: gdk_seat_get_keyboard: assertion 'GDK_IS_SEAT (seat)' failed
+
+(io.busystack.busymark:797586): Gdk-CRITICAL **: 03:22:47.916: gdk_seat_get_keyboard: assertion 'GDK_IS_SEAT (seat)' failed
+
+** (process:2): WARNING **: 03:22:47.968: Failed to connect to bus: Could not connect: No such file or directory
+
+** (process:2): WARNING **: 03:22:47.970: Can't connect to a11y bus: Error receiving data: Connection reset by peer
+
+(io.busystack.busymark:797586): Gdk-CRITICAL **: 03:22:49.682: gdk_seat_get_keyboard: assertion 'GDK_IS_SEAT (seat)' failed
+
+** (process:2): WARNING **: 03:22:49.756: Failed to connect to bus: Could not connect: No such file or directory
+
+** (process:2): WARNING **: 03:22:49.757: Can't connect to a11y bus: Error receiving data: Connection reset by peer

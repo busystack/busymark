@@ -1,10 +1,12 @@
 # Nextcloud Notes implementation validation
 
-This record describes the checks actually executed for this implementation on
-October 4–5, 2026 (UTC). See [the integration contract](nextcloud-notes.md) for the
+The sections dated October 4–5, 2026 are historical records. Their automatic
+creation-adoption behavior and incomplete acceptance results are superseded by
+the **Explicit-adoption validation, 7 October 2026** section at the end of this
+file. See [the integration contract](nextcloud-notes.md) for the current policy,
 architecture, security boundaries and server limitations.
 
-## Capability and synchronization follow-up (October 5, 2026)
+## Historical capability and synchronization follow-up (October 5, 2026)
 
 This follow-up addresses only API 1.4 compatibility, uncertain creation,
 attribute-wise merging, HTTPS enforcement and bounded attachment downloads. The
@@ -137,7 +139,8 @@ packages for **Notes 6.0.1 and 6.1.0**. Both completed **13 checks successfully*
 - Offline new note plus attachment, database close/reopen, reconnect/publication.
 - Remote deletion with pending work and explicit fresh-state-checked deletion.
 - A deliberately lost successful POST response, durable wire metadata and staged
-  attachment across restart, another local edit, automatic candidate adoption,
+  attachment across restart, another local edit, automatic candidate adoption
+  (historical behavior, superseded by mandatory confirmation),
   sanitized title/category adoption, attachment publication and **one note POST**.
 
 On 6.0.1, invoking attachment DELETE produced `unsupported` without issuing the
@@ -164,7 +167,7 @@ unverified here. Packaging and unpacked dependency checks are reported separatel
 neither is claimed to prove installed confinement behavior.
 
 
-### Follow-up changed files
+### Historical follow-up changed files
 
 - `docs/development/nextcloud-notes-validation.md`
 - `docs/development/nextcloud-notes.md`
@@ -655,3 +658,200 @@ tools/secure_credential_policy_probe.cc
 tools/test_nextcloud_libsecret.sh
 tools/test_secure_credential_policy.sh
 ```
+
+## Explicit-adoption validation, 7 October 2026
+
+This section supersedes earlier automatic-adoption expectations. Evidence is
+retained in `delivery/nextcloud-explicit-adoption/evidence/` and the delivered
+manifest records source and artifact hashes. Initial HEAD was `f9b734c`; the
+workspace was clean before this work. No unrelated edits were discarded.
+
+A pre-fix regression failed because discovery assigned server ID 1 without
+confirmation. The replacement regression verifies repeated discovery first,
+then explicitly confirms adoption before permitting an If-Match PUT.
+
+Upstream `nextcloud/notes` tags v6.0.1 and v6.1.0 were inspected specifically at
+`docs/api/v1.md` and `lib/Controller/NotesApiController.php`: POST accepts writable
+attributes and returns the server note, without a client idempotency key; PUT
+uses the server identity and ETag check. Payload equality is not identity proof.
+
+Actual disposable HTTPS Notes **6.0.1** and **6.1.0** runs each passed **14 checks**,
+including dropped successful POST response, staged attachment and newer edit
+across restart, repeated nonmutating discovery, deliberate adoption, byte
+verification, a second restart, and an independently created identical note
+whose BusyMark POST was never delivered. CRUD, canonical metadata, ETag conflict,
+chunking, deletion and version-specific attachment checks remain included.
+The harness's separate `offline` transport-injection scenario is a repository
+test and does not establish denied application network access.
+
+Browser Login Flow passed anonymous start, pending 404, external-browser
+launch, browser grant and one-time 200 credentials with disposable browser
+profiles. Native libsecret store/read/delete and credential-policy checks passed
+in an isolated keyring. Writerside conformance passed 181 checks. The Welcome
+routing test passed without weakening its assertions (5 tests in the router
+file). The native spelling package passed 13 tests.
+
+Final regression validation used Flutter **3.47.5**, Dart **3.13.4**, the frozen
+Linux release bundle and the CI spelling resources. The complete Nextcloud set
+passed **216 tests**; the entire Flutter suite passed **3,638 tests, zero failures
+and zero skips** in 18:21. The unchanged Welcome restoration assertion passed in
+the full suite. Localization audit passed 21 tests, actual dictionary integration
+passed 3, the native spell package passed 13 and Writerside conformance passed 181.
+Formatting reported 544 files with zero changes; analysis reported no issues.
+Dependency-lock enforcement succeeded without changing the lockfile.
+
+The final confirmation UI regression clicks a real dropdown option and the
+**Use this server note** action. A short timing poll initially failed under
+load; the final test drives dialog-dismissal frames and real SQLite work while
+retaining its binding, content, pending-revision and duplicate assertions. A
+separate failing regression exposed unsaved draft edits arriving during the
+confirmation GET; the commit-time controller guard fixes that race. Both
+pre-fix failures and the superseded full-suite timing failure remain historical
+evidence, alongside the successful final logs.
+
+The native application and the actual installed **strict Snap** completed
+browser Login Flow through the desktop portal and an external Chromium browser
+with disposable profiles. Account credentials used the guest's libsecret Secret
+Service and survived application restart. Both applications exercised staged
+attachment creation, discarded successful POST response, restart, newer local
+edit, repeated refresh without binding or publication, actual candidate-dialog
+confirmation, canonical metadata, exact attachment bytes, one original POST and
+another restart with the exact acknowledged revision. The native binding is
+server note 184; the Snap binding is 223. Both preserve their original local IDs.
+Snapshots, durable-state reports and server comparisons are retained.
+
+Application network denial was real: native acceptance used a root-created
+network namespace, and installed-Snap acceptance disconnected `busymark:network`.
+The Snap kernel audit records denied Internet socket creation by the actual
+`busymark` process; the UI preserved its offline draft and bytes across restart.
+Reconnect created that previously unsubmitted draft once. No harness `offline`
+flag is counted as application network acceptance.
+
+The native final binary passed fresh dictionary installation and denied-network
+restarts on X11 and Wayland in the disposable VM. Linux release visualization
+and real WebKit smoke runs passed on both backends. Installed-Snap online and
+denied-network X11 spelling passed. Its visualization run failed in WebKit
+(`Unsupported result type`, with another run failing MathJax recovery). An
+experimental Promise-retention change did not fix acceptance and was reverted.
+Installed-Snap Wayland spelling subsequently passed all 20 checks with network
+access denied. Wayland visualization failed during Mermaid/Typst export after
+13 checks. At that stage, passing installed visualization acceptance remained outstanding.
+Automatic approval review rejected uploading the source to public GitHub for
+the Ubuntu CI run; explicit export approval was requested. These failed VM
+checks are not counted as passing acceptance. The final KVM acceptance below
+supersedes that incomplete release status while retaining these failed results.
+
+The VM is Ubuntu **24.04.5**, kernel **6.8.0-142**, snapd **2.77.1**, software QEMU
+TCG (2 CPUs, 4 GiB), Xvfb/Openbox and Weston headless. Its desktop portal has the
+correct display/DBus environment. A disposable test CA was trusted only in the
+VM/browser fixture; production HTTPS checks were preserved. The VM permits
+unprivileged user namespaces for WebKit Bubblewrap; Snap AppArmor profiles remain
+enforced, as independently proved by the network denials. `LP_NUM_THREADS=2`
+caps software-renderer workers. The final native runs retain the existing smoke
+assertions and timeouts. Earlier display/portal setup failures are fixture
+history, not passed checks.
+
+The Snap was built with **Snapcraft 8.11.1**, the official core24 builder and the
+unchanged actual `snap/snapcraft.yaml`, from a fresh source directory after
+`snapcraft clean --destructive-mode`. `snapcraft pack --destructive-mode` produced
+the strict package. The development repack script was not used. The installed
+payload checks verify SVG loading, GTK/WebKit/GNOME/Mesa libraries, fonts, media,
+Git/SSH/session tools and Yaru assets. Required desktop, X11/Wayland, network,
+content and manually connected password-manager interfaces were inspected.
+The installed package SHA-256 matches the delivered recipe-built artifact.
+
+The disposable accounts were deleted after application acceptance; both
+HTTPS APIs returned 401 for their revoked credentials. All grants belonging
+to those accounts, including application Login Flow grants, were invalidated.
+Private fixture credentials, keys and Login Flow URLs are excluded.
+
+Exact commands and final reports are under
+`delivery/nextcloud-explicit-adoption/evidence/`. Key invocations were:
+
+```sh
+flutter pub get --enforce-lockfile
+flutter gen-l10n
+flutter test test/src/localization_audit_test.dart
+dart format --set-exit-if-changed .
+flutter analyze
+(cd packages/busymark_spellcheck_native && dart pub get && dart test)
+tools/fetch_spelling_dictionaries.sh build/spelling-test
+BUSYMARK_TEST_SPELLING_ROOT="$PWD/build/spelling-test" flutter test test/src/spelling_bundle_integration_test.dart
+tools/validate_writerside_conformance.sh
+flutter build linux --release
+flutter test --no-pub --concurrency=1 --reporter expanded test/src/nextcloud_notes test/src/nextcloud_*_test.dart
+BUSYMARK_NATIVE_DIALOG_TEST_DISPLAY=:97 BUSYMARK_D2_PATH="$PWD/build/linux/x64/release/bundle/libexec/busymark/d2" BUSYMARK_TYPST_PATH="$PWD/build/linux/x64/release/bundle/libexec/busymark/typst" BUSYMARK_TEST_SPELLING_ROOT="$PWD/build/spelling-test" flutter test --no-pub --concurrency=1 --reporter expanded
+dart run tools/nextcloud_notes_live_acceptance.dart PRIVATE_CREDENTIALS SANITIZED_REPORT TEST_CA_PEM
+```
+
+The live commands ran separately against Notes 6.0.1 and 6.1.0 on disposable
+Nextcloud 35.0.1 HTTPS installations. A persistent server lock through the
+supported Files Lock OCS endpoint produced a real **423** while an unrelated note
+synchronized successfully. The first Text browser lock probe did not produce
+423 and remains a failed historical fixture attempt.
+
+The final source identity is the commit recorded by the delivery manifest.
+`linux-source-identity.json` and `snap-source-identity.json` record 568 compilation
+input hashes matching that tree, the recipe hash, artifact hashes and frozen
+binary hashes. Tests and documentation changed after the build only where they
+do not enter compilation; the manifest and extracted-archive verification tie
+their final bytes to the committed source and final test logs. The delivered
+source archive is generated from that commit, with a fresh extraction checked
+byte-for-byte and the complete Nextcloud regression set rerun there.
+
+## Final installed acceptance and delivery, 7 October 2026
+
+The original recipe-built Snap, SHA-256
+`2b7c2a7b91a9aa7cbb7f23d35186e59a46173446b95ca9a14ddb5f667ca592ce`,
+passed installed visualization on **X11 and Wayland: 23 checks each**, with a
+second successful run on each backend. The repeat X11 command took 10 seconds;
+the combined Wayland spelling/visualization command took 18 seconds. Installed
+spelling passed **20 checks per run**, including fresh dictionary installation,
+Snap revision refresh, and X11/Wayland restart with `busymark:network`
+disconnected. Wayland visualization also ran with that interface disconnected.
+The original assertions and timeouts were retained.
+
+This fresh disposable VM uses **KVM, 4 CPUs, 4 GiB RAM**, Ubuntu **24.04.5**,
+kernel **6.8.0-142**, snapd **2.77.1**, core24 revision **2124**, GNOME revision
+**168** and Mesa revision **1839**. The content runtimes match the earlier TCG
+fixture. The installed root-owned Snap hash, embedded recipe hash, AOT hash,
+interfaces and enforced AppArmor profile were rechecked. The package and all
+568 recorded compilation inputs are unchanged; no renderer workaround was
+shipped and no executable was replaced during tests.
+
+The fresh headless VM initially lacked a usable desktop activation environment.
+A temporary D-Bus session could not create Snap's cgroup; its normal systemd
+user session fixed that. GTK portal activation then waited on a missing display
+and the first visualization attempt timed out. A persistent Xvfb display,
+`dbus-update-activation-environment --systemd DISPLAY=:97 XDG_CURRENT_DESKTOP=GNOME`,
+and explicit GTK portal selection provided a working Settings portal. Both
+backends then passed repeatedly without the experimental `NO_AT_BRIDGE`
+override. These observations explain the new fixture failures; they do not
+establish the cause of every historical TCG `Unsupported result type` error.
+All failures remain labelled in the evidence.
+
+The installed commands were extracted from `.github/workflows/flutter-linux.yml`:
+GTK SVG loading; shared-runtime/tool/media/resource inspection; dictionary
+install/refresh/offline use; X11 visualization/PDF; and Wayland
+spelling/visualization. Their only substitutions are the private report directory
+and the exact package path. Scripts, logs, reports, exported HTML/PDF, desktop
+configuration and kernel audit evidence are retained in
+`delivery/nextcloud-explicit-adoption/evidence/installed-kvm/`.
+
+Public source publication was explicitly approved after the initial automatic
+review rejection. GitHub then returned **403, Resource not accessible by
+integration**, and the existing SSH identity could not authenticate. No branch
+or draft PR was created and no CI result is claimed. The authorized disposable
+VM completed the installed-package checks instead.
+
+Release acceptance is complete for the recorded source and artifacts: full
+Flutter **3,638 passed / 0 failed / 0 skipped**, complete Nextcloud **216 passed**,
+the earlier native/Writerside checks, real HTTPS Notes **6.0.1 and 6.1.0**,
+real 423 isolation, actual browser/libsecret/application/offline adoption, and
+the installed strict-Snap checks above. The application and test source remains
+code commit `d55b41ddf47ef716d5113c89da8a3a2f3b80e819`; the final delivery commit
+adds evidence and documentation. The final manifest names that commit and the
+archives generated directly from it. Fresh extraction verifies every committed
+file and build input, then reruns all 216 Nextcloud tests, including the top-level
+files. Test accounts were revoked; the acceptance VM and private keys are removed
+after evidence collection.

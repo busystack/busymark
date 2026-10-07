@@ -3448,5 +3448,12 @@
   "nextcloudAttachmentReference": "مرجع پیوست روی سرور",
   "nextcloudAddAttachment": "افزودن پیوست…",
   "nextcloudDeleteAttachmentWarning": "با حذف این پیوست، پیوندهای آن در یادداشت دیگر در دسترس نخواهند بود. داده‌های نگه‌داری‌شده را می‌توان از تاریخچهٔ محلی بازیابی کرد.",
-  "nextcloudChooseConflictingAttributes": "مقدار هر ویژگی متعارض را انتخاب کنید."
+  "nextcloudChooseConflictingAttributes": "مقدار هر ویژگی متعارض را انتخاب کنید.",
+  "nextcloudUseServerNote": "استفاده از این یادداشت سرور",
+  "nextcloudUseServerNoteExplanation": "این پیش‌نویس را به یادداشت انتخاب‌شدهٔ سرور پیوند می‌دهد و سپس تغییرات محلی حفظ‌شده را همگام می‌کند. تطابق درخواست مشخص نمی‌کند چه کسی یادداشت را ایجاد کرده است.",
+  "nextcloudExactCandidate": "تطابق دقیق درخواست؛ هویت تأیید نشده است.",
+  "nextcloudPossibleCandidate": "تطابق احتمالی درخواست پاک‌سازی‌شده؛ هویت تأیید نشده است.",
+  "nextcloudSelectCandidate": "یک یادداشت سرور را برای بررسی انتخاب کنید",
+  "nextcloudCreateSeparate": "ایجاد یک یادداشت جداگانه",
+  "nextcloudCreateSeparateWarning": "ممکن است درخواست نخست قبلاً یک یادداشت سرور ایجاد کرده باشد. این کار یک یادداشت جداگانه با کار محلی حفظ‌شدهٔ شما ایجاد می‌کند. هیچ یادداشت مشکوک به تکراری بودن حذف نمی‌شود."
 }

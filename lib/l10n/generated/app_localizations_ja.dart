@@ -4615,4 +4615,27 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get nextcloudChooseConflictingAttributes => '競合する各属性の値を選択してください。';
+
+  @override
+  String get nextcloudUseServerNote => 'このサーバーノートを使用';
+
+  @override
+  String get nextcloudUseServerNoteExplanation =>
+      'この下書きを選択したサーバーノートにリンクし、保持したローカル変更を同期します。リクエストの一致だけでは作成者を確認できません。';
+
+  @override
+  String get nextcloudExactCandidate => 'リクエストと完全一致。識別情報は未確認です。';
+
+  @override
+  String get nextcloudPossibleCandidate => '正規化されたリクエストと一致する可能性あり。識別情報は未確認です。';
+
+  @override
+  String get nextcloudSelectCandidate => '確認するサーバーノートを選択';
+
+  @override
+  String get nextcloudCreateSeparate => '別のノートを作成';
+
+  @override
+  String get nextcloudCreateSeparateWarning =>
+      '最初のリクエストですでにサーバーノートが作成された可能性があります。保持したローカル作業から別のノートを作成します。重複の疑いがあるノートは削除されません。';
 }

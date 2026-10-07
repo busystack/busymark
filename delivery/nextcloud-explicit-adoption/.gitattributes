@@ -1,0 +1,2 @@
+# Preserve captured reports, screenshots and binary exports byte-for-byte.
+evidence/** -text -diff

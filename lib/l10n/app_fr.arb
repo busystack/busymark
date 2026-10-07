@@ -3406,5 +3406,12 @@
   "nextcloudAttachmentReference": "Référence de la pièce jointe sur le serveur",
   "nextcloudAddAttachment": "Ajouter une pièce jointe…",
   "nextcloudDeleteAttachmentWarning": "Supprimer cette pièce jointe rend ses liens dans la note indisponibles. Les données conservées peuvent être récupérées dans l’historique local.",
-  "nextcloudChooseConflictingAttributes": "Choisissez chaque attribut en conflit."
+  "nextcloudChooseConflictingAttributes": "Choisissez chaque attribut en conflit.",
+  "nextcloudUseServerNote": "Utiliser cette note du serveur",
+  "nextcloudUseServerNoteExplanation": "Lie ce brouillon à la note sélectionnée sur le serveur, puis synchronise les modifications locales conservées. Une requête identique ne confirme pas qui a créé la note.",
+  "nextcloudExactCandidate": "Correspondance exacte avec la requête ; identité non confirmée.",
+  "nextcloudPossibleCandidate": "Correspondance possible après normalisation ; identité non confirmée.",
+  "nextcloudSelectCandidate": "Sélectionner une note du serveur à examiner",
+  "nextcloudCreateSeparate": "Créer une note distincte",
+  "nextcloudCreateSeparateWarning": "La première requête a peut-être déjà créé une note sur le serveur. Ceci crée une note distincte avec votre travail local conservé. Aucun doublon supposé ne sera supprimé."
 }

@@ -1,0 +1,59 @@
+2026-10-07T18:56:34+00:00
+PRETTY_NAME="Ubuntu 24.04.5 LTS"
+NAME="Ubuntu"
+VERSION_ID="24.04"
+VERSION="24.04.5 LTS (Noble Numbat)"
+VERSION_CODENAME=noble
+ID=ubuntu
+ID_LIKE=debian
+HOME_URL="https://www.ubuntu.com/"
+SUPPORT_URL="https://help.ubuntu.com/"
+BUG_REPORT_URL="https://bugs.launchpad.net/ubuntu/"
+PRIVACY_POLICY_URL="https://www.ubuntu.com/legal/terms-and-policies/privacy-policy"
+UBUNTU_CODENAME=noble
+LOGO=ubuntu-logo
+Linux busymark-adoption-kvm 6.8.0-142-generic #142-Ubuntu SMP PREEMPT_DYNAMIC Wed Sep  2 14:24:27 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux
+kvm
+CPU(s):                                  4
+Model name:                              Intel(R) Core(TM) i9-9900K CPU @ 3.60GHz
+Hypervisor vendor:                       KVM
+Virtualization type:                     full
+snap          2.77.1
+snapd         2.77.1
+series        16
+ubuntu        24.04
+kernel        6.8.0-142-generic
+architecture  amd64
+Name               Version                         Rev    Tracking       Publisher    Notes
+bare               1.0                             5      latest/stable  canonical**  base
+busymark           0.6.1                           x2     -              -            -
+core24             20260824                        2124   latest/stable  canonical**  base
+gnome-46-2404      0+git.b31ceab-sdk0+git.f80dd8b  168    latest/stable  canonical**  -
+gtk-common-themes  0.1-81-g442e511                 1535   latest/stable  canonical**  -
+mesa-2404          25.2.8-snap288                  1839   latest/stable  canonical**  -
+snapd              2.77.1                          28254  latest/stable  canonical**  snapd
+Interface                 Plug                               Slot                            Notes
+audio-playback            busymark:audio-playback            :audio-playback                 -
+browser-support           busymark:browser-support           :browser-support                -
+content[gnome-46-2404]    busymark:gnome-46-2404             gnome-46-2404:gnome-46-2404     -
+content[gpu-2404]         busymark:gpu-2404                  mesa-2404:gpu-2404              -
+content[gtk-3-themes]     busymark:gtk-3-themes              gtk-common-themes:gtk-3-themes  -
+content[icon-themes]      busymark:icon-themes               gtk-common-themes:icon-themes   -
+content[sound-themes]     busymark:sound-themes              gtk-common-themes:sound-themes  -
+desktop                   busymark:desktop                   :desktop                        -
+desktop-legacy            busymark:desktop-legacy            :desktop-legacy                 -
+gsettings                 busymark:gsettings                 :gsettings                      -
+home                      busymark:home                      :home                           -
+network                   busymark:network                   :network                        manual
+opengl                    busymark:opengl                    :opengl                         -
+password-manager-service  busymark:password-manager-service  :password-manager-service       manual
+removable-media           busymark:removable-media           -                               -
+ssh-keys                  busymark:ssh-keys                  -                               -
+wayland                   busymark:wayland                   :wayland                        -
+x11                       busymark:x11                       :x11                            -
+/var/lib/snapd/snaps/busymark_x2.snap: OK
+snap.busymark.busymark (enforce)
+Installed embedded recipe SHA-256: c337fa68d95a589562aa10ab1c63e809b900c711ff53466fd79a9ffd53bc7d1d
+/snap/busymark/x2/gnome-platform/usr/lib/x86_64-linux-gnu/libwebkit2gtk-4.1.so.0.21.10
+82f152048842ffcd0a70d08d12df10bf9b24da4b230f971c692ec781019dbef9  /snap/busymark/x2/busymark
+87acd7e0dc6ebe33a6c06a9d57d22954cfb5db18e7e99a2537908055ee7e8013  /snap/busymark/x2/lib/libapp.so

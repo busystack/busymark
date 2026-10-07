@@ -1,0 +1,19 @@
+{
+  "ok": true,
+  "checks": {
+    "notesVersion": "6.0.1",
+    "apiVersion": "1.4",
+    "locallyDurableCreation": true,
+    "contentCategoryFavoriteCanonicalTitle": true,
+    "titleSanitized": true,
+    "attachmentDeleteUnavailable": true,
+    "attachmentUploadFetchRename": true,
+    "secondActorEtagConflictAndMerge": true,
+    "offlineNewNoteAttachmentRestartReconnect": true,
+    "uncertainCreateExplicitAdoptionAttachmentRestart": true,
+    "independentIdenticalCandidateRequiresConfirmation": true,
+    "listChunksLastModifiedEtag304": true,
+    "remoteDeletionPreservesLocalWork": true,
+    "explicitFreshCheckedDeletion": true
+  }
+}

@@ -1,0 +1,6 @@
+00:00 +0: loading /home/albert/busystack/busymark/test/src/spelling_bundle_integration_test.dart
+00:00 +0: real en-CA checks pasted rich content completely in both editors
+00:14 +1: packaged catalog opens real regional and non-Latin dictionaries
+Shell: Failure loading aff file /home/albert/busystack/busymark/build/spelling-test/installed/es-UY/dictionary.aff
+00:20 +2: real en-CA checks the general Markdown fixture completely
+00:23 +3: All tests passed!

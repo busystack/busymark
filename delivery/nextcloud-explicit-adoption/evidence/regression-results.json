@@ -1,0 +1,50 @@
+{
+  "ok": true,
+  "focusedNextcloud": {
+    "passed": 216,
+    "failed": 0,
+    "log": "focused-final.log"
+  },
+  "fullFlutter": {
+    "passed": 3638,
+    "failed": 0,
+    "skipped": 0,
+    "duration": "18:21",
+    "log": "full-flutter-final.log"
+  },
+  "confirmationUi": {
+    "passed": 16,
+    "failed": 0,
+    "log": "ui-confirmation-final.log"
+  },
+  "nativeSpellPackage": {
+    "passed": 13,
+    "failed": 0,
+    "log": "native-spelling.log"
+  },
+  "localizationAudit": {
+    "passed": 21,
+    "failed": 0,
+    "log": "localization-audit.log"
+  },
+  "realDictionaries": {
+    "passed": 3,
+    "failed": 0,
+    "log": "spelling-integration.log"
+  },
+  "writerside": {
+    "passed": 181,
+    "failed": 0,
+    "log": "writerside.log"
+  },
+  "liveNotes": {
+    "6.0.1": 14,
+    "6.1.0": 14,
+    "real423AndUnrelatedSynchronization": true
+  },
+  "linuxRunnerSha256": "ddd5b6fc361e697cab18f195b6afd47f4bae64ff19dfdd49a6495a341528f32b",
+  "linuxAotSha256": "9e0ccfd3e1f8164c5d218dd0b5bfbbf8b8b1c07bbf86b5295dd5a9c2f7b5815d",
+  "releaseAcceptanceComplete": true,
+  "installedSnapResults": "snap-acceptance-results.json",
+  "validatedCodeCommit": "d55b41ddf47ef716d5113c89da8a3a2f3b80e819"
+}

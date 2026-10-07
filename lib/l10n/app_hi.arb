@@ -3406,5 +3406,12 @@
   "nextcloudAttachmentReference": "सर्वर पर संलग्नक का संदर्भ",
   "nextcloudAddAttachment": "अटैचमेंट जोड़ें…",
   "nextcloudDeleteAttachmentWarning": "यह अटैचमेंट हटाने पर नोट में इसके लिंक उपलब्ध नहीं रहेंगे। सुरक्षित रखे गए डेटा को स्थानीय इतिहास से पुनर्प्राप्त किया जा सकता है।",
-  "nextcloudChooseConflictingAttributes": "हर परस्पर विरोधी विशेषता का मान चुनें।"
+  "nextcloudChooseConflictingAttributes": "हर परस्पर विरोधी विशेषता का मान चुनें।",
+  "nextcloudUseServerNote": "सर्वर के इस नोट का उपयोग करें",
+  "nextcloudUseServerNoteExplanation": "इस मसौदे को सर्वर के चुने हुए नोट से जोड़ता है, फिर सुरक्षित स्थानीय बदलाव समन्वयित करता है। अनुरोध का मिलना यह पुष्टि नहीं करता कि नोट किसने बनाया था।",
+  "nextcloudExactCandidate": "अनुरोध से पूरी तरह मेल; पहचान की पुष्टि नहीं हुई है।",
+  "nextcloudPossibleCandidate": "संशोधित अनुरोध से संभावित मेल; पहचान की पुष्टि नहीं हुई है।",
+  "nextcloudSelectCandidate": "समीक्षा के लिए सर्वर का नोट चुनें",
+  "nextcloudCreateSeparate": "अलग नोट बनाएँ",
+  "nextcloudCreateSeparateWarning": "पहले अनुरोध ने सर्वर पर पहले ही नोट बना दिया हो सकता है। यह आपके सुरक्षित स्थानीय काम के साथ अलग नोट बनाता है। किसी संभावित प्रतिलिपि को हटाया नहीं जाएगा।"
 }

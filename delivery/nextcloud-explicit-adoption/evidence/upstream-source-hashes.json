@@ -1,0 +1,10 @@
+{
+  "6.0.1": {
+    "docs/api/v1.md": "75f6d70833fb79542947efeea7c5d9e6707b1056769bea0a91d158f1caff41a4",
+    "lib/Controller/NotesApiController.php": "ec2f4c96e4d95dd3564f498d16be20fec1dc077a9b9d41eaefc51a2b12c74ab4"
+  },
+  "6.1.0": {
+    "docs/api/v1.md": "b675f4d2ab24fd7b2580f0acf3b897e90eb4a1705e9f3a351a87e6e58d1c97f7",
+    "lib/Controller/NotesApiController.php": "93193faafe00d9e5eae5e4f111794f95d821233373b06e7768313bf27cd13c8f"
+  }
+}

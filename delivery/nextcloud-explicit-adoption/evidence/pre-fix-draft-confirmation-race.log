@@ -1,0 +1,14 @@
+00:00 +0: loading /home/albert/busystack/busymark/test/src/nextcloud_workspace_test.dart
+00:00 +0: unsaved draft edits during confirmation require another review
+00:02 +0 -1: unsaved draft edits during confirmation require another review [E]
+  Expected: null
+    Actual: <1>
+  
+  package:matcher                                     expect
+  package:flutter_test/src/widget_tester.dart 473:18  expect
+  test/src/nextcloud_workspace_test.dart 79:5         main.<fn>
+  
+00:02 +0 -1: Some tests failed.
+
+Failing tests:
+  /home/albert/busystack/busymark/test/src/nextcloud_workspace_test.dart: unsaved draft edits during confirmation require another review

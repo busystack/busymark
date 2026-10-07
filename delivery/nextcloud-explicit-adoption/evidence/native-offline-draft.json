@@ -1,0 +1,63 @@
+{
+  "schema": 2,
+  "integrity": "ok",
+  "accountCount": 1,
+  "notes": [
+    {
+      "localId": "b25fb609-a960-4934-b82a-9defddb570ca",
+      "accountId": "545cb022-1de7-43d9-ab52-95ed202f803e",
+      "serverId": null,
+      "content": "",
+      "title": "New note",
+      "category": "",
+      "favorite": false,
+      "readonly": false,
+      "error": false,
+      "modified": 0,
+      "etag": null,
+      "base": null,
+      "remote": null,
+      "creationAttempt": null,
+      "revision": 1,
+      "ackRevision": 0,
+      "editorRevision": 0,
+      "editorContentDigest": null,
+      "syncState": "offline",
+      "errorMessage": "Nextcloud is unreachable. Local changes are preserved."
+    },
+    {
+      "localId": "fb4cfc0c-b2ca-4327-b1ee-cf4ec605b0f7",
+      "accountId": "545cb022-1de7-43d9-ab52-95ed202f803e",
+      "serverId": null,
+      "content": "BusyMark GUI submitted\n\n[attachment.bin](busymark-attachment:545cb022-1de7-43d9-ab52-95ed202f803e:fb4cfc0c-b2ca-4327-b1ee-cf4ec605b0f7:e43dca39-e443-4f92-b8f6-0799f7ea9a64)\n",
+      "title": "New note",
+      "category": "",
+      "favorite": false,
+      "readonly": false,
+      "error": false,
+      "modified": 0,
+      "etag": null,
+      "base": null,
+      "remote": null,
+      "creationAttempt": null,
+      "revision": 24,
+      "ackRevision": 0,
+      "editorRevision": 24,
+      "editorContentDigest": "6fa66b2526b6cdcf35bdedc515b2a941e6e805b13148012c952d871148c69707",
+      "syncState": "offline",
+      "errorMessage": "Nextcloud is unreachable. Local changes are preserved."
+    }
+  ],
+  "attachments": [
+    {
+      "id": "e43dca39-e443-4f92-b8f6-0799f7ea9a64",
+      "noteId": "fb4cfc0c-b2ca-4327-b1ee-cf4ec605b0f7",
+      "filename": "attachment.bin",
+      "reference": "busymark-attachment:545cb022-1de7-43d9-ab52-95ed202f803e:fb4cfc0c-b2ca-4327-b1ee-cf4ec605b0f7:e43dca39-e443-4f92-b8f6-0799f7ea9a64",
+      "remotePath": null,
+      "state": "pending",
+      "bytesSha256": "785b0751fc2c53dc14a4ce3d800e69ef9ce1009eb327ccf458afe09c242c26c9",
+      "byteCount": 1024
+    }
+  ]
+}

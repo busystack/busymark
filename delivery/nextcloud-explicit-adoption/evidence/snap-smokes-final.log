@@ -1,0 +1,42 @@
+[IMPORTANT:flutter/shell/platform/embedder/embedder_surface_gl_impeller.cc(126)] Using the Impeller rendering backend (OpenGLESSDF).
+
+(io.busystack.busymark:30691): IBUS-WARNING **: 12:34:47.165: Failed to mkdir /home/tester/snap/busymark/x2/.config/ibus/bus: Not a directory
+
+** (io.busystack.busymark:30691): WARNING **: 12:34:47.762: Could not open /sys/class/dmi/id/chassis_type: Failed to open file “/sys/class/dmi/id/chassis_type”: Permission denied
+
+** (io.busystack.busymark:30691): WARNING **: 12:34:47.763: Could not open /sys/firmware/acpi/pm_profile: Failed to open file “/sys/firmware/acpi/pm_profile”: Permission denied
+
+(process:30794): GLib-GIO-WARNING **: 12:34:54.778: GDBus.Error:org.freedesktop.portal.Error.NotAllowed: This call is not available inside the sandbox
+
+(process:30815): GLib-GIO-WARNING **: 12:34:55.617: GDBus.Error:org.freedesktop.portal.Error.NotAllowed: This call is not available inside the sandbox
+busymark 0.6.1 installed
+Warning: Schema “org.gnome.system.locale” has path “/system/locale/”.  Paths starting with “/apps/”, “/desktop/” or “/system/” are deprecated.
+Warning: Schema “org.gnome.system.proxy” has path “/system/proxy/”.  Paths starting with “/apps/”, “/desktop/” or “/system/” are deprecated.
+Warning: Schema “org.gnome.system.proxy.http” has path “/system/proxy/http/”.  Paths starting with “/apps/”, “/desktop/” or “/system/” are deprecated.
+Warning: Schema “org.gnome.system.proxy.https” has path “/system/proxy/https/”.  Paths starting with “/apps/”, “/desktop/” or “/system/” are deprecated.
+Warning: Schema “org.gnome.system.proxy.ftp” has path “/system/proxy/ftp/”.  Paths starting with “/apps/”, “/desktop/” or “/system/” are deprecated.
+Warning: Schema “org.gnome.system.proxy.socks” has path “/system/proxy/socks/”.  Paths starting with “/apps/”, “/desktop/” or “/system/” are deprecated.
+[IMPORTANT:flutter/shell/platform/embedder/embedder_surface_gl_impeller.cc(126)] Using the Impeller rendering backend (OpenGLESSDF).
+
+(io.busystack.busymark:32025): IBUS-WARNING **: 12:38:20.868: Failed to mkdir /home/tester/snap/busymark/x3/.config/ibus/bus: Not a directory
+
+** (io.busystack.busymark:32025): WARNING **: 12:38:21.609: Could not open /sys/class/dmi/id/chassis_type: Failed to open file “/sys/class/dmi/id/chassis_type”: Permission denied
+
+** (io.busystack.busymark:32025): WARNING **: 12:38:21.611: Could not open /sys/firmware/acpi/pm_profile: Failed to open file “/sys/firmware/acpi/pm_profile”: Permission denied
+
+(process:32402): GLib-GIO-WARNING **: 12:38:28.373: GDBus.Error:org.freedesktop.portal.Error.NotAllowed: This call is not available inside the sandbox
+
+(process:32425): GLib-GIO-WARNING **: 12:38:30.913: GDBus.Error:org.freedesktop.portal.Error.NotAllowed: This call is not available inside the sandbox
+[IMPORTANT:flutter/shell/platform/embedder/embedder_surface_gl_impeller.cc(126)] Using the Impeller rendering backend (OpenGLESSDF).
+
+(io.busystack.busymark:32769): IBUS-WARNING **: 12:39:42.078: Failed to mkdir /home/tester/snap/busymark/x3/.config/ibus/bus: Not a directory
+
+** (io.busystack.busymark:32769): WARNING **: 12:39:42.926: Could not open /sys/class/dmi/id/chassis_type: Failed to open file “/sys/class/dmi/id/chassis_type”: Permission denied
+
+** (io.busystack.busymark:32769): WARNING **: 12:39:42.929: Could not open /sys/firmware/acpi/pm_profile: Failed to open file “/sys/firmware/acpi/pm_profile”: Permission denied
+
+(process:32869): GLib-GIO-WARNING **: 12:39:51.109: GDBus.Error:org.freedesktop.portal.Error.NotAllowed: This call is not available inside the sandbox
+
+(process:32888): GLib-GIO-WARNING **: 12:39:52.716: GDBus.Error:org.freedesktop.portal.Error.NotAllowed: This call is not available inside the sandbox
+
+(process:33247): GLib-GIO-WARNING **: 12:41:39.221: Error releasing name io.busystack.busymark.Sandboxed.WebProcess-f07c2334-05e4-4980-9445-a7ed10b0c09e: GDBus.Error:org.freedesktop.DBus.Error.AccessDenied: An AppArmor policy prevents this sender from sending this message to this recipient; type="method_call", sender=":1.48" (uid=1000 pid=33247 comm="/usr/lib/x86_64-linux-gnu/webkit2gtk-4.1/WebKitWeb" label="snap.busymark.busymark (enforce)") interface="org.freedesktop.DBus" member="ReleaseName" error name="(unset)" requested_reply="0" destination="org.freedesktop.DBus" (bus)

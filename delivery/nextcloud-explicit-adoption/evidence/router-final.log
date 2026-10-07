@@ -1,0 +1,7 @@
+00:00 +0: loading /home/albert/busystack/busymark/test/src/app_router_test.dart
+00:00 +0: settings return targets are explicit and validated
+00:00 +1: opening Settings preserves a validated Settings origin
+00:00 +2: settings page routes are explicit and validated
+00:00 +3: Settings opened from Welcome returns to Welcome with a stale workspace
+00:01 +4: returning to Welcome does not restore the session again
+00:03 +5: All tests passed!

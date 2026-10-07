@@ -1,0 +1,34 @@
+{
+  "complete": true,
+  "snapSha256": "2b7c2a7b91a9aa7cbb7f23d35186e59a46173446b95ca9a14ddb5f667ca592ce",
+  "strictInstalled": true,
+  "installedPayloadPassed": true,
+  "installedPayloadLog": "installed-kvm/acceptance/02-verify-shared-runtimes-packaged-tools-media-and-resources/run.log",
+  "browserLoginLibsecretRestart": true,
+  "explicitAdoptionAttachmentAndDeniedNetworkRecovery": true,
+  "spelling": {
+    "x11OnlineInstallChecks": 20,
+    "x11DeniedNetworkChecks": 20,
+    "waylandDeniedNetworkChecks": 20
+  },
+  "visualization": {
+    "x11Passed": true,
+    "waylandPassed": true,
+    "x11CompletedChecks": 23,
+    "waylandCompletedChecks": 23,
+    "successfulRunsPerBackend": 2,
+    "reports": {
+      "x11-configured-desktop": "installed-kvm/acceptance/x11-configured-desktop/visualization-release-x11.json",
+      "x11-repeat": "installed-kvm/acceptance/x11-repeat/visualization-release-x11.json",
+      "wayland-configured-desktop": "installed-kvm/acceptance/wayland-configured-desktop/visualization-release-wayland.json",
+      "wayland-repeat": "installed-kvm/acceptance/wayland-repeat/visualization-release-wayland.json"
+    },
+    "historicalFailures": "installed-kvm/snap-acceptance-before-kvm.json"
+  },
+  "outstanding": [],
+  "installedSha256Verified": true,
+  "embeddedRecipeSha256": "c337fa68d95a589562aa10ab1c63e809b900c711ff53466fd79a9ffd53bc7d1d",
+  "enforcedAppArmorVerified": true,
+  "installedIdentityLog": "installed-kvm/acceptance/installed-identity-final.log",
+  "publicCi": "User approved publication; GitHub returned 403. No branch/PR created. Disposable KVM acceptance completed instead."
+}

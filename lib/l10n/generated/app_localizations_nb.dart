@@ -4748,4 +4748,30 @@ class AppLocalizationsNb extends AppLocalizations {
   @override
   String get nextcloudChooseConflictingAttributes =>
       'Velg hver motstridende egenskap.';
+
+  @override
+  String get nextcloudUseServerNote => 'Bruk dette servernotatet';
+
+  @override
+  String get nextcloudUseServerNoteExplanation =>
+      'Knytter dette utkastet til det valgte servernotatet og synkroniserer deretter beholdte lokale endringer. En samsvarende forespørsel bekrefter ikke hvem som opprettet notatet.';
+
+  @override
+  String get nextcloudExactCandidate =>
+      'Nøyaktig samsvar med forespørselen; identiteten er ubekreftet.';
+
+  @override
+  String get nextcloudPossibleCandidate =>
+      'Mulig samsvar etter normalisering; identiteten er ubekreftet.';
+
+  @override
+  String get nextcloudSelectCandidate =>
+      'Velg et servernotat som skal gjennomgås';
+
+  @override
+  String get nextcloudCreateSeparate => 'Opprett et separat notat';
+
+  @override
+  String get nextcloudCreateSeparateWarning =>
+      'Den første forespørselen kan allerede ha opprettet et servernotat. Dette oppretter et separat notat med ditt beholdte lokale arbeid. Ingen antatte duplikater slettes.';
 }

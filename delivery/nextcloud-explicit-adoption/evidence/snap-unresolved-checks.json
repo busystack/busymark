@@ -1,0 +1,18 @@
+{
+  "ok": true,
+  "creationPostsForOriginal": 1,
+  "serverUnchanged": true,
+  "stagedByteCount": 1024,
+  "newerEditRetained": true,
+  "candidateServerIds": [
+    223
+  ],
+  "bindingUnresolved": true,
+  "sanitizedApiCounts": {
+    "GET /index.php/apps/notes/api/v1/notes": 15,
+    "POST /index.php/apps/notes/api/v1/notes": 3,
+    "GET /index.php/apps/notes/api/v1/notes/184": 1,
+    "POST /index.php/apps/notes/api/v1.4/attachment/184": 1,
+    "PUT /index.php/apps/notes/api/v1/notes/184": 1
+  }
+}

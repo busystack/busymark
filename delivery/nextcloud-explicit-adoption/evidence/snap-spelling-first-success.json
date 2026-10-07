@@ -1,0 +1,7 @@
+{
+  "ok": true,
+  "observedSpellingCheckCount": 20,
+  "observedInstalledRevision": "x3",
+  "initialDictionaryInstallAssertionPassed": true,
+  "evidence": "The CI script reached the revision-change step only after its online dictionary assertions passed; the live read reported ok=true, error=null and all 20 check keys."
+}

@@ -1,0 +1,4 @@
+01-verify-gtk-svg-icon-loader	0	8
+02-verify-shared-runtimes-packaged-tools-media-and-resources	0	1
+03-install-one-strict-snap-dictionary-and-verify-refresh-offline-use	0	180
+04-exercise-strict-snap-visualization-and-pdf-paths-under-x11	1	110

@@ -1,0 +1,15 @@
+{
+  "ok": true,
+  "native": {
+    "unresolved": "native-unresolved-checks.json",
+    "adoption": "native-adoption-checks.json",
+    "restart": "native-restart-checks.json"
+  },
+  "strictSnap": {
+    "unresolved": "snap-unresolved-checks.json",
+    "adoption": "snap-adoption-checks.json",
+    "restart": "snap-restart-checks.json",
+    "networkConfinement": "snap-network-denials.log",
+    "browser": "snap-browser-login.log"
+  }
+}

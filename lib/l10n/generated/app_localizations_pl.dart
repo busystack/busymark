@@ -4801,4 +4801,30 @@ class AppLocalizationsPl extends AppLocalizations {
   @override
   String get nextcloudChooseConflictingAttributes =>
       'Wybierz wartość każdego sprzecznego atrybutu.';
+
+  @override
+  String get nextcloudUseServerNote => 'Użyj tej notatki z serwera';
+
+  @override
+  String get nextcloudUseServerNoteExplanation =>
+      'Łączy ten szkic z wybraną notatką na serwerze, a następnie synchronizuje zachowane zmiany lokalne. Zgodne żądanie nie potwierdza, kto utworzył notatkę.';
+
+  @override
+  String get nextcloudExactCandidate =>
+      'Dokładna zgodność z żądaniem; tożsamość niepotwierdzona.';
+
+  @override
+  String get nextcloudPossibleCandidate =>
+      'Możliwa zgodność po normalizacji żądania; tożsamość niepotwierdzona.';
+
+  @override
+  String get nextcloudSelectCandidate =>
+      'Wybierz notatkę z serwera do sprawdzenia';
+
+  @override
+  String get nextcloudCreateSeparate => 'Utwórz osobną notatkę';
+
+  @override
+  String get nextcloudCreateSeparateWarning =>
+      'Pierwsze żądanie mogło już utworzyć notatkę na serwerze. Ta czynność tworzy osobną notatkę z zachowaną pracą lokalną. Żadne podejrzane duplikaty nie zostaną usunięte.';
 }

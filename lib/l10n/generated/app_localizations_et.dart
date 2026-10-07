@@ -4746,4 +4746,29 @@ class AppLocalizationsEt extends AppLocalizations {
   @override
   String get nextcloudChooseConflictingAttributes =>
       'Valige iga vastuolulise atribuudi väärtus.';
+
+  @override
+  String get nextcloudUseServerNote => 'Kasuta seda serverimärkust';
+
+  @override
+  String get nextcloudUseServerNoteExplanation =>
+      'Seob mustandi valitud serverimärkusega ja sünkroonib seejärel säilitatud kohalikud muudatused. Päringu vastavus ei kinnita märkuse loojat.';
+
+  @override
+  String get nextcloudExactCandidate =>
+      'Täpne päringu vaste; identiteet on kinnitamata.';
+
+  @override
+  String get nextcloudPossibleCandidate =>
+      'Võimalik puhastatud päringu vaste; identiteet on kinnitamata.';
+
+  @override
+  String get nextcloudSelectCandidate => 'Vali ülevaatamiseks serverimärkus';
+
+  @override
+  String get nextcloudCreateSeparate => 'Loo eraldi märkus';
+
+  @override
+  String get nextcloudCreateSeparateWarning =>
+      'Esimene päring võis serveris juba märkuse luua. See loob eraldi märkuse koos säilitatud kohaliku tööga. Võimalikke duplikaate ei kustutata.';
 }

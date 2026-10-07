@@ -1,0 +1,17 @@
+{
+  "ok": false,
+  "checks": {
+    "resourceRoot": "/home/tester/busymark-release/share/busymark/spelling",
+    "resourceChecksumInventory": true,
+    "nativeDependencyNotices": true,
+    "availableDictionaryCount": 48,
+    "bundledDictionaryFileCount": 0,
+    "dictionaryInstalledDuringRun": false,
+    "installedDictionaryCount": 1,
+    "sessionLanguageTransition": true,
+    "realRichUnderline": true,
+    "realSourceUnderline": true
+  },
+  "error": "TimeoutException after 0:00:05.000000: Future not completed",
+  "stackTrace": "#0      Future.timeout.<anonymous closure> (dart:async/future_impl.dart:1042)\n<asynchronous suspension>\n#1      _settleSmokeFrames (package:busymark/src/spellcheck/spelling_release_smoke.dart:696)\n<asynchronous suspension>\n#2      _unmountSmokeEditor (package:busymark/src/spellcheck/spelling_release_smoke.dart:671)\n<asynchronous suspension>\n#3      runSpellingReleaseSmoke (package:busymark/src/spellcheck/spelling_release_smoke.dart:299)\n<asynchronous suspension>\n#4      main (package:busymark/main.dart:29)\n<asynchronous suspension>\n"
+}

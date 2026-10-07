@@ -1,0 +1,48 @@
+00:00 +0: loading /home/albert/busystack/busymark/test/src/nextcloud_notes_ui_test.dart
+00:00 +0: /home/albert/busystack/busymark/test/src/nextcloud_notes_ui_test.dart: selecting and confirming candidate binds draft and retains newer edits
+00:06 +0 -1: /home/albert/busystack/busymark/test/src/nextcloud_notes_ui_test.dart: selecting and confirming candidate binds draft and retains newer edits
+00:06 +0 -1: /home/albert/busystack/busymark/test/src/nextcloud_workspace_test.dart: an unsaved independently opened candidate blocks consolidation without orphaning its tab [E]
+  Expected: 'unsaved candidate edit'
+    Actual: 'wire content'
+     Which: is different.
+            Expected: unsaved ca ...
+              Actual: wire conte ...
+                      ^
+             Differ at offset 0
+  trace=[[(d52dc052-73e8-49dc-856f-12b696acab27, wire content, 1, false), (a1c68c96-b2fc-4dff-86f8-a12a53c018a2, unsaved candidate edit, 2, true)], [(d52dc052-73e8-49dc-856f-12b696acab27, wire content, 1, false), (a1c68c96-b2fc-4dff-86f8-a12a53c018a2, unsaved candidate edit, 2, true)], [(d52dc052-73e8-49dc-856f-12b696acab27, wire content, 1, false), (a1c68c96-b2fc-4dff-86f8-a12a53c018a2, unsaved candidate edit, 2, false)], [(d52dc052-73e8-49dc-856f-12b696acab27, wire content, 1, false), (a1c68c96-b2fc-4dff-86f8-a12a53c018a2, unsaved candidate edit, 2, false)], [(d52dc052-73e8-49dc-856f-12b696acab27, wire content, 1, false), (a1c68c96-b2fc-4dff-86f8-a12a53c018a2, unsaved candidate edit, 2, false)], [(d52dc052-73e8-49dc-856f-12b696acab27, wire content, 1, false), (a1c68c96-b2fc-4dff-86f8-a12a53c018a2, unsaved candidate edit, 2, false)], [(d52dc052-73e8-49dc-856f-12b696acab27, wire content, 1, false), (a1c68c96-b2fc-4dff-86f8-a12a53c018a2, unsaved candidate edit, 2, false)], [(d52dc052-73e8-49dc-856f-12b696acab27, wire content, 1, false), (a1c68c96-b2fc-4dff-86f8-a12a53c018a2, wire content, 3, false)], [(d52dc052-73e8-49dc-856f-12b696acab27, wire content, 1, false), (a1c68c96-b2fc-4dff-86f8-a12a53c018a2, wire content, 3, false)], [(d52dc052-73e8-49dc-856f-12b696acab27, wire content, 1, false), (a1c68c96-b2fc-4dff-86f8-a12a53c018a2, wire content, 3, false)]], message=Close the downloaded candidate’s editor tabs after preserving their changes, then review again., repository=wire content, buffers=[(d52dc052-73e8-49dc-856f-12b696acab27, wire content, false), (a1c68c96-b2fc-4dff-86f8-a12a53c018a2, wire content, false)]
+  
+  package:matcher                                     expect
+  package:flutter_test/src/widget_tester.dart 473:18  expect
+  test/src/nextcloud_workspace_test.dart 87:7         main.<fn>
+  
+00:08 +0 -1: /home/albert/busystack/busymark/test/src/nextcloud_notes_ui_test.dart: selecting and confirming candidate binds draft and retains newer edits
+══╡ EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK ╞════════════════════════════════════════════════════
+The following TestFailure was thrown running a test:
+Expected: <10>
+  Actual: <null>
+null
+
+When the exception was thrown, this was the stack:
+#4      main.<anonymous closure> (file:///home/albert/busystack/busymark/test/src/nextcloud_notes_ui_test.dart:815:7)
+<asynchronous suspension>
+#5      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+<asynchronous suspension>
+#6      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1953:5)
+<asynchronous suspension>
+<asynchronous suspension>
+(elided one frame from package:stack_trace)
+
+This was caught by the test expectation on the following line:
+  file:///home/albert/busystack/busymark/test/src/nextcloud_notes_ui_test.dart line 815
+The test description was:
+  selecting and confirming candidate binds draft and retains newer edits
+════════════════════════════════════════════════════════════════════════════════════════════════════
+00:08 +0 -2: /home/albert/busystack/busymark/test/src/nextcloud_notes_ui_test.dart: selecting and confirming candidate binds draft and retains newer edits [E]
+  Test failed. See exception logs above.
+  The test description was: selecting and confirming candidate binds draft and retains newer edits
+  
+00:08 +0 -2: Some tests failed.
+
+Failing tests:
+  /home/albert/busystack/busymark/test/src/nextcloud_notes_ui_test.dart: selecting and confirming candidate binds draft and retains newer edits
+  /home/albert/busystack/busymark/test/src/nextcloud_workspace_test.dart: an unsaved independently opened candidate blocks consolidation without orphaning its tab

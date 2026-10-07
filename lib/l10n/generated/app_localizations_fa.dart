@@ -4783,4 +4783,30 @@ class AppLocalizationsFa extends AppLocalizations {
   @override
   String get nextcloudChooseConflictingAttributes =>
       'مقدار هر ویژگی متعارض را انتخاب کنید.';
+
+  @override
+  String get nextcloudUseServerNote => 'استفاده از این یادداشت سرور';
+
+  @override
+  String get nextcloudUseServerNoteExplanation =>
+      'این پیش‌نویس را به یادداشت انتخاب‌شدهٔ سرور پیوند می‌دهد و سپس تغییرات محلی حفظ‌شده را همگام می‌کند. تطابق درخواست مشخص نمی‌کند چه کسی یادداشت را ایجاد کرده است.';
+
+  @override
+  String get nextcloudExactCandidate =>
+      'تطابق دقیق درخواست؛ هویت تأیید نشده است.';
+
+  @override
+  String get nextcloudPossibleCandidate =>
+      'تطابق احتمالی درخواست پاک‌سازی‌شده؛ هویت تأیید نشده است.';
+
+  @override
+  String get nextcloudSelectCandidate =>
+      'یک یادداشت سرور را برای بررسی انتخاب کنید';
+
+  @override
+  String get nextcloudCreateSeparate => 'ایجاد یک یادداشت جداگانه';
+
+  @override
+  String get nextcloudCreateSeparateWarning =>
+      'ممکن است درخواست نخست قبلاً یک یادداشت سرور ایجاد کرده باشد. این کار یک یادداشت جداگانه با کار محلی حفظ‌شدهٔ شما ایجاد می‌کند. هیچ یادداشت مشکوک به تکراری بودن حذف نمی‌شود.';
 }

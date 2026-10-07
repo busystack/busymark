@@ -1,0 +1,10 @@
+PASS D2 vector
+PASS D2 foreignObject
+
+** (process:46): ERROR **: 03:37:30.981: Failed to adopt IPC::Connection socket: creating GSocket from fd: Operation not permitted
+
+(visualization_smoke.py:3): Gtk-CRITICAL **: 03:37:31.031: _gtk_css_lookup_resolve: assertion '(((__extension__ ({ GTypeInstance *__inst = (GTypeInstance*) ((provider)); GType __t = ((_gtk_style_provider_private_get_type ())); gboolean __r; if (!__inst) __r = (0); else if (__inst->g_class && __inst->g_class->g_type == __t) __r = (!(0)); else __r = g_type_check_instance_is_a (__inst, __t); __r; }))))' failed
+/home/albert/busystack/busymark/tools/visualization_smoke.py:48: Warning: g_object_set_data_full: assertion 'G_IS_OBJECT (object)' failed
+  self.context = WebKit2.WebContext.new_ephemeral()
+
+(visualization_smoke.py:3): Gtk-ERROR **: 03:37:31.033: Can't create a GtkStyleContext without a display connection

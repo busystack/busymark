@@ -4540,6 +4540,29 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get nextcloudChooseConflictingAttributes => '为每个冲突属性选择一个值。';
+
+  @override
+  String get nextcloudUseServerNote => '使用此服务器笔记';
+
+  @override
+  String get nextcloudUseServerNoteExplanation =>
+      '将此草稿关联到选定的服务器笔记，然后同步保留的本地更改。请求匹配并不能确认笔记由谁创建。';
+
+  @override
+  String get nextcloudExactCandidate => '与请求完全匹配；身份尚未确认。';
+
+  @override
+  String get nextcloudPossibleCandidate => '可能与规范化后的请求匹配；身份尚未确认。';
+
+  @override
+  String get nextcloudSelectCandidate => '选择要检查的服务器笔记';
+
+  @override
+  String get nextcloudCreateSeparate => '创建独立笔记';
+
+  @override
+  String get nextcloudCreateSeparateWarning =>
+      '首次请求可能已在服务器上创建笔记。此操作将使用保留的本地工作创建独立笔记。不会删除任何疑似重复的笔记。';
 }
 
 /// The translations for Chinese, as used in China (`zh_CN`).
@@ -9076,4 +9099,27 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get nextcloudChooseConflictingAttributes => '为每个冲突属性选择一个值。';
+
+  @override
+  String get nextcloudUseServerNote => '使用此服务器笔记';
+
+  @override
+  String get nextcloudUseServerNoteExplanation =>
+      '将此草稿关联到选定的服务器笔记，然后同步保留的本地更改。请求匹配并不能确认笔记由谁创建。';
+
+  @override
+  String get nextcloudExactCandidate => '与请求完全匹配；身份尚未确认。';
+
+  @override
+  String get nextcloudPossibleCandidate => '可能与规范化后的请求匹配；身份尚未确认。';
+
+  @override
+  String get nextcloudSelectCandidate => '选择要检查的服务器笔记';
+
+  @override
+  String get nextcloudCreateSeparate => '创建独立笔记';
+
+  @override
+  String get nextcloudCreateSeparateWarning =>
+      '首次请求可能已在服务器上创建笔记。此操作将使用保留的本地工作创建独立笔记。不会删除任何疑似重复的笔记。';
 }

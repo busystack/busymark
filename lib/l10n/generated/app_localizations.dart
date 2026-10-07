@@ -8045,6 +8045,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Choose each conflicting attribute.'**
   String get nextcloudChooseConflictingAttributes;
+
+  /// No description provided for @nextcloudUseServerNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Use this server note'**
+  String get nextcloudUseServerNote;
+
+  /// No description provided for @nextcloudUseServerNoteExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Links this draft to the selected server note, then synchronizes retained local changes. A matching request does not confirm who created the note.'**
+  String get nextcloudUseServerNoteExplanation;
+
+  /// No description provided for @nextcloudExactCandidate.
+  ///
+  /// In en, this message translates to:
+  /// **'Exact request match; identity is unconfirmed.'**
+  String get nextcloudExactCandidate;
+
+  /// No description provided for @nextcloudPossibleCandidate.
+  ///
+  /// In en, this message translates to:
+  /// **'Possible sanitized request match; identity is unconfirmed.'**
+  String get nextcloudPossibleCandidate;
+
+  /// No description provided for @nextcloudSelectCandidate.
+  ///
+  /// In en, this message translates to:
+  /// **'Select a server note to review'**
+  String get nextcloudSelectCandidate;
+
+  /// No description provided for @nextcloudCreateSeparate.
+  ///
+  /// In en, this message translates to:
+  /// **'Create a separate note'**
+  String get nextcloudCreateSeparate;
+
+  /// No description provided for @nextcloudCreateSeparateWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'The first request may already have created a server note. This creates a separate note with your retained local work. No suspected duplicate will be deleted.'**
+  String get nextcloudCreateSeparateWarning;
 }
 
 class _AppLocalizationsDelegate
