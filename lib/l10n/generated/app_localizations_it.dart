@@ -11,6 +11,9 @@ class AppLocalizationsIt extends AppLocalizations {
   AppLocalizationsIt([String locale = 'it']) : super(locale);
 
   @override
+  String get closeOtherTabs => 'Chiudi le altre schede';
+
+  @override
   String get tocTopicFromTemplate => 'Argomento da modello...';
 
   @override
@@ -1544,8 +1547,22 @@ class AppLocalizationsIt extends AppLocalizations {
   }
 
   @override
+  String get topicIsHomePageRemovalWarning =>
+      'Questo argomento è la pagina iniziale di questa istanza. Scegli un’altra pagina iniziale prima di rimuoverlo dal sommario.';
+
+  @override
+  String get newHomePage => 'Nuova pagina iniziale';
+
+  @override
+  String get chooseHomePage => 'Scegli una pagina iniziale';
+
+  @override
+  String get noHomePageReplacement =>
+      'Aggiungi o collega un altro argomento idoneo a questa istanza prima di rimuovere la sua pagina iniziale.';
+
+  @override
   String get topicIsStartPageRemovalWarning =>
-      'Questo argomento è utilizzato come pagina iniziale di un’istanza. Esaminane gli utilizzi e assegna un’altra pagina iniziale prima di continuare.';
+      'Questo argomento è la pagina iniziale di un’istanza. Imposta un’altra pagina iniziale prima di eliminare il suo file sorgente.';
 
   @override
   String topicUsagesCount(int count) {
@@ -2191,7 +2208,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String errorWritersideStartTopicDelete(String topic) {
-    return 'L\'argomento iniziale $topic non può essere eliminato. Scegli prima un\'altra pagina iniziale.';
+    return 'La pagina iniziale $topic non può essere eliminata. Scegli prima un’altra pagina iniziale.';
   }
 
   @override
@@ -4787,4 +4804,30 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get nextcloudChooseConflictingAttributes =>
       'Scegli ogni attributo in conflitto.';
+
+  @override
+  String get nextcloudUseServerNote => 'Usa questa nota del server';
+
+  @override
+  String get nextcloudUseServerNoteExplanation =>
+      'Collega questa bozza alla nota selezionata sul server, poi sincronizza le modifiche locali conservate. Una richiesta corrispondente non conferma chi ha creato la nota.';
+
+  @override
+  String get nextcloudExactCandidate =>
+      'Corrispondenza esatta con la richiesta; identità non confermata.';
+
+  @override
+  String get nextcloudPossibleCandidate =>
+      'Possibile corrispondenza dopo la normalizzazione; identità non confermata.';
+
+  @override
+  String get nextcloudSelectCandidate =>
+      'Seleziona una nota del server da esaminare';
+
+  @override
+  String get nextcloudCreateSeparate => 'Crea una nota separata';
+
+  @override
+  String get nextcloudCreateSeparateWarning =>
+      'La prima richiesta potrebbe aver già creato una nota sul server. Questa azione crea una nota separata con il lavoro locale conservato. Nessun presunto duplicato verrà eliminato.';
 }

@@ -11,6 +11,9 @@ class AppLocalizationsAr extends AppLocalizations {
   AppLocalizationsAr([String locale = 'ar']) : super(locale);
 
   @override
+  String get closeOtherTabs => 'إغلاق علامات التبويب الأخرى';
+
+  @override
   String get tocTopicFromTemplate => 'موضوع من قالب...';
 
   @override
@@ -1535,8 +1538,22 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
+  String get topicIsHomePageRemovalWarning =>
+      'هذا الموضوع هو الصفحة الرئيسية لهذا المثيل. اختر صفحة رئيسية أخرى قبل إزالته من جدول المحتويات.';
+
+  @override
+  String get newHomePage => 'الصفحة الرئيسية الجديدة';
+
+  @override
+  String get chooseHomePage => 'اختر صفحة رئيسية';
+
+  @override
+  String get noHomePageReplacement =>
+      'أضف موضوعًا مؤهلًا آخر إلى هذا المثيل أو اربطه به قبل إزالة صفحته الرئيسية.';
+
+  @override
   String get topicIsStartPageRemovalWarning =>
-      'يُستخدم هذا الموضوع كصفحة بدء لمثيل. راجع استخداماته وعيّن صفحة بدء أخرى قبل المتابعة.';
+      'هذا الموضوع هو الصفحة الرئيسية لمثيل. عيّن صفحة رئيسية أخرى قبل حذف ملفه المصدر.';
 
   @override
   String topicUsagesCount(int count) {
@@ -1554,7 +1571,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get topicUsageTocElements => 'عناصر جدول المحتويات';
 
   @override
-  String get topicUsageStartPages => 'صفحات البدء';
+  String get topicUsageStartPages => 'الصفحات الرئيسية';
 
   @override
   String get topicUsageTopicLinks => 'روابط الموضوعات';
@@ -2188,7 +2205,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String errorWritersideStartTopicDelete(String topic) {
-    return 'لا يمكن حذف موضوع البدء ⁨$topic⁩. اختر صفحة بدء أخرى أولًا.';
+    return 'لا يمكن حذف الصفحة الرئيسية $topic. اختر صفحة رئيسية أخرى أولًا.';
   }
 
   @override
@@ -4777,4 +4794,28 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get nextcloudChooseConflictingAttributes =>
       'اختر قيمة لكل سمة متعارضة.';
+
+  @override
+  String get nextcloudUseServerNote => 'استخدام هذه الملاحظة على الخادم';
+
+  @override
+  String get nextcloudUseServerNoteExplanation =>
+      'يربط هذه المسودة بالملاحظة المحددة على الخادم، ثم يزامن التغييرات المحلية المحفوظة. تطابق الطلب لا يؤكد من أنشأ الملاحظة.';
+
+  @override
+  String get nextcloudExactCandidate => 'تطابق تام مع الطلب؛ الهوية غير مؤكدة.';
+
+  @override
+  String get nextcloudPossibleCandidate =>
+      'تطابق محتمل بعد تنقية الطلب؛ الهوية غير مؤكدة.';
+
+  @override
+  String get nextcloudSelectCandidate => 'اختر ملاحظة على الخادم لمراجعتها';
+
+  @override
+  String get nextcloudCreateSeparate => 'إنشاء ملاحظة منفصلة';
+
+  @override
+  String get nextcloudCreateSeparateWarning =>
+      'قد يكون الطلب الأول قد أنشأ ملاحظة على الخادم بالفعل. ينشئ هذا ملاحظة منفصلة بعملك المحلي المحفوظ. لن تُحذف أي ملاحظة يُشتبه بأنها مكررة.';
 }

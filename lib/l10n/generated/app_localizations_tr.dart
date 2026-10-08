@@ -11,6 +11,9 @@ class AppLocalizationsTr extends AppLocalizations {
   AppLocalizationsTr([String locale = 'tr']) : super(locale);
 
   @override
+  String get closeOtherTabs => 'Diğer sekmeleri kapat';
+
+  @override
   String get tocTopicFromTemplate => 'Şablondan Konu...';
 
   @override
@@ -1532,8 +1535,22 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
+  String get topicIsHomePageRemovalWarning =>
+      'Bu konu bu örneğin ana sayfasıdır. İçindekilerden kaldırmadan önce başka bir ana sayfa seçin.';
+
+  @override
+  String get newHomePage => 'Yeni ana sayfa';
+
+  @override
+  String get chooseHomePage => 'Ana sayfa seçin';
+
+  @override
+  String get noHomePageReplacement =>
+      'Ana sayfasını kaldırmadan önce bu örneğe başka bir uygun konu ekleyin veya bağlayın.';
+
+  @override
   String get topicIsStartPageRemovalWarning =>
-      'Bu konu bir Writerside örneğinin başlangıç sayfası olarak kullanılıyor. Devam etmeden önce kullanımlarını inceleyin ve başka bir başlangıç sayfası atayın.';
+      'Bu konu bir örneğin ana sayfasıdır. Kaynak dosyasını silmeden önce başka bir ana sayfa atayın.';
 
   @override
   String topicUsagesCount(int count) {
@@ -1551,7 +1568,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get topicUsageTocElements => 'İçindekiler öğeleri';
 
   @override
-  String get topicUsageStartPages => 'Başlangıç sayfaları';
+  String get topicUsageStartPages => 'Ana sayfalar';
 
   @override
   String get topicUsageTopicLinks => 'Konu bağlantıları';
@@ -2169,7 +2186,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String errorWritersideStartTopicDelete(String topic) {
-    return '$topic başlangıç konusu silinemez. Önce başka bir başlangıç sayfası seçin.';
+    return 'Ana sayfa $topic silinemez. Önce başka bir ana sayfa seçin.';
   }
 
   @override
@@ -4748,4 +4765,29 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get nextcloudChooseConflictingAttributes =>
       'Çakışan her öznitelik için bir değer seçin.';
+
+  @override
+  String get nextcloudUseServerNote => 'Bu sunucu notunu kullan';
+
+  @override
+  String get nextcloudUseServerNoteExplanation =>
+      'Bu taslağı seçilen sunucu notuna bağlar, ardından korunan yerel değişiklikleri eşitler. Eşleşen bir istek, notu kimin oluşturduğunu doğrulamaz.';
+
+  @override
+  String get nextcloudExactCandidate =>
+      'İstekle tam eşleşme; kimlik doğrulanmadı.';
+
+  @override
+  String get nextcloudPossibleCandidate =>
+      'Düzenlenmiş istekle olası eşleşme; kimlik doğrulanmadı.';
+
+  @override
+  String get nextcloudSelectCandidate => 'İncelemek için bir sunucu notu seçin';
+
+  @override
+  String get nextcloudCreateSeparate => 'Ayrı bir not oluştur';
+
+  @override
+  String get nextcloudCreateSeparateWarning =>
+      'İlk istek sunucuda zaten bir not oluşturmuş olabilir. Bu işlem korunan yerel çalışmanızla ayrı bir not oluşturur. Olası kopyalar silinmez.';
 }

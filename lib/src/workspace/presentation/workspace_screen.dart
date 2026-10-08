@@ -118,6 +118,7 @@ import '../workspace_model.dart';
 import '../workspace_message.dart';
 import '../workspace_safety.dart';
 import '../workspace_tabs.dart';
+import '../workspace_tab_actions.dart';
 import 'welcome_screen.dart';
 import 'writerside_instance_dialog.dart';
 import 'writerside_markdown_import_dialog.dart';
@@ -680,6 +681,135 @@ class _SearchReturnFocus {
 class WorkspaceScreen extends ConsumerWidget {
   const WorkspaceScreen({super.key});
 
+  Future<void> _showTabMenu(
+    BuildContext context,
+    WidgetRef ref,
+    Workspace workspace,
+    WorkspaceTabEntry entry,
+    Offset position,
+  ) async {
+    if (!isWorkspaceTabCurrent(ref, workspace, entry)) return;
+    final state = ref.read(workspaceControllerProvider);
+    final buffer = state.documentBuffers
+        .where((buffer) => buffer.id == entry.bufferId)
+        .firstOrNull;
+    final history = ref.read(localHistoryControllerProvider);
+    final entries = workspaceTabEntries(
+      workspace: state.workspace!,
+      gitState: ref.read(gitControllerProvider),
+      documentBuffers: state.documentBuffers,
+      activeBufferId: state.activeBufferId,
+      localHistoryRevisionId: history.selectedRevisionId,
+      localHistoryDocumentName: history.selectedDocument?.displayName,
+    );
+    final action = await showBusyMarkContextMenu<_WorkspaceTabAction>(
+      context,
+      position,
+      items: [
+        BusyMarkPopupMenuItem(
+          value: _WorkspaceTabAction.close,
+          label: context.l10n.close,
+          icon: BusyMarkGlyphs.clear,
+        ),
+        if (entry.kind == WorkspaceTabKind.file) ...[
+          BusyMarkPopupMenuItem(
+            value: _WorkspaceTabAction.closeOthers,
+            label: context.l10n.closeOtherTabs,
+            icon: BusyMarkGlyphs.clear,
+            enabled: entries.any((tab) => tab.key != entry.key),
+          ),
+          BusyMarkPopupMenuItem(
+            value: _WorkspaceTabAction.closeAll,
+            label: context.l10n.shortcutCloseAllTabs,
+            icon: BusyMarkGlyphs.clear,
+          ),
+          const PopupMenuDivider(height: BusyMarkSpacing.sm),
+          BusyMarkPopupMenuItem(
+            value: _WorkspaceTabAction.copyPath,
+            label: context.l10n.copyPath,
+            icon: BusyMarkGlyphs.copy,
+            enabled:
+                buffer != null &&
+                !buffer.isRemote &&
+                buffer.filePath != null &&
+                buffer.filePath!.isNotEmpty,
+          ),
+          const PopupMenuDivider(height: BusyMarkSpacing.sm),
+          BusyMarkPopupMenuItem(
+            value: _WorkspaceTabAction.localHistory,
+            label: context.l10n.localHistoryEllipsis,
+            icon: BusyMarkGlyphs.documentHistory,
+          ),
+        ],
+      ],
+    );
+    if (action == null ||
+        !context.mounted ||
+        !isWorkspaceTabCurrent(ref, workspace, entry)) {
+      return;
+    }
+    final actionWorkspace = ref.read(workspaceControllerProvider).workspace!;
+    switch (action) {
+      case _WorkspaceTabAction.localHistory:
+        final requestedBuffer = ref
+            .read(workspaceControllerProvider)
+            .documentBuffers
+            .where((candidate) => candidate.id == entry.bufferId)
+            .firstOrNull;
+        if (requestedBuffer == null) return;
+        final controller = ref.read(workspaceControllerProvider.notifier);
+        final historyController = ref.read(
+          localHistoryControllerProvider.notifier,
+        );
+        if (!await controller.activateDocumentBuffer(requestedBuffer.id) ||
+            !context.mounted ||
+            !isWorkspaceTabCurrent(ref, actionWorkspace, entry)) {
+          return;
+        }
+        final currentRequestedBuffer = ref
+            .read(workspaceControllerProvider)
+            .documentBuffers
+            .where((candidate) => candidate.id == requestedBuffer.id)
+            .firstOrNull;
+        if (currentRequestedBuffer == null) return;
+        await historyController.selectDocumentForBuffer(currentRequestedBuffer);
+        if (!context.mounted || !ref.context.mounted) return;
+        ref
+            .read(_sidebarShortcutRequestProvider.notifier)
+            .select(_SidebarTab.localHistory);
+      case _WorkspaceTabAction.close:
+        await closeWorkspaceTab(
+          context,
+          ref,
+          workspace: actionWorkspace,
+          tab: entry,
+        );
+      case _WorkspaceTabAction.closeOthers:
+        await closeOtherWorkspaceTabs(
+          context,
+          ref,
+          workspace: actionWorkspace,
+          retainedTab: entry,
+        );
+      case _WorkspaceTabAction.closeAll:
+        await closeAllWorkspaceTabs(context, ref, workspace: actionWorkspace);
+      case _WorkspaceTabAction.copyPath:
+        final current = ref
+            .read(workspaceControllerProvider)
+            .documentBuffers
+            .where((buffer) => buffer.id == entry.bufferId)
+            .firstOrNull;
+        final path = current?.filePath;
+        if (current == null ||
+            current.isRemote ||
+            path == null ||
+            path.isEmpty) {
+          return;
+        }
+        await _copyToClipboard(path);
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(workspaceControllerProvider);
@@ -721,6 +851,11 @@ class WorkspaceScreen extends ConsumerWidget {
             state: state,
             gitState: gitState,
             localHistoryState: localHistoryState,
+            onClose: (entry) => unawaited(
+              closeWorkspaceTab(context, ref, workspace: workspace, tab: entry),
+            ),
+            onShowMenu: (entry, position) =>
+                _showTabMenu(context, ref, workspace, entry, position),
           ),
         Expanded(
           child: localHistoryState.selectedRevision != null
@@ -2469,6 +2604,7 @@ class _SidebarState extends ConsumerState<_Sidebar> {
     _WritersideTopicRemovalTarget target, {
     bool updateUsagesAutomatically = true,
     String? redirectTopicPath,
+    String? homePageTopicPath,
     bool applyIfUnused = false,
   }) async {
     if (!await confirmSafeToRefactorWritersideProject(context, ref) ||
@@ -2493,6 +2629,9 @@ class _SidebarState extends ConsumerState<_Sidebar> {
     final initialRedirect = analysis.redirectTargets
         .where((candidate) => candidate.topicPath == redirectTopicPath)
         .firstOrNull;
+    final initialHomePage = analysis.homePageReplacementForTopic(
+      homePageTopicPath,
+    );
     _WritersideTopicRemovalDialogResult decision;
     if (applyIfUnused && analysis.relevantUsages.isEmpty) {
       decision = _WritersideTopicRemovalDialogResult.apply(
@@ -2510,6 +2649,7 @@ class _SidebarState extends ConsumerState<_Sidebar> {
               analysis: analysis,
               initialUpdateUsagesAutomatically: updateUsagesAutomatically,
               initialRedirectTarget: initialRedirect,
+              initialHomePageReplacement: initialHomePage,
             ),
           );
       if (!mounted || !context.mounted || selected == null) {
@@ -2524,6 +2664,7 @@ class _SidebarState extends ConsumerState<_Sidebar> {
           analysis: analysis,
           updateUsagesAutomatically: decision.updateUsagesAutomatically,
           redirectTopicPath: decision.redirectTarget?.topicPath,
+          homePageTopicPath: decision.homePageReplacement?.topicPath,
         );
       });
       return null;
@@ -2542,6 +2683,7 @@ class _SidebarState extends ConsumerState<_Sidebar> {
         target,
         updateUsagesAutomatically: decision.updateUsagesAutomatically,
         redirectTopicPath: decision.redirectTarget?.topicPath,
+        homePageTopicPath: decision.homePageReplacement?.topicPath,
         applyIfUnused: applyIfUnused,
       );
     }
@@ -2550,6 +2692,7 @@ class _SidebarState extends ConsumerState<_Sidebar> {
         analysis: analysis,
         updateUsagesAutomatically: decision.updateUsagesAutomatically,
         redirectTarget: decision.redirectTarget,
+        homePageReplacement: decision.homePageReplacement,
       ),
     );
     if (!mounted || !context.mounted) {
@@ -2607,6 +2750,19 @@ class _SidebarState extends ConsumerState<_Sidebar> {
       _showLatestWorkspaceMessage(context);
       return;
     }
+    final homePage = analysis.homePageReplacementForTopic(
+      review.homePageTopicPath,
+    );
+    if (analysis.requiresHomePageReplacement && homePage == null) {
+      await _runWritersideTopicRemoval(
+        context,
+        review.target,
+        updateUsagesAutomatically: review.updateUsagesAutomatically,
+        redirectTopicPath: review.redirectTopicPath,
+        homePageTopicPath: review.homePageTopicPath,
+      );
+      return;
+    }
     final redirect = review.redirectTopicPath == null
         ? null
         : analysis.redirectTargets
@@ -2622,16 +2778,20 @@ class _SidebarState extends ConsumerState<_Sidebar> {
       );
       return;
     }
-    if (analysis.blockingUsages.any(
-      (usage) =>
-          !review.updateUsagesAutomatically || !usage.canUpdateAutomatically,
-    )) {
+    if (analysis
+        .unresolvedBlockingUsages(homePage)
+        .any(
+          (usage) =>
+              !review.updateUsagesAutomatically ||
+              !usage.canUpdateAutomatically,
+        )) {
       setState(() {
         _topicUsageReview = _WritersideTopicUsageReview(
           target: review.target,
           analysis: analysis,
           updateUsagesAutomatically: review.updateUsagesAutomatically,
           redirectTopicPath: review.redirectTopicPath,
+          homePageTopicPath: homePage?.topicPath,
         );
       });
       return;
@@ -2641,6 +2801,7 @@ class _SidebarState extends ConsumerState<_Sidebar> {
         analysis: analysis,
         updateUsagesAutomatically: review.updateUsagesAutomatically,
         redirectTarget: redirect,
+        homePageReplacement: homePage,
       ),
     );
     if (!mounted || !context.mounted) return;
@@ -3689,29 +3850,35 @@ class _WritersideTopicRemovalDialogResult {
     required this.reviewUsages,
     required this.updateUsagesAutomatically,
     required this.redirectTarget,
+    required this.homePageReplacement,
   });
 
   const _WritersideTopicRemovalDialogResult.review({
     required bool updateUsagesAutomatically,
     required WritersideTopicRedirectTarget? redirectTarget,
+    WritersideHomePageReplacement? homePageReplacement,
   }) : this._(
          reviewUsages: true,
          updateUsagesAutomatically: updateUsagesAutomatically,
          redirectTarget: redirectTarget,
+         homePageReplacement: homePageReplacement,
        );
 
   const _WritersideTopicRemovalDialogResult.apply({
     required bool updateUsagesAutomatically,
     required WritersideTopicRedirectTarget? redirectTarget,
+    WritersideHomePageReplacement? homePageReplacement,
   }) : this._(
          reviewUsages: false,
          updateUsagesAutomatically: updateUsagesAutomatically,
          redirectTarget: redirectTarget,
+         homePageReplacement: homePageReplacement,
        );
 
   final bool reviewUsages;
   final bool updateUsagesAutomatically;
   final WritersideTopicRedirectTarget? redirectTarget;
+  final WritersideHomePageReplacement? homePageReplacement;
 }
 
 class _WritersideTopicUsageReview {
@@ -3720,12 +3887,14 @@ class _WritersideTopicUsageReview {
     required this.analysis,
     required this.updateUsagesAutomatically,
     required this.redirectTopicPath,
+    required this.homePageTopicPath,
   });
 
   final _WritersideTopicRemovalTarget target;
   final WritersideTopicRemovalAnalysis analysis;
   final bool updateUsagesAutomatically;
   final String? redirectTopicPath;
+  final String? homePageTopicPath;
 }
 
 class _WritersideTopicRemovalDialog extends StatefulWidget {
@@ -3733,11 +3902,13 @@ class _WritersideTopicRemovalDialog extends StatefulWidget {
     required this.analysis,
     required this.initialUpdateUsagesAutomatically,
     required this.initialRedirectTarget,
+    required this.initialHomePageReplacement,
   });
 
   final WritersideTopicRemovalAnalysis analysis;
   final bool initialUpdateUsagesAutomatically;
   final WritersideTopicRedirectTarget? initialRedirectTarget;
+  final WritersideHomePageReplacement? initialHomePageReplacement;
 
   @override
   State<_WritersideTopicRemovalDialog> createState() =>
@@ -3748,14 +3919,15 @@ class _WritersideTopicRemovalDialogState
     extends State<_WritersideTopicRemovalDialog> {
   late bool _updateUsagesAutomatically;
   WritersideTopicRedirectTarget? _redirectTarget;
+  WritersideHomePageReplacement? _homePageReplacement;
 
   WritersideTopicRemovalAnalysis get _analysis => widget.analysis;
 
   bool get _canApply {
-    if (_analysis.blockingUsages.isEmpty) {
-      return true;
-    }
-    return _updateUsagesAutomatically && _analysis.canUpdateUsagesAutomatically;
+    final blocking = _analysis.unresolvedBlockingUsages(_homePageReplacement);
+    return blocking.isEmpty ||
+        (_updateUsagesAutomatically &&
+            blocking.every((usage) => usage.canUpdateAutomatically));
   }
 
   @override
@@ -3763,8 +3935,9 @@ class _WritersideTopicRemovalDialogState
     super.initState();
     _updateUsagesAutomatically =
         widget.initialUpdateUsagesAutomatically &&
-        _analysis.canUpdateUsagesAutomatically;
+        _analysis.canUpdateOtherUsagesAutomatically;
     _redirectTarget = widget.initialRedirectTarget;
+    _homePageReplacement = widget.initialHomePageReplacement;
   }
 
   @override
@@ -3795,6 +3968,7 @@ class _WritersideTopicRemovalDialogState
               _WritersideTopicRemovalDialogResult.review(
                 updateUsagesAutomatically: _updateUsagesAutomatically,
                 redirectTarget: _redirectTarget,
+                homePageReplacement: _homePageReplacement,
               ),
             ),
           ),
@@ -3812,6 +3986,7 @@ class _WritersideTopicRemovalDialogState
                   _WritersideTopicRemovalDialogResult.apply(
                     updateUsagesAutomatically: _updateUsagesAutomatically,
                     redirectTarget: _redirectTarget,
+                    homePageReplacement: _homePageReplacement,
                   ),
                 )
               : null,
@@ -3833,9 +4008,44 @@ class _WritersideTopicRemovalDialogState
         if (_analysis.isStartPage) ...[
           const SizedBox(height: BusyMarkSpacing.md),
           BusyMarkStatusBox(
-            message: context.l10n.topicIsStartPageRemovalWarning,
+            message: removeFromInstance
+                ? context.l10n.topicIsHomePageRemovalWarning
+                : context.l10n.topicIsStartPageRemovalWarning,
             kind: BusyMarkStatusKind.warning,
           ),
+        ],
+        if (_analysis.requiresHomePageReplacement) ...[
+          const SizedBox(height: BusyMarkSpacing.md),
+          if (_analysis.homePageReplacements.isEmpty)
+            BusyMarkStatusBox(
+              message: context.l10n.noHomePageReplacement,
+              kind: BusyMarkStatusKind.warning,
+            )
+          else
+            Row(
+              children: [
+                Text(context.l10n.newHomePage),
+                const SizedBox(width: BusyMarkSpacing.sm),
+                Expanded(
+                  child: BusyMarkPopupSelector<WritersideHomePageReplacement>(
+                    value: _homePageReplacement,
+                    label:
+                        _homePageReplacement?.label ??
+                        context.l10n.chooseHomePage,
+                    tooltip: context.l10n.newHomePage,
+                    options: [
+                      for (final candidate in _analysis.homePageReplacements)
+                        BusyMarkPopupSelectorOption(
+                          value: candidate,
+                          label: candidate.label,
+                        ),
+                    ],
+                    onSelected: (value) =>
+                        setState(() => _homePageReplacement = value),
+                  ),
+                ),
+              ],
+            ),
         ],
         if (removeFromInstance)
           Row(
@@ -3880,7 +4090,7 @@ class _WritersideTopicRemovalDialogState
           children: [
             BusyMarkCheckbox(
               value: _updateUsagesAutomatically,
-              onChanged: _analysis.canUpdateUsagesAutomatically
+              onChanged: _analysis.canUpdateOtherUsagesAutomatically
                   ? (value) => setState(
                       () => _updateUsagesAutomatically = value ?? false,
                     )
@@ -10260,11 +10470,15 @@ class _EditorTabStrip extends ConsumerWidget {
     required this.state,
     required this.gitState,
     required this.localHistoryState,
+    required this.onClose,
+    required this.onShowMenu,
   });
 
   final WorkspaceState state;
   final GitState gitState;
   final LocalHistoryState localHistoryState;
+  final void Function(WorkspaceTabEntry) onClose;
+  final void Function(WorkspaceTabEntry, Offset) onShowMenu;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -10306,6 +10520,7 @@ class _EditorTabStrip extends ConsumerWidget {
                 itemBuilder: (context, index) {
                   final entry = entries[index];
                   return _WorkspaceTabButton(
+                    key: ValueKey(entry.key),
                     title: _tabTitle(context, workspace, entry),
                     icon: _tabIcon(workspace, entry),
                     diff: entry.kind == WorkspaceTabKind.gitDiff,
@@ -10313,14 +10528,9 @@ class _EditorTabStrip extends ConsumerWidget {
                     dirty: _tabDirty(workspace, entry),
                     onSelected: () =>
                         _selectTab(context, ref, workspace, entry),
-                    onClose: () => _closeTab(context, ref, workspace, entry),
-                    onSecondaryTapUp: (details) => _showTabMenu(
-                      context,
-                      ref,
-                      workspace,
-                      entry,
-                      details.globalPosition,
-                    ),
+                    onClose: () => onClose(entry),
+                    onSecondaryTapUp: (details) =>
+                        onShowMenu(entry, details.globalPosition),
                   );
                 },
                 separatorBuilder: (context, index) =>
@@ -10418,100 +10628,19 @@ class _EditorTabStrip extends ConsumerWidget {
         return;
     }
   }
-
-  Future<void> _closeTab(
-    BuildContext context,
-    WidgetRef ref,
-    Workspace workspace,
-    WorkspaceTabEntry entry,
-  ) async {
-    final gitController = ref.read(gitControllerProvider.notifier);
-    switch (entry.kind) {
-      case WorkspaceTabKind.file:
-        final controller = ref.read(workspaceControllerProvider.notifier);
-        if (entry.dirty) {
-          if (entry.bufferId != state.activeBufferId) {
-            await controller.activateDocumentBuffer(entry.bufferId!);
-          }
-          if (!context.mounted ||
-              !await confirmSafeToCloseActiveDocument(context, ref) ||
-              !context.mounted) {
-            return;
-          }
-        }
-        await controller.closeDocumentBuffer(entry.bufferId!);
-        gitController.deactivateDiffFile();
-      case WorkspaceTabKind.gitDiff:
-        if (entry.path.isEmpty) {
-          gitController.clearSelection();
-        } else {
-          gitController.closeDiffFile(entry.path);
-        }
-      case WorkspaceTabKind.localHistory:
-        ref.read(localHistoryControllerProvider.notifier).clearComparison();
-    }
-  }
-
-  Future<void> _showTabMenu(
-    BuildContext context,
-    WidgetRef ref,
-    Workspace workspace,
-    WorkspaceTabEntry entry,
-    Offset position,
-  ) async {
-    final action = await showBusyMarkContextMenu<_WorkspaceTabAction>(
-      context,
-      position,
-      items: [
-        if (entry.kind == WorkspaceTabKind.file)
-          BusyMarkPopupMenuItem(
-            value: _WorkspaceTabAction.localHistory,
-            label: context.l10n.localHistoryEllipsis,
-            icon: BusyMarkGlyphs.documentHistory,
-          ),
-        if (entry.kind == WorkspaceTabKind.file)
-          const PopupMenuDivider(height: BusyMarkSpacing.sm),
-        BusyMarkPopupMenuItem(
-          value: _WorkspaceTabAction.close,
-          label: MaterialLocalizations.of(context).closeButtonTooltip,
-          icon: BusyMarkGlyphs.clear,
-        ),
-      ],
-    );
-    if (action == null || !context.mounted) return;
-    switch (action) {
-      case _WorkspaceTabAction.localHistory:
-        final requestedBuffer = state.documentBuffers
-            .where((candidate) => candidate.id == entry.bufferId)
-            .firstOrNull;
-        if (requestedBuffer == null) return;
-        final activated = await ref
-            .read(workspaceControllerProvider.notifier)
-            .activateDocumentBuffer(requestedBuffer.id);
-        if (!activated || !context.mounted) return;
-        final currentRequestedBuffer = ref
-            .read(workspaceControllerProvider)
-            .documentBuffers
-            .where((candidate) => candidate.id == requestedBuffer.id)
-            .firstOrNull;
-        if (currentRequestedBuffer == null) return;
-        await ref
-            .read(localHistoryControllerProvider.notifier)
-            .selectDocumentForBuffer(currentRequestedBuffer);
-        if (!context.mounted) return;
-        ref
-            .read(_sidebarShortcutRequestProvider.notifier)
-            .select(_SidebarTab.localHistory);
-      case _WorkspaceTabAction.close:
-        await _closeTab(context, ref, workspace, entry);
-    }
-  }
 }
 
-enum _WorkspaceTabAction { localHistory, close }
+enum _WorkspaceTabAction {
+  close,
+  closeOthers,
+  closeAll,
+  copyPath,
+  localHistory,
+}
 
 class _WorkspaceTabButton extends StatelessWidget {
   const _WorkspaceTabButton({
+    super.key,
     required this.title,
     required this.icon,
     required this.diff,
@@ -10544,66 +10673,69 @@ class _WorkspaceTabButton extends StatelessWidget {
       borderRadius: const BorderRadius.vertical(
         top: Radius.circular(BusyMarkRadius.sm),
       ),
-      child: InkWell(
-        borderRadius: const BorderRadius.vertical(
-          top: Radius.circular(BusyMarkRadius.sm),
-        ),
-        hoverColor: colors.controlHover,
-        onTap: onSelected,
-        onSecondaryTapUp: onSecondaryTapUp,
-        child: Container(
-          height: BusyMarkSizes.paneHeaderHeight - BusyMarkSpacing.xs,
-          constraints: const BoxConstraints(minWidth: 112, maxWidth: 240),
-          decoration: BoxDecoration(
-            borderRadius: const BorderRadius.vertical(
-              top: Radius.circular(BusyMarkRadius.sm),
+      child: GestureDetector(
+        onTertiaryTapUp: (_) => onClose(),
+        child: InkWell(
+          borderRadius: const BorderRadius.vertical(
+            top: Radius.circular(BusyMarkRadius.sm),
+          ),
+          hoverColor: colors.controlHover,
+          onTap: onSelected,
+          onSecondaryTapUp: onSecondaryTapUp,
+          child: Container(
+            height: BusyMarkSizes.paneHeaderHeight - BusyMarkSpacing.xs,
+            constraints: const BoxConstraints(minWidth: 112, maxWidth: 240),
+            decoration: BoxDecoration(
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(BusyMarkRadius.sm),
+              ),
+              border: Border.all(color: borderColor),
             ),
-            border: Border.all(color: borderColor),
-          ),
-          padding: const EdgeInsetsDirectional.only(
-            start: BusyMarkSpacing.sm,
-            end: BusyMarkSpacing.xs,
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (dirty) ...[
-                Container(
-                  width: BusyMarkSizes.markerDot,
-                  height: BusyMarkSizes.markerDot,
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.primary,
-                    shape: BoxShape.circle,
+            padding: const EdgeInsetsDirectional.only(
+              start: BusyMarkSpacing.sm,
+              end: BusyMarkSpacing.xs,
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (dirty) ...[
+                  Container(
+                    width: BusyMarkSizes.markerDot,
+                    height: BusyMarkSizes.markerDot,
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.primary,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: BusyMarkSpacing.sm),
+                ] else ...[
+                  if (diff)
+                    _DiffCompareIcon(color: foreground)
+                  else
+                    Icon(icon, size: BusyMarkSizes.iconSm, color: foreground),
+                  const SizedBox(width: BusyMarkSpacing.sm),
+                ],
+                Flexible(
+                  child: Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    softWrap: false,
+                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                      color: foreground,
+                      fontWeight: active ? FontWeight.w700 : FontWeight.w500,
+                    ),
                   ),
                 ),
-                const SizedBox(width: BusyMarkSpacing.sm),
-              ] else ...[
-                if (diff)
-                  _DiffCompareIcon(color: foreground)
-                else
-                  Icon(icon, size: BusyMarkSizes.iconSm, color: foreground),
-                const SizedBox(width: BusyMarkSpacing.sm),
+                const SizedBox(width: BusyMarkSpacing.xs),
+                BusyMarkCompactIconButton(
+                  tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
+                  icon: BusyMarkGlyphs.clear,
+                  foregroundColor: foreground,
+                  onPressed: onClose,
+                ),
               ],
-              Flexible(
-                child: Text(
-                  title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  softWrap: false,
-                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                    color: foreground,
-                    fontWeight: active ? FontWeight.w700 : FontWeight.w500,
-                  ),
-                ),
-              ),
-              const SizedBox(width: BusyMarkSpacing.xs),
-              BusyMarkCompactIconButton(
-                tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
-                icon: BusyMarkGlyphs.clear,
-                foregroundColor: foreground,
-                onPressed: onClose,
-              ),
-            ],
+            ),
           ),
         ),
       ),

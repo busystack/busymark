@@ -11,6 +11,9 @@ class AppLocalizationsFa extends AppLocalizations {
   AppLocalizationsFa([String locale = 'fa']) : super(locale);
 
   @override
+  String get closeOtherTabs => 'بستن زبانه‌های دیگر';
+
+  @override
   String get tocTopicFromTemplate => 'موضوع از الگو...';
 
   @override
@@ -1558,8 +1561,22 @@ class AppLocalizationsFa extends AppLocalizations {
   }
 
   @override
+  String get topicIsHomePageRemovalWarning =>
+      'این موضوع صفحهٔ اصلی این نمونه است. پیش از حذف آن از فهرست مطالب، صفحهٔ اصلی دیگری انتخاب کنید.';
+
+  @override
+  String get newHomePage => 'صفحهٔ اصلی جدید';
+
+  @override
+  String get chooseHomePage => 'انتخاب صفحهٔ اصلی';
+
+  @override
+  String get noHomePageReplacement =>
+      'پیش از حذف صفحهٔ اصلی، موضوع مناسب دیگری به این نمونه اضافه یا پیوند دهید.';
+
+  @override
   String get topicIsStartPageRemovalWarning =>
-      'این موضوع به‌عنوان صفحهٔ آغاز یک نمونه استفاده می‌شود. موارد استفاده را مرور و پیش از ادامه صفحهٔ آغاز دیگری تعیین کنید.';
+      'این موضوع صفحهٔ اصلی یک نمونه است. پیش از حذف فایل منبع آن، صفحهٔ اصلی دیگری تعیین کنید.';
 
   @override
   String topicUsagesCount(int count) {
@@ -1581,7 +1598,7 @@ class AppLocalizationsFa extends AppLocalizations {
   String get topicUsageTocElements => 'عناصر فهرست مطالب';
 
   @override
-  String get topicUsageStartPages => 'صفحه‌های آغاز';
+  String get topicUsageStartPages => 'صفحه‌های اصلی';
 
   @override
   String get topicUsageTopicLinks => 'پیوندهای موضوع';
@@ -2209,7 +2226,7 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String errorWritersideStartTopicDelete(String topic) {
-    return 'موضوع شروع ⁨$topic⁩ را نمی‌توان حذف کرد. ابتدا صفحهٔ شروع دیگری را انتخاب کنید.';
+    return 'صفحهٔ اصلی $topic قابل حذف نیست. ابتدا صفحهٔ اصلی دیگری انتخاب کنید.';
   }
 
   @override
@@ -4783,4 +4800,30 @@ class AppLocalizationsFa extends AppLocalizations {
   @override
   String get nextcloudChooseConflictingAttributes =>
       'مقدار هر ویژگی متعارض را انتخاب کنید.';
+
+  @override
+  String get nextcloudUseServerNote => 'استفاده از این یادداشت سرور';
+
+  @override
+  String get nextcloudUseServerNoteExplanation =>
+      'این پیش‌نویس را به یادداشت انتخاب‌شدهٔ سرور پیوند می‌دهد و سپس تغییرات محلی حفظ‌شده را همگام می‌کند. تطابق درخواست مشخص نمی‌کند چه کسی یادداشت را ایجاد کرده است.';
+
+  @override
+  String get nextcloudExactCandidate =>
+      'تطابق دقیق درخواست؛ هویت تأیید نشده است.';
+
+  @override
+  String get nextcloudPossibleCandidate =>
+      'تطابق احتمالی درخواست پاک‌سازی‌شده؛ هویت تأیید نشده است.';
+
+  @override
+  String get nextcloudSelectCandidate =>
+      'یک یادداشت سرور را برای بررسی انتخاب کنید';
+
+  @override
+  String get nextcloudCreateSeparate => 'ایجاد یک یادداشت جداگانه';
+
+  @override
+  String get nextcloudCreateSeparateWarning =>
+      'ممکن است درخواست نخست قبلاً یک یادداشت سرور ایجاد کرده باشد. این کار یک یادداشت جداگانه با کار محلی حفظ‌شدهٔ شما ایجاد می‌کند. هیچ یادداشت مشکوک به تکراری بودن حذف نمی‌شود.';
 }

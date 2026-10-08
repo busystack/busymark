@@ -11,6 +11,71 @@ void main() {
   const serializer = BusyMarkMarkdownSerializer();
 
   test(
+    'reconstructed formatting across links retains offsets and leaf metadata',
+    () {
+      for (final kind in [BusyInlineKind.strong, BusyInlineKind.emphasis]) {
+        final block = busyMarkWysiwygClipboardBlock(
+          BusyWysiwygStyledBlock(
+            kind: BusyBlockKind.paragraph,
+            text: 'hello world ',
+            ranges: [
+              BusyInlineStyleRange(start: 0, end: 11, kind: kind),
+              const BusyInlineStyleRange(
+                start: 6,
+                end: 11,
+                kind: BusyInlineKind.link,
+                destination: 'guide.md',
+                attributes: {'title': 'Guide', 'target': '_blank'},
+              ),
+            ],
+          ),
+        );
+        final delimiter = kind == BusyInlineKind.strong ? '**' : '*';
+        final expected =
+            '${delimiter}hello [world](guide.md "Guide")$delimiter ';
+        for (var offset = 0; offset <= block.plainText.length; offset++) {
+          final result = serializer.serializeInlineFragmentWithOffsets(
+            block.inlines,
+            textOffset: offset,
+          );
+          expect(result.source, expected);
+          final expectedOffset = offset == 0
+              ? 0
+              : offset < 6
+              ? delimiter.length + offset
+              : offset == 6
+              ? delimiter.length + 6
+              : offset < 11
+              ? delimiter.length + offset + 1
+              : offset == 11
+              ? expected.length - 1
+              : expected.length;
+          expect(
+            result.sourceOffset,
+            expectedOffset,
+            reason: '$kind offset $offset',
+          );
+          expect(
+            result.textAtoms.map((atom) => atom.text).join(),
+            'hello world ',
+          );
+          for (final atom in result.textAtoms) {
+            expect(
+              expected.substring(atom.sourceStart, atom.sourceEnd),
+              atom.text,
+            );
+          }
+        }
+        final link = busyInlineStyleRanges(
+          block.inlines,
+        ).singleWhere((range) => range.kind == BusyInlineKind.link);
+        expect((link.start, link.end, link.destination), (6, 11, 'guide.md'));
+        expect(link.attributes, {'title': 'Guide', 'target': '_blank'});
+      }
+    },
+  );
+
+  test(
     'partially formatted URL source offsets and text atoms survive save and edit',
     () {
       const parser = MarkdownParser();

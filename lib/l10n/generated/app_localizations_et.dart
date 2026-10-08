@@ -11,6 +11,9 @@ class AppLocalizationsEt extends AppLocalizations {
   AppLocalizationsEt([String locale = 'et']) : super(locale);
 
   @override
+  String get closeOtherTabs => 'Sulge teised vahelehed';
+
+  @override
   String get tocTopicFromTemplate => 'Teema mallist...';
 
   @override
@@ -1530,8 +1533,22 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
+  String get topicIsHomePageRemovalWarning =>
+      'See teema on selle eksemplari avaleht. Vali teine avaleht enne selle eemaldamist sisukorrast.';
+
+  @override
+  String get newHomePage => 'Uus avaleht';
+
+  @override
+  String get chooseHomePage => 'Vali avaleht';
+
+  @override
+  String get noHomePageReplacement =>
+      'Lisa või lingi sellele eksemplarile teine sobiv teema enne selle avalehe eemaldamist.';
+
+  @override
   String get topicIsStartPageRemovalWarning =>
-      'Seda teemat kasutatakse eksemplari avalehena. Enne jätkamist vaata kasutuskohad üle ja määra teine avaleht.';
+      'See teema on eksemplari avaleht. Määra teine avaleht enne selle lähtefaili kustutamist.';
 
   @override
   String topicUsagesCount(int count) {
@@ -2168,7 +2185,7 @@ class AppLocalizationsEt extends AppLocalizations {
 
   @override
   String errorWritersideStartTopicDelete(String topic) {
-    return 'Avaleheks määratud teemat „$topic” ei saa kustutada. Vali esmalt teine avaleht.';
+    return 'Avaleht $topic ei saa kustutada. Vali esmalt teine avaleht.';
   }
 
   @override
@@ -4746,4 +4763,29 @@ class AppLocalizationsEt extends AppLocalizations {
   @override
   String get nextcloudChooseConflictingAttributes =>
       'Valige iga vastuolulise atribuudi väärtus.';
+
+  @override
+  String get nextcloudUseServerNote => 'Kasuta seda serverimärkust';
+
+  @override
+  String get nextcloudUseServerNoteExplanation =>
+      'Seob mustandi valitud serverimärkusega ja sünkroonib seejärel säilitatud kohalikud muudatused. Päringu vastavus ei kinnita märkuse loojat.';
+
+  @override
+  String get nextcloudExactCandidate =>
+      'Täpne päringu vaste; identiteet on kinnitamata.';
+
+  @override
+  String get nextcloudPossibleCandidate =>
+      'Võimalik puhastatud päringu vaste; identiteet on kinnitamata.';
+
+  @override
+  String get nextcloudSelectCandidate => 'Vali ülevaatamiseks serverimärkus';
+
+  @override
+  String get nextcloudCreateSeparate => 'Loo eraldi märkus';
+
+  @override
+  String get nextcloudCreateSeparateWarning =>
+      'Esimene päring võis serveris juba märkuse luua. See loob eraldi märkuse koos säilitatud kohaliku tööga. Võimalikke duplikaate ei kustutata.';
 }

@@ -5,17 +5,14 @@ account. The SQLite database and managed attachment files are implementation
 details for offline editing, recovery and synchronization; they are not another
 workspace. Existing local Markdown and Writerside storage paths remain separate.
 
-## Verified upstream contract
+## Supported API contract
 
-The implementation was researched against **Notes 6.1.0**, released September 15,
-2026, stable tag `v6.1.0`, commit
-`0c3dd46dbd781b780c1ea60a13873198609bb98d`. On October 5, 2026 the App Store
-listed this release for Nextcloud **33, 34 and 35**; no newer stable Notes release
-was listed. The package permits `>=33,<37`, which does not make an unreleased
-server a tested baseline. Live acceptance used **Nextcloud 35.0.1** with this
-exact Notes release.
+The implementation targets **Notes API 1.4** in major version 1, including
+Notes **6.0.x** and **6.1.x**. Attachment deletion additionally requires Notes
+**6.1.0** or later. Server compatibility depends on the installed Notes app and
+its advertised capabilities.
 
-Sources reviewed before implementation:
+Upstream contract references:
 
 - [App Store](https://apps.nextcloud.com/apps/notes) and
   [stable release](https://github.com/nextcloud/notes/releases/tag/v6.1.0).
@@ -27,7 +24,7 @@ Sources reviewed before implementation:
   `playwright/e2e/attachment-api.spec.ts`.
 - [Login Flow v2 and password revocation](https://docs.nextcloud.com/server/stable/developer_manual/client_apis/LoginFlow/index.html),
   [OCS authentication/capabilities](https://docs.nextcloud.com/server/stable/developer_manual/client_apis/OCS/ocs-api-overview.html).
-- Current Notes issues [1940](https://github.com/nextcloud/notes/issues/1940),
+- Notes issues [1940](https://github.com/nextcloud/notes/issues/1940),
   [2037](https://github.com/nextcloud/notes/issues/2037),
   [1955](https://github.com/nextcloud/notes/issues/1955),
   [1999](https://github.com/nextcloud/notes/issues/1999),
@@ -41,9 +38,8 @@ There is no Notes application-version minimum for connection. Missing or malform
 capability fields are ignored. No API <1.4, deprecated 0.2, or other protocol is
 implemented.
 
-The October 5 compatibility review repeated `docs/api/README.md`, `docs/api/v1.md`,
-`lib/AppInfo/Application.php`, `lib/AppInfo/Capabilities.php`, and `appinfo/routes.php`
-against these exact tags:
+The tagged `lib/AppInfo/Capabilities.php` and `appinfo/routes.php` establish
+the supported baseline alongside `docs/api/README.md` and `docs/api/v1.md`:
 
 | Tag | Commit | API capability | Attachment endpoints |
 | --- | --- | --- | --- |
@@ -114,10 +110,8 @@ newer unsupported schemas. SQLite uses WAL, `synchronous=FULL`, foreign keys and
 a busy timeout. Notes content, revision, base state, outbox and synchronization
 checkpoint commit atomically. The Notes directory is mode 0700 and database
 0600 on Linux. Managed attachment paths reject traversal and symbolic links.
-No database encryption or general account-provider framework was introduced.
-The lockfile adds only `sqlite3` and its required native-asset tooling upgrades
-(`hooks` 2.2.0 and `record_use` 1.1.1). Flutter 3.47.5 and Dart 3.13.4 were used;
-the repository's SDK and toolchain pins were preserved.
+The database is not encrypted. This is a dedicated Notes integration, with no
+general account-provider framework.
 
 An editor revision is saved only after its local transaction succeeds. HTTP
 acknowledgment is a separate operation. Save, Save All, autosave, recovery,
@@ -188,22 +182,41 @@ from the recorded wire content. There is no hidden Markdown marker.
 There is no documented create idempotency key. A transport failure, malformed
 response or 5xx after creation enters `creationUncertain`; restart after an
 in-flight create does the same. Reconciliation requests an unpruned collection.
-A plausible candidate must have an unseen ID and equal wire content, favorite
-and modified. Automatic adoption additionally requires exact wire title and
-category, exactly one match, exactly one matching local attempt, nonempty
-content, and no existing downloaded local instance. A title or category changed
-by server sanitization/deduplication remains an unresolved candidate for the user
-to adopt deliberately. Candidate IDs survive restart, and the comparison UI can
-select among multiple plausible notes. Empty-content matches, missing evidence,
-or an existing instance also require deliberate resolution. Timestamps alone
-are never identity. These are conservative correlation checks, not a server
-idempotency guarantee; an independently created fully identical note cannot be
-proven distinct. BusyMark never automatically retries an uncertain POST.
+A plausible candidate has an unseen ID and equal wire content, favorite and
+modified. Exact and sanitized payload matches only rank possible candidates;
+they never establish identity. Every uncertain outcome remains blocked across
+refresh, reconnect, autosave and restart, including a single identical nonempty
+candidate and an empty result. Discovery persists candidates without binding,
+acknowledgment, clearing the attempt or permitting PUT, DELETE or publication.
+An independently created identical note cannot be distinguished by its payload.
 
-Adoption preserves the logical identity and any newer local revision, adopts the
-server ID/base/ETag, and retains pending attachment bytes/references. Attachment
-publication then resumes through the existing durable upload/update sequence.
-Recovery as a new note is an explicit user decision.
+The comparison presents the selected server ID, title, category, modification
+time and content. **Use this server note** explicitly links the draft and then
+synchronizes retained local edits. Confirmation supplies an immutable review
+containing the draft revision, account, attempt identity and selected state.
+The repository fetches that ID through the authenticated account and compares
+all state fields, including permissions. Changed, unavailable, missing or
+read-only candidates stay unresolved and need another review. Account removal,
+new local revisions and repeated confirmation invalidate the decision.
+
+Binding preserves the draft's logical identity and history. The fresh server
+ID/base/ETag and outbox commit with removal of a clean downloaded duplicate in
+one SQLite transaction. Durable duplicate edits and pending attachment
+operations block consolidation. Every workspace controller also registers an
+open-tab guard; candidate tabs must be closed after preserving their work.
+Reserved candidates cannot be opened during confirmation. The same commit-time
+editor guard rejects unsaved draft edits that arrived during the confirmation
+GET, requiring another review. Newer draft edits and staged bytes remain
+pending through the existing ordered attachment/update pipeline, and subsequent PUTs retain If-Match protection.
+
+**Create a separate note** warns that the first request may already have created
+a server note. The explicit decision durably records one replacement identity
+and copies recoverable work and attachment bytes atomically. Concurrent clicks
+are rejected and repeated confirmation reuses that replacement. The original
+uncertain draft remains recoverable and blocked. Cancel and dismissal leave it
+untouched. No suspected server duplicate is automatically deleted. Legacy
+uncertain records without creation evidence cannot be adopted by guessing;
+the existing database migrations and startup recovery remain unchanged.
 
 Read-only notes block content/title/category editing while favorite remains
 writable under the documented contract. A note becoming read-only does not
@@ -297,12 +310,41 @@ attachment stages/media security and BusyMark save/session/history/export/UI
 integration. Native probes cover the credential whitelist and actual libsecret
 create/read/delete in an isolated keyring.
 
-`tools/nextcloud_notes_live_acceptance.dart` accepts a private credential JSON
-path and exercises an explicit disposable fixture. The browser helper uses
-Login Flow v2; do not commit credentials or use a real production account for
-destructive acceptance tests. Validation results and environment limitations
-are recorded in [the validation record](nextcloud-notes-validation.md); mocked coverage is not a
-substitute for claiming real server acceptance.
+Run the existing automated coverage from the repository root:
+
+```bash
+flutter test --no-pub test/src/nextcloud_notes test/src/nextcloud*_test.dart
+bash tools/test_secure_credential_policy.sh
+bash tools/test_nextcloud_libsecret.sh
+```
+
+The libsecret probe requires development headers, `pkg-config`, a C++ compiler,
+D-Bus, and `gnome-keyring-daemon`; it creates an isolated temporary keyring.
+Run `flutter test --no-pub` for the shared editor, session, history, export and
+packaging regressions as well.
+
+For live acceptance, use an isolated HTTPS test account and keep credentials
+and reports outside the repository. The browser harness requires Python
+`requests`, Playwright and Chrome. Its account JSON contains `server`, `user`
+and `password`; it writes private app credentials containing `server`,
+`loginName` and `appPassword` for the Dart harness:
+
+```bash
+acceptance_dir="$(mktemp -d)"
+python3 tools/nextcloud_login_live_acceptance.py \
+  /path/to/private-test-account.json "$acceptance_dir/app-credentials.json" \
+  "$acceptance_dir/login.json"
+dart run tools/nextcloud_notes_live_acceptance.dart \
+  "$acceptance_dir/app-credentials.json" "$acceptance_dir/notes.json"
+```
+
+The Dart harness also accepts a third argument naming a test CA certificate.
+It exercises disposable notes and attachments, including conflicts, offline
+saves, restart, and explicit adoption after uncertain creation. Repeat against
+the supported Notes 6.0.x and 6.1.x baselines when changing the API contract;
+mocked tests alone do not establish live server compatibility. Keep the
+checkpoint, revision, explicit-adoption and attachment ownership invariants
+above covered, and remove temporary acceptance data when finished.
 
 ## Explicit non-goals
 

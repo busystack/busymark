@@ -1,4 +1,6 @@
 {
+  "closeOtherTabs": "Fechar as outras abas",
+  "@closeOtherTabs": {"description": "Document tab context menu action that closes every other document and comparison tab while retaining this document."},
   "tocTopicFromTemplate": "Tópico a partir de modelo...",
   "tocSaveAsTemplate": "Salvar como modelo",
   "tocTemplateDialog": "Criar tópico a partir de modelo",
@@ -1877,9 +1879,9 @@
   "@errorWritersideTocInvalidMove": {
     "description": "Detail shown when a Writerside TOC move would create a cycle."
   },
-  "errorWritersideStartTopicDelete": "O tópico inicial {topic} não pode ser excluído. Escolha primeiro outra página inicial.",
+  "errorWritersideStartTopicDelete": "Não é possível excluir a página inicial {topic}. Escolha outra página inicial primeiro.",
   "@errorWritersideStartTopicDelete": {
-    "description": "Detail shown when attempting to delete the start topic of a Writerside instance.",
+    "description": "Detail shown when attempting to delete the Home Page of a Writerside instance.",
     "placeholders": {
       "topic": {
         "type": "String"
@@ -2669,7 +2671,11 @@
       }
     }
   },
-  "topicIsStartPageRemovalWarning": "Este tópico é usado como página inicial de uma instância. Revise os usos dele e atribua outra página inicial antes de continuar.",
+  "topicIsHomePageRemovalWarning": "Este tópico é a página inicial desta instância. Escolha outra página inicial antes de removê-lo do sumário.",
+  "newHomePage": "Nova página inicial",
+  "chooseHomePage": "Escolher página inicial",
+  "noHomePageReplacement": "Adicione ou vincule outro tópico elegível a esta instância antes de remover sua página inicial.",
+  "topicIsStartPageRemovalWarning": "Este tópico é a página inicial de uma instância. Defina outra página inicial antes de excluir seu arquivo de origem.",
   "@topicIsStartPageRemovalWarning": {
     "description": "Warning shown when the topic is used as an instance start page."
   },
@@ -3406,5 +3412,12 @@
   "nextcloudAttachmentReference": "Referência do anexo no servidor",
   "nextcloudAddAttachment": "Adicionar anexo…",
   "nextcloudDeleteAttachmentWarning": "Excluir este anexo torna seus links na nota indisponíveis. Os dados preservados podem ser recuperados pelo histórico local.",
-  "nextcloudChooseConflictingAttributes": "Escolha cada atributo em conflito."
+  "nextcloudChooseConflictingAttributes": "Escolha cada atributo em conflito.",
+  "nextcloudUseServerNote": "Usar esta nota do servidor",
+  "nextcloudUseServerNoteExplanation": "Vincula este rascunho à nota selecionada no servidor e depois sincroniza as alterações locais preservadas. Uma solicitação correspondente não confirma quem criou a nota.",
+  "nextcloudExactCandidate": "Correspondência exata com a solicitação; identidade não confirmada.",
+  "nextcloudPossibleCandidate": "Possível correspondência após normalização; identidade não confirmada.",
+  "nextcloudSelectCandidate": "Selecionar uma nota do servidor para revisar",
+  "nextcloudCreateSeparate": "Criar uma nota separada",
+  "nextcloudCreateSeparateWarning": "A primeira solicitação pode já ter criado uma nota no servidor. Isso cria uma nota separada com o trabalho local preservado. Nenhuma possível duplicata será excluída."
 }

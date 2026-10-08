@@ -11,6 +11,9 @@ class AppLocalizationsDe extends AppLocalizations {
   AppLocalizationsDe([String locale = 'de']) : super(locale);
 
   @override
+  String get closeOtherTabs => 'Andere Tabs schließen';
+
+  @override
   String get tocTopicFromTemplate => 'Thema aus Vorlage...';
 
   @override
@@ -1550,8 +1553,22 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
+  String get topicIsHomePageRemovalWarning =>
+      'Dieses Thema ist die Startseite dieser Instanz. Wählen Sie eine andere Startseite, bevor Sie es aus dem Inhaltsverzeichnis entfernen.';
+
+  @override
+  String get newHomePage => 'Neue Startseite';
+
+  @override
+  String get chooseHomePage => 'Startseite auswählen';
+
+  @override
+  String get noHomePageReplacement =>
+      'Fügen Sie dieser Instanz ein anderes geeignetes Thema hinzu oder verknüpfen Sie es, bevor Sie ihre Startseite entfernen.';
+
+  @override
   String get topicIsStartPageRemovalWarning =>
-      'Dieses Thema wird als Startseite einer Instanz verwendet. Prüfen Sie seine Verwendungen und weisen Sie eine andere Startseite zu, bevor Sie fortfahren.';
+      'Dieses Thema ist die Startseite einer Instanz. Legen Sie eine andere Startseite fest, bevor Sie seine Quelldatei löschen.';
 
   @override
   String topicUsagesCount(int count) {
@@ -2195,7 +2212,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String errorWritersideStartTopicDelete(String topic) {
-    return 'Das Startthema $topic kann nicht gelöscht werden. Wählen Sie zuerst eine andere Startseite aus.';
+    return 'Die Startseite $topic kann nicht gelöscht werden. Wählen Sie zuerst eine andere Startseite.';
   }
 
   @override
@@ -4789,4 +4806,29 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get nextcloudChooseConflictingAttributes =>
       'Wählen Sie jeden widersprüchlichen Wert.';
+
+  @override
+  String get nextcloudUseServerNote => 'Diese Servernotiz verwenden';
+
+  @override
+  String get nextcloudUseServerNoteExplanation =>
+      'Verknüpft diesen Entwurf mit der ausgewählten Servernotiz und synchronisiert anschließend die behaltenen lokalen Änderungen. Ein passender Antrag bestätigt nicht, wer die Notiz erstellt hat.';
+
+  @override
+  String get nextcloudExactCandidate =>
+      'Exakte Übereinstimmung mit der Anfrage; Identität unbestätigt.';
+
+  @override
+  String get nextcloudPossibleCandidate =>
+      'Mögliche Übereinstimmung nach Bereinigung der Anfrage; Identität unbestätigt.';
+
+  @override
+  String get nextcloudSelectCandidate => 'Servernotiz zur Prüfung auswählen';
+
+  @override
+  String get nextcloudCreateSeparate => 'Separate Notiz erstellen';
+
+  @override
+  String get nextcloudCreateSeparateWarning =>
+      'Die erste Anfrage hat möglicherweise bereits eine Servernotiz erstellt. Dies erstellt eine separate Notiz mit Ihrer behaltenen lokalen Arbeit. Vermutete Duplikate werden nicht gelöscht.';
 }

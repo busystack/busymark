@@ -1,4 +1,6 @@
 {
+  "closeOtherTabs": "Close other tabs",
+  "@closeOtherTabs": {"description": "Document tab context menu action that closes every other document and comparison tab while retaining this document."},
   "tocTopicFromTemplate": "Topic from Template...",
   "@tocTopicFromTemplate": {"description": "Writerside template dialog or user-template storage feedback."},
   "tocSaveAsTemplate": "Save as Template",
@@ -962,8 +964,16 @@
     "description": "Disclosure that children of a removed TOC element are promoted.",
     "placeholders": {"count": {"type": "int"}}
   },
-  "topicIsStartPageRemovalWarning": "This topic is used as an instance start page. Review its usages and assign another start page before continuing.",
-  "@topicIsStartPageRemovalWarning": {"description": "Warning that blocks deletion of a Writerside start-page topic."},
+  "topicIsHomePageRemovalWarning": "This topic is the Home Page for this instance. Choose another Home Page before removing it from the TOC.",
+  "@topicIsHomePageRemovalWarning": {"description": "Home Page replacement in the Remove TOC Element dialog."},
+  "newHomePage": "New Home Page",
+  "@newHomePage": {"description": "Home Page replacement in the Remove TOC Element dialog."},
+  "chooseHomePage": "Choose a Home Page",
+  "@chooseHomePage": {"description": "Home Page replacement in the Remove TOC Element dialog."},
+  "noHomePageReplacement": "Add or link another eligible topic to this instance before removing its Home Page.",
+  "@noHomePageReplacement": {"description": "Home Page replacement in the Remove TOC Element dialog."},
+  "topicIsStartPageRemovalWarning": "This topic is a Home Page for an instance. Assign another Home Page before deleting its source file.",
+  "@topicIsStartPageRemovalWarning": {"description": "Warning that blocks Safe Delete of a Writerside Home Page."},
   "topicUsagesCount": "{count} usages found.",
   "@topicUsagesCount": {
     "description": "Sentence reporting the number of Writerside topic usages in the removal dialog.",
@@ -975,8 +985,8 @@
   "@topicUsagesFound": {"description": "Description above Writerside topic usage groups."},
   "topicUsageTocElements": "TOC elements",
   "@topicUsageTocElements": {"description": "Usage group label for Writerside TOC elements."},
-  "topicUsageStartPages": "Start pages",
-  "@topicUsageStartPages": {"description": "Usage group label for Writerside instance start pages."},
+  "topicUsageStartPages": "Home Pages",
+  "@topicUsageStartPages": {"description": "Usage group label for Writerside instance Home Pages."},
   "topicUsageTopicLinks": "Topic links",
   "@topicUsageTopicLinks": {"description": "Usage group label for links to a Writerside topic."},
   "topicUsageIncludes": "Includes",
@@ -1397,9 +1407,9 @@
   "@errorWritersideTocNodeMissing": {"description": "Detail shown when a selected Writerside TOC entry no longer exists."},
   "errorWritersideTocInvalidMove": "A TOC entry cannot be moved into itself or one of its children.",
   "@errorWritersideTocInvalidMove": {"description": "Detail shown when a Writerside TOC move would create a cycle."},
-  "errorWritersideStartTopicDelete": "The start topic {topic} cannot be deleted. Choose another start page first.",
+  "errorWritersideStartTopicDelete": "The Home Page {topic} cannot be deleted. Choose another Home Page first.",
   "@errorWritersideStartTopicDelete": {
-    "description": "Detail shown when attempting to delete the start topic of a Writerside instance.",
+    "description": "Detail shown when attempting to delete the Home Page of a Writerside instance.",
     "placeholders": {"topic": {"type": "String"}}
   },
   "errorWritersideSafeDeleteRequired": "Use Safe Delete for Writerside topic files.",
@@ -2839,5 +2849,12 @@
   "nextcloudAttachmentReference": "Attachment reference on server",
   "nextcloudAddAttachment": "Add attachment…",
   "nextcloudDeleteAttachmentWarning": "Deleting this attachment makes its links in the note unavailable. Retained bytes can be recovered through local history.",
-  "nextcloudChooseConflictingAttributes": "Choose each conflicting attribute."
+  "nextcloudChooseConflictingAttributes": "Choose each conflicting attribute.",
+  "nextcloudUseServerNote": "Use this server note",
+  "nextcloudUseServerNoteExplanation": "Links this draft to the selected server note, then synchronizes retained local changes. A matching request does not confirm who created the note.",
+  "nextcloudExactCandidate": "Exact request match; identity is unconfirmed.",
+  "nextcloudPossibleCandidate": "Possible sanitized request match; identity is unconfirmed.",
+  "nextcloudSelectCandidate": "Select a server note to review",
+  "nextcloudCreateSeparate": "Create a separate note",
+  "nextcloudCreateSeparateWarning": "The first request may already have created a server note. This creates a separate note with your retained local work. No suspected duplicate will be deleted."
 }

@@ -5530,6 +5530,981 @@ code
     },
   );
 
+  Future<void> waitForTabAction(
+    WidgetTester tester,
+    bool Function() done,
+  ) async {
+    for (var i = 0; i < 1500 && !done(); i++) {
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 10)),
+      );
+      await tester.pump(const Duration(milliseconds: 10));
+    }
+    expect(done(), isTrue, reason: 'Tab action did not finish');
+    await tester.pumpAndSettle();
+  }
+
+  Future<T> tabOperation<T>(
+    WidgetTester tester,
+    Future<T> Function() operation,
+  ) async {
+    late T result;
+    Object? error;
+    StackTrace? stack;
+    var done = false;
+    unawaited(
+      operation().then<void>(
+        (value) {
+          result = value;
+          done = true;
+        },
+        onError: (Object caught, StackTrace trace) {
+          error = caught;
+          stack = trace;
+          done = true;
+        },
+      ),
+    );
+    await waitForTabAction(tester, () => done);
+    if (error != null) Error.throwWithStackTrace(error!, stack!);
+    return result;
+  }
+
+  Future<
+    ({
+      ProviderContainer container,
+      WorkspaceController controller,
+      _TabbedWorkspaceService service,
+      List<String> paths,
+    })
+  >
+  tabWorkspace(
+    WidgetTester tester, {
+    int count = 3,
+    bool git = false,
+    WorkspaceKind kind = WorkspaceKind.markdownFolder,
+  }) async {
+    final temp = Directory.systemTemp.createTempSync('busymark_tab_actions_');
+    addTearDown(() => temp.deleteSync(recursive: true));
+    final paths = [
+      for (var i = 0; i < count; i++)
+        '${temp.path}/${['a space 文.md', 'b.md', 'c.md'][i]}',
+    ];
+    for (final path in paths) {
+      File(path).writeAsStringSync('# Original\n');
+    }
+    final service = _TabbedWorkspaceService(
+      rootPath: temp.path,
+      paths: paths,
+      kind: kind,
+    );
+    final container = ProviderContainer(
+      overrides: [
+        ..._smokeAccentOverrides,
+        linuxHeaderBarServiceProvider.overrideWithValue(headerBarService),
+        localSettingsStoreProvider.overrideWithValue(
+          _MemorySettingsStore()
+            ..value = AppSettings.defaults()
+                .copyWith(
+                  autoSave: false,
+                  validateOnEdit: false,
+                  documentViewMode: DocumentViewModePreference.source,
+                )
+                .toJson(),
+        ),
+        workspaceServiceProvider.overrideWithValue(service),
+        startupPathProvider.overrideWithValue(temp.path),
+        if (git)
+          gitControllerProvider.overrideWith(
+            () => _PresetGitController(_gitDiffState(temp.path)),
+          ),
+      ],
+    );
+    addTearDown(container.dispose);
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const BusyMarkApp(),
+      ),
+    );
+    for (
+      var i = 0;
+      i < 40 && container.read(workspaceControllerProvider).workspace == null;
+      i++
+    ) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    final controller = container.read(workspaceControllerProvider.notifier);
+    await tabOperation(tester, () async {
+      for (final path in paths.skip(1)) {
+        await controller.openActiveFile(path);
+      }
+    });
+    await tester.pumpAndSettle();
+    return (
+      container: container,
+      controller: controller,
+      service: service,
+      paths: paths,
+    );
+  }
+
+  Finder documentTab(DocumentBuffer buffer) =>
+      find.byKey(ValueKey('file:${buffer.id}'));
+  Finder tabLabel(DocumentBuffer buffer) => find
+      .descendant(of: documentTab(buffer), matching: find.byType(Text))
+      .first;
+  Future<void> openTabMenu(WidgetTester tester, DocumentBuffer buffer) async {
+    await tester.ensureVisible(documentTab(buffer));
+    await tester.pumpAndSettle();
+    await tester.tap(tabLabel(buffer), buttons: kSecondaryButton);
+    await tester.pumpAndSettle();
+  }
+
+  Future<void> openTabComparison(
+    WidgetTester tester,
+    ProviderContainer container,
+  ) async {
+    final history = container.read(localHistoryControllerProvider.notifier);
+    final buffer = container.read(workspaceControllerProvider).activeBuffer!;
+    // Keep these memory-store operations in the test's zone so pending history
+    // work and its completion callbacks can drain through pump().
+    var done = false;
+    unawaited(() async {
+      await history.flushAll(
+        container.read(workspaceControllerProvider).documentBuffers,
+      );
+      await history.selectDocumentForBuffer(buffer);
+      await history.selectRevision(
+        container
+            .read(localHistoryControllerProvider)
+            .selectedRevisions
+            .first
+            .id,
+      );
+      done = true;
+    }());
+    await waitForTabAction(tester, () => done);
+    expect(
+      container.read(localHistoryControllerProvider).selectedRevision,
+      isNotNull,
+    );
+  }
+
+  for (final count in [1, 3]) {
+    testWidgets(
+      'document tab menu ordering and dismissal with $count documents',
+      (tester) async {
+        final h = await tabWorkspace(tester, count: count);
+        final before = h.container.read(workspaceControllerProvider);
+        await openTabMenu(tester, before.documentBuffers.first);
+        final entries = tester
+            .widgetList<PopupMenuEntry<dynamic>>(
+              find.byWidgetPredicate((w) => w is PopupMenuEntry),
+            )
+            .toList();
+        expect(
+          entries.map(
+            (e) => e is BusyMarkPopupMenuItem ? e.label : 'separator',
+          ),
+          [
+            l10n.close,
+            l10n.closeOtherTabs,
+            l10n.shortcutCloseAllTabs,
+            'separator',
+            l10n.copyPath,
+            'separator',
+            l10n.localHistoryEllipsis,
+          ],
+        );
+        expect((entries[1] as PopupMenuItem).enabled, count > 1);
+        expect((entries[4] as PopupMenuItem).enabled, isTrue);
+        expect(
+          entries.whereType<PopupMenuDivider>().map((e) => e.height),
+          everyElement(BusyMarkSpacing.sm),
+        );
+        expect(
+          h.container.read(workspaceControllerProvider).activeBufferId,
+          before.activeBufferId,
+        );
+        await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+        await tester.pumpAndSettle();
+        final after = h.container.read(workspaceControllerProvider);
+        expect(after.activeBufferId, before.activeBufferId);
+        expect(
+          after.documentBuffers.map((b) => b.id),
+          before.documentBuffers.map((b) => b.id),
+        );
+        expect(after.activeText, before.activeText);
+      },
+    );
+  }
+
+  for (final trigger in ['menu', 'middle', 'cross']) {
+    for (final active in [false, true]) {
+      testWidgets(
+        '$trigger closes exactly the ${active ? 'active' : 'inactive'} document tab',
+        (tester) async {
+          final h = await tabWorkspace(tester);
+          final before = h.container.read(workspaceControllerProvider);
+          final target = active
+              ? before.activeBuffer!
+              : before.documentBuffers.first;
+          if (trigger == 'menu') {
+            await openTabMenu(tester, target);
+            await tester.tap(find.text(l10n.close));
+          } else if (trigger == 'middle') {
+            final gesture = await tester.startGesture(
+              tester.getCenter(tabLabel(target)),
+              kind: PointerDeviceKind.mouse,
+              buttons: kTertiaryButton,
+            );
+            await tester.pump();
+            expect(
+              h.container.read(workspaceControllerProvider).documentBuffers,
+              hasLength(3),
+            );
+            expect(
+              h.container.read(workspaceControllerProvider).activeBufferId,
+              before.activeBufferId,
+            );
+            await gesture.up();
+          } else {
+            await tester.tap(
+              find.descendant(
+                of: documentTab(target),
+                matching: find.byTooltip('Close'),
+              ),
+            );
+          }
+          await waitForTabAction(
+            tester,
+            () =>
+                h.container
+                    .read(workspaceControllerProvider)
+                    .documentBuffers
+                    .length ==
+                2,
+          );
+          final after = h.container.read(workspaceControllerProvider);
+          expect(
+            after.documentBuffers.map((b) => b.id),
+            before.documentBuffers
+                .where((b) => b.id != target.id)
+                .map((b) => b.id),
+          );
+          if (!active) expect(after.activeBufferId, before.activeBufferId);
+          expect(h.service.saveCount, 0);
+        },
+      );
+    }
+  }
+
+  for (final trigger in [
+    'middle',
+    'menu',
+    'cross',
+    'keyboard',
+    'allKeyboard',
+  ]) {
+    for (final action in ['Cancel', 'Save', 'Discard']) {
+      testWidgets('$trigger closes dirty document with $action once', (
+        tester,
+      ) async {
+        final h = await tabWorkspace(tester);
+        await tabOperation(
+          tester,
+          () => h.controller.activateDocumentBuffer(
+            h.container
+                .read(workspaceControllerProvider)
+                .documentBuffers
+                .first
+                .id,
+          ),
+        );
+        h.controller.updateActiveText('# Unsaved target\n');
+        h.controller.updateActiveEditorState(
+          h.container
+              .read(workspaceControllerProvider)
+              .activeBuffer!
+              .editorState
+              .copyWith(
+                mode: DocumentViewModePreference.source,
+                selection: const TextSelection(baseOffset: 2, extentOffset: 9),
+              ),
+        );
+        await tester.pumpAndSettle();
+        final target = h.container
+            .read(workspaceControllerProvider)
+            .activeBuffer!;
+        await tabOperation(
+          tester,
+          () => h.controller.activateDocumentBuffer(
+            h.container
+                .read(workspaceControllerProvider)
+                .documentBuffers
+                .last
+                .id,
+          ),
+        );
+        await tester.pumpAndSettle();
+        if (trigger == 'keyboard') {
+          await tabOperation(
+            tester,
+            () => h.controller.activateDocumentBuffer(target.id),
+          );
+        }
+        final activeId = h.container
+            .read(workspaceControllerProvider)
+            .activeBufferId;
+        if (trigger == 'middle') {
+          await tester.tap(tabLabel(target), buttons: kTertiaryButton);
+        } else if (trigger == 'menu') {
+          await openTabMenu(tester, target);
+          await tester.tap(find.text(l10n.close));
+        } else if (trigger == 'cross') {
+          await tester.tap(
+            find.descendant(
+              of: documentTab(target),
+              matching: find.byTooltip('Close'),
+            ),
+          );
+        } else {
+          await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+          if (trigger == 'allKeyboard') {
+            await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+          }
+          await tester.sendKeyEvent(LogicalKeyboardKey.keyW);
+          if (trigger == 'allKeyboard') {
+            await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+          }
+          await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+        }
+        await tester.pumpAndSettle();
+        expect(find.text(l10n.unsavedChanges), findsOneWidget);
+        expect(
+          h.container.read(workspaceControllerProvider).activeBufferId,
+          activeId,
+        );
+        await tester.tap(find.text(action));
+        await tester.pumpAndSettle();
+        if (action != 'Cancel') {
+          await waitForTabAction(
+            tester,
+            () =>
+                h.container
+                    .read(workspaceControllerProvider)
+                    .documentBuffers
+                    .length ==
+                (trigger == 'allKeyboard' ? 0 : 2),
+          );
+        }
+        final remaining = h.container
+            .read(workspaceControllerProvider)
+            .documentBuffers;
+        if (action == 'Cancel') {
+          final kept = remaining.singleWhere((b) => b.id == target.id);
+          expect(kept.text, target.text);
+          expect(kept.isDirty, isTrue);
+          expect(kept.editorState.selection, target.editorState.selection);
+          expect(
+            kept.editorState.undoState,
+            same(target.editorState.undoState),
+          );
+          expect(
+            h.container.read(workspaceControllerProvider).activeBufferId,
+            activeId,
+          );
+        } else {
+          expect(remaining.any((b) => b.id == target.id), isFalse);
+          expect(remaining, hasLength(trigger == 'allKeyboard' ? 0 : 2));
+        }
+        expect(h.service.saveCount, action == 'Save' ? 1 : 0);
+      });
+    }
+  }
+
+  testWidgets(
+    'wheel rotation and primary and secondary tab interactions remain independent',
+    (tester) async {
+      final h = await tabWorkspace(tester);
+      final target = h.container
+          .read(workspaceControllerProvider)
+          .documentBuffers
+          .first;
+      await tester.sendEventToBinding(
+        PointerScrollEvent(
+          position: tester.getCenter(tabLabel(target)),
+          scrollDelta: const Offset(0, 24),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(
+        h.container.read(workspaceControllerProvider).documentBuffers,
+        hasLength(3),
+      );
+      await openTabMenu(tester, target);
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pumpAndSettle();
+      expect(
+        h.container.read(workspaceControllerProvider).activeBufferId,
+        isNot(target.id),
+      );
+      await tester.tap(tabLabel(target));
+      await tester.pumpAndSettle();
+      expect(
+        h.container.read(workspaceControllerProvider).activeBufferId,
+        target.id,
+      );
+    },
+  );
+
+  for (final bulk in ['other', 'all']) {
+    testWidgets(
+      'close $bulk document tabs also closes Git and Local History comparisons',
+      (tester) async {
+        final h = await tabWorkspace(tester, git: true);
+        final retainedId = h.container
+            .read(workspaceControllerProvider)
+            .documentBuffers
+            .first
+            .id;
+        await tabOperation(
+          tester,
+          () => h.controller.activateDocumentBuffer(retainedId),
+        );
+        h.controller.updateActiveText('# Retained unsaved draft\n');
+        h.controller.updateActiveEditorState(
+          h.container
+              .read(workspaceControllerProvider)
+              .activeBuffer!
+              .editorState
+              .copyWith(
+                mode: DocumentViewModePreference.source,
+                selection: const TextSelection(baseOffset: 3, extentOffset: 11),
+                scrollOffset: 12,
+                foldedRegionKeys: const {'keep-fold'},
+              ),
+        );
+        await tester.pumpAndSettle();
+        await tester.pumpAndSettle();
+        await tabOperation(
+          tester,
+          () => h.controller.activateDocumentBuffer(
+            h.container
+                .read(workspaceControllerProvider)
+                .documentBuffers
+                .last
+                .id,
+          ),
+        );
+        await tester.pumpAndSettle();
+        final retained = h.container
+            .read(workspaceControllerProvider)
+            .documentBuffers
+            .first;
+        await openTabComparison(tester, h.container);
+        final historyBefore = h.container
+            .read(localHistoryControllerProvider)
+            .snapshot
+            .revisions
+            .length;
+        await openTabMenu(tester, retained);
+        await tester.tap(
+          find.text(
+            bulk == 'other' ? l10n.closeOtherTabs : l10n.shortcutCloseAllTabs,
+          ),
+        );
+        await tester.pumpAndSettle();
+        if (bulk == 'all') {
+          expect(find.text(l10n.unsavedChanges), findsOneWidget);
+          await tester.tap(find.text(l10n.discard));
+          await tester.pumpAndSettle();
+        } else {
+          expect(find.text(l10n.unsavedChanges), findsNothing);
+        }
+        await waitForTabAction(
+          tester,
+          () =>
+              h.container
+                  .read(workspaceControllerProvider)
+                  .documentBuffers
+                  .length ==
+              (bulk == 'other' ? 1 : 0),
+        );
+        final after = h.container.read(workspaceControllerProvider);
+        expect(
+          h.container.read(gitControllerProvider).openDiffFilePaths,
+          isEmpty,
+        );
+        expect(
+          h.container.read(gitControllerProvider).selectedDiffForDisplay,
+          isNull,
+        );
+        expect(
+          h.container.read(localHistoryControllerProvider).selectedRevisionId,
+          isNull,
+        );
+        expect(
+          h.container
+              .read(localHistoryControllerProvider)
+              .snapshot
+              .revisions
+              .length,
+          greaterThanOrEqualTo(historyBefore),
+        );
+        expect(h.service.saveCount, 0);
+        if (bulk == 'other') {
+          expect(after.documentBuffers.single.id, retained.id);
+          expect(after.activeBufferId, retained.id);
+          expect(after.activeBuffer!.text, retained.text);
+          expect(after.activeBuffer!.isDirty, isTrue);
+          expect(retained.editorState.undoState.undo, isNotEmpty);
+          expect(
+            after.activeBuffer!.editorState.selection,
+            retained.editorState.selection,
+          );
+          expect(
+            after.activeBuffer!.editorState.foldedRegionKeys,
+            retained.editorState.foldedRegionKeys,
+          );
+          expect(
+            after.activeBuffer!.editorState.undoState,
+            same(retained.editorState.undoState),
+          );
+        } else {
+          expect(after.documentBuffers, isEmpty);
+          expect(after.workspace!.kind, WorkspaceKind.markdownFolder);
+          expect(after.workspace!.openFilePaths, isEmpty);
+        }
+      },
+    );
+  }
+
+  testWidgets(
+    'comparison-only neighbors enable Close other tabs and middle click closes comparison views',
+    (tester) async {
+      final h = await tabWorkspace(tester, count: 1, git: true);
+      await openTabComparison(tester, h.container);
+      final target = h.container
+          .read(workspaceControllerProvider)
+          .activeBuffer!;
+      await openTabMenu(tester, target);
+      final other = tester.widget<PopupMenuItem<dynamic>>(
+        find.byWidgetPredicate(
+          (w) => w is BusyMarkPopupMenuItem && w.label == l10n.closeOtherTabs,
+        ),
+      );
+      expect(other.enabled, isTrue);
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pumpAndSettle();
+      final revision = h.container
+          .read(localHistoryControllerProvider)
+          .selectedRevisionId;
+      await tester.scrollUntilVisible(
+        find.byKey(ValueKey('localHistory:$revision')),
+        180,
+        scrollable: find
+            .descendant(
+              of: find.byKey(const ValueKey('editor-tab-strip')),
+              matching: find.byType(Scrollable),
+            )
+            .first,
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.descendant(
+          of: find.byKey(ValueKey('localHistory:$revision')),
+          matching: find.byType(Text),
+        ),
+        buttons: kTertiaryButton,
+      );
+      await tester.pumpAndSettle();
+      expect(
+        h.container.read(localHistoryControllerProvider).selectedRevisionId,
+        isNull,
+      );
+      await tester.tap(
+        find.descendant(
+          of: find.byKey(const ValueKey('gitDiff:README.md')),
+          matching: find.byType(Text),
+        ),
+        buttons: kTertiaryButton,
+      );
+      await tester.pumpAndSettle();
+      expect(h.container.read(gitControllerProvider).openDiffFilePaths, [
+        'guide.md',
+      ]);
+      await openTabMenu(tester, target);
+      await tester.tap(find.text(l10n.closeOtherTabs));
+      await tester.pumpAndSettle();
+      expect(
+        h.container.read(gitControllerProvider).openDiffFilePaths,
+        isEmpty,
+      );
+      expect(
+        h.container.read(workspaceControllerProvider).activeBufferId,
+        target.id,
+      );
+    },
+  );
+
+  testWidgets('bulk close survives the strip disappearing', (tester) async {
+    final h = await tabWorkspace(tester, kind: WorkspaceKind.singleMarkdown);
+    final target = h.container
+        .read(workspaceControllerProvider)
+        .documentBuffers
+        .first;
+    await openTabMenu(tester, target);
+    await tester.tap(find.text(l10n.closeOtherTabs));
+    await tester.pumpAndSettle();
+    await waitForTabAction(
+      tester,
+      () =>
+          h.container
+              .read(workspaceControllerProvider)
+              .documentBuffers
+              .length ==
+          1,
+    );
+    expect(
+      h.container.read(workspaceControllerProvider).documentBuffers.single.id,
+      target.id,
+    );
+    expect(find.byKey(const ValueKey('editor-tab-strip')), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets(
+    'Copy path uses exact live inactive path even after Save As or deletion',
+    (tester) async {
+      String? clipboard;
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        (call) async {
+          if (call.method == 'Clipboard.setData') {
+            clipboard = (call.arguments as Map)['text'] as String;
+          }
+          return null;
+        },
+      );
+      addTearDown(
+        () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          SystemChannels.platform,
+          null,
+        ),
+      );
+      final h = await tabWorkspace(tester);
+      var target = h.container
+          .read(workspaceControllerProvider)
+          .documentBuffers
+          .first;
+      final active = h.container
+          .read(workspaceControllerProvider)
+          .activeBufferId;
+      await openTabMenu(tester, target);
+      await tester.tap(find.text(l10n.copyPath));
+      await tester.pumpAndSettle();
+      expect(clipboard, h.paths.first);
+      expect(
+        h.container.read(workspaceControllerProvider).activeBufferId,
+        active,
+      );
+      File(h.paths.first).deleteSync();
+      await openTabMenu(tester, target);
+      await tester.tap(find.text(l10n.copyPath));
+      await tester.pumpAndSettle();
+      expect(clipboard, h.paths.first);
+      await tabOperation(tester, () => h.controller.createMarkdownFile());
+      target = h.container.read(workspaceControllerProvider).activeBuffer!;
+      await tester.pumpAndSettle();
+      await openTabMenu(tester, target);
+      final copy = tester.widget<PopupMenuItem<dynamic>>(
+        find.byWidgetPredicate(
+          (w) => w is BusyMarkPopupMenuItem && w.label == l10n.copyPath,
+        ),
+      );
+      expect(copy.enabled, isFalse);
+      await tester.tap(find.text(l10n.copyPath));
+      await tester.pump();
+      expect(clipboard, h.paths.first);
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pumpAndSettle();
+      final newPath = '${h.service.rootPath}/saved 文 space.md';
+      await openTabMenu(
+        tester,
+        h.container.read(workspaceControllerProvider).documentBuffers[1],
+      );
+      // A live path change while a native menu is pending is covered below.
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pumpAndSettle();
+      await tabOperation(tester, () => h.controller.saveActiveAs(newPath));
+      await tester.pumpAndSettle();
+      target = h.container.read(workspaceControllerProvider).activeBuffer!;
+      await tabOperation(
+        tester,
+        () => h.controller.activateDocumentBuffer(
+          h.container.read(workspaceControllerProvider).documentBuffers[1].id,
+        ),
+      );
+      await tester.pumpAndSettle();
+      await openTabMenu(tester, target);
+      await tester.tap(find.text(l10n.copyPath));
+      await tester.pumpAndSettle();
+      expect(clipboard, newPath);
+    },
+  );
+
+  for (final selected in [0, 1, 2, 4, 6]) {
+    testWidgets(
+      'native document menu serializes entries and dispatches index $selected',
+      (tester) async {
+        final h = await tabWorkspace(tester);
+        final before = h.container.read(workspaceControllerProvider);
+        final target = before.documentBuffers.first;
+        Map? shown;
+        String? clipboard;
+        const channel = MethodChannel('busymark/native_menus');
+        tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          channel,
+          (call) async {
+            if (call.method == 'show') {
+              shown = call.arguments as Map;
+              return selected;
+            }
+            return true;
+          },
+        );
+        tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          SystemChannels.platform,
+          (call) async {
+            if (call.method == 'Clipboard.setData') {
+              clipboard = (call.arguments as Map)['text'] as String;
+            }
+            return null;
+          },
+        );
+        addTearDown(() {
+          tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+            channel,
+            null,
+          );
+          tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+            SystemChannels.platform,
+            null,
+          );
+        });
+        await openTabMenu(tester, target);
+        expect((shown!['entries'] as List).map((e) => (e as Map)['label']), [
+          l10n.close,
+          l10n.closeOtherTabs,
+          l10n.shortcutCloseAllTabs,
+          '',
+          l10n.copyPath,
+          '',
+          l10n.localHistoryEllipsis,
+        ]);
+        expect(
+          (shown!['entries'] as List).map((e) => (e as Map)['separator']),
+          [false, false, false, true, false, true, false],
+        );
+        expect((shown!['entries'] as List).map((e) => (e as Map)['enabled']), [
+          true,
+          true,
+          true,
+          false,
+          true,
+          false,
+          true,
+        ]);
+        if (selected <= 2) {
+          await waitForTabAction(
+            tester,
+            () =>
+                h.container
+                    .read(workspaceControllerProvider)
+                    .documentBuffers
+                    .length ==
+                [2, 1, 0][selected],
+          );
+        }
+        if (selected == 6) {
+          await waitForTabAction(
+            tester,
+            () =>
+                h.container
+                    .read(localHistoryControllerProvider)
+                    .selectedDocument !=
+                null,
+          );
+        }
+        final after = h.container.read(workspaceControllerProvider);
+        if (selected == 0) {
+          expect(after.documentBuffers.any((b) => b.id == target.id), isFalse);
+        }
+        if (selected == 1) expect(after.documentBuffers.single.id, target.id);
+        if (selected == 2) expect(after.documentBuffers, isEmpty);
+        if (selected == 4) {
+          expect(clipboard, target.filePath);
+          expect(after.activeBufferId, before.activeBufferId);
+        }
+        if (selected == 6) {
+          expect(after.activeBufferId, target.id);
+          expect(
+            h.container
+                .read(localHistoryControllerProvider)
+                .selectedDocument
+                ?.currentPath,
+            target.filePath,
+          );
+          expect(find.byType(LocalHistoryPanel), findsOneWidget);
+        }
+      },
+    );
+  }
+
+  testWidgets(
+    'pending native Close follows an untitled buffer through its first save',
+    (tester) async {
+      final h = await tabWorkspace(
+        tester,
+        count: 1,
+        kind: WorkspaceKind.singleMarkdown,
+      );
+      await tabOperation(tester, () => h.controller.createMarkdownWorkspace());
+      h.controller.updateActiveText('# First-save target\n');
+      await tester.pumpAndSettle();
+      final target = h.container
+          .read(workspaceControllerProvider)
+          .activeBuffer!;
+      await tabOperation(tester, () => h.controller.createMarkdownFile());
+      final retainedId = h.container
+          .read(workspaceControllerProvider)
+          .activeBufferId;
+      final result = Completer<int?>();
+      const channel = MethodChannel('busymark/native_menus');
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(channel, (
+        call,
+      ) async {
+        if (call.method == 'show') return await result.future;
+        return true;
+      });
+      addTearDown(
+        () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          channel,
+          null,
+        ),
+      );
+      await tester.tap(tabLabel(target), buttons: kSecondaryButton);
+      await tester.pump();
+      await tabOperation(tester, () async {
+        await h.controller.activateDocumentBuffer(target.id);
+        await h.controller.saveActiveAs(
+          '${h.service.rootPath}/first saved 文.md',
+        );
+        await h.controller.activateDocumentBuffer(retainedId!);
+      });
+      expect(
+        h.container.read(workspaceControllerProvider).workspace!.kind,
+        WorkspaceKind.singleMarkdown,
+      );
+      result.complete(0);
+      await waitForTabAction(
+        tester,
+        () =>
+            h.container
+                .read(workspaceControllerProvider)
+                .documentBuffers
+                .length ==
+            1,
+      );
+      final after = h.container.read(workspaceControllerProvider);
+      expect(after.documentBuffers.single.id, retainedId);
+      expect(after.documentBuffers.single.isDirty, isTrue);
+      expect(find.text(l10n.unsavedChanges), findsNothing);
+    },
+  );
+
+  for (final actionIndex in [0, 4]) {
+    for (final change in ['remove', 'workspace', 'path']) {
+      testWidgets(
+        'pending native menu index $actionIndex validates live target after $change',
+        (tester) async {
+          final h = await tabWorkspace(tester);
+          final target = h.container
+              .read(workspaceControllerProvider)
+              .documentBuffers
+              .first;
+          final result = Completer<int?>();
+          String? clipboard;
+          const channel = MethodChannel('busymark/native_menus');
+          tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+            channel,
+            (call) async {
+              if (call.method == 'show') return await result.future;
+              return true;
+            },
+          );
+          tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+            SystemChannels.platform,
+            (call) async {
+              if (call.method == 'Clipboard.setData') {
+                clipboard = (call.arguments as Map)['text'] as String;
+              }
+              return null;
+            },
+          );
+          addTearDown(() {
+            tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+              channel,
+              null,
+            );
+            tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+              SystemChannels.platform,
+              null,
+            );
+          });
+          await tester.tap(tabLabel(target), buttons: kSecondaryButton);
+          await tester.pump();
+          String? newPath;
+          await tabOperation(tester, () async {
+            if (change == 'remove') {
+              await h.controller.closeDocumentBuffer(target.id);
+            }
+            if (change == 'workspace') {
+              await h.controller.createMarkdownWorkspace();
+            }
+            if (change == 'path') {
+              await h.controller.activateDocumentBuffer(target.id);
+              newPath = '${h.service.rootPath}/renamed 文 space.md';
+              await h.controller.saveActiveAs(newPath!);
+            }
+          });
+          final beforeDispatch = h.container.read(workspaceControllerProvider);
+          result.complete(actionIndex);
+          await tester.pumpAndSettle();
+          final after = h.container.read(workspaceControllerProvider);
+          if (change == 'path') {
+            if (actionIndex == 4) expect(clipboard, newPath);
+            if (actionIndex == 0) {
+              expect(
+                after.documentBuffers.any((b) => b.id == target.id),
+                isFalse,
+              );
+            }
+          } else {
+            expect(clipboard, isNull);
+            expect(
+              after.documentBuffers.map((b) => b.id),
+              beforeDispatch.documentBuffers.map((b) => b.id),
+            );
+            expect(after.activeBufferId, beforeDispatch.activeBufferId);
+          }
+        },
+      );
+    }
+  }
+
   testWidgets('tab keyboard shortcuts move and close editor tabs', (
     tester,
   ) async {
@@ -14488,8 +15463,13 @@ class _StartupWorkspaceService extends WorkspaceService {
 }
 
 class _TabbedWorkspaceService extends WorkspaceService {
-  _TabbedWorkspaceService({required this.rootPath, required this.paths});
+  _TabbedWorkspaceService({
+    required this.rootPath,
+    required this.paths,
+    this.kind = WorkspaceKind.markdownFolder,
+  });
 
+  final WorkspaceKind kind;
   final String rootPath;
   final List<String> paths;
   final _sources = <String, String>{};
@@ -14512,7 +15492,7 @@ class _TabbedWorkspaceService extends WorkspaceService {
     return Workspace(
       id: rootPath,
       rootPath: rootPath,
-      kind: WorkspaceKind.markdownFolder,
+      kind: kind,
       openedAt: DateTime(2026),
       activeFilePath: paths.first,
       activeFileModifiedAt: DateTime(2026),

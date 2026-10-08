@@ -1,4 +1,6 @@
 {
+  "closeOtherTabs": "Fermer les autres onglets",
+  "@closeOtherTabs": {"description": "Document tab context menu action that closes every other document and comparison tab while retaining this document."},
   "tocTopicFromTemplate": "Sujet à partir d’un modèle...",
   "tocSaveAsTemplate": "Enregistrer comme modèle",
   "tocTemplateDialog": "Créer un sujet à partir d’un modèle",
@@ -1877,9 +1879,9 @@
   "@errorWritersideTocInvalidMove": {
     "description": "Detail shown when a Writerside TOC move would create a cycle."
   },
-  "errorWritersideStartTopicDelete": "Le sujet de démarrage {topic} ne peut pas être supprimé. Choisissez d’abord une autre page de démarrage.",
+  "errorWritersideStartTopicDelete": "La page d’accueil {topic} ne peut pas être supprimée. Choisissez d’abord une autre page d’accueil.",
   "@errorWritersideStartTopicDelete": {
-    "description": "Detail shown when attempting to delete the start topic of a Writerside instance.",
+    "description": "Detail shown when attempting to delete the Home Page of a Writerside instance.",
     "placeholders": {
       "topic": {
         "type": "String"
@@ -2669,7 +2671,11 @@
       }
     }
   },
-  "topicIsStartPageRemovalWarning": "Ce sujet sert de page de démarrage à une instance. Examinez ses utilisations et attribuez une autre page de démarrage avant de continuer.",
+  "topicIsHomePageRemovalWarning": "Ce sujet est la page d’accueil de cette instance. Choisissez une autre page d’accueil avant de le retirer de la table des matières.",
+  "newHomePage": "Nouvelle page d’accueil",
+  "chooseHomePage": "Choisir une page d’accueil",
+  "noHomePageReplacement": "Ajoutez ou liez un autre sujet admissible à cette instance avant de retirer sa page d’accueil.",
+  "topicIsStartPageRemovalWarning": "Ce sujet est la page d’accueil d’une instance. Définissez une autre page d’accueil avant de supprimer son fichier source.",
   "@topicIsStartPageRemovalWarning": {
     "description": "Warning shown when the topic is used as an instance start page."
   },
@@ -2694,7 +2700,7 @@
   "@topicUsageTocElements": {
     "description": "Usage group label for TOC elements."
   },
-  "topicUsageStartPages": "Pages de démarrage",
+  "topicUsageStartPages": "Pages d’accueil",
   "@topicUsageStartPages": {
     "description": "Usage group label for instance start pages."
   },
@@ -3406,5 +3412,12 @@
   "nextcloudAttachmentReference": "Référence de la pièce jointe sur le serveur",
   "nextcloudAddAttachment": "Ajouter une pièce jointe…",
   "nextcloudDeleteAttachmentWarning": "Supprimer cette pièce jointe rend ses liens dans la note indisponibles. Les données conservées peuvent être récupérées dans l’historique local.",
-  "nextcloudChooseConflictingAttributes": "Choisissez chaque attribut en conflit."
+  "nextcloudChooseConflictingAttributes": "Choisissez chaque attribut en conflit.",
+  "nextcloudUseServerNote": "Utiliser cette note du serveur",
+  "nextcloudUseServerNoteExplanation": "Lie ce brouillon à la note sélectionnée sur le serveur, puis synchronise les modifications locales conservées. Une requête identique ne confirme pas qui a créé la note.",
+  "nextcloudExactCandidate": "Correspondance exacte avec la requête ; identité non confirmée.",
+  "nextcloudPossibleCandidate": "Correspondance possible après normalisation ; identité non confirmée.",
+  "nextcloudSelectCandidate": "Sélectionner une note du serveur à examiner",
+  "nextcloudCreateSeparate": "Créer une note distincte",
+  "nextcloudCreateSeparateWarning": "La première requête a peut-être déjà créé une note sur le serveur. Ceci crée une note distincte avec votre travail local conservé. Aucun doublon supposé ne sera supprimé."
 }

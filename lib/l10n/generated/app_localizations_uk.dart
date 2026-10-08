@@ -11,6 +11,9 @@ class AppLocalizationsUk extends AppLocalizations {
   AppLocalizationsUk([String locale = 'uk']) : super(locale);
 
   @override
+  String get closeOtherTabs => 'Закрити інші вкладки';
+
+  @override
   String get tocTopicFromTemplate => 'Тема з шаблону...';
 
   @override
@@ -1557,8 +1560,22 @@ class AppLocalizationsUk extends AppLocalizations {
   }
 
   @override
+  String get topicIsHomePageRemovalWarning =>
+      'Ця тема є домашньою сторінкою цього екземпляра. Виберіть іншу домашню сторінку, перш ніж видалити її зі змісту.';
+
+  @override
+  String get newHomePage => 'Нова домашня сторінка';
+
+  @override
+  String get chooseHomePage => 'Вибрати домашню сторінку';
+
+  @override
+  String get noHomePageReplacement =>
+      'Додайте або прив’яжіть іншу придатну тему до цього екземпляра перед видаленням його домашньої сторінки.';
+
+  @override
   String get topicIsStartPageRemovalWarning =>
-      'Ця тема використовується як початкова сторінка екземпляра. Перегляньте її використання та призначте іншу початкову сторінку, перш ніж продовжити.';
+      'Ця тема є домашньою сторінкою екземпляра. Призначте іншу домашню сторінку перед видаленням її вихідного файлу.';
 
   @override
   String topicUsagesCount(int count) {
@@ -1577,7 +1594,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get topicUsageTocElements => 'Елементи змісту';
 
   @override
-  String get topicUsageStartPages => 'Початкові сторінки';
+  String get topicUsageStartPages => 'Домашні сторінки';
 
   @override
   String get topicUsageTopicLinks => 'Посилання на теми';
@@ -2209,7 +2226,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String errorWritersideStartTopicDelete(String topic) {
-    return 'Початкову тему $topic не можна видалити. Спочатку виберіть іншу початкову сторінку.';
+    return 'Домашню сторінку $topic не можна видалити. Спочатку виберіть іншу домашню сторінку.';
   }
 
   @override
@@ -4814,4 +4831,30 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get nextcloudChooseConflictingAttributes =>
       'Виберіть значення кожного конфліктного атрибута.';
+
+  @override
+  String get nextcloudUseServerNote => 'Використати цю нотатку на сервері';
+
+  @override
+  String get nextcloudUseServerNoteExplanation =>
+      'Пов’язує цю чернетку з вибраною нотаткою на сервері, а потім синхронізує збережені локальні зміни. Збіг запиту не підтверджує, хто створив нотатку.';
+
+  @override
+  String get nextcloudExactCandidate =>
+      'Точний збіг із запитом; тотожність не підтверджено.';
+
+  @override
+  String get nextcloudPossibleCandidate =>
+      'Можливий збіг після нормалізації; тотожність не підтверджено.';
+
+  @override
+  String get nextcloudSelectCandidate =>
+      'Виберіть нотатку на сервері для перегляду';
+
+  @override
+  String get nextcloudCreateSeparate => 'Створити окрему нотатку';
+
+  @override
+  String get nextcloudCreateSeparateWarning =>
+      'Перший запит міг уже створити нотатку на сервері. Буде створено окрему нотатку зі збереженою локальною роботою. Ймовірні дублікати не буде видалено.';
 }

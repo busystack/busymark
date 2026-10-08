@@ -150,8 +150,9 @@ class NotesStore {
 
   Future<void> createWithAttachments(
     NextcloudNote note,
-    List<({NotesAttachment attachment, Uint8List bytes})> attachments,
-  ) async {
+    List<({NotesAttachment attachment, Uint8List bytes})> attachments, {
+    List<NextcloudNote> additionalNotes = const [],
+  }) async {
     await _call('createWithAttachments', [
       note.toJson(),
       attachments
@@ -164,6 +165,7 @@ class NotesStore {
             ],
           )
           .toList(),
+      additionalNotes.map((n) => n.toJson()).toList(),
     ]);
   }
 
@@ -424,6 +426,12 @@ Object? _execute(Database db, String action, dynamic argument) {
       final a = argument as List;
       db.execute('BEGIN IMMEDIATE');
       try {
+        for (final note in a[2] as List) {
+          _writeNote(
+            db,
+            NextcloudNote.fromJson(Map<String, dynamic>.from(note as Map)),
+          );
+        }
         _writeNote(
           db,
           NextcloudNote.fromJson(Map<String, dynamic>.from(a[0] as Map)),

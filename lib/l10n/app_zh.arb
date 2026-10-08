@@ -1,4 +1,6 @@
 {
+  "closeOtherTabs": "关闭其他标签页",
+  "@closeOtherTabs": {"description": "Document tab context menu action that closes every other document and comparison tab while retaining this document."},
   "tocTopicFromTemplate": "从模板创建主题...",
   "tocSaveAsTemplate": "保存为模板",
   "tocTemplateDialog": "从模板创建主题",
@@ -1672,9 +1674,13 @@
       }
     }
   },
-  "topicIsStartPageRemovalWarning": "此主题被用作实例的起始页。请查看其使用情况，并在继续前指定其他起始页。",
+  "topicIsHomePageRemovalWarning": "此主题是此实例的主页。从目录中移除它之前，请选择另一个主页。",
+  "newHomePage": "新主页",
+  "chooseHomePage": "选择主页",
+  "noHomePageReplacement": "移除主页之前，请向此实例添加或链接另一个符合条件的主题。",
+  "topicIsStartPageRemovalWarning": "此主题是某个实例的主页。删除其源文件之前，请指定另一个主页。",
   "@topicIsStartPageRemovalWarning": {
-    "description": "Warning that blocks deletion of a Writerside start-page topic."
+    "description": "Warning that blocks Safe Delete of a Writerside Home Page."
   },
   "topicUsagesCount": "找到 {count} 处使用。",
   "@topicUsagesCount": {
@@ -1697,9 +1703,9 @@
   "@topicUsageTocElements": {
     "description": "Usage group label for Writerside TOC elements."
   },
-  "topicUsageStartPages": "起始页",
+  "topicUsageStartPages": "主页",
   "@topicUsageStartPages": {
-    "description": "Usage group label for Writerside instance start pages."
+    "description": "Usage group label for Writerside instance Home Pages."
   },
   "topicUsageTopicLinks": "主题链接",
   "@topicUsageTopicLinks": {
@@ -2508,9 +2514,9 @@
   "@errorWritersideTocInvalidMove": {
     "description": "Detail shown when a Writerside TOC move would create a cycle."
   },
-  "errorWritersideStartTopicDelete": "无法删除起始主题 {topic}。请先选择其他起始页。",
+  "errorWritersideStartTopicDelete": "无法删除主页 {topic}。请先选择另一个主页。",
   "@errorWritersideStartTopicDelete": {
-    "description": "Detail shown when attempting to delete the start topic of a Writerside instance.",
+    "description": "Detail shown when attempting to delete the Home Page of a Writerside instance.",
     "placeholders": {
       "topic": {
         "type": "String"
@@ -4945,5 +4951,12 @@
   "nextcloudAttachmentReference": "服务器上的附件引用",
   "nextcloudAddAttachment": "添加附件…",
   "nextcloudDeleteAttachmentWarning": "删除此附件后，笔记中指向它的链接将不可用。保留的数据可通过本地历史记录恢复。",
-  "nextcloudChooseConflictingAttributes": "为每个冲突属性选择一个值。"
+  "nextcloudChooseConflictingAttributes": "为每个冲突属性选择一个值。",
+  "nextcloudUseServerNote": "使用此服务器笔记",
+  "nextcloudUseServerNoteExplanation": "将此草稿关联到选定的服务器笔记，然后同步保留的本地更改。请求匹配并不能确认笔记由谁创建。",
+  "nextcloudExactCandidate": "与请求完全匹配；身份尚未确认。",
+  "nextcloudPossibleCandidate": "可能与规范化后的请求匹配；身份尚未确认。",
+  "nextcloudSelectCandidate": "选择要检查的服务器笔记",
+  "nextcloudCreateSeparate": "创建独立笔记",
+  "nextcloudCreateSeparateWarning": "首次请求可能已在服务器上创建笔记。此操作将使用保留的本地工作创建独立笔记。不会删除任何疑似重复的笔记。"
 }

@@ -11,6 +11,9 @@ class AppLocalizationsEs extends AppLocalizations {
   AppLocalizationsEs([String locale = 'es']) : super(locale);
 
   @override
+  String get closeOtherTabs => 'Cerrar las otras pestañas';
+
+  @override
   String get tocTopicFromTemplate => 'Tema desde plantilla...';
 
   @override
@@ -1547,8 +1550,22 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
+  String get topicIsHomePageRemovalWarning =>
+      'Este tema es la página de inicio de esta instancia. Elige otra página de inicio antes de quitarlo de la tabla de contenido.';
+
+  @override
+  String get newHomePage => 'Nueva página de inicio';
+
+  @override
+  String get chooseHomePage => 'Elegir página de inicio';
+
+  @override
+  String get noHomePageReplacement =>
+      'Añade o vincula otro tema válido a esta instancia antes de quitar su página de inicio.';
+
+  @override
   String get topicIsStartPageRemovalWarning =>
-      'Este tema se usa como página de inicio de una instancia. Revisa sus usos y asigna otra página de inicio antes de continuar.';
+      'Este tema es la página de inicio de una instancia. Asigna otra página de inicio antes de eliminar su archivo de origen.';
 
   @override
   String topicUsagesCount(int count) {
@@ -2193,7 +2210,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String errorWritersideStartTopicDelete(String topic) {
-    return 'El tema de inicio $topic no se puede eliminar. Elija primero otra página de inicio.';
+    return 'No se puede eliminar la página de inicio $topic. Elige otra página de inicio primero.';
   }
 
   @override
@@ -4794,4 +4811,30 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get nextcloudChooseConflictingAttributes =>
       'Elige cada atributo en conflicto.';
+
+  @override
+  String get nextcloudUseServerNote => 'Usar esta nota del servidor';
+
+  @override
+  String get nextcloudUseServerNoteExplanation =>
+      'Vincula este borrador con la nota seleccionada del servidor y luego sincroniza los cambios locales conservados. Una solicitud coincidente no confirma quién creó la nota.';
+
+  @override
+  String get nextcloudExactCandidate =>
+      'Coincidencia exacta con la solicitud; identidad sin confirmar.';
+
+  @override
+  String get nextcloudPossibleCandidate =>
+      'Posible coincidencia con la solicitud saneada; identidad sin confirmar.';
+
+  @override
+  String get nextcloudSelectCandidate =>
+      'Seleccionar una nota del servidor para revisarla';
+
+  @override
+  String get nextcloudCreateSeparate => 'Crear una nota aparte';
+
+  @override
+  String get nextcloudCreateSeparateWarning =>
+      'La primera solicitud puede haber creado ya una nota en el servidor. Esto crea una nota aparte con su trabajo local conservado. No se eliminará ningún posible duplicado.';
 }

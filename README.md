@@ -1,6 +1,6 @@
 # BusyMark
 
-Markdown and Writerside editor for Linux.
+Markdown, Writerside, and Nextcloud Notes editor for Linux.
 
 [![busymark](https://snapcraft.io/busymark/badge.svg)](https://snapcraft.io/busymark)
 
@@ -14,10 +14,11 @@ Markdown and Writerside editor for Linux.
 
 * **Markdown editing** — Source, Editor, Reading, and Split views with formatting tools, syntax highlighting, code folding, tables, images, links, code blocks, callouts, collapsible content, and document diagnostics.
 * **Writerside projects** — Open and create Writerside-compatible projects; edit Markdown and XML topics; manage instances, tables of contents, reusable TOC libraries, and project structure.
-* **Project navigation and search** — Files, Topics, and Outline views, tabbed documents, command palette, keyboard shortcuts, document search and replace, reviewed workspace-wide replacement, and Markdown TOC generation.
+* **Nextcloud Notes** — Connect to a Nextcloud server, create and edit notes offline, synchronize changes, search and filter notes, manage categories and favorites, and work with attachments.
+* **Navigation and search** — Files, Topics, and Outline views, tabbed documents, command palette, keyboard shortcuts, document search and replace, reviewed replacement across local workspaces, and Markdown TOC generation.
 * **Technical documentation** — Local rendering of Mermaid, PlantUML, D2, fenced OpenAPI specifications, and MathJax mathematical expressions.
 * **PDF and HTML publishing** — Export Markdown documents and Writerside instances to configurable PDF or portable offline HTML, with controls for layout, typography, tables of contents, heading numbering, and HTML styling.
-* **Git integration** — Review changes and diffs, stage and unstage files, commit, create and switch branches, fetch, pull, push, inspect file and project history, compare historical versions, and restore earlier file versions.
+* **Git integration for local workspaces** — Review changes and diffs, stage and unstage files, commit, create and switch branches, fetch, pull, push, inspect file and project history, compare historical versions, and restore earlier file versions.
 * **Clipboard and Local History** — Reuse source, rich-text, and image fragments during the current session; compare and restore persistent on-device document revisions independently of Git.
 * **AI-assisted editing** — Optional Ollama, OpenAI, and Gemini integration with explicit edit scope and shared context, proposal review before changes are applied, and AI-assisted Git commit-message drafting.
 * **Workspace reliability** — Detect files changed outside BusyMark, recover unsaved documents, restore previous workspace sessions, manage remote-image permissions, and protect Git operations behind workspace trust.
@@ -186,10 +187,38 @@ More information:
 * [Admonitions](docs/admonitions.md)
 * [Collapsible elements](docs/collapsible-elements.md)
 
+## Nextcloud Notes
+
+BusyMark can open a **Nextcloud Notes** workspace alongside its local Markdown and Writerside workflows. Notes stay associated with your Nextcloud account rather than a folder on your computer.
+
+### Connect your account
+
+1. Ensure the **Notes** app is enabled on your Nextcloud server.
+2. On BusyMark’s welcome screen, choose **Nextcloud Notes**. You can also open **Settings → Nextcloud Notes**.
+3. Enter the full **HTTPS** address of your Nextcloud server and click **Connect**.
+4. Complete authorization in your default web browser. BusyMark verifies Notes compatibility and opens the note workspace.
+
+Once connected, select **Nextcloud Notes** on the welcome screen to reopen the workspace. Use **Settings → Nextcloud Notes** to open it, reconnect, or disconnect the account. **One Nextcloud account can be connected at a time.**
+
+### Work with notes
+
+* **Create and edit:** Create notes from the Notes sidebar and edit them using the normal Markdown editor. Use each note’s menu to change its title, category, or favorite status, save a separate local copy, or delete the note.
+* **Find and organize:** Search notes by title, content, or category; filter by favorites or category; and see synchronization status in the note list and editor.
+* **Work offline:** Edits and new notes are saved to local storage before they are synchronized. Pending changes can survive an application restart. Synchronization runs when a connection is available; the sidebar’s **Refresh** control requests another pass.
+* **Review conflicts:** If a note changes on the server while you have local edits, BusyMark preserves the competing versions for review instead of silently overwriting one. The comparison workflow supports choosing a version, merging changes, or recovering content as a separate note. Ambiguous note-creation results also require explicit review.
+* **Use attachments:** Add files to notes, view supported images and media, and include managed resources when exporting Markdown or HTML. PDF export includes supported images but does not embed arbitrary file attachments. New uploads are limited to **100 MiB per file**.
+* **Export or recover:** Export individual notes to PDF or offline HTML, use **Save As** to create an independent local Markdown copy, and restore earlier content through Local History.
+
+### Requirements and limitations
+
+* BusyMark requires a server advertising **Nextcloud Notes API 1.4 or later in API major version 1**. Notes 6.0.x and 6.1.x are supported baselines. **Deleting attachments** requires Notes 6.1.0 or newer.
+* Connections require HTTPS and certificates trusted by the operating system. Authentication uses Nextcloud’s browser-based Login Flow; the resulting app password is stored in the Linux keyring (libsecret), not in the notes database.
+
 ## Search and replace
 
 BusyMark supports active-document replacement and reviewed workspace-wide
-replacement. See [Search and replace](docs/search-and-replace.md) for search
+replacement for local workspaces. Nextcloud Notes supports replacement within
+individual notes, but not workspace-wide replacement. See [Search and replace](docs/search-and-replace.md) for search
 options, scope, preview behavior, and stale-result handling.
 
 ## Diagrams and mathematics
@@ -203,7 +232,7 @@ See:
 
 ## Export
 
-BusyMark can export the current Markdown document or a Writerside instance to PDF and portable offline HTML.
+BusyMark can export the current Markdown document (including a Nextcloud note) or a Writerside instance to PDF and portable offline HTML.
 
 PDF export supports configurable paper size, orientation, margins, typography, headers and footers, page numbering, table of contents, and heading numbering.
 
@@ -232,7 +261,7 @@ undo, crash recovery, and Git. Implementation and verification details are in
 
 Issues and focused pull requests are welcome.
 
-Changes should remain consistent with BusyMark's current scope as a desktop Markdown and Writerside documentation editor.
+Changes should remain consistent with BusyMark's scope as a Linux desktop editor for Markdown, Writerside documentation, and Nextcloud Notes.
 
 ## License
 

@@ -1,4 +1,6 @@
 {
+  "closeOtherTabs": "Andere Tabs schließen",
+  "@closeOtherTabs": {"description": "Document tab context menu action that closes every other document and comparison tab while retaining this document."},
   "tocTopicFromTemplate": "Thema aus Vorlage...",
   "tocSaveAsTemplate": "Als Vorlage speichern",
   "tocTemplateDialog": "Thema aus Vorlage erstellen",
@@ -1877,9 +1879,9 @@
   "@errorWritersideTocInvalidMove": {
     "description": "Detail shown when a Writerside TOC move would create a cycle."
   },
-  "errorWritersideStartTopicDelete": "Das Startthema {topic} kann nicht gelöscht werden. Wählen Sie zuerst eine andere Startseite aus.",
+  "errorWritersideStartTopicDelete": "Die Startseite {topic} kann nicht gelöscht werden. Wählen Sie zuerst eine andere Startseite.",
   "@errorWritersideStartTopicDelete": {
-    "description": "Detail shown when attempting to delete the start topic of a Writerside instance.",
+    "description": "Detail shown when attempting to delete the Home Page of a Writerside instance.",
     "placeholders": {
       "topic": {
         "type": "String"
@@ -2669,7 +2671,11 @@
       }
     }
   },
-  "topicIsStartPageRemovalWarning": "Dieses Thema wird als Startseite einer Instanz verwendet. Prüfen Sie seine Verwendungen und weisen Sie eine andere Startseite zu, bevor Sie fortfahren.",
+  "topicIsHomePageRemovalWarning": "Dieses Thema ist die Startseite dieser Instanz. Wählen Sie eine andere Startseite, bevor Sie es aus dem Inhaltsverzeichnis entfernen.",
+  "newHomePage": "Neue Startseite",
+  "chooseHomePage": "Startseite auswählen",
+  "noHomePageReplacement": "Fügen Sie dieser Instanz ein anderes geeignetes Thema hinzu oder verknüpfen Sie es, bevor Sie ihre Startseite entfernen.",
+  "topicIsStartPageRemovalWarning": "Dieses Thema ist die Startseite einer Instanz. Legen Sie eine andere Startseite fest, bevor Sie seine Quelldatei löschen.",
   "@topicIsStartPageRemovalWarning": {
     "description": "Warning shown when the topic is used as an instance start page."
   },
@@ -3406,5 +3412,12 @@
   "nextcloudAttachmentReference": "Anhangreferenz auf dem Server",
   "nextcloudAddAttachment": "Anhang hinzufügen…",
   "nextcloudDeleteAttachmentWarning": "Durch Löschen des Anhangs sind seine Links in der Notiz nicht mehr verfügbar. Aufbewahrte Daten können über den lokalen Verlauf wiederhergestellt werden.",
-  "nextcloudChooseConflictingAttributes": "Wählen Sie jeden widersprüchlichen Wert."
+  "nextcloudChooseConflictingAttributes": "Wählen Sie jeden widersprüchlichen Wert.",
+  "nextcloudUseServerNote": "Diese Servernotiz verwenden",
+  "nextcloudUseServerNoteExplanation": "Verknüpft diesen Entwurf mit der ausgewählten Servernotiz und synchronisiert anschließend die behaltenen lokalen Änderungen. Ein passender Antrag bestätigt nicht, wer die Notiz erstellt hat.",
+  "nextcloudExactCandidate": "Exakte Übereinstimmung mit der Anfrage; Identität unbestätigt.",
+  "nextcloudPossibleCandidate": "Mögliche Übereinstimmung nach Bereinigung der Anfrage; Identität unbestätigt.",
+  "nextcloudSelectCandidate": "Servernotiz zur Prüfung auswählen",
+  "nextcloudCreateSeparate": "Separate Notiz erstellen",
+  "nextcloudCreateSeparateWarning": "Die erste Anfrage hat möglicherweise bereits eine Servernotiz erstellt. Dies erstellt eine separate Notiz mit Ihrer behaltenen lokalen Arbeit. Vermutete Duplikate werden nicht gelöscht."
 }

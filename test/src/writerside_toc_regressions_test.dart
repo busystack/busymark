@@ -12,12 +12,14 @@ import 'package:busymark/src/workspace/recovery_persistence.dart';
 import 'package:busymark/src/workspace/session_persistence.dart';
 import 'package:busymark/src/workspace/workspace_controller.dart';
 import 'package:busymark/src/writerside/writerside_template_service.dart';
+import 'package:busymark/src/writerside/writerside_topic_removal_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
+import 'package:xml/xml.dart';
 
 void main() {
   late Directory root;
@@ -135,6 +137,51 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Synchronize TOC and Editor'));
     await tester.pumpAndSettle();
+  }
+
+  Future<void> openRemoval(WidgetTester tester, {String row = '0'}) async {
+    await tester.tap(
+      find.byKey(ValueKey('workspace-sidebar-toc-row-$row')),
+      buttons: kSecondaryMouseButton,
+    );
+    await tester.pumpAndSettle();
+    await tester.runAsync(() => tester.tap(find.text('Remove TOC Element')));
+    await _settle(
+      tester,
+      until: () => find.text('Set redirect to:').evaluate().isNotEmpty,
+    );
+  }
+
+  Finder homeSelector() =>
+      find.byType(BusyMarkPopupSelector<WritersideHomePageReplacement>);
+
+  BusyMarkDialogButton removeButton(WidgetTester tester) =>
+      tester.widget(find.widgetWithText(BusyMarkDialogButton, 'Remove'));
+
+  Finder automaticCheckbox() => find
+      .descendant(
+        of: find.byType(BusyMarkDialogShell),
+        matching: find.byType(BusyMarkCheckbox),
+      )
+      .last;
+
+  Future<void> chooseHome(WidgetTester tester) async {
+    await tester.tap(find.text('Choose a Home Page'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('guides/install.md'));
+    await tester.pumpAndSettle();
+  }
+
+  Future<void> keepOrphan(WidgetTester tester) async {
+    await _settle(
+      tester,
+      until: () => find.text('Keep Topic File').evaluate().isNotEmpty,
+      timeout: const Duration(seconds: 30),
+      diagnostics: () =>
+          '${container.read(workspaceControllerProvider).message}',
+    );
+    await tester.tap(find.text('Keep Topic File'));
+    await _settle(tester);
   }
 
   bool selected(WidgetTester tester, String path) =>
@@ -271,11 +318,288 @@ void main() {
         findsOneWidget,
       );
       expect(find.text('Set redirect to'), findsNothing);
+      expect(
+        find.text(
+          'This topic is the Home Page for this instance. Choose another Home Page before removing it from the TOC.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('New Home Page'), findsOneWidget);
+      final picker = tester
+          .widget<BusyMarkPopupSelector<WritersideHomePageReplacement>>(
+            homeSelector(),
+          );
+      expect(picker.value, isNull);
+      expect(picker.options.map((option) => option.value.topicReference), [
+        'guides/install.md',
+        'elsewhere/install.md',
+      ]);
+      expect(removeButton(tester).onPressed, isNull);
+      await chooseHome(tester);
+      expect(removeButton(tester).onPressed, isNotNull);
       await tester.tap(find.text('Cancel'));
       await tester.pumpAndSettle();
       expect(await tester.runAsync(tree.readAsString), original);
+      expect(File(topicPath('other.md')).existsSync(), isTrue);
     },
   );
+
+  testWidgets(
+    'Home Page removal assigns the chosen topic and keeps the orphan source',
+    (tester) async {
+      await start(tester);
+      await openRemoval(tester);
+      await tester.tap(automaticCheckbox());
+      await tester.pumpAndSettle();
+      expect(
+        tester.widget<BusyMarkCheckbox>(automaticCheckbox()).value,
+        isFalse,
+      );
+      await chooseHome(tester);
+      expect(removeButton(tester).onPressed, isNotNull);
+      await tester.runAsync(() => tester.tap(find.text('Remove')));
+      await keepOrphan(tester);
+      final tree = XmlDocument.parse(
+        File(p.join(root.path, 'guide.tree')).readAsStringSync(),
+      );
+      expect(tree.rootElement.getAttribute('start-page'), 'guides/install.md');
+      expect(
+        tree
+            .findAllElements('toc-element')
+            .where((node) => node.getAttribute('topic') == 'other.md'),
+        isEmpty,
+      );
+      expect(
+        tree
+            .findAllElements('toc-element')
+            .any((node) => node.getAttribute('accepts-web-file-names') != null),
+        isFalse,
+      );
+      expect(File(topicPath('other.md')).existsSync(), isTrue);
+    },
+  );
+
+  testWidgets('Home Page removal with no candidate explains how to unblock it', (
+    tester,
+  ) async {
+    final tree = File(p.join(root.path, 'guide.tree'));
+    tree.writeAsStringSync(
+      '<instance-profile id="guide" start-page="other.md"><toc-element topic="other.md"/></instance-profile>',
+    );
+    final original = tree.readAsStringSync();
+    await start(tester);
+    await openRemoval(tester);
+    expect(homeSelector(), findsNothing);
+    expect(
+      find.text(
+        'Add or link another eligible topic to this instance before removing its Home Page.',
+      ),
+      findsOneWidget,
+    );
+    expect(removeButton(tester).onPressed, isNull);
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+    expect(tree.readAsStringSync(), original);
+  });
+
+  testWidgets(
+    'Review Usages without a Home Page choice resumes in the actionable dialog',
+    (tester) async {
+      await start(tester);
+      final tree = File(p.join(root.path, 'guide.tree'));
+      final original = tree.readAsStringSync();
+      await openRemoval(tester);
+      await tester.tap(find.text('Review Usages'));
+      await tester.pumpAndSettle();
+      expect(tree.readAsStringSync(), original);
+      await tester.runAsync(() => tester.tap(find.text('Do Refactor')));
+      await _settle(tester, until: () => homeSelector().evaluate().isNotEmpty);
+      expect(
+        tester
+            .widget<BusyMarkPopupSelector<WritersideHomePageReplacement>>(
+              homeSelector(),
+            )
+            .value,
+        isNull,
+      );
+      expect(removeButton(tester).onPressed, isNull);
+      await chooseHome(tester);
+      await tester.runAsync(() => tester.tap(find.text('Remove')));
+      await keepOrphan(tester);
+      expect(
+        XmlDocument.parse(
+          tree.readAsStringSync(),
+        ).rootElement.getAttribute('start-page'),
+        'guides/install.md',
+      );
+    },
+  );
+
+  testWidgets(
+    'Review Usages keeps the explicit Home Page choice across changed TOC positions',
+    (tester) async {
+      await start(tester);
+      final tree = File(p.join(root.path, 'guide.tree'));
+      final original = tree.readAsStringSync();
+      await openRemoval(tester);
+      await chooseHome(tester);
+      await tester.tap(find.text('Review Usages'));
+      await tester.pumpAndSettle();
+      expect(tree.readAsStringSync(), original);
+      tree.writeAsStringSync(
+        original.replaceFirst(
+          '<toc-element toc-title="Group">',
+          '<toc-element topic="elsewhere/install.md"/><toc-element toc-title="Group">',
+        ),
+      );
+      await tester.runAsync(() => tester.tap(find.text('Do Refactor')));
+      await keepOrphan(tester);
+      expect(
+        XmlDocument.parse(
+          tree.readAsStringSync(),
+        ).rootElement.getAttribute('start-page'),
+        'guides/install.md',
+      );
+      expect(File(topicPath('other.md')).existsSync(), isTrue);
+    },
+  );
+
+  testWidgets(
+    'Review Usages reopens the selector when the chosen replacement is no longer eligible',
+    (tester) async {
+      await start(tester);
+      final tree = File(p.join(root.path, 'guide.tree'));
+      await openRemoval(tester);
+      await chooseHome(tester);
+      await tester.tap(find.text('Review Usages'));
+      await tester.pumpAndSettle();
+      tree.writeAsStringSync(
+        tree.readAsStringSync().replaceAll(
+          'topic="guides/install.md"',
+          'topic="elsewhere/install.md"',
+        ),
+      );
+      final changed = tree.readAsStringSync();
+      await tester.runAsync(() => tester.tap(find.text('Do Refactor')));
+      await _settle(tester, until: () => homeSelector().evaluate().isNotEmpty);
+      final picker = tester
+          .widget<BusyMarkPopupSelector<WritersideHomePageReplacement>>(
+            homeSelector(),
+          );
+      expect(picker.value, isNull);
+      expect(
+        picker.options.single.value.topicReference,
+        'elsewhere/install.md',
+      );
+      expect(removeButton(tester).onPressed, isNull);
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+      expect(tree.readAsStringSync(), changed);
+    },
+  );
+
+  testWidgets(
+    'Home Page replacement and automatic usage consent remain independent',
+    (tester) async {
+      File(
+        topicPath('guides/install.md'),
+      ).writeAsStringSync('# guides/install.md\n\n[Other](../other.md)\n');
+      await start(tester);
+      await openRemoval(tester);
+      expect(
+        tester.widget<BusyMarkCheckbox>(automaticCheckbox()).onChanged,
+        isNotNull,
+      );
+      await tester.tap(automaticCheckbox());
+      await tester.pumpAndSettle();
+      await chooseHome(tester);
+      expect(removeButton(tester).onPressed, isNull);
+      await tester.tap(automaticCheckbox());
+      await tester.pumpAndSettle();
+      expect(removeButton(tester).onPressed, isNotNull);
+      await tester.runAsync(() => tester.tap(find.text('Remove')));
+      await keepOrphan(tester);
+      expect(
+        File(topicPath('guides/install.md')).readAsStringSync(),
+        isNot(contains('../other.md')),
+      );
+      expect(
+        XmlDocument.parse(
+          File(p.join(root.path, 'guide.tree')).readAsStringSync(),
+        ).rootElement.getAttribute('start-page'),
+        'guides/install.md',
+      );
+    },
+  );
+
+  testWidgets(
+    'non-Home-Page removal has no Home Page selector and remains enabled',
+    (tester) async {
+      await start(tester);
+      final tree = File(p.join(root.path, 'guide.tree'));
+      final original = tree.readAsStringSync();
+      await openRemoval(tester, row: '4');
+      expect(homeSelector(), findsNothing);
+      expect(find.text('New Home Page'), findsNothing);
+      expect(removeButton(tester).onPressed, isNotNull);
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+      expect(tree.readAsStringSync(), original);
+    },
+  );
+
+  testWidgets('Home Page choice is revalidated after saving a dirty buffer', (
+    tester,
+  ) async {
+    await start(tester);
+    await tester.runAsync(
+      () => controller().openActiveFile(topicPath('guides/install.md')),
+    );
+    await _settle(tester);
+    await openRemoval(tester);
+    await chooseHome(tester);
+    controller().updateActiveText(
+      '# guides/install.md\n\nSaved during removal.\n',
+    );
+    await tester.pumpAndSettle();
+    await tester.runAsync(() => tester.tap(find.text('Remove')));
+    await _settle(
+      tester,
+      until: () => find.text('Unsaved changes').evaluate().isNotEmpty,
+    );
+    await tester.runAsync(
+      () => tester.tap(find.widgetWithText(BusyMarkDialogButton, 'Save')),
+    );
+    await _settle(tester, until: () => homeSelector().evaluate().isNotEmpty);
+    expect(
+      tester
+          .widget<BusyMarkPopupSelector<WritersideHomePageReplacement>>(
+            homeSelector(),
+          )
+          .value
+          ?.topicReference,
+      'guides/install.md',
+    );
+    expect(removeButton(tester).onPressed, isNotNull);
+    expect(
+      XmlDocument.parse(
+        File(p.join(root.path, 'guide.tree')).readAsStringSync(),
+      ).rootElement.getAttribute('start-page'),
+      'other.md',
+    );
+    await tester.runAsync(() => tester.tap(find.text('Remove')));
+    await keepOrphan(tester);
+    expect(
+      XmlDocument.parse(
+        File(p.join(root.path, 'guide.tree')).readAsStringSync(),
+      ).rootElement.getAttribute('start-page'),
+      'guides/install.md',
+    );
+    expect(
+      File(topicPath('guides/install.md')).readAsStringSync(),
+      contains('Saved during removal.'),
+    );
+  });
 
   testWidgets(
     'New Topic surfaces expose local Markdown import only at root/sibling',
@@ -472,8 +796,9 @@ Future<void> _settle(
   WidgetTester tester, {
   bool Function()? until,
   String Function()? diagnostics,
+  Duration timeout = const Duration(seconds: 10),
 }) async {
-  final deadline = DateTime.now().add(const Duration(seconds: 10));
+  final deadline = DateTime.now().add(timeout);
   for (
     var i = 0;
     until == null ? i < 30 : DateTime.now().isBefore(deadline);

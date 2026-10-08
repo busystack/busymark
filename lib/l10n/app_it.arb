@@ -1,4 +1,6 @@
 {
+  "closeOtherTabs": "Chiudi le altre schede",
+  "@closeOtherTabs": {"description": "Document tab context menu action that closes every other document and comparison tab while retaining this document."},
   "tocTopicFromTemplate": "Argomento da modello...",
   "tocSaveAsTemplate": "Salva come modello",
   "tocTemplateDialog": "Crea argomento da modello",
@@ -1877,9 +1879,9 @@
   "@errorWritersideTocInvalidMove": {
     "description": "Detail shown when a Writerside TOC move would create a cycle."
   },
-  "errorWritersideStartTopicDelete": "L'argomento iniziale {topic} non può essere eliminato. Scegli prima un'altra pagina iniziale.",
+  "errorWritersideStartTopicDelete": "La pagina iniziale {topic} non può essere eliminata. Scegli prima un’altra pagina iniziale.",
   "@errorWritersideStartTopicDelete": {
-    "description": "Detail shown when attempting to delete the start topic of a Writerside instance.",
+    "description": "Detail shown when attempting to delete the Home Page of a Writerside instance.",
     "placeholders": {
       "topic": {
         "type": "String"
@@ -2669,7 +2671,11 @@
       }
     }
   },
-  "topicIsStartPageRemovalWarning": "Questo argomento è utilizzato come pagina iniziale di un’istanza. Esaminane gli utilizzi e assegna un’altra pagina iniziale prima di continuare.",
+  "topicIsHomePageRemovalWarning": "Questo argomento è la pagina iniziale di questa istanza. Scegli un’altra pagina iniziale prima di rimuoverlo dal sommario.",
+  "newHomePage": "Nuova pagina iniziale",
+  "chooseHomePage": "Scegli una pagina iniziale",
+  "noHomePageReplacement": "Aggiungi o collega un altro argomento idoneo a questa istanza prima di rimuovere la sua pagina iniziale.",
+  "topicIsStartPageRemovalWarning": "Questo argomento è la pagina iniziale di un’istanza. Imposta un’altra pagina iniziale prima di eliminare il suo file sorgente.",
   "@topicIsStartPageRemovalWarning": {
     "description": "Warning shown when the topic is used as an instance start page."
   },
@@ -3406,5 +3412,12 @@
   "nextcloudAttachmentReference": "Riferimento allegato sul server",
   "nextcloudAddAttachment": "Aggiungi allegato…",
   "nextcloudDeleteAttachmentWarning": "Eliminando questo allegato, i suoi collegamenti nella nota non saranno più disponibili. I dati conservati possono essere recuperati dalla cronologia locale.",
-  "nextcloudChooseConflictingAttributes": "Scegli ogni attributo in conflitto."
+  "nextcloudChooseConflictingAttributes": "Scegli ogni attributo in conflitto.",
+  "nextcloudUseServerNote": "Usa questa nota del server",
+  "nextcloudUseServerNoteExplanation": "Collega questa bozza alla nota selezionata sul server, poi sincronizza le modifiche locali conservate. Una richiesta corrispondente non conferma chi ha creato la nota.",
+  "nextcloudExactCandidate": "Corrispondenza esatta con la richiesta; identità non confermata.",
+  "nextcloudPossibleCandidate": "Possibile corrispondenza dopo la normalizzazione; identità non confermata.",
+  "nextcloudSelectCandidate": "Seleziona una nota del server da esaminare",
+  "nextcloudCreateSeparate": "Crea una nota separata",
+  "nextcloudCreateSeparateWarning": "La prima richiesta potrebbe aver già creato una nota sul server. Questa azione crea una nota separata con il lavoro locale conservato. Nessun presunto duplicato verrà eliminato."
 }

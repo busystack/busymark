@@ -94,6 +94,21 @@ class WritersideTopicRedirectTarget {
   final List<int> nodePath;
 }
 
+/// Identified by topic and instance, never by a positional TOC node path.
+class WritersideHomePageReplacement {
+  const WritersideHomePageReplacement({
+    required this.topicPath,
+    required this.treePath,
+    required this.topicReference,
+    required this.label,
+  });
+
+  final String topicPath;
+  final String treePath;
+  final String topicReference;
+  final String label;
+}
+
 class WritersideTopicRemovalAnalysis {
   WritersideTopicRemovalAnalysis({
     required this.mode,
@@ -112,6 +127,7 @@ class WritersideTopicRemovalAnalysis {
     required this.isStartPage,
     required List<WritersideTopicUsage> usages,
     required List<WritersideTopicRedirectTarget> redirectTargets,
+    List<WritersideHomePageReplacement> homePageReplacements = const [],
     required this.fingerprint,
     List<String> projectModuleRoots = const [],
   }) : projectRoot =
@@ -140,7 +156,8 @@ class WritersideTopicRemovalAnalysis {
            ? null
            : List.unmodifiable(selectedNodePath),
        usages = List.unmodifiable(usages),
-       redirectTargets = List.unmodifiable(redirectTargets);
+       redirectTargets = List.unmodifiable(redirectTargets),
+       homePageReplacements = List.unmodifiable(homePageReplacements);
 
   final WritersideTopicRemovalMode mode;
   final String projectRoot;
@@ -159,6 +176,7 @@ class WritersideTopicRemovalAnalysis {
   final bool isStartPage;
   final List<WritersideTopicUsage> usages;
   final List<WritersideTopicRedirectTarget> redirectTargets;
+  final List<WritersideHomePageReplacement> homePageReplacements;
   final String fingerprint;
 
   List<WritersideTopicUsage> get relevantUsages =>
@@ -187,6 +205,51 @@ class WritersideTopicRemovalAnalysis {
 
   bool get canUpdateUsagesAutomatically =>
       blockingUsages.every((usage) => usage.canUpdateAutomatically);
+
+  bool get requiresHomePageReplacement =>
+      mode == WritersideTopicRemovalMode.removeFromInstance &&
+      selectedTreePath != null &&
+      isStartPage;
+
+  WritersideHomePageReplacement? homePageReplacementForTopic(String? path) =>
+      path == null || !requiresHomePageReplacement
+      ? null
+      : homePageReplacements
+            .where((candidate) => p.equals(candidate.topicPath, path))
+            .firstOrNull;
+
+  bool resolvesHomePageUsage(
+    WritersideTopicUsage usage,
+    WritersideHomePageReplacement? replacement,
+  ) =>
+      requiresHomePageReplacement &&
+      replacement != null &&
+      usage.relevant &&
+      usage.kind == WritersideTopicUsageKind.startPage &&
+      p.equals(usage.filePath, selectedTreePath!) &&
+      homePageReplacements.any(
+        (candidate) =>
+            p.equals(candidate.treePath, replacement.treePath) &&
+            p.equals(candidate.topicPath, replacement.topicPath) &&
+            candidate.topicReference == replacement.topicReference,
+      );
+
+  List<WritersideTopicUsage> unresolvedBlockingUsages(
+    WritersideHomePageReplacement? replacement,
+  ) => blockingUsages
+      .where((usage) => !resolvesHomePageUsage(usage, replacement))
+      .toList(growable: false);
+
+  // The checkbox controls link/include edits only. A pending explicit Home
+  // Page choice must not discard consent or disable those otherwise safe edits.
+  bool get canUpdateOtherUsagesAutomatically => blockingUsages.every(
+    (usage) =>
+        usage.canUpdateAutomatically ||
+        (requiresHomePageReplacement &&
+            homePageReplacements.isNotEmpty &&
+            usage.kind == WritersideTopicUsageKind.startPage &&
+            p.equals(usage.filePath, selectedTreePath!)),
+  );
 }
 
 class WritersideTopicRemovalRequest {
@@ -194,11 +257,13 @@ class WritersideTopicRemovalRequest {
     required this.analysis,
     this.updateUsagesAutomatically = false,
     this.redirectTarget,
+    this.homePageReplacement,
   });
 
   final WritersideTopicRemovalAnalysis analysis;
   final bool updateUsagesAutomatically;
   final WritersideTopicRedirectTarget? redirectTarget;
+  final WritersideHomePageReplacement? homePageReplacement;
 }
 
 class WritersideTopicRemovalResult {
@@ -469,6 +534,11 @@ class WritersideTopicRemovalService {
               mode: mode,
               preferredTree: snapshot.trees[preferredTree]!,
             ),
+      homePageReplacements:
+          mode == WritersideTopicRemovalMode.removeFromInstance &&
+              selectedTree != null
+          ? _homePageReplacements(snapshot, snapshot.trees[selectedTree]!)
+          : const [],
       fingerprint: snapshot.fingerprint,
       projectModuleRoots: snapshot.moduleRoots,
     );
@@ -505,10 +575,29 @@ class WritersideTopicRemovalService {
         args: {'topic': analysis.topicFileName},
       );
     }
-    final blocking = analysis.blockingUsages;
+    final requestedReplacement = request.homePageReplacement;
+    WritersideHomePageReplacement? replacement;
+    if (requestedReplacement != null) {
+      final tree = snapshot.trees[analysis.selectedTreePath];
+      if (!analysis.requiresHomePageReplacement || tree == null) {
+        throw const BusyMarkException('writerside.toc.path-invalid');
+      }
+      replacement = _homePageReplacements(snapshot, tree)
+          .where(
+            (candidate) =>
+                p.equals(candidate.treePath, requestedReplacement.treePath) &&
+                p.equals(candidate.topicPath, requestedReplacement.topicPath) &&
+                candidate.topicReference == requestedReplacement.topicReference,
+          )
+          .firstOrNull;
+      if (replacement == null) {
+        throw const BusyMarkException('writerside.toc.path-invalid');
+      }
+    }
+    final blocking = analysis.unresolvedBlockingUsages(replacement);
     if (blocking.isNotEmpty &&
         (!request.updateUsagesAutomatically ||
-            !analysis.canUpdateUsagesAutomatically)) {
+            blocking.any((usage) => !usage.canUpdateAutomatically))) {
       throw BusyMarkException(
         'writerside.topic-removal.usages-remain',
         args: {'path': analysis.topicPath},
@@ -523,6 +612,13 @@ class WritersideTopicRemovalService {
       for (final tree in snapshot.trees.values)
         tree.path: XmlDocument.parse(tree.source),
     };
+    if (replacement != null) {
+      treeDocuments[replacement.treePath]!.rootElement.setAttribute(
+        'start-page',
+        replacement.topicReference,
+      );
+      changedTreePaths.add(replacement.treePath);
+    }
 
     XmlElement? selectedRemovalElement;
     if (analysis.mode == WritersideTopicRemovalMode.removeFromInstance) {
@@ -779,6 +875,7 @@ class WritersideTopicRemovalService {
     final sourceUsageRemains = _plannedUsageRemains(
       analysis,
       updateUsagesAutomatically: request.updateUsagesAutomatically,
+      homePageReplacement: replacement,
     );
     if (analysis.mode == WritersideTopicRemovalMode.safeDeleteFile &&
         sourceUsageRemains) {
@@ -1957,9 +2054,11 @@ class WritersideTopicRemovalService {
   bool _plannedUsageRemains(
     WritersideTopicRemovalAnalysis analysis, {
     required bool updateUsagesAutomatically,
+    WritersideHomePageReplacement? homePageReplacement,
   }) {
     for (final usage in analysis.usages) {
       if (!usage.relevant) return true;
+      if (analysis.resolvesHomePageUsage(usage, homePageReplacement)) continue;
       if (usage.kind == WritersideTopicUsageKind.tocElement &&
           usage.canUpdateAutomatically) {
         continue;
@@ -2072,6 +2171,82 @@ class WritersideTopicRemovalService {
           ),
         )
         .toList(growable: false);
+  }
+
+  List<WritersideHomePageReplacement> _homePageReplacements(
+    _RemovalSnapshot snapshot,
+    _TreeSnapshot tree,
+  ) {
+    final instance = tree.owner.instances
+        .where((candidate) => p.equals(candidate.sourceTreePath, tree.path))
+        .firstOrNull;
+    if (instance == null ||
+        instance.isLibrary ||
+        tree.document.rootElement.getAttribute('is-library') == 'true' ||
+        !tree.owner.config.instanceSources.any(
+          (source) => p.equals(p.join(tree.owner.rootPath, source), tree.path),
+        )) {
+      return const [];
+    }
+    final presenter = WritersideTocPresenter(
+      module: tree.owner,
+      instance: instance,
+      modulesByOrigin: snapshot.project.modulesByOrigin,
+    );
+    final result = <WritersideHomePageReplacement>[];
+    final seen = <String>{};
+    for (final node in instance.navigationTocRoots.expand(
+      (root) => root.flatten(),
+    )) {
+      if (!node.canEditStructure ||
+          !p.equals(node.sourceTreePath!, tree.path) ||
+          node.href != null ||
+          node.includeResolutionError != null) {
+        continue;
+      }
+      final element = _elementAtPath(
+        tree.document.rootElement,
+        node.sourceTocPath!,
+      );
+      // start-page resolves in the host module without a TOC origin. Keep the
+      // authored topic reference and require the same resolution as Set Home.
+      final reference = element.getAttribute('topic');
+      final topic = reference == null || reference.isEmpty
+          ? null
+          : tree.owner.topicByReference(reference);
+      final resolvedTopic = presenter.present(node).topic;
+      if (topic == null ||
+          resolvedTopic == null ||
+          element.getAttribute('href') != null ||
+          !p.equals(topic.filePath, resolvedTopic.filePath) ||
+          !snapshot.sources.containsKey(normalizePath(topic.filePath)) ||
+          p.equals(topic.filePath, snapshot.topic.filePath) ||
+          !seen.add(normalizePath(topic.filePath))) {
+        continue;
+      }
+      result.add(
+        WritersideHomePageReplacement(
+          topicPath: topic.filePath,
+          treePath: tree.path,
+          topicReference: reference!,
+          label: topic.title?.trim().isNotEmpty == true
+              ? topic.title!.trim()
+              : topic.fileName,
+        ),
+      );
+    }
+    return [
+      for (final candidate in result)
+        WritersideHomePageReplacement(
+          topicPath: candidate.topicPath,
+          treePath: candidate.treePath,
+          topicReference: candidate.topicReference,
+          label:
+              result.where((other) => other.label == candidate.label).length > 1
+              ? '${candidate.label} (${candidate.topicReference})'
+              : candidate.label,
+        ),
+    ];
   }
 
   List<WritersideTopicRedirectTarget> _resolvedRedirectTargets(

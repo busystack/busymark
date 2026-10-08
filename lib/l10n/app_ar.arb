@@ -1,4 +1,6 @@
 {
+  "closeOtherTabs": "إغلاق علامات التبويب الأخرى",
+  "@closeOtherTabs": {"description": "Document tab context menu action that closes every other document and comparison tab while retaining this document."},
   "tocTopicFromTemplate": "موضوع من قالب...",
   "tocSaveAsTemplate": "حفظ كقالب",
   "tocTemplateDialog": "إنشاء موضوع من قالب",
@@ -1877,9 +1879,9 @@
   "@errorWritersideTocInvalidMove": {
     "description": "Detail shown when a Writerside TOC move would create a cycle."
   },
-  "errorWritersideStartTopicDelete": "لا يمكن حذف موضوع البدء ⁨{topic}⁩. اختر صفحة بدء أخرى أولًا.",
+  "errorWritersideStartTopicDelete": "لا يمكن حذف الصفحة الرئيسية {topic}. اختر صفحة رئيسية أخرى أولًا.",
   "@errorWritersideStartTopicDelete": {
-    "description": "Detail shown when attempting to delete the start topic of a Writerside instance.",
+    "description": "Detail shown when attempting to delete the Home Page of a Writerside instance.",
     "placeholders": {
       "topic": {
         "type": "String"
@@ -2669,7 +2671,11 @@
       }
     }
   },
-  "topicIsStartPageRemovalWarning": "يُستخدم هذا الموضوع كصفحة بدء لمثيل. راجع استخداماته وعيّن صفحة بدء أخرى قبل المتابعة.",
+  "topicIsHomePageRemovalWarning": "هذا الموضوع هو الصفحة الرئيسية لهذا المثيل. اختر صفحة رئيسية أخرى قبل إزالته من جدول المحتويات.",
+  "newHomePage": "الصفحة الرئيسية الجديدة",
+  "chooseHomePage": "اختر صفحة رئيسية",
+  "noHomePageReplacement": "أضف موضوعًا مؤهلًا آخر إلى هذا المثيل أو اربطه به قبل إزالة صفحته الرئيسية.",
+  "topicIsStartPageRemovalWarning": "هذا الموضوع هو الصفحة الرئيسية لمثيل. عيّن صفحة رئيسية أخرى قبل حذف ملفه المصدر.",
   "@topicIsStartPageRemovalWarning": {
     "description": "Warning shown when the topic is used as an instance start page."
   },
@@ -2694,7 +2700,7 @@
   "@topicUsageTocElements": {
     "description": "Usage group label for TOC elements."
   },
-  "topicUsageStartPages": "صفحات البدء",
+  "topicUsageStartPages": "الصفحات الرئيسية",
   "@topicUsageStartPages": {
     "description": "Usage group label for instance start pages."
   },
@@ -3406,5 +3412,12 @@
   "nextcloudAttachmentReference": "مرجع المرفق على الخادم",
   "nextcloudAddAttachment": "إضافة مرفق…",
   "nextcloudDeleteAttachmentWarning": "سيؤدي حذف المرفق إلى جعل روابطه في الملاحظة غير متاحة. يمكن استعادة البيانات المحتفَظ بها من السجل المحلي.",
-  "nextcloudChooseConflictingAttributes": "اختر قيمة لكل سمة متعارضة."
+  "nextcloudChooseConflictingAttributes": "اختر قيمة لكل سمة متعارضة.",
+  "nextcloudUseServerNote": "استخدام هذه الملاحظة على الخادم",
+  "nextcloudUseServerNoteExplanation": "يربط هذه المسودة بالملاحظة المحددة على الخادم، ثم يزامن التغييرات المحلية المحفوظة. تطابق الطلب لا يؤكد من أنشأ الملاحظة.",
+  "nextcloudExactCandidate": "تطابق تام مع الطلب؛ الهوية غير مؤكدة.",
+  "nextcloudPossibleCandidate": "تطابق محتمل بعد تنقية الطلب؛ الهوية غير مؤكدة.",
+  "nextcloudSelectCandidate": "اختر ملاحظة على الخادم لمراجعتها",
+  "nextcloudCreateSeparate": "إنشاء ملاحظة منفصلة",
+  "nextcloudCreateSeparateWarning": "قد يكون الطلب الأول قد أنشأ ملاحظة على الخادم بالفعل. ينشئ هذا ملاحظة منفصلة بعملك المحلي المحفوظ. لن تُحذف أي ملاحظة يُشتبه بأنها مكررة."
 }

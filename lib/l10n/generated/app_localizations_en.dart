@@ -11,6 +11,9 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
+  String get closeOtherTabs => 'Close other tabs';
+
+  @override
   String get tocTopicFromTemplate => 'Topic from Template...';
 
   @override
@@ -1526,8 +1529,22 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get topicIsHomePageRemovalWarning =>
+      'This topic is the Home Page for this instance. Choose another Home Page before removing it from the TOC.';
+
+  @override
+  String get newHomePage => 'New Home Page';
+
+  @override
+  String get chooseHomePage => 'Choose a Home Page';
+
+  @override
+  String get noHomePageReplacement =>
+      'Add or link another eligible topic to this instance before removing its Home Page.';
+
+  @override
   String get topicIsStartPageRemovalWarning =>
-      'This topic is used as an instance start page. Review its usages and assign another start page before continuing.';
+      'This topic is a Home Page for an instance. Assign another Home Page before deleting its source file.';
 
   @override
   String topicUsagesCount(int count) {
@@ -1546,7 +1563,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get topicUsageTocElements => 'TOC elements';
 
   @override
-  String get topicUsageStartPages => 'Start pages';
+  String get topicUsageStartPages => 'Home Pages';
 
   @override
   String get topicUsageTopicLinks => 'Topic links';
@@ -2171,7 +2188,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String errorWritersideStartTopicDelete(String topic) {
-    return 'The start topic $topic cannot be deleted. Choose another start page first.';
+    return 'The Home Page $topic cannot be deleted. Choose another Home Page first.';
   }
 
   @override
@@ -4760,4 +4777,29 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get nextcloudChooseConflictingAttributes =>
       'Choose each conflicting attribute.';
+
+  @override
+  String get nextcloudUseServerNote => 'Use this server note';
+
+  @override
+  String get nextcloudUseServerNoteExplanation =>
+      'Links this draft to the selected server note, then synchronizes retained local changes. A matching request does not confirm who created the note.';
+
+  @override
+  String get nextcloudExactCandidate =>
+      'Exact request match; identity is unconfirmed.';
+
+  @override
+  String get nextcloudPossibleCandidate =>
+      'Possible sanitized request match; identity is unconfirmed.';
+
+  @override
+  String get nextcloudSelectCandidate => 'Select a server note to review';
+
+  @override
+  String get nextcloudCreateSeparate => 'Create a separate note';
+
+  @override
+  String get nextcloudCreateSeparateWarning =>
+      'The first request may already have created a server note. This creates a separate note with your retained local work. No suspected duplicate will be deleted.';
 }

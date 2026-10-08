@@ -1,4 +1,6 @@
 {
+  "closeOtherTabs": "Закрыть другие вкладки",
+  "@closeOtherTabs": {"description": "Document tab context menu action that closes every other document and comparison tab while retaining this document."},
   "tocTopicFromTemplate": "Тема из шаблона...",
   "tocSaveAsTemplate": "Сохранить как шаблон",
   "tocTemplateDialog": "Создать тему из шаблона",
@@ -1877,9 +1879,9 @@
   "@errorWritersideTocInvalidMove": {
     "description": "Detail shown when a Writerside TOC move would create a cycle."
   },
-  "errorWritersideStartTopicDelete": "Стартовую тему {topic} нельзя удалить. Сначала выберите другую стартовую страницу.",
+  "errorWritersideStartTopicDelete": "Домашнюю страницу {topic} нельзя удалить. Сначала выберите другую домашнюю страницу.",
   "@errorWritersideStartTopicDelete": {
-    "description": "Detail shown when attempting to delete the start topic of a Writerside instance.",
+    "description": "Detail shown when attempting to delete the Home Page of a Writerside instance.",
     "placeholders": {
       "topic": {
         "type": "String"
@@ -2695,7 +2697,11 @@
       }
     }
   },
-  "topicIsStartPageRemovalWarning": "Эта тема используется как стартовая страница экземпляра. Просмотрите её использования и назначьте другую стартовую страницу, прежде чем продолжить.",
+  "topicIsHomePageRemovalWarning": "Эта тема является домашней страницей этого экземпляра. Выберите другую домашнюю страницу перед её удалением из оглавления.",
+  "newHomePage": "Новая домашняя страница",
+  "chooseHomePage": "Выбрать домашнюю страницу",
+  "noHomePageReplacement": "Добавьте или привяжите к этому экземпляру другую подходящую тему перед удалением его домашней страницы.",
+  "topicIsStartPageRemovalWarning": "Эта тема является домашней страницей экземпляра. Назначьте другую домашнюю страницу перед удалением её исходного файла.",
   "@topicIsStartPageRemovalWarning": {
     "description": "Warning shown when the topic is used as an instance start page."
   },
@@ -2720,7 +2726,7 @@
   "@topicUsageTocElements": {
     "description": "Usage group label for TOC elements."
   },
-  "topicUsageStartPages": "Стартовые страницы",
+  "topicUsageStartPages": "Домашние страницы",
   "@topicUsageStartPages": {
     "description": "Usage group label for instance start pages."
   },
@@ -3432,5 +3438,12 @@
   "nextcloudAttachmentReference": "Ссылка на вложение на сервере",
   "nextcloudAddAttachment": "Добавить вложение…",
   "nextcloudDeleteAttachmentWarning": "После удаления этого вложения ссылки на него в заметке станут недоступны. Сохранённые данные можно восстановить через локальную историю.",
-  "nextcloudChooseConflictingAttributes": "Выберите значение каждого конфликтующего атрибута."
+  "nextcloudChooseConflictingAttributes": "Выберите значение каждого конфликтующего атрибута.",
+  "nextcloudUseServerNote": "Использовать эту заметку на сервере",
+  "nextcloudUseServerNoteExplanation": "Связывает этот черновик с выбранной заметкой на сервере, затем синхронизирует сохранённые локальные изменения. Совпадение запроса не подтверждает, кто создал заметку.",
+  "nextcloudExactCandidate": "Точное совпадение с запросом; идентичность не подтверждена.",
+  "nextcloudPossibleCandidate": "Возможное совпадение после нормализации; идентичность не подтверждена.",
+  "nextcloudSelectCandidate": "Выберите заметку на сервере для проверки",
+  "nextcloudCreateSeparate": "Создать отдельную заметку",
+  "nextcloudCreateSeparateWarning": "Первый запрос мог уже создать заметку на сервере. Будет создана отдельная заметка с сохранённой локальной работой. Предполагаемые дубликаты не будут удалены."
 }

@@ -9365,6 +9365,7 @@ Future<TextEditingController> _pumpClipboardSourceEditor(
           width: 900,
           height: 600,
           child: BusyMarkSourceEditor(
+            key: UniqueKey(),
             text: source,
             language: SourceSyntaxLanguage.markdown,
             documentFormat: documentFormat,
@@ -9397,8 +9398,10 @@ Future<TextEditingController> _pumpClipboardSourceEditor(
     ),
   );
   final field = find.byType(TextField);
-  await tester.tap(field);
+  // Clipboard tests need keyboard focus; the centre can hit a selection
+  // toolbar instead. Each mount starts an independent editor session.
   await tester.showKeyboard(field);
+  expect(tester.widget<TextField>(field).focusNode!.hasFocus, isTrue);
   return tester.widget<TextField>(field).controller!;
 }
 

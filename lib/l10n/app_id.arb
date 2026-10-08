@@ -1,4 +1,6 @@
 {
+  "closeOtherTabs": "Tutup tab lainnya",
+  "@closeOtherTabs": {"description": "Document tab context menu action that closes every other document and comparison tab while retaining this document."},
   "tocTopicFromTemplate": "Topik dari Templat...",
   "tocSaveAsTemplate": "Simpan sebagai Templat",
   "tocTemplateDialog": "Buat Topik dari Templat",
@@ -1672,9 +1674,13 @@
       }
     }
   },
-  "topicIsStartPageRemovalWarning": "Topik ini digunakan sebagai halaman awal instance. Tinjau penggunaannya dan tetapkan halaman awal lain sebelum melanjutkan.",
+  "topicIsHomePageRemovalWarning": "Topik ini adalah halaman utama instance ini. Pilih halaman utama lain sebelum menghapusnya dari daftar isi.",
+  "newHomePage": "Halaman utama baru",
+  "chooseHomePage": "Pilih halaman utama",
+  "noHomePageReplacement": "Tambahkan atau tautkan topik lain yang memenuhi syarat ke instance ini sebelum menghapus halaman utamanya.",
+  "topicIsStartPageRemovalWarning": "Topik ini adalah halaman utama sebuah instance. Tetapkan halaman utama lain sebelum menghapus file sumbernya.",
   "@topicIsStartPageRemovalWarning": {
-    "description": "Warning that blocks deletion of a Writerside start-page topic."
+    "description": "Warning that blocks Safe Delete of a Writerside Home Page."
   },
   "topicUsagesCount": "{count} penggunaan ditemukan.",
   "@topicUsagesCount": {
@@ -1697,9 +1703,9 @@
   "@topicUsageTocElements": {
     "description": "Usage group label for Writerside TOC elements."
   },
-  "topicUsageStartPages": "Halaman awal",
+  "topicUsageStartPages": "Halaman utama",
   "@topicUsageStartPages": {
-    "description": "Usage group label for Writerside instance start pages."
+    "description": "Usage group label for Writerside instance Home Pages."
   },
   "topicUsageTopicLinks": "Tautan topik",
   "@topicUsageTopicLinks": {
@@ -2508,9 +2514,9 @@
   "@errorWritersideTocInvalidMove": {
     "description": "Detail shown when a Writerside TOC move would create a cycle."
   },
-  "errorWritersideStartTopicDelete": "Topik awal {topic} tidak dapat dihapus. Pilih halaman awal lain terlebih dahulu.",
+  "errorWritersideStartTopicDelete": "Halaman utama {topic} tidak dapat dihapus. Pilih halaman utama lain terlebih dahulu.",
   "@errorWritersideStartTopicDelete": {
-    "description": "Detail shown when attempting to delete the start topic of a Writerside instance.",
+    "description": "Detail shown when attempting to delete the Home Page of a Writerside instance.",
     "placeholders": {
       "topic": {
         "type": "String"
@@ -4945,5 +4951,12 @@
   "nextcloudAttachmentReference": "Referensi lampiran di server",
   "nextcloudAddAttachment": "Tambahkan lampiran…",
   "nextcloudDeleteAttachmentWarning": "Menghapus lampiran ini membuat tautannya dalam catatan tidak tersedia. Data yang disimpan dapat dipulihkan melalui riwayat lokal.",
-  "nextcloudChooseConflictingAttributes": "Pilih setiap atribut yang berkonflik."
+  "nextcloudChooseConflictingAttributes": "Pilih setiap atribut yang berkonflik.",
+  "nextcloudUseServerNote": "Gunakan catatan server ini",
+  "nextcloudUseServerNoteExplanation": "Menautkan draf ini ke catatan server yang dipilih, lalu menyinkronkan perubahan lokal yang dipertahankan. Permintaan yang cocok tidak memastikan siapa yang membuat catatan.",
+  "nextcloudExactCandidate": "Sama persis dengan permintaan; identitas belum dikonfirmasi.",
+  "nextcloudPossibleCandidate": "Kemungkinan cocok setelah permintaan disanitasi; identitas belum dikonfirmasi.",
+  "nextcloudSelectCandidate": "Pilih catatan server untuk ditinjau",
+  "nextcloudCreateSeparate": "Buat catatan terpisah",
+  "nextcloudCreateSeparateWarning": "Permintaan pertama mungkin sudah membuat catatan server. Ini membuat catatan terpisah dengan pekerjaan lokal yang dipertahankan. Tidak ada dugaan duplikat yang akan dihapus."
 }

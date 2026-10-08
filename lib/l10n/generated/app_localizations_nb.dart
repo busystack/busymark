@@ -11,6 +11,9 @@ class AppLocalizationsNb extends AppLocalizations {
   AppLocalizationsNb([String locale = 'nb']) : super(locale);
 
   @override
+  String get closeOtherTabs => 'Lukk andre faner';
+
+  @override
   String get tocTopicFromTemplate => 'Emne fra mal...';
 
   @override
@@ -1533,8 +1536,22 @@ class AppLocalizationsNb extends AppLocalizations {
   }
 
   @override
+  String get topicIsHomePageRemovalWarning =>
+      'Dette emnet er startsiden for denne instansen. Velg en annen startside før du fjerner det fra innholdsfortegnelsen.';
+
+  @override
+  String get newHomePage => 'Ny startside';
+
+  @override
+  String get chooseHomePage => 'Velg en startside';
+
+  @override
+  String get noHomePageReplacement =>
+      'Legg til eller koble et annet egnet emne til denne instansen før du fjerner startsiden.';
+
+  @override
   String get topicIsStartPageRemovalWarning =>
-      'Dette emnet brukes som startside for en instans. Se gjennom bruken, og angi en annen startside før du fortsetter.';
+      'Dette emnet er startsiden for en instans. Angi en annen startside før du sletter kildefilen.';
 
   @override
   String topicUsagesCount(int count) {
@@ -2173,7 +2190,7 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String errorWritersideStartTopicDelete(String topic) {
-    return 'Startemnet $topic kan ikke slettes. Velg en annen startside først.';
+    return 'Startsiden $topic kan ikke slettes. Velg en annen startside først.';
   }
 
   @override
@@ -4748,4 +4765,30 @@ class AppLocalizationsNb extends AppLocalizations {
   @override
   String get nextcloudChooseConflictingAttributes =>
       'Velg hver motstridende egenskap.';
+
+  @override
+  String get nextcloudUseServerNote => 'Bruk dette servernotatet';
+
+  @override
+  String get nextcloudUseServerNoteExplanation =>
+      'Knytter dette utkastet til det valgte servernotatet og synkroniserer deretter beholdte lokale endringer. En samsvarende forespørsel bekrefter ikke hvem som opprettet notatet.';
+
+  @override
+  String get nextcloudExactCandidate =>
+      'Nøyaktig samsvar med forespørselen; identiteten er ubekreftet.';
+
+  @override
+  String get nextcloudPossibleCandidate =>
+      'Mulig samsvar etter normalisering; identiteten er ubekreftet.';
+
+  @override
+  String get nextcloudSelectCandidate =>
+      'Velg et servernotat som skal gjennomgås';
+
+  @override
+  String get nextcloudCreateSeparate => 'Opprett et separat notat';
+
+  @override
+  String get nextcloudCreateSeparateWarning =>
+      'Den første forespørselen kan allerede ha opprettet et servernotat. Dette oppretter et separat notat med ditt beholdte lokale arbeid. Ingen antatte duplikater slettes.';
 }

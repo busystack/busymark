@@ -34,6 +34,9 @@ migrate_working_dir/
 .pub/
 /build/
 /coverage/
+/delivery/
+/test-results/
+/evidence/
 .widget_preview/
 **/node_modules/
 linux/flutter/ephemeral/

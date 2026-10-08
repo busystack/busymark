@@ -566,15 +566,27 @@ Future<void> showNextcloudConflict(
               onPressed: () => Navigator.pop(context),
             ),
             BusyMarkDialogButton(
-              label: context.l10n.nextcloudNewNote,
+              label: note.serverId == null
+                  ? context.l10n.nextcloudCreateSeparate
+                  : context.l10n.nextcloudNewNote,
               onPressed: () =>
                   Navigator.pop(context, NoteConflictResolution.saveAsNew),
             ),
-            if (displayedRemote != null && !displayedRemote.error)
+            if (displayedRemote != null &&
+                !displayedRemote.error &&
+                (note.serverId != null || note.creationAttempt != null))
               BusyMarkDialogButton(
-                label: context.l10n.nextcloudTakeRemote,
-                onPressed: () =>
-                    Navigator.pop(context, NoteConflictResolution.takeRemote),
+                label: note.serverId == null
+                    ? context.l10n.nextcloudUseServerNote
+                    : context.l10n.nextcloudTakeRemote,
+                onPressed: displayedRemote.readonly && note.serverId == null
+                    ? null
+                    : () => Navigator.pop(
+                        context,
+                        note.serverId == null
+                            ? NoteConflictResolution.useServerNote
+                            : NoteConflictResolution.takeRemote,
+                      ),
               ),
             if (deletedRemotely)
               BusyMarkDialogButton(
@@ -605,7 +617,7 @@ Future<void> showNextcloudConflict(
               DropdownButton<int>(
                 isExpanded: true,
                 value: creationCandidateServerId,
-                hint: Text(context.l10n.nextcloudTakeRemote),
+                hint: Text(context.l10n.nextcloudSelectCandidate),
                 items: [
                   for (final candidate in creationCandidates)
                     DropdownMenuItem(
@@ -619,6 +631,22 @@ Future<void> showNextcloudConflict(
                   creationCandidateServerId = value;
                 }),
               ),
+            if (note.serverId == null && displayedRemote != null) ...[
+              Text(
+                '#${displayedRemote.id} · ${displayedRemote.title} · ${displayedRemote.category}',
+              ),
+              Text(
+                DateTime.fromMillisecondsSinceEpoch(
+                  displayedRemote.modified * 1000,
+                ).toLocal().toString(),
+              ),
+              Text(
+                note.creationAttempt?.matches(displayedRemote) == true
+                    ? context.l10n.nextcloudExactCandidate
+                    : context.l10n.nextcloudPossibleCandidate,
+              ),
+              Text(context.l10n.nextcloudUseServerNoteExplanation),
+            ],
             if (note.serverId != null && !deletedRemotely)
               _UncertainAttachments(note: note),
             SizedBox(
@@ -697,6 +725,38 @@ Future<void> showNextcloudConflict(
     );
     if (confirmed != true) return;
   }
+  if (note.serverId == null && resolution == NoteConflictResolution.saveAsNew) {
+    if (!context.mounted) return;
+    final confirmed = await showBusyMarkModalDialog<bool>(
+      context,
+      builder: (context) => BusyMarkDialogShell(
+        title: context.l10n.nextcloudCreateSeparate,
+        actions: [
+          BusyMarkDialogButton(
+            label: context.l10n.cancel,
+            onPressed: () => Navigator.pop(context, false),
+          ),
+          BusyMarkDialogButton(
+            label: context.l10n.nextcloudCreateSeparate,
+            onPressed: () => Navigator.pop(context, true),
+          ),
+        ],
+        children: [Text(context.l10n.nextcloudCreateSeparateWarning)],
+      ),
+    );
+    if (confirmed != true) return;
+  }
+  final selected = selectedCreationRemote();
+  final review =
+      resolution == NoteConflictResolution.useServerNote && selected != null
+      ? NotesCreationReview(
+          localId: note.localId,
+          accountId: note.accountId,
+          attemptId: note.creationAttempt!.id,
+          revision: note.revision,
+          candidate: selected,
+        )
+      : null;
   if (resolution != null) {
     await ref
         .read(workspaceControllerProvider.notifier)
@@ -709,6 +769,7 @@ Future<void> showNextcloudConflict(
               ? merged
               : null,
           creationCandidateServerId: creationCandidateServerId,
+          creationReview: review,
         );
   }
 }

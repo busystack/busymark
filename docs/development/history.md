@@ -154,6 +154,10 @@ is accepted, so an older checkpoint cannot recreate erased revisions.
 
 ## Verification
 
+Keep manual-probe outputs outside the repository, for example in directories
+created with `mktemp -d`. Use disposable workspaces for probes that edit files,
+and remove their temporary data after inspection.
+
 Run the standard checks with the repository-pinned toolchain:
 
 ```bash
@@ -189,3 +193,24 @@ GDK_BACKEND=x11 build/linux/x64/debug/bundle/busymark \
 Under `xvfb-run`, set `GDK_BACKEND=x11` explicitly so an inherited
 `WAYLAND_DISPLAY` cannot select an unrelated Wayland connection. Clipboard
 behavior under Wayland requires a compositor-driven run with real input focus.
+
+The native selection probe covers pointer/keyboard selection, highlight
+geometry, rich/plain clipboard content, table boundaries, editing, undo and
+restored selection. It copies the maintained fixture before use and exercises
+the production editor and Linux clipboard:
+
+```bash
+selection_output="$(mktemp -d)"
+flutter build linux --debug --no-pub --target tools/wysiwyg_selection_smoke.dart
+GDK_BACKEND=x11 dbus-run-session -- \
+  xvfb-run -a -s '-screen 0 1440x1000x24' \
+  build/linux/x64/debug/bundle/busymark \
+  test/fixtures/wysiwyg/selection_boundaries.md "$selection_output"
+flutter build linux --debug --no-pub --target lib/main.dart
+```
+
+The probe exits nonzero on failed assertions and writes temporary captures and
+JSON reports for inspection. Its optional `--application` mode opens a supplied
+file in the full application and requires the exact synthetic table fixture
+checked by the driver; use an isolated application profile and disposable files
+for that mode.

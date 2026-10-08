@@ -39,18 +39,21 @@ class WysiwygClipboardHtml {
       final content = start >= 0 && end > start
           ? source.substring(start + '<!--StartFragment-->'.length, end)
           : source;
-      final body = html.parse(content).body;
-      if (body == null) return null;
+      // Fragment parsing retains leading text that document parsing consumes
+      // before an inferred <body>. Full clipboard documents are accepted too.
+      final body = html.parseFragment(content);
       final normalizer = _HtmlNormalizer();
       final clean = dom.Element.tag('div')
         ..nodes.addAll(normalizer.nodes(body.nodes, 0, const {}));
       var id = 0;
-      final parsed = const RawHtmlAdapter().parseRawHtmlBlock(
-        clean.outerHtml,
-        () => 'clipboard-html-${id++}',
-      );
+      final parsed = const RawHtmlAdapter(
+        preserveInlineWhitespace: true,
+      ).parseRawHtmlBlock(clean.outerHtml, () => 'clipboard-html-${id++}');
       if (parsed == null || !parsed.safe || parsed.blocks.isEmpty) return null;
       BusyBlock task(BusyBlock block) {
+        block = block.copyWith(
+          inlines: busyMarkWysiwygNormalizeClipboardFormatting(block.inlines),
+        );
         final children = [for (final child in block.children) task(child)];
         if ((block.kind == BusyBlockKind.unorderedListItem ||
                 block.kind == BusyBlockKind.orderedListItem) &&
@@ -77,7 +80,16 @@ class WysiwygClipboardHtml {
             dirty: true,
           );
         }
-        return block.copyWith(children: children, dirty: true);
+        return block.copyWith(
+          children: children,
+          attributes: {
+            ...block.attributes,
+            if (block.plainText.isNotEmpty &&
+                block.plainText.trimRight() != block.plainText)
+              busyMarkPreserveTextWhitespaceAttribute: 'true',
+          },
+          dirty: true,
+        );
       }
 
       return WysiwygClipboardFragment(
@@ -328,6 +340,7 @@ class _HtmlNormalizer {
     'script',
     'style',
     'head',
+    'title',
     'meta',
     'link',
     'iframe',
@@ -347,27 +360,44 @@ class _HtmlNormalizer {
       throw const FormatException('Clipboard HTML nesting limit');
     }
     final out = <dom.Node>[];
-    for (final node in input) {
+    final siblings = input.toList();
+    for (var index = 0; index < siblings.length; index++) {
+      final node = siblings[index];
       if (++count > maxRawHtmlNodes) {
         throw const FormatException('Clipboard HTML node limit');
       }
       if (node is dom.Text) {
-        final content = node.data.trim();
-        if (content.isEmpty || styles.isEmpty) {
-          out.add(dom.Text(node.data));
-          continue;
+        bool structural(dom.Node? sibling) =>
+            sibling is dom.Element &&
+            isSafeBlockHtmlTag(sibling.localName ?? '');
+        final before = index > 0 ? siblings[index - 1] : null;
+        final after = index + 1 < siblings.length ? siblings[index + 1] : null;
+        var data = node.data;
+        final leading = data.substring(0, data.length - data.trimLeft().length);
+        final trailing = data.substring(data.trimRight().length);
+        if ((before == null || structural(before)) &&
+            RegExp(r'[\r\n]').hasMatch(leading)) {
+          data = data.trimLeft();
         }
-        // Markdown emphasis cannot open/close against whitespace. Keep that
-        // whitespace as text outside the formatting, not inside delimiters.
-        final start = node.data.length - node.data.trimLeft().length;
-        final end = node.data.trimRight().length;
-        if (start > 0) out.add(dom.Text(node.data.substring(0, start)));
-        dom.Node text = dom.Text(content);
+        if ((after == null || structural(after)) &&
+            RegExp(r'[\r\n]').hasMatch(trailing)) {
+          data = data.trimRight();
+        }
+        if (data.trim().isEmpty) {
+          // Indentation between blocks is layout. Newlines at a container's
+          // edges are also layout; explicit horizontal inline spaces are text.
+          if (structural(before) ||
+              structural(after) ||
+              ((before == null || after == null) &&
+                  RegExp(r'[\r\n]').hasMatch(node.data))) {
+            continue;
+          }
+        }
+        dom.Node text = dom.Text(data);
         for (final tag in _formattingTags.where(styles.contains)) {
           text = _element(tag, [text]);
         }
         out.add(text);
-        if (end < node.data.length) out.add(dom.Text(node.data.substring(end)));
         continue;
       }
       if (node is! dom.Element) continue;

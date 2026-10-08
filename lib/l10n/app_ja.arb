@@ -1,4 +1,6 @@
 {
+  "closeOtherTabs": "他のタブを閉じる",
+  "@closeOtherTabs": {"description": "Document tab context menu action that closes every other document and comparison tab while retaining this document."},
   "tocTopicFromTemplate": "テンプレートからトピック...",
   "tocSaveAsTemplate": "テンプレートとして保存",
   "tocTemplateDialog": "テンプレートからトピックを作成",
@@ -1672,9 +1674,13 @@
       }
     }
   },
-  "topicIsStartPageRemovalWarning": "このトピックはインスタンスの開始ページとして使用されています。使用箇所を確認し、続行する前に別の開始ページを割り当ててください。",
+  "topicIsHomePageRemovalWarning": "このトピックはこのインスタンスのホームページです。目次から削除する前に、別のホームページを選択してください。",
+  "newHomePage": "新しいホームページ",
+  "chooseHomePage": "ホームページを選択",
+  "noHomePageReplacement": "ホームページを削除する前に、このインスタンスに別の適切なトピックを追加またはリンクしてください。",
+  "topicIsStartPageRemovalWarning": "このトピックはインスタンスのホームページです。ソースファイルを削除する前に、別のホームページを設定してください。",
   "@topicIsStartPageRemovalWarning": {
-    "description": "Warning that blocks deletion of a Writerside start-page topic."
+    "description": "Warning that blocks Safe Delete of a Writerside Home Page."
   },
   "topicUsagesCount": "{count} 件の使用箇所が見つかりました。",
   "@topicUsagesCount": {
@@ -1697,9 +1703,9 @@
   "@topicUsageTocElements": {
     "description": "Usage group label for Writerside TOC elements."
   },
-  "topicUsageStartPages": "開始ページ",
+  "topicUsageStartPages": "ホームページ",
   "@topicUsageStartPages": {
-    "description": "Usage group label for Writerside instance start pages."
+    "description": "Usage group label for Writerside instance Home Pages."
   },
   "topicUsageTopicLinks": "トピックリンク",
   "@topicUsageTopicLinks": {
@@ -2508,9 +2514,9 @@
   "@errorWritersideTocInvalidMove": {
     "description": "Detail shown when a Writerside TOC move would create a cycle."
   },
-  "errorWritersideStartTopicDelete": "開始トピック {topic} は削除できません。先に別の開始ページを選択してください。",
+  "errorWritersideStartTopicDelete": "ホームページ {topic} は削除できません。先に別のホームページを選択してください。",
   "@errorWritersideStartTopicDelete": {
-    "description": "Detail shown when attempting to delete the start topic of a Writerside instance.",
+    "description": "Detail shown when attempting to delete the Home Page of a Writerside instance.",
     "placeholders": {
       "topic": {
         "type": "String"
@@ -4945,5 +4951,12 @@
   "nextcloudAttachmentReference": "サーバー上の添付ファイル参照",
   "nextcloudAddAttachment": "添付ファイルを追加…",
   "nextcloudDeleteAttachmentWarning": "この添付ファイルを削除すると、ノート内のリンクは利用できなくなります。保持されたデータはローカル履歴から復元できます。",
-  "nextcloudChooseConflictingAttributes": "競合する各属性の値を選択してください。"
+  "nextcloudChooseConflictingAttributes": "競合する各属性の値を選択してください。",
+  "nextcloudUseServerNote": "このサーバーノートを使用",
+  "nextcloudUseServerNoteExplanation": "この下書きを選択したサーバーノートにリンクし、保持したローカル変更を同期します。リクエストの一致だけでは作成者を確認できません。",
+  "nextcloudExactCandidate": "リクエストと完全一致。識別情報は未確認です。",
+  "nextcloudPossibleCandidate": "正規化されたリクエストと一致する可能性あり。識別情報は未確認です。",
+  "nextcloudSelectCandidate": "確認するサーバーノートを選択",
+  "nextcloudCreateSeparate": "別のノートを作成",
+  "nextcloudCreateSeparateWarning": "最初のリクエストですでにサーバーノートが作成された可能性があります。保持したローカル作業から別のノートを作成します。重複の疑いがあるノートは削除されません。"
 }

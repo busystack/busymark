@@ -11,6 +11,9 @@ class AppLocalizationsVi extends AppLocalizations {
   AppLocalizationsVi([String locale = 'vi']) : super(locale);
 
   @override
+  String get closeOtherTabs => 'Đóng các thẻ khác';
+
+  @override
   String get tocTopicFromTemplate => 'Chủ đề từ mẫu...';
 
   @override
@@ -1525,8 +1528,22 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
+  String get topicIsHomePageRemovalWarning =>
+      'Chủ đề này là trang chủ của thực thể này. Chọn trang chủ khác trước khi xóa chủ đề khỏi mục lục.';
+
+  @override
+  String get newHomePage => 'Trang chủ mới';
+
+  @override
+  String get chooseHomePage => 'Chọn trang chủ';
+
+  @override
+  String get noHomePageReplacement =>
+      'Thêm hoặc liên kết một chủ đề hợp lệ khác vào thực thể này trước khi xóa trang chủ của nó.';
+
+  @override
   String get topicIsStartPageRemovalWarning =>
-      'Chủ đề này đang được dùng làm trang bắt đầu của một thực thể. Hãy xem lại cách sử dụng và chỉ định trang bắt đầu khác trước khi tiếp tục.';
+      'Chủ đề này là trang chủ của một thực thể. Chỉ định trang chủ khác trước khi xóa tệp nguồn của chủ đề.';
 
   @override
   String topicUsagesCount(int count) {
@@ -1545,7 +1562,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get topicUsageTocElements => 'Phần tử mục lục';
 
   @override
-  String get topicUsageStartPages => 'Trang bắt đầu';
+  String get topicUsageStartPages => 'Các trang chủ';
 
   @override
   String get topicUsageTopicLinks => 'Liên kết chủ đề';
@@ -2165,7 +2182,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String errorWritersideStartTopicDelete(String topic) {
-    return 'Không thể xóa chủ đề bắt đầu $topic. Hãy chọn một trang bắt đầu khác trước.';
+    return 'Không thể xóa trang chủ $topic. Hãy chọn trang chủ khác trước.';
   }
 
   @override
@@ -4738,4 +4755,29 @@ class AppLocalizationsVi extends AppLocalizations {
   @override
   String get nextcloudChooseConflictingAttributes =>
       'Chọn giá trị cho từng thuộc tính xung đột.';
+
+  @override
+  String get nextcloudUseServerNote => 'Dùng ghi chú trên máy chủ này';
+
+  @override
+  String get nextcloudUseServerNoteExplanation =>
+      'Liên kết bản nháp này với ghi chú đã chọn trên máy chủ, rồi đồng bộ các thay đổi cục bộ được giữ lại. Yêu cầu trùng khớp không xác nhận ai đã tạo ghi chú.';
+
+  @override
+  String get nextcloudExactCandidate =>
+      'Khớp chính xác với yêu cầu; chưa xác nhận danh tính.';
+
+  @override
+  String get nextcloudPossibleCandidate =>
+      'Có thể khớp sau khi chuẩn hóa yêu cầu; chưa xác nhận danh tính.';
+
+  @override
+  String get nextcloudSelectCandidate => 'Chọn ghi chú trên máy chủ để xem xét';
+
+  @override
+  String get nextcloudCreateSeparate => 'Tạo ghi chú riêng';
+
+  @override
+  String get nextcloudCreateSeparateWarning =>
+      'Yêu cầu đầu tiên có thể đã tạo ghi chú trên máy chủ. Thao tác này tạo ghi chú riêng với công việc cục bộ được giữ lại. Không xóa ghi chú nào bị nghi trùng lặp.';
 }

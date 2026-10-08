@@ -4865,10 +4865,11 @@ void main() {
       applicationSupportRoot: p.join(temporary.path, 'support'),
       dictionaryStorageRoot: p.join(temporary.path, 'dictionary-storage'),
       wordStoreReader: (store) async {
+        final snapshot = await store.read();
         if (!store.projectStore && ++personalReads == 3) {
           secondPersonalRefresh.complete();
         }
-        return store.read();
+        return snapshot;
       },
       catalogLoader:
           ({
@@ -4897,7 +4898,9 @@ void main() {
     await entered.future;
     final second = controller.prepareSettings(null);
     await secondPersonalRefresh.future;
-    await Future<void>.delayed(Duration.zero);
+    // The read has completed; drain its continuations so the second prepare
+    // joins the catalog request before releasing that request.
+    await Future<void>(() {});
     expect(loads, 2);
     release.complete();
     await Future.wait([first, second]);

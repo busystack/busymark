@@ -11,6 +11,9 @@ class AppLocalizationsPt extends AppLocalizations {
   AppLocalizationsPt([String locale = 'pt']) : super(locale);
 
   @override
+  String get closeOtherTabs => 'Fechar os outros separadores';
+
+  @override
   String get tocTopicFromTemplate => 'Tópico a partir de modelo...';
 
   @override
@@ -1541,8 +1544,22 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
+  String get topicIsHomePageRemovalWarning =>
+      'Este tópico é a página inicial desta instância. Escolha outra página inicial antes de o remover do índice.';
+
+  @override
+  String get newHomePage => 'Nova página inicial';
+
+  @override
+  String get chooseHomePage => 'Escolher página inicial';
+
+  @override
+  String get noHomePageReplacement =>
+      'Adicione ou associe outro tópico elegível a esta instância antes de remover a sua página inicial.';
+
+  @override
   String get topicIsStartPageRemovalWarning =>
-      'Este tópico é usado como página inicial de uma instância. Reveja os usos dele e atribua outra página inicial antes de continuar.';
+      'Este tópico é a página inicial de uma instância. Defina outra página inicial antes de eliminar o seu ficheiro de origem.';
 
   @override
   String topicUsagesCount(int count) {
@@ -2184,7 +2201,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String errorWritersideStartTopicDelete(String topic) {
-    return 'O tópico inicial $topic não pode ser eliminado. Escolha primeiro outra página inicial.';
+    return 'Não é possível eliminar a página inicial $topic. Escolha primeiro outra página inicial.';
   }
 
   @override
@@ -4808,11 +4825,40 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get nextcloudChooseConflictingAttributes =>
       'Escolha cada atributo em conflito.';
+
+  @override
+  String get nextcloudUseServerNote => 'Usar esta nota do servidor';
+
+  @override
+  String get nextcloudUseServerNoteExplanation =>
+      'Associa este rascunho à nota selecionada no servidor e depois sincroniza as alterações locais preservadas. Um pedido correspondente não confirma quem criou a nota.';
+
+  @override
+  String get nextcloudExactCandidate =>
+      'Correspondência exata com o pedido; identidade não confirmada.';
+
+  @override
+  String get nextcloudPossibleCandidate =>
+      'Possível correspondência após normalização; identidade não confirmada.';
+
+  @override
+  String get nextcloudSelectCandidate =>
+      'Selecionar uma nota do servidor para rever';
+
+  @override
+  String get nextcloudCreateSeparate => 'Criar uma nota separada';
+
+  @override
+  String get nextcloudCreateSeparateWarning =>
+      'O primeiro pedido pode já ter criado uma nota no servidor. Isto cria uma nota separada com o trabalho local preservado. Nenhum possível duplicado será eliminado.';
 }
 
 /// The translations for Portuguese, as used in Brazil (`pt_BR`).
 class AppLocalizationsPtBr extends AppLocalizationsPt {
   AppLocalizationsPtBr() : super('pt_BR');
+
+  @override
+  String get closeOtherTabs => 'Fechar as outras abas';
 
   @override
   String get tocTopicFromTemplate => 'Tópico a partir de modelo...';
@@ -6346,8 +6392,22 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   }
 
   @override
+  String get topicIsHomePageRemovalWarning =>
+      'Este tópico é a página inicial desta instância. Escolha outra página inicial antes de removê-lo do sumário.';
+
+  @override
+  String get newHomePage => 'Nova página inicial';
+
+  @override
+  String get chooseHomePage => 'Escolher página inicial';
+
+  @override
+  String get noHomePageReplacement =>
+      'Adicione ou vincule outro tópico elegível a esta instância antes de remover sua página inicial.';
+
+  @override
   String get topicIsStartPageRemovalWarning =>
-      'Este tópico é usado como página inicial de uma instância. Revise os usos dele e atribua outra página inicial antes de continuar.';
+      'Este tópico é a página inicial de uma instância. Defina outra página inicial antes de excluir seu arquivo de origem.';
 
   @override
   String topicUsagesCount(int count) {
@@ -6989,7 +7049,7 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String errorWritersideStartTopicDelete(String topic) {
-    return 'O tópico inicial $topic não pode ser excluído. Escolha primeiro outra página inicial.';
+    return 'Não é possível excluir a página inicial $topic. Escolha outra página inicial primeiro.';
   }
 
   @override
@@ -9610,4 +9670,30 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   @override
   String get nextcloudChooseConflictingAttributes =>
       'Escolha cada atributo em conflito.';
+
+  @override
+  String get nextcloudUseServerNote => 'Usar esta nota do servidor';
+
+  @override
+  String get nextcloudUseServerNoteExplanation =>
+      'Vincula este rascunho à nota selecionada no servidor e depois sincroniza as alterações locais preservadas. Uma solicitação correspondente não confirma quem criou a nota.';
+
+  @override
+  String get nextcloudExactCandidate =>
+      'Correspondência exata com a solicitação; identidade não confirmada.';
+
+  @override
+  String get nextcloudPossibleCandidate =>
+      'Possível correspondência após normalização; identidade não confirmada.';
+
+  @override
+  String get nextcloudSelectCandidate =>
+      'Selecionar uma nota do servidor para revisar';
+
+  @override
+  String get nextcloudCreateSeparate => 'Criar uma nota separada';
+
+  @override
+  String get nextcloudCreateSeparateWarning =>
+      'A primeira solicitação pode já ter criado uma nota no servidor. Isso cria uma nota separada com o trabalho local preservado. Nenhuma possível duplicata será excluída.';
 }

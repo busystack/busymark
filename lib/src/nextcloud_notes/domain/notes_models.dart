@@ -15,7 +15,13 @@ enum NoteSyncState {
   deletedRemotely,
 }
 
-enum NoteConflictResolution { keepLocal, takeRemote, saveAsNew, merge }
+enum NoteConflictResolution {
+  keepLocal,
+  takeRemote,
+  saveAsNew,
+  merge,
+  useServerNote,
+}
 
 enum NotesFailureCode {
   authentication,
@@ -190,6 +196,7 @@ class NotesCreationAttempt {
     required this.wireBody,
     required Set<int> knownServerIds,
     Set<int> candidateServerIds = const {},
+    this.separateNoteLocalId,
   }) : knownServerIds = Set.unmodifiable(knownServerIds),
        candidateServerIds = Set.unmodifiable(candidateServerIds);
 
@@ -199,6 +206,7 @@ class NotesCreationAttempt {
   final String wireBody;
   final Set<int> knownServerIds;
   final Set<int> candidateServerIds;
+  final String? separateNoteLocalId;
   Map<String, dynamic> get attributes =>
       jsonDecode(wireBody) as Map<String, dynamic>;
 
@@ -226,7 +234,18 @@ class NotesCreationAttempt {
         wireBody: wireBody,
         knownServerIds: knownServerIds,
         candidateServerIds: ids.toSet(),
+        separateNoteLocalId: separateNoteLocalId,
       );
+
+  NotesCreationAttempt withSeparateNote(String localId) => NotesCreationAttempt(
+    id: id,
+    revision: revision,
+    localContent: localContent,
+    wireBody: wireBody,
+    knownServerIds: knownServerIds,
+    candidateServerIds: candidateServerIds,
+    separateNoteLocalId: localId,
+  );
 
   Map<String, Object?> toJson() => {
     'id': id,
@@ -235,10 +254,12 @@ class NotesCreationAttempt {
     'wireBody': wireBody,
     'knownServerIds': knownServerIds.toList(),
     'candidateServerIds': candidateServerIds.toList(),
+    'separateNoteLocalId': separateNoteLocalId,
   };
   factory NotesCreationAttempt.fromJson(Map<String, dynamic> json) =>
       NotesCreationAttempt(
         id: json['id'] as String,
+        separateNoteLocalId: json['separateNoteLocalId'] as String?,
         revision: json['revision'] as int,
         localContent: json['localContent'] as String,
         wireBody: json['wireBody'] as String,
@@ -247,6 +268,22 @@ class NotesCreationAttempt {
             (json['candidateServerIds'] as List?)?.cast<int>().toSet() ??
             const {},
       );
+}
+
+/// The immutable comparison explicitly approved by the user.
+class NotesCreationReview {
+  const NotesCreationReview({
+    required this.localId,
+    required this.accountId,
+    required this.attemptId,
+    required this.revision,
+    required this.candidate,
+  });
+  final String localId;
+  final String accountId;
+  final String attemptId;
+  final int revision;
+  final NoteState candidate;
 }
 
 const _unchanged = Object();

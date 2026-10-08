@@ -1,4 +1,6 @@
 {
+  "closeOtherTabs": "Andere tabbladen sluiten",
+  "@closeOtherTabs": {"description": "Document tab context menu action that closes every other document and comparison tab while retaining this document."},
   "tocTopicFromTemplate": "Onderwerp uit sjabloon...",
   "tocSaveAsTemplate": "Opslaan als sjabloon",
   "tocTemplateDialog": "Onderwerp uit sjabloon maken",
@@ -1672,9 +1674,13 @@
       }
     }
   },
-  "topicIsStartPageRemovalWarning": "Dit onderwerp wordt gebruikt als startpagina van een instantie. Controleer het gebruik ervan en wijs een andere startpagina toe voordat u verdergaat.",
+  "topicIsHomePageRemovalWarning": "Dit onderwerp is de startpagina van deze instantie. Kies een andere startpagina voordat u het uit de inhoudsopgave verwijdert.",
+  "newHomePage": "Nieuwe startpagina",
+  "chooseHomePage": "Startpagina kiezen",
+  "noHomePageReplacement": "Voeg een ander geschikt onderwerp toe aan deze instantie of koppel het voordat u de startpagina verwijdert.",
+  "topicIsStartPageRemovalWarning": "Dit onderwerp is de startpagina van een instantie. Stel een andere startpagina in voordat u het bronbestand verwijdert.",
   "@topicIsStartPageRemovalWarning": {
-    "description": "Warning that blocks deletion of a Writerside start-page topic."
+    "description": "Warning that blocks Safe Delete of a Writerside Home Page."
   },
   "topicUsagesCount": "{count} gebruikslocaties gevonden.",
   "@topicUsagesCount": {
@@ -1697,9 +1703,9 @@
   "@topicUsageTocElements": {
     "description": "Usage group label for Writerside TOC elements."
   },
-  "topicUsageStartPages": "Startpagina's",
+  "topicUsageStartPages": "Startpagina’s",
   "@topicUsageStartPages": {
-    "description": "Usage group label for Writerside instance start pages."
+    "description": "Usage group label for Writerside instance Home Pages."
   },
   "topicUsageTopicLinks": "Onderwerplinks",
   "@topicUsageTopicLinks": {
@@ -2508,9 +2514,9 @@
   "@errorWritersideTocInvalidMove": {
     "description": "Detail shown when a Writerside TOC move would create a cycle."
   },
-  "errorWritersideStartTopicDelete": "Het startonderwerp {topic} kan niet worden verwijderd. Kies eerst een andere startpagina.",
+  "errorWritersideStartTopicDelete": "De startpagina {topic} kan niet worden verwijderd. Kies eerst een andere startpagina.",
   "@errorWritersideStartTopicDelete": {
-    "description": "Detail shown when attempting to delete the start topic of a Writerside instance.",
+    "description": "Detail shown when attempting to delete the Home Page of a Writerside instance.",
     "placeholders": {
       "topic": {
         "type": "String"
@@ -4945,5 +4951,12 @@
   "nextcloudAttachmentReference": "Bijlageverwijzing op de server",
   "nextcloudAddAttachment": "Bijlage toevoegen…",
   "nextcloudDeleteAttachmentWarning": "Als u deze bijlage verwijdert, zijn de links ernaar in de notitie niet meer beschikbaar. Bewaarde gegevens kunnen via de lokale geschiedenis worden hersteld.",
-  "nextcloudChooseConflictingAttributes": "Kies voor elk conflicterend kenmerk een waarde."
+  "nextcloudChooseConflictingAttributes": "Kies voor elk conflicterend kenmerk een waarde.",
+  "nextcloudUseServerNote": "Deze servernotitie gebruiken",
+  "nextcloudUseServerNoteExplanation": "Koppelt dit concept aan de geselecteerde servernotitie en synchroniseert daarna de behouden lokale wijzigingen. Een overeenkomend verzoek bevestigt niet wie de notitie heeft gemaakt.",
+  "nextcloudExactCandidate": "Exacte overeenkomst met het verzoek; identiteit onbevestigd.",
+  "nextcloudPossibleCandidate": "Mogelijke overeenkomst na normalisatie; identiteit onbevestigd.",
+  "nextcloudSelectCandidate": "Selecteer een servernotitie om te bekijken",
+  "nextcloudCreateSeparate": "Een afzonderlijke notitie maken",
+  "nextcloudCreateSeparateWarning": "Het eerste verzoek heeft mogelijk al een servernotitie gemaakt. Dit maakt een afzonderlijke notitie met uw behouden lokale werk. Vermoedelijke duplicaten worden niet verwijderd."
 }

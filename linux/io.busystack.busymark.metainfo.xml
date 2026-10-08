@@ -52,6 +52,7 @@
   <summary xml:lang="tr">Markdown dosyaları ve Writerside uyumlu dokümantasyon projeleri için düzenleyici</summary>
   <description>
     <p>BusyMark is a Linux editor for Markdown files and Writerside-compatible documentation projects.</p>
+    <p>Connect Nextcloud Notes remote workspaces with offline-safe synchronization, categories, favorites, and attachments.</p>
     <p xml:lang="de">BusyMark ist ein Linux-Editor für Markdown-Dateien und Writerside-kompatible Dokumentationsprojekte.</p>
     <p xml:lang="nl">BusyMark is een Linux-editor voor Markdown-bestanden en Writerside-compatibele documentatieprojecten.</p>
     <p xml:lang="et">BusyMark on Linuxi redaktor Markdowni failide ja Writerside’iga ühilduvate dokumentatsiooniprojektide jaoks.</p>
@@ -87,6 +88,7 @@
   <url type="bugtracker">https://github.com/busystack/busymark/issues</url>
   <content_rating type="oars-1.1" />
   <releases>
+    <release version="0.6.1" date="2026-10-07" />
     <release version="0.6.0" date="2026-10-05" />
     <release version="0.5.1" date="2026-09-22" />
     <release version="0.5.0" date="2026-09-16" />

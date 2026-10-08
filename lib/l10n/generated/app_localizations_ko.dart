@@ -11,6 +11,9 @@ class AppLocalizationsKo extends AppLocalizations {
   AppLocalizationsKo([String locale = 'ko']) : super(locale);
 
   @override
+  String get closeOtherTabs => '다른 탭 닫기';
+
+  @override
   String get tocTopicFromTemplate => '템플릿에서 토픽...';
 
   @override
@@ -1480,8 +1483,22 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
+  String get topicIsHomePageRemovalWarning =>
+      '이 토픽은 이 인스턴스의 홈 페이지입니다. 목차에서 제거하기 전에 다른 홈 페이지를 선택하세요.';
+
+  @override
+  String get newHomePage => '새 홈 페이지';
+
+  @override
+  String get chooseHomePage => '홈 페이지 선택';
+
+  @override
+  String get noHomePageReplacement =>
+      '홈 페이지를 제거하기 전에 이 인스턴스에 다른 적합한 토픽을 추가하거나 연결하세요.';
+
+  @override
   String get topicIsStartPageRemovalWarning =>
-      '이 토픽은 인스턴스 시작 페이지로 사용됩니다. 계속하기 전에 사용처를 검토하고 다른 시작 페이지를 지정하세요.';
+      '이 토픽은 인스턴스의 홈 페이지입니다. 소스 파일을 삭제하기 전에 다른 홈 페이지를 지정하세요.';
 
   @override
   String topicUsagesCount(int count) {
@@ -1498,7 +1515,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get topicUsageTocElements => '목차 요소';
 
   @override
-  String get topicUsageStartPages => '시작 페이지';
+  String get topicUsageStartPages => '홈 페이지';
 
   @override
   String get topicUsageTopicLinks => '토픽 링크';
@@ -2096,7 +2113,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String errorWritersideStartTopicDelete(String topic) {
-    return '시작 토픽 $topic을(를) 삭제할 수 없습니다. 먼저 다른 시작 페이지를 선택하세요.';
+    return '홈 페이지 $topic을(를) 삭제할 수 없습니다. 먼저 다른 홈 페이지를 선택하세요.';
   }
 
   @override
@@ -4609,4 +4626,28 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get nextcloudChooseConflictingAttributes => '충돌하는 각 속성의 값을 선택하세요.';
+
+  @override
+  String get nextcloudUseServerNote => '이 서버 노트 사용';
+
+  @override
+  String get nextcloudUseServerNoteExplanation =>
+      '이 초안을 선택한 서버 노트에 연결한 다음 보존된 로컬 변경 사항을 동기화합니다. 요청이 일치해도 누가 노트를 만들었는지는 확인되지 않습니다.';
+
+  @override
+  String get nextcloudExactCandidate => '요청과 정확히 일치합니다. 동일한 노트인지 확인되지 않았습니다.';
+
+  @override
+  String get nextcloudPossibleCandidate =>
+      '정리된 요청과 일치할 수 있습니다. 동일한 노트인지 확인되지 않았습니다.';
+
+  @override
+  String get nextcloudSelectCandidate => '검토할 서버 노트 선택';
+
+  @override
+  String get nextcloudCreateSeparate => '별도 노트 만들기';
+
+  @override
+  String get nextcloudCreateSeparateWarning =>
+      '첫 요청으로 서버 노트가 이미 만들어졌을 수 있습니다. 보존된 로컬 작업으로 별도 노트를 만듭니다. 중복으로 의심되는 노트는 삭제하지 않습니다.';
 }

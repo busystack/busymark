@@ -1,4 +1,6 @@
 {
+  "closeOtherTabs": "بستن زبانه‌های دیگر",
+  "@closeOtherTabs": {"description": "Document tab context menu action that closes every other document and comparison tab while retaining this document."},
   "tocTopicFromTemplate": "موضوع از الگو...",
   "tocSaveAsTemplate": "ذخیره به‌عنوان الگو",
   "tocTemplateDialog": "ایجاد موضوع از الگو",
@@ -1885,9 +1887,9 @@
   "@errorWritersideTocInvalidMove": {
     "description": "Detail shown when a Writerside TOC move would create a cycle."
   },
-  "errorWritersideStartTopicDelete": "موضوع شروع ⁨{topic}⁩ را نمی‌توان حذف کرد. ابتدا صفحهٔ شروع دیگری را انتخاب کنید.",
+  "errorWritersideStartTopicDelete": "صفحهٔ اصلی {topic} قابل حذف نیست. ابتدا صفحهٔ اصلی دیگری انتخاب کنید.",
   "@errorWritersideStartTopicDelete": {
-    "description": "Detail shown when attempting to delete the start topic of a Writerside instance.",
+    "description": "Detail shown when attempting to delete the Home Page of a Writerside instance.",
     "placeholders": {
       "topic": {
         "type": "String"
@@ -2709,7 +2711,11 @@
       }
     }
   },
-  "topicIsStartPageRemovalWarning": "این موضوع به‌عنوان صفحهٔ آغاز یک نمونه استفاده می‌شود. موارد استفاده را مرور و پیش از ادامه صفحهٔ آغاز دیگری تعیین کنید.",
+  "topicIsHomePageRemovalWarning": "این موضوع صفحهٔ اصلی این نمونه است. پیش از حذف آن از فهرست مطالب، صفحهٔ اصلی دیگری انتخاب کنید.",
+  "newHomePage": "صفحهٔ اصلی جدید",
+  "chooseHomePage": "انتخاب صفحهٔ اصلی",
+  "noHomePageReplacement": "پیش از حذف صفحهٔ اصلی، موضوع مناسب دیگری به این نمونه اضافه یا پیوند دهید.",
+  "topicIsStartPageRemovalWarning": "این موضوع صفحهٔ اصلی یک نمونه است. پیش از حذف فایل منبع آن، صفحهٔ اصلی دیگری تعیین کنید.",
   "@topicIsStartPageRemovalWarning": {
     "description": "Warning shown when the topic is used as an instance start page."
   },
@@ -2735,7 +2741,7 @@
   "@topicUsageTocElements": {
     "description": "Usage group label for TOC elements."
   },
-  "topicUsageStartPages": "صفحه‌های آغاز",
+  "topicUsageStartPages": "صفحه‌های اصلی",
   "@topicUsageStartPages": {
     "description": "Usage group label for instance start pages."
   },
@@ -3448,5 +3454,12 @@
   "nextcloudAttachmentReference": "مرجع پیوست روی سرور",
   "nextcloudAddAttachment": "افزودن پیوست…",
   "nextcloudDeleteAttachmentWarning": "با حذف این پیوست، پیوندهای آن در یادداشت دیگر در دسترس نخواهند بود. داده‌های نگه‌داری‌شده را می‌توان از تاریخچهٔ محلی بازیابی کرد.",
-  "nextcloudChooseConflictingAttributes": "مقدار هر ویژگی متعارض را انتخاب کنید."
+  "nextcloudChooseConflictingAttributes": "مقدار هر ویژگی متعارض را انتخاب کنید.",
+  "nextcloudUseServerNote": "استفاده از این یادداشت سرور",
+  "nextcloudUseServerNoteExplanation": "این پیش‌نویس را به یادداشت انتخاب‌شدهٔ سرور پیوند می‌دهد و سپس تغییرات محلی حفظ‌شده را همگام می‌کند. تطابق درخواست مشخص نمی‌کند چه کسی یادداشت را ایجاد کرده است.",
+  "nextcloudExactCandidate": "تطابق دقیق درخواست؛ هویت تأیید نشده است.",
+  "nextcloudPossibleCandidate": "تطابق احتمالی درخواست پاک‌سازی‌شده؛ هویت تأیید نشده است.",
+  "nextcloudSelectCandidate": "یک یادداشت سرور را برای بررسی انتخاب کنید",
+  "nextcloudCreateSeparate": "ایجاد یک یادداشت جداگانه",
+  "nextcloudCreateSeparateWarning": "ممکن است درخواست نخست قبلاً یک یادداشت سرور ایجاد کرده باشد. این کار یک یادداشت جداگانه با کار محلی حفظ‌شدهٔ شما ایجاد می‌کند. هیچ یادداشت مشکوک به تکراری بودن حذف نمی‌شود."
 }

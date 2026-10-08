@@ -522,6 +522,7 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     String text, {
     Iterable<BusyInlineKind> activeInlineKinds = const [],
     bool preserveTextWhitespace = false,
+    bool normalizePastedFormatting = false,
   }) {
     _replaceBlock(
       blockId,
@@ -530,6 +531,7 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
         text,
         activeInlineKinds: activeInlineKinds,
         preserveTextWhitespace: preserveTextWhitespace,
+        normalizePastedFormatting: normalizePastedFormatting,
       ),
     );
   }
@@ -2159,13 +2161,19 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
               clipboardBlock.inlines,
               _inlineContextForReplacement(block.inlines, start, end),
             );
-      final mergedInlines = _refreshBareUrlLinks(
-        _mergeAdjacentInlineStyles([
-          ...partition.before,
-          ...insertedInlines,
-          ...partition.after,
-        ]),
-      );
+      var mergedInlines = _mergeAdjacentInlineStyles([
+        ...partition.before,
+        ...insertedInlines,
+        ...partition.after,
+      ]);
+      if (!ownsDestinationStructure) {
+        mergedInlines = _normalizePastedFormatting(
+          mergedInlines,
+          start,
+          start + inserted.text.length,
+        );
+      }
+      mergedInlines = _refreshBareUrlLinks(mergedInlines);
       if (ownsDestinationStructure) {
         final structural = _styledBlockToBusyBlock(inserted, rootId: block.id);
         final retainsDescendants = _isBlockContentContainer(structural.kind);
@@ -2188,7 +2196,12 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
             // select its descendants. Keep the destination structure and only
             // replace its inline content.
             kind: block.kind,
-            attributes: block.attributes,
+            attributes: _attributesForText(
+              block.attributes,
+              block.kind,
+              beforeText + inserted.text + afterText,
+              preserveTextWhitespace: true,
+            ),
             inlines: mergedInlines,
             preserveRaw: false,
             dirty: true,
@@ -2987,6 +3000,17 @@ BusyBlock busyMarkWysiwygClipboardBlock(BusyWysiwygStyledBlock styled) {
       );
 }
 
+/// HTML decoding uses the same run boundaries as insertion, after all inline
+/// wrappers are available. Trimming individual HTML text leaves would turn
+/// internal spaces in nested formatting into unformatted boundary spaces.
+List<BusyInline> busyMarkWysiwygNormalizeClipboardFormatting(
+  List<BusyInline> inlines,
+) => _normalizePastedFormatting(
+  _mergeAdjacentInlineStyles(inlines),
+  0,
+  inlines.fold(0, (length, inline) => length + inline.plainText.length),
+);
+
 List<BusyInline> busyMarkWysiwygClipboardInlineSlice(
   List<BusyInline> inlines,
   int start,
@@ -3409,6 +3433,11 @@ List<BusyInline> _applyInlineReplacementContext(
         busyMarkSameInlineSemantics(wrapper, result.single)) {
       continue;
     }
+    if (_isMarkdownEmphasis(wrapper.kind)) {
+      // The inherited wrapper already supplies this style, including through
+      // differently styled children. Do not nest an incoming copy inside it.
+      result = _withoutInlineContext(result, wrapper);
+    }
     result = [
       wrapper.copyWith(
         text: result.map((inline) => inline.plainText).join(),
@@ -3418,6 +3447,124 @@ List<BusyInline> _applyInlineReplacementContext(
   }
   return result;
 }
+
+List<BusyInline> _withoutInlineContext(
+  List<BusyInline> inlines,
+  BusyInline wrapper,
+) => [
+  for (final inline in inlines)
+    if (inline.children.isEmpty)
+      inline
+    else if (busyMarkSameInlineSemantics(inline, wrapper))
+      ..._withoutInlineContext(inline.children, wrapper)
+    else
+      inline.copyWith(
+        children: _withoutInlineContext(inline.children, wrapper),
+      ),
+];
+
+bool _isMarkdownEmphasis(BusyInlineKind kind) =>
+    kind == BusyInlineKind.strong || kind == BusyInlineKind.emphasis;
+
+// Normalize only runs touched by paste, after merging the surviving and
+// inserted content. Whitespace between surviving formatted characters stays
+// inside the run; boundary whitespace remains text outside its delimiters.
+List<BusyInline> _normalizePastedFormatting(
+  List<BusyInline> inlines,
+  int start,
+  int end,
+) {
+  final text = inlines.map((inline) => inline.plainText).join();
+  final ranges = busyInlineStyleRanges(inlines);
+  final runs =
+      <({BusyInlineKind kind, int start, int end, int first, int last})>[];
+  for (final kind in [BusyInlineKind.strong, BusyInlineKind.emphasis]) {
+    final styled = ranges.where((range) => range.kind == kind).toList();
+    for (var index = 0; index < styled.length; index++) {
+      final runStart = styled[index].start;
+      var runEnd = styled[index].end;
+      // A single visual run can cross link or other wrapper boundaries.
+      while (index + 1 < styled.length && styled[index + 1].start <= runEnd) {
+        index++;
+        if (styled[index].end > runEnd) runEnd = styled[index].end;
+      }
+      if (runStart >= end || runEnd <= start) continue;
+      var first = runStart;
+      var last = runEnd;
+      while (first < last && _formattingWhitespace.hasMatch(text[first])) {
+        first++;
+      }
+      while (last > first && _formattingWhitespace.hasMatch(text[last - 1])) {
+        last--;
+      }
+      runs.add((
+        kind: kind,
+        start: runStart,
+        end: runEnd,
+        first: first,
+        last: last,
+      ));
+    }
+  }
+
+  List<BusyInline> normalize(List<BusyInline> values, int offset) {
+    final result = <BusyInline>[];
+    for (final inline in values) {
+      final inlineStart = offset;
+      final length = inline.plainText.length;
+      offset += length;
+      if (inline.children.isEmpty) {
+        result.add(inline);
+        continue;
+      }
+      final children = normalize(inline.children, inlineStart);
+      final run = runs
+          .where(
+            (run) =>
+                run.kind == inline.kind &&
+                run.start <= inlineStart &&
+                run.end >= offset,
+          )
+          .firstOrNull;
+      final first = run == null
+          ? 0
+          : (run.first - inlineStart).clamp(0, length);
+      final last = run == null
+          ? length
+          : (run.last - inlineStart).clamp(first, length);
+      if (first == 0 && last == length) {
+        result.add(inline.copyWith(children: children));
+        continue;
+      }
+      final leading = _partitionInlinesForReplacement(
+        children,
+        first,
+        first,
+        refreshUrls: false,
+      );
+      final trailing = _partitionInlinesForReplacement(
+        leading.after,
+        last - first,
+        last - first,
+        refreshUrls: false,
+      );
+      result.addAll([
+        ...leading.before,
+        if (last > first)
+          inline.copyWith(
+            text: inline.plainText.substring(first, last),
+            children: trailing.before,
+          ),
+        ...trailing.after,
+      ]);
+    }
+    return _mergeAdjacentInlineStyles(result);
+  }
+
+  return normalize(inlines, 0);
+}
+
+final _formattingWhitespace = RegExp(r'\s', unicode: true);
 
 bool _containsInlineKind(List<BusyInline> inlines, BusyInlineKind kind) {
   for (final inline in inlines) {
@@ -3973,6 +4120,7 @@ BusyBlock _blockWithEditedText(
   String nextText, {
   Iterable<BusyInlineKind> activeInlineKinds = const [],
   bool preserveTextWhitespace = false,
+  bool normalizePastedFormatting = false,
 }) {
   final oldText = block.plainText;
   final oldRanges = busyInlineStyleRanges(block.inlines);
@@ -3992,13 +4140,23 @@ BusyBlock _blockWithEditedText(
     nextText,
     nextRanges,
   );
+  var inlines = _restoreSemanticInlineAnchors(
+    originalInlines: block.inlines,
+    oldText: oldText,
+    newText: nextText,
+    rebuiltInlines: rebuiltInlines,
+  );
+  if (normalizePastedFormatting) {
+    final prefix = _commonPrefixLength(oldText, nextText);
+    final suffix = _commonSuffixLength(oldText, nextText, prefix);
+    inlines = _normalizePastedFormatting(
+      inlines,
+      prefix,
+      nextText.length - suffix,
+    );
+  }
   return block.copyWith(
-    inlines: _restoreSemanticInlineAnchors(
-      originalInlines: block.inlines,
-      oldText: oldText,
-      newText: nextText,
-      rebuiltInlines: rebuiltInlines,
-    ),
+    inlines: inlines,
     attributes: _attributesForText(
       block.attributes,
       block.kind,
@@ -4652,12 +4810,51 @@ List<BusyInline> _inlinesFromStyleRanges(
 
 List<BusyInline> _mergeAdjacentInlineStyles(List<BusyInline> inlines) {
   final merged = <BusyInline>[];
-  for (final sourceInline in inlines) {
-    final inline = sourceInline.children.isEmpty
+  BusyInline? formatting(BusyInline? inline) {
+    if (inline?.kind == BusyInlineKind.link && inline!.children.length == 1) {
+      inline = inline.children.single;
+    }
+    return inline?.kind == BusyInlineKind.strong ||
+            inline?.kind == BusyInlineKind.emphasis
+        ? inline
+        : null;
+  }
+
+  for (var index = 0; index < inlines.length; index++) {
+    final sourceInline = inlines[index];
+    var inline = sourceInline.children.isEmpty
         ? sourceInline
         : sourceInline.copyWith(
             children: _mergeAdjacentInlineStyles(sourceInline.children),
           );
+    if (inline.kind == BusyInlineKind.link) {
+      final before = formatting(merged.lastOrNull);
+      final after = formatting(
+        index + 1 < inlines.length ? inlines[index + 1] : null,
+      );
+      var children = inline.children;
+      while (children.length == 1 &&
+          _isMarkdownEmphasis(children.single.kind)) {
+        final wrapper = children.single;
+        if ((before == null || !_canMergeInlineStyles(before, wrapper)) &&
+            (after == null || !_canMergeInlineStyles(wrapper, after))) {
+          children = wrapper.children;
+          continue;
+        }
+        // A fully styled label belongs to the adjoining visual run. Lift its
+        // wrapper so merging can enclose the intact link in one delimiter pair,
+        // including whitespace internal to that run (e.g. "hello [world]").
+        inline = wrapper.copyWith(
+          text: inline.plainText,
+          children: [
+            inline.copyWith(
+              children: _withoutInlineContext(inline.children, wrapper),
+            ),
+          ],
+        );
+        break;
+      }
+    }
     if (merged.isEmpty || !_canMergeInlineStyles(merged.last, inline)) {
       merged.add(inline);
       continue;

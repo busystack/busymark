@@ -15,6 +15,7 @@ import 'package:busymark/src/workspace/session_persistence.dart';
 import 'package:busymark/src/workspace/text_format_metadata.dart';
 import 'package:busymark/src/workspace/workspace_controller.dart';
 import 'package:busymark/src/workspace/workspace_file_monitor.dart';
+import 'package:busymark/src/workspace/workspace_message.dart';
 import 'package:busymark/src/workspace/workspace_model.dart';
 import 'package:busymark/src/workspace/workspace_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -3331,6 +3332,169 @@ void main() {
     },
   );
 
+  for (final existingDestination in [false, true]) {
+    test('pending unrelated remap permits workspace Save As '
+        '(existing=$existingDestination)', () async {
+      final source = p.join(root.path, 'A.md');
+      final moved = p.join(root.path, 'B.md');
+      final destination = p.join(root.path, 'C.md');
+      const sourceText = 'History belonging only to A/B\n';
+      const destinationText = 'Existing history belonging only to C\n';
+      const newText = 'Distinctive newly created C contents\n';
+      await File(source).writeAsString(sourceText);
+      final historyRoot = Directory(p.join(root.path, 'history'));
+      FileLocalHistoryStore freshStore() =>
+          FileLocalHistoryStore(rootDirectory: () async => historyRoot);
+      final diskStore = freshStore();
+      final existing = existingDestination
+          ? await _capture(diskStore, destination, destinationText)
+          : null;
+      if (existingDestination) {
+        await File(destination).writeAsString(destinationText);
+      }
+      final store = _ControllableHistoryStore(diskStore);
+      final sessions = MemoryDocumentSessionStore();
+      final harness = await _harness(
+        store,
+        sessionStore: sessions,
+        recoveryStore: MemoryDocumentRecoveryStore(),
+        fileMonitor: _ControlledFileMonitor(),
+        timerFactory: (delay, callback) => _FakeTimer(delay, callback),
+      );
+      final history = harness.container.read(
+        localHistoryControllerProvider.notifier,
+      );
+      await harness.controller.openPath(source);
+      expect(await history.flushBuffer(harness.state.activeBuffer!), isTrue);
+      final sourceId = history.documentIdForBuffer(
+        harness.state.activeBuffer!.id,
+      )!;
+      store.remapsAvailable = false;
+      expect(
+        await harness.controller.renameWorkspaceEntity(source, 'B.md'),
+        isTrue,
+      );
+      expect(await File(source).exists(), isFalse);
+      expect(await File(moved).readAsString(), sourceText);
+      var pending = history.pendingPathReconciliations.single;
+      expect(pending.sourcePath, source);
+      expect(pending.destinationPath, moved);
+      expect(pending.documentIds, [sourceId]);
+      expect(pending.phase, LocalHistoryPathReconciliationPhase.committed);
+
+      expect(await harness.controller.createMarkdownWorkspace(), isTrue);
+      harness.controller.updateActiveText(newText);
+      final newBufferId = harness.state.activeBuffer!.id;
+      expect(await history.flushBuffer(harness.state.activeBuffer!), isTrue);
+      final untitledId = history.documentIdForBuffer(newBufferId)!;
+      expect(untitledId, isNot(sourceId));
+      // Closing A transfers its retained work to a detached owner.
+      pending = history.pendingPathReconciliations.single;
+      expect(
+        await harness.controller.saveActiveAs(
+          destination,
+          overwriteExisting: existingDestination,
+        ),
+        isTrue,
+      );
+      expect(await File(destination).readAsString(), newText);
+      expect(harness.state.activeBuffer!.filePath, destination);
+      expect(harness.state.activeBuffer!.isUntitled, isFalse);
+      expect(harness.state.activeBuffer!.isDirty, isFalse);
+      expect(
+        harness.state.message?.code,
+        isNot(WorkspaceMessageCode.saveFailed),
+      );
+      final destinationId = history.documentIdForBuffer(newBufferId)!;
+      expect(destinationId, existing?.document.id ?? untitledId);
+      expect(destinationId, isNot(sourceId));
+      if (existingDestination) expect(destinationId, isNot(untitledId));
+      expect(history.warningForBuffer(newBufferId), isNull);
+      expect(
+        history.pendingPathReconciliations.single.toJson(),
+        pending.toJson(),
+      );
+      await harness.controller.flushPersistence();
+      expect(
+        sessions.value!.pendingLocalHistoryReconciliations.single.toJson(),
+        pending.toJson(),
+      );
+
+      final beforeRecoveryStore = freshStore();
+      final beforeRecovery = await beforeRecoveryStore.load();
+      expect(
+        beforeRecovery.documents
+            .singleWhere((d) => d.id == sourceId)
+            .currentPath,
+        source,
+      );
+      expect(
+        beforeRecovery.documents
+            .singleWhere((d) => d.id == destinationId)
+            .currentPath,
+        destination,
+      );
+      final destinationRevisions = beforeRecovery.revisionsFor(destinationId);
+      expect(
+        await _revisionSources(beforeRecoveryStore, destinationRevisions),
+        existingDestination
+            ? containsAll([destinationText, newText])
+            : everyElement(newText),
+      );
+      expect(destinationRevisions, isNotEmpty);
+      expect(
+        await _revisionSources(
+          beforeRecoveryStore,
+          beforeRecovery.revisionsFor(sourceId),
+        ),
+        [sourceText],
+      );
+      if (existingDestination) {
+        expect(
+          beforeRecovery.documents
+              .singleWhere((d) => d.id == untitledId)
+              .untitled,
+          isTrue,
+        );
+        expect(
+          await _revisionSources(
+            beforeRecoveryStore,
+            beforeRecovery.revisionsFor(untitledId),
+          ),
+          [newText],
+        );
+      }
+
+      store.remapsAvailable = true;
+      expect(await history.flushAll(harness.state.documentBuffers), isTrue);
+      expect(history.pendingPathReconciliations, isEmpty);
+      final afterRecoveryStore = freshStore();
+      final afterRecovery = await afterRecoveryStore.load();
+      expect(
+        afterRecovery.documents
+            .singleWhere((d) => d.id == sourceId)
+            .currentPath,
+        moved,
+      );
+      expect(
+        afterRecovery.documents
+            .singleWhere((d) => d.id == destinationId)
+            .toJson(),
+        beforeRecovery.documents
+            .singleWhere((d) => d.id == destinationId)
+            .toJson(),
+      );
+      expect(
+        afterRecovery.revisionsFor(destinationId).map((r) => r.toJson()),
+        destinationRevisions.map((r) => r.toJson()),
+      );
+      expect(history.documentIdForBuffer(newBufferId), destinationId);
+      expect(harness.state.activeBuffer!.filePath, destination);
+      expect(await File(destination).readAsString(), newText);
+      expect(history.warningForBuffer(newBufferId), isNull);
+    });
+  }
+
   test('committed move retries a failed history path reconciliation', () async {
     final sourcePath = p.join(root.path, 'remap-a.md');
     final destinationPath = p.join(root.path, 'remap-b.md');
@@ -4173,6 +4337,8 @@ void main() {
       );
       final owner = await _harness(
         store,
+        // Keep this staged remap unreconciled while testing live-owner recovery.
+        fileMonitor: _ControlledFileMonitor(),
         sessionStore: sessions,
         recoveryStore: ownerRecovery,
       );
@@ -4200,6 +4366,7 @@ void main() {
         sessions.value?.pendingLocalHistoryReconciliations.single.phase,
         LocalHistoryPathReconciliationPhase.committed,
       );
+      expect(owner.state.activeBuffer!.filePath, source);
 
       final observerRecovery = _ExternallyOwnedJsonRecoveryStore(
         filePathOverride: recoveryFile,

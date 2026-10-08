@@ -139,6 +139,12 @@ abstract class AppLocalizations {
     Locale('zh', 'CN'),
   ];
 
+  /// Document tab context menu action that closes every other document and comparison tab while retaining this document.
+  ///
+  /// In en, this message translates to:
+  /// **'Close other tabs'**
+  String get closeOtherTabs;
+
   /// Writerside template dialog or user-template storage feedback.
   ///
   /// In en, this message translates to:
@@ -2869,10 +2875,34 @@ abstract class AppLocalizations {
   /// **'{count, plural, =1{1 child topic will move up one level.} other{{count} child topics will move up one level.}}'**
   String childTopicsPromoted(int count);
 
-  /// Warning that blocks deletion of a Writerside start-page topic.
+  /// Home Page replacement in the Remove TOC Element dialog.
   ///
   /// In en, this message translates to:
-  /// **'This topic is used as an instance start page. Review its usages and assign another start page before continuing.'**
+  /// **'This topic is the Home Page for this instance. Choose another Home Page before removing it from the TOC.'**
+  String get topicIsHomePageRemovalWarning;
+
+  /// Home Page replacement in the Remove TOC Element dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'New Home Page'**
+  String get newHomePage;
+
+  /// Home Page replacement in the Remove TOC Element dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a Home Page'**
+  String get chooseHomePage;
+
+  /// Home Page replacement in the Remove TOC Element dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Add or link another eligible topic to this instance before removing its Home Page.'**
+  String get noHomePageReplacement;
+
+  /// Warning that blocks Safe Delete of a Writerside Home Page.
+  ///
+  /// In en, this message translates to:
+  /// **'This topic is a Home Page for an instance. Assign another Home Page before deleting its source file.'**
   String get topicIsStartPageRemovalWarning;
 
   /// Sentence reporting the number of Writerside topic usages in the removal dialog.
@@ -2899,10 +2929,10 @@ abstract class AppLocalizations {
   /// **'TOC elements'**
   String get topicUsageTocElements;
 
-  /// Usage group label for Writerside instance start pages.
+  /// Usage group label for Writerside instance Home Pages.
   ///
   /// In en, this message translates to:
-  /// **'Start pages'**
+  /// **'Home Pages'**
   String get topicUsageStartPages;
 
   /// Usage group label for links to a Writerside topic.
@@ -3853,10 +3883,10 @@ abstract class AppLocalizations {
   /// **'A TOC entry cannot be moved into itself or one of its children.'**
   String get errorWritersideTocInvalidMove;
 
-  /// Detail shown when attempting to delete the start topic of a Writerside instance.
+  /// Detail shown when attempting to delete the Home Page of a Writerside instance.
   ///
   /// In en, this message translates to:
-  /// **'The start topic {topic} cannot be deleted. Choose another start page first.'**
+  /// **'The Home Page {topic} cannot be deleted. Choose another Home Page first.'**
   String errorWritersideStartTopicDelete(String topic);
 
   /// Error shown when generic file deletion is attempted for a Writerside topic.
@@ -8045,6 +8075,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Choose each conflicting attribute.'**
   String get nextcloudChooseConflictingAttributes;
+
+  /// No description provided for @nextcloudUseServerNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Use this server note'**
+  String get nextcloudUseServerNote;
+
+  /// No description provided for @nextcloudUseServerNoteExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Links this draft to the selected server note, then synchronizes retained local changes. A matching request does not confirm who created the note.'**
+  String get nextcloudUseServerNoteExplanation;
+
+  /// No description provided for @nextcloudExactCandidate.
+  ///
+  /// In en, this message translates to:
+  /// **'Exact request match; identity is unconfirmed.'**
+  String get nextcloudExactCandidate;
+
+  /// No description provided for @nextcloudPossibleCandidate.
+  ///
+  /// In en, this message translates to:
+  /// **'Possible sanitized request match; identity is unconfirmed.'**
+  String get nextcloudPossibleCandidate;
+
+  /// No description provided for @nextcloudSelectCandidate.
+  ///
+  /// In en, this message translates to:
+  /// **'Select a server note to review'**
+  String get nextcloudSelectCandidate;
+
+  /// No description provided for @nextcloudCreateSeparate.
+  ///
+  /// In en, this message translates to:
+  /// **'Create a separate note'**
+  String get nextcloudCreateSeparate;
+
+  /// No description provided for @nextcloudCreateSeparateWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'The first request may already have created a server note. This creates a separate note with your retained local work. No suspected duplicate will be deleted.'**
+  String get nextcloudCreateSeparateWarning;
 }
 
 class _AppLocalizationsDelegate

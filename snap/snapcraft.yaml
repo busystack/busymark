@@ -1,6 +1,6 @@
 name: busymark
 title: BusyMark
-version: "0.6.0"
+version: "0.6.1"
 summary: Markdown and Writerside documentation editor
 # Snap Store listing translations are managed outside this Flutter package.
 # Update store metadata when approved translated listing text is supplied.
@@ -8,6 +8,8 @@ description: |
   BusyMark is a Linux desktop editor for Markdown files and Writerside-compatible documentation projects.
 
   Open individual Markdown files, documentation folders, and Writerside-style project structures. Edit local files, preview Markdown, navigate project files, inspect document outlines, and save changes in a native-feeling Linux desktop workspace.
+
+  Connect Nextcloud Notes remote workspaces with offline-safe synchronization, categories, favorites, and attachments.
 
 license: Apache-2.0
 base: core24

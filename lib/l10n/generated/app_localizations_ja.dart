@@ -11,6 +11,9 @@ class AppLocalizationsJa extends AppLocalizations {
   AppLocalizationsJa([String locale = 'ja']) : super(locale);
 
   @override
+  String get closeOtherTabs => '他のタブを閉じる';
+
+  @override
   String get tocTopicFromTemplate => 'テンプレートからトピック...';
 
   @override
@@ -1483,8 +1486,22 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
+  String get topicIsHomePageRemovalWarning =>
+      'このトピックはこのインスタンスのホームページです。目次から削除する前に、別のホームページを選択してください。';
+
+  @override
+  String get newHomePage => '新しいホームページ';
+
+  @override
+  String get chooseHomePage => 'ホームページを選択';
+
+  @override
+  String get noHomePageReplacement =>
+      'ホームページを削除する前に、このインスタンスに別の適切なトピックを追加またはリンクしてください。';
+
+  @override
   String get topicIsStartPageRemovalWarning =>
-      'このトピックはインスタンスの開始ページとして使用されています。使用箇所を確認し、続行する前に別の開始ページを割り当ててください。';
+      'このトピックはインスタンスのホームページです。ソースファイルを削除する前に、別のホームページを設定してください。';
 
   @override
   String topicUsagesCount(int count) {
@@ -1501,7 +1518,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get topicUsageTocElements => '目次要素';
 
   @override
-  String get topicUsageStartPages => '開始ページ';
+  String get topicUsageStartPages => 'ホームページ';
 
   @override
   String get topicUsageTopicLinks => 'トピックリンク';
@@ -2100,7 +2117,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String errorWritersideStartTopicDelete(String topic) {
-    return '開始トピック $topic は削除できません。先に別の開始ページを選択してください。';
+    return 'ホームページ $topic は削除できません。先に別のホームページを選択してください。';
   }
 
   @override
@@ -4615,4 +4632,27 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get nextcloudChooseConflictingAttributes => '競合する各属性の値を選択してください。';
+
+  @override
+  String get nextcloudUseServerNote => 'このサーバーノートを使用';
+
+  @override
+  String get nextcloudUseServerNoteExplanation =>
+      'この下書きを選択したサーバーノートにリンクし、保持したローカル変更を同期します。リクエストの一致だけでは作成者を確認できません。';
+
+  @override
+  String get nextcloudExactCandidate => 'リクエストと完全一致。識別情報は未確認です。';
+
+  @override
+  String get nextcloudPossibleCandidate => '正規化されたリクエストと一致する可能性あり。識別情報は未確認です。';
+
+  @override
+  String get nextcloudSelectCandidate => '確認するサーバーノートを選択';
+
+  @override
+  String get nextcloudCreateSeparate => '別のノートを作成';
+
+  @override
+  String get nextcloudCreateSeparateWarning =>
+      '最初のリクエストですでにサーバーノートが作成された可能性があります。保持したローカル作業から別のノートを作成します。重複の疑いがあるノートは削除されません。';
 }

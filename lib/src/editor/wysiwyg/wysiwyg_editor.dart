@@ -1964,6 +1964,7 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       value,
       activeInlineKinds: pendingInlineKinds,
       preserveTextWhitespace: origin == _WysiwygTextEditOrigin.paste,
+      normalizePastedFormatting: origin == _WysiwygTextEditOrigin.paste,
     );
     if (value.isNotEmpty) {
       _pendingInlineKindsByBlockId.remove(blockId);

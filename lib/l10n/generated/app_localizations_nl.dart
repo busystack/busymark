@@ -11,6 +11,9 @@ class AppLocalizationsNl extends AppLocalizations {
   AppLocalizationsNl([String locale = 'nl']) : super(locale);
 
   @override
+  String get closeOtherTabs => 'Andere tabbladen sluiten';
+
+  @override
   String get tocTopicFromTemplate => 'Onderwerp uit sjabloon...';
 
   @override
@@ -1536,8 +1539,22 @@ class AppLocalizationsNl extends AppLocalizations {
   }
 
   @override
+  String get topicIsHomePageRemovalWarning =>
+      'Dit onderwerp is de startpagina van deze instantie. Kies een andere startpagina voordat u het uit de inhoudsopgave verwijdert.';
+
+  @override
+  String get newHomePage => 'Nieuwe startpagina';
+
+  @override
+  String get chooseHomePage => 'Startpagina kiezen';
+
+  @override
+  String get noHomePageReplacement =>
+      'Voeg een ander geschikt onderwerp toe aan deze instantie of koppel het voordat u de startpagina verwijdert.';
+
+  @override
   String get topicIsStartPageRemovalWarning =>
-      'Dit onderwerp wordt gebruikt als startpagina van een instantie. Controleer het gebruik ervan en wijs een andere startpagina toe voordat u verdergaat.';
+      'Dit onderwerp is de startpagina van een instantie. Stel een andere startpagina in voordat u het bronbestand verwijdert.';
 
   @override
   String topicUsagesCount(int count) {
@@ -1556,7 +1573,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get topicUsageTocElements => 'TOC-elementen';
 
   @override
-  String get topicUsageStartPages => 'Startpagina\'s';
+  String get topicUsageStartPages => 'Startpagina’s';
 
   @override
   String get topicUsageTopicLinks => 'Onderwerplinks';
@@ -2184,7 +2201,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String errorWritersideStartTopicDelete(String topic) {
-    return 'Het startonderwerp $topic kan niet worden verwijderd. Kies eerst een andere startpagina.';
+    return 'De startpagina $topic kan niet worden verwijderd. Kies eerst een andere startpagina.';
   }
 
   @override
@@ -4793,4 +4810,30 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get nextcloudChooseConflictingAttributes =>
       'Kies voor elk conflicterend kenmerk een waarde.';
+
+  @override
+  String get nextcloudUseServerNote => 'Deze servernotitie gebruiken';
+
+  @override
+  String get nextcloudUseServerNoteExplanation =>
+      'Koppelt dit concept aan de geselecteerde servernotitie en synchroniseert daarna de behouden lokale wijzigingen. Een overeenkomend verzoek bevestigt niet wie de notitie heeft gemaakt.';
+
+  @override
+  String get nextcloudExactCandidate =>
+      'Exacte overeenkomst met het verzoek; identiteit onbevestigd.';
+
+  @override
+  String get nextcloudPossibleCandidate =>
+      'Mogelijke overeenkomst na normalisatie; identiteit onbevestigd.';
+
+  @override
+  String get nextcloudSelectCandidate =>
+      'Selecteer een servernotitie om te bekijken';
+
+  @override
+  String get nextcloudCreateSeparate => 'Een afzonderlijke notitie maken';
+
+  @override
+  String get nextcloudCreateSeparateWarning =>
+      'Het eerste verzoek heeft mogelijk al een servernotitie gemaakt. Dit maakt een afzonderlijke notitie met uw behouden lokale werk. Vermoedelijke duplicaten worden niet verwijderd.';
 }
