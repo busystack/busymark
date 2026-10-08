@@ -86,6 +86,79 @@ String _insert(
   return output;
 }
 
+// Keep boundary spaces in the fixture independently of Markdown/HTML parsing.
+WysiwygClipboardFragment _boundaryFragment(String leading, String trailing) =>
+    WysiwygClipboardFragment(
+      mode: MarkdownMode.writersideMarkdown,
+      blocks: [
+        BusyWysiwygStyledBlock(
+          kind: BusyBlockKind.paragraph,
+          text: '${leading}hello world$trailing',
+          ranges: [
+            BusyInlineStyleRange(
+              start: leading.length,
+              end: leading.length + 11,
+              kind: BusyInlineKind.strong,
+            ),
+          ],
+        ),
+      ],
+    );
+
+List<Object> _inlineTree(List<BusyInline> inlines) => [
+  for (final inline in inlines)
+    [inline.kind.name, inline.plainText, _inlineTree(inline.children)],
+];
+
+List<(int, int)> _strongRanges(BusyBlock block) => [
+  for (final range in busyInlineStyleRanges(block.inlines))
+    if (range.kind == BusyInlineKind.strong) (range.start, range.end),
+];
+
+void _expectBoundaryReplacement(
+  BusyBlock block,
+  String markdown,
+  int? caret, {
+  required String leading,
+  required String trailing,
+}) {
+  expect(
+    {
+      'text': block.plainText,
+      'strong': _strongRanges(block),
+      'markdown': markdown,
+      if (caret != null) 'caret': caret,
+    },
+    {
+      'text': '${leading}hello world$trailing',
+      'strong': [(leading.length, leading.length + 11)],
+      'markdown': '$leading**hello world**$trailing\n',
+      if (caret != null) 'caret': leading.length + 11 + trailing.length,
+    },
+    reason: 'Live inline tree: ${_inlineTree(block.inlines)}',
+  );
+  expect(_inlineTree(block.inlines), [
+    if (leading.isNotEmpty) ['text', leading, <Object>[]],
+    [
+      'strong',
+      'hello world',
+      [
+        ['text', 'hello world', <Object>[]],
+      ],
+    ],
+    if (trailing.isNotEmpty) ['text', trailing, <Object>[]],
+  ]);
+  final reparsed = _parser
+      .parse(filePath: '/reparsed.md', source: markdown)
+      .busyDocument
+      .blocks
+      .single;
+  final strong = reparsed.inlines.singleWhere(
+    (inline) => inline.kind == BusyInlineKind.strong,
+  );
+  expect(strong.plainText, 'hello world');
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -107,6 +180,96 @@ void main() {
       expect(output, contains('```dart\nfinal x = 1;\n```'));
     },
   );
+
+  for (final trailing in [' ', '  ']) {
+    test('structured replacement boundary with ${trailing.length} spaces', () {
+      final fragment = _boundaryFragment('', trailing);
+      final incoming = busyMarkWysiwygClipboardBlock(fragment.blocks.single);
+      expect(incoming.plainText, 'hello world$trailing');
+      expect(_strongRanges(incoming), [(0, 11)]);
+      expect(incoming.inlines.last.kind, BusyInlineKind.text);
+      expect(incoming.inlines.last.text, trailing);
+      final document = _parser
+          .parse(filePath: '/destination.md', source: '**hello wold**\n')
+          .busyDocument;
+      final controller = BusyMarkWysiwygDocumentController(document: document);
+      addTearDown(controller.dispose);
+      final result = controller.insertStyledBlocksAtSelection(
+        blockId: document.blocks.single.id,
+        selectionStart: 0,
+        selectionEnd: 10,
+        blocks: fragment.blocks,
+        replacementScope: BusyWysiwygReplacementScope.fieldContent,
+      );
+      _expectBoundaryReplacement(
+        controller.document.blocks.single,
+        controller.markdown,
+        result!.offset,
+        leading: '',
+        trailing: trailing,
+      );
+    });
+  }
+
+  test('paste boundary preserves a strong run across link wrappers', () {
+    final fragment = WysiwygClipboardFragment(
+      mode: MarkdownMode.writersideMarkdown,
+      blocks: [
+        BusyWysiwygStyledBlock(
+          kind: BusyBlockKind.paragraph,
+          text: 'hello world ',
+          ranges: const [
+            BusyInlineStyleRange(
+              start: 0,
+              end: 11,
+              kind: BusyInlineKind.strong,
+            ),
+            BusyInlineStyleRange(
+              start: 6,
+              end: 11,
+              kind: BusyInlineKind.link,
+              destination: 'guide.md',
+            ),
+          ],
+        ),
+      ],
+    );
+    final incoming = fragment.documentBlocks.single;
+    expect(_strongRanges(incoming), [(0, 6), (6, 11)]);
+    final document = _parser
+        .parse(filePath: '/destination.md', source: 'Target\n')
+        .busyDocument;
+    final controller = BusyMarkWysiwygDocumentController(document: document);
+    addTearDown(controller.dispose);
+    controller.insertStyledBlocksAtSelection(
+      blockId: document.blocks.single.id,
+      selectionStart: 0,
+      selectionEnd: 6,
+      blocks: fragment.blocks,
+      replacementScope: BusyWysiwygReplacementScope.fieldContent,
+    );
+    final pasted = controller.document.blocks.single;
+    expect(pasted.plainText, 'hello world ');
+    expect(_strongRanges(pasted), _strongRanges(incoming));
+    final link = pasted.inlines.singleWhere(
+      (inline) => inline.kind == BusyInlineKind.link,
+    );
+    expect(link.destination, 'guide.md');
+    expect(link.plainText, 'world');
+  });
+
+  test('HTML decoding exposes formatting-edge whitespace loss', () {
+    for (final trailing in [' ', '  ']) {
+      final decoded = const WysiwygClipboardHtml().decode(
+        '<strong>hello world</strong>$trailing',
+        mode: MarkdownMode.writersideMarkdown,
+      )!;
+      // RawHtmlAdapter discards this HTML boundary whitespace before insertion.
+      // Use explicit structured fixtures above to exercise replacement itself.
+      expect(decoded.blocks.single.text, 'hello world');
+      expect(_strongRanges(decoded.documentBlocks.single), [(0, 11)]);
+    }
+  });
 
   test('single rich paragraphs preserve list descendants through source', () {
     final incoming = _fragment('**X**\n').blocks;
@@ -1560,6 +1723,240 @@ void main() {
         expect(RegExp(r'Existing').allMatches(result), hasLength(1));
       },
     );
+
+    for (final plain in [false, true]) {
+      for (final boundary in [
+        (leading: '', trailing: ' '),
+        (leading: '', trailing: '  '),
+        (leading: ' ', trailing: ''),
+        (leading: '', trailing: ''),
+      ]) {
+        testWidgets('${plain ? 'plain' : 'structured'} paste boundary '
+            '${boundary.leading.length}/${boundary.trailing.length}', (
+          tester,
+        ) async {
+          const original = '**hello wold**\n';
+          var saved = original;
+          BusyDocument? live;
+          await mount(
+            tester,
+            'paste-boundary',
+            original,
+            (value) => saved = value,
+            onDocumentChanged: (value) => live = value,
+          );
+          final fragment = _boundaryFragment(
+            boundary.leading,
+            boundary.trailing,
+          );
+          final service = tester
+              .widget<BusyMarkWysiwygEditor>(find.byType(BusyMarkWysiwygEditor))
+              .clipboardService!;
+          expect(
+            await service.write(
+              RichClipboardData(
+                text: fragment.blocks.single.text,
+                richFragment: fragment.encode(),
+              ),
+            ),
+            isTrue,
+          );
+          final incoming = await service.read();
+          expect(incoming.text, fragment.blocks.single.text);
+          expect(
+            _strongRanges(
+              WysiwygClipboardFragment.decode(
+                incoming.richFragment!,
+              )!.documentBlocks.single,
+            ),
+            [(boundary.leading.length, boundary.leading.length + 11)],
+          );
+          final field = tester.widget<TextField>(find.byType(TextField).first);
+          expect(field.controller!.text, 'hello wold');
+          field.controller!.selection = const TextSelection(
+            baseOffset: 0,
+            extentOffset: 10,
+          );
+          await tester.pump();
+          await key(tester, LogicalKeyboardKey.keyV, shift: plain);
+          await tester.pumpAndSettle();
+          void check({bool checkCaret = true}) {
+            final current = tester
+                .widget<TextField>(find.byType(TextField).first)
+                .controller!;
+            expect(current.text, fragment.blocks.single.text);
+            expect(current.selection.isCollapsed, isTrue);
+            _expectBoundaryReplacement(
+              live!.blocks.single,
+              saved,
+              checkCaret ? current.selection.extentOffset : null,
+              leading: boundary.leading,
+              trailing: boundary.trailing,
+            );
+          }
+
+          check();
+          await key(tester, LogicalKeyboardKey.keyZ);
+          await tester.pumpAndSettle();
+          expect(saved, original);
+          expect(live!.blocks.single.plainText, 'hello wold');
+          expect(_strongRanges(live!.blocks.single), [(0, 10)]);
+          await key(tester, LogicalKeyboardKey.keyZ, shift: true);
+          await tester.pumpAndSettle();
+          check(checkCaret: false);
+        });
+      }
+    }
+
+    for (final plain in [false, true]) {
+      for (final value in [
+        (
+          name: 'whitespace only',
+          source: '**hello wold**\n',
+          start: 0,
+          end: 10,
+          text: '  ',
+          ranges: <BusyInlineStyleRange>[],
+          expected: '  \n',
+        ),
+        (
+          name: 'internal spaces',
+          source: '**Target**\n',
+          start: 2,
+          end: 4,
+          text: '   ',
+          ranges: <BusyInlineStyleRange>[],
+          expected: '**Ta   et**\n',
+        ),
+        (
+          name: 'emphasis',
+          source: '*hello wold*\n',
+          start: 0,
+          end: 10,
+          text: 'hello world ',
+          ranges: [
+            const BusyInlineStyleRange(
+              start: 0,
+              end: 11,
+              kind: BusyInlineKind.emphasis,
+            ),
+          ],
+          expected: '*hello world* \n',
+        ),
+        (
+          name: 'nested emphasis',
+          source: '**hello *wold***\n',
+          start: 0,
+          end: 10,
+          text: 'hello world ',
+          ranges: [
+            const BusyInlineStyleRange(
+              start: 0,
+              end: 11,
+              kind: BusyInlineKind.strong,
+            ),
+            const BusyInlineStyleRange(
+              start: 6,
+              end: 11,
+              kind: BusyInlineKind.emphasis,
+            ),
+          ],
+          expected: '**hello *world*** \n',
+        ),
+      ]) {
+        testWidgets(
+          '${plain ? 'plain' : 'structured'} paste boundary preserves ${value.name}',
+          (tester) async {
+            var saved = value.source;
+            BusyDocument? live;
+            await mount(
+              tester,
+              'paste-format-boundary',
+              saved,
+              (source) => saved = source,
+              onDocumentChanged: (document) => live = document,
+            );
+            final fragment = WysiwygClipboardFragment(
+              mode: MarkdownMode.writersideMarkdown,
+              blocks: [
+                BusyWysiwygStyledBlock(
+                  kind: BusyBlockKind.paragraph,
+                  text: value.text,
+                  ranges: value.ranges,
+                ),
+              ],
+            );
+            final service = tester
+                .widget<BusyMarkWysiwygEditor>(
+                  find.byType(BusyMarkWysiwygEditor),
+                )
+                .clipboardService!;
+            expect(
+              await service.write(
+                RichClipboardData(
+                  text: value.text,
+                  richFragment: fragment.encode(),
+                ),
+              ),
+              isTrue,
+            );
+            tester
+                .widget<TextField>(find.byType(TextField).first)
+                .controller!
+                .selection = TextSelection(
+              baseOffset: value.start,
+              extentOffset: value.end,
+            );
+            await tester.pump();
+            await key(tester, LogicalKeyboardKey.keyV, shift: plain);
+            await tester.pumpAndSettle();
+            void check({bool checkCaret = true}) {
+              expect(
+                saved,
+                value.expected,
+                reason:
+                    'Live inline tree: ${_inlineTree(live!.blocks.single.inlines)}',
+              );
+              final field = tester
+                  .widget<TextField>(find.byType(TextField).first)
+                  .controller!;
+              expect(field.text, live!.blocks.single.plainText);
+              if (checkCaret) {
+                expect(
+                  field.selection,
+                  TextSelection.collapsed(
+                    offset: value.start + value.text.length,
+                  ),
+                );
+              }
+              if (value.text == '  ') {
+                expect(field.text, '  ');
+                expect(_inlineTree(live!.blocks.single.inlines), [
+                  ['text', '  ', <Object>[]],
+                ]);
+              } else {
+                final reparsed = _parser
+                    .parse(filePath: '/reparsed.md', source: saved)
+                    .busyDocument
+                    .blocks
+                    .single;
+                expect(_inlineTree(live!.blocks.single.inlines), [
+                  ..._inlineTree(reparsed.inlines),
+                  if (value.expected.endsWith(' \n')) ['text', ' ', <Object>[]],
+                ]);
+              }
+            }
+
+            check();
+            await key(tester, LogicalKeyboardKey.keyZ);
+            expect(saved, value.source);
+            await key(tester, LogicalKeyboardKey.keyZ, shift: true);
+            await tester.pumpAndSettle();
+            check(checkCaret: false);
+          },
+        );
+      }
+    }
 
     testWidgets('plain paste persists intentional whitespace through history', (
       tester,
