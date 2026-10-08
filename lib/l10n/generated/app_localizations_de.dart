@@ -11,6 +11,9 @@ class AppLocalizationsDe extends AppLocalizations {
   AppLocalizationsDe([String locale = 'de']) : super(locale);
 
   @override
+  String get closeOtherTabs => 'Andere Tabs schließen';
+
+  @override
   String get tocTopicFromTemplate => 'Thema aus Vorlage...';
 
   @override

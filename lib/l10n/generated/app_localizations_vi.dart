@@ -11,6 +11,9 @@ class AppLocalizationsVi extends AppLocalizations {
   AppLocalizationsVi([String locale = 'vi']) : super(locale);
 
   @override
+  String get closeOtherTabs => 'Đóng các thẻ khác';
+
+  @override
   String get tocTopicFromTemplate => 'Chủ đề từ mẫu...';
 
   @override

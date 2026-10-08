@@ -1,4 +1,6 @@
 {
+  "closeOtherTabs": "إغلاق علامات التبويب الأخرى",
+  "@closeOtherTabs": {"description": "Document tab context menu action that closes every other document and comparison tab while retaining this document."},
   "tocTopicFromTemplate": "موضوع من قالب...",
   "tocSaveAsTemplate": "حفظ كقالب",
   "tocTemplateDialog": "إنشاء موضوع من قالب",

@@ -11,6 +11,9 @@ class AppLocalizationsHi extends AppLocalizations {
   AppLocalizationsHi([String locale = 'hi']) : super(locale);
 
   @override
+  String get closeOtherTabs => 'अन्य टैब बंद करें';
+
+  @override
   String get tocTopicFromTemplate => 'टेम्पलेट से विषय...';
 
   @override

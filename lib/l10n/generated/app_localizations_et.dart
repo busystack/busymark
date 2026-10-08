@@ -11,6 +11,9 @@ class AppLocalizationsEt extends AppLocalizations {
   AppLocalizationsEt([String locale = 'et']) : super(locale);
 
   @override
+  String get closeOtherTabs => 'Sulge teised vahelehed';
+
+  @override
   String get tocTopicFromTemplate => 'Teema mallist...';
 
   @override

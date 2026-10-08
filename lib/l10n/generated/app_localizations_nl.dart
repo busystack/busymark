@@ -11,6 +11,9 @@ class AppLocalizationsNl extends AppLocalizations {
   AppLocalizationsNl([String locale = 'nl']) : super(locale);
 
   @override
+  String get closeOtherTabs => 'Andere tabbladen sluiten';
+
+  @override
   String get tocTopicFromTemplate => 'Onderwerp uit sjabloon...';
 
   @override

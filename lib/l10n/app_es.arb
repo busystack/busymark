@@ -1,4 +1,6 @@
 {
+  "closeOtherTabs": "Cerrar las otras pestañas",
+  "@closeOtherTabs": {"description": "Document tab context menu action that closes every other document and comparison tab while retaining this document."},
   "tocTopicFromTemplate": "Tema desde plantilla...",
   "tocSaveAsTemplate": "Guardar como plantilla",
   "tocTemplateDialog": "Crear tema desde plantilla",

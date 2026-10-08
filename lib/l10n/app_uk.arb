@@ -1,4 +1,6 @@
 {
+  "closeOtherTabs": "Закрити інші вкладки",
+  "@closeOtherTabs": {"description": "Document tab context menu action that closes every other document and comparison tab while retaining this document."},
   "tocTopicFromTemplate": "Тема з шаблону...",
   "tocSaveAsTemplate": "Зберегти як шаблон",
   "tocTemplateDialog": "Створити тему з шаблону",

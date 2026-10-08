@@ -11,6 +11,9 @@ class AppLocalizationsTr extends AppLocalizations {
   AppLocalizationsTr([String locale = 'tr']) : super(locale);
 
   @override
+  String get closeOtherTabs => 'Diğer sekmeleri kapat';
+
+  @override
   String get tocTopicFromTemplate => 'Şablondan Konu...';
 
   @override

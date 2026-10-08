@@ -11,6 +11,9 @@ class AppLocalizationsPl extends AppLocalizations {
   AppLocalizationsPl([String locale = 'pl']) : super(locale);
 
   @override
+  String get closeOtherTabs => 'Zamknij pozostałe karty';
+
+  @override
   String get tocTopicFromTemplate => 'Temat z szablonu...';
 
   @override

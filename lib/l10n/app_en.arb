@@ -1,4 +1,6 @@
 {
+  "closeOtherTabs": "Close other tabs",
+  "@closeOtherTabs": {"description": "Document tab context menu action that closes every other document and comparison tab while retaining this document."},
   "tocTopicFromTemplate": "Topic from Template...",
   "@tocTopicFromTemplate": {"description": "Writerside template dialog or user-template storage feedback."},
   "tocSaveAsTemplate": "Save as Template",

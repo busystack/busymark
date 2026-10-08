@@ -11,6 +11,9 @@ class AppLocalizationsNb extends AppLocalizations {
   AppLocalizationsNb([String locale = 'nb']) : super(locale);
 
   @override
+  String get closeOtherTabs => 'Lukk andre faner';
+
+  @override
   String get tocTopicFromTemplate => 'Emne fra mal...';
 
   @override

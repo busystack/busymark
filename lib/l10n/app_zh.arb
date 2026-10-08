@@ -1,4 +1,6 @@
 {
+  "closeOtherTabs": "关闭其他标签页",
+  "@closeOtherTabs": {"description": "Document tab context menu action that closes every other document and comparison tab while retaining this document."},
   "tocTopicFromTemplate": "从模板创建主题...",
   "tocSaveAsTemplate": "保存为模板",
   "tocTemplateDialog": "从模板创建主题",

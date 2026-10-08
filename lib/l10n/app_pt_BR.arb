@@ -1,4 +1,6 @@
 {
+  "closeOtherTabs": "Fechar as outras abas",
+  "@closeOtherTabs": {"description": "Document tab context menu action that closes every other document and comparison tab while retaining this document."},
   "tocTopicFromTemplate": "Tópico a partir de modelo...",
   "tocSaveAsTemplate": "Salvar como modelo",
   "tocTemplateDialog": "Criar tópico a partir de modelo",

@@ -1,4 +1,6 @@
 {
+  "closeOtherTabs": "Fermer les autres onglets",
+  "@closeOtherTabs": {"description": "Document tab context menu action that closes every other document and comparison tab while retaining this document."},
   "tocTopicFromTemplate": "Sujet à partir d’un modèle...",
   "tocSaveAsTemplate": "Enregistrer comme modèle",
   "tocTemplateDialog": "Créer un sujet à partir d’un modèle",

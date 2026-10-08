@@ -4947,12 +4947,18 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         if (candidate.id != bufferId) candidate,
     ];
     if (remaining.isEmpty) {
-      _removalOperationRevision++;
-      state = workspace.isRemote
-          ? WorkspaceState(workspace: workspace.copyWith(markdown: null))
-          : const WorkspaceState();
-      _fileMonitor.updateOpenFilePaths(const <String>[]);
-      _schedulePersistence();
+      if (_supportsOpenFileTabs(workspace)) {
+        // The last buffer can be an untitled draft in a folder/project.
+        // Discarding that draft closes a view and retains the workspace.
+        await _clearOpenFileTabs(workspace);
+      } else {
+        _removalOperationRevision++;
+        state = workspace.isRemote
+            ? WorkspaceState(workspace: workspace.copyWith(markdown: null))
+            : const WorkspaceState();
+        _fileMonitor.updateOpenFilePaths(const <String>[]);
+        _schedulePersistence();
+      }
       await _localHistory.handleBufferClosed(
         bufferId,
         historySettled: historySettled,

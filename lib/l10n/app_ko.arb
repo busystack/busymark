@@ -1,4 +1,6 @@
 {
+  "closeOtherTabs": "다른 탭 닫기",
+  "@closeOtherTabs": {"description": "Document tab context menu action that closes every other document and comparison tab while retaining this document."},
   "tocTopicFromTemplate": "템플릿에서 토픽...",
   "tocSaveAsTemplate": "템플릿으로 저장",
   "tocTemplateDialog": "템플릿에서 토픽 만들기",

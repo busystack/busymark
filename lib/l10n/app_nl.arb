@@ -1,4 +1,6 @@
 {
+  "closeOtherTabs": "Andere tabbladen sluiten",
+  "@closeOtherTabs": {"description": "Document tab context menu action that closes every other document and comparison tab while retaining this document."},
   "tocTopicFromTemplate": "Onderwerp uit sjabloon...",
   "tocSaveAsTemplate": "Opslaan als sjabloon",
   "tocTemplateDialog": "Onderwerp uit sjabloon maken",

@@ -11,6 +11,9 @@ class AppLocalizationsPt extends AppLocalizations {
   AppLocalizationsPt([String locale = 'pt']) : super(locale);
 
   @override
+  String get closeOtherTabs => 'Fechar os outros separadores';
+
+  @override
   String get tocTopicFromTemplate => 'Tópico a partir de modelo...';
 
   @override
@@ -4839,6 +4842,9 @@ class AppLocalizationsPt extends AppLocalizations {
 /// The translations for Portuguese, as used in Brazil (`pt_BR`).
 class AppLocalizationsPtBr extends AppLocalizationsPt {
   AppLocalizationsPtBr() : super('pt_BR');
+
+  @override
+  String get closeOtherTabs => 'Fechar as outras abas';
 
   @override
   String get tocTopicFromTemplate => 'Tópico a partir de modelo...';

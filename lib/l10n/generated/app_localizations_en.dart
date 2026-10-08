@@ -11,6 +11,9 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
+  String get closeOtherTabs => 'Close other tabs';
+
+  @override
   String get tocTopicFromTemplate => 'Topic from Template...';
 
   @override

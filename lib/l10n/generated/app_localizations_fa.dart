@@ -11,6 +11,9 @@ class AppLocalizationsFa extends AppLocalizations {
   AppLocalizationsFa([String locale = 'fa']) : super(locale);
 
   @override
+  String get closeOtherTabs => 'بستن زبانه‌های دیگر';
+
+  @override
   String get tocTopicFromTemplate => 'موضوع از الگو...';
 
   @override

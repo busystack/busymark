@@ -11,6 +11,9 @@ class AppLocalizationsJa extends AppLocalizations {
   AppLocalizationsJa([String locale = 'ja']) : super(locale);
 
   @override
+  String get closeOtherTabs => '他のタブを閉じる';
+
+  @override
   String get tocTopicFromTemplate => 'テンプレートからトピック...';
 
   @override

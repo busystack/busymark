@@ -1,4 +1,6 @@
 {
+  "closeOtherTabs": "अन्य टैब बंद करें",
+  "@closeOtherTabs": {"description": "Document tab context menu action that closes every other document and comparison tab while retaining this document."},
   "tocTopicFromTemplate": "टेम्पलेट से विषय...",
   "tocSaveAsTemplate": "टेम्पलेट के रूप में सहेजें",
   "tocTemplateDialog": "टेम्पलेट से विषय बनाएँ",

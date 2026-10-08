@@ -1,4 +1,6 @@
 {
+  "closeOtherTabs": "Đóng các thẻ khác",
+  "@closeOtherTabs": {"description": "Document tab context menu action that closes every other document and comparison tab while retaining this document."},
   "tocTopicFromTemplate": "Chủ đề từ mẫu...",
   "tocSaveAsTemplate": "Lưu thành mẫu",
   "tocTemplateDialog": "Tạo chủ đề từ mẫu",

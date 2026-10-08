@@ -1,4 +1,6 @@
 {
+  "closeOtherTabs": "Zamknij pozostałe karty",
+  "@closeOtherTabs": {"description": "Document tab context menu action that closes every other document and comparison tab while retaining this document."},
   "tocTopicFromTemplate": "Temat z szablonu...",
   "tocSaveAsTemplate": "Zapisz jako szablon",
   "tocTemplateDialog": "Utwórz temat z szablonu",

@@ -139,6 +139,12 @@ abstract class AppLocalizations {
     Locale('zh', 'CN'),
   ];
 
+  /// Document tab context menu action that closes every other document and comparison tab while retaining this document.
+  ///
+  /// In en, this message translates to:
+  /// **'Close other tabs'**
+  String get closeOtherTabs;
+
   /// Writerside template dialog or user-template storage feedback.
   ///
   /// In en, this message translates to:
