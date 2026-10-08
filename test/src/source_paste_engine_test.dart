@@ -13,6 +13,85 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   const engine = SourcePasteEngine();
 
+  test(
+    'HTML Source paste retains boundary spaces and formatting across links',
+    () {
+      for (final mode in [
+        MarkdownMode.commonMark,
+        MarkdownMode.writersideMarkdown,
+      ]) {
+        for (final value in [
+          (
+            html: '<strong>hello world</strong> ',
+            expected: '**hello world** \n',
+            linked: false,
+          ),
+          (
+            html: '<strong>hello world  </strong>',
+            expected: '**hello world**  \n',
+            linked: false,
+          ),
+          (
+            html: '<strong>hello <a href="guide.md">world</a></strong> ',
+            expected: '**hello [world](guide.md)** \n',
+            linked: true,
+          ),
+        ]) {
+          final fragment = const WysiwygClipboardHtml().decode(
+            value.html,
+            mode: mode,
+          )!;
+          final applied = _applyReady(
+            'Target\n',
+            engine.prepareStructured(
+              target: SourcePasteDocumentSnapshot(
+                expectedSource: 'Target\n',
+                selection: const TextSelection(baseOffset: 0, extentOffset: 6),
+                format: SourceDocumentFormat.markdown,
+                markdownMode: mode,
+                filePath: '/project/source.md',
+              ),
+              fragment: fragment,
+            ),
+          );
+          expect(applied.source, value.expected);
+          final block = const MarkdownParser()
+              .parse(
+                filePath: '/project/source.md',
+                source: applied.source,
+                mode: mode,
+              )
+              .busyDocument
+              .blocks
+              .single;
+          expect(block.plainText, 'hello world');
+          final ranges = busyInlineStyleRanges(block.inlines);
+          expect(
+            {
+              for (final range in ranges.where(
+                (range) => range.kind == BusyInlineKind.strong,
+              ))
+                for (var offset = range.start; offset < range.end; offset++)
+                  offset,
+            },
+            {for (var offset = 0; offset < 11; offset++) offset},
+          );
+          final links = ranges.where(
+            (range) => range.kind == BusyInlineKind.link,
+          );
+          if (value.linked) {
+            expect(
+              (links.single.start, links.single.end, links.single.destination),
+              (6, 11, 'guide.md'),
+            );
+          } else {
+            expect(links, isEmpty);
+          }
+        }
+      }
+    },
+  );
+
   test('single rich paragraph repairs independently surviving endpoints', () {
     final cases = <({String source, int start, int end, String expected})>[
       (
