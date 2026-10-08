@@ -1553,8 +1553,22 @@ class AppLocalizationsDe extends AppLocalizations {
   }
 
   @override
+  String get topicIsHomePageRemovalWarning =>
+      'Dieses Thema ist die Startseite dieser Instanz. Wählen Sie eine andere Startseite, bevor Sie es aus dem Inhaltsverzeichnis entfernen.';
+
+  @override
+  String get newHomePage => 'Neue Startseite';
+
+  @override
+  String get chooseHomePage => 'Startseite auswählen';
+
+  @override
+  String get noHomePageReplacement =>
+      'Fügen Sie dieser Instanz ein anderes geeignetes Thema hinzu oder verknüpfen Sie es, bevor Sie ihre Startseite entfernen.';
+
+  @override
   String get topicIsStartPageRemovalWarning =>
-      'Dieses Thema wird als Startseite einer Instanz verwendet. Prüfen Sie seine Verwendungen und weisen Sie eine andere Startseite zu, bevor Sie fortfahren.';
+      'Dieses Thema ist die Startseite einer Instanz. Legen Sie eine andere Startseite fest, bevor Sie seine Quelldatei löschen.';
 
   @override
   String topicUsagesCount(int count) {
@@ -2198,7 +2212,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String errorWritersideStartTopicDelete(String topic) {
-    return 'Das Startthema $topic kann nicht gelöscht werden. Wählen Sie zuerst eine andere Startseite aus.';
+    return 'Die Startseite $topic kann nicht gelöscht werden. Wählen Sie zuerst eine andere Startseite.';
   }
 
   @override

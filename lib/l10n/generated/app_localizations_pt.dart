@@ -1544,8 +1544,22 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
+  String get topicIsHomePageRemovalWarning =>
+      'Este tópico é a página inicial desta instância. Escolha outra página inicial antes de o remover do índice.';
+
+  @override
+  String get newHomePage => 'Nova página inicial';
+
+  @override
+  String get chooseHomePage => 'Escolher página inicial';
+
+  @override
+  String get noHomePageReplacement =>
+      'Adicione ou associe outro tópico elegível a esta instância antes de remover a sua página inicial.';
+
+  @override
   String get topicIsStartPageRemovalWarning =>
-      'Este tópico é usado como página inicial de uma instância. Reveja os usos dele e atribua outra página inicial antes de continuar.';
+      'Este tópico é a página inicial de uma instância. Defina outra página inicial antes de eliminar o seu ficheiro de origem.';
 
   @override
   String topicUsagesCount(int count) {
@@ -2187,7 +2201,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String errorWritersideStartTopicDelete(String topic) {
-    return 'O tópico inicial $topic não pode ser eliminado. Escolha primeiro outra página inicial.';
+    return 'Não é possível eliminar a página inicial $topic. Escolha primeiro outra página inicial.';
   }
 
   @override
@@ -6378,8 +6392,22 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   }
 
   @override
+  String get topicIsHomePageRemovalWarning =>
+      'Este tópico é a página inicial desta instância. Escolha outra página inicial antes de removê-lo do sumário.';
+
+  @override
+  String get newHomePage => 'Nova página inicial';
+
+  @override
+  String get chooseHomePage => 'Escolher página inicial';
+
+  @override
+  String get noHomePageReplacement =>
+      'Adicione ou vincule outro tópico elegível a esta instância antes de remover sua página inicial.';
+
+  @override
   String get topicIsStartPageRemovalWarning =>
-      'Este tópico é usado como página inicial de uma instância. Revise os usos dele e atribua outra página inicial antes de continuar.';
+      'Este tópico é a página inicial de uma instância. Defina outra página inicial antes de excluir seu arquivo de origem.';
 
   @override
   String topicUsagesCount(int count) {
@@ -7021,7 +7049,7 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String errorWritersideStartTopicDelete(String topic) {
-    return 'O tópico inicial $topic não pode ser excluído. Escolha primeiro outra página inicial.';
+    return 'Não é possível excluir a página inicial $topic. Escolha outra página inicial primeiro.';
   }
 
   @override

@@ -1879,9 +1879,9 @@
   "@errorWritersideTocInvalidMove": {
     "description": "Detail shown when a Writerside TOC move would create a cycle."
   },
-  "errorWritersideStartTopicDelete": "Das Startthema {topic} kann nicht gelöscht werden. Wählen Sie zuerst eine andere Startseite aus.",
+  "errorWritersideStartTopicDelete": "Die Startseite {topic} kann nicht gelöscht werden. Wählen Sie zuerst eine andere Startseite.",
   "@errorWritersideStartTopicDelete": {
-    "description": "Detail shown when attempting to delete the start topic of a Writerside instance.",
+    "description": "Detail shown when attempting to delete the Home Page of a Writerside instance.",
     "placeholders": {
       "topic": {
         "type": "String"
@@ -2671,7 +2671,11 @@
       }
     }
   },
-  "topicIsStartPageRemovalWarning": "Dieses Thema wird als Startseite einer Instanz verwendet. Prüfen Sie seine Verwendungen und weisen Sie eine andere Startseite zu, bevor Sie fortfahren.",
+  "topicIsHomePageRemovalWarning": "Dieses Thema ist die Startseite dieser Instanz. Wählen Sie eine andere Startseite, bevor Sie es aus dem Inhaltsverzeichnis entfernen.",
+  "newHomePage": "Neue Startseite",
+  "chooseHomePage": "Startseite auswählen",
+  "noHomePageReplacement": "Fügen Sie dieser Instanz ein anderes geeignetes Thema hinzu oder verknüpfen Sie es, bevor Sie ihre Startseite entfernen.",
+  "topicIsStartPageRemovalWarning": "Dieses Thema ist die Startseite einer Instanz. Legen Sie eine andere Startseite fest, bevor Sie seine Quelldatei löschen.",
   "@topicIsStartPageRemovalWarning": {
     "description": "Warning shown when the topic is used as an instance start page."
   },

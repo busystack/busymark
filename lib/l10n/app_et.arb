@@ -1586,9 +1586,13 @@
       }
     }
   },
-  "topicIsStartPageRemovalWarning": "Seda teemat kasutatakse eksemplari avalehena. Enne jätkamist vaata kasutuskohad üle ja määra teine avaleht.",
+  "topicIsHomePageRemovalWarning": "See teema on selle eksemplari avaleht. Vali teine avaleht enne selle eemaldamist sisukorrast.",
+  "newHomePage": "Uus avaleht",
+  "chooseHomePage": "Vali avaleht",
+  "noHomePageReplacement": "Lisa või lingi sellele eksemplarile teine sobiv teema enne selle avalehe eemaldamist.",
+  "topicIsStartPageRemovalWarning": "See teema on eksemplari avaleht. Määra teine avaleht enne selle lähtefaili kustutamist.",
   "@topicIsStartPageRemovalWarning": {
-    "description": "Warning that blocks deletion of a Writerside start-page topic."
+    "description": "Warning that blocks Safe Delete of a Writerside Home Page."
   },
   "topicUsagesCount": "Leiti {count} kasutuskohta.",
   "@topicUsagesCount": {
@@ -1613,7 +1617,7 @@
   },
   "topicUsageStartPages": "Avalehed",
   "@topicUsageStartPages": {
-    "description": "Usage group label for Writerside instance start pages."
+    "description": "Usage group label for Writerside instance Home Pages."
   },
   "topicUsageTopicLinks": "Teemalingid",
   "@topicUsageTopicLinks": {
@@ -2215,9 +2219,9 @@
   "@errorWritersideTocInvalidMove": {
     "description": "Detail shown when a Writerside TOC move would create a cycle."
   },
-  "errorWritersideStartTopicDelete": "Avaleheks määratud teemat „{topic}” ei saa kustutada. Vali esmalt teine avaleht.",
+  "errorWritersideStartTopicDelete": "Avaleht {topic} ei saa kustutada. Vali esmalt teine avaleht.",
   "@errorWritersideStartTopicDelete": {
-    "description": "Detail shown when attempting to delete the start topic of a Writerside instance.",
+    "description": "Detail shown when attempting to delete the Home Page of a Writerside instance.",
     "placeholders": {
       "topic": {
         "type": "String"

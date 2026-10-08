@@ -1674,9 +1674,13 @@
       }
     }
   },
-  "topicIsStartPageRemovalWarning": "此主题被用作实例的起始页。请查看其使用情况，并在继续前指定其他起始页。",
+  "topicIsHomePageRemovalWarning": "此主题是此实例的主页。从目录中移除它之前，请选择另一个主页。",
+  "newHomePage": "新主页",
+  "chooseHomePage": "选择主页",
+  "noHomePageReplacement": "移除主页之前，请向此实例添加或链接另一个符合条件的主题。",
+  "topicIsStartPageRemovalWarning": "此主题是某个实例的主页。删除其源文件之前，请指定另一个主页。",
   "@topicIsStartPageRemovalWarning": {
-    "description": "Warning that blocks deletion of a Writerside start-page topic."
+    "description": "Warning that blocks Safe Delete of a Writerside Home Page."
   },
   "topicUsagesCount": "找到 {count} 处使用。",
   "@topicUsagesCount": {
@@ -1699,9 +1703,9 @@
   "@topicUsageTocElements": {
     "description": "Usage group label for Writerside TOC elements."
   },
-  "topicUsageStartPages": "起始页",
+  "topicUsageStartPages": "主页",
   "@topicUsageStartPages": {
-    "description": "Usage group label for Writerside instance start pages."
+    "description": "Usage group label for Writerside instance Home Pages."
   },
   "topicUsageTopicLinks": "主题链接",
   "@topicUsageTopicLinks": {
@@ -2510,9 +2514,9 @@
   "@errorWritersideTocInvalidMove": {
     "description": "Detail shown when a Writerside TOC move would create a cycle."
   },
-  "errorWritersideStartTopicDelete": "无法删除起始主题 {topic}。请先选择其他起始页。",
+  "errorWritersideStartTopicDelete": "无法删除主页 {topic}。请先选择另一个主页。",
   "@errorWritersideStartTopicDelete": {
-    "description": "Detail shown when attempting to delete the start topic of a Writerside instance.",
+    "description": "Detail shown when attempting to delete the Home Page of a Writerside instance.",
     "placeholders": {
       "topic": {
         "type": "String"

@@ -1674,9 +1674,13 @@
       }
     }
   },
-  "topicIsStartPageRemovalWarning": "Dit onderwerp wordt gebruikt als startpagina van een instantie. Controleer het gebruik ervan en wijs een andere startpagina toe voordat u verdergaat.",
+  "topicIsHomePageRemovalWarning": "Dit onderwerp is de startpagina van deze instantie. Kies een andere startpagina voordat u het uit de inhoudsopgave verwijdert.",
+  "newHomePage": "Nieuwe startpagina",
+  "chooseHomePage": "Startpagina kiezen",
+  "noHomePageReplacement": "Voeg een ander geschikt onderwerp toe aan deze instantie of koppel het voordat u de startpagina verwijdert.",
+  "topicIsStartPageRemovalWarning": "Dit onderwerp is de startpagina van een instantie. Stel een andere startpagina in voordat u het bronbestand verwijdert.",
   "@topicIsStartPageRemovalWarning": {
-    "description": "Warning that blocks deletion of a Writerside start-page topic."
+    "description": "Warning that blocks Safe Delete of a Writerside Home Page."
   },
   "topicUsagesCount": "{count} gebruikslocaties gevonden.",
   "@topicUsagesCount": {
@@ -1699,9 +1703,9 @@
   "@topicUsageTocElements": {
     "description": "Usage group label for Writerside TOC elements."
   },
-  "topicUsageStartPages": "Startpagina's",
+  "topicUsageStartPages": "Startpagina’s",
   "@topicUsageStartPages": {
-    "description": "Usage group label for Writerside instance start pages."
+    "description": "Usage group label for Writerside instance Home Pages."
   },
   "topicUsageTopicLinks": "Onderwerplinks",
   "@topicUsageTopicLinks": {
@@ -2510,9 +2514,9 @@
   "@errorWritersideTocInvalidMove": {
     "description": "Detail shown when a Writerside TOC move would create a cycle."
   },
-  "errorWritersideStartTopicDelete": "Het startonderwerp {topic} kan niet worden verwijderd. Kies eerst een andere startpagina.",
+  "errorWritersideStartTopicDelete": "De startpagina {topic} kan niet worden verwijderd. Kies eerst een andere startpagina.",
   "@errorWritersideStartTopicDelete": {
-    "description": "Detail shown when attempting to delete the start topic of a Writerside instance.",
+    "description": "Detail shown when attempting to delete the Home Page of a Writerside instance.",
     "placeholders": {
       "topic": {
         "type": "String"

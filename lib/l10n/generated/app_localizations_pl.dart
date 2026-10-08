@@ -1557,8 +1557,22 @@ class AppLocalizationsPl extends AppLocalizations {
   }
 
   @override
+  String get topicIsHomePageRemovalWarning =>
+      'Ten temat jest stroną główną tej instancji. Wybierz inną stronę główną przed usunięciem go ze spisu treści.';
+
+  @override
+  String get newHomePage => 'Nowa strona główna';
+
+  @override
+  String get chooseHomePage => 'Wybierz stronę główną';
+
+  @override
+  String get noHomePageReplacement =>
+      'Dodaj lub połącz inny odpowiedni temat z tą instancją przed usunięciem jej strony głównej.';
+
+  @override
   String get topicIsStartPageRemovalWarning =>
-      'Ten temat jest używany jako strona początkowa instancji. Przejrzyj jego użycia i przypisz inną stronę początkową przed kontynuowaniem.';
+      'Ten temat jest stroną główną instancji. Ustaw inną stronę główną przed usunięciem jego pliku źródłowego.';
 
   @override
   String topicUsagesCount(int count) {
@@ -1577,7 +1591,7 @@ class AppLocalizationsPl extends AppLocalizations {
   String get topicUsageTocElements => 'Elementy spisu treści';
 
   @override
-  String get topicUsageStartPages => 'Strony początkowe';
+  String get topicUsageStartPages => 'Strony główne';
 
   @override
   String get topicUsageTopicLinks => 'Linki do tematów';
@@ -2208,7 +2222,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String errorWritersideStartTopicDelete(String topic) {
-    return 'Nie można usunąć tematu początkowego $topic. Najpierw wybierz inną stronę początkową.';
+    return 'Nie można usunąć strony głównej $topic. Najpierw wybierz inną stronę główną.';
   }
 
   @override

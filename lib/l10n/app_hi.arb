@@ -1879,9 +1879,9 @@
   "@errorWritersideTocInvalidMove": {
     "description": "Detail shown when a Writerside TOC move would create a cycle."
   },
-  "errorWritersideStartTopicDelete": "आरंभिक विषय {topic} को हटाया नहीं जा सकता। पहले कोई दूसरा आरंभ पेज चुनें।",
+  "errorWritersideStartTopicDelete": "मुखपृष्ठ {topic} को हटाया नहीं जा सकता। पहले कोई दूसरा मुखपृष्ठ चुनें।",
   "@errorWritersideStartTopicDelete": {
-    "description": "Detail shown when attempting to delete the start topic of a Writerside instance.",
+    "description": "Detail shown when attempting to delete the Home Page of a Writerside instance.",
     "placeholders": {
       "topic": {
         "type": "String"
@@ -2671,7 +2671,11 @@
       }
     }
   },
-  "topicIsStartPageRemovalWarning": "यह विषय किसी इंस्टेंस के प्रारंभ पृष्ठ के रूप में उपयोग हो रहा है। इसके उपयोगों की समीक्षा करें और आगे बढ़ने से पहले कोई दूसरा प्रारंभ पृष्ठ निर्धारित करें।",
+  "topicIsHomePageRemovalWarning": "यह विषय इस इंस्टेंस का मुखपृष्ठ है। इसे विषय-सूची से हटाने से पहले कोई दूसरा मुखपृष्ठ चुनें।",
+  "newHomePage": "नया मुखपृष्ठ",
+  "chooseHomePage": "मुखपृष्ठ चुनें",
+  "noHomePageReplacement": "इसका मुखपृष्ठ हटाने से पहले इस इंस्टेंस में कोई दूसरा योग्य विषय जोड़ें या लिंक करें।",
+  "topicIsStartPageRemovalWarning": "यह विषय किसी इंस्टेंस का मुखपृष्ठ है। इसकी स्रोत फ़ाइल हटाने से पहले कोई दूसरा मुखपृष्ठ निर्धारित करें।",
   "@topicIsStartPageRemovalWarning": {
     "description": "Warning shown when the topic is used as an instance start page."
   },
@@ -2696,7 +2700,7 @@
   "@topicUsageTocElements": {
     "description": "Usage group label for TOC elements."
   },
-  "topicUsageStartPages": "प्रारंभ पृष्ठ",
+  "topicUsageStartPages": "मुखपृष्ठ",
   "@topicUsageStartPages": {
     "description": "Usage group label for instance start pages."
   },

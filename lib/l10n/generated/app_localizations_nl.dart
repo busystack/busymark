@@ -1539,8 +1539,22 @@ class AppLocalizationsNl extends AppLocalizations {
   }
 
   @override
+  String get topicIsHomePageRemovalWarning =>
+      'Dit onderwerp is de startpagina van deze instantie. Kies een andere startpagina voordat u het uit de inhoudsopgave verwijdert.';
+
+  @override
+  String get newHomePage => 'Nieuwe startpagina';
+
+  @override
+  String get chooseHomePage => 'Startpagina kiezen';
+
+  @override
+  String get noHomePageReplacement =>
+      'Voeg een ander geschikt onderwerp toe aan deze instantie of koppel het voordat u de startpagina verwijdert.';
+
+  @override
   String get topicIsStartPageRemovalWarning =>
-      'Dit onderwerp wordt gebruikt als startpagina van een instantie. Controleer het gebruik ervan en wijs een andere startpagina toe voordat u verdergaat.';
+      'Dit onderwerp is de startpagina van een instantie. Stel een andere startpagina in voordat u het bronbestand verwijdert.';
 
   @override
   String topicUsagesCount(int count) {
@@ -1559,7 +1573,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get topicUsageTocElements => 'TOC-elementen';
 
   @override
-  String get topicUsageStartPages => 'Startpagina\'s';
+  String get topicUsageStartPages => 'Startpagina’s';
 
   @override
   String get topicUsageTopicLinks => 'Onderwerplinks';
@@ -2187,7 +2201,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String errorWritersideStartTopicDelete(String topic) {
-    return 'Het startonderwerp $topic kan niet worden verwijderd. Kies eerst een andere startpagina.';
+    return 'De startpagina $topic kan niet worden verwijderd. Kies eerst een andere startpagina.';
   }
 
   @override

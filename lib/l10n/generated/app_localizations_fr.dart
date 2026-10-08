@@ -1554,8 +1554,22 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
+  String get topicIsHomePageRemovalWarning =>
+      'Ce sujet est la page d’accueil de cette instance. Choisissez une autre page d’accueil avant de le retirer de la table des matières.';
+
+  @override
+  String get newHomePage => 'Nouvelle page d’accueil';
+
+  @override
+  String get chooseHomePage => 'Choisir une page d’accueil';
+
+  @override
+  String get noHomePageReplacement =>
+      'Ajoutez ou liez un autre sujet admissible à cette instance avant de retirer sa page d’accueil.';
+
+  @override
   String get topicIsStartPageRemovalWarning =>
-      'Ce sujet sert de page de démarrage à une instance. Examinez ses utilisations et attribuez une autre page de démarrage avant de continuer.';
+      'Ce sujet est la page d’accueil d’une instance. Définissez une autre page d’accueil avant de supprimer son fichier source.';
 
   @override
   String topicUsagesCount(int count) {
@@ -1574,7 +1588,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get topicUsageTocElements => 'Éléments de la table des matières';
 
   @override
-  String get topicUsageStartPages => 'Pages de démarrage';
+  String get topicUsageStartPages => 'Pages d’accueil';
 
   @override
   String get topicUsageTopicLinks => 'Liens vers le sujet';
@@ -2202,7 +2216,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String errorWritersideStartTopicDelete(String topic) {
-    return 'Le sujet de démarrage $topic ne peut pas être supprimé. Choisissez d’abord une autre page de démarrage.';
+    return 'La page d’accueil $topic ne peut pas être supprimée. Choisissez d’abord une autre page d’accueil.';
   }
 
   @override

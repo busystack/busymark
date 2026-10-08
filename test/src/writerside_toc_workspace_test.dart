@@ -166,6 +166,99 @@ void main() {
     },
   );
 
+  for (final afterPublication in [false, true]) {
+    test(
+      'combined Home Page removal rechecks dirty buffers (published=$afterPublication)',
+      () async {
+        final root = await fixture();
+        const service = WorkspaceService();
+        final workspace = await service.openPath(root.path);
+        final tree = File(p.join(root.path, 'guide.tree'));
+        final originals = <String, String>{
+          for (final file in root.listSync(recursive: true).whereType<File>())
+            file.path: file.readAsStringSync(),
+        };
+        final home = workspace.writersideModule!.topicByReference('home.md')!;
+        final analysis = await service.analyzeWritersideTopicRemoval(
+          workspace,
+          topicPath: home.filePath,
+          mode: WritersideTopicRemovalMode.removeFromInstance,
+          treePath: tree.path,
+          nodePath: [0],
+        );
+        final replacement = analysis.homePageReplacements.singleWhere(
+          (candidate) => candidate.topicReference == 'details.topic',
+        );
+        var rejected = false;
+        await expectLater(
+          service.applyWritersideTopicRemoval(
+            workspace,
+            WritersideTopicRemovalRequest(
+              analysis: analysis,
+              homePageReplacement: replacement,
+              updateUsagesAutomatically: true,
+            ),
+            validateBeforeCommit: (paths) {
+              expect(paths, contains(tree.path));
+              if (!afterPublication ||
+                  tree.readAsStringSync() != originals[tree.path]) {
+                rejected = true;
+                throw StateError('became dirty');
+              }
+            },
+          ),
+          throwsStateError,
+        );
+        expect(rejected, isTrue);
+        for (final entry in originals.entries) {
+          expect(File(entry.key).readAsStringSync(), entry.value);
+        }
+      },
+    );
+  }
+
+  test(
+    'combined Home Page removal preserves other instances and unrelated attributes',
+    () async {
+      final root = await fixture();
+      const service = WorkspaceService();
+      final workspace = await service.openPath(root.path);
+      final tree = File(p.join(root.path, 'guide.tree'));
+      final api = File(p.join(root.path, 'api.tree'));
+      final apiBefore = api.readAsStringSync();
+      final home = workspace.writersideModule!.topicByReference('home.md')!;
+      final source = File(home.filePath).readAsStringSync();
+      final analysis = await service.analyzeWritersideTopicRemoval(
+        workspace,
+        topicPath: home.filePath,
+        mode: WritersideTopicRemovalMode.removeFromInstance,
+        treePath: tree.path,
+        nodePath: [0],
+      );
+      await service.applyWritersideTopicRemoval(
+        workspace,
+        WritersideTopicRemovalRequest(
+          analysis: analysis,
+          homePageReplacement: analysis.homePageReplacements.singleWhere(
+            (candidate) => candidate.topicReference == 'details.topic',
+          ),
+          updateUsagesAutomatically: true,
+        ),
+      );
+      final xml = XmlDocument.parse(tree.readAsStringSync()).rootElement;
+      expect(xml.getAttribute('start-page'), 'details.topic');
+      expect(xml.getAttribute('name'), 'User Guide');
+      expect(
+        xml
+            .findAllElements('toc-element')
+            .any((element) => element.getAttribute('topic') == 'home.md'),
+        isFalse,
+      );
+      expect(api.readAsStringSync(), apiBefore);
+      expect(File(home.filePath).readAsStringSync(), source);
+    },
+  );
+
   for (final scenario in [
     (
       name: 'empty instance',

@@ -1879,9 +1879,9 @@
   "@errorWritersideTocInvalidMove": {
     "description": "Detail shown when a Writerside TOC move would create a cycle."
   },
-  "errorWritersideStartTopicDelete": "Startemnet {topic} kan ikke slettes. Velg en annen startside først.",
+  "errorWritersideStartTopicDelete": "Startsiden {topic} kan ikke slettes. Velg en annen startside først.",
   "@errorWritersideStartTopicDelete": {
-    "description": "Detail shown when attempting to delete the start topic of a Writerside instance.",
+    "description": "Detail shown when attempting to delete the Home Page of a Writerside instance.",
     "placeholders": {
       "topic": {
         "type": "String"
@@ -2671,7 +2671,11 @@
       }
     }
   },
-  "topicIsStartPageRemovalWarning": "Dette emnet brukes som startside for en instans. Se gjennom bruken, og angi en annen startside før du fortsetter.",
+  "topicIsHomePageRemovalWarning": "Dette emnet er startsiden for denne instansen. Velg en annen startside før du fjerner det fra innholdsfortegnelsen.",
+  "newHomePage": "Ny startside",
+  "chooseHomePage": "Velg en startside",
+  "noHomePageReplacement": "Legg til eller koble et annet egnet emne til denne instansen før du fjerner startsiden.",
+  "topicIsStartPageRemovalWarning": "Dette emnet er startsiden for en instans. Angi en annen startside før du sletter kildefilen.",
   "@topicIsStartPageRemovalWarning": {
     "description": "Warning shown when the topic is used as an instance start page."
   },

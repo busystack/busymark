@@ -1528,8 +1528,22 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
+  String get topicIsHomePageRemovalWarning =>
+      'Chủ đề này là trang chủ của thực thể này. Chọn trang chủ khác trước khi xóa chủ đề khỏi mục lục.';
+
+  @override
+  String get newHomePage => 'Trang chủ mới';
+
+  @override
+  String get chooseHomePage => 'Chọn trang chủ';
+
+  @override
+  String get noHomePageReplacement =>
+      'Thêm hoặc liên kết một chủ đề hợp lệ khác vào thực thể này trước khi xóa trang chủ của nó.';
+
+  @override
   String get topicIsStartPageRemovalWarning =>
-      'Chủ đề này đang được dùng làm trang bắt đầu của một thực thể. Hãy xem lại cách sử dụng và chỉ định trang bắt đầu khác trước khi tiếp tục.';
+      'Chủ đề này là trang chủ của một thực thể. Chỉ định trang chủ khác trước khi xóa tệp nguồn của chủ đề.';
 
   @override
   String topicUsagesCount(int count) {
@@ -1548,7 +1562,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get topicUsageTocElements => 'Phần tử mục lục';
 
   @override
-  String get topicUsageStartPages => 'Trang bắt đầu';
+  String get topicUsageStartPages => 'Các trang chủ';
 
   @override
   String get topicUsageTopicLinks => 'Liên kết chủ đề';
@@ -2168,7 +2182,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String errorWritersideStartTopicDelete(String topic) {
-    return 'Không thể xóa chủ đề bắt đầu $topic. Hãy chọn một trang bắt đầu khác trước.';
+    return 'Không thể xóa trang chủ $topic. Hãy chọn trang chủ khác trước.';
   }
 
   @override

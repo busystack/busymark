@@ -1879,9 +1879,9 @@
   "@errorWritersideTocInvalidMove": {
     "description": "Detail shown when a Writerside TOC move would create a cycle."
   },
-  "errorWritersideStartTopicDelete": "Nie można usunąć tematu początkowego {topic}. Najpierw wybierz inną stronę początkową.",
+  "errorWritersideStartTopicDelete": "Nie można usunąć strony głównej {topic}. Najpierw wybierz inną stronę główną.",
   "@errorWritersideStartTopicDelete": {
-    "description": "Detail shown when attempting to delete the start topic of a Writerside instance.",
+    "description": "Detail shown when attempting to delete the Home Page of a Writerside instance.",
     "placeholders": {
       "topic": {
         "type": "String"
@@ -2697,7 +2697,11 @@
       }
     }
   },
-  "topicIsStartPageRemovalWarning": "Ten temat jest używany jako strona początkowa instancji. Przejrzyj jego użycia i przypisz inną stronę początkową przed kontynuowaniem.",
+  "topicIsHomePageRemovalWarning": "Ten temat jest stroną główną tej instancji. Wybierz inną stronę główną przed usunięciem go ze spisu treści.",
+  "newHomePage": "Nowa strona główna",
+  "chooseHomePage": "Wybierz stronę główną",
+  "noHomePageReplacement": "Dodaj lub połącz inny odpowiedni temat z tą instancją przed usunięciem jej strony głównej.",
+  "topicIsStartPageRemovalWarning": "Ten temat jest stroną główną instancji. Ustaw inną stronę główną przed usunięciem jego pliku źródłowego.",
   "@topicIsStartPageRemovalWarning": {
     "description": "Warning shown when the topic is used as an instance start page."
   },
@@ -2722,7 +2726,7 @@
   "@topicUsageTocElements": {
     "description": "Usage group label for TOC elements."
   },
-  "topicUsageStartPages": "Strony początkowe",
+  "topicUsageStartPages": "Strony główne",
   "@topicUsageStartPages": {
     "description": "Usage group label for instance start pages."
   },
