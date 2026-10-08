@@ -37,6 +37,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:html/parser.dart' as html;
 import 'package:path/path.dart' as p;
 
+import '../support/widget_async.dart';
+
 const _source =
     '# Issues\n\n**When** selecting all, keep *formatting*.\n\n- [ ] First task\n- [x] Second task\n';
 const _parser = MarkdownParser();
@@ -1021,19 +1023,11 @@ void main() {
       required String operation,
       String Function()? diagnostics,
     }) async {
-      // Image ingestion performs real filesystem I/O outside FakeAsync. Pump
-      // until the observable stage completes, retaining a bounded failure.
-      final deadline = DateTime.now().add(const Duration(seconds: 10));
-      while (!complete() && DateTime.now().isBefore(deadline)) {
-        await tester.runAsync(
-          () => Future<void>.delayed(const Duration(milliseconds: 25)),
-        );
-        await tester.pump();
-      }
-      expect(
-        complete(),
-        isTrue,
-        reason: '$operation did not complete. ${diagnostics?.call() ?? ''}',
+      await pumpUntil(
+        tester,
+        complete,
+        operation: operation,
+        diagnostics: diagnostics,
       );
     }
 
@@ -3942,6 +3936,25 @@ void main() {
         expect(find.byKey(BusyMarkImageDialogKeys.choose), findsOneWidget);
       }
 
+      Future<void> chooseImage(File file, int publicationCount) async {
+        final commitsBefore = committed.length;
+        picks.add(file.path);
+        await tester.tap(find.byKey(BusyMarkImageDialogKeys.choose));
+        await waitForCount(published, publicationCount);
+        final sourceField = find.descendant(
+          of: find.byKey(BusyMarkImageDialogKeys.source),
+          matching: find.byType(TextField),
+        );
+        await waitForImageIo(
+          tester,
+          () =>
+              tester.widget<TextField>(sourceField).controller!.text ==
+              published.last.markdownPath,
+          operation: 'selected image reflected in dialog',
+        );
+        expect(committed, hasLength(commitsBefore));
+      }
+
       systemData = {'text': files[0].path};
       var result = 'Target\n';
       await mount(
@@ -3956,9 +3969,7 @@ void main() {
       await key(tester, LogicalKeyboardKey.keyV);
       await waitForCount(published, 1);
       await waitForDialog();
-      picks.add(files[1].path);
-      await tester.tap(find.byKey(BusyMarkImageDialogKeys.choose));
-      await waitForCount(published, 2);
+      await chooseImage(files[1], 2);
       await tester.tap(find.byKey(BusyMarkImageDialogKeys.cancel));
       await tester.pumpAndSettle();
       await waitForCount(rolledBack, 2);
@@ -3980,11 +3991,8 @@ void main() {
       await key(tester, LogicalKeyboardKey.keyV);
       await waitForCount(published, 3);
       await waitForDialog();
-      picks.addAll([files[1].path, files[2].path]);
-      await tester.tap(find.byKey(BusyMarkImageDialogKeys.choose));
-      await waitForCount(published, 4);
-      await tester.tap(find.byKey(BusyMarkImageDialogKeys.choose));
-      await waitForCount(published, 5);
+      await chooseImage(files[1], 4);
+      await chooseImage(files[2], 5);
       await tester.tap(find.byKey(BusyMarkImageDialogKeys.submit));
       await tester.pumpAndSettle();
       await waitForCount(committed, 1);
@@ -4016,9 +4024,7 @@ void main() {
       await key(tester, LogicalKeyboardKey.keyV);
       await waitForCount(published, 6);
       await waitForDialog();
-      picks.add(files[1].path);
-      await tester.tap(find.byKey(BusyMarkImageDialogKeys.choose));
-      await waitForCount(published, 7);
+      await chooseImage(files[1], 7);
       final destination = tester.widget<TextField>(
         find.widgetWithText(TextField, 'Target'),
       );
@@ -4082,6 +4088,9 @@ void main() {
           assetIngestionService: ingestion,
           hostToasts: true,
         );
+        final l10n = AppLocalizations.of(
+          tester.element(find.byType(BusyMarkWysiwygEditor)),
+        );
         await key(tester, LogicalKeyboardKey.keyV);
         await waitForImageIo(
           tester,
@@ -4092,8 +4101,8 @@ void main() {
         await tester.tap(find.byKey(BusyMarkImageDialogKeys.submit));
         await waitForImageIo(
           tester,
-          () => commitAttempts > 0,
-          operation: 'failed image commit attempt',
+          () => find.text(l10n.clipboardUnavailable).evaluate().isNotEmpty,
+          operation: 'failed image commit reported to the user',
         );
 
         expect(commitAttempts, 1);
@@ -4109,7 +4118,7 @@ void main() {
           await tester.runAsync(
             () => File(published.single.absolutePath).readAsBytes(),
           ),
-          isNotEmpty,
+          await tester.runAsync(source.readAsBytes),
         );
         final pending = await tester.runAsync(
           () => Directory('${root.path}/images/.busymark-asset-transactions')
@@ -4121,6 +4130,15 @@ void main() {
               .toList(),
         );
         expect(pending, hasLength(1));
+        final recordSource = await tester.runAsync(
+          () => File(pending!.single.path).readAsString(),
+        );
+        final record = jsonDecode(recordSource!) as Map<String, dynamic>;
+        expect(record['publicationToken'], published.single.publicationId);
+        expect(
+          record['finalFilename'],
+          p.basename(published.single.absolutePath),
+        );
       },
     );
 

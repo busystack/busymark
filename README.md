@@ -212,7 +212,7 @@ Once connected, select **Nextcloud Notes** on the welcome screen to reopen the w
 ### Requirements and limitations
 
 * BusyMark requires a server advertising **Nextcloud Notes API 1.4 or later in API major version 1**. Notes 6.0.x and 6.1.x are supported baselines. **Deleting attachments** requires Notes 6.1.0 or newer.
-* Connections require HTTPS and certificates trusted by the operating system. Sign-in uses Nextcloud’s browser-based Login Flow; the resulting app password is stored in the Linux keyring (libsecret), not in the notes database.
+* Connections require HTTPS and certificates trusted by the operating system. Authentication uses Nextcloud’s browser-based Login Flow; the resulting app password is stored in the Linux keyring (libsecret), not in the notes database.
 
 ## Search and replace
 

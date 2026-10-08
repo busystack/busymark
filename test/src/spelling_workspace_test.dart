@@ -37,6 +37,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 
 import '../support/spelling_test_bundle.dart';
+import '../support/widget_async.dart';
 
 void main() {
   final l10n = AppLocalizationsEn();
@@ -1503,6 +1504,7 @@ void main() {
       harness.workspace.activeBuffer?.editorState.spellingLanguage,
       const SpellingLanguageOverride.inherit(),
     );
+    expect(harness.spelling.catalog?.installedById('fr-Test'), isNull);
 
     releaseDownload.complete();
     await _until(
@@ -1510,10 +1512,17 @@ void main() {
       () =>
           harness.workspace.activeBuffer?.editorState.spellingLanguage ==
           const SpellingLanguageOverride.selected('fr-Test'),
+      diagnostics: () =>
+          'downloads=$downloadCount, '
+          'installation=${harness.spelling.dictionaryInstallStatus}, '
+          'override=${harness.workspace.activeBuffer?.editorState.spellingLanguage}',
     );
+    expect(downloadCount, 2);
     expect(harness.spelling.catalog?.installedById('fr-Test'), isNotNull);
+    expect(harness.spelling.dictionaryInstallStatus, isNull);
     await tester.pump(const Duration(milliseconds: 300));
     await _until(tester, () => harness.spelling.state.complete);
+    expect(harness.spelling.effectiveLanguage, 'fr-Test');
   });
 
   testWidgets('failed document dictionary install preserves override', (
@@ -1712,19 +1721,14 @@ Future<void> _until(
   Duration timeout = const Duration(seconds: 10),
   String Function()? diagnostics,
 }) async {
-  final elapsed = Stopwatch()..start();
-  while (!condition()) {
-    if (elapsed.elapsed > timeout) {
-      throw TimeoutException(
-        'Spelling workspace did not settle. ${diagnostics?.call() ?? ''}',
-      );
-    }
-    await tester.pump(const Duration(milliseconds: 50));
-    await tester.runAsync(
-      () => Future<void>.delayed(const Duration(milliseconds: 10)),
-    );
-  }
-  await tester.pump();
+  await pumpUntil(
+    tester,
+    condition,
+    operation: 'Spelling workspace',
+    timeout: timeout,
+    frameStep: const Duration(milliseconds: 50),
+    diagnostics: diagnostics,
+  );
 }
 
 class _Settings implements LocalSettingsStore {

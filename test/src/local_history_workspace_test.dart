@@ -4337,6 +4337,8 @@ void main() {
       );
       final owner = await _harness(
         store,
+        // Keep this staged remap unreconciled while testing live-owner recovery.
+        fileMonitor: _ControlledFileMonitor(),
         sessionStore: sessions,
         recoveryStore: ownerRecovery,
       );
@@ -4364,6 +4366,7 @@ void main() {
         sessions.value?.pendingLocalHistoryReconciliations.single.phase,
         LocalHistoryPathReconciliationPhase.committed,
       );
+      expect(owner.state.activeBuffer!.filePath, source);
 
       final observerRecovery = _ExternallyOwnedJsonRecoveryStore(
         filePathOverride: recoveryFile,
