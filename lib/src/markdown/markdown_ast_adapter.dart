@@ -861,6 +861,7 @@ class MarkdownAstAdapter {
                 closing: range.closing,
                 isSourceLineBreak: entry.key.kind == BusyInlineKind.hardBreak,
                 isRawHtmlText: true,
+                rawHtmlFragment: (start: mappingStart, end: mappingEnd),
                 sourceLineBreakOffset: range.sourceLineBreakOffset == null
                     ? null
                     : mappingStart + range.sourceLineBreakOffset!,

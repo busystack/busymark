@@ -79,6 +79,47 @@ void main() {
   });
 
   testWidgets(
+    'Writerside list hard break supports underlines and spelling review',
+    (tester) async {
+      const source = '1. helo  \n**world**\n\n2. hello\n';
+      const corrected = '1. hello  \n**world**\n\n2. hello\n';
+      final harness = await _pumpWorkspace(
+        tester,
+        source: source,
+        writerside: true,
+      );
+      await _until(tester, () => harness.spelling.state.complete);
+      expect(find.text(l10n.spellingCheckIncomplete), findsNothing);
+      expect(harness.spelling.misspellings.map((word) => word.word), ['helo']);
+      final target =
+          harness.spelling.misspellings.single.run.target
+              as SpellingRichBlockTarget;
+      final field = tester
+          .widgetList<BusyMarkWysiwygBlockField>(
+            find.byType(BusyMarkWysiwygBlockField),
+          )
+          .singleWhere((field) => field.block.id == target.blockId);
+      expect(field.spellingRanges, isNotEmpty);
+      await tester.sendKeyEvent(LogicalKeyboardKey.f7);
+      final dialog = find.byType(BusyMarkSpellingReviewDialog);
+      final suggestion = find.descendant(
+        of: dialog,
+        matching: find.text('hello'),
+      );
+      await _until(tester, () => suggestion.evaluate().isNotEmpty);
+      await tester.tap(suggestion);
+      await _until(
+        tester,
+        () => dialog.evaluate().isEmpty && harness.spelling.state.complete,
+      );
+      expect(harness.workspace.activeText, corrected);
+      expect(harness.spelling.misspellings, isEmpty);
+      expect(find.text(l10n.spellingCheckIncomplete), findsNothing);
+      await tester.pumpWidget(const SizedBox.shrink());
+    },
+  );
+
+  testWidgets(
     'Writerside nested TOC and comment retain rich spelling through correction',
     (tester) async {
       const source =

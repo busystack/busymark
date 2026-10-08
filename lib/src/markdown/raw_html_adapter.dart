@@ -818,7 +818,15 @@ class RawHtmlAdapter {
         node.data,
         ignoredPositionMarkers: mapping?.positionMarkers ?? const [],
       );
-      return [BusyInline(kind: BusyInlineKind.text, text: text)];
+      final inline = BusyInline(kind: BusyInlineKind.text, text: text);
+      final span = node.sourceSpan;
+      if (mapping != null && span != null) {
+        mapping.ranges[inline] = RawHtmlInlineSourceRange(
+          start: mapping.projection.rawStartFor(span.start.offset),
+          end: mapping.projection.rawEndFor(span.end.offset),
+        );
+      }
+      return [inline];
     }
     if (node is html.Element) {
       return _inlineFromElement(node, mapping: mapping);
@@ -919,16 +927,22 @@ class RawHtmlAdapter {
       final closingStart = authoredClosing == null
           ? null
           : mapping.projection.rawStartFor(authoredClosing.start);
-      mapping.ranges[result.single] = RawHtmlInlineSourceRange(
-        start: start,
-        end: end,
-        opening: mapping.projection.source.substring(start, openingEnd),
-        closing: closingStart == null || closingStart >= end
-            ? null
-            : mapping.projection.source.substring(closingStart, end),
-        sourceLineBreakOffset: tag == 'br'
-            ? mapping.layout.claimForBreak(start, end)
-            : null,
+      // Transparent HTML containers can return their existing child. Keep
+      // that child's authored text/break interval rather than widening it to
+      // the surrounding tag and attributes.
+      mapping.ranges.putIfAbsent(
+        result.single,
+        () => RawHtmlInlineSourceRange(
+          start: start,
+          end: end,
+          opening: mapping.projection.source.substring(start, openingEnd),
+          closing: closingStart == null || closingStart >= end
+              ? null
+              : mapping.projection.source.substring(closingStart, end),
+          sourceLineBreakOffset: tag == 'br'
+              ? mapping.layout.claimForBreak(start, end)
+              : null,
+        ),
       );
     }
     return result;

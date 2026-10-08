@@ -281,7 +281,9 @@ void main() {
         expect(texts, contains('28. Document Conclusion'));
       }
       expect(
-        rich.runs.firstWhere((run) => run.text == 'Raw HTML block ').target,
+        rich.runs
+            .firstWhere((run) => run.text.trim() == 'Raw HTML block')
+            .target,
         isA<SpellingSourceTarget>(),
         reason: 'Protected HTML still gets checked in Source.',
       );
