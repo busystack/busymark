@@ -12,6 +12,7 @@ import 'package:busymark/src/clipboard/clipboard_history_controller.dart';
 import 'package:busymark/src/clipboard/clipboard_history_panel.dart';
 import 'package:busymark/src/clipboard/clipboard_insertion.dart';
 import 'package:busymark/src/clipboard/clipboard_models.dart';
+import 'package:busymark/src/editor/clipboard_paste_resolver.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_clipboard_fragment.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_clipboard_html.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_document_controller.dart';
@@ -22,6 +23,7 @@ import 'package:busymark/src/editor/writerside_video_player_host.dart';
 import 'package:busymark/src/markdown/busymark_document.dart';
 import 'package:busymark/src/markdown/markdown_model.dart';
 import 'package:busymark/src/markdown/markdown_parser.dart';
+import 'package:busymark/src/markdown/raw_html_adapter.dart';
 import 'package:busymark/src/platform/native_menu_service.dart';
 import 'package:busymark/src/platform/rich_clipboard_service.dart';
 import 'package:busymark/src/visualization/visualization_providers.dart';
@@ -38,6 +40,23 @@ import 'package:path/path.dart' as p;
 const _source =
     '# Issues\n\n**When** selecting all, keep *formatting*.\n\n- [ ] First task\n- [x] Second task\n';
 const _parser = MarkdownParser();
+
+final _htmlBoundaries = [
+  for (final boundary in [
+    (leading: '', trailing: ' '),
+    (leading: '', trailing: '  '),
+    (leading: ' ', trailing: ''),
+    (leading: '', trailing: ''),
+  ])
+    for (final inside in [false, true])
+      (
+        leading: boundary.leading,
+        trailing: boundary.trailing,
+        html: inside
+            ? '<strong>${boundary.leading}hello world${boundary.trailing}</strong>'
+            : '${boundary.leading}<strong>hello world</strong>${boundary.trailing}',
+      ),
+];
 
 WysiwygClipboardFragment _fragment(
   String source, {
@@ -115,6 +134,53 @@ List<(int, int)> _strongRanges(BusyBlock block) => [
     if (range.kind == BusyInlineKind.strong) (range.start, range.end),
 ];
 
+// Compare coverage rather than wrapper nesting: a visual run may have several
+// equivalent inline representations, but every character must retain its style.
+void _expectInlineSemantics(
+  BusyBlock block,
+  String text,
+  List<BusyInlineStyleRange> expected,
+) {
+  expect(block.plainText, text);
+  final actual = busyInlineStyleRanges(block.inlines);
+  for (final kind in [
+    BusyInlineKind.strong,
+    BusyInlineKind.emphasis,
+    BusyInlineKind.link,
+  ]) {
+    Map<int, Object> coverage(List<BusyInlineStyleRange> ranges) => {
+      for (final range in ranges.where((range) => range.kind == kind))
+        for (var offset = range.start; offset < range.end; offset++)
+          offset: kind == BusyInlineKind.link ? range.destination ?? '' : true,
+    };
+    expect(coverage(actual), coverage(expected), reason: '$kind in $text');
+  }
+}
+
+void _expectSavedSemantics(
+  String markdown,
+  MarkdownMode mode,
+  String text,
+  List<BusyInlineStyleRange> ranges,
+) {
+  final parsed = _parser
+      .parse(filePath: '/reparsed.md', source: markdown, mode: mode)
+      .busyDocument;
+  // Markdown block parsing intentionally consumes trailing paragraph whitespace.
+  // The original editor text and saved bytes are checked separately.
+  final recovered = text.trimRight();
+  _expectInlineSemantics(parsed.blocks.single, recovered, [
+    for (final range in ranges)
+      BusyInlineStyleRange(
+        start: range.start.clamp(0, recovered.length),
+        end: range.end.clamp(0, recovered.length),
+        kind: range.kind,
+        destination: range.destination,
+      ),
+  ]);
+  expect(parsed.blocks.single.plainText, isNot(contains('**')));
+}
+
 void _expectBoundaryReplacement(
   BusyBlock block,
   String markdown,
@@ -148,15 +214,18 @@ void _expectBoundaryReplacement(
     ],
     if (trailing.isNotEmpty) ['text', trailing, <Object>[]],
   ]);
-  final reparsed = _parser
-      .parse(filePath: '/reparsed.md', source: markdown)
-      .busyDocument
-      .blocks
-      .single;
-  final strong = reparsed.inlines.singleWhere(
-    (inline) => inline.kind == BusyInlineKind.strong,
-  );
-  expect(strong.plainText, 'hello world');
+  for (final mode in [
+    MarkdownMode.commonMark,
+    MarkdownMode.writersideMarkdown,
+  ]) {
+    _expectSavedSemantics(markdown, mode, block.plainText, [
+      BusyInlineStyleRange(
+        start: leading.length,
+        end: leading.length + 11,
+        kind: BusyInlineKind.strong,
+      ),
+    ]);
+  }
 }
 
 void main() {
@@ -211,65 +280,377 @@ void main() {
     });
   }
 
-  test('paste boundary preserves a strong run across link wrappers', () {
-    final fragment = WysiwygClipboardFragment(
-      mode: MarkdownMode.writersideMarkdown,
-      blocks: [
-        BusyWysiwygStyledBlock(
-          kind: BusyBlockKind.paragraph,
-          text: 'hello world ',
-          ranges: const [
-            BusyInlineStyleRange(
-              start: 0,
+  for (final kind in [BusyInlineKind.strong, BusyInlineKind.emphasis]) {
+    for (final mode in [
+      MarkdownMode.commonMark,
+      MarkdownMode.writersideMarkdown,
+    ]) {
+      test(
+        'paste boundary preserves a ${kind.name} run across link wrappers ($mode)',
+        () {
+          final ranges = [
+            BusyInlineStyleRange(start: 0, end: 11, kind: kind),
+            const BusyInlineStyleRange(
+              start: 6,
               end: 11,
-              kind: BusyInlineKind.strong,
+              kind: BusyInlineKind.link,
+              destination: 'guide.md',
+              attributes: {'title': 'Guide'},
             ),
-            BusyInlineStyleRange(
+          ];
+          final fragment = WysiwygClipboardFragment(
+            mode: mode,
+            blocks: [
+              BusyWysiwygStyledBlock(
+                kind: BusyBlockKind.paragraph,
+                text: 'hello world ',
+                ranges: ranges,
+              ),
+            ],
+          );
+          final incoming = fragment.documentBlocks.single;
+          _expectInlineSemantics(incoming, 'hello world ', ranges);
+          final document = _parser
+              .parse(
+                filePath: '/destination.md',
+                source: 'Target\n',
+                mode: mode,
+              )
+              .busyDocument;
+          final controller = BusyMarkWysiwygDocumentController(
+            document: document,
+          );
+          addTearDown(controller.dispose);
+          controller.insertStyledBlocksAtSelection(
+            blockId: document.blocks.single.id,
+            selectionStart: 0,
+            selectionEnd: 6,
+            blocks: fragment.blocks,
+            replacementScope: BusyWysiwygReplacementScope.fieldContent,
+          );
+          final pasted = controller.document.blocks.single;
+          _expectInlineSemantics(pasted, 'hello world ', ranges);
+          final link = busyInlineStyleRanges(
+            pasted.inlines,
+          ).singleWhere((range) => range.kind == BusyInlineKind.link);
+          expect(link.destination, 'guide.md');
+          expect(link.attributes, {'title': 'Guide'});
+          _expectSavedSemantics(
+            controller.markdown,
+            mode,
+            'hello world ',
+            ranges,
+          );
+          final delimiter = kind == BusyInlineKind.strong ? '**' : '*';
+          expect(
+            controller.markdown,
+            '$delimiter'
+            'hello [world](guide.md "Guide")$delimiter \n',
+          );
+        },
+      );
+    }
+  }
+
+  test('HTML decoding preserves formatting-edge whitespace', () {
+    for (final value in _htmlBoundaries) {
+      final decoded = const WysiwygClipboardHtml().decode(
+        value.html,
+        mode: MarkdownMode.writersideMarkdown,
+      )!;
+      _expectInlineSemantics(
+        decoded.documentBlocks.single,
+        '${value.leading}hello world${value.trailing}',
+        [
+          BusyInlineStyleRange(
+            start: value.leading.length,
+            end: value.leading.length + 11,
+            kind: BusyInlineKind.strong,
+          ),
+        ],
+      );
+      expect(
+        decoded.markdown,
+        '${value.leading}**hello world**${value.trailing}\n',
+      );
+    }
+  });
+
+  test(
+    'HTML clipboard documents preserve body spaces and discard head content',
+    () {
+      final decoded = const WysiwygClipboardHtml().decode(
+        '<html><head><meta charset="utf-8"><title>Other document</title></head>'
+        '<body> <strong>hello world</strong>  </body></html>',
+        mode: MarkdownMode.commonMark,
+      )!;
+      expect(decoded.blocks.single.text, ' hello world  ');
+      expect(decoded.markdown, ' **hello world**  \n');
+    },
+  );
+
+  for (final kind in [BusyInlineKind.strong, BusyInlineKind.emphasis]) {
+    for (final nested in [false, true]) {
+      test(
+        'HTML formatting retains internal whitespace across a link ($kind, nested=$nested)',
+        () {
+          final tag = kind == BusyInlineKind.strong ? 'strong' : 'em';
+          final otherTag = kind == BusyInlineKind.strong ? 'em' : 'strong';
+          final label = nested ? '<$otherTag>world</$otherTag>' : 'world';
+          final fragment = const WysiwygClipboardHtml().decode(
+            '<$tag>hello <a href="guide.md">$label</a></$tag> ',
+            mode: MarkdownMode.commonMark,
+          )!;
+          final ranges = [
+            BusyInlineStyleRange(start: 0, end: 11, kind: kind),
+            if (nested)
+              BusyInlineStyleRange(
+                start: 6,
+                end: 11,
+                kind: kind == BusyInlineKind.strong
+                    ? BusyInlineKind.emphasis
+                    : BusyInlineKind.strong,
+              ),
+            const BusyInlineStyleRange(
               start: 6,
               end: 11,
               kind: BusyInlineKind.link,
               destination: 'guide.md',
             ),
-          ],
-        ),
-      ],
+          ];
+          _expectInlineSemantics(
+            fragment.documentBlocks.single,
+            'hello world ',
+            ranges,
+          );
+          final output = _insert(fragment);
+          for (final mode in [
+            MarkdownMode.commonMark,
+            MarkdownMode.writersideMarkdown,
+          ]) {
+            _expectSavedSemantics(output, mode, 'hello world ', ranges);
+          }
+          expect(output.endsWith(' \n'), isTrue);
+        },
+      );
+    }
+  }
+
+  test(
+    'clipboard whitespace mode leaves ordinary raw HTML normalization intact',
+    () {
+      var id = 0;
+      for (final preserve in [false, true]) {
+        final blocks = RawHtmlAdapter(preserveInlineWhitespace: preserve)
+            .parseRawHtmlBlock(
+              '<div> <strong>hello world</strong>  </div>',
+              () => 'html-${id++}',
+            )!
+            .blocks;
+        expect(
+          blocks.single.plainText,
+          preserve ? ' hello world  ' : 'hello world',
+        );
+        expect(_strongRanges(blocks.single), [
+          (preserve ? 1 : 0, preserve ? 12 : 11),
+        ]);
+      }
+    },
+  );
+
+  test('clipboard HTML layout whitespace adds no structural text', () {
+    final decoded = const WysiwygClipboardHtml().decode('''
+      <div>
+        <h2>
+          Heading
+        </h2>
+        <p><strong>First</strong></p>
+        <p>
+          Second
+        </p>
+        <ul>
+          <li><strong>Parent</strong>
+            <ul><li>Child</li></ul>
+          </li>
+        </ul>
+        <table border="1">
+          <tr><th>A</th><th>B</th></tr>
+          <tr><td><strong>One</strong></td><td>Two</td></tr>
+        </table>
+      </div>
+    ''', mode: MarkdownMode.writersideMarkdown)!;
+    final blocks = decoded.documentBlocks;
+    expect(blocks.map((block) => block.kind), [
+      BusyBlockKind.heading,
+      BusyBlockKind.paragraph,
+      BusyBlockKind.paragraph,
+      BusyBlockKind.unorderedListItem,
+      BusyBlockKind.table,
+    ]);
+    expect(blocks.take(4).map((block) => block.plainText), [
+      'Heading',
+      'First',
+      'Second',
+      'Parent',
+    ]);
+    expect(blocks[3].children.single.plainText, 'Child');
+    expect(
+      blocks.last.children
+          .expand((row) => row.children)
+          .map((cell) => cell.plainText),
+      ['A', 'B', 'One', 'Two'],
     );
-    final incoming = fragment.documentBlocks.single;
-    expect(_strongRanges(incoming), [(0, 6), (6, 11)]);
-    final document = _parser
-        .parse(filePath: '/destination.md', source: 'Target\n')
-        .busyDocument;
-    final controller = BusyMarkWysiwygDocumentController(document: document);
-    addTearDown(controller.dispose);
-    controller.insertStyledBlocksAtSelection(
-      blockId: document.blocks.single.id,
-      selectionStart: 0,
-      selectionEnd: 6,
-      blocks: fragment.blocks,
-      replacementScope: BusyWysiwygReplacementScope.fieldContent,
-    );
-    final pasted = controller.document.blocks.single;
-    expect(pasted.plainText, 'hello world ');
-    expect(_strongRanges(pasted), _strongRanges(incoming));
-    final link = pasted.inlines.singleWhere(
-      (inline) => inline.kind == BusyInlineKind.link,
-    );
-    expect(link.destination, 'guide.md');
-    expect(link.plainText, 'world');
   });
 
-  test('HTML decoding exposes formatting-edge whitespace loss', () {
-    for (final trailing in [' ', '  ']) {
-      final decoded = const WysiwygClipboardHtml().decode(
-        '<strong>hello world</strong>$trailing',
-        mode: MarkdownMode.writersideMarkdown,
-      )!;
-      // RawHtmlAdapter discards this HTML boundary whitespace before insertion.
-      // Use explicit structured fixtures above to exercise replacement itself.
-      expect(decoded.blocks.single.text, 'hello world');
-      expect(_strongRanges(decoded.documentBlocks.single), [(0, 11)]);
+  for (final mode in [
+    MarkdownMode.commonMark,
+    MarkdownMode.writersideMarkdown,
+  ]) {
+    for (final value in [
+      (
+        name: 'adjacent strong segments',
+        text: 'hello world ',
+        ranges: const [
+          BusyInlineStyleRange(start: 0, end: 6, kind: BusyInlineKind.strong),
+          BusyInlineStyleRange(start: 6, end: 11, kind: BusyInlineKind.strong),
+        ],
+      ),
+      (
+        name: 'adjacent strong and emphasis',
+        text: 'helloworld ',
+        ranges: const [
+          BusyInlineStyleRange(start: 0, end: 5, kind: BusyInlineKind.strong),
+          BusyInlineStyleRange(
+            start: 5,
+            end: 10,
+            kind: BusyInlineKind.emphasis,
+          ),
+        ],
+      ),
+      (
+        name: 'strong beside a plain link',
+        text: 'hello world ',
+        ranges: const [
+          BusyInlineStyleRange(start: 0, end: 5, kind: BusyInlineKind.strong),
+          BusyInlineStyleRange(
+            start: 6,
+            end: 11,
+            kind: BusyInlineKind.link,
+            destination: 'guide.md',
+          ),
+        ],
+      ),
+      (
+        name: 'partially strong link label',
+        text: 'hello world ',
+        ranges: const [
+          BusyInlineStyleRange(start: 6, end: 11, kind: BusyInlineKind.strong),
+          BusyInlineStyleRange(
+            start: 0,
+            end: 11,
+            kind: BusyInlineKind.link,
+            destination: 'guide.md',
+          ),
+        ],
+      ),
+      (
+        name: 'strong run starting in a link',
+        text: 'hello world ',
+        ranges: const [
+          BusyInlineStyleRange(start: 0, end: 11, kind: BusyInlineKind.strong),
+          BusyInlineStyleRange(
+            start: 0,
+            end: 5,
+            kind: BusyInlineKind.link,
+            destination: 'guide.md',
+          ),
+        ],
+      ),
+      (
+        name: 'nested strong and emphasis across a link',
+        text: 'hello world ',
+        ranges: const [
+          BusyInlineStyleRange(start: 0, end: 11, kind: BusyInlineKind.strong),
+          BusyInlineStyleRange(
+            start: 6,
+            end: 11,
+            kind: BusyInlineKind.emphasis,
+          ),
+          BusyInlineStyleRange(
+            start: 6,
+            end: 11,
+            kind: BusyInlineKind.link,
+            destination: 'guide.md',
+          ),
+        ],
+      ),
+      (
+        name: 'nested emphasis and strong across a link',
+        text: 'hello world ',
+        ranges: const [
+          BusyInlineStyleRange(
+            start: 0,
+            end: 11,
+            kind: BusyInlineKind.emphasis,
+          ),
+          BusyInlineStyleRange(start: 6, end: 11, kind: BusyInlineKind.strong),
+          BusyInlineStyleRange(
+            start: 6,
+            end: 11,
+            kind: BusyInlineKind.link,
+            destination: 'guide.md',
+          ),
+        ],
+      ),
+      (
+        name: 'nested coincident formatting',
+        text: 'hello world ',
+        ranges: const [
+          BusyInlineStyleRange(start: 0, end: 11, kind: BusyInlineKind.strong),
+          BusyInlineStyleRange(
+            start: 0,
+            end: 11,
+            kind: BusyInlineKind.emphasis,
+          ),
+        ],
+      ),
+    ]) {
+      test('paste serialization preserves ${value.name} ($mode)', () {
+        final document = _parser
+            .parse(filePath: '/destination.md', source: 'Target\n', mode: mode)
+            .busyDocument;
+        final controller = BusyMarkWysiwygDocumentController(
+          document: document,
+        );
+        addTearDown(controller.dispose);
+        controller.insertStyledBlocksAtSelection(
+          blockId: document.blocks.single.id,
+          selectionStart: 0,
+          selectionEnd: 6,
+          replacementScope: BusyWysiwygReplacementScope.fieldContent,
+          blocks: [
+            BusyWysiwygStyledBlock(
+              kind: BusyBlockKind.paragraph,
+              text: value.text,
+              ranges: value.ranges,
+            ),
+          ],
+        );
+        _expectInlineSemantics(
+          controller.document.blocks.single,
+          value.text,
+          value.ranges,
+        );
+        expect(controller.markdown.endsWith(' \n'), isTrue);
+        _expectSavedSemantics(
+          controller.markdown,
+          mode,
+          value.text,
+          value.ranges,
+        );
+      });
     }
-  });
+  }
 
   test('single rich paragraphs preserve list descendants through source', () {
     final incoming = _fragment('**X**\n').blocks;
@@ -675,15 +1056,12 @@ void main() {
       bool hostToasts = false,
       bool providerScope = false,
       bool focusFirstField = true,
+      MarkdownMode mode = MarkdownMode.writersideMarkdown,
       WysiwygEditorSessionState Function(BusyDocument document)?
       initialSessionFor,
     }) async {
       final document = _parser
-          .parse(
-            filePath: filePath ?? '/$id.md',
-            source: source,
-            mode: MarkdownMode.writersideMarkdown,
-          )
+          .parse(filePath: filePath ?? '/$id.md', source: source, mode: mode)
           .busyDocument;
       final app = MaterialApp(
         localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -1723,6 +2101,230 @@ void main() {
         expect(RegExp(r'Existing').allMatches(result), hasLength(1));
       },
     );
+
+    for (final mode in [
+      MarkdownMode.commonMark,
+      MarkdownMode.writersideMarkdown,
+    ]) {
+      for (final withPlainText in [false, true]) {
+        for (final value in _htmlBoundaries) {
+          testWidgets(
+            'normal HTML paste retains boundary spaces ($mode, plain=$withPlainText, ${value.html})',
+            (tester) async {
+              const original = '**hello wold**\n';
+              var saved = original;
+              BusyDocument? live;
+              systemData = {
+                'html': value.html,
+                if (withPlainText)
+                  'text': '${value.leading}hello world${value.trailing}',
+              };
+              await mount(
+                tester,
+                'html-boundary',
+                original,
+                (source) => saved = source,
+                onDocumentChanged: (document) => live = document,
+                mode: mode,
+              );
+              final service = tester
+                  .widget<BusyMarkWysiwygEditor>(
+                    find.byType(BusyMarkWysiwygEditor),
+                  )
+                  .clipboardService!;
+              final snapshot = BusyMarkClipboardSnapshot.fromSystem(
+                await service.read(),
+              );
+              expect(snapshot.richFragment, isNull);
+              expect(
+                snapshot.text,
+                withPlainText
+                    ? '${value.leading}hello world${value.trailing}'
+                    : null,
+              );
+              final candidate =
+                  const BusyMarkClipboardPasteResolver()
+                          .resolve(
+                            snapshot: snapshot,
+                            mode: BusyMarkPasteMode.normal,
+                            destination: BusyMarkPasteDestination.editor,
+                            markdownMode: mode,
+                          )
+                          .candidates
+                          .first
+                      as BusyMarkStructuredPasteCandidate;
+              expect(candidate.source, BusyMarkStructuredClipboardSource.html);
+              // Exercise the keyboard path even when the decoder is defective.
+              tester
+                  .widget<TextField>(find.byType(TextField).first)
+                  .controller!
+                  .selection = const TextSelection(
+                baseOffset: 0,
+                extentOffset: 10,
+              );
+              await tester.pump();
+              await key(tester, LogicalKeyboardKey.keyV);
+              await tester.pumpAndSettle();
+              _expectBoundaryReplacement(
+                live!.blocks.single,
+                saved,
+                tester
+                    .widget<TextField>(find.byType(TextField).first)
+                    .controller!
+                    .selection
+                    .extentOffset,
+                leading: value.leading,
+                trailing: value.trailing,
+              );
+              expect(
+                candidate.fragment.blocks.single.text,
+                '${value.leading}hello world${value.trailing}',
+              );
+              await key(tester, LogicalKeyboardKey.keyZ);
+              await tester.pumpAndSettle();
+              expect(saved, original);
+              _expectInlineSemantics(live!.blocks.single, 'hello wold', [
+                const BusyInlineStyleRange(
+                  start: 0,
+                  end: 10,
+                  kind: BusyInlineKind.strong,
+                ),
+              ]);
+              await key(tester, LogicalKeyboardKey.keyZ, shift: true);
+              await tester.pumpAndSettle();
+              _expectBoundaryReplacement(
+                live!.blocks.single,
+                saved,
+                null,
+                leading: value.leading,
+                trailing: value.trailing,
+              );
+            },
+          );
+        }
+      }
+    }
+
+    for (final mode in [
+      MarkdownMode.commonMark,
+      MarkdownMode.writersideMarkdown,
+    ]) {
+      for (final kind in [BusyInlineKind.strong, BusyInlineKind.emphasis]) {
+        for (final useHtml in [false, true]) {
+          testWidgets(
+            'normal ${useHtml ? 'HTML' : 'structured'} paste saves linked ${kind.name} and restores history ($mode)',
+            (tester) async {
+              var saved = 'Target\n';
+              BusyDocument? live;
+              final ranges = [
+                BusyInlineStyleRange(start: 0, end: 11, kind: kind),
+                const BusyInlineStyleRange(
+                  start: 6,
+                  end: 11,
+                  kind: BusyInlineKind.link,
+                  destination: 'guide.md',
+                  attributes: {'title': 'Guide'},
+                ),
+              ];
+              final fragment = WysiwygClipboardFragment(
+                mode: mode,
+                blocks: [
+                  BusyWysiwygStyledBlock(
+                    kind: BusyBlockKind.paragraph,
+                    text: 'hello world ',
+                    ranges: ranges,
+                  ),
+                ],
+              );
+              await mount(
+                tester,
+                'linked-paste',
+                saved,
+                (source) => saved = source,
+                onDocumentChanged: (document) => live = document,
+                mode: mode,
+              );
+              final service = tester
+                  .widget<BusyMarkWysiwygEditor>(
+                    find.byType(BusyMarkWysiwygEditor),
+                  )
+                  .clipboardService!;
+              final tag = kind == BusyInlineKind.strong ? 'strong' : 'em';
+              expect(
+                await service.write(
+                  RichClipboardData(
+                    text: 'hello world ',
+                    html: useHtml
+                        ? '<$tag>hello <a href="guide.md" title="Guide">world</a></$tag> '
+                        : null,
+                    richFragment: useHtml ? null : fragment.encode(),
+                  ),
+                ),
+                isTrue,
+              );
+              tester
+                  .widget<TextField>(find.byType(TextField).first)
+                  .controller!
+                  .selection = const TextSelection(
+                baseOffset: 0,
+                extentOffset: 6,
+              );
+              await tester.pump();
+              await key(tester, LogicalKeyboardKey.keyV);
+              await tester.pumpAndSettle();
+              final delimiter = kind == BusyInlineKind.strong ? '**' : '*';
+              final expected =
+                  '${delimiter}hello [world](guide.md "Guide")$delimiter \n';
+              void check() {
+                expect(saved, expected);
+                _expectInlineSemantics(
+                  live!.blocks.single,
+                  'hello world ',
+                  ranges,
+                );
+                _expectSavedSemantics(saved, mode, 'hello world ', ranges);
+              }
+
+              check();
+              expect(
+                tester
+                    .widget<TextField>(find.byType(TextField).first)
+                    .controller!
+                    .selection,
+                const TextSelection.collapsed(offset: 12),
+              );
+              await key(tester, LogicalKeyboardKey.keyZ);
+              await tester.pumpAndSettle();
+              expect(saved, 'Target\n');
+              _expectInlineSemantics(live!.blocks.single, 'Target', []);
+              await key(tester, LogicalKeyboardKey.keyZ, shift: true);
+              await tester.pumpAndSettle();
+              check();
+              await mount(tester, 'linked-reopened', saved, (_) {}, mode: mode);
+              expect(
+                tester
+                    .widget<TextField>(find.byType(TextField).first)
+                    .controller!
+                    .text,
+                'hello world',
+              );
+              final reopened = _parser
+                  .parse(
+                    filePath: '/linked-reopened.md',
+                    source: saved,
+                    mode: mode,
+                  )
+                  .busyDocument;
+              _expectInlineSemantics(
+                reopened.blocks.single,
+                'hello world',
+                ranges,
+              );
+            },
+          );
+        }
+      }
+    }
 
     for (final plain in [false, true]) {
       for (final boundary in [

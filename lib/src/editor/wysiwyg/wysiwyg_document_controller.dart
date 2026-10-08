@@ -3000,6 +3000,17 @@ BusyBlock busyMarkWysiwygClipboardBlock(BusyWysiwygStyledBlock styled) {
       );
 }
 
+/// HTML decoding uses the same run boundaries as insertion, after all inline
+/// wrappers are available. Trimming individual HTML text leaves would turn
+/// internal spaces in nested formatting into unformatted boundary spaces.
+List<BusyInline> busyMarkWysiwygNormalizeClipboardFormatting(
+  List<BusyInline> inlines,
+) => _normalizePastedFormatting(
+  _mergeAdjacentInlineStyles(inlines),
+  0,
+  inlines.fold(0, (length, inline) => length + inline.plainText.length),
+);
+
 List<BusyInline> busyMarkWysiwygClipboardInlineSlice(
   List<BusyInline> inlines,
   int start,
@@ -4799,12 +4810,51 @@ List<BusyInline> _inlinesFromStyleRanges(
 
 List<BusyInline> _mergeAdjacentInlineStyles(List<BusyInline> inlines) {
   final merged = <BusyInline>[];
-  for (final sourceInline in inlines) {
-    final inline = sourceInline.children.isEmpty
+  BusyInline? formatting(BusyInline? inline) {
+    if (inline?.kind == BusyInlineKind.link && inline!.children.length == 1) {
+      inline = inline.children.single;
+    }
+    return inline?.kind == BusyInlineKind.strong ||
+            inline?.kind == BusyInlineKind.emphasis
+        ? inline
+        : null;
+  }
+
+  for (var index = 0; index < inlines.length; index++) {
+    final sourceInline = inlines[index];
+    var inline = sourceInline.children.isEmpty
         ? sourceInline
         : sourceInline.copyWith(
             children: _mergeAdjacentInlineStyles(sourceInline.children),
           );
+    if (inline.kind == BusyInlineKind.link) {
+      final before = formatting(merged.lastOrNull);
+      final after = formatting(
+        index + 1 < inlines.length ? inlines[index + 1] : null,
+      );
+      var children = inline.children;
+      while (children.length == 1 &&
+          _isMarkdownEmphasis(children.single.kind)) {
+        final wrapper = children.single;
+        if ((before == null || !_canMergeInlineStyles(before, wrapper)) &&
+            (after == null || !_canMergeInlineStyles(wrapper, after))) {
+          children = wrapper.children;
+          continue;
+        }
+        // A fully styled label belongs to the adjoining visual run. Lift its
+        // wrapper so merging can enclose the intact link in one delimiter pair,
+        // including whitespace internal to that run (e.g. "hello [world]").
+        inline = wrapper.copyWith(
+          text: inline.plainText,
+          children: [
+            inline.copyWith(
+              children: _withoutInlineContext(inline.children, wrapper),
+            ),
+          ],
+        );
+        break;
+      }
+    }
     if (merged.isEmpty || !_canMergeInlineStyles(merged.last, inline)) {
       merged.add(inline);
       continue;
