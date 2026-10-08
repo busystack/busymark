@@ -11,6 +11,9 @@ class AppLocalizationsUk extends AppLocalizations {
   AppLocalizationsUk([String locale = 'uk']) : super(locale);
 
   @override
+  String get closeOtherTabs => 'Закрити інші вкладки';
+
+  @override
   String get tocTopicFromTemplate => 'Тема з шаблону...';
 
   @override

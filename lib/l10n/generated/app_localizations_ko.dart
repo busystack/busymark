@@ -11,6 +11,9 @@ class AppLocalizationsKo extends AppLocalizations {
   AppLocalizationsKo([String locale = 'ko']) : super(locale);
 
   @override
+  String get closeOtherTabs => '다른 탭 닫기';
+
+  @override
   String get tocTopicFromTemplate => '템플릿에서 토픽...';
 
   @override

@@ -1,4 +1,6 @@
 {
+  "closeOtherTabs": "Lukk andre faner",
+  "@closeOtherTabs": {"description": "Document tab context menu action that closes every other document and comparison tab while retaining this document."},
   "tocTopicFromTemplate": "Emne fra mal...",
   "tocSaveAsTemplate": "Lagre som mal",
   "tocTemplateDialog": "Opprett emne fra mal",

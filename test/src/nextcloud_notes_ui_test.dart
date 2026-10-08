@@ -23,7 +23,9 @@ import 'package:busymark/src/workspace/presentation/settings_screen.dart';
 import 'package:busymark/src/workspace/recovery_persistence.dart';
 import 'package:busymark/src/workspace/session_persistence.dart';
 import 'package:busymark/src/workspace/workspace_controller.dart';
+import 'package:busymark/src/workspace/workspace_model.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -369,6 +371,135 @@ void main() {
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox.shrink());
   });
+
+  for (final action in ['middle', 'other', 'all']) {
+    testWidgets(
+      'remote tab $action closing keeps notes and disables Copy path',
+      (tester) async {
+        final container = ProviderContainer(
+          overrides: [
+            nextcloudNotesRepositoryProvider.overrideWith(
+              (ref) async => repository,
+            ),
+            localSettingsStoreProvider.overrideWithValue(_TabSettings()),
+            linuxAccentPlatformProvider.overrideWithValue(false),
+            localHistoryStoreProvider.overrideWithValue(
+              MemoryLocalHistoryStore(),
+            ),
+            documentSessionStoreProvider.overrideWithValue(
+              MemoryDocumentSessionStore(),
+            ),
+            documentRecoveryStoreProvider.overrideWithValue(
+              MemoryDocumentRecoveryStore(),
+            ),
+          ],
+        );
+        addTearDown(container.dispose);
+        final controller = container.read(workspaceControllerProvider.notifier);
+        const personalId = '223e4567-e89b-42d3-a456-426614174000';
+        const sharedId = '323e4567-e89b-42d3-a456-426614174000';
+        await tester.runAsync(() async {
+          await controller.openNextcloudWorkspace(accountId);
+          await controller.openNextcloudNote(personalId);
+          await controller.openNextcloudNote(sharedId);
+        });
+        container.read(appRouterProvider).go('/workspace');
+        await tester.pumpWidget(
+          UncontrolledProviderScope(
+            container: container,
+            child: const BusyMarkApp(),
+          ),
+        );
+        await tester.pumpAndSettle();
+        final target = container
+            .read(workspaceControllerProvider)
+            .documentBuffers
+            .singleWhere((buffer) => buffer.remoteNote?.localId == personalId);
+        final activeId = container
+            .read(workspaceControllerProvider)
+            .activeBufferId;
+        Finder label() => find
+            .descendant(
+              of: find.byKey(ValueKey('file:${target.id}')),
+              matching: find.byType(Text),
+            )
+            .first;
+        Map? menu;
+        var choice = 4; // Disabled Copy path must not dispatch or write.
+        var clipboardWrites = 0;
+        const channel = MethodChannel('busymark/native_menus');
+        tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          channel,
+          (call) async {
+            if (call.method == 'show') {
+              menu = call.arguments as Map;
+              return choice;
+            }
+            return true;
+          },
+        );
+        tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          SystemChannels.platform,
+          (call) async {
+            if (call.method == 'Clipboard.setData') clipboardWrites++;
+            return null;
+          },
+        );
+        addTearDown(() {
+          tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+            channel,
+            null,
+          );
+          tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+            SystemChannels.platform,
+            null,
+          );
+        });
+        await tester.tap(label(), buttons: kSecondaryButton);
+        await tester.pumpAndSettle();
+        final entries = menu!['entries'] as List;
+        expect((entries[4] as Map)['enabled'], isFalse);
+        expect(clipboardWrites, 0);
+        expect(
+          container.read(workspaceControllerProvider).activeBufferId,
+          activeId,
+        );
+        if (action == 'middle') {
+          await tester.tap(label(), buttons: kTertiaryButton);
+        } else {
+          choice = action == 'other' ? 1 : 2;
+          await tester.tap(label(), buttons: kSecondaryButton);
+        }
+        for (var i = 0; i < 100; i++) {
+          await tester.runAsync(
+            () => Future<void>.delayed(const Duration(milliseconds: 10)),
+          );
+          await tester.pump(const Duration(milliseconds: 10));
+          if (container
+                  .read(workspaceControllerProvider)
+                  .documentBuffers
+                  .length ==
+              (action == 'all' ? 0 : 1)) {
+            break;
+          }
+        }
+        await tester.pumpAndSettle();
+        final state = container.read(workspaceControllerProvider);
+        expect(state.documentBuffers, hasLength(action == 'all' ? 0 : 1));
+        if (action == 'other') expect(state.activeBufferId, target.id);
+        if (action == 'middle') {
+          expect(state.documentBuffers.single.remoteNote?.localId, sharedId);
+        }
+        expect(state.workspace!.kind, WorkspaceKind.nextcloudNotes);
+        expect((repository as _CachedNotesRepository).deleteCalls, 0);
+        expect(repository.noteById(personalId)?.content, 'private search text');
+        expect(repository.noteById(sharedId)?.content, 'shared material');
+        expect(clipboardWrites, 0);
+        expect(tester.takeException(), isNull);
+        await tester.pumpWidget(const SizedBox.shrink());
+      },
+    );
+  }
 
   testWidgets(
     'cached note list searches content and excludes clean deletion tombstones',
@@ -914,6 +1045,13 @@ class _CachedNotesRepository extends NotesRepository {
           appPassword: 'fixture',
         ),
       );
+
+  int deleteCalls = 0;
+  @override
+  Future<void> delete(String localId) {
+    deleteCalls++;
+    return super.delete(localId);
+  }
 
   @override
   Future<void> synchronize(String accountId) async {}

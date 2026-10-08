@@ -1,4 +1,6 @@
 {
+  "closeOtherTabs": "Diğer sekmeleri kapat",
+  "@closeOtherTabs": {"description": "Document tab context menu action that closes every other document and comparison tab while retaining this document."},
   "tocTopicFromTemplate": "Şablondan Konu...",
   "tocSaveAsTemplate": "Şablon Olarak Kaydet",
   "tocTemplateDialog": "Şablondan Konu Oluştur",

@@ -1,4 +1,6 @@
 {
+  "closeOtherTabs": "Fechar os outros separadores",
+  "@closeOtherTabs": {"description": "Document tab context menu action that closes every other document and comparison tab while retaining this document."},
   "tocTopicFromTemplate": "Tópico a partir de modelo...",
   "tocSaveAsTemplate": "Guardar como modelo",
   "tocTemplateDialog": "Criar tópico a partir de modelo",

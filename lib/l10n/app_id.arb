@@ -1,4 +1,6 @@
 {
+  "closeOtherTabs": "Tutup tab lainnya",
+  "@closeOtherTabs": {"description": "Document tab context menu action that closes every other document and comparison tab while retaining this document."},
   "tocTopicFromTemplate": "Topik dari Templat...",
   "tocSaveAsTemplate": "Simpan sebagai Templat",
   "tocTemplateDialog": "Buat Topik dari Templat",

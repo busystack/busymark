@@ -11,6 +11,9 @@ class AppLocalizationsAr extends AppLocalizations {
   AppLocalizationsAr([String locale = 'ar']) : super(locale);
 
   @override
+  String get closeOtherTabs => 'إغلاق علامات التبويب الأخرى';
+
+  @override
   String get tocTopicFromTemplate => 'موضوع من قالب...';
 
   @override

@@ -11,6 +11,9 @@ class AppLocalizationsIt extends AppLocalizations {
   AppLocalizationsIt([String locale = 'it']) : super(locale);
 
   @override
+  String get closeOtherTabs => 'Chiudi le altre schede';
+
+  @override
   String get tocTopicFromTemplate => 'Argomento da modello...';
 
   @override

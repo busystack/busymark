@@ -1,4 +1,6 @@
 {
+  "closeOtherTabs": "Chiudi le altre schede",
+  "@closeOtherTabs": {"description": "Document tab context menu action that closes every other document and comparison tab while retaining this document."},
   "tocTopicFromTemplate": "Argomento da modello...",
   "tocSaveAsTemplate": "Salva come modello",
   "tocTemplateDialog": "Crea argomento da modello",

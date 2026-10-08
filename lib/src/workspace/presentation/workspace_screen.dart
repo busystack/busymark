@@ -118,6 +118,7 @@ import '../workspace_model.dart';
 import '../workspace_message.dart';
 import '../workspace_safety.dart';
 import '../workspace_tabs.dart';
+import '../workspace_tab_actions.dart';
 import 'welcome_screen.dart';
 import 'writerside_instance_dialog.dart';
 import 'writerside_markdown_import_dialog.dart';
@@ -680,6 +681,135 @@ class _SearchReturnFocus {
 class WorkspaceScreen extends ConsumerWidget {
   const WorkspaceScreen({super.key});
 
+  Future<void> _showTabMenu(
+    BuildContext context,
+    WidgetRef ref,
+    Workspace workspace,
+    WorkspaceTabEntry entry,
+    Offset position,
+  ) async {
+    if (!isWorkspaceTabCurrent(ref, workspace, entry)) return;
+    final state = ref.read(workspaceControllerProvider);
+    final buffer = state.documentBuffers
+        .where((buffer) => buffer.id == entry.bufferId)
+        .firstOrNull;
+    final history = ref.read(localHistoryControllerProvider);
+    final entries = workspaceTabEntries(
+      workspace: state.workspace!,
+      gitState: ref.read(gitControllerProvider),
+      documentBuffers: state.documentBuffers,
+      activeBufferId: state.activeBufferId,
+      localHistoryRevisionId: history.selectedRevisionId,
+      localHistoryDocumentName: history.selectedDocument?.displayName,
+    );
+    final action = await showBusyMarkContextMenu<_WorkspaceTabAction>(
+      context,
+      position,
+      items: [
+        BusyMarkPopupMenuItem(
+          value: _WorkspaceTabAction.close,
+          label: context.l10n.close,
+          icon: BusyMarkGlyphs.clear,
+        ),
+        if (entry.kind == WorkspaceTabKind.file) ...[
+          BusyMarkPopupMenuItem(
+            value: _WorkspaceTabAction.closeOthers,
+            label: context.l10n.closeOtherTabs,
+            icon: BusyMarkGlyphs.clear,
+            enabled: entries.any((tab) => tab.key != entry.key),
+          ),
+          BusyMarkPopupMenuItem(
+            value: _WorkspaceTabAction.closeAll,
+            label: context.l10n.shortcutCloseAllTabs,
+            icon: BusyMarkGlyphs.clear,
+          ),
+          const PopupMenuDivider(height: BusyMarkSpacing.sm),
+          BusyMarkPopupMenuItem(
+            value: _WorkspaceTabAction.copyPath,
+            label: context.l10n.copyPath,
+            icon: BusyMarkGlyphs.copy,
+            enabled:
+                buffer != null &&
+                !buffer.isRemote &&
+                buffer.filePath != null &&
+                buffer.filePath!.isNotEmpty,
+          ),
+          const PopupMenuDivider(height: BusyMarkSpacing.sm),
+          BusyMarkPopupMenuItem(
+            value: _WorkspaceTabAction.localHistory,
+            label: context.l10n.localHistoryEllipsis,
+            icon: BusyMarkGlyphs.documentHistory,
+          ),
+        ],
+      ],
+    );
+    if (action == null ||
+        !context.mounted ||
+        !isWorkspaceTabCurrent(ref, workspace, entry)) {
+      return;
+    }
+    final actionWorkspace = ref.read(workspaceControllerProvider).workspace!;
+    switch (action) {
+      case _WorkspaceTabAction.localHistory:
+        final requestedBuffer = ref
+            .read(workspaceControllerProvider)
+            .documentBuffers
+            .where((candidate) => candidate.id == entry.bufferId)
+            .firstOrNull;
+        if (requestedBuffer == null) return;
+        final controller = ref.read(workspaceControllerProvider.notifier);
+        final historyController = ref.read(
+          localHistoryControllerProvider.notifier,
+        );
+        if (!await controller.activateDocumentBuffer(requestedBuffer.id) ||
+            !context.mounted ||
+            !isWorkspaceTabCurrent(ref, actionWorkspace, entry)) {
+          return;
+        }
+        final currentRequestedBuffer = ref
+            .read(workspaceControllerProvider)
+            .documentBuffers
+            .where((candidate) => candidate.id == requestedBuffer.id)
+            .firstOrNull;
+        if (currentRequestedBuffer == null) return;
+        await historyController.selectDocumentForBuffer(currentRequestedBuffer);
+        if (!context.mounted || !ref.context.mounted) return;
+        ref
+            .read(_sidebarShortcutRequestProvider.notifier)
+            .select(_SidebarTab.localHistory);
+      case _WorkspaceTabAction.close:
+        await closeWorkspaceTab(
+          context,
+          ref,
+          workspace: actionWorkspace,
+          tab: entry,
+        );
+      case _WorkspaceTabAction.closeOthers:
+        await closeOtherWorkspaceTabs(
+          context,
+          ref,
+          workspace: actionWorkspace,
+          retainedTab: entry,
+        );
+      case _WorkspaceTabAction.closeAll:
+        await closeAllWorkspaceTabs(context, ref, workspace: actionWorkspace);
+      case _WorkspaceTabAction.copyPath:
+        final current = ref
+            .read(workspaceControllerProvider)
+            .documentBuffers
+            .where((buffer) => buffer.id == entry.bufferId)
+            .firstOrNull;
+        final path = current?.filePath;
+        if (current == null ||
+            current.isRemote ||
+            path == null ||
+            path.isEmpty) {
+          return;
+        }
+        await _copyToClipboard(path);
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(workspaceControllerProvider);
@@ -721,6 +851,11 @@ class WorkspaceScreen extends ConsumerWidget {
             state: state,
             gitState: gitState,
             localHistoryState: localHistoryState,
+            onClose: (entry) => unawaited(
+              closeWorkspaceTab(context, ref, workspace: workspace, tab: entry),
+            ),
+            onShowMenu: (entry, position) =>
+                _showTabMenu(context, ref, workspace, entry, position),
           ),
         Expanded(
           child: localHistoryState.selectedRevision != null
@@ -10260,11 +10395,15 @@ class _EditorTabStrip extends ConsumerWidget {
     required this.state,
     required this.gitState,
     required this.localHistoryState,
+    required this.onClose,
+    required this.onShowMenu,
   });
 
   final WorkspaceState state;
   final GitState gitState;
   final LocalHistoryState localHistoryState;
+  final void Function(WorkspaceTabEntry) onClose;
+  final void Function(WorkspaceTabEntry, Offset) onShowMenu;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -10306,6 +10445,7 @@ class _EditorTabStrip extends ConsumerWidget {
                 itemBuilder: (context, index) {
                   final entry = entries[index];
                   return _WorkspaceTabButton(
+                    key: ValueKey(entry.key),
                     title: _tabTitle(context, workspace, entry),
                     icon: _tabIcon(workspace, entry),
                     diff: entry.kind == WorkspaceTabKind.gitDiff,
@@ -10313,14 +10453,9 @@ class _EditorTabStrip extends ConsumerWidget {
                     dirty: _tabDirty(workspace, entry),
                     onSelected: () =>
                         _selectTab(context, ref, workspace, entry),
-                    onClose: () => _closeTab(context, ref, workspace, entry),
-                    onSecondaryTapUp: (details) => _showTabMenu(
-                      context,
-                      ref,
-                      workspace,
-                      entry,
-                      details.globalPosition,
-                    ),
+                    onClose: () => onClose(entry),
+                    onSecondaryTapUp: (details) =>
+                        onShowMenu(entry, details.globalPosition),
                   );
                 },
                 separatorBuilder: (context, index) =>
@@ -10418,100 +10553,19 @@ class _EditorTabStrip extends ConsumerWidget {
         return;
     }
   }
-
-  Future<void> _closeTab(
-    BuildContext context,
-    WidgetRef ref,
-    Workspace workspace,
-    WorkspaceTabEntry entry,
-  ) async {
-    final gitController = ref.read(gitControllerProvider.notifier);
-    switch (entry.kind) {
-      case WorkspaceTabKind.file:
-        final controller = ref.read(workspaceControllerProvider.notifier);
-        if (entry.dirty) {
-          if (entry.bufferId != state.activeBufferId) {
-            await controller.activateDocumentBuffer(entry.bufferId!);
-          }
-          if (!context.mounted ||
-              !await confirmSafeToCloseActiveDocument(context, ref) ||
-              !context.mounted) {
-            return;
-          }
-        }
-        await controller.closeDocumentBuffer(entry.bufferId!);
-        gitController.deactivateDiffFile();
-      case WorkspaceTabKind.gitDiff:
-        if (entry.path.isEmpty) {
-          gitController.clearSelection();
-        } else {
-          gitController.closeDiffFile(entry.path);
-        }
-      case WorkspaceTabKind.localHistory:
-        ref.read(localHistoryControllerProvider.notifier).clearComparison();
-    }
-  }
-
-  Future<void> _showTabMenu(
-    BuildContext context,
-    WidgetRef ref,
-    Workspace workspace,
-    WorkspaceTabEntry entry,
-    Offset position,
-  ) async {
-    final action = await showBusyMarkContextMenu<_WorkspaceTabAction>(
-      context,
-      position,
-      items: [
-        if (entry.kind == WorkspaceTabKind.file)
-          BusyMarkPopupMenuItem(
-            value: _WorkspaceTabAction.localHistory,
-            label: context.l10n.localHistoryEllipsis,
-            icon: BusyMarkGlyphs.documentHistory,
-          ),
-        if (entry.kind == WorkspaceTabKind.file)
-          const PopupMenuDivider(height: BusyMarkSpacing.sm),
-        BusyMarkPopupMenuItem(
-          value: _WorkspaceTabAction.close,
-          label: MaterialLocalizations.of(context).closeButtonTooltip,
-          icon: BusyMarkGlyphs.clear,
-        ),
-      ],
-    );
-    if (action == null || !context.mounted) return;
-    switch (action) {
-      case _WorkspaceTabAction.localHistory:
-        final requestedBuffer = state.documentBuffers
-            .where((candidate) => candidate.id == entry.bufferId)
-            .firstOrNull;
-        if (requestedBuffer == null) return;
-        final activated = await ref
-            .read(workspaceControllerProvider.notifier)
-            .activateDocumentBuffer(requestedBuffer.id);
-        if (!activated || !context.mounted) return;
-        final currentRequestedBuffer = ref
-            .read(workspaceControllerProvider)
-            .documentBuffers
-            .where((candidate) => candidate.id == requestedBuffer.id)
-            .firstOrNull;
-        if (currentRequestedBuffer == null) return;
-        await ref
-            .read(localHistoryControllerProvider.notifier)
-            .selectDocumentForBuffer(currentRequestedBuffer);
-        if (!context.mounted) return;
-        ref
-            .read(_sidebarShortcutRequestProvider.notifier)
-            .select(_SidebarTab.localHistory);
-      case _WorkspaceTabAction.close:
-        await _closeTab(context, ref, workspace, entry);
-    }
-  }
 }
 
-enum _WorkspaceTabAction { localHistory, close }
+enum _WorkspaceTabAction {
+  close,
+  closeOthers,
+  closeAll,
+  copyPath,
+  localHistory,
+}
 
 class _WorkspaceTabButton extends StatelessWidget {
   const _WorkspaceTabButton({
+    super.key,
     required this.title,
     required this.icon,
     required this.diff,
@@ -10544,66 +10598,69 @@ class _WorkspaceTabButton extends StatelessWidget {
       borderRadius: const BorderRadius.vertical(
         top: Radius.circular(BusyMarkRadius.sm),
       ),
-      child: InkWell(
-        borderRadius: const BorderRadius.vertical(
-          top: Radius.circular(BusyMarkRadius.sm),
-        ),
-        hoverColor: colors.controlHover,
-        onTap: onSelected,
-        onSecondaryTapUp: onSecondaryTapUp,
-        child: Container(
-          height: BusyMarkSizes.paneHeaderHeight - BusyMarkSpacing.xs,
-          constraints: const BoxConstraints(minWidth: 112, maxWidth: 240),
-          decoration: BoxDecoration(
-            borderRadius: const BorderRadius.vertical(
-              top: Radius.circular(BusyMarkRadius.sm),
+      child: GestureDetector(
+        onTertiaryTapUp: (_) => onClose(),
+        child: InkWell(
+          borderRadius: const BorderRadius.vertical(
+            top: Radius.circular(BusyMarkRadius.sm),
+          ),
+          hoverColor: colors.controlHover,
+          onTap: onSelected,
+          onSecondaryTapUp: onSecondaryTapUp,
+          child: Container(
+            height: BusyMarkSizes.paneHeaderHeight - BusyMarkSpacing.xs,
+            constraints: const BoxConstraints(minWidth: 112, maxWidth: 240),
+            decoration: BoxDecoration(
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(BusyMarkRadius.sm),
+              ),
+              border: Border.all(color: borderColor),
             ),
-            border: Border.all(color: borderColor),
-          ),
-          padding: const EdgeInsetsDirectional.only(
-            start: BusyMarkSpacing.sm,
-            end: BusyMarkSpacing.xs,
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (dirty) ...[
-                Container(
-                  width: BusyMarkSizes.markerDot,
-                  height: BusyMarkSizes.markerDot,
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.primary,
-                    shape: BoxShape.circle,
+            padding: const EdgeInsetsDirectional.only(
+              start: BusyMarkSpacing.sm,
+              end: BusyMarkSpacing.xs,
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (dirty) ...[
+                  Container(
+                    width: BusyMarkSizes.markerDot,
+                    height: BusyMarkSizes.markerDot,
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.primary,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: BusyMarkSpacing.sm),
+                ] else ...[
+                  if (diff)
+                    _DiffCompareIcon(color: foreground)
+                  else
+                    Icon(icon, size: BusyMarkSizes.iconSm, color: foreground),
+                  const SizedBox(width: BusyMarkSpacing.sm),
+                ],
+                Flexible(
+                  child: Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    softWrap: false,
+                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                      color: foreground,
+                      fontWeight: active ? FontWeight.w700 : FontWeight.w500,
+                    ),
                   ),
                 ),
-                const SizedBox(width: BusyMarkSpacing.sm),
-              ] else ...[
-                if (diff)
-                  _DiffCompareIcon(color: foreground)
-                else
-                  Icon(icon, size: BusyMarkSizes.iconSm, color: foreground),
-                const SizedBox(width: BusyMarkSpacing.sm),
+                const SizedBox(width: BusyMarkSpacing.xs),
+                BusyMarkCompactIconButton(
+                  tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
+                  icon: BusyMarkGlyphs.clear,
+                  foregroundColor: foreground,
+                  onPressed: onClose,
+                ),
               ],
-              Flexible(
-                child: Text(
-                  title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  softWrap: false,
-                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                    color: foreground,
-                    fontWeight: active ? FontWeight.w700 : FontWeight.w500,
-                  ),
-                ),
-              ),
-              const SizedBox(width: BusyMarkSpacing.xs),
-              BusyMarkCompactIconButton(
-                tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
-                icon: BusyMarkGlyphs.clear,
-                foregroundColor: foreground,
-                onPressed: onClose,
-              ),
-            ],
+            ),
           ),
         ),
       ),

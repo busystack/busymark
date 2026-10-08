@@ -99,6 +99,24 @@ Future<bool> confirmSafeToCloseActiveDocument(
   return _confirmUnsavedChanges(context, ref, dirtyBufferIds: [active.id]);
 }
 
+/// Resolves only dirty documents in the requested close set, including
+/// inactive buffers, without prompting for a retained document.
+Future<bool> confirmSafeToCloseDocumentBuffers(
+  BuildContext context,
+  WidgetRef ref,
+  Iterable<String> bufferIds,
+) {
+  final requested = bufferIds.toSet();
+  return _confirmUnsavedChanges(
+    context,
+    ref,
+    dirtyBufferIds: [
+      for (final buffer in ref.read(workspaceControllerProvider).dirtyBuffers)
+        if (requested.contains(buffer.id)) buffer.id,
+    ],
+  );
+}
+
 Future<bool> _confirmUnsavedChanges(
   BuildContext context,
   WidgetRef ref, {
@@ -175,6 +193,7 @@ Future<bool> _confirmUnsavedChanges(
     ),
   );
 
+  if (!context.mounted || !ref.context.mounted) return false;
   final currentState = ref.read(workspaceControllerProvider);
   final currentDirtyIds = currentState.dirtyBuffers
       .map((buffer) => buffer.id)

@@ -4978,6 +4978,55 @@ void _registerResponsivenessTests() {
       );
     },
   );
+  for (final project in [false, true]) {
+    for (final discard in [false, true]) {
+      test(
+        'last untitled buffer keeps ${project ? 'project' : 'folder'} open on ${discard ? 'discard' : 'bulk close'}',
+        () async {
+          final root = project
+              ? await responsiveness.syntheticProject()
+              : await Directory.systemTemp.createTemp('busymark-tabs-folder-');
+          if (!project) {
+            addTearDown(() => root.delete(recursive: true));
+            await File(
+              p.join(root.path, 'saved.md'),
+            ).writeAsString('# Saved\n');
+          }
+          final harness = await _createControllerHarness(
+            fileMonitor: _ControlledFileMonitor(),
+          );
+          await harness.settingsController.setAutoSave(false);
+          final controller = harness.controller._notifier;
+          await controller.openPath(root.path);
+          final savedId = controller.state.activeBuffer!.id;
+          await controller.createMarkdownFile();
+          final draft = controller.state.activeBuffer!;
+          await controller.closeDocumentBuffer(savedId);
+          expect(controller.state.documentBuffers.single.id, draft.id);
+          final workspaceId = controller.state.workspace!.id;
+          if (discard) {
+            expect(await controller.discardActiveChanges(), isTrue);
+          } else {
+            controller.state = controller.state.copyWith(
+              documentBuffers: [draft.copyWith(dirty: false)],
+            );
+            expect(await controller.closeAllOpenFileTabs(), isTrue);
+          }
+          expect(controller.state.documentBuffers, isEmpty);
+          expect(controller.state.workspace!.id, workspaceId);
+          expect(
+            controller.state.workspace!.kind,
+            project
+                ? WorkspaceKind.writersideModule
+                : WorkspaceKind.markdownFolder,
+          );
+          expect(controller.state.workspace!.openFilePaths, isEmpty);
+          expect(controller.state.workspace!.sourceOverrides, isEmpty);
+        },
+      );
+    }
+  }
+
   test(
     'closing all Writerside tabs completes override relinquishment',
     () async {

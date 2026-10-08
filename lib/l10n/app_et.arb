@@ -1,4 +1,6 @@
 {
+  "closeOtherTabs": "Sulge teised vahelehed",
+  "@closeOtherTabs": {"description": "Document tab context menu action that closes every other document and comparison tab while retaining this document."},
   "tocTopicFromTemplate": "Teema mallist...",
   "tocSaveAsTemplate": "Salvesta mallina",
   "tocTemplateDialog": "Loo teema mallist",

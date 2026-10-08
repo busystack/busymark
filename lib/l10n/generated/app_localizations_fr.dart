@@ -11,6 +11,9 @@ class AppLocalizationsFr extends AppLocalizations {
   AppLocalizationsFr([String locale = 'fr']) : super(locale);
 
   @override
+  String get closeOtherTabs => 'Fermer les autres onglets';
+
+  @override
   String get tocTopicFromTemplate => 'Sujet à partir d’un modèle...';
 
   @override

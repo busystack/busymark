@@ -1,4 +1,6 @@
 {
+  "closeOtherTabs": "بستن زبانه‌های دیگر",
+  "@closeOtherTabs": {"description": "Document tab context menu action that closes every other document and comparison tab while retaining this document."},
   "tocTopicFromTemplate": "موضوع از الگو...",
   "tocSaveAsTemplate": "ذخیره به‌عنوان الگو",
   "tocTemplateDialog": "ایجاد موضوع از الگو",

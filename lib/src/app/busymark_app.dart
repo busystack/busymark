@@ -22,6 +22,7 @@ import '../workspace/workspace_model.dart';
 import '../workspace/presentation/welcome_screen.dart';
 import '../workspace/workspace_safety.dart';
 import '../workspace/workspace_tabs.dart';
+import '../workspace/workspace_tab_actions.dart';
 import 'app_router.dart';
 import 'app_locale.dart';
 import 'app_settings.dart';
@@ -728,44 +729,16 @@ class BusyMarkApp extends ConsumerWidget {
       return;
     }
     final activeTab = tabs[activeIndex];
-    if (activeTab.kind == WorkspaceTabKind.file) {
-      if (activeTab.dirty &&
-          (!await confirmSafeToCloseActiveDocument(context, ref) ||
-              !context.mounted)) {
-        return;
-      }
-    }
-    await _closeWorkspaceTab(ref, activeTab);
+    await closeWorkspaceTab(context, ref, workspace: workspace, tab: activeTab);
   }
 
   Future<void> _closeAllOpenFileTabs(
     BuildContext context,
     WidgetRef ref,
   ) async {
-    final workspaceState = ref.read(workspaceControllerProvider);
-    final workspace = workspaceState.workspace;
-    final gitState = ref.read(gitControllerProvider);
-    if (workspace == null ||
-        workspaceTabEntries(
-          workspace: workspace,
-          gitState: gitState,
-          documentBuffers: workspaceState.documentBuffers,
-          activeBufferId: workspaceState.activeBufferId,
-          localHistoryRevisionId: ref
-              .read(localHistoryControllerProvider)
-              .selectedRevisionId,
-          localHistoryDocumentName: ref
-              .read(localHistoryControllerProvider)
-              .selectedDocument
-              ?.displayName,
-        ).isEmpty) {
-      return;
-    }
-    if (!await confirmSafeToContinue(context, ref) || !context.mounted) {
-      return;
-    }
-    await ref.read(workspaceControllerProvider.notifier).closeAllOpenFileTabs();
-    ref.read(gitControllerProvider.notifier).clearSelection();
+    final workspace = ref.read(workspaceControllerProvider).workspace;
+    if (workspace == null) return;
+    await closeAllWorkspaceTabs(context, ref, workspace: workspace);
   }
 
   Future<void> _activateWorkspaceTab(
@@ -788,25 +761,6 @@ class BusyMarkApp extends ConsumerWidget {
         await gitController.activateDiffFile(tab.path);
       case WorkspaceTabKind.localHistory:
         return;
-    }
-  }
-
-  Future<void> _closeWorkspaceTab(WidgetRef ref, WorkspaceTabEntry tab) async {
-    final gitController = ref.read(gitControllerProvider.notifier);
-    switch (tab.kind) {
-      case WorkspaceTabKind.file:
-        await ref
-            .read(workspaceControllerProvider.notifier)
-            .closeDocumentBuffer(tab.bufferId!);
-        gitController.deactivateDiffFile();
-      case WorkspaceTabKind.gitDiff:
-        if (tab.path.isEmpty) {
-          gitController.clearSelection();
-        } else {
-          gitController.closeDiffFile(tab.path);
-        }
-      case WorkspaceTabKind.localHistory:
-        ref.read(localHistoryControllerProvider.notifier).clearComparison();
     }
   }
 

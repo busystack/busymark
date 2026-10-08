@@ -11,6 +11,9 @@ class AppLocalizationsEs extends AppLocalizations {
   AppLocalizationsEs([String locale = 'es']) : super(locale);
 
   @override
+  String get closeOtherTabs => 'Cerrar las otras pestañas';
+
+  @override
   String get tocTopicFromTemplate => 'Tema desde plantilla...';
 
   @override
