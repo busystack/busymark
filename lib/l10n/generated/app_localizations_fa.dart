@@ -1561,8 +1561,22 @@ class AppLocalizationsFa extends AppLocalizations {
   }
 
   @override
+  String get topicIsHomePageRemovalWarning =>
+      'این موضوع صفحهٔ اصلی این نمونه است. پیش از حذف آن از فهرست مطالب، صفحهٔ اصلی دیگری انتخاب کنید.';
+
+  @override
+  String get newHomePage => 'صفحهٔ اصلی جدید';
+
+  @override
+  String get chooseHomePage => 'انتخاب صفحهٔ اصلی';
+
+  @override
+  String get noHomePageReplacement =>
+      'پیش از حذف صفحهٔ اصلی، موضوع مناسب دیگری به این نمونه اضافه یا پیوند دهید.';
+
+  @override
   String get topicIsStartPageRemovalWarning =>
-      'این موضوع به‌عنوان صفحهٔ آغاز یک نمونه استفاده می‌شود. موارد استفاده را مرور و پیش از ادامه صفحهٔ آغاز دیگری تعیین کنید.';
+      'این موضوع صفحهٔ اصلی یک نمونه است. پیش از حذف فایل منبع آن، صفحهٔ اصلی دیگری تعیین کنید.';
 
   @override
   String topicUsagesCount(int count) {
@@ -1584,7 +1598,7 @@ class AppLocalizationsFa extends AppLocalizations {
   String get topicUsageTocElements => 'عناصر فهرست مطالب';
 
   @override
-  String get topicUsageStartPages => 'صفحه‌های آغاز';
+  String get topicUsageStartPages => 'صفحه‌های اصلی';
 
   @override
   String get topicUsageTopicLinks => 'پیوندهای موضوع';
@@ -2212,7 +2226,7 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String errorWritersideStartTopicDelete(String topic) {
-    return 'موضوع شروع ⁨$topic⁩ را نمی‌توان حذف کرد. ابتدا صفحهٔ شروع دیگری را انتخاب کنید.';
+    return 'صفحهٔ اصلی $topic قابل حذف نیست. ابتدا صفحهٔ اصلی دیگری انتخاب کنید.';
   }
 
   @override

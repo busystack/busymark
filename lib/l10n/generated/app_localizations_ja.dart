@@ -1486,8 +1486,22 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
+  String get topicIsHomePageRemovalWarning =>
+      'このトピックはこのインスタンスのホームページです。目次から削除する前に、別のホームページを選択してください。';
+
+  @override
+  String get newHomePage => '新しいホームページ';
+
+  @override
+  String get chooseHomePage => 'ホームページを選択';
+
+  @override
+  String get noHomePageReplacement =>
+      'ホームページを削除する前に、このインスタンスに別の適切なトピックを追加またはリンクしてください。';
+
+  @override
   String get topicIsStartPageRemovalWarning =>
-      'このトピックはインスタンスの開始ページとして使用されています。使用箇所を確認し、続行する前に別の開始ページを割り当ててください。';
+      'このトピックはインスタンスのホームページです。ソースファイルを削除する前に、別のホームページを設定してください。';
 
   @override
   String topicUsagesCount(int count) {
@@ -1504,7 +1518,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get topicUsageTocElements => '目次要素';
 
   @override
-  String get topicUsageStartPages => '開始ページ';
+  String get topicUsageStartPages => 'ホームページ';
 
   @override
   String get topicUsageTopicLinks => 'トピックリンク';
@@ -2103,7 +2117,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String errorWritersideStartTopicDelete(String topic) {
-    return '開始トピック $topic は削除できません。先に別の開始ページを選択してください。';
+    return 'ホームページ $topic は削除できません。先に別のホームページを選択してください。';
   }
 
   @override

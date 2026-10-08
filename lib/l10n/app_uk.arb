@@ -1879,9 +1879,9 @@
   "@errorWritersideTocInvalidMove": {
     "description": "Detail shown when a Writerside TOC move would create a cycle."
   },
-  "errorWritersideStartTopicDelete": "Початкову тему {topic} не можна видалити. Спочатку виберіть іншу початкову сторінку.",
+  "errorWritersideStartTopicDelete": "Домашню сторінку {topic} не можна видалити. Спочатку виберіть іншу домашню сторінку.",
   "@errorWritersideStartTopicDelete": {
-    "description": "Detail shown when attempting to delete the start topic of a Writerside instance.",
+    "description": "Detail shown when attempting to delete the Home Page of a Writerside instance.",
     "placeholders": {
       "topic": {
         "type": "String"
@@ -2697,7 +2697,11 @@
       }
     }
   },
-  "topicIsStartPageRemovalWarning": "Ця тема використовується як початкова сторінка екземпляра. Перегляньте її використання та призначте іншу початкову сторінку, перш ніж продовжити.",
+  "topicIsHomePageRemovalWarning": "Ця тема є домашньою сторінкою цього екземпляра. Виберіть іншу домашню сторінку, перш ніж видалити її зі змісту.",
+  "newHomePage": "Нова домашня сторінка",
+  "chooseHomePage": "Вибрати домашню сторінку",
+  "noHomePageReplacement": "Додайте або прив’яжіть іншу придатну тему до цього екземпляра перед видаленням його домашньої сторінки.",
+  "topicIsStartPageRemovalWarning": "Ця тема є домашньою сторінкою екземпляра. Призначте іншу домашню сторінку перед видаленням її вихідного файлу.",
   "@topicIsStartPageRemovalWarning": {
     "description": "Warning shown when the topic is used as an instance start page."
   },
@@ -2722,7 +2726,7 @@
   "@topicUsageTocElements": {
     "description": "Usage group label for TOC elements."
   },
-  "topicUsageStartPages": "Початкові сторінки",
+  "topicUsageStartPages": "Домашні сторінки",
   "@topicUsageStartPages": {
     "description": "Usage group label for instance start pages."
   },

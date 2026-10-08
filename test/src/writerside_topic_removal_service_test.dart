@@ -14,6 +14,365 @@ import 'package:xml/xml.dart';
 void main() {
   const service = WritersideTopicRemovalService();
 
+  Future<WritersideTopicRemovalAnalysis> analyzeHome(
+    ({Directory root, WritersideModule module}) fixture,
+  ) => service.analyze(
+    module: fixture.module,
+    topicPath: _topic(fixture.module, 'doomed.md').filePath,
+    mode: WritersideTopicRemovalMode.removeFromInstance,
+    selectedTreePath: p.join(fixture.root.path, 'guide.tree'),
+    selectedNodePath: const [0],
+  );
+
+  for (final redirect in [false, true]) {
+    test(
+      'explicit Home Page replacement promotes children (redirect=$redirect)',
+      () async {
+        final fixture = await _homeFixture();
+        final analysis = await analyzeHome(fixture);
+        final replacement = analysis.homePageReplacements.singleWhere(
+          (candidate) => candidate.topicReference == 'guides/new.md',
+        );
+        expect(replacement.label, 'New (guides/new.md)');
+        expect(
+          analysis.blockingUsages.single.kind,
+          WritersideTopicUsageKind.startPage,
+        );
+        expect(analysis.canUpdateUsagesAutomatically, isFalse);
+        expect(analysis.unresolvedBlockingUsages(replacement), isEmpty);
+
+        final result = await service.apply(
+          WritersideTopicRemovalRequest(
+            analysis: analysis,
+            homePageReplacement: replacement,
+            redirectTarget: redirect
+                ? analysis.redirectTargets.singleWhere(
+                    (candidate) => candidate.topicPath == replacement.topicPath,
+                  )
+                : null,
+          ),
+        );
+
+        final tree = _tree(fixture.root, 'guide.tree');
+        expect(tree.rootElement.getAttribute('start-page'), 'guides/new.md');
+        expect(tree.rootElement.getAttribute('web-path'), '/guide');
+        expect(_topics(tree), ['guides/new.md', 'elsewhere/new.md']);
+        expect(result.promotedChildren, 1);
+        expect(result.orphaned, isTrue);
+        expect(result.deletedFile, isFalse);
+        expect(result.redirectAdded, redirect);
+        expect(
+          tree
+              .findAllElements('toc-element')
+              .first
+              .getAttribute('accepts-web-file-names'),
+          redirect ? 'doomed.html' : isNull,
+        );
+        expect(File(analysis.topicPath).existsSync(), isTrue);
+      },
+    );
+  }
+
+  test(
+    'Home Page removal requires a replacement even with automatic consent',
+    () async {
+      final fixture = await _homeFixture();
+      final analysis = await analyzeHome(fixture);
+      final originals = _sources(fixture.root);
+      for (final automatic in [false, true]) {
+        await expectLater(
+          service.apply(
+            WritersideTopicRemovalRequest(
+              analysis: analysis,
+              updateUsagesAutomatically: automatic,
+            ),
+          ),
+          throwsA(isA<BusyMarkException>()),
+        );
+        expect(_sources(fixture.root), originals);
+      }
+    },
+  );
+
+  test(
+    'invalid or wrong-instance Home Page replacements fail without writes',
+    () async {
+      final fixture = await _homeFixture(
+        otherTree:
+            '<instance-profile id="other"><toc-element topic="outside.md"/></instance-profile>',
+      );
+      final analysis = await analyzeHome(fixture);
+      final valid = analysis.homePageReplacements.first;
+      final originals = _sources(fixture.root);
+      final invalid = [
+        WritersideHomePageReplacement(
+          topicPath: analysis.topicPath,
+          treePath: valid.treePath,
+          topicReference: 'doomed.md',
+          label: 'Doomed',
+        ),
+        WritersideHomePageReplacement(
+          topicPath: _topic(fixture.module, 'outside.md').filePath,
+          treePath: valid.treePath,
+          topicReference: 'outside.md',
+          label: 'Outside',
+        ),
+        WritersideHomePageReplacement(
+          topicPath: valid.topicPath,
+          treePath: p.join(fixture.root.path, 'other.tree'),
+          topicReference: valid.topicReference,
+          label: valid.label,
+        ),
+        WritersideHomePageReplacement(
+          topicPath: valid.topicPath,
+          treePath: valid.treePath,
+          topicReference: 'missing.md',
+          label: valid.label,
+        ),
+      ];
+      for (final replacement in invalid) {
+        await expectLater(
+          service.apply(
+            WritersideTopicRemovalRequest(
+              analysis: analysis,
+              homePageReplacement: replacement,
+              updateUsagesAutomatically: true,
+            ),
+          ),
+          throwsA(isA<BusyMarkException>()),
+        );
+        expect(_sources(fixture.root), originals);
+      }
+      final safeDelete = await service.analyze(
+        module: fixture.module,
+        topicPath: analysis.topicPath,
+        mode: WritersideTopicRemovalMode.safeDeleteFile,
+      );
+      expect(safeDelete.homePageReplacements, isEmpty);
+      await expectLater(
+        service.apply(
+          WritersideTopicRemovalRequest(
+            analysis: safeDelete,
+            homePageReplacement: valid,
+            updateUsagesAutomatically: true,
+          ),
+        ),
+        throwsA(
+          isA<BusyMarkException>().having(
+            (error) => error.code,
+            'code',
+            'writerside.topic-file.is-start-page',
+          ),
+        ),
+      );
+      expect(_sources(fixture.root), originals);
+    },
+  );
+
+  test(
+    'Home Page candidates respect conditions, editable provenance and topic resolution',
+    () async {
+      final fixture = await _fixture(
+        trees: {
+          'guide.tree': '''
+<instance-profile id="guide" start-page="doomed.md">
+  <toc-element topic="doomed.md"/>
+  <toc-element topic="eligible.md"/>
+  <toc-element topic="inactive.md" instance="other"/>
+  <toc-element topic="external.md" href="https://example.com"/>
+  <toc-element ref="ref.md"/>
+  <toc-element topic="missing.md"/>
+  <include from="library.tree" element-id="shared"/>
+</instance-profile>
+''',
+          'library.tree':
+              '<instance-profile id="library" is-library="true"><snippet id="shared"><toc-element topic="included.md"/></snippet></instance-profile>',
+        },
+        configuredTrees: ['guide.tree', 'library.tree'],
+        topics: {
+          for (final name in [
+            'doomed',
+            'eligible',
+            'inactive',
+            'external',
+            'ref',
+            'included',
+          ])
+            '$name.md': '# $name\n',
+        },
+      );
+      final analysis = await analyzeHome(fixture);
+      expect(
+        analysis.homePageReplacements.map(
+          (candidate) => candidate.topicReference,
+        ),
+        ['eligible.md'],
+      );
+    },
+  );
+
+  test(
+    'explicit Home Page replacement still requires consent for links and includes',
+    () async {
+      final fixture = await _homeFixture(
+        referrer:
+            '# Referrer\n\n[Old](doomed.md)\n\n<include from="doomed.md" element-id="part"/>\n',
+      );
+      final analysis = await analyzeHome(fixture);
+      final replacement = analysis.homePageReplacements.first;
+      final originals = _sources(fixture.root);
+      expect(analysis.canUpdateOtherUsagesAutomatically, isTrue);
+      expect(analysis.unresolvedBlockingUsages(replacement), hasLength(2));
+      await expectLater(
+        service.apply(
+          WritersideTopicRemovalRequest(
+            analysis: analysis,
+            homePageReplacement: replacement,
+          ),
+        ),
+        throwsA(isA<BusyMarkException>()),
+      );
+      expect(_sources(fixture.root), originals);
+      final result = await service.apply(
+        WritersideTopicRemovalRequest(
+          analysis: analysis,
+          homePageReplacement: replacement,
+          updateUsagesAutomatically: true,
+        ),
+      );
+      expect(result.orphaned, isTrue);
+      expect(
+        result.updatedUsageFiles,
+        contains(p.join(fixture.root.path, 'topics', 'referrer.md')),
+      );
+      expect(
+        File(
+          p.join(fixture.root.path, 'topics', 'referrer.md'),
+        ).readAsStringSync(),
+        isNot(contains('doomed.md')),
+      );
+    },
+  );
+
+  test(
+    'explicit Home Page replacement cannot resolve non-automatic blockers',
+    () async {
+      final fixture = await _homeFixture(
+        referrer: '# Referrer\n\n<a href="doomed.md">unfinished.\n',
+      );
+      final analysis = await analyzeHome(fixture);
+      expect(analysis.canUpdateOtherUsagesAutomatically, isFalse);
+      final originals = _sources(fixture.root);
+      await expectLater(
+        service.apply(
+          WritersideTopicRemovalRequest(
+            analysis: analysis,
+            homePageReplacement: analysis.homePageReplacements.first,
+            updateUsagesAutomatically: true,
+          ),
+        ),
+        throwsA(isA<BusyMarkException>()),
+      );
+      expect(_sources(fixture.root), originals);
+    },
+  );
+
+  for (final remaining in ['start-page="doomed.md"', '']) {
+    test(
+      'Home Page reassignment preserves other instance usages ($remaining)',
+      () async {
+        final fixture = await _homeFixture(
+          otherTree:
+              '<instance-profile id="other" $remaining><toc-element topic="doomed.md"/></instance-profile>',
+        );
+        final analysis = await analyzeHome(fixture);
+        final other = File(p.join(fixture.root.path, 'other.tree'));
+        final original = other.readAsStringSync();
+        final result = await service.apply(
+          WritersideTopicRemovalRequest(
+            analysis: analysis,
+            homePageReplacement: analysis.homePageReplacements.first,
+          ),
+        );
+        expect(result.orphaned, isFalse);
+        expect(other.readAsStringSync(), original);
+        expect(File(analysis.topicPath).existsSync(), isTrue);
+      },
+    );
+  }
+
+  for (final change in ['tree', 'replacement', 'delete']) {
+    test(
+      'stale Home Page removal fails closed after $change changes',
+      () async {
+        final fixture = await _homeFixture();
+        final analysis = await analyzeHome(fixture);
+        final replacement = analysis.homePageReplacements.first;
+        if (change == 'tree') {
+          final tree = File(replacement.treePath);
+          tree.writeAsStringSync(
+            tree.readAsStringSync().replaceAll('/guide', '/changed'),
+          );
+        } else if (change == 'delete') {
+          File(replacement.topicPath).deleteSync();
+        } else {
+          File(replacement.topicPath).writeAsStringSync('# Changed\n');
+        }
+        final originals = _sources(fixture.root);
+        await expectLater(
+          service.apply(
+            WritersideTopicRemovalRequest(
+              analysis: analysis,
+              homePageReplacement: replacement,
+            ),
+          ),
+          throwsA(isA<BusyMarkException>()),
+        );
+        expect(_sources(fixture.root), originals);
+      },
+    );
+  }
+
+  test(
+    'failed Home Page transaction rolls back reassignment and preserves concurrent edits',
+    () async {
+      final fixture = await _homeFixture(
+        referrer: '# Referrer\n\n[Old](doomed.md)\n',
+      );
+      final analysis = await analyzeHome(fixture);
+      final replacement = analysis.homePageReplacements.first;
+      final originals = _sources(fixture.root);
+      final referrer = File(p.join(fixture.root.path, 'topics', 'referrer.md'));
+      var published = false;
+      await expectLater(
+        service.apply(
+          WritersideTopicRemovalRequest(
+            analysis: analysis,
+            homePageReplacement: replacement,
+            updateUsagesAutomatically: true,
+          ),
+          validateBeforeCommit: (_) {
+            if (File(replacement.treePath).readAsStringSync() ==
+                originals[replacement.treePath]) {
+              return;
+            }
+            published = true;
+            referrer.writeAsStringSync('# Concurrent external edit\n');
+            throw const BusyMarkException('test.concurrent-edit');
+          },
+        ),
+        throwsA(isA<BusyMarkException>()),
+      );
+      expect(published, isTrue);
+      expect(referrer.readAsStringSync(), '# Concurrent external edit\n');
+      for (final entry in originals.entries) {
+        if (entry.key != referrer.path) {
+          expect(File(entry.key).readAsStringSync(), entry.value);
+        }
+      }
+    },
+  );
+
   test(
     'analysis finds every tree, topic link, include, and start page',
     () async {
@@ -1949,6 +2308,37 @@ Other: <a href="guide.md" origin="other">Other guide</a>.
     },
   );
 }
+
+Map<String, String> _sources(Directory root) => {
+  for (final file in root.listSync(recursive: true).whereType<File>())
+    file.path: file.readAsStringSync(),
+};
+
+Future<({Directory root, WritersideModule module})> _homeFixture({
+  String? referrer,
+  String? otherTree,
+}) => _fixture(
+  trees: {
+    'guide.tree':
+        '''
+<instance-profile id="guide" name="Guide" start-page="doomed.md" web-path="/guide">
+  <toc-element topic="doomed.md"><toc-element topic="guides/new.md"/></toc-element>
+  <toc-element topic="doomed.md"/>
+  <toc-element topic="elsewhere/new.md"/>
+  ${referrer == null ? '' : '<toc-element topic="referrer.md"/>'}
+</instance-profile>
+''',
+    if (otherTree != null) 'other.tree': otherTree,
+  },
+  configuredTrees: ['guide.tree', if (otherTree != null) 'other.tree'],
+  topics: {
+    'doomed.md': '# Doomed\n\n<snippet id="part">Reusable.</snippet>\n',
+    'guides/new.md': '# New\n',
+    'elsewhere/new.md': '# New\n',
+    'outside.md': '# Outside\n',
+    if (referrer != null) 'referrer.md': referrer,
+  },
+);
 
 Future<({Directory root, String mainRoot, String sharedRoot})> _projectFixture({
   required String mainTree,

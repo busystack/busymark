@@ -1553,8 +1553,22 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
+  String get topicIsHomePageRemovalWarning =>
+      'Эта тема является домашней страницей этого экземпляра. Выберите другую домашнюю страницу перед её удалением из оглавления.';
+
+  @override
+  String get newHomePage => 'Новая домашняя страница';
+
+  @override
+  String get chooseHomePage => 'Выбрать домашнюю страницу';
+
+  @override
+  String get noHomePageReplacement =>
+      'Добавьте или привяжите к этому экземпляру другую подходящую тему перед удалением его домашней страницы.';
+
+  @override
   String get topicIsStartPageRemovalWarning =>
-      'Эта тема используется как стартовая страница экземпляра. Просмотрите её использования и назначьте другую стартовую страницу, прежде чем продолжить.';
+      'Эта тема является домашней страницей экземпляра. Назначьте другую домашнюю страницу перед удалением её исходного файла.';
 
   @override
   String topicUsagesCount(int count) {
@@ -1572,7 +1586,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get topicUsageTocElements => 'Элементы оглавления';
 
   @override
-  String get topicUsageStartPages => 'Стартовые страницы';
+  String get topicUsageStartPages => 'Домашние страницы';
 
   @override
   String get topicUsageTopicLinks => 'Ссылки на темы';
@@ -2203,7 +2217,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String errorWritersideStartTopicDelete(String topic) {
-    return 'Стартовую тему $topic нельзя удалить. Сначала выберите другую стартовую страницу.';
+    return 'Домашнюю страницу $topic нельзя удалить. Сначала выберите другую домашнюю страницу.';
   }
 
   @override

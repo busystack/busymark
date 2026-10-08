@@ -1674,9 +1674,13 @@
       }
     }
   },
-  "topicIsStartPageRemovalWarning": "このトピックはインスタンスの開始ページとして使用されています。使用箇所を確認し、続行する前に別の開始ページを割り当ててください。",
+  "topicIsHomePageRemovalWarning": "このトピックはこのインスタンスのホームページです。目次から削除する前に、別のホームページを選択してください。",
+  "newHomePage": "新しいホームページ",
+  "chooseHomePage": "ホームページを選択",
+  "noHomePageReplacement": "ホームページを削除する前に、このインスタンスに別の適切なトピックを追加またはリンクしてください。",
+  "topicIsStartPageRemovalWarning": "このトピックはインスタンスのホームページです。ソースファイルを削除する前に、別のホームページを設定してください。",
   "@topicIsStartPageRemovalWarning": {
-    "description": "Warning that blocks deletion of a Writerside start-page topic."
+    "description": "Warning that blocks Safe Delete of a Writerside Home Page."
   },
   "topicUsagesCount": "{count} 件の使用箇所が見つかりました。",
   "@topicUsagesCount": {
@@ -1699,9 +1703,9 @@
   "@topicUsageTocElements": {
     "description": "Usage group label for Writerside TOC elements."
   },
-  "topicUsageStartPages": "開始ページ",
+  "topicUsageStartPages": "ホームページ",
   "@topicUsageStartPages": {
-    "description": "Usage group label for Writerside instance start pages."
+    "description": "Usage group label for Writerside instance Home Pages."
   },
   "topicUsageTopicLinks": "トピックリンク",
   "@topicUsageTopicLinks": {
@@ -2510,9 +2514,9 @@
   "@errorWritersideTocInvalidMove": {
     "description": "Detail shown when a Writerside TOC move would create a cycle."
   },
-  "errorWritersideStartTopicDelete": "開始トピック {topic} は削除できません。先に別の開始ページを選択してください。",
+  "errorWritersideStartTopicDelete": "ホームページ {topic} は削除できません。先に別のホームページを選択してください。",
   "@errorWritersideStartTopicDelete": {
-    "description": "Detail shown when attempting to delete the start topic of a Writerside instance.",
+    "description": "Detail shown when attempting to delete the Home Page of a Writerside instance.",
     "placeholders": {
       "topic": {
         "type": "String"

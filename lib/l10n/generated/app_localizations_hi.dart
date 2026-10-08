@@ -1529,8 +1529,22 @@ class AppLocalizationsHi extends AppLocalizations {
   }
 
   @override
+  String get topicIsHomePageRemovalWarning =>
+      'यह विषय इस इंस्टेंस का मुखपृष्ठ है। इसे विषय-सूची से हटाने से पहले कोई दूसरा मुखपृष्ठ चुनें।';
+
+  @override
+  String get newHomePage => 'नया मुखपृष्ठ';
+
+  @override
+  String get chooseHomePage => 'मुखपृष्ठ चुनें';
+
+  @override
+  String get noHomePageReplacement =>
+      'इसका मुखपृष्ठ हटाने से पहले इस इंस्टेंस में कोई दूसरा योग्य विषय जोड़ें या लिंक करें।';
+
+  @override
   String get topicIsStartPageRemovalWarning =>
-      'यह विषय किसी इंस्टेंस के प्रारंभ पृष्ठ के रूप में उपयोग हो रहा है। इसके उपयोगों की समीक्षा करें और आगे बढ़ने से पहले कोई दूसरा प्रारंभ पृष्ठ निर्धारित करें।';
+      'यह विषय किसी इंस्टेंस का मुखपृष्ठ है। इसकी स्रोत फ़ाइल हटाने से पहले कोई दूसरा मुखपृष्ठ निर्धारित करें।';
 
   @override
   String topicUsagesCount(int count) {
@@ -1548,7 +1562,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get topicUsageTocElements => 'TOC तत्व';
 
   @override
-  String get topicUsageStartPages => 'प्रारंभ पृष्ठ';
+  String get topicUsageStartPages => 'मुखपृष्ठ';
 
   @override
   String get topicUsageTopicLinks => 'विषय लिंक';
@@ -2168,7 +2182,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String errorWritersideStartTopicDelete(String topic) {
-    return 'आरंभिक विषय $topic को हटाया नहीं जा सकता। पहले कोई दूसरा आरंभ पेज चुनें।';
+    return 'मुखपृष्ठ $topic को हटाया नहीं जा सकता। पहले कोई दूसरा मुखपृष्ठ चुनें।';
   }
 
   @override

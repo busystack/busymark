@@ -1534,8 +1534,22 @@ class AppLocalizationsId extends AppLocalizations {
   }
 
   @override
+  String get topicIsHomePageRemovalWarning =>
+      'Topik ini adalah halaman utama instance ini. Pilih halaman utama lain sebelum menghapusnya dari daftar isi.';
+
+  @override
+  String get newHomePage => 'Halaman utama baru';
+
+  @override
+  String get chooseHomePage => 'Pilih halaman utama';
+
+  @override
+  String get noHomePageReplacement =>
+      'Tambahkan atau tautkan topik lain yang memenuhi syarat ke instance ini sebelum menghapus halaman utamanya.';
+
+  @override
   String get topicIsStartPageRemovalWarning =>
-      'Topik ini digunakan sebagai halaman awal instance. Tinjau penggunaannya dan tetapkan halaman awal lain sebelum melanjutkan.';
+      'Topik ini adalah halaman utama sebuah instance. Tetapkan halaman utama lain sebelum menghapus file sumbernya.';
 
   @override
   String topicUsagesCount(int count) {
@@ -1553,7 +1567,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get topicUsageTocElements => 'elemen TOC';
 
   @override
-  String get topicUsageStartPages => 'Halaman awal';
+  String get topicUsageStartPages => 'Halaman utama';
 
   @override
   String get topicUsageTopicLinks => 'Tautan topik';
@@ -2173,7 +2187,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String errorWritersideStartTopicDelete(String topic) {
-    return 'Topik awal $topic tidak dapat dihapus. Pilih halaman awal lain terlebih dahulu.';
+    return 'Halaman utama $topic tidak dapat dihapus. Pilih halaman utama lain terlebih dahulu.';
   }
 
   @override

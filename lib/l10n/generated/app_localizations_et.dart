@@ -1533,8 +1533,22 @@ class AppLocalizationsEt extends AppLocalizations {
   }
 
   @override
+  String get topicIsHomePageRemovalWarning =>
+      'See teema on selle eksemplari avaleht. Vali teine avaleht enne selle eemaldamist sisukorrast.';
+
+  @override
+  String get newHomePage => 'Uus avaleht';
+
+  @override
+  String get chooseHomePage => 'Vali avaleht';
+
+  @override
+  String get noHomePageReplacement =>
+      'Lisa või lingi sellele eksemplarile teine sobiv teema enne selle avalehe eemaldamist.';
+
+  @override
   String get topicIsStartPageRemovalWarning =>
-      'Seda teemat kasutatakse eksemplari avalehena. Enne jätkamist vaata kasutuskohad üle ja määra teine avaleht.';
+      'See teema on eksemplari avaleht. Määra teine avaleht enne selle lähtefaili kustutamist.';
 
   @override
   String topicUsagesCount(int count) {
@@ -2171,7 +2185,7 @@ class AppLocalizationsEt extends AppLocalizations {
 
   @override
   String errorWritersideStartTopicDelete(String topic) {
-    return 'Avaleheks määratud teemat „$topic” ei saa kustutada. Vali esmalt teine avaleht.';
+    return 'Avaleht $topic ei saa kustutada. Vali esmalt teine avaleht.';
   }
 
   @override

@@ -2604,6 +2604,7 @@ class _SidebarState extends ConsumerState<_Sidebar> {
     _WritersideTopicRemovalTarget target, {
     bool updateUsagesAutomatically = true,
     String? redirectTopicPath,
+    String? homePageTopicPath,
     bool applyIfUnused = false,
   }) async {
     if (!await confirmSafeToRefactorWritersideProject(context, ref) ||
@@ -2628,6 +2629,9 @@ class _SidebarState extends ConsumerState<_Sidebar> {
     final initialRedirect = analysis.redirectTargets
         .where((candidate) => candidate.topicPath == redirectTopicPath)
         .firstOrNull;
+    final initialHomePage = analysis.homePageReplacementForTopic(
+      homePageTopicPath,
+    );
     _WritersideTopicRemovalDialogResult decision;
     if (applyIfUnused && analysis.relevantUsages.isEmpty) {
       decision = _WritersideTopicRemovalDialogResult.apply(
@@ -2645,6 +2649,7 @@ class _SidebarState extends ConsumerState<_Sidebar> {
               analysis: analysis,
               initialUpdateUsagesAutomatically: updateUsagesAutomatically,
               initialRedirectTarget: initialRedirect,
+              initialHomePageReplacement: initialHomePage,
             ),
           );
       if (!mounted || !context.mounted || selected == null) {
@@ -2659,6 +2664,7 @@ class _SidebarState extends ConsumerState<_Sidebar> {
           analysis: analysis,
           updateUsagesAutomatically: decision.updateUsagesAutomatically,
           redirectTopicPath: decision.redirectTarget?.topicPath,
+          homePageTopicPath: decision.homePageReplacement?.topicPath,
         );
       });
       return null;
@@ -2677,6 +2683,7 @@ class _SidebarState extends ConsumerState<_Sidebar> {
         target,
         updateUsagesAutomatically: decision.updateUsagesAutomatically,
         redirectTopicPath: decision.redirectTarget?.topicPath,
+        homePageTopicPath: decision.homePageReplacement?.topicPath,
         applyIfUnused: applyIfUnused,
       );
     }
@@ -2685,6 +2692,7 @@ class _SidebarState extends ConsumerState<_Sidebar> {
         analysis: analysis,
         updateUsagesAutomatically: decision.updateUsagesAutomatically,
         redirectTarget: decision.redirectTarget,
+        homePageReplacement: decision.homePageReplacement,
       ),
     );
     if (!mounted || !context.mounted) {
@@ -2742,6 +2750,19 @@ class _SidebarState extends ConsumerState<_Sidebar> {
       _showLatestWorkspaceMessage(context);
       return;
     }
+    final homePage = analysis.homePageReplacementForTopic(
+      review.homePageTopicPath,
+    );
+    if (analysis.requiresHomePageReplacement && homePage == null) {
+      await _runWritersideTopicRemoval(
+        context,
+        review.target,
+        updateUsagesAutomatically: review.updateUsagesAutomatically,
+        redirectTopicPath: review.redirectTopicPath,
+        homePageTopicPath: review.homePageTopicPath,
+      );
+      return;
+    }
     final redirect = review.redirectTopicPath == null
         ? null
         : analysis.redirectTargets
@@ -2757,16 +2778,20 @@ class _SidebarState extends ConsumerState<_Sidebar> {
       );
       return;
     }
-    if (analysis.blockingUsages.any(
-      (usage) =>
-          !review.updateUsagesAutomatically || !usage.canUpdateAutomatically,
-    )) {
+    if (analysis
+        .unresolvedBlockingUsages(homePage)
+        .any(
+          (usage) =>
+              !review.updateUsagesAutomatically ||
+              !usage.canUpdateAutomatically,
+        )) {
       setState(() {
         _topicUsageReview = _WritersideTopicUsageReview(
           target: review.target,
           analysis: analysis,
           updateUsagesAutomatically: review.updateUsagesAutomatically,
           redirectTopicPath: review.redirectTopicPath,
+          homePageTopicPath: homePage?.topicPath,
         );
       });
       return;
@@ -2776,6 +2801,7 @@ class _SidebarState extends ConsumerState<_Sidebar> {
         analysis: analysis,
         updateUsagesAutomatically: review.updateUsagesAutomatically,
         redirectTarget: redirect,
+        homePageReplacement: homePage,
       ),
     );
     if (!mounted || !context.mounted) return;
@@ -3824,29 +3850,35 @@ class _WritersideTopicRemovalDialogResult {
     required this.reviewUsages,
     required this.updateUsagesAutomatically,
     required this.redirectTarget,
+    required this.homePageReplacement,
   });
 
   const _WritersideTopicRemovalDialogResult.review({
     required bool updateUsagesAutomatically,
     required WritersideTopicRedirectTarget? redirectTarget,
+    WritersideHomePageReplacement? homePageReplacement,
   }) : this._(
          reviewUsages: true,
          updateUsagesAutomatically: updateUsagesAutomatically,
          redirectTarget: redirectTarget,
+         homePageReplacement: homePageReplacement,
        );
 
   const _WritersideTopicRemovalDialogResult.apply({
     required bool updateUsagesAutomatically,
     required WritersideTopicRedirectTarget? redirectTarget,
+    WritersideHomePageReplacement? homePageReplacement,
   }) : this._(
          reviewUsages: false,
          updateUsagesAutomatically: updateUsagesAutomatically,
          redirectTarget: redirectTarget,
+         homePageReplacement: homePageReplacement,
        );
 
   final bool reviewUsages;
   final bool updateUsagesAutomatically;
   final WritersideTopicRedirectTarget? redirectTarget;
+  final WritersideHomePageReplacement? homePageReplacement;
 }
 
 class _WritersideTopicUsageReview {
@@ -3855,12 +3887,14 @@ class _WritersideTopicUsageReview {
     required this.analysis,
     required this.updateUsagesAutomatically,
     required this.redirectTopicPath,
+    required this.homePageTopicPath,
   });
 
   final _WritersideTopicRemovalTarget target;
   final WritersideTopicRemovalAnalysis analysis;
   final bool updateUsagesAutomatically;
   final String? redirectTopicPath;
+  final String? homePageTopicPath;
 }
 
 class _WritersideTopicRemovalDialog extends StatefulWidget {
@@ -3868,11 +3902,13 @@ class _WritersideTopicRemovalDialog extends StatefulWidget {
     required this.analysis,
     required this.initialUpdateUsagesAutomatically,
     required this.initialRedirectTarget,
+    required this.initialHomePageReplacement,
   });
 
   final WritersideTopicRemovalAnalysis analysis;
   final bool initialUpdateUsagesAutomatically;
   final WritersideTopicRedirectTarget? initialRedirectTarget;
+  final WritersideHomePageReplacement? initialHomePageReplacement;
 
   @override
   State<_WritersideTopicRemovalDialog> createState() =>
@@ -3883,14 +3919,15 @@ class _WritersideTopicRemovalDialogState
     extends State<_WritersideTopicRemovalDialog> {
   late bool _updateUsagesAutomatically;
   WritersideTopicRedirectTarget? _redirectTarget;
+  WritersideHomePageReplacement? _homePageReplacement;
 
   WritersideTopicRemovalAnalysis get _analysis => widget.analysis;
 
   bool get _canApply {
-    if (_analysis.blockingUsages.isEmpty) {
-      return true;
-    }
-    return _updateUsagesAutomatically && _analysis.canUpdateUsagesAutomatically;
+    final blocking = _analysis.unresolvedBlockingUsages(_homePageReplacement);
+    return blocking.isEmpty ||
+        (_updateUsagesAutomatically &&
+            blocking.every((usage) => usage.canUpdateAutomatically));
   }
 
   @override
@@ -3898,8 +3935,9 @@ class _WritersideTopicRemovalDialogState
     super.initState();
     _updateUsagesAutomatically =
         widget.initialUpdateUsagesAutomatically &&
-        _analysis.canUpdateUsagesAutomatically;
+        _analysis.canUpdateOtherUsagesAutomatically;
     _redirectTarget = widget.initialRedirectTarget;
+    _homePageReplacement = widget.initialHomePageReplacement;
   }
 
   @override
@@ -3930,6 +3968,7 @@ class _WritersideTopicRemovalDialogState
               _WritersideTopicRemovalDialogResult.review(
                 updateUsagesAutomatically: _updateUsagesAutomatically,
                 redirectTarget: _redirectTarget,
+                homePageReplacement: _homePageReplacement,
               ),
             ),
           ),
@@ -3947,6 +3986,7 @@ class _WritersideTopicRemovalDialogState
                   _WritersideTopicRemovalDialogResult.apply(
                     updateUsagesAutomatically: _updateUsagesAutomatically,
                     redirectTarget: _redirectTarget,
+                    homePageReplacement: _homePageReplacement,
                   ),
                 )
               : null,
@@ -3968,9 +4008,44 @@ class _WritersideTopicRemovalDialogState
         if (_analysis.isStartPage) ...[
           const SizedBox(height: BusyMarkSpacing.md),
           BusyMarkStatusBox(
-            message: context.l10n.topicIsStartPageRemovalWarning,
+            message: removeFromInstance
+                ? context.l10n.topicIsHomePageRemovalWarning
+                : context.l10n.topicIsStartPageRemovalWarning,
             kind: BusyMarkStatusKind.warning,
           ),
+        ],
+        if (_analysis.requiresHomePageReplacement) ...[
+          const SizedBox(height: BusyMarkSpacing.md),
+          if (_analysis.homePageReplacements.isEmpty)
+            BusyMarkStatusBox(
+              message: context.l10n.noHomePageReplacement,
+              kind: BusyMarkStatusKind.warning,
+            )
+          else
+            Row(
+              children: [
+                Text(context.l10n.newHomePage),
+                const SizedBox(width: BusyMarkSpacing.sm),
+                Expanded(
+                  child: BusyMarkPopupSelector<WritersideHomePageReplacement>(
+                    value: _homePageReplacement,
+                    label:
+                        _homePageReplacement?.label ??
+                        context.l10n.chooseHomePage,
+                    tooltip: context.l10n.newHomePage,
+                    options: [
+                      for (final candidate in _analysis.homePageReplacements)
+                        BusyMarkPopupSelectorOption(
+                          value: candidate,
+                          label: candidate.label,
+                        ),
+                    ],
+                    onSelected: (value) =>
+                        setState(() => _homePageReplacement = value),
+                  ),
+                ),
+              ],
+            ),
         ],
         if (removeFromInstance)
           Row(
@@ -4015,7 +4090,7 @@ class _WritersideTopicRemovalDialogState
           children: [
             BusyMarkCheckbox(
               value: _updateUsagesAutomatically,
-              onChanged: _analysis.canUpdateUsagesAutomatically
+              onChanged: _analysis.canUpdateOtherUsagesAutomatically
                   ? (value) => setState(
                       () => _updateUsagesAutomatically = value ?? false,
                     )

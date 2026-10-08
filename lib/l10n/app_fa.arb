@@ -1887,9 +1887,9 @@
   "@errorWritersideTocInvalidMove": {
     "description": "Detail shown when a Writerside TOC move would create a cycle."
   },
-  "errorWritersideStartTopicDelete": "موضوع شروع ⁨{topic}⁩ را نمی‌توان حذف کرد. ابتدا صفحهٔ شروع دیگری را انتخاب کنید.",
+  "errorWritersideStartTopicDelete": "صفحهٔ اصلی {topic} قابل حذف نیست. ابتدا صفحهٔ اصلی دیگری انتخاب کنید.",
   "@errorWritersideStartTopicDelete": {
-    "description": "Detail shown when attempting to delete the start topic of a Writerside instance.",
+    "description": "Detail shown when attempting to delete the Home Page of a Writerside instance.",
     "placeholders": {
       "topic": {
         "type": "String"
@@ -2711,7 +2711,11 @@
       }
     }
   },
-  "topicIsStartPageRemovalWarning": "این موضوع به‌عنوان صفحهٔ آغاز یک نمونه استفاده می‌شود. موارد استفاده را مرور و پیش از ادامه صفحهٔ آغاز دیگری تعیین کنید.",
+  "topicIsHomePageRemovalWarning": "این موضوع صفحهٔ اصلی این نمونه است. پیش از حذف آن از فهرست مطالب، صفحهٔ اصلی دیگری انتخاب کنید.",
+  "newHomePage": "صفحهٔ اصلی جدید",
+  "chooseHomePage": "انتخاب صفحهٔ اصلی",
+  "noHomePageReplacement": "پیش از حذف صفحهٔ اصلی، موضوع مناسب دیگری به این نمونه اضافه یا پیوند دهید.",
+  "topicIsStartPageRemovalWarning": "این موضوع صفحهٔ اصلی یک نمونه است. پیش از حذف فایل منبع آن، صفحهٔ اصلی دیگری تعیین کنید.",
   "@topicIsStartPageRemovalWarning": {
     "description": "Warning shown when the topic is used as an instance start page."
   },
@@ -2737,7 +2741,7 @@
   "@topicUsageTocElements": {
     "description": "Usage group label for TOC elements."
   },
-  "topicUsageStartPages": "صفحه‌های آغاز",
+  "topicUsageStartPages": "صفحه‌های اصلی",
   "@topicUsageStartPages": {
     "description": "Usage group label for instance start pages."
   },

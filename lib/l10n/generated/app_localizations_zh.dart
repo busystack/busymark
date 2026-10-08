@@ -1469,8 +1469,19 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get topicIsStartPageRemovalWarning =>
-      '此主题被用作实例的起始页。请查看其使用情况，并在继续前指定其他起始页。';
+  String get topicIsHomePageRemovalWarning => '此主题是此实例的主页。从目录中移除它之前，请选择另一个主页。';
+
+  @override
+  String get newHomePage => '新主页';
+
+  @override
+  String get chooseHomePage => '选择主页';
+
+  @override
+  String get noHomePageReplacement => '移除主页之前，请向此实例添加或链接另一个符合条件的主题。';
+
+  @override
+  String get topicIsStartPageRemovalWarning => '此主题是某个实例的主页。删除其源文件之前，请指定另一个主页。';
 
   @override
   String topicUsagesCount(int count) {
@@ -1487,7 +1498,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get topicUsageTocElements => '目录元素';
 
   @override
-  String get topicUsageStartPages => '起始页';
+  String get topicUsageStartPages => '主页';
 
   @override
   String get topicUsageTopicLinks => '主题链接';
@@ -2072,7 +2083,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String errorWritersideStartTopicDelete(String topic) {
-    return '无法删除起始主题 $topic。请先选择其他起始页。';
+    return '无法删除主页 $topic。请先选择另一个主页。';
   }
 
   @override
@@ -6031,8 +6042,19 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   }
 
   @override
-  String get topicIsStartPageRemovalWarning =>
-      '此主题被用作实例的起始页。请查看其使用情况，并在继续前指定其他起始页。';
+  String get topicIsHomePageRemovalWarning => '此主题是此实例的主页。从目录中移除它之前，请选择另一个主页。';
+
+  @override
+  String get newHomePage => '新主页';
+
+  @override
+  String get chooseHomePage => '选择主页';
+
+  @override
+  String get noHomePageReplacement => '移除主页之前，请向此实例添加或链接另一个符合条件的主题。';
+
+  @override
+  String get topicIsStartPageRemovalWarning => '此主题是某个实例的主页。删除其源文件之前，请指定另一个主页。';
 
   @override
   String topicUsagesCount(int count) {
@@ -6049,7 +6071,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get topicUsageTocElements => '目录元素';
 
   @override
-  String get topicUsageStartPages => '起始页';
+  String get topicUsageStartPages => '主页';
 
   @override
   String get topicUsageTopicLinks => '主题链接';
@@ -6634,7 +6656,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String errorWritersideStartTopicDelete(String topic) {
-    return '无法删除起始主题 $topic。请先选择其他起始页。';
+    return '无法删除主页 $topic。请先选择另一个主页。';
   }
 
   @override

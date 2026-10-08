@@ -1879,9 +1879,9 @@
   "@errorWritersideTocInvalidMove": {
     "description": "Detail shown when a Writerside TOC move would create a cycle."
   },
-  "errorWritersideStartTopicDelete": "Le sujet de démarrage {topic} ne peut pas être supprimé. Choisissez d’abord une autre page de démarrage.",
+  "errorWritersideStartTopicDelete": "La page d’accueil {topic} ne peut pas être supprimée. Choisissez d’abord une autre page d’accueil.",
   "@errorWritersideStartTopicDelete": {
-    "description": "Detail shown when attempting to delete the start topic of a Writerside instance.",
+    "description": "Detail shown when attempting to delete the Home Page of a Writerside instance.",
     "placeholders": {
       "topic": {
         "type": "String"
@@ -2671,7 +2671,11 @@
       }
     }
   },
-  "topicIsStartPageRemovalWarning": "Ce sujet sert de page de démarrage à une instance. Examinez ses utilisations et attribuez une autre page de démarrage avant de continuer.",
+  "topicIsHomePageRemovalWarning": "Ce sujet est la page d’accueil de cette instance. Choisissez une autre page d’accueil avant de le retirer de la table des matières.",
+  "newHomePage": "Nouvelle page d’accueil",
+  "chooseHomePage": "Choisir une page d’accueil",
+  "noHomePageReplacement": "Ajoutez ou liez un autre sujet admissible à cette instance avant de retirer sa page d’accueil.",
+  "topicIsStartPageRemovalWarning": "Ce sujet est la page d’accueil d’une instance. Définissez une autre page d’accueil avant de supprimer son fichier source.",
   "@topicIsStartPageRemovalWarning": {
     "description": "Warning shown when the topic is used as an instance start page."
   },
@@ -2696,7 +2700,7 @@
   "@topicUsageTocElements": {
     "description": "Usage group label for TOC elements."
   },
-  "topicUsageStartPages": "Pages de démarrage",
+  "topicUsageStartPages": "Pages d’accueil",
   "@topicUsageStartPages": {
     "description": "Usage group label for instance start pages."
   },

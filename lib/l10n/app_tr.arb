@@ -1674,9 +1674,13 @@
       }
     }
   },
-  "topicIsStartPageRemovalWarning": "Bu konu bir Writerside örneğinin başlangıç sayfası olarak kullanılıyor. Devam etmeden önce kullanımlarını inceleyin ve başka bir başlangıç sayfası atayın.",
+  "topicIsHomePageRemovalWarning": "Bu konu bu örneğin ana sayfasıdır. İçindekilerden kaldırmadan önce başka bir ana sayfa seçin.",
+  "newHomePage": "Yeni ana sayfa",
+  "chooseHomePage": "Ana sayfa seçin",
+  "noHomePageReplacement": "Ana sayfasını kaldırmadan önce bu örneğe başka bir uygun konu ekleyin veya bağlayın.",
+  "topicIsStartPageRemovalWarning": "Bu konu bir örneğin ana sayfasıdır. Kaynak dosyasını silmeden önce başka bir ana sayfa atayın.",
   "@topicIsStartPageRemovalWarning": {
-    "description": "Warning that blocks deletion of a Writerside start-page topic."
+    "description": "Warning that blocks Safe Delete of a Writerside Home Page."
   },
   "topicUsagesCount": "{count} kullanım bulundu.",
   "@topicUsagesCount": {
@@ -1699,9 +1703,9 @@
   "@topicUsageTocElements": {
     "description": "Usage group label for Writerside TOC elements."
   },
-  "topicUsageStartPages": "Başlangıç sayfaları",
+  "topicUsageStartPages": "Ana sayfalar",
   "@topicUsageStartPages": {
-    "description": "Usage group label for Writerside instance start pages."
+    "description": "Usage group label for Writerside instance Home Pages."
   },
   "topicUsageTopicLinks": "Konu bağlantıları",
   "@topicUsageTopicLinks": {
@@ -2510,9 +2514,9 @@
   "@errorWritersideTocInvalidMove": {
     "description": "Detail shown when a Writerside TOC move would create a cycle."
   },
-  "errorWritersideStartTopicDelete": "{topic} başlangıç konusu silinemez. Önce başka bir başlangıç sayfası seçin.",
+  "errorWritersideStartTopicDelete": "Ana sayfa {topic} silinemez. Önce başka bir ana sayfa seçin.",
   "@errorWritersideStartTopicDelete": {
-    "description": "Detail shown when attempting to delete the start topic of a Writerside instance.",
+    "description": "Detail shown when attempting to delete the Home Page of a Writerside instance.",
     "placeholders": {
       "topic": {
         "type": "String"

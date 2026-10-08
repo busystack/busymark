@@ -1535,8 +1535,22 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
+  String get topicIsHomePageRemovalWarning =>
+      'Bu konu bu örneğin ana sayfasıdır. İçindekilerden kaldırmadan önce başka bir ana sayfa seçin.';
+
+  @override
+  String get newHomePage => 'Yeni ana sayfa';
+
+  @override
+  String get chooseHomePage => 'Ana sayfa seçin';
+
+  @override
+  String get noHomePageReplacement =>
+      'Ana sayfasını kaldırmadan önce bu örneğe başka bir uygun konu ekleyin veya bağlayın.';
+
+  @override
   String get topicIsStartPageRemovalWarning =>
-      'Bu konu bir Writerside örneğinin başlangıç sayfası olarak kullanılıyor. Devam etmeden önce kullanımlarını inceleyin ve başka bir başlangıç sayfası atayın.';
+      'Bu konu bir örneğin ana sayfasıdır. Kaynak dosyasını silmeden önce başka bir ana sayfa atayın.';
 
   @override
   String topicUsagesCount(int count) {
@@ -1554,7 +1568,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get topicUsageTocElements => 'İçindekiler öğeleri';
 
   @override
-  String get topicUsageStartPages => 'Başlangıç sayfaları';
+  String get topicUsageStartPages => 'Ana sayfalar';
 
   @override
   String get topicUsageTopicLinks => 'Konu bağlantıları';
@@ -2172,7 +2186,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String errorWritersideStartTopicDelete(String topic) {
-    return '$topic başlangıç konusu silinemez. Önce başka bir başlangıç sayfası seçin.';
+    return 'Ana sayfa $topic silinemez. Önce başka bir ana sayfa seçin.';
   }
 
   @override
