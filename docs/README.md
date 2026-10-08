@@ -35,5 +35,6 @@ are intentionally independent so they can be referenced directly.
 - [AI implementation and qualification](development/ai.md)
 - [Export verification](development/export-verification.md)
 - [History implementation](development/history.md)
+- [Nextcloud Notes architecture, API contract, and verification](development/nextcloud-notes.md)
 - [Visualization implementation and verification](development/visualizations.md)
 - [Writerside verification](development/writerside-verification.md)

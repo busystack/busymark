@@ -40,6 +40,21 @@ final class MarkdownSpellingProjector {
       documentSource: source,
       mode: mode,
     );
+    // Keep the document's block context: a scanner chunk can start with a
+    // literal list-like continuation that becomes a list if parsed alone.
+    final blockMappings = inlineParser.parsePositionedBlocks(
+      source,
+      includeCodeBlocks: false,
+    );
+    final consumedMappings = <BusyMarkMappedInlineParse>{};
+    final literalHtmlBlocks = [
+      for (final block in _walkBlocks(parsed.busyDocument.blocks))
+        if (block.sourceSpan != null &&
+            block.inlines.length == 1 &&
+            block.inlines.single.kind == BusyInlineKind.text &&
+            block.inlines.single.text.contains('<'))
+          block,
+    ];
     final excludedBlockSpans = <SourceSpan>[
       ...parsed.codeBlocks.map((block) => block.span),
       for (final block in _walkBlocks(parsed.busyDocument.blocks))
@@ -253,7 +268,8 @@ final class MarkdownSpellingProjector {
       ];
       final hardBreakSyntax = <_SourceInterval>[
         for (final entry in mapped.ranges.entries)
-          if (entry.key.kind == BusyInlineKind.hardBreak)
+          if (entry.key.kind == BusyInlineKind.hardBreak &&
+              !entry.value.isRawHtmlText)
             _SourceInterval(
               sourceBase + entry.value.start,
               sourceBase + entry.value.end,
@@ -273,6 +289,16 @@ final class MarkdownSpellingProjector {
         end: mappedEnd,
         context: context,
         stripBlockSyntax: stripBlockSyntax,
+        // Rejected inline HTML is displayed as literal editable text. Only
+        // an exact match in its parser-owned block may bypass HTML scanning;
+        // protected HTML blocks and encoded/escaped text keep their policies.
+        interpretHtmlSyntax: !literalHtmlBlocks.any(
+          (block) =>
+              block.sourceSpan!.startOffset <= mappedStart &&
+              block.sourceSpan!.endOffset >= mappedEnd &&
+              block.inlines.single.text ==
+                  source.substring(mappedStart, mappedEnd),
+        ),
         footnoteLabels: footnoteLabels,
         formattingSyntax: formattingSyntax,
         formattingWrappers: [
@@ -287,6 +313,31 @@ final class MarkdownSpellingProjector {
         imageCodeSyntax: imageCodeSyntax,
         positionedLineBreaks: positionedLineBreaks,
         hardBreakSyntax: hardBreakSyntax,
+        htmlLineBreaks: {
+          for (final entry in mapped.ranges.entries)
+            if (entry.key.kind == BusyInlineKind.hardBreak &&
+                entry.value.isRawHtmlText)
+              sourceBase + entry.value.start: sourceBase + entry.value.end,
+        },
+        htmlText: {
+          for (final entry in mapped.ranges.entries)
+            if (entry.key.kind == BusyInlineKind.text &&
+                entry.value.isRawHtmlText)
+              sourceBase + entry.value.start: (
+                end: sourceBase + entry.value.end,
+                text: entry.key.text,
+              ),
+        },
+        htmlFragments: [
+          for (final fragment in {
+            for (final range in mapped.ranges.values)
+              if (range.rawHtmlFragment case final fragment?) fragment,
+          })
+            _SourceInterval(
+              sourceBase + fragment.start,
+              sourceBase + fragment.end,
+            ),
+        ],
         recognizedLinks: {
           for (final entry in mapped.ranges.entries)
             if (entry.key.kind == BusyInlineKind.link ||
@@ -385,7 +436,15 @@ final class MarkdownSpellingProjector {
       }
       final slice = source.substring(start, end);
       final mapped = stripBlockSyntax
-          ? inlineParser.parsePositionedBlocks(slice)
+          ? blockMappings
+                .where(
+                  (leaf) =>
+                      leaf.sourceStart != null &&
+                      leaf.sourceEnd != null &&
+                      leaf.sourceStart! < end &&
+                      leaf.sourceEnd! > start,
+                )
+                .toList()
           : [inlineParser.parseMapped(slice)];
       if (stripBlockSyntax && mapped.isNotEmpty) {
         for (final semanticLeaf in mapped) {
@@ -396,12 +455,13 @@ final class MarkdownSpellingProjector {
             continue;
           }
           if (leafEnd <= leafStart) continue;
+          if (!consumedMappings.add(semanticLeaf)) continue;
           addMapped(
-            start + leafStart,
-            start + leafEnd,
+            leafStart,
+            leafEnd,
             semanticLeaf,
-            sourceBase: start,
-            sourceLimit: end,
+            sourceBase: 0,
+            sourceLimit: source.length,
             stripBlockSyntax: true,
             context: context,
           );
@@ -957,6 +1017,9 @@ final class _MarkdownProseScanner {
     this.imageCodeSyntax = const [],
     this.positionedLineBreaks = const [],
     this.hardBreakSyntax = const [],
+    this.htmlLineBreaks = const {},
+    this.htmlText = const {},
+    this.htmlFragments = const [],
     this.recognizedLinks = const {},
     this.recognizedAttributeSpans = const [],
     this.footnoteLabels = const {},
@@ -976,8 +1039,19 @@ final class _MarkdownProseScanner {
   final List<_MappedImageCode> imageCodeSyntax;
   final List<BusyMarkMappedSourceLineBreak> positionedLineBreaks;
   final List<_SourceInterval> hardBreakSyntax;
+  final Map<int, int> htmlLineBreaks;
+  final Map<int, ({int end, String text})> htmlText;
+  final List<_SourceInterval> htmlFragments;
   final Map<int, _RecognizedLinkOccurrence> recognizedLinks;
   final List<_SourceInterval> recognizedAttributeSpans;
+  late final _continuationEnds = <int, int>{
+    for (final lineBreak in positionedLineBreaks)
+      if (lineBreak.sourceOffset case final offset?)
+        offset:
+            offset +
+            lineBreak.lineEnding.length +
+            lineBreak.continuationPrefix.length,
+  };
   final List<Object> _groups = [];
   StringBuffer _text = StringBuffer();
   final StringBuffer _tokenizationContext = StringBuffer();
@@ -985,46 +1059,44 @@ final class _MarkdownProseScanner {
   int? _tokenizationContextStart;
   int? _opaqueEnd;
   int? _consumedLinkEnd;
+  int? _consumedHtmlEnd;
   bool _inImageLabel = false;
   bool complete = true;
 
   List<_EmissionGroup> scan() {
     final lines = _lines();
+    final continuationStarts = <int, int>{
+      for (final lineBreak in positionedLineBreaks)
+        if (lineBreak.sourceOffset case final offset?)
+          offset + lineBreak.lineEnding.length:
+              offset +
+              lineBreak.lineEnding.length +
+              lineBreak.continuationPrefix.length,
+    };
     for (var lineIndex = 0; lineIndex < lines.length; lineIndex++) {
       final line = lines[lineIndex];
-      var contentStart = line.start;
+      // The block parser already located the first prose character and each
+      // continuation. Reinterpreting their prefixes would discard literal
+      // text such as "2. words" or misread nested container indentation.
+      final contentStart = stripBlockSyntax
+          ? continuationStarts[line.start] ?? line.start
+          : line.start;
       var contentEnd = line.contentEnd;
-      // Positioned leaves already start after their first block prefix. Do
-      // not reinterpret heading text such as "2. Paragraphs" as a list item.
-      // Continuation lines still carry their authored container prefixes.
-      if (stripBlockSyntax &&
-          (lineIndex > 0 ||
-              start == 0 ||
-              source.codeUnitAt(start - 1) == 0x0a)) {
-        final rawLine = source.substring(contentStart, contentEnd);
-        if (_isSetextOrThematic(rawLine)) {
-          _barrier();
-          continue;
-        }
-        final prefix = _blockPrefix.firstMatch(rawLine);
-        contentStart += prefix?.end ?? 0;
-        var isAtxHeading = false;
-        if (source.startsWith('#', contentStart)) {
-          final heading = RegExp(
-            r'^#{1,6}[ \t]+',
-          ).firstMatch(source.substring(contentStart, contentEnd));
-          contentStart += heading?.end ?? 0;
-          isAtxHeading = heading != null;
-        }
+      if (stripBlockSyntax && lineIndex + 1 < lines.length) {
+        // Spaces before a soft break are omitted by the inline grammar;
+        // tabs are authored text. Hard breaks also own their backslash or
+        // spaces, including on the first line after a list/quote marker.
         while (contentEnd > contentStart &&
-            _horizontalWhitespace(source.codeUnitAt(contentEnd - 1))) {
+            source.codeUnitAt(contentEnd - 1) == 0x20) {
           contentEnd--;
         }
-        final closingHeading = RegExp(
-          r'[ \t]+#+$',
-        ).firstMatch(source.substring(contentStart, contentEnd));
-        if (isAtxHeading && closingHeading != null) {
-          contentEnd = contentStart + closingHeading.start;
+        for (final hardBreak in hardBreakSyntax) {
+          if (hardBreak.start >= contentStart &&
+              hardBreak.start <= contentEnd &&
+              hardBreak.end > line.contentEnd) {
+            contentEnd = hardBreak.start;
+            break;
+          }
         }
       }
       for (final attributes in recognizedAttributeSpans) {
@@ -1036,13 +1108,17 @@ final class _MarkdownProseScanner {
       if (contentEnd > contentStart) _scanInline(contentStart, contentEnd);
       if (lineIndex + 1 < lines.length &&
           _text.length > 0 &&
+          !htmlFragments.any(
+            (span) =>
+                span.start <= line.contentEnd && span.end > line.contentEnd,
+          ) &&
           !(_consumedLinkEnd != null &&
               lines[lineIndex + 1].start < _consumedLinkEnd!)) {
         final next = lines[lineIndex + 1];
         _emit(
           ' ',
-          line.contentEnd,
-          next.start,
+          contentEnd,
+          continuationStarts[next.start] ?? next.start,
           SpellingTransformationKind.lineBreak,
           tokenizationLogical: '\n',
         );
@@ -1068,6 +1144,10 @@ final class _MarkdownProseScanner {
   void _scanInline(int rangeStart, int rangeEnd) {
     var cursor = rangeStart;
     while (cursor < rangeEnd) {
+      if (_consumedHtmlEnd case final htmlEnd? when cursor < htmlEnd) {
+        cursor = math.min(rangeEnd, htmlEnd);
+        continue;
+      }
       if (_consumedLinkEnd case final linkEnd? when cursor < linkEnd) {
         cursor = math.min(rangeEnd, linkEnd);
         continue;
@@ -1087,6 +1167,27 @@ final class _MarkdownProseScanner {
       final formattingEnd = _formattingEndAt(cursor);
       if (formattingEnd != null) {
         cursor = formattingEnd;
+        continue;
+      }
+      final htmlTextRange = _inImageLabel ? null : htmlText[cursor];
+      if (htmlTextRange != null) {
+        _scanHtmlText(cursor, htmlTextRange.end, htmlTextRange.text);
+        _consumedHtmlEnd = htmlTextRange.end;
+        cursor = htmlTextRange.end;
+        continue;
+      }
+      final htmlBreakEnd = _inImageLabel ? null : htmlLineBreaks[cursor];
+      if (htmlBreakEnd != null) {
+        _scanHtmlBreakAttributes(cursor, htmlBreakEnd);
+        _emit(
+          ' ',
+          cursor,
+          htmlBreakEnd,
+          SpellingTransformationKind.lineBreak,
+          tokenizationLogical: '\n',
+        );
+        _consumedHtmlEnd = htmlBreakEnd;
+        cursor = htmlBreakEnd;
         continue;
       }
       final opaqueEnd = _opaqueEndAt(cursor);
@@ -1225,6 +1326,105 @@ final class _MarkdownProseScanner {
         SpellingTransformationKind.identity,
       );
       cursor += width;
+    }
+  }
+
+  void _scanHtmlText(int rangeStart, int rangeEnd, String expected) {
+    final units =
+        <
+          ({
+            String text,
+            int start,
+            int end,
+            SpellingTransformationKind transformation,
+          })
+        >[];
+    var cursor = rangeStart;
+    while (cursor < rangeEnd) {
+      final start = cursor;
+      var end = cursor + (_codePointAt(source, cursor) > 0xffff ? 2 : 1);
+      var text = source.substring(cursor, end);
+      var transformation = SpellingTransformationKind.identity;
+      final continuation = _continuationEnds[cursor];
+      if (continuation != null && continuation <= rangeEnd) {
+        text = ' ';
+        end = continuation;
+        transformation = SpellingTransformationKind.lineBreak;
+      } else if (text == '\\' &&
+          end < rangeEnd &&
+          _commonMarkEscapableAsciiPunctuation(source.codeUnitAt(end))) {
+        text = source.substring(end, end + 1);
+        end++;
+        transformation = SpellingTransformationKind.markdownEscape;
+      } else if (text == '&') {
+        final entity = _entity.matchAsPrefix(source, cursor);
+        if (entity != null && entity.end <= rangeEnd) {
+          final encoded = entity.group(0)!;
+          final decoded = html.parseFragment(encoded).text ?? '';
+          if (decoded.isNotEmpty && decoded != encoded) {
+            text = decoded;
+            end = entity.end;
+            transformation = SpellingTransformationKind.entity;
+          }
+        }
+      }
+      if (_htmlWhitespaceText.hasMatch(text)) {
+        text = ' ';
+        transformation = SpellingTransformationKind.lineBreak;
+        if (units.isNotEmpty && units.last.text == ' ') {
+          final previous = units.removeLast();
+          units.add((
+            text: ' ',
+            start: previous.start,
+            end: end,
+            transformation: transformation,
+          ));
+          cursor = end;
+          continue;
+        }
+      }
+      units.add((
+        text: text,
+        start: start,
+        end: end,
+        transformation: transformation,
+      ));
+      cursor = end;
+    }
+    // The HTML adapter trims fragment edges, but preserves spaces inside
+    // formatting. Its semantic text decides which normalized edge survives.
+    if (units.isNotEmpty &&
+        units.first.text == ' ' &&
+        !expected.startsWith(' ')) {
+      units.removeAt(0);
+    }
+    if (units.isNotEmpty && units.last.text == ' ' && !expected.endsWith(' ')) {
+      units.removeLast();
+    }
+    if (units.map((unit) => unit.text).join() != expected) {
+      complete = false;
+      return;
+    }
+    final addresses = spellingPlainAddress.allMatches(expected).toList();
+    var logicalOffset = 0;
+    for (final unit in units) {
+      final logicalEnd = logicalOffset + unit.text.length;
+      if (addresses.any(
+        (address) => address.start < logicalEnd && address.end > logicalOffset,
+      )) {
+        _barrier();
+      } else {
+        _emit(unit.text, unit.start, unit.end, unit.transformation);
+      }
+      logicalOffset = logicalEnd;
+    }
+  }
+
+  void _scanHtmlBreakAttributes(int start, int end) {
+    // Multiline tag metadata is collected separately with the opaque HTML
+    // spans. Single-line breaks still expose their readable attributes.
+    if (!RegExp(r'\r|\n').hasMatch(source.substring(start, end))) {
+      _scanHumanReadableAttributes(start, end);
     }
   }
 
@@ -1407,6 +1607,15 @@ final class _MarkdownProseScanner {
       final offset = lineBreak.sourceOffset;
       return offset != null && offset >= labelStart && offset < labelEnd;
     }).toList()..sort((a, b) => a.sourceOffset!.compareTo(b.sourceOffset!));
+    final inlineBreaks = [
+      ...hardBreakSyntax.where(
+        (span) =>
+            !RegExp(r'\r|\n').hasMatch(source.substring(span.start, span.end)),
+      ),
+      if (!_inImageLabel)
+        for (final entry in htmlLineBreaks.entries)
+          _SourceInterval(entry.key, entry.value),
+    ];
     var breakIndex = 0;
     while (cursor < labelEnd) {
       // Mapped children own their internal line boundaries. Traverse them
@@ -1462,14 +1671,33 @@ final class _MarkdownProseScanner {
           );
         }
       }
-      for (final span in hardBreakSyntax) {
-        if (span.start < cursor ||
-            span.end > labelEnd ||
-            (nextBreak != null && span.start > nextBreak) ||
-            RegExp(r'\r|\n').hasMatch(source.substring(span.start, span.end))) {
+      for (final entry in htmlText.entries) {
+        if (_inImageLabel ||
+            entry.key < cursor ||
+            entry.value.end > labelEnd ||
+            (nextBreak != null && entry.key > nextBreak)) {
           continue;
         }
-        if (owner == null || span.start < owner.start) {
+        if (owner == null || entry.key < owner.start) {
+          owner = (
+            start: entry.key,
+            end: entry.value.end,
+            semanticBreaks: 0,
+            image: null,
+            imageCode: null,
+            inlineBreak: false,
+          );
+        }
+      }
+      for (final span in inlineBreaks) {
+        if (span.start < cursor ||
+            span.end > labelEnd ||
+            (nextBreak != null && span.start > nextBreak)) {
+          continue;
+        }
+        // A mapped HTML break owns its semantic newline even when its tag
+        // also appears in the generic multiline HTML exclusion spans.
+        if (owner == null || span.start <= owner.start) {
           owner = (
             start: span.start,
             end: span.end,
@@ -1504,6 +1732,9 @@ final class _MarkdownProseScanner {
         if (owner.imageCode case final code?) {
           _scanImageCode(code);
         } else if (owner.inlineBreak) {
+          if (htmlLineBreaks[owner.start] == owner.end) {
+            _scanHtmlBreakAttributes(owner.start, owner.end);
+          }
           _emit(
             ' ',
             owner.start,
@@ -1550,6 +1781,14 @@ final class _MarkdownProseScanner {
           breakStart +
           lineBreak.lineEnding.length +
           lineBreak.continuationPrefix.length;
+      if (!_inImageLabel &&
+          htmlFragments.any(
+            (span) => span.start <= breakStart && span.end > breakStart,
+          )) {
+        if (cursor < breakStart) _scanInline(cursor, breakStart);
+        cursor = nextStart;
+        continue;
+      }
       _SourceInterval? hardBreak;
       for (final span in hardBreakSyntax) {
         if (span.start >= cursor &&
@@ -2081,8 +2320,6 @@ bool _commonMarkEscapableAsciiPunctuation(int unit) =>
     (unit >= 0x5b && unit <= 0x60) ||
     (unit >= 0x7b && unit <= 0x7e);
 
-bool _horizontalWhitespace(int unit) => unit == 0x20 || unit == 0x09;
-
 bool _coversSourceRange(int start, int end, List<_SourceInterval> intervals) {
   if (start >= end) return true;
   final ordered = [...intervals]
@@ -2097,19 +2334,10 @@ bool _coversSourceRange(int start, int end, List<_SourceInterval> intervals) {
   return false;
 }
 
-bool _isSetextOrThematic(String line) {
-  final trimmed = line.trim();
-  return RegExp(r'^(?:=+|-+)$').hasMatch(trimmed) ||
-      RegExp(r'^(?:\*\s*){3,}$').hasMatch(trimmed) ||
-      RegExp(r'^(?:_\s*){3,}$').hasMatch(trimmed);
-}
-
-final RegExp _blockPrefix = RegExp(
-  r'^[ \t]{0,3}(?:(?:>[ \t]?)+)?(?:(?:[-+*]|\d+[.)])[ \t]+(?:\[[ xX]\][ \t]+)?)?',
-);
 final RegExp _entity = RegExp(
   r'&(?:#[0-9]{1,7}|#[xX][0-9A-Fa-f]{1,6}|[A-Za-z][A-Za-z0-9]{1,31});',
 );
+final RegExp _htmlWhitespaceText = RegExp(r'^\s+$');
 final RegExp _autolink = RegExp(r'^<[A-Za-z][A-Za-z0-9+.-]*:[^ <>]*>$');
 final RegExp _emailAutolink = RegExp(r'^<[^ <>@]+@[^ <>@]+>$');
 final RegExp _humanAttribute = RegExp(

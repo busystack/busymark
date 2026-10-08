@@ -1,8 +1,0 @@
-could not load cursor 'dnd-move'
-could not load cursor 'dnd-copy'
-could not load cursor 'dnd-none'
-could not load cursor 'dnd-move'
-could not load cursor 'dnd-copy'
-could not load cursor 'dnd-none'
-
-(io.busystack.busymark:38373): Gtk-WARNING **: 13:47:44.301: cannot open display: 

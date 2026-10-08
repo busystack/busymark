@@ -16,10 +16,13 @@ sudo snap connect busymark:ssh-keys
 sudo snap connect busymark:password-manager-service
 ```
 
-BusyMark's AI provider keys use the system credential store. Saving, reading,
-or removing those keys in a strict Snap requires the second connection. It
-grants access to the session's password manager, so make that choice only on a
-trusted installation.
+BusyMark stores AI provider keys and Nextcloud Notes app passwords in the system
+credential store through libsecret. Saving, reading, or removing either kind of
+credential in a strict Snap requires the `password-manager-service` connection.
+It grants access to the session's password manager, so make that choice only on a
+trusted installation. Nextcloud credentials have a separate namespace; an
+unavailable or locked credential store has no plaintext fallback. See
+[Nextcloud Notes](development/nextcloud-notes.md) for the authentication contract.
 
 ## Git author identity
 

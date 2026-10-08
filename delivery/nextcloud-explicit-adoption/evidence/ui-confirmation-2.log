@@ -1,7 +1,0 @@
-00:00 +0: loading /home/albert/busystack/busymark/test/src/nextcloud_notes_ui_test.dart
-00:00 +0: selecting and confirming candidate binds draft and retains newer edits
-02:32 +0: selecting and confirming candidate binds draft and retains newer edits - did not complete [E]
-02:32 +0: Some tests failed.
-
-Failing tests:
-  /home/albert/busystack/busymark/test/src/nextcloud_notes_ui_test.dart: selecting and confirming candidate binds draft and retains newer edits (did not complete)

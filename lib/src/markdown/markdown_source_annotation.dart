@@ -37,6 +37,7 @@ class BusyMarkMappedInlineRange {
     this.isReference = false,
     this.isSourceLineBreak = false,
     this.isRawHtmlText = false,
+    this.rawHtmlFragment,
     this.sourceLineBreakOffset,
   });
 
@@ -57,6 +58,10 @@ class BusyMarkMappedInlineRange {
 
   /// This inline came from Markdown's literal raw-HTML text node.
   final bool isRawHtmlText;
+
+  /// The complete inline HTML fragment whose outer whitespace is trimmed by
+  /// the HTML adapter. Distinct Markdown siblings are outside this interval.
+  final ({int start, int end})? rawHtmlFragment;
   final int? sourceLineBreakOffset;
 }
 

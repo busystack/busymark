@@ -1,7 +1,0 @@
-   snap.busymark.busymark
-   snap.busymark.hook.configure
-browser-support           busymark:browser-support           :browser-support                -
-network                   busymark:network                   :network                        -
-password-manager-service  busymark:password-manager-service  :password-manager-service       manual
-wayland                   busymark:wayland                   :wayland                        -
-x11                       busymark:x11                       :x11                            -

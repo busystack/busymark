@@ -772,6 +772,7 @@ class BusyMarkInlineParserContext {
           isReference: mappedRange.isReference,
           isSourceLineBreak: mappedRange.isSourceLineBreak,
           isRawHtmlText: mappedRange.isRawHtmlText,
+          rawHtmlFragment: mappedRange.rawHtmlFragment,
           sourceLineBreakOffset: mappedRange.sourceLineBreakOffset,
         );
       }
@@ -804,6 +805,7 @@ class BusyMarkInlineParserContext {
           isReference: range.isReference,
           isSourceLineBreak: range.isSourceLineBreak,
           isRawHtmlText: range.isRawHtmlText,
+          rawHtmlFragment: range.rawHtmlFragment,
           sourceLineBreakOffset: range.sourceLineBreakOffset,
         );
       }
@@ -888,6 +890,7 @@ class BusyMarkInlineParserContext {
     String source, {
     int sourceStart = 0,
     int? sourceEnd,
+    bool includeCodeBlocks = true,
   }) {
     if (source.isEmpty) return const [];
     final boundedStart = sourceStart.clamp(0, source.length).toInt();
@@ -903,6 +906,9 @@ class BusyMarkInlineParserContext {
 
     void collect(Iterable<md.Node> values) {
       for (final node in values) {
+        if (!includeCodeBlocks && node is md.Element && node.tag == 'pre') {
+          continue;
+        }
         if (node is md.UnparsedContent) {
           if (node.textContent.isNotEmpty) candidates.add(node.textContent);
         } else if (node is md.Text) {
@@ -993,6 +999,12 @@ class BusyMarkInlineParserContext {
         isReference: range.isReference,
         isSourceLineBreak: range.isSourceLineBreak,
         isRawHtmlText: range.isRawHtmlText,
+        rawHtmlFragment: range.rawHtmlFragment == null
+            ? null
+            : (
+                start: projection.rawStartFor(range.rawHtmlFragment!.start),
+                end: projection.rawEndFor(range.rawHtmlFragment!.end),
+              ),
         sourceLineBreakOffset: range.sourceLineBreakOffset == null
             ? null
             : projection.rawStartFor(range.sourceLineBreakOffset!),

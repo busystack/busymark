@@ -109,7 +109,7 @@ artifacts to a fresh temporary directory:
 verification_dir="$(mktemp -d)"
 report="$verification_dir/report.json"
 BUSYMARK_RELEASE_SMOKE=1 \
-  xvfb-run -a env WEBKIT_DISABLE_COMPOSITING_MODE=1 \
+  xvfb-run -a env GDK_BACKEND=x11 \
   LIBGL_ALWAYS_SOFTWARE=1 build/linux/x64/release/bundle/busymark \
   --visualization-release-smoke="$report"
 ```
@@ -141,6 +141,6 @@ do not certify physical-printer or assistive-technology behavior.
 ## CI environment
 
 The Linux workflow in `.github/workflows/flutter-linux.yml` is authoritative for
-native packages, environment flags, browser setup, X11 and Wayland runs, and the
+native packages, environment flags, X11 and Wayland runs, and the
 strict Snap verification. Keep ordinary build prerequisites in the main README;
 do not copy the larger CI-only dependency set into user installation steps.
