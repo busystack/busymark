@@ -4818,4 +4818,103 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get nextcloudCreateSeparateWarning =>
       'قد يكون الطلب الأول قد أنشأ ملاحظة على الخادم بالفعل. ينشئ هذا ملاحظة منفصلة بعملك المحلي المحفوظ. لن تُحذف أي ملاحظة يُشتبه بأنها مكررة.';
+
+  @override
+  String get wsSemanticFormats => 'تنسيق دلالي';
+
+  @override
+  String get wsUiControl => 'عنصر تحكم في الواجهة';
+
+  @override
+  String get wsFilePath => 'ملف / مسار';
+
+  @override
+  String get wsUiPath => 'مسار الواجهة';
+
+  @override
+  String get wsDefinitionList => 'قائمة تعريفات';
+
+  @override
+  String get wsIncludeContent => 'تضمين محتوى قابل لإعادة الاستخدام';
+
+  @override
+  String get wsVariableReference => 'مرجع متغير';
+
+  @override
+  String get wsConvertList => 'تحويل القائمة إلى إجراء';
+
+  @override
+  String get wsElementProperties => 'خصائص العنصر';
+
+  @override
+  String get wsTopicProperties => 'خصائص الموضوع';
+
+  @override
+  String get wsCollapsible => 'قابل للطي';
+
+  @override
+  String get wsPublishedState => 'الحالة الأولية عند النشر';
+
+  @override
+  String get wsExpanded => 'موسع';
+
+  @override
+  String get wsCollapsed => 'مطوي';
+
+  @override
+  String get wsCollapsedTitle => 'العنوان عند الطي';
+
+  @override
+  String get wsTerm => 'المصطلح';
+
+  @override
+  String get wsListLayout => 'تخطيط القائمة';
+
+  @override
+  String get wsSyncGroup => 'مجموعة المزامنة';
+
+  @override
+  String get wsTabKey => 'مفتاح علامة التبويب';
+
+  @override
+  String get wsSwitcherLabel => 'تسمية المبدل';
+
+  @override
+  String get wsNavigationElements => 'عناصر التنقل';
+
+  @override
+  String get wsNavigationDepth => 'عمق التنقل';
+
+  @override
+  String get wsAddItem => 'إضافة عنصر';
+
+  @override
+  String get wsStep => 'خطوة';
+
+  @override
+  String get wsPropertyInvalid => 'قيمة خاصية غير صالحة';
+
+  @override
+  String get wsFilter => 'عامل التصفية';
+
+  @override
+  String get wsIdentifier => 'معرّف العنصر';
+
+  @override
+  String get wsTldr => 'ملخّص (TLDR)';
+
+  @override
+  String get wsFullLayout => 'عرض كامل';
+
+  @override
+  String get wsMediumLayout => 'أعمدة متساوية';
+
+  @override
+  String get wsNarrowLayout => 'مصطلح ضيق';
+
+  @override
+  String get wsTitle => 'العنوان';
+
+  @override
+  String get wsSwitcherKey => 'مفتاح المبدّل';
 }

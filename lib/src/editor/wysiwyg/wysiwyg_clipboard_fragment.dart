@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
+
 import 'package:path/path.dart' as p;
 
 import '../../markdown/busymark_document.dart';
@@ -265,6 +267,14 @@ class WysiwygClipboardFragment {
     );
     BusyBlock block(BusyBlock value) {
       final rebasedAttributes = attributes(value.attributes);
+      final rebasedInlines = [for (final child in value.inlines) inline(child)];
+      bool referencesChanged(BusyInline before, BusyInline after) =>
+          before.destination != after.destination ||
+          !mapEquals(before.attributes, after.attributes) ||
+          [
+            for (var i = 0; i < before.children.length; i++)
+              referencesChanged(before.children[i], after.children[i]),
+          ].any((v) => v);
       final rawSource = value.kind == BusyBlockKind.video
           ? _rebaseVideoRawSource(
               value.rawSource,
@@ -275,7 +285,7 @@ class WysiwygClipboardFragment {
       return BusyBlock(
         id: value.id,
         kind: value.kind,
-        inlines: [for (final child in value.inlines) inline(child)],
+        inlines: rebasedInlines,
         children: [for (final child in value.children) block(child)],
         attributes: rebasedAttributes,
         rawSource: rawSource,
@@ -283,7 +293,13 @@ class WysiwygClipboardFragment {
         isSourceOnly: value.isSourceOnly,
         isGenerated: value.isGenerated,
         isSourceProtected: value.isSourceProtected,
-        dirty: true,
+        dirty:
+            value.dirty ||
+            !mapEquals(value.attributes, rebasedAttributes) ||
+            [
+              for (var i = 0; i < value.inlines.length; i++)
+                referencesChanged(value.inlines[i], rebasedInlines[i]),
+            ].any((v) => v),
       );
     }
 
@@ -363,6 +379,7 @@ Map<String, Object?> _encodeBlock(BusyBlock block) => {
   'sourceOnly': block.isSourceOnly,
   'generated': block.isGenerated,
   'sourceProtected': block.isSourceProtected,
+  'dirty': block.dirty,
 };
 
 bool _boundedJsonDepth(String source) {
@@ -389,12 +406,20 @@ bool _boundedJsonDepth(String source) {
   return true;
 }
 
-BusyBlock _destinationSerializationBlock(BusyBlock block) => BusyBlock(
+BusyBlock _destinationSerializationBlock(
+  BusyBlock block, {
+  bool authoredStructure = false,
+}) => BusyBlock(
   id: block.id,
   kind: block.kind,
   inlines: block.inlines,
   children: [
-    for (final child in block.children) _destinationSerializationBlock(child),
+    for (final child in block.children)
+      _destinationSerializationBlock(
+        child,
+        authoredStructure:
+            authoredStructure || busyMarkIsWritersideContainer(block),
+      ),
   ],
   attributes: block.attributes,
   rawSource: block.rawSource,
@@ -402,7 +427,9 @@ BusyBlock _destinationSerializationBlock(BusyBlock block) => BusyBlock(
   isSourceOnly: block.isSourceOnly,
   isGenerated: block.isGenerated,
   isSourceProtected: false,
-  dirty: true,
+  dirty: authoredStructure || busyMarkIsWritersideContainer(block)
+      ? block.dirty
+      : true,
 );
 
 class _FragmentReader {
@@ -484,7 +511,7 @@ class _FragmentReader {
       isSourceOnly: boolean(data['sourceOnly']),
       isGenerated: boolean(data['generated']),
       isSourceProtected: boolean(data['sourceProtected']),
-      dirty: true,
+      dirty: data['dirty'] == null || boolean(data['dirty']),
     );
   }
 }

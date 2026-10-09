@@ -4837,4 +4837,103 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get nextcloudCreateSeparateWarning =>
       'La primera solicitud puede haber creado ya una nota en el servidor. Esto crea una nota aparte con su trabajo local conservado. No se eliminará ningún posible duplicado.';
+
+  @override
+  String get wsSemanticFormats => 'Formato semántico';
+
+  @override
+  String get wsUiControl => 'Control de interfaz';
+
+  @override
+  String get wsFilePath => 'Archivo / Ruta';
+
+  @override
+  String get wsUiPath => 'Ruta de interfaz';
+
+  @override
+  String get wsDefinitionList => 'Lista de definiciones';
+
+  @override
+  String get wsIncludeContent => 'Incluir contenido reutilizable';
+
+  @override
+  String get wsVariableReference => 'Referencia de variable';
+
+  @override
+  String get wsConvertList => 'Convertir lista en procedimiento';
+
+  @override
+  String get wsElementProperties => 'Propiedades del elemento';
+
+  @override
+  String get wsTopicProperties => 'Propiedades del tema';
+
+  @override
+  String get wsCollapsible => 'Contraíble';
+
+  @override
+  String get wsPublishedState => 'Estado inicial publicado';
+
+  @override
+  String get wsExpanded => 'Expandido';
+
+  @override
+  String get wsCollapsed => 'Contraído';
+
+  @override
+  String get wsCollapsedTitle => 'Título contraído';
+
+  @override
+  String get wsTerm => 'Término';
+
+  @override
+  String get wsListLayout => 'Diseño de la lista';
+
+  @override
+  String get wsSyncGroup => 'Grupo de sincronización';
+
+  @override
+  String get wsTabKey => 'Clave de pestaña';
+
+  @override
+  String get wsSwitcherLabel => 'Etiqueta del selector';
+
+  @override
+  String get wsNavigationElements => 'Elementos de navegación';
+
+  @override
+  String get wsNavigationDepth => 'Profundidad de navegación';
+
+  @override
+  String get wsAddItem => 'Añadir elemento';
+
+  @override
+  String get wsStep => 'Paso';
+
+  @override
+  String get wsPropertyInvalid => 'Valor de propiedad no válido';
+
+  @override
+  String get wsFilter => 'Filtro';
+
+  @override
+  String get wsIdentifier => 'ID del elemento';
+
+  @override
+  String get wsTldr => 'Resumen (TLDR)';
+
+  @override
+  String get wsFullLayout => 'Ancho completo';
+
+  @override
+  String get wsMediumLayout => 'Columnas iguales';
+
+  @override
+  String get wsNarrowLayout => 'Término estrecho';
+
+  @override
+  String get wsTitle => 'Título';
+
+  @override
+  String get wsSwitcherKey => 'Clave del selector';
 }

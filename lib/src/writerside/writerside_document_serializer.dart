@@ -60,6 +60,25 @@ class WritersideDocumentSerializer {
   }
 
   String _serializeElement(WritersideElementNode element) {
+    final originalAttributes = {
+      for (final a in element.qualifiedAttributes) a.name: a.value,
+    };
+    final opening = _originalOpening(element.rawSource);
+    final originalName = RegExp(
+      r'^<([^\s/>]+)',
+    ).firstMatch(element.rawSource)?.group(1);
+    if (opening != null &&
+        !opening.endsWith('/>') &&
+        originalName == element.qualifiedName &&
+        _sameStringMap(element.attributes, originalAttributes)) {
+      final closing = RegExp(
+        r'</[^>]+>\s*$',
+        dotAll: true,
+      ).firstMatch(element.rawSource)?.group(0);
+      if (closing != null) {
+        return '$opening${element.children.map(_serializeNode).join()}$closing';
+      }
+    }
     final attributes = _serializeAttributes(element);
     if (element.children.isEmpty &&
         RegExp(r'/\s*>$').hasMatch(element.rawSource.trim())) {
@@ -68,6 +87,22 @@ class WritersideDocumentSerializer {
     final children = element.children.map(_serializeNode).join();
     return '<${element.qualifiedName}$attributes>'
         '$children</${element.qualifiedName}>';
+  }
+
+  String? _originalOpening(String source) {
+    if (!source.startsWith('<')) return null;
+    String? quote;
+    for (var i = 1; i < source.length; i++) {
+      final c = source[i];
+      if (quote != null) {
+        if (c == quote) quote = null;
+      } else if (c == '"' || c == "'") {
+        quote = c;
+      } else if (c == '>') {
+        return source.substring(0, i + 1);
+      }
+    }
+    return null;
   }
 
   String _serializeAttributes(WritersideElementNode element) {

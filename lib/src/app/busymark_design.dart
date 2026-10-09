@@ -1284,6 +1284,9 @@ class _BusyMarkHeaderPopupMenuButtonState<T>
       return;
     }
     setState(() => _loading = true);
+    // A menu response belongs to the context in which it was opened. A
+    // rebuilt caller may now represent another buffer or element.
+    final onSelected = widget.onSelected;
     try {
       final items = await widget.itemBuilder(context);
       if (!mounted || items.isEmpty) {
@@ -1314,7 +1317,7 @@ class _BusyMarkHeaderPopupMenuButtonState<T>
         }
       }
       if (mounted && !session.dismissed && selection != null) {
-        widget.onSelected(selection);
+        onSelected(selection);
       }
     } finally {
       if (mounted) {

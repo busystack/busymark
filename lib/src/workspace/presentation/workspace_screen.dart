@@ -68,6 +68,7 @@ import '../../editor/source/source_document.dart';
 import '../../editor/source/source_editor.dart';
 import '../../editor/source/source_search.dart';
 import '../../editor/wysiwyg/wysiwyg_editor.dart';
+import '../../editor/wysiwyg/writerside_editing_adapter.dart';
 import '../../editor/wysiwyg/wysiwyg_session_state.dart';
 import '../../editor/writerside_video_view.dart';
 import '../../feedback/presentation/feedback_dialog.dart';
@@ -10259,6 +10260,18 @@ List<DocumentOutlineHeading> _activeDocumentOutline(WorkspaceState state) {
     return preview.outline;
   }
   final buffer = state.activeBuffer;
+  if (workspace != null &&
+      buffer != null &&
+      resolveWorkspaceDocumentContext(workspace, buffer).kind ==
+          DocumentKind.writersideXmlTopic) {
+    return const WritersideEditingAdapter()
+            .parseXml(
+              filePath: buffer.filePath ?? workspace.activeFilePath ?? '',
+              source: buffer.text,
+            )
+            ?.outline ??
+        const [];
+  }
   final markdown = workspace?.markdown;
   if (workspace == null || markdown == null) return const [];
   if (buffer == null) {
@@ -11976,6 +11989,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
   String? _cachedWysiwygPath;
   String? _cachedWysiwygSource;
   MarkdownMode? _cachedWysiwygMode;
+  DocumentKind? _cachedWysiwygKind;
   String? _wysiwygScrollHeadingId;
   String? _wysiwygScrollBlockId;
   String? _wysiwygSearchQuery;
@@ -12310,6 +12324,12 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
                           Expanded(
                             key: const ValueKey('document-wysiwyg-pane'),
                             child: BusyMarkWysiwygEditor(
+                              writersideProjectIndex: widget
+                                  .state
+                                  .workspace
+                                  ?.writersideProject
+                                  ?.index,
+                              writersideModuleId: _activeWritersideModuleId(),
                               key: _wysiwygEditorKey,
                               document: wysiwygDocument,
                               documentId: activeBuffer?.id,
@@ -13674,6 +13694,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     _cachedWysiwygPath = document.filePath;
     _cachedWysiwygSource = document.source;
     _cachedWysiwygMode = context.markdownMode;
+    _cachedWysiwygKind = context.kind;
   }
 
   void _clearWysiwygCache() {
@@ -13682,6 +13703,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     _cachedWysiwygPath = null;
     _cachedWysiwygSource = null;
     _cachedWysiwygMode = null;
+    _cachedWysiwygKind = null;
   }
 
   String? _activeEditorPath() {
@@ -14169,7 +14191,24 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
 
   bool _canUseWysiwyg(Workspace? workspace) {
     final kind = _activeDocumentKind(workspace);
-    return kind?.supportsAiMarkdownEditing ?? false;
+    return kind?.supportsVisualEditing ?? false;
+  }
+
+  String? _activeWritersideModuleId() {
+    final workspace = widget.state.workspace;
+    final buffer = widget.state.activeBuffer;
+    if (workspace == null || buffer == null) return null;
+    final module = resolveWorkspaceDocumentContext(
+      workspace,
+      buffer,
+    ).writersideModule;
+    if (module == null) return null;
+    for (final entry
+        in workspace.writersideProject?.index.modulesById.entries ??
+            const Iterable.empty()) {
+      if (p.equals(entry.value.rootPath, module.rootPath)) return entry.key;
+    }
+    return null;
   }
 
   BusyDocument? _wysiwygDocument() {
@@ -14183,8 +14222,18 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     if (_cachedWysiwygBufferId == buffer.id &&
         _cachedWysiwygPath == activePath &&
         _cachedWysiwygSource == buffer.text &&
-        _cachedWysiwygMode == context.markdownMode) {
+        _cachedWysiwygMode == context.markdownMode &&
+        _cachedWysiwygKind == context.kind) {
       return _cachedWysiwygDocument;
+    }
+    if (context.kind == DocumentKind.writersideXmlTopic) {
+      final document = const WritersideEditingAdapter().parseXml(
+        filePath: activePath,
+        source: buffer.text,
+      );
+      _clearWysiwygCache();
+      if (document != null) _cacheWysiwygDocument(buffer.id, document);
+      return document;
     }
     final currentMarkdown = workspace.markdown;
     if (currentMarkdown != null &&
@@ -14197,6 +14246,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
       _cachedWysiwygPath = activePath;
       _cachedWysiwygSource = buffer.text;
       _cachedWysiwygMode = context.markdownMode;
+      _cachedWysiwygKind = context.kind;
       return document;
     }
     try {
@@ -14214,6 +14264,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
       _cachedWysiwygPath = activePath;
       _cachedWysiwygSource = buffer.text;
       _cachedWysiwygMode = context.markdownMode;
+      _cachedWysiwygKind = context.kind;
       return document;
     } on Object {
       return null;

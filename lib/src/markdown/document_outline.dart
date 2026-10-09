@@ -46,7 +46,14 @@ extension BusyDocumentOutline on BusyDocument {
     final headings = <DocumentOutlineHeading>[];
     final generatedIdOccurrences = <String, int>{};
 
-    for (final block in blocks) {
+    Iterable<BusyBlock> xmlHeadings(Iterable<BusyBlock> candidates) sync* {
+      for (final block in candidates) {
+        if (block.kind == BusyBlockKind.heading) yield block;
+        yield* xmlHeadings(block.children);
+      }
+    }
+
+    for (final block in isXmlTopic ? xmlHeadings(blocks) : blocks) {
       if (block.kind != BusyBlockKind.heading) {
         continue;
       }

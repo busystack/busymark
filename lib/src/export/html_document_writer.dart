@@ -866,6 +866,11 @@ class HtmlDocumentWriter {
           );
         case BusyInlineKind.strikethrough:
           node = _el('del', children: nodes);
+        case BusyInlineKind.writersideControl:
+          node = _el('strong', children: nodes);
+        case BusyInlineKind.writersidePath:
+        case BusyInlineKind.writersideUiPath:
+        case BusyInlineKind.writersideShortcut:
         case BusyInlineKind.code:
           var text = value.text;
           if (a['shortcut-layouts'] case final layouts?) {

@@ -4831,4 +4831,103 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get nextcloudCreateSeparateWarning =>
       'Die erste Anfrage hat möglicherweise bereits eine Servernotiz erstellt. Dies erstellt eine separate Notiz mit Ihrer behaltenen lokalen Arbeit. Vermutete Duplikate werden nicht gelöscht.';
+
+  @override
+  String get wsSemanticFormats => 'Semantische Formatierung';
+
+  @override
+  String get wsUiControl => 'UI-Steuerelement';
+
+  @override
+  String get wsFilePath => 'Datei / Pfad';
+
+  @override
+  String get wsUiPath => 'UI-Pfad';
+
+  @override
+  String get wsDefinitionList => 'Definitionsliste';
+
+  @override
+  String get wsIncludeContent => 'Wiederverwendbaren Inhalt einbinden';
+
+  @override
+  String get wsVariableReference => 'Variablenreferenz';
+
+  @override
+  String get wsConvertList => 'Liste in Prozedur umwandeln';
+
+  @override
+  String get wsElementProperties => 'Elementeigenschaften';
+
+  @override
+  String get wsTopicProperties => 'Themeneigenschaften';
+
+  @override
+  String get wsCollapsible => 'Einklappbar';
+
+  @override
+  String get wsPublishedState => 'Anfangszustand bei Veröffentlichung';
+
+  @override
+  String get wsExpanded => 'Ausgeklappt';
+
+  @override
+  String get wsCollapsed => 'Eingeklappt';
+
+  @override
+  String get wsCollapsedTitle => 'Titel im eingeklappten Zustand';
+
+  @override
+  String get wsTerm => 'Begriff';
+
+  @override
+  String get wsListLayout => 'Listenlayout';
+
+  @override
+  String get wsSyncGroup => 'Synchronisierungsgruppe';
+
+  @override
+  String get wsTabKey => 'Registerschlüssel';
+
+  @override
+  String get wsSwitcherLabel => 'Beschriftung des Umschalters';
+
+  @override
+  String get wsNavigationElements => 'Navigationselemente';
+
+  @override
+  String get wsNavigationDepth => 'Navigationstiefe';
+
+  @override
+  String get wsAddItem => 'Element hinzufügen';
+
+  @override
+  String get wsStep => 'Schritt';
+
+  @override
+  String get wsPropertyInvalid => 'Ungültiger Eigenschaftswert';
+
+  @override
+  String get wsFilter => 'Inhaltsfilter';
+
+  @override
+  String get wsIdentifier => 'Element-ID';
+
+  @override
+  String get wsTldr => 'Kurzfassung (TLDR)';
+
+  @override
+  String get wsFullLayout => 'Volle Breite';
+
+  @override
+  String get wsMediumLayout => 'Gleiche Spalten';
+
+  @override
+  String get wsNarrowLayout => 'Schmale Begriffsspalte';
+
+  @override
+  String get wsTitle => 'Titel';
+
+  @override
+  String get wsSwitcherKey => 'Umschaltschlüssel';
 }

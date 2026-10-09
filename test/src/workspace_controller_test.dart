@@ -3,6 +3,9 @@ import 'dart:io';
 
 import 'package:busymark/src/core/path_utils.dart';
 import 'package:busymark/src/writerside/writerside_project.dart';
+import 'package:busymark/src/editor/wysiwyg/writerside_editing_adapter.dart';
+import 'package:busymark/src/editor/wysiwyg/wysiwyg_document_controller.dart';
+import 'package:busymark/src/editor/wysiwyg/wysiwyg_commands.dart';
 
 import 'package:busymark/src/markdown/markdown_parser.dart';
 import 'package:busymark/src/markdown/markdown_model.dart';
@@ -40,6 +43,70 @@ import 'package:xml/xml.dart';
 void main() {
   _registerResponsivenessTests();
   _registerCorrectionBoundaryTests();
+  test(
+    'XML visual edits use buffer history, save and reopen without Markdown conversion',
+    () async {
+      final root = await Directory.systemTemp.createTemp(
+        'busymark-xml-authoring-buffer-',
+      );
+      addTearDown(() => root.delete(recursive: true));
+      final file = File(p.join(root.path, 't.topic'));
+      const original =
+          '<?xml version="1.0"?>\n<topic xmlns:e="urn:extension" id="t" title="Title" e:keep="yes"><!-- keep --><p>Text</p></topic>\n';
+      await file.writeAsString(original);
+      final harness = await _createControllerHarness();
+      await harness.settingsController.setAutoSave(false);
+      await harness.settingsController.setValidateOnEdit(false);
+      final controller = harness.controller._notifier;
+      await controller.openPath(file.path);
+      final buffer = controller.state.activeBuffer!;
+      final visual = BusyMarkWysiwygDocumentController(
+        document: const WritersideEditingAdapter().parseXml(
+          filePath: file.path,
+          source: buffer.text,
+        )!,
+      );
+      final paragraph = visual.document.blocks
+          .firstWhere((b) => b.attributes['element'] == 'topic')
+          .children
+          .firstWhere((b) => b.kind == BusyBlockKind.paragraph);
+      visual.insertWriterside(
+        BusyWritersideInsertCommand.tabs,
+        paragraph.id,
+        title: 'First',
+      );
+      final authored = visual.markdown;
+      visual.rebaseCommittedSource(authored);
+      controller.updateActiveWysiwygText(
+        authored,
+        document: visual.document,
+        sourceBufferId: buffer.id,
+        sourceFilePath: file.path,
+      );
+      expect(controller.state.activeBuffer!.dirty, isTrue);
+      expect(
+        controller.state.activeBuffer!.editorState.undoState.undo,
+        hasLength(1),
+      );
+      expect(controller.undoActiveBuffer(), isTrue);
+      expect(controller.state.activeText, original);
+      expect(controller.state.activeBuffer!.dirty, isFalse);
+      expect(controller.redoActiveBuffer(), isTrue);
+      expect(controller.state.activeText, authored);
+      expect(await controller.saveActive(), isTrue);
+      expect(await file.readAsString(), authored);
+      expect(controller.state.activeBuffer!.dirty, isFalse);
+      final reopened = const WritersideEditingAdapter().parseXml(
+        filePath: file.path,
+        source: await file.readAsString(),
+      )!;
+      expect(reopened.isXmlTopic, isTrue);
+      expect(const WritersideEditingAdapter().serializeXml(reopened), authored);
+      expect(authored, contains('<!-- keep -->'));
+      expect(authored, contains('e:keep="yes"'));
+      expect(authored, contains('<tabs>'));
+    },
+  );
   test(
     'Welcome creation cannot overwrite an edit made during history flush',
     () async {

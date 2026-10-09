@@ -4857,4 +4857,103 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get nextcloudCreateSeparateWarning =>
       'Перший запит міг уже створити нотатку на сервері. Буде створено окрему нотатку зі збереженою локальною роботою. Ймовірні дублікати не буде видалено.';
+
+  @override
+  String get wsSemanticFormats => 'Семантичне форматування';
+
+  @override
+  String get wsUiControl => 'Елемент інтерфейсу';
+
+  @override
+  String get wsFilePath => 'Файл / Шлях';
+
+  @override
+  String get wsUiPath => 'Шлях в інтерфейсі';
+
+  @override
+  String get wsDefinitionList => 'Список визначень';
+
+  @override
+  String get wsIncludeContent => 'Додати повторно використовуваний вміст';
+
+  @override
+  String get wsVariableReference => 'Посилання на змінну';
+
+  @override
+  String get wsConvertList => 'Перетворити список на процедуру';
+
+  @override
+  String get wsElementProperties => 'Властивості елемента';
+
+  @override
+  String get wsTopicProperties => 'Властивості теми';
+
+  @override
+  String get wsCollapsible => 'Згортання';
+
+  @override
+  String get wsPublishedState => 'Початковий стан публікації';
+
+  @override
+  String get wsExpanded => 'Розгорнуто';
+
+  @override
+  String get wsCollapsed => 'Згорнуто';
+
+  @override
+  String get wsCollapsedTitle => 'Заголовок у згорнутому стані';
+
+  @override
+  String get wsTerm => 'Термін';
+
+  @override
+  String get wsListLayout => 'Макет списку';
+
+  @override
+  String get wsSyncGroup => 'Група синхронізації';
+
+  @override
+  String get wsTabKey => 'Ключ вкладки';
+
+  @override
+  String get wsSwitcherLabel => 'Підпис перемикача';
+
+  @override
+  String get wsNavigationElements => 'Елементи навігації';
+
+  @override
+  String get wsNavigationDepth => 'Глибина навігації';
+
+  @override
+  String get wsAddItem => 'Додати елемент';
+
+  @override
+  String get wsStep => 'Крок';
+
+  @override
+  String get wsPropertyInvalid => 'Неприпустиме значення властивості';
+
+  @override
+  String get wsFilter => 'Фільтр';
+
+  @override
+  String get wsIdentifier => 'Ідентифікатор елемента';
+
+  @override
+  String get wsTldr => 'Короткий виклад (TLDR)';
+
+  @override
+  String get wsFullLayout => 'Повна ширина';
+
+  @override
+  String get wsMediumLayout => 'Рівні стовпці';
+
+  @override
+  String get wsNarrowLayout => 'Вузький стовпець терміна';
+
+  @override
+  String get wsTitle => 'Заголовок';
+
+  @override
+  String get wsSwitcherKey => 'Ключ перемикача';
 }

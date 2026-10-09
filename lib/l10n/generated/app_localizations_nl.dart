@@ -4836,4 +4836,103 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get nextcloudCreateSeparateWarning =>
       'Het eerste verzoek heeft mogelijk al een servernotitie gemaakt. Dit maakt een afzonderlijke notitie met uw behouden lokale werk. Vermoedelijke duplicaten worden niet verwijderd.';
+
+  @override
+  String get wsSemanticFormats => 'Semantische opmaak';
+
+  @override
+  String get wsUiControl => 'UI-besturingselement';
+
+  @override
+  String get wsFilePath => 'Bestand / Pad';
+
+  @override
+  String get wsUiPath => 'UI-pad';
+
+  @override
+  String get wsDefinitionList => 'Definitielijst';
+
+  @override
+  String get wsIncludeContent => 'Herbruikbare inhoud opnemen';
+
+  @override
+  String get wsVariableReference => 'Variabelereferentie';
+
+  @override
+  String get wsConvertList => 'Lijst omzetten naar procedure';
+
+  @override
+  String get wsElementProperties => 'Elementeigenschappen';
+
+  @override
+  String get wsTopicProperties => 'Onderwerpeigenschappen';
+
+  @override
+  String get wsCollapsible => 'Inklapbaar';
+
+  @override
+  String get wsPublishedState => 'Gepubliceerde beginstatus';
+
+  @override
+  String get wsExpanded => 'Uitgeklapt';
+
+  @override
+  String get wsCollapsed => 'Ingeklapt';
+
+  @override
+  String get wsCollapsedTitle => 'Ingeklapte titel';
+
+  @override
+  String get wsTerm => 'Begrip';
+
+  @override
+  String get wsListLayout => 'Lijstindeling';
+
+  @override
+  String get wsSyncGroup => 'Synchronisatiegroep';
+
+  @override
+  String get wsTabKey => 'Tabsleutel';
+
+  @override
+  String get wsSwitcherLabel => 'Schakelaarlabel';
+
+  @override
+  String get wsNavigationElements => 'Navigatie-elementen';
+
+  @override
+  String get wsNavigationDepth => 'Navigatiediepte';
+
+  @override
+  String get wsAddItem => 'Item toevoegen';
+
+  @override
+  String get wsStep => 'Stap';
+
+  @override
+  String get wsPropertyInvalid => 'Ongeldige eigenschapswaarde';
+
+  @override
+  String get wsFilter => 'Inhoudsfilter';
+
+  @override
+  String get wsIdentifier => 'Element-ID';
+
+  @override
+  String get wsTldr => 'Samenvatting (TLDR)';
+
+  @override
+  String get wsFullLayout => 'Volledige breedte';
+
+  @override
+  String get wsMediumLayout => 'Gelijke kolommen';
+
+  @override
+  String get wsNarrowLayout => 'Smalle begripskolom';
+
+  @override
+  String get wsTitle => 'Titel';
+
+  @override
+  String get wsSwitcherKey => 'Keuzeschakelaar';
 }

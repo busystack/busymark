@@ -4778,4 +4778,103 @@ class AppLocalizationsHi extends AppLocalizations {
   @override
   String get nextcloudCreateSeparateWarning =>
       'पहले अनुरोध ने सर्वर पर पहले ही नोट बना दिया हो सकता है। यह आपके सुरक्षित स्थानीय काम के साथ अलग नोट बनाता है। किसी संभावित प्रतिलिपि को हटाया नहीं जाएगा।';
+
+  @override
+  String get wsSemanticFormats => 'अर्थपूर्ण स्वरूपण';
+
+  @override
+  String get wsUiControl => 'यूआई नियंत्रण';
+
+  @override
+  String get wsFilePath => 'फ़ाइल / पथ';
+
+  @override
+  String get wsUiPath => 'यूआई पथ';
+
+  @override
+  String get wsDefinitionList => 'परिभाषा सूची';
+
+  @override
+  String get wsIncludeContent => 'पुनः उपयोग योग्य सामग्री शामिल करें';
+
+  @override
+  String get wsVariableReference => 'चर संदर्भ';
+
+  @override
+  String get wsConvertList => 'सूची को प्रक्रिया में बदलें';
+
+  @override
+  String get wsElementProperties => 'तत्व के गुण';
+
+  @override
+  String get wsTopicProperties => 'विषय के गुण';
+
+  @override
+  String get wsCollapsible => 'समेटने योग्य';
+
+  @override
+  String get wsPublishedState => 'प्रकाशित आरंभिक स्थिति';
+
+  @override
+  String get wsExpanded => 'विस्तृत';
+
+  @override
+  String get wsCollapsed => 'संक्षिप्त';
+
+  @override
+  String get wsCollapsedTitle => 'संक्षिप्त शीर्षक';
+
+  @override
+  String get wsTerm => 'शब्द';
+
+  @override
+  String get wsListLayout => 'सूची लेआउट';
+
+  @override
+  String get wsSyncGroup => 'सिंक समूह';
+
+  @override
+  String get wsTabKey => 'टैब कुंजी';
+
+  @override
+  String get wsSwitcherLabel => 'स्विचर लेबल';
+
+  @override
+  String get wsNavigationElements => 'नेविगेशन तत्व';
+
+  @override
+  String get wsNavigationDepth => 'नेविगेशन गहराई';
+
+  @override
+  String get wsAddItem => 'आइटम जोड़ें';
+
+  @override
+  String get wsStep => 'चरण';
+
+  @override
+  String get wsPropertyInvalid => 'अमान्य गुण मान';
+
+  @override
+  String get wsFilter => 'फ़िल्टर';
+
+  @override
+  String get wsIdentifier => 'तत्व आईडी';
+
+  @override
+  String get wsTldr => 'सारांश (TLDR)';
+
+  @override
+  String get wsFullLayout => 'पूरी चौड़ाई';
+
+  @override
+  String get wsMediumLayout => 'समान स्तंभ';
+
+  @override
+  String get wsNarrowLayout => 'संकीर्ण शब्द स्तंभ';
+
+  @override
+  String get wsTitle => 'शीर्षक';
+
+  @override
+  String get wsSwitcherKey => 'स्विचर कुंजी';
 }

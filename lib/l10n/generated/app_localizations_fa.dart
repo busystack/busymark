@@ -4826,4 +4826,103 @@ class AppLocalizationsFa extends AppLocalizations {
   @override
   String get nextcloudCreateSeparateWarning =>
       'ممکن است درخواست نخست قبلاً یک یادداشت سرور ایجاد کرده باشد. این کار یک یادداشت جداگانه با کار محلی حفظ‌شدهٔ شما ایجاد می‌کند. هیچ یادداشت مشکوک به تکراری بودن حذف نمی‌شود.';
+
+  @override
+  String get wsSemanticFormats => 'قالب‌بندی معنایی';
+
+  @override
+  String get wsUiControl => 'کنترل رابط کاربری';
+
+  @override
+  String get wsFilePath => 'فایل / مسیر';
+
+  @override
+  String get wsUiPath => 'مسیر رابط کاربری';
+
+  @override
+  String get wsDefinitionList => 'فهرست تعریف‌ها';
+
+  @override
+  String get wsIncludeContent => 'درج محتوای قابل استفاده مجدد';
+
+  @override
+  String get wsVariableReference => 'ارجاع به متغیر';
+
+  @override
+  String get wsConvertList => 'تبدیل فهرست به رویه';
+
+  @override
+  String get wsElementProperties => 'ویژگی‌های عنصر';
+
+  @override
+  String get wsTopicProperties => 'ویژگی‌های موضوع';
+
+  @override
+  String get wsCollapsible => 'قابل جمع شدن';
+
+  @override
+  String get wsPublishedState => 'حالت اولیه هنگام انتشار';
+
+  @override
+  String get wsExpanded => 'باز';
+
+  @override
+  String get wsCollapsed => 'جمع شده';
+
+  @override
+  String get wsCollapsedTitle => 'عنوان در حالت جمع شده';
+
+  @override
+  String get wsTerm => 'اصطلاح';
+
+  @override
+  String get wsListLayout => 'چیدمان فهرست';
+
+  @override
+  String get wsSyncGroup => 'گروه همگام‌سازی';
+
+  @override
+  String get wsTabKey => 'کلید زبانه';
+
+  @override
+  String get wsSwitcherLabel => 'برچسب تغییر‌دهنده';
+
+  @override
+  String get wsNavigationElements => 'عناصر پیمایش';
+
+  @override
+  String get wsNavigationDepth => 'عمق پیمایش';
+
+  @override
+  String get wsAddItem => 'افزودن مورد';
+
+  @override
+  String get wsStep => 'گام';
+
+  @override
+  String get wsPropertyInvalid => 'مقدار ویژگی نامعتبر';
+
+  @override
+  String get wsFilter => 'فیلتر';
+
+  @override
+  String get wsIdentifier => 'شناسه عنصر';
+
+  @override
+  String get wsTldr => 'خلاصه (TLDR)';
+
+  @override
+  String get wsFullLayout => 'عرض کامل';
+
+  @override
+  String get wsMediumLayout => 'ستون‌های برابر';
+
+  @override
+  String get wsNarrowLayout => 'ستون باریک اصطلاح';
+
+  @override
+  String get wsTitle => 'عنوان';
+
+  @override
+  String get wsSwitcherKey => 'کلید انتخابگر';
 }

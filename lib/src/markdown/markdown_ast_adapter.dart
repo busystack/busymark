@@ -14,6 +14,7 @@ import 'raw_html_adapter.dart';
 import 'raw_html_policy.dart';
 import 'writerside_variable_syntax.dart';
 import '../writerside/writerside_schema.dart';
+import '../editor/wysiwyg/writerside_editing_adapter.dart';
 
 const _rawHtmlAdapter = RawHtmlAdapter();
 
@@ -553,7 +554,36 @@ class MarkdownAstAdapter {
       ];
     }
 
-    if (mode == MarkdownMode.writersideMarkdown && _writersideBlockTag(tag)) {
+    if (mode == MarkdownMode.writersideMarkdown &&
+        (_writersideBlockTag(tag) ||
+            WritersideEditingAdapter.containers.contains(tag))) {
+      if (WritersideEditingAdapter.containers.contains(tag) &&
+          !_writersideAdmonitionTag(tag)) {
+        final titled = WritersideEditingAdapter.titleElements.contains(tag);
+        return [
+          BusyBlock(
+            id: nextId(),
+            kind: _writersideKind(tag),
+            inlines: titled
+                ? [
+                    BusyInline(
+                      kind: BusyInlineKind.text,
+                      text: node.attributes['title'] ?? '',
+                    ),
+                  ]
+                : const [],
+            children: [
+              for (final child in children)
+                ..._blocksFromNode(child, nextId: nextId, mode: mode),
+            ],
+            attributes: {
+              ...node.attributes,
+              'element': tag,
+              busyMarkWritersideContainerAttribute: 'true',
+            },
+          ),
+        ];
+      }
       if (tag == 'code-block') {
         return [
           _writersideCodeBlock(
@@ -928,6 +958,19 @@ class MarkdownAstAdapter {
     );
     final text = node.textContent;
     final inlines = switch (tag) {
+      'control' || 'path' || 'ui-path' || 'shortcut' => [
+        BusyInline(
+          kind: switch (tag) {
+            'control' => BusyInlineKind.writersideControl,
+            'path' => BusyInlineKind.writersidePath,
+            'ui-path' => BusyInlineKind.writersideUiPath,
+            _ => BusyInlineKind.writersideShortcut,
+          },
+          text: text,
+          children: children,
+          attributes: node.attributes,
+        ),
+      ],
       busyMarkMathInlineTag => [
         BusyInline(
           kind: BusyInlineKind.math,
@@ -1223,6 +1266,19 @@ class MarkdownAstAdapter {
     required String Function() nextId,
     required bool allowVideo,
   }) {
+    final semantic = const WritersideEditingAdapter().parseMarkdownElement(
+      value,
+      nextId,
+    );
+    if (semantic != null &&
+        !{
+          'tip',
+          'note',
+          'warning',
+          'quote',
+        }.contains(semantic.attributes['element'])) {
+      return semantic;
+    }
     try {
       final fragment = XmlDocumentFragment.parse(value.trim());
       final elements = fragment.children.whereType<XmlElement>().toList();
@@ -1639,7 +1695,8 @@ class MarkdownAstAdapter {
   }
 
   bool _writersideBlockTag(String tag) {
-    return WritersideSchema.isMarkdownSemanticBlock(tag);
+    return !{'control', 'path', 'ui-path', 'shortcut'}.contains(tag) &&
+        WritersideSchema.isMarkdownSemanticBlock(tag);
   }
 
   bool _editableWritersideTag(String tag) {

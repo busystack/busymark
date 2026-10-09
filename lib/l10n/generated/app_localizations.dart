@@ -8117,6 +8117,204 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The first request may already have created a server note. This creates a separate note with your retained local work. No suspected duplicate will be deleted.'**
   String get nextcloudCreateSeparateWarning;
+
+  /// No description provided for @wsSemanticFormats.
+  ///
+  /// In en, this message translates to:
+  /// **'Semantic formatting'**
+  String get wsSemanticFormats;
+
+  /// No description provided for @wsUiControl.
+  ///
+  /// In en, this message translates to:
+  /// **'UI Control'**
+  String get wsUiControl;
+
+  /// No description provided for @wsFilePath.
+  ///
+  /// In en, this message translates to:
+  /// **'File / Path'**
+  String get wsFilePath;
+
+  /// No description provided for @wsUiPath.
+  ///
+  /// In en, this message translates to:
+  /// **'UI Path'**
+  String get wsUiPath;
+
+  /// No description provided for @wsDefinitionList.
+  ///
+  /// In en, this message translates to:
+  /// **'Definition List'**
+  String get wsDefinitionList;
+
+  /// No description provided for @wsIncludeContent.
+  ///
+  /// In en, this message translates to:
+  /// **'Include Reusable Content'**
+  String get wsIncludeContent;
+
+  /// No description provided for @wsVariableReference.
+  ///
+  /// In en, this message translates to:
+  /// **'Variable Reference'**
+  String get wsVariableReference;
+
+  /// No description provided for @wsConvertList.
+  ///
+  /// In en, this message translates to:
+  /// **'Convert List to Procedure'**
+  String get wsConvertList;
+
+  /// No description provided for @wsElementProperties.
+  ///
+  /// In en, this message translates to:
+  /// **'Element Properties'**
+  String get wsElementProperties;
+
+  /// No description provided for @wsTopicProperties.
+  ///
+  /// In en, this message translates to:
+  /// **'Topic Properties'**
+  String get wsTopicProperties;
+
+  /// No description provided for @wsCollapsible.
+  ///
+  /// In en, this message translates to:
+  /// **'Collapsible'**
+  String get wsCollapsible;
+
+  /// No description provided for @wsPublishedState.
+  ///
+  /// In en, this message translates to:
+  /// **'Published initial state'**
+  String get wsPublishedState;
+
+  /// No description provided for @wsExpanded.
+  ///
+  /// In en, this message translates to:
+  /// **'Expanded'**
+  String get wsExpanded;
+
+  /// No description provided for @wsCollapsed.
+  ///
+  /// In en, this message translates to:
+  /// **'Collapsed'**
+  String get wsCollapsed;
+
+  /// No description provided for @wsCollapsedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Collapsed title'**
+  String get wsCollapsedTitle;
+
+  /// No description provided for @wsTerm.
+  ///
+  /// In en, this message translates to:
+  /// **'Term'**
+  String get wsTerm;
+
+  /// No description provided for @wsListLayout.
+  ///
+  /// In en, this message translates to:
+  /// **'List layout'**
+  String get wsListLayout;
+
+  /// No description provided for @wsSyncGroup.
+  ///
+  /// In en, this message translates to:
+  /// **'Synchronization group'**
+  String get wsSyncGroup;
+
+  /// No description provided for @wsTabKey.
+  ///
+  /// In en, this message translates to:
+  /// **'Tab key'**
+  String get wsTabKey;
+
+  /// No description provided for @wsSwitcherLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Switcher label'**
+  String get wsSwitcherLabel;
+
+  /// No description provided for @wsNavigationElements.
+  ///
+  /// In en, this message translates to:
+  /// **'Navigation elements'**
+  String get wsNavigationElements;
+
+  /// No description provided for @wsNavigationDepth.
+  ///
+  /// In en, this message translates to:
+  /// **'Navigation depth'**
+  String get wsNavigationDepth;
+
+  /// No description provided for @wsAddItem.
+  ///
+  /// In en, this message translates to:
+  /// **'Add item'**
+  String get wsAddItem;
+
+  /// No description provided for @wsStep.
+  ///
+  /// In en, this message translates to:
+  /// **'Step'**
+  String get wsStep;
+
+  /// No description provided for @wsPropertyInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid property value'**
+  String get wsPropertyInvalid;
+
+  /// No description provided for @wsFilter.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter'**
+  String get wsFilter;
+
+  /// No description provided for @wsIdentifier.
+  ///
+  /// In en, this message translates to:
+  /// **'Element ID'**
+  String get wsIdentifier;
+
+  /// No description provided for @wsTldr.
+  ///
+  /// In en, this message translates to:
+  /// **'TLDR'**
+  String get wsTldr;
+
+  /// No description provided for @wsFullLayout.
+  ///
+  /// In en, this message translates to:
+  /// **'Full width'**
+  String get wsFullLayout;
+
+  /// No description provided for @wsMediumLayout.
+  ///
+  /// In en, this message translates to:
+  /// **'Equal columns'**
+  String get wsMediumLayout;
+
+  /// No description provided for @wsNarrowLayout.
+  ///
+  /// In en, this message translates to:
+  /// **'Narrow term'**
+  String get wsNarrowLayout;
+
+  /// No description provided for @wsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Title'**
+  String get wsTitle;
+
+  /// No description provided for @wsSwitcherKey.
+  ///
+  /// In en, this message translates to:
+  /// **'Switcher key'**
+  String get wsSwitcherKey;
 }
 
 class _AppLocalizationsDelegate

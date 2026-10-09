@@ -4655,4 +4655,103 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String get nextcloudCreateSeparateWarning =>
       '最初のリクエストですでにサーバーノートが作成された可能性があります。保持したローカル作業から別のノートを作成します。重複の疑いがあるノートは削除されません。';
+
+  @override
+  String get wsSemanticFormats => '意味に基づく書式';
+
+  @override
+  String get wsUiControl => 'UI コントロール';
+
+  @override
+  String get wsFilePath => 'ファイル / パス';
+
+  @override
+  String get wsUiPath => 'UI パス';
+
+  @override
+  String get wsDefinitionList => '定義リスト';
+
+  @override
+  String get wsIncludeContent => '再利用可能なコンテンツを含める';
+
+  @override
+  String get wsVariableReference => '変数参照';
+
+  @override
+  String get wsConvertList => 'リストを手順に変換';
+
+  @override
+  String get wsElementProperties => '要素のプロパティ';
+
+  @override
+  String get wsTopicProperties => 'トピックのプロパティ';
+
+  @override
+  String get wsCollapsible => '折りたたみ可能';
+
+  @override
+  String get wsPublishedState => '公開時の初期状態';
+
+  @override
+  String get wsExpanded => '展開';
+
+  @override
+  String get wsCollapsed => '折りたたみ';
+
+  @override
+  String get wsCollapsedTitle => '折りたたみ時のタイトル';
+
+  @override
+  String get wsTerm => '用語';
+
+  @override
+  String get wsListLayout => 'リストのレイアウト';
+
+  @override
+  String get wsSyncGroup => '同期グループ';
+
+  @override
+  String get wsTabKey => 'タブのキー';
+
+  @override
+  String get wsSwitcherLabel => '切り替えラベル';
+
+  @override
+  String get wsNavigationElements => 'ナビゲーション要素';
+
+  @override
+  String get wsNavigationDepth => 'ナビゲーションの深さ';
+
+  @override
+  String get wsAddItem => '項目を追加';
+
+  @override
+  String get wsStep => 'ステップ';
+
+  @override
+  String get wsPropertyInvalid => '無効なプロパティ値';
+
+  @override
+  String get wsFilter => 'フィルター';
+
+  @override
+  String get wsIdentifier => '要素 ID';
+
+  @override
+  String get wsTldr => '要約 (TLDR)';
+
+  @override
+  String get wsFullLayout => '全幅';
+
+  @override
+  String get wsMediumLayout => '均等な列';
+
+  @override
+  String get wsNarrowLayout => '狭い用語列';
+
+  @override
+  String get wsTitle => 'タイトル';
+
+  @override
+  String get wsSwitcherKey => '切り替えキー';
 }

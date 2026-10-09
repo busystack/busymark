@@ -4577,6 +4577,105 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get nextcloudCreateSeparateWarning =>
       '首次请求可能已在服务器上创建笔记。此操作将使用保留的本地工作创建独立笔记。不会删除任何疑似重复的笔记。';
+
+  @override
+  String get wsSemanticFormats => '语义格式';
+
+  @override
+  String get wsUiControl => '界面控件';
+
+  @override
+  String get wsFilePath => '文件 / 路径';
+
+  @override
+  String get wsUiPath => '界面路径';
+
+  @override
+  String get wsDefinitionList => '定义列表';
+
+  @override
+  String get wsIncludeContent => '包含可复用内容';
+
+  @override
+  String get wsVariableReference => '变量引用';
+
+  @override
+  String get wsConvertList => '将列表转换为过程';
+
+  @override
+  String get wsElementProperties => '元素属性';
+
+  @override
+  String get wsTopicProperties => '主题属性';
+
+  @override
+  String get wsCollapsible => '可折叠';
+
+  @override
+  String get wsPublishedState => '发布时的初始状态';
+
+  @override
+  String get wsExpanded => '展开';
+
+  @override
+  String get wsCollapsed => '折叠';
+
+  @override
+  String get wsCollapsedTitle => '折叠标题';
+
+  @override
+  String get wsTerm => '术语';
+
+  @override
+  String get wsListLayout => '列表布局';
+
+  @override
+  String get wsSyncGroup => '同步组';
+
+  @override
+  String get wsTabKey => '选项卡键';
+
+  @override
+  String get wsSwitcherLabel => '切换器标签';
+
+  @override
+  String get wsNavigationElements => '导航元素';
+
+  @override
+  String get wsNavigationDepth => '导航深度';
+
+  @override
+  String get wsAddItem => '添加项目';
+
+  @override
+  String get wsStep => '步骤';
+
+  @override
+  String get wsPropertyInvalid => '属性值无效';
+
+  @override
+  String get wsFilter => '筛选器';
+
+  @override
+  String get wsIdentifier => '元素 ID';
+
+  @override
+  String get wsTldr => '摘要 (TLDR)';
+
+  @override
+  String get wsFullLayout => '全宽';
+
+  @override
+  String get wsMediumLayout => '等宽列';
+
+  @override
+  String get wsNarrowLayout => '窄术语列';
+
+  @override
+  String get wsTitle => '标题';
+
+  @override
+  String get wsSwitcherKey => '切换键';
 }
 
 /// The translations for Chinese, as used in China (`zh_CN`).
@@ -9150,4 +9249,103 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   @override
   String get nextcloudCreateSeparateWarning =>
       '首次请求可能已在服务器上创建笔记。此操作将使用保留的本地工作创建独立笔记。不会删除任何疑似重复的笔记。';
+
+  @override
+  String get wsSemanticFormats => '语义格式';
+
+  @override
+  String get wsUiControl => '界面控件';
+
+  @override
+  String get wsFilePath => '文件 / 路径';
+
+  @override
+  String get wsUiPath => '界面路径';
+
+  @override
+  String get wsDefinitionList => '定义列表';
+
+  @override
+  String get wsIncludeContent => '包含可复用内容';
+
+  @override
+  String get wsVariableReference => '变量引用';
+
+  @override
+  String get wsConvertList => '将列表转换为过程';
+
+  @override
+  String get wsElementProperties => '元素属性';
+
+  @override
+  String get wsTopicProperties => '主题属性';
+
+  @override
+  String get wsCollapsible => '可折叠';
+
+  @override
+  String get wsPublishedState => '发布时的初始状态';
+
+  @override
+  String get wsExpanded => '展开';
+
+  @override
+  String get wsCollapsed => '折叠';
+
+  @override
+  String get wsCollapsedTitle => '折叠标题';
+
+  @override
+  String get wsTerm => '术语';
+
+  @override
+  String get wsListLayout => '列表布局';
+
+  @override
+  String get wsSyncGroup => '同步组';
+
+  @override
+  String get wsTabKey => '选项卡键';
+
+  @override
+  String get wsSwitcherLabel => '切换器标签';
+
+  @override
+  String get wsNavigationElements => '导航元素';
+
+  @override
+  String get wsNavigationDepth => '导航深度';
+
+  @override
+  String get wsAddItem => '添加项目';
+
+  @override
+  String get wsStep => '步骤';
+
+  @override
+  String get wsPropertyInvalid => '属性值无效';
+
+  @override
+  String get wsFilter => '筛选器';
+
+  @override
+  String get wsIdentifier => '元素 ID';
+
+  @override
+  String get wsTldr => '摘要 (TLDR)';
+
+  @override
+  String get wsFullLayout => '全宽';
+
+  @override
+  String get wsMediumLayout => '等宽列';
+
+  @override
+  String get wsNarrowLayout => '窄术语列';
+
+  @override
+  String get wsTitle => '标题';
+
+  @override
+  String get wsSwitcherKey => '切换键';
 }

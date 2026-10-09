@@ -7,11 +7,29 @@ import '../../app/localization.dart';
 import '../../markdown/busymark_document.dart';
 import 'wysiwyg_commands.dart';
 
+String busyMarkWritersideInsertLabel(
+  BuildContext context,
+  BusyWritersideInsertCommand command,
+) => switch (command) {
+  BusyWritersideInsertCommand.procedure => context.l10n.procedure,
+  BusyWritersideInsertCommand.tabs => context.l10n.tabs,
+  BusyWritersideInsertCommand.definitionList => context.l10n.wsDefinitionList,
+  BusyWritersideInsertCommand.include => context.l10n.wsIncludeContent,
+  BusyWritersideInsertCommand.variable => context.l10n.wsVariableReference,
+  BusyWritersideInsertCommand.video => context.l10n.video,
+  BusyWritersideInsertCommand.tldr => context.l10n.wsTldr,
+  BusyWritersideInsertCommand.convertListToProcedure =>
+    context.l10n.wsConvertList,
+};
+
 class BusyMarkWysiwygToolbar extends StatelessWidget {
   const BusyMarkWysiwygToolbar({
     super.key,
     required this.onBlockCommand,
     this.onAdmonitionCommand,
+    this.onWritersideInsert,
+    this.isWritersideInsertEnabled,
+    this.onProperties,
     required this.onInlineCommand,
     required this.onLinkCommand,
     required this.onInlineMathCommand,
@@ -36,14 +54,17 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
 
   final ValueChanged<BusyWysiwygBlockCommand> onBlockCommand;
   final ValueChanged<BusyAdmonitionStyle>? onAdmonitionCommand;
+  final ValueChanged<BusyWritersideInsertCommand>? onWritersideInsert;
+  final bool Function(BusyWritersideInsertCommand)? isWritersideInsertEnabled;
+  final VoidCallback? onProperties;
   final ValueChanged<BusyWysiwygInlineCommand> onInlineCommand;
   final VoidCallback onLinkCommand;
-  final VoidCallback onInlineMathCommand;
-  final VoidCallback onDisplayMathCommand;
+  final VoidCallback? onInlineMathCommand;
+  final VoidCallback? onDisplayMathCommand;
   final VoidCallback onImageCommand;
   final VoidCallback onInlineImageCommand;
-  final VoidCallback onTableCommand;
-  final VoidCallback onHtmlCommand;
+  final VoidCallback? onTableCommand;
+  final VoidCallback? onHtmlCommand;
   final VoidCallback onIndentCommand;
   final VoidCallback onOutdentCommand;
   final VoidCallback onToggleTaskCommand;
@@ -63,7 +84,7 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
     return SingleChildScrollView(
       scrollDirection: axis,
       reverse: alignEnd,
-      clipBehavior: Clip.none,
+      clipBehavior: Clip.hardEdge,
       hitTestBehavior: HitTestBehavior.deferToChild,
       padding: axis == Axis.horizontal
           ? const EdgeInsets.symmetric(
@@ -158,9 +179,35 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
                   : null,
             ),
           ],
+          if (admonitionsEnabled)
+            [
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: BusyMarkSpacing.xs,
+                ),
+                child: RotatedBox(
+                  quarterTurns: axis == Axis.vertical ? 3 : 0,
+                  child: Text(
+                    context.l10n.writerside,
+                    key: const ValueKey('wysiwyg-writerside-group'),
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: BusyMarkSurfaceColors.of(context).mutedForeground,
+                    ),
+                  ),
+                ),
+              ),
+              if (onAdmonitionCommand != null) _admonitionMenu(context),
+              if (onWritersideInsert != null) _writersideInsertMenu(context),
+              _writersideSemanticMenu(context),
+              if (onProperties != null)
+                _button(
+                  context,
+                  tooltip: context.l10n.wsElementProperties,
+                  icon: BusyMarkGlyphs.settings,
+                  onPressed: onProperties,
+                ),
+            ],
           [
-            if (admonitionsEnabled && onAdmonitionCommand != null)
-              _admonitionMenu(context),
             _button(
               context,
               tooltip: context.l10n.blockquote,
@@ -285,6 +332,58 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
   bool _blockCommandEnabled(BusyWysiwygBlockCommand command) {
     return isBlockCommandEnabled?.call(command) ?? true;
   }
+
+  Widget _writersideInsertMenu(BuildContext context) =>
+      BusyMarkHeaderPopupMenuButton<BusyWritersideInsertCommand>(
+        key: const ValueKey('wysiwyg-writerside-insert'),
+        tooltip: '${context.l10n.writerside} · ${context.l10n.insert}',
+        icon: BusyMarkGlyphs.insertObject,
+        transparent: false,
+        elevated: true,
+        foregroundColor: BusyMarkLinuxPalette.white,
+        backgroundColor: _editorToolbarButtonBackground(context),
+        itemBuilder: (context) => [
+          for (final command in BusyWritersideInsertCommand.values)
+            if (command != BusyWritersideInsertCommand.convertListToProcedure ||
+                (isWritersideInsertEnabled?.call(command) ?? false))
+              BusyMarkPopupMenuItem(
+                value: command,
+                label: busyMarkWritersideInsertLabel(context, command),
+                enabled: isWritersideInsertEnabled?.call(command) ?? true,
+              ),
+        ],
+        onSelected: onWritersideInsert!,
+      );
+
+  Widget _writersideSemanticMenu(BuildContext context) =>
+      BusyMarkHeaderPopupMenuButton<BusyWysiwygInlineCommand>(
+        key: const ValueKey('wysiwyg-writerside-semantic'),
+        tooltip: context.l10n.wsSemanticFormats,
+        icon: BusyMarkGlyphs.code,
+        transparent: false,
+        elevated: true,
+        foregroundColor: BusyMarkLinuxPalette.white,
+        backgroundColor: _editorToolbarButtonBackground(context),
+        itemBuilder: (context) => [
+          for (final command in const [
+            BusyWysiwygInlineCommand.uiControl,
+            BusyWysiwygInlineCommand.filePath,
+            BusyWysiwygInlineCommand.uiPath,
+            BusyWysiwygInlineCommand.shortcut,
+          ])
+            BusyMarkPopupMenuItem(
+              value: command,
+              enabled: inlineCommandsEnabled,
+              label: switch (command) {
+                BusyWysiwygInlineCommand.uiControl => context.l10n.wsUiControl,
+                BusyWysiwygInlineCommand.filePath => context.l10n.wsFilePath,
+                BusyWysiwygInlineCommand.uiPath => context.l10n.wsUiPath,
+                _ => context.l10n.keyboardShortcuts,
+              },
+            ),
+        ],
+        onSelected: onInlineCommand,
+      );
 
   List<Widget> _groups(Axis axis, List<List<Widget>> groups) {
     final widgets = <Widget>[];

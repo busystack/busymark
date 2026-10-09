@@ -4780,4 +4780,103 @@ class AppLocalizationsVi extends AppLocalizations {
   @override
   String get nextcloudCreateSeparateWarning =>
       'Yêu cầu đầu tiên có thể đã tạo ghi chú trên máy chủ. Thao tác này tạo ghi chú riêng với công việc cục bộ được giữ lại. Không xóa ghi chú nào bị nghi trùng lặp.';
+
+  @override
+  String get wsSemanticFormats => 'Định dạng ngữ nghĩa';
+
+  @override
+  String get wsUiControl => 'Điều khiển giao diện';
+
+  @override
+  String get wsFilePath => 'Tệp / Đường dẫn';
+
+  @override
+  String get wsUiPath => 'Đường dẫn giao diện';
+
+  @override
+  String get wsDefinitionList => 'Danh sách định nghĩa';
+
+  @override
+  String get wsIncludeContent => 'Chèn nội dung tái sử dụng';
+
+  @override
+  String get wsVariableReference => 'Tham chiếu biến';
+
+  @override
+  String get wsConvertList => 'Chuyển danh sách thành quy trình';
+
+  @override
+  String get wsElementProperties => 'Thuộc tính phần tử';
+
+  @override
+  String get wsTopicProperties => 'Thuộc tính chủ đề';
+
+  @override
+  String get wsCollapsible => 'Có thể thu gọn';
+
+  @override
+  String get wsPublishedState => 'Trạng thái ban đầu khi xuất bản';
+
+  @override
+  String get wsExpanded => 'Mở rộng';
+
+  @override
+  String get wsCollapsed => 'Thu gọn';
+
+  @override
+  String get wsCollapsedTitle => 'Tiêu đề thu gọn';
+
+  @override
+  String get wsTerm => 'Thuật ngữ';
+
+  @override
+  String get wsListLayout => 'Bố cục danh sách';
+
+  @override
+  String get wsSyncGroup => 'Nhóm đồng bộ';
+
+  @override
+  String get wsTabKey => 'Khóa thẻ';
+
+  @override
+  String get wsSwitcherLabel => 'Nhãn bộ chuyển';
+
+  @override
+  String get wsNavigationElements => 'Phần tử điều hướng';
+
+  @override
+  String get wsNavigationDepth => 'Độ sâu điều hướng';
+
+  @override
+  String get wsAddItem => 'Thêm mục';
+
+  @override
+  String get wsStep => 'Bước';
+
+  @override
+  String get wsPropertyInvalid => 'Giá trị thuộc tính không hợp lệ';
+
+  @override
+  String get wsFilter => 'Bộ lọc';
+
+  @override
+  String get wsIdentifier => 'ID phần tử';
+
+  @override
+  String get wsTldr => 'Tóm tắt (TLDR)';
+
+  @override
+  String get wsFullLayout => 'Toàn chiều rộng';
+
+  @override
+  String get wsMediumLayout => 'Các cột bằng nhau';
+
+  @override
+  String get wsNarrowLayout => 'Cột thuật ngữ hẹp';
+
+  @override
+  String get wsTitle => 'Tiêu đề';
+
+  @override
+  String get wsSwitcherKey => 'Khóa chuyển đổi';
 }

@@ -758,6 +758,10 @@ class MarkdownParser {
           case BusyInlineKind.softBreak:
           case BusyInlineKind.hardBreak:
           case BusyInlineKind.html:
+          case BusyInlineKind.writersideControl:
+          case BusyInlineKind.writersidePath:
+          case BusyInlineKind.writersideUiPath:
+          case BusyInlineKind.writersideShortcut:
           case BusyInlineKind.writersideVariable:
           case BusyInlineKind.unknown:
             break;
@@ -790,9 +794,35 @@ class MarkdownParser {
   ) {
     var updated = block;
     if (updated.kind != BusyBlockKind.frontMatter && sourceChunk != null) {
+      // Semantic fragments are parsed independently. Their descendants carry
+      // fragment-relative spans; bind them to the containing Markdown source.
+      BusyBlock positionChild(BusyBlock child) {
+        final span = child.sourceSpan;
+        final base = sourceChunk.span;
+        return child.copyWith(
+          sourceSpan: span == null || span.filePath.isNotEmpty
+              ? span
+              : SourceSpan(
+                  filePath: base.filePath,
+                  startOffset: base.startOffset + span.startOffset,
+                  endOffset: base.startOffset + span.endOffset,
+                  startLine: base.startLine + span.startLine - 1,
+                  endLine: base.startLine + span.endLine - 1,
+                  startColumn:
+                      span.startColumn +
+                      (span.startLine == 1 ? base.startColumn - 1 : 0),
+                  endColumn:
+                      span.endColumn +
+                      (span.endLine == 1 ? base.startColumn - 1 : 0),
+                ),
+          children: child.children.map(positionChild).toList(),
+        );
+      }
+
       updated = updated.copyWith(
         rawSource: sourceChunk.rawSource,
         sourceSpan: sourceChunk.span,
+        children: updated.children.map(positionChild).toList(),
       );
       if (sourceChunk.protectEdits) {
         updated = _sourceProtectedTree(updated);

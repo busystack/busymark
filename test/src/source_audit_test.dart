@@ -1924,7 +1924,7 @@ void main() {
     expect(serializer, contains('String _listItem('));
     expect(serializer, contains('String _indentBlock('));
     expect(toolbar, isNot(contains('transparent: true')));
-    expect(RegExp(r'transparent: false').allMatches(toolbar), hasLength(3));
+    expect(RegExp(r'transparent: false').allMatches(toolbar), hasLength(5));
     expect(toolbar, contains('BusyMarkHeaderIconButton('));
     expect(toolbar, contains('_editorToolbarButtonBackground(context)'));
     expect(toolbar, contains('return theme.colorScheme.primary'));
@@ -1932,13 +1932,13 @@ void main() {
       RegExp(
         r'foregroundColor: BusyMarkLinuxPalette\.white',
       ).allMatches(toolbar),
-      hasLength(3),
+      hasLength(5),
     );
     expect(toolbar, isNot(contains('busyMarkContainedControlBackground(')));
     expect(toolbar, isNot(contains('foregroundColor: colors.foreground')));
-    expect(RegExp(r'elevated: true').allMatches(toolbar), hasLength(3));
+    expect(RegExp(r'elevated: true').allMatches(toolbar), hasLength(5));
     expect(toolbar, isNot(contains('accented: true')));
-    expect(toolbar, contains('clipBehavior: Clip.none'));
+    expect(toolbar, contains('clipBehavior: Clip.hardEdge'));
     expect(toolbar, contains('hitTestBehavior: HitTestBehavior.deferToChild'));
     expect(toolbar, contains('horizontal: BusyMarkSpacing.sm'));
     expect(toolbar, contains('vertical: BusyMarkSpacing.xs'));

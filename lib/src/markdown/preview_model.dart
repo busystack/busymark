@@ -189,6 +189,13 @@ class BusyMarkPreviewBuilder {
   }
 
   PreviewBlock _block(BusyBlock block, String path) {
+    if (busyMarkIsWritersideContainer(block) &&
+        block.attributes['element'] == 'chapter' &&
+        block.rawSource != null &&
+        !block.dirty) {
+      final semantic = _writersideSemanticBlock(block, path);
+      if (semantic != null) return _withSourceSpan(semantic, block.sourceSpan);
+    }
     final preview = switch (block.kind) {
       BusyBlockKind.heading => PreviewBlock(
         kind: PreviewBlockKind.heading,
@@ -197,7 +204,7 @@ class BusyMarkPreviewBuilder {
         inlines: _inlines(block.inlines, 'block-${block.id}.i'),
         children: [
           for (final (index, child) in block.children.indexed)
-            _block(child, '$path.b$index'),
+            if (!child.isSourceOnly) _block(child, '$path.b$index'),
         ],
         attributes: {
           ...block.attributes,
@@ -211,7 +218,7 @@ class BusyMarkPreviewBuilder {
         inlines: _inlines(block.inlines, 'block-${block.id}.i'),
         children: [
           for (final (index, child) in block.children.indexed)
-            _block(child, '$path.b$index'),
+            if (!child.isSourceOnly) _block(child, '$path.b$index'),
         ],
         attributes: block.attributes,
       ),
@@ -244,7 +251,7 @@ class BusyMarkPreviewBuilder {
         inlines: _inlines(block.inlines, 'block-${block.id}.i'),
         children: [
           for (final (index, child) in block.children.indexed)
-            _block(child, '$path.b$index'),
+            if (!child.isSourceOnly) _block(child, '$path.b$index'),
         ],
         attributes: block.attributes,
       ),
@@ -271,7 +278,7 @@ class BusyMarkPreviewBuilder {
         text: '',
         children: [
           for (final (index, child) in block.children.indexed)
-            _block(child, '$path.b$index'),
+            if (!child.isSourceOnly) _block(child, '$path.b$index'),
         ],
         attributes: block.attributes,
       ),
@@ -281,7 +288,7 @@ class BusyMarkPreviewBuilder {
         text: _plainText(block.inlines),
         children: [
           for (final (index, child) in block.children.indexed)
-            _block(child, '$path.b$index'),
+            if (!child.isSourceOnly) _block(child, '$path.b$index'),
         ],
         attributes: block.attributes,
       ),
@@ -303,7 +310,7 @@ class BusyMarkPreviewBuilder {
         text: block.children.map((child) => child.plainText).join('\n'),
         children: [
           for (final (index, child) in block.children.indexed)
-            _block(child, '$path.b$index'),
+            if (!child.isSourceOnly) _block(child, '$path.b$index'),
         ],
         attributes: block.attributes,
       ),
@@ -427,7 +434,7 @@ class BusyMarkPreviewBuilder {
     )?.kind;
     final children = [
       for (final (index, child) in block.children.indexed)
-        _block(child, '$path.b$index'),
+        if (!child.isSourceOnly) _block(child, '$path.b$index'),
     ];
     return switch (semanticKind) {
       WritersideSemanticKind.definitionList => PreviewBlock(
@@ -566,6 +573,10 @@ class BusyMarkPreviewBuilder {
         BusyInlineKind.emphasis => PreviewInlineKind.emphasis,
         BusyInlineKind.underline => PreviewInlineKind.underline,
         BusyInlineKind.strikethrough => PreviewInlineKind.strikethrough,
+        BusyInlineKind.writersideControl => PreviewInlineKind.strong,
+        BusyInlineKind.writersidePath ||
+        BusyInlineKind.writersideUiPath ||
+        BusyInlineKind.writersideShortcut ||
         BusyInlineKind.code => PreviewInlineKind.code,
         BusyInlineKind.link => PreviewInlineKind.link,
         BusyInlineKind.image => PreviewInlineKind.image,

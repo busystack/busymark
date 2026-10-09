@@ -4802,4 +4802,103 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get nextcloudCreateSeparateWarning =>
       'The first request may already have created a server note. This creates a separate note with your retained local work. No suspected duplicate will be deleted.';
+
+  @override
+  String get wsSemanticFormats => 'Semantic formatting';
+
+  @override
+  String get wsUiControl => 'UI Control';
+
+  @override
+  String get wsFilePath => 'File / Path';
+
+  @override
+  String get wsUiPath => 'UI Path';
+
+  @override
+  String get wsDefinitionList => 'Definition List';
+
+  @override
+  String get wsIncludeContent => 'Include Reusable Content';
+
+  @override
+  String get wsVariableReference => 'Variable Reference';
+
+  @override
+  String get wsConvertList => 'Convert List to Procedure';
+
+  @override
+  String get wsElementProperties => 'Element Properties';
+
+  @override
+  String get wsTopicProperties => 'Topic Properties';
+
+  @override
+  String get wsCollapsible => 'Collapsible';
+
+  @override
+  String get wsPublishedState => 'Published initial state';
+
+  @override
+  String get wsExpanded => 'Expanded';
+
+  @override
+  String get wsCollapsed => 'Collapsed';
+
+  @override
+  String get wsCollapsedTitle => 'Collapsed title';
+
+  @override
+  String get wsTerm => 'Term';
+
+  @override
+  String get wsListLayout => 'List layout';
+
+  @override
+  String get wsSyncGroup => 'Synchronization group';
+
+  @override
+  String get wsTabKey => 'Tab key';
+
+  @override
+  String get wsSwitcherLabel => 'Switcher label';
+
+  @override
+  String get wsNavigationElements => 'Navigation elements';
+
+  @override
+  String get wsNavigationDepth => 'Navigation depth';
+
+  @override
+  String get wsAddItem => 'Add item';
+
+  @override
+  String get wsStep => 'Step';
+
+  @override
+  String get wsPropertyInvalid => 'Invalid property value';
+
+  @override
+  String get wsFilter => 'Filter';
+
+  @override
+  String get wsIdentifier => 'Element ID';
+
+  @override
+  String get wsTldr => 'TLDR';
+
+  @override
+  String get wsFullLayout => 'Full width';
+
+  @override
+  String get wsMediumLayout => 'Equal columns';
+
+  @override
+  String get wsNarrowLayout => 'Narrow term';
+
+  @override
+  String get wsTitle => 'Title';
+
+  @override
+  String get wsSwitcherKey => 'Switcher key';
 }

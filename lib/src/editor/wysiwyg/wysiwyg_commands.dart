@@ -24,6 +24,21 @@ enum BusyWysiwygInlineCommand {
   strikethrough,
   code,
   link,
+  uiControl,
+  filePath,
+  uiPath,
+  shortcut,
+}
+
+enum BusyWritersideInsertCommand {
+  procedure,
+  tabs,
+  definitionList,
+  include,
+  variable,
+  video,
+  tldr,
+  convertListToProcedure,
 }
 
 /// Whether [block] can safely be replaced by a generic block command.
@@ -41,6 +56,7 @@ bool busyMarkWysiwygCanApplyBlockCommand(
     return true;
   }
   if (block.preserveRaw ||
+      busyMarkIsWritersideContainer(block) ||
       block.isSourceOnly ||
       block.isGenerated ||
       block.isSourceProtected) {
@@ -144,5 +160,9 @@ BusyInlineKind inlineKindForCommand(BusyWysiwygInlineCommand command) {
     BusyWysiwygInlineCommand.strikethrough => BusyInlineKind.strikethrough,
     BusyWysiwygInlineCommand.code => BusyInlineKind.code,
     BusyWysiwygInlineCommand.link => BusyInlineKind.link,
+    BusyWysiwygInlineCommand.uiControl => BusyInlineKind.writersideControl,
+    BusyWysiwygInlineCommand.filePath => BusyInlineKind.writersidePath,
+    BusyWysiwygInlineCommand.uiPath => BusyInlineKind.writersideUiPath,
+    BusyWysiwygInlineCommand.shortcut => BusyInlineKind.writersideShortcut,
   };
 }

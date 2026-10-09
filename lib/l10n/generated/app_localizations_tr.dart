@@ -4790,4 +4790,103 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get nextcloudCreateSeparateWarning =>
       'İlk istek sunucuda zaten bir not oluşturmuş olabilir. Bu işlem korunan yerel çalışmanızla ayrı bir not oluşturur. Olası kopyalar silinmez.';
+
+  @override
+  String get wsSemanticFormats => 'Anlamsal biçimlendirme';
+
+  @override
+  String get wsUiControl => 'Arayüz denetimi';
+
+  @override
+  String get wsFilePath => 'Dosya / Yol';
+
+  @override
+  String get wsUiPath => 'Arayüz yolu';
+
+  @override
+  String get wsDefinitionList => 'Tanım listesi';
+
+  @override
+  String get wsIncludeContent => 'Yeniden kullanılabilir içerik ekle';
+
+  @override
+  String get wsVariableReference => 'Değişken başvurusu';
+
+  @override
+  String get wsConvertList => 'Listeyi prosedüre dönüştür';
+
+  @override
+  String get wsElementProperties => 'Öğe özellikleri';
+
+  @override
+  String get wsTopicProperties => 'Konu özellikleri';
+
+  @override
+  String get wsCollapsible => 'Daraltılabilir';
+
+  @override
+  String get wsPublishedState => 'Yayımlanan başlangıç durumu';
+
+  @override
+  String get wsExpanded => 'Genişletilmiş';
+
+  @override
+  String get wsCollapsed => 'Daraltılmış';
+
+  @override
+  String get wsCollapsedTitle => 'Daraltılmış başlık';
+
+  @override
+  String get wsTerm => 'Terim';
+
+  @override
+  String get wsListLayout => 'Liste düzeni';
+
+  @override
+  String get wsSyncGroup => 'Eşitleme grubu';
+
+  @override
+  String get wsTabKey => 'Sekme anahtarı';
+
+  @override
+  String get wsSwitcherLabel => 'Değiştirici etiketi';
+
+  @override
+  String get wsNavigationElements => 'Gezinme öğeleri';
+
+  @override
+  String get wsNavigationDepth => 'Gezinme derinliği';
+
+  @override
+  String get wsAddItem => 'Öğe ekle';
+
+  @override
+  String get wsStep => 'Adım';
+
+  @override
+  String get wsPropertyInvalid => 'Geçersiz özellik değeri';
+
+  @override
+  String get wsFilter => 'Filtre';
+
+  @override
+  String get wsIdentifier => 'Öğe kimliği';
+
+  @override
+  String get wsTldr => 'Özet (TLDR)';
+
+  @override
+  String get wsFullLayout => 'Tam genişlik';
+
+  @override
+  String get wsMediumLayout => 'Eşit sütunlar';
+
+  @override
+  String get wsNarrowLayout => 'Dar terim sütunu';
+
+  @override
+  String get wsTitle => 'Başlık';
+
+  @override
+  String get wsSwitcherKey => 'Değiştirici anahtarı';
 }

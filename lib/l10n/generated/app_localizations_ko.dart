@@ -4650,4 +4650,103 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get nextcloudCreateSeparateWarning =>
       '첫 요청으로 서버 노트가 이미 만들어졌을 수 있습니다. 보존된 로컬 작업으로 별도 노트를 만듭니다. 중복으로 의심되는 노트는 삭제하지 않습니다.';
+
+  @override
+  String get wsSemanticFormats => '의미 기반 서식';
+
+  @override
+  String get wsUiControl => 'UI 컨트롤';
+
+  @override
+  String get wsFilePath => '파일 / 경로';
+
+  @override
+  String get wsUiPath => 'UI 경로';
+
+  @override
+  String get wsDefinitionList => '정의 목록';
+
+  @override
+  String get wsIncludeContent => '재사용 가능한 콘텐츠 포함';
+
+  @override
+  String get wsVariableReference => '변수 참조';
+
+  @override
+  String get wsConvertList => '목록을 절차로 변환';
+
+  @override
+  String get wsElementProperties => '요소 속성';
+
+  @override
+  String get wsTopicProperties => '주제 속성';
+
+  @override
+  String get wsCollapsible => '접기 가능';
+
+  @override
+  String get wsPublishedState => '게시 시 초기 상태';
+
+  @override
+  String get wsExpanded => '펼침';
+
+  @override
+  String get wsCollapsed => '접힘';
+
+  @override
+  String get wsCollapsedTitle => '접힌 제목';
+
+  @override
+  String get wsTerm => '용어';
+
+  @override
+  String get wsListLayout => '목록 레이아웃';
+
+  @override
+  String get wsSyncGroup => '동기화 그룹';
+
+  @override
+  String get wsTabKey => '탭 키';
+
+  @override
+  String get wsSwitcherLabel => '전환 레이블';
+
+  @override
+  String get wsNavigationElements => '탐색 요소';
+
+  @override
+  String get wsNavigationDepth => '탐색 깊이';
+
+  @override
+  String get wsAddItem => '항목 추가';
+
+  @override
+  String get wsStep => '단계';
+
+  @override
+  String get wsPropertyInvalid => '잘못된 속성 값';
+
+  @override
+  String get wsFilter => '필터';
+
+  @override
+  String get wsIdentifier => '요소 ID';
+
+  @override
+  String get wsTldr => '요약 (TLDR)';
+
+  @override
+  String get wsFullLayout => '전체 너비';
+
+  @override
+  String get wsMediumLayout => '동일한 열';
+
+  @override
+  String get wsNarrowLayout => '좁은 용어 열';
+
+  @override
+  String get wsTitle => '제목';
+
+  @override
+  String get wsSwitcherKey => '전환 키';
 }

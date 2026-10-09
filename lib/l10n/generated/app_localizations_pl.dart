@@ -4844,4 +4844,103 @@ class AppLocalizationsPl extends AppLocalizations {
   @override
   String get nextcloudCreateSeparateWarning =>
       'Pierwsze żądanie mogło już utworzyć notatkę na serwerze. Ta czynność tworzy osobną notatkę z zachowaną pracą lokalną. Żadne podejrzane duplikaty nie zostaną usunięte.';
+
+  @override
+  String get wsSemanticFormats => 'Formatowanie semantyczne';
+
+  @override
+  String get wsUiControl => 'Element interfejsu';
+
+  @override
+  String get wsFilePath => 'Plik / Ścieżka';
+
+  @override
+  String get wsUiPath => 'Ścieżka interfejsu';
+
+  @override
+  String get wsDefinitionList => 'Lista definicji';
+
+  @override
+  String get wsIncludeContent => 'Dołącz treść wielokrotnego użytku';
+
+  @override
+  String get wsVariableReference => 'Odwołanie do zmiennej';
+
+  @override
+  String get wsConvertList => 'Przekształć listę w procedurę';
+
+  @override
+  String get wsElementProperties => 'Właściwości elementu';
+
+  @override
+  String get wsTopicProperties => 'Właściwości tematu';
+
+  @override
+  String get wsCollapsible => 'Możliwość zwijania';
+
+  @override
+  String get wsPublishedState => 'Opublikowany stan początkowy';
+
+  @override
+  String get wsExpanded => 'Rozwinięty';
+
+  @override
+  String get wsCollapsed => 'Zwinięty';
+
+  @override
+  String get wsCollapsedTitle => 'Zwinięty tytuł';
+
+  @override
+  String get wsTerm => 'Termin';
+
+  @override
+  String get wsListLayout => 'Układ listy';
+
+  @override
+  String get wsSyncGroup => 'Grupa synchronizacji';
+
+  @override
+  String get wsTabKey => 'Klucz karty';
+
+  @override
+  String get wsSwitcherLabel => 'Etykieta przełącznika';
+
+  @override
+  String get wsNavigationElements => 'Elementy nawigacji';
+
+  @override
+  String get wsNavigationDepth => 'Głębokość nawigacji';
+
+  @override
+  String get wsAddItem => 'Dodaj element';
+
+  @override
+  String get wsStep => 'Krok';
+
+  @override
+  String get wsPropertyInvalid => 'Nieprawidłowa wartość właściwości';
+
+  @override
+  String get wsFilter => 'Filtr';
+
+  @override
+  String get wsIdentifier => 'Identyfikator elementu';
+
+  @override
+  String get wsTldr => 'Podsumowanie (TLDR)';
+
+  @override
+  String get wsFullLayout => 'Pełna szerokość';
+
+  @override
+  String get wsMediumLayout => 'Równe kolumny';
+
+  @override
+  String get wsNarrowLayout => 'Wąska kolumna terminu';
+
+  @override
+  String get wsTitle => 'Tytuł';
+
+  @override
+  String get wsSwitcherKey => 'Klucz przełącznika';
 }

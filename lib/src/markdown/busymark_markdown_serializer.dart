@@ -1,5 +1,6 @@
 import '../core/source_span.dart';
 import 'busymark_document.dart';
+import '../editor/wysiwyg/writerside_editing_adapter.dart';
 import 'math_syntax.dart';
 
 class BusyMarkSerializedInlineFragment {
@@ -257,6 +258,29 @@ class BusyMarkMarkdownSerializer {
         block.rawSource != null) {
       return block.rawSource!;
     }
+    if (busyMarkIsWritersideContainer(block)) {
+      if (block.attributes['busymark-definition-form'] == 'markdown') {
+        final attrs = WritersideEditingAdapter.sourceAttributes(block);
+        final prefix = attrs.isEmpty
+            ? ''
+            : '{${attrs.entries.map((e) => '${e.key}="${WritersideEditingAdapter.escape(e.value)}"').join(' ')}}\n';
+        return prefix +
+            block.children
+                .map(
+                  (item) =>
+                      '${item.plainText}\n: ${item.children.map(serializeBlock).join('\n\n').replaceAll('\n', '\n  ')}',
+                )
+                .join('\n\n');
+      }
+      return const WritersideEditingAdapter().serializeMarkdownElement(block);
+    }
+    if ({
+      'include',
+      'video',
+      'show-structure',
+    }.contains(block.attributes['element'])) {
+      return const WritersideEditingAdapter().serializeMarkdownElement(block);
+    }
     return switch (block.kind) {
       BusyBlockKind.heading => _heading(block),
       BusyBlockKind.paragraph => _inlineMarkdown(
@@ -399,6 +423,17 @@ class BusyMarkMarkdownSerializer {
       if (block.attributes[busyMarkWritersideDefaultStateAttribute]
           case final state? when state.trim().isNotEmpty)
         'default-state="${_attribute(state)}"',
+      for (final entry in block.attributes.entries)
+        if (!{
+              'id',
+              'level',
+              'generatedId',
+              busyMarkWritersideCollapsibleAttribute,
+              busyMarkWritersideDefaultStateAttribute,
+              busyMarkPreserveTextWhitespaceAttribute,
+            }.contains(entry.key) &&
+            !entry.key.startsWith('busymark-'))
+          '${entry.key}="${_attribute(entry.value)}"',
     ];
     final suffix = attributes.isEmpty ? '' : ' {${attributes.join(' ')}}';
     return '${'#' * level} $text$suffix';
@@ -710,6 +745,14 @@ class BusyMarkMarkdownSerializer {
         .replaceAll('"', '&quot;')
         .replaceAll('<', '&lt;')
         .replaceAll('>', '&gt;');
+  }
+
+  String _semanticInlineOpening(BusyInline inline) {
+    final attributes = inline.attributes.entries
+        .where((e) => !e.key.startsWith('xml-'))
+        .map((e) => ' ${e.key}="${_escapeXmlAttribute(e.value)}"')
+        .join();
+    return '<${busyMarkSemanticInlineTag(inline.kind)}$attributes>';
   }
 
   _InlineSerialization _inlineMarkdownAtTextOffsets(
@@ -1047,6 +1090,11 @@ class BusyMarkMarkdownSerializer {
       BusyInlineKind.softBreak => ' ',
       BusyInlineKind.hardBreak => '  \n',
       BusyInlineKind.writersideVariable => '%${inline.text}%',
+      BusyInlineKind.writersideControl ||
+      BusyInlineKind.writersidePath ||
+      BusyInlineKind.writersideUiPath ||
+      BusyInlineKind.writersideShortcut =>
+        '${_semanticInlineOpening(inline)}$children</${busyMarkSemanticInlineTag(inline.kind)}>',
       BusyInlineKind.html || BusyInlineKind.unknown => inline.text,
     };
     final escapedTextOffsets = rawText
@@ -1067,6 +1115,12 @@ class BusyMarkMarkdownSerializer {
           BusyInlineKind.strong || BusyInlineKind.strikethrough => 2,
           BusyInlineKind.underline => 3,
           BusyInlineKind.emphasis => 1,
+          BusyInlineKind.writersideControl ||
+          BusyInlineKind.writersidePath ||
+          BusyInlineKind.writersideUiPath ||
+          BusyInlineKind.writersideShortcut => _semanticInlineOpening(
+            inline,
+          ).length,
           _ => 0,
         };
     final sourceOffsets = <int, int>{};
@@ -1082,6 +1136,11 @@ class BusyMarkMarkdownSerializer {
               BusyInlineKind.underline ||
               BusyInlineKind.strikethrough =>
                 openingLength + (childResult?.sourceOffsets[target] ?? 0),
+              BusyInlineKind.writersideControl ||
+              BusyInlineKind.writersidePath ||
+              BusyInlineKind.writersideUiPath ||
+              BusyInlineKind.writersideShortcut =>
+                openingLength + (childResult?.sourceOffsets[target] ?? target),
               BusyInlineKind.link =>
                 linkOpeningLength +
                     (childResult?.sourceOffsets[target] ??

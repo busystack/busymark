@@ -4788,4 +4788,103 @@ class AppLocalizationsEt extends AppLocalizations {
   @override
   String get nextcloudCreateSeparateWarning =>
       'Esimene päring võis serveris juba märkuse luua. See loob eraldi märkuse koos säilitatud kohaliku tööga. Võimalikke duplikaate ei kustutata.';
+
+  @override
+  String get wsSemanticFormats => 'Semantiline vormindus';
+
+  @override
+  String get wsUiControl => 'Kasutajaliidese juhtelement';
+
+  @override
+  String get wsFilePath => 'Fail / Tee';
+
+  @override
+  String get wsUiPath => 'Kasutajaliidese tee';
+
+  @override
+  String get wsDefinitionList => 'Definitsiooniloend';
+
+  @override
+  String get wsIncludeContent => 'Lisa korduskasutatav sisu';
+
+  @override
+  String get wsVariableReference => 'Muutuja viide';
+
+  @override
+  String get wsConvertList => 'Teisenda loend protseduuriks';
+
+  @override
+  String get wsElementProperties => 'Elemendi omadused';
+
+  @override
+  String get wsTopicProperties => 'Teema omadused';
+
+  @override
+  String get wsCollapsible => 'Ahendatav';
+
+  @override
+  String get wsPublishedState => 'Avaldatud algolek';
+
+  @override
+  String get wsExpanded => 'Laiendatud';
+
+  @override
+  String get wsCollapsed => 'Ahendatud';
+
+  @override
+  String get wsCollapsedTitle => 'Ahendatud pealkiri';
+
+  @override
+  String get wsTerm => 'Termin';
+
+  @override
+  String get wsListLayout => 'Loendi paigutus';
+
+  @override
+  String get wsSyncGroup => 'Sünkroonimisrühm';
+
+  @override
+  String get wsTabKey => 'Vahelehe võti';
+
+  @override
+  String get wsSwitcherLabel => 'Lüliti silt';
+
+  @override
+  String get wsNavigationElements => 'Navigeerimise elemendid';
+
+  @override
+  String get wsNavigationDepth => 'Navigeerimise sügavus';
+
+  @override
+  String get wsAddItem => 'Lisa element';
+
+  @override
+  String get wsStep => 'Samm';
+
+  @override
+  String get wsPropertyInvalid => 'Vigane omaduse väärtus';
+
+  @override
+  String get wsFilter => 'Sisufilter';
+
+  @override
+  String get wsIdentifier => 'Elemendi ID';
+
+  @override
+  String get wsTldr => 'Kokkuvõte (TLDR)';
+
+  @override
+  String get wsFullLayout => 'Täislaius';
+
+  @override
+  String get wsMediumLayout => 'Võrdsed veerud';
+
+  @override
+  String get wsNarrowLayout => 'Kitsas terminiveerg';
+
+  @override
+  String get wsTitle => 'Pealkiri';
+
+  @override
+  String get wsSwitcherKey => 'Valikulüliti võti';
 }

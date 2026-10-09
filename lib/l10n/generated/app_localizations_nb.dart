@@ -4791,4 +4791,103 @@ class AppLocalizationsNb extends AppLocalizations {
   @override
   String get nextcloudCreateSeparateWarning =>
       'Den første forespørselen kan allerede ha opprettet et servernotat. Dette oppretter et separat notat med ditt beholdte lokale arbeid. Ingen antatte duplikater slettes.';
+
+  @override
+  String get wsSemanticFormats => 'Semantisk formatering';
+
+  @override
+  String get wsUiControl => 'UI-kontroll';
+
+  @override
+  String get wsFilePath => 'Fil / Sti';
+
+  @override
+  String get wsUiPath => 'UI-sti';
+
+  @override
+  String get wsDefinitionList => 'Definisjonsliste';
+
+  @override
+  String get wsIncludeContent => 'Inkluder gjenbrukbart innhold';
+
+  @override
+  String get wsVariableReference => 'Variabelreferanse';
+
+  @override
+  String get wsConvertList => 'Konverter liste til prosedyre';
+
+  @override
+  String get wsElementProperties => 'Elementegenskaper';
+
+  @override
+  String get wsTopicProperties => 'Emneegenskaper';
+
+  @override
+  String get wsCollapsible => 'Sammenleggbar';
+
+  @override
+  String get wsPublishedState => 'Publisert starttilstand';
+
+  @override
+  String get wsExpanded => 'Utvidet';
+
+  @override
+  String get wsCollapsed => 'Sammenlagt';
+
+  @override
+  String get wsCollapsedTitle => 'Sammenlagt tittel';
+
+  @override
+  String get wsTerm => 'Begrep';
+
+  @override
+  String get wsListLayout => 'Listeoppsett';
+
+  @override
+  String get wsSyncGroup => 'Synkroniseringsgruppe';
+
+  @override
+  String get wsTabKey => 'Fanenøkkel';
+
+  @override
+  String get wsSwitcherLabel => 'Bytteetikett';
+
+  @override
+  String get wsNavigationElements => 'Navigasjonselementer';
+
+  @override
+  String get wsNavigationDepth => 'Navigasjonsdybde';
+
+  @override
+  String get wsAddItem => 'Legg til element';
+
+  @override
+  String get wsStep => 'Trinn';
+
+  @override
+  String get wsPropertyInvalid => 'Ugyldig egenskapsverdi';
+
+  @override
+  String get wsFilter => 'Innholdsfilter';
+
+  @override
+  String get wsIdentifier => 'Element-ID';
+
+  @override
+  String get wsTldr => 'Sammendrag (TLDR)';
+
+  @override
+  String get wsFullLayout => 'Full bredde';
+
+  @override
+  String get wsMediumLayout => 'Like kolonner';
+
+  @override
+  String get wsNarrowLayout => 'Smal termkolonne';
+
+  @override
+  String get wsTitle => 'Tittel';
+
+  @override
+  String get wsSwitcherKey => 'Byttenøkkel';
 }

@@ -1130,6 +1130,9 @@ void main() {
           expect(source, '$url\n\n');
           final fields = tester
               .widgetList<TextField>(find.byType(TextField))
+              .where(
+                (field) => field.controller is BusyMarkWysiwygTextController,
+              )
               .toList();
           expect(fields, hasLength(2));
           expect(fields.last.controller!.text, '');
@@ -1209,7 +1212,15 @@ void main() {
           await tester.sendKeyEvent(LogicalKeyboardKey.enter);
           await tester.pumpAndSettle();
           expect(live!.blocks.first.plainText, text);
-          final next = tester.widget<TextField>(find.byType(TextField).last);
+          final next = tester.widget<TextField>(
+            find
+                .byWidgetPredicate(
+                  (w) =>
+                      w is TextField &&
+                      w.controller is BusyMarkWysiwygTextController,
+                )
+                .last,
+          );
           expect(next.focusNode!.hasFocus, isTrue);
           expect(
             next.controller!.selection,
@@ -1309,7 +1320,15 @@ void main() {
           }
 
           check(live!);
-          final next = tester.widget<TextField>(find.byType(TextField).last);
+          final next = tester.widget<TextField>(
+            find
+                .byWidgetPredicate(
+                  (w) =>
+                      w is TextField &&
+                      w.controller is BusyMarkWysiwygTextController,
+                )
+                .last,
+          );
           expect(next.focusNode!.hasFocus, isTrue);
           expect(
             next.controller!.selection,
@@ -4507,7 +4526,10 @@ void main() {
       systemData = {'text': 'Pasted'};
       var result = '| A |\n| --- |\n| Cell |\n';
       await mount(tester, 'composing-cell', result, (value) => result = value);
-      final cell = tester.widgetList<TextField>(find.byType(TextField)).last;
+      final cell = tester
+          .widgetList<TextField>(find.byType(TextField))
+          .where((field) => field.controller is BusyMarkWysiwygTextController)
+          .last;
       cell.focusNode!.requestFocus();
       cell.controller!.value = const TextEditingValue(
         text: 'Cell',

@@ -457,6 +457,20 @@ class BusyMarkWysiwygBlockField extends StatelessWidget {
         borderEffect: block.attributes['border-effect'] ?? 'none',
       );
     }
+    if (!block.preserveRaw && block.attributes['element'] == 'include') {
+      final from = block.attributes['from'] ?? '';
+      final elementId = block.attributes['element-id'] ?? '';
+      return BusyMarkGroupedList(
+        children: [
+          BusyMarkActionRow(
+            title: context.l10n.wsIncludeContent,
+            subtitle: elementId.isEmpty ? from : '$from#$elementId',
+            tooltip: context.l10n.wsElementProperties,
+            onTap: onFocused,
+          ),
+        ],
+      );
+    }
     if (_isRenderedHtmlBlock) {
       return _RenderedHtmlBlockEditor(
         block: block,

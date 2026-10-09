@@ -4830,4 +4830,103 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get nextcloudCreateSeparateWarning =>
       'La prima richiesta potrebbe aver già creato una nota sul server. Questa azione crea una nota separata con il lavoro locale conservato. Nessun presunto duplicato verrà eliminato.';
+
+  @override
+  String get wsSemanticFormats => 'Formattazione semantica';
+
+  @override
+  String get wsUiControl => 'Controllo dell’interfaccia';
+
+  @override
+  String get wsFilePath => 'File / Percorso';
+
+  @override
+  String get wsUiPath => 'Percorso dell’interfaccia';
+
+  @override
+  String get wsDefinitionList => 'Elenco di definizioni';
+
+  @override
+  String get wsIncludeContent => 'Includi contenuto riutilizzabile';
+
+  @override
+  String get wsVariableReference => 'Riferimento a variabile';
+
+  @override
+  String get wsConvertList => 'Converti elenco in procedura';
+
+  @override
+  String get wsElementProperties => 'Proprietà dell’elemento';
+
+  @override
+  String get wsTopicProperties => 'Proprietà dell’argomento';
+
+  @override
+  String get wsCollapsible => 'Comprimibile';
+
+  @override
+  String get wsPublishedState => 'Stato iniziale pubblicato';
+
+  @override
+  String get wsExpanded => 'Espanso';
+
+  @override
+  String get wsCollapsed => 'Compresso';
+
+  @override
+  String get wsCollapsedTitle => 'Titolo compresso';
+
+  @override
+  String get wsTerm => 'Termine';
+
+  @override
+  String get wsListLayout => 'Disposizione dell’elenco';
+
+  @override
+  String get wsSyncGroup => 'Gruppo di sincronizzazione';
+
+  @override
+  String get wsTabKey => 'Chiave della scheda';
+
+  @override
+  String get wsSwitcherLabel => 'Etichetta del selettore';
+
+  @override
+  String get wsNavigationElements => 'Elementi di navigazione';
+
+  @override
+  String get wsNavigationDepth => 'Profondità di navigazione';
+
+  @override
+  String get wsAddItem => 'Aggiungi elemento';
+
+  @override
+  String get wsStep => 'Passaggio';
+
+  @override
+  String get wsPropertyInvalid => 'Valore della proprietà non valido';
+
+  @override
+  String get wsFilter => 'Filtro';
+
+  @override
+  String get wsIdentifier => 'ID elemento';
+
+  @override
+  String get wsTldr => 'Riepilogo (TLDR)';
+
+  @override
+  String get wsFullLayout => 'Larghezza piena';
+
+  @override
+  String get wsMediumLayout => 'Colonne uguali';
+
+  @override
+  String get wsNarrowLayout => 'Termine stretto';
+
+  @override
+  String get wsTitle => 'Titolo';
+
+  @override
+  String get wsSwitcherKey => 'Chiave del selettore';
 }

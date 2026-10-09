@@ -157,6 +157,10 @@ List<SpellingInlineProjection> projectSpellingInlineRuns({
     switch (inline.kind) {
       case BusyInlineKind.math:
       case BusyInlineKind.html:
+      case BusyInlineKind.writersideControl:
+      case BusyInlineKind.writersidePath:
+      case BusyInlineKind.writersideUiPath:
+      case BusyInlineKind.writersideShortcut:
       case BusyInlineKind.writersideVariable:
       case BusyInlineKind.unknown:
         barrier();

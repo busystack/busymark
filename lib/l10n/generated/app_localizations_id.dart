@@ -4788,4 +4788,103 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get nextcloudCreateSeparateWarning =>
       'Permintaan pertama mungkin sudah membuat catatan server. Ini membuat catatan terpisah dengan pekerjaan lokal yang dipertahankan. Tidak ada dugaan duplikat yang akan dihapus.';
+
+  @override
+  String get wsSemanticFormats => 'Pemformatan semantik';
+
+  @override
+  String get wsUiControl => 'Kontrol antarmuka';
+
+  @override
+  String get wsFilePath => 'Berkas / Jalur';
+
+  @override
+  String get wsUiPath => 'Jalur antarmuka';
+
+  @override
+  String get wsDefinitionList => 'Daftar definisi';
+
+  @override
+  String get wsIncludeContent => 'Sertakan konten yang dapat digunakan ulang';
+
+  @override
+  String get wsVariableReference => 'Referensi variabel';
+
+  @override
+  String get wsConvertList => 'Ubah daftar menjadi prosedur';
+
+  @override
+  String get wsElementProperties => 'Properti elemen';
+
+  @override
+  String get wsTopicProperties => 'Properti topik';
+
+  @override
+  String get wsCollapsible => 'Dapat diciutkan';
+
+  @override
+  String get wsPublishedState => 'Status awal publikasi';
+
+  @override
+  String get wsExpanded => 'Diperluas';
+
+  @override
+  String get wsCollapsed => 'Diciutkan';
+
+  @override
+  String get wsCollapsedTitle => 'Judul saat diciutkan';
+
+  @override
+  String get wsTerm => 'Istilah';
+
+  @override
+  String get wsListLayout => 'Tata letak daftar';
+
+  @override
+  String get wsSyncGroup => 'Grup sinkronisasi';
+
+  @override
+  String get wsTabKey => 'Kunci tab';
+
+  @override
+  String get wsSwitcherLabel => 'Label pengalih';
+
+  @override
+  String get wsNavigationElements => 'Elemen navigasi';
+
+  @override
+  String get wsNavigationDepth => 'Kedalaman navigasi';
+
+  @override
+  String get wsAddItem => 'Tambah item';
+
+  @override
+  String get wsStep => 'Langkah';
+
+  @override
+  String get wsPropertyInvalid => 'Nilai properti tidak valid';
+
+  @override
+  String get wsFilter => 'Filter konten';
+
+  @override
+  String get wsIdentifier => 'ID elemen';
+
+  @override
+  String get wsTldr => 'Ringkasan (TLDR)';
+
+  @override
+  String get wsFullLayout => 'Lebar penuh';
+
+  @override
+  String get wsMediumLayout => 'Kolom seimbang';
+
+  @override
+  String get wsNarrowLayout => 'Kolom istilah sempit';
+
+  @override
+  String get wsTitle => 'Judul';
+
+  @override
+  String get wsSwitcherKey => 'Kunci pemilih';
 }

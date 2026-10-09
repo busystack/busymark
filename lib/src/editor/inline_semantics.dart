@@ -11,6 +11,8 @@ bool busyMarkSameInlineSemantics(BusyInline left, BusyInline right) =>
     );
 
 bool busyMarkIsInheritedInlineContext(BusyInlineKind kind) =>
+    busyMarkIsSemanticInline(kind) ||
+    kind == BusyInlineKind.writersideVariable ||
     kind == BusyInlineKind.strong ||
     kind == BusyInlineKind.emphasis ||
     kind == BusyInlineKind.underline ||

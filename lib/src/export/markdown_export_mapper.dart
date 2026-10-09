@@ -463,6 +463,10 @@ class MarkdownExportMapper {
         text: inline.text,
         children: children,
       ),
+      BusyInlineKind.writersideControl ||
+      BusyInlineKind.writersidePath ||
+      BusyInlineKind.writersideUiPath ||
+      BusyInlineKind.writersideShortcut ||
       BusyInlineKind.code => MarkdownExportInline(
         kind: MarkdownExportInlineKind.code,
         text: inline.text,

@@ -4851,6 +4851,105 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get nextcloudCreateSeparateWarning =>
       'O primeiro pedido pode já ter criado uma nota no servidor. Isto cria uma nota separada com o trabalho local preservado. Nenhum possível duplicado será eliminado.';
+
+  @override
+  String get wsSemanticFormats => 'Formatação semântica';
+
+  @override
+  String get wsUiControl => 'Controlo da interface';
+
+  @override
+  String get wsFilePath => 'Ficheiro / Caminho';
+
+  @override
+  String get wsUiPath => 'Caminho da interface';
+
+  @override
+  String get wsDefinitionList => 'Lista de definições';
+
+  @override
+  String get wsIncludeContent => 'Incluir conteúdo reutilizável';
+
+  @override
+  String get wsVariableReference => 'Referência de variável';
+
+  @override
+  String get wsConvertList => 'Converter lista em procedimento';
+
+  @override
+  String get wsElementProperties => 'Propriedades do elemento';
+
+  @override
+  String get wsTopicProperties => 'Propriedades do tópico';
+
+  @override
+  String get wsCollapsible => 'Recolhível';
+
+  @override
+  String get wsPublishedState => 'Estado inicial publicado';
+
+  @override
+  String get wsExpanded => 'Expandido';
+
+  @override
+  String get wsCollapsed => 'Recolhido';
+
+  @override
+  String get wsCollapsedTitle => 'Título recolhido';
+
+  @override
+  String get wsTerm => 'Termo';
+
+  @override
+  String get wsListLayout => 'Disposição da lista';
+
+  @override
+  String get wsSyncGroup => 'Grupo de sincronização';
+
+  @override
+  String get wsTabKey => 'Chave do separador';
+
+  @override
+  String get wsSwitcherLabel => 'Etiqueta do seletor';
+
+  @override
+  String get wsNavigationElements => 'Elementos de navegação';
+
+  @override
+  String get wsNavigationDepth => 'Profundidade de navegação';
+
+  @override
+  String get wsAddItem => 'Adicionar item';
+
+  @override
+  String get wsStep => 'Passo';
+
+  @override
+  String get wsPropertyInvalid => 'Valor de propriedade inválido';
+
+  @override
+  String get wsFilter => 'Filtro';
+
+  @override
+  String get wsIdentifier => 'ID do elemento';
+
+  @override
+  String get wsTldr => 'Resumo (TLDR)';
+
+  @override
+  String get wsFullLayout => 'Largura total';
+
+  @override
+  String get wsMediumLayout => 'Colunas iguais';
+
+  @override
+  String get wsNarrowLayout => 'Coluna de termo estreita';
+
+  @override
+  String get wsTitle => 'Título';
+
+  @override
+  String get wsSwitcherKey => 'Chave do seletor';
 }
 
 /// The translations for Portuguese, as used in Brazil (`pt_BR`).
@@ -9696,4 +9795,103 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   @override
   String get nextcloudCreateSeparateWarning =>
       'A primeira solicitação pode já ter criado uma nota no servidor. Isso cria uma nota separada com o trabalho local preservado. Nenhuma possível duplicata será excluída.';
+
+  @override
+  String get wsSemanticFormats => 'Formatação semântica';
+
+  @override
+  String get wsUiControl => 'Controle da interface';
+
+  @override
+  String get wsFilePath => 'Arquivo / Caminho';
+
+  @override
+  String get wsUiPath => 'Caminho da interface';
+
+  @override
+  String get wsDefinitionList => 'Lista de definições';
+
+  @override
+  String get wsIncludeContent => 'Incluir conteúdo reutilizável';
+
+  @override
+  String get wsVariableReference => 'Referência de variável';
+
+  @override
+  String get wsConvertList => 'Converter lista em procedimento';
+
+  @override
+  String get wsElementProperties => 'Propriedades do elemento';
+
+  @override
+  String get wsTopicProperties => 'Propriedades do tópico';
+
+  @override
+  String get wsCollapsible => 'Recolhível';
+
+  @override
+  String get wsPublishedState => 'Estado inicial publicado';
+
+  @override
+  String get wsExpanded => 'Expandido';
+
+  @override
+  String get wsCollapsed => 'Recolhido';
+
+  @override
+  String get wsCollapsedTitle => 'Título recolhido';
+
+  @override
+  String get wsTerm => 'Termo';
+
+  @override
+  String get wsListLayout => 'Disposição da lista';
+
+  @override
+  String get wsSyncGroup => 'Grupo de sincronização';
+
+  @override
+  String get wsTabKey => 'Chave do aba';
+
+  @override
+  String get wsSwitcherLabel => 'Etiqueta do seletor';
+
+  @override
+  String get wsNavigationElements => 'Elementos de navegação';
+
+  @override
+  String get wsNavigationDepth => 'Profundidade de navegação';
+
+  @override
+  String get wsAddItem => 'Adicionar item';
+
+  @override
+  String get wsStep => 'Passo';
+
+  @override
+  String get wsPropertyInvalid => 'Valor de propriedade inválido';
+
+  @override
+  String get wsFilter => 'Filtro';
+
+  @override
+  String get wsIdentifier => 'ID do elemento';
+
+  @override
+  String get wsTldr => 'Resumo (TLDR)';
+
+  @override
+  String get wsFullLayout => 'Largura total';
+
+  @override
+  String get wsMediumLayout => 'Colunas iguais';
+
+  @override
+  String get wsNarrowLayout => 'Coluna de termo estreita';
+
+  @override
+  String get wsTitle => 'Título';
+
+  @override
+  String get wsSwitcherKey => 'Chave do seletor';
 }
