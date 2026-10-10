@@ -957,6 +957,51 @@ void main() {
     }
   }
 
+  for (final state in [NoteSyncState.pending, NoteSyncState.synced]) {
+    testWidgets('persisted metadata review shows conflict rather than $state', (
+      tester,
+    ) async {
+      const id = 'metadata-server';
+      await tester.runAsync(() async {
+        final snapshot = repository.metadataSnapshot(id);
+        await repository.patchMetadata(snapshot, title: 'B');
+        await repository.patchMetadata(snapshot, title: 'C');
+        final note = repository.noteById(id)!;
+        await repository.store.saveNote(note.copyWith(syncState: state));
+        await repository.dispose();
+        repository = _CachedNotesRepository(
+          store: await NotesStore.open(
+            path: p.join(root.path, 'notes.sqlite3'),
+          ),
+        );
+        await repository.initialize();
+      });
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            nextcloudNotesRepositoryProvider.overrideWith(
+              (ref) async => repository,
+            ),
+          ],
+          child: MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: const Scaffold(
+              body: NextcloudNoteStatus(localId: id, unsaved: false),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Conflicts'), findsOneWidget);
+      expect(find.text('Compare'), findsOneWidget);
+      expect(find.text('Synced'), findsNothing);
+      expect(find.text('Saved locally'), findsNothing);
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox.shrink());
+    });
+  }
+
   testWidgets('read-only favorite conflict offers a safe merge', (
     tester,
   ) async {

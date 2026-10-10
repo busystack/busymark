@@ -50,6 +50,20 @@ String nextcloudSyncLabel(
   NoteSyncState.recoveryRequired => context.l10n.warning,
 };
 
+// Legacy response transitions may have left a transient/synchronized state
+// alongside durable review evidence. That evidence still takes precedence.
+bool _metadataNeedsReview(NextcloudNote note) =>
+    note.metadataConflict != null &&
+    {
+      NoteSyncState.synced,
+      NoteSyncState.pending,
+      NoteSyncState.syncing,
+      NoteSyncState.offline,
+      NoteSyncState.locked,
+      NoteSyncState.throttled,
+      NoteSyncState.conflict,
+    }.contains(note.syncState);
+
 class NextcloudNotesSidebar extends ConsumerStatefulWidget {
   const NextcloudNotesSidebar({super.key, required this.accountId});
   final String accountId;
@@ -212,7 +226,9 @@ class _NextcloudNotesSidebarState extends ConsumerState<NextcloudNotesSidebar> {
                           subtitle: Text(
                             [
                               note.category,
-                              repository.isSynchronizing(note.accountId)
+                              _metadataNeedsReview(note)
+                                  ? context.l10n.gitConflicts
+                                  : repository.isSynchronizing(note.accountId)
                                   ? context.l10n.nextcloudSyncing
                                   : notesAttachmentReferences(note.content).any(
                                       (r) => r.reference.startsWith(
@@ -385,6 +401,8 @@ class NextcloudNoteStatus extends ConsumerWidget {
                 child: Text(
                   unsaved
                       ? context.l10n.closeUnsavedChangesTitle
+                      : _metadataNeedsReview(note)
+                      ? context.l10n.gitConflicts
                       : repository!.isSynchronizing(note.accountId)
                       ? context.l10n.nextcloudSyncing
                       : notesAttachmentReferences(note.content).any(

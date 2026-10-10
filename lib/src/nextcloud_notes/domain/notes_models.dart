@@ -527,6 +527,7 @@ class NextcloudNote {
             : modified * 1000000);
 
   bool get hasPendingChanges =>
+      metadataConflict != null ||
       revision > ackRevision ||
       (serverId == null && syncState != NoteSyncState.deletedRemotely);
   String get identity => 'nextcloud-note:$accountId:$localId';

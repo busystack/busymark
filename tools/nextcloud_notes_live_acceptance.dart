@@ -14,6 +14,14 @@ import 'package:busymark/src/nextcloud_notes/data/notes_store.dart';
 import 'package:busymark/src/nextcloud_notes/domain/notes_models.dart';
 import 'package:busymark/src/nextcloud_notes/domain/notes_conflict.dart';
 
+class _HeldWrite {
+  _HeldWrite(this.status);
+  final int status;
+  final started = Completer<void>();
+  final release = Completer<void>();
+  int? executedId;
+}
+
 class _Connection extends http.BaseClient {
   _Connection(this._client);
   final http.Client _client;
@@ -32,6 +40,7 @@ class _Connection extends http.BaseClient {
   final attachmentUploadsById = <int, int>{};
   int noteCreates = 0;
   int chunkRequests = 0;
+  _HeldWrite? holdNextWrite;
   @override
   Future<http.StreamedResponse> send(http.BaseRequest request) async {
     if (offline) throw http.ClientException('Intentional offline acceptance.');
@@ -91,7 +100,41 @@ class _Connection extends http.BaseClient {
         'Intentional nondelivery of creation request.',
       );
     }
+    final held =
+        creation ||
+            (request.method == 'PUT' && request.url.path.contains('/v1/notes/'))
+        ? holdNextWrite
+        : null;
+    if (held != null) {
+      holdNextWrite = null;
+      held.started.complete();
+      await held.release.future;
+      if (held.status == 429) {
+        // Definitive rejection: deliberately do not execute this fixture write.
+        return http.StreamedResponse(
+          Stream.value(utf8.encode('{}')),
+          429,
+          headers: {'Retry-After': '10'},
+          request: request,
+        );
+      }
+    }
     final response = await _client.send(request);
+    if (held?.status == 503) {
+      // Simulate a server failure after a real successful write. A POST outcome
+      // remains uncertain; its known test-owned ID is retained only for cleanup.
+      final bytes = await response.stream.toBytes();
+      _require(
+        response.statusCode == 200,
+        'Held fixture write was not successful.',
+      );
+      held!.executedId = (jsonDecode(utf8.decode(bytes)) as Map)['id'] as int;
+      return http.StreamedResponse(
+        Stream.value(utf8.encode('{}')),
+        503,
+        request: request,
+      );
+    }
     if ((loseNextSettingsResponse &&
             request.method == 'PUT' &&
             request.url.path.endsWith('/v1/settings')) ||
@@ -205,6 +248,14 @@ Future<void> main(List<String> arguments) async {
       (value) => editClock = value,
     );
     await _reviewCorrections(
+      connection,
+      account,
+      api,
+      createdIds,
+      checks,
+      directory,
+    );
+    await _metadataRaceChecks(
       connection,
       account,
       api,
@@ -1025,6 +1076,148 @@ Future<void> _reviewCorrections(
       }
     }
     checks['serverAndDraftEveryReviewedMetadataChoiceRestartRealSync'] = true;
+  } finally {
+    await r.dispose();
+  }
+}
+
+Future<void> _metadataRaceChecks(
+  _Connection connection,
+  NextcloudAccount account,
+  NotesApiClient Function(NextcloudAccount) api,
+  Set<int> createdIds,
+  Map<String, Object?> checks,
+  Directory directory,
+) async {
+  var now = DateTime.now();
+  Future<NotesRepository> open() async {
+    final r = NotesRepository(
+      store: await NotesStore.open(
+        path: '${directory.path}/metadata-race.sqlite3',
+      ),
+      clientForAccount: (a) async => api(a),
+      clock: () => now,
+    );
+    await r.initialize();
+    if (r.accounts.isEmpty) await r.upsertAccount(account);
+    return r;
+  }
+
+  var r = await open();
+  Future<void> restart() async {
+    await r.dispose();
+    r = await open();
+  }
+
+  var sequence = 0;
+  final prefix = DateTime.now().microsecondsSinceEpoch;
+  try {
+    for (final draft in [false, true]) {
+      for (final status in [200, 429, 503]) {
+        for (final choice in [
+          NoteConflictResolution.takeRemote,
+          NoteConflictResolution.keepLocal,
+        ]) {
+          now = DateTime.now();
+          final suffix = '$prefix-${sequence++}';
+          final a = 'Race A-$suffix',
+              b = 'Race B-$suffix',
+              c = 'Race C-$suffix';
+          final note = await r.create(
+            account.id,
+            title: a,
+            category: 'BusyMarkRace',
+            content: 'race body',
+          );
+          if (!draft) {
+            await r.synchronize(account.id);
+            createdIds.add(r.noteById(note.localId)!.serverId!);
+          }
+          final snapshot = r.metadataSnapshot(note.localId);
+          await r.patchMetadata(snapshot, title: b);
+          final sent = r.noteById(note.localId)!;
+          final held = _HeldWrite(status);
+          connection.holdNextWrite = held;
+          final sending = r.synchronize(account.id);
+          late int revision, requests;
+          try {
+            await Future.any([
+              held.started.future,
+              sending.then<void>((_) => throw StateError('No held write.')),
+            ]);
+            await r.patchMetadata(snapshot, title: c);
+            revision = r.noteById(note.localId)!.revision;
+            requests = connection.noteUpdates + connection.noteCreates;
+          } finally {
+            held.release.complete();
+          }
+          await sending;
+          if (held.executedId != null) createdIds.add(held.executedId!);
+          var current = r.noteById(note.localId)!;
+          if (current.serverId != null) createdIds.add(current.serverId!);
+          _require(
+            current.revision == revision &&
+                current.ackRevision ==
+                    (status == 200 ? sent.revision : sent.ackRevision) &&
+                current.title == c &&
+                current.metadataConflict?.alternative.title == b,
+            'Older held response lost the reviewed revision or alternatives.',
+          );
+          now = now.add(const Duration(minutes: 1));
+          await r.synchronize(account.id);
+          await restart();
+          await r.synchronize(account.id);
+          _require(
+            connection.noteUpdates + connection.noteCreates == requests,
+            'Unresolved metadata published after response/retry/restart.',
+          );
+          await r.resolveConflict(note.localId, choice);
+          final expected = choice == NoteConflictResolution.takeRemote ? b : c;
+          current = r.noteById(note.localId)!;
+          _require(
+            current.title == expected,
+            'Explicit metadata choice was substituted.',
+          );
+          if (draft && status == 503) {
+            await r.synchronize(account.id);
+            _require(
+              connection.noteUpdates + connection.noteCreates == requests &&
+                  r.noteById(note.localId)!.syncState ==
+                      NoteSyncState.creationUncertain,
+              'Metadata resolution released an uncertain real creation.',
+            );
+            final candidate = r
+                .uncertainCreationCandidates(note.localId)
+                .singleWhere((n) => n.serverId == held.executedId);
+            await r.resolveConflict(
+              note.localId,
+              NoteConflictResolution.useServerNote,
+              creationCandidateServerId: candidate.serverId,
+              creationReview: r.creationReview(note.localId, candidate.base!),
+            );
+          } else if (current.syncState == NoteSyncState.conflict) {
+            // A simulated failed response may follow a real accepted PUT. Review
+            // that actual server observation separately from the B/C decision.
+            await r.resolveConflict(
+              note.localId,
+              NoteConflictResolution.keepLocal,
+            );
+          }
+          await r.synchronize(account.id);
+          current = r.noteById(note.localId)!;
+          createdIds.add(current.serverId!);
+          _require(
+            current.syncState == NoteSyncState.synced &&
+                current.title == expected &&
+                (await api(account).get(current.serverId!)).title == expected,
+            'Selected race alternative did not synchronize to the real server.',
+          );
+        }
+      }
+    }
+    checks['heldPutPostResponsesMetadataAlternativesRetryRestartRealSync'] =
+        true;
+    checks['heldPossiblyExecutedPostRequiresSeparateCreationDecision'] = true;
   } finally {
     await r.dispose();
   }

@@ -116,22 +116,34 @@ Future<void> main(List<String> args) async {
   );
 }
 
+class _HeldWrite {
+  _HeldWrite(this.status);
+  final int status;
+  final started = Completer<void>();
+  final release = Completer<void>();
+}
+
 class _Transport extends http.BaseClient {
   _Transport(this.inner);
   final http.Client inner;
   bool offline = false;
   bool rejectNextWriteCredentials = false;
   bool throttleNextWrite = false;
+  _HeldWrite? holdNextWrite;
   int writes = 0;
+  int creates = 0;
   int collections = 0;
   @override
-  Future<http.StreamedResponse> send(http.BaseRequest request) {
+  Future<http.StreamedResponse> send(http.BaseRequest request) async {
     if (request.method == 'GET' && request.url.path.endsWith('/v1/notes')) {
       collections++;
     }
     if (offline) {
       throw http.ClientException('Simulated desktop loss of connectivity.');
     }
+    final creation =
+        request.method == 'POST' && request.url.path.endsWith('/v1/notes');
+    if (creation) creates++;
     if (request.method == 'PUT' && request.url.path.contains('/v1/notes/')) {
       writes++;
       if (rejectNextWriteCredentials) {
@@ -150,6 +162,25 @@ class _Transport extends http.BaseClient {
             headers: {'Retry-After': '5'},
             request: request,
           ),
+        );
+      }
+    }
+    final held =
+        creation ||
+            (request.method == 'PUT' && request.url.path.contains('/v1/notes/'))
+        ? holdNextWrite
+        : null;
+    if (held != null) {
+      holdNextWrite = null;
+      held.started.complete();
+      await held.release.future;
+      if (held.status == 429) {
+        // A simulated rejection prevents execution; successful writes use HTTPS.
+        return http.StreamedResponse(
+          Stream.value(utf8.encode('{}')),
+          429,
+          headers: {'Retry-After': '5'},
+          request: request,
         );
       }
     }
@@ -305,6 +336,123 @@ class _HarnessState extends ConsumerState<_Harness> {
     final data = await image.toByteData(format: ui.ImageByteFormat.png);
     image.dispose();
     return data!.buffer.asUint8List();
+  }
+
+  Future<void> metadataRaces(WorkspaceController workspace) async {
+    for (final draft in [false, true]) {
+      for (final status in [200, 429]) {
+        for (final previous in [true, false]) {
+          final suffix = '$draft-$status-$previous';
+          final a = 'Native race A-$suffix';
+          final b = 'Native race B-$suffix';
+          final c = 'Native race C-$suffix';
+          widget.transport.offline = draft;
+          final note = await repository.create(
+            widget.account.id,
+            title: a,
+            category: 'Desktop/Remote',
+            content: 'native race body',
+          );
+          if (!draft) {
+            await workspace.refreshNextcloudNotes();
+            created.add(repository.noteById(note.localId)!.serverId!);
+          }
+          widget.transport.offline = true;
+          await workspace.openNextcloudNote(note.localId);
+          await wait(
+            () => widgets<ListTile>().any(
+              (t) => t.key == ValueKey('nextcloud-note-${note.localId}'),
+            ),
+            'held metadata row',
+          );
+          widgets<ListTile>()
+              .firstWhere(
+                (t) => t.key == ValueKey('nextcloud-note-${note.localId}'),
+              )
+              .onLongPress!();
+          await wait(
+            () => widgets<TextField>().any((f) => f.controller?.text == a),
+            'held properties dialog',
+          );
+          final snapshot = repository.metadataSnapshot(note.localId);
+          await repository.patchMetadata(snapshot, title: b);
+          edit(
+            widgets<TextField>().firstWhere((f) => f.controller?.text == a),
+            c,
+          );
+          final held = _HeldWrite(status);
+          widget.transport.holdNextWrite = held;
+          widget.transport.offline = false;
+          final sending = workspace.refreshNextcloudNotes();
+          late int requests;
+          try {
+            await Future.any([
+              held.started.future,
+              sending.then<void>((_) => throw StateError('No held UI write.')),
+            ]);
+            await label('Save');
+            await wait(
+              () => repository.noteById(note.localId)!.metadataConflict != null,
+              'held properties conflict',
+            );
+            requests = widget.transport.writes + widget.transport.creates;
+          } finally {
+            held.release.complete();
+          }
+          await sending;
+          var current = repository.noteById(note.localId)!;
+          if (current.serverId != null) created.add(current.serverId!);
+          await workspace.refreshNextcloudNotes();
+          check(
+            current.title == c &&
+                current.metadataConflict?.alternative.title == b &&
+                current.syncState == NoteSyncState.conflict &&
+                widget.transport.writes + widget.transport.creates == requests,
+            'nativeHeldResponseBlocksPublication$suffix',
+          );
+          await wait(
+            () => widgets<Text>().any((t) => t.data == 'Conflicts'),
+            'held conflict status',
+          );
+          await label('Compare');
+          await wait(
+            () => widgets<DropdownButton>().any(
+              (d) =>
+                  d.items?.any(
+                    (i) =>
+                        i.child is Text &&
+                        (i.child as Text).data == 'Previous local edit: $b',
+                  ) ==
+                  true,
+            ),
+            'held B/C review',
+          );
+          if (draft && status == 200 && previous) {
+            await capture('held-post-metadata-review');
+          }
+          await label(previous ? 'Use previous edit' : 'Keep Mine');
+          await wait(
+            () => repository.noteById(note.localId)!.metadataConflict == null,
+            'held metadata choice',
+          );
+          final deadline = repository.noteById(note.localId)!.retryNotBefore;
+          if (deadline != null && DateTime.now().isBefore(deadline)) {
+            await Future<void>.delayed(
+              deadline.difference(DateTime.now()) + const Duration(seconds: 1),
+            );
+          }
+          await workspace.refreshNextcloudNotes();
+          current = repository.noteById(note.localId)!;
+          created.add(current.serverId!);
+          check(
+            current.title == (previous ? b : c) &&
+                current.syncState == NoteSyncState.synced &&
+                (await api.get(current.serverId!)).title == current.title,
+            'nativeHeldReviewedChoiceSynchronizes$suffix',
+          );
+        }
+      }
+    }
   }
 
   Future<void> run() async {
@@ -497,6 +645,7 @@ class _HarnessState extends ConsumerState<_Harness> {
           'nativeReviewedBPreservedDraft$draft',
         );
       }
+      await metadataRaces(workspace);
       await workspace.openNextcloudNote(id);
       workspace.updateActiveText('# Native authenticated edit');
       await workspace.saveActive();

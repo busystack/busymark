@@ -1211,6 +1211,7 @@ class NotesRepository {
   }
 
   bool _isBlocked(NextcloudNote note) =>
+      note.metadataConflict != null ||
       (note.serverId == null && note.creationAttempt != null) ||
       note.error ||
       (note.readonly &&
@@ -1476,11 +1477,17 @@ class NotesRepository {
       base: remote,
       remote: null,
       content: current.content,
-      title: current.title == wire['title'] ? remote.title : current.title,
-      category: current.category == wire['category']
+      title: current.metadataConflict == null && current.title == wire['title']
+          ? remote.title
+          : current.title,
+      category:
+          current.metadataConflict == null &&
+              current.category == wire['category']
           ? remote.category
           : current.category,
-      favorite: current.favorite == wire['favorite']
+      favorite:
+          current.metadataConflict == null &&
+              current.favorite == wire['favorite']
           ? remote.favorite
           : current.favorite,
       readonly: remote.readonly,
@@ -1488,11 +1495,15 @@ class NotesRepository {
       error: false,
       ackRevision: attempt.revision,
       revision: latest && staged ? current.revision + 1 : current.revision,
-      syncState: latest && !staged
+      syncState: current.metadataConflict != null
+          ? NoteSyncState.conflict
+          : latest && !staged
           ? NoteSyncState.synced
           : NoteSyncState.pending,
       creationAttempt: null,
-      errorMessage: null,
+      errorMessage: current.metadataConflict != null
+          ? current.errorMessage
+          : null,
     );
     return _readonlyBlocks(adopted, remote)
         ? adopted.copyWith(
@@ -1504,9 +1515,19 @@ class NotesRepository {
   }
 
   Future<NextcloudNote> _markSending(String id) => _mutate(() async {
-    final sent = _require(
-      id,
-    ).copyWith(syncState: NoteSyncState.syncing, errorMessage: null);
+    final current = _require(id);
+    // Revalidate inside the mutation boundary: a properties review can become
+    // conflicted while attachment publication or an earlier queue entry awaits.
+    if (_isBlocked(current)) {
+      throw const NotesException(
+        NotesFailureCode.conflict,
+        'Resolve the outstanding note conflict before publishing another revision.',
+      );
+    }
+    final sent = current.copyWith(
+      syncState: NoteSyncState.syncing,
+      errorMessage: null,
+    );
     await store.saveNote(sent);
     _notes[id] = sent;
     _notify();
@@ -1562,21 +1583,31 @@ class NotesRepository {
         retryCount: 0,
         retryNotBefore: null,
         content: latest && !staged ? remote.content : current.content,
-        title: latest || current.title == sent.title
+        title:
+            current.metadataConflict == null &&
+                (latest || current.title == sent.title)
             ? remote.title
             : current.title,
-        category: latest || current.category == sent.category
+        category:
+            current.metadataConflict == null &&
+                (latest || current.category == sent.category)
             ? remote.category
             : current.category,
-        favorite: latest ? remote.favorite : current.favorite,
+        favorite: latest && current.metadataConflict == null
+            ? remote.favorite
+            : current.favorite,
         readonly: remote.readonly,
         error: false,
         modified: remote.modified,
         revision: latest && staged ? current.revision + 1 : current.revision,
-        syncState: latest && !staged
+        syncState: current.metadataConflict != null
+            ? NoteSyncState.conflict
+            : latest && !staged
             ? NoteSyncState.synced
             : NoteSyncState.pending,
-        errorMessage: null,
+        errorMessage: current.metadataConflict != null
+            ? current.errorMessage
+            : null,
       );
       if (acknowledged.hasPendingChanges &&
           _readonlyBlocks(acknowledged, remote)) {
@@ -1616,12 +1647,14 @@ class NotesRepository {
     NotesApiClient? client,
   }) async {
     var remote = error.remote;
+    final serverId = _notes[id]?.serverId;
     if ((error.code == NotesFailureCode.conflict ||
             error.code == NotesFailureCode.forbidden) &&
         remote == null &&
-        client != null) {
+        client != null &&
+        serverId != null) {
       try {
-        remote = await client.get(_require(id).serverId!);
+        remote = await client.get(serverId);
       } on NotesException {
         /* Preserve base/local. */
       }
@@ -1652,8 +1685,15 @@ class NotesRepository {
         return;
       }
       final updated = current.copyWith(
-        syncState: state,
-        errorMessage: error.message,
+        // A retryable failure belongs to the earlier request, not to the
+        // disposition of newer metadata edits. Keep its retry evidence without
+        // replacing the review that independently blocks publication.
+        syncState: current.metadataConflict != null && error.retryable
+            ? NoteSyncState.conflict
+            : state,
+        errorMessage: current.metadataConflict != null && error.retryable
+            ? current.errorMessage
+            : error.message,
         remote: remote ?? current.remote,
         readonly: remote?.readonly ?? current.readonly,
         failureCode: error.code,
@@ -2504,6 +2544,7 @@ class NotesRepository {
       if (storedAttachment == null) continue;
       var attachment = storedAttachment;
       final note = _require(localId);
+      if (_isBlocked(note)) return;
       if (attachment.state == 'deleted') continue;
       if (attachment.state == 'deletePending') {
         try {
@@ -2600,7 +2641,9 @@ class NotesRepository {
         final updated = current.copyWith(
           content: content,
           revision: current.revision + 1,
-          syncState: NoteSyncState.pending,
+          syncState: current.metadataConflict != null
+              ? NoteSyncState.conflict
+              : NoteSyncState.pending,
         );
         await store.updateAttachment(attachment, note: updated);
         (_publishedReferences[localId] ??= {})[attachment.reference] =
