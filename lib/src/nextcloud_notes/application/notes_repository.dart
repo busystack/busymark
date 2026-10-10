@@ -437,7 +437,13 @@ class NotesRepository {
       }
       captured.add(note);
     }
-    return List.unmodifiable(captured);
+    return NotesLocalSnapshot(
+      captured,
+      mediaVersions: {
+        for (final note in captured) note.localId: mediaVersion(note.localId),
+      },
+      accountGenerations: {accountId: accountGeneration(accountId)},
+    );
   });
 
   Future<void> setOfflineRequirement(

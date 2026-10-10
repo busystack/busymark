@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../app/app_settings.dart';
 import '../../app/busymark_design.dart';
 import '../../app/busymark_dialogs.dart';
+import '../../app/busymark_glyphs.dart';
 import '../../app/localization.dart';
 import '../../local_history/local_history_controller.dart';
 import '../../local_history/local_history_models.dart';
@@ -394,7 +395,7 @@ class _NotesSearchDialogState extends ConsumerState<NotesSearchDialog> {
                           ? null
                           : IconButton(
                               tooltip: context.l10n.notesSourceLocation,
-                              icon: const Icon(Icons.code),
+                              icon: const Icon(BusyMarkGlyphs.code),
                               onPressed: () =>
                                   _open(source: true, index: index),
                             ),

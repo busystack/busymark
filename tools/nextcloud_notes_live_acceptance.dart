@@ -1291,7 +1291,7 @@ Future<void> _everydayWorkspaceChecks(
     if (published.serverId != null) owned.add(published.serverId!);
     _require(
       published.syncState == NoteSyncState.synced,
-      'Offline organization did not synchronize.',
+      'Offline organization did not synchronize: ${published.syncState.name}; ${published.errorMessage}; deadline=${published.retryNotBefore}; scope=${published.failureScope}',
     );
     final actual = await api(account).get(published.serverId!);
     _require(

@@ -489,6 +489,8 @@ a conflict does not resolve it. Choose a parent directory: BusyMark stages then
 publishes a new unique `BusyMark-notes-…` directory, without overwriting existing
 files. Cancelling or a filesystem failure removes unpublished staging. Missing
 managed bytes and unsupported/external dependencies are listed as omissions.
+If attachment bytes refresh or the account is removed during capture/copying,
+publication stops and asks for a fresh snapshot; a mixed snapshot is not published.
 
 Each snapshot contains ordinary `.md` documents in category directories and
 companion media. Only recognized attachment destinations are rewritten; prose,

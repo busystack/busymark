@@ -423,8 +423,10 @@ class _NextcloudNotesSidebarState extends ConsumerState<NextcloudNotesSidebar> {
                   tooltip: category,
                   icon: Icon(
                     _navigation.collapsed.contains(category)
-                        ? Icons.chevron_right
-                        : Icons.expand_more,
+                        ? BusyMarkGlyphs.collapsedTreeArrowFor(
+                            Directionality.of(context),
+                          )
+                        : BusyMarkGlyphs.downArrow,
                   ),
                   onPressed: () => setState(() {
                     if (!_navigation.collapsed.remove(category)) {

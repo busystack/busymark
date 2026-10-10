@@ -765,6 +765,66 @@ void main() {
     },
   );
   test(
+    'captured export rejects refreshed media but preserves captured text during later edits',
+    () async {
+      f.remote[1] = serverNote(1);
+      await f.repository.synchronize(testAccount().id, allowWrites: false);
+      final note = f.repository.notes.single;
+      final snapshot = await f.repository.captureLocalSnapshot(
+        testAccount().id,
+        {note.localId},
+      );
+      f.remote[1] = {...f.remote[1]!, 'etag': 'media-refreshed'};
+      await f.repository.synchronize(testAccount().id, allowWrites: false);
+      final service = NotesTransferService(f.repository);
+      await expectLater(
+        service.exportSnapshot(
+          notes: snapshot,
+          destination: f.root.path,
+          cancellation: NotesTransferCancellation(),
+        ),
+        throwsA(isA<FileSystemException>()),
+      );
+      expect(f.root.listSync().whereType<Directory>(), isEmpty);
+      final fresh = await f.repository.captureLocalSnapshot(testAccount().id, {
+        note.localId,
+      });
+      await f.repository.save(note.localId, content: 'later local edit');
+      final exported = await service.exportSnapshot(
+        notes: fresh,
+        destination: f.root.path,
+        cancellation: NotesTransferCancellation(),
+      );
+      final review = await service.review(exported.path, testAccount().id);
+      expect(review.items.single.content, fresh.single.content);
+      expect(f.repository.noteById(note.localId)!.content, 'later local edit');
+    },
+  );
+  test(
+    'account removal during export prevents publication and cleans staging',
+    () async {
+      final note = await f.repository.create(testAccount().id, content: 'body');
+      final snapshot = await f.repository.captureLocalSnapshot(
+        testAccount().id,
+        {note.localId},
+      );
+      Future<void>? removal;
+      await expectLater(
+        NotesTransferService(f.repository).exportSnapshot(
+          notes: snapshot,
+          destination: f.root.path,
+          cancellation: NotesTransferCancellation(),
+          onProgress: (_, _) =>
+              removal = f.repository.removeAccount(testAccount().id),
+        ),
+        throwsA(isA<FileSystemException>()),
+      );
+      await removal;
+      expect(f.root.listSync().whereType<Directory>(), isEmpty);
+      expect(f.repository.accounts, isEmpty);
+    },
+  );
+  test(
     'export filesystem failure publishes no partial snapshot and keeps unrelated files',
     () async {
       final note = await f.repository.create(

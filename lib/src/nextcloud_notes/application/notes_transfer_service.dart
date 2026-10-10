@@ -90,6 +90,34 @@ class NotesTransferService {
     required NotesTransferCancellation cancellation,
     void Function(int completed, int total)? onProgress,
   }) async {
+    final snapshot = notes is NotesLocalSnapshot
+        ? notes
+        : NotesLocalSnapshot(
+            List<NextcloudNote>.unmodifiable(notes),
+            mediaVersions: {
+              for (final note in notes)
+                note.localId: repository.mediaVersion(note.localId),
+            },
+            accountGenerations: {
+              for (final note in notes)
+                note.accountId: repository.accountGeneration(note.accountId),
+            },
+          );
+    void checkSnapshot() {
+      cancellation.check();
+      if (snapshot.mediaVersions.entries.any(
+            (e) => repository.mediaVersion(e.key) != e.value,
+          ) ||
+          snapshot.accountGenerations.entries.any(
+            (e) => repository.accountGeneration(e.key) != e.value,
+          )) {
+        throw const FileSystemException(
+          'Export media changed; capture the snapshot again.',
+        );
+      }
+    }
+
+    checkSnapshot();
     final parent = Directory(destination);
     await _safeAbsolute(parent.path);
     final staging = await parent.createTemp('.busymark-export-');
@@ -102,8 +130,8 @@ class NotesTransferService {
     final directories = <String, String>{'': ''};
     final used = <String>{};
     try {
-      for (final note in notes) {
-        cancellation.check();
+      for (final note in snapshot) {
+        checkSnapshot();
         var directory = '';
         var original = '';
         for (final component
@@ -162,9 +190,10 @@ class NotesTransferService {
                   note.hasPendingChanges,
           'omissions': missing,
         });
-        onProgress?.call(documents.length, notes.length);
+        checkSnapshot();
+        onProgress?.call(documents.length, snapshot.length);
       }
-      cancellation.check();
+      checkSnapshot();
       await File(p.join(staging.path, manifestName)).writeAsString(
         const JsonEncoder.withIndent('  ').convert({
           'format': format,
@@ -175,7 +204,7 @@ class NotesTransferService {
         }),
         flush: true,
       );
-      cancellation.check();
+      checkSnapshot();
       if (await FileSystemEntity.type(published, followLinks: false) !=
           FileSystemEntityType.notFound) {
         throw const FileSystemException('Export destination already exists.');

@@ -1,4 +1,20 @@
+import 'dart:collection';
 import 'dart:convert';
+
+/// Immutable document versions with fences for lazily copied attachment bytes.
+/// A refresh or account removal invalidates publication, without holding the
+/// durability queue while files are copied.
+class NotesLocalSnapshot extends UnmodifiableListView<NextcloudNote> {
+  NotesLocalSnapshot(
+    super.notes, {
+    required Map<String, int> mediaVersions,
+    required Map<String, int> accountGenerations,
+  }) : mediaVersions = Map.unmodifiable(mediaVersions),
+       accountGenerations = Map.unmodifiable(accountGenerations);
+
+  final Map<String, int> mediaVersions;
+  final Map<String, int> accountGenerations;
+}
 
 enum NoteSyncState {
   synced,

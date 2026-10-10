@@ -200,7 +200,16 @@ void main() {
     ]) {
       expect(combined, isNot(contains(removed)));
     }
-    expect(RegExp(r'Ctrl\+P(?![A-Za-z])').hasMatch(combined), isFalse);
+    // Ctrl+P is now the approved Quick Open binding. Printing remains absent.
+    final shortcuts = File(
+      'lib/src/app/busymark_shortcuts.dart',
+    ).readAsStringSync();
+    expect(shortcuts, contains("quickOpenLabel = 'Ctrl+P'"));
+    expect(shortcuts, contains("commandPaletteLabel = 'Ctrl+Shift+P'"));
+    final registry = File(
+      'lib/src/app/command_registry.dart',
+    ).readAsStringSync();
+    expect(registry, contains('BusyMarkAppShortcutAction.quickOpen'));
   });
 
   test('product stderr logging is isolated behind debug logging', () {
