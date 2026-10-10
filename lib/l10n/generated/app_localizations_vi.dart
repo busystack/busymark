@@ -4919,4 +4919,94 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get nextcloudUsePreviousEdit => 'Dùng chỉnh sửa trước';
+
+  @override
+  String get quickOpen => 'Mở nhanh';
+
+  @override
+  String get notesAll => 'Tất cả ghi chú';
+
+  @override
+  String get notesUncategorized => 'Chưa phân loại';
+
+  @override
+  String get notesRecovery => 'Khôi phục';
+
+  @override
+  String get notesRecentlyEdited => 'Sửa gần đây';
+
+  @override
+  String get notesOldestEdited => 'Sửa lâu nhất';
+
+  @override
+  String get notesTitleAscending => 'Tiêu đề A–Z';
+
+  @override
+  String get notesTitleDescending => 'Tiêu đề Z–A';
+
+  @override
+  String get notesMove => 'Chuyển tới danh mục';
+
+  @override
+  String get notesRemoveFavorite => 'Bỏ yêu thích';
+
+  @override
+  String get notesOffline => 'Cho phép dùng ngoại tuyến';
+
+  @override
+  String get notesOfflineRemove => 'Bỏ yêu cầu lưu ngoại tuyến';
+
+  @override
+  String get notesIndexing => 'Đang lập chỉ mục ghi chú…';
+
+  @override
+  String get notesSearchHelp =>
+      'Các từ kết hợp bằng VÀ. Dùng \"cụm từ trích dẫn\", title: và category:.';
+
+  @override
+  String get notesSourceLocation => 'Vị trí mã nguồn';
+
+  @override
+  String get notesRecoveryHelp =>
+      'Chỉ gồm ghi chú cục bộ được giữ và lịch sử cục bộ. Không có thùng rác hoặc lịch sử máy chủ.';
+
+  @override
+  String get notesImport => 'Nhập ghi chú';
+
+  @override
+  String get notesExport => 'Xuất ghi chú';
+
+  @override
+  String get notesImportDistinct => 'Nhập thành ghi chú riêng';
+
+  @override
+  String get notesAvailableOffline => 'Có sẵn ngoại tuyến';
+
+  @override
+  String get notesIncomplete => 'Chưa đầy đủ';
+
+  @override
+  String get notesSelected => 'Ghi chú đã chọn';
+
+  @override
+  String get notesNoHistory =>
+      'Không có phiên bản được giữ. Lịch sử có thể bị tắt, hết hạn hoặc bị xóa.';
+
+  @override
+  String get notesTextAvailable => 'Văn bản có sẵn cục bộ';
+
+  @override
+  String get notesLocalVersion => 'Phiên bản làm việc cục bộ';
+
+  @override
+  String get notesAttachments => 'Tệp đính kèm';
+
+  @override
+  String get notesSkipped => 'Đã bỏ qua';
+
+  @override
+  String get notesFailed => 'Thất bại';
+
+  @override
+  String get notesCompleted => 'Hoàn tất';
 }

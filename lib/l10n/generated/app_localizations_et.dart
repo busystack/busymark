@@ -4927,4 +4927,94 @@ class AppLocalizationsEt extends AppLocalizations {
 
   @override
   String get nextcloudUsePreviousEdit => 'Kasuta eelmist muudatust';
+
+  @override
+  String get quickOpen => 'Kiiravamine';
+
+  @override
+  String get notesAll => 'Kõik märkmed';
+
+  @override
+  String get notesUncategorized => 'Kategooriata';
+
+  @override
+  String get notesRecovery => 'Taastamine';
+
+  @override
+  String get notesRecentlyEdited => 'Hiljuti muudetud';
+
+  @override
+  String get notesOldestEdited => 'Vanim muutmine';
+
+  @override
+  String get notesTitleAscending => 'Pealkiri A–Z';
+
+  @override
+  String get notesTitleDescending => 'Pealkiri Z–A';
+
+  @override
+  String get notesMove => 'Teisalda kategooriasse';
+
+  @override
+  String get notesRemoveFavorite => 'Eemalda lemmik';
+
+  @override
+  String get notesOffline => 'Tee võrguta kättesaadavaks';
+
+  @override
+  String get notesOfflineRemove => 'Eemalda võrguta säilitamine';
+
+  @override
+  String get notesIndexing => 'Märkmete indekseerimine…';
+
+  @override
+  String get notesSearchHelp =>
+      'Mõisted ühendatakse JA abil. Kasuta \"tsiteeritud fraase\", title: ja category:.';
+
+  @override
+  String get notesSourceLocation => 'Lähtekoht';
+
+  @override
+  String get notesRecoveryHelp =>
+      'Ainult säilitatud kohalikud märkmed ja kohalik ajalugu. Serveri prügikast ja ajalugu pole saadaval.';
+
+  @override
+  String get notesImport => 'Impordi märkmed';
+
+  @override
+  String get notesExport => 'Ekspordi märkmed';
+
+  @override
+  String get notesImportDistinct => 'Impordi eraldi märkmena';
+
+  @override
+  String get notesAvailableOffline => 'Võrguta saadaval';
+
+  @override
+  String get notesIncomplete => 'Mittetäielik';
+
+  @override
+  String get notesSelected => 'Valitud märkmed';
+
+  @override
+  String get notesNoHistory =>
+      'Säilitatud versioone pole. Ajalugu võib olla keelatud, aegunud või kustutatud.';
+
+  @override
+  String get notesTextAvailable => 'Tekst on kohalikult saadaval';
+
+  @override
+  String get notesLocalVersion => 'Kohalik tööversioon';
+
+  @override
+  String get notesAttachments => 'Manused';
+
+  @override
+  String get notesSkipped => 'Vahele jäetud';
+
+  @override
+  String get notesFailed => 'Ebaõnnestus';
+
+  @override
+  String get notesCompleted => 'Lõpetatud';
 }

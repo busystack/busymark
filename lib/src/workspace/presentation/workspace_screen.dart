@@ -1,3 +1,5 @@
+import '../../nextcloud_notes/presentation/notes_workspace_ui.dart';
+import '../../nextcloud_notes/domain/notes_search.dart';
 import '../../assets/provider_asset_ingestion_service.dart';
 import '../../assets/document_media_context.dart';
 import '../../nextcloud_notes/application/nextcloud_connection.dart';
@@ -629,9 +631,13 @@ class _SearchNavigationTarget {
     required this.endOffset,
     required this.query,
     required this.request,
+    this.localId,
+    this.digest,
   });
 
-  final String filePath;
+  final String? filePath;
+  final String? localId;
+  final String? digest;
   final int line;
   final int startOffset;
   final int endOffset;
@@ -1259,6 +1265,11 @@ class WorkspaceScreen extends ConsumerWidget {
   }
 
   void _openSearch(WidgetRef ref) {
+    if (ref.read(workspaceControllerProvider).workspace?.isRemote == true) {
+      final target = ref.context;
+      unawaited(showNotesSearch(target, ref));
+      return;
+    }
     final search = ref.read(_workspaceSearchProvider);
     ref.read(_headerSearchFocusRequestProvider.notifier).request();
     if (!search.active) {
@@ -1413,6 +1424,7 @@ class WorkspaceScreen extends ConsumerWidget {
         context.go(settingsLocation(SettingsReturnTarget.workspace));
       case BusyMarkMainMenuAction.keyboardShortcuts:
         showBusyMarkKeyboardShortcutsDialog(context);
+      case BusyMarkMainMenuAction.quickOpen:
       case BusyMarkMainMenuAction.commandPalette:
         return;
       case BusyMarkMainMenuAction.syntaxReference:
@@ -12139,10 +12151,39 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
       }
       _scrollToOutlineTarget(next);
     });
+    ref.listen(notesMatchNavigationProvider, (previous, next) {
+      if (next == null ||
+          next.request == previous?.request ||
+          widget.state.activeBuffer?.remoteNote?.localId != next.localId) {
+        return;
+      }
+      final source = widget.state.activeBuffer!.text;
+      if (notesSearchDigest(source) != next.digest) return;
+      final line = SourceDocument(
+        fullText: source,
+      ).lineIndex.lineNumberAtOffset(next.start);
+      final old = ref.read(_searchNavigationTargetProvider);
+      ref
+          .read(_searchNavigationTargetProvider.notifier)
+          .set(
+            _SearchNavigationTarget(
+              filePath: null,
+              localId: next.localId,
+              digest: next.digest,
+              line: line,
+              startOffset: next.start,
+              endOffset: next.end,
+              query: '',
+              request: (old?.request ?? 0) + 1,
+            ),
+          );
+    });
     final searchTarget = ref.watch(_searchNavigationTargetProvider);
     if (searchTarget != null &&
-        ref.read(_workspaceSearchProvider).active &&
-        ref.read(_workspaceSearchProvider).query == searchTarget.query &&
+        (searchTarget.localId != null ||
+            (ref.read(_workspaceSearchProvider).active &&
+                ref.read(_workspaceSearchProvider).query ==
+                    searchTarget.query)) &&
         searchTarget.request != _lastSearchNavigationRequest) {
       _scrollToSearchTarget(searchTarget);
     }
@@ -13942,7 +13983,12 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
           ref.read(_searchNavigationTargetProvider)?.request !=
               target.request ||
           _lastSearchNavigationRequest == target.request ||
-          target.filePath != widget.state.activeBuffer?.filePath) {
+          (target.localId != null
+              ? target.localId !=
+                        widget.state.activeBuffer?.remoteNote?.localId ||
+                    notesSearchDigest(widget.state.activeBuffer?.text ?? '') !=
+                        target.digest
+              : target.filePath != widget.state.activeBuffer?.filePath)) {
         return;
       }
       _lastSearchNavigationRequest = target.request;

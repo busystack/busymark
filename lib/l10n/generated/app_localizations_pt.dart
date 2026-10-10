@@ -4990,6 +4990,96 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get nextcloudUsePreviousEdit => 'Usar edição anterior';
+
+  @override
+  String get quickOpen => 'Abertura rápida';
+
+  @override
+  String get notesAll => 'Todas as notas';
+
+  @override
+  String get notesUncategorized => 'Sem categoria';
+
+  @override
+  String get notesRecovery => 'Recuperação';
+
+  @override
+  String get notesRecentlyEdited => 'Editadas recentemente';
+
+  @override
+  String get notesOldestEdited => 'Edições mais antigas';
+
+  @override
+  String get notesTitleAscending => 'Título A–Z';
+
+  @override
+  String get notesTitleDescending => 'Título Z–A';
+
+  @override
+  String get notesMove => 'Mover para categoria';
+
+  @override
+  String get notesRemoveFavorite => 'Remover favorito';
+
+  @override
+  String get notesOffline => 'Disponibilizar offline';
+
+  @override
+  String get notesOfflineRemove => 'Remover retenção offline';
+
+  @override
+  String get notesIndexing => 'A indexar notas…';
+
+  @override
+  String get notesSearchHelp =>
+      'Os termos usam E. Use \"frases entre aspas\", title: e category:.';
+
+  @override
+  String get notesSourceLocation => 'Localização no código fonte';
+
+  @override
+  String get notesRecoveryHelp =>
+      'Apenas notas locais retidas e histórico local. O lixo e o histórico do servidor não estão disponíveis.';
+
+  @override
+  String get notesImport => 'Importar notas';
+
+  @override
+  String get notesExport => 'Exportar notas';
+
+  @override
+  String get notesImportDistinct => 'Importar como nota distinta';
+
+  @override
+  String get notesAvailableOffline => 'Disponível offline';
+
+  @override
+  String get notesIncomplete => 'Incompleto';
+
+  @override
+  String get notesSelected => 'Notas selecionadas';
+
+  @override
+  String get notesNoHistory =>
+      'Não há revisões retidas. O histórico pode estar desativado, expirado ou apagado.';
+
+  @override
+  String get notesTextAvailable => 'Texto disponível localmente';
+
+  @override
+  String get notesLocalVersion => 'Versão de trabalho local';
+
+  @override
+  String get notesAttachments => 'Anexos';
+
+  @override
+  String get notesSkipped => 'Ignorado';
+
+  @override
+  String get notesFailed => 'Falhou';
+
+  @override
+  String get notesCompleted => 'Concluído';
 }
 
 /// The translations for Portuguese, as used in Brazil (`pt_BR`).
@@ -9974,4 +10064,94 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get nextcloudUsePreviousEdit => 'Usar edição anterior';
+
+  @override
+  String get quickOpen => 'Abertura rápida';
+
+  @override
+  String get notesAll => 'Todas as notas';
+
+  @override
+  String get notesUncategorized => 'Sem categoria';
+
+  @override
+  String get notesRecovery => 'Recuperação';
+
+  @override
+  String get notesRecentlyEdited => 'Editadas recentemente';
+
+  @override
+  String get notesOldestEdited => 'Edições mais antigas';
+
+  @override
+  String get notesTitleAscending => 'Título A–Z';
+
+  @override
+  String get notesTitleDescending => 'Título Z–A';
+
+  @override
+  String get notesMove => 'Mover para categoria';
+
+  @override
+  String get notesRemoveFavorite => 'Remover favorito';
+
+  @override
+  String get notesOffline => 'Disponibilizar offline';
+
+  @override
+  String get notesOfflineRemove => 'Remover retenção offline';
+
+  @override
+  String get notesIndexing => 'Indexando notas…';
+
+  @override
+  String get notesSearchHelp =>
+      'Os termos usam E. Use \"frases entre aspas\", title: e category:.';
+
+  @override
+  String get notesSourceLocation => 'Localização no código fonte';
+
+  @override
+  String get notesRecoveryHelp =>
+      'Apenas notas locais retidas e histórico local. O lixo e o histórico do servidor não estão disponíveis.';
+
+  @override
+  String get notesImport => 'Importar notas';
+
+  @override
+  String get notesExport => 'Exportar notas';
+
+  @override
+  String get notesImportDistinct => 'Importar como nota distinta';
+
+  @override
+  String get notesAvailableOffline => 'Disponível offline';
+
+  @override
+  String get notesIncomplete => 'Incompleto';
+
+  @override
+  String get notesSelected => 'Notas selecionadas';
+
+  @override
+  String get notesNoHistory =>
+      'Não há revisões retidas. O histórico pode estar desativado, expirado ou apagado.';
+
+  @override
+  String get notesTextAvailable => 'Texto disponível localmente';
+
+  @override
+  String get notesLocalVersion => 'Versão de trabalho local';
+
+  @override
+  String get notesAttachments => 'Anexos';
+
+  @override
+  String get notesSkipped => 'Ignorado';
+
+  @override
+  String get notesFailed => 'Falhou';
+
+  @override
+  String get notesCompleted => 'Concluído';
 }

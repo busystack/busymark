@@ -8387,6 +8387,180 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Use previous edit'**
   String get nextcloudUsePreviousEdit;
+
+  /// No description provided for @quickOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Quick Open'**
+  String get quickOpen;
+
+  /// No description provided for @notesAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All notes'**
+  String get notesAll;
+
+  /// No description provided for @notesUncategorized.
+  ///
+  /// In en, this message translates to:
+  /// **'Uncategorized'**
+  String get notesUncategorized;
+
+  /// No description provided for @notesRecovery.
+  ///
+  /// In en, this message translates to:
+  /// **'Recovery'**
+  String get notesRecovery;
+
+  /// No description provided for @notesRecentlyEdited.
+  ///
+  /// In en, this message translates to:
+  /// **'Recently edited'**
+  String get notesRecentlyEdited;
+
+  /// No description provided for @notesOldestEdited.
+  ///
+  /// In en, this message translates to:
+  /// **'Oldest edited'**
+  String get notesOldestEdited;
+
+  /// No description provided for @notesTitleAscending.
+  ///
+  /// In en, this message translates to:
+  /// **'Title A–Z'**
+  String get notesTitleAscending;
+
+  /// No description provided for @notesTitleDescending.
+  ///
+  /// In en, this message translates to:
+  /// **'Title Z–A'**
+  String get notesTitleDescending;
+
+  /// No description provided for @notesMove.
+  ///
+  /// In en, this message translates to:
+  /// **'Move to category'**
+  String get notesMove;
+
+  /// No description provided for @notesRemoveFavorite.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove favorite'**
+  String get notesRemoveFavorite;
+
+  /// No description provided for @notesOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'Make available offline'**
+  String get notesOffline;
+
+  /// No description provided for @notesOfflineRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove offline requirement'**
+  String get notesOfflineRemove;
+
+  /// No description provided for @notesIndexing.
+  ///
+  /// In en, this message translates to:
+  /// **'Indexing notes…'**
+  String get notesIndexing;
+
+  /// No description provided for @notesSearchHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Terms use AND. Use \"quoted phrases\", title: and category:.'**
+  String get notesSearchHelp;
+
+  /// No description provided for @notesSourceLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Source location'**
+  String get notesSourceLocation;
+
+  /// No description provided for @notesRecoveryHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Retained local notes and Local History only. Server trash and history are unavailable.'**
+  String get notesRecoveryHelp;
+
+  /// No description provided for @notesImport.
+  ///
+  /// In en, this message translates to:
+  /// **'Import notes'**
+  String get notesImport;
+
+  /// No description provided for @notesExport.
+  ///
+  /// In en, this message translates to:
+  /// **'Export notes'**
+  String get notesExport;
+
+  /// No description provided for @notesImportDistinct.
+  ///
+  /// In en, this message translates to:
+  /// **'Import as a distinct note'**
+  String get notesImportDistinct;
+
+  /// No description provided for @notesAvailableOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'Available offline'**
+  String get notesAvailableOffline;
+
+  /// No description provided for @notesIncomplete.
+  ///
+  /// In en, this message translates to:
+  /// **'Incomplete'**
+  String get notesIncomplete;
+
+  /// No description provided for @notesSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'Selected notes'**
+  String get notesSelected;
+
+  /// No description provided for @notesNoHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'No retained revisions. History may be disabled, expired or cleared.'**
+  String get notesNoHistory;
+
+  /// No description provided for @notesTextAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Text available locally'**
+  String get notesTextAvailable;
+
+  /// No description provided for @notesLocalVersion.
+  ///
+  /// In en, this message translates to:
+  /// **'Local working version'**
+  String get notesLocalVersion;
+
+  /// No description provided for @notesAttachments.
+  ///
+  /// In en, this message translates to:
+  /// **'Attachments'**
+  String get notesAttachments;
+
+  /// No description provided for @notesSkipped.
+  ///
+  /// In en, this message translates to:
+  /// **'Skipped'**
+  String get notesSkipped;
+
+  /// No description provided for @notesFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed'**
+  String get notesFailed;
+
+  /// No description provided for @notesCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed'**
+  String get notesCompleted;
 }
 
 class _AppLocalizationsDelegate

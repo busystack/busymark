@@ -251,6 +251,7 @@ abstract final class BusyMarkCommandIds {
   static const back = 'navigation.back';
   static const search = 'search.find';
   static const keyboardShortcuts = 'help.keyboardShortcuts';
+  static const quickOpen = 'workspace.quickOpen';
   static const commandPalette = 'view.commandPalette';
   static const syntaxReference = 'help.syntaxReference';
   static const settings = 'application.settings';
@@ -459,6 +460,7 @@ abstract final class BusyMarkCommandCatalog {
     BusyMarkAppShortcutAction.fullScreen => BusyMarkCommandIds.fullScreen,
     BusyMarkAppShortcutAction.back => BusyMarkCommandIds.back,
     BusyMarkAppShortcutAction.search => BusyMarkCommandIds.search,
+    BusyMarkAppShortcutAction.quickOpen => BusyMarkCommandIds.quickOpen,
     BusyMarkAppShortcutAction.keyboardShortcuts =>
       BusyMarkCommandIds.keyboardShortcuts,
     BusyMarkAppShortcutAction.commandPalette =>
@@ -484,6 +486,7 @@ abstract final class BusyMarkCommandCatalog {
     BusyMarkAppShortcutAction.fullScreen => context.l10n.fullScreen,
     BusyMarkAppShortcutAction.back => context.l10n.back,
     BusyMarkAppShortcutAction.search => context.l10n.search,
+    BusyMarkAppShortcutAction.quickOpen => context.l10n.quickOpen,
     BusyMarkAppShortcutAction.keyboardShortcuts =>
       context.l10n.keyboardShortcuts,
     BusyMarkAppShortcutAction.commandPalette => context.l10n.commandPalette,

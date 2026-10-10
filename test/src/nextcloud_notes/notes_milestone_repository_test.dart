@@ -902,9 +902,9 @@ void main() {
     },
   );
 
-  for (final schema in [2, 3]) {
+  for (final schema in [2, 3, 4]) {
     test(
-      'v$schema migration retains exact outbox and bytes; failed recovery rolls back fence; v5 rejected',
+      'v$schema migration retains exact outbox and bytes; failed recovery rolls back fence; v6 rejected',
       () async {
         final r = await open(MockClient((_) async => http.Response('[]', 200)));
         final draft = await r.create(testAccount().id, content: 'retained');
@@ -915,6 +915,15 @@ void main() {
         );
         await restart(r);
         var db = sqlite3.open('${directory.path}/notes.sqlite3');
+        db.execute('DROP TRIGGER IF EXISTS notes_search_delete');
+        for (final table in [
+          'note_search',
+          'note_search_map',
+          'offline_requirements',
+          'import_items',
+        ]) {
+          db.execute('DROP TABLE IF EXISTS $table');
+        }
         db.execute('PRAGMA user_version=$schema');
         final outbox = db.select('SELECT data FROM outbox').single['data'];
         db.close();
@@ -928,8 +937,17 @@ void main() {
         expect(await migrated.store.attachmentBytes(attachment.id), [1, 2]);
         await restart(migrated);
         db = sqlite3.open('${directory.path}/notes.sqlite3');
-        expect(db.select('PRAGMA user_version').single.values.single, 4);
+        expect(db.select('PRAGMA user_version').single.values.single, 5);
         expect(db.select('SELECT data FROM outbox').single['data'], outbox);
+        db.execute('DROP TRIGGER IF EXISTS notes_search_delete');
+        for (final table in [
+          'note_search',
+          'note_search_map',
+          'offline_requirements',
+          'import_items',
+        ]) {
+          db.execute('DROP TABLE IF EXISTS $table');
+        }
         db.execute('PRAGMA user_version=$schema');
         db.execute("UPDATE notes SET data='{}'");
         db.close();
@@ -939,7 +957,13 @@ void main() {
         );
         db = sqlite3.open('${directory.path}/notes.sqlite3');
         expect(db.select('PRAGMA user_version').single.values.single, schema);
-        db.execute('PRAGMA user_version=5');
+        expect(
+          db.select(
+            "SELECT name FROM sqlite_master WHERE name IN ('note_search','offline_requirements','import_items')",
+          ),
+          isEmpty,
+        );
+        db.execute('PRAGMA user_version=6');
         db.close();
         await expectLater(
           NotesStore.open(path: '${directory.path}/notes.sqlite3'),

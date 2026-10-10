@@ -1,3 +1,4 @@
+import '../nextcloud_notes/application/notes_navigation.dart';
 import 'dart:async';
 import 'dart:io';
 import 'dart:math' as math;
@@ -935,6 +936,70 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     }
   }
 
+  Future<List<NotesBatchOutcome>> batchNextcloudMetadata(
+    List<NotesMetadataSnapshot> reviewed, {
+    String? category,
+    bool? favorite,
+  }) async {
+    final repository = await _ensureNotesRepository();
+    final eligible = <NotesMetadataSnapshot>[];
+    final failed = <NotesBatchOutcome>[];
+    for (final snapshot in reviewed) {
+      final buffer = state.documentBuffers
+          .where((b) => b.remoteNote?.localId == snapshot.note.localId)
+          .firstOrNull;
+      if (buffer?.isDirty == true &&
+          !await _saveRemoteBufferSnapshot(buffer!, scheduleSync: false)) {
+        failed.add(
+          NotesBatchOutcome(
+            snapshot.note.localId,
+            snapshot.note.title,
+            NotesBatchStatus.failed,
+            'Editor save failed.',
+          ),
+        );
+      } else {
+        eligible.add(snapshot);
+      }
+    }
+    final outcomes = await repository.patchMetadataBatch(
+      eligible,
+      category: category,
+      favorite: favorite,
+    );
+    for (final account in eligible.map((s) => s.note.accountId).toSet()) {
+      _scheduleRemoteSync(account);
+    }
+    return [...outcomes, ...failed];
+  }
+
+  Future<List<NextcloudNote>?> captureNextcloudExport(Set<String> ids) async {
+    final accountId = state.workspace?.nextcloudAccountId;
+    if (accountId == null) return null;
+    for (final id in ids) {
+      final buffer = state.documentBuffers
+          .where((b) => b.remoteNote?.localId == id)
+          .firstOrNull;
+      if (buffer?.isDirty == true &&
+          !await _saveRemoteBufferSnapshot(buffer!, scheduleSync: false)) {
+        return null;
+      }
+    }
+    if (state.workspace?.nextcloudAccountId != accountId ||
+        state.documentBuffers.any(
+          (b) => ids.contains(b.remoteNote?.localId) && b.isDirty,
+        )) {
+      return null;
+    }
+    return (await _ensureNotesRepository()).captureLocalSnapshot(
+      accountId,
+      ids,
+    );
+  }
+
+  void synchronizeImportedNotes(String accountId) =>
+      _scheduleRemoteSync(accountId);
+
   Future<bool> deleteNextcloudNote(String localId) async {
     try {
       final repository = await _ensureNotesRepository();
@@ -1054,6 +1119,30 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       if (accountId != null) _scheduleRemoteSync(accountId);
     } on Object catch (error) {
       _reportNextcloudFailure(error);
+    }
+  }
+
+  Future<bool> recoverDeletedNextcloudNote(
+    String localId, {
+    String? content,
+  }) async {
+    try {
+      final repository = await _ensureNotesRepository();
+      final original = repository.noteById(localId);
+      if (original == null ||
+          state.workspace?.nextcloudAccountId != original.accountId) {
+        return false;
+      }
+      final recovered = await repository.recoverAsNew(
+        localId,
+        content: content,
+      );
+      final opened = await openNextcloudNote(recovered.localId);
+      _scheduleRemoteSync(original.accountId);
+      return opened;
+    } on Object catch (error) {
+      _reportNextcloudFailure(error);
+      return false;
     }
   }
 

@@ -325,6 +325,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
         context.go(settingsLocation(SettingsReturnTarget.welcome));
       case BusyMarkMainMenuAction.keyboardShortcuts:
         showBusyMarkKeyboardShortcutsDialog(context);
+      case BusyMarkMainMenuAction.quickOpen:
       case BusyMarkMainMenuAction.commandPalette:
         return;
       case BusyMarkMainMenuAction.syntaxReference:

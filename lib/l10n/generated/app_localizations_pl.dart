@@ -4983,4 +4983,94 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get nextcloudUsePreviousEdit => 'Użyj poprzedniej zmiany';
+
+  @override
+  String get quickOpen => 'Szybkie otwieranie';
+
+  @override
+  String get notesAll => 'Wszystkie notatki';
+
+  @override
+  String get notesUncategorized => 'Bez kategorii';
+
+  @override
+  String get notesRecovery => 'Odzyskiwanie';
+
+  @override
+  String get notesRecentlyEdited => 'Ostatnio edytowane';
+
+  @override
+  String get notesOldestEdited => 'Najstarsza edycja';
+
+  @override
+  String get notesTitleAscending => 'Tytuł A–Z';
+
+  @override
+  String get notesTitleDescending => 'Tytuł Z–A';
+
+  @override
+  String get notesMove => 'Przenieś do kategorii';
+
+  @override
+  String get notesRemoveFavorite => 'Usuń z ulubionych';
+
+  @override
+  String get notesOffline => 'Udostępnij offline';
+
+  @override
+  String get notesOfflineRemove => 'Usuń przechowywanie offline';
+
+  @override
+  String get notesIndexing => 'Indeksowanie notatek…';
+
+  @override
+  String get notesSearchHelp =>
+      'Terminy używają ORAZ. Użyj \"cytowanych fraz\", title: i category:.';
+
+  @override
+  String get notesSourceLocation => 'Pozycja w źródle';
+
+  @override
+  String get notesRecoveryHelp =>
+      'Tylko zachowane notatki lokalne i historia lokalna. Kosz i historia serwera są niedostępne.';
+
+  @override
+  String get notesImport => 'Importuj notatki';
+
+  @override
+  String get notesExport => 'Eksportuj notatki';
+
+  @override
+  String get notesImportDistinct => 'Importuj jako osobną notatkę';
+
+  @override
+  String get notesAvailableOffline => 'Dostępne offline';
+
+  @override
+  String get notesIncomplete => 'Niekompletne';
+
+  @override
+  String get notesSelected => 'Wybrane notatki';
+
+  @override
+  String get notesNoHistory =>
+      'Brak zachowanych wersji. Historia może być wyłączona, wygasła lub wyczyszczona.';
+
+  @override
+  String get notesTextAvailable => 'Tekst dostępny lokalnie';
+
+  @override
+  String get notesLocalVersion => 'Lokalna wersja robocza';
+
+  @override
+  String get notesAttachments => 'Załączniki';
+
+  @override
+  String get notesSkipped => 'Pominięto';
+
+  @override
+  String get notesFailed => 'Niepowodzenie';
+
+  @override
+  String get notesCompleted => 'Ukończono';
 }

@@ -4793,4 +4793,92 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get nextcloudUsePreviousEdit => '以前の編集を使用';
+
+  @override
+  String get quickOpen => 'クイックオープン';
+
+  @override
+  String get notesAll => 'すべてのノート';
+
+  @override
+  String get notesUncategorized => '未分類';
+
+  @override
+  String get notesRecovery => '復元';
+
+  @override
+  String get notesRecentlyEdited => '最近編集した順';
+
+  @override
+  String get notesOldestEdited => '古い編集順';
+
+  @override
+  String get notesTitleAscending => 'タイトル昇順';
+
+  @override
+  String get notesTitleDescending => 'タイトル降順';
+
+  @override
+  String get notesMove => 'カテゴリに移動';
+
+  @override
+  String get notesRemoveFavorite => 'お気に入りを解除';
+
+  @override
+  String get notesOffline => 'オフラインで利用可能にする';
+
+  @override
+  String get notesOfflineRemove => 'オフライン保持を解除';
+
+  @override
+  String get notesIndexing => 'ノートを索引作成中…';
+
+  @override
+  String get notesSearchHelp =>
+      '語句は AND で結合します。\"引用句\"、title:、category: を使えます。';
+
+  @override
+  String get notesSourceLocation => 'ソース位置';
+
+  @override
+  String get notesRecoveryHelp => '保持されたローカルノートとローカル履歴のみ。サーバーのごみ箱や履歴は利用できません。';
+
+  @override
+  String get notesImport => 'ノートをインポート';
+
+  @override
+  String get notesExport => 'ノートをエクスポート';
+
+  @override
+  String get notesImportDistinct => '別のノートとしてインポート';
+
+  @override
+  String get notesAvailableOffline => 'オフラインで利用可能';
+
+  @override
+  String get notesIncomplete => '不完全';
+
+  @override
+  String get notesSelected => '選択したノート';
+
+  @override
+  String get notesNoHistory => '保持された版がありません。履歴は無効、期限切れ、または消去済みの場合があります。';
+
+  @override
+  String get notesTextAvailable => 'テキストはローカルで利用可能';
+
+  @override
+  String get notesLocalVersion => 'ローカルの作業版';
+
+  @override
+  String get notesAttachments => '添付ファイル';
+
+  @override
+  String get notesSkipped => 'スキップ';
+
+  @override
+  String get notesFailed => '失敗';
+
+  @override
+  String get notesCompleted => '完了';
 }

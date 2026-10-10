@@ -4941,4 +4941,94 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get nextcloudUsePreviousEdit => 'Use previous edit';
+
+  @override
+  String get quickOpen => 'Quick Open';
+
+  @override
+  String get notesAll => 'All notes';
+
+  @override
+  String get notesUncategorized => 'Uncategorized';
+
+  @override
+  String get notesRecovery => 'Recovery';
+
+  @override
+  String get notesRecentlyEdited => 'Recently edited';
+
+  @override
+  String get notesOldestEdited => 'Oldest edited';
+
+  @override
+  String get notesTitleAscending => 'Title A–Z';
+
+  @override
+  String get notesTitleDescending => 'Title Z–A';
+
+  @override
+  String get notesMove => 'Move to category';
+
+  @override
+  String get notesRemoveFavorite => 'Remove favorite';
+
+  @override
+  String get notesOffline => 'Make available offline';
+
+  @override
+  String get notesOfflineRemove => 'Remove offline requirement';
+
+  @override
+  String get notesIndexing => 'Indexing notes…';
+
+  @override
+  String get notesSearchHelp =>
+      'Terms use AND. Use \"quoted phrases\", title: and category:.';
+
+  @override
+  String get notesSourceLocation => 'Source location';
+
+  @override
+  String get notesRecoveryHelp =>
+      'Retained local notes and Local History only. Server trash and history are unavailable.';
+
+  @override
+  String get notesImport => 'Import notes';
+
+  @override
+  String get notesExport => 'Export notes';
+
+  @override
+  String get notesImportDistinct => 'Import as a distinct note';
+
+  @override
+  String get notesAvailableOffline => 'Available offline';
+
+  @override
+  String get notesIncomplete => 'Incomplete';
+
+  @override
+  String get notesSelected => 'Selected notes';
+
+  @override
+  String get notesNoHistory =>
+      'No retained revisions. History may be disabled, expired or cleared.';
+
+  @override
+  String get notesTextAvailable => 'Text available locally';
+
+  @override
+  String get notesLocalVersion => 'Local working version';
+
+  @override
+  String get notesAttachments => 'Attachments';
+
+  @override
+  String get notesSkipped => 'Skipped';
+
+  @override
+  String get notesFailed => 'Failed';
+
+  @override
+  String get notesCompleted => 'Completed';
 }

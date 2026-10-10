@@ -19,6 +19,7 @@ import 'package:busymark/src/nextcloud_notes/application/notes_repository.dart';
 import 'package:busymark/src/nextcloud_notes/data/notes_store.dart';
 import 'package:busymark/src/nextcloud_notes/domain/notes_models.dart';
 import 'package:busymark/src/nextcloud_notes/presentation/notes_sidebar.dart';
+import 'package:busymark/src/nextcloud_notes/presentation/notes_workspace_ui.dart';
 import 'package:busymark/src/workspace/presentation/settings_screen.dart';
 import 'package:busymark/src/workspace/recovery_persistence.dart';
 import 'package:busymark/src/workspace/session_persistence.dart';
@@ -30,6 +31,16 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
+
+Future<void> settleStorage(WidgetTester tester) async {
+  for (var i = 0; i < 10; i++) {
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 30)),
+    );
+    await tester.pump();
+  }
+  await tester.pumpAndSettle();
+}
 
 void main() {
   late Directory root;
@@ -286,7 +297,7 @@ void main() {
   });
 
   Future<void> pump(WidgetTester tester) async {
-    tester.view.physicalSize = const Size(800, 600);
+    tester.view.physicalSize = const Size(1000, 1000);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
@@ -303,14 +314,14 @@ void main() {
           home: const Scaffold(
             body: SizedBox(
               width: 500,
-              height: 700,
+              height: 1000,
               child: NextcloudNotesSidebar(accountId: accountId),
             ),
           ),
         ),
       ),
     );
-    await tester.pumpAndSettle();
+    await settleStorage(tester);
   }
 
   test('Nextcloud settings route selects its dedicated page', () {
@@ -366,7 +377,7 @@ void main() {
         child: const BusyMarkApp(),
       ),
     );
-    await tester.pumpAndSettle();
+    await settleStorage(tester);
     final strip = find.byKey(const ValueKey('editor-tab-strip'));
     Finder tab(String title) =>
         find.descendant(of: strip, matching: find.text(title));
@@ -382,7 +393,7 @@ void main() {
         title: 'Renamed personal note',
       ),
     );
-    await tester.pumpAndSettle();
+    await settleStorage(tester);
     expect(tab('Personal note'), findsNothing);
     expect(tab('Renamed personal note'), findsOneWidget);
     expect(tab('Shared note'), findsOneWidget);
@@ -434,7 +445,7 @@ void main() {
             child: const BusyMarkApp(),
           ),
         );
-        await tester.pumpAndSettle();
+        await settleStorage(tester);
         final target = container
             .read(workspaceControllerProvider)
             .documentBuffers
@@ -480,7 +491,7 @@ void main() {
           );
         });
         await tester.tap(label(), buttons: kSecondaryButton);
-        await tester.pumpAndSettle();
+        await settleStorage(tester);
         final entries = menu!['entries'] as List;
         expect((entries[4] as Map)['enabled'], isFalse);
         expect(clipboardWrites, 0);
@@ -507,7 +518,7 @@ void main() {
             break;
           }
         }
-        await tester.pumpAndSettle();
+        await settleStorage(tester);
         final state = container.read(workspaceControllerProvider);
         expect(state.documentBuffers, hasLength(action == 'all' ? 0 : 1));
         if (action == 'other') expect(state.activeBufferId, target.id);
@@ -532,10 +543,30 @@ void main() {
       expect(find.text('Personal note'), findsOneWidget);
       expect(find.text('Shared note'), findsOneWidget);
       expect(find.text('Deleted note'), findsNothing);
-      await tester.enterText(find.byType(TextField), 'private search');
-      await tester.pumpAndSettle();
-      expect(find.text('Personal note'), findsOneWidget);
-      expect(find.text('Shared note'), findsNothing);
+      await tester.tap(find.byType(TextField));
+      await settleStorage(tester);
+      final dialog = find.byType(NotesSearchDialog);
+      final field = find.descendant(
+        of: dialog,
+        matching: find.byType(TextField),
+      );
+      await tester.enterText(field, 'private search');
+      await tester.pump(const Duration(milliseconds: 200));
+      for (var i = 0; i < 30; i++) {
+        await tester.runAsync(
+          () => Future<void>.delayed(const Duration(milliseconds: 20)),
+        );
+        await tester.pump();
+      }
+      expect(
+        find.descendant(of: dialog, matching: find.text('Personal note')),
+        findsNWidgets(2),
+      );
+      expect(
+        find.descendant(of: dialog, matching: find.text('Shared note')),
+        findsNothing,
+      );
+      await tester.pumpWidget(const SizedBox.shrink());
     },
   );
 
@@ -543,16 +574,16 @@ void main() {
     'favorites and ancestor category filtering operate on cached notes',
     (tester) async {
       await pump(tester);
-      await tester.tap(find.byType(CheckboxListTile).first);
-      await tester.pumpAndSettle();
+      await tester.tap(find.text('Favorites').first);
+      await settleStorage(tester);
       expect(find.text('Shared note'), findsNothing);
       expect(find.text('Personal note'), findsOneWidget);
-      await tester.tap(find.byType(CheckboxListTile).first);
-      await tester.pumpAndSettle();
-      await tester.tap(find.byType(DropdownButton<String>));
-      await tester.pumpAndSettle();
+      await tester.tap(find.text('All notes').first);
+      await settleStorage(tester);
+      await tester.ensureVisible(find.text('Projects').last);
+      await settleStorage(tester);
       await tester.tap(find.text('Projects').last);
-      await tester.pumpAndSettle();
+      await settleStorage(tester);
       expect(find.text('Shared note'), findsOneWidget);
       expect(find.text('Personal note'), findsNothing);
     },
@@ -562,10 +593,9 @@ void main() {
     tester,
   ) async {
     await pump(tester);
-    await tester.tap(find.byType(DropdownButton<String>));
-    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Personal').last);
     await tester.tap(find.text('Personal').last);
-    await tester.pumpAndSettle();
+    await settleStorage(tester);
     expect(find.text('Shared note'), findsNothing);
     await tester.runAsync(
       () => repository.save(
@@ -574,14 +604,19 @@ void main() {
         category: '',
       ),
     );
-    await tester.pumpAndSettle();
+    await settleStorage(tester);
     expect(find.text('Personal note'), findsOneWidget);
     expect(find.text('Shared note'), findsOneWidget);
     expect(
       tester
-          .widget<DropdownButton<String>>(find.byType(DropdownButton<String>))
-          .value,
-      isNull,
+          .widget<ListTile>(
+            find.ancestor(
+              of: find.text('All notes'),
+              matching: find.byType(ListTile),
+            ),
+          )
+          .selected,
+      isTrue,
     );
   });
 
@@ -598,21 +633,20 @@ void main() {
           title: 'Move me',
           category: 'Last',
         );
-        await repository.create(accountId, title: 'Uncategorized');
+        await repository.create(accountId, title: 'Uncategorized draft');
       });
       await pump(tester);
-      await tester.tap(find.byType(DropdownButton<String>));
-      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('Last').last);
       await tester.tap(find.text('Last').last);
-      await tester.pumpAndSettle();
-      expect(find.text('Uncategorized'), findsNothing);
+      await settleStorage(tester);
+      expect(find.text('Uncategorized draft'), findsNothing);
       await tester.runAsync(
         () => repository.save(categorized.localId, content: '', category: ''),
       );
-      await tester.pumpAndSettle();
-      expect(find.byType(DropdownButton<String>), findsNothing);
+      await settleStorage(tester);
+      expect(find.text('Last'), findsNothing);
       expect(find.text('Move me'), findsOneWidget);
-      expect(find.text('Uncategorized'), findsOneWidget);
+      expect(find.text('Uncategorized draft'), findsOneWidget);
     },
   );
 
@@ -638,18 +672,18 @@ void main() {
           ),
         ),
       );
-      await tester.pumpAndSettle();
+      await settleStorage(tester);
       await tester.tap(find.text('Compare'));
-      await tester.pumpAndSettle();
+      await settleStorage(tester);
       await tester.runAsync(
         () async => Future<void>.delayed(const Duration(milliseconds: 50)),
       );
-      await tester.pumpAndSettle();
+      await settleStorage(tester);
       expect(find.text('uncertain.pdf'), findsOneWidget);
       expect(find.text('Retry'), findsOneWidget);
       expect(find.text('Attachment reference on server'), findsOneWidget);
       await tester.tap(find.text('Cancel'));
-      await tester.pumpAndSettle();
+      await settleStorage(tester);
     },
   );
 
@@ -664,12 +698,19 @@ void main() {
               'nextcloud-note-323e4567-e89b-42d3-a456-426614174000',
             ),
           ),
-          matching: find.byType(IconButton),
+          matching: find.byTooltip('Main menu'),
         ),
       );
-      await tester.pumpAndSettle();
+      await settleStorage(tester);
+      await tester.tap(find.text('Rename'));
+      await settleStorage(tester);
       final fields = tester
-          .widgetList<TextField>(find.byType(TextField))
+          .widgetList<TextField>(
+            find.descendant(
+              of: find.byType(Dialog),
+              matching: find.byType(TextField),
+            ),
+          )
           .toList();
       expect(fields.where((field) => field.readOnly), hasLength(2));
       expect(find.text('Save local copy…'), findsOneWidget);
@@ -691,10 +732,12 @@ void main() {
               'nextcloud-note-223e4567-e89b-42d3-a456-426614174000',
             ),
           ),
-          matching: find.byType(IconButton),
+          matching: find.byTooltip('Main menu'),
         ),
       );
-      await tester.pumpAndSettle();
+      await settleStorage(tester);
+      await tester.tap(find.text('Rename'));
+      await settleStorage(tester);
       for (
         var attempt = 0;
         attempt < 20 && find.text('report.pdf').evaluate().isEmpty;
@@ -703,14 +746,14 @@ void main() {
         await tester.runAsync(
           () => Future<void>.delayed(const Duration(milliseconds: 25)),
         );
-        await tester.pumpAndSettle();
+        await settleStorage(tester);
       }
       expect(find.text('Add attachment…'), findsOneWidget);
       expect(find.text('report.pdf'), findsOneWidget);
       await tester.ensureVisible(find.byTooltip('Delete'));
-      await tester.pumpAndSettle();
+      await settleStorage(tester);
       await tester.tap(find.byTooltip('Delete'));
-      await tester.pumpAndSettle();
+      await settleStorage(tester);
       expect(
         find.text(
           'Deleting this attachment makes its links in the note unavailable. Retained bytes can be recovered through local history.',
@@ -718,7 +761,7 @@ void main() {
         findsOneWidget,
       );
       await tester.tap(find.text('Cancel').last);
-      await tester.pumpAndSettle();
+      await settleStorage(tester);
       expect(find.text('report.pdf'), findsOneWidget);
       expect(tester.takeException(), isNull);
     },
@@ -759,14 +802,14 @@ void main() {
         ),
       );
       await tester.tap(find.text('Resolve'));
-      await tester.pumpAndSettle();
+      await settleStorage(tester);
       expect(find.text('New note'), findsOneWidget);
       await tester.tap(find.text('Discard'));
-      await tester.pumpAndSettle();
+      await settleStorage(tester);
       expect(find.text('Discard'), findsNWidgets(2));
       expect(find.text('Recoverable edit'), findsOneWidget);
       await tester.tap(find.text('Cancel'));
-      await tester.pumpAndSettle();
+      await settleStorage(tester);
       expect(find.text('Resolve'), findsOneWidget);
       expect(find.text('Discard'), findsNothing);
       expect(tester.takeException(), isNull);
@@ -806,9 +849,9 @@ void main() {
         ),
       ),
     );
-    await tester.pumpAndSettle();
+    await settleStorage(tester);
     await tester.tap(find.text('Compare'));
-    await tester.pumpAndSettle();
+    await settleStorage(tester);
     final button = find.byWidgetPredicate(
       (w) => w is BusyMarkDialogButton && w.label == 'Merge',
     );
@@ -821,11 +864,11 @@ void main() {
       );
       // Exercise the actual dialog state callback and verify Apply enablement.
       dropdown.onChanged!(NotesMergeChoice.remote);
-      await tester.pumpAndSettle();
+      await settleStorage(tester);
     }
     expect(tester.widget<BusyMarkDialogButton>(button).onPressed, isNotNull);
     await tester.tap(find.text('Cancel'));
-    await tester.pumpAndSettle();
+    await settleStorage(tester);
     expect(repository.noteById(id)!.title, 'Local title');
     expect(tester.takeException(), isNull);
   });
@@ -893,7 +936,7 @@ void main() {
               ),
             ),
           );
-          await tester.pumpAndSettle();
+          await settleStorage(tester);
           await tester.runAsync(() => tester.tap(find.text('Compare')));
           for (
             var i = 0;
@@ -905,15 +948,15 @@ void main() {
             );
             await tester.pump(const Duration(milliseconds: 50));
           }
-          await tester.pumpAndSettle();
+          await settleStorage(tester);
           expect(find.text('Use previous edit'), findsOneWidget);
           expect(find.text('Take Remote'), findsNothing);
           await tester.tap(find.byType(DropdownButton<NotesMergeChoice>));
-          await tester.pumpAndSettle();
+          await settleStorage(tester);
           expect(find.text('Previous local edit: B'), findsOneWidget);
           expect(find.text('Keep Mine: C'), findsOneWidget);
           await tester.tap(find.text('Previous local edit: B'));
-          await tester.pumpAndSettle();
+          await settleStorage(tester);
           await tester.runAsync(() async {
             await tester.tap(
               find.byWidgetPredicate(
@@ -932,7 +975,7 @@ void main() {
               () => Future<void>.delayed(const Duration(milliseconds: 10)),
             );
           }
-          await tester.pumpAndSettle();
+          await settleStorage(tester);
           expect(finished(), isTrue);
           final selected = choice == 'New note'
               ? repository.notes.singleWhere(
@@ -992,7 +1035,7 @@ void main() {
           ),
         ),
       );
-      await tester.pumpAndSettle();
+      await settleStorage(tester);
       expect(find.text('Conflicts'), findsOneWidget);
       expect(find.text('Compare'), findsOneWidget);
       expect(find.text('Synced'), findsNothing);
@@ -1024,9 +1067,9 @@ void main() {
         ),
       ),
     );
-    await tester.pumpAndSettle();
+    await settleStorage(tester);
     await tester.tap(find.text('Compare'));
-    await tester.pumpAndSettle();
+    await settleStorage(tester);
     final merge = find.byWidgetPredicate(
       (widget) => widget is BusyMarkDialogButton && widget.label == 'Merge',
     );
@@ -1034,7 +1077,7 @@ void main() {
     expect(tester.widget<BusyMarkDialogButton>(merge).onPressed, isNotNull);
     expect(find.text('Keep Mine'), findsNothing);
     await tester.tap(find.text('Cancel'));
-    await tester.pumpAndSettle();
+    await settleStorage(tester);
     expect(tester.takeException(), isNull);
   });
 
@@ -1060,9 +1103,9 @@ void main() {
         ),
       ),
     );
-    await tester.pumpAndSettle();
+    await settleStorage(tester);
     await tester.tap(find.text('Compare'));
-    await tester.pumpAndSettle();
+    await settleStorage(tester);
     final takeRemote = find.byWidgetPredicate(
       (widget) =>
           widget is BusyMarkDialogButton &&
@@ -1072,11 +1115,11 @@ void main() {
     final candidates = find.byType(DropdownButton<int>);
     expect(candidates, findsOneWidget);
     tester.widget<DropdownButton<int>>(candidates).onChanged!(10);
-    await tester.pumpAndSettle();
+    await settleStorage(tester);
     expect(takeRemote, findsOneWidget);
     expect(find.textContaining('Sanitized A'), findsWidgets);
     await tester.tap(find.text('Cancel'));
-    await tester.pumpAndSettle();
+    await settleStorage(tester);
     expect(repository.noteById('uncertain-create')!.serverId, isNull);
     expect(tester.takeException(), isNull);
   });
@@ -1127,7 +1170,7 @@ void main() {
           ),
         ),
       );
-      await tester.pumpAndSettle();
+      await settleStorage(tester);
       await tester.runAsync(() => tester.tap(find.text('Compare')));
       for (
         var i = 0;
@@ -1140,9 +1183,9 @@ void main() {
         await tester.pump(const Duration(milliseconds: 50));
       }
       await tester.tap(find.byType(DropdownButton<int>));
-      await tester.pumpAndSettle();
+      await settleStorage(tester);
       await tester.tap(find.text('Sanitized A (#10)').last);
-      await tester.pumpAndSettle();
+      await settleStorage(tester);
       expect(find.textContaining('identity is unconfirmed'), findsOneWidget);
       expect(find.textContaining('#10'), findsWidgets);
       await tester.runAsync(
@@ -1205,14 +1248,14 @@ void main() {
             ),
           ),
         );
-        await tester.pumpAndSettle();
+        await settleStorage(tester);
         await tester.tap(find.text('Compare'));
-        await tester.pumpAndSettle();
+        await settleStorage(tester);
         expect(find.text('New note'), findsOneWidget);
         expect(find.text('Merge'), findsNothing);
         expect(find.text('Keep Mine'), findsNothing);
         await tester.tap(find.text('Cancel'));
-        await tester.pumpAndSettle();
+        await settleStorage(tester);
         expect(tester.takeException(), isNull);
       },
     );

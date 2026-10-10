@@ -4929,4 +4929,94 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get nextcloudUsePreviousEdit => 'Önceki düzenlemeyi kullan';
+
+  @override
+  String get quickOpen => 'Hızlı aç';
+
+  @override
+  String get notesAll => 'Tüm notlar';
+
+  @override
+  String get notesUncategorized => 'Kategorisiz';
+
+  @override
+  String get notesRecovery => 'Kurtarma';
+
+  @override
+  String get notesRecentlyEdited => 'Son düzenlenen';
+
+  @override
+  String get notesOldestEdited => 'En eski düzenleme';
+
+  @override
+  String get notesTitleAscending => 'Başlık A–Z';
+
+  @override
+  String get notesTitleDescending => 'Başlık Z–A';
+
+  @override
+  String get notesMove => 'Kategoriye taşı';
+
+  @override
+  String get notesRemoveFavorite => 'Favoriyi kaldır';
+
+  @override
+  String get notesOffline => 'Çevrimdışı kullanılabilir yap';
+
+  @override
+  String get notesOfflineRemove => 'Çevrimdışı saklamayı kaldır';
+
+  @override
+  String get notesIndexing => 'Notlar dizine ekleniyor…';
+
+  @override
+  String get notesSearchHelp =>
+      'Terimler VE ile birleştirilir. \"Alıntı ifadeler\", title: ve category: kullanın.';
+
+  @override
+  String get notesSourceLocation => 'Kaynak konumu';
+
+  @override
+  String get notesRecoveryHelp =>
+      'Yalnızca saklanan yerel notlar ve yerel geçmiş. Sunucu çöp kutusu ve geçmişi kullanılamaz.';
+
+  @override
+  String get notesImport => 'Notları içe aktar';
+
+  @override
+  String get notesExport => 'Notları dışa aktar';
+
+  @override
+  String get notesImportDistinct => 'Ayrı bir not olarak içe aktar';
+
+  @override
+  String get notesAvailableOffline => 'Çevrimdışı kullanılabilir';
+
+  @override
+  String get notesIncomplete => 'Eksik';
+
+  @override
+  String get notesSelected => 'Seçilen notlar';
+
+  @override
+  String get notesNoHistory =>
+      'Saklanan sürüm yok. Geçmiş kapalı, süresi dolmuş veya temizlenmiş olabilir.';
+
+  @override
+  String get notesTextAvailable => 'Metin yerel olarak kullanılabilir';
+
+  @override
+  String get notesLocalVersion => 'Yerel çalışma sürümü';
+
+  @override
+  String get notesAttachments => 'Ekler';
+
+  @override
+  String get notesSkipped => 'Atlandı';
+
+  @override
+  String get notesFailed => 'Başarısız';
+
+  @override
+  String get notesCompleted => 'Tamamlandı';
 }

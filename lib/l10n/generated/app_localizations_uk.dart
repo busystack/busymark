@@ -4996,4 +4996,94 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get nextcloudUsePreviousEdit => 'Використати попередню зміну';
+
+  @override
+  String get quickOpen => 'Швидке відкриття';
+
+  @override
+  String get notesAll => 'Усі нотатки';
+
+  @override
+  String get notesUncategorized => 'Без категорії';
+
+  @override
+  String get notesRecovery => 'Відновлення';
+
+  @override
+  String get notesRecentlyEdited => 'Нещодавно змінені';
+
+  @override
+  String get notesOldestEdited => 'Давно змінені';
+
+  @override
+  String get notesTitleAscending => 'Назва А–Я';
+
+  @override
+  String get notesTitleDescending => 'Назва Я–А';
+
+  @override
+  String get notesMove => 'Перемістити до категорії';
+
+  @override
+  String get notesRemoveFavorite => 'Вилучити з обраного';
+
+  @override
+  String get notesOffline => 'Зберегти для роботи без мережі';
+
+  @override
+  String get notesOfflineRemove => 'Вилучити збереження без мережі';
+
+  @override
+  String get notesIndexing => 'Індексація нотаток…';
+
+  @override
+  String get notesSearchHelp =>
+      'Терміни поєднуються І. Використовуйте \"фрази в лапках\", title: та category:.';
+
+  @override
+  String get notesSourceLocation => 'Місце в джерелі';
+
+  @override
+  String get notesRecoveryHelp =>
+      'Лише збережені локальні нотатки та локальна історія. Кошик та історія сервера недоступні.';
+
+  @override
+  String get notesImport => 'Імпорт нотаток';
+
+  @override
+  String get notesExport => 'Експорт нотаток';
+
+  @override
+  String get notesImportDistinct => 'Імпортувати як окрему нотатку';
+
+  @override
+  String get notesAvailableOffline => 'Доступно без мережі';
+
+  @override
+  String get notesIncomplete => 'Неповно';
+
+  @override
+  String get notesSelected => 'Вибрані нотатки';
+
+  @override
+  String get notesNoHistory =>
+      'Немає збережених версій. Історію може бути вимкнено, прострочено або очищено.';
+
+  @override
+  String get notesTextAvailable => 'Текст доступний локально';
+
+  @override
+  String get notesLocalVersion => 'Локальна робоча версія';
+
+  @override
+  String get notesAttachments => 'Вкладення';
+
+  @override
+  String get notesSkipped => 'Пропущено';
+
+  @override
+  String get notesFailed => 'Помилка';
+
+  @override
+  String get notesCompleted => 'Завершено';
 }

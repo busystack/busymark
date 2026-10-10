@@ -15,6 +15,7 @@ enum BusyMarkMainMenuAction {
   settings,
   keyboardShortcuts,
   commandPalette,
+  quickOpen,
   syntaxReference,
   reportIssue,
   aboutBusyMark,
@@ -75,6 +76,12 @@ class BusyMarkMainMenuButton extends ConsumerWidget {
           ).shortcut?.label,
         ),
         BusyMarkPopupMenuItem(
+          value: BusyMarkMainMenuAction.quickOpen,
+          label: command(BusyMarkCommandIds.quickOpen).label(context),
+          icon: BusyMarkGlyphs.search,
+          shortcut: command(BusyMarkCommandIds.quickOpen).shortcut?.label,
+        ),
+        BusyMarkPopupMenuItem(
           value: BusyMarkMainMenuAction.commandPalette,
           label: command(BusyMarkCommandIds.commandPalette).label(context),
           icon: BusyMarkGlyphs.search,
@@ -104,6 +111,7 @@ class BusyMarkMainMenuButton extends ConsumerWidget {
           BusyMarkMainMenuAction.settings => BusyMarkCommandIds.settings,
           BusyMarkMainMenuAction.keyboardShortcuts =>
             BusyMarkCommandIds.keyboardShortcuts,
+          BusyMarkMainMenuAction.quickOpen => BusyMarkCommandIds.quickOpen,
           BusyMarkMainMenuAction.commandPalette =>
             BusyMarkCommandIds.commandPalette,
           BusyMarkMainMenuAction.syntaxReference =>

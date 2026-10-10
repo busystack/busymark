@@ -4975,4 +4975,94 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get nextcloudUsePreviousEdit => 'Vorige wijziging gebruiken';
+
+  @override
+  String get quickOpen => 'Snel openen';
+
+  @override
+  String get notesAll => 'Alle notities';
+
+  @override
+  String get notesUncategorized => 'Zonder categorie';
+
+  @override
+  String get notesRecovery => 'Herstel';
+
+  @override
+  String get notesRecentlyEdited => 'Recent bewerkt';
+
+  @override
+  String get notesOldestEdited => 'Oudste bewerking';
+
+  @override
+  String get notesTitleAscending => 'Titel A–Z';
+
+  @override
+  String get notesTitleDescending => 'Titel Z–A';
+
+  @override
+  String get notesMove => 'Naar categorie verplaatsen';
+
+  @override
+  String get notesRemoveFavorite => 'Favoriet verwijderen';
+
+  @override
+  String get notesOffline => 'Offline beschikbaar maken';
+
+  @override
+  String get notesOfflineRemove => 'Offlinebewaring verwijderen';
+
+  @override
+  String get notesIndexing => 'Notities indexeren…';
+
+  @override
+  String get notesSearchHelp =>
+      'Termen gebruiken EN. Gebruik \"geciteerde zinnen\", title: en category:.';
+
+  @override
+  String get notesSourceLocation => 'Bronlocatie';
+
+  @override
+  String get notesRecoveryHelp =>
+      'Alleen bewaarde lokale notities en lokale geschiedenis. Prullenbak en geschiedenis van de server zijn niet beschikbaar.';
+
+  @override
+  String get notesImport => 'Notities importeren';
+
+  @override
+  String get notesExport => 'Notities exporteren';
+
+  @override
+  String get notesImportDistinct => 'Als afzonderlijke notitie importeren';
+
+  @override
+  String get notesAvailableOffline => 'Offline beschikbaar';
+
+  @override
+  String get notesIncomplete => 'Onvolledig';
+
+  @override
+  String get notesSelected => 'Geselecteerde notities';
+
+  @override
+  String get notesNoHistory =>
+      'Geen bewaarde revisies. Geschiedenis kan uitgeschakeld, verlopen of gewist zijn.';
+
+  @override
+  String get notesTextAvailable => 'Tekst lokaal beschikbaar';
+
+  @override
+  String get notesLocalVersion => 'Lokale werkversie';
+
+  @override
+  String get notesAttachments => 'Bijlagen';
+
+  @override
+  String get notesSkipped => 'Overgeslagen';
+
+  @override
+  String get notesFailed => 'Mislukt';
+
+  @override
+  String get notesCompleted => 'Voltooid';
 }

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:yaru/yaru.dart';
 
@@ -16,6 +17,8 @@ import '../../workspace/workspace_controller.dart';
 import '../../workspace/workspace_message.dart';
 import '../../workspace/workspace_safety.dart';
 import '../application/nextcloud_connection.dart';
+import '../application/notes_navigation.dart';
+import 'notes_workspace_ui.dart';
 import '../application/attachment_markdown.dart';
 import '../domain/notes_models.dart';
 import '../domain/notes_conflict.dart';
@@ -73,196 +76,645 @@ class NextcloudNotesSidebar extends ConsumerStatefulWidget {
 }
 
 class _NextcloudNotesSidebarState extends ConsumerState<NextcloudNotesSidebar> {
-  String _query = '';
-  bool _favorites = false;
-  String? _category;
+  final _navigation = NotesNavigationController();
+  final _listFocus = FocusNode();
+  final _listScroll = ScrollController();
+  StreamSubscription<void>? _notesSubscription;
+  bool _ready = false;
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_initializeNavigation());
+  }
+
+  @override
+  void didUpdateWidget(covariant NextcloudNotesSidebar oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.accountId != widget.accountId) {
+      unawaited(_notesSubscription?.cancel());
+      _ready = false;
+      unawaited(_initializeNavigation());
+    }
+  }
+
+  Future<void> _initializeNavigation() async {
+    final accountId = widget.accountId;
+    final repository = await ref.read(nextcloudNotesRepositoryProvider.future);
+    if (!mounted || accountId != widget.accountId) return;
+    _navigation.update(repository.notes, widget.accountId);
+    _notesSubscription = repository.changes.listen((_) {
+      if (mounted) {
+        setState(() => _navigation.update(repository.notes, widget.accountId));
+      }
+    });
+    setState(() => _ready = true);
+  }
+
+  void _refreshNavigation() {
+    final repository = ref.read(nextcloudNotesRepositoryProvider).value;
+    if (repository != null) {
+      _navigation.update(repository.notes, widget.accountId);
+    }
+  }
+
+  @override
+  void dispose() {
+    unawaited(_notesSubscription?.cancel());
+    _listFocus.dispose();
+    _listScroll.dispose();
+    super.dispose();
+  }
+
+  KeyEventResult _listKey(FocusNode node, KeyEvent event) {
+    if (event is! KeyDownEvent) return KeyEventResult.ignored;
+    final keyboard = HardwareKeyboard.instance;
+    if (keyboard.isControlPressed &&
+        event.logicalKey == LogicalKeyboardKey.keyA) {
+      setState(_navigation.selectAll);
+      return KeyEventResult.handled;
+    }
+    final visible = _navigation.visible;
+    if (visible.isEmpty) return KeyEventResult.ignored;
+    if (event.logicalKey == LogicalKeyboardKey.arrowDown ||
+        event.logicalKey == LogicalKeyboardKey.arrowUp) {
+      final index = visible.indexWhere((n) => n.localId == _navigation.focused);
+      final next =
+          (index + (event.logicalKey == LogicalKeyboardKey.arrowDown ? 1 : -1))
+              .clamp(0, visible.length - 1);
+      setState(
+        () => _navigation.select(
+          visible[next].localId,
+          range: keyboard.isShiftPressed,
+          toggle: keyboard.isControlPressed,
+        ),
+      );
+      if (_listScroll.hasClients) {
+        unawaited(
+          _listScroll.animateTo(
+            (next * 100.0).clamp(0, _listScroll.position.maxScrollExtent),
+            duration: const Duration(milliseconds: 120),
+            curve: Curves.easeOut,
+          ),
+        );
+      }
+      return KeyEventResult.handled;
+    }
+    if (event.logicalKey == LogicalKeyboardKey.space &&
+        _navigation.focused != null) {
+      setState(() => _navigation.select(_navigation.focused!, toggle: true));
+      return KeyEventResult.handled;
+    }
+    if (event.logicalKey == LogicalKeyboardKey.enter &&
+        _navigation.focused != null) {
+      final note = visible.firstWhere((n) => n.localId == _navigation.focused);
+      unawaited(
+        isNotesRecovery(note)
+            ? showNotesRecovery(context, ref, note)
+            : ref
+                  .read(workspaceControllerProvider.notifier)
+                  .openNextcloudNote(note.localId),
+      );
+      return KeyEventResult.handled;
+    }
+    return KeyEventResult.ignored;
+  }
 
   @override
   Widget build(BuildContext context) {
-    ref.watch(nextcloudNotesChangesProvider);
-    final repository = ref.watch(nextcloudNotesRepositoryProvider);
-    final active = ref
-        .watch(workspaceControllerProvider)
-        .activeBuffer
-        ?.remoteNote
-        ?.localId;
-    return repository.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (error, stack) => Padding(
-        padding: const EdgeInsets.all(BusyMarkSpacing.md),
-        child: Text(error.toString()),
+    final repository = ref.watch(nextcloudNotesRepositoryProvider).value;
+    final active = ref.watch(
+      workspaceControllerProvider.select(
+        (s) => s.activeBuffer?.remoteNote?.localId,
       ),
-      data: (repository) {
-        final all = repository.notes
-            .where(
-              (n) =>
-                  n.accountId == widget.accountId &&
-                  !(n.syncState == NoteSyncState.deletedRemotely &&
-                      !n.hasPendingChanges),
-            )
-            .toList();
-        final categories = <String>{};
-        for (final note in all) {
-          final pieces = note.category.split('/');
-          for (var i = 1; i <= pieces.length; i++) {
-            final category = pieces.take(i).join('/');
-            if (category.isNotEmpty) categories.add(category);
-          }
-        }
-        // A move/delete can remove the selected category, including the last
-        // category that made the filter control visible.
-        if (!categories.contains(_category)) _category = null;
-        final sortedCategories = categories.toList()..sort();
-        final query = _query.toLowerCase();
-        final visible =
-            all
-                .where(
-                  (n) =>
-                      (!_favorites || n.favorite) &&
-                      (_category == null ||
-                          n.category == _category ||
-                          n.category.startsWith('$_category/')) &&
-                      (query.isEmpty ||
-                          n.title.toLowerCase().contains(query) ||
-                          n.content.toLowerCase().contains(query) ||
-                          n.category.toLowerCase().contains(query)),
-                )
-                .toList()
-              ..sort((a, b) {
-                final order = b.activityMicros.compareTo(a.activityMicros);
-                return order == 0 ? a.localId.compareTo(b.localId) : order;
-              });
-        final accountError = repository.accountError(widget.accountId);
-        return Column(
-          children: [
-            if (accountError != null)
-              Padding(
-                padding: const EdgeInsets.all(BusyMarkSpacing.sm),
-                child: BusyMarkStatusBox(
-                  message: accountError.message,
-                  kind: BusyMarkStatusKind.warning,
+    );
+    final offline = ref.watch(notesOfflineProvider(widget.accountId)).value;
+    ref.watch(notesOfflineChangesProvider(widget.accountId));
+    if (repository == null || !_ready) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    final categories = _navigation.categoryPaths;
+    final categoryRows = categories
+        .where(
+          (category) => !_navigation.collapsed.any(
+            (parent) => category.startsWith('$parent/'),
+          ),
+        )
+        .toList();
+    final visible = _navigation.visible;
+    final accountError = repository.accountError(widget.accountId);
+    String destinationLabel(NotesDestination destination) =>
+        switch (destination) {
+          NotesDestination.all => context.l10n.notesAll,
+          NotesDestination.favorites => context.l10n.nextcloudFavorites,
+          NotesDestination.uncategorized => context.l10n.notesUncategorized,
+          NotesDestination.recovery => context.l10n.notesRecovery,
+          NotesDestination.category => _navigation.category,
+        };
+    return Column(
+      children: [
+        if (accountError != null)
+          Padding(
+            padding: const EdgeInsets.all(BusyMarkSpacing.sm),
+            child: BusyMarkStatusBox(
+              message: accountError.message,
+              kind: BusyMarkStatusKind.warning,
+            ),
+          ),
+        Padding(
+          padding: const EdgeInsets.all(BusyMarkSpacing.sm),
+          child: Row(
+            children: [
+              Expanded(
+                child: BusyMarkPushButton.standard(
+                  onPressed: () => unawaited(
+                    ref
+                        .read(workspaceControllerProvider.notifier)
+                        .createNextcloudNote(
+                          title: context.l10n.nextcloudNewNote,
+                          category:
+                              _navigation.destination ==
+                                  NotesDestination.category
+                              ? _navigation.category
+                              : '',
+                        ),
+                  ),
+                  child: Text(context.l10n.nextcloudNewNote),
                 ),
               ),
-            Padding(
-              padding: const EdgeInsets.all(BusyMarkSpacing.sm),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: BusyMarkPushButton.standard(
-                      onPressed: () => unawaited(
-                        ref
-                            .read(workspaceControllerProvider.notifier)
-                            .createNextcloudNote(
-                              title: context.l10n.nextcloudNewNote,
-                              category: _category ?? '',
-                            ),
+              IconButton(
+                tooltip: context.l10n.tocSynchronize,
+                icon: const Icon(BusyMarkGlyphs.refresh),
+                onPressed: () => unawaited(
+                  ref
+                      .read(workspaceControllerProvider.notifier)
+                      .refreshNextcloudNotes(),
+                ),
+              ),
+              PopupMenuButton<String>(
+                tooltip: context.l10n.mainMenu,
+                onSelected: (action) {
+                  if (action == 'export') {
+                    unawaited(
+                      showNotesExport(
+                        context,
+                        ref,
+                        repository.notes
+                            .where(
+                              (n) =>
+                                  n.accountId == widget.accountId &&
+                                  !isNotesRecovery(n) &&
+                                  (_navigation.destination !=
+                                          NotesDestination.category ||
+                                      categoryIncludes(
+                                        _navigation.category,
+                                        n.category,
+                                      )),
+                            )
+                            .map((n) => n.localId)
+                            .toList(),
                       ),
-                      child: Text(context.l10n.nextcloudNewNote),
+                    );
+                  }
+                  if (action == 'import') {
+                    unawaited(showNotesImport(context, ref));
+                  }
+                  if (action == 'file') {
+                    unawaited(showNotesImport(context, ref, folder: false));
+                  }
+                  if (action == 'offline' && offline != null) {
+                    unawaited(
+                      offline.setRequirement(
+                        'category',
+                        _navigation.destination == NotesDestination.category
+                            ? _navigation.category
+                            : '',
+                      ),
+                    );
+                  }
+                  if (action == 'remove' && offline != null) {
+                    unawaited(
+                      offline.setRequirement(
+                        'category',
+                        _navigation.destination == NotesDestination.category
+                            ? _navigation.category
+                            : '',
+                        required: false,
+                      ),
+                    );
+                  }
+                  if (action == 'cancel' && offline != null) {
+                    unawaited(
+                      offline.setRequirement(
+                        'category',
+                        _navigation.destination == NotesDestination.category
+                            ? _navigation.category
+                            : '',
+                        paused: true,
+                      ),
+                    );
+                  }
+                  if (action == 'retry' && offline != null) {
+                    unawaited(
+                      offline.setRequirement(
+                        'category',
+                        _navigation.destination == NotesDestination.category
+                            ? _navigation.category
+                            : '',
+                      ),
+                    );
+                  }
+                },
+                itemBuilder: (context) => [
+                  PopupMenuItem(
+                    value: 'export',
+                    child: Text(context.l10n.notesExport),
+                  ),
+                  PopupMenuItem(
+                    value: 'import',
+                    child: Text(
+                      '${context.l10n.notesImport} · ${context.l10n.folder}',
                     ),
                   ),
-                  IconButton(
-                    tooltip: context.l10n.tocSynchronize,
-                    icon: const Icon(BusyMarkGlyphs.refresh),
-                    onPressed: () => unawaited(
-                      ref
-                          .read(workspaceControllerProvider.notifier)
-                          .refreshNextcloudNotes(),
+                  PopupMenuItem(
+                    value: 'file',
+                    child: Text(
+                      '${context.l10n.notesImport} · ${context.l10n.fileTypeMarkdown}',
                     ),
+                  ),
+                  PopupMenuItem(
+                    value: 'offline',
+                    child: Text(context.l10n.notesOffline),
+                  ),
+                  PopupMenuItem(
+                    value: 'remove',
+                    child: Text(context.l10n.notesOfflineRemove),
+                  ),
+                  PopupMenuItem(
+                    value: 'cancel',
+                    child: Text(context.l10n.cancel),
+                  ),
+                  PopupMenuItem(
+                    value: 'retry',
+                    child: Text(context.l10n.visualizationRetry),
                   ),
                 ],
               ),
+            ],
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: BusyMarkSpacing.sm),
+          child: TextField(
+            readOnly: true,
+            decoration: InputDecoration(
+              hintText: context.l10n.search,
+              prefixIcon: const Icon(BusyMarkGlyphs.search),
             ),
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: BusyMarkSpacing.sm,
-              ),
-              child: TextField(
-                decoration: InputDecoration(
-                  hintText: context.l10n.search,
-                  prefixIcon: const Icon(BusyMarkGlyphs.search),
+            onTap: () => unawaited(
+              showNotesSearch(context, ref, account: widget.accountId),
+            ),
+          ),
+        ),
+        SizedBox(
+          height: ((categoryRows.length + 4) * 36.0).clamp(0, 240),
+          child: ListView.builder(
+            itemExtent: 36,
+            itemCount: categoryRows.length + 4,
+            itemBuilder: (context, index) {
+              if (index < 4) {
+                final destination = [
+                  NotesDestination.all,
+                  NotesDestination.favorites,
+                  NotesDestination.uncategorized,
+                  NotesDestination.recovery,
+                ][index];
+                return ListTile(
+                  dense: true,
+                  minTileHeight: 36,
+                  minVerticalPadding: 0,
+                  selected: _navigation.destination == destination,
+                  title: Text(destinationLabel(destination)),
+                  trailing: Text('${_navigation.counts[destination] ?? 0}'),
+                  onTap: () => setState(() {
+                    _navigation.destination = destination;
+                    _refreshNavigation();
+                  }),
+                );
+              }
+              final category = categoryRows[index - 4];
+              return ListTile(
+                dense: true,
+                minTileHeight: 36,
+                minVerticalPadding: 0,
+                contentPadding: EdgeInsets.only(
+                  left: 8 + 12.0 * (category.split('/').length - 1),
+                  right: 12,
                 ),
-                onChanged: (value) => setState(() => _query = value),
+                selected:
+                    _navigation.destination == NotesDestination.category &&
+                    _navigation.category == category,
+                leading: IconButton(
+                  constraints: const BoxConstraints.tightFor(
+                    width: 24,
+                    height: 24,
+                  ),
+                  padding: EdgeInsets.zero,
+                  tooltip: category,
+                  icon: Icon(
+                    _navigation.collapsed.contains(category)
+                        ? Icons.chevron_right
+                        : Icons.expand_more,
+                  ),
+                  onPressed: () => setState(() {
+                    if (!_navigation.collapsed.remove(category)) {
+                      _navigation.collapsed.add(category);
+                    }
+                  }),
+                ),
+                title: Text(
+                  category.split('/').last,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                trailing: Text('${_navigation.categoryCounts[category]}'),
+                onTap: () => setState(() {
+                  _navigation.destination = NotesDestination.category;
+                  _navigation.category = category;
+                  _refreshNavigation();
+                }),
+              );
+            },
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          child: DropdownButton<NotesSort>(
+            isExpanded: true,
+            value: _navigation.sort,
+            items: [
+              DropdownMenuItem(
+                value: NotesSort.recent,
+                child: Text(context.l10n.notesRecentlyEdited),
+              ),
+              DropdownMenuItem(
+                value: NotesSort.oldest,
+                child: Text(context.l10n.notesOldestEdited),
+              ),
+              DropdownMenuItem(
+                value: NotesSort.titleAscending,
+                child: Text(context.l10n.notesTitleAscending),
+              ),
+              DropdownMenuItem(
+                value: NotesSort.titleDescending,
+                child: Text(context.l10n.notesTitleDescending),
+              ),
+            ],
+            onChanged: (v) => setState(() {
+              _navigation.sort = v!;
+              _refreshNavigation();
+            }),
+          ),
+        ),
+        if (_navigation.selected.isNotEmpty &&
+            _navigation.destination != NotesDestination.recovery)
+          TextButton(
+            onPressed: () => unawaited(
+              showNotesBatch(
+                context,
+                ref,
+                _navigation.visible
+                    .where((n) => _navigation.selected.contains(n.localId))
+                    .map((n) => n.localId)
+                    .toList(),
               ),
             ),
-            CheckboxListTile(
-              dense: true,
-              title: Text(context.l10n.nextcloudFavorites),
-              value: _favorites,
-              onChanged: (value) => setState(() => _favorites = value ?? false),
+            child: Text(
+              '${context.l10n.notesSelected} (${_navigation.selected.length})',
             ),
-            if (categories.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: BusyMarkSpacing.sm,
-                ),
-                child: DropdownButton<String>(
-                  isExpanded: true,
-                  value: categories.contains(_category) ? _category : null,
-                  hint: Text(context.l10n.syntaxReferenceCategory),
-                  items: [
-                    DropdownMenuItem(
-                      value: '',
-                      child: Text(context.l10n.syntaxReferenceCategory),
-                    ),
-                    for (final category in sortedCategories)
-                      DropdownMenuItem(value: category, child: Text(category)),
-                  ],
-                  onChanged: (value) =>
-                      setState(() => _category = value == '' ? null : value),
-                ),
-              ),
-            Expanded(
-              child: visible.isEmpty
-                  ? Center(child: Text(context.l10n.noResults))
-                  : ListView.builder(
-                      itemCount: visible.length,
-                      itemBuilder: (context, index) {
-                        final note = visible[index];
-                        return ListTile(
+          ),
+        if (_navigation.destination == NotesDestination.recovery)
+          Padding(
+            padding: const EdgeInsets.all(8),
+            child: Text(
+              context.l10n.notesRecoveryHelp,
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ),
+        Expanded(
+          child: Focus(
+            focusNode: _listFocus,
+            onKeyEvent: _listKey,
+            child: visible.isEmpty
+                ? Center(child: Text(context.l10n.noResults))
+                : ListView.builder(
+                    controller: _listScroll,
+                    itemExtent: 100,
+                    itemCount: visible.length,
+                    itemBuilder: (context, index) {
+                      final note = visible[index];
+                      final retained = offline?.statuses[note.localId];
+                      return GestureDetector(
+                        onSecondaryTapDown: (details) => unawaited(
+                          _contextMenu(note, details.globalPosition),
+                        ),
+                        child: ListTile(
                           key: ValueKey('nextcloud-note-${note.localId}'),
                           dense: true,
-                          selected: active == note.localId,
-                          title: Text(note.title),
+                          selected: _navigation.selected.contains(note.localId),
+                          shape: _navigation.focused == note.localId
+                              ? Border(
+                                  left: BorderSide(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.primary,
+                                    width: 2,
+                                  ),
+                                )
+                              : null,
+                          leading: Checkbox(
+                            value: _navigation.selected.contains(note.localId),
+                            semanticLabel: note.title,
+                            onChanged: (_) => setState(
+                              () => _navigation.select(
+                                note.localId,
+                                toggle: true,
+                              ),
+                            ),
+                          ),
+                          title: Text(
+                            note.title,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                           subtitle: Text(
                             [
                               note.category,
-                              _metadataNeedsReview(note)
-                                  ? context.l10n.gitConflicts
-                                  : repository.isSynchronizing(note.accountId)
-                                  ? context.l10n.nextcloudSyncing
-                                  : notesAttachmentReferences(note.content).any(
-                                      (r) => r.reference.startsWith(
-                                        'busymark-attachment:',
-                                      ),
-                                    )
-                                  ? context.l10n.nextcloudPendingUpload
-                                  : nextcloudSyncLabel(context, note.syncState),
+                              MaterialLocalizations.of(context).formatShortDate(
+                                DateTime.fromMicrosecondsSinceEpoch(
+                                  note.activityMicros,
+                                ),
+                              ),
+                              if (_metadataNeedsReview(note))
+                                context.l10n.gitConflicts
+                              else if (note.syncState != NoteSyncState.synced)
+                                nextcloudSyncLabel(context, note.syncState),
+                              if (note.content.contains('busymark-attachment:'))
+                                context.l10n.nextcloudPendingUpload,
+                              if (retained != null)
+                                '${retained.available ? context.l10n.notesAvailableOffline : context.l10n.notesIncomplete} ${retained.availableCount}/${retained.requiredCount}',
                             ].where((s) => s.isNotEmpty).join(' · '),
+                            maxLines: 3,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          leading: Icon(
-                            note.favorite
-                                ? YaruIcons.star_filled
-                                : BusyMarkGlyphs.markdownFile,
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (active == note.localId)
+                                Icon(
+                                  BusyMarkGlyphs.markdownFile,
+                                  size: 14,
+                                  semanticLabel: context.l10n.open,
+                                ),
+                              IconButton(
+                                tooltip: note.favorite
+                                    ? context.l10n.notesRemoveFavorite
+                                    : context.l10n.nextcloudFavorites,
+                                icon: Icon(
+                                  note.favorite
+                                      ? YaruIcons.star_filled
+                                      : YaruIcons.star,
+                                  size: 16,
+                                ),
+                                onPressed: () => unawaited(
+                                  ref
+                                      .read(
+                                        workspaceControllerProvider.notifier,
+                                      )
+                                      .updateNextcloudNoteMetadata(
+                                        note.localId,
+                                        snapshot: repository.metadataSnapshot(
+                                          note.localId,
+                                        ),
+                                        favorite: !note.favorite,
+                                      ),
+                                ),
+                              ),
+                              IconButton(
+                                tooltip: context.l10n.mainMenu,
+                                icon: const Icon(
+                                  BusyMarkGlyphs.menuVertical,
+                                  size: 16,
+                                ),
+                                onPressed: () =>
+                                    unawaited(_contextMenu(note, null)),
+                              ),
+                            ],
                           ),
-                          onTap: () => unawaited(
-                            ref
-                                .read(workspaceControllerProvider.notifier)
-                                .openNextcloudNote(note.localId),
-                          ),
+                          onTap: () {
+                            _listFocus.requestFocus();
+                            final keyboard = HardwareKeyboard.instance;
+                            setState(
+                              () => _navigation.select(
+                                note.localId,
+                                toggle: keyboard.isControlPressed,
+                                range: keyboard.isShiftPressed,
+                              ),
+                            );
+                            if (!keyboard.isControlPressed &&
+                                !keyboard.isShiftPressed) {
+                              unawaited(
+                                isNotesRecovery(note)
+                                    ? showNotesRecovery(context, ref, note)
+                                    : ref
+                                          .read(
+                                            workspaceControllerProvider
+                                                .notifier,
+                                          )
+                                          .openNextcloudNote(note.localId),
+                              );
+                            }
+                          },
                           onLongPress: () => unawaited(_editNote(note)),
-                          trailing: IconButton(
-                            tooltip: context.l10n.rename,
-                            icon: const Icon(BusyMarkGlyphs.menuVertical),
-                            onPressed: () => unawaited(_editNote(note)),
-                          ),
-                        );
-                      },
-                    ),
-            ),
-          ],
-        );
-      },
+                        ),
+                      );
+                    },
+                  ),
+          ),
+        ),
+      ],
     );
+  }
+
+  Future<void> _contextMenu(NextcloudNote note, Offset? position) async {
+    final targets = _navigation.contextTargets(note.localId);
+    final repository = await ref.read(nextcloudNotesRepositoryProvider.future);
+    final reviewed = [
+      for (final id in targets)
+        if (repository.noteById(id) != null) repository.metadataSnapshot(id),
+    ];
+    if (!mounted) return;
+    final overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
+    final point =
+        position ??
+        overlay.localToGlobal(
+          Offset(overlay.size.width / 2, overlay.size.height / 2),
+        );
+    final action = await showMenu<String>(
+      context: context,
+      position: RelativeRect.fromRect(
+        Rect.fromLTWH(point.dx, point.dy, 1, 1),
+        Offset.zero & overlay.size,
+      ),
+      items: [
+        PopupMenuItem(
+          enabled: false,
+          child: Text(
+            targets.length > 1
+                ? '${context.l10n.notesSelected} (${targets.length})'
+                : note.title,
+          ),
+        ),
+        if (!isNotesRecovery(note)) ...[
+          PopupMenuItem(
+            value: 'favorite',
+            child: Text(context.l10n.nextcloudFavorites),
+          ),
+          PopupMenuItem(
+            value: 'unfavorite',
+            child: Text(context.l10n.notesRemoveFavorite),
+          ),
+          PopupMenuItem(value: 'move', child: Text(context.l10n.notesMove)),
+        ],
+        if (targets.length == 1) ...[
+          PopupMenuItem(value: 'properties', child: Text(context.l10n.rename)),
+          PopupMenuItem(
+            value: 'offline',
+            child: Text(context.l10n.notesOffline),
+          ),
+          if (isNotesRecovery(note))
+            PopupMenuItem(
+              value: 'recovery',
+              child: Text(context.l10n.notesRecovery),
+            ),
+        ],
+      ],
+    );
+    if (!mounted || action == null) return;
+    if ({'favorite', 'unfavorite', 'move'}.contains(action)) {
+      await showNotesBatch(
+        context,
+        ref,
+        targets,
+        initialAction: action,
+        reviewedTargets: reviewed,
+      );
+    }
+    if (action == 'properties') await _editNote(note);
+    if (!mounted) return;
+    if (action == 'offline') await showNotesOffline(context, ref, note);
+    if (!mounted) return;
+    if (action == 'recovery') await showNotesRecovery(context, ref, note);
   }
 
   Future<void> _editNote(NextcloudNote note) async {

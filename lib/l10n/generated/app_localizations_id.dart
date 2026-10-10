@@ -4927,4 +4927,94 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get nextcloudUsePreviousEdit => 'Gunakan edit sebelumnya';
+
+  @override
+  String get quickOpen => 'Buka cepat';
+
+  @override
+  String get notesAll => 'Semua catatan';
+
+  @override
+  String get notesUncategorized => 'Tanpa kategori';
+
+  @override
+  String get notesRecovery => 'Pemulihan';
+
+  @override
+  String get notesRecentlyEdited => 'Baru diedit';
+
+  @override
+  String get notesOldestEdited => 'Edit terlama';
+
+  @override
+  String get notesTitleAscending => 'Judul A–Z';
+
+  @override
+  String get notesTitleDescending => 'Judul Z–A';
+
+  @override
+  String get notesMove => 'Pindah ke kategori';
+
+  @override
+  String get notesRemoveFavorite => 'Hapus favorit';
+
+  @override
+  String get notesOffline => 'Sediakan secara luring';
+
+  @override
+  String get notesOfflineRemove => 'Hapus penyimpanan luring';
+
+  @override
+  String get notesIndexing => 'Mengindeks catatan…';
+
+  @override
+  String get notesSearchHelp =>
+      'Istilah digabung dengan DAN. Gunakan \"frasa kutipan\", title: dan category:.';
+
+  @override
+  String get notesSourceLocation => 'Lokasi sumber';
+
+  @override
+  String get notesRecoveryHelp =>
+      'Hanya catatan lokal tersimpan dan riwayat lokal. Sampah dan riwayat server tidak tersedia.';
+
+  @override
+  String get notesImport => 'Impor catatan';
+
+  @override
+  String get notesExport => 'Ekspor catatan';
+
+  @override
+  String get notesImportDistinct => 'Impor sebagai catatan terpisah';
+
+  @override
+  String get notesAvailableOffline => 'Tersedia secara luring';
+
+  @override
+  String get notesIncomplete => 'Tidak lengkap';
+
+  @override
+  String get notesSelected => 'Catatan terpilih';
+
+  @override
+  String get notesNoHistory =>
+      'Tidak ada revisi tersimpan. Riwayat mungkin dinonaktifkan, kedaluwarsa atau dihapus.';
+
+  @override
+  String get notesTextAvailable => 'Teks tersedia secara lokal';
+
+  @override
+  String get notesLocalVersion => 'Versi kerja lokal';
+
+  @override
+  String get notesAttachments => 'Lampiran';
+
+  @override
+  String get notesSkipped => 'Dilewati';
+
+  @override
+  String get notesFailed => 'Gagal';
+
+  @override
+  String get notesCompleted => 'Selesai';
 }

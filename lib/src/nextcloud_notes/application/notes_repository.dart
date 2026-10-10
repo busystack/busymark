@@ -13,6 +13,7 @@ import '../data/notes_store.dart';
 import '../data/notes_capabilities.dart';
 import '../domain/notes_models.dart';
 import '../domain/notes_conflict.dart';
+import 'notes_navigation.dart';
 
 /// Owns local durability and ordinary optimistic synchronization separately.
 class NotesRepository {
@@ -259,6 +260,12 @@ class NotesRepository {
         'The note identity changed; reopen its properties.',
       );
     }
+    if (isNotesRecovery(current)) {
+      throw const NotesException(
+        NotesFailureCode.missing,
+        'Recover this deleted note as a new note before editing.',
+      );
+    }
     title = title == original.title ? null : title;
     category = category == original.category ? null : category;
     favorite = favorite == original.favorite ? null : favorite;
@@ -355,6 +362,211 @@ class NotesRepository {
     _notes[current.localId] = patched;
     _notify();
     return patched;
+  });
+
+  Future<List<NotesBatchOutcome>> patchMetadataBatch(
+    List<NotesMetadataSnapshot> reviewed, {
+    String? category,
+    bool? favorite,
+  }) async {
+    final outcomes = <NotesBatchOutcome>[];
+    final seen = <String>{};
+    for (final snapshot in reviewed) {
+      final original = snapshot.note;
+      if (!seen.add(original.localId)) continue;
+      try {
+        final before = noteById(original.localId)?.revision;
+        final updated = await patchMetadata(
+          snapshot,
+          category: category,
+          favorite: favorite,
+        );
+        outcomes.add(
+          NotesBatchOutcome(
+            original.localId,
+            original.title,
+            updated.metadataConflict != null ||
+                    updated.syncState == NoteSyncState.conflict
+                ? NotesBatchStatus.conflicted
+                : updated.revision == before
+                ? NotesBatchStatus.skipped
+                : NotesBatchStatus.changed,
+          ),
+        );
+      } on NotesException catch (error) {
+        outcomes.add(
+          NotesBatchOutcome(
+            original.localId,
+            original.title,
+            error.code == NotesFailureCode.forbidden ||
+                    error.code == NotesFailureCode.missing
+                ? NotesBatchStatus.skipped
+                : error.code == NotesFailureCode.conflict
+                ? NotesBatchStatus.conflicted
+                : NotesBatchStatus.failed,
+            error.message,
+          ),
+        );
+      } on Object {
+        outcomes.add(
+          NotesBatchOutcome(
+            original.localId,
+            original.title,
+            NotesBatchStatus.failed,
+            'Local transaction failed; successful items remain saved.',
+          ),
+        );
+      }
+    }
+    return outcomes;
+  }
+
+  Future<List<NextcloudNote>> captureLocalSnapshot(
+    String accountId,
+    Set<String> ids,
+  ) => _mutate(() async {
+    _assertMutableAccount(accountId);
+    final captured = <NextcloudNote>[];
+    for (final id in ids) {
+      final note = _require(id);
+      if (note.accountId != accountId || isNotesRecovery(note)) {
+        throw const NotesException(
+          NotesFailureCode.conflict,
+          'The export scope changed; review again.',
+        );
+      }
+      captured.add(note);
+    }
+    return List.unmodifiable(captured);
+  });
+
+  Future<void> setOfflineRequirement(
+    String accountId,
+    String kind,
+    String target, {
+    bool required = true,
+    bool paused = false,
+  }) => _mutate(() async {
+    _assertMutableAccount(accountId);
+    if ((kind == 'note' || kind == 'pause') &&
+        _require(target).accountId != accountId) {
+      throw const NotesException(
+        NotesFailureCode.unsafeReference,
+        'Wrong offline note account.',
+      );
+    }
+    await store.setOfflineRequirement(
+      accountId,
+      kind,
+      target,
+      required: required,
+      paused: paused,
+    );
+    _notify();
+  });
+  void cancelMediaDownloads(String localId) {
+    final note = _notes[localId];
+    if (note == null) return;
+    for (final entry in _downloads.entries.where(
+      (e) => e.key.startsWith('${note.accountId}:$localId:'),
+    )) {
+      entry.value.cancel();
+    }
+  }
+
+  Future<
+    ({List<String> required, List<String> available, List<String> external})
+  >
+  attachmentAvailability(String localId, {String? source}) async {
+    final note = _require(localId);
+    final known = await store.attachments(localId);
+    final required = <String>{}, available = <String>{}, external = <String>{};
+    for (final occurrence in await scanNotesAttachmentReferences(
+      source ?? note.content,
+    )) {
+      final reference = occurrence.reference;
+      final canonical = canonicalAttachmentReference(reference);
+      final attachment = known
+          .where(
+            (a) =>
+                a.reference == reference ||
+                canonical != null && a.remotePath == canonical,
+          )
+          .firstOrNull;
+      final pending = reference.startsWith('busymark-attachment:');
+      final own =
+          canonical?.startsWith('.attachments.${note.serverId}/') == true;
+      final foreign = canonical?.startsWith('.attachments.') == true && !own;
+      if (attachment != null ||
+          pending ||
+          own ||
+          occurrence.image && canonical != null && !foreign) {
+        required.add(reference);
+        if (attachment != null &&
+            await store.attachmentSize(attachment.id) != null) {
+          available.add(reference);
+        }
+      } else if (occurrence.image || foreign) {
+        external.add(reference);
+      }
+    }
+    return (
+      required: required.toList(),
+      available: available.toList(),
+      external: external.toList(),
+    );
+  }
+
+  /// An import item's association commits with its new identity and bytes.
+  /// Synchronization keeps the existing never-sent/uncertain publication logic.
+  Future<NextcloudNote> importLocal({
+    required String accountId,
+    required String sourceKey,
+    required String title,
+    required String category,
+    required String content,
+    bool favorite = false,
+    int? activityMicros,
+    int? modified,
+    required Map<String, ({String filename, Uint8List bytes})> media,
+  }) => _mutate(() async {
+    _assertMutableAccount(accountId);
+    final existing = await store.importedNote(accountId, sourceKey);
+    if (existing != null) return _require(existing);
+    final localId = _uuid.v4();
+    final attachments = <({NotesAttachment attachment, Uint8List bytes})>[];
+    final replacements = <String, String>{};
+    for (final entry in media.entries) {
+      final id = _uuid.v4();
+      final attachment = NotesAttachment(
+        id: id,
+        noteId: localId,
+        filename: entry.value.filename,
+        reference: 'busymark-attachment:$accountId:$localId:$id',
+      );
+      attachments.add((attachment: attachment, bytes: entry.value.bytes));
+      replacements[entry.key] = attachment.reference;
+    }
+    final rewritten = replaceNotesAttachmentReferences(
+      content,
+      await scanNotesAttachmentReferences(content),
+      replacements,
+    );
+    final note = NextcloudNote(
+      localId: localId,
+      accountId: accountId,
+      title: title,
+      category: category,
+      content: rewritten,
+      favorite: favorite,
+      creationNeverSent: true,
+      localActivityMicros: activityMicros ?? clock().microsecondsSinceEpoch,
+      modified: modified ?? 0,
+    );
+    await store.createWithAttachments(note, attachments, importKey: sourceKey);
+    _notes[localId] = note;
+    _notify();
+    return note;
   });
 
   final _capabilityEpochs = <String, int>{};
@@ -2672,12 +2884,25 @@ class NotesRepository {
     });
   }
 
+  Future<String?> resolveCachedMedia(
+    String accountId,
+    String localId,
+    String reference,
+  ) => _resolveMedia(
+    accountId,
+    localId,
+    reference,
+    canonicalAttachmentReference(reference),
+    allowDownload: false,
+  );
+
   Future<String?> _resolveMedia(
     String accountId,
     String localId,
     String reference,
-    String? canonicalReference,
-  ) async {
+    String? canonicalReference, {
+    bool allowDownload = true,
+  }) async {
     _validateId(accountId);
     _validateId(localId);
     final note = _notes[localId];
@@ -2720,7 +2945,7 @@ class NotesRepository {
         initialAttachment.validatedAt == null ||
         clock().difference(initialAttachment.validatedAt!) >= mediaFreshness ||
         (_validatedMediaEpochs[initialAttachment.id] ?? 0) < freshnessEpoch;
-    if (downloadable && stale) {
+    if (allowDownload && downloadable && stale) {
       final cancellation = NotesDownloadCancellation();
       final key = '$accountId:$localId:$canonicalReference';
       _downloads[key] = cancellation;

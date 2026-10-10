@@ -4788,4 +4788,93 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get nextcloudUsePreviousEdit => '이전 편집 사용';
+
+  @override
+  String get quickOpen => '빠른 열기';
+
+  @override
+  String get notesAll => '모든 노트';
+
+  @override
+  String get notesUncategorized => '미분류';
+
+  @override
+  String get notesRecovery => '복구';
+
+  @override
+  String get notesRecentlyEdited => '최근 편집순';
+
+  @override
+  String get notesOldestEdited => '오래된 편집순';
+
+  @override
+  String get notesTitleAscending => '제목 오름차순';
+
+  @override
+  String get notesTitleDescending => '제목 내림차순';
+
+  @override
+  String get notesMove => '범주로 이동';
+
+  @override
+  String get notesRemoveFavorite => '즐겨찾기 해제';
+
+  @override
+  String get notesOffline => '오프라인 사용 설정';
+
+  @override
+  String get notesOfflineRemove => '오프라인 보존 해제';
+
+  @override
+  String get notesIndexing => '노트 색인 생성 중…';
+
+  @override
+  String get notesSearchHelp =>
+      '검색어는 AND로 결합합니다. \"인용 구문\", title:, category:를 사용하세요.';
+
+  @override
+  String get notesSourceLocation => '소스 위치';
+
+  @override
+  String get notesRecoveryHelp =>
+      '보존된 로컬 노트와 로컬 기록만 표시합니다. 서버 휴지통과 기록은 사용할 수 없습니다.';
+
+  @override
+  String get notesImport => '노트 가져오기';
+
+  @override
+  String get notesExport => '노트 내보내기';
+
+  @override
+  String get notesImportDistinct => '별도 노트로 가져오기';
+
+  @override
+  String get notesAvailableOffline => '오프라인 사용 가능';
+
+  @override
+  String get notesIncomplete => '불완전';
+
+  @override
+  String get notesSelected => '선택한 노트';
+
+  @override
+  String get notesNoHistory => '보존된 버전이 없습니다. 기록이 비활성화되었거나 만료 또는 삭제되었을 수 있습니다.';
+
+  @override
+  String get notesTextAvailable => '텍스트를 로컬에서 사용 가능';
+
+  @override
+  String get notesLocalVersion => '로컬 작업 버전';
+
+  @override
+  String get notesAttachments => '첨부 파일';
+
+  @override
+  String get notesSkipped => '건너뜀';
+
+  @override
+  String get notesFailed => '실패';
+
+  @override
+  String get notesCompleted => '완료';
 }

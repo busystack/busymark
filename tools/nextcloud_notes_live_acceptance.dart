@@ -1,3 +1,7 @@
+import 'package:busymark/src/nextcloud_notes/application/notes_offline_controller.dart';
+import 'package:busymark/src/nextcloud_notes/application/notes_search_controller.dart';
+import 'package:busymark/src/nextcloud_notes/application/notes_transfer_service.dart';
+import 'package:busymark/src/nextcloud_notes/application/notes_navigation.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
@@ -662,6 +666,15 @@ Future<void> main(List<String> arguments) async {
       'Explicit online deletion failed.',
     );
     checks['explicitFreshCheckedDeletion'] = true;
+    await _everydayWorkspaceChecks(
+      repository,
+      connection,
+      account,
+      api,
+      createdIds,
+      checks,
+      directory.path,
+    );
     await File(arguments[1]).writeAsString(
       const JsonEncoder.withIndent(
         '  ',
@@ -1221,4 +1234,138 @@ Future<void> _metadataRaceChecks(
   } finally {
     await r.dispose();
   }
+}
+
+Future<void> _everydayWorkspaceChecks(
+  NotesRepository r,
+  _Connection connection,
+  NextcloudAccount account,
+  NotesApiClient Function(NextcloudAccount) api,
+  Set<int> owned,
+  Map<String, Object?> checks,
+  String root,
+) async {
+  connection.offline = true;
+  final draft = await r.create(
+    account.id,
+    title: 'M2 portable 同じ',
+    category: 'M2/子/Sub',
+    content: 'pending alpha beta café 中文 foo_bar',
+  );
+  final attachment = await r.addAttachment(
+    draft.localId,
+    filename: 'café%20.png',
+    bytes: Uint8List.fromList([1, 2, 3]),
+  );
+  await r.save(
+    draft.localId,
+    content:
+        'pending alpha beta café 中文 foo_bar\n![image](${attachment.reference})\n<img src="${attachment.reference}">',
+  );
+  final second = await r.create(
+    account.id,
+    title: draft.title,
+    category: draft.category,
+    content: 'duplicate alpha beta',
+  );
+  final outcomes = await r.patchMetadataBatch([
+    r.metadataSnapshot(draft.localId),
+    r.metadataSnapshot(second.localId),
+  ], favorite: true);
+  _require(
+    outcomes.every((o) => o.status == NotesBatchStatus.changed),
+    'Offline batch did not persist every reviewed note.',
+  );
+  final search = NotesSearchController(r.store, account.id);
+  await search.search('"alpha beta" category:"M2/子"');
+  _require(
+    search.state.error == null &&
+        search.state.hits.any((h) => h.localId == draft.localId),
+    'Indexed pending note search failed.',
+  );
+  await search.dispose();
+  connection.offline = false;
+  await r.synchronize(account.id);
+  for (final note in [draft, second]) {
+    final published = r.noteById(note.localId)!;
+    if (published.serverId != null) owned.add(published.serverId!);
+    _require(
+      published.syncState == NoteSyncState.synced,
+      'Offline organization did not synchronize.',
+    );
+    final actual = await api(account).get(published.serverId!);
+    _require(
+      actual.favorite && actual.category == 'M2/子/Sub',
+      'Server metadata did not match the batch.',
+    );
+  }
+  checks['m2OfflineBatchIndexedPendingTextRealSync'] = true;
+  var offline = NotesOfflineController(r, account.id);
+  await offline.initialize();
+  await offline.setRequirement('category', 'M2');
+  await offline.reconcile();
+  final published = r.noteById(draft.localId)!;
+  _require(
+    (await offline.inspect(published)).available,
+    'Category retention is incomplete.',
+  );
+  connection.offline = true;
+  final media = await r.attachmentAvailability(draft.localId);
+  _require(
+    media.required.isNotEmpty &&
+        media.available.length == media.required.length,
+    'Retained bytes unavailable offline.',
+  );
+  final export = await NotesTransferService(r).exportSnapshot(
+    notes: [published, r.noteById(second.localId)!],
+    destination: root,
+    cancellation: NotesTransferCancellation(),
+  );
+  _require(export.complete, 'Portable snapshot silently omitted media.');
+  final review = await NotesTransferService(r).review(export.path, account.id);
+  _require(
+    review.items.length == 2 && review.items.every((i) => i.collision),
+    'Import review lost duplicate title collisions.',
+  );
+  final imported = await NotesTransferService(r).importReviewed(
+    review,
+    account.id,
+    cancellation: NotesTransferCancellation(),
+  );
+  _require(imported.every((i) => i.noteId != null), 'Portable import failed.');
+  final repeated = await NotesTransferService(r).importReviewed(
+    review,
+    account.id,
+    cancellation: NotesTransferCancellation(),
+  );
+  _require(
+    repeated.every((i) => i.alreadyImported),
+    'Resume duplicated a completed import.',
+  );
+  checks['m2RetainedCategoryPortableMarkdownHtmlMediaDuplicateRoundTrip'] =
+      true;
+  await offline.dispose();
+  connection.offline = false;
+  await r.delete(draft.localId);
+  owned.remove(published.serverId);
+  final recovered = await r.recoverAsNew(draft.localId);
+  _require(
+    recovered.localId != draft.localId && recovered.serverId == null,
+    'Recovery overwrote an existing identity.',
+  );
+  await r.synchronize(account.id);
+  for (final id in [recovered.localId, ...imported.map((i) => i.noteId!)]) {
+    final note = r.noteById(id)!;
+    if (note.serverId != null) owned.add(note.serverId!);
+    _require(
+      note.syncState == NoteSyncState.synced,
+      'Recovered/imported media did not synchronize.',
+    );
+    final actual = await api(account).get(note.serverId!);
+    _require(
+      actual.favorite && actual.category == 'M2/子/Sub',
+      'Round trip lost exact organization metadata.',
+    );
+  }
+  checks['m2DeletedNoteRetainedMediaRecoveryAndImportedRealPublication'] = true;
 }

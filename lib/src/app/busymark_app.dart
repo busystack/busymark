@@ -27,6 +27,7 @@ import 'app_router.dart';
 import 'app_locale.dart';
 import 'app_settings.dart';
 import 'command_palette.dart';
+import 'quick_open.dart';
 import 'command_registry.dart';
 import 'app_theme.dart';
 import 'busymark_dialogs.dart';
@@ -51,6 +52,7 @@ final busyMarkCommandRegistryProvider = Provider<BusyMarkCommandRegistry>((
     BusyMarkCommandIds.search: const _OpenSearchIntent(),
     BusyMarkCommandIds.keyboardShortcuts: const _KeyboardShortcutsIntent(),
     BusyMarkCommandIds.commandPalette: const _CommandPaletteIntent(),
+    BusyMarkCommandIds.quickOpen: const _QuickOpenIntent(),
     BusyMarkCommandIds.syntaxReference: const _SyntaxReferenceIntent(),
     BusyMarkCommandIds.settings: const _SettingsIntent(),
     BusyMarkCommandIds.nextTab: const _NextTabIntent(),
@@ -85,6 +87,8 @@ final busyMarkCommandRegistryProvider = Provider<BusyMarkCommandRegistry>((
         },
     },
     enabled: {
+      BusyMarkCommandIds.quickOpen: () =>
+          ref.read(workspaceControllerProvider).workspace != null,
       BusyMarkCommandIds.save: () =>
           ref.read(workspaceControllerProvider).workspace != null,
       BusyMarkCommandIds.export: () =>
@@ -371,6 +375,13 @@ class BusyMarkApp extends ConsumerWidget {
                       if (navigatorContext != null) {
                         unawaited(_closeAllOpenFileTabs(navigatorContext, ref));
                       }
+                      return null;
+                    },
+                  ),
+                  _QuickOpenIntent: CallbackAction<_QuickOpenIntent>(
+                    onInvoke: (_) {
+                      final target = rootNavigatorKey.currentContext;
+                      if (target != null) unawaited(showQuickOpen(target, ref));
                       return null;
                     },
                   ),
@@ -1235,4 +1246,8 @@ class _DocumentViewModeIntent extends Intent {
   const _DocumentViewModeIntent(this.mode);
 
   final DocumentViewModePreference mode;
+}
+
+class _QuickOpenIntent extends Intent {
+  const _QuickOpenIntent();
 }

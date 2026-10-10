@@ -4917,4 +4917,94 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get nextcloudUsePreviousEdit => 'पिछला संपादन इस्तेमाल करें';
+
+  @override
+  String get quickOpen => 'त्वरित खोलें';
+
+  @override
+  String get notesAll => 'सभी नोट्स';
+
+  @override
+  String get notesUncategorized => 'बिना श्रेणी';
+
+  @override
+  String get notesRecovery => 'पुनर्प्राप्ति';
+
+  @override
+  String get notesRecentlyEdited => 'हाल में संपादित';
+
+  @override
+  String get notesOldestEdited => 'सबसे पुराना संपादन';
+
+  @override
+  String get notesTitleAscending => 'शीर्षक आरोही';
+
+  @override
+  String get notesTitleDescending => 'शीर्षक अवरोही';
+
+  @override
+  String get notesMove => 'श्रेणी में ले जाएँ';
+
+  @override
+  String get notesRemoveFavorite => 'पसंदीदा हटाएँ';
+
+  @override
+  String get notesOffline => 'ऑफ़लाइन उपलब्ध करें';
+
+  @override
+  String get notesOfflineRemove => 'ऑफ़लाइन संरक्षण हटाएँ';
+
+  @override
+  String get notesIndexing => 'नोट्स की अनुक्रमणिका बन रही है…';
+
+  @override
+  String get notesSearchHelp =>
+      'शब्द AND से जुड़ते हैं। \"उद्धृत वाक्यांश\", title: और category: का उपयोग करें।';
+
+  @override
+  String get notesSourceLocation => 'स्रोत स्थान';
+
+  @override
+  String get notesRecoveryHelp =>
+      'केवल संरक्षित स्थानीय नोट्स और स्थानीय इतिहास। सर्वर का कचरा और इतिहास उपलब्ध नहीं है।';
+
+  @override
+  String get notesImport => 'नोट्स आयात करें';
+
+  @override
+  String get notesExport => 'नोट्स निर्यात करें';
+
+  @override
+  String get notesImportDistinct => 'अलग नोट के रूप में आयात करें';
+
+  @override
+  String get notesAvailableOffline => 'ऑफ़लाइन उपलब्ध';
+
+  @override
+  String get notesIncomplete => 'अपूर्ण';
+
+  @override
+  String get notesSelected => 'चुने गए नोट्स';
+
+  @override
+  String get notesNoHistory =>
+      'कोई संरक्षित संशोधन नहीं। इतिहास बंद, समाप्त या साफ़ किया गया हो सकता है।';
+
+  @override
+  String get notesTextAvailable => 'पाठ स्थानीय रूप से उपलब्ध है';
+
+  @override
+  String get notesLocalVersion => 'स्थानीय कार्य संस्करण';
+
+  @override
+  String get notesAttachments => 'अटैचमेंट';
+
+  @override
+  String get notesSkipped => 'छोड़ा गया';
+
+  @override
+  String get notesFailed => 'विफल';
+
+  @override
+  String get notesCompleted => 'पूर्ण';
 }

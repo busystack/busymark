@@ -4715,6 +4715,93 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get nextcloudUsePreviousEdit => '使用先前编辑';
+
+  @override
+  String get quickOpen => '快速打开';
+
+  @override
+  String get notesAll => '所有笔记';
+
+  @override
+  String get notesUncategorized => '未分类';
+
+  @override
+  String get notesRecovery => '恢复';
+
+  @override
+  String get notesRecentlyEdited => '最近编辑';
+
+  @override
+  String get notesOldestEdited => '最早编辑';
+
+  @override
+  String get notesTitleAscending => '标题升序';
+
+  @override
+  String get notesTitleDescending => '标题降序';
+
+  @override
+  String get notesMove => '移至分类';
+
+  @override
+  String get notesRemoveFavorite => '取消收藏';
+
+  @override
+  String get notesOffline => '设为离线可用';
+
+  @override
+  String get notesOfflineRemove => '移除离线保留要求';
+
+  @override
+  String get notesIndexing => '正在索引笔记…';
+
+  @override
+  String get notesSearchHelp => '词项使用“与”组合。可使用\"引号短语\"、title: 和 category:。';
+
+  @override
+  String get notesSourceLocation => '源文件位置';
+
+  @override
+  String get notesRecoveryHelp => '仅包括保留的本地笔记和本地历史。无法访问服务器回收站或历史。';
+
+  @override
+  String get notesImport => '导入笔记';
+
+  @override
+  String get notesExport => '导出笔记';
+
+  @override
+  String get notesImportDistinct => '导入为独立笔记';
+
+  @override
+  String get notesAvailableOffline => '离线可用';
+
+  @override
+  String get notesIncomplete => '不完整';
+
+  @override
+  String get notesSelected => '已选笔记';
+
+  @override
+  String get notesNoHistory => '没有保留的版本。历史可能已禁用、过期或清除。';
+
+  @override
+  String get notesTextAvailable => '文本已在本地可用';
+
+  @override
+  String get notesLocalVersion => '本地工作版本';
+
+  @override
+  String get notesAttachments => '附件';
+
+  @override
+  String get notesSkipped => '已跳过';
+
+  @override
+  String get notesFailed => '失败';
+
+  @override
+  String get notesCompleted => '已完成';
 }
 
 /// The translations for Chinese, as used in China (`zh_CN`).
@@ -9426,4 +9513,91 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get nextcloudUsePreviousEdit => '使用先前编辑';
+
+  @override
+  String get quickOpen => '快速打开';
+
+  @override
+  String get notesAll => '所有笔记';
+
+  @override
+  String get notesUncategorized => '未分类';
+
+  @override
+  String get notesRecovery => '恢复';
+
+  @override
+  String get notesRecentlyEdited => '最近编辑';
+
+  @override
+  String get notesOldestEdited => '最早编辑';
+
+  @override
+  String get notesTitleAscending => '标题升序';
+
+  @override
+  String get notesTitleDescending => '标题降序';
+
+  @override
+  String get notesMove => '移至分类';
+
+  @override
+  String get notesRemoveFavorite => '取消收藏';
+
+  @override
+  String get notesOffline => '设为离线可用';
+
+  @override
+  String get notesOfflineRemove => '移除离线保留要求';
+
+  @override
+  String get notesIndexing => '正在索引笔记…';
+
+  @override
+  String get notesSearchHelp => '词项使用“与”组合。可使用\"引号短语\"、title: 和 category:。';
+
+  @override
+  String get notesSourceLocation => '源文件位置';
+
+  @override
+  String get notesRecoveryHelp => '仅包括保留的本地笔记和本地历史。无法访问服务器回收站或历史。';
+
+  @override
+  String get notesImport => '导入笔记';
+
+  @override
+  String get notesExport => '导出笔记';
+
+  @override
+  String get notesImportDistinct => '导入为独立笔记';
+
+  @override
+  String get notesAvailableOffline => '离线可用';
+
+  @override
+  String get notesIncomplete => '不完整';
+
+  @override
+  String get notesSelected => '已选笔记';
+
+  @override
+  String get notesNoHistory => '没有保留的版本。历史可能已禁用、过期或清除。';
+
+  @override
+  String get notesTextAvailable => '文本已在本地可用';
+
+  @override
+  String get notesLocalVersion => '本地工作版本';
+
+  @override
+  String get notesAttachments => '附件';
+
+  @override
+  String get notesSkipped => '已跳过';
+
+  @override
+  String get notesFailed => '失败';
+
+  @override
+  String get notesCompleted => '已完成';
 }

@@ -684,6 +684,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         _selectPage(SettingsPage.appearance);
       case BusyMarkMainMenuAction.keyboardShortcuts:
         showBusyMarkKeyboardShortcutsDialog(context);
+      case BusyMarkMainMenuAction.quickOpen:
       case BusyMarkMainMenuAction.commandPalette:
         return;
       case BusyMarkMainMenuAction.syntaxReference:

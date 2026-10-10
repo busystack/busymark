@@ -4965,4 +4965,94 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get nextcloudUsePreviousEdit => 'استفاده از ویرایش قبلی';
+
+  @override
+  String get quickOpen => 'باز کردن سریع';
+
+  @override
+  String get notesAll => 'همه یادداشت‌ها';
+
+  @override
+  String get notesUncategorized => 'بدون دسته';
+
+  @override
+  String get notesRecovery => 'بازیابی';
+
+  @override
+  String get notesRecentlyEdited => 'تازه ویرایش‌شده';
+
+  @override
+  String get notesOldestEdited => 'قدیمی‌ترین ویرایش';
+
+  @override
+  String get notesTitleAscending => 'عنوان صعودی';
+
+  @override
+  String get notesTitleDescending => 'عنوان نزولی';
+
+  @override
+  String get notesMove => 'انتقال به دسته';
+
+  @override
+  String get notesRemoveFavorite => 'حذف از علاقه‌مندی‌ها';
+
+  @override
+  String get notesOffline => 'در دسترس کردن آفلاین';
+
+  @override
+  String get notesOfflineRemove => 'حذف نگهداری آفلاین';
+
+  @override
+  String get notesIndexing => 'در حال نمایه‌سازی یادداشت‌ها…';
+
+  @override
+  String get notesSearchHelp =>
+      'واژه‌ها با AND ترکیب می‌شوند. از \"عبارت نقل‌شده\" و title: و category: استفاده کنید.';
+
+  @override
+  String get notesSourceLocation => 'موقعیت در منبع';
+
+  @override
+  String get notesRecoveryHelp =>
+      'فقط یادداشت‌های محلی نگهداری‌شده و تاریخچه محلی. زباله‌دان و تاریخچه سرور در دسترس نیست.';
+
+  @override
+  String get notesImport => 'وارد کردن یادداشت‌ها';
+
+  @override
+  String get notesExport => 'صادر کردن یادداشت‌ها';
+
+  @override
+  String get notesImportDistinct => 'وارد کردن به عنوان یادداشت جدا';
+
+  @override
+  String get notesAvailableOffline => 'در دسترس آفلاین';
+
+  @override
+  String get notesIncomplete => 'ناقص';
+
+  @override
+  String get notesSelected => 'یادداشت‌های انتخاب‌شده';
+
+  @override
+  String get notesNoHistory =>
+      'نسخه نگهداری‌شده‌ای نیست. تاریخچه ممکن است غیرفعال، منقضی یا پاک شده باشد.';
+
+  @override
+  String get notesTextAvailable => 'متن به صورت محلی در دسترس است';
+
+  @override
+  String get notesLocalVersion => 'نسخهٔ کاری محلی';
+
+  @override
+  String get notesAttachments => 'پیوست‌ها';
+
+  @override
+  String get notesSkipped => 'رد شد';
+
+  @override
+  String get notesFailed => 'ناموفق';
+
+  @override
+  String get notesCompleted => 'تکمیل شد';
 }

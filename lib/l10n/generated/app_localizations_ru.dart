@@ -4986,4 +4986,94 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get nextcloudUsePreviousEdit => 'Использовать предыдущую правку';
+
+  @override
+  String get quickOpen => 'Быстрое открытие';
+
+  @override
+  String get notesAll => 'Все заметки';
+
+  @override
+  String get notesUncategorized => 'Без категории';
+
+  @override
+  String get notesRecovery => 'Восстановление';
+
+  @override
+  String get notesRecentlyEdited => 'Недавно изменённые';
+
+  @override
+  String get notesOldestEdited => 'Давно изменённые';
+
+  @override
+  String get notesTitleAscending => 'Название А–Я';
+
+  @override
+  String get notesTitleDescending => 'Название Я–А';
+
+  @override
+  String get notesMove => 'Переместить в категорию';
+
+  @override
+  String get notesRemoveFavorite => 'Убрать из избранного';
+
+  @override
+  String get notesOffline => 'Сохранить для работы без сети';
+
+  @override
+  String get notesOfflineRemove => 'Убрать сохранение без сети';
+
+  @override
+  String get notesIndexing => 'Индексация заметок…';
+
+  @override
+  String get notesSearchHelp =>
+      'Термины объединяются И. Используйте \"фразы в кавычках\", title: и category:.';
+
+  @override
+  String get notesSourceLocation => 'Место в исходнике';
+
+  @override
+  String get notesRecoveryHelp =>
+      'Только сохранённые локальные заметки и локальная история. Корзина и история сервера недоступны.';
+
+  @override
+  String get notesImport => 'Импорт заметок';
+
+  @override
+  String get notesExport => 'Экспорт заметок';
+
+  @override
+  String get notesImportDistinct => 'Импортировать как отдельную заметку';
+
+  @override
+  String get notesAvailableOffline => 'Доступно без сети';
+
+  @override
+  String get notesIncomplete => 'Неполно';
+
+  @override
+  String get notesSelected => 'Выбранные заметки';
+
+  @override
+  String get notesNoHistory =>
+      'Нет сохранённых версий. История может быть отключена, устарела или очищена.';
+
+  @override
+  String get notesTextAvailable => 'Текст доступен локально';
+
+  @override
+  String get notesLocalVersion => 'Локальная рабочая версия';
+
+  @override
+  String get notesAttachments => 'Вложения';
+
+  @override
+  String get notesSkipped => 'Пропущено';
+
+  @override
+  String get notesFailed => 'Ошибка';
+
+  @override
+  String get notesCompleted => 'Завершено';
 }

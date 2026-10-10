@@ -9,6 +9,7 @@ import 'package:sqlite3/sqlite3.dart';
 
 import '../../assets/asset_limits.dart';
 import '../domain/notes_models.dart';
+import '../domain/notes_search.dart';
 
 /// Focused durable Notes store. All synchronous SQLite work runs in one isolate.
 class NotesStore {
@@ -152,6 +153,7 @@ class NotesStore {
     NextcloudNote note,
     List<({NotesAttachment attachment, Uint8List bytes})> attachments, {
     List<NextcloudNote> additionalNotes = const [],
+    String? importKey,
   }) async {
     await _call('createWithAttachments', [
       note.toJson(),
@@ -166,6 +168,7 @@ class NotesStore {
           )
           .toList(),
       additionalNotes.map((n) => n.toJson()).toList(),
+      importKey,
     ]);
   }
 
@@ -198,6 +201,9 @@ class NotesStore {
           )
           .toList();
 
+  Future<int?> attachmentSize(String id) async =>
+      await _call('attachmentSize', id) as int?;
+
   Future<Uint8List?> attachmentBytes(String id) async =>
       await _call('attachmentBytes', id) as Uint8List?;
 
@@ -215,6 +221,47 @@ class NotesStore {
   Future<void> removeAttachment(String id) async {
     await _call('removeAttachment', id);
   }
+
+  /// Each step is bounded so queued durable saves can run between steps.
+  Future<int> indexStep() async => await _call('indexStep') as int;
+  Future<void> rebuildIndex() async => await _call('rebuildIndex');
+  Future<Map<String, dynamic>> searchChunk(
+    String accountId,
+    NotesSearchQuery query, {
+    int after = 0,
+    int limit = 80,
+    Set<String> exclude = const {},
+  }) async => Map<String, dynamic>.from(
+    await _call('searchChunk', {
+          'account': accountId,
+          'query': query.text,
+          'wholeWord': query.wholeWord,
+          'after': after,
+          'limit': limit.clamp(1, 200),
+          'exclude': exclude.toList(),
+        })
+        as Map,
+  );
+  Future<List<Map<String, dynamic>>> offlineRequirements(
+    String accountId,
+  ) async => (await _call('offlineRequirements', accountId) as List)
+      .map((v) => Map<String, dynamic>.from(v as Map))
+      .toList();
+  Future<void> setOfflineRequirement(
+    String accountId,
+    String kind,
+    String target, {
+    bool required = true,
+    bool paused = false,
+  }) async => await _call('setOfflineRequirement', [
+    accountId,
+    kind,
+    target,
+    required,
+    paused,
+  ]);
+  Future<String?> importedNote(String accountId, String sourceKey) async =>
+      await _call('importedNote', [accountId, sourceKey]) as String?;
 
   Future<void> close() => _closing ??= _close();
 
@@ -244,7 +291,7 @@ void _worker(List<dynamic> arguments) {
     db.execute('PRAGMA synchronous = FULL');
     db.execute('PRAGMA busy_timeout = 5000');
     final version = db.select('PRAGMA user_version').first.values.first as int;
-    if (version > 4) {
+    if (version > 5) {
       throw StateError(
         'The Notes database was created by a newer BusyMark version.',
       );
@@ -281,6 +328,7 @@ void _worker(List<dynamic> arguments) {
     // A request interrupted by a crash has an uncertain creation/upload outcome.
     db.execute('BEGIN IMMEDIATE');
     try {
+      _createWorkspaceSchema(db);
       for (final row in db.select('SELECT data FROM notes')) {
         final note = NextcloudNote.fromJson(
           jsonDecode(row['data'] as String) as Map<String, dynamic>,
@@ -296,7 +344,7 @@ void _worker(List<dynamic> arguments) {
           );
         }
       }
-      if (version < 4) db.execute('PRAGMA user_version = 4');
+      if (version < 5) db.execute('PRAGMA user_version = 5');
       db.execute('COMMIT');
     } catch (_) {
       db.execute('ROLLBACK');
@@ -330,6 +378,7 @@ void _writeNote(Database db, NextcloudNote note) {
     'INSERT INTO notes(id,account_id,server_id,data) VALUES(?,?,?,?) ON CONFLICT(id) DO UPDATE SET server_id=excluded.server_id,data=excluded.data',
     [note.localId, note.accountId, note.serverId, note.encode()],
   );
+  _indexNote(db, note);
   if (note.hasPendingChanges) {
     db.execute(
       'INSERT INTO outbox(note_id,revision,operation,data) VALUES(?,?,?,?) ON CONFLICT(note_id) DO UPDATE SET revision=excluded.revision,operation=excluded.operation,data=excluded.data',
@@ -347,6 +396,107 @@ void _writeNote(Database db, NextcloudNote note) {
 
 Object? _execute(Database db, String action, dynamic argument) {
   switch (action) {
+    case 'indexStep':
+      final rows = db.select(
+        "SELECT n.data FROM notes n LEFT JOIN note_search_map s ON s.id=n.id WHERE s.id IS NULL OR s.revision!=json_extract(n.data,'\$.revision') LIMIT 32",
+      );
+      db.execute('BEGIN IMMEDIATE');
+      try {
+        for (final row in rows) {
+          _indexNote(
+            db,
+            NextcloudNote.fromJson(
+              jsonDecode(row['data'] as String) as Map<String, dynamic>,
+            ),
+          );
+        }
+        db.execute('COMMIT');
+      } catch (_) {
+        db.execute('ROLLBACK');
+        rethrow;
+      }
+      return rows.length;
+    case 'rebuildIndex':
+      db.execute('BEGIN IMMEDIATE');
+      try {
+        db.execute('DELETE FROM note_search');
+        db.execute('DELETE FROM note_search_map');
+        db.execute('COMMIT');
+      } catch (_) {
+        db.execute('ROLLBACK');
+        rethrow;
+      }
+      return null;
+    case 'searchChunk':
+      final a = argument as Map;
+      final query = NotesSearchQuery(
+        a['query'] as String,
+        wholeWord: a['wholeWord'] as bool,
+      );
+      final expression = query.ftsCandidates;
+      final rows = db.select(
+        'SELECT note_search.rowid AS cursor,n.data FROM note_search JOIN notes n ON n.id=note_search.id WHERE note_search.account=? AND note_search.rowid>? '
+        "${expression == null ? '' : 'AND note_search MATCH ? '}ORDER BY note_search.rowid LIMIT 32",
+        [a['account'], a['after'], if (expression != null) expression],
+      );
+      final hits = <Map<String, Object?>>[];
+      final exclude = (a['exclude'] as List).cast<String>().toSet();
+      for (final row in rows) {
+        final note = NextcloudNote.fromJson(
+          jsonDecode(row['data'] as String) as Map<String, dynamic>,
+        );
+        if (exclude.contains(note.localId) ||
+            note.syncState == NoteSyncState.deletedRemotely &&
+                !note.hasPendingChanges) {
+          continue;
+        }
+        hits.addAll(
+          matchNotesDocument(
+            query: query,
+            localId: note.localId,
+            revision: note.revision,
+            title: note.title,
+            category: note.category,
+            source: note.content,
+            limit: (a['limit'] as int) - hits.length,
+          ).map((h) => h.toJson()),
+        );
+        if (hits.length >= (a['limit'] as int)) break;
+      }
+      return {
+        'hits': hits,
+        'after': rows.isEmpty ? a['after'] : rows.last['cursor'],
+        'more': rows.length == 32,
+      };
+    case 'offlineRequirements':
+      return db
+          .select(
+            'SELECT kind,target,paused FROM offline_requirements WHERE account_id=? ORDER BY kind,target',
+            [argument],
+          )
+          .map((r) => Map<String, Object?>.from(r))
+          .toList();
+    case 'setOfflineRequirement':
+      final a = argument as List;
+      if (a[3] == true) {
+        db.execute(
+          'INSERT INTO offline_requirements(account_id,kind,target,paused) VALUES(?,?,?,?) ON CONFLICT(account_id,kind,target) DO UPDATE SET paused=excluded.paused',
+          [a[0], a[1], a[2], a[4] == true ? 1 : 0],
+        );
+      } else {
+        db.execute(
+          'DELETE FROM offline_requirements WHERE account_id=? AND kind=? AND target=?',
+          [a[0], a[1], a[2]],
+        );
+      }
+      return null;
+    case 'importedNote':
+      final a = argument as List;
+      final rows = db.select(
+        'SELECT note_id FROM import_items WHERE account_id=? AND source_key=?',
+        [a[0], a[1]],
+      );
+      return rows.isEmpty ? null : rows.single['note_id'];
     case 'accounts':
       return db
           .select('SELECT data FROM accounts ORDER BY id')
@@ -446,6 +596,15 @@ Object? _execute(Database db, String action, dynamic argument) {
             (attachment as List).cast<Object?>(),
           );
         }
+        if (a.length > 3 && a[3] != null) {
+          final note = NextcloudNote.fromJson(
+            Map<String, dynamic>.from(a[0] as Map),
+          );
+          db.execute(
+            'INSERT INTO import_items(account_id,source_key,note_id) VALUES(?,?,?)',
+            [note.accountId, a[3], note.localId],
+          );
+        }
         db.execute('COMMIT');
       } catch (_) {
         db.execute('ROLLBACK');
@@ -476,6 +635,12 @@ Object? _execute(Database db, String action, dynamic argument) {
         rethrow;
       }
       return null;
+    case 'attachmentSize':
+      final rows = db.select(
+        'SELECT length(bytes) AS size FROM attachments WHERE id=?',
+        [argument],
+      );
+      return rows.isEmpty ? null : rows.single['size'];
     case 'attachmentBytes':
       final rows = db.select('SELECT bytes FROM attachments WHERE id=?', [
         argument,
@@ -507,4 +672,78 @@ Object? _execute(Database db, String action, dynamic argument) {
     default:
       throw StateError('Unknown Notes storage operation.');
   }
+}
+
+void _createWorkspaceSchema(Database db) {
+  // A runtime FTS5/trigram capability check uses the same native library as
+  // durable notes. A lost derived index is recreated without touching outbox.
+  final hadIndex = db
+      .select("SELECT name FROM sqlite_master WHERE name='note_search'")
+      .isNotEmpty;
+  db.execute(
+    'CREATE TABLE IF NOT EXISTS note_search_map(id TEXT PRIMARY KEY REFERENCES notes(id) ON DELETE CASCADE, docid INTEGER UNIQUE, revision INTEGER NOT NULL)',
+  );
+  db.execute(
+    'CREATE VIRTUAL TABLE IF NOT EXISTS note_search USING fts5(id UNINDEXED, account UNINDEXED, revision UNINDEXED, title, category, body, tokenize="trigram")',
+  );
+  db.execute(
+    'CREATE TRIGGER IF NOT EXISTS notes_search_delete BEFORE DELETE ON notes BEGIN DELETE FROM note_search WHERE rowid=(SELECT docid FROM note_search_map WHERE id=old.id); END',
+  );
+  if (!hadIndex ||
+      db.select('SELECT count(*) AS n FROM note_search').single['n'] !=
+          db
+              .select('SELECT count(docid) AS n FROM note_search_map')
+              .single['n']) {
+    db.execute('DELETE FROM note_search');
+    db.execute('DELETE FROM note_search_map');
+  }
+  db.execute(
+    "CREATE TABLE IF NOT EXISTS offline_requirements(account_id TEXT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE, kind TEXT NOT NULL CHECK(kind IN ('note','category','pause')), target TEXT NOT NULL, paused INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(account_id,kind,target))",
+  );
+  db.execute(
+    'CREATE TABLE IF NOT EXISTS import_items(account_id TEXT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE, source_key TEXT NOT NULL, note_id TEXT NOT NULL REFERENCES notes(id), PRIMARY KEY(account_id,source_key))',
+  );
+}
+
+void _indexNote(Database db, NextcloudNote note) {
+  final existing = db.select(
+    'SELECT s.rowid,s.revision,s.title,s.category,s.body FROM note_search s JOIN note_search_map m ON s.rowid=m.docid WHERE m.id=?',
+    [note.localId],
+  );
+  if (note.syncState == NoteSyncState.deletedRemotely &&
+      !note.hasPendingChanges) {
+    if (existing.isNotEmpty) {
+      db.execute('DELETE FROM note_search WHERE rowid=?', [
+        existing.single['rowid'],
+      ]);
+    }
+    db.execute(
+      'INSERT INTO note_search_map(id,docid,revision) VALUES(?,NULL,?) ON CONFLICT(id) DO UPDATE SET docid=NULL,revision=excluded.revision',
+      [note.localId, note.revision],
+    );
+    return;
+  }
+  final title = normalizeNotesSearch(note.title);
+  final category = normalizeNotesSearch(note.category);
+  final body = normalizeNotesSearch(note.content);
+  if (existing.isNotEmpty &&
+      existing.single['revision'] == note.revision &&
+      existing.single['title'] == title &&
+      existing.single['category'] == category &&
+      existing.single['body'] == body) {
+    return;
+  }
+  final rowid = existing.isEmpty ? null : existing.single['rowid'];
+  if (rowid != null) {
+    db.execute('DELETE FROM note_search WHERE rowid=?', [rowid]);
+  }
+  db.execute(
+    'INSERT INTO note_search(rowid,id,account,revision,title,category,body) VALUES(?,?,?,?,?,?,?)',
+    [rowid, note.localId, note.accountId, note.revision, title, category, body],
+  );
+  final docid = rowid ?? db.lastInsertRowId;
+  db.execute(
+    'INSERT INTO note_search_map(id,docid,revision) VALUES(?,?,?) ON CONFLICT(id) DO UPDATE SET docid=excluded.docid,revision=excluded.revision',
+    [note.localId, docid, note.revision],
+  );
 }

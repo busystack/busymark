@@ -4957,4 +4957,94 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get nextcloudUsePreviousEdit => 'استخدام التعديل السابق';
+
+  @override
+  String get quickOpen => 'فتح سريع';
+
+  @override
+  String get notesAll => 'كل الملاحظات';
+
+  @override
+  String get notesUncategorized => 'بلا تصنيف';
+
+  @override
+  String get notesRecovery => 'استعادة';
+
+  @override
+  String get notesRecentlyEdited => 'المعدلة مؤخراً';
+
+  @override
+  String get notesOldestEdited => 'الأقدم تعديلاً';
+
+  @override
+  String get notesTitleAscending => 'العنوان تصاعدياً';
+
+  @override
+  String get notesTitleDescending => 'العنوان تنازلياً';
+
+  @override
+  String get notesMove => 'نقل إلى تصنيف';
+
+  @override
+  String get notesRemoveFavorite => 'إزالة من المفضلة';
+
+  @override
+  String get notesOffline => 'إتاحة دون اتصال';
+
+  @override
+  String get notesOfflineRemove => 'إزالة الاحتفاظ دون اتصال';
+
+  @override
+  String get notesIndexing => 'جارٍ فهرسة الملاحظات…';
+
+  @override
+  String get notesSearchHelp =>
+      'تُجمع الكلمات باستخدام AND. استخدم \"عبارات مقتبسة\" و title: و category:.';
+
+  @override
+  String get notesSourceLocation => 'الموضع في المصدر';
+
+  @override
+  String get notesRecoveryHelp =>
+      'الملاحظات المحلية المحتفظ بها والسجل المحلي فقط. سلة المحذوفات وسجل الخادم غير متاحين.';
+
+  @override
+  String get notesImport => 'استيراد ملاحظات';
+
+  @override
+  String get notesExport => 'تصدير ملاحظات';
+
+  @override
+  String get notesImportDistinct => 'استيراد كملاحظة مستقلة';
+
+  @override
+  String get notesAvailableOffline => 'متاح دون اتصال';
+
+  @override
+  String get notesIncomplete => 'غير مكتمل';
+
+  @override
+  String get notesSelected => 'الملاحظات المحددة';
+
+  @override
+  String get notesNoHistory =>
+      'لا توجد مراجعات محفوظة. قد يكون السجل معطلاً أو منتهياً أو ممسوحاً.';
+
+  @override
+  String get notesTextAvailable => 'النص متاح محليًا';
+
+  @override
+  String get notesLocalVersion => 'نسخة العمل المحلية';
+
+  @override
+  String get notesAttachments => 'المرفقات';
+
+  @override
+  String get notesSkipped => 'تم التخطي';
+
+  @override
+  String get notesFailed => 'فشل';
+
+  @override
+  String get notesCompleted => 'مكتمل';
 }

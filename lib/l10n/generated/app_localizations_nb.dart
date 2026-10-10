@@ -4930,4 +4930,94 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String get nextcloudUsePreviousEdit => 'Bruk forrige endring';
+
+  @override
+  String get quickOpen => 'Hurtigåpning';
+
+  @override
+  String get notesAll => 'Alle notater';
+
+  @override
+  String get notesUncategorized => 'Uten kategori';
+
+  @override
+  String get notesRecovery => 'Gjenoppretting';
+
+  @override
+  String get notesRecentlyEdited => 'Nylig redigert';
+
+  @override
+  String get notesOldestEdited => 'Eldste redigering';
+
+  @override
+  String get notesTitleAscending => 'Tittel A–Z';
+
+  @override
+  String get notesTitleDescending => 'Tittel Z–A';
+
+  @override
+  String get notesMove => 'Flytt til kategori';
+
+  @override
+  String get notesRemoveFavorite => 'Fjern favoritt';
+
+  @override
+  String get notesOffline => 'Gjør tilgjengelig frakoblet';
+
+  @override
+  String get notesOfflineRemove => 'Fjern frakoblet oppbevaring';
+
+  @override
+  String get notesIndexing => 'Indekserer notater…';
+
+  @override
+  String get notesSearchHelp =>
+      'Ord bruker OG. Bruk \"siterte fraser\", title: og category:.';
+
+  @override
+  String get notesSourceLocation => 'Kildeplassering';
+
+  @override
+  String get notesRecoveryHelp =>
+      'Kun beholdte lokale notater og lokal historikk. Serverens papirkurv og historikk er utilgjengelige.';
+
+  @override
+  String get notesImport => 'Importer notater';
+
+  @override
+  String get notesExport => 'Eksporter notater';
+
+  @override
+  String get notesImportDistinct => 'Importer som eget notat';
+
+  @override
+  String get notesAvailableOffline => 'Tilgjengelig frakoblet';
+
+  @override
+  String get notesIncomplete => 'Ufullstendig';
+
+  @override
+  String get notesSelected => 'Valgte notater';
+
+  @override
+  String get notesNoHistory =>
+      'Ingen beholdte revisjoner. Historikken kan være deaktivert, utløpt eller slettet.';
+
+  @override
+  String get notesTextAvailable => 'Tekst tilgjengelig lokalt';
+
+  @override
+  String get notesLocalVersion => 'Lokal arbeidsversjon';
+
+  @override
+  String get notesAttachments => 'Vedlegg';
+
+  @override
+  String get notesSkipped => 'Hoppet over';
+
+  @override
+  String get notesFailed => 'Mislyktes';
+
+  @override
+  String get notesCompleted => 'Fullført';
 }
