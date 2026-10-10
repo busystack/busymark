@@ -4,8 +4,13 @@ Markdown, Writerside, and Nextcloud Notes editor for Linux.
 
 [![busymark](https://snapcraft.io/busymark/badge.svg)](https://snapcraft.io/busymark)
 
-[![Get it from the Snap Store](https://snapcraft.io/en/dark/install.svg)](https://snapcraft.io/busymark)
-
+<a href="https://snapcraft.io/busymark">
+  <img
+    src="https://snapcraft.io/en/dark/install.svg"
+    alt="Get it from the Snap Store"
+    width="182"
+  />
+</a>
 <p align="center">
   <img src="docs/screenshots/busymark-split-view.png" alt="BusyMark split source and reading view" width="900">
 </p>
