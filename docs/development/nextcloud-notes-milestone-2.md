@@ -190,3 +190,133 @@ Both credential probes passed through Bash (exit 0). Final analysis found no iss
 Only test-owned fixtures were removed: both `busymark-m2-6-0` / `busymark-m2-6-1` containers and anonymous volumes, and the two proxies after verifying their PID/command/port. Cleanup exited 0. Private CA, credential/profile/report/corpus artifacts remain outside Git. The final shortcut restart test ran after the first fixture removal. Fresh isolated fixtures were then recreated for the exact two-process journey; browser Login Flow passed on both again, and the same owned cleanup was repeated afterward.
 
 All five Milestone 2 areas are implemented, connected to the production UI, and verified together. No unresolved implementation or feature-acceptance blocker; no Milestone 3 work. Implementation and evidence are committed locally without merge, push, or publication.
+
+## Correctness follow-up — 2026-10-10
+
+Baseline: `6a14289d54978ffe699f0180ad426f7ab703e598`, clean working tree,
+`feature/nextcloud-notes-workspace`; no applicable `AGENTS.md`. Accepted M1/M2
+work and dependency pins retained. No Writerside editing-button changes.
+The five reported defects were confirmed before fixes. New regression run:
+**1 passed, 8 failed**; the offline assertion first required the scanner's Unicode
+encoding adjustment, then separately failed on recovery-only bytes being counted
+as available. Private before/after logs and rebuilt fixture artifacts live in
+`/tmp/busymark-m2-corrections` (the old `/tmp/busymark-m1` and `m2` artifacts
+were absent). Upstream pinned API and FTS5 contracts consulted again.
+
+| Correction | Implementation and regression coverage |
+| --- | --- |
+| Complete search continuation | Lazy literal per-term occurrence streams merge by start/end, with bounded grapheme-boundary maps. The SQLite worker returns a cursor only past fully processed documents, plus revision/content/metadata-fenced partial-document continuation. The 200-hit transfer bound remains; controller requests continue across it. Dirty overlays have a global transfer bound. Tests compare exact identities/UTF-16 offsets for 40 occurrences, 10 × 32 matches at limits 80/160/240/320/400, 962 Unicode occurrences across 40 candidates, overlapping terms, dirty text, and changed revisions. Production dialog verifies all 320 keys and Show more. Changed-document navigation pages to the nearest current occurrence in an isolate, then rechecks the current buffer before selecting. |
+| New imports versus resumed operations | Every new review gets a new operation UUID. Schema **6** adds account-scoped durable reviewed operations; existing item associations remain intact. Item-to-note association is still atomic with note/outbox/index/media creation, now namespaced by operation. Restart reconstructs selection, reviewed categories and media fingerprints; completed items are accurately labeled and cannot be retargeted in resume review. Production chooser explicitly offers a new import or a specific interrupted operation. Completed jobs are omitted from resume choices. Tests cover new same-source imports, category corrections, repaired/changed media, partial resume from SQLite, account removal, and unchanged uncertain create/upload evidence with no repeated publication. |
+| Safe relative local media | Transfer service has a separate decode-once local destination parser; resolve dot segments relative to the document before enforcing selected-root containment and symlink restrictions. Remote attachment validation is unchanged. Markdown and supported HTML tests cover `./`, inside-root `../`, Unicode/literal-percent filenames, outside-root escape, restart and synchronization. |
+| Live offline eligibility | Repository availability selects attachments through the same `_liveMediaAttachment` rules as ordinary media resolution. Deleted bytes remain retained and separately usable for recovery; they neither count as live availability nor trigger automatic resurrection. Tests cover retained references, offline requirements/restart, unchanged tombstones/bytes, and a legitimate later upload superseding the tombstone. |
+| Recovery search | Sidebar passes an explicit Recovery scope; bounded store queries scan existing account-scoped retained deletion records using the same literal semantics. Deleted records remain outside live FTS search. Results open the existing Recovery preview, with history selector and byte checks, preserving the current document. Tests cover title/category/content, account boundaries, deletion conflicts, restart, account removal, and new-identity recovery/publication. Production Enter navigation checks preview identity and absence of deleted editor buffers. |
+
+Migration tests cover schemas 2–5, rollback and rejection of schema 7; a genuine
+schema-5 fixture preserves accounts, notes, exact outbox, blobs, offline settings
+and the legacy import ledger byte-for-byte. All new UI strings are translated in
+23 catalogs and generated output is regenerated.
+
+Follow-up verification artifacts are private under `/tmp/busymark-m2-corrections`.
+The affected suite passed **376 tests**, including all accepted metadata-race,
+review-correction, coordinator, search/navigation, export, Local History workspace
+and localization cases (`affected-verified.log`). Both credential-policy and
+libsecret scripts passed through Bash, exit 0. The complete Local History store
+group passed **50 tests**, exit 0 (`full-history.log`). The remaining exhaustive
+group passed **4,195 tests**, exit 0 (`full-remaining.log`), with all **200**
+current paths exactly once, one worker, the
+bundled D2/Typst/spelling resources and native display `:97`. Its manifest has the
+same SHA-256 `623f4e141e1a877c18aee1a4a906c61d8a01c4e40521a66d893756eda36c622a`;
+a fresh comparison accounts for all **201** files without omissions/duplicates.
+Combined: **4,245 passed, 0 failed, 0 skipped**. All 200 distinct loading entries
+are present in the final log. This is exhaustive **two-group** verification,
+preserving the accepted single-invocation History child-startup limitation;
+there was no failed exhaustive attempt during this follow-up.
+Native Hunspell package tests also passed **13** cases, exit 0.
+Locked dependency resolution, localization regeneration and the **21-test**
+localization audit passed. Formatting checked **573 files, 0 changes**; final
+analysis found no issues, and `git diff --check` passed. Dependency pins are
+unchanged. The final normal production Linux release passed, exit 0
+(`production-release-verified.log`), restoring `lib/main.dart` after native tests.
+
+Fresh disposable HTTPS fixtures use Nextcloud **35.0.1**, Notes **6.0.2** /
+**6.1.0**, API **1.4**. Browser Login Flow and extended live Notes acceptance
+passed on each: **34 scenarios plus 2 version entries**, exit 0 (`live/notes-*.json`).
+The corrections execute real synchronization after restart, check exact occurrence
+sets, distinct import identities/reviewed categories/repaired media, partial
+operation resume, deleted-media eligibility/replacement, and Recovery-only search
+followed by new-note publication. The 6.0.2 attachment-delete version gate stays
+intact. CA/hostname verification remains enabled; credentials and reports stay
+outside Git. Xvfb was obtained as a private unpacked package because the machine
+does not have it installed; no system package or project dependency changed.
+
+Both strengthened native Linux journeys passed in fresh private profiles:
+**16 checks before process shutdown + 35 after actual restart**, per baseline,
+exit 0 (`desktop-6.0.2-views-verified` / `desktop-6.1.0-views-verified`, separate
+`report-corrections-start.json` / `report-corrections-resume.json`). They remain
+offline across shutdown/restart, exhaust 40 and 320 occurrences through the
+production search dialog, review a distinct import/category/repaired relative
+media, resume a persisted partial operation without duplicate notes, retain
+deleted-media bytes while showing incomplete offline status, replace media,
+search Recovery and open its preview, recover a distinct identity, then perform
+real synchronization. The existing full everyday journey follows: nested
+category creation, offline edits/media, Quick Open/search, batch organization,
+category retention, all four views, deletion/recovery and export/import.
+Inspected screenshots cover populated sidebar, pagination/highlights, new/resume
+review, specific offline omissions, scoped Recovery search/preview, actual
+Source/Reading/Split media, batch review and portable transfer. Final screenshots
+have correct route dismissal, readable controls and no obstructing leftover
+search modal. Unsupported raw HTML remains visible through the existing source
+representation; recognized imported Markdown media is rendered in supported views.
+
+The unchanged reproducible **10,000-note native AOT** benchmark was rerun during
+concurrent test/desktop load (`performance/report.json`). Corpus: **1,279**
+categories, **250** duplicate titles, **21,785,692** UTF-8 text bytes, **2,000**
+attachments / **4,096,000** bytes. Intel i9-9900K, 16 logical processors, Linux
+7.0.0-38-generic, Flutter **3.47.5** / Dart **3.13.4**, packaged SQLite **3.53.4**.
+
+| Follow-up measurement | Actual |
+| --- | --- |
+| Corpus creation with maintained index / fresh rebuild | 38.404 / 26.935 s |
+| `token42` median / p95 | 59.511 / 69.418 ms |
+| `"alpha beta" category:"Area 7"` median / p95 | 54.409 / 56.554 ms |
+| `中文` median / p95 | 76.295 / 121.886 ms |
+| `C++` median / p95 | 68.318 / 90.540 ms |
+| `é` median / p95 | 55.533 / 64.104 ms |
+| Saves during rebuild median / p95 / maximum | 55.506 / 166.747 / 444.959 ms |
+| Save during query | 84.987 ms |
+| Import during search median / p95 | 32.981 / 106.349 ms |
+| RSS before / after repository loaded | 13,873,152 / 186,404,864 bytes |
+| OS maximum RSS sample / database size | 185,470,976 / 118,743,040 bytes |
+
+Failed attempts are retained rather than counted as passes. Initial regressions
+are described above. New widget selectors first counted both a title and its
+highlighted snippet; corrected to result rows. Expanded regressions initially
+used two nonexistent helper properties, then passed after correcting those
+test references. An initial concurrent affected invocation named a nonexistent
+shortcut-test file and hit the unchanged unsaved-refresh timing assertion; the
+correct current command-registry suite and exhaustive affected set passed with
+one worker. Fixture provisioning first ran before image initialization; it was
+recreated only after readiness. Browser TLS exposed missing CA key-usage
+extensions, corrected by reissuing the dedicated CA with the same key and strict
+extensions. Native attempts exposed insufficient route-close waiting and an
+offline resume GET-settings in the harness; both harness errors were corrected.
+Screenshot inspection then exposed a harness selecting the sidebar recovery row
+instead of the search-result row, and changing only the global view preference.
+The harness now targets exact search-result keys, verifies route dismissal, and
+switches the active buffer view while asserting rendered media/source widgets.
+Its first strengthened build caught incorrect existing property names; those
+harness-only references were corrected before rerunning both desktop baselines.
+A rerun also reused an earlier private output directory containing two fixture
+accounts; its failed resume was stopped, and both final journeys used previously
+unused `*-views-verified` directories. No production workaround or weakened
+assertion was introduced for these harness failures.
+
+Implementation commit: **`4609a77`**. Only the two ownership-labeled
+`busymark-m2c-6-0-2` / `busymark-m2c-6-1-0` containers and anonymous volumes,
+the verified test proxy and private Xvfb `:97` were removed; cleanup exited 0.
+Private profiles, CA/credentials, reports and corpus remain outside Git.
+Post-implementation locked resolution and localization regeneration leave pins
+and generated files unchanged. Handoff repeats both after the evidence commit
+and confirms Git status. All five defects are resolved and verified; no remaining
+correction blocker, unrelated Writerside change or Milestone 3 work. Commits stay
+local without merge, push or publication.
