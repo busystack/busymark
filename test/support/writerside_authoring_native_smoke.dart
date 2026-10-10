@@ -50,6 +50,9 @@ Future<void> main(List<String> arguments) async {
   await File(p.join(root.path, 'topics/authoring.md')).writeAsString(
     '# Authoring Markdown\n\nText\n\n## Section\n\nNested content\n',
   );
+  await File(
+    p.join(root.path, 'README.md'),
+  ).writeAsString('# Ordinary Markdown\n\nPlain text\n');
   final tree = File(p.join(root.path, 'conformance.tree'));
   await tree.writeAsString(
     (await tree.readAsString()).replaceFirst(
@@ -349,12 +352,17 @@ class _HarnessState extends ConsumerState<_Harness> {
     });
     final element = media!;
     final original = element.widget as MediaQuery;
-    element.update(
-      MediaQuery(
-        data: original.data.copyWith(textScaler: TextScaler.linear(1.5)),
-        child: original.child,
-      ),
-    );
+    // Inherited-widget updates must notify their dependants during a build
+    // scope. Updating the element directly from this async probe asserts in
+    // the debug application and prevents the scaling acceptance check.
+    element.owner!.buildScope(element, () {
+      element.update(
+        MediaQuery(
+          data: original.data.copyWith(textScaler: TextScaler.linear(1.5)),
+          child: original.child,
+        ),
+      );
+    });
     await _pause();
     _check(
       MediaQuery.textScalerOf(
@@ -364,7 +372,7 @@ class _HarnessState extends ConsumerState<_Harness> {
       'Linux text scaling applied',
     );
     await _capture(name);
-    element.update(original);
+    element.owner!.buildScope(element, () => element.update(original));
     await _pause();
   }
 
@@ -398,6 +406,31 @@ class _HarnessState extends ConsumerState<_Harness> {
           extentOffset: 4,
         );
         await _pause();
+        final beforeMenu = _source;
+        final selected = (body.widget as TextField).controller!.selection;
+        await _tap(
+          _elements(
+            (w) => w.key == const ValueKey('wysiwyg-writerside-insert'),
+          ).single,
+        );
+        _nativeMenuOpen = true;
+        await _native('key', 'Down');
+        await _capture('authoring-$suffix-insert-menu');
+        await _native('key', 'Escape');
+        _nativeMenuOpen = false;
+        await _pause();
+        stdout.writeln(
+          'GTK dismissal: source unchanged=${_source == beforeMenu}; '
+          'selection before=$selected after=${(body.widget as TextField).controller!.selection}; '
+          'editing focus=${(body.widget as TextField).focusNode!.hasFocus}; '
+          'primary focus=${FocusManager.instance.primaryFocus?.debugLabel}',
+        );
+        _check(
+          _source == beforeMenu &&
+              (body.widget as TextField).controller!.selection == selected &&
+              (body.widget as TextField).focusNode!.hasFocus,
+          '$suffix GTK keyboard dismissal preserves source, selection and focus',
+        );
         await _choose('wysiwyg-writerside-semantic', ['UI Control']);
         _check(
           _source.contains('<control>Text</control>'),
@@ -569,6 +602,10 @@ class _HarnessState extends ConsumerState<_Harness> {
           '$suffix local disclosure is source-neutral',
         );
         _check(await controller.saveActive(), '$suffix save succeeds');
+        stdout.writeln(
+          'Saved $suffix: dirty=${ref.read(workspaceControllerProvider).activeBuffer?.isDirty}; '
+          'revision=${ref.read(workspaceControllerProvider).activeBuffer?.revision}',
+        );
         controller.updateActiveEditorMode(DocumentViewModePreference.source);
         await settings.setDocumentViewMode(DocumentViewModePreference.source);
         await _pause();
@@ -582,6 +619,48 @@ class _HarnessState extends ConsumerState<_Harness> {
         _check(
           _source == authored,
           '$suffix Source to Editor preserves source',
+        );
+        // Use the queued buffer transaction used by the application's tab
+        // actions; background validation may refresh buffer metadata here.
+        final closingBuffer = ref
+            .read(workspaceControllerProvider)
+            .activeBuffer!;
+        final closed = await controller.closeDocumentBuffer(closingBuffer.id);
+        stdout.writeln(
+          'Close $suffix: result=$closed; dirty=${closingBuffer.isDirty}; '
+          'revision=${closingBuffer.revision}; '
+          'content saved=${closingBuffer.text == closingBuffer.lastSavedText}; '
+          'current dirty=${ref.read(workspaceControllerProvider).activeBuffer?.isDirty}; '
+          'current document=${ref.read(workspaceControllerProvider).activeBuffer?.displayName}; '
+          'buffer remains=${ref.read(workspaceControllerProvider).documentBuffers.any((b) => b.id == closingBuffer.id)}; '
+          'message=${ref.read(workspaceControllerProvider).message}',
+        );
+        _check(closed, '$suffix saved buffer closes');
+        await controller.openActiveFile(
+          p.join(widget.root.path, 'topics/authoring.$suffix'),
+        );
+        await _until(
+          () =>
+              _elements((w) => w is BusyMarkWysiwygEditor).isNotEmpty &&
+              _source == authored,
+          '$suffix saved topic reopens',
+        );
+        _check(
+          _source == authored,
+          '$suffix reopening from disk preserves authored semantics',
+        );
+        final variableField = _field('Textproduct');
+        await _tap(variableField);
+        (variableField.widget as TextField).controller!.selection =
+            const TextSelection.collapsed(offset: 6);
+        await _pause();
+        _check(
+          _elements(
+            (w) =>
+                w is BusyMarkGroupedTextEntry &&
+                w.label == 'Variable Reference',
+          ).isNotEmpty,
+          '$suffix variable reference properties survive reopening',
         );
         await topicProperties();
         _check(
@@ -613,6 +692,30 @@ class _HarnessState extends ConsumerState<_Harness> {
         );
         await windowManager.setSize(const Size(1400, 960));
       }
+      await controller.openActiveFile(p.join(widget.root.path, 'README.md'));
+      await _until(
+        () =>
+            _elements((w) => w is BusyMarkWysiwygEditor).isNotEmpty &&
+            _elements(
+              (w) => w is TextField && w.controller?.text == 'Plain text',
+            ).isNotEmpty,
+        'Ordinary Markdown Editor available',
+      );
+      _check(
+        _elements(
+              (w) => w.key == const ValueKey('wysiwyg-writerside-insert'),
+            ).isEmpty &&
+            _elements((w) => w is BusyMarkWritersideProperties).isEmpty,
+        'Ordinary Markdown has no Writerside controls or properties',
+      );
+      await _type(_field('Plain text'), 'Edited ordinary text');
+      _check(
+        _source.contains('# Ordinary Markdown') &&
+            _source.contains('Edited ordinary text'),
+        'Ordinary Markdown remains visually editable',
+      );
+      _check(await controller.saveActive(), 'Ordinary Markdown save succeeds');
+      await _capture('authoring-ordinary-markdown');
       await File(p.join(widget.output.path, 'generated.topic')).writeAsString(
         await File(
           p.join(widget.root.path, 'topics/authoring.topic'),

@@ -30,6 +30,7 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
     this.onWritersideInsert,
     this.isWritersideInsertEnabled,
     this.onProperties,
+    this.onMenuCanceled,
     required this.onInlineCommand,
     required this.onLinkCommand,
     required this.onInlineMathCommand,
@@ -57,6 +58,7 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
   final ValueChanged<BusyWritersideInsertCommand>? onWritersideInsert;
   final bool Function(BusyWritersideInsertCommand)? isWritersideInsertEnabled;
   final VoidCallback? onProperties;
+  final VoidCallback? onMenuCanceled;
   final ValueChanged<BusyWysiwygInlineCommand> onInlineCommand;
   final VoidCallback onLinkCommand;
   final VoidCallback? onInlineMathCommand;
@@ -335,6 +337,7 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
 
   Widget _writersideInsertMenu(BuildContext context) =>
       BusyMarkHeaderPopupMenuButton<BusyWritersideInsertCommand>(
+        onCanceled: onMenuCanceled,
         key: const ValueKey('wysiwyg-writerside-insert'),
         tooltip: '${context.l10n.writerside} · ${context.l10n.insert}',
         icon: BusyMarkGlyphs.insertObject,
@@ -357,6 +360,7 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
 
   Widget _writersideSemanticMenu(BuildContext context) =>
       BusyMarkHeaderPopupMenuButton<BusyWysiwygInlineCommand>(
+        onCanceled: onMenuCanceled,
         key: const ValueKey('wysiwyg-writerside-semantic'),
         tooltip: context.l10n.wsSemanticFormats,
         icon: BusyMarkGlyphs.code,
@@ -405,6 +409,7 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
 
   Widget _blockStyleMenu(BuildContext context) {
     return BusyMarkHeaderPopupMenuButton<BusyWysiwygBlockCommand>(
+      onCanceled: onMenuCanceled,
       tooltip: context.l10n.textStyle,
       icon: BusyMarkGlyphs.font,
       shortcut: BusyMarkEditorShortcutLabels.textStyle,
@@ -469,6 +474,7 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
 
   Widget _admonitionMenu(BuildContext context) {
     return BusyMarkHeaderPopupMenuButton<BusyAdmonitionStyle>(
+      onCanceled: onMenuCanceled,
       tooltip: context.l10n.admonition,
       icon: BusyMarkGlyphs.info,
       transparent: false,

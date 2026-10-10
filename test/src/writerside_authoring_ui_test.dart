@@ -106,6 +106,42 @@ void main() {
   }
 
   for (final xml in [false, true]) {
+    testWidgets(
+      '${xml ? 'XML' : 'Markdown'} canceled native menu restores editing focus and selection',
+      (tester) async {
+        final changes = <String>[];
+        await mount(
+          tester,
+          BusyMarkWysiwygEditor(
+            document: _document(xml),
+            onSourceChanged: (_, source) => changes.add(source),
+          ),
+        );
+        await tester.tap(_textField('Text'));
+        final field = tester.widget<TextField>(_textField('Text'));
+        const selection = TextSelection(baseOffset: 0, extentOffset: 4);
+        field.controller!.selection = selection;
+        await tester.pumpAndSettle();
+        binding.defaultBinaryMessenger.setMockMethodCallHandler(channel, (
+          call,
+        ) async {
+          if (call.method == 'show') {
+            // GTK owns keyboard focus while its menu is open. Its dismissal
+            // returns a null selection without invoking a toolbar command.
+            FocusManager.instance.primaryFocus?.unfocus();
+            return null;
+          }
+          return true;
+        });
+        await tester.tap(
+          find.byKey(const ValueKey('wysiwyg-writerside-insert')),
+        );
+        await tester.pumpAndSettle();
+        expect(field.focusNode!.hasFocus, isTrue);
+        expect(field.controller!.selection, selection);
+        expect(changes, isEmpty);
+      },
+    );
     for (final label in ['Procedure', 'Tabs', 'Definition List', 'TLDR']) {
       testWidgets(
         '${xml ? 'XML' : 'Markdown'} inserts and edits $label through native menu',
@@ -526,6 +562,39 @@ void main() {
     await tester.pumpAndSettle();
     result.complete(0);
     await tester.pumpAndSettle();
+    expect(edits, 0);
+  });
+  testWidgets('stale native cancellation cannot focus the switched buffer', (
+    tester,
+  ) async {
+    final result = Completer<int?>();
+    binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      channel,
+      (call) => call.method == 'show' ? result.future : Future.value(true),
+    );
+    var edits = 0;
+    Widget editor(String id) => _app(
+      BusyMarkWysiwygEditor(
+        document: _document(true),
+        documentId: id,
+        onSourceChanged: (_, _) => edits++,
+      ),
+    );
+    await tester.pumpWidget(editor('first'));
+    await tester.pumpAndSettle();
+    await tester.tap(_textField('Text'));
+    await tester.tap(find.byKey(const ValueKey('wysiwyg-writerside-insert')));
+    await tester.pump();
+    await tester.pumpWidget(editor('second'));
+    await tester.pumpAndSettle();
+    FocusManager.instance.primaryFocus?.unfocus();
+    await tester.pumpAndSettle();
+    result.complete(null);
+    await tester.pumpAndSettle();
+    expect(
+      tester.widget<TextField>(_textField('Text')).focusNode!.hasFocus,
+      isFalse,
+    );
     expect(edits, 0);
   });
   testWidgets(

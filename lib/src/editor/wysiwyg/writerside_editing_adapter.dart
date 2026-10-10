@@ -363,15 +363,11 @@ class WritersideEditingAdapter {
 
   String serializeXml(BusyDocument document) {
     final authored = document.authoredXml!;
-    final rootName = authored.rootElement?.qualifiedName ?? 'topic';
-    final namespacePrefix = rootName.contains(':')
-        ? '${rootName.split(':').first}:'
-        : '';
     final bindings = <String, WritersideDocumentNode>{
       for (final node in authored.walk())
         '${node.span.startOffset}:${node.span.endOffset}': node,
     };
-    WritersideDocumentNode build(BusyBlock block) {
+    WritersideDocumentNode build(BusyBlock block, String namespacePrefix) {
       final original = bindings[block.attributes[busyMarkXmlBindingAttribute]];
       if (block.preserveRaw || (!hasDirtyContent(block) && original != null)) {
         return original ?? rawNode(block.rawSource ?? '', document.filePath);
@@ -386,6 +382,12 @@ class WritersideEditingAdapter {
         );
       }
       final name = tagForBlock(block);
+      // New descendants belong to their actual parent's namespace. Its
+      // qualified prefix is already bound by the preserved declarations,
+      // including local aliases, default namespaces and prefix rebindings.
+      final childPrefix = original is WritersideElementNode
+          ? _namespacePrefix(original.qualifiedName)
+          : namespacePrefix;
       final attributes = sourceAttributes(block);
       if (titleElements.contains(name)) attributes['title'] = block.plainText;
       if (name == 'code-block') {
@@ -409,13 +411,13 @@ class WritersideEditingAdapter {
                 : const <WritersideDocumentNode>[]
           : busyMarkIsWritersideContainer(block) ||
                 containers.contains(name) && block.children.isNotEmpty
-          ? block.children.map(build).toList()
+          ? block.children.map((child) => build(child, childPrefix)).toList()
           : [
               for (final inline in block.inlines)
                 ...inlineNodes(
                   inline,
                   document.filePath,
-                  namespacePrefix: namespacePrefix,
+                  namespacePrefix: childPrefix,
                 ),
             ];
       return elementNode(
@@ -428,7 +430,9 @@ class WritersideEditingAdapter {
       );
     }
 
-    final next = authored.copyWith(nodes: document.blocks.map(build).toList());
+    final next = authored.copyWith(
+      nodes: document.blocks.map((block) => build(block, '')).toList(),
+    );
     return const WritersideDocumentSerializer().serialize(next);
   }
 
@@ -597,6 +601,8 @@ class WritersideEditingAdapter {
         span: SourceSpan.entireFile(path, source),
         rawSource: source,
       );
+  static String _namespacePrefix(String qualifiedName) =>
+      qualifiedName.contains(':') ? '${qualifiedName.split(':').first}:' : '';
   static WritersideElementNode elementNode(
     String name,
     Map<String, String> attributes,
@@ -686,6 +692,10 @@ class WritersideEditingAdapter {
         'src': inline.destination!,
       if (inline.kind == BusyInlineKind.image) 'alt': inline.text,
     };
+    final qualifiedName = inline.attributes['xml-name'];
+    final childPrefix = qualifiedName != null
+        ? _namespacePrefix(qualifiedName)
+        : namespacePrefix;
     return [
       elementNode(
         name.split(':').last,
@@ -703,7 +713,7 @@ class WritersideEditingAdapter {
               ]
             : [
                 for (final child in inline.children)
-                  ...inlineNodes(child, path, namespacePrefix: namespacePrefix),
+                  ...inlineNodes(child, path, namespacePrefix: childPrefix),
               ],
         path,
         namespacePrefix: namespacePrefix,

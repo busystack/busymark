@@ -956,6 +956,11 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
                     onPlacementChanged: widget.onToolbarPlacementChanged,
                     onDirectionChanged: widget.onToolbarDirectionChanged,
                     child: BusyMarkWysiwygToolbar(
+                      onMenuCanceled: () {
+                        if (_isDialogTargetCurrent(authoringGuard)) {
+                          _restoreEditingFocusAfterFrame();
+                        }
+                      },
                       axis: widget.toolbarDirection._axis,
                       alignEnd: _toolbarAlignedEnd(
                         widget.toolbarPlacement,
@@ -4670,8 +4675,9 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   }
 
   void _restoreEditingFocusAfterFrame() {
+    final documentId = _documentId;
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) {
+      if (!mounted || _documentId != documentId) {
         return;
       }
       if (_documentSelection != null) {
@@ -6716,14 +6722,16 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       return null;
     }
     final liveBlocks = _editableBlocks(_documentController.document.blocks);
-    final parsedDocument = const MarkdownParser()
-        .parse(
-          filePath: _documentController.document.filePath,
-          source: source,
-          mode: _documentController.document.mode,
-          validateLocalReferences: false,
-        )
-        .busyDocument;
+    final parsedDocument = busyMarkWysiwygBindMarkdownReferences(
+      const MarkdownParser()
+          .parse(
+            filePath: _documentController.document.filePath,
+            source: source,
+            mode: _documentController.document.mode,
+            validateLocalReferences: false,
+          )
+          .busyDocument,
+    );
     final parsedBlocks = _editableBlocks(parsedDocument.blocks);
     final ranges = _currentSelectionRanges();
     if (ranges.isEmpty) {

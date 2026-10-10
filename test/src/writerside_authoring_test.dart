@@ -13,6 +13,7 @@ import 'package:busymark/src/writerside/writerside_document_parser.dart';
 import 'package:busymark/src/writerside/writerside_project.dart';
 import 'package:busymark/src/workspace/workspace_model.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:xml/xml.dart';
 
 Iterable<BusyBlock> walk(Iterable<BusyBlock> blocks) sync* {
   for (final b in blocks) {
@@ -30,6 +31,105 @@ void main() {
     expect(DocumentKind.writersideXmlTopic.supportsAiMarkdownEditing, isFalse);
     expect(DocumentKind.config.supportsVisualEditing, isFalse);
   });
+  test(
+    'Markdown variable references retain their editable type after reopening',
+    () {
+      const parser = MarkdownParser();
+      final c = BusyMarkWysiwygDocumentController(
+        document: parser
+            .parse(
+              filePath: 'a.md',
+              source: '# A\n\nText\n',
+              mode: MarkdownMode.writersideMarkdown,
+            )
+            .busyDocument,
+      );
+      final p = walk(
+        c.document.blocks,
+      ).firstWhere((b) => b.kind == BusyBlockKind.paragraph);
+      c.insertVariableReference(p.id, 'product', 4, 4);
+      final source = c.markdown;
+      final reopened = parser
+          .parse(
+            filePath: 'a.md',
+            source: source,
+            mode: MarkdownMode.writersideMarkdown,
+          )
+          .busyDocument;
+      final editor = BusyMarkWysiwygDocumentController(document: reopened);
+      final paragraph = walk(
+        editor.document.blocks,
+      ).firstWhere((b) => b.kind == BusyBlockKind.paragraph);
+      expect(paragraph.plainText, 'Textproduct');
+      final reference = busyInlineReferenceRanges(paragraph.inlines).single;
+      expect(reference.kind, BusyInlineKind.writersideVariable);
+      expect(reference.attributes['reference'], 'product');
+      expect(editor.markdown, source);
+      expect(
+        editor.updateInlineReference(
+          paragraph.id,
+          reference,
+          'reference',
+          'version',
+        ),
+        isTrue,
+      );
+      expect(editor.markdown, contains('Text%version%'));
+      final ordinary = parser
+          .parse(
+            filePath: 'a.md',
+            source: source,
+            mode: MarkdownMode.commonMark,
+          )
+          .busyDocument;
+      expect(
+        walk(
+          ordinary.blocks,
+        ).firstWhere((b) => b.kind == BusyBlockKind.paragraph).plainText,
+        'Text%product%',
+      );
+    },
+  );
+  test(
+    'Markdown reference binding preserves formatting and literal contexts',
+    () {
+      const source = r'''# A
+
+%product% **%version%** [more %product%](guide.topic) \%product% &#37;product&#37; `%product%` $x%product%$
+
+<extension>%product%</extension>
+''';
+      final document = const MarkdownParser()
+          .parse(
+            filePath: 'a.md',
+            source: source,
+            mode: MarkdownMode.writersideMarkdown,
+          )
+          .busyDocument;
+      final c = BusyMarkWysiwygDocumentController(document: document);
+      final paragraph = walk(
+        c.document.blocks,
+      ).firstWhere((b) => b.kind == BusyBlockKind.paragraph);
+      expect(
+        busyInlineReferenceRanges(paragraph.inlines)
+            .where((r) => r.kind == BusyInlineKind.writersideVariable)
+            .map((r) => r.attributes['reference']),
+        ['product', 'version', 'product'],
+      );
+      expect(c.markdown, source);
+      expect(walk(c.document.blocks).every((b) => !b.dirty), isTrue);
+      c.replaceDocument(document);
+      expect(c.markdown, source);
+      expect(
+        busyInlineReferenceRanges(
+          walk(
+            c.document.blocks,
+          ).firstWhere((b) => b.kind == BusyBlockKind.paragraph).inlines,
+        ).where((r) => r.kind == BusyInlineKind.writersideVariable),
+        hasLength(3),
+      );
+    },
+  );
   test(
     'Markdown switcher labels preserve literal metadata through reopening',
     () {
@@ -232,6 +332,201 @@ Text
     c.rebaseCommittedSource(source);
     c.updateBlockText(p.id, 'Texxt');
     expect(c.markdown, contains('<ws:control>Texxt</ws:control>'));
+  });
+  for (final context in [
+    (
+      name: 'different namespace',
+      prefix: 'nested:',
+      declaration: 'xmlns:nested="urn:nested"',
+      uri: 'urn:nested',
+    ),
+    (
+      name: 'namespace alias',
+      prefix: 'nested:',
+      declaration: 'xmlns:nested="urn:topic"',
+      uri: 'urn:topic',
+    ),
+    (
+      name: 'rebound root prefix',
+      prefix: 'nested:',
+      declaration: 'xmlns:nested="urn:nested" xmlns:ws="urn:rebound"',
+      uri: 'urn:nested',
+    ),
+    (
+      name: 'locally rebound parent prefix',
+      prefix: 'ws:',
+      declaration: 'xmlns:ws="urn:nested"',
+      uri: 'urn:nested',
+    ),
+    (
+      name: 'default namespace',
+      prefix: '',
+      declaration: 'xmlns="urn:nested"',
+      uri: 'urn:nested',
+    ),
+  ]) {
+    test('XML editing inherits the parent ${context.name}', () {
+      final prefix = context.prefix;
+      final source =
+          '<?xml version="1.0"?>\n<!--before-->\n'
+          '<ws:topic xmlns:ws="urn:topic" xmlns:ext="urn:extension" id="t" title="Title">'
+          '<${prefix}chapter ${context.declaration} ext:mode="kept" title="Chapter" id="nested">'
+          '<${prefix}p id="text">Text &amp; more</${prefix}p>'
+          '<!--inside--><ext:unknown ext:flag="yes">Protected</ext:unknown>'
+          '</${prefix}chapter></ws:topic>';
+      final c = BusyMarkWysiwygDocumentController(
+        document: adapter.parseXml(filePath: 't.topic', source: source)!,
+      );
+      expect(c.markdown, source);
+      final paragraph = walk(
+        c.document.blocks,
+      ).firstWhere((b) => b.attributes['id'] == 'text');
+      final chapter = walk(
+        c.document.blocks,
+      ).firstWhere((b) => b.attributes['id'] == 'nested');
+      c.applyInlineCommand(
+        paragraph.id,
+        BusyWysiwygInlineCommand.uiControl,
+        0,
+        4,
+      );
+      final procedure = c.insertWriterside(
+        BusyWritersideInsertCommand.procedure,
+        paragraph.id,
+        title: 'Procedure',
+      )!;
+      final tabs = c.insertWriterside(
+        BusyWritersideInsertCommand.tabs,
+        paragraph.id,
+        title: 'Tab',
+      )!;
+      for (final id in [procedure, tabs]) {
+        final leaf = walk(
+          c.blockById(id)!.children,
+        ).firstWhere((b) => b.kind == BusyBlockKind.paragraph);
+        c.updateBlockText(leaf.id, 'Inserted content');
+      }
+      c.updateBlockText(chapter.id, 'Edited chapter');
+      void verify(String saved) {
+        expect(
+          const WritersideDocumentParser()
+              .parseXml(filePath: 't.topic', source: saved)
+              .isWellFormed,
+          isTrue,
+        );
+        final xmlDocument = XmlDocument.parse(saved);
+        for (final element in xmlDocument.descendants.whereType<XmlElement>()) {
+          if (element.name.prefix != null) {
+            expect(element.namespaceUri, isNotNull);
+          }
+          for (final attribute in element.attributes) {
+            if (attribute.name.prefix != null &&
+                attribute.name.prefix != 'xmlns') {
+              expect(attribute.namespaceUri, isNotNull);
+            }
+          }
+        }
+        final parent = xmlDocument.descendants
+            .whereType<XmlElement>()
+            .firstWhere((e) => e.getAttribute('id') == 'nested');
+        expect(parent.name.qualified, '${prefix}chapter');
+        expect(parent.getAttribute('title'), 'Edited chapter');
+        expect(
+          parent.attributes
+              .firstWhere((a) => a.name.qualified == 'ext:mode')
+              .namespaceUri,
+          'urn:extension',
+        );
+        for (final element in parent.descendants.whereType<XmlElement>().where(
+          (e) => e.name.prefix != 'ext',
+        )) {
+          expect(
+            element.namespaceUri,
+            context.uri,
+            reason: element.toXmlString(),
+          );
+          expect(element.name.qualified, '$prefix${element.name.local}');
+        }
+        expect(
+          parent.descendants.whereType<XmlElement>().map((e) => e.name.local),
+          containsAll(['procedure', 'step', 'tabs', 'tab', 'control']),
+        );
+        expect(saved, startsWith('<?xml version="1.0"?>\n<!--before-->\n'));
+        expect(
+          saved,
+          contains(
+            '<!--inside--><ext:unknown ext:flag="yes">Protected</ext:unknown>',
+          ),
+        );
+        expect(
+          RegExp(r'xmlns[:=]').allMatches(saved).length,
+          RegExp(r'xmlns[:=]').allMatches(source).length,
+        );
+      }
+
+      final saved = c.markdown;
+      verify(saved);
+      c.rebaseCommittedSource(saved);
+      expect(c.blockById(paragraph.id), isNotNull);
+      c.updateBlockText(paragraph.id, 'Texxt & more');
+      verify(c.markdown);
+      final reopened = BusyMarkWysiwygDocumentController(
+        document: adapter.parseXml(filePath: 't.topic', source: c.markdown)!,
+      );
+      final p = walk(
+        reopened.document.blocks,
+      ).firstWhere((b) => b.attributes['id'] == 'text');
+      reopened.applyInlineCommand(
+        p.id,
+        BusyWysiwygInlineCommand.filePath,
+        8,
+        12,
+      );
+      verify(reopened.markdown);
+    });
+  }
+  test('XML formatting inherits declarations on existing inline elements', () {
+    const source =
+        '<ws:topic xmlns:ws="urn:topic" id="t" title="Title">'
+        '<ws:p><n:b xmlns:n="urn:inline" xmlns:ws="urn:rebound" n:role="button">Save</n:b></ws:p></ws:topic>';
+    final c = BusyMarkWysiwygDocumentController(
+      document: adapter.parseXml(filePath: 't.topic', source: source)!,
+    );
+    expect(c.markdown, source);
+    final p = walk(
+      c.document.blocks,
+    ).firstWhere((b) => b.kind == BusyBlockKind.paragraph);
+    c.applyInlineCommand(p.id, BusyWysiwygInlineCommand.uiControl, 0, 4);
+    final saved = c.markdown;
+    final elements = XmlDocument.parse(
+      saved,
+    ).descendants.whereType<XmlElement>().toList();
+    final control = elements.firstWhere((e) => e.name.local == 'control');
+    expect(control.name.qualified, 'n:control');
+    final bold = elements.firstWhere((e) => e.name.local == 'b');
+    expect(bold.name.qualified, 'n:b');
+    expect(
+      bold.attributes
+          .firstWhere((a) => a.name.qualified == 'n:role')
+          .namespaceUri,
+      'urn:inline',
+    );
+    expect(control.namespaceUri, 'urn:inline');
+    c.rebaseCommittedSource(saved);
+    c.updateBlockText(p.id, 'Saved');
+    c.applyInlineCommand(p.id, BusyWysiwygInlineCommand.filePath, 0, 5);
+    final edited = XmlDocument.parse(c.markdown).descendants
+        .whereType<XmlElement>()
+        .where((e) => {'b', 'control', 'path'}.contains(e.name.local))
+        .toList();
+    expect(
+      edited.map((e) => e.name.local),
+      containsAll(['b', 'control', 'path']),
+    );
+    for (final element in edited) {
+      expect(element.namespaceUri, 'urn:inline');
+      expect(element.name.prefix, 'n');
+    }
   });
   test(
     'XML ordinary inline and image edits serialize as XML, unsupported insertions are inert',
@@ -1221,13 +1516,13 @@ Text
             ? adapter.parseXml(
                 filePath: 'authored-xml.topic',
                 source:
-                    '<topic id="authored-xml" title="Authored XML"><p>Text path UI Ctrl+C</p><chapter title="Chapter"><p>Chapter text</p></chapter></topic>',
+                    '<topic id="authored-xml" title="Authored XML"><p>Text path UI Ctrl+S</p><chapter title="Desktop"><p>Desktop content</p></chapter><chapter title="Terminal"><p>Terminal content</p></chapter></topic>',
               )!
             : const MarkdownParser()
                   .parse(
                     filePath: 'authored-markdown.md',
                     source:
-                        '# Authored Markdown\n\nText path UI Ctrl+C\n\n## Chapter\n\nChapter text\n',
+                        '# Authored Markdown\n\nText path UI Ctrl+S\n\n## Desktop\n\nDesktop content\n\n## Terminal\n\nTerminal content\n',
                     mode: MarkdownMode.writersideMarkdown,
                   )
                   .busyDocument,
@@ -1286,7 +1581,27 @@ Text
       c.applyInlineCommand(p.id, BusyWysiwygInlineCommand.filePath, 5, 9);
       c.applyInlineCommand(p.id, BusyWysiwygInlineCommand.uiPath, 10, 12);
       c.applyInlineCommand(p.id, BusyWysiwygInlineCommand.shortcut, 13, 19);
+      // The fixture defines $Save. Exercise the authored-reference property
+      // path as well as literal formatting without a hard-coded-shortcut
+      // warning from the official builder.
+      final shortcut = busyInlineReferenceRanges(
+        c.blockById(p.id)!.inlines,
+      ).firstWhere((range) => range.kind == BusyInlineKind.writersideShortcut);
+      expect(c.updateInlineReference(p.id, shortcut, 'key', r'$Save'), isTrue);
       c.insertVariableReference(p.id, 'product', 19, 19);
+      for (final title in ['Desktop', 'Terminal']) {
+        final chapter = walk(c.document.blocks).firstWhere(
+          (b) => b.kind == BusyBlockKind.heading && b.plainText == title,
+        );
+        expect(
+          c.updateWritersideProperty(
+            chapter.id,
+            'switcher-key',
+            title.toLowerCase(),
+          ),
+          isTrue,
+        );
+      }
       c.updateTopicSwitcherLabel('Platform');
       c.updateTopicNavigation('for', 'chapter,procedure,def');
       final name = xmlFormat ? 'authored-xml.topic' : 'authored-markdown.md';

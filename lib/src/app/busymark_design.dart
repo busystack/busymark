@@ -1209,6 +1209,7 @@ class BusyMarkHeaderPopupMenuButton<T> extends StatefulWidget {
     required this.icon,
     required this.itemBuilder,
     required this.onSelected,
+    this.onCanceled,
     this.transparent = true,
     this.elevated = false,
     this.shortcut,
@@ -1224,6 +1225,7 @@ class BusyMarkHeaderPopupMenuButton<T> extends StatefulWidget {
   final FutureOr<List<PopupMenuEntry<T>>> Function(BuildContext context)
   itemBuilder;
   final ValueChanged<T> onSelected;
+  final VoidCallback? onCanceled;
   final bool transparent;
 
   /// Uses the theme's physical button elevation.
@@ -1287,6 +1289,7 @@ class _BusyMarkHeaderPopupMenuButtonState<T>
     // A menu response belongs to the context in which it was opened. A
     // rebuilt caller may now represent another buffer or element.
     final onSelected = widget.onSelected;
+    final onCanceled = widget.onCanceled;
     try {
       final items = await widget.itemBuilder(context);
       if (!mounted || items.isEmpty) {
@@ -1316,8 +1319,12 @@ class _BusyMarkHeaderPopupMenuButtonState<T>
           });
         }
       }
-      if (mounted && !session.dismissed && selection != null) {
-        onSelected(selection);
+      if (mounted && !session.dismissed) {
+        if (selection != null) {
+          onSelected(selection);
+        } else {
+          onCanceled?.call();
+        }
       }
     } finally {
       if (mounted) {

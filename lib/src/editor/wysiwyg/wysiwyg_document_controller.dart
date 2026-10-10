@@ -56,7 +56,9 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
   BusyMarkWysiwygDocumentController({
     required BusyDocument document,
     BusyMarkMarkdownSerializer serializer = const BusyMarkMarkdownSerializer(),
-  }) : _document = _ensureEditableDocument(document),
+  }) : _document = _ensureEditableDocument(
+         busyMarkWysiwygBindMarkdownReferences(document),
+       ),
        _serializer = serializer;
 
   BusyDocument _document;
@@ -82,7 +84,9 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
   }
 
   void replaceDocument(BusyDocument document) {
-    _document = _ensureEditableDocument(document);
+    _document = _ensureEditableDocument(
+      busyMarkWysiwygBindMarkdownReferences(document),
+    );
     notifyListeners();
   }
 
@@ -5558,6 +5562,96 @@ String _incrementOrderedMarker(String? marker, int offset) {
   final value = int.tryParse(match.group(1) ?? '') ?? 1;
   final suffix = match.group(2) ?? '.';
   return '${value + offset}$suffix';
+}
+
+// The authored Markdown parser retains interpolation tokens for the preview
+// resolver. Bind those tokens to the editor's reference representation on
+// loading, without changing source, dirty flags, or the preview projection.
+BusyDocument busyMarkWysiwygBindMarkdownReferences(BusyDocument document) {
+  if (document.mode != MarkdownMode.writersideMarkdown || document.isXmlTopic) {
+    return document;
+  }
+  bool ignores(Map<String, String> attributes, bool inherited) =>
+      switch (attributes['ignore-vars']) {
+        'true' => true,
+        'false' => false,
+        _ => inherited,
+      };
+  List<BusyInline> bind(List<BusyInline> inlines, bool inherited) {
+    final result = <BusyInline>[];
+    for (final inline in inlines) {
+      final ignore = ignores(inline.attributes, inherited);
+      if (ignore ||
+          {
+            BusyInlineKind.code,
+            BusyInlineKind.math,
+            BusyInlineKind.html,
+            BusyInlineKind.writersideVariable,
+          }.contains(inline.kind)) {
+        result.add(inline);
+      } else if (inline.kind == BusyInlineKind.text) {
+        final parts = const WritersideEditingAdapter().textInlines(inline.text);
+        if (!parts.any((p) => p.kind == BusyInlineKind.writersideVariable)) {
+          result.add(inline);
+        } else {
+          result.addAll(
+            parts.map(
+              (part) => part.kind == BusyInlineKind.writersideVariable
+                  ? part.copyWith(
+                      attributes: {...inline.attributes, ...part.attributes},
+                    )
+                  : inline.copyWith(text: part.text),
+            ),
+          );
+        }
+      } else if (inline.children.isNotEmpty) {
+        final children = bind(inline.children, ignore);
+        result.add(
+          listEquals(children, inline.children)
+              ? inline
+              : inline.copyWith(children: children),
+        );
+      } else {
+        result.add(inline);
+      }
+    }
+    return result;
+  }
+
+  BusyBlock visit(BusyBlock block, bool inherited) {
+    if (block.isSourceProtected || block.preserveRaw || block.isSourceOnly) {
+      return block;
+    }
+    final ignore = ignores(block.attributes, inherited);
+    final inlines =
+        {
+              BusyBlockKind.paragraph,
+              BusyBlockKind.heading,
+              BusyBlockKind.unorderedListItem,
+              BusyBlockKind.orderedListItem,
+              BusyBlockKind.taskListItem,
+            }.contains(block.kind) &&
+            !WritersideEditingAdapter.titleElements.contains(
+              block.attributes['element'],
+            )
+        ? bind(block.inlines, ignore)
+        : block.inlines;
+    final children = block.children.map((b) => visit(b, ignore)).toList();
+    if (listEquals(inlines, block.inlines) &&
+        listEquals(children, block.children)) {
+      return block;
+    }
+    return block.copyWith(
+      inlines: inlines,
+      children: children,
+      dirty: block.dirty,
+    );
+  }
+
+  final blocks = document.blocks.map((b) => visit(b, false)).toList();
+  return listEquals(blocks, document.blocks)
+      ? document
+      : document.copyWith(blocks: blocks);
 }
 
 BusyDocument _ensureEditableDocument(BusyDocument document) {
