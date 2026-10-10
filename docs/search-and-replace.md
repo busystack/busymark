@@ -1,8 +1,30 @@
 # Search and replace
 
 Press **Ctrl+F**, choose **Search**, or use the command palette to search the
-open workspace. The search controls use the same query and options for the
-active document and workspace results.
+open workspace. For local Markdown and Writerside workspaces, the search controls
+use the same query and options for the active document and workspace results.
+
+## Quick Open and Notes search
+
+**Ctrl+P** opens Quick Open for titles and local paths or Notes categories.
+Exact/prefix title matches appear first. Use the arrow keys and Enter to open a
+result, or Escape to dismiss; **Ctrl+Shift+P** remains the command palette.
+
+In a Nextcloud Notes workspace, the sidebar search and workspace Search action
+open the same indexed search dialog, including unopened cached notes, saved
+pending edits, and unsaved open buffers. Terms use AND; quotes match phrases,
+`title:` restricts a term to the title, and `category:` restricts the category.
+For example, `"alpha beta" café category:"Work/子"` combines all three restrictions.
+Whole word is optional. Ordinary punctuation and technical identifiers are
+literal; Notes search does not expose regular-expression or FTS operators.
+
+Results show contextual highlights. Select a result to navigate in the current
+view where supported, or choose its source-location action for Markdown syntax
+that has no rendered counterpart. Changed documents are checked before applying
+stored offsets. Loading/indexing, errors, empty results, and **Show more** are
+explicit. Workspace-wide replacement remains unavailable for Notes.
+
+The remaining sections describe local workspace search and replacement.
 
 ## Search options
 

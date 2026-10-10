@@ -8,7 +8,6 @@ import 'package:busymark/src/nextcloud_notes/data/notes_api_client.dart';
 import 'package:busymark/l10n/generated/app_localizations.dart';
 import 'package:busymark/src/app/app_settings.dart';
 import 'package:busymark/src/app/busymark_design.dart';
-import 'package:busymark/src/app/busymark_dialogs.dart';
 import 'package:busymark/src/nextcloud_notes/domain/notes_conflict.dart';
 import 'package:busymark/src/app/app_router.dart';
 import 'package:busymark/src/app/busymark_app.dart';

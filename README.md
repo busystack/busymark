@@ -208,11 +208,15 @@ Once connected, select **Nextcloud Notes** on the welcome screen to reopen the w
 ### Work with notes
 
 * **Create and edit:** Create notes from the Notes sidebar and edit them using the normal Markdown editor. Use each note’s menu to change its title, category, or favorite status, save a separate local copy, or delete the note.
-* **Find and organize:** Search notes by title, content, or category; filter by favorites or category; and see synchronization status in the note list and editor.
-* **Work offline:** Edits and new notes are saved to local storage before they are synchronized. Pending changes can survive an application restart. Synchronization runs when a connection is available; the sidebar’s **Refresh** control requests another pass.
+* **Find and organize:** Use All notes, Favorites, Uncategorized, Recovery, or a category and its descendants. Sort by activity or title. Ctrl-click toggles selection, Shift-click selects a range, and Ctrl+A selects the current list; the selected-notes action reviews batch favorite/category changes and reports partial outcomes.
+* **Quick Open and search:** Ctrl+P finds titles/categories, including unopened cached notes; Ctrl+Shift+P opens the command palette. Notes search combines terms with AND and supports quoted phrases, `title:` / `category:` restrictions, whole words, snippets, and navigation to the match. Unsaved open text is included without forcing a save.
+* **Work offline:** Edits and new notes are saved locally before synchronization and survive restart. **Make available offline** retains a note or category/subtree's supported managed media. Its status lists available/missing bytes and offers deliberate retry/cancellation. Offline availability, freshness, and acknowledged synchronization are separate states; external dependencies remain identified.
 * **Review conflicts:** If a note changes on the server while you have local edits, BusyMark preserves the competing versions for review instead of silently overwriting one. The comparison workflow supports choosing a version, merging changes, or recovering content as a separate note. Ambiguous note-creation results also require explicit review.
 * **Use attachments:** Add files to notes, view supported images and media, and include managed resources when exporting Markdown or HTML. PDF export includes supported images but does not embed arbitrary file attachments. New uploads are limited to **100 MiB per file**.
-* **Export or recover:** Export individual notes to PDF or offline HTML, use **Save As** to create an independent local Markdown copy, and restore earlier content through Local History.
+* **Export and import:** Keep per-note **Save local copy**, PDF, and offline HTML exports, or export a category/subtree or account as ordinary Markdown with companion media and a versioned metadata manifest. Dirty buffers must save first; missing media is listed explicitly. Import Markdown files/folders or these snapshots through a review of categories, media, and collisions. Imports create distinct notes and resume successful local items after interruption.
+* **Recover:** Recovery lists retained deleted notes and available Local History revisions, previews their content/media availability, and recovers as a new note. It uses local retention settings; Nextcloud server trash/history is unavailable.
+
+See the [Notes workspace guide](docs/development/nextcloud-notes.md#everyday-notes-workspace) for search syntax, offline requirements, recovery, and the portable snapshot format.
 
 ### Requirements and limitations
 

@@ -339,7 +339,12 @@ class _HarnessState extends ConsumerState<_Harness> {
   }
 
   void edit(TextField field, String value) {
-    field.controller!.text = value;
+    final controller =
+        field.controller ??
+        widgets<EditableText>()
+            .firstWhere((editable) => editable.focusNode == field.focusNode)
+            .controller;
+    controller.text = value;
     field.onChanged!(value);
   }
 
@@ -932,6 +937,61 @@ class _HarnessState extends ConsumerState<_Harness> {
       }
       await capture('m2-restart-${mode.name}');
     }
+    await nativeShortcut('ctrl+p');
+    await wait(() => widgets<QuickOpenDialog>().isNotEmpty, 'native Ctrl+P');
+    edit(
+      widgets<TextField>().firstWhere(
+        (f) => f.decoration?.labelText == 'Quick Open',
+      ),
+      note.title,
+    );
+    await wait(
+      () => widgets<ListTile>().any(
+        (t) => t.title is Text && (t.title as Text).data == note.title,
+      ),
+      'native Quick Open result',
+    );
+    // The imported copy has the same title/category. Capture the selected
+    // document identity before Enter instead of guessing from duplicate titles.
+    final selectedIdentity = rankQuickOpen(
+      widgets<QuickOpenDialog>().single.documents,
+      note.title,
+    ).first.localId;
+    await capture('m2-restart-native-quick-open');
+    await nativeShortcut('enter');
+    await wait(
+      () =>
+          widgets<QuickOpenDialog>().isEmpty &&
+          ref
+                  .read(workspaceControllerProvider)
+                  .activeBuffer
+                  ?.remoteNote
+                  ?.localId ==
+              selectedIdentity,
+      'native Quick Open Enter',
+    );
+    check(true, 'm2NativeCtrlPEnterStableIdentity');
+    await nativeShortcut('ctrl+p');
+    await wait(
+      () => widgets<QuickOpenDialog>().isNotEmpty,
+      'Quick Open reopened',
+    );
+    await nativeShortcut('escape');
+    await wait(() => widgets<QuickOpenDialog>().isEmpty, 'Quick Open Escape');
+    check(true, 'm2NativeQuickOpenEscape');
+    await nativeShortcut('ctrl+shift+p');
+    await wait(
+      () =>
+          widgets<Text>().any((t) => t.data == 'Command Palette') &&
+          widgets<QuickOpenDialog>().isEmpty,
+      'native Ctrl+Shift+P',
+    );
+    await nativeShortcut('escape');
+    await wait(
+      () => !widgets<Text>().any((t) => t.data == 'Command Palette'),
+      'command palette Escape',
+    );
+    check(true, 'm2NativeCtrlShiftPCommandPalette');
     final search = showNotesSearch(
       rootNavigatorKey.currentContext!,
       ref,
@@ -1051,6 +1111,18 @@ class _HarnessState extends ConsumerState<_Harness> {
     await capture(screenshot);
     ref.read(workspaceSearchCloseRequestProvider.notifier).request();
     check(true, screenshot);
+  }
+
+  Future<void> nativeShortcut(String key) async {
+    await windowManager.focus();
+    final result = await Process.run(
+      'python3',
+      ['tools/nextcloud_notes_native_key.py', key],
+      environment: {'BUSYMARK_NATIVE_ACCEPTANCE': '1'},
+    );
+    if (result.exitCode != 0) {
+      throw StateError('Native acceptance key failed: $key');
+    }
   }
 
   Future<void> run() async {
