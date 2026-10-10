@@ -244,7 +244,7 @@ void _worker(List<dynamic> arguments) {
     db.execute('PRAGMA synchronous = FULL');
     db.execute('PRAGMA busy_timeout = 5000');
     final version = db.select('PRAGMA user_version').first.values.first as int;
-    if (version > 2) {
+    if (version > 3) {
       throw StateError(
         'The Notes database was created by a newer BusyMark version.',
       );
@@ -274,7 +274,9 @@ void _worker(List<dynamic> arguments) {
     // v2 stores durable creation attempts in the existing versioned note JSON.
     // Older uncertain operations have no attempt and remain explicitly unresolved.
     // Prevent old clients from opening and losing this new safety metadata.
-    if (version < 2) db.execute('PRAGMA user_version = 2');
+    // v3 fences durable retry/error provenance, edit times and settings attempts.
+    // Advance only inside the recovery transaction; malformed rows roll back.
+
     // A request interrupted by a crash has an uncertain creation/upload outcome.
     db.execute('BEGIN IMMEDIATE');
     try {
@@ -293,6 +295,7 @@ void _worker(List<dynamic> arguments) {
           );
         }
       }
+      if (version < 3) db.execute('PRAGMA user_version = 3');
       db.execute('COMMIT');
     } catch (_) {
       db.execute('ROLLBACK');
@@ -395,7 +398,7 @@ Object? _execute(Database db, String action, dynamic argument) {
         throw StateError('Attachment too large.');
       }
       db.execute(
-        'INSERT INTO attachments(id,note_id,data,bytes) VALUES(?,?,?,?)',
+        'INSERT INTO attachments(id,note_id,data,bytes) VALUES(?,?,?,?) ON CONFLICT(id) DO UPDATE SET data=excluded.data,bytes=excluded.bytes',
         [a[0], a[1], a[2], bytes],
       );
       return null;

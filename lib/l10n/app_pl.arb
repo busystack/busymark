@@ -3478,5 +3478,17 @@
   "wsMediumLayout": "Równe kolumny",
   "wsNarrowLayout": "Wąska kolumna terminu",
   "wsTitle": "Tytuł",
-  "wsSwitcherKey": "Klucz przełącznika"
+  "wsSwitcherKey": "Klucz przełącznika",
+  "nextcloudServerSettings": "Ustawienia Notes na serwerze",
+  "nextcloudNotesPath": "Ścieżka folderu notatek",
+  "nextcloudFileSuffix": "Rozszerzenie nowych notatek",
+  "nextcloudServerSettingsExplanation": "Te ustawienia Notes dotyczą innych klientów. Zmiana ścieżki nie przenosi plików; zmiana rozszerzenia nie zmienia nazw istniejących notatek.",
+  "nextcloudSettingsSaved": "Zapisano ustawienia serwera",
+  "nextcloudSettingsNormalized": "Zapisano wartości znormalizowane przez serwer",
+  "nextcloudPendingUpload": "Załącznik oczekuje na wysłanie",
+  "nextcloudServerCheck": "Ostatnie sprawdzenie serwera: {time}",
+  "nextcloudSettingsLoading": "Wczytywanie ustawień serwera",
+  "@nextcloudSettingsLoading": {"description": "Accessible progress label while reading server Notes settings."},
+  "nextcloudSettingsSaving": "Zapisywanie ustawień serwera",
+  "@nextcloudSettingsSaving": {"description": "Accessible progress label while writing server Notes settings."}
 }

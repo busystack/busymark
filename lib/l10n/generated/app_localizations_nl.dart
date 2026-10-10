@@ -4935,4 +4935,38 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get wsSwitcherKey => 'Keuzeschakelaar';
+
+  @override
+  String get nextcloudServerSettings => 'Notes-instellingen op de server';
+
+  @override
+  String get nextcloudNotesPath => 'Pad van de notitiemap';
+
+  @override
+  String get nextcloudFileSuffix => 'Bestandsextensie voor nieuwe notities';
+
+  @override
+  String get nextcloudServerSettingsExplanation =>
+      'Deze Notes-instellingen gelden ook voor andere clients. Een ander pad verplaatst geen bestanden; een andere extensie hernoemt bestaande notities niet.';
+
+  @override
+  String get nextcloudSettingsSaved => 'Serverinstellingen opgeslagen';
+
+  @override
+  String get nextcloudSettingsNormalized =>
+      'Opgeslagen met door de server genormaliseerde waarden';
+
+  @override
+  String get nextcloudPendingUpload => 'Bijlage wacht op upload';
+
+  @override
+  String nextcloudServerCheck(String time) {
+    return 'Laatste servercontrole: $time';
+  }
+
+  @override
+  String get nextcloudSettingsLoading => 'Serverinstellingen laden';
+
+  @override
+  String get nextcloudSettingsSaving => 'Serverinstellingen opslaan';
 }

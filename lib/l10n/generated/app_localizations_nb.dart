@@ -4890,4 +4890,38 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String get wsSwitcherKey => 'Byttenøkkel';
+
+  @override
+  String get nextcloudServerSettings => 'Notes-innstillinger på serveren';
+
+  @override
+  String get nextcloudNotesPath => 'Sti til notatmappen';
+
+  @override
+  String get nextcloudFileSuffix => 'Filendelse for nye notater';
+
+  @override
+  String get nextcloudServerSettingsExplanation =>
+      'Disse Notes-innstillingene påvirker andre klienter. Endring av stien flytter ikke filer; endring av filendelsen gir ikke eksisterende notater nye navn.';
+
+  @override
+  String get nextcloudSettingsSaved => 'Serverinnstillinger lagret';
+
+  @override
+  String get nextcloudSettingsNormalized =>
+      'Lagret med verdier normalisert av serveren';
+
+  @override
+  String get nextcloudPendingUpload => 'Vedlegg venter på opplasting';
+
+  @override
+  String nextcloudServerCheck(String time) {
+    return 'Siste serverkontroll: $time';
+  }
+
+  @override
+  String get nextcloudSettingsLoading => 'Laster serverinnstillinger';
+
+  @override
+  String get nextcloudSettingsSaving => 'Lagrer serverinnstillinger';
 }

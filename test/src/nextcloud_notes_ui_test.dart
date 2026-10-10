@@ -1054,5 +1054,10 @@ class _CachedNotesRepository extends NotesRepository {
   }
 
   @override
-  Future<void> synchronize(String accountId) async {}
+  Future<void> synchronize(
+    String accountId, {
+    bool allowWrites = true,
+    bool refreshCapabilities = false,
+    bool onlyFreshWrites = false,
+  }) async {}
 }

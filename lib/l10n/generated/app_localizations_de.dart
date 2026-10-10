@@ -4930,4 +4930,39 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get wsSwitcherKey => 'Umschaltschlüssel';
+
+  @override
+  String get nextcloudServerSettings => 'Notes-Einstellungen auf dem Server';
+
+  @override
+  String get nextcloudNotesPath => 'Pfad des Notizordners';
+
+  @override
+  String get nextcloudFileSuffix => 'Dateiendung neuer Notizen';
+
+  @override
+  String get nextcloudServerSettingsExplanation =>
+      'Diese Notes-Einstellungen gelten auch für andere Clients. Ein Pfadwechsel verschiebt keine Dateien; eine neue Endung benennt bestehende Notizen nicht um.';
+
+  @override
+  String get nextcloudSettingsSaved => 'Servereinstellungen gespeichert';
+
+  @override
+  String get nextcloudSettingsNormalized =>
+      'Mit vom Server normalisierten Werten gespeichert';
+
+  @override
+  String get nextcloudPendingUpload => 'Anhang wartet auf Upload';
+
+  @override
+  String nextcloudServerCheck(String time) {
+    return 'Letzte Serverprüfung: $time';
+  }
+
+  @override
+  String get nextcloudSettingsLoading => 'Servereinstellungen werden geladen';
+
+  @override
+  String get nextcloudSettingsSaving =>
+      'Servereinstellungen werden gespeichert';
 }

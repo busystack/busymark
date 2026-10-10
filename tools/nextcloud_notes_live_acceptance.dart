@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
@@ -18,6 +19,10 @@ class _Connection extends http.BaseClient {
   bool offline = false;
   bool loseNextCreateResponse = false;
   bool discardNextCreate = false;
+  bool loseNextSettingsResponse = false;
+  bool loseNextUploadResponse = false;
+  int? nextCollectionFailure;
+  String? nextPutRetryAfter;
   Map<String, dynamic>? discardedCreation;
   int attachmentUploads = 0;
   int noteUpdates = 0;
@@ -28,6 +33,29 @@ class _Connection extends http.BaseClient {
   @override
   Future<http.StreamedResponse> send(http.BaseRequest request) async {
     if (offline) throw http.ClientException('Intentional offline acceptance.');
+    if (request.method == 'GET' &&
+        request.url.path.endsWith('/v1/notes') &&
+        nextCollectionFailure != null) {
+      final status = nextCollectionFailure!;
+      nextCollectionFailure = null;
+      return http.StreamedResponse(
+        Stream.value(utf8.encode('{}')),
+        status,
+        request: request,
+      );
+    }
+    if (request.method == 'PUT' &&
+        request.url.path.contains('/v1/notes/') &&
+        nextPutRetryAfter != null) {
+      final deadline = nextPutRetryAfter!;
+      nextPutRetryAfter = null;
+      return http.StreamedResponse(
+        Stream.value(utf8.encode('{}')),
+        429,
+        headers: {'Retry-After': deadline},
+        request: request,
+      );
+    }
     if (request.url.queryParameters.containsKey('chunkCursor')) chunkRequests++;
     final creation =
         request.method == 'POST' && request.url.path.endsWith('/v1/notes');
@@ -37,7 +65,7 @@ class _Connection extends http.BaseClient {
       final id = int.parse(request.url.pathSegments.last);
       attachmentUploadsById.update(id, (v) => v + 1, ifAbsent: () => 1);
     }
-    if (request.method == 'PUT' && request.url.path.contains('/notes/')) {
+    if (request.method == 'PUT' && request.url.path.contains('/v1/notes/')) {
       noteUpdates++;
       final id = int.parse(request.url.pathSegments.last);
       noteUpdatesById.update(id, (v) => v + 1, ifAbsent: () => 1);
@@ -51,6 +79,19 @@ class _Connection extends http.BaseClient {
       );
     }
     final response = await _client.send(request);
+    if ((loseNextSettingsResponse &&
+            request.method == 'PUT' &&
+            request.url.path.endsWith('/v1/settings')) ||
+        (loseNextUploadResponse &&
+            request.method == 'POST' &&
+            request.url.path.contains('/attachment/'))) {
+      loseNextSettingsResponse = false;
+      loseNextUploadResponse = false;
+      await response.stream.drain<void>();
+      throw http.ClientException(
+        'Intentional lost response after a real server write.',
+      );
+    }
     if (creation && loseNextCreateResponse) {
       loseNextCreateResponse = false;
       await response.stream.drain<void>();
@@ -95,6 +136,8 @@ Future<void> main(List<String> arguments) async {
   final checks = <String, Object?>{};
   NotesRepository? repository;
   final createdIds = <int>{};
+  NotesSettings? originalSettings;
+  DateTime? editClock;
   try {
     final capabilities = await fetchNotesCapabilities(
       client: connection,
@@ -123,6 +166,13 @@ Future<void> main(List<String> arguments) async {
       final result = NotesRepository(
         store: store,
         clientForAccount: (value) async => api(value),
+        clock: () => editClock ?? DateTime.now(),
+        fetchCapabilities: (value) => fetchNotesCapabilities(
+          client: connection,
+          server: value.server,
+          loginName: value.loginName,
+          appPassword: password,
+        ),
       );
       await result.initialize();
       return result;
@@ -130,6 +180,17 @@ Future<void> main(List<String> arguments) async {
 
     repository = await reopen();
     await repository.upsertAccount(account);
+    originalSettings = await api(account).getSettings();
+    await _milestoneChecks(
+      repository,
+      connection,
+      account,
+      api,
+      createdIds,
+      checks,
+      directory,
+      (value) => editClock = value,
+    );
     if (credentials['lockedNoteId'] case final int lockedId) {
       await repository.synchronize(account.id);
       final locked = repository.notes.firstWhere((n) => n.serverId == lockedId);
@@ -538,12 +599,13 @@ Future<void> main(List<String> arguments) async {
     stdout.writeln(
       'Live Nextcloud Notes acceptance passed (${checks.length} checks).',
     );
-  } on Object catch (error) {
+  } on Object catch (error, stack) {
     await File(arguments[1]).writeAsString(
       const JsonEncoder.withIndent('  ').convert({
         'ok': false,
         'checks': checks,
         'failureType': error.runtimeType.toString(),
+        'failureStack': stack.toString(),
         'failure': error is NotesException
             ? error.message
             : error is StateError
@@ -556,6 +618,19 @@ Future<void> main(List<String> arguments) async {
     exitCode = 1;
   } finally {
     connection.offline = false;
+    if (originalSettings != null &&
+        repository != null &&
+        repository.accounts.isNotEmpty) {
+      try {
+        await NotesApiClient(
+          client: connection,
+          account: repository.accounts.first,
+          appPassword: password,
+        ).updateSettings(originalSettings.toJson());
+      } on Object {
+        /* Fixture teardown still bounds cleanup. */
+      }
+    }
     // Every destructive cleanup target was created by this isolated test run.
     for (final id in createdIds) {
       try {
@@ -579,4 +654,181 @@ Future<void> main(List<String> arguments) async {
     connection.close();
     await directory.delete(recursive: true);
   }
+}
+
+Future<void> _milestoneChecks(
+  NotesRepository repository,
+  _Connection connection,
+  NextcloudAccount account,
+  NotesApiClient Function(NextcloudAccount) api,
+  Set<int> createdIds,
+  Map<String, Object?> checks,
+  Directory directory,
+  void Function(DateTime?) setClock,
+) async {
+  final settings = await repository.getSettings(account.id);
+  final changed = await repository.changeSettings(account.id, settings, {
+    'fileSuffix': '.busyacceptance',
+  });
+  _require(
+    changed.fileSuffix == '.busyacceptance' &&
+        changed.notesPath == settings.notesPath,
+    'Custom suffix/partial settings update failed.',
+  );
+  final normalized = await repository.changeSettings(account.id, changed, {
+    'fileSuffix': 'md',
+  });
+  _require(
+    normalized.fileSuffix.startsWith('.'),
+    'Server suffix normalization was not adopted.',
+  );
+  await repository.changeSettings(account.id, normalized, {
+    'fileSuffix': settings.fileSuffix,
+  });
+  checks['settingsPartialCustomSuffixNormalization'] = true;
+  connection.loseNextSettingsResponse = true;
+  final lost = await repository.changeSettings(account.id, settings, {
+    'notesPath': 'BusyMark M1 isolated collection',
+  });
+  _require(
+    lost.notesPath == 'BusyMark M1 isolated collection' &&
+        repository.accounts.single.settingsAttempt == null &&
+        repository.accounts.single.listEtag == null,
+    'Lost settings response did not reconcile by read/reset checkpoint.',
+  );
+  await repository.changeSettings(account.id, lost, {
+    'notesPath': settings.notesPath,
+  });
+  checks['lostSettingsResponseReconciledRealWrite'] = true;
+  await repository.synchronize(account.id, allowWrites: false);
+  _require(
+    repository.accounts.single.lastServerCheck != null,
+    'Complete server check timestamp missing.',
+  );
+  await repository.maintainCapabilities(account.id, force: true);
+  _require(
+    repository.accounts.single.appVersion == account.appVersion,
+    'Capabilities were not maintained without reconnect.',
+  );
+  checks['maintainedCapabilitiesAndServerCheck'] = true;
+
+  final editTime = DateTime.now().toUtc().subtract(const Duration(days: 3));
+  setClock(editTime);
+  final draft = await repository.create(
+    account.id,
+    title: 'M1 timestamp and filenames',
+    category: 'BusyMarkAcceptance',
+    content: '# Edit time',
+  );
+  final captured = draft.localActivityMicros;
+  setClock(editTime.add(const Duration(days: 2)));
+  await repository.synchronize(account.id);
+  var note = repository.noteById(draft.localId)!;
+  createdIds.add(note.serverId!);
+  _require(
+    (await api(account).get(note.serverId!)).modified ==
+            editTime.millisecondsSinceEpoch ~/ 1000 &&
+        note.localActivityMicros == captured,
+    'Delayed creation changed the local edit time.',
+  );
+  checks['delayedPublicationTimestampFidelity'] = true;
+  setClock(null);
+  final names = [
+    'é 日本.txt',
+    'literal%.txt',
+    'space # (1).txt',
+    '%2F.txt',
+    '%2e%2e.txt',
+  ];
+  for (final filename in names) {
+    final bytes = Uint8List.fromList(utf8.encode('fixture:$filename'));
+    final attachment = await repository.addAttachment(
+      note.localId,
+      filename: filename,
+      bytes: bytes,
+    );
+    await repository.save(
+      note.localId,
+      content:
+          '${repository.noteById(note.localId)!.content}\n[file](${attachment.reference})',
+    );
+    await repository.synchronize(account.id);
+    final stored = (await repository.attachments(
+      note.localId,
+    )).singleWhere((a) => a.id == attachment.id);
+    _require(
+      stored.remotePath != null &&
+          repository
+              .noteById(note.localId)!
+              .content
+              .contains(attachmentMarkdownReference(stored.remotePath!)),
+      'Raw filename was not durably published into Markdown.',
+    );
+    final file = await api(account).fetchAttachment(
+      note.serverId!,
+      stored.remotePath!,
+      destination: File('${directory.path}/filename-${attachment.id}'),
+    );
+    _require(
+      base64Encode(await file.readAsBytes()) == base64Encode(bytes),
+      'Filename upload/Markdown/download round trip failed.',
+    );
+  }
+  checks['unicodePercentSpaceHashParenthesesAttachmentRoundTrips'] = true;
+  await repository.save(
+    note.localId,
+    content: '${repository.noteById(note.localId)!.content}\nPending edit',
+  );
+  connection.nextCollectionFailure = 404;
+  await repository.synchronize(account.id);
+  _require(
+    repository.noteById(note.localId)!.syncState !=
+            NoteSyncState.deletedRemotely &&
+        repository.noteById(note.localId)!.hasPendingChanges,
+    'Injected collection 404 poisoned pending work.',
+  );
+  connection.nextPutRetryAfter = '3600';
+  await repository.synchronize(account.id);
+  note = repository.noteById(note.localId)!;
+  _require(
+    note.syncState == NoteSyncState.throttled && note.retryNotBefore != null,
+    'Injected throttle did not preserve a deadline.',
+  );
+  final updates = connection.noteUpdates;
+  await repository.synchronize(account.id);
+  _require(
+    connection.noteUpdates == updates &&
+        repository.noteById(note.localId)!.hasPendingChanges,
+    'Write retried before the throttle deadline.',
+  );
+  setClock(note.retryNotBefore!.add(const Duration(seconds: 1)));
+  await repository.synchronize(account.id);
+  setClock(null);
+  checks['simulatedCollection404AndThrottlingAroundRealRequests'] = true;
+  final staged = await repository.addAttachment(
+    note.localId,
+    filename: 'lost-upload.txt',
+    bytes: Uint8List.fromList([1, 2, 3]),
+  );
+  await repository.save(
+    note.localId,
+    content:
+        '${repository.noteById(note.localId)!.content}\n[lost](${staged.reference})',
+  );
+  connection.loseNextUploadResponse = true;
+  await repository.synchronize(account.id);
+  final uploads = connection.attachmentUploads;
+  await repository.synchronize(account.id);
+  _require(
+    connection.attachmentUploads == uploads &&
+        (await repository.attachments(
+              note.localId,
+            )).singleWhere((a) => a.id == staged.id).state ==
+            'uncertain',
+    'Lost upload was repeated automatically.',
+  );
+  checks['lostRealUploadResponsePreservesUncertainty'] = true;
+  // Explicitly remove the note; uncertain attachment bytes remain in local recovery.
+  await repository.delete(note.localId);
+  createdIds.remove(note.serverId!);
 }

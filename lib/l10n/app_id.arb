@@ -4991,5 +4991,17 @@
   "wsMediumLayout": "Kolom seimbang",
   "wsNarrowLayout": "Kolom istilah sempit",
   "wsTitle": "Judul",
-  "wsSwitcherKey": "Kunci pemilih"
+  "wsSwitcherKey": "Kunci pemilih",
+  "nextcloudServerSettings": "Pengaturan Notes server",
+  "nextcloudNotesPath": "Jalur folder catatan",
+  "nextcloudFileSuffix": "Ekstensi berkas catatan baru",
+  "nextcloudServerSettingsExplanation": "Pengaturan Notes server ini memengaruhi klien lain. Mengubah jalur tidak memindahkan berkas; mengubah ekstensi tidak mengganti nama catatan yang ada.",
+  "nextcloudSettingsSaved": "Pengaturan server disimpan",
+  "nextcloudSettingsNormalized": "Disimpan dengan nilai yang dinormalisasi server",
+  "nextcloudPendingUpload": "Unggahan lampiran tertunda",
+  "nextcloudServerCheck": "Pemeriksaan server terakhir: {time}",
+  "nextcloudSettingsLoading": "Memuat pengaturan server",
+  "@nextcloudSettingsLoading": {"description": "Accessible progress label while reading server Notes settings."},
+  "nextcloudSettingsSaving": "Menyimpan pengaturan server",
+  "@nextcloudSettingsSaving": {"description": "Accessible progress label while writing server Notes settings."}
 }

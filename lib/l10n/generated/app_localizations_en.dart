@@ -4901,4 +4901,38 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get wsSwitcherKey => 'Switcher key';
+
+  @override
+  String get nextcloudServerSettings => 'Server Notes settings';
+
+  @override
+  String get nextcloudNotesPath => 'Notes folder path';
+
+  @override
+  String get nextcloudFileSuffix => 'New-note file suffix';
+
+  @override
+  String get nextcloudServerSettingsExplanation =>
+      'These server Notes settings affect other clients. Changing the path does not migrate files; changing the suffix does not rename existing notes.';
+
+  @override
+  String get nextcloudSettingsSaved => 'Server settings saved';
+
+  @override
+  String get nextcloudSettingsNormalized =>
+      'Saved with server-normalized values';
+
+  @override
+  String get nextcloudPendingUpload => 'Attachment upload pending';
+
+  @override
+  String nextcloudServerCheck(String time) {
+    return 'Last server check: $time';
+  }
+
+  @override
+  String get nextcloudSettingsLoading => 'Loading server settings';
+
+  @override
+  String get nextcloudSettingsSaving => 'Saving server settings';
 }

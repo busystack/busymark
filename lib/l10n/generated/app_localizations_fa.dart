@@ -4925,4 +4925,38 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get wsSwitcherKey => 'کلید انتخابگر';
+
+  @override
+  String get nextcloudServerSettings => 'تنظیمات Notes سرور';
+
+  @override
+  String get nextcloudNotesPath => 'مسیر پوشهٔ یادداشت‌ها';
+
+  @override
+  String get nextcloudFileSuffix => 'پسوند فایل یادداشت‌های جدید';
+
+  @override
+  String get nextcloudServerSettingsExplanation =>
+      'این تنظیمات Notes روی کارخواه‌های دیگر هم اثر می‌گذارد. تغییر مسیر فایل‌ها را جابه‌جا نمی‌کند؛ تغییر پسوند نام یادداشت‌های موجود را تغییر نمی‌دهد.';
+
+  @override
+  String get nextcloudSettingsSaved => 'تنظیمات سرور ذخیره شد';
+
+  @override
+  String get nextcloudSettingsNormalized =>
+      'با مقادیر نرمال‌شدهٔ سرور ذخیره شد';
+
+  @override
+  String get nextcloudPendingUpload => 'بارگذاری پیوست در انتظار است';
+
+  @override
+  String nextcloudServerCheck(String time) {
+    return 'آخرین بررسی سرور: $time';
+  }
+
+  @override
+  String get nextcloudSettingsLoading => 'در حال بارگیری تنظیمات سرور';
+
+  @override
+  String get nextcloudSettingsSaving => 'در حال ذخیره تنظیمات سرور';
 }

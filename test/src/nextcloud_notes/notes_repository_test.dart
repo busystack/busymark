@@ -712,7 +712,7 @@ void main() {
       );
       expect((await store.notes()).single.content, 'body');
       final db = sqlite3.open(path);
-      expect(db.select('PRAGMA user_version').single.values.single, 2);
+      expect(db.select('PRAGMA user_version').single.values.single, 3);
       expect(db.select('SELECT COUNT(*) AS n FROM outbox').single['n'], 1);
       db.close();
       if (Platform.isLinux) {
@@ -747,7 +747,7 @@ void main() {
     expect(repository.noteById(note.localId)!.revision, 10);
     expect(repository.noteById(note.localId)!.hasPendingChanges, isTrue);
     await repository.synchronize(testAccount().id);
-    expect(repository.noteById(note.localId)!.syncState, NoteSyncState.offline);
+    expect(repository.noteById(note.localId)!.syncState, NoteSyncState.pending);
     expect(repository.noteById(note.localId)!.content, 'revision 10');
   });
 

@@ -4991,5 +4991,17 @@
   "wsMediumLayout": "Eşit sütunlar",
   "wsNarrowLayout": "Dar terim sütunu",
   "wsTitle": "Başlık",
-  "wsSwitcherKey": "Değiştirici anahtarı"
+  "wsSwitcherKey": "Değiştirici anahtarı",
+  "nextcloudServerSettings": "Sunucu Notes ayarları",
+  "nextcloudNotesPath": "Not klasörünün yolu",
+  "nextcloudFileSuffix": "Yeni notların dosya uzantısı",
+  "nextcloudServerSettingsExplanation": "Bu sunucu Notes ayarları diğer istemcileri de etkiler. Yolun değiştirilmesi dosyaları taşımaz; uzantının değiştirilmesi mevcut notları yeniden adlandırmaz.",
+  "nextcloudSettingsSaved": "Sunucu ayarları kaydedildi",
+  "nextcloudSettingsNormalized": "Sunucunun normalleştirdiği değerlerle kaydedildi",
+  "nextcloudPendingUpload": "Ek yüklemesi bekliyor",
+  "nextcloudServerCheck": "Son sunucu kontrolü: {time}",
+  "nextcloudSettingsLoading": "Sunucu ayarları yükleniyor",
+  "@nextcloudSettingsLoading": {"description": "Accessible progress label while reading server Notes settings."},
+  "nextcloudSettingsSaving": "Sunucu ayarları kaydediliyor",
+  "@nextcloudSettingsSaving": {"description": "Accessible progress label while writing server Notes settings."}
 }

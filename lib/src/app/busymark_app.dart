@@ -911,11 +911,27 @@ class _BusyMarkWindowLifecycle extends ConsumerStatefulWidget {
 class _BusyMarkWindowLifecycleState
     extends ConsumerState<_BusyMarkWindowLifecycle> {
   late final WindowControlService _windowControlService;
+  late final AppLifecycleListener _notesLifecycle;
+  late final GoRouter _notesRouter;
 
   @override
   void initState() {
     super.initState();
     _windowControlService = ref.read(windowControlServiceProvider);
+    _notesRouter = ref.read(appRouterProvider);
+    _notesRouter.routeInformationProvider.addListener(_notesRouteChanged);
+    _notesLifecycle = AppLifecycleListener(
+      onStateChange: (state) {
+        final controller = ref.read(workspaceControllerProvider.notifier);
+        controller.setNotesApplicationVisible(
+          state == AppLifecycleState.resumed ||
+              state == AppLifecycleState.inactive,
+        );
+        if (state == AppLifecycleState.resumed) {
+          controller.refreshNotesOnFocus();
+        }
+      },
+    );
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) {
         return;
@@ -927,6 +943,8 @@ class _BusyMarkWindowLifecycleState
 
   @override
   void dispose() {
+    _notesRouter.routeInformationProvider.removeListener(_notesRouteChanged);
+    _notesLifecycle.dispose();
     _windowControlService.unregisterCloseHandler();
     super.dispose();
   }
@@ -934,6 +952,17 @@ class _BusyMarkWindowLifecycleState
   @override
   Widget build(BuildContext context) {
     return widget.child;
+  }
+
+  void _notesRouteChanged() {
+    if (!mounted) return;
+    ref
+        .read(workspaceControllerProvider.notifier)
+        .setNotesWorkspaceActive(
+          _notesRouter.routeInformationProvider.value.uri.path.startsWith(
+            '/workspace',
+          ),
+        );
   }
 
   Future<void> _handleWindowClose() async {

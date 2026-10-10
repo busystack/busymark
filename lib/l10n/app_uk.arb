@@ -3478,5 +3478,17 @@
   "wsMediumLayout": "Рівні стовпці",
   "wsNarrowLayout": "Вузький стовпець терміна",
   "wsTitle": "Заголовок",
-  "wsSwitcherKey": "Ключ перемикача"
+  "wsSwitcherKey": "Ключ перемикача",
+  "nextcloudServerSettings": "Налаштування Notes на сервері",
+  "nextcloudNotesPath": "Шлях до теки нотаток",
+  "nextcloudFileSuffix": "Розширення нових нотаток",
+  "nextcloudServerSettingsExplanation": "Ці налаштування Notes впливають на інші клієнти. Зміна шляху не переміщує файли; зміна розширення не перейменовує наявні нотатки.",
+  "nextcloudSettingsSaved": "Налаштування сервера збережено",
+  "nextcloudSettingsNormalized": "Збережено зі значеннями, нормалізованими сервером",
+  "nextcloudPendingUpload": "Вкладення очікує завантаження",
+  "nextcloudServerCheck": "Остання перевірка сервера: {time}",
+  "nextcloudSettingsLoading": "Завантаження налаштувань сервера",
+  "@nextcloudSettingsLoading": {"description": "Accessible progress label while reading server Notes settings."},
+  "nextcloudSettingsSaving": "Збереження налаштувань сервера",
+  "@nextcloudSettingsSaving": {"description": "Accessible progress label while writing server Notes settings."}
 }

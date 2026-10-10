@@ -3452,5 +3452,17 @@
   "wsMediumLayout": "Like kolonner",
   "wsNarrowLayout": "Smal termkolonne",
   "wsTitle": "Tittel",
-  "wsSwitcherKey": "Byttenøkkel"
+  "wsSwitcherKey": "Byttenøkkel",
+  "nextcloudServerSettings": "Notes-innstillinger på serveren",
+  "nextcloudNotesPath": "Sti til notatmappen",
+  "nextcloudFileSuffix": "Filendelse for nye notater",
+  "nextcloudServerSettingsExplanation": "Disse Notes-innstillingene påvirker andre klienter. Endring av stien flytter ikke filer; endring av filendelsen gir ikke eksisterende notater nye navn.",
+  "nextcloudSettingsSaved": "Serverinnstillinger lagret",
+  "nextcloudSettingsNormalized": "Lagret med verdier normalisert av serveren",
+  "nextcloudPendingUpload": "Vedlegg venter på opplasting",
+  "nextcloudServerCheck": "Siste serverkontroll: {time}",
+  "nextcloudSettingsLoading": "Laster serverinnstillinger",
+  "@nextcloudSettingsLoading": {"description": "Accessible progress label while reading server Notes settings."},
+  "nextcloudSettingsSaving": "Lagrer serverinnstillinger",
+  "@nextcloudSettingsSaving": {"description": "Accessible progress label while writing server Notes settings."}
 }

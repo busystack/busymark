@@ -4991,5 +4991,17 @@
   "wsMediumLayout": "均等な列",
   "wsNarrowLayout": "狭い用語列",
   "wsTitle": "タイトル",
-  "wsSwitcherKey": "切り替えキー"
+  "wsSwitcherKey": "切り替えキー",
+  "nextcloudServerSettings": "サーバーのNotes設定",
+  "nextcloudNotesPath": "ノートフォルダーのパス",
+  "nextcloudFileSuffix": "新しいノートの拡張子",
+  "nextcloudServerSettingsExplanation": "このサーバーのNotes設定は他のクライアントにも影響します。パスを変更してもファイルは移動せず、拡張子を変更しても既存のノートの名前は変わりません。",
+  "nextcloudSettingsSaved": "サーバー設定を保存しました",
+  "nextcloudSettingsNormalized": "サーバーが正規化した値で保存しました",
+  "nextcloudPendingUpload": "添付ファイルのアップロード待ち",
+  "nextcloudServerCheck": "前回のサーバー確認: {time}",
+  "nextcloudSettingsLoading": "サーバー設定を読み込み中",
+  "@nextcloudSettingsLoading": {"description": "Accessible progress label while reading server Notes settings."},
+  "nextcloudSettingsSaving": "サーバー設定を保存中",
+  "@nextcloudSettingsSaving": {"description": "Accessible progress label while writing server Notes settings."}
 }

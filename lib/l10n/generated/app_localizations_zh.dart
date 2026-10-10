@@ -4676,6 +4676,39 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get wsSwitcherKey => '切换键';
+
+  @override
+  String get nextcloudServerSettings => '服务器 Notes 设置';
+
+  @override
+  String get nextcloudNotesPath => '笔记文件夹路径';
+
+  @override
+  String get nextcloudFileSuffix => '新笔记的文件后缀';
+
+  @override
+  String get nextcloudServerSettingsExplanation =>
+      '这些服务器 Notes 设置会影响其他客户端。更改路径不会移动文件；更改后缀不会重命名现有笔记。';
+
+  @override
+  String get nextcloudSettingsSaved => '服务器设置已保存';
+
+  @override
+  String get nextcloudSettingsNormalized => '已保存服务器规范化后的值';
+
+  @override
+  String get nextcloudPendingUpload => '附件等待上传';
+
+  @override
+  String nextcloudServerCheck(String time) {
+    return '上次服务器检查：$time';
+  }
+
+  @override
+  String get nextcloudSettingsLoading => '正在加载服务器设置';
+
+  @override
+  String get nextcloudSettingsSaving => '正在保存服务器设置';
 }
 
 /// The translations for Chinese, as used in China (`zh_CN`).
@@ -9348,4 +9381,37 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get wsSwitcherKey => '切换键';
+
+  @override
+  String get nextcloudServerSettings => '服务器 Notes 设置';
+
+  @override
+  String get nextcloudNotesPath => '笔记文件夹路径';
+
+  @override
+  String get nextcloudFileSuffix => '新笔记的文件后缀';
+
+  @override
+  String get nextcloudServerSettingsExplanation =>
+      '这些服务器 Notes 设置会影响其他客户端。更改路径不会移动文件；更改后缀不会重命名现有笔记。';
+
+  @override
+  String get nextcloudSettingsSaved => '服务器设置已保存';
+
+  @override
+  String get nextcloudSettingsNormalized => '已保存服务器规范化后的值';
+
+  @override
+  String get nextcloudPendingUpload => '附件等待上传';
+
+  @override
+  String nextcloudServerCheck(String time) {
+    return '上次服务器检查：$time';
+  }
+
+  @override
+  String get nextcloudSettingsLoading => '正在加载服务器设置';
+
+  @override
+  String get nextcloudSettingsSaving => '正在保存服务器设置';
 }

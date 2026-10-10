@@ -19,10 +19,14 @@ import '../application/nextcloud_connection.dart';
 import '../application/attachment_markdown.dart';
 import '../domain/notes_models.dart';
 import '../domain/notes_conflict.dart';
+import '../data/notes_attachment_references.dart';
 
-final nextcloudNotesChangesProvider = StreamProvider<void>((ref) async* {
+final nextcloudNotesChangesProvider = StreamProvider<int>((ref) async* {
   final repository = await ref.watch(nextcloudNotesRepositoryProvider.future);
-  yield* repository.changes;
+  var generation = 0;
+  await for (final _ in repository.changes) {
+    yield ++generation;
+  }
 });
 
 String nextcloudSyncLabel(
@@ -40,7 +44,10 @@ String nextcloudSyncLabel(
   NoteSyncState.deletedRemotely => context.l10n.localHistoryDeleted,
   NoteSyncState.forbidden => context.l10n.nextcloudReadOnly,
   NoteSyncState.storageFull ||
-  NoteSyncState.unavailable => context.l10n.warning,
+  NoteSyncState.unavailable ||
+  NoteSyncState.rejected ||
+  NoteSyncState.throttled ||
+  NoteSyncState.recoveryRequired => context.l10n.warning,
 };
 
 class NextcloudNotesSidebar extends ConsumerStatefulWidget {
@@ -107,7 +114,10 @@ class _NextcloudNotesSidebarState extends ConsumerState<NextcloudNotesSidebar> {
                           n.category.toLowerCase().contains(query)),
                 )
                 .toList()
-              ..sort((a, b) => b.modified.compareTo(a.modified));
+              ..sort((a, b) {
+                final order = b.activityMicros.compareTo(a.activityMicros);
+                return order == 0 ? a.localId.compareTo(b.localId) : order;
+              });
         final accountError = repository.accountError(widget.accountId);
         return Column(
           children: [
@@ -130,6 +140,7 @@ class _NextcloudNotesSidebarState extends ConsumerState<NextcloudNotesSidebar> {
                             .read(workspaceControllerProvider.notifier)
                             .createNextcloudNote(
                               title: context.l10n.nextcloudNewNote,
+                              category: _category ?? '',
                             ),
                       ),
                       child: Text(context.l10n.nextcloudNewNote),
@@ -201,7 +212,15 @@ class _NextcloudNotesSidebarState extends ConsumerState<NextcloudNotesSidebar> {
                           subtitle: Text(
                             [
                               note.category,
-                              nextcloudSyncLabel(context, note.syncState),
+                              repository.isSynchronizing(note.accountId)
+                                  ? context.l10n.nextcloudSyncing
+                                  : notesAttachmentReferences(note.content).any(
+                                      (r) => r.reference.startsWith(
+                                        'busymark-attachment:',
+                                      ),
+                                    )
+                                  ? context.l10n.nextcloudPendingUpload
+                                  : nextcloudSyncLabel(context, note.syncState),
                             ].where((s) => s.isNotEmpty).join(' · '),
                           ),
                           leading: Icon(
@@ -231,6 +250,10 @@ class _NextcloudNotesSidebarState extends ConsumerState<NextcloudNotesSidebar> {
   }
 
   Future<void> _editNote(NextcloudNote note) async {
+    final repository = await ref.read(nextcloudNotesRepositoryProvider.future);
+    if (!mounted || repository.noteById(note.localId) == null) return;
+    final snapshot = repository.metadataSnapshot(note.localId);
+    note = snapshot.note;
     var title = note.title;
     var category = note.category;
     var favorite = note.favorite;
@@ -303,9 +326,12 @@ class _NextcloudNotesSidebarState extends ConsumerState<NextcloudNotesSidebar> {
     } else if (action == 'save') {
       await controller.updateNextcloudNoteMetadata(
         note.localId,
-        title: note.readonly ? null : title,
-        category: note.readonly ? null : category,
-        favorite: favorite,
+        snapshot: snapshot,
+        title: note.readonly || title == snapshot.note.title ? null : title,
+        category: note.readonly || category == snapshot.note.category
+            ? null
+            : category,
+        favorite: favorite == snapshot.note.favorite ? null : favorite,
       );
     } else if (action == 'delete') {
       final confirmed = await showBusyMarkModalDialog<bool>(
@@ -342,10 +368,8 @@ class NextcloudNoteStatus extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     ref.watch(nextcloudNotesChangesProvider);
-    final note = ref
-        .watch(nextcloudNotesRepositoryProvider)
-        .value
-        ?.noteById(localId);
+    final repository = ref.watch(nextcloudNotesRepositoryProvider).value;
+    final note = repository?.noteById(localId);
     if (note == null) return const SizedBox.shrink();
     return Padding(
       padding: const EdgeInsets.symmetric(
@@ -361,6 +385,12 @@ class NextcloudNoteStatus extends ConsumerWidget {
                 child: Text(
                   unsaved
                       ? context.l10n.closeUnsavedChangesTitle
+                      : repository!.isSynchronizing(note.accountId)
+                      ? context.l10n.nextcloudSyncing
+                      : notesAttachmentReferences(note.content).any(
+                          (r) => r.reference.startsWith('busymark-attachment:'),
+                        )
+                      ? context.l10n.nextcloudPendingUpload
                       : nextcloudSyncLabel(context, note.syncState),
                 ),
               ),
@@ -376,6 +406,7 @@ class NextcloudNoteStatus extends ConsumerWidget {
               if (note.syncState == NoteSyncState.conflict ||
                   note.syncState == NoteSyncState.deletedRemotely ||
                   note.syncState == NoteSyncState.creationUncertain ||
+                  note.syncState == NoteSyncState.recoveryRequired ||
                   ((note.syncState == NoteSyncState.forbidden ||
                           note.syncState == NoteSyncState.unavailable) &&
                       note.hasPendingChanges))
@@ -394,8 +425,25 @@ class NextcloudNoteStatus extends ConsumerWidget {
                   ),
                   child: Text(context.l10n.visualizationRetry),
                 ),
+              if (note.syncState == NoteSyncState.rejected ||
+                  note.syncState == NoteSyncState.storageFull)
+                BusyMarkPushButton.standard(
+                  onPressed: () => unawaited(
+                    ref
+                        .read(workspaceControllerProvider.notifier)
+                        .retryRejectedNextcloudNote(localId),
+                  ),
+                  child: Text(context.l10n.visualizationRetry),
+                ),
             ],
           ),
+          if (repository?.accountById(note.accountId)?.lastServerCheck
+              case final checked?)
+            Text(
+              context.l10n.nextcloudServerCheck(
+                '${MaterialLocalizations.of(context).formatShortDate(checked.toLocal())} ${MaterialLocalizations.of(context).formatTimeOfDay(TimeOfDay.fromDateTime(checked.toLocal()))}',
+              ),
+            ),
           if (note.errorMessage != null)
             Text(
               note.errorMessage!,

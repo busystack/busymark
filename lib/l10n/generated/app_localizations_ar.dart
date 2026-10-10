@@ -4917,4 +4917,38 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get wsSwitcherKey => 'مفتاح المبدّل';
+
+  @override
+  String get nextcloudServerSettings => 'إعدادات Notes على الخادم';
+
+  @override
+  String get nextcloudNotesPath => 'مسار مجلد الملاحظات';
+
+  @override
+  String get nextcloudFileSuffix => 'لاحقة ملفات الملاحظات الجديدة';
+
+  @override
+  String get nextcloudServerSettingsExplanation =>
+      'تؤثر إعدادات Notes هذه على العملاء الآخرين. تغيير المسار لا ينقل الملفات؛ وتغيير اللاحقة لا يعيد تسمية الملاحظات الحالية.';
+
+  @override
+  String get nextcloudSettingsSaved => 'حُفظت إعدادات الخادم';
+
+  @override
+  String get nextcloudSettingsNormalized =>
+      'حُفظت القيم بعد توحيدها على الخادم';
+
+  @override
+  String get nextcloudPendingUpload => 'رفع المرفق قيد الانتظار';
+
+  @override
+  String nextcloudServerCheck(String time) {
+    return 'آخر فحص للخادم: $time';
+  }
+
+  @override
+  String get nextcloudSettingsLoading => 'جارٍ تحميل إعدادات الخادم';
+
+  @override
+  String get nextcloudSettingsSaving => 'جارٍ حفظ إعدادات الخادم';
 }

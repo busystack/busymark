@@ -101,12 +101,16 @@ Parser labels are logical identifiers only. Remote workspaces install no disk
 watchers, discover no Git repository and expose no path/file-manager actions.
 
 `NotesStore` uses direct `sqlite3` 3.7.0 in a dedicated isolate under application
-support storage. Schema version 2 includes accounts, notes, a coalesced per-note
+support storage. Schema version 3 includes accounts, notes, a coalesced per-note
 outbox and attachment metadata/bytes. The v1 → v2 migration retains existing
 records and adds optional creation-attempt metadata in note/outbox JSON; the
 version fence prevents older clients from discarding it. Existing uncertain
 creations without that metadata remain unresolved. Migrations use transactions and reject
-newer unsupported schemas. SQLite uses WAL, `synchronous=FULL`, foreign keys and
+newer unsupported schemas. The v2 → v3 transaction fences new failure states,
+retry deadlines/budgets, settings attempts, media validation and local activity.
+Missing historical edit times remain missing; server modified time is the ordering
+fallback. Ambiguous legacy creation histories require deliberate recovery.
+SQLite uses WAL, `synchronous=FULL`, foreign keys and
 a busy timeout. Notes content, revision, base state, outbox and synchronization
 checkpoint commit atomically. The Notes directory is mode 0700 and database
 0600 on Linux. Managed attachment paths reject traversal and symbolic links.
@@ -125,11 +129,23 @@ copy in session/recovery JSON. A clean shutdown may retain a durable outbox.
 
 `NotesApiClient` takes an injectable HTTP client. `NotesRepository` serializes
 local mutations and runs at most one synchronization pass per account. The
-controller requests a subsequent pass when another local save commits during
-an upload. Transient network/server/lock failures receive six delayed retry
-attempts (5, 10, 20, 40, 80, 160 seconds), then explicit Refresh remains available.
-Conflicts, uncertain creation, authentication and forbidden errors require
-deliberate resolution.
+`NotesSyncCoordinator` routes opening, committed edits, manual Refresh and desktop
+lifecycle events through that same mechanism. It coalesces one follow-up when
+local work arrives during a pass; manual Refresh is awaitable. Visible active
+workspaces check every 60 seconds, including authenticated read-side connectivity
+recovery. Inactive-but-visible windows keep polling; hidden/minimized windows and
+other screens suspend healthy polling. Focus/resume coalesces checks completed
+within ten seconds. Timers/listeners are disposed and account generations fenced.
+Transient writes receive six delayed retries (5, 10, 20, 40, 80, 160 seconds).
+Healthy reads/focus never reset their durable exhausted budgets. Successful read-side
+connectivity recovery releases only network failures. Valid Retry-After delta/date
+deadlines are durable and never shortened. Conflicts, uncertain outcomes,
+authentication, permissions, quota and permanent rejection require correction;
+a relevant edit or deliberate Retry can release a rejected operation. Separate
+last-successful-server-check time means a complete GET/304, not all writes/media
+having synchronized. Local activity uses an injectable microsecond clock and
+writable API modified uses Unix seconds; internal attachment publication retains
+the human edit time. Read-only favorite writes still contain only favorite.
 
 List synchronization sends `If-None-Match`, the **previous server
 Last-Modified** as `pruneBefore`, `chunkSize` and the opaque chunk cursor. Header
@@ -216,16 +232,22 @@ are rejected and repeated confirmation reuses that replacement. The original
 uncertain draft remains recoverable and blocked. Cancel and dismissal leave it
 untouched. No suspected server duplicate is automatically deleted. Legacy
 uncertain records without creation evidence cannot be adopted by guessing;
-the existing database migrations and startup recovery remain unchanged.
+schema migration and startup recovery preserve their uncertainty and work.
 
 Read-only notes block content/title/category editing while favorite remains
 writable under the documented contract. A note becoming read-only does not
 discard edits already captured locally. `error: true` responses carry unavailable
 state; their exception-text content never replaces known-good cached content.
 
-Errors are classified as reconnect required (401), forbidden/read-only (403),
-missing/deleted (404), conflict (412), locked (423), insufficient storage (507),
-transport/offline, server errors and safely reported unknown responses. A locked
+Errors carry operation scope as well as rejection/transient/uncertain classification.
+Only individual-note absence or a completed authoritative ID set establishes note
+deletion. Collection/settings/capability and attachment 404s preserve notes,
+bases, revisions, outbox and bytes. Legacy poisoned server edits reconcile against
+remote ETags, using the existing conflict workflow for divergence. Positive durable
+never-sent evidence permits draft recovery; ambiguous old creation histories retain
+work and require deliberate separate-note recovery. A 429 preserves a not-before
+deadline; rejected 4xx operations do not loop. Lock/network/5xx/invalid write
+responses remain conservative uncertain create/upload outcomes. A locked
 note retains its content and outbox and does not prevent unrelated notes from
 synchronizing. Issue 1940 describes locks retained by Notes/Text editing sessions;
 the client cannot remove those server locks or claim live collaboration.
@@ -263,6 +285,10 @@ Only actual Markdown/HTML destinations are rewritten; namespace text in prose or
 code remains literal. History restoration can restage deleted attachment bytes,
 and recovery as a new note clones managed bytes under the new logical identity.
 Neither operation reuses another note's attachment ownership.
+API paths/filenames are raw strings. Markdown destinations are decoded exactly
+once and raw segments encoded exactly once; literal percent sequences remain
+filename characters. Upload response paths commit durably before reference
+replacement, so later local failures cannot cause a second upload.
 
 Attachment downloads have a dedicated streaming path and share the existing local
 asset ingestion limit, `maximumManagedAssetBytes` (**100 MiB**). Advertised
@@ -300,6 +326,34 @@ Diagram source attachments use bounded provider-resolved UTF-8 text. Preview,
 WYSIWYG, HTML and PDF share this resource boundary. Filesystem/Writerside project exports and
 workspace-wide search/replace are explicitly unavailable for Notes; per-note
 search/replace uses the normal editor and save pipeline.
+
+## Settings and maintained capabilities
+
+The account settings screen loads the server Notes application's notesPath and
+fileSuffix, with explicit Save/Cancel, partial updates, custom suffixes and returned
+normalization. These preferences affect other clients; path changes do not migrate
+files and suffix changes do not rename existing notes. Dirty buffers save through
+the normal boundary before transitions. Pending notes/conflicts/attachment work
+block collection-affecting settings changes; synchronization is serialized and
+mutations fenced. A durable exact settings attempt survives a lost PUT response
+and is reconciled by GET before success/retry. Relevant changes reset the old
+checkpoint and perform a full authoritative read.
+
+Capabilities refresh on first connected use per process, explicit Refresh,
+reconnect and hourly active use. OCS and case-insensitive X-Notes-API-Versions
+headers share version parsing. API advertisement is separate from application
+version evidence; a header never independently enables attachment deletion.
+Verified unsupported advertisements block remote operations while retaining local
+editing/recovery. Transient refresh failure retains verified metadata. Updates
+merge onto current account/checkpoint state and pre-reconnect responses are fenced.
+
+Managed media validates after observed remote note changes, on explicit Refresh
+for cached attachments used by the active note (including 304), and becomes stale
+after five minutes while displayed. Both repository bytes and document contexts
+refresh. Failed refresh retains usable old bytes without advancing validation.
+Requests coalesce; late downloads are fenced by account/ownership/deletion/media
+generation. Materializations use content identity and remove superseded files.
+No whole-library uncached media prefetch is performed.
 
 ## Verification
 
@@ -355,3 +409,20 @@ The current [Text source](https://github.com/nextcloud/text) and
 describe web-editor ownership and internal collaborative machinery, not a
 documented supported external native collaboration API. A future official
 native API would require a separate product decision.
+
+Milestone 1 implementation, regression names, fixture versions and acceptance
+results are maintained in [nextcloud-notes-milestone-1.md](nextcloud-notes-milestone-1.md).
+The native disposable acceptance target is built with:
+
+```sh
+flutter build linux --release -t tools/nextcloud_notes_desktop_acceptance.dart
+# Private credentials/CA/output and an explicitly disposable Docker container:
+WEBKIT_DISABLE_DMABUF_RENDERER=1 build/linux/x64/release/bundle/busymark \
+  /private/app-credentials.json /private/test-ca.pem /private/desktop-output \
+  disposable-nextcloud-container
+```
+
+Use a disposable XDG profile/display. The target drives production UI/controllers;
+connectivity loss is injected around real authenticated requests. Its same-path
+replacement writes only an owned image within the named disposable container.
+Rebuild the normal default release target afterward.

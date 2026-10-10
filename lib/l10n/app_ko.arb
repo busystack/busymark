@@ -4991,5 +4991,17 @@
   "wsMediumLayout": "동일한 열",
   "wsNarrowLayout": "좁은 용어 열",
   "wsTitle": "제목",
-  "wsSwitcherKey": "전환 키"
+  "wsSwitcherKey": "전환 키",
+  "nextcloudServerSettings": "서버 Notes 설정",
+  "nextcloudNotesPath": "노트 폴더 경로",
+  "nextcloudFileSuffix": "새 노트의 파일 확장자",
+  "nextcloudServerSettingsExplanation": "이 서버 Notes 설정은 다른 클라이언트에도 적용됩니다. 경로를 변경해도 파일이 이동하지 않으며 확장자를 변경해도 기존 노트의 이름이 바뀌지 않습니다.",
+  "nextcloudSettingsSaved": "서버 설정 저장됨",
+  "nextcloudSettingsNormalized": "서버에서 정규화한 값으로 저장됨",
+  "nextcloudPendingUpload": "첨부 파일 업로드 대기 중",
+  "nextcloudServerCheck": "마지막 서버 확인: {time}",
+  "nextcloudSettingsLoading": "서버 설정을 불러오는 중",
+  "@nextcloudSettingsLoading": {"description": "Accessible progress label while reading server Notes settings."},
+  "nextcloudSettingsSaving": "서버 설정을 저장하는 중",
+  "@nextcloudSettingsSaving": {"description": "Accessible progress label while writing server Notes settings."}
 }

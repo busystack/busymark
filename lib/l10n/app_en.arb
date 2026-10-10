@@ -2889,5 +2889,18 @@
   "wsMediumLayout": "Equal columns",
   "wsNarrowLayout": "Narrow term",
   "wsTitle": "Title",
-  "wsSwitcherKey": "Switcher key"
+  "wsSwitcherKey": "Switcher key",
+  "nextcloudServerSettings": "Server Notes settings",
+  "nextcloudNotesPath": "Notes folder path",
+  "nextcloudFileSuffix": "New-note file suffix",
+  "nextcloudServerSettingsExplanation": "These server Notes settings affect other clients. Changing the path does not migrate files; changing the suffix does not rename existing notes.",
+  "nextcloudSettingsSaved": "Server settings saved",
+  "nextcloudSettingsNormalized": "Saved with server-normalized values",
+  "nextcloudPendingUpload": "Attachment upload pending",
+  "nextcloudServerCheck": "Last server check: {time}",
+  "@nextcloudServerCheck": {"placeholders": {"time": {"type": "String"}}},
+  "nextcloudSettingsLoading": "Loading server settings",
+  "@nextcloudSettingsLoading": {"description": "Accessible progress label while reading server Notes settings."},
+  "nextcloudSettingsSaving": "Saving server settings",
+  "@nextcloudSettingsSaving": {"description": "Accessible progress label while writing server Notes settings."}
 }

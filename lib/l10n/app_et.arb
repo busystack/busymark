@@ -3912,5 +3912,17 @@
   "wsMediumLayout": "Võrdsed veerud",
   "wsNarrowLayout": "Kitsas terminiveerg",
   "wsTitle": "Pealkiri",
-  "wsSwitcherKey": "Valikulüliti võti"
+  "wsSwitcherKey": "Valikulüliti võti",
+  "nextcloudServerSettings": "Serveri Notesi seaded",
+  "nextcloudNotesPath": "Märkmete kausta tee",
+  "nextcloudFileSuffix": "Uute märkmete faililaiend",
+  "nextcloudServerSettingsExplanation": "Need Notesi seaded mõjutavad teisi kliente. Tee muutmine ei teisalda faile; laiendi muutmine ei nimeta olemasolevaid märkmeid ümber.",
+  "nextcloudSettingsSaved": "Serveri seaded salvestatud",
+  "nextcloudSettingsNormalized": "Salvestatud serveri normaliseeritud väärtustega",
+  "nextcloudPendingUpload": "Manuse üleslaadimine ootel",
+  "nextcloudServerCheck": "Viimane serverikontroll: {time}",
+  "nextcloudSettingsLoading": "Serveri seadete laadimine",
+  "@nextcloudSettingsLoading": {"description": "Accessible progress label while reading server Notes settings."},
+  "nextcloudSettingsSaving": "Serveri seadete salvestamine",
+  "@nextcloudSettingsSaving": {"description": "Accessible progress label while writing server Notes settings."}
 }

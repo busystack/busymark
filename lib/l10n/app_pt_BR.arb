@@ -3452,5 +3452,17 @@
   "wsMediumLayout": "Colunas iguais",
   "wsNarrowLayout": "Coluna de termo estreita",
   "wsTitle": "Título",
-  "wsSwitcherKey": "Chave do seletor"
+  "wsSwitcherKey": "Chave do seletor",
+  "nextcloudServerSettings": "Configurações de Notes do servidor",
+  "nextcloudNotesPath": "Caminho da pasta de notas",
+  "nextcloudFileSuffix": "Extensão de novas notas",
+  "nextcloudServerSettingsExplanation": "Estas configurações de Notes afetam outros clientes. Alterar o caminho não move arquivos; alterar a extensão não renomeia notas existentes.",
+  "nextcloudSettingsSaved": "Configurações do servidor salvas",
+  "nextcloudSettingsNormalized": "Salvo com valores normalizados pelo servidor",
+  "nextcloudPendingUpload": "Envio de anexo pendente",
+  "nextcloudServerCheck": "Última verificação do servidor: {time}",
+  "nextcloudSettingsLoading": "Carregando configurações do servidor",
+  "@nextcloudSettingsLoading": {"description": "Accessible progress label while reading server Notes settings."},
+  "nextcloudSettingsSaving": "Salvando configurações do servidor",
+  "@nextcloudSettingsSaving": {"description": "Accessible progress label while writing server Notes settings."}
 }

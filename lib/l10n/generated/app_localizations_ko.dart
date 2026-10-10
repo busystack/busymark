@@ -4749,4 +4749,37 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get wsSwitcherKey => '전환 키';
+
+  @override
+  String get nextcloudServerSettings => '서버 Notes 설정';
+
+  @override
+  String get nextcloudNotesPath => '노트 폴더 경로';
+
+  @override
+  String get nextcloudFileSuffix => '새 노트의 파일 확장자';
+
+  @override
+  String get nextcloudServerSettingsExplanation =>
+      '이 서버 Notes 설정은 다른 클라이언트에도 적용됩니다. 경로를 변경해도 파일이 이동하지 않으며 확장자를 변경해도 기존 노트의 이름이 바뀌지 않습니다.';
+
+  @override
+  String get nextcloudSettingsSaved => '서버 설정 저장됨';
+
+  @override
+  String get nextcloudSettingsNormalized => '서버에서 정규화한 값으로 저장됨';
+
+  @override
+  String get nextcloudPendingUpload => '첨부 파일 업로드 대기 중';
+
+  @override
+  String nextcloudServerCheck(String time) {
+    return '마지막 서버 확인: $time';
+  }
+
+  @override
+  String get nextcloudSettingsLoading => '서버 설정을 불러오는 중';
+
+  @override
+  String get nextcloudSettingsSaving => '서버 설정을 저장하는 중';
 }

@@ -10,6 +10,8 @@ import '../../app/localization.dart';
 import '../../workspace/workspace_controller.dart';
 import '../../workspace/workspace_safety.dart';
 import '../application/nextcloud_connection.dart';
+import '../application/notes_settings_controller.dart';
+import 'notes_sidebar.dart' show nextcloudNotesChangesProvider;
 
 class NextcloudNotesSettings extends ConsumerStatefulWidget {
   const NextcloudNotesSettings({super.key});
@@ -48,7 +50,13 @@ class _NextcloudNotesSettingsState
   Widget build(BuildContext context) {
     final connection = ref.watch(nextcloudConnectionProvider);
     final controller = ref.read(nextcloudConnectionProvider.notifier);
-    final account = connection.account;
+    ref.watch(nextcloudNotesChangesProvider);
+    final repository = ref.watch(nextcloudNotesRepositoryProvider).value;
+    final account = connection.account == null
+        ? null
+        : repository == null
+        ? connection.account
+        : repository.accountById(connection.account!.id);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -115,6 +123,14 @@ class _NextcloudNotesSettingsState
               ),
           ],
         ),
+        if (account != null) ...[
+          _ServerNotesSettings(accountId: account.id),
+          if (repository?.accountError(account.id) case final error?)
+            BusyMarkStatusBox(
+              message: error.message,
+              kind: BusyMarkStatusKind.error,
+            ),
+        ],
         if (connection.error != null)
           BusyMarkStatusBox(
             message: connection.error!,
@@ -160,5 +176,143 @@ class _NextcloudNotesSettingsState
         if (mounted) context.go('/');
       }
     }
+  }
+}
+
+class _ServerNotesSettings extends ConsumerStatefulWidget {
+  const _ServerNotesSettings({required this.accountId});
+  final String accountId;
+  @override
+  ConsumerState<_ServerNotesSettings> createState() =>
+      _ServerNotesSettingsState();
+}
+
+class _ServerNotesSettingsState extends ConsumerState<_ServerNotesSettings> {
+  final _path = TextEditingController();
+  final _suffix = TextEditingController();
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(() {
+      if (mounted) {
+        unawaited(
+          ref.read(notesSettingsProvider.notifier).load(widget.accountId),
+        );
+      }
+    });
+  }
+
+  @override
+  void didUpdateWidget(_ServerNotesSettings oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.accountId != oldWidget.accountId) {
+      unawaited(
+        ref
+            .read(notesSettingsProvider.notifier)
+            .load(widget.accountId, discard: true),
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    _path.dispose();
+    _suffix.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final settings = ref.watch(notesSettingsProvider);
+    final controller = ref.read(notesSettingsProvider.notifier);
+    final draft = settings.draft;
+    if (draft != null) {
+      if (_path.text != draft.notesPath) _path.text = draft.notesPath;
+      if (_suffix.text != draft.fileSuffix) _suffix.text = draft.fileSuffix;
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        BusyMarkGroupedList(
+          title: context.l10n.nextcloudServerSettings,
+          filled: true,
+          children: [
+            BusyMarkGroupedTextEntry(
+              key: const ValueKey('notes-settings-path'),
+              label: context.l10n.nextcloudNotesPath,
+              controller: _path,
+              enabled: draft != null && !settings.busy,
+              onChanged: (value) => controller.edit(notesPath: value),
+            ),
+            BusyMarkGroupedTextEntry(
+              key: const ValueKey('notes-settings-suffix'),
+              label: context.l10n.nextcloudFileSuffix,
+              controller: _suffix,
+              enabled: draft != null && !settings.busy,
+              onChanged: (value) => controller.edit(fileSuffix: value),
+            ),
+          ],
+        ),
+        Text(context.l10n.nextcloudServerSettingsExplanation),
+        if (settings.busy) ...[
+          Semantics(
+            liveRegion: true,
+            child: Text(
+              settings.phase == NotesSettingsPhase.loading
+                  ? context.l10n.nextcloudSettingsLoading
+                  : context.l10n.nextcloudSettingsSaving,
+            ),
+          ),
+          LinearProgressIndicator(
+            semanticsLabel: settings.phase == NotesSettingsPhase.loading
+                ? context.l10n.nextcloudSettingsLoading
+                : context.l10n.nextcloudSettingsSaving,
+          ),
+        ],
+        if (settings.error != null)
+          BusyMarkStatusBox(
+            message: settings.error!,
+            kind: BusyMarkStatusKind.error,
+          ),
+        if (settings.phase == NotesSettingsPhase.saved)
+          Text(
+            settings.normalized
+                ? context.l10n.nextcloudSettingsNormalized
+                : context.l10n.nextcloudSettingsSaved,
+          ),
+        if (settings.dirty) Text(context.l10n.closeUnsavedChangesTitle),
+        Row(
+          children: [
+            BusyMarkPushButton.standard(
+              key: const ValueKey('notes-settings-save'),
+              onPressed: settings.dirty && !settings.busy
+                  ? () => unawaited(
+                      controller.save(
+                        preserveBuffers: () async =>
+                            (await ref
+                                    .read(workspaceControllerProvider.notifier)
+                                    .saveAll())
+                                .succeeded,
+                      ),
+                    )
+                  : null,
+              child: Text(context.l10n.save),
+            ),
+            BusyMarkPushButton.standard(
+              onPressed: settings.dirty && !settings.busy
+                  ? controller.cancel
+                  : null,
+              child: Text(context.l10n.cancel),
+            ),
+            BusyMarkPushButton.standard(
+              onPressed: !settings.busy && !settings.dirty
+                  ? () => unawaited(controller.load(widget.accountId))
+                  : null,
+              child: Text(context.l10n.visualizationRetry),
+            ),
+          ],
+        ),
+      ],
+    );
   }
 }

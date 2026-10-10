@@ -1,20 +1,33 @@
+import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:http/http.dart' as http;
 
 import 'server_uri.dart';
+import 'notes_api_client.dart' show retryAfter;
 
 enum NextcloudCapabilityFailure {
   unsupported,
   unauthorized,
   malformed,
   network,
+  rejected,
+  forbidden,
+  throttled,
 }
 
 class NextcloudCapabilityException implements Exception {
-  const NextcloudCapabilityException(this.code, this.message);
+  const NextcloudCapabilityException(
+    this.code,
+    this.message, {
+    this.statusCode,
+    this.retryNotBefore,
+  });
   final NextcloudCapabilityFailure code;
   final String message;
+  final int? statusCode;
+  final DateTime? retryNotBefore;
   @override
   String toString() => message;
 }
@@ -49,27 +62,42 @@ class NotesCapabilities {
     }
     final version = notes['version'];
     final versions = notes['api_version'];
-    final minors = <int>[];
-    if (versions is List) {
-      for (final advertised in versions) {
-        if (advertised is! String) continue;
-        final match = RegExp(r'^1\.(\d+)$').firstMatch(advertised);
-        final minor = match == null ? null : int.tryParse(match.group(1)!);
-        if (minor != null && minor >= 4) minors.add(minor);
-      }
+    if (versions is! List ||
+        (versions.isNotEmpty &&
+            !versions.any(
+              (v) => v is String && RegExp(r'^\d+\.\d+$').hasMatch(v.trim()),
+            ))) {
+      throw const NextcloudCapabilityException(
+        NextcloudCapabilityFailure.malformed,
+        'The Nextcloud server returned invalid Notes API versions.',
+      );
     }
-    if (minors.isEmpty) {
+    final supported = parseNotesApiVersions(versions);
+    if (supported == null) {
       throw const NextcloudCapabilityException(
         NextcloudCapabilityFailure.unsupported,
         'This Nextcloud Notes API is unsupported. BusyMark requires Notes API major version 1 with minor version 4 or later.',
       );
     }
-    minors.sort();
     return NotesCapabilities(
       appVersion: version is String ? version : '',
-      apiVersion: '1.${minors.last}',
+      apiVersion: supported,
     );
   }
+}
+
+/// Shared OCS/header boundary. Application versions are separate evidence.
+String? parseNotesApiVersions(Iterable<dynamic> versions) {
+  final minors = <int>[];
+  for (final version in versions) {
+    if (version is! String) continue;
+    final match = RegExp(r'^1\.(\d+)$').firstMatch(version.trim());
+    final minor = match == null ? null : int.tryParse(match.group(1)!);
+    if (minor != null && minor >= 4) minors.add(minor);
+  }
+  if (minors.isEmpty) return null;
+  minors.sort();
+  return '1.${minors.last}';
 }
 
 String nextcloudAuthorization(String loginName, String appPassword) =>
@@ -102,7 +130,17 @@ Future<NotesCapabilities> fetchNotesCapabilities({
     response = await http.Response.fromStream(
       await client.send(request).timeout(const Duration(seconds: 30)),
     ).timeout(const Duration(seconds: 30));
-  } on Object {
+  } on TimeoutException {
+    throw const NextcloudCapabilityException(
+      NextcloudCapabilityFailure.network,
+      'The Nextcloud capabilities request timed out.',
+    );
+  } on IOException {
+    throw const NextcloudCapabilityException(
+      NextcloudCapabilityFailure.network,
+      'The Nextcloud capabilities endpoint is unreachable.',
+    );
+  } on http.ClientException {
     throw const NextcloudCapabilityException(
       NextcloudCapabilityFailure.network,
       'BusyMark could not verify the Nextcloud Notes capabilities. Check your connection and try again.',
@@ -120,6 +158,32 @@ Future<NotesCapabilities> fetchNotesCapabilities({
       'The Nextcloud capabilities endpoint redirected. Reconnect using the canonical server URL.',
     );
   }
+  if (response.statusCode == 429) {
+    final value = response.headers.entries
+        .where((e) => e.key.toLowerCase() == 'retry-after')
+        .firstOrNull
+        ?.value;
+    throw NextcloudCapabilityException(
+      NextcloudCapabilityFailure.throttled,
+      'Nextcloud requested a pause before checking capabilities.',
+      statusCode: 429,
+      retryNotBefore: retryAfter(value, DateTime.now()),
+    );
+  }
+  if (response.statusCode == 403) {
+    throw const NextcloudCapabilityException(
+      NextcloudCapabilityFailure.forbidden,
+      'Nextcloud does not permit capability checks.',
+      statusCode: 403,
+    );
+  }
+  if (response.statusCode >= 400 && response.statusCode < 500) {
+    throw NextcloudCapabilityException(
+      NextcloudCapabilityFailure.rejected,
+      'The capability endpoint rejected the request (HTTP ${response.statusCode}).',
+      statusCode: response.statusCode,
+    );
+  }
   if (response.statusCode != 200) {
     throw const NextcloudCapabilityException(
       NextcloudCapabilityFailure.network,
@@ -127,12 +191,12 @@ Future<NotesCapabilities> fetchNotesCapabilities({
     );
   }
   try {
-    return NotesCapabilities.fromOcsJson(
-      jsonDecode(response.body) as Map<String, dynamic>,
-    );
+    final json = jsonDecode(response.body);
+    if (json is! Map<String, dynamic>) throw const FormatException();
+    return NotesCapabilities.fromOcsJson(json);
   } on NextcloudCapabilityException {
     rethrow;
-  } on Object {
+  } on FormatException {
     throw const NextcloudCapabilityException(
       NextcloudCapabilityFailure.malformed,
       'The Nextcloud server returned invalid capabilities.',

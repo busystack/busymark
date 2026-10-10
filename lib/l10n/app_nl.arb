@@ -4991,5 +4991,17 @@
   "wsMediumLayout": "Gelijke kolommen",
   "wsNarrowLayout": "Smalle begripskolom",
   "wsTitle": "Titel",
-  "wsSwitcherKey": "Keuzeschakelaar"
+  "wsSwitcherKey": "Keuzeschakelaar",
+  "nextcloudServerSettings": "Notes-instellingen op de server",
+  "nextcloudNotesPath": "Pad van de notitiemap",
+  "nextcloudFileSuffix": "Bestandsextensie voor nieuwe notities",
+  "nextcloudServerSettingsExplanation": "Deze Notes-instellingen gelden ook voor andere clients. Een ander pad verplaatst geen bestanden; een andere extensie hernoemt bestaande notities niet.",
+  "nextcloudSettingsSaved": "Serverinstellingen opgeslagen",
+  "nextcloudSettingsNormalized": "Opgeslagen met door de server genormaliseerde waarden",
+  "nextcloudPendingUpload": "Bijlage wacht op upload",
+  "nextcloudServerCheck": "Laatste servercontrole: {time}",
+  "nextcloudSettingsLoading": "Serverinstellingen laden",
+  "@nextcloudSettingsLoading": {"description": "Accessible progress label while reading server Notes settings."},
+  "nextcloudSettingsSaving": "Serverinstellingen opslaan",
+  "@nextcloudSettingsSaving": {"description": "Accessible progress label while writing server Notes settings."}
 }

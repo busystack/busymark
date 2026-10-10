@@ -4943,4 +4943,38 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get wsSwitcherKey => 'Klucz przełącznika';
+
+  @override
+  String get nextcloudServerSettings => 'Ustawienia Notes na serwerze';
+
+  @override
+  String get nextcloudNotesPath => 'Ścieżka folderu notatek';
+
+  @override
+  String get nextcloudFileSuffix => 'Rozszerzenie nowych notatek';
+
+  @override
+  String get nextcloudServerSettingsExplanation =>
+      'Te ustawienia Notes dotyczą innych klientów. Zmiana ścieżki nie przenosi plików; zmiana rozszerzenia nie zmienia nazw istniejących notatek.';
+
+  @override
+  String get nextcloudSettingsSaved => 'Zapisano ustawienia serwera';
+
+  @override
+  String get nextcloudSettingsNormalized =>
+      'Zapisano wartości znormalizowane przez serwer';
+
+  @override
+  String get nextcloudPendingUpload => 'Załącznik oczekuje na wysłanie';
+
+  @override
+  String nextcloudServerCheck(String time) {
+    return 'Ostatnie sprawdzenie serwera: $time';
+  }
+
+  @override
+  String get nextcloudSettingsLoading => 'Wczytywanie ustawień serwera';
+
+  @override
+  String get nextcloudSettingsSaving => 'Zapisywanie ustawień serwera';
 }

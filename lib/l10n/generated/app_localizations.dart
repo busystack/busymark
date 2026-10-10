@@ -8315,6 +8315,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Switcher key'**
   String get wsSwitcherKey;
+
+  /// No description provided for @nextcloudServerSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Server Notes settings'**
+  String get nextcloudServerSettings;
+
+  /// No description provided for @nextcloudNotesPath.
+  ///
+  /// In en, this message translates to:
+  /// **'Notes folder path'**
+  String get nextcloudNotesPath;
+
+  /// No description provided for @nextcloudFileSuffix.
+  ///
+  /// In en, this message translates to:
+  /// **'New-note file suffix'**
+  String get nextcloudFileSuffix;
+
+  /// No description provided for @nextcloudServerSettingsExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'These server Notes settings affect other clients. Changing the path does not migrate files; changing the suffix does not rename existing notes.'**
+  String get nextcloudServerSettingsExplanation;
+
+  /// No description provided for @nextcloudSettingsSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Server settings saved'**
+  String get nextcloudSettingsSaved;
+
+  /// No description provided for @nextcloudSettingsNormalized.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved with server-normalized values'**
+  String get nextcloudSettingsNormalized;
+
+  /// No description provided for @nextcloudPendingUpload.
+  ///
+  /// In en, this message translates to:
+  /// **'Attachment upload pending'**
+  String get nextcloudPendingUpload;
+
+  /// No description provided for @nextcloudServerCheck.
+  ///
+  /// In en, this message translates to:
+  /// **'Last server check: {time}'**
+  String nextcloudServerCheck(String time);
+
+  /// Accessible progress label while reading server Notes settings.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading server settings'**
+  String get nextcloudSettingsLoading;
+
+  /// Accessible progress label while writing server Notes settings.
+  ///
+  /// In en, this message translates to:
+  /// **'Saving server settings'**
+  String get nextcloudSettingsSaving;
 }
 
 class _AppLocalizationsDelegate

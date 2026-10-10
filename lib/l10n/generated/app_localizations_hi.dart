@@ -4877,4 +4877,38 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get wsSwitcherKey => 'स्विचर कुंजी';
+
+  @override
+  String get nextcloudServerSettings => 'सर्वर Notes सेटिंग्स';
+
+  @override
+  String get nextcloudNotesPath => 'नोट फ़ोल्डर का पथ';
+
+  @override
+  String get nextcloudFileSuffix => 'नए नोट की फ़ाइल का प्रत्यय';
+
+  @override
+  String get nextcloudServerSettingsExplanation =>
+      'ये सर्वर Notes सेटिंग्स दूसरे क्लाइंट को भी प्रभावित करती हैं। पथ बदलने से फ़ाइलें स्थानांतरित नहीं होतीं; प्रत्यय बदलने से मौजूदा नोट का नाम नहीं बदलता।';
+
+  @override
+  String get nextcloudSettingsSaved => 'सर्वर सेटिंग्स सहेजी गईं';
+
+  @override
+  String get nextcloudSettingsNormalized =>
+      'सर्वर द्वारा सामान्यीकृत मानों के साथ सहेजा गया';
+
+  @override
+  String get nextcloudPendingUpload => 'अटैचमेंट अपलोड लंबित है';
+
+  @override
+  String nextcloudServerCheck(String time) {
+    return 'सर्वर की अंतिम जाँच: $time';
+  }
+
+  @override
+  String get nextcloudSettingsLoading => 'सर्वर सेटिंग लोड हो रही हैं';
+
+  @override
+  String get nextcloudSettingsSaving => 'सर्वर सेटिंग सहेजी जा रही हैं';
 }

@@ -3452,5 +3452,17 @@
   "wsMediumLayout": "समान स्तंभ",
   "wsNarrowLayout": "संकीर्ण शब्द स्तंभ",
   "wsTitle": "शीर्षक",
-  "wsSwitcherKey": "स्विचर कुंजी"
+  "wsSwitcherKey": "स्विचर कुंजी",
+  "nextcloudServerSettings": "सर्वर Notes सेटिंग्स",
+  "nextcloudNotesPath": "नोट फ़ोल्डर का पथ",
+  "nextcloudFileSuffix": "नए नोट की फ़ाइल का प्रत्यय",
+  "nextcloudServerSettingsExplanation": "ये सर्वर Notes सेटिंग्स दूसरे क्लाइंट को भी प्रभावित करती हैं। पथ बदलने से फ़ाइलें स्थानांतरित नहीं होतीं; प्रत्यय बदलने से मौजूदा नोट का नाम नहीं बदलता।",
+  "nextcloudSettingsSaved": "सर्वर सेटिंग्स सहेजी गईं",
+  "nextcloudSettingsNormalized": "सर्वर द्वारा सामान्यीकृत मानों के साथ सहेजा गया",
+  "nextcloudPendingUpload": "अटैचमेंट अपलोड लंबित है",
+  "nextcloudServerCheck": "सर्वर की अंतिम जाँच: {time}",
+  "nextcloudSettingsLoading": "सर्वर सेटिंग लोड हो रही हैं",
+  "@nextcloudSettingsLoading": {"description": "Accessible progress label while reading server Notes settings."},
+  "nextcloudSettingsSaving": "सर्वर सेटिंग सहेजी जा रही हैं",
+  "@nextcloudSettingsSaving": {"description": "Accessible progress label while writing server Notes settings."}
 }

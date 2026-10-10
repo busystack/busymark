@@ -25,6 +25,7 @@ import '../local_history/local_history_models.dart';
 import '../nextcloud_notes/domain/notes_models.dart';
 import '../nextcloud_notes/domain/notes_conflict.dart';
 import '../nextcloud_notes/application/notes_repository.dart';
+import '../nextcloud_notes/application/notes_sync_coordinator.dart';
 import '../nextcloud_notes/application/nextcloud_connection.dart';
 import '../nextcloud_notes/application/notes_media.dart';
 import '../export/markdown_copy_export_service.dart';
@@ -230,10 +231,9 @@ class WorkspaceController extends Notifier<WorkspaceState> {
   late LocalHistoryController _localHistory;
   NotesRepository? _notesRepository;
   StreamSubscription<void>? _notesSubscription;
-  final _remoteSyncTasks = <String, Future<void>>{};
-  final _remoteSyncRequested = <String>{};
-  final _remoteRetryTimers = <String, Timer>{};
-  final _remoteRetryCounts = <String, int>{};
+  NotesSyncCoordinator? _notesCoordinator;
+  bool _notesApplicationVisible = true;
+  bool _notesWorkspaceActive = true;
   final _remoteDurabilityWrites = <String, int>{};
   var _restoringLocalHistorySession = false;
   StreamSubscription<WorkspaceFileMonitorEvent>? _fileMonitorSubscription;
@@ -361,9 +361,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       _restoredRecoveryOwnerIdsByBuffer.clear();
       unawaited(_fileMonitorSubscription?.cancel());
       unawaited(_notesSubscription?.cancel());
-      for (final timer in _remoteRetryTimers.values) {
-        timer.cancel();
-      }
+      _notesCoordinator?.dispose();
     });
     return const WorkspaceState();
   }
@@ -452,6 +450,12 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     await repository.initialize();
     if (!ref.mounted) throw StateError('Workspace closed');
     _notesRepository = repository;
+    _notesCoordinator = NotesSyncCoordinator(
+      repository,
+      onError: (error, stack) => _reportNextcloudFailure(error),
+    );
+    _updateNotesCoordinator();
+    listenSelf((previous, next) => _updateNotesCoordinator());
     bool bindingGuard(String localId, Set<String> ids) =>
         !state.documentBuffers.any(
           (b) =>
@@ -670,7 +674,11 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         );
       }
       _schedulePersistence();
-      _scheduleRemoteSync(accountId);
+      unawaited(
+        _notesCoordinator
+            ?.request(NotesSyncTrigger.opening)
+            .catchError((Object error) => _reportNextcloudFailure(error)),
+      );
       return true;
     } on Object catch (error) {
       if (ref.mounted) {
@@ -841,113 +849,87 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     }
   }
 
-  void _scheduleRemoteSync(String accountId, {bool automaticRetry = false}) {
-    if (!ref.mounted) return;
-    _remoteRetryTimers.remove(accountId)?.cancel();
-    if (!automaticRetry) _remoteRetryCounts.remove(accountId);
-    _remoteSyncRequested.add(accountId);
-    if (_remoteSyncTasks.containsKey(accountId)) return;
-    final task = () async {
-      do {
-        _remoteSyncRequested.remove(accountId);
-        try {
-          await (await _ensureNotesRepository()).synchronize(accountId);
-        } on Object catch (error) {
-          if (ref.mounted && state.workspace?.nextcloudAccountId == accountId) {
-            state = state.copyWith(
-              message: WorkspaceMessage(
-                WorkspaceMessageCode.saveFailed,
-                error: error,
-              ),
-            );
-          }
-        }
-        // An edit committed during the request schedules one more pass. Network
-        // failures do not request a pass, so this cannot spin on server locks.
-      } while (ref.mounted && _remoteSyncRequested.contains(accountId));
-      _remoteSyncTasks.remove(accountId);
-      _scheduleRemoteRetry(accountId);
-    }();
-    _remoteSyncTasks[accountId] = task;
-    unawaited(task);
+  void _updateNotesCoordinator() {
+    _notesCoordinator?.setActiveAccount(
+      _notesWorkspaceActive ? state.workspace?.nextcloudAccountId : null,
+    );
+    _notesCoordinator?.setVisible(_notesApplicationVisible);
+    _notesRepository?.setDisplayedMediaNotes([
+      if (state.activeBuffer?.remoteNote?.localId case final id?) id,
+    ]);
   }
 
-  void _scheduleRemoteRetry(String accountId) {
-    if (!ref.mounted || state.workspace?.nextcloudAccountId != accountId) {
-      return;
-    }
-    final repository = _notesRepository;
-    if (repository == null) return;
-    final accountError = repository.accountError(accountId);
-    final retryable =
-        accountError?.code == NotesFailureCode.network ||
-        accountError?.code == NotesFailureCode.server ||
-        repository.notes.any(
-          (note) =>
-              note.accountId == accountId &&
-              note.hasPendingChanges &&
-              {
-                NoteSyncState.offline,
-                NoteSyncState.locked,
-                NoteSyncState.pending,
-              }.contains(note.syncState),
-        );
-    if (!retryable) {
-      _remoteRetryCounts.remove(accountId);
-      return;
-    }
-    final attempt = _remoteRetryCounts[accountId] ?? 0;
-    // Six delayed attempts, then explicit Refresh remains available. Creation
-    // uncertainty, conflicts, keyring/authentication and forbidden errors never
-    // trigger an automatic retry.
-    if (attempt >= 6) return;
-    _remoteRetryCounts[accountId] = attempt + 1;
-    _remoteRetryTimers[accountId] = Timer(
-      Duration(seconds: math.min(300, 5 * (1 << attempt))),
-      () {
-        _remoteRetryTimers.remove(accountId);
-        if (ref.mounted && state.workspace?.nextcloudAccountId == accountId) {
-          _scheduleRemoteSync(accountId, automaticRetry: true);
-        }
-      },
+  void setNotesApplicationVisible(bool visible) {
+    _notesApplicationVisible = visible;
+    _notesCoordinator?.setVisible(visible);
+  }
+
+  void setNotesWorkspaceActive(bool active) {
+    _notesWorkspaceActive = active;
+    _updateNotesCoordinator();
+    if (active) _notesCoordinator?.focused();
+  }
+
+  void refreshNotesOnFocus() => _notesCoordinator?.focused();
+  void _scheduleRemoteSync(String accountId) {
+    if (!ref.mounted) return;
+    _notesCoordinator?.setActiveAccount(
+      _notesWorkspaceActive ? state.workspace?.nextcloudAccountId : null,
+    );
+    _notesCoordinator?.setVisible(_notesApplicationVisible);
+    unawaited(
+      _notesCoordinator
+          ?.request(NotesSyncTrigger.localChange)
+          .catchError((Object error) => _reportNextcloudFailure(error)),
     );
   }
 
   Future<void> refreshNextcloudNotes() async {
-    final account = state.workspace?.nextcloudAccountId;
-    if (account != null) {
-      _remoteRetryTimers.remove(account)?.cancel();
-      _remoteRetryCounts.remove(account);
-      await (await _ensureNotesRepository()).synchronize(account);
-      _scheduleRemoteRetry(account);
+    if (state.workspace?.nextcloudAccountId == null) return;
+    await _ensureNotesRepository();
+    _updateNotesCoordinator();
+    await _notesCoordinator?.request(NotesSyncTrigger.manual);
+  }
+
+  Future<void> retryRejectedNextcloudNote(String localId) async {
+    try {
+      final repository = await _ensureNotesRepository();
+      await repository.retryRejectedNote(localId);
+      final note = repository.noteById(localId);
+      if (note != null) _scheduleRemoteSync(note.accountId);
+    } on Object catch (error) {
+      _reportNextcloudFailure(error);
     }
   }
 
   Future<void> updateNextcloudNoteMetadata(
     String localId, {
+    NotesMetadataSnapshot? snapshot,
     String? title,
     String? category,
     bool? favorite,
   }) async {
     try {
       final repository = await _ensureNotesRepository();
+      final beforeRevision = repository.noteById(localId)?.revision;
       final buffer = state.documentBuffers
           .where((b) => b.remoteNote?.localId == localId)
           .firstOrNull;
       if (buffer?.isDirty == true &&
-          !await _saveRemoteBufferSnapshot(buffer!)) {
+          !await _saveRemoteBufferSnapshot(buffer!, scheduleSync: false)) {
         return;
       }
       final note = repository.noteById(localId);
       if (note == null) return;
-      await repository.save(
-        localId,
-        content: note.content,
+      final updated = await repository.patchMetadata(
+        snapshot ?? repository.metadataSnapshot(localId),
         title: title,
         category: category,
         favorite: favorite,
       );
-      _scheduleRemoteSync(note.accountId);
+      if (updated.revision != beforeRevision) {
+        _scheduleRemoteSync(note.accountId);
+      }
     } on Object catch (error) {
       _reportNextcloudFailure(error);
     }
@@ -1110,9 +1092,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     _cancelPendingDerivedRefresh();
     _cancelAllAutoSaves();
     _invalidateActiveDocumentOperations();
-    _remoteSyncRequested.remove(accountId);
-    _remoteRetryTimers.remove(accountId)?.cancel();
-    _remoteRetryCounts.remove(accountId);
+    _notesCoordinator?.removeAccount(accountId);
     for (final buffer in state.documentBuffers) {
       await _localHistory.handleBufferClosed(buffer.id, historySettled: true);
     }

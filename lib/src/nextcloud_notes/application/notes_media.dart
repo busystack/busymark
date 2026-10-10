@@ -41,6 +41,7 @@ class NextcloudDocumentMedia {
   final String accountId;
   final String localId;
   final _paths = <String, String>{};
+  final _resolvedAt = <String, DateTime>{};
   final _pending = <String, Future<String?>>{};
   DocumentMediaContext? _context;
   int _version = -1;
@@ -64,12 +65,17 @@ class NextcloudDocumentMedia {
     _version = version;
     _context = null;
     _paths.clear();
+    _resolvedAt.clear();
     _pending.clear();
   }
 
   Future<String?> resolve(String reference) async {
     _checkVersion();
-    if (_paths.containsKey(reference)) return _paths[reference];
+    if (_paths.containsKey(reference) &&
+        repository.clock().difference(_resolvedAt[reference]!) <
+            NotesRepository.mediaFreshness) {
+      return _paths[reference];
+    }
     if (_pending.containsKey(reference)) return _pending[reference];
     final future = _resolve(reference);
     _pending[reference] = future;
@@ -81,12 +87,13 @@ class NextcloudDocumentMedia {
   }
 
   Future<String?> _resolve(String reference) async {
-    final version = _version;
     try {
       final path = await repository.resolveMedia(accountId, localId, reference);
       _checkVersion();
-      if (version != _version) return null;
-      if (path != null) _paths[reference] = path;
+      if (path != null) {
+        _paths[reference] = path;
+        _resolvedAt[reference] = repository.clock();
+      }
       return path;
     } on Object {
       // An unavailable remote item is represented by the renderer placeholder.

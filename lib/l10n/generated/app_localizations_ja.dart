@@ -4754,4 +4754,37 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get wsSwitcherKey => '切り替えキー';
+
+  @override
+  String get nextcloudServerSettings => 'サーバーのNotes設定';
+
+  @override
+  String get nextcloudNotesPath => 'ノートフォルダーのパス';
+
+  @override
+  String get nextcloudFileSuffix => '新しいノートの拡張子';
+
+  @override
+  String get nextcloudServerSettingsExplanation =>
+      'このサーバーのNotes設定は他のクライアントにも影響します。パスを変更してもファイルは移動せず、拡張子を変更しても既存のノートの名前は変わりません。';
+
+  @override
+  String get nextcloudSettingsSaved => 'サーバー設定を保存しました';
+
+  @override
+  String get nextcloudSettingsNormalized => 'サーバーが正規化した値で保存しました';
+
+  @override
+  String get nextcloudPendingUpload => '添付ファイルのアップロード待ち';
+
+  @override
+  String nextcloudServerCheck(String time) {
+    return '前回のサーバー確認: $time';
+  }
+
+  @override
+  String get nextcloudSettingsLoading => 'サーバー設定を読み込み中';
+
+  @override
+  String get nextcloudSettingsSaving => 'サーバー設定を保存中';
 }

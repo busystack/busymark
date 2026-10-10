@@ -3478,5 +3478,17 @@
   "wsMediumLayout": "Равные столбцы",
   "wsNarrowLayout": "Узкий столбец термина",
   "wsTitle": "Заголовок",
-  "wsSwitcherKey": "Ключ переключателя"
+  "wsSwitcherKey": "Ключ переключателя",
+  "nextcloudServerSettings": "Настройки Notes на сервере",
+  "nextcloudNotesPath": "Путь к папке заметок",
+  "nextcloudFileSuffix": "Расширение новых заметок",
+  "nextcloudServerSettingsExplanation": "Эти настройки Notes влияют на другие клиенты. Изменение пути не перемещает файлы; изменение расширения не переименовывает существующие заметки.",
+  "nextcloudSettingsSaved": "Настройки сервера сохранены",
+  "nextcloudSettingsNormalized": "Сохранено со значениями, нормализованными сервером",
+  "nextcloudPendingUpload": "Вложение ожидает загрузки",
+  "nextcloudServerCheck": "Последняя проверка сервера: {time}",
+  "nextcloudSettingsLoading": "Загрузка настроек сервера",
+  "@nextcloudSettingsLoading": {"description": "Accessible progress label while reading server Notes settings."},
+  "nextcloudSettingsSaving": "Сохранение настроек сервера",
+  "@nextcloudSettingsSaving": {"description": "Accessible progress label while writing server Notes settings."}
 }

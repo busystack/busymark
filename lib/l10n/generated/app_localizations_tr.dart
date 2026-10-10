@@ -4889,4 +4889,38 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get wsSwitcherKey => 'Değiştirici anahtarı';
+
+  @override
+  String get nextcloudServerSettings => 'Sunucu Notes ayarları';
+
+  @override
+  String get nextcloudNotesPath => 'Not klasörünün yolu';
+
+  @override
+  String get nextcloudFileSuffix => 'Yeni notların dosya uzantısı';
+
+  @override
+  String get nextcloudServerSettingsExplanation =>
+      'Bu sunucu Notes ayarları diğer istemcileri de etkiler. Yolun değiştirilmesi dosyaları taşımaz; uzantının değiştirilmesi mevcut notları yeniden adlandırmaz.';
+
+  @override
+  String get nextcloudSettingsSaved => 'Sunucu ayarları kaydedildi';
+
+  @override
+  String get nextcloudSettingsNormalized =>
+      'Sunucunun normalleştirdiği değerlerle kaydedildi';
+
+  @override
+  String get nextcloudPendingUpload => 'Ek yüklemesi bekliyor';
+
+  @override
+  String nextcloudServerCheck(String time) {
+    return 'Son sunucu kontrolü: $time';
+  }
+
+  @override
+  String get nextcloudSettingsLoading => 'Sunucu ayarları yükleniyor';
+
+  @override
+  String get nextcloudSettingsSaving => 'Sunucu ayarları kaydediliyor';
 }

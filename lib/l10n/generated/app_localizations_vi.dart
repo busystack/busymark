@@ -4879,4 +4879,38 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get wsSwitcherKey => 'Khóa chuyển đổi';
+
+  @override
+  String get nextcloudServerSettings => 'Cài đặt Notes trên máy chủ';
+
+  @override
+  String get nextcloudNotesPath => 'Đường dẫn thư mục ghi chú';
+
+  @override
+  String get nextcloudFileSuffix => 'Phần mở rộng của ghi chú mới';
+
+  @override
+  String get nextcloudServerSettingsExplanation =>
+      'Các cài đặt Notes này ảnh hưởng đến các ứng dụng khách khác. Đổi đường dẫn không di chuyển tệp; đổi phần mở rộng không đổi tên ghi chú hiện có.';
+
+  @override
+  String get nextcloudSettingsSaved => 'Đã lưu cài đặt máy chủ';
+
+  @override
+  String get nextcloudSettingsNormalized =>
+      'Đã lưu các giá trị được máy chủ chuẩn hóa';
+
+  @override
+  String get nextcloudPendingUpload => 'Đang chờ tải tệp đính kèm lên';
+
+  @override
+  String nextcloudServerCheck(String time) {
+    return 'Lần kiểm tra máy chủ gần nhất: $time';
+  }
+
+  @override
+  String get nextcloudSettingsLoading => 'Đang tải cài đặt máy chủ';
+
+  @override
+  String get nextcloudSettingsSaving => 'Đang lưu cài đặt máy chủ';
 }

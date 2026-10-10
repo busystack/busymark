@@ -51,7 +51,10 @@ class NotesApiClient {
     required this.account,
     required String appPassword,
     this.timeout = const Duration(seconds: 30),
-  }) : _client = client,
+    this.onApiVersions,
+    DateTime Function()? clock,
+  }) : clock = clock ?? DateTime.now,
+       _client = client,
        _authorization =
            'Basic ${base64Encode(utf8.encode('${account.loginName}:$appPassword'))}';
 
@@ -59,6 +62,24 @@ class NotesApiClient {
   final NextcloudAccount account;
   final String _authorization;
   final Duration timeout;
+  final DateTime Function() clock;
+  final Future<void> Function(String)? onApiVersions;
+
+  NotesRequestScope _scope(http.BaseRequest request) =>
+      request.url.path.contains('/attachment/')
+      ? NotesRequestScope.attachment
+      : request.url.path.endsWith('/settings')
+      ? NotesRequestScope.settings
+      : request.url.path.endsWith('/notes')
+      ? NotesRequestScope.collection
+      : NotesRequestScope.note;
+  Future<void> _observe(Map<String, String> headers) async {
+    final value = headers.entries
+        .where((e) => e.key.toLowerCase() == 'x-notes-api-versions')
+        .firstOrNull
+        ?.value;
+    if (value != null) await onApiVersions?.call(value);
+  }
 
   Uri _endpoint(String path, [Map<String, String>? query]) => nextcloudEndpoint(
     account.server,
@@ -74,6 +95,7 @@ class NotesApiClient {
       final response = await http.Response.fromStream(
         await _client.send(request).timeout(timeout),
       ).timeout(timeout);
+      await _observe(response.headers);
       if (response.statusCode >= 300 &&
           response.statusCode < 400 &&
           response.statusCode != 304) {
@@ -83,22 +105,25 @@ class NotesApiClient {
         );
       }
       return response;
-    } on NotesException {
-      rethrow;
+    } on NotesException catch (error) {
+      throw error.inScope(_scope(request));
     } on TimeoutException {
-      throw const NotesException(
+      throw NotesException(
         NotesFailureCode.network,
         'The Nextcloud request timed out. Local changes are preserved.',
+        scope: _scope(request),
       );
     } on http.ClientException {
-      throw const NotesException(
+      throw NotesException(
         NotesFailureCode.network,
         'Nextcloud is unreachable. Local changes are preserved.',
+        scope: _scope(request),
       );
     } on IOException {
-      throw const NotesException(
+      throw NotesException(
         NotesFailureCode.network,
         'Nextcloud is unreachable. Local changes are preserved.',
+        scope: _scope(request),
       );
     }
   }
@@ -111,13 +136,17 @@ class NotesApiClient {
     return null;
   }
 
-  static dynamic _json(http.Response response) {
+  static dynamic _json(
+    http.Response response, {
+    NotesRequestScope scope = NotesRequestScope.note,
+  }) {
     try {
       return jsonDecode(utf8.decode(response.bodyBytes));
     } on FormatException {
-      throw const NotesException(
+      throw NotesException(
         NotesFailureCode.invalidResponse,
         'Nextcloud returned invalid JSON.',
+        scope: scope,
       );
     }
   }
@@ -133,7 +162,10 @@ class NotesApiClient {
     return NoteState.fromJson(json);
   }
 
-  static void _check(http.Response response) {
+  void _check(
+    http.Response response, {
+    NotesRequestScope scope = NotesRequestScope.note,
+  }) {
     final status = response.statusCode;
     if (status >= 200 && status < 300) return;
     final (code, message) = switch (status) {
@@ -148,6 +180,10 @@ class NotesApiClient {
       404 => (
         NotesFailureCode.missing,
         'The note or attachment no longer exists on Nextcloud.',
+      ),
+      429 => (
+        NotesFailureCode.throttled,
+        'Nextcloud requested a pause before retrying. Local changes are preserved.',
       ),
       412 => (
         NotesFailureCode.conflict,
@@ -166,7 +202,7 @@ class NotesApiClient {
         'Nextcloud returned server error $status. Local changes are preserved.',
       ),
       _ => (
-        NotesFailureCode.server,
+        NotesFailureCode.rejected,
         'Nextcloud rejected this request (HTTP $status). Local changes are preserved.',
       ),
     };
@@ -178,7 +214,14 @@ class NotesApiClient {
         /* Fetch fresh state separately. */
       }
     }
-    throw NotesException(code, message, statusCode: status, remote: remote);
+    throw NotesException(
+      code,
+      message,
+      statusCode: status,
+      remote: remote,
+      scope: scope,
+      retryNotBefore: retryAfter(header(response, 'Retry-After'), clock()),
+    );
   }
 
   /// Collects every chunk before returning; interrupted lists never imply deletion.
@@ -198,7 +241,7 @@ class NotesApiClient {
         try {
           query['pruneBefore'] =
               '${HttpDate.parse(account.lastModified!).millisecondsSinceEpoch ~/ 1000}';
-        } on FormatException {
+        } on HttpException {
           // Invalid persisted checkpoint safely triggers an unpruned list.
         }
       }
@@ -211,12 +254,13 @@ class NotesApiClient {
       if (response.statusCode == 304 && cursor == null) {
         return const NotesListResult(notes: [], ids: {}, notModified: true);
       }
-      _check(response);
-      final json = _json(response);
+      _check(response, scope: NotesRequestScope.collection);
+      final json = _json(response, scope: NotesRequestScope.collection);
       if (json is! List) {
         throw const NotesException(
           NotesFailureCode.invalidResponse,
           'Nextcloud returned an invalid notes list.',
+          scope: NotesRequestScope.collection,
         );
       }
       for (final item in json) {
@@ -226,11 +270,17 @@ class NotesApiClient {
           throw const NotesException(
             NotesFailureCode.invalidResponse,
             'Nextcloud returned an invalid note identifier.',
+            scope: NotesRequestScope.collection,
           );
         }
         ids.add(item['id'] as int);
         if (item.containsKey('etag') || item.containsKey('content')) {
-          final note = NoteState.fromJson(item);
+          final NoteState note;
+          try {
+            note = NoteState.fromJson(item);
+          } on NotesException catch (error) {
+            throw error.inScope(NotesRequestScope.collection);
+          }
           notes[note.id] = note;
         }
       }
@@ -249,12 +299,14 @@ class NotesApiClient {
         throw const NotesException(
           NotesFailureCode.invalidResponse,
           'Nextcloud repeated a notes chunk cursor.',
+          scope: NotesRequestScope.collection,
         );
       }
     }
     throw const NotesException(
       NotesFailureCode.invalidResponse,
       'Nextcloud returned too many notes chunks.',
+      scope: NotesRequestScope.collection,
     );
   }
 
@@ -271,6 +323,10 @@ class NotesApiClient {
     'title': note.title,
     'category': note.category,
     'favorite': note.favorite,
+    if (note.localActivityMicros != null || note.modified > 0)
+      'modified': note.localActivityMicros == null
+          ? note.modified
+          : note.localActivityMicros! ~/ 1000000,
   };
 
   static Future<Map<String, Object>> creationAttributes(
@@ -286,7 +342,6 @@ class NotesApiClient {
             if (reference.reference.startsWith('busymark-attachment:'))
               reference.reference: '',
         });
-    attributes['modified'] = DateTime.now().millisecondsSinceEpoch ~/ 1000;
     return attributes;
   }
 
@@ -297,7 +352,7 @@ class NotesApiClient {
           note.creationAttempt?.wireBody ??
           jsonEncode(await creationAttributes(note));
     final response = await _send(request);
-    _check(response);
+    _check(response, scope: NotesRequestScope.collection);
     return _note(response);
   }
 
@@ -348,8 +403,8 @@ class NotesApiClient {
             http.MultipartFile.fromBytes('file', bytes, filename: filename),
           );
     final response = await _send(request);
-    _check(response);
-    final json = _json(response);
+    _check(response, scope: NotesRequestScope.attachment);
+    final json = _json(response, scope: NotesRequestScope.attachment);
     if (json is! Map ||
         json['filename'] is! String ||
         !isSafeAttachmentPath(json['filename'] as String) ||
@@ -357,6 +412,7 @@ class NotesApiClient {
       throw const NotesException(
         NotesFailureCode.invalidResponse,
         'Nextcloud returned an unsafe attachment filename.',
+        scope: NotesRequestScope.attachment,
       );
     }
     return json['filename'] as String;
@@ -375,9 +431,8 @@ class NotesApiClient {
         'This attachment reference is unsafe.',
       );
     }
-    final decodedPath = Uri.decodeComponent(path);
-    if (decodedPath.startsWith('.attachments.') &&
-        !decodedPath.startsWith('.attachments.$id/')) {
+    if (path.startsWith('.attachments.') &&
+        !path.startsWith('.attachments.$id/')) {
       throw const NotesException(
         NotesFailureCode.unsafeReference,
         'This attachment belongs to a different Nextcloud note.',
@@ -402,13 +457,17 @@ class NotesApiClient {
       // Register the stream before checking status/headers so every exit cancels it.
       input = StreamIterator(response.stream.timeout(timeout));
       cancel.check();
+      await _observe(response.headers);
       if (response.statusCode >= 300 && response.statusCode < 400) {
         throw const NotesException(
           NotesFailureCode.authentication,
           'Nextcloud redirected an authenticated attachment request. Reconnect using its canonical HTTPS URL.',
         );
       }
-      _check(http.Response('', response.statusCode));
+      _check(
+        http.Response('', response.statusCode, headers: response.headers),
+        scope: NotesRequestScope.attachment,
+      );
       if (response.statusCode != 200) {
         throw const NotesException(
           NotesFailureCode.invalidResponse,
@@ -491,23 +550,26 @@ class NotesApiClient {
       }
       cancel.check();
       return await partial.rename(destination.path);
-    } on NotesException {
-      rethrow;
+    } on NotesException catch (error) {
+      throw error.inScope(NotesRequestScope.attachment);
     } on TimeoutException {
       throw const NotesException(
         NotesFailureCode.network,
         'The attachment download timed out.',
+        scope: NotesRequestScope.attachment,
       );
     } on http.ClientException {
       cancel.check();
       throw const NotesException(
         NotesFailureCode.network,
         'The attachment download was interrupted.',
+        scope: NotesRequestScope.attachment,
       );
     } on IOException {
       throw const NotesException(
         NotesFailureCode.network,
         'The attachment could not be downloaded safely.',
+        scope: NotesRequestScope.attachment,
       );
     } finally {
       if (!abort.isCompleted) abort.complete();
@@ -536,61 +598,65 @@ class NotesApiClient {
       ..headers['Content-Type'] = 'application/json'
       ..body = jsonEncode({'path': path});
     final response = await _send(request);
-    _check(response);
+    _check(response, scope: NotesRequestScope.attachment);
+  }
+
+  Future<NotesSettings> getSettings() async {
+    final response = await _send(http.Request('GET', _endpoint('v1/settings')));
+    _check(response, scope: NotesRequestScope.settings);
+    return NotesSettings.fromJson(
+      _json(response, scope: NotesRequestScope.settings),
+    );
+  }
+
+  Future<NotesSettings> updateSettings(Map<String, String> patch) async {
+    if (patch.keys.any((key) => key != 'notesPath' && key != 'fileSuffix')) {
+      throw ArgumentError('Unknown Notes setting.');
+    }
+    final request = http.Request('PUT', _endpoint('v1/settings'))
+      ..headers['Content-Type'] = 'application/json'
+      ..body = jsonEncode(patch);
+    final response = await _send(request);
+    _check(response, scope: NotesRequestScope.settings);
+    return NotesSettings.fromJson(
+      _json(response, scope: NotesRequestScope.settings),
+    );
   }
 }
 
-bool isSafeAttachmentReference(String reference) {
-  if (reference.isEmpty ||
-      reference.contains('\\') ||
-      RegExp(r'[\x00-\x1f\x7f]').hasMatch(reference)) {
+/// Decode Markdown destinations once; API paths always remain raw.
+bool isSafeAttachmentReference(String reference) =>
+    canonicalAttachmentReference(reference) != null;
+
+bool isSafeAttachmentPath(String path) {
+  if (path.isEmpty ||
+      path.startsWith('/') ||
+      path.contains('\\') ||
+      RegExp(r'[\x00-\x1f\x7f]').hasMatch(path)) {
     return false;
   }
+  // A colon in the first segment could be a URI scheme. Percent characters are opaque.
+  if (path.split('/').first.contains(':')) return false;
+  return path
+      .split('/')
+      .every((part) => part.isNotEmpty && part != '.' && part != '..');
+}
+
+String? canonicalAttachmentReference(String reference) {
   final uri = Uri.tryParse(reference);
   if (uri == null ||
       uri.hasScheme ||
       uri.hasAuthority ||
       uri.hasQuery ||
       uri.hasFragment ||
-      reference.startsWith('/')) {
-    return false;
+      reference.contains('\\')) {
+    return null;
   }
+  // Uri.parse tolerates stray percent signs; a destination must be valid encoding.
+  if (RegExp(r'%(?![0-9a-fA-F]{2})').hasMatch(reference)) return null;
   try {
-    final decoded = Uri.decodeComponent(reference);
-    if (decoded.startsWith('/') || decoded.contains('\\')) return false;
-    return decoded
-        .split('/')
-        .every((part) => part.isNotEmpty && part != '.' && part != '..');
-  } on FormatException {
-    return false;
-  }
-}
-
-/// API filenames are opaque paths: a literal # can be a valid filename. The
-/// Markdown URI spelling is decoded separately before passing it to the API.
-bool isSafeAttachmentPath(String path) {
-  if (path.isEmpty ||
-      path.startsWith('/') ||
-      path.contains('\\') ||
-      RegExp(r'[\x00-\x1f\x7f]').hasMatch(path) ||
-      Uri.tryParse(path)?.hasScheme != false) {
-    return false;
-  }
-  try {
-    final decoded = Uri.decodeComponent(path);
-    if (decoded.startsWith('/') || decoded.contains('\\')) return false;
-    return decoded
-        .split('/')
-        .every((part) => part.isNotEmpty && part != '.' && part != '..');
-  } on FormatException {
-    return false;
-  }
-}
-
-String? canonicalAttachmentReference(String reference) {
-  if (!isSafeAttachmentReference(reference)) return null;
-  try {
-    return Uri.decodeComponent(reference);
+    final raw = Uri.decodeComponent(reference);
+    return isSafeAttachmentPath(raw) ? raw : null;
   } on FormatException {
     return null;
   }
@@ -605,9 +671,28 @@ String attachmentMarkdownReference(String path) => path
     )
     .join('/');
 
-/// API 1.4 returns flat filenames on 6.0.x and scoped filenames on 6.1.x.
-/// A foreign note folder or any other directory is never an upload destination.
 bool isNoteAttachmentPath(int id, String path) =>
     isSafeAttachmentPath(path) &&
-    (!Uri.decodeComponent(path).contains('/') ||
-        Uri.decodeComponent(path).startsWith('.attachments.$id/'));
+    (!path.contains('/') ||
+        (path.startsWith('.attachments.$id/') && path.split('/').length == 2));
+
+/// RFC 9110: retain a server deadline, including long delays; never clamp earlier.
+DateTime? retryAfter(String? value, DateTime now) {
+  if (value == null) return null;
+  final text = value.trim();
+  if (RegExp(r'^\d+$').hasMatch(text)) {
+    final seconds = int.tryParse(text);
+    if (seconds == null || seconds > 8640000000000) {
+      return DateTime.utc(275760, 1, 1);
+    }
+    final maximum = DateTime.utc(275760, 1, 1);
+    if (seconds > maximum.difference(now.toUtc()).inSeconds) return maximum;
+    return now.add(Duration(seconds: seconds));
+  }
+  try {
+    final deadline = HttpDate.parse(text);
+    return deadline.isAfter(now) ? deadline : now;
+  } on HttpException {
+    return null;
+  }
+}

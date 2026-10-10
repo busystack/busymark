@@ -4950,6 +4950,40 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get wsSwitcherKey => 'Chave do seletor';
+
+  @override
+  String get nextcloudServerSettings => 'Definições de Notes do servidor';
+
+  @override
+  String get nextcloudNotesPath => 'Caminho da pasta de notas';
+
+  @override
+  String get nextcloudFileSuffix => 'Extensão de novas notas';
+
+  @override
+  String get nextcloudServerSettingsExplanation =>
+      'Estas definições de Notes afetam outros clientes. Alterar o caminho não move ficheiros; alterar a extensão não renomeia notas existentes.';
+
+  @override
+  String get nextcloudSettingsSaved => 'Definições do servidor guardadas';
+
+  @override
+  String get nextcloudSettingsNormalized =>
+      'Guardado com valores normalizados pelo servidor';
+
+  @override
+  String get nextcloudPendingUpload => 'Envio de anexo pendente';
+
+  @override
+  String nextcloudServerCheck(String time) {
+    return 'Última verificação do servidor: $time';
+  }
+
+  @override
+  String get nextcloudSettingsLoading => 'A carregar as definições do servidor';
+
+  @override
+  String get nextcloudSettingsSaving => 'A guardar as definições do servidor';
 }
 
 /// The translations for Portuguese, as used in Brazil (`pt_BR`).
@@ -9894,4 +9928,38 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get wsSwitcherKey => 'Chave do seletor';
+
+  @override
+  String get nextcloudServerSettings => 'Configurações de Notes do servidor';
+
+  @override
+  String get nextcloudNotesPath => 'Caminho da pasta de notas';
+
+  @override
+  String get nextcloudFileSuffix => 'Extensão de novas notas';
+
+  @override
+  String get nextcloudServerSettingsExplanation =>
+      'Estas configurações de Notes afetam outros clientes. Alterar o caminho não move arquivos; alterar a extensão não renomeia notas existentes.';
+
+  @override
+  String get nextcloudSettingsSaved => 'Configurações do servidor salvas';
+
+  @override
+  String get nextcloudSettingsNormalized =>
+      'Salvo com valores normalizados pelo servidor';
+
+  @override
+  String get nextcloudPendingUpload => 'Envio de anexo pendente';
+
+  @override
+  String nextcloudServerCheck(String time) {
+    return 'Última verificação do servidor: $time';
+  }
+
+  @override
+  String get nextcloudSettingsLoading => 'Carregando configurações do servidor';
+
+  @override
+  String get nextcloudSettingsSaving => 'Salvando configurações do servidor';
 }

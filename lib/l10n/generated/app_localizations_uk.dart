@@ -4956,4 +4956,38 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get wsSwitcherKey => 'Ключ перемикача';
+
+  @override
+  String get nextcloudServerSettings => 'Налаштування Notes на сервері';
+
+  @override
+  String get nextcloudNotesPath => 'Шлях до теки нотаток';
+
+  @override
+  String get nextcloudFileSuffix => 'Розширення нових нотаток';
+
+  @override
+  String get nextcloudServerSettingsExplanation =>
+      'Ці налаштування Notes впливають на інші клієнти. Зміна шляху не переміщує файли; зміна розширення не перейменовує наявні нотатки.';
+
+  @override
+  String get nextcloudSettingsSaved => 'Налаштування сервера збережено';
+
+  @override
+  String get nextcloudSettingsNormalized =>
+      'Збережено зі значеннями, нормалізованими сервером';
+
+  @override
+  String get nextcloudPendingUpload => 'Вкладення очікує завантаження';
+
+  @override
+  String nextcloudServerCheck(String time) {
+    return 'Остання перевірка сервера: $time';
+  }
+
+  @override
+  String get nextcloudSettingsLoading => 'Завантаження налаштувань сервера';
+
+  @override
+  String get nextcloudSettingsSaving => 'Збереження налаштувань сервера';
 }

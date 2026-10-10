@@ -4887,4 +4887,38 @@ class AppLocalizationsEt extends AppLocalizations {
 
   @override
   String get wsSwitcherKey => 'Valikulüliti võti';
+
+  @override
+  String get nextcloudServerSettings => 'Serveri Notesi seaded';
+
+  @override
+  String get nextcloudNotesPath => 'Märkmete kausta tee';
+
+  @override
+  String get nextcloudFileSuffix => 'Uute märkmete faililaiend';
+
+  @override
+  String get nextcloudServerSettingsExplanation =>
+      'Need Notesi seaded mõjutavad teisi kliente. Tee muutmine ei teisalda faile; laiendi muutmine ei nimeta olemasolevaid märkmeid ümber.';
+
+  @override
+  String get nextcloudSettingsSaved => 'Serveri seaded salvestatud';
+
+  @override
+  String get nextcloudSettingsNormalized =>
+      'Salvestatud serveri normaliseeritud väärtustega';
+
+  @override
+  String get nextcloudPendingUpload => 'Manuse üleslaadimine ootel';
+
+  @override
+  String nextcloudServerCheck(String time) {
+    return 'Viimane serverikontroll: $time';
+  }
+
+  @override
+  String get nextcloudSettingsLoading => 'Serveri seadete laadimine';
+
+  @override
+  String get nextcloudSettingsSaving => 'Serveri seadete salvestamine';
 }

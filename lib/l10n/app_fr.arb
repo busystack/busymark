@@ -3452,5 +3452,17 @@
   "wsMediumLayout": "Colonnes égales",
   "wsNarrowLayout": "Terme étroit",
   "wsTitle": "Titre",
-  "wsSwitcherKey": "Clé du sélecteur"
+  "wsSwitcherKey": "Clé du sélecteur",
+  "nextcloudServerSettings": "Paramètres Notes du serveur",
+  "nextcloudNotesPath": "Chemin du dossier de notes",
+  "nextcloudFileSuffix": "Extension des nouvelles notes",
+  "nextcloudServerSettingsExplanation": "Ces paramètres Notes du serveur affectent les autres clients. Changer le chemin ne déplace pas les fichiers ; changer l’extension ne renomme pas les notes existantes.",
+  "nextcloudSettingsSaved": "Paramètres serveur enregistrés",
+  "nextcloudSettingsNormalized": "Enregistré avec les valeurs normalisées par le serveur",
+  "nextcloudPendingUpload": "Envoi de pièce jointe en attente",
+  "nextcloudServerCheck": "Dernière vérification du serveur : {time}",
+  "nextcloudSettingsLoading": "Chargement des paramètres du serveur",
+  "@nextcloudSettingsLoading": {"description": "Accessible progress label while reading server Notes settings."},
+  "nextcloudSettingsSaving": "Enregistrement des paramètres du serveur",
+  "@nextcloudSettingsSaving": {"description": "Accessible progress label while writing server Notes settings."}
 }

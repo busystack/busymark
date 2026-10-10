@@ -46,30 +46,56 @@ final nextcloudNotesRepositoryProvider = FutureProvider<NotesRepository>((
   final client = ref.watch(nextcloudHttpClientProvider);
   final secrets = ref.watch(nextcloudSecretStoreProvider);
   final store = await NotesStore.open(path: path);
-  final repository = NotesRepository(
+  Future<String> passwordFor(NextcloudAccount account) async {
+    String? password;
+    try {
+      password = await secrets.read(account.id);
+    } on NextcloudCredentialException {
+      throw const NotesException(
+        NotesFailureCode.authentication,
+        'BusyMark could not access the desktop keyring. Unlock it and reconnect Nextcloud.',
+        scope: NotesRequestScope.account,
+      );
+    }
+    if (password == null) {
+      throw const NotesException(
+        NotesFailureCode.authentication,
+        'The Nextcloud app password is unavailable. Reconnect this account.',
+        scope: NotesRequestScope.account,
+      );
+    }
+    return password;
+  }
+
+  late final NotesRepository repository;
+  repository = NotesRepository(
     store: store,
     clientForAccount: (account) async {
-      String? password;
-      try {
-        password = await secrets.read(account.id);
-      } on NextcloudCredentialException {
-        throw const NotesException(
-          NotesFailureCode.authentication,
-          'BusyMark could not access the desktop keyring. Unlock the keyring and reconnect Nextcloud.',
-        );
-      }
-      if (password == null) {
-        throw const NotesException(
-          NotesFailureCode.authentication,
-          'The Nextcloud app password is unavailable. Reconnect this account.',
-        );
-      }
+      final password = await passwordFor(account);
+      final generation = repository.accountGeneration(account.id);
+      var epoch = repository.capabilityEpoch(account.id);
       return NotesApiClient(
         client: client,
         account: account,
         appPassword: password,
+        onApiVersions: (raw) async {
+          final current = repository.capabilityEpoch(account.id) == epoch;
+          await repository.recordApiVersions(
+            account.id,
+            generation,
+            epoch,
+            raw,
+          );
+          if (current) epoch = repository.capabilityEpoch(account.id);
+        },
       );
     },
+    fetchCapabilities: (account) async => fetchNotesCapabilities(
+      client: client,
+      server: account.server,
+      loginName: account.loginName,
+      appPassword: await passwordFor(account),
+    ),
   );
   try {
     await repository.initialize();
@@ -226,7 +252,7 @@ class NextcloudConnectionController extends Notifier<NextcloudConnectionState> {
         listEtag: previous?.listEtag,
         lastModified: previous?.lastModified,
       );
-      await repository.upsertAccount(account);
+      await repository.upsertAccount(account, reconnect: previous != null);
       committed = true;
       if (_disposed) return true;
       state = NextcloudConnectionState(

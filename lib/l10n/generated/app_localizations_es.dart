@@ -4936,4 +4936,38 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get wsSwitcherKey => 'Clave del selector';
+
+  @override
+  String get nextcloudServerSettings => 'Ajustes de Notes del servidor';
+
+  @override
+  String get nextcloudNotesPath => 'Ruta de la carpeta de notas';
+
+  @override
+  String get nextcloudFileSuffix => 'Extensión de las notas nuevas';
+
+  @override
+  String get nextcloudServerSettingsExplanation =>
+      'Estos ajustes de Notes afectan a otros clientes. Cambiar la ruta no mueve archivos; cambiar la extensión no renombra las notas existentes.';
+
+  @override
+  String get nextcloudSettingsSaved => 'Ajustes del servidor guardados';
+
+  @override
+  String get nextcloudSettingsNormalized =>
+      'Guardado con valores normalizados por el servidor';
+
+  @override
+  String get nextcloudPendingUpload => 'Carga de adjunto pendiente';
+
+  @override
+  String nextcloudServerCheck(String time) {
+    return 'Última comprobación del servidor: $time';
+  }
+
+  @override
+  String get nextcloudSettingsLoading => 'Cargando ajustes del servidor';
+
+  @override
+  String get nextcloudSettingsSaving => 'Guardando ajustes del servidor';
 }

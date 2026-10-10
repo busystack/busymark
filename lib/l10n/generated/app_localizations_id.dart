@@ -4887,4 +4887,38 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get wsSwitcherKey => 'Kunci pemilih';
+
+  @override
+  String get nextcloudServerSettings => 'Pengaturan Notes server';
+
+  @override
+  String get nextcloudNotesPath => 'Jalur folder catatan';
+
+  @override
+  String get nextcloudFileSuffix => 'Ekstensi berkas catatan baru';
+
+  @override
+  String get nextcloudServerSettingsExplanation =>
+      'Pengaturan Notes server ini memengaruhi klien lain. Mengubah jalur tidak memindahkan berkas; mengubah ekstensi tidak mengganti nama catatan yang ada.';
+
+  @override
+  String get nextcloudSettingsSaved => 'Pengaturan server disimpan';
+
+  @override
+  String get nextcloudSettingsNormalized =>
+      'Disimpan dengan nilai yang dinormalisasi server';
+
+  @override
+  String get nextcloudPendingUpload => 'Unggahan lampiran tertunda';
+
+  @override
+  String nextcloudServerCheck(String time) {
+    return 'Pemeriksaan server terakhir: $time';
+  }
+
+  @override
+  String get nextcloudSettingsLoading => 'Memuat pengaturan server';
+
+  @override
+  String get nextcloudSettingsSaving => 'Menyimpan pengaturan server';
 }
