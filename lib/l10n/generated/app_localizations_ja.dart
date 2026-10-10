@@ -4787,4 +4787,10 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get nextcloudSettingsSaving => 'サーバー設定を保存中';
+
+  @override
+  String get nextcloudPreviousLocalEdit => '以前のローカル編集';
+
+  @override
+  String get nextcloudUsePreviousEdit => '以前の編集を使用';
 }

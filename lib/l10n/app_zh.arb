@@ -5003,5 +5003,7 @@
   "nextcloudSettingsLoading": "正在加载服务器设置",
   "@nextcloudSettingsLoading": {"description": "Accessible progress label while reading server Notes settings."},
   "nextcloudSettingsSaving": "正在保存服务器设置",
-  "@nextcloudSettingsSaving": {"description": "Accessible progress label while writing server Notes settings."}
+  "@nextcloudSettingsSaving": {"description": "Accessible progress label while writing server Notes settings."},
+  "nextcloudPreviousLocalEdit": "先前的本地编辑",
+  "nextcloudUsePreviousEdit": "使用先前编辑"
 }

@@ -3464,5 +3464,7 @@
   "nextcloudSettingsLoading": "Chargement des paramètres du serveur",
   "@nextcloudSettingsLoading": {"description": "Accessible progress label while reading server Notes settings."},
   "nextcloudSettingsSaving": "Enregistrement des paramètres du serveur",
-  "@nextcloudSettingsSaving": {"description": "Accessible progress label while writing server Notes settings."}
+  "@nextcloudSettingsSaving": {"description": "Accessible progress label while writing server Notes settings."},
+  "nextcloudPreviousLocalEdit": "Modification locale précédente",
+  "nextcloudUsePreviousEdit": "Utiliser la modification précédente"
 }

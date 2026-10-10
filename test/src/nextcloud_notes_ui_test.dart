@@ -253,6 +253,30 @@ void main() {
         ),
       );
     }
+    const metadataBase = NoteState(
+      id: 12,
+      etag: 'metadata-base',
+      content: 'body',
+      title: 'A',
+      category: '',
+      favorite: false,
+      readonly: false,
+      modified: 1,
+    );
+    await store.saveNote(
+      const NextcloudNote(
+        localId: 'metadata-server',
+        accountId: accountId,
+        serverId: 12,
+        title: 'A',
+        content: 'body',
+        etag: 'metadata-base',
+        base: metadataBase,
+        revision: 1,
+        ackRevision: 1,
+        syncState: NoteSyncState.synced,
+      ),
+    );
     repository = _CachedNotesRepository(store: store);
     await repository.initialize();
   });
@@ -805,6 +829,133 @@ void main() {
     expect(repository.noteById(id)!.title, 'Local title');
     expect(tester.takeException(), isNull);
   });
+
+  for (final draft in [false, true]) {
+    for (final choice in [
+      'Use previous edit',
+      'Keep Mine',
+      'Merge',
+      'New note',
+    ]) {
+      testWidgets(
+        'local metadata review applies the displayed choice: draft=$draft $choice',
+        (tester) async {
+          for (final channelName in ['yaru_window', 'yaru_window/events']) {
+            TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+                .setMockMethodCallHandler(
+                  MethodChannel(channelName),
+                  (call) async =>
+                      call.method == 'state' ? <String, Object?>{} : null,
+                );
+            addTearDown(
+              () => TestDefaultBinaryMessengerBinding
+                  .instance
+                  .defaultBinaryMessenger
+                  .setMockMethodCallHandler(MethodChannel(channelName), null),
+            );
+          }
+          final id = draft
+              ? '223e4567-e89b-42d3-a456-426614174000'
+              : 'metadata-server';
+          await tester.runAsync(() async {
+            final snapshot = repository.metadataSnapshot(id);
+            await repository.patchMetadata(snapshot, title: 'B');
+            await repository.patchMetadata(snapshot, title: 'C');
+          });
+          tester.view.physicalSize = const Size(1200, 1000);
+          tester.view.devicePixelRatio = 1;
+          addTearDown(tester.view.resetPhysicalSize);
+          addTearDown(tester.view.resetDevicePixelRatio);
+          await tester.pumpWidget(
+            ProviderScope(
+              overrides: [
+                nextcloudNotesRepositoryProvider.overrideWith(
+                  (ref) async => repository,
+                ),
+                localSettingsStoreProvider.overrideWithValue(_TabSettings()),
+                linuxAccentPlatformProvider.overrideWithValue(false),
+                localHistoryStoreProvider.overrideWithValue(
+                  MemoryLocalHistoryStore(),
+                ),
+                documentSessionStoreProvider.overrideWithValue(
+                  MemoryDocumentSessionStore(),
+                ),
+                documentRecoveryStoreProvider.overrideWithValue(
+                  MemoryDocumentRecoveryStore(),
+                ),
+              ],
+              child: MaterialApp(
+                localizationsDelegates: AppLocalizations.localizationsDelegates,
+                supportedLocales: AppLocalizations.supportedLocales,
+                home: Scaffold(
+                  body: NextcloudNoteStatus(localId: id, unsaved: false),
+                ),
+              ),
+            ),
+          );
+          await tester.pumpAndSettle();
+          await tester.runAsync(() => tester.tap(find.text('Compare')));
+          for (
+            var i = 0;
+            i < 100 && find.text('Use previous edit').evaluate().isEmpty;
+            i++
+          ) {
+            await tester.runAsync(
+              () => Future<void>.delayed(const Duration(milliseconds: 10)),
+            );
+            await tester.pump(const Duration(milliseconds: 50));
+          }
+          await tester.pumpAndSettle();
+          expect(find.text('Use previous edit'), findsOneWidget);
+          expect(find.text('Take Remote'), findsNothing);
+          await tester.tap(find.byType(DropdownButton<NotesMergeChoice>));
+          await tester.pumpAndSettle();
+          expect(find.text('Previous local edit: B'), findsOneWidget);
+          expect(find.text('Keep Mine: C'), findsOneWidget);
+          await tester.tap(find.text('Previous local edit: B'));
+          await tester.pumpAndSettle();
+          await tester.runAsync(() async {
+            await tester.tap(
+              find.byWidgetPredicate(
+                (w) => w is BusyMarkDialogButton && w.label == choice,
+              ),
+            );
+          });
+          final completion = Stopwatch()..start();
+          bool finished() => choice == 'New note'
+              ? repository.notes.any((n) => n.localId != id && n.title == 'C')
+              : repository.noteById(id)!.metadataConflict == null;
+          while (!finished() &&
+              completion.elapsed < const Duration(seconds: 30)) {
+            await tester.pump(const Duration(milliseconds: 50));
+            await tester.runAsync(
+              () => Future<void>.delayed(const Duration(milliseconds: 10)),
+            );
+          }
+          await tester.pumpAndSettle();
+          expect(finished(), isTrue);
+          final selected = choice == 'New note'
+              ? repository.notes.singleWhere(
+                  (n) => n.localId != id && n.title == 'C',
+                )
+              : repository.noteById(id)!;
+          expect(
+            selected.title,
+            choice == 'Keep Mine' || choice == 'New note' ? 'C' : 'B',
+          );
+          expect(tester.takeException(), isNull);
+          final container = ProviderScope.containerOf(
+            tester.element(find.byType(NextcloudNoteStatus)),
+          );
+          await tester.runAsync(() async {
+            container.dispose();
+          });
+          await tester.pumpWidget(const SizedBox.shrink());
+          await tester.runAsync(() => repository.dispose());
+        },
+      );
+    }
+  }
 
   testWidgets('read-only favorite conflict offers a safe merge', (
     tester,

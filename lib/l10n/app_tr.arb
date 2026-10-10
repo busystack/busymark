@@ -5003,5 +5003,7 @@
   "nextcloudSettingsLoading": "Sunucu ayarları yükleniyor",
   "@nextcloudSettingsLoading": {"description": "Accessible progress label while reading server Notes settings."},
   "nextcloudSettingsSaving": "Sunucu ayarları kaydediliyor",
-  "@nextcloudSettingsSaving": {"description": "Accessible progress label while writing server Notes settings."}
+  "@nextcloudSettingsSaving": {"description": "Accessible progress label while writing server Notes settings."},
+  "nextcloudPreviousLocalEdit": "Önceki yerel düzenleme",
+  "nextcloudUsePreviousEdit": "Önceki düzenlemeyi kullan"
 }

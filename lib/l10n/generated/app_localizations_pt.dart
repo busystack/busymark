@@ -4984,6 +4984,12 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get nextcloudSettingsSaving => 'A guardar as definições do servidor';
+
+  @override
+  String get nextcloudPreviousLocalEdit => 'Edição local anterior';
+
+  @override
+  String get nextcloudUsePreviousEdit => 'Usar edição anterior';
 }
 
 /// The translations for Portuguese, as used in Brazil (`pt_BR`).
@@ -9962,4 +9968,10 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get nextcloudSettingsSaving => 'Salvando configurações do servidor';
+
+  @override
+  String get nextcloudPreviousLocalEdit => 'Edição local anterior';
+
+  @override
+  String get nextcloudUsePreviousEdit => 'Usar edição anterior';
 }

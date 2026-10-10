@@ -8375,6 +8375,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Saving server settings'**
   String get nextcloudSettingsSaving;
+
+  /// Label for the competing accepted local metadata edit, distinct from server state.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous local edit'**
+  String get nextcloudPreviousLocalEdit;
+
+  /// Conflict action that keeps the exact previously reviewed local metadata values.
+  ///
+  /// In en, this message translates to:
+  /// **'Use previous edit'**
+  String get nextcloudUsePreviousEdit;
 }
 
 class _AppLocalizationsDelegate

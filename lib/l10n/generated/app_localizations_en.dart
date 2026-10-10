@@ -4935,4 +4935,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get nextcloudSettingsSaving => 'Saving server settings';
+
+  @override
+  String get nextcloudPreviousLocalEdit => 'Previous local edit';
+
+  @override
+  String get nextcloudUsePreviousEdit => 'Use previous edit';
 }

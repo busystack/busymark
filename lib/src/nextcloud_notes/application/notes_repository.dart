@@ -129,7 +129,7 @@ class NotesRepository {
         n.accountId == id &&
         n.hasPendingChanges &&
         !_isBlocked(n) &&
-        n.retryCount > 0 &&
+        (n.retryCount > 0 || n.retryNotBefore?.isAfter(clock()) == true) &&
         n.retryCount <= 6,
   );
   DateTime? writeDeadline(String id) {
@@ -270,42 +270,74 @@ class NotesRepository {
         'This Nextcloud note became read-only.',
       );
     }
-    final divergent =
+    final titleDivergent =
         (title != null &&
-            current.title != original.title &&
-            current.title != title) ||
+        current.title != original.title &&
+        current.title != title);
+    final categoryDivergent =
         (category != null &&
-            current.category != original.category &&
-            current.category != category) ||
+        current.category != original.category &&
+        current.category != category);
+    final favoriteDivergent =
         (favorite != null &&
-            current.favorite != original.favorite &&
-            current.favorite != favorite);
+        current.favorite != original.favorite &&
+        current.favorite != favorite);
+    final divergent = titleDivergent || categoryDivergent || favoriteDivergent;
     final changed =
         (title != null && title != current.title) ||
         (category != null && category != current.category) ||
         (favorite != null && favorite != current.favorite);
     if (!changed) return current;
+    final intended = NotesMetadataValues.fromNote(
+      current,
+    ).copyWith(title: title, category: category, favorite: favorite);
+    final previousConflict = current.metadataConflict;
+    final previousMerge = previousConflict == null
+        ? null
+        : NotesConflictMerge.metadata(current);
+    final metadataConflict = previousConflict == null
+        ? divergent
+              ? NotesMetadataConflict(
+                  original: NotesMetadataValues.fromNote(original),
+                  alternative: intended.copyWith(
+                    title: titleDivergent ? current.title : null,
+                    category: categoryDivergent ? current.category : null,
+                    favorite: favoriteDivergent ? current.favorite : null,
+                  ),
+                )
+              : null
+        : NotesMetadataConflict(
+            original: previousConflict.original,
+            alternative: previousConflict.alternative.copyWith(
+              title: previousMerge!.title.conflicted ? null : intended.title,
+              category: previousMerge.category.conflicted
+                  ? null
+                  : intended.category,
+              favorite: previousMerge.favorite.conflicted
+                  ? null
+                  : intended.favorite,
+            ),
+          );
     final patched = current.copyWith(
       title: title,
       category: category,
       favorite: favorite,
       revision: current.revision + 1,
       localActivityMicros: clock().microsecondsSinceEpoch,
-      base: divergent ? snapshot.base.state : current.base,
-      remote: divergent
-          ? (current.remote ??
-                NoteState(
-                  id: current.serverId ?? 1,
-                  etag: current.etag ?? 'local',
-                  content: current.content,
-                  title: current.title,
-                  category: current.category,
-                  favorite: current.favorite,
-                  readonly: current.readonly,
-                  modified: current.modified,
-                ))
-          : current.remote,
-      syncState: divergent || current.syncState == NoteSyncState.conflict
+      metadataConflict: metadataConflict,
+      syncState:
+          {
+            NoteSyncState.creationUncertain,
+            NoteSyncState.deletedRemotely,
+            NoteSyncState.recoveryRequired,
+            NoteSyncState.reconnectRequired,
+            NoteSyncState.forbidden,
+            NoteSyncState.unavailable,
+            NoteSyncState.storageFull,
+          }.contains(current.syncState)
+          ? current.syncState
+          : metadataConflict != null ||
+                current.syncState == NoteSyncState.conflict
           ? NoteSyncState.conflict
           : _isBlocked(current) && current.syncState != NoteSyncState.rejected
           ? current.syncState
@@ -313,7 +345,6 @@ class NotesRepository {
       failureCode: null,
       failureScope: null,
       retryCount: 0,
-      retryNotBefore: null,
       errorMessage: divergent
           ? 'A property changed while the dialog was open. Review both values before synchronizing.'
           : current.syncState == NoteSyncState.conflict
@@ -809,8 +840,21 @@ class NotesRepository {
   }) async {
     await initialize();
     _validateId(account.id);
+    // Finish requests using the old credential before releasing their durable
+    // authentication blocks. Network waits stay outside the mutation queue.
+    if (reconnect) await _syncs[account.id];
     await _mutate(() async {
       final existing = _accounts[account.id];
+      if (reconnect &&
+          (existing == null ||
+              existing.server != account.server ||
+              existing.loginName != account.loginName)) {
+        throw const NotesException(
+          NotesFailureCode.conflict,
+          'Reconnect must verify the same Nextcloud account.',
+          scope: NotesRequestScope.account,
+        );
+      }
       final merged = existing == null
           ? account
           : existing.copyWith(
@@ -819,8 +863,34 @@ class NotesRepository {
               apiSupported: account.apiSupported,
               capabilitiesCheckedAt: account.capabilitiesCheckedAt,
             );
-      await store.saveAccount(merged);
+      final recovered = reconnect
+          ? notes
+                .where(
+                  (note) =>
+                      note.accountId == account.id &&
+                      note.syncState == NoteSyncState.reconnectRequired &&
+                      note.creationAttempt == null,
+                )
+                .map(
+                  (note) => note.copyWith(
+                    syncState:
+                        note.metadataConflict != null || note.remote != null
+                        ? NoteSyncState.conflict
+                        : NoteSyncState.pending,
+                    failureCode: null,
+                    failureScope: null,
+                    errorMessage: null,
+                    retryCount: 0,
+                  ),
+                )
+                .toList()
+          : <NextcloudNote>[];
+      await store.commit(accounts: [merged], notes: recovered);
       _accounts[account.id] = merged;
+      for (final note in recovered) {
+        _notes[note.localId] = note;
+      }
+      if (reconnect) _accountErrors.remove(account.id);
       if (reconnect || existing == null) {
         _accountGenerations[account.id] =
             (_accountGenerations[account.id] ?? 0) + 1;
@@ -937,7 +1007,6 @@ class NotesRepository {
       failureCode: null,
       failureScope: null,
       retryCount: 0,
-      retryNotBefore: null,
       editorRevision: editorRevision ?? current.editorRevision,
       editorContentDigest: editorRevision == null
           ? current.editorContentDigest
@@ -1963,6 +2032,15 @@ class NotesRepository {
       await _resolveCreation(original, creationReview);
       return;
     }
+    if (original.metadataConflict != null) {
+      await _resolveMetadataConflict(
+        original,
+        resolution,
+        mergedContent: mergedContent,
+        metadataChoices: metadataChoices,
+      );
+      return;
+    }
     if (original.serverId == null) {
       throw const NotesException(
         NotesFailureCode.conflict,
@@ -1996,9 +2074,8 @@ class NotesRepository {
           'New local edits appeared while resolving this note. Review them before applying the resolution.',
         );
       }
-      if (resolution != NoteConflictResolution.takeRemote &&
-          original.remote != null &&
-          fresh.etag != original.remote!.etag) {
+      if (original.remote != null &&
+          jsonEncode(fresh.toJson()) != jsonEncode(original.remote!.toJson())) {
         final changedAgain = current.copyWith(
           remote: fresh,
           readonly: fresh.readonly,
@@ -2059,7 +2136,6 @@ class NotesRepository {
               failureCode: null,
               failureScope: null,
               retryCount: 0,
-              retryNotBefore: null,
               syncState: NoteSyncState.pending,
               errorMessage: null,
             );
@@ -2073,6 +2149,107 @@ class NotesRepository {
       }
       await store.saveNote(resolved);
       _notes[localId] = resolved;
+      _notify();
+    });
+  }
+
+  Future<void> _resolveMetadataConflict(
+    NextcloudNote original,
+    NoteConflictResolution resolution, {
+    String? mergedContent,
+    required Map<NotesMergeAttribute, NotesMergeChoice> metadataChoices,
+  }) async {
+    _assertMutableAccount(original.accountId);
+    final generation = accountGeneration(original.accountId);
+    NoteState? fresh;
+    if (original.serverId != null) {
+      final client = await _clientForAccount(_accounts[original.accountId]!);
+      fresh = await client.get(original.serverId!);
+      if (fresh.error) {
+        throw const NotesException(
+          NotesFailureCode.forbidden,
+          'The server note is unavailable.',
+        );
+      }
+    }
+    await _mutate(() async {
+      if (!_currentAccount(original.accountId, generation)) {
+        throw const NotesException(
+          NotesFailureCode.conflict,
+          'The account changed while reviewing these properties.',
+        );
+      }
+      _assertMutableAccount(original.accountId);
+      final current = _require(original.localId);
+      if (current.revision != original.revision ||
+          current.metadataConflict == null) {
+        throw const NotesException(
+          NotesFailureCode.conflict,
+          'New local edits appeared. Review the conflict again.',
+        );
+      }
+      final merge = NotesConflictMerge.metadata(current);
+      final alternative = current.metadataConflict!.alternative;
+      final merging = resolution == NoteConflictResolution.merge;
+      final previous = resolution == NoteConflictResolution.takeRemote;
+      final serverChanged = fresh != null && fresh.etag != current.etag;
+      final protectedState = {
+        NoteSyncState.creationUncertain,
+        NoteSyncState.deletedRemotely,
+        NoteSyncState.recoveryRequired,
+        NoteSyncState.reconnectRequired,
+        NoteSyncState.forbidden,
+        NoteSyncState.unavailable,
+        NoteSyncState.storageFull,
+      }.contains(current.syncState);
+      final resolved = current.copyWith(
+        content: merging ? mergedContent ?? current.content : current.content,
+        title: previous
+            ? alternative.title
+            : merging
+            ? merge.title.resolve(metadataChoices[NotesMergeAttribute.title])
+            : current.title,
+        category: previous
+            ? alternative.category
+            : merging
+            ? merge.category.resolve(
+                metadataChoices[NotesMergeAttribute.category],
+              )
+            : current.category,
+        favorite: previous
+            ? alternative.favorite
+            : merging
+            ? merge.favorite.resolve(
+                metadataChoices[NotesMergeAttribute.favorite],
+              )
+            : current.favorite,
+        metadataConflict: null,
+        base: !serverChanged && fresh != null ? fresh : current.base,
+        remote: serverChanged ? fresh : null,
+        readonly: fresh?.readonly ?? current.readonly,
+        revision: current.revision + 1,
+        localActivityMicros: clock().microsecondsSinceEpoch,
+        syncState: protectedState
+            ? current.syncState
+            : current.serverId == null && current.creationAttempt != null
+            ? NoteSyncState.creationUncertain
+            : serverChanged
+            ? NoteSyncState.conflict
+            : NoteSyncState.pending,
+        errorMessage: protectedState
+            ? current.errorMessage
+            : serverChanged
+            ? 'The server also changed. Review its state against your selected properties.'
+            : null,
+      );
+      if (fresh?.readonly == true && _readonlyBlocks(resolved, fresh!)) {
+        throw const NotesException(
+          NotesFailureCode.forbidden,
+          'The server note is read-only. Recover protected changes as a new note.',
+        );
+      }
+      await store.saveNote(resolved);
+      _notes[current.localId] = resolved;
       _notify();
     });
   }

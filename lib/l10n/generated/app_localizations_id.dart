@@ -4921,4 +4921,10 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get nextcloudSettingsSaving => 'Menyimpan pengaturan server';
+
+  @override
+  String get nextcloudPreviousLocalEdit => 'Edit lokal sebelumnya';
+
+  @override
+  String get nextcloudUsePreviousEdit => 'Gunakan edit sebelumnya';
 }

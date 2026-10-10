@@ -395,6 +395,67 @@ class NotesEditorBase {
   final int generation;
 }
 
+/// Metadata values from one accepted local edit, independent of server evidence.
+class NotesMetadataValues {
+  const NotesMetadataValues({
+    required this.title,
+    required this.category,
+    required this.favorite,
+  });
+  factory NotesMetadataValues.fromNote(NextcloudNote note) =>
+      NotesMetadataValues(
+        title: note.title,
+        category: note.category,
+        favorite: note.favorite,
+      );
+  final String title;
+  final String category;
+  final bool favorite;
+  NotesMetadataValues copyWith({
+    String? title,
+    String? category,
+    bool? favorite,
+  }) => NotesMetadataValues(
+    title: title ?? this.title,
+    category: category ?? this.category,
+    favorite: favorite ?? this.favorite,
+  );
+  Map<String, Object?> toJson() => {
+    'title': title,
+    'category': category,
+    'favorite': favorite,
+  };
+  factory NotesMetadataValues.fromJson(Map<String, dynamic> json) =>
+      NotesMetadataValues(
+        title: json['title'] as String,
+        category: json['category'] as String,
+        favorite: json['favorite'] as bool,
+      );
+}
+
+/// Competing local properties edits. Neither side is an observation of Nextcloud.
+class NotesMetadataConflict {
+  const NotesMetadataConflict({
+    required this.original,
+    required this.alternative,
+  });
+  final NotesMetadataValues original;
+  final NotesMetadataValues alternative;
+  Map<String, Object?> toJson() => {
+    'original': original.toJson(),
+    'alternative': alternative.toJson(),
+  };
+  factory NotesMetadataConflict.fromJson(Map<String, dynamic> json) =>
+      NotesMetadataConflict(
+        original: NotesMetadataValues.fromJson(
+          Map<String, dynamic>.from(json['original'] as Map),
+        ),
+        alternative: NotesMetadataValues.fromJson(
+          Map<String, dynamic>.from(json['alternative'] as Map),
+        ),
+      );
+}
+
 class NextcloudNote {
   const NextcloudNote({
     required this.localId,
@@ -410,6 +471,7 @@ class NextcloudNote {
     this.etag,
     this.base,
     this.remote,
+    this.metadataConflict,
     this.creationAttempt,
     this.creationNeverSent = false,
     this.revision = 1,
@@ -439,6 +501,7 @@ class NextcloudNote {
   final String? etag;
   final NoteState? base;
   final NoteState? remote;
+  final NotesMetadataConflict? metadataConflict;
   final NotesCreationAttempt? creationAttempt;
 
   /// Positive durable evidence; missing legacy metadata is not proof.
@@ -480,6 +543,7 @@ class NextcloudNote {
     Object? etag = _unchanged,
     Object? base = _unchanged,
     Object? remote = _unchanged,
+    Object? metadataConflict = _unchanged,
     Object? creationAttempt = _unchanged,
     bool? creationNeverSent,
     int? revision,
@@ -510,6 +574,9 @@ class NextcloudNote {
     etag: identical(etag, _unchanged) ? this.etag : etag as String?,
     base: identical(base, _unchanged) ? this.base : base as NoteState?,
     remote: identical(remote, _unchanged) ? this.remote : remote as NoteState?,
+    metadataConflict: identical(metadataConflict, _unchanged)
+        ? this.metadataConflict
+        : metadataConflict as NotesMetadataConflict?,
     creationNeverSent: creationNeverSent ?? this.creationNeverSent,
     creationAttempt: identical(creationAttempt, _unchanged)
         ? this.creationAttempt
@@ -556,6 +623,7 @@ class NextcloudNote {
     'etag': etag,
     'base': base?.toJson(),
     'remote': remote?.toJson(),
+    'metadataConflict': metadataConflict?.toJson(),
     'creationAttempt': creationAttempt?.toJson(),
     'creationNeverSent': creationNeverSent,
     'revision': revision,
@@ -590,6 +658,11 @@ class NextcloudNote {
     remote: json['remote'] == null
         ? null
         : NoteState.fromJson(Map<String, dynamic>.from(json['remote'] as Map)),
+    metadataConflict: json['metadataConflict'] == null
+        ? null
+        : NotesMetadataConflict.fromJson(
+            Map<String, dynamic>.from(json['metadataConflict'] as Map),
+          ),
     creationNeverSent: json['creationNeverSent'] == true,
     creationAttempt: json['creationAttempt'] == null
         ? null

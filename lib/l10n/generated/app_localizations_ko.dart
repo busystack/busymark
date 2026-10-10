@@ -4782,4 +4782,10 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get nextcloudSettingsSaving => '서버 설정을 저장하는 중';
+
+  @override
+  String get nextcloudPreviousLocalEdit => '이전 로컬 편집';
+
+  @override
+  String get nextcloudUsePreviousEdit => '이전 편집 사용';
 }

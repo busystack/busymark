@@ -12,6 +12,7 @@ import 'package:busymark/src/nextcloud_notes/data/notes_api_client.dart';
 import 'package:busymark/src/nextcloud_notes/data/notes_capabilities.dart';
 import 'package:busymark/src/nextcloud_notes/data/notes_store.dart';
 import 'package:busymark/src/nextcloud_notes/domain/notes_models.dart';
+import 'package:busymark/src/nextcloud_notes/domain/notes_conflict.dart';
 
 class _Connection extends http.BaseClient {
   _Connection(this._client);
@@ -22,6 +23,7 @@ class _Connection extends http.BaseClient {
   bool loseNextSettingsResponse = false;
   bool loseNextUploadResponse = false;
   int? nextCollectionFailure;
+  bool rejectNextPutCredentials = false;
   String? nextPutRetryAfter;
   Map<String, dynamic>? discardedCreation;
   int attachmentUploads = 0;
@@ -33,6 +35,17 @@ class _Connection extends http.BaseClient {
   @override
   Future<http.StreamedResponse> send(http.BaseRequest request) async {
     if (offline) throw http.ClientException('Intentional offline acceptance.');
+    if (rejectNextPutCredentials &&
+        request.method == 'PUT' &&
+        request.url.path.contains('/v1/notes/')) {
+      rejectNextPutCredentials = false;
+      // Real server authentication rejection with intentionally invalid fixture
+      // credentials, confined to this one write. Never logged or persisted.
+      request.headers['Authorization'] = nextcloudAuthorization(
+        'invalid-review-fixture',
+        'invalid-review-password',
+      );
+    }
     if (request.method == 'GET' &&
         request.url.path.endsWith('/v1/notes') &&
         nextCollectionFailure != null) {
@@ -190,6 +203,14 @@ Future<void> main(List<String> arguments) async {
       checks,
       directory,
       (value) => editClock = value,
+    );
+    await _reviewCorrections(
+      connection,
+      account,
+      api,
+      createdIds,
+      checks,
+      directory,
     );
     if (credentials['lockedNoteId'] case final int lockedId) {
       await repository.synchronize(account.id);
@@ -831,4 +852,180 @@ Future<void> _milestoneChecks(
   // Explicitly remove the note; uncertain attachment bytes remain in local recovery.
   await repository.delete(note.localId);
   createdIds.remove(note.serverId!);
+}
+
+Future<void> _reviewCorrections(
+  _Connection connection,
+  NextcloudAccount account,
+  NotesApiClient Function(NextcloudAccount) api,
+  Set<int> createdIds,
+  Map<String, Object?> checks,
+  Directory directory,
+) async {
+  var now = DateTime.now();
+  Future<NotesRepository> open() async {
+    final r = NotesRepository(
+      store: await NotesStore.open(path: '${directory.path}/review.sqlite3'),
+      clientForAccount: (a) async => api(a),
+      clock: () => now,
+    );
+    await r.initialize();
+    if (r.accounts.isEmpty) await r.upsertAccount(account);
+    return r;
+  }
+
+  var r = await open();
+  Future<void> restart() async {
+    await r.dispose();
+    r = await open();
+  }
+
+  try {
+    final owned = await r.create(
+      account.id,
+      title: 'Review auth and Unicode',
+      category: 'BusyMarkReview',
+      content: 'body',
+    );
+    await r.synchronize(account.id);
+    final id = owned.localId;
+    createdIds.add(r.noteById(id)!.serverId!);
+    await r.save(id, content: 'durable authenticated edit');
+    connection.rejectNextPutCredentials = true;
+    await r.synchronize(account.id);
+    _require(
+      r.noteById(id)!.syncState == NoteSyncState.reconnectRequired,
+      'Real invalid-credential PUT did not produce an authentication block.',
+    );
+    await restart();
+    // The account identity and valid app password came from the verified Login
+    // Flow; this authenticated read verifies the restored credential boundary.
+    await api(account).list();
+    await r.upsertAccount(account, reconnect: true);
+    await r.synchronize(account.id);
+    _require(
+      r.noteById(id)!.syncState == NoteSyncState.synced &&
+          (await api(account).get(r.noteById(id)!.serverId!)).content ==
+              'durable authenticated edit',
+      'Restart/reconnect did not resume the real authenticated write.',
+    );
+    checks['real401RestartVerifiedReconnectResumesWrite'] = true;
+
+    await r.save(id, content: 'first throttled edit');
+    connection.nextPutRetryAfter = '600';
+    await r.synchronize(account.id);
+    final deadline = r.noteById(id)!.retryNotBefore!;
+    final updates = connection.noteUpdates;
+    await r.save(id, content: 'content edited while throttled');
+    await r.patchMetadata(
+      r.metadataSnapshot(id),
+      category: 'BusyMarkReview/Edited',
+    );
+    await restart();
+    await r.synchronize(account.id);
+    _require(
+      r.noteById(id)!.retryNotBefore == deadline &&
+          connection.noteUpdates == updates,
+      'Content/metadata editing or restart bypassed injected Retry-After.',
+    );
+    now = deadline;
+    await r.synchronize(account.id);
+    _require(
+      r.noteById(id)!.syncState == NoteSyncState.synced &&
+          connection.noteUpdates == updates + 1,
+      'Expired throttle did not publish the edited revision.',
+    );
+    checks['simulated429ContentMetadataRestartDeadlineExpiryRealPublication'] =
+        true;
+    now = DateTime.now();
+
+    final bytes = Uint8List.fromList([1, 2, 3, 4]);
+    final attachment = await r.addAttachment(
+      id,
+      filename: 'café.png',
+      bytes: bytes,
+    );
+    await r.save(id, content: '![unicode](${attachment.reference})');
+    await r.synchronize(account.id);
+    final path = (await r.attachments(
+      id,
+    )).singleWhere((a) => a.id == attachment.id).remotePath!;
+    await r.save(id, content: '<img src="$path">');
+    await r.synchronize(account.id);
+    for (final destination in [path, attachmentMarkdownReference(path)]) {
+      final file = await r.resolveMedia(account.id, id, destination);
+      _require(
+        file != null &&
+            base64Encode(await File(file).readAsBytes()) == base64Encode(bytes),
+        'Literal/encoded Unicode HTML media failed.',
+      );
+    }
+    final downloaded = await api(account).fetchAttachment(
+      r.noteById(id)!.serverId!,
+      path,
+      destination: File('${directory.path}/unicode-review.png'),
+    );
+    _require(
+      base64Encode(await downloaded.readAsBytes()) == base64Encode(bytes),
+      'Real Unicode download did not round trip.',
+    );
+    checks['literalAndEncodedUnicodeHtmlUploadPublicationDownload'] = true;
+
+    var sequence = 0;
+    final prefix = DateTime.now().microsecondsSinceEpoch;
+    for (final draft in [false, true]) {
+      for (final resolution in [
+        NoteConflictResolution.takeRemote,
+        NoteConflictResolution.keepLocal,
+        NoteConflictResolution.merge,
+        NoteConflictResolution.saveAsNew,
+      ]) {
+        final suffix = '$prefix-${sequence++}';
+        final a = 'A-$suffix', b = 'B-$suffix', c = 'C-$suffix';
+        final note = await r.create(
+          account.id,
+          title: a,
+          category: 'BusyMarkReview/Choices',
+          content: 'choice body',
+        );
+        if (!draft) {
+          await r.synchronize(account.id);
+          createdIds.add(r.noteById(note.localId)!.serverId!);
+        }
+        final snapshot = r.metadataSnapshot(note.localId);
+        await r.patchMetadata(snapshot, title: b);
+        await r.patchMetadata(snapshot, title: c);
+        await restart();
+        await r.resolveConflict(
+          note.localId,
+          resolution,
+          metadataChoices: {NotesMergeAttribute.title: NotesMergeChoice.remote},
+        );
+        final chosen = resolution == NoteConflictResolution.saveAsNew
+            ? r.notes.singleWhere(
+                (n) =>
+                    n.localId != note.localId &&
+                    n.title == c &&
+                    n.serverId == null,
+              )
+            : r.noteById(note.localId)!;
+        await r.synchronize(account.id);
+        final published = r.noteById(chosen.localId)!;
+        createdIds.add(published.serverId!);
+        final expected =
+            resolution == NoteConflictResolution.takeRemote ||
+                resolution == NoteConflictResolution.merge
+            ? b
+            : c;
+        _require(
+          published.title == expected &&
+              (await api(account).get(published.serverId!)).title == expected,
+          'Reviewed local choice was substituted during real server synchronization.',
+        );
+      }
+    }
+    checks['serverAndDraftEveryReviewedMetadataChoiceRestartRealSync'] = true;
+  } finally {
+    await r.dispose();
+  }
 }

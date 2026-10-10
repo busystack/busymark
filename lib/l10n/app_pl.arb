@@ -3490,5 +3490,7 @@
   "nextcloudSettingsLoading": "Wczytywanie ustawień serwera",
   "@nextcloudSettingsLoading": {"description": "Accessible progress label while reading server Notes settings."},
   "nextcloudSettingsSaving": "Zapisywanie ustawień serwera",
-  "@nextcloudSettingsSaving": {"description": "Accessible progress label while writing server Notes settings."}
+  "@nextcloudSettingsSaving": {"description": "Accessible progress label while writing server Notes settings."},
+  "nextcloudPreviousLocalEdit": "Poprzednia lokalna zmiana",
+  "nextcloudUsePreviousEdit": "Użyj poprzedniej zmiany"
 }

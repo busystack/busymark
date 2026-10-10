@@ -4921,4 +4921,10 @@ class AppLocalizationsEt extends AppLocalizations {
 
   @override
   String get nextcloudSettingsSaving => 'Serveri seadete salvestamine';
+
+  @override
+  String get nextcloudPreviousLocalEdit => 'Eelmine kohalik muudatus';
+
+  @override
+  String get nextcloudUsePreviousEdit => 'Kasuta eelmist muudatust';
 }

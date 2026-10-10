@@ -120,6 +120,9 @@ class _Transport extends http.BaseClient {
   _Transport(this.inner);
   final http.Client inner;
   bool offline = false;
+  bool rejectNextWriteCredentials = false;
+  bool throttleNextWrite = false;
+  int writes = 0;
   int collections = 0;
   @override
   Future<http.StreamedResponse> send(http.BaseRequest request) {
@@ -128,6 +131,27 @@ class _Transport extends http.BaseClient {
     }
     if (offline) {
       throw http.ClientException('Simulated desktop loss of connectivity.');
+    }
+    if (request.method == 'PUT' && request.url.path.contains('/v1/notes/')) {
+      writes++;
+      if (rejectNextWriteCredentials) {
+        rejectNextWriteCredentials = false;
+        request.headers['Authorization'] = nextcloudAuthorization(
+          'invalid-desktop-fixture',
+          'invalid-desktop-password',
+        );
+      }
+      if (throttleNextWrite) {
+        throttleNextWrite = false;
+        return Future.value(
+          http.StreamedResponse(
+            Stream.value(utf8.encode('{}')),
+            429,
+            headers: {'Retry-After': '5'},
+            request: request,
+          ),
+        );
+      }
     }
     return inner.send(request);
   }
@@ -407,6 +431,128 @@ class _HarnessState extends ConsumerState<_Harness> {
         'propertiesConcurrencyAndDirtyBuffer',
       );
       await workspace.refreshNextcloudNotes();
+      for (final draft in [false, true]) {
+        widget.transport.offline = true;
+        final reviewId = draft
+            ? (await repository.create(
+                widget.account.id,
+                title: 'Desktop A draft',
+                category: 'Desktop/Remote',
+                content: 'draft body',
+              )).localId
+            : id;
+        await workspace.openNextcloudNote(reviewId);
+        final title = repository.noteById(reviewId)!.title;
+        await wait(
+          () => widgets<ListTile>().any(
+            (t) => t.key == ValueKey('nextcloud-note-$reviewId'),
+          ),
+          'metadata review row',
+        );
+        widgets<ListTile>()
+            .firstWhere((t) => t.key == ValueKey('nextcloud-note-$reviewId'))
+            .onLongPress!();
+        await wait(
+          () => widgets<TextField>().any((f) => f.controller?.text == title),
+          'stale metadata dialog',
+        );
+        final snapshot = repository.metadataSnapshot(reviewId);
+        await repository.patchMetadata(snapshot, title: 'Desktop B $draft');
+        edit(
+          widgets<TextField>().firstWhere((f) => f.controller?.text == title),
+          'Desktop C $draft',
+        );
+        await label('Save');
+        await wait(
+          () => repository.noteById(reviewId)!.metadataConflict != null,
+          'local metadata conflict',
+        );
+        widget.transport.offline = false;
+        await label('Compare');
+        await wait(
+          () => widgets<DropdownButton>().any(
+            (d) =>
+                d.items?.any(
+                  (i) =>
+                      i.child is Text &&
+                      (i.child as Text).data ==
+                          'Previous local edit: Desktop B $draft',
+                ) ==
+                true,
+          ),
+          'reviewed B/C choices',
+        );
+        await capture('local-metadata-conflict-$draft');
+        await label('Use previous edit');
+        await wait(
+          () => repository.noteById(reviewId)!.metadataConflict == null,
+          'previous local choice applied',
+        );
+        await workspace.refreshNextcloudNotes();
+        final selected = repository.noteById(reviewId)!;
+        created.add(selected.serverId!);
+        check(
+          selected.title == 'Desktop B $draft' &&
+              (await api.get(selected.serverId!)).title == selected.title,
+          'nativeReviewedBPreservedDraft$draft',
+        );
+      }
+      await workspace.openNextcloudNote(id);
+      workspace.updateActiveText('# Native authenticated edit');
+      await workspace.saveActive();
+      widget.transport.rejectNextWriteCredentials = true;
+      await workspace.refreshNextcloudNotes();
+      check(
+        repository.noteById(id)!.syncState == NoteSyncState.reconnectRequired,
+        'nativeReal401BlocksWrite',
+      );
+      final verified = await fetchNotesCapabilities(
+        client: widget.transport,
+        server: widget.account.server,
+        loginName: widget.account.loginName,
+        appPassword: widget.password,
+      );
+      await repository.upsertAccount(
+        widget.account.copyWith(
+          appVersion: verified.appVersion,
+          apiVersion: verified.apiVersion,
+        ),
+        reconnect: true,
+      );
+      await ref.read(nextcloudConnectionProvider.notifier).reload();
+      await workspace.refreshNextcloudNotes();
+      check(
+        repository.noteById(id)!.syncState == NoteSyncState.synced &&
+            (await api.get(repository.noteById(id)!.serverId!)).content ==
+                '# Native authenticated edit',
+        'nativeVerifiedReconnectResumesWrite',
+      );
+      workspace.updateActiveText('# First throttled edit');
+      await workspace.saveActive();
+      widget.transport.throttleNextWrite = true;
+      await workspace.refreshNextcloudNotes();
+      final deadline = repository.noteById(id)!.retryNotBefore!;
+      final writes = widget.transport.writes;
+      workspace.updateActiveText('# Edited during throttling');
+      await workspace.saveActive();
+      await repository.patchMetadata(
+        repository.metadataSnapshot(id),
+        favorite: !repository.noteById(id)!.favorite,
+      );
+      await workspace.refreshNextcloudNotes();
+      check(
+        widget.transport.writes == writes &&
+            repository.noteById(id)!.retryNotBefore == deadline,
+        'nativeEditsKeepRetryAfter',
+      );
+      await Future<void>.delayed(
+        deadline.difference(DateTime.now()) + const Duration(seconds: 1),
+      );
+      await workspace.refreshNextcloudNotes();
+      check(
+        repository.noteById(id)!.syncState == NoteSyncState.synced,
+        'nativeDeadlinePublishesEditedRevision',
+      );
       // Open and save the actual server settings controls.
       ref
           .read(appRouterProvider)
@@ -509,7 +655,7 @@ class _HarnessState extends ConsumerState<_Harness> {
       // disposable fixture without changing its path or the note ETag.
       final attachment = await repository.addAttachment(
         id,
-        filename: 'desktop.png',
+        filename: 'café.png',
         bytes: await png(Colors.red),
       );
       workspace.updateActiveText(
@@ -523,6 +669,14 @@ class _HarnessState extends ConsumerState<_Harness> {
       )).firstWhere((a) => a.id == attachment.id);
       final rawPath = remoteAttachment.remotePath!;
       final destination = attachmentMarkdownReference(rawPath);
+      workspace.updateActiveText('<img src="$rawPath">\n');
+      await workspace.saveActive();
+      await workspace.refreshNextcloudNotes();
+      note = repository.noteById(id)!;
+      check(
+        note.content.contains('café.png'),
+        'nativeLiteralUnicodeHtmlDestination',
+      );
       final oldPath = await repository.resolveMedia(
         widget.account.id,
         id,

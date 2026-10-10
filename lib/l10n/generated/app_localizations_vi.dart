@@ -4913,4 +4913,10 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get nextcloudSettingsSaving => 'Đang lưu cài đặt máy chủ';
+
+  @override
+  String get nextcloudPreviousLocalEdit => 'Chỉnh sửa cục bộ trước';
+
+  @override
+  String get nextcloudUsePreviousEdit => 'Dùng chỉnh sửa trước';
 }

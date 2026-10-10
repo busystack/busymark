@@ -567,7 +567,8 @@ void main() {
       final changed = await r.patchMetadata(snapshot, title: 'Dialog intent');
       expect(changed.syncState, NoteSyncState.conflict);
       expect(changed.title, 'Dialog intent');
-      expect(changed.remote!.title, 'Other local action');
+      expect(changed.remote, isNull);
+      expect(changed.metadataConflict!.alternative.title, 'Other local action');
       final convergence = r.metadataSnapshot(id);
       final revision = changed.revision;
       final time = changed.localActivityMicros;
@@ -901,48 +902,50 @@ void main() {
     },
   );
 
-  test(
-    'v2 migration retains exact outbox and bytes; failed recovery rolls back fence; v4 rejected',
-    () async {
-      final r = await open(MockClient((_) async => http.Response('[]', 200)));
-      final draft = await r.create(testAccount().id, content: 'retained');
-      final attachment = await r.addAttachment(
-        draft.localId,
-        filename: 'a.bin',
-        bytes: Uint8List.fromList([1, 2]),
-      );
-      await restart(r);
-      var db = sqlite3.open('${directory.path}/notes.sqlite3');
-      db.execute('PRAGMA user_version=2');
-      final outbox = db.select('SELECT data FROM outbox').single['data'];
-      db.close();
-      final migrated = await open(
-        MockClient((_) async => http.Response('[]', 200)),
-      );
-      expect(
-        migrated.notes.single.localActivityMicros,
-        draft.localActivityMicros,
-      );
-      expect(await migrated.store.attachmentBytes(attachment.id), [1, 2]);
-      await restart(migrated);
-      db = sqlite3.open('${directory.path}/notes.sqlite3');
-      expect(db.select('PRAGMA user_version').single.values.single, 3);
-      expect(db.select('SELECT data FROM outbox').single['data'], outbox);
-      db.execute('PRAGMA user_version=2');
-      db.execute("UPDATE notes SET data='{}'");
-      db.close();
-      await expectLater(
-        NotesStore.open(path: '${directory.path}/notes.sqlite3'),
-        throwsStateError,
-      );
-      db = sqlite3.open('${directory.path}/notes.sqlite3');
-      expect(db.select('PRAGMA user_version').single.values.single, 2);
-      db.execute('PRAGMA user_version=4');
-      db.close();
-      await expectLater(
-        NotesStore.open(path: '${directory.path}/notes.sqlite3'),
-        throwsStateError,
-      );
-    },
-  );
+  for (final schema in [2, 3]) {
+    test(
+      'v$schema migration retains exact outbox and bytes; failed recovery rolls back fence; v5 rejected',
+      () async {
+        final r = await open(MockClient((_) async => http.Response('[]', 200)));
+        final draft = await r.create(testAccount().id, content: 'retained');
+        final attachment = await r.addAttachment(
+          draft.localId,
+          filename: 'a.bin',
+          bytes: Uint8List.fromList([1, 2]),
+        );
+        await restart(r);
+        var db = sqlite3.open('${directory.path}/notes.sqlite3');
+        db.execute('PRAGMA user_version=$schema');
+        final outbox = db.select('SELECT data FROM outbox').single['data'];
+        db.close();
+        final migrated = await open(
+          MockClient((_) async => http.Response('[]', 200)),
+        );
+        expect(
+          migrated.notes.single.localActivityMicros,
+          draft.localActivityMicros,
+        );
+        expect(await migrated.store.attachmentBytes(attachment.id), [1, 2]);
+        await restart(migrated);
+        db = sqlite3.open('${directory.path}/notes.sqlite3');
+        expect(db.select('PRAGMA user_version').single.values.single, 4);
+        expect(db.select('SELECT data FROM outbox').single['data'], outbox);
+        db.execute('PRAGMA user_version=$schema');
+        db.execute("UPDATE notes SET data='{}'");
+        db.close();
+        await expectLater(
+          NotesStore.open(path: '${directory.path}/notes.sqlite3'),
+          throwsStateError,
+        );
+        db = sqlite3.open('${directory.path}/notes.sqlite3');
+        expect(db.select('PRAGMA user_version').single.values.single, schema);
+        db.execute('PRAGMA user_version=5');
+        db.close();
+        await expectLater(
+          NotesStore.open(path: '${directory.path}/notes.sqlite3'),
+          throwsStateError,
+        );
+      },
+    );
+  }
 }

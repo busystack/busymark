@@ -2902,5 +2902,13 @@
   "nextcloudSettingsLoading": "Loading server settings",
   "@nextcloudSettingsLoading": {"description": "Accessible progress label while reading server Notes settings."},
   "nextcloudSettingsSaving": "Saving server settings",
-  "@nextcloudSettingsSaving": {"description": "Accessible progress label while writing server Notes settings."}
+  "@nextcloudSettingsSaving": {"description": "Accessible progress label while writing server Notes settings."},
+  "nextcloudPreviousLocalEdit": "Previous local edit",
+  "nextcloudUsePreviousEdit": "Use previous edit",
+  "@nextcloudPreviousLocalEdit": {
+    "description": "Label for the competing accepted local metadata edit, distinct from server state."
+  },
+  "@nextcloudUsePreviousEdit": {
+    "description": "Conflict action that keeps the exact previously reviewed local metadata values."
+  }
 }

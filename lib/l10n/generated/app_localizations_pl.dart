@@ -4977,4 +4977,10 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get nextcloudSettingsSaving => 'Zapisywanie ustawień serwera';
+
+  @override
+  String get nextcloudPreviousLocalEdit => 'Poprzednia lokalna zmiana';
+
+  @override
+  String get nextcloudUsePreviousEdit => 'Użyj poprzedniej zmiany';
 }

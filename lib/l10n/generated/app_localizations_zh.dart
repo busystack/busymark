@@ -4709,6 +4709,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get nextcloudSettingsSaving => '正在保存服务器设置';
+
+  @override
+  String get nextcloudPreviousLocalEdit => '先前的本地编辑';
+
+  @override
+  String get nextcloudUsePreviousEdit => '使用先前编辑';
 }
 
 /// The translations for Chinese, as used in China (`zh_CN`).
@@ -9414,4 +9420,10 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get nextcloudSettingsSaving => '正在保存服务器设置';
+
+  @override
+  String get nextcloudPreviousLocalEdit => '先前的本地编辑';
+
+  @override
+  String get nextcloudUsePreviousEdit => '使用先前编辑';
 }

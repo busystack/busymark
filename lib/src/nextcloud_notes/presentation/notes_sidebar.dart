@@ -403,7 +403,8 @@ class NextcloudNoteStatus extends ConsumerWidget {
                     addNextcloudFileAttachment(context, ref, note.localId),
                   ),
                 ),
-              if (note.syncState == NoteSyncState.conflict ||
+              if (note.metadataConflict != null ||
+                  note.syncState == NoteSyncState.conflict ||
                   note.syncState == NoteSyncState.deletedRemotely ||
                   note.syncState == NoteSyncState.creationUncertain ||
                   note.syncState == NoteSyncState.recoveryRequired ||
@@ -543,8 +544,9 @@ Future<void> showNextcloudConflict(
   final current = repository.noteById(note.localId);
   if (current == null || !context.mounted) return;
   note = current;
+  final localMetadata = note.metadataConflict != null;
   final remote = note.remote;
-  final creationCandidates = note.serverId == null
+  final creationCandidates = note.serverId == null && !localMetadata
       ? repository.uncertainCreationCandidates(note.localId)
       : const <NextcloudNote>[];
   var creationCandidateServerId = remote?.id;
@@ -557,17 +559,23 @@ Future<void> showNextcloudConflict(
         .firstOrNull;
   }
 
-  final canOverwriteRemote =
-      note.serverId != null &&
-      remote != null &&
-      !remote.readonly &&
-      !remote.error;
+  final canOverwriteRemote = localMetadata
+      ? !note.readonly && !note.error
+      : note.serverId != null &&
+            remote != null &&
+            !remote.readonly &&
+            !remote.error;
   final deletedRemotely =
       note.syncState == NoteSyncState.deletedRemotely && remote == null;
-  final merge = remote == null ? null : NotesConflictMerge(note, remote);
+  final merge = localMetadata
+      ? NotesConflictMerge.metadata(note)
+      : remote == null
+      ? null
+      : NotesConflictMerge(note, remote);
   final canMergeRemote =
       canOverwriteRemote ||
-      (note.serverId != null &&
+      (!localMetadata &&
+          note.serverId != null &&
           remote != null &&
           remote.readonly &&
           !remote.error &&
@@ -588,15 +596,21 @@ Future<void> showNextcloudConflict(
     context,
     builder: (context) => StatefulBuilder(
       builder: (context, setDialogState) {
-        final displayedRemote = note.serverId == null
+        final displayedRemote = localMetadata
+            ? null
+            : note.serverId == null
             ? selectedCreationRemote()
             : remote;
         final comparison = compareSource(
           SourceComparisonInput(
             id: 'remote:${note.localId}',
             version: displayedRemote?.modified ?? 0,
-            label: context.l10n.nextcloudTakeRemote,
-            source: displayedRemote?.content ?? '',
+            label: localMetadata
+                ? context.l10n.nextcloudPreviousLocalEdit
+                : context.l10n.nextcloudTakeRemote,
+            source: localMetadata
+                ? note.content
+                : displayedRemote?.content ?? '',
           ),
           SourceComparisonInput(
             id: note.localId,
@@ -614,12 +628,22 @@ Future<void> showNextcloudConflict(
               onPressed: () => Navigator.pop(context),
             ),
             BusyMarkDialogButton(
-              label: note.serverId == null
+              label: note.serverId == null && !localMetadata
                   ? context.l10n.nextcloudCreateSeparate
                   : context.l10n.nextcloudNewNote,
               onPressed: () =>
                   Navigator.pop(context, NoteConflictResolution.saveAsNew),
             ),
+            if (localMetadata)
+              BusyMarkDialogButton(
+                label: context.l10n.nextcloudUsePreviousEdit,
+                onPressed: canOverwriteRemote
+                    ? () => Navigator.pop(
+                        context,
+                        NoteConflictResolution.takeRemote,
+                      )
+                    : null,
+              ),
             if (displayedRemote != null &&
                 !displayedRemote.error &&
                 (note.serverId != null || note.creationAttempt != null))
@@ -729,7 +753,7 @@ Future<void> showNextcloudConflict(
                       DropdownMenuItem(
                         value: NotesMergeChoice.remote,
                         child: Text(
-                          '${context.l10n.nextcloudTakeRemote}: ${entry.value.remote}',
+                          '${localMetadata ? context.l10n.nextcloudPreviousLocalEdit : context.l10n.nextcloudTakeRemote}: ${entry.value.remote}',
                         ),
                       ),
                     ],
@@ -773,7 +797,9 @@ Future<void> showNextcloudConflict(
     );
     if (confirmed != true) return;
   }
-  if (note.serverId == null && resolution == NoteConflictResolution.saveAsNew) {
+  if (note.serverId == null &&
+      !localMetadata &&
+      resolution == NoteConflictResolution.saveAsNew) {
     if (!context.mounted) return;
     final confirmed = await showBusyMarkModalDialog<bool>(
       context,

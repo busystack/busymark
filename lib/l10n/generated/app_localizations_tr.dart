@@ -4923,4 +4923,10 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get nextcloudSettingsSaving => 'Sunucu ayarları kaydediliyor';
+
+  @override
+  String get nextcloudPreviousLocalEdit => 'Önceki yerel düzenleme';
+
+  @override
+  String get nextcloudUsePreviousEdit => 'Önceki düzenlemeyi kullan';
 }

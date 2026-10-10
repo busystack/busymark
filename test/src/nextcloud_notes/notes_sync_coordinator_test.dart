@@ -347,4 +347,59 @@ void main() {
       expect(posts, 1);
     },
   );
+
+  test(
+    'edited throttled work keeps a deadline timer after restart while hidden',
+    () async {
+      var puts = 0;
+      var remote = serverNote(1);
+      final transport = MockClient((request) async {
+        if (request.method == 'GET') {
+          expect(request.url.path.endsWith('/v1/notes'), isTrue);
+          return http.Response(jsonEncode([remote]), 200);
+        }
+        expect(request.method, 'PUT');
+        expect(request.url.path.endsWith('/v1/notes/1'), isTrue);
+        puts++;
+        if (puts == 1) {
+          return http.Response('{}', 429, headers: {'Retry-After': '600'});
+        }
+        remote = {
+          ...remote,
+          ...jsonDecode(request.body) as Map,
+          'etag': 'written',
+        };
+        return http.Response(jsonEncode(remote), 200);
+      });
+      var c = await open(transport);
+      await c.request(NotesSyncTrigger.opening);
+      final id = repository!.notes.single.localId;
+      await repository!.save(id, content: 'first edit');
+      await c.request(NotesSyncTrigger.localChange);
+      await repository!.patchMetadata(
+        repository!.metadataSnapshot(id),
+        title: 'edited while throttled',
+      );
+      expect(repository!.noteById(id)!.retryCount, 0);
+      await c.request(NotesSyncTrigger.localChange);
+      expect(puts, 1);
+      c.dispose();
+      await repository!.dispose();
+      c = await open(transport);
+      c.setVisible(false);
+      await c.request(NotesSyncTrigger.opening);
+      expect(
+        timers.tasks.where((t) => !t.cancelled).single.deadline,
+        timers.now.add(const Duration(minutes: 10)),
+      );
+      timers.advance(const Duration(minutes: 9));
+      expect(puts, 1);
+      timers.advance(const Duration(minutes: 1));
+      // Join the pass started by the deadline timer without making another trigger.
+      await repository!.synchronize(testAccount().id);
+      expect(puts, 2);
+      expect(repository!.noteById(id)!.syncState, NoteSyncState.synced);
+      expect(remote['title'], 'edited while throttled');
+    },
+  );
 }

@@ -4959,4 +4959,10 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get nextcloudSettingsSaving => 'در حال ذخیره تنظیمات سرور';
+
+  @override
+  String get nextcloudPreviousLocalEdit => 'ویرایش محلی قبلی';
+
+  @override
+  String get nextcloudUsePreviousEdit => 'استفاده از ویرایش قبلی';
 }

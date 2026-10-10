@@ -4951,4 +4951,10 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get nextcloudSettingsSaving => 'جارٍ حفظ إعدادات الخادم';
+
+  @override
+  String get nextcloudPreviousLocalEdit => 'التعديل المحلي السابق';
+
+  @override
+  String get nextcloudUsePreviousEdit => 'استخدام التعديل السابق';
 }

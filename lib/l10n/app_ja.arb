@@ -5003,5 +5003,7 @@
   "nextcloudSettingsLoading": "サーバー設定を読み込み中",
   "@nextcloudSettingsLoading": {"description": "Accessible progress label while reading server Notes settings."},
   "nextcloudSettingsSaving": "サーバー設定を保存中",
-  "@nextcloudSettingsSaving": {"description": "Accessible progress label while writing server Notes settings."}
+  "@nextcloudSettingsSaving": {"description": "Accessible progress label while writing server Notes settings."},
+  "nextcloudPreviousLocalEdit": "以前のローカル編集",
+  "nextcloudUsePreviousEdit": "以前の編集を使用"
 }

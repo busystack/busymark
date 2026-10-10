@@ -4980,4 +4980,10 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get nextcloudSettingsSaving => 'Сохранение настроек сервера';
+
+  @override
+  String get nextcloudPreviousLocalEdit => 'Предыдущая локальная правка';
+
+  @override
+  String get nextcloudUsePreviousEdit => 'Использовать предыдущую правку';
 }

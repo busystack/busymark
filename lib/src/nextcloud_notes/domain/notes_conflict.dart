@@ -30,6 +30,28 @@ class NotesAttributeMerge<T> {
 }
 
 class NotesConflictMerge {
+  NotesConflictMerge.metadata(NextcloudNote local)
+    : content = NotesAttributeMerge(
+        local.content,
+        local.content,
+        local.content,
+      ),
+      title = NotesAttributeMerge(
+        local.metadataConflict!.original.title,
+        local.title,
+        local.metadataConflict!.alternative.title,
+      ),
+      category = NotesAttributeMerge(
+        local.metadataConflict!.original.category,
+        local.category,
+        local.metadataConflict!.alternative.category,
+      ),
+      favorite = NotesAttributeMerge(
+        local.metadataConflict!.original.favorite,
+        local.favorite,
+        local.metadataConflict!.alternative.favorite,
+      );
+
   NotesConflictMerge(NextcloudNote local, NoteState remote)
     : content = NotesAttributeMerge(
         local.base?.content,

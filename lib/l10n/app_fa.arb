@@ -3506,5 +3506,7 @@
   "nextcloudSettingsLoading": "در حال بارگیری تنظیمات سرور",
   "@nextcloudSettingsLoading": {"description": "Accessible progress label while reading server Notes settings."},
   "nextcloudSettingsSaving": "در حال ذخیره تنظیمات سرور",
-  "@nextcloudSettingsSaving": {"description": "Accessible progress label while writing server Notes settings."}
+  "@nextcloudSettingsSaving": {"description": "Accessible progress label while writing server Notes settings."},
+  "nextcloudPreviousLocalEdit": "ویرایش محلی قبلی",
+  "nextcloudUsePreviousEdit": "استفاده از ویرایش قبلی"
 }

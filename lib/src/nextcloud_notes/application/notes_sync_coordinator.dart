@@ -230,7 +230,9 @@ class NotesSyncCoordinator {
             .map((n) => n.retryCount - 1)
             .toList()
           ..sort();
-    final attempt = accountRetry ? _accountRetryCount++ : counts.first;
+    final attempt = accountRetry
+        ? _accountRetryCount++
+        : counts.firstOrNull ?? 0;
     var delay = Duration(seconds: retryIntervals[attempt.clamp(0, 5)]);
     final deadline = repository.writeDeadline(id);
     if (deadline != null && deadline.difference(clock()) > delay) {

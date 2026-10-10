@@ -4911,4 +4911,10 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get nextcloudSettingsSaving => 'सर्वर सेटिंग सहेजी जा रही हैं';
+
+  @override
+  String get nextcloudPreviousLocalEdit => 'पिछला स्थानीय संपादन';
+
+  @override
+  String get nextcloudUsePreviousEdit => 'पिछला संपादन इस्तेमाल करें';
 }

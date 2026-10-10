@@ -655,7 +655,13 @@ String? canonicalAttachmentReference(String reference) {
   // Uri.parse tolerates stray percent signs; a destination must be valid encoding.
   if (RegExp(r'%(?![0-9a-fA-F]{2})').hasMatch(reference)) return null;
   try {
-    final raw = Uri.decodeComponent(reference);
+    // Escape literal Unicode before decoding exactly once. Do not use uri.path:
+    // Uri.parse normalizes dot segments before traversal can be validated.
+    final encoded = reference.replaceAllMapped(
+      RegExp(r'[^\x00-\x7f]+'),
+      (match) => Uri.encodeComponent(match[0]!),
+    );
+    final raw = Uri.decodeComponent(encoded);
     return isSafeAttachmentPath(raw) ? raw : null;
   } on FormatException {
     return null;

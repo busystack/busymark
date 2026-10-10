@@ -4969,4 +4969,10 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get nextcloudSettingsSaving => 'Serverinstellingen opslaan';
+
+  @override
+  String get nextcloudPreviousLocalEdit => 'Vorige lokale wijziging';
+
+  @override
+  String get nextcloudUsePreviousEdit => 'Vorige wijziging gebruiken';
 }

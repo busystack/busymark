@@ -3464,5 +3464,7 @@
   "nextcloudSettingsLoading": "सर्वर सेटिंग लोड हो रही हैं",
   "@nextcloudSettingsLoading": {"description": "Accessible progress label while reading server Notes settings."},
   "nextcloudSettingsSaving": "सर्वर सेटिंग सहेजी जा रही हैं",
-  "@nextcloudSettingsSaving": {"description": "Accessible progress label while writing server Notes settings."}
+  "@nextcloudSettingsSaving": {"description": "Accessible progress label while writing server Notes settings."},
+  "nextcloudPreviousLocalEdit": "पिछला स्थानीय संपादन",
+  "nextcloudUsePreviousEdit": "पिछला संपादन इस्तेमाल करें"
 }

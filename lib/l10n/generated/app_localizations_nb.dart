@@ -4924,4 +4924,10 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String get nextcloudSettingsSaving => 'Lagrer serverinnstillinger';
+
+  @override
+  String get nextcloudPreviousLocalEdit => 'Forrige lokale endring';
+
+  @override
+  String get nextcloudUsePreviousEdit => 'Bruk forrige endring';
 }
