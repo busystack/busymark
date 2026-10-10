@@ -372,7 +372,12 @@ class _NextcloudNotesSidebarState extends ConsumerState<NextcloudNotesSidebar> {
               prefixIcon: const Icon(BusyMarkGlyphs.search),
             ),
             onTap: () => unawaited(
-              showNotesSearch(context, ref, account: widget.accountId),
+              showNotesSearch(
+                context,
+                ref,
+                account: widget.accountId,
+                recovery: _navigation.destination == NotesDestination.recovery,
+              ),
             ),
           ),
         ),

@@ -5080,6 +5080,15 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get notesCompleted => 'Concluído';
+
+  @override
+  String get notesImportNew => 'Iniciar nova importação';
+
+  @override
+  String get notesImportResume => 'Retomar importação interrompida';
+
+  @override
+  String get notesImportAlreadyImported => 'Já importado nesta operação';
 }
 
 /// The translations for Portuguese, as used in Brazil (`pt_BR`).
@@ -10154,4 +10163,13 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get notesCompleted => 'Concluído';
+
+  @override
+  String get notesImportNew => 'Iniciar nova importação';
+
+  @override
+  String get notesImportResume => 'Retomar importação interrompida';
+
+  @override
+  String get notesImportAlreadyImported => 'Já importado nesta operação';
 }

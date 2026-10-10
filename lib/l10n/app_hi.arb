@@ -3495,5 +3495,8 @@
   "notesAttachments": "अटैचमेंट",
   "notesSkipped": "छोड़ा गया",
   "notesFailed": "विफल",
-  "notesCompleted": "पूर्ण"
+  "notesCompleted": "पूर्ण",
+  "notesImportNew": "नया आयात शुरू करें",
+  "notesImportResume": "बाधित आयात फिर से शुरू करें",
+  "notesImportAlreadyImported": "इस प्रक्रिया में पहले ही आयात किया गया"
 }

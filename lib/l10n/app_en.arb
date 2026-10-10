@@ -2939,5 +2939,8 @@
   "notesAttachments": "Attachments",
   "notesSkipped": "Skipped",
   "notesFailed": "Failed",
-  "notesCompleted": "Completed"
+  "notesCompleted": "Completed",
+  "notesImportNew": "Start a new import",
+  "notesImportResume": "Resume interrupted import",
+  "notesImportAlreadyImported": "Already imported in this operation"
 }

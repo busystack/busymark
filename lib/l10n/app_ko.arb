@@ -5034,5 +5034,8 @@
   "notesAttachments": "첨부 파일",
   "notesSkipped": "건너뜀",
   "notesFailed": "실패",
-  "notesCompleted": "완료"
+  "notesCompleted": "완료",
+  "notesImportNew": "새 가져오기 시작",
+  "notesImportResume": "중단된 가져오기 재개",
+  "notesImportAlreadyImported": "이 작업에서 이미 가져옴"
 }

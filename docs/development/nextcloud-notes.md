@@ -514,8 +514,28 @@ directory for a single-file import); external URLs are not fetched. Unsafe or
 missing media remains an explicit incomplete item for review.
 
 Imports commit each new local identity, attachment bytes, outbox and source-item
-association together. Reopening the same source after cancellation/restart resumes
-without duplicating successful items. Changed source content is a new reviewed
-item. Imported locally means durable local content; waiting to synchronize means
+association together. Resuming a specific interrupted operation after
+cancellation/restart does not duplicate successful items. A new reviewed import
+creates distinct notes even when the source content is unchanged.
+Imported locally means durable local content; waiting to synchronize means
 publication has not been acknowledged. The existing uncertain-create/upload
 workflow applies to interrupted publication. One failed item retains the others.
+
+### Import operations and Recovery search
+
+Each confirmed import is a separate operation. Selecting the same source again
+creates distinct notes and uses the newly reviewed categories and media. When
+an interrupted operation exists for that source, choose **Start a new import**
+or **Resume interrupted import** explicitly. Resume reloads the persisted review
+and identifies completed items as **Already imported in this operation**; it
+does not repeat their creation or publication. Successful items keep their
+original identities even when another item fails. Safe relative images such as
+`./images/photo.png` and `../images/photo.png` are imported when their resolved
+files stay inside the selected source folder; symlinks and outside references
+remain excluded.
+
+Search in **Recovery** searches retained deleted records for the current account
+and opens their recovery preview. Ordinary Notes search excludes these records.
+The preview continues to offer retained Local History revisions and recovery
+as a new note; it does not access server history or trash. Deleted attachments
+retained for recovery do not count as live offline availability.

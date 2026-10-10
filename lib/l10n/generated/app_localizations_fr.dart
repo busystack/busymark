@@ -5069,4 +5069,13 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get notesCompleted => 'Terminé';
+
+  @override
+  String get notesImportNew => 'Démarrer une nouvelle importation';
+
+  @override
+  String get notesImportResume => 'Reprendre l’importation interrompue';
+
+  @override
+  String get notesImportAlreadyImported => 'Déjà importé dans cette opération';
 }

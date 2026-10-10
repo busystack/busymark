@@ -5031,4 +5031,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get notesCompleted => 'Completed';
+
+  @override
+  String get notesImportNew => 'Start a new import';
+
+  @override
+  String get notesImportResume => 'Resume interrupted import';
+
+  @override
+  String get notesImportAlreadyImported => 'Already imported in this operation';
 }

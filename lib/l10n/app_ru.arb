@@ -3521,5 +3521,8 @@
   "notesAttachments": "Вложения",
   "notesSkipped": "Пропущено",
   "notesFailed": "Ошибка",
-  "notesCompleted": "Завершено"
+  "notesCompleted": "Завершено",
+  "notesImportNew": "Начать новый импорт",
+  "notesImportResume": "Продолжить прерванный импорт",
+  "notesImportAlreadyImported": "Уже импортировано в этой операции"
 }

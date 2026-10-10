@@ -17,6 +17,7 @@ import 'package:busymark/src/app/app_router.dart';
 import 'package:busymark/src/app/busymark_app.dart';
 import 'package:busymark/src/app/startup_path.dart';
 import 'package:busymark/src/app/system_accent.dart';
+import 'package:busymark/src/editor/source/source_editor.dart';
 import 'package:busymark/src/local_history/local_history_controller.dart';
 import 'package:busymark/src/local_history/local_history_store.dart';
 import 'package:busymark/src/nextcloud_notes/application/nextcloud_connection.dart';
@@ -59,9 +60,13 @@ Future<void> main(List<String> args) async {
   final performance = args.length == 5 && args[4] == '--performance-m2';
   final restarting = args.length == 5 && args[4] == '--restart-m2';
   final stopOffline = args.length == 5 && args[4] == '--stop-offline-m2';
+  final correctionsStart =
+      args.length == 5 && args[4] == '--corrections-start-m2';
+  final correctionsResume =
+      args.length == 5 && args[4] == '--corrections-resume-m2';
   final resumeOffline = args.length == 5 && args[4] == '--resume-offline-m2';
   NextcloudAccount account;
-  if (restarting || performance || resumeOffline) {
+  if (restarting || performance || resumeOffline || correctionsResume) {
     final persisted = await NotesStore.open(
       path: '${output.path}/notes.sqlite3',
     );
@@ -134,6 +139,8 @@ Future<void> main(List<String> args) async {
         restart: restarting,
         stopOffline: stopOffline,
         resumeOffline: resumeOffline,
+        correctionsStart: correctionsStart,
+        correctionsResume: correctionsResume,
         performance: performance,
         m2Only: args.length == 5,
       ),
@@ -262,6 +269,8 @@ class _Harness extends ConsumerStatefulWidget {
     this.restart = false,
     this.stopOffline = false,
     this.resumeOffline = false,
+    this.correctionsStart = false,
+    this.correctionsResume = false,
     this.performance = false,
     this.m2Only = false,
   });
@@ -270,7 +279,13 @@ class _Harness extends ConsumerStatefulWidget {
   final String password;
   final Directory output;
   final String containerName;
-  final bool restart, m2Only, performance, stopOffline, resumeOffline;
+  final bool restart,
+      m2Only,
+      performance,
+      stopOffline,
+      resumeOffline,
+      correctionsStart,
+      correctionsResume;
   @override
   ConsumerState<_Harness> createState() => _HarnessState();
 }
@@ -901,6 +916,486 @@ class _HarnessState extends ConsumerState<_Harness> {
     );
   }
 
+  Future<void> correctionSearch(String query, List<int> counts) async {
+    final searching = showNotesSearch(
+      rootNavigatorKey.currentContext!,
+      ref,
+      account: widget.account.id,
+      query: query,
+    );
+    for (final count in counts) {
+      await wait(
+        () => widgets<ListView>().any(
+          (l) =>
+              l.key == const ValueKey('notes-search-results') &&
+              l.childrenDelegate.estimatedChildCount == count,
+        ),
+        'correction results $count',
+      );
+      final list = widgets<ListView>().singleWhere(
+        (l) => l.key == const ValueKey('notes-search-results'),
+      );
+      final delegate = list.childrenDelegate as SliverChildBuilderDelegate;
+      final keys = <Object>{};
+      for (var i = 0; i < count; i++) {
+        final row =
+            delegate.builder(rootNavigatorKey.currentContext!, i)! as ListTile;
+        keys.add((row.key! as ValueKey).value);
+      }
+      check(keys.length == count, 'correctionSearchExactIdentities$count');
+      await capture('correction-search-$count');
+      if (count != counts.last) await label('Show more results');
+    }
+    check(
+      !widgets<Text>().any((t) => t.data == 'Show more results'),
+      'correctionSearchNoHiddenFinalOccurrences${counts.last}',
+    );
+    Navigator.of(rootNavigatorKey.currentContext!).pop();
+    await searching;
+    await wait(
+      () => widgets<NotesSearchDialog>().isEmpty,
+      'correction search route closed',
+    );
+  }
+
+  Future<void> correctionReview(
+    NotesImportReview review, {
+    String? category,
+  }) async {
+    final dialog = showBusyMarkModalDialog<bool>(
+      rootNavigatorKey.currentContext!,
+      builder: (_) => NotesImportReviewDialog(review: review),
+    );
+    await wait(
+      () => widgets<NotesImportReviewDialog>().isNotEmpty,
+      'correction import review',
+    );
+    if (category != null) {
+      edit(
+        widgets<TextField>().firstWhere(
+          (f) => f.decoration?.labelText == 'Category',
+        ),
+        category,
+      );
+    }
+    await capture('correction-import-${category == null ? 'resume' : 'new'}');
+    await label('Import notes');
+    check(
+      await dialog == true,
+      'correctionImportReviewAccepted${category == null ? 'Resume' : 'New'}',
+    );
+  }
+
+  Future<void> correctionRecovery(String id, {required bool recover}) async {
+    bool recoveryHit(ListTile tile) =>
+        tile.key is ValueKey<(String, String, int?, int?)> &&
+        (tile.key! as ValueKey<(String, String, int?, int?)>).value.$1 ==
+            'notes-search-hit' &&
+        (tile.key! as ValueKey<(String, String, int?, int?)>).value.$2 == id;
+    await wait(
+      () => widgets<ListTile>().any(
+        (t) => t.title is Text && (t.title as Text).data == 'Recovery',
+      ),
+      'correction Recovery destination',
+    );
+    widgets<ListTile>()
+        .firstWhere(
+          (t) => t.title is Text && (t.title as Text).data == 'Recovery',
+        )
+        .onTap!();
+    await Future<void>.delayed(const Duration(milliseconds: 200));
+    final active = ref
+        .read(workspaceControllerProvider)
+        .activeBuffer
+        ?.remoteNote
+        ?.localId;
+    widgets<TextField>()
+        .firstWhere((f) => f.readOnly && f.decoration?.hintText == 'Search')
+        .onTap!();
+    await wait(
+      () => widgets<NotesSearchDialog>().isNotEmpty,
+      'correction Recovery Search',
+    );
+    check(
+      widgets<NotesSearchDialog>().single.recovery,
+      'correctionRecoverySearchExplicitScope',
+    );
+    edit(
+      widgets<TextField>().firstWhere(
+        (f) => f.controller != null && f.decoration?.labelText == 'Search',
+      ),
+      'retainedcorrectionneedle',
+    );
+    await wait(
+      () => widgets<ListTile>().any(recoveryHit),
+      'correction deleted search result',
+    );
+    await capture('correction-recovery-search');
+    check(
+      !widgets<IconButton>().any((b) => b.tooltip == 'Source location'),
+      'correctionRecoveryHasPreviewInsteadOfLiveSource',
+    );
+    widgets<ListTile>().firstWhere(recoveryHit).onTap!();
+    await wait(
+      () => widgets<NotesSearchDialog>().isEmpty,
+      'correction Recovery search route closed',
+    );
+    await wait(
+      () => widgets<NotesRecoveryDialog>().isNotEmpty,
+      'correction Recovery preview',
+    );
+    check(
+      widgets<NotesRecoveryDialog>().single.note.localId == id &&
+          ref
+                  .read(workspaceControllerProvider)
+                  .activeBuffer
+                  ?.remoteNote
+                  ?.localId ==
+              active,
+      'correctionRecoveryPreviewPreservesCurrentDocument',
+    );
+    await capture('correction-recovery-preview');
+    if (recover) {
+      await label('Recovery: New note');
+      await wait(
+        () => widgets<NotesRecoveryDialog>().isEmpty,
+        'correction new recovery note',
+      );
+      check(
+        ref
+                .read(workspaceControllerProvider)
+                .activeBuffer
+                ?.remoteNote
+                ?.localId !=
+            id,
+        'correctionRecoveryDistinctIdentity',
+      );
+    } else {
+      Navigator.of(rootNavigatorKey.currentContext!).pop();
+    }
+    await wait(
+      () => widgets<NotesRecoveryDialog>().isEmpty,
+      'correction Recovery preview route closed',
+    );
+  }
+
+  Future<void> correctionJourney(WorkspaceController workspace) async {
+    final stateFile = File('${widget.output.path}/correction-journey.json');
+    final service = NotesTransferService(repository);
+    if (widget.correctionsStart) {
+      widget.transport.offline = true;
+      for (var n = 0; n < 10; n++) {
+        await repository.create(
+          widget.account.id,
+          title: 'Correction paging $n',
+          category: 'Correction/Paging',
+          content: List.filled(32, 'desktopcorrectionneedle').join(' '),
+        );
+      }
+      await repository.create(
+        widget.account.id,
+        title: 'Correction forty',
+        category: 'Correction/Paging',
+        content: List.filled(40, 'desktopfortyneedle').join(' '),
+      );
+      await correctionSearch('desktopcorrectionneedle', [80, 160, 240, 320]);
+      await correctionSearch('desktopfortyneedle', [40]);
+      final source = await Directory(
+        '${widget.output.path}/correction-source',
+      ).create();
+      final document = File('${source.path}/Correction import.md');
+      await document.writeAsString(
+        '![image](./images/caf%C3%A9%2520.png)\n\n<img src="./images/caf%C3%A9%2520.png">',
+      );
+      final missing = await service.review(document.path, widget.account.id);
+      await correctionReview(missing, category: 'Correction/Original');
+      final first = await service.importReviewed(
+        missing,
+        widget.account.id,
+        cancellation: NotesTransferCancellation(),
+      );
+      await Directory('${source.path}/images').create();
+      await File(
+        '${source.path}/images/café%20.png',
+      ).writeAsBytes(await png(Colors.green));
+      final repaired = await service.review(document.path, widget.account.id);
+      await correctionReview(repaired, category: 'Correction/New/子');
+      final second = await service.importReviewed(
+        repaired,
+        widget.account.id,
+        cancellation: NotesTransferCancellation(),
+      );
+      check(
+        second.single.noteId != first.single.noteId &&
+            !second.single.alreadyImported &&
+            repository.noteById(second.single.noteId!)!.category ==
+                'Correction/New/子',
+        'correctionNewImportDistinctReviewedCategory',
+      );
+      await workspace.openNextcloudNote(second.single.noteId!);
+      check(
+        await repository.resolveCachedMedia(
+              widget.account.id,
+              second.single.noteId!,
+              (await repository.attachments(
+                second.single.noteId!,
+              )).single.reference,
+            ) !=
+            null,
+        'correctionRepairedRelativeMediaUsable',
+      );
+      await capture('correction-imported-media');
+      await Directory('${source.path}/chapters').create();
+      await File('${source.path}/chapters/Correction nested.md').writeAsString(
+        '![image](../images/caf%C3%A9%2520.png)\n\n<img src="../images/caf%C3%A9%2520.png">',
+      );
+      await File(
+        '${widget.output.path}/outside.png',
+      ).writeAsBytes(await png(Colors.red));
+      await File(
+        '${source.path}/Correction escape.md',
+      ).writeAsString('![image](../outside.png)\n\n<img src="../outside.png">');
+      final nested = await service.review(source.path, widget.account.id);
+      final safe = nested.items.singleWhere(
+        (i) => i.title == 'Correction nested',
+      );
+      final escape = nested.items.singleWhere(
+        (i) => i.title == 'Correction escape',
+      );
+      check(
+        safe.media.isNotEmpty &&
+            safe.issues.isEmpty &&
+            escape.media.isEmpty &&
+            escape.issues.isNotEmpty,
+        'correctionLocalRelativeContainment',
+      );
+      for (final item in nested.items) {
+        item.selected = identical(item, safe);
+        item.category = 'Correction/Nested';
+      }
+      await correctionReview(nested);
+      await service.importReviewed(
+        nested,
+        widget.account.id,
+        cancellation: NotesTransferCancellation(),
+      );
+      final resumeSource = await Directory(
+        '${widget.output.path}/correction-resume',
+      ).create();
+      for (var n = 0; n < 3; n++) {
+        await File(
+          '${resumeSource.path}/Correction $n.md',
+        ).writeAsString('resume text $n');
+      }
+      final partial = await service.review(
+        resumeSource.path,
+        widget.account.id,
+        category: 'Correction/Resume',
+      );
+      final cancel = NotesTransferCancellation();
+      final imported = await service.importReviewed(
+        partial,
+        widget.account.id,
+        cancellation: cancel,
+        onProgress: (_, _) => cancel.cancel(),
+      );
+      final tombstone = await repository.create(
+        widget.account.id,
+        title: 'Correction deleted media',
+        category: 'Correction/Offline',
+      );
+      final attachment = await repository.addAttachment(
+        tombstone.localId,
+        filename: 'recover.png',
+        bytes: await png(Colors.red),
+      );
+      await repository.save(
+        tombstone.localId,
+        content: '![image](${attachment.reference})',
+      );
+      await repository.deleteAttachment(
+        tombstone.localId,
+        attachment.reference,
+        retainForHistory: true,
+      );
+      final offlineDialog = showNotesOffline(
+        rootNavigatorKey.currentContext!,
+        ref,
+        repository.noteById(tombstone.localId)!,
+      );
+      await wait(
+        () => widgets<Text>().any((t) => t.data == 'Incomplete · 0/1'),
+        'correction unavailable deleted media',
+      );
+      await capture('correction-offline-deleted');
+      Navigator.of(rootNavigatorKey.currentContext!).pop();
+      await offlineDialog;
+      final deleted = await repository.create(
+        widget.account.id,
+        title: 'Correction retained note',
+        category: 'Correction/Recovery',
+        content: 'retainedcorrectionneedle',
+      );
+      await repository.delete(deleted.localId);
+      await correctionRecovery(deleted.localId, recover: false);
+      await stateFile.writeAsString(
+        jsonEncode({
+          'operation': partial.operationId,
+          'firstImported': imported.single.noteId,
+          'tombstone': tombstone.localId,
+          'attachment': attachment.id,
+          'reference': attachment.reference,
+          'repaired': second.single.noteId,
+          'deleted': deleted.localId,
+          'created': created.toList(),
+        }),
+      );
+      check(
+        widget.transport.creates == 0 && widget.transport.writes == 0,
+        'correctionOfflineStartNoPublication',
+      );
+      return;
+    }
+    final state = jsonDecode(await stateFile.readAsString()) as Map;
+    created.addAll((state['created'] as List).cast<int>());
+    check(
+      widget.transport.offline &&
+          widget.transport.creates == 0 &&
+          widget.transport.writes == 0,
+      'correctionActualOfflineProcessRestart',
+    );
+    await correctionSearch('desktopcorrectionneedle', [80, 160, 240, 320]);
+    final requirements = await repository.store.importOperations(
+      widget.account.id,
+    );
+    final choosing = showBusyMarkModalDialog<String>(
+      rootNavigatorKey.currentContext!,
+      builder: (_) => NotesImportOperationDialog(operations: requirements),
+    );
+    await wait(
+      () => widgets<NotesImportOperationDialog>().isNotEmpty,
+      'correction durable operation choice',
+    );
+    await capture('correction-import-operation-choice');
+    widgets<ListTile>()
+        .firstWhere(
+          (t) =>
+              t.title is Text &&
+              (t.title as Text).data == 'Resume interrupted import',
+        )
+        .onTap!();
+    final operationId = await choosing;
+    check(operationId == state['operation'], 'correctionExplicitResumeChosen');
+    final resumed = await service.resumeImport(operationId!, widget.account.id);
+    await correctionReview(resumed);
+    final outcomes = await service.importReviewed(
+      resumed,
+      widget.account.id,
+      cancellation: NotesTransferCancellation(),
+    );
+    check(
+      outcomes.length == 3 &&
+          outcomes.first.alreadyImported &&
+          outcomes.first.noteId == state['firstImported'],
+      'correctionRestartResumeNoDuplicate',
+    );
+    final tombstoneId = state['tombstone'] as String;
+    final availability = await repository.attachmentAvailability(tombstoneId);
+    check(
+      availability.available.isEmpty &&
+          await repository.store.attachmentBytes(
+                state['attachment'] as String,
+              ) !=
+              null &&
+          await repository.resolveCachedMedia(
+                widget.account.id,
+                tombstoneId,
+                state['reference'] as String,
+              ) ==
+              null,
+      'correctionDeletedBytesRemainRecoveryOnlyAfterRestart',
+    );
+    final replacement = await repository.addAttachment(
+      tombstoneId,
+      filename: 'recover.png',
+      bytes: await png(Colors.blue),
+    );
+    await repository.save(
+      tombstoneId,
+      content: '![image](${replacement.reference})',
+    );
+    check(
+      (await repository.attachmentAvailability(tombstoneId)).available.length ==
+          1,
+      'correctionLegitimateReplacementAvailable',
+    );
+    final repairedId = state['repaired'] as String;
+    await workspace.openNextcloudNote(repairedId);
+    final repairedMedia = await repository.resolveCachedMedia(
+      widget.account.id,
+      repairedId,
+      (await repository.attachments(repairedId)).single.reference,
+    );
+    check(repairedMedia != null, 'correctionRepairedMediaAfterProcessRestart');
+    for (final mode in DocumentViewModePreference.values) {
+      workspace.updateActiveEditorMode(mode);
+      await ref
+          .read(appSettingsControllerProvider.notifier)
+          .setDocumentViewMode(mode);
+      await wait(
+        () =>
+            ref
+                .read(workspaceControllerProvider)
+                .activeBuffer
+                ?.editorState
+                .mode ==
+            mode,
+        'repaired media active view ${mode.name}',
+      );
+      if (mode != DocumentViewModePreference.source) {
+        await wait(
+          () => widgets<Image>().any(
+            (image) =>
+                image.image is FileImage &&
+                (image.image as FileImage).file.path == repairedMedia,
+          ),
+          'repaired media rendered ${mode.name}',
+        );
+      }
+      if (mode == DocumentViewModePreference.source ||
+          mode == DocumentViewModePreference.split) {
+        await wait(
+          () => widgets<BusyMarkSourceEditor>().isNotEmpty,
+          'repaired media source ${mode.name}',
+        );
+      }
+      await capture('correction-repaired-${mode.name}');
+      check(true, 'correctionRepairedMediaActualView${mode.name}');
+    }
+    await correctionRecovery(state['deleted'] as String, recover: true);
+    widget.transport.offline = false;
+    await workspace.refreshNextcloudNotes();
+    final current = repository.notes
+        .where(
+          (n) =>
+              n.title.startsWith('Correction') ||
+              n.category.startsWith('Correction'),
+        )
+        .where((n) => !isNotesRecovery(n))
+        .toList();
+    created.addAll(current.map((n) => n.serverId).whereType<int>());
+    check(
+      current.every((n) => n.syncState == NoteSyncState.synced),
+      'correctionImportedReplacementRecoveredRealSynchronization',
+    );
+    check(
+      await repository.store.attachmentBytes(state['attachment'] as String) !=
+          null,
+      'correctionPublicationRetainsOriginalRecoveryBytes',
+    );
+    await everydayJourney(workspace);
+  }
+
   Future<void> performanceJourney(WorkspaceController workspace) async {
     check(repository.notes.length == 10020, 'm2Real10000NoteLibrary');
     await wait(
@@ -1194,6 +1689,7 @@ class _HarnessState extends ConsumerState<_Harness> {
       if (!widget.restart &&
           !widget.performance &&
           !widget.resumeOffline &&
+          !widget.correctionsResume &&
           !widget.stopOffline) {
         original = await api.getSettings();
       }
@@ -1202,7 +1698,9 @@ class _HarnessState extends ConsumerState<_Harness> {
         final workspace = ref.read(workspaceControllerProvider.notifier);
         await workspace.openNextcloudWorkspace(widget.account.id);
         ref.read(appRouterProvider).go('/workspace');
-        if (widget.performance) {
+        if (widget.correctionsStart || widget.correctionsResume) {
+          await correctionJourney(workspace);
+        } else if (widget.performance) {
           await performanceJourney(workspace);
         } else if (widget.restart) {
           await restartJourney(workspace);
@@ -1680,19 +2178,29 @@ class _HarnessState extends ConsumerState<_Harness> {
       failureStack = stack;
     } finally {
       widget.transport.offline =
-          widget.restart || widget.performance || widget.stopOffline;
+          widget.restart ||
+          widget.performance ||
+          widget.stopOffline ||
+          widget.correctionsStart;
       if (original != null) {
         try {
           await api.updateSettings(original!.toJson());
         } catch (_) {}
       }
-      for (final id in widget.stopOffline ? <int>[] : created) {
+      for (final id
+          in widget.stopOffline || widget.correctionsStart
+              ? <int>[]
+              : created) {
         try {
           await api.delete(id);
         } catch (_) {}
       }
       await File(
-        '${widget.output.path}/${widget.stopOffline
+        '${widget.output.path}/${widget.correctionsStart
+            ? 'report-corrections-start'
+            : widget.correctionsResume
+            ? 'report-corrections-resume'
+            : widget.stopOffline
             ? 'report-offline-start'
             : widget.resumeOffline
             ? 'report-offline-resume'

@@ -10,7 +10,6 @@ import '../../assets/asset_limits.dart';
 import '../../assets/document_media_resolver.dart';
 import '../../export/markdown_copy_export_service.dart';
 import '../data/notes_attachment_references.dart';
-import '../data/notes_api_client.dart';
 import '../domain/notes_models.dart';
 import '../domain/notes_search.dart' show normalizeNotesSearch;
 import 'notes_repository.dart';
@@ -52,11 +51,14 @@ class NotesImportItem {
   final Map<String, ({String path, String filename, String digest})> media;
   final List<String> issues;
   bool selected = true;
+  String? importedNoteId;
+  bool get alreadyImported => importedNoteId != null;
 }
 
 class NotesImportReview {
-  const NotesImportReview(this.root, this.items, this.issues);
-  final String root;
+  NotesImportReview(this.root, this.items, this.issues, {String? operationId})
+    : operationId = operationId ?? const Uuid().v4();
+  final String root, operationId;
   final List<NotesImportItem> items;
   final List<String> issues;
 }
@@ -334,20 +336,15 @@ class NotesTransferService {
         }
         // Preserve unrelated document links. Import only recognized image and
         // snapshot companion-media destinations, through the shared scanner.
-        final decoded = canonicalAttachmentReference(reference);
+        final decoded = _localMediaDestination(reference);
         if (decoded == null) {
           if (occurrence.image) itemIssues.add('Unsafe reference: $reference');
           continue;
         }
         if (!occurrence.image && !decoded.contains('.attachments-')) continue;
         try {
-          final asset = _relative(
-            root,
-            p
-                .split(p.relative(file.parent.path, from: root))
-                .where((s) => s != '.')
-                .followedBy(decoded.split('/'))
-                .join('/'),
+          final asset = p.normalize(
+            p.join(file.parent.path, p.joinAll(decoded.split('/'))),
           );
           await _within(root, asset);
           final assetFile = File(asset);
@@ -374,8 +371,8 @@ class NotesTransferService {
             n.syncState != NoteSyncState.deletedRemotely,
       );
       final digest = sha256.convert(utf8.encode(content)).toString();
-      // Source location and content identity survive process restarts. Target
-      // category corrections do not change identity or duplicate successful work.
+      // This is an item fingerprint, not an account-wide import identity. The
+      // durable reviewed operation namespaces it when an import is applied.
       final key = sha256
           .convert(utf8.encode('$root\u0000${entry['file']}\u0000$digest'))
           .toString();
@@ -398,12 +395,100 @@ class NotesTransferService {
     return NotesImportReview(root, items, issues);
   }
 
+  String _itemKey(NotesImportReview review, NotesImportItem item) =>
+      '${review.operationId}:${item.key}';
+
+  /// Restart resumes a specific reviewed operation, with the original paths,
+  /// fingerprints, selection and categories. A new review always gets a new ID.
+  Future<NotesImportReview> resumeImport(
+    String operationId,
+    String accountId,
+  ) async {
+    final operation = await repository.store.importOperation(
+      accountId,
+      operationId,
+    );
+    if (operation == null) throw StateError('Import operation is unavailable.');
+    final data =
+        jsonDecode(operation['review'] as String) as Map<String, dynamic>;
+    final review = NotesImportReview(
+      operation['root'] as String,
+      [
+        for (final row in data['items'] as List)
+          NotesImportItem(
+            key: row['key'] as String,
+            path: row['path'] as String,
+            title: row['title'] as String,
+            category: row['category'] as String,
+            content: row['content'] as String,
+            favorite: row['favorite'] as bool,
+            activityMicros: row['activityMicros'] as int?,
+            serverModified: row['serverModified'] as int?,
+            collision: row['collision'] as bool,
+            media: {
+              for (final entry in (row['media'] as Map).entries)
+                entry.key as String: (
+                  path: entry.value['path'] as String,
+                  filename: entry.value['filename'] as String,
+                  digest: entry.value['digest'] as String,
+                ),
+            },
+            issues: (row['issues'] as List).cast<String>(),
+          )..selected = row['selected'] as bool,
+      ],
+      (data['issues'] as List).cast<String>(),
+      operationId: operationId,
+    );
+    for (final item in review.items) {
+      item.importedNoteId = await repository.store.importedNote(
+        accountId,
+        _itemKey(review, item),
+      );
+    }
+    return review;
+  }
+
+  String _reviewJson(NotesImportReview review) => jsonEncode({
+    'issues': review.issues,
+    'items': [
+      for (final item in review.items)
+        {
+          'key': item.key,
+          'path': item.path,
+          'title': item.title,
+          'category': item.category,
+          'content': item.content,
+          'favorite': item.favorite,
+          'activityMicros': item.activityMicros,
+          'serverModified': item.serverModified,
+          'collision': item.collision,
+          'selected': item.selected,
+          'issues': item.issues,
+          'media': {
+            for (final entry in item.media.entries)
+              entry.key: {
+                'path': entry.value.path,
+                'filename': entry.value.filename,
+                'digest': entry.value.digest,
+              },
+          },
+        },
+    ],
+  });
+
   Future<List<NotesImportOutcome>> importReviewed(
     NotesImportReview review,
     String accountId, {
     required NotesTransferCancellation cancellation,
     void Function(int completed, int total)? onProgress,
   }) async {
+    if (cancellation.cancelled) return [];
+    await repository.store.beginImportOperation(
+      accountId,
+      review.operationId,
+      review.root,
+      _reviewJson(review),
+    );
     final outcomes = <NotesImportOutcome>[];
     final selected = review.items.where((i) => i.selected).toList();
     for (final item in selected) {
@@ -411,7 +496,7 @@ class NotesTransferService {
       try {
         final existing = await repository.store.importedNote(
           accountId,
-          item.key,
+          _itemKey(review, item),
         );
         if (existing != null) {
           outcomes.add(
@@ -450,7 +535,7 @@ class NotesTransferService {
         cancellation.check();
         final note = await repository.importLocal(
           accountId: accountId,
-          sourceKey: item.key,
+          sourceKey: _itemKey(review, item),
           title: item.title,
           category: item.category,
           content: item.content,
@@ -459,13 +544,55 @@ class NotesTransferService {
           modified: item.serverModified,
           media: media,
         );
+        item.importedNoteId = note.localId;
         outcomes.add(NotesImportOutcome(item.title, noteId: note.localId));
       } on Object catch (error) {
         outcomes.add(NotesImportOutcome(item.title, error: error.toString()));
       }
       onProgress?.call(outcomes.length, selected.length);
     }
+    if (outcomes.length == selected.length &&
+        outcomes.every((o) => o.error == null)) {
+      await repository.store.completeImportOperation(
+        accountId,
+        review.operationId,
+        [for (final item in selected) _itemKey(review, item)],
+      );
+    }
     return outcomes;
+  }
+
+  // Local document destinations may contain dot segments. Decode once before
+  // resolving relative to the document, then enforce the selected-root/symlink
+  // boundary in _within. Remote attachment validation remains deliberately strict.
+  static String? _localMediaDestination(String reference) {
+    final uri = Uri.tryParse(reference);
+    if (uri == null ||
+        uri.hasScheme ||
+        uri.hasAuthority ||
+        uri.hasQuery ||
+        uri.hasFragment ||
+        reference.contains('\\') ||
+        RegExp(r'%(?![0-9a-fA-F]{2})').hasMatch(reference)) {
+      return null;
+    }
+    try {
+      final encoded = reference.replaceAllMapped(
+        RegExp(r'[^\x00-\x7f]+'),
+        (match) => Uri.encodeComponent(match[0]!),
+      );
+      final decoded = Uri.decodeComponent(encoded);
+      if (decoded.isEmpty ||
+          decoded.startsWith('/') ||
+          decoded.contains('\\') ||
+          RegExp(r'[\x00-\x1f\x7f]').hasMatch(decoded) ||
+          decoded.split('/').first.contains(':')) {
+        return null;
+      }
+      return decoded;
+    } on FormatException {
+      return null;
+    }
   }
 
   static bool _markdown(String path) =>

@@ -332,6 +332,197 @@ void main() {
     );
   });
 
+  testWidgets(
+    'correction: Recovery Search finds deleted records rather than live notes',
+    (tester) async {
+      await pump(tester);
+      await tester.tap(find.text('Recovery').first);
+      await settleStorage(tester);
+      expect(find.text('Deleted note'), findsOneWidget);
+      await tester.tap(find.byType(TextField).first);
+      await settleStorage(tester);
+      final field = find.descendant(
+        of: find.byType(NotesSearchDialog),
+        matching: find.byType(TextField),
+      );
+      await tester.enterText(field, 'title:Deleted');
+      await tester.pump(const Duration(milliseconds: 200));
+      await settleStorage(tester);
+      expect(
+        find.descendant(
+          of: find.byType(NotesSearchDialog),
+          matching: find.widgetWithText(ListTile, 'Deleted note'),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: find.byType(NotesSearchDialog),
+          matching: find.text('Personal note'),
+        ),
+        findsNothing,
+      );
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await settleStorage(tester);
+      await tester.pumpWidget(const SizedBox.shrink());
+    },
+  );
+
+  testWidgets(
+    'correction: Show more reaches all 320 indexed occurrences through the production dialog',
+    (tester) async {
+      final expected = <Key>{};
+      await tester.runAsync(() async {
+        for (var n = 0; n < 10; n++) {
+          final note = await repository.create(
+            accountId,
+            title: 'Page $n',
+            content: List.filled(32, 'pagingneedle').join(' '),
+          );
+          expected.addAll([
+            for (var i = 0; i < 32; i++)
+              ValueKey<(String, String, int?, int?)>((
+                'notes-search-hit',
+                note.localId,
+                i * 13,
+                i * 13 + 12,
+              )),
+          ]);
+        }
+      });
+      await pump(tester);
+      await tester.tap(find.byType(TextField).first);
+      await settleStorage(tester);
+      await tester.enterText(
+        find.descendant(
+          of: find.byType(NotesSearchDialog),
+          matching: find.byType(TextField),
+        ),
+        'pagingneedle',
+      );
+      await tester.pump(const Duration(milliseconds: 200));
+      await settleStorage(tester);
+      for (final count in [80, 160, 240, 320]) {
+        final list = tester.widget<ListView>(
+          find.byKey(const ValueKey('notes-search-results')),
+        );
+        final delegate = list.childrenDelegate as SliverChildBuilderDelegate;
+        expect(delegate.estimatedChildCount, count);
+        final context = tester.element(
+          find.byKey(const ValueKey('notes-search-results')),
+        );
+        final keys = {
+          for (var i = 0; i < count; i++) delegate.builder(context, i)!.key!,
+        };
+        expect(keys.length, count);
+        expect(expected.containsAll(keys), true);
+        if (count < 320) {
+          expect(find.text('Show more results'), findsOneWidget);
+          await tester.tap(find.text('Show more results'));
+          await settleStorage(tester);
+        } else {
+          expect(keys, expected);
+          expect(find.text('Show more results'), findsNothing);
+        }
+      }
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await settleStorage(tester);
+      await tester.pumpWidget(const SizedBox.shrink());
+    },
+  );
+
+  testWidgets(
+    'correction: Recovery search activation opens preview and keeps the current document',
+    (tester) async {
+      final container = ProviderContainer(
+        overrides: [
+          nextcloudNotesRepositoryProvider.overrideWith(
+            (ref) async => repository,
+          ),
+          localSettingsStoreProvider.overrideWithValue(_TabSettings()),
+          linuxAccentPlatformProvider.overrideWithValue(false),
+          localHistoryStoreProvider.overrideWithValue(
+            MemoryLocalHistoryStore(),
+          ),
+          documentSessionStoreProvider.overrideWithValue(
+            MemoryDocumentSessionStore(),
+          ),
+          documentRecoveryStoreProvider.overrideWithValue(
+            MemoryDocumentRecoveryStore(),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+      const personalId = '223e4567-e89b-42d3-a456-426614174000';
+      const deletedId = '423e4567-e89b-42d3-a456-426614174000';
+      final controller = container.read(workspaceControllerProvider.notifier);
+      await tester.runAsync(() async {
+        await controller.openNextcloudWorkspace(accountId);
+        await controller.openNextcloudNote(personalId);
+      });
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: const Scaffold(
+              body: SizedBox(
+                width: 500,
+                height: 1000,
+                child: NextcloudNotesSidebar(accountId: accountId),
+              ),
+            ),
+          ),
+        ),
+      );
+      await settleStorage(tester);
+      await tester.tap(find.text('Recovery').first);
+      await settleStorage(tester);
+      await tester.tap(find.byType(TextField).first);
+      await settleStorage(tester);
+      await tester.enterText(
+        find.descendant(
+          of: find.byType(NotesSearchDialog),
+          matching: find.byType(TextField),
+        ),
+        'title:Deleted',
+      );
+      await tester.pump(const Duration(milliseconds: 200));
+      await settleStorage(tester);
+      expect(find.byTooltip('Source location'), findsNothing);
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await settleStorage(tester);
+      expect(find.byType(NotesSearchDialog), findsNothing);
+      expect(find.byType(NotesRecoveryDialog), findsOneWidget);
+      expect(
+        tester
+            .widget<NotesRecoveryDialog>(find.byType(NotesRecoveryDialog))
+            .note
+            .localId,
+        deletedId,
+      );
+      expect(
+        container
+            .read(workspaceControllerProvider)
+            .activeBuffer
+            ?.remoteNote
+            ?.localId,
+        personalId,
+      );
+      expect(
+        container
+            .read(workspaceControllerProvider)
+            .documentBuffers
+            .any((b) => b.remoteNote?.localId == deletedId),
+        false,
+      );
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await settleStorage(tester);
+      await tester.pumpWidget(const SizedBox.shrink());
+    },
+  );
+
   testWidgets('remote editor tabs retain note titles through metadata rename', (
     tester,
   ) async {

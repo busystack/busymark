@@ -492,18 +492,19 @@ class NotesRepository {
     )) {
       final reference = occurrence.reference;
       final canonical = canonicalAttachmentReference(reference);
-      final attachment = known
+      final candidates = known
           .where(
             (a) =>
                 a.reference == reference ||
                 canonical != null && a.remotePath == canonical,
           )
-          .firstOrNull;
+          .toList();
+      final attachment = _liveMediaAttachment(candidates);
       final pending = reference.startsWith('busymark-attachment:');
       final own =
           canonical?.startsWith('.attachments.${note.serverId}/') == true;
       final foreign = canonical?.startsWith('.attachments.') == true && !own;
-      if (attachment != null ||
+      if (candidates.isNotEmpty ||
           pending ||
           own ||
           occurrence.image && canonical != null && !foreign) {

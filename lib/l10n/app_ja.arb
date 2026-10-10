@@ -5034,5 +5034,8 @@
   "notesAttachments": "添付ファイル",
   "notesSkipped": "スキップ",
   "notesFailed": "失敗",
-  "notesCompleted": "完了"
+  "notesCompleted": "完了",
+  "notesImportNew": "新しいインポートを開始",
+  "notesImportResume": "中断したインポートを再開",
+  "notesImportAlreadyImported": "この操作ではインポート済み"
 }

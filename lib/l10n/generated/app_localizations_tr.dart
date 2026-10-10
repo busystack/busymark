@@ -5019,4 +5019,13 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get notesCompleted => 'Tamamlandı';
+
+  @override
+  String get notesImportNew => 'Yeni içe aktarma başlat';
+
+  @override
+  String get notesImportResume => 'Kesilen içe aktarmayı sürdür';
+
+  @override
+  String get notesImportAlreadyImported => 'Bu işlemde zaten içe aktarıldı';
 }

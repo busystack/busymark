@@ -5034,5 +5034,8 @@
   "notesAttachments": "Bijlagen",
   "notesSkipped": "Overgeslagen",
   "notesFailed": "Mislukt",
-  "notesCompleted": "Voltooid"
+  "notesCompleted": "Voltooid",
+  "notesImportNew": "Nieuwe import starten",
+  "notesImportResume": "Onderbroken import hervatten",
+  "notesImportAlreadyImported": "Al geïmporteerd in deze bewerking"
 }

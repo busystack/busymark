@@ -3495,5 +3495,8 @@
   "notesAttachments": "Vedlegg",
   "notesSkipped": "Hoppet over",
   "notesFailed": "Mislyktes",
-  "notesCompleted": "Fullført"
+  "notesCompleted": "Fullført",
+  "notesImportNew": "Start en ny import",
+  "notesImportResume": "Fortsett avbrutt import",
+  "notesImportAlreadyImported": "Allerede importert i denne operasjonen"
 }

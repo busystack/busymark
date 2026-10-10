@@ -712,7 +712,7 @@ void main() {
       );
       expect((await store.notes()).single.content, 'body');
       final db = sqlite3.open(path);
-      expect(db.select('PRAGMA user_version').single.values.single, 5);
+      expect(db.select('PRAGMA user_version').single.values.single, 6);
       expect(db.select('SELECT COUNT(*) AS n FROM outbox').single['n'], 1);
       db.close();
       if (Platform.isLinux) {

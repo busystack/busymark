@@ -5017,4 +5017,13 @@ class AppLocalizationsEt extends AppLocalizations {
 
   @override
   String get notesCompleted => 'Lõpetatud';
+
+  @override
+  String get notesImportNew => 'Alusta uut importimist';
+
+  @override
+  String get notesImportResume => 'Jätka katkestatud importimist';
+
+  @override
+  String get notesImportAlreadyImported => 'Selles toimingus juba imporditud';
 }

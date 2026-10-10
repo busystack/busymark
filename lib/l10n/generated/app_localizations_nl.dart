@@ -5065,4 +5065,13 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get notesCompleted => 'Voltooid';
+
+  @override
+  String get notesImportNew => 'Nieuwe import starten';
+
+  @override
+  String get notesImportResume => 'Onderbroken import hervatten';
+
+  @override
+  String get notesImportAlreadyImported => 'Al geïmporteerd in deze bewerking';
 }

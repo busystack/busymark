@@ -4802,6 +4802,15 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get notesCompleted => '已完成';
+
+  @override
+  String get notesImportNew => '开始新导入';
+
+  @override
+  String get notesImportResume => '继续中断的导入';
+
+  @override
+  String get notesImportAlreadyImported => '已在此操作中导入';
 }
 
 /// The translations for Chinese, as used in China (`zh_CN`).
@@ -9600,4 +9609,13 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get notesCompleted => '已完成';
+
+  @override
+  String get notesImportNew => '开始新导入';
+
+  @override
+  String get notesImportResume => '继续中断的导入';
+
+  @override
+  String get notesImportAlreadyImported => '已在此操作中导入';
 }

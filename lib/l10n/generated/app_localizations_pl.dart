@@ -5073,4 +5073,13 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get notesCompleted => 'Ukończono';
+
+  @override
+  String get notesImportNew => 'Rozpocznij nowy import';
+
+  @override
+  String get notesImportResume => 'Wznów przerwany import';
+
+  @override
+  String get notesImportAlreadyImported => 'Już zaimportowano w tej operacji';
 }

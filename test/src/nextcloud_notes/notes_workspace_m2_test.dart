@@ -24,10 +24,11 @@ class _Fixture {
   late Directory root;
   late NotesRepository repository;
   bool offline = false, failMedia = false;
+  bool loseNextCreate = false, loseNextUpload = false;
   Completer<void>? mediaGate, writeGate;
   final writeStarted = Completer<void>();
   final mediaStarted = Completer<void>();
-  int downloads = 0, writes = 0;
+  int downloads = 0, writes = 0, uploads = 0;
   final remote = <int, Map<String, dynamic>>{};
   late final transport = MockClient((request) async {
     if (offline) throw http.ClientException('offline fixture');
@@ -39,6 +40,13 @@ class _Fixture {
         await mediaGate?.future;
         if (failMedia) return http.Response('missing', 404);
         return http.Response.bytes([1, 2, 3], 200);
+      }
+      if (request.method == 'POST') {
+        uploads++;
+        if (loseNextUpload) {
+          loseNextUpload = false;
+          throw http.ClientException('lost upload response');
+        }
       }
       return http.Response(
         jsonEncode({'filename': '.attachments.$id/café%20.png'}),
@@ -72,6 +80,10 @@ class _Fixture {
       ...body,
       'etag': 'write-$writes',
     };
+    if (id == null && loseNextCreate) {
+      loseNextCreate = false;
+      throw http.ClientException('lost creation response');
+    }
     return http.Response(
       jsonEncode(remote[assigned]),
       200,
@@ -128,6 +140,786 @@ void main() {
     await f.repository.dispose();
     await f.root.delete(recursive: true);
   });
+
+  test('correction: every occurrence beyond 32 is reachable', () async {
+    final content = List.filled(40, 'needle').join(' ');
+    final note = await f.repository.create(testAccount().id, content: content);
+    final search = NotesSearchController(f.repository.store, testAccount().id);
+    addTearDown(search.dispose);
+    await search.search('needle');
+    expect(search.state.error, isNull);
+    expect(search.state.hits.map((h) => (h.localId, h.start, h.end)), [
+      for (var i = 0; i < 40; i++) (note.localId, i * 7, i * 7 + 6),
+    ]);
+    expect(search.state.truncated, false);
+  });
+
+  test(
+    'correction: database pages preserve all document identities and offsets',
+    () async {
+      final expected = <(String, int?, int?)>{};
+      for (var n = 0; n < 10; n++) {
+        final note = await f.repository.create(
+          testAccount().id,
+          title: 'Note $n',
+          content: List.filled(32, 'needle').join(' '),
+        );
+        expected.addAll([
+          for (var i = 0; i < 32; i++) (note.localId, i * 7, i * 7 + 6),
+        ]);
+      }
+      final search = NotesSearchController(
+        f.repository.store,
+        testAccount().id,
+      );
+      addTearDown(search.dispose);
+      var previous = <(String, int?, int?)>{};
+      for (final limit in [80, 160, 240, 320, 400]) {
+        await search.search('needle', limit: limit);
+        final actual = search.state.hits
+            .map((h) => (h.localId, h.start, h.end))
+            .toSet();
+        expect(search.state.error, isNull);
+        expect(actual.length, limit.clamp(0, 320));
+        expect(search.state.hits.length, actual.length);
+        expect(actual.containsAll(previous), true);
+        expect(expected.containsAll(actual), true);
+        expect(search.state.truncated, limit < 320);
+        previous = actual;
+      }
+      expect(previous, expected);
+      await f.restart();
+      final reopened = NotesSearchController(
+        f.repository.store,
+        testAccount().id,
+      );
+      addTearDown(reopened.dispose);
+      await reopened.search('needle', limit: 400);
+      expect(
+        reopened.state.hits.map((h) => (h.localId, h.start, h.end)).toSet(),
+        expected,
+      );
+    },
+  );
+
+  test(
+    'correction: a new reviewed import creates a distinct note in its reviewed category',
+    () async {
+      final source = await Directory(p.join(f.root.path, 'source')).create();
+      await File(
+        p.join(source.path, 'note.md'),
+      ).writeAsString('unchanged body');
+      var service = NotesTransferService(f.repository);
+      final first = await service.importReviewed(
+        await service.review(source.path, testAccount().id),
+        testAccount().id,
+        cancellation: NotesTransferCancellation(),
+      );
+      await f.repository.synchronize(testAccount().id);
+      await f.restart();
+      service = NotesTransferService(f.repository);
+      final review = await service.review(source.path, testAccount().id);
+      expect(review.items.single.collision, true);
+      review.items.single.category = 'Reviewed/子';
+      final second = await service.importReviewed(
+        review,
+        testAccount().id,
+        cancellation: NotesTransferCancellation(),
+      );
+      expect(second.single.alreadyImported, false);
+      expect(second.single.noteId, isNot(first.single.noteId));
+      expect(
+        f.repository.noteById(second.single.noteId!)!.category,
+        'Reviewed/子',
+      );
+      await f.repository.synchronize(testAccount().id);
+      expect(f.repository.notes.length, 2);
+      expect(
+        f.repository.notes.every((n) => n.syncState == NoteSyncState.synced),
+        true,
+      );
+      expect(f.remote.values.map((n) => n['category']).toSet(), {
+        '',
+        'Reviewed/子',
+      });
+    },
+  );
+
+  test(
+    'correction: a fresh import honors repaired and changed media with unchanged Markdown',
+    () async {
+      final source = await Directory(p.join(f.root.path, 'source')).create();
+      await File(
+        p.join(source.path, 'note.md'),
+      ).writeAsString('![image](photo.png)');
+      final service = NotesTransferService(f.repository);
+      final missing = await service.review(source.path, testAccount().id);
+      expect(missing.items.single.issues, isNotEmpty);
+      final first = await service.importReviewed(
+        missing,
+        testAccount().id,
+        cancellation: NotesTransferCancellation(),
+      );
+      await File(p.join(source.path, 'photo.png')).writeAsBytes([4, 5, 6]);
+      for (final bytes in [
+        [4, 5, 6],
+        [7, 8, 9],
+      ]) {
+        await File(p.join(source.path, 'photo.png')).writeAsBytes(bytes);
+        final review = await service.review(source.path, testAccount().id);
+        expect(review.items.single.issues, isEmpty);
+        final imported = await service.importReviewed(
+          review,
+          testAccount().id,
+          cancellation: NotesTransferCancellation(),
+        );
+        expect(imported.single.noteId, isNot(first.single.noteId));
+        final attachments = await f.repository.store.attachments(
+          imported.single.noteId,
+        );
+        expect(attachments, hasLength(1));
+        expect(
+          await f.repository.store.attachmentBytes(attachments.single.id),
+          bytes,
+        );
+      }
+      await f.restart();
+      expect(f.repository.notes, hasLength(3));
+    },
+  );
+
+  for (final prefix in ['./', '../']) {
+    test(
+      'correction: Markdown and HTML local media resolve safely with $prefix',
+      () async {
+        final source = await Directory(p.join(f.root.path, 'source')).create();
+        await Directory(p.join(source.path, 'images')).create();
+        await Directory(p.join(source.path, 'chapters')).create();
+        final document = prefix == './' ? 'note.md' : 'chapters/note.md';
+        final reference = '${prefix}images/caf%C3%A9%2520.png';
+        await File(
+          p.join(source.path, 'images/café%20.png'),
+        ).writeAsBytes([4, 3, 2]);
+        await File(
+          p.join(source.path, document),
+        ).writeAsString('![image]($reference)\n\n<img src="$reference" />\n');
+        final service = NotesTransferService(f.repository);
+        final review = await service.review(source.path, testAccount().id);
+        expect(review.items.single.issues, isEmpty);
+        expect(review.items.single.media.keys, [reference]);
+        final result = await service.importReviewed(
+          review,
+          testAccount().id,
+          cancellation: NotesTransferCancellation(),
+        );
+        final note = f.repository.noteById(result.single.noteId!)!;
+        final attachment = (await f.repository.store.attachments(
+          note.localId,
+        )).single;
+        expect(
+          note.content,
+          '![image](${attachment.reference})\n\n<img src="${attachment.reference}" />\n',
+        );
+        expect(await f.repository.store.attachmentBytes(attachment.id), [
+          4,
+          3,
+          2,
+        ]);
+        await f.restart();
+        expect(
+          await f.repository.resolveCachedMedia(
+            testAccount().id,
+            note.localId,
+            attachment.reference,
+          ),
+          isNotNull,
+        );
+        expect(canonicalAttachmentReference(reference), isNull);
+        await f.repository.synchronize(testAccount().id);
+        expect(
+          f.repository.noteById(note.localId)!.syncState,
+          NoteSyncState.synced,
+        );
+      },
+    );
+  }
+
+  test(
+    'correction: outside-root local media is rejected without reading its bytes',
+    () async {
+      final source = await Directory(p.join(f.root.path, 'source')).create();
+      await File(p.join(f.root.path, 'outside.png')).writeAsBytes([9, 9, 9]);
+      await File(p.join(source.path, 'note.md')).writeAsString(
+        '![image](../outside.png)\n\n<img src="../outside.png" />\n',
+      );
+      final review = await NotesTransferService(
+        f.repository,
+      ).review(source.path, testAccount().id);
+      expect(review.items.single.media, isEmpty);
+      expect(review.items.single.issues, isNotEmpty);
+    },
+  );
+
+  test(
+    'correction: deleted recovery bytes are unavailable to live offline media',
+    () async {
+      f.remote[1] = {
+        ...serverNote(1),
+        'content': '![image](.attachments.1/café%2520.png)',
+      };
+      await f.repository.synchronize(testAccount().id, allowWrites: false);
+      final note = f.repository.notes.single;
+      const reference = '.attachments.1/café%2520.png';
+      await f.repository.resolveMedia(
+        testAccount().id,
+        note.localId,
+        reference,
+      );
+      final original = (await f.repository.store.attachments(
+        note.localId,
+      )).single;
+      await f.repository.deleteAttachment(
+        note.localId,
+        reference,
+        retainForHistory: true,
+      );
+      expect(await f.repository.store.attachmentBytes(original.id), [1, 2, 3]);
+      expect(
+        await f.repository.resolveCachedMedia(
+          testAccount().id,
+          note.localId,
+          reference,
+        ),
+        isNull,
+      );
+      final availability = await f.repository.attachmentAvailability(
+        note.localId,
+      );
+      expect(availability.required.map(canonicalAttachmentReference), [
+        canonicalAttachmentReference(reference),
+      ]);
+      expect(availability.available, isEmpty);
+      await f.restart();
+      final offline = NotesOfflineController(f.repository, testAccount().id);
+      addTearDown(offline.dispose);
+      await offline.initialize();
+      await offline.setRequirement('note', note.localId);
+      expect(
+        (await offline.inspect(f.repository.noteById(note.localId)!)).available,
+        false,
+      );
+      expect(
+        (await f.repository.store.attachments(note.localId)).single.state,
+        'deleted',
+      );
+      expect(await f.repository.store.attachmentBytes(original.id), [1, 2, 3]);
+      final replacement = await f.repository.addAttachment(
+        note.localId,
+        filename: 'café%20.png',
+        bytes: Uint8List.fromList([7, 8, 9]),
+      );
+      await f.repository.save(
+        note.localId,
+        content: '![image](${replacement.reference})',
+      );
+      await f.repository.synchronize(testAccount().id);
+      expect(
+        (await f.repository.store.attachments(
+          note.localId,
+        )).where((a) => a.id == replacement.id).single.state,
+        'uploaded',
+      );
+      expect(
+        (await offline.inspect(f.repository.noteById(note.localId)!)).available,
+        true,
+      );
+      expect(
+        await f.repository.resolveCachedMedia(
+          testAccount().id,
+          note.localId,
+          reference,
+        ),
+        isNotNull,
+      );
+      expect(await f.repository.store.attachmentBytes(original.id), [1, 2, 3]);
+    },
+  );
+
+  test(
+    'correction: worker continuation spans occurrences, candidates and Unicode ranges',
+    () async {
+      final expected = <(String, int?, int?)>{};
+      for (var n = 0; n < 40; n++) {
+        final source = List.filled(
+          n == 0 ? 403 : 2,
+          'cafe\u0301 café',
+        ).join(' ');
+        final note = await f.repository.create(
+          testAccount().id,
+          content: source,
+        );
+        expected.addAll(
+          RegExp(
+            'cafe\u0301|café',
+          ).allMatches(source).map((m) => (note.localId, m.start, m.end)),
+        );
+      }
+      final actual = <(String, int?, int?)>[];
+      var after = 0;
+      Map<String, dynamic>? continuation;
+      var more = true, calls = 0;
+      while (more) {
+        expect(++calls, lessThan(100));
+        final page = await f.repository.store.searchChunk(
+          testAccount().id,
+          NotesSearchQuery('café'),
+          after: after,
+          continuation: continuation,
+          limit: 200,
+        );
+        final hits = (page['hits'] as List)
+            .map(
+              (h) =>
+                  NotesSearchHit.fromJson(Map<String, dynamic>.from(h as Map)),
+            )
+            .toList();
+        expect(hits.length, lessThanOrEqualTo(200));
+        actual.addAll(hits.map((h) => (h.localId, h.start, h.end)));
+        after = page['after'] as int;
+        continuation = page['continuation'] == null
+            ? null
+            : Map<String, dynamic>.from(page['continuation'] as Map);
+        more = page['more'] as bool;
+      }
+      expect(actual.length, expected.length);
+      expect(actual.toSet(), expected);
+      final search = NotesSearchController(
+        f.repository.store,
+        testAccount().id,
+      );
+      addTearDown(search.dispose);
+      await search.search('café', limit: 1000);
+      expect(
+        search.state.hits.map((h) => (h.localId, h.start, h.end)).toSet(),
+        expected,
+      );
+      expect(search.state.truncated, false);
+    },
+  );
+
+  test(
+    'correction: partial-document continuation rejects changed revisions',
+    () async {
+      final note = await f.repository.create(
+        testAccount().id,
+        content: List.filled(40, 'needle').join(' '),
+      );
+      final first = await f.repository.store.searchChunk(
+        testAccount().id,
+        NotesSearchQuery('needle'),
+        limit: 10,
+      );
+      expect(first['more'], true);
+      expect(first['continuation'], isNotNull);
+      await f.repository.save(note.localId, content: 'changed needle');
+      await expectLater(
+        f.repository.store.searchChunk(
+          testAccount().id,
+          NotesSearchQuery('needle'),
+          after: first['after'] as int,
+          continuation: Map<String, dynamic>.from(first['continuation'] as Map),
+        ),
+        throwsStateError,
+      );
+      final search = NotesSearchController(
+        f.repository.store,
+        testAccount().id,
+      );
+      addTearDown(search.dispose);
+      await search.search('needle');
+      expect(search.state.hits.map((h) => (h.start, h.end)), [(8, 14)]);
+    },
+  );
+
+  test(
+    'correction: interrupted import is reconstructed from its durable operation after restart',
+    () async {
+      final source = await Directory(p.join(f.root.path, 'resume')).create();
+      for (var n = 0; n < 3; n++) {
+        await File(
+          p.join(source.path, '$n.md'),
+        ).writeAsString('resume body $n');
+      }
+      var service = NotesTransferService(f.repository);
+      final original = await service.review(source.path, testAccount().id);
+      for (final item in original.items) {
+        item.category = 'Reviewed/Resume';
+      }
+      final cancel = NotesTransferCancellation();
+      final first = await service.importReviewed(
+        original,
+        testAccount().id,
+        cancellation: cancel,
+        onProgress: (_, _) => cancel.cancel(),
+      );
+      expect(first, hasLength(1));
+      final pending = await f.repository.store.importOperations(
+        testAccount().id,
+      );
+      expect(pending.single['id'], original.operationId);
+      await f.restart();
+      service = NotesTransferService(f.repository);
+      final resumed = await service.resumeImport(
+        original.operationId,
+        testAccount().id,
+      );
+      expect(resumed.items.first.importedNoteId, first.single.noteId);
+      expect(resumed.items.every((i) => i.category == 'Reviewed/Resume'), true);
+      final second = await service.importReviewed(
+        resumed,
+        testAccount().id,
+        cancellation: NotesTransferCancellation(),
+      );
+      expect(second.map((o) => o.alreadyImported), [true, false, false]);
+      expect(second.first.noteId, first.single.noteId);
+      expect(f.repository.notes, hasLength(3));
+      expect(
+        await f.repository.store.importOperations(testAccount().id),
+        isEmpty,
+      );
+      await f.repository.synchronize(testAccount().id);
+      final writes = f.writes;
+      await f.restart();
+      final completed = await NotesTransferService(
+        f.repository,
+      ).resumeImport(original.operationId, testAccount().id);
+      final replayed = await NotesTransferService(f.repository).importReviewed(
+        completed,
+        testAccount().id,
+        cancellation: NotesTransferCancellation(),
+      );
+      expect(replayed.every((o) => o.alreadyImported), true);
+      await f.repository.synchronize(testAccount().id);
+      expect(f.writes, writes);
+      final fresh = await NotesTransferService(
+        f.repository,
+      ).review(source.path, testAccount().id);
+      expect(fresh.operationId, isNot(original.operationId));
+      expect(fresh.items.every((i) => !i.alreadyImported), true);
+      await f.repository.removeAccount(testAccount().id);
+      expect(
+        await f.repository.store.importOperation(
+          testAccount().id,
+          original.operationId,
+        ),
+        isNull,
+      );
+      await expectLater(
+        NotesTransferService(
+          f.repository,
+        ).resumeImport(original.operationId, testAccount().id),
+        throwsStateError,
+      );
+    },
+  );
+
+  test(
+    'correction: Recovery search is account-scoped and excluded from live indexing',
+    () async {
+      final deleted = await f.repository.create(
+        testAccount().id,
+        title: 'Retained 子',
+        category: 'Gone/Sub',
+        content: 'forty retained needles',
+      );
+      await f.repository.delete(deleted.localId);
+      final pending = await f.repository.create(
+        testAccount().id,
+        title: 'Deletion conflict',
+        content: 'retained needles',
+      );
+      await f.repository.store.saveNote(
+        pending.copyWith(syncState: NoteSyncState.deletedRemotely),
+      );
+      final other = NextcloudAccount(
+        id: 'aaf20ae4-efbb-43a5-8f57-88bb0a6b9132',
+        server: testAccount().server,
+        loginName: 'Other',
+        appVersion: '6.1.0',
+      );
+      await f.repository.upsertAccount(other);
+      final foreign = await f.repository.create(
+        other.id,
+        content: 'retained needles',
+      );
+      await f.repository.delete(foreign.localId);
+      await f.restart();
+      final recovery = NotesSearchController(
+        f.repository.store,
+        testAccount().id,
+        recovery: true,
+      );
+      final live = NotesSearchController(f.repository.store, testAccount().id);
+      addTearDown(recovery.dispose);
+      addTearDown(live.dispose);
+      await recovery.search('"retained needles" category:Gone');
+      expect(recovery.state.hits.single.localId, deleted.localId);
+      expect(recovery.state.hits.single.start, 6);
+      await live.search('retained');
+      expect(live.state.hits.map((h) => h.localId), [pending.localId]);
+      final restored = await f.repository.recoverAsNew(deleted.localId);
+      expect(restored.localId, isNot(deleted.localId));
+      await f.repository.synchronize(testAccount().id);
+      expect(
+        f.repository.noteById(restored.localId)!.syncState,
+        NoteSyncState.synced,
+      );
+      await recovery.search('title:"Retained 子"');
+      expect(recovery.state.hits.single.localId, deleted.localId);
+      await f.repository.removeAccount(testAccount().id);
+      await recovery.search('retained');
+      expect(recovery.state.hits, isEmpty);
+    },
+  );
+
+  test(
+    'correction: resumed operation preserves uncertain creation and upload evidence',
+    () async {
+      final source = await Directory(p.join(f.root.path, 'uncertain')).create();
+      await File(
+        p.join(source.path, '0.md'),
+      ).writeAsString('![image](photo.png)');
+      await File(p.join(source.path, '1.md')).writeAsString('other');
+      await File(p.join(source.path, 'photo.png')).writeAsBytes([1, 2, 3]);
+      var service = NotesTransferService(f.repository);
+      final review = await service.review(source.path, testAccount().id);
+      final cancel = NotesTransferCancellation();
+      final first = await service.importReviewed(
+        review,
+        testAccount().id,
+        cancellation: cancel,
+        onProgress: (_, _) => cancel.cancel(),
+      );
+      final id = first.single.noteId!;
+      f.loseNextCreate = true;
+      await f.repository.synchronize(testAccount().id);
+      expect(
+        f.repository.noteById(id)!.syncState,
+        NoteSyncState.creationUncertain,
+      );
+      final evidence = f.repository.noteById(id)!.creationAttempt!;
+      await f.restart();
+      service = NotesTransferService(f.repository);
+      final resumed = await service.resumeImport(
+        review.operationId,
+        testAccount().id,
+      );
+      final second = await service.importReviewed(
+        resumed,
+        testAccount().id,
+        cancellation: NotesTransferCancellation(),
+      );
+      expect(second.first.noteId, id);
+      expect(second.first.alreadyImported, true);
+      expect(
+        f.repository.noteById(id)!.creationAttempt!.toJson(),
+        evidence.toJson(),
+      );
+      await f.repository.synchronize(testAccount().id);
+      expect(f.remote.length, 2);
+      expect(
+        f.repository.noteById(id)!.syncState,
+        NoteSyncState.creationUncertain,
+      );
+      final candidate = NoteState.fromJson(f.remote.values.first);
+      await f.repository.resolveConflict(
+        id,
+        NoteConflictResolution.useServerNote,
+        creationCandidateServerId: candidate.id,
+        creationReview: f.repository.creationReview(id, candidate),
+      );
+      f.loseNextUpload = true;
+      await f.repository.synchronize(testAccount().id);
+      final staged = (await f.repository.store.attachments(id)).single;
+      expect(staged.state, 'uncertain');
+      expect(await f.repository.store.attachmentBytes(staged.id), [1, 2, 3]);
+      final uploads = f.uploads;
+      await f.restart();
+      final complete = await NotesTransferService(
+        f.repository,
+      ).resumeImport(review.operationId, testAccount().id);
+      final replay = await NotesTransferService(f.repository).importReviewed(
+        complete,
+        testAccount().id,
+        cancellation: NotesTransferCancellation(),
+      );
+      expect(replay.every((o) => o.alreadyImported), true);
+      await f.repository.synchronize(testAccount().id);
+      expect(f.uploads, uploads);
+      expect(
+        (await f.repository.store.attachments(id)).single.state,
+        'uncertain',
+      );
+      expect(f.repository.notes, hasLength(2));
+    },
+  );
+
+  test(
+    'correction: schema 5 migration preserves existing item ledger and all durable data',
+    () async {
+      final note = await f.repository.importLocal(
+        accountId: testAccount().id,
+        sourceKey: 'legacy-import-key',
+        title: 'legacy',
+        category: 'Legacy/Sub',
+        content: 'body',
+        media: {
+          'photo.png': (
+            filename: 'photo.png',
+            bytes: Uint8List.fromList([8, 7, 6]),
+          ),
+        },
+      );
+      await f.repository.setOfflineRequirement(
+        testAccount().id,
+        'category',
+        'Legacy',
+      );
+      final attachment = (await f.repository.store.attachments(
+        note.localId,
+      )).single;
+      await f.repository.dispose();
+      var db = sqlite3.open(p.join(f.root.path, 'notes.db'));
+      db.execute('DROP TABLE import_operations');
+      db.execute('PRAGMA user_version=5');
+      final before = {
+        for (final table in [
+          'accounts',
+          'notes',
+          'outbox',
+          'attachments',
+          'import_items',
+          'offline_requirements',
+        ])
+          table: db
+              .select('SELECT * FROM $table')
+              .map((r) => Map<String, Object?>.from(r))
+              .toList(),
+      };
+      db.close();
+      await f.open();
+      expect(
+        await f.repository.store.importedNote(
+          testAccount().id,
+          'legacy-import-key',
+        ),
+        note.localId,
+      );
+      expect(await f.repository.store.attachmentBytes(attachment.id), [
+        8,
+        7,
+        6,
+      ]);
+      db = sqlite3.open(f.repository.store.path);
+      expect(db.select('PRAGMA user_version').single.values.single, 6);
+      for (final entry in before.entries) {
+        expect(
+          db
+              .select('SELECT * FROM ${entry.key}')
+              .map((r) => Map<String, Object?>.from(r))
+              .toList(),
+          entry.value,
+        );
+      }
+      db.close();
+    },
+  );
+
+  test(
+    'correction: dirty overlays expose every occurrence without saving',
+    () async {
+      final note = await f.repository.create(
+        testAccount().id,
+        content: 'saved body',
+      );
+      final search = NotesSearchController(
+        f.repository.store,
+        testAccount().id,
+      );
+      addTearDown(search.dispose);
+      final source = List.filled(103, 'needle').join(' ');
+      for (final limit in [80, 160]) {
+        await search.search(
+          'needle',
+          limit: limit,
+          overlays: [
+            NotesSearchOverlay(note.localId, 9, note.title, '', source),
+          ],
+        );
+        expect(search.state.hits.map((h) => (h.localId, h.start, h.end)), [
+          for (var i = 0; i < limit.clamp(0, 103); i++)
+            (note.localId, i * 7, i * 7 + 6),
+        ]);
+        expect(search.state.truncated, limit < 103);
+      }
+      expect((await f.repository.store.notes()).single.content, 'saved body');
+    },
+  );
+
+  test(
+    'correction: overlapping terms continue at the same start without duplication',
+    () async {
+      final note = await f.repository.create(
+        testAccount().id,
+        content: List.filled(40, 'foobar').join(' '),
+      );
+      final query = NotesSearchQuery('foo foobar');
+      final actual = <(int?, int?)>[];
+      var after = 0;
+      Map<String, dynamic>? continuation;
+      for (var i = 0; i < 80; i++) {
+        final page = await f.repository.store.searchChunk(
+          testAccount().id,
+          query,
+          after: after,
+          continuation: continuation,
+          limit: 1,
+        );
+        final hit = NotesSearchHit.fromJson(
+          Map<String, dynamic>.from((page['hits'] as List).single as Map),
+        );
+        expect(hit.localId, note.localId);
+        actual.add((hit.start, hit.end));
+        expect(page['more'], i < 79);
+        after = page['after'] as int;
+        continuation = page['continuation'] == null
+            ? null
+            : Map<String, dynamic>.from(page['continuation'] as Map);
+      }
+      expect(actual, [
+        for (var i = 0; i < 40; i++) ...[
+          (i * 7, i * 7 + 3),
+          (i * 7, i * 7 + 6),
+        ],
+      ]);
+    },
+  );
+
+  test(
+    'correction: navigation relocates late occurrences after a dirty edit',
+    () async {
+      final source = 'x ${List.filled(400, 'needle').join(' ')}';
+      final hit = await relocateNotesSearchHit(
+        NotesSearchQuery('needle'),
+        NotesSearchOverlay('identity', 11, 'Title', '', source),
+        350 * 7,
+      );
+      expect(hit!.start, 350 * 7 + 2);
+      expect(hit.end, 350 * 7 + 8);
+      expect(hit.revision, 11);
+      expect(hit.digest, notesSearchDigest(source));
+    },
+  );
 
   test(
     'navigation counts share inclusion, descendants, recovery and stable selection',

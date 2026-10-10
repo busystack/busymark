@@ -3537,5 +3537,8 @@
   "notesAttachments": "پیوست‌ها",
   "notesSkipped": "رد شد",
   "notesFailed": "ناموفق",
-  "notesCompleted": "تکمیل شد"
+  "notesCompleted": "تکمیل شد",
+  "notesImportNew": "شروع وارد کردن جدید",
+  "notesImportResume": "ادامه وارد کردن متوقف‌شده",
+  "notesImportAlreadyImported": "قبلاً در این عملیات وارد شده است"
 }

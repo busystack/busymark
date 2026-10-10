@@ -229,6 +229,8 @@ class NotesStore {
     String accountId,
     NotesSearchQuery query, {
     int after = 0,
+    Map<String, dynamic>? continuation,
+    bool recovery = false,
     int limit = 80,
     Set<String> exclude = const {},
   }) async => Map<String, dynamic>.from(
@@ -237,6 +239,8 @@ class NotesStore {
           'query': query.text,
           'wholeWord': query.wholeWord,
           'after': after,
+          'continuation': continuation,
+          'recovery': recovery,
           'limit': limit.clamp(1, 200),
           'exclude': exclude.toList(),
         })
@@ -260,6 +264,35 @@ class NotesStore {
     required,
     paused,
   ]);
+  Future<void> beginImportOperation(
+    String accountId,
+    String operationId,
+    String root,
+    String review,
+  ) async => await _call('beginImportOperation', [
+    accountId,
+    operationId,
+    root,
+    review,
+  ]);
+  Future<List<Map<String, dynamic>>> importOperations(String accountId) async =>
+      (await _call('importOperations', accountId) as List)
+          .map((r) => Map<String, dynamic>.from(r as Map))
+          .toList();
+  Future<Map<String, dynamic>?> importOperation(
+    String accountId,
+    String operationId,
+  ) async {
+    final row = await _call('importOperation', [accountId, operationId]);
+    return row == null ? null : Map<String, dynamic>.from(row as Map);
+  }
+
+  Future<void> completeImportOperation(
+    String accountId,
+    String operationId,
+    List<String> keys,
+  ) async =>
+      await _call('completeImportOperation', [accountId, operationId, keys]);
   Future<String?> importedNote(String accountId, String sourceKey) async =>
       await _call('importedNote', [accountId, sourceKey]) as String?;
 
@@ -291,7 +324,7 @@ void _worker(List<dynamic> arguments) {
     db.execute('PRAGMA synchronous = FULL');
     db.execute('PRAGMA busy_timeout = 5000');
     final version = db.select('PRAGMA user_version').first.values.first as int;
-    if (version > 5) {
+    if (version > 6) {
       throw StateError(
         'The Notes database was created by a newer BusyMark version.',
       );
@@ -344,7 +377,7 @@ void _worker(List<dynamic> arguments) {
           );
         }
       }
-      if (version < 5) db.execute('PRAGMA user_version = 5');
+      if (version < 6) db.execute('PRAGMA user_version = 6');
       db.execute('COMMIT');
     } catch (_) {
       db.execute('ROLLBACK');
@@ -434,40 +467,134 @@ Object? _execute(Database db, String action, dynamic argument) {
         wholeWord: a['wholeWord'] as bool,
       );
       final expression = query.ftsCandidates;
+      final recovery = a['recovery'] == true;
       final rows = db.select(
-        'SELECT note_search.rowid AS cursor,n.data FROM note_search JOIN notes n ON n.id=note_search.id WHERE note_search.account=? AND note_search.rowid>? '
-        "${expression == null ? '' : 'AND note_search MATCH ? '}ORDER BY note_search.rowid LIMIT 32",
-        [a['account'], a['after'], if (expression != null) expression],
+        recovery
+            ? 'SELECT rowid AS cursor,data FROM notes WHERE account_id=? AND rowid>? ORDER BY rowid LIMIT 32'
+            : 'SELECT note_search.rowid AS cursor,n.data FROM note_search JOIN notes n ON n.id=note_search.id WHERE note_search.account=? AND note_search.rowid>? '
+                  "${expression == null ? '' : 'AND note_search MATCH ? '}ORDER BY note_search.rowid LIMIT 32",
+        [
+          a['account'],
+          a['after'],
+          if (!recovery && expression != null) expression,
+        ],
       );
       final hits = <Map<String, Object?>>[];
       final exclude = (a['exclude'] as List).cast<String>().toSet();
-      for (final row in rows) {
+      final limit = a['limit'] as int;
+      var after = a['after'] as int;
+      Map? continuation = a['continuation'] as Map?;
+      for (var index = 0; index < rows.length; index++) {
+        final row = rows[index];
         final note = NextcloudNote.fromJson(
           jsonDecode(row['data'] as String) as Map<String, dynamic>,
         );
-        if (exclude.contains(note.localId) ||
-            note.syncState == NoteSyncState.deletedRemotely &&
-                !note.hasPendingChanges) {
-          continue;
+        if (continuation != null &&
+            (continuation['id'] != note.localId ||
+                continuation['revision'] != note.revision ||
+                continuation['title'] != note.title ||
+                continuation['category'] != note.category ||
+                continuation['digest'] != notesSearchDigest(note.content))) {
+          throw StateError('Search continuation changed; refresh the query.');
         }
-        hits.addAll(
-          matchNotesDocument(
+        final deleted =
+            note.syncState == NoteSyncState.deletedRemotely &&
+            !note.hasPendingChanges;
+        if (!exclude.contains(note.localId) && deleted == recovery) {
+          final remaining = limit - hits.length;
+          final page = matchNotesDocument(
             query: query,
             localId: note.localId,
             revision: note.revision,
             title: note.title,
             category: note.category,
             source: note.content,
-            limit: (a['limit'] as int) - hits.length,
-          ).map((h) => h.toJson()),
-        );
-        if (hits.length >= (a['limit'] as int)) break;
+            limit: remaining + 1,
+            afterStart: continuation?['start'] as int? ?? -1,
+            afterEnd: continuation?['end'] as int? ?? -1,
+          );
+          hits.addAll(page.take(remaining).map((h) => h.toJson()));
+          if (page.length > remaining) {
+            final last = page[remaining - 1];
+            return {
+              'hits': hits,
+              'after': after,
+              'more': true,
+              'continuation': {
+                'id': note.localId,
+                'revision': note.revision,
+                'title': note.title,
+                'category': note.category,
+                'digest': last.digest,
+                'start': last.start,
+                'end': last.end,
+              },
+            };
+          }
+        }
+        // Advance only after the complete document has been consumed.
+        after = row['cursor'] as int;
+        continuation = null;
+        if (hits.length == limit) {
+          return {
+            'hits': hits,
+            'after': after,
+            'continuation': null,
+            'more': index < rows.length - 1 || rows.length == 32,
+          };
+        }
       }
+      if (continuation != null) throw StateError('Search continuation lost.');
       return {
         'hits': hits,
-        'after': rows.isEmpty ? a['after'] : rows.last['cursor'],
+        'after': after,
+        'continuation': null,
         'more': rows.length == 32,
       };
+    case 'beginImportOperation':
+      final a = argument as List;
+      db.execute(
+        "INSERT INTO import_operations(account_id,id,root,review,state) VALUES(?,?,?,?,'pending') ON CONFLICT(account_id,id) DO UPDATE SET review=excluded.review WHERE import_operations.state='pending' AND import_operations.root=excluded.root",
+        a,
+      );
+      return null;
+    case 'importOperations':
+      return db
+          .select(
+            "SELECT id,root,state,created_at FROM import_operations WHERE account_id=? AND state='pending' ORDER BY rowid DESC",
+            [argument],
+          )
+          .map((r) => Map<String, Object?>.from(r))
+          .toList();
+    case 'importOperation':
+      final a = argument as List;
+      final rows = db.select(
+        'SELECT id,root,review,state FROM import_operations WHERE account_id=? AND id=?',
+        a,
+      );
+      return rows.isEmpty ? null : Map<String, Object?>.from(rows.single);
+    case 'completeImportOperation':
+      final a = argument as List;
+      db.execute('BEGIN IMMEDIATE');
+      try {
+        for (final key in a[2] as List) {
+          if (db.select(
+            'SELECT note_id FROM import_items WHERE account_id=? AND source_key=?',
+            [a[0], key],
+          ).isEmpty) {
+            throw StateError('An import item is not durable.');
+          }
+        }
+        db.execute(
+          "UPDATE import_operations SET state='completed' WHERE account_id=? AND id=?",
+          [a[0], a[1]],
+        );
+        db.execute('COMMIT');
+      } catch (_) {
+        db.execute('ROLLBACK');
+        rethrow;
+      }
+      return null;
     case 'offlineRequirements':
       return db
           .select(
@@ -702,6 +829,10 @@ void _createWorkspaceSchema(Database db) {
   );
   db.execute(
     'CREATE TABLE IF NOT EXISTS import_items(account_id TEXT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE, source_key TEXT NOT NULL, note_id TEXT NOT NULL REFERENCES notes(id), PRIMARY KEY(account_id,source_key))',
+  ); // v6 namespaces imports by a durable reviewed operation. Existing v5 item
+  // associations remain intact; they cannot suppress a deliberately new import.
+  db.execute(
+    "CREATE TABLE IF NOT EXISTS import_operations(account_id TEXT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE, id TEXT NOT NULL, root TEXT NOT NULL, review TEXT NOT NULL, created_at INTEGER NOT NULL DEFAULT(unixepoch()), state TEXT NOT NULL CHECK(state IN ('pending','completed')), PRIMARY KEY(account_id,id))",
   );
 }
 

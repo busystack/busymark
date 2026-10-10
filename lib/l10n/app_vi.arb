@@ -5034,5 +5034,8 @@
   "notesAttachments": "Tệp đính kèm",
   "notesSkipped": "Đã bỏ qua",
   "notesFailed": "Thất bại",
-  "notesCompleted": "Hoàn tất"
+  "notesCompleted": "Hoàn tất",
+  "notesImportNew": "Bắt đầu nhập mới",
+  "notesImportResume": "Tiếp tục lần nhập bị gián đoạn",
+  "notesImportAlreadyImported": "Đã nhập trong thao tác này"
 }

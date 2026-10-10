@@ -5007,4 +5007,14 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get notesCompleted => 'पूर्ण';
+
+  @override
+  String get notesImportNew => 'नया आयात शुरू करें';
+
+  @override
+  String get notesImportResume => 'बाधित आयात फिर से शुरू करें';
+
+  @override
+  String get notesImportAlreadyImported =>
+      'इस प्रक्रिया में पहले ही आयात किया गया';
 }

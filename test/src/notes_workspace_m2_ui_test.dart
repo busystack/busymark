@@ -126,4 +126,77 @@ void main() {
       expect(tester.takeException(), isNull);
     },
   );
+  testWidgets(
+    'correction: import chooser distinguishes a new import from an explicit resumed operation',
+    (tester) async {
+      String? choice;
+      await tester.pumpWidget(
+        _app(
+          Builder(
+            builder: (context) => TextButton(
+              onPressed: () async {
+                choice = await showDialog<String>(
+                  context: context,
+                  builder: (_) => const NotesImportOperationDialog(
+                    operations: [
+                      {
+                        'id': 'reviewed-operation',
+                        'root': '/source',
+                        'created_at': 1780000000,
+                      },
+                    ],
+                  ),
+                );
+              },
+              child: const Text('launch'),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.text('launch'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Start a new import'));
+      await tester.pumpAndSettle();
+      expect(choice, '');
+      await tester.tap(find.text('launch'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Resume interrupted import'));
+      await tester.pumpAndSettle();
+      expect(choice, 'reviewed-operation');
+      final item = NotesImportItem(
+        key: 'one',
+        path: '/source/one.md',
+        title: 'Imported',
+        category: 'Reviewed/Sub',
+        content: 'body',
+      )..importedNoteId = 'stable-note';
+      await tester.pumpWidget(
+        _app(
+          NotesImportReviewDialog(
+            review: NotesImportReview('/source', [item], []),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Already imported in this operation'), findsOneWidget);
+      expect(
+        tester
+            .widget<CheckboxListTile>(find.byType(CheckboxListTile))
+            .onChanged,
+        isNull,
+      );
+      expect(
+        tester
+            .widget<TextField>(
+              find.descendant(
+                of: find.byType(TextFormField),
+                matching: find.byType(TextField),
+              ),
+            )
+            .readOnly,
+        true,
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
 }

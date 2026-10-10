@@ -3521,5 +3521,8 @@
   "notesAttachments": "Вкладення",
   "notesSkipped": "Пропущено",
   "notesFailed": "Помилка",
-  "notesCompleted": "Завершено"
+  "notesCompleted": "Завершено",
+  "notesImportNew": "Почати новий імпорт",
+  "notesImportResume": "Продовжити перерваний імпорт",
+  "notesImportAlreadyImported": "Уже імпортовано в цій операції"
 }

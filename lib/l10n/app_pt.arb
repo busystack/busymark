@@ -3495,5 +3495,8 @@
   "notesAttachments": "Anexos",
   "notesSkipped": "Ignorado",
   "notesFailed": "Falhou",
-  "notesCompleted": "Concluído"
+  "notesCompleted": "Concluído",
+  "notesImportNew": "Iniciar nova importação",
+  "notesImportResume": "Retomar importação interrompida",
+  "notesImportAlreadyImported": "Já importado nesta operação"
 }

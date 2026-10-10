@@ -79,6 +79,7 @@ Future<void> showNotesSearch(
   WidgetRef ref, {
   String query = '',
   String? account,
+  bool recovery = false,
 }) async {
   final accountId =
       account ??
@@ -90,8 +91,11 @@ Future<void> showNotesSearch(
         ({NotesSearchHit hit, String query, bool wholeWord, bool source})
       >(
         context,
-        builder: (_) =>
-            NotesSearchDialog(accountId: accountId, initialQuery: query),
+        builder: (_) => NotesSearchDialog(
+          accountId: accountId,
+          initialQuery: query,
+          recovery: recovery,
+        ),
       );
   if (!context.mounted) return;
   if (choice == null) {
@@ -100,6 +104,17 @@ Future<void> showNotesSearch(
   }
   if (ref.read(workspaceControllerProvider).workspace?.nextcloudAccountId !=
       accountId) {
+    return;
+  }
+  if (recovery) {
+    final repository = await ref.read(nextcloudNotesRepositoryProvider.future);
+    final note = repository.noteById(choice.hit.localId);
+    if (context.mounted &&
+        note != null &&
+        note.accountId == accountId &&
+        isNotesRecovery(note)) {
+      await showNotesRecovery(context, ref, note);
+    }
     return;
   }
   final controller = ref.read(workspaceControllerProvider.notifier);
@@ -116,21 +131,25 @@ Future<void> showNotesSearch(
   // Even a revision collision cannot apply offsets to a different document.
   if (buffer!.revision != hit.revision ||
       notesSearchDigest(buffer.text) != hit.digest) {
-    final refreshed = matchNotesDocument(
-      query: NotesSearchQuery(choice.query, wholeWord: choice.wholeWord),
-      localId: note.localId,
-      revision: buffer.revision,
-      title: note.title,
-      category: note.category,
-      source: buffer.text,
-    );
-    if (refreshed.isEmpty) return;
-    refreshed.sort(
-      (a, b) => ((a.start ?? 0) - (hit.start ?? 0)).abs().compareTo(
-        ((b.start ?? 0) - (hit.start ?? 0)).abs(),
+    final refreshed = await relocateNotesSearchHit(
+      NotesSearchQuery(choice.query, wholeWord: choice.wholeWord),
+      NotesSearchOverlay(
+        note.localId,
+        buffer.revision,
+        note.title,
+        note.category,
+        buffer.text,
       ),
+      hit.start ?? 0,
     );
-    hit = refreshed.first;
+    if (refreshed == null || !context.mounted) return;
+    final current = ref.read(workspaceControllerProvider).activeBuffer;
+    if (current?.remoteNote?.localId != note.localId ||
+        current!.revision != refreshed.revision ||
+        notesSearchDigest(current.text) != refreshed.digest) {
+      return;
+    }
+    hit = refreshed;
   }
   if (hit.start == null || hit.end == null) return;
   if (choice.source) {
@@ -148,8 +167,10 @@ class NotesSearchDialog extends ConsumerStatefulWidget {
     super.key,
     required this.accountId,
     this.initialQuery = '',
+    this.recovery = false,
   });
   final String accountId, initialQuery;
+  final bool recovery;
   @override
   ConsumerState<NotesSearchDialog> createState() => _NotesSearchDialogState();
 }
@@ -174,7 +195,11 @@ class _NotesSearchDialogState extends ConsumerState<NotesSearchDialog> {
   Future<void> _initialize() async {
     final repository = await ref.read(nextcloudNotesRepositoryProvider.future);
     if (!mounted) return;
-    _controller = NotesSearchController(repository.store, widget.accountId);
+    _controller = NotesSearchController(
+      repository.store,
+      widget.accountId,
+      recovery: widget.recovery,
+    );
     _results = _controller!.changes.listen((state) {
       if (mounted) {
         setState(() {
@@ -199,7 +224,8 @@ class _NotesSearchDialogState extends ConsumerState<NotesSearchDialog> {
     final overlays = [
       for (final buffer
           in ref.read(workspaceControllerProvider).documentBuffers)
-        if (buffer.isDirty &&
+        if (!widget.recovery &&
+            buffer.isDirty &&
             buffer.remoteNote?.accountId == widget.accountId &&
             repository.noteById(buffer.remoteNote!.localId) != null)
           NotesSearchOverlay(
@@ -283,7 +309,9 @@ class _NotesSearchDialogState extends ConsumerState<NotesSearchDialog> {
       (a, b) => _schedule(),
     );
     return BusyMarkDialogShell(
-      title: context.l10n.search,
+      title: widget.recovery
+          ? '${context.l10n.notesRecovery} · ${context.l10n.search}'
+          : context.l10n.search,
       maxWidth: 760,
       children: [
         TextField(
@@ -296,6 +324,7 @@ class _NotesSearchDialogState extends ConsumerState<NotesSearchDialog> {
             _schedule();
           },
         ),
+        if (widget.recovery) Text(context.l10n.notesRecoveryHelp),
         Text(
           context.l10n.notesSearchHelp,
           style: Theme.of(context).textTheme.bodySmall,
@@ -324,6 +353,7 @@ class _NotesSearchDialogState extends ConsumerState<NotesSearchDialog> {
                   ),
                 )
               : ListView.builder(
+                  key: const ValueKey('notes-search-results'),
                   controller: _scroll,
                   itemCount: _state.hits.length,
                   itemBuilder: (context, index) {
@@ -345,6 +375,12 @@ class _NotesSearchDialogState extends ConsumerState<NotesSearchDialog> {
                                 hit.snippet.length,
                               ));
                     return ListTile(
+                      key: ValueKey((
+                        'notes-search-hit',
+                        hit.localId,
+                        hit.start,
+                        hit.end,
+                      )),
                       selected: index == _selected,
                       title: Text(
                         hit.title,
@@ -391,7 +427,7 @@ class _NotesSearchDialogState extends ConsumerState<NotesSearchDialog> {
                           ),
                         ],
                       ),
-                      trailing: hit.start == null
+                      trailing: widget.recovery || hit.start == null
                           ? null
                           : IconButton(
                               tooltip: context.l10n.notesSourceLocation,
@@ -821,6 +857,8 @@ Future<void> showNotesImport(
       ?.nextcloudAccountId;
   if (accountId == null) return;
   final savedLocally = context.l10n.nextcloudSavedLocally;
+  final alreadyImported = context.l10n.notesImportAlreadyImported;
+  final synced = context.l10n.nextcloudSynced;
   final source = folder
       ? await getDirectoryPath(confirmButtonText: context.l10n.notesImport)
       : (await openFile(
@@ -835,8 +873,22 @@ Future<void> showNotesImport(
   final repository = await ref.read(nextcloudNotesRepositoryProvider.future);
   final service = NotesTransferService(repository);
   try {
-    final review = await service.review(source, accountId);
+    var review = await service.review(source, accountId);
+    final pending = (await repository.store.importOperations(
+      accountId,
+    )).where((o) => o['root'] == review.root).toList();
     if (!context.mounted) return;
+    if (pending.isNotEmpty) {
+      final choice = await showBusyMarkModalDialog<String>(
+        context,
+        builder: (_) => NotesImportOperationDialog(operations: pending),
+      );
+      if (choice == null || !context.mounted) return;
+      if (choice.isNotEmpty) {
+        review = await service.resumeImport(choice, accountId);
+      }
+      if (!context.mounted) return;
+    }
     final confirmed = await showBusyMarkModalDialog<bool>(
       context,
       builder: (_) => NotesImportReviewDialog(review: review),
@@ -859,7 +911,7 @@ Future<void> showNotesImport(
               .synchronizeImportedNotes(accountId);
           return [
             for (final result in results)
-              '${result.item}: ${result.error ?? savedLocally}',
+              '${result.item}: ${result.error ?? [if (result.alreadyImported) alreadyImported, repository.noteById(result.noteId ?? '')?.hasPendingChanges == false ? synced : savedLocally].join(' · ')}',
           ];
         },
       ),
@@ -875,6 +927,37 @@ Future<void> showNotesImport(
       );
     }
   }
+}
+
+/// Choosing a new import never reuses a prior source-item association. Resume
+/// is explicit and selects a persisted reviewed operation within this account.
+class NotesImportOperationDialog extends StatelessWidget {
+  const NotesImportOperationDialog({super.key, required this.operations});
+  final List<Map<String, dynamic>> operations;
+  @override
+  Widget build(BuildContext context) => BusyMarkDialogShell(
+    title: context.l10n.notesImport,
+    actions: [
+      BusyMarkDialogButton(
+        label: context.l10n.cancel,
+        onPressed: () => Navigator.pop(context),
+      ),
+    ],
+    children: [
+      ListTile(
+        title: Text(context.l10n.notesImportNew),
+        onTap: () => Navigator.pop(context, ''),
+      ),
+      for (final operation in operations)
+        ListTile(
+          title: Text(context.l10n.notesImportResume),
+          subtitle: Text(
+            '${operation['root']}\n${DateTime.fromMillisecondsSinceEpoch((operation['created_at'] as int) * 1000).toLocal()}',
+          ),
+          onTap: () => Navigator.pop(context, operation['id'] as String),
+        ),
+    ],
+  );
 }
 
 class NotesImportReviewDialog extends StatefulWidget {
@@ -915,16 +998,21 @@ class _NotesImportReviewDialogState extends State<NotesImportReviewDialog> {
               children: [
                 CheckboxListTile(
                   value: item.selected,
-                  onChanged: (v) => setState(() => item.selected = v ?? false),
+                  onChanged: item.alreadyImported
+                      ? null
+                      : (v) => setState(() => item.selected = v ?? false),
                   title: Text(item.title),
                   subtitle: Text(
-                    item.collision
+                    item.alreadyImported
+                        ? context.l10n.notesImportAlreadyImported
+                        : item.collision
                         ? context.l10n.notesImportDistinct
                         : item.path,
                   ),
                 ),
                 TextFormField(
                   initialValue: item.category,
+                  readOnly: item.alreadyImported,
                   decoration: InputDecoration(
                     labelText: context.l10n.syntaxReferenceCategory,
                   ),

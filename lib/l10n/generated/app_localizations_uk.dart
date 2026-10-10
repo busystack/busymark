@@ -5086,4 +5086,13 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get notesCompleted => 'Завершено';
+
+  @override
+  String get notesImportNew => 'Почати новий імпорт';
+
+  @override
+  String get notesImportResume => 'Продовжити перерваний імпорт';
+
+  @override
+  String get notesImportAlreadyImported => 'Уже імпортовано в цій операції';
 }

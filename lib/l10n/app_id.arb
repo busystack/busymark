@@ -5034,5 +5034,8 @@
   "notesAttachments": "Lampiran",
   "notesSkipped": "Dilewati",
   "notesFailed": "Gagal",
-  "notesCompleted": "Selesai"
+  "notesCompleted": "Selesai",
+  "notesImportNew": "Mulai impor baru",
+  "notesImportResume": "Lanjutkan impor yang terputus",
+  "notesImportAlreadyImported": "Sudah diimpor dalam operasi ini"
 }

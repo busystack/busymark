@@ -5047,4 +5047,13 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get notesCompleted => 'مكتمل';
+
+  @override
+  String get notesImportNew => 'بدء استيراد جديد';
+
+  @override
+  String get notesImportResume => 'استئناف الاستيراد المنقطع';
+
+  @override
+  String get notesImportAlreadyImported => 'تم الاستيراد بالفعل في هذه العملية';
 }

@@ -8561,6 +8561,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Completed'**
   String get notesCompleted;
+
+  /// No description provided for @notesImportNew.
+  ///
+  /// In en, this message translates to:
+  /// **'Start a new import'**
+  String get notesImportNew;
+
+  /// No description provided for @notesImportResume.
+  ///
+  /// In en, this message translates to:
+  /// **'Resume interrupted import'**
+  String get notesImportResume;
+
+  /// No description provided for @notesImportAlreadyImported.
+  ///
+  /// In en, this message translates to:
+  /// **'Already imported in this operation'**
+  String get notesImportAlreadyImported;
 }
 
 class _AppLocalizationsDelegate

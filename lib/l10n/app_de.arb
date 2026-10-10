@@ -3495,5 +3495,8 @@
   "notesAttachments": "Anhänge",
   "notesSkipped": "Übersprungen",
   "notesFailed": "Fehlgeschlagen",
-  "notesCompleted": "Abgeschlossen"
+  "notesCompleted": "Abgeschlossen",
+  "notesImportNew": "Neuen Import starten",
+  "notesImportResume": "Unterbrochenen Import fortsetzen",
+  "notesImportAlreadyImported": "In diesem Vorgang bereits importiert"
 }

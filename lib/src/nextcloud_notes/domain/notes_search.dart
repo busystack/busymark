@@ -107,12 +107,11 @@ String notesSearchDigest(String source) =>
     sha256.convert(utf8.encode(source)).toString();
 final _word = RegExp(r'[\p{L}\p{M}\p{N}_]', unicode: true);
 
-List<({int start, int end})> _ranges(
+Iterable<({int start, int end})> _ranges(
   String normalized,
   String term,
   bool wholeWord,
-) {
-  final ranges = <({int start, int end})>[];
+) sync* {
   var position = 0;
   while (position <= normalized.length) {
     final start = normalized.indexOf(term, position);
@@ -128,12 +127,10 @@ List<({int start, int end})> _ranges(
                 !_word.hasMatch(
                   String.fromCharCode(normalized.runesAt(end)),
                 )))) {
-      ranges.add((start: start, end: end));
-      if (ranges.length == 32) break;
+      yield (start: start, end: end);
     }
     position = end;
   }
-  return ranges;
 }
 
 extension on String {
@@ -160,26 +157,29 @@ List<NotesSearchHit> matchNotesDocument({
   required String category,
   required String source,
   int limit = 80,
+  int afterStart = -1,
+  int afterEnd = -1,
 }) {
   if (query.terms.isEmpty || limit <= 0) return [];
   final body = normalizeNotesSearch(source);
   final normalizedTitle = normalizeNotesSearch(title);
   final normalizedCategory = normalizeNotesSearch(category);
-  final occurrences = <({int start, int end})>{};
+  final iterators = <Iterator<({int start, int end})>>[];
   ({String text, int start, int end})? metadataMatch;
   for (final term in query.terms) {
-    final contentMatches = term.field == null
-        ? _ranges(body, term.literal, query.wholeWord)
-        : <({int start, int end})>[];
+    final contentMatches =
+        (term.field == null
+                ? _ranges(body, term.literal, query.wholeWord)
+                : const <({int start, int end})>[])
+            .iterator;
+    final hasContent = contentMatches.moveNext();
     final titleMatches = term.field != 'category'
         ? _ranges(normalizedTitle, term.literal, query.wholeWord)
         : <({int start, int end})>[];
     final categoryMatches = term.field != 'title'
         ? _ranges(normalizedCategory, term.literal, query.wholeWord)
         : <({int start, int end})>[];
-    if (contentMatches.isEmpty &&
-        titleMatches.isEmpty &&
-        categoryMatches.isEmpty) {
+    if (!hasContent && titleMatches.isEmpty && categoryMatches.isEmpty) {
       return [];
     }
     if (metadataMatch == null && titleMatches.isNotEmpty) {
@@ -195,10 +195,11 @@ List<NotesSearchHit> matchNotesDocument({
         end: categoryMatches.first.end,
       );
     }
-    occurrences.addAll(contentMatches);
+    if (hasContent) iterators.add(contentMatches);
   }
   final digest = notesSearchDigest(source);
-  if (occurrences.isEmpty) {
+  if (iterators.isEmpty) {
+    if (afterStart >= 0) return [];
     final match = metadataMatch!;
     var normalizedOffset = 0, originalOffset = 0, from = 0, to = 0;
     for (final cluster in match.text.characters) {
@@ -228,22 +229,56 @@ List<NotesSearchHit> matchNotesDocument({
       ),
     ];
   }
-  final starts = <int>[];
-  final ends = <int>[];
-  var offset = 0;
-  for (final cluster in source.characters) {
-    final normalized = normalizeNotesSearch(cluster);
-    for (var i = 0; i < normalized.length; i++) {
-      starts.add(offset);
-      ends.add(offset + cluster.length);
+  // Merge lazy per-term streams. Bounds limit transferred hits, never the
+  // searchable occurrences. A range cursor also distinguishes overlapping terms.
+  final ranges = <({int start, int end})>[];
+  final normalizedAfterStart = afterStart < 0
+      ? -1
+      : normalizeNotesSearch(source.substring(0, afterStart)).length;
+  final normalizedAfterEnd = afterEnd < 0
+      ? -1
+      : normalizeNotesSearch(source.substring(0, afterEnd)).length;
+  ({int start, int end})? previous;
+  while (iterators.isNotEmpty && ranges.length < limit) {
+    iterators.sort((a, b) {
+      final start = a.current.start.compareTo(b.current.start);
+      return start != 0 ? start : a.current.end.compareTo(b.current.end);
+    });
+    final iterator = iterators.first;
+    final range = iterator.current;
+    if (range != previous &&
+        (range.start > normalizedAfterStart ||
+            range.start == normalizedAfterStart &&
+                range.end > normalizedAfterEnd)) {
+      ranges.add(range);
     }
-    offset += cluster.length;
+    previous = range;
+    if (!iterator.moveNext()) iterators.removeAt(0);
   }
-  final sorted = occurrences.toList()
-    ..sort((a, b) => a.start.compareTo(b.start));
-  return [
-    for (final range in sorted.take(limit))
-      if (range.end <= ends.length)
+  // Map only page boundaries through authored graphemes, including overlapping
+  // occurrences. No array proportional to document length is transferred.
+  final startBoundaries = ranges.map((r) => r.start).toSet().toList()..sort();
+  final endBoundaries = ranges.map((r) => r.end).toSet().toList()..sort();
+  final starts = <int, int>{}, ends = <int, int>{};
+  var normalizedOffset = 0, originalOffset = 0, startIndex = 0, endIndex = 0;
+  for (final cluster in source.characters) {
+    final normalizedEnd =
+        normalizedOffset + normalizeNotesSearch(cluster).length;
+    while (startIndex < startBoundaries.length &&
+        startBoundaries[startIndex] < normalizedEnd) {
+      starts[startBoundaries[startIndex++]] = originalOffset;
+    }
+    while (endIndex < endBoundaries.length &&
+        endBoundaries[endIndex] <= normalizedEnd) {
+      ends[endBoundaries[endIndex++]] = originalOffset + cluster.length;
+    }
+    if (endIndex == endBoundaries.length) break;
+    normalizedOffset = normalizedEnd;
+    originalOffset += cluster.length;
+  }
+  final hits = <NotesSearchHit>[
+    for (final range in ranges)
+      if (starts.containsKey(range.start) && ends.containsKey(range.end))
         _hit(
           localId,
           revision,
@@ -251,10 +286,11 @@ List<NotesSearchHit> matchNotesDocument({
           title,
           category,
           source,
-          starts[range.start],
-          ends[range.end - 1],
+          starts[range.start]!,
+          ends[range.end]!,
         ),
   ];
+  return hits;
 }
 
 NotesSearchHit _hit(

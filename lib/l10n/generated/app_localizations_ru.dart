@@ -5076,4 +5076,13 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get notesCompleted => 'Завершено';
+
+  @override
+  String get notesImportNew => 'Начать новый импорт';
+
+  @override
+  String get notesImportResume => 'Продолжить прерванный импорт';
+
+  @override
+  String get notesImportAlreadyImported => 'Уже импортировано в этой операции';
 }

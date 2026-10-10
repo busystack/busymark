@@ -675,6 +675,14 @@ Future<void> main(List<String> arguments) async {
       checks,
       directory.path,
     );
+    await _workspaceCorrectionChecks(
+      connection,
+      account,
+      api,
+      createdIds,
+      checks,
+      directory.path,
+    );
     await File(arguments[1]).writeAsString(
       const JsonEncoder.withIndent(
         '  ',
@@ -1368,4 +1376,358 @@ Future<void> _everydayWorkspaceChecks(
     );
   }
   checks['m2DeletedNoteRetainedMediaRecoveryAndImportedRealPublication'] = true;
+}
+
+Future<void> _workspaceCorrectionChecks(
+  _Connection connection,
+  NextcloudAccount account,
+  NotesApiClient Function(NextcloudAccount) api,
+  Set<int> owned,
+  Map<String, Object?> checks,
+  String root,
+) async {
+  late NotesRepository r;
+  Future<void> open() async {
+    r = NotesRepository(
+      store: await NotesStore.open(path: '$root/corrections.sqlite3'),
+      clientForAccount: (account) async => api(account),
+    );
+    await r.initialize();
+    if (r.accounts.isEmpty) await r.upsertAccount(account);
+  }
+
+  Future<void> restart() async {
+    await r.dispose();
+    await open();
+  }
+
+  Future<void> synchronize() async {
+    await r.synchronize(account.id);
+    owned.addAll(
+      r.notes
+          .where(
+            (n) =>
+                n.title.startsWith('Correction') ||
+                n.category.startsWith('Correction'),
+          )
+          .map((n) => n.serverId)
+          .whereType<int>(),
+    );
+  }
+
+  await open();
+  try {
+    connection.offline = true;
+    const token = 'correctionneedle';
+    final expected = <(String, int?, int?)>{};
+    for (var n = 0; n < 10; n++) {
+      final note = await r.create(
+        account.id,
+        title: 'Correction paging $n',
+        category: 'Correction/Paging',
+        content: List.filled(32, token).join(' '),
+      );
+      expected.addAll([
+        for (var i = 0; i < 32; i++)
+          (
+            note.localId,
+            i * (token.length + 1),
+            i * (token.length + 1) + token.length,
+          ),
+      ]);
+    }
+    final forty = await r.create(
+      account.id,
+      title: 'Correction forty',
+      category: 'Correction/Paging',
+      content: List.filled(40, 'fortyneedle').join(' '),
+    );
+    await restart();
+    final search = NotesSearchController(r.store, account.id);
+    for (final limit in [80, 160, 240, 320, 400]) {
+      await search.search(token, limit: limit);
+      final actual = search.state.hits
+          .map((h) => (h.localId, h.start, h.end))
+          .toSet();
+      _require(
+        actual.length == limit.clamp(0, 320) &&
+            actual.length == search.state.hits.length &&
+            expected.containsAll(actual) &&
+            search.state.truncated == (limit < 320),
+        'Indexed occurrence continuation omitted or duplicated results.',
+      );
+      if (limit >= 320) {
+        _require(
+          actual.containsAll(expected),
+          'Indexed continuation lost final identities.',
+        );
+      }
+    }
+    await search.search('fortyneedle');
+    _require(
+      search.state.hits.length == 40 &&
+          search.state.hits.every((h) => h.localId == forty.localId) &&
+          !search.state.truncated,
+      'Occurrences beyond 32 were omitted.',
+    );
+    await search.dispose();
+    connection.offline = false;
+    await synchronize();
+    checks['correctionCompleteOccurrenceAndDocumentContinuationAfterRestartAndSync'] =
+        true;
+
+    final source = await Directory('$root/correction-source').create();
+    final document = File('${source.path}/Correction-import.md');
+    await document.writeAsString(
+      '![image](./images/caf%C3%A9%2520.png)\n\n<img src="./images/caf%C3%A9%2520.png">',
+    );
+    var service = NotesTransferService(r);
+    var review = await service.review(document.path, account.id);
+    review.items.single.category = 'Correction/Import';
+    _require(
+      review.items.single.issues.isNotEmpty,
+      'Missing media was not reported.',
+    );
+    final first = await service.importReviewed(
+      review,
+      account.id,
+      cancellation: NotesTransferCancellation(),
+    );
+    await synchronize();
+    await Directory('${source.path}/images').create();
+    await File('${source.path}/images/café%20.png').writeAsBytes([1, 2, 3]);
+    await restart();
+    service = NotesTransferService(r);
+    review = await service.review(document.path, account.id);
+    review.items.single.category = 'Correction/New/子';
+    _require(
+      review.items.single.issues.isEmpty &&
+          review.items.single.media.isNotEmpty,
+      'Safe ./ media was rejected.',
+    );
+    final fresh = await service.importReviewed(
+      review,
+      account.id,
+      cancellation: NotesTransferCancellation(),
+    );
+    _require(
+      !fresh.single.alreadyImported &&
+          fresh.single.noteId != first.single.noteId &&
+          r.noteById(fresh.single.noteId!)!.category == 'Correction/New/子',
+      'A deliberately new import reused an old association.',
+    );
+    await synchronize();
+    _require(
+      (await r.attachmentAvailability(fresh.single.noteId!)).available.length ==
+          1,
+      'Repaired media was not staged/published for Markdown and HTML.',
+    );
+    checks['correctionNewImportHonorsReviewedCategoryAndRepairedRelativeMedia'] =
+        true;
+
+    await Directory('${source.path}/chapters').create();
+    await File('${source.path}/chapters/Correction-nested.md').writeAsString(
+      '![image](../images/caf%C3%A9%2520.png)\n\n<img src="../images/caf%C3%A9%2520.png">',
+    );
+    await File('$root/outside.png').writeAsBytes([9, 9, 9]);
+    await File(
+      '${source.path}/Correction-escape.md',
+    ).writeAsString('![image](../outside.png)\n\n<img src="../outside.png">');
+    final paths = await service.review(
+      source.path,
+      account.id,
+      category: 'Correction/Relative',
+    );
+    final nested = paths.items.singleWhere(
+      (i) => i.title == 'Correction-nested',
+    );
+    final escape = paths.items.singleWhere(
+      (i) => i.title == 'Correction-escape',
+    );
+    _require(
+      nested.media.isNotEmpty &&
+          nested.issues.isEmpty &&
+          escape.media.isEmpty &&
+          escape.issues.isNotEmpty,
+      'Local-import containment failed.',
+    );
+    for (final item in paths.items) {
+      item.selected = identical(item, nested);
+    }
+    final importedPaths = await service.importReviewed(
+      paths,
+      account.id,
+      cancellation: NotesTransferCancellation(),
+    );
+    await synchronize();
+    _require(
+      r.noteById(importedPaths.single.noteId!)!.syncState ==
+          NoteSyncState.synced,
+      'Safe nested relative media did not synchronize.',
+    );
+    checks['correctionRelativeMarkdownHtmlInsideRootAndOutsideRootBoundary'] =
+        true;
+
+    final resumeSource = await Directory('$root/correction-resume').create();
+    for (var n = 0; n < 3; n++) {
+      await File(
+        '${resumeSource.path}/Correction-$n.md',
+      ).writeAsString('resumable $n');
+    }
+    final original = await service.review(
+      resumeSource.path,
+      account.id,
+      category: 'Correction/Resume',
+    );
+    final cancellation = NotesTransferCancellation();
+    final partial = await service.importReviewed(
+      original,
+      account.id,
+      cancellation: cancellation,
+      onProgress: (_, _) => cancellation.cancel(),
+    );
+    await restart();
+    service = NotesTransferService(r);
+    final resumed = await service.resumeImport(
+      original.operationId,
+      account.id,
+    );
+    final finished = await service.importReviewed(
+      resumed,
+      account.id,
+      cancellation: NotesTransferCancellation(),
+    );
+    _require(
+      finished.length == 3 &&
+          finished.first.alreadyImported &&
+          finished.first.noteId == partial.single.noteId &&
+          finished.map((o) => o.noteId).toSet().length == 3,
+      'Restarting an import duplicated its durable items.',
+    );
+    await synchronize();
+    checks['correctionDurableReviewedOperationResumesExactlyOnce'] = true;
+
+    final liveId = fresh.single.noteId!;
+    final published = r.noteById(liveId)!;
+    final reference = (await r.attachments(liveId)).first.remotePath!;
+    if (account.supportsAttachmentDeletion) {
+      await r.deleteAttachment(
+        liveId,
+        attachmentMarkdownReference(reference),
+        retainForHistory: true,
+      );
+    } else {
+      // 6.0.2 has no remote DELETE contract: exercise the ordinary local draft
+      // deletion boundary, which retains the same recovery-only tombstone.
+      final draft = await r.create(
+        account.id,
+        title: 'Correction local tombstone',
+        category: 'Correction/Offline',
+      );
+      final file = await r.addAttachment(
+        draft.localId,
+        filename: 'local.png',
+        bytes: Uint8List.fromList([1, 2, 3]),
+      );
+      await r.save(draft.localId, content: '![image](${file.reference})');
+      await r.deleteAttachment(
+        draft.localId,
+        file.reference,
+        retainForHistory: true,
+      );
+      final availability = await r.attachmentAvailability(draft.localId);
+      _require(
+        availability.required.length == 1 &&
+            availability.available.isEmpty &&
+            await r.store.attachmentBytes(file.id) != null,
+        'Local recovery tombstone counted as live offline media.',
+      );
+    }
+    if (account.supportsAttachmentDeletion) {
+      final availability = await r.attachmentAvailability(liveId);
+      _require(
+        availability.available.isEmpty &&
+            (await r.attachments(liveId)).any((a) => a.state == 'deleted'),
+        'Remote recovery tombstone counted as live offline media.',
+      );
+      connection.offline = true;
+      await restart();
+      final offline = NotesOfflineController(r, account.id);
+      await offline.initialize();
+      await offline.setRequirement('note', liveId);
+      _require(
+        !(await offline.inspect(r.noteById(liveId)!)).available &&
+            await r.resolveCachedMedia(
+                  account.id,
+                  liveId,
+                  attachmentMarkdownReference(reference),
+                ) ==
+                null,
+        'Restart resurrected deleted media.',
+      );
+      await offline.dispose();
+      final replacement = await r.addAttachment(
+        liveId,
+        filename: 'café%20.png',
+        bytes: Uint8List.fromList([7, 8, 9]),
+      );
+      await r.save(liveId, content: '![image](${replacement.reference})');
+      connection.offline = false;
+      await synchronize();
+      _require(
+        (await r.attachmentAvailability(liveId)).available.length == 1 &&
+            await r.resolveCachedMedia(
+                  account.id,
+                  liveId,
+                  attachmentMarkdownReference(reference),
+                ) !=
+                null,
+        'Legitimate replacement upload did not supersede the tombstone.',
+      );
+    }
+    checks['correctionLiveOfflineEligibilitySeparateFromRecoveryBytes'] = true;
+
+    await r.delete(published.localId);
+    owned.remove(published.serverId);
+    await restart();
+    final recovery = NotesSearchController(r.store, account.id, recovery: true);
+    await recovery.search('title:Correction-import');
+    _require(
+      recovery.state.hits.any((h) => h.localId == published.localId),
+      'Recovery cannot search its retained deleted records.',
+    );
+    final live = NotesSearchController(r.store, account.id);
+    await live.search('title:Correction-import');
+    _require(
+      live.state.hits.every((h) => h.localId != published.localId),
+      'Deleted recovery record leaked into live search.',
+    );
+    final restored = await r.recoverAsNew(published.localId);
+    _require(
+      restored.localId != published.localId,
+      'Recovery search overwrote the retained note.',
+    );
+    await synchronize();
+    _require(
+      r.noteById(restored.localId)!.syncState == NoteSyncState.synced,
+      'Recovered search result did not synchronize.',
+    );
+    await recovery.dispose();
+    await live.dispose();
+    checks['correctionRecoveryScopedSearchPreviewDataAndNewIdentityPublication'] =
+        true;
+  } finally {
+    connection.offline = false;
+    owned.addAll(
+      r.notes
+          .where(
+            (n) =>
+                n.title.startsWith('Correction') ||
+                n.category.startsWith('Correction'),
+          )
+          .map((n) => n.serverId)
+          .whereType<int>(),
+    );
+    await r.dispose();
+  }
 }

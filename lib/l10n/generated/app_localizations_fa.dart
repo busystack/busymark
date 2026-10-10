@@ -5055,4 +5055,13 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get notesCompleted => 'تکمیل شد';
+
+  @override
+  String get notesImportNew => 'شروع وارد کردن جدید';
+
+  @override
+  String get notesImportResume => 'ادامه وارد کردن متوقف‌شده';
+
+  @override
+  String get notesImportAlreadyImported => 'قبلاً در این عملیات وارد شده است';
 }

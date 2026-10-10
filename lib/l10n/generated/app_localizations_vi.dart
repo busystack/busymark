@@ -5009,4 +5009,13 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get notesCompleted => 'Hoàn tất';
+
+  @override
+  String get notesImportNew => 'Bắt đầu nhập mới';
+
+  @override
+  String get notesImportResume => 'Tiếp tục lần nhập bị gián đoạn';
+
+  @override
+  String get notesImportAlreadyImported => 'Đã nhập trong thao tác này';
 }

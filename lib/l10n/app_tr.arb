@@ -5034,5 +5034,8 @@
   "notesAttachments": "Ekler",
   "notesSkipped": "Atlandı",
   "notesFailed": "Başarısız",
-  "notesCompleted": "Tamamlandı"
+  "notesCompleted": "Tamamlandı",
+  "notesImportNew": "Yeni içe aktarma başlat",
+  "notesImportResume": "Kesilen içe aktarmayı sürdür",
+  "notesImportAlreadyImported": "Bu işlemde zaten içe aktarıldı"
 }

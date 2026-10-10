@@ -5034,5 +5034,8 @@
   "notesAttachments": "附件",
   "notesSkipped": "已跳过",
   "notesFailed": "失败",
-  "notesCompleted": "已完成"
+  "notesCompleted": "已完成",
+  "notesImportNew": "开始新导入",
+  "notesImportResume": "继续中断的导入",
+  "notesImportAlreadyImported": "已在此操作中导入"
 }

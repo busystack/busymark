@@ -5017,4 +5017,13 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get notesCompleted => 'Selesai';
+
+  @override
+  String get notesImportNew => 'Mulai impor baru';
+
+  @override
+  String get notesImportResume => 'Lanjutkan impor yang terputus';
+
+  @override
+  String get notesImportAlreadyImported => 'Sudah diimpor dalam operasi ini';
 }

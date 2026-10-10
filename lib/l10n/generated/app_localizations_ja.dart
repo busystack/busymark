@@ -4881,4 +4881,13 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get notesCompleted => '完了';
+
+  @override
+  String get notesImportNew => '新しいインポートを開始';
+
+  @override
+  String get notesImportResume => '中断したインポートを再開';
+
+  @override
+  String get notesImportAlreadyImported => 'この操作ではインポート済み';
 }

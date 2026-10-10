@@ -3955,5 +3955,8 @@
   "notesAttachments": "Manused",
   "notesSkipped": "Vahele jäetud",
   "notesFailed": "Ebaõnnestus",
-  "notesCompleted": "Lõpetatud"
+  "notesCompleted": "Lõpetatud",
+  "notesImportNew": "Alusta uut importimist",
+  "notesImportResume": "Jätka katkestatud importimist",
+  "notesImportAlreadyImported": "Selles toimingus juba imporditud"
 }

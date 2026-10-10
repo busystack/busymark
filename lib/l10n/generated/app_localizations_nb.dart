@@ -5020,4 +5020,14 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String get notesCompleted => 'Fullført';
+
+  @override
+  String get notesImportNew => 'Start en ny import';
+
+  @override
+  String get notesImportResume => 'Fortsett avbrutt import';
+
+  @override
+  String get notesImportAlreadyImported =>
+      'Allerede importert i denne operasjonen';
 }

@@ -3495,5 +3495,8 @@
   "notesAttachments": "المرفقات",
   "notesSkipped": "تم التخطي",
   "notesFailed": "فشل",
-  "notesCompleted": "مكتمل"
+  "notesCompleted": "مكتمل",
+  "notesImportNew": "بدء استيراد جديد",
+  "notesImportResume": "استئناف الاستيراد المنقطع",
+  "notesImportAlreadyImported": "تم الاستيراد بالفعل في هذه العملية"
 }

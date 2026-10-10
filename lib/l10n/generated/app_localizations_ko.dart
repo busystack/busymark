@@ -4877,4 +4877,13 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get notesCompleted => '완료';
+
+  @override
+  String get notesImportNew => '새 가져오기 시작';
+
+  @override
+  String get notesImportResume => '중단된 가져오기 재개';
+
+  @override
+  String get notesImportAlreadyImported => '이 작업에서 이미 가져옴';
 }

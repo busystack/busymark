@@ -3495,5 +3495,8 @@
   "notesAttachments": "Pièces jointes",
   "notesSkipped": "Ignoré",
   "notesFailed": "Échec",
-  "notesCompleted": "Terminé"
+  "notesCompleted": "Terminé",
+  "notesImportNew": "Démarrer une nouvelle importation",
+  "notesImportResume": "Reprendre l’importation interrompue",
+  "notesImportAlreadyImported": "Déjà importé dans cette opération"
 }
