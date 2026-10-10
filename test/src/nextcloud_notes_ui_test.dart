@@ -8,6 +8,7 @@ import 'package:busymark/src/nextcloud_notes/data/notes_api_client.dart';
 import 'package:busymark/l10n/generated/app_localizations.dart';
 import 'package:busymark/src/app/app_settings.dart';
 import 'package:busymark/src/app/busymark_design.dart';
+import 'package:busymark/src/app/busymark_dialogs.dart';
 import 'package:busymark/src/nextcloud_notes/domain/notes_conflict.dart';
 import 'package:busymark/src/app/app_router.dart';
 import 'package:busymark/src/app/busymark_app.dart';
@@ -15,6 +16,7 @@ import 'package:busymark/src/app/system_accent.dart';
 import 'package:busymark/src/local_history/local_history_controller.dart';
 import 'package:busymark/src/local_history/local_history_store.dart';
 import 'package:busymark/src/nextcloud_notes/application/nextcloud_connection.dart';
+import 'package:busymark/src/nextcloud_notes/application/notes_navigation.dart';
 import 'package:busymark/src/nextcloud_notes/application/notes_repository.dart';
 import 'package:busymark/src/nextcloud_notes/data/notes_store.dart';
 import 'package:busymark/src/nextcloud_notes/domain/notes_models.dart';
@@ -566,6 +568,90 @@ void main() {
         find.descendant(of: dialog, matching: find.text('Shared note')),
         findsNothing,
       );
+      await tester.pumpWidget(const SizedBox.shrink());
+    },
+  );
+
+  testWidgets(
+    'pointer and keyboard multiselection preserves reviewed context targets after resorting',
+    (tester) async {
+      late NextcloudNote alpha, beta, gamma;
+      await tester.runAsync(() async {
+        final account = repository.accountById(accountId)!;
+        await repository.removeAccount(accountId);
+        await repository.upsertAccount(account);
+        alpha = await repository.create(accountId, title: 'Alpha');
+        beta = await repository.create(accountId, title: 'Beta');
+        gamma = await repository.create(accountId, title: 'Gamma');
+      });
+      await pump(tester);
+      final sort = tester.widget<DropdownButton<NotesSort>>(
+        find.byType(DropdownButton<NotesSort>),
+      );
+      sort.onChanged!(NotesSort.titleAscending);
+      await tester.pumpAndSettle();
+      Finder row(NextcloudNote note) =>
+          find.byKey(ValueKey('nextcloud-note-${note.localId}'));
+      bool selected(NextcloudNote note) =>
+          tester.widget<ListTile>(row(note)).selected;
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.tap(row(alpha));
+      await tester.tap(row(gamma));
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.pump();
+      expect(selected(alpha), true);
+      expect(selected(beta), false);
+      expect(selected(gamma), true);
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+      await tester.tap(row(beta));
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+      await tester.pump();
+      expect(selected(alpha), false);
+      expect(selected(beta), true);
+      expect(selected(gamma), true);
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyA);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.pump();
+      expect([alpha, beta, gamma].every(selected), true);
+      sort.onChanged!(NotesSort.titleDescending);
+      await tester.pumpAndSettle();
+      expect([alpha, beta, gamma].every(selected), true);
+      await tester.tap(row(beta), buttons: kSecondaryButton);
+      await settleStorage(tester);
+      expect(find.text('Selected notes (3)'), findsNWidgets(2));
+      // The menu has captured the reviewed identities and metadata. A durable
+      // update can reorder the list while the menu is open without retargeting.
+      await tester.runAsync(
+        () => repository.patchMetadata(
+          repository.metadataSnapshot(beta.localId),
+          title: 'Zeta',
+        ),
+      );
+      await settleStorage(tester);
+      await tester.tap(find.text('Move to category'));
+      await settleStorage(tester);
+      final review = find.byType(BusyMarkDialogShell);
+      expect(review, findsOneWidget);
+      for (final title in ['Alpha', 'Beta', 'Gamma']) {
+        expect(
+          find.descendant(of: review, matching: find.text(title)),
+          findsOneWidget,
+        );
+      }
+      expect(
+        find.descendant(of: review, matching: find.text('Zeta')),
+        findsNothing,
+      );
+      await tester.tap(
+        find.descendant(of: review, matching: find.text('Cancel')),
+      );
+      await settleStorage(tester);
+      expect(repository.noteById(beta.localId)!.title, 'Zeta');
+      await tester.tap(find.text('Favorites').first);
+      await settleStorage(tester);
+      expect(find.text('Selected notes (3)'), findsNothing);
+      expect(tester.takeException(), isNull);
       await tester.pumpWidget(const SizedBox.shrink());
     },
   );
