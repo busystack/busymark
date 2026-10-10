@@ -95,6 +95,6 @@ Extended native Linux release acceptance passed **31 checks** on Notes **6.1.0/A
 | Secure credential policy / libsecret | PASS, both required shell scripts exit **0** |
 | Linux builds | PASS, extended desktop acceptance release target, then normal production `flutter build linux --release --no-pub` |
 | Complete Flutter suite with bundled tools/native display | PASS, **4,172 tests, 0 failed, 0 skipped**, exit **0** |
-| Post-commit generation/locked resolution and clean tree | PENDING final commit verification |
+| Post-commit generation/locked resolution and clean tree | PASS after correction commit `1ece41e03cec4ba510136a384ff1e41218074d0a`: `flutter gen-l10n`, `flutter pub get --enforce-lockfile`, both Git diffs and status clean |
 
-The full-suite command remains the bundled D2/Typst/spelling/native-display command recorded above with `--concurrency=4`. All four corrections are implemented and verified by affected/full suites and live/native acceptance. No acceptance blocker remains; post-commit generation/locked resolution is the remaining final verification.
+The full-suite command remains the bundled D2/Typst/spelling/native-display command recorded above with `--concurrency=4`. All four corrections are implemented and verified by affected/full suites and live/native acceptance. Post-commit generation and locked resolution also leave the tree clean. No remaining implementation or acceptance blocker.
