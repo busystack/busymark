@@ -5,6 +5,7 @@ import '../../markdown/busymark_document.dart';
 import '../../markdown/busymark_markdown_serializer.dart';
 import '../../markdown/markdown_model.dart';
 import '../../markdown/markdown_parser.dart';
+import '../../markdown/markdown_front_matter.dart';
 import '../../markdown/math_syntax.dart';
 import '../../markdown/raw_html_adapter.dart';
 import '../../spellcheck/spelling_replacement.dart';
@@ -636,32 +637,18 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
           updateWritersideProperty(root.id, 'switcher-label', value);
     }
     if (!_document.isWriterside ||
-        _document.frontMatter['switcher-label'] == value) {
+        _document.frontMatter['switcher-label'] == value ||
+        value.isEmpty && !_document.frontMatter.containsKey('switcher-label')) {
       return false;
     }
     final raw = _document.rawFrontMatter;
-    // The official builder accepts ordinary plain YAML labels, but its
-    // Markdown gist currently fails on double-quoted labels. Quote only when the
-    // value requires it to remain a string scalar.
-    final plainLabel =
-        value.trim() == value &&
-        RegExp(
-          r'^[A-Za-z_\u00c0-\uffff][A-Za-z0-9_\u00c0-\uffff .()/+-]*$',
-        ).hasMatch(value) &&
-        !{
-          'true',
-          'false',
-          'yes',
-          'no',
-          'on',
-          'off',
-          'null',
-        }.contains(value.toLowerCase());
-    final scalar = plainLabel
-        ? value
-        : '"${value.replaceAll('\\', '\\\\').replaceAll('"', '\\"').replaceAll('\n', r'\n').replaceAll('\r', r'\r')}"';
-    final line = 'switcher-label: $scalar';
-    final nextRaw = raw == null
+    final line = 'switcher-label: ${encodeWritersideSwitcherLabel(value)}';
+    final nextRaw = value.isEmpty
+        ? (raw ?? '').replaceFirst(
+            RegExp(r'^switcher-label:[^\r\n]*(?:\r?\n|$)', multiLine: true),
+            '',
+          )
+        : raw == null
         ? '---\n$line\n---\n'
         : RegExp(r'^switcher-label:.*$', multiLine: true).hasMatch(raw)
         ? raw.replaceFirst(
@@ -676,7 +663,11 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     _document = _document.copyWith(
       source: nextSource,
       rawFrontMatter: nextRaw,
-      frontMatter: {..._document.frontMatter, 'switcher-label': value},
+      frontMatter: {
+        for (final entry in _document.frontMatter.entries)
+          if (entry.key != 'switcher-label') entry.key: entry.value,
+        if (value.isNotEmpty) 'switcher-label': value,
+      },
     );
     notifyListeners();
     return true;

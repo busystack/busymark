@@ -31,15 +31,17 @@ void main() {
     expect(DocumentKind.config.supportsVisualEditing, isFalse);
   });
   test(
-    'Markdown switcher labels use safe plain YAML and quote special scalars',
+    'Markdown switcher labels preserve literal metadata through reopening',
     () {
       for (final entry in {
         'Operating System': 'Operating System',
         'النظام': 'النظام',
-        'Platform: Choice': '"Platform: Choice"',
-        'true': '"true"',
+        'Platform: Choice': 'Platform: Choice',
+        r'Platform: "Desktop" \ Keys': r'Platform: "Desktop" \ Keys',
+        "Author's platform": "Author's platform",
+        'true': 'true',
         'Leading\nline': r'"Leading\nline"',
-        '': '""',
+        ' padded ': '" padded "',
       }.entries) {
         final c = BusyMarkWysiwygDocumentController(
           document: const MarkdownParser()
@@ -57,7 +59,83 @@ void main() {
         );
         expect(c.document.frontMatter['switcher-label'], entry.key);
         expect(c.markdown, contains('# A'));
+        final reopened = const MarkdownParser()
+            .parse(
+              filePath: 'a.md',
+              source: c.markdown,
+              mode: MarkdownMode.writersideMarkdown,
+            )
+            .busyDocument;
+        expect(reopened.frontMatter['switcher-label'], entry.key);
+        expect(
+          BusyMarkWysiwygDocumentController(document: reopened).markdown,
+          c.markdown,
+        );
       }
+    },
+  );
+  test(
+    'existing double-quoted switcher labels decode without changing source',
+    () {
+      const source = r'''---
+switcher-label: "Platform: \"Desktop\" \\ Keys"
+custom: "kept\\raw"
+---
+
+# A
+
+Text
+''';
+      final parser = const MarkdownParser();
+      final document = parser
+          .parse(
+            filePath: 'a.md',
+            source: source,
+            mode: MarkdownMode.writersideMarkdown,
+          )
+          .busyDocument;
+      expect(
+        document.frontMatter['switcher-label'],
+        r'Platform: "Desktop" \ Keys',
+      );
+      expect(document.frontMatter['custom'], r'kept\\raw');
+      final c = BusyMarkWysiwygDocumentController(document: document);
+      expect(c.markdown, source);
+      expect(c.updateTopicSwitcherLabel("Author's: \"Desktop\""), isTrue);
+      expect(c.markdown, contains("switcher-label: Author's: \"Desktop\""));
+      expect(c.markdown, contains(r'custom: "kept\\raw"'));
+      final ordinary = parser
+          .parse(
+            filePath: 'a.md',
+            source: source,
+            mode: MarkdownMode.commonMark,
+          )
+          .busyDocument;
+      expect(
+        ordinary.frontMatter['switcher-label'],
+        r'Platform: \"Desktop\" \\ Keys',
+      );
+    },
+  );
+  test(
+    'clearing the topic switcher label restores the default without changing other metadata',
+    () {
+      final c = BusyMarkWysiwygDocumentController(
+        document: const MarkdownParser()
+            .parse(
+              filePath: 'a.md',
+              source: '---\ncustom: kept\n---\n\n# A\n\nText\n',
+              mode: MarkdownMode.writersideMarkdown,
+            )
+            .busyDocument,
+      );
+      final original = c.markdown;
+      expect(c.updateTopicSwitcherLabel(''), isFalse);
+      expect(c.markdown, original);
+      expect(c.updateTopicSwitcherLabel("Author's: Platform"), isTrue);
+      expect(c.updateTopicSwitcherLabel(''), isTrue);
+      expect(c.markdown, original);
+      expect(c.document.frontMatter.containsKey('switcher-label'), isFalse);
     },
   );
   test('XML no-edit round trip preserves all source exactly', () {

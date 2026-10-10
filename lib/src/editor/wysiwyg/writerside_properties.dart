@@ -308,7 +308,7 @@ class BusyMarkWritersideProperties extends StatelessWidget {
           rows.add(
             entry(
               'force-layout',
-              l.wsListLayout,
+              l.keyboardLayout,
               value: inline.attributes['force-layout'] ?? '',
               inline: true,
             ),

@@ -312,6 +312,153 @@ void main() {
       expect(source, contains('%product%'));
     },
   );
+  for (final xml in [false, true]) {
+    testWidgets(
+      '${xml ? 'XML' : 'Markdown'} Topic Properties preserve a quoted label through undo and reopen',
+      (tester) async {
+        const label = r'''Author's: "Desktop" \ Keys''';
+        final original = _document(xml).source;
+        var saved = '';
+        await mount(
+          tester,
+          BusyMarkWysiwygEditor(
+            document: _document(xml),
+            documentId: 'original',
+            onSourceChanged: (_, source) => saved = source,
+          ),
+        );
+        final field = _textField('Text');
+        await tester.tap(field);
+        tester.widget<TextField>(field).controller!.selection =
+            const TextSelection.collapsed(offset: 2);
+        await tester.pumpAndSettle();
+        Future<void> selectTopic() async {
+          labels.add('Topic Properties');
+          await tester.tap(
+            find.byWidgetPredicate(
+              (w) =>
+                  w is BusyMarkComboRow<String> && w.values.contains('@topic'),
+            ),
+          );
+          await tester.pumpAndSettle();
+        }
+
+        await selectTopic();
+        expect(
+          tester
+              .widget<TextField>(_textField('Text'))
+              .controller!
+              .selection
+              .baseOffset,
+          2,
+        );
+        expect(saved, isEmpty);
+        Finder entry() => find.descendant(
+          of: find.byKey(
+            const ValueKey('writerside-property-topic-switcher-label'),
+          ),
+          matching: find.byType(TextField),
+        );
+        await tester.enterText(entry(), label);
+        expect(saved, isEmpty);
+        await tester.testTextInput.receiveAction(TextInputAction.done);
+        await tester.pumpAndSettle();
+        expect(
+          _document(xml, source: saved).frontMatter['switcher-label'] ??
+              _document(
+                xml,
+                source: saved,
+              ).blocks.first.attributes['switcher-label'],
+          label,
+        );
+        final authored = saved;
+        await tester.tap(_textField('Text'));
+        await tester.pumpAndSettle();
+        expect(
+          tester
+              .widget<BusyMarkWritersideProperties>(
+                find.byType(BusyMarkWritersideProperties),
+              )
+              .topicSelected,
+          isFalse,
+        );
+        expect(saved, authored);
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+        await tester.sendKeyEvent(LogicalKeyboardKey.keyZ);
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+        await tester.pumpAndSettle();
+        expect(saved, original);
+        await tester.pumpWidget(
+          _app(
+            BusyMarkWysiwygEditor(
+              document: _document(xml, source: authored),
+              documentId: 'reopened',
+              onSourceChanged: (_, source) => saved = source,
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(_textField('Text'));
+        await tester.pumpAndSettle();
+        await selectTopic();
+        expect(tester.widget<TextField>(entry()).controller!.text, label);
+      },
+    );
+  }
+  testWidgets('returning to a table cell retargets Topic Properties', (
+    tester,
+  ) async {
+    var edits = 0;
+    await mount(
+      tester,
+      BusyMarkWysiwygEditor(
+        document: _document(
+          false,
+          source: '# Title\n\n## Section\n\n| Header |\n| --- |\n| Cell |\n',
+        ),
+        onSourceChanged: (_, _) => edits++,
+      ),
+    );
+    await tester.tap(_textField('Cell'));
+    await tester.pumpAndSettle();
+    labels.add('Topic Properties');
+    await tester.tap(
+      find.byWidgetPredicate(
+        (w) => w is BusyMarkComboRow<String> && w.values.contains('@topic'),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(_textField('Cell'));
+    await tester.pumpAndSettle();
+    final properties = tester.widget<BusyMarkWritersideProperties>(
+      find.byType(BusyMarkWritersideProperties),
+    );
+    expect(properties.topicSelected, isFalse);
+    expect(properties.target!.kind, BusyBlockKind.table);
+    expect(edits, 0);
+  });
+  testWidgets('shortcut reference properties identify keyboard layout', (
+    tester,
+  ) async {
+    await mount(
+      tester,
+      BusyMarkWysiwygEditor(
+        document: _document(
+          true,
+          source:
+              '<topic id="a" title="Title"><p><shortcut key="\$Save" force-layout="Linux">Save</shortcut></p></topic>',
+        ),
+        onSourceChanged: (_, _) {},
+      ),
+    );
+    final field = _textField('Save');
+    await tester.tap(field);
+    tester.widget<TextField>(field).controller!.selection =
+        const TextSelection.collapsed(offset: 2);
+    await tester.pumpAndSettle();
+    expect(find.text('Keyboard layout'), findsOneWidget);
+    expect(find.text('List layout'), findsNothing);
+  });
   testWidgets(
     'chapter properties are available before collapse and local expansion is source-neutral',
     (tester) async {

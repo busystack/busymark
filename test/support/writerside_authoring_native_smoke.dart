@@ -9,6 +9,7 @@ import 'package:busymark/src/app/busymark_design.dart';
 import 'package:busymark/src/app/startup_path.dart';
 import 'package:busymark/src/app/system_accent.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_editor.dart';
+import 'package:busymark/src/editor/wysiwyg/writerside_properties.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_inline_controller.dart';
 import 'package:busymark/src/local_history/local_history_store.dart';
 import 'package:busymark/src/local_history/local_history_controller.dart';
@@ -500,6 +501,48 @@ class _HarnessState extends ConsumerState<_Harness> {
           _source.contains('%product%'),
           '$suffix variable remains authored reference',
         );
+        const switcherLabel = r'''Author's: "Desktop" \ Keys''';
+        final beforeLabel = _source;
+        final selectedField = _field('Textproduct').widget as TextField;
+        final selection = selectedField.controller!.selection;
+        Future<void> topicProperties() async {
+          await _tap(
+            _elements(
+              (w) =>
+                  w is BusyMarkComboRow<String> && w.values.contains('@topic'),
+            ).single,
+          );
+          _nativeMenuOpen = true;
+          await _tapLabel('Topic Properties');
+          _check(!_nativeMenuOpen, '$suffix GTK Topic Properties selected');
+        }
+
+        await topicProperties();
+        _check(
+          _source == beforeLabel &&
+              selectedField.controller!.selection == selection,
+          '$suffix opening Topic Properties preserves source and selection',
+        );
+        BusyMarkGroupedTextEntry labelEntry() =>
+            _elements(
+                  (w) =>
+                      w is BusyMarkGroupedTextEntry &&
+                      w.label == 'Switcher label',
+                ).single.widget
+                as BusyMarkGroupedTextEntry;
+        final labelField = labelEntry();
+        labelField.controller!.text = switcherLabel;
+        labelField.focusNode!.requestFocus();
+        await _pause();
+        _check(
+          _source == beforeLabel,
+          '$suffix switcher label draft is source-neutral',
+        );
+        await _key(PhysicalKeyboardKey.enter, LogicalKeyboardKey.enter);
+        _check(
+          _source != beforeLabel && _source.contains('switcher-label'),
+          '$suffix switcher label property is authored',
+        );
         await _tap(_field('Section'));
         final before = _source;
         await _capture('authoring-$suffix-light');
@@ -539,6 +582,18 @@ class _HarnessState extends ConsumerState<_Harness> {
         _check(
           _source == authored,
           '$suffix Source to Editor preserves source',
+        );
+        await topicProperties();
+        _check(
+          labelEntry().controller!.text == switcherLabel,
+          '$suffix switcher label survives save and Source to Editor',
+        );
+        await _tap(_field('Section'));
+        _check(
+          !(_elements((w) => w is BusyMarkWritersideProperties).single.widget
+                  as BusyMarkWritersideProperties)
+              .topicSelected,
+          '$suffix returning to the same content retargets properties',
         );
         await settings.setThemeModePreference(BusyMarkThemeModePreference.dark);
         await settings.setEditorToolbarDirection(

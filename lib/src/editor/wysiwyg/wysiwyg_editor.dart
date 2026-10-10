@@ -2213,26 +2213,45 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     _ => false,
   };
 
-  void _setActiveBlock(String blockId) {
+  void _setActiveBlock(String blockId, {bool selectElement = false}) {
     final changed = _activeBlockId != blockId || _activeCellId != null;
+    final propertiesChanged =
+        selectElement &&
+        (_propertiesTargetId != null ||
+            _topicPropertiesSelected ||
+            _videoDraftTarget != null);
     _activeBlockId = blockId;
     _activeCellId = null;
-    if (changed) {
+    if (changed || propertiesChanged) {
       _propertiesTargetId = null;
       _videoDraftTarget = null;
       _topicPropertiesSelected = false;
     }
-    if (changed && mounted) {
+    if ((changed || propertiesChanged) && mounted) {
       setState(() {});
     }
     _scheduleSessionReport();
   }
 
-  void _setActiveTableCell(String tableBlockId, String cellId) {
+  void _setActiveTableCell(
+    String tableBlockId,
+    String cellId, {
+    bool selectElement = false,
+  }) {
     final changed = _activeBlockId != tableBlockId || _activeCellId != cellId;
+    final propertiesChanged =
+        selectElement &&
+        (_propertiesTargetId != null ||
+            _topicPropertiesSelected ||
+            _videoDraftTarget != null);
     _activeBlockId = tableBlockId;
     _activeCellId = cellId;
-    if (changed && mounted) {
+    if (changed || propertiesChanged) {
+      _propertiesTargetId = null;
+      _videoDraftTarget = null;
+      _topicPropertiesSelected = false;
+    }
+    if ((changed || propertiesChanged) && mounted) {
       setState(() {});
     }
     _scheduleSessionReport();
@@ -2245,13 +2264,13 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     }
     if (_preserveSelectionFocusCallbacks > 0 && _hasBlockSelection) {
       _preserveSelectionFocusCallbacks--;
-      _setActiveBlock(tableBlockId);
+      _setActiveBlock(tableBlockId, selectElement: true);
       return;
     }
     _cellSelectAllTarget = null;
     _clearBlockSelection();
     _collapseFieldSelections(exceptBlockId: cellId);
-    _setActiveTableCell(tableBlockId, cellId);
+    _setActiveTableCell(tableBlockId, cellId, selectElement: true);
   }
 
   KeyEventResult _handleDocumentSelectionKeyEvent(
@@ -2403,12 +2422,12 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     }
     if (_preserveSelectionFocusCallbacks > 0 && _hasBlockSelection) {
       _preserveSelectionFocusCallbacks--;
-      _setActiveBlock(blockId);
+      _setActiveBlock(blockId, selectElement: true);
       return;
     }
     _clearBlockSelection();
     _collapseInactiveFieldSelections(blockId);
-    _setActiveBlock(blockId);
+    _setActiveBlock(blockId, selectElement: true);
   }
 
   void _handleBlockTextChanged(

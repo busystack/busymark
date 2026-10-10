@@ -64,7 +64,10 @@ class MarkdownAstAdapter {
     String? title,
     bool preserveHtmlSemantics = false,
   }) {
-    final frontMatter = _extractFrontMatter(source);
+    final frontMatter = _extractFrontMatter(
+      source,
+      writerside: mode == MarkdownMode.writersideMarkdown,
+    );
     final imageAttributes = _imageAttributeBlocks(source);
     final markdownSource = frontMatter == null
         ? source
@@ -1801,7 +1804,7 @@ class MarkdownAstAdapter {
     return result;
   }
 
-  _FrontMatter? _extractFrontMatter(String source) {
+  _FrontMatter? _extractFrontMatter(String source, {required bool writerside}) {
     final closing = frontMatterClosing(source);
     if (closing == null) {
       return null;
@@ -1815,9 +1818,11 @@ class MarkdownAstAdapter {
         r'^\s*([A-Za-z0-9_-]+)\s*:\s*(.+?)\s*$',
       ).firstMatch(line);
       if (match != null) {
-        values[match.group(1)!] = match
-            .group(2)!
-            .replaceAll(RegExp(r'''^["']|["']$'''), '');
+        final key = match.group(1)!;
+        final scalar = match.group(2)!;
+        values[key] = writerside && key == 'switcher-label'
+            ? decodeWritersideSwitcherLabel(scalar)
+            : scalar.replaceAll(RegExp(r'''^["']|["']$'''), '');
       }
     }
     return _FrontMatter(raw: raw, endOffset: end, values: values);
