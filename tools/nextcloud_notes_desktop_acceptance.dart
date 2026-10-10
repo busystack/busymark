@@ -58,8 +58,10 @@ Future<void> main(List<String> args) async {
   final password = credentials['appPassword'] as String;
   final performance = args.length == 5 && args[4] == '--performance-m2';
   final restarting = args.length == 5 && args[4] == '--restart-m2';
+  final stopOffline = args.length == 5 && args[4] == '--stop-offline-m2';
+  final resumeOffline = args.length == 5 && args[4] == '--resume-offline-m2';
   NextcloudAccount account;
-  if (restarting || performance) {
+  if (restarting || performance || resumeOffline) {
     final persisted = await NotesStore.open(
       path: '${output.path}/notes.sqlite3',
     );
@@ -130,6 +132,8 @@ Future<void> main(List<String> args) async {
         output: output,
         containerName: args[3],
         restart: restarting,
+        stopOffline: stopOffline,
+        resumeOffline: resumeOffline,
         performance: performance,
         m2Only: args.length == 5,
       ),
@@ -256,6 +260,8 @@ class _Harness extends ConsumerStatefulWidget {
     required this.output,
     required this.containerName,
     this.restart = false,
+    this.stopOffline = false,
+    this.resumeOffline = false,
     this.performance = false,
     this.m2Only = false,
   });
@@ -264,7 +270,7 @@ class _Harness extends ConsumerStatefulWidget {
   final String password;
   final Directory output;
   final String containerName;
-  final bool restart, m2Only, performance;
+  final bool restart, m2Only, performance, stopOffline, resumeOffline;
   @override
   ConsumerState<_Harness> createState() => _HarnessState();
 }
@@ -496,129 +502,178 @@ class _HarnessState extends ConsumerState<_Harness> {
     // Actual production widgets are used for navigation, search, batch review,
     // offline status, recovery and import review. Provider calls supply fixtures
     // or selected paths where an OS file chooser is otherwise interactive.
-    await wait(
-      () => widgets<ListTile>().any(
-        (t) => t.title is Text && (t.title as Text).data == 'All notes',
-      ),
-      'all notes destination',
-    );
-    widgets<ListTile>()
-        .firstWhere(
+    late NextcloudNote draft;
+    if (widget.resumeOffline) {
+      final state =
+          jsonDecode(
+                await File(
+                  '${widget.output.path}/offline-journey.json',
+                ).readAsString(),
+              )
+              as Map;
+      draft = repository.noteById(state['localId'] as String)!;
+      created.addAll((state['ownedServerIds'] as List).cast<int>());
+      check(
+        draft.accountId == widget.account.id &&
+            draft.hasPendingChanges &&
+            draft.content.contains('busymark-attachment:'),
+        'm2ProcessRestartPendingIdentityAndText',
+      );
+      final available = await repository.attachmentAvailability(draft.localId);
+      check(
+        available.required.isNotEmpty &&
+            available.available.length == available.required.length &&
+            available.external.isEmpty,
+        'm2ProcessRestartPendingAttachmentBytes',
+      );
+      await workspace.openNextcloudNote(draft.localId);
+      await wait(
+        () => widgets<ListTile>().any(
+          (t) => t.key == ValueKey('nextcloud-note-${draft.localId}'),
+        ),
+        'restarted pending note row',
+      );
+      check(
+        widget.transport.offline && widget.transport.writes == 0,
+        'm2RestartBeforeAnyPublication',
+      );
+      await capture('m2-pending-process-restart');
+    } else {
+      await wait(
+        () => widgets<ListTile>().any(
           (t) => t.title is Text && (t.title as Text).data == 'All notes',
-        )
-        .onTap!();
-    widget.transport.offline = false;
-    final categoryFixture = await repository.create(
-      widget.account.id,
-      title: 'M2 category fixture',
-      category: 'M2/子/Sub',
-    );
-    await repository.synchronize(widget.account.id);
-    created.add(repository.noteById(categoryFixture.localId)!.serverId!);
-    final navigation = NotesNavigationController()
-      ..update(repository.notes, widget.account.id);
-    final categoryIndex = navigation.categoryPaths.indexOf('M2/子/Sub') + 4;
-    await Future<void>.delayed(const Duration(milliseconds: 200));
-    void scrollCategory(Element element) {
-      if (element is StatefulElement && element.state is ScrollableState) {
-        final position = (element.state as ScrollableState).position;
-        if (position.axis == Axis.vertical &&
-            position.viewportDimension == 240) {
-          position.jumpTo(
-            (categoryIndex * 36.0).clamp(0, position.maxScrollExtent),
-          );
+        ),
+        'all notes destination',
+      );
+      widgets<ListTile>()
+          .firstWhere(
+            (t) => t.title is Text && (t.title as Text).data == 'All notes',
+          )
+          .onTap!();
+      widget.transport.offline = false;
+      final categoryFixture = await repository.create(
+        widget.account.id,
+        title: 'M2 category fixture',
+        category: 'M2/子/Sub',
+      );
+      await repository.synchronize(widget.account.id);
+      created.add(repository.noteById(categoryFixture.localId)!.serverId!);
+      final navigation = NotesNavigationController()
+        ..update(repository.notes, widget.account.id);
+      final categoryIndex = navigation.categoryPaths.indexOf('M2/子/Sub') + 4;
+      await Future<void>.delayed(const Duration(milliseconds: 200));
+      void scrollCategory(Element element) {
+        if (element is StatefulElement && element.state is ScrollableState) {
+          final position = (element.state as ScrollableState).position;
+          if (position.axis == Axis.vertical &&
+              position.viewportDimension == 240) {
+            position.jumpTo(
+              (categoryIndex * 36.0).clamp(0, position.maxScrollExtent),
+            );
+          }
         }
+        element.visitChildren(scrollCategory);
       }
-      element.visitChildren(scrollCategory);
-    }
 
-    WidgetsBinding.instance.rootElement?.visitChildren(scrollCategory);
-    await wait(
-      () => widgets<ListTile>().any(
-        (t) => t.title is Text && (t.title as Text).data == 'Sub',
-      ),
-      'nested category navigation',
-    );
-    widgets<ListTile>()
-        .firstWhere((t) => t.title is Text && (t.title as Text).data == 'Sub')
-        .onTap!();
-    final previousId = ref
-        .read(workspaceControllerProvider)
-        .activeBuffer
-        ?.remoteNote
-        ?.localId;
-    await label('New note');
-    await wait(
-      () =>
-          ref
-              .read(workspaceControllerProvider)
-              .activeBuffer
-              ?.remoteNote
-              ?.localId !=
-          previousId,
-      'nested filtered creation',
-    );
-    final draftId = ref
-        .read(workspaceControllerProvider)
-        .activeBuffer!
-        .remoteNote!
-        .localId;
-    check(
-      repository.noteById(draftId)!.category == 'M2/子/Sub',
-      'm2NativeNestedFilteredCreation',
-    );
-    await wait(
-      () => widgets<ListTile>().any(
-        (t) => t.key == ValueKey('nextcloud-note-$draftId'),
-      ),
-      'new note row',
-    );
-    widgets<ListTile>()
-        .firstWhere((t) => t.key == ValueKey('nextcloud-note-$draftId'))
-        .onLongPress!();
-    await wait(
-      () => widgets<TextField>().any((f) => f.decoration?.labelText == 'Title'),
-      'new note properties',
-    );
-    edit(
-      widgets<TextField>().firstWhere(
-        (f) => f.decoration?.labelText == 'Title',
-      ),
-      'M2 desktop café',
-    );
-    await label('Save');
-    await wait(
-      () => repository.noteById(draftId)!.title == 'M2 desktop café',
-      'reviewed title',
-    );
-    await workspace.refreshNextcloudNotes();
-    final draft = repository.noteById(draftId)!;
-    created.add(draft.serverId!);
-    widget.transport.offline = true;
-    await workspace.openNextcloudNote(draft.localId);
-    workspace.updateActiveText(
-      '# Everyday workspace\n\nalpha beta café 中文 foo_bar\n',
-    );
-    final attachment = await repository.addAttachment(
-      draft.localId,
-      filename: 'café%20.png',
-      bytes: await png(Colors.green),
-    );
-    workspace.updateActiveText(
-      '${ref.read(workspaceControllerProvider).activeText}\n\n![image](${attachment.reference})\n\n<img src="${attachment.reference}">',
-    );
-    check(await workspace.saveActive(), 'm2OfflineEditorMediaSave');
-    final freshStore = await NotesStore.open(path: repository.store.path);
-    final persisted = (await freshStore.notes()).firstWhere(
-      (n) => n.localId == draft.localId,
-    );
-    check(
-      persisted.content.contains(attachment.reference) &&
-          (await freshStore.attachments(draft.localId)).isNotEmpty,
-      'm2RestartDurableTextAndMedia',
-    );
-    await freshStore.close();
-    await capture('m2-sidebar');
+      WidgetsBinding.instance.rootElement?.visitChildren(scrollCategory);
+      await wait(
+        () => widgets<ListTile>().any(
+          (t) => t.title is Text && (t.title as Text).data == 'Sub',
+        ),
+        'nested category navigation',
+      );
+      widgets<ListTile>()
+          .firstWhere((t) => t.title is Text && (t.title as Text).data == 'Sub')
+          .onTap!();
+      final previousId = ref
+          .read(workspaceControllerProvider)
+          .activeBuffer
+          ?.remoteNote
+          ?.localId;
+      await label('New note');
+      await wait(
+        () =>
+            ref
+                .read(workspaceControllerProvider)
+                .activeBuffer
+                ?.remoteNote
+                ?.localId !=
+            previousId,
+        'nested filtered creation',
+      );
+      final draftId = ref
+          .read(workspaceControllerProvider)
+          .activeBuffer!
+          .remoteNote!
+          .localId;
+      check(
+        repository.noteById(draftId)!.category == 'M2/子/Sub',
+        'm2NativeNestedFilteredCreation',
+      );
+      await wait(
+        () => widgets<ListTile>().any(
+          (t) => t.key == ValueKey('nextcloud-note-$draftId'),
+        ),
+        'new note row',
+      );
+      widgets<ListTile>()
+          .firstWhere((t) => t.key == ValueKey('nextcloud-note-$draftId'))
+          .onLongPress!();
+      await wait(
+        () =>
+            widgets<TextField>().any((f) => f.decoration?.labelText == 'Title'),
+        'new note properties',
+      );
+      edit(
+        widgets<TextField>().firstWhere(
+          (f) => f.decoration?.labelText == 'Title',
+        ),
+        'M2 desktop café',
+      );
+      await label('Save');
+      await wait(
+        () => repository.noteById(draftId)!.title == 'M2 desktop café',
+        'reviewed title',
+      );
+      await workspace.refreshNextcloudNotes();
+      draft = repository.noteById(draftId)!;
+      created.add(draft.serverId!);
+      widget.transport.offline = true;
+      await workspace.openNextcloudNote(draft.localId);
+      workspace.updateActiveText(
+        '# Everyday workspace\n\nalpha beta café 中文 foo_bar\n',
+      );
+      final attachment = await repository.addAttachment(
+        draft.localId,
+        filename: 'café%20.png',
+        bytes: await png(Colors.green),
+      );
+      workspace.updateActiveText(
+        '${ref.read(workspaceControllerProvider).activeText}\n\n![image](${attachment.reference})\n\n<img src="${attachment.reference}">',
+      );
+      check(await workspace.saveActive(), 'm2OfflineEditorMediaSave');
+      final freshStore = await NotesStore.open(path: repository.store.path);
+      final persisted = (await freshStore.notes()).firstWhere(
+        (n) => n.localId == draft.localId,
+      );
+      check(
+        persisted.content.contains(attachment.reference) &&
+            (await freshStore.attachments(draft.localId)).isNotEmpty,
+        'm2RestartDurableTextAndMedia',
+      );
+      await freshStore.close();
+      await capture('m2-sidebar');
+      if (widget.stopOffline) {
+        await File('${widget.output.path}/offline-journey.json').writeAsString(
+          jsonEncode({
+            'localId': draft.localId,
+            'ownedServerIds': created.toList(),
+          }),
+          flush: true,
+        );
+        return;
+      }
+    }
     final quick = showQuickOpen(rootNavigatorKey.currentContext!, ref);
     await wait(
       () => widgets<QuickOpenDialog>().isNotEmpty,
@@ -1136,7 +1191,10 @@ class _HarnessState extends ConsumerState<_Harness> {
         account: widget.account,
         appPassword: widget.password,
       );
-      if (!widget.restart && !widget.performance) {
+      if (!widget.restart &&
+          !widget.performance &&
+          !widget.resumeOffline &&
+          !widget.stopOffline) {
         original = await api.getSettings();
       }
       await ref.read(nextcloudConnectionProvider.notifier).reload();
@@ -1621,19 +1679,26 @@ class _HarnessState extends ConsumerState<_Harness> {
       failure = error;
       failureStack = stack;
     } finally {
-      widget.transport.offline = widget.restart || widget.performance;
+      widget.transport.offline =
+          widget.restart || widget.performance || widget.stopOffline;
       if (original != null) {
         try {
           await api.updateSettings(original!.toJson());
         } catch (_) {}
       }
-      for (final id in created) {
+      for (final id in widget.stopOffline ? <int>[] : created) {
         try {
           await api.delete(id);
         } catch (_) {}
       }
       await File(
-        '${widget.output.path}/${widget.restart ? 'report-restart' : 'report'}.json',
+        '${widget.output.path}/${widget.stopOffline
+            ? 'report-offline-start'
+            : widget.resumeOffline
+            ? 'report-offline-resume'
+            : widget.restart
+            ? 'report-restart'
+            : 'report'}.json',
       ).writeAsString(
         const JsonEncoder.withIndent('  ').convert({
           'passed': failure == null,
