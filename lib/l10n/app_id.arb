@@ -5037,5 +5037,18 @@
   "notesCompleted": "Selesai",
   "notesImportNew": "Mulai impor baru",
   "notesImportResume": "Lanjutkan impor yang terputus",
-  "notesImportAlreadyImported": "Sudah diimpor dalam operasi ini"
+  "notesImportAlreadyImported": "Sudah diimpor dalam operasi ini",
+  "references": "Referensi",
+  "referenceIncoming": "Masuk",
+  "referenceOutgoing": "Keluar",
+  "referenceChooseTarget": "Pilih tujuan tautan",
+  "referenceWholeDocument": "Seluruh dokumen",
+  "referenceSourceLocation": "Lokasi sumber",
+  "referenceTargetLocation": "Lokasi tujuan",
+  "referenceResolved": "Terselesaikan",
+  "referenceMissing": "Tidak ditemukan",
+  "referenceAmbiguous": "Ambigu",
+  "referenceUnavailable": "Tidak tersedia dalam konteks ini",
+  "referenceUnsupported": "Tidak didukung",
+  "referenceNoPortableId": "Tujuan ini tidak memiliki URL catatan portabel yang terverifikasi."
 }

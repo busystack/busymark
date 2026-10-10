@@ -3571,6 +3571,7 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     int selectionStart,
     int selectionEnd, {
     String? destination,
+    Map<String, String> linkAttributes = const {},
   }) {
     if (_document.isXmlTopic &&
         blockById(blockId)?.kind != BusyBlockKind.paragraph) {
@@ -3589,6 +3590,7 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
         start,
         end,
         destination: destination,
+        linkAttributes: linkAttributes,
       ),
     );
   }
@@ -5392,6 +5394,7 @@ BusyBlock _blockWithInlineCommand(
   int selectionStart,
   int selectionEnd, {
   String? destination,
+  Map<String, String> linkAttributes = const {},
 }) {
   final text = block.plainText;
   final safeStart = selectionStart.clamp(0, text.length).toInt();
@@ -5417,6 +5420,9 @@ BusyBlock _blockWithInlineCommand(
         start: safeStart,
         end: safeEnd,
         kind: inlineKind,
+        attributes: command == BusyWysiwygInlineCommand.link
+            ? linkAttributes
+            : const {},
         destination: command == BusyWysiwygInlineCommand.link
             ? destination
             : null,

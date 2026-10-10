@@ -4811,6 +4811,45 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get notesImportAlreadyImported => '已在此操作中导入';
+
+  @override
+  String get references => '引用';
+
+  @override
+  String get referenceIncoming => '传入';
+
+  @override
+  String get referenceOutgoing => '传出';
+
+  @override
+  String get referenceChooseTarget => '选择链接目标';
+
+  @override
+  String get referenceWholeDocument => '整个文档';
+
+  @override
+  String get referenceSourceLocation => '源位置';
+
+  @override
+  String get referenceTargetLocation => '目标位置';
+
+  @override
+  String get referenceResolved => '已解析';
+
+  @override
+  String get referenceMissing => '缺失';
+
+  @override
+  String get referenceAmbiguous => '不明确';
+
+  @override
+  String get referenceUnavailable => '当前上下文中不可用';
+
+  @override
+  String get referenceUnsupported => '不支持';
+
+  @override
+  String get referenceNoPortableId => '此目标没有经过验证的可移植笔记网址。';
 }
 
 /// The translations for Chinese, as used in China (`zh_CN`).
@@ -9618,4 +9657,43 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get notesImportAlreadyImported => '已在此操作中导入';
+
+  @override
+  String get references => '引用';
+
+  @override
+  String get referenceIncoming => '传入';
+
+  @override
+  String get referenceOutgoing => '传出';
+
+  @override
+  String get referenceChooseTarget => '选择链接目标';
+
+  @override
+  String get referenceWholeDocument => '整个文档';
+
+  @override
+  String get referenceSourceLocation => '源位置';
+
+  @override
+  String get referenceTargetLocation => '目标位置';
+
+  @override
+  String get referenceResolved => '已解析';
+
+  @override
+  String get referenceMissing => '缺失';
+
+  @override
+  String get referenceAmbiguous => '不明确';
+
+  @override
+  String get referenceUnavailable => '当前上下文中不可用';
+
+  @override
+  String get referenceUnsupported => '不支持';
+
+  @override
+  String get referenceNoPortableId => '此目标没有经过验证的可移植笔记网址。';
 }

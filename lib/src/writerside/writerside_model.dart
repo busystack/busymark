@@ -655,7 +655,13 @@ class WritersideModule {
     String reference, {
     WritersideTopic? fromTopic,
   }) {
-    final normalized = _normalizedTopicReference(reference);
+    var decoded = reference;
+    try {
+      decoded = Uri.decodeComponent(reference);
+    } on FormatException {
+      // Malformed destinations retain their authored value for diagnostics.
+    }
+    final normalized = _normalizedTopicReference(decoded);
     if (normalized.isEmpty) {
       return fromTopic == null ? const [] : [fromTopic];
     }

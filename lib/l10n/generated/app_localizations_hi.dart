@@ -5017,4 +5017,44 @@ class AppLocalizationsHi extends AppLocalizations {
   @override
   String get notesImportAlreadyImported =>
       'इस प्रक्रिया में पहले ही आयात किया गया';
+
+  @override
+  String get references => 'संदर्भ';
+
+  @override
+  String get referenceIncoming => 'आने वाले';
+
+  @override
+  String get referenceOutgoing => 'जाने वाले';
+
+  @override
+  String get referenceChooseTarget => 'लिंक लक्ष्य चुनें';
+
+  @override
+  String get referenceWholeDocument => 'पूरा दस्तावेज़';
+
+  @override
+  String get referenceSourceLocation => 'स्रोत स्थान';
+
+  @override
+  String get referenceTargetLocation => 'लक्ष्य स्थान';
+
+  @override
+  String get referenceResolved => 'हल हुआ';
+
+  @override
+  String get referenceMissing => 'गुम';
+
+  @override
+  String get referenceAmbiguous => 'अस्पष्ट';
+
+  @override
+  String get referenceUnavailable => 'इस संदर्भ में अनुपलब्ध';
+
+  @override
+  String get referenceUnsupported => 'असमर्थित';
+
+  @override
+  String get referenceNoPortableId =>
+      'इस लक्ष्य का सत्यापित पोर्टेबल नोट URL नहीं है.';
 }

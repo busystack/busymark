@@ -1,3 +1,4 @@
+import '../references/reference_controller.dart';
 import 'dart:async';
 
 import 'package:file_selector/file_selector.dart';
@@ -78,6 +79,8 @@ final busyMarkCommandRegistryProvider = Provider<BusyMarkCommandRegistry>((
   };
   return BusyMarkCommandCatalog.create(
     executions: {
+      BusyMarkCommandIds.references: () =>
+          ref.read(referencePanelRequestProvider.notifier).request(),
       for (final entry in commandIntents.entries)
         entry.key: () {
           final target = rootNavigatorKey.currentContext;

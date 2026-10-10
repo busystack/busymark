@@ -1,3 +1,9 @@
+import 'package:busymark/src/references/reference_controller.dart';
+import 'package:busymark/src/references/reference_ui.dart';
+import 'package:busymark/src/app/command_registry.dart';
+import 'package:busymark/src/nextcloud_notes/data/server_uri.dart';
+import 'package:busymark/src/editor/wysiwyg/wysiwyg_editor.dart';
+import 'package:flutter/gestures.dart';
 import 'package:busymark/src/nextcloud_notes/data/notes_store.dart';
 import 'package:busymark/src/app/busymark_dialogs.dart';
 import 'package:busymark/src/nextcloud_notes/presentation/notes_workspace_ui.dart';
@@ -58,6 +64,10 @@ Future<void> main(List<String> args) async {
   final login = credentials['loginName'] as String;
   final password = credentials['appPassword'] as String;
   final performance = args.length == 5 && args[4] == '--performance-m2';
+  final milestone3 = args.length == 5 && args[4] == '--m3';
+  final local3 = args.length == 5 && args[4] == '--local-m3';
+  final writerside3 = args.length == 5 && args[4] == '--writerside-m3';
+  final restart3 = args.length == 5 && args[4] == '--restart-m3';
   final restarting = args.length == 5 && args[4] == '--restart-m2';
   final stopOffline = args.length == 5 && args[4] == '--stop-offline-m2';
   final correctionsStart =
@@ -66,7 +76,11 @@ Future<void> main(List<String> args) async {
       args.length == 5 && args[4] == '--corrections-resume-m2';
   final resumeOffline = args.length == 5 && args[4] == '--resume-offline-m2';
   NextcloudAccount account;
-  if (restarting || performance || resumeOffline || correctionsResume) {
+  if (restarting ||
+      restart3 ||
+      performance ||
+      resumeOffline ||
+      correctionsResume) {
     final persisted = await NotesStore.open(
       path: '${output.path}/notes.sqlite3',
     );
@@ -137,6 +151,10 @@ Future<void> main(List<String> args) async {
         output: output,
         containerName: args[3],
         restart: restarting,
+        milestone3: milestone3,
+        local3: local3,
+        writerside3: writerside3,
+        restart3: restart3,
         stopOffline: stopOffline,
         resumeOffline: resumeOffline,
         correctionsStart: correctionsStart,
@@ -267,6 +285,10 @@ class _Harness extends ConsumerStatefulWidget {
     required this.output,
     required this.containerName,
     this.restart = false,
+    this.milestone3 = false,
+    this.local3 = false,
+    this.writerside3 = false,
+    this.restart3 = false,
     this.stopOffline = false,
     this.resumeOffline = false,
     this.correctionsStart = false,
@@ -279,6 +301,7 @@ class _Harness extends ConsumerStatefulWidget {
   final String password;
   final Directory output;
   final String containerName;
+  final bool milestone3, restart3, local3, writerside3;
   final bool restart,
       m2Only,
       performance,
@@ -360,13 +383,27 @@ class _HarnessState extends ConsumerState<_Harness> {
   }
 
   void edit(TextField field, String value) {
-    final controller =
-        field.controller ??
-        widgets<EditableText>()
-            .firstWhere((editable) => editable.focusNode == field.focusNode)
-            .controller;
-    controller.text = value;
-    field.onChanged!(value);
+    TextEditingController? controller = field.controller;
+    if (controller == null) {
+      void visit(Element e) {
+        if (identical(e.widget, field)) {
+          void child(Element c) {
+            if (c.widget is EditableText) {
+              controller = (c.widget as EditableText).controller;
+            }
+            c.visitChildren(child);
+          }
+
+          e.visitChildren(child);
+        }
+        e.visitChildren(visit);
+      }
+
+      WidgetsBinding.instance.rootElement?.visitChildren(visit);
+    }
+    if (controller == null) throw StateError('Rendered input missing');
+    controller!.text = value;
+    field.onChanged?.call(value);
   }
 
   Future<void> capture(String name) async {
@@ -914,6 +951,546 @@ class _HarnessState extends ConsumerState<_Harness> {
       ),
       'm2ImportedMediaSynced',
     );
+  }
+
+  Future<void> treeAction(
+    String name, {
+    String? menu,
+    bool expand = false,
+  }) async {
+    Element? element;
+    await wait(() {
+      void visit(Element e) {
+        if (e.widget.runtimeType.toString() == '_SidebarTreeRow' &&
+            (e.widget as dynamic).title.toString().contains(name)) {
+          element = e;
+        }
+        e.visitChildren(visit);
+      }
+
+      WidgetsBinding.instance.rootElement?.visitChildren(visit);
+      return element != null;
+    }, 'tree row $name');
+    final dynamic row = element!.widget;
+    if (expand) {
+      if (row.expanded == false) row.onTap();
+      return;
+    }
+    if (menu == null) {
+      row.onTap();
+      return;
+    }
+    row.onMenuRequested(element!, const Offset(230, 180));
+    await Future<void>.delayed(const Duration(milliseconds: 250));
+    await nativeShortcut('home', focusWindow: false);
+    final index = menu == 'Rename' || menu == 'Rename Topic File'
+        ? 1
+        : menu == 'Cut'
+        ? 2
+        : menu == 'Paste'
+        ? 3
+        : throw StateError('Unexpected menu');
+    for (var i = 0; i < index; i++) {
+      await nativeShortcut('down', focusWindow: false);
+    }
+    await nativeShortcut('enter', focusWindow: false);
+  }
+
+  Future<void> localReferenceJourney(WorkspaceController workspace) async {
+    final root = Directory('${widget.output.path}/local');
+    await root.create(recursive: true);
+    await Directory('${root.path}/old').create();
+    await Directory('${root.path}/new').create();
+    await File('${root.path}/media.png').writeAsBytes(await png(Colors.green));
+    await File('${root.path}/old/target.md').writeAsString(
+      '# M3 local target\n\n## Actual heading\n\n![Media](../media.png)\n',
+    );
+    await File(
+      '${root.path}/source.md',
+    ).writeAsString('# Local source\n\nSelected link\n');
+    await workspace.openFolder(root.path);
+    await workspace.openActiveFile('${root.path}/source.md');
+    workspace.updateActiveEditorMode(DocumentViewModePreference.source);
+    await ref
+        .read(appSettingsControllerProvider.notifier)
+        .setDocumentViewMode(DocumentViewModePreference.source);
+    await chooseAuthoredLink('Actual heading', 'old/target.md#actual-heading');
+    await workspace.saveActive();
+    await ref
+        .read(busyMarkCommandRegistryProvider)
+        .execute(BusyMarkCommandIds.references);
+    await wait(
+      () =>
+          widgets<ReferencesPanel>().isNotEmpty &&
+          widgets<ListTile>().any(
+            (t) =>
+                t.subtitle is Text &&
+                (t.subtitle as Text).data!.contains('Resolved'),
+          ),
+      'local resolved outgoing references',
+    );
+    await capture('m3-local-references');
+    widgets<ListTile>()
+        .firstWhere(
+          (t) =>
+              t.subtitle is Text &&
+              (t.subtitle as Text).data!.contains('Resolved'),
+        )
+        .onTap!();
+    await wait(
+      () =>
+          ref.read(workspaceControllerProvider).activeBuffer?.filePath ==
+          '${root.path}/old/target.md',
+      'local reference navigation',
+    );
+    await ref
+        .read(busyMarkCommandRegistryProvider)
+        .execute(BusyMarkCommandIds.sidebarFiles);
+    await treeAction('old', expand: true);
+    await treeAction('target.md', menu: 'Rename');
+    await wait(
+      () => widgets<TextField>().any((f) => f.controller?.text == 'target.md'),
+      'ordinary rename input',
+    );
+    edit(
+      widgets<TextField>().firstWhere((f) => f.controller?.text == 'target.md'),
+      'renamed.md',
+    );
+    await label('Rename');
+    await wait(
+      () => widgets<SelectableText>().any(
+        (t) => t.data?.contains('target.md#actual-heading') == true,
+      ),
+      'exact destination review',
+    );
+    await capture('m3-refactoring-review');
+    await label('Apply');
+    await wait(
+      () =>
+          ref.read(workspaceControllerProvider).activeBuffer?.filePath ==
+          '${root.path}/old/renamed.md',
+      'reviewed rename publication',
+    );
+    await treeAction('renamed.md', menu: 'Cut');
+    await treeAction('new', menu: 'Paste');
+    await wait(
+      () => widgets<SelectableText>().any(
+        (t) => t.data?.contains('old/renamed.md') == true,
+      ),
+      'move link review',
+    );
+    await capture('m3-move-review');
+    await label('Apply');
+    await wait(
+      () =>
+          ref.read(workspaceControllerProvider).activeBuffer?.filePath ==
+          '${root.path}/new/renamed.md',
+      'ordinary reviewed move',
+    );
+    check(
+      (await File(
+            '${root.path}/source.md',
+          ).readAsString()).contains('new/renamed.md#actual-heading') &&
+          (await File(
+            '${root.path}/new/renamed.md',
+          ).readAsString()).contains('../media.png'),
+      'm3OrdinaryRenameMoveIncomingOutgoingMedia',
+    );
+    for (final mode in DocumentViewModePreference.values) {
+      workspace.updateActiveEditorMode(mode);
+      await ref
+          .read(appSettingsControllerProvider.notifier)
+          .setDocumentViewMode(mode);
+      await capture('m3-local-${mode.name}');
+    }
+    await workspace.openFolder(root.path);
+    await workspace.openActiveFile('${root.path}/source.md');
+    check(
+      ref
+          .read(workspaceControllerProvider)
+          .activeText
+          .contains('new/renamed.md#actual-heading'),
+      'm3LocalWorkspaceReopenLinks',
+    );
+  }
+
+  Future<void> writersideReferenceJourney(WorkspaceController workspace) async {
+    final root = Directory('${widget.output.path}/writerside');
+    await root.create(recursive: true);
+    final copied = await Process.run('cp', [
+      '-a',
+      'test/fixtures/writerside/reference_conformance/.',
+      root.path,
+    ]);
+    if (copied.exitCode != 0) throw StateError('Fixture copy failed');
+    await workspace.openFolder(root.path);
+    await workspace.openActiveFile('${root.path}/topics/source.md');
+    await ref
+        .read(busyMarkCommandRegistryProvider)
+        .execute(BusyMarkCommandIds.references);
+    await wait(
+      () =>
+          widgets<ReferencesPanel>().isNotEmpty &&
+          ref
+                  .read(referenceIndexProvider)
+                  .value
+                  ?.references
+                  .any(
+                    (r) => r.authored.destination == 'target.topic#actual-id',
+                  ) ==
+              true,
+      'Writerside element references',
+    );
+    await capture('m3-writerside-references');
+    await ref
+        .read(busyMarkCommandRegistryProvider)
+        .execute(BusyMarkCommandIds.sidebarFiles);
+    await treeAction('topics', expand: true);
+    await treeAction('target.topic', menu: 'Rename Topic File');
+    await wait(
+      () =>
+          widgets<TextField>().any((f) => f.controller?.text == 'target.topic'),
+      'Writerside rename dialog',
+    );
+    edit(
+      widgets<TextField>().firstWhere(
+        (f) => f.controller?.text == 'target.topic',
+      ),
+      'renamed.topic',
+    );
+    await label('Rename');
+    await wait(
+      () => widgets<Text>().any((t) => t.data == 'Rename Preview'),
+      'established Writerside rename preview',
+    );
+    await capture('m3-writerside-refactoring');
+    await label('Rename');
+    await wait(
+      () => File('${root.path}/topics/renamed.topic').existsSync(),
+      'Writerside reviewed topic publication',
+    );
+    final source = await File('${root.path}/topics/source.md').readAsString();
+    check(
+      source.contains('[target]: renamed.topic#actual-id') &&
+          source.contains('from="renamed.topic"') &&
+          source.contains('`[Code exclusion](missing.topic)`'),
+      'm3WritersideEstablishedReviewedRenameAndSourcePreservation',
+    );
+  }
+
+  Future<void> chooseAuthoredLink(
+    String search,
+    String destinationLabel,
+  ) async {
+    await wait(
+      () => widgets<BusyMarkSourceEditor>().isNotEmpty,
+      'source editor for link authoring',
+    );
+    final editor =
+        (widgets<BusyMarkSourceEditor>().single.key as GlobalKey).currentState!
+            as BusyMarkSourceEditorState;
+    final source = ref.read(workspaceControllerProvider).activeText;
+    final start = source.indexOf('Selected link');
+    editor.scrollToOffset(start, updateSelection: false);
+    await WidgetsBinding.instance.endOfFrame;
+    final editable = widgets<EditableText>().firstWhere(
+      (e) => e.controller.text == source,
+    );
+    editable.controller.selection = TextSelection(
+      baseOffset: start,
+      extentOffset: start + 'Selected link'.length,
+    );
+    editable.focusNode.requestFocus();
+    await nativeShortcut('ctrl+k');
+    await wait(
+      () => widgets<ReferenceLinkChooser>().isNotEmpty,
+      'production link chooser',
+    );
+    edit(
+      widgets<TextField>().firstWhere(
+        (f) => f.decoration?.labelText == 'Quick Open',
+      ),
+      search,
+    );
+    await wait(
+      () => widgets<ListTile>().any(
+        (t) =>
+            t.subtitle is Text && (t.subtitle as Text).data == destinationLabel,
+      ),
+      'resolved target chooser row',
+    );
+    await capture('m3-target-chooser');
+    widgets<ListTile>()
+        .firstWhere(
+          (t) =>
+              t.subtitle is Text &&
+              (t.subtitle as Text).data == destinationLabel,
+        )
+        .onTap!();
+    await wait(
+      () => widgets<ReferenceLinkChooser>().isEmpty,
+      'chooser accepted',
+    );
+  }
+
+  Future<void> tapAuthoredLink(String text) async {
+    VoidCallback? action;
+    void spans(InlineSpan span) {
+      if (span is TextSpan) {
+        if (span.toPlainText() == text &&
+            span.recognizer is TapGestureRecognizer) {
+          action = (span.recognizer! as TapGestureRecognizer).onTap;
+        }
+        for (final child in span.children ?? const <InlineSpan>[]) {
+          spans(child);
+        }
+      }
+    }
+
+    await wait(() {
+      for (final rich in widgets<RichText>()) {
+        spans(rich.text);
+      }
+      return action != null;
+    }, 'rendered link gesture');
+    action!();
+  }
+
+  Future<void> referenceJourney(WorkspaceController workspace) async {
+    if (widget.restart3) {
+      final saved =
+          jsonDecode(
+                await File(
+                  '${widget.output.path}/portable-browser.json',
+                ).readAsString(),
+              )
+              as Map;
+      final source = repository.noteById(saved['sourceLocalId'] as String)!;
+      final target = repository.noteById(saved['targetLocalId'] as String)!;
+      created.addAll((saved['ownedServerIds'] as List).cast<int>());
+      await workspace.openNextcloudNote(source.localId);
+      workspace.updateActiveEditorMode(DocumentViewModePreference.preview);
+      await ref
+          .read(appSettingsControllerProvider.notifier)
+          .setDocumentViewMode(DocumentViewModePreference.preview);
+      await tapAuthoredLink('Selected link');
+      await wait(
+        () =>
+            ref
+                .read(workspaceControllerProvider)
+                .activeBuffer
+                ?.remoteNote
+                ?.localId ==
+            target.localId,
+        'offline ID navigation after process restart',
+      );
+      check(
+        widget.transport.offline &&
+            ref
+                .read(workspaceControllerProvider)
+                .activeText
+                .contains('M3 intended target marker'),
+        'm3CachedOfflineLinkAfterProcessRestart',
+      );
+      await capture('m3-offline-restart');
+      return;
+    }
+    final target = await repository.create(
+      widget.account.id,
+      title: 'M3 portable target',
+      category: 'M3/Original',
+      content: '# M3 intended target marker\n\n## Heading\n',
+    );
+    final source = await repository.create(
+      widget.account.id,
+      title: 'M3 portable source',
+      category: 'M3/Original',
+      content: '# M3 source\n\nSelected link\n',
+    );
+    await repository.synchronize(widget.account.id);
+    final targetTitle = repository.noteById(target.localId)!.title;
+    final sourceTitle = repository.noteById(source.localId)!.title;
+    final targetId = repository.noteById(target.localId)!.serverId!;
+    created.add(targetId);
+    created.add(repository.noteById(source.localId)!.serverId!);
+    final href = nextcloudNoteUrl(widget.account.server, targetId).toString();
+    await workspace.openNextcloudNote(source.localId);
+    workspace.updateActiveEditorMode(DocumentViewModePreference.source);
+    await ref
+        .read(appSettingsControllerProvider.notifier)
+        .setDocumentViewMode(DocumentViewModePreference.source);
+    await chooseAuthoredLink('M3 portable target', href);
+    await wait(
+      () => ref
+          .read(workspaceControllerProvider)
+          .activeText
+          .contains('[Selected link]($href)'),
+      'authored portable Markdown',
+    );
+    await workspace.saveActive();
+    await repository.synchronize(widget.account.id);
+    final stored = await api.get(
+      repository.noteById(source.localId)!.serverId!,
+    );
+    check(
+      stored.content.contains('[Selected link]($href)'),
+      'm3ProductionChooserStoredPortableLink',
+    );
+    workspace.updateActiveEditorMode(DocumentViewModePreference.editor);
+    await ref
+        .read(appSettingsControllerProvider.notifier)
+        .setDocumentViewMode(DocumentViewModePreference.editor);
+    await wait(
+      () =>
+          widgets<BusyMarkWysiwygEditor>().isNotEmpty &&
+          widgets<EditableText>().any(
+            (e) => e.controller.text == 'Selected link',
+          ),
+      'Editor link selection',
+    );
+    final editable = widgets<EditableText>().firstWhere(
+      (e) => e.controller.text == 'Selected link',
+    );
+    editable.controller.selection = const TextSelection(
+      baseOffset: 0,
+      extentOffset: 13,
+    );
+    editable.focusNode.requestFocus();
+    await nativeShortcut('ctrl+k');
+    await wait(
+      () => widgets<ReferenceLinkChooser>().isNotEmpty,
+      'Editor target chooser',
+    );
+    edit(
+      widgets<TextField>().firstWhere(
+        (f) => f.decoration?.labelText == 'Quick Open',
+      ),
+      'M3 portable target',
+    );
+    await wait(
+      () => widgets<ListTile>().any(
+        (t) => t.subtitle is Text && (t.subtitle as Text).data == href,
+      ),
+      'Editor target row',
+    );
+    widgets<ListTile>()
+        .firstWhere(
+          (t) => t.subtitle is Text && (t.subtitle as Text).data == href,
+        )
+        .onTap!();
+    await wait(
+      () => widgets<ReferenceLinkChooser>().isEmpty,
+      'Editor chooser completion',
+    );
+    check(
+      ref.read(workspaceControllerProvider).activeText.contains(href),
+      'm3EditorLinkChooserPreservesSelection',
+    );
+    await ref
+        .read(busyMarkCommandRegistryProvider)
+        .execute(BusyMarkCommandIds.references);
+    await wait(
+      () =>
+          widgets<ReferencesPanel>().isNotEmpty &&
+          widgets<Text>().any((t) => t.data == targetTitle),
+      'production References outgoing panel',
+    );
+    await capture('m3-references-outgoing');
+    workspace.updateActiveEditorMode(DocumentViewModePreference.preview);
+    await ref
+        .read(appSettingsControllerProvider.notifier)
+        .setDocumentViewMode(DocumentViewModePreference.preview);
+    await tapAuthoredLink('Selected link');
+    await wait(
+      () =>
+          ref
+              .read(workspaceControllerProvider)
+              .activeBuffer
+              ?.remoteNote
+              ?.localId ==
+          target.localId,
+      'rendered HTTPS link internal navigation',
+    );
+    widgets<SegmentedButton<bool>>()
+        .firstWhere((w) => w.segments.any((s) => s.value == true))
+        .onSelectionChanged!({true});
+    await wait(
+      () => widgets<ListTile>().any(
+        (t) => t.title is Text && (t.title as Text).data == sourceTitle,
+      ),
+      'incoming reference',
+    );
+    await capture('m3-references-incoming');
+    check(true, 'm3RenderedLinkAndIncomingReferences');
+    await ref
+        .read(busyMarkCommandRegistryProvider)
+        .execute(BusyMarkCommandIds.sidebarFiles);
+    await wait(
+      () => widgets<ListTile>().any(
+        (t) => t.key == ValueKey('nextcloud-note-${target.localId}'),
+      ),
+      'target properties row',
+    );
+    widgets<ListTile>()
+        .firstWhere(
+          (t) => t.key == ValueKey('nextcloud-note-${target.localId}'),
+        )
+        .onLongPress!();
+    await wait(
+      () => widgets<TextField>().any((f) => f.controller?.text == targetTitle),
+      'target properties dialog',
+    );
+    edit(
+      widgets<TextField>().firstWhere((f) => f.controller?.text == targetTitle),
+      'M3 renamed target',
+    );
+    edit(
+      widgets<TextField>().firstWhere(
+        (f) => f.decoration?.labelText == 'Category',
+      ),
+      'M3/Moved',
+    );
+    await label('Save');
+    await repository.synchronize(widget.account.id);
+    check(
+      repository.noteById(target.localId)!.serverId == targetId &&
+          (await api.get(targetId)).category == 'M3/Moved',
+      'm3TitleCategoryDoNotRetargetLink',
+    );
+    await workspace.openNextcloudNote(source.localId);
+    workspace.updateActiveText('${stored.content}\n[Browser pasted]($href)\n');
+    await workspace.saveActive();
+    await repository.synchronize(widget.account.id);
+    workspace.updateActiveEditorMode(DocumentViewModePreference.preview);
+    await ref
+        .read(appSettingsControllerProvider.notifier)
+        .setDocumentViewMode(DocumentViewModePreference.preview);
+    await tapAuthoredLink('Browser pasted');
+    await wait(
+      () =>
+          ref
+              .read(workspaceControllerProvider)
+              .activeBuffer
+              ?.remoteNote
+              ?.localId ==
+          target.localId,
+      'pasted browser note URL navigation',
+    );
+    check(true, 'm3PastedBrowserRouteNavigatesInternally');
+    await File('${widget.output.path}/portable-browser.json').writeAsString(
+      jsonEncode({
+        'sourceLocalId': source.localId,
+        'targetLocalId': target.localId,
+        'sourceId': repository.noteById(source.localId)!.serverId,
+        'targetId': targetId,
+        'href': href,
+        'ownedServerIds': created.toList(),
+        'marker': 'M3 intended target marker',
+      }),
+    );
+    widget.transport.offline = true;
+    await workspace.openNextcloudNote(source.localId);
+    await capture('m3-offline-ready');
   }
 
   Future<void> correctionSearch(String query, List<int> counts) async {
@@ -1663,8 +2240,8 @@ class _HarnessState extends ConsumerState<_Harness> {
     check(true, screenshot);
   }
 
-  Future<void> nativeShortcut(String key) async {
-    await windowManager.focus();
+  Future<void> nativeShortcut(String key, {bool focusWindow = true}) async {
+    if (focusWindow) await windowManager.focus();
     final result = await Process.run(
       'python3',
       ['tools/nextcloud_notes_native_key.py', key],
@@ -1687,6 +2264,7 @@ class _HarnessState extends ConsumerState<_Harness> {
         appPassword: widget.password,
       );
       if (!widget.restart &&
+          !widget.restart3 &&
           !widget.performance &&
           !widget.resumeOffline &&
           !widget.correctionsResume &&
@@ -1698,7 +2276,13 @@ class _HarnessState extends ConsumerState<_Harness> {
         final workspace = ref.read(workspaceControllerProvider.notifier);
         await workspace.openNextcloudWorkspace(widget.account.id);
         ref.read(appRouterProvider).go('/workspace');
-        if (widget.correctionsStart || widget.correctionsResume) {
+        if (widget.local3) {
+          await localReferenceJourney(workspace);
+        } else if (widget.writerside3) {
+          await writersideReferenceJourney(workspace);
+        } else if (widget.milestone3 || widget.restart3) {
+          await referenceJourney(workspace);
+        } else if (widget.correctionsStart || widget.correctionsResume) {
           await correctionJourney(workspace);
         } else if (widget.performance) {
           await performanceJourney(workspace);
@@ -2175,10 +2759,14 @@ class _HarnessState extends ConsumerState<_Harness> {
       }
     } catch (error, stack) {
       failure = error;
+      try {
+        await capture('m3-failure');
+      } catch (_) {}
       failureStack = stack;
     } finally {
       widget.transport.offline =
           widget.restart ||
+          widget.restart3 ||
           widget.performance ||
           widget.stopOffline ||
           widget.correctionsStart;
@@ -2188,7 +2776,7 @@ class _HarnessState extends ConsumerState<_Harness> {
         } catch (_) {}
       }
       for (final id
-          in widget.stopOffline || widget.correctionsStart
+          in widget.stopOffline || widget.correctionsStart || widget.milestone3
               ? <int>[]
               : created) {
         try {
@@ -2196,7 +2784,11 @@ class _HarnessState extends ConsumerState<_Harness> {
         } catch (_) {}
       }
       await File(
-        '${widget.output.path}/${widget.correctionsStart
+        '${widget.output.path}/${widget.milestone3
+            ? 'report-m3'
+            : widget.restart3
+            ? 'report-restart-m3'
+            : widget.correctionsStart
             ? 'report-corrections-start'
             : widget.correctionsResume
             ? 'report-corrections-resume'

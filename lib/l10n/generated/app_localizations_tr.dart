@@ -5028,4 +5028,44 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get notesImportAlreadyImported => 'Bu işlemde zaten içe aktarıldı';
+
+  @override
+  String get references => 'Başvurular';
+
+  @override
+  String get referenceIncoming => 'Gelen';
+
+  @override
+  String get referenceOutgoing => 'Giden';
+
+  @override
+  String get referenceChooseTarget => 'Bağlantı hedefini seç';
+
+  @override
+  String get referenceWholeDocument => 'Tüm belge';
+
+  @override
+  String get referenceSourceLocation => 'Kaynak konumu';
+
+  @override
+  String get referenceTargetLocation => 'Hedef konumu';
+
+  @override
+  String get referenceResolved => 'Çözüldü';
+
+  @override
+  String get referenceMissing => 'Eksik';
+
+  @override
+  String get referenceAmbiguous => 'Belirsiz';
+
+  @override
+  String get referenceUnavailable => 'Bu bağlamda kullanılamıyor';
+
+  @override
+  String get referenceUnsupported => 'Desteklenmiyor';
+
+  @override
+  String get referenceNoPortableId =>
+      'Bu hedefin doğrulanmış taşınabilir not URL’si yok.';
 }

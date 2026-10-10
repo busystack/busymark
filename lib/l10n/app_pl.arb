@@ -3524,5 +3524,18 @@
   "notesCompleted": "Ukończono",
   "notesImportNew": "Rozpocznij nowy import",
   "notesImportResume": "Wznów przerwany import",
-  "notesImportAlreadyImported": "Już zaimportowano w tej operacji"
+  "notesImportAlreadyImported": "Już zaimportowano w tej operacji",
+  "references": "Odwołania",
+  "referenceIncoming": "Przychodzące",
+  "referenceOutgoing": "Wychodzące",
+  "referenceChooseTarget": "Wybierz cel linku",
+  "referenceWholeDocument": "Cały dokument",
+  "referenceSourceLocation": "Lokalizacja źródła",
+  "referenceTargetLocation": "Lokalizacja celu",
+  "referenceResolved": "Rozwiązane",
+  "referenceMissing": "Brak",
+  "referenceAmbiguous": "Niejednoznaczne",
+  "referenceUnavailable": "Niedostępne w tym kontekście",
+  "referenceUnsupported": "Nieobsługiwane",
+  "referenceNoPortableId": "Ten cel nie ma zweryfikowanego przenośnego adresu URL notatki."
 }

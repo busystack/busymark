@@ -277,6 +277,7 @@ abstract final class BusyMarkCommandIds {
   static const textEscape = 'text.escape';
   static const editorRefineWithAi = 'editor.refineWithAi';
   static const checkSpelling = 'spelling.check';
+  static const references = 'sidebar.references';
   static const sidebarFiles = 'sidebar.files';
   static const sidebarToc = 'sidebar.toc';
   static const sidebarOutline = 'sidebar.outline';
@@ -331,6 +332,12 @@ abstract final class BusyMarkCommandCatalog {
     }
 
     final commands = <BusyMarkCommand>[
+      command(
+        id: BusyMarkCommandIds.references,
+        label: (context) => context.l10n.references,
+        category: (context) => context.l10n.shortcutGroupSidebar,
+        scope: BusyMarkCommandScope.sidebar,
+      ),
       for (final action in BusyMarkAppShortcutAction.values)
         command(
           id: _appId(action),

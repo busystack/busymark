@@ -5056,4 +5056,44 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get notesImportAlreadyImported => 'تم الاستيراد بالفعل في هذه العملية';
+
+  @override
+  String get references => 'المراجع';
+
+  @override
+  String get referenceIncoming => 'الواردة';
+
+  @override
+  String get referenceOutgoing => 'الصادرة';
+
+  @override
+  String get referenceChooseTarget => 'اختر هدف الرابط';
+
+  @override
+  String get referenceWholeDocument => 'المستند بالكامل';
+
+  @override
+  String get referenceSourceLocation => 'موقع المصدر';
+
+  @override
+  String get referenceTargetLocation => 'موقع الهدف';
+
+  @override
+  String get referenceResolved => 'تم الحل';
+
+  @override
+  String get referenceMissing => 'مفقود';
+
+  @override
+  String get referenceAmbiguous => 'ملتبس';
+
+  @override
+  String get referenceUnavailable => 'غير متاح في هذا السياق';
+
+  @override
+  String get referenceUnsupported => 'غير مدعوم';
+
+  @override
+  String get referenceNoPortableId =>
+      'ليس لهذا الهدف عنوان URL محمول ومُتحقَّق منه للملاحظة.';
 }

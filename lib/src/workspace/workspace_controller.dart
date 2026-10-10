@@ -1,3 +1,4 @@
+import '../references/markdown_move_service.dart';
 import '../nextcloud_notes/application/notes_navigation.dart';
 import 'dart:async';
 import 'dart:io';
@@ -724,6 +725,36 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       unawaited(_localHistory.observeOpened(buffer));
     }
     return result;
+  }
+
+  Future<bool> openNextcloudNoteLink(int serverId) async {
+    final workspace = state.workspace;
+    final accountId = workspace?.nextcloudAccountId;
+    if (accountId == null) return false;
+    try {
+      final repository = await _ensureNotesRepository();
+      final note = await repository.linkedNote(accountId, serverId);
+      if (!ref.mounted ||
+          state.workspace?.id != workspace?.id ||
+          state.workspace?.nextcloudAccountId != accountId) {
+        return false;
+      }
+      if (!await openNextcloudNote(note.localId)) return false;
+      // Cached navigation works offline. Refresh through the existing repository
+      // boundary, without a second synchronization coordinator or polling loop.
+      unawaited(
+        repository.refreshLinkedNote(accountId, serverId).catchError((
+          Object error,
+        ) {
+          _reportNextcloudFailure(error);
+          return note;
+        }),
+      );
+      return true;
+    } on Object catch (error) {
+      _reportNextcloudFailure(error);
+      return false;
+    }
   }
 
   Future<bool> createNextcloudNote({
@@ -4176,7 +4207,133 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     return created;
   }
 
-  Future<bool> renameWorkspaceEntity(String path, String newName) async {
+  Future<MarkdownMovePlan?> prepareMarkdownMove(
+    String source,
+    String destination,
+  ) async {
+    final workspace = state.workspace;
+    if (workspace == null || workspace.kind != WorkspaceKind.markdownFolder) {
+      return null;
+    }
+    _requireCleanAffectedFiles(
+      workspace,
+      workspace.files.map((f) => f.absolutePath),
+    );
+    return MarkdownMoveService(
+      workspaceService: _service,
+    ).prepare(workspace, source, destination);
+  }
+
+  Future<bool> recoverMarkdownMove(MarkdownRecoveryPlan plan) {
+    return _runWorkspaceFileOperation((workspace) async {
+      if (workspace.id != state.workspace?.id ||
+          !p.equals(workspace.rootPath, plan.root)) {
+        throw StateError('Recovery workspace changed.');
+      }
+      void validateBuffers() => _requireCleanAffectedFiles(
+        workspace,
+        workspace.files.map((f) => f.absolutePath),
+      );
+      validateBuffers();
+      final service = MarkdownMoveService(workspaceService: _service);
+      for (final file in plan.files) {
+        if (!await _localHistory.capturePath(
+          path: file.path,
+          text: file.load.text,
+          format: file.load.format,
+          reason: LocalHistoryCaptureReason.beforeRestore,
+          requireProtection: true,
+        )) {
+          throw StateError('Local History could not protect recovery.');
+        }
+      }
+      if (!plan.moved) {
+        await service.recoverReviewed(plan, validateBuffers: validateBuffers);
+        return state.activeBuffer?.filePath;
+      }
+      final active = state.activeBuffer?.filePath;
+      final transitions = _beginLocalHistoryPathTransitions(
+        plan.destination,
+        plan.source,
+      );
+      String? historyId;
+      var committed = false;
+      try {
+        await _localHistory.runStagedPathRemap(
+          sourcePath: plan.destination,
+          destinationPath: plan.source,
+          filesystemOperation: () async {
+            await service.recoverReviewed(
+              plan,
+              validateBuffers: validateBuffers,
+            );
+            return plan.source;
+          },
+          didCommit: (_) => true,
+          onOperationStaged: (id) => historyId = id,
+        );
+        committed = true;
+        _remapOpenWorkspacePaths(workspace, plan.destination, plan.source);
+        await _localHistory.acknowledgeStagedPathOperation(historyId);
+        return _remapMovedPath(active, plan.destination, plan.source);
+      } finally {
+        if (!committed) {
+          await _localHistory.cancelStagedPathOperation(historyId);
+        }
+        await _finishLocalHistoryPathTransitions(
+          transitions,
+          committed: committed,
+        );
+      }
+    });
+  }
+
+  Future<String> _applyMarkdownMove(
+    Workspace workspace,
+    String source,
+    String destination,
+    MarkdownMovePlan? reviewed,
+    Future<String> Function() move,
+  ) async {
+    if (workspace.kind != WorkspaceKind.markdownFolder ||
+        p.equals(source, destination)) {
+      return move();
+    }
+    final service = MarkdownMoveService(workspaceService: _service);
+    final plan =
+        reviewed ?? await service.prepare(workspace, source, destination);
+    if (plan.workspaceId != workspace.id ||
+        !p.equals(plan.source, source) ||
+        !p.equals(plan.destination, destination)) {
+      throw StateError('The reviewed operation changed.');
+    }
+    if (reviewed == null && plan.files.isNotEmpty) {
+      throw StateError('Review the affected links before moving this file.');
+    }
+    void validateBuffers() =>
+        _requireCleanAffectedFiles(workspace, plan.snapshots.keys);
+    validateBuffers();
+    for (final file in plan.files) {
+      if (!await _localHistory.capturePath(
+        path: file.path,
+        text: file.load.text,
+        format: file.load.format,
+        reason: LocalHistoryCaptureReason.beforeRestore,
+        requireProtection: true,
+      )) {
+        throw StateError(
+          'Local History could not protect the reviewed changes.',
+        );
+      }
+    }
+    return service.apply(plan, move: move, validateBuffers: validateBuffers);
+  }
+
+  Future<bool> renameWorkspaceEntity(
+    String path,
+    String newName, {
+    MarkdownMovePlan? reviewedPlan,
+  }) async {
     final activeFilePath = state.workspace?.activeFilePath;
     return _runWorkspaceFileOperation((workspace) async {
       final expectedTarget = p.normalize(p.join(p.dirname(path), newName));
@@ -4190,8 +4347,13 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         final target = await _localHistory.runStagedPathRemap(
           sourcePath: path,
           destinationPath: expectedTarget,
-          filesystemOperation: () =>
-              _service.renameEntity(workspace, path, newName),
+          filesystemOperation: () => _applyMarkdownMove(
+            workspace,
+            path,
+            expectedTarget,
+            reviewedPlan,
+            () => _service.renameEntity(workspace, path, newName),
+          ),
           didCommit: (_) => true,
           onOperationStaged: (value) => historyOperationId = value,
         );
@@ -4213,8 +4375,9 @@ class WorkspaceController extends Notifier<WorkspaceState> {
 
   Future<bool> moveWorkspaceEntity(
     String sourcePath,
-    String targetDirectoryPath,
-  ) async {
+    String targetDirectoryPath, {
+    MarkdownMovePlan? reviewedPlan,
+  }) async {
     final activeFilePath = state.workspace?.activeFilePath;
     return _runWorkspaceFileOperation((workspace) async {
       final expectedTarget = p.normalize(
@@ -4230,8 +4393,14 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         final target = await _localHistory.runStagedPathRemap(
           sourcePath: sourcePath,
           destinationPath: expectedTarget,
-          filesystemOperation: () =>
-              _service.moveEntity(workspace, sourcePath, targetDirectoryPath),
+          filesystemOperation: () => _applyMarkdownMove(
+            workspace,
+            sourcePath,
+            expectedTarget,
+            reviewedPlan,
+            () =>
+                _service.moveEntity(workspace, sourcePath, targetDirectoryPath),
+          ),
           didCommit: (_) => true,
           onOperationStaged: (value) => historyOperationId = value,
         );

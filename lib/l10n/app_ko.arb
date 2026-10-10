@@ -5037,5 +5037,18 @@
   "notesCompleted": "완료",
   "notesImportNew": "새 가져오기 시작",
   "notesImportResume": "중단된 가져오기 재개",
-  "notesImportAlreadyImported": "이 작업에서 이미 가져옴"
+  "notesImportAlreadyImported": "이 작업에서 이미 가져옴",
+  "references": "참조",
+  "referenceIncoming": "들어오는 참조",
+  "referenceOutgoing": "나가는 참조",
+  "referenceChooseTarget": "링크 대상 선택",
+  "referenceWholeDocument": "전체 문서",
+  "referenceSourceLocation": "원본 위치",
+  "referenceTargetLocation": "대상 위치",
+  "referenceResolved": "해결됨",
+  "referenceMissing": "없음",
+  "referenceAmbiguous": "모호함",
+  "referenceUnavailable": "이 맥락에서 사용할 수 없음",
+  "referenceUnsupported": "지원되지 않음",
+  "referenceNoPortableId": "이 대상에는 확인된 이식 가능한 노트 URL이 없습니다."
 }

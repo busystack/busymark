@@ -5037,5 +5037,18 @@
   "notesCompleted": "完了",
   "notesImportNew": "新しいインポートを開始",
   "notesImportResume": "中断したインポートを再開",
-  "notesImportAlreadyImported": "この操作ではインポート済み"
+  "notesImportAlreadyImported": "この操作ではインポート済み",
+  "references": "参照",
+  "referenceIncoming": "被参照",
+  "referenceOutgoing": "参照先",
+  "referenceChooseTarget": "リンク先を選択",
+  "referenceWholeDocument": "文書全体",
+  "referenceSourceLocation": "参照元の位置",
+  "referenceTargetLocation": "参照先の位置",
+  "referenceResolved": "解決済み",
+  "referenceMissing": "見つかりません",
+  "referenceAmbiguous": "曖昧",
+  "referenceUnavailable": "このコンテキストでは利用できません",
+  "referenceUnsupported": "未対応",
+  "referenceNoPortableId": "この参照先には確認済みの移植可能なノートURLがありません。"
 }

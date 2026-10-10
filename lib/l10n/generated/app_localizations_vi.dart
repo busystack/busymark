@@ -5018,4 +5018,44 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get notesImportAlreadyImported => 'Đã nhập trong thao tác này';
+
+  @override
+  String get references => 'Tham chiếu';
+
+  @override
+  String get referenceIncoming => 'Đến';
+
+  @override
+  String get referenceOutgoing => 'Đi';
+
+  @override
+  String get referenceChooseTarget => 'Chọn đích liên kết';
+
+  @override
+  String get referenceWholeDocument => 'Toàn bộ tài liệu';
+
+  @override
+  String get referenceSourceLocation => 'Vị trí nguồn';
+
+  @override
+  String get referenceTargetLocation => 'Vị trí đích';
+
+  @override
+  String get referenceResolved => 'Đã phân giải';
+
+  @override
+  String get referenceMissing => 'Không tìm thấy';
+
+  @override
+  String get referenceAmbiguous => 'Không rõ ràng';
+
+  @override
+  String get referenceUnavailable => 'Không khả dụng trong ngữ cảnh này';
+
+  @override
+  String get referenceUnsupported => 'Không được hỗ trợ';
+
+  @override
+  String get referenceNoPortableId =>
+      'Đích này không có URL ghi chú di động đã xác minh.';
 }

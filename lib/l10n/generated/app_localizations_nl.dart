@@ -5074,4 +5074,44 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get notesImportAlreadyImported => 'Al geïmporteerd in deze bewerking';
+
+  @override
+  String get references => 'Verwijzingen';
+
+  @override
+  String get referenceIncoming => 'Inkomend';
+
+  @override
+  String get referenceOutgoing => 'Uitgaand';
+
+  @override
+  String get referenceChooseTarget => 'Linkdoel kiezen';
+
+  @override
+  String get referenceWholeDocument => 'Heel document';
+
+  @override
+  String get referenceSourceLocation => 'Bronlocatie';
+
+  @override
+  String get referenceTargetLocation => 'Doellocatie';
+
+  @override
+  String get referenceResolved => 'Opgelost';
+
+  @override
+  String get referenceMissing => 'Ontbreekt';
+
+  @override
+  String get referenceAmbiguous => 'Dubbelzinnig';
+
+  @override
+  String get referenceUnavailable => 'Niet beschikbaar in deze context';
+
+  @override
+  String get referenceUnsupported => 'Niet ondersteund';
+
+  @override
+  String get referenceNoPortableId =>
+      'Dit doel heeft geen geverifieerde overdraagbare notitie-URL.';
 }

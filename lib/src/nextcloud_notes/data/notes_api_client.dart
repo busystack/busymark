@@ -7,6 +7,7 @@ import 'package:http/http.dart' as http;
 
 import '../../assets/asset_limits.dart';
 import '../domain/notes_models.dart';
+import '../domain/notes_retrieval.dart';
 import 'notes_attachment_references.dart';
 import 'server_uri.dart';
 
@@ -311,11 +312,144 @@ class NotesApiClient {
   }
 
   Future<NoteState> get(int id) async {
+    final result = await retrieve(id);
+    return (result as NotesReturned).note;
+  }
+
+  Future<NotesGetResult> retrieve(int id, {NoteState? cached}) async {
+    if (id <= 0 || (cached != null && cached.id != id)) {
+      throw ArgumentError(
+        'The cached representation must belong to this note.',
+      );
+    }
+    final request = http.Request('GET', _endpoint('v1/notes/$id'));
+    if (cached != null && !cached.error) {
+      request.headers['If-None-Match'] = '"${cached.etag}"';
+    }
+    final response = await _send(request);
+    if (response.statusCode == 304) {
+      if (cached == null || cached.error) {
+        throw const NotesException(
+          NotesFailureCode.invalidResponse,
+          'Nextcloud returned 304 without a cached server representation.',
+        );
+      }
+      return NotesNotModified(cached);
+    }
+    _check(response);
+    final note = _note(response);
+    if (note.id != id) {
+      throw const NotesException(
+        NotesFailureCode.invalidResponse,
+        'Nextcloud returned a different note.',
+      );
+    }
+    return NotesReturned(note);
+  }
+
+  Future<NotesProjection> getProjection(
+    int id,
+    NotesRetrievalScope scope,
+  ) async {
+    if (id <= 0 || scope.category != null) {
+      throw ArgumentError('Invalid note query.');
+    }
     final response = await _send(
-      http.Request('GET', _endpoint('v1/notes/$id')),
+      http.Request('GET', _endpoint('v1/notes/$id', scope.query)),
     );
     _check(response);
-    return _note(response);
+    final value = _json(response);
+    if (value is! Map<String, dynamic>) {
+      throw const NotesException(
+        NotesFailureCode.invalidResponse,
+        'Invalid projected note.',
+      );
+    }
+    final note = NotesProjection.fromJson(value);
+    if (note.id != null && note.id != id ||
+        note.id == null && !scope.exclude.contains('id')) {
+      throw const NotesException(
+        NotesFailureCode.invalidResponse,
+        'Nextcloud returned a different note.',
+      );
+    }
+    return note;
+  }
+
+  Future<NotesQueryResult> query(
+    NotesRetrievalScope scope, {
+    int chunkSize = 100,
+  }) async {
+    if (chunkSize <= 0) throw ArgumentError.value(chunkSize);
+    final notes = <int, NotesProjection>{};
+    final unidentified = <NotesProjection>[];
+    final cursors = <String>{};
+    String? cursor;
+    for (var chunk = 0; chunk < 10000; chunk++) {
+      final response = await _send(
+        http.Request(
+          'GET',
+          _endpoint('v1/notes', {
+            ...scope.query,
+            'chunkSize': '$chunkSize',
+            if (cursor != null) 'chunkCursor': cursor,
+          }),
+        ),
+      );
+      _check(response, scope: NotesRequestScope.collection);
+      final value = _json(response, scope: NotesRequestScope.collection);
+      if (value is! List) {
+        throw const NotesException(
+          NotesFailureCode.invalidResponse,
+          'Invalid projected notes list.',
+          scope: NotesRequestScope.collection,
+        );
+      }
+      for (final item in value) {
+        if (item is! Map<String, dynamic>) {
+          throw const NotesException(
+            NotesFailureCode.invalidResponse,
+            'Invalid projected note.',
+            scope: NotesRequestScope.collection,
+          );
+        }
+        final NotesProjection note;
+        try {
+          note = NotesProjection.fromJson(item);
+        } on NotesException catch (error) {
+          throw error.inScope(NotesRequestScope.collection);
+        }
+        if (note.id == null) {
+          if (!scope.exclude.contains('id')) {
+            throw const NotesException(
+              NotesFailureCode.invalidResponse,
+              'Missing projected note identifier.',
+              scope: NotesRequestScope.collection,
+            );
+          }
+          unidentified.add(note);
+          continue;
+        }
+        if (scope.exclude.contains('id') && note.values.length == 1) continue;
+        // The final chunk repeats earlier IDs without their fields.
+        if (!notes.containsKey(note.id) || note.values.length > 1) {
+          notes[note.id!] = note;
+        }
+      }
+      cursor = header(response, 'X-Notes-Chunk-Cursor');
+      if (cursor == null || cursor.isEmpty) {
+        return NotesQueryResult(
+          scope: scope,
+          notes: [...notes.values, ...unidentified],
+        );
+      }
+      if (!cursors.add(cursor)) break;
+    }
+    throw const NotesException(
+      NotesFailureCode.invalidResponse,
+      'Invalid projected notes continuation.',
+      scope: NotesRequestScope.collection,
+    );
   }
 
   static Map<String, Object> writable(NextcloudNote note) => {

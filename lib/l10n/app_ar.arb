@@ -3498,5 +3498,18 @@
   "notesCompleted": "مكتمل",
   "notesImportNew": "بدء استيراد جديد",
   "notesImportResume": "استئناف الاستيراد المنقطع",
-  "notesImportAlreadyImported": "تم الاستيراد بالفعل في هذه العملية"
+  "notesImportAlreadyImported": "تم الاستيراد بالفعل في هذه العملية",
+  "references": "المراجع",
+  "referenceIncoming": "الواردة",
+  "referenceOutgoing": "الصادرة",
+  "referenceChooseTarget": "اختر هدف الرابط",
+  "referenceWholeDocument": "المستند بالكامل",
+  "referenceSourceLocation": "موقع المصدر",
+  "referenceTargetLocation": "موقع الهدف",
+  "referenceResolved": "تم الحل",
+  "referenceMissing": "مفقود",
+  "referenceAmbiguous": "ملتبس",
+  "referenceUnavailable": "غير متاح في هذا السياق",
+  "referenceUnsupported": "غير مدعوم",
+  "referenceNoPortableId": "ليس لهذا الهدف عنوان URL محمول ومُتحقَّق منه للملاحظة."
 }

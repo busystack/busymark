@@ -17,10 +17,10 @@ from playwright.sync_api import sync_playwright
 
 
 def main():
-    if len(sys.argv) != 4:
+    if len(sys.argv) not in (4, 5):
         raise SystemExit(
             "Usage: python3 tools/nextcloud_login_live_acceptance.py "
-            "<private-test-account.json> <private-app-credentials.json> <report.json>"
+            "<private-test-account.json> <private-app-credentials.json> <report.json> [private-BusyMark-portable-link.json]"
         )
     account = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
     server = account["server"].rstrip("/")
@@ -51,6 +51,7 @@ def main():
         external_browser = launched.returncode == 0
     except (OSError, subprocess.TimeoutExpired):
         external_browser = False
+    portable_checks = None
     with sync_playwright() as playwright:
         browser = playwright.chromium.launch(
             executable_path=os.getenv("BUSYMARK_CHROME_PATH", "/usr/bin/google-chrome"),
@@ -93,6 +94,42 @@ def main():
                 allow_redirects=False,
             )
             assert after.status_code == 404, "Login Flow success was not one-time."
+            if len(sys.argv) == 5:
+                published = json.loads(Path(sys.argv[4]).read_text(encoding="utf-8"))
+                source_url = server + "/index.php/apps/notes/note/" + str(published["sourceId"])
+                page.goto(source_url, wait_until="networkidle", timeout=60000)
+                wizard = page.locator('#firstrunwizard[role=dialog]')
+                if wizard.count() and wizard.is_visible():
+                    wizard.get_by_role('button', name=re.compile('close', re.I)).first.click()
+                    wizard.wait_for(state='hidden')
+                link = page.locator('a[href="' + published["href"] + '"]').filter(has_text="Selected link").first
+                if link.count() == 0:
+                    preview = page.get_by_role("button", name=re.compile("preview|read.?mode", re.I))
+                    if preview.count():
+                        preview.first.click()
+                link.wait_for(state="visible", timeout=60000)
+                page.screenshot(path=str(Path(sys.argv[3]).with_suffix(".source.png")), full_page=True)
+                link.click(modifiers=["Control"])
+                page.wait_for_timeout(1500)
+                page.screenshot(path=str(Path(sys.argv[3]).with_suffix('.after-click.png')), full_page=True)
+                Path(sys.argv[3]).with_suffix('.after-click.html').write_text(page.content())
+                opened = next((candidate for candidate in page.context.pages if "/note/" + str(published["targetId"]) in candidate.url), None)
+                assert opened is not None, "Stored BusyMark link did not open the intended browser note."
+                opened.get_by_text(published["marker"], exact=True).first.wait_for(state="visible", timeout=60000)
+                opened.screenshot(path=str(Path(sys.argv[3]).with_suffix(".target.png")), full_page=True)
+                pretty = server + "/apps/notes/note/" + str(published["targetId"])
+                opened.goto(pretty, wait_until="networkidle", timeout=60000)
+                opened.get_by_text(published["marker"], exact=True).first.wait_for(state="visible", timeout=60000)
+                opened.goto(published["href"] + "#heading", wait_until="networkidle", timeout=60000)
+                opened.get_by_text(published["marker"], exact=True).first.wait_for(state="visible", timeout=60000)
+                portable_checks = {
+                    "storedBusyMarkLinkOpenedIntendedNote": True,
+                    "frontControllerRoute": True,
+                    "prettyRouteOpenedIntendedNote": True,
+                    "browserFragment": opened.evaluate("location.hash"),
+                    "browserHasBusyMarkHeadingId": opened.locator('[id="heading"]').count() > 0,
+                    "installationPath": requests.utils.urlparse(server).path,
+                }
         finally:
             browser.close()
     report = {
@@ -101,6 +138,7 @@ def main():
         "pending404": True,
         "browserGrant": True,
         "success200Once": True,
+        **({"portableNotes": portable_checks} if portable_checks is not None else {}),
     }
     Path(sys.argv[3]).write_text(json.dumps(report, indent=2), encoding="utf-8")
     print("Live browser Login Flow v2 acceptance passed.")

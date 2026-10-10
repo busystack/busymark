@@ -5082,4 +5082,44 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get notesImportAlreadyImported => 'Już zaimportowano w tej operacji';
+
+  @override
+  String get references => 'Odwołania';
+
+  @override
+  String get referenceIncoming => 'Przychodzące';
+
+  @override
+  String get referenceOutgoing => 'Wychodzące';
+
+  @override
+  String get referenceChooseTarget => 'Wybierz cel linku';
+
+  @override
+  String get referenceWholeDocument => 'Cały dokument';
+
+  @override
+  String get referenceSourceLocation => 'Lokalizacja źródła';
+
+  @override
+  String get referenceTargetLocation => 'Lokalizacja celu';
+
+  @override
+  String get referenceResolved => 'Rozwiązane';
+
+  @override
+  String get referenceMissing => 'Brak';
+
+  @override
+  String get referenceAmbiguous => 'Niejednoznaczne';
+
+  @override
+  String get referenceUnavailable => 'Niedostępne w tym kontekście';
+
+  @override
+  String get referenceUnsupported => 'Nieobsługiwane';
+
+  @override
+  String get referenceNoPortableId =>
+      'Ten cel nie ma zweryfikowanego przenośnego adresu URL notatki.';
 }

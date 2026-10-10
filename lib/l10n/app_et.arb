@@ -3958,5 +3958,18 @@
   "notesCompleted": "Lõpetatud",
   "notesImportNew": "Alusta uut importimist",
   "notesImportResume": "Jätka katkestatud importimist",
-  "notesImportAlreadyImported": "Selles toimingus juba imporditud"
+  "notesImportAlreadyImported": "Selles toimingus juba imporditud",
+  "references": "Viited",
+  "referenceIncoming": "Sissetulevad",
+  "referenceOutgoing": "Väljaminevad",
+  "referenceChooseTarget": "Vali lingi siht",
+  "referenceWholeDocument": "Kogu dokument",
+  "referenceSourceLocation": "Allika asukoht",
+  "referenceTargetLocation": "Sihtkoha asukoht",
+  "referenceResolved": "Lahendatud",
+  "referenceMissing": "Puudub",
+  "referenceAmbiguous": "Mitmetähenduslik",
+  "referenceUnavailable": "Selles kontekstis pole saadaval",
+  "referenceUnsupported": "Pole toetatud",
+  "referenceNoPortableId": "Sellel sihtkohal pole kinnitatud teisaldatavat märkme URL-i."
 }

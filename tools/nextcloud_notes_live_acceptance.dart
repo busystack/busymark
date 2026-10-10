@@ -1,3 +1,5 @@
+import 'package:busymark/src/nextcloud_notes/domain/notes_retrieval.dart';
+import 'package:busymark/src/nextcloud_notes/data/server_uri.dart';
 import 'package:busymark/src/nextcloud_notes/application/notes_offline_controller.dart';
 import 'package:busymark/src/nextcloud_notes/application/notes_search_controller.dart';
 import 'package:busymark/src/nextcloud_notes/application/notes_transfer_service.dart';
@@ -241,6 +243,58 @@ Future<void> main(List<String> arguments) async {
     repository = await reopen();
     await repository.upsertAccount(account);
     originalSettings = await api(account).getSettings();
+    final linked = await repository.create(
+      account.id,
+      title: 'M3 portable target',
+      category: 'M3/Scoped',
+      content: '# Target\nconfirmed portable identity',
+    );
+    await repository.synchronize(account.id);
+    final target = repository.noteById(linked.localId)!;
+    createdIds.add(target.serverId!);
+    final first = await api(account).retrieve(target.serverId!);
+    final conditional = await api(
+      account,
+    ).retrieve(target.serverId!, cached: (first as NotesReturned).note);
+    if (conditional is! NotesNotModified) {
+      throw StateError('Single-note conditional GET did not return 304.');
+    }
+    checks['m3ConditionalSingleNote200And304'] = true;
+    final projected = await api(account).query(
+      NotesRetrievalScope(category: 'M3/Scoped', exclude: {'content', 'title'}),
+      chunkSize: 1,
+    );
+    if (!projected.notes.any((n) => n.id == target.serverId) ||
+        projected.notes.any((n) => n.has('content') || n.has('title'))) {
+      throw StateError('Filtered/projected live response semantics differed.');
+    }
+    checks['m3FilteredProjectedRetrieval'] = true;
+    final checkpoint = repository.accountById(account.id)!.listEtag;
+    await repository.save(target.localId, content: 'pending local edit');
+    final refreshed = await repository.refreshLinkedNote(
+      account.id,
+      target.serverId!,
+    );
+    if (refreshed.content != 'pending local edit' ||
+        !refreshed.hasPendingChanges ||
+        repository.accountById(account.id)!.listEtag != checkpoint) {
+      throw StateError('304 changed pending local state.');
+    }
+    checks['m3ConditionalReadPreservesPendingAndCheckpoint'] = true;
+    final url = nextcloudNoteUrl(account.server, target.serverId!);
+    final source = await repository.create(
+      account.id,
+      title: 'M3 link source',
+      content: '[portable target]($url)',
+    );
+    await repository.synchronize(account.id);
+    final sourceId = repository.noteById(source.localId)!.serverId!;
+    createdIds.add(sourceId);
+    if (!(await api(account).get(sourceId)).content.contains(url.toString())) {
+      throw StateError('Portable link publication failed.');
+    }
+    checks['m3PortableUrlPublished'] = true;
+
     await _milestoneChecks(
       repository,
       connection,

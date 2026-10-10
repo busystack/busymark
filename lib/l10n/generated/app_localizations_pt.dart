@@ -5089,6 +5089,46 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get notesImportAlreadyImported => 'Já importado nesta operação';
+
+  @override
+  String get references => 'Referências';
+
+  @override
+  String get referenceIncoming => 'Recebidas';
+
+  @override
+  String get referenceOutgoing => 'Enviadas';
+
+  @override
+  String get referenceChooseTarget => 'Escolher destino da ligação';
+
+  @override
+  String get referenceWholeDocument => 'Documento completo';
+
+  @override
+  String get referenceSourceLocation => 'Localização de origem';
+
+  @override
+  String get referenceTargetLocation => 'Localização de destino';
+
+  @override
+  String get referenceResolved => 'Resolvida';
+
+  @override
+  String get referenceMissing => 'Em falta';
+
+  @override
+  String get referenceAmbiguous => 'Ambígua';
+
+  @override
+  String get referenceUnavailable => 'Indisponível neste contexto';
+
+  @override
+  String get referenceUnsupported => 'Não suportada';
+
+  @override
+  String get referenceNoPortableId =>
+      'Este destino não tem um URL portátil de nota verificado.';
 }
 
 /// The translations for Portuguese, as used in Brazil (`pt_BR`).
@@ -10172,4 +10212,44 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get notesImportAlreadyImported => 'Já importado nesta operação';
+
+  @override
+  String get references => 'Referências';
+
+  @override
+  String get referenceIncoming => 'Recebidas';
+
+  @override
+  String get referenceOutgoing => 'Enviadas';
+
+  @override
+  String get referenceChooseTarget => 'Escolher destino do link';
+
+  @override
+  String get referenceWholeDocument => 'Documento completo';
+
+  @override
+  String get referenceSourceLocation => 'Local de origem';
+
+  @override
+  String get referenceTargetLocation => 'Local de destino';
+
+  @override
+  String get referenceResolved => 'Resolvida';
+
+  @override
+  String get referenceMissing => 'Ausente';
+
+  @override
+  String get referenceAmbiguous => 'Ambígua';
+
+  @override
+  String get referenceUnavailable => 'Indisponível neste contexto';
+
+  @override
+  String get referenceUnsupported => 'Não compatível';
+
+  @override
+  String get referenceNoPortableId =>
+      'Este destino não tem uma URL portátil de nota verificada.';
 }

@@ -3498,5 +3498,18 @@
   "notesCompleted": "Abgeschlossen",
   "notesImportNew": "Neuen Import starten",
   "notesImportResume": "Unterbrochenen Import fortsetzen",
-  "notesImportAlreadyImported": "In diesem Vorgang bereits importiert"
+  "notesImportAlreadyImported": "In diesem Vorgang bereits importiert",
+  "references": "Verweise",
+  "referenceIncoming": "Eingehend",
+  "referenceOutgoing": "Ausgehend",
+  "referenceChooseTarget": "Linkziel auswählen",
+  "referenceWholeDocument": "Gesamtes Dokument",
+  "referenceSourceLocation": "Quellposition",
+  "referenceTargetLocation": "Zielposition",
+  "referenceResolved": "Aufgelöst",
+  "referenceMissing": "Fehlt",
+  "referenceAmbiguous": "Mehrdeutig",
+  "referenceUnavailable": "In diesem Kontext nicht verfügbar",
+  "referenceUnsupported": "Nicht unterstützt",
+  "referenceNoPortableId": "Dieses Ziel hat keine bestätigte portable Notiz-URL."
 }

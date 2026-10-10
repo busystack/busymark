@@ -4886,4 +4886,43 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get notesImportAlreadyImported => '이 작업에서 이미 가져옴';
+
+  @override
+  String get references => '참조';
+
+  @override
+  String get referenceIncoming => '들어오는 참조';
+
+  @override
+  String get referenceOutgoing => '나가는 참조';
+
+  @override
+  String get referenceChooseTarget => '링크 대상 선택';
+
+  @override
+  String get referenceWholeDocument => '전체 문서';
+
+  @override
+  String get referenceSourceLocation => '원본 위치';
+
+  @override
+  String get referenceTargetLocation => '대상 위치';
+
+  @override
+  String get referenceResolved => '해결됨';
+
+  @override
+  String get referenceMissing => '없음';
+
+  @override
+  String get referenceAmbiguous => '모호함';
+
+  @override
+  String get referenceUnavailable => '이 맥락에서 사용할 수 없음';
+
+  @override
+  String get referenceUnsupported => '지원되지 않음';
+
+  @override
+  String get referenceNoPortableId => '이 대상에는 확인된 이식 가능한 노트 URL이 없습니다.';
 }

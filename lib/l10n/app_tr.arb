@@ -5037,5 +5037,18 @@
   "notesCompleted": "Tamamlandı",
   "notesImportNew": "Yeni içe aktarma başlat",
   "notesImportResume": "Kesilen içe aktarmayı sürdür",
-  "notesImportAlreadyImported": "Bu işlemde zaten içe aktarıldı"
+  "notesImportAlreadyImported": "Bu işlemde zaten içe aktarıldı",
+  "references": "Başvurular",
+  "referenceIncoming": "Gelen",
+  "referenceOutgoing": "Giden",
+  "referenceChooseTarget": "Bağlantı hedefini seç",
+  "referenceWholeDocument": "Tüm belge",
+  "referenceSourceLocation": "Kaynak konumu",
+  "referenceTargetLocation": "Hedef konumu",
+  "referenceResolved": "Çözüldü",
+  "referenceMissing": "Eksik",
+  "referenceAmbiguous": "Belirsiz",
+  "referenceUnavailable": "Bu bağlamda kullanılamıyor",
+  "referenceUnsupported": "Desteklenmiyor",
+  "referenceNoPortableId": "Bu hedefin doğrulanmış taşınabilir not URL’si yok."
 }

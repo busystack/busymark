@@ -3498,5 +3498,18 @@
   "notesCompleted": "Terminé",
   "notesImportNew": "Démarrer une nouvelle importation",
   "notesImportResume": "Reprendre l’importation interrompue",
-  "notesImportAlreadyImported": "Déjà importé dans cette opération"
+  "notesImportAlreadyImported": "Déjà importé dans cette opération",
+  "references": "Références",
+  "referenceIncoming": "Entrantes",
+  "referenceOutgoing": "Sortantes",
+  "referenceChooseTarget": "Choisir la cible du lien",
+  "referenceWholeDocument": "Document entier",
+  "referenceSourceLocation": "Emplacement source",
+  "referenceTargetLocation": "Emplacement cible",
+  "referenceResolved": "Résolue",
+  "referenceMissing": "Manquante",
+  "referenceAmbiguous": "Ambiguë",
+  "referenceUnavailable": "Indisponible dans ce contexte",
+  "referenceUnsupported": "Non prise en charge",
+  "referenceNoPortableId": "Cette cible ne possède pas d’URL de note portable vérifiée."
 }

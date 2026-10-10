@@ -5095,4 +5095,44 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get notesImportAlreadyImported => 'Уже імпортовано в цій операції';
+
+  @override
+  String get references => 'Посилання';
+
+  @override
+  String get referenceIncoming => 'Вхідні';
+
+  @override
+  String get referenceOutgoing => 'Вихідні';
+
+  @override
+  String get referenceChooseTarget => 'Виберіть ціль посилання';
+
+  @override
+  String get referenceWholeDocument => 'Увесь документ';
+
+  @override
+  String get referenceSourceLocation => 'Позиція джерела';
+
+  @override
+  String get referenceTargetLocation => 'Позиція цілі';
+
+  @override
+  String get referenceResolved => 'Знайдено';
+
+  @override
+  String get referenceMissing => 'Відсутнє';
+
+  @override
+  String get referenceAmbiguous => 'Неоднозначне';
+
+  @override
+  String get referenceUnavailable => 'Недоступне в цьому контексті';
+
+  @override
+  String get referenceUnsupported => 'Не підтримується';
+
+  @override
+  String get referenceNoPortableId =>
+      'Ця ціль не має перевіреної переносної URL-адреси нотатки.';
 }

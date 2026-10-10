@@ -15,6 +15,88 @@ import '../../writerside/writerside_schema.dart';
 class WritersideEditingAdapter {
   const WritersideEditingAdapter();
 
+  /// Source authoring shares the semantic XML serializer and namespace rules.
+  String? insertSourceLink({
+    required String filePath,
+    required String source,
+    required int start,
+    required int end,
+    required String destination,
+    required String placeholder,
+    String? origin,
+  }) {
+    final document = const WritersideDocumentParser().parseXml(
+      filePath: filePath,
+      source: source,
+    );
+    if (!document.isWellFormed ||
+        start < 0 ||
+        end < start ||
+        end > source.length) {
+      return null;
+    }
+    final parent = document
+        .walk()
+        .whereType<WritersideElementNode>()
+        .where((n) => n.span.startOffset < start && n.span.endOffset > end)
+        .lastOrNull;
+    if (parent == null ||
+        !{
+          'p',
+          'title',
+          'b',
+          'i',
+          'em',
+          'strong',
+          'u',
+          's',
+          'td',
+          'li',
+        }.contains(parent.name)) {
+      return null;
+    }
+    final openingEnd = source.indexOf('>', parent.span.startOffset);
+    final closingStart = source.lastIndexOf('</', parent.span.endOffset);
+    if (start <= openingEnd || end > closingStart) return null;
+    final prefix = parent.qualifiedName.contains(':')
+        ? '${parent.qualifiedName.split(':').first}:'
+        : '';
+    final inner = source.substring(start, end);
+    final link = elementNode(
+      'a',
+      {'href': destination, if (origin != null) 'origin': origin},
+      [
+        if (inner.isEmpty)
+          ...inlineNodes(
+            BusyInline(kind: BusyInlineKind.text, text: placeholder),
+            filePath,
+          )
+        else
+          rawNode(inner, filePath),
+      ],
+      filePath,
+      namespacePrefix: prefix,
+    );
+    final fragment = const WritersideDocumentSerializer().serialize(
+      WritersideDocument(
+        filePath: filePath,
+        source: '',
+        format: WritersideDocumentFormat.xmlTopic,
+        nodes: [link],
+      ),
+    );
+    final candidate = source.replaceRange(start, end, fragment);
+    final checked = const WritersideDocumentParser().parseXml(
+      filePath: filePath,
+      source: candidate,
+    );
+    if (!checked.isWellFormed) return null;
+    final authored = checked.elements
+        .where((e) => e.name == 'a' && e.span.startOffset == start)
+        .firstOrNull;
+    return authored?.attributes['href'] == destination ? candidate : null;
+  }
+
   static const containers = {
     'topic',
     'chapter',

@@ -5085,4 +5085,44 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get notesImportAlreadyImported => 'Уже импортировано в этой операции';
+
+  @override
+  String get references => 'Ссылки';
+
+  @override
+  String get referenceIncoming => 'Входящие';
+
+  @override
+  String get referenceOutgoing => 'Исходящие';
+
+  @override
+  String get referenceChooseTarget => 'Выберите цель ссылки';
+
+  @override
+  String get referenceWholeDocument => 'Весь документ';
+
+  @override
+  String get referenceSourceLocation => 'Положение источника';
+
+  @override
+  String get referenceTargetLocation => 'Положение цели';
+
+  @override
+  String get referenceResolved => 'Найдена';
+
+  @override
+  String get referenceMissing => 'Отсутствует';
+
+  @override
+  String get referenceAmbiguous => 'Неоднозначная';
+
+  @override
+  String get referenceUnavailable => 'Недоступна в этом контексте';
+
+  @override
+  String get referenceUnsupported => 'Не поддерживается';
+
+  @override
+  String get referenceNoPortableId =>
+      'У этой цели нет проверенного переносимого URL заметки.';
 }

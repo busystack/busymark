@@ -3498,5 +3498,18 @@
   "notesCompleted": "Fullført",
   "notesImportNew": "Start en ny import",
   "notesImportResume": "Fortsett avbrutt import",
-  "notesImportAlreadyImported": "Allerede importert i denne operasjonen"
+  "notesImportAlreadyImported": "Allerede importert i denne operasjonen",
+  "references": "Referanser",
+  "referenceIncoming": "Innkommende",
+  "referenceOutgoing": "Utgående",
+  "referenceChooseTarget": "Velg lenkemål",
+  "referenceWholeDocument": "Hele dokumentet",
+  "referenceSourceLocation": "Kildeplassering",
+  "referenceTargetLocation": "Målplassering",
+  "referenceResolved": "Løst",
+  "referenceMissing": "Mangler",
+  "referenceAmbiguous": "Tvetydig",
+  "referenceUnavailable": "Utilgjengelig i denne konteksten",
+  "referenceUnsupported": "Ikke støttet",
+  "referenceNoPortableId": "Dette målet har ingen bekreftet portabel notatadresse."
 }

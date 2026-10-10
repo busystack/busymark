@@ -2942,5 +2942,18 @@
   "notesCompleted": "Completed",
   "notesImportNew": "Start a new import",
   "notesImportResume": "Resume interrupted import",
-  "notesImportAlreadyImported": "Already imported in this operation"
+  "notesImportAlreadyImported": "Already imported in this operation",
+  "references": "References",
+  "referenceIncoming": "Incoming",
+  "referenceOutgoing": "Outgoing",
+  "referenceChooseTarget": "Choose link target",
+  "referenceWholeDocument": "Whole document",
+  "referenceSourceLocation": "Source location",
+  "referenceTargetLocation": "Target location",
+  "referenceResolved": "Resolved",
+  "referenceMissing": "Missing",
+  "referenceAmbiguous": "Ambiguous",
+  "referenceUnavailable": "Unavailable in this context",
+  "referenceUnsupported": "Unsupported",
+  "referenceNoPortableId": "This target has no verified portable note URL."
 }

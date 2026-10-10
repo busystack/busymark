@@ -4890,4 +4890,43 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get notesImportAlreadyImported => 'この操作ではインポート済み';
+
+  @override
+  String get references => '参照';
+
+  @override
+  String get referenceIncoming => '被参照';
+
+  @override
+  String get referenceOutgoing => '参照先';
+
+  @override
+  String get referenceChooseTarget => 'リンク先を選択';
+
+  @override
+  String get referenceWholeDocument => '文書全体';
+
+  @override
+  String get referenceSourceLocation => '参照元の位置';
+
+  @override
+  String get referenceTargetLocation => '参照先の位置';
+
+  @override
+  String get referenceResolved => '解決済み';
+
+  @override
+  String get referenceMissing => '見つかりません';
+
+  @override
+  String get referenceAmbiguous => '曖昧';
+
+  @override
+  String get referenceUnavailable => 'このコンテキストでは利用できません';
+
+  @override
+  String get referenceUnsupported => '未対応';
+
+  @override
+  String get referenceNoPortableId => 'この参照先には確認済みの移植可能なノートURLがありません。';
 }

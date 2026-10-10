@@ -12,6 +12,7 @@ import '../data/notes_attachment_references.dart';
 import '../data/notes_store.dart';
 import '../data/notes_capabilities.dart';
 import '../domain/notes_models.dart';
+import '../domain/notes_retrieval.dart';
 import '../domain/notes_conflict.dart';
 import 'notes_navigation.dart';
 
@@ -1500,74 +1501,12 @@ class NotesRepository {
       );
     }
     for (final remote in list.notes) {
-      final current = existing[remote.id];
-      if (current == null) {
-        updated.add(_fromRemote(_uuid.v4(), account.id, remote));
-      } else if (remote.error) {
-        updated.add(
-          current.copyWith(
-            readonly: true,
-            error: true,
-            remote: remote,
-            syncState: NoteSyncState.unavailable,
-            errorMessage:
-                'Nextcloud could not read this note. Cached content has been preserved.',
-          ),
-        );
-      } else if (current.hasPendingChanges) {
-        if (current.syncState == NoteSyncState.deletedRemotely &&
-            current.deletionEvidence == null &&
-            remote.etag == current.etag) {
-          updated.add(
-            current.copyWith(
-              syncState: NoteSyncState.pending,
-              errorMessage: null,
-              failureCode: null,
-              failureScope: null,
-            ),
-          );
-        } else if (remote.etag != current.etag) {
-          updated.add(
-            current.copyWith(
-              remote: remote,
-              readonly: remote.readonly,
-              syncState: NoteSyncState.conflict,
-              errorMessage:
-                  'The note changed on Nextcloud while local changes were pending.',
-            ),
-          );
-        } else if (current.readonly != remote.readonly || current.error) {
-          final forbidden =
-              _readonlyBlocks(current, remote) &&
-              current.syncState != NoteSyncState.conflict;
-          updated.add(
-            current.copyWith(
-              readonly: remote.readonly,
-              error: false,
-              syncState: forbidden
-                  ? NoteSyncState.forbidden
-                  : current.syncState == NoteSyncState.unavailable
-                  ? NoteSyncState.pending
-                  : current.syncState,
-              errorMessage: forbidden
-                  ? 'Nextcloud became read-only. Local changes are preserved; recover them as a new note.'
-                  : current.syncState == NoteSyncState.unavailable
-                  ? null
-                  : current.errorMessage,
-            ),
-          );
-        }
-      } else {
-        updated.add(
-          _fromRemote(
-            current.localId,
-            account.id,
-            remote,
-            revision: current.revision,
-            previous: current,
-          ),
-        );
-      }
+      final reconciled = _reconcileServerNote(
+        account.id,
+        existing[remote.id],
+        remote,
+      );
+      if (reconciled != null) updated.add(reconciled);
     }
     // Only list()'s fully received final chunk may supply the complete ID set.
     for (final note in existing.values) {
@@ -1621,6 +1560,194 @@ class NotesRepository {
     }
     _notify();
   });
+
+  NextcloudNote? _reconcileServerNote(
+    String accountId,
+    NextcloudNote? current,
+    NoteState remote,
+  ) {
+    final updated = <NextcloudNote>[];
+    if (current == null) {
+      updated.add(_fromRemote(_uuid.v4(), accountId, remote));
+    } else if (remote.error) {
+      updated.add(
+        current.copyWith(
+          readonly: true,
+          error: true,
+          remote: remote,
+          syncState: NoteSyncState.unavailable,
+          errorMessage:
+              'Nextcloud could not read this note. Cached content has been preserved.',
+        ),
+      );
+    } else if (current.hasPendingChanges) {
+      if (current.syncState == NoteSyncState.deletedRemotely &&
+          current.deletionEvidence == null &&
+          remote.etag == current.etag) {
+        updated.add(
+          current.copyWith(
+            syncState: NoteSyncState.pending,
+            errorMessage: null,
+            failureCode: null,
+            failureScope: null,
+          ),
+        );
+      } else if (remote.etag != current.etag) {
+        updated.add(
+          current.copyWith(
+            remote: remote,
+            readonly: remote.readonly,
+            syncState: NoteSyncState.conflict,
+            errorMessage:
+                'The note changed on Nextcloud while local changes were pending.',
+          ),
+        );
+      } else if (current.readonly != remote.readonly || current.error) {
+        final forbidden =
+            _readonlyBlocks(current, remote) &&
+            current.syncState != NoteSyncState.conflict;
+        updated.add(
+          current.copyWith(
+            readonly: remote.readonly,
+            error: false,
+            syncState: forbidden
+                ? NoteSyncState.forbidden
+                : current.syncState == NoteSyncState.unavailable
+                ? NoteSyncState.pending
+                : current.syncState,
+            errorMessage: forbidden
+                ? 'Nextcloud became read-only. Local changes are preserved; recover them as a new note.'
+                : current.syncState == NoteSyncState.unavailable
+                ? null
+                : current.errorMessage,
+          ),
+        );
+      }
+    } else {
+      updated.add(
+        _fromRemote(
+          current.localId,
+          accountId,
+          remote,
+          revision: current.revision,
+          previous: current,
+        ),
+      );
+    }
+    return updated.singleOrNull;
+  }
+
+  /// Individually opening a link uses the same reconciliation as full sync,
+  /// without collection checkpoints or deletion inference.
+  Future<NextcloudNote> linkedNote(String accountId, int serverId) async {
+    await initialize();
+    _assertMutableAccount(accountId);
+    final cached = _notes.values
+        .where((n) => n.accountId == accountId && n.serverId == serverId)
+        .firstOrNull;
+    if (cached != null) {
+      if (isNotesRecovery(cached)) {
+        throw const NotesException(
+          NotesFailureCode.missing,
+          'This linked note was deleted.',
+        );
+      }
+      return cached;
+    }
+    return refreshLinkedNote(accountId, serverId);
+  }
+
+  Future<NotesQueryResult> queryNotes(
+    String accountId,
+    NotesRetrievalScope scope, {
+    int chunkSize = 100,
+  }) async {
+    await initialize();
+    _assertMutableAccount(accountId);
+    final generation = _accountGenerations[accountId] ?? 0;
+    final client = await _clientForAccount(_accounts[accountId]!);
+    if (!_currentAccount(accountId, generation)) {
+      throw const NotesException(
+        NotesFailureCode.missing,
+        'The queried account was removed.',
+        scope: NotesRequestScope.account,
+      );
+    }
+    final result = await client.query(scope, chunkSize: chunkSize);
+    if (!_currentAccount(accountId, generation)) {
+      throw const NotesException(
+        NotesFailureCode.missing,
+        'The queried account was removed.',
+        scope: NotesRequestScope.account,
+      );
+    }
+    return result;
+  }
+
+  Future<NextcloudNote> refreshLinkedNote(
+    String accountId,
+    int serverId,
+  ) async {
+    await initialize();
+    _assertMutableAccount(accountId);
+    final account = _accounts[accountId]!;
+    final generation = _accountGenerations[accountId] ?? 0;
+    final cached = _notes.values
+        .where((n) => n.accountId == accountId && n.serverId == serverId)
+        .firstOrNull;
+    final baseGeneration = cached == null
+        ? null
+        : _baseGenerations[cached.localId] ?? 0;
+    final client = await _clientForAccount(account);
+    if (!_currentAccount(accountId, generation)) {
+      throw const NotesException(
+        NotesFailureCode.missing,
+        'The linked account was removed.',
+        scope: NotesRequestScope.account,
+      );
+    }
+    final result = await client.retrieve(serverId, cached: cached?.base);
+    return _mutate(() async {
+      if (!_currentAccount(accountId, generation)) {
+        throw const NotesException(
+          NotesFailureCode.missing,
+          'The linked account was removed.',
+          scope: NotesRequestScope.account,
+        );
+      }
+      final current = _notes.values
+          .where((n) => n.accountId == accountId && n.serverId == serverId)
+          .firstOrNull;
+      if (current != null &&
+          (isNotesRecovery(current) ||
+              cached == null ||
+              (_baseGenerations[current.localId] ?? 0) != baseGeneration)) {
+        return current;
+      }
+      if (result is NotesNotModified) {
+        if (current == null) {
+          throw const NotesException(
+            NotesFailureCode.invalidResponse,
+            'The cached linked note is no longer available.',
+          );
+        }
+        // A 304 is a read observation; never an acknowledgment of local writes.
+        return current;
+      }
+      final remote = (result as NotesReturned).note;
+      final reconciled = _reconcileServerNote(accountId, current, remote);
+      if (reconciled == null) return current!;
+      await store.commit(notes: [reconciled]);
+      _notes[reconciled.localId] = reconciled;
+      if (reconciled.etag != current?.etag) {
+        _invalidateMediaFreshness(reconciled.localId);
+        _baseGenerations[reconciled.localId] =
+            (_baseGenerations[reconciled.localId] ?? 0) + 1;
+      }
+      _notify();
+      return reconciled;
+    });
+  }
 
   NextcloudNote _fromRemote(
     String localId,

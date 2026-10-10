@@ -5037,5 +5037,18 @@
   "notesCompleted": "已完成",
   "notesImportNew": "开始新导入",
   "notesImportResume": "继续中断的导入",
-  "notesImportAlreadyImported": "已在此操作中导入"
+  "notesImportAlreadyImported": "已在此操作中导入",
+  "references": "引用",
+  "referenceIncoming": "传入",
+  "referenceOutgoing": "传出",
+  "referenceChooseTarget": "选择链接目标",
+  "referenceWholeDocument": "整个文档",
+  "referenceSourceLocation": "源位置",
+  "referenceTargetLocation": "目标位置",
+  "referenceResolved": "已解析",
+  "referenceMissing": "缺失",
+  "referenceAmbiguous": "不明确",
+  "referenceUnavailable": "当前上下文中不可用",
+  "referenceUnsupported": "不支持",
+  "referenceNoPortableId": "此目标没有经过验证的可移植笔记网址。"
 }

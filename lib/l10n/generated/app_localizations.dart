@@ -8579,6 +8579,84 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Already imported in this operation'**
   String get notesImportAlreadyImported;
+
+  /// No description provided for @references.
+  ///
+  /// In en, this message translates to:
+  /// **'References'**
+  String get references;
+
+  /// No description provided for @referenceIncoming.
+  ///
+  /// In en, this message translates to:
+  /// **'Incoming'**
+  String get referenceIncoming;
+
+  /// No description provided for @referenceOutgoing.
+  ///
+  /// In en, this message translates to:
+  /// **'Outgoing'**
+  String get referenceOutgoing;
+
+  /// No description provided for @referenceChooseTarget.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose link target'**
+  String get referenceChooseTarget;
+
+  /// No description provided for @referenceWholeDocument.
+  ///
+  /// In en, this message translates to:
+  /// **'Whole document'**
+  String get referenceWholeDocument;
+
+  /// No description provided for @referenceSourceLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Source location'**
+  String get referenceSourceLocation;
+
+  /// No description provided for @referenceTargetLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Target location'**
+  String get referenceTargetLocation;
+
+  /// No description provided for @referenceResolved.
+  ///
+  /// In en, this message translates to:
+  /// **'Resolved'**
+  String get referenceResolved;
+
+  /// No description provided for @referenceMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'Missing'**
+  String get referenceMissing;
+
+  /// No description provided for @referenceAmbiguous.
+  ///
+  /// In en, this message translates to:
+  /// **'Ambiguous'**
+  String get referenceAmbiguous;
+
+  /// No description provided for @referenceUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Unavailable in this context'**
+  String get referenceUnavailable;
+
+  /// No description provided for @referenceUnsupported.
+  ///
+  /// In en, this message translates to:
+  /// **'Unsupported'**
+  String get referenceUnsupported;
+
+  /// No description provided for @referenceNoPortableId.
+  ///
+  /// In en, this message translates to:
+  /// **'This target has no verified portable note URL.'**
+  String get referenceNoPortableId;
 }
 
 class _AppLocalizationsDelegate

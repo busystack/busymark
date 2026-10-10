@@ -5030,4 +5030,44 @@ class AppLocalizationsNb extends AppLocalizations {
   @override
   String get notesImportAlreadyImported =>
       'Allerede importert i denne operasjonen';
+
+  @override
+  String get references => 'Referanser';
+
+  @override
+  String get referenceIncoming => 'Innkommende';
+
+  @override
+  String get referenceOutgoing => 'Utgående';
+
+  @override
+  String get referenceChooseTarget => 'Velg lenkemål';
+
+  @override
+  String get referenceWholeDocument => 'Hele dokumentet';
+
+  @override
+  String get referenceSourceLocation => 'Kildeplassering';
+
+  @override
+  String get referenceTargetLocation => 'Målplassering';
+
+  @override
+  String get referenceResolved => 'Løst';
+
+  @override
+  String get referenceMissing => 'Mangler';
+
+  @override
+  String get referenceAmbiguous => 'Tvetydig';
+
+  @override
+  String get referenceUnavailable => 'Utilgjengelig i denne konteksten';
+
+  @override
+  String get referenceUnsupported => 'Ikke støttet';
+
+  @override
+  String get referenceNoPortableId =>
+      'Dette målet har ingen bekreftet portabel notatadresse.';
 }

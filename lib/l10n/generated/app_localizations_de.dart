@@ -5071,4 +5071,44 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get notesImportAlreadyImported =>
       'In diesem Vorgang bereits importiert';
+
+  @override
+  String get references => 'Verweise';
+
+  @override
+  String get referenceIncoming => 'Eingehend';
+
+  @override
+  String get referenceOutgoing => 'Ausgehend';
+
+  @override
+  String get referenceChooseTarget => 'Linkziel auswählen';
+
+  @override
+  String get referenceWholeDocument => 'Gesamtes Dokument';
+
+  @override
+  String get referenceSourceLocation => 'Quellposition';
+
+  @override
+  String get referenceTargetLocation => 'Zielposition';
+
+  @override
+  String get referenceResolved => 'Aufgelöst';
+
+  @override
+  String get referenceMissing => 'Fehlt';
+
+  @override
+  String get referenceAmbiguous => 'Mehrdeutig';
+
+  @override
+  String get referenceUnavailable => 'In diesem Kontext nicht verfügbar';
+
+  @override
+  String get referenceUnsupported => 'Nicht unterstützt';
+
+  @override
+  String get referenceNoPortableId =>
+      'Dieses Ziel hat keine bestätigte portable Notiz-URL.';
 }

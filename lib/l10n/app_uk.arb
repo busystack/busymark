@@ -3524,5 +3524,18 @@
   "notesCompleted": "Завершено",
   "notesImportNew": "Почати новий імпорт",
   "notesImportResume": "Продовжити перерваний імпорт",
-  "notesImportAlreadyImported": "Уже імпортовано в цій операції"
+  "notesImportAlreadyImported": "Уже імпортовано в цій операції",
+  "references": "Посилання",
+  "referenceIncoming": "Вхідні",
+  "referenceOutgoing": "Вихідні",
+  "referenceChooseTarget": "Виберіть ціль посилання",
+  "referenceWholeDocument": "Увесь документ",
+  "referenceSourceLocation": "Позиція джерела",
+  "referenceTargetLocation": "Позиція цілі",
+  "referenceResolved": "Знайдено",
+  "referenceMissing": "Відсутнє",
+  "referenceAmbiguous": "Неоднозначне",
+  "referenceUnavailable": "Недоступне в цьому контексті",
+  "referenceUnsupported": "Не підтримується",
+  "referenceNoPortableId": "Ця ціль не має перевіреної переносної URL-адреси нотатки."
 }

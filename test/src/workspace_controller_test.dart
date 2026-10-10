@@ -43,6 +43,7 @@ import 'package:xml/xml.dart';
 void main() {
   _registerResponsivenessTests();
   _registerCorrectionBoundaryTests();
+  _registerReferenceMoveTests();
   test(
     'XML visual edits use buffer history, save and reopen without Markdown conversion',
     () async {
@@ -6700,4 +6701,55 @@ class _RemovalNavigationWorkspaceService extends WorkspaceService {
     preparations++;
     return super.prepareDocument(workspace, buffer, sources);
   }
+}
+
+void _registerReferenceMoveTests() {
+  test(
+    'ordinary local rename refuses unreviewed links and dirty buffers and preserves tab identity after reviewed application',
+    () async {
+      final root = await Directory.systemTemp.createTemp(
+        'busymark-reviewed-rename-',
+      );
+      addTearDown(() => root.delete(recursive: true));
+      final source = File(p.join(root.path, 'source.md')),
+          target = File(p.join(root.path, 'target.md'));
+      await source.writeAsString('[target](target.md)');
+      await target.writeAsString('# Target');
+      final harness = await _createControllerHarness();
+      await harness.settingsController.setAutoSave(false);
+      final controller = harness.controller._notifier;
+      await controller.openPath(root.path);
+      await controller.openActiveFile(target.path);
+      final id = controller.state.activeBuffer!.id;
+      expect(
+        await controller.renameWorkspaceEntity(target.path, 'renamed.md'),
+        isFalse,
+      );
+      expect(await source.readAsString(), '[target](target.md)');
+      controller.updateActiveText('# Dirty');
+      await expectLater(
+        controller.prepareMarkdownMove(
+          target.path,
+          p.join(root.path, 'renamed.md'),
+        ),
+        throwsA(anything),
+      );
+      expect(await controller.saveActive(), isTrue);
+      final plan = await controller.prepareMarkdownMove(
+        target.path,
+        p.join(root.path, 'renamed.md'),
+      );
+      expect(
+        await controller.renameWorkspaceEntity(
+          target.path,
+          'renamed.md',
+          reviewedPlan: plan,
+        ),
+        isTrue,
+      );
+      expect(controller.state.activeBuffer!.id, id);
+      expect(controller.state.activeBuffer!.text, '# Dirty');
+      expect(await source.readAsString(), '[target](renamed.md)');
+    },
+  );
 }

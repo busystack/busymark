@@ -5064,4 +5064,44 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get notesImportAlreadyImported => 'قبلاً در این عملیات وارد شده است';
+
+  @override
+  String get references => 'ارجاع‌ها';
+
+  @override
+  String get referenceIncoming => 'ورودی';
+
+  @override
+  String get referenceOutgoing => 'خروجی';
+
+  @override
+  String get referenceChooseTarget => 'انتخاب مقصد پیوند';
+
+  @override
+  String get referenceWholeDocument => 'کل سند';
+
+  @override
+  String get referenceSourceLocation => 'مکان منبع';
+
+  @override
+  String get referenceTargetLocation => 'مکان مقصد';
+
+  @override
+  String get referenceResolved => 'حل‌شده';
+
+  @override
+  String get referenceMissing => 'یافت نشد';
+
+  @override
+  String get referenceAmbiguous => 'مبهم';
+
+  @override
+  String get referenceUnavailable => 'در این زمینه در دسترس نیست';
+
+  @override
+  String get referenceUnsupported => 'پشتیبانی نمی‌شود';
+
+  @override
+  String get referenceNoPortableId =>
+      'این مقصد نشانی قابل‌انتقال و تأییدشده‌ای برای یادداشت ندارد.';
 }

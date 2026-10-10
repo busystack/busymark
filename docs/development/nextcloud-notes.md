@@ -63,6 +63,24 @@ Unknown/malformed/prerelease app versions conservatively disable DELETE. An
 unsupported cleanup attempt explains the limitation before queuing any operation;
 notes and attachment upload/download remain available.
 
+## Retrieval coverage
+
+[API coverage](nextcloud-notes-api-coverage.md) records the supported request
+scopes. Single-note conditional retrieval returns a distinct not-modified result
+with its complete cached server representation. Linked-note opening benefits
+from this path; it does not add a synchronization poller. A 304 does not
+acknowledge pending writes, clear conflicts, or replace dirty content. Cached
+notes open offline and an uncached linked ID uses the existing authenticated
+repository boundary. Account and base generations fence asynchronous replies.
+
+Optional category/projection queries retain their immutable request scope and
+all pagination parameters. Missing fields remain absent, including an explicitly
+excluded ID; reduced payloads never become complete NoteState objects. These
+reads use no collection validator/checkpoint and never infer account deletions.
+The authoritative full-account list strategy and local category/search workflows
+remain unchanged. Portable note URLs and reference workflows are described in
+[the user guide](../references.md).
+
 ## Authentication and credential boundary
 
 Anonymous Login Flow v2 opens the returned URL with `url_launcher` in the default

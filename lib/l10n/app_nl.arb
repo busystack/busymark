@@ -5037,5 +5037,18 @@
   "notesCompleted": "Voltooid",
   "notesImportNew": "Nieuwe import starten",
   "notesImportResume": "Onderbroken import hervatten",
-  "notesImportAlreadyImported": "Al geïmporteerd in deze bewerking"
+  "notesImportAlreadyImported": "Al geïmporteerd in deze bewerking",
+  "references": "Verwijzingen",
+  "referenceIncoming": "Inkomend",
+  "referenceOutgoing": "Uitgaand",
+  "referenceChooseTarget": "Linkdoel kiezen",
+  "referenceWholeDocument": "Heel document",
+  "referenceSourceLocation": "Bronlocatie",
+  "referenceTargetLocation": "Doellocatie",
+  "referenceResolved": "Opgelost",
+  "referenceMissing": "Ontbreekt",
+  "referenceAmbiguous": "Dubbelzinnig",
+  "referenceUnavailable": "Niet beschikbaar in deze context",
+  "referenceUnsupported": "Niet ondersteund",
+  "referenceNoPortableId": "Dit doel heeft geen geverifieerde overdraagbare notitie-URL."
 }

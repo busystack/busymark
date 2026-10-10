@@ -3498,5 +3498,18 @@
   "notesCompleted": "पूर्ण",
   "notesImportNew": "नया आयात शुरू करें",
   "notesImportResume": "बाधित आयात फिर से शुरू करें",
-  "notesImportAlreadyImported": "इस प्रक्रिया में पहले ही आयात किया गया"
+  "notesImportAlreadyImported": "इस प्रक्रिया में पहले ही आयात किया गया",
+  "references": "संदर्भ",
+  "referenceIncoming": "आने वाले",
+  "referenceOutgoing": "जाने वाले",
+  "referenceChooseTarget": "लिंक लक्ष्य चुनें",
+  "referenceWholeDocument": "पूरा दस्तावेज़",
+  "referenceSourceLocation": "स्रोत स्थान",
+  "referenceTargetLocation": "लक्ष्य स्थान",
+  "referenceResolved": "हल हुआ",
+  "referenceMissing": "गुम",
+  "referenceAmbiguous": "अस्पष्ट",
+  "referenceUnavailable": "इस संदर्भ में अनुपलब्ध",
+  "referenceUnsupported": "असमर्थित",
+  "referenceNoPortableId": "इस लक्ष्य का सत्यापित पोर्टेबल नोट URL नहीं है."
 }

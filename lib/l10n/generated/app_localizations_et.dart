@@ -5026,4 +5026,44 @@ class AppLocalizationsEt extends AppLocalizations {
 
   @override
   String get notesImportAlreadyImported => 'Selles toimingus juba imporditud';
+
+  @override
+  String get references => 'Viited';
+
+  @override
+  String get referenceIncoming => 'Sissetulevad';
+
+  @override
+  String get referenceOutgoing => 'Väljaminevad';
+
+  @override
+  String get referenceChooseTarget => 'Vali lingi siht';
+
+  @override
+  String get referenceWholeDocument => 'Kogu dokument';
+
+  @override
+  String get referenceSourceLocation => 'Allika asukoht';
+
+  @override
+  String get referenceTargetLocation => 'Sihtkoha asukoht';
+
+  @override
+  String get referenceResolved => 'Lahendatud';
+
+  @override
+  String get referenceMissing => 'Puudub';
+
+  @override
+  String get referenceAmbiguous => 'Mitmetähenduslik';
+
+  @override
+  String get referenceUnavailable => 'Selles kontekstis pole saadaval';
+
+  @override
+  String get referenceUnsupported => 'Pole toetatud';
+
+  @override
+  String get referenceNoPortableId =>
+      'Sellel sihtkohal pole kinnitatud teisaldatavat märkme URL-i.';
 }

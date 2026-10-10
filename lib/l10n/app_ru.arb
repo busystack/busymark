@@ -3524,5 +3524,18 @@
   "notesCompleted": "Завершено",
   "notesImportNew": "Начать новый импорт",
   "notesImportResume": "Продолжить прерванный импорт",
-  "notesImportAlreadyImported": "Уже импортировано в этой операции"
+  "notesImportAlreadyImported": "Уже импортировано в этой операции",
+  "references": "Ссылки",
+  "referenceIncoming": "Входящие",
+  "referenceOutgoing": "Исходящие",
+  "referenceChooseTarget": "Выберите цель ссылки",
+  "referenceWholeDocument": "Весь документ",
+  "referenceSourceLocation": "Положение источника",
+  "referenceTargetLocation": "Положение цели",
+  "referenceResolved": "Найдена",
+  "referenceMissing": "Отсутствует",
+  "referenceAmbiguous": "Неоднозначная",
+  "referenceUnavailable": "Недоступна в этом контексте",
+  "referenceUnsupported": "Не поддерживается",
+  "referenceNoPortableId": "У этой цели нет проверенного переносимого URL заметки."
 }

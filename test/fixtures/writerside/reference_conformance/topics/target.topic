@@ -1,0 +1,5 @@
+<topic id="target" title="Reference target">
+  <chapter id="actual-id" title="Actual target"><p>Element destination.</p></chapter>
+  <snippet id="reusable-piece"><p>Authored reusable content.</p></snippet>
+  <p><a href="source.md#explicit-heading">XML semantic link</a></p>
+</topic>

@@ -1,3 +1,4 @@
+import '../link_destination.dart';
 import '../../assets/document_media_context.dart';
 import 'dart:async';
 import 'dart:io';
@@ -118,6 +119,7 @@ class BusyMarkWysiwygEditor extends StatefulWidget {
     this.clipboardInsertionRegistry,
     this.onClipboardCaptured,
     this.onAssetSaveRequired,
+    this.onChooseLink,
     this.allowRemoteImages = false,
     this.onRemoteImageBlocked,
     this.toolbarPlacement = EditorToolbarPlacement.topLeft,
@@ -166,6 +168,7 @@ class BusyMarkWysiwygEditor extends StatefulWidget {
   final BusyMarkClipboardInsertionRegistry? clipboardInsertionRegistry;
   final ValueChanged<BusyMarkClipboardCapture>? onClipboardCaptured;
   final VoidCallback? onAssetSaveRequired;
+  final Future<LinkDestination?> Function(String initial)? onChooseLink;
   final bool allowRemoteImages;
   final VoidCallback? onRemoteImageBlocked;
   final EditorToolbarPlacement toolbarPlacement;
@@ -5073,7 +5076,7 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       );
       if (!_isDialogTargetCurrent(target) ||
           destination == null ||
-          destination.trim().isEmpty) {
+          destination.href.trim().isEmpty) {
         return;
       }
       _recordUndoSnapshot();
@@ -5083,7 +5086,10 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
           BusyWysiwygInlineCommand.link,
           range.start,
           range.end,
-          destination: destination.trim(),
+          destination: destination.href.trim(),
+          linkAttributes: destination.origin == null
+              ? const {}
+              : {'origin': destination.origin!},
         );
       }
       _clearBlockSelection();
@@ -5129,7 +5135,7 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     );
     if (!_isDialogTargetCurrent(dialogTarget) ||
         destination == null ||
-        destination.trim().isEmpty) {
+        destination.href.trim().isEmpty) {
       return;
     }
     _recordUndoSnapshot();
@@ -5138,7 +5144,10 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       BusyWysiwygInlineCommand.link,
       rangeToApply.start,
       rangeToApply.end,
-      destination: destination.trim(),
+      destination: destination.href.trim(),
+      linkAttributes: destination.origin == null
+          ? const {}
+          : {'origin': destination.origin!},
     );
     _emitMarkdown();
   }
@@ -6147,19 +6156,22 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     );
   }
 
-  Future<String?> _showLinkDialog(
+  Future<LinkDestination?> _showLinkDialog(
     BuildContext context, {
     String initialDestination = '',
   }) {
+    if (widget.onChooseLink != null) {
+      return widget.onChooseLink!(initialDestination);
+    }
     var destination = initialDestination;
-    return _showEditorDialog<String>(
+    return _showEditorDialog<LinkDestination>(
       context,
       builder: (context) => BusyMarkModalEditorScaffold(
         title: context.l10n.link,
         cancelLabel: context.l10n.cancel,
         saveLabel: context.l10n.apply,
         onCancel: () => Navigator.pop(context),
-        onSave: () => Navigator.pop(context, destination),
+        onSave: () => Navigator.pop(context, LinkDestination(destination)),
         children: [
           BusyMarkGroupedList(
             filled: true,
@@ -6176,7 +6188,8 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
                   fontFamilyFallback: BusyMarkTypography.monoFontFamilyFallback,
                 ),
                 hintText: 'https://example.com',
-                onSubmitted: (value) => Navigator.pop(context, value),
+                onSubmitted: (value) =>
+                    Navigator.pop(context, LinkDestination(value)),
               ),
             ],
           ),

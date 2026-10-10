@@ -20,6 +20,7 @@ Markdown, Writerside, and Nextcloud Notes editor for Linux.
 * **Markdown editing** — Source, Editor, Reading, and Split views with formatting tools, syntax highlighting, code folding, tables, images, links, code blocks, callouts, collapsible content, and document diagnostics.
 * **Writerside projects** — Open and create Writerside-compatible projects; edit Markdown and XML topics; manage instances, tables of contents, reusable TOC libraries, and project structure.
 * **Nextcloud Notes** — Connect to a Nextcloud server, create and edit notes offline, synchronize changes, search and filter notes, manage categories and favorites, and work with attachments.
+* **References and links** — Incoming/outgoing references, document/topic/heading target chooser, reviewed local Markdown rename/move, and portable Nextcloud note URLs. See [reference workflows](docs/references.md).
 * **Navigation and search** — Files, Topics, and Outline views, tabbed documents, command palette, keyboard shortcuts, document search and replace, reviewed replacement across local workspaces, and Markdown TOC generation.
 * **Technical documentation** — Local rendering of Mermaid, PlantUML, D2, fenced OpenAPI specifications, and MathJax mathematical expressions.
 * **PDF and HTML publishing** — Export Markdown documents and Writerside instances to configurable PDF or portable offline HTML, with controls for layout, typography, tables of contents, heading numbering, and HTML styling.

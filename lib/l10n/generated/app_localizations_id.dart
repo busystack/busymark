@@ -5026,4 +5026,44 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get notesImportAlreadyImported => 'Sudah diimpor dalam operasi ini';
+
+  @override
+  String get references => 'Referensi';
+
+  @override
+  String get referenceIncoming => 'Masuk';
+
+  @override
+  String get referenceOutgoing => 'Keluar';
+
+  @override
+  String get referenceChooseTarget => 'Pilih tujuan tautan';
+
+  @override
+  String get referenceWholeDocument => 'Seluruh dokumen';
+
+  @override
+  String get referenceSourceLocation => 'Lokasi sumber';
+
+  @override
+  String get referenceTargetLocation => 'Lokasi tujuan';
+
+  @override
+  String get referenceResolved => 'Terselesaikan';
+
+  @override
+  String get referenceMissing => 'Tidak ditemukan';
+
+  @override
+  String get referenceAmbiguous => 'Ambigu';
+
+  @override
+  String get referenceUnavailable => 'Tidak tersedia dalam konteks ini';
+
+  @override
+  String get referenceUnsupported => 'Tidak didukung';
+
+  @override
+  String get referenceNoPortableId =>
+      'Tujuan ini tidak memiliki URL catatan portabel yang terverifikasi.';
 }

@@ -5037,5 +5037,18 @@
   "notesCompleted": "Hoàn tất",
   "notesImportNew": "Bắt đầu nhập mới",
   "notesImportResume": "Tiếp tục lần nhập bị gián đoạn",
-  "notesImportAlreadyImported": "Đã nhập trong thao tác này"
+  "notesImportAlreadyImported": "Đã nhập trong thao tác này",
+  "references": "Tham chiếu",
+  "referenceIncoming": "Đến",
+  "referenceOutgoing": "Đi",
+  "referenceChooseTarget": "Chọn đích liên kết",
+  "referenceWholeDocument": "Toàn bộ tài liệu",
+  "referenceSourceLocation": "Vị trí nguồn",
+  "referenceTargetLocation": "Vị trí đích",
+  "referenceResolved": "Đã phân giải",
+  "referenceMissing": "Không tìm thấy",
+  "referenceAmbiguous": "Không rõ ràng",
+  "referenceUnavailable": "Không khả dụng trong ngữ cảnh này",
+  "referenceUnsupported": "Không được hỗ trợ",
+  "referenceNoPortableId": "Đích này không có URL ghi chú di động đã xác minh."
 }

@@ -5040,4 +5040,44 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get notesImportAlreadyImported => 'Already imported in this operation';
+
+  @override
+  String get references => 'References';
+
+  @override
+  String get referenceIncoming => 'Incoming';
+
+  @override
+  String get referenceOutgoing => 'Outgoing';
+
+  @override
+  String get referenceChooseTarget => 'Choose link target';
+
+  @override
+  String get referenceWholeDocument => 'Whole document';
+
+  @override
+  String get referenceSourceLocation => 'Source location';
+
+  @override
+  String get referenceTargetLocation => 'Target location';
+
+  @override
+  String get referenceResolved => 'Resolved';
+
+  @override
+  String get referenceMissing => 'Missing';
+
+  @override
+  String get referenceAmbiguous => 'Ambiguous';
+
+  @override
+  String get referenceUnavailable => 'Unavailable in this context';
+
+  @override
+  String get referenceUnsupported => 'Unsupported';
+
+  @override
+  String get referenceNoPortableId =>
+      'This target has no verified portable note URL.';
 }

@@ -3540,5 +3540,18 @@
   "notesCompleted": "تکمیل شد",
   "notesImportNew": "شروع وارد کردن جدید",
   "notesImportResume": "ادامه وارد کردن متوقف‌شده",
-  "notesImportAlreadyImported": "قبلاً در این عملیات وارد شده است"
+  "notesImportAlreadyImported": "قبلاً در این عملیات وارد شده است",
+  "references": "ارجاع‌ها",
+  "referenceIncoming": "ورودی",
+  "referenceOutgoing": "خروجی",
+  "referenceChooseTarget": "انتخاب مقصد پیوند",
+  "referenceWholeDocument": "کل سند",
+  "referenceSourceLocation": "مکان منبع",
+  "referenceTargetLocation": "مکان مقصد",
+  "referenceResolved": "حل‌شده",
+  "referenceMissing": "یافت نشد",
+  "referenceAmbiguous": "مبهم",
+  "referenceUnavailable": "در این زمینه در دسترس نیست",
+  "referenceUnsupported": "پشتیبانی نمی‌شود",
+  "referenceNoPortableId": "این مقصد نشانی قابل‌انتقال و تأییدشده‌ای برای یادداشت ندارد."
 }

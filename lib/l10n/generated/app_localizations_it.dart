@@ -5070,4 +5070,44 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get notesImportAlreadyImported => 'Già importato in questa operazione';
+
+  @override
+  String get references => 'Riferimenti';
+
+  @override
+  String get referenceIncoming => 'In entrata';
+
+  @override
+  String get referenceOutgoing => 'In uscita';
+
+  @override
+  String get referenceChooseTarget => 'Scegli destinazione del collegamento';
+
+  @override
+  String get referenceWholeDocument => 'Intero documento';
+
+  @override
+  String get referenceSourceLocation => 'Posizione di origine';
+
+  @override
+  String get referenceTargetLocation => 'Posizione di destinazione';
+
+  @override
+  String get referenceResolved => 'Risolto';
+
+  @override
+  String get referenceMissing => 'Mancante';
+
+  @override
+  String get referenceAmbiguous => 'Ambiguo';
+
+  @override
+  String get referenceUnavailable => 'Non disponibile in questo contesto';
+
+  @override
+  String get referenceUnsupported => 'Non supportato';
+
+  @override
+  String get referenceNoPortableId =>
+      'Questa destinazione non ha un URL portabile della nota verificato.';
 }

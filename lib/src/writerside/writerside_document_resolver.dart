@@ -91,6 +91,62 @@ class ResolvedWritersideDocument {
 class WritersideDocumentResolver {
   const WritersideDocumentResolver();
 
+  /// Authored-reference inspection uses exactly the publication link resolver.
+  Map<String, String> resolveAuthoredLink({
+    required WritersideResolveContext context,
+    required WritersideDocumentNode node,
+    required String destination,
+    String? origin,
+  }) {
+    if (destination.contains('%')) {
+      // Resolve lexical variables and instance conditions through the same
+      // authored tree used by preview; retain the original occurrence span.
+      final resolved = resolve(context.topic.document, context).document;
+      final link = resolved
+          .walk()
+          .whereType<WritersideElementNode>()
+          .where(
+            (candidate) =>
+                candidate.semanticKind == WritersideSemanticKind.link &&
+                candidate.span.filePath == node.span.filePath &&
+                candidate.span.startOffset == node.span.startOffset,
+          )
+          .firstOrNull;
+      if (link != null) return link.attributes;
+    }
+    return _ResolveState(context)._resolveLink(
+      {'href': destination, if (origin != null) 'origin': origin},
+      module: context.module,
+      topic: context.topic,
+      node: node,
+    );
+  }
+
+  bool matchesInstance(
+    String? condition,
+    WritersideModule module,
+    WritersideInstance? instance,
+  ) => _matchesWritersideInstance(condition, module, instance);
+
+  bool authoredIncludeAvailable({
+    required WritersideResolveContext context,
+    required WritersideElementNode include,
+  }) {
+    final state = _ResolveState(context);
+    if (!state._matchesConditions(include.attributes, null, context.module)) {
+      return false;
+    }
+    final result = state._resolveInclude(
+      include,
+      module: context.module,
+      topic: context.topic,
+      variables: const {},
+      includeStack: <String>{},
+      inheritedIgnoreVariables: false,
+    );
+    return result.isNotEmpty && !result.any((n) => identical(n, include));
+  }
+
   /// Navigation-only attributes share the renderer's condition and variable
   /// engine, without manufacturing a document for groups and external links.
   String resolveNavigationTitle(

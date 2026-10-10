@@ -1,3 +1,5 @@
+import 'dart:isolate';
+import 'package:busymark/src/references/reference_index.dart';
 // Reproducible real SQLite corpus. Run with `dart build cli` for AOT timing.
 import 'dart:convert';
 import 'dart:io';
@@ -151,7 +153,90 @@ Future<void> main(List<String> args) async {
   }
   await queryingImports;
   importTimes.sort();
+  final referenceDocuments = notes
+      .map(
+        (note) => ReferenceDocument(
+          identity: note.localId,
+          localId: note.localId,
+          serverId: note.serverId,
+          title: note.title,
+          source:
+              '${note.content}\n# Technical\n[related](https://benchmark.invalid/index.php/apps/notes/note/${note.serverId! % 10000 + 1}) '
+              '[same](#technical) [reference][related]\n\n[related]: https://benchmark.invalid/index.php/apps/notes/note/${note.serverId! % 10000 + 1}\n',
+        ),
+      )
+      .toList();
+  final referenceRss = ProcessInfo.currentRss;
+  final initialReferences = Stopwatch()..start();
+  final referenceWork = _buildReferenceIndex(referenceDocuments);
+  final referenceSaveTimes = <double>[];
+  for (var i = 0; i < 20; i++) {
+    final watch = Stopwatch()..start();
+    await store.saveNote(
+      notes[i].copyWith(
+        content: '${notes[i].content}\nreference workload save $i',
+        revision: 4,
+      ),
+    );
+    referenceSaveTimes.add(watch.elapsedMicroseconds / 1000);
+  }
+  final referenceSearch = Stopwatch()..start();
+  await search.search('token42');
+  referenceSearch.stop();
+  final referenceIndex = await referenceWork;
+  initialReferences.stop();
+  final incremental = Stopwatch()..start();
+  final changed = ReferenceDocument(
+    identity: referenceDocuments.first.identity,
+    localId: referenceDocuments.first.localId,
+    serverId: 1,
+    title: referenceDocuments.first.title,
+    source: '${referenceDocuments.first.source}\n[new](#technical)',
+  );
+  final updated = await _parseReferenceDocument(changed);
+  final updatedIndex = ReferenceIndex(
+    parsed: [
+      for (final value in referenceIndex.parsedDocuments)
+        value.document.identity == changed.identity ? updated : value,
+    ],
+    server: referenceIndex.server,
+    previous: referenceIndex,
+  );
+  if (updatedIndex.query(changed.identity).total < 4) {
+    throw StateError('Incremental reference update failed.');
+  }
+  incremental.stop();
+  final referenceQueryTimes = <double>[];
+  for (var i = 0; i < 100; i++) {
+    final watch = Stopwatch()..start();
+    final page = referenceIndex.query(
+      referenceDocuments[i].identity,
+      incoming: i.isOdd,
+    );
+    if (page.total < 1) throw StateError('Reference corpus query failed.');
+    referenceQueryTimes.add(watch.elapsedMicroseconds / 1000);
+  }
+  referenceQueryTimes.sort();
+  referenceSaveTimes.sort();
+  final referenceReport = {
+    'documentCount': referenceDocuments.length,
+    'occurrenceCount': referenceIndex.references.length,
+    'corpusUtf8Bytes': referenceDocuments.fold<int>(
+      0,
+      (n, d) => n + utf8.encode(d.source).length,
+    ),
+    'initialIndexMilliseconds': initialReferences.elapsedMilliseconds,
+    'incrementalDocumentMilliseconds': incremental.elapsedMicroseconds / 1000,
+    'queryMedianMilliseconds': referenceQueryTimes[50],
+    'queryP95Milliseconds': referenceQueryTimes[95],
+    'searchDuringIndexMilliseconds': referenceSearch.elapsedMicroseconds / 1000,
+    'saveDuringIndexMedianMilliseconds': referenceSaveTimes[10],
+    'saveDuringIndexP95Milliseconds': referenceSaveTimes[19],
+    'rssBeforeBytes': referenceRss,
+    'rssAfterBytes': ProcessInfo.currentRss,
+  };
   final report = {
+    'references': referenceReport,
     'count': 10000,
     'categories': notes.map((n) => n.category).toSet().length,
     'duplicateTitleCount': 250,
@@ -191,3 +276,15 @@ Future<void> main(List<String> args) async {
   await search.dispose();
   await repository.dispose();
 }
+
+Future<ReferenceIndex> _buildReferenceIndex(
+  List<ReferenceDocument> documents,
+) => Isolate.run(
+  () => ReferenceIndex(
+    parsed: documents.map(ParsedReferenceDocument.new).toList(),
+    server: Uri.parse('https://benchmark.invalid'),
+  ),
+);
+Future<ParsedReferenceDocument> _parseReferenceDocument(
+  ReferenceDocument document,
+) => Isolate.run(() => ParsedReferenceDocument(document));
