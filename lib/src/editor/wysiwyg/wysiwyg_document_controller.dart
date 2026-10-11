@@ -5,12 +5,16 @@ import '../../markdown/busymark_document.dart';
 import '../../markdown/busymark_markdown_serializer.dart';
 import '../../markdown/markdown_model.dart';
 import '../../markdown/markdown_parser.dart';
+import '../../markdown/markdown_front_matter.dart';
 import '../../markdown/math_syntax.dart';
 import '../../markdown/raw_html_adapter.dart';
 import '../../spellcheck/spelling_replacement.dart';
 import '../inline_semantics.dart';
 import 'wysiwyg_commands.dart';
 import 'wysiwyg_inline_controller.dart';
+import 'writerside_editing_adapter.dart';
+import '../../writerside/writerside_schema.dart';
+import '../../writerside/writerside_project.dart';
 
 BusyBlock busyMarkWysiwygImmutableBlockSnapshot(BusyBlock block) {
   BusyInline snapshotInline(BusyInline inline) {
@@ -52,7 +56,9 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
   BusyMarkWysiwygDocumentController({
     required BusyDocument document,
     BusyMarkMarkdownSerializer serializer = const BusyMarkMarkdownSerializer(),
-  }) : _document = _ensureEditableDocument(document),
+  }) : _document = _ensureEditableDocument(
+         busyMarkWysiwygBindMarkdownReferences(document),
+       ),
        _serializer = serializer;
 
   BusyDocument _document;
@@ -61,7 +67,15 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
 
   BusyDocument get document => _document;
 
-  String get markdown => _serializer.serialize(_document);
+  String get markdown => _document.isXmlTopic
+      ? const WritersideEditingAdapter().serializeXml(_document)
+      : _serializer.serialize(_document);
+
+  void rebaseCommittedSource(String source) {
+    if (_document.isXmlTopic) {
+      _document = const WritersideEditingAdapter().rebaseXml(_document, source);
+    }
+  }
 
   @override
   void notifyListeners() {
@@ -70,13 +84,739 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
   }
 
   void replaceDocument(BusyDocument document) {
-    _document = _ensureEditableDocument(document);
+    _document = _ensureEditableDocument(
+      busyMarkWysiwygBindMarkdownReferences(document),
+    );
     notifyListeners();
   }
 
   String blockText(String blockId) {
     final block = blockById(blockId);
     return block == null ? '' : busyMarkWysiwygEditableText(block);
+  }
+
+  List<BusyBlock> elementPath(String blockId) {
+    List<BusyBlock>? find(List<BusyBlock> blocks) {
+      for (final block in blocks) {
+        if (block.id == blockId) return [block];
+        final path = find(block.children);
+        if (path != null) return [block, ...path];
+      }
+      return null;
+    }
+
+    final path = find(_document.blocks) ?? [];
+    if (!_document.isXmlTopic && path.isNotEmpty) {
+      final rootIndex = _document.blocks.indexWhere(
+        (b) => b.id == path.first.id,
+      );
+      final headings = <BusyBlock>[];
+      for (final candidate in _document.blocks.take(rootIndex + 1)) {
+        if (candidate.kind != BusyBlockKind.heading) continue;
+        final level = int.tryParse(candidate.attributes['level'] ?? '') ?? 1;
+        headings.removeWhere(
+          (h) => (int.tryParse(h.attributes['level'] ?? '') ?? 1) >= level,
+        );
+        if (candidate.id != blockId) headings.add(candidate);
+      }
+      return [...headings, ...path];
+    }
+    return path;
+  }
+
+  List<String> availableVariableReferences(
+    WritersideProjectIndex index,
+    String moduleId,
+    String blockId,
+  ) {
+    final target = blockById(blockId);
+    if (target == null) {
+      return const [];
+    }
+    final names = <String>{
+      for (final s in index.symbols)
+        if (s.moduleId == moduleId &&
+            s.kind == WritersideSymbolKind.variable &&
+            s.scopeSpan == null)
+          s.name,
+    };
+    // Read local declarations from authored parents, avoiding stale index
+    // offsets after structural edits. Markdown root declarations share topic
+    // scope, while a declaration inside a tab/chapter remains in that parent.
+    final scopes = [
+      if (!_document.isXmlTopic) _document.blocks,
+      for (final parent in elementPath(blockId)) parent.children,
+    ];
+    for (final children in scopes) {
+      for (final child in children) {
+        final name = child.attributes['name'];
+        if (child.attributes['element'] == 'var' && name != null) {
+          names.add(name);
+        }
+      }
+    }
+    return names.toList()..sort();
+  }
+
+  bool canInsertWriterside(
+    BusyWritersideInsertCommand command,
+    String? blockId,
+  ) {
+    if (!_document.isWriterside || blockId == null) return false;
+    final target = blockById(blockId);
+    if (target == null ||
+        target.preserveRaw ||
+        target.isSourceProtected ||
+        target.isGenerated) {
+      return false;
+    }
+    if (command == BusyWritersideInsertCommand.variable) {
+      return !busyMarkIsWritersideContainer(target) &&
+          target.kind == BusyBlockKind.paragraph;
+    }
+    if (command == BusyWritersideInsertCommand.convertListToProcedure) {
+      return _listToProcedureSelection(blockId) != null;
+    }
+    final parent = _insertionParent(target);
+    final tag = switch (command) {
+      BusyWritersideInsertCommand.procedure => 'procedure',
+      BusyWritersideInsertCommand.tabs => 'tabs',
+      BusyWritersideInsertCommand.definitionList => 'deflist',
+      BusyWritersideInsertCommand.include => 'include',
+      BusyWritersideInsertCommand.video => 'video',
+      BusyWritersideInsertCommand.tldr => 'tldr',
+      _ => '',
+    };
+    final parentTag = parent == null
+        ? 'topic'
+        : parent.attributes['element'] ?? 'chapter';
+    if (!WritersideSchema.childElementNames(parentTag).contains(tag)) {
+      return false;
+    }
+    if (command == BusyWritersideInsertCommand.tldr) {
+      if (!{'topic', 'chapter'}.contains(parentTag)) return false;
+      final siblings = parent?.children ?? _document.blocks;
+      if (_document.isXmlTopic ||
+          parent != null && busyMarkIsWritersideContainer(parent)) {
+        if (siblings.any((b) => b.attributes['element'] == 'tldr')) {
+          return false;
+        }
+      } else if (_document.blocks.any(
+        (b) =>
+            b.attributes['element'] == 'tldr' &&
+            elementPath(b.id)
+                    .where((p) => p.kind == BusyBlockKind.heading)
+                    .lastOrNull
+                    ?.id ==
+                parent?.id,
+      )) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  BusyBlock? _insertionParent(BusyBlock target) {
+    if (!_document.isXmlTopic && target.kind == BusyBlockKind.heading) {
+      return target;
+    }
+    if (busyMarkIsWritersideContainer(target) &&
+        !{
+          'tabs',
+          'deflist',
+          'list',
+          'procedure',
+        }.contains(target.attributes['element'])) {
+      return target;
+    }
+    final path = elementPath(target.id);
+    for (final parent in path.reversed.skip(1)) {
+      if (busyMarkIsWritersideContainer(parent)) return parent;
+      if (!_document.isXmlTopic && parent.kind == BusyBlockKind.heading) {
+        return parent;
+      }
+    }
+    return null;
+  }
+
+  BusyBlock _newWritersideElement(
+    String tag, {
+    String title = '',
+    Map<String, String> attributes = const {},
+    List<BusyBlock> children = const [],
+  }) {
+    final container = WritersideEditingAdapter.containers.contains(tag);
+    return BusyBlock(
+      id: _nextGeneratedBlockId(tag),
+      kind: switch (tag) {
+        'procedure' => BusyBlockKind.writersideProcedure,
+        'tabs' || 'tab' => BusyBlockKind.writersideTabs,
+        'video' => BusyBlockKind.video,
+        'p' => BusyBlockKind.paragraph,
+        _ => BusyBlockKind.writersideRawXml,
+      },
+      inlines: WritersideEditingAdapter.titleElements.contains(tag)
+          ? [BusyInline(kind: BusyInlineKind.text, text: title)]
+          : const [],
+      children: children,
+      dirty: true,
+      attributes: {
+        'element': tag,
+        ...attributes,
+        if (container) busyMarkWritersideContainerAttribute: 'true',
+        if (WritersideEditingAdapter.titleElements.contains(tag))
+          'title': title,
+      },
+    );
+  }
+
+  String? insertWriterside(
+    BusyWritersideInsertCommand command,
+    String blockId, {
+    required String title,
+    Map<String, String> attributes = const {},
+  }) {
+    if (!canInsertWriterside(command, blockId)) return null;
+    if (command == BusyWritersideInsertCommand.convertListToProcedure) {
+      return convertListToProcedure(blockId, title: title);
+    }
+    final tag = switch (command) {
+      BusyWritersideInsertCommand.procedure => 'procedure',
+      BusyWritersideInsertCommand.tabs => 'tabs',
+      BusyWritersideInsertCommand.definitionList => 'deflist',
+      BusyWritersideInsertCommand.include => 'include',
+      BusyWritersideInsertCommand.video => 'video',
+      BusyWritersideInsertCommand.tldr => 'tldr',
+      _ => '',
+    };
+    if (tag.isEmpty) return null;
+    for (final required in WritersideSchema.requiredAttributesFor(tag)) {
+      if ((attributes[required] ?? '').trim().isEmpty) return null;
+    }
+    final itemTag = switch (tag) {
+      'procedure' => 'step',
+      'tabs' => 'tab',
+      'deflist' => 'def',
+      _ => null,
+    };
+    final inserted = _newWritersideElement(
+      tag,
+      title: title,
+      attributes: attributes,
+      children: itemTag == null
+          ? tag == 'tldr'
+                ? [_newWritersideElement('p')]
+                : []
+          : [
+              _newWritersideElement(
+                itemTag,
+                title: title,
+                children: [_newWritersideElement('p')],
+              ),
+            ],
+    );
+    final target = blockById(blockId)!;
+    final parent = _insertionParent(target);
+    if (parent != null && busyMarkIsWritersideContainer(parent)) {
+      _replaceBlock(parent.id, (block) {
+        final children = [...block.children];
+        var index = children.indexWhere((b) => b.id == target.id);
+        if (tag == 'tldr') {
+          index = children.indexWhere(
+            (b) => !b.isSourceOnly && b.attributes['element'] != 'title',
+          );
+          children.insert(index < 0 ? children.length : index, inserted);
+        } else {
+          children.insert(index < 0 ? children.length : index + 1, inserted);
+        }
+        return block.copyWith(children: children, dirty: true);
+      });
+    } else {
+      final anchor = tag == 'tldr' && parent != null ? parent.id : blockId;
+      _document = _document.copyWith(
+        blocks: _insertBlocksAfter(_document.blocks, anchor, [inserted]),
+      );
+      notifyListeners();
+    }
+    return inserted.id;
+  }
+
+  ({BusyBlock? list, List<BusyBlock> items, BusyBlockKind kind})?
+  _listToProcedureSelection(String blockId) {
+    final target = elementPath(
+      blockId,
+    ).where((b) => _isListItemKind(b.kind)).lastOrNull;
+    if (target == null || target.kind == BusyBlockKind.taskListItem) {
+      return null;
+    }
+    final path = elementPath(target.id);
+    final list = path
+        .where((b) => b.attributes['element'] == 'list')
+        .lastOrNull;
+    final siblings =
+        list?.children ??
+        (path.length > 1 && busyMarkIsWritersideContainer(path[path.length - 2])
+            ? path[path.length - 2].children
+            : _document.blocks);
+    final index = siblings.indexWhere((b) => b.id == target.id);
+    if (index < 0) return null;
+    var start = index, end = index + 1;
+    while (start > 0 && siblings[start - 1].kind == target.kind) {
+      start--;
+    }
+    while (end < siblings.length && siblings[end].kind == target.kind) {
+      end++;
+    }
+    final items = list == null
+        ? siblings.sublist(start, end)
+        : siblings.where((b) => !b.isSourceOnly).toList();
+    if (items.any(
+      (b) =>
+          !_isListItemKind(b.kind) ||
+          b.preserveRaw ||
+          b.isSourceProtected ||
+          WritersideEditingAdapter.sourceAttributes(b).keys.any(
+            (a) => !WritersideSchema.attributesFor('step').contains(a),
+          ),
+    )) {
+      return null;
+    }
+    if (list != null &&
+        WritersideEditingAdapter.sourceAttributes(list).keys.any(
+          (a) =>
+              a != 'type' &&
+              !WritersideSchema.attributesFor('procedure').contains(a),
+        )) {
+      return null;
+    }
+    final parentPath = elementPath(list?.id ?? target.id);
+    final parent = parentPath.length > 1
+        ? parentPath[parentPath.length - 2]
+        : null;
+    final parentTag = parent == null
+        ? 'topic'
+        : parent.kind == BusyBlockKind.heading && !_document.isXmlTopic
+        ? 'chapter'
+        : WritersideEditingAdapter.tagForBlock(parent);
+    if (!WritersideSchema.childElementNames(parentTag).contains('procedure')) {
+      return null;
+    }
+    return (list: list, items: items, kind: target.kind);
+  }
+
+  String? convertListToProcedure(String blockId, {required String title}) {
+    final selection = _listToProcedureSelection(blockId);
+    if (selection == null) return null;
+    final list = selection.list;
+    final items = selection.items;
+    final steps = [
+      for (final item in items)
+        _newWritersideElement(
+          'step',
+          attributes: WritersideEditingAdapter.sourceAttributes(item),
+          children: [
+            if (item.inlines.isNotEmpty)
+              BusyBlock(
+                id: _nextGeneratedBlockId('p'),
+                kind: BusyBlockKind.paragraph,
+                inlines: item.inlines,
+                dirty: true,
+              ),
+            ...item.children,
+          ],
+        ),
+    ];
+    final procedure = _newWritersideElement(
+      'procedure',
+      title: title,
+      attributes: {
+        if (list != null) ...{
+          for (final e in WritersideEditingAdapter.sourceAttributes(
+            list,
+          ).entries)
+            if (WritersideSchema.attributesFor('procedure').contains(e.key) &&
+                e.key != 'type')
+              e.key: e.value,
+        },
+        'type': selection.kind == BusyBlockKind.orderedListItem
+            ? 'steps'
+            : 'choices',
+      },
+      children: list == null
+          ? steps
+          : [
+              for (final child in list.children)
+                if (child.isSourceOnly) child else steps[items.indexOf(child)],
+            ],
+    );
+    if (list != null) {
+      _document = _document.copyWith(
+        blocks: _replaceBlockWithMany(_document.blocks, list.id, [procedure]),
+      );
+    } else {
+      var blocks = _document.blocks;
+      for (final item in items) {
+        blocks = _replaceBlockWithMany(
+          blocks,
+          item.id,
+          item == items.first ? [procedure] : [],
+        );
+      }
+      _document = _document.copyWith(blocks: blocks);
+    }
+    notifyListeners();
+    return procedure.id;
+  }
+
+  bool updateWritersideProperty(
+    String blockId,
+    String attribute,
+    String? value,
+  ) {
+    final block = blockById(blockId);
+    if (block == null || block.isSourceProtected || block.preserveRaw) {
+      return false;
+    }
+    final tag = block.kind == BusyBlockKind.heading && !_document.isXmlTopic
+        ? 'chapter'
+        : WritersideEditingAdapter.tagForBlock(block);
+    final name = attribute == 'language' ? 'lang' : attribute;
+    if (name == 'id' &&
+        value != null &&
+        value.isNotEmpty &&
+        _flatten(_document.blocks).any(
+          (b) =>
+              b.id != blockId &&
+              b.attributes['id'] == value &&
+              b.attributes['generatedId'] != 'true',
+        )) {
+      return false;
+    }
+    if (block.kind == BusyBlockKind.heading &&
+        !_document.isXmlTopic &&
+        block.attributes['level'] == '1' &&
+        {'collapsible', 'default-state'}.contains(name)) {
+      return false;
+    }
+    if (!WritersideSchema.attributesFor(tag).contains(name)) return false;
+    if (value != null &&
+        WritersideSchema.invalidAttributeValue(tag, name, value) != null) {
+      return false;
+    }
+    if ((value == null || value.isEmpty) &&
+        WritersideSchema.requiredAttributesFor(tag).contains(name)) {
+      return false;
+    }
+    if (block.attributes[attribute] == value) return false;
+    _replaceBlock(blockId, (block) {
+      final attrs = {...block.attributes};
+      if (value == null || value.isEmpty) {
+        attrs.remove(attribute);
+      } else {
+        attrs[attribute] = value;
+      }
+      if (attribute == 'language' && attrs['element'] == 'code-block') {
+        attrs['lang'] = value ?? '';
+      }
+      if (attribute == 'id' && block.kind == BusyBlockKind.heading) {
+        attrs['generatedId'] = 'false';
+      }
+      return block.copyWith(
+        attributes: attrs,
+        dirty: true,
+        inlines: attribute == 'title' && busyMarkIsWritersideContainer(block)
+            ? [BusyInline(kind: BusyInlineKind.text, text: value ?? '')]
+            : block.inlines,
+      );
+    });
+    if (tag == 'def' && attribute != 'title' && !_document.isXmlTopic) {
+      final list = elementPath(
+        blockId,
+      ).where((b) => b.attributes['element'] == 'deflist').lastOrNull;
+      if (list?.attributes['busymark-definition-form'] == 'markdown') {
+        _replaceBlock(
+          list!.id,
+          (b) => b.copyWith(
+            attributes: {...b.attributes}..remove('busymark-definition-form'),
+            dirty: true,
+          ),
+        );
+      }
+    }
+    return true;
+  }
+
+  bool manageWritersideItem(
+    String containerId, {
+    String? itemId,
+    int? direction,
+    bool remove = false,
+    required String title,
+  }) {
+    final group = blockById(containerId);
+    final tag = switch (group?.attributes['element']) {
+      'tabs' => 'tab',
+      'procedure' => 'step',
+      'deflist' => 'def',
+      _ => null,
+    };
+    if (group == null ||
+        tag == null ||
+        group.preserveRaw ||
+        group.isSourceProtected) {
+      return false;
+    }
+    final children = [...group.children];
+    if (itemId == null) {
+      children.add(
+        _newWritersideElement(
+          tag,
+          title: title,
+          children: [_newWritersideElement('p')],
+        ),
+      );
+    } else {
+      final index = children.indexWhere(
+        (b) => b.id == itemId && b.attributes['element'] == tag,
+      );
+      if (index < 0) return false;
+      if (remove) {
+        if (children.where((b) => b.attributes['element'] == tag).length < 2) {
+          return false;
+        }
+        children.removeAt(index);
+      } else {
+        final items = children
+            .where((b) => b.attributes['element'] == tag)
+            .toList();
+        final ordinal = items.indexWhere((b) => b.id == itemId);
+        final next = ordinal + (direction ?? 0);
+        if (next < 0 || next >= items.length || next == ordinal) return false;
+        final other = children.indexOf(items[next]);
+        children[index] = items[next];
+        children[other] = items[ordinal];
+      }
+    }
+    _replaceBlock(
+      containerId,
+      (b) => b.copyWith(children: children, dirty: true),
+    );
+    return true;
+  }
+
+  void insertVariableReference(
+    String blockId,
+    String name,
+    int start,
+    int end,
+  ) {
+    final block = blockById(blockId);
+    if (block == null ||
+        !canInsertWriterside(BusyWritersideInsertCommand.variable, blockId)) {
+      return;
+    }
+    final value = BusyInline(
+      kind: BusyInlineKind.writersideVariable,
+      text: name,
+      attributes: {'reference': name},
+    );
+    final before = busyMarkWysiwygClipboardInlineSlice(block.inlines, 0, start);
+    final after = busyMarkWysiwygClipboardInlineSlice(
+      block.inlines,
+      end,
+      block.plainText.length,
+    );
+    _replaceBlock(
+      blockId,
+      (b) => b.copyWith(inlines: [...before, value, ...after], dirty: true),
+    );
+  }
+
+  bool updateTopicSwitcherLabel(String value) {
+    if (_document.isXmlTopic) {
+      final root = _document.blocks
+          .where((b) => b.attributes['element'] == 'topic')
+          .firstOrNull;
+      return root != null &&
+          updateWritersideProperty(root.id, 'switcher-label', value);
+    }
+    if (!_document.isWriterside ||
+        _document.frontMatter['switcher-label'] == value ||
+        value.isEmpty && !_document.frontMatter.containsKey('switcher-label')) {
+      return false;
+    }
+    final raw = _document.rawFrontMatter;
+    final line = 'switcher-label: ${encodeWritersideSwitcherLabel(value)}';
+    final nextRaw = value.isEmpty
+        ? (raw ?? '').replaceFirst(
+            RegExp(r'^switcher-label:[^\r\n]*(?:\r?\n|$)', multiLine: true),
+            '',
+          )
+        : raw == null
+        ? '---\n$line\n---\n'
+        : RegExp(r'^switcher-label:.*$', multiLine: true).hasMatch(raw)
+        ? raw.replaceFirst(
+            RegExp(r'^switcher-label:.*$', multiLine: true),
+            line,
+          )
+        : raw.replaceFirst(RegExp(r'^---\s*\r?\n'), '---\n$line\n');
+    final source = markdown;
+    final nextSource = raw == null
+        ? '$nextRaw\n$source'
+        : source.replaceFirst(raw, nextRaw);
+    _document = _document.copyWith(
+      source: nextSource,
+      rawFrontMatter: nextRaw,
+      frontMatter: {
+        for (final entry in _document.frontMatter.entries)
+          if (entry.key != 'switcher-label') entry.key: entry.value,
+        if (value.isNotEmpty) 'switcher-label': value,
+      },
+    );
+    notifyListeners();
+    return true;
+  }
+
+  bool updateTopicNavigation(String attribute, String value) {
+    if (!_document.isWriterside ||
+        !{'for', 'depth'}.contains(attribute) ||
+        WritersideSchema.invalidAttributeValue(
+              'show-structure',
+              attribute,
+              value,
+            ) !=
+            null) {
+      return false;
+    }
+    final root = _document.blocks
+        .where((b) => b.attributes['element'] == 'topic')
+        .firstOrNull;
+    final siblings = root?.children ?? _document.blocks;
+    final existing = siblings
+        .where((b) => b.attributes['element'] == 'show-structure')
+        .firstOrNull;
+    if (existing != null) {
+      return updateWritersideProperty(existing.id, attribute, value);
+    }
+    final node = _newWritersideElement(
+      'show-structure',
+      attributes: {attribute: value},
+    ).copyWith(isSourceOnly: _document.isXmlTopic);
+    if (root != null) {
+      _replaceBlock(
+        root.id,
+        (b) => b.copyWith(children: [node, ...b.children], dirty: true),
+      );
+    } else {
+      final heading = siblings
+          .where(
+            (b) =>
+                b.kind == BusyBlockKind.heading && b.attributes['level'] == '1',
+          )
+          .firstOrNull;
+      _document = _document.copyWith(
+        blocks: heading == null
+            ? [node, ...siblings]
+            : _insertBlocksAfter(siblings, heading.id, [node]),
+      );
+      notifyListeners();
+    }
+    return true;
+  }
+
+  bool updateInlineReference(
+    String blockId,
+    BusyInlineStyleRange target,
+    String attribute,
+    String value,
+  ) {
+    final block = blockById(blockId);
+    if (block == null || block.preserveRaw) {
+      return false;
+    }
+    final ranges = busyInlineReferenceRanges(block.inlines);
+    final index = ranges.indexWhere(
+      (r) =>
+          r.start == target.start &&
+          r.end == target.end &&
+          r.kind == target.kind &&
+          mapEquals(r.attributes, target.attributes),
+    );
+    if (index < 0) return false;
+    final range = ranges[index];
+    if (range.kind == BusyInlineKind.writersideVariable) {
+      if (value.trim().isEmpty) {
+        return false;
+      }
+      final before = busyMarkWysiwygClipboardInlineSlice(
+        block.inlines,
+        0,
+        range.start,
+      );
+      final after = busyMarkWysiwygClipboardInlineSlice(
+        block.inlines,
+        range.end,
+        block.plainText.length,
+      );
+      _replaceBlock(
+        blockId,
+        (b) => b.copyWith(
+          inlines: [
+            ...before,
+            BusyInline(
+              kind: range.kind,
+              text: value,
+              attributes: {...range.attributes, 'reference': value},
+            ),
+            ...after,
+          ],
+          dirty: true,
+        ),
+      );
+      return true;
+    }
+    if (range.kind != BusyInlineKind.writersideShortcut ||
+        !{'key', 'from-keymap-of', 'force-layout'}.contains(attribute) ||
+        value.isNotEmpty &&
+            WritersideSchema.invalidAttributeValue(
+                  'shortcut',
+                  attribute,
+                  value,
+                ) !=
+                null ||
+        attribute == 'key' && value.isEmpty && range.start == range.end) {
+      return false;
+    }
+    var offset = 0;
+    var replaced = false;
+    BusyInline replace(BusyInline inline) {
+      final start = offset;
+      if (!replaced &&
+          inline.kind == range.kind &&
+          start == range.start &&
+          start + inline.plainText.length == range.end &&
+          mapEquals(inline.attributes, range.attributes)) {
+        offset += inline.plainText.length;
+        replaced = true;
+        final attributes = {...inline.attributes};
+        if (value.isEmpty) {
+          attributes.remove(attribute);
+        } else {
+          attributes[attribute] = value;
+        }
+        return inline.copyWith(attributes: attributes);
+      }
+      if (inline.children.isNotEmpty) {
+        return inline.copyWith(children: inline.children.map(replace).toList());
+      }
+      offset += inline.plainText.length;
+      return inline;
+    }
+
+    final inlines = block.inlines.map(replace).toList();
+    if (!replaced) return false;
+    _replaceBlock(blockId, (b) => b.copyWith(inlines: inlines, dirty: true));
+    return true;
   }
 
   String _blockStructurePrefix(BusyBlock block) {
@@ -439,6 +1179,7 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
   }
 
   String? insertDisplayMathAfter(String blockId, {String expression = 'x'}) {
+    if (_document.isXmlTopic) return null;
     if (blockById(blockId) == null) {
       return null;
     }
@@ -951,7 +1692,11 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
 
   void applyBlockCommand(String blockId, BusyWysiwygBlockCommand command) {
     final block = blockById(blockId);
-    if (block == null || !busyMarkWysiwygCanApplyBlockCommand(block, command)) {
+    if (block == null || !canApplyBlockCommand(block, command)) {
+      return;
+    }
+    if (_document.isXmlTopic) {
+      _replaceBlock(blockId, (b) => _xmlBlockWithCommand(b, command));
       return;
     }
     if (command == BusyWysiwygBlockCommand.thematicBreak) {
@@ -985,8 +1730,7 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     }
     final eligibleIds = ids.where((id) {
       final block = blockById(id);
-      return block != null &&
-          busyMarkWysiwygCanApplyBlockCommand(block, command);
+      return block != null && canApplyBlockCommand(block, command);
     }).toList();
     if (eligibleIds.isEmpty) {
       return;
@@ -997,6 +1741,7 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     }
     final idSet = eligibleIds.toSet();
     final replaced = _replaceBlocksByIds(_document.blocks, idSet, (block) {
+      if (_document.isXmlTopic) return _xmlBlockWithCommand(block, command);
       return _blockWithCommand(
         block,
         command,
@@ -1011,6 +1756,86 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     notifyListeners();
   }
 
+  bool canApplyBlockCommand(BusyBlock block, BusyWysiwygBlockCommand command) {
+    if (!busyMarkWysiwygCanApplyBlockCommand(block, command)) return false;
+    if (!_document.isXmlTopic) return true;
+    final tag = switch (blockKindForCommand(command)) {
+      BusyBlockKind.heading => 'chapter',
+      BusyBlockKind.codeBlock => 'code-block',
+      BusyBlockKind.unorderedListItem ||
+      BusyBlockKind.orderedListItem ||
+      BusyBlockKind.taskListItem => 'list',
+      BusyBlockKind.blockquote => 'quote',
+      BusyBlockKind.paragraph => 'p',
+      BusyBlockKind.image => 'img',
+      _ => '',
+    };
+    final parent = elementPath(block.id).reversed.skip(1).firstOrNull;
+    if (parent == null ||
+        !WritersideSchema.childElementNames(
+          parent.attributes['element'] ?? '',
+        ).contains(tag)) {
+      return false;
+    }
+    if (tag == 'chapter' &&
+        block.inlines.any(
+          (i) =>
+              i.kind != BusyInlineKind.text &&
+              i.kind != BusyInlineKind.softBreak,
+        )) {
+      return false;
+    }
+    return true;
+  }
+
+  BusyBlock _xmlBlockWithCommand(
+    BusyBlock block,
+    BusyWysiwygBlockCommand command,
+  ) {
+    final kind = blockKindForCommand(command);
+    if (_isListItemKind(kind)) {
+      return _newWritersideElement(
+        'list',
+        attributes: {
+          'type': kind == BusyBlockKind.orderedListItem
+              ? 'decimal'
+              : kind == BusyBlockKind.taskListItem
+              ? 'checkbox'
+              : 'bullet',
+        },
+        children: [
+          _newWritersideElement('li', children: [block]).copyWith(
+            kind: kind,
+            attributes: {
+              'element': 'li',
+              busyMarkWritersideContainerAttribute: 'true',
+              'marker': kind == BusyBlockKind.orderedListItem ? '1.' : '-',
+            },
+          ),
+        ],
+      );
+    }
+    if (kind == BusyBlockKind.blockquote) {
+      return _xmlAdmonitionStyle(block, BusyAdmonitionStyle.quote);
+    }
+    final attrs = {
+      ...block.attributes,
+      'element': kind == BusyBlockKind.heading
+          ? 'chapter'
+          : kind == BusyBlockKind.codeBlock
+          ? 'code-block'
+          : 'p',
+    }..remove(busyMarkWritersideContainerAttribute);
+    if (kind == BusyBlockKind.heading) {
+      attrs.addAll({
+        busyMarkWritersideContainerAttribute: 'true',
+        'title': block.plainText,
+        'level': '2',
+      });
+    }
+    return block.copyWith(kind: kind, attributes: attrs, dirty: true);
+  }
+
   void applyAdmonitionStyle(String blockId, BusyAdmonitionStyle style) {
     final block = blockById(blockId);
     if (block == null || !busyMarkWysiwygCanApplyAdmonitionStyle(block)) {
@@ -1020,15 +1845,45 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
       blocks: _replaceInBlocks(
         _document.blocks,
         blockId,
-        (block) => _blockWithAdmonitionStyle(
-          block,
-          style,
-          nextId: () => _nextGeneratedBlockId('paragraph'),
-        ),
+        (block) => _document.isXmlTopic
+            ? _xmlAdmonitionStyle(block, style)
+            : _blockWithAdmonitionStyle(
+                block,
+                style,
+                nextId: () => _nextGeneratedBlockId('paragraph'),
+              ),
       ),
     );
     notifyListeners();
   }
+
+  BusyBlock _xmlAdmonitionStyle(BusyBlock block, BusyAdmonitionStyle style) =>
+      block.copyWith(
+        kind: BusyBlockKind.writersideAdmonition,
+        attributes: {
+          ...block.attributes,
+          'element': style.name,
+          'style': style.name,
+          busyMarkWritersideContainerAttribute: 'true',
+          busyMarkWritersideAdmonitionAttribute: 'true',
+          busyMarkWritersideAdmonitionSourceFormAttribute: 'element',
+        },
+        inlines: const [],
+        children: busyMarkIsWritersideContainer(block)
+            ? block.children
+            : [
+                if (block.inlines.isNotEmpty)
+                  BusyBlock(
+                    id: _nextGeneratedBlockId('p'),
+                    kind: BusyBlockKind.paragraph,
+                    inlines: block.inlines,
+                    dirty: true,
+                  ),
+                ...block.children,
+              ],
+        dirty: true,
+        preserveRaw: false,
+      );
 
   void applyAdmonitionStyleToBlocks(
     Iterable<String> blockIds,
@@ -1047,11 +1902,13 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
       blocks: _replaceBlocksByIds(
         _document.blocks,
         ids,
-        (block) => _blockWithAdmonitionStyle(
-          block,
-          style,
-          nextId: () => _nextGeneratedBlockId('paragraph'),
-        ),
+        (block) => _document.isXmlTopic
+            ? _xmlAdmonitionStyle(block, style)
+            : _blockWithAdmonitionStyle(
+                block,
+                style,
+                nextId: () => _nextGeneratedBlockId('paragraph'),
+              ),
       ),
     );
     notifyListeners();
@@ -1087,7 +1944,11 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
             attributes: {'src': trimmedSource, 'alt': trimmedAlt},
           ),
         ],
-        attributes: {...block.attributes, 'src': trimmedSource},
+        attributes: {
+          ...block.attributes,
+          'src': trimmedSource,
+          if (_document.isXmlTopic) ...{'element': 'img', 'alt': trimmedAlt},
+        },
         dirty: true,
       ),
     );
@@ -1101,6 +1962,10 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     required String alt,
     required String fallbackAltText,
   }) {
+    if (_document.isXmlTopic &&
+        blockById(blockId)?.kind != BusyBlockKind.paragraph) {
+      return;
+    }
     final trimmedSource = source.trim();
     if (trimmedSource.isEmpty) {
       return;
@@ -1178,6 +2043,7 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     required String Function(int columnNumber) headerTextForColumn,
     required String cellText,
   }) {
+    if (_document.isXmlTopic) return null;
     if (blockById(blockId) == null) {
       return null;
     }
@@ -1205,6 +2071,7 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
   }
 
   String? insertRawHtmlBlockAfter(String blockId, String rawSource) {
+    if (_document.isXmlTopic) return null;
     if (blockById(blockId) == null) {
       return null;
     }
@@ -1833,6 +2700,18 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     if (block == null) {
       return null;
     }
+    if (_document.isXmlTopic &&
+        busyMarkIsWritersideContainer(block) &&
+        WritersideEditingAdapter.titleElements.contains(
+          block.attributes['element'],
+        )) {
+      final paragraph = _newWritersideElement('p');
+      _replaceBlock(
+        blockId,
+        (b) => b.copyWith(children: [...b.children, paragraph], dirty: true),
+      );
+      return BusyWysiwygTextSplitResult(blockId: paragraph.id, offset: 0);
+    }
     if (block.kind == BusyBlockKind.codeBlock) {
       final text = block.plainText;
       final safeOffset = offset.clamp(0, text.length).toInt();
@@ -2117,6 +2996,57 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     final block = blockById(blockId);
     if (block == null || block.preserveRaw) {
       return null;
+    }
+    if (_document.isXmlTopic) {
+      if (block.kind != BusyBlockKind.paragraph) return null;
+      bool supportedInline(BusyInline inline) =>
+          inline.kind != BusyInlineKind.math &&
+          (inline.kind != BusyInlineKind.html ||
+              inline.attributes.containsKey('xml-raw')) &&
+          inline.children.every(supportedInline);
+      bool supportedBlock(BusyBlock block) {
+        if (block.preserveRaw || block.isSourceProtected) {
+          final raw = block.rawSource?.trimLeft();
+          return raw != null &&
+              (raw.startsWith('<') || block.isSourceOnly && raw.isEmpty);
+        }
+        if ({
+              BusyBlockKind.table,
+              BusyBlockKind.math,
+              BusyBlockKind.htmlBlock,
+            }.contains(block.kind) ||
+            !busyMarkIsWritersideContainer(block) &&
+                {
+                  BusyBlockKind.heading,
+                  BusyBlockKind.orderedListItem,
+                  BusyBlockKind.unorderedListItem,
+                  BusyBlockKind.taskListItem,
+                }.contains(block.kind)) {
+          return false;
+        }
+        return block.inlines.every(supportedInline) &&
+            block.children.every(supportedBlock);
+      }
+
+      if (blocks.any(
+        (b) => !supportedBlock(busyMarkWysiwygClipboardBlock(b)),
+      )) {
+        return null;
+      }
+      for (final styled in blocks) {
+        final command = switch (styled.completeBlock?.attributes['element']) {
+          'procedure' => BusyWritersideInsertCommand.procedure,
+          'tabs' => BusyWritersideInsertCommand.tabs,
+          'deflist' => BusyWritersideInsertCommand.definitionList,
+          'tldr' => BusyWritersideInsertCommand.tldr,
+          'include' => BusyWritersideInsertCommand.include,
+          'video' => BusyWritersideInsertCommand.video,
+          _ => null,
+        };
+        if (command != null && !canInsertWriterside(command, blockId)) {
+          return null;
+        }
+      }
     }
     final text = block.plainText;
     final start = selectionStart.clamp(0, text.length).toInt();
@@ -2641,7 +3571,12 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     int selectionStart,
     int selectionEnd, {
     String? destination,
+    Map<String, String> linkAttributes = const {},
   }) {
+    if (_document.isXmlTopic &&
+        blockById(blockId)?.kind != BusyBlockKind.paragraph) {
+      return;
+    }
     if (selectionStart == selectionEnd) {
       return;
     }
@@ -2655,6 +3590,7 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
         start,
         end,
         destination: destination,
+        linkAttributes: linkAttributes,
       ),
     );
   }
@@ -2670,6 +3606,9 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     }
     _document = _document.copyWith(
       blocks: _replaceBlocksByIds(_document.blocks, idSet, (block) {
+        if (_document.isXmlTopic && block.kind != BusyBlockKind.paragraph) {
+          return block;
+        }
         final length = block.plainText.length;
         if (length == 0) {
           return block;
@@ -2901,7 +3840,9 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
       children: List.unmodifiable([
         for (final child in block.children) _cloneClipboardBlock(child),
       ]),
-      attributes: Map.unmodifiable(block.attributes),
+      attributes: Map.unmodifiable(
+        {...block.attributes}..remove(busyMarkXmlBindingAttribute),
+      ),
       rawSource: block.rawSource,
       preserveRaw: block.preserveRaw,
       isSourceOnly: block.isSourceOnly,
@@ -4298,6 +5239,7 @@ BusyBlock _blockWithAdmonitionStyle(
     ..['style'] = style.name;
   if (semanticElement) {
     attributes['element'] = style.name;
+    if (block.attributes['id'] case final id?) attributes['id'] = id;
   } else {
     attributes.remove('element');
   }
@@ -4452,6 +5394,7 @@ BusyBlock _blockWithInlineCommand(
   int selectionStart,
   int selectionEnd, {
   String? destination,
+  Map<String, String> linkAttributes = const {},
 }) {
   final text = block.plainText;
   final safeStart = selectionStart.clamp(0, text.length).toInt();
@@ -4477,6 +5420,9 @@ BusyBlock _blockWithInlineCommand(
         start: safeStart,
         end: safeEnd,
         kind: inlineKind,
+        attributes: command == BusyWysiwygInlineCommand.link
+            ? linkAttributes
+            : const {},
         destination: command == BusyWysiwygInlineCommand.link
             ? destination
             : null,
@@ -4583,7 +5529,11 @@ bool _isTypingInlineKind(BusyInlineKind kind) {
     BusyInlineKind.emphasis ||
     BusyInlineKind.underline ||
     BusyInlineKind.strikethrough ||
-    BusyInlineKind.code => true,
+    BusyInlineKind.code ||
+    BusyInlineKind.writersideControl ||
+    BusyInlineKind.writersidePath ||
+    BusyInlineKind.writersideUiPath ||
+    BusyInlineKind.writersideShortcut => true,
     _ => false,
   };
 }
@@ -4620,7 +5570,98 @@ String _incrementOrderedMarker(String? marker, int offset) {
   return '${value + offset}$suffix';
 }
 
+// The authored Markdown parser retains interpolation tokens for the preview
+// resolver. Bind those tokens to the editor's reference representation on
+// loading, without changing source, dirty flags, or the preview projection.
+BusyDocument busyMarkWysiwygBindMarkdownReferences(BusyDocument document) {
+  if (document.mode != MarkdownMode.writersideMarkdown || document.isXmlTopic) {
+    return document;
+  }
+  bool ignores(Map<String, String> attributes, bool inherited) =>
+      switch (attributes['ignore-vars']) {
+        'true' => true,
+        'false' => false,
+        _ => inherited,
+      };
+  List<BusyInline> bind(List<BusyInline> inlines, bool inherited) {
+    final result = <BusyInline>[];
+    for (final inline in inlines) {
+      final ignore = ignores(inline.attributes, inherited);
+      if (ignore ||
+          {
+            BusyInlineKind.code,
+            BusyInlineKind.math,
+            BusyInlineKind.html,
+            BusyInlineKind.writersideVariable,
+          }.contains(inline.kind)) {
+        result.add(inline);
+      } else if (inline.kind == BusyInlineKind.text) {
+        final parts = const WritersideEditingAdapter().textInlines(inline.text);
+        if (!parts.any((p) => p.kind == BusyInlineKind.writersideVariable)) {
+          result.add(inline);
+        } else {
+          result.addAll(
+            parts.map(
+              (part) => part.kind == BusyInlineKind.writersideVariable
+                  ? part.copyWith(
+                      attributes: {...inline.attributes, ...part.attributes},
+                    )
+                  : inline.copyWith(text: part.text),
+            ),
+          );
+        }
+      } else if (inline.children.isNotEmpty) {
+        final children = bind(inline.children, ignore);
+        result.add(
+          listEquals(children, inline.children)
+              ? inline
+              : inline.copyWith(children: children),
+        );
+      } else {
+        result.add(inline);
+      }
+    }
+    return result;
+  }
+
+  BusyBlock visit(BusyBlock block, bool inherited) {
+    if (block.isSourceProtected || block.preserveRaw || block.isSourceOnly) {
+      return block;
+    }
+    final ignore = ignores(block.attributes, inherited);
+    final inlines =
+        {
+              BusyBlockKind.paragraph,
+              BusyBlockKind.heading,
+              BusyBlockKind.unorderedListItem,
+              BusyBlockKind.orderedListItem,
+              BusyBlockKind.taskListItem,
+            }.contains(block.kind) &&
+            !WritersideEditingAdapter.titleElements.contains(
+              block.attributes['element'],
+            )
+        ? bind(block.inlines, ignore)
+        : block.inlines;
+    final children = block.children.map((b) => visit(b, ignore)).toList();
+    if (listEquals(inlines, block.inlines) &&
+        listEquals(children, block.children)) {
+      return block;
+    }
+    return block.copyWith(
+      inlines: inlines,
+      children: children,
+      dirty: block.dirty,
+    );
+  }
+
+  final blocks = document.blocks.map((b) => visit(b, false)).toList();
+  return listEquals(blocks, document.blocks)
+      ? document
+      : document.copyWith(blocks: blocks);
+}
+
 BusyDocument _ensureEditableDocument(BusyDocument document) {
+  if (document.isXmlTopic) return document;
   // Commit source-form changes before notifying listeners, within the edit's
   // existing transaction. Include dirty imported fragments as well as newly
   // reconstructed prose; untouched source-backed blocks retain their source.
@@ -4894,7 +5935,11 @@ bool _canMergeInlineStyles(BusyInline left, BusyInline right) {
         BusyInlineKind.emphasis ||
         BusyInlineKind.underline ||
         BusyInlineKind.strikethrough ||
-        BusyInlineKind.link => true,
+        BusyInlineKind.link ||
+        BusyInlineKind.writersideControl ||
+        BusyInlineKind.writersidePath ||
+        BusyInlineKind.writersideUiPath ||
+        BusyInlineKind.writersideShortcut => true,
         _ => false,
       };
 }

@@ -8117,6 +8117,546 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The first request may already have created a server note. This creates a separate note with your retained local work. No suspected duplicate will be deleted.'**
   String get nextcloudCreateSeparateWarning;
+
+  /// No description provided for @wsSemanticFormats.
+  ///
+  /// In en, this message translates to:
+  /// **'Semantic formatting'**
+  String get wsSemanticFormats;
+
+  /// No description provided for @wsUiControl.
+  ///
+  /// In en, this message translates to:
+  /// **'UI Control'**
+  String get wsUiControl;
+
+  /// No description provided for @wsFilePath.
+  ///
+  /// In en, this message translates to:
+  /// **'File / Path'**
+  String get wsFilePath;
+
+  /// No description provided for @wsUiPath.
+  ///
+  /// In en, this message translates to:
+  /// **'UI Path'**
+  String get wsUiPath;
+
+  /// No description provided for @wsDefinitionList.
+  ///
+  /// In en, this message translates to:
+  /// **'Definition List'**
+  String get wsDefinitionList;
+
+  /// No description provided for @wsIncludeContent.
+  ///
+  /// In en, this message translates to:
+  /// **'Include Reusable Content'**
+  String get wsIncludeContent;
+
+  /// No description provided for @wsVariableReference.
+  ///
+  /// In en, this message translates to:
+  /// **'Variable Reference'**
+  String get wsVariableReference;
+
+  /// No description provided for @wsConvertList.
+  ///
+  /// In en, this message translates to:
+  /// **'Convert List to Procedure'**
+  String get wsConvertList;
+
+  /// No description provided for @wsElementProperties.
+  ///
+  /// In en, this message translates to:
+  /// **'Element Properties'**
+  String get wsElementProperties;
+
+  /// No description provided for @wsTopicProperties.
+  ///
+  /// In en, this message translates to:
+  /// **'Topic Properties'**
+  String get wsTopicProperties;
+
+  /// No description provided for @wsCollapsible.
+  ///
+  /// In en, this message translates to:
+  /// **'Collapsible'**
+  String get wsCollapsible;
+
+  /// No description provided for @wsPublishedState.
+  ///
+  /// In en, this message translates to:
+  /// **'Published initial state'**
+  String get wsPublishedState;
+
+  /// No description provided for @wsExpanded.
+  ///
+  /// In en, this message translates to:
+  /// **'Expanded'**
+  String get wsExpanded;
+
+  /// No description provided for @wsCollapsed.
+  ///
+  /// In en, this message translates to:
+  /// **'Collapsed'**
+  String get wsCollapsed;
+
+  /// No description provided for @wsCollapsedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Collapsed title'**
+  String get wsCollapsedTitle;
+
+  /// No description provided for @wsTerm.
+  ///
+  /// In en, this message translates to:
+  /// **'Term'**
+  String get wsTerm;
+
+  /// No description provided for @wsListLayout.
+  ///
+  /// In en, this message translates to:
+  /// **'List layout'**
+  String get wsListLayout;
+
+  /// No description provided for @wsSyncGroup.
+  ///
+  /// In en, this message translates to:
+  /// **'Synchronization group'**
+  String get wsSyncGroup;
+
+  /// No description provided for @wsTabKey.
+  ///
+  /// In en, this message translates to:
+  /// **'Tab key'**
+  String get wsTabKey;
+
+  /// No description provided for @wsSwitcherLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Switcher label'**
+  String get wsSwitcherLabel;
+
+  /// No description provided for @wsNavigationElements.
+  ///
+  /// In en, this message translates to:
+  /// **'Navigation elements'**
+  String get wsNavigationElements;
+
+  /// No description provided for @wsNavigationDepth.
+  ///
+  /// In en, this message translates to:
+  /// **'Navigation depth'**
+  String get wsNavigationDepth;
+
+  /// No description provided for @wsAddItem.
+  ///
+  /// In en, this message translates to:
+  /// **'Add item'**
+  String get wsAddItem;
+
+  /// No description provided for @wsStep.
+  ///
+  /// In en, this message translates to:
+  /// **'Step'**
+  String get wsStep;
+
+  /// No description provided for @wsPropertyInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid property value'**
+  String get wsPropertyInvalid;
+
+  /// No description provided for @wsFilter.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter'**
+  String get wsFilter;
+
+  /// No description provided for @wsIdentifier.
+  ///
+  /// In en, this message translates to:
+  /// **'Element ID'**
+  String get wsIdentifier;
+
+  /// No description provided for @wsTldr.
+  ///
+  /// In en, this message translates to:
+  /// **'TLDR'**
+  String get wsTldr;
+
+  /// No description provided for @wsFullLayout.
+  ///
+  /// In en, this message translates to:
+  /// **'Full width'**
+  String get wsFullLayout;
+
+  /// No description provided for @wsMediumLayout.
+  ///
+  /// In en, this message translates to:
+  /// **'Equal columns'**
+  String get wsMediumLayout;
+
+  /// No description provided for @wsNarrowLayout.
+  ///
+  /// In en, this message translates to:
+  /// **'Narrow term'**
+  String get wsNarrowLayout;
+
+  /// No description provided for @wsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Title'**
+  String get wsTitle;
+
+  /// No description provided for @wsSwitcherKey.
+  ///
+  /// In en, this message translates to:
+  /// **'Switcher key'**
+  String get wsSwitcherKey;
+
+  /// No description provided for @nextcloudServerSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Server Notes settings'**
+  String get nextcloudServerSettings;
+
+  /// No description provided for @nextcloudNotesPath.
+  ///
+  /// In en, this message translates to:
+  /// **'Notes folder path'**
+  String get nextcloudNotesPath;
+
+  /// No description provided for @nextcloudFileSuffix.
+  ///
+  /// In en, this message translates to:
+  /// **'New-note file suffix'**
+  String get nextcloudFileSuffix;
+
+  /// No description provided for @nextcloudServerSettingsExplanation.
+  ///
+  /// In en, this message translates to:
+  /// **'These server Notes settings affect other clients. Changing the path does not migrate files; changing the suffix does not rename existing notes.'**
+  String get nextcloudServerSettingsExplanation;
+
+  /// No description provided for @nextcloudSettingsSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Server settings saved'**
+  String get nextcloudSettingsSaved;
+
+  /// No description provided for @nextcloudSettingsNormalized.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved with server-normalized values'**
+  String get nextcloudSettingsNormalized;
+
+  /// No description provided for @nextcloudPendingUpload.
+  ///
+  /// In en, this message translates to:
+  /// **'Attachment upload pending'**
+  String get nextcloudPendingUpload;
+
+  /// No description provided for @nextcloudServerCheck.
+  ///
+  /// In en, this message translates to:
+  /// **'Last server check: {time}'**
+  String nextcloudServerCheck(String time);
+
+  /// Accessible progress label while reading server Notes settings.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading server settings'**
+  String get nextcloudSettingsLoading;
+
+  /// Accessible progress label while writing server Notes settings.
+  ///
+  /// In en, this message translates to:
+  /// **'Saving server settings'**
+  String get nextcloudSettingsSaving;
+
+  /// Label for the competing accepted local metadata edit, distinct from server state.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous local edit'**
+  String get nextcloudPreviousLocalEdit;
+
+  /// Conflict action that keeps the exact previously reviewed local metadata values.
+  ///
+  /// In en, this message translates to:
+  /// **'Use previous edit'**
+  String get nextcloudUsePreviousEdit;
+
+  /// No description provided for @quickOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Quick Open'**
+  String get quickOpen;
+
+  /// No description provided for @notesAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All notes'**
+  String get notesAll;
+
+  /// No description provided for @notesUncategorized.
+  ///
+  /// In en, this message translates to:
+  /// **'Uncategorized'**
+  String get notesUncategorized;
+
+  /// No description provided for @notesRecovery.
+  ///
+  /// In en, this message translates to:
+  /// **'Recovery'**
+  String get notesRecovery;
+
+  /// No description provided for @notesRecentlyEdited.
+  ///
+  /// In en, this message translates to:
+  /// **'Recently edited'**
+  String get notesRecentlyEdited;
+
+  /// No description provided for @notesOldestEdited.
+  ///
+  /// In en, this message translates to:
+  /// **'Oldest edited'**
+  String get notesOldestEdited;
+
+  /// No description provided for @notesTitleAscending.
+  ///
+  /// In en, this message translates to:
+  /// **'Title A–Z'**
+  String get notesTitleAscending;
+
+  /// No description provided for @notesTitleDescending.
+  ///
+  /// In en, this message translates to:
+  /// **'Title Z–A'**
+  String get notesTitleDescending;
+
+  /// No description provided for @notesMove.
+  ///
+  /// In en, this message translates to:
+  /// **'Move to category'**
+  String get notesMove;
+
+  /// No description provided for @notesRemoveFavorite.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove favorite'**
+  String get notesRemoveFavorite;
+
+  /// No description provided for @notesOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'Make available offline'**
+  String get notesOffline;
+
+  /// No description provided for @notesOfflineRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove offline requirement'**
+  String get notesOfflineRemove;
+
+  /// No description provided for @notesIndexing.
+  ///
+  /// In en, this message translates to:
+  /// **'Indexing notes…'**
+  String get notesIndexing;
+
+  /// No description provided for @notesSearchHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Terms use AND. Use \"quoted phrases\", title: and category:.'**
+  String get notesSearchHelp;
+
+  /// No description provided for @notesSourceLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Source location'**
+  String get notesSourceLocation;
+
+  /// No description provided for @notesRecoveryHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Retained local notes and Local History only. Server trash and history are unavailable.'**
+  String get notesRecoveryHelp;
+
+  /// No description provided for @notesImport.
+  ///
+  /// In en, this message translates to:
+  /// **'Import notes'**
+  String get notesImport;
+
+  /// No description provided for @notesExport.
+  ///
+  /// In en, this message translates to:
+  /// **'Export notes'**
+  String get notesExport;
+
+  /// No description provided for @notesImportDistinct.
+  ///
+  /// In en, this message translates to:
+  /// **'Import as a distinct note'**
+  String get notesImportDistinct;
+
+  /// No description provided for @notesAvailableOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'Available offline'**
+  String get notesAvailableOffline;
+
+  /// No description provided for @notesIncomplete.
+  ///
+  /// In en, this message translates to:
+  /// **'Incomplete'**
+  String get notesIncomplete;
+
+  /// No description provided for @notesSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'Selected notes'**
+  String get notesSelected;
+
+  /// No description provided for @notesNoHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'No retained revisions. History may be disabled, expired or cleared.'**
+  String get notesNoHistory;
+
+  /// No description provided for @notesTextAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Text available locally'**
+  String get notesTextAvailable;
+
+  /// No description provided for @notesLocalVersion.
+  ///
+  /// In en, this message translates to:
+  /// **'Local working version'**
+  String get notesLocalVersion;
+
+  /// No description provided for @notesAttachments.
+  ///
+  /// In en, this message translates to:
+  /// **'Attachments'**
+  String get notesAttachments;
+
+  /// No description provided for @notesSkipped.
+  ///
+  /// In en, this message translates to:
+  /// **'Skipped'**
+  String get notesSkipped;
+
+  /// No description provided for @notesFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed'**
+  String get notesFailed;
+
+  /// No description provided for @notesCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed'**
+  String get notesCompleted;
+
+  /// No description provided for @notesImportNew.
+  ///
+  /// In en, this message translates to:
+  /// **'Start a new import'**
+  String get notesImportNew;
+
+  /// No description provided for @notesImportResume.
+  ///
+  /// In en, this message translates to:
+  /// **'Resume interrupted import'**
+  String get notesImportResume;
+
+  /// No description provided for @notesImportAlreadyImported.
+  ///
+  /// In en, this message translates to:
+  /// **'Already imported in this operation'**
+  String get notesImportAlreadyImported;
+
+  /// No description provided for @references.
+  ///
+  /// In en, this message translates to:
+  /// **'References'**
+  String get references;
+
+  /// No description provided for @referenceIncoming.
+  ///
+  /// In en, this message translates to:
+  /// **'Incoming'**
+  String get referenceIncoming;
+
+  /// No description provided for @referenceOutgoing.
+  ///
+  /// In en, this message translates to:
+  /// **'Outgoing'**
+  String get referenceOutgoing;
+
+  /// No description provided for @referenceChooseTarget.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose link target'**
+  String get referenceChooseTarget;
+
+  /// No description provided for @referenceWholeDocument.
+  ///
+  /// In en, this message translates to:
+  /// **'Whole document'**
+  String get referenceWholeDocument;
+
+  /// No description provided for @referenceSourceLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Source location'**
+  String get referenceSourceLocation;
+
+  /// No description provided for @referenceTargetLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Target location'**
+  String get referenceTargetLocation;
+
+  /// No description provided for @referenceResolved.
+  ///
+  /// In en, this message translates to:
+  /// **'Resolved'**
+  String get referenceResolved;
+
+  /// No description provided for @referenceMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'Missing'**
+  String get referenceMissing;
+
+  /// No description provided for @referenceAmbiguous.
+  ///
+  /// In en, this message translates to:
+  /// **'Ambiguous'**
+  String get referenceAmbiguous;
+
+  /// No description provided for @referenceUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Unavailable in this context'**
+  String get referenceUnavailable;
+
+  /// No description provided for @referenceUnsupported.
+  ///
+  /// In en, this message translates to:
+  /// **'Unsupported'**
+  String get referenceUnsupported;
+
+  /// No description provided for @referenceNoPortableId.
+  ///
+  /// In en, this message translates to:
+  /// **'This target has no verified portable note URL.'**
+  String get referenceNoPortableId;
 }
 
 class _AppLocalizationsDelegate

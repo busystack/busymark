@@ -200,7 +200,16 @@ void main() {
     ]) {
       expect(combined, isNot(contains(removed)));
     }
-    expect(RegExp(r'Ctrl\+P(?![A-Za-z])').hasMatch(combined), isFalse);
+    // Ctrl+P is now the approved Quick Open binding. Printing remains absent.
+    final shortcuts = File(
+      'lib/src/app/busymark_shortcuts.dart',
+    ).readAsStringSync();
+    expect(shortcuts, contains("quickOpenLabel = 'Ctrl+P'"));
+    expect(shortcuts, contains("commandPaletteLabel = 'Ctrl+Shift+P'"));
+    final registry = File(
+      'lib/src/app/command_registry.dart',
+    ).readAsStringSync();
+    expect(registry, contains('BusyMarkAppShortcutAction.quickOpen'));
   });
 
   test('product stderr logging is isolated behind debug logging', () {
@@ -1924,7 +1933,7 @@ void main() {
     expect(serializer, contains('String _listItem('));
     expect(serializer, contains('String _indentBlock('));
     expect(toolbar, isNot(contains('transparent: true')));
-    expect(RegExp(r'transparent: false').allMatches(toolbar), hasLength(3));
+    expect(RegExp(r'transparent: false').allMatches(toolbar), hasLength(5));
     expect(toolbar, contains('BusyMarkHeaderIconButton('));
     expect(toolbar, contains('_editorToolbarButtonBackground(context)'));
     expect(toolbar, contains('return theme.colorScheme.primary'));
@@ -1932,13 +1941,13 @@ void main() {
       RegExp(
         r'foregroundColor: BusyMarkLinuxPalette\.white',
       ).allMatches(toolbar),
-      hasLength(3),
+      hasLength(5),
     );
     expect(toolbar, isNot(contains('busyMarkContainedControlBackground(')));
     expect(toolbar, isNot(contains('foregroundColor: colors.foreground')));
-    expect(RegExp(r'elevated: true').allMatches(toolbar), hasLength(3));
+    expect(RegExp(r'elevated: true').allMatches(toolbar), hasLength(5));
     expect(toolbar, isNot(contains('accented: true')));
-    expect(toolbar, contains('clipBehavior: Clip.none'));
+    expect(toolbar, contains('clipBehavior: Clip.hardEdge'));
     expect(toolbar, contains('hitTestBehavior: HitTestBehavior.deferToChild'));
     expect(toolbar, contains('horizontal: BusyMarkSpacing.sm'));
     expect(toolbar, contains('vertical: BusyMarkSpacing.xs'));

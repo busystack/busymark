@@ -4818,4 +4818,282 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get nextcloudCreateSeparateWarning =>
       'قد يكون الطلب الأول قد أنشأ ملاحظة على الخادم بالفعل. ينشئ هذا ملاحظة منفصلة بعملك المحلي المحفوظ. لن تُحذف أي ملاحظة يُشتبه بأنها مكررة.';
+
+  @override
+  String get wsSemanticFormats => 'تنسيق دلالي';
+
+  @override
+  String get wsUiControl => 'عنصر تحكم في الواجهة';
+
+  @override
+  String get wsFilePath => 'ملف / مسار';
+
+  @override
+  String get wsUiPath => 'مسار الواجهة';
+
+  @override
+  String get wsDefinitionList => 'قائمة تعريفات';
+
+  @override
+  String get wsIncludeContent => 'تضمين محتوى قابل لإعادة الاستخدام';
+
+  @override
+  String get wsVariableReference => 'مرجع متغير';
+
+  @override
+  String get wsConvertList => 'تحويل القائمة إلى إجراء';
+
+  @override
+  String get wsElementProperties => 'خصائص العنصر';
+
+  @override
+  String get wsTopicProperties => 'خصائص الموضوع';
+
+  @override
+  String get wsCollapsible => 'قابل للطي';
+
+  @override
+  String get wsPublishedState => 'الحالة الأولية عند النشر';
+
+  @override
+  String get wsExpanded => 'موسع';
+
+  @override
+  String get wsCollapsed => 'مطوي';
+
+  @override
+  String get wsCollapsedTitle => 'العنوان عند الطي';
+
+  @override
+  String get wsTerm => 'المصطلح';
+
+  @override
+  String get wsListLayout => 'تخطيط القائمة';
+
+  @override
+  String get wsSyncGroup => 'مجموعة المزامنة';
+
+  @override
+  String get wsTabKey => 'مفتاح علامة التبويب';
+
+  @override
+  String get wsSwitcherLabel => 'تسمية المبدل';
+
+  @override
+  String get wsNavigationElements => 'عناصر التنقل';
+
+  @override
+  String get wsNavigationDepth => 'عمق التنقل';
+
+  @override
+  String get wsAddItem => 'إضافة عنصر';
+
+  @override
+  String get wsStep => 'خطوة';
+
+  @override
+  String get wsPropertyInvalid => 'قيمة خاصية غير صالحة';
+
+  @override
+  String get wsFilter => 'عامل التصفية';
+
+  @override
+  String get wsIdentifier => 'معرّف العنصر';
+
+  @override
+  String get wsTldr => 'ملخّص (TLDR)';
+
+  @override
+  String get wsFullLayout => 'عرض كامل';
+
+  @override
+  String get wsMediumLayout => 'أعمدة متساوية';
+
+  @override
+  String get wsNarrowLayout => 'مصطلح ضيق';
+
+  @override
+  String get wsTitle => 'العنوان';
+
+  @override
+  String get wsSwitcherKey => 'مفتاح المبدّل';
+
+  @override
+  String get nextcloudServerSettings => 'إعدادات Notes على الخادم';
+
+  @override
+  String get nextcloudNotesPath => 'مسار مجلد الملاحظات';
+
+  @override
+  String get nextcloudFileSuffix => 'لاحقة ملفات الملاحظات الجديدة';
+
+  @override
+  String get nextcloudServerSettingsExplanation =>
+      'تؤثر إعدادات Notes هذه على العملاء الآخرين. تغيير المسار لا ينقل الملفات؛ وتغيير اللاحقة لا يعيد تسمية الملاحظات الحالية.';
+
+  @override
+  String get nextcloudSettingsSaved => 'حُفظت إعدادات الخادم';
+
+  @override
+  String get nextcloudSettingsNormalized =>
+      'حُفظت القيم بعد توحيدها على الخادم';
+
+  @override
+  String get nextcloudPendingUpload => 'رفع المرفق قيد الانتظار';
+
+  @override
+  String nextcloudServerCheck(String time) {
+    return 'آخر فحص للخادم: $time';
+  }
+
+  @override
+  String get nextcloudSettingsLoading => 'جارٍ تحميل إعدادات الخادم';
+
+  @override
+  String get nextcloudSettingsSaving => 'جارٍ حفظ إعدادات الخادم';
+
+  @override
+  String get nextcloudPreviousLocalEdit => 'التعديل المحلي السابق';
+
+  @override
+  String get nextcloudUsePreviousEdit => 'استخدام التعديل السابق';
+
+  @override
+  String get quickOpen => 'فتح سريع';
+
+  @override
+  String get notesAll => 'كل الملاحظات';
+
+  @override
+  String get notesUncategorized => 'بلا تصنيف';
+
+  @override
+  String get notesRecovery => 'استعادة';
+
+  @override
+  String get notesRecentlyEdited => 'المعدلة مؤخراً';
+
+  @override
+  String get notesOldestEdited => 'الأقدم تعديلاً';
+
+  @override
+  String get notesTitleAscending => 'العنوان تصاعدياً';
+
+  @override
+  String get notesTitleDescending => 'العنوان تنازلياً';
+
+  @override
+  String get notesMove => 'نقل إلى تصنيف';
+
+  @override
+  String get notesRemoveFavorite => 'إزالة من المفضلة';
+
+  @override
+  String get notesOffline => 'إتاحة دون اتصال';
+
+  @override
+  String get notesOfflineRemove => 'إزالة الاحتفاظ دون اتصال';
+
+  @override
+  String get notesIndexing => 'جارٍ فهرسة الملاحظات…';
+
+  @override
+  String get notesSearchHelp =>
+      'تُجمع الكلمات باستخدام AND. استخدم \"عبارات مقتبسة\" و title: و category:.';
+
+  @override
+  String get notesSourceLocation => 'الموضع في المصدر';
+
+  @override
+  String get notesRecoveryHelp =>
+      'الملاحظات المحلية المحتفظ بها والسجل المحلي فقط. سلة المحذوفات وسجل الخادم غير متاحين.';
+
+  @override
+  String get notesImport => 'استيراد ملاحظات';
+
+  @override
+  String get notesExport => 'تصدير ملاحظات';
+
+  @override
+  String get notesImportDistinct => 'استيراد كملاحظة مستقلة';
+
+  @override
+  String get notesAvailableOffline => 'متاح دون اتصال';
+
+  @override
+  String get notesIncomplete => 'غير مكتمل';
+
+  @override
+  String get notesSelected => 'الملاحظات المحددة';
+
+  @override
+  String get notesNoHistory =>
+      'لا توجد مراجعات محفوظة. قد يكون السجل معطلاً أو منتهياً أو ممسوحاً.';
+
+  @override
+  String get notesTextAvailable => 'النص متاح محليًا';
+
+  @override
+  String get notesLocalVersion => 'نسخة العمل المحلية';
+
+  @override
+  String get notesAttachments => 'المرفقات';
+
+  @override
+  String get notesSkipped => 'تم التخطي';
+
+  @override
+  String get notesFailed => 'فشل';
+
+  @override
+  String get notesCompleted => 'مكتمل';
+
+  @override
+  String get notesImportNew => 'بدء استيراد جديد';
+
+  @override
+  String get notesImportResume => 'استئناف الاستيراد المنقطع';
+
+  @override
+  String get notesImportAlreadyImported => 'تم الاستيراد بالفعل في هذه العملية';
+
+  @override
+  String get references => 'المراجع';
+
+  @override
+  String get referenceIncoming => 'الواردة';
+
+  @override
+  String get referenceOutgoing => 'الصادرة';
+
+  @override
+  String get referenceChooseTarget => 'اختر هدف الرابط';
+
+  @override
+  String get referenceWholeDocument => 'المستند بالكامل';
+
+  @override
+  String get referenceSourceLocation => 'موقع المصدر';
+
+  @override
+  String get referenceTargetLocation => 'موقع الهدف';
+
+  @override
+  String get referenceResolved => 'تم الحل';
+
+  @override
+  String get referenceMissing => 'مفقود';
+
+  @override
+  String get referenceAmbiguous => 'ملتبس';
+
+  @override
+  String get referenceUnavailable => 'غير متاح في هذا السياق';
+
+  @override
+  String get referenceUnsupported => 'غير مدعوم';
+
+  @override
+  String get referenceNoPortableId =>
+      'ليس لهذا الهدف عنوان URL محمول ومُتحقَّق منه للملاحظة.';
 }

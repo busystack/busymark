@@ -61,30 +61,38 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    // References display their authored name in the editor; source mapping
+    // still targets the original interpolation token and surrounding text.
     final nestedFieldFinder = find.widgetWithText(
       TextField,
-      'Use %product% for docs.',
+      'Use product for docs.',
     );
     await tester.tap(nestedFieldFinder);
     final nestedField = tester.widget<TextField>(nestedFieldFinder);
-    nestedField.focusNode!.requestFocus();
-    nestedField.controller!.selection = const TextSelection(
-      baseOffset: 0,
-      extentOffset: 3,
-    );
-    await tester.pump();
-    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
-    await tester.sendKeyDownEvent(LogicalKeyboardKey.keyG);
-    await tester.sendKeyUpEvent(LogicalKeyboardKey.keyG);
-    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
-    await tester.pumpAndSettle();
+    for (final range in [
+      (start: 0, end: 3, text: 'Use'),
+      (start: 12, end: 21, text: 'for docs.'),
+    ]) {
+      captured = null;
+      nestedField.focusNode!.requestFocus();
+      nestedField.controller!.selection = TextSelection(
+        baseOffset: range.start,
+        extentOffset: range.end,
+      );
+      await tester.pump();
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.keyG);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.keyG);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.pumpAndSettle();
 
-    expect(captured, isNotNull);
-    expect(captured!.blockTargetAvailable, isTrue);
-    expect(
-      source.substring(captured!.selectionStart, captured!.selectionEnd),
-      'Use',
-    );
+      expect(captured, isNotNull);
+      expect(captured!.blockTargetAvailable, isTrue);
+      expect(
+        source.substring(captured!.selectionStart, captured!.selectionEnd),
+        range.text,
+      );
+    }
   });
 
   testWidgets(

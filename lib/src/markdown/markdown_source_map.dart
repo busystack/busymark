@@ -445,6 +445,8 @@ class BusyMarkInlineParserContext {
   final md.Document _document;
   final md.Document _mappingDocument;
   final Map<String, md.LinkReference> _referenceDefinitions;
+  Map<String, md.LinkReference> get referenceDefinitions =>
+      _referenceDefinitions;
   final _SourceMappingEmailAutolinkSyntax _emailSyntax;
 
   int parseInvocations = 0;

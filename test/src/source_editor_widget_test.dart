@@ -1,3 +1,4 @@
+import 'package:busymark/src/editor/link_destination.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
@@ -51,6 +52,36 @@ import 'package:markdown/markdown.dart' as md;
 import 'package:yaru/yaru.dart';
 
 void main() {
+  for (final stale in [false, true]) {
+    testWidgets(
+      'Source target chooser ${stale ? 'rejects changed selection' : 'preserves selected text and formatting'}',
+      (tester) async {
+        final pending = Completer<LinkDestination?>();
+        final controller = await _pumpClipboardSourceEditor(
+          tester,
+          source: 'Chosen **format**',
+          clipboard: _SourceTestClipboard(),
+          onChooseLink: () => pending.future,
+        );
+        controller.selection = const TextSelection(
+          baseOffset: 0,
+          extentOffset: 17,
+        );
+        await _pressControlKey(tester, LogicalKeyboardKey.keyK);
+        await tester.pump();
+        if (stale) {
+          controller.selection = const TextSelection.collapsed(offset: 0);
+        }
+        pending.complete(const LinkDestination('target.md#actual'));
+        await tester.pumpAndSettle();
+        expect(
+          controller.text,
+          stale ? 'Chosen **format**' : '[Chosen **format**](target.md#actual)',
+        );
+      },
+    );
+  }
+
   testWidgets('Source pastes a web layout table as a complete document', (
     tester,
   ) async {
@@ -9351,6 +9382,7 @@ Future<TextEditingController> _pumpClipboardSourceEditor(
   AssetInputService? assetInputService,
   AssetIngestionService assetIngestionService = const AssetIngestionService(),
   VoidCallback? onAssetSaveRequired,
+  Future<LinkDestination?> Function()? onChooseLink,
 }) async {
   await tester.pumpWidget(
     MaterialApp(
@@ -9365,6 +9397,7 @@ Future<TextEditingController> _pumpClipboardSourceEditor(
           width: 900,
           height: 600,
           child: BusyMarkSourceEditor(
+            onChooseLink: onChooseLink,
             key: UniqueKey(),
             text: source,
             language: SourceSyntaxLanguage.markdown,

@@ -649,7 +649,10 @@ class WritersideProjectIndex {
             );
     }
     final hash = value.indexOf('#');
-    final normalized = hash < 0 ? value : value.substring(hash + 1);
+    var normalized = hash < 0 ? value : value.substring(hash + 1);
+    if (hash >= 0) {
+      normalized = decodeWritersideReferenceComponent(normalized);
+    }
     final module = modulesById[targetModule];
     final fromTopic = module?.topics
         .where((topic) => topic.filePath == filePath)
@@ -666,7 +669,25 @@ class WritersideProjectIndex {
         ? fromTopic
         : module?.topicByReference(targetPath, fromTopic: fromTopic) ??
               module?.topicsById[targetPath];
-    if (hash >= 0 && targetPath.isNotEmpty && module != null && topic == null) {
+    final matchingTopics =
+        targetPath.isEmpty ||
+            (hash < 0 &&
+                {
+                  WritersideSymbolKind.element,
+                  WritersideSymbolKind.snippet,
+                  WritersideSymbolKind.seealso,
+                }.contains(kind))
+        ? [if (fromTopic != null) fromTopic]
+        : module?.topicsMatchingReference(targetPath, fromTopic: fromTopic) ??
+              const <WritersideTopic>[];
+    final targetPaths = {
+      for (final candidate in matchingTopics) candidate.filePath,
+      if (topic != null) topic.filePath,
+    };
+    if (hash >= 0 &&
+        targetPath.isNotEmpty &&
+        module != null &&
+        targetPaths.isEmpty) {
       return const [];
     }
     final wantsElement =
@@ -716,14 +737,14 @@ class WritersideProjectIndex {
                 }.contains(symbol.kind)
               : kind == null || symbol.kind == kind) &&
           (!wantsElement ||
-              (topic == null
+              (targetPaths.isEmpty
                   ? filePath == null || symbol.filePath == filePath
-                  : symbol.filePath == topic.filePath)) &&
+                  : targetPaths.contains(symbol.filePath))) &&
           (symbol.name == normalized ||
               symbol.qualifiedName == reference ||
               (!wantsElement &&
                   symbol.kind == WritersideSymbolKind.topic &&
-                  topic?.filePath == symbol.filePath) ||
+                  targetPaths.contains(symbol.filePath)) ||
               (resourceMatch &&
                   p.basename(symbol.name) == p.basename(normalized)));
     });

@@ -44,3 +44,15 @@ if [[ -n "${WRITERSIDE_CONFORMANCE_OUTPUT:-}" ]]; then
   mkdir -p -- "$WRITERSIDE_CONFORMANCE_OUTPUT"
   cp -a -- "$output_root/artifacts/." "$WRITERSIDE_CONFORMANCE_OUTPUT/"
 fi
+
+if [[ "$source_root" == "test/fixtures/writerside/reference_conformance" ]]; then
+  python3 tools/verify_writerside_reference_fixture.py \
+    "$output_root/artifacts/webHelpGUIDE2-all.zip"
+fi
+if [[ "$source_root" == "test/fixtures/writerside/conformance_project" ]]; then
+  if [[ -n "${WRITERSIDE_CONFORMANCE_OUTPUT:-}" ]]; then
+    export WRITERSIDE_CONFORMANCE_OUTPUT="$WRITERSIDE_CONFORMANCE_OUTPUT/reference-links"
+  fi
+  bash tools/validate_writerside_conformance.sh \
+    test/fixtures/writerside/reference_conformance ReferenceLinks/guide
+fi

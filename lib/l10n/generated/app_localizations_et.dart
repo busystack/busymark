@@ -4788,4 +4788,282 @@ class AppLocalizationsEt extends AppLocalizations {
   @override
   String get nextcloudCreateSeparateWarning =>
       'Esimene päring võis serveris juba märkuse luua. See loob eraldi märkuse koos säilitatud kohaliku tööga. Võimalikke duplikaate ei kustutata.';
+
+  @override
+  String get wsSemanticFormats => 'Semantiline vormindus';
+
+  @override
+  String get wsUiControl => 'Kasutajaliidese juhtelement';
+
+  @override
+  String get wsFilePath => 'Fail / Tee';
+
+  @override
+  String get wsUiPath => 'Kasutajaliidese tee';
+
+  @override
+  String get wsDefinitionList => 'Definitsiooniloend';
+
+  @override
+  String get wsIncludeContent => 'Lisa korduskasutatav sisu';
+
+  @override
+  String get wsVariableReference => 'Muutuja viide';
+
+  @override
+  String get wsConvertList => 'Teisenda loend protseduuriks';
+
+  @override
+  String get wsElementProperties => 'Elemendi omadused';
+
+  @override
+  String get wsTopicProperties => 'Teema omadused';
+
+  @override
+  String get wsCollapsible => 'Ahendatav';
+
+  @override
+  String get wsPublishedState => 'Avaldatud algolek';
+
+  @override
+  String get wsExpanded => 'Laiendatud';
+
+  @override
+  String get wsCollapsed => 'Ahendatud';
+
+  @override
+  String get wsCollapsedTitle => 'Ahendatud pealkiri';
+
+  @override
+  String get wsTerm => 'Termin';
+
+  @override
+  String get wsListLayout => 'Loendi paigutus';
+
+  @override
+  String get wsSyncGroup => 'Sünkroonimisrühm';
+
+  @override
+  String get wsTabKey => 'Vahelehe võti';
+
+  @override
+  String get wsSwitcherLabel => 'Lüliti silt';
+
+  @override
+  String get wsNavigationElements => 'Navigeerimise elemendid';
+
+  @override
+  String get wsNavigationDepth => 'Navigeerimise sügavus';
+
+  @override
+  String get wsAddItem => 'Lisa element';
+
+  @override
+  String get wsStep => 'Samm';
+
+  @override
+  String get wsPropertyInvalid => 'Vigane omaduse väärtus';
+
+  @override
+  String get wsFilter => 'Sisufilter';
+
+  @override
+  String get wsIdentifier => 'Elemendi ID';
+
+  @override
+  String get wsTldr => 'Kokkuvõte (TLDR)';
+
+  @override
+  String get wsFullLayout => 'Täislaius';
+
+  @override
+  String get wsMediumLayout => 'Võrdsed veerud';
+
+  @override
+  String get wsNarrowLayout => 'Kitsas terminiveerg';
+
+  @override
+  String get wsTitle => 'Pealkiri';
+
+  @override
+  String get wsSwitcherKey => 'Valikulüliti võti';
+
+  @override
+  String get nextcloudServerSettings => 'Serveri Notesi seaded';
+
+  @override
+  String get nextcloudNotesPath => 'Märkmete kausta tee';
+
+  @override
+  String get nextcloudFileSuffix => 'Uute märkmete faililaiend';
+
+  @override
+  String get nextcloudServerSettingsExplanation =>
+      'Need Notesi seaded mõjutavad teisi kliente. Tee muutmine ei teisalda faile; laiendi muutmine ei nimeta olemasolevaid märkmeid ümber.';
+
+  @override
+  String get nextcloudSettingsSaved => 'Serveri seaded salvestatud';
+
+  @override
+  String get nextcloudSettingsNormalized =>
+      'Salvestatud serveri normaliseeritud väärtustega';
+
+  @override
+  String get nextcloudPendingUpload => 'Manuse üleslaadimine ootel';
+
+  @override
+  String nextcloudServerCheck(String time) {
+    return 'Viimane serverikontroll: $time';
+  }
+
+  @override
+  String get nextcloudSettingsLoading => 'Serveri seadete laadimine';
+
+  @override
+  String get nextcloudSettingsSaving => 'Serveri seadete salvestamine';
+
+  @override
+  String get nextcloudPreviousLocalEdit => 'Eelmine kohalik muudatus';
+
+  @override
+  String get nextcloudUsePreviousEdit => 'Kasuta eelmist muudatust';
+
+  @override
+  String get quickOpen => 'Kiiravamine';
+
+  @override
+  String get notesAll => 'Kõik märkmed';
+
+  @override
+  String get notesUncategorized => 'Kategooriata';
+
+  @override
+  String get notesRecovery => 'Taastamine';
+
+  @override
+  String get notesRecentlyEdited => 'Hiljuti muudetud';
+
+  @override
+  String get notesOldestEdited => 'Vanim muutmine';
+
+  @override
+  String get notesTitleAscending => 'Pealkiri A–Z';
+
+  @override
+  String get notesTitleDescending => 'Pealkiri Z–A';
+
+  @override
+  String get notesMove => 'Teisalda kategooriasse';
+
+  @override
+  String get notesRemoveFavorite => 'Eemalda lemmik';
+
+  @override
+  String get notesOffline => 'Tee võrguta kättesaadavaks';
+
+  @override
+  String get notesOfflineRemove => 'Eemalda võrguta säilitamine';
+
+  @override
+  String get notesIndexing => 'Märkmete indekseerimine…';
+
+  @override
+  String get notesSearchHelp =>
+      'Mõisted ühendatakse JA abil. Kasuta \"tsiteeritud fraase\", title: ja category:.';
+
+  @override
+  String get notesSourceLocation => 'Lähtekoht';
+
+  @override
+  String get notesRecoveryHelp =>
+      'Ainult säilitatud kohalikud märkmed ja kohalik ajalugu. Serveri prügikast ja ajalugu pole saadaval.';
+
+  @override
+  String get notesImport => 'Impordi märkmed';
+
+  @override
+  String get notesExport => 'Ekspordi märkmed';
+
+  @override
+  String get notesImportDistinct => 'Impordi eraldi märkmena';
+
+  @override
+  String get notesAvailableOffline => 'Võrguta saadaval';
+
+  @override
+  String get notesIncomplete => 'Mittetäielik';
+
+  @override
+  String get notesSelected => 'Valitud märkmed';
+
+  @override
+  String get notesNoHistory =>
+      'Säilitatud versioone pole. Ajalugu võib olla keelatud, aegunud või kustutatud.';
+
+  @override
+  String get notesTextAvailable => 'Tekst on kohalikult saadaval';
+
+  @override
+  String get notesLocalVersion => 'Kohalik tööversioon';
+
+  @override
+  String get notesAttachments => 'Manused';
+
+  @override
+  String get notesSkipped => 'Vahele jäetud';
+
+  @override
+  String get notesFailed => 'Ebaõnnestus';
+
+  @override
+  String get notesCompleted => 'Lõpetatud';
+
+  @override
+  String get notesImportNew => 'Alusta uut importimist';
+
+  @override
+  String get notesImportResume => 'Jätka katkestatud importimist';
+
+  @override
+  String get notesImportAlreadyImported => 'Selles toimingus juba imporditud';
+
+  @override
+  String get references => 'Viited';
+
+  @override
+  String get referenceIncoming => 'Sissetulevad';
+
+  @override
+  String get referenceOutgoing => 'Väljaminevad';
+
+  @override
+  String get referenceChooseTarget => 'Vali lingi siht';
+
+  @override
+  String get referenceWholeDocument => 'Kogu dokument';
+
+  @override
+  String get referenceSourceLocation => 'Allika asukoht';
+
+  @override
+  String get referenceTargetLocation => 'Sihtkoha asukoht';
+
+  @override
+  String get referenceResolved => 'Lahendatud';
+
+  @override
+  String get referenceMissing => 'Puudub';
+
+  @override
+  String get referenceAmbiguous => 'Mitmetähenduslik';
+
+  @override
+  String get referenceUnavailable => 'Selles kontekstis pole saadaval';
+
+  @override
+  String get referenceUnsupported => 'Pole toetatud';
+
+  @override
+  String get referenceNoPortableId =>
+      'Sellel sihtkohal pole kinnitatud teisaldatavat märkme URL-i.';
 }

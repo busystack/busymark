@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 
 import '../../app/busymark_design.dart';
 import '../../markdown/busymark_document.dart';
@@ -166,6 +167,34 @@ class BusyInlineSemanticAnchor {
   final BusyInline inline;
 }
 
+/// Authored references with no label (for example a keymap shortcut) still
+/// have an editable target at their source position.
+List<BusyInlineStyleRange> busyInlineReferenceRanges(List<BusyInline> inlines) {
+  final ranges = busyInlineStyleRanges(inlines);
+  var offset = 0;
+  void visit(BusyInline inline) {
+    if (inline.plainText.isEmpty &&
+        inline.kind == BusyInlineKind.writersideShortcut) {
+      ranges.add(
+        BusyInlineStyleRange(
+          start: offset,
+          end: offset,
+          kind: inline.kind,
+          attributes: inline.attributes,
+        ),
+      );
+    }
+    if (inline.children.isNotEmpty) {
+      inline.children.forEach(visit);
+    } else {
+      offset += inline.plainText.length;
+    }
+  }
+
+  inlines.forEach(visit);
+  return ranges;
+}
+
 List<BusyInlineSemanticAnchor> busyInlineSemanticAnchors(
   List<BusyInline> inlines,
 ) {
@@ -304,13 +333,19 @@ class BusyMarkWysiwygTextController extends TextEditingController {
       BusyInlineKind.strikethrough => baseStyle.copyWith(
         decoration: TextDecoration.lineThrough,
       ),
-      BusyInlineKind.code => baseStyle.copyWith(
+      BusyInlineKind.code ||
+      BusyInlineKind.writersidePath ||
+      BusyInlineKind.writersideUiPath ||
+      BusyInlineKind.writersideShortcut => baseStyle.copyWith(
         fontFamily: BusyMarkTypography.monoFontFamily,
         backgroundColor: colors.control,
       ),
       BusyInlineKind.link => baseStyle.copyWith(
         color: colorScheme.primary,
         decoration: TextDecoration.underline,
+      ),
+      BusyInlineKind.writersideControl => baseStyle.copyWith(
+        fontWeight: FontWeight.w600,
       ),
       BusyInlineKind.image => baseStyle.copyWith(
         color: colorScheme.primary,
@@ -446,15 +481,17 @@ class _InheritedInlineStyle {
 }
 
 bool _styledKind(BusyInlineKind kind) {
-  return {
-    BusyInlineKind.strong,
-    BusyInlineKind.emphasis,
-    BusyInlineKind.underline,
-    BusyInlineKind.strikethrough,
-    BusyInlineKind.code,
-    BusyInlineKind.link,
-    BusyInlineKind.image,
-  }.contains(kind);
+  return busyMarkIsSemanticInline(kind) ||
+      kind == BusyInlineKind.writersideVariable ||
+      {
+        BusyInlineKind.strong,
+        BusyInlineKind.emphasis,
+        BusyInlineKind.underline,
+        BusyInlineKind.strikethrough,
+        BusyInlineKind.code,
+        BusyInlineKind.link,
+        BusyInlineKind.image,
+      }.contains(kind);
 }
 
 bool _inlineStyleRangesEqual(
@@ -473,7 +510,8 @@ bool _inlineStyleRangesEqual(
     if (left.start != right.start ||
         left.end != right.end ||
         left.kind != right.kind ||
-        left.destination != right.destination) {
+        left.destination != right.destination ||
+        !mapEquals(left.attributes, right.attributes)) {
       return false;
     }
   }

@@ -4836,4 +4836,282 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get nextcloudCreateSeparateWarning =>
       'Het eerste verzoek heeft mogelijk al een servernotitie gemaakt. Dit maakt een afzonderlijke notitie met uw behouden lokale werk. Vermoedelijke duplicaten worden niet verwijderd.';
+
+  @override
+  String get wsSemanticFormats => 'Semantische opmaak';
+
+  @override
+  String get wsUiControl => 'UI-besturingselement';
+
+  @override
+  String get wsFilePath => 'Bestand / Pad';
+
+  @override
+  String get wsUiPath => 'UI-pad';
+
+  @override
+  String get wsDefinitionList => 'Definitielijst';
+
+  @override
+  String get wsIncludeContent => 'Herbruikbare inhoud opnemen';
+
+  @override
+  String get wsVariableReference => 'Variabelereferentie';
+
+  @override
+  String get wsConvertList => 'Lijst omzetten naar procedure';
+
+  @override
+  String get wsElementProperties => 'Elementeigenschappen';
+
+  @override
+  String get wsTopicProperties => 'Onderwerpeigenschappen';
+
+  @override
+  String get wsCollapsible => 'Inklapbaar';
+
+  @override
+  String get wsPublishedState => 'Gepubliceerde beginstatus';
+
+  @override
+  String get wsExpanded => 'Uitgeklapt';
+
+  @override
+  String get wsCollapsed => 'Ingeklapt';
+
+  @override
+  String get wsCollapsedTitle => 'Ingeklapte titel';
+
+  @override
+  String get wsTerm => 'Begrip';
+
+  @override
+  String get wsListLayout => 'Lijstindeling';
+
+  @override
+  String get wsSyncGroup => 'Synchronisatiegroep';
+
+  @override
+  String get wsTabKey => 'Tabsleutel';
+
+  @override
+  String get wsSwitcherLabel => 'Schakelaarlabel';
+
+  @override
+  String get wsNavigationElements => 'Navigatie-elementen';
+
+  @override
+  String get wsNavigationDepth => 'Navigatiediepte';
+
+  @override
+  String get wsAddItem => 'Item toevoegen';
+
+  @override
+  String get wsStep => 'Stap';
+
+  @override
+  String get wsPropertyInvalid => 'Ongeldige eigenschapswaarde';
+
+  @override
+  String get wsFilter => 'Inhoudsfilter';
+
+  @override
+  String get wsIdentifier => 'Element-ID';
+
+  @override
+  String get wsTldr => 'Samenvatting (TLDR)';
+
+  @override
+  String get wsFullLayout => 'Volledige breedte';
+
+  @override
+  String get wsMediumLayout => 'Gelijke kolommen';
+
+  @override
+  String get wsNarrowLayout => 'Smalle begripskolom';
+
+  @override
+  String get wsTitle => 'Titel';
+
+  @override
+  String get wsSwitcherKey => 'Keuzeschakelaar';
+
+  @override
+  String get nextcloudServerSettings => 'Notes-instellingen op de server';
+
+  @override
+  String get nextcloudNotesPath => 'Pad van de notitiemap';
+
+  @override
+  String get nextcloudFileSuffix => 'Bestandsextensie voor nieuwe notities';
+
+  @override
+  String get nextcloudServerSettingsExplanation =>
+      'Deze Notes-instellingen gelden ook voor andere clients. Een ander pad verplaatst geen bestanden; een andere extensie hernoemt bestaande notities niet.';
+
+  @override
+  String get nextcloudSettingsSaved => 'Serverinstellingen opgeslagen';
+
+  @override
+  String get nextcloudSettingsNormalized =>
+      'Opgeslagen met door de server genormaliseerde waarden';
+
+  @override
+  String get nextcloudPendingUpload => 'Bijlage wacht op upload';
+
+  @override
+  String nextcloudServerCheck(String time) {
+    return 'Laatste servercontrole: $time';
+  }
+
+  @override
+  String get nextcloudSettingsLoading => 'Serverinstellingen laden';
+
+  @override
+  String get nextcloudSettingsSaving => 'Serverinstellingen opslaan';
+
+  @override
+  String get nextcloudPreviousLocalEdit => 'Vorige lokale wijziging';
+
+  @override
+  String get nextcloudUsePreviousEdit => 'Vorige wijziging gebruiken';
+
+  @override
+  String get quickOpen => 'Snel openen';
+
+  @override
+  String get notesAll => 'Alle notities';
+
+  @override
+  String get notesUncategorized => 'Zonder categorie';
+
+  @override
+  String get notesRecovery => 'Herstel';
+
+  @override
+  String get notesRecentlyEdited => 'Recent bewerkt';
+
+  @override
+  String get notesOldestEdited => 'Oudste bewerking';
+
+  @override
+  String get notesTitleAscending => 'Titel A–Z';
+
+  @override
+  String get notesTitleDescending => 'Titel Z–A';
+
+  @override
+  String get notesMove => 'Naar categorie verplaatsen';
+
+  @override
+  String get notesRemoveFavorite => 'Favoriet verwijderen';
+
+  @override
+  String get notesOffline => 'Offline beschikbaar maken';
+
+  @override
+  String get notesOfflineRemove => 'Offlinebewaring verwijderen';
+
+  @override
+  String get notesIndexing => 'Notities indexeren…';
+
+  @override
+  String get notesSearchHelp =>
+      'Termen gebruiken EN. Gebruik \"geciteerde zinnen\", title: en category:.';
+
+  @override
+  String get notesSourceLocation => 'Bronlocatie';
+
+  @override
+  String get notesRecoveryHelp =>
+      'Alleen bewaarde lokale notities en lokale geschiedenis. Prullenbak en geschiedenis van de server zijn niet beschikbaar.';
+
+  @override
+  String get notesImport => 'Notities importeren';
+
+  @override
+  String get notesExport => 'Notities exporteren';
+
+  @override
+  String get notesImportDistinct => 'Als afzonderlijke notitie importeren';
+
+  @override
+  String get notesAvailableOffline => 'Offline beschikbaar';
+
+  @override
+  String get notesIncomplete => 'Onvolledig';
+
+  @override
+  String get notesSelected => 'Geselecteerde notities';
+
+  @override
+  String get notesNoHistory =>
+      'Geen bewaarde revisies. Geschiedenis kan uitgeschakeld, verlopen of gewist zijn.';
+
+  @override
+  String get notesTextAvailable => 'Tekst lokaal beschikbaar';
+
+  @override
+  String get notesLocalVersion => 'Lokale werkversie';
+
+  @override
+  String get notesAttachments => 'Bijlagen';
+
+  @override
+  String get notesSkipped => 'Overgeslagen';
+
+  @override
+  String get notesFailed => 'Mislukt';
+
+  @override
+  String get notesCompleted => 'Voltooid';
+
+  @override
+  String get notesImportNew => 'Nieuwe import starten';
+
+  @override
+  String get notesImportResume => 'Onderbroken import hervatten';
+
+  @override
+  String get notesImportAlreadyImported => 'Al geïmporteerd in deze bewerking';
+
+  @override
+  String get references => 'Verwijzingen';
+
+  @override
+  String get referenceIncoming => 'Inkomend';
+
+  @override
+  String get referenceOutgoing => 'Uitgaand';
+
+  @override
+  String get referenceChooseTarget => 'Linkdoel kiezen';
+
+  @override
+  String get referenceWholeDocument => 'Heel document';
+
+  @override
+  String get referenceSourceLocation => 'Bronlocatie';
+
+  @override
+  String get referenceTargetLocation => 'Doellocatie';
+
+  @override
+  String get referenceResolved => 'Opgelost';
+
+  @override
+  String get referenceMissing => 'Ontbreekt';
+
+  @override
+  String get referenceAmbiguous => 'Dubbelzinnig';
+
+  @override
+  String get referenceUnavailable => 'Niet beschikbaar in deze context';
+
+  @override
+  String get referenceUnsupported => 'Niet ondersteund';
+
+  @override
+  String get referenceNoPortableId =>
+      'Dit doel heeft geen geverifieerde overdraagbare notitie-URL.';
 }

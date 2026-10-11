@@ -4778,4 +4778,283 @@ class AppLocalizationsHi extends AppLocalizations {
   @override
   String get nextcloudCreateSeparateWarning =>
       'पहले अनुरोध ने सर्वर पर पहले ही नोट बना दिया हो सकता है। यह आपके सुरक्षित स्थानीय काम के साथ अलग नोट बनाता है। किसी संभावित प्रतिलिपि को हटाया नहीं जाएगा।';
+
+  @override
+  String get wsSemanticFormats => 'अर्थपूर्ण स्वरूपण';
+
+  @override
+  String get wsUiControl => 'यूआई नियंत्रण';
+
+  @override
+  String get wsFilePath => 'फ़ाइल / पथ';
+
+  @override
+  String get wsUiPath => 'यूआई पथ';
+
+  @override
+  String get wsDefinitionList => 'परिभाषा सूची';
+
+  @override
+  String get wsIncludeContent => 'पुनः उपयोग योग्य सामग्री शामिल करें';
+
+  @override
+  String get wsVariableReference => 'चर संदर्भ';
+
+  @override
+  String get wsConvertList => 'सूची को प्रक्रिया में बदलें';
+
+  @override
+  String get wsElementProperties => 'तत्व के गुण';
+
+  @override
+  String get wsTopicProperties => 'विषय के गुण';
+
+  @override
+  String get wsCollapsible => 'समेटने योग्य';
+
+  @override
+  String get wsPublishedState => 'प्रकाशित आरंभिक स्थिति';
+
+  @override
+  String get wsExpanded => 'विस्तृत';
+
+  @override
+  String get wsCollapsed => 'संक्षिप्त';
+
+  @override
+  String get wsCollapsedTitle => 'संक्षिप्त शीर्षक';
+
+  @override
+  String get wsTerm => 'शब्द';
+
+  @override
+  String get wsListLayout => 'सूची लेआउट';
+
+  @override
+  String get wsSyncGroup => 'सिंक समूह';
+
+  @override
+  String get wsTabKey => 'टैब कुंजी';
+
+  @override
+  String get wsSwitcherLabel => 'स्विचर लेबल';
+
+  @override
+  String get wsNavigationElements => 'नेविगेशन तत्व';
+
+  @override
+  String get wsNavigationDepth => 'नेविगेशन गहराई';
+
+  @override
+  String get wsAddItem => 'आइटम जोड़ें';
+
+  @override
+  String get wsStep => 'चरण';
+
+  @override
+  String get wsPropertyInvalid => 'अमान्य गुण मान';
+
+  @override
+  String get wsFilter => 'फ़िल्टर';
+
+  @override
+  String get wsIdentifier => 'तत्व आईडी';
+
+  @override
+  String get wsTldr => 'सारांश (TLDR)';
+
+  @override
+  String get wsFullLayout => 'पूरी चौड़ाई';
+
+  @override
+  String get wsMediumLayout => 'समान स्तंभ';
+
+  @override
+  String get wsNarrowLayout => 'संकीर्ण शब्द स्तंभ';
+
+  @override
+  String get wsTitle => 'शीर्षक';
+
+  @override
+  String get wsSwitcherKey => 'स्विचर कुंजी';
+
+  @override
+  String get nextcloudServerSettings => 'सर्वर Notes सेटिंग्स';
+
+  @override
+  String get nextcloudNotesPath => 'नोट फ़ोल्डर का पथ';
+
+  @override
+  String get nextcloudFileSuffix => 'नए नोट की फ़ाइल का प्रत्यय';
+
+  @override
+  String get nextcloudServerSettingsExplanation =>
+      'ये सर्वर Notes सेटिंग्स दूसरे क्लाइंट को भी प्रभावित करती हैं। पथ बदलने से फ़ाइलें स्थानांतरित नहीं होतीं; प्रत्यय बदलने से मौजूदा नोट का नाम नहीं बदलता।';
+
+  @override
+  String get nextcloudSettingsSaved => 'सर्वर सेटिंग्स सहेजी गईं';
+
+  @override
+  String get nextcloudSettingsNormalized =>
+      'सर्वर द्वारा सामान्यीकृत मानों के साथ सहेजा गया';
+
+  @override
+  String get nextcloudPendingUpload => 'अटैचमेंट अपलोड लंबित है';
+
+  @override
+  String nextcloudServerCheck(String time) {
+    return 'सर्वर की अंतिम जाँच: $time';
+  }
+
+  @override
+  String get nextcloudSettingsLoading => 'सर्वर सेटिंग लोड हो रही हैं';
+
+  @override
+  String get nextcloudSettingsSaving => 'सर्वर सेटिंग सहेजी जा रही हैं';
+
+  @override
+  String get nextcloudPreviousLocalEdit => 'पिछला स्थानीय संपादन';
+
+  @override
+  String get nextcloudUsePreviousEdit => 'पिछला संपादन इस्तेमाल करें';
+
+  @override
+  String get quickOpen => 'त्वरित खोलें';
+
+  @override
+  String get notesAll => 'सभी नोट्स';
+
+  @override
+  String get notesUncategorized => 'बिना श्रेणी';
+
+  @override
+  String get notesRecovery => 'पुनर्प्राप्ति';
+
+  @override
+  String get notesRecentlyEdited => 'हाल में संपादित';
+
+  @override
+  String get notesOldestEdited => 'सबसे पुराना संपादन';
+
+  @override
+  String get notesTitleAscending => 'शीर्षक आरोही';
+
+  @override
+  String get notesTitleDescending => 'शीर्षक अवरोही';
+
+  @override
+  String get notesMove => 'श्रेणी में ले जाएँ';
+
+  @override
+  String get notesRemoveFavorite => 'पसंदीदा हटाएँ';
+
+  @override
+  String get notesOffline => 'ऑफ़लाइन उपलब्ध करें';
+
+  @override
+  String get notesOfflineRemove => 'ऑफ़लाइन संरक्षण हटाएँ';
+
+  @override
+  String get notesIndexing => 'नोट्स की अनुक्रमणिका बन रही है…';
+
+  @override
+  String get notesSearchHelp =>
+      'शब्द AND से जुड़ते हैं। \"उद्धृत वाक्यांश\", title: और category: का उपयोग करें।';
+
+  @override
+  String get notesSourceLocation => 'स्रोत स्थान';
+
+  @override
+  String get notesRecoveryHelp =>
+      'केवल संरक्षित स्थानीय नोट्स और स्थानीय इतिहास। सर्वर का कचरा और इतिहास उपलब्ध नहीं है।';
+
+  @override
+  String get notesImport => 'नोट्स आयात करें';
+
+  @override
+  String get notesExport => 'नोट्स निर्यात करें';
+
+  @override
+  String get notesImportDistinct => 'अलग नोट के रूप में आयात करें';
+
+  @override
+  String get notesAvailableOffline => 'ऑफ़लाइन उपलब्ध';
+
+  @override
+  String get notesIncomplete => 'अपूर्ण';
+
+  @override
+  String get notesSelected => 'चुने गए नोट्स';
+
+  @override
+  String get notesNoHistory =>
+      'कोई संरक्षित संशोधन नहीं। इतिहास बंद, समाप्त या साफ़ किया गया हो सकता है।';
+
+  @override
+  String get notesTextAvailable => 'पाठ स्थानीय रूप से उपलब्ध है';
+
+  @override
+  String get notesLocalVersion => 'स्थानीय कार्य संस्करण';
+
+  @override
+  String get notesAttachments => 'अटैचमेंट';
+
+  @override
+  String get notesSkipped => 'छोड़ा गया';
+
+  @override
+  String get notesFailed => 'विफल';
+
+  @override
+  String get notesCompleted => 'पूर्ण';
+
+  @override
+  String get notesImportNew => 'नया आयात शुरू करें';
+
+  @override
+  String get notesImportResume => 'बाधित आयात फिर से शुरू करें';
+
+  @override
+  String get notesImportAlreadyImported =>
+      'इस प्रक्रिया में पहले ही आयात किया गया';
+
+  @override
+  String get references => 'संदर्भ';
+
+  @override
+  String get referenceIncoming => 'आने वाले';
+
+  @override
+  String get referenceOutgoing => 'जाने वाले';
+
+  @override
+  String get referenceChooseTarget => 'लिंक लक्ष्य चुनें';
+
+  @override
+  String get referenceWholeDocument => 'पूरा दस्तावेज़';
+
+  @override
+  String get referenceSourceLocation => 'स्रोत स्थान';
+
+  @override
+  String get referenceTargetLocation => 'लक्ष्य स्थान';
+
+  @override
+  String get referenceResolved => 'हल हुआ';
+
+  @override
+  String get referenceMissing => 'गुम';
+
+  @override
+  String get referenceAmbiguous => 'अस्पष्ट';
+
+  @override
+  String get referenceUnavailable => 'इस संदर्भ में अनुपलब्ध';
+
+  @override
+  String get referenceUnsupported => 'असमर्थित';
+
+  @override
+  String get referenceNoPortableId =>
+      'इस लक्ष्य का सत्यापित पोर्टेबल नोट URL नहीं है.';
 }

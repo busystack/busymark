@@ -1,3 +1,9 @@
+import '../../references/markdown_move_ui.dart';
+import '../../nextcloud_notes/presentation/notes_workspace_ui.dart';
+import '../../nextcloud_notes/data/server_uri.dart';
+import '../../references/reference_ui.dart';
+import '../../references/reference_controller.dart';
+import '../../nextcloud_notes/domain/notes_search.dart';
 import '../../assets/provider_asset_ingestion_service.dart';
 import '../../assets/document_media_context.dart';
 import '../../nextcloud_notes/application/nextcloud_connection.dart';
@@ -68,6 +74,7 @@ import '../../editor/source/source_document.dart';
 import '../../editor/source/source_editor.dart';
 import '../../editor/source/source_search.dart';
 import '../../editor/wysiwyg/wysiwyg_editor.dart';
+import '../../editor/wysiwyg/writerside_editing_adapter.dart';
 import '../../editor/wysiwyg/wysiwyg_session_state.dart';
 import '../../editor/writerside_video_view.dart';
 import '../../feedback/presentation/feedback_dialog.dart';
@@ -628,9 +635,13 @@ class _SearchNavigationTarget {
     required this.endOffset,
     required this.query,
     required this.request,
+    this.localId,
+    this.digest,
   });
 
-  final String filePath;
+  final String? filePath;
+  final String? localId;
+  final String? digest;
   final int line;
   final int startOffset;
   final int endOffset;
@@ -1258,6 +1269,11 @@ class WorkspaceScreen extends ConsumerWidget {
   }
 
   void _openSearch(WidgetRef ref) {
+    if (ref.read(workspaceControllerProvider).workspace?.isRemote == true) {
+      final target = ref.context;
+      unawaited(showNotesSearch(target, ref));
+      return;
+    }
     final search = ref.read(_workspaceSearchProvider);
     ref.read(_headerSearchFocusRequestProvider.notifier).request();
     if (!search.active) {
@@ -1412,6 +1428,7 @@ class WorkspaceScreen extends ConsumerWidget {
         context.go(settingsLocation(SettingsReturnTarget.workspace));
       case BusyMarkMainMenuAction.keyboardShortcuts:
         showBusyMarkKeyboardShortcutsDialog(context);
+      case BusyMarkMainMenuAction.quickOpen:
       case BusyMarkMainMenuAction.commandPalette:
         return;
       case BusyMarkMainMenuAction.syntaxReference:
@@ -2334,6 +2351,9 @@ class _SidebarState extends ConsumerState<_Sidebar> {
     final repositoryInfo = gitState.attachedWorkspace?.id == widget.workspace.id
         ? gitState.repositoryInfo
         : null;
+    ref.listen(referencePanelRequestProvider, (_, next) {
+      _selectTab(_SidebarTab.references, tabs);
+    });
     ref.listen<_SidebarTab?>(_sidebarShortcutRequestProvider, (_, next) {
       if (next == null) {
         return;
@@ -2446,6 +2466,7 @@ class _SidebarState extends ConsumerState<_Sidebar> {
                             .target
                             ?.requestEditorFocus(),
                       ),
+                      _SidebarTab.references => const ReferencesPanel(),
                       _SidebarTab.localHistory => LocalHistoryPanel(
                         focusSearchRequest: ref.watch(
                           localHistoryFindRequestProvider,
@@ -3068,7 +3089,16 @@ class _SidebarState extends ConsumerState<_Sidebar> {
   }
 }
 
-enum _SidebarTab { notes, files, toc, outline, git, localHistory, clipboard }
+enum _SidebarTab {
+  notes,
+  files,
+  toc,
+  outline,
+  git,
+  localHistory,
+  clipboard,
+  references,
+}
 
 int _preferredSidebarTabIndex(Workspace workspace) {
   final tabs = _sidebarTabsFor(workspace.kind);
@@ -3096,16 +3126,19 @@ List<_SidebarTab> _sidebarTabsFor(WorkspaceKind kind) {
       _SidebarTab.outline,
       _SidebarTab.localHistory,
       _SidebarTab.clipboard,
+      _SidebarTab.references,
     ],
     WorkspaceKind.untitledMarkdown => const [
       _SidebarTab.outline,
       _SidebarTab.localHistory,
       _SidebarTab.clipboard,
+      _SidebarTab.references,
     ],
     WorkspaceKind.singleMarkdown => const [
       _SidebarTab.outline,
       _SidebarTab.localHistory,
       _SidebarTab.clipboard,
+      _SidebarTab.references,
     ],
     WorkspaceKind.markdownFolder => const [
       _SidebarTab.files,
@@ -3113,6 +3146,7 @@ List<_SidebarTab> _sidebarTabsFor(WorkspaceKind kind) {
       _SidebarTab.git,
       _SidebarTab.localHistory,
       _SidebarTab.clipboard,
+      _SidebarTab.references,
     ],
     WorkspaceKind.writersideModule => const [
       _SidebarTab.files,
@@ -3121,6 +3155,7 @@ List<_SidebarTab> _sidebarTabsFor(WorkspaceKind kind) {
       _SidebarTab.git,
       _SidebarTab.localHistory,
       _SidebarTab.clipboard,
+      _SidebarTab.references,
     ],
   };
 }
@@ -3134,6 +3169,7 @@ String _sidebarTabLabel(BuildContext context, _SidebarTab tab) {
     _SidebarTab.git => context.l10n.git,
     _SidebarTab.localHistory => context.l10n.localHistory,
     _SidebarTab.clipboard => context.l10n.clipboardHistory,
+    _SidebarTab.references => context.l10n.references,
   };
 }
 
@@ -3146,6 +3182,7 @@ IconData _sidebarTabIcon(_SidebarTab tab, TextDirection direction) {
     _SidebarTab.git => BusyMarkGlyphs.branch,
     _SidebarTab.localHistory => BusyMarkGlyphs.sidebarLocalHistory,
     _SidebarTab.clipboard => BusyMarkGlyphs.copy,
+    _SidebarTab.references => BusyMarkGlyphs.link,
   };
 }
 
@@ -3161,6 +3198,7 @@ String? _sidebarTabShortcut(BuildContext context, _SidebarTab tab) {
     _SidebarTab.git => BusyMarkCommandIds.sidebarGit,
     _SidebarTab.localHistory => BusyMarkCommandIds.localHistory,
     _SidebarTab.clipboard => BusyMarkCommandIds.clipboardHistory,
+    _SidebarTab.references => BusyMarkCommandIds.references,
   };
   return commands[id]?.shortcut?.label;
 }
@@ -4741,9 +4779,21 @@ class _FilesTabState extends ConsumerState<_FilesTab> {
                     !await saveOrConfirmSafeToChangeActiveFile(context, ref)) {
                   return false;
                 }
+                if (!mounted) return false;
+                final plan = await reviewMarkdownMove(
+                  this.context,
+                  ref,
+                  path,
+                  p.join(p.dirname(path), newName),
+                );
+                if (!mounted || !plan.proceed) return false;
                 return ref
                     .read(workspaceControllerProvider.notifier)
-                    .renameWorkspaceEntity(path, newName);
+                    .renameWorkspaceEntity(
+                      path,
+                      newName,
+                      reviewedPlan: plan.plan,
+                    );
               }());
         if (renamed) {
           setState(() => _cutEntry = null);
@@ -4760,9 +4810,21 @@ class _FilesTabState extends ConsumerState<_FilesTab> {
           return;
         }
         final directory = isFolder ? path : p.dirname(path);
+        if (!mounted) return;
+        final plan = await reviewMarkdownMove(
+          this.context,
+          ref,
+          entry.path,
+          p.join(directory, p.basename(entry.path)),
+        );
+        if (!mounted || !plan.proceed) return;
         final moved = await ref
             .read(workspaceControllerProvider.notifier)
-            .moveWorkspaceEntity(entry.path, directory);
+            .moveWorkspaceEntity(
+              entry.path,
+              directory,
+              reviewedPlan: plan.plan,
+            );
         if (moved) {
           setState(() => _cutEntry = null);
           _expandedPaths.addAll(_directoryAncestorPaths(directory));
@@ -10259,6 +10321,18 @@ List<DocumentOutlineHeading> _activeDocumentOutline(WorkspaceState state) {
     return preview.outline;
   }
   final buffer = state.activeBuffer;
+  if (workspace != null &&
+      buffer != null &&
+      resolveWorkspaceDocumentContext(workspace, buffer).kind ==
+          DocumentKind.writersideXmlTopic) {
+    return const WritersideEditingAdapter()
+            .parseXml(
+              filePath: buffer.filePath ?? workspace.activeFilePath ?? '',
+              source: buffer.text,
+            )
+            ?.outline ??
+        const [];
+  }
   final markdown = workspace?.markdown;
   if (workspace == null || markdown == null) return const [];
   if (buffer == null) {
@@ -11976,6 +12050,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
   String? _cachedWysiwygPath;
   String? _cachedWysiwygSource;
   MarkdownMode? _cachedWysiwygMode;
+  DocumentKind? _cachedWysiwygKind;
   String? _wysiwygScrollHeadingId;
   String? _wysiwygScrollBlockId;
   String? _wysiwygSearchQuery;
@@ -12125,10 +12200,41 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
       }
       _scrollToOutlineTarget(next);
     });
+    ref.listen(notesMatchNavigationProvider, (previous, next) {
+      if (next == null ||
+          next.request == previous?.request ||
+          (widget.state.activeBuffer?.remoteNote?.localId ??
+                  widget.state.activeBuffer?.filePath) !=
+              next.localId) {
+        return;
+      }
+      final source = widget.state.activeBuffer!.text;
+      if (notesSearchDigest(source) != next.digest) return;
+      final line = SourceDocument(
+        fullText: source,
+      ).lineIndex.lineNumberAtOffset(next.start);
+      final old = ref.read(_searchNavigationTargetProvider);
+      ref
+          .read(_searchNavigationTargetProvider.notifier)
+          .set(
+            _SearchNavigationTarget(
+              filePath: null,
+              localId: next.localId,
+              digest: next.digest,
+              line: line,
+              startOffset: next.start,
+              endOffset: next.end,
+              query: '',
+              request: (old?.request ?? 0) + 1,
+            ),
+          );
+    });
     final searchTarget = ref.watch(_searchNavigationTargetProvider);
     if (searchTarget != null &&
-        ref.read(_workspaceSearchProvider).active &&
-        ref.read(_workspaceSearchProvider).query == searchTarget.query &&
+        (searchTarget.localId != null ||
+            (ref.read(_workspaceSearchProvider).active &&
+                ref.read(_workspaceSearchProvider).query ==
+                    searchTarget.query)) &&
         searchTarget.request != _lastSearchNavigationRequest) {
       _scrollToSearchTarget(searchTarget);
     }
@@ -12310,6 +12416,17 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
                           Expanded(
                             key: const ValueKey('document-wysiwyg-pane'),
                             child: BusyMarkWysiwygEditor(
+                              onChooseLink: (initial) =>
+                                  showReferenceLinkChooser(
+                                    context,
+                                    initialDestination: initial,
+                                  ),
+                              writersideProjectIndex: widget
+                                  .state
+                                  .workspace
+                                  ?.writersideProject
+                                  ?.index,
+                              writersideModuleId: _activeWritersideModuleId(),
                               key: _wysiwygEditorKey,
                               document: wysiwygDocument,
                               documentId: activeBuffer?.id,
@@ -12487,6 +12604,8 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
                           Expanded(
                             key: const ValueKey('document-source-pane'),
                             child: BusyMarkSourceEditor(
+                              onChooseLink: () =>
+                                  showReferenceLinkChooser(context),
                               key: _sourceEditorKey,
                               text: widget.state.activeText,
                               language: _sourceSyntaxLanguage(
@@ -13674,6 +13793,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     _cachedWysiwygPath = document.filePath;
     _cachedWysiwygSource = document.source;
     _cachedWysiwygMode = context.markdownMode;
+    _cachedWysiwygKind = context.kind;
   }
 
   void _clearWysiwygCache() {
@@ -13682,6 +13802,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     _cachedWysiwygPath = null;
     _cachedWysiwygSource = null;
     _cachedWysiwygMode = null;
+    _cachedWysiwygKind = null;
   }
 
   String? _activeEditorPath() {
@@ -13920,7 +14041,13 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
           ref.read(_searchNavigationTargetProvider)?.request !=
               target.request ||
           _lastSearchNavigationRequest == target.request ||
-          target.filePath != widget.state.activeBuffer?.filePath) {
+          (target.localId != null
+              ? target.localId !=
+                        (widget.state.activeBuffer?.remoteNote?.localId ??
+                            widget.state.activeBuffer?.filePath) ||
+                    notesSearchDigest(widget.state.activeBuffer?.text ?? '') !=
+                        target.digest
+              : target.filePath != widget.state.activeBuffer?.filePath)) {
         return;
       }
       _lastSearchNavigationRequest = target.request;
@@ -14169,7 +14296,24 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
 
   bool _canUseWysiwyg(Workspace? workspace) {
     final kind = _activeDocumentKind(workspace);
-    return kind?.supportsAiMarkdownEditing ?? false;
+    return kind?.supportsVisualEditing ?? false;
+  }
+
+  String? _activeWritersideModuleId() {
+    final workspace = widget.state.workspace;
+    final buffer = widget.state.activeBuffer;
+    if (workspace == null || buffer == null) return null;
+    final module = resolveWorkspaceDocumentContext(
+      workspace,
+      buffer,
+    ).writersideModule;
+    if (module == null) return null;
+    for (final entry
+        in workspace.writersideProject?.index.modulesById.entries ??
+            const Iterable.empty()) {
+      if (p.equals(entry.value.rootPath, module.rootPath)) return entry.key;
+    }
+    return null;
   }
 
   BusyDocument? _wysiwygDocument() {
@@ -14183,8 +14327,18 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     if (_cachedWysiwygBufferId == buffer.id &&
         _cachedWysiwygPath == activePath &&
         _cachedWysiwygSource == buffer.text &&
-        _cachedWysiwygMode == context.markdownMode) {
+        _cachedWysiwygMode == context.markdownMode &&
+        _cachedWysiwygKind == context.kind) {
       return _cachedWysiwygDocument;
+    }
+    if (context.kind == DocumentKind.writersideXmlTopic) {
+      final document = const WritersideEditingAdapter().parseXml(
+        filePath: activePath,
+        source: buffer.text,
+      );
+      _clearWysiwygCache();
+      if (document != null) _cacheWysiwygDocument(buffer.id, document);
+      return document;
     }
     final currentMarkdown = workspace.markdown;
     if (currentMarkdown != null &&
@@ -14197,6 +14351,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
       _cachedWysiwygPath = activePath;
       _cachedWysiwygSource = buffer.text;
       _cachedWysiwygMode = context.markdownMode;
+      _cachedWysiwygKind = context.kind;
       return document;
     }
     try {
@@ -14214,6 +14369,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
       _cachedWysiwygPath = activePath;
       _cachedWysiwygSource = buffer.text;
       _cachedWysiwygMode = context.markdownMode;
+      _cachedWysiwygKind = context.kind;
       return document;
     } on Object {
       return null;
@@ -16327,6 +16483,27 @@ Future<void> _openPreviewLink(
   }
   final uri = parseSchemedUri(target);
   final remoteState = ref.read(workspaceControllerProvider);
+  final accountId = remoteState.workspace?.nextcloudAccountId;
+  final account = accountId == null
+      ? null
+      : ref
+            .read(nextcloudNotesRepositoryProvider)
+            .value
+            ?.accountById(accountId);
+  final linkedId = account == null
+      ? null
+      : nextcloudNoteId(account.server, target);
+  if (linkedId != null) {
+    final opened = await ref
+        .read(workspaceControllerProvider.notifier)
+        .openNextcloudNoteLink(linkedId);
+    if (opened && context.mounted && uri?.hasFragment == true) {
+      _navigatePreviewAnchor(context, ref, '', uri!.fragment);
+    } else if (!opened && context.mounted) {
+      _showPreviewLinkMessage(context, context.l10n.couldNotOpenTarget(target));
+    }
+    return;
+  }
   if (remoteState.workspace?.isRemote == true &&
       (uri == null || !isLaunchableExternalUri(uri))) {
     if (target.startsWith('#')) {

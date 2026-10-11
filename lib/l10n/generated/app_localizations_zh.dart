@@ -4577,6 +4577,279 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get nextcloudCreateSeparateWarning =>
       '首次请求可能已在服务器上创建笔记。此操作将使用保留的本地工作创建独立笔记。不会删除任何疑似重复的笔记。';
+
+  @override
+  String get wsSemanticFormats => '语义格式';
+
+  @override
+  String get wsUiControl => '界面控件';
+
+  @override
+  String get wsFilePath => '文件 / 路径';
+
+  @override
+  String get wsUiPath => '界面路径';
+
+  @override
+  String get wsDefinitionList => '定义列表';
+
+  @override
+  String get wsIncludeContent => '包含可复用内容';
+
+  @override
+  String get wsVariableReference => '变量引用';
+
+  @override
+  String get wsConvertList => '将列表转换为过程';
+
+  @override
+  String get wsElementProperties => '元素属性';
+
+  @override
+  String get wsTopicProperties => '主题属性';
+
+  @override
+  String get wsCollapsible => '可折叠';
+
+  @override
+  String get wsPublishedState => '发布时的初始状态';
+
+  @override
+  String get wsExpanded => '展开';
+
+  @override
+  String get wsCollapsed => '折叠';
+
+  @override
+  String get wsCollapsedTitle => '折叠标题';
+
+  @override
+  String get wsTerm => '术语';
+
+  @override
+  String get wsListLayout => '列表布局';
+
+  @override
+  String get wsSyncGroup => '同步组';
+
+  @override
+  String get wsTabKey => '选项卡键';
+
+  @override
+  String get wsSwitcherLabel => '切换器标签';
+
+  @override
+  String get wsNavigationElements => '导航元素';
+
+  @override
+  String get wsNavigationDepth => '导航深度';
+
+  @override
+  String get wsAddItem => '添加项目';
+
+  @override
+  String get wsStep => '步骤';
+
+  @override
+  String get wsPropertyInvalid => '属性值无效';
+
+  @override
+  String get wsFilter => '筛选器';
+
+  @override
+  String get wsIdentifier => '元素 ID';
+
+  @override
+  String get wsTldr => '摘要 (TLDR)';
+
+  @override
+  String get wsFullLayout => '全宽';
+
+  @override
+  String get wsMediumLayout => '等宽列';
+
+  @override
+  String get wsNarrowLayout => '窄术语列';
+
+  @override
+  String get wsTitle => '标题';
+
+  @override
+  String get wsSwitcherKey => '切换键';
+
+  @override
+  String get nextcloudServerSettings => '服务器 Notes 设置';
+
+  @override
+  String get nextcloudNotesPath => '笔记文件夹路径';
+
+  @override
+  String get nextcloudFileSuffix => '新笔记的文件后缀';
+
+  @override
+  String get nextcloudServerSettingsExplanation =>
+      '这些服务器 Notes 设置会影响其他客户端。更改路径不会移动文件；更改后缀不会重命名现有笔记。';
+
+  @override
+  String get nextcloudSettingsSaved => '服务器设置已保存';
+
+  @override
+  String get nextcloudSettingsNormalized => '已保存服务器规范化后的值';
+
+  @override
+  String get nextcloudPendingUpload => '附件等待上传';
+
+  @override
+  String nextcloudServerCheck(String time) {
+    return '上次服务器检查：$time';
+  }
+
+  @override
+  String get nextcloudSettingsLoading => '正在加载服务器设置';
+
+  @override
+  String get nextcloudSettingsSaving => '正在保存服务器设置';
+
+  @override
+  String get nextcloudPreviousLocalEdit => '先前的本地编辑';
+
+  @override
+  String get nextcloudUsePreviousEdit => '使用先前编辑';
+
+  @override
+  String get quickOpen => '快速打开';
+
+  @override
+  String get notesAll => '所有笔记';
+
+  @override
+  String get notesUncategorized => '未分类';
+
+  @override
+  String get notesRecovery => '恢复';
+
+  @override
+  String get notesRecentlyEdited => '最近编辑';
+
+  @override
+  String get notesOldestEdited => '最早编辑';
+
+  @override
+  String get notesTitleAscending => '标题升序';
+
+  @override
+  String get notesTitleDescending => '标题降序';
+
+  @override
+  String get notesMove => '移至分类';
+
+  @override
+  String get notesRemoveFavorite => '取消收藏';
+
+  @override
+  String get notesOffline => '设为离线可用';
+
+  @override
+  String get notesOfflineRemove => '移除离线保留要求';
+
+  @override
+  String get notesIndexing => '正在索引笔记…';
+
+  @override
+  String get notesSearchHelp => '词项使用“与”组合。可使用\"引号短语\"、title: 和 category:。';
+
+  @override
+  String get notesSourceLocation => '源文件位置';
+
+  @override
+  String get notesRecoveryHelp => '仅包括保留的本地笔记和本地历史。无法访问服务器回收站或历史。';
+
+  @override
+  String get notesImport => '导入笔记';
+
+  @override
+  String get notesExport => '导出笔记';
+
+  @override
+  String get notesImportDistinct => '导入为独立笔记';
+
+  @override
+  String get notesAvailableOffline => '离线可用';
+
+  @override
+  String get notesIncomplete => '不完整';
+
+  @override
+  String get notesSelected => '已选笔记';
+
+  @override
+  String get notesNoHistory => '没有保留的版本。历史可能已禁用、过期或清除。';
+
+  @override
+  String get notesTextAvailable => '文本已在本地可用';
+
+  @override
+  String get notesLocalVersion => '本地工作版本';
+
+  @override
+  String get notesAttachments => '附件';
+
+  @override
+  String get notesSkipped => '已跳过';
+
+  @override
+  String get notesFailed => '失败';
+
+  @override
+  String get notesCompleted => '已完成';
+
+  @override
+  String get notesImportNew => '开始新导入';
+
+  @override
+  String get notesImportResume => '继续中断的导入';
+
+  @override
+  String get notesImportAlreadyImported => '已在此操作中导入';
+
+  @override
+  String get references => '引用';
+
+  @override
+  String get referenceIncoming => '传入';
+
+  @override
+  String get referenceOutgoing => '传出';
+
+  @override
+  String get referenceChooseTarget => '选择链接目标';
+
+  @override
+  String get referenceWholeDocument => '整个文档';
+
+  @override
+  String get referenceSourceLocation => '源位置';
+
+  @override
+  String get referenceTargetLocation => '目标位置';
+
+  @override
+  String get referenceResolved => '已解析';
+
+  @override
+  String get referenceMissing => '缺失';
+
+  @override
+  String get referenceAmbiguous => '不明确';
+
+  @override
+  String get referenceUnavailable => '当前上下文中不可用';
+
+  @override
+  String get referenceUnsupported => '不支持';
+
+  @override
+  String get referenceNoPortableId => '此目标没有经过验证的可移植笔记网址。';
 }
 
 /// The translations for Chinese, as used in China (`zh_CN`).
@@ -9150,4 +9423,277 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   @override
   String get nextcloudCreateSeparateWarning =>
       '首次请求可能已在服务器上创建笔记。此操作将使用保留的本地工作创建独立笔记。不会删除任何疑似重复的笔记。';
+
+  @override
+  String get wsSemanticFormats => '语义格式';
+
+  @override
+  String get wsUiControl => '界面控件';
+
+  @override
+  String get wsFilePath => '文件 / 路径';
+
+  @override
+  String get wsUiPath => '界面路径';
+
+  @override
+  String get wsDefinitionList => '定义列表';
+
+  @override
+  String get wsIncludeContent => '包含可复用内容';
+
+  @override
+  String get wsVariableReference => '变量引用';
+
+  @override
+  String get wsConvertList => '将列表转换为过程';
+
+  @override
+  String get wsElementProperties => '元素属性';
+
+  @override
+  String get wsTopicProperties => '主题属性';
+
+  @override
+  String get wsCollapsible => '可折叠';
+
+  @override
+  String get wsPublishedState => '发布时的初始状态';
+
+  @override
+  String get wsExpanded => '展开';
+
+  @override
+  String get wsCollapsed => '折叠';
+
+  @override
+  String get wsCollapsedTitle => '折叠标题';
+
+  @override
+  String get wsTerm => '术语';
+
+  @override
+  String get wsListLayout => '列表布局';
+
+  @override
+  String get wsSyncGroup => '同步组';
+
+  @override
+  String get wsTabKey => '选项卡键';
+
+  @override
+  String get wsSwitcherLabel => '切换器标签';
+
+  @override
+  String get wsNavigationElements => '导航元素';
+
+  @override
+  String get wsNavigationDepth => '导航深度';
+
+  @override
+  String get wsAddItem => '添加项目';
+
+  @override
+  String get wsStep => '步骤';
+
+  @override
+  String get wsPropertyInvalid => '属性值无效';
+
+  @override
+  String get wsFilter => '筛选器';
+
+  @override
+  String get wsIdentifier => '元素 ID';
+
+  @override
+  String get wsTldr => '摘要 (TLDR)';
+
+  @override
+  String get wsFullLayout => '全宽';
+
+  @override
+  String get wsMediumLayout => '等宽列';
+
+  @override
+  String get wsNarrowLayout => '窄术语列';
+
+  @override
+  String get wsTitle => '标题';
+
+  @override
+  String get wsSwitcherKey => '切换键';
+
+  @override
+  String get nextcloudServerSettings => '服务器 Notes 设置';
+
+  @override
+  String get nextcloudNotesPath => '笔记文件夹路径';
+
+  @override
+  String get nextcloudFileSuffix => '新笔记的文件后缀';
+
+  @override
+  String get nextcloudServerSettingsExplanation =>
+      '这些服务器 Notes 设置会影响其他客户端。更改路径不会移动文件；更改后缀不会重命名现有笔记。';
+
+  @override
+  String get nextcloudSettingsSaved => '服务器设置已保存';
+
+  @override
+  String get nextcloudSettingsNormalized => '已保存服务器规范化后的值';
+
+  @override
+  String get nextcloudPendingUpload => '附件等待上传';
+
+  @override
+  String nextcloudServerCheck(String time) {
+    return '上次服务器检查：$time';
+  }
+
+  @override
+  String get nextcloudSettingsLoading => '正在加载服务器设置';
+
+  @override
+  String get nextcloudSettingsSaving => '正在保存服务器设置';
+
+  @override
+  String get nextcloudPreviousLocalEdit => '先前的本地编辑';
+
+  @override
+  String get nextcloudUsePreviousEdit => '使用先前编辑';
+
+  @override
+  String get quickOpen => '快速打开';
+
+  @override
+  String get notesAll => '所有笔记';
+
+  @override
+  String get notesUncategorized => '未分类';
+
+  @override
+  String get notesRecovery => '恢复';
+
+  @override
+  String get notesRecentlyEdited => '最近编辑';
+
+  @override
+  String get notesOldestEdited => '最早编辑';
+
+  @override
+  String get notesTitleAscending => '标题升序';
+
+  @override
+  String get notesTitleDescending => '标题降序';
+
+  @override
+  String get notesMove => '移至分类';
+
+  @override
+  String get notesRemoveFavorite => '取消收藏';
+
+  @override
+  String get notesOffline => '设为离线可用';
+
+  @override
+  String get notesOfflineRemove => '移除离线保留要求';
+
+  @override
+  String get notesIndexing => '正在索引笔记…';
+
+  @override
+  String get notesSearchHelp => '词项使用“与”组合。可使用\"引号短语\"、title: 和 category:。';
+
+  @override
+  String get notesSourceLocation => '源文件位置';
+
+  @override
+  String get notesRecoveryHelp => '仅包括保留的本地笔记和本地历史。无法访问服务器回收站或历史。';
+
+  @override
+  String get notesImport => '导入笔记';
+
+  @override
+  String get notesExport => '导出笔记';
+
+  @override
+  String get notesImportDistinct => '导入为独立笔记';
+
+  @override
+  String get notesAvailableOffline => '离线可用';
+
+  @override
+  String get notesIncomplete => '不完整';
+
+  @override
+  String get notesSelected => '已选笔记';
+
+  @override
+  String get notesNoHistory => '没有保留的版本。历史可能已禁用、过期或清除。';
+
+  @override
+  String get notesTextAvailable => '文本已在本地可用';
+
+  @override
+  String get notesLocalVersion => '本地工作版本';
+
+  @override
+  String get notesAttachments => '附件';
+
+  @override
+  String get notesSkipped => '已跳过';
+
+  @override
+  String get notesFailed => '失败';
+
+  @override
+  String get notesCompleted => '已完成';
+
+  @override
+  String get notesImportNew => '开始新导入';
+
+  @override
+  String get notesImportResume => '继续中断的导入';
+
+  @override
+  String get notesImportAlreadyImported => '已在此操作中导入';
+
+  @override
+  String get references => '引用';
+
+  @override
+  String get referenceIncoming => '传入';
+
+  @override
+  String get referenceOutgoing => '传出';
+
+  @override
+  String get referenceChooseTarget => '选择链接目标';
+
+  @override
+  String get referenceWholeDocument => '整个文档';
+
+  @override
+  String get referenceSourceLocation => '源位置';
+
+  @override
+  String get referenceTargetLocation => '目标位置';
+
+  @override
+  String get referenceResolved => '已解析';
+
+  @override
+  String get referenceMissing => '缺失';
+
+  @override
+  String get referenceAmbiguous => '不明确';
+
+  @override
+  String get referenceUnavailable => '当前上下文中不可用';
+
+  @override
+  String get referenceUnsupported => '不支持';
+
+  @override
+  String get referenceNoPortableId => '此目标没有经过验证的可移植笔记网址。';
 }

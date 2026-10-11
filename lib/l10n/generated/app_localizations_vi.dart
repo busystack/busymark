@@ -4780,4 +4780,282 @@ class AppLocalizationsVi extends AppLocalizations {
   @override
   String get nextcloudCreateSeparateWarning =>
       'Yêu cầu đầu tiên có thể đã tạo ghi chú trên máy chủ. Thao tác này tạo ghi chú riêng với công việc cục bộ được giữ lại. Không xóa ghi chú nào bị nghi trùng lặp.';
+
+  @override
+  String get wsSemanticFormats => 'Định dạng ngữ nghĩa';
+
+  @override
+  String get wsUiControl => 'Điều khiển giao diện';
+
+  @override
+  String get wsFilePath => 'Tệp / Đường dẫn';
+
+  @override
+  String get wsUiPath => 'Đường dẫn giao diện';
+
+  @override
+  String get wsDefinitionList => 'Danh sách định nghĩa';
+
+  @override
+  String get wsIncludeContent => 'Chèn nội dung tái sử dụng';
+
+  @override
+  String get wsVariableReference => 'Tham chiếu biến';
+
+  @override
+  String get wsConvertList => 'Chuyển danh sách thành quy trình';
+
+  @override
+  String get wsElementProperties => 'Thuộc tính phần tử';
+
+  @override
+  String get wsTopicProperties => 'Thuộc tính chủ đề';
+
+  @override
+  String get wsCollapsible => 'Có thể thu gọn';
+
+  @override
+  String get wsPublishedState => 'Trạng thái ban đầu khi xuất bản';
+
+  @override
+  String get wsExpanded => 'Mở rộng';
+
+  @override
+  String get wsCollapsed => 'Thu gọn';
+
+  @override
+  String get wsCollapsedTitle => 'Tiêu đề thu gọn';
+
+  @override
+  String get wsTerm => 'Thuật ngữ';
+
+  @override
+  String get wsListLayout => 'Bố cục danh sách';
+
+  @override
+  String get wsSyncGroup => 'Nhóm đồng bộ';
+
+  @override
+  String get wsTabKey => 'Khóa thẻ';
+
+  @override
+  String get wsSwitcherLabel => 'Nhãn bộ chuyển';
+
+  @override
+  String get wsNavigationElements => 'Phần tử điều hướng';
+
+  @override
+  String get wsNavigationDepth => 'Độ sâu điều hướng';
+
+  @override
+  String get wsAddItem => 'Thêm mục';
+
+  @override
+  String get wsStep => 'Bước';
+
+  @override
+  String get wsPropertyInvalid => 'Giá trị thuộc tính không hợp lệ';
+
+  @override
+  String get wsFilter => 'Bộ lọc';
+
+  @override
+  String get wsIdentifier => 'ID phần tử';
+
+  @override
+  String get wsTldr => 'Tóm tắt (TLDR)';
+
+  @override
+  String get wsFullLayout => 'Toàn chiều rộng';
+
+  @override
+  String get wsMediumLayout => 'Các cột bằng nhau';
+
+  @override
+  String get wsNarrowLayout => 'Cột thuật ngữ hẹp';
+
+  @override
+  String get wsTitle => 'Tiêu đề';
+
+  @override
+  String get wsSwitcherKey => 'Khóa chuyển đổi';
+
+  @override
+  String get nextcloudServerSettings => 'Cài đặt Notes trên máy chủ';
+
+  @override
+  String get nextcloudNotesPath => 'Đường dẫn thư mục ghi chú';
+
+  @override
+  String get nextcloudFileSuffix => 'Phần mở rộng của ghi chú mới';
+
+  @override
+  String get nextcloudServerSettingsExplanation =>
+      'Các cài đặt Notes này ảnh hưởng đến các ứng dụng khách khác. Đổi đường dẫn không di chuyển tệp; đổi phần mở rộng không đổi tên ghi chú hiện có.';
+
+  @override
+  String get nextcloudSettingsSaved => 'Đã lưu cài đặt máy chủ';
+
+  @override
+  String get nextcloudSettingsNormalized =>
+      'Đã lưu các giá trị được máy chủ chuẩn hóa';
+
+  @override
+  String get nextcloudPendingUpload => 'Đang chờ tải tệp đính kèm lên';
+
+  @override
+  String nextcloudServerCheck(String time) {
+    return 'Lần kiểm tra máy chủ gần nhất: $time';
+  }
+
+  @override
+  String get nextcloudSettingsLoading => 'Đang tải cài đặt máy chủ';
+
+  @override
+  String get nextcloudSettingsSaving => 'Đang lưu cài đặt máy chủ';
+
+  @override
+  String get nextcloudPreviousLocalEdit => 'Chỉnh sửa cục bộ trước';
+
+  @override
+  String get nextcloudUsePreviousEdit => 'Dùng chỉnh sửa trước';
+
+  @override
+  String get quickOpen => 'Mở nhanh';
+
+  @override
+  String get notesAll => 'Tất cả ghi chú';
+
+  @override
+  String get notesUncategorized => 'Chưa phân loại';
+
+  @override
+  String get notesRecovery => 'Khôi phục';
+
+  @override
+  String get notesRecentlyEdited => 'Sửa gần đây';
+
+  @override
+  String get notesOldestEdited => 'Sửa lâu nhất';
+
+  @override
+  String get notesTitleAscending => 'Tiêu đề A–Z';
+
+  @override
+  String get notesTitleDescending => 'Tiêu đề Z–A';
+
+  @override
+  String get notesMove => 'Chuyển tới danh mục';
+
+  @override
+  String get notesRemoveFavorite => 'Bỏ yêu thích';
+
+  @override
+  String get notesOffline => 'Cho phép dùng ngoại tuyến';
+
+  @override
+  String get notesOfflineRemove => 'Bỏ yêu cầu lưu ngoại tuyến';
+
+  @override
+  String get notesIndexing => 'Đang lập chỉ mục ghi chú…';
+
+  @override
+  String get notesSearchHelp =>
+      'Các từ kết hợp bằng VÀ. Dùng \"cụm từ trích dẫn\", title: và category:.';
+
+  @override
+  String get notesSourceLocation => 'Vị trí mã nguồn';
+
+  @override
+  String get notesRecoveryHelp =>
+      'Chỉ gồm ghi chú cục bộ được giữ và lịch sử cục bộ. Không có thùng rác hoặc lịch sử máy chủ.';
+
+  @override
+  String get notesImport => 'Nhập ghi chú';
+
+  @override
+  String get notesExport => 'Xuất ghi chú';
+
+  @override
+  String get notesImportDistinct => 'Nhập thành ghi chú riêng';
+
+  @override
+  String get notesAvailableOffline => 'Có sẵn ngoại tuyến';
+
+  @override
+  String get notesIncomplete => 'Chưa đầy đủ';
+
+  @override
+  String get notesSelected => 'Ghi chú đã chọn';
+
+  @override
+  String get notesNoHistory =>
+      'Không có phiên bản được giữ. Lịch sử có thể bị tắt, hết hạn hoặc bị xóa.';
+
+  @override
+  String get notesTextAvailable => 'Văn bản có sẵn cục bộ';
+
+  @override
+  String get notesLocalVersion => 'Phiên bản làm việc cục bộ';
+
+  @override
+  String get notesAttachments => 'Tệp đính kèm';
+
+  @override
+  String get notesSkipped => 'Đã bỏ qua';
+
+  @override
+  String get notesFailed => 'Thất bại';
+
+  @override
+  String get notesCompleted => 'Hoàn tất';
+
+  @override
+  String get notesImportNew => 'Bắt đầu nhập mới';
+
+  @override
+  String get notesImportResume => 'Tiếp tục lần nhập bị gián đoạn';
+
+  @override
+  String get notesImportAlreadyImported => 'Đã nhập trong thao tác này';
+
+  @override
+  String get references => 'Tham chiếu';
+
+  @override
+  String get referenceIncoming => 'Đến';
+
+  @override
+  String get referenceOutgoing => 'Đi';
+
+  @override
+  String get referenceChooseTarget => 'Chọn đích liên kết';
+
+  @override
+  String get referenceWholeDocument => 'Toàn bộ tài liệu';
+
+  @override
+  String get referenceSourceLocation => 'Vị trí nguồn';
+
+  @override
+  String get referenceTargetLocation => 'Vị trí đích';
+
+  @override
+  String get referenceResolved => 'Đã phân giải';
+
+  @override
+  String get referenceMissing => 'Không tìm thấy';
+
+  @override
+  String get referenceAmbiguous => 'Không rõ ràng';
+
+  @override
+  String get referenceUnavailable => 'Không khả dụng trong ngữ cảnh này';
+
+  @override
+  String get referenceUnsupported => 'Không được hỗ trợ';
+
+  @override
+  String get referenceNoPortableId =>
+      'Đích này không có URL ghi chú di động đã xác minh.';
 }

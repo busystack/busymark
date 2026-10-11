@@ -4790,4 +4790,282 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get nextcloudCreateSeparateWarning =>
       'İlk istek sunucuda zaten bir not oluşturmuş olabilir. Bu işlem korunan yerel çalışmanızla ayrı bir not oluşturur. Olası kopyalar silinmez.';
+
+  @override
+  String get wsSemanticFormats => 'Anlamsal biçimlendirme';
+
+  @override
+  String get wsUiControl => 'Arayüz denetimi';
+
+  @override
+  String get wsFilePath => 'Dosya / Yol';
+
+  @override
+  String get wsUiPath => 'Arayüz yolu';
+
+  @override
+  String get wsDefinitionList => 'Tanım listesi';
+
+  @override
+  String get wsIncludeContent => 'Yeniden kullanılabilir içerik ekle';
+
+  @override
+  String get wsVariableReference => 'Değişken başvurusu';
+
+  @override
+  String get wsConvertList => 'Listeyi prosedüre dönüştür';
+
+  @override
+  String get wsElementProperties => 'Öğe özellikleri';
+
+  @override
+  String get wsTopicProperties => 'Konu özellikleri';
+
+  @override
+  String get wsCollapsible => 'Daraltılabilir';
+
+  @override
+  String get wsPublishedState => 'Yayımlanan başlangıç durumu';
+
+  @override
+  String get wsExpanded => 'Genişletilmiş';
+
+  @override
+  String get wsCollapsed => 'Daraltılmış';
+
+  @override
+  String get wsCollapsedTitle => 'Daraltılmış başlık';
+
+  @override
+  String get wsTerm => 'Terim';
+
+  @override
+  String get wsListLayout => 'Liste düzeni';
+
+  @override
+  String get wsSyncGroup => 'Eşitleme grubu';
+
+  @override
+  String get wsTabKey => 'Sekme anahtarı';
+
+  @override
+  String get wsSwitcherLabel => 'Değiştirici etiketi';
+
+  @override
+  String get wsNavigationElements => 'Gezinme öğeleri';
+
+  @override
+  String get wsNavigationDepth => 'Gezinme derinliği';
+
+  @override
+  String get wsAddItem => 'Öğe ekle';
+
+  @override
+  String get wsStep => 'Adım';
+
+  @override
+  String get wsPropertyInvalid => 'Geçersiz özellik değeri';
+
+  @override
+  String get wsFilter => 'Filtre';
+
+  @override
+  String get wsIdentifier => 'Öğe kimliği';
+
+  @override
+  String get wsTldr => 'Özet (TLDR)';
+
+  @override
+  String get wsFullLayout => 'Tam genişlik';
+
+  @override
+  String get wsMediumLayout => 'Eşit sütunlar';
+
+  @override
+  String get wsNarrowLayout => 'Dar terim sütunu';
+
+  @override
+  String get wsTitle => 'Başlık';
+
+  @override
+  String get wsSwitcherKey => 'Değiştirici anahtarı';
+
+  @override
+  String get nextcloudServerSettings => 'Sunucu Notes ayarları';
+
+  @override
+  String get nextcloudNotesPath => 'Not klasörünün yolu';
+
+  @override
+  String get nextcloudFileSuffix => 'Yeni notların dosya uzantısı';
+
+  @override
+  String get nextcloudServerSettingsExplanation =>
+      'Bu sunucu Notes ayarları diğer istemcileri de etkiler. Yolun değiştirilmesi dosyaları taşımaz; uzantının değiştirilmesi mevcut notları yeniden adlandırmaz.';
+
+  @override
+  String get nextcloudSettingsSaved => 'Sunucu ayarları kaydedildi';
+
+  @override
+  String get nextcloudSettingsNormalized =>
+      'Sunucunun normalleştirdiği değerlerle kaydedildi';
+
+  @override
+  String get nextcloudPendingUpload => 'Ek yüklemesi bekliyor';
+
+  @override
+  String nextcloudServerCheck(String time) {
+    return 'Son sunucu kontrolü: $time';
+  }
+
+  @override
+  String get nextcloudSettingsLoading => 'Sunucu ayarları yükleniyor';
+
+  @override
+  String get nextcloudSettingsSaving => 'Sunucu ayarları kaydediliyor';
+
+  @override
+  String get nextcloudPreviousLocalEdit => 'Önceki yerel düzenleme';
+
+  @override
+  String get nextcloudUsePreviousEdit => 'Önceki düzenlemeyi kullan';
+
+  @override
+  String get quickOpen => 'Hızlı aç';
+
+  @override
+  String get notesAll => 'Tüm notlar';
+
+  @override
+  String get notesUncategorized => 'Kategorisiz';
+
+  @override
+  String get notesRecovery => 'Kurtarma';
+
+  @override
+  String get notesRecentlyEdited => 'Son düzenlenen';
+
+  @override
+  String get notesOldestEdited => 'En eski düzenleme';
+
+  @override
+  String get notesTitleAscending => 'Başlık A–Z';
+
+  @override
+  String get notesTitleDescending => 'Başlık Z–A';
+
+  @override
+  String get notesMove => 'Kategoriye taşı';
+
+  @override
+  String get notesRemoveFavorite => 'Favoriyi kaldır';
+
+  @override
+  String get notesOffline => 'Çevrimdışı kullanılabilir yap';
+
+  @override
+  String get notesOfflineRemove => 'Çevrimdışı saklamayı kaldır';
+
+  @override
+  String get notesIndexing => 'Notlar dizine ekleniyor…';
+
+  @override
+  String get notesSearchHelp =>
+      'Terimler VE ile birleştirilir. \"Alıntı ifadeler\", title: ve category: kullanın.';
+
+  @override
+  String get notesSourceLocation => 'Kaynak konumu';
+
+  @override
+  String get notesRecoveryHelp =>
+      'Yalnızca saklanan yerel notlar ve yerel geçmiş. Sunucu çöp kutusu ve geçmişi kullanılamaz.';
+
+  @override
+  String get notesImport => 'Notları içe aktar';
+
+  @override
+  String get notesExport => 'Notları dışa aktar';
+
+  @override
+  String get notesImportDistinct => 'Ayrı bir not olarak içe aktar';
+
+  @override
+  String get notesAvailableOffline => 'Çevrimdışı kullanılabilir';
+
+  @override
+  String get notesIncomplete => 'Eksik';
+
+  @override
+  String get notesSelected => 'Seçilen notlar';
+
+  @override
+  String get notesNoHistory =>
+      'Saklanan sürüm yok. Geçmiş kapalı, süresi dolmuş veya temizlenmiş olabilir.';
+
+  @override
+  String get notesTextAvailable => 'Metin yerel olarak kullanılabilir';
+
+  @override
+  String get notesLocalVersion => 'Yerel çalışma sürümü';
+
+  @override
+  String get notesAttachments => 'Ekler';
+
+  @override
+  String get notesSkipped => 'Atlandı';
+
+  @override
+  String get notesFailed => 'Başarısız';
+
+  @override
+  String get notesCompleted => 'Tamamlandı';
+
+  @override
+  String get notesImportNew => 'Yeni içe aktarma başlat';
+
+  @override
+  String get notesImportResume => 'Kesilen içe aktarmayı sürdür';
+
+  @override
+  String get notesImportAlreadyImported => 'Bu işlemde zaten içe aktarıldı';
+
+  @override
+  String get references => 'Başvurular';
+
+  @override
+  String get referenceIncoming => 'Gelen';
+
+  @override
+  String get referenceOutgoing => 'Giden';
+
+  @override
+  String get referenceChooseTarget => 'Bağlantı hedefini seç';
+
+  @override
+  String get referenceWholeDocument => 'Tüm belge';
+
+  @override
+  String get referenceSourceLocation => 'Kaynak konumu';
+
+  @override
+  String get referenceTargetLocation => 'Hedef konumu';
+
+  @override
+  String get referenceResolved => 'Çözüldü';
+
+  @override
+  String get referenceMissing => 'Eksik';
+
+  @override
+  String get referenceAmbiguous => 'Belirsiz';
+
+  @override
+  String get referenceUnavailable => 'Bu bağlamda kullanılamıyor';
+
+  @override
+  String get referenceUnsupported => 'Desteklenmiyor';
+
+  @override
+  String get referenceNoPortableId =>
+      'Bu hedefin doğrulanmış taşınabilir not URL’si yok.';
 }

@@ -4839,4 +4839,283 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get nextcloudCreateSeparateWarning =>
       'La première requête a peut-être déjà créé une note sur le serveur. Ceci crée une note distincte avec votre travail local conservé. Aucun doublon supposé ne sera supprimé.';
+
+  @override
+  String get wsSemanticFormats => 'Mise en forme sémantique';
+
+  @override
+  String get wsUiControl => 'Contrôle d’interface';
+
+  @override
+  String get wsFilePath => 'Fichier / Chemin';
+
+  @override
+  String get wsUiPath => 'Chemin d’interface';
+
+  @override
+  String get wsDefinitionList => 'Liste de définitions';
+
+  @override
+  String get wsIncludeContent => 'Inclure du contenu réutilisable';
+
+  @override
+  String get wsVariableReference => 'Référence de variable';
+
+  @override
+  String get wsConvertList => 'Convertir la liste en procédure';
+
+  @override
+  String get wsElementProperties => 'Propriétés de l’élément';
+
+  @override
+  String get wsTopicProperties => 'Propriétés du sujet';
+
+  @override
+  String get wsCollapsible => 'Repliable';
+
+  @override
+  String get wsPublishedState => 'État initial publié';
+
+  @override
+  String get wsExpanded => 'Développé';
+
+  @override
+  String get wsCollapsed => 'Replié';
+
+  @override
+  String get wsCollapsedTitle => 'Titre replié';
+
+  @override
+  String get wsTerm => 'Terme';
+
+  @override
+  String get wsListLayout => 'Disposition de la liste';
+
+  @override
+  String get wsSyncGroup => 'Groupe de synchronisation';
+
+  @override
+  String get wsTabKey => 'Clé de l’onglet';
+
+  @override
+  String get wsSwitcherLabel => 'Libellé du sélecteur';
+
+  @override
+  String get wsNavigationElements => 'Éléments de navigation';
+
+  @override
+  String get wsNavigationDepth => 'Profondeur de navigation';
+
+  @override
+  String get wsAddItem => 'Ajouter un élément';
+
+  @override
+  String get wsStep => 'Étape';
+
+  @override
+  String get wsPropertyInvalid => 'Valeur de propriété non valide';
+
+  @override
+  String get wsFilter => 'Filtre';
+
+  @override
+  String get wsIdentifier => 'ID de l’élément';
+
+  @override
+  String get wsTldr => 'Résumé (TLDR)';
+
+  @override
+  String get wsFullLayout => 'Pleine largeur';
+
+  @override
+  String get wsMediumLayout => 'Colonnes égales';
+
+  @override
+  String get wsNarrowLayout => 'Terme étroit';
+
+  @override
+  String get wsTitle => 'Titre';
+
+  @override
+  String get wsSwitcherKey => 'Clé du sélecteur';
+
+  @override
+  String get nextcloudServerSettings => 'Paramètres Notes du serveur';
+
+  @override
+  String get nextcloudNotesPath => 'Chemin du dossier de notes';
+
+  @override
+  String get nextcloudFileSuffix => 'Extension des nouvelles notes';
+
+  @override
+  String get nextcloudServerSettingsExplanation =>
+      'Ces paramètres Notes du serveur affectent les autres clients. Changer le chemin ne déplace pas les fichiers ; changer l’extension ne renomme pas les notes existantes.';
+
+  @override
+  String get nextcloudSettingsSaved => 'Paramètres serveur enregistrés';
+
+  @override
+  String get nextcloudSettingsNormalized =>
+      'Enregistré avec les valeurs normalisées par le serveur';
+
+  @override
+  String get nextcloudPendingUpload => 'Envoi de pièce jointe en attente';
+
+  @override
+  String nextcloudServerCheck(String time) {
+    return 'Dernière vérification du serveur : $time';
+  }
+
+  @override
+  String get nextcloudSettingsLoading => 'Chargement des paramètres du serveur';
+
+  @override
+  String get nextcloudSettingsSaving =>
+      'Enregistrement des paramètres du serveur';
+
+  @override
+  String get nextcloudPreviousLocalEdit => 'Modification locale précédente';
+
+  @override
+  String get nextcloudUsePreviousEdit => 'Utiliser la modification précédente';
+
+  @override
+  String get quickOpen => 'Ouverture rapide';
+
+  @override
+  String get notesAll => 'Toutes les notes';
+
+  @override
+  String get notesUncategorized => 'Sans catégorie';
+
+  @override
+  String get notesRecovery => 'Récupération';
+
+  @override
+  String get notesRecentlyEdited => 'Modifiées récemment';
+
+  @override
+  String get notesOldestEdited => 'Modifiées les plus anciennes';
+
+  @override
+  String get notesTitleAscending => 'Titre A–Z';
+
+  @override
+  String get notesTitleDescending => 'Titre Z–A';
+
+  @override
+  String get notesMove => 'Déplacer vers une catégorie';
+
+  @override
+  String get notesRemoveFavorite => 'Retirer des favoris';
+
+  @override
+  String get notesOffline => 'Rendre disponible hors ligne';
+
+  @override
+  String get notesOfflineRemove => 'Retirer la conservation hors ligne';
+
+  @override
+  String get notesIndexing => 'Indexation des notes…';
+
+  @override
+  String get notesSearchHelp =>
+      'Les termes utilisent ET. Utilisez \"des expressions\", title: et category:.';
+
+  @override
+  String get notesSourceLocation => 'Emplacement source';
+
+  @override
+  String get notesRecoveryHelp =>
+      'Notes locales conservées et historique local uniquement. La corbeille et l’historique du serveur sont indisponibles.';
+
+  @override
+  String get notesImport => 'Importer des notes';
+
+  @override
+  String get notesExport => 'Exporter des notes';
+
+  @override
+  String get notesImportDistinct => 'Importer comme une note distincte';
+
+  @override
+  String get notesAvailableOffline => 'Disponible hors ligne';
+
+  @override
+  String get notesIncomplete => 'Incomplet';
+
+  @override
+  String get notesSelected => 'Notes sélectionnées';
+
+  @override
+  String get notesNoHistory =>
+      'Aucune révision conservée. L’historique peut être désactivé, expiré ou effacé.';
+
+  @override
+  String get notesTextAvailable => 'Texte disponible localement';
+
+  @override
+  String get notesLocalVersion => 'Version de travail locale';
+
+  @override
+  String get notesAttachments => 'Pièces jointes';
+
+  @override
+  String get notesSkipped => 'Ignoré';
+
+  @override
+  String get notesFailed => 'Échec';
+
+  @override
+  String get notesCompleted => 'Terminé';
+
+  @override
+  String get notesImportNew => 'Démarrer une nouvelle importation';
+
+  @override
+  String get notesImportResume => 'Reprendre l’importation interrompue';
+
+  @override
+  String get notesImportAlreadyImported => 'Déjà importé dans cette opération';
+
+  @override
+  String get references => 'Références';
+
+  @override
+  String get referenceIncoming => 'Entrantes';
+
+  @override
+  String get referenceOutgoing => 'Sortantes';
+
+  @override
+  String get referenceChooseTarget => 'Choisir la cible du lien';
+
+  @override
+  String get referenceWholeDocument => 'Document entier';
+
+  @override
+  String get referenceSourceLocation => 'Emplacement source';
+
+  @override
+  String get referenceTargetLocation => 'Emplacement cible';
+
+  @override
+  String get referenceResolved => 'Résolue';
+
+  @override
+  String get referenceMissing => 'Manquante';
+
+  @override
+  String get referenceAmbiguous => 'Ambiguë';
+
+  @override
+  String get referenceUnavailable => 'Indisponible dans ce contexte';
+
+  @override
+  String get referenceUnsupported => 'Non prise en charge';
+
+  @override
+  String get referenceNoPortableId =>
+      'Cette cible ne possède pas d’URL de note portable vérifiée.';
 }

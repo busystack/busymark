@@ -4826,4 +4826,282 @@ class AppLocalizationsFa extends AppLocalizations {
   @override
   String get nextcloudCreateSeparateWarning =>
       'ممکن است درخواست نخست قبلاً یک یادداشت سرور ایجاد کرده باشد. این کار یک یادداشت جداگانه با کار محلی حفظ‌شدهٔ شما ایجاد می‌کند. هیچ یادداشت مشکوک به تکراری بودن حذف نمی‌شود.';
+
+  @override
+  String get wsSemanticFormats => 'قالب‌بندی معنایی';
+
+  @override
+  String get wsUiControl => 'کنترل رابط کاربری';
+
+  @override
+  String get wsFilePath => 'فایل / مسیر';
+
+  @override
+  String get wsUiPath => 'مسیر رابط کاربری';
+
+  @override
+  String get wsDefinitionList => 'فهرست تعریف‌ها';
+
+  @override
+  String get wsIncludeContent => 'درج محتوای قابل استفاده مجدد';
+
+  @override
+  String get wsVariableReference => 'ارجاع به متغیر';
+
+  @override
+  String get wsConvertList => 'تبدیل فهرست به رویه';
+
+  @override
+  String get wsElementProperties => 'ویژگی‌های عنصر';
+
+  @override
+  String get wsTopicProperties => 'ویژگی‌های موضوع';
+
+  @override
+  String get wsCollapsible => 'قابل جمع شدن';
+
+  @override
+  String get wsPublishedState => 'حالت اولیه هنگام انتشار';
+
+  @override
+  String get wsExpanded => 'باز';
+
+  @override
+  String get wsCollapsed => 'جمع شده';
+
+  @override
+  String get wsCollapsedTitle => 'عنوان در حالت جمع شده';
+
+  @override
+  String get wsTerm => 'اصطلاح';
+
+  @override
+  String get wsListLayout => 'چیدمان فهرست';
+
+  @override
+  String get wsSyncGroup => 'گروه همگام‌سازی';
+
+  @override
+  String get wsTabKey => 'کلید زبانه';
+
+  @override
+  String get wsSwitcherLabel => 'برچسب تغییر‌دهنده';
+
+  @override
+  String get wsNavigationElements => 'عناصر پیمایش';
+
+  @override
+  String get wsNavigationDepth => 'عمق پیمایش';
+
+  @override
+  String get wsAddItem => 'افزودن مورد';
+
+  @override
+  String get wsStep => 'گام';
+
+  @override
+  String get wsPropertyInvalid => 'مقدار ویژگی نامعتبر';
+
+  @override
+  String get wsFilter => 'فیلتر';
+
+  @override
+  String get wsIdentifier => 'شناسه عنصر';
+
+  @override
+  String get wsTldr => 'خلاصه (TLDR)';
+
+  @override
+  String get wsFullLayout => 'عرض کامل';
+
+  @override
+  String get wsMediumLayout => 'ستون‌های برابر';
+
+  @override
+  String get wsNarrowLayout => 'ستون باریک اصطلاح';
+
+  @override
+  String get wsTitle => 'عنوان';
+
+  @override
+  String get wsSwitcherKey => 'کلید انتخابگر';
+
+  @override
+  String get nextcloudServerSettings => 'تنظیمات Notes سرور';
+
+  @override
+  String get nextcloudNotesPath => 'مسیر پوشهٔ یادداشت‌ها';
+
+  @override
+  String get nextcloudFileSuffix => 'پسوند فایل یادداشت‌های جدید';
+
+  @override
+  String get nextcloudServerSettingsExplanation =>
+      'این تنظیمات Notes روی کارخواه‌های دیگر هم اثر می‌گذارد. تغییر مسیر فایل‌ها را جابه‌جا نمی‌کند؛ تغییر پسوند نام یادداشت‌های موجود را تغییر نمی‌دهد.';
+
+  @override
+  String get nextcloudSettingsSaved => 'تنظیمات سرور ذخیره شد';
+
+  @override
+  String get nextcloudSettingsNormalized =>
+      'با مقادیر نرمال‌شدهٔ سرور ذخیره شد';
+
+  @override
+  String get nextcloudPendingUpload => 'بارگذاری پیوست در انتظار است';
+
+  @override
+  String nextcloudServerCheck(String time) {
+    return 'آخرین بررسی سرور: $time';
+  }
+
+  @override
+  String get nextcloudSettingsLoading => 'در حال بارگیری تنظیمات سرور';
+
+  @override
+  String get nextcloudSettingsSaving => 'در حال ذخیره تنظیمات سرور';
+
+  @override
+  String get nextcloudPreviousLocalEdit => 'ویرایش محلی قبلی';
+
+  @override
+  String get nextcloudUsePreviousEdit => 'استفاده از ویرایش قبلی';
+
+  @override
+  String get quickOpen => 'باز کردن سریع';
+
+  @override
+  String get notesAll => 'همه یادداشت‌ها';
+
+  @override
+  String get notesUncategorized => 'بدون دسته';
+
+  @override
+  String get notesRecovery => 'بازیابی';
+
+  @override
+  String get notesRecentlyEdited => 'تازه ویرایش‌شده';
+
+  @override
+  String get notesOldestEdited => 'قدیمی‌ترین ویرایش';
+
+  @override
+  String get notesTitleAscending => 'عنوان صعودی';
+
+  @override
+  String get notesTitleDescending => 'عنوان نزولی';
+
+  @override
+  String get notesMove => 'انتقال به دسته';
+
+  @override
+  String get notesRemoveFavorite => 'حذف از علاقه‌مندی‌ها';
+
+  @override
+  String get notesOffline => 'در دسترس کردن آفلاین';
+
+  @override
+  String get notesOfflineRemove => 'حذف نگهداری آفلاین';
+
+  @override
+  String get notesIndexing => 'در حال نمایه‌سازی یادداشت‌ها…';
+
+  @override
+  String get notesSearchHelp =>
+      'واژه‌ها با AND ترکیب می‌شوند. از \"عبارت نقل‌شده\" و title: و category: استفاده کنید.';
+
+  @override
+  String get notesSourceLocation => 'موقعیت در منبع';
+
+  @override
+  String get notesRecoveryHelp =>
+      'فقط یادداشت‌های محلی نگهداری‌شده و تاریخچه محلی. زباله‌دان و تاریخچه سرور در دسترس نیست.';
+
+  @override
+  String get notesImport => 'وارد کردن یادداشت‌ها';
+
+  @override
+  String get notesExport => 'صادر کردن یادداشت‌ها';
+
+  @override
+  String get notesImportDistinct => 'وارد کردن به عنوان یادداشت جدا';
+
+  @override
+  String get notesAvailableOffline => 'در دسترس آفلاین';
+
+  @override
+  String get notesIncomplete => 'ناقص';
+
+  @override
+  String get notesSelected => 'یادداشت‌های انتخاب‌شده';
+
+  @override
+  String get notesNoHistory =>
+      'نسخه نگهداری‌شده‌ای نیست. تاریخچه ممکن است غیرفعال، منقضی یا پاک شده باشد.';
+
+  @override
+  String get notesTextAvailable => 'متن به صورت محلی در دسترس است';
+
+  @override
+  String get notesLocalVersion => 'نسخهٔ کاری محلی';
+
+  @override
+  String get notesAttachments => 'پیوست‌ها';
+
+  @override
+  String get notesSkipped => 'رد شد';
+
+  @override
+  String get notesFailed => 'ناموفق';
+
+  @override
+  String get notesCompleted => 'تکمیل شد';
+
+  @override
+  String get notesImportNew => 'شروع وارد کردن جدید';
+
+  @override
+  String get notesImportResume => 'ادامه وارد کردن متوقف‌شده';
+
+  @override
+  String get notesImportAlreadyImported => 'قبلاً در این عملیات وارد شده است';
+
+  @override
+  String get references => 'ارجاع‌ها';
+
+  @override
+  String get referenceIncoming => 'ورودی';
+
+  @override
+  String get referenceOutgoing => 'خروجی';
+
+  @override
+  String get referenceChooseTarget => 'انتخاب مقصد پیوند';
+
+  @override
+  String get referenceWholeDocument => 'کل سند';
+
+  @override
+  String get referenceSourceLocation => 'مکان منبع';
+
+  @override
+  String get referenceTargetLocation => 'مکان مقصد';
+
+  @override
+  String get referenceResolved => 'حل‌شده';
+
+  @override
+  String get referenceMissing => 'یافت نشد';
+
+  @override
+  String get referenceAmbiguous => 'مبهم';
+
+  @override
+  String get referenceUnavailable => 'در این زمینه در دسترس نیست';
+
+  @override
+  String get referenceUnsupported => 'پشتیبانی نمی‌شود';
+
+  @override
+  String get referenceNoPortableId =>
+      'این مقصد نشانی قابل‌انتقال و تأییدشده‌ای برای یادداشت ندارد.';
 }

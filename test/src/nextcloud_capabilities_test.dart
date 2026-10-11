@@ -76,7 +76,11 @@ void main() {
               .having(
                 (e) => e.code,
                 'code',
-                NextcloudCapabilityFailure.unsupported,
+                notes != null &&
+                        (notes['api_version'] is! List ||
+                            (notes['api_version'] as List).contains('1.bad'))
+                    ? NextcloudCapabilityFailure.malformed
+                    : NextcloudCapabilityFailure.unsupported,
               )
               .having(
                 (e) => e.message,

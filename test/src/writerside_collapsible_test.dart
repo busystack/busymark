@@ -353,7 +353,11 @@ Hidden body.
     );
     await tester.pump();
 
-    expect(find.text('Details'), findsOneWidget);
+    final content = find.byKey(const ValueKey('wysiwyg-document-content'));
+    expect(
+      find.descendant(of: content, matching: find.text('Details')),
+      findsOneWidget,
+    );
     expect(find.text('Hidden body.'), findsNothing);
     await tester.tap(find.byType(IconButton).first);
     await tester.pump();

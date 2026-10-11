@@ -4847,4 +4847,282 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get nextcloudCreateSeparateWarning =>
       'Первый запрос мог уже создать заметку на сервере. Будет создана отдельная заметка с сохранённой локальной работой. Предполагаемые дубликаты не будут удалены.';
+
+  @override
+  String get wsSemanticFormats => 'Семантическое форматирование';
+
+  @override
+  String get wsUiControl => 'Элемент интерфейса';
+
+  @override
+  String get wsFilePath => 'Файл / Путь';
+
+  @override
+  String get wsUiPath => 'Путь в интерфейсе';
+
+  @override
+  String get wsDefinitionList => 'Список определений';
+
+  @override
+  String get wsIncludeContent => 'Включить повторно используемый контент';
+
+  @override
+  String get wsVariableReference => 'Ссылка на переменную';
+
+  @override
+  String get wsConvertList => 'Преобразовать список в процедуру';
+
+  @override
+  String get wsElementProperties => 'Свойства элемента';
+
+  @override
+  String get wsTopicProperties => 'Свойства темы';
+
+  @override
+  String get wsCollapsible => 'Сворачиваемый';
+
+  @override
+  String get wsPublishedState => 'Начальное состояние публикации';
+
+  @override
+  String get wsExpanded => 'Развёрнуто';
+
+  @override
+  String get wsCollapsed => 'Свёрнуто';
+
+  @override
+  String get wsCollapsedTitle => 'Заголовок в свёрнутом виде';
+
+  @override
+  String get wsTerm => 'Термин';
+
+  @override
+  String get wsListLayout => 'Макет списка';
+
+  @override
+  String get wsSyncGroup => 'Группа синхронизации';
+
+  @override
+  String get wsTabKey => 'Ключ вкладки';
+
+  @override
+  String get wsSwitcherLabel => 'Подпись переключателя';
+
+  @override
+  String get wsNavigationElements => 'Элементы навигации';
+
+  @override
+  String get wsNavigationDepth => 'Глубина навигации';
+
+  @override
+  String get wsAddItem => 'Добавить элемент';
+
+  @override
+  String get wsStep => 'Шаг';
+
+  @override
+  String get wsPropertyInvalid => 'Недопустимое значение свойства';
+
+  @override
+  String get wsFilter => 'Фильтр';
+
+  @override
+  String get wsIdentifier => 'Идентификатор элемента';
+
+  @override
+  String get wsTldr => 'Краткое содержание (TLDR)';
+
+  @override
+  String get wsFullLayout => 'Полная ширина';
+
+  @override
+  String get wsMediumLayout => 'Равные столбцы';
+
+  @override
+  String get wsNarrowLayout => 'Узкий столбец термина';
+
+  @override
+  String get wsTitle => 'Заголовок';
+
+  @override
+  String get wsSwitcherKey => 'Ключ переключателя';
+
+  @override
+  String get nextcloudServerSettings => 'Настройки Notes на сервере';
+
+  @override
+  String get nextcloudNotesPath => 'Путь к папке заметок';
+
+  @override
+  String get nextcloudFileSuffix => 'Расширение новых заметок';
+
+  @override
+  String get nextcloudServerSettingsExplanation =>
+      'Эти настройки Notes влияют на другие клиенты. Изменение пути не перемещает файлы; изменение расширения не переименовывает существующие заметки.';
+
+  @override
+  String get nextcloudSettingsSaved => 'Настройки сервера сохранены';
+
+  @override
+  String get nextcloudSettingsNormalized =>
+      'Сохранено со значениями, нормализованными сервером';
+
+  @override
+  String get nextcloudPendingUpload => 'Вложение ожидает загрузки';
+
+  @override
+  String nextcloudServerCheck(String time) {
+    return 'Последняя проверка сервера: $time';
+  }
+
+  @override
+  String get nextcloudSettingsLoading => 'Загрузка настроек сервера';
+
+  @override
+  String get nextcloudSettingsSaving => 'Сохранение настроек сервера';
+
+  @override
+  String get nextcloudPreviousLocalEdit => 'Предыдущая локальная правка';
+
+  @override
+  String get nextcloudUsePreviousEdit => 'Использовать предыдущую правку';
+
+  @override
+  String get quickOpen => 'Быстрое открытие';
+
+  @override
+  String get notesAll => 'Все заметки';
+
+  @override
+  String get notesUncategorized => 'Без категории';
+
+  @override
+  String get notesRecovery => 'Восстановление';
+
+  @override
+  String get notesRecentlyEdited => 'Недавно изменённые';
+
+  @override
+  String get notesOldestEdited => 'Давно изменённые';
+
+  @override
+  String get notesTitleAscending => 'Название А–Я';
+
+  @override
+  String get notesTitleDescending => 'Название Я–А';
+
+  @override
+  String get notesMove => 'Переместить в категорию';
+
+  @override
+  String get notesRemoveFavorite => 'Убрать из избранного';
+
+  @override
+  String get notesOffline => 'Сохранить для работы без сети';
+
+  @override
+  String get notesOfflineRemove => 'Убрать сохранение без сети';
+
+  @override
+  String get notesIndexing => 'Индексация заметок…';
+
+  @override
+  String get notesSearchHelp =>
+      'Термины объединяются И. Используйте \"фразы в кавычках\", title: и category:.';
+
+  @override
+  String get notesSourceLocation => 'Место в исходнике';
+
+  @override
+  String get notesRecoveryHelp =>
+      'Только сохранённые локальные заметки и локальная история. Корзина и история сервера недоступны.';
+
+  @override
+  String get notesImport => 'Импорт заметок';
+
+  @override
+  String get notesExport => 'Экспорт заметок';
+
+  @override
+  String get notesImportDistinct => 'Импортировать как отдельную заметку';
+
+  @override
+  String get notesAvailableOffline => 'Доступно без сети';
+
+  @override
+  String get notesIncomplete => 'Неполно';
+
+  @override
+  String get notesSelected => 'Выбранные заметки';
+
+  @override
+  String get notesNoHistory =>
+      'Нет сохранённых версий. История может быть отключена, устарела или очищена.';
+
+  @override
+  String get notesTextAvailable => 'Текст доступен локально';
+
+  @override
+  String get notesLocalVersion => 'Локальная рабочая версия';
+
+  @override
+  String get notesAttachments => 'Вложения';
+
+  @override
+  String get notesSkipped => 'Пропущено';
+
+  @override
+  String get notesFailed => 'Ошибка';
+
+  @override
+  String get notesCompleted => 'Завершено';
+
+  @override
+  String get notesImportNew => 'Начать новый импорт';
+
+  @override
+  String get notesImportResume => 'Продолжить прерванный импорт';
+
+  @override
+  String get notesImportAlreadyImported => 'Уже импортировано в этой операции';
+
+  @override
+  String get references => 'Ссылки';
+
+  @override
+  String get referenceIncoming => 'Входящие';
+
+  @override
+  String get referenceOutgoing => 'Исходящие';
+
+  @override
+  String get referenceChooseTarget => 'Выберите цель ссылки';
+
+  @override
+  String get referenceWholeDocument => 'Весь документ';
+
+  @override
+  String get referenceSourceLocation => 'Положение источника';
+
+  @override
+  String get referenceTargetLocation => 'Положение цели';
+
+  @override
+  String get referenceResolved => 'Найдена';
+
+  @override
+  String get referenceMissing => 'Отсутствует';
+
+  @override
+  String get referenceAmbiguous => 'Неоднозначная';
+
+  @override
+  String get referenceUnavailable => 'Недоступна в этом контексте';
+
+  @override
+  String get referenceUnsupported => 'Не поддерживается';
+
+  @override
+  String get referenceNoPortableId =>
+      'У этой цели нет проверенного переносимого URL заметки.';
 }

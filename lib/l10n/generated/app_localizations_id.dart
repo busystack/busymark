@@ -4788,4 +4788,282 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get nextcloudCreateSeparateWarning =>
       'Permintaan pertama mungkin sudah membuat catatan server. Ini membuat catatan terpisah dengan pekerjaan lokal yang dipertahankan. Tidak ada dugaan duplikat yang akan dihapus.';
+
+  @override
+  String get wsSemanticFormats => 'Pemformatan semantik';
+
+  @override
+  String get wsUiControl => 'Kontrol antarmuka';
+
+  @override
+  String get wsFilePath => 'Berkas / Jalur';
+
+  @override
+  String get wsUiPath => 'Jalur antarmuka';
+
+  @override
+  String get wsDefinitionList => 'Daftar definisi';
+
+  @override
+  String get wsIncludeContent => 'Sertakan konten yang dapat digunakan ulang';
+
+  @override
+  String get wsVariableReference => 'Referensi variabel';
+
+  @override
+  String get wsConvertList => 'Ubah daftar menjadi prosedur';
+
+  @override
+  String get wsElementProperties => 'Properti elemen';
+
+  @override
+  String get wsTopicProperties => 'Properti topik';
+
+  @override
+  String get wsCollapsible => 'Dapat diciutkan';
+
+  @override
+  String get wsPublishedState => 'Status awal publikasi';
+
+  @override
+  String get wsExpanded => 'Diperluas';
+
+  @override
+  String get wsCollapsed => 'Diciutkan';
+
+  @override
+  String get wsCollapsedTitle => 'Judul saat diciutkan';
+
+  @override
+  String get wsTerm => 'Istilah';
+
+  @override
+  String get wsListLayout => 'Tata letak daftar';
+
+  @override
+  String get wsSyncGroup => 'Grup sinkronisasi';
+
+  @override
+  String get wsTabKey => 'Kunci tab';
+
+  @override
+  String get wsSwitcherLabel => 'Label pengalih';
+
+  @override
+  String get wsNavigationElements => 'Elemen navigasi';
+
+  @override
+  String get wsNavigationDepth => 'Kedalaman navigasi';
+
+  @override
+  String get wsAddItem => 'Tambah item';
+
+  @override
+  String get wsStep => 'Langkah';
+
+  @override
+  String get wsPropertyInvalid => 'Nilai properti tidak valid';
+
+  @override
+  String get wsFilter => 'Filter konten';
+
+  @override
+  String get wsIdentifier => 'ID elemen';
+
+  @override
+  String get wsTldr => 'Ringkasan (TLDR)';
+
+  @override
+  String get wsFullLayout => 'Lebar penuh';
+
+  @override
+  String get wsMediumLayout => 'Kolom seimbang';
+
+  @override
+  String get wsNarrowLayout => 'Kolom istilah sempit';
+
+  @override
+  String get wsTitle => 'Judul';
+
+  @override
+  String get wsSwitcherKey => 'Kunci pemilih';
+
+  @override
+  String get nextcloudServerSettings => 'Pengaturan Notes server';
+
+  @override
+  String get nextcloudNotesPath => 'Jalur folder catatan';
+
+  @override
+  String get nextcloudFileSuffix => 'Ekstensi berkas catatan baru';
+
+  @override
+  String get nextcloudServerSettingsExplanation =>
+      'Pengaturan Notes server ini memengaruhi klien lain. Mengubah jalur tidak memindahkan berkas; mengubah ekstensi tidak mengganti nama catatan yang ada.';
+
+  @override
+  String get nextcloudSettingsSaved => 'Pengaturan server disimpan';
+
+  @override
+  String get nextcloudSettingsNormalized =>
+      'Disimpan dengan nilai yang dinormalisasi server';
+
+  @override
+  String get nextcloudPendingUpload => 'Unggahan lampiran tertunda';
+
+  @override
+  String nextcloudServerCheck(String time) {
+    return 'Pemeriksaan server terakhir: $time';
+  }
+
+  @override
+  String get nextcloudSettingsLoading => 'Memuat pengaturan server';
+
+  @override
+  String get nextcloudSettingsSaving => 'Menyimpan pengaturan server';
+
+  @override
+  String get nextcloudPreviousLocalEdit => 'Edit lokal sebelumnya';
+
+  @override
+  String get nextcloudUsePreviousEdit => 'Gunakan edit sebelumnya';
+
+  @override
+  String get quickOpen => 'Buka cepat';
+
+  @override
+  String get notesAll => 'Semua catatan';
+
+  @override
+  String get notesUncategorized => 'Tanpa kategori';
+
+  @override
+  String get notesRecovery => 'Pemulihan';
+
+  @override
+  String get notesRecentlyEdited => 'Baru diedit';
+
+  @override
+  String get notesOldestEdited => 'Edit terlama';
+
+  @override
+  String get notesTitleAscending => 'Judul A–Z';
+
+  @override
+  String get notesTitleDescending => 'Judul Z–A';
+
+  @override
+  String get notesMove => 'Pindah ke kategori';
+
+  @override
+  String get notesRemoveFavorite => 'Hapus favorit';
+
+  @override
+  String get notesOffline => 'Sediakan secara luring';
+
+  @override
+  String get notesOfflineRemove => 'Hapus penyimpanan luring';
+
+  @override
+  String get notesIndexing => 'Mengindeks catatan…';
+
+  @override
+  String get notesSearchHelp =>
+      'Istilah digabung dengan DAN. Gunakan \"frasa kutipan\", title: dan category:.';
+
+  @override
+  String get notesSourceLocation => 'Lokasi sumber';
+
+  @override
+  String get notesRecoveryHelp =>
+      'Hanya catatan lokal tersimpan dan riwayat lokal. Sampah dan riwayat server tidak tersedia.';
+
+  @override
+  String get notesImport => 'Impor catatan';
+
+  @override
+  String get notesExport => 'Ekspor catatan';
+
+  @override
+  String get notesImportDistinct => 'Impor sebagai catatan terpisah';
+
+  @override
+  String get notesAvailableOffline => 'Tersedia secara luring';
+
+  @override
+  String get notesIncomplete => 'Tidak lengkap';
+
+  @override
+  String get notesSelected => 'Catatan terpilih';
+
+  @override
+  String get notesNoHistory =>
+      'Tidak ada revisi tersimpan. Riwayat mungkin dinonaktifkan, kedaluwarsa atau dihapus.';
+
+  @override
+  String get notesTextAvailable => 'Teks tersedia secara lokal';
+
+  @override
+  String get notesLocalVersion => 'Versi kerja lokal';
+
+  @override
+  String get notesAttachments => 'Lampiran';
+
+  @override
+  String get notesSkipped => 'Dilewati';
+
+  @override
+  String get notesFailed => 'Gagal';
+
+  @override
+  String get notesCompleted => 'Selesai';
+
+  @override
+  String get notesImportNew => 'Mulai impor baru';
+
+  @override
+  String get notesImportResume => 'Lanjutkan impor yang terputus';
+
+  @override
+  String get notesImportAlreadyImported => 'Sudah diimpor dalam operasi ini';
+
+  @override
+  String get references => 'Referensi';
+
+  @override
+  String get referenceIncoming => 'Masuk';
+
+  @override
+  String get referenceOutgoing => 'Keluar';
+
+  @override
+  String get referenceChooseTarget => 'Pilih tujuan tautan';
+
+  @override
+  String get referenceWholeDocument => 'Seluruh dokumen';
+
+  @override
+  String get referenceSourceLocation => 'Lokasi sumber';
+
+  @override
+  String get referenceTargetLocation => 'Lokasi tujuan';
+
+  @override
+  String get referenceResolved => 'Terselesaikan';
+
+  @override
+  String get referenceMissing => 'Tidak ditemukan';
+
+  @override
+  String get referenceAmbiguous => 'Ambigu';
+
+  @override
+  String get referenceUnavailable => 'Tidak tersedia dalam konteks ini';
+
+  @override
+  String get referenceUnsupported => 'Tidak didukung';
+
+  @override
+  String get referenceNoPortableId =>
+      'Tujuan ini tidak memiliki URL catatan portabel yang terverifikasi.';
 }

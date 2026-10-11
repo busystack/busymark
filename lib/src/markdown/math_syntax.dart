@@ -4,6 +4,7 @@ import 'busymark_document.dart';
 import 'markdown_model.dart';
 import 'markdown_source_annotation.dart';
 import 'writerside_variable_syntax.dart';
+import 'writerside_authoring_syntax.dart';
 
 const busyMarkLiteralLessThanTag = 'busymark-literal-less-than';
 
@@ -36,9 +37,17 @@ md.Document busyMarkMarkdownDocument(
   Iterable<md.InlineSyntax> leadingInlineSyntaxes = const [],
 }) {
   return md.Document(
-    blockSyntaxes: const [BusyDisplayMathSyntax()],
+    blockSyntaxes: [
+      const BusyDisplayMathSyntax(),
+      if (mode == MarkdownMode.writersideMarkdown)
+        const WritersideSemanticParagraphSyntax(),
+      if (mode == MarkdownMode.writersideMarkdown)
+        const WritersideDefinitionListSyntax(),
+    ],
     inlineSyntaxes: [
       ...leadingInlineSyntaxes,
+      if (mode == MarkdownMode.writersideMarkdown)
+        WritersideSemanticInlineSyntax(),
       _LiteralLessThanSyntax(),
       if (mode == MarkdownMode.writersideMarkdown)
         WritersideLiteralPercentSyntax(),

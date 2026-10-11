@@ -28,6 +28,7 @@ enum BusyMarkAppShortcutAction {
   search,
   keyboardShortcuts,
   commandPalette,
+  quickOpen,
   syntaxReference,
   settings,
   nextTab,
@@ -48,6 +49,14 @@ abstract final class BusyMarkAppShortcuts {
   static const backLabel = 'Alt+Left';
   static const searchLabel = 'Ctrl+F';
   static const keyboardShortcutsLabel = 'Ctrl+Alt+K';
+  static const quickOpenLabel = 'Ctrl+P';
+  static const quickOpenGtkAccelerator = '<Primary>p';
+  static const quickOpen = BusyMarkShortcutDefinition(
+    label: quickOpenLabel,
+    activator: SingleActivator(LogicalKeyboardKey.keyP, control: true),
+    gtkAccelerator: quickOpenGtkAccelerator,
+  );
+
   static const commandPaletteLabel = 'Ctrl+Shift+P';
   static const syntaxReferenceLabel = 'Ctrl+Alt+M';
   static const settingsLabel = 'Ctrl+Alt+S';
@@ -198,6 +207,7 @@ abstract final class BusyMarkAppShortcuts {
         BusyMarkAppShortcutAction.search: search,
         BusyMarkAppShortcutAction.keyboardShortcuts: keyboardShortcuts,
         BusyMarkAppShortcutAction.commandPalette: commandPalette,
+        BusyMarkAppShortcutAction.quickOpen: quickOpen,
         BusyMarkAppShortcutAction.syntaxReference: syntaxReference,
         BusyMarkAppShortcutAction.settings: settings,
         BusyMarkAppShortcutAction.nextTab: nextTab,

@@ -28,6 +28,45 @@ const _accountId = 'ba6d02cd-42fe-4e14-a577-3e2c13822459';
 
 void main() {
   test(
+    'no-op properties Save preserves revision/time and schedules no server pass',
+    () async {
+      var gets = 0;
+      final harness = await _Harness.create(
+        seedLocal: false,
+        deferPersistence: true,
+        client: MockClient((request) async {
+          expect(request.method, 'GET');
+          expect(
+            request.url.path,
+            '/nextcloud/index.php/apps/notes/api/v1/notes',
+          );
+          gets++;
+          return http.Response(jsonEncode([serverNote(1)]), 200);
+        }),
+      );
+      addTearDown(harness.dispose);
+      await harness.repository.synchronize(_accountId, allowWrites: false);
+      await harness.controller.openNextcloudWorkspace(_accountId);
+      await harness.controller.refreshNextcloudNotes();
+      final note = harness.repository.notes.single;
+      final count = gets;
+      await harness.controller.updateNextcloudNoteMetadata(
+        note.localId,
+        snapshot: harness.repository.metadataSnapshot(note.localId),
+      );
+      expect(gets, count);
+      expect(harness.repository.isSynchronizing(_accountId), isFalse);
+      expect(
+        harness.repository.noteById(note.localId)!.revision,
+        note.revision,
+      );
+      expect(
+        harness.repository.noteById(note.localId)!.localActivityMicros,
+        note.localActivityMicros,
+      );
+    },
+  );
+  test(
     'unsaved draft edits during confirmation require another review',
     () async {
       Map<String, dynamic>? remote;

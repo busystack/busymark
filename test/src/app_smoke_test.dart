@@ -10875,6 +10875,9 @@ After break.
     final editorImage = find.byType(MarkdownImageView);
     expect(editorAdmonition, findsOneWidget);
     expect(editorImage, findsOneWidget);
+    // Compare the shared document surface with the utility pane dismissed.
+    await tester.tap(find.byTooltip('Element Properties'));
+    await tester.pumpAndSettle();
     expect(
       find.descendant(
         of: editorAdmonition,

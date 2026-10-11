@@ -4655,4 +4655,278 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String get nextcloudCreateSeparateWarning =>
       '最初のリクエストですでにサーバーノートが作成された可能性があります。保持したローカル作業から別のノートを作成します。重複の疑いがあるノートは削除されません。';
+
+  @override
+  String get wsSemanticFormats => '意味に基づく書式';
+
+  @override
+  String get wsUiControl => 'UI コントロール';
+
+  @override
+  String get wsFilePath => 'ファイル / パス';
+
+  @override
+  String get wsUiPath => 'UI パス';
+
+  @override
+  String get wsDefinitionList => '定義リスト';
+
+  @override
+  String get wsIncludeContent => '再利用可能なコンテンツを含める';
+
+  @override
+  String get wsVariableReference => '変数参照';
+
+  @override
+  String get wsConvertList => 'リストを手順に変換';
+
+  @override
+  String get wsElementProperties => '要素のプロパティ';
+
+  @override
+  String get wsTopicProperties => 'トピックのプロパティ';
+
+  @override
+  String get wsCollapsible => '折りたたみ可能';
+
+  @override
+  String get wsPublishedState => '公開時の初期状態';
+
+  @override
+  String get wsExpanded => '展開';
+
+  @override
+  String get wsCollapsed => '折りたたみ';
+
+  @override
+  String get wsCollapsedTitle => '折りたたみ時のタイトル';
+
+  @override
+  String get wsTerm => '用語';
+
+  @override
+  String get wsListLayout => 'リストのレイアウト';
+
+  @override
+  String get wsSyncGroup => '同期グループ';
+
+  @override
+  String get wsTabKey => 'タブのキー';
+
+  @override
+  String get wsSwitcherLabel => '切り替えラベル';
+
+  @override
+  String get wsNavigationElements => 'ナビゲーション要素';
+
+  @override
+  String get wsNavigationDepth => 'ナビゲーションの深さ';
+
+  @override
+  String get wsAddItem => '項目を追加';
+
+  @override
+  String get wsStep => 'ステップ';
+
+  @override
+  String get wsPropertyInvalid => '無効なプロパティ値';
+
+  @override
+  String get wsFilter => 'フィルター';
+
+  @override
+  String get wsIdentifier => '要素 ID';
+
+  @override
+  String get wsTldr => '要約 (TLDR)';
+
+  @override
+  String get wsFullLayout => '全幅';
+
+  @override
+  String get wsMediumLayout => '均等な列';
+
+  @override
+  String get wsNarrowLayout => '狭い用語列';
+
+  @override
+  String get wsTitle => 'タイトル';
+
+  @override
+  String get wsSwitcherKey => '切り替えキー';
+
+  @override
+  String get nextcloudServerSettings => 'サーバーのNotes設定';
+
+  @override
+  String get nextcloudNotesPath => 'ノートフォルダーのパス';
+
+  @override
+  String get nextcloudFileSuffix => '新しいノートの拡張子';
+
+  @override
+  String get nextcloudServerSettingsExplanation =>
+      'このサーバーのNotes設定は他のクライアントにも影響します。パスを変更してもファイルは移動せず、拡張子を変更しても既存のノートの名前は変わりません。';
+
+  @override
+  String get nextcloudSettingsSaved => 'サーバー設定を保存しました';
+
+  @override
+  String get nextcloudSettingsNormalized => 'サーバーが正規化した値で保存しました';
+
+  @override
+  String get nextcloudPendingUpload => '添付ファイルのアップロード待ち';
+
+  @override
+  String nextcloudServerCheck(String time) {
+    return '前回のサーバー確認: $time';
+  }
+
+  @override
+  String get nextcloudSettingsLoading => 'サーバー設定を読み込み中';
+
+  @override
+  String get nextcloudSettingsSaving => 'サーバー設定を保存中';
+
+  @override
+  String get nextcloudPreviousLocalEdit => '以前のローカル編集';
+
+  @override
+  String get nextcloudUsePreviousEdit => '以前の編集を使用';
+
+  @override
+  String get quickOpen => 'クイックオープン';
+
+  @override
+  String get notesAll => 'すべてのノート';
+
+  @override
+  String get notesUncategorized => '未分類';
+
+  @override
+  String get notesRecovery => '復元';
+
+  @override
+  String get notesRecentlyEdited => '最近編集した順';
+
+  @override
+  String get notesOldestEdited => '古い編集順';
+
+  @override
+  String get notesTitleAscending => 'タイトル昇順';
+
+  @override
+  String get notesTitleDescending => 'タイトル降順';
+
+  @override
+  String get notesMove => 'カテゴリに移動';
+
+  @override
+  String get notesRemoveFavorite => 'お気に入りを解除';
+
+  @override
+  String get notesOffline => 'オフラインで利用可能にする';
+
+  @override
+  String get notesOfflineRemove => 'オフライン保持を解除';
+
+  @override
+  String get notesIndexing => 'ノートを索引作成中…';
+
+  @override
+  String get notesSearchHelp =>
+      '語句は AND で結合します。\"引用句\"、title:、category: を使えます。';
+
+  @override
+  String get notesSourceLocation => 'ソース位置';
+
+  @override
+  String get notesRecoveryHelp => '保持されたローカルノートとローカル履歴のみ。サーバーのごみ箱や履歴は利用できません。';
+
+  @override
+  String get notesImport => 'ノートをインポート';
+
+  @override
+  String get notesExport => 'ノートをエクスポート';
+
+  @override
+  String get notesImportDistinct => '別のノートとしてインポート';
+
+  @override
+  String get notesAvailableOffline => 'オフラインで利用可能';
+
+  @override
+  String get notesIncomplete => '不完全';
+
+  @override
+  String get notesSelected => '選択したノート';
+
+  @override
+  String get notesNoHistory => '保持された版がありません。履歴は無効、期限切れ、または消去済みの場合があります。';
+
+  @override
+  String get notesTextAvailable => 'テキストはローカルで利用可能';
+
+  @override
+  String get notesLocalVersion => 'ローカルの作業版';
+
+  @override
+  String get notesAttachments => '添付ファイル';
+
+  @override
+  String get notesSkipped => 'スキップ';
+
+  @override
+  String get notesFailed => '失敗';
+
+  @override
+  String get notesCompleted => '完了';
+
+  @override
+  String get notesImportNew => '新しいインポートを開始';
+
+  @override
+  String get notesImportResume => '中断したインポートを再開';
+
+  @override
+  String get notesImportAlreadyImported => 'この操作ではインポート済み';
+
+  @override
+  String get references => '参照';
+
+  @override
+  String get referenceIncoming => '被参照';
+
+  @override
+  String get referenceOutgoing => '参照先';
+
+  @override
+  String get referenceChooseTarget => 'リンク先を選択';
+
+  @override
+  String get referenceWholeDocument => '文書全体';
+
+  @override
+  String get referenceSourceLocation => '参照元の位置';
+
+  @override
+  String get referenceTargetLocation => '参照先の位置';
+
+  @override
+  String get referenceResolved => '解決済み';
+
+  @override
+  String get referenceMissing => '見つかりません';
+
+  @override
+  String get referenceAmbiguous => '曖昧';
+
+  @override
+  String get referenceUnavailable => 'このコンテキストでは利用できません';
+
+  @override
+  String get referenceUnsupported => '未対応';
+
+  @override
+  String get referenceNoPortableId => 'この参照先には確認済みの移植可能なノートURLがありません。';
 }

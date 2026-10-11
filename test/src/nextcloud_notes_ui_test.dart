@@ -15,10 +15,12 @@ import 'package:busymark/src/app/system_accent.dart';
 import 'package:busymark/src/local_history/local_history_controller.dart';
 import 'package:busymark/src/local_history/local_history_store.dart';
 import 'package:busymark/src/nextcloud_notes/application/nextcloud_connection.dart';
+import 'package:busymark/src/nextcloud_notes/application/notes_navigation.dart';
 import 'package:busymark/src/nextcloud_notes/application/notes_repository.dart';
 import 'package:busymark/src/nextcloud_notes/data/notes_store.dart';
 import 'package:busymark/src/nextcloud_notes/domain/notes_models.dart';
 import 'package:busymark/src/nextcloud_notes/presentation/notes_sidebar.dart';
+import 'package:busymark/src/nextcloud_notes/presentation/notes_workspace_ui.dart';
 import 'package:busymark/src/workspace/presentation/settings_screen.dart';
 import 'package:busymark/src/workspace/recovery_persistence.dart';
 import 'package:busymark/src/workspace/session_persistence.dart';
@@ -30,6 +32,16 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
+
+Future<void> settleStorage(WidgetTester tester) async {
+  for (var i = 0; i < 10; i++) {
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 30)),
+    );
+    await tester.pump();
+  }
+  await tester.pumpAndSettle();
+}
 
 void main() {
   late Directory root;
@@ -253,6 +265,30 @@ void main() {
         ),
       );
     }
+    const metadataBase = NoteState(
+      id: 12,
+      etag: 'metadata-base',
+      content: 'body',
+      title: 'A',
+      category: '',
+      favorite: false,
+      readonly: false,
+      modified: 1,
+    );
+    await store.saveNote(
+      const NextcloudNote(
+        localId: 'metadata-server',
+        accountId: accountId,
+        serverId: 12,
+        title: 'A',
+        content: 'body',
+        etag: 'metadata-base',
+        base: metadataBase,
+        revision: 1,
+        ackRevision: 1,
+        syncState: NoteSyncState.synced,
+      ),
+    );
     repository = _CachedNotesRepository(store: store);
     await repository.initialize();
   });
@@ -262,7 +298,7 @@ void main() {
   });
 
   Future<void> pump(WidgetTester tester) async {
-    tester.view.physicalSize = const Size(800, 600);
+    tester.view.physicalSize = const Size(1000, 1000);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
@@ -279,14 +315,14 @@ void main() {
           home: const Scaffold(
             body: SizedBox(
               width: 500,
-              height: 700,
+              height: 1000,
               child: NextcloudNotesSidebar(accountId: accountId),
             ),
           ),
         ),
       ),
     );
-    await tester.pumpAndSettle();
+    await settleStorage(tester);
   }
 
   test('Nextcloud settings route selects its dedicated page', () {
@@ -295,6 +331,197 @@ void main() {
       SettingsPage.nextcloudNotes,
     );
   });
+
+  testWidgets(
+    'correction: Recovery Search finds deleted records rather than live notes',
+    (tester) async {
+      await pump(tester);
+      await tester.tap(find.text('Recovery').first);
+      await settleStorage(tester);
+      expect(find.text('Deleted note'), findsOneWidget);
+      await tester.tap(find.byType(TextField).first);
+      await settleStorage(tester);
+      final field = find.descendant(
+        of: find.byType(NotesSearchDialog),
+        matching: find.byType(TextField),
+      );
+      await tester.enterText(field, 'title:Deleted');
+      await tester.pump(const Duration(milliseconds: 200));
+      await settleStorage(tester);
+      expect(
+        find.descendant(
+          of: find.byType(NotesSearchDialog),
+          matching: find.widgetWithText(ListTile, 'Deleted note'),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(
+          of: find.byType(NotesSearchDialog),
+          matching: find.text('Personal note'),
+        ),
+        findsNothing,
+      );
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await settleStorage(tester);
+      await tester.pumpWidget(const SizedBox.shrink());
+    },
+  );
+
+  testWidgets(
+    'correction: Show more reaches all 320 indexed occurrences through the production dialog',
+    (tester) async {
+      final expected = <Key>{};
+      await tester.runAsync(() async {
+        for (var n = 0; n < 10; n++) {
+          final note = await repository.create(
+            accountId,
+            title: 'Page $n',
+            content: List.filled(32, 'pagingneedle').join(' '),
+          );
+          expected.addAll([
+            for (var i = 0; i < 32; i++)
+              ValueKey<(String, String, int?, int?)>((
+                'notes-search-hit',
+                note.localId,
+                i * 13,
+                i * 13 + 12,
+              )),
+          ]);
+        }
+      });
+      await pump(tester);
+      await tester.tap(find.byType(TextField).first);
+      await settleStorage(tester);
+      await tester.enterText(
+        find.descendant(
+          of: find.byType(NotesSearchDialog),
+          matching: find.byType(TextField),
+        ),
+        'pagingneedle',
+      );
+      await tester.pump(const Duration(milliseconds: 200));
+      await settleStorage(tester);
+      for (final count in [80, 160, 240, 320]) {
+        final list = tester.widget<ListView>(
+          find.byKey(const ValueKey('notes-search-results')),
+        );
+        final delegate = list.childrenDelegate as SliverChildBuilderDelegate;
+        expect(delegate.estimatedChildCount, count);
+        final context = tester.element(
+          find.byKey(const ValueKey('notes-search-results')),
+        );
+        final keys = {
+          for (var i = 0; i < count; i++) delegate.builder(context, i)!.key!,
+        };
+        expect(keys.length, count);
+        expect(expected.containsAll(keys), true);
+        if (count < 320) {
+          expect(find.text('Show more results'), findsOneWidget);
+          await tester.tap(find.text('Show more results'));
+          await settleStorage(tester);
+        } else {
+          expect(keys, expected);
+          expect(find.text('Show more results'), findsNothing);
+        }
+      }
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await settleStorage(tester);
+      await tester.pumpWidget(const SizedBox.shrink());
+    },
+  );
+
+  testWidgets(
+    'correction: Recovery search activation opens preview and keeps the current document',
+    (tester) async {
+      final container = ProviderContainer(
+        overrides: [
+          nextcloudNotesRepositoryProvider.overrideWith(
+            (ref) async => repository,
+          ),
+          localSettingsStoreProvider.overrideWithValue(_TabSettings()),
+          linuxAccentPlatformProvider.overrideWithValue(false),
+          localHistoryStoreProvider.overrideWithValue(
+            MemoryLocalHistoryStore(),
+          ),
+          documentSessionStoreProvider.overrideWithValue(
+            MemoryDocumentSessionStore(),
+          ),
+          documentRecoveryStoreProvider.overrideWithValue(
+            MemoryDocumentRecoveryStore(),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+      const personalId = '223e4567-e89b-42d3-a456-426614174000';
+      const deletedId = '423e4567-e89b-42d3-a456-426614174000';
+      final controller = container.read(workspaceControllerProvider.notifier);
+      await tester.runAsync(() async {
+        await controller.openNextcloudWorkspace(accountId);
+        await controller.openNextcloudNote(personalId);
+      });
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: const Scaffold(
+              body: SizedBox(
+                width: 500,
+                height: 1000,
+                child: NextcloudNotesSidebar(accountId: accountId),
+              ),
+            ),
+          ),
+        ),
+      );
+      await settleStorage(tester);
+      await tester.tap(find.text('Recovery').first);
+      await settleStorage(tester);
+      await tester.tap(find.byType(TextField).first);
+      await settleStorage(tester);
+      await tester.enterText(
+        find.descendant(
+          of: find.byType(NotesSearchDialog),
+          matching: find.byType(TextField),
+        ),
+        'title:Deleted',
+      );
+      await tester.pump(const Duration(milliseconds: 200));
+      await settleStorage(tester);
+      expect(find.byTooltip('Source location'), findsNothing);
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await settleStorage(tester);
+      expect(find.byType(NotesSearchDialog), findsNothing);
+      expect(find.byType(NotesRecoveryDialog), findsOneWidget);
+      expect(
+        tester
+            .widget<NotesRecoveryDialog>(find.byType(NotesRecoveryDialog))
+            .note
+            .localId,
+        deletedId,
+      );
+      expect(
+        container
+            .read(workspaceControllerProvider)
+            .activeBuffer
+            ?.remoteNote
+            ?.localId,
+        personalId,
+      );
+      expect(
+        container
+            .read(workspaceControllerProvider)
+            .documentBuffers
+            .any((b) => b.remoteNote?.localId == deletedId),
+        false,
+      );
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await settleStorage(tester);
+      await tester.pumpWidget(const SizedBox.shrink());
+    },
+  );
 
   testWidgets('remote editor tabs retain note titles through metadata rename', (
     tester,
@@ -342,7 +569,7 @@ void main() {
         child: const BusyMarkApp(),
       ),
     );
-    await tester.pumpAndSettle();
+    await settleStorage(tester);
     final strip = find.byKey(const ValueKey('editor-tab-strip'));
     Finder tab(String title) =>
         find.descendant(of: strip, matching: find.text(title));
@@ -358,7 +585,7 @@ void main() {
         title: 'Renamed personal note',
       ),
     );
-    await tester.pumpAndSettle();
+    await settleStorage(tester);
     expect(tab('Personal note'), findsNothing);
     expect(tab('Renamed personal note'), findsOneWidget);
     expect(tab('Shared note'), findsOneWidget);
@@ -410,7 +637,7 @@ void main() {
             child: const BusyMarkApp(),
           ),
         );
-        await tester.pumpAndSettle();
+        await settleStorage(tester);
         final target = container
             .read(workspaceControllerProvider)
             .documentBuffers
@@ -456,7 +683,7 @@ void main() {
           );
         });
         await tester.tap(label(), buttons: kSecondaryButton);
-        await tester.pumpAndSettle();
+        await settleStorage(tester);
         final entries = menu!['entries'] as List;
         expect((entries[4] as Map)['enabled'], isFalse);
         expect(clipboardWrites, 0);
@@ -483,7 +710,7 @@ void main() {
             break;
           }
         }
-        await tester.pumpAndSettle();
+        await settleStorage(tester);
         final state = container.read(workspaceControllerProvider);
         expect(state.documentBuffers, hasLength(action == 'all' ? 0 : 1));
         if (action == 'other') expect(state.activeBufferId, target.id);
@@ -508,10 +735,114 @@ void main() {
       expect(find.text('Personal note'), findsOneWidget);
       expect(find.text('Shared note'), findsOneWidget);
       expect(find.text('Deleted note'), findsNothing);
-      await tester.enterText(find.byType(TextField), 'private search');
+      await tester.tap(find.byType(TextField));
+      await settleStorage(tester);
+      final dialog = find.byType(NotesSearchDialog);
+      final field = find.descendant(
+        of: dialog,
+        matching: find.byType(TextField),
+      );
+      await tester.enterText(field, 'private search');
+      await tester.pump(const Duration(milliseconds: 200));
+      for (var i = 0; i < 30; i++) {
+        await tester.runAsync(
+          () => Future<void>.delayed(const Duration(milliseconds: 20)),
+        );
+        await tester.pump();
+      }
+      expect(
+        find.descendant(of: dialog, matching: find.text('Personal note')),
+        findsNWidgets(2),
+      );
+      expect(
+        find.descendant(of: dialog, matching: find.text('Shared note')),
+        findsNothing,
+      );
+      await tester.pumpWidget(const SizedBox.shrink());
+    },
+  );
+
+  testWidgets(
+    'pointer and keyboard multiselection preserves reviewed context targets after resorting',
+    (tester) async {
+      late NextcloudNote alpha, beta, gamma;
+      await tester.runAsync(() async {
+        final account = repository.accountById(accountId)!;
+        await repository.removeAccount(accountId);
+        await repository.upsertAccount(account);
+        alpha = await repository.create(accountId, title: 'Alpha');
+        beta = await repository.create(accountId, title: 'Beta');
+        gamma = await repository.create(accountId, title: 'Gamma');
+      });
+      await pump(tester);
+      final sort = tester.widget<DropdownButton<NotesSort>>(
+        find.byType(DropdownButton<NotesSort>),
+      );
+      sort.onChanged!(NotesSort.titleAscending);
       await tester.pumpAndSettle();
-      expect(find.text('Personal note'), findsOneWidget);
-      expect(find.text('Shared note'), findsNothing);
+      Finder row(NextcloudNote note) =>
+          find.byKey(ValueKey('nextcloud-note-${note.localId}'));
+      bool selected(NextcloudNote note) =>
+          tester.widget<ListTile>(row(note)).selected;
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.tap(row(alpha));
+      await tester.tap(row(gamma));
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.pump();
+      expect(selected(alpha), true);
+      expect(selected(beta), false);
+      expect(selected(gamma), true);
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+      await tester.tap(row(beta));
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+      await tester.pump();
+      expect(selected(alpha), false);
+      expect(selected(beta), true);
+      expect(selected(gamma), true);
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyA);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.pump();
+      expect([alpha, beta, gamma].every(selected), true);
+      sort.onChanged!(NotesSort.titleDescending);
+      await tester.pumpAndSettle();
+      expect([alpha, beta, gamma].every(selected), true);
+      await tester.tap(row(beta), buttons: kSecondaryButton);
+      await settleStorage(tester);
+      expect(find.text('Selected notes (3)'), findsNWidgets(2));
+      // The menu has captured the reviewed identities and metadata. A durable
+      // update can reorder the list while the menu is open without retargeting.
+      await tester.runAsync(
+        () => repository.patchMetadata(
+          repository.metadataSnapshot(beta.localId),
+          title: 'Zeta',
+        ),
+      );
+      await settleStorage(tester);
+      await tester.tap(find.text('Move to category'));
+      await settleStorage(tester);
+      final review = find.byType(BusyMarkDialogShell);
+      expect(review, findsOneWidget);
+      for (final title in ['Alpha', 'Beta', 'Gamma']) {
+        expect(
+          find.descendant(of: review, matching: find.text(title)),
+          findsOneWidget,
+        );
+      }
+      expect(
+        find.descendant(of: review, matching: find.text('Zeta')),
+        findsNothing,
+      );
+      await tester.tap(
+        find.descendant(of: review, matching: find.text('Cancel')),
+      );
+      await settleStorage(tester);
+      expect(repository.noteById(beta.localId)!.title, 'Zeta');
+      await tester.tap(find.text('Favorites').first);
+      await settleStorage(tester);
+      expect(find.text('Selected notes (3)'), findsNothing);
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox.shrink());
     },
   );
 
@@ -519,16 +850,16 @@ void main() {
     'favorites and ancestor category filtering operate on cached notes',
     (tester) async {
       await pump(tester);
-      await tester.tap(find.byType(CheckboxListTile).first);
-      await tester.pumpAndSettle();
+      await tester.tap(find.text('Favorites').first);
+      await settleStorage(tester);
       expect(find.text('Shared note'), findsNothing);
       expect(find.text('Personal note'), findsOneWidget);
-      await tester.tap(find.byType(CheckboxListTile).first);
-      await tester.pumpAndSettle();
-      await tester.tap(find.byType(DropdownButton<String>));
-      await tester.pumpAndSettle();
+      await tester.tap(find.text('All notes').first);
+      await settleStorage(tester);
+      await tester.ensureVisible(find.text('Projects').last);
+      await settleStorage(tester);
       await tester.tap(find.text('Projects').last);
-      await tester.pumpAndSettle();
+      await settleStorage(tester);
       expect(find.text('Shared note'), findsOneWidget);
       expect(find.text('Personal note'), findsNothing);
     },
@@ -538,10 +869,9 @@ void main() {
     tester,
   ) async {
     await pump(tester);
-    await tester.tap(find.byType(DropdownButton<String>));
-    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Personal').last);
     await tester.tap(find.text('Personal').last);
-    await tester.pumpAndSettle();
+    await settleStorage(tester);
     expect(find.text('Shared note'), findsNothing);
     await tester.runAsync(
       () => repository.save(
@@ -550,14 +880,19 @@ void main() {
         category: '',
       ),
     );
-    await tester.pumpAndSettle();
+    await settleStorage(tester);
     expect(find.text('Personal note'), findsOneWidget);
     expect(find.text('Shared note'), findsOneWidget);
     expect(
       tester
-          .widget<DropdownButton<String>>(find.byType(DropdownButton<String>))
-          .value,
-      isNull,
+          .widget<ListTile>(
+            find.ancestor(
+              of: find.text('All notes'),
+              matching: find.byType(ListTile),
+            ),
+          )
+          .selected,
+      isTrue,
     );
   });
 
@@ -574,21 +909,20 @@ void main() {
           title: 'Move me',
           category: 'Last',
         );
-        await repository.create(accountId, title: 'Uncategorized');
+        await repository.create(accountId, title: 'Uncategorized draft');
       });
       await pump(tester);
-      await tester.tap(find.byType(DropdownButton<String>));
-      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('Last').last);
       await tester.tap(find.text('Last').last);
-      await tester.pumpAndSettle();
-      expect(find.text('Uncategorized'), findsNothing);
+      await settleStorage(tester);
+      expect(find.text('Uncategorized draft'), findsNothing);
       await tester.runAsync(
         () => repository.save(categorized.localId, content: '', category: ''),
       );
-      await tester.pumpAndSettle();
-      expect(find.byType(DropdownButton<String>), findsNothing);
+      await settleStorage(tester);
+      expect(find.text('Last'), findsNothing);
       expect(find.text('Move me'), findsOneWidget);
-      expect(find.text('Uncategorized'), findsOneWidget);
+      expect(find.text('Uncategorized draft'), findsOneWidget);
     },
   );
 
@@ -614,18 +948,18 @@ void main() {
           ),
         ),
       );
-      await tester.pumpAndSettle();
+      await settleStorage(tester);
       await tester.tap(find.text('Compare'));
-      await tester.pumpAndSettle();
+      await settleStorage(tester);
       await tester.runAsync(
         () async => Future<void>.delayed(const Duration(milliseconds: 50)),
       );
-      await tester.pumpAndSettle();
+      await settleStorage(tester);
       expect(find.text('uncertain.pdf'), findsOneWidget);
       expect(find.text('Retry'), findsOneWidget);
       expect(find.text('Attachment reference on server'), findsOneWidget);
       await tester.tap(find.text('Cancel'));
-      await tester.pumpAndSettle();
+      await settleStorage(tester);
     },
   );
 
@@ -640,12 +974,19 @@ void main() {
               'nextcloud-note-323e4567-e89b-42d3-a456-426614174000',
             ),
           ),
-          matching: find.byType(IconButton),
+          matching: find.byTooltip('Main menu'),
         ),
       );
-      await tester.pumpAndSettle();
+      await settleStorage(tester);
+      await tester.tap(find.text('Rename'));
+      await settleStorage(tester);
       final fields = tester
-          .widgetList<TextField>(find.byType(TextField))
+          .widgetList<TextField>(
+            find.descendant(
+              of: find.byType(Dialog),
+              matching: find.byType(TextField),
+            ),
+          )
           .toList();
       expect(fields.where((field) => field.readOnly), hasLength(2));
       expect(find.text('Save local copy…'), findsOneWidget);
@@ -667,10 +1008,12 @@ void main() {
               'nextcloud-note-223e4567-e89b-42d3-a456-426614174000',
             ),
           ),
-          matching: find.byType(IconButton),
+          matching: find.byTooltip('Main menu'),
         ),
       );
-      await tester.pumpAndSettle();
+      await settleStorage(tester);
+      await tester.tap(find.text('Rename'));
+      await settleStorage(tester);
       for (
         var attempt = 0;
         attempt < 20 && find.text('report.pdf').evaluate().isEmpty;
@@ -679,14 +1022,14 @@ void main() {
         await tester.runAsync(
           () => Future<void>.delayed(const Duration(milliseconds: 25)),
         );
-        await tester.pumpAndSettle();
+        await settleStorage(tester);
       }
       expect(find.text('Add attachment…'), findsOneWidget);
       expect(find.text('report.pdf'), findsOneWidget);
       await tester.ensureVisible(find.byTooltip('Delete'));
-      await tester.pumpAndSettle();
+      await settleStorage(tester);
       await tester.tap(find.byTooltip('Delete'));
-      await tester.pumpAndSettle();
+      await settleStorage(tester);
       expect(
         find.text(
           'Deleting this attachment makes its links in the note unavailable. Retained bytes can be recovered through local history.',
@@ -694,7 +1037,7 @@ void main() {
         findsOneWidget,
       );
       await tester.tap(find.text('Cancel').last);
-      await tester.pumpAndSettle();
+      await settleStorage(tester);
       expect(find.text('report.pdf'), findsOneWidget);
       expect(tester.takeException(), isNull);
     },
@@ -735,14 +1078,14 @@ void main() {
         ),
       );
       await tester.tap(find.text('Resolve'));
-      await tester.pumpAndSettle();
+      await settleStorage(tester);
       expect(find.text('New note'), findsOneWidget);
       await tester.tap(find.text('Discard'));
-      await tester.pumpAndSettle();
+      await settleStorage(tester);
       expect(find.text('Discard'), findsNWidgets(2));
       expect(find.text('Recoverable edit'), findsOneWidget);
       await tester.tap(find.text('Cancel'));
-      await tester.pumpAndSettle();
+      await settleStorage(tester);
       expect(find.text('Resolve'), findsOneWidget);
       expect(find.text('Discard'), findsNothing);
       expect(tester.takeException(), isNull);
@@ -782,9 +1125,9 @@ void main() {
         ),
       ),
     );
-    await tester.pumpAndSettle();
+    await settleStorage(tester);
     await tester.tap(find.text('Compare'));
-    await tester.pumpAndSettle();
+    await settleStorage(tester);
     final button = find.byWidgetPredicate(
       (w) => w is BusyMarkDialogButton && w.label == 'Merge',
     );
@@ -797,14 +1140,186 @@ void main() {
       );
       // Exercise the actual dialog state callback and verify Apply enablement.
       dropdown.onChanged!(NotesMergeChoice.remote);
-      await tester.pumpAndSettle();
+      await settleStorage(tester);
     }
     expect(tester.widget<BusyMarkDialogButton>(button).onPressed, isNotNull);
     await tester.tap(find.text('Cancel'));
-    await tester.pumpAndSettle();
+    await settleStorage(tester);
     expect(repository.noteById(id)!.title, 'Local title');
     expect(tester.takeException(), isNull);
   });
+
+  for (final draft in [false, true]) {
+    for (final choice in [
+      'Use previous edit',
+      'Keep Mine',
+      'Merge',
+      'New note',
+    ]) {
+      testWidgets(
+        'local metadata review applies the displayed choice: draft=$draft $choice',
+        (tester) async {
+          for (final channelName in ['yaru_window', 'yaru_window/events']) {
+            TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+                .setMockMethodCallHandler(
+                  MethodChannel(channelName),
+                  (call) async =>
+                      call.method == 'state' ? <String, Object?>{} : null,
+                );
+            addTearDown(
+              () => TestDefaultBinaryMessengerBinding
+                  .instance
+                  .defaultBinaryMessenger
+                  .setMockMethodCallHandler(MethodChannel(channelName), null),
+            );
+          }
+          final id = draft
+              ? '223e4567-e89b-42d3-a456-426614174000'
+              : 'metadata-server';
+          await tester.runAsync(() async {
+            final snapshot = repository.metadataSnapshot(id);
+            await repository.patchMetadata(snapshot, title: 'B');
+            await repository.patchMetadata(snapshot, title: 'C');
+          });
+          tester.view.physicalSize = const Size(1200, 1000);
+          tester.view.devicePixelRatio = 1;
+          addTearDown(tester.view.resetPhysicalSize);
+          addTearDown(tester.view.resetDevicePixelRatio);
+          await tester.pumpWidget(
+            ProviderScope(
+              overrides: [
+                nextcloudNotesRepositoryProvider.overrideWith(
+                  (ref) async => repository,
+                ),
+                localSettingsStoreProvider.overrideWithValue(_TabSettings()),
+                linuxAccentPlatformProvider.overrideWithValue(false),
+                localHistoryStoreProvider.overrideWithValue(
+                  MemoryLocalHistoryStore(),
+                ),
+                documentSessionStoreProvider.overrideWithValue(
+                  MemoryDocumentSessionStore(),
+                ),
+                documentRecoveryStoreProvider.overrideWithValue(
+                  MemoryDocumentRecoveryStore(),
+                ),
+              ],
+              child: MaterialApp(
+                localizationsDelegates: AppLocalizations.localizationsDelegates,
+                supportedLocales: AppLocalizations.supportedLocales,
+                home: Scaffold(
+                  body: NextcloudNoteStatus(localId: id, unsaved: false),
+                ),
+              ),
+            ),
+          );
+          await settleStorage(tester);
+          await tester.runAsync(() => tester.tap(find.text('Compare')));
+          for (
+            var i = 0;
+            i < 100 && find.text('Use previous edit').evaluate().isEmpty;
+            i++
+          ) {
+            await tester.runAsync(
+              () => Future<void>.delayed(const Duration(milliseconds: 10)),
+            );
+            await tester.pump(const Duration(milliseconds: 50));
+          }
+          await settleStorage(tester);
+          expect(find.text('Use previous edit'), findsOneWidget);
+          expect(find.text('Take Remote'), findsNothing);
+          await tester.tap(find.byType(DropdownButton<NotesMergeChoice>));
+          await settleStorage(tester);
+          expect(find.text('Previous local edit: B'), findsOneWidget);
+          expect(find.text('Keep Mine: C'), findsOneWidget);
+          await tester.tap(find.text('Previous local edit: B'));
+          await settleStorage(tester);
+          await tester.runAsync(() async {
+            await tester.tap(
+              find.byWidgetPredicate(
+                (w) => w is BusyMarkDialogButton && w.label == choice,
+              ),
+            );
+          });
+          final completion = Stopwatch()..start();
+          bool finished() => choice == 'New note'
+              ? repository.notes.any((n) => n.localId != id && n.title == 'C')
+              : repository.noteById(id)!.metadataConflict == null;
+          while (!finished() &&
+              completion.elapsed < const Duration(seconds: 30)) {
+            await tester.pump(const Duration(milliseconds: 50));
+            await tester.runAsync(
+              () => Future<void>.delayed(const Duration(milliseconds: 10)),
+            );
+          }
+          await settleStorage(tester);
+          expect(finished(), isTrue);
+          final selected = choice == 'New note'
+              ? repository.notes.singleWhere(
+                  (n) => n.localId != id && n.title == 'C',
+                )
+              : repository.noteById(id)!;
+          expect(
+            selected.title,
+            choice == 'Keep Mine' || choice == 'New note' ? 'C' : 'B',
+          );
+          expect(tester.takeException(), isNull);
+          final container = ProviderScope.containerOf(
+            tester.element(find.byType(NextcloudNoteStatus)),
+          );
+          await tester.runAsync(() async {
+            container.dispose();
+          });
+          await tester.pumpWidget(const SizedBox.shrink());
+          await tester.runAsync(() => repository.dispose());
+        },
+      );
+    }
+  }
+
+  for (final state in [NoteSyncState.pending, NoteSyncState.synced]) {
+    testWidgets('persisted metadata review shows conflict rather than $state', (
+      tester,
+    ) async {
+      const id = 'metadata-server';
+      await tester.runAsync(() async {
+        final snapshot = repository.metadataSnapshot(id);
+        await repository.patchMetadata(snapshot, title: 'B');
+        await repository.patchMetadata(snapshot, title: 'C');
+        final note = repository.noteById(id)!;
+        await repository.store.saveNote(note.copyWith(syncState: state));
+        await repository.dispose();
+        repository = _CachedNotesRepository(
+          store: await NotesStore.open(
+            path: p.join(root.path, 'notes.sqlite3'),
+          ),
+        );
+        await repository.initialize();
+      });
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            nextcloudNotesRepositoryProvider.overrideWith(
+              (ref) async => repository,
+            ),
+          ],
+          child: MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: const Scaffold(
+              body: NextcloudNoteStatus(localId: id, unsaved: false),
+            ),
+          ),
+        ),
+      );
+      await settleStorage(tester);
+      expect(find.text('Conflicts'), findsOneWidget);
+      expect(find.text('Compare'), findsOneWidget);
+      expect(find.text('Synced'), findsNothing);
+      expect(find.text('Saved locally'), findsNothing);
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox.shrink());
+    });
+  }
 
   testWidgets('read-only favorite conflict offers a safe merge', (
     tester,
@@ -828,9 +1343,9 @@ void main() {
         ),
       ),
     );
-    await tester.pumpAndSettle();
+    await settleStorage(tester);
     await tester.tap(find.text('Compare'));
-    await tester.pumpAndSettle();
+    await settleStorage(tester);
     final merge = find.byWidgetPredicate(
       (widget) => widget is BusyMarkDialogButton && widget.label == 'Merge',
     );
@@ -838,7 +1353,7 @@ void main() {
     expect(tester.widget<BusyMarkDialogButton>(merge).onPressed, isNotNull);
     expect(find.text('Keep Mine'), findsNothing);
     await tester.tap(find.text('Cancel'));
-    await tester.pumpAndSettle();
+    await settleStorage(tester);
     expect(tester.takeException(), isNull);
   });
 
@@ -864,9 +1379,9 @@ void main() {
         ),
       ),
     );
-    await tester.pumpAndSettle();
+    await settleStorage(tester);
     await tester.tap(find.text('Compare'));
-    await tester.pumpAndSettle();
+    await settleStorage(tester);
     final takeRemote = find.byWidgetPredicate(
       (widget) =>
           widget is BusyMarkDialogButton &&
@@ -876,11 +1391,11 @@ void main() {
     final candidates = find.byType(DropdownButton<int>);
     expect(candidates, findsOneWidget);
     tester.widget<DropdownButton<int>>(candidates).onChanged!(10);
-    await tester.pumpAndSettle();
+    await settleStorage(tester);
     expect(takeRemote, findsOneWidget);
     expect(find.textContaining('Sanitized A'), findsWidgets);
     await tester.tap(find.text('Cancel'));
-    await tester.pumpAndSettle();
+    await settleStorage(tester);
     expect(repository.noteById('uncertain-create')!.serverId, isNull);
     expect(tester.takeException(), isNull);
   });
@@ -931,7 +1446,7 @@ void main() {
           ),
         ),
       );
-      await tester.pumpAndSettle();
+      await settleStorage(tester);
       await tester.runAsync(() => tester.tap(find.text('Compare')));
       for (
         var i = 0;
@@ -944,9 +1459,9 @@ void main() {
         await tester.pump(const Duration(milliseconds: 50));
       }
       await tester.tap(find.byType(DropdownButton<int>));
-      await tester.pumpAndSettle();
+      await settleStorage(tester);
       await tester.tap(find.text('Sanitized A (#10)').last);
-      await tester.pumpAndSettle();
+      await settleStorage(tester);
       expect(find.textContaining('identity is unconfirmed'), findsOneWidget);
       expect(find.textContaining('#10'), findsWidgets);
       await tester.runAsync(
@@ -1009,14 +1524,14 @@ void main() {
             ),
           ),
         );
-        await tester.pumpAndSettle();
+        await settleStorage(tester);
         await tester.tap(find.text('Compare'));
-        await tester.pumpAndSettle();
+        await settleStorage(tester);
         expect(find.text('New note'), findsOneWidget);
         expect(find.text('Merge'), findsNothing);
         expect(find.text('Keep Mine'), findsNothing);
         await tester.tap(find.text('Cancel'));
-        await tester.pumpAndSettle();
+        await settleStorage(tester);
         expect(tester.takeException(), isNull);
       },
     );
@@ -1054,5 +1569,10 @@ class _CachedNotesRepository extends NotesRepository {
   }
 
   @override
-  Future<void> synchronize(String accountId) async {}
+  Future<void> synchronize(
+    String accountId, {
+    bool allowWrites = true,
+    bool refreshCapabilities = false,
+    bool onlyFreshWrites = false,
+  }) async {}
 }

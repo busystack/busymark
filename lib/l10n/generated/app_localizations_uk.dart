@@ -4857,4 +4857,282 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get nextcloudCreateSeparateWarning =>
       'Перший запит міг уже створити нотатку на сервері. Буде створено окрему нотатку зі збереженою локальною роботою. Ймовірні дублікати не буде видалено.';
+
+  @override
+  String get wsSemanticFormats => 'Семантичне форматування';
+
+  @override
+  String get wsUiControl => 'Елемент інтерфейсу';
+
+  @override
+  String get wsFilePath => 'Файл / Шлях';
+
+  @override
+  String get wsUiPath => 'Шлях в інтерфейсі';
+
+  @override
+  String get wsDefinitionList => 'Список визначень';
+
+  @override
+  String get wsIncludeContent => 'Додати повторно використовуваний вміст';
+
+  @override
+  String get wsVariableReference => 'Посилання на змінну';
+
+  @override
+  String get wsConvertList => 'Перетворити список на процедуру';
+
+  @override
+  String get wsElementProperties => 'Властивості елемента';
+
+  @override
+  String get wsTopicProperties => 'Властивості теми';
+
+  @override
+  String get wsCollapsible => 'Згортання';
+
+  @override
+  String get wsPublishedState => 'Початковий стан публікації';
+
+  @override
+  String get wsExpanded => 'Розгорнуто';
+
+  @override
+  String get wsCollapsed => 'Згорнуто';
+
+  @override
+  String get wsCollapsedTitle => 'Заголовок у згорнутому стані';
+
+  @override
+  String get wsTerm => 'Термін';
+
+  @override
+  String get wsListLayout => 'Макет списку';
+
+  @override
+  String get wsSyncGroup => 'Група синхронізації';
+
+  @override
+  String get wsTabKey => 'Ключ вкладки';
+
+  @override
+  String get wsSwitcherLabel => 'Підпис перемикача';
+
+  @override
+  String get wsNavigationElements => 'Елементи навігації';
+
+  @override
+  String get wsNavigationDepth => 'Глибина навігації';
+
+  @override
+  String get wsAddItem => 'Додати елемент';
+
+  @override
+  String get wsStep => 'Крок';
+
+  @override
+  String get wsPropertyInvalid => 'Неприпустиме значення властивості';
+
+  @override
+  String get wsFilter => 'Фільтр';
+
+  @override
+  String get wsIdentifier => 'Ідентифікатор елемента';
+
+  @override
+  String get wsTldr => 'Короткий виклад (TLDR)';
+
+  @override
+  String get wsFullLayout => 'Повна ширина';
+
+  @override
+  String get wsMediumLayout => 'Рівні стовпці';
+
+  @override
+  String get wsNarrowLayout => 'Вузький стовпець терміна';
+
+  @override
+  String get wsTitle => 'Заголовок';
+
+  @override
+  String get wsSwitcherKey => 'Ключ перемикача';
+
+  @override
+  String get nextcloudServerSettings => 'Налаштування Notes на сервері';
+
+  @override
+  String get nextcloudNotesPath => 'Шлях до теки нотаток';
+
+  @override
+  String get nextcloudFileSuffix => 'Розширення нових нотаток';
+
+  @override
+  String get nextcloudServerSettingsExplanation =>
+      'Ці налаштування Notes впливають на інші клієнти. Зміна шляху не переміщує файли; зміна розширення не перейменовує наявні нотатки.';
+
+  @override
+  String get nextcloudSettingsSaved => 'Налаштування сервера збережено';
+
+  @override
+  String get nextcloudSettingsNormalized =>
+      'Збережено зі значеннями, нормалізованими сервером';
+
+  @override
+  String get nextcloudPendingUpload => 'Вкладення очікує завантаження';
+
+  @override
+  String nextcloudServerCheck(String time) {
+    return 'Остання перевірка сервера: $time';
+  }
+
+  @override
+  String get nextcloudSettingsLoading => 'Завантаження налаштувань сервера';
+
+  @override
+  String get nextcloudSettingsSaving => 'Збереження налаштувань сервера';
+
+  @override
+  String get nextcloudPreviousLocalEdit => 'Попередня локальна зміна';
+
+  @override
+  String get nextcloudUsePreviousEdit => 'Використати попередню зміну';
+
+  @override
+  String get quickOpen => 'Швидке відкриття';
+
+  @override
+  String get notesAll => 'Усі нотатки';
+
+  @override
+  String get notesUncategorized => 'Без категорії';
+
+  @override
+  String get notesRecovery => 'Відновлення';
+
+  @override
+  String get notesRecentlyEdited => 'Нещодавно змінені';
+
+  @override
+  String get notesOldestEdited => 'Давно змінені';
+
+  @override
+  String get notesTitleAscending => 'Назва А–Я';
+
+  @override
+  String get notesTitleDescending => 'Назва Я–А';
+
+  @override
+  String get notesMove => 'Перемістити до категорії';
+
+  @override
+  String get notesRemoveFavorite => 'Вилучити з обраного';
+
+  @override
+  String get notesOffline => 'Зберегти для роботи без мережі';
+
+  @override
+  String get notesOfflineRemove => 'Вилучити збереження без мережі';
+
+  @override
+  String get notesIndexing => 'Індексація нотаток…';
+
+  @override
+  String get notesSearchHelp =>
+      'Терміни поєднуються І. Використовуйте \"фрази в лапках\", title: та category:.';
+
+  @override
+  String get notesSourceLocation => 'Місце в джерелі';
+
+  @override
+  String get notesRecoveryHelp =>
+      'Лише збережені локальні нотатки та локальна історія. Кошик та історія сервера недоступні.';
+
+  @override
+  String get notesImport => 'Імпорт нотаток';
+
+  @override
+  String get notesExport => 'Експорт нотаток';
+
+  @override
+  String get notesImportDistinct => 'Імпортувати як окрему нотатку';
+
+  @override
+  String get notesAvailableOffline => 'Доступно без мережі';
+
+  @override
+  String get notesIncomplete => 'Неповно';
+
+  @override
+  String get notesSelected => 'Вибрані нотатки';
+
+  @override
+  String get notesNoHistory =>
+      'Немає збережених версій. Історію може бути вимкнено, прострочено або очищено.';
+
+  @override
+  String get notesTextAvailable => 'Текст доступний локально';
+
+  @override
+  String get notesLocalVersion => 'Локальна робоча версія';
+
+  @override
+  String get notesAttachments => 'Вкладення';
+
+  @override
+  String get notesSkipped => 'Пропущено';
+
+  @override
+  String get notesFailed => 'Помилка';
+
+  @override
+  String get notesCompleted => 'Завершено';
+
+  @override
+  String get notesImportNew => 'Почати новий імпорт';
+
+  @override
+  String get notesImportResume => 'Продовжити перерваний імпорт';
+
+  @override
+  String get notesImportAlreadyImported => 'Уже імпортовано в цій операції';
+
+  @override
+  String get references => 'Посилання';
+
+  @override
+  String get referenceIncoming => 'Вхідні';
+
+  @override
+  String get referenceOutgoing => 'Вихідні';
+
+  @override
+  String get referenceChooseTarget => 'Виберіть ціль посилання';
+
+  @override
+  String get referenceWholeDocument => 'Увесь документ';
+
+  @override
+  String get referenceSourceLocation => 'Позиція джерела';
+
+  @override
+  String get referenceTargetLocation => 'Позиція цілі';
+
+  @override
+  String get referenceResolved => 'Знайдено';
+
+  @override
+  String get referenceMissing => 'Відсутнє';
+
+  @override
+  String get referenceAmbiguous => 'Неоднозначне';
+
+  @override
+  String get referenceUnavailable => 'Недоступне в цьому контексті';
+
+  @override
+  String get referenceUnsupported => 'Не підтримується';
+
+  @override
+  String get referenceNoPortableId =>
+      'Ця ціль не має перевіреної переносної URL-адреси нотатки.';
 }

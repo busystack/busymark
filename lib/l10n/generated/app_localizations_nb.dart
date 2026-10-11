@@ -4791,4 +4791,283 @@ class AppLocalizationsNb extends AppLocalizations {
   @override
   String get nextcloudCreateSeparateWarning =>
       'Den første forespørselen kan allerede ha opprettet et servernotat. Dette oppretter et separat notat med ditt beholdte lokale arbeid. Ingen antatte duplikater slettes.';
+
+  @override
+  String get wsSemanticFormats => 'Semantisk formatering';
+
+  @override
+  String get wsUiControl => 'UI-kontroll';
+
+  @override
+  String get wsFilePath => 'Fil / Sti';
+
+  @override
+  String get wsUiPath => 'UI-sti';
+
+  @override
+  String get wsDefinitionList => 'Definisjonsliste';
+
+  @override
+  String get wsIncludeContent => 'Inkluder gjenbrukbart innhold';
+
+  @override
+  String get wsVariableReference => 'Variabelreferanse';
+
+  @override
+  String get wsConvertList => 'Konverter liste til prosedyre';
+
+  @override
+  String get wsElementProperties => 'Elementegenskaper';
+
+  @override
+  String get wsTopicProperties => 'Emneegenskaper';
+
+  @override
+  String get wsCollapsible => 'Sammenleggbar';
+
+  @override
+  String get wsPublishedState => 'Publisert starttilstand';
+
+  @override
+  String get wsExpanded => 'Utvidet';
+
+  @override
+  String get wsCollapsed => 'Sammenlagt';
+
+  @override
+  String get wsCollapsedTitle => 'Sammenlagt tittel';
+
+  @override
+  String get wsTerm => 'Begrep';
+
+  @override
+  String get wsListLayout => 'Listeoppsett';
+
+  @override
+  String get wsSyncGroup => 'Synkroniseringsgruppe';
+
+  @override
+  String get wsTabKey => 'Fanenøkkel';
+
+  @override
+  String get wsSwitcherLabel => 'Bytteetikett';
+
+  @override
+  String get wsNavigationElements => 'Navigasjonselementer';
+
+  @override
+  String get wsNavigationDepth => 'Navigasjonsdybde';
+
+  @override
+  String get wsAddItem => 'Legg til element';
+
+  @override
+  String get wsStep => 'Trinn';
+
+  @override
+  String get wsPropertyInvalid => 'Ugyldig egenskapsverdi';
+
+  @override
+  String get wsFilter => 'Innholdsfilter';
+
+  @override
+  String get wsIdentifier => 'Element-ID';
+
+  @override
+  String get wsTldr => 'Sammendrag (TLDR)';
+
+  @override
+  String get wsFullLayout => 'Full bredde';
+
+  @override
+  String get wsMediumLayout => 'Like kolonner';
+
+  @override
+  String get wsNarrowLayout => 'Smal termkolonne';
+
+  @override
+  String get wsTitle => 'Tittel';
+
+  @override
+  String get wsSwitcherKey => 'Byttenøkkel';
+
+  @override
+  String get nextcloudServerSettings => 'Notes-innstillinger på serveren';
+
+  @override
+  String get nextcloudNotesPath => 'Sti til notatmappen';
+
+  @override
+  String get nextcloudFileSuffix => 'Filendelse for nye notater';
+
+  @override
+  String get nextcloudServerSettingsExplanation =>
+      'Disse Notes-innstillingene påvirker andre klienter. Endring av stien flytter ikke filer; endring av filendelsen gir ikke eksisterende notater nye navn.';
+
+  @override
+  String get nextcloudSettingsSaved => 'Serverinnstillinger lagret';
+
+  @override
+  String get nextcloudSettingsNormalized =>
+      'Lagret med verdier normalisert av serveren';
+
+  @override
+  String get nextcloudPendingUpload => 'Vedlegg venter på opplasting';
+
+  @override
+  String nextcloudServerCheck(String time) {
+    return 'Siste serverkontroll: $time';
+  }
+
+  @override
+  String get nextcloudSettingsLoading => 'Laster serverinnstillinger';
+
+  @override
+  String get nextcloudSettingsSaving => 'Lagrer serverinnstillinger';
+
+  @override
+  String get nextcloudPreviousLocalEdit => 'Forrige lokale endring';
+
+  @override
+  String get nextcloudUsePreviousEdit => 'Bruk forrige endring';
+
+  @override
+  String get quickOpen => 'Hurtigåpning';
+
+  @override
+  String get notesAll => 'Alle notater';
+
+  @override
+  String get notesUncategorized => 'Uten kategori';
+
+  @override
+  String get notesRecovery => 'Gjenoppretting';
+
+  @override
+  String get notesRecentlyEdited => 'Nylig redigert';
+
+  @override
+  String get notesOldestEdited => 'Eldste redigering';
+
+  @override
+  String get notesTitleAscending => 'Tittel A–Z';
+
+  @override
+  String get notesTitleDescending => 'Tittel Z–A';
+
+  @override
+  String get notesMove => 'Flytt til kategori';
+
+  @override
+  String get notesRemoveFavorite => 'Fjern favoritt';
+
+  @override
+  String get notesOffline => 'Gjør tilgjengelig frakoblet';
+
+  @override
+  String get notesOfflineRemove => 'Fjern frakoblet oppbevaring';
+
+  @override
+  String get notesIndexing => 'Indekserer notater…';
+
+  @override
+  String get notesSearchHelp =>
+      'Ord bruker OG. Bruk \"siterte fraser\", title: og category:.';
+
+  @override
+  String get notesSourceLocation => 'Kildeplassering';
+
+  @override
+  String get notesRecoveryHelp =>
+      'Kun beholdte lokale notater og lokal historikk. Serverens papirkurv og historikk er utilgjengelige.';
+
+  @override
+  String get notesImport => 'Importer notater';
+
+  @override
+  String get notesExport => 'Eksporter notater';
+
+  @override
+  String get notesImportDistinct => 'Importer som eget notat';
+
+  @override
+  String get notesAvailableOffline => 'Tilgjengelig frakoblet';
+
+  @override
+  String get notesIncomplete => 'Ufullstendig';
+
+  @override
+  String get notesSelected => 'Valgte notater';
+
+  @override
+  String get notesNoHistory =>
+      'Ingen beholdte revisjoner. Historikken kan være deaktivert, utløpt eller slettet.';
+
+  @override
+  String get notesTextAvailable => 'Tekst tilgjengelig lokalt';
+
+  @override
+  String get notesLocalVersion => 'Lokal arbeidsversjon';
+
+  @override
+  String get notesAttachments => 'Vedlegg';
+
+  @override
+  String get notesSkipped => 'Hoppet over';
+
+  @override
+  String get notesFailed => 'Mislyktes';
+
+  @override
+  String get notesCompleted => 'Fullført';
+
+  @override
+  String get notesImportNew => 'Start en ny import';
+
+  @override
+  String get notesImportResume => 'Fortsett avbrutt import';
+
+  @override
+  String get notesImportAlreadyImported =>
+      'Allerede importert i denne operasjonen';
+
+  @override
+  String get references => 'Referanser';
+
+  @override
+  String get referenceIncoming => 'Innkommende';
+
+  @override
+  String get referenceOutgoing => 'Utgående';
+
+  @override
+  String get referenceChooseTarget => 'Velg lenkemål';
+
+  @override
+  String get referenceWholeDocument => 'Hele dokumentet';
+
+  @override
+  String get referenceSourceLocation => 'Kildeplassering';
+
+  @override
+  String get referenceTargetLocation => 'Målplassering';
+
+  @override
+  String get referenceResolved => 'Løst';
+
+  @override
+  String get referenceMissing => 'Mangler';
+
+  @override
+  String get referenceAmbiguous => 'Tvetydig';
+
+  @override
+  String get referenceUnavailable => 'Utilgjengelig i denne konteksten';
+
+  @override
+  String get referenceUnsupported => 'Ikke støttet';
+
+  @override
+  String get referenceNoPortableId =>
+      'Dette målet har ingen bekreftet portabel notatadresse.';
 }

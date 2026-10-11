@@ -4650,4 +4650,279 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get nextcloudCreateSeparateWarning =>
       '첫 요청으로 서버 노트가 이미 만들어졌을 수 있습니다. 보존된 로컬 작업으로 별도 노트를 만듭니다. 중복으로 의심되는 노트는 삭제하지 않습니다.';
+
+  @override
+  String get wsSemanticFormats => '의미 기반 서식';
+
+  @override
+  String get wsUiControl => 'UI 컨트롤';
+
+  @override
+  String get wsFilePath => '파일 / 경로';
+
+  @override
+  String get wsUiPath => 'UI 경로';
+
+  @override
+  String get wsDefinitionList => '정의 목록';
+
+  @override
+  String get wsIncludeContent => '재사용 가능한 콘텐츠 포함';
+
+  @override
+  String get wsVariableReference => '변수 참조';
+
+  @override
+  String get wsConvertList => '목록을 절차로 변환';
+
+  @override
+  String get wsElementProperties => '요소 속성';
+
+  @override
+  String get wsTopicProperties => '주제 속성';
+
+  @override
+  String get wsCollapsible => '접기 가능';
+
+  @override
+  String get wsPublishedState => '게시 시 초기 상태';
+
+  @override
+  String get wsExpanded => '펼침';
+
+  @override
+  String get wsCollapsed => '접힘';
+
+  @override
+  String get wsCollapsedTitle => '접힌 제목';
+
+  @override
+  String get wsTerm => '용어';
+
+  @override
+  String get wsListLayout => '목록 레이아웃';
+
+  @override
+  String get wsSyncGroup => '동기화 그룹';
+
+  @override
+  String get wsTabKey => '탭 키';
+
+  @override
+  String get wsSwitcherLabel => '전환 레이블';
+
+  @override
+  String get wsNavigationElements => '탐색 요소';
+
+  @override
+  String get wsNavigationDepth => '탐색 깊이';
+
+  @override
+  String get wsAddItem => '항목 추가';
+
+  @override
+  String get wsStep => '단계';
+
+  @override
+  String get wsPropertyInvalid => '잘못된 속성 값';
+
+  @override
+  String get wsFilter => '필터';
+
+  @override
+  String get wsIdentifier => '요소 ID';
+
+  @override
+  String get wsTldr => '요약 (TLDR)';
+
+  @override
+  String get wsFullLayout => '전체 너비';
+
+  @override
+  String get wsMediumLayout => '동일한 열';
+
+  @override
+  String get wsNarrowLayout => '좁은 용어 열';
+
+  @override
+  String get wsTitle => '제목';
+
+  @override
+  String get wsSwitcherKey => '전환 키';
+
+  @override
+  String get nextcloudServerSettings => '서버 Notes 설정';
+
+  @override
+  String get nextcloudNotesPath => '노트 폴더 경로';
+
+  @override
+  String get nextcloudFileSuffix => '새 노트의 파일 확장자';
+
+  @override
+  String get nextcloudServerSettingsExplanation =>
+      '이 서버 Notes 설정은 다른 클라이언트에도 적용됩니다. 경로를 변경해도 파일이 이동하지 않으며 확장자를 변경해도 기존 노트의 이름이 바뀌지 않습니다.';
+
+  @override
+  String get nextcloudSettingsSaved => '서버 설정 저장됨';
+
+  @override
+  String get nextcloudSettingsNormalized => '서버에서 정규화한 값으로 저장됨';
+
+  @override
+  String get nextcloudPendingUpload => '첨부 파일 업로드 대기 중';
+
+  @override
+  String nextcloudServerCheck(String time) {
+    return '마지막 서버 확인: $time';
+  }
+
+  @override
+  String get nextcloudSettingsLoading => '서버 설정을 불러오는 중';
+
+  @override
+  String get nextcloudSettingsSaving => '서버 설정을 저장하는 중';
+
+  @override
+  String get nextcloudPreviousLocalEdit => '이전 로컬 편집';
+
+  @override
+  String get nextcloudUsePreviousEdit => '이전 편집 사용';
+
+  @override
+  String get quickOpen => '빠른 열기';
+
+  @override
+  String get notesAll => '모든 노트';
+
+  @override
+  String get notesUncategorized => '미분류';
+
+  @override
+  String get notesRecovery => '복구';
+
+  @override
+  String get notesRecentlyEdited => '최근 편집순';
+
+  @override
+  String get notesOldestEdited => '오래된 편집순';
+
+  @override
+  String get notesTitleAscending => '제목 오름차순';
+
+  @override
+  String get notesTitleDescending => '제목 내림차순';
+
+  @override
+  String get notesMove => '범주로 이동';
+
+  @override
+  String get notesRemoveFavorite => '즐겨찾기 해제';
+
+  @override
+  String get notesOffline => '오프라인 사용 설정';
+
+  @override
+  String get notesOfflineRemove => '오프라인 보존 해제';
+
+  @override
+  String get notesIndexing => '노트 색인 생성 중…';
+
+  @override
+  String get notesSearchHelp =>
+      '검색어는 AND로 결합합니다. \"인용 구문\", title:, category:를 사용하세요.';
+
+  @override
+  String get notesSourceLocation => '소스 위치';
+
+  @override
+  String get notesRecoveryHelp =>
+      '보존된 로컬 노트와 로컬 기록만 표시합니다. 서버 휴지통과 기록은 사용할 수 없습니다.';
+
+  @override
+  String get notesImport => '노트 가져오기';
+
+  @override
+  String get notesExport => '노트 내보내기';
+
+  @override
+  String get notesImportDistinct => '별도 노트로 가져오기';
+
+  @override
+  String get notesAvailableOffline => '오프라인 사용 가능';
+
+  @override
+  String get notesIncomplete => '불완전';
+
+  @override
+  String get notesSelected => '선택한 노트';
+
+  @override
+  String get notesNoHistory => '보존된 버전이 없습니다. 기록이 비활성화되었거나 만료 또는 삭제되었을 수 있습니다.';
+
+  @override
+  String get notesTextAvailable => '텍스트를 로컬에서 사용 가능';
+
+  @override
+  String get notesLocalVersion => '로컬 작업 버전';
+
+  @override
+  String get notesAttachments => '첨부 파일';
+
+  @override
+  String get notesSkipped => '건너뜀';
+
+  @override
+  String get notesFailed => '실패';
+
+  @override
+  String get notesCompleted => '완료';
+
+  @override
+  String get notesImportNew => '새 가져오기 시작';
+
+  @override
+  String get notesImportResume => '중단된 가져오기 재개';
+
+  @override
+  String get notesImportAlreadyImported => '이 작업에서 이미 가져옴';
+
+  @override
+  String get references => '참조';
+
+  @override
+  String get referenceIncoming => '들어오는 참조';
+
+  @override
+  String get referenceOutgoing => '나가는 참조';
+
+  @override
+  String get referenceChooseTarget => '링크 대상 선택';
+
+  @override
+  String get referenceWholeDocument => '전체 문서';
+
+  @override
+  String get referenceSourceLocation => '원본 위치';
+
+  @override
+  String get referenceTargetLocation => '대상 위치';
+
+  @override
+  String get referenceResolved => '해결됨';
+
+  @override
+  String get referenceMissing => '없음';
+
+  @override
+  String get referenceAmbiguous => '모호함';
+
+  @override
+  String get referenceUnavailable => '이 맥락에서 사용할 수 없음';
+
+  @override
+  String get referenceUnsupported => '지원되지 않음';
+
+  @override
+  String get referenceNoPortableId => '이 대상에는 확인된 이식 가능한 노트 URL이 없습니다.';
 }

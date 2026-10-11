@@ -1,3 +1,4 @@
+import '../references/reference_controller.dart';
 import 'dart:async';
 
 import 'package:file_selector/file_selector.dart';
@@ -27,6 +28,7 @@ import 'app_router.dart';
 import 'app_locale.dart';
 import 'app_settings.dart';
 import 'command_palette.dart';
+import 'quick_open.dart';
 import 'command_registry.dart';
 import 'app_theme.dart';
 import 'busymark_dialogs.dart';
@@ -51,6 +53,7 @@ final busyMarkCommandRegistryProvider = Provider<BusyMarkCommandRegistry>((
     BusyMarkCommandIds.search: const _OpenSearchIntent(),
     BusyMarkCommandIds.keyboardShortcuts: const _KeyboardShortcutsIntent(),
     BusyMarkCommandIds.commandPalette: const _CommandPaletteIntent(),
+    BusyMarkCommandIds.quickOpen: const _QuickOpenIntent(),
     BusyMarkCommandIds.syntaxReference: const _SyntaxReferenceIntent(),
     BusyMarkCommandIds.settings: const _SettingsIntent(),
     BusyMarkCommandIds.nextTab: const _NextTabIntent(),
@@ -76,6 +79,8 @@ final busyMarkCommandRegistryProvider = Provider<BusyMarkCommandRegistry>((
   };
   return BusyMarkCommandCatalog.create(
     executions: {
+      BusyMarkCommandIds.references: () =>
+          ref.read(referencePanelRequestProvider.notifier).request(),
       for (final entry in commandIntents.entries)
         entry.key: () {
           final target = rootNavigatorKey.currentContext;
@@ -85,6 +90,8 @@ final busyMarkCommandRegistryProvider = Provider<BusyMarkCommandRegistry>((
         },
     },
     enabled: {
+      BusyMarkCommandIds.quickOpen: () =>
+          ref.read(workspaceControllerProvider).workspace != null,
       BusyMarkCommandIds.save: () =>
           ref.read(workspaceControllerProvider).workspace != null,
       BusyMarkCommandIds.export: () =>
@@ -371,6 +378,13 @@ class BusyMarkApp extends ConsumerWidget {
                       if (navigatorContext != null) {
                         unawaited(_closeAllOpenFileTabs(navigatorContext, ref));
                       }
+                      return null;
+                    },
+                  ),
+                  _QuickOpenIntent: CallbackAction<_QuickOpenIntent>(
+                    onInvoke: (_) {
+                      final target = rootNavigatorKey.currentContext;
+                      if (target != null) unawaited(showQuickOpen(target, ref));
                       return null;
                     },
                   ),
@@ -911,11 +925,27 @@ class _BusyMarkWindowLifecycle extends ConsumerStatefulWidget {
 class _BusyMarkWindowLifecycleState
     extends ConsumerState<_BusyMarkWindowLifecycle> {
   late final WindowControlService _windowControlService;
+  late final AppLifecycleListener _notesLifecycle;
+  late final GoRouter _notesRouter;
 
   @override
   void initState() {
     super.initState();
     _windowControlService = ref.read(windowControlServiceProvider);
+    _notesRouter = ref.read(appRouterProvider);
+    _notesRouter.routeInformationProvider.addListener(_notesRouteChanged);
+    _notesLifecycle = AppLifecycleListener(
+      onStateChange: (state) {
+        final controller = ref.read(workspaceControllerProvider.notifier);
+        controller.setNotesApplicationVisible(
+          state == AppLifecycleState.resumed ||
+              state == AppLifecycleState.inactive,
+        );
+        if (state == AppLifecycleState.resumed) {
+          controller.refreshNotesOnFocus();
+        }
+      },
+    );
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) {
         return;
@@ -927,6 +957,8 @@ class _BusyMarkWindowLifecycleState
 
   @override
   void dispose() {
+    _notesRouter.routeInformationProvider.removeListener(_notesRouteChanged);
+    _notesLifecycle.dispose();
     _windowControlService.unregisterCloseHandler();
     super.dispose();
   }
@@ -934,6 +966,17 @@ class _BusyMarkWindowLifecycleState
   @override
   Widget build(BuildContext context) {
     return widget.child;
+  }
+
+  void _notesRouteChanged() {
+    if (!mounted) return;
+    ref
+        .read(workspaceControllerProvider.notifier)
+        .setNotesWorkspaceActive(
+          _notesRouter.routeInformationProvider.value.uri.path.startsWith(
+            '/workspace',
+          ),
+        );
   }
 
   Future<void> _handleWindowClose() async {
@@ -1206,4 +1249,8 @@ class _DocumentViewModeIntent extends Intent {
   const _DocumentViewModeIntent(this.mode);
 
   final DocumentViewModePreference mode;
+}
+
+class _QuickOpenIntent extends Intent {
+  const _QuickOpenIntent();
 }
