@@ -159,7 +159,10 @@ List<AuthoredReference> markdownReferences({
           range.start < 0 ||
           range.end > source.length ||
           range.start == range.end ||
-          mask.sublist(range.start, range.end).any((v) => v)) {
+          // The parser owns label semantics. Code spans *inside* link text
+          // remain formatting; only a link starting in literal code/comment
+          // context is excluded.
+          mask[range.start]) {
         continue;
       }
       if (!seen.add('${range.start}:${range.end}')) continue;

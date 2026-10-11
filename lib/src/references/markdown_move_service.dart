@@ -3,10 +3,13 @@ import 'dart:io';
 import 'dart:isolate';
 
 import 'package:path/path.dart' as p;
+import 'package:crypto/crypto.dart';
 import 'package:uuid/uuid.dart';
 
 import '../core/anchored_path_guard.dart';
 import '../core/atomic_file_writer.dart';
+import '../core/linux_file_identity.dart';
+import '../core/linux_atomic_file_api.dart';
 import '../workspace/workspace_model.dart';
 import '../workspace/workspace_service.dart';
 import '../workspace/text_format_metadata.dart';
@@ -74,11 +77,13 @@ class MarkdownRecoveryPlan {
     required this.source,
     required this.destination,
     required this.moved,
+    required this.moveEvidence,
     required List<MarkdownRecoveryFile> files,
   }) : files = List.unmodifiable(files);
   final String root, journal, source, destination;
   final WorkspaceFileSnapshot journalSnapshot;
   final bool moved;
+  final String moveEvidence;
   final List<MarkdownRecoveryFile> files;
 }
 
@@ -329,43 +334,76 @@ class MarkdownMoveService {
     await resolveAnchoredPath(plan.anchor, folder, allowRoot: false);
     await Directory(folder).create();
     final journal = File(p.join(folder, '${const Uuid().v4()}.json'));
+    final data = <String, Object?>{
+      'version': 2,
+      'phase': 'prepared',
+      'source': p.relative(plan.source, from: plan.root),
+      'destination': p.relative(plan.destination, from: plan.root),
+      'moveEntries': await _moveEvidence(plan, rewritten: false),
+      'files': [
+        for (final file in plan.files)
+          {
+            'path': p.relative(file.path, from: plan.root),
+            'before': base64Encode(file.load.format.encode(file.load.text)),
+            'after': base64Encode(file.load.format.encode(file.result)),
+          },
+      ],
+    };
     await const AtomicFileWriter().writeBytes(
       journal.path,
-      utf8.encode(
-        jsonEncode({
-          'version': 1,
-          'source': p.relative(plan.source, from: plan.root),
-          'destination': p.relative(plan.destination, from: plan.root),
-          'files': [
-            for (final file in plan.files)
-              {
-                'path': p.relative(file.path, from: plan.root),
-                'before': base64Encode(file.load.format.encode(file.load.text)),
-                'after': base64Encode(file.load.format.encode(file.result)),
-              },
-          ],
-        }),
-      ),
+      utf8.encode(jsonEncode(data)),
       overwrite: false,
     );
     try {
       await validate(plan);
       validateBuffers();
-      await workspaceService.saveFormattedTextBatch([
-        for (final file in plan.files)
-          WorkspaceBatchTextWrite(
-            path: file.path,
-            text: file.result,
-            expectedSnapshot: file.load.snapshot,
-            format: file.load.format,
-          ),
-      ], validateBeforeCommit: validateBuffers);
+      final writtenIdentities = <String, String?>{};
+      await workspaceService.saveFormattedTextBatch(
+        [
+          for (final file in plan.files)
+            WorkspaceBatchTextWrite(
+              path: file.path,
+              text: file.result,
+              expectedSnapshot: file.load.snapshot,
+              format: file.load.format,
+            ),
+        ],
+        validateBeforeCommit: validateBuffers,
+        onCommitted: (_) {
+          for (final file in plan.files) {
+            writtenIdentities[file.path] = LinuxFileIdentity.read(file.path);
+          }
+        },
+      );
       validateBuffers();
+      // Atomic rewrites can replace the moved file's inode. Persist the actual
+      // complete post-write identities BEFORE the rename, including files with
+      // no reference edits. A crash cannot leave an unrecorded move eligible
+      // for pathname-only inference.
+      data['moveEntries'] = await _moveEvidence(
+        plan,
+        rewritten: true,
+        expectedIdentities: {
+          for (final entry in data['moveEntries'] as List<Map<String, Object?>>)
+            p.join(plan.root, entry['path'] as String):
+                entry['identity'] as String?,
+          ...writtenIdentities,
+        },
+      );
+      data['phase'] = 'moving';
+      await const AtomicFileWriter().writeBytes(
+        journal.path,
+        utf8.encode(jsonEncode(data)),
+        overwrite: true,
+      );
+      await prepareRecovery(plan.root, journal.path);
       // Move revalidates canonical paths and collisions through WorkspaceService.
       final target = await move();
       if (!p.equals(target, plan.destination)) {
         throw StateError('Unexpected move result.');
       }
+      final completed = await prepareRecovery(plan.root, journal.path);
+      if (!completed.moved) throw StateError('Moved identity changed.');
       await journal.delete();
       return target;
     } on Object {
@@ -374,6 +412,50 @@ class MarkdownMoveService {
       await recover(plan.root, journal.path);
       rethrow;
     }
+  }
+
+  Future<List<Map<String, Object?>>> _moveEvidence(
+    MarkdownMovePlan plan, {
+    required bool rewritten,
+    Map<String, String?>? expectedIdentities,
+  }) async {
+    final result = <Map<String, Object?>>[];
+    for (final path in plan.mapping.keys) {
+      await resolveAnchoredPath(plan.anchor, path, allowRoot: false);
+      final identity = LinuxFileIdentity.read(path);
+      if (identity == null) {
+        throw UnsupportedError('Durable move identity is unavailable: $path');
+      }
+      if (expectedIdentities != null && expectedIdentities[path] != identity) {
+        throw StateError('Moved filesystem identity changed: $path');
+      }
+      final type = await FileSystemEntity.type(path, followLinks: false);
+      final changed = plan.files
+          .where((f) => p.equals(f.path, path))
+          .firstOrNull;
+      final before = plan.snapshots[path]?.contentHash;
+      final after = changed == null
+          ? before
+          : sha256
+                .convert(changed.load.format.encode(changed.result))
+                .toString();
+      if (type == FileSystemEntityType.file) {
+        final snapshot = await workspaceService.fileSnapshot(path);
+        if (snapshot.contentHash != (rewritten ? after : before) ||
+            LinuxFileIdentity.read(path) != identity) {
+          throw StateError('Moved source changed: $path');
+        }
+      } else if (type != FileSystemEntityType.directory) {
+        throw StateError('Unsupported moved entry: $path');
+      }
+      result.add({
+        'path': p.relative(path, from: plan.root),
+        'type': type == FileSystemEntityType.directory ? 'directory' : 'file',
+        'identity': identity,
+        if (before != null) 'hashes': [before, after],
+      });
+    }
+    return result;
   }
 
   Future<void> recover(
@@ -402,27 +484,39 @@ class MarkdownMoveService {
     final data =
         jsonDecode(await File(journalPath).readAsString())
             as Map<String, dynamic>;
-    if (data['version'] != 1) {
-      throw StateError('Unsupported refactoring journal.');
+    if (data['version'] != 2 ||
+        !{'prepared', 'moving'}.contains(data['phase'])) {
+      // Older journals lack moved-object identity. Keep that evidence for
+      // manual review rather than guess which existing file was moved.
+      throw StateError(
+        'Refactoring journal lacks verified move identity; manual review is required.',
+      );
     }
-    String safe(Object? relative) {
-      if (relative is! String ||
-          p.isAbsolute(relative) ||
-          p.split(relative).contains('..')) {
-        throw StateError('Unsafe refactoring journal.');
-      }
-      return p.join(root, relative);
-    }
+    String safe(Object? relative) => _safeJournalPath(root, relative);
 
     final source = safe(data['source']),
         destination = safe(data['destination']);
     await resolveAnchoredPath(anchor, source, allowRoot: false);
     await resolveAnchoredPath(anchor, destination, allowRoot: false);
-    final moved =
-        await FileSystemEntity.type(source, followLinks: false) ==
-            FileSystemEntityType.notFound &&
+    final sourceExists =
+        await FileSystemEntity.type(source, followLinks: false) !=
+        FileSystemEntityType.notFound;
+    final destinationExists =
         await FileSystemEntity.type(destination, followLinks: false) !=
-            FileSystemEntityType.notFound;
+        FileSystemEntityType.notFound;
+    if (sourceExists == destinationExists ||
+        data['phase'] == 'prepared' && destinationExists) {
+      throw StateError('Move paths changed; recovery evidence is retained.');
+    }
+    final moved = destinationExists;
+    final entries = data['moveEntries'] as List;
+    await _validateMoveEntries(
+      anchor,
+      source,
+      destination,
+      entries,
+      moved: moved,
+    );
     final files = <MarkdownRecoveryFile>[];
     for (final raw in data['files'] as List) {
       final original = safe(raw['path']);
@@ -453,8 +547,79 @@ class MarkdownMoveService {
       source: source,
       destination: destination,
       moved: moved,
+      moveEvidence: jsonEncode(entries),
       files: files,
     );
+  }
+
+  String _safeJournalPath(String root, Object? relative) {
+    if (relative is! String ||
+        p.isAbsolute(relative) ||
+        p.split(relative).contains('..')) {
+      throw StateError('Unsafe refactoring journal.');
+    }
+    return p.join(root, relative);
+  }
+
+  Future<void> _validateMoveEntries(
+    CanonicalPathAnchor anchor,
+    String source,
+    String destination,
+    List entries, {
+    required bool moved,
+    Map<String, String?> writtenIdentities = const {},
+  }) async {
+    String safe(Object? relative) =>
+        _safeJournalPath(anchor.rootPath, relative);
+    if (entries.isEmpty) throw StateError('Missing move identity evidence.');
+    final paths = <String>{};
+    for (final raw in entries) {
+      final original = safe(raw['path']);
+      if (!(p.equals(original, source) || p.isWithin(source, original))) {
+        throw StateError('Invalid moved entry.');
+      }
+      final path = moved ? remap(original, source, destination) : original;
+      if (!paths.add(path)) throw StateError('Duplicate moved entry.');
+      await resolveAnchoredPath(anchor, path, allowRoot: false);
+      final identity = LinuxFileIdentity.read(path);
+      final type = await FileSystemEntity.type(path, followLinks: false);
+      if (identity == null ||
+          identity !=
+              (writtenIdentities.containsKey(path)
+                  ? writtenIdentities[path]
+                  : raw['identity']) ||
+          (type == FileSystemEntityType.directory
+                  ? 'directory'
+                  : type == FileSystemEntityType.file
+                  ? 'file'
+                  : 'unsupported') !=
+              raw['type']) {
+        throw StateError('Moved filesystem identity changed: $path');
+      }
+      if (type == FileSystemEntityType.file &&
+          !(raw['hashes'] as List).contains(
+            (await workspaceService.fileSnapshot(path)).contentHash,
+          )) {
+        throw StateError('Moved content changed: $path');
+      }
+      if (LinuxFileIdentity.read(path) != identity) {
+        throw StateError('Moved filesystem identity changed: $path');
+      }
+    }
+    final active = moved ? destination : source;
+    final membership = <String>{active};
+    if (await FileSystemEntity.type(active, followLinks: false) ==
+        FileSystemEntityType.directory) {
+      await for (final entry in Directory(
+        active,
+      ).list(recursive: true, followLinks: false)) {
+        await resolveAnchoredPath(anchor, entry.path, allowRoot: false);
+        membership.add(entry.path);
+      }
+    }
+    if (paths.length != membership.length || !paths.containsAll(membership)) {
+      throw StateError('Moved folder membership changed.');
+    }
   }
 
   Future<void> recoverReviewed(
@@ -463,6 +628,11 @@ class MarkdownMoveService {
     void Function()? validateBuffers,
   }) async {
     validateBuffers?.call();
+    if (plan.moved && !undoMove) {
+      throw StateError(
+        'Restoring references requires restoring the moved identity.',
+      );
+    }
     final anchor = await captureCanonicalDirectoryAnchor(plan.root);
     await resolveAnchoredPath(anchor, plan.journal, allowRoot: false);
     final currentPlan = await prepareRecovery(plan.root, plan.journal);
@@ -482,15 +652,6 @@ class MarkdownMoveService {
       }
     }
     validateBuffers?.call();
-    await workspaceService.saveFormattedTextBatch([
-      for (final file in plan.files)
-        WorkspaceBatchTextWrite(
-          path: file.path,
-          text: decodeUtf8Document(file.before).text,
-          format: decodeUtf8Document(file.before).format,
-          expectedSnapshot: file.load.snapshot,
-        ),
-    ], validateBeforeCommit: validateBuffers);
     if (plan.moved && undoMove) {
       await resolveAnchoredPath(anchor, plan.source, allowRoot: false);
       await resolveAnchoredPath(anchor, plan.destination, allowRoot: false);
@@ -498,16 +659,84 @@ class MarkdownMoveService {
           FileSystemEntityType.notFound) {
         throw StateError('Recovery destination is occupied.');
       }
-      final type = await FileSystemEntity.type(
+      // Check identities immediately before a no-replace rename. Restore the
+      // moved object first so a recreated original path can never receive
+      // restored incoming references.
+      await prepareRecovery(plan.root, plan.journal);
+      final error = LinuxAtomicFileApi.instance.publishNoReplace(
         plan.destination,
-        followLinks: false,
+        plan.source,
+        directory: true,
       );
-      if (type == FileSystemEntityType.directory) {
-        await Directory(plan.destination).rename(plan.source);
-      } else {
-        await File(plan.destination).rename(plan.source);
+      if (error != null) {
+        throw FileSystemException(
+          'Cannot restore moved identity (errno $error)',
+          plan.source,
+        );
       }
     }
+    final restoredIdentities = <String, String?>{};
+    final restoredPaths = {
+      for (final file in plan.files)
+        plan.moved
+            ? remap(file.path, plan.destination, plan.source)
+            : file.path,
+    };
+    final unwrittenIdentities = <String, String>{
+      for (final entry in jsonDecode(plan.moveEvidence) as List)
+        if (!restoredPaths.contains(_safeJournalPath(plan.root, entry['path'])))
+          _safeJournalPath(plan.root, entry['path']):
+              entry['identity'] as String,
+    };
+    void validateRecoveryPublication() {
+      validateBuffers?.call();
+      if (FileSystemEntity.typeSync(plan.destination, followLinks: false) !=
+              FileSystemEntityType.notFound ||
+          unwrittenIdentities.entries.any(
+            (entry) => LinuxFileIdentity.read(entry.key) != entry.value,
+          )) {
+        throw StateError('Moved identity changed during recovery publication.');
+      }
+    }
+
+    await workspaceService.saveFormattedTextBatch(
+      [
+        for (final file in plan.files)
+          WorkspaceBatchTextWrite(
+            path: plan.moved && undoMove
+                ? remap(file.path, plan.destination, plan.source)
+                : file.path,
+            text: decodeUtf8Document(file.before).text,
+            format: decodeUtf8Document(file.before).format,
+            expectedSnapshot: file.load.snapshot,
+          ),
+      ],
+      validateBeforeCommit: validateRecoveryPublication,
+      onCommitted: (snapshots) {
+        for (final path in snapshots.keys) {
+          restoredIdentities[path] = LinuxFileIdentity.read(path);
+        }
+      },
+    );
+    // Revalidate even an unedited moved document after restoring references;
+    // a concurrent replacement must retain the recovery evidence.
+    if (await FileSystemEntity.type(plan.source, followLinks: false) ==
+            FileSystemEntityType.notFound ||
+        await FileSystemEntity.type(plan.destination, followLinks: false) !=
+            FileSystemEntityType.notFound ||
+        (await workspaceService.fileSnapshot(
+          plan.journal,
+        )).differsFrom(plan.journalSnapshot)) {
+      throw StateError('Recovery paths or evidence changed.');
+    }
+    await _validateMoveEntries(
+      anchor,
+      plan.source,
+      plan.destination,
+      jsonDecode(plan.moveEvidence) as List,
+      moved: false,
+      writtenIdentities: restoredIdentities,
+    );
     await File(plan.journal).delete();
   }
 }

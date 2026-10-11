@@ -44,6 +44,34 @@ void main() {
     final refs = markdownReferences(identity: 'a.md', source: source);
     expect(refs.map((r) => r.destination), ['good.md']);
   });
+  test('code formatting inside genuine link labels is not a code example', () {
+    const source =
+        '[`API`](target.md "title") [`API`][ref] [`API`][] [`API`]\n\n'
+        '[ref]: target.md#section\n[`API`]: target.md\n\n'
+        '`[example](bad.md)`\n\n```\n[`example`](bad.md)\n```\n\n'
+        '<!-- [`comment`](bad.md) -->\n';
+    final refs = markdownReferences(identity: 'source.md', source: source);
+    expect(refs.map((r) => r.destination), [
+      'target.md',
+      'target.md#section',
+      'target.md',
+      'target.md',
+    ]);
+    expect(refs.map((r) => r.kind), [
+      AuthoredReferenceKind.link,
+      AuthoredReferenceKind.referenceLink,
+      AuthoredReferenceKind.referenceLink,
+      AuthoredReferenceKind.referenceLink,
+    ]);
+    expect(
+      source.substring(
+        refs.first.occurrence.startOffset,
+        refs.first.occurrence.endOffset,
+      ),
+      '[`API`](target.md "title")',
+    );
+    expect(refs[2].destinationSpan, refs[3].destinationSpan);
+  });
   test(
     'multiline container definitions use parser-winning source positions',
     () {

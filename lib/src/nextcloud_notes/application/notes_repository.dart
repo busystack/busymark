@@ -44,6 +44,9 @@ class NotesRepository {
   final _notes = <String, NextcloudNote>{};
   final _listedIds = <String, Set<int>>{};
   final _baseGenerations = <String, int>{};
+  // Downloads invalidate editor bases; acknowledgments only invalidate older
+  // reads. Our own acknowledged writes must not create editor conflicts.
+  final _acknowledgmentGenerations = <String, int>{};
   final _mediaResolutions = <String, Future<String?>>{};
   final _mediaVersions = <String, int>{};
   int mediaVersion(String localId) => _mediaVersions[localId] ?? 0;
@@ -1733,6 +1736,9 @@ class NotesRepository {
     final baseGeneration = cached == null
         ? null
         : _baseGenerations[cached.localId] ?? 0;
+    final acknowledgmentGeneration = cached == null
+        ? null
+        : _acknowledgmentGenerations[cached.localId] ?? 0;
     final client = await _clientForAccount(account);
     if (!_currentAccount(accountId, generation)) {
       throw const NotesException(
@@ -1756,7 +1762,9 @@ class NotesRepository {
       if (current != null &&
           (isNotesRecovery(current) ||
               cached == null ||
-              (_baseGenerations[current.localId] ?? 0) != baseGeneration)) {
+              (_baseGenerations[current.localId] ?? 0) != baseGeneration ||
+              (_acknowledgmentGenerations[current.localId] ?? 0) !=
+                  acknowledgmentGeneration)) {
         return current;
       }
       if (result is NotesNotModified) {
@@ -2000,6 +2008,8 @@ class NotesRepository {
       }
       await store.saveNote(acknowledged);
       _notes[sent.localId] = acknowledged;
+      _acknowledgmentGenerations[sent.localId] =
+          (_acknowledgmentGenerations[sent.localId] ?? 0) + 1;
     }
     _notify();
   });

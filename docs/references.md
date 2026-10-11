@@ -25,6 +25,8 @@ are marked Unsupported; normal external-link navigation remains available.
 
 Select text in Source or Editor and use the existing Link action (Ctrl+K).
 Search the target chooser for a document/topic or an actual parsed heading ID.
+Unicode heading and explicit IDs use ordinary percent-encoded URL fragments;
+References resolves them to the actual parsed ID without changing authored bytes.
 Manual URL entry remains available. XML topics receive semantic Writerside
 links through the existing adapter, including namespace and module origin.
 Reading follows links; it does not insert them. Cancelling restores focus and
@@ -49,6 +51,10 @@ protection block the operation with an explanation. Cancellation before Apply
 makes no refactoring changes. After an interrupted publication, References
 exposes Recovery. Review the pending recovery before applying it; newer external
 content prevents automatic restoration and the recovery evidence remains.
+Recovery also verifies the moved file/folder identity, including entries that had
+no reference edits. Recreated original paths or replaced destinations require
+manual review and retain the journal. Older journals without identity evidence
+are retained for manual review rather than inferred from path existence.
 
 ## Portable Nextcloud note links
 

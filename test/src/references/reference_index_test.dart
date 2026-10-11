@@ -78,6 +78,64 @@ void main() {
       );
     },
   );
+  test(
+    'code-formatted inline and reference labels remain incoming references',
+    () {
+      final target = doc('target.md', '# Target');
+      final index = ReferenceIndex(
+        parsed: [
+          doc(
+            'source.md',
+            '[`API`](target.md) [`API`][ref]\n\n[ref]: target.md\n'
+                '`[example](target.md)`\n<!-- [hidden](target.md) -->',
+          ),
+          target,
+        ],
+        root: '/workspace',
+      );
+      final incoming = index.query(target.document.identity, incoming: true);
+      expect(incoming.total, 2);
+      expect(
+        incoming.values.map((r) => r.resolution),
+        everyElement(ReferenceResolution.resolved),
+      );
+    },
+  );
+  test('encoded Unicode and literal percent anchors decode exactly once', () {
+    final target = doc(
+      'target.md',
+      '# Café\n\n## Explicit {id="élément%20id"}\n',
+    );
+    expect(target.headings.map((h) => h.id), ['café', 'élément%20id']);
+    final source = doc(
+      'source.md',
+      '[heading](target.md#caf%C3%A9) '
+          '[explicit](target.md#%C3%A9l%C3%A9ment%2520id) '
+          '[wrong](target.md#%C3%A9l%C3%A9ment%20id)',
+    );
+    final index = ReferenceIndex(parsed: [source, target], root: '/workspace');
+    expect(index.references.map((r) => r.resolution), [
+      ReferenceResolution.resolved,
+      ReferenceResolution.resolved,
+      ReferenceResolution.missing,
+    ]);
+    for (var i = 0; i < 2; i++) {
+      final reference = index.references[i];
+      expect(reference.target!.anchor, target.headings[i].id);
+      expect(reference.target!.span, target.headings[i].span);
+      expect(
+        index
+            .query(
+              target.document.identity,
+              incoming: true,
+              anchor: target.headings[i].id,
+            )
+            .total,
+        1,
+      );
+    }
+    expect(index.references.first.authored.destination, 'target.md#caf%C3%A9');
+  });
   test('every reference remains reachable through explicit continuation', () {
     final source = doc(
       'source.md',

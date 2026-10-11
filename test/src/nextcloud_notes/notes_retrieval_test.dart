@@ -325,6 +325,91 @@ void main() {
     expect(result.localId, 'cached');
     expect(pending.isCompleted, isFalse);
   });
+  test(
+    'held individual GET cannot replace later acknowledged PUTs after restart',
+    () async {
+      await repository.dispose();
+      final putStarted = Completer<void>();
+      final getStarted = Completer<void>();
+      final firstAcknowledgment = Completer<http.Response>();
+      final heldGet = Completer<http.Response>();
+      var remote = serverNote(1);
+      var puts = 0;
+      http.Response? oldGet;
+      Future<NotesRepository> reopen() async {
+        final store = await NotesStore.open(path: '${root.path}/notes.sqlite3');
+        final result = NotesRepository(
+          store: store,
+          clientForAccount: (account) async => NotesApiClient(
+            account: account,
+            appPassword: 'fixture',
+            client: MockClient((request) async {
+              if (request.method == 'PUT') {
+                final body = jsonDecode(request.body) as Map<String, dynamic>;
+                remote = {...serverNote(1), ...body, 'etag': body['content']};
+                if (puts++ == 0) {
+                  putStarted.complete();
+                  return firstAcknowledgment.future;
+                }
+                return http.Response(jsonEncode(remote), 200);
+              }
+              if (request.url.path.endsWith('/notes/1')) {
+                oldGet = http.Response(jsonEncode(remote), 200);
+                getStarted.complete();
+                return heldGet.future;
+              }
+              return http.Response(jsonEncode([remote]), 200);
+            }),
+          ),
+        );
+        await result.initialize();
+        return result;
+      }
+
+      repository = await reopen();
+      final editBase = repository.editorBase('cached');
+      await repository.save('cached', content: 'B');
+      final publishingB = repository.synchronize(testAccount().id);
+      await putStarted.future;
+      final readingB = repository.refreshLinkedNote(testAccount().id, 1);
+      await getStarted.future;
+      firstAcknowledgment.complete(http.Response(jsonEncode(remote), 200));
+      await publishingB;
+      // An acknowledgment of our own save must not masquerade as an external
+      // download when a captured editor base is used for the next local edit.
+      final savedC = await repository.save(
+        'cached',
+        content: 'C',
+        editBase: editBase,
+      );
+      expect(savedC.syncState, NoteSyncState.pending);
+      await repository.synchronize(testAccount().id);
+      final acknowledgedC = repository.noteById('cached')!;
+      expect(acknowledgedC.content, 'C');
+      expect(acknowledgedC.syncState, NoteSyncState.synced);
+      heldGet.complete(oldGet!);
+      final result = await readingB;
+      void check(NextcloudNote note) {
+        expect(note.content, 'C');
+        expect(note.base!.toJson(), acknowledgedC.base!.toJson());
+        expect(note.base!.content, 'C');
+        expect(note.etag, 'C');
+        expect(note.base!.etag, 'C');
+        expect(note.revision, savedC.revision);
+        expect(note.ackRevision, savedC.revision);
+        expect(note.syncState, NoteSyncState.synced);
+        expect(note.hasPendingChanges, isFalse);
+        expect(note.remote, isNull);
+      }
+
+      check(result);
+      check(repository.noteById('cached')!);
+      await repository.dispose();
+      repository = await reopen();
+      check(repository.noteById('cached')!);
+      expect(puts, 2);
+    },
+  );
 
   test('account removal rejects in-flight retrieval', () async {
     final request = repository.refreshLinkedNote(testAccount().id, 1);

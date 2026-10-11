@@ -17,10 +17,10 @@ fixture materials and raw reports remain outside Git.
 
 ## Implementation and verification
 
-Implementation commits: `55c62dd`, `e9f5ab3` and `138c92b`. **Milestone 3 complete:**
-implementation, production integration, regressions, documentation and all required
-release acceptance gates pass together. The final handoff commit contains this
-record, the documented clean-build information flag and acceptance-tool corrections.
+Initial implementation commits: `55c62dd`, `e9f5ab3` and `138c92b`; acceptance was
+recorded in `4c3306e`. Post-review corrections below supersede that completion claim.
+Historical release results and artifact identity in this record apply to `138c92b`;
+they must not be reused as acceptance of the corrected production payload.
 
 | Work package | Delivered behavior |
 | --- | --- |
@@ -235,3 +235,38 @@ above. Only owned acceptance processes/fixtures are stopped; private artifact,
 VM disk and raw evidence remain outside Git. No merge, push, publication or ordinary
 host installation replacement performed. Locked resolution and localization are
 repeated after committing the handoff; final Git status is reported with that commit.
+
+## Post-review corrections — 2026-10-11
+
+Correction baseline: branch `feature/nextcloud-notes-workspace`, HEAD
+`4c3306e6161229f4319be6e147536fef646a8b9c`, clean tree, no applicable `AGENTS.md`.
+Flutter **3.47.5**, Dart **3.13.4**, dependency pins and Notes schema **6** unchanged.
+Required CommonMark link/code rules reread from the retained private reference copy.
+
+* Successful PUT acknowledgments now advance a separate linked-read fence. Older
+  individual responses cannot replace acknowledged content/base/ETag/revisions.
+  Editor base generations remain reserved for external observations, so pending
+  local edits still reconcile correctly. Held GET B → acknowledged PUT B/C →
+  released GET B verifies content, base, ETag, revision/ack, synchronized state and
+  SQLite restart persistence; the original implementation failed with content B.
+* Refactoring journals now persist phase and complete moved-entry device/inode
+  identity (birth time where available), type, content hashes and membership.
+  Identities are recaptured after owned atomic writes and persisted before moving.
+  Recovery checks paths and identities before restoring anything, uses a no-replace
+  reverse rename, guards rollback publication and verifies identity again before
+  deleting evidence. Recreated sources, replaced/identical-byte destinations,
+  folder replacement/membership and publication races retain evidence. Unedited
+  moved documents are covered; legacy identity-free journals require manual review.
+* The supported parser determines genuine link structure; a literal mask excludes
+  links starting in code/comments without rejecting code formatting within labels.
+  Inline, full/collapsed/shortcut reference labels are covered through extraction,
+  incoming queries and real rename/move; code examples/comments remain unchanged.
+* Fragment lookup decodes once against parsed IDs, preserving authored destination
+  bytes. Real chooser → index → target navigation tests cover `café` and the explicit
+  ID `élément%20id`, including exact UTF-16 spans, incoming heading queries and a
+  double-decoding negative case. The fixture uses the supported `{id="…"}` syntax.
+
+Focused reference/retrieval checks and static analysis pass. Complete two-group
+tests, normal Linux build, pinned conformance/security and corrected clean Snap
+acceptance are being rerun; final results will be recorded here. Private correction
+logs use `corrections-*` under `/tmp/busymark-m3`, preserving the original reports.

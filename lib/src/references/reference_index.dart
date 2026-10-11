@@ -233,7 +233,14 @@ class ReferenceIndex {
           resolution = destination.document.available
               ? ReferenceResolution.resolved
               : ReferenceResolution.unavailable;
-          final anchor = uri?.fragment;
+          String? anchor;
+          try {
+            // URI fragments retain percent encoding. Semantic IDs are decoded
+            // once, while authored.destination remains unchanged for edits.
+            anchor = uri == null ? null : Uri.decodeComponent(uri.fragment);
+          } on FormatException {
+            resolution = ReferenceResolution.unsupported;
+          }
           SourceSpan? span;
           if (anchor != null &&
               anchor.isNotEmpty &&

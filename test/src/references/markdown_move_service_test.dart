@@ -23,6 +23,39 @@ void main() {
     );
   });
   tearDown(() async => root.delete(recursive: true));
+  // Capture the actual durable pre-rename journal, then restore it after the
+  // successful operation to model process death immediately before deletion.
+  Future<File> interruptedMove(MarkdownMovePlan plan) async {
+    final workspace = await workspaceService.openPath(root.path);
+    late File journal;
+    late List<int> evidence;
+    await service.apply(
+      plan,
+      validateBuffers: () {},
+      move: () async {
+        journal =
+            (await Directory(
+                  '${root.path}/.busymark-refactoring',
+                ).list().where((e) => e.path.endsWith('.json')).toList()).single
+                as File;
+        evidence = await journal.readAsBytes();
+        return p.equals(p.dirname(plan.source), p.dirname(plan.destination))
+            ? workspaceService.renameEntity(
+                workspace,
+                plan.source,
+                p.basename(plan.destination),
+              )
+            : workspaceService.moveEntity(
+                workspace,
+                plan.source,
+                p.dirname(plan.destination),
+              );
+      },
+    );
+    await journal.writeAsBytes(evidence, flush: true);
+    return journal;
+  }
+
   test(
     'file rename updates incoming definitions once and leaves code unchanged',
     () async {
@@ -235,39 +268,7 @@ void main() {
         '${root.path}/old/target.md',
         '${root.path}/new/target.md',
       );
-      final folder = Directory('${root.path}/.busymark-refactoring');
-      await folder.create();
-      final journal = File('${folder.path}/interrupted.json');
-      await journal.writeAsString(
-        jsonEncode({
-          'version': 1,
-          'source': 'old/target.md',
-          'destination': 'new/target.md',
-          'files': [
-            for (final file in plan.files)
-              {
-                'path': p.relative(file.path, from: root.path),
-                'before': base64Encode(file.load.format.encode(file.load.text)),
-                'after': base64Encode(file.load.format.encode(file.result)),
-              },
-          ],
-        }),
-        flush: true,
-      );
-      await workspaceService.saveFormattedTextBatch([
-        for (final file in plan.files)
-          WorkspaceBatchTextWrite(
-            path: file.path,
-            text: file.result,
-            expectedSnapshot: file.load.snapshot,
-            format: file.load.format,
-          ),
-      ]);
-      await workspaceService.moveEntity(
-        workspace,
-        plan.source,
-        '${root.path}/new',
-      );
+      final journal = await interruptedMove(plan);
       const restarted = MarkdownMoveService();
       final review = await restarted.prepareRecovery(root.path, journal.path);
       await original.writeAsString('new external edit');
@@ -288,6 +289,249 @@ void main() {
         changedFile.load.format.encode(changedFile.load.text),
       );
       expect(await journal.exists(), isFalse);
+    },
+  );
+  for (final change in [
+    'recreated source',
+    'replaced destination',
+    'identical-byte destination replacement',
+  ]) {
+    for (final afterReview in [false, true]) {
+      test(
+        'restart recovery retains evidence for $change (after review: $afterReview)',
+        () async {
+          final source = File('${root.path}/old/target.md');
+          await source.writeAsString('# Target without outgoing references\n');
+          final incoming = File('${root.path}/other.md');
+          final workspace = await workspaceService.openPath(root.path);
+          final plan = await service.prepare(
+            workspace,
+            source.path,
+            '${root.path}/old/renamed.md',
+          );
+          expect(plan.files.any((f) => f.path == source.path), isFalse);
+          final journal = await interruptedMove(plan);
+          final reviewed = afterReview
+              ? await const MarkdownMoveService().prepareRecovery(
+                  root.path,
+                  journal.path,
+                )
+              : null;
+          final evidence = await journal.readAsBytes();
+          final linked = await incoming.readAsBytes();
+          final destination = File(plan.destination);
+          if (change == 'recreated source') {
+            await source.writeAsString('# Unrelated newly created source\n');
+          } else {
+            final bytes = await destination.readAsBytes();
+            await destination.rename('${plan.destination}.original');
+            await destination.writeAsBytes(
+              change == 'replaced destination'
+                  ? utf8.encode('# Unrelated replacement destination\n')
+                  : bytes,
+            );
+          }
+          final destinationBytes = await destination.readAsBytes();
+          final sourceBytes = await source.exists()
+              ? await source.readAsBytes()
+              : null;
+          if (reviewed == null) {
+            await expectLater(
+              const MarkdownMoveService().recover(root.path, journal.path),
+              throwsStateError,
+            );
+          } else {
+            await expectLater(
+              const MarkdownMoveService().recoverReviewed(reviewed),
+              throwsStateError,
+            );
+          }
+          expect(await incoming.readAsBytes(), linked);
+          expect(await destination.readAsBytes(), destinationBytes);
+          if (sourceBytes != null) {
+            expect(await source.readAsBytes(), sourceBytes);
+          } else {
+            expect(await source.exists(), isFalse);
+          }
+          expect(await journal.readAsBytes(), evidence);
+        },
+      );
+    }
+  }
+  test(
+    'legacy identity-free recovery evidence is kept for manual review',
+    () async {
+      final journal = File('${root.path}/.busymark-refactoring/legacy.json');
+      await journal.parent.create();
+      await journal.writeAsString(
+        jsonEncode({
+          'version': 1,
+          'source': 'old/target.md',
+          'destination': 'old/renamed.md',
+          'files': [],
+        }),
+      );
+      final before = await journal.readAsString();
+      await expectLater(
+        service.recover(root.path, journal.path),
+        throwsStateError,
+      );
+      expect(await journal.readAsString(), before);
+    },
+  );
+  test(
+    'replaced folder identity and added membership retain restart evidence',
+    () async {
+      final workspace = await workspaceService.openPath(root.path);
+      final plan = await service.prepare(
+        workspace,
+        '${root.path}/old',
+        '${root.path}/new/old',
+      );
+      final journal = await interruptedMove(plan);
+      final incoming = await File('${root.path}/other.md').readAsBytes();
+      await File('${plan.destination}/unreviewed.png').writeAsBytes([9]);
+      await expectLater(
+        service.recover(root.path, journal.path),
+        throwsStateError,
+      );
+      expect(await File('${root.path}/other.md').readAsBytes(), incoming);
+      expect(await journal.exists(), isTrue);
+      await File('${plan.destination}/unreviewed.png').delete();
+      // Retain all original child identities but replace the containing directory.
+      await Directory(plan.destination).rename('${plan.destination}.original');
+      await Directory(plan.destination).create();
+      await for (final entry in Directory(
+        '${plan.destination}.original',
+      ).list()) {
+        await File(
+          entry.path,
+        ).rename(p.join(plan.destination, p.basename(entry.path)));
+      }
+      await expectLater(
+        service.recover(root.path, journal.path),
+        throwsStateError,
+      );
+      expect(await File('${root.path}/other.md').readAsBytes(), incoming);
+      expect(await journal.exists(), isTrue);
+    },
+  );
+  test(
+    'recreated source during publication prevents journal deletion and reference rollback',
+    () async {
+      final workspace = await workspaceService.openPath(root.path);
+      final source = File('${root.path}/old/target.md');
+      final plan = await service.prepare(
+        workspace,
+        source.path,
+        '${root.path}/old/renamed.md',
+      );
+      await expectLater(
+        service.apply(
+          plan,
+          validateBuffers: () {},
+          move: () async {
+            final moved = await workspaceService.renameEntity(
+              workspace,
+              source.path,
+              'renamed.md',
+            );
+            await source.writeAsString('# Unrelated recreated source');
+            return moved;
+          },
+        ),
+        throwsStateError,
+      );
+      expect(await source.readAsString(), '# Unrelated recreated source');
+      expect(await File(plan.destination).exists(), isTrue);
+      expect(
+        await File('${root.path}/other.md').readAsString(),
+        contains('old/renamed.md#heading'),
+      );
+      expect(
+        await Directory(
+          '${root.path}/.busymark-refactoring',
+        ).list().where((e) => e.path.endsWith('.json')).length,
+        1,
+      );
+    },
+  );
+  test(
+    'valid code-formatted labels update through ordinary rename and move',
+    () async {
+      final file = File('${root.path}/other.md');
+      const before =
+          '[`API`](old/target.md "title") [`API`][ref]\n\n'
+          '[ref]: old/target.md#heading "definition title"\n\n'
+          '`[example](old/target.md)`\n<!-- [`hidden`](old/target.md) -->\n';
+      await file.writeAsString(before);
+      final workspace = await workspaceService.openPath(root.path);
+      final rename = await service.prepare(
+        workspace,
+        '${root.path}/old/target.md',
+        '${root.path}/old/renamed.md',
+      );
+      await service.apply(
+        rename,
+        validateBuffers: () {},
+        move: () => workspaceService.renameEntity(
+          workspace,
+          rename.source,
+          'renamed.md',
+        ),
+      );
+      final move = await service.prepare(
+        workspace,
+        rename.destination,
+        '${root.path}/new/renamed.md',
+      );
+      await service.apply(
+        move,
+        validateBuffers: () {},
+        move: () => workspaceService.moveEntity(
+          workspace,
+          move.source,
+          '${root.path}/new',
+        ),
+      );
+      expect(
+        await file.readAsString(),
+        '[`API`](new/renamed.md "title") [`API`][ref]\n\n'
+        '[ref]: new/renamed.md#heading "definition title"\n\n'
+        '`[example](old/target.md)`\n<!-- [`hidden`](old/target.md) -->\n',
+      );
+    },
+  );
+  test(
+    'replacement during recovery writes rolls references back and retains evidence',
+    () async {
+      final source = File('${root.path}/old/target.md');
+      await source.writeAsString('# Target without internal links');
+      final workspace = await workspaceService.openPath(root.path);
+      final plan = await service.prepare(
+        workspace,
+        source.path,
+        '${root.path}/old/renamed.md',
+      );
+      final journal = await interruptedMove(plan);
+      final incoming = File('${root.path}/other.md');
+      final linked = await incoming.readAsBytes();
+      final evidence = await journal.readAsBytes();
+      final restarted = MarkdownMoveService(
+        workspaceService: WorkspaceService(
+          afterBatchFileCommit: (_, _) async {
+            await source.rename('${source.path}.original');
+            await source.writeAsString('# Unrelated concurrent replacement');
+          },
+        ),
+      );
+      await expectLater(
+        restarted.recover(root.path, journal.path),
+        throwsStateError,
+      );
+      expect(await incoming.readAsBytes(), linked);
+      expect(await source.readAsString(), '# Unrelated concurrent replacement');
+      expect(await journal.readAsBytes(), evidence);
     },
   );
   test(
