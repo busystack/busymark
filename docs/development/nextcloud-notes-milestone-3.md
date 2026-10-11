@@ -18,7 +18,8 @@ fixture materials and raw reports remain outside Git.
 ## Implementation and verification
 
 Initial implementation commits: `55c62dd`, `e9f5ab3` and `138c92b`; acceptance was
-recorded in `4c3306e`. Post-review corrections below supersede that completion claim.
+recorded in `4c3306e`. Post-review corrections below record the current candidate
+and its renewed verification; earlier candidate reports remain historical.
 Historical release results and artifact identity in this record apply to `138c92b`;
 they must not be reused as acceptance of the corrected production payload.
 
@@ -266,7 +267,60 @@ Required CommonMark link/code rules reread from the retained private reference c
   ID `élément%20id`, including exact UTF-16 spans, incoming heading queries and a
   double-decoding negative case. The fixture uses the supported `{id="…"}` syntax.
 
-Focused reference/retrieval checks and static analysis pass. Complete two-group
-tests, normal Linux build, pinned conformance/security and corrected clean Snap
-acceptance are being rerun; final results will be recorded here. Private correction
-logs use `corrections-*` under `/tmp/busymark-m3`, preserving the original reports.
+Correction candidate: **`d6f36d94bad8d95f78d1e30475e92dcc54eabcfe`**. Seventeen
+new deterministic regressions are included in the current exhaustive suite.
+
+| Corrected-source gate | Result |
+|---|---|
+| Current manifest | 208 files: complete Local History store file separately, all other 207 files once per remaining-group attempt |
+| Local History group | **50 PASS**, exit 0 |
+| First remaining-group attempt | **4,257 PASS / 1 FAIL**, exit 1, 21:54; existing Empty MD Topic UI test exceeded its 10-second activation wait after creating its file |
+| Unchanged failing file rerun | **15 PASS**, exit 0, 1:13; no test timeout or expectation changed |
+| Complete remaining-group rerun | **4,258 PASS**, exit 0, 21:13; no failing files omitted |
+| Static/generation/release checks | Locked resolution and localization generation PASS; localization audit in exhaustive suite PASS; 585 Dart files formatted with zero changes; analysis zero issues; normal Linux release exit 0 |
+| Security / Writerside | Both credential scripts invoked with bash PASS; pinned official builder **181 + 181 = 362 PASS**, authored-link assertions PASS |
+| Real HTTPS API 1.4 | Notes **6.0.2: 41 PASS**, **6.1.0: 41 PASS**; first cold 6.1.0 capability request failed with a network error, unchanged verified endpoint/retry passed |
+
+Current AOT benchmark (`dart build cli`, Dart 3.13.4, SQLite 3.53.4, Linux x64):
+same 10,000-note/1,279-category/250-duplicate-title corpus, 21,785,692 text bytes,
+2,000 attachments/4,096,000 bytes. Reference corpus: 10,000 documents, 32,000
+occurrences, 23,683,480 UTF-8 bytes. Initial reference indexing **213,611 ms**,
+incremental document **40.420 ms**, queries below reported timer resolution;
+search during indexing **51.702 ms**, save median/p95 **12.260 / 15.016 ms**.
+Warm search medians **39.355–60.410 ms**; maximum RSS **217.5 MiB**. Concurrent
+exhaustive tests and release/VM activity were present. Initial indexing remains
+substantial; reference-era search and save results retain accepted responsiveness.
+Full timings and memory observations: `corrections-performance/report.json`.
+
+Fresh clean Git archive of the correction candidate, unchanged recipe, official
+Ubuntu 24.04 Snapcraft **8.11.1**, `SNAPCRAFT_BUILD_INFO=1`: version → extension
+expansion → clean → destructive-mode build **PASS, exit 0**. Initial Docker
+mountpoint failure occurred before building; separate read-only dependency mounts
+fixed it. Previous application intermediates were never reused. Embedded recipe
+and resolved lock hashes match the checkout.
+
+Corrected artifact: `busymark_0.6.2_amd64.snap`, **310,149,120 bytes**, SHA-256
+**`3c91d151e61b560675e4f0f09515c052e500d00266ee6f8a0ff435d3ec991f20`**.
+Installed only in the retained isolated VM as **x3**; root-owned artifact hash
+matches, executable `/snap/busymark/x3/busymark`, AppArmor profile enforcing.
+Documented password-manager-service connection retained; locked disposable
+keyring preserved and fixture credential reseeded into a new encrypted keyring.
+
+Real installed UI: Source chooser inserts both encoded Unicode targets; panel
+shows all four incoming/outgoing links Resolved and excludes the fenced example;
+keyboard Target location selects the exact explicit heading. Ordinary file Rename
+and containing-folder Cut/Paste each review four precise edits. Actual published
+files preserve code labels, reference title, fragments, code example and unedited
+target bytes. Recovery journals are cleared on success. Process restart and
+Reading navigation open `moved/docs/renamed.md` through the code-labeled link.
+Installed Notes uses libsecret and verified HTTPS, then opens stored source-note
+483 links to target 482, confirmed by its unique marker and renamed title/category.
+After taking HTTPS offline and restarting, the same cached URL opens that target
+and its retained image; settled screenshots show both content and explicit network
+failure messages. No test controllers or older package substitute were used.
+Screenshots inspected under `snap-vm/corrections-*`; early empty-frame captures and
+premature filesystem assertions are retained, not counted as successful checks.
+Previous broad browser/Writerside desktop reports remain historical evidence.
+
+Private correction logs use `corrections-*` under `/tmp/busymark-m3`, preserving
+the original reports and artifact. No ordinary installation, pins or schema changed.
