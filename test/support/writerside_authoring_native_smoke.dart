@@ -67,7 +67,27 @@ Future<void> main(List<String> arguments) async {
   await File(
     p.join(root.path, 'topics/inspector-corrections.md'),
   ).writeAsString(
-    '# Inspector Corrections\n\nUse `{id="literal-code"}`\n\nUse [**link**](authoring.topic){id="owned-link"}\n\n- First **item**\n- Second item\n\n- [x] Checked task\n- [ ] Unchecked task\n\n> A **note**.\n{style="note"}\n',
+    '# Inspector Corrections\n\nUse `{id="literal-code"}`\n\nUse [**link**](authoring.topic){id="owned-link"}\n\n'
+    'See [`{id="linked-literal"}`](authoring.topic){id="code-reference"}\n\n'
+    'Show ![{id="image-literal"}](logo.png){id="alt-reference" width="24"}\n\n'
+    '- First **item**\n- Second item\n\n- [x] Checked task\n- [ ] Unchecked task\n\n> A **note**.\n{style="note"}\n\n'
+    'Numbered override.\n\n3. Numbered parent\n   4. Nested first\n   5. Nested second\n4. Numbered sibling\n\n'
+    '{start="10" id="numbered-list"}\n\nNumbered markers.\n\n'
+    '3. Marker parent\n   4. Marker nested first\n   5. Marker nested second\n4. Marker sibling\n',
+  );
+  await Directory(p.join(root.path, 'images')).create();
+  await File(
+    p.join(fixture.parent.path, 'property_conformance/images/logo.png'),
+  ).copy(p.join(root.path, 'images/logo.png'));
+  await File(
+    p.join(fixture.parent.path, 'property_conformance/images/logo_dark.png'),
+  ).copy(p.join(root.path, 'images/logo_dark.png'));
+  final configuration = File(p.join(root.path, 'writerside.cfg'));
+  await configuration.writeAsString(
+    (await configuration.readAsString()).replaceFirst(
+      '<topics dir="topics"/>',
+      '<topics dir="topics"/><images dir="images"/>',
+    ),
   );
   final tree = File(p.join(root.path, 'conformance.tree'));
   await tree.writeAsString(
@@ -1162,6 +1182,12 @@ class _HarnessState extends ConsumerState<_Harness> {
         'Literal inline code Editor loaded',
       );
       await _type(_field('Use {id="literal-code"}'), 'Try {id="literal-code"}');
+      for (final text in [
+        'See {id="linked-literal"}',
+        'Show {id="image-literal"}',
+      ]) {
+        await _type(_field(text), text.replaceFirst(RegExp(r'^\w+'), 'Read'));
+      }
       await _native('chord', 'ctrl+s');
       await reopenSource();
       _check(
@@ -1175,6 +1201,43 @@ class _HarnessState extends ConsumerState<_Harness> {
         'Literal code is not a paragraph ID',
       );
       await _capture('inspector-inline-ownership-reopened');
+      for (final reference in [
+        (
+          identity: 'code-reference',
+          kind: BusyInlineKind.link,
+          literal: 'linked-literal',
+        ),
+        (
+          identity: 'alt-reference',
+          kind: BusyInlineKind.image,
+          literal: 'image-literal',
+        ),
+      ]) {
+        sourceCaret(
+          _source.indexOf(
+            'Read ${reference.kind == BusyInlineKind.link ? '[' : '!['}',
+          ),
+        );
+        await _pause();
+        final target = inspector().target!;
+        final inline = target.inlines.singleWhere(
+          (i) => i.kind == reference.kind,
+        );
+        _check(
+          target.attributes['id'] == null &&
+              inline.attributes['id'] == reference.identity,
+          'Reopened ${reference.identity} belongs to its inline reference, not paragraph',
+        );
+        _check(
+          reference.kind == BusyInlineKind.link
+              ? inline.children.single.kind == BusyInlineKind.code &&
+                    inline.children.single.text == '{id="${reference.literal}"}'
+              : inline.text == '{id="${reference.literal}"}' &&
+                    inline.attributes['width'] == '24',
+          'Ordinary content edit save reopen retains ${reference.identity} literal and formatting',
+        );
+      }
+      await _capture('inspector-linked-code-reopened');
       sourceCaret(_source.indexOf('Use [') + 1);
       await _pause();
       _check(
@@ -1265,6 +1328,69 @@ class _HarnessState extends ConsumerState<_Harness> {
         'Admonition attributes use the builder-verified blank-line placement',
       );
       await _capture('inspector-admonition-reopened');
+      for (final numbered in [
+        (text: 'Numbered parent', identity: 'saved-numbered-item', start: '10'),
+        (text: 'Marker parent', identity: 'saved-marker-item', start: '3'),
+      ]) {
+        sourceCaret(_source.indexOf('3. ${numbered.text}'));
+        await _pause();
+        final original = _source;
+        final undoCount = ref
+            .read(workspaceControllerProvider)
+            .activeBuffer!
+            .editorState
+            .undoState
+            .undo
+            .length;
+        await propertyText('Element ID', numbered.identity);
+        final converted = _source;
+        _check(
+          ref
+                  .read(workspaceControllerProvider)
+                  .activeBuffer!
+                  .editorState
+                  .undoState
+                  .undo
+                  .length ==
+              undoCount + 1,
+          '${numbered.identity} conversion creates one undo operation',
+        );
+        _check(
+          controller.undoActiveBuffer(),
+          '${numbered.identity} undo succeeds',
+        );
+        await _pause();
+        _check(
+          _source == original,
+          '${numbered.identity} undo restores original markers and authored override',
+        );
+        _check(
+          controller.redoActiveBuffer(),
+          '${numbered.identity} redo succeeds',
+        );
+        await _pause();
+        _check(
+          _source == converted,
+          '${numbered.identity} redo restores converted source',
+        );
+        await reopenSource();
+        sourceCaret(_source.indexOf('<li id="${numbered.identity}"'));
+        await _pause();
+        final target = inspector().target!;
+        final list = inspector().path.lastWhere(
+          (b) => b.attributes['element'] == 'list',
+        );
+        final nested = target.children.singleWhere(
+          (b) => b.attributes['element'] == 'list',
+        );
+        _check(
+          target.attributes['id'] == numbered.identity &&
+              list.attributes['start'] == numbered.start &&
+              nested.attributes['start'] == '4',
+          '${numbered.identity} save close reopen preserves outer ${numbered.start} and nested 4',
+        );
+      }
+      await _capture('inspector-numbered-list-reopened');
       await File(
         p.join(widget.output.path, 'inspector-corrections.md'),
       ).writeAsString(_source);

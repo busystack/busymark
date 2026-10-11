@@ -17,6 +17,144 @@ BusyDocument parse(String source) => const MarkdownParser()
     .busyDocument;
 
 void main() {
+  for (final image in [false, true]) {
+    test(
+      '${image ? 'Image attribute-like alt text' : 'Linked code example'} survives content edit save reopen',
+      () async {
+        final source = image
+            ? 'See ![{id="literal"}](logo.png){id="reference" width="24"}\n'
+            : 'See [`{id="literal"}`](guide.md){id="reference"}\n';
+        final c = BusyMarkWysiwygDocumentController(document: parse(source));
+        addTearDown(c.dispose);
+        void verify(BusyBlock paragraph, String prefix) {
+          expect(paragraph.attributes['id'], isNull);
+          expect(paragraph.plainText, '$prefix {id="literal"}');
+          final reference = paragraph.inlines.singleWhere(
+            (i) =>
+                i.kind == (image ? BusyInlineKind.image : BusyInlineKind.link),
+          );
+          expect(reference.attributes['id'], 'reference');
+          expect(
+            reference.attributes['busymark-writerside-attribute-token'],
+            isNull,
+          );
+          expect(reference.destination, image ? 'logo.png' : 'guide.md');
+          if (image) {
+            expect(reference.text, '{id="literal"}');
+            expect(reference.attributes['width'], '24');
+          } else {
+            expect(reference.children.single.kind, BusyInlineKind.code);
+            expect(reference.children.single.text, '{id="literal"}');
+          }
+        }
+
+        final paragraph = c.document.blocks.single;
+        verify(paragraph, 'See');
+        c.updateBlockText(paragraph.id, 'Read {id="literal"}');
+        final directory = await Directory.systemTemp.createTemp(
+          'reference-token-',
+        );
+        addTearDown(() => directory.delete(recursive: true));
+        final file = File('${directory.path}/edited.md');
+        await file.writeAsString(c.markdown);
+        verify(parse(await file.readAsString()).blocks.single, 'Read');
+        expect(
+          c.markdown,
+          contains(image ? '![\\{id="literal"}]' : '[`{id="literal"}`]'),
+        );
+        expect(c.markdown, contains('{id="reference"'));
+      },
+    );
+  }
+  for (final explicitStart in [false, true]) {
+    test(
+      'Ordered item conversion preserves ${explicitStart ? 'authored outer override' : 'native outer marker'} and nested start',
+      () async {
+        final source =
+            '3. Parent\n   4. Nested first\n   5. Nested second\n4. Sibling\n'
+            '${explicitStart ? '\n{start="10" id="numbered-list"}\n' : ''}';
+        final c = BusyMarkWysiwygDocumentController(document: parse(source));
+        addTearDown(c.dispose);
+        final target = explicitStart
+            ? c.document.blocks.first.children.first
+            : c.document.blocks.first;
+        final identity = explicitStart ? 'numbered-parent' : 'marker-parent';
+        expect(c.updateWritersideProperty(target.id, 'id', identity), isTrue);
+        final directory = await Directory.systemTemp.createTemp(
+          'numbered-list-',
+        );
+        addTearDown(() => directory.delete(recursive: true));
+        final file = File('${directory.path}/edited.md');
+        await file.writeAsString(c.markdown);
+        final list = parse(await file.readAsString()).blocks.single;
+        expect(list.attributes['start'], explicitStart ? '10' : '3');
+        final item = list.children.firstWhere(
+          (b) => b.attributes['element'] == 'li',
+        );
+        expect(item.attributes['id'], identity);
+        final nested = item.children.singleWhere(
+          (b) => b.attributes['element'] == 'list',
+        );
+        expect(nested.attributes['type'], 'decimal');
+        expect(nested.attributes['start'], '4');
+        expect(
+          list.children.where((b) => b.attributes['element'] == 'li'),
+          hasLength(2),
+        );
+        expect(
+          nested.children.where((b) => b.attributes['element'] == 'li'),
+          hasLength(2),
+        );
+        for (final fixture in [
+          'property_conformance',
+          'property_defaults_conformance',
+        ]) {
+          expect(
+            File(
+              'test/fixtures/writerside/$fixture/topics/properties-markdown.md',
+            ).readAsStringSync(),
+            contains(c.markdown.trim()),
+            reason: 'The builder must check actual serialized conversion bytes',
+          );
+        }
+      },
+    );
+  }
+  test('nested authored list override survives parent item conversion', () async {
+    const source =
+        '3. Parent\n   4. Nested first\n   5. Nested second\n\n'
+        '   {start="7" id="nested-list"}\n\n4. Sibling\n\n{start="10"}\n';
+    final c = BusyMarkWysiwygDocumentController(document: parse(source));
+    addTearDown(c.dispose);
+    final parent = c.document.blocks.single.children.first;
+    expect(
+      c.updateWritersideProperty(parent.id, 'id', 'nested-parent'),
+      isTrue,
+    );
+    final directory = await Directory.systemTemp.createTemp(
+      'nested-list-override-',
+    );
+    addTearDown(() => directory.delete(recursive: true));
+    final file = File('${directory.path}/edited.md');
+    await file.writeAsString(c.markdown);
+    final list = parse(await file.readAsString()).blocks.single;
+    expect(list.attributes['start'], '10');
+    final item = list.children.firstWhere(
+      (b) => b.attributes['element'] == 'li',
+    );
+    final nested = item.children.singleWhere(
+      (b) => b.attributes['element'] == 'list',
+    );
+    expect(nested.attributes['start'], '7');
+    expect(nested.attributes['id'], 'nested-list');
+    expect(c.markdown, isNot(contains('busymark-')));
+    expect(
+      File(
+        'test/fixtures/writerside/property_conformance/topics/properties-markdown.md',
+      ).readAsStringSync(),
+      contains(c.markdown.trim()),
+    );
+  });
   test(
     'list-item properties under Markdown chapters use physical list ownership',
     () {

@@ -682,12 +682,7 @@ class MarkdownAstAdapter {
       if ({BusyInlineKind.image, BusyInlineKind.link}.contains(inline.kind) &&
           index + 1 < values.length) {
         final next = values[index + 1];
-        final match = next.attributes.containsKey(writersideAttributeSyntaxTag)
-            ? RegExp(r'^\{([^{}]+)\}').firstMatch(next.text)
-            : null;
-        final attributes = match == null
-            ? const <String, String>{}
-            : _parseAttributePairs(match[1]!);
+        final attributes = _attributeTokenAttributes(next);
         final tag = inline.kind == BusyInlineKind.image ? 'img' : 'a';
         if (attributes.isNotEmpty &&
             attributes.keys.every(
@@ -711,9 +706,9 @@ class MarkdownAstAdapter {
               'busymark-writerside-attributes': 'true',
             },
           );
-          values[index + 1] = next.copyWith(
-            text: next.text.substring(match!.end),
-          );
+          // Ownership consumes the whole lexical token. Reference metadata
+          // cannot subsequently make the reference itself a paragraph token.
+          index++;
         }
       }
       if (inline.kind != BusyInlineKind.text || inline.text.isNotEmpty) {
@@ -782,7 +777,9 @@ class MarkdownAstAdapter {
                 ? _attachReferenceAttributes(_inlinesFromNodes(inlineNodes))
                 : _inlinesFromNodes(inlineNodes),
           ),
-          children: nestedBlocks,
+          children: mode == MarkdownMode.writersideMarkdown
+              ? _attachWritersideCodeAttributes(nestedBlocks)
+              : nestedBlocks,
           attributes: attributes,
         ),
       );
@@ -928,13 +925,13 @@ class MarkdownAstAdapter {
     int? mappingEnd,
     Iterable<String> ignoredPositionMarkers = const [],
   }) {
-    if (node is md.Element && node.tag == writersideAttributeSyntaxTag) {
+    if (node is md.Element && node.tag == writersideAttributeTokenTag) {
       return [
         BusyInline(
           kind: BusyInlineKind.text,
           text: node.textContent,
           attributes: {
-            writersideAttributeSyntaxTag:
+            writersideAttributeTokenTag:
                 '${node.attributes[busyMarkSourceMappingStartAttribute]}:${node.attributes[busyMarkSourceMappingEndAttribute]}',
           },
         ),
@@ -1577,11 +1574,10 @@ class MarkdownAstAdapter {
         inlines[index].text.trim().isEmpty) {
       index--;
     }
-    if (index < 1 ||
-        !inlines[index].attributes.containsKey(writersideAttributeSyntaxTag)) {
+    if (index < 1) {
       return (attributes: const {}, inlines: inlines);
     }
-    final attributes = _standaloneAttributeBlock(inlines[index].text);
+    final attributes = _attributeTokenAttributes(inlines[index]);
     if (attributes.isEmpty) return (attributes: const {}, inlines: inlines);
     final content = inlines.take(index).toList();
     if (content.last.kind == BusyInlineKind.text) {
@@ -1591,6 +1587,34 @@ class MarkdownAstAdapter {
       }
     }
     return (attributes: attributes, inlines: content);
+  }
+
+  Map<String, String> _attributeTokenAttributes(BusyInline inline) {
+    if (inline.kind != BusyInlineKind.text || inline.children.isNotEmpty) {
+      return const {};
+    }
+    final range = inline.attributes[writersideAttributeTokenTag]?.split(':');
+    if (range == null || range.length != 2) return const {};
+    final start = int.tryParse(range.first), end = int.tryParse(range.last);
+    // Only the inline grammar emits this range. Reject consumed/changed tokens
+    // and metadata without a complete, matching lexical source range.
+    if (start == null ||
+        end == null ||
+        start < 0 ||
+        end - start != inline.text.length ||
+        end <= start) {
+      return const {};
+    }
+    return _standaloneAttributeBlock(inline.text);
+  }
+
+  Map<String, String> _standaloneAttributeInline(List<BusyInline> inlines) {
+    final content = inlines
+        .where((i) => i.kind != BusyInlineKind.text || i.text.trim().isNotEmpty)
+        .toList();
+    return content.length == 1
+        ? _attributeTokenAttributes(content.single)
+        : const {};
   }
 
   bool? _taskChecked(List<md.Node> children) {
@@ -1641,12 +1665,8 @@ class MarkdownAstAdapter {
           end++;
         }
         final attributeBlock = end < blocks.length ? blocks[end] : null;
-        final attributes =
-            attributeBlock?.kind == BusyBlockKind.paragraph &&
-                attributeBlock!.inlines.any(
-                  (i) => i.attributes.containsKey(writersideAttributeSyntaxTag),
-                )
-            ? _standaloneAttributeBlock(attributeBlock.plainText)
+        final attributes = attributeBlock?.kind == BusyBlockKind.paragraph
+            ? _standaloneAttributeInline(attributeBlock!.inlines)
             : const <String, String>{};
         if (attributes.isNotEmpty) {
           result.add(
@@ -1679,12 +1699,8 @@ class MarkdownAstAdapter {
           }.contains(block.kind) &&
           index + 1 < blocks.length) {
         final attributeBlock = blocks[index + 1];
-        final attributes =
-            attributeBlock.kind == BusyBlockKind.paragraph &&
-                attributeBlock.inlines.any(
-                  (i) => i.attributes.containsKey(writersideAttributeSyntaxTag),
-                )
-            ? _standaloneAttributeBlock(attributeBlock.plainText)
+        final attributes = attributeBlock.kind == BusyBlockKind.paragraph
+            ? _standaloneAttributeInline(attributeBlock.inlines)
             : const <String, String>{};
         if (attributes.isNotEmpty) {
           result.add(
@@ -1918,15 +1934,12 @@ class MarkdownAstAdapter {
     if (blocks.isNotEmpty && blocks.last.kind == BusyBlockKind.paragraph) {
       final last = blocks.last;
       final recorded = last.attributes['busymark-writerside-source-attributes'];
-      final token =
-          last.inlines.length == 1 &&
-          last.inlines.single.attributes.containsKey(
-            writersideAttributeSyntaxTag,
-          );
+      final tokenAttributes = _standaloneAttributeInline(last.inlines);
+      final token = tokenAttributes.isNotEmpty;
       final attributes = recorded != null
           ? Map<String, String>.from(jsonDecode(recorded) as Map)
           : token
-          ? _standaloneAttributeBlock(last.inlines.single.text)
+          ? tokenAttributes
           : <String, String>{};
       if (attributes.isNotEmpty) {
         final content = [...blocks.take(blocks.length - 1)];

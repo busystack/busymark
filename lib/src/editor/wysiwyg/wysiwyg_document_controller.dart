@@ -669,7 +669,44 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
         b.children.every(convertible);
     if (!items.every(convertible)) return false;
 
+    Map<String, String> listAttributes(
+      List<BusyBlock> members, [
+      Map<String, String> authored = const {},
+    ]) {
+      final first = members.first;
+      final markerStart = RegExp(
+        r'^([0-9]+)[.)]$',
+      ).firstMatch(first.attributes['marker'] ?? '')?.group(1);
+      return {
+        ...authored,
+        'type':
+            authored['type'] ??
+            (first.kind == BusyBlockKind.orderedListItem
+                ? 'decimal'
+                : first.kind == BusyBlockKind.taskListItem
+                ? 'checkbox'
+                : 'bullet'),
+        // An explicit Writerside start overrides Markdown marker numbering.
+        // Infer only an absent override, separately for each list level.
+        if (!authored.containsKey('start') &&
+            first.kind == BusyBlockKind.orderedListItem &&
+            markerStart != null &&
+            markerStart != '1')
+          'start': markerStart,
+      };
+    }
+
     BusyBlock convert(BusyBlock b) {
+      if (b.attributes['busymark-list-form'] == 'markdown') {
+        return _newWritersideElement(
+          'list',
+          attributes: listAttributes(
+            b.children,
+            WritersideEditingAdapter.sourceAttributes(b),
+          ),
+          children: b.children.map(convert).toList(),
+        ).copyWith(id: b.id);
+      }
       if (busyMarkIsWritersideContainer(b)) return b;
       final children = <BusyBlock>[];
       if (_isListItemKind(b.kind) && b.inlines.isNotEmpty) {
@@ -694,13 +731,7 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
           children.add(
             _newWritersideElement(
               'list',
-              attributes: {
-                'type': child.kind == BusyBlockKind.orderedListItem
-                    ? 'decimal'
-                    : child.kind == BusyBlockKind.taskListItem
-                    ? 'checkbox'
-                    : 'bullet',
-              },
+              attributes: listAttributes(b.children.sublist(i, last)),
               children: b.children.sublist(i, last).map(convert).toList(),
             ),
           );
@@ -743,19 +774,12 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
           );
     final list = _newWritersideElement(
       'list',
-      attributes: {
-        if (nativeList) ...WritersideEditingAdapter.sourceAttributes(parent!),
-        'type': nativeList && parent!.attributes.containsKey('type')
-            ? parent.attributes['type']!
-            : target.kind == BusyBlockKind.orderedListItem
-            ? 'decimal'
-            : target.kind == BusyBlockKind.taskListItem
-            ? 'checkbox'
-            : 'bullet',
-        if (target.kind == BusyBlockKind.orderedListItem &&
-            items.first.attributes['marker'] != '1.')
-          'start': items.first.attributes['marker']!.replaceAll('.', ''),
-      },
+      attributes: listAttributes(
+        items,
+        nativeList
+            ? WritersideEditingAdapter.sourceAttributes(parent!)
+            : const {},
+      ),
       children: items.map(convert).toList(),
     ).copyWith(sourceSpan: nativeList ? parent!.sourceSpan : span);
     if (nativeList) {

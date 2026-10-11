@@ -74,3 +74,135 @@ Show ![Logo](logo.png){id="owned-image" width="24"}.
 <li id="checked-xml-item" checked="true"><p>Checked XML</p></li>
 <li id="unchecked-xml-item" checked="false"><p>Unchecked XML</p></li>
 </list>
+
+See [`{id="linked-literal"}`](properties.topic){id="code-reference"}
+
+Show ![\{id="image-literal"}](logo.png){id="alt-reference" width="24"}
+
+Native authored start override.
+
+3. Native parent
+   4. Native nested first
+   5. Native nested second
+4. Native sibling
+
+{start="10" id="native-numbered-list"}
+
+Native marker starts.
+
+3. Native marker parent
+   4. Native marker nested first
+   5. Native marker nested second
+4. Native marker sibling
+
+{id="native-marker-list"}
+
+Native nested authored start override.
+
+3. Native override parent
+   4. Native override nested first
+   5. Native override nested second
+
+   {start="7" id="native-nested-list"}
+
+4. Native override sibling
+
+{start="10" id="native-override-list"}
+
+Converted numbered lists.
+
+<list start="10" id="numbered-list" type="decimal">
+
+<li id="numbered-parent">
+
+<p>Parent</p>
+
+<list type="decimal" start="4">
+
+<li>
+
+<p>Nested first</p>
+
+</li>
+
+<li>
+
+<p>Nested second</p>
+
+</li>
+
+</list>
+
+</li>
+
+<li>
+
+<p>Sibling</p>
+
+</li>
+
+</list>
+
+<list type="decimal" start="3">
+
+<li id="marker-parent">
+
+<p>Parent</p>
+
+<list type="decimal" start="4">
+
+<li>
+
+<p>Nested first</p>
+
+</li>
+
+<li>
+
+<p>Nested second</p>
+
+</li>
+
+</list>
+
+</li>
+
+<li>
+
+<p>Sibling</p>
+
+</li>
+
+</list>
+
+<list start="10" type="decimal">
+
+<li id="nested-parent">
+
+<p>Parent</p>
+
+<list start="7" id="nested-list" type="decimal">
+
+<li>
+
+<p>Nested first</p>
+
+</li>
+
+<li>
+
+<p>Nested second</p>
+
+</li>
+
+</list>
+
+</li>
+
+<li>
+
+<p>Sibling</p>
+
+</li>
+
+</list>

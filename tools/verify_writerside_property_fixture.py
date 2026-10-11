@@ -12,11 +12,13 @@ class Elements(HTMLParser):
         self.texts = {}
         self.images = {}
         self.links = {}
+        self.descendants = {}
         self.feed(source)
 
     def handle_starttag(self, tag, attrs):
         attrs = dict(attrs)
         for _, parent in self.stack:
+            if 'id' in parent: self.descendants.setdefault(parent['id'], []).append((tag, attrs))
             if 'id' in parent and tag == 'img': self.images.setdefault(parent['id'], []).append(attrs)
             if 'id' in parent and tag == 'a': self.links.setdefault(parent['id'], []).append(attrs)
         if 'id' in attrs:
@@ -34,6 +36,26 @@ class Elements(HTMLParser):
         for _, attrs in self.stack:
             if 'id' in attrs:
                 self.texts[attrs['id']] = self.texts.get(attrs['id'], '') + data
+
+
+def verify_literal_references(actual):
+    link = actual.elements['code-reference'][0]
+    assert link['href'].endswith(('properties.html', 'authoring.html')), link
+    assert actual.texts['code-reference'] == '{id="linked-literal"}'
+    assert any(tag == 'code' or 'code' in attrs.get('class', '').split()
+               for tag, attrs in actual.descendants['code-reference'])
+    image = actual.elements['alt-reference'][0]
+    assert image['alt'] == '{id="image-literal"}', image
+    assert image['src'].endswith('/logo.png') and image['width'] == '24', image
+    assert 'linked-literal' not in actual.elements and 'image-literal' not in actual.elements
+
+
+def verify_numbered_item(actual, identity, outer_start, nested_start):
+    _, parents = actual.elements[identity]
+    lists = [attrs for tag, attrs in parents if tag == 'ol']
+    assert lists[-1]['start'] == str(outer_start), (identity, lists)
+    nested = [attrs for tag, attrs in actual.descendants[identity] if tag == 'ol']
+    assert len(nested) == 1 and nested[0]['start'] == str(nested_start), (identity, nested)
 
 
 if len(sys.argv) > 2 and sys.argv[2] == 'native-defaults':
@@ -67,7 +89,10 @@ if len(sys.argv) > 2 and sys.argv[2] == 'native':
         task, parents = corrections.elements['saved-task']
         assert 'checked' not in task and any(a.get('class') == 'list _checkbox' for _, a in parents)
         assert any(a.get('checked') == 'true' for a, _ in corrections.elements.values())
-    print('Native saved HTML: source inclusion, snippet emphasis, inherited state, literal inline code, list-item and admonition IDs verified')
+        verify_literal_references(corrections)
+        verify_numbered_item(corrections, 'saved-numbered-item', 10, 4)
+        verify_numbered_item(corrections, 'saved-marker-item', 3, 4)
+    print('Native saved HTML: source inclusion, snippet emphasis, inherited state, literal inline references, ordered starts, list-item and admonition IDs verified')
     sys.exit(0)
 
 defaults = len(sys.argv) > 2 and sys.argv[2] == 'defaults'
@@ -147,6 +172,16 @@ with zipfile.ZipFile(sys.argv[1]) as archive:
     assert md.elements['checked-native-list'][0]['class'] == 'list _checkbox'
     assert md.elements['checked-xml-item'][0]['checked'] == 'true'
     assert 'checked' not in md.elements['unchecked-xml-item'][0]
+    verify_literal_references(md)
+    verify_numbered_item(md, 'numbered-parent', 10, 4)
+    verify_numbered_item(md, 'marker-parent', 3, 4)
+    verify_numbered_item(md, 'nested-parent', 10, 7)
+    for identity, start, nested_start in [('native-numbered-list', 10, 4),
+                                         ('native-marker-list', 3, 4),
+                                         ('native-override-list', 10, 7)]:
+        assert md.elements[identity][0]['start'] == str(start), identity
+        nested = [attrs for tag, attrs in md.descendants[identity] if tag == 'ol']
+        assert len(nested) == 1 and nested[0]['start'] == str(nested_start), (identity, nested)
     note = md.elements['native-note'][0]
     assert note['class'] == 'prompt' and note['data-type'] == 'note', note
-print('Pinned property HTML: collapse, state, inheritance, module layout, inline ownership, list/item and admonition IDs, snippet emphasis, formatted titles and images verified')
+print('Pinned property HTML: collapse, state, inheritance, module layout, literal inline ownership, ordered starts, list/item and admonition IDs, snippet emphasis, formatted titles and images verified')

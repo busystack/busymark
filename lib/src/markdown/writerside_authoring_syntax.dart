@@ -2,7 +2,9 @@ import 'package:markdown/markdown.dart' as md;
 import 'package:xml/xml.dart';
 import 'markdown_source_annotation.dart';
 
-const writersideAttributeSyntaxTag = 'busymark-writerside-attributes';
+// Lexical tokens have a separate identity from an attributed reference's
+// busymark-writerside-attributes serialization flag.
+const writersideAttributeTokenTag = 'busymark-writerside-attribute-token';
 
 /// Attribute ownership is resolved on parsed siblings. Code spans and escapes
 /// are consumed by the ordinary inline grammar before this syntax can match.
@@ -16,7 +18,7 @@ class WritersideAttributeSyntax extends md.InlineSyntax {
   @override
   bool onMatch(md.InlineParser parser, Match match) {
     parser.addNode(
-      md.Element.text(writersideAttributeSyntaxTag, match[0]!)
+      md.Element.text(writersideAttributeTokenTag, match[0]!)
         ..attributes.addAll({
           busyMarkSourceMappingStartAttribute: '${match.start}',
           busyMarkSourceMappingEndAttribute: '${match.end}',
