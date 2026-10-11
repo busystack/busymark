@@ -6715,7 +6715,11 @@ void _registerReferenceMoveTests() {
           target = File(p.join(root.path, 'target.md'));
       await source.writeAsString('[target](target.md)');
       await target.writeAsString('# Target');
-      final harness = await _createControllerHarness();
+      final harness = await _createControllerHarness(
+        localHistoryStore: FileLocalHistoryStore(
+          rootDirectory: () async => Directory(p.join(root.path, '.history')),
+        ),
+      );
       await harness.settingsController.setAutoSave(false);
       final controller = harness.controller._notifier;
       await controller.openPath(root.path);
@@ -6740,11 +6744,13 @@ void _registerReferenceMoveTests() {
         p.join(root.path, 'renamed.md'),
       );
       expect(
-        await controller.renameWorkspaceEntity(
-          target.path,
-          'renamed.md',
-          reviewedPlan: plan,
-        ),
+        await controller
+            .renameWorkspaceEntity(
+              target.path,
+              'renamed.md',
+              reviewedPlan: plan,
+            )
+            .timeout(const Duration(seconds: 10)),
         isTrue,
       );
       expect(controller.state.activeBuffer!.id, id);

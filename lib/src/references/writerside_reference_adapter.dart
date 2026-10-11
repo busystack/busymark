@@ -15,6 +15,20 @@ void addWritersideReferences(
       targets = index.targets,
       references = index.references;
   final origins = writerside.modulesById;
+  String symbolLabel(WritersideSymbol symbol) {
+    final node = origins[symbol.moduleId]?.topics
+        .where((t) => t.filePath == symbol.filePath)
+        .firstOrNull
+        ?.document
+        .contentById(symbol.name)
+        ?.firstOrNull;
+    if (node is WritersideMarkdownBlockNode) return node.block.plainText;
+    if (node is WritersideElementNode) {
+      return node.attributes['title'] ?? symbol.name;
+    }
+    return symbol.name;
+  }
+
   for (final symbol in writerside.symbols.where(
     (s) => {
       WritersideSymbolKind.topic,
@@ -42,7 +56,7 @@ void addWritersideReferences(
         ReferenceTarget(
           document,
           anchor: anchor,
-          label: symbol.name,
+          label: symbolLabel(symbol),
           span: symbol.span,
           moduleId: symbol.moduleId,
           scopeSpan: writerside.modulesById[symbol.moduleId]?.topics
@@ -135,7 +149,7 @@ void addWritersideReferences(
           anchor: symbol.kind == WritersideSymbolKind.topic
               ? null
               : symbol.name,
-          label: symbol.name,
+          label: symbolLabel(symbol),
           span: symbol.span,
           moduleId: symbol.moduleId,
           scopeSpan: origins[symbol.moduleId]?.topics

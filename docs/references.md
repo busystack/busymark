@@ -1,7 +1,6 @@
 # References and links
 
 Open **References** from the sidebar menu or Command Palette. The panel follows
-
 the current document and shows its workspace/account scope. Switch between
 Incoming and Outgoing, or choose a parsed heading, topic element, or reusable
 fragment. Rows show the authored context, destination, and resolution status.
@@ -53,10 +52,14 @@ content prevents automatic restoration and the recovery evidence remains.
 
 ## Portable Nextcloud note links
 
-Choose a synchronized note to insert its ordinary HTTPS Notes web URL:
-`https://server/installation/index.php/apps/notes/note/123`. The real server ID
-survives title/category changes. The supported pretty route is also recognized
-when pasted from a browser. BusyMark intercepts only the exact connected
+Choose a synchronized note to insert its ordinary HTTPS Notes web URL.
+BusyMark first observes the installation's public routing configuration and uses
+`https://server/installation/index.php/apps/notes/note/123` or its configured
+pretty form, `https://server/installation/apps/notes/note/123`. This observation
+is cached for offline authoring. If the route cannot be confirmed, the chooser
+explains the failure and manual URL entry remains available. The real server ID
+survives title/category changes. Both forms are recognized when pasted from a
+browser. BusyMark intercepts only the exact connected
 installation; other URLs retain external navigation. Account removal disables
 that account's internal link resolution.
 
@@ -67,6 +70,6 @@ import creates a new identity and does not redirect an old note ID to it.
 
 A never-synchronized note has no confirmed server ID and cannot supply a
 portable target URL. The chooser explains this rather than creating another
-note. Note heading targets are disabled because equivalent browser fragment
-navigation has not been verified; BusyMark does not invent a persistent link
-syntax for this limitation.
+note. Note heading targets are disabled: the supported Notes browser uses
+different heading IDs from BusyMark's parsed Markdown IDs. BusyMark does not
+invent a persistent link syntax for this limitation.

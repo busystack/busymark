@@ -281,7 +281,11 @@ Future<void> main(List<String> arguments) async {
       throw StateError('304 changed pending local state.');
     }
     checks['m3ConditionalReadPreservesPendingAndCheckpoint'] = true;
-    final url = nextcloudNoteUrl(account.server, target.serverId!);
+    final url = nextcloudNoteUrl(
+      account.server,
+      target.serverId!,
+      pretty: await repository.confirmNoteWebRoute(account.id),
+    );
     final source = await repository.create(
       account.id,
       title: 'M3 link source',

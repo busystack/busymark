@@ -96,6 +96,38 @@ class NotesRepository {
   Stream<void> get changes => _changes.stream;
   NextcloudAccount? accountById(String id) => _accounts[id];
   NextcloudNote? noteById(String id) => _notes[id];
+
+  Future<bool> confirmNoteWebRoute(String accountId) async {
+    _assertMutableAccount(accountId);
+    final account = _accounts[accountId]!;
+    if (account.notesWebPrettyUrls case final cached?) return cached;
+    final generation = accountGeneration(accountId);
+    final client = await _clientForAccount(account);
+    _assertMutableAccount(accountId);
+    if (!_currentAccount(accountId, generation)) {
+      throw const NotesException(
+        NotesFailureCode.missing,
+        'The Nextcloud account changed.',
+      );
+    }
+    final pretty = await client.noteWebPrettyUrls();
+    return _mutate(() async {
+      if (!_currentAccount(accountId, generation)) {
+        throw const NotesException(
+          NotesFailureCode.missing,
+          'The Nextcloud account changed.',
+        );
+      }
+      final updated = _accounts[accountId]!.copyWith(
+        notesWebPrettyUrls: pretty,
+      );
+      await store.saveAccount(updated);
+      _accounts[accountId] = updated;
+      _notify();
+      return pretty;
+    });
+  }
+
   NotesEditorBase editorBase(String id) =>
       NotesEditorBase(_require(id).base, _baseGenerations[id] ?? 0);
   NotesException? accountError(String accountId) => _accountErrors[accountId];
@@ -1082,6 +1114,9 @@ class NotesRepository {
               apiVersion: account.apiVersion,
               apiSupported: account.apiSupported,
               capabilitiesCheckedAt: account.capabilitiesCheckedAt,
+              notesWebPrettyUrls: reconnect
+                  ? null
+                  : existing.notesWebPrettyUrls,
             );
       final recovered = reconnect
           ? notes

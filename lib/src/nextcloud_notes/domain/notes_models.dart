@@ -122,6 +122,7 @@ class NextcloudAccount {
     this.apiSupported = true,
     this.settingsAttempt,
     this.throttleNotBefore,
+    this.notesWebPrettyUrls,
   });
 
   final String id;
@@ -136,6 +137,9 @@ class NextcloudAccount {
   final bool apiSupported;
   final NotesSettingsAttempt? settingsAttempt;
   final DateTime? throttleNotBefore;
+
+  /// Optional, backward-compatible observation of the installation's web router.
+  final bool? notesWebPrettyUrls;
 
   /// DELETE was added without an API capability bump (upstream #2037).
   /// Unknown/malformed/prerelease versions cannot establish support.
@@ -160,6 +164,7 @@ class NextcloudAccount {
     DateTime? capabilitiesCheckedAt,
     Object? settingsAttempt = _unchanged,
     Object? throttleNotBefore = _unchanged,
+    Object? notesWebPrettyUrls = _unchanged,
   }) => NextcloudAccount(
     id: id,
     server: server,
@@ -181,6 +186,9 @@ class NextcloudAccount {
     throttleNotBefore: identical(throttleNotBefore, _unchanged)
         ? this.throttleNotBefore
         : throttleNotBefore as DateTime?,
+    notesWebPrettyUrls: identical(notesWebPrettyUrls, _unchanged)
+        ? this.notesWebPrettyUrls
+        : notesWebPrettyUrls as bool?,
   );
   NextcloudAccount withCheckpoint(String? etag, String? modified) =>
       copyWith(listEtag: etag, lastModified: modified);
@@ -198,6 +206,7 @@ class NextcloudAccount {
     'apiSupported': apiSupported,
     'settingsAttempt': settingsAttempt?.toJson(),
     'throttleNotBefore': throttleNotBefore?.toIso8601String(),
+    if (notesWebPrettyUrls != null) 'notesWebPrettyUrls': notesWebPrettyUrls,
   };
 
   factory NextcloudAccount.fromJson(Map<String, dynamic> json) =>
@@ -216,6 +225,7 @@ class NextcloudAccount {
           json['capabilitiesCheckedAt'] as String? ?? '',
         ),
         apiSupported: json['apiSupported'] as bool? ?? true,
+        notesWebPrettyUrls: json['notesWebPrettyUrls'] as bool?,
         settingsAttempt: json['settingsAttempt'] == null
             ? null
             : NotesSettingsAttempt.fromJson(

@@ -4288,16 +4288,15 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     });
   }
 
-  Future<String> _applyMarkdownMove(
+  Future<MarkdownMovePlan?> _protectMarkdownMove(
     Workspace workspace,
     String source,
     String destination,
     MarkdownMovePlan? reviewed,
-    Future<String> Function() move,
   ) async {
     if (workspace.kind != WorkspaceKind.markdownFolder ||
         p.equals(source, destination)) {
-      return move();
+      return null;
     }
     final service = MarkdownMoveService(workspaceService: _service);
     final plan =
@@ -4326,7 +4325,25 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         );
       }
     }
-    return service.apply(plan, move: move, validateBuffers: validateBuffers);
+    return plan;
+  }
+
+  Future<String> _applyMarkdownMove(
+    Workspace workspace,
+    String source,
+    String destination,
+    MarkdownMovePlan? plan,
+    Future<String> Function() move,
+  ) async {
+    if (plan == null) return move();
+    if (state.workspace?.id != plan.workspaceId) {
+      throw StateError('The reviewed workspace changed.');
+    }
+    void validateBuffers() =>
+        _requireCleanAffectedFiles(workspace, plan.snapshots.keys);
+    return MarkdownMoveService(
+      workspaceService: _service,
+    ).apply(plan, move: move, validateBuffers: validateBuffers);
   }
 
   Future<bool> renameWorkspaceEntity(
@@ -4337,6 +4354,12 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     final activeFilePath = state.workspace?.activeFilePath;
     return _runWorkspaceFileOperation((workspace) async {
       final expectedTarget = p.normalize(p.join(p.dirname(path), newName));
+      final protectedPlan = await _protectMarkdownMove(
+        workspace,
+        path,
+        expectedTarget,
+        reviewedPlan,
+      );
       final transitions = _beginLocalHistoryPathTransitions(
         path,
         expectedTarget,
@@ -4351,7 +4374,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
             workspace,
             path,
             expectedTarget,
-            reviewedPlan,
+            protectedPlan,
             () => _service.renameEntity(workspace, path, newName),
           ),
           didCommit: (_) => true,
@@ -4383,6 +4406,12 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       final expectedTarget = p.normalize(
         p.join(targetDirectoryPath, p.basename(sourcePath)),
       );
+      final protectedPlan = await _protectMarkdownMove(
+        workspace,
+        sourcePath,
+        expectedTarget,
+        reviewedPlan,
+      );
       final transitions = _beginLocalHistoryPathTransitions(
         sourcePath,
         expectedTarget,
@@ -4397,7 +4426,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
             workspace,
             sourcePath,
             expectedTarget,
-            reviewedPlan,
+            protectedPlan,
             () =>
                 _service.moveEntity(workspace, sourcePath, targetDirectoryPath),
           ),

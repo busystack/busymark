@@ -61,8 +61,9 @@ def main():
                   if "BUSYMARK_TEST_TLS_SPKI" in os.environ else []),
         )
         try:
-            page = browser.new_page()
-            page.goto(flow["login"], wait_until="networkidle", timeout=60000)
+            context = browser.new_context()
+            page = context.new_page()
+            page.goto(flow["login"], wait_until="domcontentloaded", timeout=60000)
             if page.locator("#user").count() == 0:
                 page.get_by_role("button", name=re.compile("Log in", re.I)).first.click()
             page.locator("#user").fill(account["user"])
@@ -96,8 +97,8 @@ def main():
             assert after.status_code == 404, "Login Flow success was not one-time."
             if len(sys.argv) == 5:
                 published = json.loads(Path(sys.argv[4]).read_text(encoding="utf-8"))
-                source_url = server + "/index.php/apps/notes/note/" + str(published["sourceId"])
-                page.goto(source_url, wait_until="networkidle", timeout=60000)
+                source_url = published["href"].rsplit("/note/", 1)[0] + "/note/" + str(published["sourceId"])
+                page.goto(source_url, wait_until="domcontentloaded", timeout=60000)
                 wizard = page.locator('#firstrunwizard[role=dialog]')
                 if wizard.count() and wizard.is_visible():
                     wizard.get_by_role('button', name=re.compile('close', re.I)).first.click()
@@ -109,25 +110,55 @@ def main():
                         preview.first.click()
                 link.wait_for(state="visible", timeout=60000)
                 page.screenshot(path=str(Path(sys.argv[3]).with_suffix(".source.png")), full_page=True)
-                link.click(modifiers=["Control"])
+                # Nextcloud's rich editor opens ordinary links through its
+                # link context menu; keyboard modifiers select editor content.
+                link.click(button='right')
+                page.wait_for_timeout(300)
+                page.screenshot(path=str(Path(sys.argv[3]).with_suffix('.link-menu.png')), full_page=True)
+                Path(sys.argv[3]).with_suffix('.link-menu.html').write_text(page.content())
+                with page.expect_popup(timeout=60000) as popup:
+                    page.get_by_role('button', name='Open link', exact=True).click()
+                popup.value.wait_for_load_state('domcontentloaded', timeout=60000)
                 page.wait_for_timeout(1500)
                 page.screenshot(path=str(Path(sys.argv[3]).with_suffix('.after-click.png')), full_page=True)
                 Path(sys.argv[3]).with_suffix('.after-click.html').write_text(page.content())
-                opened = next((candidate for candidate in page.context.pages if "/note/" + str(published["targetId"]) in candidate.url), None)
+                opened = next((candidate for candidate in page.context.pages if re.search(r"/note/" + str(published["targetId"]) + r"(?:[#?]|$)", candidate.url)), None)
+                Path(sys.argv[3]).with_suffix('.pages.json').write_text(json.dumps([p.url for p in page.context.pages]))
+                if opened is None:
+                    probes = []
+                    for route in ['/index.php/apps/notes/note/', '/apps/notes/note/']:
+                        probe = page.context.new_page()
+                        probe.goto(server + route + str(published['targetId']), wait_until='domcontentloaded', timeout=60000)
+                        probe.wait_for_timeout(1500)
+                        probes.append({'requested': server + route + str(published['targetId']), 'url': probe.url,
+                            'headings': probe.locator('.ProseMirror h1').all_text_contents()})
+                    Path(sys.argv[3]).with_suffix('.route-probes.json').write_text(json.dumps(probes,indent=2))
                 assert opened is not None, "Stored BusyMark link did not open the intended browser note."
                 opened.get_by_text(published["marker"], exact=True).first.wait_for(state="visible", timeout=60000)
                 opened.screenshot(path=str(Path(sys.argv[3]).with_suffix(".target.png")), full_page=True)
-                pretty = server + "/apps/notes/note/" + str(published["targetId"])
-                opened.goto(pretty, wait_until="networkidle", timeout=60000)
-                opened.get_by_text(published["marker"], exact=True).first.wait_for(state="visible", timeout=60000)
-                opened.goto(published["href"] + "#heading", wait_until="networkidle", timeout=60000)
+                browser_url = opened.url
+                route_checks = {}
+                for name, route in [("frontController", "/index.php/apps/notes/note/"), ("pretty", "/apps/notes/note/")]:
+                    probe = page.context.new_page()
+                    requested = server + route + str(published["targetId"])
+                    probe.goto(requested, wait_until="domcontentloaded", timeout=60000)
+                    probe.wait_for_timeout(1500)
+                    route_checks[name] = {
+                        "requested": requested,
+                        "opened": probe.url,
+                        "openedIntendedNote": bool(re.search(r"/note/" + str(published["targetId"]) + r"(?:[#?]|$)", probe.url)) and probe.get_by_text(published["marker"], exact=True).count() > 0,
+                    }
+                    probe.close()
+                opened.goto(published["href"] + "#heading", wait_until="domcontentloaded", timeout=60000)
                 opened.get_by_text(published["marker"], exact=True).first.wait_for(state="visible", timeout=60000)
                 portable_checks = {
                     "storedBusyMarkLinkOpenedIntendedNote": True,
-                    "frontControllerRoute": True,
-                    "prettyRouteOpenedIntendedNote": True,
+                    "generatedHref": published["href"],
+                    "browserNoteUrl": browser_url,
+                    "routes": route_checks,
                     "browserFragment": opened.evaluate("location.hash"),
                     "browserHasBusyMarkHeadingId": opened.locator('[id="heading"]').count() > 0,
+                    "browserHeadingIds": opened.locator('.ProseMirror h1, .ProseMirror h2, .ProseMirror h3').evaluate_all('(nodes) => nodes.map(node => node.id)'),
                     "installationPath": requests.utils.urlparse(server).path,
                 }
         finally:

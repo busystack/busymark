@@ -593,12 +593,7 @@ class _ResolveState {
         attributes['anchor']?.replaceFirst(RegExp(r'^#'), '') ??
         (hash < 0 ? '' : href.substring(hash + 1));
     final destination = '$path${anchor.isEmpty ? '' : '#$anchor'}';
-    var decodedAnchor = anchor;
-    try {
-      decodedAnchor = Uri.decodeComponent(anchor);
-    } on FormatException {
-      // Preserve malformed fragments so normal reference validation reports them.
-    }
+    final decodedAnchor = decodeWritersideReferenceComponent(anchor);
     if (Uri.tryParse(path)?.hasScheme == true) {
       return {
         'resolved-destination': destination,

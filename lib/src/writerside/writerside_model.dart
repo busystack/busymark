@@ -655,12 +655,7 @@ class WritersideModule {
     String reference, {
     WritersideTopic? fromTopic,
   }) {
-    var decoded = reference;
-    try {
-      decoded = Uri.decodeComponent(reference);
-    } on FormatException {
-      // Malformed destinations retain their authored value for diagnostics.
-    }
+    final decoded = decodeWritersideReferenceComponent(reference);
     final normalized = _normalizedTopicReference(decoded);
     if (normalized.isEmpty) {
       return fromTopic == null ? const [] : [fromTopic];
@@ -703,6 +698,22 @@ class WritersideModule {
 
 String _normalizedTopicReference(String value) {
   return p.normalize(value.trim()).replaceAll(r'\', '/');
+}
+
+/// URI destinations may contain authored Unicode or unresolved variables.
+String decodeWritersideReferenceComponent(String value) {
+  try {
+    return Uri.decodeComponent(
+      value.replaceAllMapped(
+        RegExp(r'[^\x00-\x7f]+'),
+        (match) => Uri.encodeComponent(match[0]!),
+      ),
+    );
+  } on ArgumentError {
+    return value;
+  } on FormatException {
+    return value;
+  }
 }
 
 extension _FirstOrNull<T> on List<T> {

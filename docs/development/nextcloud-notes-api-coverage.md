@@ -13,7 +13,7 @@ API integration, one account, schema **6**, existing outbox/coordinator retained
 | GET/PUT settings | Existing conditional/concurrent settings handling and suffix normalization | Existing settings boundary |
 | GET/POST attachment | Existing authenticated API 1.4 retrieval/upload and safe managed-reference publication | Existing ownership, generation and uncertainty protections |
 | DELETE attachment | Notes 6.1.0 application capability gate retained | Existing unsupported-version explanation |
-| Browser `/note/{id}` | Ordinary HTTPS web navigation, installation prefix, real server ID; pretty/front-controller recognition | Existing connected-account opening; cached offline or authenticated repository retrieval |
+| Browser `/note/{id}` | Ordinary HTTPS web navigation, installation prefix, real server ID; public routing observation selects the configured pretty/front-controller form | Existing connected-account opening; cached offline or authenticated repository retrieval |
 
 A category filter is exact on the supported servers; it is not a descendant
 category synchronization strategy. Exclude can omit ID; ID-only entries repeated
@@ -22,6 +22,16 @@ notes. Optional reads do not feed the full-account synchronization checkpoint.
 The tagged helper always adds ETag and some internal server fields; projections
 retain present fields rather than promising that every excluded server field
 will disappear.
+
+The public installation login page's explicit `modRewriteWorking` configuration
+selects the web URL form. This anonymous, bounded request never sends account
+credentials or follows redirects. A successful HTTP response from the other
+form does not prove navigation: on a pretty-URL installation the Notes SPA can
+open its most recent note instead. Browser acceptance verifies the intended
+note ID and unique content. The optional cached route observation is stored in
+the existing account JSON; schema 6 and synchronization checkpoints are unchanged.
+BusyMark recognizes both pasted forms internally. Portable heading insertion
+is disabled because the supported browser heading IDs differ from BusyMark's.
 
 Deterministic retrieval tests are in
 `test/src/nextcloud_notes/notes_retrieval_test.dart`; authenticated fixture checks

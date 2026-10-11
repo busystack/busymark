@@ -651,11 +651,7 @@ class WritersideProjectIndex {
     final hash = value.indexOf('#');
     var normalized = hash < 0 ? value : value.substring(hash + 1);
     if (hash >= 0) {
-      try {
-        normalized = Uri.decodeComponent(normalized);
-      } on FormatException {
-        // Keep malformed fragments unresolved.
-      }
+      normalized = decodeWritersideReferenceComponent(normalized);
     }
     final module = modulesById[targetModule];
     final fromTopic = module?.topics

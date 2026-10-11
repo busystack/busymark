@@ -66,6 +66,49 @@ class NotesApiClient {
   final DateTime Function() clock;
   final Future<void> Function(String)? onApiVersions;
 
+  /// Web navigation configuration, observed without sending any credential.
+  /// This is not a Notes synchronization or collection retrieval request.
+  Future<bool> noteWebPrettyUrls() async {
+    try {
+      final request = http.Request(
+        'GET',
+        nextcloudEndpoint(account.server, 'index.php/login'),
+      )..followRedirects = false;
+      final response = await _client.send(request).timeout(timeout);
+      if (response.statusCode != 200) {
+        throw const FormatException('Web route unavailable.');
+      }
+      final bytes = <int>[];
+      final input = StreamIterator(response.stream);
+      final bodyDeadline = Stopwatch()..start();
+      try {
+        while (await input.moveNext().timeout(timeout - bodyDeadline.elapsed)) {
+          bytes.addAll(input.current);
+          if (bytes.length > 2 * 1024 * 1024) {
+            throw const FormatException('Web configuration too large.');
+          }
+        }
+      } finally {
+        await input.cancel();
+      }
+      final source = utf8.decode(bytes);
+      final config = RegExp(
+        r'var\s+_oc_config\s*=\s*(\{[^\n]*\})\s*;',
+      ).firstMatch(source);
+      final value = config == null
+          ? null
+          : jsonDecode(config[1]!)['modRewriteWorking'];
+      if (value is! bool) throw const FormatException('Web route unconfirmed.');
+      return value;
+    } on Object {
+      throw const NotesException(
+        NotesFailureCode.network,
+        'The installation’s note web route could not be verified. Manual URLs remain available.',
+        scope: NotesRequestScope.account,
+      );
+    }
+  }
+
   NotesRequestScope _scope(http.BaseRequest request) =>
       request.url.path.contains('/attachment/')
       ? NotesRequestScope.attachment

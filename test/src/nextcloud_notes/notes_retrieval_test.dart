@@ -60,6 +60,55 @@ void main() {
   );
 
   test(
+    'web route observes explicit configuration without credentials or redirects',
+    () async {
+      for (final pretty in [true, false]) {
+        final result = await api((request) async {
+          expect(
+            request.url.path,
+            '${testAccount().server.path}/index.php/login',
+          );
+          expect(request.followRedirects, isFalse);
+          expect(request.headers.containsKey('Authorization'), isFalse);
+          return http.Response(
+            '<script>var _oc_config={"modRewriteWorking":$pretty};</script>',
+            200,
+          );
+        }).noteWebPrettyUrls();
+        expect(result, pretty);
+        expect(
+          nextcloudNoteUrl(testAccount().server, 42, pretty: result).path,
+          '${testAccount().server.path}${pretty ? '' : '/index.php'}/apps/notes/note/42',
+        );
+      }
+      await expectLater(
+        api(
+          (_) async => http.Response(
+            '',
+            302,
+            headers: {'location': 'https://evil.example'},
+          ),
+        ).noteWebPrettyUrls(),
+        throwsA(isA<NotesException>()),
+      );
+    },
+  );
+  test(
+    'optional web observation round trips without changing schema or checkpoint',
+    () {
+      final original = testAccount(listEtag: '"checkpoint"');
+      final restored = NextcloudAccount.fromJson(
+        original.copyWith(notesWebPrettyUrls: true).toJson(),
+      );
+      expect(restored.notesWebPrettyUrls, isTrue);
+      expect(restored.listEtag, original.listEtag);
+      expect(
+        NextcloudAccount.fromJson(original.toJson()).notesWebPrettyUrls,
+        isNull,
+      );
+    },
+  );
+  test(
     'conditional 200/304 retains complete representation and quoted validator',
     () async {
       final cached = NoteState.fromJson(serverNote(1));

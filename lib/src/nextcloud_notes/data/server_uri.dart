@@ -72,9 +72,12 @@ bool nextcloudSameOrigin(Uri first, Uri second) =>
     first.port == second.port;
 
 /// Portable web navigation, independent of title/category and local database IDs.
-Uri nextcloudNoteUrl(Uri server, int serverId) {
+Uri nextcloudNoteUrl(Uri server, int serverId, {bool pretty = false}) {
   if (serverId <= 0) throw ArgumentError.value(serverId, 'serverId');
-  return nextcloudEndpoint(server, 'index.php/apps/notes/note/$serverId');
+  return nextcloudEndpoint(
+    server,
+    '${pretty ? '' : 'index.php/'}apps/notes/note/$serverId',
+  );
 }
 
 /// Recognizes only this exact installation, with front-controller or pretty URLs.

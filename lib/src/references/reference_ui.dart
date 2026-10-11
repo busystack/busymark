@@ -16,6 +16,7 @@ import 'reference_controller.dart';
 import 'reference_index.dart';
 import 'markdown_move_ui.dart';
 import 'dart:io';
+import 'dart:async';
 
 Future<LinkDestination?> showReferenceLinkChooser(
   BuildContext context, {
@@ -45,12 +46,29 @@ class _ReferenceLinkChooserState extends ConsumerState<ReferenceLinkChooser> {
   int _limit = 100;
   late final String? _workspaceId;
   late final String? _bufferId;
+  bool? _prettyUrls;
+  String? _routeFailure;
   @override
   void initState() {
     super.initState();
     final state = ref.read(workspaceControllerProvider);
     _workspaceId = state.workspace?.id;
     _bufferId = state.activeBufferId;
+    if (state.workspace?.nextcloudAccountId case final id?) {
+      unawaited(_confirmRoute(id));
+    }
+  }
+
+  Future<void> _confirmRoute(String id) async {
+    try {
+      final repository = await ref.read(
+        nextcloudNotesRepositoryProvider.future,
+      );
+      final pretty = await repository.confirmNoteWebRoute(id);
+      if (mounted) setState(() => _prettyUrls = pretty);
+    } on Object catch (error) {
+      if (mounted) setState(() => _routeFailure = error.toString());
+    }
   }
 
   @override
@@ -76,11 +94,15 @@ class _ReferenceLinkChooserState extends ConsumerState<ReferenceLinkChooser> {
       return null;
     }
     if (index.server != null) {
-      if (target.document.serverId == null) return null;
+      if (target.document.serverId == null || _prettyUrls == null) return null;
       // Nextcloud browser heading fragments are not a verified portable route.
       if (target.anchor != null) return null;
       return LinkDestination(
-        nextcloudNoteUrl(index.server!, target.document.serverId!).toString(),
+        nextcloudNoteUrl(
+          index.server!,
+          target.document.serverId!,
+          pretty: _prettyUrls!,
+        ).toString(),
       );
     }
     final source = state.activeBuffer?.filePath;
@@ -150,6 +172,7 @@ class _ReferenceLinkChooserState extends ConsumerState<ReferenceLinkChooser> {
         ),
       ],
       children: [
+        if (_routeFailure != null) Text(_routeFailure!),
         TextField(
           controller: _url,
           autofocus: true,

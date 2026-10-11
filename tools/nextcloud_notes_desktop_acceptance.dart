@@ -65,9 +65,13 @@ Future<void> main(List<String> args) async {
   final password = credentials['appPassword'] as String;
   final performance = args.length == 5 && args[4] == '--performance-m2';
   final milestone3 = args.length == 5 && args[4] == '--m3';
-  final local3 = args.length == 5 && args[4] == '--local-m3';
+  final local3 =
+      args.length == 5 &&
+      ['--local-m3', '--restart-local-m3'].contains(args[4]);
   final writerside3 = args.length == 5 && args[4] == '--writerside-m3';
-  final restart3 = args.length == 5 && args[4] == '--restart-m3';
+  final restart3 =
+      args.length == 5 &&
+      ['--restart-m3', '--restart-local-m3'].contains(args[4]);
   final restarting = args.length == 5 && args[4] == '--restart-m2';
   final stopOffline = args.length == 5 && args[4] == '--stop-offline-m2';
   final correctionsStart =
@@ -342,7 +346,9 @@ class _HarnessState extends ConsumerState<_Harness> {
     final deadline = DateTime.now().add(Duration(seconds: seconds));
     while (!test()) {
       if (DateTime.now().isAfter(deadline)) {
-        throw StateError('Timed out: $name');
+        throw StateError(
+          'Timed out: $name; workspace error: ${ref.read(workspaceControllerProvider).message?.error}',
+        );
       }
       await Future<void>.delayed(const Duration(milliseconds: 100));
     }
@@ -994,10 +1000,34 @@ class _HarnessState extends ConsumerState<_Harness> {
       await nativeShortcut('down', focusWindow: false);
     }
     await nativeShortcut('enter', focusWindow: false);
+    await Future<void>.delayed(const Duration(milliseconds: 300));
+    await WidgetsBinding.instance.endOfFrame;
   }
 
   Future<void> localReferenceJourney(WorkspaceController workspace) async {
     final root = Directory('${widget.output.path}/local');
+    if (widget.restart3) {
+      await workspace.openFolder(root.path);
+      await workspace.openActiveFile('${root.path}/source.md');
+      workspace.updateActiveEditorMode(DocumentViewModePreference.preview);
+      await ref
+          .read(appSettingsControllerProvider.notifier)
+          .setDocumentViewMode(DocumentViewModePreference.preview);
+      await tapAuthoredLink('Selected link');
+      await wait(
+        () =>
+            ref.read(workspaceControllerProvider).activeBuffer?.filePath ==
+            '${root.path}/new/renamed.md',
+        'local link after process restart',
+      );
+      await wait(
+        () => widgets<Image>().any((i) => i.image is FileImage),
+        'local media after process restart',
+      );
+      await capture('m3-local-process-restart');
+      check(true, 'm3LocalLinksAndMediaAfterProcessRestart');
+      return;
+    }
     await root.create(recursive: true);
     await Directory('${root.path}/old').create();
     await Directory('${root.path}/new').create();
@@ -1043,9 +1073,7 @@ class _HarnessState extends ConsumerState<_Harness> {
           '${root.path}/old/target.md',
       'local reference navigation',
     );
-    await ref
-        .read(busyMarkCommandRegistryProvider)
-        .execute(BusyMarkCommandIds.sidebarFiles);
+    await nativeShortcut('ctrl+1');
     await treeAction('old', expand: true);
     await treeAction('target.md', menu: 'Rename');
     await wait(
@@ -1124,6 +1152,23 @@ class _HarnessState extends ConsumerState<_Harness> {
     ]);
     if (copied.exitCode != 0) throw StateError('Fixture copy failed');
     await workspace.openFolder(root.path);
+    await workspace.openActiveFile('${root.path}/topics/target.topic');
+    workspace.updateActiveEditorMode(DocumentViewModePreference.source);
+    await ref
+        .read(appSettingsControllerProvider.notifier)
+        .setDocumentViewMode(DocumentViewModePreference.source);
+    await chooseAuthoredLink(
+      'Explicit heading',
+      'source.md#explicit-heading',
+      selected: 'Element destination.',
+    );
+    await workspace.saveActive();
+    check(
+      (await File('${root.path}/topics/target.topic').readAsString()).contains(
+        '<a href="source.md#explicit-heading">Element destination.</a>',
+      ),
+      'm3WritersideXmlChooserSemanticLink',
+    );
     await workspace.openActiveFile('${root.path}/topics/source.md');
     await ref
         .read(busyMarkCommandRegistryProvider)
@@ -1142,9 +1187,7 @@ class _HarnessState extends ConsumerState<_Harness> {
       'Writerside element references',
     );
     await capture('m3-writerside-references');
-    await ref
-        .read(busyMarkCommandRegistryProvider)
-        .execute(BusyMarkCommandIds.sidebarFiles);
+    await nativeShortcut('ctrl+1');
     await treeAction('topics', expand: true);
     await treeAction('target.topic', menu: 'Rename Topic File');
     await wait(
@@ -1158,15 +1201,19 @@ class _HarnessState extends ConsumerState<_Harness> {
       ),
       'renamed.topic',
     );
-    await label('Rename');
+    await label('Preview');
     await wait(
       () => widgets<Text>().any((t) => t.data == 'Rename Preview'),
       'established Writerside rename preview',
     );
     await capture('m3-writerside-refactoring');
-    await label('Rename');
+    await label('Do Refactor');
     await wait(
-      () => File('${root.path}/topics/renamed.topic').existsSync(),
+      () =>
+          File('${root.path}/topics/renamed.topic').existsSync() &&
+          File('${root.path}/topics/source.md')
+              .readAsStringSync()
+              .contains('[target]: renamed.topic#actual-id'),
       'Writerside reviewed topic publication',
     );
     final source = await File('${root.path}/topics/source.md').readAsString();
@@ -1180,8 +1227,9 @@ class _HarnessState extends ConsumerState<_Harness> {
 
   Future<void> chooseAuthoredLink(
     String search,
-    String destinationLabel,
-  ) async {
+    String destinationLabel, {
+    String selected = 'Selected link',
+  }) async {
     await wait(
       () => widgets<BusyMarkSourceEditor>().isNotEmpty,
       'source editor for link authoring',
@@ -1190,7 +1238,7 @@ class _HarnessState extends ConsumerState<_Harness> {
         (widgets<BusyMarkSourceEditor>().single.key as GlobalKey).currentState!
             as BusyMarkSourceEditorState;
     final source = ref.read(workspaceControllerProvider).activeText;
-    final start = source.indexOf('Selected link');
+    final start = source.indexOf(selected);
     editor.scrollToOffset(start, updateSelection: false);
     await WidgetsBinding.instance.endOfFrame;
     final editable = widgets<EditableText>().firstWhere(
@@ -1198,7 +1246,7 @@ class _HarnessState extends ConsumerState<_Harness> {
     );
     editable.controller.selection = TextSelection(
       baseOffset: start,
-      extentOffset: start + 'Selected link'.length,
+      extentOffset: start + selected.length,
     );
     editable.focusNode.requestFocus();
     await nativeShortcut('ctrl+k');
@@ -1313,7 +1361,12 @@ class _HarnessState extends ConsumerState<_Harness> {
     final targetId = repository.noteById(target.localId)!.serverId!;
     created.add(targetId);
     created.add(repository.noteById(source.localId)!.serverId!);
-    final href = nextcloudNoteUrl(widget.account.server, targetId).toString();
+    final pretty = await repository.confirmNoteWebRoute(widget.account.id);
+    final href = nextcloudNoteUrl(
+      widget.account.server,
+      targetId,
+      pretty: pretty,
+    ).toString();
     await workspace.openNextcloudNote(source.localId);
     workspace.updateActiveEditorMode(DocumentViewModePreference.source);
     await ref
@@ -1422,9 +1475,7 @@ class _HarnessState extends ConsumerState<_Harness> {
     );
     await capture('m3-references-incoming');
     check(true, 'm3RenderedLinkAndIncomingReferences');
-    await ref
-        .read(busyMarkCommandRegistryProvider)
-        .execute(BusyMarkCommandIds.sidebarFiles);
+    await nativeShortcut('ctrl+1');
     await wait(
       () => widgets<ListTile>().any(
         (t) => t.key == ValueKey('nextcloud-note-${target.localId}'),
@@ -1490,6 +1541,30 @@ class _HarnessState extends ConsumerState<_Harness> {
     );
     widget.transport.offline = true;
     await workspace.openNextcloudNote(source.localId);
+    await workspace.openNextcloudNote(source.localId);
+    widget.transport.offline = false;
+    final originalSource = ref.read(workspaceControllerProvider).activeText;
+    workspace.updateActiveText(
+      '$originalSource\n[Missing target](${nextcloudNoteUrl(widget.account.server, 99999999, pretty: pretty)})',
+    );
+    workspace.updateActiveEditorMode(DocumentViewModePreference.preview);
+    await ref
+        .read(appSettingsControllerProvider.notifier)
+        .setDocumentViewMode(DocumentViewModePreference.preview);
+    await tapAuthoredLink('Missing target');
+    await wait(
+      () => ref.read(workspaceControllerProvider).message?.error != null,
+      'explicit missing linked-note error',
+    );
+    check(
+      ref.read(workspaceControllerProvider).activeBuffer?.remoteNote?.localId ==
+              source.localId &&
+          ref.read(workspaceControllerProvider).activeBuffer!.isDirty,
+      'm3MissingTargetPreservesDirtySource',
+    );
+    await capture('m3-missing-target-failure');
+    workspace.updateActiveText(originalSource);
+    widget.transport.offline = true;
     await capture('m3-offline-ready');
   }
 
@@ -1982,6 +2057,8 @@ class _HarnessState extends ConsumerState<_Harness> {
       'large sidebar',
     );
     await capture('m2-10000-sidebar');
+    ref.read(referencePanelRequestProvider.notifier).request();
+    await WidgetsBinding.instance.endOfFrame;
     final watch = Stopwatch()..start();
     final quick = showQuickOpen(rootNavigatorKey.currentContext!, ref);
     await wait(
@@ -2255,6 +2332,14 @@ class _HarnessState extends ConsumerState<_Harness> {
   Future<void> run() async {
     Object? failure;
     StackTrace? failureStack;
+    final diagnostics = ref.listenManual(workspaceControllerProvider, (
+      before,
+      after,
+    ) {
+      if (after.message?.error != null) {
+        stderr.writeln('Acceptance workspace failure: ${after.message!.error}');
+      }
+    });
     try {
       repository = await ref.read(nextcloudNotesRepositoryProvider.future);
       await repository.upsertAccount(widget.account);
@@ -2764,6 +2849,7 @@ class _HarnessState extends ConsumerState<_Harness> {
       } catch (_) {}
       failureStack = stack;
     } finally {
+      diagnostics.close();
       widget.transport.offline =
           widget.restart ||
           widget.restart3 ||
