@@ -1,3 +1,11 @@
+import '../../editor/wysiwyg/wysiwyg_commands.dart';
+import '../../writerside/writerside_property_validation.dart';
+import '../../writerside/writerside_effective_properties.dart';
+import '../../editor/wysiwyg/writerside_inspector_target.dart';
+import '../../editor/wysiwyg/writerside_properties.dart';
+import '../../editor/wysiwyg/writerside_property_session.dart';
+import '../../editor/wysiwyg/wysiwyg_document_controller.dart';
+import '../../editor/wysiwyg/wysiwyg_inline_controller.dart';
 import '../../references/markdown_move_ui.dart';
 import '../../nextcloud_notes/presentation/notes_workspace_ui.dart';
 import '../../nextcloud_notes/data/server_uri.dart';
@@ -12040,6 +12048,12 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
   _SourceNavigationTarget? _lastSourceNavigationTarget;
   final _sourceEditorKey = GlobalKey<BusyMarkSourceEditorState>();
   final _wysiwygEditorKey = GlobalKey<BusyMarkWysiwygEditorState>();
+  WritersideInspectorTarget? _inspected;
+  bool _videoPropertyDraft = false;
+  TextSelection? _lastPropertiesSourceSelection;
+  String? _lastPropertiesSourceBuffer;
+  String? _propertiesSourceOwner;
+  final _propertiesPanelKey = GlobalKey();
   late final SpellingSessionController _spelling;
   final _previewBlockContexts = <int, BuildContext>{};
   String _lastPath = '';
@@ -12288,6 +12302,21 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
         ),
       );
     }
+    if (sourceVisible && activeBuffer != null) {
+      final owner = '${activeBuffer.id}:${widget.viewMode.name}';
+      if (_propertiesSourceOwner != owner) {
+        _propertiesSourceOwner = owner;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted || _propertiesSourceOwner != owner) return;
+          final live = ref.read(workspaceControllerProvider).activeBuffer;
+          if (live == null || live.id != activeBuffer.id) return;
+          _lastPropertiesSourceSelection = null;
+          _inspectSourceSelection(live.editorState.selection);
+        });
+      }
+    } else {
+      _propertiesSourceOwner = null;
+    }
     final sourceTarget = ref.watch(_sourceNavigationTargetProvider);
     if (sourceVisible &&
         sourceTarget != null &&
@@ -12416,6 +12445,19 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
                           Expanded(
                             key: const ValueKey('document-wysiwyg-pane'),
                             child: BusyMarkWysiwygEditor(
+                              onInspectElement: _inspectEditorElement,
+                              onPropertiesRequested: _showProperties,
+                              onVideoPropertiesRequested: (document, id) {
+                                _inspectEditorElement(
+                                  document,
+                                  id,
+                                  null,
+                                  true,
+                                  false,
+                                );
+                                setState(() => _videoPropertyDraft = true);
+                                _showProperties();
+                              },
                               onChooseLink: (initial) =>
                                   showReferenceLinkChooser(
                                     context,
@@ -12427,10 +12469,20 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
                                   ?.writersideProject
                                   ?.index,
                               writersideModuleId: _activeWritersideModuleId(),
+                              resolvedWritersideProperties:
+                                  _effectiveDocumentPropertyOccurrences(
+                                    _wysiwygDocument()!,
+                                  ),
+                              writersideSettings:
+                                  resolveWorkspaceDocumentContext(
+                                    widget.state.workspace!,
+                                    activeBuffer!,
+                                  ).writersideModule?.config.settings ??
+                                  const WritersideSettingsConfig(),
                               key: _wysiwygEditorKey,
                               document: wysiwygDocument,
-                              documentId: activeBuffer?.id,
-                              contentRevision: activeBuffer?.revision,
+                              documentId: activeBuffer.id,
+                              contentRevision: activeBuffer.revision,
                               spellingAnnotations: _spelling.annotations,
                               onCheckSpelling: () =>
                                   unawaited(_openSpellingReview()),
@@ -12444,8 +12496,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
                                   )
                                   .retain,
                               initialSessionState:
-                                  activeBuffer?.editorState.wysiwygState ??
-                                  const WysiwygEditorSessionState(),
+                                  activeBuffer.editorState.wysiwygState,
                               useExternalUndoHistory: true,
                               onSessionChanged: (documentId, session) {
                                 final latest = ref
@@ -12511,19 +12562,19 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
                               ),
                               onDocumentChanged: (document) =>
                                   _cacheWysiwygDocument(
-                                    activeBuffer?.id,
+                                    activeBuffer.id,
                                     document,
                                   ),
                               onSourceChanged: (filePath, value) =>
                                   _handleWysiwygSourceChanged(
-                                    activeBuffer?.id,
+                                    activeBuffer.id,
                                     filePath,
                                     value,
                                   ),
                               onTransactionalSourceChanged:
                                   (filePath, value, [undoGroup]) =>
                                       _handleWysiwygSourceChanged(
-                                        activeBuffer?.id,
+                                        activeBuffer.id,
                                         filePath,
                                         value,
                                         undoGroup,
@@ -12531,7 +12582,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
                               onSpellingSourceChanged:
                                   (filePath, value, before, after) =>
                                       _handleWysiwygSpellingSourceChanged(
-                                        activeBuffer?.id,
+                                        activeBuffer.id,
                                         filePath,
                                         value,
                                         before,
@@ -12593,10 +12644,8 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
                                         expressionId: expressionId,
                                         code: code,
                                         sourceSpan: sourceSpan,
-                                        expectedRevision:
-                                            activeBuffer?.revision,
-                                        expectedFilePath:
-                                            activeBuffer?.filePath,
+                                        expectedRevision: activeBuffer.revision,
+                                        expectedFilePath: activeBuffer.filePath,
                                       ),
                             ),
                           ),
@@ -12733,6 +12782,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
                                       scrollOffset,
                                       foldedRegionKeys,
                                     ) {
+                                      _inspectSourceSelection(selection);
                                       final latest = ref
                                           .read(workspaceControllerProvider)
                                           .documentBuffers
@@ -12908,7 +12958,703 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
           : media?.context ?? DocumentMediaContext.unavailable,
       child: DocumentReadOnlyScope(
         readOnly: activeBuffer?.readonly ?? false,
-        child: editor,
+        child: _withProperties(editor),
+      ),
+    );
+  }
+
+  WritersidePropertySession get _propertyEdits =>
+      ref.read(workspaceControllerProvider.notifier).propertyEdits;
+
+  void _showProperties() {
+    unawaited(
+      ref
+          .read(appSettingsControllerProvider.notifier)
+          .setElementPropertiesVisible(true),
+    );
+  }
+
+  void _inspectEditorElement(
+    BusyDocument document,
+    String? id,
+    BusyInlineStyleRange? inline,
+    bool explicit,
+    bool multiple,
+  ) {
+    final buffer = ref.read(workspaceControllerProvider).activeBuffer;
+    if (buffer == null || !document.isWriterside) return;
+    if (!explicit &&
+        _inspected?.block?.id == id &&
+        _inspected?.inline == inline &&
+        _inspected?.matches(buffer.id, buffer.revision, buffer.text) == true) {
+      return;
+    }
+    final incoming = WritersideInspectorTarget.fromSelection(
+      bufferId: buffer.id,
+      revision: buffer.revision,
+      source: buffer.text,
+      document: document,
+      blockId: id,
+      inline: inline,
+      multiple: multiple,
+    );
+    if (!incoming.matches(buffer.id, buffer.revision, buffer.text)) {
+      if (explicit) _propertyEdits.reject(WritersidePropertyRejection.stale);
+      return;
+    }
+    if (!_propertyEdits.transition()) return;
+    final current = ref.read(workspaceControllerProvider).activeBuffer;
+    if (current == null || current.id != buffer.id) return;
+    if (current.revision != buffer.revision || current.text != buffer.text) {
+      final fresh = _wysiwygDocument();
+      if (fresh == null) return;
+      var siblings = fresh.blocks;
+      BusyBlock? reconciled;
+      for (final ordinal in incoming.address) {
+        if (ordinal >= siblings.length) return;
+        reconciled = siblings[ordinal];
+        siblings = reconciled.children;
+      }
+      if (reconciled?.plainText != incoming.block?.plainText ||
+          reconciled?.kind != incoming.block?.kind) {
+        return;
+      }
+      document = fresh;
+      id = reconciled?.id;
+      inline = null;
+    }
+    final target = WritersideInspectorTarget.fromSelection(
+      bufferId: current.id,
+      revision: current.revision,
+      source: current.text,
+      document: document,
+      blockId: id,
+      inline: inline,
+      multiple: multiple,
+    );
+    if (mounted) {
+      setState(() {
+        _inspected = target;
+        _videoPropertyDraft = false;
+      });
+    }
+  }
+
+  void _inspectSourceSelection(TextSelection selection) {
+    var buffer = ref.read(workspaceControllerProvider).activeBuffer;
+    var document = _wysiwygDocument();
+    if (buffer == null || document == null || !document.isWriterside) return;
+    if (_lastPropertiesSourceBuffer == buffer.id &&
+        _lastPropertiesSourceSelection == selection &&
+        _inspected?.matches(buffer.id, buffer.revision, buffer.text) == true) {
+      return;
+    }
+    if (!_propertyEdits.transition()) return;
+    buffer = ref.read(workspaceControllerProvider).activeBuffer;
+    document = _wysiwygDocument();
+    if (buffer == null || document == null) return;
+    _lastPropertiesSourceBuffer = buffer.id;
+    _lastPropertiesSourceSelection = selection;
+    final target = WritersideInspectorTarget.fromSource(
+      bufferId: buffer.id,
+      revision: buffer.revision,
+      source: buffer.text,
+      document: document,
+      selection: selection,
+    );
+    if (mounted) setState(() => _inspected = target);
+  }
+
+  Widget _withProperties(Widget editor) {
+    final settings = ref.watch(appSettingsControllerProvider);
+    final document = _wysiwygDocument();
+    if (document?.isWriterside != true || !settings.elementPropertiesVisible) {
+      return editor;
+    }
+    final buffer = ref.read(workspaceControllerProvider).activeBuffer;
+    final captured = _inspected;
+    final valid =
+        captured != null &&
+        captured.matches(buffer?.id, buffer?.revision, buffer?.text);
+    // An invalid draft keeps its captured identity; unresolved reading targets clear.
+    final target =
+        valid ||
+            _propertyEdits.hasPending &&
+                widget.viewMode != DocumentViewModePreference.preview
+        ? captured
+        : null;
+    final panel =
+        target == null ||
+            target.multiple ||
+            target.block == null && !target.topic
+        ? DecoratedBox(
+            key: _propertiesPanelKey,
+            decoration: BoxDecoration(
+              color: BusyMarkSurfaceColors.of(context).panel,
+            ),
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: Text(context.l10n.wsElementProperties),
+                      ),
+                    ),
+                    BusyMarkHeaderIconButton(
+                      icon: BusyMarkGlyphs.windowClose,
+                      tooltip: context.l10n.close,
+                      onPressed: _closeProperties,
+                    ),
+                  ],
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Text(context.l10n.wsPropertiesSelection),
+                ),
+                BusyMarkDialogButton(
+                  label: context.l10n.wsTopicProperties,
+                  onPressed: _inspectTopic,
+                ),
+              ],
+            ),
+          )
+        : _buildWorkspaceProperties(target);
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = settings.elementPropertiesWidth
+            .clamp(260.0, math.max(260.0, constraints.maxWidth - 32))
+            .toDouble();
+        if (constraints.maxWidth < width + 480) {
+          return Stack(
+            children: [
+              Positioned.fill(child: editor),
+              PositionedDirectional(
+                top: 0,
+                bottom: 0,
+                end: 0,
+                width: math.min(width, constraints.maxWidth),
+                child: Material(elevation: 8, child: panel),
+              ),
+            ],
+          );
+        }
+        return Row(
+          children: [
+            Expanded(child: editor),
+            _ElementPropertiesResizeHandle(
+              width: settings.elementPropertiesWidth,
+              onResize: (value) => unawaited(
+                ref
+                    .read(appSettingsControllerProvider.notifier)
+                    .setElementPropertiesWidth(value),
+              ),
+            ),
+            SizedBox(width: width, child: panel),
+          ],
+        );
+      },
+    );
+  }
+
+  void _inspectTopic() {
+    if (!_propertyEdits.transition()) return;
+    final buffer = ref.read(workspaceControllerProvider).activeBuffer;
+    final document = _wysiwygDocument();
+    if (buffer == null || document?.isWriterside != true) return;
+    setState(
+      () => _inspected = WritersideInspectorTarget.fromTopic(
+        bufferId: buffer.id,
+        revision: buffer.revision,
+        source: buffer.text,
+        document: document!,
+      ),
+    );
+  }
+
+  void _closeProperties() {
+    if (!_propertyEdits.transition()) return;
+    unawaited(
+      ref
+          .read(appSettingsControllerProvider.notifier)
+          .setElementPropertiesVisible(false),
+    );
+    _wysiwygEditorKey.currentState?.restoreEditingFocus();
+    _sourceEditorKey.currentState?.restoreSpellingFocus();
+  }
+
+  String? _effectivePropertySource;
+  String? _effectivePropertyBufferId;
+  Object? _effectivePropertyModule;
+  Map<int, Map<String, String>> _effectivePropertyOccurrences = const {};
+
+  Map<int, Map<String, String>> _effectiveDocumentPropertyOccurrences(
+    BusyDocument document,
+  ) {
+    final state = ref.read(workspaceControllerProvider);
+    final workspace = state.workspace;
+    final buffer = state.activeBuffer;
+    if (workspace == null || buffer == null || !document.isWriterside) {
+      return const {};
+    }
+    final context = resolveWorkspaceDocumentContext(workspace, buffer);
+    final module = context.writersideModule;
+    final original = context.writersideTopic;
+    if (module == null || original == null) return const {};
+    if (_effectivePropertyBufferId == buffer.id &&
+        _effectivePropertySource == buffer.text &&
+        identical(_effectivePropertyModule, module)) {
+      return _effectivePropertyOccurrences;
+    }
+    final topic = document.isXmlTopic
+        ? const WritersideTopicParser().parseXml(
+            filePath: original.filePath,
+            source: buffer.text,
+            topicsRoot: original.topicRoot,
+          )
+        : const WritersideTopicParser().parseMarkdown(
+            filePath: original.filePath,
+            source: buffer.text,
+            topicsRoot: original.topicRoot,
+          );
+    final instance = _tocInstanceForTreePath(
+      module,
+      _tocInstanceTreePathForActiveFile(workspace),
+    );
+    _effectivePropertyOccurrences = const WritersideDocumentResolver()
+        .resolvePropertyOccurrences(
+          topic.document,
+          WritersideResolveContext(
+            module: module,
+            topic: topic,
+            instance: instance,
+            modulesByOrigin:
+                workspace.writersideProject?.modulesByOrigin ?? const {},
+          ),
+        );
+    _effectivePropertyBufferId = buffer.id;
+    _effectivePropertySource = buffer.text;
+    _effectivePropertyModule = module;
+    return _effectivePropertyOccurrences;
+  }
+
+  WritersideEffectiveProperties _effectiveInspectorProperties(
+    WritersideInspectorTarget target,
+  ) {
+    final state = ref.read(workspaceControllerProvider);
+    final workspace = state.workspace;
+    final buffer = state.activeBuffer;
+    if (workspace == null ||
+        buffer == null ||
+        !target.matches(buffer.id, buffer.revision, buffer.text)) {
+      return const WritersideEffectiveProperties();
+    }
+    final module = resolveWorkspaceDocumentContext(
+      workspace,
+      buffer,
+    ).writersideModule;
+    return WritersideEffectiveProperties(
+      settings: module?.config.settings ?? const WritersideSettingsConfig(),
+      resolvedValues:
+          _effectiveDocumentPropertyOccurrences(
+            target.document,
+          )[target.block?.sourceSpan?.startOffset] ??
+          const {},
+      inheritedIgnoreVars: target.path
+          .where(
+            (b) =>
+                b.id != target.block?.id &&
+                b.attributes.containsKey('ignore-vars'),
+          )
+          .lastOrNull
+          ?.attributes['ignore-vars'],
+    );
+  }
+
+  Widget _buildWorkspaceProperties(WritersideInspectorTarget target) {
+    String? resultingId;
+    bool commit(bool Function(BusyMarkWysiwygDocumentController) mutation) {
+      if (!mounted) return false;
+      final live = ref.read(workspaceControllerProvider).activeBuffer;
+      if (!target.sameElement(_inspected) ||
+          !target.matches(live?.id, live?.revision, live?.text)) {
+        return _propertyEdits.reject(WritersidePropertyRejection.stale);
+      }
+      if (live!.readonly ||
+          live.editorState.mode == DocumentViewModePreference.preview) {
+        return _propertyEdits.reject(WritersidePropertyRejection.readOnly);
+      }
+      final controller = BusyMarkWysiwygDocumentController(
+        document: target.document,
+      );
+      try {
+        if (!mutation(controller)) return false;
+        final editedAddress = WritersideInspectorTarget.fromSelection(
+          bufferId: target.bufferId,
+          revision: target.revision,
+          source: target.source,
+          document: controller.document,
+          blockId: resultingId ?? target.block?.id,
+        ).address;
+        final source = controller.markdown;
+        final accepted = ref
+            .read(workspaceControllerProvider.notifier)
+            .applyInspectorSource(
+              bufferId: target.bufferId,
+              revision: target.revision,
+              expectedSource: target.source,
+              source: source,
+            );
+        if (!accepted) {
+          return _propertyEdits.reject(WritersidePropertyRejection.stale);
+        }
+        if (source != target.source) {
+          _clearWysiwygCache();
+          final document = _wysiwygDocument();
+          final next = ref.read(workspaceControllerProvider).activeBuffer!;
+          if (document != null) {
+            final ordinal = editedAddress;
+            var siblings = document.blocks;
+            BusyBlock? block;
+            siblings = document.blocks;
+            for (final i in ordinal) {
+              if (i >= siblings.length) {
+                block = null;
+                break;
+              }
+              block = siblings[i];
+              siblings = block.children;
+            }
+            _inspected = target.topic && target.block == null
+                ? WritersideInspectorTarget.fromTopic(
+                    bufferId: next.id,
+                    revision: next.revision,
+                    source: next.text,
+                    document: document,
+                  )
+                : WritersideInspectorTarget.fromSelection(
+                    bufferId: next.id,
+                    revision: next.revision,
+                    source: next.text,
+                    document: document,
+                    blockId: block?.id,
+                    inline: target.inline == null || block == null
+                        ? null
+                        : (() {
+                            final before = busyInlineReferenceRanges(
+                              target.block!.inlines,
+                            );
+                            final index = before.indexWhere(
+                              (r) =>
+                                  r.kind == target.inline!.kind &&
+                                  r.start == target.inline!.start &&
+                                  r.end == target.inline!.end,
+                            );
+                            final after = busyInlineReferenceRanges(
+                              block!.inlines,
+                            );
+                            return index >= 0 &&
+                                    index < after.length &&
+                                    after[index].kind == target.inline!.kind
+                                ? after[index]
+                                : null;
+                          })(),
+                  );
+          }
+          if (mounted) {
+            setState(() {
+              _videoPropertyDraft = false;
+            });
+          }
+        }
+        return true;
+      } finally {
+        controller.dispose();
+      }
+    }
+
+    final block =
+        target.block ??
+        const BusyBlock(id: '@topic', kind: BusyBlockKind.heading);
+    return BusyMarkWritersideProperties(
+      key: _propertiesPanelKey,
+      effectiveProperties: _effectiveInspectorProperties(target),
+      session: _propertyEdits,
+      document: target.document,
+      path: target.path,
+      target: target.block,
+      topicSelected: target.topic,
+      readOnly:
+          widget.viewMode == DocumentViewModePreference.preview ||
+          widget.state.activeBuffer?.readonly == true,
+      onClose: _closeProperties,
+      videoDraft: _videoPropertyDraft,
+      onInsertVideo: (source) => commit((c) {
+        if (source.trim().isEmpty) return false;
+        resultingId = c.insertWriterside(
+          BusyWritersideInsertCommand.video,
+          target.block!.id,
+          title: context.l10n.video,
+          attributes: {'src': source.trim()},
+        );
+        return resultingId != null;
+      }),
+      onTargetSelected: (id) {
+        if (id == '@topic') {
+          _inspectTopic();
+        } else {
+          _inspectEditorElement(target.document, id, null, true, false);
+        }
+      },
+      onProperty: (name, value) {
+        if (!mounted) return false;
+        final live = ref.read(workspaceControllerProvider).activeBuffer;
+        if (!target.sameElement(_inspected) ||
+            !target.matches(live?.id, live?.revision, live?.text)) {
+          return _propertyEdits.reject(WritersidePropertyRejection.stale);
+        }
+        if (live!.readonly ||
+            live.editorState.mode == DocumentViewModePreference.preview) {
+          return _propertyEdits.reject(WritersidePropertyRejection.readOnly);
+        }
+        if (name == 'admonition-type') {
+          final style = busyAdmonitionStyleFromName(value);
+          if (style == null || !busyMarkWysiwygCanApplyAdmonitionStyle(block)) {
+            return false;
+          }
+          return commit((c) {
+            c.applyAdmonitionStyle(block.id, style);
+            return true;
+          });
+        }
+        final tag =
+            block.kind == BusyBlockKind.heading &&
+                !target.document.isXmlTopic &&
+                !block.attributes.containsKey('element')
+            ? 'chapter'
+            : WritersideEditingAdapter.tagForBlock(block);
+        final reason =
+            block.kind == BusyBlockKind.heading &&
+                !target.document.isXmlTopic &&
+                {'id', 'title'}.contains(name) &&
+                (value == null || value.isEmpty)
+            ? null
+            : validateWritersideProperty(
+                tag,
+                name,
+                value,
+                attributes: block.attributes,
+                hasTitleChild: block.children.any(
+                  (b) => b.attributes['element'] == 'title',
+                ),
+                inlineCode: block.kind == BusyBlockKind.codeBlock
+                    ? block.plainText
+                    : null,
+                codeSource:
+                    block.kind == BusyBlockKind.codeBlock &&
+                        block.attributes['src']?.isNotEmpty != true
+                    ? block.plainText
+                    : resolveWorkspaceDocumentContext(
+                            ref.read(workspaceControllerProvider).workspace!,
+                            ref.read(workspaceControllerProvider).activeBuffer!,
+                          )
+                          .writersideModule
+                          ?.sourceFiles[WritersideSourceLoader.key(
+                            target.document.filePath,
+                            block.attributes['src'] ?? '',
+                          )]
+                          ?.text,
+              );
+        if (reason != null) {
+          return _propertyEdits.reject(
+            WritersidePropertyRejection.invalid,
+            reason,
+          );
+        }
+        return commit((c) => c.updateWritersideProperty(block.id, name, value));
+      },
+      onHeadingText: (text) => commit((c) {
+        if (text.trim().isEmpty) return false;
+        if (block.plainText != text) c.updateBlockText(block.id, text);
+        return true;
+      }),
+      onTopicProperty: (name, value) => commit(
+        (c) => name == '@navigation'
+            ? value == 'default'
+                  ? c.resetTopicNavigation()
+                  : value == 'none'
+                  ? c.updateTopicNavigation('for', 'none')
+                  : c.resetTopicNavigation() &&
+                        c.updateTopicNavigation('for', '')
+            : name == 'switcher-label'
+            ? c.updateTopicSwitcherLabel(value)
+            : c.updateTopicNavigation(name, value),
+      ),
+      inlineTarget: target.inline,
+      onInlineProperty: (name, value) => commit(
+        (c) =>
+            target.inline != null &&
+            c.updateInlineReference(block.id, target.inline!, name, value),
+      ),
+      onChooseInclude: () => unawaited(_chooseInclude(target, commit)),
+      onChooseCodeSource: () => unawaited(_chooseCodeSource(target, commit)),
+      onManageItem: (item, direction, remove) => commit(
+        (c) => c.manageWritersideItem(
+          block.id,
+          itemId: item,
+          direction: direction,
+          remove: remove,
+          title: context.l10n.tab,
+        ),
+      ),
+      onSourceLocation: () {
+        if (!_propertyEdits.transition()) return;
+        final offset = block.sourceSpan?.startOffset;
+        if (offset != null) {
+          ref
+              .read(workspaceControllerProvider.notifier)
+              .updateActiveEditorState(
+                widget.state.activeBuffer!.editorState.copyWith(
+                  selection: TextSelection.collapsed(offset: offset),
+                ),
+              );
+        }
+        unawaited(
+          ref
+              .read(appSettingsControllerProvider.notifier)
+              .setDocumentViewMode(DocumentViewModePreference.source),
+        );
+      },
+    );
+  }
+
+  Future<void> _chooseCodeSource(
+    WritersideInspectorTarget target,
+    bool Function(bool Function(BusyMarkWysiwygDocumentController)) commit,
+  ) async {
+    if (!_propertyEdits.flush()) return;
+    if (target.block!.plainText.trim().isNotEmpty) {
+      _propertyEdits.reject(
+        WritersidePropertyRejection.invalid,
+        context.l10n.wsCodeSourceConflict,
+      );
+      return;
+    }
+    final text = TextEditingController(
+      text: target.block!.attributes['src'] ?? '',
+    );
+    final chosen = await showBusyMarkModalDialog<String>(
+      context,
+      builder: (context) => BusyMarkDialogShell(
+        title: context.l10n.source,
+        actions: [
+          BusyMarkDialogButton(
+            label: context.l10n.cancel,
+            onPressed: () => Navigator.pop(context),
+          ),
+          BusyMarkDialogButton(
+            label: context.l10n.apply,
+            onPressed: () {
+              if (text.text.trim().isNotEmpty) {
+                Navigator.pop(context, text.text.trim());
+              }
+            },
+          ),
+        ],
+        children: [
+          BusyMarkGroupedTextEntry(
+            label: context.l10n.file,
+            controller: text,
+            autofocus: true,
+          ),
+        ],
+      ),
+    );
+    text.dispose();
+    if (!mounted || chosen == null) return;
+    commit((c) => c.updateWritersideProperty(target.block!.id, 'src', chosen));
+  }
+
+  Future<void> _chooseInclude(
+    WritersideInspectorTarget target,
+    bool Function(bool Function(BusyMarkWysiwygDocumentController)) commit,
+  ) async {
+    if (!_propertyEdits.flush()) return;
+    final index = ref
+        .read(workspaceControllerProvider)
+        .workspace
+        ?.writersideProject
+        ?.index;
+    final moduleId = _activeWritersideModuleId();
+    if (index == null || moduleId == null) return;
+    final candidates = index.symbols
+        .where(
+          (s) =>
+              s.kind == WritersideSymbolKind.element ||
+              s.kind == WritersideSymbolKind.snippet,
+        )
+        .where(
+          (s) =>
+              index.modulesById[s.moduleId]?.topics
+                  .where((t) => t.filePath == s.filePath)
+                  .firstOrNull
+                  ?.document
+                  .elementById(s.name)
+                  ?.name !=
+              'topic',
+        )
+        .toList();
+    final files = {
+      for (final s in candidates) '${s.moduleId}\u0000${s.filePath}',
+    }.toList()..sort();
+    final file = await showBusyMarkMenu<String>(
+      context: context,
+      focusFirst: true,
+      items: [
+        for (final file in files)
+          BusyMarkPopupMenuItem(
+            value: file,
+            label:
+                '${file.split('\u0000').first} · ${p.basename(file.split('\u0000').last)}',
+          ),
+      ],
+    );
+    if (file == null || !mounted) return;
+    final parts = file.split('\u0000');
+    final selected = await showBusyMarkMenu<WritersideSymbol>(
+      context: context,
+      focusFirst: true,
+      items: [
+        for (final s in candidates.where(
+          (s) => s.moduleId == parts.first && s.filePath == parts.last,
+        ))
+          BusyMarkPopupMenuItem(value: s, label: s.name),
+      ],
+    );
+    if (selected == null || !mounted) return;
+    final live = ref.read(workspaceControllerProvider);
+    if (!identical(live.workspace?.writersideProject?.index, index) ||
+        !target.matches(
+          live.activeBuffer?.id,
+          live.activeBuffer?.revision,
+          live.activeBuffer?.text,
+        )) {
+      _propertyEdits.reject(WritersidePropertyRejection.stale);
+      return;
+    }
+    final topic = index.modulesById[selected.moduleId]?.topics
+        .where((t) => t.filePath == selected.filePath)
+        .firstOrNull;
+    if (topic == null || topic.document.elementById(selected.name) == null) {
+      return;
+    }
+    commit(
+      (c) => c.updateIncludeReference(
+        target.block!.id,
+        from: topic.fileName,
+        elementId: selected.name,
+        origin: selected.moduleId == moduleId ? null : selected.moduleId,
       ),
     );
   }
@@ -14317,8 +15063,8 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
   }
 
   BusyDocument? _wysiwygDocument() {
-    final workspace = widget.state.workspace;
-    final buffer = widget.state.activeBuffer;
+    final workspace = ref.read(workspaceControllerProvider).workspace;
+    final buffer = ref.read(workspaceControllerProvider).activeBuffer;
     if (workspace == null || buffer == null) {
       return null;
     }
@@ -18407,6 +19153,71 @@ class _EmptyPane extends StatelessWidget {
           const SizedBox(height: BusyMarkSpacing.sm),
           Text(title, style: Theme.of(context).textTheme.bodySmall),
         ],
+      ),
+    );
+  }
+}
+
+/// A narrow separator remains operable without a mouse.
+class _ElementPropertiesResizeHandle extends StatefulWidget {
+  const _ElementPropertiesResizeHandle({
+    required this.width,
+    required this.onResize,
+  });
+  final double width;
+  final ValueChanged<double> onResize;
+  @override
+  State<_ElementPropertiesResizeHandle> createState() =>
+      _ElementPropertiesResizeHandleState();
+}
+
+class _ElementPropertiesResizeHandleState
+    extends State<_ElementPropertiesResizeHandle> {
+  bool focused = false;
+  @override
+  Widget build(BuildContext context) {
+    final rtl = Directionality.of(context) == TextDirection.rtl;
+    void resize(double delta) => widget.onResize(widget.width + delta);
+    return Semantics(
+      label: context.l10n.wsElementProperties,
+      value: '${widget.width.round()}',
+      increasedValue: '${(widget.width + 20).round()}',
+      decreasedValue: '${(widget.width - 20).round()}',
+      onIncrease: () => resize(20),
+      onDecrease: () => resize(-20),
+      child: Focus(
+        onFocusChange: (value) => setState(() => focused = value),
+        onKeyEvent: (node, event) {
+          if (event is! KeyDownEvent) return KeyEventResult.ignored;
+          if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
+            resize(rtl ? -20 : 20);
+            return KeyEventResult.handled;
+          }
+          if (event.logicalKey == LogicalKeyboardKey.arrowRight) {
+            resize(rtl ? 20 : -20);
+            return KeyEventResult.handled;
+          }
+          return KeyEventResult.ignored;
+        },
+        child: MouseRegion(
+          cursor: SystemMouseCursors.resizeLeftRight,
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onHorizontalDragUpdate: (details) =>
+                resize(rtl ? details.delta.dx : -details.delta.dx),
+            child: SizedBox(
+              width: 8,
+              height: double.infinity,
+              child: ColoredBox(
+                color: focused
+                    ? Theme.of(context).colorScheme.primary
+                    : BusyMarkSurfaceColors.of(
+                        context,
+                      ).panel.withValues(alpha: 0),
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

@@ -4850,6 +4850,82 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get referenceNoPortableId => '此目标没有经过验证的可移植笔记网址。';
+
+  @override
+  String get wsIncludeLines => '包含行';
+
+  @override
+  String get wsIncludeSymbol => '包含符号';
+
+  @override
+  String get wsEmphasizeLines => '突出显示已显示的行';
+
+  @override
+  String get wsPropertiesReadOnly => '此视图中的属性为只读。';
+
+  @override
+  String get wsPropertiesProtected => '此元素受保护。请编辑其源代码。';
+
+  @override
+  String get wsPropertiesConflict => '文档或元素已更改。请还原草稿并重新选择。';
+
+  @override
+  String get wsPropertiesUnresolved => '目前无法解析此引用。';
+
+  @override
+  String get wsUseDefault => '使用默认值';
+
+  @override
+  String get wsPropertiesSelection => '请选择单个元素。';
+
+  @override
+  String get wsImageDisplay => '图像显示';
+
+  @override
+  String get wsImageThumbnail => '可点击缩略图';
+
+  @override
+  String get wsEnabled => '已启用';
+
+  @override
+  String get wsDisabled => '已禁用';
+
+  @override
+  String get wsWidth => '宽度';
+
+  @override
+  String get wsHeight => '高度';
+
+  @override
+  String get wsPropertiesInactive => '未启用发布折叠时，此属性无效。';
+
+  @override
+  String get wsNavigationAll => '所有有标题的元素';
+
+  @override
+  String get wsNavigationNone => '无导航';
+
+  @override
+  String get wsNavigationCustom => '自定义导航';
+
+  @override
+  String get wsTitleOverride => '覆盖标题';
+
+  @override
+  String get wsCompactLayout => '紧凑';
+
+  @override
+  String get wsWideLayout => '宽';
+
+  @override
+  String get wsCodeSourceConflict =>
+      '选择源文件前请移除或移动内联代码。Writerside 不接受同时含有内容和源引用的代码块。';
+
+  @override
+  String get wsInherited => '从列表继承';
+
+  @override
+  String get wsExternalImageSize => 'Writerside 无法可靠地调整外部托管图片的尺寸。可以查看和移除已有尺寸。';
 }
 
 /// The translations for Chinese, as used in China (`zh_CN`).
@@ -9696,4 +9772,80 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get referenceNoPortableId => '此目标没有经过验证的可移植笔记网址。';
+
+  @override
+  String get wsIncludeLines => '包含行';
+
+  @override
+  String get wsIncludeSymbol => '包含符号';
+
+  @override
+  String get wsEmphasizeLines => '突出显示已显示的行';
+
+  @override
+  String get wsPropertiesReadOnly => '此视图中的属性为只读。';
+
+  @override
+  String get wsPropertiesProtected => '此元素受保护。请编辑其源代码。';
+
+  @override
+  String get wsPropertiesConflict => '文档或元素已更改。请还原草稿并重新选择。';
+
+  @override
+  String get wsPropertiesUnresolved => '目前无法解析此引用。';
+
+  @override
+  String get wsUseDefault => '使用默认值';
+
+  @override
+  String get wsPropertiesSelection => '请选择单个元素。';
+
+  @override
+  String get wsImageDisplay => '图像显示';
+
+  @override
+  String get wsImageThumbnail => '可点击缩略图';
+
+  @override
+  String get wsEnabled => '已启用';
+
+  @override
+  String get wsDisabled => '已禁用';
+
+  @override
+  String get wsWidth => '宽度';
+
+  @override
+  String get wsHeight => '高度';
+
+  @override
+  String get wsPropertiesInactive => '未启用发布折叠时，此属性无效。';
+
+  @override
+  String get wsNavigationAll => '所有有标题的元素';
+
+  @override
+  String get wsNavigationNone => '无导航';
+
+  @override
+  String get wsNavigationCustom => '自定义导航';
+
+  @override
+  String get wsTitleOverride => '覆盖标题';
+
+  @override
+  String get wsCompactLayout => '紧凑';
+
+  @override
+  String get wsWideLayout => '宽';
+
+  @override
+  String get wsCodeSourceConflict =>
+      '选择源文件前请移除或移动内联代码。Writerside 不接受同时含有内容和源引用的代码块。';
+
+  @override
+  String get wsInherited => '从列表继承';
+
+  @override
+  String get wsExternalImageSize => 'Writerside 无法可靠地调整外部托管图片的尺寸。可以查看和移除已有尺寸。';
 }

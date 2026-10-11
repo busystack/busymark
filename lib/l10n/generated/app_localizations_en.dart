@@ -5080,4 +5080,86 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get referenceNoPortableId =>
       'This target has no verified portable note URL.';
+
+  @override
+  String get wsIncludeLines => 'Include lines';
+
+  @override
+  String get wsIncludeSymbol => 'Include symbol';
+
+  @override
+  String get wsEmphasizeLines => 'Emphasize displayed lines';
+
+  @override
+  String get wsPropertiesReadOnly => 'Properties are read-only in this view.';
+
+  @override
+  String get wsPropertiesProtected =>
+      'This element is protected. Edit its source to change properties.';
+
+  @override
+  String get wsPropertiesConflict =>
+      'The document or element changed. Revert this draft and inspect the current element.';
+
+  @override
+  String get wsPropertiesUnresolved =>
+      'The reference cannot currently be resolved.';
+
+  @override
+  String get wsUseDefault => 'Use default';
+
+  @override
+  String get wsPropertiesSelection =>
+      'Select a single element to inspect its properties.';
+
+  @override
+  String get wsImageDisplay => 'Image display';
+
+  @override
+  String get wsImageThumbnail => 'Clickable thumbnail';
+
+  @override
+  String get wsEnabled => 'Enabled';
+
+  @override
+  String get wsDisabled => 'Disabled';
+
+  @override
+  String get wsWidth => 'Width';
+
+  @override
+  String get wsHeight => 'Height';
+
+  @override
+  String get wsPropertiesInactive =>
+      'This property has no effect while published collapse is disabled.';
+
+  @override
+  String get wsNavigationAll => 'All titled elements';
+
+  @override
+  String get wsNavigationNone => 'No navigation';
+
+  @override
+  String get wsNavigationCustom => 'Custom navigation';
+
+  @override
+  String get wsTitleOverride => 'Title override';
+
+  @override
+  String get wsCompactLayout => 'Compact';
+
+  @override
+  String get wsWideLayout => 'Wide';
+
+  @override
+  String get wsCodeSourceConflict =>
+      'Remove or move the inline code before selecting a source file. Writerside rejects a nonempty code block with a source reference.';
+
+  @override
+  String get wsInherited => 'Inherit from list';
+
+  @override
+  String get wsExternalImageSize =>
+      'Writerside does not reliably size externally hosted images. Existing dimensions can be inspected and removed.';
 }

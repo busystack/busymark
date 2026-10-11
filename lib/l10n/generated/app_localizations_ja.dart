@@ -4929,4 +4929,81 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get referenceNoPortableId => 'この参照先には確認済みの移植可能なノートURLがありません。';
+
+  @override
+  String get wsIncludeLines => '行を含める';
+
+  @override
+  String get wsIncludeSymbol => 'シンボルを含める';
+
+  @override
+  String get wsEmphasizeLines => '表示された行を強調';
+
+  @override
+  String get wsPropertiesReadOnly => 'この表示ではプロパティは読み取り専用です。';
+
+  @override
+  String get wsPropertiesProtected => 'この要素は保護されています。ソースを編集してください。';
+
+  @override
+  String get wsPropertiesConflict => '文書または要素が変わりました。下書きを戻して再選択してください。';
+
+  @override
+  String get wsPropertiesUnresolved => '現在、参照を解決できません。';
+
+  @override
+  String get wsUseDefault => '既定値を使用';
+
+  @override
+  String get wsPropertiesSelection => '単一の要素を選択してください。';
+
+  @override
+  String get wsImageDisplay => '画像の表示';
+
+  @override
+  String get wsImageThumbnail => 'クリック可能なサムネイル';
+
+  @override
+  String get wsEnabled => '有効';
+
+  @override
+  String get wsDisabled => '無効';
+
+  @override
+  String get wsWidth => '幅';
+
+  @override
+  String get wsHeight => '高さ';
+
+  @override
+  String get wsPropertiesInactive => '公開時の折りたたみが無効の場合、このプロパティは作用しません。';
+
+  @override
+  String get wsNavigationAll => 'タイトルのあるすべての要素';
+
+  @override
+  String get wsNavigationNone => 'ナビゲーションなし';
+
+  @override
+  String get wsNavigationCustom => 'カスタムナビゲーション';
+
+  @override
+  String get wsTitleOverride => 'タイトルの上書き';
+
+  @override
+  String get wsCompactLayout => 'コンパクト';
+
+  @override
+  String get wsWideLayout => 'ワイド';
+
+  @override
+  String get wsCodeSourceConflict =>
+      'ソースファイルの選択前にインラインコードを削除または移動してください。Writerside はソース参照を持つ空でないコードブロックを拒否します。';
+
+  @override
+  String get wsInherited => 'リストから継承';
+
+  @override
+  String get wsExternalImageSize =>
+      'Writerside は外部画像のサイズを確実には設定できません。既存の寸法は確認して削除できます。';
 }

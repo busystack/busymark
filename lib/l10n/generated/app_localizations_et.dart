@@ -5066,4 +5066,84 @@ class AppLocalizationsEt extends AppLocalizations {
   @override
   String get referenceNoPortableId =>
       'Sellel sihtkohal pole kinnitatud teisaldatavat märkme URL-i.';
+
+  @override
+  String get wsIncludeLines => 'Kaasa read';
+
+  @override
+  String get wsIncludeSymbol => 'Kaasa sümbol';
+
+  @override
+  String get wsEmphasizeLines => 'Tõsta kuvatud read esile';
+
+  @override
+  String get wsPropertiesReadOnly =>
+      'Selles vaates on omadused kirjutuskaitstud.';
+
+  @override
+  String get wsPropertiesProtected => 'Element on kaitstud. Muuda lähtekoodi.';
+
+  @override
+  String get wsPropertiesConflict =>
+      'Dokument või element muutus. Taasta mustand ja vali uuesti.';
+
+  @override
+  String get wsPropertiesUnresolved => 'Viidet ei saa praegu lahendada.';
+
+  @override
+  String get wsUseDefault => 'Kasuta vaikeväärtust';
+
+  @override
+  String get wsPropertiesSelection => 'Vali üks element.';
+
+  @override
+  String get wsImageDisplay => 'Pildi kuvamine';
+
+  @override
+  String get wsImageThumbnail => 'Klõpsatav pisipilt';
+
+  @override
+  String get wsEnabled => 'Lubatud';
+
+  @override
+  String get wsDisabled => 'Keelatud';
+
+  @override
+  String get wsWidth => 'Laius';
+
+  @override
+  String get wsHeight => 'Kõrgus';
+
+  @override
+  String get wsPropertiesInactive =>
+      'Omadus toimib ainult avaldatud ahendamise korral.';
+
+  @override
+  String get wsNavigationAll => 'Kõik pealkirjaga elemendid';
+
+  @override
+  String get wsNavigationNone => 'Navigeerimine puudub';
+
+  @override
+  String get wsNavigationCustom => 'Kohandatud navigeerimine';
+
+  @override
+  String get wsTitleOverride => 'Pealkirja ülekirjutus';
+
+  @override
+  String get wsCompactLayout => 'Kompaktne';
+
+  @override
+  String get wsWideLayout => 'Lai';
+
+  @override
+  String get wsCodeSourceConflict =>
+      'Enne lähtefaili valimist eemaldage või teisaldage kood. Writerside ei luba mittetühja koodiplokki koos allikaviitega.';
+
+  @override
+  String get wsInherited => 'Päri loendilt';
+
+  @override
+  String get wsExternalImageSize =>
+      'Writerside ei määra väliste piltide mõõtmeid usaldusväärselt. Olemasolevaid mõõtmeid saab vaadata ja eemaldada.';
 }

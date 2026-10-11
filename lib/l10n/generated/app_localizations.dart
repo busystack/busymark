@@ -8657,6 +8657,156 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This target has no verified portable note URL.'**
   String get referenceNoPortableId;
+
+  /// No description provided for @wsIncludeLines.
+  ///
+  /// In en, this message translates to:
+  /// **'Include lines'**
+  String get wsIncludeLines;
+
+  /// No description provided for @wsIncludeSymbol.
+  ///
+  /// In en, this message translates to:
+  /// **'Include symbol'**
+  String get wsIncludeSymbol;
+
+  /// No description provided for @wsEmphasizeLines.
+  ///
+  /// In en, this message translates to:
+  /// **'Emphasize displayed lines'**
+  String get wsEmphasizeLines;
+
+  /// No description provided for @wsPropertiesReadOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Properties are read-only in this view.'**
+  String get wsPropertiesReadOnly;
+
+  /// No description provided for @wsPropertiesProtected.
+  ///
+  /// In en, this message translates to:
+  /// **'This element is protected. Edit its source to change properties.'**
+  String get wsPropertiesProtected;
+
+  /// No description provided for @wsPropertiesConflict.
+  ///
+  /// In en, this message translates to:
+  /// **'The document or element changed. Revert this draft and inspect the current element.'**
+  String get wsPropertiesConflict;
+
+  /// No description provided for @wsPropertiesUnresolved.
+  ///
+  /// In en, this message translates to:
+  /// **'The reference cannot currently be resolved.'**
+  String get wsPropertiesUnresolved;
+
+  /// No description provided for @wsUseDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'Use default'**
+  String get wsUseDefault;
+
+  /// No description provided for @wsPropertiesSelection.
+  ///
+  /// In en, this message translates to:
+  /// **'Select a single element to inspect its properties.'**
+  String get wsPropertiesSelection;
+
+  /// No description provided for @wsImageDisplay.
+  ///
+  /// In en, this message translates to:
+  /// **'Image display'**
+  String get wsImageDisplay;
+
+  /// No description provided for @wsImageThumbnail.
+  ///
+  /// In en, this message translates to:
+  /// **'Clickable thumbnail'**
+  String get wsImageThumbnail;
+
+  /// No description provided for @wsEnabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Enabled'**
+  String get wsEnabled;
+
+  /// No description provided for @wsDisabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Disabled'**
+  String get wsDisabled;
+
+  /// No description provided for @wsWidth.
+  ///
+  /// In en, this message translates to:
+  /// **'Width'**
+  String get wsWidth;
+
+  /// No description provided for @wsHeight.
+  ///
+  /// In en, this message translates to:
+  /// **'Height'**
+  String get wsHeight;
+
+  /// No description provided for @wsPropertiesInactive.
+  ///
+  /// In en, this message translates to:
+  /// **'This property has no effect while published collapse is disabled.'**
+  String get wsPropertiesInactive;
+
+  /// No description provided for @wsNavigationAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All titled elements'**
+  String get wsNavigationAll;
+
+  /// No description provided for @wsNavigationNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No navigation'**
+  String get wsNavigationNone;
+
+  /// No description provided for @wsNavigationCustom.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom navigation'**
+  String get wsNavigationCustom;
+
+  /// No description provided for @wsTitleOverride.
+  ///
+  /// In en, this message translates to:
+  /// **'Title override'**
+  String get wsTitleOverride;
+
+  /// No description provided for @wsCompactLayout.
+  ///
+  /// In en, this message translates to:
+  /// **'Compact'**
+  String get wsCompactLayout;
+
+  /// No description provided for @wsWideLayout.
+  ///
+  /// In en, this message translates to:
+  /// **'Wide'**
+  String get wsWideLayout;
+
+  /// No description provided for @wsCodeSourceConflict.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove or move the inline code before selecting a source file. Writerside rejects a nonempty code block with a source reference.'**
+  String get wsCodeSourceConflict;
+
+  /// No description provided for @wsInherited.
+  ///
+  /// In en, this message translates to:
+  /// **'Inherit from list'**
+  String get wsInherited;
+
+  /// No description provided for @wsExternalImageSize.
+  ///
+  /// In en, this message translates to:
+  /// **'Writerside does not reliably size externally hosted images. Existing dimensions can be inspected and removed.'**
+  String get wsExternalImageSize;
 }
 
 class _AppLocalizationsDelegate

@@ -45,6 +45,110 @@ void main() {
   _registerCorrectionBoundaryTests();
   _registerReferenceMoveTests();
   test(
+    'inspector pending text is flushed by Save and uses one buffer undo operation',
+    () async {
+      final root = await Directory.systemTemp.createTemp(
+        'busymark-inspector-save-',
+      );
+      addTearDown(() => root.delete(recursive: true));
+      final file = File(p.join(root.path, 't.topic'));
+      const original = '<topic id="t" title="Title"><p>Text</p></topic>\n';
+      await file.writeAsString(original);
+      final harness = await _createControllerHarness();
+      await harness.settingsController.setAutoSave(false);
+      final controller = harness.controller._notifier;
+      await controller.openPath(file.path);
+      final buffer = controller.state.activeBuffer!;
+      final draft = controller.propertyEdits.bind('id-target-generation', '', (
+        value,
+      ) {
+        final visual = BusyMarkWysiwygDocumentController(
+          document: const WritersideEditingAdapter().parseXml(
+            filePath: file.path,
+            source: buffer.text,
+          )!,
+        );
+        final paragraph = visual.document.blocks
+            .firstWhere((b) => b.attributes['element'] == 'topic')
+            .children
+            .firstWhere((b) => b.kind == BusyBlockKind.paragraph);
+        final accepted =
+            visual.updateWritersideProperty(paragraph.id, 'id', value) &&
+            controller.applyInspectorSource(
+              bufferId: buffer.id,
+              revision: buffer.revision,
+              expectedSource: buffer.text,
+              source: visual.markdown,
+            );
+        visual.dispose();
+        return accepted;
+      });
+      controller.propertyEdits.edit(draft, 'intro');
+      expect(controller.state.activeText, original);
+      expect(await controller.saveActive(), isTrue);
+      expect(await file.readAsString(), contains('id="intro"'));
+      expect(
+        controller.state.activeBuffer!.editorState.undoState.undo,
+        hasLength(1),
+      );
+      expect(controller.undoActiveBuffer(), isTrue);
+      expect(controller.state.activeText, original);
+      expect(controller.redoActiveBuffer(), isTrue);
+      final live = controller.state.activeBuffer!;
+      expect(
+        controller.applyInspectorSource(
+          bufferId: buffer.id,
+          revision: buffer.revision,
+          expectedSource: buffer.text,
+          source: 'WRONG',
+        ),
+        isFalse,
+      );
+      expect(
+        controller.applyInspectorSource(
+          bufferId: live.id,
+          revision: live.revision,
+          expectedSource: live.text,
+          source: live.text,
+        ),
+        isTrue,
+      );
+      expect(
+        controller.state.activeBuffer!.editorState.undoState.undo,
+        hasLength(1),
+      );
+    },
+  );
+  test(
+    'invalid property draft cancels Save, close, and view changes without losing text',
+    () async {
+      final harness = await _createControllerHarness();
+      await harness.settingsController.setAutoSave(false);
+      final controller = harness.controller._notifier;
+      await controller.openPath('test/fixtures/markdown/basic.md');
+      final buffer = controller.state.activeBuffer!;
+      final draft = controller.propertyEdits.bind(
+        'captured',
+        'old',
+        (_) => false,
+      );
+      controller.propertyEdits.edit(draft, 'invalid');
+      expect(await controller.saveActive(), isFalse);
+      expect(
+        await controller.closeDocumentBuffer(buffer.id, discard: true),
+        isFalse,
+      );
+      controller.updateActiveEditorMode(DocumentViewModePreference.source);
+      expect(
+        controller.state.activeBuffer!.editorState.mode,
+        buffer.editorState.mode,
+      );
+      expect(draft.text, 'invalid');
+      controller.propertyEdits.revert(draft);
+      expect(controller.propertyEdits.flush(), isTrue);
+    },
+  );
+  test(
     'XML visual edits use buffer history, save and reopen without Markdown conversion',
     () async {
       final root = await Directory.systemTemp.createTemp(

@@ -5125,4 +5125,84 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get referenceNoPortableId =>
       'У этой цели нет проверенного переносимого URL заметки.';
+
+  @override
+  String get wsIncludeLines => 'Включить строки';
+
+  @override
+  String get wsIncludeSymbol => 'Включить символ';
+
+  @override
+  String get wsEmphasizeLines => 'Выделить отображаемые строки';
+
+  @override
+  String get wsPropertiesReadOnly =>
+      'В этом режиме свойства доступны только для чтения.';
+
+  @override
+  String get wsPropertiesProtected => 'Элемент защищён. Измените исходный код.';
+
+  @override
+  String get wsPropertiesConflict =>
+      'Документ или элемент изменился. Отмените черновик и выберите заново.';
+
+  @override
+  String get wsPropertiesUnresolved => 'Сейчас невозможно разрешить ссылку.';
+
+  @override
+  String get wsUseDefault => 'Использовать по умолчанию';
+
+  @override
+  String get wsPropertiesSelection => 'Выберите один элемент.';
+
+  @override
+  String get wsImageDisplay => 'Отображение изображения';
+
+  @override
+  String get wsImageThumbnail => 'Нажимаемая миниатюра';
+
+  @override
+  String get wsEnabled => 'Включено';
+
+  @override
+  String get wsDisabled => 'Выключено';
+
+  @override
+  String get wsWidth => 'Ширина';
+
+  @override
+  String get wsHeight => 'Высота';
+
+  @override
+  String get wsPropertiesInactive =>
+      'Свойство действует только при сворачивании в публикации.';
+
+  @override
+  String get wsNavigationAll => 'Все элементы с заголовками';
+
+  @override
+  String get wsNavigationNone => 'Без навигации';
+
+  @override
+  String get wsNavigationCustom => 'Своя навигация';
+
+  @override
+  String get wsTitleOverride => 'Переопределить заголовок';
+
+  @override
+  String get wsCompactLayout => 'Компактный';
+
+  @override
+  String get wsWideLayout => 'Широкий';
+
+  @override
+  String get wsCodeSourceConflict =>
+      'Удалите или перенесите код перед выбором исходного файла. Writerside отклоняет непустые блоки кода со ссылкой на исходник.';
+
+  @override
+  String get wsInherited => 'Наследовать от списка';
+
+  @override
+  String get wsExternalImageSize =>
+      'Writerside ненадёжно задаёт размеры внешних изображений. Существующие размеры можно просмотреть и удалить.';
 }

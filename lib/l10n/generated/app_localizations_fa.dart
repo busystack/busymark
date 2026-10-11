@@ -5104,4 +5104,84 @@ class AppLocalizationsFa extends AppLocalizations {
   @override
   String get referenceNoPortableId =>
       'این مقصد نشانی قابل‌انتقال و تأییدشده‌ای برای یادداشت ندارد.';
+
+  @override
+  String get wsIncludeLines => 'شامل کردن خط‌ها';
+
+  @override
+  String get wsIncludeSymbol => 'شامل کردن نماد';
+
+  @override
+  String get wsEmphasizeLines => 'برجسته کردن خط‌های نمایش داده‌شده';
+
+  @override
+  String get wsPropertiesReadOnly => 'ویژگی‌ها در این نما فقط خواندنی هستند.';
+
+  @override
+  String get wsPropertiesProtected =>
+      'این عنصر محافظت شده است. منبع آن را ویرایش کنید.';
+
+  @override
+  String get wsPropertiesConflict =>
+      'سند یا عنصر تغییر کرد. پیش‌نویس را برگردانید و دوباره انتخاب کنید.';
+
+  @override
+  String get wsPropertiesUnresolved => 'مرجع اکنون قابل حل نیست.';
+
+  @override
+  String get wsUseDefault => 'استفاده از پیش‌فرض';
+
+  @override
+  String get wsPropertiesSelection => 'یک عنصر را انتخاب کنید.';
+
+  @override
+  String get wsImageDisplay => 'نمایش تصویر';
+
+  @override
+  String get wsImageThumbnail => 'تصویر بندانگشتی قابل کلیک';
+
+  @override
+  String get wsEnabled => 'فعال';
+
+  @override
+  String get wsDisabled => 'غیرفعال';
+
+  @override
+  String get wsWidth => 'عرض';
+
+  @override
+  String get wsHeight => 'ارتفاع';
+
+  @override
+  String get wsPropertiesInactive =>
+      'این ویژگی تنها با فعال بودن جمع‌شدن در انتشار اثر دارد.';
+
+  @override
+  String get wsNavigationAll => 'همه عناصر دارای عنوان';
+
+  @override
+  String get wsNavigationNone => 'بدون پیمایش';
+
+  @override
+  String get wsNavigationCustom => 'پیمایش سفارشی';
+
+  @override
+  String get wsTitleOverride => 'بازنویسی عنوان';
+
+  @override
+  String get wsCompactLayout => 'فشرده';
+
+  @override
+  String get wsWideLayout => 'عریض';
+
+  @override
+  String get wsCodeSourceConflict =>
+      'پیش از انتخاب فایل منبع، کد درون‌خطی را حذف یا جابه‌جا کنید. Writerside بلوک کد غیرخالی با ارجاع منبع را نمی‌پذیرد.';
+
+  @override
+  String get wsInherited => 'ارث‌بری از فهرست';
+
+  @override
+  String get wsExternalImageSize =>
+      'Writerside اندازه تصاویر خارجی را به‌طور قابل اتکا تنظیم نمی‌کند. اندازه‌های موجود قابل بررسی و حذف هستند.';
 }

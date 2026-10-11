@@ -5070,4 +5070,84 @@ class AppLocalizationsNb extends AppLocalizations {
   @override
   String get referenceNoPortableId =>
       'Dette målet har ingen bekreftet portabel notatadresse.';
+
+  @override
+  String get wsIncludeLines => 'Inkluder linjer';
+
+  @override
+  String get wsIncludeSymbol => 'Inkluder symbol';
+
+  @override
+  String get wsEmphasizeLines => 'Fremhev viste linjer';
+
+  @override
+  String get wsPropertiesReadOnly =>
+      'Egenskapene er skrivebeskyttet i denne visningen.';
+
+  @override
+  String get wsPropertiesProtected => 'Elementet er beskyttet. Rediger kilden.';
+
+  @override
+  String get wsPropertiesConflict =>
+      'Dokument eller element endret. Tilbakestill utkastet og velg på nytt.';
+
+  @override
+  String get wsPropertiesUnresolved => 'Referansen kan ikke løses nå.';
+
+  @override
+  String get wsUseDefault => 'Bruk standard';
+
+  @override
+  String get wsPropertiesSelection => 'Velg ett element.';
+
+  @override
+  String get wsImageDisplay => 'Bildevisning';
+
+  @override
+  String get wsImageThumbnail => 'Klikkbart miniatyrbilde';
+
+  @override
+  String get wsEnabled => 'Aktivert';
+
+  @override
+  String get wsDisabled => 'Deaktivert';
+
+  @override
+  String get wsWidth => 'Bredde';
+
+  @override
+  String get wsHeight => 'Høyde';
+
+  @override
+  String get wsPropertiesInactive =>
+      'Egenskapen virker bare med publisert sammenfolding.';
+
+  @override
+  String get wsNavigationAll => 'Alle elementer med tittel';
+
+  @override
+  String get wsNavigationNone => 'Ingen navigasjon';
+
+  @override
+  String get wsNavigationCustom => 'Egendefinert navigasjon';
+
+  @override
+  String get wsTitleOverride => 'Overstyr tittel';
+
+  @override
+  String get wsCompactLayout => 'Kompakt';
+
+  @override
+  String get wsWideLayout => 'Bred';
+
+  @override
+  String get wsCodeSourceConflict =>
+      'Fjern eller flytt koden før du velger en kildefil. Writerside avviser kodeblokker med både innhold og kildereferanse.';
+
+  @override
+  String get wsInherited => 'Arv fra listen';
+
+  @override
+  String get wsExternalImageSize =>
+      'Writerside endrer ikke størrelsen på eksterne bilder pålitelig. Eksisterende mål kan ses og fjernes.';
 }

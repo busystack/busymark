@@ -10,6 +10,7 @@ import ctypes
 import json
 import os
 import sys
+import subprocess
 import time
 
 target_gdk_backend = os.environ.get("GDK_BACKEND")
@@ -89,6 +90,9 @@ def main():
         capture.savev(args[0], "png", [], [])
     elif command == "key":
         key(args[0])
+    elif command == "chord":
+        subprocess.run(["xdotool", "key", "--clearmodifiers", args[0]], check=True)
+        time.sleep(0.3)
     elif command == "inspect":
         print(json.dumps([
             {"name": node.get_name(), "role": node.get_role_name(),

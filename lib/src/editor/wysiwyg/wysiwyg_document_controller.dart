@@ -1,9 +1,12 @@
+import '../../writerside/writerside_property_validation.dart';
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
 
 import '../../core/path_utils.dart';
 import '../../markdown/busymark_document.dart';
 import '../../markdown/busymark_markdown_serializer.dart';
 import '../../markdown/markdown_model.dart';
+import '../../markdown/markdown_source_map.dart';
 import '../../markdown/markdown_parser.dart';
 import '../../markdown/markdown_front_matter.dart';
 import '../../markdown/math_syntax.dart';
@@ -474,13 +477,38 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     String? value,
   ) {
     final block = blockById(blockId);
-    if (block == null || block.isSourceProtected || block.preserveRaw) {
+    if (!_document.isWriterside ||
+        block == null ||
+        block.isSourceProtected ||
+        block.preserveRaw) {
       return false;
     }
-    final tag = block.kind == BusyBlockKind.heading && !_document.isXmlTopic
+    final tag =
+        block.kind == BusyBlockKind.heading &&
+            !_document.isXmlTopic &&
+            !block.attributes.containsKey('element')
         ? 'chapter'
         : WritersideEditingAdapter.tagForBlock(block);
     final name = attribute == 'language' ? 'lang' : attribute;
+    if (!(block.kind == BusyBlockKind.heading &&
+            !_document.isXmlTopic &&
+            {'id', 'title'}.contains(attribute) &&
+            (value == null || value.isEmpty)) &&
+        validateWritersideProperty(
+              tag,
+              attribute,
+              value,
+              attributes: block.attributes,
+              hasTitleChild: block.children.any(
+                (b) => b.attributes['element'] == 'title',
+              ),
+              inlineCode: block.kind == BusyBlockKind.codeBlock
+                  ? block.plainText
+                  : null,
+            ) !=
+            null) {
+      return false;
+    }
     if (name == 'id' &&
         value != null &&
         value.isNotEmpty &&
@@ -495,36 +523,89 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     if (block.kind == BusyBlockKind.heading &&
         !_document.isXmlTopic &&
         block.attributes['level'] == '1' &&
+        !block.attributes.containsKey('element') &&
         {'collapsible', 'default-state'}.contains(name)) {
       return false;
     }
     if (!WritersideSchema.attributesFor(tag).contains(name)) return false;
     if (value != null &&
+        value.isNotEmpty &&
         WritersideSchema.invalidAttributeValue(tag, name, value) != null) {
       return false;
     }
-    if ((value == null || value.isEmpty) &&
-        WritersideSchema.requiredAttributesFor(tag).contains(name)) {
+    if ((value == null || value.isEmpty && name != 'alt') &&
+        WritersideSchema.requiredAttributesFor(tag).contains(name) &&
+        !(name == 'title' &&
+            block.children.any((b) => b.attributes['element'] == 'title')) &&
+        !(block.kind == BusyBlockKind.heading &&
+            !_document.isXmlTopic &&
+            {'id', 'title'}.contains(name))) {
       return false;
     }
-    if (block.attributes[attribute] == value) return false;
+    if (block.attributes[attribute] == value ||
+        (value == null || value.isEmpty && attribute != 'alt') &&
+            !block.attributes.containsKey(attribute)) {
+      return true;
+    }
+    final imageRange = block.kind == BusyBlockKind.image
+        ? busyInlineReferenceRanges(
+            block.inlines,
+          ).where((r) => r.kind == BusyInlineKind.image).firstOrNull
+        : null;
+    final imageSource = imageRange == null
+        ? null
+        : _patchNativeReferenceProperty(block, imageRange, attribute, value);
     _replaceBlock(blockId, (block) {
       final attrs = {...block.attributes};
-      if (value == null || value.isEmpty) {
+      if (!_document.isXmlTopic &&
+          block.rawSource != null &&
+          (!block.dirty ||
+              block.attributes.containsKey('busymark-property-edits')) &&
+          (block.attributes.containsKey('element') ||
+              {
+                BusyBlockKind.paragraph,
+                BusyBlockKind.heading,
+                BusyBlockKind.codeBlock,
+                BusyBlockKind.table,
+                BusyBlockKind.image,
+              }.contains(block.kind))) {
+        final old = block.attributes['busymark-property-edits'];
+        attrs['busymark-property-line-ending'] =
+            (_document.source?.contains('\r\n') ?? false) ? '\r\n' : '\n';
+        attrs['busymark-property-edits'] = imageSource != null
+            ? old ?? '{}'
+            : jsonEncode({
+                if (old != null) ...(jsonDecode(old) as Map<String, dynamic>),
+                attribute: value,
+              });
+      }
+      if (value == null || value.isEmpty && attribute != 'alt') {
         attrs.remove(attribute);
       } else {
         attrs[attribute] = value;
       }
-      if (attribute == 'language' && attrs['element'] == 'code-block') {
-        attrs['lang'] = value ?? '';
+      if (attribute == 'language' &&
+          (attrs['element'] == 'code-block' || attrs.containsKey('lang'))) {
+        if (value == null || value.isEmpty) {
+          attrs.remove('lang');
+        } else {
+          attrs['lang'] = value;
+        }
       }
       if (attribute == 'id' && block.kind == BusyBlockKind.heading) {
         attrs['generatedId'] = 'false';
       }
       return block.copyWith(
+        rawSource: imageSource ?? block.rawSource,
         attributes: attrs,
         dirty: true,
-        inlines: attribute == 'title' && busyMarkIsWritersideContainer(block)
+        inlines:
+            block.kind == BusyBlockKind.image &&
+                WritersideSchema.attributesFor('img').contains(attribute)
+            ? block.inlines
+                  .map((inline) => _imageProperty(inline, attribute, value))
+                  .toList()
+            : attribute == 'title' && busyMarkIsWritersideContainer(block)
             ? [BusyInline(kind: BusyInlineKind.text, text: value ?? '')]
             : block.inlines,
       );
@@ -546,6 +627,86 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     return true;
   }
 
+  BusyInline _imageProperty(BusyInline inline, String name, String? value) {
+    if (inline.kind == BusyInlineKind.image) {
+      final attributes = {
+        ...inline.attributes,
+        if (!_document.isXmlTopic) 'busymark-writerside-attributes': 'true',
+      };
+      if (value == null || value.isEmpty && name != 'alt') {
+        attributes.remove(name);
+      } else {
+        attributes[name] = value;
+      }
+      return inline.copyWith(
+        text: name == 'alt' ? value ?? '' : inline.text,
+        destination: name == 'src' ? value ?? '' : inline.destination,
+        attributes: attributes,
+      );
+    }
+    return inline.copyWith(
+      children: inline.children
+          .map((i) => _imageProperty(i, name, value))
+          .toList(),
+    );
+  }
+
+  /// Reference tuples are validated together and published as one model edit.
+  bool updateIncludeReference(
+    String blockId, {
+    required String from,
+    required String elementId,
+    String? origin,
+  }) {
+    final block = blockById(blockId);
+    if (!_document.isWriterside ||
+        block == null ||
+        block.attributes['element'] != 'include' ||
+        block.isSourceProtected ||
+        block.preserveRaw ||
+        from.trim().isEmpty ||
+        elementId.trim().isEmpty) {
+      return false;
+    }
+    final attrs = {...block.attributes, 'from': from, 'element-id': elementId}
+      ..remove('origin');
+    if (origin?.isNotEmpty == true) attrs['origin'] = origin!;
+    _replaceBlock(blockId, (b) => b.copyWith(attributes: attrs, dirty: true));
+    return true;
+  }
+
+  bool resetTopicNavigation() {
+    if (!_document.isWriterside) return false;
+    final root = _document.blocks
+        .where((b) => b.attributes['element'] == 'topic')
+        .firstOrNull;
+    final nodes = (root?.children ?? _document.blocks)
+        .where((b) => b.attributes['element'] == 'show-structure')
+        .toList();
+    if (nodes.isEmpty) return true;
+    if (nodes.length != 1 ||
+        nodes.single.attributes.keys.any(
+          {'instance', 'filter', 'switcher-key'}.contains,
+        )) {
+      return false;
+    }
+    if (root != null) {
+      _replaceBlock(
+        root.id,
+        (b) => b.copyWith(
+          children: b.children.where((c) => c.id != nodes.single.id).toList(),
+          dirty: true,
+        ),
+      );
+    } else {
+      _document = _document.copyWith(
+        blocks: _document.blocks.where((b) => b.id != nodes.single.id).toList(),
+      );
+      notifyListeners();
+    }
+    return true;
+  }
+
   bool manageWritersideItem(
     String containerId, {
     String? itemId,
@@ -562,6 +723,9 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     };
     if (group == null ||
         tag == null ||
+        tag == 'tab' &&
+            group.children.any((b) => b.kind == BusyBlockKind.codeBlock) &&
+            !group.children.any((b) => b.attributes['element'] == 'tab') ||
         group.preserveRaw ||
         group.isSourceProtected) {
       return false;
@@ -640,29 +804,33 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
       return root != null &&
           updateWritersideProperty(root.id, 'switcher-label', value);
     }
-    if (!_document.isWriterside ||
-        _document.frontMatter['switcher-label'] == value ||
-        value.isEmpty && !_document.frontMatter.containsKey('switcher-label')) {
+    if (!_document.isWriterside) {
       return false;
     }
+    if (_document.frontMatter['switcher-label'] == value ||
+        value.isEmpty && !_document.frontMatter.containsKey('switcher-label')) {
+      return true;
+    }
     final raw = _document.rawFrontMatter;
+    final newline = _document.source?.contains('\r\n') == true ? '\r\n' : '\n';
     final line = 'switcher-label: ${encodeWritersideSwitcherLabel(value)}';
+    final labelPattern = RegExp(r'^switcher-label:[^\r\n]*', multiLine: true);
     final nextRaw = value.isEmpty
         ? (raw ?? '').replaceFirst(
             RegExp(r'^switcher-label:[^\r\n]*(?:\r?\n|$)', multiLine: true),
             '',
           )
         : raw == null
-        ? '---\n$line\n---\n'
-        : RegExp(r'^switcher-label:.*$', multiLine: true).hasMatch(raw)
-        ? raw.replaceFirst(
-            RegExp(r'^switcher-label:.*$', multiLine: true),
-            line,
-          )
-        : raw.replaceFirst(RegExp(r'^---\s*\r?\n'), '---\n$line\n');
+        ? '---$newline$line$newline---$newline'
+        : labelPattern.hasMatch(raw)
+        ? raw.replaceFirst(labelPattern, line)
+        : raw.replaceFirstMapped(
+            RegExp(r'^---[ \t]*\r?\n'),
+            (m) => '${m[0]}$line$newline',
+          );
     final source = markdown;
     final nextSource = raw == null
-        ? '$nextRaw\n$source'
+        ? '$nextRaw$newline$source'
         : source.replaceFirst(raw, nextRaw);
     _document = _document.copyWith(
       source: nextSource,
@@ -680,27 +848,37 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
   bool updateTopicNavigation(String attribute, String value) {
     if (!_document.isWriterside ||
         !{'for', 'depth'}.contains(attribute) ||
-        WritersideSchema.invalidAttributeValue(
-              'show-structure',
-              attribute,
-              value,
-            ) !=
-            null) {
+        value.isNotEmpty &&
+            WritersideSchema.invalidAttributeValue(
+                  'show-structure',
+                  attribute,
+                  value,
+                ) !=
+                null) {
       return false;
     }
     final root = _document.blocks
         .where((b) => b.attributes['element'] == 'topic')
         .firstOrNull;
     final siblings = root?.children ?? _document.blocks;
-    final existing = siblings
+    final declarations = siblings
         .where((b) => b.attributes['element'] == 'show-structure')
-        .firstOrNull;
+        .toList();
+    if (declarations.length > 1 ||
+        declarations.any(
+          (b) => b.attributes.keys.any(
+            {'instance', 'filter', 'switcher-key'}.contains,
+          ),
+        )) {
+      return false;
+    }
+    final existing = declarations.firstOrNull;
     if (existing != null) {
       return updateWritersideProperty(existing.id, attribute, value);
     }
     final node = _newWritersideElement(
       'show-structure',
-      attributes: {attribute: value},
+      attributes: {if (value.isNotEmpty) attribute: value},
     ).copyWith(isSourceOnly: _document.isXmlTopic);
     if (root != null) {
       _replaceBlock(
@@ -711,7 +889,9 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
       final heading = siblings
           .where(
             (b) =>
-                b.kind == BusyBlockKind.heading && b.attributes['level'] == '1',
+                b.kind == BusyBlockKind.heading &&
+                b.attributes['level'] == '1' &&
+                !b.attributes.containsKey('element'),
           )
           .firstOrNull;
       _document = _document.copyWith(
@@ -775,18 +955,38 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
       );
       return true;
     }
-    if (range.kind != BusyInlineKind.writersideShortcut ||
-        !{'key', 'from-keymap-of', 'force-layout'}.contains(attribute) ||
+    final tag = switch (range.kind) {
+      BusyInlineKind.link => 'a',
+      BusyInlineKind.image => 'img',
+      BusyInlineKind.writersideShortcut => 'shortcut',
+      _ => null,
+    };
+    if (tag == null ||
+        validateWritersideProperty(
+              tag,
+              attribute,
+              value,
+              attributes: range.attributes,
+            ) !=
+            null ||
         value.isNotEmpty &&
-            WritersideSchema.invalidAttributeValue(
-                  'shortcut',
-                  attribute,
-                  value,
-                ) !=
+            WritersideSchema.invalidAttributeValue(tag, attribute, value) !=
                 null ||
         attribute == 'key' && value.isEmpty && range.start == range.end) {
       return false;
     }
+    if (range.attributes[attribute] == value ||
+        value.isEmpty &&
+            attribute != 'alt' &&
+            !range.attributes.containsKey(attribute)) {
+      return true;
+    }
+    final patchedSource = _patchNativeReferenceProperty(
+      block,
+      range,
+      attribute,
+      value,
+    );
     var offset = 0;
     var replaced = false;
     BusyInline replace(BusyInline inline) {
@@ -798,13 +998,23 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
           mapEquals(inline.attributes, range.attributes)) {
         offset += inline.plainText.length;
         replaced = true;
-        final attributes = {...inline.attributes};
-        if (value.isEmpty) {
+        final attributes = {
+          ...inline.attributes,
+          if (!_document.isXmlTopic) 'busymark-writerside-attributes': 'true',
+        };
+        if (attribute == 'href') attributes.remove('busymark-ignored-href');
+        if (value.isEmpty && attribute != 'alt') {
           attributes.remove(attribute);
         } else {
           attributes[attribute] = value;
         }
-        return inline.copyWith(attributes: attributes);
+        return inline.copyWith(
+          attributes: attributes,
+          destination: {'src', 'href'}.contains(attribute)
+              ? value
+              : inline.destination,
+          text: attribute == 'alt' ? value : inline.text,
+        );
       }
       if (inline.children.isNotEmpty) {
         return inline.copyWith(children: inline.children.map(replace).toList());
@@ -815,8 +1025,124 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
 
     final inlines = block.inlines.map(replace).toList();
     if (!replaced) return false;
-    _replaceBlock(blockId, (b) => b.copyWith(inlines: inlines, dirty: true));
+    _replaceBlock(
+      blockId,
+      (b) => b.copyWith(
+        inlines: inlines,
+        dirty: true,
+        rawSource: patchedSource ?? b.rawSource,
+        attributes: {
+          ...b.attributes,
+          if (patchedSource != null)
+            'busymark-property-edits':
+                b.attributes['busymark-property-edits'] ?? '{}',
+        },
+      ),
+    );
     return true;
+  }
+
+  // Use the established positioned parser to preserve the occurrence, link
+  // wrapper, reference definition and surrounding formatting. Writerside's
+  // native attribute syntax permits local image src/alt overrides. Link href
+  // overrides are ignored by the builder, so change only that native link.
+  String? _patchNativeReferenceProperty(
+    BusyBlock block,
+    BusyInlineStyleRange range,
+    String attribute,
+    String? value,
+  ) {
+    if (_document.mode != MarkdownMode.writersideMarkdown ||
+        _document.isXmlTopic ||
+        block.attributes.containsKey('element') ||
+        block.rawSource == null ||
+        block.dirty &&
+            !block.attributes.containsKey('busymark-property-edits') ||
+        !{BusyInlineKind.image, BusyInlineKind.link}.contains(range.kind)) {
+      return null;
+    }
+    final raw = block.rawSource!;
+    final mapped = const MarkdownSourceMapper()
+        .createInlineParserContext(
+          documentSource: _document.source ?? markdown,
+          mode: _document.mode,
+        )
+        .parseMapped(raw);
+    final peers = busyInlineReferenceRanges(
+      block.inlines,
+    ).where((r) => r.kind == range.kind).toList();
+    final candidates =
+        mapped.ranges.entries.where((e) => e.key.kind == range.kind).toList()
+          ..sort((a, b) => a.value.start.compareTo(b.value.start));
+    final ordinal = peers.indexWhere(
+      (r) => r.start == range.start && r.end == range.end,
+    );
+    if (ordinal < 0 || candidates.length != peers.length) return null;
+    final positioned = candidates[ordinal].value;
+    final end = positioned.end;
+    if (range.kind == BusyInlineKind.link &&
+        attribute == 'href' &&
+        value != null) {
+      final destination = value
+          .replaceAll('\\', '\\\\')
+          .replaceAll('(', '\\(')
+          .replaceAll(')', '\\)')
+          .replaceAll(' ', '%20')
+          .replaceAll('\r', '%0D')
+          .replaceAll('\n', '%0A');
+      final labelEnd = positioned.labelEnd;
+      final labelStart = positioned.labelStart;
+      if (labelEnd == null || labelStart == null) return null;
+      var title = '';
+      if (positioned.titleStart != null && positioned.titleEnd != null) {
+        var start = positioned.titleStart! - 1;
+        while (start > labelEnd + 2 && RegExp(r'\s').hasMatch(raw[start - 1])) {
+          start--;
+        }
+        title = raw.substring(start, positioned.titleEnd! + 1);
+      } else if (range.attributes['title']?.isNotEmpty == true) {
+        final original = range.attributes['title']!.replaceAll('"', '&quot;');
+        title = ' "$original"';
+      }
+      final label = positioned.isAutolink
+          ? '[${raw.substring(labelStart, labelEnd)}]'
+          : raw.substring(positioned.start, labelEnd + 1);
+      final cleaned =
+          _patchNativeReferenceProperty(block, range, 'href', null) ?? raw;
+      return cleaned.replaceRange(
+        positioned.start,
+        end,
+        '$label($destination$title)',
+      );
+    }
+    final suffix = RegExp(
+      r'^\{(?:\s*[\w:.-]+\s*=\s*"[^"]*"\s*)+\}',
+    ).firstMatch(raw.substring(end));
+    var attributes = suffix == null
+        ? ''
+        : suffix[0]!.substring(1, suffix.end - 1);
+    final pattern = RegExp(
+      '(?:^|\\s+)${RegExp.escape(attribute)}\\s*=\\s*"[^"]*"',
+    );
+    final escaped = (value ?? '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('"', '&quot;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;');
+    final replacement = value == null || value.isEmpty && attribute != 'alt'
+        ? ''
+        : '$attribute="$escaped"';
+    if (pattern.hasMatch(attributes)) {
+      attributes = attributes.replaceFirstMapped(
+        pattern,
+        (m) =>
+            '${m[0]!.startsWith(' ') && replacement.isNotEmpty ? ' ' : ''}$replacement',
+      );
+    } else if (replacement.isNotEmpty) {
+      attributes = '${attributes.trimRight()} $replacement';
+    }
+    final ending = attributes.trim().isEmpty ? '' : '{${attributes.trim()}}';
+    return raw.replaceRange(end, end + (suffix?.end ?? 0), ending);
   }
 
   String _blockStructurePrefix(BusyBlock block) {
@@ -2489,6 +2815,11 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
 
   void applyCodeBlockLanguage(String blockId, String language) {
     final trimmedLanguage = language.trim();
+    if (_document.isWriterside &&
+        blockById(blockId)?.kind == BusyBlockKind.codeBlock) {
+      updateWritersideProperty(blockId, 'language', trimmedLanguage);
+      return;
+    }
     _replaceBlock(blockId, (block) {
       final attributes = {...block.attributes}
         ..remove('level')
@@ -3627,7 +3958,21 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
 
   void _replaceBlock(String blockId, BusyBlock Function(BusyBlock) replace) {
     _document = _document.copyWith(
-      blocks: _replaceInBlocks(_document.blocks, blockId, replace),
+      blocks: _replaceInBlocks(_document.blocks, blockId, (block) {
+        final next = replace(block);
+        if (next.attributes['busymark-property-edits'] != null &&
+            next.rawSource == block.rawSource &&
+            next.attributes['busymark-property-edits'] ==
+                block.attributes['busymark-property-edits'] &&
+            (!identical(next.inlines, block.inlines) ||
+                !identical(next.children, block.children) ||
+                next.kind != block.kind)) {
+          return next.copyWith(
+            attributes: {...next.attributes}..remove('busymark-property-edits'),
+          );
+        }
+        return next;
+      }),
     );
     notifyListeners();
   }
@@ -3671,7 +4016,10 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
       }
       return [
         ...blocks.take(index),
-        block.copyWith(children: children),
+        block.copyWith(
+          children: children,
+          attributes: {...block.attributes}..remove('busymark-property-edits'),
+        ),
         ...blocks.skip(index + 1),
       ];
     }

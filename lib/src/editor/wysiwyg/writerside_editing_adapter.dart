@@ -211,7 +211,11 @@ class WritersideEditingAdapter {
     final tag = node.name;
     if (WritersideSchema.requiredAttributesFor(tag).any(
       (a) =>
-          !node.attributes.containsKey(a) ||
+          (!node.attributes.containsKey(a) &&
+              !(a == 'title' &&
+                  node.children.whereType<WritersideElementNode>().any(
+                    (child) => child.name == 'title',
+                  ))) ||
           a != 'title' && (node.attributes[a] ?? '').trim().isEmpty,
     )) {
       return BusyBlock(
@@ -242,6 +246,15 @@ class WritersideEditingAdapter {
     final attributes = <String, String>{
       ...node.attributes,
       'element': tag,
+      if (!node.attributes.containsKey('title') &&
+          titleElements.contains(tag) &&
+          node.children.whereType<WritersideElementNode>().any(
+            (child) => child.name == 'title',
+          ))
+        'busymark-title-label': node.children
+            .whereType<WritersideElementNode>()
+            .firstWhere((child) => child.name == 'title')
+            .plainText,
       if (node.qualifiedName != tag)
         'busymark-xml-element-prefix': node.qualifiedName.substring(
           0,
@@ -411,6 +424,7 @@ class WritersideEditingAdapter {
       attributes: {
         ...node.attributes,
         'xml-name': node.qualifiedName,
+        'xml-source-binding': '${node.span.startOffset}:${node.span.endOffset}',
         if (kind == BusyInlineKind.html) 'xml-raw': node.rawSource,
       },
     );
@@ -471,9 +485,15 @@ class WritersideEditingAdapter {
           ? _namespacePrefix(original.qualifiedName)
           : namespacePrefix;
       final attributes = sourceAttributes(block);
-      if (titleElements.contains(name)) attributes['title'] = block.plainText;
+      if (titleElements.contains(name) &&
+          (block.attributes.containsKey('title') ||
+              block.plainText.isNotEmpty)) {
+        attributes['title'] = block.plainText;
+      }
       if (name == 'code-block') {
-        attributes['lang'] = block.attributes['language'] ?? '';
+        if (block.attributes['language']?.isNotEmpty == true) {
+          attributes['lang'] = block.attributes['language']!;
+        }
       }
       if (name == 'img') {
         final image = block.inlines
@@ -481,7 +501,9 @@ class WritersideEditingAdapter {
             .firstOrNull;
         if (image != null) {
           attributes['src'] = image.destination ?? attributes['src'] ?? '';
-          attributes['alt'] = image.text;
+          if (attributes.containsKey('alt') || image.text.isNotEmpty) {
+            attributes['alt'] = image.text;
+          }
         }
       }
       final leafContent = block.attributes['busymark-xml-leaf-content'];
@@ -633,6 +655,9 @@ class WritersideEditingAdapter {
       block.dirty || block.children.any(hasDirtyContent);
   static const _projectionAttributes = {
     'element',
+    'htmlTag',
+    'htmlAttributes',
+    'editorBlockId',
     'level',
     'language',
     'marker',
@@ -647,21 +672,23 @@ class WritersideEditingAdapter {
     busyMarkTransientTrailingParagraphAttribute,
     busyMarkPreserveEmptyParagraphAttribute,
   };
-  static bool _isProjectionAttribute(String key, BusyBlock block) =>
+  static bool isProjectionAttribute(String key, BusyBlockKind kind) =>
       key.startsWith('busymark-') ||
       _projectionAttributes.contains(key) &&
           (key != 'style' ||
-              block.kind == BusyBlockKind.writersideAdmonition ||
-              block.kind == BusyBlockKind.blockquote);
+              kind == BusyBlockKind.writersideAdmonition ||
+              kind == BusyBlockKind.blockquote);
   static Map<String, String> sourceAttributes(BusyBlock block) => {
     // Some authored attributes share names with the existing Markdown editing
     // metadata. Keep their original values independently of the projection.
-    if (block.attributes['busymark-xml-source-attributes'] case final source?)
+    if (block.attributes['busymark-xml-source-attributes'] ??
+            block.attributes['busymark-writerside-source-attributes']
+        case final source?)
       for (final entry in (jsonDecode(source) as Map<String, dynamic>).entries)
-        if (_isProjectionAttribute(entry.key, block))
+        if (isProjectionAttribute(entry.key, block.kind))
           entry.key: entry.value as String,
     for (final entry in block.attributes.entries)
-      if (!_isProjectionAttribute(entry.key, block)) entry.key: entry.value,
+      if (!isProjectionAttribute(entry.key, block.kind)) entry.key: entry.value,
   };
   static String tagForBlock(BusyBlock block) => switch (block.kind) {
     BusyBlockKind.paragraph => 'p',
@@ -669,6 +696,7 @@ class WritersideEditingAdapter {
       block.attributes['element'] == 'topic' ? 'topic' : 'chapter',
     BusyBlockKind.codeBlock => 'code-block',
     BusyBlockKind.image => 'img',
+    BusyBlockKind.table => 'table',
     BusyBlockKind.video => 'video',
     BusyBlockKind.unorderedListItem ||
     BusyBlockKind.orderedListItem ||
@@ -744,6 +772,7 @@ class WritersideEditingAdapter {
       final text = inline.kind == BusyInlineKind.writersideVariable
           ? '%${inline.attributes['reference'] ?? inline.text}%'
           : inline.text;
+      if (text.isEmpty) return const [];
       return [
         WritersideTextNode(
           text: text,
@@ -767,12 +796,17 @@ class WritersideEditingAdapter {
         };
     final attrs = {
       for (final e in inline.attributes.entries)
-        if (!e.key.startsWith('xml-') && e.key != 'reference') e.key: e.value,
+        if (!e.key.startsWith('xml-') &&
+            !e.key.startsWith('busymark-') &&
+            e.key != 'reference')
+          e.key: e.value,
       if (inline.kind == BusyInlineKind.link && inline.destination != null)
         'href': inline.destination!,
       if (inline.kind == BusyInlineKind.image && inline.destination != null)
         'src': inline.destination!,
-      if (inline.kind == BusyInlineKind.image) 'alt': inline.text,
+      if (inline.kind == BusyInlineKind.image &&
+          (inline.text.isNotEmpty || inline.attributes.containsKey('alt')))
+        'alt': inline.text,
     };
     final qualifiedName = inline.attributes['xml-name'];
     final childPrefix = qualifiedName != null
@@ -804,6 +838,16 @@ class WritersideEditingAdapter {
     ];
   }
 
+  static String serializeInlineElement(BusyInline inline) =>
+      const WritersideDocumentSerializer().serialize(
+        WritersideDocument(
+          filePath: '',
+          source: '',
+          format: WritersideDocumentFormat.xmlTopic,
+          nodes: inlineNodes(inline, ''),
+        ),
+      );
+
   String serializeMarkdownElement(BusyBlock block) {
     if (!hasDirtyContent(block) && block.rawSource != null) {
       return block.rawSource!;
@@ -812,11 +856,28 @@ class WritersideEditingAdapter {
     final qualifiedName =
         '${block.attributes['busymark-xml-element-prefix'] ?? ''}$name';
     final attrs = sourceAttributes(block);
-    if (titleElements.contains(name)) attrs['title'] = block.plainText;
+    if (titleElements.contains(name) &&
+        (block.attributes.containsKey('title') || block.plainText.isNotEmpty)) {
+      attrs['title'] = block.plainText;
+    }
     final attributes = attrs.entries
         .map((e) => ' ${e.key}="${escape(e.value)}"')
         .join();
     if (!busyMarkIsWritersideContainer(block)) {
+      if ({'p', 'code-block'}.contains(name)) {
+        return const WritersideDocumentSerializer().serialize(
+          WritersideDocument(
+            filePath: '',
+            source: '',
+            format: WritersideDocumentFormat.xmlTopic,
+            nodes: [
+              elementNode(name, attrs, [
+                for (final inline in block.inlines) ...inlineNodes(inline, ''),
+              ], ''),
+            ],
+          ),
+        );
+      }
       final content = block.attributes['busymark-xml-leaf-content'];
       return content == null
           ? '<$qualifiedName$attributes/>'
@@ -824,7 +885,11 @@ class WritersideEditingAdapter {
     }
     final content = block.children
         .map(
-          (child) => child.isSourceOnly
+          (child) => child.rawSource != null && !hasDirtyContent(child)
+              ? child.rawSource!
+              : child.attributes.containsKey('busymark-property-edits')
+              ? const BusyMarkMarkdownSerializer().serializeBlock(child)
+              : child.isSourceOnly
               ? child.rawSource ?? ''
               : busyMarkIsWritersideContainer(child)
               ? serializeMarkdownElement(child)

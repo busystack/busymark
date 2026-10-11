@@ -1020,7 +1020,7 @@ class MarkdownParser {
 
   bool _isWritersideCodeAttributeLine(String line) {
     return RegExp(
-      r'^\{[^{}]*(?:\bcollapsible\s*=\s*"true"|\bsrc\s*=\s*"[^"]+")[^{}]*\}\s*$',
+      r'^\{\s*[A-Za-z_:][-A-Za-z0-9_:.]*\s*=\s*"[^\r\n]*"[^{}]*\}\s*$',
       caseSensitive: false,
     ).hasMatch(line);
   }

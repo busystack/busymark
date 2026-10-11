@@ -10,6 +10,32 @@ import 'package:path/path.dart' as p;
 
 void main() {
   test(
+    'Element Properties preferences persist independently of navigation sidebar',
+    () {
+      final settings = AppSettings.defaults().copyWith(
+        sidebarVisible: false,
+        elementPropertiesVisible: true,
+        elementPropertiesWidth: 390,
+      );
+      final restored = AppSettings.fromJson(settings.toJson());
+      expect(restored.sidebarVisible, isFalse);
+      expect(restored.elementPropertiesVisible, isTrue);
+      expect(restored.elementPropertiesWidth, 390);
+      expect(
+        AppSettings.fromJson({
+          'elementPropertiesWidth': 9999,
+        }).elementPropertiesWidth,
+        600,
+      );
+      expect(
+        AppSettings.fromJson({
+          'elementPropertiesWidth': 1,
+        }).elementPropertiesWidth,
+        260,
+      );
+    },
+  );
+  test(
     'hydration and redundant sidebar requests do not count as user transitions',
     () async {
       final store = _MemorySettingsStore();

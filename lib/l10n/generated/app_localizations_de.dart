@@ -5111,4 +5111,86 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get referenceNoPortableId =>
       'Dieses Ziel hat keine bestätigte portable Notiz-URL.';
+
+  @override
+  String get wsIncludeLines => 'Zeilen einschließen';
+
+  @override
+  String get wsIncludeSymbol => 'Symbol einschließen';
+
+  @override
+  String get wsEmphasizeLines => 'Angezeigte Zeilen hervorheben';
+
+  @override
+  String get wsPropertiesReadOnly =>
+      'Eigenschaften sind in dieser Ansicht schreibgeschützt.';
+
+  @override
+  String get wsPropertiesProtected =>
+      'Dieses Element ist geschützt. Bearbeiten Sie seine Quelle.';
+
+  @override
+  String get wsPropertiesConflict =>
+      'Dokument oder Element geändert. Entwurf zurücksetzen und erneut auswählen.';
+
+  @override
+  String get wsPropertiesUnresolved =>
+      'Der Verweis kann derzeit nicht aufgelöst werden.';
+
+  @override
+  String get wsUseDefault => 'Standard verwenden';
+
+  @override
+  String get wsPropertiesSelection => 'Ein einzelnes Element auswählen.';
+
+  @override
+  String get wsImageDisplay => 'Bilddarstellung';
+
+  @override
+  String get wsImageThumbnail => 'Anklickbare Miniaturansicht';
+
+  @override
+  String get wsEnabled => 'Aktiviert';
+
+  @override
+  String get wsDisabled => 'Deaktiviert';
+
+  @override
+  String get wsWidth => 'Breite';
+
+  @override
+  String get wsHeight => 'Höhe';
+
+  @override
+  String get wsPropertiesInactive =>
+      'Ohne veröffentlichtes Einklappen hat diese Eigenschaft keine Wirkung.';
+
+  @override
+  String get wsNavigationAll => 'Alle Elemente mit Titel';
+
+  @override
+  String get wsNavigationNone => 'Keine Navigation';
+
+  @override
+  String get wsNavigationCustom => 'Benutzerdefinierte Navigation';
+
+  @override
+  String get wsTitleOverride => 'Titel überschreiben';
+
+  @override
+  String get wsCompactLayout => 'Kompakt';
+
+  @override
+  String get wsWideLayout => 'Breit';
+
+  @override
+  String get wsCodeSourceConflict =>
+      'Entfernen oder verschieben Sie den Inline-Code vor der Quelldateiauswahl. Writerside lehnt nicht leere Codeblöcke mit Quellverweis ab.';
+
+  @override
+  String get wsInherited => 'Von Liste erben';
+
+  @override
+  String get wsExternalImageSize =>
+      'Writerside skaliert extern gehostete Bilder nicht zuverlässig. Vorhandene Maße können geprüft und entfernt werden.';
 }

@@ -79,6 +79,11 @@ final busyMarkCommandRegistryProvider = Provider<BusyMarkCommandRegistry>((
   };
   return BusyMarkCommandCatalog.create(
     executions: {
+      BusyMarkCommandIds.elementProperties: () => ref
+          .read(appSettingsControllerProvider.notifier)
+          .setElementPropertiesVisible(
+            !ref.read(appSettingsControllerProvider).elementPropertiesVisible,
+          ),
       BusyMarkCommandIds.references: () =>
           ref.read(referencePanelRequestProvider.notifier).request(),
       for (final entry in commandIntents.entries)

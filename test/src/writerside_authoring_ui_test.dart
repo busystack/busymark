@@ -60,6 +60,153 @@ Finder _textField(String text) => _contentFields()
     .first;
 
 void main() {
+  testWidgets('XML title control retains authored absence and child title', (
+    tester,
+  ) async {
+    final document = _document(
+      true,
+      source:
+          '<topic id="a" title="Topic"><chapter id="c"><title instance="web">Install <b>now</b></title><p>Body</p></chapter></topic>',
+    );
+    final chapter = document.blocks.first.children.single;
+    String? committedName;
+    String? committedValue;
+    await tester.pumpWidget(
+      _app(
+        BusyMarkWritersideProperties(
+          document: document,
+          target: chapter,
+          path: [document.blocks.first, chapter],
+          topicSelected: false,
+          onClose: () {},
+          onTargetSelected: (_) {},
+          onProperty: (name, value) {
+            committedName = name;
+            committedValue = value;
+            return true;
+          },
+          onHeadingText: (_) => throw StateError('XML title is an attribute'),
+          onTopicProperty: (_, _) => true,
+          onManageItem: (_, _, _) => true,
+        ),
+      ),
+    );
+    final field = find.descendant(
+      of: find.byKey(ValueKey('writerside-property-${chapter.id}-title')),
+      matching: find.byType(TextField),
+    );
+    expect(field, findsOneWidget);
+    expect(tester.widget<TextField>(field).controller!.text, isEmpty);
+    await tester.enterText(field, 'Default title');
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    expect(committedName, 'title');
+    expect(committedValue, 'Default title');
+    expect(chapter.children.first.attributes['instance'], 'web');
+    expect(chapter.children.first.rawSource, contains('<b>now</b>'));
+  });
+
+  testWidgets('inactive published values remain inspectable and removable', (
+    tester,
+  ) async {
+    final document = _document(
+      true,
+      source:
+          '<topic id="a" title="Topic"><code-block collapsible="false" default-state="expanded" collapsed-title="Details">code</code-block></topic>',
+    );
+    final code = document.blocks.first.children.single;
+    final removed = <String>[];
+    await tester.pumpWidget(
+      _app(
+        BusyMarkWritersideProperties(
+          document: document,
+          target: code,
+          path: [document.blocks.first, code],
+          topicSelected: false,
+          onClose: () {},
+          onTargetSelected: (_) {},
+          onProperty: (name, value) {
+            if (value == null) removed.add(name);
+            return true;
+          },
+          onHeadingText: (_) => true,
+          onTopicProperty: (_, _) => true,
+          onManageItem: (_, _, _) => true,
+        ),
+      ),
+    );
+    final state = tester.widget<BusyMarkComboRow<String>>(
+      find.byWidgetPredicate(
+        (w) =>
+            w is BusyMarkComboRow<String> &&
+            w.title == 'Published initial state',
+      ),
+    );
+    expect(state.enabled, isFalse);
+    expect(state.selected, 'expanded');
+    final title = tester.widget<TextField>(
+      find.descendant(
+        of: find.byKey(
+          ValueKey('writerside-property-${code.id}-collapsed-title'),
+        ),
+        matching: find.byType(TextField),
+      ),
+    );
+    expect(title.readOnly, isTrue);
+    expect(title.controller!.text, 'Details');
+    final reset = find.byWidgetPredicate(
+      (w) => w is BusyMarkHeaderIconButton && w.tooltip == 'Use default',
+    );
+    expect(reset, findsNWidgets(2));
+    tester.widget<BusyMarkHeaderIconButton>(reset.first).onPressed!();
+    tester.widget<BusyMarkHeaderIconButton>(reset.last).onPressed!();
+    expect(removed, ['default-state', 'collapsed-title']);
+  });
+
+  testWidgets(
+    'reset option describes the default after removing a local override',
+    (tester) async {
+      final document = const WritersideEditingAdapter().parseXml(
+        filePath: 't.topic',
+        source:
+            '<topic id="t" title="Topic"><code-block collapsible="true" default-state="expanded"/></topic>',
+      )!;
+      final code = document.blocks.first.children.single;
+      await tester.pumpWidget(
+        _app(
+          BusyMarkWritersideProperties(
+            document: document,
+            target: code,
+            path: [document.blocks.first, code],
+            topicSelected: false,
+            onClose: () {},
+            onTargetSelected: (_) {},
+            onProperty: (_, _) => true,
+            onHeadingText: (_) => true,
+            onTopicProperty: (_, _) => true,
+            onManageItem: (_, _, _) => true,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final collapse = tester.widget<BusyMarkComboRow<String>>(
+        find.byWidgetPredicate(
+          (w) => w is BusyMarkComboRow<String> && w.title == 'Collapsible',
+        ),
+      );
+      final state = tester.widget<BusyMarkComboRow<String>>(
+        find.byWidgetPredicate(
+          (w) =>
+              w is BusyMarkComboRow<String> &&
+              w.title == 'Published initial state',
+        ),
+      );
+      expect(collapse.selected, 'true');
+      expect(collapse.labelFor(''), 'Use default — Disabled');
+      expect(state.selected, 'expanded');
+      expect(state.labelFor(''), 'Use default — Collapsed');
+    },
+  );
+
   final binding = TestWidgetsFlutterBinding.ensureInitialized();
   const channel = MethodChannel(nativeMenuChannelName);
   final labels = <String>[];
@@ -514,10 +661,12 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Collapsible'), findsOneWidget);
       expect(source, isEmpty);
-      final switchRow = find.byWidgetPredicate(
-        (w) => w is BusyMarkSwitchRow && w.title == 'Collapsible',
+      final collapseRow = tester.widget<BusyMarkComboRow<String>>(
+        find.byWidgetPredicate(
+          (w) => w is BusyMarkComboRow<String> && w.title == 'Collapsible',
+        ),
       );
-      await tester.tap(switchRow);
+      collapseRow.onSelected('true');
       await tester.pumpAndSettle();
       expect(source, contains('collapsible="true"'));
       final before = source;
@@ -748,7 +897,13 @@ void main() {
       expect(edits, 0);
       await tester.pumpWidget(_app(editor(replaced)));
       await tester.pumpAndSettle();
-      expect(tester.widget<TextField>(entry).controller!.text, 'sql');
+      expect(tester.widget<TextField>(entry).controller!.text, 'python');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pumpAndSettle();
+      expect(
+        find.textContaining('document or element changed'),
+        findsOneWidget,
+      );
       expect(edits, 0);
     },
   );
@@ -782,6 +937,14 @@ void main() {
           find.byKey(const ValueKey('wysiwyg-writerside-semantic')),
           findsOneWidget,
         );
+        await tester.ensureVisible(
+          find.byKey(const ValueKey('wysiwyg-writerside-properties')),
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(
+          find.byKey(const ValueKey('wysiwyg-writerside-properties')),
+        );
+        await tester.pumpAndSettle();
         expect(find.byType(BusyMarkWritersideProperties), findsOneWidget);
         expect(tester.takeException(), isNull);
       },

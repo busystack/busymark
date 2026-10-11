@@ -5129,6 +5129,87 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get referenceNoPortableId =>
       'Este destino não tem um URL portátil de nota verificado.';
+
+  @override
+  String get wsIncludeLines => 'Incluir linhas';
+
+  @override
+  String get wsIncludeSymbol => 'Incluir símbolo';
+
+  @override
+  String get wsEmphasizeLines => 'Realçar linhas exibidas';
+
+  @override
+  String get wsPropertiesReadOnly =>
+      'Propriedades somente leitura nesta visualização.';
+
+  @override
+  String get wsPropertiesProtected => 'Elemento protegido. Edite sua fonte.';
+
+  @override
+  String get wsPropertiesConflict =>
+      'Documento ou elemento alterado. Reverta o rascunho e selecione novamente.';
+
+  @override
+  String get wsPropertiesUnresolved =>
+      'Não é possível resolver a referência no momento.';
+
+  @override
+  String get wsUseDefault => 'Usar padrão';
+
+  @override
+  String get wsPropertiesSelection => 'Selecione um único elemento.';
+
+  @override
+  String get wsImageDisplay => 'Exibição de imagem';
+
+  @override
+  String get wsImageThumbnail => 'Miniatura clicável';
+
+  @override
+  String get wsEnabled => 'Ativado';
+
+  @override
+  String get wsDisabled => 'Desativado';
+
+  @override
+  String get wsWidth => 'Largura';
+
+  @override
+  String get wsHeight => 'Altura';
+
+  @override
+  String get wsPropertiesInactive =>
+      'Esta propriedade não tem efeito sem recolhimento publicado.';
+
+  @override
+  String get wsNavigationAll => 'Todos os elementos com título';
+
+  @override
+  String get wsNavigationNone => 'Sem navegação';
+
+  @override
+  String get wsNavigationCustom => 'Navegação personalizada';
+
+  @override
+  String get wsTitleOverride => 'Substituir título';
+
+  @override
+  String get wsCompactLayout => 'Compacto';
+
+  @override
+  String get wsWideLayout => 'Largo';
+
+  @override
+  String get wsCodeSourceConflict =>
+      'Remova ou mova o código antes de escolher um arquivo fonte. Writerside rejeita blocos não vazios com referência à fonte.';
+
+  @override
+  String get wsInherited => 'Herdar da lista';
+
+  @override
+  String get wsExternalImageSize =>
+      'Writerside não dimensiona imagens externas de forma confiável. As dimensões existentes podem ser consultadas e removidas.';
 }
 
 /// The translations for Portuguese, as used in Brazil (`pt_BR`).
@@ -10252,4 +10333,85 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   @override
   String get referenceNoPortableId =>
       'Este destino não tem uma URL portátil de nota verificada.';
+
+  @override
+  String get wsIncludeLines => 'Incluir linhas';
+
+  @override
+  String get wsIncludeSymbol => 'Incluir símbolo';
+
+  @override
+  String get wsEmphasizeLines => 'Realçar linhas exibidas';
+
+  @override
+  String get wsPropertiesReadOnly =>
+      'Propriedades somente leitura nesta visualização.';
+
+  @override
+  String get wsPropertiesProtected => 'Elemento protegido. Edite sua fonte.';
+
+  @override
+  String get wsPropertiesConflict =>
+      'Documento ou elemento alterado. Reverta o rascunho e selecione novamente.';
+
+  @override
+  String get wsPropertiesUnresolved =>
+      'Não é possível resolver a referência no momento.';
+
+  @override
+  String get wsUseDefault => 'Usar padrão';
+
+  @override
+  String get wsPropertiesSelection => 'Selecione um único elemento.';
+
+  @override
+  String get wsImageDisplay => 'Exibição de imagem';
+
+  @override
+  String get wsImageThumbnail => 'Miniatura clicável';
+
+  @override
+  String get wsEnabled => 'Ativado';
+
+  @override
+  String get wsDisabled => 'Desativado';
+
+  @override
+  String get wsWidth => 'Largura';
+
+  @override
+  String get wsHeight => 'Altura';
+
+  @override
+  String get wsPropertiesInactive =>
+      'Esta propriedade não tem efeito sem recolhimento publicado.';
+
+  @override
+  String get wsNavigationAll => 'Todos os elementos com título';
+
+  @override
+  String get wsNavigationNone => 'Sem navegação';
+
+  @override
+  String get wsNavigationCustom => 'Navegação personalizada';
+
+  @override
+  String get wsTitleOverride => 'Substituir título';
+
+  @override
+  String get wsCompactLayout => 'Compacto';
+
+  @override
+  String get wsWideLayout => 'Largo';
+
+  @override
+  String get wsCodeSourceConflict =>
+      'Remova ou mova o código antes de escolher um arquivo fonte. Writerside rejeita blocos não vazios com referência à fonte.';
+
+  @override
+  String get wsInherited => 'Herdar da lista';
+
+  @override
+  String get wsExternalImageSize =>
+      'Writerside não dimensiona imagens externas de forma confiável. As dimensões existentes podem ser consultadas e removidas.';
 }

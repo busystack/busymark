@@ -5058,4 +5058,83 @@ class AppLocalizationsVi extends AppLocalizations {
   @override
   String get referenceNoPortableId =>
       'Đích này không có URL ghi chú di động đã xác minh.';
+
+  @override
+  String get wsIncludeLines => 'Gồm các dòng';
+
+  @override
+  String get wsIncludeSymbol => 'Gồm ký hiệu';
+
+  @override
+  String get wsEmphasizeLines => 'Tô nổi các dòng hiển thị';
+
+  @override
+  String get wsPropertiesReadOnly => 'Thuộc tính chỉ đọc trong chế độ này.';
+
+  @override
+  String get wsPropertiesProtected => 'Phần tử được bảo vệ. Hãy sửa mã nguồn.';
+
+  @override
+  String get wsPropertiesConflict =>
+      'Tài liệu hoặc phần tử đã đổi. Hoàn nguyên bản nháp và chọn lại.';
+
+  @override
+  String get wsPropertiesUnresolved => 'Hiện không thể phân giải tham chiếu.';
+
+  @override
+  String get wsUseDefault => 'Dùng mặc định';
+
+  @override
+  String get wsPropertiesSelection => 'Chọn một phần tử.';
+
+  @override
+  String get wsImageDisplay => 'Hiển thị ảnh';
+
+  @override
+  String get wsImageThumbnail => 'Ảnh thu nhỏ có thể nhấp';
+
+  @override
+  String get wsEnabled => 'Bật';
+
+  @override
+  String get wsDisabled => 'Tắt';
+
+  @override
+  String get wsWidth => 'Chiều rộng';
+
+  @override
+  String get wsHeight => 'Chiều cao';
+
+  @override
+  String get wsPropertiesInactive =>
+      'Thuộc tính chỉ có tác dụng khi bật thu gọn lúc xuất bản.';
+
+  @override
+  String get wsNavigationAll => 'Mọi phần tử có tiêu đề';
+
+  @override
+  String get wsNavigationNone => 'Không điều hướng';
+
+  @override
+  String get wsNavigationCustom => 'Điều hướng tùy chỉnh';
+
+  @override
+  String get wsTitleOverride => 'Ghi đè tiêu đề';
+
+  @override
+  String get wsCompactLayout => 'Gọn';
+
+  @override
+  String get wsWideLayout => 'Rộng';
+
+  @override
+  String get wsCodeSourceConflict =>
+      'Xóa hoặc di chuyển mã trước khi chọn tệp nguồn. Writerside từ chối khối mã không rỗng có tham chiếu nguồn.';
+
+  @override
+  String get wsInherited => 'Kế thừa từ danh sách';
+
+  @override
+  String get wsExternalImageSize =>
+      'Writerside không đặt kích thước ảnh bên ngoài một cách tin cậy. Có thể xem và xóa kích thước hiện có.';
 }

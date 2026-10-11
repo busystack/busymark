@@ -190,6 +190,7 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
                 _button(
                   context,
                   tooltip: context.l10n.wsElementProperties,
+                  key: const ValueKey('wysiwyg-writerside-properties'),
                   icon: BusyMarkGlyphs.settings,
                   onPressed: onProperties,
                 ),
@@ -502,8 +503,10 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
     required IconData icon,
     required VoidCallback? onPressed,
     String? shortcut,
+    Key? key,
   }) {
     return BusyMarkHeaderIconButton(
+      key: key,
       tooltip: tooltip,
       icon: icon,
       onPressed: onPressed,

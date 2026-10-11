@@ -5066,4 +5066,83 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get referenceNoPortableId =>
       'Tujuan ini tidak memiliki URL catatan portabel yang terverifikasi.';
+
+  @override
+  String get wsIncludeLines => 'Sertakan baris';
+
+  @override
+  String get wsIncludeSymbol => 'Sertakan simbol';
+
+  @override
+  String get wsEmphasizeLines => 'Sorot baris yang ditampilkan';
+
+  @override
+  String get wsPropertiesReadOnly => 'Properti hanya baca pada tampilan ini.';
+
+  @override
+  String get wsPropertiesProtected => 'Elemen dilindungi. Edit sumbernya.';
+
+  @override
+  String get wsPropertiesConflict =>
+      'Dokumen atau elemen berubah. Kembalikan draf dan pilih lagi.';
+
+  @override
+  String get wsPropertiesUnresolved => 'Referensi belum dapat diselesaikan.';
+
+  @override
+  String get wsUseDefault => 'Gunakan bawaan';
+
+  @override
+  String get wsPropertiesSelection => 'Pilih satu elemen.';
+
+  @override
+  String get wsImageDisplay => 'Tampilan gambar';
+
+  @override
+  String get wsImageThumbnail => 'Thumbnail yang dapat diklik';
+
+  @override
+  String get wsEnabled => 'Aktif';
+
+  @override
+  String get wsDisabled => 'Nonaktif';
+
+  @override
+  String get wsWidth => 'Lebar';
+
+  @override
+  String get wsHeight => 'Tinggi';
+
+  @override
+  String get wsPropertiesInactive =>
+      'Properti hanya berlaku saat penciutan publikasi diaktifkan.';
+
+  @override
+  String get wsNavigationAll => 'Semua elemen berjudul';
+
+  @override
+  String get wsNavigationNone => 'Tanpa navigasi';
+
+  @override
+  String get wsNavigationCustom => 'Navigasi khusus';
+
+  @override
+  String get wsTitleOverride => 'Timpa judul';
+
+  @override
+  String get wsCompactLayout => 'Ringkas';
+
+  @override
+  String get wsWideLayout => 'Lebar';
+
+  @override
+  String get wsCodeSourceConflict =>
+      'Hapus atau pindahkan kode sebelum memilih berkas sumber. Writerside menolak blok kode tidak kosong dengan referensi sumber.';
+
+  @override
+  String get wsInherited => 'Warisi dari daftar';
+
+  @override
+  String get wsExternalImageSize =>
+      'Writerside tidak mengatur ukuran gambar eksternal dengan andal. Ukuran yang ada dapat dilihat dan dihapus.';
 }

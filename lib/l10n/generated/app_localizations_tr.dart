@@ -5068,4 +5068,83 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get referenceNoPortableId =>
       'Bu hedefin doğrulanmış taşınabilir not URL’si yok.';
+
+  @override
+  String get wsIncludeLines => 'Satırları dahil et';
+
+  @override
+  String get wsIncludeSymbol => 'Sembolü dahil et';
+
+  @override
+  String get wsEmphasizeLines => 'Görüntülenen satırları vurgula';
+
+  @override
+  String get wsPropertiesReadOnly => 'Bu görünümde özellikler salt okunurdur.';
+
+  @override
+  String get wsPropertiesProtected => 'Bu öğe korunuyor. Kaynağını düzenleyin.';
+
+  @override
+  String get wsPropertiesConflict =>
+      'Belge veya öğe değişti. Taslağı geri alın ve yeniden seçin.';
+
+  @override
+  String get wsPropertiesUnresolved => 'Başvuru şu anda çözümlenemiyor.';
+
+  @override
+  String get wsUseDefault => 'Varsayılanı kullan';
+
+  @override
+  String get wsPropertiesSelection => 'Tek bir öğe seçin.';
+
+  @override
+  String get wsImageDisplay => 'Görüntü görünümü';
+
+  @override
+  String get wsImageThumbnail => 'Tıklanabilir küçük resim';
+
+  @override
+  String get wsEnabled => 'Etkin';
+
+  @override
+  String get wsDisabled => 'Devre dışı';
+
+  @override
+  String get wsWidth => 'Genişlik';
+
+  @override
+  String get wsHeight => 'Yükseklik';
+
+  @override
+  String get wsPropertiesInactive =>
+      'Bu özellik yalnızca yayımlanan daraltma etkinken geçerlidir.';
+
+  @override
+  String get wsNavigationAll => 'Başlıklı tüm öğeler';
+
+  @override
+  String get wsNavigationNone => 'Gezinme yok';
+
+  @override
+  String get wsNavigationCustom => 'Özel gezinme';
+
+  @override
+  String get wsTitleOverride => 'Başlığı geçersiz kıl';
+
+  @override
+  String get wsCompactLayout => 'Kompakt';
+
+  @override
+  String get wsWideLayout => 'Geniş';
+
+  @override
+  String get wsCodeSourceConflict =>
+      'Kaynak dosya seçmeden önce satır içi kodu kaldırın veya taşıyın. Writerside kaynak başvurusu olan boş olmayan kod bloklarını reddeder.';
+
+  @override
+  String get wsInherited => 'Listeden devral';
+
+  @override
+  String get wsExternalImageSize =>
+      'Writerside dış görüntülerin boyutunu güvenilir biçimde ayarlamaz. Mevcut boyutlar incelenebilir ve kaldırılabilir.';
 }

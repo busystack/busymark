@@ -49,10 +49,20 @@ if [[ "$source_root" == "test/fixtures/writerside/reference_conformance" ]]; the
   python3 tools/verify_writerside_reference_fixture.py \
     "$output_root/artifacts/webHelpGUIDE2-all.zip"
 fi
+if [[ "$source_root" == "test/fixtures/writerside/property_conformance" ]]; then
+  python3 tools/verify_writerside_property_fixture.py \
+    "$output_root/artifacts/webHelpCONFORMANCE2-all.zip"
+fi
+if [[ "$source_root" == "test/fixtures/writerside/property_defaults_conformance" ]]; then
+  python3 tools/verify_writerside_property_fixture.py \
+    "$output_root/artifacts/webHelpCONFORMANCE2-all.zip" defaults
+fi
 if [[ "$source_root" == "test/fixtures/writerside/conformance_project" ]]; then
-  if [[ -n "${WRITERSIDE_CONFORMANCE_OUTPUT:-}" ]]; then
-    export WRITERSIDE_CONFORMANCE_OUTPUT="$WRITERSIDE_CONFORMANCE_OUTPUT/reference-links"
-  fi
-  bash tools/validate_writerside_conformance.sh \
+  evidence_root="${WRITERSIDE_CONFORMANCE_OUTPUT:-$work_root/evidence}"
+  WRITERSIDE_CONFORMANCE_OUTPUT="$evidence_root/reference-links" bash tools/validate_writerside_conformance.sh \
     test/fixtures/writerside/reference_conformance ReferenceLinks/guide
+  WRITERSIDE_CONFORMANCE_OUTPUT="$evidence_root/properties" bash tools/validate_writerside_conformance.sh \
+    test/fixtures/writerside/property_conformance Conformance/conformance
+  WRITERSIDE_CONFORMANCE_OUTPUT="$evidence_root/property-defaults" bash tools/validate_writerside_conformance.sh \
+    test/fixtures/writerside/property_defaults_conformance Conformance/conformance
 fi

@@ -5114,4 +5114,86 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get referenceNoPortableId =>
       'Dit doel heeft geen geverifieerde overdraagbare notitie-URL.';
+
+  @override
+  String get wsIncludeLines => 'Regels opnemen';
+
+  @override
+  String get wsIncludeSymbol => 'Symbool opnemen';
+
+  @override
+  String get wsEmphasizeLines => 'Weergegeven regels markeren';
+
+  @override
+  String get wsPropertiesReadOnly =>
+      'Eigenschappen zijn alleen-lezen in deze weergave.';
+
+  @override
+  String get wsPropertiesProtected =>
+      'Dit element is beschermd. Bewerk de bron.';
+
+  @override
+  String get wsPropertiesConflict =>
+      'Document of element gewijzigd. Herstel het concept en selecteer opnieuw.';
+
+  @override
+  String get wsPropertiesUnresolved =>
+      'De verwijzing kan momenteel niet worden opgelost.';
+
+  @override
+  String get wsUseDefault => 'Standaard gebruiken';
+
+  @override
+  String get wsPropertiesSelection => 'Selecteer één element.';
+
+  @override
+  String get wsImageDisplay => 'Afbeeldingsweergave';
+
+  @override
+  String get wsImageThumbnail => 'Klikbare miniatuur';
+
+  @override
+  String get wsEnabled => 'Ingeschakeld';
+
+  @override
+  String get wsDisabled => 'Uitgeschakeld';
+
+  @override
+  String get wsWidth => 'Breedte';
+
+  @override
+  String get wsHeight => 'Hoogte';
+
+  @override
+  String get wsPropertiesInactive =>
+      'Deze eigenschap werkt alleen bij gepubliceerd inklappen.';
+
+  @override
+  String get wsNavigationAll => 'Alle elementen met titel';
+
+  @override
+  String get wsNavigationNone => 'Geen navigatie';
+
+  @override
+  String get wsNavigationCustom => 'Aangepaste navigatie';
+
+  @override
+  String get wsTitleOverride => 'Titel overschrijven';
+
+  @override
+  String get wsCompactLayout => 'Compacte indeling';
+
+  @override
+  String get wsWideLayout => 'Breed';
+
+  @override
+  String get wsCodeSourceConflict =>
+      'Verwijder of verplaats de code voordat u een bronbestand kiest. Writerside weigert niet-lege codeblokken met een bronverwijzing.';
+
+  @override
+  String get wsInherited => 'Overnemen van lijst';
+
+  @override
+  String get wsExternalImageSize =>
+      'Writerside past het formaat van externe afbeeldingen niet betrouwbaar aan. Bestaande maten kunnen worden bekeken en verwijderd.';
 }

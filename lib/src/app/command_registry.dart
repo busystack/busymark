@@ -260,6 +260,7 @@ abstract final class BusyMarkCommandIds {
   static const closeTab = 'tabs.close';
   static const closeAllTabs = 'tabs.closeAll';
   static const toggleSidebar = 'view.toggleSidebar';
+  static const elementProperties = 'view.elementProperties';
   static const viewEditor = 'view.editor';
   static const viewSource = 'view.source';
   static const viewReading = 'view.reading';
@@ -332,6 +333,12 @@ abstract final class BusyMarkCommandCatalog {
     }
 
     final commands = <BusyMarkCommand>[
+      command(
+        id: BusyMarkCommandIds.elementProperties,
+        label: (context) => context.l10n.wsElementProperties,
+        category: (context) => context.l10n.viewMode,
+        scope: BusyMarkCommandScope.documentView,
+      ),
       command(
         id: BusyMarkCommandIds.references,
         label: (context) => context.l10n.references,

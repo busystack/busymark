@@ -11,6 +11,8 @@ import 'package:busymark/src/app/system_accent.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_editor.dart';
 import 'package:busymark/src/editor/wysiwyg/writerside_properties.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_inline_controller.dart';
+import 'package:busymark/src/editor/source/source_editor.dart';
+import 'package:busymark/src/markdown/busymark_document.dart';
 import 'package:busymark/src/local_history/local_history_store.dart';
 import 'package:busymark/src/local_history/local_history_controller.dart';
 import 'package:busymark/src/platform/linux_header_bar_service.dart';
@@ -47,19 +49,43 @@ Future<void> main(List<String> arguments) async {
   await File(p.join(root.path, 'topics/authoring.topic')).writeAsString(
     '<topic id="authoring" title="Authoring XML"><p>Text</p><chapter id="section" title="Section"><p>Nested content</p><code-block lang="dart">print(1);</code-block></chapter></topic>',
   );
-  await File(p.join(root.path, 'topics/authoring.md')).writeAsString(
+  await File(p.join(root.path, 'topics/authoring-markdown.md')).writeAsString(
     '# Authoring Markdown\n\nText\n\n## Section\n\nNested content\n',
   );
   await File(
     p.join(root.path, 'README.md'),
   ).writeAsString('# Ordinary Markdown\n\nPlain text\n');
+  await File(p.join(root.path, 'topics/inspector.topic')).writeAsString(
+    '<topic id="inspector" title="Inspector"><p id="caret">Caret A</p><chapter id="b" title="Block B"><chapter id="nested" title="Nested"><p>Nested body</p><code-block id="file" lang="text" src="inspector-sample.txt"/></chapter></chapter><deflist collapsible="true" default-state="expanded"><def title="Term" default-state="inherited"><p>Definition.</p></def></deflist></topic>',
+  );
+  await File(p.join(root.path, 'topics/inspector-markdown.md')).writeAsString(
+    '# Inspector {id="inspector-markdown"}\n\nCaret A\n\n## Block B\n\n### Nested\n\nNested body\n\n```text\n```\n{id="file" src="inspector-sample.txt"}\n',
+  );
+  await File(
+    p.join(root.path, 'topics/inspector-sample.txt'),
+  ).writeAsString('first\nsecond\nthird\n');
   final tree = File(p.join(root.path, 'conformance.tree'));
   await tree.writeAsString(
     (await tree.readAsString()).replaceFirst(
       '</instance-profile>',
-      '<toc-element topic="authoring.topic"/><toc-element topic="authoring.md"/></instance-profile>',
+      '<toc-element topic="authoring.topic"/><toc-element topic="authoring-markdown.md"/><toc-element topic="inspector.topic" toc-title="Inspector XML"/><toc-element topic="inspector-markdown.md" toc-title="Inspector Markdown"/></instance-profile>',
     ),
   );
+  final defaultsFixture = Directory(
+    p.join(fixture.parent.path, 'property_defaults_conformance'),
+  );
+  final defaultsRoot = Directory('${root.path}-defaults');
+  await for (final item in defaultsFixture.list(recursive: true)) {
+    final destination = p.join(
+      defaultsRoot.path,
+      p.relative(item.path, from: defaultsFixture.path),
+    );
+    if (item is Directory) await Directory(destination).create(recursive: true);
+    if (item is File) {
+      await File(destination).parent.create(recursive: true);
+      await item.copy(destination);
+    }
+  }
   final output = await Directory(
     p.absolute(arguments[1]),
   ).create(recursive: true);
@@ -387,9 +413,15 @@ class _HarnessState extends ConsumerState<_Harness> {
       );
       final controller = ref.read(workspaceControllerProvider.notifier);
       final settings = ref.read(appSettingsControllerProvider.notifier);
-      for (final suffix in ['topic', 'md']) {
+      for (final suffix
+          in Platform.environment['BUSYMARK_PROPERTIES_ONLY'] == '1'
+              ? <String>[]
+              : ['topic', 'md']) {
         await controller.openActiveFile(
-          p.join(widget.root.path, 'topics/authoring.$suffix'),
+          p.join(
+            widget.root.path,
+            'topics/${suffix == 'md' ? 'authoring-markdown.md' : 'authoring.topic'}',
+          ),
         );
         await _until(
           () => _elements((w) => w is BusyMarkWysiwygEditor).isNotEmpty,
@@ -581,9 +613,11 @@ class _HarnessState extends ConsumerState<_Harness> {
         await _capture('authoring-$suffix-light');
         await _tap(
           _elements(
-            (w) => w is BusyMarkSwitchRow && w.title == 'Collapsible',
+            (w) => w is BusyMarkComboRow<String> && w.title == 'Collapsible',
           ).single,
         );
+        _nativeMenuOpen = true;
+        await _tapLabel('Enabled');
         _check(
           _source != before && _source.contains('collapsible="true"'),
           '$suffix ordinary section exposes collapse properties',
@@ -637,7 +671,10 @@ class _HarnessState extends ConsumerState<_Harness> {
         );
         _check(closed, '$suffix saved buffer closes');
         await controller.openActiveFile(
-          p.join(widget.root.path, 'topics/authoring.$suffix'),
+          p.join(
+            widget.root.path,
+            'topics/${suffix == 'md' ? 'authoring-markdown.md' : 'authoring.topic'}',
+          ),
         );
         await _until(
           () =>
@@ -692,6 +729,463 @@ class _HarnessState extends ConsumerState<_Harness> {
         );
         await windowManager.setSize(const Size(1400, 960));
       }
+      for (final suffix in ['topic', 'md']) {
+        await _native('chord', 'ctrl+shift+1');
+        await settings.setElementPropertiesVisible(true);
+        await settings.setElementPropertiesWidth(390);
+        await controller.openActiveFile(
+          p.join(
+            widget.root.path,
+            'topics/${suffix == 'md' ? 'inspector-markdown.md' : 'inspector.topic'}',
+          ),
+        );
+        await _until(
+          () => _elements((w) => w is BusyMarkWysiwygEditor).isNotEmpty,
+          'Inspector editor loaded',
+        );
+        await _tap(_field('Caret A'));
+        final caret =
+            (_field('Caret A').widget as TextField).controller!.selection;
+        if (suffix == 'topic') {
+          final editor =
+              _elements((w) => w is BusyMarkWysiwygEditor).single.widget
+                  as BusyMarkWysiwygEditor;
+          final b = editor.document.blocks.first.children.firstWhere(
+            (b) => b.attributes['id'] == 'b',
+          );
+          await _tap(
+            _elements(
+              (w) => w.key == ValueKey('writerside-inspect-${b.id}'),
+            ).single,
+          );
+          final panel =
+              _elements((w) => w is BusyMarkWritersideProperties).single.widget
+                  as BusyMarkWritersideProperties;
+          _check(
+            panel.target!.plainText == 'Block B' &&
+                panel.path.last.id == b.id &&
+                (_field('Caret A').widget as TextField).controller!.selection ==
+                    caret,
+            'Inspector identity and ancestry follow B while caret remains in A',
+          );
+          await _capture('inspector-nested-target');
+          final title =
+              _elements(
+                    (w) => w is BusyMarkGroupedTextEntry && w.label == 'Title',
+                  ).single.widget
+                  as BusyMarkGroupedTextEntry;
+          await _tap(
+            _elements(
+              (w) => w is TextField && w.controller == title.controller,
+            ).single,
+          );
+          title.controller!.text = 'Installation';
+          await _key(PhysicalKeyboardKey.enter, LogicalKeyboardKey.enter);
+          _check(
+            _source.contains('title="Installation"') &&
+                _source.contains('>Caret A</p>'),
+            'Explicit inspected B receives the edit',
+          );
+          _check(
+            controller.undoActiveBuffer(),
+            'Explicit B property has one undo',
+          );
+          await _pause();
+          _check(
+            _source.contains('title="Block B"'),
+            'Undo restores inspected B',
+          );
+        }
+        await _native('chord', 'ctrl+shift+2');
+        await _until(
+          () => _elements((w) => w is BusyMarkSourceEditor).isNotEmpty,
+          'Source inspector loaded',
+        );
+        _check(
+          _elements((w) => w is BusyMarkWysiwygEditor).isEmpty,
+          'Source inspector has no hidden WYSIWYG',
+        );
+        final sourceElement =
+            _elements((w) => w is BusyMarkSourceEditor).single
+                as StatefulElement;
+        final sourceState = sourceElement.state as BusyMarkSourceEditorState;
+        final codeOffset = suffix == 'topic'
+            ? _source.indexOf('<code-block')
+            : _source.indexOf('```text');
+        sourceState.scrollToOffset(codeOffset);
+        await _pause();
+        final properties =
+            _elements((w) => w is BusyMarkWritersideProperties).single.widget
+                as BusyMarkWritersideProperties;
+        _check(
+          properties.target!.kind == BusyBlockKind.codeBlock &&
+              properties.path.any((b) => b.plainText == 'Nested'),
+          '$suffix Source caret resolves code and chapter ancestry',
+        );
+        await _capture('inspector-$suffix-source-code');
+        BusyMarkGroupedTextEntry property(String label) =>
+            _elements(
+                  (w) => w is BusyMarkGroupedTextEntry && w.label == label,
+                ).single.widget
+                as BusyMarkGroupedTextEntry;
+        final id = property('Element ID');
+        await _tap(
+          _elements(
+            (w) => w is TextField && w.controller == id.controller,
+          ).single,
+        );
+        final beforeHistory = ref
+            .read(workspaceControllerProvider)
+            .activeBuffer!
+            .editorState
+            .undoState
+            .undo
+            .length;
+        id.controller!.text = 'saved-code';
+        await _native('chord', 'ctrl+s');
+        await _until(() {
+          final current = ref.read(workspaceControllerProvider).activeBuffer;
+          return current != null &&
+              !current.isDirty &&
+              File(
+                current.filePath!,
+              ).readAsStringSync().contains('id="saved-code"');
+        }, '$suffix focused native Save reaches disk');
+        final buffer = ref.read(workspaceControllerProvider).activeBuffer!;
+        _check(
+          (await File(
+            buffer.filePath!,
+          ).readAsString()).contains('id="saved-code"'),
+          '$suffix native Ctrl+S commits focused property before saving',
+        );
+        _check(
+          buffer.editorState.undoState.undo.length == beforeHistory + 1,
+          '$suffix property commit records one undo',
+        );
+        _check(
+          buffer.editorState.selection.extentOffset == codeOffset,
+          '$suffix Source selection survives property transaction',
+        );
+        final invalidId = property('Element ID');
+        invalidId.focusNode!.requestFocus();
+        invalidId.controller!.text = 'invalid id';
+        final beforeInvalid = _source;
+        await _native('chord', 'ctrl+s');
+        await _pause();
+        _check(
+          _source == beforeInvalid && controller.propertyEdits.hasPending,
+          '$suffix invalid draft blocks Save and retains its target',
+        );
+        await _native('chord', 'ctrl+shift+3');
+        await _pause();
+        _check(
+          _elements((w) => w is BusyMarkSourceEditor).isNotEmpty,
+          '$suffix invalid draft cancels view transition',
+        );
+        await _tap(
+          _elements(
+                (w) => w is BusyMarkHeaderIconButton && w.tooltip == 'Close',
+              )
+              .where(
+                (e) =>
+                    e
+                        .findAncestorWidgetOfExactType<
+                          BusyMarkWritersideProperties
+                        >() !=
+                    null,
+              )
+              .single,
+        );
+        _check(
+          _elements((w) => w is BusyMarkWritersideProperties).isNotEmpty &&
+              controller.propertyEdits.hasPending,
+          '$suffix invalid draft cancels inspector closure',
+        );
+        await _capture('inspector-$suffix-invalid-draft');
+        invalidId.focusNode!.requestFocus();
+        await _pause();
+        await _key(PhysicalKeyboardKey.escape, LogicalKeyboardKey.escape);
+        _check(
+          !controller.propertyEdits.hasPending &&
+              invalidId.controller!.text == 'saved-code',
+          '$suffix Escape explicitly reverts pending text',
+        );
+        final extraction = property('Include lines');
+        await _tap(
+          _elements(
+            (w) => w is TextField && w.controller == extraction.controller,
+          ).single,
+        );
+        extraction.controller!.text = '2-3';
+        await _key(PhysicalKeyboardKey.enter, LogicalKeyboardKey.enter);
+        final emphasis = property('Emphasize displayed lines');
+        await _tap(
+          _elements(
+            (w) => w is TextField && w.controller == emphasis.controller,
+          ).single,
+        );
+        emphasis.controller!.text = '1';
+        await _key(PhysicalKeyboardKey.enter, LogicalKeyboardKey.enter);
+        await _capture('inspector-$suffix-code-properties');
+        _check(await controller.saveActive(), '$suffix Source inspector save');
+        _check(
+          await controller.closeDocumentBuffer(buffer.id),
+          '$suffix Source inspector close',
+        );
+        await controller.openActiveFile(buffer.filePath!);
+        await _native('chord', 'ctrl+shift+2');
+        await _until(
+          () => _elements((w) => w is BusyMarkSourceEditor).isNotEmpty,
+          'Reopened Source inspector',
+        );
+        final reopened =
+            (_elements((w) => w is BusyMarkSourceEditor).single
+                        as StatefulElement)
+                    .state
+                as BusyMarkSourceEditorState;
+        reopened.scrollToOffset(
+          _source.indexOf(suffix == 'topic' ? '<code-block' : '```text'),
+        );
+        await _until(
+          () => _elements(
+            (w) =>
+                w is BusyMarkGroupedTextEntry &&
+                w.label == 'Element ID' &&
+                w.controller?.text == 'saved-code',
+          ).isNotEmpty,
+          '$suffix reopened Source caret resolves saved code',
+        );
+        _check(
+          property('Element ID').controller!.text == 'saved-code' &&
+              property('Include lines').controller!.text == '2-3' &&
+              property('Emphasize displayed lines').controller!.text == '1',
+          '$suffix saved code properties survive close, reopen and reinspection',
+        );
+        await _native('chord', 'ctrl+shift+4');
+        await _pause();
+        await _capture('inspector-$suffix-split');
+        await _native('chord', 'ctrl+shift+2');
+        await _pause();
+        final initial = _source;
+        final delayedProperties =
+            _elements((w) => w is BusyMarkWritersideProperties).single.widget
+                as BusyMarkWritersideProperties;
+        final liveSourceState =
+            (_elements((w) => w is BusyMarkSourceEditor).single
+                        as StatefulElement)
+                    .state
+                as BusyMarkSourceEditorState;
+        liveSourceState.scrollToOffset(
+          _source.indexOf(suffix == 'topic' ? '<chapter id="b"' : '## Block B'),
+        );
+        await _until(
+          () => _elements(
+            (w) =>
+                w is BusyMarkWritersideProperties &&
+                w.target?.attributes['element'] != 'code-block' &&
+                w.target?.kind != BusyBlockKind.codeBlock,
+          ).isNotEmpty,
+          '$suffix Source retargets to chapter',
+        );
+        _check(
+          !delayedProperties.onProperty('collapsed-title', 'Delayed result') &&
+              _source == initial,
+          '$suffix delayed completion rejects a different target in the same unchanged buffer',
+        );
+        liveSourceState.scrollToOffset(
+          _source.indexOf(suffix == 'topic' ? '<code-block' : '```text'),
+        );
+        await _until(
+          () => _elements(
+            (w) =>
+                w is BusyMarkWritersideProperties &&
+                w.target?.kind == BusyBlockKind.codeBlock,
+          ).isNotEmpty,
+          '$suffix Source restores code target',
+        );
+        await _tap(
+          _elements(
+            (w) => w is BusyMarkComboRow<String> && w.title == 'Collapsible',
+          ).single,
+        );
+        _nativeMenuOpen = true;
+        await _tapLabel('Enabled');
+        await _capture('inspector-$suffix-override');
+        await _tap(
+          _elements(
+            (w) => w is BusyMarkComboRow<String> && w.title == 'Collapsible',
+          ).single,
+        );
+        _nativeMenuOpen = true;
+        await _tapLabel('Use default — Disabled');
+        _check(
+          _source == initial,
+          '$suffix reset removes authored collapse and restores source',
+        );
+        await windowManager.setSize(const Size(800, 900));
+        await _capture('inspector-$suffix-narrow-overlay');
+        _check(
+          ref.read(appSettingsControllerProvider).elementPropertiesWidth == 390,
+          'Narrow layout preserves preferred inspector width',
+        );
+        await windowManager.setSize(const Size(1400, 960));
+        await _native('chord', 'ctrl+shift+3');
+        await _pause();
+        final reading =
+            _elements((w) => w is BusyMarkWritersideProperties).single.widget
+                as BusyMarkWritersideProperties;
+        _check(
+          reading.readOnly,
+          '$suffix Reading retains validated read-only properties',
+        );
+        await _capture('inspector-$suffix-reading');
+        _check(
+          _source == initial,
+          '$suffix navigation and Reading leave source unchanged',
+        );
+        await File(
+          p.join(widget.output.path, 'inspector.$suffix'),
+        ).writeAsString(_source);
+        await _native('chord', 'ctrl+shift+1');
+      }
+      await controller.openPath('${widget.root.path}-defaults');
+      await controller.openActiveFile(
+        p.join('${widget.root.path}-defaults', 'topics/properties.topic'),
+      );
+      await _native('chord', 'ctrl+shift+2');
+      await _until(
+        () => _elements((w) => w is BusyMarkSourceEditor).isNotEmpty,
+        'Module-default Source document loaded',
+      );
+      final defaultsSource = _source;
+      final defaultsSourceState =
+          (_elements((w) => w is BusyMarkSourceEditor).single
+                      as StatefulElement)
+                  .state
+              as BusyMarkSourceEditorState;
+      defaultsSourceState.scrollToOffset(
+        _source.indexOf('<code-block id="code-block-absent"'),
+      );
+      await _pause();
+      BusyMarkComboRow<String> defaultCombo(String title) =>
+          _elements(
+                (w) => w is BusyMarkComboRow<String> && w.title == title,
+              ).single.widget
+              as BusyMarkComboRow<String>;
+      _check(
+        defaultCombo('Collapsible').labelFor('') == 'Use default — Enabled' &&
+            defaultCombo('Published initial state').labelFor('') ==
+                'Use default — Expanded',
+        'Inspector resolves omitted code properties from module defaults',
+      );
+      _check(
+        _source == defaultsSource &&
+            !ref.read(workspaceControllerProvider).activeBuffer!.isDirty,
+        'Opening effective defaults is source-neutral',
+      );
+      await _capture('inspector-module-defaults');
+      await _tap(
+        _elements(
+          (w) => w is BusyMarkComboRow<String> && w.title == 'Collapsible',
+        ).single,
+      );
+      _nativeMenuOpen = true;
+      await _tapLabel('Disabled');
+      await _native('chord', 'ctrl+s');
+      await _pause();
+      _check(
+        _source
+            .substring(
+              _source.indexOf('id="code-block-absent"'),
+              _source.indexOf('>', _source.indexOf('id="code-block-absent"')),
+            )
+            .contains('collapsible="false"'),
+        'Explicit false overrides the module collapse default',
+      );
+      await _capture('inspector-module-override');
+      await _tap(
+        _elements(
+          (w) => w is BusyMarkComboRow<String> && w.title == 'Collapsible',
+        ).single,
+      );
+      _nativeMenuOpen = true;
+      await _tapLabel('Use default — Enabled');
+      _check(
+        _source == defaultsSource,
+        'Reset removes local override and restores the module default',
+      );
+      await controller.saveActive();
+      final resize = _elements((w) => w is GestureDetector).firstWhere((e) {
+        Element? ancestor = e;
+        while (ancestor != null) {
+          if (ancestor.widget.runtimeType.toString() ==
+              '_ElementPropertiesResizeHandle') {
+            return true;
+          }
+          Element? parent;
+          ancestor.visitAncestorElements((e) {
+            parent = e;
+            return false;
+          });
+          ancestor = parent;
+        }
+        return false;
+      });
+      final preferredWidth = ref
+          .read(appSettingsControllerProvider)
+          .elementPropertiesWidth;
+      Focus.of(resize).requestFocus();
+      await _pause();
+      await _native('chord', 'Left');
+      _check(
+        ref.read(appSettingsControllerProvider).elementPropertiesWidth ==
+            preferredWidth + 20,
+        'Native keyboard increases inspector width',
+      );
+      await _native('chord', 'Right');
+      _check(
+        ref.read(appSettingsControllerProvider).elementPropertiesWidth ==
+            preferredWidth,
+        'Native keyboard restores preferred inspector width',
+      );
+      await _tap(
+        _elements(
+          (w) => w is TextField && w.controller?.text == 'code-block-absent',
+        ).single,
+      );
+      await _native('chord', 'Tab');
+      _check(
+        FocusManager.instance.primaryFocus?.context
+                ?.findAncestorWidgetOfExactType<
+                  BusyMarkWritersideProperties
+                >() !=
+            null,
+        'Native Tab traverses inspector controls',
+      );
+      await _tap(
+        _elements(
+          (w) => w is BusyMarkHeaderIconButton && w.tooltip == 'Close',
+        ).singleWhere(
+          (e) =>
+              e.findAncestorWidgetOfExactType<BusyMarkWritersideProperties>() !=
+              null,
+        ),
+      );
+      await _until(
+        () => _elements((w) => w is BusyMarkWritersideProperties).isEmpty,
+        'Inspector closes without pending drafts',
+      );
+      _check(
+        FocusManager.instance.primaryFocus?.context
+                ?.findAncestorWidgetOfExactType<BusyMarkSourceEditor>() !=
+            null,
+        'Closing inspector restores Source editor focus',
+      );
+      await ref
+          .read(appSettingsControllerProvider.notifier)
+          .setElementPropertiesVisible(true);
+      await controller.openPath(widget.root.path);
+      await _native('chord', 'ctrl+shift+1');
       await controller.openActiveFile(p.join(widget.root.path, 'README.md'));
       await _until(
         () =>
@@ -708,6 +1202,10 @@ class _HarnessState extends ConsumerState<_Harness> {
             _elements((w) => w is BusyMarkWritersideProperties).isEmpty,
         'Ordinary Markdown has no Writerside controls or properties',
       );
+      _check(
+        ref.read(appSettingsControllerProvider).elementPropertiesVisible,
+        'Inapplicable document preserves inspector visibility preference',
+      );
       await _type(_field('Plain text'), 'Edited ordinary text');
       _check(
         _source.contains('# Ordinary Markdown') &&
@@ -723,7 +1221,7 @@ class _HarnessState extends ConsumerState<_Harness> {
       );
       await File(p.join(widget.output.path, 'generated.md')).writeAsString(
         await File(
-          p.join(widget.root.path, 'topics/authoring.md'),
+          p.join(widget.root.path, 'topics/authoring-markdown.md'),
         ).readAsString(),
       );
     } on Object catch (error, stack) {

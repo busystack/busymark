@@ -1,7 +1,13 @@
 import '../core/source_span.dart';
+import '../writerside/writerside_schema.dart';
+import '../writerside/writerside_document.dart';
+import '../writerside/writerside_document_parser.dart';
+import '../writerside/writerside_document_serializer.dart';
+import 'dart:convert';
 import 'busymark_document.dart';
 import '../editor/wysiwyg/writerside_editing_adapter.dart';
 import 'math_syntax.dart';
+import 'markdown_model.dart';
 
 class BusyMarkSerializedInlineFragment {
   const BusyMarkSerializedInlineFragment({
@@ -258,6 +264,17 @@ class BusyMarkMarkdownSerializer {
         block.rawSource != null) {
       return block.rawSource!;
     }
+    if (block.attributes['busymark-property-edits'] != null &&
+        block.rawSource != null) {
+      final preserved = _propertyOnlySource(block);
+      if (preserved != null) return preserved;
+    }
+    if (block.kind != BusyBlockKind.math &&
+        {'p', 'code-block', 'img'}.contains(block.attributes['element']) &&
+        block.rawSource?.trimLeft().startsWith('<') == true &&
+        !busyMarkIsWritersideContainer(block)) {
+      return const WritersideEditingAdapter().serializeMarkdownElement(block);
+    }
     if (busyMarkIsWritersideContainer(block)) {
       if (block.attributes['busymark-definition-form'] == 'markdown') {
         final attrs = WritersideEditingAdapter.sourceAttributes(block);
@@ -283,10 +300,13 @@ class BusyMarkMarkdownSerializer {
     }
     return switch (block.kind) {
       BusyBlockKind.heading => _heading(block),
-      BusyBlockKind.paragraph => _inlineMarkdown(
-        block.inlines,
-        atBlockStart: true,
-        readableHardBreakRuns: true,
+      BusyBlockKind.paragraph => _withBlockAttributes(
+        block,
+        _inlineMarkdown(
+          block.inlines,
+          atBlockStart: true,
+          readableHardBreakRuns: true,
+        ),
       ),
       BusyBlockKind.math => _mathBlock(block),
       BusyBlockKind.codeBlock => _codeBlock(block),
@@ -306,7 +326,7 @@ class BusyMarkMarkdownSerializer {
       BusyBlockKind.thematicBreak => '---',
       BusyBlockKind.image => _image(block),
       BusyBlockKind.video => block.rawSource ?? _inlineMarkdown(block.inlines),
-      BusyBlockKind.table => _table(block),
+      BusyBlockKind.table => _withBlockAttributes(block, _table(block)),
       BusyBlockKind.writersideAdmonition => _writersideAdmonition(block),
       BusyBlockKind.writersideTabs ||
       BusyBlockKind.writersideProcedure ||
@@ -416,18 +436,18 @@ class BusyMarkMarkdownSerializer {
     final text = _inlineMarkdown(block.inlines);
     final id = block.attributes['id'];
     final generated = block.attributes['generatedId'] != 'false';
+    final authored = WritersideEditingAdapter.sourceAttributes(block);
     final attributes = <String>[
       if (id != null && id.isNotEmpty && !generated) 'id="${_attribute(id)}"',
-      if (busyMarkWritersideIsCollapsible(block.attributes))
-        'collapsible="true"',
+      if (block.attributes[busyMarkWritersideCollapsibleAttribute]
+          case final value?)
+        'collapsible="${_attribute(value)}"',
       if (block.attributes[busyMarkWritersideDefaultStateAttribute]
           case final state? when state.trim().isNotEmpty)
         'default-state="${_attribute(state)}"',
-      for (final entry in block.attributes.entries)
+      for (final entry in authored.entries)
         if (!{
               'id',
-              'level',
-              'generatedId',
               busyMarkWritersideCollapsibleAttribute,
               busyMarkWritersideDefaultStateAttribute,
               busyMarkPreserveTextWhitespaceAttribute,
@@ -463,38 +483,153 @@ class BusyMarkMarkdownSerializer {
     final fence = delimiter * _delimiterLength(text, delimiter, minimum: 3);
     final infoSeparator = language.startsWith(delimiter) ? ' ' : '';
     final source = '$fence$infoSeparator$language\n$text\n$fence';
-    final hasSource = block.attributes['src']?.trim().isNotEmpty ?? false;
-    if (!busyMarkWritersideIsCollapsible(block.attributes) && !hasSource) {
-      return source;
-    }
-    final attributes = <String>[
-      'collapsible="true"',
-      if (block.attributes[busyMarkWritersideCollapsedTitleAttribute]
-          case final title? when title.trim().isNotEmpty)
-        'collapsed-title="${_attribute(title)}"',
-      if (block.attributes[busyMarkWritersideDefaultStateAttribute]
-          case final state? when state.trim().isNotEmpty)
-        'default-state="${_attribute(state)}"',
-      if (block.attributes['src'] case final source?
-          when source.trim().isNotEmpty)
-        'src="${_attribute(source)}"',
-    ];
-    return '$source\n{${attributes.join(' ')}}';
+    return _withBlockAttributes(block, source);
   }
 
-  bool _writersideCodeBlockXmlAttribute(String key) => !{
-    'element',
-    'lang',
-    'language',
-    'editorBlockId',
-    busyMarkWritersideCodeBlockSourceFormAttribute,
-  }.contains(key);
+  String? _propertyOnlySource(BusyBlock block) {
+    var source = block.rawSource!.trimRight();
+    final edits =
+        jsonDecode(block.attributes['busymark-property-edits']!)
+            as Map<String, dynamic>;
+    if (edits.isEmpty) return block.rawSource!;
+    if (block.attributes.containsKey('element') &&
+        source.trimLeft().startsWith('<')) {
+      final authored = const WritersideDocumentParser().parseMarkdown(
+        filePath: '',
+        source: block.rawSource!,
+        markdown: BusyDocument(
+          filePath: '',
+          mode: MarkdownMode.writersideMarkdown,
+          blocks: [
+            BusyBlock(
+              id: 'property-source',
+              kind: BusyBlockKind.writersideRawXml,
+              rawSource: block.rawSource,
+              sourceSpan: SourceSpan.entireFile('', block.rawSource!),
+            ),
+          ],
+        ),
+      );
+      final original = authored.nodes
+          .whereType<WritersideElementNode>()
+          .firstOrNull;
+      if (original == null) return null;
+      final attributes = {...original.attributes};
+      for (final edit in edits.entries) {
+        final name = edit.key == 'language' ? 'lang' : edit.key;
+        if (edit.value == null || edit.value == '') {
+          attributes.remove(name);
+        } else {
+          attributes[name] = edit.value as String;
+        }
+      }
+      return const WritersideDocumentSerializer().serialize(
+        authored.copyWith(
+          nodes: [
+            for (final node in authored.nodes)
+              identical(node, original)
+                  ? original.copyWith(attributes: attributes)
+                  : node,
+          ],
+        ),
+      );
+    }
+    final authored = block.attributes['busymark-writerside-source-attributes'];
+    final hasLanguageOverride =
+        block.kind == BusyBlockKind.codeBlock &&
+        authored != null &&
+        (jsonDecode(authored) as Map<String, dynamic>).containsKey('lang');
+    if (block.kind == BusyBlockKind.codeBlock &&
+        edits.containsKey('language') &&
+        !hasLanguageOverride) {
+      final opening = RegExp(r'^(\s*)(`{3,}|~{3,})[^\r\n]*').firstMatch(source);
+      final language = edits['language'] as String? ?? '';
+      if (opening == null ||
+          language.contains('`') ||
+          language.contains('\n')) {
+        return null;
+      }
+      source = source.replaceRange(
+        0,
+        opening.end,
+        '${opening[1]}${opening[2]}$language',
+      );
+    }
+    final suffix = RegExp(
+      r'\{(?:\s*[\w:.-]+\s*=\s*"[^"]*"\s*)+\}\s*$',
+    ).firstMatch(source);
+    var attributes = suffix == null
+        ? ''
+        : source.substring(suffix.start + 1, source.lastIndexOf('}'));
+    for (final edit in edits.entries) {
+      if (edit.key == 'language' && !hasLanguageOverride) continue;
+      final name = edit.key == 'language' ? 'lang' : edit.key;
+      final pattern = RegExp(
+        '(?:^|\\s+)${RegExp.escape(name)}\\s*=\\s*"[^"]*"',
+      );
+      final value = edit.value as String?;
+      final replacement = value == null || value.isEmpty
+          ? ''
+          : '$name="${_attribute(value)}"';
+      if (pattern.hasMatch(attributes)) {
+        attributes = attributes.replaceFirstMapped(
+          pattern,
+          (m) =>
+              '${m[0]!.startsWith(' ') && replacement.isNotEmpty ? ' ' : ''}$replacement',
+        );
+      } else if (replacement.isNotEmpty) {
+        attributes = '${attributes.trimRight()} $replacement';
+      }
+    }
+    final ending = attributes.trim().isEmpty ? '' : '{${attributes.trim()}}';
+    if (suffix != null) {
+      return source
+          .replaceRange(suffix.start, source.length, ending)
+          .trimRight();
+    }
+    if (ending.isEmpty) return source;
+    return '$source${block.kind == BusyBlockKind.image
+        ? ''
+        : block.kind == BusyBlockKind.heading
+        ? ' '
+        : block.attributes['busymark-property-line-ending'] ?? '\n'}$ending';
+  }
+
+  String _withBlockAttributes(BusyBlock block, String source) {
+    final authored = block.attributes['busymark-writerside-source-attributes'];
+    final original = authored == null
+        ? const <String, dynamic>{}
+        : jsonDecode(authored) as Map<String, dynamic>;
+    final tag = WritersideEditingAdapter.tagForBlock(block);
+    final attributes = WritersideEditingAdapter.sourceAttributes(block)
+      ..removeWhere(
+        (k, v) =>
+            !WritersideSchema.attributesFor(tag).contains(k) &&
+            !original.containsKey(k),
+      );
+    if (attributes.isEmpty) return source;
+    return '$source\n{${attributes.entries.map((e) => '${e.key}="${_attribute(e.value)}"').join(' ')}}';
+  }
+
+  bool _writersideCodeBlockXmlAttribute(String key) =>
+      !{
+        'element',
+        'lang',
+        'language',
+        'editorBlockId',
+        busyMarkWritersideCodeBlockSourceFormAttribute,
+      }.contains(key) &&
+      !key.startsWith('busymark-');
 
   String _xmlAttribute(String value) => busyMarkEncodeXmlMathText(
     value,
   ).replaceAll('"', '&quot;').replaceAll("'", '&apos;');
 
-  String _attribute(String value) => value.replaceAll('"', '&quot;');
+  String _attribute(String value) => value
+      .replaceAll('&', '&amp;')
+      .replaceAll('"', '&quot;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;');
 
   String _mathBlock(BusyBlock block) {
     final expression =
@@ -651,18 +786,52 @@ class BusyMarkMarkdownSerializer {
     return quote.isEmpty ? attribute : '$quote\n$attribute';
   }
 
+  String _withInlineReferenceAttributes(BusyInline inline, String source) {
+    if (inline.attributes['busymark-writerside-attributes'] != 'true') {
+      return source;
+    }
+    final tag = inline.kind == BusyInlineKind.image
+        ? 'img'
+        : inline.kind == BusyInlineKind.link
+        ? 'a'
+        : null;
+    if (tag == null) return source;
+    final attrs = inline.attributes.entries.where(
+      (entry) =>
+          !{'src', 'href', 'alt', 'title'}.contains(entry.key) &&
+          WritersideSchema.attributesFor(tag).contains(entry.key),
+    );
+    final attributes = [
+      ...attrs,
+      if (inline.attributes['busymark-ignored-href'] case final href?)
+        MapEntry('href', href),
+    ].map((e) => '${e.key}="${_attribute(e.value)}"').join(' ');
+    return attributes.isEmpty ? source : '$source{$attributes}';
+  }
+
   String _image(BusyBlock block) {
-    final imageInline = block.inlines
-        .where((inline) => inline.kind == BusyInlineKind.image)
-        .firstOrNull;
-    final alt = imageInline?.text ?? block.plainText;
-    final src = block.attributes['src'] ?? imageInline?.destination ?? '';
-    final attributes = {...block.attributes}
-      ..removeWhere((key, value) => {'src', 'alt', 'title'}.contains(key));
-    final attrText = attributes.isEmpty
-        ? ''
-        : '{ ${attributes.entries.map((entry) => '${entry.key}="${entry.value}"').join(' ')} }';
-    return '![${_escapeInlineText(alt)}]($src)$attrText';
+    final original = _inlineMarkdown(block.inlines);
+    final attributes = WritersideEditingAdapter.sourceAttributes(block)
+      ..removeWhere(
+        (key, value) => {'src', 'alt', 'title', 'href'}.contains(key),
+      );
+    final inlineAttributes = <String, String>{};
+    void collect(BusyInline inline) {
+      if (inline.kind == BusyInlineKind.image &&
+          inline.attributes['busymark-writerside-attributes'] == 'true') {
+        inlineAttributes.addAll(inline.attributes);
+      }
+      for (final child in inline.children) {
+        collect(child);
+      }
+    }
+
+    for (final inline in block.inlines) {
+      collect(inline);
+    }
+    attributes.removeWhere((key, value) => inlineAttributes[key] == value);
+    if (attributes.isEmpty) return original;
+    return '$original{${attributes.entries.map((e) => '${e.key}="${_attribute(e.value)}"').join(' ')}}';
   }
 
   String _table(BusyBlock block) {
@@ -1057,7 +1226,7 @@ class BusyMarkMarkdownSerializer {
               : _escapeInlineText(inline.text, atBlockStart: atBlockStart)
         : childResult!.source;
     final delimiter = delimiterOverrides[inline.kind];
-    final source = switch (inline.kind) {
+    final nativeSource = switch (inline.kind) {
       BusyInlineKind.text =>
         rawText
             ? inline.text
@@ -1097,6 +1266,10 @@ class BusyMarkMarkdownSerializer {
         '${_semanticInlineOpening(inline)}$children</${busyMarkSemanticInlineTag(inline.kind)}>',
       BusyInlineKind.html || BusyInlineKind.unknown => inline.text,
     };
+    final source =
+        {'a', 'img'}.contains(inline.attributes['xml-name']?.split(':').last)
+        ? WritersideEditingAdapter.serializeInlineElement(inline)
+        : _withInlineReferenceAttributes(inline, nativeSource);
     final escapedTextOffsets = rawText
         ? {for (final target in targets) target: target}
         : inline.kind == BusyInlineKind.text
@@ -1629,8 +1802,4 @@ class _HardBreakRunSerialization {
 
 class _InlineTraversalMetrics {
   int visitedNodes = 0;
-}
-
-extension _FirstOrNull<T> on Iterable<T> {
-  T? get firstOrNull => isEmpty ? null : first;
 }

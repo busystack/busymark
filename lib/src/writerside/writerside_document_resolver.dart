@@ -1,3 +1,4 @@
+import 'writerside_effective_properties.dart';
 import 'dart:convert';
 import 'package:html/parser.dart' as html;
 import 'package:path/path.dart' as p;
@@ -90,6 +91,40 @@ class ResolvedWritersideDocument {
 /// concrete representation.
 class WritersideDocumentResolver {
   const WritersideDocumentResolver();
+
+  /// Inspector values use the same lexical scope, variables and conditions as
+  /// publication. The source occurrence, rather than a reusable parser ID,
+  /// identifies the requested authored element.
+  Map<String, String> resolveAuthoredProperties(
+    WritersideDocument document,
+    WritersideResolveContext context,
+    int offset,
+  ) {
+    final resolved = resolve(document, context).document;
+    for (final node in resolved.walk()) {
+      if (node.span.startOffset != offset ||
+          node.span.filePath != document.filePath) {
+        continue;
+      }
+      if (node is WritersideElementNode) return node.attributes;
+      if (node is WritersideMarkdownBlockNode) return node.block.attributes;
+    }
+    return const {};
+  }
+
+  Map<int, Map<String, String>> resolvePropertyOccurrences(
+    WritersideDocument document,
+    WritersideResolveContext context,
+  ) => {
+    for (final node in resolve(document, context).document.walk()) ...{
+      if (node.span.filePath == document.filePath &&
+          node is WritersideElementNode)
+        node.span.startOffset: node.attributes,
+      if (node.span.filePath == document.filePath &&
+          node is WritersideMarkdownBlockNode)
+        node.span.startOffset: node.block.attributes,
+    },
+  };
 
   /// Authored-reference inspection uses exactly the publication link resolver.
   Map<String, String> resolveAuthoredLink({
@@ -386,7 +421,9 @@ class _ResolveState {
         inheritedIgnoreVariables,
       );
       final attributes = <String, String>{
-        for (final entry in element.attributes.entries)
+        for (final entry in WritersideEffectiveProperties(
+          settings: module.config.settings,
+        ).defaultsFor(element.name, element.attributes).entries)
           entry.key: _interpolate(
             entry.value,
             scopedVariables,
@@ -966,7 +1003,9 @@ class _ResolveState {
   }
 
   bool _ignoreVariablesFor(WritersideElementNode element, bool inherited) {
-    final explicit = element.attributes['ignore-vars'];
+    final explicit = WritersideEffectiveProperties(
+      settings: context.module.config.settings,
+    ).defaultsFor(element.name, element.attributes)['ignore-vars'];
     if (explicit == 'true') {
       return true;
     }
@@ -979,11 +1018,14 @@ class _ResolveState {
     if (context.module.config.settings.smartIgnoreVars != true) {
       return false;
     }
-    return {
-      WritersideSemanticKind.codeBlock,
-      WritersideSemanticKind.link,
-      WritersideSemanticKind.image,
-    }.contains(element.semanticKind);
+    return element.semanticKind == WritersideSemanticKind.codeBlock ||
+        {
+              WritersideSemanticKind.link,
+              WritersideSemanticKind.image,
+            }.contains(element.semanticKind) &&
+            RegExp(r'^(?:https?:)?//').hasMatch(
+              element.attributes[element.name == 'img' ? 'src' : 'href'] ?? '',
+            );
   }
 
   BusyBlock _resolveMarkdownBlock(
@@ -994,10 +1036,27 @@ class _ResolveState {
     required bool ignoreVariables,
     required WritersideDocumentNode sourceNode,
   }) {
-    final explicit = block.attributes['ignore-vars'];
+    final tag =
+        block.attributes['element'] ??
+        switch (block.kind) {
+          BusyBlockKind.heading =>
+            block.attributes['level'] == '1' ? 'topic' : 'chapter',
+          BusyBlockKind.codeBlock => 'code-block',
+          BusyBlockKind.image => 'img',
+          BusyBlockKind.table => 'table',
+          _ => 'p',
+        };
+    final effectiveAttributes = WritersideEffectiveProperties(
+      settings: module.config.settings,
+    ).defaultsFor(tag, block.attributes);
+    final explicit = effectiveAttributes['ignore-vars'];
     final smart =
         context.module.config.settings.smartIgnoreVars == true &&
-        {BusyBlockKind.codeBlock, BusyBlockKind.image}.contains(block.kind);
+        (block.kind == BusyBlockKind.codeBlock ||
+            block.kind == BusyBlockKind.image &&
+                RegExp(
+                  r'^(?:https?:)?//',
+                ).hasMatch(block.attributes['src'] ?? ''));
     final ignore =
         explicit == 'true' ||
         (explicit != 'false' && (ignoreVariables || smart));
@@ -1005,7 +1064,17 @@ class _ResolveState {
       final children = inline.children
           .map(resolveInline)
           .toList(growable: false);
-      final inlineIgnore = inline.attributes['ignore-vars'] == 'true' || ignore;
+      final inlineTag = inline.kind == BusyInlineKind.image ? 'img' : 'a';
+      final explicitInline = WritersideEffectiveProperties(
+        settings: module.config.settings,
+      ).defaultsFor(inlineTag, inline.attributes)['ignore-vars'];
+      final smartInline =
+          module.config.settings.smartIgnoreVars == true &&
+          {BusyInlineKind.image, BusyInlineKind.link}.contains(inline.kind) &&
+          RegExp(r'^(?:https?:)?//').hasMatch(inline.destination ?? '');
+      final inlineIgnore =
+          explicitInline == 'true' ||
+          explicitInline != 'false' && (ignore || smartInline);
       final resolved = inline.copyWith(
         text: children.isEmpty
             ? _interpolate(
@@ -1099,7 +1168,7 @@ class _ResolveState {
       ],
       attributes: {
         if (sourceText != null) writersideResolvedSourceAttribute: sourceText,
-        for (final entry in block.attributes.entries)
+        for (final entry in effectiveAttributes.entries)
           entry.key: _interpolate(
             entry.value,
             variables,

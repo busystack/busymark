@@ -5096,4 +5096,83 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get referenceNoPortableId =>
       'ليس لهذا الهدف عنوان URL محمول ومُتحقَّق منه للملاحظة.';
+
+  @override
+  String get wsIncludeLines => 'تضمين الأسطر';
+
+  @override
+  String get wsIncludeSymbol => 'تضمين الرمز';
+
+  @override
+  String get wsEmphasizeLines => 'تمييز الأسطر المعروضة';
+
+  @override
+  String get wsPropertiesReadOnly => 'الخصائص للقراءة فقط في هذا العرض.';
+
+  @override
+  String get wsPropertiesProtected => 'هذا العنصر محمي. حرر مصدره.';
+
+  @override
+  String get wsPropertiesConflict =>
+      'تغير المستند أو العنصر. تراجع عن المسودة وحدد العنصر مجدداً.';
+
+  @override
+  String get wsPropertiesUnresolved => 'لا يمكن حل المرجع حالياً.';
+
+  @override
+  String get wsUseDefault => 'استخدام الافتراضي';
+
+  @override
+  String get wsPropertiesSelection => 'حدد عنصراً واحداً.';
+
+  @override
+  String get wsImageDisplay => 'عرض الصورة';
+
+  @override
+  String get wsImageThumbnail => 'صورة مصغرة قابلة للنقر';
+
+  @override
+  String get wsEnabled => 'مفعّل';
+
+  @override
+  String get wsDisabled => 'معطّل';
+
+  @override
+  String get wsWidth => 'العرض';
+
+  @override
+  String get wsHeight => 'الارتفاع';
+
+  @override
+  String get wsPropertiesInactive =>
+      'لا تؤثر هذه الخاصية إلا عند تفعيل الطي المنشور.';
+
+  @override
+  String get wsNavigationAll => 'كل العناصر ذات العناوين';
+
+  @override
+  String get wsNavigationNone => 'بلا تنقل';
+
+  @override
+  String get wsNavigationCustom => 'تنقل مخصص';
+
+  @override
+  String get wsTitleOverride => 'تجاوز العنوان';
+
+  @override
+  String get wsCompactLayout => 'مضغوط';
+
+  @override
+  String get wsWideLayout => 'عريض';
+
+  @override
+  String get wsCodeSourceConflict =>
+      'أزل الشفرة المضمّنة أو انقلها قبل تحديد ملف مصدر. يرفض Writerside كتلة شفرة غير فارغة ذات مرجع مصدر.';
+
+  @override
+  String get wsInherited => 'وراثة من القائمة';
+
+  @override
+  String get wsExternalImageSize =>
+      'لا يحدد Writerside أبعاد الصور الخارجية بشكل موثوق. يمكنك فحص الأبعاد الحالية وإزالتها.';
 }

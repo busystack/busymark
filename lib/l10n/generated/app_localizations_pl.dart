@@ -5122,4 +5122,85 @@ class AppLocalizationsPl extends AppLocalizations {
   @override
   String get referenceNoPortableId =>
       'Ten cel nie ma zweryfikowanego przenośnego adresu URL notatki.';
+
+  @override
+  String get wsIncludeLines => 'Dołącz wiersze';
+
+  @override
+  String get wsIncludeSymbol => 'Dołącz symbol';
+
+  @override
+  String get wsEmphasizeLines => 'Wyróżnij wyświetlane wiersze';
+
+  @override
+  String get wsPropertiesReadOnly =>
+      'W tym widoku właściwości są tylko do odczytu.';
+
+  @override
+  String get wsPropertiesProtected =>
+      'Element jest chroniony. Edytuj jego źródło.';
+
+  @override
+  String get wsPropertiesConflict =>
+      'Dokument lub element zmieniono. Cofnij szkic i wybierz ponownie.';
+
+  @override
+  String get wsPropertiesUnresolved => 'Nie można obecnie rozwiązać odwołania.';
+
+  @override
+  String get wsUseDefault => 'Użyj domyślnej wartości';
+
+  @override
+  String get wsPropertiesSelection => 'Wybierz jeden element.';
+
+  @override
+  String get wsImageDisplay => 'Wyświetlanie obrazu';
+
+  @override
+  String get wsImageThumbnail => 'Klikalna miniatura';
+
+  @override
+  String get wsEnabled => 'Włączone';
+
+  @override
+  String get wsDisabled => 'Wyłączone';
+
+  @override
+  String get wsWidth => 'Szerokość';
+
+  @override
+  String get wsHeight => 'Wysokość';
+
+  @override
+  String get wsPropertiesInactive =>
+      'Ta właściwość działa tylko przy opublikowanym zwijaniu.';
+
+  @override
+  String get wsNavigationAll => 'Wszystkie elementy z tytułem';
+
+  @override
+  String get wsNavigationNone => 'Bez nawigacji';
+
+  @override
+  String get wsNavigationCustom => 'Własna nawigacja';
+
+  @override
+  String get wsTitleOverride => 'Zastąp tytuł';
+
+  @override
+  String get wsCompactLayout => 'Zwarty';
+
+  @override
+  String get wsWideLayout => 'Szeroki';
+
+  @override
+  String get wsCodeSourceConflict =>
+      'Usuń lub przenieś kod przed wybraniem pliku źródłowego. Writerside odrzuca niepuste bloki kodu z odwołaniem do źródła.';
+
+  @override
+  String get wsInherited => 'Dziedzicz z listy';
+
+  @override
+  String get wsExternalImageSize =>
+      'Writerside nie ustawia niezawodnie rozmiaru obrazów zewnętrznych. Istniejące wymiary można sprawdzić i usunąć.';
 }

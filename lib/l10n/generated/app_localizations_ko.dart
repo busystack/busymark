@@ -4925,4 +4925,81 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get referenceNoPortableId => '이 대상에는 확인된 이식 가능한 노트 URL이 없습니다.';
+
+  @override
+  String get wsIncludeLines => '줄 포함';
+
+  @override
+  String get wsIncludeSymbol => '기호 포함';
+
+  @override
+  String get wsEmphasizeLines => '표시된 줄 강조';
+
+  @override
+  String get wsPropertiesReadOnly => '이 보기에서 속성은 읽기 전용입니다.';
+
+  @override
+  String get wsPropertiesProtected => '보호된 요소입니다. 소스를 편집하세요.';
+
+  @override
+  String get wsPropertiesConflict => '문서 또는 요소가 변경되었습니다. 초안을 되돌리고 다시 선택하세요.';
+
+  @override
+  String get wsPropertiesUnresolved => '현재 참조를 확인할 수 없습니다.';
+
+  @override
+  String get wsUseDefault => '기본값 사용';
+
+  @override
+  String get wsPropertiesSelection => '요소 하나를 선택하세요.';
+
+  @override
+  String get wsImageDisplay => '이미지 표시';
+
+  @override
+  String get wsImageThumbnail => '클릭 가능한 미리 보기';
+
+  @override
+  String get wsEnabled => '사용';
+
+  @override
+  String get wsDisabled => '사용 안 함';
+
+  @override
+  String get wsWidth => '너비';
+
+  @override
+  String get wsHeight => '높이';
+
+  @override
+  String get wsPropertiesInactive => '게시된 접기가 꺼져 있으면 이 속성은 적용되지 않습니다.';
+
+  @override
+  String get wsNavigationAll => '제목이 있는 모든 요소';
+
+  @override
+  String get wsNavigationNone => '탐색 없음';
+
+  @override
+  String get wsNavigationCustom => '사용자 지정 탐색';
+
+  @override
+  String get wsTitleOverride => '제목 재정의';
+
+  @override
+  String get wsCompactLayout => '간결';
+
+  @override
+  String get wsWideLayout => '넓게';
+
+  @override
+  String get wsCodeSourceConflict =>
+      '소스 파일을 선택하기 전에 인라인 코드를 제거하거나 이동하세요. Writerside는 소스 참조가 있는 비어 있지 않은 코드 블록을 거부합니다.';
+
+  @override
+  String get wsInherited => '목록에서 상속';
+
+  @override
+  String get wsExternalImageSize =>
+      'Writerside는 외부 이미지 크기를 안정적으로 설정하지 못합니다. 기존 크기는 확인하거나 제거할 수 있습니다.';
 }

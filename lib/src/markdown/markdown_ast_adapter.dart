@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'dart:convert';
 
 import 'package:markdown/markdown.dart' as md;
 import 'package:xml/xml.dart';
@@ -68,7 +69,6 @@ class MarkdownAstAdapter {
       source,
       writerside: mode == MarkdownMode.writersideMarkdown,
     );
-    final imageAttributes = _imageAttributeBlocks(source);
     final markdownSource = frontMatter == null
         ? source
         : source.substring(frontMatter.endOffset).trimLeft();
@@ -92,7 +92,7 @@ class MarkdownAstAdapter {
       filePath: filePath,
       mode: mode,
       title: title,
-      blocks: _applyImageAttributes(blocks, imageAttributes),
+      blocks: blocks,
       frontMatter: frontMatter?.values ?? const {},
       rawFrontMatter: frontMatter?.raw,
       source: source,
@@ -253,7 +253,11 @@ class MarkdownAstAdapter {
       return const [];
     }
     final packageSource = _protectProseHyphenLines(
-      _protectImageDestinationsWithSpaces(source),
+      _protectImageDestinationsWithSpaces(
+        mode == MarkdownMode.writersideMarkdown
+            ? _protectWritersideAttributeEntities(source)
+            : source,
+      ),
     );
     final document = busyMarkMarkdownDocument(mode);
     final nodes = document.parse(packageSource);
@@ -266,24 +270,26 @@ class MarkdownAstAdapter {
         : blocks;
   }
 
-  List<BusyBlock> _applyImageAttributes(
-    List<BusyBlock> blocks,
-    List<Map<String, String>> imageAttributes,
-  ) {
-    var imageIndex = 0;
-    BusyBlock visit(BusyBlock block) {
-      final children = block.children.map(visit).toList();
-      if (block.kind == BusyBlockKind.image &&
-          imageIndex < imageAttributes.length) {
-        return block.copyWith(
-          children: children,
-          attributes: {...block.attributes, ...imageAttributes[imageIndex++]},
-        );
-      }
-      return children.isEmpty ? block : block.copyWith(children: children);
-    }
-
-    return blocks.map(visit).toList();
+  String _protectWritersideAttributeEntities(String source) {
+    MarkdownFence? fence;
+    return source
+        .split('\n')
+        .map((line) {
+          if (fence != null) {
+            if (fence!.closes(line)) fence = null;
+            return line;
+          }
+          fence = MarkdownFence.parse(line);
+          if (fence != null) return line;
+          return line.replaceAllMapped(RegExp(r'\{[^{}]*\}\s*$'), (block) {
+            return block[0]!.replaceAllMapped(
+              RegExp(r'([\w:.-]+\s*=\s*")([^"]*)(")'),
+              (pair) =>
+                  '${pair[1]}${pair[2]!.replaceAll('&', '&amp;')}${pair[3]}',
+            );
+          });
+        })
+        .join('\n');
   }
 
   List<BusyBlock> _blocksFromNode(
@@ -396,7 +402,16 @@ class MarkdownAstAdapter {
             'level': '$level',
             'id': anchorId,
             'generatedId': '${attrId == null}',
-            ...trailingAttributes,
+            for (final entry in trailingAttributes.entries)
+              if (!WritersideEditingAdapter.isProjectionAttribute(
+                entry.key,
+                BusyBlockKind.heading,
+              ))
+                entry.key: entry.value,
+            if (trailingAttributes.isNotEmpty)
+              'busymark-writerside-source-attributes': jsonEncode(
+                trailingAttributes,
+              ),
           },
         ),
       ];
@@ -413,7 +428,10 @@ class MarkdownAstAdapter {
       if (writerside != null) {
         return [writerside];
       }
-      final inlines = _inlinesFromNodes(children);
+      final parsedInlines = _inlinesFromNodes(children);
+      final inlines = mode == MarkdownMode.writersideMarkdown
+          ? _attachReferenceAttributes(parsedInlines)
+          : parsedInlines;
       final imageBlock = _imageBlockFromParagraph(node, inlines, nextId);
       if (imageBlock != null) {
         return [imageBlock];
@@ -422,7 +440,30 @@ class MarkdownAstAdapter {
         BusyBlock(
           id: nextId(),
           kind: BusyBlockKind.paragraph,
-          inlines: _normalizeSoftBreaks(inlines),
+          inlines: _normalizeSoftBreaks(
+            mode == MarkdownMode.writersideMarkdown &&
+                    _trailingAttributeBlock(node.textContent).isNotEmpty &&
+                    !node.textContent.trim().startsWith('{')
+                ? _stripTrailingAttributeInline(inlines)
+                : inlines,
+          ),
+          attributes:
+              mode == MarkdownMode.writersideMarkdown &&
+                  !node.textContent.trim().startsWith('{')
+              ? {
+                  for (final entry in _trailingAttributeBlock(
+                    node.textContent,
+                  ).entries)
+                    if (!WritersideEditingAdapter.isProjectionAttribute(
+                      entry.key,
+                      BusyBlockKind.paragraph,
+                    ))
+                      entry.key: entry.value,
+                  'busymark-writerside-source-attributes': jsonEncode(
+                    _trailingAttributeBlock(node.textContent),
+                  ),
+                }
+              : const {},
         ),
       ];
     }
@@ -532,7 +573,7 @@ class MarkdownAstAdapter {
     }
 
     if (tag == 'table') {
-      final tableRows = _tableRows(node, nextId);
+      final tableRows = _tableRows(node, nextId, mode);
       return [
         if (_tableCaption(node, nextId) case final caption?) caption,
         BusyBlock(id: nextId(), kind: BusyBlockKind.table, children: tableRows),
@@ -653,6 +694,62 @@ class MarkdownAstAdapter {
     ];
   }
 
+  List<BusyInline> _attachReferenceAttributes(List<BusyInline> inlines) {
+    final values = [
+      for (final inline in inlines)
+        inline.children.isEmpty
+            ? inline
+            : inline.copyWith(
+                children: _attachReferenceAttributes(inline.children),
+              ),
+    ];
+    final result = <BusyInline>[];
+    for (var index = 0; index < values.length; index++) {
+      var inline = values[index];
+      if ({BusyInlineKind.image, BusyInlineKind.link}.contains(inline.kind) &&
+          index + 1 < values.length) {
+        final next = values[index + 1];
+        final match = next.kind == BusyInlineKind.text
+            ? RegExp(r'^\{([^{}]+)\}').firstMatch(next.text)
+            : null;
+        final attributes = match == null
+            ? const <String, String>{}
+            : _parseAttributePairs(match[1]!);
+        final tag = inline.kind == BusyInlineKind.image ? 'img' : 'a';
+        if (attributes.isNotEmpty &&
+            attributes.keys.every(
+              WritersideSchema.attributesFor(tag).contains,
+            )) {
+          inline = inline.copyWith(
+            destination: inline.kind == BusyInlineKind.image
+                ? attributes['src'] ?? inline.destination
+                : inline.destination,
+            text: inline.kind == BusyInlineKind.image
+                ? attributes['alt'] ?? inline.text
+                : inline.text,
+            attributes: {
+              ...inline.attributes,
+              ...attributes,
+              if (inline.kind == BusyInlineKind.link) ...{
+                if (attributes['href'] != null)
+                  'busymark-ignored-href': attributes['href']!,
+                if (inline.destination != null) 'href': inline.destination!,
+              },
+              'busymark-writerside-attributes': 'true',
+            },
+          );
+          values[index + 1] = next.copyWith(
+            text: next.text.substring(match!.end),
+          );
+        }
+      }
+      if (inline.kind != BusyInlineKind.text || inline.text.isNotEmpty) {
+        result.add(inline);
+      }
+    }
+    return result;
+  }
+
   List<BusyBlock> _listBlocksFromNode(
     md.Element node, {
     required bool ordered,
@@ -707,7 +804,11 @@ class MarkdownAstAdapter {
                     ? BusyBlockKind.orderedListItem
                     : BusyBlockKind.unorderedListItem
               : BusyBlockKind.taskListItem,
-          inlines: _normalizeSoftBreaks(_inlinesFromNodes(inlineNodes)),
+          inlines: _normalizeSoftBreaks(
+            mode == MarkdownMode.writersideMarkdown
+                ? _attachReferenceAttributes(_inlinesFromNodes(inlineNodes))
+                : _inlinesFromNodes(inlineNodes),
+          ),
           children: nestedBlocks,
           attributes: attributes,
         ),
@@ -1150,7 +1251,9 @@ class MarkdownAstAdapter {
       return null;
     }
     final imageInline = images.single;
-    final plain = paragraph.textContent.trim();
+    // Inline attribute overrides can change the authored image's alt text.
+    // Use the adapted inlines, rather than the pre-override Markdown AST label.
+    final plain = inlines.map((inline) => inline.plainText).join().trim();
     final attributeText = plain.replaceFirst(imageInline.text, '').trim();
     if (inlines.length > 2 ||
         (attributeText.isNotEmpty && !attributeText.startsWith('{'))) {
@@ -1190,7 +1293,11 @@ class MarkdownAstAdapter {
     }
   }
 
-  List<BusyBlock> _tableRows(md.Element table, String Function() nextId) {
+  List<BusyBlock> _tableRows(
+    md.Element table,
+    String Function() nextId,
+    MarkdownMode mode,
+  ) {
     final rows = <BusyBlock>[];
 
     void addRow(md.Element row, {required bool sectionHeader}) {
@@ -1214,7 +1321,11 @@ class MarkdownAstAdapter {
               BusyBlock(
                 id: nextId(),
                 kind: BusyBlockKind.paragraph,
-                inlines: _inlinesFromNodes(cell.children ?? const []),
+                inlines: mode == MarkdownMode.writersideMarkdown
+                    ? _attachReferenceAttributes(
+                        _inlinesFromNodes(cell.children ?? const []),
+                      )
+                    : _inlinesFromNodes(cell.children ?? const []),
                 attributes: _tableCellAttributes(cell),
               ),
           ],
@@ -1470,7 +1581,7 @@ class MarkdownAstAdapter {
     if (stripped == text) {
       return inlines;
     }
-    return [BusyInline(kind: BusyInlineKind.text, text: stripped)];
+    return _takeInlinePrefix(inlines, stripped.length);
   }
 
   bool? _taskChecked(List<md.Node> children) {
@@ -1515,15 +1626,29 @@ class MarkdownAstAdapter {
     var index = 0;
     while (index < blocks.length) {
       final block = blocks[index];
-      if (block.kind == BusyBlockKind.codeBlock && index + 1 < blocks.length) {
+      if ({BusyBlockKind.codeBlock, BusyBlockKind.table}.contains(block.kind) &&
+          index + 1 < blocks.length) {
         final attributeBlock = blocks[index + 1];
         final attributes = attributeBlock.kind == BusyBlockKind.paragraph
             ? _standaloneAttributeBlock(attributeBlock.plainText)
             : const <String, String>{};
-        if (busyMarkWritersideIsCollapsible(attributes) ||
-            (attributes['src']?.trim().isNotEmpty ?? false)) {
+        if (attributes.isNotEmpty) {
           result.add(
-            block.copyWith(attributes: {...block.attributes, ...attributes}),
+            block.copyWith(
+              attributes: {
+                ...block.attributes,
+                for (final entry in attributes.entries)
+                  if (!WritersideEditingAdapter.isProjectionAttribute(
+                    entry.key,
+                    block.kind,
+                  ))
+                    entry.key: entry.value,
+                if (block.kind == BusyBlockKind.codeBlock &&
+                    attributes['lang'] != null)
+                  'language': attributes['lang']!,
+                'busymark-writerside-source-attributes': jsonEncode(attributes),
+              },
+            ),
           );
           index += 2;
           continue;
@@ -1560,7 +1685,14 @@ class MarkdownAstAdapter {
     for (final match in RegExp(
       r'([A-Za-z_:][-A-Za-z0-9_:.]*)\s*=\s*"([^"]*)"',
     ).allMatches(raw)) {
-      attributes[match.group(1)!] = match.group(2)!;
+      final encoded = match.group(2)!;
+      try {
+        attributes[match.group(1)!] = XmlDocumentFragment.parse(
+          encoded,
+        ).innerText;
+      } on XmlParserException {
+        attributes[match.group(1)!] = encoded;
+      }
     }
     return attributes;
   }
@@ -1688,15 +1820,6 @@ class MarkdownAstAdapter {
     });
   }
 
-  List<Map<String, String>> _imageAttributeBlocks(String source) {
-    return [
-      for (final match in RegExp(
-        r'!\[[^\]]*\]\([^)]+\)\s*(\{[^}]+\})',
-      ).allMatches(source))
-        _parseAttributeBlock(match.group(1)!),
-    ];
-  }
-
   bool _writersideBlockTag(String tag) {
     return !{'control', 'path', 'ui-path', 'shortcut'}.contains(tag) &&
         WritersideSchema.isMarkdownSemanticBlock(tag);
@@ -1729,6 +1852,23 @@ class MarkdownAstAdapter {
       final block = blocks[index];
       if (block.kind != BusyBlockKind.paragraph || block.inlines.isEmpty) {
         continue;
+      }
+      final attachedStyle = busyAdmonitionStyleFromName(
+        block.attributes['style'],
+      );
+      if (attachedStyle != null) {
+        final attributes = {...block.attributes}..remove('style');
+        final recorded = attributes['busymark-writerside-source-attributes'];
+        if (recorded != null) {
+          final source = jsonDecode(recorded) as Map<String, dynamic>;
+          source.remove('style');
+          attributes['busymark-writerside-source-attributes'] = jsonEncode(
+            source,
+          );
+        }
+        final updated = [...blocks];
+        updated[index] = block.copyWith(attributes: attributes);
+        return (style: attachedStyle, blocks: updated);
       }
       final match = RegExp(r'\s*\{([^{}]*)\}\s*$').firstMatch(block.plainText);
       if (match == null) {

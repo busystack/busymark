@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<vars>
+  <var name="product" value="BusyMark"/>
+  <var name="collapse" value="true"/>
+  <var name="state" value="expanded"/>
+</vars>

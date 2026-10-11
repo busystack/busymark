@@ -5115,4 +5115,86 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get referenceNoPortableId =>
       'Este destino no tiene una URL portátil de nota verificada.';
+
+  @override
+  String get wsIncludeLines => 'Incluir líneas';
+
+  @override
+  String get wsIncludeSymbol => 'Incluir símbolo';
+
+  @override
+  String get wsEmphasizeLines => 'Resaltar líneas mostradas';
+
+  @override
+  String get wsPropertiesReadOnly =>
+      'Propiedades de solo lectura en esta vista.';
+
+  @override
+  String get wsPropertiesProtected =>
+      'Este elemento está protegido. Edite su fuente.';
+
+  @override
+  String get wsPropertiesConflict =>
+      'El documento o elemento cambió. Revierta el borrador y seleccione de nuevo.';
+
+  @override
+  String get wsPropertiesUnresolved =>
+      'No se puede resolver la referencia actualmente.';
+
+  @override
+  String get wsUseDefault => 'Usar valor predeterminado';
+
+  @override
+  String get wsPropertiesSelection => 'Seleccione un solo elemento.';
+
+  @override
+  String get wsImageDisplay => 'Visualización de imagen';
+
+  @override
+  String get wsImageThumbnail => 'Miniatura pulsable';
+
+  @override
+  String get wsEnabled => 'Activado';
+
+  @override
+  String get wsDisabled => 'Desactivado';
+
+  @override
+  String get wsWidth => 'Ancho';
+
+  @override
+  String get wsHeight => 'Alto';
+
+  @override
+  String get wsPropertiesInactive =>
+      'Esta propiedad no tiene efecto sin contraer en la publicación.';
+
+  @override
+  String get wsNavigationAll => 'Todos los elementos con título';
+
+  @override
+  String get wsNavigationNone => 'Sin navegación';
+
+  @override
+  String get wsNavigationCustom => 'Navegación personalizada';
+
+  @override
+  String get wsTitleOverride => 'Sustituir título';
+
+  @override
+  String get wsCompactLayout => 'Compacto';
+
+  @override
+  String get wsWideLayout => 'Ancho';
+
+  @override
+  String get wsCodeSourceConflict =>
+      'Quite o mueva el código antes de elegir un archivo fuente. Writerside rechaza bloques no vacíos con una referencia fuente.';
+
+  @override
+  String get wsInherited => 'Heredar de la lista';
+
+  @override
+  String get wsExternalImageSize =>
+      'Writerside no dimensiona con fiabilidad las imágenes externas. Puede revisar y quitar dimensiones existentes.';
 }

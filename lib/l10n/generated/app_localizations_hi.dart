@@ -5057,4 +5057,84 @@ class AppLocalizationsHi extends AppLocalizations {
   @override
   String get referenceNoPortableId =>
       'इस लक्ष्य का सत्यापित पोर्टेबल नोट URL नहीं है.';
+
+  @override
+  String get wsIncludeLines => 'पंक्तियाँ शामिल करें';
+
+  @override
+  String get wsIncludeSymbol => 'प्रतीक शामिल करें';
+
+  @override
+  String get wsEmphasizeLines => 'दिखाई गई पंक्तियाँ हाइलाइट करें';
+
+  @override
+  String get wsPropertiesReadOnly => 'इस दृश्य में गुण केवल पढ़ने के लिए हैं।';
+
+  @override
+  String get wsPropertiesProtected =>
+      'यह तत्व सुरक्षित है। इसका स्रोत संपादित करें।';
+
+  @override
+  String get wsPropertiesConflict =>
+      'दस्तावेज़ या तत्व बदल गया। मसौदा वापस करें और फिर चुनें।';
+
+  @override
+  String get wsPropertiesUnresolved => 'संदर्भ अभी हल नहीं हो सकता।';
+
+  @override
+  String get wsUseDefault => 'डिफ़ॉल्ट उपयोग करें';
+
+  @override
+  String get wsPropertiesSelection => 'एक तत्व चुनें।';
+
+  @override
+  String get wsImageDisplay => 'छवि प्रदर्शन';
+
+  @override
+  String get wsImageThumbnail => 'क्लिक करने योग्य थंबनेल';
+
+  @override
+  String get wsEnabled => 'सक्षम';
+
+  @override
+  String get wsDisabled => 'अक्षम';
+
+  @override
+  String get wsWidth => 'चौड़ाई';
+
+  @override
+  String get wsHeight => 'ऊँचाई';
+
+  @override
+  String get wsPropertiesInactive =>
+      'प्रकाशित संकुचन बंद होने पर इस गुण का प्रभाव नहीं होता।';
+
+  @override
+  String get wsNavigationAll => 'सभी शीर्षक वाले तत्व';
+
+  @override
+  String get wsNavigationNone => 'नेविगेशन नहीं';
+
+  @override
+  String get wsNavigationCustom => 'कस्टम नेविगेशन';
+
+  @override
+  String get wsTitleOverride => 'शीर्षक बदलें';
+
+  @override
+  String get wsCompactLayout => 'संक्षिप्त';
+
+  @override
+  String get wsWideLayout => 'चौड़ा';
+
+  @override
+  String get wsCodeSourceConflict =>
+      'स्रोत फ़ाइल चुनने से पहले इनलाइन कोड हटाएँ या स्थानांतरित करें। Writerside स्रोत संदर्भ वाले गैर-रिक्त कोड ब्लॉक अस्वीकार करता है।';
+
+  @override
+  String get wsInherited => 'सूची से प्राप्त करें';
+
+  @override
+  String get wsExternalImageSize =>
+      'Writerside बाहरी छवियों का आकार विश्वसनीय ढंग से नहीं बदलता। मौजूदा आयाम देखे और हटाए जा सकते हैं।';
 }

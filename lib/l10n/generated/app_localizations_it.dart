@@ -5110,4 +5110,86 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get referenceNoPortableId =>
       'Questa destinazione non ha un URL portabile della nota verificato.';
+
+  @override
+  String get wsIncludeLines => 'Includi righe';
+
+  @override
+  String get wsIncludeSymbol => 'Includi simbolo';
+
+  @override
+  String get wsEmphasizeLines => 'Evidenzia righe visualizzate';
+
+  @override
+  String get wsPropertiesReadOnly =>
+      'Proprietà di sola lettura in questa vista.';
+
+  @override
+  String get wsPropertiesProtected =>
+      'Elemento protetto. Modifica la sorgente.';
+
+  @override
+  String get wsPropertiesConflict =>
+      'Documento o elemento modificato. Annulla la bozza e seleziona di nuovo.';
+
+  @override
+  String get wsPropertiesUnresolved =>
+      'Impossibile risolvere il riferimento al momento.';
+
+  @override
+  String get wsUseDefault => 'Usa predefinito';
+
+  @override
+  String get wsPropertiesSelection => 'Seleziona un solo elemento.';
+
+  @override
+  String get wsImageDisplay => 'Visualizzazione immagine';
+
+  @override
+  String get wsImageThumbnail => 'Miniatura cliccabile';
+
+  @override
+  String get wsEnabled => 'Abilitato';
+
+  @override
+  String get wsDisabled => 'Disabilitato';
+
+  @override
+  String get wsWidth => 'Larghezza';
+
+  @override
+  String get wsHeight => 'Altezza';
+
+  @override
+  String get wsPropertiesInactive =>
+      'Questa proprietà non ha effetto senza compressione pubblicata.';
+
+  @override
+  String get wsNavigationAll => 'Tutti gli elementi con titolo';
+
+  @override
+  String get wsNavigationNone => 'Nessuna navigazione';
+
+  @override
+  String get wsNavigationCustom => 'Navigazione personalizzata';
+
+  @override
+  String get wsTitleOverride => 'Sostituisci titolo';
+
+  @override
+  String get wsCompactLayout => 'Compatto';
+
+  @override
+  String get wsWideLayout => 'Largo';
+
+  @override
+  String get wsCodeSourceConflict =>
+      'Rimuovi o sposta il codice prima di scegliere un file sorgente. Writerside rifiuta blocchi non vuoti con un riferimento sorgente.';
+
+  @override
+  String get wsInherited => 'Eredita dall’elenco';
+
+  @override
+  String get wsExternalImageSize =>
+      'Writerside non dimensiona in modo affidabile le immagini esterne. Le dimensioni esistenti possono essere consultate e rimosse.';
 }

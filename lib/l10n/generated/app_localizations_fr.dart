@@ -5118,4 +5118,86 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get referenceNoPortableId =>
       'Cette cible ne possède pas d’URL de note portable vérifiée.';
+
+  @override
+  String get wsIncludeLines => 'Inclure les lignes';
+
+  @override
+  String get wsIncludeSymbol => 'Inclure le symbole';
+
+  @override
+  String get wsEmphasizeLines => 'Surligner les lignes affichées';
+
+  @override
+  String get wsPropertiesReadOnly =>
+      'Propriétés en lecture seule dans cette vue.';
+
+  @override
+  String get wsPropertiesProtected =>
+      'Cet élément est protégé. Modifiez sa source.';
+
+  @override
+  String get wsPropertiesConflict =>
+      'Le document ou élément a changé. Annulez le brouillon et sélectionnez de nouveau.';
+
+  @override
+  String get wsPropertiesUnresolved =>
+      'La référence ne peut pas être résolue actuellement.';
+
+  @override
+  String get wsUseDefault => 'Utiliser la valeur par défaut';
+
+  @override
+  String get wsPropertiesSelection => 'Sélectionnez un seul élément.';
+
+  @override
+  String get wsImageDisplay => 'Affichage de l’image';
+
+  @override
+  String get wsImageThumbnail => 'Miniature cliquable';
+
+  @override
+  String get wsEnabled => 'Activé';
+
+  @override
+  String get wsDisabled => 'Désactivé';
+
+  @override
+  String get wsWidth => 'Largeur';
+
+  @override
+  String get wsHeight => 'Hauteur';
+
+  @override
+  String get wsPropertiesInactive =>
+      'Sans repli publié, cette propriété est sans effet.';
+
+  @override
+  String get wsNavigationAll => 'Tous les éléments avec titre';
+
+  @override
+  String get wsNavigationNone => 'Aucune navigation';
+
+  @override
+  String get wsNavigationCustom => 'Navigation personnalisée';
+
+  @override
+  String get wsTitleOverride => 'Remplacer le titre';
+
+  @override
+  String get wsCompactLayout => 'Disposition compacte';
+
+  @override
+  String get wsWideLayout => 'Large';
+
+  @override
+  String get wsCodeSourceConflict =>
+      'Supprimez ou déplacez le code avant de choisir un fichier source. Writerside refuse les blocs non vides avec une référence source.';
+
+  @override
+  String get wsInherited => 'Hériter de la liste';
+
+  @override
+  String get wsExternalImageSize =>
+      'Writerside ne dimensionne pas de manière fiable les images externes. Les dimensions existantes restent consultables et supprimables.';
 }
