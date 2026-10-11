@@ -1,0 +1,5 @@
+
+** (io.busystack.busymark:199): WARNING **: 14:43:55.413: Failed to load application icon: Couldn?t recognize the image file format for file ?/workspace/build/linux/x64/release/bundle/data/flutter_assets/assets/branding/busymark_logo.svg?
+
+(io.busystack.busymark:199): Atk-CRITICAL **: 14:43:55.443: atk_socket_embed: assertion 'plug_id != NULL' failed
+[IMPORTANT:flutter/shell/platform/embedder/embedder_surface_gl_impeller.cc(126)] Using the Impeller rendering backend (OpenGLESSDF).

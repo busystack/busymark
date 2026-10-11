@@ -1,0 +1,24 @@
+00:00 +0: loading /home/albert/busystack/busymark/test/src/writerside_authoring_test.dart
+00:00 +0: Markdown switcher labels preserve literal metadata through reopening
+00:00 +0 -1: Markdown switcher labels preserve literal metadata through reopening [E]
+  Expected: a string starting with '---\n'
+              'switcher-label: Platform: &quot;Desktop&quot; \\ Keys\n'
+              '---\n'
+              ''
+    Actual: '---\n'
+              'switcher-label: Platform: "Desktop" \\ Keys\n'
+              '---\n'
+              '\n'
+              '# A\n'
+              '\n'
+              'Text\n'
+              ''
+  
+  package:matcher                                     expect
+  package:flutter_test/src/widget_tester.dart 473:18  expect
+  test/src/writerside_authoring_test.dart 156:9       main.<fn>
+  
+00:00 +0 -1: Some tests failed.
+
+Failing tests:
+  /home/albert/busystack/busymark/test/src/writerside_authoring_test.dart: Markdown switcher labels preserve literal metadata through reopening

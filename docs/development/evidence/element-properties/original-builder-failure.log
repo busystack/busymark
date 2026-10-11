@@ -1,0 +1,311 @@
+Generating website...
+_XSERVTransmkdir: ERROR: euid != 0,directory /tmp/.X11-unix will not be created.
+error: XDG_RUNTIME_DIR not set in the environment.
+[0.003s][warning][cds] Archived non-system classes are disabled because the java.system.class.loader property is specified (value = "com.intellij.util.lang.PathClassLoader"). To use archived non-system classes, this property must not be set
+Oct 11, 2026 1:28:54 PM java.util.prefs.FileSystemPreferences setupUserRoot
+INFO: Created user preferences directory.
+2026-10-11 13:28:54,979 [    146]   WARN - #c.i.i.p.PluginManager - Dist index is missing or corrupted; an OLD, DEPRECATED, SOON-TO-BE-REMOVED implementation will be used
+SLF4J(E): A service provider failed to instantiate:
+org.slf4j.spi.SLF4JServiceProvider: org.slf4j.jul.JULServiceProvider not a subtype
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::allocateMemory has been called by io.netty.util.internal.PlatformDependent0$2
+WARNING: Please consider reporting this to the maintainers of class io.netty.util.internal.PlatformDependent0$2
+WARNING: sun.misc.Unsafe::allocateMemory will be removed in a future release
+2026-10-11 13:28:57,015 [   2182] SEVERE - #c.i.s.ComponentManagerImpl - com.intellij.ui.jcef.JBCefApp$Holder <clinit> requests com.intellij.util.net.internal.ProxyMigrationService instance. Class initialization must not depend on services. Consider using instance of the service on-demand instead.
+java.lang.Throwable: com.intellij.ui.jcef.JBCefApp$Holder <clinit> requests com.intellij.util.net.internal.ProxyMigrationService instance. Class initialization must not depend on services. Consider using instance of the service on-demand instead.
+	at com.intellij.openapi.diagnostic.Logger.error(Logger.java:375)
+	at com.intellij.serviceContainer.ComponentManagerImplKt.checkOutsideClassInitializer(ComponentManagerImpl.kt:1724)
+	at com.intellij.serviceContainer.ComponentManagerImplKt.getOrCreateInstanceBlocking(ComponentManagerImpl.kt:1680)
+	at com.intellij.serviceContainer.ComponentManagerImpl.doGetService(ComponentManagerImpl.kt:803)
+	at com.intellij.serviceContainer.ComponentManagerImpl.getService(ComponentManagerImpl.kt:741)
+	at com.intellij.util.net.internal.ProxyMigrationService$Companion.getInstance(ProxyMigrationService.kt:19)
+	at com.intellij.util.net.internal.ProxyMigrationService.getInstance(ProxyMigrationService.kt)
+	at com.intellij.util.net.HttpConfigurable.initializeComponent(HttpConfigurable.java:165)
+	at com.intellij.configurationStore.ComponentStoreImpl.initComponent$suspendImpl(ComponentStoreImpl.kt:198)
+	at com.intellij.configurationStore.ComponentStoreImpl.initComponent(ComponentStoreImpl.kt)
+	at com.intellij.configurationStore.ComponentStoreWithExtraComponents.initComponent(ComponentStoreWithExtraComponents.kt:48)
+	at com.intellij.serviceContainer.ServiceInstanceInitializerKt.initializeService(ServiceInstanceInitializer.kt:157)
+	at com.intellij.serviceContainer.ServiceInstanceInitializerKt.access$initializeService(ServiceInstanceInitializer.kt:1)
+	at com.intellij.serviceContainer.ServiceInstanceInitializer.createInstance$suspendImpl(ServiceInstanceInitializer.kt:75)
+	at com.intellij.serviceContainer.ServiceInstanceInitializer.createInstance(ServiceInstanceInitializer.kt)
+	at com.intellij.platform.instanceContainer.internal.LazyInstanceHolder$initialize$1$1.invokeSuspend(LazyInstanceHolder.kt:181)
+	at com.intellij.platform.instanceContainer.internal.LazyInstanceHolder$initialize$1$1.invoke(LazyInstanceHolder.kt)
+	at com.intellij.platform.instanceContainer.internal.LazyInstanceHolder$initialize$1$1.invoke(LazyInstanceHolder.kt)
+	at kotlinx.coroutines.intrinsics.UndispatchedKt.startUndspatched(Undispatched.kt:67)
+	at kotlinx.coroutines.intrinsics.UndispatchedKt.startUndispatchedOrReturn(Undispatched.kt:43)
+	at kotlinx.coroutines.BuildersKt__Builders_commonKt.withContext(Builders.common.kt:165)
+	at kotlinx.coroutines.BuildersKt.withContext(Unknown Source)
+	at com.intellij.platform.instanceContainer.internal.LazyInstanceHolder$initialize$1.invokeSuspend(LazyInstanceHolder.kt:179)
+	at com.intellij.platform.instanceContainer.internal.LazyInstanceHolder$initialize$1.invoke(LazyInstanceHolder.kt)
+	at com.intellij.platform.instanceContainer.internal.LazyInstanceHolder$initialize$1.invoke(LazyInstanceHolder.kt)
+	at kotlinx.coroutines.intrinsics.UndispatchedKt.startCoroutineUndispatched(Undispatched.kt:20)
+	at kotlinx.coroutines.CoroutineStart.invoke(CoroutineStart.kt:360)
+	at kotlinx.coroutines.AbstractCoroutine.start(AbstractCoroutine.kt:134)
+	at kotlinx.coroutines.BuildersKt__Builders_commonKt.launch(Builders.common.kt:53)
+	at kotlinx.coroutines.BuildersKt.launch(Unknown Source)
+	at com.intellij.platform.instanceContainer.internal.LazyInstanceHolder.initialize(LazyInstanceHolder.kt:164)
+	at com.intellij.platform.instanceContainer.internal.LazyInstanceHolder.access$initialize(LazyInstanceHolder.kt:29)
+	at com.intellij.platform.instanceContainer.internal.LazyInstanceHolder.tryInitialize(LazyInstanceHolder.kt:154)
+	at com.intellij.platform.instanceContainer.internal.LazyInstanceHolder.getInstance(LazyInstanceHolder.kt:112)
+	at com.intellij.platform.instanceContainer.internal.LazyInstanceHolder.getInstanceInCallerContext$suspendImpl(LazyInstanceHolder.kt:104)
+	at com.intellij.platform.instanceContainer.internal.LazyInstanceHolder.getInstanceInCallerContext(LazyInstanceHolder.kt)
+	at com.intellij.serviceContainer.ComponentManagerImplKt$doGetOrCreateInstanceBlocking$1.invokeSuspend(ComponentManagerImpl.kt:1698)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:34)
+	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:100)
+	at kotlinx.coroutines.EventLoopImplBase.processNextEvent(EventLoop.common.kt:263)
+	at kotlinx.coroutines.BlockingCoroutine.joinBlocking(Builders.kt:112)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking$BuildersKt__BuildersKt(Builders.kt:87)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlockingWithParallelismCompensation(Builders.kt:63)
+	at kotlinx.coroutines.BuildersKt.runBlockingWithParallelismCompensation(Unknown Source)
+	at kotlinx.coroutines.internal.intellij.IntellijCoroutines.runBlockingWithParallelismCompensation(intellij.kt:48)
+	at com.intellij.util.IntelliJCoroutinesFacade.runBlockingWithParallelismCompensation(IntelliJCoroutinesFacade.kt:35)
+	at com.intellij.serviceContainer.ComponentManagerImplKt.runBlockingInitialization$lambda$0(ComponentManagerImpl.kt:1829)
+	at com.intellij.openapi.progress.ContextKt.prepareThreadContext$lambda$0(context.kt:93)
+	at com.intellij.concurrency.ThreadContext.resetThreadContext(threadContext.kt:294)
+	at com.intellij.openapi.progress.ContextKt.prepareThreadContext(context.kt:92)
+	at com.intellij.serviceContainer.ComponentManagerImplKt.runBlockingInitialization(ComponentManagerImpl.kt:1814)
+	at com.intellij.serviceContainer.ComponentManagerImplKt.doGetOrCreateInstanceBlocking(ComponentManagerImpl.kt:1697)
+	at com.intellij.serviceContainer.ComponentManagerImplKt.getOrCreateInstanceBlocking(ComponentManagerImpl.kt:1686)
+	at com.intellij.serviceContainer.ComponentManagerImpl.doGetService(ComponentManagerImpl.kt:803)
+	at com.intellij.serviceContainer.ComponentManagerImpl.getService(ComponentManagerImpl.kt:741)
+	at com.intellij.util.net.HttpConfigurable.getInstance(HttpConfigurable.java:141)
+	at com.intellij.ui.jcef.JBCefProxySettings.getInstance(JBCefProxySettings.java:55)
+	at com.intellij.ui.jcef.SettingsHelper.loadArgs(SettingsHelper.java:139)
+	at com.intellij.ui.jcef.JBCefApp.lambda$new$3(JBCefApp.java:176)
+	at com.intellij.openapi.progress.Cancellation.computeInNonCancelableSection(Cancellation.java:150)
+	at com.intellij.openapi.progress.Cancellation.forceNonCancellableSectionInClassInitializer(Cancellation.java:198)
+	at com.intellij.ui.jcef.JBCefApp.<init>(JBCefApp.java:176)
+	at com.intellij.ui.jcef.JBCefApp$Holder.init(JBCefApp.java:333)
+	at com.intellij.ui.jcef.JBCefApp$Holder.<clinit>(JBCefApp.java:309)
+	at com.intellij.ui.jcef.JBCefApp.getInstance(JBCefApp.java:291)
+	at com.intellij.ui.jcef.JBCefBrowserBase.<init>(JBCefBrowserBase.java:199)
+	at com.intellij.ui.jcef.JBCefBrowser.<init>(JBCefBrowser.java:51)
+	at com.intellij.ui.jcef.JBCefBrowser.create(JBCefBrowser.java:146)
+	at com.intellij.ui.jcef.JBCefBrowserBuilder.build(JBCefBrowserBuilder.java:137)
+	at com.intellij.writerside.nebula.javascript.JsLibrary$Provider.<init>(JsLibrary.kt:71)
+	at com.intellij.platform.instanceContainer.instantiation.InstantiateKt.instantiate$lambda$0(instantiate.kt:48)
+	at com.intellij.platform.instanceContainer.instantiation.InstantiateKt.instantiate$lambda$3$0(instantiate.kt:294)
+	at com.intellij.platform.instanceContainer.instantiation.InstantiateKt.withStoredTemporaryContext(instantiate.kt:310)
+	at com.intellij.platform.instanceContainer.instantiation.InstantiateKt.instantiate(instantiate.kt:293)
+	at com.intellij.platform.instanceContainer.instantiation.InstantiateKt.instantiate(instantiate.kt:45)
+	at com.intellij.serviceContainer.LightServiceInstanceSupport$LightServiceInstanceInitializer.createInstance(LightServiceInstanceSupport.kt:45)
+	at com.intellij.platform.instanceContainer.internal.LazyInstanceHolder$initialize$1$1.invokeSuspend(LazyInstanceHolder.kt:181)
+	at com.intellij.platform.instanceContainer.internal.LazyInstanceHolder$initialize$1$1.invoke(LazyInstanceHolder.kt)
+	at com.intellij.platform.instanceContainer.internal.LazyInstanceHolder$initialize$1$1.invoke(LazyInstanceHolder.kt)
+	at kotlinx.coroutines.intrinsics.UndispatchedKt.startUndspatched(Undispatched.kt:67)
+	at kotlinx.coroutines.intrinsics.UndispatchedKt.startUndispatchedOrReturn(Undispatched.kt:43)
+	at kotlinx.coroutines.BuildersKt__Builders_commonKt.withContext(Builders.common.kt:165)
+	at kotlinx.coroutines.BuildersKt.withContext(Unknown Source)
+	at com.intellij.platform.instanceContainer.internal.LazyInstanceHolder$initialize$1.invokeSuspend(LazyInstanceHolder.kt:179)
+	at com.intellij.platform.instanceContainer.internal.LazyInstanceHolder$initialize$1.invoke(LazyInstanceHolder.kt)
+	at com.intellij.platform.instanceContainer.internal.LazyInstanceHolder$initialize$1.invoke(LazyInstanceHolder.kt)
+	at kotlinx.coroutines.intrinsics.UndispatchedKt.startCoroutineUndispatched(Undispatched.kt:20)
+	at kotlinx.coroutines.CoroutineStart.invoke(CoroutineStart.kt:360)
+	at kotlinx.coroutines.AbstractCoroutine.start(AbstractCoroutine.kt:134)
+	at kotlinx.coroutines.BuildersKt__Builders_commonKt.launch(Builders.common.kt:53)
+	at kotlinx.coroutines.BuildersKt.launch(Unknown Source)
+	at com.intellij.platform.instanceContainer.internal.LazyInstanceHolder.initialize(LazyInstanceHolder.kt:164)
+	at com.intellij.platform.instanceContainer.internal.LazyInstanceHolder.access$initialize(LazyInstanceHolder.kt:29)
+	at com.intellij.platform.instanceContainer.internal.LazyInstanceHolder.tryInitialize(LazyInstanceHolder.kt:154)
+	at com.intellij.platform.instanceContainer.internal.LazyInstanceHolder.getInstance(LazyInstanceHolder.kt:112)
+	at com.intellij.platform.instanceContainer.internal.LazyInstanceHolder.getInstanceInCallerContext$suspendImpl(LazyInstanceHolder.kt:104)
+	at com.intellij.platform.instanceContainer.internal.LazyInstanceHolder.getInstanceInCallerContext(LazyInstanceHolder.kt)
+	at com.intellij.serviceContainer.ComponentManagerImplKt$doGetOrCreateInstanceBlocking$1.invokeSuspend(ComponentManagerImpl.kt:1698)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:34)
+	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:100)
+	at kotlinx.coroutines.EventLoopImplBase.processNextEvent(EventLoop.common.kt:263)
+	at kotlinx.coroutines.BlockingCoroutine.joinBlocking(Builders.kt:112)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking$BuildersKt__BuildersKt(Builders.kt:87)
+	at kotlinx.coroutines.BuildersKt__BuildersKt.runBlockingWithParallelismCompensation(Builders.kt:63)
+	at kotlinx.coroutines.BuildersKt.runBlockingWithParallelismCompensation(Unknown Source)
+	at kotlinx.coroutines.internal.intellij.IntellijCoroutines.runBlockingWithParallelismCompensation(intellij.kt:48)
+	at com.intellij.util.IntelliJCoroutinesFacade.runBlockingWithParallelismCompensation(IntelliJCoroutinesFacade.kt:35)
+	at com.intellij.serviceContainer.ComponentManagerImplKt.runBlockingInitialization$lambda$0(ComponentManagerImpl.kt:1829)
+	at com.intellij.openapi.progress.ContextKt.prepareThreadContext$lambda$0(context.kt:93)
+	at com.intellij.concurrency.ThreadContext.resetThreadContext(threadContext.kt:294)
+	at com.intellij.openapi.progress.ContextKt.prepareThreadContext(context.kt:92)
+	at com.intellij.serviceContainer.ComponentManagerImplKt.runBlockingInitialization(ComponentManagerImpl.kt:1814)
+	at com.intellij.serviceContainer.ComponentManagerImplKt.doGetOrCreateInstanceBlocking(ComponentManagerImpl.kt:1697)
+	at com.intellij.serviceContainer.ComponentManagerImplKt.getOrCreateInstanceBlocking(ComponentManagerImpl.kt:1686)
+	at com.intellij.serviceContainer.ComponentManagerImpl.doGetService(ComponentManagerImpl.kt:803)
+	at com.intellij.serviceContainer.ComponentManagerImpl.getService(ComponentManagerImpl.kt:741)
+	at com.intellij.writerside.nebula.javascript.JsLibrary$Companion.getProvider(JsLibrary.kt:33)
+	at supernova.core.SupernovaStarter.main(SupernovaStarter.java:104)
+	at com.intellij.platform.ide.bootstrap.ApplicationLoader$executeApplicationStarter$3.invokeSuspend$lambda$0(ApplicationLoader.kt:474)
+	at com.intellij.openapi.application.TransactionGuardImpl.performActivity(TransactionGuardImpl.java:106)
+	at com.intellij.openapi.application.TransactionGuardImpl.performUserActivity(TransactionGuardImpl.java:95)
+	at com.intellij.platform.ide.bootstrap.ApplicationLoader$executeApplicationStarter$3.invokeSuspend(ApplicationLoader.kt:473)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:34)
+	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:100)
+	at com.intellij.openapi.application.impl.DispatchedRunnable.run(DispatchedRunnable.kt:42)
+	at com.intellij.openapi.application.TransactionGuardImpl.runWithWritingAllowed(TransactionGuardImpl.java:236)
+	at com.intellij.openapi.application.TransactionGuardImpl.access$100(TransactionGuardImpl.java:22)
+	at com.intellij.openapi.application.TransactionGuardImpl$2.run(TransactionGuardImpl.java:218)
+	at com.intellij.openapi.application.impl.NonBlockingFlushQueue.runNextEvent$lambda$1$1(NonBlockingFlushQueue.kt:337)
+	at com.intellij.concurrency.ThreadContext.resetThreadContext(threadContext.kt:294)
+	at com.intellij.openapi.application.impl.NonBlockingFlushQueue.runNextEvent$lambda$1(NonBlockingFlushQueue.kt:330)
+	at com.intellij.platform.locking.impl.NestedLocksThreadingSupport.tryRunWriteIntentReadAction(NestedLocksThreadingSupport.kt:747)
+	at com.intellij.openapi.application.impl.NonBlockingFlushQueue.runNextEvent(NonBlockingFlushQueue.kt:326)
+	at com.intellij.openapi.application.impl.NonBlockingFlushQueue.flushNow(NonBlockingFlushQueue.kt:305)
+	at com.intellij.openapi.application.impl.NonBlockingFlushQueue.FLUSH_NOW$lambda$0(NonBlockingFlushQueue.kt:167)
+	at java.desktop/java.awt.event.InvocationEvent.dispatch(InvocationEvent.java:323)
+	at java.desktop/java.awt.EventQueue.dispatchEventImpl(EventQueue.java:732)
+	at java.desktop/java.awt.EventQueue.dispatchEvent(EventQueue.java:711)
+	at com.intellij.ide.IdeEventQueue.defaultDispatchEvent(IdeEventQueue.kt:720)
+	at com.intellij.ide.IdeEventQueue._dispatchEvent(IdeEventQueue.kt:573)
+	at com.intellij.ide.IdeEventQueue.dispatchEvent$lambda$0$0$0(IdeEventQueue.kt:377)
+	at com.intellij.ide.IdeEventQueueKt.performActivity$lambda$0(IdeEventQueue.kt:1110)
+	at com.intellij.openapi.application.TransactionGuardImpl.performActivity(TransactionGuardImpl.java:106)
+	at com.intellij.ide.IdeEventQueueKt.performActivity(IdeEventQueue.kt:1110)
+	at com.intellij.ide.IdeEventQueue.dispatchEvent$lambda$0(IdeEventQueue.kt:375)
+	at com.intellij.ide.IdeEventQueue.dispatchEvent(IdeEventQueue.kt:415)
+	at java.desktop/java.awt.EventDispatchThread.pumpOneEventForFilters(EventDispatchThread.java:207)
+	at java.desktop/java.awt.EventDispatchThread.pumpEventsForFilter(EventDispatchThread.java:128)
+	at java.desktop/java.awt.EventDispatchThread.pumpEventsForHierarchy(EventDispatchThread.java:117)
+	at java.desktop/java.awt.EventDispatchThread.pumpEvents(EventDispatchThread.java:113)
+	at java.desktop/java.awt.EventDispatchThread.pumpEvents(EventDispatchThread.java:105)
+	at java.desktop/java.awt.EventDispatchThread.run(EventDispatchThread.java:92)
+2026-10-11 13:28:57,024 [   2191] SEVERE - #c.i.s.ComponentManagerImpl - IntelliJ IDEA 2026.1  Build #IU-261.22158.277
+2026-10-11 13:28:57,024 [   2191] SEVERE - #c.i.s.ComponentManagerImpl - JDK: 25.0.2; VM: OpenJDK 64-Bit Server VM; Vendor: JetBrains s.r.o.
+2026-10-11 13:28:57,025 [   2192] SEVERE - #c.i.s.ComponentManagerImpl - OS: Linux
+2026-10-11 13:28:57,025 [   2192] SEVERE - #c.i.s.ComponentManagerImpl - Plugin to blame: supernova version: 2.1.29-p0328
+2026-10-11 13:28:57,025 [   2192] SEVERE - #c.i.s.ComponentManagerImpl - Last Action: 
+WARNING: A restricted method in java.lang.System has been called
+WARNING: java.lang.System::loadLibrary has been called by com.jetbrains.cef.JCefAppConfig$6 in module jcef (jrt:/jcef)
+WARNING: Use --enable-native-access=jcef to avoid a warning for callers in this module
+WARNING: Restricted methods will be blocked in a future release unless native access is enabled
+
+Preparing "/opt/sources" for build.
+Open solution: "sources", 1 modules: Conformance.
+Help for "Conformance/conformance" will be saved to /opt/builder-output/artifacts
+2026-10-11 13:29:03,618 [   8785]   WARN - #nebula.core.project.HelpSolutionComponent - {}: findFile: buildprofiles.xml, NOTHING found in FilenameIndex, while brute force have found: [file:///opt/sources/cfg/buildprofiles.xml]
+Collect toc elements.
+Collect articles.
+2026-10-11 13:29:03,673 [   8840]   WARN - #nebula.core.project.HelpSolutionComponent - {}: findFile: features.topic, NOTHING found in FilenameIndex, while brute force have found: [file:///opt/sources/topics/features.topic]
+Verify articles.
+Get HelpTOC.
+Get release map.
+Get redirects list.
+Compile config.json.
+Compile articles.
+2026-10-11 13:29:03,987 [   9154] SEVERE - #c.i.o.a.i.ExceptionsKt - Unhandled exception in [Kernel@qbk1fasr3g06i8inh9sm, Rete(abortOnError=false, commands=capacity=2147483647,data=[onReceive], reteState=kotlinx.coroutines.flow.StateFlowImpl@4e9ba398, dbSource=ReteDbSource(reteState=kotlinx.coroutines.flow.StateFlowImpl@4e9ba398)), DbSourceContextElement(kernel Kernel@qbk1fasr3g06i8inh9sm), ComponentManager(ApplicationImpl@1889534138), ClientId(value=Host), CoroutineName(nebula.core.compiler.ProductCompilerCoroutineSupport), Dispatchers.Default]
+com.intellij.openapi.diagnostic.UnhandledException: Markdown gist rewrite: consumed 0 recorded headings, expected 1
+	at com.intellij.openapi.application.impl.ExceptionsKt.processUnhandledException(exceptions.kt:55)
+	at com.intellij.openapi.application.impl.CoroutineExceptionHandlerImpl.handleException(CoroutineExceptionHandlerImpl.kt:27)
+	at kotlinx.coroutines.internal.CoroutineExceptionHandlerImpl_commonKt.handleUncaughtCoroutineException(CoroutineExceptionHandlerImpl.common.kt:34)
+	at kotlinx.coroutines.CoroutineExceptionHandlerKt.handleCoroutineException(CoroutineExceptionHandler.kt:31)
+	at kotlinx.coroutines.StandaloneCoroutine.handleJobException(Builders.common.kt:192)
+	at kotlinx.coroutines.JobSupport.finalizeFinishingState(JobSupport.kt:229)
+	at kotlinx.coroutines.JobSupport.tryMakeCompletingSlowPath(JobSupport.kt:953)
+	at kotlinx.coroutines.JobSupport.tryMakeCompleting(JobSupport.kt:901)
+	at kotlinx.coroutines.JobSupport.makeCompletingOnce$kotlinx_coroutines_core(JobSupport.kt:866)
+	at kotlinx.coroutines.AbstractCoroutine.resumeWith(AbstractCoroutine.kt:99)
+	at kotlinx.coroutines.debug.internal.DebugProbesImpl$CoroutineOwner.resumeWith(DebugProbesImpl.kt:545)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:47)
+	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:100)
+	at kotlinx.coroutines.scheduling.CoroutineScheduler.runSafely(CoroutineScheduler.kt:610)
+	at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.runDefaultDispatcherTask(CoroutineScheduler.kt:1194)
+	at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.executeTask(CoroutineScheduler.kt:906)
+	at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.runWorker(CoroutineScheduler.kt:775)
+	at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.run(CoroutineScheduler.kt:762)
+Caused by: java.lang.IllegalStateException: Markdown gist rewrite: consumed 0 recorded headings, expected 1
+	at nebula.core.gist.TopicMetadataGistKt.rewriteForMarkdownWithFallback(TopicMetadataGist.kt:314)
+	at nebula.core.gist.TopicMetadataGistKt.rewriteForMarkdown(TopicMetadataGist.kt:153)
+	at nebula.core.gist.TopicMetadataGistKt.computeMarkdownTopicGist(TopicMetadataGist.kt:99)
+	at nebula.core.gist.TopicMetadataGistKt.computeTopicGistFromPsi(TopicMetadataGist.kt:43)
+	at nebula.core.gist.TopicMetadataGistKt$TOPIC_METADATA_GIST$1.invoke(TopicMetadataGist.kt:27)
+	at nebula.core.gist.TopicMetadataGistKt$TOPIC_METADATA_GIST$1.invoke(TopicMetadataGist.kt:27)
+	at nebula.core.gist.TopicMetadataGistKt.TOPIC_METADATA_GIST$lambda$0(TopicMetadataGist.kt:27)
+	at com.intellij.util.gist.PsiFileGistImpl.lambda$new$1(PsiFileGistImpl.java:39)
+	at com.intellij.util.gist.VirtualFileGistOverGistStorage.getOrCalculateAndCache(VirtualFileGistOverGistStorage.java:76)
+	at com.intellij.util.gist.VirtualFileGistOverGistStorage.getFileData(VirtualFileGistOverGistStorage.java:37)
+	at com.intellij.util.gist.PsiFileGistImpl.getFileData(PsiFileGistImpl.java:58)
+	at nebula.core.gist.ModelRuntimeContextKt.loadTopicGist(ModelRuntimeContext.kt:205)
+	at nebula.core.compiler.ProductCompilerKt.collectDuplicatedElementIdProblems$lambda$0(productCompiler.kt:66)
+	at com.intellij.platform.locking.impl.NestedLocksThreadingSupport.runReadAction(NestedLocksThreadingSupport.kt:854)
+	at com.intellij.openapi.application.impl.ApplicationImpl.runReadAction(ApplicationImpl.java:1104)
+	at nebula.util.ReadActionsKt.readActionIfNeeded$lambda$0(readActions.kt:10)
+	at nebula.util.ReadActionHelper$Companion.wrapperSlowOperationKnownIssue(readActions.kt:29)
+	at nebula.util.ReadActionsKt.readActionIfNeeded(readActions.kt:10)
+	at nebula.core.compiler.ProductCompilerKt.collectDuplicatedElementIdProblems(productCompiler.kt:65)
+	at nebula.core.compiler.ProductCompiler.promiseRenderOneArticle(ProductCompiler.java:745)
+	at nebula.core.compiler.ProductCompiler.lambda$compileArticles$34(ProductCompiler.java:604)
+	at nebula.core.compiler.ProductCompilerCoroutineSupport$toSuspendProcessor$2.invokeSuspend(productCompiler.kt:175)
+	at nebula.core.compiler.ProductCompilerCoroutineSupport$toSuspendProcessor$2.invoke(productCompiler.kt)
+	at nebula.core.compiler.ProductCompilerCoroutineSupport$toSuspendProcessor$2.invoke(productCompiler.kt)
+	at nebula.core.compiler.ProductCompilerCoroutineSupport.waitForALl(productCompiler.kt:169)
+	at nebula.core.compiler.ProductCompilerCoroutineSupport.access$waitForALl(productCompiler.kt:131)
+	at nebula.core.compiler.ProductCompilerCoroutineSupport$promiseAllProcessedInOrder$1.invokeSuspend(productCompiler.kt:163)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:34)
+	... 6 more
+2026-10-11 13:29:03,989 [   9156] SEVERE - #c.i.o.a.i.ExceptionsKt - IntelliJ IDEA 2026.1  Build #IU-261.22158.277
+2026-10-11 13:29:03,989 [   9156] SEVERE - #c.i.o.a.i.ExceptionsKt - JDK: 25.0.2; VM: OpenJDK 64-Bit Server VM; Vendor: JetBrains s.r.o.
+2026-10-11 13:29:03,989 [   9156] SEVERE - #c.i.o.a.i.ExceptionsKt - OS: Linux
+2026-10-11 13:29:03,993 [   9160] SEVERE - #c.i.o.a.i.ExceptionsKt - Plugin to blame: supernova version: 2.1.29-p0328
+2026-10-11 13:29:03,993 [   9160] SEVERE - #c.i.o.a.i.ExceptionsKt - Last Action: 
+Exception in thread "DefaultDispatcher-worker-75" java.lang.IllegalStateException: Markdown gist rewrite: consumed 0 recorded headings, expected 1
+	at nebula.core.gist.TopicMetadataGistKt.rewriteForMarkdownWithFallback(TopicMetadataGist.kt:314)
+	at nebula.core.gist.TopicMetadataGistKt.rewriteForMarkdown(TopicMetadataGist.kt:153)
+	at nebula.core.gist.TopicMetadataGistKt.computeMarkdownTopicGist(TopicMetadataGist.kt:99)
+	at nebula.core.gist.TopicMetadataGistKt.computeTopicGistFromPsi(TopicMetadataGist.kt:43)
+	at nebula.core.gist.TopicMetadataGistKt$TOPIC_METADATA_GIST$1.invoke(TopicMetadataGist.kt:27)
+	at nebula.core.gist.TopicMetadataGistKt$TOPIC_METADATA_GIST$1.invoke(TopicMetadataGist.kt:27)
+	at nebula.core.gist.TopicMetadataGistKt.TOPIC_METADATA_GIST$lambda$0(TopicMetadataGist.kt:27)
+	at com.intellij.util.gist.PsiFileGistImpl.lambda$new$1(PsiFileGistImpl.java:39)
+	at com.intellij.util.gist.VirtualFileGistOverGistStorage.getOrCalculateAndCache(VirtualFileGistOverGistStorage.java:76)
+	at com.intellij.util.gist.VirtualFileGistOverGistStorage.getFileData(VirtualFileGistOverGistStorage.java:37)
+	at com.intellij.util.gist.PsiFileGistImpl.getFileData(PsiFileGistImpl.java:58)
+	at nebula.core.gist.ModelRuntimeContextKt.loadTopicGist(ModelRuntimeContext.kt:205)
+	at nebula.core.compiler.ProductCompilerKt.collectDuplicatedElementIdProblems$lambda$0(productCompiler.kt:66)
+	at com.intellij.platform.locking.impl.NestedLocksThreadingSupport.runReadAction(NestedLocksThreadingSupport.kt:854)
+	at com.intellij.openapi.application.impl.ApplicationImpl.runReadAction(ApplicationImpl.java:1104)
+	at nebula.util.ReadActionsKt.readActionIfNeeded$lambda$0(readActions.kt:10)
+	at nebula.util.ReadActionHelper$Companion.wrapperSlowOperationKnownIssue(readActions.kt:29)
+	at nebula.util.ReadActionsKt.readActionIfNeeded(readActions.kt:10)
+	at nebula.core.compiler.ProductCompilerKt.collectDuplicatedElementIdProblems(productCompiler.kt:65)
+	at nebula.core.compiler.ProductCompiler.promiseRenderOneArticle(ProductCompiler.java:745)
+	at nebula.core.compiler.ProductCompiler.lambda$compileArticles$34(ProductCompiler.java:604)
+	at nebula.core.compiler.ProductCompilerCoroutineSupport$toSuspendProcessor$2.invokeSuspend(productCompiler.kt:175)
+	at nebula.core.compiler.ProductCompilerCoroutineSupport$toSuspendProcessor$2.invoke(productCompiler.kt)
+	at nebula.core.compiler.ProductCompilerCoroutineSupport$toSuspendProcessor$2.invoke(productCompiler.kt)
+	at nebula.core.compiler.ProductCompilerCoroutineSupport.waitForALl(productCompiler.kt:169)
+	at nebula.core.compiler.ProductCompilerCoroutineSupport.access$waitForALl(productCompiler.kt:131)
+	at nebula.core.compiler.ProductCompilerCoroutineSupport$promiseAllProcessedInOrder$1.invokeSuspend(productCompiler.kt:163)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:34)
+	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:100)
+	at kotlinx.coroutines.scheduling.CoroutineScheduler.runSafely(CoroutineScheduler.kt:610)
+	at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.runDefaultDispatcherTask(CoroutineScheduler.kt:1194)
+	at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.executeTask(CoroutineScheduler.kt:906)
+	at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.runWorker(CoroutineScheduler.kt:775)
+	at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.run(CoroutineScheduler.kt:762)
+	Suppressed: kotlinx.coroutines.internal.DiagnosticCoroutineContextException: [Kernel@qbk1fasr3g06i8inh9sm, Rete(abortOnError=false, commands=capacity=2147483647,data=[onReceive], reteState=kotlinx.coroutines.flow.StateFlowImpl@4e9ba398, dbSource=ReteDbSource(reteState=kotlinx.coroutines.flow.StateFlowImpl@4e9ba398)), DbSourceContextElement(kernel Kernel@qbk1fasr3g06i8inh9sm), ComponentManager(ApplicationImpl@1889534138), ClientId(value=Host), CoroutineName(nebula.core.compiler.ProductCompilerCoroutineSupport), StandaloneCoroutine{Cancelling}@18d05889, Dispatchers.Default]
+No VCS for file inspector-markdown.md
+No VCS for file inspector.topic
+No VCS for file semantic.md
+No VCS for file authoring.topic
+No VCS for file features.topic
+Compile article inspector-markdown.md to inspector-markdown.html
+Compile article semantic.md to semantic.html
+Compile article inspector.topic to inspector.html
+Compile article authoring.topic to authoring.html
+Compile article features.topic to features.html
+2026-10-11 13:29:56,610 [  61777] SEVERE - #c.i.p.d.c.DaemonLogger - 
+com.jetbrains.app.logger.LoggedError: Failed to launch the daemon on consecutive attempt 10.Last launch current: 'Exception(java.io.IOException)'. Last launch bundled: 'Failure(94 (CONNECTION_TIMEOUT))'
+	at com.jetbrains.app.daemon.client.DaemonClientImpl$job$1$1$2.invokeSuspend(DaemonClientImpl.kt:235)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:34)
+	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:100)
+	at kotlinx.coroutines.scheduling.CoroutineScheduler.runSafely(CoroutineScheduler.kt:610)
+	at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.runDefaultDispatcherTask(CoroutineScheduler.kt:1194)
+	at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.executeTask(CoroutineScheduler.kt:906)
+	at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.runWorker(CoroutineScheduler.kt:775)
+	at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.run(CoroutineScheduler.kt:762)
+2026-10-11 13:29:56,610 [  61777] SEVERE - #c.i.p.d.c.DaemonLogger - IntelliJ IDEA 2026.1  Build #IU-261.22158.277
+2026-10-11 13:29:56,611 [  61778] SEVERE - #c.i.p.d.c.DaemonLogger - JDK: 25.0.2; VM: OpenJDK 64-Bit Server VM; Vendor: JetBrains s.r.o.
+2026-10-11 13:29:56,611 [  61778] SEVERE - #c.i.p.d.c.DaemonLogger - OS: Linux
+2026-10-11 13:29:56,611 [  61778] SEVERE - #c.i.p.d.c.DaemonLogger - Last Action: 
+error: XDG_RUNTIME_DIR not set in the environment.
+error: XDG_RUNTIME_DIR not set in the environment.
+Warning: Vulkan shaderUniform*ArrayDynamicIndexing required.
+ - While initializing adapter (backend=BackendType::Vulkan)
+    at InitializeImpl (../../third_party/dawn/src/dawn/native/vulkan/PhysicalDeviceVk.cpp:212)
+

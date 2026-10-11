@@ -1,0 +1,35 @@
+{
+  "date": "2026-10-11",
+  "builder": "2026.08.0328",
+  "flutter": "3.47.5",
+  "dart": "3.13.4",
+  "fullTests": {
+    "passed": 4364,
+    "skipped": 1,
+    "failed": 0
+  },
+  "nativeWorkspace": {
+    "passed": 118,
+    "failed": 0
+  },
+  "nativeDialogs": {
+    "passed": 4
+  },
+  "nativeHunspell": {
+    "passed": 13
+  },
+  "nativeVisualization": {
+    "x11Passed": 36,
+    "waylandPassed": 36
+  },
+  "nativeSnapshotBuilderBytesMatch": true,
+  "remainingRequiredGates": [],
+  "officialBuilder": {
+    "fixtures": 5,
+    "passedPerFixture": 181,
+    "errors": 0,
+    "warnings": 0
+  },
+  "implementationCommit": "c8df89d",
+  "releaseExecutableSha256": "ddd5b6fc361e697cab18f195b6afd47f4bae64ff19dfdd49a6495a341528f32b"
+}

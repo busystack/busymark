@@ -1,0 +1,361 @@
+dbus-daemon[6062]: [session uid=0 pid=6062] Activating service name='org.a11y.Bus' requested by ':1.1' (uid=0 pid=6063 comm="build/linux/x64/debug/bundle/busymark test/fixture" label="docker-default (enforce)")
+dbus-daemon[6062]: [session uid=0 pid=6062] Successfully activated service 'org.a11y.Bus'
+
+** (io.busystack.busymark:6063): WARNING **: 14:06:32.953: Failed to load application icon: Couldn?t recognize the image file format for file ?/workspace/build/linux/x64/debug/bundle/data/flutter_assets/assets/branding/busymark_logo.svg?
+[IMPORTANT:flutter/shell/platform/embedder/embedder_surface_gl_impeller.cc(126)] Using the Impeller rendering backend (OpenGLESSDF).
+The Dart VM service is listening on http://127.0.0.1:34329/BgvF9F3wd9s=/
+dbus-daemon[6074]: Activating service name='org.a11y.atspi.Registry' requested by ':1.0' (uid=0 pid=6063 comm="build/linux/x64/debug/bundle/busymark test/fixture" label="docker-default (enforce)")
+dbus-daemon[6074]: Successfully activated service 'org.a11y.atspi.Registry'
+SpiRegistry daemon is running with well-known name - org.a11y.atspi.Registry
+Native text scale: 1.0
+Tap: TextField
+Tap: BusyMarkHeaderPopupMenuButton<BusyWritersideInsertCommand>
+
+(io.busystack.busymark:6063): Gtk-WARNING **: 14:06:42.359: no trigger event for menu popup
+GTK dismissal: source unchanged=true; selection before=TextSelection(baseOffset: 0, extentOffset: 4, isDirectional: false) after=TextSelection(baseOffset: 0, extentOffset: 4, isDirectional: false); editing focus=true; primary focus=BusyMark WYSIWYG xml-1
+Tap: BusyMarkHeaderPopupMenuButton<BusyWysiwygInlineCommand>
+
+(io.busystack.busymark:6063): Gtk-WARNING **: 14:06:45.531: no trigger event for menu popup
+GTK menu: UI Control
+
+(io.busystack.busymark:6063): Atk-CRITICAL **: 14:06:46.314: atk_state_set_contains_state: assertion 'ATK_IS_STATE_SET (set)' failed
+
+(io.busystack.busymark:6063): Atk-CRITICAL **: 14:06:46.314: atk_state_set_contains_state: assertion 'ATK_IS_STATE_SET (set)' failed
+
+(io.busystack.busymark:6063): Atk-CRITICAL **: 14:06:46.314: atk_state_set_contains_state: assertion 'ATK_IS_STATE_SET (set)' failed
+
+(io.busystack.busymark:6063): GLib-GObject-CRITICAL **: 14:06:46.314: g_object_unref: assertion 'G_IS_OBJECT (object)' failed
+
+(io.busystack.busymark:6063): Atk-CRITICAL **: 14:06:46.315: atk_state_set_contains_state: assertion 'ATK_IS_STATE_SET (set)' failed
+
+(io.busystack.busymark:6063): Atk-CRITICAL **: 14:06:46.315: atk_state_set_contains_state: assertion 'ATK_IS_STATE_SET (set)' failed
+
+(io.busystack.busymark:6063): Atk-CRITICAL **: 14:06:46.315: atk_state_set_contains_state: assertion 'ATK_IS_STATE_SET (set)' failed
+
+(io.busystack.busymark:6063): GLib-GObject-CRITICAL **: 14:06:46.315: g_object_unref: assertion 'G_IS_OBJECT (object)' failed
+
+(io.busystack.busymark:6063): Atk-CRITICAL **: 14:06:46.315: atk_state_set_contains_state: assertion 'ATK_IS_STATE_SET (set)' failed
+
+(io.busystack.busymark:6063): Atk-CRITICAL **: 14:06:46.315: atk_state_set_contains_state: assertion 'ATK_IS_STATE_SET (set)' failed
+
+(io.busystack.busymark:6063): Atk-CRITICAL **: 14:06:46.315: atk_state_set_contains_state: assertion 'ATK_IS_STATE_SET (set)' failed
+
+(io.busystack.busymark:6063): GLib-GObject-CRITICAL **: 14:06:46.315: g_object_unref: assertion 'G_IS_OBJECT (object)' failed
+
+(io.busystack.busymark:6063): Atk-CRITICAL **: 14:06:46.315: atk_state_set_contains_state: assertion 'ATK_IS_STATE_SET (set)' failed
+
+(io.busystack.busymark:6063): Atk-CRITICAL **: 14:06:46.315: atk_state_set_contains_state: assertion 'ATK_IS_STATE_SET (set)' failed
+
+(io.busystack.busymark:6063): Atk-CRITICAL **: 14:06:46.315: atk_state_set_contains_state: assertion 'ATK_IS_STATE_SET (set)' failed
+
+(io.busystack.busymark:6063): GLib-GObject-CRITICAL **: 14:06:46.315: g_object_unref: assertion 'G_IS_OBJECT (object)' failed
+
+(io.busystack.busymark:6063): Atk-CRITICAL **: 14:06:46.315: atk_state_set_contains_state: assertion 'ATK_IS_STATE_SET (set)' failed
+
+(io.busystack.busymark:6063): Atk-CRITICAL **: 14:06:46.315: atk_state_set_contains_state: assertion 'ATK_IS_STATE_SET (set)' failed
+
+(io.busystack.busymark:6063): Atk-CRITICAL **: 14:06:46.315: atk_state_set_contains_state: assertion 'ATK_IS_STATE_SET (set)' failed
+
+(io.busystack.busymark:6063): GLib-GObject-CRITICAL **: 14:06:46.315: g_object_unref: assertion 'G_IS_OBJECT (object)' failed
+
+(io.busystack.busymark:6063): Atk-CRITICAL **: 14:06:46.315: atk_state_set_contains_state: assertion 'ATK_IS_STATE_SET (set)' failed
+
+(io.busystack.busymark:6063): Atk-CRITICAL **: 14:06:46.315: atk_state_set_contains_state: assertion 'ATK_IS_STATE_SET (set)' failed
+
+(io.busystack.busymark:6063): Atk-CRITICAL **: 14:06:46.316: atk_state_set_contains_state: assertion 'ATK_IS_STATE_SET (set)' failed
+
+(io.busystack.busymark:6063): GLib-GObject-CRITICAL **: 14:06:46.316: g_object_unref: assertion 'G_IS_OBJECT (object)' failed
+
+(io.busystack.busymark:6063): Atk-CRITICAL **: 14:06:46.316: atk_state_set_contains_state: assertion 'ATK_IS_STATE_SET (set)' failed
+
+(io.busystack.busymark:6063): Atk-CRITICAL **: 14:06:46.316: atk_state_set_contains_state: assertion 'ATK_IS_STATE_SET (set)' failed
+
+(io.busystack.busymark:6063): Atk-CRITICAL **: 14:06:46.316: atk_state_set_contains_state: assertion 'ATK_IS_STATE_SET (set)' failed
+
+(io.busystack.busymark:6063): GLib-GObject-CRITICAL **: 14:06:46.316: g_object_unref: assertion 'G_IS_OBJECT (object)' failed
+Tap: BusyMarkHeaderPopupMenuButton<BusyWritersideInsertCommand>
+
+(io.busystack.busymark:6063): Gtk-WARNING **: 14:06:49.496: no trigger event for menu popup
+GTK menu: Procedure
+
+(io.busystack.busymark:6063): Atk-CRITICAL **: 14:06:50.282: atk_state_set_contains_state: assertion 'ATK_IS_STATE_SET (set)' failed
+
+(io.busystack.busymark:6063): Atk-CRITICAL **: 14:06:50.282: atk_state_set_contains_state: assertion 'ATK_IS_STATE_SET (set)' failed
+
+(io.busystack.busymark:6063): Atk-CRITICAL **: 14:06:50.282: atk_state_set_contains_state: assertion 'ATK_IS_STATE_SET (set)' failed
+
+(io.busystack.busymark:6063): GLib-GObject-CRITICAL **: 14:06:50.283: g_object_unref: assertion 'G_IS_OBJECT (object)' failed
+
+(io.busystack.busymark:6063): Atk-CRITICAL **: 14:06:50.284: atk_state_set_contains_state: assertion 'ATK_IS_STATE_SET (set)' failed
+
+(io.busystack.busymark:6063): Atk-CRITICAL **: 14:06:50.284: atk_state_set_contains_state: assertion 'ATK_IS_STATE_SET (set)' failed
+
+(io.busystack.busymark:6063): Atk-CRITICAL **: 14:06:50.284: atk_state_set_contains_state: assertion 'ATK_IS_STATE_SET (set)' failed
+
+(io.busystack.busymark:6063): GLib-GObject-CRITICAL **: 14:06:50.284: g_object_unref: assertion 'G_IS_OBJECT (object)' failed
+
+(io.busystack.busymark:6063): Atk-CRITICAL **: 14:06:50.284: atk_state_set_contains_state: assertion 'ATK_IS_STATE_SET (set)' failed
+
+(io.busystack.busymark:6063): Atk-CRITICAL **: 14:06:50.284: atk_state_set_contains_state: assertion 'ATK_IS_STATE_SET (set)' failed
+
+(io.busystack.busymark:6063): Atk-CRITICAL **: 14:06:50.284: atk_state_set_contains_state: assertion 'ATK_IS_STATE_SET (set)' failed
+
+(io.busystack.busymark:6063): GLib-GObject-CRITICAL **: 14:06:50.284: g_object_unref: assertion 'G_IS_OBJECT (object)' failed
+
+(io.busystack.busymark:6063): Atk-CRITICAL **: 14:06:50.284: atk_state_set_contains_state: assertion 'ATK_IS_STATE_SET (set)' failed
+
+(io.busystack.busymark:6063): Atk-CRITICAL **: 14:06:50.284: atk_state_set_contains_state: assertion 'ATK_IS_STATE_SET (set)' failed
+
+(io.busystack.busymark:6063): Atk-CRITICAL **: 14:06:50.284: atk_state_set_contains_state: assertion 'ATK_IS_STATE_SET (set)' failed
+
+(io.busystack.busymark:6063): GLib-GObject-CRITICAL **: 14:06:50.284: g_object_unref: assertion 'G_IS_OBJECT (object)' failed
+
+(io.busystack.busymark:6063): Atk-CRITICAL **: 14:06:50.284: atk_state_set_contains_state: assertion 'ATK_IS_STATE_SET (set)' failed
+
+(io.busystack.busymark:6063): Atk-CRITICAL **: 14:06:50.284: atk_state_set_contains_state: assertion 'ATK_IS_STATE_SET (set)' failed
+
+(io.busystack.busymark:6063): Atk-CRITICAL **: 14:06:50.284: atk_state_set_contains_state: assertion 'ATK_IS_STATE_SET (set)' failed
+
+(io.busystack.busymark:6063): GLib-GObject-CRITICAL **: 14:06:50.284: g_object_unref: assertion 'G_IS_OBJECT (object)' failed
+
+(io.busystack.busymark:6063): Atk-CRITICAL **: 14:06:50.284: atk_state_set_contains_state: assertion 'ATK_IS_STATE_SET (set)' failed
+
+(io.busystack.busymark:6063): Atk-CRITICAL **: 14:06:50.284: atk_state_set_contains_state: assertion 'ATK_IS_STATE_SET (set)' failed
+
+(io.busystack.busymark:6063): Atk-CRITICAL **: 14:06:50.284: atk_state_set_contains_state: assertion 'ATK_IS_STATE_SET (set)' failed
+
+(io.busystack.busymark:6063): GLib-GObject-CRITICAL **: 14:06:50.284: g_object_unref: assertion 'G_IS_OBJECT (object)' failed
+
+(io.busystack.busymark:6063): Atk-CRITICAL **: 14:06:50.284: atk_state_set_contains_state: assertion 'ATK_IS_STATE_SET (set)' failed
+
+(io.busystack.busymark:6063): Atk-CRITICAL **: 14:06:50.284: atk_state_set_contains_state: assertion 'ATK_IS_STATE_SET (set)' failed
+
+(io.busystack.busymark:6063): Atk-CRITICAL **: 14:06:50.284: atk_state_set_contains_state: assertion 'ATK_IS_STATE_SET (set)' failed
+
+(io.busystack.busymark:6063): GLib-GObject-CRITICAL **: 14:06:50.284: g_object_unref: assertion 'G_IS_OBJECT (object)' failed
+Tap: TextField
+Tap: TextField
+Tap: BusyMarkHeaderPopupMenuButton<BusyWritersideInsertCommand>
+
+(io.busystack.busymark:6063): Gtk-WARNING **: 14:06:56.093: no trigger event for menu popup
+GTK menu: Tabs
+
+(io.busystack.busymark:6063): Atk-CRITICAL **: 14:06:56.889: atk_state_set_contains_state: assertion 'ATK_IS_STATE_SET (set)' failed
+
+(io.busystack.busymark:6063): Atk-CRITICAL **: 14:06:56.889: atk_state_set_contains_state: assertion 'ATK_IS_STATE_SET (set)' failed
+
+(io.busystack.busymark:6063): Atk-CRITICAL **: 14:06:56.889: atk_state_set_contains_state: assertion 'ATK_IS_STATE_SET (set)' failed
+
+(io.busystack.busymark:6063): GLib-GObject-CRITICAL **: 14:06:56.889: g_object_unref: assertion 'G_IS_OBJECT (object)' failed
+
+(io.busystack.busymark:6063): Atk-CRITICAL **: 14:06:56.890: atk_state_set_contains_state: assertion 'ATK_IS_STATE_SET (set)' failed
+
+(io.busystack.busymark:6063): Atk-CRITICAL **: 14:06:56.890: atk_state_set_contains_state: assertion 'ATK_IS_STATE_SET (set)' failed
+
+(io.busystack.busymark:6063): Atk-CRITICAL **: 14:06:56.890: atk_state_set_contains_state: assertion 'ATK_IS_STATE_SET (set)' failed
+
+(io.busystack.busymark:6063): GLib-GObject-CRITICAL **: 14:06:56.890: g_object_unref: assertion 'G_IS_OBJECT (object)' failed
+
+(io.busystack.busymark:6063): Atk-CRITICAL **: 14:06:56.890: atk_state_set_contains_state: assertion 'ATK_IS_STATE_SET (set)' failed
+
+(io.busystack.busymark:6063): Atk-CRITICAL **: 14:06:56.890: atk_state_set_contains_state: assertion 'ATK_IS_STATE_SET (set)' failed
+
+(io.busystack.busymark:6063): Atk-CRITICAL **: 14:06:56.890: atk_state_set_contains_state: assertion 'ATK_IS_STATE_SET (set)' failed
+
+(io.busystack.busymark:6063): GLib-GObject-CRITICAL **: 14:06:56.890: g_object_unref: assertion 'G_IS_OBJECT (object)' failed
+
+(io.busystack.busymark:6063): Atk-CRITICAL **: 14:06:56.891: atk_state_set_contains_state: assertion 'ATK_IS_STATE_SET (set)' failed
+
+(io.busystack.busymark:6063): Atk-CRITICAL **: 14:06:56.891: atk_state_set_contains_state: assertion 'ATK_IS_STATE_SET (set)' failed
+
+(io.busystack.busymark:6063): Atk-CRITICAL **: 14:06:56.891: atk_state_set_contains_state: assertion 'ATK_IS_STATE_SET (set)' failed
+
+(io.busystack.busymark:6063): GLib-GObject-CRITICAL **: 14:06:56.891: g_object_unref: assertion 'G_IS_OBJECT (object)' failed
+
+(io.busystack.busymark:6063): Atk-CRITICAL **: 14:06:56.891: atk_state_set_contains_state: assertion 'ATK_IS_STATE_SET (set)' failed
+
+(io.busystack.busymark:6063): Atk-CRITICAL **: 14:06:56.891: atk_state_set_contains_state: assertion 'ATK_IS_STATE_SET (set)' failed
+
+(io.busystack.busymark:6063): Atk-CRITICAL **: 14:06:56.891: atk_state_set_contains_state: assertion 'ATK_IS_STATE_SET (set)' failed
+
+(io.busystack.busymark:6063): GLib-GObject-CRITICAL **: 14:06:56.891: g_object_unref: assertion 'G_IS_OBJECT (object)' failed
+
+(io.busystack.busymark:6063): Atk-CRITICAL **: 14:06:56.891: atk_state_set_contains_state: assertion 'ATK_IS_STATE_SET (set)' failed
+
+(io.busystack.busymark:6063): Atk-CRITICAL **: 14:06:56.891: atk_state_set_contains_state: assertion 'ATK_IS_STATE_SET (set)' failed
+
+(io.busystack.busymark:6063): Atk-CRITICAL **: 14:06:56.891: atk_state_set_contains_state: assertion 'ATK_IS_STATE_SET (set)' failed
+
+(io.busystack.busymark:6063): GLib-GObject-CRITICAL **: 14:06:56.891: g_object_unref: assertion 'G_IS_OBJECT (object)' failed
+
+(io.busystack.busymark:6063): Atk-CRITICAL **: 14:06:56.891: atk_state_set_contains_state: assertion 'ATK_IS_STATE_SET (set)' failed
+
+(io.busystack.busymark:6063): Atk-CRITICAL **: 14:06:56.891: atk_state_set_contains_state: assertion 'ATK_IS_STATE_SET (set)' failed
+
+(io.busystack.busymark:6063): Atk-CRITICAL **: 14:06:56.891: atk_state_set_contains_state: assertion 'ATK_IS_STATE_SET (set)' failed
+
+(io.busystack.busymark:6063): GLib-GObject-CRITICAL **: 14:06:56.891: g_object_unref: assertion 'G_IS_OBJECT (object)' failed
+Tap: TextField
+Tap: TextField
+Tap: BusyMarkHeaderPopupMenuButton<BusyWritersideInsertCommand>
+
+(io.busystack.busymark:6063): Gtk-WARNING **: 14:07:02.216: no trigger event for menu popup
+GTK menu: Definition List
+Tap: TextField
+Tap: TextField
+Tap: BusyMarkHeaderPopupMenuButton<BusyWritersideInsertCommand>
+
+(io.busystack.busymark:6063): Gtk-WARNING **: 14:07:08.350: no trigger event for menu popup
+GTK menu: TLDR
+Tap: TextField
+Tap: TextField
+Tap: BusyMarkHeaderPopupMenuButton<BusyWritersideInsertCommand>
+
+(io.busystack.busymark:6063): Gtk-WARNING **: 14:07:14.486: no trigger event for menu popup
+GTK menu: Video
+Tap: BusyMarkGroupedTextEntry
+Tap: TextField
+Tap: BusyMarkHeaderPopupMenuButton<BusyWritersideInsertCommand>
+
+(io.busystack.busymark:6063): Gtk-WARNING **: 14:07:21.554: no trigger event for menu popup
+GTK menu: Include Reusable Content
+
+(io.busystack.busymark:6063): Gtk-WARNING **: 14:07:22.412: no trigger event for menu popup
+GTK menu: features.topic
+
+(io.busystack.busymark:6063): Gtk-WARNING **: 14:07:23.550: no trigger event for menu popup
+GTK menu: shared-conformance
+Tap: TextField
+Tap: BusyMarkHeaderPopupMenuButton<BusyWritersideInsertCommand>
+
+(io.busystack.busymark:6063): Gtk-WARNING **: 14:07:30.395: no trigger event for menu popup
+GTK menu: Variable Reference
+
+(io.busystack.busymark:6063): Gtk-WARNING **: 14:07:31.251: no trigger event for menu popup
+GTK menu: product
+Tap: BusyMarkComboRow<String>
+
+(io.busystack.busymark:6063): Gtk-WARNING **: 14:07:34.106: no trigger event for menu popup
+
+(io.busystack.busymark:6063): Gtk-WARNING **: 14:07:34.108: Could not load a pixbuf from /org/gtk/libgtk/theme/Adwaita/assets/check-symbolic.svg.
+This may indicate that pixbuf loaders or the mime database could not be found.
+GTK menu: Topic Properties
+Tap: TextField
+Tap: BusyMarkComboRow<String>
+
+(io.busystack.busymark:6063): Gtk-WARNING **: 14:07:40.615: no trigger event for menu popup
+GTK menu: Enabled
+Tap: BusyMarkHeaderIconButton
+Saved topic: dirty=false; revision=16
+Close topic: result=true; dirty=false; revision=16; content saved=true; current dirty=false; current document=features.topic; buffer remains=false; message=null
+Tap: TextField
+Tap: BusyMarkComboRow<String>
+
+(io.busystack.busymark:6063): Gtk-WARNING **: 14:07:51.671: no trigger event for menu popup
+GTK menu: Topic Properties
+Tap: TextField
+Native text scale: 1.0
+Tap: TextField
+Tap: BusyMarkHeaderPopupMenuButton<BusyWritersideInsertCommand>
+
+(io.busystack.busymark:6063): Gtk-WARNING **: 14:08:04.331: no trigger event for menu popup
+GTK dismissal: source unchanged=true; selection before=TextSelection(baseOffset: 0, extentOffset: 4, isDirectional: false) after=TextSelection(baseOffset: 0, extentOffset: 4, isDirectional: false); editing focus=true; primary focus=BusyMark WYSIWYG b1
+Tap: BusyMarkHeaderPopupMenuButton<BusyWysiwygInlineCommand>
+
+(io.busystack.busymark:6063): Gtk-WARNING **: 14:08:07.505: no trigger event for menu popup
+GTK menu: UI Control
+Tap: BusyMarkHeaderPopupMenuButton<BusyWritersideInsertCommand>
+
+(io.busystack.busymark:6063): Gtk-WARNING **: 14:08:11.457: no trigger event for menu popup
+GTK menu: Procedure
+Tap: TextField
+Tap: TextField
+Tap: BusyMarkHeaderPopupMenuButton<BusyWritersideInsertCommand>
+
+(io.busystack.busymark:6063): Gtk-WARNING **: 14:08:17.539: no trigger event for menu popup
+GTK menu: Tabs
+Tap: TextField
+Tap: TextField
+Tap: BusyMarkHeaderPopupMenuButton<BusyWritersideInsertCommand>
+
+(io.busystack.busymark:6063): Gtk-WARNING **: 14:08:23.666: no trigger event for menu popup
+GTK menu: Definition List
+Tap: TextField
+Tap: TextField
+Tap: BusyMarkHeaderPopupMenuButton<BusyWritersideInsertCommand>
+
+(io.busystack.busymark:6063): Gtk-WARNING **: 14:08:29.887: no trigger event for menu popup
+GTK menu: TLDR
+Tap: TextField
+Tap: TextField
+Tap: BusyMarkHeaderPopupMenuButton<BusyWritersideInsertCommand>
+
+(io.busystack.busymark:6063): Gtk-WARNING **: 14:08:35.966: no trigger event for menu popup
+GTK menu: Video
+Tap: BusyMarkGroupedTextEntry
+Tap: TextField
+Tap: BusyMarkHeaderPopupMenuButton<BusyWritersideInsertCommand>
+
+(io.busystack.busymark:6063): Gtk-WARNING **: 14:08:43.466: no trigger event for menu popup
+GTK menu: Include Reusable Content
+
+(io.busystack.busymark:6063): Gtk-WARNING **: 14:08:44.316: no trigger event for menu popup
+GTK menu: features.topic
+
+(io.busystack.busymark:6063): Gtk-WARNING **: 14:08:45.453: no trigger event for menu popup
+GTK menu: shared-conformance
+Tap: TextField
+Tap: BusyMarkHeaderPopupMenuButton<BusyWritersideInsertCommand>
+
+(io.busystack.busymark:6063): Gtk-WARNING **: 14:08:50.755: no trigger event for menu popup
+GTK menu: Variable Reference
+
+(io.busystack.busymark:6063): Gtk-WARNING **: 14:08:51.655: no trigger event for menu popup
+GTK menu: product
+Tap: BusyMarkComboRow<String>
+
+(io.busystack.busymark:6063): Gtk-WARNING **: 14:08:54.557: no trigger event for menu popup
+GTK menu: Topic Properties
+Tap: TextField
+Tap: BusyMarkComboRow<String>
+
+(io.busystack.busymark:6063): Gtk-WARNING **: 14:09:02.127: no trigger event for menu popup
+GTK menu: Enabled
+Tap: IconButton
+Saved md: dirty=false; revision=16
+Close md: result=true; dirty=false; revision=16; content saved=true; current dirty=false; current document=authoring.topic; buffer remains=false; message=null
+Tap: TextField
+Tap: BusyMarkComboRow<String>
+
+(io.busystack.busymark:6063): Gtk-WARNING **: 14:09:11.902: no trigger event for menu popup
+GTK menu: Topic Properties
+Tap: TextField
+
+** (io.busystack.busymark:6063): WARNING **: 14:09:19.619: Timed out waiting for OpenGL frame of size 1400x960 (have 800x900)
+Tap: TextField
+Tap: BusyMarkHeaderIconButton
+Tap: TextField
+Tap: TextField
+Tap: BusyMarkHeaderIconButton
+Tap: TextField
+Tap: TextField
+Tap: BusyMarkComboRow<String>
+GTK menu: Enabled
+Tap: BusyMarkComboRow<String>
+GTK menu: Use default — Disabled
+Tap: TextField
+Tap: TextField
+Tap: BusyMarkHeaderIconButton
+Tap: TextField
+Tap: TextField
+Tap: BusyMarkComboRow<String>
+GTK menu: Enabled
+Tap: BusyMarkComboRow<String>
+GTK menu: Use default — Disabled
+Tap: BusyMarkComboRow<String>
+GTK menu: Disabled
+Tap: BusyMarkComboRow<String>
+GTK menu: Use default — Enabled
+Tap: TextField
+Tap: BusyMarkHeaderIconButton
+Tap: TextField

@@ -1,0 +1,80 @@
+00:00 +0: loading /home/albert/busystack/busymark/test/src/writerside_properties_round_trip_test.dart
+00:00 +0: fenced code id survives editing and reopening
+00:00 +0 -1: fenced code id survives editing and reopening [E]
+  Bad state: Too many elements
+  dart:core                                                  List.single
+  test/src/writerside_properties_round_trip_test.dart 18:43  main.<fn>
+  
+00:00 +0 -1: fenced code switcher-key survives editing and reopening
+00:00 +0 -2: fenced code switcher-key survives editing and reopening [E]
+  Bad state: Too many elements
+  dart:core                                                  List.single
+  test/src/writerside_properties_round_trip_test.dart 18:43  main.<fn>
+  
+00:00 +0 -2: fenced code collapsible survives editing and reopening
+00:00 +0 -3: fenced code collapsible survives editing and reopening [E]
+  Bad state: Too many elements
+  dart:core                                                  List.single
+  test/src/writerside_properties_round_trip_test.dart 18:43  main.<fn>
+  
+00:00 +0 -3: fenced code include-lines survives editing and reopening
+00:00 +0 -4: fenced code include-lines survives editing and reopening [E]
+  Bad state: Too many elements
+  dart:core                                                  List.single
+  test/src/writerside_properties_round_trip_test.dart 18:43  main.<fn>
+  
+00:00 +0 -4: fenced code emphasize-lines survives editing and reopening
+00:00 +0 -5: fenced code emphasize-lines survives editing and reopening [E]
+  Bad state: Too many elements
+  dart:core                                                  List.single
+  test/src/writerside_properties_round_trip_test.dart 18:43  main.<fn>
+  
+00:00 +0 -5: fenced code default-state survives editing and reopening
+00:00 +0 -6: fenced code default-state survives editing and reopening [E]
+  Bad state: Too many elements
+  dart:core                                                  List.single
+  test/src/writerside_properties_round_trip_test.dart 18:43  main.<fn>
+  
+00:00 +0 -6: a file-backed fence does not author collapse
+00:00 +0 -7: a file-backed fence does not author collapse [E]
+  Bad state: Too many elements
+  dart:core                                                  List.single
+  test/src/writerside_properties_round_trip_test.dart 27:67  main.<fn>
+  
+00:00 +0 -7: paragraph ID preserves Markdown inline formatting
+00:00 +0 -8: paragraph ID preserves Markdown inline formatting [E]
+  Expected: 'intro'
+    Actual: <null>
+     Which: not an <Instance of 'String'>
+  
+  package:matcher                                           expect
+  package:flutter_test/src/widget_tester.dart 473:18        expect
+  test/src/writerside_properties_round_trip_test.dart 36:5  main.<fn>
+  
+00:00 +0 -8: explicit false survives heading serialization
+00:00 +0 -9: explicit false survives heading serialization [E]
+  Expected: 'false'
+    Actual: <null>
+     Which: not an <Instance of 'String'>
+  
+  package:matcher                                           expect
+  package:flutter_test/src/widget_tester.dart 473:18        expect
+  test/src/writerside_properties_round_trip_test.dart 41:5  main.<fn>
+  
+00:00 +0 -9: optional enum removal is separate from setting a value
+00:00 +0 -10: optional enum removal is separate from setting a value [E]
+  Expected: true
+    Actual: <false>
+  
+  package:matcher                                           expect
+  package:flutter_test/src/widget_tester.dart 473:18        expect
+  test/src/writerside_properties_round_trip_test.dart 45:5  main.<fn>
+  
+00:00 +0 -10: Some tests failed.
+
+Failing tests:
+  /home/albert/busystack/busymark/test/src/writerside_properties_round_trip_test.dart: a file-backed fence does not author collapse
+  /home/albert/busystack/busymark/test/src/writerside_properties_round_trip_test.dart: explicit false survives heading serialization
+  /home/albert/busystack/busymark/test/src/writerside_properties_round_trip_test.dart: fenced code collapsible survives editing and reopening
+  /home/albert/busystack/busymark/test/src/writerside_properties_round_trip_test.dart: fenced code default-state survives editing and reopening
+  ... and 6 more
