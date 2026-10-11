@@ -1,0 +1,100 @@
+00:00 +0: loading /home/albert/busystack/busymark/test/src/writerside_properties_round_trip_test.dart
+00:00 +0: /home/albert/busystack/busymark/test/src/writerside_properties_round_trip_test.dart: list-item properties under Markdown chapters use physical list ownership
+00:00 +1: /home/albert/busystack/busymark/test/src/writerside_properties_round_trip_test.dart: native list attribute line belongs to the list and remains native
+00:00 +2: /home/albert/busystack/busymark/test/src/writerside_properties_round_trip_test.dart: paragraph attribute ownership survives content editing and reopening
+00:03 +3: /home/albert/busystack/busymark/test/src/writerside_properties_round_trip_test.dart: paragraph attribute ownership survives content editing and reopening
+00:03 +4: /home/albert/busystack/busymark/test/src/writerside_properties_round_trip_test.dart: paragraph attribute ownership survives content editing and reopening
+00:04 +5: /home/albert/busystack/busymark/test/src/writerside_properties_round_trip_test.dart: paragraph attribute ownership survives content editing and reopening
+00:04 +6: /home/albert/busystack/busymark/test/src/writerside_properties_round_trip_test.dart: paragraph attribute ownership survives content editing and reopening
+00:04 +7: /home/albert/busystack/busymark/test/src/writerside_properties_round_trip_test.dart: paragraph attribute ownership survives content editing and reopening
+00:05 +8: /home/albert/busystack/busymark/test/src/writerside_properties_round_trip_test.dart: paragraph attribute ownership survives content editing and reopening
+00:05 +9: /home/albert/busystack/busymark/test/src/writerside_properties_round_trip_test.dart: paragraph attribute ownership survives content editing and reopening
+00:05 +10: /home/albert/busystack/busymark/test/src/writerside_properties_round_trip_test.dart: paragraph attribute ownership survives content editing and reopening
+00:05 +11: /home/albert/busystack/busymark/test/src/writerside_properties_round_trip_test.dart: paragraph attribute ownership survives content editing and reopening
+00:05 +12: /home/albert/busystack/busymark/test/src/writerside_properties_round_trip_test.dart: paragraph attribute ownership survives content editing and reopening
+00:05 +13: /home/albert/busystack/busymark/test/src/writerside_properties_round_trip_test.dart: paragraph attribute ownership survives content editing and reopening
+00:05 +14: /home/albert/busystack/busymark/test/src/writerside_properties_round_trip_test.dart: paragraph attribute ownership survives content editing and reopening
+00:05 +15: /home/albert/busystack/busymark/test/src/writerside_properties_round_trip_test.dart: paragraph attribute ownership survives content editing and reopening
+00:05 +16: /home/albert/busystack/busymark/test/src/writerside_properties_round_trip_test.dart: paragraph attribute ownership survives content editing and reopening
+00:05 +17: /home/albert/busystack/busymark/test/src/writerside_properties_round_trip_test.dart: paragraph attribute ownership survives content editing and reopening
+00:05 +18: /home/albert/busystack/busymark/test/src/writerside_properties_round_trip_test.dart: paragraph attribute ownership survives content editing and reopening
+00:05 +19: /home/albert/busystack/busymark/test/src/writerside_properties_round_trip_test.dart: paragraph attribute ownership survives content editing and reopening
+00:05 +20: /home/albert/busystack/busymark/test/src/writerside_properties_round_trip_test.dart: paragraph attribute ownership survives content editing and reopening
+00:05 +21: /home/albert/busystack/busymark/test/src/writerside_properties_round_trip_test.dart: paragraph attribute ownership survives content editing and reopening
+00:05 +22: /home/albert/busystack/busymark/test/src/writerside_properties_round_trip_test.dart: paragraph attribute ownership survives content editing and reopening
+00:05 +23: /home/albert/busystack/busymark/test/src/writerside_properties_round_trip_test.dart: paragraph attribute ownership survives content editing and reopening
+00:05 +24: /home/albert/busystack/busymark/test/src/writerside_properties_round_trip_test.dart: paragraph attribute ownership survives content editing and reopening
+00:05 +25: /home/albert/busystack/busymark/test/src/writerside_properties_round_trip_test.dart: paragraph attribute ownership survives content editing and reopening
+00:05 +26: /home/albert/busystack/busymark/test/src/writerside_properties_round_trip_test.dart: paragraph attribute ownership survives content editing and reopening
+00:05 +27: /home/albert/busystack/busymark/test/src/writerside_properties_round_trip_test.dart: paragraph attribute ownership survives content editing and reopening
+00:05 +28: /home/albert/busystack/busymark/test/src/writerside_properties_round_trip_test.dart: paragraph attribute ownership survives content editing and reopening
+00:05 +29: /home/albert/busystack/busymark/test/src/writerside_properties_round_trip_test.dart: paragraph attribute ownership survives content editing and reopening
+00:05 +30: /home/albert/busystack/busymark/test/src/writerside_properties_round_trip_test.dart: paragraph attribute ownership survives content editing and reopening
+00:05 +31: /home/albert/busystack/busymark/test/src/writerside_properties_round_trip_test.dart: paragraph attribute ownership survives content editing and reopening
+00:05 +32: /home/albert/busystack/busymark/test/src/writerside_properties_round_trip_test.dart: paragraph attribute ownership survives content editing and reopening
+00:05 +33: /home/albert/busystack/busymark/test/src/writerside_authoring_ui_test.dart: Markdown inserts and edits Procedure through native menu
+00:05 +34: /home/albert/busystack/busymark/test/src/writerside_authoring_ui_test.dart: Markdown inserts and edits Procedure through native menu
+00:06 +35: /home/albert/busystack/busymark/test/src/writerside_authoring_ui_test.dart: Markdown inserts and edits Procedure through native menu
+00:06 +36: /home/albert/busystack/busymark/test/src/writerside_authoring_ui_test.dart: Markdown inserts and edits Procedure through native menu
+00:06 +37: /home/albert/busystack/busymark/test/src/writerside_authoring_ui_test.dart: Markdown inserts and edits Procedure through native menu
+00:06 +38: /home/albert/busystack/busymark/test/src/writerside_authoring_ui_test.dart: Markdown inserts and edits Procedure through native menu
+00:06 +39: /home/albert/busystack/busymark/test/src/writerside_authoring_ui_test.dart: Markdown inserts and edits Procedure through native menu
+00:06 +40: /home/albert/busystack/busymark/test/src/writerside_authoring_ui_test.dart: Markdown inserts and edits Procedure through native menu
+00:06 +41: /home/albert/busystack/busymark/test/src/writerside_authoring_ui_test.dart: Markdown inserts and edits Procedure through native menu
+00:06 +42: /home/albert/busystack/busymark/test/src/writerside_authoring_ui_test.dart: Markdown inserts and edits Procedure through native menu
+00:06 +43: /home/albert/busystack/busymark/test/src/writerside_authoring_ui_test.dart: Markdown inserts and edits Procedure through native menu
+00:06 +44: /home/albert/busystack/busymark/test/src/writerside_authoring_ui_test.dart: Markdown inserts and edits Procedure through native menu
+00:06 +45: /home/albert/busystack/busymark/test/src/writerside_authoring_ui_test.dart: Markdown inserts and edits Procedure through native menu
+00:06 +46: /home/albert/busystack/busymark/test/src/writerside_authoring_ui_test.dart: Markdown inserts and edits Procedure through native menu
+00:06 +47: /home/albert/busystack/busymark/test/src/writerside_authoring_ui_test.dart: Markdown inserts and edits Procedure through native menu
+00:06 +48: /home/albert/busystack/busymark/test/src/writerside_authoring_ui_test.dart: Markdown inserts and edits Procedure through native menu
+00:06 +49: /home/albert/busystack/busymark/test/src/writerside_authoring_ui_test.dart: Markdown inserts and edits Procedure through native menu
+00:06 +50: /home/albert/busystack/busymark/test/src/writerside_authoring_ui_test.dart: Markdown inserts and edits Procedure through native menu
+00:06 +51: /home/albert/busystack/busymark/test/src/writerside_authoring_ui_test.dart: Markdown inserts and edits Procedure through native menu
+00:06 +52: /home/albert/busystack/busymark/test/src/writerside_authoring_ui_test.dart: Markdown inserts and edits Procedure through native menu
+00:06 +53: /home/albert/busystack/busymark/test/src/writerside_authoring_ui_test.dart: Markdown inserts and edits Procedure through native menu
+00:06 +54: /home/albert/busystack/busymark/test/src/writerside_authoring_ui_test.dart: Markdown inserts and edits Procedure through native menu
+00:06 +55: /home/albert/busystack/busymark/test/src/writerside_authoring_ui_test.dart: Markdown inserts and edits Procedure through native menu
+00:06 +56: /home/albert/busystack/busymark/test/src/writerside_authoring_ui_test.dart: Markdown inserts and edits Procedure through native menu
+00:06 +57: /home/albert/busystack/busymark/test/src/writerside_authoring_ui_test.dart: Markdown inserts and edits Procedure through native menu
+00:06 +58: /home/albert/busystack/busymark/test/src/writerside_authoring_ui_test.dart: Markdown inserts and edits Procedure through native menu
+00:06 +59: /home/albert/busystack/busymark/test/src/writerside_authoring_ui_test.dart: Markdown inserts and edits Procedure through native menu
+00:06 +60: /home/albert/busystack/busymark/test/src/writerside_authoring_ui_test.dart: Markdown inserts and edits Procedure through native menu
+00:06 +61: /home/albert/busystack/busymark/test/src/writerside_authoring_ui_test.dart: Markdown inserts and edits Procedure through native menu
+00:06 +62: /home/albert/busystack/busymark/test/src/writerside_authoring_ui_test.dart: Markdown inserts and edits Procedure through native menu
+00:06 +63: /home/albert/busystack/busymark/test/src/writerside_authoring_ui_test.dart: Markdown inserts and edits Procedure through native menu
+00:06 +64: /home/albert/busystack/busymark/test/src/writerside_authoring_ui_test.dart: Markdown inserts and edits Procedure through native menu
+00:06 +65: /home/albert/busystack/busymark/test/src/writerside_authoring_ui_test.dart: Markdown inserts and edits Tabs through native menu
+00:06 +66: /home/albert/busystack/busymark/test/src/writerside_authoring_ui_test.dart: Markdown inserts and edits Definition List through native menu
+00:07 +67: /home/albert/busystack/busymark/test/src/writerside_authoring_ui_test.dart: Markdown inserts and edits TLDR through native menu
+00:08 +68: /home/albert/busystack/busymark/test/src/writerside_authoring_ui_test.dart: Markdown applies UI Control and restores undo
+00:08 +69: /home/albert/busystack/busymark/test/src/writerside_authoring_ui_test.dart: Markdown applies File / Path and restores undo
+00:08 +70: /home/albert/busystack/busymark/test/src/writerside_authoring_ui_test.dart: Markdown applies UI Path and restores undo
+00:09 +71: /home/albert/busystack/busymark/test/src/writerside_authoring_ui_test.dart: Markdown applies Keyboard Shortcuts and restores undo
+00:09 +72: /home/albert/busystack/busymark/test/src/writerside_authoring_ui_test.dart: XML canceled native menu restores editing focus and selection
+00:09 +73: /home/albert/busystack/busymark/test/src/writerside_authoring_ui_test.dart: XML inserts and edits Procedure through native menu
+00:10 +74: /home/albert/busystack/busymark/test/src/writerside_authoring_ui_test.dart: XML inserts and edits Tabs through native menu
+00:10 +75: /home/albert/busystack/busymark/test/src/writerside_authoring_ui_test.dart: XML inserts and edits Definition List through native menu
+00:11 +76: /home/albert/busystack/busymark/test/src/writerside_authoring_ui_test.dart: XML inserts and edits TLDR through native menu
+00:11 +77: /home/albert/busystack/busymark/test/src/writerside_authoring_ui_test.dart: XML applies UI Control and restores undo
+00:11 +78: /home/albert/busystack/busymark/test/src/writerside_authoring_ui_test.dart: XML applies File / Path and restores undo
+00:12 +79: /home/albert/busystack/busymark/test/src/writerside_authoring_ui_test.dart: XML applies UI Path and restores undo
+00:12 +80: /home/albert/busystack/busymark/test/src/writerside_authoring_ui_test.dart: XML applies Keyboard Shortcuts and restores undo
+00:12 +81: /home/albert/busystack/busymark/test/src/writerside_authoring_ui_test.dart: video insertion draft and cancellation do not modify source
+00:13 +82: /home/albert/busystack/busymark/test/src/writerside_authoring_ui_test.dart: include native picker offers authored reusable elements and omits root-only topics
+00:13 +83: /home/albert/busystack/busymark/test/src/writerside_authoring_ui_test.dart: variable native picker uses module and lexical scope, inserts reference
+00:13 +84: /home/albert/busystack/busymark/test/src/writerside_authoring_ui_test.dart: Markdown Topic Properties preserve a quoted label through undo and reopen
+00:14 +85: /home/albert/busystack/busymark/test/src/writerside_authoring_ui_test.dart: XML Topic Properties preserve a quoted label through undo and reopen
+00:15 +86: /home/albert/busystack/busymark/test/src/writerside_authoring_ui_test.dart: returning to a table cell retargets Topic Properties
+00:15 +87: /home/albert/busystack/busymark/test/src/writerside_authoring_ui_test.dart: shortcut reference properties identify keyboard layout
+00:15 +88: /home/albert/busystack/busymark/test/src/writerside_authoring_ui_test.dart: chapter properties are available before collapse and local expansion is source-neutral
+00:16 +89: /home/albert/busystack/busymark/test/src/writerside_authoring_ui_test.dart: stale native response cannot edit the switched buffer
+00:16 +90: /home/albert/busystack/busymark/test/src/writerside_authoring_ui_test.dart: stale native cancellation cannot focus the switched buffer
+00:16 +91: /home/albert/busystack/busymark/test/src/writerside_authoring_ui_test.dart: XML source navigation finds repeated semantic text after real edits and reveals local content
+00:16 +92: /home/albert/busystack/busymark/test/src/writerside_authoring_ui_test.dart: Markdown contextual list conversion preserves hierarchy and is one undo action
+00:17 +93: /home/albert/busystack/busymark/test/src/writerside_authoring_ui_test.dart: XML contextual list conversion preserves hierarchy and is one undo action
+00:17 +94: /home/albert/busystack/busymark/test/src/writerside_authoring_ui_test.dart: code properties preserve source attributes, keep their target and undo together
+00:17 +95: /home/albert/busystack/busymark/test/src/writerside_authoring_ui_test.dart: a property draft cannot apply to a replacement element in the same buffer
+00:18 +96: /home/albert/busystack/busymark/test/src/writerside_authoring_ui_test.dart: narrow dark RTL scaled EditorToolbarDirection.horizontal authoring controls remain usable
+00:18 +97: /home/albert/busystack/busymark/test/src/writerside_authoring_ui_test.dart: narrow dark RTL scaled EditorToolbarDirection.vertical authoring controls remain usable
+00:18 +98: All tests passed!

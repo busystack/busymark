@@ -283,3 +283,7 @@ they are not used alone as evidence of successful mutation or persistence.
 No required acceptance gate remains unexecuted. Temporary runtime limitations
 were handled inside the disposable container as described above. The generated
 schema, supported builder version and package lockfiles remain unchanged.
+
+The four subsequent parsing/persistence/default corrections are recorded in
+[element-properties-corrections-acceptance.md](element-properties-corrections-acceptance.md),
+with fresh production-workspace and pinned-builder evidence.

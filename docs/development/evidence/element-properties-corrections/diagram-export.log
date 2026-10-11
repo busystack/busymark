@@ -1,0 +1,12 @@
+00:00 +0: loading /home/albert/busystack/busymark/test/src/writerside_math_diagram_test.dart
+00:00 +0: /home/albert/busystack/busymark/test/src/writerside_math_diagram_test.dart: Writerside math forms use semantic math nodes and round-trip
+00:00 +1: /home/albert/busystack/busymark/test/src/writerside_math_diagram_test.dart: ordinary Markdown does not reinterpret Writerside TeX forms
+00:00 +2: /home/albert/busystack/busymark/test/src/writerside_math_diagram_test.dart: Writerside semantic and fenced diagrams share visualizers
+00:00 +3: /home/albert/busystack/busymark/test/src/writerside_math_diagram_test.dart: referenced diagram source is constrained to the Writerside root
+00:00 +4: /home/albert/busystack/busymark/test/src/writerside_math_diagram_test.dart: Writerside topic XML exposes TeX and diagrams to shared preview
+00:01 +5: /home/albert/busystack/busymark/test/src/markdown_visualization_export_test.dart: stages vector/raster assets, maps OpenAPI, and preserves failed source
+00:04 +6: /home/albert/busystack/busymark/test/src/markdown_visualization_export_test.dart: enforces the export block count without failing the document
+00:04 +7: /home/albert/busystack/busymark/test/src/markdown_visualization_export_test.dart: loads a Writerside referenced diagram before PDF rendering
+00:04 +8: /home/albert/busystack/busymark/test/src/markdown_visualization_export_test.dart: static OpenAPI export contains selectable reference sections
+00:04 +9: /home/albert/busystack/busymark/test/src/markdown_visualization_export_test.dart: Typst exports generated vector/raster assets and falls back on failure
+00:04 +10: All tests passed!
