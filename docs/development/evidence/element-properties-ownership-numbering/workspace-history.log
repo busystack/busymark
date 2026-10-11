@@ -1,0 +1,9 @@
+00:00 +0: loading /home/albert/busystack/busymark/test/src/writerside_properties_round_trip_test.dart
+00:00 +0: /home/albert/busystack/busymark/test/src/writerside_properties_round_trip_test.dart: Linked code example survives content edit save reopen
+00:00 +1: /home/albert/busystack/busymark/test/src/writerside_properties_round_trip_test.dart: Image attribute-like alt text survives content edit save reopen
+00:00 +2: /home/albert/busystack/busymark/test/src/writerside_properties_round_trip_test.dart: Ordered item conversion preserves native outer marker and nested start
+00:00 +3: /home/albert/busystack/busymark/test/src/writerside_properties_round_trip_test.dart: Ordered item conversion preserves authored outer override and nested start
+00:04 +4: /home/albert/busystack/busymark/test/src/workspace_controller_test.dart: numbered item property preserves starts through buffer undo redo save close reopen (false)
+00:04 +5: /home/albert/busystack/busymark/test/src/workspace_controller_test.dart: numbered item property preserves starts through buffer undo redo save close reopen (false)
+00:07 +6: /home/albert/busystack/busymark/test/src/workspace_controller_test.dart: numbered item property preserves starts through buffer undo redo save close reopen (true)
+00:08 +7: All tests passed!

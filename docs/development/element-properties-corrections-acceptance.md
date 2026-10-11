@@ -165,3 +165,7 @@ architecture, schema builder pin and lockfiles. Evidence includes original
 screenshots, saved source, generated HTML, official reports and execution logs.
 Artifact hashes are in
 [evidence/element-properties-corrections/SHA256SUMS](evidence/element-properties-corrections/SHA256SUMS).
+
+The subsequent linked-code/image token and ordered-numbering corrections have
+a separate [acceptance record](element-properties-ownership-numbering-acceptance.md)
+with fresh evidence.

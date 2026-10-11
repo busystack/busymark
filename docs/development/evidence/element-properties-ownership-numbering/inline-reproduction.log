@@ -1,0 +1,26 @@
+00:00 +0: loading /home/albert/busystack/busymark/test/src/writerside_properties_round_trip_test.dart
+00:00 +0: Linked code example survives content edit save reopen
+00:00 +0 -1: Linked code example survives content edit save reopen [E]
+  Expected: null
+    Actual: 'literal'
+
+  package:matcher                                            expect
+  package:flutter_test/src/widget_tester.dart 473:18         expect
+  test/src/writerside_properties_round_trip_test.dart 30:11  main.<fn>.verify
+  test/src/writerside_properties_round_trip_test.dart 47:9   main.<fn>
+
+00:00 +0 -1: Image attribute-like alt text survives content edit save reopen
+00:00 +0 -2: Image attribute-like alt text survives content edit save reopen [E]
+  Expected: null
+    Actual: 'literal'
+
+  package:matcher                                            expect
+  package:flutter_test/src/widget_tester.dart 473:18         expect
+  test/src/writerside_properties_round_trip_test.dart 30:11  main.<fn>.verify
+  test/src/writerside_properties_round_trip_test.dart 47:9   main.<fn>
+
+00:00 +0 -2: Some tests failed.
+
+Failing tests:
+  /home/albert/busystack/busymark/test/src/writerside_properties_round_trip_test.dart: Image attribute-like alt text survives content edit save reopen
+  /home/albert/busystack/busymark/test/src/writerside_properties_round_trip_test.dart: Linked code example survives content edit save reopen

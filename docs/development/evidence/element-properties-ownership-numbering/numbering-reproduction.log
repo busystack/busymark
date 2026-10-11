@@ -1,0 +1,30 @@
+00:00 +0: loading /home/albert/busystack/busymark/test/src/writerside_properties_round_trip_test.dart
+00:00 +0: Ordered item conversion preserves native outer marker and nested start
+00:00 +0 -1: Ordered item conversion preserves native outer marker and nested start [E]
+  Expected: '4'
+    Actual: <null>
+     Which: not an <Instance of 'String'>
+
+  package:matcher                                           expect
+  package:flutter_test/src/widget_tester.dart 473:18        expect
+  test/src/writerside_properties_round_trip_test.dart 79:9  main.<fn>
+
+00:00 +0 -1: Ordered item conversion preserves authored outer override and nested start
+00:00 +0 -2: Ordered item conversion preserves authored outer override and nested start [E]
+  Expected: '10'
+    Actual: '3'
+     Which: is different.
+            Expected: 10
+              Actual: 3
+                      ^
+             Differ at offset 0
+
+  package:matcher                                           expect
+  package:flutter_test/src/widget_tester.dart 473:18        expect
+  test/src/writerside_properties_round_trip_test.dart 74:9  main.<fn>
+
+00:00 +0 -2: Some tests failed.
+
+Failing tests:
+  /home/albert/busystack/busymark/test/src/writerside_properties_round_trip_test.dart: Ordered item conversion preserves authored outer override and nested start
+  /home/albert/busystack/busymark/test/src/writerside_properties_round_trip_test.dart: Ordered item conversion preserves native outer marker and nested start

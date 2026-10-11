@@ -1,0 +1,14 @@
+TAP version 13
+# random seed: R02Sb8882e54e1d5565792308fcf90c59740
+1..4
+# Start of writerside tests
+# Start of edit-title tests
+# GLib-GIO-DEBUG: _g_io_module_get_default: Found default implementation local (GLocalVfs) for ?gio-vfs?
+ok 1 /writerside/edit-title/rtl-on-ltr-desktop
+ok 2 /writerside/edit-title/ltr-on-rtl-desktop
+# End of edit-title tests
+# Start of duplicate tests
+ok 3 /writerside/duplicate/rtl-on-ltr-desktop
+ok 4 /writerside/duplicate/ltr-on-rtl-desktop
+# End of duplicate tests
+# End of writerside tests
