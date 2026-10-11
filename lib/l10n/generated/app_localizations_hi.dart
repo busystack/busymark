@@ -5129,7 +5129,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get wsCodeSourceConflict =>
-      'स्रोत फ़ाइल चुनने से पहले इनलाइन कोड हटाएँ या स्थानांतरित करें। Writerside स्रोत संदर्भ वाले गैर-रिक्त कोड ब्लॉक अस्वीकार करता है।';
+      'src सेट करने से पहले इस ब्लॉक में लिखे कोड को हटाएँ या स्थानांतरित करें। Writerside स्रोत संदर्भ वाले गैर-खाली कोड ब्लॉक को अस्वीकार करता है।';
 
   @override
   String get wsInherited => 'सूची से प्राप्त करें';
@@ -5144,4 +5144,48 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get wsListItem => 'सूची आइटम';
+
+  @override
+  String get wsSourceFile => 'स्रोत फ़ाइल';
+
+  @override
+  String get wsLinkTarget => 'लिंक लक्ष्य';
+
+  @override
+  String get wsPreviewImage => 'पूर्वावलोकन छवि';
+
+  @override
+  String get wsIncludedElement => 'शामिल तत्व';
+
+  @override
+  String get wsHelpModule => 'सहायता मॉड्यूल';
+
+  @override
+  String get wsActionId => 'कार्रवाई ID';
+
+  @override
+  String get wsKeymapHelpInstance => 'कीमैप सहायता इंस्टेंस';
+
+  @override
+  String get wsShowInSource => 'स्रोत में दिखाएँ';
+
+  @override
+  String get wsOriginElement => 'तत्व का ओवरराइड';
+
+  @override
+  String get wsOriginAncestor => 'मूल तत्व';
+
+  @override
+  String get wsOriginModule => 'मॉड्यूल का डिफ़ॉल्ट';
+
+  @override
+  String get wsOriginBuiltIn => 'अंतर्निहित डिफ़ॉल्ट';
+
+  @override
+  String get wsOriginUnresolved => 'अनसुलझा';
+
+  @override
+  String wsEffectiveProperty(String value, String origin) {
+    return 'प्रभावी: $value — $origin';
+  }
 }

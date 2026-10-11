@@ -5167,7 +5167,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get wsCodeSourceConflict =>
-      'أزل الشفرة المضمّنة أو انقلها قبل تحديد ملف مصدر. يرفض Writerside كتلة شفرة غير فارغة ذات مرجع مصدر.';
+      'انقل أو أزل الشفرة المكتوبة في هذه الكتلة قبل تعيين src. يرفض Writerside كتلة شفرة غير فارغة لها مرجع مصدر.';
 
   @override
   String get wsInherited => 'وراثة من القائمة';
@@ -5182,4 +5182,48 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get wsListItem => 'عنصر قائمة';
+
+  @override
+  String get wsSourceFile => 'ملف المصدر';
+
+  @override
+  String get wsLinkTarget => 'وجهة الرابط';
+
+  @override
+  String get wsPreviewImage => 'صورة المعاينة';
+
+  @override
+  String get wsIncludedElement => 'العنصر المُضمَّن';
+
+  @override
+  String get wsHelpModule => 'وحدة المساعدة';
+
+  @override
+  String get wsActionId => 'معرّف الإجراء';
+
+  @override
+  String get wsKeymapHelpInstance => 'نسخة مساعدة خريطة المفاتيح';
+
+  @override
+  String get wsShowInSource => 'إظهار في المصدر';
+
+  @override
+  String get wsOriginElement => 'تجاوز العنصر';
+
+  @override
+  String get wsOriginAncestor => 'العنصر الأب';
+
+  @override
+  String get wsOriginModule => 'القيمة الافتراضية للوحدة';
+
+  @override
+  String get wsOriginBuiltIn => 'القيمة الافتراضية المضمّنة';
+
+  @override
+  String get wsOriginUnresolved => 'غير محلول';
+
+  @override
+  String wsEffectiveProperty(String value, String origin) {
+    return 'القيمة الفعلية: $value — $origin';
+  }
 }

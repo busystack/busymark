@@ -64,6 +64,7 @@ import 'writerside_editing_adapter.dart';
 import 'writerside_properties.dart';
 import 'writerside_property_session.dart';
 import '../../writerside/writerside_project.dart';
+import '../../writerside/writerside_source_loader.dart';
 
 typedef BusyMarkWysiwygSourceChanged =
     void Function(String filePath, String source);
@@ -242,7 +243,7 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   String? _activeBlockId;
   String? _propertiesTargetId;
   String? _videoDraftTarget;
-  bool _propertiesVisible = true;
+  bool _propertiesVisible = false;
   bool _propertiesExplicitlyOpened = false;
   final _propertySession = WritersidePropertySession();
   String? _lastInspectorSelection;
@@ -1162,8 +1163,12 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
         inline = busyInlineReferenceRanges(target.inlines)
             .where(
               (r) =>
-                  (r.kind == BusyInlineKind.writersideVariable ||
-                      r.kind == BusyInlineKind.writersideShortcut) &&
+                  {
+                    BusyInlineKind.link,
+                    BusyInlineKind.image,
+                    BusyInlineKind.writersideVariable,
+                    BusyInlineKind.writersideShortcut,
+                  }.contains(r.kind) &&
                   selection!.start >= r.start &&
                   selection.end <= r.end,
             )
@@ -1177,6 +1182,36 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
         settings: widget.writersideSettings,
       ),
       session: _propertySession,
+      onChooseCodeSource: () async {
+        final guard = _captureDialogTarget();
+        final module = widget
+            .writersideProjectIndex
+            ?.modulesById[widget.writersideModuleId];
+        final root =
+            module?.rootPath ?? widget.writersideRoot ?? widget.workspaceRoot;
+        if (root == null) {
+          _propertySession.reject(WritersidePropertyRejection.unresolved);
+          return null;
+        }
+        final selected = await openFile(
+          initialDirectory: module?.config.snippetsDir == null
+              ? p.dirname(document.filePath)
+              : p.join(root, module!.config.snippetsDir!),
+          confirmButtonText: context.l10n.open,
+        );
+        if (!_isDialogTargetCurrent(guard) || selected == null) return null;
+        final reference = await const WritersideSourceLoader().referenceForFile(
+          selectedPath: selected.path,
+          documentPath: document.filePath,
+          workspaceRoot: root,
+          snippetsDirectory: module?.config.snippetsDir,
+        );
+        if (!_isDialogTargetCurrent(guard)) return null;
+        if (reference == null) {
+          _propertySession.reject(WritersidePropertyRejection.unresolved);
+        }
+        return reference;
+      },
       document: document,
       path: path,
       target: target,
@@ -3022,7 +3057,7 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     });
   }
 
-  void _publishInspectorTarget({bool explicit = false}) {
+  void _publishInspectorTarget({bool explicit = false, bool? multiple}) {
     final selection = _activeBlockId == null
         ? null
         : _textControllers[_activeBlockId]?.selection;
@@ -3039,7 +3074,17 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       final selection = _textControllers[targetId]?.selection;
       if (selection?.isValid == true) {
         inline = busyInlineReferenceRanges(block.inlines)
-            .where((r) => selection!.start >= r.start && selection.end <= r.end)
+            .where(
+              (r) =>
+                  {
+                    BusyInlineKind.link,
+                    BusyInlineKind.image,
+                    BusyInlineKind.writersideVariable,
+                    BusyInlineKind.writersideShortcut,
+                  }.contains(r.kind) &&
+                  selection!.start >= r.start &&
+                  selection.end <= r.end,
+            )
             .firstOrNull;
       }
     }
@@ -3048,7 +3093,7 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       targetId,
       inline,
       explicit,
-      _hasBlockSelection,
+      multiple ?? _hasBlockSelection,
     );
     if (explicit) widget.onPropertiesRequested?.call();
   }
@@ -6251,11 +6296,12 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
         blockIds.length == 1 &&
         firstBlock?.kind == BusyBlockKind.codeBlock) {
       setState(() {
-        _propertiesVisible = true;
+        _propertiesVisible = widget.onInspectElement == null;
         _propertiesExplicitlyOpened = true;
         _propertiesTargetId = firstBlock!.id;
         _topicPropertiesSelected = false;
       });
+      _publishInspectorTarget(explicit: true, multiple: false);
       return;
     }
     final target = _captureDialogTarget();

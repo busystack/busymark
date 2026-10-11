@@ -79,7 +79,7 @@ class AppSettings {
     required this.themeModePreference,
     required this.localeTag,
     required this.sidebarVisible,
-    this.elementPropertiesVisible = true,
+    this.elementPropertiesVisible = false,
     this.elementPropertiesWidth = 320,
     required this.previewVisible,
     required this.documentViewMode,
@@ -974,6 +974,9 @@ class AppSettingsController extends Notifier<AppSettings> {
     } on Object {
       loaded = AppSettings.defaults();
     }
+    // Visibility belongs to this run; retain the preferred inspector width.
+    // Explicit requests made during hydration are applied below.
+    loaded = loaded.copyWith(elementPropertiesVisible: false);
     final hadPendingInitialMutations = _pendingInitialMutations.isNotEmpty;
     for (final mutation in _pendingInitialMutations) {
       loaded = mutation(loaded);

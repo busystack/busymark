@@ -93,6 +93,9 @@ def main():
     elif command == "chord":
         subprocess.run(["xdotool", "key", "--clearmodifiers", args[0]], check=True)
         time.sleep(0.3)
+    elif command == "type":
+        subprocess.run(["xdotool", "type", "--clearmodifiers", "--", args[0]], check=True)
+        time.sleep(0.3)
     elif command == "inspect":
         print(json.dumps([
             {"name": node.get_name(), "role": node.get_role_name(),

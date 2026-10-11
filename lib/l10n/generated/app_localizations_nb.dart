@@ -5142,7 +5142,7 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String get wsCodeSourceConflict =>
-      'Fjern eller flytt koden før du velger en kildefil. Writerside avviser kodeblokker med både innhold og kildereferanse.';
+      'Flytt eller fjern koden skrevet i denne blokken før du setter src. Writerside avviser en ikke-tom kodeblokk med en kildereferanse.';
 
   @override
   String get wsInherited => 'Arv fra listen';
@@ -5157,4 +5157,48 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String get wsListItem => 'Listeelement';
+
+  @override
+  String get wsSourceFile => 'Kildefil';
+
+  @override
+  String get wsLinkTarget => 'Lenkemål';
+
+  @override
+  String get wsPreviewImage => 'Forhåndsvisningsbilde';
+
+  @override
+  String get wsIncludedElement => 'Inkludert element';
+
+  @override
+  String get wsHelpModule => 'Hjelpemodul';
+
+  @override
+  String get wsActionId => 'Handlings-ID';
+
+  @override
+  String get wsKeymapHelpInstance => 'Hjelpeinstans for tastaturkart';
+
+  @override
+  String get wsShowInSource => 'Vis i Kilde';
+
+  @override
+  String get wsOriginElement => 'Elementoverstyring';
+
+  @override
+  String get wsOriginAncestor => 'Overordnet element';
+
+  @override
+  String get wsOriginModule => 'Modulstandard';
+
+  @override
+  String get wsOriginBuiltIn => 'Innebygd standard';
+
+  @override
+  String get wsOriginUnresolved => 'Uavklart';
+
+  @override
+  String wsEffectiveProperty(String value, String origin) {
+    return 'Effektiv: $value — $origin';
+  }
 }

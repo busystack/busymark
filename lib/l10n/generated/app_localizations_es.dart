@@ -5189,7 +5189,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get wsCodeSourceConflict =>
-      'Quite o mueva el código antes de elegir un archivo fuente. Writerside rechaza bloques no vacíos con una referencia fuente.';
+      'Mueve o elimina el código escrito en este bloque antes de establecer src. Writerside rechaza bloques de código no vacíos con una referencia de origen.';
 
   @override
   String get wsInherited => 'Heredar de la lista';
@@ -5204,4 +5204,48 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get wsListItem => 'Elemento de lista';
+
+  @override
+  String get wsSourceFile => 'Archivo de origen';
+
+  @override
+  String get wsLinkTarget => 'Destino del enlace';
+
+  @override
+  String get wsPreviewImage => 'Imagen de vista previa';
+
+  @override
+  String get wsIncludedElement => 'Elemento incluido';
+
+  @override
+  String get wsHelpModule => 'Módulo de ayuda';
+
+  @override
+  String get wsActionId => 'ID de acción';
+
+  @override
+  String get wsKeymapHelpInstance => 'Instancia de ayuda del mapa de teclas';
+
+  @override
+  String get wsShowInSource => 'Mostrar en Fuente';
+
+  @override
+  String get wsOriginElement => 'Valor del elemento';
+
+  @override
+  String get wsOriginAncestor => 'Elemento padre';
+
+  @override
+  String get wsOriginModule => 'Predeterminado del módulo';
+
+  @override
+  String get wsOriginBuiltIn => 'Predeterminado integrado';
+
+  @override
+  String get wsOriginUnresolved => 'Sin resolver';
+
+  @override
+  String wsEffectiveProperty(String value, String origin) {
+    return 'Efectivo: $value — $origin';
+  }
 }

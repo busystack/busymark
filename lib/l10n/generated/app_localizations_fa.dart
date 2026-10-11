@@ -5176,7 +5176,7 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get wsCodeSourceConflict =>
-      'پیش از انتخاب فایل منبع، کد درون‌خطی را حذف یا جابه‌جا کنید. Writerside بلوک کد غیرخالی با ارجاع منبع را نمی‌پذیرد.';
+      'پیش از تنظیم src، کد نوشته‌شده در این بلوک را منتقل یا حذف کنید. Writerside بلوک کد غیرخالی با ارجاع منبع را نمی‌پذیرد.';
 
   @override
   String get wsInherited => 'ارث‌بری از فهرست';
@@ -5191,4 +5191,48 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get wsListItem => 'مورد فهرست';
+
+  @override
+  String get wsSourceFile => 'فایل منبع';
+
+  @override
+  String get wsLinkTarget => 'مقصد پیوند';
+
+  @override
+  String get wsPreviewImage => 'تصویر پیش‌نمایش';
+
+  @override
+  String get wsIncludedElement => 'عنصر گنجانده‌شده';
+
+  @override
+  String get wsHelpModule => 'ماژول راهنما';
+
+  @override
+  String get wsActionId => 'شناسهٔ عمل';
+
+  @override
+  String get wsKeymapHelpInstance => 'نمونهٔ راهنمای نگاشت کلید';
+
+  @override
+  String get wsShowInSource => 'نمایش در منبع';
+
+  @override
+  String get wsOriginElement => 'بازنویسی عنصر';
+
+  @override
+  String get wsOriginAncestor => 'عنصر والد';
+
+  @override
+  String get wsOriginModule => 'پیش‌فرض ماژول';
+
+  @override
+  String get wsOriginBuiltIn => 'پیش‌فرض داخلی';
+
+  @override
+  String get wsOriginUnresolved => 'حل‌نشده';
+
+  @override
+  String wsEffectiveProperty(String value, String origin) {
+    return 'مقدار مؤثر: $value — $origin';
+  }
 }

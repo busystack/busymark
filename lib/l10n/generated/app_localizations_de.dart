@@ -5185,7 +5185,7 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get wsCodeSourceConflict =>
-      'Entfernen oder verschieben Sie den Inline-Code vor der Quelldateiauswahl. Writerside lehnt nicht leere Codeblöcke mit Quellverweis ab.';
+      'Verschieben oder entfernen Sie den Code in diesem Block, bevor Sie src setzen. Writerside lehnt nicht leere Codeblöcke mit einer Quellreferenz ab.';
 
   @override
   String get wsInherited => 'Von Liste erben';
@@ -5200,4 +5200,48 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get wsListItem => 'Listeneintrag';
+
+  @override
+  String get wsSourceFile => 'Quelldatei';
+
+  @override
+  String get wsLinkTarget => 'Linkziel';
+
+  @override
+  String get wsPreviewImage => 'Vorschaubild';
+
+  @override
+  String get wsIncludedElement => 'Eingebundenes Element';
+
+  @override
+  String get wsHelpModule => 'Hilfemodul';
+
+  @override
+  String get wsActionId => 'Aktions-ID';
+
+  @override
+  String get wsKeymapHelpInstance => 'Hilfeinstanz der Tastaturbelegung';
+
+  @override
+  String get wsShowInSource => 'Im Quelltext anzeigen';
+
+  @override
+  String get wsOriginElement => 'Elementüberschreibung';
+
+  @override
+  String get wsOriginAncestor => 'Übergeordnetes Element';
+
+  @override
+  String get wsOriginModule => 'Modulstandard';
+
+  @override
+  String get wsOriginBuiltIn => 'Integrierter Standard';
+
+  @override
+  String get wsOriginUnresolved => 'Nicht aufgelöst';
+
+  @override
+  String wsEffectiveProperty(String value, String origin) {
+    return 'Effektiv: $value — $origin';
+  }
 }

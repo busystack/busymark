@@ -5188,7 +5188,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get wsCodeSourceConflict =>
-      'Verwijder of verplaats de code voordat u een bronbestand kiest. Writerside weigert niet-lege codeblokken met een bronverwijzing.';
+      'Verplaats of verwijder de code in dit blok voordat u src instelt. Writerside weigert een niet-leeg codeblok met een bronverwijzing.';
 
   @override
   String get wsInherited => 'Overnemen van lijst';
@@ -5203,4 +5203,48 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get wsListItem => 'Lijstitem';
+
+  @override
+  String get wsSourceFile => 'Bronbestand';
+
+  @override
+  String get wsLinkTarget => 'Linkdoel';
+
+  @override
+  String get wsPreviewImage => 'Voorbeeldafbeelding';
+
+  @override
+  String get wsIncludedElement => 'Opgenomen element';
+
+  @override
+  String get wsHelpModule => 'Helpmodule';
+
+  @override
+  String get wsActionId => 'Actie-ID';
+
+  @override
+  String get wsKeymapHelpInstance => 'Helpinstantie van toetsindeling';
+
+  @override
+  String get wsShowInSource => 'Tonen in Bron';
+
+  @override
+  String get wsOriginElement => 'Elementoverschrijving';
+
+  @override
+  String get wsOriginAncestor => 'Bovenliggend element';
+
+  @override
+  String get wsOriginModule => 'Modulestandaard';
+
+  @override
+  String get wsOriginBuiltIn => 'Ingebouwde standaard';
+
+  @override
+  String get wsOriginUnresolved => 'Niet opgelost';
+
+  @override
+  String wsEffectiveProperty(String value, String origin) {
+    return 'Effectief: $value — $origin';
+  }
 }

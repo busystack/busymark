@@ -5139,7 +5139,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get wsCodeSourceConflict =>
-      'Kaynak dosya seçmeden önce satır içi kodu kaldırın veya taşıyın. Writerside kaynak başvurusu olan boş olmayan kod bloklarını reddeder.';
+      'src ayarlamadan önce bu blokta yazılan kodu taşıyın veya kaldırın. Writerside, kaynak başvurusu olan boş olmayan kod bloğunu reddeder.';
 
   @override
   String get wsInherited => 'Listeden devral';
@@ -5154,4 +5154,48 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get wsListItem => 'Liste öğesi';
+
+  @override
+  String get wsSourceFile => 'Kaynak dosya';
+
+  @override
+  String get wsLinkTarget => 'Bağlantı hedefi';
+
+  @override
+  String get wsPreviewImage => 'Önizleme resmi';
+
+  @override
+  String get wsIncludedElement => 'Dahil edilen öğe';
+
+  @override
+  String get wsHelpModule => 'Yardım modülü';
+
+  @override
+  String get wsActionId => 'Eylem kimliği';
+
+  @override
+  String get wsKeymapHelpInstance => 'Tuş eşlemesi yardım örneği';
+
+  @override
+  String get wsShowInSource => 'Kaynakta göster';
+
+  @override
+  String get wsOriginElement => 'Öğe geçersiz kılması';
+
+  @override
+  String get wsOriginAncestor => 'Üst öğe';
+
+  @override
+  String get wsOriginModule => 'Modül varsayılanı';
+
+  @override
+  String get wsOriginBuiltIn => 'Yerleşik varsayılan';
+
+  @override
+  String get wsOriginUnresolved => 'Çözümlenemedi';
+
+  @override
+  String wsEffectiveProperty(String value, String origin) {
+    return 'Etkin: $value — $origin';
+  }
 }

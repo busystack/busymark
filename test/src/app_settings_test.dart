@@ -10,6 +10,57 @@ import 'package:path/path.dart' as p;
 
 void main() {
   test(
+    'inspector starts closed after loading an old visible preference',
+    () async {
+      final store = _MemorySettingsStore();
+      store.value.addAll({
+        'elementPropertiesVisible': true,
+        'elementPropertiesWidth': 390.0,
+      });
+      final container = ProviderContainer(
+        overrides: [localSettingsStoreProvider.overrideWithValue(store)],
+      );
+      addTearDown(container.dispose);
+      final controller = container.read(appSettingsControllerProvider.notifier);
+      expect(
+        container.read(appSettingsControllerProvider).elementPropertiesVisible,
+        isFalse,
+      );
+      await controller.waitUntilLoaded();
+      expect(
+        container.read(appSettingsControllerProvider).elementPropertiesVisible,
+        isFalse,
+      );
+      expect(
+        container.read(appSettingsControllerProvider).elementPropertiesWidth,
+        390,
+      );
+      await controller.setElementPropertiesVisible(true);
+      expect(
+        container.read(appSettingsControllerProvider).elementPropertiesVisible,
+        isTrue,
+      );
+    },
+  );
+  test(
+    'an explicit inspector request during settings hydration stays open',
+    () async {
+      final container = ProviderContainer(
+        overrides: [
+          localSettingsStoreProvider.overrideWithValue(_MemorySettingsStore()),
+        ],
+      );
+      addTearDown(container.dispose);
+      final controller = container.read(appSettingsControllerProvider.notifier);
+      await controller.setElementPropertiesVisible(true);
+      await controller.waitUntilLoaded();
+      expect(
+        container.read(appSettingsControllerProvider).elementPropertiesVisible,
+        isTrue,
+      );
+    },
+  );
+  test(
     'Element Properties preferences persist independently of navigation sidebar',
     () {
       final settings = AppSettings.defaults().copyWith(

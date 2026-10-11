@@ -5137,7 +5137,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get wsCodeSourceConflict =>
-      'Hapus atau pindahkan kode sebelum memilih berkas sumber. Writerside menolak blok kode tidak kosong dengan referensi sumber.';
+      'Pindahkan atau hapus kode yang ditulis dalam blok ini sebelum menetapkan src. Writerside menolak blok kode yang tidak kosong dengan referensi sumber.';
 
   @override
   String get wsInherited => 'Warisi dari daftar';
@@ -5152,4 +5152,48 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get wsListItem => 'Item daftar';
+
+  @override
+  String get wsSourceFile => 'Berkas sumber';
+
+  @override
+  String get wsLinkTarget => 'Tujuan tautan';
+
+  @override
+  String get wsPreviewImage => 'Gambar pratinjau';
+
+  @override
+  String get wsIncludedElement => 'Elemen yang disertakan';
+
+  @override
+  String get wsHelpModule => 'Modul bantuan';
+
+  @override
+  String get wsActionId => 'ID tindakan';
+
+  @override
+  String get wsKeymapHelpInstance => 'Instans bantuan peta tombol';
+
+  @override
+  String get wsShowInSource => 'Tampilkan di Sumber';
+
+  @override
+  String get wsOriginElement => 'Penggantian elemen';
+
+  @override
+  String get wsOriginAncestor => 'Elemen induk';
+
+  @override
+  String get wsOriginModule => 'Bawaan modul';
+
+  @override
+  String get wsOriginBuiltIn => 'Bawaan internal';
+
+  @override
+  String get wsOriginUnresolved => 'Belum teratasi';
+
+  @override
+  String wsEffectiveProperty(String value, String origin) {
+    return 'Efektif: $value — $origin';
+  }
 }

@@ -8793,7 +8793,7 @@ abstract class AppLocalizations {
   /// No description provided for @wsCodeSourceConflict.
   ///
   /// In en, this message translates to:
-  /// **'Remove or move the inline code before selecting a source file. Writerside rejects a nonempty code block with a source reference.'**
+  /// **'Move or remove the code authored in this block before setting src. Writerside rejects a nonempty code block with a source reference.'**
   String get wsCodeSourceConflict;
 
   /// No description provided for @wsInherited.
@@ -8819,6 +8819,90 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'List item'**
   String get wsListItem;
+
+  /// No description provided for @wsSourceFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Source file'**
+  String get wsSourceFile;
+
+  /// No description provided for @wsLinkTarget.
+  ///
+  /// In en, this message translates to:
+  /// **'Link target'**
+  String get wsLinkTarget;
+
+  /// No description provided for @wsPreviewImage.
+  ///
+  /// In en, this message translates to:
+  /// **'Preview image'**
+  String get wsPreviewImage;
+
+  /// No description provided for @wsIncludedElement.
+  ///
+  /// In en, this message translates to:
+  /// **'Included element'**
+  String get wsIncludedElement;
+
+  /// No description provided for @wsHelpModule.
+  ///
+  /// In en, this message translates to:
+  /// **'Help module'**
+  String get wsHelpModule;
+
+  /// No description provided for @wsActionId.
+  ///
+  /// In en, this message translates to:
+  /// **'Action ID'**
+  String get wsActionId;
+
+  /// No description provided for @wsKeymapHelpInstance.
+  ///
+  /// In en, this message translates to:
+  /// **'Keymap help instance'**
+  String get wsKeymapHelpInstance;
+
+  /// No description provided for @wsShowInSource.
+  ///
+  /// In en, this message translates to:
+  /// **'Show in Source'**
+  String get wsShowInSource;
+
+  /// No description provided for @wsOriginElement.
+  ///
+  /// In en, this message translates to:
+  /// **'element override'**
+  String get wsOriginElement;
+
+  /// No description provided for @wsOriginAncestor.
+  ///
+  /// In en, this message translates to:
+  /// **'parent element'**
+  String get wsOriginAncestor;
+
+  /// No description provided for @wsOriginModule.
+  ///
+  /// In en, this message translates to:
+  /// **'module default'**
+  String get wsOriginModule;
+
+  /// No description provided for @wsOriginBuiltIn.
+  ///
+  /// In en, this message translates to:
+  /// **'built-in default'**
+  String get wsOriginBuiltIn;
+
+  /// No description provided for @wsOriginUnresolved.
+  ///
+  /// In en, this message translates to:
+  /// **'unresolved'**
+  String get wsOriginUnresolved;
+
+  /// Effective Writerside property value and its localized origin. Attribute names are displayed separately without translation.
+  ///
+  /// In en, this message translates to:
+  /// **'Effective: {value} — {origin}'**
+  String wsEffectiveProperty(String value, String origin);
 }
 
 class _AppLocalizationsDelegate

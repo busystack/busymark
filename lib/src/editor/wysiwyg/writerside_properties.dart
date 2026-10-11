@@ -81,7 +81,7 @@ class BusyMarkWritersideProperties extends StatelessWidget {
   final bool readOnly;
   final VoidCallback? onSourceLocation;
   final VoidCallback? onChooseInclude;
-  final VoidCallback? onChooseCodeSource;
+  final Future<String?> Function()? onChooseCodeSource;
   final BusyDocument document;
   final List<BusyBlock> path;
   final BusyBlock? target;
@@ -125,12 +125,24 @@ class BusyMarkWritersideProperties extends StatelessWidget {
         block?.isSourceProtected == true ||
         block?.preserveRaw == true;
     final offered = <String>{};
+    String attributeLabel(String attribute, String label) {
+      final name = switch (attribute) {
+        'language' => 'lang',
+        'busymark-ignored-href' => 'href',
+        _ => attribute,
+      };
+      return name == label || attribute == 'reference'
+          ? label
+          : '$label ($name)';
+    }
+
     Widget resetOverride(String attribute) => BusyMarkHeaderIconButton(
       icon: BusyMarkGlyphs.windowClose,
       tooltip: l.wsUseDefault,
       onPressed: immutable
           ? null
           : () {
+              if (!(session?.flush() ?? true)) return;
               if (inlineTarget != null) {
                 onInlineProperty?.call(attribute, '');
               } else {
@@ -145,6 +157,7 @@ class BusyMarkWritersideProperties extends StatelessWidget {
       bool topic = false,
       bool inline = false,
       bool enabled = true,
+      Future<String?> Function()? chooseFile,
     }) {
       offered.add(attribute == 'language' ? 'lang' : attribute);
       return _PropertyTextEntry(
@@ -153,7 +166,8 @@ class BusyMarkWritersideProperties extends StatelessWidget {
         ),
         session: session,
         readOnly: immutable || !enabled,
-        label: label,
+        label: attributeLabel(attribute, label),
+        chooseFile: chooseFile,
         value: value ?? attrs[attribute] ?? '',
         apply: (value) => inline || inlineTarget != null
             ? onInlineProperty?.call(attribute, value) ?? false
@@ -171,13 +185,20 @@ class BusyMarkWritersideProperties extends StatelessWidget {
         RegExp(
           r'^(?:https?:)?//',
         ).hasMatch(inlineTarget?.destination ?? attrs['src'] ?? '');
-    Widget dimension(String attribute, String label) => Row(
-      children: [
-        Expanded(child: entry(attribute, label, enabled: !externalImage)),
-        if (externalImage && attrs[attribute]?.isNotEmpty == true)
-          resetOverride(attribute),
-      ],
-    );
+    Widget dimension(String attribute, String label) {
+      if (externalImage && attrs[attribute]?.isNotEmpty != true) {
+        offered.add(attribute);
+        return const SizedBox.shrink();
+      }
+      return Row(
+        children: [
+          Expanded(child: entry(attribute, label, enabled: !externalImage)),
+          if (externalImage && attrs[attribute]?.isNotEmpty == true)
+            resetOverride(attribute),
+        ],
+      );
+    }
+
     final parentList = path
         .where((b) => b.attributes['element'] == 'deflist' && b.id != block?.id)
         .lastOrNull;
@@ -198,72 +219,76 @@ class BusyMarkWritersideProperties extends StatelessWidget {
         attrs,
         definitionList: listAttributes,
       );
-      final defaultProperty = effectiveProperties.resolve(
-        tag,
-        attribute,
-        {...attrs}..remove(attribute),
-        definitionList: listAttributes,
-      );
       final value = attrs[attribute] ?? '';
+      if (!active && value.isEmpty) return const SizedBox.shrink();
       final allowed = WritersideSchema.valuesFor(tag, attribute).toList();
       final values = [
         '',
         ...allowed,
         if (value.isNotEmpty && !allowed.contains(value)) value,
       ];
-      return Tooltip(
-        message:
-            '${property.origin.name}: ${property.value ?? l.wsPropertiesUnresolved}',
-        child: Row(
-          children: [
-            Expanded(
-              child: BusyMarkComboRow<String>(
-                enabled: !immutable && active,
-                subtitle: active ? null : l.wsPropertiesInactive,
-                title: label,
-                values: values,
-                selected: value,
-                labelFor: (v) => v.isEmpty
-                    ? '${l.wsUseDefault} — ${defaultProperty.value == null ? l.wsPropertiesUnresolved : switch (defaultProperty.value) {
-                              'expanded' => l.wsExpanded,
-                              'collapsed' => l.wsCollapsed,
-                              'inherited' => l.wsInherited,
-                              'true' => l.wsEnabled,
-                              'false' => l.wsDisabled,
-                              'full' => l.wsFullLayout,
-                              'medium' => l.wsMediumLayout,
-                              'narrow' => l.wsNarrowLayout,
-                              'compact' => l.wsCompactLayout,
-                              'wide' => l.wsWideLayout,
-                              _ => defaultProperty.value!,
-                            }}'
-                    : switch (v) {
-                        'expanded' => l.wsExpanded,
-                        'collapsed' => l.wsCollapsed,
-                        'true' => l.wsEnabled,
-                        'false' => l.wsDisabled,
-                        'full' => l.wsFullLayout,
-                        'medium' => l.wsMediumLayout,
-                        'narrow' => l.wsNarrowLayout,
-                        'compact' => l.wsCompactLayout,
-                        'wide' => l.wsWideLayout,
-                        _ => v,
-                      },
-                onSelected: (v) {
-                  if (!immutable && (active || v.isEmpty)) {
-                    if (inlineTarget != null) {
-                      onInlineProperty?.call(attribute, v);
-                    } else {
-                      onProperty(attribute, v.isEmpty ? null : v);
+      String valueLabel(String v) => switch (v) {
+        'expanded' => l.wsExpanded,
+        'collapsed' => l.wsCollapsed,
+        'inherited' => l.wsInherited,
+        'true' => l.wsEnabled,
+        'false' => l.wsDisabled,
+        'full' => l.wsFullLayout,
+        'medium' => l.wsMediumLayout,
+        'narrow' => l.wsNarrowLayout,
+        'compact' => l.wsCompactLayout,
+        'wide' => l.wsWideLayout,
+        _ => v,
+      };
+      final origin = switch (property.origin) {
+        WritersidePropertyOrigin.element => l.wsOriginElement,
+        WritersidePropertyOrigin.ancestor => l.wsOriginAncestor,
+        WritersidePropertyOrigin.module => l.wsOriginModule,
+        WritersidePropertyOrigin.builtIn => l.wsOriginBuiltIn,
+        WritersidePropertyOrigin.unresolved => l.wsOriginUnresolved,
+      };
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: BusyMarkComboRow<String>(
+                  enabled: !immutable && active,
+                  subtitle: active ? null : l.wsPropertiesInactive,
+                  title: attributeLabel(attribute, label),
+                  values: values,
+                  selected: value,
+                  labelFor: (v) => v.isEmpty ? l.wsUseDefault : valueLabel(v),
+                  onSelected: (v) {
+                    if (!immutable && (active || v.isEmpty)) {
+                      if (inlineTarget != null) {
+                        onInlineProperty?.call(attribute, v);
+                      } else {
+                        onProperty(attribute, v.isEmpty ? null : v);
+                      }
                     }
-                  }
-                },
-                width: 170,
+                  },
+                  width: 125,
+                ),
+              ),
+              if (!active && value.isNotEmpty) resetOverride(attribute),
+            ],
+          ),
+          if (property.value != null ||
+              property.origin == WritersidePropertyOrigin.unresolved)
+            Padding(
+              padding: const EdgeInsetsDirectional.fromSTEB(16, 0, 16, 8),
+              child: Text(
+                l.wsEffectiveProperty(
+                  property.value == null
+                      ? l.wsPropertiesUnresolved
+                      : valueLabel(property.value!),
+                  origin,
+                ),
               ),
             ),
-            if (!active && value.isNotEmpty) resetOverride(attribute),
-          ],
-        ),
+        ],
       );
     }
 
@@ -294,6 +319,17 @@ class BusyMarkWritersideProperties extends StatelessWidget {
     ];
     final selected = topicSelected ? '@topic' : block?.id ?? '@topic';
     if (!values.contains(selected)) values.add(selected);
+    final identity = [
+      if (attrs['id']?.isNotEmpty == true) attrs['id']!,
+      if (inlineTarget != null && block != null)
+        block.plainText.substring(inlineTarget!.start, inlineTarget!.end)
+      else if (block != null)
+        block.attributes['title'] ??
+            block.attributes['busymark-title-label'] ??
+            (block.kind == BusyBlockKind.codeBlock
+                ? block.attributes['src'] ?? ''
+                : block.plainText.split('\n').first),
+    ].where((v) => v.isNotEmpty).join(' · ');
     final rows = <Widget>[];
     if (videoDraft) {
       rows.add(
@@ -302,7 +338,7 @@ class BusyMarkWritersideProperties extends StatelessWidget {
           commitOnBlur: false,
           session: session,
           readOnly: immutable,
-          label: l.source,
+          label: attributeLabel('src', l.source),
           value: '',
           apply: (v) => onInsertVideo?.call(v) ?? false,
         ),
@@ -311,7 +347,9 @@ class BusyMarkWritersideProperties extends StatelessWidget {
       final selectedInline = inlineTarget!;
       switch (selectedInline.kind) {
         case BusyInlineKind.link:
-          rows.add(entry('href', l.source, value: selectedInline.destination));
+          rows.add(
+            entry('href', l.wsLinkTarget, value: selectedInline.destination),
+          );
           if (attrs['busymark-ignored-href'] case final ignored?) {
             rows.add(
               entry(
@@ -323,7 +361,7 @@ class BusyMarkWritersideProperties extends StatelessWidget {
             );
             rows.add(Text(l.wsPropertiesProtected));
           }
-          rows.add(entry('origin', l.writerside));
+          rows.add(entry('origin', l.wsHelpModule));
         case BusyInlineKind.image:
           rows.add(entry('src', l.source, value: selectedInline.destination));
           rows.add(
@@ -343,7 +381,7 @@ class BusyMarkWritersideProperties extends StatelessWidget {
           rows.add(dimension('height', l.wsHeight));
           rows.add(enumRow('style', l.wsImageDisplay));
           rows.add(enumRow('thumbnail', l.wsImageThumbnail));
-          rows.add(entry('preview-src', l.videoPreview));
+          rows.add(entry('preview-src', l.wsPreviewImage));
         case BusyInlineKind.writersideVariable:
           rows.add(
             entry(
@@ -358,8 +396,8 @@ class BusyMarkWritersideProperties extends StatelessWidget {
             ),
           );
         case BusyInlineKind.writersideShortcut:
-          rows.add(entry('key', l.keyboardShortcuts));
-          rows.add(entry('from-keymap-of', l.source));
+          rows.add(entry('key', l.wsActionId));
+          rows.add(entry('from-keymap-of', l.wsKeymapHelpInstance));
           rows.add(entry('force-layout', l.keyboardLayout));
         default:
           break;
@@ -497,43 +535,48 @@ class BusyMarkWritersideProperties extends StatelessWidget {
       }
       if (tag == 'def') rows.add(stateRow());
       if (tag == 'code-block') {
-        rows.add(
-          BusyMarkComboRow<String>(
-            title: l.source,
-            values: const ['inline', 'file'],
-            selected: attrs['src']?.isNotEmpty == true ? 'file' : 'inline',
-            enabled: !immutable && onChooseCodeSource != null,
-            labelFor: (v) => v == 'inline' ? l.inlineCode : l.file,
-            onSelected: (v) {
-              if (v == 'inline') {
-                onProperty('src', null);
-              } else {
-                onChooseCodeSource?.call();
-              }
-            },
-            width: 150,
-          ),
-        );
         rows.add(entry('language', l.language));
-        rows.add(
-          Row(
-            children: [
-              Expanded(
-                child: entry(
-                  'collapsed-title',
-                  l.wsCollapsedTitle,
-                  enabled: collapse.value == 'true',
+        rows.add(entry('src', l.wsSourceFile, chooseFile: onChooseCodeSource));
+        if (collapse.value == 'true' ||
+            attrs['collapsed-title']?.isNotEmpty == true) {
+          rows.add(
+            Row(
+              children: [
+                Expanded(
+                  child: entry(
+                    'collapsed-title',
+                    l.wsCollapsedTitle,
+                    enabled: collapse.value == 'true',
+                  ),
                 ),
-              ),
-              if (collapse.value != 'true' &&
-                  attrs['collapsed-title']?.isNotEmpty == true)
-                resetOverride('collapsed-title'),
-            ],
-          ),
-        );
-        rows.add(entry('src', l.source));
+                if (collapse.value != 'true' &&
+                    attrs['collapsed-title']?.isNotEmpty == true)
+                  resetOverride('collapsed-title'),
+              ],
+            ),
+          );
+        }
         rows.add(entry('include-lines', l.wsIncludeLines));
-        rows.add(entry('include-symbol', l.wsIncludeSymbol));
+        if (attrs['src']?.isNotEmpty == true ||
+            attrs['include-symbol']?.isNotEmpty == true) {
+          rows.add(
+            Row(
+              children: [
+                Expanded(
+                  child: entry(
+                    'include-symbol',
+                    l.wsIncludeSymbol,
+                    enabled: attrs['src']?.isNotEmpty == true,
+                  ),
+                ),
+                if (attrs['src']?.isNotEmpty != true)
+                  resetOverride('include-symbol'),
+              ],
+            ),
+          );
+        } else {
+          offered.add('include-symbol');
+        }
         rows.add(entry('emphasize-lines', l.wsEmphasizeLines));
       }
       if (tag == 'img') {
@@ -544,7 +587,7 @@ class BusyMarkWritersideProperties extends StatelessWidget {
         rows.add(dimension('height', l.wsHeight));
         rows.add(enumRow('style', l.wsImageDisplay));
         rows.add(enumRow('thumbnail', l.wsImageThumbnail));
-        rows.add(entry('preview-src', l.videoPreview));
+        rows.add(entry('preview-src', l.wsPreviewImage));
       }
       if (tag == 'deflist') {
         rows.add(enumRow('type', l.wsListLayout));
@@ -582,16 +625,14 @@ class BusyMarkWritersideProperties extends StatelessWidget {
             ),
           );
         }
-        rows.add(entry('from', l.source));
-        rows.add(entry('element-id', l.wsIdentifier));
-        if (attrs.containsKey('origin')) {
-          rows.add(entry('origin', l.writerside));
-        }
+        rows.add(entry('from', l.topic));
+        rows.add(entry('element-id', l.wsIncludedElement));
+        rows.add(entry('origin', l.wsHelpModule));
         rows.add(entry('use-filter', l.wsFilter));
       }
       if (tag == 'video') {
         rows.add(entry('src', l.source));
-        rows.add(entry('preview-src', l.videoPreview));
+        rows.add(entry('preview-src', l.wsPreviewImage));
       }
       if (WritersideSchema.attributesFor(tag).contains('switcher-key') &&
           tag != 'topic') {
@@ -613,7 +654,7 @@ class BusyMarkWritersideProperties extends StatelessWidget {
           rows.add(
             entry(
               'key',
-              l.keyboardShortcuts,
+              l.wsActionId,
               value: inline.attributes['key'] ?? '',
               inline: true,
             ),
@@ -621,7 +662,7 @@ class BusyMarkWritersideProperties extends StatelessWidget {
           rows.add(
             entry(
               'from-keymap-of',
-              l.source,
+              l.wsKeymapHelpInstance,
               value: inline.attributes['from-keymap-of'] ?? '',
               inline: true,
             ),
@@ -844,15 +885,22 @@ class BusyMarkWritersideProperties extends StatelessWidget {
                                         .firstOrNull;
                                     return inlineTarget != null &&
                                             id == block?.id
-                                        ? '${switch (inlineTarget!.kind) {
+                                        ? switch (inlineTarget!.kind) {
                                             BusyInlineKind.image => l.image,
                                             BusyInlineKind.link => l.link,
-                                            BusyInlineKind.writersideVariable => l.wsVariableReference,
+                                            BusyInlineKind.writersideVariable =>
+                                              l.wsVariableReference,
                                             _ => l.keyboardShortcuts,
-                                          }} · ${block!.plainText.substring(inlineTarget!.start, inlineTarget!.end)}'
+                                          }
                                         : b == null
                                         ? l.wsElementProperties
-                                        : '${writersideElementLabel(context, b)}${(b.attributes['busymark-title-label'] ?? b.plainText).isEmpty ? '' : ' · ${b.attributes['busymark-title-label'] ?? b.plainText}'}';
+                                        : [
+                                            writersideElementLabel(context, b),
+                                            b.attributes['id'] ??
+                                                b.attributes['title'] ??
+                                                b.attributes['busymark-title-label'] ??
+                                                b.plainText.split('\n').first,
+                                          ].where((v) => v.isNotEmpty).join(' · ');
                                   })(),
                             onSelected: (value) {
                               if (session?.transition() ?? true) {
@@ -864,6 +912,27 @@ class BusyMarkWritersideProperties extends StatelessWidget {
                         ],
                       ),
                     ),
+                    if (identity.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                        child: Align(
+                          alignment: AlignmentDirectional.centerStart,
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(maxHeight: 72),
+                            child: SingleChildScrollView(
+                              child: SelectableText(
+                                identity,
+                                key: const ValueKey(
+                                  'writerside-properties-identity',
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
                     if (rows.isNotEmpty)
                       AbsorbPointer(
                         absorbing:
@@ -891,8 +960,10 @@ class BusyMarkWritersideProperties extends StatelessWidget {
                       ),
                     if (onSourceLocation != null)
                       TextButton(
-                        onPressed: onSourceLocation,
-                        child: Text(l.source),
+                        onPressed: () {
+                          if (session?.flush() ?? true) onSourceLocation!();
+                        },
+                        child: Text(l.wsShowInSource),
                       ),
                   ],
                 ),
@@ -914,12 +985,14 @@ class _PropertyTextEntry extends StatefulWidget {
     this.session,
     this.readOnly = false,
     this.commitOnBlur = true,
+    this.chooseFile,
   });
   final String label, value;
   final bool Function(String) apply;
   final WritersidePropertySession? session;
   final bool readOnly;
   final bool commitOnBlur;
+  final Future<String?> Function()? chooseFile;
   @override
   State<_PropertyTextEntry> createState() => _PropertyTextEntryState();
 }
@@ -931,6 +1004,41 @@ class _PropertyTextEntryState extends State<_PropertyTextEntry> {
   late final TextEditingController _controller;
   final _focus = FocusNode();
   String get _key => widget.key.toString();
+  var _choosing = false;
+
+  Future<void> _chooseFile() async {
+    if (_choosing || !_session.flush()) return;
+    final draft = _draft;
+    setState(() => _choosing = true);
+    try {
+      // A successful flush can reparse the same element. Capture its refreshed
+      // transaction after the workspace has rebuilt, before opening the dialog.
+      await WidgetsBinding.instance.endOfFrame;
+      if (!mounted || !identical(draft, _draft) || widget.readOnly) return;
+      final apply = draft.apply;
+      final chooser = widget.chooseFile;
+      if (chooser == null) return;
+      final selected = await chooser();
+      if (!mounted ||
+          selected == null ||
+          !identical(draft, _draft) ||
+          widget.readOnly) {
+        return;
+      }
+      // Keep the authoritative target captured before opening the chooser.
+      // A presentation rebuild may rebind this field while the dialog is open.
+      draft.apply = apply;
+      _session.edit(draft, selected);
+      _session.commit(draft);
+    } on Exception {
+      if (mounted && identical(draft, _draft)) {
+        _session.reject(WritersidePropertyRejection.unresolved);
+      }
+    } finally {
+      if (mounted) setState(() => _choosing = false);
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -1007,6 +1115,31 @@ class _PropertyTextEntryState extends State<_PropertyTextEntry> {
           controller: _controller,
           focusNode: _focus,
           errorText: error,
+          trailing: widget.chooseFile == null
+              ? null
+              : Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    BusyMarkHeaderIconButton(
+                      icon: BusyMarkGlyphs.folderOpen,
+                      tooltip: l.open,
+                      onPressed: widget.readOnly || _choosing
+                          ? null
+                          : _chooseFile,
+                    ),
+                    if (_draft.text.isNotEmpty)
+                      BusyMarkHeaderIconButton(
+                        icon: BusyMarkGlyphs.windowClose,
+                        tooltip: l.removeAction,
+                        onPressed: widget.readOnly || _choosing
+                            ? null
+                            : () {
+                                _session.edit(_draft, '');
+                                _session.commit(_draft);
+                              },
+                      ),
+                  ],
+                ),
           onSubmitted: (_) => _session.commit(_draft),
           onChanged: (text) {
             _session.edit(_draft, text);

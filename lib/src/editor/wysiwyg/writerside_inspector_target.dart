@@ -185,6 +185,106 @@ class WritersideInspectorTarget {
     }
   }
 
+  /// The inspected occurrence's markup, independent of the editing caret.
+  int? get sourceLocation {
+    if (block == null) return topic ? 0 : null;
+    final selected = inline;
+    if (selected == null) return block!.sourceSpan?.startOffset;
+    return _authoredInlineRanges(document, source, block!)
+        .where(
+          (entry) =>
+              entry.range.kind == selected.kind &&
+              entry.range.start == selected.start &&
+              entry.range.end == selected.end,
+        )
+        .firstOrNull
+        ?.begin;
+  }
+
+  static Iterable<({BusyInlineStyleRange range, int begin, int end})>
+  _authoredInlineRanges(
+    BusyDocument document,
+    String source,
+    BusyBlock block,
+  ) sync* {
+    if (block.sourceSpan == null) return;
+    final base = block.sourceSpan!.startOffset;
+    final raw = block.rawSource ?? '';
+    final mapped =
+        !document.isXmlTopic && !block.attributes.containsKey('element')
+        ? const MarkdownSourceMapper()
+              .createInlineParserContext(
+                documentSource: source,
+                mode: document.mode,
+              )
+              .parseMapped(raw)
+        : null;
+    final mappedReferences =
+        mapped?.ranges.entries
+            .where(
+              (e) => {
+                BusyInlineKind.link,
+                BusyInlineKind.image,
+              }.contains(e.key.kind),
+            )
+            .toList() ??
+        const [];
+    final references = busyInlineReferenceRanges(block.inlines);
+    for (final range in references) {
+      if (!{
+        BusyInlineKind.link,
+        BusyInlineKind.image,
+        BusyInlineKind.writersideVariable,
+        BusyInlineKind.writersideShortcut,
+      }.contains(range.kind)) {
+        continue;
+      }
+      final binding = range.attributes['xml-source-binding']?.split(':');
+      int? begin;
+      int? end;
+      if (document.isXmlTopic && binding?.length == 2) {
+        begin = int.tryParse(binding![0]);
+        end = int.tryParse(binding[1]);
+      } else if (mapped != null &&
+          {BusyInlineKind.link, BusyInlineKind.image}.contains(range.kind)) {
+        final peers = references.where((r) => r.kind == range.kind).toList();
+        final ordinal = peers.indexOf(range);
+        final candidates =
+            mappedReferences.where((e) => e.key.kind == range.kind).toList()
+              ..sort((a, b) => a.value.start.compareTo(b.value.start));
+        if (ordinal >= 0 && candidates.length == peers.length) {
+          begin = base + candidates[ordinal].value.start;
+          end = base + candidates[ordinal].value.end;
+          final attributes = RegExp(
+            r'^\{(?:\s*[\w:.-]+\s*=\s*"[^"]*"\s*)+\}',
+          ).firstMatch(raw.substring(candidates[ordinal].value.end));
+          end += attributes?.end ?? 0;
+        }
+      } else {
+        final fragment =
+            range.attributes['xml-original-source'] ??
+            (range.kind == BusyInlineKind.writersideVariable
+                ? '%${range.attributes['reference'] ?? block.plainText.substring(range.start, range.end)}%'
+                : const BusyMarkMarkdownSerializer().serializeInlineFragment([
+                    BusyInline(
+                      kind: range.kind,
+                      text: block.plainText.substring(range.start, range.end),
+                      destination: range.destination,
+                      attributes: range.attributes,
+                    ),
+                  ]));
+        final at = raw.indexOf(fragment);
+        if (at >= 0 && raw.indexOf(fragment, at + fragment.length) < 0) {
+          begin = base + at;
+          end = begin + fragment.length;
+        }
+      }
+      if (begin != null && end != null) {
+        yield (range: range, begin: begin, end: end);
+      }
+    }
+  }
+
   static WritersideInspectorTarget fromSource({
     required String bufferId,
     required int revision,
@@ -218,83 +318,11 @@ class WritersideInspectorTarget {
     BusyInlineStyleRange? inline;
     final block = first.lastOrNull;
     if (!multiple && block != null && block.sourceSpan != null) {
-      final base = block.sourceSpan!.startOffset;
-      final raw = block.rawSource ?? '';
-      final mapped =
-          !document.isXmlTopic && !block.attributes.containsKey('element')
-          ? const MarkdownSourceMapper()
-                .createInlineParserContext(
-                  documentSource: source,
-                  mode: document.mode,
-                )
-                .parseMapped(raw)
-          : null;
-      final mappedReferences =
-          mapped?.ranges.entries
-              .where(
-                (e) => {
-                  BusyInlineKind.link,
-                  BusyInlineKind.image,
-                }.contains(e.key.kind),
-              )
-              .toList() ??
-          const [];
-      final references = busyInlineReferenceRanges(block.inlines);
-      for (final range in references) {
-        if (!{
-          BusyInlineKind.link,
-          BusyInlineKind.image,
-          BusyInlineKind.writersideVariable,
-          BusyInlineKind.writersideShortcut,
-        }.contains(range.kind)) {
-          continue;
-        }
-        final binding = range.attributes['xml-source-binding']?.split(':');
-        int? begin;
-        int? end;
-        if (document.isXmlTopic && binding?.length == 2) {
-          begin = int.tryParse(binding![0]);
-          end = int.tryParse(binding[1]);
-        } else if (mapped != null &&
-            {BusyInlineKind.link, BusyInlineKind.image}.contains(range.kind)) {
-          final peers = references.where((r) => r.kind == range.kind).toList();
-          final ordinal = peers.indexOf(range);
-          final candidates =
-              mappedReferences.where((e) => e.key.kind == range.kind).toList()
-                ..sort((a, b) => a.value.start.compareTo(b.value.start));
-          if (ordinal >= 0 && candidates.length == peers.length) {
-            begin = base + candidates[ordinal].value.start;
-            end = base + candidates[ordinal].value.end;
-            final attributes = RegExp(
-              r'^\{(?:\s*[\w:.-]+\s*=\s*"[^"]*"\s*)+\}',
-            ).firstMatch(raw.substring(candidates[ordinal].value.end));
-            end += attributes?.end ?? 0;
-          }
-        } else {
-          final fragment =
-              range.attributes['xml-original-source'] ??
-              (range.kind == BusyInlineKind.writersideVariable
-                  ? '%${range.attributes['reference'] ?? block.plainText.substring(range.start, range.end)}%'
-                  : const BusyMarkMarkdownSerializer().serializeInlineFragment([
-                      BusyInline(
-                        kind: range.kind,
-                        text: block.plainText.substring(range.start, range.end),
-                        destination: range.destination,
-                        attributes: range.attributes,
-                      ),
-                    ]));
-          final at = raw.indexOf(fragment);
-          if (at >= 0 && raw.indexOf(fragment, at + fragment.length) < 0) {
-            begin = base + at;
-            end = begin + fragment.length;
-          }
-        }
-        if (begin != null &&
-            end != null &&
-            start >= begin &&
-            start < end &&
-            selection.end <= end) {
-          inline = range;
+      for (final entry in _authoredInlineRanges(document, source, block)) {
+        if (start >= entry.begin &&
+            start < entry.end &&
+            selection.end <= entry.end) {
+          inline = entry.range;
         }
       }
     }

@@ -5129,7 +5129,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get wsCodeSourceConflict =>
-      'Xóa hoặc di chuyển mã trước khi chọn tệp nguồn. Writerside từ chối khối mã không rỗng có tham chiếu nguồn.';
+      'Di chuyển hoặc xóa mã được viết trong khối này trước khi đặt src. Writerside từ chối khối mã không trống có tham chiếu nguồn.';
 
   @override
   String get wsInherited => 'Kế thừa từ danh sách';
@@ -5144,4 +5144,48 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get wsListItem => 'Mục danh sách';
+
+  @override
+  String get wsSourceFile => 'Tệp nguồn';
+
+  @override
+  String get wsLinkTarget => 'Đích liên kết';
+
+  @override
+  String get wsPreviewImage => 'Ảnh xem trước';
+
+  @override
+  String get wsIncludedElement => 'Phần tử được đưa vào';
+
+  @override
+  String get wsHelpModule => 'Mô-đun trợ giúp';
+
+  @override
+  String get wsActionId => 'ID hành động';
+
+  @override
+  String get wsKeymapHelpInstance => 'Phiên bản trợ giúp sơ đồ phím';
+
+  @override
+  String get wsShowInSource => 'Hiện trong Nguồn';
+
+  @override
+  String get wsOriginElement => 'Giá trị ghi đè của phần tử';
+
+  @override
+  String get wsOriginAncestor => 'Phần tử cha';
+
+  @override
+  String get wsOriginModule => 'Mặc định của mô-đun';
+
+  @override
+  String get wsOriginBuiltIn => 'Mặc định tích hợp';
+
+  @override
+  String get wsOriginUnresolved => 'Chưa phân giải';
+
+  @override
+  String wsEffectiveProperty(String value, String origin) {
+    return 'Hiệu lực: $value — $origin';
+  }
 }

@@ -29,7 +29,7 @@ String? validateWritersideProperty(
       name == 'src' &&
       value != attributes['src'] &&
       inlineCode?.trim().isNotEmpty == true) {
-    return 'src: inline code is nonempty; preserve it or clear it explicitly in the editor before selecting a source file';
+    return 'src: the authored code block is nonempty; preserve it or clear it explicitly in the editor before selecting a source file';
   }
   if (name == 'id' && !RegExp(r'^[A-Za-z_][A-Za-z0-9_.-]*$').hasMatch(value)) {
     return 'id: expected an identifier starting with a letter or underscore';

@@ -5195,7 +5195,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get wsCodeSourceConflict =>
-      'Usuń lub przenieś kod przed wybraniem pliku źródłowego. Writerside odrzuca niepuste bloki kodu z odwołaniem do źródła.';
+      'Przenieś lub usuń kod napisany w tym bloku przed ustawieniem src. Writerside odrzuca niepusty blok kodu z odwołaniem do źródła.';
 
   @override
   String get wsInherited => 'Dziedzicz z listy';
@@ -5210,4 +5210,48 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get wsListItem => 'Element listy';
+
+  @override
+  String get wsSourceFile => 'Plik źródłowy';
+
+  @override
+  String get wsLinkTarget => 'Cel linku';
+
+  @override
+  String get wsPreviewImage => 'Obraz podglądu';
+
+  @override
+  String get wsIncludedElement => 'Dołączany element';
+
+  @override
+  String get wsHelpModule => 'Moduł pomocy';
+
+  @override
+  String get wsActionId => 'ID akcji';
+
+  @override
+  String get wsKeymapHelpInstance => 'Instancja pomocy mapy klawiszy';
+
+  @override
+  String get wsShowInSource => 'Pokaż w Źródle';
+
+  @override
+  String get wsOriginElement => 'Wartość elementu';
+
+  @override
+  String get wsOriginAncestor => 'Element nadrzędny';
+
+  @override
+  String get wsOriginModule => 'Domyślna wartość modułu';
+
+  @override
+  String get wsOriginBuiltIn => 'Wbudowana wartość domyślna';
+
+  @override
+  String get wsOriginUnresolved => 'Nierozwiązane';
+
+  @override
+  String wsEffectiveProperty(String value, String origin) {
+    return 'Efektywna wartość: $value — $origin';
+  }
 }

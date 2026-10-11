@@ -1,8 +1,9 @@
 # Element Properties
 
 In a Writerside workspace, **Element Properties** follows the active editing
-selection in Editor, Source and Split. Open or hide it with the command palette
-command **Element Properties** or the Editor's existing properties button.
+selection in Editor, Source and Split. Open it with the Editor’s existing
+properties button, or open and hide it with the command palette command
+**Element Properties**.
 Reading shows validated values without allowing changes. Ordinary Markdown and
 Nextcloud Notes retain their own authoring behavior.
 
@@ -21,8 +22,10 @@ edit to a replacement. Property edits use the document's normal undo, recovery
 and save history.
 
 Drag the separator to resize the panel. A focused separator also accepts Left
-and Right arrows. BusyMark remembers visibility and preferred width separately
-from the navigation sidebar. In a narrow window the panel becomes a dismissible
+and Right arrows. The inspector starts closed on each launch, including with an
+older saved visible preference. BusyMark remembers its preferred width separately
+from the navigation sidebar. Once opened, it follows ordinary selection changes.
+In a narrow window the panel becomes a dismissible
 right-edge overlay. Closing it returns focus to the active editing surface.
 
 ## Common controls
@@ -36,19 +39,29 @@ a valid value. Suggestions and pickers do not replace legal variable expressions
 | Element | Properties and source mapping |
 | --- | --- |
 | Chapters and procedures | Title, ID, published collapse and initial state. Native Markdown heading text and its explicit `title` override remain separate. Existing formatted or conditional XML `<title>` children are preserved. |
-| Code | Language maps to XML `lang` or a native fence's language. An explicit Markdown `lang` override takes precedence; changing it preserves the original fence language, and resetting it restores that language. Source mode/reference, extraction, emphasis, collapse and collapsed title remain separate. `include-lines` and `include-symbol` conflict; emphasis counts the displayed snippet after extraction. |
+| Code | Language maps to XML `lang` or a native fence's language. An explicit Markdown `lang` override takes precedence; changing it preserves the original fence language, and resetting it restores that language. **Source file (src)** is one editable field with file selection and removal. Extraction, emphasis, collapse and collapsed title remain separate. The code-language command opens this block’s Language (`lang`) control in the workspace inspector. `include-lines` and `include-symbol` conflict; emphasis counts the displayed snippet after extraction. |
 | Definition lists/items | Schema-supported list layouts, list collapse/state, item title and item state override. Literal `inherited` is an authored item override distinct from an absent attribute. |
 | Tabs | Container `group` synchronizes tab sets; child `group-key` and title identify individual tabs. Topic switchers are separate. Existing code-block tab groups are preserved. |
 | Lists and items | A Markdown attribute line after a blank line belongs to the whole list. An individual item's ID or condition uses semantic `<list>`/`<li>` markup; conversion preserves the other items, checked task states and ordered starts at every nested level and is one undoable edit. An authored list `start` overrides its first Markdown marker. |
-| Images | Source and alternative text use the image model; applicable dimensions, style, thumbnail and preview reference are available. Link wrappers and reference syntax survive scalar property edits. Writerside documents a limitation on sizing external images; authored dimensions do not guarantee external-image builder sizing. |
-| Includes/references | Topic, element and module selection use the current project index. Include selection publishes the reference tuple together. `use-filter` belongs to the include; `filter` belongs to source content. Unavailable resolution remains a diagnostic. |
+| Images | Source and alternative text use the image model; applicable dimensions, style, thumbnail and **Preview image (preview-src)** are available. The preview can be an image thumbnail or an animated GIF’s initial preview; it is separate from the main `src`. Link wrappers and reference syntax survive scalar property edits. Writerside documents a limitation on sizing external images; authored dimensions do not guarantee external-image builder sizing. |
+| Includes/references | **Topic (from)**, **Included element (element-id)** and **Help module (origin)** identify the reference. **Element ID (id)** identifies the include itself. Topic, element and module selection use the current project index. Include selection publishes the reference tuple together. `use-filter` belongs to the include; `filter` belongs to source content. Unavailable resolution remains a diagnostic. |
+| Links and shortcuts | **Link target (href)** names the destination; **Help module (origin)** selects its originating module. **Action ID (key)** references a keymap action without replacing literal shortcut content. **Keymap help instance (from-keymap-of)** names a help instance, not a file. |
 | Topic | XML root properties or the appropriate native heading/front matter; navigation uses `<show-structure>`. XML-only fields do not acquire invented Markdown equivalents. |
 
-For code, selecting a file never changes that file. BusyMark rejects adding a
-source reference to nonempty inline code; move or explicitly clear the code first.
-Removing a source reference preserves any existing inline content and other
-attributes. Existing malformed or unsupported content stays protected and can
-be reached with the inspector's **Source** action.
+The inspector pairs descriptive localized labels with exact Writerside attribute
+names. Less-used schema attributes remain under **Advanced**. Empty inactive
+controls are hidden; existing authored values remain inspectable and removable.
+
+For code, the native file chooser updates the same **Source file (src)** field
+as direct typing. It stores a reference from the designated snippets directory
+when that reference resolves to the chosen file, or a path relative to the topic
+within its help module. Unsupported or out-of-module choices explain that the
+reference cannot be resolved. Cancelling changes nothing and selecting a file
+never changes that file. BusyMark rejects adding a source reference to a block
+with authored code; move or explicitly clear that code first. Removing `src`
+preserves authored content and other attributes, without copying referenced
+file contents into the topic. **Show in Source** processes pending edits and
+navigates to the inspected element’s markup. It does not open the code file.
 
 Image source and alt edits can use local Writerside attribute overrides while
 retaining a Markdown reference definition and its link wrapper. Explicit empty
@@ -66,16 +79,18 @@ after a blank line so the pinned builder assigns them to the admonition alone.
 
 ## Published defaults and editor folding
 
-**Use default — Expanded**, for example, means no local override is authored and
-the effective value is expanded. Hover the control for its origin. A module
-`<default-property>` can change an omitted property's meaning. Unresolved
-variable expressions remain visible without being converted to false or to an
-arbitrary enum. Opening the panel does not write effective defaults to source.
+The selector shows **Use default** when no local override is authored. For
+properties with a known effective value, a separate line below it shows that
+value and its origin, for example,
+**Effective: Expanded — module default**. A module `<default-property>` can change
+an omitted property's meaning. Unresolved variable expressions remain visible
+without being converted to false or to an arbitrary enum. Opening the panel
+does not write effective defaults to source.
 
 Definition-list layout uses the same defaults: a module setting of `medium`
-appears as **Use default — Medium (1:2)**, including after resetting a local
-override. Hover the control to see whether the value comes from the element,
-module, or built-in default.
+appears beneath **Use default** as **Effective: Medium (1:2) — module default**,
+including after resetting a local override. Origins distinguish an element
+override, parent element, module default, and built-in default.
 
 The supported builder is `2026.08.0328`. Its generated output requires effective
 `collapsible="true"` for chapters, procedures, code and definition lists, including

@@ -12054,6 +12054,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
   String? _lastPropertiesSourceBuffer;
   String? _propertiesSourceOwner;
   final _propertiesPanelKey = GlobalKey();
+  late final WorkspaceController _inspectorWorkspaceController;
   late final SpellingSessionController _spelling;
   final _previewBlockContexts = <int, BuildContext>{};
   String _lastPath = '';
@@ -12077,6 +12078,10 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
   @override
   void initState() {
     super.initState();
+    _inspectorWorkspaceController = ref.read(
+      workspaceControllerProvider.notifier,
+    );
+    _inspectorWorkspaceController.toggleElementProperties = _toggleProperties;
     _spelling = ref.read(spellingSessionControllerProvider)
       ..addListener(_handleSpellingChanged);
     _spelling.synchronizeOpenBuffers(
@@ -12090,6 +12095,10 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
 
   @override
   void dispose() {
+    if (_inspectorWorkspaceController.toggleElementProperties ==
+        _toggleProperties) {
+      _inspectorWorkspaceController.toggleElementProperties = null;
+    }
     _previewItemPositionsListener.itemPositions.removeListener(
       _handlePreviewVisibleItemsChanged,
     );
@@ -12121,6 +12130,24 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
           previousText: previousBuffer.text,
           bufferId: nextBuffer.id,
         );
+      }
+      // Undo and external edits can leave the Source caret at the same offset.
+      // Its occurrence still needs a new revision-bound inspector snapshot.
+      if (!_propertyEdits.hasPending &&
+          ref.read(appSettingsControllerProvider).elementPropertiesVisible &&
+          (widget.viewMode == DocumentViewModePreference.source ||
+              widget.viewMode == DocumentViewModePreference.split)) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted || _propertyEdits.hasPending) return;
+          final live = ref.read(workspaceControllerProvider).activeBuffer;
+          if (live?.id != nextBuffer.id ||
+              live?.revision != nextBuffer.revision ||
+              (widget.viewMode != DocumentViewModePreference.source &&
+                  widget.viewMode != DocumentViewModePreference.split)) {
+            return;
+          }
+          _inspectSourceSelection(live!.editorState.selection);
+        });
       }
     }
     _spelling.synchronizeOpenBuffers(
@@ -12974,6 +13001,14 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     );
   }
 
+  void _toggleProperties() {
+    if (ref.read(appSettingsControllerProvider).elementPropertiesVisible) {
+      _closeProperties();
+    } else {
+      _showProperties();
+    }
+  }
+
   void _inspectEditorElement(
     BusyDocument document,
     String? id,
@@ -13480,7 +13515,11 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
         if (reason != null) {
           return _propertyEdits.reject(
             WritersidePropertyRejection.invalid,
-            reason,
+            tag == 'code-block' &&
+                    name == 'src' &&
+                    block.plainText.trim().isNotEmpty
+                ? context.l10n.wsCodeSourceConflict
+                : reason,
           );
         }
         return commit((c) => c.updateWritersideProperty(block.id, name, value));
@@ -13509,7 +13548,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
             c.updateInlineReference(block.id, target.inline!, name, value),
       ),
       onChooseInclude: () => unawaited(_chooseInclude(target, commit)),
-      onChooseCodeSource: () => unawaited(_chooseCodeSource(target, commit)),
+      onChooseCodeSource: () => _chooseCodeSource(target),
       onManageItem: (item, direction, remove) => commit(
         (c) => c.manageWritersideItem(
           block.id,
@@ -13521,70 +13560,100 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
       ),
       onSourceLocation: () {
         if (!_propertyEdits.transition()) return;
-        final offset = block.sourceSpan?.startOffset;
-        if (offset != null) {
-          ref
-              .read(workspaceControllerProvider.notifier)
-              .updateActiveEditorState(
-                widget.state.activeBuffer!.editorState.copyWith(
-                  selection: TextSelection.collapsed(offset: offset),
-                ),
-              );
+        final current = _inspected;
+        final live = ref.read(workspaceControllerProvider).activeBuffer;
+        if (current == null ||
+            current.bufferId != target.bufferId ||
+            !current.matches(live?.id, live?.revision, live?.text)) {
+          _propertyEdits.reject(WritersidePropertyRejection.stale);
+          return;
         }
+        final offset = current.sourceLocation;
+        if (offset == null) {
+          _propertyEdits.reject(WritersidePropertyRejection.unresolved);
+          return;
+        }
+        ref
+            .read(workspaceControllerProvider.notifier)
+            .updateActiveEditorState(
+              live!.editorState.copyWith(
+                selection: TextSelection.collapsed(offset: offset),
+              ),
+            );
+        ref
+            .read(workspaceControllerProvider.notifier)
+            .updateActiveEditorMode(DocumentViewModePreference.source);
         unawaited(
           ref
               .read(appSettingsControllerProvider.notifier)
               .setDocumentViewMode(DocumentViewModePreference.source),
         );
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          final next = ref.read(workspaceControllerProvider).activeBuffer;
+          if (next?.id == live.id && next?.revision == live.revision) {
+            _sourceEditorKey.currentState?.scrollToOffset(offset);
+          }
+        });
       },
     );
   }
 
-  Future<void> _chooseCodeSource(
-    WritersideInspectorTarget target,
-    bool Function(bool Function(BusyMarkWysiwygDocumentController)) commit,
-  ) async {
-    if (!_propertyEdits.flush()) return;
-    if (target.block!.plainText.trim().isNotEmpty) {
-      _propertyEdits.reject(
-        WritersidePropertyRejection.invalid,
-        context.l10n.wsCodeSourceConflict,
-      );
-      return;
+  Future<String?> _chooseCodeSource(WritersideInspectorTarget target) async {
+    final state = ref.read(workspaceControllerProvider);
+    final buffer = state.activeBuffer;
+    final workspace = state.workspace;
+    if (buffer == null ||
+        workspace == null ||
+        !target.matches(buffer.id, buffer.revision, buffer.text)) {
+      return null;
     }
-    final text = TextEditingController(
-      text: target.block!.attributes['src'] ?? '',
+    final module = resolveWorkspaceDocumentContext(
+      workspace,
+      buffer,
+    ).writersideModule;
+    if (module == null) {
+      _propertyEdits.reject(WritersidePropertyRejection.unresolved);
+      return null;
+    }
+    final chosen = await openFile(
+      initialDirectory: module.config.snippetsDir == null
+          ? p.dirname(buffer.filePath!)
+          : p.join(module.rootPath, module.config.snippetsDir!),
+      confirmButtonText: context.l10n.open,
     );
-    final chosen = await showBusyMarkModalDialog<String>(
-      context,
-      builder: (context) => BusyMarkDialogShell(
-        title: context.l10n.source,
-        actions: [
-          BusyMarkDialogButton(
-            label: context.l10n.cancel,
-            onPressed: () => Navigator.pop(context),
-          ),
-          BusyMarkDialogButton(
-            label: context.l10n.apply,
-            onPressed: () {
-              if (text.text.trim().isNotEmpty) {
-                Navigator.pop(context, text.text.trim());
-              }
-            },
-          ),
-        ],
-        children: [
-          BusyMarkGroupedTextEntry(
-            label: context.l10n.file,
-            controller: text,
-            autofocus: true,
-          ),
-        ],
-      ),
+    if (!mounted || chosen == null) return null;
+    final live = ref.read(workspaceControllerProvider);
+    if (!target.sameElement(_inspected) ||
+        !target.matches(
+          live.activeBuffer?.id,
+          live.activeBuffer?.revision,
+          live.activeBuffer?.text,
+        ) ||
+        live.workspace?.id != workspace.id) {
+      _propertyEdits.reject(WritersidePropertyRejection.stale);
+      return null;
+    }
+    final currentModule = resolveWorkspaceDocumentContext(
+      live.workspace!,
+      live.activeBuffer!,
+    ).writersideModule;
+    if (currentModule?.rootPath != module.rootPath ||
+        currentModule?.config.snippetsDir != module.config.snippetsDir) {
+      _propertyEdits.reject(WritersidePropertyRejection.stale);
+      return null;
+    }
+    final reference = await const WritersideSourceLoader().referenceForFile(
+      selectedPath: chosen.path,
+      documentPath: buffer.filePath!,
+      workspaceRoot: module.rootPath,
+      snippetsDirectory: module.config.snippetsDir,
     );
-    text.dispose();
-    if (!mounted || chosen == null) return;
-    commit((c) => c.updateWritersideProperty(target.block!.id, 'src', chosen));
+    if (!mounted) return null;
+    if (reference == null) {
+      _propertyEdits.reject(WritersidePropertyRejection.unresolved);
+    }
+    return reference;
   }
 
   Future<void> _chooseInclude(

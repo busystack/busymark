@@ -5154,7 +5154,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get wsCodeSourceConflict =>
-      'Remove or move the inline code before selecting a source file. Writerside rejects a nonempty code block with a source reference.';
+      'Move or remove the code authored in this block before setting src. Writerside rejects a nonempty code block with a source reference.';
 
   @override
   String get wsInherited => 'Inherit from list';
@@ -5169,4 +5169,48 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get wsListItem => 'List item';
+
+  @override
+  String get wsSourceFile => 'Source file';
+
+  @override
+  String get wsLinkTarget => 'Link target';
+
+  @override
+  String get wsPreviewImage => 'Preview image';
+
+  @override
+  String get wsIncludedElement => 'Included element';
+
+  @override
+  String get wsHelpModule => 'Help module';
+
+  @override
+  String get wsActionId => 'Action ID';
+
+  @override
+  String get wsKeymapHelpInstance => 'Keymap help instance';
+
+  @override
+  String get wsShowInSource => 'Show in Source';
+
+  @override
+  String get wsOriginElement => 'element override';
+
+  @override
+  String get wsOriginAncestor => 'parent element';
+
+  @override
+  String get wsOriginModule => 'module default';
+
+  @override
+  String get wsOriginBuiltIn => 'built-in default';
+
+  @override
+  String get wsOriginUnresolved => 'unresolved';
+
+  @override
+  String wsEffectiveProperty(String value, String origin) {
+    return 'Effective: $value — $origin';
+  }
 }

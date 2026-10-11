@@ -4998,7 +4998,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get wsCodeSourceConflict =>
-      'ソースファイルの選択前にインラインコードを削除または移動してください。Writerside はソース参照を持つ空でないコードブロックを拒否します。';
+      'src を設定する前に、このブロック内に記述したコードを移動または削除してください。Writerside はソース参照がある空でないコードブロックを拒否します。';
 
   @override
   String get wsInherited => 'リストから継承';
@@ -5012,4 +5012,48 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get wsListItem => 'リスト項目';
+
+  @override
+  String get wsSourceFile => 'ソースファイル';
+
+  @override
+  String get wsLinkTarget => 'リンク先';
+
+  @override
+  String get wsPreviewImage => 'プレビュー画像';
+
+  @override
+  String get wsIncludedElement => 'インクルードする要素';
+
+  @override
+  String get wsHelpModule => 'ヘルプモジュール';
+
+  @override
+  String get wsActionId => 'アクション ID';
+
+  @override
+  String get wsKeymapHelpInstance => 'キーマップのヘルプインスタンス';
+
+  @override
+  String get wsShowInSource => 'ソースで表示';
+
+  @override
+  String get wsOriginElement => '要素の指定値';
+
+  @override
+  String get wsOriginAncestor => '親要素';
+
+  @override
+  String get wsOriginModule => 'モジュールの既定値';
+
+  @override
+  String get wsOriginBuiltIn => '組み込みの既定値';
+
+  @override
+  String get wsOriginUnresolved => '未解決';
+
+  @override
+  String wsEffectiveProperty(String value, String origin) {
+    return '有効値: $value — $origin';
+  }
 }

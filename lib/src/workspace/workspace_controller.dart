@@ -229,6 +229,9 @@ class WorkspaceController extends Notifier<WorkspaceState> {
   late WorkspaceService _service;
   late AppSettingsController _settingsController;
   final propertyEdits = WritersidePropertySession();
+
+  /// The mounted workspace owns inspector transitions and focus restoration.
+  void Function()? toggleElementProperties;
   late DocumentSessionStore _sessionStore;
   late DocumentRecoveryStore _recoveryStore;
   late WorkspaceFileMonitor _fileMonitor;

@@ -2978,9 +2978,34 @@
   "wsTitleOverride": "Title override",
   "wsCompactLayout": "Compact",
   "wsWideLayout": "Wide",
-  "wsCodeSourceConflict": "Remove or move the inline code before selecting a source file. Writerside rejects a nonempty code block with a source reference.",
+  "wsCodeSourceConflict": "Move or remove the code authored in this block before setting src. Writerside rejects a nonempty code block with a source reference.",
   "wsInherited": "Inherit from list",
   "wsExternalImageSize": "Writerside does not reliably size externally hosted images. Existing dimensions can be inspected and removed.",
   "wsPropertiesNotSerialized": "This change did not reach the source. The draft has been retained.",
-  "wsListItem": "List item"
+  "wsListItem": "List item",
+  "wsSourceFile": "Source file",
+  "wsLinkTarget": "Link target",
+  "wsPreviewImage": "Preview image",
+  "wsIncludedElement": "Included element",
+  "wsHelpModule": "Help module",
+  "wsActionId": "Action ID",
+  "wsKeymapHelpInstance": "Keymap help instance",
+  "wsShowInSource": "Show in Source",
+  "wsOriginElement": "element override",
+  "wsOriginAncestor": "parent element",
+  "wsOriginModule": "module default",
+  "wsOriginBuiltIn": "built-in default",
+  "wsOriginUnresolved": "unresolved",
+  "wsEffectiveProperty": "Effective: {value} — {origin}",
+  "@wsEffectiveProperty": {
+    "description": "Effective Writerside property value and its localized origin. Attribute names are displayed separately without translation.",
+    "placeholders": {
+      "value": {
+        "type": "String"
+      },
+      "origin": {
+        "type": "String"
+      }
+    }
+  }
 }

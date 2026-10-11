@@ -5138,7 +5138,7 @@ class AppLocalizationsEt extends AppLocalizations {
 
   @override
   String get wsCodeSourceConflict =>
-      'Enne lähtefaili valimist eemaldage või teisaldage kood. Writerside ei luba mittetühja koodiplokki koos allikaviitega.';
+      'Enne src määramist teisalda või eemalda sellesse plokki kirjutatud kood. Writerside ei luba lähteviitega mittetühja koodiplokki.';
 
   @override
   String get wsInherited => 'Päri loendilt';
@@ -5153,4 +5153,48 @@ class AppLocalizationsEt extends AppLocalizations {
 
   @override
   String get wsListItem => 'Loendiüksus';
+
+  @override
+  String get wsSourceFile => 'Lähtefail';
+
+  @override
+  String get wsLinkTarget => 'Lingi siht';
+
+  @override
+  String get wsPreviewImage => 'Eelvaatepilt';
+
+  @override
+  String get wsIncludedElement => 'Kaasatud element';
+
+  @override
+  String get wsHelpModule => 'Abimoodul';
+
+  @override
+  String get wsActionId => 'Toimingu ID';
+
+  @override
+  String get wsKeymapHelpInstance => 'Klahvikaardi abieksemplar';
+
+  @override
+  String get wsShowInSource => 'Näita lähtekoodis';
+
+  @override
+  String get wsOriginElement => 'Elemendi ülekirjutus';
+
+  @override
+  String get wsOriginAncestor => 'Ülemelement';
+
+  @override
+  String get wsOriginModule => 'Mooduli vaikeväärtus';
+
+  @override
+  String get wsOriginBuiltIn => 'Sisseehitatud vaikeväärtus';
+
+  @override
+  String get wsOriginUnresolved => 'Lahendamata';
+
+  @override
+  String wsEffectiveProperty(String value, String origin) {
+    return 'Tegelik: $value — $origin';
+  }
 }

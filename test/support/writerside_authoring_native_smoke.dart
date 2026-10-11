@@ -89,11 +89,16 @@ Future<void> main(List<String> arguments) async {
       '<topics dir="topics"/><images dir="images"/>',
     ),
   );
+  await File(
+    p.join(root.path, 'topics/inspector-mappings.topic'),
+  ).writeAsString(
+    '<topic id="inspector-mappings" title="Inspector mappings"><p>Press <shortcut>Ctrl+S</shortcut> now.</p><p>Open <a href="inspector.topic"><b>Guide</b></a> now.</p><img id="image" src="logo.png" alt="Logo" preview-src="logo.png"/><include id="own-include" from="inspector.topic" element-id="b"/></topic>',
+  );
   final tree = File(p.join(root.path, 'conformance.tree'));
   await tree.writeAsString(
     (await tree.readAsString()).replaceFirst(
       '</instance-profile>',
-      '<toc-element topic="authoring.topic"/><toc-element topic="authoring-markdown.md"/><toc-element topic="inspector.topic" toc-title="Inspector XML"/><toc-element topic="inspector-markdown.md" toc-title="Inspector Markdown"/><toc-element topic="inspector-corrections.md"/></instance-profile>',
+      '<toc-element topic="authoring.topic"/><toc-element topic="authoring-markdown.md"/><toc-element topic="inspector.topic" toc-title="Inspector XML"/><toc-element topic="inspector-markdown.md" toc-title="Inspector Markdown"/><toc-element topic="inspector-corrections.md"/><toc-element topic="inspector-mappings.topic"/></instance-profile>',
     ),
   );
   final defaultsFixture = Directory(
@@ -121,6 +126,8 @@ Future<void> main(List<String> arguments) async {
     themeModePreference: BusyMarkThemeModePreference.light,
     documentViewMode: DocumentViewModePreference.editor,
     autoSave: false,
+    elementPropertiesVisible: true,
+    elementPropertiesWidth: 390,
     reopenPreviousWorkspaceOnStartup: false,
     confirmCloseWithUnsavedChanges: false,
   );
@@ -338,6 +345,7 @@ class _HarnessState extends ConsumerState<_Harness> {
   }
 
   Future<void> _capture(String name) async {
+    await windowManager.setPosition(Offset.zero);
     await _pause();
     if (Platform.environment['BUSYMARK_NATIVE_PROBE'] == '1') {
       await _native('capture', p.join(widget.output.path, '$name.png'));
@@ -438,6 +446,114 @@ class _HarnessState extends ConsumerState<_Harness> {
       );
       final controller = ref.read(workspaceControllerProvider.notifier);
       final settings = ref.read(appSettingsControllerProvider.notifier);
+      await settings.waitUntilLoaded();
+      _check(
+        !ref.read(appSettingsControllerProvider).elementPropertiesVisible &&
+            ref.read(appSettingsControllerProvider).elementPropertiesWidth ==
+                390,
+        'Startup ignores old visible preference and preserves width',
+      );
+      await _capture('inspector-startup-closed');
+      Future<void> paletteProperties() async {
+        await _native('chord', 'ctrl+shift+p');
+        await _until(
+          () => _elements(
+            (w) => w is BusyMarkGroupedTextEntry && w.label == 'Type a command',
+          ).isNotEmpty,
+          'Command palette opens',
+        );
+        final entry = _elements(
+          (w) => w is TextField && w.decoration?.labelText == 'Type a command',
+        ).single;
+        await _type(entry, 'Element Properties');
+        await _native('chord', 'Return');
+        await _pause();
+      }
+
+      await controller.openActiveFile(
+        p.join(widget.root.path, 'topics/authoring.topic'),
+      );
+      await _until(
+        () => _elements(
+          (w) => w is TextField && w.controller?.text == 'print(1);',
+        ).isNotEmpty,
+        'Language fixture opens in Editor',
+      );
+      await _tap(_field('print(1);'));
+      _check(
+        !ref.read(appSettingsControllerProvider).elementPropertiesVisible,
+        'Ordinary selection does not reopen inspector',
+      );
+      await _native('chord', 'ctrl+shift+k');
+      await _until(
+        () => _elements(
+          (w) =>
+              w is BusyMarkWritersideProperties &&
+              w.target?.kind == BusyBlockKind.codeBlock,
+        ).isNotEmpty,
+        'Language command exposes workspace code properties',
+      );
+      _check(
+        _elements((w) => w is BusyMarkWritersideProperties).length == 1 &&
+            _elements(
+              (w) =>
+                  w is BusyMarkGroupedTextEntry && w.label == 'Language (lang)',
+            ).isNotEmpty,
+        'Hosted language command opens selected code language control',
+      );
+      await _capture('inspector-workspace-language-command');
+      final languageEntry =
+          _elements(
+                (w) =>
+                    w is BusyMarkGroupedTextEntry &&
+                    w.label == 'Language (lang)',
+              ).single.widget
+              as BusyMarkGroupedTextEntry;
+      await _type(
+        _elements(
+          (w) => w is TextField && w.controller == languageEntry.controller,
+        ).single,
+        'kotlin',
+      );
+      await _tapLabel('Show in Source');
+      await _until(
+        () => _elements((w) => w is BusyMarkSourceEditor).isNotEmpty,
+        'Show in Source processes pending language draft',
+      );
+      _check(
+        ref
+                .read(workspaceControllerProvider)
+                .activeBuffer!
+                .editorState
+                .selection
+                .extentOffset ==
+            _source.indexOf('<code-block'),
+        'Show in Source selects inspected markup rather than a referenced file',
+      );
+      _check(
+        FocusManager.instance.primaryFocus?.context
+                ?.findAncestorWidgetOfExactType<BusyMarkSourceEditor>() !=
+            null,
+        'Show in Source focuses the inspected markup',
+      );
+      _check(
+        _source.contains('lang="kotlin"') && _source.contains('print(1);'),
+        'Language field changes lang while preserving authored code',
+      );
+      _check(
+        controller.undoActiveBuffer(),
+        'Language edit has existing workspace undo',
+      );
+      await _pause();
+      _check(
+        _source.contains('lang="dart"'),
+        'Language undo restores src-independent block',
+      );
+      if (Platform.environment['BUSYMARK_NAVIGATION_ONLY'] == '1') {
+        await _finish(null);
+        return;
+      }
+      await paletteProperties();
       for (final suffix
           in Platform.environment['BUSYMARK_PROPERTIES_ONLY'] == '1'
               ? <String>[]
@@ -638,7 +754,9 @@ class _HarnessState extends ConsumerState<_Harness> {
         await _capture('authoring-$suffix-light');
         await _tap(
           _elements(
-            (w) => w is BusyMarkComboRow<String> && w.title == 'Collapsible',
+            (w) =>
+                w is BusyMarkComboRow<String> &&
+                w.title == 'Collapsible (collapsible)',
           ).single,
         );
         _nativeMenuOpen = true;
@@ -796,7 +914,9 @@ class _HarnessState extends ConsumerState<_Harness> {
           await _capture('inspector-nested-target');
           final title =
               _elements(
-                    (w) => w is BusyMarkGroupedTextEntry && w.label == 'Title',
+                    (w) =>
+                        w is BusyMarkGroupedTextEntry &&
+                        w.label == 'Title (title)',
                   ).single.widget
                   as BusyMarkGroupedTextEntry;
           await _tap(
@@ -853,7 +973,71 @@ class _HarnessState extends ConsumerState<_Harness> {
                   (w) => w is BusyMarkGroupedTextEntry && w.label == label,
                 ).single.widget
                 as BusyMarkGroupedTextEntry;
-        final id = property('Element ID');
+        final sourceBeforeChooser = _source;
+        await _capture('inspector-single-source-field');
+        Element sourceButton(String tooltip) =>
+            _elements(
+              (w) => w is BusyMarkHeaderIconButton && w.tooltip == tooltip,
+            ).singleWhere(
+              (e) =>
+                  e
+                      .findAncestorWidgetOfExactType<BusyMarkGroupedTextEntry>()
+                      ?.label ==
+                  'Source file (src)',
+            );
+        await _tap(sourceButton('Open'));
+        await _pause();
+        await _capture('inspector-native-source-chooser');
+        await _native('chord', 'Escape');
+        await _pause();
+        _check(
+          _source == sourceBeforeChooser,
+          '$suffix native file selection cancellation changes nothing',
+        );
+        await _tap(sourceButton('Remove'));
+        await _pause();
+        _check(
+          !_source.contains('src="inspector-sample.txt"') &&
+              !_source.contains('first\nsecond'),
+          '$suffix removing src does not import file bytes',
+        );
+        await _tap(sourceButton('Open'));
+        await _pause();
+        await _native('chord', 'ctrl+l');
+        await _native(
+          'type',
+          p.join(widget.root.path, 'topics/inspector-sample.txt'),
+        );
+        await _native('chord', 'Return');
+        await _pause();
+        await _until(
+          () => _source == sourceBeforeChooser,
+          '$suffix native file choice edits the same src transaction',
+        );
+        _check(
+          (_elements(
+                        (w) =>
+                            w is BusyMarkGroupedTextEntry &&
+                            w.label == 'Source file (src)',
+                      ).single.widget
+                      as BusyMarkGroupedTextEntry)
+                  .controller!
+                  .text ==
+              'inspector-sample.txt',
+          'Source field displays chosen topic-relative reference',
+        );
+        await _capture('inspector-source-file-selected');
+        await paletteProperties();
+        _check(
+          !ref.read(appSettingsControllerProvider).elementPropertiesVisible,
+          'Palette closes through workspace handler',
+        );
+        await paletteProperties();
+        _check(
+          ref.read(appSettingsControllerProvider).elementPropertiesVisible,
+          'Palette opens one workspace inspector',
+        );
+        final id = property('Element ID (id)');
         await _tap(
           _elements(
             (w) => w is TextField && w.controller == id.controller,
@@ -891,7 +1075,7 @@ class _HarnessState extends ConsumerState<_Harness> {
           buffer.editorState.selection.extentOffset == codeOffset,
           '$suffix Source selection survives property transaction',
         );
-        final invalidId = property('Element ID');
+        final invalidId = property('Element ID (id)');
         invalidId.focusNode!.requestFocus();
         invalidId.controller!.text = 'invalid id';
         final beforeInvalid = _source;
@@ -927,6 +1111,12 @@ class _HarnessState extends ConsumerState<_Harness> {
           '$suffix invalid draft cancels inspector closure',
         );
         await _capture('inspector-$suffix-invalid-draft');
+        await paletteProperties();
+        _check(
+          ref.read(appSettingsControllerProvider).elementPropertiesVisible &&
+              controller.propertyEdits.hasPending,
+          'Palette close retains invalid draft and inspector',
+        );
         invalidId.focusNode!.requestFocus();
         await _pause();
         await _key(PhysicalKeyboardKey.escape, LogicalKeyboardKey.escape);
@@ -935,7 +1125,7 @@ class _HarnessState extends ConsumerState<_Harness> {
               invalidId.controller!.text == 'saved-code',
           '$suffix Escape explicitly reverts pending text',
         );
-        final extraction = property('Include lines');
+        final extraction = property('Include lines (include-lines)');
         await _tap(
           _elements(
             (w) => w is TextField && w.controller == extraction.controller,
@@ -943,7 +1133,9 @@ class _HarnessState extends ConsumerState<_Harness> {
         );
         extraction.controller!.text = '2-3';
         await _key(PhysicalKeyboardKey.enter, LogicalKeyboardKey.enter);
-        final emphasis = property('Emphasize displayed lines');
+        final emphasis = property(
+          'Emphasize displayed lines (emphasize-lines)',
+        );
         await _tap(
           _elements(
             (w) => w is TextField && w.controller == emphasis.controller,
@@ -975,15 +1167,19 @@ class _HarnessState extends ConsumerState<_Harness> {
           () => _elements(
             (w) =>
                 w is BusyMarkGroupedTextEntry &&
-                w.label == 'Element ID' &&
+                w.label == 'Element ID (id)' &&
                 w.controller?.text == 'saved-code',
           ).isNotEmpty,
           '$suffix reopened Source caret resolves saved code',
         );
         _check(
-          property('Element ID').controller!.text == 'saved-code' &&
-              property('Include lines').controller!.text == '2-3' &&
-              property('Emphasize displayed lines').controller!.text == '1',
+          property('Element ID (id)').controller!.text == 'saved-code' &&
+              property('Include lines (include-lines)').controller!.text ==
+                  '2-3' &&
+              property(
+                    'Emphasize displayed lines (emphasize-lines)',
+                  ).controller!.text ==
+                  '1',
           '$suffix saved code properties survive close, reopen and reinspection',
         );
         await _native('chord', 'ctrl+shift+4');
@@ -1030,7 +1226,9 @@ class _HarnessState extends ConsumerState<_Harness> {
         );
         await _tap(
           _elements(
-            (w) => w is BusyMarkComboRow<String> && w.title == 'Collapsible',
+            (w) =>
+                w is BusyMarkComboRow<String> &&
+                w.title == 'Collapsible (collapsible)',
           ).single,
         );
         _nativeMenuOpen = true;
@@ -1038,11 +1236,13 @@ class _HarnessState extends ConsumerState<_Harness> {
         await _capture('inspector-$suffix-override');
         await _tap(
           _elements(
-            (w) => w is BusyMarkComboRow<String> && w.title == 'Collapsible',
+            (w) =>
+                w is BusyMarkComboRow<String> &&
+                w.title == 'Collapsible (collapsible)',
           ).single,
         );
         _nativeMenuOpen = true;
-        await _tapLabel('Use default — Disabled');
+        await _tapLabel('Use default');
         _check(
           _source == initial,
           '$suffix reset removes authored collapse and restores source',
@@ -1159,7 +1359,7 @@ class _HarnessState extends ConsumerState<_Harness> {
           'Navigation ${choice.$1} survives save close reopen',
         );
       }
-      await propertyText('Navigation elements', 'chapter,def');
+      await propertyText('Navigation elements (for)', 'chapter,def');
       await reopenSource();
       sourceCaret(0);
       await _pause();
@@ -1170,6 +1370,157 @@ class _HarnessState extends ConsumerState<_Harness> {
         'Custom navigation survives reopening',
       );
       await _capture('inspector-navigation-reopened');
+      await controller.openActiveFile(
+        p.join(widget.root.path, 'topics/inspector-mappings.topic'),
+      );
+      await _native('chord', 'ctrl+shift+2');
+      await _until(
+        () => _elements((w) => w is BusyMarkSourceEditor).isNotEmpty,
+        'Mapping controls open in Source',
+      );
+      final mappingsPath = ref
+          .read(workspaceControllerProvider)
+          .activeBuffer!
+          .filePath!;
+      void mappingCaret(String markup) {
+        final state =
+            (_elements((w) => w is BusyMarkSourceEditor).single
+                        as StatefulElement)
+                    .state
+                as BusyMarkSourceEditorState;
+        state.scrollToOffset(_source.indexOf(markup) + 2);
+      }
+
+      Future<void> reopenMapping(String markup) async {
+        await _native('chord', 'ctrl+s');
+        await _until(
+          () => !ref.read(workspaceControllerProvider).activeBuffer!.isDirty,
+          'Mapping source saved',
+        );
+        _check(
+          await controller.closeDocumentBuffer(
+            ref.read(workspaceControllerProvider).activeBuffer!.id,
+          ),
+          'Mapping buffer closes',
+        );
+        await controller.openActiveFile(mappingsPath);
+        await _pause();
+        mappingCaret(markup);
+        await _pause();
+      }
+
+      mappingCaret('<include');
+      await _pause();
+      _check(
+        inspector().target!.attributes['id'] == 'own-include',
+        'Include own identity is readable independently of its reference',
+      );
+      final longIdentity =
+          'own-include-${List.filled(10, 'long-readable-identifier').join('-')}';
+      await propertyText('Element ID (id)', longIdentity);
+      _check(
+        inspector().target!.attributes['id'] == longIdentity,
+        'Long values retain complete authored identity',
+      );
+      await windowManager.setSize(const Size(800, 900));
+      await _capture('inspector-long-identity-narrow');
+      _check(
+        controller.undoActiveBuffer(),
+        'Long identity edit uses existing undo',
+      );
+      await _pause();
+      await windowManager.setSize(const Size(1400, 960));
+      await _native('chord', 'ctrl+s');
+      await _pause();
+      _check(
+        inspector().target!.attributes['id'] == 'own-include',
+        'Source inspector refreshes unchanged caret after undo',
+      );
+      mappingCaret('<include');
+      await _pause();
+      final beforeInclude = _source;
+      await propertyText('Included element (element-id)', 'nested');
+      _check(
+        _source.contains('element-id="nested"') &&
+            _source.contains('id="own-include"'),
+        'Included element edits element-id and preserves own id',
+      );
+      final afterInclude = _source;
+      _check(
+        controller.undoActiveBuffer(),
+        'Include property uses workspace undo',
+      );
+      await _pause();
+      _check(_source == beforeInclude, 'Include undo preserves source');
+      _check(
+        controller.redoActiveBuffer(),
+        'Include property uses workspace redo',
+      );
+      await _pause();
+      _check(
+        _source == afterInclude,
+        'Include redo restores only the reviewed property',
+      );
+      await reopenMapping('<include');
+      _check(
+        inspector().target!.attributes['element-id'] == 'nested' &&
+            inspector().target!.attributes['id'] == 'own-include',
+        'Include reference and own identity survive save close reopen',
+      );
+      await _capture('inspector-include-mapping');
+      mappingCaret('<img');
+      await _pause();
+      await propertyText('Preview image (preview-src)', 'logo_dark.png');
+      await reopenMapping('<img');
+      _check(
+        inspector().target!.attributes['src'] == 'logo.png' &&
+            inspector().target!.attributes['preview-src'] == 'logo_dark.png',
+        'Preview image edits preview-src and keeps main src through reopen',
+      );
+      await _capture('inspector-image-preview-mapping');
+      mappingCaret('<shortcut');
+      await _pause();
+      await propertyText('Action ID (key)', '\$Save');
+      await propertyText(
+        'Keymap help instance (from-keymap-of)',
+        'conformance',
+      );
+      await reopenMapping('<shortcut');
+      _check(
+        inspector().inlineTarget!.attributes['key'] == '\$Save' &&
+            inspector().inlineTarget!.attributes['from-keymap-of'] ==
+                'conformance' &&
+            _source.contains('>Ctrl+S</shortcut>'),
+        'Shortcut action and help instance survive reopen without replacing literal content',
+      );
+      await _capture('inspector-shortcut-mapping');
+      mappingCaret('<a href');
+      await _pause();
+      await propertyText('Link target (href)', 'inspector.topic#nested');
+      await reopenMapping('<a href');
+      _check(
+        inspector().inlineTarget!.destination == 'inspector.topic#nested' &&
+            _source.contains('<b>Guide</b>'),
+        'Link target edits href and retains formatted label',
+      );
+      await _capture('inspector-link-target-mapping');
+      await _native('chord', 'ctrl+shift+1');
+      await _pause();
+      await _tap(_field('Press Ctrl+S now.'));
+      final shortcutField = _field('Press Ctrl+S now.').widget as TextField;
+      shortcutField.controller!.selection = const TextSelection.collapsed(
+        offset: 8,
+      );
+      await _pause();
+      _check(
+        inspector().inlineTarget?.kind == BusyInlineKind.writersideShortcut &&
+            _elements(
+              (w) =>
+                  w is BusyMarkGroupedTextEntry && w.label == 'Action ID (key)',
+            ).isNotEmpty,
+        'Editor exposes the same shortcut action control',
+      );
+      await _capture('inspector-editor-shortcut-mapping');
       await controller.openActiveFile(
         p.join(widget.root.path, 'topics/inspector-corrections.md'),
       );
@@ -1256,7 +1607,7 @@ class _HarnessState extends ConsumerState<_Harness> {
           .undoState
           .undo
           .length;
-      await propertyText('Element ID', 'saved-item');
+      await propertyText('Element ID (id)', 'saved-item');
       _check(
         inspector().target!.attributes['id'] == 'saved-item' &&
             inspector().path.any((b) => b.attributes['element'] == 'list'),
@@ -1297,7 +1648,7 @@ class _HarnessState extends ConsumerState<_Harness> {
       await _capture('inspector-native-item-reopened');
       sourceCaret(_source.indexOf('- [ ] Unchecked task'));
       await _pause();
-      await propertyText('Element ID', 'saved-task');
+      await propertyText('Element ID (id)', 'saved-task');
       await reopenSource();
       sourceCaret(_source.indexOf('<li id="saved-task"'));
       await _pause();
@@ -1314,7 +1665,7 @@ class _HarnessState extends ConsumerState<_Harness> {
       await _capture('inspector-task-item-reopened');
       sourceCaret(_source.indexOf('> A'));
       await _pause();
-      await propertyText('Element ID', 'saved-note');
+      await propertyText('Element ID (id)', 'saved-note');
       await reopenSource();
       sourceCaret(_source.indexOf('> A'));
       await _pause();
@@ -1342,7 +1693,7 @@ class _HarnessState extends ConsumerState<_Harness> {
             .undoState
             .undo
             .length;
-        await propertyText('Element ID', numbered.identity);
+        await propertyText('Element ID (id)', numbered.identity);
         final converted = _source;
         _check(
           ref
@@ -1419,9 +1770,12 @@ class _HarnessState extends ConsumerState<_Harness> {
               ).single.widget
               as BusyMarkComboRow<String>;
       _check(
-        defaultCombo('Collapsible').labelFor('') == 'Use default — Enabled' &&
-            defaultCombo('Published initial state').labelFor('') ==
-                'Use default — Expanded',
+        defaultCombo('Collapsible (collapsible)').labelFor('') ==
+                'Use default' &&
+            defaultCombo(
+                  'Published initial state (default-state)',
+                ).labelFor('') ==
+                'Use default',
         'Inspector resolves omitted code properties from module defaults',
       );
       _check(
@@ -1429,10 +1783,23 @@ class _HarnessState extends ConsumerState<_Harness> {
             !ref.read(workspaceControllerProvider).activeBuffer!.isDirty,
         'Opening effective defaults is source-neutral',
       );
+      _check(
+        _elements(
+              (w) =>
+                  w is Text && w.data == 'Effective: Enabled — module default',
+            ).isNotEmpty &&
+            _elements(
+              (w) =>
+                  w is Text && w.data == 'Effective: Expanded — module default',
+            ).isNotEmpty,
+        'Effective values and localized origins appear beneath selectors',
+      );
       await _capture('inspector-module-defaults');
       await _tap(
         _elements(
-          (w) => w is BusyMarkComboRow<String> && w.title == 'Collapsible',
+          (w) =>
+              w is BusyMarkComboRow<String> &&
+              w.title == 'Collapsible (collapsible)',
         ).single,
       );
       _nativeMenuOpen = true;
@@ -1451,11 +1818,13 @@ class _HarnessState extends ConsumerState<_Harness> {
       await _capture('inspector-module-override');
       await _tap(
         _elements(
-          (w) => w is BusyMarkComboRow<String> && w.title == 'Collapsible',
+          (w) =>
+              w is BusyMarkComboRow<String> &&
+              w.title == 'Collapsible (collapsible)',
         ).single,
       );
       _nativeMenuOpen = true;
-      await _tapLabel('Use default — Enabled');
+      await _tapLabel('Use default');
       _check(
         _source == defaultsSource,
         'Reset removes local override and restores the module default',
@@ -1463,28 +1832,28 @@ class _HarnessState extends ConsumerState<_Harness> {
       sourceCaret(_source.indexOf('<deflist id="layout-default"'));
       await _pause();
       _check(
-        combo('List layout').selected == '' &&
-            combo('List layout').labelFor('') == 'Use default — Medium (1:2)',
+        combo('List layout (type)').selected == '' &&
+            combo('List layout (type)').labelFor('') == 'Use default',
         'Layout resolves the module medium default',
       );
       await _capture('inspector-module-layout-default');
-      await chooseCombo('List layout', 'Wide');
+      await chooseCombo('List layout (type)', 'Wide');
       await reopenSource();
       sourceCaret(_source.indexOf('<deflist id="layout-default"'));
       await _pause();
       _check(
-        combo('List layout').selected == 'wide' &&
-            combo('List layout').labelFor('') == 'Use default — Medium (1:2)',
+        combo('List layout (type)').selected == 'wide' &&
+            combo('List layout (type)').labelFor('') == 'Use default',
         'Layout override survives reopening and retains module reset label',
       );
       await _capture('inspector-module-layout-override');
-      await chooseCombo('List layout', 'Use default — Medium (1:2)');
+      await chooseCombo('List layout (type)', 'Use default');
       await reopenSource();
       sourceCaret(_source.indexOf('<deflist id="layout-default"'));
       await _pause();
       _check(
-        combo('List layout').selected == '' &&
-            combo('List layout').labelFor('') == 'Use default — Medium (1:2)' &&
+        combo('List layout (type)').selected == '' &&
+            combo('List layout (type)').labelFor('') == 'Use default' &&
             _source == defaultsSource,
         'Layout reset removes local override and preserves module default after reopening',
       );
@@ -1606,6 +1975,10 @@ class _HarnessState extends ConsumerState<_Harness> {
       stderr.writeln('$error\n$stack');
       await _capture('failure');
     }
+    await _finish(failure);
+  }
+
+  Future<void> _finish(Object? failure) async {
     await File(p.join(widget.output.path, 'result.json')).writeAsString(
       const JsonEncoder.withIndent('  ').convert({
         'fixture': widget.root.path,

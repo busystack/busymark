@@ -5207,7 +5207,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get wsCodeSourceConflict =>
-      'Видаліть або перенесіть код перед вибором вихідного файлу. Writerside відхиляє непорожні блоки коду з посиланням на джерело.';
+      'Перемістіть або видаліть код, написаний у цьому блоці, перш ніж задати src. Writerside відхиляє непорожній блок коду з посиланням на джерело.';
 
   @override
   String get wsInherited => 'Успадкувати зі списку';
@@ -5222,4 +5222,48 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get wsListItem => 'Елемент списку';
+
+  @override
+  String get wsSourceFile => 'Вихідний файл';
+
+  @override
+  String get wsLinkTarget => 'Ціль посилання';
+
+  @override
+  String get wsPreviewImage => 'Зображення перегляду';
+
+  @override
+  String get wsIncludedElement => 'Включений елемент';
+
+  @override
+  String get wsHelpModule => 'Модуль довідки';
+
+  @override
+  String get wsActionId => 'ID дії';
+
+  @override
+  String get wsKeymapHelpInstance => 'Екземпляр довідки розкладки';
+
+  @override
+  String get wsShowInSource => 'Показати у джерелі';
+
+  @override
+  String get wsOriginElement => 'Значення елемента';
+
+  @override
+  String get wsOriginAncestor => 'Батьківський елемент';
+
+  @override
+  String get wsOriginModule => 'Типове значення модуля';
+
+  @override
+  String get wsOriginBuiltIn => 'Вбудоване типове значення';
+
+  @override
+  String get wsOriginUnresolved => 'Не визначено';
+
+  @override
+  String wsEffectiveProperty(String value, String origin) {
+    return 'Дійсне значення: $value — $origin';
+  }
 }

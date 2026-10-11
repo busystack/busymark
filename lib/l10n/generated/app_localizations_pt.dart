@@ -5202,7 +5202,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get wsCodeSourceConflict =>
-      'Remova ou mova o código antes de escolher um arquivo fonte. Writerside rejeita blocos não vazios com referência à fonte.';
+      'Mova ou remova o código escrito neste bloco antes de definir src. O Writerside rejeita um bloco de código não vazio com uma referência de origem.';
 
   @override
   String get wsInherited => 'Herdar da lista';
@@ -5217,6 +5217,50 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get wsListItem => 'Item da lista';
+
+  @override
+  String get wsSourceFile => 'Arquivo de origem';
+
+  @override
+  String get wsLinkTarget => 'Destino do link';
+
+  @override
+  String get wsPreviewImage => 'Imagem de prévia';
+
+  @override
+  String get wsIncludedElement => 'Elemento incluído';
+
+  @override
+  String get wsHelpModule => 'Módulo de ajuda';
+
+  @override
+  String get wsActionId => 'ID da ação';
+
+  @override
+  String get wsKeymapHelpInstance => 'Instância de ajuda do mapa de teclas';
+
+  @override
+  String get wsShowInSource => 'Mostrar no Fonte';
+
+  @override
+  String get wsOriginElement => 'Valor do elemento';
+
+  @override
+  String get wsOriginAncestor => 'Elemento pai';
+
+  @override
+  String get wsOriginModule => 'Padrão do módulo';
+
+  @override
+  String get wsOriginBuiltIn => 'Padrão integrado';
+
+  @override
+  String get wsOriginUnresolved => 'Não resolvido';
+
+  @override
+  String wsEffectiveProperty(String value, String origin) {
+    return 'Efetivo: $value — $origin';
+  }
 }
 
 /// The translations for Portuguese, as used in Brazil (`pt_BR`).
@@ -10413,7 +10457,7 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get wsCodeSourceConflict =>
-      'Remova ou mova o código antes de escolher um arquivo fonte. Writerside rejeita blocos não vazios com referência à fonte.';
+      'Mova ou remova o código escrito neste bloco antes de definir src. O Writerside rejeita um bloco de código não vazio com uma referência de origem.';
 
   @override
   String get wsInherited => 'Herdar da lista';
@@ -10428,4 +10472,48 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get wsListItem => 'Item da lista';
+
+  @override
+  String get wsSourceFile => 'Arquivo de origem';
+
+  @override
+  String get wsLinkTarget => 'Destino do link';
+
+  @override
+  String get wsPreviewImage => 'Imagem de prévia';
+
+  @override
+  String get wsIncludedElement => 'Elemento incluído';
+
+  @override
+  String get wsHelpModule => 'Módulo de ajuda';
+
+  @override
+  String get wsActionId => 'ID da ação';
+
+  @override
+  String get wsKeymapHelpInstance => 'Instância de ajuda do mapa de teclas';
+
+  @override
+  String get wsShowInSource => 'Mostrar no Fonte';
+
+  @override
+  String get wsOriginElement => 'Valor do elemento';
+
+  @override
+  String get wsOriginAncestor => 'Elemento pai';
+
+  @override
+  String get wsOriginModule => 'Padrão do módulo';
+
+  @override
+  String get wsOriginBuiltIn => 'Padrão integrado';
+
+  @override
+  String get wsOriginUnresolved => 'Não resolvido';
+
+  @override
+  String wsEffectiveProperty(String value, String origin) {
+    return 'Efetivo: $value — $origin';
+  }
 }

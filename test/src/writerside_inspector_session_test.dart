@@ -12,6 +12,57 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  for (final xml in [true, false]) {
+    test(
+      '${xml ? "XML" : "Markdown"} Show in Source locates the inspected inline markup',
+      () {
+        final source = xml
+            ? '<topic id="t" title="Topic"><p>Before <a href="one.topic"><b>Guide</b></a> and <a href="two.topic">Guide</a>.</p><code-block src="sample.dart"/></topic>'
+            : 'Before [**Guide**][ref] and [Guide][ref].\n\n[ref]: target.md\n';
+        final doc = xml
+            ? const WritersideEditingAdapter().parseXml(
+                filePath: 'a.topic',
+                source: source,
+              )!
+            : const MarkdownParser()
+                  .parse(
+                    filePath: 'a.md',
+                    source: source,
+                    mode: MarkdownMode.writersideMarkdown,
+                  )
+                  .busyDocument;
+        final offsets = xml
+            ? [
+                source.indexOf('<a href'),
+                source.indexOf('<a href', source.indexOf('<a href') + 1),
+              ]
+            : [source.indexOf('[**'), source.indexOf('[Guide]')];
+        for (final offset in offsets) {
+          final target = WritersideInspectorTarget.fromSource(
+            bufferId: 'b',
+            revision: 1,
+            source: source,
+            document: doc,
+            selection: TextSelection.collapsed(offset: offset + 2),
+          );
+          expect(target.inline?.kind, BusyInlineKind.link);
+          expect(target.sourceLocation, offset);
+        }
+        if (xml) {
+          final code = WritersideInspectorTarget.fromSource(
+            bufferId: 'b',
+            revision: 1,
+            source: source,
+            document: doc,
+            selection: TextSelection.collapsed(
+              offset: source.indexOf('<code-block') + 2,
+            ),
+          );
+          expect(code.sourceLocation, source.indexOf('<code-block'));
+        }
+      },
+    );
+  }
   test(
     'authored-state comparison distinguishes no-ops and serialization loss',
     () {

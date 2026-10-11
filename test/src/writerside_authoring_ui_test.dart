@@ -166,22 +166,24 @@ void main() {
       );
       return tester.widget<BusyMarkComboRow<String>>(
         find.byWidgetPredicate(
-          (w) => w is BusyMarkComboRow<String> && w.title == 'List layout',
+          (w) =>
+              w is BusyMarkComboRow<String> && w.title == 'List layout (type)',
         ),
       );
     }
 
     final layout = await show();
     expect(layout.selected, 'wide');
-    expect(layout.labelFor(''), 'Use default — Medium (1:2)');
+    expect(layout.labelFor(''), 'Use default');
     layout.onSelected('');
     final reset = await show();
     expect(reset.selected, '');
-    expect(reset.labelFor(''), 'Use default — Medium (1:2)');
+    expect(reset.labelFor(''), 'Use default');
     expect(c.markdown, isNot(contains('type=')));
     expect(
       find.byWidgetPredicate(
-        (w) => w is Tooltip && w.message == 'module: medium',
+        (w) =>
+            w is Text && w.data == 'Effective: Medium (1:2) — module default',
       ),
       findsOneWidget,
     );
@@ -264,7 +266,7 @@ void main() {
       find.byWidgetPredicate(
         (w) =>
             w is BusyMarkComboRow<String> &&
-            w.title == 'Published initial state',
+            w.title == 'Published initial state (default-state)',
       ),
     );
     expect(state.enabled, isFalse);
@@ -316,20 +318,22 @@ void main() {
       await tester.pumpAndSettle();
       final collapse = tester.widget<BusyMarkComboRow<String>>(
         find.byWidgetPredicate(
-          (w) => w is BusyMarkComboRow<String> && w.title == 'Collapsible',
+          (w) =>
+              w is BusyMarkComboRow<String> &&
+              w.title == 'Collapsible (collapsible)',
         ),
       );
       final state = tester.widget<BusyMarkComboRow<String>>(
         find.byWidgetPredicate(
           (w) =>
               w is BusyMarkComboRow<String> &&
-              w.title == 'Published initial state',
+              w.title == 'Published initial state (default-state)',
         ),
       );
       expect(collapse.selected, 'true');
-      expect(collapse.labelFor(''), 'Use default — Disabled');
+      expect(collapse.labelFor(''), 'Use default');
       expect(state.selected, 'expanded');
-      expect(state.labelFor(''), 'Use default — Collapsed');
+      expect(state.labelFor(''), 'Use default');
     },
   );
 
@@ -361,7 +365,11 @@ void main() {
   tearDown(() {
     binding.defaultBinaryMessenger.setMockMethodCallHandler(channel, null);
   });
-  Future<void> mount(WidgetTester tester, BusyMarkWysiwygEditor editor) async {
+  Future<void> mount(
+    WidgetTester tester,
+    BusyMarkWysiwygEditor editor, {
+    bool openProperties = true,
+  }) async {
     tester.view.resetPhysicalSize();
     tester.view.physicalSize = const Size(1100, 850);
     tester.view.devicePixelRatio = 1;
@@ -369,8 +377,109 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
     await tester.pumpWidget(_app(editor));
     await tester.pumpAndSettle();
+    if (openProperties) {
+      await tester.tap(find.byTooltip('Element Properties').first);
+      await tester.pumpAndSettle();
+    }
   }
 
+  testWidgets(
+    'selection leaves the inspector closed and hosted language opens the workspace target',
+    (tester) async {
+      final doc = _document(
+        true,
+        source:
+            '<topic id="a" title="Title"><code-block lang="dart">print(1);</code-block></topic>',
+      );
+      var opened = 0;
+      String? inspected;
+      var explicit = false;
+      await mount(
+        tester,
+        BusyMarkWysiwygEditor(
+          document: doc,
+          onSourceChanged: (_, _) {},
+          onInspectElement: (_, id, _, requested, multiple) {
+            inspected = id;
+            explicit = requested;
+          },
+          onPropertiesRequested: () => opened++,
+        ),
+        openProperties: false,
+      );
+      await tester.tap(_textField('print(1);'));
+      await tester.pumpAndSettle();
+      expect(find.byType(BusyMarkWritersideProperties), findsNothing);
+      expect(opened, 0);
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyK);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.pumpAndSettle();
+      expect(opened, 1);
+      expect(explicit, isTrue);
+      expect(inspected, doc.blocks.first.children.single.id);
+      expect(find.byType(BusyMarkWritersideProperties), findsNothing);
+    },
+  );
+  testWidgets(
+    'shortcut action edits preserve literal content through undo redo and reopen',
+    (tester) async {
+      const original =
+          '<topic id="a" title="Title"><p>Press <shortcut key="\$Save">Ctrl+S</shortcut> <b>now</b>.</p></topic>';
+      var saved = original;
+      await mount(
+        tester,
+        BusyMarkWysiwygEditor(
+          document: _document(true, source: original),
+          onSourceChanged: (_, source) => saved = source,
+        ),
+      );
+      final body = _textField('Press Ctrl+S now.');
+      await tester.tap(body);
+      tester.widget<TextField>(body).controller!.selection =
+          const TextSelection.collapsed(offset: 8);
+      await tester.pumpAndSettle();
+      final entry = find.descendant(
+        of: find.byWidgetPredicate(
+          (w) => w is BusyMarkGroupedTextEntry && w.label == 'Action ID (key)',
+        ),
+        matching: find.byType(TextField),
+      );
+      await tester.enterText(entry, '\$Copy');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pumpAndSettle();
+      expect(saved, contains('key="\$Copy"'));
+      expect(saved, contains('>Ctrl+S</shortcut>'));
+      expect(saved, contains('<b>now</b>'));
+      final changed = saved;
+      await tester.tap(_textField('Press Ctrl+S now.'));
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyZ);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.pumpAndSettle();
+      expect(saved, original);
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyZ);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.pumpAndSettle();
+      expect(saved, changed);
+      final reopened = _document(
+        true,
+        source: saved,
+      ).blocks.first.children.single;
+      expect(reopened.plainText, 'Press Ctrl+S now.');
+      expect(
+        busyInlineReferenceRanges(reopened.inlines)
+            .firstWhere((r) => r.kind == BusyInlineKind.writersideShortcut)
+            .attributes['key'],
+        '\$Copy',
+      );
+    },
+  );
   Future<void> insert(WidgetTester tester, String label) async {
     await tester.pumpAndSettle();
     labels.add(label);
@@ -765,8 +874,8 @@ void main() {
     tester.widget<TextField>(field).controller!.selection =
         const TextSelection.collapsed(offset: 2);
     await tester.pumpAndSettle();
-    expect(find.text('Keyboard layout'), findsOneWidget);
-    expect(find.text('List layout'), findsNothing);
+    expect(find.text('Keyboard layout (force-layout)'), findsOneWidget);
+    expect(find.text('List layout (type)'), findsNothing);
   });
   testWidgets(
     'chapter properties are available before collapse and local expansion is source-neutral',
@@ -785,11 +894,13 @@ void main() {
       );
       await tester.tap(_textField('Chapter'));
       await tester.pumpAndSettle();
-      expect(find.text('Collapsible'), findsOneWidget);
+      expect(find.text('Collapsible (collapsible)'), findsOneWidget);
       expect(source, isEmpty);
       final collapseRow = tester.widget<BusyMarkComboRow<String>>(
         find.byWidgetPredicate(
-          (w) => w is BusyMarkComboRow<String> && w.title == 'Collapsible',
+          (w) =>
+              w is BusyMarkComboRow<String> &&
+              w.title == 'Collapsible (collapsible)',
         ),
       );
       collapseRow.onSelected('true');
@@ -1011,6 +1122,8 @@ void main() {
         onSourceChanged: (_, _) => edits++,
       );
       await mount(tester, editor(first));
+      await tester.tap(_textField('print(1);'));
+      await tester.pumpAndSettle();
       final property = find.byKey(
         const ValueKey('writerside-property-xml-1-language'),
       );

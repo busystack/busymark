@@ -4994,7 +4994,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get wsCodeSourceConflict =>
-      '소스 파일을 선택하기 전에 인라인 코드를 제거하거나 이동하세요. Writerside는 소스 참조가 있는 비어 있지 않은 코드 블록을 거부합니다.';
+      'src를 설정하기 전에 이 블록에 작성된 코드를 이동하거나 제거하세요. Writerside는 소스 참조가 있는 비어 있지 않은 코드 블록을 허용하지 않습니다.';
 
   @override
   String get wsInherited => '목록에서 상속';
@@ -5008,4 +5008,48 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get wsListItem => '목록 항목';
+
+  @override
+  String get wsSourceFile => '소스 파일';
+
+  @override
+  String get wsLinkTarget => '링크 대상';
+
+  @override
+  String get wsPreviewImage => '미리보기 이미지';
+
+  @override
+  String get wsIncludedElement => '포함할 요소';
+
+  @override
+  String get wsHelpModule => '도움말 모듈';
+
+  @override
+  String get wsActionId => '액션 ID';
+
+  @override
+  String get wsKeymapHelpInstance => '키맵 도움말 인스턴스';
+
+  @override
+  String get wsShowInSource => '소스에서 표시';
+
+  @override
+  String get wsOriginElement => '요소 재정의';
+
+  @override
+  String get wsOriginAncestor => '상위 요소';
+
+  @override
+  String get wsOriginModule => '모듈 기본값';
+
+  @override
+  String get wsOriginBuiltIn => '내장 기본값';
+
+  @override
+  String get wsOriginUnresolved => '확인되지 않음';
+
+  @override
+  String wsEffectiveProperty(String value, String origin) {
+    return '적용 값: $value — $origin';
+  }
 }

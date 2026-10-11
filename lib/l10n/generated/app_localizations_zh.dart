@@ -4919,7 +4919,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get wsCodeSourceConflict =>
-      '选择源文件前请移除或移动内联代码。Writerside 不接受同时含有内容和源引用的代码块。';
+      '设置 src 前，请移走或删除此代码块中编写的代码。Writerside 不接受带有源引用的非空代码块。';
 
   @override
   String get wsInherited => '从列表继承';
@@ -4932,6 +4932,50 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get wsListItem => '列表项';
+
+  @override
+  String get wsSourceFile => '源文件';
+
+  @override
+  String get wsLinkTarget => '链接目标';
+
+  @override
+  String get wsPreviewImage => '预览图像';
+
+  @override
+  String get wsIncludedElement => '包含的元素';
+
+  @override
+  String get wsHelpModule => '帮助模块';
+
+  @override
+  String get wsActionId => '操作 ID';
+
+  @override
+  String get wsKeymapHelpInstance => '键位映射帮助实例';
+
+  @override
+  String get wsShowInSource => '在源代码中显示';
+
+  @override
+  String get wsOriginElement => '元素覆盖值';
+
+  @override
+  String get wsOriginAncestor => '父元素';
+
+  @override
+  String get wsOriginModule => '模块默认值';
+
+  @override
+  String get wsOriginBuiltIn => '内置默认值';
+
+  @override
+  String get wsOriginUnresolved => '未解析';
+
+  @override
+  String wsEffectiveProperty(String value, String origin) {
+    return '有效值：$value — $origin';
+  }
 }
 
 /// The translations for Chinese, as used in China (`zh_CN`).
@@ -9847,7 +9891,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get wsCodeSourceConflict =>
-      '选择源文件前请移除或移动内联代码。Writerside 不接受同时含有内容和源引用的代码块。';
+      '设置 src 前，请移走或删除此代码块中编写的代码。Writerside 不接受带有源引用的非空代码块。';
 
   @override
   String get wsInherited => '从列表继承';
@@ -9860,4 +9904,48 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get wsListItem => '列表项';
+
+  @override
+  String get wsSourceFile => '源文件';
+
+  @override
+  String get wsLinkTarget => '链接目标';
+
+  @override
+  String get wsPreviewImage => '预览图像';
+
+  @override
+  String get wsIncludedElement => '包含的元素';
+
+  @override
+  String get wsHelpModule => '帮助模块';
+
+  @override
+  String get wsActionId => '操作 ID';
+
+  @override
+  String get wsKeymapHelpInstance => '键位映射帮助实例';
+
+  @override
+  String get wsShowInSource => '在源代码中显示';
+
+  @override
+  String get wsOriginElement => '元素覆盖值';
+
+  @override
+  String get wsOriginAncestor => '父元素';
+
+  @override
+  String get wsOriginModule => '模块默认值';
+
+  @override
+  String get wsOriginBuiltIn => '内置默认值';
+
+  @override
+  String get wsOriginUnresolved => '未解析';
+
+  @override
+  String wsEffectiveProperty(String value, String origin) {
+    return '有效值：$value — $origin';
+  }
 }
