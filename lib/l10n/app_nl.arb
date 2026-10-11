@@ -4988,7 +4988,7 @@
   "wsIdentifier": "Element-ID",
   "wsTldr": "Samenvatting (TLDR)",
   "wsFullLayout": "Volledige breedte",
-  "wsMediumLayout": "Gelijke kolommen",
+  "wsMediumLayout": "Gemiddeld (1:2)",
   "wsNarrowLayout": "Smalle begripskolom",
   "wsTitle": "Titel",
   "wsSwitcherKey": "Keuzeschakelaar",
@@ -5075,5 +5075,7 @@
   "wsWideLayout": "Breed",
   "wsCodeSourceConflict": "Verwijder of verplaats de code voordat u een bronbestand kiest. Writerside weigert niet-lege codeblokken met een bronverwijzing.",
   "wsInherited": "Overnemen van lijst",
-  "wsExternalImageSize": "Writerside past het formaat van externe afbeeldingen niet betrouwbaar aan. Bestaande maten kunnen worden bekeken en verwijderd."
+  "wsExternalImageSize": "Writerside past het formaat van externe afbeeldingen niet betrouwbaar aan. Bestaande maten kunnen worden bekeken en verwijderd.",
+  "wsPropertiesNotSerialized": "Deze wijziging is niet in de bron verwerkt. Het concept is behouden.",
+  "wsListItem": "Lijstitem"
 }

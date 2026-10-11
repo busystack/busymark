@@ -64,11 +64,16 @@ Future<void> main(List<String> arguments) async {
   await File(
     p.join(root.path, 'topics/inspector-sample.txt'),
   ).writeAsString('first\nsecond\nthird\n');
+  await File(
+    p.join(root.path, 'topics/inspector-corrections.md'),
+  ).writeAsString(
+    '# Inspector Corrections\n\nUse `{id="literal-code"}`\n\nUse [**link**](authoring.topic){id="owned-link"}\n\n- First **item**\n- Second item\n\n- [x] Checked task\n- [ ] Unchecked task\n\n> A **note**.\n{style="note"}\n',
+  );
   final tree = File(p.join(root.path, 'conformance.tree'));
   await tree.writeAsString(
     (await tree.readAsString()).replaceFirst(
       '</instance-profile>',
-      '<toc-element topic="authoring.topic"/><toc-element topic="authoring-markdown.md"/><toc-element topic="inspector.topic" toc-title="Inspector XML"/><toc-element topic="inspector-markdown.md" toc-title="Inspector Markdown"/></instance-profile>',
+      '<toc-element topic="authoring.topic"/><toc-element topic="authoring-markdown.md"/><toc-element topic="inspector.topic" toc-title="Inspector XML"/><toc-element topic="inspector-markdown.md" toc-title="Inspector Markdown"/><toc-element topic="inspector-corrections.md"/></instance-profile>',
     ),
   );
   final defaultsFixture = Directory(
@@ -1048,6 +1053,221 @@ class _HarnessState extends ConsumerState<_Harness> {
         ).writeAsString(_source);
         await _native('chord', 'ctrl+shift+1');
       }
+      BusyMarkWritersideProperties inspector() =>
+          _elements((w) => w is BusyMarkWritersideProperties).single.widget
+              as BusyMarkWritersideProperties;
+      BusyMarkComboRow<String> combo(String title) =>
+          _elements(
+                (w) => w is BusyMarkComboRow<String> && w.title == title,
+              ).single.widget
+              as BusyMarkComboRow<String>;
+      Future<void> chooseCombo(String title, String label) async {
+        await _tap(
+          _elements(
+            (w) => w is BusyMarkComboRow<String> && w.title == title,
+          ).single,
+        );
+        _nativeMenuOpen = true;
+        await _tapLabel(label);
+      }
+
+      Future<void> propertyText(String label, String value) async {
+        final entry =
+            _elements(
+                  (w) => w is BusyMarkGroupedTextEntry && w.label == label,
+                ).single.widget
+                as BusyMarkGroupedTextEntry;
+        await _tap(
+          _elements(
+            (w) => w is TextField && w.controller == entry.controller,
+          ).single,
+        );
+        entry.controller!.text = value;
+        await _native('chord', 'ctrl+s');
+        await _until(
+          () => !ref.read(workspaceControllerProvider).activeBuffer!.isDirty,
+          'Focused $label saved',
+        );
+      }
+
+      Future<void> reopenSource() async {
+        final buffer = ref.read(workspaceControllerProvider).activeBuffer!;
+        _check(await controller.saveActive(), 'Correction saves to buffer');
+        _check(
+          await controller.closeDocumentBuffer(buffer.id),
+          'Correction closes document',
+        );
+        await controller.openActiveFile(buffer.filePath!);
+        await _native('chord', 'ctrl+shift+2');
+        await _until(
+          () => _elements((w) => w is BusyMarkSourceEditor).isNotEmpty,
+          'Correction Source reopened',
+        );
+      }
+
+      void sourceCaret(int offset) {
+        ((_elements((w) => w is BusyMarkSourceEditor).single as StatefulElement)
+                    .state
+                as BusyMarkSourceEditorState)
+            .scrollToOffset(offset);
+      }
+
+      await controller.openActiveFile(
+        p.join(widget.root.path, 'topics/inspector.topic'),
+      );
+      await _native('chord', 'ctrl+shift+2');
+      await _pause();
+      inspector().onTargetSelected('@topic');
+      await _pause();
+      for (final choice in [
+        ('all', 'All titled elements'),
+        ('none', 'No navigation'),
+        ('default', 'Use default'),
+      ]) {
+        await chooseCombo('Navigation elements', choice.$2);
+        _check(
+          combo('Navigation elements').selected == choice.$1,
+          'Navigation ${choice.$1} selected after native choice',
+        );
+        await reopenSource();
+        sourceCaret(0);
+        await _pause();
+        inspector().onTargetSelected('@topic');
+        await _pause();
+        _check(
+          combo('Navigation elements').selected == choice.$1,
+          'Navigation ${choice.$1} survives save close reopen',
+        );
+      }
+      await propertyText('Navigation elements', 'chapter,def');
+      await reopenSource();
+      sourceCaret(0);
+      await _pause();
+      inspector().onTargetSelected('@topic');
+      await _pause();
+      _check(
+        combo('Navigation elements').selected == 'custom',
+        'Custom navigation survives reopening',
+      );
+      await _capture('inspector-navigation-reopened');
+      await controller.openActiveFile(
+        p.join(widget.root.path, 'topics/inspector-corrections.md'),
+      );
+      await _native('chord', 'ctrl+shift+1');
+      await _until(
+        () => _elements(
+          (w) =>
+              w is TextField && w.controller?.text == 'Use {id="literal-code"}',
+        ).isNotEmpty,
+        'Literal inline code Editor loaded',
+      );
+      await _type(_field('Use {id="literal-code"}'), 'Try {id="literal-code"}');
+      await _native('chord', 'ctrl+s');
+      await reopenSource();
+      _check(
+        _source.contains('Try `{id="literal-code"}`'),
+        'Ordinary content edit save reopen preserves inline code',
+      );
+      sourceCaret(_source.indexOf('Try'));
+      await _pause();
+      _check(
+        inspector().target!.attributes['id'] == null,
+        'Literal code is not a paragraph ID',
+      );
+      await _capture('inspector-inline-ownership-reopened');
+      sourceCaret(_source.indexOf('Use [') + 1);
+      await _pause();
+      _check(
+        inspector().target!.attributes['id'] == null &&
+            inspector().target!.inlines.any(
+              (i) => i.attributes['id'] == 'owned-link',
+            ),
+        'Trailing link attributes belong only to the link',
+      );
+      sourceCaret(_source.indexOf('- Second'));
+      await _pause();
+      final beforeItemUndo = ref
+          .read(workspaceControllerProvider)
+          .activeBuffer!
+          .editorState
+          .undoState
+          .undo
+          .length;
+      await propertyText('Element ID', 'saved-item');
+      _check(
+        inspector().target!.attributes['id'] == 'saved-item' &&
+            inspector().path.any((b) => b.attributes['element'] == 'list'),
+        'Native item conversion retains inspected item and ancestry',
+      );
+      _check(
+        ref
+                .read(workspaceControllerProvider)
+                .activeBuffer!
+                .editorState
+                .undoState
+                .undo
+                .length ==
+            beforeItemUndo + 1,
+        'Native item property creates exactly one undo operation',
+      );
+      _check(
+        controller.undoActiveBuffer(),
+        'Native item conversion undo succeeds',
+      );
+      await _pause();
+      _check(
+        _source.contains('- Second item') && !_source.contains('<list'),
+        'Undo restores the native list',
+      );
+      _check(
+        controller.redoActiveBuffer(),
+        'Native item conversion redo succeeds',
+      );
+      await _pause();
+      await reopenSource();
+      sourceCaret(_source.indexOf('<li id="saved-item"'));
+      await _pause();
+      _check(
+        inspector().target!.attributes['id'] == 'saved-item',
+        'Item ID survives save close reopen reinspection',
+      );
+      await _capture('inspector-native-item-reopened');
+      sourceCaret(_source.indexOf('- [ ] Unchecked task'));
+      await _pause();
+      await propertyText('Element ID', 'saved-task');
+      await reopenSource();
+      sourceCaret(_source.indexOf('<li id="saved-task"'));
+      await _pause();
+      _check(
+        inspector().target!.kind == BusyBlockKind.taskListItem &&
+            inspector().target!.attributes['task'] == 'false' &&
+            inspector().target!.attributes['id'] == 'saved-task',
+        'Task item ID and unchecked state survive property conversion and reopening',
+      );
+      _check(
+        _source.contains('checked="true"') && !_source.contains(' task='),
+        'Checked sibling survives without projection metadata in source',
+      );
+      await _capture('inspector-task-item-reopened');
+      sourceCaret(_source.indexOf('> A'));
+      await _pause();
+      await propertyText('Element ID', 'saved-note');
+      await reopenSource();
+      sourceCaret(_source.indexOf('> A'));
+      await _pause();
+      _check(
+        inspector().target!.attributes['id'] == 'saved-note' &&
+            inspector().target!.attributes['style'] == 'note',
+        'Native admonition ID and style survive save close reopen',
+      );
+      _check(
+        _source.contains('> A **note**.\n\n{'),
+        'Admonition attributes use the builder-verified blank-line placement',
+      );
+      await _capture('inspector-admonition-reopened');
+      await File(
+        p.join(widget.output.path, 'inspector-corrections.md'),
+      ).writeAsString(_source);
       await controller.openPath('${widget.root.path}-defaults');
       await controller.openActiveFile(
         p.join('${widget.root.path}-defaults', 'topics/properties.topic'),
@@ -1114,6 +1334,35 @@ class _HarnessState extends ConsumerState<_Harness> {
         _source == defaultsSource,
         'Reset removes local override and restores the module default',
       );
+      sourceCaret(_source.indexOf('<deflist id="layout-default"'));
+      await _pause();
+      _check(
+        combo('List layout').selected == '' &&
+            combo('List layout').labelFor('') == 'Use default — Medium (1:2)',
+        'Layout resolves the module medium default',
+      );
+      await _capture('inspector-module-layout-default');
+      await chooseCombo('List layout', 'Wide');
+      await reopenSource();
+      sourceCaret(_source.indexOf('<deflist id="layout-default"'));
+      await _pause();
+      _check(
+        combo('List layout').selected == 'wide' &&
+            combo('List layout').labelFor('') == 'Use default — Medium (1:2)',
+        'Layout override survives reopening and retains module reset label',
+      );
+      await _capture('inspector-module-layout-override');
+      await chooseCombo('List layout', 'Use default — Medium (1:2)');
+      await reopenSource();
+      sourceCaret(_source.indexOf('<deflist id="layout-default"'));
+      await _pause();
+      _check(
+        combo('List layout').selected == '' &&
+            combo('List layout').labelFor('') == 'Use default — Medium (1:2)' &&
+            _source == defaultsSource,
+        'Layout reset removes local override and preserves module default after reopening',
+      );
+      await _capture('inspector-module-layout-reset');
       await controller.saveActive();
       final resize = _elements((w) => w is GestureDetector).firstWhere((e) {
         Element? ancestor = e;
@@ -1148,6 +1397,8 @@ class _HarnessState extends ConsumerState<_Harness> {
             preferredWidth,
         'Native keyboard restores preferred inspector width',
       );
+      sourceCaret(_source.indexOf('<code-block id="code-block-absent"'));
+      await _pause();
       await _tap(
         _elements(
           (w) => w is TextField && w.controller?.text == 'code-block-absent',

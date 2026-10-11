@@ -3449,7 +3449,7 @@
   "wsIdentifier": "Element-ID",
   "wsTldr": "Sammendrag (TLDR)",
   "wsFullLayout": "Full bredde",
-  "wsMediumLayout": "Like kolonner",
+  "wsMediumLayout": "Middels (1:2)",
   "wsNarrowLayout": "Smal termkolonne",
   "wsTitle": "Tittel",
   "wsSwitcherKey": "Byttenøkkel",
@@ -3536,5 +3536,7 @@
   "wsWideLayout": "Bred",
   "wsCodeSourceConflict": "Fjern eller flytt koden før du velger en kildefil. Writerside avviser kodeblokker med både innhold og kildereferanse.",
   "wsInherited": "Arv fra listen",
-  "wsExternalImageSize": "Writerside endrer ikke størrelsen på eksterne bilder pålitelig. Eksisterende mål kan ses og fjernes."
+  "wsExternalImageSize": "Writerside endrer ikke størrelsen på eksterne bilder pålitelig. Eksisterende mål kan ses og fjernes.",
+  "wsPropertiesNotSerialized": "Denne endringen ble ikke skrevet til kilden. Utkastet er beholdt.",
+  "wsListItem": "Listeelement"
 }

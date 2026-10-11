@@ -482,19 +482,65 @@ class MarkdownParser {
     BusyDocument document,
     List<Diagnostic> diagnostics,
   ) {
-    final sourceChunks = document.source == null
+    var sourceChunks = document.source == null
         ? const <_ScannedBlockSource>[]
         : _scannedBlockSources(
             document.filePath,
             document.source!,
             mode: document.mode,
           );
-    final contentBlocks = document.blocks
+    var contentBlocks = document.blocks
         .where(
           (block) =>
               block.kind != BusyBlockKind.frontMatter && !block.isGenerated,
         )
         .toList(growable: false);
+    // A native list attribute line owns the complete list. The existing scanner
+    // supplies item ranges; join just those ranges and their attribute line.
+    final requiredChunks = contentBlocks.fold<int>(
+      0,
+      (count, b) =>
+          count +
+          (b.attributes['busymark-list-form'] == 'markdown'
+              ? b.children.length + 1
+              : 1),
+    );
+    if (requiredChunks == sourceChunks.where((c) => !c.sourceOnly).length) {
+      final merged = <_ScannedBlockSource>[];
+      final positioned = <BusyBlock>[];
+      var cursor = 0;
+      for (final block in contentBlocks) {
+        while (cursor < sourceChunks.length &&
+            sourceChunks[cursor].sourceOnly) {
+          merged.add(sourceChunks[cursor++]);
+        }
+        if (block.attributes['busymark-list-form'] != 'markdown') {
+          merged.add(sourceChunks[cursor++]);
+          positioned.add(block);
+          continue;
+        }
+        final first = sourceChunks[cursor];
+        final children = <BusyBlock>[];
+        for (final item in block.children) {
+          children.add(
+            _blockWithScannedSourceMetadata(item, sourceChunks[cursor++]),
+          );
+        }
+        final last = sourceChunks[cursor++];
+        merged.add(
+          _ScannedBlockSource.fromOffsets(
+            filePath: document.filePath,
+            source: document.source!,
+            startOffset: first.span.startOffset,
+            endOffset: last.span.endOffset,
+          ),
+        );
+        positioned.add(block.copyWith(children: children));
+      }
+      merged.addAll(sourceChunks.skip(cursor));
+      sourceChunks = merged;
+      contentBlocks = positioned;
+    }
     final generatedBlocks = document.blocks
         .where((block) => block.isGenerated)
         .toList(growable: false);
@@ -1012,6 +1058,19 @@ class MarkdownParser {
           break;
         }
         index += 1;
+      }
+      if (mode == MarkdownMode.writersideMarkdown && startsWithBlockquote) {
+        var attributeIndex = index;
+        while (attributeIndex < indexedLines.length &&
+            indexedLines[attributeIndex].trimmed.isEmpty) {
+          attributeIndex++;
+        }
+        if (attributeIndex < indexedLines.length &&
+            _isWritersideCodeAttributeLine(
+              indexedLines[attributeIndex].trimmed,
+            )) {
+          index = attributeIndex + 1;
+        }
       }
       addChunk(startIndex, index);
     }

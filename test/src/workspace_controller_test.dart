@@ -97,6 +97,19 @@ void main() {
       final live = controller.state.activeBuffer!;
       expect(
         controller.applyInspectorSource(
+          bufferId: live.id,
+          revision: live.revision,
+          expectedSource: live.text,
+          source: live.text,
+          requiresSourceChange: true,
+        ),
+        isFalse,
+        reason:
+            'An intended semantic change lost by serialization must not succeed',
+      );
+
+      expect(
+        controller.applyInspectorSource(
           bufferId: buffer.id,
           revision: buffer.revision,
           expectedSource: buffer.text,

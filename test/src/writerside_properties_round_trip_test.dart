@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_document_controller.dart';
 import 'package:busymark/src/markdown/busymark_document.dart';
 import 'package:busymark/src/markdown/markdown_model.dart';
@@ -16,11 +18,252 @@ BusyDocument parse(String source) => const MarkdownParser()
 
 void main() {
   test(
+    'list-item properties under Markdown chapters use physical list ownership',
+    () {
+      const source =
+          '# Topic\n\n## Chapter\n\n- First **item**\n- Second item\n\nAfter.\n';
+      final c = BusyMarkWysiwygDocumentController(document: parse(source));
+      addTearDown(c.dispose);
+      final target = c.document.blocks.firstWhere(
+        (b) => b.plainText == 'Second item',
+      );
+      expect(c.updateWritersideProperty(target.id, 'id', 'second'), isTrue);
+      expect(c.markdown, startsWith('# Topic\n\n## Chapter\n\n'));
+      expect(c.markdown, endsWith('\n\nAfter.\n'));
+      final reopened = parse(c.markdown);
+      final list = reopened.blocks.firstWhere(
+        (b) => b.attributes['element'] == 'list',
+      );
+      final item = list.children
+          .where((b) => b.attributes['element'] == 'li')
+          .last;
+      expect(item.attributes['id'], 'second');
+      final next = BusyMarkWysiwygDocumentController(document: reopened);
+      addTearDown(next.dispose);
+      expect(
+        next.elementPath(item.id).map((b) => b.plainText),
+        contains('Chapter'),
+      );
+    },
+  );
+  test(
+    'native list attribute line belongs to the list and remains native',
+    () async {
+      const source =
+          '- One\n- Two\n\n{id="whole-list" instance="web"}\n\nAfter.\n';
+      final c = BusyMarkWysiwygDocumentController(document: parse(source));
+      addTearDown(c.dispose);
+      final list = c.document.blocks.first;
+      expect(list.attributes['element'], 'list');
+      expect(list.attributes['id'], 'whole-list');
+      expect(list.children, hasLength(2));
+      expect(list.children.every((b) => b.attributes['id'] == null), isTrue);
+      expect(c.markdown, source);
+      expect(c.updateWritersideProperty(list.id, 'id', 'saved-list'), isTrue);
+      expect(c.updateWritersideProperty(list.id, 'filter', 'release'), isTrue);
+      expect(c.markdown, isNot(contains('<list')));
+      final file = await File(
+        '${(await Directory.systemTemp.createTemp('whole-list-')).path}/saved.md',
+      ).writeAsString(c.markdown);
+      addTearDown(() => file.parent.delete(recursive: true));
+      final reopened = parse(await file.readAsString());
+      expect(reopened.blocks.first.attributes['id'], 'saved-list');
+      expect(reopened.blocks.first.attributes['filter'], 'release');
+      expect(reopened.blocks.first.children, hasLength(2));
+      expect(reopened.blocks.last.plainText, 'After.');
+      expect(
+        c.updateWritersideProperty(list.children.last.id, 'id', 'item-two'),
+        isTrue,
+      );
+      final xmlList = parse(c.markdown).blocks.first;
+      expect(xmlList.attributes['id'], 'saved-list');
+      expect(xmlList.attributes['instance'], 'web');
+      expect(
+        xmlList.children
+            .where((b) => b.attributes['element'] == 'li')
+            .last
+            .attributes['id'],
+        'item-two',
+      );
+      expect(c.markdown, endsWith('After.\n'));
+    },
+  );
+  test(
+    'paragraph attribute ownership survives content editing and reopening',
+    () async {
+      final directory = await Directory.systemTemp.createTemp(
+        'paragraph-ownership-',
+      );
+      addTearDown(() => directory.delete(recursive: true));
+      for (final source in [
+        'Use `{id="example"}`\n',
+        'Use \\{id="example"\\}\n',
+        'Use \\{id="example"}\n',
+        'Use &#123;id="example"}\n',
+        'Use \\{x.y="example"}\n',
+        'Use [**link**](guide.md){id="example"}\n',
+        'Use ![Logo](logo.png){id="example" width="24"}\n',
+      ]) {
+        final c = BusyMarkWysiwygDocumentController(document: parse(source));
+        addTearDown(c.dispose);
+        final paragraph = c.document.blocks.first;
+        expect(paragraph.attributes['id'], isNull, reason: source);
+        c.updateBlockText(
+          paragraph.id,
+          paragraph.plainText.replaceFirst('Use', 'Try'),
+        );
+        final file = File('${directory.path}/edited.md');
+        await file.writeAsString(c.markdown);
+        final reopened = parse(await file.readAsString()).blocks.first;
+        expect(reopened.attributes['id'], isNull, reason: c.markdown);
+        expect(
+          reopened.plainText,
+          paragraph.plainText.replaceFirst('Use', 'Try'),
+        );
+        if (source.contains('`')) {
+          expect(reopened.inlines.last.kind, BusyInlineKind.code);
+          expect(reopened.inlines.last.text, '{id="example"}');
+        }
+        if (source.contains('](')) {
+          final reference = busyInlineReferenceRanges(reopened.inlines)
+              .firstWhere(
+                (r) =>
+                    r.kind ==
+                    (source.contains('![')
+                        ? BusyInlineKind.image
+                        : BusyInlineKind.link),
+              );
+          expect(reference.attributes['id'], 'example');
+        }
+      }
+    },
+  );
+  test('native list item properties belong to the item after saving', () async {
+    final directory = await Directory.systemTemp.createTemp('list-properties-');
+    addTearDown(() => directory.delete(recursive: true));
+    final c = BusyMarkWysiwygDocumentController(
+      document: parse('- First **item**\n- Second item\n'),
+    );
+    addTearDown(c.dispose);
+    final target = c.document.blocks[1];
+    expect(c.updateWritersideProperty(target.id, 'id', 'second'), isTrue);
+    expect(c.updateWritersideProperty(target.id, 'filter', 'release'), isTrue);
+    final file = File('${directory.path}/list.md');
+    await file.writeAsString(c.markdown);
+    final reopened = parse(await file.readAsString());
+    final list = reopened.blocks.first;
+    expect(list.attributes['element'], 'list');
+    expect(list.attributes['id'], isNull);
+    final items = list.children
+        .where((b) => b.attributes['element'] == 'li')
+        .toList();
+    expect(items.first.attributes['id'], isNull);
+    expect(items[1].attributes['id'], 'second', reason: c.markdown);
+    expect(items[1].attributes['filter'], 'release');
+    expect(
+      items.first.children.where((b) => !b.isSourceOnly).first.plainText,
+      contains('First item'),
+    );
+    expect(c.updateWritersideProperty(target.id, 'id', null), isTrue);
+    expect(
+      parse(c.markdown).blocks.first.children
+          .where((b) => b.attributes['element'] == 'li')
+          .last
+          .attributes['id'],
+      isNull,
+    );
+  });
+  test(
+    'task item overrides preserve checks through XML and later edits',
+    () async {
+      final directory = await Directory.systemTemp.createTemp(
+        'task-properties-',
+      );
+      addTearDown(() => directory.delete(recursive: true));
+      final c = BusyMarkWysiwygDocumentController(
+        document: parse('- [x] Checked **item**\n- [ ] Unchecked item\n'),
+      );
+      addTearDown(c.dispose);
+      final target = c.document.blocks.last;
+      expect(c.updateWritersideProperty(target.id, 'id', 'task-item'), isTrue);
+      expect(c.updateWritersideProperty(target.id, 'instance', 'web'), isTrue);
+      final file = File('${directory.path}/tasks.md');
+      await file.writeAsString(c.markdown);
+      final reopened = parse(await file.readAsString());
+      final items = reopened.blocks.first.children
+          .where((b) => b.attributes['element'] == 'li')
+          .toList();
+      expect(
+        items.map((b) => b.kind),
+        everyElement(BusyBlockKind.taskListItem),
+      );
+      expect(items.first.attributes['task'], 'true');
+      expect(items.last.attributes['task'], 'false');
+      expect(items.last.attributes['id'], 'task-item');
+      expect(items.last.attributes['instance'], 'web');
+      expect(c.markdown, isNot(contains(' task=')));
+      final next = BusyMarkWysiwygDocumentController(document: reopened);
+      addTearDown(next.dispose);
+      expect(
+        next.updateWritersideProperty(items.last.id, 'id', 'updated-task'),
+        isTrue,
+      );
+      next.toggleTaskChecked([items.last.id]);
+      expect(
+        parse(next.markdown).blocks.first.children
+            .where((b) => b.attributes['element'] == 'li')
+            .last
+            .attributes['task'],
+        'true',
+      );
+      expect(next.markdown, contains('id="updated-task"'));
+      expect(
+        next.updateWritersideProperty(items.last.id, 'checked', 'false'),
+        isTrue,
+      );
+      expect(next.blockById(items.last.id)!.attributes['task'], 'false');
+      expect(
+        next.updateWritersideProperty(items.last.id, 'checked', 'invalid'),
+        isFalse,
+      );
+      await file.writeAsString(next.markdown);
+      expect(
+        parse(await file.readAsString()).blocks.first.children
+            .where((b) => b.attributes['element'] == 'li')
+            .last
+            .attributes['checked'],
+        'false',
+      );
+    },
+  );
+  test('native admonition properties survive edits save and reopen', () async {
+    final directory = await Directory.systemTemp.createTemp(
+      'admonition-properties-',
+    );
+    addTearDown(() => directory.delete(recursive: true));
+    final c = BusyMarkWysiwygDocumentController(
+      document: parse('> A **note**.\n{style="note"}\n'),
+    );
+    addTearDown(c.dispose);
+    final block = c.document.blocks.first;
+    expect(c.updateWritersideProperty(block.id, 'id', 'note-id'), isTrue);
+    expect(c.updateWritersideProperty(block.id, 'filter', 'release'), isTrue);
+    final file = File('${directory.path}/note.md');
+    await file.writeAsString(c.markdown);
+    final reopened = parse(await file.readAsString()).blocks.first;
+    expect(reopened.attributes['id'], 'note-id');
+    expect(reopened.attributes['filter'], 'release');
+    expect(reopened.attributes['style'], 'note', reason: c.markdown);
+    expect(c.updateWritersideProperty(block.id, 'id', null), isTrue);
+    expect(parse(c.markdown).blocks.first.attributes['id'], isNull);
+  });
+  test(
     'native heading and paragraph attributes cannot replace projection metadata',
     () {
       for (final source in [
         '## Heading {level="6" element="topic" id="before"}\n',
         'Paragraph {element="topic" language="opaque" id="before"}\n',
+        'Paragraph {x.y="opaque" id="before"}\n',
       ]) {
         final c = BusyMarkWysiwygDocumentController(document: parse(source));
         final block = c.document.blocks.first;
@@ -31,12 +274,16 @@ void main() {
         expect(c.updateWritersideProperty(block.id, 'id', 'after'), isTrue);
         expect(c.markdown, source.replaceFirst('id="before"', 'id="after"'));
         c.updateBlockText(block.id, 'Changed');
-        expect(c.markdown, contains('element="topic"'));
+        if (source.contains('element=')) {
+          expect(c.markdown, contains('element="topic"'));
+        }
         if (block.kind == BusyBlockKind.heading) {
           expect(c.markdown, startsWith('## Changed'));
           expect(c.markdown, contains('level="6"'));
-        } else {
+        } else if (source.contains('language=')) {
           expect(c.markdown, contains('language="opaque"'));
+        } else {
+          expect(c.markdown, contains('x.y="opaque"'));
         }
       }
     },

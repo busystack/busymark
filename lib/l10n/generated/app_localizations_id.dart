@@ -4877,7 +4877,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get wsFullLayout => 'Lebar penuh';
 
   @override
-  String get wsMediumLayout => 'Kolom seimbang';
+  String get wsMediumLayout => 'Sedang (1:2)';
 
   @override
   String get wsNarrowLayout => 'Kolom istilah sempit';
@@ -5145,4 +5145,11 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get wsExternalImageSize =>
       'Writerside tidak mengatur ukuran gambar eksternal dengan andal. Ukuran yang ada dapat dilihat dan dihapus.';
+
+  @override
+  String get wsPropertiesNotSerialized =>
+      'Perubahan ini tidak diterapkan ke sumber. Draf tetap disimpan.';
+
+  @override
+  String get wsListItem => 'Item daftar';
 }

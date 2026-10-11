@@ -276,6 +276,13 @@ class BusyMarkMarkdownSerializer {
       return const WritersideEditingAdapter().serializeMarkdownElement(block);
     }
     if (busyMarkIsWritersideContainer(block)) {
+      if (block.attributes['busymark-list-form'] == 'markdown') {
+        final attributes = WritersideEditingAdapter.sourceAttributes(block);
+        final content = block.children.map(serializeBlock).join('\n');
+        return attributes.isEmpty
+            ? content
+            : '$content\n\n{${attributes.entries.map((a) => '${a.key}="${_attribute(a.value)}"').join(' ')}}';
+      }
       if (block.attributes['busymark-definition-form'] == 'markdown') {
         final attrs = WritersideEditingAdapter.sourceAttributes(block);
         final prefix = attrs.isEmpty
@@ -555,9 +562,11 @@ class BusyMarkMarkdownSerializer {
         '${opening[1]}${opening[2]}$language',
       );
     }
-    final suffix = RegExp(
-      r'\{(?:\s*[\w:.-]+\s*=\s*"[^"]*"\s*)+\}\s*$',
-    ).firstMatch(source);
+    final suffix = authored == null
+        ? null
+        : RegExp(
+            r'\{(?:\s*[\w:.-]+\s*=\s*"[^"]*"\s*)+\}\s*$',
+          ).firstMatch(source);
     var attributes = suffix == null
         ? ''
         : source.substring(suffix.start + 1, source.lastIndexOf('}'));
@@ -583,6 +592,12 @@ class BusyMarkMarkdownSerializer {
     }
     final ending = attributes.trim().isEmpty ? '' : '{${attributes.trim()}}';
     if (suffix != null) {
+      if (block.kind == BusyBlockKind.blockquote) {
+        final content = source.substring(0, suffix.start).trimRight();
+        final newline =
+            block.attributes['busymark-property-line-ending'] ?? '\n';
+        return ending.isEmpty ? content : '$content$newline$newline$ending';
+      }
       return source
           .replaceRange(suffix.start, source.length, ending)
           .trimRight();
@@ -590,6 +605,8 @@ class BusyMarkMarkdownSerializer {
     if (ending.isEmpty) return source;
     return '$source${block.kind == BusyBlockKind.image
         ? ''
+        : block.kind == BusyBlockKind.blockquote
+        ? '${block.attributes['busymark-property-line-ending'] ?? '\n'}${block.attributes['busymark-property-line-ending'] ?? '\n'}'
         : block.kind == BusyBlockKind.heading
         ? ' '
         : block.attributes['busymark-property-line-ending'] ?? '\n'}$ending';
@@ -779,11 +796,16 @@ class BusyMarkMarkdownSerializer {
     final style =
         busyAdmonitionStyleFromName(block.attributes['style']) ??
         BusyAdmonitionStyle.tip;
-    if (style == BusyAdmonitionStyle.tip) {
-      return quote;
-    }
-    final attribute = '{style="${style.name}"}';
-    return quote.isEmpty ? attribute : '$quote\n$attribute';
+    final attributes = WritersideEditingAdapter.sourceAttributes(block);
+    attributes.remove('style');
+    if (style != BusyAdmonitionStyle.tip) attributes['style'] = style.name;
+    if (attributes.isEmpty) return quote;
+    final attribute =
+        '{${attributes.entries.map((e) => '${e.key}="${_attribute(e.value)}"').join(' ')}}';
+    final separator = attributes.keys.any((name) => name != 'style')
+        ? '\n\n'
+        : '\n';
+    return quote.isEmpty ? attribute : '$quote$separator$attribute';
   }
 
   String _withInlineReferenceAttributes(BusyInline inline, String source) {
@@ -1504,6 +1526,11 @@ class BusyMarkMarkdownSerializer {
       final unit = value.codeUnitAt(index);
       if (index >= literalPrefixLength &&
           (_inlineSyntaxCharacters.contains(unit) ||
+              (unit == 0x7b &&
+                  RegExp(
+                        r'''\{\s*[\w:.-]+\s*=\s*(?:"[^"\n]*"|'[^'\n]*')''',
+                      ).matchAsPrefix(value, index) !=
+                      null) ||
               (escapeTrailingBang &&
                   unit == 0x21 &&
                   index == value.length - 1) ||
@@ -1639,6 +1666,11 @@ class BusyMarkMarkdownSerializer {
       final unit = value.codeUnitAt(index);
       if (index >= literalPrefixLength &&
           (_inlineSyntaxCharacters.contains(unit) ||
+              (unit == 0x7b &&
+                  RegExp(
+                        r'''\{\s*[\w:.-]+\s*=\s*(?:"[^"\n]*"|'[^'\n]*')''',
+                      ).matchAsPrefix(value, index) !=
+                      null) ||
               (escapeTrailingBang &&
                   unit == 0x21 &&
                   index == value.length - 1) ||

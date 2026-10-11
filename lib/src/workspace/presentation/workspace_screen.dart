@@ -13296,8 +13296,17 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
           source: target.source,
           document: controller.document,
           blockId: resultingId ?? target.block?.id,
-        ).address;
+        ).semanticAddress;
         final source = controller.markdown;
+        final requiresSourceChange = !target.hasSameAuthoredState(
+          controller.document,
+        );
+        if (requiresSourceChange && source == target.source) {
+          return _propertyEdits.reject(
+            WritersidePropertyRejection.invalid,
+            context.l10n.wsPropertiesNotSerialized,
+          );
+        }
         final accepted = ref
             .read(workspaceControllerProvider.notifier)
             .applyInspectorSource(
@@ -13305,6 +13314,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
               revision: target.revision,
               expectedSource: target.source,
               source: source,
+              requiresSourceChange: requiresSourceChange,
             );
         if (!accepted) {
           return _propertyEdits.reject(WritersidePropertyRejection.stale);
@@ -13315,16 +13325,17 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
           final next = ref.read(workspaceControllerProvider).activeBuffer!;
           if (document != null) {
             final ordinal = editedAddress;
-            var siblings = document.blocks;
+            var siblings = document.blocks
+                .where((b) => !b.isSourceOnly)
+                .toList();
             BusyBlock? block;
-            siblings = document.blocks;
             for (final i in ordinal) {
               if (i >= siblings.length) {
                 block = null;
                 break;
               }
               block = siblings[i];
-              siblings = block.children;
+              siblings = block.children.where((b) => !b.isSourceOnly).toList();
             }
             _inspected = target.topic && target.block == null
                 ? WritersideInspectorTarget.fromTopic(

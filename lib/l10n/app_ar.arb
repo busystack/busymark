@@ -3449,7 +3449,7 @@
   "wsIdentifier": "معرّف العنصر",
   "wsTldr": "ملخّص (TLDR)",
   "wsFullLayout": "عرض كامل",
-  "wsMediumLayout": "أعمدة متساوية",
+  "wsMediumLayout": "متوسط (1:2)",
   "wsNarrowLayout": "مصطلح ضيق",
   "wsTitle": "العنوان",
   "wsSwitcherKey": "مفتاح المبدّل",
@@ -3536,5 +3536,7 @@
   "wsWideLayout": "عريض",
   "wsCodeSourceConflict": "أزل الشفرة المضمّنة أو انقلها قبل تحديد ملف مصدر. يرفض Writerside كتلة شفرة غير فارغة ذات مرجع مصدر.",
   "wsInherited": "وراثة من القائمة",
-  "wsExternalImageSize": "لا يحدد Writerside أبعاد الصور الخارجية بشكل موثوق. يمكنك فحص الأبعاد الحالية وإزالتها."
+  "wsExternalImageSize": "لا يحدد Writerside أبعاد الصور الخارجية بشكل موثوق. يمكنك فحص الأبعاد الحالية وإزالتها.",
+  "wsPropertiesNotSerialized": "لم يُطبّق هذا التغيير على المصدر. تم الاحتفاظ بالمسودة.",
+  "wsListItem": "عنصر قائمة"
 }

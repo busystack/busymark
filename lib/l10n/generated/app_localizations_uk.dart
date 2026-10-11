@@ -4946,7 +4946,7 @@ class AppLocalizationsUk extends AppLocalizations {
   String get wsFullLayout => 'Повна ширина';
 
   @override
-  String get wsMediumLayout => 'Рівні стовпці';
+  String get wsMediumLayout => 'Середній (1:2)';
 
   @override
   String get wsNarrowLayout => 'Вузький стовпець терміна';
@@ -5215,4 +5215,11 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get wsExternalImageSize =>
       'Writerside ненадійно задає розміри зовнішніх зображень. Наявні розміри можна переглянути та видалити.';
+
+  @override
+  String get wsPropertiesNotSerialized =>
+      'Цю зміну не записано у вихідний текст. Чернетку збережено.';
+
+  @override
+  String get wsListItem => 'Елемент списку';
 }

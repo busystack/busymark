@@ -21,6 +21,11 @@ String writersideElementLabel(BuildContext context, BusyBlock block) =>
       'tab' => context.l10n.tab,
       'deflist' => context.l10n.wsDefinitionList,
       'def' => context.l10n.wsTerm,
+      'list' =>
+        block.attributes['type'] == 'decimal'
+            ? context.l10n.orderedList
+            : context.l10n.unorderedList,
+      'li' => context.l10n.wsListItem,
       'tldr' => context.l10n.wsTldr,
       'img' => context.l10n.image,
       'table' => context.l10n.table,
@@ -36,6 +41,9 @@ String writersideElementLabel(BuildContext context, BusyBlock block) =>
         BusyBlockKind.image => context.l10n.image,
         BusyBlockKind.table => context.l10n.table,
         BusyBlockKind.codeBlock => context.l10n.codeBlock,
+        BusyBlockKind.unorderedListItem ||
+        BusyBlockKind.orderedListItem ||
+        BusyBlockKind.taskListItem => context.l10n.wsListItem,
         BusyBlockKind.blockquote ||
         BusyBlockKind.writersideAdmonition => context.l10n.admonition,
         _ => context.l10n.paragraph,
@@ -222,6 +230,11 @@ class BusyMarkWritersideProperties extends StatelessWidget {
                               'inherited' => l.wsInherited,
                               'true' => l.wsEnabled,
                               'false' => l.wsDisabled,
+                              'full' => l.wsFullLayout,
+                              'medium' => l.wsMediumLayout,
+                              'narrow' => l.wsNarrowLayout,
+                              'compact' => l.wsCompactLayout,
+                              'wide' => l.wsWideLayout,
                               _ => defaultProperty.value!,
                             }}'
                     : switch (v) {
@@ -229,6 +242,11 @@ class BusyMarkWritersideProperties extends StatelessWidget {
                         'collapsed' => l.wsCollapsed,
                         'true' => l.wsEnabled,
                         'false' => l.wsDisabled,
+                        'full' => l.wsFullLayout,
+                        'medium' => l.wsMediumLayout,
+                        'narrow' => l.wsNarrowLayout,
+                        'compact' => l.wsCompactLayout,
+                        'wide' => l.wsWideLayout,
                         _ => v,
                       },
                 onSelected: (v) {
@@ -410,7 +428,7 @@ class BusyMarkWritersideProperties extends StatelessWidget {
               ? 'default'
               : navigation.attributes['for'] == 'none'
               ? 'none'
-              : navigation.attributes.isEmpty
+              : WritersideEditingAdapter.sourceAttributes(navigation).isEmpty
               ? 'all'
               : 'custom',
           enabled: !immutable && navigationEditable,
@@ -529,31 +547,7 @@ class BusyMarkWritersideProperties extends StatelessWidget {
         rows.add(entry('preview-src', l.videoPreview));
       }
       if (tag == 'deflist') {
-        final value = attrs['type'] ?? '';
-        final allowed = WritersideSchema.valuesFor('deflist', 'type').toList();
-        rows.add(
-          BusyMarkComboRow<String>(
-            title: l.wsListLayout,
-            values: [
-              '',
-              ...allowed,
-              if (value.isNotEmpty && !allowed.contains(value)) value,
-            ],
-            enabled: !immutable,
-            selected: value,
-            labelFor: (v) => switch (v) {
-              '' => '${l.wsUseDefault} — ${l.wsFullLayout}',
-              'full' => l.wsFullLayout,
-              'medium' => l.wsMediumLayout,
-              'narrow' => l.wsNarrowLayout,
-              'compact' => l.wsCompactLayout,
-              'wide' => l.wsWideLayout,
-              _ => v,
-            },
-            onSelected: (v) => onProperty('type', v.isEmpty ? null : v),
-            width: 110,
-          ),
-        );
+        rows.add(enumRow('type', l.wsListLayout));
       }
       if (tag == 'tabs') rows.add(entry('group', l.wsSyncGroup));
       if (tag == 'tab') rows.add(entry('group-key', l.wsTabKey));

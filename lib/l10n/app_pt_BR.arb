@@ -3449,7 +3449,7 @@
   "wsIdentifier": "ID do elemento",
   "wsTldr": "Resumo (TLDR)",
   "wsFullLayout": "Largura total",
-  "wsMediumLayout": "Colunas iguais",
+  "wsMediumLayout": "Médio (1:2)",
   "wsNarrowLayout": "Coluna de termo estreita",
   "wsTitle": "Título",
   "wsSwitcherKey": "Chave do seletor",
@@ -3536,5 +3536,7 @@
   "wsWideLayout": "Largo",
   "wsCodeSourceConflict": "Remova ou mova o código antes de escolher um arquivo fonte. Writerside rejeita blocos não vazios com referência à fonte.",
   "wsInherited": "Herdar da lista",
-  "wsExternalImageSize": "Writerside não dimensiona imagens externas de forma confiável. As dimensões existentes podem ser consultadas e removidas."
+  "wsExternalImageSize": "Writerside não dimensiona imagens externas de forma confiável. As dimensões existentes podem ser consultadas e removidas.",
+  "wsPropertiesNotSerialized": "Esta alteração não foi aplicada ao código fonte. O rascunho foi mantido.",
+  "wsListItem": "Item da lista"
 }

@@ -8295,7 +8295,7 @@ abstract class AppLocalizations {
   /// No description provided for @wsMediumLayout.
   ///
   /// In en, this message translates to:
-  /// **'Equal columns'**
+  /// **'Medium (1:2)'**
   String get wsMediumLayout;
 
   /// No description provided for @wsNarrowLayout.
@@ -8807,6 +8807,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Writerside does not reliably size externally hosted images. Existing dimensions can be inspected and removed.'**
   String get wsExternalImageSize;
+
+  /// No description provided for @wsPropertiesNotSerialized.
+  ///
+  /// In en, this message translates to:
+  /// **'This change did not reach the source. The draft has been retained.'**
+  String get wsPropertiesNotSerialized;
+
+  /// No description provided for @wsListItem.
+  ///
+  /// In en, this message translates to:
+  /// **'List item'**
+  String get wsListItem;
 }
 
 class _AppLocalizationsDelegate

@@ -1,4 +1,5 @@
 import 'package:busymark/src/editor/wysiwyg/writerside_editing_adapter.dart';
+import 'package:busymark/src/editor/wysiwyg/wysiwyg_document_controller.dart';
 import 'package:busymark/src/editor/wysiwyg/writerside_inspector_target.dart';
 import 'package:busymark/src/editor/wysiwyg/writerside_property_session.dart';
 import 'package:busymark/src/markdown/markdown_model.dart';
@@ -11,6 +12,84 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  test(
+    'authored-state comparison distinguishes no-ops and serialization loss',
+    () {
+      const source =
+          '<topic id="t" title="Topic"><show-structure/><p>Body</p></topic>';
+      final doc = const WritersideEditingAdapter().parseXml(
+        filePath: 't.topic',
+        source: source,
+      )!;
+      final target = WritersideInspectorTarget.fromTopic(
+        bufferId: 'b',
+        revision: 1,
+        source: source,
+        document: doc,
+      );
+      final c = BusyMarkWysiwygDocumentController(document: doc);
+      addTearDown(c.dispose);
+      expect(
+        c.resetTopicNavigation() && c.updateTopicNavigation('for', ''),
+        isTrue,
+      );
+      expect(target.hasSameAuthoredState(c.document), isTrue);
+      expect(c.updateTopicNavigation('for', 'none'), isTrue);
+      expect(target.hasSameAuthoredState(c.document), isFalse);
+      final paragraph = c.document.blocks.first.children.firstWhere(
+        (b) => b.kind == BusyBlockKind.paragraph,
+      );
+      expect(c.updateWritersideProperty(paragraph.id, 'id', 'body'), isTrue);
+      expect(target.hasSameAuthoredState(c.document), isFalse);
+    },
+  );
+  test(
+    'semantic target address survives XML whitespace after native item conversion',
+    () {
+      const source = '# Topic\n\n- One\n- Two\n';
+      final doc = const MarkdownParser()
+          .parse(
+            filePath: 't.md',
+            source: source,
+            mode: MarkdownMode.writersideMarkdown,
+          )
+          .busyDocument;
+      final c = BusyMarkWysiwygDocumentController(document: doc);
+      addTearDown(c.dispose);
+      final item = c.document.blocks.firstWhere((b) => b.plainText == 'Two');
+      expect(c.updateWritersideProperty(item.id, 'id', 'two'), isTrue);
+      final before = WritersideInspectorTarget.fromSelection(
+        bufferId: 'b',
+        revision: 1,
+        source: source,
+        document: c.document,
+        blockId: item.id,
+      );
+      final saved = c.markdown;
+      final reopened = const MarkdownParser()
+          .parse(
+            filePath: 't.md',
+            source: saved,
+            mode: MarkdownMode.writersideMarkdown,
+          )
+          .busyDocument;
+      final list = reopened.blocks.firstWhere(
+        (b) => b.attributes['element'] == 'list',
+      );
+      final second = list.children.firstWhere(
+        (b) => b.attributes['id'] == 'two',
+      );
+      final after = WritersideInspectorTarget.fromSelection(
+        bufferId: 'b',
+        revision: 2,
+        source: saved,
+        document: reopened,
+        blockId: second.id,
+      );
+      expect(before.semanticAddress, after.semanticAddress);
+      expect(before.address, isNot(after.address));
+    },
+  );
   test(
     'unchanged buffer generation does not authorize another inspected element',
     () {

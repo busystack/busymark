@@ -3449,7 +3449,7 @@
   "wsIdentifier": "ID elemento",
   "wsTldr": "Riepilogo (TLDR)",
   "wsFullLayout": "Larghezza piena",
-  "wsMediumLayout": "Colonne uguali",
+  "wsMediumLayout": "Medio (1:2)",
   "wsNarrowLayout": "Termine stretto",
   "wsTitle": "Titolo",
   "wsSwitcherKey": "Chiave del selettore",
@@ -3536,5 +3536,7 @@
   "wsWideLayout": "Largo",
   "wsCodeSourceConflict": "Rimuovi o sposta il codice prima di scegliere un file sorgente. Writerside rifiuta blocchi non vuoti con un riferimento sorgente.",
   "wsInherited": "Eredita dall’elenco",
-  "wsExternalImageSize": "Writerside non dimensiona in modo affidabile le immagini esterne. Le dimensioni esistenti possono essere consultate e rimosse."
+  "wsExternalImageSize": "Writerside non dimensiona in modo affidabile le immagini esterne. Le dimensioni esistenti possono essere consultate e rimosse.",
+  "wsPropertiesNotSerialized": "Questa modifica non è stata applicata al sorgente. La bozza è stata conservata.",
+  "wsListItem": "Elemento elenco"
 }

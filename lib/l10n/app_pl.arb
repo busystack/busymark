@@ -3475,7 +3475,7 @@
   "wsIdentifier": "Identyfikator elementu",
   "wsTldr": "Podsumowanie (TLDR)",
   "wsFullLayout": "Pełna szerokość",
-  "wsMediumLayout": "Równe kolumny",
+  "wsMediumLayout": "Średni (1:2)",
   "wsNarrowLayout": "Wąska kolumna terminu",
   "wsTitle": "Tytuł",
   "wsSwitcherKey": "Klucz przełącznika",
@@ -3562,5 +3562,7 @@
   "wsWideLayout": "Szeroki",
   "wsCodeSourceConflict": "Usuń lub przenieś kod przed wybraniem pliku źródłowego. Writerside odrzuca niepuste bloki kodu z odwołaniem do źródła.",
   "wsInherited": "Dziedzicz z listy",
-  "wsExternalImageSize": "Writerside nie ustawia niezawodnie rozmiaru obrazów zewnętrznych. Istniejące wymiary można sprawdzić i usunąć."
+  "wsExternalImageSize": "Writerside nie ustawia niezawodnie rozmiaru obrazów zewnętrznych. Istniejące wymiary można sprawdzić i usunąć.",
+  "wsPropertiesNotSerialized": "Ta zmiana nie została zapisana w źródle. Wersja robocza została zachowana.",
+  "wsListItem": "Element listy"
 }

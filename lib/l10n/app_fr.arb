@@ -3449,7 +3449,7 @@
   "wsIdentifier": "ID de l’élément",
   "wsTldr": "Résumé (TLDR)",
   "wsFullLayout": "Pleine largeur",
-  "wsMediumLayout": "Colonnes égales",
+  "wsMediumLayout": "Moyen (1:2)",
   "wsNarrowLayout": "Terme étroit",
   "wsTitle": "Titre",
   "wsSwitcherKey": "Clé du sélecteur",
@@ -3536,5 +3536,7 @@
   "wsWideLayout": "Large",
   "wsCodeSourceConflict": "Supprimez ou déplacez le code avant de choisir un fichier source. Writerside refuse les blocs non vides avec une référence source.",
   "wsInherited": "Hériter de la liste",
-  "wsExternalImageSize": "Writerside ne dimensionne pas de manière fiable les images externes. Les dimensions existantes restent consultables et supprimables."
+  "wsExternalImageSize": "Writerside ne dimensionne pas de manière fiable les images externes. Les dimensions existantes restent consultables et supprimables.",
+  "wsPropertiesNotSerialized": "Cette modification n’a pas été appliquée à la source. Le brouillon a été conservé.",
+  "wsListItem": "Élément de liste"
 }

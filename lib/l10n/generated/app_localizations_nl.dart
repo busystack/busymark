@@ -4925,7 +4925,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get wsFullLayout => 'Volledige breedte';
 
   @override
-  String get wsMediumLayout => 'Gelijke kolommen';
+  String get wsMediumLayout => 'Gemiddeld (1:2)';
 
   @override
   String get wsNarrowLayout => 'Smalle begripskolom';
@@ -5196,4 +5196,11 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get wsExternalImageSize =>
       'Writerside past het formaat van externe afbeeldingen niet betrouwbaar aan. Bestaande maten kunnen worden bekeken en verwijderd.';
+
+  @override
+  String get wsPropertiesNotSerialized =>
+      'Deze wijziging is niet in de bron verwerkt. Het concept is behouden.';
+
+  @override
+  String get wsListItem => 'Lijstitem';
 }

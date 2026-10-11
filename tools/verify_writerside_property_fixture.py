@@ -36,6 +36,15 @@ class Elements(HTMLParser):
                 self.texts[attrs['id']] = self.texts.get(attrs['id'], '') + data
 
 
+if len(sys.argv) > 2 and sys.argv[2] == 'native-defaults':
+    with zipfile.ZipFile(sys.argv[1]) as archive:
+        actual = Elements(archive.read('properties.html').decode('utf-8'))
+        layout = actual.elements['layout-default'][0]
+        assert layout['data-style'] == 'title-left', layout
+        assert layout['data-title-width'] == 'medium', layout
+    print('Native reset layout HTML: module Medium verified')
+    sys.exit(0)
+
 if len(sys.argv) > 2 and sys.argv[2] == 'native':
     with zipfile.ZipFile(sys.argv[1]) as archive:
         for page in ['inspector.html', 'inspector-markdown.html']:
@@ -49,7 +58,16 @@ if len(sys.argv) > 2 and sys.argv[2] == 'native':
                 assert any(a.get('data-expandable') == 'true' and
                            a.get('data-expanded') == 'true'
                            for a, _ in actual.elements.values())
-    print('Native saved XML/Markdown HTML: source inclusion, extracted snippet, emphasis and inherited definition state verified')
+        corrections = Elements(archive.read('inspector-corrections.html').decode('utf-8'))
+        assert 'literal-code' not in corrections.elements
+        assert any('{id="literal-code"}' in text and 'Try' in text for text in corrections.texts.values())
+        item, parents = corrections.elements['saved-item']
+        assert item['class'] == 'list__item' and any(tag == 'ul' for tag, _ in parents)
+        assert corrections.elements['saved-note'][0]['data-type'] == 'note'
+        task, parents = corrections.elements['saved-task']
+        assert 'checked' not in task and any(a.get('class') == 'list _checkbox' for _, a in parents)
+        assert any(a.get('checked') == 'true' for a, _ in corrections.elements.values())
+    print('Native saved HTML: source inclusion, snippet emphasis, inherited state, literal inline code, list-item and admonition IDs verified')
     sys.exit(0)
 
 defaults = len(sys.argv) > 2 and sys.argv[2] == 'defaults'
@@ -112,4 +130,23 @@ with zipfile.ZipFile(sys.argv[1]) as archive:
     assert xml.elements['code-variable'][0]['data-is-expanded'] == 'true'
     assert md.elements['embedded-code'][0]['class'] == 'code-block'
     assert md.texts['embedded-code'] == 'embedded code'
-print('Pinned property HTML: collapse, state, inheritance, defaults, Markdown IDs, snippet emphasis, formatted titles and images verified')
+    layout = xml.elements['layout-default'][0]
+    assert layout['data-style'] == ('title-left' if defaults else 'title-top'), layout
+    if defaults:
+        assert layout['data-title-width'] == 'medium', layout
+    assert xml.elements['layout-wide'][0]['data-title-width'] == 'wide'
+    assert xml.elements['layout-full'][0]['data-style'] == 'title-top'
+    assert '{id="literal-code"}' in md.texts['paragraph-code-owner']
+    assert '{id="literal-escaped"}' in md.texts['paragraph-escaped-owner']
+    assert 'literal-code' not in md.elements and 'literal-escaped' not in md.elements
+    for identity, owner in [('owned-link', 'paragraph-link-owner'), ('owned-image', 'paragraph-image-owner')]:
+        assert any(attrs.get('id') == owner for _, attrs in md.elements[identity][1]), (identity, owner)
+    assert md.elements['native-list'][0]['class'] == 'list _bullet'
+    item, parents = md.elements['converted-list-item']
+    assert item['class'] == 'list__item' and any(tag == 'ul' for tag, _ in parents)
+    assert md.elements['checked-native-list'][0]['class'] == 'list _checkbox'
+    assert md.elements['checked-xml-item'][0]['checked'] == 'true'
+    assert 'checked' not in md.elements['unchecked-xml-item'][0]
+    note = md.elements['native-note'][0]
+    assert note['class'] == 'prompt' and note['data-type'] == 'note', note
+print('Pinned property HTML: collapse, state, inheritance, module layout, inline ownership, list/item and admonition IDs, snippet emphasis, formatted titles and images verified')

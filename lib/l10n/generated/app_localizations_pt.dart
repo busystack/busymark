@@ -4940,7 +4940,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get wsFullLayout => 'Largura total';
 
   @override
-  String get wsMediumLayout => 'Colunas iguais';
+  String get wsMediumLayout => 'Médio (1:2)';
 
   @override
   String get wsNarrowLayout => 'Coluna de termo estreita';
@@ -5210,6 +5210,13 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get wsExternalImageSize =>
       'Writerside não dimensiona imagens externas de forma confiável. As dimensões existentes podem ser consultadas e removidas.';
+
+  @override
+  String get wsPropertiesNotSerialized =>
+      'Esta alteração não foi aplicada ao código fonte. O rascunho foi mantido.';
+
+  @override
+  String get wsListItem => 'Item da lista';
 }
 
 /// The translations for Portuguese, as used in Brazil (`pt_BR`).
@@ -10144,7 +10151,7 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   String get wsFullLayout => 'Largura total';
 
   @override
-  String get wsMediumLayout => 'Colunas iguais';
+  String get wsMediumLayout => 'Médio (1:2)';
 
   @override
   String get wsNarrowLayout => 'Coluna de termo estreita';
@@ -10414,4 +10421,11 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   @override
   String get wsExternalImageSize =>
       'Writerside não dimensiona imagens externas de forma confiável. As dimensões existentes podem ser consultadas e removidas.';
+
+  @override
+  String get wsPropertiesNotSerialized =>
+      'Esta alteração não foi aplicada ao código fonte. O rascunho foi mantido.';
+
+  @override
+  String get wsListItem => 'Item da lista';
 }

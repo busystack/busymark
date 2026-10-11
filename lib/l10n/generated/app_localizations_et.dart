@@ -4877,7 +4877,7 @@ class AppLocalizationsEt extends AppLocalizations {
   String get wsFullLayout => 'Täislaius';
 
   @override
-  String get wsMediumLayout => 'Võrdsed veerud';
+  String get wsMediumLayout => 'Keskmine (1:2)';
 
   @override
   String get wsNarrowLayout => 'Kitsas terminiveerg';
@@ -5146,4 +5146,11 @@ class AppLocalizationsEt extends AppLocalizations {
   @override
   String get wsExternalImageSize =>
       'Writerside ei määra väliste piltide mõõtmeid usaldusväärselt. Olemasolevaid mõõtmeid saab vaadata ja eemaldada.';
+
+  @override
+  String get wsPropertiesNotSerialized =>
+      'Muudatust ei rakendatud lähtetekstile. Mustand on alles.';
+
+  @override
+  String get wsListItem => 'Loendiüksus';
 }

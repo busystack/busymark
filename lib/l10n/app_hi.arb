@@ -3449,7 +3449,7 @@
   "wsIdentifier": "तत्व आईडी",
   "wsTldr": "सारांश (TLDR)",
   "wsFullLayout": "पूरी चौड़ाई",
-  "wsMediumLayout": "समान स्तंभ",
+  "wsMediumLayout": "मध्यम (1:2)",
   "wsNarrowLayout": "संकीर्ण शब्द स्तंभ",
   "wsTitle": "शीर्षक",
   "wsSwitcherKey": "स्विचर कुंजी",
@@ -3536,5 +3536,7 @@
   "wsWideLayout": "चौड़ा",
   "wsCodeSourceConflict": "स्रोत फ़ाइल चुनने से पहले इनलाइन कोड हटाएँ या स्थानांतरित करें। Writerside स्रोत संदर्भ वाले गैर-रिक्त कोड ब्लॉक अस्वीकार करता है।",
   "wsInherited": "सूची से प्राप्त करें",
-  "wsExternalImageSize": "Writerside बाहरी छवियों का आकार विश्वसनीय ढंग से नहीं बदलता। मौजूदा आयाम देखे और हटाए जा सकते हैं।"
+  "wsExternalImageSize": "Writerside बाहरी छवियों का आकार विश्वसनीय ढंग से नहीं बदलता। मौजूदा आयाम देखे और हटाए जा सकते हैं।",
+  "wsPropertiesNotSerialized": "यह बदलाव स्रोत में लागू नहीं हुआ। मसौदा सुरक्षित रखा गया है।",
+  "wsListItem": "सूची आइटम"
 }

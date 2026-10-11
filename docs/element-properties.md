@@ -39,6 +39,7 @@ a valid value. Suggestions and pickers do not replace legal variable expressions
 | Code | Language maps to XML `lang` or a native fence's language. An explicit Markdown `lang` override takes precedence; changing it preserves the original fence language, and resetting it restores that language. Source mode/reference, extraction, emphasis, collapse and collapsed title remain separate. `include-lines` and `include-symbol` conflict; emphasis counts the displayed snippet after extraction. |
 | Definition lists/items | Schema-supported list layouts, list collapse/state, item title and item state override. Literal `inherited` is an authored item override distinct from an absent attribute. |
 | Tabs | Container `group` synchronizes tab sets; child `group-key` and title identify individual tabs. Topic switchers are separate. Existing code-block tab groups are preserved. |
+| Lists and items | A Markdown attribute line after a blank line belongs to the whole list. An individual item's ID or condition uses semantic `<list>`/`<li>` markup; conversion preserves the other items and checked task states and is one undoable edit. |
 | Images | Source and alternative text use the image model; applicable dimensions, style, thumbnail and preview reference are available. Link wrappers and reference syntax survive scalar property edits. Writerside documents a limitation on sizing external images; authored dimensions do not guarantee external-image builder sizing. |
 | Includes/references | Topic, element and module selection use the current project index. Include selection publishes the reference tuple together. `use-filter` belongs to the include; `filter` belongs to source content. Unavailable resolution remains a diagnostic. |
 | Topic | XML root properties or the appropriate native heading/front matter; navigation uses `<show-structure>`. XML-only fields do not acquire invented Markdown equivalents. |
@@ -58,6 +59,11 @@ leaving the reference definition and other occurrences untouched. The pinned
 builder ignores a native link's `href` attribute override, so BusyMark does not
 use that override to implement destination changes.
 
+Backtick-delimited code and escaped literal braces stay inline content, even
+when they look like attributes. A link or image's attached attributes belong to
+that inline element. Blockquote-form admonition IDs and conditions are written
+after a blank line so the pinned builder assigns them to the admonition alone.
+
 ## Published defaults and editor folding
 
 **Use default — Expanded**, for example, means no local override is authored and
@@ -65,6 +71,11 @@ the effective value is expanded. Hover the control for its origin. A module
 `<default-property>` can change an omitted property's meaning. Unresolved
 variable expressions remain visible without being converted to false or to an
 arbitrary enum. Opening the panel does not write effective defaults to source.
+
+Definition-list layout uses the same defaults: a module setting of `medium`
+appears as **Use default — Medium (1:2)**, including after resetting a local
+override. Hover the control to see whether the value comes from the element,
+module, or built-in default.
 
 The supported builder is `2026.08.0328`. Its generated output requires effective
 `collapsible="true"` for chapters, procedures, code and definition lists, including

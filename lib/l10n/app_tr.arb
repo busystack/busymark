@@ -4988,7 +4988,7 @@
   "wsIdentifier": "Öğe kimliği",
   "wsTldr": "Özet (TLDR)",
   "wsFullLayout": "Tam genişlik",
-  "wsMediumLayout": "Eşit sütunlar",
+  "wsMediumLayout": "Orta (1:2)",
   "wsNarrowLayout": "Dar terim sütunu",
   "wsTitle": "Başlık",
   "wsSwitcherKey": "Değiştirici anahtarı",
@@ -5075,5 +5075,7 @@
   "wsWideLayout": "Geniş",
   "wsCodeSourceConflict": "Kaynak dosya seçmeden önce satır içi kodu kaldırın veya taşıyın. Writerside kaynak başvurusu olan boş olmayan kod bloklarını reddeder.",
   "wsInherited": "Listeden devral",
-  "wsExternalImageSize": "Writerside dış görüntülerin boyutunu güvenilir biçimde ayarlamaz. Mevcut boyutlar incelenebilir ve kaldırılabilir."
+  "wsExternalImageSize": "Writerside dış görüntülerin boyutunu güvenilir biçimde ayarlamaz. Mevcut boyutlar incelenebilir ve kaldırılabilir.",
+  "wsPropertiesNotSerialized": "Bu değişiklik kaynağa uygulanmadı. Taslak korundu.",
+  "wsListItem": "Liste öğesi"
 }

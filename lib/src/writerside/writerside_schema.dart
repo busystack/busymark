@@ -750,6 +750,11 @@ class WritersideSchema {
   };
 
   static Set<String> valuesFor(String element, String attribute) {
+    // The generated XSD omits li@checked. Builder 2026.08.0328 renders it as
+    // a checkbox state; the property-conformance fixture verifies this overlay.
+    if (element == 'li' && attribute == 'checked') {
+      return const {'true', 'false'};
+    }
     if (attribute == 'sortable') return const {'true', 'false'};
     if (attribute == 'generate-samples') {
       return const {'all', 'request', 'response', 'none'};

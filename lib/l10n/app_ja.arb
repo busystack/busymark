@@ -4988,7 +4988,7 @@
   "wsIdentifier": "要素 ID",
   "wsTldr": "要約 (TLDR)",
   "wsFullLayout": "全幅",
-  "wsMediumLayout": "均等な列",
+  "wsMediumLayout": "中幅 (1:2)",
   "wsNarrowLayout": "狭い用語列",
   "wsTitle": "タイトル",
   "wsSwitcherKey": "切り替えキー",
@@ -5075,5 +5075,7 @@
   "wsWideLayout": "ワイド",
   "wsCodeSourceConflict": "ソースファイルの選択前にインラインコードを削除または移動してください。Writerside はソース参照を持つ空でないコードブロックを拒否します。",
   "wsInherited": "リストから継承",
-  "wsExternalImageSize": "Writerside は外部画像のサイズを確実には設定できません。既存の寸法は確認して削除できます。"
+  "wsExternalImageSize": "Writerside は外部画像のサイズを確実には設定できません。既存の寸法は確認して削除できます。",
+  "wsPropertiesNotSerialized": "この変更はソースに反映されませんでした。下書きは保持されています。",
+  "wsListItem": "リスト項目"
 }

@@ -14,6 +14,9 @@ import 'package:busymark/src/markdown/markdown_model.dart';
 import 'package:busymark/src/markdown/markdown_parser.dart';
 import 'package:busymark/src/platform/native_menu_service.dart';
 import 'package:busymark/src/writerside/writerside_project.dart';
+import 'package:busymark/src/writerside/writerside_effective_properties.dart';
+import 'package:busymark/src/writerside/writerside_model.dart';
+import 'package:busymark/src/editor/wysiwyg/wysiwyg_document_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -60,6 +63,129 @@ Finder _textField(String text) => _contentFields()
     .first;
 
 void main() {
+  testWidgets(
+    'navigation selection represents authored declarations after reopening',
+    (tester) async {
+      var c = BusyMarkWysiwygDocumentController(document: _document(true));
+      addTearDown(() => c.dispose());
+      Future<BusyMarkComboRow<String>> show() async {
+        final document = c.document;
+        await tester.pumpWidget(
+          _app(
+            BusyMarkWritersideProperties(
+              document: document,
+              target: document.blocks.first,
+              path: [document.blocks.first],
+              topicSelected: true,
+              onClose: () {},
+              onTargetSelected: (_) {},
+              onProperty: (_, _) => true,
+              onHeadingText: (_) => true,
+              onTopicProperty: (name, value) => name == '@navigation'
+                  ? value == 'default'
+                        ? c.resetTopicNavigation()
+                        : value == 'none'
+                        ? c.updateTopicNavigation('for', 'none')
+                        : c.resetTopicNavigation() &&
+                              c.updateTopicNavigation('for', '')
+                  : c.updateTopicNavigation(name, value),
+              onManageItem: (_, _, _) {},
+            ),
+          ),
+        );
+        return tester.widget<BusyMarkComboRow<String>>(
+          find.byWidgetPredicate(
+            (w) => w is BusyMarkComboRow<String> && w.values.contains('all'),
+          ),
+        );
+      }
+
+      for (final option in ['all', 'none', 'default']) {
+        (await show()).onSelected(option);
+        final saved = c.markdown;
+        c.dispose();
+        c = BusyMarkWysiwygDocumentController(
+          document: _document(true, source: saved),
+        );
+        expect((await show()).selected, option, reason: saved);
+      }
+      expect(c.updateTopicNavigation('for', 'chapter,def'), isTrue);
+      final saved = c.markdown;
+      c.dispose();
+      c = BusyMarkWysiwygDocumentController(
+        document: _document(true, source: saved),
+      );
+      expect((await show()).selected, 'custom');
+    },
+  );
+  testWidgets('definition layout displays module default and reset origin', (
+    tester,
+  ) async {
+    final c = BusyMarkWysiwygDocumentController(
+      document: _document(
+        true,
+        source:
+            '<topic id="a" title="Title"><deflist type="wide"><def title="Term"><p>Body</p></def></deflist></topic>',
+      ),
+    );
+    addTearDown(c.dispose);
+    const effective = WritersideEffectiveProperties(
+      settings: WritersideSettingsConfig(
+        defaultProperties: [
+          WritersideDefaultProperty(
+            elementName: 'deflist',
+            propertyName: 'type',
+            value: 'medium',
+          ),
+        ],
+      ),
+    );
+    Future<BusyMarkComboRow<String>> show() async {
+      final document = _document(true, source: c.markdown);
+      final list = document.blocks.first.children.single;
+      await tester.pumpWidget(
+        _app(
+          BusyMarkWritersideProperties(
+            document: document,
+            target: list,
+            path: [document.blocks.first, list],
+            topicSelected: false,
+            effectiveProperties: effective,
+            onClose: () {},
+            onTargetSelected: (_) {},
+            onProperty: (name, value) => c.updateWritersideProperty(
+              c.document.blocks.first.children.single.id,
+              name,
+              value,
+            ),
+            onHeadingText: (_) => true,
+            onTopicProperty: (_, _) => true,
+            onManageItem: (_, _, _) {},
+          ),
+        ),
+      );
+      return tester.widget<BusyMarkComboRow<String>>(
+        find.byWidgetPredicate(
+          (w) => w is BusyMarkComboRow<String> && w.title == 'List layout',
+        ),
+      );
+    }
+
+    final layout = await show();
+    expect(layout.selected, 'wide');
+    expect(layout.labelFor(''), 'Use default — Medium (1:2)');
+    layout.onSelected('');
+    final reset = await show();
+    expect(reset.selected, '');
+    expect(reset.labelFor(''), 'Use default — Medium (1:2)');
+    expect(c.markdown, isNot(contains('type=')));
+    expect(
+      find.byWidgetPredicate(
+        (w) => w is Tooltip && w.message == 'module: medium',
+      ),
+      findsOneWidget,
+    );
+  });
   testWidgets('XML title control retains authored absence and child title', (
     tester,
   ) async {

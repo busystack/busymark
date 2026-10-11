@@ -2886,7 +2886,7 @@
   "wsIdentifier": "Element ID",
   "wsTldr": "TLDR",
   "wsFullLayout": "Full width",
-  "wsMediumLayout": "Equal columns",
+  "wsMediumLayout": "Medium (1:2)",
   "wsNarrowLayout": "Narrow term",
   "wsTitle": "Title",
   "wsSwitcherKey": "Switcher key",
@@ -2980,5 +2980,7 @@
   "wsWideLayout": "Wide",
   "wsCodeSourceConflict": "Remove or move the inline code before selecting a source file. Writerside rejects a nonempty code block with a source reference.",
   "wsInherited": "Inherit from list",
-  "wsExternalImageSize": "Writerside does not reliably size externally hosted images. Existing dimensions can be inspected and removed."
+  "wsExternalImageSize": "Writerside does not reliably size externally hosted images. Existing dimensions can be inspected and removed.",
+  "wsPropertiesNotSerialized": "This change did not reach the source. The draft has been retained.",
+  "wsListItem": "List item"
 }

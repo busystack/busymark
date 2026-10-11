@@ -4739,7 +4739,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get wsFullLayout => '전체 너비';
 
   @override
-  String get wsMediumLayout => '동일한 열';
+  String get wsMediumLayout => '중간 (1:2)';
 
   @override
   String get wsNarrowLayout => '좁은 용어 열';
@@ -5002,4 +5002,10 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get wsExternalImageSize =>
       'Writerside는 외부 이미지 크기를 안정적으로 설정하지 못합니다. 기존 크기는 확인하거나 제거할 수 있습니다.';
+
+  @override
+  String get wsPropertiesNotSerialized => '이 변경 사항은 소스에 반영되지 않았습니다. 초안은 유지됩니다.';
+
+  @override
+  String get wsListItem => '목록 항목';
 }

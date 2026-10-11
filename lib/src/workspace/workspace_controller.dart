@@ -5961,6 +5961,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     required int revision,
     required String expectedSource,
     required String source,
+    bool requiresSourceChange = false,
   }) {
     final buffer = state.activeBuffer;
     if (buffer == null ||
@@ -5971,7 +5972,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         buffer.editorState.mode == DocumentViewModePreference.preview) {
       return false;
     }
-    if (source == expectedSource) return true;
+    if (source == expectedSource) return !requiresSourceChange;
     updateActiveSourceText(
       source,
       sourceBufferId: bufferId,

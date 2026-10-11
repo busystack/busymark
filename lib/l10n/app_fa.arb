@@ -3491,7 +3491,7 @@
   "wsIdentifier": "شناسه عنصر",
   "wsTldr": "خلاصه (TLDR)",
   "wsFullLayout": "عرض کامل",
-  "wsMediumLayout": "ستون‌های برابر",
+  "wsMediumLayout": "متوسط (1:2)",
   "wsNarrowLayout": "ستون باریک اصطلاح",
   "wsTitle": "عنوان",
   "wsSwitcherKey": "کلید انتخابگر",
@@ -3578,5 +3578,7 @@
   "wsWideLayout": "عریض",
   "wsCodeSourceConflict": "پیش از انتخاب فایل منبع، کد درون‌خطی را حذف یا جابه‌جا کنید. Writerside بلوک کد غیرخالی با ارجاع منبع را نمی‌پذیرد.",
   "wsInherited": "ارث‌بری از فهرست",
-  "wsExternalImageSize": "Writerside اندازه تصاویر خارجی را به‌طور قابل اتکا تنظیم نمی‌کند. اندازه‌های موجود قابل بررسی و حذف هستند."
+  "wsExternalImageSize": "Writerside اندازه تصاویر خارجی را به‌طور قابل اتکا تنظیم نمی‌کند. اندازه‌های موجود قابل بررسی و حذف هستند.",
+  "wsPropertiesNotSerialized": "این تغییر در متن منبع اعمال نشد. پیش‌نویس حفظ شده است.",
+  "wsListItem": "مورد فهرست"
 }

@@ -4869,7 +4869,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get wsFullLayout => 'Toàn chiều rộng';
 
   @override
-  String get wsMediumLayout => 'Các cột bằng nhau';
+  String get wsMediumLayout => 'Trung bình (1:2)';
 
   @override
   String get wsNarrowLayout => 'Cột thuật ngữ hẹp';
@@ -5137,4 +5137,11 @@ class AppLocalizationsVi extends AppLocalizations {
   @override
   String get wsExternalImageSize =>
       'Writerside không đặt kích thước ảnh bên ngoài một cách tin cậy. Có thể xem và xóa kích thước hiện có.';
+
+  @override
+  String get wsPropertiesNotSerialized =>
+      'Thay đổi này chưa được ghi vào nguồn. Bản nháp đã được giữ lại.';
+
+  @override
+  String get wsListItem => 'Mục danh sách';
 }

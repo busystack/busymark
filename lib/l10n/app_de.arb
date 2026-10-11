@@ -3449,7 +3449,7 @@
   "wsIdentifier": "Element-ID",
   "wsTldr": "Kurzfassung (TLDR)",
   "wsFullLayout": "Volle Breite",
-  "wsMediumLayout": "Gleiche Spalten",
+  "wsMediumLayout": "Mittel (1:2)",
   "wsNarrowLayout": "Schmale Begriffsspalte",
   "wsTitle": "Titel",
   "wsSwitcherKey": "Umschaltschlüssel",
@@ -3536,5 +3536,7 @@
   "wsWideLayout": "Breit",
   "wsCodeSourceConflict": "Entfernen oder verschieben Sie den Inline-Code vor der Quelldateiauswahl. Writerside lehnt nicht leere Codeblöcke mit Quellverweis ab.",
   "wsInherited": "Von Liste erben",
-  "wsExternalImageSize": "Writerside skaliert extern gehostete Bilder nicht zuverlässig. Vorhandene Maße können geprüft und entfernt werden."
+  "wsExternalImageSize": "Writerside skaliert extern gehostete Bilder nicht zuverlässig. Vorhandene Maße können geprüft und entfernt werden.",
+  "wsPropertiesNotSerialized": "Diese Änderung wurde nicht in den Quelltext übernommen. Der Entwurf wurde beibehalten.",
+  "wsListItem": "Listeneintrag"
 }

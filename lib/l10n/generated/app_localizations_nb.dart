@@ -4880,7 +4880,7 @@ class AppLocalizationsNb extends AppLocalizations {
   String get wsFullLayout => 'Full bredde';
 
   @override
-  String get wsMediumLayout => 'Like kolonner';
+  String get wsMediumLayout => 'Middels (1:2)';
 
   @override
   String get wsNarrowLayout => 'Smal termkolonne';
@@ -5150,4 +5150,11 @@ class AppLocalizationsNb extends AppLocalizations {
   @override
   String get wsExternalImageSize =>
       'Writerside endrer ikke størrelsen på eksterne bilder pålitelig. Eksisterende mål kan ses og fjernes.';
+
+  @override
+  String get wsPropertiesNotSerialized =>
+      'Denne endringen ble ikke skrevet til kilden. Utkastet er beholdt.';
+
+  @override
+  String get wsListItem => 'Listeelement';
 }

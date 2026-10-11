@@ -4867,7 +4867,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get wsFullLayout => 'पूरी चौड़ाई';
 
   @override
-  String get wsMediumLayout => 'समान स्तंभ';
+  String get wsMediumLayout => 'मध्यम (1:2)';
 
   @override
   String get wsNarrowLayout => 'संकीर्ण शब्द स्तंभ';
@@ -5137,4 +5137,11 @@ class AppLocalizationsHi extends AppLocalizations {
   @override
   String get wsExternalImageSize =>
       'Writerside बाहरी छवियों का आकार विश्वसनीय ढंग से नहीं बदलता। मौजूदा आयाम देखे और हटाए जा सकते हैं।';
+
+  @override
+  String get wsPropertiesNotSerialized =>
+      'यह बदलाव स्रोत में लागू नहीं हुआ। मसौदा सुरक्षित रखा गया है।';
+
+  @override
+  String get wsListItem => 'सूची आइटम';
 }

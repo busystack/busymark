@@ -4920,7 +4920,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get wsFullLayout => 'Volle Breite';
 
   @override
-  String get wsMediumLayout => 'Gleiche Spalten';
+  String get wsMediumLayout => 'Mittel (1:2)';
 
   @override
   String get wsNarrowLayout => 'Schmale Begriffsspalte';
@@ -5193,4 +5193,11 @@ class AppLocalizationsDe extends AppLocalizations {
   @override
   String get wsExternalImageSize =>
       'Writerside skaliert extern gehostete Bilder nicht zuverlässig. Vorhandene Maße können geprüft und entfernt werden.';
+
+  @override
+  String get wsPropertiesNotSerialized =>
+      'Diese Änderung wurde nicht in den Quelltext übernommen. Der Entwurf wurde beibehalten.';
+
+  @override
+  String get wsListItem => 'Listeneintrag';
 }

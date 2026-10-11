@@ -4744,7 +4744,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get wsFullLayout => '全幅';
 
   @override
-  String get wsMediumLayout => '均等な列';
+  String get wsMediumLayout => '中幅 (1:2)';
 
   @override
   String get wsNarrowLayout => '狭い用語列';
@@ -5006,4 +5006,10 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String get wsExternalImageSize =>
       'Writerside は外部画像のサイズを確実には設定できません。既存の寸法は確認して削除できます。';
+
+  @override
+  String get wsPropertiesNotSerialized => 'この変更はソースに反映されませんでした。下書きは保持されています。';
+
+  @override
+  String get wsListItem => 'リスト項目';
 }

@@ -4907,7 +4907,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get wsFullLayout => 'عرض كامل';
 
   @override
-  String get wsMediumLayout => 'أعمدة متساوية';
+  String get wsMediumLayout => 'متوسط (1:2)';
 
   @override
   String get wsNarrowLayout => 'مصطلح ضيق';
@@ -5175,4 +5175,11 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get wsExternalImageSize =>
       'لا يحدد Writerside أبعاد الصور الخارجية بشكل موثوق. يمكنك فحص الأبعاد الحالية وإزالتها.';
+
+  @override
+  String get wsPropertiesNotSerialized =>
+      'لم يُطبّق هذا التغيير على المصدر. تم الاحتفاظ بالمسودة.';
+
+  @override
+  String get wsListItem => 'عنصر قائمة';
 }

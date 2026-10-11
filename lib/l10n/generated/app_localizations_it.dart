@@ -4919,7 +4919,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get wsFullLayout => 'Larghezza piena';
 
   @override
-  String get wsMediumLayout => 'Colonne uguali';
+  String get wsMediumLayout => 'Medio (1:2)';
 
   @override
   String get wsNarrowLayout => 'Termine stretto';
@@ -5192,4 +5192,11 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get wsExternalImageSize =>
       'Writerside non dimensiona in modo affidabile le immagini esterne. Le dimensioni esistenti possono essere consultate e rimosse.';
+
+  @override
+  String get wsPropertiesNotSerialized =>
+      'Questa modifica non è stata applicata al sorgente. La bozza è stata conservata.';
+
+  @override
+  String get wsListItem => 'Elemento elenco';
 }

@@ -5,6 +5,7 @@ import 'wysiwyg_document_controller.dart';
 import 'wysiwyg_inline_controller.dart';
 import '../../markdown/busymark_markdown_serializer.dart';
 import '../../markdown/markdown_source_map.dart';
+import 'writerside_editing_adapter.dart';
 
 /// A source-generation-bound identity. Parser IDs are only locators within
 /// this snapshot, never durable identities across reparsing or replacement.
@@ -31,8 +32,17 @@ class WritersideInspectorTarget {
   final BusyInlineStyleRange? inline;
   final bool multiple;
   final bool logicalTopic;
-  List<int> get address {
+  List<int> get address => _address(includeSourceOnly: true);
+
+  /// Serialization can add XML whitespace nodes. They are not authored
+  /// property targets and must not shift the edited element's ordinal.
+  List<int> get semanticAddress => _address(includeSourceOnly: false);
+
+  List<int> _address({required bool includeSourceOnly}) {
     List<int>? find(List<BusyBlock> blocks) {
+      if (!includeSourceOnly) {
+        blocks = blocks.where((b) => !b.isSourceOnly).toList();
+      }
       for (var i = 0; i < blocks.length; i++) {
         if (blocks[i].id == block?.id) return [i];
         final nested = find(blocks[i].children);
@@ -42,6 +52,51 @@ class WritersideInspectorTarget {
     }
 
     return find(document.blocks) ?? [];
+  }
+
+  bool hasSameAuthoredState(BusyDocument other) {
+    bool authored(BusyBlock b) =>
+        !b.isGenerated &&
+        b.attributes[busyMarkTransientTrailingParagraphAttribute] != 'true' &&
+        (!b.isSourceOnly || b.attributes['element'] == 'show-structure');
+    Object inlineState(BusyInline inline) => [
+      inline.kind,
+      inline.text,
+      inline.destination,
+      {
+        for (final a in inline.attributes.entries)
+          if (!a.key.startsWith('busymark-')) a.key: a.value,
+      },
+      inline.children.map(inlineState).toList(),
+    ];
+    Object blockState(BusyBlock block) => [
+      WritersideEditingAdapter.tagForBlock(block),
+      WritersideEditingAdapter.sourceAttributes(block),
+      if (block.kind == BusyBlockKind.codeBlock) block.attributes['language'],
+      if (block.kind == BusyBlockKind.blockquote ||
+          block.kind == BusyBlockKind.writersideAdmonition)
+        block.attributes['style'],
+      block.inlines.map(inlineState).toList(),
+      block.children.where(authored).map(blockState).toList(),
+      if (block.isSourceProtected || block.preserveRaw) block.rawSource,
+    ];
+    Object state(BusyDocument d) => [
+      d.frontMatter,
+      d.blocks.where(authored).map(blockState).toList(),
+    ];
+    bool equal(Object? a, Object? b) {
+      if (a is List && b is List) {
+        return a.length == b.length &&
+            Iterable.generate(a.length).every((i) => equal(a[i], b[i]));
+      }
+      if (a is Map && b is Map) {
+        return a.length == b.length &&
+            a.keys.every((k) => b.containsKey(k) && equal(a[k], b[k]));
+      }
+      return a == b;
+    }
+
+    return equal(state(document), state(other));
   }
 
   bool get topic =>

@@ -4933,7 +4933,7 @@ class AppLocalizationsPl extends AppLocalizations {
   String get wsFullLayout => 'Pełna szerokość';
 
   @override
-  String get wsMediumLayout => 'Równe kolumny';
+  String get wsMediumLayout => 'Średni (1:2)';
 
   @override
   String get wsNarrowLayout => 'Wąska kolumna terminu';
@@ -5203,4 +5203,11 @@ class AppLocalizationsPl extends AppLocalizations {
   @override
   String get wsExternalImageSize =>
       'Writerside nie ustawia niezawodnie rozmiaru obrazów zewnętrznych. Istniejące wymiary można sprawdzić i usunąć.';
+
+  @override
+  String get wsPropertiesNotSerialized =>
+      'Ta zmiana nie została zapisana w źródle. Wersja robocza została zachowana.';
+
+  @override
+  String get wsListItem => 'Element listy';
 }

@@ -4915,7 +4915,7 @@ class AppLocalizationsFa extends AppLocalizations {
   String get wsFullLayout => 'عرض کامل';
 
   @override
-  String get wsMediumLayout => 'ستون‌های برابر';
+  String get wsMediumLayout => 'متوسط (1:2)';
 
   @override
   String get wsNarrowLayout => 'ستون باریک اصطلاح';
@@ -5184,4 +5184,11 @@ class AppLocalizationsFa extends AppLocalizations {
   @override
   String get wsExternalImageSize =>
       'Writerside اندازه تصاویر خارجی را به‌طور قابل اتکا تنظیم نمی‌کند. اندازه‌های موجود قابل بررسی و حذف هستند.';
+
+  @override
+  String get wsPropertiesNotSerialized =>
+      'این تغییر در متن منبع اعمال نشد. پیش‌نویس حفظ شده است.';
+
+  @override
+  String get wsListItem => 'مورد فهرست';
 }

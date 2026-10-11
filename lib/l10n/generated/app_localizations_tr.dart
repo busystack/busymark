@@ -4879,7 +4879,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get wsFullLayout => 'Tam genişlik';
 
   @override
-  String get wsMediumLayout => 'Eşit sütunlar';
+  String get wsMediumLayout => 'Orta (1:2)';
 
   @override
   String get wsNarrowLayout => 'Dar terim sütunu';
@@ -5147,4 +5147,11 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get wsExternalImageSize =>
       'Writerside dış görüntülerin boyutunu güvenilir biçimde ayarlamaz. Mevcut boyutlar incelenebilir ve kaldırılabilir.';
+
+  @override
+  String get wsPropertiesNotSerialized =>
+      'Bu değişiklik kaynağa uygulanmadı. Taslak korundu.';
+
+  @override
+  String get wsListItem => 'Liste öğesi';
 }

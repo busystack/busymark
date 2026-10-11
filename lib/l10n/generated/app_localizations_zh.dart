@@ -4666,7 +4666,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get wsFullLayout => '全宽';
 
   @override
-  String get wsMediumLayout => '等宽列';
+  String get wsMediumLayout => '中等 (1:2)';
 
   @override
   String get wsNarrowLayout => '窄术语列';
@@ -4926,6 +4926,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get wsExternalImageSize => 'Writerside 无法可靠地调整外部托管图片的尺寸。可以查看和移除已有尺寸。';
+
+  @override
+  String get wsPropertiesNotSerialized => '此更改未写入源文本。草稿已保留。';
+
+  @override
+  String get wsListItem => '列表项';
 }
 
 /// The translations for Chinese, as used in China (`zh_CN`).
@@ -9588,7 +9594,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get wsFullLayout => '全宽';
 
   @override
-  String get wsMediumLayout => '等宽列';
+  String get wsMediumLayout => '中等 (1:2)';
 
   @override
   String get wsNarrowLayout => '窄术语列';
@@ -9848,4 +9854,10 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get wsExternalImageSize => 'Writerside 无法可靠地调整外部托管图片的尺寸。可以查看和移除已有尺寸。';
+
+  @override
+  String get wsPropertiesNotSerialized => '此更改未写入源文本。草稿已保留。';
+
+  @override
+  String get wsListItem => '列表项';
 }

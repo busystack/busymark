@@ -50,4 +50,7 @@ second</code-block>
 <img id="image-xml" src="logo.png" alt="Logo" width="48" height="24" thumbnail="true" preview-src="logo.png"/>
 <img id="empty-alt-xml" src="logo.png" alt=""/><chapter id="chapter-variable" title="Variables" collapsible="%collapse%" default-state="%state%"><p>Variable attributes.</p></chapter>
 <code-block id="code-variable" lang="text" collapsible="%collapse%" default-state="%state%" ignore-vars="false">variable code</code-block>
+<deflist id="layout-default"><def title="Default layout"><p>Default body.</p></def></deflist>
+<deflist id="layout-wide" type="wide"><def title="Wide layout"><p>Wide body.</p></def></deflist>
+<deflist id="layout-full" type="full"><def title="Full layout"><p>Full body.</p></def></deflist>
 </topic>

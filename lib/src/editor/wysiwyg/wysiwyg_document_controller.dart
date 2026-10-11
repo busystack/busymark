@@ -1,5 +1,6 @@
 import '../../writerside/writerside_property_validation.dart';
 import 'dart:convert';
+import '../../core/source_span.dart';
 import 'package:flutter/foundation.dart';
 
 import '../../core/path_utils.dart';
@@ -547,6 +548,14 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
             !block.attributes.containsKey(attribute)) {
       return true;
     }
+    // Markdown's list attribute line applies to the list, never to a li.
+    // An item override therefore requires the existing semantic XML form.
+    if (!_document.isXmlTopic &&
+        _isListItemKind(block.kind) &&
+        !block.attributes.containsKey('element') &&
+        !_materializeNativeList(blockId)) {
+      return false;
+    }
     final imageRange = block.kind == BusyBlockKind.image
         ? busyInlineReferenceRanges(
             block.inlines,
@@ -568,6 +577,7 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
                 BusyBlockKind.codeBlock,
                 BusyBlockKind.table,
                 BusyBlockKind.image,
+                BusyBlockKind.blockquote,
               }.contains(block.kind))) {
         final old = block.attributes['busymark-property-edits'];
         attrs['busymark-property-line-ending'] =
@@ -583,6 +593,9 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
         attrs.remove(attribute);
       } else {
         attrs[attribute] = value;
+      }
+      if (attribute == 'checked' && block.kind == BusyBlockKind.taskListItem) {
+        attrs['task'] = value ?? 'false';
       }
       if (attribute == 'language' &&
           (attrs['element'] == 'code-block' || attrs.containsKey('lang'))) {
@@ -624,6 +637,147 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
         );
       }
     }
+    return true;
+  }
+
+  bool _materializeNativeList(String blockId) {
+    final path = elementPath(blockId);
+    final target = path.last;
+    // Markdown chapter ancestry is structural navigation, not child ownership.
+    final parent = path
+        .where((b) => b.children.any((child) => child.id == blockId))
+        .lastOrNull;
+    final nativeList = parent?.attributes['busymark-list-form'] == 'markdown';
+    final siblings = parent?.children ?? _document.blocks;
+    final index = siblings.indexWhere((b) => b.id == blockId);
+    if (index < 0) return false;
+    var start = index, end = index + 1;
+    while (start > 0 && siblings[start - 1].kind == target.kind) {
+      start--;
+    }
+    while (end < siblings.length && siblings[end].kind == target.kind) {
+      end++;
+    }
+    final items = siblings.sublist(start, end);
+    bool convertible(BusyBlock b) =>
+        !b.isSourceProtected &&
+        !b.preserveRaw &&
+        (_isListItemKind(b.kind) ||
+            b.kind == BusyBlockKind.paragraph ||
+            b.kind == BusyBlockKind.codeBlock ||
+            busyMarkIsWritersideContainer(b)) &&
+        b.children.every(convertible);
+    if (!items.every(convertible)) return false;
+
+    BusyBlock convert(BusyBlock b) {
+      if (busyMarkIsWritersideContainer(b)) return b;
+      final children = <BusyBlock>[];
+      if (_isListItemKind(b.kind) && b.inlines.isNotEmpty) {
+        children.add(
+          BusyBlock(
+            id: _nextGeneratedBlockId('p'),
+            kind: BusyBlockKind.paragraph,
+            inlines: b.inlines,
+            attributes: const {'element': 'p'},
+            dirty: true,
+          ),
+        );
+      }
+      for (var i = 0; i < b.children.length;) {
+        final child = b.children[i];
+        if (_isListItemKind(child.kind)) {
+          var last = i + 1;
+          while (last < b.children.length &&
+              b.children[last].kind == child.kind) {
+            last++;
+          }
+          children.add(
+            _newWritersideElement(
+              'list',
+              attributes: {
+                'type': child.kind == BusyBlockKind.orderedListItem
+                    ? 'decimal'
+                    : child.kind == BusyBlockKind.taskListItem
+                    ? 'checkbox'
+                    : 'bullet',
+              },
+              children: b.children.sublist(i, last).map(convert).toList(),
+            ),
+          );
+          i = last;
+        } else {
+          children.add(convert(child));
+          i++;
+        }
+      }
+      return BusyBlock(
+        id: b.id,
+        kind: b.kind,
+        inlines: _isListItemKind(b.kind) ? const [] : b.inlines,
+        children: children,
+        dirty: true,
+        attributes: {
+          ...b.attributes,
+          if (b.kind == BusyBlockKind.taskListItem &&
+              b.attributes['task'] == 'true')
+            'checked': 'true',
+          'element': WritersideEditingAdapter.tagForBlock(b),
+          if (_isListItemKind(b.kind))
+            busyMarkWritersideContainerAttribute: 'true',
+          if (b.kind == BusyBlockKind.codeBlock &&
+              b.attributes['language'] != null)
+            'lang': b.attributes['language']!,
+        },
+      );
+    }
+
+    final source = _document.source;
+    final first = items.first.sourceSpan, last = items.last.sourceSpan;
+    final span = source == null || first == null || last == null
+        ? null
+        : SourceSpan.fromOffsets(
+            filePath: _document.filePath,
+            source: source,
+            startOffset: first.startOffset,
+            endOffset: last.endOffset,
+          );
+    final list = _newWritersideElement(
+      'list',
+      attributes: {
+        if (nativeList) ...WritersideEditingAdapter.sourceAttributes(parent!),
+        'type': nativeList && parent!.attributes.containsKey('type')
+            ? parent.attributes['type']!
+            : target.kind == BusyBlockKind.orderedListItem
+            ? 'decimal'
+            : target.kind == BusyBlockKind.taskListItem
+            ? 'checkbox'
+            : 'bullet',
+        if (target.kind == BusyBlockKind.orderedListItem &&
+            items.first.attributes['marker'] != '1.')
+          'start': items.first.attributes['marker']!.replaceAll('.', ''),
+      },
+      children: items.map(convert).toList(),
+    ).copyWith(sourceSpan: nativeList ? parent!.sourceSpan : span);
+    if (nativeList) {
+      _document = _document.copyWith(
+        blocks: _replaceInBlocks(
+          _document.blocks,
+          parent!.id,
+          (_) => list.copyWith(id: parent.id),
+        ),
+      );
+      return true;
+    }
+    final replacement = [...siblings.take(start), list, ...siblings.skip(end)];
+    _document = _document.copyWith(
+      blocks: parent == null
+          ? replacement
+          : _replaceInBlocks(
+              _document.blocks,
+              parent.id,
+              (b) => b.copyWith(children: replacement, dirty: true),
+            ),
+    );
     return true;
   }
 
@@ -2851,7 +3005,18 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
         }
         final checked = block.attributes['task'] == 'true';
         return block.copyWith(
-          attributes: {...block.attributes, 'task': '${!checked}'},
+          attributes: {
+            ...block.attributes,
+            'task': '${!checked}',
+            if (block.attributes['element'] == 'li') 'checked': '${!checked}',
+            if (block.attributes['element'] == 'li' &&
+                block.attributes['busymark-property-edits'] != null)
+              'busymark-property-edits': jsonEncode({
+                ...(jsonDecode(block.attributes['busymark-property-edits']!)
+                    as Map<String, dynamic>),
+                'checked': '${!checked}',
+              }),
+          },
           dirty: true,
         );
       }),

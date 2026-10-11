@@ -275,6 +275,8 @@ class WritersideEditingAdapter {
             busyMarkWritersideCodeBlockElementSourceForm,
       },
       if (tag == 'li') 'marker': listType == 'decimal' ? '1.' : '-',
+      if (tag == 'li' && listType == 'checkbox')
+        'task': node.attributes['checked'] ?? 'false',
       if (busyAdmonitionStyleFromName(tag) != null) ...{
         'style': tag,
         busyMarkWritersideAdmonitionAttribute: 'true',
@@ -299,6 +301,8 @@ class WritersideEditingAdapter {
       'li' =>
         listType == 'decimal'
             ? BusyBlockKind.orderedListItem
+            : listType == 'checkbox'
+            ? BusyBlockKind.taskListItem
             : BusyBlockKind.unorderedListItem,
       'video' => BusyBlockKind.video,
       'img' => BusyBlockKind.image,
@@ -661,6 +665,7 @@ class WritersideEditingAdapter {
     'level',
     'language',
     'marker',
+    'task',
     'ordered',
     'style',
     'generatedId',

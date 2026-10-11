@@ -1,5 +1,30 @@
 import 'package:markdown/markdown.dart' as md;
 import 'package:xml/xml.dart';
+import 'markdown_source_annotation.dart';
+
+const writersideAttributeSyntaxTag = 'busymark-writerside-attributes';
+
+/// Attribute ownership is resolved on parsed siblings. Code spans and escapes
+/// are consumed by the ordinary inline grammar before this syntax can match.
+class WritersideAttributeSyntax extends md.InlineSyntax {
+  WritersideAttributeSyntax()
+    : super(
+        r'''\{\s*(?:[\w:.-]+\s*=\s*(?:"[^"\n]*"|'[^'\n]*'|[^\s{}]+)\s*)+\}''',
+        startCharacter: 0x7b,
+      );
+
+  @override
+  bool onMatch(md.InlineParser parser, Match match) {
+    parser.addNode(
+      md.Element.text(writersideAttributeSyntaxTag, match[0]!)
+        ..attributes.addAll({
+          busyMarkSourceMappingStartAttribute: '${match.start}',
+          busyMarkSourceMappingEndAttribute: '${match.end}',
+        }),
+    );
+    return true;
+  }
+}
 
 /// Writerside semantic spans participate in the existing inline parser, so
 /// Markdown formatting and links inside a span retain their normal behavior.
@@ -113,7 +138,7 @@ class WritersideDefinitionListSyntax extends md.BlockSyntax {
     if (!value.startsWith('{') || !value.endsWith('}')) return null;
     final result = <String, String>{};
     for (final match in RegExp(
-      r'''([\w:-]+)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s}]+))''',
+      r'''([\w:.-]+)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s}]+))''',
     ).allMatches(value.substring(1, value.length - 1))) {
       result[match[1]!] = match[2] ?? match[3] ?? match[4]!;
     }

@@ -4891,7 +4891,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get wsFullLayout => 'Full width';
 
   @override
-  String get wsMediumLayout => 'Equal columns';
+  String get wsMediumLayout => 'Medium (1:2)';
 
   @override
   String get wsNarrowLayout => 'Narrow term';
@@ -5162,4 +5162,11 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get wsExternalImageSize =>
       'Writerside does not reliably size externally hosted images. Existing dimensions can be inspected and removed.';
+
+  @override
+  String get wsPropertiesNotSerialized =>
+      'This change did not reach the source. The draft has been retained.';
+
+  @override
+  String get wsListItem => 'List item';
 }
