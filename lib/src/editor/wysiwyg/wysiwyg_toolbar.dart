@@ -183,21 +183,6 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
           ],
           if (admonitionsEnabled)
             [
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: BusyMarkSpacing.xs,
-                ),
-                child: RotatedBox(
-                  quarterTurns: axis == Axis.vertical ? 3 : 0,
-                  child: Text(
-                    context.l10n.writerside,
-                    key: const ValueKey('wysiwyg-writerside-group'),
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: BusyMarkSurfaceColors.of(context).mutedForeground,
-                    ),
-                  ),
-                ),
-              ),
               if (onAdmonitionCommand != null) _admonitionMenu(context),
               if (onWritersideInsert != null) _writersideInsertMenu(context),
               _writersideSemanticMenu(context),

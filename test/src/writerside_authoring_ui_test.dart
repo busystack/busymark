@@ -773,8 +773,13 @@ void main() {
           ),
         );
         await tester.pumpAndSettle();
+        expect(find.text('Writerside'), findsNothing);
         expect(
-          find.byKey(const ValueKey('wysiwyg-writerside-group')),
+          find.byKey(const ValueKey('wysiwyg-writerside-insert')),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(const ValueKey('wysiwyg-writerside-semantic')),
           findsOneWidget,
         );
         expect(find.byType(BusyMarkWritersideProperties), findsOneWidget);
