@@ -82,7 +82,8 @@ The supported builder is `2026.08.0328`. Its generated output requires effective
 state-only chapter forms. Explicit false disables collapse even when a module
 supplies true. This pinned behavior differs from the current chapter reference's
 state-only description. A source file or XML self-closing syntax does not itself
-enable collapse. See [the verified builder observations](development/element-properties-acceptance.md).
+enable collapse. See [Writerside verification](development/writerside-verification.md#official-builder-conformance)
+for the maintained fixtures and generated-HTML checks.
 
 Definition items get collapse from their list. With no module item default,
 absent and literal `inherited` item states both follow the list. With a module

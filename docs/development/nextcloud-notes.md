@@ -418,6 +418,23 @@ mocked tests alone do not establish live server compatibility. Keep the
 checkpoint, revision, explicit-adoption and attachment ownership invariants
 above covered, and remove temporary acceptance data when finished.
 
+For repeatable performance measurements, build the existing real-SQLite corpus
+harness with the pinned Dart SDK and dependency lock. Use an empty corpus
+directory outside the checkout:
+
+```bash
+performance_dir="$(mktemp -d)"
+dart build cli -t tools/nextcloud_notes_performance.dart \
+  -o "$performance_dir/build"
+"$performance_dir/build/bundle/bin/nextcloud_notes_performance" \
+  "$performance_dir/corpus"
+```
+
+The harness measures index rebuilding, warm queries, concurrent saves/imports
+and reference indexing with durable notes and cached attachments. Compare its
+`report.json` under equivalent machine/load conditions; it is a benchmark,
+not a timing assertion in the regression suite.
+
 ## Explicit non-goals
 
 No Nextcloud Files, WebDAV, automatic protocol fallback, file browsing, embedded
@@ -428,8 +445,6 @@ describe web-editor ownership and internal collaborative machinery, not a
 documented supported external native collaboration API. A future official
 native API would require a separate product decision.
 
-Milestone 1 implementation, regression names, fixture versions and acceptance
-results are maintained in [nextcloud-notes-milestone-1.md](nextcloud-notes-milestone-1.md).
 The native disposable acceptance target is built with:
 
 ```sh

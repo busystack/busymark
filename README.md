@@ -275,6 +275,10 @@ Issues and focused pull requests are welcome.
 
 Changes should remain consistent with BusyMark's scope as a Linux desktop editor for Markdown, Writerside documentation, and Nextcloud Notes.
 
+Keep temporary execution reports, test-run screenshots, agent session notes, and
+acceptance diaries outside the repository; keep reusable tests, fixtures, tools,
+and maintained documentation in it.
+
 ## License
 
 BusyMark is licensed under the Apache License 2.0. See [LICENSE](LICENSE).

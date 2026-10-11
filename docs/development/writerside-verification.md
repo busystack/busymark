@@ -93,6 +93,55 @@ and temporary fixture path. Remove the output and disposable fixture after
 inspection. It verifies BusyMark's native interactions, not visual parity with
 the original IDE or comprehensive assistive-technology support.
 
+## Linux Element Properties harness
+
+`test/support/writerside_authoring_native_smoke.dart` opens the production
+`BusyMarkApp` workspace with isolated settings, history, recovery and template
+storage. It copies `test/fixtures/writerside/conformance_project` and
+`test/fixtures/writerside/property_defaults_conformance`, then drives GTK menus
+and native keyboard shortcuts through `tools/linux_native_menu_probe.py`.
+
+Use the pinned Flutter SDK and the Linux build dependencies listed in the README,
+plus Python GTK/AT-SPI introspection, XTest, xdotool, Xvfb and a D-Bus session.
+Run from the repository root with an isolated display and software rendering:
+
+```bash
+inspector_output="$(mktemp -d)"
+flutter build linux --debug --no-pub \
+  --target=test/support/writerside_authoring_native_smoke.dart
+BUSYMARK_NATIVE_PROBE=1 GDK_BACKEND=x11 NO_AT_BRIDGE=0 \
+  LIBGL_ALWAYS_SOFTWARE=1 \
+  dbus-run-session -- xvfb-run -a -s '-screen 0 1440x1000x24' \
+  build/linux/x64/debug/bundle/busymark \
+  test/fixtures/writerside/conformance_project "$inspector_output"
+flutter build linux --debug --no-pub --target lib/main.dart
+```
+
+Treat a nonzero exit or a non-null `failure` in `result.json` as failure. The checks
+cover target identity and ancestry independently of the caret, Source without a
+hidden Editor, native Save and one-step undo/redo, invalid-draft transition
+blocking and Escape, XML/Markdown save/close/reopen, defaults/override/reset,
+source-neutral folding, Split/Reading, narrow layouts, RTL and text scaling.
+Ownership cases retain literal code/image labels and selected inline attributes;
+ordered-item conversions retain outer and nested list starts. Screenshots alone
+do not establish persistence or correct mutation. Keep output and copied projects
+outside the repository and remove them after inspection.
+
+To check the saved source with the pinned builder, pass the copied project named
+by `result.json`'s `fixture` field to `tools/validate_writerside_conformance.sh`.
+Validate its sibling `${fixture}-defaults` project separately. Both use
+`Conformance/conformance`. Retain each build outside the checkout via
+`WRITERSIDE_CONFORMANCE_OUTPUT`, then run
+`tools/verify_writerside_property_fixture.py` on its `webHelpCONFORMANCE2-all.zip`
+with mode `native` or `native-defaults`, respectively. This checks the actual
+saved bytes and module defaults as well as the checked-in conformance inputs.
+
+The corresponding executable regressions are
+`test/src/writerside_properties_round_trip_test.dart`,
+`test/src/writerside_inspector_session_test.dart`,
+`test/src/writerside_authoring_ui_test.dart` and
+`test/src/workspace_controller_test.dart`.
+
 ## Official-builder conformance
 
 `test/fixtures/writerside/conformance_semantics.json` is a normalized semantic
@@ -107,9 +156,16 @@ Run the builder comparison with:
 bash tools/validate_writerside_conformance.sh
 ```
 
-The script uses temporary source copies and validates both the builder report
-and normalized semantic snapshot. Set `WRITERSIDE_CONFORMANCE_OUTPUT` only when
-generated artifacts must be retained for diagnosis.
+The script requires Docker and uses the pinned builder **2026.08.0328** with
+temporary source copies. It validates the builder report and normalized semantic
+snapshot, then checks `reference_conformance`, `property_conformance` and
+`property_defaults_conformance` under `test/fixtures/writerside/`.
+`tools/verify_writerside_property_fixture.py` checks generated HTML for collapse,
+state/default inheritance, extraction/emphasis, reference ownership and nested
+ordered-list starts. Builder errors, warnings, semantic mismatches or failed HTML
+assertions fail validation; process success alone does not establish the output
+semantics. Set `WRITERSIDE_CONFORMANCE_OUTPUT` to a directory outside the
+repository only when generated artifacts must be retained for diagnosis.
 
 Regenerate the authoring schema from an intentionally selected official XSD:
 

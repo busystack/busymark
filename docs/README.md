@@ -15,6 +15,7 @@ are intentionally independent so they can be referenced directly.
 
 - [Supported content and limitations](writerside-support.md)
 - [Instances and TOC libraries](writerside-instances.md)
+- [Element Properties](element-properties.md): contextual Writerside properties, defaults, drafts, Source integration and navigation.
 - [Admonitions](admonitions.md)
 - [Collapsible elements](collapsible-elements.md)
 - [Videos](videos.md)
@@ -38,5 +39,3 @@ are intentionally independent so they can be referenced directly.
 - [Nextcloud Notes architecture, API contract, and verification](development/nextcloud-notes.md)
 - [Visualization implementation and verification](development/visualizations.md)
 - [Writerside verification](development/writerside-verification.md)
-
-- [Element Properties](element-properties.md): contextual Writerside properties, defaults, drafts, Source integration and navigation.

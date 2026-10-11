@@ -35,5 +35,6 @@ is disabled because the verified browser view does not expose BusyMark's heading
 
 Deterministic retrieval tests are in
 `test/src/nextcloud_notes/notes_retrieval_test.dart`; authenticated fixture checks
-are in `tools/nextcloud_notes_live_acceptance.dart`. Exact acceptance results and
-limitations are recorded in [Milestone 3](nextcloud-notes-milestone-3.md).
+are in `tools/nextcloud_notes_live_acceptance.dart`. See the
+[verification instructions](nextcloud-notes.md#verification) for running them
+against isolated HTTPS fixtures.
