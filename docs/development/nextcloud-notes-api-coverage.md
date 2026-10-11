@@ -31,7 +31,7 @@ open its most recent note instead. Browser acceptance verifies the intended
 note ID and unique content. The optional cached route observation is stored in
 the existing account JSON; schema 6 and synchronization checkpoints are unchanged.
 BusyMark recognizes both pasted forms internally. Portable heading insertion
-is disabled because the supported browser heading IDs differ from BusyMark's.
+is disabled because the verified browser view does not expose BusyMark's heading IDs.
 
 Deterministic retrieval tests are in
 `test/src/nextcloud_notes/notes_retrieval_test.dart`; authenticated fixture checks

@@ -12,6 +12,7 @@ if os.environ.get('BUSYMARK_NATIVE_ACCEPTANCE') != '1':
     raise SystemExit('Only the isolated Notes desktop acceptance harness may invoke this helper.')
 bindings = {
     'ctrl+1': [b'Control_L', b'1'],
+    'ctrl+2': [b'Control_L', b'2'],
     'ctrl+f': [b'Control_L', b'f'],
     'ctrl+k': [b'Control_L', b'k'],
     'ctrl+p': [b'Control_L', b'p'],

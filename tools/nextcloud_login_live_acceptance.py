@@ -13,7 +13,7 @@ import sys
 from pathlib import Path
 
 import requests
-from playwright.sync_api import sync_playwright
+from playwright.sync_api import TimeoutError as PlaywrightTimeoutError, sync_playwright
 
 
 def main():
@@ -109,6 +109,15 @@ def main():
                     if preview.count():
                         preview.first.click()
                 link.wait_for(state="visible", timeout=60000)
+                # The asynchronously loaded first-run wizard can appear after
+                # the editor link becomes visible on a newly provisioned user.
+                try:
+                    wizard.wait_for(state="visible", timeout=5000)
+                except PlaywrightTimeoutError:
+                    pass
+                else:
+                    wizard.get_by_role('button', name=re.compile('close', re.I)).first.click()
+                    wizard.wait_for(state='hidden')
                 page.screenshot(path=str(Path(sys.argv[3]).with_suffix(".source.png")), full_page=True)
                 # Nextcloud's rich editor opens ordinary links through its
                 # link context menu; keyboard modifiers select editor content.
@@ -161,6 +170,10 @@ def main():
                     "browserHeadingIds": opened.locator('.ProseMirror h1, .ProseMirror h2, .ProseMirror h3').evaluate_all('(nodes) => nodes.map(node => node.id)'),
                     "installationPath": requests.utils.urlparse(server).path,
                 }
+        except Exception:
+            page.screenshot(path=str(Path(sys.argv[3]).with_suffix('.failure.png')), full_page=True)
+            Path(sys.argv[3]).with_suffix('.failure.html').write_text(page.content())
+            raise
         finally:
             browser.close()
     report = {

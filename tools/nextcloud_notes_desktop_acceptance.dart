@@ -1,6 +1,7 @@
 import 'package:busymark/src/references/reference_controller.dart';
 import 'package:busymark/src/references/reference_ui.dart';
 import 'package:busymark/src/app/command_registry.dart';
+import 'package:busymark/src/app/busymark_design.dart';
 import 'package:busymark/src/nextcloud_notes/data/server_uri.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_editor.dart';
 import 'package:flutter/gestures.dart';
@@ -1211,9 +1212,10 @@ class _HarnessState extends ConsumerState<_Harness> {
     await wait(
       () =>
           File('${root.path}/topics/renamed.topic').existsSync() &&
-          File('${root.path}/topics/source.md')
-              .readAsStringSync()
-              .contains('[target]: renamed.topic#actual-id'),
+          File(
+            '${root.path}/topics/source.md',
+          ).readAsStringSync().contains('[target]: renamed.topic#actual-id') &&
+          !ref.read(workspaceControllerProvider).isLoading,
       'Writerside reviewed topic publication',
     );
     final source = await File('${root.path}/topics/source.md').readAsString();
@@ -1223,6 +1225,167 @@ class _HarnessState extends ConsumerState<_Harness> {
           source.contains('`[Code exclusion](missing.topic)`'),
       'm3WritersideEstablishedReviewedRenameAndSourcePreservation',
     );
+    await writersideContextJourney(workspace);
+  }
+
+  Future<void> writersideContextJourney(WorkspaceController workspace) async {
+    final root = Directory('${widget.output.path}/writerside-contexts');
+    Future<void> write(String path, String source) async {
+      final file = File('${root.path}/$path');
+      await file.parent.create(recursive: true);
+      await file.writeAsString(source);
+    }
+
+    for (final module in ['main', 'shared']) {
+      await write(
+        '$module/writerside.cfg',
+        '<ihp><module name="$module"/><topics dir="topics"/>'
+            '<instance src="guide.tree"/><instance src="beta.tree"/></ihp>',
+      );
+      for (final instance in ['guide', 'beta']) {
+        final topic = module == 'main' ? 'source' : 'target';
+        await write(
+          '$module/$instance.tree',
+          '<instance-profile id="$instance" name="$instance" start-page="$topic.topic">'
+              '<toc-element topic="$topic.topic"/>'
+              '${module == 'main' ? '<toc-element origin="shared" topic="target.topic"/>' : ''}'
+              '</instance-profile>',
+        );
+      }
+    }
+    await write(
+      'main/topics/source.topic',
+      '<topic id="source" title="Context source"><p>'
+          '<a origin="shared" href="target.topic#explicit">Element</a>'
+          '<a origin="shared" href="dup.topic">Ambiguous</a></p>'
+          '<include origin="shared" from="target.topic" element-id="piece"/></topic>',
+    );
+    await write(
+      'shared/topics/target.topic',
+      '<topic id="target" title="Shared target">'
+          '<chapter id="explicit" title="Actual element"><p>Target</p></chapter>'
+          '<snippet id="piece" instance="beta"><p>Reusable origin</p></snippet></topic>',
+    );
+    for (final directory in ['first', 'nested']) {
+      await write(
+        'shared/topics/$directory/dup.topic',
+        '<topic id="$directory" title="$directory duplicate"><p>Duplicate</p></topic>',
+      );
+    }
+    final sourcePath = '${root.path}/main/topics/source.topic';
+    final targetPath = '${root.path}/shared/topics/target.topic';
+    await workspace.openFolder(root.path);
+    await workspace.openActiveFile(sourcePath);
+    workspace.updateActiveEditorMode(DocumentViewModePreference.source);
+    await ref
+        .read(appSettingsControllerProvider.notifier)
+        .setDocumentViewMode(DocumentViewModePreference.source);
+    await nativeShortcut('ctrl+2');
+    await wait(
+      () => widgets<BusyMarkMenuButton<String>>().any(
+        (w) => w.key == const ValueKey('writerside-instance-selector'),
+      ),
+      'production instance selector',
+    );
+    final guideSelector = widgets<BusyMarkMenuButton<String>>().singleWhere(
+      (w) => w.key == const ValueKey('writerside-instance-selector'),
+    );
+    guideSelector.onSelected('${root.path}/main/guide.tree');
+    await ref
+        .read(busyMarkCommandRegistryProvider)
+        .execute(BusyMarkCommandIds.references);
+    await wait(
+      () =>
+          widgets<ListTile>().any(
+            (t) =>
+                t.subtitle is Text &&
+                (t.subtitle as Text).data!.contains(
+                  'Unavailable in this context',
+                ),
+          ) &&
+          widgets<ListTile>().any(
+            (t) =>
+                t.subtitle is Text &&
+                (t.subtitle as Text).data!.contains('Ambiguous'),
+          ),
+      'conditional include and cross-module ambiguity',
+    );
+    await capture('m3-writerside-guide-unavailable');
+    widgets<ListTile>()
+        .firstWhere(
+          (t) =>
+              t.subtitle is Text &&
+              (t.subtitle as Text).data!.contains('target.topic#explicit'),
+        )
+        .onTap!();
+    await wait(
+      () =>
+          ref.read(workspaceControllerProvider).activeBuffer?.filePath ==
+          targetPath,
+      'cross-module element UI navigation',
+    );
+    await workspace.openActiveFile(sourcePath);
+    await nativeShortcut('ctrl+2');
+    await wait(
+      () => widgets<BusyMarkMenuButton<String>>().any(
+        (w) => w.key == const ValueKey('writerside-instance-selector'),
+      ),
+      'instance selection after reference navigation',
+    );
+    widgets<BusyMarkMenuButton<String>>()
+        .singleWhere(
+          (w) => w.key == const ValueKey('writerside-instance-selector'),
+        )
+        .onSelected('${root.path}/main/beta.tree');
+    await ref
+        .read(busyMarkCommandRegistryProvider)
+        .execute(BusyMarkCommandIds.references);
+    await wait(
+      () => widgets<ListTile>().any(
+        (t) =>
+            t.subtitle is Text &&
+            (t.subtitle as Text).data!.contains('piece\nResolved'),
+      ),
+      'beta include available in References',
+    );
+    await capture('m3-writerside-beta-include');
+    widgets<ListTile>()
+        .firstWhere(
+          (t) =>
+              t.subtitle is Text &&
+              (t.subtitle as Text).data!.contains('piece\nResolved'),
+        )
+        .onTap!();
+    await wait(
+      () =>
+          ref.read(workspaceControllerProvider).activeBuffer?.filePath ==
+          targetPath,
+      'include origin UI navigation',
+    );
+    await nativeShortcut('ctrl+2');
+    await wait(
+      () => widgets<BusyMarkHeaderPopupMenuButton<String>>().any(
+        (w) => w.key == const ValueKey('writerside-module-selector'),
+      ),
+      'production module selector',
+    );
+    widgets<BusyMarkHeaderPopupMenuButton<String>>()
+        .singleWhere(
+          (w) => w.key == const ValueKey('writerside-module-selector'),
+        )
+        .onSelected('shared');
+    await wait(
+      () =>
+          ref
+              .read(workspaceControllerProvider)
+              .workspace
+              ?.writersideProject
+              ?.activeModuleId ==
+          'shared',
+      'shared module UI context',
+    );
+    await capture('m3-writerside-shared-module');
+    check(true, 'm3CrossModuleElementIncludeAndInstanceUiContexts');
   }
 
   Future<void> chooseAuthoredLink(
@@ -1317,11 +1480,19 @@ class _HarnessState extends ConsumerState<_Harness> {
       final target = repository.noteById(saved['targetLocalId'] as String)!;
       created.addAll((saved['ownedServerIds'] as List).cast<int>());
       await workspace.openNextcloudNote(source.localId);
+      final browserUrl = saved['browserNoteUrl'];
+      if (browserUrl is String) {
+        workspace.updateActiveText(
+          '${source.content}\n[Browser returned]($browserUrl)\n',
+        );
+      }
       workspace.updateActiveEditorMode(DocumentViewModePreference.preview);
       await ref
           .read(appSettingsControllerProvider.notifier)
           .setDocumentViewMode(DocumentViewModePreference.preview);
-      await tapAuthoredLink('Selected link');
+      await tapAuthoredLink(
+        browserUrl is String ? 'Browser returned' : 'Selected link',
+      );
       await wait(
         () =>
             ref
@@ -1337,17 +1508,21 @@ class _HarnessState extends ConsumerState<_Harness> {
             ref
                 .read(workspaceControllerProvider)
                 .activeText
-                .contains('M3 intended target marker'),
+                .contains(saved['marker'] as String),
         'm3CachedOfflineLinkAfterProcessRestart',
       );
       await capture('m3-offline-restart');
+      if (browserUrl is String) {
+        check(true, 'm3ActualBrowserCopiedUrlInternalNavigation');
+      }
       return;
     }
+    final marker = 'M3 intended target ${const Uuid().v4()}';
     final target = await repository.create(
       widget.account.id,
       title: 'M3 portable target',
       category: 'M3/Original',
-      content: '# M3 intended target marker\n\n## Heading\n',
+      content: '# M3 target\n\n$marker\n\n## Heading\n',
     );
     final source = await repository.create(
       widget.account.id,
@@ -1536,7 +1711,7 @@ class _HarnessState extends ConsumerState<_Harness> {
         'targetId': targetId,
         'href': href,
         'ownedServerIds': created.toList(),
-        'marker': 'M3 intended target marker',
+        'marker': marker,
       }),
     );
     widget.transport.offline = true;
@@ -2057,22 +2232,42 @@ class _HarnessState extends ConsumerState<_Harness> {
       'large sidebar',
     );
     await capture('m2-10000-sidebar');
+    Future<int> quickSample(String? screenshot) async {
+      final watch = Stopwatch()..start();
+      final quick = showQuickOpen(rootNavigatorKey.currentContext!, ref);
+      await wait(
+        () =>
+            widgets<QuickOpenDialog>().isNotEmpty &&
+            widgets<ListTile>().any(
+              (t) => t.title is Text && (t.title as Text).data == 'Duplicate 0',
+            ),
+        'large quick open',
+      );
+      watch.stop();
+      if (screenshot != null) await capture(screenshot);
+      Navigator.of(rootNavigatorKey.currentContext!).pop();
+      await quick;
+      await wait(
+        () => widgets<QuickOpenDialog>().isEmpty,
+        'quick open dismissal before the next sample',
+      );
+      return watch.elapsedMilliseconds;
+    }
+
+    final baselineQuick = <int>[];
+    for (var i = 0; i < 5; i++) {
+      baselineQuick.add(
+        await quickSample(i == 0 ? 'm3-quick-open-baseline' : null),
+      );
+    }
     ref.read(referencePanelRequestProvider.notifier).request();
     await WidgetsBinding.instance.endOfFrame;
-    final watch = Stopwatch()..start();
-    final quick = showQuickOpen(rootNavigatorKey.currentContext!, ref);
-    await wait(
-      () =>
-          widgets<QuickOpenDialog>().isNotEmpty &&
-          widgets<ListTile>().any(
-            (t) => t.title is Text && (t.title as Text).data == 'Duplicate 0',
-          ),
-      'large quick open',
-    );
-    watch.stop();
-    await capture('m2-10000-quick-open');
-    Navigator.of(rootNavigatorKey.currentContext!).pop();
-    await quick;
+    final indexingQuick = <int>[];
+    for (var i = 0; i < 5; i++) {
+      indexingQuick.add(
+        await quickSample(i == 0 ? 'm2-10000-quick-open' : null),
+      );
+    }
     final search = NotesSearchController(repository.store, widget.account.id);
     final querying = search.search('é', limit: 2000);
     final saved = Stopwatch()..start();
@@ -2102,7 +2297,8 @@ class _HarnessState extends ConsumerState<_Harness> {
     await File('${widget.output.path}/ui-performance.json').writeAsString(
       jsonEncode({
         'notes': repository.notes.length,
-        'quickOpenToResultsMs': watch.elapsedMilliseconds,
+        'quickOpenBaselineMs': baselineQuick,
+        'quickOpenDuringReferenceIndexMs': indexingQuick,
         'durableSaveDuringSearchMs': saved.elapsedMilliseconds,
         'rssBytes': ProcessInfo.currentRss,
         'maximumRssBytes': ProcessInfo.maxRss,

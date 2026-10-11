@@ -106,9 +106,10 @@ class ReferenceIndex {
     required List<ParsedReferenceDocument> parsed,
     this.root,
     this.server,
+    Set<int> missingNoteIds = const {},
     Set<String> ownedPaths = const {},
     ReferenceIndex? previous,
-  }) {
+  }) : missingNoteIds = Set.unmodifiable(missingNoteIds) {
     parsedDocuments = List.unmodifiable(parsed);
     documents = {
       for (final value in parsed) value.document.identity: value.document,
@@ -142,6 +143,8 @@ class ReferenceIndex {
         previous != null &&
         previous.root == root &&
         previous.server == server &&
+        previous.missingNoteIds.length == missingNoteIds.length &&
+        previous.missingNoteIds.every(missingNoteIds.contains) &&
         previous.documents.length == documents.length &&
         documents.entries.every((entry) {
           final old = previous.documents[entry.key];
@@ -188,8 +191,12 @@ class ReferenceIndex {
         if (server != null) {
           final noteId = nextcloudNoteId(server!, authored.destination);
           if (noteId != null) {
-            destination = ids[noteId];
-            resolution = ReferenceResolution.unavailable;
+            if (missingNoteIds.contains(noteId)) {
+              resolution = ReferenceResolution.missing;
+            } else {
+              destination = ids[noteId];
+              resolution = ReferenceResolution.unavailable;
+            }
           } else if (authored.destination.startsWith('#')) {
             destination = value;
           }
@@ -211,7 +218,10 @@ class ReferenceIndex {
               destination = paths[path];
               resolution =
                   destination == null &&
-                      p.extension(path).toLowerCase() != '.md'
+                      !const {
+                        '.md',
+                        '.markdown',
+                      }.contains(p.extension(path).toLowerCase())
                   ? ReferenceResolution.unsupported
                   : ReferenceResolution.missing;
             }
@@ -258,6 +268,7 @@ class ReferenceIndex {
   }
   final String? root;
   final Uri? server;
+  final Set<int> missingNoteIds;
   late final Map<String, ReferenceDocument> documents;
   late final List<ParsedReferenceDocument> parsedDocuments;
   late final List<ReferenceTarget> targets;

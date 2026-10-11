@@ -90,6 +90,70 @@ void main() {
     },
   );
   test(
+    'hidden authored sources participate in reviewed incoming links',
+    () async {
+      final hidden = File('${root.path}/.guides/.source.md');
+      await hidden.parent.create();
+      await hidden.writeAsString('[Target](../old/target.md#heading)\n');
+      final workspace = await workspaceService.openPath(root.path);
+      final plan = await service.prepare(
+        workspace,
+        '${root.path}/old/target.md',
+        '${root.path}/old/renamed.md',
+      );
+      expect(plan.files.any((f) => f.path == hidden.path), isTrue);
+      await service.apply(
+        plan,
+        validateBuffers: () {},
+        move: () => workspaceService.renameEntity(
+          workspace,
+          '${root.path}/old/target.md',
+          'renamed.md',
+        ),
+      );
+      expect(
+        await hidden.readAsString(),
+        '[Target](../old/renamed.md#heading)\n',
+      );
+      final reviewed = await service.prepare(
+        workspace,
+        '${root.path}/old/renamed.md',
+        '${root.path}/old/final.md',
+      );
+      await File('${root.path}/.guides/new.md').writeAsString('new member');
+      await expectLater(service.validate(reviewed), throwsStateError);
+    },
+  );
+  test(
+    'folder moves maintain outgoing references in hidden descendants',
+    () async {
+      final hidden = File('${root.path}/old/.drafts/.source.md');
+      await hidden.parent.create();
+      await hidden.writeAsString(
+        '[Other](../../other.md)\n![Media](../image.png)\n',
+      );
+      final workspace = await workspaceService.openPath(root.path);
+      final plan = await service.prepare(
+        workspace,
+        '${root.path}/old',
+        '${root.path}/new/old',
+      );
+      await service.apply(
+        plan,
+        validateBuffers: () {},
+        move: () => workspaceService.moveEntity(
+          workspace,
+          '${root.path}/old',
+          '${root.path}/new',
+        ),
+      );
+      expect(
+        await File('${root.path}/new/old/.drafts/.source.md').readAsString(),
+        '[Other](../../../other.md)\n![Media](../image.png)\n',
+      );
+    },
+  );
+  test(
     'external edits after review and new workspace members reject publication',
     () async {
       final workspace = await workspaceService.openPath(root.path);

@@ -235,7 +235,9 @@ class MarkdownMoveService {
       await for (final entity in pending.removeLast().list(
         followLinks: false,
       )) {
-        if (p.basename(entity.path).startsWith('.')) continue;
+        if (const {'.git', '.hg', '.svn'}.contains(p.basename(entity.path))) {
+          continue;
+        }
         if (entity is Link) {
           final type = await FileSystemEntity.type(entity.path);
           if (type == FileSystemEntityType.directory ||

@@ -269,6 +269,21 @@ Future<void> main(List<String> arguments) async {
       throw StateError('Filtered/projected live response semantics differed.');
     }
     checks['m3FilteredProjectedRetrieval'] = true;
+    final unidentified = await api(account).query(
+      NotesRetrievalScope(category: 'M3/Scoped', exclude: {'id', 'content'}),
+      chunkSize: 1,
+    );
+    final singleProjection = await api(account).getProjection(
+      target.serverId!,
+      NotesRetrievalScope(exclude: {'id', 'content'}),
+    );
+    if (unidentified.notes.isEmpty ||
+        unidentified.notes.any((n) => n.id != null || n.has('content')) ||
+        singleProjection.id != null ||
+        singleProjection.has('content')) {
+      throw StateError('Excluded identifiers were not represented as omitted.');
+    }
+    checks['m3ExcludedIdentifiersAndSingleProjection'] = true;
     final checkpoint = repository.accountById(account.id)!.listEtag;
     await repository.save(target.localId, content: 'pending local edit');
     final refreshed = await repository.refreshLinkedNote(

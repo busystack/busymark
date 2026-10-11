@@ -7,6 +7,7 @@ import 'package:path/path.dart' as p;
 
 import '../nextcloud_notes/application/nextcloud_connection.dart';
 import '../nextcloud_notes/application/notes_navigation.dart';
+import '../nextcloud_notes/domain/notes_models.dart';
 import '../workspace/workspace_controller.dart';
 import '../workspace/workspace_model.dart';
 import '../markdown/markdown_model.dart';
@@ -17,6 +18,14 @@ final referenceIndexProvider =
     NotifierProvider<ReferenceController, AsyncValue<ReferenceIndex>>(
       ReferenceController.new,
     );
+
+typedef ReferenceBatchParser =
+    Future<List<ParsedReferenceDocument>> Function(
+      List<ReferenceDocument> documents,
+    );
+final referenceBatchParserProvider = Provider<ReferenceBatchParser>(
+  (ref) => parseReferenceBatch,
+);
 
 /// Coalesces edits and filesystem/repository notifications outside widget builds.
 /// Content digests retain unchanged parsing; generations fence obsolete results.
@@ -64,12 +73,23 @@ class ReferenceController extends Notifier<AsyncValue<ReferenceIndex>> {
       }
       final documents = <ReferenceDocument>[];
       Uri? server;
+      final missingNoteIds = <int>{};
       String? root;
       if (workspace.isRemote) {
         final repository = await ref.read(
           nextcloudNotesRepositoryProvider.future,
         );
         server = repository.accountById(workspace.nextcloudAccountId!)?.server;
+        missingNoteIds.addAll(
+          repository.notes
+              .where(
+                (n) =>
+                    n.accountId == workspace.nextcloudAccountId &&
+                    n.syncState == NoteSyncState.deletedRemotely &&
+                    n.serverId != null,
+              )
+              .map((n) => n.serverId!),
+        );
         for (final note in repository.notes.where(
           (n) =>
               n.accountId == workspace.nextcloudAccountId &&
@@ -145,6 +165,7 @@ class ReferenceController extends Notifier<AsyncValue<ReferenceIndex>> {
         if (cached?.document.revision == document.revision &&
             cached?.document.available == document.available &&
             cached?.document.title == document.title &&
+            cached?.document.mode == document.mode &&
             cached?.document.serverId == document.serverId) {
           parsed.add(cached!);
         } else {
@@ -154,9 +175,12 @@ class ReferenceController extends Notifier<AsyncValue<ReferenceIndex>> {
       // A worker transfer is limited to 16 documents, never the entire corpus.
       for (var offset = 0; offset < changed.length; offset += 16) {
         final batch = changed.skip(offset).take(16).toList();
-        final values = await parseReferenceBatch(batch);
+        final values = await ref.read(referenceBatchParserProvider)(batch);
         if (generation != _generation || !ref.mounted) return;
         parsed.addAll(values);
+        // Keep completed, current batches when a later edit supersedes the
+        // rebuild. Their revisions are checked before reuse on the next pass.
+        _cache.addEntries(values.map((d) => MapEntry(d.document.identity, d)));
       }
       final writerside = workspace.writersideProject == null
           ? null
@@ -171,6 +195,7 @@ class ReferenceController extends Notifier<AsyncValue<ReferenceIndex>> {
         parsed: parsed,
         root: root,
         server: server,
+        missingNoteIds: missingNoteIds,
         previous: state.value,
         ownedPaths:
             writerside?.modulesById.values

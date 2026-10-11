@@ -89,7 +89,9 @@ class _ReferenceLinkChooserState extends ConsumerState<ReferenceLinkChooser> {
 
   LinkDestination? _destination(ReferenceTarget target, ReferenceIndex index) {
     final state = ref.read(workspaceControllerProvider);
-    if (state.workspace?.id != _workspaceId ||
+    if (!target.document.available ||
+        index.missingNoteIds.contains(target.document.serverId) ||
+        state.workspace?.id != _workspaceId ||
         state.activeBufferId != _bufferId) {
       return null;
     }
@@ -212,7 +214,15 @@ class _ReferenceLinkChooserState extends ConsumerState<ReferenceLinkChooser> {
                     title: Text(target.label ?? target.document.title),
                     subtitle: Text(
                       destination == null
-                          ? context.l10n.referenceNoPortableId
+                          ? index?.missingNoteIds.contains(
+                                      target.document.serverId,
+                                    ) ==
+                                    true
+                                ? context.l10n.referenceMissing
+                                : index?.server == null ||
+                                      !target.document.available
+                                ? context.l10n.referenceUnavailable
+                                : context.l10n.referenceNoPortableId
                           : '${destination.href}${destination.origin == null ? '' : ' / ${destination.origin}'}',
                     ),
                     enabled: destination != null,

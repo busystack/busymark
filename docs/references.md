@@ -70,6 +70,6 @@ import creates a new identity and does not redirect an old note ID to it.
 
 A never-synchronized note has no confirmed server ID and cannot supply a
 portable target URL. The chooser explains this rather than creating another
-note. Note heading targets are disabled: the supported Notes browser uses
-different heading IDs from BusyMark's parsed Markdown IDs. BusyMark does not
+note. Note heading targets are disabled: the verified Notes browser view does
+not expose BusyMark's parsed Markdown heading IDs. BusyMark does not
 invent a persistent link syntax for this limitation.

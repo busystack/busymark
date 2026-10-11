@@ -97,6 +97,63 @@ void main() {
     expect(offsets.length, 357);
     expect(offsets.toSet().length, 357);
   });
+  test(
+    'known deleted IDs invalidate cached availability and never retarget recovery',
+    () {
+      final parsed = [
+        ParsedReferenceDocument(
+          ReferenceDocument(
+            identity: 'source',
+            title: 'Source',
+            localId: 'source',
+            serverId: 1,
+            source:
+                '[old](https://cloud.example/nc/apps/notes/note/42) '
+                '[recovered](https://cloud.example/nc/apps/notes/note/43) '
+                '[uncached](https://cloud.example/nc/apps/notes/note/44)',
+          ),
+        ),
+        ParsedReferenceDocument(
+          ReferenceDocument(
+            identity: 'recovered',
+            title: 'Recovered',
+            localId: 'recovered',
+            serverId: 43,
+            source: '# Recovered',
+          ),
+        ),
+      ];
+      final server = Uri.parse('https://cloud.example/nc');
+      final before = ReferenceIndex(parsed: parsed, server: server);
+      expect(
+        before.references.first.resolution,
+        ReferenceResolution.unavailable,
+      );
+      final missing = <int>{42};
+      final after = ReferenceIndex(
+        parsed: parsed,
+        server: server,
+        previous: before,
+        missingNoteIds: missing,
+      );
+      missing.clear();
+      expect(after.missingNoteIds, {42});
+      expect(after.references.map((r) => r.resolution), [
+        ReferenceResolution.missing,
+        ReferenceResolution.resolved,
+        ReferenceResolution.unavailable,
+      ]);
+      expect(after.references.first.target, isNull);
+      expect(after.references[1].target!.document.identity, 'recovered');
+    },
+  );
+  test('missing supported Markdown extension remains a missing document', () {
+    final index = ReferenceIndex(
+      parsed: [doc('source.md', '[missing](target.markdown)')],
+      root: '/workspace',
+    );
+    expect(index.references.single.resolution, ReferenceResolution.missing);
+  });
   test('incremental reuse refreshes repaired anchors and changed targets', () {
     final source = doc('source.md', '[missing](target.md#added)');
     final untouched = doc('untouched.md', '[target](target.md)');
