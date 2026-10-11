@@ -1530,6 +1530,7 @@ void main() {
     );
     expect(groupedMaterial.elevation, theme.cardTheme.elevation);
     expect(groupedMaterial.shadowColor, Colors.transparent);
+    expect(groupedMaterial.clipBehavior, Clip.antiAlias);
     expect(
       _nativeCardDecoration(tester, groupedSurface).shadows,
       BusyMarkShadow.nativeCardShadows(theme.colorScheme.shadow),
@@ -1557,6 +1558,7 @@ void main() {
       tester.widget<Divider>(find.byType(Divider)).color,
       colors.cardShade,
     );
+    expect(tester.widget<Divider>(find.byType(Divider)).height, 1);
     expect(
       DefaultTextStyle.of(tester.element(find.text('One'))).style.color,
       isNot(colors.mutedForeground),
@@ -2296,6 +2298,41 @@ void main() {
       expect(blockCommandCalls, 1);
     });
   }
+
+  testWidgets('dialog title and body share a clipped surface in both themes', (
+    tester,
+  ) async {
+    for (final brightness in Brightness.values) {
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: buildBusyMarkTheme(
+            brightness: brightness,
+            accentColor: const Color(0xFFE95420),
+          ),
+          home: const Scaffold(
+            body: BusyMarkDialogShell(
+              title: 'Dialog',
+              children: [Text('Body')],
+            ),
+          ),
+        ),
+      );
+      final shell = find.byType(BusyMarkDialogShell);
+      final dialog = tester.widget<Dialog>(
+        find.descendant(of: shell, matching: find.byType(Dialog)),
+      );
+      final titleBar = tester.widget<YaruDialogTitleBar>(
+        find.descendant(of: shell, matching: find.byType(YaruDialogTitleBar)),
+      );
+      expect(
+        dialog.backgroundColor,
+        busyMarkDialogSurfaceColor(tester.element(shell)),
+      );
+      expect(titleBar.backgroundColor, dialog.backgroundColor);
+      expect(dialog.surfaceTintColor, dialog.backgroundColor);
+      expect(dialog.clipBehavior, Clip.antiAlias);
+    }
+  });
 
   testWidgets('dialog actions wrap at narrow localized text widths', (
     tester,

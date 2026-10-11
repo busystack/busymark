@@ -27,7 +27,7 @@ import 'package:busymark/src/editor/source_highlighter.dart'
 import 'package:busymark/src/editor/source/source_editor.dart';
 import 'package:busymark/src/editor/source/source_autocomplete.dart';
 import 'package:busymark/src/editor/source/source_gutter.dart'
-    show sourceTextHeightBehavior;
+    show BusyMarkSourceGutter, sourceTextHeightBehavior;
 import 'package:busymark/src/editor/source/source_search.dart';
 import 'package:busymark/src/editor/source_folding.dart';
 import 'package:busymark/src/editor/source_language.dart';
@@ -1289,6 +1289,96 @@ void main() {
       findsOneWidget,
     );
   });
+
+  testWidgets(
+    'gutter follows wrapped text and preserves folded line positions',
+    (tester) async {
+      final source =
+          '## Fold\n${List.filled(8, 'wrapped words').join(' ')}\n\n'
+          '## Next\nTail\n';
+      await tester.pumpWidget(
+        MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(
+            body: SizedBox(
+              width: 360,
+              height: 600,
+              child: BusyMarkSourceEditor(
+                text: source,
+                language: SourceSyntaxLanguage.markdown,
+                filePath: '/project/gutter.md',
+                diagnostics: const [],
+                editorFontSize: 14,
+                wordWrap: true,
+                searchActive: false,
+                searchOptions: const SourceSearchOptions(),
+                onSearchOptionsChanged: (_) {},
+                onChanged: (_, _) {},
+                onOpenSearch: () {},
+                onCloseSearch: () {},
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      final gutter = find.byType(BusyMarkSourceGutter);
+      Finder number(int line) =>
+          find.descendant(of: gutter, matching: find.text('$line'));
+      double lineTop(int line) => tester.getTopLeft(number(line)).dy;
+      double renderedLineTop(int fullOffset) {
+        final controller =
+            tester.widget<TextField>(find.byType(TextField)).controller!
+                as BusyMarkSourceEditingController;
+        final paragraph = tester.renderObject<RenderParagraph>(
+          find.byWidgetPredicate(
+            (widget) =>
+                widget is RichText &&
+                widget.text.toPlainText() == controller.text,
+          ),
+        );
+        final offset = controller.fullOffsetToVisibleOffset(fullOffset);
+        final position = paragraph.getOffsetForCaret(
+          TextPosition(offset: offset),
+          Rect.zero,
+        );
+        return paragraph.localToGlobal(position).dy;
+      }
+
+      final nextOffset = source.indexOf('## Next');
+      expect(number(4), findsOneWidget);
+      expect(lineTop(4) - lineTop(2), greaterThan(lineTop(2) - lineTop(1)));
+      expect(
+        lineTop(4) - lineTop(1),
+        closeTo(renderedLineTop(nextOffset) - renderedLineTop(0), 1),
+      );
+
+      final l10n = AppLocalizationsEn();
+      await tester.tap(
+        find.byTooltip(l10n.collapseKind(l10n.foldKindSection)).first,
+      );
+      await tester.pump();
+      expect(number(2), findsNothing);
+      expect(number(3), findsNothing);
+      expect(number(4), findsOneWidget);
+      final collapsed = tester.widget<Text>(find.text('## Fold ...'));
+      expect(collapsed.maxLines, 1);
+      expect(collapsed.overflow, TextOverflow.ellipsis);
+      expect(
+        lineTop(5) - lineTop(4),
+        closeTo(
+          renderedLineTop(source.indexOf('Tail')) - renderedLineTop(nextOffset),
+          1,
+        ),
+      );
+      final controller =
+          tester.widget<TextField>(find.byType(TextField)).controller!
+              as BusyMarkSourceEditingController;
+      expect(controller.fullText, source);
+    },
+  );
 
   testWidgets('source editor renders visible diagnostic gutter tooltip', (
     tester,
