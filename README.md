@@ -103,6 +103,7 @@ the current `snap/snapcraft.yaml` in a clean Ubuntu 24.04 amd64 Snapcraft build
 environment. The authoritative build sequence is:
 
 ```bash
+export SNAPCRAFT_BUILD_INFO=1
 snapcraft --version
 snapcraft expand-extensions
 snapcraft clean
@@ -114,6 +115,7 @@ Inspect and test the exact file emitted by the final `snapcraft` command. A
 failed build must not fall back to an older `.snap`. The `snap` job in
 [the Linux workflow](.github/workflows/flutter-linux.yml) follows this route,
 installs that selected artifact, and runs the strict-confinement smoke checks.
+Build information embeds the original recipe for the workflow's identity check.
 
 `tools/build_install_snap_local.sh` is intentionally different: it replaces
 the Flutter payload in an installed Snap scaffold for quick development and

@@ -1032,6 +1032,10 @@ class _HarnessState extends ConsumerState<_Harness> {
     await root.create(recursive: true);
     await Directory('${root.path}/old').create();
     await Directory('${root.path}/new').create();
+    await Directory('${root.path}/.drafts').create();
+    await File(
+      '${root.path}/.drafts/hidden.md',
+    ).writeAsString('[Hidden source](../old/target.md#actual-heading)\n');
     await File('${root.path}/media.png').writeAsBytes(await png(Colors.green));
     await File('${root.path}/old/target.md').writeAsString(
       '# M3 local target\n\n## Actual heading\n\n![Media](../media.png)\n',
@@ -1122,7 +1126,10 @@ class _HarnessState extends ConsumerState<_Harness> {
           ).readAsString()).contains('new/renamed.md#actual-heading') &&
           (await File(
             '${root.path}/new/renamed.md',
-          ).readAsString()).contains('../media.png'),
+          ).readAsString()).contains('../media.png') &&
+          (await File(
+            '${root.path}/.drafts/hidden.md',
+          ).readAsString()).contains('../new/renamed.md#actual-heading'),
       'm3OrdinaryRenameMoveIncomingOutgoingMedia',
     );
     for (final mode in DocumentViewModePreference.values) {
@@ -1722,6 +1729,10 @@ class _HarnessState extends ConsumerState<_Harness> {
     workspace.updateActiveText(
       '$originalSource\n[Missing target](${nextcloudNoteUrl(widget.account.server, 99999999, pretty: pretty)})',
     );
+    final unsavedSource = ref.read(workspaceControllerProvider).activeText;
+    if (!ref.read(workspaceControllerProvider).activeBuffer!.isDirty) {
+      throw StateError('Missing-target fixture must start with a dirty source');
+    }
     workspace.updateActiveEditorMode(DocumentViewModePreference.preview);
     await ref
         .read(appSettingsControllerProvider.notifier)
@@ -1734,7 +1745,10 @@ class _HarnessState extends ConsumerState<_Harness> {
     check(
       ref.read(workspaceControllerProvider).activeBuffer?.remoteNote?.localId ==
               source.localId &&
-          ref.read(workspaceControllerProvider).activeBuffer!.isDirty,
+          ref.read(workspaceControllerProvider).activeText == unsavedSource &&
+          (ref.read(workspaceControllerProvider).activeBuffer!.isDirty ||
+              (repository.noteById(source.localId)!.content == unsavedSource &&
+                  repository.noteById(source.localId)!.hasPendingChanges)),
       'm3MissingTargetPreservesDirtySource',
     );
     await capture('m3-missing-target-failure');
