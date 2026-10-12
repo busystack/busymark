@@ -151,6 +151,7 @@ class BusyInlineStyleRange {
     required this.kind,
     this.destination,
     this.attributes = const {},
+    this.referenceIndex,
   });
 
   final int start;
@@ -158,6 +159,10 @@ class BusyInlineStyleRange {
   final BusyInlineKind kind;
   final String? destination;
   final Map<String, String> attributes;
+
+  /// Owning reference's ordinal within this block snapshot. Empty references
+  /// can share text boundaries, so offsets alone are not their identity.
+  final int? referenceIndex;
 }
 
 class BusyInlineSemanticAnchor {
@@ -167,20 +172,27 @@ class BusyInlineSemanticAnchor {
   final BusyInline inline;
 }
 
-/// Authored references with no label (for example a keymap shortcut) still
-/// have an editable target at their source position.
+/// One range per owning reference, independent of formatting in its caption.
+/// Styling still uses [busyInlineStyleRanges]'s individual text segments.
+/// References without a label retain their editable source position.
 List<BusyInlineStyleRange> busyInlineReferenceRanges(List<BusyInline> inlines) {
-  final ranges = busyInlineStyleRanges(inlines);
+  final ranges = <BusyInlineStyleRange>[];
   var offset = 0;
   void visit(BusyInline inline) {
-    if (inline.plainText.isEmpty &&
-        inline.kind == BusyInlineKind.writersideShortcut) {
+    if ({
+      BusyInlineKind.link,
+      BusyInlineKind.image,
+      BusyInlineKind.writersideVariable,
+      BusyInlineKind.writersideShortcut,
+    }.contains(inline.kind)) {
       ranges.add(
         BusyInlineStyleRange(
           start: offset,
-          end: offset,
+          end: offset + inline.plainText.length,
           kind: inline.kind,
+          destination: inline.destination,
           attributes: inline.attributes,
+          referenceIndex: ranges.length,
         ),
       );
     }

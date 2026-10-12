@@ -3,7 +3,6 @@ import 'package:flutter/foundation.dart';
 import '../../markdown/busymark_document.dart';
 import 'wysiwyg_document_controller.dart';
 import 'wysiwyg_inline_controller.dart';
-import '../../markdown/busymark_markdown_serializer.dart';
 import '../../markdown/markdown_source_map.dart';
 import 'writerside_editing_adapter.dart';
 
@@ -121,7 +120,8 @@ class WritersideInspectorTarget {
       listEquals(address, current.address) &&
       inline?.kind == current.inline?.kind &&
       inline?.start == current.inline?.start &&
-      inline?.end == current.inline?.end;
+      inline?.end == current.inline?.end &&
+      inline?.referenceIndex == current.inline?.referenceIndex;
 
   static WritersideInspectorTarget fromTopic({
     required String bufferId,
@@ -195,7 +195,9 @@ class WritersideInspectorTarget {
           (entry) =>
               entry.range.kind == selected.kind &&
               entry.range.start == selected.start &&
-              entry.range.end == selected.end,
+              entry.range.end == selected.end &&
+              (selected.referenceIndex == null ||
+                  entry.range.referenceIndex == selected.referenceIndex),
         )
         .firstOrNull
         ?.begin;
@@ -210,25 +212,70 @@ class WritersideInspectorTarget {
     if (block.sourceSpan == null) return;
     final base = block.sourceSpan!.startOffset;
     final raw = block.rawSource ?? '';
+    if (!document.isXmlTopic && block.attributes.containsKey('element')) {
+      // Semantic XML islands retain bindings relative to their own authored
+      // fragment. Use that same adapter to map text occurrences, including
+      // variables, then translate back into the containing Markdown source.
+      const prefix = '<topic id="inspector" title="Inspector">';
+      final wrapped = '$prefix$raw</topic>';
+      final xml = const WritersideEditingAdapter().parseXml(
+        filePath: document.filePath,
+        source: wrapped,
+      );
+      final element = xml?.blocks.first.children
+          .where((b) => !b.isSourceOnly)
+          .singleOrNull;
+      if (xml != null && element?.plainText == block.plainText) {
+        final references = busyInlineReferenceRanges(block.inlines);
+        for (final entry in _authoredInlineRanges(xml, wrapped, element!)) {
+          final owner = references
+              .where(
+                (r) =>
+                    r.kind == entry.range.kind &&
+                    r.start == entry.range.start &&
+                    r.end == entry.range.end &&
+                    r.referenceIndex == entry.range.referenceIndex,
+              )
+              .firstOrNull;
+          if (owner != null) {
+            yield (
+              range: owner,
+              begin: base + entry.begin - prefix.length,
+              end: base + entry.end - prefix.length,
+            );
+          }
+        }
+      }
+      return;
+    }
     final mapped =
         !document.isXmlTopic && !block.attributes.containsKey('element')
         ? const MarkdownSourceMapper()
               .createInlineParserContext(
                 documentSource: source,
                 mode: document.mode,
+                mapWritersideReferences: true,
               )
               .parseMapped(raw)
         : null;
-    final mappedReferences =
-        mapped?.ranges.entries
-            .where(
-              (e) => {
-                BusyInlineKind.link,
-                BusyInlineKind.image,
-              }.contains(e.key.kind),
-            )
-            .toList() ??
-        const [];
+    final mappedReferences = <BusyInline>[];
+    void collect(List<BusyInline> inlines, bool inheritedIgnore) {
+      for (final inline in inlines) {
+        final ignore = switch (inline.attributes['ignore-vars']) {
+          'true' => true,
+          'false' => false,
+          _ => inheritedIgnore,
+        };
+        if (inline.kind != BusyInlineKind.writersideVariable || !ignore) {
+          if (mapped!.ranges.containsKey(inline)) mappedReferences.add(inline);
+        }
+        collect(inline.children, ignore);
+      }
+    }
+
+    if (mapped != null) {
+      collect(mapped.inlines, block.attributes['ignore-vars'] == 'true');
+    }
     final references = busyInlineReferenceRanges(block.inlines);
     for (final range in references) {
       if (!{
@@ -245,38 +292,45 @@ class WritersideInspectorTarget {
       if (document.isXmlTopic && binding?.length == 2) {
         begin = int.tryParse(binding![0]);
         end = int.tryParse(binding[1]);
-      } else if (mapped != null &&
-          {BusyInlineKind.link, BusyInlineKind.image}.contains(range.kind)) {
+      } else if (mapped != null) {
         final peers = references.where((r) => r.kind == range.kind).toList();
         final ordinal = peers.indexOf(range);
         final candidates =
-            mappedReferences.where((e) => e.key.kind == range.kind).toList()
-              ..sort((a, b) => a.value.start.compareTo(b.value.start));
+            mappedReferences.where((e) => e.kind == range.kind).toList()..sort(
+              (a, b) =>
+                  mapped.ranges[a]!.start.compareTo(mapped.ranges[b]!.start),
+            );
         if (ordinal >= 0 && candidates.length == peers.length) {
-          begin = base + candidates[ordinal].value.start;
-          end = base + candidates[ordinal].value.end;
+          final positioned = mapped.ranges[candidates[ordinal]]!;
+          begin = base + positioned.start;
+          end = base + positioned.end;
           final attributes = RegExp(
             r'^\{(?:\s*[\w:.-]+\s*=\s*"[^"]*"\s*)+\}',
-          ).firstMatch(raw.substring(candidates[ordinal].value.end));
+          ).firstMatch(raw.substring(positioned.end));
           end += attributes?.end ?? 0;
         }
-      } else {
-        final fragment =
-            range.attributes['xml-original-source'] ??
-            (range.kind == BusyInlineKind.writersideVariable
-                ? '%${range.attributes['reference'] ?? block.plainText.substring(range.start, range.end)}%'
-                : const BusyMarkMarkdownSerializer().serializeInlineFragment([
-                    BusyInline(
-                      kind: range.kind,
-                      text: block.plainText.substring(range.start, range.end),
-                      destination: range.destination,
-                      attributes: range.attributes,
-                    ),
-                  ]));
-        final at = raw.indexOf(fragment);
-        if (at >= 0 && raw.indexOf(fragment, at + fragment.length) < 0) {
-          begin = base + at;
-          end = begin + fragment.length;
+      } else if (document.isXmlTopic &&
+          range.kind == BusyInlineKind.writersideVariable) {
+        final start = const WritersideEditingAdapter().xmlTextSourceOffset(
+          document,
+          block,
+          range.start,
+          endBoundary: false,
+        );
+        final finish = const WritersideEditingAdapter().xmlTextSourceOffset(
+          document,
+          block,
+          range.end,
+          endBoundary: true,
+        );
+        final fragment = '%${range.attributes['reference']}%';
+        if (start != null &&
+            finish != null &&
+            start > 0 &&
+            finish < source.length &&
+            source.substring(start - 1, finish + 1) == fragment) {
+          begin = start - 1;
+          end = finish + 1;
         }
       }
       if (begin != null && end != null) {
@@ -292,6 +346,7 @@ class WritersideInspectorTarget {
     required BusyDocument document,
     required TextSelection selection,
   }) {
+    document = busyMarkWysiwygBindMarkdownReferences(document);
     List<BusyBlock> locate(int offset) {
       List<BusyBlock> find(List<BusyBlock> blocks) {
         for (final block in blocks) {

@@ -13395,7 +13395,10 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
                               (r) =>
                                   r.kind == target.inline!.kind &&
                                   r.start == target.inline!.start &&
-                                  r.end == target.inline!.end,
+                                  r.end == target.inline!.end &&
+                                  (target.inline!.referenceIndex == null ||
+                                      r.referenceIndex ==
+                                          target.inline!.referenceIndex),
                             );
                             final after = busyInlineReferenceRanges(
                               block!.inlines,

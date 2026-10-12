@@ -1098,6 +1098,8 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
           r.start == target.start &&
           r.end == target.end &&
           r.kind == target.kind &&
+          (target.referenceIndex == null ||
+              r.referenceIndex == target.referenceIndex) &&
           mapEquals(r.attributes, target.attributes),
     );
     if (index < 0) return false;
@@ -1167,10 +1169,21 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     );
     var offset = 0;
     var replaced = false;
+    var referenceIndex = 0;
     BusyInline replace(BusyInline inline) {
       final start = offset;
+      final ordinal =
+          {
+            BusyInlineKind.link,
+            BusyInlineKind.image,
+            BusyInlineKind.writersideVariable,
+            BusyInlineKind.writersideShortcut,
+          }.contains(inline.kind)
+          ? referenceIndex++
+          : null;
       if (!replaced &&
           inline.kind == range.kind &&
+          ordinal == range.referenceIndex &&
           start == range.start &&
           start + inline.plainText.length == range.end &&
           mapEquals(inline.attributes, range.attributes)) {
@@ -1253,7 +1266,10 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
         mapped.ranges.entries.where((e) => e.key.kind == range.kind).toList()
           ..sort((a, b) => a.value.start.compareTo(b.value.start));
     final ordinal = peers.indexWhere(
-      (r) => r.start == range.start && r.end == range.end,
+      (r) =>
+          r.start == range.start &&
+          r.end == range.end &&
+          r.referenceIndex == range.referenceIndex,
     );
     if (ordinal < 0 || candidates.length != peers.length) return null;
     final positioned = candidates[ordinal].value;

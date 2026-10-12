@@ -72,6 +72,11 @@ leaving the reference definition and other occurrences untouched. The pinned
 builder ignores a native link's `href` attribute override, so BusyMark does not
 use that override to implement destination changes.
 
+The inspector targets a complete link even when only part of its caption is
+formatted. **Show in Source** navigates to the inspected occurrence's markup,
+including repeated variable and shortcut references in the same paragraph.
+Source selections identify those same occurrences independently.
+
 Backtick-delimited code and escaped literal braces stay inline content, even
 when they look like attributes. A link or image's attached attributes belong to
 that inline element, including links containing code and image alt text that looks like an attribute block. Ordinary text edits preserve their formatting and attributes. Blockquote-form admonition IDs and conditions are written

@@ -62,8 +62,8 @@ void main() {
       '${xml ? "XML" : "Markdown"} inspector edits the named reference attributes and reopens them',
       (tester) async {
         final original = xml
-            ? '<topic id="a" title="Title"><p>Before <a href="old.topic" origin="old"><b>Guide</b></a> after.</p><p><img src="logo.png" alt="Logo" preview-src="old.png"/></p><p>Press <shortcut key="\$Save" from-keymap-of="old">Ctrl+S</shortcut>.</p><include id="own" from="old.topic" element-id="old-fragment" origin="old"/></topic>'
-            : '# Title\n\nBefore [**Guide**](old.topic){origin="old"} after.\n\n![Logo](logo.png){preview-src="old.png"}\n\nPress <shortcut key="\$Save" from-keymap-of="old">Ctrl+S</shortcut>.\n\n<include id="own" from="old.topic" element-id="old-fragment" origin="old"/>\n';
+            ? '<topic id="a" title="Title"><p>Before <a href="old.topic" origin="old">Read <b>guide</b></a> after.</p><p><img src="logo.png" alt="Logo" preview-src="old.png"/></p><p>Press <shortcut key="\$Save" from-keymap-of="old">Ctrl+S</shortcut>.</p><include id="own" from="old.topic" element-id="old-fragment" origin="old"/></topic>'
+            : '# Title\n\nBefore [Read **guide**](old.topic){origin="old"} after.\n\n![Logo](logo.png){preview-src="old.png"}\n\nPress <shortcut key="\$Save" from-keymap-of="old">Ctrl+S</shortcut>.\n\n<include id="own" from="old.topic" element-id="old-fragment" origin="old"/>\n';
         var c = BusyMarkWysiwygDocumentController(
           document: parse(original, xml),
         );
@@ -148,7 +148,7 @@ void main() {
         await show(BusyInlineKind.link);
         await edit(tester, 'Link target (href)', 'new.topic#anchor');
         await edit(tester, 'Help module (origin)', 'new-module');
-        expect(selected().plainText, 'Before Guide after.');
+        expect(selected().plainText, 'Before Read guide after.');
         await tester.runAsync(() async {
           final directory = await Directory.systemTemp.createTemp(
             'inspector-controls-',
@@ -156,7 +156,10 @@ void main() {
           addTearDown(() => directory.delete(recursive: true));
           final file = File('${directory.path}/a.${xml ? 'topic' : 'md'}');
           await file.writeAsString(c.markdown);
-          expect(c.markdown, contains(xml ? '<b>Guide</b>' : '**Guide**'));
+          expect(
+            c.markdown,
+            contains(xml ? 'Read <b>guide</b>' : 'Read **guide**'),
+          );
           c.dispose();
           c = BusyMarkWysiwygDocumentController(
             document: parse(await file.readAsString(), xml),

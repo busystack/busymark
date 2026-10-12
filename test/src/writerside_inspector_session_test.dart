@@ -1,5 +1,6 @@
 import 'package:busymark/src/editor/wysiwyg/writerside_editing_adapter.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_document_controller.dart';
+import 'package:busymark/src/editor/wysiwyg/wysiwyg_inline_controller.dart';
 import 'package:busymark/src/editor/wysiwyg/writerside_inspector_target.dart';
 import 'package:busymark/src/editor/wysiwyg/writerside_property_session.dart';
 import 'package:busymark/src/markdown/markdown_model.dart';
@@ -17,8 +18,8 @@ void main() {
       '${xml ? "XML" : "Markdown"} Show in Source locates the inspected inline markup',
       () {
         final source = xml
-            ? '<topic id="t" title="Topic"><p>Before <a href="one.topic"><b>Guide</b></a> and <a href="two.topic">Guide</a>.</p><code-block src="sample.dart"/></topic>'
-            : 'Before [**Guide**][ref] and [Guide][ref].\n\n[ref]: target.md\n';
+            ? '<topic id="t" title="Topic"><p>Before <a href="one.topic">Read <b>guide</b></a> and <a href="two.topic">Guide</a>.</p><code-block src="sample.dart"/></topic>'
+            : 'Before [Read **guide**][ref] and [Guide][ref].\n\n[ref]: target.md\n';
         final doc = xml
             ? const WritersideEditingAdapter().parseXml(
                 filePath: 'a.topic',
@@ -36,7 +37,7 @@ void main() {
                 source.indexOf('<a href'),
                 source.indexOf('<a href', source.indexOf('<a href') + 1),
               ]
-            : [source.indexOf('[**'), source.indexOf('[Guide]')];
+            : [source.indexOf('[Read'), source.indexOf('[Guide]')];
         for (final offset in offsets) {
           final target = WritersideInspectorTarget.fromSource(
             bufferId: 'b',
@@ -60,6 +61,279 @@ void main() {
           );
           expect(code.sourceLocation, source.indexOf('<code-block'));
         }
+      },
+    );
+  }
+  for (final xml in [true, false]) {
+    for (final shortcut in [false, true]) {
+      test(
+        '${xml ? "XML" : "Markdown"} repeated ${shortcut ? "shortcuts" : "variables"} have distinct source occurrences after an earlier edit',
+        () {
+          final token = shortcut
+              ? '<shortcut key="\$Copy">Copy</shortcut>'
+              : '%product%';
+          final original = xml
+              ? '<topic id="t" title="Topic"><p>Before $token and $token.</p></topic>'
+              : '# Topic\n\nBefore $token and $token.\n';
+          BusyDocument parse(String source) => xml
+              ? const WritersideEditingAdapter().parseXml(
+                  filePath: 't.topic',
+                  source: source,
+                )!
+              : const MarkdownParser()
+                    .parse(
+                      filePath: 't.md',
+                      source: source,
+                      mode: MarkdownMode.writersideMarkdown,
+                    )
+                    .busyDocument;
+          final model = BusyMarkWysiwygDocumentController(
+            document: parse(original),
+          );
+          addTearDown(model.dispose);
+          final kind = shortcut
+              ? BusyInlineKind.writersideShortcut
+              : BusyInlineKind.writersideVariable;
+          void verify(String source) {
+            final doc = parse(source);
+            final editor = BusyMarkWysiwygDocumentController(document: doc);
+            try {
+              Iterable<BusyBlock> walk(List<BusyBlock> blocks) sync* {
+                for (final b in blocks) {
+                  yield b;
+                  yield* walk(b.children);
+                }
+              }
+
+              final block = walk(editor.document.blocks).firstWhere(
+                (b) => busyInlineReferenceRanges(
+                  b.inlines,
+                ).any((r) => r.kind == kind),
+              );
+              final refs = busyInlineReferenceRanges(
+                block.inlines,
+              ).where((r) => r.kind == kind).toList();
+              expect(refs, hasLength(2));
+              var cursor = 0;
+              for (final range in refs) {
+                final fragment = shortcut
+                    ? '<shortcut'
+                    : '%${range.attributes['reference']}%';
+                final offset = source.indexOf(fragment, cursor);
+                expect(offset, greaterThanOrEqualTo(0));
+                cursor = offset + fragment.length;
+                final fromEditor = WritersideInspectorTarget.fromSelection(
+                  bufferId: 'b',
+                  revision: 1,
+                  source: source,
+                  document: doc,
+                  blockId: block.id,
+                  inline: range,
+                );
+                expect(fromEditor.sourceLocation, offset);
+                final fromSource = WritersideInspectorTarget.fromSource(
+                  bufferId: 'b',
+                  revision: 1,
+                  source: source,
+                  document: doc,
+                  selection: TextSelection.collapsed(offset: offset + 2),
+                );
+                expect(fromSource.inline?.kind, kind);
+                expect(fromSource.inline?.start, range.start);
+                expect(fromSource.inline?.end, range.end);
+                expect(fromSource.sourceLocation, offset);
+              }
+            } finally {
+              editor.dispose();
+            }
+          }
+
+          verify(original);
+          final block = xml
+              ? model.document.blocks.first.children.single
+              : model.document.blocks.firstWhere(
+                  (b) => b.plainText.startsWith('Before'),
+                );
+          final first = busyInlineReferenceRanges(block.inlines).first;
+          expect(
+            model.updateInlineReference(
+              block.id,
+              first,
+              shortcut ? 'key' : 'reference',
+              shortcut ? '\$VeryLongActionIdentifier' : 'long_product_name',
+            ),
+            isTrue,
+          );
+          final changed = model.markdown;
+          expect(changed, contains(token));
+          expect(changed, isNot(original));
+          verify(changed);
+        },
+      );
+    }
+  }
+  test(
+    'Markdown variable mappings exclude code and escaped literals and preserve formatting',
+    () {
+      const source =
+          '# Topic\n\nCode `%product%` escaped %\\product% and %product% then **%product%**.\n';
+      final doc = const MarkdownParser()
+          .parse(
+            filePath: 't.md',
+            source: source,
+            mode: MarkdownMode.writersideMarkdown,
+          )
+          .busyDocument;
+      final model = BusyMarkWysiwygDocumentController(document: doc);
+      addTearDown(model.dispose);
+      final block = model.document.blocks.firstWhere(
+        (b) => b.plainText.startsWith('Code'),
+      );
+      final refs = busyInlineReferenceRanges(block.inlines);
+      expect(refs, hasLength(2));
+      final firstOffset = source.indexOf('%product%', source.indexOf(' and '));
+      final secondOffset = source.indexOf('%product%', firstOffset + 1);
+      for (final pair in [(refs[0], firstOffset), (refs[1], secondOffset)]) {
+        final target = WritersideInspectorTarget.fromSource(
+          bufferId: 'b',
+          revision: 1,
+          source: source,
+          document: doc,
+          selection: TextSelection.collapsed(offset: pair.$2 + 2),
+        );
+        expect(target.inline?.start, pair.$1.start);
+        expect(target.sourceLocation, pair.$2);
+      }
+      final literal = WritersideInspectorTarget.fromSource(
+        bufferId: 'b',
+        revision: 1,
+        source: source,
+        document: doc,
+        selection: TextSelection.collapsed(
+          offset: source.indexOf('%product%') + 2,
+        ),
+      );
+      expect(literal.inline, isNull);
+      expect(model.markdown, source);
+    },
+  );
+  test(
+    'Markdown XML-island bindings retain repeated occurrences and mutation identities',
+    () {
+      const source =
+          '# Topic\n\n<chapter title="Section"><p>Vars %product% and %product%, <shortcut key="\$Save">Save</shortcut> and <shortcut key="\$Save">Save</shortcut>. <a href="old.topic">Read <b>guide</b></a></p></chapter>\n';
+      final doc = const MarkdownParser()
+          .parse(
+            filePath: 't.md',
+            source: source,
+            mode: MarkdownMode.writersideMarkdown,
+          )
+          .busyDocument;
+      final model = BusyMarkWysiwygDocumentController(document: doc);
+      addTearDown(model.dispose);
+      for (final token in ['%product%', '<shortcut', '<a href']) {
+        final offsets = <int>[];
+        for (
+          var at = source.indexOf(token);
+          at >= 0;
+          at = source.indexOf(token, at + token.length)
+        ) {
+          offsets.add(at);
+        }
+        for (final offset in offsets) {
+          final target = WritersideInspectorTarget.fromSource(
+            bufferId: 'b',
+            revision: 1,
+            source: source,
+            document: doc,
+            selection: TextSelection.collapsed(offset: offset + 2),
+          );
+          expect(
+            target.inline,
+            isNotNull,
+            reason: 'token=$token offset=$offset',
+          );
+          expect(target.sourceLocation, offset);
+          if (token == '<a href') {
+            expect(
+              model.updateInlineReference(
+                target.block!.id,
+                target.inline!,
+                'href',
+                'new.topic',
+              ),
+              isTrue,
+            );
+          }
+        }
+      }
+      expect(model.markdown, contains('Read <b>guide</b>'));
+      expect(model.markdown, contains('href="new.topic"'));
+    },
+  );
+  for (final xml in [true, false]) {
+    test(
+      '${xml ? "XML" : "Markdown"} adjacent empty shortcuts retain distinct owning identities',
+      () {
+        final source = xml
+            ? '<topic id="t" title="Topic"><p>Keys <shortcut key="\$Save"/><shortcut key="\$Save"/>.</p></topic>'
+            : '# Topic\n\nKeys <shortcut key="\$Save"/><shortcut key="\$Save"/>.\n';
+        BusyDocument parse(String text) => xml
+            ? const WritersideEditingAdapter().parseXml(
+                filePath: 't.topic',
+                source: text,
+              )!
+            : const MarkdownParser()
+                  .parse(
+                    filePath: 't.md',
+                    source: text,
+                    mode: MarkdownMode.writersideMarkdown,
+                  )
+                  .busyDocument;
+        final model = BusyMarkWysiwygDocumentController(
+          document: parse(source),
+        );
+        addTearDown(model.dispose);
+        final first = source.indexOf('<shortcut');
+        final second = source.indexOf('<shortcut', first + 1);
+        final target = WritersideInspectorTarget.fromSource(
+          bufferId: 'b',
+          revision: 1,
+          source: source,
+          document: parse(source),
+          selection: TextSelection.collapsed(offset: second + 2),
+        );
+        expect(target.sourceLocation, second);
+        expect(target.inline?.referenceIndex, 1);
+        expect(
+          model.updateInlineReference(
+            target.block!.id,
+            target.inline!,
+            'key',
+            '\$Copy',
+          ),
+          isTrue,
+        );
+        final changed = model.markdown;
+        expect(changed, contains('<shortcut key="\$Save"'));
+        expect(
+          changed.indexOf('key="\$Copy"'),
+          greaterThan(changed.indexOf('key="\$Save"')),
+        );
+        final reopened = WritersideInspectorTarget.fromSource(
+          bufferId: 'b',
+          revision: 2,
+          source: changed,
+          document: parse(changed),
+          selection: TextSelection.collapsed(
+            offset: changed.indexOf('key="\$Copy"'),
+          ),
+        );
+        expect(
+          reopened.sourceLocation,
+          changed.indexOf('<shortcut', changed.indexOf('<shortcut') + 1),
+        );
+        expect(reopened.inline?.referenceIndex, 1);
       },
     );
   }

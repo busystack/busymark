@@ -6,6 +6,7 @@ import 'package:busymark/src/app/app_settings.dart';
 import 'package:busymark/src/app/busymark_design.dart';
 import 'package:busymark/src/editor/wysiwyg/writerside_editing_adapter.dart';
 import 'package:busymark/src/editor/wysiwyg/writerside_properties.dart';
+import 'package:busymark/src/editor/wysiwyg/writerside_inspector_target.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_editor.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_inline_controller.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_session_state.dart';
@@ -480,6 +481,136 @@ void main() {
       );
     },
   );
+  for (final xml in [true, false]) {
+    testWidgets(
+      '${xml ? "XML" : "Markdown"} inspector edits a complete mixed-format link through undo redo and reopen',
+      (tester) async {
+        final original = xml
+            ? '<topic id="a" title="Title"><p>Before <a href="old.topic">Read <b>guide</b></a> and <a href="old.topic">Other</a>.</p></topic>'
+            : '# Title\n\nBefore [Read **guide**][ref] and [Other][ref].\n\n[ref]: old.topic "Keep title"\n';
+        var saved = original;
+        await mount(
+          tester,
+          BusyMarkWysiwygEditor(
+            document: _document(xml, source: original),
+            onSourceChanged: (_, source) => saved = source,
+          ),
+        );
+        final body = _textField('Before Read guide and Other.');
+        await tester.tap(body);
+        // Inside the unformatted segment, then inside the bold segment: both
+        // selections expose the same owning link, without changing styling.
+        for (final caret in [9, 15]) {
+          tester
+              .widget<TextField>(_textField('Before Read guide and Other.'))
+              .controller!
+              .selection = TextSelection.collapsed(
+            offset: caret,
+          );
+          await tester.pumpAndSettle();
+          expect(
+            find.byWidgetPredicate(
+              (w) =>
+                  w is BusyMarkGroupedTextEntry &&
+                  w.label == 'Link target (href)',
+            ),
+            findsOneWidget,
+          );
+        }
+        final entry = find.descendant(
+          of: find.byWidgetPredicate(
+            (w) =>
+                w is BusyMarkGroupedTextEntry &&
+                w.label == 'Link target (href)',
+          ),
+          matching: find.byType(TextField),
+        );
+        await tester.enterText(entry, 'new.topic#details');
+        await tester.testTextInput.receiveAction(TextInputAction.done);
+        await tester.pumpAndSettle();
+        expect(
+          saved,
+          contains(
+            xml
+                ? 'href="new.topic#details"'
+                : '[Read **guide**](new.topic#details "Keep title")',
+          ),
+        );
+        expect(saved, contains(xml ? 'Read <b>guide</b>' : 'Read **guide**'));
+        expect(
+          saved,
+          contains(xml ? '<a href="old.topic">Other</a>' : '[Other][ref]'),
+        );
+        final changed = saved;
+        await tester.tap(_textField('Before Read guide and Other.'));
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+        await tester.sendKeyEvent(LogicalKeyboardKey.keyZ);
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+        await tester.pumpAndSettle();
+        expect(saved, original);
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+        await tester.sendKeyEvent(LogicalKeyboardKey.keyZ);
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+        await tester.pumpAndSettle();
+        expect(saved, changed);
+        await tester.runAsync(() async {
+          final dir = await Directory.systemTemp.createTemp('mixed-link-');
+          try {
+            final file = File('${dir.path}/a.${xml ? 'topic' : 'md'}');
+            await file.writeAsString(saved);
+            final reopened = BusyMarkWysiwygDocumentController(
+              document: _document(xml, source: await file.readAsString()),
+            );
+            try {
+              final block = xml
+                  ? reopened.document.blocks.first.children.single
+                  : reopened.document.blocks.firstWhere(
+                      (b) => b.plainText.startsWith('Before'),
+                    );
+              final owners = busyInlineReferenceRanges(block.inlines);
+              expect(owners, hasLength(2));
+              expect(
+                owners.first.end - owners.first.start,
+                'Read guide'.length,
+              );
+              expect(owners.first.destination, 'new.topic#details');
+              expect(
+                busyInlineStyleRanges(
+                  block.inlines,
+                ).where((r) => r.kind == BusyInlineKind.link),
+                hasLength(3),
+              );
+              final target = WritersideInspectorTarget.fromSelection(
+                bufferId: 'b',
+                revision: 2,
+                source: saved,
+                document: reopened.document,
+                blockId: block.id,
+                inline: owners.first,
+              );
+              final offset = saved.indexOf(xml ? '<a href' : '[Read');
+              expect(target.sourceLocation, offset);
+              final sourceTarget = WritersideInspectorTarget.fromSource(
+                bufferId: 'b',
+                revision: 2,
+                source: saved,
+                document: reopened.document,
+                selection: TextSelection.collapsed(offset: offset + 3),
+              );
+              expect(sourceTarget.inline?.start, owners.first.start);
+              expect(sourceTarget.inline?.end, owners.first.end);
+            } finally {
+              reopened.dispose();
+            }
+          } finally {
+            await dir.delete(recursive: true);
+          }
+        });
+      },
+    );
+  }
   Future<void> insert(WidgetTester tester, String label) async {
     await tester.pumpAndSettle();
     labels.add(label);

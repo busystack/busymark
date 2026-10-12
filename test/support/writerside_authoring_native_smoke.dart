@@ -94,11 +94,30 @@ Future<void> main(List<String> arguments) async {
   ).writeAsString(
     '<topic id="inspector-mappings" title="Inspector mappings"><p>Press <shortcut>Ctrl+S</shortcut> now.</p><p>Open <a href="inspector.topic"><b>Guide</b></a> now.</p><img id="image" src="logo.png" alt="Logo" preview-src="logo.png"/><include id="own-include" from="inspector.topic" element-id="b"/></topic>',
   );
+  for (final xml in [true, false]) {
+    await File(
+      p.join(
+        root.path,
+        'topics/inline-references-${xml ? 'xml.topic' : 'markdown.md'}',
+      ),
+    ).writeAsString(
+      xml
+          ? '<topic id="inline-references-xml" title="Inline references XML"><p>Before <a href="inspector.topic">Read <b>guide</b></a> and <a href="inspector.topic">Other</a>.</p><p>Vars %product% and %product%.</p><p>Keys <shortcut key="\$Save">Save</shortcut> and <shortcut key="\$Save">Save</shortcut>.</p><p>Empty <shortcut key="\$Save"/><shortcut key="\$Save"/>.</p></topic>'
+          : '# Inline references Markdown\n\nBefore [Read **guide**][ref] and [Other][ref].\n\nVars %product% and %product%.\n\nKeys <shortcut key="\$Save">Save</shortcut> and <shortcut key="\$Save">Save</shortcut>.\n\nEmpty <shortcut key="\$Save"/><shortcut key="\$Save"/>.\n\n[ref]: inspector.topic "Kept title"\n',
+    );
+  }
+  final variables = File(p.join(root.path, 'v.list'));
+  await variables.writeAsString(
+    (await variables.readAsString()).replaceFirst(
+      '</vars>',
+      '<var name="product_long" value="BusyMark Long"/></vars>',
+    ),
+  );
   final tree = File(p.join(root.path, 'conformance.tree'));
   await tree.writeAsString(
     (await tree.readAsString()).replaceFirst(
       '</instance-profile>',
-      '<toc-element topic="authoring.topic"/><toc-element topic="authoring-markdown.md"/><toc-element topic="inspector.topic" toc-title="Inspector XML"/><toc-element topic="inspector-markdown.md" toc-title="Inspector Markdown"/><toc-element topic="inspector-corrections.md"/><toc-element topic="inspector-mappings.topic"/></instance-profile>',
+      '<toc-element topic="authoring.topic"/><toc-element topic="authoring-markdown.md"/><toc-element topic="inspector.topic" toc-title="Inspector XML"/><toc-element topic="inspector-markdown.md" toc-title="Inspector Markdown"/><toc-element topic="inspector-corrections.md"/><toc-element topic="inspector-mappings.topic"/><toc-element topic="inline-references-xml.topic"/><toc-element topic="inline-references-markdown.md"/></instance-profile>',
     ),
   );
   final defaultsFixture = Directory(
@@ -435,6 +454,248 @@ class _HarnessState extends ConsumerState<_Harness> {
     await _pause();
   }
 
+  Future<void> _runInlineReferences(
+    Future<void> Function() openInspector,
+  ) async {
+    final controller = ref.read(workspaceControllerProvider.notifier);
+    BusyMarkWritersideProperties inspector() =>
+        _elements((w) => w is BusyMarkWritersideProperties).single.widget
+            as BusyMarkWritersideProperties;
+    Future<void> editorCaret(String text, int offset) async {
+      await _native('chord', 'ctrl+shift+1');
+      await _pause();
+      await _tap(_field(text));
+      (_field(text).widget as TextField).controller!.selection =
+          TextSelection.collapsed(offset: offset);
+      await _pause();
+    }
+
+    Future<void> sourceCaret(int offset) async {
+      ((_elements((w) => w is BusyMarkSourceEditor).single as StatefulElement)
+                  .state
+              as BusyMarkSourceEditorState)
+          .scrollToOffset(offset);
+      await _pause();
+    }
+
+    Future<void> property(String label, String value) async {
+      final entry =
+          _elements(
+                (w) => w is BusyMarkGroupedTextEntry && w.label == label,
+              ).single.widget
+              as BusyMarkGroupedTextEntry;
+      await _type(
+        _elements(
+          (w) => w is TextField && w.controller == entry.controller,
+        ).single,
+        value,
+      );
+      await _key(PhysicalKeyboardKey.enter, LogicalKeyboardKey.enter);
+    }
+
+    Future<void> showSource(int offset, String label) async {
+      await _tapLabel('Show in Source');
+      await _until(
+        () => _elements((w) => w is BusyMarkSourceEditor).isNotEmpty,
+        '$label switches to Source',
+      );
+      await _pause();
+      _check(
+        ref
+                .read(workspaceControllerProvider)
+                .activeBuffer!
+                .editorState
+                .selection
+                .extentOffset ==
+            offset,
+        '$label navigates to exact markup occurrence',
+      );
+      _check(
+        FocusManager.instance.primaryFocus?.context
+                ?.findAncestorWidgetOfExactType<BusyMarkSourceEditor>() !=
+            null,
+        '$label restores source focus',
+      );
+    }
+
+    Future<void> reopen() async {
+      await _native('chord', 'ctrl+s');
+      await _until(
+        () => !ref.read(workspaceControllerProvider).activeBuffer!.isDirty,
+        'Inline references saved',
+      );
+      final buffer = ref.read(workspaceControllerProvider).activeBuffer!;
+      _check(
+        await File(buffer.filePath!).readAsString() == buffer.text,
+        'Inline references persisted exactly',
+      );
+      _check(
+        await controller.closeDocumentBuffer(buffer.id),
+        'Inline reference buffer closes',
+      );
+      await controller.openActiveFile(buffer.filePath!);
+      await _pause();
+    }
+
+    for (final xml in [true, false]) {
+      final suffix = xml ? 'xml' : 'markdown';
+      await controller.openActiveFile(
+        p.join(
+          widget.root.path,
+          'topics/inline-references-${xml ? 'xml.topic' : 'markdown.md'}',
+        ),
+      );
+      await editorCaret('Before Read guide and Other.', 9);
+      if (!ref.read(appSettingsControllerProvider).elementPropertiesVisible) {
+        await openInspector();
+      }
+      final original = _source;
+      for (final offset in [9, 15]) {
+        await editorCaret('Before Read guide and Other.', offset);
+        _check(
+          inspector().inlineTarget?.kind == BusyInlineKind.link &&
+              inspector().inlineTarget!.end - inspector().inlineTarget!.start ==
+                  'Read guide'.length,
+          '$suffix mixed link selects complete owner at caret $offset',
+        );
+      }
+      await _capture('inline-$suffix-mixed-link-editor');
+      await property('Link target (href)', 'inspector.topic#nested');
+      _check(
+        _source.contains(xml ? 'Read <b>guide</b>' : 'Read **guide**') &&
+            _source.contains(
+              xml ? '<a href="inspector.topic">Other</a>' : '[Other][ref]',
+            ),
+        '$suffix link edit retains mixed formatting and other occurrence',
+      );
+      final changed = _source;
+      _check(
+        changed != original &&
+            changed.contains(
+              xml
+                  ? 'href="inspector.topic#nested"'
+                  : '(inspector.topic#nested "Kept title")',
+            ),
+        '$suffix link destination changes',
+      );
+      await showSource(
+        _source.indexOf(xml ? '<a href' : '[Read'),
+        '$suffix mixed link',
+      );
+      await _native('chord', 'ctrl+z');
+      await _pause();
+      _check(_source == original, '$suffix link undo restores exact source');
+      await _native('chord', 'ctrl+shift+z');
+      await _pause();
+      _check(_source == changed, '$suffix link redo restores exact edit');
+      await reopen();
+      _check(_source == changed, '$suffix mixed link survives reopening');
+      await editorCaret('Before Read guide and Other.', 15);
+      await showSource(
+        _source.indexOf(xml ? '<a href' : '[Read'),
+        '$suffix reopened mixed link',
+      );
+      await _capture('inline-$suffix-mixed-link-source');
+      for (final shortcut in [false, true]) {
+        var text = shortcut
+            ? 'Keys Save and Save.'
+            : 'Vars product and product.';
+        final kind = shortcut
+            ? BusyInlineKind.writersideShortcut
+            : BusyInlineKind.writersideVariable;
+        final token = shortcut ? '<shortcut' : '%product%';
+        for (final ordinal in [0, 1]) {
+          final offset = ordinal == 0
+              ? _source.indexOf(token)
+              : _source.indexOf(token, _source.indexOf(token) + token.length);
+          final caret = ordinal == 0 ? 6 : (shortcut ? 15 : 19);
+          await editorCaret(text, caret);
+          _check(
+            inspector().inlineTarget?.kind == kind,
+            '$suffix repeated $kind Editor occurrence $ordinal targets reference',
+          );
+          await showSource(
+            offset,
+            '$suffix repeated $kind occurrence $ordinal',
+          );
+          await sourceCaret(offset + 2);
+          _check(
+            inspector().inlineTarget?.kind == kind,
+            '$suffix repeated $kind Source occurrence $ordinal targets reference',
+          );
+        }
+        final firstOffset = _source.indexOf(token);
+        await sourceCaret(firstOffset + 2);
+        await property(
+          shortcut
+              ? 'Keymap help instance (from-keymap-of)'
+              : 'Variable Reference',
+          shortcut ? 'conformance' : 'product_long',
+        );
+        final updated = _source;
+        text = shortcut ? text : 'Vars product_long and product.';
+        for (final ordinal in [0, 1]) {
+          final offset = ordinal == 0
+              ? firstOffset
+              : updated.indexOf(token, firstOffset + token.length);
+          await editorCaret(text, ordinal == 0 ? 6 : (shortcut ? 15 : 24));
+          _check(
+            inspector().inlineTarget?.kind == kind,
+            '$suffix changed $kind Editor occurrence $ordinal remains targeted',
+          );
+          await showSource(offset, '$suffix changed $kind occurrence $ordinal');
+          await sourceCaret(offset + 2);
+          _check(
+            inspector().inlineTarget?.kind == kind,
+            '$suffix changed $kind Source occurrence $ordinal remains targeted',
+          );
+        }
+        await _capture(
+          'inline-$suffix-${shortcut ? 'shortcuts' : 'variables'}-second-occurrence',
+        );
+        await reopen();
+        _check(_source == updated, '$suffix repeated $kind edit persists');
+      }
+      await _native('chord', 'ctrl+shift+2');
+      await _pause();
+      final emptyStart = _source.indexOf('Empty ');
+      final firstEmpty = _source.indexOf('<shortcut', emptyStart);
+      var secondEmpty = _source.indexOf('<shortcut', firstEmpty + 1);
+      for (final pair in [(firstEmpty, 0), (secondEmpty, 1)]) {
+        await sourceCaret(pair.$1 + 2);
+        _check(
+          inspector().inlineTarget?.referenceIndex == pair.$2,
+          '$suffix empty shortcut has distinct owning occurrence ${pair.$2}',
+        );
+        await showSource(pair.$1, '$suffix empty shortcut ${pair.$2}');
+      }
+      await property('Keymap help instance (from-keymap-of)', 'conformance');
+      secondEmpty = _source.indexOf(
+        '<shortcut',
+        _source.indexOf('<shortcut', _source.indexOf('Empty ')) + 1,
+      );
+      _check(
+        !_source
+                .substring(firstEmpty, secondEmpty)
+                .contains('from-keymap-of') &&
+            _source
+                .substring(secondEmpty)
+                .contains('from-keymap-of="conformance"'),
+        '$suffix empty shortcut edits only the selected second occurrence',
+      );
+      await reopen();
+      await _native('chord', 'ctrl+shift+2');
+      await _pause();
+      await sourceCaret(secondEmpty + 2);
+      _check(
+        inspector().inlineTarget?.referenceIndex == 1,
+        '$suffix empty shortcut retains identity after reopening',
+      );
+      await showSource(secondEmpty, '$suffix reopened second empty shortcut');
+      await _capture('inline-$suffix-empty-shortcut-second-occurrence');
+    }
+  }
+
   Future<void> _run() async {
     Object? failure;
     try {
@@ -468,6 +729,12 @@ class _HarnessState extends ConsumerState<_Harness> {
         await _type(entry, 'Element Properties');
         await _native('chord', 'Return');
         await _pause();
+      }
+
+      if (Platform.environment['BUSYMARK_INLINE_REFERENCES_ONLY'] == '1') {
+        await _runInlineReferences(paletteProperties);
+        await _finish(null);
+        return;
       }
 
       await controller.openActiveFile(
