@@ -6,6 +6,7 @@
 #include <webkit2/webkit2.h>
 
 #include <cstring>
+#include <initializer_list>
 
 namespace {
 
@@ -15,6 +16,30 @@ constexpr char kHarnessUri[] = "busymark-render://app/harness.html";
 constexpr char kReferenceUri[] = "busymark-render://app/reference.html";
 constexpr gsize kMaximumRequestBytes = 20 * 1024 * 1024;
 constexpr gsize kMaximumPngBytes = 64 * 1024 * 1024;
+
+// All transitions and GTK/WebKit construction run on the GTK main context.
+// Scheduled is cancellable before any WebKit resources have been constructed.
+enum class RenderState { dormant, scheduled, loading, ready, failed, stopped };
+
+class InitializationProbe {
+ public:
+  explicit InitializationProbe(const char* operation)
+      : operation_(operation),
+        enabled_(g_strcmp0(g_getenv("BUSYMARK_VISUALIZATION_TRACE"), "1") == 0),
+        start_(enabled_ ? g_get_monotonic_time() : 0) {}
+  ~InitializationProbe() {
+    if (enabled_) {
+      g_printerr("visualization-init %s start_us=%" G_GINT64_FORMAT
+                 " duration_us=%" G_GINT64_FORMAT "\n",
+                 operation_, start_, g_get_monotonic_time() - start_);
+    }
+  }
+
+ private:
+  const char* operation_;
+  bool enabled_;
+  gint64 start_;
+};
 
 struct PendingRequest {
   BusyMarkWebRenderHost* host;
@@ -28,6 +53,14 @@ struct PendingRequest {
   guint snapshot_wait_source_id;
   gboolean responded;
 };
+
+void trace_request(PendingRequest* request, const char* event) {
+  if (g_strcmp0(g_getenv("BUSYMARK_VISUALIZATION_TRACE"), "1") == 0) {
+    g_printerr("visualization-request %s %s %s time_us=%" G_GINT64_FORMAT "\n",
+               request->operation, request->request_id, event,
+               g_get_monotonic_time());
+  }
+}
 
 struct ReferenceLoadData {
   gchar* arguments_json;
@@ -51,11 +84,13 @@ struct _BusyMarkWebRenderHost {
   GtkWidget* offscreen_window;
   WebKitWebView* web_view;
   GCancellable* active_cancellable;
+  GCancellable* initialization_cancellable;
   GQueue* queue;
   PendingRequest* active;
   guint recreate_source_id;
   gchar* resource_root;
-  gboolean ready;
+  GList* reference_windows;
+  RenderState state;
   gboolean recreate_requested;
   gboolean shutting_down;
 };
@@ -69,6 +104,8 @@ namespace {
 void pump_requests(BusyMarkWebRenderHost* self);
 void recreate_render_view(BusyMarkWebRenderHost* self);
 void schedule_render_view_recreation(BusyMarkWebRenderHost* self);
+gboolean ensure_context(BusyMarkWebRenderHost* self);
+void fail_initialization(BusyMarkWebRenderHost* self, const gchar* message);
 
 void respond_error(FlMethodCall* method_call,
                    const gchar* code,
@@ -96,6 +133,7 @@ void respond_pending_error(PendingRequest* request,
                            const gchar* code,
                            const gchar* message) {
   if (!request->responded) {
+    trace_request(request, code);
     request->responded = TRUE;
     respond_error(request->method_call, code, message);
   }
@@ -158,9 +196,9 @@ gboolean is_allowed_resource_name(const gchar* path) {
 
 void uri_scheme_request_cb(WebKitURISchemeRequest* request,
                            gpointer user_data) {
-  auto* self = BUSYMARK_WEB_RENDER_HOST(user_data);
+  const auto* resource_root = static_cast<const gchar*>(user_data);
   const gchar* path = webkit_uri_scheme_request_get_path(request);
-  if (self->resource_root == nullptr || !is_allowed_resource_name(path)) {
+  if (resource_root == nullptr || !is_allowed_resource_name(path)) {
     g_autoptr(GError) error = g_error_new_literal(
         G_IO_ERROR, G_IO_ERROR_PERMISSION_DENIED,
         "Visualization resource is not available.");
@@ -168,8 +206,7 @@ void uri_scheme_request_cb(WebKitURISchemeRequest* request,
     return;
   }
   const gchar* name = path[0] == '/' ? path + 1 : path;
-  g_autofree gchar* filename =
-      g_build_filename(self->resource_root, name, nullptr);
+  g_autofree gchar* filename = g_build_filename(resource_root, name, nullptr);
   gchar* contents = nullptr;
   gsize length = 0;
   g_autoptr(GError) error = nullptr;
@@ -302,6 +339,9 @@ void complete_active(BusyMarkWebRenderHost* self) {
 }
 
 void respond_json(PendingRequest* request, const gchar* json) {
+  if (request->responded) {
+    return;
+  }
   g_autoptr(FlJsonMessageCodec) codec = fl_json_message_codec_new();
   g_autoptr(GError) error = nullptr;
   g_autoptr(FlValue) value =
@@ -313,6 +353,7 @@ void respond_json(PendingRequest* request, const gchar* json) {
     return;
   }
   request->responded = TRUE;
+  trace_request(request, "completed");
   fl_method_call_respond_success(request->method_call, value, nullptr);
 }
 
@@ -335,6 +376,13 @@ void snapshot_finished_cb(GObject* object,
   g_autoptr(GError) error = nullptr;
   cairo_surface_t* surface = webkit_web_view_get_snapshot_finish(
       WEBKIT_WEB_VIEW(object), result, &error);
+  if (request->responded || self->shutting_down) {
+    if (surface != nullptr) {
+      cairo_surface_destroy(surface);
+    }
+    complete_active(self);
+    return;
+  }
   if (surface == nullptr) {
     respond_pending_error(request, "visualization.rasterFailed",
                           error != nullptr ? error->message
@@ -356,6 +404,7 @@ void snapshot_finished_cb(GObject* object,
   g_autoptr(GBytes) owned_bytes = g_byte_array_free_to_bytes(bytes);
   g_autoptr(FlValue) value = fl_value_new_uint8_list_from_bytes(owned_bytes);
   request->responded = TRUE;
+  trace_request(request, "completed");
   fl_method_call_respond_success(request->method_call, value, nullptr);
   gtk_widget_set_size_request(GTK_WIDGET(self->web_view), 1, 1);
   gtk_widget_set_size_request(self->offscreen_window, 1, 1);
@@ -367,7 +416,7 @@ void snapshot_finished_cb(GObject* object,
 gboolean begin_snapshot_cb(gpointer user_data) {
   auto* request = static_cast<PendingRequest*>(user_data);
   BusyMarkWebRenderHost* self = request->host;
-  if (self->shutting_down || self->web_view == nullptr) {
+  if (request->responded || self->shutting_down || self->web_view == nullptr) {
     request->snapshot_wait_source_id = 0;
     respond_pending_error(request, "visualization.hostUnavailable",
                           "The WebKit host is shutting down.");
@@ -455,6 +504,11 @@ void javascript_finished_cb(GObject* object,
   g_autoptr(GError) error = nullptr;
   JSCValue* value = webkit_web_view_call_async_javascript_function_finish(
       WEBKIT_WEB_VIEW(object), result, &error);
+  if (request->responded || self->shutting_down) {
+    g_clear_object(&value);
+    complete_active(self);
+    return;
+  }
   if (value == nullptr) {
     respond_pending_error(request, "visualization.webRenderFailed",
                           error != nullptr ? error->message
@@ -505,37 +559,116 @@ void start_request(BusyMarkWebRenderHost* self, PendingRequest* request) {
 }
 
 void pump_requests(BusyMarkWebRenderHost* self) {
-  if (self->shutting_down || !self->ready || self->active != nullptr ||
-      self->web_view == nullptr || g_queue_is_empty(self->queue)) {
+  if (self->shutting_down || self->active != nullptr ||
+      g_queue_is_empty(self->queue)) {
+    return;
+  }
+  if (self->state == RenderState::dormant ||
+      self->state == RenderState::failed) {
+    self->recreate_requested = TRUE;
+    schedule_render_view_recreation(self);
+  }
+  if (self->state != RenderState::ready || self->web_view == nullptr) {
     return;
   }
   start_request(
       self, static_cast<PendingRequest*>(g_queue_pop_head(self->queue)));
 }
 
-void render_load_changed_cb(WebKitWebView*,
-                            WebKitLoadEvent event,
+void harness_ready_cb(GObject* object, GAsyncResult* result,
+                      gpointer user_data) {
+  auto* self = BUSYMARK_WEB_RENDER_HOST(user_data);
+  g_autoptr(GError) error = nullptr;
+  g_autoptr(JSCValue) value =
+      webkit_web_view_call_async_javascript_function_finish(
+          WEBKIT_WEB_VIEW(object), result, &error);
+  if (!self->shutting_down && WEBKIT_WEB_VIEW(object) == self->web_view &&
+      self->state == RenderState::loading) {
+    g_clear_object(&self->initialization_cancellable);
+    if (value == nullptr || !jsc_value_to_boolean(value)) {
+      fail_initialization(
+          self, error != nullptr
+                    ? error->message
+                    : "The visualization harness did not initialize.");
+    } else {
+      self->state = RenderState::ready;
+      if (self->release_smoke_recovery_call != nullptr) {
+        g_autoptr(FlValue) response = fl_value_new_null();
+        fl_method_call_respond_success(self->release_smoke_recovery_call,
+                                       response, nullptr);
+        g_clear_object(&self->release_smoke_recovery_call);
+      }
+      pump_requests(self);
+    }
+  }
+  g_object_unref(self);
+}
+
+void render_load_changed_cb(WebKitWebView* web_view, WebKitLoadEvent event,
                             gpointer user_data) {
   auto* self = BUSYMARK_WEB_RENDER_HOST(user_data);
-  if (event == WEBKIT_LOAD_FINISHED) {
-    self->ready = TRUE;
-    if (self->release_smoke_recovery_call != nullptr) {
-      g_autoptr(FlValue) result = fl_value_new_null();
-      fl_method_call_respond_success(self->release_smoke_recovery_call, result,
-                                     nullptr);
-      g_clear_object(&self->release_smoke_recovery_call);
-    }
-    pump_requests(self);
+  if (!self->shutting_down && web_view == self->web_view &&
+      self->state == RenderState::loading && event == WEBKIT_LOAD_FINISHED &&
+      self->initialization_cancellable == nullptr) {
+    self->initialization_cancellable = g_cancellable_new();
+    // Load-finished can precede the module's ready event. Keep the existing
+    // harness deadline; Dart request deadlines also include this wait.
+    constexpr char kBody[] =
+        "if (typeof window.busymarkRender !== 'function') {"
+        "await new Promise((resolve, reject) => {"
+        "const timer = window.setTimeout(() => reject(new Error("
+        "'The visualization harness did not initialize.')), 15000);"
+        "window.addEventListener('busymark-render-ready', () => {"
+        "window.clearTimeout(timer); resolve();"
+        "}, { once: true });"
+        "});"
+        "}"
+        "return true;";
+    webkit_web_view_call_async_javascript_function(
+        web_view, kBody, -1, nullptr, nullptr, kHarnessUri,
+        self->initialization_cancellable, harness_ready_cb, g_object_ref(self));
   }
+}
+
+void fail_initialization(BusyMarkWebRenderHost* self, const gchar* message) {
+  self->state = RenderState::failed;
+  while (!g_queue_is_empty(self->queue)) {
+    auto* request = static_cast<PendingRequest*>(g_queue_pop_head(self->queue));
+    respond_pending_error(request, "visualization.hostUnavailable", message);
+    pending_request_free(request);
+  }
+  if (self->release_smoke_recovery_call != nullptr) {
+    respond_error(self->release_smoke_recovery_call,
+                  "visualization.hostUnavailable", message);
+    g_clear_object(&self->release_smoke_recovery_call);
+  }
+  // Tear down outside WebKit's load signal. A later legitimate request retries.
+  self->recreate_requested = FALSE;
+  schedule_render_view_recreation(self);
+}
+
+gboolean render_load_failed_cb(WebKitWebView* web_view, WebKitLoadEvent,
+                               const gchar*, GError* error,
+                               gpointer user_data) {
+  auto* self = BUSYMARK_WEB_RENDER_HOST(user_data);
+  if (!self->shutting_down && web_view == self->web_view) {
+    fail_initialization(self, error->message);
+  }
+  return TRUE;
 }
 
 void render_process_terminated_cb(WebKitWebView*,
                                   WebKitWebProcessTerminationReason,
                                   gpointer user_data) {
   auto* self = BUSYMARK_WEB_RENDER_HOST(user_data);
-  self->ready = FALSE;
+  if (self->shutting_down) {
+    return;
+  }
+  self->state = RenderState::scheduled;
   self->recreate_requested = TRUE;
   if (self->active_cancellable != nullptr) {
+    respond_pending_error(self->active, "visualization.webRenderFailed",
+                          "The WebKit renderer process terminated.");
     g_cancellable_cancel(self->active_cancellable);
   } else if (!self->shutting_down) {
     schedule_render_view_recreation(self);
@@ -543,7 +676,13 @@ void render_process_terminated_cb(WebKitWebView*,
 }
 
 void destroy_render_view(BusyMarkWebRenderHost* self) {
-  self->ready = FALSE;
+  if (self->initialization_cancellable != nullptr) {
+    g_cancellable_cancel(self->initialization_cancellable);
+    g_clear_object(&self->initialization_cancellable);
+  }
+  if (self->web_view != nullptr) {
+    g_signal_handlers_disconnect_by_data(self->web_view, self);
+  }
   self->web_view = nullptr;
   if (self->offscreen_window != nullptr) {
     gtk_widget_destroy(self->offscreen_window);
@@ -553,13 +692,22 @@ void destroy_render_view(BusyMarkWebRenderHost* self) {
 
 void recreate_render_view(BusyMarkWebRenderHost* self) {
   destroy_render_view(self);
-  if (self->shutting_down || self->resource_root == nullptr) {
+  if (self->shutting_down) {
     return;
   }
+  if (!ensure_context(self)) {
+    fail_initialization(self,
+                        "The visualization context could not be created.");
+    return;
+  }
+  self->state = RenderState::loading;
   self->offscreen_window = gtk_offscreen_window_new();
   gtk_window_set_default_size(GTK_WINDOW(self->offscreen_window), 1, 1);
-  self->web_view = WEBKIT_WEB_VIEW(
-      webkit_web_view_new_with_context(self->context));
+  {
+    InitializationProbe probe("view");
+    self->web_view =
+        WEBKIT_WEB_VIEW(webkit_web_view_new_with_context(self->context));
+  }
   configure_web_view(self->web_view);
   // GtkOffscreenWindow cannot provide a GL context for compositing. Set this
   // before realizing/loading the view, including after WebKit process recovery.
@@ -570,13 +718,21 @@ void recreate_render_view(BusyMarkWebRenderHost* self) {
       WEBKIT_HARDWARE_ACCELERATION_POLICY_NEVER);
   g_signal_connect(self->web_view, "load-changed",
                    G_CALLBACK(render_load_changed_cb), self);
+  g_signal_connect(self->web_view, "load-failed",
+                   G_CALLBACK(render_load_failed_cb), self);
   g_signal_connect(self->web_view, "web-process-terminated",
                    G_CALLBACK(render_process_terminated_cb), self);
   gtk_container_add(GTK_CONTAINER(self->offscreen_window),
                     GTK_WIDGET(self->web_view));
   gtk_widget_set_size_request(GTK_WIDGET(self->web_view), 1, 1);
-  gtk_widget_show_all(self->offscreen_window);
-  webkit_web_view_load_uri(self->web_view, kHarnessUri);
+  {
+    InitializationProbe probe("offscreen-show");
+    gtk_widget_show_all(self->offscreen_window);
+  }
+  {
+    InitializationProbe probe("harness-dispatch");
+    webkit_web_view_load_uri(self->web_view, kHarnessUri);
+  }
 }
 
 gboolean recreate_render_view_cb(gpointer user_data) {
@@ -584,7 +740,19 @@ gboolean recreate_render_view_cb(gpointer user_data) {
   self->recreate_source_id = 0;
   if (!self->shutting_down && self->recreate_requested) {
     self->recreate_requested = FALSE;
-    recreate_render_view(self);
+    if (!g_queue_is_empty(self->queue) ||
+        self->release_smoke_recovery_call != nullptr ||
+        self->web_view != nullptr) {
+      recreate_render_view(self);
+    } else {
+      self->state = RenderState::dormant;
+    }
+  } else if (!self->shutting_down && self->state == RenderState::failed) {
+    destroy_render_view(self);
+    // URI callbacks own their resource path independently of the host.
+    if (self->reference_windows == nullptr) {
+      g_clear_object(&self->context);
+    }
   }
   return G_SOURCE_REMOVE;
 }
@@ -592,6 +760,9 @@ gboolean recreate_render_view_cb(gpointer user_data) {
 void schedule_render_view_recreation(BusyMarkWebRenderHost* self) {
   if (self->shutting_down || self->recreate_source_id != 0) {
     return;
+  }
+  if (self->state != RenderState::failed) {
+    self->state = RenderState::scheduled;
   }
   self->recreate_source_id = g_idle_add_full(
       G_PRIORITY_DEFAULT_IDLE, recreate_render_view_cb, g_object_ref(self),
@@ -661,6 +832,24 @@ void reference_process_terminated_cb(WebKitWebView* web_view,
   webkit_web_view_reload(web_view);
 }
 
+void reference_window_destroyed_cb(GtkWidget* window, gpointer user_data) {
+  auto* self = BUSYMARK_WEB_RENDER_HOST(user_data);
+  self->reference_windows = g_list_remove(self->reference_windows, window);
+  auto* child = static_cast<GtkWidget*>(
+      g_object_get_data(G_OBJECT(window), "busymark-reference-view"));
+  if (child != nullptr) {
+    // An asynchronous JavaScript call can retain the view beyond its window.
+    // Disconnect both callbacks before freeing their shared load data.
+    g_signal_handlers_disconnect_matched(
+        child, G_SIGNAL_MATCH_FUNC, 0, 0, nullptr,
+        reinterpret_cast<gpointer>(reference_process_terminated_cb), nullptr);
+    g_signal_handlers_disconnect_matched(
+        child, G_SIGNAL_MATCH_FUNC, 0, 0, nullptr,
+        reinterpret_cast<gpointer>(reference_load_changed_cb), nullptr);
+    g_object_set_data(G_OBJECT(window), "busymark-reference-view", nullptr);
+  }
+}
+
 void open_reference_window(BusyMarkWebRenderHost* self,
                            FlMethodCall* method_call,
                            FlValue* args,
@@ -670,7 +859,15 @@ void open_reference_window(BusyMarkWebRenderHost* self,
                   "The bundled visualization resources could not be found.");
     return;
   }
+  if (!ensure_context(self)) {
+    respond_error(method_call, "visualization.hostUnavailable",
+                  "The visualization context could not be created.");
+    return;
+  }
   GtkWidget* window = gtk_application_window_new(self->application);
+  self->reference_windows = g_list_prepend(self->reference_windows, window);
+  g_signal_connect(window, "destroy", G_CALLBACK(reference_window_destroyed_cb),
+                   self);
   gtk_window_set_default_size(GTK_WINDOW(window), 1100, 760);
   if (self->parent_window != nullptr) {
     gtk_window_set_transient_for(GTK_WINDOW(window), self->parent_window);
@@ -700,6 +897,10 @@ void open_reference_window(BusyMarkWebRenderHost* self,
                         G_CALLBACK(reference_load_changed_cb), load_data,
                         reference_load_data_free,
                         static_cast<GConnectFlags>(0));
+  // Keep the view available to the window's destroy handler even if GTK has
+  // already removed its child, or an async callback keeps the view alive.
+  g_object_set_data_full(G_OBJECT(window), "busymark-reference-view",
+                         g_object_ref(web_view), g_object_unref);
   gtk_container_add(GTK_CONTAINER(window), GTK_WIDGET(web_view));
   gtk_widget_show_all(window);
   webkit_web_view_load_uri(web_view, kReferenceUri);
@@ -726,6 +927,33 @@ gboolean is_render_operation(const gchar* method) {
          g_strcmp0(method, "rasterizeSvg") == 0;
 }
 
+gboolean has_argument(FlValue* args, const char* name, FlValueType type) {
+  FlValue* value = fl_value_lookup_string(args, name);
+  return value != nullptr && fl_value_get_type(value) == type;
+}
+
+gboolean valid_operation_arguments(const gchar* method, FlValue* args) {
+  if (args == nullptr || fl_value_get_type(args) != FL_VALUE_TYPE_MAP) {
+    return FALSE;
+  }
+  if (g_strcmp0(method, "renderMathBatch") == 0) {
+    return has_argument(args, "expressions", FL_VALUE_TYPE_LIST);
+  }
+  if (g_strcmp0(method, "rasterizeSvg") == 0) {
+    if (!has_argument(args, "svg", FL_VALUE_TYPE_STRING)) {
+      return FALSE;
+    }
+    for (const auto* name : {"width", "height", "scale"}) {
+      if (!has_argument(args, name, FL_VALUE_TYPE_INT) &&
+          !has_argument(args, name, FL_VALUE_TYPE_FLOAT)) {
+        return FALSE;
+      }
+    }
+    return TRUE;
+  }
+  return has_argument(args, "source", FL_VALUE_TYPE_STRING);
+}
+
 void cancel_render_request(BusyMarkWebRenderHost* self,
                            FlMethodCall* method_call,
                            FlValue* args) {
@@ -744,6 +972,8 @@ void cancel_render_request(BusyMarkWebRenderHost* self,
   if (self->active != nullptr &&
       g_strcmp0(self->active->request_id, request_id) == 0) {
     cancelled = TRUE;
+    respond_pending_error(self->active, "visualization.cancelled",
+                          "The visualization render was cancelled.");
     if (self->active_cancellable != nullptr) {
       g_cancellable_cancel(self->active_cancellable);
     }
@@ -815,7 +1045,7 @@ gboolean terminate_web_process_for_release_smoke_cb(gpointer user_data) {
       self->release_smoke_recovery_call == nullptr) {
     return G_SOURCE_REMOVE;
   }
-  self->ready = FALSE;
+  self->state = RenderState::scheduled;
   webkit_web_view_terminate_web_process(self->web_view);
   return G_SOURCE_REMOVE;
 }
@@ -828,8 +1058,8 @@ void terminate_web_process_for_release_smoke(BusyMarkWebRenderHost* self,
                   "The release visualization smoke hook is disabled.");
     return;
   }
-  if (!self->ready || self->web_view == nullptr || self->active != nullptr ||
-      !g_queue_is_empty(self->queue) ||
+  if (self->state != RenderState::ready || self->web_view == nullptr ||
+      self->active != nullptr || !g_queue_is_empty(self->queue) ||
       self->release_smoke_recovery_call != nullptr) {
     respond_error(method_call, "visualization.hostBusy",
                   "The WebKit host is not idle for its recovery check.");
@@ -869,6 +1099,12 @@ void method_call_cb(FlMethodChannel*,
   if (!is_render_operation(method) &&
       g_strcmp0(method, "openOpenApiReference") != 0) {
     fl_method_call_respond_not_implemented(method_call, nullptr);
+    return;
+  }
+  if (!valid_operation_arguments(method,
+                                 fl_method_call_get_args(method_call))) {
+    respond_error(method_call, "visualization.invalidArguments",
+                  "Visualization arguments are invalid.");
     return;
   }
   g_autoptr(GError) error = nullptr;
@@ -911,6 +1147,7 @@ void method_call_cb(FlMethodChannel*,
           ? g_strdup(fl_value_get_string(request_id_value))
           : g_uuid_string_random();
   request->arguments_json = g_strdup(arguments_json);
+  trace_request(request, "accepted");
   g_queue_push_tail(self->queue, request);
   pump_requests(self);
 }
@@ -923,6 +1160,7 @@ void busymark_web_render_host_shutdown(BusyMarkWebRenderHost* self) {
     return;
   }
   self->shutting_down = TRUE;
+  self->state = RenderState::stopped;
   if (self->release_smoke_terminate_source_id != 0) {
     g_source_remove(self->release_smoke_terminate_source_id);
     self->release_smoke_terminate_source_id = 0;
@@ -938,6 +1176,8 @@ void busymark_web_render_host_shutdown(BusyMarkWebRenderHost* self) {
     g_clear_object(&self->release_smoke_recovery_call);
   }
   if (self->active_cancellable != nullptr) {
+    respond_pending_error(self->active, "visualization.hostUnavailable",
+                          "The WebKit host is shutting down.");
     g_cancellable_cancel(self->active_cancellable);
   }
   while (!g_queue_is_empty(self->queue)) {
@@ -948,6 +1188,10 @@ void busymark_web_render_host_shutdown(BusyMarkWebRenderHost* self) {
     pending_request_free(request);
   }
   destroy_render_view(self);
+  while (self->reference_windows != nullptr) {
+    gtk_widget_destroy(GTK_WIDGET(self->reference_windows->data));
+  }
+  g_clear_object(&self->context);
 }
 
 void busymark_web_render_host_register_channel(BusyMarkWebRenderHost* self,
@@ -970,7 +1214,25 @@ BusyMarkWebRenderHost* busymark_web_render_host_new(
   self->application = application;
   self->parent_window = parent_window;
   self->resource_root = locate_resource_root();
-  self->context = webkit_web_context_new_ephemeral();
+  return self;
+}
+
+namespace {
+
+gboolean ensure_context(BusyMarkWebRenderHost* self) {
+  if (self->shutting_down || self->resource_root == nullptr) {
+    return FALSE;
+  }
+  if (self->context != nullptr) {
+    return TRUE;
+  }
+  {
+    InitializationProbe probe("context");
+    self->context = webkit_web_context_new_ephemeral();
+  }
+  if (self->context == nullptr) {
+    return FALSE;
+  }
   webkit_web_context_set_cache_model(self->context,
                                      WEBKIT_CACHE_MODEL_DOCUMENT_VIEWER);
   webkit_web_context_set_spell_checking_enabled(self->context, FALSE);
@@ -978,8 +1240,8 @@ BusyMarkWebRenderHost* busymark_web_render_host_new(
   // boundary inside both strict Snap and conventional Linux packages.
   webkit_web_context_set_sandbox_enabled(self->context, TRUE);
   webkit_web_context_register_uri_scheme(self->context, kScheme,
-                                         uri_scheme_request_cb, self,
-                                         nullptr);
+                                         uri_scheme_request_cb,
+                                         g_strdup(self->resource_root), g_free);
   WebKitSecurityManager* security_manager =
       webkit_web_context_get_security_manager(self->context);
   webkit_security_manager_register_uri_scheme_as_secure(security_manager,
@@ -990,12 +1252,19 @@ BusyMarkWebRenderHost* busymark_web_render_host_new(
       webkit_web_context_get_cookie_manager(self->context);
   webkit_cookie_manager_set_accept_policy(
       cookie_manager, WEBKIT_COOKIE_POLICY_ACCEPT_NEVER);
-  recreate_render_view(self);
-  return self;
+  return TRUE;
 }
+
+}  // namespace
 
 static void busymark_web_render_host_dispose(GObject* object) {
   auto* self = BUSYMARK_WEB_RENDER_HOST(object);
+  // Until disposal, late calls still receive the existing hostUnavailable
+  // response from method_call_cb. Detach before the borrowed host pointer dies.
+  if (self->channel != nullptr) {
+    fl_method_channel_set_method_call_handler(self->channel, nullptr, nullptr,
+                                              nullptr);
+  }
   busymark_web_render_host_shutdown(self);
   g_clear_object(&self->channel);
   g_clear_object(&self->release_smoke_recovery_call);
@@ -1020,4 +1289,5 @@ static void busymark_web_render_host_class_init(
 
 static void busymark_web_render_host_init(BusyMarkWebRenderHost* self) {
   self->queue = g_queue_new();
+  self->state = RenderState::dormant;
 }
