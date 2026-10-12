@@ -418,6 +418,24 @@ class _HarnessState extends ConsumerState<_Harness> {
         w.controller is BusyMarkWysiwygTextController &&
         w.controller!.text == text,
   ).first;
+
+  Future<void> _expandInspectorSection(
+    String title,
+    bool Function(Widget) hasControl,
+  ) async {
+    if (_elements(hasControl).isNotEmpty) return;
+    await _tap(
+      _elements(
+        (w) =>
+            w is ListTile && w.title is Text && (w.title as Text).data == title,
+      ).single,
+    );
+    await _until(
+      () => _elements(hasControl).isNotEmpty,
+      '$title exposes the requested inspector control',
+    );
+  }
+
   Future<void> _choose(String key, List<String> labels) async {
     await _tap(_elements((w) => w.key == ValueKey(key)).single);
     _nativeMenuOpen = true;
@@ -984,7 +1002,7 @@ class _HarnessState extends ConsumerState<_Harness> {
         '$stem Source identifies the logical topic',
       );
       _check(
-        !fields().contains('Element ID (id)'),
+        !fields().contains('Element anchor (id)'),
         '$stem topic identity is not a scalar field',
       );
       _check(
@@ -1446,6 +1464,7 @@ class _HarnessState extends ConsumerState<_Harness> {
             'topics/${suffix == 'md' ? 'authoring-markdown.md' : 'authoring.topic'}',
           ),
         );
+        await _native('chord', 'ctrl+shift+1');
         await _until(
           () => _elements((w) => w is BusyMarkWysiwygEditor).isNotEmpty,
           'Editor available for $suffix',
@@ -1555,7 +1574,7 @@ class _HarnessState extends ConsumerState<_Harness> {
         await _choose('wysiwyg-writerside-insert', ['Video']);
         _check(_source == beforeVideo, '$suffix video draft is source-neutral');
         final videoEntry = _elements(
-          (w) => w is BusyMarkGroupedTextEntry && w.label == 'Source',
+          (w) => w is BusyMarkGroupedTextEntry && w.label == 'Source (src)',
         ).single;
         await _tap(videoEntry);
         final videoField = videoEntry.widget as BusyMarkGroupedTextEntry;
@@ -1611,11 +1630,22 @@ class _HarnessState extends ConsumerState<_Harness> {
               selectedField.controller!.selection == selection,
           '$suffix opening Topic Properties preserves source and selection',
         );
+        await _expandInspectorSection(
+          'Advanced',
+          (w) =>
+              w is BusyMarkGroupedTextEntry &&
+              w.label == 'Switcher label (switcher-label)',
+        );
+        _check(
+          _source == beforeLabel &&
+              selectedField.controller!.selection == selection,
+          '$suffix opening Advanced preserves source and selection',
+        );
         BusyMarkGroupedTextEntry labelEntry() =>
             _elements(
                   (w) =>
                       w is BusyMarkGroupedTextEntry &&
-                      w.label == 'Switcher label',
+                      w.label == 'Switcher label (switcher-label)',
                 ).single.widget
                 as BusyMarkGroupedTextEntry;
         final labelField = labelEntry();
@@ -1725,6 +1755,12 @@ class _HarnessState extends ConsumerState<_Harness> {
           '$suffix variable reference properties survive reopening',
         );
         await topicProperties();
+        await _expandInspectorSection(
+          'Advanced',
+          (w) =>
+              w is BusyMarkGroupedTextEntry &&
+              w.label == 'Switcher label (switcher-label)',
+        );
         _check(
           labelEntry().controller!.text == switcherLabel,
           '$suffix switcher label survives save and Source to Editor',
@@ -1919,7 +1955,7 @@ class _HarnessState extends ConsumerState<_Harness> {
           ref.read(appSettingsControllerProvider).elementPropertiesVisible,
           'Palette opens one workspace inspector',
         );
-        final id = property('Element ID (id)');
+        final id = property('Element anchor (id)');
         await _tap(
           _elements(
             (w) => w is TextField && w.controller == id.controller,
@@ -1957,7 +1993,7 @@ class _HarnessState extends ConsumerState<_Harness> {
           buffer.editorState.selection.extentOffset == codeOffset,
           '$suffix Source selection survives property transaction',
         );
-        final invalidId = property('Element ID (id)');
+        final invalidId = property('Element anchor (id)');
         invalidId.focusNode!.requestFocus();
         invalidId.controller!.text = 'invalid id';
         final beforeInvalid = _source;
@@ -2049,13 +2085,13 @@ class _HarnessState extends ConsumerState<_Harness> {
           () => _elements(
             (w) =>
                 w is BusyMarkGroupedTextEntry &&
-                w.label == 'Element ID (id)' &&
+                w.label == 'Element anchor (id)' &&
                 w.controller?.text == 'saved-code',
           ).isNotEmpty,
           '$suffix reopened Source caret resolves saved code',
         );
         _check(
-          property('Element ID (id)').controller!.text == 'saved-code' &&
+          property('Element anchor (id)').controller!.text == 'saved-code' &&
               property('Include lines (include-lines)').controller!.text ==
                   '2-3' &&
               property(
@@ -2174,22 +2210,21 @@ class _HarnessState extends ConsumerState<_Harness> {
       }
 
       Future<void> propertyText(String label, String value) async {
-        if (_elements(
+        await _expandInspectorSection(
+          'Advanced',
           (w) => w is BusyMarkGroupedTextEntry && w.label == label,
-        ).isEmpty) {
-          await _tapLabel('Advanced');
-        }
+        );
         final entry =
             _elements(
                   (w) => w is BusyMarkGroupedTextEntry && w.label == label,
                 ).single.widget
                 as BusyMarkGroupedTextEntry;
-        await _tap(
+        await _type(
           _elements(
             (w) => w is TextField && w.controller == entry.controller,
           ).single,
+          value,
         );
-        entry.controller!.text = value;
         await _native('chord', 'ctrl+s');
         await _until(
           () => !ref.read(workspaceControllerProvider).activeBuffer!.isDirty,
@@ -2219,6 +2254,12 @@ class _HarnessState extends ConsumerState<_Harness> {
             .scrollToOffset(offset);
       }
 
+      Future<void> showTopicNavigation() => _expandInspectorSection(
+        'Topic navigation',
+        (w) =>
+            w is BusyMarkComboRow<String> && w.title == 'Navigation elements',
+      );
+
       await controller.openActiveFile(
         p.join(widget.root.path, 'topics/inspector.topic'),
       );
@@ -2226,7 +2267,7 @@ class _HarnessState extends ConsumerState<_Harness> {
       await _pause();
       inspector().onTargetSelected('@topic');
       await _pause();
-      await _tapLabel('Topic navigation');
+      await showTopicNavigation();
       for (final choice in [
         ('all', 'All titled elements'),
         ('none', 'No navigation'),
@@ -2242,6 +2283,7 @@ class _HarnessState extends ConsumerState<_Harness> {
         await _pause();
         inspector().onTargetSelected('@topic');
         await _pause();
+        await showTopicNavigation();
         _check(
           combo('Navigation elements').selected == choice.$1,
           'Navigation ${choice.$1} survives save close reopen',
@@ -2254,6 +2296,7 @@ class _HarnessState extends ConsumerState<_Harness> {
       await _pause();
       inspector().onTargetSelected('@topic');
       await _pause();
+      await showTopicNavigation();
       _check(
         combo('Navigation elements').selected == 'custom',
         'Custom navigation survives reopening',
@@ -2496,7 +2539,7 @@ class _HarnessState extends ConsumerState<_Harness> {
           .undoState
           .undo
           .length;
-      await propertyText('Element ID (id)', 'saved-item');
+      await propertyText('Element anchor (id)', 'saved-item');
       _check(
         inspector().target!.attributes['id'] == 'saved-item' &&
             inspector().path.any((b) => b.attributes['element'] == 'list'),
@@ -2537,7 +2580,7 @@ class _HarnessState extends ConsumerState<_Harness> {
       await _capture('inspector-native-item-reopened');
       sourceCaret(_source.indexOf('- [ ] Unchecked task'));
       await _pause();
-      await propertyText('Element ID (id)', 'saved-task');
+      await propertyText('Element anchor (id)', 'saved-task');
       await reopenSource();
       sourceCaret(_source.indexOf('<li id="saved-task"'));
       await _pause();
@@ -2554,7 +2597,7 @@ class _HarnessState extends ConsumerState<_Harness> {
       await _capture('inspector-task-item-reopened');
       sourceCaret(_source.indexOf('> A'));
       await _pause();
-      await propertyText('Element ID (id)', 'saved-note');
+      await propertyText('Element anchor (id)', 'saved-note');
       await reopenSource();
       sourceCaret(_source.indexOf('> A'));
       await _pause();
@@ -2582,7 +2625,7 @@ class _HarnessState extends ConsumerState<_Harness> {
             .undoState
             .undo
             .length;
-        await propertyText('Element ID (id)', numbered.identity);
+        await propertyText('Element anchor (id)', numbered.identity);
         final converted = _source;
         _check(
           ref
