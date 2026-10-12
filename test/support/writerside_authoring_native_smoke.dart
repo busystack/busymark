@@ -106,6 +106,20 @@ Future<void> main(List<String> arguments) async {
           : '# Inline references Markdown\n\nBefore [Read **guide**][ref] and [Other][ref].\n\nVars %product% and %product%.\n\nKeys <shortcut key="\$Save">Save</shortcut> and <shortcut key="\$Save">Save</shortcut>.\n\nEmpty <shortcut key="\$Save"/><shortcut key="\$Save"/>.\n\n[ref]: inspector.topic "Kept title"\n',
     );
   }
+  for (final xml in [true, false]) {
+    const body =
+        '<p id="image-variables">%product%<img src="logo.png" alt="Product" width="16"/>%product%%product%</p><p id="break-variables">%product%<br/>%product%</p>';
+    await File(
+      p.join(
+        root.path,
+        'topics/variable-media-${xml ? 'xml.topic' : 'markdown.md'}',
+      ),
+    ).writeAsString(
+      xml
+          ? '<topic id="variable-media-xml" title="Variable media XML">$body</topic>'
+          : '# Variable media Markdown\n\n<chapter id="media" title="Media">$body</chapter>\n',
+    );
+  }
   final variables = File(p.join(root.path, 'v.list'));
   await variables.writeAsString(
     (await variables.readAsString()).replaceFirst(
@@ -117,7 +131,7 @@ Future<void> main(List<String> arguments) async {
   await tree.writeAsString(
     (await tree.readAsString()).replaceFirst(
       '</instance-profile>',
-      '<toc-element topic="authoring.topic"/><toc-element topic="authoring-markdown.md"/><toc-element topic="inspector.topic" toc-title="Inspector XML"/><toc-element topic="inspector-markdown.md" toc-title="Inspector Markdown"/><toc-element topic="inspector-corrections.md"/><toc-element topic="inspector-mappings.topic"/><toc-element topic="inline-references-xml.topic"/><toc-element topic="inline-references-markdown.md"/></instance-profile>',
+      '<toc-element topic="authoring.topic"/><toc-element topic="authoring-markdown.md"/><toc-element topic="inspector.topic" toc-title="Inspector XML"/><toc-element topic="inspector-markdown.md" toc-title="Inspector Markdown"/><toc-element topic="inspector-corrections.md"/><toc-element topic="inspector-mappings.topic"/><toc-element topic="inline-references-xml.topic"/><toc-element topic="inline-references-markdown.md"/><toc-element topic="variable-media-xml.topic"/><toc-element topic="variable-media-markdown.md"/></instance-profile>',
     ),
   );
   final defaultsFixture = Directory(
@@ -537,162 +551,327 @@ class _HarnessState extends ConsumerState<_Harness> {
       await _pause();
     }
 
+    if (Platform.environment['BUSYMARK_VARIABLE_MEDIA_ONLY'] != '1') {
+      for (final xml in [true, false]) {
+        final suffix = xml ? 'xml' : 'markdown';
+        await controller.openActiveFile(
+          p.join(
+            widget.root.path,
+            'topics/inline-references-${xml ? 'xml.topic' : 'markdown.md'}',
+          ),
+        );
+        await editorCaret('Before Read guide and Other.', 9);
+        if (!ref.read(appSettingsControllerProvider).elementPropertiesVisible) {
+          await openInspector();
+        }
+        final original = _source;
+        for (final offset in [9, 15]) {
+          await editorCaret('Before Read guide and Other.', offset);
+          _check(
+            inspector().inlineTarget?.kind == BusyInlineKind.link &&
+                inspector().inlineTarget!.end -
+                        inspector().inlineTarget!.start ==
+                    'Read guide'.length,
+            '$suffix mixed link selects complete owner at caret $offset',
+          );
+        }
+        await _capture('inline-$suffix-mixed-link-editor');
+        await property('Link target (href)', 'inspector.topic#nested');
+        _check(
+          _source.contains(xml ? 'Read <b>guide</b>' : 'Read **guide**') &&
+              _source.contains(
+                xml ? '<a href="inspector.topic">Other</a>' : '[Other][ref]',
+              ),
+          '$suffix link edit retains mixed formatting and other occurrence',
+        );
+        final changed = _source;
+        _check(
+          changed != original &&
+              changed.contains(
+                xml
+                    ? 'href="inspector.topic#nested"'
+                    : '(inspector.topic#nested "Kept title")',
+              ),
+          '$suffix link destination changes',
+        );
+        await showSource(
+          _source.indexOf(xml ? '<a href' : '[Read'),
+          '$suffix mixed link',
+        );
+        await _native('chord', 'ctrl+z');
+        await _pause();
+        _check(_source == original, '$suffix link undo restores exact source');
+        await _native('chord', 'ctrl+shift+z');
+        await _pause();
+        _check(_source == changed, '$suffix link redo restores exact edit');
+        await reopen();
+        _check(_source == changed, '$suffix mixed link survives reopening');
+        await editorCaret('Before Read guide and Other.', 15);
+        await showSource(
+          _source.indexOf(xml ? '<a href' : '[Read'),
+          '$suffix reopened mixed link',
+        );
+        await _capture('inline-$suffix-mixed-link-source');
+        for (final shortcut in [false, true]) {
+          var text = shortcut
+              ? 'Keys Save and Save.'
+              : 'Vars product and product.';
+          final kind = shortcut
+              ? BusyInlineKind.writersideShortcut
+              : BusyInlineKind.writersideVariable;
+          final token = shortcut ? '<shortcut' : '%product%';
+          for (final ordinal in [0, 1]) {
+            final offset = ordinal == 0
+                ? _source.indexOf(token)
+                : _source.indexOf(token, _source.indexOf(token) + token.length);
+            final caret = ordinal == 0 ? 6 : (shortcut ? 15 : 19);
+            await editorCaret(text, caret);
+            _check(
+              inspector().inlineTarget?.kind == kind,
+              '$suffix repeated $kind Editor occurrence $ordinal targets reference',
+            );
+            await showSource(
+              offset,
+              '$suffix repeated $kind occurrence $ordinal',
+            );
+            await sourceCaret(offset + 2);
+            _check(
+              inspector().inlineTarget?.kind == kind,
+              '$suffix repeated $kind Source occurrence $ordinal targets reference',
+            );
+          }
+          final firstOffset = _source.indexOf(token);
+          await sourceCaret(firstOffset + 2);
+          await property(
+            shortcut
+                ? 'Keymap help instance (from-keymap-of)'
+                : 'Variable Reference',
+            shortcut ? 'conformance' : 'product_long',
+          );
+          final updated = _source;
+          text = shortcut ? text : 'Vars product_long and product.';
+          for (final ordinal in [0, 1]) {
+            final offset = ordinal == 0
+                ? firstOffset
+                : updated.indexOf(token, firstOffset + token.length);
+            await editorCaret(text, ordinal == 0 ? 6 : (shortcut ? 15 : 24));
+            _check(
+              inspector().inlineTarget?.kind == kind,
+              '$suffix changed $kind Editor occurrence $ordinal remains targeted',
+            );
+            await showSource(
+              offset,
+              '$suffix changed $kind occurrence $ordinal',
+            );
+            await sourceCaret(offset + 2);
+            _check(
+              inspector().inlineTarget?.kind == kind,
+              '$suffix changed $kind Source occurrence $ordinal remains targeted',
+            );
+          }
+          await _capture(
+            'inline-$suffix-${shortcut ? 'shortcuts' : 'variables'}-second-occurrence',
+          );
+          await reopen();
+          _check(_source == updated, '$suffix repeated $kind edit persists');
+        }
+        await _native('chord', 'ctrl+shift+2');
+        await _pause();
+        final emptyStart = _source.indexOf('Empty ');
+        final firstEmpty = _source.indexOf('<shortcut', emptyStart);
+        var secondEmpty = _source.indexOf('<shortcut', firstEmpty + 1);
+        for (final pair in [(firstEmpty, 0), (secondEmpty, 1)]) {
+          await sourceCaret(pair.$1 + 2);
+          _check(
+            inspector().inlineTarget?.referenceIndex == pair.$2,
+            '$suffix empty shortcut has distinct owning occurrence ${pair.$2}',
+          );
+          await showSource(pair.$1, '$suffix empty shortcut ${pair.$2}');
+        }
+        await property('Keymap help instance (from-keymap-of)', 'conformance');
+        secondEmpty = _source.indexOf(
+          '<shortcut',
+          _source.indexOf('<shortcut', _source.indexOf('Empty ')) + 1,
+        );
+        _check(
+          !_source
+                  .substring(firstEmpty, secondEmpty)
+                  .contains('from-keymap-of') &&
+              _source
+                  .substring(secondEmpty)
+                  .contains('from-keymap-of="conformance"'),
+          '$suffix empty shortcut edits only the selected second occurrence',
+        );
+        await reopen();
+        await _native('chord', 'ctrl+shift+2');
+        await _pause();
+        await sourceCaret(secondEmpty + 2);
+        _check(
+          inspector().inlineTarget?.referenceIndex == 1,
+          '$suffix empty shortcut retains identity after reopening',
+        );
+        await showSource(secondEmpty, '$suffix reopened second empty shortcut');
+        await _capture('inline-$suffix-empty-shortcut-second-occurrence');
+      }
+    }
     for (final xml in [true, false]) {
       final suffix = xml ? 'xml' : 'markdown';
       await controller.openActiveFile(
         p.join(
           widget.root.path,
-          'topics/inline-references-${xml ? 'xml.topic' : 'markdown.md'}',
+          'topics/variable-media-${xml ? 'xml.topic' : 'markdown.md'}',
         ),
       );
-      await editorCaret('Before Read guide and Other.', 9);
+      var imageNames = ['product', 'product', 'product'];
+      var breakNames = ['product', 'product'];
+      var alt = 'Product';
+      Future<void> verifyMedia(String stage) async {
+        for (final image in [true, false]) {
+          final names = image ? imageNames : breakNames;
+          final text = image
+              ? '${names.first}$alt${names.skip(1).join()}'
+              : names.join('\n');
+          final paragraph = _source.indexOf(
+            image ? '<p id="image-variables"' : '<p id="break-variables"',
+          );
+          var cursor = paragraph;
+          var position = 0;
+          for (var i = 0; i < names.length; i++) {
+            final at = _source.indexOf('%${names[i]}%', cursor);
+            cursor = at + names[i].length + 2;
+            final referenceIndex = image && i > 0 ? i + 1 : i;
+            await editorCaret(text, position + 1);
+            _check(
+              inspector().inlineTarget?.referenceIndex == referenceIndex &&
+                  inspector().inlineTarget?.start == position &&
+                  inspector().inlineTarget?.kind ==
+                      BusyInlineKind.writersideVariable,
+              '$suffix $stage ${image ? "image" : "break"} Editor variable $i has exact target',
+            );
+            await showSource(
+              at,
+              '$suffix $stage ${image ? "image" : "break"} variable $i',
+            );
+            await sourceCaret(at + 2);
+            _check(
+              inspector().inlineTarget?.referenceIndex == referenceIndex &&
+                  inspector().inlineTarget?.start == position,
+              '$suffix $stage ${image ? "image" : "break"} Source variable $i has exact target',
+            );
+            position += names[i].length;
+            if (i == 0) position += image ? alt.length : 1;
+          }
+        }
+      }
+
+      await editorCaret('productProductproductproduct', 1);
       if (!ref.read(appSettingsControllerProvider).elementPropertiesVisible) {
         await openInspector();
       }
+      await verifyMedia('initial');
       final original = _source;
-      for (final offset in [9, 15]) {
-        await editorCaret('Before Read guide and Other.', offset);
-        _check(
-          inspector().inlineTarget?.kind == BusyInlineKind.link &&
-              inspector().inlineTarget!.end - inspector().inlineTarget!.start ==
-                  'Read guide'.length,
-          '$suffix mixed link selects complete owner at caret $offset',
-        );
-      }
-      await _capture('inline-$suffix-mixed-link-editor');
-      await property('Link target (href)', 'inspector.topic#nested');
-      _check(
-        _source.contains(xml ? 'Read <b>guide</b>' : 'Read **guide**') &&
-            _source.contains(
-              xml ? '<a href="inspector.topic">Other</a>' : '[Other][ref]',
-            ),
-        '$suffix link edit retains mixed formatting and other occurrence',
+      var third = _source.indexOf(
+        '%product%',
+        _source.indexOf('%product%') + 1,
       );
-      final changed = _source;
+      third = _source.indexOf('%product%', third + 1);
+      await sourceCaret(third + 2);
+      await property('Variable Reference', 'product_long');
+      final editedThird = _source;
+      third = _source.indexOf('%product_long%', _source.indexOf('<img'));
+      await showSource(third, '$suffix edited third variable');
       _check(
-        changed != original &&
-            changed.contains(
-              xml
-                  ? 'href="inspector.topic#nested"'
-                  : '(inspector.topic#nested "Kept title")',
-            ),
-        '$suffix link destination changes',
-      );
-      await showSource(
-        _source.indexOf(xml ? '<a href' : '[Read'),
-        '$suffix mixed link',
+        _source.contains('%product%<img') &&
+            _source.contains('/>%product%%product_long%</p>'),
+        '$suffix editing third variable preserves first and second',
       );
       await _native('chord', 'ctrl+z');
       await _pause();
-      _check(_source == original, '$suffix link undo restores exact source');
+      _check(
+        _source == original,
+        '$suffix third variable undo restores exact source',
+      );
       await _native('chord', 'ctrl+shift+z');
       await _pause();
-      _check(_source == changed, '$suffix link redo restores exact edit');
+      _check(
+        _source == editedThird,
+        '$suffix third variable redo restores exact edit',
+      );
+      imageNames[2] = 'product_long';
+      await verifyMedia('third edited');
       await reopen();
-      _check(_source == changed, '$suffix mixed link survives reopening');
-      await editorCaret('Before Read guide and Other.', 15);
+      await verifyMedia('third reopened');
+      await sourceCaret(_source.indexOf('%product%') + 2);
+      await property('Variable Reference', 'product_long');
+      imageNames[0] = 'product_long';
+      await sourceCaret(_source.indexOf('<img') + 2);
+      final beforeAlt = _source;
+      await property('Alt text (alt)', 'Longer product alternative');
+      final afterAlt = _source;
+      await showSource(_source.indexOf('<img'), '$suffix edited image alt');
+      await _native('chord', 'ctrl+z');
+      await _pause();
+      _check(_source == beforeAlt, '$suffix alt undo preserves variables');
+      await _native('chord', 'ctrl+shift+z');
+      await _pause();
+      _check(_source == afterAlt, '$suffix alt redo restores only alt edit');
+      alt = 'Longer product alternative';
+      await verifyMedia('first and alt length changed');
+      await reopen();
+      await verifyMedia('changed lengths reopened');
+      await _capture('variable-media-$suffix-image-source');
+      // Verify mutation after both preceding lengths changed, then exercise
+      // the break example's second occurrence and an earlier length change.
+      third = _source.indexOf('%product_long%', _source.indexOf('<img'));
+      await sourceCaret(third + 2);
+      await property('Variable Reference', 'product');
+      imageNames[2] = 'product';
+      final breakStart = _source.indexOf('<p id="break-variables"');
+      final firstBreak = _source.indexOf('%product%', breakStart);
+      final secondBreak = _source.indexOf('%product%', firstBreak + 1);
+      await sourceCaret(secondBreak + 2);
+      final beforeBreak = _source;
+      await property('Variable Reference', 'product_long');
+      final afterBreak = _source;
       await showSource(
-        _source.indexOf(xml ? '<a href' : '[Read'),
-        '$suffix reopened mixed link',
-      );
-      await _capture('inline-$suffix-mixed-link-source');
-      for (final shortcut in [false, true]) {
-        var text = shortcut
-            ? 'Keys Save and Save.'
-            : 'Vars product and product.';
-        final kind = shortcut
-            ? BusyInlineKind.writersideShortcut
-            : BusyInlineKind.writersideVariable;
-        final token = shortcut ? '<shortcut' : '%product%';
-        for (final ordinal in [0, 1]) {
-          final offset = ordinal == 0
-              ? _source.indexOf(token)
-              : _source.indexOf(token, _source.indexOf(token) + token.length);
-          final caret = ordinal == 0 ? 6 : (shortcut ? 15 : 19);
-          await editorCaret(text, caret);
-          _check(
-            inspector().inlineTarget?.kind == kind,
-            '$suffix repeated $kind Editor occurrence $ordinal targets reference',
-          );
-          await showSource(
-            offset,
-            '$suffix repeated $kind occurrence $ordinal',
-          );
-          await sourceCaret(offset + 2);
-          _check(
-            inspector().inlineTarget?.kind == kind,
-            '$suffix repeated $kind Source occurrence $ordinal targets reference',
-          );
-        }
-        final firstOffset = _source.indexOf(token);
-        await sourceCaret(firstOffset + 2);
-        await property(
-          shortcut
-              ? 'Keymap help instance (from-keymap-of)'
-              : 'Variable Reference',
-          shortcut ? 'conformance' : 'product_long',
-        );
-        final updated = _source;
-        text = shortcut ? text : 'Vars product_long and product.';
-        for (final ordinal in [0, 1]) {
-          final offset = ordinal == 0
-              ? firstOffset
-              : updated.indexOf(token, firstOffset + token.length);
-          await editorCaret(text, ordinal == 0 ? 6 : (shortcut ? 15 : 24));
-          _check(
-            inspector().inlineTarget?.kind == kind,
-            '$suffix changed $kind Editor occurrence $ordinal remains targeted',
-          );
-          await showSource(offset, '$suffix changed $kind occurrence $ordinal');
-          await sourceCaret(offset + 2);
-          _check(
-            inspector().inlineTarget?.kind == kind,
-            '$suffix changed $kind Source occurrence $ordinal remains targeted',
-          );
-        }
-        await _capture(
-          'inline-$suffix-${shortcut ? 'shortcuts' : 'variables'}-second-occurrence',
-        );
-        await reopen();
-        _check(_source == updated, '$suffix repeated $kind edit persists');
-      }
-      await _native('chord', 'ctrl+shift+2');
-      await _pause();
-      final emptyStart = _source.indexOf('Empty ');
-      final firstEmpty = _source.indexOf('<shortcut', emptyStart);
-      var secondEmpty = _source.indexOf('<shortcut', firstEmpty + 1);
-      for (final pair in [(firstEmpty, 0), (secondEmpty, 1)]) {
-        await sourceCaret(pair.$1 + 2);
-        _check(
-          inspector().inlineTarget?.referenceIndex == pair.$2,
-          '$suffix empty shortcut has distinct owning occurrence ${pair.$2}',
-        );
-        await showSource(pair.$1, '$suffix empty shortcut ${pair.$2}');
-      }
-      await property('Keymap help instance (from-keymap-of)', 'conformance');
-      secondEmpty = _source.indexOf(
-        '<shortcut',
-        _source.indexOf('<shortcut', _source.indexOf('Empty ')) + 1,
+        _source.indexOf(
+          '%product_long%',
+          _source.indexOf('<p id="break-variables"'),
+        ),
+        '$suffix edited break variable',
       );
       _check(
-        !_source
-                .substring(firstEmpty, secondEmpty)
-                .contains('from-keymap-of') &&
-            _source
-                .substring(secondEmpty)
-                .contains('from-keymap-of="conformance"'),
-        '$suffix empty shortcut edits only the selected second occurrence',
+        _source.contains(
+          '<p id="break-variables">%product%<br/>%product_long%</p>',
+        ),
+        '$suffix second break variable changes only its occurrence',
       );
+      await _native('chord', 'ctrl+z');
+      await _pause();
+      _check(
+        _source == beforeBreak,
+        '$suffix break variable undo restores exact source',
+      );
+      await _native('chord', 'ctrl+shift+z');
+      await _pause();
+      _check(
+        _source == afterBreak,
+        '$suffix break variable redo restores exact edit',
+      );
+      breakNames[1] = 'product_long';
+      await sourceCaret(
+        _source.indexOf(
+              '%product%',
+              _source.indexOf('<p id="break-variables"'),
+            ) +
+            2,
+      );
+      await property('Variable Reference', 'product_long');
+      breakNames[0] = 'product_long';
+      await verifyMedia('break and first length changed');
       await reopen();
-      await _native('chord', 'ctrl+shift+2');
-      await _pause();
-      await sourceCaret(secondEmpty + 2);
-      _check(
-        inspector().inlineTarget?.referenceIndex == 1,
-        '$suffix empty shortcut retains identity after reopening',
-      );
-      await showSource(secondEmpty, '$suffix reopened second empty shortcut');
-      await _capture('inline-$suffix-empty-shortcut-second-occurrence');
+      await verifyMedia('final reopened');
+      await _capture('variable-media-$suffix-break-source');
     }
   }
 
@@ -731,7 +910,8 @@ class _HarnessState extends ConsumerState<_Harness> {
         await _pause();
       }
 
-      if (Platform.environment['BUSYMARK_INLINE_REFERENCES_ONLY'] == '1') {
+      if (Platform.environment['BUSYMARK_INLINE_REFERENCES_ONLY'] == '1' ||
+          Platform.environment['BUSYMARK_VARIABLE_MEDIA_ONLY'] == '1') {
         await _runInlineReferences(paletteProperties);
         await _finish(null);
         return;
