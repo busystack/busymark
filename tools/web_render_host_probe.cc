@@ -2,6 +2,7 @@
 // and a one-shot context-allocation failure are injected. No Dart mock host.
 #include <cstdio>
 #include <functional>
+#include <map>
 #include <string>
 
 #include "../linux/runner/web_render_host.cc"
@@ -155,6 +156,39 @@ extern "C" WebKitWebContext* __wrap_webkit_web_context_new_ephemeral() {
   return __real_webkit_web_context_new_ephemeral();
 }
 
+static std::map<std::string, unsigned> resource_reads;
+static bool fail_engine_read = false;
+static const char* failed_engine_resource = "mermaid-engine.js";
+extern "C" gboolean __real_g_file_get_contents(const gchar*, gchar**, gsize*,
+                                               GError**);
+extern "C" gboolean __wrap_g_file_get_contents(const gchar* path,
+                                               gchar** contents, gsize* length,
+                                               GError** error) {
+  const char* name = strrchr(path, '/');
+  if (name != nullptr) {
+    ++resource_reads[name + 1];
+    if (fail_engine_read && strcmp(name + 1, failed_engine_resource) == 0) {
+      fail_engine_read = false;
+      g_set_error_literal(error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND,
+                          "Injected missing engine bundle");
+      return FALSE;
+    }
+  }
+  return __real_g_file_get_contents(path, contents, length, error);
+}
+
+static void only_engine(const char* expected) {
+  for (const char* engine : {"mermaid", "plantuml", "math", "openapi"}) {
+    const std::string name = std::string(engine) + "-engine.js";
+    g_assert_cmpuint(
+        resource_reads[name], ==,
+        expected != nullptr && strcmp(expected, engine) == 0 ? 1 : 0);
+  }
+  g_assert_cmpuint(
+      resource_reads["viz-global.js"], ==,
+      expected != nullptr && strcmp(expected, "plantuml") == 0 ? 1 : 0);
+}
+
 static void until(const std::function<bool()>& predicate) {
   const gint64 deadline = g_get_monotonic_time() + 20000000;
   while (!predicate() && g_get_monotonic_time() < deadline) {
@@ -181,6 +215,7 @@ struct Harness {
   BusyMarkWebRenderHost* host;
   Harness() {
     contexts = views = harness_loads = 0;
+    resource_reads.clear();
     messenger = static_cast<TestMessenger*>(
         g_object_new(test_messenger_get_type(), nullptr));
     active_messenger = messenger;
@@ -203,6 +238,7 @@ struct Harness {
     g_assert_null(host->context);
     g_assert_null(host->web_view);
     g_assert_null(host->offscreen_window);
+    g_assert_true(resource_reads.empty());
   }
   ~Harness() {
     busymark_web_render_host_shutdown(host);
@@ -342,6 +378,15 @@ int main(int argc, char** argv) {
   const char* mode = argv[1];
   Harness h;
   if (strcmp(mode, "no-init") == 0) {
+    for (const char* name : {"/mermaid-engine.js", "/plantuml-engine.js",
+                             "/math-engine.js", "/openapi-engine.js"}) {
+      g_assert_true(is_allowed_resource_name(name));
+    }
+    for (const char* name :
+         {"/../math-engine.js", "//math-engine.js", "/math-engine.js/other",
+          "/engine-extra.js", "/licenses/package-lock.json"}) {
+      g_assert_false(is_allowed_resource_name(name));
+    }
     g_autoptr(FlValue) cancel = args("cancelRender");
     g_autoptr(TestResponse) response = h.call("cancelRender", cancel);
     g_autoptr(FlValue) result = h.success(response);
@@ -433,6 +478,7 @@ int main(int argc, char** argv) {
                         webkit_web_view_get_settings(view)),
                     ==,
                     webkit_settings_get_hardware_acceleration_policy(defaults));
+    only_engine("openapi");
     g_autoptr(FlValue) render = args("renderMermaid");
     g_autoptr(TestResponse) rendered = h.call("renderMermaid", render);
     g_autoptr(FlValue) rendered_result = h.success(rendered);
@@ -450,6 +496,11 @@ int main(int argc, char** argv) {
       g_assert_cmpuint(contexts, ==, 0);
       g_autoptr(FlValue) result = h.success(response);
       verify(mode, result);
+      only_engine(strcmp(mode, "renderMermaid") == 0     ? "mermaid"
+                  : strcmp(mode, "renderPlantUml") == 0  ? "plantuml"
+                  : strcmp(mode, "renderMathBatch") == 0 ? "math"
+                  : strstr(mode, "OpenApi") != nullptr   ? "openapi"
+                                                         : nullptr);
       g_assert_cmpuint(contexts, ==, 1);
       std::printf("first-use %s duration_us=%" G_GINT64_FORMAT "\n", mode,
                   g_get_monotonic_time() - started);
@@ -457,6 +508,12 @@ int main(int argc, char** argv) {
       g_autoptr(TestResponse) repeated = h.call(mode, repeat);
       g_autoptr(FlValue) repeated_result = h.success(repeated);
       verify(mode, repeated_result);
+      g_assert_cmpuint(resource_reads["render-engines.js"], ==, 1);
+      only_engine(strcmp(mode, "renderMermaid") == 0     ? "mermaid"
+                  : strcmp(mode, "renderPlantUml") == 0  ? "plantuml"
+                  : strcmp(mode, "renderMathBatch") == 0 ? "math"
+                  : strstr(mode, "OpenApi") != nullptr   ? "openapi"
+                                                         : nullptr);
       g_assert_cmpuint(views, ==, 1);
       g_assert_cmpuint(harness_loads, ==, 1);
       g_assert_true(webkit_web_context_is_ephemeral(h.host->context));
@@ -468,6 +525,31 @@ int main(int argc, char** argv) {
           webkit_settings_get_hardware_acceleration_policy(settings), ==,
           WEBKIT_HARDWARE_ACCELERATION_POLICY_NEVER);
       g_assert_cmpuint(contexts, ==, 1);
+    } else if (strcmp(mode, "engine-failure") == 0 ||
+               strcmp(mode, "graphviz-failure") == 0) {
+      const char* operation = strcmp(mode, "graphviz-failure") == 0
+                                  ? "renderPlantUml"
+                                  : "renderMermaid";
+      failed_engine_resource = strcmp(mode, "graphviz-failure") == 0
+                                   ? "viz-global.js"
+                                   : "mermaid-engine.js";
+      fail_engine_read = true;
+      g_clear_pointer(&request, fl_value_unref);
+      request = args(operation);
+      g_autoptr(TestResponse) first = h.call(operation, request);
+      g_autoptr(FlValue) math = args("renderMathBatch", "math");
+      g_autoptr(TestResponse) second = h.call("renderMathBatch", math);
+      h.error(first, "visualization.hostUnavailable");
+      g_autoptr(FlValue) math_result = h.success(second);
+      verify("renderMathBatch", math_result);
+      // Retry without the release-only process-termination hook. A failed
+      // module registry must not permanently poison this renderer operation.
+      g_autoptr(TestResponse) retry = h.call(operation, request);
+      g_autoptr(FlValue) result = h.success(retry);
+      verify(operation, result);
+      g_assert_cmpuint(contexts, ==, 1);
+      g_assert_cmpuint(harness_loads, ==, 2);
+      g_assert_cmpuint(views, ==, 2);
     } else if (strcmp(mode, "failure") == 0 ||
                strcmp(mode, "load-failure") == 0 ||
                strcmp(mode, "harness-failure") == 0) {
@@ -526,7 +608,8 @@ int main(int argc, char** argv) {
         g_assert_cmpuint(harness_loads, ==, 1);
       }
     } else if (strcmp(mode, "active-cancel") == 0 ||
-               strcmp(mode, "snapshot-cancel") == 0) {
+               strcmp(mode, "snapshot-cancel") == 0 ||
+               strcmp(mode, "engine-cancel") == 0) {
       if (strcmp(mode, "snapshot-cancel") == 0) {
         g_clear_pointer(&request, fl_value_unref);
         request = args("rasterizeSvg");
@@ -540,6 +623,8 @@ int main(int argc, char** argv) {
                (strcmp(mode, "snapshot-cancel") != 0 ||
                 h.host->active->snapshot_wait_source_id != 0);
       });
+      if (strcmp(mode, "engine-cancel") == 0)
+        until([&] { return resource_reads["mermaid-engine.js"] != 0; });
       g_autoptr(FlValue) cancel = args("cancelRender");
       g_autoptr(TestResponse) cancelled = h.call("cancelRender", cancel);
       h.error(first, "visualization.cancelled");
@@ -557,6 +642,8 @@ int main(int argc, char** argv) {
         until([&] { return h.host->initialization_cancellable != nullptr; });
       if (strcmp(mode, "shutdown-active") == 0)
         until([&] { return h.host->active != nullptr; });
+      if (strcmp(mode, "shutdown-engine") == 0)
+        until([&] { return resource_reads["mermaid-engine.js"] != 0; });
       busymark_web_render_host_shutdown(h.host);
       h.error(first, "visualization.hostUnavailable");
       until([&] { return h.host->active == nullptr; });

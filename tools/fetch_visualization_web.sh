@@ -30,6 +30,9 @@ SOURCE_FINGERPRINT="$({
     "${SOURCE_DIR}/package.json" \
     "${SOURCE_DIR}/package-lock.json" \
     "${SOURCE_DIR}/render_engines.js" \
+    "${SOURCE_DIR}/mermaid_renderer.js" \
+    "${SOURCE_DIR}/plantuml_renderer.js" \
+    "${SOURCE_DIR}/openapi_renderer.js" \
     "${SOURCE_DIR}/mathjax_renderer.js" \
     "${SOURCE_DIR}/mermaid_math_disabled.js" \
     "${SOURCE_DIR}/build_render_engines.js" \
@@ -44,6 +47,10 @@ VERSION_FINGERPRINT="mermaid=${MERMAID_VERSION};plantuml=${PLANTUML_VERSION};sca
 if [[ -f "${OUTPUT_DIR}/VERSION" ]] &&
    [[ "$(<"${OUTPUT_DIR}/VERSION")" == "${VERSION_FINGERPRINT}" ]] &&
    [[ -s "${OUTPUT_DIR}/render-engines.js" ]] &&
+   [[ -s "${OUTPUT_DIR}/mermaid-engine.js" ]] &&
+   [[ -s "${OUTPUT_DIR}/plantuml-engine.js" ]] &&
+   [[ -s "${OUTPUT_DIR}/openapi-engine.js" ]] &&
+   [[ -s "${OUTPUT_DIR}/math-engine.js" ]] &&
    [[ -s "${OUTPUT_DIR}/scalar.js" ]] &&
    [[ -s "${OUTPUT_DIR}/viz-global.js" ]] &&
    [[ -s "${OUTPUT_DIR}/harness.html" ]] &&
@@ -69,6 +76,9 @@ TOOL_DIR="${TEMP_DIR}/tool"
 mkdir -p -- "${TOOL_DIR}"
 cp -- "${SOURCE_DIR}/package.json" "${SOURCE_DIR}/package-lock.json" "${TOOL_DIR}/"
 cp -- "${SOURCE_DIR}/render_engines.js" "${TOOL_DIR}/"
+cp -- "${SOURCE_DIR}/mermaid_renderer.js" "${TOOL_DIR}/"
+cp -- "${SOURCE_DIR}/plantuml_renderer.js" "${TOOL_DIR}/"
+cp -- "${SOURCE_DIR}/openapi_renderer.js" "${TOOL_DIR}/"
 cp -- "${SOURCE_DIR}/mathjax_renderer.js" "${TOOL_DIR}/"
 cp -- "${SOURCE_DIR}/build_render_engines.js" "${TOOL_DIR}/"
 npm ci \

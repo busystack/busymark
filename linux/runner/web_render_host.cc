@@ -189,6 +189,10 @@ gboolean is_allowed_resource_name(const gchar* path) {
          g_strcmp0(name, "reference.html") == 0 ||
          g_strcmp0(name, "bootstrap.js") == 0 ||
          g_strcmp0(name, "render-engines.js") == 0 ||
+         g_strcmp0(name, "mermaid-engine.js") == 0 ||
+         g_strcmp0(name, "plantuml-engine.js") == 0 ||
+         g_strcmp0(name, "openapi-engine.js") == 0 ||
+         g_strcmp0(name, "math-engine.js") == 0 ||
          g_strcmp0(name, "reference.js") == 0 ||
          g_strcmp0(name, "scalar.js") == 0 ||
          g_strcmp0(name, "viz-global.js") == 0;
@@ -352,6 +356,19 @@ void respond_json(PendingRequest* request, const gchar* json) {
                                            : "WebKit returned invalid JSON.");
     return;
   }
+  FlValue* engine_failed =
+      fl_value_get_type(value) == FL_VALUE_TYPE_MAP
+          ? fl_value_lookup_string(value, "engineLoadFailed")
+          : nullptr;
+  if (engine_failed != nullptr &&
+      fl_value_get_type(engine_failed) == FL_VALUE_TYPE_BOOL &&
+      fl_value_get_bool(engine_failed)) {
+    request->host->recreate_requested = TRUE;
+    respond_pending_error(
+        request, "visualization.hostUnavailable",
+        "The bundled visualization engine could not be loaded.");
+    return;
+  }
   request->responded = TRUE;
   trace_request(request, "completed");
   fl_method_call_respond_success(request->method_call, value, nullptr);
@@ -502,6 +519,7 @@ void javascript_finished_cb(GObject* object,
   auto* request = static_cast<PendingRequest*>(user_data);
   BusyMarkWebRenderHost* self = request->host;
   g_autoptr(GError) error = nullptr;
+  trace_request(request, "javascript-delivered");
   JSCValue* value = webkit_web_view_call_async_javascript_function_finish(
       WEBKIT_WEB_VIEW(object), result, &error);
   if (request->responded || self->shutting_down) {
@@ -535,6 +553,7 @@ void javascript_finished_cb(GObject* object,
 }
 
 void start_request(BusyMarkWebRenderHost* self, PendingRequest* request) {
+  trace_request(request, "started");
   self->active = request;
   request->host = BUSYMARK_WEB_RENDER_HOST(g_object_ref(self));
   self->active_cancellable = g_cancellable_new();
@@ -552,7 +571,11 @@ void start_request(BusyMarkWebRenderHost* self, PendingRequest* request) {
       "}"
       "const request = JSON.parse(requestJson);"
       "request.operation = operation;"
-      "return JSON.stringify(await window.busymarkRender(request));";
+      "try { return JSON.stringify(await window.busymarkRender(request)); }"
+      "catch (error) {"
+      "if (error?.busymarkEngineLoadFailed !== true) throw error;"
+      "return JSON.stringify({engineLoadFailed: true});"
+      "}";
   webkit_web_view_call_async_javascript_function(
       self->web_view, kBody, -1, arguments, nullptr, kHarnessUri,
       self->active_cancellable, javascript_finished_cb, request);

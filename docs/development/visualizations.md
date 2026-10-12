@@ -51,6 +51,21 @@ states. Loading includes the harness's asynchronous ready event and its existing
 Malformed, oversized, unsupported, cancellation, and PNG clipboard operations
 do not start WebKit. Cancelling all scheduled requests avoids construction.
 
+The harness registers its dispatcher without evaluating an engine. The first
+operation imports a fixed, offline bundle for Mermaid, PlantUML, MathJax, or
+OpenAPI. SVG rasterization needs only the harness. PlantUML alone loads the
+bundled Graphviz script. Module evaluation is reused within the view, and
+concurrent imports share the browser's module registry. Engine load failures
+reject their request with `visualization.hostUnavailable` and retire the failed
+view and its module registry. Queued work and retries use a fresh restricted
+view in the same ephemeral context. Process recovery also creates a fresh
+registry. Each engine retains its existing validation,
+configuration, and dependencies. Math includes all offline NewCM font tables.
+First use still pays for the WebKit process, harness, and requested engine;
+subsequent requests reuse them. Those costs must be measured alongside plain
+startup when assessing performance, including preparation that an eager
+baseline completed before receiving its first request.
+
 Opening an interactive reference first creates the shared context and its
 visible view, without loading the offscreen harness. A later render uses that
 context. Reference windows retain their normal acceleration policy.
@@ -69,7 +84,7 @@ their resource path independently of the host.
 
 Set `BUSYMARK_VISUALIZATION_TRACE=1` for opt-in monotonic timings on stderr:
 context construction, view construction, offscreen realization/show, harness
-dispatch, and request acceptance/completion. It logs no document source. Moving
+dispatch, and request acceptance, start, JavaScript delivery, and completion. It logs no document source. Moving
 construction to first use removes unused startup work; it does not establish
 the cause or elimination of a rare WebKit construction stall.
 

@@ -16,6 +16,7 @@ trap 'rm -rf "$fixture_root"' EXIT
   -Wl,--wrap=webkit_web_context_new_ephemeral \
   -Wl,--wrap=webkit_web_view_new_with_context \
   -Wl,--wrap=webkit_web_view_load_uri \
+  -Wl,--wrap=g_file_get_contents \
   -o "$fixture_root/probe"
 export BUSYMARK_VISUALIZATION_ASSETS="$assets"
 export GSETTINGS_BACKEND=memory
@@ -24,9 +25,9 @@ unset BUSYMARK_RELEASE_SMOKE
 # Each case gets a fresh process and profile. Keep WebKit's sandbox enabled.
 for operation in no-init pre-cancel renderMermaid renderPlantUml renderMathBatch \
   inspectOpenApi parseOpenApi rasterizeSvg openOpenApiReference concurrent-cancel \
-  active-cancel snapshot-cancel failure load-failure harness-failure \
+  active-cancel engine-cancel snapshot-cancel engine-failure graphviz-failure failure load-failure harness-failure \
   shutdown-scheduled shutdown-loading shutdown-readiness shutdown-active \
-  shutdown-channel reference-shutdown recovery; do
+  shutdown-channel shutdown-engine reference-shutdown recovery; do
   profile="$fixture_root/$operation"
   mkdir -p "$profile"/{home,config,cache,data,state,tmp}
   HOME="$profile/home" XDG_CONFIG_HOME="$profile/config" \
