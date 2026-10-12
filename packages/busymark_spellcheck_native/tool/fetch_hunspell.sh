@@ -27,6 +27,10 @@ mkdir -p -- "${TEMP_DIR}/source" "${TEMP_DIR}/prepared/src"
 tar --extract --gzip --file "${ARCHIVE}" --directory "${TEMP_DIR}/source" \
   --strip-components=1
 cp -R -- "${TEMP_DIR}/source/src/hunspell" "${TEMP_DIR}/prepared/src/"
+# The Dart build hook compiles the engine directly and uses hunvisapi.h.
+# Autotools inputs cannot build a standalone project in this source subset.
+rm -- "${TEMP_DIR}/prepared/src/hunspell/Makefile.am" \
+  "${TEMP_DIR}/prepared/src/hunspell/hunvisapi.h.in"
 mkdir -p -- "${TEMP_DIR}/prepared/licenses"
 for license in COPYING COPYING.LESSER COPYING.MPL license.hunspell license.myspell; do
   test -f "${TEMP_DIR}/source/${license}"

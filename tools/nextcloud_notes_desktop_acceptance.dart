@@ -1,43 +1,41 @@
-import 'package:busymark/src/references/reference_controller.dart';
-import 'package:busymark/src/references/reference_ui.dart';
-import 'package:busymark/src/app/command_registry.dart';
-import 'package:busymark/src/app/busymark_design.dart';
-import 'package:busymark/src/nextcloud_notes/data/server_uri.dart';
-import 'package:busymark/src/editor/wysiwyg/wysiwyg_editor.dart';
-import 'package:flutter/gestures.dart';
-import 'package:busymark/src/nextcloud_notes/data/notes_store.dart';
-import 'package:busymark/src/app/busymark_dialogs.dart';
-import 'package:busymark/src/nextcloud_notes/presentation/notes_workspace_ui.dart';
-import 'package:busymark/src/nextcloud_notes/application/notes_transfer_service.dart';
-import 'package:busymark/src/app/quick_open.dart';
-import 'package:busymark/src/nextcloud_notes/application/notes_navigation.dart';
-import 'package:busymark/src/nextcloud_notes/application/notes_search_controller.dart';
-// Disposable native acceptance target. Production widgets/controllers, private
-// profile, one explicitly trusted test CA, and only test-owned server resources.
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:ui' as ui;
 
-import 'package:busymark/src/app/app_settings.dart';
 import 'package:busymark/src/app/app_router.dart';
+import 'package:busymark/src/app/app_settings.dart';
 import 'package:busymark/src/app/busymark_app.dart';
+import 'package:busymark/src/app/busymark_design.dart';
+import 'package:busymark/src/app/busymark_dialogs.dart';
+import 'package:busymark/src/app/command_registry.dart';
+import 'package:busymark/src/app/quick_open.dart';
 import 'package:busymark/src/app/startup_path.dart';
 import 'package:busymark/src/app/system_accent.dart';
 import 'package:busymark/src/editor/source/source_editor.dart';
+import 'package:busymark/src/editor/wysiwyg/wysiwyg_editor.dart';
 import 'package:busymark/src/local_history/local_history_controller.dart';
 import 'package:busymark/src/local_history/local_history_store.dart';
 import 'package:busymark/src/nextcloud_notes/application/nextcloud_connection.dart';
+import 'package:busymark/src/nextcloud_notes/application/notes_navigation.dart';
 import 'package:busymark/src/nextcloud_notes/application/notes_repository.dart';
+import 'package:busymark/src/nextcloud_notes/application/notes_search_controller.dart';
 import 'package:busymark/src/nextcloud_notes/application/notes_settings_controller.dart';
+import 'package:busymark/src/nextcloud_notes/application/notes_transfer_service.dart';
 import 'package:busymark/src/nextcloud_notes/data/notes_api_client.dart';
 import 'package:busymark/src/nextcloud_notes/data/notes_capabilities.dart';
 import 'package:busymark/src/nextcloud_notes/data/notes_secret_store.dart';
+import 'package:busymark/src/nextcloud_notes/data/notes_store.dart';
+import 'package:busymark/src/nextcloud_notes/data/server_uri.dart';
 import 'package:busymark/src/nextcloud_notes/domain/notes_models.dart';
+import 'package:busymark/src/nextcloud_notes/presentation/notes_workspace_ui.dart';
 import 'package:busymark/src/platform/linux_header_bar_service.dart';
+import 'package:busymark/src/references/reference_controller.dart';
+import 'package:busymark/src/references/reference_ui.dart';
 import 'package:busymark/src/workspace/recovery_persistence.dart';
 import 'package:busymark/src/workspace/session_persistence.dart';
 import 'package:busymark/src/workspace/workspace_controller.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
@@ -47,12 +45,61 @@ import 'package:http/io_client.dart';
 import 'package:uuid/uuid.dart';
 import 'package:window_manager/window_manager.dart';
 
+// Reusable native integration target. Production widgets/controllers, private
+// profile, one explicitly trusted test CA, and only test-owned server resources.
+
+enum _Scenario {
+  full('full'),
+  workspace('workspace'),
+  offlineStart('offline-start'),
+  offlineResume('offline-resume'),
+  references('references'),
+  referencesResume('references-resume'),
+  localReferences('local-references'),
+  localReferencesResume('local-references-resume'),
+  writersideReferences('writerside-references'),
+  recoveryStart('recovery-start'),
+  recoveryResume('recovery-resume'),
+  performance('performance');
+
+  const _Scenario(this.option);
+  final String option;
+
+  bool get reopensProfile => const {
+    offlineResume,
+    referencesResume,
+    localReferencesResume,
+    recoveryResume,
+    performance,
+  }.contains(this);
+
+  bool get retainsResources =>
+      const {offlineStart, references, recoveryStart}.contains(this);
+
+  bool get endsOffline => const {
+    offlineStart,
+    recoveryStart,
+    referencesResume,
+    localReferencesResume,
+    performance,
+  }.contains(this);
+}
+
 Future<void> main(List<String> args) async {
   WidgetsFlutterBinding.ensureInitialized();
   if (args.length < 4 || args.length > 5) {
     stderr.writeln(
-      'Usage: PRIVATE_CREDENTIALS TEST_CA PRIVATE_OUTPUT DISPOSABLE_CONTAINER',
+      'Usage: PRIVATE_CREDENTIALS TEST_CA PRIVATE_OUTPUT DISPOSABLE_CONTAINER '
+      '[${_Scenario.values.map((s) => '--${s.option}').join('|')}]',
     );
+    exit(64);
+  }
+  final option = args.length == 5 ? args[4] : '--full';
+  final scenario = _Scenario.values
+      .where((s) => option == '--${s.option}')
+      .firstOrNull;
+  if (scenario == null) {
+    stderr.writeln('Unknown scenario: $option');
     exit(64);
   }
   final credentials = jsonDecode(await File(args[0]).readAsString()) as Map;
@@ -64,28 +111,8 @@ Future<void> main(List<String> args) async {
   final server = Uri.parse(credentials['server'] as String);
   final login = credentials['loginName'] as String;
   final password = credentials['appPassword'] as String;
-  final performance = args.length == 5 && args[4] == '--performance-m2';
-  final milestone3 = args.length == 5 && args[4] == '--m3';
-  final local3 =
-      args.length == 5 &&
-      ['--local-m3', '--restart-local-m3'].contains(args[4]);
-  final writerside3 = args.length == 5 && args[4] == '--writerside-m3';
-  final restart3 =
-      args.length == 5 &&
-      ['--restart-m3', '--restart-local-m3'].contains(args[4]);
-  final restarting = args.length == 5 && args[4] == '--restart-m2';
-  final stopOffline = args.length == 5 && args[4] == '--stop-offline-m2';
-  final correctionsStart =
-      args.length == 5 && args[4] == '--corrections-start-m2';
-  final correctionsResume =
-      args.length == 5 && args[4] == '--corrections-resume-m2';
-  final resumeOffline = args.length == 5 && args[4] == '--resume-offline-m2';
   NextcloudAccount account;
-  if (restarting ||
-      restart3 ||
-      performance ||
-      resumeOffline ||
-      correctionsResume) {
+  if (scenario.reopensProfile) {
     final persisted = await NotesStore.open(
       path: '${output.path}/notes.sqlite3',
     );
@@ -155,17 +182,7 @@ Future<void> main(List<String> args) async {
         password: password,
         output: output,
         containerName: args[3],
-        restart: restarting,
-        milestone3: milestone3,
-        local3: local3,
-        writerside3: writerside3,
-        restart3: restart3,
-        stopOffline: stopOffline,
-        resumeOffline: resumeOffline,
-        correctionsStart: correctionsStart,
-        correctionsResume: correctionsResume,
-        performance: performance,
-        m2Only: args.length == 5,
+        scenario: scenario,
       ),
     ),
   );
@@ -289,31 +306,21 @@ class _Harness extends ConsumerStatefulWidget {
     required this.password,
     required this.output,
     required this.containerName,
-    this.restart = false,
-    this.milestone3 = false,
-    this.local3 = false,
-    this.writerside3 = false,
-    this.restart3 = false,
-    this.stopOffline = false,
-    this.resumeOffline = false,
-    this.correctionsStart = false,
-    this.correctionsResume = false,
-    this.performance = false,
-    this.m2Only = false,
+    required this.scenario,
   });
   final NextcloudAccount account;
   final _Transport transport;
   final String password;
   final Directory output;
   final String containerName;
-  final bool milestone3, restart3, local3, writerside3;
-  final bool restart,
-      m2Only,
-      performance,
-      stopOffline,
-      resumeOffline,
-      correctionsStart,
-      correctionsResume;
+  final _Scenario scenario;
+  bool get resumeOffline => scenario == _Scenario.offlineResume;
+  bool get stopOffline => scenario == _Scenario.offlineStart;
+  bool get correctionsStart => scenario == _Scenario.recoveryStart;
+  bool get resumeReferences => const {
+    _Scenario.referencesResume,
+    _Scenario.localReferencesResume,
+  }.contains(scenario);
   @override
   ConsumerState<_Harness> createState() => _HarnessState();
 }
@@ -576,14 +583,14 @@ class _HarnessState extends ConsumerState<_Harness> {
         draft.accountId == widget.account.id &&
             draft.hasPendingChanges &&
             draft.content.contains('busymark-attachment:'),
-        'm2ProcessRestartPendingIdentityAndText',
+        'processRestartPendingIdentityAndText',
       );
       final available = await repository.attachmentAvailability(draft.localId);
       check(
         available.required.isNotEmpty &&
             available.available.length == available.required.length &&
             available.external.isEmpty,
-        'm2ProcessRestartPendingAttachmentBytes',
+        'processRestartPendingAttachmentBytes',
       );
       await workspace.openNextcloudNote(draft.localId);
       await wait(
@@ -594,9 +601,34 @@ class _HarnessState extends ConsumerState<_Harness> {
       );
       check(
         widget.transport.offline && widget.transport.writes == 0,
-        'm2RestartBeforeAnyPublication',
+        'workspaceRestartBeforeAnyPublication',
       );
-      await capture('m2-pending-process-restart');
+      final offline = await ref.read(
+        notesOfflineProvider(widget.account.id).future,
+      );
+      check(
+        offline.categoryRetained('Workspace'),
+        'processRestartCategoryRequirement',
+      );
+      await ref.read(localHistoryControllerProvider.notifier).refresh();
+      check(
+        ref.read(localHistoryControllerProvider).snapshot.documents.isNotEmpty,
+        'processRestartRetainedHistory',
+      );
+      for (final mode in DocumentViewModePreference.values) {
+        workspace.updateActiveEditorMode(mode);
+        await ref
+            .read(appSettingsControllerProvider.notifier)
+            .setDocumentViewMode(mode);
+        if (mode != DocumentViewModePreference.source) {
+          await wait(
+            () => widgets<Image>().any((i) => i.image is FileImage),
+            'restart media ${mode.name}',
+          );
+        }
+        await capture('workspace-restart-${mode.name}');
+      }
+      await capture('workspace-pending-process-restart');
     } else {
       await wait(
         () => widgets<ListTile>().any(
@@ -612,14 +644,15 @@ class _HarnessState extends ConsumerState<_Harness> {
       widget.transport.offline = false;
       final categoryFixture = await repository.create(
         widget.account.id,
-        title: 'M2 category fixture',
-        category: 'M2/子/Sub',
+        title: 'Workspace category fixture',
+        category: 'Workspace/子/Sub',
       );
       await repository.synchronize(widget.account.id);
       created.add(repository.noteById(categoryFixture.localId)!.serverId!);
       final navigation = NotesNavigationController()
         ..update(repository.notes, widget.account.id);
-      final categoryIndex = navigation.categoryPaths.indexOf('M2/子/Sub') + 4;
+      final categoryIndex =
+          navigation.categoryPaths.indexOf('Workspace/子/Sub') + 4;
       await Future<void>.delayed(const Duration(milliseconds: 200));
       void scrollCategory(Element element) {
         if (element is StatefulElement && element.state is ScrollableState) {
@@ -666,8 +699,8 @@ class _HarnessState extends ConsumerState<_Harness> {
           .remoteNote!
           .localId;
       check(
-        repository.noteById(draftId)!.category == 'M2/子/Sub',
-        'm2NativeNestedFilteredCreation',
+        repository.noteById(draftId)!.category == 'Workspace/子/Sub',
+        'nativeNestedFilteredCreation',
       );
       await wait(
         () => widgets<ListTile>().any(
@@ -687,11 +720,11 @@ class _HarnessState extends ConsumerState<_Harness> {
         widgets<TextField>().firstWhere(
           (f) => f.decoration?.labelText == 'Title',
         ),
-        'M2 desktop café',
+        'Workspace desktop café',
       );
       await label('Save');
       await wait(
-        () => repository.noteById(draftId)!.title == 'M2 desktop café',
+        () => repository.noteById(draftId)!.title == 'Workspace desktop café',
         'reviewed title',
       );
       await workspace.refreshNextcloudNotes();
@@ -710,7 +743,7 @@ class _HarnessState extends ConsumerState<_Harness> {
       workspace.updateActiveText(
         '${ref.read(workspaceControllerProvider).activeText}\n\n![image](${attachment.reference})\n\n<img src="${attachment.reference}">',
       );
-      check(await workspace.saveActive(), 'm2OfflineEditorMediaSave');
+      check(await workspace.saveActive(), 'workspaceOfflineEditorMediaSave');
       final freshStore = await NotesStore.open(path: repository.store.path);
       final persisted = (await freshStore.notes()).firstWhere(
         (n) => n.localId == draft.localId,
@@ -718,11 +751,15 @@ class _HarnessState extends ConsumerState<_Harness> {
       check(
         persisted.content.contains(attachment.reference) &&
             (await freshStore.attachments(draft.localId)).isNotEmpty,
-        'm2RestartDurableTextAndMedia',
+        'workspaceRestartDurableTextAndMedia',
       );
       await freshStore.close();
-      await capture('m2-sidebar');
+      await capture('workspace-sidebar');
       if (widget.stopOffline) {
+        final offline = await ref.read(
+          notesOfflineProvider(widget.account.id).future,
+        );
+        await offline.setRequirement('category', 'Workspace');
         await File('${widget.output.path}/offline-journey.json').writeAsString(
           jsonEncode({
             'localId': draft.localId,
@@ -740,7 +777,7 @@ class _HarnessState extends ConsumerState<_Harness> {
     );
     widgets<TextField>()
         .firstWhere((f) => f.decoration?.labelText == 'Quick Open')
-        .onChanged!('M2 desktop');
+        .onChanged!('Workspace desktop');
     await wait(
       () => widgets<ListTile>().any(
         (t) =>
@@ -750,7 +787,7 @@ class _HarnessState extends ConsumerState<_Harness> {
       ),
       'quick open results',
     );
-    await capture('m2-quick-open');
+    await capture('workspace-quick-open');
     final quickTile = widgets<ListTile>().lastWhere(
       (t) =>
           t.title is Text &&
@@ -762,12 +799,12 @@ class _HarnessState extends ConsumerState<_Harness> {
     check(
       ref.read(workspaceControllerProvider).activeBuffer?.remoteNote?.localId ==
           draft.localId,
-      'm2QuickOpenStableIdentity',
+      'workspaceQuickOpenStableIdentity',
     );
     final search = showNotesSearch(
       rootNavigatorKey.currentContext!,
       ref,
-      query: '"alpha beta" category:M2',
+      query: '"alpha beta" category:Workspace',
     );
     await wait(
       () => widgets<NotesSearchDialog>().isNotEmpty,
@@ -782,7 +819,7 @@ class _HarnessState extends ConsumerState<_Harness> {
       ),
       'indexed result',
     );
-    await capture('m2-search');
+    await capture('workspace-search');
     final result = widgets<ListTile>().lastWhere(
       (t) =>
           t.title is Text &&
@@ -794,12 +831,12 @@ class _HarnessState extends ConsumerState<_Harness> {
     check(
       ref.read(appSettingsControllerProvider).documentViewMode ==
           DocumentViewModePreference.source,
-      'm2ExplicitSourceLocation',
+      'workspaceExplicitSourceLocation',
     );
     final seed = await repository.create(
       widget.account.id,
-      title: 'M2 second',
-      category: 'M2/子/Sub',
+      title: 'Workspace second',
+      category: 'Workspace/子/Sub',
       content: 'alpha beta second',
     );
     final batch = showNotesBatch(rootNavigatorKey.currentContext!, ref, [
@@ -814,18 +851,18 @@ class _HarnessState extends ConsumerState<_Harness> {
     );
     widgets<TextField>()
         .firstWhere((f) => f.decoration?.labelText == 'Category')
-        .onChanged!('M2/Moved/子');
-    await capture('m2-batch-review');
+        .onChanged!('Workspace/Moved/子');
+    await capture('workspace-batch-review');
     await label('Save');
     await wait(
       () =>
-          repository.noteById(draft.localId)!.category == 'M2/Moved/子' &&
-          repository.noteById(seed.localId)!.category == 'M2/Moved/子',
+          repository.noteById(draft.localId)!.category == 'Workspace/Moved/子' &&
+          repository.noteById(seed.localId)!.category == 'Workspace/Moved/子',
       'batch durability',
     );
     Navigator.of(rootNavigatorKey.currentContext!).pop();
     await batch;
-    check(true, 'm2ReviewedBatchOrganize');
+    check(true, 'workspaceReviewedBatchOrganize');
     widget.transport.offline = false;
     await workspace.refreshNextcloudNotes();
     for (final id in [draft.localId, seed.localId]) {
@@ -834,11 +871,11 @@ class _HarnessState extends ConsumerState<_Harness> {
     final offline = await ref.read(
       notesOfflineProvider(widget.account.id).future,
     );
-    await offline.setRequirement('category', 'M2');
+    await offline.setRequirement('category', 'Workspace');
     await offline.reconcile();
     check(
       (await offline.inspect(repository.noteById(draft.localId)!)).available,
-      'm2CategoryOfflineCompleteness',
+      'workspaceCategoryOfflineCompleteness',
     );
     final status = showNotesOffline(
       rootNavigatorKey.currentContext!,
@@ -849,7 +886,7 @@ class _HarnessState extends ConsumerState<_Harness> {
       () => widgets<Text>().any((t) => t.data == 'Make available offline'),
       'offline status dialog',
     );
-    await capture('m2-offline-status');
+    await capture('workspace-offline-status');
     Navigator.of(rootNavigatorKey.currentContext!).pop();
     await status;
     widget.transport.offline = true;
@@ -866,7 +903,7 @@ class _HarnessState extends ConsumerState<_Harness> {
         );
       }
     }
-    check(true, 'm2DisconnectReopenRetainedMediaAllViews');
+    check(true, 'workspaceDisconnectReopenRetainedMediaAllViews');
     widget.transport.offline = false;
     await workspace.deleteNextcloudNote(draft.localId);
     created.remove(repository.noteById(draft.localId)!.serverId);
@@ -879,7 +916,7 @@ class _HarnessState extends ConsumerState<_Harness> {
       () => widgets<NotesRecoveryDialog>().isNotEmpty,
       'recovery preview',
     );
-    await capture('m2-recovery');
+    await capture('workspace-recovery');
     await label('Recovery: New note');
     await recover;
     final recoveredId = ref
@@ -887,7 +924,7 @@ class _HarnessState extends ConsumerState<_Harness> {
         .activeBuffer!
         .remoteNote!
         .localId;
-    check(recoveredId != draft.localId, 'm2RecoveryNewIdentity');
+    check(recoveredId != draft.localId, 'workspaceRecoveryNewIdentity');
     await workspace.refreshNextcloudNotes();
     created.add(repository.noteById(recoveredId)!.serverId!);
     final snapshot = await workspace.captureNextcloudExport({
@@ -907,7 +944,7 @@ class _HarnessState extends ConsumerState<_Harness> {
                 cancellation: cancel,
                 onProgress: progress,
               );
-          check(exported.complete, 'm2PortableExportComplete');
+          check(exported.complete, 'workspacePortableExportComplete');
           return [exported.path];
         },
       ),
@@ -920,7 +957,7 @@ class _HarnessState extends ConsumerState<_Harness> {
       () => widgets<LinearProgressIndicator>().isEmpty,
       'export complete',
     );
-    await capture('m2-export');
+    await capture('workspace-export');
     await label('Close');
     await exportDialog;
     final exported = widget.output.listSync().whereType<Directory>().firstWhere(
@@ -937,15 +974,15 @@ class _HarnessState extends ConsumerState<_Harness> {
       () => widgets<NotesImportReviewDialog>().isNotEmpty,
       'import review',
     );
-    await capture('m2-import-review');
+    await capture('workspace-import-review');
     await label('Import notes');
-    check(await importReview == true, 'm2ImportReviewAccepted');
+    check(await importReview == true, 'workspaceImportReviewAccepted');
     final imported = await NotesTransferService(
       repository,
     ).importReviewed(review, widget.account.id, cancellation: cancellation);
     check(
       imported.every((i) => i.noteId != null),
-      'm2ImportDurableDistinctIdentities',
+      'workspaceImportDurableDistinctIdentities',
     );
     await workspace.refreshNextcloudNotes();
     for (final item in imported) {
@@ -956,8 +993,11 @@ class _HarnessState extends ConsumerState<_Harness> {
         (i) =>
             repository.noteById(i.noteId!)!.syncState == NoteSyncState.synced,
       ),
-      'm2ImportedMediaSynced',
+      'workspaceImportedMediaSynced',
     );
+    if (widget.resumeOffline) {
+      await navigationJourney(workspace, repository.noteById(recoveredId)!);
+    }
   }
 
   Future<void> treeAction(
@@ -1007,7 +1047,7 @@ class _HarnessState extends ConsumerState<_Harness> {
 
   Future<void> localReferenceJourney(WorkspaceController workspace) async {
     final root = Directory('${widget.output.path}/local');
-    if (widget.restart3) {
+    if (widget.resumeReferences) {
       await workspace.openFolder(root.path);
       await workspace.openActiveFile('${root.path}/source.md');
       workspace.updateActiveEditorMode(DocumentViewModePreference.preview);
@@ -1025,8 +1065,8 @@ class _HarnessState extends ConsumerState<_Harness> {
         () => widgets<Image>().any((i) => i.image is FileImage),
         'local media after process restart',
       );
-      await capture('m3-local-process-restart');
-      check(true, 'm3LocalLinksAndMediaAfterProcessRestart');
+      await capture('references-local-process-restart');
+      check(true, 'referencesLocalLinksAndMediaAfterProcessRestart');
       return;
     }
     await root.create(recursive: true);
@@ -1038,7 +1078,7 @@ class _HarnessState extends ConsumerState<_Harness> {
     ).writeAsString('[Hidden source](../old/target.md#actual-heading)\n');
     await File('${root.path}/media.png').writeAsBytes(await png(Colors.green));
     await File('${root.path}/old/target.md').writeAsString(
-      '# M3 local target\n\n## Actual heading\n\n![Media](../media.png)\n',
+      '# References local target\n\n## Actual heading\n\n![Media](../media.png)\n',
     );
     await File(
       '${root.path}/source.md',
@@ -1064,7 +1104,7 @@ class _HarnessState extends ConsumerState<_Harness> {
           ),
       'local resolved outgoing references',
     );
-    await capture('m3-local-references');
+    await capture('references-local-references');
     widgets<ListTile>()
         .firstWhere(
           (t) =>
@@ -1096,7 +1136,7 @@ class _HarnessState extends ConsumerState<_Harness> {
       ),
       'exact destination review',
     );
-    await capture('m3-refactoring-review');
+    await capture('references-refactoring-review');
     await label('Apply');
     await wait(
       () =>
@@ -1112,7 +1152,7 @@ class _HarnessState extends ConsumerState<_Harness> {
       ),
       'move link review',
     );
-    await capture('m3-move-review');
+    await capture('references-move-review');
     await label('Apply');
     await wait(
       () =>
@@ -1130,14 +1170,14 @@ class _HarnessState extends ConsumerState<_Harness> {
           (await File(
             '${root.path}/.drafts/hidden.md',
           ).readAsString()).contains('../new/renamed.md#actual-heading'),
-      'm3OrdinaryRenameMoveIncomingOutgoingMedia',
+      'referencesOrdinaryRenameMoveIncomingOutgoingMedia',
     );
     for (final mode in DocumentViewModePreference.values) {
       workspace.updateActiveEditorMode(mode);
       await ref
           .read(appSettingsControllerProvider.notifier)
           .setDocumentViewMode(mode);
-      await capture('m3-local-${mode.name}');
+      await capture('references-local-${mode.name}');
     }
     await workspace.openFolder(root.path);
     await workspace.openActiveFile('${root.path}/source.md');
@@ -1146,7 +1186,7 @@ class _HarnessState extends ConsumerState<_Harness> {
           .read(workspaceControllerProvider)
           .activeText
           .contains('new/renamed.md#actual-heading'),
-      'm3LocalWorkspaceReopenLinks',
+      'referencesLocalWorkspaceReopenLinks',
     );
   }
 
@@ -1175,7 +1215,7 @@ class _HarnessState extends ConsumerState<_Harness> {
       (await File('${root.path}/topics/target.topic').readAsString()).contains(
         '<a href="source.md#explicit-heading">Element destination.</a>',
       ),
-      'm3WritersideXmlChooserSemanticLink',
+      'referencesWritersideXmlChooserSemanticLink',
     );
     await workspace.openActiveFile('${root.path}/topics/source.md');
     await ref
@@ -1194,7 +1234,7 @@ class _HarnessState extends ConsumerState<_Harness> {
               true,
       'Writerside element references',
     );
-    await capture('m3-writerside-references');
+    await capture('references-writerside-references');
     await nativeShortcut('ctrl+1');
     await treeAction('topics', expand: true);
     await treeAction('target.topic', menu: 'Rename Topic File');
@@ -1214,7 +1254,7 @@ class _HarnessState extends ConsumerState<_Harness> {
       () => widgets<Text>().any((t) => t.data == 'Rename Preview'),
       'established Writerside rename preview',
     );
-    await capture('m3-writerside-refactoring');
+    await capture('references-writerside-refactoring');
     await label('Do Refactor');
     await wait(
       () =>
@@ -1230,7 +1270,7 @@ class _HarnessState extends ConsumerState<_Harness> {
       source.contains('[target]: renamed.topic#actual-id') &&
           source.contains('from="renamed.topic"') &&
           source.contains('`[Code exclusion](missing.topic)`'),
-      'm3WritersideEstablishedReviewedRenameAndSourcePreservation',
+      'referencesWritersideEstablishedReviewedRenameAndSourcePreservation',
     );
     await writersideContextJourney(workspace);
   }
@@ -1317,7 +1357,7 @@ class _HarnessState extends ConsumerState<_Harness> {
           ),
       'conditional include and cross-module ambiguity',
     );
-    await capture('m3-writerside-guide-unavailable');
+    await capture('references-writerside-guide-unavailable');
     widgets<ListTile>()
         .firstWhere(
           (t) =>
@@ -1355,7 +1395,7 @@ class _HarnessState extends ConsumerState<_Harness> {
       ),
       'beta include available in References',
     );
-    await capture('m3-writerside-beta-include');
+    await capture('references-writerside-beta-include');
     widgets<ListTile>()
         .firstWhere(
           (t) =>
@@ -1391,8 +1431,8 @@ class _HarnessState extends ConsumerState<_Harness> {
           'shared',
       'shared module UI context',
     );
-    await capture('m3-writerside-shared-module');
-    check(true, 'm3CrossModuleElementIncludeAndInstanceUiContexts');
+    await capture('references-writerside-shared-module');
+    check(true, 'referencesCrossModuleElementIncludeAndInstanceUiContexts');
   }
 
   Future<void> chooseAuthoredLink(
@@ -1437,7 +1477,7 @@ class _HarnessState extends ConsumerState<_Harness> {
       ),
       'resolved target chooser row',
     );
-    await capture('m3-target-chooser');
+    await capture('references-target-chooser');
     widgets<ListTile>()
         .firstWhere(
           (t) =>
@@ -1475,7 +1515,7 @@ class _HarnessState extends ConsumerState<_Harness> {
   }
 
   Future<void> referenceJourney(WorkspaceController workspace) async {
-    if (widget.restart3) {
+    if (widget.resumeReferences) {
       final saved =
           jsonDecode(
                 await File(
@@ -1516,26 +1556,26 @@ class _HarnessState extends ConsumerState<_Harness> {
                 .read(workspaceControllerProvider)
                 .activeText
                 .contains(saved['marker'] as String),
-        'm3CachedOfflineLinkAfterProcessRestart',
+        'referencesCachedOfflineLinkAfterProcessRestart',
       );
-      await capture('m3-offline-restart');
+      await capture('references-offline-restart');
       if (browserUrl is String) {
-        check(true, 'm3ActualBrowserCopiedUrlInternalNavigation');
+        check(true, 'referencesActualBrowserCopiedUrlInternalNavigation');
       }
       return;
     }
-    final marker = 'M3 intended target ${const Uuid().v4()}';
+    final marker = 'References intended target ${const Uuid().v4()}';
     final target = await repository.create(
       widget.account.id,
-      title: 'M3 portable target',
-      category: 'M3/Original',
-      content: '# M3 target\n\n$marker\n\n## Heading\n',
+      title: 'References portable target',
+      category: 'References/Original',
+      content: '# References target\n\n$marker\n\n## Heading\n',
     );
     final source = await repository.create(
       widget.account.id,
-      title: 'M3 portable source',
-      category: 'M3/Original',
-      content: '# M3 source\n\nSelected link\n',
+      title: 'References portable source',
+      category: 'References/Original',
+      content: '# References source\n\nSelected link\n',
     );
     await repository.synchronize(widget.account.id);
     final targetTitle = repository.noteById(target.localId)!.title;
@@ -1554,7 +1594,7 @@ class _HarnessState extends ConsumerState<_Harness> {
     await ref
         .read(appSettingsControllerProvider.notifier)
         .setDocumentViewMode(DocumentViewModePreference.source);
-    await chooseAuthoredLink('M3 portable target', href);
+    await chooseAuthoredLink('References portable target', href);
     await wait(
       () => ref
           .read(workspaceControllerProvider)
@@ -1569,7 +1609,7 @@ class _HarnessState extends ConsumerState<_Harness> {
     );
     check(
       stored.content.contains('[Selected link]($href)'),
-      'm3ProductionChooserStoredPortableLink',
+      'referencesProductionChooserStoredPortableLink',
     );
     workspace.updateActiveEditorMode(DocumentViewModePreference.editor);
     await ref
@@ -1600,7 +1640,7 @@ class _HarnessState extends ConsumerState<_Harness> {
       widgets<TextField>().firstWhere(
         (f) => f.decoration?.labelText == 'Quick Open',
       ),
-      'M3 portable target',
+      'References portable target',
     );
     await wait(
       () => widgets<ListTile>().any(
@@ -1619,7 +1659,7 @@ class _HarnessState extends ConsumerState<_Harness> {
     );
     check(
       ref.read(workspaceControllerProvider).activeText.contains(href),
-      'm3EditorLinkChooserPreservesSelection',
+      'referencesEditorLinkChooserPreservesSelection',
     );
     await ref
         .read(busyMarkCommandRegistryProvider)
@@ -1630,7 +1670,7 @@ class _HarnessState extends ConsumerState<_Harness> {
           widgets<Text>().any((t) => t.data == targetTitle),
       'production References outgoing panel',
     );
-    await capture('m3-references-outgoing');
+    await capture('references-references-outgoing');
     workspace.updateActiveEditorMode(DocumentViewModePreference.preview);
     await ref
         .read(appSettingsControllerProvider.notifier)
@@ -1655,8 +1695,8 @@ class _HarnessState extends ConsumerState<_Harness> {
       ),
       'incoming reference',
     );
-    await capture('m3-references-incoming');
-    check(true, 'm3RenderedLinkAndIncomingReferences');
+    await capture('references-references-incoming');
+    check(true, 'referencesRenderedLinkAndIncomingReferences');
     await nativeShortcut('ctrl+1');
     await wait(
       () => widgets<ListTile>().any(
@@ -1675,20 +1715,20 @@ class _HarnessState extends ConsumerState<_Harness> {
     );
     edit(
       widgets<TextField>().firstWhere((f) => f.controller?.text == targetTitle),
-      'M3 renamed target',
+      'References renamed target',
     );
     edit(
       widgets<TextField>().firstWhere(
         (f) => f.decoration?.labelText == 'Category',
       ),
-      'M3/Moved',
+      'References/Moved',
     );
     await label('Save');
     await repository.synchronize(widget.account.id);
     check(
       repository.noteById(target.localId)!.serverId == targetId &&
-          (await api.get(targetId)).category == 'M3/Moved',
-      'm3TitleCategoryDoNotRetargetLink',
+          (await api.get(targetId)).category == 'References/Moved',
+      'referencesTitleCategoryDoNotRetargetLink',
     );
     await workspace.openNextcloudNote(source.localId);
     workspace.updateActiveText('${stored.content}\n[Browser pasted]($href)\n');
@@ -1709,7 +1749,7 @@ class _HarnessState extends ConsumerState<_Harness> {
           target.localId,
       'pasted browser note URL navigation',
     );
-    check(true, 'm3PastedBrowserRouteNavigatesInternally');
+    check(true, 'referencesPastedBrowserRouteNavigatesInternally');
     await File('${widget.output.path}/portable-browser.json').writeAsString(
       jsonEncode({
         'sourceLocalId': source.localId,
@@ -1749,12 +1789,12 @@ class _HarnessState extends ConsumerState<_Harness> {
           (ref.read(workspaceControllerProvider).activeBuffer!.isDirty ||
               (repository.noteById(source.localId)!.content == unsavedSource &&
                   repository.noteById(source.localId)!.hasPendingChanges)),
-      'm3MissingTargetPreservesDirtySource',
+      'referencesMissingTargetPreservesDirtySource',
     );
-    await capture('m3-missing-target-failure');
+    await capture('references-missing-target-failure');
     workspace.updateActiveText(originalSource);
     widget.transport.offline = true;
-    await capture('m3-offline-ready');
+    await capture('references-offline-ready');
   }
 
   Future<void> correctionSearch(String query, List<int> counts) async {
@@ -2238,14 +2278,14 @@ class _HarnessState extends ConsumerState<_Harness> {
   }
 
   Future<void> performanceJourney(WorkspaceController workspace) async {
-    check(repository.notes.length == 10020, 'm2Real10000NoteLibrary');
+    check(repository.notes.length >= 10000, 'largeNoteLibrary');
     await wait(
       () => widgets<ListTile>().any(
         (t) => t.title is Text && (t.title as Text).data == 'All notes',
       ),
       'large sidebar',
     );
-    await capture('m2-10000-sidebar');
+    await capture('workspace-10000-sidebar');
     Future<int> quickSample(String? screenshot) async {
       final watch = Stopwatch()..start();
       final quick = showQuickOpen(rootNavigatorKey.currentContext!, ref);
@@ -2253,7 +2293,9 @@ class _HarnessState extends ConsumerState<_Harness> {
         () =>
             widgets<QuickOpenDialog>().isNotEmpty &&
             widgets<ListTile>().any(
-              (t) => t.title is Text && (t.title as Text).data == 'Duplicate 0',
+              (t) =>
+                  t.title is Text &&
+                  (t.title as Text).data == repository.notes.first.title,
             ),
         'large quick open',
       );
@@ -2271,7 +2313,7 @@ class _HarnessState extends ConsumerState<_Harness> {
     final baselineQuick = <int>[];
     for (var i = 0; i < 5; i++) {
       baselineQuick.add(
-        await quickSample(i == 0 ? 'm3-quick-open-baseline' : null),
+        await quickSample(i == 0 ? 'references-quick-open-baseline' : null),
       );
     }
     ref.read(referencePanelRequestProvider.notifier).request();
@@ -2279,7 +2321,7 @@ class _HarnessState extends ConsumerState<_Harness> {
     final indexingQuick = <int>[];
     for (var i = 0; i < 5; i++) {
       indexingQuick.add(
-        await quickSample(i == 0 ? 'm2-10000-quick-open' : null),
+        await quickSample(i == 0 ? 'workspace-10000-quick-open' : null),
       );
     }
     final search = NotesSearchController(repository.store, widget.account.id);
@@ -2292,12 +2334,12 @@ class _HarnessState extends ConsumerState<_Harness> {
     );
     saved.stop();
     await querying;
-    check(search.state.hits.isNotEmpty, 'm2LargeUiSearchDuringEdit');
+    check(search.state.hits.isNotEmpty, 'workspaceLargeUiSearchDuringEdit');
     await search.dispose();
     final dialog = showNotesSearch(
       rootNavigatorKey.currentContext!,
       ref,
-      query: 'token42',
+      query: repository.notes.first.title,
     );
     await wait(
       () =>
@@ -2305,7 +2347,7 @@ class _HarnessState extends ConsumerState<_Harness> {
           widgets<IconButton>().any((b) => b.tooltip == 'Source location'),
       'large indexed search UI',
     );
-    await capture('m2-10000-search');
+    await capture('workspace-10000-search');
     Navigator.of(rootNavigatorKey.currentContext!).pop();
     await dialog;
     await File('${widget.output.path}/ui-performance.json').writeAsString(
@@ -2320,37 +2362,11 @@ class _HarnessState extends ConsumerState<_Harness> {
     );
   }
 
-  Future<void> restartJourney(WorkspaceController workspace) async {
-    final note = repository.notes.firstWhere(
-      (n) =>
-          n.title == 'M2 desktop café' &&
-          n.syncState != NoteSyncState.deletedRemotely,
-    );
-    final offline = await ref.read(
-      notesOfflineProvider(widget.account.id).future,
-    );
-    check(
-      offline.categoryRetained('M2'),
-      'm2ProcessRestartCategoryRequirement',
-    );
-    check(
-      (await offline.inspect(note)).available,
-      'm2ProcessRestartCachedBytes',
-    );
+  Future<void> navigationJourney(
+    WorkspaceController workspace,
+    NextcloudNote note,
+  ) async {
     await workspace.openNextcloudNote(note.localId);
-    for (final mode in DocumentViewModePreference.values) {
-      workspace.updateActiveEditorMode(mode);
-      await ref
-          .read(appSettingsControllerProvider.notifier)
-          .setDocumentViewMode(mode);
-      if (mode != DocumentViewModePreference.source) {
-        await wait(
-          () => widgets<Image>().any((i) => i.image is FileImage),
-          'restart media ${mode.name}',
-        );
-      }
-      await capture('m2-restart-${mode.name}');
-    }
     await nativeShortcut('ctrl+p');
     await wait(() => widgets<QuickOpenDialog>().isNotEmpty, 'native Ctrl+P');
     edit(
@@ -2371,7 +2387,7 @@ class _HarnessState extends ConsumerState<_Harness> {
       widgets<QuickOpenDialog>().single.documents,
       note.title,
     ).first.localId;
-    await capture('m2-restart-native-quick-open');
+    await capture('workspace-restart-native-quick-open');
     await nativeShortcut('enter');
     await wait(
       () =>
@@ -2384,7 +2400,7 @@ class _HarnessState extends ConsumerState<_Harness> {
               selectedIdentity,
       'native Quick Open Enter',
     );
-    check(true, 'm2NativeCtrlPEnterStableIdentity');
+    check(true, 'nativeCtrlPEnterStableIdentity');
     await nativeShortcut('ctrl+p');
     await wait(
       () => widgets<QuickOpenDialog>().isNotEmpty,
@@ -2392,7 +2408,7 @@ class _HarnessState extends ConsumerState<_Harness> {
     );
     await nativeShortcut('escape');
     await wait(() => widgets<QuickOpenDialog>().isEmpty, 'Quick Open Escape');
-    check(true, 'm2NativeQuickOpenEscape');
+    check(true, 'nativeQuickOpenEscape');
     await nativeShortcut('ctrl+shift+p');
     await wait(
       () =>
@@ -2405,34 +2421,7 @@ class _HarnessState extends ConsumerState<_Harness> {
       () => !widgets<Text>().any((t) => t.data == 'Command Palette'),
       'command palette Escape',
     );
-    check(true, 'm2NativeCtrlShiftPCommandPalette');
-    final search = showNotesSearch(
-      rootNavigatorKey.currentContext!,
-      ref,
-      query: '"alpha beta"',
-    );
-    await wait(
-      () => widgets<NotesSearchDialog>().isNotEmpty,
-      'restart search dialog',
-    );
-    await wait(
-      () => widgets<ListTile>().any(
-        (t) =>
-            t.title is Text &&
-            (t.title as Text).data == note.title &&
-            t.trailing is IconButton,
-      ),
-      'restart indexed results',
-    );
-    await capture('m2-restart-search');
-    Navigator.of(rootNavigatorKey.currentContext!).pop();
-    await search;
-    check(true, 'm2ProcessRestartIndexedSearch');
-    await ref.read(localHistoryControllerProvider.notifier).refresh();
-    check(
-      ref.read(localHistoryControllerProvider).snapshot.documents.isNotEmpty,
-      'm2ProcessRestartRetainedHistory',
-    );
+    check(true, 'nativeCtrlShiftPCommandPalette');
     // Local Markdown navigation/Quick Open remains available after changing workspace.
     final folder = await Directory(
       '${widget.output.path}/local-smoke',
@@ -2455,9 +2444,12 @@ class _HarnessState extends ConsumerState<_Harness> {
     await quick;
     check(
       ref.read(workspaceControllerProvider).activeBuffer?.filePath == file.path,
-      'm2LocalMarkdownQuickOpen',
+      'workspaceLocalMarkdownQuickOpen',
     );
-    await localSearchSmoke('local search smoke', 'm2-local-markdown-search');
+    await localSearchSmoke(
+      'local search smoke',
+      'workspace-local-markdown-search',
+    );
     final writerside = Directory('${widget.output.path}/writerside-smoke');
     if (await writerside.exists()) await writerside.delete(recursive: true);
     await writerside.create();
@@ -2469,7 +2461,7 @@ class _HarnessState extends ConsumerState<_Harness> {
     check(copied.exitCode == 0, 'writersideFixtureCopy');
     await workspace.openFolder(writerside.path);
     await workspace.openActiveFile('${writerside.path}/topics/intro.md');
-    await localSearchSmoke('Introduction', 'm2-writerside-search');
+    await localSearchSmoke('Introduction', 'workspace-writerside-search');
     final writerQuick = showQuickOpen(rootNavigatorKey.currentContext!, ref);
     await wait(
       () =>
@@ -2488,7 +2480,7 @@ class _HarnessState extends ConsumerState<_Harness> {
     check(
       ref.read(workspaceControllerProvider).activeBuffer?.filePath ==
           '${writerside.path}/topics/install.topic',
-      'm2WritersideQuickOpen',
+      'workspaceWritersideQuickOpen',
     );
   }
 
@@ -2558,33 +2550,34 @@ class _HarnessState extends ConsumerState<_Harness> {
         account: widget.account,
         appPassword: widget.password,
       );
-      if (!widget.restart &&
-          !widget.restart3 &&
-          !widget.performance &&
-          !widget.resumeOffline &&
-          !widget.correctionsResume &&
-          !widget.stopOffline) {
+      if (!widget.scenario.reopensProfile && !widget.stopOffline) {
         original = await api.getSettings();
       }
       await ref.read(nextcloudConnectionProvider.notifier).reload();
-      if (widget.restart || widget.m2Only || widget.performance) {
+      if (widget.scenario != _Scenario.full) {
         final workspace = ref.read(workspaceControllerProvider.notifier);
-        await workspace.openNextcloudWorkspace(widget.account.id);
+        check(
+          await workspace.openNextcloudWorkspace(widget.account.id),
+          'openNativeWorkspace',
+        );
         ref.read(appRouterProvider).go('/workspace');
-        if (widget.local3) {
-          await localReferenceJourney(workspace);
-        } else if (widget.writerside3) {
-          await writersideReferenceJourney(workspace);
-        } else if (widget.milestone3 || widget.restart3) {
-          await referenceJourney(workspace);
-        } else if (widget.correctionsStart || widget.correctionsResume) {
-          await correctionJourney(workspace);
-        } else if (widget.performance) {
-          await performanceJourney(workspace);
-        } else if (widget.restart) {
-          await restartJourney(workspace);
-        } else {
-          await everydayJourney(workspace);
+        switch (widget.scenario) {
+          case _Scenario.localReferences || _Scenario.localReferencesResume:
+            await localReferenceJourney(workspace);
+          case _Scenario.writersideReferences:
+            await writersideReferenceJourney(workspace);
+          case _Scenario.references || _Scenario.referencesResume:
+            await referenceJourney(workspace);
+          case _Scenario.recoveryStart || _Scenario.recoveryResume:
+            await correctionJourney(workspace);
+          case _Scenario.performance:
+            await performanceJourney(workspace);
+          case _Scenario.workspace ||
+              _Scenario.offlineStart ||
+              _Scenario.offlineResume:
+            await everydayJourney(workspace);
+          case _Scenario.full:
+            throw StateError('Full scenario dispatched separately.');
         }
       } else {
         final seed = await repository.create(
@@ -3055,46 +3048,26 @@ class _HarnessState extends ConsumerState<_Harness> {
     } catch (error, stack) {
       failure = error;
       try {
-        await capture('m3-failure');
+        await capture('${widget.scenario.option}-failure');
       } catch (_) {}
       failureStack = stack;
     } finally {
       diagnostics.close();
-      widget.transport.offline =
-          widget.restart ||
-          widget.restart3 ||
-          widget.performance ||
-          widget.stopOffline ||
-          widget.correctionsStart;
+      widget.transport.offline = widget.scenario.endsOffline;
       if (original != null) {
         try {
           await api.updateSettings(original!.toJson());
         } catch (_) {}
       }
-      for (final id
-          in widget.stopOffline || widget.correctionsStart || widget.milestone3
-              ? <int>[]
-              : created) {
-        try {
-          await api.delete(id);
-        } catch (_) {}
+      if (!widget.scenario.retainsResources) {
+        for (final id in created) {
+          try {
+            await api.delete(id);
+          } catch (_) {}
+        }
       }
       await File(
-        '${widget.output.path}/${widget.milestone3
-            ? 'report-m3'
-            : widget.restart3
-            ? 'report-restart-m3'
-            : widget.correctionsStart
-            ? 'report-corrections-start'
-            : widget.correctionsResume
-            ? 'report-corrections-resume'
-            : widget.stopOffline
-            ? 'report-offline-start'
-            : widget.resumeOffline
-            ? 'report-offline-resume'
-            : widget.restart
-            ? 'report-restart'
-            : 'report'}.json',
+        '${widget.output.path}/report-${widget.scenario.option}.json',
       ).writeAsString(
         const JsonEncoder.withIndent('  ').convert({
           'passed': failure == null,

@@ -14041,7 +14041,7 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
       ..value = AppSettings.defaults()
           .copyWith(documentViewMode: DocumentViewModePreference.preview)
           .toJson();
-    final service = _SearchWorkspaceService(_fsrsReadmeSearchSource());
+    final service = _SearchWorkspaceService(_technicalReadmeSearchSource());
     final container = ProviderContainer(
       overrides: [
         ..._smokeAccentOverrides,
@@ -14334,12 +14334,12 @@ Before [![Inline logo](inline-logo.png)](inline-guide.md) after.
       tester.view.resetDevicePixelRatio();
     });
 
-    const target = 'conda activate fsrs-service';
+    const target = 'conda activate example-service';
     final settingsStore = _MemorySettingsStore()
       ..value = AppSettings.defaults()
           .copyWith(documentViewMode: DocumentViewModePreference.preview)
           .toJson();
-    final service = _SearchWorkspaceService(_fsrsReadmeSearchSource());
+    final service = _SearchWorkspaceService(_technicalReadmeSearchSource());
     final container = ProviderContainer(
       overrides: [
         ..._smokeAccentOverrides,
@@ -14767,19 +14767,19 @@ Rect _rightmostTextRect(WidgetTester tester, String text) {
   return tester.getRect(rightmostFinder!);
 }
 
-String _fsrsReadmeSearchSource() {
+String _technicalReadmeSearchSource() {
   return [
-    '# FSRS Service',
+    '# Rendering Service',
     '',
-    'Stateless FastAPI microservice exposing the **py-fsrs (FSRS 6.x)** scheduling algorithm via a strict OpenAPI contract.',
+    'Stateless document-rendering service exposing the **rendering API (version 1.x)** through a strict OpenAPI contract.',
     '',
     'This service performs **pure computation only**.',
     'Persistence, authentication, authorization, and rate-limiting are expected to be handled by an upstream service (e.g.',
-    'Spring Boot).',
+    'a separate gateway).',
     '',
     'This service is designed to be deployed:',
     '',
-    '* Behind an API gateway or Spring Boot service',
+    '* Behind an API gateway or reverse proxy',
     '* Without direct public exposure',
     '* Without authentication logic',
     '',
@@ -14788,15 +14788,15 @@ String _fsrsReadmeSearchSource() {
     '## Conda Environment Setup',
     '',
     '```bash',
-    'conda create -n fsrs-service python=3.11',
-    'conda activate fsrs-service',
+    'conda create -n example-service python=3.11',
+    'conda activate example-service',
     'python -m pip install -e .',
     '```',
     '',
     'Install test dependencies:',
     '',
     '```bash',
-    'conda install -n fsrs-service pytest',
+    'conda install -n example-service pytest',
     '```',
     '',
     '---',
@@ -14804,36 +14804,36 @@ String _fsrsReadmeSearchSource() {
     '## Run the Service',
     '',
     '```bash',
-    'uvicorn fsrs_service.main:app --host 127.0.0.1 --port 8000',
+    'uvicorn example_service.main:app --host 127.0.0.1 --port 8000',
     '```',
     '',
     'An application factory is also available:',
     '',
     '```python',
-    'from fsrs_service.main import create_app',
+    'from example_service.main import create_app',
     '',
     'app = create_app()',
     '```',
     '',
     '---',
     '',
-    '### Scheduler Operations',
+    '### Rendering Operations',
     '',
-    '* `POST /v1/schedulers/retrievability`',
-    '  Compute recall probability at a given time.',
+    '* `POST /v1/documents/validate`',
+    '  Validate document syntax before rendering.',
     '',
-    '* `POST /v1/schedulers/review`',
-    '  Apply a review rating and return:',
+    '* `POST /v1/documents/render`',
+    '  Render a document and return:',
     '',
     '  ```json',
-    '  { "card": {}, "review_log": {} }',
+    '  { "document": {}, "diagnostics": {} }',
     '  ```',
     '',
-    '* `POST /v1/schedulers/reschedule`',
-    '  Recompute card state **from review history**.',
+    '* `POST /v1/documents/rebuild`',
+    '  Rebuild document output **from source content**.',
     '',
-    '  This endpoint **does not accept a target datetime**.',
-    '  It replays `review_logs` to derive the card state.',
+    '  This endpoint **does not accept remote resources**.',
+    '  It reads `source_blocks` to derive the document output.',
     '',
     for (var index = 0; index < 50; index += 1) ...[
       'Trailing content $index keeps the preview scrollable.',

@@ -210,6 +210,7 @@ class WritersideInspectorTarget {
     BusyBlock block,
   ) sync* {
     if (block.sourceSpan == null) return;
+    if (document.isXmlTopic && document.authoredXml?.source != source) return;
     final base = block.sourceSpan!.startOffset;
     final raw = block.rawSource ?? '';
     if (!document.isXmlTopic && block.attributes.containsKey('element')) {
@@ -277,6 +278,11 @@ class WritersideInspectorTarget {
       collect(mapped.inlines, block.attributes['ignore-vars'] == 'true');
     }
     final references = busyInlineReferenceRanges(block.inlines);
+    final xmlVariables = document.isXmlTopic
+        ? const WritersideEditingAdapter()
+              .xmlVariableSourceRanges(document, block)
+              .toList()
+        : const <({int start, int end, int sourceStart, int sourceEnd})>[];
     for (final range in references) {
       if (!{
         BusyInlineKind.link,
@@ -311,26 +317,12 @@ class WritersideInspectorTarget {
         }
       } else if (document.isXmlTopic &&
           range.kind == BusyInlineKind.writersideVariable) {
-        final start = const WritersideEditingAdapter().xmlTextSourceOffset(
-          document,
-          block,
-          range.start,
-          endBoundary: false,
-        );
-        final finish = const WritersideEditingAdapter().xmlTextSourceOffset(
-          document,
-          block,
-          range.end,
-          endBoundary: true,
-        );
-        final fragment = '%${range.attributes['reference']}%';
-        if (start != null &&
-            finish != null &&
-            start > 0 &&
-            finish < source.length &&
-            source.substring(start - 1, finish + 1) == fragment) {
-          begin = start - 1;
-          end = finish + 1;
+        final occurrence = xmlVariables
+            .where((v) => v.start == range.start && v.end == range.end)
+            .singleOrNull;
+        if (occurrence != null) {
+          begin = occurrence.sourceStart;
+          end = occurrence.sourceEnd;
         }
       }
       if (begin != null && end != null) {

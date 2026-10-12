@@ -140,17 +140,17 @@ void main() {
     final parsed = parser.parse(
       filePath: 'README.md',
       source: [
-        '# FSRS Service',
+        '# Rendering Service',
         '',
-        'Stateless FastAPI microservice exposing the **py-fsrs (FSRS 6.x)** scheduling algorithm via a strict OpenAPI contract.',
+        'Stateless document-rendering service exposing the **rendering API (version 1.x)** through a strict OpenAPI contract.',
         '',
         'This service performs **pure computation only**.',
         'Persistence, authentication, authorization, and rate-limiting are expected to be handled by an upstream service (e.g.',
-        'Spring Boot).',
+        'a separate gateway).',
         '',
         'This service is designed to be deployed:',
         '',
-        '* Behind an API gateway or Spring Boot service',
+        '* Behind an API gateway or reverse proxy',
         '* Without direct public exposure',
         '* Without authentication logic',
         '',
@@ -159,15 +159,15 @@ void main() {
         '## Conda Environment Setup',
         '',
         '```bash',
-        'conda create -n fsrs-service python=3.11',
-        'conda activate fsrs-service',
+        'conda create -n example-service python=3.11',
+        'conda activate example-service',
         'python -m pip install -e .',
         '```',
         '',
         'Install test dependencies:',
         '',
         '```bash',
-        'conda install -n fsrs-service pytest',
+        'conda install -n example-service pytest',
         '```',
         '',
         '---',
@@ -175,13 +175,13 @@ void main() {
         '## Run the Service',
         '',
         '```bash',
-        'uvicorn fsrs_service.main:app --host 127.0.0.1 --port 8000',
+        'uvicorn example_service.main:app --host 127.0.0.1 --port 8000',
         '```',
         '',
         'An application factory is also available:',
         '',
         '```python',
-        'from fsrs_service.main import create_app',
+        'from example_service.main import create_app',
         '',
         'app = create_app()',
         '```',
@@ -233,19 +233,19 @@ void main() {
     final parsed = parser.parse(
       filePath: 'topic.md',
       source:
-          '- [How to Install Matter on RPi](https://mattercoder.com/'
-          'codelabs/how-to-install-matter-on-rpi/)\n',
+          '- [Install a rendering service](https://example.test/'
+          'guides/install-rendering-service/)\n',
     );
     final preview = previewBuilder.build(parsed);
     final list = preview.blocks.singleWhere(
       (block) => block.kind == PreviewBlockKind.list,
     );
 
-    expect(list.text, 'How to Install Matter on RPi');
+    expect(list.text, 'Install a rendering service');
     expect(list.inlines.single.kind, PreviewInlineKind.link);
     expect(
       list.inlines.single.destination,
-      'https://mattercoder.com/codelabs/how-to-install-matter-on-rpi/',
+      'https://example.test/guides/install-rendering-service/',
     );
   });
 
@@ -369,36 +369,6 @@ void main() {
   test('preview preserves pasted local image destinations with spaces', () {
     const destination =
         '/tmp/busymark-fixtures/Screenshots/'
-        'Screenshot From 2026-06-15 03-27-53.png';
-    final parsed = parser.parse(
-      filePath: 'topic.md',
-      source: '![Screenshot From 2026-06-15 03-27-53.png]($destination)\n',
-      validateLocalReferences: false,
-    );
-    final preview = previewBuilder.build(parsed);
-    final image = preview.blocks.singleWhere(
-      (block) => block.kind == PreviewBlockKind.image,
-    );
-
-    expect(image.text, 'Screenshot From 2026-06-15 03-27-53.png');
-    expect(Uri.decodeComponent(image.attributes['src']!), destination);
-  });
-
-  test('preview renders quote characters as text instead of HTML entities', () {
-    final parsed = parser.parse(
-      filePath: 'topic.md',
-      source: 'Use "group" here.\n',
-    );
-    final preview = previewBuilder.build(parsed);
-    final paragraph = preview.blocks.single;
-
-    expect(paragraph.text, 'Use "group" here.');
-    expect(paragraph.inlines.single.text, 'Use "group" here.');
-  });
-
-  test('preview preserves pasted local image destinations with spaces', () {
-    const destination =
-        '/home/albert/Pictures/Screenshots/'
         'Screenshot From 2026-06-15 03-27-53.png';
     final parsed = parser.parse(
       filePath: 'topic.md',
@@ -709,13 +679,13 @@ Also visible.
   test('preview does not make raw HTML links active without href', () {
     final parsed = parser.parse(
       filePath: 'topic.md',
-      source: 'See <a>file:///home/albert/private.md</a> now.\n',
+      source: 'See <a>file:///home/example/private.md</a> now.\n',
     );
     final preview = previewBuilder.build(parsed);
     final paragraph = preview.blocks.single;
     final inlines = _flattenInlines(paragraph.inlines).toList();
 
-    expect(paragraph.text, 'See file:///home/albert/private.md now.');
+    expect(paragraph.text, 'See file:///home/example/private.md now.');
     expect(
       inlines.map((inline) => inline.kind),
       isNot(contains(PreviewInlineKind.link)),
@@ -725,12 +695,12 @@ Also visible.
   test('preview rejects absolute local image paths in raw HTML', () {
     final parsed = parser.parse(
       filePath: 'topic.md',
-      source: '<img src="/home/albert/private.png" alt="Private">\n',
+      source: '<img src="/home/example/private.png" alt="Private">\n',
     );
     final preview = previewBuilder.build(parsed);
 
     expect(preview.blocks.single.kind, PreviewBlockKind.raw);
-    expect(preview.blocks.single.text, contains('/home/albert/private.png'));
+    expect(preview.blocks.single.text, contains('/home/example/private.png'));
   });
 
   test('preview rejects deeply nested raw HTML before conversion', () {

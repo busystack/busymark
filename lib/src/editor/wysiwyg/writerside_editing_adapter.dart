@@ -355,8 +355,15 @@ class WritersideEditingAdapter {
     );
   }
 
-  List<BusyInline> textInlines(String text) {
+  List<BusyInline> textInlines(
+    String text, {
+    WritersideTextNode? authoredText,
+    Map<BusyInline, ({int start, int end})>? sourceBindings,
+  }) {
     final result = <BusyInline>[];
+    final positions = authoredText == null || sourceBindings == null
+        ? null
+        : _authoredTextPositions(authoredText);
     var end = 0;
     for (final match in RegExp(r'%([\w.-]+)%').allMatches(text)) {
       if (match.start > end) {
@@ -367,13 +374,18 @@ class WritersideEditingAdapter {
           ),
         );
       }
-      result.add(
-        BusyInline(
-          kind: BusyInlineKind.writersideVariable,
-          text: match.group(1)!,
-          attributes: {'reference': match.group(1)!},
-        ),
+      final variable = BusyInline(
+        kind: BusyInlineKind.writersideVariable,
+        text: match.group(1)!,
+        attributes: {'reference': match.group(1)!},
       );
+      result.add(variable);
+      if (positions != null) {
+        sourceBindings![variable] = (
+          start: positions[match.start].start,
+          end: positions[match.end - 1].end,
+        );
+      }
       end = match.end;
     }
     if (end < text.length) {
@@ -384,10 +396,17 @@ class WritersideEditingAdapter {
     return result;
   }
 
-  List<BusyInline> inlinesFromNodes(List<WritersideDocumentNode> nodes) => [
+  List<BusyInline> inlinesFromNodes(
+    List<WritersideDocumentNode> nodes, {
+    Map<BusyInline, ({int start, int end})>? sourceBindings,
+  }) => [
     for (final node in nodes)
       if (node is WritersideTextNode)
-        ...textInlines(node.text)
+        ...textInlines(
+          node.text,
+          authoredText: node,
+          sourceBindings: sourceBindings,
+        )
       else if (node is WritersideRawNode)
         BusyInline(
           kind: BusyInlineKind.html,
@@ -395,10 +414,13 @@ class WritersideEditingAdapter {
           attributes: {'xml-raw': node.rawSource},
         )
       else if (node is WritersideElementNode)
-        _inline(node),
+        _inline(node, sourceBindings: sourceBindings),
   ];
 
-  BusyInline _inline(WritersideElementNode node) {
+  BusyInline _inline(
+    WritersideElementNode node, {
+    Map<BusyInline, ({int start, int end})>? sourceBindings,
+  }) {
     final kind = switch (node.name) {
       'control' => BusyInlineKind.writersideControl,
       'path' => BusyInlineKind.writersidePath,
@@ -424,7 +446,7 @@ class WritersideEditingAdapter {
       destination: node.attributes['href'] ?? node.attributes['src'],
       children: kind == BusyInlineKind.html
           ? const []
-          : inlinesFromNodes(node.children),
+          : inlinesFromNodes(node.children, sourceBindings: sourceBindings),
       attributes: {
         ...node.attributes,
         'xml-name': node.qualifiedName,
@@ -439,6 +461,88 @@ class WritersideEditingAdapter {
         'xml-original-signature': _inlineSignature(inline),
       },
     );
+  }
+
+  // Bind tokens within their actual XML text node, including entity and CDATA
+  // spelling. A binding is emitted only when the decoded text agrees with the
+  // existing authored parser. Images, breaks and comments are separate nodes.
+  static List<({int start, int end})>? _authoredTextPositions(
+    WritersideTextNode node,
+  ) {
+    final cdata = node.rawSource.startsWith('<![CDATA[');
+    final raw = cdata
+        ? node.rawSource.substring(9, node.rawSource.length - 3)
+        : node.rawSource;
+    final base = node.span.startOffset + (cdata ? 9 : 0);
+    final decoded = StringBuffer();
+    final positions = <({int start, int end})>[];
+    for (var i = 0; i < raw.length;) {
+      var end = i + 1;
+      var value = raw.substring(i, end);
+      if (!cdata && raw[i] == '&') {
+        final closing = raw.indexOf(';', i + 1);
+        if (closing < 0) return null;
+        end = closing + 1;
+        try {
+          value = XmlDocumentFragment.parse(raw.substring(i, end)).innerText;
+        } on XmlParserException {
+          return null;
+        }
+      }
+      decoded.write(value);
+      for (var j = 0; j < value.length; j++) {
+        positions.add((start: base + i, end: base + end));
+      }
+      i = end;
+    }
+    return decoded.toString() == node.text ? positions : null;
+  }
+
+  /// Variable bindings in the editor's inline coordinate system. Reusing the
+  /// editing projection makes image alt text, breaks, wrappers and atomic
+  /// elements advance the position exactly as they do in the editor.
+  Iterable<({int start, int end, int sourceStart, int sourceEnd})>
+  xmlVariableSourceRanges(BusyDocument document, BusyBlock block) sync* {
+    final authored = document.authoredXml;
+    final binding = block.attributes[busyMarkXmlBindingAttribute];
+    if (authored == null || binding == null) return;
+    final node = authored
+        .walk()
+        .where((n) => '${n.span.startOffset}:${n.span.endOffset}' == binding)
+        .firstOrNull;
+    if (node == null) return;
+    final bindings = Map<BusyInline, ({int start, int end})>.identity();
+    final projected = node is WritersideTextNode
+        ? textInlines(node.text, authoredText: node, sourceBindings: bindings)
+        : node is WritersideElementNode
+        ? inlinesFromNodes(node.children, sourceBindings: bindings)
+        : const <BusyInline>[];
+    if (projected.map((i) => i.plainText).join() != block.plainText) return;
+    var offset = 0;
+    Iterable<({int start, int end, int sourceStart, int sourceEnd})> visit(
+      BusyInline inline,
+    ) sync* {
+      final position = bindings[inline];
+      if (position != null) {
+        yield (
+          start: offset,
+          end: offset + inline.plainText.length,
+          sourceStart: position.start,
+          sourceEnd: position.end,
+        );
+      }
+      if (inline.children.isNotEmpty) {
+        for (final child in inline.children) {
+          yield* visit(child);
+        }
+      } else {
+        offset += inline.plainText.length;
+      }
+    }
+
+    for (final inline in projected) {
+      yield* visit(inline);
+    }
   }
 
   static bool _protectedInline(BusyInline inline) =>

@@ -245,8 +245,8 @@ Future<void> main(List<String> arguments) async {
     originalSettings = await api(account).getSettings();
     final linked = await repository.create(
       account.id,
-      title: 'M3 portable target',
-      category: 'M3/Scoped',
+      title: 'References portable target',
+      category: 'References/Scoped',
       content: '# Target\nconfirmed portable identity',
     );
     await repository.synchronize(account.id);
@@ -259,18 +259,24 @@ Future<void> main(List<String> arguments) async {
     if (conditional is! NotesNotModified) {
       throw StateError('Single-note conditional GET did not return 304.');
     }
-    checks['m3ConditionalSingleNote200And304'] = true;
+    checks['referencesConditionalSingleNote200And304'] = true;
     final projected = await api(account).query(
-      NotesRetrievalScope(category: 'M3/Scoped', exclude: {'content', 'title'}),
+      NotesRetrievalScope(
+        category: 'References/Scoped',
+        exclude: {'content', 'title'},
+      ),
       chunkSize: 1,
     );
     if (!projected.notes.any((n) => n.id == target.serverId) ||
         projected.notes.any((n) => n.has('content') || n.has('title'))) {
       throw StateError('Filtered/projected live response semantics differed.');
     }
-    checks['m3FilteredProjectedRetrieval'] = true;
+    checks['referencesFilteredProjectedRetrieval'] = true;
     final unidentified = await api(account).query(
-      NotesRetrievalScope(category: 'M3/Scoped', exclude: {'id', 'content'}),
+      NotesRetrievalScope(
+        category: 'References/Scoped',
+        exclude: {'id', 'content'},
+      ),
       chunkSize: 1,
     );
     final singleProjection = await api(account).getProjection(
@@ -283,7 +289,7 @@ Future<void> main(List<String> arguments) async {
         singleProjection.has('content')) {
       throw StateError('Excluded identifiers were not represented as omitted.');
     }
-    checks['m3ExcludedIdentifiersAndSingleProjection'] = true;
+    checks['referencesExcludedIdentifiersAndSingleProjection'] = true;
     final checkpoint = repository.accountById(account.id)!.listEtag;
     await repository.save(target.localId, content: 'pending local edit');
     final refreshed = await repository.refreshLinkedNote(
@@ -295,7 +301,7 @@ Future<void> main(List<String> arguments) async {
         repository.accountById(account.id)!.listEtag != checkpoint) {
       throw StateError('304 changed pending local state.');
     }
-    checks['m3ConditionalReadPreservesPendingAndCheckpoint'] = true;
+    checks['referencesConditionalReadPreservesPendingAndCheckpoint'] = true;
     final url = nextcloudNoteUrl(
       account.server,
       target.serverId!,
@@ -303,7 +309,7 @@ Future<void> main(List<String> arguments) async {
     );
     final source = await repository.create(
       account.id,
-      title: 'M3 link source',
+      title: 'References link source',
       content: '[portable target]($url)',
     );
     await repository.synchronize(account.id);
@@ -312,9 +318,9 @@ Future<void> main(List<String> arguments) async {
     if (!(await api(account).get(sourceId)).content.contains(url.toString())) {
       throw StateError('Portable link publication failed.');
     }
-    checks['m3PortableUrlPublished'] = true;
+    checks['referencesPortableUrlPublished'] = true;
 
-    await _milestoneChecks(
+    await _protocolChecks(
       repository,
       connection,
       account,
@@ -822,7 +828,7 @@ Future<void> main(List<String> arguments) async {
   }
 }
 
-Future<void> _milestoneChecks(
+Future<void> _protocolChecks(
   NotesRepository repository,
   _Connection connection,
   NextcloudAccount account,
@@ -854,10 +860,10 @@ Future<void> _milestoneChecks(
   checks['settingsPartialCustomSuffixNormalization'] = true;
   connection.loseNextSettingsResponse = true;
   final lost = await repository.changeSettings(account.id, settings, {
-    'notesPath': 'BusyMark M1 isolated collection',
+    'notesPath': 'BusyMark Protocol isolated collection',
   });
   _require(
-    lost.notesPath == 'BusyMark M1 isolated collection' &&
+    lost.notesPath == 'BusyMark Protocol isolated collection' &&
         repository.accounts.single.settingsAttempt == null &&
         repository.accounts.single.listEtag == null,
     'Lost settings response did not reconcile by read/reset checkpoint.',
@@ -882,7 +888,7 @@ Future<void> _milestoneChecks(
   setClock(editTime);
   final draft = await repository.create(
     account.id,
-    title: 'M1 timestamp and filenames',
+    title: 'Protocol timestamp and filenames',
     category: 'BusyMarkAcceptance',
     content: '# Edit time',
   );

@@ -2079,9 +2079,9 @@ void main() {
 
     final beforeMarkerSpace = await enterAndReadCaret('#');
     final afterMarkerSpace = await enterAndReadCaret('# ');
-    final beforeWordSpace = await enterAndReadCaret('# Linguality');
-    final afterWordSpace = await enterAndReadCaret('# Linguality ');
-    await enterAndReadCaret('# Linguality\nBody');
+    final beforeWordSpace = await enterAndReadCaret('# Guidelines');
+    final afterWordSpace = await enterAndReadCaret('# Guidelines ');
+    await enterAndReadCaret('# Guidelines\nBody');
     final field = tester.widget<TextField>(fieldFinder);
     field.controller!.selection = const TextSelection.collapsed(offset: 12);
     await tester.pump();
@@ -2093,7 +2093,7 @@ void main() {
     );
     tester.testTextInput.updateEditingValue(
       const TextEditingValue(
-        text: '# Linguality \nBody',
+        text: '# Guidelines \nBody',
         selection: TextSelection.collapsed(offset: 13),
       ),
     );
