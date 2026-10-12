@@ -1251,6 +1251,13 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
         _documentController.updateBlockText(target.id, value);
         return true;
       }),
+      onNavigation: (present, forElements, depth) => commit(
+        () => _documentController.setTopicNavigation(
+          present: present,
+          forElements: forElements,
+          depth: depth,
+        ),
+      ),
       onTopicProperty: (name, value) => commit(
         () => name == '@navigation'
             ? value == 'default'
@@ -1520,10 +1527,18 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
                     : BusyMarkGlyphs.upArrow,
                 tooltip: expanded
                     ? context.l10n.collapseKind(
-                        writersideElementLabel(context, block),
+                        writersideElementLabel(
+                          context,
+                          block,
+                          _documentController.document,
+                        ),
                       )
                     : context.l10n.expandKind(
-                        writersideElementLabel(context, block),
+                        writersideElementLabel(
+                          context,
+                          block,
+                          _documentController.document,
+                        ),
                       ),
                 onPressed: () =>
                     setState(() => _collapsibleExpansion[block.id] = !expanded),
@@ -1538,7 +1553,11 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
                       selectionRangesByBlockId: selectionRangesByBlockId,
                     )
                   : Text(
-                      writersideElementLabel(context, block),
+                      writersideElementLabel(
+                        context,
+                        block,
+                        _documentController.document,
+                      ),
                       style: busyMarkSectionHeaderStyle(context),
                     ),
             ),

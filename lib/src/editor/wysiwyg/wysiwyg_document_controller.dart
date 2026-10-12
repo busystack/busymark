@@ -484,12 +484,7 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
         block.preserveRaw) {
       return false;
     }
-    final tag =
-        block.kind == BusyBlockKind.heading &&
-            !_document.isXmlTopic &&
-            !block.attributes.containsKey('element')
-        ? 'chapter'
-        : WritersideEditingAdapter.tagForBlock(block);
+    final tag = WritersideEditingAdapter.propertyTag(_document, block);
     final name = attribute == 'language' ? 'lang' : attribute;
     if (!(block.kind == BusyBlockKind.heading &&
             !_document.isXmlTopic &&
@@ -500,6 +495,10 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
               attribute,
               value,
               attributes: block.attributes,
+              applicableAttributes: WritersideEditingAdapter.propertyAttributes(
+                _document,
+                block,
+              ),
               hasTitleChild: block.children.any(
                 (b) => b.attributes['element'] == 'title',
               ),
@@ -523,12 +522,17 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     }
     if (block.kind == BusyBlockKind.heading &&
         !_document.isXmlTopic &&
-        block.attributes['level'] == '1' &&
-        !block.attributes.containsKey('element') &&
+        WritersideEditingAdapter.topicHeading(_document)?.id == block.id &&
         {'collapsible', 'default-state'}.contains(name)) {
       return false;
     }
-    if (!WritersideSchema.attributesFor(tag).contains(name)) return false;
+    if (!WritersideEditingAdapter.propertyAttributes(
+          _document,
+          block,
+        ).contains(name) ||
+        tag == 'topic' && name == 'id') {
+      return false;
+    }
     if (value != null &&
         value.isNotEmpty &&
         WritersideSchema.invalidAttributeValue(tag, name, value) != null) {
@@ -854,7 +858,10 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
   }
 
   bool resetTopicNavigation() {
-    if (!_document.isWriterside) return false;
+    if (!_document.isWriterside ||
+        !WritersideEditingAdapter.topicNavigationEditable(_document)) {
+      return false;
+    }
     final root = _document.blocks
         .where((b) => b.attributes['element'] == 'topic')
         .firstOrNull;
@@ -877,9 +884,29 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
         ),
       );
     } else {
-      _document = _document.copyWith(
-        blocks: _document.blocks.where((b) => b.id != nodes.single.id).toList(),
-      );
+      // A removed block cannot mark itself dirty. The Markdown serializer's
+      // unchanged-source fast path would otherwise retain the declaration.
+      // Locate its authored span in the current serialized generation, then
+      // reparse through the existing adapter to keep all following locations
+      // and inline bindings in the same coordinate system.
+      final source = markdown;
+      final parsed = const MarkdownParser()
+          .parse(
+            filePath: _document.filePath,
+            source: source,
+            mode: _document.mode,
+            validateLocalReferences: false,
+          )
+          .busyDocument;
+      final declaration = parsed.blocks
+          .where((b) => b.attributes['element'] == 'show-structure')
+          .singleOrNull;
+      final span = declaration?.sourceSpan;
+      if (span == null) return false;
+      final next = source.replaceRange(span.startOffset, span.endOffset, '');
+      if (!_publishMarkdownNavigationSource(next, removedId: nodes.single.id)) {
+        return false;
+      }
       notifyListeners();
     }
     return true;
@@ -1024,15 +1051,34 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
   }
 
   bool updateTopicNavigation(String attribute, String value) {
+    if (!{'for', 'depth'}.contains(attribute)) return false;
+    final root = _document.blocks
+        .where((b) => b.attributes['element'] == 'topic')
+        .firstOrNull;
+    final existing = (root?.children ?? _document.blocks)
+        .where((b) => b.attributes['element'] == 'show-structure')
+        .firstOrNull;
+    return setTopicNavigation(
+      present: true,
+      forElements: attribute == 'for'
+          ? value
+          : existing?.attributes['for'] ?? '',
+      depth: attribute == 'depth' ? value : existing?.attributes['depth'] ?? '',
+    );
+  }
+
+  /// Publish a complete unscoped declaration as one document transaction.
+  /// Absence, an empty declaration and an explicit configuration are distinct.
+  bool setTopicNavigation({
+    required bool present,
+    String forElements = '',
+    String depth = '',
+  }) {
     if (!_document.isWriterside ||
-        !{'for', 'depth'}.contains(attribute) ||
-        value.isNotEmpty &&
-            WritersideSchema.invalidAttributeValue(
-                  'show-structure',
-                  attribute,
-                  value,
-                ) !=
-                null) {
+        !WritersideEditingAdapter.topicNavigationEditable(_document) ||
+        validateWritersideProperty('show-structure', 'depth', depth) != null ||
+        validateWritersideProperty('show-structure', 'for', forElements) !=
+            null) {
       return false;
     }
     final root = _document.blocks
@@ -1051,12 +1097,23 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
       return false;
     }
     final existing = declarations.firstOrNull;
+    if (!present) return resetTopicNavigation();
+    final attrs = {...?existing?.attributes}
+      ..remove('for')
+      ..remove('depth');
+    if (forElements.isNotEmpty) attrs['for'] = forElements;
+    if (depth.isNotEmpty) attrs['depth'] = depth;
     if (existing != null) {
-      return updateWritersideProperty(existing.id, attribute, value);
+      if (mapEquals(attrs, existing.attributes)) return true;
+      _replaceBlock(
+        existing.id,
+        (b) => b.copyWith(attributes: attrs, dirty: true),
+      );
+      return true;
     }
     final node = _newWritersideElement(
       'show-structure',
-      attributes: {if (value.isNotEmpty) attribute: value},
+      attributes: attrs,
     ).copyWith(isSourceOnly: _document.isXmlTopic);
     if (root != null) {
       _replaceBlock(
@@ -1064,21 +1121,95 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
         (b) => b.copyWith(children: [node, ...b.children], dirty: true),
       );
     } else {
-      final heading = siblings
-          .where(
-            (b) =>
-                b.kind == BusyBlockKind.heading &&
-                b.attributes['level'] == '1' &&
-                !b.attributes.containsKey('element'),
+      final source = markdown;
+      final parsed = const MarkdownParser()
+          .parse(
+            filePath: _document.filePath,
+            source: source,
+            mode: _document.mode,
+            validateLocalReferences: false,
           )
-          .firstOrNull;
-      _document = _document.copyWith(
-        blocks: heading == null
-            ? [node, ...siblings]
-            : _insertBlocksAfter(siblings, heading.id, [node]),
+          .busyDocument;
+      final heading = WritersideEditingAdapter.topicHeading(parsed);
+      final offset =
+          heading?.sourceSpan?.endOffset ?? parsed.rawFrontMatter?.length ?? 0;
+      final newline = source.contains('\r\n') ? '\r\n' : '\n';
+      final fragment = _serializer.serializeBlock(node);
+      final next = source.replaceRange(
+        offset,
+        offset,
+        '${offset == 0 ? '' : '$newline$newline'}$fragment${offset == source.length ? newline : ''}',
       );
+      if (!_publishMarkdownNavigationSource(next, inserted: node)) return false;
       notifyListeners();
     }
+    return true;
+  }
+
+  /// Navigation changes one known top-level owner. Rebase locations through
+  /// the existing parser while retaining the editor identities of every other
+  /// block, including its nested children. Reject a changed structural shape.
+  bool _publishMarkdownNavigationSource(
+    String source, {
+    String? removedId,
+    BusyBlock? inserted,
+  }) {
+    final parsed = _ensureEditableDocument(
+      const MarkdownParser()
+          .parse(
+            filePath: _document.filePath,
+            source: source,
+            mode: _document.mode,
+            validateLocalReferences: false,
+          )
+          .busyDocument,
+    );
+    final previous = _document.blocks
+        .where(
+          (b) =>
+              b.id != removedId && b.attributes['element'] != 'show-structure',
+        )
+        .toList();
+    var index = 0;
+    BusyBlock? retain(BusyBlock fresh, BusyBlock old) {
+      if (fresh.kind != old.kind ||
+          fresh.plainText != old.plainText ||
+          fresh.children.length != old.children.length) {
+        return null;
+      }
+      final children = <BusyBlock>[];
+      for (var i = 0; i < fresh.children.length; i++) {
+        final child = retain(fresh.children[i], old.children[i]);
+        if (child == null) return null;
+        children.add(child);
+      }
+      return fresh.copyWith(
+        id: old.id,
+        children: children,
+        attributes: {
+          ...fresh.attributes,
+          if (fresh.attributes.containsKey('editorBlockId'))
+            'editorBlockId': old.id,
+        },
+      );
+    }
+
+    final blocks = <BusyBlock>[];
+    for (final block in parsed.blocks) {
+      if (block.attributes['element'] == 'show-structure') {
+        if (inserted == null) return false;
+        blocks.add(block.copyWith(id: inserted.id));
+      } else {
+        if (index >= previous.length) return false;
+        final retained = retain(block, previous[index++]);
+        if (retained == null) return false;
+        blocks.add(retained);
+      }
+    }
+    if (index != previous.length) return false;
+    _document = busyMarkWysiwygBindMarkdownReferences(
+      parsed.copyWith(blocks: blocks),
+    );
     return true;
   }
 

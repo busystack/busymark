@@ -11,6 +11,92 @@ class AppLocalizationsHi extends AppLocalizations {
   AppLocalizationsHi([String locale = 'hi']) : super(locale);
 
   @override
+  String get wsMarkdownInstanceTitleLimitation =>
+      'निश्चित बिल्डर Markdown विषयों में इंस्टेंस शीर्षक प्रकाशित नहीं करता। मौजूदा मार्कअप सुरक्षित है; स्रोत में देखें।';
+
+  @override
+  String get wsTopicIdentity => 'विषय ID';
+
+  @override
+  String get wsElementAnchor => 'तत्व एंकर';
+
+  @override
+  String get wsHeadingText => 'शीर्षक पाठ';
+
+  @override
+  String get wsDefaultTitle => 'डिफ़ॉल्ट शीर्षक';
+
+  @override
+  String get wsTopicNavigation => 'विषय नेविगेशन';
+
+  @override
+  String get wsHeadingOptions => 'शीर्षक विशेषताएँ';
+
+  @override
+  String get wsDocumentOptions => 'दस्तावेज़ सेटिंग';
+
+  @override
+  String get wsSettingsPresent => 'लिखी हुई सेटिंग मौजूद हैं';
+
+  @override
+  String get wsTitleOverrideExplanation =>
+      'प्रकाशित शीर्षक को बदलता है; शीर्षक पाठ अपरिवर्तित रहता है।';
+
+  @override
+  String get wsIgnoreVariables => 'चरों को शाब्दिक पाठ मानें';
+
+  @override
+  String get wsIgnoreVariablesExplanation =>
+      'सक्षम होने पर चर जैसा पाठ प्रतिस्थापित नहीं होता।';
+
+  @override
+  String get wsInstanceSelection => 'सहायता इंस्टेंस';
+
+  @override
+  String get wsInstanceExplanation =>
+      'नाम, समूह, सूची, बहिष्करण या अभिव्यक्ति से सहायता आउटपुट चुनें।';
+
+  @override
+  String get wsFilterExplanation =>
+      'पुनः उपयोग की सामग्री को मानदंड से फ़िल्टर करता है; सहायता इंस्टेंस नहीं चुनता।';
+
+  @override
+  String get wsContextHelp => 'प्रासंगिक सहायता ID';
+
+  @override
+  String get wsCapitalization => 'अक्षर केस';
+
+  @override
+  String get wsLibraryTopic => 'लाइब्रेरी विषय';
+
+  @override
+  String get wsLastModified => 'अंतिम संशोधन';
+
+  @override
+  String get wsMissingTopicHeading =>
+      'विषय H1 मौजूद नहीं है। स्रोत में जोड़ें।';
+
+  @override
+  String get wsMultipleTopicHeadings =>
+      'पहला H1 विषय शीर्षक निर्धारित करता है। बाद के H1 अलग शीर्षक हैं।';
+
+  @override
+  String get wsTopicIdentityMismatch =>
+      'मूल id फ़ाइलनाम से बने विषय ID से अलग है। विषय फ़ाइल का नाम बदलें या स्रोत देखें।';
+
+  @override
+  String get wsUnsupportedProperties =>
+      'असमर्थित विशेषताएँ सुरक्षित रहती हैं। स्रोत में देखें।';
+
+  @override
+  String get wsGeneratedAnchor =>
+      'बना हुआ एंकर; मान दर्ज करने से ओवरराइड बनता है।';
+
+  @override
+  String get wsHeadingBuilderLimitation =>
+      'निश्चित बिल्डर H1 विशेषताएँ प्रकाशित नहीं करता। वे शीर्षक की हैं, XML मूल की नहीं।';
+
+  @override
   String get closeOtherTabs => 'अन्य टैब बंद करें';
 
   @override

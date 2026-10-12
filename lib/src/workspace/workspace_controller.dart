@@ -232,6 +232,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
 
   /// The mounted workspace owns inspector transitions and focus restoration.
   void Function()? toggleElementProperties;
+  Future<bool> Function(String topicPath)? renameInspectedTopic;
   late DocumentSessionStore _sessionStore;
   late DocumentRecoveryStore _recoveryStore;
   late WorkspaceFileMonitor _fileMonitor;

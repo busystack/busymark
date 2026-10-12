@@ -739,10 +739,35 @@ class WritersideSchema {
     });
   }
 
-  static Iterable<String> attributesFor(String element) => {
+  /// Authored input remains lossless even when a capability is too broad to
+  /// authorize completion or a new property. Do not use this for authoring.
+  static Iterable<String> preservedAttributesFor(String element) => {
     ...?writersideOfficialRules[element.toLowerCase()]?.attributes.keys,
     ...?elements[element.toLowerCase()]?.attributes,
   };
+
+  /// The generated rules are authoritative for attribute applicability. The
+  /// overlays below have dedicated published-output checks for the pinned builder.
+  static Iterable<String> attributesFor(String element) {
+    final name = element.toLowerCase();
+    final official = writersideOfficialRules[name];
+    return {
+      if (official != null)
+        ...official.attributes.keys
+      else
+        ...?elements[name]?.attributes,
+      if (name == 'li') 'checked',
+      // The property-conformance HTML checks verify snippet emphasis, including
+      // its Markdown fenced-code form, against the same pinned builder.
+      if (name == 'code-block') 'emphasize-lines',
+      // Published by conformance_project/features.topic and its HTML snapshot.
+      if (name == 'table') 'sticky-header',
+      // Current table/td reference documents interactive sorting. The contract
+      // fixture verifies data-sortable on the table and its excluded column.
+      if (name == 'table' || name == 'td') 'sortable',
+      if (name == 'a') 'as',
+    };
+  }
 
   static Set<String> requiredAttributesFor(String element) => {
     ...?writersideOfficialRules[element]?.required,
@@ -753,6 +778,9 @@ class WritersideSchema {
     // The generated XSD omits li@checked. Builder 2026.08.0328 renders it as
     // a checkbox state; the property-conformance fixture verifies this overlay.
     if (element == 'li' && attribute == 'checked') {
+      return const {'true', 'false'};
+    }
+    if (element == 'table' && attribute == 'sticky-header') {
       return const {'true', 'false'};
     }
     if (attribute == 'sortable') return const {'true', 'false'};

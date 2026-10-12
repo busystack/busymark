@@ -144,6 +144,7 @@ import '../../writerside/writerside_parsers.dart';
 import '../../writerside/writerside_document_resolver.dart';
 import '../../writerside/writerside_document_renderer.dart';
 import '../../writerside/writerside_title_editor.dart';
+import '../workspace_service.dart' show WritersideTitleEditSession;
 
 final _problemsPresentationProvider =
     NotifierProvider<_ProblemsPresentation, bool>(_ProblemsPresentation.new);
@@ -694,6 +695,68 @@ class _SearchReturnFocus {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (target?.context?.mounted == true) target!.requestFocus();
     });
+  }
+}
+
+Future<void> _publishWritersideTitleDialog(
+  BuildContext context,
+  WidgetRef ref,
+  WritersideTitleEditSession session,
+) async {
+  final controller = ref.read(workspaceControllerProvider.notifier);
+  final originalTitle = session.topic.title ?? '';
+  final originalInstanceTitle =
+      session.topic.titleOverrides
+          .where((override) => override.instance == session.instanceId)
+          .firstOrNull
+          ?.title ??
+      '';
+  final originalTocTitle = session.identity.tocTitle ?? '';
+  final nativeEdit = await const NativeWritersideDialogService().showEditTitle(
+    dialogTitle: context.l10n.tocEditTitleDialog,
+    topicTitleLabel: context.l10n.tocTopicTitleField,
+    advancedLabel: context.l10n.tocAdvancedSettings,
+    instanceTitleLabel: context.l10n.tocInstanceTitleField(session.instanceId),
+    tocTitleLabel: context.l10n.tocOnlyTitleField,
+    instanceTitleEditable: session.topic.format == WritersideTopicFormat.xml,
+    instanceExplanation: session.topic.format == WritersideTopicFormat.xml
+        ? context.l10n.tocInstanceTitleExplanation
+        : context.l10n.wsMarkdownInstanceTitleLimitation,
+    tocExplanation: context.l10n.tocOnlyTitleExplanation,
+    documentationLabel: context.l10n.tocTitleDocumentationLink,
+    documentationUrl: 'https://www.jetbrains.com/help/writerside/topics.html',
+    initialTitle: originalTitle,
+    initialInstanceTitle: originalInstanceTitle,
+    initialTocTitle: originalTocTitle,
+    cancelLabel: context.l10n.cancel,
+    okLabel: context.l10n.tocOk,
+    textDirection: Directionality.of(context),
+  );
+  if (!context.mounted) return;
+  final WritersideTitleEdit? edit;
+  if (nativeEdit.available) {
+    final values = nativeEdit.value;
+    edit = values == null
+        ? null
+        : WritersideTitleEdit(
+            title: values.title == originalTitle ? null : values.title,
+            instanceTitle:
+                session.topic.format != WritersideTopicFormat.xml ||
+                    values.instanceTitle == originalInstanceTitle
+                ? null
+                : values.instanceTitle,
+            tocTitle: values.tocTitle == originalTocTitle
+                ? null
+                : values.tocTitle,
+          );
+  } else {
+    edit = await showBusyMarkModalDialog<WritersideTitleEdit>(
+      context,
+      builder: (_) => WritersideTitleDialog(session: session),
+    );
+  }
+  if (edit != null && context.mounted) {
+    await controller.editWritersideTitles(session, edit);
   }
 }
 
@@ -2296,6 +2359,7 @@ class _Sidebar extends ConsumerStatefulWidget {
 }
 
 class _SidebarState extends ConsumerState<_Sidebar> {
+  late final WorkspaceController _topicActionController;
   late int _tab;
   late String _workspaceId;
   String? _activeFilePath;
@@ -2305,6 +2369,10 @@ class _SidebarState extends ConsumerState<_Sidebar> {
 
   @override
   void dispose() {
+    final controller = _topicActionController;
+    if (controller.renameInspectedTopic == _renameInspectedTopic) {
+      controller.renameInspectedTopic = null;
+    }
     _replacementCancellation?.cancel();
     super.dispose();
   }
@@ -2312,6 +2380,8 @@ class _SidebarState extends ConsumerState<_Sidebar> {
   @override
   void initState() {
     super.initState();
+    _topicActionController = ref.read(workspaceControllerProvider.notifier);
+    _topicActionController.renameInspectedTopic = _renameInspectedTopic;
     _workspaceId = widget.workspace.id;
     _activeFilePath = widget.workspace.activeFilePath;
     _tab = _initialSidebarTabIndex(widget.workspace);
@@ -2558,6 +2628,9 @@ class _SidebarState extends ConsumerState<_Sidebar> {
       showGitChanges: false,
     );
   }
+
+  Future<bool> _renameInspectedTopic(String path) =>
+      _startWritersideTopicRename(context, path);
 
   Future<bool> _startWritersideTopicRename(
     BuildContext context,
@@ -7001,59 +7074,7 @@ class _TocTabState extends ConsumerState<_TocTab> {
           topicPath: topic.filePath,
         );
         if (session == null || !mounted || !context.mounted) return;
-        final originalTitle = session.topic.title ?? '';
-        final originalInstanceTitle =
-            session.topic.titleOverrides
-                .where((override) => override.instance == session.instanceId)
-                .firstOrNull
-                ?.title ??
-            '';
-        final originalTocTitle = session.identity.tocTitle ?? '';
-        final nativeEdit = await const NativeWritersideDialogService()
-            .showEditTitle(
-              dialogTitle: context.l10n.tocEditTitleDialog,
-              topicTitleLabel: context.l10n.tocTopicTitleField,
-              advancedLabel: context.l10n.tocAdvancedSettings,
-              instanceTitleLabel: context.l10n.tocInstanceTitleField(
-                session.instanceId,
-              ),
-              tocTitleLabel: context.l10n.tocOnlyTitleField,
-              instanceExplanation: context.l10n.tocInstanceTitleExplanation,
-              tocExplanation: context.l10n.tocOnlyTitleExplanation,
-              documentationLabel: context.l10n.tocTitleDocumentationLink,
-              documentationUrl:
-                  'https://www.jetbrains.com/help/writerside/topics.html',
-              initialTitle: originalTitle,
-              initialInstanceTitle: originalInstanceTitle,
-              initialTocTitle: originalTocTitle,
-              cancelLabel: context.l10n.cancel,
-              okLabel: context.l10n.tocOk,
-              textDirection: Directionality.of(context),
-            );
-        if (!mounted || !context.mounted) return;
-        final WritersideTitleEdit? edit;
-        if (nativeEdit.available) {
-          final values = nativeEdit.value;
-          edit = values == null
-              ? null
-              : WritersideTitleEdit(
-                  title: values.title == originalTitle ? null : values.title,
-                  instanceTitle: values.instanceTitle == originalInstanceTitle
-                      ? null
-                      : values.instanceTitle,
-                  tocTitle: values.tocTitle == originalTocTitle
-                      ? null
-                      : values.tocTitle,
-                );
-        } else {
-          edit = await showBusyMarkModalDialog<WritersideTitleEdit>(
-            context,
-            builder: (_) => WritersideTitleDialog(session: session),
-          );
-        }
-        if (edit != null && mounted) {
-          await controller.editWritersideTitles(session, edit);
-        }
+        await _publishWritersideTitleDialog(context, ref, session);
       case _TocTreeAction.duplicate:
         if (topic == null || rawNode == null) return;
         String? validateDuplicateName(String name) {
@@ -13437,6 +13458,14 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
       readOnly:
           widget.viewMode == DocumentViewModePreference.preview ||
           widget.state.activeBuffer?.readonly == true,
+      onEditTitles: widget.state.activeBuffer?.filePath == null
+          ? null
+          : () => unawaited(_editInspectorTitles(target)),
+      navigationEditable: target.navigationEditable,
+      hasFileIdentity: widget.state.activeBuffer?.filePath != null,
+      onRenameTopic: widget.state.activeBuffer?.filePath == null
+          ? null
+          : () => unawaited(_renameInspectorTopic(target)),
       onClose: _closeProperties,
       videoDraft: _videoPropertyDraft,
       onInsertVideo: (source) => commit((c) {
@@ -13477,12 +13506,10 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
             return true;
           });
         }
-        final tag =
-            block.kind == BusyBlockKind.heading &&
-                !target.document.isXmlTopic &&
-                !block.attributes.containsKey('element')
-            ? 'chapter'
-            : WritersideEditingAdapter.tagForBlock(block);
+        final tag = WritersideEditingAdapter.propertyTag(
+          target.document,
+          block,
+        );
         final reason =
             block.kind == BusyBlockKind.heading &&
                 !target.document.isXmlTopic &&
@@ -13494,6 +13521,11 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
                 name,
                 value,
                 attributes: block.attributes,
+                applicableAttributes:
+                    WritersideEditingAdapter.propertyAttributes(
+                      target.document,
+                      block,
+                    ),
                 hasTitleChild: block.children.any(
                   (b) => b.attributes['element'] == 'title',
                 ),
@@ -13532,6 +13564,13 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
         if (block.plainText != text) c.updateBlockText(block.id, text);
         return true;
       }),
+      onNavigation: (present, forElements, depth) => commit(
+        (c) => c.setTopicNavigation(
+          present: present,
+          forElements: forElements,
+          depth: depth,
+        ),
+      ),
       onTopicProperty: (name, value) => commit(
         (c) => name == '@navigation'
             ? value == 'default'
@@ -13600,6 +13639,79 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
         });
       },
     );
+  }
+
+  Future<void> _renameInspectorTopic(WritersideInspectorTarget target) async {
+    final current = ref.read(workspaceControllerProvider).activeBuffer;
+    if (current?.id != target.bufferId || current?.filePath == null) return;
+    final path = current!.filePath!;
+    final settings = ref.read(appSettingsControllerProvider.notifier);
+    await settings.setSidebarVisible(true);
+    await WidgetsBinding.instance.endOfFrame;
+    if (!mounted) return;
+    final live = ref.read(workspaceControllerProvider).activeBuffer;
+    if (live?.id != target.bufferId || live?.filePath != path) return;
+    final rename = ref
+        .read(workspaceControllerProvider.notifier)
+        .renameInspectedTopic;
+    if (rename != null) await rename(path);
+  }
+
+  Future<void> _editInspectorTitles(WritersideInspectorTarget target) async {
+    final state = ref.read(workspaceControllerProvider);
+    final buffer = state.activeBuffer;
+    final workspace = state.workspace;
+    if (workspace == null ||
+        buffer == null ||
+        (_inspected?.bufferId != target.bufferId ||
+            _inspected?.topic != true ||
+            _inspected?.matches(buffer.id, buffer.revision, buffer.text) !=
+                true) ||
+        buffer.filePath == null) {
+      return;
+    }
+    final module = resolveWorkspaceDocumentContext(
+      workspace,
+      buffer,
+    ).writersideModule;
+    final instance = workspace.writersideProject?.activeInstance;
+    if (module == null || instance == null) return;
+    final entries = instance.tocRoots
+        .expand((n) => n.flatten())
+        .where(
+          (n) =>
+              !n.included &&
+              n.origin == null &&
+              n.topicReference != null &&
+              p.equals(
+                module.topicByReference(n.topicReference!)?.filePath ?? '',
+                buffer.filePath!,
+              ),
+        )
+        .toList();
+    if (entries.length != 1 || entries.single.sourceTocPath == null) {
+      _propertyEdits.reject(WritersidePropertyRejection.unresolved);
+      return;
+    }
+    if (!await confirmSafeToChangeWorkspaceFiles(context, ref, [
+          buffer.filePath!,
+          instance.sourceTreePath,
+        ]) ||
+        !mounted) {
+      return;
+    }
+    final session = await ref
+        .read(workspaceControllerProvider.notifier)
+        .prepareWritersideTitleEdit(
+          treePath: instance.sourceTreePath,
+          tocPath: entries.single.sourceTocPath!,
+          identity: WritersideTocNodeIdentity.fromNode(entries.single),
+          topicModuleRoot: module.rootPath,
+          topicPath: buffer.filePath!,
+        );
+    if (session != null && mounted) {
+      await _publishWritersideTitleDialog(context, ref, session);
+    }
   }
 
   Future<String?> _chooseCodeSource(WritersideInspectorTarget target) async {

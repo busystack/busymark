@@ -11,6 +11,92 @@ class AppLocalizationsNl extends AppLocalizations {
   AppLocalizationsNl([String locale = 'nl']) : super(locale);
 
   @override
+  String get wsMarkdownInstanceTitleLimitation =>
+      'De vastgelegde builder publiceert geen instantietitels in Markdown-onderwerpen. Bestaande opmaak blijft behouden; bekijk de bron.';
+
+  @override
+  String get wsTopicIdentity => 'Onderwerp-ID';
+
+  @override
+  String get wsElementAnchor => 'Elementanker';
+
+  @override
+  String get wsHeadingText => 'Koptekst';
+
+  @override
+  String get wsDefaultTitle => 'Standaardtitel';
+
+  @override
+  String get wsTopicNavigation => 'Onderwerpnavigatie';
+
+  @override
+  String get wsHeadingOptions => 'Kopattributen';
+
+  @override
+  String get wsDocumentOptions => 'Documentinstellingen';
+
+  @override
+  String get wsSettingsPresent => 'Expliciete instellingen aanwezig';
+
+  @override
+  String get wsTitleOverrideExplanation =>
+      'Vervangt de gepubliceerde titel; de koptekst blijft gelijk.';
+
+  @override
+  String get wsIgnoreVariables => 'Variabeletekst letterlijk behandelen';
+
+  @override
+  String get wsIgnoreVariablesExplanation =>
+      'Indien ingeschakeld wordt tekst die op variabelen lijkt niet vervangen.';
+
+  @override
+  String get wsInstanceSelection => 'Helpinstanties';
+
+  @override
+  String get wsInstanceExplanation =>
+      'Selecteer helpuitvoer via namen, groepen, lijsten, uitsluitingen of expressies.';
+
+  @override
+  String get wsFilterExplanation =>
+      'Filter herbruikbare inhoud op criteria; dit selecteert geen helpinstantie.';
+
+  @override
+  String get wsContextHelp => 'Contexthelp-ID';
+
+  @override
+  String get wsCapitalization => 'Hoofdlettergebruik';
+
+  @override
+  String get wsLibraryTopic => 'Bibliotheekonderwerp';
+
+  @override
+  String get wsLastModified => 'Laatst gewijzigd';
+
+  @override
+  String get wsMissingTopicHeading =>
+      'Geen onderwerp-H1 aanwezig. Voeg deze toe in de bron.';
+
+  @override
+  String get wsMultipleTopicHeadings =>
+      'De eerste H1 bepaalt de onderwerptitel. Latere H1’s zijn afzonderlijke koppen.';
+
+  @override
+  String get wsTopicIdentityMismatch =>
+      'De root-id verschilt van de bestands-ID. Gebruik Onderwerpbestand hernoemen of bekijk de bron.';
+
+  @override
+  String get wsUnsupportedProperties =>
+      'Niet-ondersteunde attributen blijven behouden. Bekijk ze in de bron.';
+
+  @override
+  String get wsGeneratedAnchor =>
+      'Gegenereerd anker; een waarde maakt een overschrijving.';
+
+  @override
+  String get wsHeadingBuilderLimitation =>
+      'De vastgelegde builder publiceert geen H1-attributen. Ze horen bij de kop, niet bij de XML-root.';
+
+  @override
   String get closeOtherTabs => 'Andere tabbladen sluiten';
 
   @override

@@ -95,6 +95,48 @@ if len(sys.argv) > 2 and sys.argv[2] == 'native':
     print('Native saved HTML: source inclusion, snippet emphasis, inherited state, literal inline references, ordered starts, list-item and admonition IDs verified')
     sys.exit(0)
 
+# The formal Topic/Chapter/Paragraph contract has an independent HTML oracle.
+# In particular, accepted H1 attribute syntax is NOT evidence of publishing it.
+if len(sys.argv) > 2 and sys.argv[2] in {'contract', 'contract-native'}:
+    import json, re
+    native = sys.argv[2] == 'contract-native'
+    with zipfile.ZipFile(sys.argv[1]) as archive:
+        for xml in [True, False]:
+            stem = 'contract-xml' if xml else 'contract-markdown'
+            source = archive.read(stem + '.html').decode()
+            actual = Elements(source)
+            topic_text = actual.texts[stem + ('.topic' if xml else '.md')]
+            expected_topic = ('Edited XML topic' if xml else 'Edited Markdown topic') if native else ('XML default topic' if xml else 'Markdown topic heading')
+            if native and xml:
+                # Native Edit Title uses the existing instance child, not the default.
+                assert topic_text == 'Published ' + stem + ' instance', topic_text
+            elif xml:
+                assert topic_text == expected_topic, topic_text
+            else:
+                anchor = 'edited-topic-anchor' if native else 'authored-topic-anchor'
+                assert topic_text == expected_topic + ' {id="' + anchor + '"}', topic_text
+                assert anchor not in actual.elements
+                assert 'Published contract-markdown instance' not in source
+            chapter = ('edited-' if native else '') + ('xml-chapter' if xml else 'markdown-chapter')
+            assert actual.texts[chapter] == (('Edited XML chapter' if native else 'XML default chapter') if xml else ('Edited Markdown override' if native else 'Published Markdown override'))
+            nav_match = re.search(r'<script type="application/json" id="virtual-toc-data">(.*?)</script>', source, re.S)
+            assert nav_match, stem
+            nav = json.loads(nav_match[1])
+            ids = {item['id'] for item in nav}
+            prefix = 'xml' if xml else 'markdown'
+            assert {chapter, prefix + '-procedure', prefix + '-tab', prefix + '-term'} <= ids, ids
+            assert 'Literal %product%.' in source, stem
+            assert 'Excluded XML content.' not in source and 'Excluded Markdown content.' not in source, stem
+            label = stem + ' platform edited' if native else ('XML platform' if xml else 'Markdown platform')
+            assert 'data-sections-label="' + label + '"' in source, stem
+            assert 'data-section="One"' in source and 'data-section="Two"' in source, stem
+            if xml:
+                assert actual.elements['contract-sorting'][0]['data-sortable'] == 'true'
+                assert 'sticky-header' in actual.elements['contract-sorting'][0]['class']
+                assert any(tag == 'th' and attrs.get('data-sortable') == 'false' for tag, attrs in actual.descendants['contract-sorting'])
+    print('Property contract HTML: default/instance titles, chapter override and anchor, four navigation target kinds, conditions, literal variables and switcher owners verified; H1 attribute limitation explicit')
+    sys.exit(0)
+
 defaults = len(sys.argv) > 2 and sys.argv[2] == 'defaults'
 with zipfile.ZipFile(sys.argv[1]) as archive:
     xml = Elements(archive.read('properties.html').decode())

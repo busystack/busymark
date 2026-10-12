@@ -53,6 +53,10 @@ if [[ "$source_root" == "test/fixtures/writerside/property_conformance" ]]; then
   python3 tools/verify_writerside_property_fixture.py \
     "$output_root/artifacts/webHelpCONFORMANCE2-all.zip"
 fi
+if [[ "$source_root" == "test/fixtures/writerside/property_contract_conformance" ]]; then
+  python3 tools/verify_writerside_property_fixture.py \
+    "$output_root/artifacts/webHelpCONFORMANCE2-all.zip" contract
+fi
 if [[ "$source_root" == "test/fixtures/writerside/property_defaults_conformance" ]]; then
   python3 tools/verify_writerside_property_fixture.py \
     "$output_root/artifacts/webHelpCONFORMANCE2-all.zip" defaults
@@ -65,4 +69,6 @@ if [[ "$source_root" == "test/fixtures/writerside/conformance_project" ]]; then
     test/fixtures/writerside/property_conformance Conformance/conformance
   WRITERSIDE_CONFORMANCE_OUTPUT="$evidence_root/property-defaults" bash tools/validate_writerside_conformance.sh \
     test/fixtures/writerside/property_defaults_conformance Conformance/conformance
+  WRITERSIDE_CONFORMANCE_OUTPUT="$evidence_root/property-contract" bash tools/validate_writerside_conformance.sh \
+    test/fixtures/writerside/property_contract_conformance Conformance/conformance
 fi

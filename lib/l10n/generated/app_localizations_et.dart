@@ -11,6 +11,90 @@ class AppLocalizationsEt extends AppLocalizations {
   AppLocalizationsEt([String locale = 'et']) : super(locale);
 
   @override
+  String get wsMarkdownInstanceTitleLimitation =>
+      'Kinnitatud koostaja ei avalda Markdowni teemade instantsipealkirju. Olemasolev märgistus säilitatakse; vaata lähteteksti.';
+
+  @override
+  String get wsTopicIdentity => 'Teema ID';
+
+  @override
+  String get wsElementAnchor => 'Elemendi ankur';
+
+  @override
+  String get wsHeadingText => 'Pealkirja tekst';
+
+  @override
+  String get wsDefaultTitle => 'Vaikepealkiri';
+
+  @override
+  String get wsTopicNavigation => 'Teema navigeerimine';
+
+  @override
+  String get wsHeadingOptions => 'Pealkirja atribuudid';
+
+  @override
+  String get wsDocumentOptions => 'Dokumendi sätted';
+
+  @override
+  String get wsSettingsPresent => 'Koostatud sätted olemas';
+
+  @override
+  String get wsTitleOverrideExplanation =>
+      'Asendab avaldatud pealkirja; pealkirja tekst ei muutu.';
+
+  @override
+  String get wsIgnoreVariables => 'Käsitle muutujaid sõnasõnalise tekstina';
+
+  @override
+  String get wsIgnoreVariablesExplanation =>
+      'Lubamisel ei asendata muutujalaadset teksti.';
+
+  @override
+  String get wsInstanceSelection => 'Spikri instantsid';
+
+  @override
+  String get wsInstanceExplanation =>
+      'Vali väljundid nimede, rühmade, loendite, välistuste või avaldistega.';
+
+  @override
+  String get wsFilterExplanation =>
+      'Filtreerib korduvkasutatavat sisu tingimuste järgi; ei vali spikri instantsi.';
+
+  @override
+  String get wsContextHelp => 'Kontekstispikri ID';
+
+  @override
+  String get wsCapitalization => 'Suur- ja väiketähed';
+
+  @override
+  String get wsLibraryTopic => 'Teegi teema';
+
+  @override
+  String get wsLastModified => 'Viimati muudetud';
+
+  @override
+  String get wsMissingTopicHeading => 'Teema H1 puudub. Lisa see lähtetekstis.';
+
+  @override
+  String get wsMultipleTopicHeadings =>
+      'Esimene H1 määrab teema pealkirja. Hilisemad H1-d on eraldi pealkirjad.';
+
+  @override
+  String get wsTopicIdentityMismatch =>
+      'Juure id erineb failinimest tulenevast teema ID-st. Nimeta teemafail ümber või vaata lähteteksti.';
+
+  @override
+  String get wsUnsupportedProperties =>
+      'Toetamata atribuudid säilitatakse. Vaata neid lähtetekstis.';
+
+  @override
+  String get wsGeneratedAnchor => 'Loodud ankur; väärtus loob ülekirjutuse.';
+
+  @override
+  String get wsHeadingBuilderLimitation =>
+      'Kinnitatud koostaja ei avalda H1 atribuute. Need kuuluvad pealkirjale, mitte XML-juurele.';
+
+  @override
   String get closeOtherTabs => 'Sulge teised vahelehed';
 
   @override

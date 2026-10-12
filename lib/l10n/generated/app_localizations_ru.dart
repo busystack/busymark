@@ -11,6 +11,92 @@ class AppLocalizationsRu extends AppLocalizations {
   AppLocalizationsRu([String locale = 'ru']) : super(locale);
 
   @override
+  String get wsMarkdownInstanceTitleLimitation =>
+      'Закреплённый builder не публикует заголовки экземпляров в темах Markdown. Разметка сохраняется; проверьте исходник.';
+
+  @override
+  String get wsTopicIdentity => 'ID темы';
+
+  @override
+  String get wsElementAnchor => 'Якорь элемента';
+
+  @override
+  String get wsHeadingText => 'Текст заголовка';
+
+  @override
+  String get wsDefaultTitle => 'Заголовок по умолчанию';
+
+  @override
+  String get wsTopicNavigation => 'Навигация темы';
+
+  @override
+  String get wsHeadingOptions => 'Атрибуты заголовка';
+
+  @override
+  String get wsDocumentOptions => 'Настройки документа';
+
+  @override
+  String get wsSettingsPresent => 'Есть явные настройки';
+
+  @override
+  String get wsTitleOverrideExplanation =>
+      'Переопределяет опубликованный заголовок; текст заголовка не меняется.';
+
+  @override
+  String get wsIgnoreVariables => 'Считать переменные буквальным текстом';
+
+  @override
+  String get wsIgnoreVariablesExplanation =>
+      'Если включено, текст, похожий на переменные, не подставляется.';
+
+  @override
+  String get wsInstanceSelection => 'Экземпляры справки';
+
+  @override
+  String get wsInstanceExplanation =>
+      'Выберите выпуски справки по именам, группам, спискам, исключениям или выражениям.';
+
+  @override
+  String get wsFilterExplanation =>
+      'Фильтрует повторно используемое содержимое по критериям; не выбирает экземпляр справки.';
+
+  @override
+  String get wsContextHelp => 'ID контекстной справки';
+
+  @override
+  String get wsCapitalization => 'Регистр';
+
+  @override
+  String get wsLibraryTopic => 'Библиотечная тема';
+
+  @override
+  String get wsLastModified => 'Последнее изменение';
+
+  @override
+  String get wsMissingTopicHeading =>
+      'H1 темы отсутствует. Добавьте его в исходнике.';
+
+  @override
+  String get wsMultipleTopicHeadings =>
+      'Первый H1 определяет заголовок темы. Остальные H1 — отдельные заголовки.';
+
+  @override
+  String get wsTopicIdentityMismatch =>
+      'Корневой id отличается от ID по имени файла. Используйте переименование файла темы или проверьте исходник.';
+
+  @override
+  String get wsUnsupportedProperties =>
+      'Неподдерживаемые атрибуты сохраняются. Проверьте их в исходнике.';
+
+  @override
+  String get wsGeneratedAnchor =>
+      'Сгенерированный якорь; значение создаёт переопределение.';
+
+  @override
+  String get wsHeadingBuilderLimitation =>
+      'Закреплённый builder не публикует атрибуты H1. Они принадлежат заголовку, а не корню XML.';
+
+  @override
   String get closeOtherTabs => 'Закрыть другие вкладки';
 
   @override

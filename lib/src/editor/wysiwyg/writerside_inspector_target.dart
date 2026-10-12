@@ -20,6 +20,7 @@ class WritersideInspectorTarget {
     this.inline,
     this.multiple = false,
     this.logicalTopic = false,
+    this.navigationEditable = true,
   });
   final String bufferId;
   final int revision;
@@ -31,6 +32,7 @@ class WritersideInspectorTarget {
   final BusyInlineStyleRange? inline;
   final bool multiple;
   final bool logicalTopic;
+  final bool navigationEditable;
   List<int> get address => _address(includeSourceOnly: true);
 
   /// Serialization can add XML whitespace nodes. They are not authored
@@ -101,9 +103,8 @@ class WritersideInspectorTarget {
   bool get topic =>
       logicalTopic ||
       block?.attributes['element'] == 'topic' ||
-      block?.kind == BusyBlockKind.heading &&
-          block?.attributes['level'] == '1' &&
-          block?.attributes.containsKey('element') != true;
+      block != null &&
+          WritersideEditingAdapter.topicHeading(document)?.id == block!.id;
   bool matches(String? id, int? generation, String? text) =>
       id == bufferId &&
       generation == revision &&
@@ -129,15 +130,11 @@ class WritersideInspectorTarget {
     required String source,
     required BusyDocument document,
   }) {
-    final root = document.blocks
-        .where(
-          (b) =>
-              b.attributes['element'] == 'topic' ||
-              b.kind == BusyBlockKind.heading &&
-                  b.attributes['level'] == '1' &&
-                  !b.attributes.containsKey('element'),
-        )
-        .firstOrNull;
+    final root = document.isXmlTopic
+        ? document.blocks
+              .where((b) => b.attributes['element'] == 'topic')
+              .firstOrNull
+        : WritersideEditingAdapter.topicHeading(document);
     final selected = fromSelection(
       bufferId: bufferId,
       revision: revision,
@@ -154,6 +151,7 @@ class WritersideInspectorTarget {
       block: selected.block,
       path: selected.path,
       logicalTopic: true,
+      navigationEditable: selected.navigationEditable,
     );
   }
 
@@ -179,6 +177,9 @@ class WritersideInspectorTarget {
         path: block == null ? const [] : model.elementPath(block.id),
         inline: inline,
         multiple: multiple,
+        navigationEditable: WritersideEditingAdapter.topicNavigationEditable(
+          document,
+        ),
       );
     } finally {
       model.dispose();

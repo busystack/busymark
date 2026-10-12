@@ -11,6 +11,84 @@ class AppLocalizationsJa extends AppLocalizations {
   AppLocalizationsJa([String locale = 'ja']) : super(locale);
 
   @override
+  String get wsMarkdownInstanceTitleLimitation =>
+      '固定バージョンのビルダーは Markdown トピックのインスタンス別タイトルを公開しません。既存のマークアップは保持されます。ソースで確認してください。';
+
+  @override
+  String get wsTopicIdentity => 'トピック ID';
+
+  @override
+  String get wsElementAnchor => '要素アンカー';
+
+  @override
+  String get wsHeadingText => '見出しテキスト';
+
+  @override
+  String get wsDefaultTitle => '既定のタイトル';
+
+  @override
+  String get wsTopicNavigation => 'トピックナビゲーション';
+
+  @override
+  String get wsHeadingOptions => '見出しの属性';
+
+  @override
+  String get wsDocumentOptions => '文書設定';
+
+  @override
+  String get wsSettingsPresent => '明示的な設定あり';
+
+  @override
+  String get wsTitleOverrideExplanation => '公開タイトルを上書きします。見出しテキストは変わりません。';
+
+  @override
+  String get wsIgnoreVariables => '変数をリテラルテキストとして扱う';
+
+  @override
+  String get wsIgnoreVariablesExplanation => '有効にすると、変数のようなテキストは置換されません。';
+
+  @override
+  String get wsInstanceSelection => 'ヘルプインスタンス';
+
+  @override
+  String get wsInstanceExplanation => '名前、グループ、リスト、除外、式でヘルプ出力を選択します。';
+
+  @override
+  String get wsFilterExplanation => '再利用する内容を条件で絞り込みます。ヘルプインスタンスの選択ではありません。';
+
+  @override
+  String get wsContextHelp => 'コンテキストヘルプ ID';
+
+  @override
+  String get wsCapitalization => '大文字・小文字';
+
+  @override
+  String get wsLibraryTopic => 'ライブラリトピック';
+
+  @override
+  String get wsLastModified => '最終更新';
+
+  @override
+  String get wsMissingTopicHeading => 'トピックの H1 がありません。ソースで追加してください。';
+
+  @override
+  String get wsMultipleTopicHeadings => '最初の H1 がトピックタイトルです。後続の H1 は別の見出しです。';
+
+  @override
+  String get wsTopicIdentityMismatch =>
+      'ルート id がファイル名によるトピック ID と異なります。トピックファイルの名前変更かソースを使用してください。';
+
+  @override
+  String get wsUnsupportedProperties => '未対応の属性は保持されます。ソースで確認してください。';
+
+  @override
+  String get wsGeneratedAnchor => '自動生成アンカー。値の入力で上書きします。';
+
+  @override
+  String get wsHeadingBuilderLimitation =>
+      '固定バージョンのビルダーは H1 属性を公開しません。属性の所有者は見出しであり、XML ルートではありません。';
+
+  @override
   String get closeOtherTabs => '他のタブを閉じる';
 
   @override

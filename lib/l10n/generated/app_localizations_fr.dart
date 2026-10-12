@@ -11,6 +11,92 @@ class AppLocalizationsFr extends AppLocalizations {
   AppLocalizationsFr([String locale = 'fr']) : super(locale);
 
   @override
+  String get wsMarkdownInstanceTitleLimitation =>
+      'Le constructeur fixé ne publie pas les titres par instance des sujets Markdown. Le balisage existant est conservé ; consultez la source.';
+
+  @override
+  String get wsTopicIdentity => 'ID du sujet';
+
+  @override
+  String get wsElementAnchor => 'Ancre de l’élément';
+
+  @override
+  String get wsHeadingText => 'Texte du titre';
+
+  @override
+  String get wsDefaultTitle => 'Titre par défaut';
+
+  @override
+  String get wsTopicNavigation => 'Navigation du sujet';
+
+  @override
+  String get wsHeadingOptions => 'Attributs du titre';
+
+  @override
+  String get wsDocumentOptions => 'Paramètres du document';
+
+  @override
+  String get wsSettingsPresent => 'Paramètres explicites présents';
+
+  @override
+  String get wsTitleOverrideExplanation =>
+      'Remplace le titre publié ; le texte du titre reste inchangé.';
+
+  @override
+  String get wsIgnoreVariables => 'Traiter les variables littéralement';
+
+  @override
+  String get wsIgnoreVariablesExplanation =>
+      'Si activé, le texte ressemblant à une variable n’est pas substitué.';
+
+  @override
+  String get wsInstanceSelection => 'Instances d’aide';
+
+  @override
+  String get wsInstanceExplanation =>
+      'Sélectionnez les sorties d’aide par noms, groupes, listes, exclusions ou expressions.';
+
+  @override
+  String get wsFilterExplanation =>
+      'Filtre le contenu réutilisable selon des critères ; ne sélectionne pas une instance d’aide.';
+
+  @override
+  String get wsContextHelp => 'ID d’aide contextuelle';
+
+  @override
+  String get wsCapitalization => 'Casse';
+
+  @override
+  String get wsLibraryTopic => 'Sujet de bibliothèque';
+
+  @override
+  String get wsLastModified => 'Dernière modification';
+
+  @override
+  String get wsMissingTopicHeading =>
+      'Aucun H1 de sujet. Ajoutez-le dans la source.';
+
+  @override
+  String get wsMultipleTopicHeadings =>
+      'Le premier H1 définit le titre du sujet. Les autres H1 sont des titres distincts.';
+
+  @override
+  String get wsTopicIdentityMismatch =>
+      'L’id racine diffère de l’ID issu du nom du fichier. Utilisez Renommer le fichier du sujet ou consultez la source.';
+
+  @override
+  String get wsUnsupportedProperties =>
+      'Les attributs non pris en charge sont conservés. Consultez-les dans la source.';
+
+  @override
+  String get wsGeneratedAnchor =>
+      'Ancre générée ; saisir une valeur crée un remplacement.';
+
+  @override
+  String get wsHeadingBuilderLimitation =>
+      'Le constructeur fixé ne publie pas les attributs H1. Ils appartiennent au titre, pas à la racine XML.';
+
+  @override
   String get closeOtherTabs => 'Fermer les autres onglets';
 
   @override

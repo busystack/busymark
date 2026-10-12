@@ -11,6 +11,91 @@ class AppLocalizationsPl extends AppLocalizations {
   AppLocalizationsPl([String locale = 'pl']) : super(locale);
 
   @override
+  String get wsMarkdownInstanceTitleLimitation =>
+      'Przypięty builder nie publikuje tytułów instancji w tematach Markdown. Istniejące znaczniki są zachowane; sprawdź źródło.';
+
+  @override
+  String get wsTopicIdentity => 'ID tematu';
+
+  @override
+  String get wsElementAnchor => 'Kotwica elementu';
+
+  @override
+  String get wsHeadingText => 'Tekst nagłówka';
+
+  @override
+  String get wsDefaultTitle => 'Tytuł domyślny';
+
+  @override
+  String get wsTopicNavigation => 'Nawigacja tematu';
+
+  @override
+  String get wsHeadingOptions => 'Atrybuty nagłówka';
+
+  @override
+  String get wsDocumentOptions => 'Ustawienia dokumentu';
+
+  @override
+  String get wsSettingsPresent => 'Obecne jawne ustawienia';
+
+  @override
+  String get wsTitleOverrideExplanation =>
+      'Zastępuje opublikowany tytuł; tekst nagłówka pozostaje bez zmian.';
+
+  @override
+  String get wsIgnoreVariables => 'Traktuj zmienne jako tekst dosłowny';
+
+  @override
+  String get wsIgnoreVariablesExplanation =>
+      'Po włączeniu tekst przypominający zmienne nie jest podstawiany.';
+
+  @override
+  String get wsInstanceSelection => 'Instancje pomocy';
+
+  @override
+  String get wsInstanceExplanation =>
+      'Wybierz wyjścia pomocy za pomocą nazw, grup, list, wykluczeń lub wyrażeń.';
+
+  @override
+  String get wsFilterExplanation =>
+      'Filtruje treść wielokrotnego użytku według kryteriów; nie wybiera instancji pomocy.';
+
+  @override
+  String get wsContextHelp => 'ID pomocy kontekstowej';
+
+  @override
+  String get wsCapitalization => 'Wielkość liter';
+
+  @override
+  String get wsLibraryTopic => 'Temat biblioteki';
+
+  @override
+  String get wsLastModified => 'Ostatnia zmiana';
+
+  @override
+  String get wsMissingTopicHeading => 'Brak H1 tematu. Dodaj go w źródle.';
+
+  @override
+  String get wsMultipleTopicHeadings =>
+      'Pierwszy H1 określa tytuł tematu. Kolejne H1 są osobnymi nagłówkami.';
+
+  @override
+  String get wsTopicIdentityMismatch =>
+      'Id korzenia różni się od ID z nazwy pliku. Użyj zmiany nazwy pliku tematu lub sprawdź źródło.';
+
+  @override
+  String get wsUnsupportedProperties =>
+      'Nieobsługiwane atrybuty są zachowane. Sprawdź je w źródle.';
+
+  @override
+  String get wsGeneratedAnchor =>
+      'Wygenerowana kotwica; wpisanie wartości tworzy nadpisanie.';
+
+  @override
+  String get wsHeadingBuilderLimitation =>
+      'Przypięty builder nie publikuje atrybutów H1. Należą do nagłówka, nie korzenia XML.';
+
+  @override
   String get closeOtherTabs => 'Zamknij pozostałe karty';
 
   @override

@@ -90,6 +90,7 @@ void main() {
     expect(result.value?.instanceTitle, 'Instance title');
     expect(result.value?.tocTitle, 'TOC title');
     expect(call?.method, 'showEditTitle');
+    expect((call!.arguments as Map)['instanceTitleEditable'], isTrue);
     expect((call?.arguments as Map<Object?, Object?>)['textDirection'], 'rtl');
     expect(
       (call?.arguments as Map<Object?, Object?>)['initialTitle'],

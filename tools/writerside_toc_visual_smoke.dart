@@ -463,7 +463,7 @@ class _HarnessState extends ConsumerState<_Harness> {
       _check(
         await _native(
                   'has',
-                  'Used for the current instance only. By default, inherited from topic title.',
+                  'The pinned builder does not publish instance title overrides in Markdown topics. Existing markup is preserved; inspect it in Source.',
                 ) ==
                 'true' &&
             await _native(

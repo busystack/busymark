@@ -11,6 +11,92 @@ class AppLocalizationsId extends AppLocalizations {
   AppLocalizationsId([String locale = 'id']) : super(locale);
 
   @override
+  String get wsMarkdownInstanceTitleLimitation =>
+      'Builder yang dipatok tidak menerbitkan judul instans pada topik Markdown. Markup yang ada tetap disimpan; periksa di Sumber.';
+
+  @override
+  String get wsTopicIdentity => 'ID topik';
+
+  @override
+  String get wsElementAnchor => 'Jangkar elemen';
+
+  @override
+  String get wsHeadingText => 'Teks judul';
+
+  @override
+  String get wsDefaultTitle => 'Judul bawaan';
+
+  @override
+  String get wsTopicNavigation => 'Navigasi topik';
+
+  @override
+  String get wsHeadingOptions => 'Atribut judul';
+
+  @override
+  String get wsDocumentOptions => 'Pengaturan dokumen';
+
+  @override
+  String get wsSettingsPresent => 'Ada pengaturan tertulis';
+
+  @override
+  String get wsTitleOverrideExplanation =>
+      'Mengganti judul yang diterbitkan; teks judul tidak berubah.';
+
+  @override
+  String get wsIgnoreVariables => 'Perlakukan variabel sebagai teks literal';
+
+  @override
+  String get wsIgnoreVariablesExplanation =>
+      'Jika diaktifkan, teks yang menyerupai variabel tidak diganti.';
+
+  @override
+  String get wsInstanceSelection => 'Instans bantuan';
+
+  @override
+  String get wsInstanceExplanation =>
+      'Pilih keluaran bantuan dengan nama, grup, daftar, pengecualian, atau ekspresi.';
+
+  @override
+  String get wsFilterExplanation =>
+      'Menyaring konten pakai ulang menurut kriteria; tidak memilih instans bantuan.';
+
+  @override
+  String get wsContextHelp => 'ID bantuan kontekstual';
+
+  @override
+  String get wsCapitalization => 'Kapitalisasi';
+
+  @override
+  String get wsLibraryTopic => 'Topik pustaka';
+
+  @override
+  String get wsLastModified => 'Terakhir diubah';
+
+  @override
+  String get wsMissingTopicHeading =>
+      'Tidak ada H1 topik. Tambahkan di Sumber.';
+
+  @override
+  String get wsMultipleTopicHeadings =>
+      'H1 pertama menentukan judul topik. H1 berikutnya adalah judul terpisah.';
+
+  @override
+  String get wsTopicIdentityMismatch =>
+      'id akar berbeda dari ID berdasarkan nama berkas. Gunakan Ubah nama berkas topik atau periksa Sumber.';
+
+  @override
+  String get wsUnsupportedProperties =>
+      'Atribut yang tidak didukung tetap disimpan. Periksa di Sumber.';
+
+  @override
+  String get wsGeneratedAnchor =>
+      'Jangkar yang dihasilkan; memasukkan nilai membuat penimpaan.';
+
+  @override
+  String get wsHeadingBuilderLimitation =>
+      'Builder yang dipatok tidak menerbitkan atribut H1. Atribut milik judul, bukan akar XML.';
+
+  @override
   String get closeOtherTabs => 'Tutup tab lainnya';
 
   @override

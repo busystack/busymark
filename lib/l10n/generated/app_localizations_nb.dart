@@ -11,6 +11,92 @@ class AppLocalizationsNb extends AppLocalizations {
   AppLocalizationsNb([String locale = 'nb']) : super(locale);
 
   @override
+  String get wsMarkdownInstanceTitleLimitation =>
+      'Den fastlåste byggeren publiserer ikke instanstitler i Markdown-emner. Eksisterende markering bevares; se kilden.';
+
+  @override
+  String get wsTopicIdentity => 'Emne-ID';
+
+  @override
+  String get wsElementAnchor => 'Elementanker';
+
+  @override
+  String get wsHeadingText => 'Overskriftstekst';
+
+  @override
+  String get wsDefaultTitle => 'Standardtittel';
+
+  @override
+  String get wsTopicNavigation => 'Emnenavigasjon';
+
+  @override
+  String get wsHeadingOptions => 'Overskriftsattributter';
+
+  @override
+  String get wsDocumentOptions => 'Dokumentinnstillinger';
+
+  @override
+  String get wsSettingsPresent => 'Eksplisitte innstillinger finnes';
+
+  @override
+  String get wsTitleOverrideExplanation =>
+      'Overstyrer publisert tittel; overskriftsteksten beholdes.';
+
+  @override
+  String get wsIgnoreVariables => 'Behandle variabeltekst bokstavelig';
+
+  @override
+  String get wsIgnoreVariablesExplanation =>
+      'Når aktivert erstattes ikke tekst som ligner variabler.';
+
+  @override
+  String get wsInstanceSelection => 'Hjelpeinstanser';
+
+  @override
+  String get wsInstanceExplanation =>
+      'Velg hjelpeutgaver med navn, grupper, lister, unntak eller uttrykk.';
+
+  @override
+  String get wsFilterExplanation =>
+      'Filtrer gjenbrukbart innhold etter kriterier; dette velger ikke en hjelpeinstans.';
+
+  @override
+  String get wsContextHelp => 'Konteksthjelp-ID';
+
+  @override
+  String get wsCapitalization => 'Store og små bokstaver';
+
+  @override
+  String get wsLibraryTopic => 'Bibliotekemne';
+
+  @override
+  String get wsLastModified => 'Sist endret';
+
+  @override
+  String get wsMissingTopicHeading =>
+      'Ingen H1 for emnet. Legg den til i kilden.';
+
+  @override
+  String get wsMultipleTopicHeadings =>
+      'Den første H1 bestemmer emnetittelen. Senere H1 er egne overskrifter.';
+
+  @override
+  String get wsTopicIdentityMismatch =>
+      'Rotens id avviker fra filnavnets emne-ID. Bruk Gi emnefil nytt navn eller se kilden.';
+
+  @override
+  String get wsUnsupportedProperties =>
+      'Ustøttede attributter bevares. Se dem i kilden.';
+
+  @override
+  String get wsGeneratedAnchor =>
+      'Generert anker; en verdi oppretter en overstyring.';
+
+  @override
+  String get wsHeadingBuilderLimitation =>
+      'Den fastlåste byggeren publiserer ikke H1-attributter. De tilhører overskriften, ikke XML-roten.';
+
+  @override
   String get closeOtherTabs => 'Lukk andre faner';
 
   @override

@@ -11,6 +11,92 @@ class AppLocalizationsPt extends AppLocalizations {
   AppLocalizationsPt([String locale = 'pt']) : super(locale);
 
   @override
+  String get wsMarkdownInstanceTitleLimitation =>
+      'O builder fixado não publica títulos por instância em tópicos Markdown. A marcação existente é preservada; consulte o código-fonte.';
+
+  @override
+  String get wsTopicIdentity => 'ID do tópico';
+
+  @override
+  String get wsElementAnchor => 'Âncora do elemento';
+
+  @override
+  String get wsHeadingText => 'Texto do cabeçalho';
+
+  @override
+  String get wsDefaultTitle => 'Título predefinido';
+
+  @override
+  String get wsTopicNavigation => 'Navegação do tópico';
+
+  @override
+  String get wsHeadingOptions => 'Atributos do cabeçalho';
+
+  @override
+  String get wsDocumentOptions => 'Definições do documento';
+
+  @override
+  String get wsSettingsPresent => 'Existem definições explícitas';
+
+  @override
+  String get wsTitleOverrideExplanation =>
+      'Substitui o título publicado; o texto do cabeçalho mantém-se.';
+
+  @override
+  String get wsIgnoreVariables => 'Tratar variáveis como texto literal';
+
+  @override
+  String get wsIgnoreVariablesExplanation =>
+      'Quando ativo, o texto semelhante a variáveis não é substituído.';
+
+  @override
+  String get wsInstanceSelection => 'Instâncias de ajuda';
+
+  @override
+  String get wsInstanceExplanation =>
+      'Selecione saídas por nomes, grupos, listas, exclusões ou expressões.';
+
+  @override
+  String get wsFilterExplanation =>
+      'Filtra conteúdo reutilizável por critérios; não seleciona uma instância de ajuda.';
+
+  @override
+  String get wsContextHelp => 'ID de ajuda contextual';
+
+  @override
+  String get wsCapitalization => 'Capitalização';
+
+  @override
+  String get wsLibraryTopic => 'Tópico de biblioteca';
+
+  @override
+  String get wsLastModified => 'Última alteração';
+
+  @override
+  String get wsMissingTopicHeading =>
+      'Não existe H1 do tópico. Adicione-o no código-fonte.';
+
+  @override
+  String get wsMultipleTopicHeadings =>
+      'O primeiro H1 determina o título do tópico. Os restantes são cabeçalhos separados.';
+
+  @override
+  String get wsTopicIdentityMismatch =>
+      'O id da raiz difere do ID baseado no ficheiro. Use Renomear ficheiro do tópico ou consulte o código-fonte.';
+
+  @override
+  String get wsUnsupportedProperties =>
+      'Os atributos não suportados são preservados. Consulte-os no código-fonte.';
+
+  @override
+  String get wsGeneratedAnchor =>
+      'Âncora gerada; introduzir um valor cria uma substituição.';
+
+  @override
+  String get wsHeadingBuilderLimitation =>
+      'O builder fixado não publica atributos H1. Pertencem ao cabeçalho, não à raiz XML.';
+
+  @override
   String get closeOtherTabs => 'Fechar os outros separadores';
 
   @override
@@ -5266,6 +5352,92 @@ class AppLocalizationsPt extends AppLocalizations {
 /// The translations for Portuguese, as used in Brazil (`pt_BR`).
 class AppLocalizationsPtBr extends AppLocalizationsPt {
   AppLocalizationsPtBr() : super('pt_BR');
+
+  @override
+  String get wsMarkdownInstanceTitleLimitation =>
+      'O builder fixado não publica títulos por instância em tópicos Markdown. A marcação existente é preservada; consulte o código-fonte.';
+
+  @override
+  String get wsTopicIdentity => 'ID do tópico';
+
+  @override
+  String get wsElementAnchor => 'Âncora do elemento';
+
+  @override
+  String get wsHeadingText => 'Texto do cabeçalho';
+
+  @override
+  String get wsDefaultTitle => 'Título padrão';
+
+  @override
+  String get wsTopicNavigation => 'Navegação do tópico';
+
+  @override
+  String get wsHeadingOptions => 'Atributos do cabeçalho';
+
+  @override
+  String get wsDocumentOptions => 'Configurações do documento';
+
+  @override
+  String get wsSettingsPresent => 'Existem configurações explícitas';
+
+  @override
+  String get wsTitleOverrideExplanation =>
+      'Substitui o título publicado; o texto do cabeçalho permanece.';
+
+  @override
+  String get wsIgnoreVariables => 'Tratar variáveis como texto literal';
+
+  @override
+  String get wsIgnoreVariablesExplanation =>
+      'Quando ativo, o texto semelhante a variáveis não é substituído.';
+
+  @override
+  String get wsInstanceSelection => 'Instâncias de ajuda';
+
+  @override
+  String get wsInstanceExplanation =>
+      'Selecione saídas por nomes, grupos, listas, exclusões ou expressões.';
+
+  @override
+  String get wsFilterExplanation =>
+      'Filtra conteúdo reutilizável por critérios; não seleciona uma instância de ajuda.';
+
+  @override
+  String get wsContextHelp => 'ID de ajuda contextual';
+
+  @override
+  String get wsCapitalization => 'Capitalização';
+
+  @override
+  String get wsLibraryTopic => 'Tópico de biblioteca';
+
+  @override
+  String get wsLastModified => 'Última alteração';
+
+  @override
+  String get wsMissingTopicHeading =>
+      'Não existe H1 do tópico. Adicione-o no código-fonte.';
+
+  @override
+  String get wsMultipleTopicHeadings =>
+      'O primeiro H1 determina o título do tópico. Os restantes são cabeçalhos separados.';
+
+  @override
+  String get wsTopicIdentityMismatch =>
+      'O id da raiz difere do ID baseado no arquivo. Use Renomear arquivo do tópico ou consulte o código-fonte.';
+
+  @override
+  String get wsUnsupportedProperties =>
+      'Os atributos não suportados são preservados. Consulte-os no código-fonte.';
+
+  @override
+  String get wsGeneratedAnchor =>
+      'Âncora gerada; introduzir um valor cria uma substituição.';
+
+  @override
+  String get wsHeadingBuilderLimitation =>
+      'O builder fixado não publica atributos H1. Pertencem ao cabeçalho, não à raiz XML.';
 
   @override
   String get closeOtherTabs => 'Fechar as outras abas';

@@ -11,6 +11,83 @@ class AppLocalizationsZh extends AppLocalizations {
   AppLocalizationsZh([String locale = 'zh']) : super(locale);
 
   @override
+  String get wsMarkdownInstanceTitleLimitation =>
+      '固定版本构建器不发布 Markdown 主题的实例标题覆盖。保留现有标记，请在源码中查看。';
+
+  @override
+  String get wsTopicIdentity => '主题 ID';
+
+  @override
+  String get wsElementAnchor => '元素锚点';
+
+  @override
+  String get wsHeadingText => '标题文本';
+
+  @override
+  String get wsDefaultTitle => '默认标题';
+
+  @override
+  String get wsTopicNavigation => '主题导航';
+
+  @override
+  String get wsHeadingOptions => '标题属性';
+
+  @override
+  String get wsDocumentOptions => '文档设置';
+
+  @override
+  String get wsSettingsPresent => '存在已编写设置';
+
+  @override
+  String get wsTitleOverrideExplanation => '覆盖发布的标题；标题文本保持不变。';
+
+  @override
+  String get wsIgnoreVariables => '将变量视为字面文本';
+
+  @override
+  String get wsIgnoreVariablesExplanation => '启用时，不替换类似变量的文本。';
+
+  @override
+  String get wsInstanceSelection => '帮助实例';
+
+  @override
+  String get wsInstanceExplanation => '通过名称、组、列表、排除项或表达式选择帮助输出。';
+
+  @override
+  String get wsFilterExplanation => '按条件筛选可复用内容；这不会选择帮助实例。';
+
+  @override
+  String get wsContextHelp => '上下文帮助 ID';
+
+  @override
+  String get wsCapitalization => '大小写';
+
+  @override
+  String get wsLibraryTopic => '库主题';
+
+  @override
+  String get wsLastModified => '最后修改';
+
+  @override
+  String get wsMissingTopicHeading => '尚未编写主题 H1。请在源码中添加。';
+
+  @override
+  String get wsMultipleTopicHeadings => '第一个 H1 决定主题标题，后续 H1 是独立标题。';
+
+  @override
+  String get wsTopicIdentityMismatch => '根 id 与文件名派生的主题 ID 不同。请重命名主题文件或查看源码。';
+
+  @override
+  String get wsUnsupportedProperties => '保留不受支持的属性。请在源码中查看。';
+
+  @override
+  String get wsGeneratedAnchor => '自动生成的锚点；输入值可覆盖。';
+
+  @override
+  String get wsHeadingBuilderLimitation =>
+      '固定版本构建器不发布 H1 属性。属性属于标题，而非 XML 根元素。';
+
+  @override
   String get closeOtherTabs => '关闭其他标签页';
 
   @override
@@ -4981,6 +5058,83 @@ class AppLocalizationsZh extends AppLocalizations {
 /// The translations for Chinese, as used in China (`zh_CN`).
 class AppLocalizationsZhCn extends AppLocalizationsZh {
   AppLocalizationsZhCn() : super('zh_CN');
+
+  @override
+  String get wsMarkdownInstanceTitleLimitation =>
+      '固定版本构建器不发布 Markdown 主题的实例标题覆盖。保留现有标记，请在源码中查看。';
+
+  @override
+  String get wsTopicIdentity => '主题 ID';
+
+  @override
+  String get wsElementAnchor => '元素锚点';
+
+  @override
+  String get wsHeadingText => '标题文本';
+
+  @override
+  String get wsDefaultTitle => '默认标题';
+
+  @override
+  String get wsTopicNavigation => '主题导航';
+
+  @override
+  String get wsHeadingOptions => '标题属性';
+
+  @override
+  String get wsDocumentOptions => '文档设置';
+
+  @override
+  String get wsSettingsPresent => '存在已编写设置';
+
+  @override
+  String get wsTitleOverrideExplanation => '覆盖发布的标题；标题文本保持不变。';
+
+  @override
+  String get wsIgnoreVariables => '将变量视为字面文本';
+
+  @override
+  String get wsIgnoreVariablesExplanation => '启用时，不替换类似变量的文本。';
+
+  @override
+  String get wsInstanceSelection => '帮助实例';
+
+  @override
+  String get wsInstanceExplanation => '通过名称、组、列表、排除项或表达式选择帮助输出。';
+
+  @override
+  String get wsFilterExplanation => '按条件筛选可复用内容；这不会选择帮助实例。';
+
+  @override
+  String get wsContextHelp => '上下文帮助 ID';
+
+  @override
+  String get wsCapitalization => '大小写';
+
+  @override
+  String get wsLibraryTopic => '库主题';
+
+  @override
+  String get wsLastModified => '最后修改';
+
+  @override
+  String get wsMissingTopicHeading => '尚未编写主题 H1。请在源码中添加。';
+
+  @override
+  String get wsMultipleTopicHeadings => '第一个 H1 决定主题标题，后续 H1 是独立标题。';
+
+  @override
+  String get wsTopicIdentityMismatch => '根 id 与文件名派生的主题 ID 不同。请重命名主题文件或查看源码。';
+
+  @override
+  String get wsUnsupportedProperties => '保留不受支持的属性。请在源码中查看。';
+
+  @override
+  String get wsGeneratedAnchor => '自动生成的锚点；输入值可覆盖。';
+
+  @override
+  String get wsHeadingBuilderLimitation =>
+      '固定版本构建器不发布 H1 属性。属性属于标题，而非 XML 根元素。';
 
   @override
   String get closeOtherTabs => '关闭其他标签页';

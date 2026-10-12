@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<buildprofiles>
+  <shortcuts>
+    <src>keymap.xml</src>
+    <layout name="Linux" display-name="Linux"/>
+  </shortcuts>
+  <build-profile instance="conformance">
+    <variables>
+      <noindex-content>true</noindex-content>
+      <offline-docs>false</offline-docs>
+    </variables>
+  </build-profile>
+</buildprofiles>

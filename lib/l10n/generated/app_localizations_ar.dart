@@ -11,6 +11,90 @@ class AppLocalizationsAr extends AppLocalizations {
   AppLocalizationsAr([String locale = 'ar']) : super(locale);
 
   @override
+  String get wsMarkdownInstanceTitleLimitation =>
+      'لا ينشر الباني المثبّت عناوين النسخ في مواضيع Markdown. تُحفظ العلامات الحالية؛ افحصها في المصدر.';
+
+  @override
+  String get wsTopicIdentity => 'معرّف الموضوع';
+
+  @override
+  String get wsElementAnchor => 'مرساة العنصر';
+
+  @override
+  String get wsHeadingText => 'نص العنوان';
+
+  @override
+  String get wsDefaultTitle => 'العنوان الافتراضي';
+
+  @override
+  String get wsTopicNavigation => 'تنقّل الموضوع';
+
+  @override
+  String get wsHeadingOptions => 'سمات العنوان';
+
+  @override
+  String get wsDocumentOptions => 'إعدادات المستند';
+
+  @override
+  String get wsSettingsPresent => 'توجد إعدادات مكتوبة';
+
+  @override
+  String get wsTitleOverrideExplanation =>
+      'يتجاوز العنوان المنشور؛ يبقى نص العنوان كما هو.';
+
+  @override
+  String get wsIgnoreVariables => 'معاملة المتغيرات كنص حرفي';
+
+  @override
+  String get wsIgnoreVariablesExplanation =>
+      'عند التفعيل، لا يُستبدل النص الذي يشبه المتغيرات.';
+
+  @override
+  String get wsInstanceSelection => 'نُسخ المساعدة';
+
+  @override
+  String get wsInstanceExplanation =>
+      'اختر المخرجات بالأسماء أو المجموعات أو القوائم أو الاستثناءات أو التعبيرات.';
+
+  @override
+  String get wsFilterExplanation =>
+      'يرشّح المحتوى المعاد استخدامه حسب المعايير؛ لا يختار نسخة مساعدة.';
+
+  @override
+  String get wsContextHelp => 'معرّف المساعدة السياقية';
+
+  @override
+  String get wsCapitalization => 'حالة الأحرف';
+
+  @override
+  String get wsLibraryTopic => 'موضوع مكتبة';
+
+  @override
+  String get wsLastModified => 'آخر تعديل';
+
+  @override
+  String get wsMissingTopicHeading => 'لا يوجد H1 للموضوع. أضفه في المصدر.';
+
+  @override
+  String get wsMultipleTopicHeadings =>
+      'يحدّد أول H1 عنوان الموضوع. عناوين H1 اللاحقة مستقلة.';
+
+  @override
+  String get wsTopicIdentityMismatch =>
+      'يختلف id الجذر عن معرّف الموضوع المشتق من اسم الملف. استخدم إعادة تسمية ملف الموضوع أو افحص المصدر.';
+
+  @override
+  String get wsUnsupportedProperties =>
+      'تُحفظ السمات غير المدعومة. افحصها في المصدر.';
+
+  @override
+  String get wsGeneratedAnchor => 'مرساة مولّدة؛ إدخال قيمة ينشئ تجاوزًا.';
+
+  @override
+  String get wsHeadingBuilderLimitation =>
+      'لا ينشر الباني المثبّت سمات H1. تخص العنوان وليس جذر XML.';
+
+  @override
   String get closeOtherTabs => 'إغلاق علامات التبويب الأخرى';
 
   @override

@@ -621,7 +621,7 @@ class BusyMarkMarkdownSerializer {
     final attributes = WritersideEditingAdapter.sourceAttributes(block)
       ..removeWhere(
         (k, v) =>
-            !WritersideSchema.attributesFor(tag).contains(k) &&
+            !WritersideSchema.preservedAttributesFor(tag).contains(k) &&
             !original.containsKey(k),
       );
     if (attributes.isEmpty) return source;
@@ -821,7 +821,7 @@ class BusyMarkMarkdownSerializer {
     final attrs = inline.attributes.entries.where(
       (entry) =>
           !{'src', 'href', 'alt', 'title'}.contains(entry.key) &&
-          WritersideSchema.attributesFor(tag).contains(entry.key),
+          WritersideSchema.preservedAttributesFor(tag).contains(entry.key),
     );
     final attributes = [
       ...attrs,

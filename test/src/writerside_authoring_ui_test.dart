@@ -94,6 +94,17 @@ void main() {
             ),
           ),
         );
+        final section = find.widgetWithText(ListTile, 'Topic navigation');
+        if (find
+            .byWidgetPredicate(
+              (w) => w is BusyMarkComboRow<String> && w.values.contains('all'),
+            )
+            .evaluate()
+            .isEmpty) {
+          await tester.ensureVisible(section);
+          await tester.tap(section);
+          await tester.pumpAndSettle();
+        }
         return tester.widget<BusyMarkComboRow<String>>(
           find.byWidgetPredicate(
             (w) => w is BusyMarkComboRow<String> && w.values.contains('all'),
@@ -221,7 +232,9 @@ void main() {
       ),
     );
     final field = find.descendant(
-      of: find.byKey(ValueKey('writerside-property-${chapter.id}-title')),
+      of: find.byKey(
+        ValueKey('writerside-property-a.topic-element-${chapter.id}-title'),
+      ),
       matching: find.byType(TextField),
     );
     expect(field, findsOneWidget);
@@ -275,7 +288,9 @@ void main() {
     final title = tester.widget<TextField>(
       find.descendant(
         of: find.byKey(
-          ValueKey('writerside-property-${code.id}-collapsed-title'),
+          ValueKey(
+            'writerside-property-a.topic-element-${code.id}-collapsed-title',
+          ),
         ),
         matching: find.byType(TextField),
       ),
@@ -904,10 +919,17 @@ void main() {
         expect(saved, isEmpty);
         Finder entry() => find.descendant(
           of: find.byKey(
-            const ValueKey('writerside-property-topic-switcher-label'),
+            ValueKey(
+              'writerside-property-a.${xml ? 'topic' : 'md'}-document-switcher-label',
+            ),
           ),
           matching: find.byType(TextField),
         );
+        if (entry().evaluate().isEmpty) {
+          await tester.ensureVisible(find.widgetWithText(ListTile, 'Advanced'));
+          await tester.tap(find.widgetWithText(ListTile, 'Advanced'));
+          await tester.pumpAndSettle();
+        }
         await tester.enterText(entry(), label);
         expect(saved, isEmpty);
         await tester.testTextInput.receiveAction(TextInputAction.done);
@@ -950,6 +972,10 @@ void main() {
         await tester.tap(_textField('Text'));
         await tester.pumpAndSettle();
         await selectTopic();
+        if (entry().evaluate().isEmpty) {
+          await tester.tap(find.widgetWithText(ListTile, 'Advanced'));
+          await tester.pumpAndSettle();
+        }
         expect(tester.widget<TextField>(entry()).controller!.text, label);
       },
     );
@@ -1205,7 +1231,9 @@ void main() {
       );
       expect(props.target!.attributes['id'], 'code');
       final entry = find.byKey(
-        ValueKey('writerside-property-${props.target!.id}-language'),
+        ValueKey(
+          'writerside-property-a.topic-element-${props.target!.id}-language',
+        ),
       );
       final language = find.descendant(
         of: entry,
@@ -1256,7 +1284,7 @@ void main() {
       await tester.tap(_textField('print(1);'));
       await tester.pumpAndSettle();
       final property = find.byKey(
-        const ValueKey('writerside-property-xml-1-language'),
+        const ValueKey('writerside-property-a.topic-element-xml-1-language'),
       );
       final entry = find.descendant(
         of: property,

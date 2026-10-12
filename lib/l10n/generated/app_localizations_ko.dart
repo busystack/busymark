@@ -11,6 +11,85 @@ class AppLocalizationsKo extends AppLocalizations {
   AppLocalizationsKo([String locale = 'ko']) : super(locale);
 
   @override
+  String get wsMarkdownInstanceTitleLimitation =>
+      '고정된 빌더는 Markdown 주제의 인스턴스 제목을 게시하지 않습니다. 기존 마크업은 보존됩니다. 소스에서 확인하세요.';
+
+  @override
+  String get wsTopicIdentity => '주제 ID';
+
+  @override
+  String get wsElementAnchor => '요소 앵커';
+
+  @override
+  String get wsHeadingText => '제목 텍스트';
+
+  @override
+  String get wsDefaultTitle => '기본 제목';
+
+  @override
+  String get wsTopicNavigation => '주제 탐색';
+
+  @override
+  String get wsHeadingOptions => '제목 속성';
+
+  @override
+  String get wsDocumentOptions => '문서 설정';
+
+  @override
+  String get wsSettingsPresent => '작성된 설정 있음';
+
+  @override
+  String get wsTitleOverrideExplanation => '게시 제목을 재정의하며 제목 텍스트는 변경하지 않습니다.';
+
+  @override
+  String get wsIgnoreVariables => '변수를 리터럴 텍스트로 처리';
+
+  @override
+  String get wsIgnoreVariablesExplanation => '활성화하면 변수처럼 보이는 텍스트를 치환하지 않습니다.';
+
+  @override
+  String get wsInstanceSelection => '도움말 인스턴스';
+
+  @override
+  String get wsInstanceExplanation => '이름, 그룹, 목록, 제외 또는 식으로 도움말 출력을 선택합니다.';
+
+  @override
+  String get wsFilterExplanation =>
+      '조건에 따라 재사용 콘텐츠를 필터링하며 도움말 인스턴스를 선택하지 않습니다.';
+
+  @override
+  String get wsContextHelp => '상황별 도움말 ID';
+
+  @override
+  String get wsCapitalization => '대소문자';
+
+  @override
+  String get wsLibraryTopic => '라이브러리 주제';
+
+  @override
+  String get wsLastModified => '최종 수정';
+
+  @override
+  String get wsMissingTopicHeading => '주제 H1이 없습니다. 소스에서 추가하세요.';
+
+  @override
+  String get wsMultipleTopicHeadings => '첫 H1이 주제 제목을 결정합니다. 이후 H1은 별도 제목입니다.';
+
+  @override
+  String get wsTopicIdentityMismatch =>
+      '루트 id가 파일명 기반 주제 ID와 다릅니다. 주제 파일 이름 바꾸기 또는 소스를 사용하세요.';
+
+  @override
+  String get wsUnsupportedProperties => '지원하지 않는 속성은 보존됩니다. 소스에서 확인하세요.';
+
+  @override
+  String get wsGeneratedAnchor => '생성된 앵커이며 값을 입력하면 재정의됩니다.';
+
+  @override
+  String get wsHeadingBuilderLimitation =>
+      '고정된 빌더는 H1 속성을 게시하지 않습니다. 속성은 XML 루트가 아닌 제목에 속합니다.';
+
+  @override
   String get closeOtherTabs => '다른 탭 닫기';
 
   @override

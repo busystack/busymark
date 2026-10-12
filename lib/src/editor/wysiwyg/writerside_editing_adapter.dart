@@ -15,6 +15,63 @@ import '../../writerside/writerside_schema.dart';
 class WritersideEditingAdapter {
   const WritersideEditingAdapter();
 
+  static bool isNativeHeading(BusyDocument document, BusyBlock block) =>
+      !document.isXmlTopic &&
+      block.kind == BusyBlockKind.heading &&
+      !block.attributes.containsKey('element');
+
+  /// The existing document interpretation uses the first top-level H1 as the
+  /// topic heading. Subsequent H1s retain their own heading/anchor ownership.
+  static BusyBlock? topicHeading(BusyDocument document) => document.blocks
+      .where(
+        (b) => isNativeHeading(document, b) && b.attributes['level'] == '1',
+      )
+      .firstOrNull;
+
+  static String propertyTag(BusyDocument document, BusyBlock block) =>
+      isNativeHeading(document, block) ? 'chapter' : tagForBlock(block);
+
+  static Iterable<String> propertyAttributes(
+    BusyDocument document,
+    BusyBlock block,
+  ) => WritersideSchema.attributesFor(propertyTag(document, block)).where(
+    (name) =>
+        !(topicHeading(document)?.id == block.id &&
+            !{'id', 'title'}.contains(name)),
+  );
+
+  /// Reuse the authored semantic parser to protect declarations that an opaque
+  /// editing block cannot safely expose as one unscoped navigation owner.
+  static bool topicNavigationEditable(BusyDocument document) {
+    final semantic =
+        document.authoredXml ??
+        const WritersideDocumentParser().parseMarkdown(
+          filePath: document.filePath,
+          source: document.source ?? '',
+          markdown: document,
+        );
+    final declarations = semantic.elements
+        .where((e) => e.name == 'show-structure')
+        .toList();
+    final topLevel = document.isXmlTopic
+        ? semantic.rootElement?.children
+                  .whereType<WritersideElementNode>()
+                  .where((e) => e.name == 'show-structure')
+                  .length ??
+              0
+        : semantic.nodes
+              .whereType<WritersideElementNode>()
+              .where((e) => e.name == 'show-structure')
+              .length;
+    return declarations.length < 2 &&
+        declarations.length == topLevel &&
+        !declarations.any(
+          (e) => e.attributes.keys.any(
+            {'instance', 'filter', 'switcher-key'}.contains,
+          ),
+        );
+  }
+
   /// Source authoring shares the semantic XML serializer and namespace rules.
   String? insertSourceLink({
     required String filePath,

@@ -46,94 +46,104 @@ Future<void> main(List<String> arguments) async {
       await item.copy(destination);
     }
   }
-  await File(p.join(root.path, 'topics/authoring.topic')).writeAsString(
-    '<topic id="authoring" title="Authoring XML"><p>Text</p><chapter id="section" title="Section"><p>Nested content</p><code-block lang="dart">print(1);</code-block></chapter></topic>',
-  );
-  await File(p.join(root.path, 'topics/authoring-markdown.md')).writeAsString(
-    '# Authoring Markdown\n\nText\n\n## Section\n\nNested content\n',
-  );
-  await File(
-    p.join(root.path, 'README.md'),
-  ).writeAsString('# Ordinary Markdown\n\nPlain text\n');
-  await File(p.join(root.path, 'topics/inspector.topic')).writeAsString(
-    '<topic id="inspector" title="Inspector"><p id="caret">Caret A</p><chapter id="b" title="Block B"><chapter id="nested" title="Nested"><p>Nested body</p><code-block id="file" lang="text" src="inspector-sample.txt"/></chapter></chapter><deflist collapsible="true" default-state="expanded"><def title="Term" default-state="inherited"><p>Definition.</p></def></deflist></topic>',
-  );
-  await File(p.join(root.path, 'topics/inspector-markdown.md')).writeAsString(
-    '# Inspector {id="inspector-markdown"}\n\nCaret A\n\n## Block B\n\n### Nested\n\nNested body\n\n```text\n```\n{id="file" src="inspector-sample.txt"}\n',
-  );
-  await File(
-    p.join(root.path, 'topics/inspector-sample.txt'),
-  ).writeAsString('first\nsecond\nthird\n');
-  await File(
-    p.join(root.path, 'topics/inspector-corrections.md'),
-  ).writeAsString(
-    '# Inspector Corrections\n\nUse `{id="literal-code"}`\n\nUse [**link**](authoring.topic){id="owned-link"}\n\n'
-    'See [`{id="linked-literal"}`](authoring.topic){id="code-reference"}\n\n'
-    'Show ![{id="image-literal"}](logo.png){id="alt-reference" width="24"}\n\n'
-    '- First **item**\n- Second item\n\n- [x] Checked task\n- [ ] Unchecked task\n\n> A **note**.\n{style="note"}\n\n'
-    'Numbered override.\n\n3. Numbered parent\n   4. Nested first\n   5. Nested second\n4. Numbered sibling\n\n'
-    '{start="10" id="numbered-list"}\n\nNumbered markers.\n\n'
-    '3. Marker parent\n   4. Marker nested first\n   5. Marker nested second\n4. Marker sibling\n',
-  );
-  await Directory(p.join(root.path, 'images')).create();
-  await File(
-    p.join(fixture.parent.path, 'property_conformance/images/logo.png'),
-  ).copy(p.join(root.path, 'images/logo.png'));
-  await File(
-    p.join(fixture.parent.path, 'property_conformance/images/logo_dark.png'),
-  ).copy(p.join(root.path, 'images/logo_dark.png'));
-  final configuration = File(p.join(root.path, 'writerside.cfg'));
-  await configuration.writeAsString(
-    (await configuration.readAsString()).replaceFirst(
-      '<topics dir="topics"/>',
-      '<topics dir="topics"/><images dir="images"/>',
-    ),
-  );
-  await File(
-    p.join(root.path, 'topics/inspector-mappings.topic'),
-  ).writeAsString(
-    '<topic id="inspector-mappings" title="Inspector mappings"><p>Press <shortcut>Ctrl+S</shortcut> now.</p><p>Open <a href="inspector.topic"><b>Guide</b></a> now.</p><img id="image" src="logo.png" alt="Logo" preview-src="logo.png"/><include id="own-include" from="inspector.topic" element-id="b"/></topic>',
-  );
-  for (final xml in [true, false]) {
+  if (Platform.environment['BUSYMARK_PROPERTY_CONTRACT_ONLY'] != '1') {
+    for (final name in ['contract-xml.topic', 'contract-markdown.md']) {
+      await File(
+        p.join(
+          'test/fixtures/writerside/property_contract_conformance/topics',
+          name,
+        ),
+      ).copy(p.join(root.path, 'topics', name));
+    }
+    await File(p.join(root.path, 'topics/authoring.topic')).writeAsString(
+      '<topic id="authoring" title="Authoring XML"><p>Text</p><chapter id="section" title="Section"><p>Nested content</p><code-block lang="dart">print(1);</code-block></chapter></topic>',
+    );
+    await File(p.join(root.path, 'topics/authoring-markdown.md')).writeAsString(
+      '# Authoring Markdown\n\nText\n\n## Section\n\nNested content\n',
+    );
     await File(
-      p.join(
-        root.path,
-        'topics/inline-references-${xml ? 'xml.topic' : 'markdown.md'}',
-      ),
+      p.join(root.path, 'README.md'),
+    ).writeAsString('# Ordinary Markdown\n\nPlain text\n');
+    await File(p.join(root.path, 'topics/inspector.topic')).writeAsString(
+      '<topic id="inspector" title="Inspector"><p id="caret">Caret A</p><chapter id="b" title="Block B"><chapter id="nested" title="Nested"><p>Nested body</p><code-block id="file" lang="text" src="inspector-sample.txt"/></chapter></chapter><deflist collapsible="true" default-state="expanded"><def title="Term" default-state="inherited"><p>Definition.</p></def></deflist></topic>',
+    );
+    await File(p.join(root.path, 'topics/inspector-markdown.md')).writeAsString(
+      '# Inspector {id="inspector-markdown"}\n\nCaret A\n\n## Block B\n\n### Nested\n\nNested body\n\n```text\n```\n{id="file" src="inspector-sample.txt"}\n',
+    );
+    await File(
+      p.join(root.path, 'topics/inspector-sample.txt'),
+    ).writeAsString('first\nsecond\nthird\n');
+    await File(
+      p.join(root.path, 'topics/inspector-corrections.md'),
     ).writeAsString(
-      xml
-          ? '<topic id="inline-references-xml" title="Inline references XML"><p>Before <a href="inspector.topic">Read <b>guide</b></a> and <a href="inspector.topic">Other</a>.</p><p>Vars %product% and %product%.</p><p>Keys <shortcut key="\$Save">Save</shortcut> and <shortcut key="\$Save">Save</shortcut>.</p><p>Empty <shortcut key="\$Save"/><shortcut key="\$Save"/>.</p></topic>'
-          : '# Inline references Markdown\n\nBefore [Read **guide**][ref] and [Other][ref].\n\nVars %product% and %product%.\n\nKeys <shortcut key="\$Save">Save</shortcut> and <shortcut key="\$Save">Save</shortcut>.\n\nEmpty <shortcut key="\$Save"/><shortcut key="\$Save"/>.\n\n[ref]: inspector.topic "Kept title"\n',
+      '# Inspector Corrections\n\nUse `{id="literal-code"}`\n\nUse [**link**](authoring.topic){id="owned-link"}\n\n'
+      'See [`{id="linked-literal"}`](authoring.topic){id="code-reference"}\n\n'
+      'Show ![{id="image-literal"}](logo.png){id="alt-reference" width="24"}\n\n'
+      '- First **item**\n- Second item\n\n- [x] Checked task\n- [ ] Unchecked task\n\n> A **note**.\n{style="note"}\n\n'
+      'Numbered override.\n\n3. Numbered parent\n   4. Nested first\n   5. Nested second\n4. Numbered sibling\n\n'
+      '{start="10" id="numbered-list"}\n\nNumbered markers.\n\n'
+      '3. Marker parent\n   4. Marker nested first\n   5. Marker nested second\n4. Marker sibling\n',
+    );
+    await Directory(p.join(root.path, 'images')).create();
+    await File(
+      p.join(fixture.parent.path, 'property_conformance/images/logo.png'),
+    ).copy(p.join(root.path, 'images/logo.png'));
+    await File(
+      p.join(fixture.parent.path, 'property_conformance/images/logo_dark.png'),
+    ).copy(p.join(root.path, 'images/logo_dark.png'));
+    final configuration = File(p.join(root.path, 'writerside.cfg'));
+    await configuration.writeAsString(
+      (await configuration.readAsString()).replaceFirst(
+        '<topics dir="topics"/>',
+        '<topics dir="topics"/><images dir="images"/>',
+      ),
+    );
+    await File(
+      p.join(root.path, 'topics/inspector-mappings.topic'),
+    ).writeAsString(
+      '<topic id="inspector-mappings" title="Inspector mappings"><p>Press <shortcut>Ctrl+S</shortcut> now.</p><p>Open <a href="inspector.topic"><b>Guide</b></a> now.</p><img id="image" src="logo.png" alt="Logo" preview-src="logo.png"/><include id="own-include" from="inspector.topic" element-id="b"/></topic>',
+    );
+    for (final xml in [true, false]) {
+      await File(
+        p.join(
+          root.path,
+          'topics/inline-references-${xml ? 'xml.topic' : 'markdown.md'}',
+        ),
+      ).writeAsString(
+        xml
+            ? '<topic id="inline-references-xml" title="Inline references XML"><p>Before <a href="inspector.topic">Read <b>guide</b></a> and <a href="inspector.topic">Other</a>.</p><p>Vars %product% and %product%.</p><p>Keys <shortcut key="\$Save">Save</shortcut> and <shortcut key="\$Save">Save</shortcut>.</p><p>Empty <shortcut key="\$Save"/><shortcut key="\$Save"/>.</p></topic>'
+            : '# Inline references Markdown\n\nBefore [Read **guide**][ref] and [Other][ref].\n\nVars %product% and %product%.\n\nKeys <shortcut key="\$Save">Save</shortcut> and <shortcut key="\$Save">Save</shortcut>.\n\nEmpty <shortcut key="\$Save"/><shortcut key="\$Save"/>.\n\n[ref]: inspector.topic "Kept title"\n',
+      );
+    }
+    for (final xml in [true, false]) {
+      const body =
+          '<p id="image-variables">%product%<img src="logo.png" alt="Product" width="16"/>%product%%product%</p><p id="break-variables">%product%<br/>%product%</p>';
+      await File(
+        p.join(
+          root.path,
+          'topics/variable-media-${xml ? 'xml.topic' : 'markdown.md'}',
+        ),
+      ).writeAsString(
+        xml
+            ? '<topic id="variable-media-xml" title="Variable media XML">$body</topic>'
+            : '# Variable media Markdown\n\n<chapter id="media" title="Media">$body</chapter>\n',
+      );
+    }
+    final variables = File(p.join(root.path, 'v.list'));
+    await variables.writeAsString(
+      (await variables.readAsString()).replaceFirst(
+        '</vars>',
+        '<var name="product_long" value="BusyMark Long"/></vars>',
+      ),
+    );
+    final tree = File(p.join(root.path, 'conformance.tree'));
+    await tree.writeAsString(
+      (await tree.readAsString()).replaceFirst(
+        '</instance-profile>',
+        '<toc-element topic="contract-xml.topic"/><toc-element topic="contract-markdown.md"/><toc-element topic="authoring.topic"/><toc-element topic="authoring-markdown.md"/><toc-element topic="inspector.topic" toc-title="Inspector XML"/><toc-element topic="inspector-markdown.md" toc-title="Inspector Markdown"/><toc-element topic="inspector-corrections.md"/><toc-element topic="inspector-mappings.topic"/><toc-element topic="inline-references-xml.topic"/><toc-element topic="inline-references-markdown.md"/><toc-element topic="variable-media-xml.topic"/><toc-element topic="variable-media-markdown.md"/></instance-profile>',
+      ),
     );
   }
-  for (final xml in [true, false]) {
-    const body =
-        '<p id="image-variables">%product%<img src="logo.png" alt="Product" width="16"/>%product%%product%</p><p id="break-variables">%product%<br/>%product%</p>';
-    await File(
-      p.join(
-        root.path,
-        'topics/variable-media-${xml ? 'xml.topic' : 'markdown.md'}',
-      ),
-    ).writeAsString(
-      xml
-          ? '<topic id="variable-media-xml" title="Variable media XML">$body</topic>'
-          : '# Variable media Markdown\n\n<chapter id="media" title="Media">$body</chapter>\n',
-    );
-  }
-  final variables = File(p.join(root.path, 'v.list'));
-  await variables.writeAsString(
-    (await variables.readAsString()).replaceFirst(
-      '</vars>',
-      '<var name="product_long" value="BusyMark Long"/></vars>',
-    ),
-  );
-  final tree = File(p.join(root.path, 'conformance.tree'));
-  await tree.writeAsString(
-    (await tree.readAsString()).replaceFirst(
-      '</instance-profile>',
-      '<toc-element topic="authoring.topic"/><toc-element topic="authoring-markdown.md"/><toc-element topic="inspector.topic" toc-title="Inspector XML"/><toc-element topic="inspector-markdown.md" toc-title="Inspector Markdown"/><toc-element topic="inspector-corrections.md"/><toc-element topic="inspector-mappings.topic"/><toc-element topic="inline-references-xml.topic"/><toc-element topic="inline-references-markdown.md"/><toc-element topic="variable-media-xml.topic"/><toc-element topic="variable-media-markdown.md"/></instance-profile>',
-    ),
-  );
   final defaultsFixture = Directory(
     p.join(fixture.parent.path, 'property_defaults_conformance'),
   );
@@ -302,6 +312,7 @@ class _HarnessState extends ConsumerState<_Harness> {
     );
     await Scrollable.ensureVisible(
       element,
+      alignment: 0.25,
       duration: const Duration(milliseconds: 200),
     ).timeout(const Duration(seconds: 5));
     await _pause();
@@ -875,6 +886,425 @@ class _HarnessState extends ConsumerState<_Harness> {
     }
   }
 
+  Future<void> _runPropertyContract(
+    Future<void> Function() openInspector,
+  ) async {
+    final controller = ref.read(workspaceControllerProvider.notifier);
+    final settings = ref.read(appSettingsControllerProvider.notifier);
+    BusyMarkWritersideProperties inspector() =>
+        _elements((w) => w is BusyMarkWritersideProperties).single.widget
+            as BusyMarkWritersideProperties;
+    List<String> fields() => _elements(
+      (w) => w is BusyMarkGroupedTextEntry,
+    ).map((e) => (e.widget as BusyMarkGroupedTextEntry).label).toList();
+    Future<void> sourceCaret(int offset) async {
+      await _native('chord', 'ctrl+shift+2');
+      await _until(
+        () => _elements((w) => w is BusyMarkSourceEditor).isNotEmpty,
+        'Contract Source mode is ready',
+      );
+      await _pause();
+      ((_elements((w) => w is BusyMarkSourceEditor).single as StatefulElement)
+                  .state
+              as BusyMarkSourceEditorState)
+          .scrollToOffset(offset);
+      await _pause();
+    }
+
+    Future<void> section(String title, {String? field}) async {
+      if (field != null && fields().contains(field)) return;
+      await _tap(
+        _elements(
+          (w) =>
+              w is ListTile &&
+              w.title is Text &&
+              (w.title as Text).data == title,
+        ).single,
+      );
+    }
+
+    Future<void> property(String label, String value) async {
+      final entry =
+          _elements(
+                (w) => w is BusyMarkGroupedTextEntry && w.label == label,
+              ).single.widget
+              as BusyMarkGroupedTextEntry;
+      await _type(
+        _elements(
+          (w) => w is TextField && w.controller == entry.controller,
+        ).single,
+        value,
+      );
+      await _key(PhysicalKeyboardKey.enter, LogicalKeyboardKey.enter);
+    }
+
+    Future<void> combo(String title, String label) async {
+      await _tap(
+        _elements(
+          (w) => w is BusyMarkComboRow<String> && w.title == title,
+        ).single,
+      );
+      _nativeMenuOpen = true;
+      await _tapLabel(label);
+    }
+
+    Future<void> reopen() async {
+      await _native('chord', 'ctrl+s');
+      await _until(
+        () => !ref.read(workspaceControllerProvider).activeBuffer!.isDirty,
+        'Contract source saved',
+      );
+      final buffer = ref.read(workspaceControllerProvider).activeBuffer!;
+      _check(
+        await File(buffer.filePath!).readAsString() == buffer.text,
+        'Contract source persisted exactly',
+      );
+      _check(
+        await controller.closeDocumentBuffer(buffer.id),
+        'Contract buffer closes',
+      );
+      await controller.openActiveFile(buffer.filePath!);
+      await _pause();
+    }
+
+    for (final xml in [true, false]) {
+      final stem = xml ? 'contract-xml' : 'contract-markdown';
+      final path = p.join(
+        widget.root.path,
+        'topics/$stem.${xml ? 'topic' : 'md'}',
+      );
+      await controller.openActiveFile(path);
+      await sourceCaret(_source.indexOf(xml ? '<topic' : '# Markdown'));
+      if (!ref.read(appSettingsControllerProvider).elementPropertiesVisible) {
+        await openInspector();
+      }
+      await sourceCaret(_source.indexOf(xml ? '<topic' : '# Markdown'));
+      _check(
+        inspector().topicSelected,
+        '$stem Source identifies the logical topic',
+      );
+      _check(
+        !fields().contains('Element ID (id)'),
+        '$stem topic identity is not a scalar field',
+      );
+      _check(
+        fields().contains(xml ? 'Default title (title)' : 'Heading text'),
+        '$stem ordinary title is primary',
+      );
+      final initial = _source;
+      await _capture('$stem-topic-main');
+      await _tapLabel('Rename Topic File');
+      await _pause();
+      await _tapLabel('Cancel');
+      _check(
+        _source == initial && await File(path).exists(),
+        '$stem identity routes to the existing rename workflow and cancellation preserves source',
+      );
+
+      await property(
+        xml ? 'Default title (title)' : 'Heading text',
+        xml ? 'Edited XML topic' : 'Edited Markdown topic',
+      );
+      _check(
+        _source.contains(
+          xml ? 'id="contract-xml"' : 'id="authored-topic-anchor"',
+        ),
+        '$stem title preserves identity and authored anchor',
+      );
+      _check(
+        _source.contains(
+          xml ? '<b>topic title</b>' : 'custom-setting: untouched',
+        ),
+        '$stem title preserves conditional markup or front matter',
+      );
+      await _tapLabel('Show in Source');
+      await _pause();
+      final changedTitle = _source;
+      await _native('chord', 'ctrl+z');
+      await _pause();
+      _check(_source == initial, '$stem title undo is one step');
+      await _native('chord', 'ctrl+shift+z');
+      await _pause();
+      _check(_source == changedTitle, '$stem title redo preserves source');
+      await sourceCaret(_source.indexOf(xml ? '<topic' : '# Edited'));
+      await section('Advanced', field: 'Switcher label (switcher-label)');
+      await _capture('$stem-topic-advanced');
+      _check(
+        !fields().contains('Filter (filter)') &&
+            !fields().contains('Help instances (instance)'),
+        '$stem topic does not offer content conditions as root settings',
+      );
+      await property(
+        'Switcher label (switcher-label)',
+        '$stem platform edited',
+      );
+      _check(
+        _source.contains(
+          xml
+              ? 'switcher-label="contract-xml platform edited"'
+              : 'switcher-label: contract-markdown platform edited',
+        ),
+        '$stem switcher edits its document owner',
+      );
+      if (!xml) {
+        await property('Element anchor (id)', 'edited-topic-anchor');
+        _check(
+          _source.contains('id="edited-topic-anchor"') &&
+              p.basename(path) == 'contract-markdown.md',
+          'Markdown heading anchor is distinct from file identity',
+        );
+      }
+      await section('Topic navigation');
+      for (final preset in [
+        'Use default',
+        'All titled elements',
+        'No navigation',
+      ]) {
+        await combo('Navigation elements', preset);
+        final beforeCustom = _source;
+        await combo('Navigation elements', 'Custom navigation');
+        _check(
+          fields().contains('Navigation elements (for)') &&
+              fields().contains('Navigation depth (depth)'),
+          '$stem Custom from $preset exposes the compound editor',
+        );
+        _check(
+          _source == beforeCustom,
+          '$stem selecting Custom does not invent source settings',
+        );
+      }
+      final entry =
+          _elements(
+                (w) =>
+                    w is BusyMarkGroupedTextEntry &&
+                    w.label == 'Navigation elements (for)',
+              ).single.widget
+              as BusyMarkGroupedTextEntry;
+      await _type(
+        _elements(
+          (w) => w is TextField && w.controller == entry.controller,
+        ).single,
+        'chapter,procedure,tab,def',
+      );
+      final depthEntry =
+          _elements(
+                (w) =>
+                    w is BusyMarkGroupedTextEntry &&
+                    w.label == 'Navigation depth (depth)',
+              ).single.widget
+              as BusyMarkGroupedTextEntry;
+      await _type(
+        _elements(
+          (w) => w is TextField && w.controller == depthEntry.controller,
+        ).single,
+        'invalid',
+      );
+      final beforeInvalid = _source;
+      await openInspector();
+      _check(
+        ref.read(appSettingsControllerProvider).elementPropertiesVisible &&
+            _source == beforeInvalid,
+        '$stem palette close cannot discard an invalid navigation draft',
+      );
+      await _capture('$stem-navigation-invalid');
+      await property('Navigation depth (depth)', '2');
+      final navigationSource = _source;
+      _check(
+        navigationSource.contains('for="chapter,procedure,tab,def"') &&
+            navigationSource.contains('depth="2"'),
+        '$stem compound navigation publishes both values',
+      );
+      await _capture('$stem-navigation-custom');
+      await _tapLabel('Show in Source');
+      await _pause();
+      await _native('chord', 'ctrl+z');
+      await _pause();
+      _check(_source == beforeInvalid, '$stem compound navigation is one undo');
+      await _native('chord', 'ctrl+shift+z');
+      await _pause();
+      _check(
+        _source == navigationSource,
+        '$stem compound navigation redo restores both fields',
+      );
+      await sourceCaret(_source.indexOf(xml ? '<chapter' : '## Markdown'));
+      _check(!inspector().topicSelected, '$stem chapter has its own owner');
+      await _capture('$stem-chapter-main');
+      await combo('Published initial state (default-state)', 'Use default');
+      _check(
+        !inspector().target!.attributes.containsKey('default-state'),
+        '$stem reset removes the local initial-state override',
+      );
+      await combo('Published initial state (default-state)', 'Expanded');
+
+      await property(
+        xml ? 'Default title (title)' : 'Heading text',
+        xml ? 'Edited XML chapter' : 'Edited Markdown chapter',
+      );
+      _check(
+        _source.contains(
+          xml ? '<b>chapter title</b>' : 'title="Published Markdown override"',
+        ),
+        '$stem default chapter title preserves distinct overrides',
+      );
+      await property(
+        'Element anchor (id)',
+        xml ? 'edited-xml-chapter' : 'edited-markdown-chapter',
+      );
+      await _native('chord', 'ctrl+shift+1');
+      await _pause();
+      await _tap(
+        _field(xml ? 'Edited XML chapter' : 'Edited Markdown chapter'),
+      );
+      await _pause();
+      _check(
+        !inspector().topicSelected,
+        '$stem Editor selects the complete chapter owner',
+      );
+      _check(
+        fields().contains(xml ? 'Default title (title)' : 'Heading text'),
+        '$stem inspector remains usable in Editor',
+      );
+      await section('Advanced', field: 'Help instances (instance)');
+      if (!xml) {
+        await property('Title override (title)', 'Edited Markdown override');
+      }
+      await property('Help instances (instance)', 'conformance');
+      _check(
+        _source.contains('instance="conformance"'),
+        '$stem conditional chapter setting is authored',
+      );
+      await property('Help instances (instance)', '');
+      await sourceCaret(
+        _source.indexOf(xml ? '<p id="xml-paragraph"' : 'Literal %product%'),
+      );
+      _check(
+        fields().contains('Element anchor (id)'),
+        '$stem paragraph anchor is primary',
+      );
+      await _capture('$stem-paragraph-main');
+      await section('Advanced', field: 'Help instances (instance)');
+      final longInstances = List.generate(18, (i) => '!other$i').join(',');
+      await property('Help instances (instance)', longInstances);
+      await _capture('$stem-long-instances');
+      _check(
+        inspector().target!.attributes['instance'] == longInstances,
+        '$stem long conditional values are retained',
+      );
+      await property('Help instances (instance)', '!other,conformance');
+      _check(
+        _source.contains('instance="!other,conformance"'),
+        '$stem paragraph permits legal instance exclusions and lists',
+      );
+      await property('Help instances (instance)', 'conformance');
+      await property('Filter (filter)', 'private');
+      _check(
+        _source.contains('filter="private"'),
+        '$stem filter edits criteria independently',
+      );
+      await property('Filter (filter)', 'public');
+      await _capture('$stem-paragraph-advanced');
+      await _native('chord', 'Tab');
+      await _pause();
+      _check(
+        FocusManager.instance.primaryFocus != null,
+        '$stem keyboard traversal retains focus',
+      );
+      await _native('chord', 'ctrl+shift+4');
+      await _pause();
+      _check(
+        _elements((w) => w is BusyMarkSourceEditor).isNotEmpty,
+        '$stem Split source is present',
+      );
+      await _native('chord', 'ctrl+shift+3');
+      await _pause();
+      _check(inspector().readOnly, '$stem Reading inspector is read-only');
+      final readOnlySource = _source;
+      await _capture('$stem-reading');
+      await _native('chord', 'ctrl+shift+2');
+      await _pause();
+      _check(
+        _source == readOnlySource,
+        '$stem changing views does not edit source',
+      );
+      await settings.setThemeModePreference(BusyMarkThemeModePreference.dark);
+      await windowManager.setSize(const Size(860, 760));
+      await _pause();
+      await _capture('$stem-narrow-dark');
+      _check(
+        _elements((w) => w is BusyMarkWritersideProperties).length == 1,
+        '$stem narrow window keeps one inspector',
+      );
+      await windowManager.setSize(const Size(1440, 1000));
+      await settings.setThemeModePreference(BusyMarkThemeModePreference.light);
+      await _pause();
+      final saved = _source;
+      await reopen();
+      _check(
+        _source == saved,
+        '$stem save close reopen preserves exact source',
+      );
+      await sourceCaret(_source.indexOf(xml ? '<topic' : '# Edited'));
+      _check(
+        fields().contains(xml ? 'Default title (title)' : 'Heading text'),
+        '$stem reopened title remains available',
+      );
+      await _capture('$stem-reopened');
+      final titleSource = _source;
+      await _tapLabel('Edit Title...');
+      await _pause();
+      await _native('activate', 'Advanced Settings');
+      if (xml) {
+        await _native('set-entry', '2\nPublished $stem instance');
+      } else {
+        _check(
+          await _native(
+                'has',
+                'The pinned builder does not publish instance title overrides in Markdown topics. Existing markup is preserved; inspect it in Source.',
+              ) ==
+              'true',
+          '$stem existing title workflow explains the unsupported instance mapping',
+        );
+      }
+      await _native('set-entry', '1\nPublished $stem TOC');
+      await _capture('$stem-instance-toc-title');
+      await _native('activate', 'OK');
+      if (xml) {
+        await _until(
+          () => _source.contains('Published $stem instance'),
+          '$stem existing title workflow publishes the instance title',
+        );
+      } else {
+        await _until(
+          () =>
+              !_elements((w) => w is Text && w.data == 'Edit Title').isNotEmpty,
+          '$stem title workflow closes',
+        );
+      }
+      _check(
+        _source.contains(
+          xml ? 'title="Edited XML topic"' : '# Edited Markdown topic',
+        ),
+        '$stem instance title does not replace the default owner',
+      );
+      _check(
+        xml
+            ? _source.contains('<b>topic title</b>')
+            : _source.contains('custom-setting: untouched'),
+        '$stem instance edit preserves surrounding authored content',
+      );
+      _check(
+        xml ? _source != titleSource : _source == titleSource,
+        '$stem instance scope is independently authored or protected according to builder support',
+      );
+      _check(
+        (await File(
+          p.join(widget.root.path, 'conformance.tree'),
+        ).readAsString()).contains('toc-title="Published $stem TOC"'),
+        '$stem TOC override edits the tree entry',
+      );
+    }
+  }
+
   Future<void> _run() async {
     Object? failure;
     try {
@@ -910,6 +1340,11 @@ class _HarnessState extends ConsumerState<_Harness> {
         await _pause();
       }
 
+      if (Platform.environment['BUSYMARK_PROPERTY_CONTRACT_ONLY'] == '1') {
+        await _runPropertyContract(paletteProperties);
+        await _finish(null);
+        return;
+      }
       if (Platform.environment['BUSYMARK_INLINE_REFERENCES_ONLY'] == '1' ||
           Platform.environment['BUSYMARK_VARIABLE_MEDIA_ONLY'] == '1') {
         await _runInlineReferences(paletteProperties);
@@ -1363,7 +1798,7 @@ class _HarnessState extends ConsumerState<_Harness> {
               _elements(
                     (w) =>
                         w is BusyMarkGroupedTextEntry &&
-                        w.label == 'Title (title)',
+                        w.label == 'Default title (title)',
                   ).single.widget
                   as BusyMarkGroupedTextEntry;
           await _tap(
@@ -1739,6 +2174,11 @@ class _HarnessState extends ConsumerState<_Harness> {
       }
 
       Future<void> propertyText(String label, String value) async {
+        if (_elements(
+          (w) => w is BusyMarkGroupedTextEntry && w.label == label,
+        ).isEmpty) {
+          await _tapLabel('Advanced');
+        }
         final entry =
             _elements(
                   (w) => w is BusyMarkGroupedTextEntry && w.label == label,
@@ -1786,6 +2226,7 @@ class _HarnessState extends ConsumerState<_Harness> {
       await _pause();
       inspector().onTargetSelected('@topic');
       await _pause();
+      await _tapLabel('Topic navigation');
       for (final choice in [
         ('all', 'All titled elements'),
         ('none', 'No navigation'),
@@ -1806,6 +2247,7 @@ class _HarnessState extends ConsumerState<_Harness> {
           'Navigation ${choice.$1} survives save close reopen',
         );
       }
+      await chooseCombo('Navigation elements', 'Custom navigation');
       await propertyText('Navigation elements (for)', 'chapter,def');
       await reopenSource();
       sourceCaret(0);
@@ -1864,7 +2306,7 @@ class _HarnessState extends ConsumerState<_Harness> {
       );
       final longIdentity =
           'own-include-${List.filled(10, 'long-readable-identifier').join('-')}';
-      await propertyText('Element ID (id)', longIdentity);
+      await propertyText('Element anchor (id)', longIdentity);
       _check(
         inspector().target!.attributes['id'] == longIdentity,
         'Long values retain complete authored identity',

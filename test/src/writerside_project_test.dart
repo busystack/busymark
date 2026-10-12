@@ -27,6 +27,32 @@ DocumentBuffer _documentBuffer(Workspace workspace, String source) {
 
 void main() {
   test(
+    'formal root diagnostics reject broad conditional capabilities while preserving input',
+    () async {
+      final root = await Directory.systemTemp.createTemp(
+        'writerside-applicability-',
+      );
+      addTearDown(() => root.delete(recursive: true));
+      final module = await _writeDiscoveryModule(root, 'main', 'main');
+      final file = File(p.join(module.path, 'topics', 'main.topic'));
+      const authored =
+          '<topic id="main" title="Title" filter="legacy" instance="web" switcher-key="One"><p filter="public" instance="guide" switcher-key="One" help-id="help" ignore-vars="true">Text</p><list><li checked="true">Task</li></list></topic>';
+      await file.writeAsString(authored);
+      final project = await const WritersideProjectService().load(root.path);
+      final unknown = project.index.diagnostics
+          .where((d) => d.code == 'writerside.schema.unknown-attribute')
+          .toList();
+      expect(unknown, hasLength(3));
+      expect(unknown.map((d) => d.args['attribute']).toSet(), {
+        'filter',
+        'instance',
+        'switcher-key',
+      });
+      expect(await file.readAsString(), authored);
+    },
+  );
+
+  test(
     'discovers modules, indexes symbols, and resolves origin references',
     () async {
       final fixture = await _ProjectFixture.create();

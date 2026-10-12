@@ -376,7 +376,7 @@ void main() {
           ),
         ),
       );
-      await tester.enterText(field('Element ID (id)'), 'invalid id');
+      await tester.enterText(field('Default title (title)'), 'rejected draft');
       await tester.ensureVisible(find.text('Show in Source'));
       await tester.tap(find.text('Show in Source'));
       await tester.pumpAndSettle();

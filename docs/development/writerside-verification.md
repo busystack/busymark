@@ -117,6 +117,20 @@ BUSYMARK_NATIVE_PROBE=1 GDK_BACKEND=x11 NO_AT_BRIDGE=0 \
 flutter build linux --debug --no-pub --target lib/main.dart
 ```
 
+Use `test/fixtures/writerside/property_contract_conformance` as the fixture argument
+and set `BUSYMARK_PROPERTY_CONTRACT_ONLY=1` for the reusable Topic, Chapter and
+Paragraph journey. It exercises the production forms, source ownership, Custom
+navigation from all presets, invalid-draft protection, compound undo/redo,
+conditions, defaults, Source/Editor/Split/Reading, save/close/reopen, keyboard
+focus and narrow light/dark layouts. The two `contract-*` documents come from
+`test/fixtures/writerside/property_contract_conformance`. Validate their saved
+bytes with the pinned builder and the property verifier's `contract-native`
+mode. The `contract` mode checks the checked-in fixture. Both assert published
+default titles, XML instance titles, chapter overrides and anchors, navigation
+targets, conditional visibility, literal variables and switcher labels; they
+explicitly check the topic-H1 attribute and Markdown instance-title limitations
+instead of mistaking accepted markup for supported output.
+
 Treat a nonzero exit or a non-null `failure` in `result.json` as failure. The checks
 cover target identity and ancestry independently of the caret, Source without a
 hidden Editor, native Save and one-step undo/redo, invalid-draft transition
@@ -158,8 +172,9 @@ bash tools/validate_writerside_conformance.sh
 
 The script requires Docker and uses the pinned builder **2026.08.0328** with
 temporary source copies. It validates the builder report and normalized semantic
-snapshot, then checks `reference_conformance`, `property_conformance` and
-`property_defaults_conformance` under `test/fixtures/writerside/`.
+snapshot, then checks `reference_conformance`, `property_conformance`,
+`property_defaults_conformance` and `property_contract_conformance` under
+`test/fixtures/writerside/`.
 `tools/verify_writerside_property_fixture.py` checks generated HTML for collapse,
 state/default inheritance, extraction/emphasis, reference ownership and nested
 ordered-list starts. Builder errors, warnings, semantic mismatches or failed HTML

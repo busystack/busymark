@@ -11,9 +11,12 @@ String? validateWritersideProperty(
   String? codeSource,
   String? inlineCode,
   bool hasTitleChild = false,
+  Iterable<String>? applicableAttributes,
 }) {
   final name = attribute == 'language' ? 'lang' : attribute;
-  if (!WritersideSchema.attributesFor(tag).contains(name)) {
+  if (!(applicableAttributes ?? WritersideSchema.attributesFor(tag)).contains(
+    name,
+  )) {
     return 'unsupported attribute: $name';
   }
   if (value == null || value.isEmpty && name != 'alt') {
@@ -25,6 +28,16 @@ String? validateWritersideProperty(
   final invalid = WritersideSchema.invalidAttributeValue(tag, name, value);
   if (invalid != null) return '$name: $invalid';
   if (value.contains('%')) return null;
+  if (tag == 'show-structure' &&
+      name == 'for' &&
+      value != 'none' &&
+      value
+          .split(',')
+          .any(
+            (v) => !{'chapter', 'procedure', 'tab', 'def'}.contains(v.trim()),
+          )) {
+    return 'for: expected chapter, procedure, tab, def, or none';
+  }
   if (tag == 'code-block' &&
       name == 'src' &&
       value != attributes['src'] &&

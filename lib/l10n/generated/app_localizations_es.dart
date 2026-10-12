@@ -11,6 +11,92 @@ class AppLocalizationsEs extends AppLocalizations {
   AppLocalizationsEs([String locale = 'es']) : super(locale);
 
   @override
+  String get wsMarkdownInstanceTitleLimitation =>
+      'El constructor fijado no publica títulos por instancia en temas Markdown. Se conserva el marcado existente; examínelo en el código fuente.';
+
+  @override
+  String get wsTopicIdentity => 'ID del tema';
+
+  @override
+  String get wsElementAnchor => 'Ancla del elemento';
+
+  @override
+  String get wsHeadingText => 'Texto del encabezado';
+
+  @override
+  String get wsDefaultTitle => 'Título predeterminado';
+
+  @override
+  String get wsTopicNavigation => 'Navegación del tema';
+
+  @override
+  String get wsHeadingOptions => 'Atributos del encabezado';
+
+  @override
+  String get wsDocumentOptions => 'Ajustes del documento';
+
+  @override
+  String get wsSettingsPresent => 'Hay ajustes explícitos';
+
+  @override
+  String get wsTitleOverrideExplanation =>
+      'Reemplaza el título publicado; el texto del encabezado no cambia.';
+
+  @override
+  String get wsIgnoreVariables => 'Tratar las variables como texto literal';
+
+  @override
+  String get wsIgnoreVariablesExplanation =>
+      'Al activarlo, el texto con aspecto de variable no se sustituye.';
+
+  @override
+  String get wsInstanceSelection => 'Instancias de ayuda';
+
+  @override
+  String get wsInstanceExplanation =>
+      'Seleccione salidas de ayuda mediante nombres, grupos, listas, exclusiones o expresiones.';
+
+  @override
+  String get wsFilterExplanation =>
+      'Filtra contenido reutilizable por criterios; no selecciona una instancia de ayuda.';
+
+  @override
+  String get wsContextHelp => 'ID de ayuda contextual';
+
+  @override
+  String get wsCapitalization => 'Mayúsculas y minúsculas';
+
+  @override
+  String get wsLibraryTopic => 'Tema de biblioteca';
+
+  @override
+  String get wsLastModified => 'Última modificación';
+
+  @override
+  String get wsMissingTopicHeading =>
+      'No hay un H1 de tema. Añádalo en el código fuente.';
+
+  @override
+  String get wsMultipleTopicHeadings =>
+      'El primer H1 define el título del tema. Los demás H1 son encabezados independientes.';
+
+  @override
+  String get wsTopicIdentityMismatch =>
+      'El id raíz difiere del ID derivado del archivo. Use Renombrar archivo de tema o examine el código fuente.';
+
+  @override
+  String get wsUnsupportedProperties =>
+      'Se conservan los atributos no compatibles. Examínelos en el código fuente.';
+
+  @override
+  String get wsGeneratedAnchor =>
+      'Ancla generada; introducir un valor crea una anulación.';
+
+  @override
+  String get wsHeadingBuilderLimitation =>
+      'El constructor fijado no publica los atributos del H1. Pertenecen al encabezado, no a la raíz XML.';
+
+  @override
   String get closeOtherTabs => 'Cerrar las otras pestañas';
 
   @override

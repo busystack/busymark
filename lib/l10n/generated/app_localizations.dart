@@ -139,6 +139,156 @@ abstract class AppLocalizations {
     Locale('zh', 'CN'),
   ];
 
+  /// Pinned-builder limitation shown in the existing instance/TOC title workflow.
+  ///
+  /// In en, this message translates to:
+  /// **'The pinned builder does not publish instance title overrides in Markdown topics. Existing markup is preserved; inspect it in Source.'**
+  String get wsMarkdownInstanceTitleLimitation;
+
+  /// Writerside inspector source ownership, applicability, or field explanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Topic ID'**
+  String get wsTopicIdentity;
+
+  /// Writerside inspector source ownership, applicability, or field explanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Element anchor'**
+  String get wsElementAnchor;
+
+  /// Writerside inspector source ownership, applicability, or field explanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Heading text'**
+  String get wsHeadingText;
+
+  /// Writerside inspector source ownership, applicability, or field explanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Default title'**
+  String get wsDefaultTitle;
+
+  /// Writerside inspector source ownership, applicability, or field explanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Topic navigation'**
+  String get wsTopicNavigation;
+
+  /// Writerside inspector source ownership, applicability, or field explanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Heading attributes'**
+  String get wsHeadingOptions;
+
+  /// Writerside inspector source ownership, applicability, or field explanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Document settings'**
+  String get wsDocumentOptions;
+
+  /// Writerside inspector source ownership, applicability, or field explanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Authored settings present'**
+  String get wsSettingsPresent;
+
+  /// Writerside inspector source ownership, applicability, or field explanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Overrides the published heading title; the heading text remains unchanged.'**
+  String get wsTitleOverrideExplanation;
+
+  /// Writerside inspector source ownership, applicability, or field explanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Treat variable text literally'**
+  String get wsIgnoreVariables;
+
+  /// Writerside inspector source ownership, applicability, or field explanation.
+  ///
+  /// In en, this message translates to:
+  /// **'When enabled, variable-looking text is not substituted.'**
+  String get wsIgnoreVariablesExplanation;
+
+  /// Writerside inspector source ownership, applicability, or field explanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Help instances'**
+  String get wsInstanceSelection;
+
+  /// Writerside inspector source ownership, applicability, or field explanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Select help outputs with names, groups, lists, exclusions, or expressions.'**
+  String get wsInstanceExplanation;
+
+  /// Writerside inspector source ownership, applicability, or field explanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter reusable content by criteria; this does not select a help instance.'**
+  String get wsFilterExplanation;
+
+  /// Writerside inspector source ownership, applicability, or field explanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Context help ID'**
+  String get wsContextHelp;
+
+  /// Writerside inspector source ownership, applicability, or field explanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Capitalization'**
+  String get wsCapitalization;
+
+  /// Writerside inspector source ownership, applicability, or field explanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Library topic'**
+  String get wsLibraryTopic;
+
+  /// Writerside inspector source ownership, applicability, or field explanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Last modified'**
+  String get wsLastModified;
+
+  /// Writerside inspector source ownership, applicability, or field explanation.
+  ///
+  /// In en, this message translates to:
+  /// **'No topic H1 is authored. Add the topic heading in Source.'**
+  String get wsMissingTopicHeading;
+
+  /// Writerside inspector source ownership, applicability, or field explanation.
+  ///
+  /// In en, this message translates to:
+  /// **'The first H1 owns the topic title. Later H1s are separate headings.'**
+  String get wsMultipleTopicHeadings;
+
+  /// Writerside inspector source ownership, applicability, or field explanation.
+  ///
+  /// In en, this message translates to:
+  /// **'The authored root id differs from the filename-derived Topic ID. Use Rename topic file or inspect Source.'**
+  String get wsTopicIdentityMismatch;
+
+  /// Writerside inspector source ownership, applicability, or field explanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Unsupported authored attributes are preserved. Inspect them in Source.'**
+  String get wsUnsupportedProperties;
+
+  /// Writerside inspector source ownership, applicability, or field explanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Generated anchor; setting a value authors an override.'**
+  String get wsGeneratedAnchor;
+
+  /// Writerside inspector source ownership, applicability, or field explanation.
+  ///
+  /// In en, this message translates to:
+  /// **'The pinned builder does not publish topic H1 attributes: inline attributes render literally and separate-line attributes are ignored. These belong to the heading, not the XML root.'**
+  String get wsHeadingBuilderLimitation;
+
   /// Document tab context menu action that closes every other document and comparison tab while retaining this document.
   ///
   /// In en, this message translates to:

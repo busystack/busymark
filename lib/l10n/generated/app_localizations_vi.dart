@@ -11,6 +11,91 @@ class AppLocalizationsVi extends AppLocalizations {
   AppLocalizationsVi([String locale = 'vi']) : super(locale);
 
   @override
+  String get wsMarkdownInstanceTitleLimitation =>
+      'Builder cố định không xuất bản tiêu đề phiên bản trong chủ đề Markdown. Giữ nguyên đánh dấu hiện có; kiểm tra trong Nguồn.';
+
+  @override
+  String get wsTopicIdentity => 'ID chủ đề';
+
+  @override
+  String get wsElementAnchor => 'Neo phần tử';
+
+  @override
+  String get wsHeadingText => 'Văn bản tiêu đề';
+
+  @override
+  String get wsDefaultTitle => 'Tiêu đề mặc định';
+
+  @override
+  String get wsTopicNavigation => 'Điều hướng chủ đề';
+
+  @override
+  String get wsHeadingOptions => 'Thuộc tính tiêu đề';
+
+  @override
+  String get wsDocumentOptions => 'Thiết lập tài liệu';
+
+  @override
+  String get wsSettingsPresent => 'Có thiết lập được ghi rõ';
+
+  @override
+  String get wsTitleOverrideExplanation =>
+      'Ghi đè tiêu đề xuất bản; văn bản tiêu đề không đổi.';
+
+  @override
+  String get wsIgnoreVariables => 'Xử lý biến như văn bản nguyên dạng';
+
+  @override
+  String get wsIgnoreVariablesExplanation =>
+      'Khi bật, văn bản giống biến không được thay thế.';
+
+  @override
+  String get wsInstanceSelection => 'Phiên bản trợ giúp';
+
+  @override
+  String get wsInstanceExplanation =>
+      'Chọn đầu ra theo tên, nhóm, danh sách, loại trừ hoặc biểu thức.';
+
+  @override
+  String get wsFilterExplanation =>
+      'Lọc nội dung tái sử dụng theo tiêu chí; không chọn phiên bản trợ giúp.';
+
+  @override
+  String get wsContextHelp => 'ID trợ giúp ngữ cảnh';
+
+  @override
+  String get wsCapitalization => 'Kiểu chữ hoa';
+
+  @override
+  String get wsLibraryTopic => 'Chủ đề thư viện';
+
+  @override
+  String get wsLastModified => 'Sửa đổi lần cuối';
+
+  @override
+  String get wsMissingTopicHeading => 'Chưa có H1 chủ đề. Thêm trong Nguồn.';
+
+  @override
+  String get wsMultipleTopicHeadings =>
+      'H1 đầu tiên xác định tiêu đề chủ đề. Các H1 sau là tiêu đề riêng.';
+
+  @override
+  String get wsTopicIdentityMismatch =>
+      'id gốc khác ID theo tên tệp. Dùng Đổi tên tệp chủ đề hoặc kiểm tra Nguồn.';
+
+  @override
+  String get wsUnsupportedProperties =>
+      'Thuộc tính không hỗ trợ được giữ lại. Kiểm tra trong Nguồn.';
+
+  @override
+  String get wsGeneratedAnchor =>
+      'Neo được tạo tự động; nhập giá trị để ghi đè.';
+
+  @override
+  String get wsHeadingBuilderLimitation =>
+      'Builder cố định không xuất bản thuộc tính H1. Chúng thuộc tiêu đề, không thuộc gốc XML.';
+
+  @override
   String get closeOtherTabs => 'Đóng các thẻ khác';
 
   @override

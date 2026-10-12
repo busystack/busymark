@@ -10,8 +10,11 @@ Nextcloud Notes retain their own authoring behavior.
 The identity and ancestor selector refer to the inspected element. A container's
 properties button lets you inspect that container while leaving the editing
 caret where it was. Choose **Topic Properties** in the same selector for the
-topic title, switcher label and navigation. Selections spanning several elements
-show a selection message instead of editing an arbitrary element.
+topic title, document identity and navigation. The first top-level Markdown H1
+owns the logical topic title; later H1 headings keep their own element identity.
+A missing H1 is reported rather than selecting a paragraph as the title.
+Selections spanning several elements show a selection message instead of
+editing an arbitrary element.
 
 Text edits commit on Enter, on leaving the field, or before Save. Escape restores
 the last committed value. Save, closing the inspector, and changing the document
@@ -31,14 +34,20 @@ right-edge overlay. Closing it returns focus to the active editing surface.
 ## Common controls
 
 Frequent properties appear first; **Advanced** starts closed and contains other
-applicable scalar attributes from the supported schema. Empty optional text
+applicable scalar attributes from the supported schema. An authored-settings
+indication makes existing overrides discoverable while the section is closed.
+Its explicit expansion is retained while editing. Collapsing a section processes
+its drafts first. Empty optional text
 fields remove their local attribute when committed. Enum controls offer
 **Use default**, which removes the local override. Required attributes must keep
 a valid value. Suggestions and pickers do not replace legal variable expressions.
 
 | Element | Properties and source mapping |
 | --- | --- |
-| Chapters and procedures | Title, ID, published collapse and initial state. Native Markdown heading text and its explicit `title` override remain separate. Existing formatted or conditional XML `<title>` children are preserved. |
+| Topic | Default XML `title` or Markdown H1 text first, followed by read-only **Topic ID** derived from the filename. **Rename topic file** uses the established reviewed refactoring. Topic navigation and Advanced start collapsed. XML Advanced offers root `help-id`, `switcher-label`, `ignore-vars`, `is-library`, and `last-modified`. Markdown document settings offer the confirmed front-matter `switcher-label` mapping separately from heading attributes. |
+| Chapter | Default XML `title` or Markdown heading text, an optional element anchor, published collapsibility and applicable initial state. Advanced retains capitalization, switcher, conditions, context-help, literal-variable settings and the Markdown `title` override. |
+| Paragraph | Optional element anchor first. Advanced retains `switcher-key`, `filter`, `instance`, `help-id` and `ignore-vars`. These fields can be left absent while writing content. |
+| Procedures | Title, element ID, published collapse and initial state. Existing formatted or conditional XML `<title>` children are preserved. |
 | Code | Language maps to XML `lang` or a native fence's language. An explicit Markdown `lang` override takes precedence; changing it preserves the original fence language, and resetting it restores that language. **Source file (src)** is one editable field with file selection and removal. Extraction, emphasis, collapse and collapsed title remain separate. The code-language command opens this block’s Language (`lang`) control in the workspace inspector. `include-lines` and `include-symbol` conflict; emphasis counts the displayed snippet after extraction. |
 | Definition lists/items | Schema-supported list layouts, list collapse/state, item title and item state override. Literal `inherited` is an authored item override distinct from an absent attribute. |
 | Tabs | Container `group` synchronizes tab sets; child `group-key` and title identify individual tabs. Topic switchers are separate. Existing code-block tab groups are preserved. |
@@ -51,6 +60,41 @@ a valid value. Suggestions and pickers do not replace legal variable expressions
 The inspector pairs descriptive localized labels with exact Writerside attribute
 names. Less-used schema attributes remain under **Advanced**. Empty inactive
 controls are hidden; existing authored values remain inspectable and removable.
+
+Topic identity is independent of titles and anchors. Renaming a topic updates its
+filename, XML root ID and references through the existing review. Editing a
+heading or explicit anchor does not rename a file. Unsaved documents have no
+confirmed file identity. A root ID that differs from its filename is diagnosed
+and preserved.
+
+Default XML titles edit only the scalar `title` attribute; formatted and conditional
+`<title>` children remain intact. Markdown heading text edits its inline content,
+while **Title override (title)** under Advanced edits the separate heading
+attribute. The override changes the published chapter title without changing the
+heading text. **Edit Title...** reuses the established instance/TOC title workflow
+for a uniquely identified entry in the selected instance. When a topic has
+multiple entries, use the desired entry's existing TOC action rather than
+choosing an arbitrary owner.
+
+The pinned builder does not publish attributes on the topic H1. Inline H1
+attribute syntax becomes literal title text; the separate-line form is ignored.
+Existing authored H1 attributes and the independently editable heading anchor
+remain distinct from Topic ID, with this limitation shown in Advanced. BusyMark
+does not offer other unverified H1 or YAML properties as XML-root settings.
+The same builder ignores instance-specific `<title>` children in Markdown
+topics. The existing Edit Title workflow keeps TOC overrides available and
+explains that limitation. Existing instance markup is retained and accessible
+in Source, with no new unsupported instance override offered. XML instance
+titles are supported. Chapter heading attributes, including explicit `title`,
+are supported and tested against the published output.
+
+**Filter (filter)** selects reusable content by criteria. **Help instances
+(instance)** selects help outputs and accepts legal names, groups, lists,
+exclusions and expressions. **Treat variable text literally (ignore-vars)**
+enables literal variable-looking text rather than substituting variables.
+Unsupported authored attributes remain preserved, are identified in Advanced,
+and remain accessible through **Show in Source**. They are not offered as new
+supported properties.
 
 For code, the native file chooser updates the same **Source file (src)** field
 as direct typing. It stores a reference from the designated snippets directory
@@ -118,6 +162,11 @@ without rewriting unrelated local folding preferences.
 
 **Use default** removes the unscoped navigation declaration. **All elements with
 title** creates an empty `<show-structure/>`. **No navigation** authors
-`for="none"`. These have different Writerside meanings. Custom `for` and `depth`
-values edit the same declaration. Multiple or conditional/scoped declarations
+`for="none"`. These have different Writerside meanings. Selecting **Custom
+navigation** exposes `for` and `depth` together without inventing source values.
+Supported element types are `chapter`, `procedure`,
+`tab` and `def`; a depth-only configuration is also supported. The pending
+configuration is validated and published as one undoable change. Invalid drafts
+block closing or hiding the section. Resetting removes the declaration instead
+of serializing an effective default. Multiple or conditional/scoped declarations
 remain protected from this single-declaration editor; use Source to edit them.

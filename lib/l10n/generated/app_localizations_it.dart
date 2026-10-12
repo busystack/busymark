@@ -11,6 +11,92 @@ class AppLocalizationsIt extends AppLocalizations {
   AppLocalizationsIt([String locale = 'it']) : super(locale);
 
   @override
+  String get wsMarkdownInstanceTitleLimitation =>
+      'Il builder fissato non pubblica titoli per istanza negli argomenti Markdown. Il markup esistente è conservato; consultalo nel sorgente.';
+
+  @override
+  String get wsTopicIdentity => 'ID argomento';
+
+  @override
+  String get wsElementAnchor => 'Ancora elemento';
+
+  @override
+  String get wsHeadingText => 'Testo intestazione';
+
+  @override
+  String get wsDefaultTitle => 'Titolo predefinito';
+
+  @override
+  String get wsTopicNavigation => 'Navigazione argomento';
+
+  @override
+  String get wsHeadingOptions => 'Attributi intestazione';
+
+  @override
+  String get wsDocumentOptions => 'Impostazioni documento';
+
+  @override
+  String get wsSettingsPresent => 'Impostazioni esplicite presenti';
+
+  @override
+  String get wsTitleOverrideExplanation =>
+      'Sostituisce il titolo pubblicato; il testo dell’intestazione non cambia.';
+
+  @override
+  String get wsIgnoreVariables => 'Tratta le variabili come testo letterale';
+
+  @override
+  String get wsIgnoreVariablesExplanation =>
+      'Se attivo, il testo simile a una variabile non viene sostituito.';
+
+  @override
+  String get wsInstanceSelection => 'Istanze della guida';
+
+  @override
+  String get wsInstanceExplanation =>
+      'Seleziona le uscite tramite nomi, gruppi, elenchi, esclusioni o espressioni.';
+
+  @override
+  String get wsFilterExplanation =>
+      'Filtra contenuti riutilizzabili per criteri; non seleziona un’istanza della guida.';
+
+  @override
+  String get wsContextHelp => 'ID guida contestuale';
+
+  @override
+  String get wsCapitalization => 'Maiuscole e minuscole';
+
+  @override
+  String get wsLibraryTopic => 'Argomento libreria';
+
+  @override
+  String get wsLastModified => 'Ultima modifica';
+
+  @override
+  String get wsMissingTopicHeading =>
+      'Nessun H1 dell’argomento. Aggiungilo nel sorgente.';
+
+  @override
+  String get wsMultipleTopicHeadings =>
+      'Il primo H1 determina il titolo dell’argomento. Gli altri H1 sono intestazioni separate.';
+
+  @override
+  String get wsTopicIdentityMismatch =>
+      'L’id radice differisce dall’ID del nome file. Usa Rinomina file argomento o consulta il sorgente.';
+
+  @override
+  String get wsUnsupportedProperties =>
+      'Gli attributi non supportati sono conservati. Consultali nel sorgente.';
+
+  @override
+  String get wsGeneratedAnchor =>
+      'Ancora generata; un valore crea una sostituzione.';
+
+  @override
+  String get wsHeadingBuilderLimitation =>
+      'Il builder fissato non pubblica gli attributi H1. Appartengono all’intestazione, non alla radice XML.';
+
+  @override
   String get closeOtherTabs => 'Chiudi le altre schede';
 
   @override

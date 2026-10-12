@@ -11,6 +11,91 @@ class AppLocalizationsTr extends AppLocalizations {
   AppLocalizationsTr([String locale = 'tr']) : super(locale);
 
   @override
+  String get wsMarkdownInstanceTitleLimitation =>
+      'Sabitlenmiş derleyici Markdown konularında örnek başlıklarını yayımlamaz. Mevcut işaretleme korunur; Kaynakta inceleyin.';
+
+  @override
+  String get wsTopicIdentity => 'Konu kimliği';
+
+  @override
+  String get wsElementAnchor => 'Öğe çapası';
+
+  @override
+  String get wsHeadingText => 'Başlık metni';
+
+  @override
+  String get wsDefaultTitle => 'Varsayılan başlık';
+
+  @override
+  String get wsTopicNavigation => 'Konu gezinmesi';
+
+  @override
+  String get wsHeadingOptions => 'Başlık öznitelikleri';
+
+  @override
+  String get wsDocumentOptions => 'Belge ayarları';
+
+  @override
+  String get wsSettingsPresent => 'Yazılmış ayarlar mevcut';
+
+  @override
+  String get wsTitleOverrideExplanation =>
+      'Yayımlanan başlığı geçersiz kılar; başlık metni değişmez.';
+
+  @override
+  String get wsIgnoreVariables => 'Değişkenleri düz metin olarak işle';
+
+  @override
+  String get wsIgnoreVariablesExplanation =>
+      'Etkinleştirildiğinde değişken benzeri metin değiştirilmez.';
+
+  @override
+  String get wsInstanceSelection => 'Yardım örnekleri';
+
+  @override
+  String get wsInstanceExplanation =>
+      'Yardım çıktılarını adlar, gruplar, listeler, dışlamalar veya ifadelerle seçin.';
+
+  @override
+  String get wsFilterExplanation =>
+      'Yeniden kullanılan içeriği ölçütlerle süzer; yardım örneği seçmez.';
+
+  @override
+  String get wsContextHelp => 'Bağlam yardımı kimliği';
+
+  @override
+  String get wsCapitalization => 'Büyük/küçük harf';
+
+  @override
+  String get wsLibraryTopic => 'Kitaplık konusu';
+
+  @override
+  String get wsLastModified => 'Son değiştirilme';
+
+  @override
+  String get wsMissingTopicHeading => 'Konu H1 başlığı yok. Kaynakta ekleyin.';
+
+  @override
+  String get wsMultipleTopicHeadings =>
+      'İlk H1 konu başlığını belirler. Sonraki H1’ler ayrı başlıklardır.';
+
+  @override
+  String get wsTopicIdentityMismatch =>
+      'Kök id, dosya adından türetilen konu kimliğinden farklı. Konu dosyasını yeniden adlandırın veya kaynağı inceleyin.';
+
+  @override
+  String get wsUnsupportedProperties =>
+      'Desteklenmeyen öznitelikler korunur. Kaynakta inceleyin.';
+
+  @override
+  String get wsGeneratedAnchor =>
+      'Oluşturulmuş çapa; bir değer geçersiz kılma oluşturur.';
+
+  @override
+  String get wsHeadingBuilderLimitation =>
+      'Sabitlenmiş derleyici H1 özniteliklerini yayımlamaz. XML köküne değil başlığa aittirler.';
+
+  @override
   String get closeOtherTabs => 'Diğer sekmeleri kapat';
 
   @override

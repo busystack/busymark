@@ -686,7 +686,7 @@ class MarkdownAstAdapter {
         final tag = inline.kind == BusyInlineKind.image ? 'img' : 'a';
         if (attributes.isNotEmpty &&
             attributes.keys.every(
-              WritersideSchema.attributesFor(tag).contains,
+              WritersideSchema.preservedAttributesFor(tag).contains,
             )) {
           inline = inline.copyWith(
             destination: inline.kind == BusyInlineKind.image

@@ -11,6 +11,92 @@ class AppLocalizationsDe extends AppLocalizations {
   AppLocalizationsDe([String locale = 'de']) : super(locale);
 
   @override
+  String get wsMarkdownInstanceTitleLimitation =>
+      'Der festgelegte Builder veröffentlicht keine instanzspezifischen Titel in Markdown-Themen. Bestehendes Markup bleibt erhalten; prüfen Sie es im Quelltext.';
+
+  @override
+  String get wsTopicIdentity => 'Themen-ID';
+
+  @override
+  String get wsElementAnchor => 'Elementanker';
+
+  @override
+  String get wsHeadingText => 'Überschriftentext';
+
+  @override
+  String get wsDefaultTitle => 'Standardtitel';
+
+  @override
+  String get wsTopicNavigation => 'Themennavigation';
+
+  @override
+  String get wsHeadingOptions => 'Überschriftenattribute';
+
+  @override
+  String get wsDocumentOptions => 'Dokumenteinstellungen';
+
+  @override
+  String get wsSettingsPresent => 'Explizite Einstellungen vorhanden';
+
+  @override
+  String get wsTitleOverrideExplanation =>
+      'Überschreibt den veröffentlichten Titel; der Überschriftentext bleibt erhalten.';
+
+  @override
+  String get wsIgnoreVariables => 'Variablentext wörtlich behandeln';
+
+  @override
+  String get wsIgnoreVariablesExplanation =>
+      'Bei Aktivierung wird variablenähnlicher Text nicht ersetzt.';
+
+  @override
+  String get wsInstanceSelection => 'Hilfeinstanzen';
+
+  @override
+  String get wsInstanceExplanation =>
+      'Hilfeausgaben über Namen, Gruppen, Listen, Ausschlüsse oder Ausdrücke auswählen.';
+
+  @override
+  String get wsFilterExplanation =>
+      'Wiederverwendbare Inhalte nach Kriterien filtern; dies wählt keine Hilfeinstanz aus.';
+
+  @override
+  String get wsContextHelp => 'Kontexthilfe-ID';
+
+  @override
+  String get wsCapitalization => 'Groß- und Kleinschreibung';
+
+  @override
+  String get wsLibraryTopic => 'Bibliotheksthema';
+
+  @override
+  String get wsLastModified => 'Zuletzt geändert';
+
+  @override
+  String get wsMissingTopicHeading =>
+      'Keine Themenüberschrift H1 vorhanden. Fügen Sie sie im Quelltext hinzu.';
+
+  @override
+  String get wsMultipleTopicHeadings =>
+      'Die erste H1 bestimmt den Thementitel. Weitere H1 sind eigene Überschriften.';
+
+  @override
+  String get wsTopicIdentityMismatch =>
+      'Die Root-ID weicht von der dateibasierten Themen-ID ab. Verwenden Sie Thema umbenennen oder den Quelltext.';
+
+  @override
+  String get wsUnsupportedProperties =>
+      'Nicht unterstützte Attribute bleiben erhalten. Prüfen Sie sie im Quelltext.';
+
+  @override
+  String get wsGeneratedAnchor =>
+      'Generierter Anker; ein eingegebener Wert erstellt eine Überschreibung.';
+
+  @override
+  String get wsHeadingBuilderLimitation =>
+      'Der festgelegte Builder veröffentlicht keine H1-Attribute. Sie gehören zur Überschrift, nicht zur XML-Root.';
+
+  @override
   String get closeOtherTabs => 'Andere Tabs schließen';
 
   @override

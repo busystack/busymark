@@ -11,6 +11,92 @@ class AppLocalizationsFa extends AppLocalizations {
   AppLocalizationsFa([String locale = 'fa']) : super(locale);
 
   @override
+  String get wsMarkdownInstanceTitleLimitation =>
+      'سازنده تثبیت‌شده عنوان نمونه را در موضوع‌های Markdown منتشر نمی‌کند. نشانه‌گذاری موجود حفظ می‌شود؛ منبع را بررسی کنید.';
+
+  @override
+  String get wsTopicIdentity => 'شناسه موضوع';
+
+  @override
+  String get wsElementAnchor => 'لنگر عنصر';
+
+  @override
+  String get wsHeadingText => 'متن عنوان';
+
+  @override
+  String get wsDefaultTitle => 'عنوان پیش‌فرض';
+
+  @override
+  String get wsTopicNavigation => 'پیمایش موضوع';
+
+  @override
+  String get wsHeadingOptions => 'ویژگی‌های عنوان';
+
+  @override
+  String get wsDocumentOptions => 'تنظیمات سند';
+
+  @override
+  String get wsSettingsPresent => 'تنظیمات صریح موجود است';
+
+  @override
+  String get wsTitleOverrideExplanation =>
+      'عنوان منتشرشده را بازنویسی می‌کند؛ متن عنوان تغییر نمی‌کند.';
+
+  @override
+  String get wsIgnoreVariables => 'متغیرها را متن لفظی در نظر بگیر';
+
+  @override
+  String get wsIgnoreVariablesExplanation =>
+      'وقتی فعال باشد، متن شبیه متغیر جایگزین نمی‌شود.';
+
+  @override
+  String get wsInstanceSelection => 'نمونه‌های راهنما';
+
+  @override
+  String get wsInstanceExplanation =>
+      'خروجی را با نام، گروه، فهرست، استثنا یا عبارت انتخاب کنید.';
+
+  @override
+  String get wsFilterExplanation =>
+      'محتوای قابل استفاده مجدد را با معیارها فیلتر می‌کند؛ نمونه راهنما را انتخاب نمی‌کند.';
+
+  @override
+  String get wsContextHelp => 'شناسه راهنمای زمینه‌ای';
+
+  @override
+  String get wsCapitalization => 'بزرگی حروف';
+
+  @override
+  String get wsLibraryTopic => 'موضوع کتابخانه';
+
+  @override
+  String get wsLastModified => 'آخرین تغییر';
+
+  @override
+  String get wsMissingTopicHeading =>
+      'H1 موضوع وجود ندارد. آن را در منبع اضافه کنید.';
+
+  @override
+  String get wsMultipleTopicHeadings =>
+      'اولین H1 عنوان موضوع را تعیین می‌کند. H1های بعدی مستقل‌اند.';
+
+  @override
+  String get wsTopicIdentityMismatch =>
+      'id ریشه با شناسه مشتق از نام فایل متفاوت است. فایل موضوع را تغییر نام دهید یا منبع را بررسی کنید.';
+
+  @override
+  String get wsUnsupportedProperties =>
+      'ویژگی‌های پشتیبانی‌نشده حفظ می‌شوند. در منبع بررسی کنید.';
+
+  @override
+  String get wsGeneratedAnchor =>
+      'لنگر تولیدشده؛ وارد کردن مقدار آن را بازنویسی می‌کند.';
+
+  @override
+  String get wsHeadingBuilderLimitation =>
+      'سازنده تثبیت‌شده ویژگی‌های H1 را منتشر نمی‌کند. متعلق به عنوان هستند، نه ریشه XML.';
+
+  @override
   String get closeOtherTabs => 'بستن زبانه‌های دیگر';
 
   @override

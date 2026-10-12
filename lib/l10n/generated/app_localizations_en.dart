@@ -11,6 +11,92 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
+  String get wsMarkdownInstanceTitleLimitation =>
+      'The pinned builder does not publish instance title overrides in Markdown topics. Existing markup is preserved; inspect it in Source.';
+
+  @override
+  String get wsTopicIdentity => 'Topic ID';
+
+  @override
+  String get wsElementAnchor => 'Element anchor';
+
+  @override
+  String get wsHeadingText => 'Heading text';
+
+  @override
+  String get wsDefaultTitle => 'Default title';
+
+  @override
+  String get wsTopicNavigation => 'Topic navigation';
+
+  @override
+  String get wsHeadingOptions => 'Heading attributes';
+
+  @override
+  String get wsDocumentOptions => 'Document settings';
+
+  @override
+  String get wsSettingsPresent => 'Authored settings present';
+
+  @override
+  String get wsTitleOverrideExplanation =>
+      'Overrides the published heading title; the heading text remains unchanged.';
+
+  @override
+  String get wsIgnoreVariables => 'Treat variable text literally';
+
+  @override
+  String get wsIgnoreVariablesExplanation =>
+      'When enabled, variable-looking text is not substituted.';
+
+  @override
+  String get wsInstanceSelection => 'Help instances';
+
+  @override
+  String get wsInstanceExplanation =>
+      'Select help outputs with names, groups, lists, exclusions, or expressions.';
+
+  @override
+  String get wsFilterExplanation =>
+      'Filter reusable content by criteria; this does not select a help instance.';
+
+  @override
+  String get wsContextHelp => 'Context help ID';
+
+  @override
+  String get wsCapitalization => 'Capitalization';
+
+  @override
+  String get wsLibraryTopic => 'Library topic';
+
+  @override
+  String get wsLastModified => 'Last modified';
+
+  @override
+  String get wsMissingTopicHeading =>
+      'No topic H1 is authored. Add the topic heading in Source.';
+
+  @override
+  String get wsMultipleTopicHeadings =>
+      'The first H1 owns the topic title. Later H1s are separate headings.';
+
+  @override
+  String get wsTopicIdentityMismatch =>
+      'The authored root id differs from the filename-derived Topic ID. Use Rename topic file or inspect Source.';
+
+  @override
+  String get wsUnsupportedProperties =>
+      'Unsupported authored attributes are preserved. Inspect them in Source.';
+
+  @override
+  String get wsGeneratedAnchor =>
+      'Generated anchor; setting a value authors an override.';
+
+  @override
+  String get wsHeadingBuilderLimitation =>
+      'The pinned builder does not publish topic H1 attributes: inline attributes render literally and separate-line attributes are ignored. These belong to the heading, not the XML root.';
+
+  @override
   String get closeOtherTabs => 'Close other tabs';
 
   @override
