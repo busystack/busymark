@@ -3577,5 +3577,13 @@
   "wsOriginModule": "Modulstandard",
   "wsOriginBuiltIn": "Integrierter Standard",
   "wsOriginUnresolved": "Nicht aufgelöst",
-  "wsEffectiveProperty": "Effektiv: {value} — {origin}"
+  "wsEffectiveProperty": "Effektiv: {value} — {origin}",
+  "wsElementSelector": "Element",
+  "wsGeneratedAnchorValue": "Generiert: {anchor}",
+  "wsDefaultProperty": "Standard: {value}",
+  "wsDefaultPropertyOrigin": "Standard: {value} · {origin}",
+  "wsResolvedProperty": "Aufgelöst: {value}",
+  "wsPropertyUnresolved": "Nicht aufgelöst",
+  "wsModule": "Modul",
+  "wsParent": "Übergeordnetes Element"
 }

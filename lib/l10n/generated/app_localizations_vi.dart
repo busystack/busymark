@@ -5273,4 +5273,36 @@ class AppLocalizationsVi extends AppLocalizations {
   String wsEffectiveProperty(String value, String origin) {
     return 'Hiệu lực: $value — $origin';
   }
+
+  @override
+  String get wsElementSelector => 'Phần tử';
+
+  @override
+  String wsGeneratedAnchorValue(String anchor) {
+    return 'Được tạo: $anchor';
+  }
+
+  @override
+  String wsDefaultProperty(String value) {
+    return 'Mặc định: $value';
+  }
+
+  @override
+  String wsDefaultPropertyOrigin(String value, String origin) {
+    return 'Mặc định: $value · $origin';
+  }
+
+  @override
+  String wsResolvedProperty(String value) {
+    return 'Đã phân giải: $value';
+  }
+
+  @override
+  String get wsPropertyUnresolved => 'Chưa phân giải';
+
+  @override
+  String get wsModule => 'Mô-đun';
+
+  @override
+  String get wsParent => 'Phần tử cha';
 }

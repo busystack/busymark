@@ -5342,4 +5342,36 @@ class AppLocalizationsRu extends AppLocalizations {
   String wsEffectiveProperty(String value, String origin) {
     return 'Действующее значение: $value — $origin';
   }
+
+  @override
+  String get wsElementSelector => 'Элемент';
+
+  @override
+  String wsGeneratedAnchorValue(String anchor) {
+    return 'Сгенерировано: $anchor';
+  }
+
+  @override
+  String wsDefaultProperty(String value) {
+    return 'По умолчанию: $value';
+  }
+
+  @override
+  String wsDefaultPropertyOrigin(String value, String origin) {
+    return 'По умолчанию: $value · $origin';
+  }
+
+  @override
+  String wsResolvedProperty(String value) {
+    return 'Разрешено: $value';
+  }
+
+  @override
+  String get wsPropertyUnresolved => 'Не разрешено';
+
+  @override
+  String get wsModule => 'Модуль';
+
+  @override
+  String get wsParent => 'Родительский элемент';
 }

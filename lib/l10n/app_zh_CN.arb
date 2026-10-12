@@ -5116,5 +5116,13 @@
   "wsOriginModule": "模块默认值",
   "wsOriginBuiltIn": "内置默认值",
   "wsOriginUnresolved": "未解析",
-  "wsEffectiveProperty": "有效值：{value} — {origin}"
+  "wsEffectiveProperty": "有效值：{value} — {origin}",
+  "wsElementSelector": "元素",
+  "wsGeneratedAnchorValue": "生成值：{anchor}",
+  "wsDefaultProperty": "默认值：{value}",
+  "wsDefaultPropertyOrigin": "默认值：{value} · {origin}",
+  "wsResolvedProperty": "解析值：{value}",
+  "wsPropertyUnresolved": "未解析",
+  "wsModule": "模块",
+  "wsParent": "父元素"
 }

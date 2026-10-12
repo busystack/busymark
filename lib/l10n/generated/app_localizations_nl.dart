@@ -5333,4 +5333,36 @@ class AppLocalizationsNl extends AppLocalizations {
   String wsEffectiveProperty(String value, String origin) {
     return 'Effectief: $value — $origin';
   }
+
+  @override
+  String get wsElementSelector => 'Element';
+
+  @override
+  String wsGeneratedAnchorValue(String anchor) {
+    return 'Gegenereerd: $anchor';
+  }
+
+  @override
+  String wsDefaultProperty(String value) {
+    return 'Standaard: $value';
+  }
+
+  @override
+  String wsDefaultPropertyOrigin(String value, String origin) {
+    return 'Standaard: $value · $origin';
+  }
+
+  @override
+  String wsResolvedProperty(String value) {
+    return 'Opgelost: $value';
+  }
+
+  @override
+  String get wsPropertyUnresolved => 'Onopgelost';
+
+  @override
+  String get wsModule => 'Module';
+
+  @override
+  String get wsParent => 'Bovenliggend element';
 }

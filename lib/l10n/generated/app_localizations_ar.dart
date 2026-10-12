@@ -5310,4 +5310,36 @@ class AppLocalizationsAr extends AppLocalizations {
   String wsEffectiveProperty(String value, String origin) {
     return 'القيمة الفعلية: $value — $origin';
   }
+
+  @override
+  String get wsElementSelector => 'العنصر';
+
+  @override
+  String wsGeneratedAnchorValue(String anchor) {
+    return 'مُولَّد: $anchor';
+  }
+
+  @override
+  String wsDefaultProperty(String value) {
+    return 'الافتراضي: $value';
+  }
+
+  @override
+  String wsDefaultPropertyOrigin(String value, String origin) {
+    return 'الافتراضي: $value · $origin';
+  }
+
+  @override
+  String wsResolvedProperty(String value) {
+    return 'القيمة المحلولة: $value';
+  }
+
+  @override
+  String get wsPropertyUnresolved => 'غير محلول';
+
+  @override
+  String get wsModule => 'الوحدة';
+
+  @override
+  String get wsParent => 'العنصر الأب';
 }

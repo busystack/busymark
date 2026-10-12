@@ -5116,5 +5116,13 @@
   "wsOriginModule": "Bawaan modul",
   "wsOriginBuiltIn": "Bawaan internal",
   "wsOriginUnresolved": "Belum teratasi",
-  "wsEffectiveProperty": "Efektif: {value} — {origin}"
+  "wsEffectiveProperty": "Efektif: {value} — {origin}",
+  "wsElementSelector": "Elemen",
+  "wsGeneratedAnchorValue": "Dihasilkan: {anchor}",
+  "wsDefaultProperty": "Default: {value}",
+  "wsDefaultPropertyOrigin": "Default: {value} · {origin}",
+  "wsResolvedProperty": "Diselesaikan: {value}",
+  "wsPropertyUnresolved": "Belum diselesaikan",
+  "wsModule": "Modul",
+  "wsParent": "Induk"
 }

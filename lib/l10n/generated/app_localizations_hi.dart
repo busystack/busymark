@@ -5274,4 +5274,36 @@ class AppLocalizationsHi extends AppLocalizations {
   String wsEffectiveProperty(String value, String origin) {
     return 'प्रभावी: $value — $origin';
   }
+
+  @override
+  String get wsElementSelector => 'तत्व';
+
+  @override
+  String wsGeneratedAnchorValue(String anchor) {
+    return 'जनित: $anchor';
+  }
+
+  @override
+  String wsDefaultProperty(String value) {
+    return 'डिफ़ॉल्ट: $value';
+  }
+
+  @override
+  String wsDefaultPropertyOrigin(String value, String origin) {
+    return 'डिफ़ॉल्ट: $value · $origin';
+  }
+
+  @override
+  String wsResolvedProperty(String value) {
+    return 'समाधित: $value';
+  }
+
+  @override
+  String get wsPropertyUnresolved => 'असमाधित';
+
+  @override
+  String get wsModule => 'मॉड्यूल';
+
+  @override
+  String get wsParent => 'मूल तत्व';
 }

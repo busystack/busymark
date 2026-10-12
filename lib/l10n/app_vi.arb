@@ -5116,5 +5116,13 @@
   "wsOriginModule": "Mặc định của mô-đun",
   "wsOriginBuiltIn": "Mặc định tích hợp",
   "wsOriginUnresolved": "Chưa phân giải",
-  "wsEffectiveProperty": "Hiệu lực: {value} — {origin}"
+  "wsEffectiveProperty": "Hiệu lực: {value} — {origin}",
+  "wsElementSelector": "Phần tử",
+  "wsGeneratedAnchorValue": "Được tạo: {anchor}",
+  "wsDefaultProperty": "Mặc định: {value}",
+  "wsDefaultPropertyOrigin": "Mặc định: {value} · {origin}",
+  "wsResolvedProperty": "Đã phân giải: {value}",
+  "wsPropertyUnresolved": "Chưa phân giải",
+  "wsModule": "Mô-đun",
+  "wsParent": "Phần tử cha"
 }

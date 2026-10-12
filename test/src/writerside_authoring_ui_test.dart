@@ -194,8 +194,16 @@ void main() {
     expect(c.markdown, isNot(contains('type=')));
     expect(
       find.byWidgetPredicate(
+        (w) => w is Text && w.data == 'Default: Medium (1:2) · Module',
+      ),
+      findsOneWidget,
+    );
+    expect(reset.tooltip, 'Effective: Medium (1:2) — module default');
+    expect(
+      find.byWidgetPredicate(
         (w) =>
-            w is Text && w.data == 'Effective: Medium (1:2) — module default',
+            w is Semantics &&
+            w.properties.hint == 'Effective: Medium (1:2) — module default',
       ),
       findsOneWidget,
     );

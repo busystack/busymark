@@ -4037,5 +4037,13 @@
   "wsOriginModule": "Mooduli vaikeväärtus",
   "wsOriginBuiltIn": "Sisseehitatud vaikeväärtus",
   "wsOriginUnresolved": "Lahendamata",
-  "wsEffectiveProperty": "Tegelik: {value} — {origin}"
+  "wsEffectiveProperty": "Tegelik: {value} — {origin}",
+  "wsElementSelector": "Element",
+  "wsGeneratedAnchorValue": "Genereeritud: {anchor}",
+  "wsDefaultProperty": "Vaikimisi: {value}",
+  "wsDefaultPropertyOrigin": "Vaikimisi: {value} · {origin}",
+  "wsResolvedProperty": "Lahendatud: {value}",
+  "wsPropertyUnresolved": "Lahendamata",
+  "wsModule": "Moodul",
+  "wsParent": "Ülemelement"
 }

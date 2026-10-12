@@ -5116,5 +5116,13 @@
   "wsOriginModule": "Modulestandaard",
   "wsOriginBuiltIn": "Ingebouwde standaard",
   "wsOriginUnresolved": "Niet opgelost",
-  "wsEffectiveProperty": "Effectief: {value} — {origin}"
+  "wsEffectiveProperty": "Effectief: {value} — {origin}",
+  "wsElementSelector": "Element",
+  "wsGeneratedAnchorValue": "Gegenereerd: {anchor}",
+  "wsDefaultProperty": "Standaard: {value}",
+  "wsDefaultPropertyOrigin": "Standaard: {value} · {origin}",
+  "wsResolvedProperty": "Opgelost: {value}",
+  "wsPropertyUnresolved": "Onopgelost",
+  "wsModule": "Module",
+  "wsParent": "Bovenliggend element"
 }

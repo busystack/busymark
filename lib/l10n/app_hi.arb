@@ -3577,5 +3577,13 @@
   "wsOriginModule": "मॉड्यूल का डिफ़ॉल्ट",
   "wsOriginBuiltIn": "अंतर्निहित डिफ़ॉल्ट",
   "wsOriginUnresolved": "अनसुलझा",
-  "wsEffectiveProperty": "प्रभावी: {value} — {origin}"
+  "wsEffectiveProperty": "प्रभावी: {value} — {origin}",
+  "wsElementSelector": "तत्व",
+  "wsGeneratedAnchorValue": "जनित: {anchor}",
+  "wsDefaultProperty": "डिफ़ॉल्ट: {value}",
+  "wsDefaultPropertyOrigin": "डिफ़ॉल्ट: {value} · {origin}",
+  "wsResolvedProperty": "समाधित: {value}",
+  "wsPropertyUnresolved": "असमाधित",
+  "wsModule": "मॉड्यूल",
+  "wsParent": "मूल तत्व"
 }

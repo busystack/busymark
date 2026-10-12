@@ -3603,5 +3603,13 @@
   "wsOriginModule": "Типове значення модуля",
   "wsOriginBuiltIn": "Вбудоване типове значення",
   "wsOriginUnresolved": "Не визначено",
-  "wsEffectiveProperty": "Дійсне значення: {value} — {origin}"
+  "wsEffectiveProperty": "Дійсне значення: {value} — {origin}",
+  "wsElementSelector": "Елемент",
+  "wsGeneratedAnchorValue": "Згенеровано: {anchor}",
+  "wsDefaultProperty": "Типово: {value}",
+  "wsDefaultPropertyOrigin": "Типово: {value} · {origin}",
+  "wsResolvedProperty": "Визначено: {value}",
+  "wsPropertyUnresolved": "Не визначено",
+  "wsModule": "Модуль",
+  "wsParent": "Батьківський елемент"
 }

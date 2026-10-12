@@ -3619,5 +3619,13 @@
   "wsOriginModule": "پیش‌فرض ماژول",
   "wsOriginBuiltIn": "پیش‌فرض داخلی",
   "wsOriginUnresolved": "حل‌نشده",
-  "wsEffectiveProperty": "مقدار مؤثر: {value} — {origin}"
+  "wsEffectiveProperty": "مقدار مؤثر: {value} — {origin}",
+  "wsElementSelector": "عنصر",
+  "wsGeneratedAnchorValue": "تولیدشده: {anchor}",
+  "wsDefaultProperty": "پیش‌فرض: {value}",
+  "wsDefaultPropertyOrigin": "پیش‌فرض: {value} · {origin}",
+  "wsResolvedProperty": "مقدار حل‌شده: {value}",
+  "wsPropertyUnresolved": "حل‌نشده",
+  "wsModule": "ماژول",
+  "wsParent": "عنصر والد"
 }

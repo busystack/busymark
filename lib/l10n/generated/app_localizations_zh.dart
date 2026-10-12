@@ -5053,6 +5053,38 @@ class AppLocalizationsZh extends AppLocalizations {
   String wsEffectiveProperty(String value, String origin) {
     return '有效值：$value — $origin';
   }
+
+  @override
+  String get wsElementSelector => '元素';
+
+  @override
+  String wsGeneratedAnchorValue(String anchor) {
+    return '生成值：$anchor';
+  }
+
+  @override
+  String wsDefaultProperty(String value) {
+    return '默认值：$value';
+  }
+
+  @override
+  String wsDefaultPropertyOrigin(String value, String origin) {
+    return '默认值：$value · $origin';
+  }
+
+  @override
+  String wsResolvedProperty(String value) {
+    return '解析值：$value';
+  }
+
+  @override
+  String get wsPropertyUnresolved => '未解析';
+
+  @override
+  String get wsModule => '模块';
+
+  @override
+  String get wsParent => '父元素';
 }
 
 /// The translations for Chinese, as used in China (`zh_CN`).
@@ -10102,4 +10134,36 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String wsEffectiveProperty(String value, String origin) {
     return '有效值：$value — $origin';
   }
+
+  @override
+  String get wsElementSelector => '元素';
+
+  @override
+  String wsGeneratedAnchorValue(String anchor) {
+    return '生成值：$anchor';
+  }
+
+  @override
+  String wsDefaultProperty(String value) {
+    return '默认值：$value';
+  }
+
+  @override
+  String wsDefaultPropertyOrigin(String value, String origin) {
+    return '默认值：$value · $origin';
+  }
+
+  @override
+  String wsResolvedProperty(String value) {
+    return '解析值：$value';
+  }
+
+  @override
+  String get wsPropertyUnresolved => '未解析';
+
+  @override
+  String get wsModule => '模块';
+
+  @override
+  String get wsParent => '父元素';
 }

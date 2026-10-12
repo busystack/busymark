@@ -7,7 +7,10 @@ properties button, or open and hide it with the command palette command
 Reading shows validated values without allowing changes. Ordinary Markdown and
 Nextcloud Notes retain their own authoring behavior.
 
-The identity and ancestor selector refer to the inspected element. A container's
+The **Element** selector shows the inspected type; ancestor choices retain their
+titles or identifiers. Editable chapters show their heading/title and anchor in
+the corresponding controls, without a repeated identity strip. Paragraphs and
+references keep a concise excerpt. A container's
 properties button lets you inspect that container while leaving the editing
 caret where it was. Choose **Topic Properties** in the same selector for the
 topic title, document identity and navigation. The first top-level Markdown H1
@@ -66,6 +69,13 @@ filename, XML root ID and references through the existing review. Editing a
 heading or explicit anchor does not rename a file. Unsaved documents have no
 confirmed file identity. A root ID that differs from its filename is diagnosed
 and preserved.
+
+A generated chapter anchor appears as **Generated: …** within the anchor row,
+with an empty override editor. It remains selectable and wraps when necessary.
+Entering an explicit `id` replaces the generated value; clearing it restores the
+heading-derived anchor. Focus, inspection and Save do not author that value.
+Attribute explanations and full provenance are available in contextual help:
+focus the control and press **F1**, or hover over its property row.
 
 Default XML titles edit only the scalar `title` attribute; formatted and conditional
 `<title>` children remain intact. Markdown heading text edits its inline content,
@@ -128,16 +138,19 @@ after a blank line so the pinned builder assigns them to the admonition alone.
 
 ## Published defaults and editor folding
 
-The selector shows **Use default** when no local override is authored. For
-properties with a known effective value, a separate line below it shows that
-value and its origin, for example,
-**Effective: Expanded — module default**. A module `<default-property>` can change
+The selector shows **Use default** when no local override is authored. Its row
+subtitle shows **Default: Disabled** for a built-in value, or, for example,
+**Default: Expanded · Module** for a module setting. An explicit literal value
+does not repeat the same effective value. Inherited values and resolved variable
+expressions show a concise **Resolved: …** subtitle when the displayed result
+differs from the authored selection. Full provenance remains in keyboard and
+accessible contextual help. A module `<default-property>` can change
 an omitted property's meaning. Unresolved variable expressions remain visible
 without being converted to false or to an arbitrary enum. Opening the panel
 does not write effective defaults to source.
 
 Definition-list layout uses the same defaults: a module setting of `medium`
-appears beneath **Use default** as **Effective: Medium (1:2) — module default**,
+appears beneath **Use default** as **Default: Medium (1:2) · Module**,
 including after resetting a local override. Origins distinguish an element
 override, parent element, module default, and built-in default.
 

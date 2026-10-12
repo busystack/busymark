@@ -5347,6 +5347,38 @@ class AppLocalizationsPt extends AppLocalizations {
   String wsEffectiveProperty(String value, String origin) {
     return 'Efetivo: $value — $origin';
   }
+
+  @override
+  String get wsElementSelector => 'Elemento';
+
+  @override
+  String wsGeneratedAnchorValue(String anchor) {
+    return 'Gerado: $anchor';
+  }
+
+  @override
+  String wsDefaultProperty(String value) {
+    return 'Padrão: $value';
+  }
+
+  @override
+  String wsDefaultPropertyOrigin(String value, String origin) {
+    return 'Padrão: $value · $origin';
+  }
+
+  @override
+  String wsResolvedProperty(String value) {
+    return 'Resolvido: $value';
+  }
+
+  @override
+  String get wsPropertyUnresolved => 'Não resolvido';
+
+  @override
+  String get wsModule => 'Módulo';
+
+  @override
+  String get wsParent => 'Elemento pai';
 }
 
 /// The translations for Portuguese, as used in Brazil (`pt_BR`).
@@ -10688,4 +10720,36 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   String wsEffectiveProperty(String value, String origin) {
     return 'Efetivo: $value — $origin';
   }
+
+  @override
+  String get wsElementSelector => 'Elemento';
+
+  @override
+  String wsGeneratedAnchorValue(String anchor) {
+    return 'Gerado: $anchor';
+  }
+
+  @override
+  String wsDefaultProperty(String value) {
+    return 'Padrão: $value';
+  }
+
+  @override
+  String wsDefaultPropertyOrigin(String value, String origin) {
+    return 'Padrão: $value · $origin';
+  }
+
+  @override
+  String wsResolvedProperty(String value) {
+    return 'Resolvido: $value';
+  }
+
+  @override
+  String get wsPropertyUnresolved => 'Não resolvido';
+
+  @override
+  String get wsModule => 'Módulo';
+
+  @override
+  String get wsParent => 'Elemento pai';
 }

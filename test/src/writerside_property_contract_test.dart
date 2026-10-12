@@ -11,7 +11,10 @@ import 'package:busymark/src/markdown/markdown_parser.dart';
 import 'package:busymark/src/writerside/writerside_schema.dart';
 import 'package:busymark/src/writerside/writerside_parsers.dart';
 import 'package:busymark/src/writerside/writerside_property_validation.dart';
+import 'package:busymark/src/writerside/writerside_effective_properties.dart';
+import 'package:busymark/src/writerside/writerside_model.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 BusyDocument parse(String source, {bool xml = true, String? file}) => xml
@@ -60,6 +63,240 @@ List<String> fields(WidgetTester tester) => tester
     .toList();
 
 void main() {
+  testWidgets(
+    'normal H2 presentation keeps generated anchor derived through focus, help, save and overrides',
+    (tester) async {
+      const heading = '2. Diagnosed cause and source map';
+      const source = '# Topic\n\n## $heading\n\nBody.\n';
+      final c = BusyMarkWysiwygDocumentController(
+        document: parse(source, xml: false),
+      );
+      final session = WritersidePropertySession();
+      addTearDown(c.dispose);
+      addTearDown(session.dispose);
+      Future<void> show() async {
+        await tester.pumpWidget(harness(c, session, 'chapter'));
+        await tester.pumpAndSettle();
+      }
+
+      await show();
+      final selector = tester.widget<BusyMarkComboRow<String>>(
+        find.byWidgetPredicate(
+          (w) => w is BusyMarkComboRow<String> && w.title == 'Element',
+        ),
+      );
+      expect(selector.labelFor(selector.selected), 'Chapter');
+      expect(
+        find.text('Select a single element to inspect its properties.'),
+        findsNothing,
+      );
+      expect(
+        find.byKey(const ValueKey('writerside-properties-identity')),
+        findsNothing,
+      );
+      expect(fields(tester), ['Heading text', 'Element anchor (id)']);
+      expect(
+        tester.widget<TextField>(entry('Element anchor (id)')).controller!.text,
+        isEmpty,
+      );
+      expect(
+        find.text('Generated anchor; setting a value authors an override.'),
+        findsNothing,
+      );
+      final generated = find.byKey(
+        const ValueKey('writerside-generated-anchor'),
+      );
+      expect(
+        tester.widget<SelectableText>(generated).data,
+        'Generated: 2-diagnosed-cause-and-source-map',
+      );
+      final group = tester
+          .element(generated)
+          .findAncestorWidgetOfExactType<BusyMarkGroupedList>()!;
+      expect(group.children.whereType<SelectableText>(), isEmpty);
+      expect(group.children.whereType<Text>(), isEmpty);
+      await tester.tap(entry('Element anchor (id)'));
+      await tester.pumpAndSettle();
+      await tester.sendKeyEvent(LogicalKeyboardKey.f1);
+      await tester.pump();
+      expect(
+        find.text('Generated anchor; setting a value authors an override.'),
+        findsOneWidget,
+      );
+      expect(session.flush(), isTrue);
+      expect(c.markdown, source);
+      await tester.pump(const Duration(seconds: 3));
+      await tester.tap(entry('Heading text'));
+      await tester.pumpAndSettle();
+      expect(c.markdown, source);
+      await section(tester, 'Advanced');
+      await section(tester, 'Advanced');
+      expect(c.markdown, source);
+      await edit(tester, 'Element anchor (id)', 'cause-map');
+      expect(c.markdown, contains('id="cause-map"'));
+      expect(generated, findsNothing);
+      await edit(tester, 'Element anchor (id)', '');
+      expect(c.markdown, source);
+      // The workspace reparses published source before exposing derived IDs.
+      c.replaceDocument(parse(c.markdown, xml: false));
+      await show();
+      expect(generated, findsOneWidget);
+      final reopened = BusyMarkWysiwygDocumentController(
+        document: parse(c.markdown, xml: false),
+      );
+      addTearDown(reopened.dispose);
+      await tester.pumpWidget(harness(reopened, session, 'chapter'));
+      await tester.pumpAndSettle();
+      expect(generated, findsOneWidget);
+      expect(reopened.markdown, source);
+    },
+  );
+  testWidgets(
+    'long generated anchor wraps at minimum and desktop widths with text scaling',
+    (tester) async {
+      final longHeading = List.filled(14, 'documentation').join(' ');
+      final c = BusyMarkWysiwygDocumentController(
+        document: parse('# Topic\n\n## $longHeading\n', xml: false),
+      );
+      final session = WritersidePropertySession();
+      addTearDown(c.dispose);
+      addTearDown(session.dispose);
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+      tester.view.devicePixelRatio = 1;
+      for (final width in [260.0, 390.0]) {
+        tester.view.physicalSize = Size(width, 1500);
+        tester.platformDispatcher.textScaleFactorTestValue = 1.6;
+        await tester.pumpWidget(harness(c, session, 'chapter'));
+        await tester.pumpAndSettle();
+        final generated = find.byKey(
+          const ValueKey('writerside-generated-anchor'),
+        );
+        await tester.ensureVisible(generated);
+        final text = tester.widget<SelectableText>(generated);
+        expect(
+          text.data,
+          'Generated: ${List.filled(14, 'documentation').join('-')}',
+        );
+        expect(text.maxLines, isNull);
+        expect(tester.getSize(generated).height, greaterThan(32));
+        expect(tester.takeException(), isNull);
+        expect(c.markdown, isNot(contains('id=')));
+      }
+    },
+  );
+  testWidgets(
+    'effective subtitles are compact and provenance remains in semantics',
+    (tester) async {
+      final semantics = tester.ensureSemantics();
+      const module = WritersideEffectiveProperties(
+        settings: WritersideSettingsConfig(
+          defaultProperties: [
+            WritersideDefaultProperty(
+              elementName: 'chapter',
+              propertyName: 'collapsible',
+              value: 'true',
+            ),
+          ],
+        ),
+      );
+      for (final row in [
+        (
+          attrs: '',
+          effective: const WritersideEffectiveProperties(),
+          selected: '',
+          summary: 'Default: Disabled',
+          origin: 'built-in default',
+        ),
+        (
+          attrs: '',
+          effective: module,
+          selected: '',
+          summary: 'Default: Enabled · Module',
+          origin: 'module default',
+        ),
+        (
+          attrs: ' collapsible="true"',
+          effective: module,
+          selected: 'true',
+          summary: null,
+          origin: 'element override',
+        ),
+        (
+          attrs: ' collapsible="%collapse%"',
+          effective: const WritersideEffectiveProperties(
+            variables: {'collapse': 'true'},
+          ),
+          selected: '%collapse%',
+          summary: 'Resolved: Enabled',
+          origin: 'element override',
+        ),
+        (
+          attrs: ' collapsible="%unknown%"',
+          effective: const WritersideEffectiveProperties(),
+          selected: '%unknown%',
+          summary: 'Unresolved',
+          origin: 'unresolved',
+        ),
+      ]) {
+        final c = BusyMarkWysiwygDocumentController(
+          document: parse(
+            '<topic id="identity" title="Topic"><chapter title="Chapter"${row.attrs}><p>Body</p></chapter></topic>',
+          ),
+        );
+        final session = WritersidePropertySession();
+        await tester.pumpWidget(
+          harness(c, session, 'chapter', effective: row.effective),
+        );
+        await tester.pumpAndSettle();
+        final finder = find.byWidgetPredicate(
+          (w) =>
+              w is BusyMarkComboRow<String> &&
+              w.title == 'Collapsible (collapsible)',
+        );
+        final combo = tester.widget<BusyMarkComboRow<String>>(finder);
+        expect(combo.selected, row.selected);
+        expect(combo.subtitle, row.summary);
+        expect(combo.labelFor(''), 'Use default');
+        expect(combo.tooltip, contains(row.origin));
+        expect(
+          tester.getSemantics(finder).getSemanticsData().hint,
+          contains(row.origin),
+        );
+        expect(
+          find.byWidgetPredicate(
+            (w) => w is Text && w.data?.startsWith('Effective:') == true,
+          ),
+          findsNothing,
+        );
+        await tester.pumpWidget(const SizedBox());
+        session.dispose();
+        c.dispose();
+      }
+      final c = BusyMarkWysiwygDocumentController(
+        document: parse(
+          '<topic id="identity" title="Topic"><deflist collapsible="true" default-state="expanded"><def title="Term" default-state="inherited"><p>Body</p></def></deflist></topic>',
+        ),
+      );
+      final session = WritersidePropertySession();
+      addTearDown(c.dispose);
+      addTearDown(session.dispose);
+      await tester.pumpWidget(harness(c, session, 'def'));
+      await tester.pumpAndSettle();
+      final state = tester.widget<BusyMarkComboRow<String>>(
+        find.byWidgetPredicate(
+          (w) =>
+              w is BusyMarkComboRow<String> &&
+              w.title == 'Published initial state (default-state)',
+        ),
+      );
+      expect(state.selected, 'inherited');
+      expect(state.subtitle, 'Resolved: Expanded');
+      expect(state.tooltip, contains('parent element'));
+      semantics.dispose();
+    },
+  );
   test(
     'formal authoring sets are independent of preservation capabilities',
     () {
@@ -327,6 +564,23 @@ void main() {
         addTearDown(session.dispose);
         await tester.pumpWidget(harness(c, session, tag));
         final before = c.markdown;
+        final selector = tester.widget<BusyMarkComboRow<String>>(
+          find.byWidgetPredicate(
+            (w) => w is BusyMarkComboRow<String> && w.title == 'Element',
+          ),
+        );
+        expect(
+          selector.labelFor(selector.selected),
+          tag == 'p'
+              ? 'Paragraph'
+              : tag == 'topic'
+              ? 'Topic Properties'
+              : 'Chapter',
+        );
+        expect(
+          find.text('Select a single element to inspect its properties.'),
+          findsNothing,
+        );
         expect(
           fields(tester),
           tag == 'topic'
@@ -533,6 +787,8 @@ Widget harness(
   WritersidePropertySession session,
   String tag, {
   VoidCallback? onPublished,
+  WritersideEffectiveProperties effective =
+      const WritersideEffectiveProperties(),
 }) => MaterialApp(
   localizationsDelegates: AppLocalizations.localizationsDelegates,
   supportedLocales: AppLocalizations.supportedLocales,
@@ -560,6 +816,7 @@ Widget harness(
         }
 
         return BusyMarkWritersideProperties(
+          effectiveProperties: effective,
           document: c.document,
           target: block,
           path: block == null ? [] : c.elementPath(block.id),

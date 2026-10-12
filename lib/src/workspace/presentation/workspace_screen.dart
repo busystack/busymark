@@ -13042,6 +13042,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     if (!explicit &&
         _inspected?.block?.id == id &&
         _inspected?.inline == inline &&
+        _inspected?.multiple == multiple &&
         _inspected?.matches(buffer.id, buffer.revision, buffer.text) == true) {
       return;
     }

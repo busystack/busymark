@@ -3577,5 +3577,13 @@
   "wsOriginModule": "Predeterminado del módulo",
   "wsOriginBuiltIn": "Predeterminado integrado",
   "wsOriginUnresolved": "Sin resolver",
-  "wsEffectiveProperty": "Efectivo: {value} — {origin}"
+  "wsEffectiveProperty": "Efectivo: {value} — {origin}",
+  "wsElementSelector": "Elemento",
+  "wsGeneratedAnchorValue": "Generado: {anchor}",
+  "wsDefaultProperty": "Predeterminado: {value}",
+  "wsDefaultPropertyOrigin": "Predeterminado: {value} · {origin}",
+  "wsResolvedProperty": "Resuelto: {value}",
+  "wsPropertyUnresolved": "Sin resolver",
+  "wsModule": "Módulo",
+  "wsParent": "Elemento padre"
 }

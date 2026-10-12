@@ -3603,5 +3603,13 @@
   "wsOriginModule": "Domyślna wartość modułu",
   "wsOriginBuiltIn": "Wbudowana wartość domyślna",
   "wsOriginUnresolved": "Nierozwiązane",
-  "wsEffectiveProperty": "Efektywna wartość: {value} — {origin}"
+  "wsEffectiveProperty": "Efektywna wartość: {value} — {origin}",
+  "wsElementSelector": "Element",
+  "wsGeneratedAnchorValue": "Wygenerowano: {anchor}",
+  "wsDefaultProperty": "Domyślnie: {value}",
+  "wsDefaultPropertyOrigin": "Domyślnie: {value} · {origin}",
+  "wsResolvedProperty": "Rozwiązano: {value}",
+  "wsPropertyUnresolved": "Nierozwiązane",
+  "wsModule": "Moduł",
+  "wsParent": "Element nadrzędny"
 }

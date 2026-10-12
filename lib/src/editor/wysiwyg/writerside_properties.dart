@@ -175,6 +175,7 @@ class BusyMarkWritersideProperties extends StatelessWidget {
       bool inline = false,
       bool enabled = true,
       Future<String?> Function()? chooseFile,
+      String? supportingText,
     }) {
       final name = attribute == 'language' ? 'lang' : attribute;
       offered.add(name);
@@ -202,6 +203,15 @@ class BusyMarkWritersideProperties extends StatelessWidget {
         readOnly: immutable || !enabled,
         label: attributeLabel(attribute, label),
         chooseFile: chooseFile,
+        supportingText: supportingText,
+        help: switch (name) {
+          'id' when nativeHeading => l.wsGeneratedAnchor,
+          'title' when nativeHeading => l.wsTitleOverrideExplanation,
+          'filter' => l.wsFilterExplanation,
+          'instance' => l.wsInstanceExplanation,
+          'ignore-vars' => l.wsIgnoreVariablesExplanation,
+          _ => null,
+        },
         value: value ?? attrs[attribute] ?? '',
         apply: (value) => inline || inlineTarget != null
             ? onInlineProperty?.call(attribute, value) ?? false
@@ -284,48 +294,59 @@ class BusyMarkWritersideProperties extends StatelessWidget {
         WritersidePropertyOrigin.builtIn => l.wsOriginBuiltIn,
         WritersidePropertyOrigin.unresolved => l.wsOriginUnresolved,
       };
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: BusyMarkComboRow<String>(
-                  enabled: !immutable && active,
-                  subtitle: active ? null : l.wsPropertiesInactive,
-                  title: attributeLabel(attribute, label),
-                  values: values,
-                  selected: value,
-                  labelFor: (v) => v.isEmpty ? l.wsUseDefault : valueLabel(v),
-                  onSelected: (v) {
-                    if (!immutable && (active || v.isEmpty)) {
-                      if (inlineTarget != null) {
-                        onInlineProperty?.call(attribute, v);
-                      } else {
-                        onProperty(attribute, v.isEmpty ? null : v);
-                      }
+      final resolved = property.value;
+      final summary = resolved == null
+          ? l.wsPropertyUnresolved
+          : value.isEmpty
+          ? property.origin == WritersidePropertyOrigin.module
+                ? l.wsDefaultPropertyOrigin(valueLabel(resolved), l.wsModule)
+                : property.origin == WritersidePropertyOrigin.ancestor
+                ? l.wsDefaultPropertyOrigin(valueLabel(resolved), l.wsParent)
+                : l.wsDefaultProperty(valueLabel(resolved))
+          : resolved != value
+          ? l.wsResolvedProperty(valueLabel(resolved))
+          : null;
+      final provenance = l.wsEffectiveProperty(
+        resolved == null ? l.wsPropertyUnresolved : valueLabel(resolved),
+        origin,
+      );
+      final help = [
+        provenance,
+        if (attribute == 'ignore-vars') l.wsIgnoreVariablesExplanation,
+      ].join('\n');
+      final subtitle = [
+        if (summary != null) summary,
+        if (!active) l.wsPropertiesInactive,
+      ].join('\n');
+      return _PropertyContextHelp(
+        help: help,
+        mergeSemantics: active,
+        child: Row(
+          children: [
+            Expanded(
+              child: BusyMarkComboRow<String>(
+                enabled: !immutable && active,
+                subtitle: subtitle.isEmpty ? null : subtitle,
+                tooltip: help,
+                title: attributeLabel(attribute, label),
+                values: values,
+                selected: value,
+                labelFor: (v) => v.isEmpty ? l.wsUseDefault : valueLabel(v),
+                onSelected: (v) {
+                  if (!immutable && (active || v.isEmpty)) {
+                    if (inlineTarget != null) {
+                      onInlineProperty?.call(attribute, v);
+                    } else {
+                      onProperty(attribute, v.isEmpty ? null : v);
                     }
-                  },
-                  width: 125,
-                ),
-              ),
-              if (!active && value.isNotEmpty) resetOverride(attribute),
-            ],
-          ),
-          if (property.value != null ||
-              property.origin == WritersidePropertyOrigin.unresolved)
-            Padding(
-              padding: const EdgeInsetsDirectional.fromSTEB(16, 0, 16, 8),
-              child: Text(
-                l.wsEffectiveProperty(
-                  property.value == null
-                      ? l.wsPropertiesUnresolved
-                      : valueLabel(property.value!),
-                  origin,
-                ),
+                  }
+                },
+                width: 125,
               ),
             ),
-        ],
+            if (!active && value.isNotEmpty) resetOverride(attribute),
+          ],
+        ),
       );
     }
 
@@ -365,6 +386,12 @@ class BusyMarkWritersideProperties extends StatelessWidget {
                 ? block.attributes['src'] ?? ''
                 : block.plainText.split('\n').first),
     ].where((v) => v.isNotEmpty).join(' · ');
+    final hasEditableTitle =
+        !immutable &&
+        inlineTarget == null &&
+        block != null &&
+        (block.kind == BusyBlockKind.heading ||
+            WritersideEditingAdapter.titleElements.contains(tag));
     final rows = <Widget>[];
     if (videoDraft) {
       rows.add(
@@ -545,11 +572,11 @@ class BusyMarkWritersideProperties extends StatelessWidget {
             'id',
             l.wsElementAnchor,
             value: attrs['generatedId'] == 'true' ? '' : attrs['id'],
+            supportingText: attrs['generatedId'] == 'true'
+                ? l.wsGeneratedAnchorValue(attrs['id'] ?? '')
+                : null,
           ),
         );
-        if (attrs['generatedId'] == 'true') {
-          rows.add(Text('${l.wsGeneratedAnchor} ${attrs['id'] ?? ''}'));
-        }
       }
       if ({'chapter', 'code-block', 'procedure', 'deflist'}.contains(tag)) {
         rows.add(enumRow('collapsible', l.wsCollapsible));
@@ -824,11 +851,11 @@ class BusyMarkWritersideProperties extends StatelessWidget {
             'id',
             l.wsElementAnchor,
             value: attrs['generatedId'] == 'true' ? '' : attrs['id'],
+            supportingText: attrs['generatedId'] == 'true'
+                ? l.wsGeneratedAnchorValue(attrs['id'] ?? '')
+                : null,
           ),
         );
-        if (attrs['generatedId'] == 'true') {
-          advanced.add(Text('${l.wsGeneratedAnchor} ${attrs['id'] ?? ''}'));
-        }
       }
     }
     String fieldLabel(String name) => switch (name) {
@@ -847,7 +874,6 @@ class BusyMarkWritersideProperties extends StatelessWidget {
         (inlineTarget == null || inlineTag != null)) {
       if (nativeHeading && (!topicSelected || attrs.containsKey('title'))) {
         advanced.add(entry('title', l.wsTitleOverride));
-        if (!topicSelected) advanced.add(Text(l.wsTitleOverrideExplanation));
       }
       final properties =
           (inlineTag == null
@@ -874,20 +900,6 @@ class BusyMarkWritersideProperties extends StatelessWidget {
                   active: !(tag == 'def' && name == 'collapsible'),
                 ),
         );
-        final explanation = switch (name) {
-          'filter' => l.wsFilterExplanation,
-          'instance' => l.wsInstanceExplanation,
-          'ignore-vars' => l.wsIgnoreVariablesExplanation,
-          _ => null,
-        };
-        if (explanation != null) {
-          advanced.add(
-            Padding(
-              padding: const EdgeInsetsDirectional.fromSTEB(16, 0, 16, 8),
-              child: Text(explanation),
-            ),
-          );
-        }
       }
       final unsupported = WritersideEditingAdapter.sourceAttributes(block).keys
           .where(
@@ -979,13 +991,13 @@ class BusyMarkWritersideProperties extends StatelessWidget {
                   children: [
                     Tooltip(
                       message: block == null
-                          ? l.wsPropertiesSelection
+                          ? l.wsElementSelector
                           : '${writersideElementLabel(context, block, document)} · ${block.attributes['id'] ?? ''} · ${block.attributes['title'] ?? block.attributes['busymark-title-label'] ?? block.plainText}',
                       child: BusyMarkGroupedList(
                         filled: true,
                         children: [
                           BusyMarkComboRow<String>(
-                            title: l.wsPropertiesSelection,
+                            title: l.wsElementSelector,
                             values: values,
                             selected: selected,
                             labelFor: (id) => id == '@topic'
@@ -1033,7 +1045,9 @@ class BusyMarkWritersideProperties extends StatelessWidget {
                         ],
                       ),
                     ),
-                    if (identity.isNotEmpty && !topicSelected)
+                    if (identity.isNotEmpty &&
+                        !topicSelected &&
+                        !hasEditableTitle)
                       Padding(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 12,
@@ -1368,6 +1382,8 @@ class _PropertyTextEntry extends StatefulWidget {
     this.readOnly = false,
     this.commitOnBlur = true,
     this.chooseFile,
+    this.supportingText,
+    this.help,
   });
   final String label, value;
   final bool Function(String) apply;
@@ -1375,6 +1391,8 @@ class _PropertyTextEntry extends StatefulWidget {
   final bool readOnly;
   final bool commitOnBlur;
   final Future<String?> Function()? chooseFile;
+  final String? supportingText;
+  final String? help;
   @override
   State<_PropertyTextEntry> createState() => _PropertyTextEntryState();
 }
@@ -1478,7 +1496,7 @@ class _PropertyTextEntryState extends State<_PropertyTextEntry> {
           WritersidePropertyRejection.unresolved => l.wsPropertiesUnresolved,
           null => null,
         };
-    return Shortcuts(
+    final field = Shortcuts(
       shortcuts: const {
         SingleActivator(LogicalKeyboardKey.escape): _RevertPropertyIntent(),
       },
@@ -1530,7 +1548,60 @@ class _PropertyTextEntryState extends State<_PropertyTextEntry> {
         ),
       ),
     );
+    final unit = Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        field,
+        if (widget.supportingText != null && _controller.text.isEmpty)
+          Padding(
+            padding: const EdgeInsetsDirectional.fromSTEB(16, 0, 16, 8),
+            child: SelectableText(
+              widget.supportingText!,
+              key: const ValueKey('writerside-generated-anchor'),
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ),
+      ],
+    );
+    return widget.help == null
+        ? unit
+        : _PropertyContextHelp(help: widget.help!, child: unit);
   }
+}
+
+/// Existing tooltip treatment, available from the keyboard and in semantics.
+class _PropertyContextHelp extends StatefulWidget {
+  const _PropertyContextHelp({
+    required this.help,
+    required this.child,
+    this.mergeSemantics = false,
+  });
+  final String help;
+  final Widget child;
+  final bool mergeSemantics;
+  @override
+  State<_PropertyContextHelp> createState() => _PropertyContextHelpState();
+}
+
+class _PropertyContextHelpState extends State<_PropertyContextHelp> {
+  final _tooltip = GlobalKey<TooltipState>();
+  @override
+  Widget build(BuildContext context) => CallbackShortcuts(
+    bindings: {
+      const SingleActivator(LogicalKeyboardKey.f1): () =>
+          _tooltip.currentState?.ensureTooltipVisible(),
+    },
+    child: Tooltip(
+      key: _tooltip,
+      message: widget.help,
+      excludeFromSemantics: true,
+      child: widget.mergeSemantics
+          ? MergeSemantics(
+              child: Semantics(hint: widget.help, child: widget.child),
+            )
+          : Semantics(hint: widget.help, child: widget.child),
+    ),
+  );
 }
 
 class _RevertPropertyIntent extends Intent {

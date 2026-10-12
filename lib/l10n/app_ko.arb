@@ -5116,5 +5116,13 @@
   "wsOriginModule": "모듈 기본값",
   "wsOriginBuiltIn": "내장 기본값",
   "wsOriginUnresolved": "확인되지 않음",
-  "wsEffectiveProperty": "적용 값: {value} — {origin}"
+  "wsEffectiveProperty": "적용 값: {value} — {origin}",
+  "wsElementSelector": "요소",
+  "wsGeneratedAnchorValue": "생성된 값: {anchor}",
+  "wsDefaultProperty": "기본값: {value}",
+  "wsDefaultPropertyOrigin": "기본값: {value} · {origin}",
+  "wsResolvedProperty": "해석된 값: {value}",
+  "wsPropertyUnresolved": "미해결",
+  "wsModule": "모듈",
+  "wsParent": "부모 요소"
 }

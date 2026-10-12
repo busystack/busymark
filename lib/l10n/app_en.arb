@@ -3057,5 +3057,60 @@
         "type": "String"
       }
     }
+  },
+  "wsElementSelector": "Element",
+  "wsGeneratedAnchorValue": "Generated: {anchor}",
+  "wsDefaultProperty": "Default: {value}",
+  "wsDefaultPropertyOrigin": "Default: {value} · {origin}",
+  "wsResolvedProperty": "Resolved: {value}",
+  "wsPropertyUnresolved": "Unresolved",
+  "wsModule": "Module",
+  "wsParent": "Parent",
+  "@wsElementSelector": {
+    "description": "Compact Element Properties control label or supporting value; source ownership and default resolution are unchanged."
+  },
+  "@wsGeneratedAnchorValue": {
+    "description": "Compact Element Properties control label or supporting value; source ownership and default resolution are unchanged.",
+    "placeholders": {
+      "anchor": {
+        "type": "String"
+      }
+    }
+  },
+  "@wsDefaultProperty": {
+    "description": "Compact Element Properties control label or supporting value; source ownership and default resolution are unchanged.",
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "@wsDefaultPropertyOrigin": {
+    "description": "Compact Element Properties control label or supporting value; source ownership and default resolution are unchanged.",
+    "placeholders": {
+      "value": {
+        "type": "String"
+      },
+      "origin": {
+        "type": "String"
+      }
+    }
+  },
+  "@wsResolvedProperty": {
+    "description": "Compact Element Properties control label or supporting value; source ownership and default resolution are unchanged.",
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "@wsPropertyUnresolved": {
+    "description": "Compact Element Properties control label or supporting value; source ownership and default resolution are unchanged."
+  },
+  "@wsModule": {
+    "description": "Compact Element Properties control label or supporting value; source ownership and default resolution are unchanged."
+  },
+  "@wsParent": {
+    "description": "Compact Element Properties control label or supporting value; source ownership and default resolution are unchanged."
   }
 }

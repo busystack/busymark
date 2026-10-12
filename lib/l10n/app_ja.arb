@@ -5116,5 +5116,13 @@
   "wsOriginModule": "モジュールの既定値",
   "wsOriginBuiltIn": "組み込みの既定値",
   "wsOriginUnresolved": "未解決",
-  "wsEffectiveProperty": "有効値: {value} — {origin}"
+  "wsEffectiveProperty": "有効値: {value} — {origin}",
+  "wsElementSelector": "要素",
+  "wsGeneratedAnchorValue": "生成値: {anchor}",
+  "wsDefaultProperty": "既定値: {value}",
+  "wsDefaultPropertyOrigin": "既定値: {value} · {origin}",
+  "wsResolvedProperty": "解決値: {value}",
+  "wsPropertyUnresolved": "未解決",
+  "wsModule": "モジュール",
+  "wsParent": "親要素"
 }

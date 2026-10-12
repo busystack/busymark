@@ -9053,6 +9053,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Effective: {value} — {origin}'**
   String wsEffectiveProperty(String value, String origin);
+
+  /// Compact Element Properties control label or supporting value; source ownership and default resolution are unchanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Element'**
+  String get wsElementSelector;
+
+  /// Compact Element Properties control label or supporting value; source ownership and default resolution are unchanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Generated: {anchor}'**
+  String wsGeneratedAnchorValue(String anchor);
+
+  /// Compact Element Properties control label or supporting value; source ownership and default resolution are unchanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Default: {value}'**
+  String wsDefaultProperty(String value);
+
+  /// Compact Element Properties control label or supporting value; source ownership and default resolution are unchanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Default: {value} · {origin}'**
+  String wsDefaultPropertyOrigin(String value, String origin);
+
+  /// Compact Element Properties control label or supporting value; source ownership and default resolution are unchanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Resolved: {value}'**
+  String wsResolvedProperty(String value);
+
+  /// Compact Element Properties control label or supporting value; source ownership and default resolution are unchanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Unresolved'**
+  String get wsPropertyUnresolved;
+
+  /// Compact Element Properties control label or supporting value; source ownership and default resolution are unchanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Module'**
+  String get wsModule;
+
+  /// Compact Element Properties control label or supporting value; source ownership and default resolution are unchanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Parent'**
+  String get wsParent;
 }
 
 class _AppLocalizationsDelegate

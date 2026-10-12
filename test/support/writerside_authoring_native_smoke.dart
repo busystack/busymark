@@ -144,6 +144,18 @@ Future<void> main(List<String> arguments) async {
       ),
     );
   }
+  const presentationSource =
+      '# Inspector presentation\n\n## 2. Diagnosed cause and source map\n\nBody for presentation checks.\n\n## Long generated anchor documentation documentation documentation documentation documentation documentation documentation documentation documentation documentation documentation documentation\n\nLong anchor body.\n';
+  await File(
+    p.join(root.path, 'topics/inspector-presentation.md'),
+  ).writeAsString(presentationSource);
+  final presentationTree = File(p.join(root.path, 'conformance.tree'));
+  await presentationTree.writeAsString(
+    (await presentationTree.readAsString()).replaceFirst(
+      '</instance-profile>',
+      '<toc-element topic="inspector-presentation.md"/></instance-profile>',
+    ),
+  );
   final defaultsFixture = Directory(
     p.join(fixture.parent.path, 'property_defaults_conformance'),
   );
@@ -956,6 +968,345 @@ class _HarnessState extends ConsumerState<_Harness> {
     }
   }
 
+  Future<void> _runChapterPresentation() async {
+    const heading = '2. Diagnosed cause and source map';
+    final controller = ref.read(workspaceControllerProvider.notifier);
+    final settings = ref.read(appSettingsControllerProvider.notifier);
+    final path = p.join(widget.root.path, 'topics/inspector-presentation.md');
+    await controller.openActiveFile(path);
+    await _native('chord', 'ctrl+shift+1');
+    await _until(
+      () => _elements(
+        (w) =>
+            w is TextField &&
+            w.controller is BusyMarkWysiwygTextController &&
+            w.controller!.text == heading,
+      ).isNotEmpty,
+      'Presentation heading opens in Editor',
+    );
+    final original = _source;
+    Element propertiesButton() => _elements(
+      (w) => w.key == const ValueKey('wysiwyg-writerside-properties'),
+    ).single;
+    Future<void> closeInspector() async {
+      await _tap(
+        _elements(
+          (w) => w is BusyMarkHeaderIconButton && w.tooltip == 'Close',
+        ).single,
+      );
+      await _until(
+        () => !ref.read(appSettingsControllerProvider).elementPropertiesVisible,
+        'Inspector Close hides the pane',
+      );
+    }
+
+    if (ref.read(appSettingsControllerProvider).elementPropertiesVisible) {
+      await closeInspector();
+    }
+    await _tap(_field(heading));
+    await _tap(propertiesButton());
+    await _until(
+      () => _elements(
+        (w) =>
+            w is BusyMarkWritersideProperties && w.target?.plainText == heading,
+      ).isNotEmpty,
+      'Heading click then Element Properties identifies the chapter',
+    );
+    BusyMarkWritersideProperties inspector() =>
+        _elements((w) => w is BusyMarkWritersideProperties).single.widget
+            as BusyMarkWritersideProperties;
+    BusyMarkComboRow<String> combo(String title) =>
+        _singleInspectorControl(
+              title,
+              (w) => w is BusyMarkComboRow<String> && w.title == title,
+            ).widget
+            as BusyMarkComboRow<String>;
+    _check(
+      combo('Element').labelFor(combo('Element').selected) == 'Chapter',
+      'Exact heading click → Properties shows Element — Chapter',
+    );
+    _check(
+      _elements(
+        (w) =>
+            w is Text &&
+            w.data == 'Select a single element to inspect its properties.',
+      ).isEmpty,
+      'Valid chapter never shows the empty-selection instruction',
+    );
+    _check(
+      _elements(
+        (w) => w.key == const ValueKey('writerside-properties-identity'),
+      ).isEmpty,
+      'Editable chapter has no repeated identity strip',
+    );
+    _check(
+      _inspectorProperty('Heading text').controller!.text == heading &&
+          _inspectorProperty('Element anchor (id)').controller!.text.isEmpty,
+      'Heading text and absent anchor override have distinct values',
+    );
+    const generated = 'Generated: 2-diagnosed-cause-and-source-map';
+    _check(
+      _elements((w) => w is SelectableText && w.data == generated).length == 1,
+      'Generated anchor is readable and selectable in its property unit',
+    );
+    _check(
+      combo('Collapsible (collapsible)').subtitle == 'Default: Disabled' &&
+          combo('Collapsible (collapsible)').selected == '',
+      'Unspecified chapter collapse shows compact built-in default',
+    );
+    _check(
+      _elements(
+        (w) =>
+            w is RichText &&
+            w.text.toPlainText() ==
+                'Generated anchor; setting a value authors an override.',
+      ).isEmpty,
+      'Generated-anchor explanation is not permanent form prose',
+    );
+    await _capture('presentation-heading-properties-light');
+    final anchor = _inspectorProperty('Element anchor (id)');
+    await _tap(
+      _elements(
+        (w) => w is TextField && w.controller == anchor.controller,
+      ).single,
+    );
+    await _native('chord', 'F1');
+    await _pause();
+    _check(
+      _elements(
+        (w) =>
+            w is RichText &&
+            w.text.toPlainText() ==
+                'Generated anchor; setting a value authors an override.',
+      ).isNotEmpty,
+      'F1 opens generated-anchor contextual help',
+    );
+    await _capture('presentation-anchor-help');
+    await _tap(_field(heading));
+    await _native('chord', 'ctrl+s');
+    await _until(
+      () => !ref.read(workspaceControllerProvider).activeBuffer!.isDirty,
+      'Presentation neutral Save finishes',
+    );
+    _check(
+      _source == original && await File(path).readAsString() == original,
+      'Focus, blur, help and Save do not author a generated ID',
+    );
+    await closeInspector();
+    await _tap(propertiesButton());
+    _check(
+      _source == original &&
+          _inspectorProperty('Element anchor (id)').controller!.text.isEmpty,
+      'Closing and reopening properties keeps generated source unchanged',
+    );
+    Future<void> anchorEdit(String value) async {
+      await _tap(_field(heading));
+      if (_elements(
+        (w) =>
+            w is BusyMarkWritersideProperties && w.target?.plainText == heading,
+      ).isEmpty) {
+        // Undo restores the document while retaining the caret. Move the
+        // actual Editor caret to establish a fresh revision-bound selection.
+        await _native('chord', 'Home');
+      }
+      await _until(
+        () => _elements(
+          (w) =>
+              w is BusyMarkWritersideProperties &&
+              w.target?.plainText == heading,
+        ).isNotEmpty,
+        'Heading is selected for the anchor transaction',
+      );
+      final field = _inspectorProperty('Element anchor (id)');
+      await _type(
+        _elements(
+          (w) => w is TextField && w.controller == field.controller,
+        ).single,
+        value,
+      );
+      await _key(PhysicalKeyboardKey.enter, LogicalKeyboardKey.enter);
+    }
+
+    await anchorEdit('diagnosed-cause-map');
+    await _until(
+      () => inspector().target?.attributes['id'] == 'diagnosed-cause-map',
+      'Anchor override is authored',
+    );
+    final overrideSource = _source;
+    _check(
+      _elements(
+        (w) => w.key == const ValueKey('writerside-generated-anchor'),
+      ).isEmpty,
+      'Authored override replaces the generated summary',
+    );
+    await _tap(_field(heading));
+    await _native('chord', 'ctrl+z');
+    await _until(
+      () => _source == original,
+      'Native undo restores generated anchor',
+    );
+    await _native('chord', 'ctrl+shift+z');
+    await _until(
+      () => _source == overrideSource,
+      'Native redo restores explicit anchor',
+    );
+    await anchorEdit('');
+    await _until(
+      () => inspector().target?.attributes['generatedId'] == 'true',
+      'Removing override restores generated anchor',
+    );
+    _check(
+      _source == original,
+      'Removing the override restores the original authored source',
+    );
+    await _tap(_field(heading));
+    await _native('chord', 'ctrl+z');
+    await _until(
+      () => _source == overrideSource,
+      'Undo of reset restores the override',
+    );
+    await _native('chord', 'ctrl+shift+z');
+    await _until(
+      () => _source == original,
+      'Redo of reset restores generated behavior',
+    );
+    await anchorEdit('diagnosed-cause-map');
+    final collapseElement = _singleInspectorControl(
+      'Collapsible (collapsible)',
+      (w) =>
+          w is BusyMarkComboRow<String> &&
+          w.title == 'Collapsible (collapsible)',
+    );
+    await _tap(collapseElement);
+    _nativeMenuOpen = true;
+    await _tapLabel('Enabled');
+    _check(
+      combo('Collapsible (collapsible)').subtitle == null,
+      'Explicit collapse does not repeat an effective-value sentence',
+    );
+    await _native('chord', 'ctrl+s');
+    await _until(
+      () => !ref.read(workspaceControllerProvider).activeBuffer!.isDirty,
+      'Presentation override save finishes',
+    );
+    final saved = _source;
+    await _native('chord', 'ctrl+w');
+    await _until(
+      () => !ref
+          .read(workspaceControllerProvider)
+          .documentBuffers
+          .any((buffer) => buffer.filePath == path),
+      'Presentation document closes before reopening',
+    );
+    await controller.openActiveFile(path);
+    await _native('chord', 'ctrl+shift+1');
+    await _until(
+      () => _elements(
+        (w) =>
+            w is TextField &&
+            w.controller is BusyMarkWysiwygTextController &&
+            w.controller!.text == heading,
+      ).isNotEmpty,
+      'Presentation document reopens in Editor',
+    );
+    await _tap(_field(heading));
+    _check(
+      _source == saved &&
+          _inspectorProperty('Element anchor (id)').controller!.text ==
+              'diagnosed-cause-map',
+      'Anchor override and explicit collapse survive save close reopen',
+    );
+    await _capture('presentation-heading-properties-reopened');
+    final longHeading = inspector().document.blocks
+        .firstWhere(
+          (b) =>
+              b.kind == BusyBlockKind.heading &&
+              b.plainText.startsWith('Long generated anchor'),
+        )
+        .plainText;
+    await _tap(_field(longHeading));
+    await _pause();
+    _check(
+      _inspectorProperty('Element anchor (id)').controller!.text.isEmpty &&
+          inspector().target?.attributes['generatedId'] == 'true',
+      'Target change does not transfer an authored anchor draft',
+    );
+    final longAnchor = inspector().target!.attributes['id']!;
+    for (final width in [390.0, 260.0]) {
+      await settings.setElementPropertiesWidth(width);
+      await settings.setThemeModePreference(
+        width == 260
+            ? BusyMarkThemeModePreference.dark
+            : BusyMarkThemeModePreference.light,
+      );
+      await _capture('presentation-long-anchor-${width.toInt()}');
+      await _captureScaled('presentation-long-anchor-${width.toInt()}-scaled');
+      _check(
+        _elements(
+              (w) =>
+                  w is SelectableText &&
+                  w.data == 'Generated: $longAnchor' &&
+                  w.maxLines == null,
+            ).length ==
+            1,
+        'Long generated anchor remains complete at width ${width.toInt()} and increased scaling',
+      );
+    }
+    await settings.setElementPropertiesWidth(390);
+    await settings.setThemeModePreference(BusyMarkThemeModePreference.light);
+    // The first chapter now has published collapse enabled; use the visible
+    // second chapter's body to begin the native multiple-selection gesture.
+    await _tap(_field('Long anchor body.'));
+    await _native('chord', 'ctrl+a');
+    await _native('chord', 'ctrl+a');
+    await _pause();
+    _check(
+      _elements(
+            (w) =>
+                w is Text &&
+                w.data == 'Select a single element to inspect its properties.',
+          ).isNotEmpty &&
+          _elements((w) => w is BusyMarkWritersideProperties).isEmpty,
+      'Multiple Editor selection shows feedback instead of arbitrary editable properties',
+    );
+    await _capture('presentation-multiple-selection');
+    await _native('chord', 'Escape');
+    final emptyPath = p.join(widget.root.path, 'topics/inspector-empty.md');
+    await File(emptyPath).writeAsString('');
+    await controller.openActiveFile(emptyPath);
+    await _native('chord', 'ctrl+shift+2');
+    await _pause();
+    _check(
+      _elements(
+            (w) =>
+                w is Text &&
+                w.data == 'Select a single element to inspect its properties.',
+          ).isNotEmpty &&
+          _elements((w) => w is BusyMarkWritersideProperties).isEmpty,
+      'Empty Source document shows selection feedback without arbitrary editable fields',
+    );
+    await _capture('presentation-empty-selection');
+    await _native('chord', 'ctrl+w');
+    await _until(
+      () => !ref
+          .read(workspaceControllerProvider)
+          .documentBuffers
+          .any((buffer) => buffer.filePath == emptyPath),
+      'Empty document closes before fixture cleanup',
+    );
+    await File(emptyPath).delete();
+    await controller.openActiveFile(path);
+    await _native('chord', 'ctrl+shift+1');
+    await _pause();
+    if (ref.read(appSettingsControllerProvider).elementPropertiesVisible) {
+      await closeInspector();
+    }
+    _check(
+      await File(path).readAsString() == saved,
+      'Presentation inspection, scaling and selection changes preserve saved source',
+    );
+  }
+
   Future<void> _runPropertyContract(
     Future<void> Function() openInspector,
   ) async {
@@ -1406,6 +1757,14 @@ class _HarnessState extends ConsumerState<_Harness> {
         await _pause();
       }
 
+      if (![
+        'BUSYMARK_INLINE_REFERENCES_ONLY',
+        'BUSYMARK_VARIABLE_MEDIA_ONLY',
+        'BUSYMARK_NAVIGATION_ONLY',
+        'BUSYMARK_PROPERTIES_ONLY',
+      ].any((flag) => Platform.environment[flag] == '1')) {
+        await _runChapterPresentation();
+      }
       if (Platform.environment['BUSYMARK_PROPERTY_CONTRACT_ONLY'] == '1') {
         await _runPropertyContract(paletteProperties);
         await _finish(null);
@@ -2757,14 +3116,22 @@ class _HarnessState extends ConsumerState<_Harness> {
       );
       _check(
         _elements(
-              (w) =>
-                  w is Text && w.data == 'Effective: Enabled — module default',
+              (w) => w is Text && w.data == 'Default: Enabled · Module',
             ).isNotEmpty &&
             _elements(
-              (w) =>
-                  w is Text && w.data == 'Effective: Expanded — module default',
+              (w) => w is Text && w.data == 'Default: Expanded · Module',
             ).isNotEmpty,
-        'Effective values and localized origins appear beneath selectors',
+        'Compact default values appear beneath selectors',
+      );
+      _check(
+        defaultCombo('Collapsible (collapsible)').tooltip ==
+                'Effective: Enabled — module default' &&
+            _elements(
+              (w) =>
+                  w is Semantics &&
+                  w.properties.hint == 'Effective: Enabled — module default',
+            ).isNotEmpty,
+        'Default controls retain complete provenance in help and accessibility',
       );
       await _capture('inspector-module-defaults');
       await _tap(

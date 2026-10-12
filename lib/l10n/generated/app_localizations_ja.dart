@@ -5134,4 +5134,36 @@ class AppLocalizationsJa extends AppLocalizations {
   String wsEffectiveProperty(String value, String origin) {
     return '有効値: $value — $origin';
   }
+
+  @override
+  String get wsElementSelector => '要素';
+
+  @override
+  String wsGeneratedAnchorValue(String anchor) {
+    return '生成値: $anchor';
+  }
+
+  @override
+  String wsDefaultProperty(String value) {
+    return '既定値: $value';
+  }
+
+  @override
+  String wsDefaultPropertyOrigin(String value, String origin) {
+    return '既定値: $value · $origin';
+  }
+
+  @override
+  String wsResolvedProperty(String value) {
+    return '解決値: $value';
+  }
+
+  @override
+  String get wsPropertyUnresolved => '未解決';
+
+  @override
+  String get wsModule => 'モジュール';
+
+  @override
+  String get wsParent => '親要素';
 }

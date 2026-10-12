@@ -5321,4 +5321,36 @@ class AppLocalizationsFa extends AppLocalizations {
   String wsEffectiveProperty(String value, String origin) {
     return 'مقدار مؤثر: $value — $origin';
   }
+
+  @override
+  String get wsElementSelector => 'عنصر';
+
+  @override
+  String wsGeneratedAnchorValue(String anchor) {
+    return 'تولیدشده: $anchor';
+  }
+
+  @override
+  String wsDefaultProperty(String value) {
+    return 'پیش‌فرض: $value';
+  }
+
+  @override
+  String wsDefaultPropertyOrigin(String value, String origin) {
+    return 'پیش‌فرض: $value · $origin';
+  }
+
+  @override
+  String wsResolvedProperty(String value) {
+    return 'مقدار حل‌شده: $value';
+  }
+
+  @override
+  String get wsPropertyUnresolved => 'حل‌نشده';
+
+  @override
+  String get wsModule => 'ماژول';
+
+  @override
+  String get wsParent => 'عنصر والد';
 }

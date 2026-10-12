@@ -5283,4 +5283,36 @@ class AppLocalizationsTr extends AppLocalizations {
   String wsEffectiveProperty(String value, String origin) {
     return 'Etkin: $value — $origin';
   }
+
+  @override
+  String get wsElementSelector => 'Öğe';
+
+  @override
+  String wsGeneratedAnchorValue(String anchor) {
+    return 'Oluşturulan: $anchor';
+  }
+
+  @override
+  String wsDefaultProperty(String value) {
+    return 'Varsayılan: $value';
+  }
+
+  @override
+  String wsDefaultPropertyOrigin(String value, String origin) {
+    return 'Varsayılan: $value · $origin';
+  }
+
+  @override
+  String wsResolvedProperty(String value) {
+    return 'Çözümlenen: $value';
+  }
+
+  @override
+  String get wsPropertyUnresolved => 'Çözümlenmedi';
+
+  @override
+  String get wsModule => 'Modül';
+
+  @override
+  String get wsParent => 'Üst öğe';
 }

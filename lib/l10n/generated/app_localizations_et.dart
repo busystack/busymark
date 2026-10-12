@@ -5281,4 +5281,36 @@ class AppLocalizationsEt extends AppLocalizations {
   String wsEffectiveProperty(String value, String origin) {
     return 'Tegelik: $value — $origin';
   }
+
+  @override
+  String get wsElementSelector => 'Element';
+
+  @override
+  String wsGeneratedAnchorValue(String anchor) {
+    return 'Genereeritud: $anchor';
+  }
+
+  @override
+  String wsDefaultProperty(String value) {
+    return 'Vaikimisi: $value';
+  }
+
+  @override
+  String wsDefaultPropertyOrigin(String value, String origin) {
+    return 'Vaikimisi: $value · $origin';
+  }
+
+  @override
+  String wsResolvedProperty(String value) {
+    return 'Lahendatud: $value';
+  }
+
+  @override
+  String get wsPropertyUnresolved => 'Lahendamata';
+
+  @override
+  String get wsModule => 'Moodul';
+
+  @override
+  String get wsParent => 'Ülemelement';
 }

@@ -5131,4 +5131,36 @@ class AppLocalizationsKo extends AppLocalizations {
   String wsEffectiveProperty(String value, String origin) {
     return '적용 값: $value — $origin';
   }
+
+  @override
+  String get wsElementSelector => '요소';
+
+  @override
+  String wsGeneratedAnchorValue(String anchor) {
+    return '생성된 값: $anchor';
+  }
+
+  @override
+  String wsDefaultProperty(String value) {
+    return '기본값: $value';
+  }
+
+  @override
+  String wsDefaultPropertyOrigin(String value, String origin) {
+    return '기본값: $value · $origin';
+  }
+
+  @override
+  String wsResolvedProperty(String value) {
+    return '해석된 값: $value';
+  }
+
+  @override
+  String get wsPropertyUnresolved => '미해결';
+
+  @override
+  String get wsModule => '모듈';
+
+  @override
+  String get wsParent => '부모 요소';
 }

@@ -58,6 +58,20 @@ def verify_numbered_item(actual, identity, outer_start, nested_start):
     assert len(nested) == 1 and nested[0]['start'] == str(nested_start), (identity, nested)
 
 
+def verify_inspector_presentation(archive):
+    actual = Elements(archive.read('inspector-presentation.html').decode('utf-8'))
+    identity = 'diagnosed-cause-map'
+    assert actual.texts[identity] == '2. Diagnosed cause and source map'
+    collapse = [attrs for _, attrs in actual.elements[identity][1]
+                if attrs.get('class') == 'collapse__title']
+    assert len(collapse) == 1, actual.elements[identity]
+    # The pinned builder omits data-expanded for its collapsed initial state.
+    assert collapse[0].get('data-expanded') in {None, 'false'}, collapse[0]
+    generated = 'long-generated-anchor-' + '-'.join(['documentation'] * 12)
+    assert generated in actual.elements, generated
+    print('Native presentation HTML: authored chapter anchor, published collapse and unchanged generated anchor verified')
+
+
 if len(sys.argv) > 2 and sys.argv[2] == 'native-defaults':
     with zipfile.ZipFile(sys.argv[1]) as archive:
         actual = Elements(archive.read('properties.html').decode('utf-8'))
@@ -69,6 +83,7 @@ if len(sys.argv) > 2 and sys.argv[2] == 'native-defaults':
 
 if len(sys.argv) > 2 and sys.argv[2] == 'native':
     with zipfile.ZipFile(sys.argv[1]) as archive:
+        verify_inspector_presentation(archive)
         for page in ['inspector.html', 'inspector-markdown.html']:
             actual = Elements(archive.read(page).decode('utf-8'))
             code = actual.elements['saved-code'][0]
@@ -101,6 +116,8 @@ if len(sys.argv) > 2 and sys.argv[2] in {'contract', 'contract-native'}:
     import json, re
     native = sys.argv[2] == 'contract-native'
     with zipfile.ZipFile(sys.argv[1]) as archive:
+        if native:
+            verify_inspector_presentation(archive)
         for xml in [True, False]:
             stem = 'contract-xml' if xml else 'contract-markdown'
             source = archive.read(stem + '.html').decode()

@@ -1311,6 +1311,7 @@ const _sharedEnglishMatches = <String>{
 
 const _localeSpecificEnglishMatches = <String, Set<String>>{
   'de': {
+    'wsElementSelector', // Element is also the German noun.
     'tocTemplateName', // Name and Format are also German words.
     'tocTemplateFormat',
     'exportLayout',
@@ -1327,7 +1328,7 @@ const _localeSpecificEnglishMatches = <String, Set<String>>{
     'instanceVersion',
     'instanceStatus',
   },
-  'et': {'link', 'gitCommit'},
+  'et': {'link', 'gitCommit', 'wsElementSelector'}, // Estonian: element.
   'es': {
     'editor',
     'gitCommit',
@@ -1336,6 +1337,7 @@ const _localeSpecificEnglishMatches = <String, Set<String>>{
     'shortcutGroupGeneral',
   },
   'fr': {
+    'wsModule', // Module is also the French noun.
     'htmlInstance', // Instance is also the French technical term.
     'actions',
     'source',
@@ -1365,13 +1367,20 @@ const _localeSpecificEnglishMatches = <String, Set<String>>{
     'gitCommit',
   },
   'nb': {
+    'wsElementSelector', // Norwegian Bokmål: element.
     'systemTheme',
     'systemLanguage',
     'gitCommit',
     'instanceStatus',
     'tocTemplateFormat',
   },
-  'pl': {'folder', 'foldKindTag', 'aiModel', 'tocTemplateFormat'},
+  'pl': {
+    'folder',
+    'foldKindTag',
+    'aiModel',
+    'tocTemplateFormat',
+    'wsElementSelector', // Element is also the Polish noun.
+  },
   'pt_BR': {
     'exportLayout',
     'editor',
@@ -1388,6 +1397,8 @@ const _localeSpecificEnglishMatches = <String, Set<String>>{
   'ja': {'gitFetch', 'gitCommit', 'pdfPageSizeLetter'},
   'ko': {'gitDiff', 'gitFetch', 'gitCommit', 'pdfPageSizeLetter'},
   'id': {
+    'wsDefaultProperty', // Default is an Indonesian computing loanword.
+    'wsDefaultPropertyOrigin',
     'tocTemplatesInternal', // Reviewed Indonesian technical terms.
     'tocTemplateFormat',
     'editor',
@@ -1415,6 +1426,8 @@ const _localeSpecificEnglishMatches = <String, Set<String>>{
     'pdfPageSizeLetter',
   },
   'nl': {
+    'wsElementSelector', // Element and module are also Dutch nouns.
+    'wsModule',
     'aboutWebsite',
     'editor',
     'recent',

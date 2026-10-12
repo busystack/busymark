@@ -124,6 +124,16 @@ void main() {
             ),
           );
           await tester.pumpAndSettle();
+          expect(
+            find.byWidgetPredicate(
+              (w) => w is BusyMarkComboRow<String> && w.title == 'Element',
+            ),
+            findsOneWidget,
+          );
+          expect(
+            find.text('Select a single element to inspect its properties.'),
+            findsNothing,
+          );
         }
 
         await show(null);

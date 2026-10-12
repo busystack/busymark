@@ -3603,5 +3603,13 @@
   "wsOriginModule": "По умолчанию в модуле",
   "wsOriginBuiltIn": "Встроенное значение",
   "wsOriginUnresolved": "Не разрешено",
-  "wsEffectiveProperty": "Действующее значение: {value} — {origin}"
+  "wsEffectiveProperty": "Действующее значение: {value} — {origin}",
+  "wsElementSelector": "Элемент",
+  "wsGeneratedAnchorValue": "Сгенерировано: {anchor}",
+  "wsDefaultProperty": "По умолчанию: {value}",
+  "wsDefaultPropertyOrigin": "По умолчанию: {value} · {origin}",
+  "wsResolvedProperty": "Разрешено: {value}",
+  "wsPropertyUnresolved": "Не разрешено",
+  "wsModule": "Модуль",
+  "wsParent": "Родительский элемент"
 }

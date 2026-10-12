@@ -5116,5 +5116,13 @@
   "wsOriginModule": "Modül varsayılanı",
   "wsOriginBuiltIn": "Yerleşik varsayılan",
   "wsOriginUnresolved": "Çözümlenemedi",
-  "wsEffectiveProperty": "Etkin: {value} — {origin}"
+  "wsEffectiveProperty": "Etkin: {value} — {origin}",
+  "wsElementSelector": "Öğe",
+  "wsGeneratedAnchorValue": "Oluşturulan: {anchor}",
+  "wsDefaultProperty": "Varsayılan: {value}",
+  "wsDefaultPropertyOrigin": "Varsayılan: {value} · {origin}",
+  "wsResolvedProperty": "Çözümlenen: {value}",
+  "wsPropertyUnresolved": "Çözümlenmedi",
+  "wsModule": "Modül",
+  "wsParent": "Üst öğe"
 }
