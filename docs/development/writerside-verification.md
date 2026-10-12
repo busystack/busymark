@@ -106,6 +106,8 @@ plus Python GTK/AT-SPI introspection, XTest, xdotool, Xvfb and a D-Bus session.
 Run from the repository root with an isolated display and software rendering:
 
 ```bash
+unset BUSYMARK_PROPERTY_CONTRACT_ONLY BUSYMARK_INLINE_REFERENCES_ONLY \
+  BUSYMARK_VARIABLE_MEDIA_ONLY BUSYMARK_NAVIGATION_ONLY BUSYMARK_PROPERTIES_ONLY
 inspector_output="$(mktemp -d)"
 flutter build linux --debug --no-pub \
   --target=test/support/writerside_authoring_native_smoke.dart
@@ -116,6 +118,11 @@ BUSYMARK_NATIVE_PROBE=1 GDK_BACKEND=x11 NO_AT_BRIDGE=0 \
   test/fixtures/writerside/conformance_project "$inspector_output"
 flutter build linux --debug --no-pub --target lib/main.dart
 ```
+
+The full invocation clears focused-mode flags so it reaches the retained
+switcher, saved-code, draft-safety, list/admonition and numbering workflows.
+Confirm those scenario names in `result.json`'s `checks`, rather than treating a
+focused run's check count as evidence that the full workflows executed.
 
 Use `test/fixtures/writerside/property_contract_conformance` as the fixture argument
 and set `BUSYMARK_PROPERTY_CONTRACT_ONLY=1` for the reusable Topic, Chapter and

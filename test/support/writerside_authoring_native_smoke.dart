@@ -419,21 +419,73 @@ class _HarnessState extends ConsumerState<_Harness> {
         w.controller!.text == text,
   ).first;
 
+  String _inspectorLookupContext(String expected, int count) {
+    final state = ref.read(workspaceControllerProvider);
+    final targets = _elements((w) => w is BusyMarkWritersideProperties)
+        .map((e) {
+          final panel = e.widget as BusyMarkWritersideProperties;
+          final target = panel.target;
+          return '${panel.document.filePath}: '
+              '${panel.topicSelected ? 'topic' : target?.attributes['element'] ?? target?.kind.name ?? 'no element'} '
+              '(block=${target?.id}, anchor=${target?.attributes['id']}, '
+              'inline=${panel.inlineTarget?.kind.name})';
+        })
+        .join('; ');
+    return 'Expected exactly one inspector control "$expected", found $count; '
+        'document=${state.activeBuffer?.filePath}, '
+        'buffer=${state.activeBuffer?.id}; '
+        'targets=${targets.isEmpty ? 'no inspector' : targets}';
+  }
+
+  List<Element> _inspectorControls(
+    bool Function(Widget) matches,
+  ) => _elements(matches)
+      .where(
+        (e) =>
+            e.findAncestorWidgetOfExactType<BusyMarkWritersideProperties>() !=
+            null,
+      )
+      .toList();
+
+  Element _singleInspectorControl(
+    String expected,
+    bool Function(Widget) matches,
+  ) {
+    final controls = _inspectorControls(matches);
+    if (controls.length != 1) {
+      throw StateError(_inspectorLookupContext(expected, controls.length));
+    }
+    return controls.single;
+  }
+
+  BusyMarkGroupedTextEntry _inspectorProperty(String label) =>
+      _singleInspectorControl(
+            label,
+            (w) => w is BusyMarkGroupedTextEntry && w.label == label,
+          ).widget
+          as BusyMarkGroupedTextEntry;
+
   Future<void> _expandInspectorSection(
     String title,
+    String expectedControl,
     bool Function(Widget) hasControl,
   ) async {
-    if (_elements(hasControl).isNotEmpty) return;
+    if (_inspectorControls(hasControl).isNotEmpty) {
+      _singleInspectorControl(expectedControl, hasControl);
+      return;
+    }
     await _tap(
-      _elements(
+      _singleInspectorControl(
+        '$title section',
         (w) =>
             w is ListTile && w.title is Text && (w.title as Text).data == title,
-      ).single,
+      ),
     );
     await _until(
-      () => _elements(hasControl).isNotEmpty,
-      '$title exposes the requested inspector control',
+      () => _inspectorControls(hasControl).isNotEmpty,
+      _inspectorLookupContext(expectedControl, 0),
     );
+    _singleInspectorControl(expectedControl, hasControl);
   }
 
   Future<void> _choose(String key, List<String> labels) async {
@@ -942,11 +994,7 @@ class _HarnessState extends ConsumerState<_Harness> {
     }
 
     Future<void> property(String label, String value) async {
-      final entry =
-          _elements(
-                (w) => w is BusyMarkGroupedTextEntry && w.label == label,
-              ).single.widget
-              as BusyMarkGroupedTextEntry;
+      final entry = _inspectorProperty(label);
       await _type(
         _elements(
           (w) => w is TextField && w.controller == entry.controller,
@@ -1632,6 +1680,7 @@ class _HarnessState extends ConsumerState<_Harness> {
         );
         await _expandInspectorSection(
           'Advanced',
+          'Switcher label (switcher-label)',
           (w) =>
               w is BusyMarkGroupedTextEntry &&
               w.label == 'Switcher label (switcher-label)',
@@ -1642,12 +1691,7 @@ class _HarnessState extends ConsumerState<_Harness> {
           '$suffix opening Advanced preserves source and selection',
         );
         BusyMarkGroupedTextEntry labelEntry() =>
-            _elements(
-                  (w) =>
-                      w is BusyMarkGroupedTextEntry &&
-                      w.label == 'Switcher label (switcher-label)',
-                ).single.widget
-                as BusyMarkGroupedTextEntry;
+            _inspectorProperty('Switcher label (switcher-label)');
         final labelField = labelEntry();
         labelField.controller!.text = switcherLabel;
         labelField.focusNode!.requestFocus();
@@ -1757,6 +1801,7 @@ class _HarnessState extends ConsumerState<_Harness> {
         await topicProperties();
         await _expandInspectorSection(
           'Advanced',
+          'Switcher label (switcher-label)',
           (w) =>
               w is BusyMarkGroupedTextEntry &&
               w.label == 'Switcher label (switcher-label)',
@@ -1887,10 +1932,7 @@ class _HarnessState extends ConsumerState<_Harness> {
         );
         await _capture('inspector-$suffix-source-code');
         BusyMarkGroupedTextEntry property(String label) =>
-            _elements(
-                  (w) => w is BusyMarkGroupedTextEntry && w.label == label,
-                ).single.widget
-                as BusyMarkGroupedTextEntry;
+            _inspectorProperty(label);
         final sourceBeforeChooser = _source;
         await _capture('inspector-single-source-field');
         Element sourceButton(String tooltip) =>
@@ -2212,13 +2254,10 @@ class _HarnessState extends ConsumerState<_Harness> {
       Future<void> propertyText(String label, String value) async {
         await _expandInspectorSection(
           'Advanced',
+          label,
           (w) => w is BusyMarkGroupedTextEntry && w.label == label,
         );
-        final entry =
-            _elements(
-                  (w) => w is BusyMarkGroupedTextEntry && w.label == label,
-                ).single.widget
-                as BusyMarkGroupedTextEntry;
+        final entry = _inspectorProperty(label);
         await _type(
           _elements(
             (w) => w is TextField && w.controller == entry.controller,
@@ -2256,6 +2295,7 @@ class _HarnessState extends ConsumerState<_Harness> {
 
       Future<void> showTopicNavigation() => _expandInspectorSection(
         'Topic navigation',
+        'Navigation elements',
         (w) =>
             w is BusyMarkComboRow<String> && w.title == 'Navigation elements',
       );
