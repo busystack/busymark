@@ -13035,8 +13035,9 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     String? id,
     BusyInlineStyleRange? inline,
     bool explicit,
-    bool multiple,
-  ) {
+    bool multiple, {
+    bool revisionRefresh = false,
+  }) {
     final buffer = ref.read(workspaceControllerProvider).activeBuffer;
     if (buffer == null || !document.isWriterside) return;
     if (!explicit &&
@@ -13058,6 +13059,24 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     if (!incoming.matches(buffer.id, buffer.revision, buffer.text)) {
       if (explicit) _propertyEdits.reject(WritersidePropertyRejection.stale);
       return;
+    }
+    if (revisionRefresh && _inspected?.bufferId == buffer.id) {
+      // A model refresh is not a new selection. Preserve an explicitly
+      // inspected ancestor, and never rebind drafts to the new revision.
+      if (_propertyEdits.hasPending) return;
+      final captured = _inspected!;
+      if (captured.matches(buffer.id, buffer.revision, buffer.text)) return;
+      if (captured.block?.id != id || captured.logicalTopic) {
+        final refreshed = captured.refreshUnchangedElement(
+          revision: buffer.revision,
+          source: buffer.text,
+          document: document,
+        );
+        if (refreshed != null && mounted) {
+          setState(() => _inspected = refreshed);
+        }
+        return;
+      }
     }
     if (!_propertyEdits.transition()) return;
     final current = ref.read(workspaceControllerProvider).activeBuffer;

@@ -1101,14 +1101,6 @@ class _HarnessState extends ConsumerState<_Harness> {
     );
     Future<void> anchorEdit(String value) async {
       await _tap(_field(heading));
-      if (_elements(
-        (w) =>
-            w is BusyMarkWritersideProperties && w.target?.plainText == heading,
-      ).isEmpty) {
-        // Undo restores the document while retaining the caret. Move the
-        // actual Editor caret to establish a fresh revision-bound selection.
-        await _native('chord', 'Home');
-      }
       await _until(
         () => _elements(
           (w) =>
@@ -1125,6 +1117,50 @@ class _HarnessState extends ConsumerState<_Harness> {
         value,
       );
       await _key(PhysicalKeyboardKey.enter, LogicalKeyboardKey.enter);
+    }
+
+    Future<void> restoredInspector(
+      String action, {
+      required bool generatedAnchor,
+      bool collapsible = false,
+    }) async {
+      // Check the restored view before another caret, click or navigation event.
+      await _until(
+        () =>
+            _elements(
+              (w) =>
+                  w is BusyMarkWritersideProperties &&
+                  w.document.source == _source &&
+                  w.target?.plainText == heading,
+            ).length ==
+            1,
+        '$action republishes the selected chapter at the restored revision',
+      );
+      _check(
+        _inspectorProperty('Element anchor (id)').controller!.text ==
+                (generatedAnchor ? '' : 'diagnosed-cause-map') &&
+            _elements(
+                  (w) => w is SelectableText && w.data == generated,
+                ).length ==
+                (generatedAnchor ? 1 : 0) &&
+            combo('Collapsible (collapsible)').selected ==
+                (collapsible ? 'true' : '') &&
+            combo('Collapsible (collapsible)').subtitle ==
+                (collapsible ? null : 'Default: Disabled') &&
+            (collapsible
+                ? combo('Published initial state (default-state)').selected ==
+                          '' &&
+                      combo(
+                            'Published initial state (default-state)',
+                          ).subtitle ==
+                          'Default: Collapsed'
+                : _inspectorControls(
+                    (w) =>
+                        w is BusyMarkComboRow<String> &&
+                        w.title == 'Published initial state (default-state)',
+                  ).isEmpty),
+        '$action keeps the chapter, anchor and collapse values current without caret movement',
+      );
     }
 
     await anchorEdit('diagnosed-cause-map');
@@ -1145,11 +1181,13 @@ class _HarnessState extends ConsumerState<_Harness> {
       () => _source == original,
       'Native undo restores generated anchor',
     );
+    await restoredInspector('Anchor Undo', generatedAnchor: true);
     await _native('chord', 'ctrl+shift+z');
     await _until(
       () => _source == overrideSource,
       'Native redo restores explicit anchor',
     );
+    await restoredInspector('Anchor Redo', generatedAnchor: false);
     await anchorEdit('');
     await _until(
       () => inspector().target?.attributes['generatedId'] == 'true',
@@ -1165,11 +1203,13 @@ class _HarnessState extends ConsumerState<_Harness> {
       () => _source == overrideSource,
       'Undo of reset restores the override',
     );
+    await restoredInspector('Anchor reset Undo', generatedAnchor: false);
     await _native('chord', 'ctrl+shift+z');
     await _until(
       () => _source == original,
       'Redo of reset restores generated behavior',
     );
+    await restoredInspector('Anchor reset Redo', generatedAnchor: true);
     await anchorEdit('diagnosed-cause-map');
     final collapseElement = _singleInspectorControl(
       'Collapsible (collapsible)',
@@ -1177,12 +1217,46 @@ class _HarnessState extends ConsumerState<_Harness> {
           w is BusyMarkComboRow<String> &&
           w.title == 'Collapsible (collapsible)',
     );
+    final unchangedCaret =
+        (_field(heading).widget as TextField).controller!.selection;
     await _tap(collapseElement);
     _nativeMenuOpen = true;
     await _tapLabel('Enabled');
     _check(
       combo('Collapsible (collapsible)').subtitle == null,
       'Explicit collapse does not repeat an effective-value sentence',
+    );
+    final collapsedSource = _source;
+    _check(
+      (_field(heading).widget as TextField).controller!.selection ==
+          unchangedCaret,
+      'Collapse property change leaves heading text and caret unchanged',
+    );
+    await _native('chord', 'ctrl+z');
+    await _until(
+      () => _source == overrideSource,
+      'Collapse Undo restores the absent attribute',
+    );
+    await restoredInspector('Collapse Undo', generatedAnchor: false);
+    _check(
+      (_field(heading).widget as TextField).controller!.selection ==
+          unchangedCaret,
+      'Collapse Undo leaves heading text and caret unchanged',
+    );
+    await _native('chord', 'ctrl+shift+z');
+    await _until(
+      () => _source == collapsedSource,
+      'Collapse Redo restores the authored attribute',
+    );
+    await restoredInspector(
+      'Collapse Redo',
+      generatedAnchor: false,
+      collapsible: true,
+    );
+    _check(
+      (_field(heading).widget as TextField).controller!.selection ==
+          unchangedCaret,
+      'Collapse Redo leaves heading text and caret unchanged',
     );
     await _native('chord', 'ctrl+s');
     await _until(
@@ -2253,6 +2327,17 @@ class _HarnessState extends ConsumerState<_Harness> {
                 _source.contains('>Caret A</p>'),
             'Explicit inspected B receives the edit',
           );
+          await _until(
+            () =>
+                _elements(
+                  (w) =>
+                      w is BusyMarkWritersideProperties &&
+                      w.target?.plainText == 'Installation' &&
+                      w.document.source == _source,
+                ).length ==
+                1,
+            'Property publication preserves inspected B while caret stays in A',
+          );
           _check(
             controller.undoActiveBuffer(),
             'Explicit B property has one undo',
@@ -2261,6 +2346,33 @@ class _HarnessState extends ConsumerState<_Harness> {
           _check(
             _source.contains('title="Block B"'),
             'Undo restores inspected B',
+          );
+          await _until(
+            () =>
+                _elements(
+                  (w) =>
+                      w is BusyMarkWritersideProperties &&
+                      w.target?.plainText == 'Block B' &&
+                      w.document.source == _source,
+                ).length ==
+                1,
+            'Undo preserves explicitly inspected B at the new revision',
+          );
+          _check(
+            _inspectorProperty('Default title (title)').controller!.text ==
+                    'Block B' &&
+                (_field('Caret A').widget as TextField)
+                        .controller!
+                        .selection
+                        .baseOffset ==
+                    caret.baseOffset &&
+                (_field('Caret A').widget as TextField)
+                        .controller!
+                        .selection
+                        .extentOffset ==
+                    caret.extentOffset &&
+                (_field('Caret A').widget as TextField).focusNode!.hasFocus,
+            'Off-caret B inspection survives Undo without selecting A',
           );
         }
         await _native('chord', 'ctrl+shift+2');

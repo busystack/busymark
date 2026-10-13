@@ -15,6 +15,97 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   for (final xml in [true, false]) {
     test(
+      '${xml ? "XML" : "Markdown"} off-caret refresh preserves property ownership and rejects replacement',
+      () {
+        String source(String anchor) => xml
+            ? '<topic id="t" title="Topic"><p>Caret A</p><chapter title="Chapter" id="$anchor"><p>Body</p></chapter></topic>'
+            : '# Topic\n\nCaret A\n\n## Chapter {id="$anchor"}\n\nBody\n';
+        BusyDocument parse(String text) => xml
+            ? const WritersideEditingAdapter().parseXml(
+                filePath: 't.topic',
+                source: text,
+              )!
+            : const MarkdownParser()
+                  .parse(
+                    filePath: 't.md',
+                    source: text,
+                    mode: MarkdownMode.writersideMarkdown,
+                  )
+                  .busyDocument;
+        final original = source('original');
+        final doc = parse(original);
+        final b = xml
+            ? doc.blocks.first.children.last
+            : doc.blocks.firstWhere((b) => b.plainText == 'Chapter');
+        final target = WritersideInspectorTarget.fromSelection(
+          bufferId: 'b',
+          revision: 1,
+          source: original,
+          document: doc,
+          blockId: b.id,
+        );
+        final changed = source('changed');
+        final refreshed = target.refreshUnchangedElement(
+          revision: 2,
+          source: changed,
+          document: parse(changed),
+        )!;
+        expect(refreshed.block?.attributes['id'], 'changed');
+        expect(refreshed.matches('b', 2, changed), isTrue);
+        expect(target.matches('b', 2, changed), isFalse);
+        expect(target.sameElement(refreshed), isFalse);
+        final restored = refreshed.refreshUnchangedElement(
+          revision: 3,
+          source: original,
+          document: parse(original),
+        )!;
+        expect(restored.block?.attributes['id'], 'original');
+        final removed = xml
+            ? '<topic id="t" title="Topic"><p>Caret A</p></topic>'
+            : '# Topic\n\nCaret A\n';
+        final replaced = xml
+            ? changed.replaceFirst('Body', 'Different body')
+            : changed.replaceFirst('## Chapter', '## Other Chapter');
+        for (final text in [removed, replaced]) {
+          expect(
+            target.refreshUnchangedElement(
+              revision: 2,
+              source: text,
+              document: parse(text),
+            ),
+            isNull,
+          );
+        }
+        expect(
+          target.refreshUnchangedElement(
+            revision: 2,
+            source: changed,
+            document: doc,
+          ),
+          isNull,
+        );
+        if (xml) {
+          final title = original.replaceFirst(
+            'title="Chapter"',
+            'title="Renamed"',
+          );
+          expect(
+            target
+                .refreshUnchangedElement(
+                  revision: 2,
+                  source: title,
+                  document: parse(title),
+                )!
+                .block
+                ?.plainText,
+            'Renamed',
+          );
+        }
+      },
+    );
+  }
+  for (final xml in [true, false]) {
+    test(
       '${xml ? "XML" : "Markdown"} Show in Source locates the inspected inline markup',
       () {
         final source = xml

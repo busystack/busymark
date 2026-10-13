@@ -423,10 +423,11 @@ void main() {
         BusyMarkWysiwygEditor(
           document: doc,
           onSourceChanged: (_, _) {},
-          onInspectElement: (_, id, _, requested, multiple) {
-            inspected = id;
-            explicit = requested;
-          },
+          onInspectElement:
+              (_, id, _, requested, multiple, {bool revisionRefresh = false}) {
+                inspected = id;
+                explicit = requested;
+              },
           onPropertiesRequested: () => opened++,
         ),
         openProperties: false,

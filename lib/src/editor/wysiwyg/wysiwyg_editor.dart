@@ -152,13 +152,16 @@ class BusyMarkWysiwygEditor extends StatefulWidget {
     this.onMathDiagnostic,
   });
 
+  /// A revision refresh preserves the restored caret and lets the workspace
+  /// retain an explicitly inspected ancestor without rebinding pending drafts.
   final void Function(
     BusyDocument document,
     String? blockId,
     BusyInlineStyleRange? inline,
     bool explicit,
-    bool multiple,
-  )?
+    bool multiple, {
+    bool revisionRefresh,
+  })?
   onInspectElement;
   final VoidCallback? onPropertiesRequested;
   final void Function(BusyDocument, String)? onVideoPropertiesRequested;
@@ -247,6 +250,8 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   bool _propertiesExplicitlyOpened = false;
   final _propertySession = WritersidePropertySession();
   String? _lastInspectorSelection;
+  String? _lastInspectorCaretSelection;
+  bool _inspectorRestorePending = false;
   BusyDocument? _propertiesSnapshot;
   String? _propertiesSnapshotTarget;
   bool _topicPropertiesSelected = false;
@@ -616,6 +621,9 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       _scheduleHeadingScroll();
       _scheduleSearchScroll();
     }
+    if (oldWidget.contentRevision != widget.contentRevision) {
+      _scheduleSessionReport();
+    }
   }
 
   @override
@@ -650,6 +658,8 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   }
 
   void _resetPerDocumentState() {
+    _lastInspectorSelection = null;
+    _lastInspectorCaretSelection = null;
     _propertiesTargetId = null;
     _videoDraftTarget = null;
     _topicPropertiesSelected = false;
@@ -2053,6 +2063,7 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   void _handleDocumentControllerChanged() {
     _documentGeneration++;
     _syncBlockControllers();
+    _scheduleSessionReport();
   }
 
   _WysiwygDialogTarget _captureDialogTarget() {
@@ -2940,14 +2951,19 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
           .where((block) => !busyMarkWysiwygBlockContainsMath(block))
           .firstOrNull;
       if (firstPlainBlock == null) {
+        _inspectorRestorePending = false;
+        _scheduleSessionReport();
         return;
       }
       _activeBlockId = firstPlainBlock.id;
       _focusActiveOrFirstBlock(initialSelectionOffset: 0);
+      _inspectorRestorePending = false;
+      _scheduleSessionReport();
     });
   }
 
   void _scheduleSessionRestore(WysiwygEditorSessionState session) {
+    _inspectorRestorePending = true;
     if (session.activeBlockId == null &&
         session.anchorBlockId == null &&
         session.viewportBlockId == null) {
@@ -3058,6 +3074,8 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       if (mounted) {
         setState(() {});
       }
+      _inspectorRestorePending = false;
+      _scheduleSessionReport();
     });
   }
 
@@ -3069,7 +3087,7 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     _sessionReportScheduled = true;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _sessionReportScheduled = false;
-      if (mounted) {
+      if (mounted && !_inspectorRestorePending) {
         _reportSessionNow();
         _publishInspectorTarget();
       }
@@ -3077,13 +3095,23 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   }
 
   void _publishInspectorTarget({bool explicit = false, bool? multiple}) {
+    if (_inspectorRestorePending) return;
     final selection = _activeBlockId == null
         ? null
         : _textControllers[_activeBlockId]?.selection;
-    final signature =
+    final caretSignature =
         '$_documentId|$_activeBlockId|$_activeCellId|${selection?.baseOffset}|${selection?.extentOffset}|$_hasBlockSelection';
+    final signature =
+        '$caretSignature|$_documentGeneration|${widget.contentRevision}';
     if (!explicit && _lastInspectorSelection == signature) return;
-    if (!explicit) _lastInspectorSelection = signature;
+    final revisionRefresh =
+        !explicit &&
+        _lastInspectorSelection != null &&
+        _lastInspectorCaretSelection == caretSignature;
+    if (!explicit) {
+      _lastInspectorSelection = signature;
+      _lastInspectorCaretSelection = caretSignature;
+    }
     final targetId = explicit ? _propertiesTargetId : _activeBlockId;
     final block = targetId == null
         ? null
@@ -3113,6 +3141,7 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       inline,
       explicit,
       multiple ?? _hasBlockSelection,
+      revisionRefresh: revisionRefresh,
     );
     if (explicit) widget.onPropertiesRequested?.call();
   }

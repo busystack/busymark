@@ -124,6 +124,83 @@ class WritersideInspectorTarget {
       inline?.end == current.inline?.end &&
       inline?.referenceIndex == current.inline?.referenceIndex;
 
+  /// Revalidate an off-caret selection after a property-only model refresh.
+  /// Ordinals alone are insufficient: removal, replacement or changed content
+  /// must not bind the old inspected element to another authored node.
+  WritersideInspectorTarget? refreshUnchangedElement({
+    required int revision,
+    required String source,
+    required BusyDocument document,
+  }) {
+    if (document.filePath != this.document.filePath ||
+        document.isXmlTopic != this.document.isXmlTopic ||
+        document.mode != this.document.mode) {
+      return null;
+    }
+    if (logicalTopic) {
+      final refreshed = fromTopic(
+        bufferId: bufferId,
+        revision: revision,
+        source: source,
+        document: document,
+      );
+      return refreshed.matches(bufferId, revision, source) ? refreshed : null;
+    }
+    final before = block;
+    if (before == null || inline != null) return null;
+    List<BusyBlock> authored(List<BusyBlock> blocks) =>
+        blocks.where((b) => !b.isSourceOnly).toList();
+    bool sameContent(BusyBlock a, BusyBlock b) {
+      final scalarTitle =
+          a.kind == BusyBlockKind.heading &&
+          a.attributes.containsKey('element') &&
+          a.attributes['id']?.isNotEmpty == true &&
+          a.attributes['id'] == b.attributes['id'];
+      if (a.kind != b.kind ||
+          WritersideEditingAdapter.tagForBlock(a) !=
+              WritersideEditingAdapter.tagForBlock(b) ||
+          (a.plainText != b.plainText && !scalarTitle) ||
+          ((a.isSourceProtected || a.preserveRaw) &&
+              a.rawSource != b.rawSource)) {
+        return false;
+      }
+      final left = authored(a.children);
+      final right = authored(b.children);
+      return left.length == right.length &&
+          Iterable.generate(
+            left.length,
+          ).every((i) => sameContent(left[i], right[i]));
+    }
+
+    var previous = authored(this.document.blocks);
+    var current = authored(document.blocks);
+    BusyBlock? candidate;
+    for (final ordinal in semanticAddress) {
+      if (previous.length != current.length || ordinal >= current.length) {
+        return null;
+      }
+      final owner = previous[ordinal];
+      candidate = current[ordinal];
+      if (owner.kind != candidate.kind ||
+          WritersideEditingAdapter.tagForBlock(owner) !=
+              WritersideEditingAdapter.tagForBlock(candidate)) {
+        return null;
+      }
+      previous = authored(owner.children);
+      current = authored(candidate.children);
+    }
+    if (candidate == null || !sameContent(before, candidate)) return null;
+    final refreshed = fromSelection(
+      bufferId: bufferId,
+      revision: revision,
+      source: source,
+      document: document,
+      blockId: candidate.id,
+      multiple: multiple,
+    );
+    return refreshed.matches(bufferId, revision, source) ? refreshed : null;
+  }
+
   static WritersideInspectorTarget fromTopic({
     required String bufferId,
     required int revision,
