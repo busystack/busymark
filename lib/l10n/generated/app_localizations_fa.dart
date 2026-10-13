@@ -5353,4 +5353,63 @@ class AppLocalizationsFa extends AppLocalizations {
 
   @override
   String get wsParent => 'عنصر والد';
+
+  @override
+  String get wsListType => 'نوع فهرست';
+
+  @override
+  String get wsStartingNumber => 'شمارهٔ آغاز';
+
+  @override
+  String get wsListSorting => 'مرتب‌سازی';
+
+  @override
+  String get wsLetteredList => 'فهرست حروفی';
+
+  @override
+  String get wsCheckboxList => 'فهرست کادرهای انتخاب';
+
+  @override
+  String get wsMarkerlessList => 'فهرست بدون نشانگر';
+
+  @override
+  String get wsAscending => 'صعودی';
+
+  @override
+  String get wsDescending => 'نزولی';
+
+  @override
+  String get wsNoSorting => 'بدون مرتب‌سازی';
+
+  @override
+  String get wsAsWritten => 'همان‌طور که نوشته شده';
+
+  @override
+  String get wsSentenceCase => 'حالت حروف جمله';
+
+  @override
+  String get wsTitleCase => 'حالت حروف عنوان';
+
+  @override
+  String get wsLowerCase => 'حروف کوچک';
+
+  @override
+  String get wsUpperCase => 'حروف بزرگ';
+
+  @override
+  String get wsNativeMarkers => 'نشانگرهای Markdown';
+
+  @override
+  String wsListMarkerStart(String number) {
+    return 'نشانگر آغاز: $number';
+  }
+
+  @override
+  String wsListLevel(String level) {
+    return 'سطح $level';
+  }
+
+  @override
+  String get wsModuleCapsIgnored =>
+      'سازندهٔ ثابت قواعد <caps> ماژول را نادیده می‌گیرد. از ویژگی caps محلی یا default-property استفاده کنید.';
 }

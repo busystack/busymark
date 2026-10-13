@@ -5305,4 +5305,63 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get wsParent => 'Phần tử cha';
+
+  @override
+  String get wsListType => 'Loại danh sách';
+
+  @override
+  String get wsStartingNumber => 'Số bắt đầu';
+
+  @override
+  String get wsListSorting => 'Sắp xếp';
+
+  @override
+  String get wsLetteredList => 'Danh sách chữ cái';
+
+  @override
+  String get wsCheckboxList => 'Danh sách hộp kiểm';
+
+  @override
+  String get wsMarkerlessList => 'Danh sách không dấu đầu dòng';
+
+  @override
+  String get wsAscending => 'Tăng dần';
+
+  @override
+  String get wsDescending => 'Giảm dần';
+
+  @override
+  String get wsNoSorting => 'Không sắp xếp';
+
+  @override
+  String get wsAsWritten => 'Theo văn bản gốc';
+
+  @override
+  String get wsSentenceCase => 'Viết hoa kiểu câu';
+
+  @override
+  String get wsTitleCase => 'Viết hoa kiểu tiêu đề';
+
+  @override
+  String get wsLowerCase => 'Chữ thường';
+
+  @override
+  String get wsUpperCase => 'Chữ hoa';
+
+  @override
+  String get wsNativeMarkers => 'Dấu Markdown';
+
+  @override
+  String wsListMarkerStart(String number) {
+    return 'Dấu bắt đầu: $number';
+  }
+
+  @override
+  String wsListLevel(String level) {
+    return 'Cấp $level';
+  }
+
+  @override
+  String get wsModuleCapsIgnored =>
+      'Trình dựng cố định bỏ qua quy tắc <caps> của mô-đun. Dùng thuộc tính caps cục bộ hoặc default-property.';
 }

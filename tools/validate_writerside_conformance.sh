@@ -57,6 +57,21 @@ if [[ "$source_root" == "test/fixtures/writerside/property_contract_conformance"
   python3 tools/verify_writerside_property_fixture.py \
     "$output_root/artifacts/webHelpCONFORMANCE2-all.zip" contract
 fi
+if [[ "$source_root" == "test/fixtures/writerside/list_capitalization_conformance" ]]; then
+  python3 tools/verify_writerside_property_fixture.py \
+    "$output_root/artifacts/webHelpCONFORMANCE2-all.zip" list-caps
+  for variant in generic variable list-type list-start; do
+    variant_sources="$work_root/$variant"
+    variant_output="$work_root/$variant-output"
+    cp -a -- "$source_copy" "$variant_sources"
+    cp -- "$source_copy/variants/$variant.cfg" "$variant_sources/writerside.cfg"
+    if [[ -f "$source_copy/variants/$variant.tree" ]]; then
+      cp -- "$source_copy/variants/$variant.tree" "$variant_sources/conformance.tree"
+    fi
+    WRITERSIDE_CONFORMANCE_OUTPUT="$variant_output" bash tools/validate_writerside_conformance.sh "$variant_sources" Conformance/conformance
+    python3 tools/verify_writerside_property_fixture.py "$variant_output/webHelpCONFORMANCE2-all.zip" "list-caps-$variant"
+  done
+fi
 if [[ "$source_root" == "test/fixtures/writerside/property_defaults_conformance" ]]; then
   python3 tools/verify_writerside_property_fixture.py \
     "$output_root/artifacts/webHelpCONFORMANCE2-all.zip" defaults
@@ -71,4 +86,6 @@ if [[ "$source_root" == "test/fixtures/writerside/conformance_project" ]]; then
     test/fixtures/writerside/property_defaults_conformance Conformance/conformance
   WRITERSIDE_CONFORMANCE_OUTPUT="$evidence_root/property-contract" bash tools/validate_writerside_conformance.sh \
     test/fixtures/writerside/property_contract_conformance Conformance/conformance
+  WRITERSIDE_CONFORMANCE_OUTPUT="$evidence_root/list-capitalization" bash tools/validate_writerside_conformance.sh \
+    test/fixtures/writerside/list_capitalization_conformance Conformance/conformance
 fi

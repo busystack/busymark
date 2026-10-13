@@ -5085,6 +5085,65 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get wsParent => '父元素';
+
+  @override
+  String get wsListType => '列表类型';
+
+  @override
+  String get wsStartingNumber => '起始编号';
+
+  @override
+  String get wsListSorting => '排序';
+
+  @override
+  String get wsLetteredList => '字母列表';
+
+  @override
+  String get wsCheckboxList => '复选框列表';
+
+  @override
+  String get wsMarkerlessList => '无标记列表';
+
+  @override
+  String get wsAscending => '升序';
+
+  @override
+  String get wsDescending => '降序';
+
+  @override
+  String get wsNoSorting => '不排序';
+
+  @override
+  String get wsAsWritten => '按原文';
+
+  @override
+  String get wsSentenceCase => '句首大写';
+
+  @override
+  String get wsTitleCase => '标题大写';
+
+  @override
+  String get wsLowerCase => '小写';
+
+  @override
+  String get wsUpperCase => '大写';
+
+  @override
+  String get wsNativeMarkers => 'Markdown 标记';
+
+  @override
+  String wsListMarkerStart(String number) {
+    return '起始标记：$number';
+  }
+
+  @override
+  String wsListLevel(String level) {
+    return '层级 $level';
+  }
+
+  @override
+  String get wsModuleCapsIgnored =>
+      '固定版本的构建器会忽略模块的 <caps> 规则。请使用本地 caps 属性或 default-property。';
 }
 
 /// The translations for Chinese, as used in China (`zh_CN`).
@@ -10166,4 +10225,63 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get wsParent => '父元素';
+
+  @override
+  String get wsListType => '列表类型';
+
+  @override
+  String get wsStartingNumber => '起始编号';
+
+  @override
+  String get wsListSorting => '排序';
+
+  @override
+  String get wsLetteredList => '字母列表';
+
+  @override
+  String get wsCheckboxList => '复选框列表';
+
+  @override
+  String get wsMarkerlessList => '无标记列表';
+
+  @override
+  String get wsAscending => '升序';
+
+  @override
+  String get wsDescending => '降序';
+
+  @override
+  String get wsNoSorting => '不排序';
+
+  @override
+  String get wsAsWritten => '按原文';
+
+  @override
+  String get wsSentenceCase => '句首大写';
+
+  @override
+  String get wsTitleCase => '标题大写';
+
+  @override
+  String get wsLowerCase => '小写';
+
+  @override
+  String get wsUpperCase => '大写';
+
+  @override
+  String get wsNativeMarkers => 'Markdown 标记';
+
+  @override
+  String wsListMarkerStart(String number) {
+    return '起始标记：$number';
+  }
+
+  @override
+  String wsListLevel(String level) {
+    return '层级 $level';
+  }
+
+  @override
+  String get wsModuleCapsIgnored =>
+      '固定版本的构建器会忽略模块的 <caps> 规则。请使用本地 caps 属性或 default-property。';
 }

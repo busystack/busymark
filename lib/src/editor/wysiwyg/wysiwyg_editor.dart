@@ -252,6 +252,34 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   String? _lastInspectorSelection;
   String? _lastInspectorCaretSelection;
   bool _inspectorRestorePending = false;
+  final _propertyHoverViewportKey = GlobalKey();
+  final _propertyHoverEntries =
+      <
+        String,
+        ({
+          BusyBlock block,
+          BusyBlock hovered,
+          int depth,
+          int generation,
+          int? revision,
+          TextDirection direction,
+          TextDirection ambientDirection,
+          RenderBox anchor,
+        })
+      >{};
+  ({
+    BusyBlock block,
+    BusyBlock hovered,
+    int depth,
+    int generation,
+    int? revision,
+    TextDirection direction,
+    TextDirection ambientDirection,
+    RenderBox anchor,
+  })?
+  _propertyHoverCapture;
+  String? _propertyHoverScope;
+  bool _propertyMarginHovered = false;
   BusyDocument? _propertiesSnapshot;
   String? _propertiesSnapshotTarget;
   bool _topicPropertiesSelected = false;
@@ -918,6 +946,7 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
                   : 0.0;
               const paneHeight = 0.0;
               final editor = Stack(
+                key: _propertyHoverViewportKey,
                 children: [
                   Positioned.fill(
                     child: Listener(
@@ -954,6 +983,7 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
                       ),
                     ),
                   ),
+                  if (_propertyHoverControl() case final control?) control,
                   if (_documentSelection case final selection?
                       when _selectionPointer == null &&
                           _documentController
@@ -1023,15 +1053,6 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
                                 BusyWritersideInsertCommand.variable,
                               }.contains(command) ||
                               widget.writersideProjectIndex != null),
-                      onProperties:
-                          widget.onPropertiesRequested ??
-                          () {
-                            if (!_propertySession.transition()) return;
-                            setState(() {
-                              _propertiesExplicitlyOpened = true;
-                              _propertiesVisible = !showProperties;
-                            });
-                          },
                       isBlockCommandEnabled: _canApplyBlockCommand,
                       onAdmonitionCommand: (style) {
                         if (!_isDialogTargetCurrent(authoringGuard)) return;
@@ -1188,6 +1209,7 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     final inlineTarget = inline;
     return BusyMarkWritersideProperties(
       key: ValueKey('writerside-properties-$_documentId'),
+      documentIdentity: _documentId,
       effectiveProperties: WritersideEffectiveProperties(
         settings: widget.writersideSettings,
       ),
@@ -1528,62 +1550,55 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Row(
-          children: [
-            if (collapsible)
-              BusyMarkHeaderIconButton(
-                icon: expanded
-                    ? BusyMarkGlyphs.downArrow
-                    : BusyMarkGlyphs.upArrow,
-                tooltip: expanded
-                    ? context.l10n.collapseKind(
-                        writersideElementLabel(
-                          context,
-                          block,
-                          _documentController.document,
+        _propertyHoverRegion(
+          block,
+          Row(
+            children: [
+              if (collapsible)
+                BusyMarkHeaderIconButton(
+                  icon: expanded
+                      ? BusyMarkGlyphs.downArrow
+                      : BusyMarkGlyphs.upArrow,
+                  tooltip: expanded
+                      ? context.l10n.collapseKind(
+                          writersideElementLabel(
+                            context,
+                            block,
+                            _documentController.document,
+                          ),
+                        )
+                      : context.l10n.expandKind(
+                          writersideElementLabel(
+                            context,
+                            block,
+                            _documentController.document,
+                          ),
                         ),
-                      )
-                    : context.l10n.expandKind(
-                        writersideElementLabel(
-                          context,
-                          block,
-                          _documentController.document,
-                        ),
-                      ),
-                onPressed: () =>
-                    setState(() => _collapsibleExpansion[block.id] = !expanded),
-              ),
-            Expanded(
-              child: title
-                  ? _buildEditableBlockField(
-                      block,
-                      first: false,
-                      listRunEnd: false,
-                      selectedBlockIds: selectedBlockIds,
-                      selectionRangesByBlockId: selectionRangesByBlockId,
-                    )
-                  : Text(
-                      writersideElementLabel(
-                        context,
+                  onPressed: () => setState(
+                    () => _collapsibleExpansion[block.id] = !expanded,
+                  ),
+                ),
+              Expanded(
+                child: title
+                    ? _buildEditableBlockField(
                         block,
-                        _documentController.document,
+                        first: false,
+                        listRunEnd: false,
+                        selectedBlockIds: selectedBlockIds,
+                        selectionRangesByBlockId: selectionRangesByBlockId,
+                      )
+                    : Text(
+                        writersideElementLabel(
+                          context,
+                          block,
+                          _documentController.document,
+                        ),
+                        style: busyMarkSectionHeaderStyle(context),
                       ),
-                      style: busyMarkSectionHeaderStyle(context),
-                    ),
-            ),
-            BusyMarkHeaderIconButton(
-              key: ValueKey('writerside-inspect-${block.id}'),
-              icon: BusyMarkGlyphs.settings,
-              tooltip: context.l10n.wsElementProperties,
-              onPressed: () => setState(() {
-                _propertiesTargetId = block.id;
-                _propertiesVisible = true;
-                _propertiesExplicitlyOpened = true;
-                _topicPropertiesSelected = false;
-                _publishInspectorTarget(explicit: true);
-              }),
-            ),
-          ],
+              ),
+            ],
+          ),
+          scope: 'header',
         ),
         if (expanded)
           Padding(
@@ -1612,12 +1627,188 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     );
   }
 
-  BusyMarkDocumentLayoutSpec get _documentLayout =>
-      widget.documentLayout ??
-      BusyMarkDocumentLayoutSpec.standalone.withEditingToolbar(
-        placement: widget.toolbarPlacement,
-        direction: widget.toolbarDirection,
-      );
+  BusyMarkDocumentLayoutSpec get _documentLayout {
+    final base =
+        widget.documentLayout ??
+        BusyMarkDocumentLayoutSpec.standalone.withEditingToolbar(
+          placement: widget.toolbarPlacement,
+          direction: widget.toolbarDirection,
+        );
+    if (!_documentController.document.isWriterside) return base;
+    // Reserve a stable margin. Pointer entry never changes content width.
+    return BusyMarkDocumentLayoutSpec(
+      minimumInsets: base.minimumInsets.copyWith(
+        left: base.minimumInsets.left + BusyMarkSizes.iconButton,
+        right: base.minimumInsets.right + BusyMarkSizes.iconButton,
+      ),
+      maxContentWidth: base.maxContentWidth,
+    );
+  }
+
+  Widget _propertyHoverRegion(
+    BusyBlock block,
+    Widget child, {
+    String scope = 'block',
+  }) {
+    if (!_documentController.document.isWriterside) return child;
+    final token = '${block.id}:$scope';
+    return Builder(
+      builder: (regionContext) {
+        void updateHover(PointerEvent _) {
+          final previous = _propertyHoverEntries[token];
+          final anchor = regionContext.findRenderObject();
+          final ambientDirection = Directionality.of(regionContext);
+          if (identical(previous?.hovered, block) &&
+              identical(previous?.anchor, anchor) &&
+              previous?.ambientDirection == ambientDirection &&
+              previous?.generation == _documentGeneration &&
+              previous?.revision == widget.contentRevision) {
+            return;
+          }
+          if (anchor is! RenderBox || !anchor.attached) return;
+          final path = _documentController.elementPath(block.id);
+          final parent = path.length < 2 ? null : path[path.length - 2];
+          final inspected =
+              block.kind == BusyBlockKind.paragraph &&
+                  parent?.attributes['element'] == 'li' &&
+                  parent!.children
+                          .where((b) => !b.isSourceOnly)
+                          .firstOrNull
+                          ?.id ==
+                      block.id
+              ? parent
+              : block;
+          _propertyHoverEntries[token] = (
+            block: inspected,
+            hovered: block,
+            ambientDirection: ambientDirection,
+            anchor: anchor,
+            depth: inspected.id == block.id ? path.length : path.length - 1,
+            generation: _documentGeneration,
+            revision: widget.contentRevision,
+            direction: busyMarkWysiwygBlockTextDirection(
+              block,
+              fallback: Directionality.of(context),
+            ),
+          );
+          final active = _propertyHoverEntries.entries
+              .reduce((a, b) => a.value.depth > b.value.depth ? a : b)
+              .key;
+          if (_propertyHoverScope != active ||
+              previous?.ambientDirection != ambientDirection ||
+              !identical(previous?.anchor, anchor) ||
+              previous?.generation != _documentGeneration ||
+              previous?.revision != widget.contentRevision ||
+              !identical(previous?.block, inspected)) {
+            setState(() => _propertyHoverScope = active);
+          }
+        }
+
+        return MouseRegion(
+          onEnter: updateHover,
+          onHover: updateHover,
+          onExit: (_) {
+            _propertyHoverEntries.remove(token);
+            _schedulePropertyHoverExit();
+          },
+          child: child,
+        );
+      },
+    );
+  }
+
+  void _schedulePropertyHoverExit() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || _propertyMarginHovered) return;
+      final active = _propertyHoverEntries.isEmpty
+          ? null
+          : _propertyHoverEntries.entries
+                .reduce((a, b) => a.value.depth > b.value.depth ? a : b)
+                .key;
+      if (_propertyHoverScope != active) {
+        setState(() => _propertyHoverScope = active);
+      }
+    });
+  }
+
+  Widget? _propertyHoverControl() {
+    final scope = _propertyHoverScope;
+    if (scope == null) return null;
+    // Retain the captured occurrence while crossing into its margin button.
+    final capture = _propertyHoverEntries[scope] ?? _propertyHoverCapture;
+    if (capture == null ||
+        capture.generation != _documentGeneration ||
+        capture.revision != widget.contentRevision) {
+      return null;
+    }
+    _propertyHoverCapture = capture;
+    final anchor = capture.anchor;
+    final viewport = _propertyHoverViewportKey.currentContext
+        ?.findRenderObject();
+    if (!anchor.attached ||
+        viewport is! RenderBox ||
+        !viewport.hasSize ||
+        !anchor.hasSize) {
+      return null;
+    }
+    final origin = viewport.globalToLocal(anchor.localToGlobal(Offset.zero));
+    final size = BusyMarkSizes.iconButton;
+    final left = capture.direction == TextDirection.rtl
+        ? origin.dx + anchor.size.width
+        : origin.dx - size;
+    final top = origin.dy
+        .clamp(
+          math.min(
+            _documentLayout.minimumInsets.top,
+            math.max(0, viewport.size.height - size),
+          ),
+          math.max(0, viewport.size.height - size),
+        )
+        .toDouble();
+    return Positioned(
+      left: left.clamp(0, math.max(0, viewport.size.width - size)).toDouble(),
+      top: top,
+      width: size,
+      height: size,
+      child: MouseRegion(
+        onEnter: (_) => _propertyMarginHovered = true,
+        onExit: (_) {
+          _propertyMarginHovered = false;
+          _schedulePropertyHoverExit();
+        },
+        child: BusyMarkHeaderIconButton(
+          key: ValueKey('writerside-inspect-${capture.block.id}'),
+          icon: BusyMarkGlyphs.settings,
+          tooltip: context.l10n.wsElementProperties,
+          onPressed: () {
+            if (capture.generation != _documentGeneration ||
+                capture.revision != widget.contentRevision ||
+                !identical(
+                  _documentController.blockById(capture.block.id),
+                  capture.block,
+                )) {
+              return;
+            }
+            if (widget.onInspectElement == null &&
+                !_propertySession.transition()) {
+              return;
+            }
+            setState(() {
+              _propertiesTargetId = capture.block.id;
+              _propertiesVisible = widget.onInspectElement == null;
+              _propertiesExplicitlyOpened = true;
+              _topicPropertiesSelected = false;
+            });
+            _publishInspectorTarget(
+              explicit: true,
+              multiple: false,
+              inspectInline: false,
+            );
+          },
+        ),
+      ),
+    );
+  }
 
   Widget _buildRenderEntry(
     BuildContext context,
@@ -1756,7 +1947,7 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
                 ? BusyMarkInsets.documentHeadingBlock.copyWith(top: 0)
                 : BusyMarkInsets.documentHeadingBlock)
           : const EdgeInsets.symmetric(vertical: BusyMarkSpacing.xs),
-      header: header,
+      header: _propertyHoverRegion(block, header, scope: 'header'),
       child: expandedChild,
     );
   }
@@ -1860,106 +2051,115 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     selectionRangesByBlockId,
   }) {
     final documentFilePath = _documentController.document.filePath;
-    return BusyMarkWysiwygBlockField(
-      key: _blockKeyFor(block.id),
-      block: block,
-      first: first,
-      listRunEnd: listRunEnd,
-      documentFilePath: documentFilePath,
-      workspaceRoot: widget.workspaceRoot,
-      writersideRoot: widget.writersideRoot,
-      imagesDir: widget.imagesDir,
-      allowRemoteImages: widget.allowRemoteImages,
-      onRemoteImageBlocked: widget.onRemoteImageBlocked,
-      onMathDiagnostic: widget.onMathDiagnostic,
-      controller: _textControllerFor(block),
-      undoController: _textUndoControllerFor(block),
-      focusNode: _focusNodeFor(block),
-      selected: selectedBlockIds.contains(block.id),
-      selectionRange: selectionRangesByBlockId[block.id],
-      documentSelectionActive: _hasBlockSelection,
-      // The originating field must stop its local drag once the document owns
-      // it; otherwise EditableText refocuses and scrolls that field's caret.
-      documentSelectionDragging:
-          _hasBlockSelection && _pointerSelectionAnchor != null,
-      onPointerDown: (event) => _handleBlockPointerDown(block.id, event),
-      onPointerMove: _handleBlockPointerMove,
-      onPointerUp: _handleBlockPointerUp,
-      onPointerCancel: _handleBlockPointerCancel,
-      onFocused: () => _handleBlockFocused(block.id),
-      onCut: _cutCurrentSelection,
-      onCopy: _copyCurrentSelection,
-      onPaste: () =>
-          unawaited(_pasteFromSystemClipboard(BusyMarkPasteMode.normal)),
-      onPastePlainText: () =>
-          unawaited(_pasteFromSystemClipboard(BusyMarkPasteMode.plainText)),
-      readPasteAvailability: _readContextMenuPasteAvailability,
-      onCopyPlainText: _copyCurrentSelectionAsPlainText,
-      onRefineWithAi: widget.onAiEdit == null
-          ? null
-          : () => unawaited(_runAiEdit(blockId: block.id)),
-      onChanged: (value) =>
-          _handleBlockTextChanged(documentFilePath, block.id, value),
-      onTableCellChanged: (cellId, value) => _handleTableCellTextChanged(
-        documentFilePath,
-        block.id,
-        cellId,
-        value,
-      ),
-      onTableCellSourceChanged: (cellId, value) =>
-          _handleTableCellSourceChanged(
-            documentFilePath,
-            block.id,
-            cellId,
-            value,
-          ),
-      tableCellController: _tableCellControllerFor,
-      tableCellUndoController: _textUndoControllerFor,
-      tableCellFocusNode: (cell) => _tableCellFocusNodeFor(block.id, cell),
-      tableCellKey: _tableCellKeyFor,
-      spellingRanges: _spellingRangesForBlock(block.id),
-      spellingEditableKey: _spellingEditableKeyFor(block.id),
-      tableCellSpellingRanges: _spellingRangesForCell,
-      tableCellSpellingEditableKey: _tableCellSpellingEditableKeyFor,
-      spellingMenuReader: widget.readSpellingMenuItems == null
-          ? null
-          : (offset) => widget.readSpellingMenuItems!(
-              SpellingRichBlockTarget(
-                blockId: block.id,
-                documentGeneration: _documentGeneration,
-              ),
-              offset,
+    return _propertyHoverRegion(
+      block,
+      BusyMarkWysiwygBlockField(
+        key: _blockKeyFor(block.id),
+        block: block,
+        first: first,
+        listRunEnd: listRunEnd,
+        documentFilePath: documentFilePath,
+        workspaceRoot: widget.workspaceRoot,
+        writersideRoot: widget.writersideRoot,
+        imagesDir: widget.imagesDir,
+        allowRemoteImages: widget.allowRemoteImages,
+        onRemoteImageBlocked: widget.onRemoteImageBlocked,
+        onMathDiagnostic: widget.onMathDiagnostic,
+        controller: _textControllerFor(block),
+        undoController: _textUndoControllerFor(block),
+        focusNode: _focusNodeFor(block),
+        selected: selectedBlockIds.contains(block.id),
+        selectionRange: selectionRangesByBlockId[block.id],
+        documentSelectionActive: _hasBlockSelection,
+        // The originating field must stop its local drag once the document owns
+        // it; otherwise EditableText refocuses and scrolls that field's caret.
+        documentSelectionDragging:
+            _hasBlockSelection && _pointerSelectionAnchor != null,
+        onPointerDown: (event) => _handleBlockPointerDown(block.id, event),
+        onPointerMove: _handleBlockPointerMove,
+        onPointerUp: _handleBlockPointerUp,
+        onPointerCancel: _handleBlockPointerCancel,
+        onFocused: () => _handleBlockFocused(block.id),
+        onCut: _cutCurrentSelection,
+        onCopy: _copyCurrentSelection,
+        onPaste: () =>
+            unawaited(_pasteFromSystemClipboard(BusyMarkPasteMode.normal)),
+        onPastePlainText: () =>
+            unawaited(_pasteFromSystemClipboard(BusyMarkPasteMode.plainText)),
+        readPasteAvailability: _readContextMenuPasteAvailability,
+        onCopyPlainText: _copyCurrentSelectionAsPlainText,
+        onRefineWithAi: widget.onAiEdit == null
+            ? null
+            : () => unawaited(_runAiEdit(blockId: block.id)),
+        onChanged: (value) =>
+            _handleBlockTextChanged(documentFilePath, block.id, value),
+        onTableCellChanged: (cellId, value) => _handleTableCellTextChanged(
+          documentFilePath,
+          block.id,
+          cellId,
+          value,
+        ),
+        onTableCellSourceChanged: (cellId, value) =>
+            _handleTableCellSourceChanged(
+              documentFilePath,
+              block.id,
+              cellId,
+              value,
             ),
-      tableCellSpellingMenuReader: widget.readSpellingMenuItems == null
-          ? null
-          : (cellId) =>
-                (offset) => widget.readSpellingMenuItems!(
-                  SpellingRichTableCellTarget(
-                    tableBlockId: block.id,
-                    cellId: cellId,
-                    documentGeneration: _documentGeneration,
-                  ),
-                  offset,
+        tableCellController: _tableCellControllerFor,
+        tableCellUndoController: _textUndoControllerFor,
+        tableCellFocusNode: (cell) => _tableCellFocusNodeFor(block.id, cell),
+        tableCellKey: _tableCellKeyFor,
+        spellingRanges: _spellingRangesForBlock(block.id),
+        spellingEditableKey: _spellingEditableKeyFor(block.id),
+        tableCellSpellingRanges: _spellingRangesForCell,
+        tableCellSpellingEditableKey: _tableCellSpellingEditableKeyFor,
+        spellingMenuReader: widget.readSpellingMenuItems == null
+            ? null
+            : (offset) => widget.readSpellingMenuItems!(
+                SpellingRichBlockTarget(
+                  blockId: block.id,
+                  documentGeneration: _documentGeneration,
                 ),
-      onCheckSpelling: widget.onCheckSpelling,
-      onTableCellFocused: (cellId) => _handleTableCellFocused(block.id, cellId),
-      onTableRowInserted: (rowIndex, {required after}) =>
-          _handleTableRowInserted(block.id, rowIndex, after: after),
-      onTableRowDeleted: (rowIndex) =>
-          _handleTableRowDeleted(block.id, rowIndex),
-      onTableColumnInserted: (columnIndex, {required after}) =>
-          _handleTableColumnInserted(block.id, columnIndex, after: after),
-      onTableColumnDeleted: (columnIndex) =>
-          _handleTableColumnDeleted(block.id, columnIndex),
-      onTableColumnAlignmentChanged: (columnIndex, alignment) =>
-          _handleTableColumnAlignmentChanged(block.id, columnIndex, alignment),
-      onTableDeleted: () => _handleTableDeleted(block.id),
-      onImageEditRequested: () =>
-          unawaited(_handleImageBlockEditRequested(block.id)),
-      onHtmlEditRequested: () =>
-          unawaited(_handleHtmlBlockEditRequested(block.id)),
-      onTaskChanged: (checked) => _handleTaskCheckedChanged(block.id, checked),
-      editRevision: widget.visualizationRevision + _documentGeneration,
+                offset,
+              ),
+        tableCellSpellingMenuReader: widget.readSpellingMenuItems == null
+            ? null
+            : (cellId) =>
+                  (offset) => widget.readSpellingMenuItems!(
+                    SpellingRichTableCellTarget(
+                      tableBlockId: block.id,
+                      cellId: cellId,
+                      documentGeneration: _documentGeneration,
+                    ),
+                    offset,
+                  ),
+        onCheckSpelling: widget.onCheckSpelling,
+        onTableCellFocused: (cellId) =>
+            _handleTableCellFocused(block.id, cellId),
+        onTableRowInserted: (rowIndex, {required after}) =>
+            _handleTableRowInserted(block.id, rowIndex, after: after),
+        onTableRowDeleted: (rowIndex) =>
+            _handleTableRowDeleted(block.id, rowIndex),
+        onTableColumnInserted: (columnIndex, {required after}) =>
+            _handleTableColumnInserted(block.id, columnIndex, after: after),
+        onTableColumnDeleted: (columnIndex) =>
+            _handleTableColumnDeleted(block.id, columnIndex),
+        onTableColumnAlignmentChanged: (columnIndex, alignment) =>
+            _handleTableColumnAlignmentChanged(
+              block.id,
+              columnIndex,
+              alignment,
+            ),
+        onTableDeleted: () => _handleTableDeleted(block.id),
+        onImageEditRequested: () =>
+            unawaited(_handleImageBlockEditRequested(block.id)),
+        onHtmlEditRequested: () =>
+            unawaited(_handleHtmlBlockEditRequested(block.id)),
+        onTaskChanged: (checked) =>
+            _handleTaskCheckedChanged(block.id, checked),
+        editRevision: widget.visualizationRevision + _documentGeneration,
+      ),
     );
   }
 
@@ -2062,6 +2262,9 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
 
   void _handleDocumentControllerChanged() {
     _documentGeneration++;
+    _propertyHoverEntries.clear();
+    _propertyHoverScope = null;
+    _propertyMarginHovered = false;
     _syncBlockControllers();
     _scheduleSessionReport();
   }
@@ -2234,6 +2437,10 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       if (block.kind == BusyBlockKind.frontMatter || block.isSourceOnly) {
         continue;
       }
+      if (block.attributes['busymark-list-form'] == 'markdown') {
+        entries.addAll(_editableBlockEntries(block.children, depth));
+        continue;
+      }
       if (_isStructuralBlockquote(block)) {
         entries.addAll(_editableBlockEntries(block.children, depth));
         continue;
@@ -2260,6 +2467,11 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     var index = 0;
     while (index < visibleBlocks.length) {
       final block = visibleBlocks[index];
+      if (block.attributes['busymark-list-form'] == 'markdown') {
+        entries.addAll(_editorRenderEntries(block.children, depth));
+        index++;
+        continue;
+      }
       if (busyMarkIsWritersideContainer(block)) {
         if ({'topic', 'chapter'}.contains(block.attributes['element']) &&
             !busyMarkWritersideIsCollapsible(_publishedProperties(block))) {
@@ -3094,7 +3306,11 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     });
   }
 
-  void _publishInspectorTarget({bool explicit = false, bool? multiple}) {
+  void _publishInspectorTarget({
+    bool explicit = false,
+    bool? multiple,
+    bool inspectInline = true,
+  }) {
     if (_inspectorRestorePending) return;
     final selection = _activeBlockId == null
         ? null
@@ -3117,7 +3333,7 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
         ? null
         : _documentController.blockById(targetId);
     BusyInlineStyleRange? inline;
-    if (block != null && targetId == _activeBlockId) {
+    if (inspectInline && block != null && targetId == _activeBlockId) {
       final selection = _textControllers[targetId]?.selection;
       if (selection?.isValid == true) {
         inline = busyInlineReferenceRanges(block.inlines)
@@ -3147,6 +3363,20 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   }
 
   void restoreEditingFocus() => _restoreEditingFocusAfterFrame();
+
+  void inspectCurrentSelection() {
+    if (!_documentController.document.isWriterside) return;
+    if (widget.onInspectElement == null && !_propertySession.transition()) {
+      return;
+    }
+    setState(() {
+      _propertiesTargetId = _activeBlockId;
+      _propertiesVisible = widget.onInspectElement == null;
+      _propertiesExplicitlyOpened = true;
+      _topicPropertiesSelected = false;
+    });
+    _publishInspectorTarget(explicit: true);
+  }
 
   void _reportSessionNow({
     BusyMarkWysiwygSessionChanged? callback,

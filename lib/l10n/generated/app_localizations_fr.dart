@@ -5369,4 +5369,63 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get wsParent => 'Élément parent';
+
+  @override
+  String get wsListType => 'Type de liste';
+
+  @override
+  String get wsStartingNumber => 'Numéro de départ';
+
+  @override
+  String get wsListSorting => 'Tri';
+
+  @override
+  String get wsLetteredList => 'Liste alphabétique';
+
+  @override
+  String get wsCheckboxList => 'Liste à cases à cocher';
+
+  @override
+  String get wsMarkerlessList => 'Liste sans marqueurs';
+
+  @override
+  String get wsAscending => 'Croissant';
+
+  @override
+  String get wsDescending => 'Décroissant';
+
+  @override
+  String get wsNoSorting => 'Sans tri';
+
+  @override
+  String get wsAsWritten => 'Tel qu’écrit';
+
+  @override
+  String get wsSentenceCase => 'Casse de phrase';
+
+  @override
+  String get wsTitleCase => 'Casse de titre';
+
+  @override
+  String get wsLowerCase => 'Minuscules';
+
+  @override
+  String get wsUpperCase => 'Majuscules';
+
+  @override
+  String get wsNativeMarkers => 'Marqueurs Markdown';
+
+  @override
+  String wsListMarkerStart(String number) {
+    return 'Premier marqueur : $number';
+  }
+
+  @override
+  String wsListLevel(String level) {
+    return 'Niveau $level';
+  }
+
+  @override
+  String get wsModuleCapsIgnored =>
+      'Le compilateur fixé ignore les règles <caps> du module. Utilisez un attribut caps local ou default-property.';
 }

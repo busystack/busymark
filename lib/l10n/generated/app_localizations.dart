@@ -9101,6 +9101,114 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Parent'**
   String get wsParent;
+
+  /// Writerside list ownership or verified capitalization presentation.
+  ///
+  /// In en, this message translates to:
+  /// **'List type'**
+  String get wsListType;
+
+  /// Writerside list ownership or verified capitalization presentation.
+  ///
+  /// In en, this message translates to:
+  /// **'Starting number'**
+  String get wsStartingNumber;
+
+  /// Writerside list ownership or verified capitalization presentation.
+  ///
+  /// In en, this message translates to:
+  /// **'Sorting'**
+  String get wsListSorting;
+
+  /// Writerside list ownership or verified capitalization presentation.
+  ///
+  /// In en, this message translates to:
+  /// **'Lettered list'**
+  String get wsLetteredList;
+
+  /// Writerside list ownership or verified capitalization presentation.
+  ///
+  /// In en, this message translates to:
+  /// **'Checkbox list'**
+  String get wsCheckboxList;
+
+  /// Writerside list ownership or verified capitalization presentation.
+  ///
+  /// In en, this message translates to:
+  /// **'List without markers'**
+  String get wsMarkerlessList;
+
+  /// Writerside list ownership or verified capitalization presentation.
+  ///
+  /// In en, this message translates to:
+  /// **'Ascending'**
+  String get wsAscending;
+
+  /// Writerside list ownership or verified capitalization presentation.
+  ///
+  /// In en, this message translates to:
+  /// **'Descending'**
+  String get wsDescending;
+
+  /// Writerside list ownership or verified capitalization presentation.
+  ///
+  /// In en, this message translates to:
+  /// **'No sorting'**
+  String get wsNoSorting;
+
+  /// Writerside list ownership or verified capitalization presentation.
+  ///
+  /// In en, this message translates to:
+  /// **'As written'**
+  String get wsAsWritten;
+
+  /// Writerside list ownership or verified capitalization presentation.
+  ///
+  /// In en, this message translates to:
+  /// **'Sentence case'**
+  String get wsSentenceCase;
+
+  /// Writerside list ownership or verified capitalization presentation.
+  ///
+  /// In en, this message translates to:
+  /// **'Title case'**
+  String get wsTitleCase;
+
+  /// Writerside list ownership or verified capitalization presentation.
+  ///
+  /// In en, this message translates to:
+  /// **'Lowercase'**
+  String get wsLowerCase;
+
+  /// Writerside list ownership or verified capitalization presentation.
+  ///
+  /// In en, this message translates to:
+  /// **'Uppercase'**
+  String get wsUpperCase;
+
+  /// Writerside list ownership or verified capitalization presentation.
+  ///
+  /// In en, this message translates to:
+  /// **'Markdown markers'**
+  String get wsNativeMarkers;
+
+  /// Writerside list ownership or verified capitalization presentation.
+  ///
+  /// In en, this message translates to:
+  /// **'Marker start: {number}'**
+  String wsListMarkerStart(String number);
+
+  /// Writerside list ownership or verified capitalization presentation.
+  ///
+  /// In en, this message translates to:
+  /// **'Level {level}'**
+  String wsListLevel(String level);
+
+  /// Writerside list ownership or verified capitalization presentation.
+  ///
+  /// In en, this message translates to:
+  /// **'The pinned builder ignores module <caps> rules. Use a local caps override or default-property.'**
+  String get wsModuleCapsIgnored;
 }
 
 class _AppLocalizationsDelegate

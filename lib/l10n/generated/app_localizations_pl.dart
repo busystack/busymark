@@ -5371,4 +5371,63 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get wsParent => 'Element nadrzędny';
+
+  @override
+  String get wsListType => 'Typ listy';
+
+  @override
+  String get wsStartingNumber => 'Numer początkowy';
+
+  @override
+  String get wsListSorting => 'Sortowanie';
+
+  @override
+  String get wsLetteredList => 'Lista literowa';
+
+  @override
+  String get wsCheckboxList => 'Lista pól wyboru';
+
+  @override
+  String get wsMarkerlessList => 'Lista bez znaczników';
+
+  @override
+  String get wsAscending => 'Rosnąco';
+
+  @override
+  String get wsDescending => 'Malejąco';
+
+  @override
+  String get wsNoSorting => 'Bez sortowania';
+
+  @override
+  String get wsAsWritten => 'Jak napisano';
+
+  @override
+  String get wsSentenceCase => 'Wielkość liter zdania';
+
+  @override
+  String get wsTitleCase => 'Wielkość liter tytułu';
+
+  @override
+  String get wsLowerCase => 'Małe litery';
+
+  @override
+  String get wsUpperCase => 'Wielkie litery';
+
+  @override
+  String get wsNativeMarkers => 'Znaczniki Markdown';
+
+  @override
+  String wsListMarkerStart(String number) {
+    return 'Znacznik początkowy: $number';
+  }
+
+  @override
+  String wsListLevel(String level) {
+    return 'Poziom $level';
+  }
+
+  @override
+  String get wsModuleCapsIgnored =>
+      'Przypięty kompilator ignoruje reguły <caps> modułu. Użyj lokalnego atrybutu caps lub default-property.';
 }

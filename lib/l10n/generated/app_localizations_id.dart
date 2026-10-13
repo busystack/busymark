@@ -5314,4 +5314,63 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get wsParent => 'Induk';
+
+  @override
+  String get wsListType => 'Jenis daftar';
+
+  @override
+  String get wsStartingNumber => 'Nomor awal';
+
+  @override
+  String get wsListSorting => 'Pengurutan';
+
+  @override
+  String get wsLetteredList => 'Daftar huruf';
+
+  @override
+  String get wsCheckboxList => 'Daftar kotak centang';
+
+  @override
+  String get wsMarkerlessList => 'Daftar tanpa penanda';
+
+  @override
+  String get wsAscending => 'Menaik';
+
+  @override
+  String get wsDescending => 'Menurun';
+
+  @override
+  String get wsNoSorting => 'Tanpa pengurutan';
+
+  @override
+  String get wsAsWritten => 'Sesuai tulisan';
+
+  @override
+  String get wsSentenceCase => 'Kapitalisasi kalimat';
+
+  @override
+  String get wsTitleCase => 'Kapitalisasi judul';
+
+  @override
+  String get wsLowerCase => 'Huruf kecil';
+
+  @override
+  String get wsUpperCase => 'Huruf besar';
+
+  @override
+  String get wsNativeMarkers => 'Penanda Markdown';
+
+  @override
+  String wsListMarkerStart(String number) {
+    return 'Penanda awal: $number';
+  }
+
+  @override
+  String wsListLevel(String level) {
+    return 'Tingkat $level';
+  }
+
+  @override
+  String get wsModuleCapsIgnored =>
+      'Builder yang dipatok mengabaikan aturan <caps> modul. Gunakan atribut caps lokal atau default-property.';
 }

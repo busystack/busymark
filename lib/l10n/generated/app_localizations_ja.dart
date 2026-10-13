@@ -5166,4 +5166,63 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get wsParent => '親要素';
+
+  @override
+  String get wsListType => 'リストの種類';
+
+  @override
+  String get wsStartingNumber => '開始番号';
+
+  @override
+  String get wsListSorting => '並べ替え';
+
+  @override
+  String get wsLetteredList => '英字リスト';
+
+  @override
+  String get wsCheckboxList => 'チェックボックスリスト';
+
+  @override
+  String get wsMarkerlessList => 'マーカーなしのリスト';
+
+  @override
+  String get wsAscending => '昇順';
+
+  @override
+  String get wsDescending => '降順';
+
+  @override
+  String get wsNoSorting => '並べ替えなし';
+
+  @override
+  String get wsAsWritten => '記述どおり';
+
+  @override
+  String get wsSentenceCase => '文頭のみ大文字';
+
+  @override
+  String get wsTitleCase => 'タイトル形式';
+
+  @override
+  String get wsLowerCase => '小文字';
+
+  @override
+  String get wsUpperCase => '大文字';
+
+  @override
+  String get wsNativeMarkers => 'Markdown マーカー';
+
+  @override
+  String wsListMarkerStart(String number) {
+    return '開始マーカー: $number';
+  }
+
+  @override
+  String wsListLevel(String level) {
+    return '階層 $level';
+  }
+
+  @override
+  String get wsModuleCapsIgnored =>
+      '固定されたビルダーはモジュールの <caps> ルールを無視します。ローカルの caps 属性または default-property を使用してください。';
 }

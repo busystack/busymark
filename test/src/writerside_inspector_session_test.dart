@@ -472,7 +472,10 @@ void main() {
           .busyDocument;
       final c = BusyMarkWysiwygDocumentController(document: doc);
       addTearDown(c.dispose);
-      final item = c.document.blocks.firstWhere((b) => b.plainText == 'Two');
+      final item = c.document.blocks
+          .singleWhere((b) => b.attributes['element'] == 'list')
+          .children
+          .singleWhere((b) => b.plainText == 'Two');
       expect(c.updateWritersideProperty(item.id, 'id', 'two'), isTrue);
       final before = WritersideInspectorTarget.fromSelection(
         bufferId: 'b',

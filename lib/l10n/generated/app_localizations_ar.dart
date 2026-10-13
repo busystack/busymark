@@ -5342,4 +5342,63 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get wsParent => 'العنصر الأب';
+
+  @override
+  String get wsListType => 'نوع القائمة';
+
+  @override
+  String get wsStartingNumber => 'رقم البداية';
+
+  @override
+  String get wsListSorting => 'الفرز';
+
+  @override
+  String get wsLetteredList => 'قائمة حرفية';
+
+  @override
+  String get wsCheckboxList => 'قائمة مربعات اختيار';
+
+  @override
+  String get wsMarkerlessList => 'قائمة دون علامات';
+
+  @override
+  String get wsAscending => 'تصاعدي';
+
+  @override
+  String get wsDescending => 'تنازلي';
+
+  @override
+  String get wsNoSorting => 'دون فرز';
+
+  @override
+  String get wsAsWritten => 'كما كُتب';
+
+  @override
+  String get wsSentenceCase => 'حالة أحرف الجملة';
+
+  @override
+  String get wsTitleCase => 'حالة أحرف العنوان';
+
+  @override
+  String get wsLowerCase => 'أحرف صغيرة';
+
+  @override
+  String get wsUpperCase => 'أحرف كبيرة';
+
+  @override
+  String get wsNativeMarkers => 'علامات Markdown';
+
+  @override
+  String wsListMarkerStart(String number) {
+    return 'علامة البداية: $number';
+  }
+
+  @override
+  String wsListLevel(String level) {
+    return 'المستوى $level';
+  }
+
+  @override
+  String get wsModuleCapsIgnored =>
+      'يتجاهل الباني المثبّت قواعد <caps> للوحدة. استخدم سمة caps محلية أو default-property.';
 }

@@ -75,9 +75,7 @@ void main() {
             '${explicitStart ? '\n{start="10" id="numbered-list"}\n' : ''}';
         final c = BusyMarkWysiwygDocumentController(document: parse(source));
         addTearDown(c.dispose);
-        final target = explicitStart
-            ? c.document.blocks.first.children.first
-            : c.document.blocks.first;
+        final target = c.document.blocks.first.children.first;
         final identity = explicitStart ? 'numbered-parent' : 'marker-parent';
         expect(c.updateWritersideProperty(target.id, 'id', identity), isTrue);
         final directory = await Directory.systemTemp.createTemp(
@@ -162,9 +160,10 @@ void main() {
           '# Topic\n\n## Chapter\n\n- First **item**\n- Second item\n\nAfter.\n';
       final c = BusyMarkWysiwygDocumentController(document: parse(source));
       addTearDown(c.dispose);
-      final target = c.document.blocks.firstWhere(
-        (b) => b.plainText == 'Second item',
-      );
+      final target = c.document.blocks
+          .firstWhere((b) => b.attributes['element'] == 'list')
+          .children
+          .firstWhere((b) => b.plainText == 'Second item');
       expect(c.updateWritersideProperty(target.id, 'id', 'second'), isTrue);
       expect(c.markdown, startsWith('# Topic\n\n## Chapter\n\n'));
       expect(c.markdown, endsWith('\n\nAfter.\n'));
@@ -283,7 +282,7 @@ void main() {
       document: parse('- First **item**\n- Second item\n'),
     );
     addTearDown(c.dispose);
-    final target = c.document.blocks[1];
+    final target = c.document.blocks.first.children[1];
     expect(c.updateWritersideProperty(target.id, 'id', 'second'), isTrue);
     expect(c.updateWritersideProperty(target.id, 'filter', 'release'), isTrue);
     final file = File('${directory.path}/list.md');
@@ -322,7 +321,7 @@ void main() {
         document: parse('- [x] Checked **item**\n- [ ] Unchecked item\n'),
       );
       addTearDown(c.dispose);
-      final target = c.document.blocks.last;
+      final target = c.document.blocks.first.children.last;
       expect(c.updateWritersideProperty(target.id, 'id', 'task-item'), isTrue);
       expect(c.updateWritersideProperty(target.id, 'instance', 'web'), isTrue);
       final file = File('${directory.path}/tasks.md');

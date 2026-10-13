@@ -17,6 +17,7 @@ String writersideElementLabel(
   BuildContext context,
   BusyBlock block, [
   BusyDocument? document,
+  WritersideEffectiveProperties? resolver,
 ]) => switch (block.attributes['element']) {
   'topic' => context.l10n.topic,
   'chapter' => context.l10n.chapter,
@@ -26,10 +27,15 @@ String writersideElementLabel(
   'tab' => context.l10n.tab,
   'deflist' => context.l10n.wsDefinitionList,
   'def' => context.l10n.wsTerm,
-  'list' =>
-    block.attributes['type'] == 'decimal'
-        ? context.l10n.orderedList
-        : context.l10n.unorderedList,
+  'list' => switch ((resolver ?? const WritersideEffectiveProperties())
+      .resolve('list', 'type', block.attributes)
+      .value) {
+    'decimal' => context.l10n.orderedList,
+    'alpha-lower' => context.l10n.wsLetteredList,
+    'checkbox' => context.l10n.wsCheckboxList,
+    'none' => context.l10n.wsMarkerlessList,
+    _ => context.l10n.unorderedList,
+  },
   'li' => context.l10n.wsListItem,
   'tldr' => context.l10n.wsTldr,
   'img' => context.l10n.image,
@@ -59,6 +65,17 @@ String writersideElementLabel(
 
 /// Subordinate, non-modal authoring properties. Targets are supplied by the
 /// workspace, never inferred from whichever property entry happens to have focus.
+String _elementExcerpt(BusyBlock block) {
+  if (block.plainText.trim().isNotEmpty) {
+    return block.plainText.split('\n').first;
+  }
+  for (final child in block.children) {
+    final excerpt = _elementExcerpt(child);
+    if (excerpt.isNotEmpty) return excerpt;
+  }
+  return '';
+}
+
 class BusyMarkWritersideProperties extends StatelessWidget {
   const BusyMarkWritersideProperties({
     super.key,
@@ -73,6 +90,7 @@ class BusyMarkWritersideProperties extends StatelessWidget {
     required this.onTopicProperty,
     required this.onManageItem,
     this.effectiveProperties = const WritersideEffectiveProperties(),
+    this.documentIdentity,
     this.session,
     this.readOnly = false,
     this.onSourceLocation,
@@ -89,6 +107,7 @@ class BusyMarkWritersideProperties extends StatelessWidget {
     this.navigationEditable = true,
   });
   final WritersideEffectiveProperties effectiveProperties;
+  final String? documentIdentity;
   final WritersidePropertySession? session;
   final bool readOnly;
   final VoidCallback? onSourceLocation;
@@ -137,8 +156,20 @@ class BusyMarkWritersideProperties extends StatelessWidget {
         inlineTarget?.attributes ??
         block?.attributes ??
         const <String, String>{};
+    final nativeOwner = path
+        .where(
+          (b) =>
+              b.attributes['busymark-list-form'] == 'markdown' &&
+              b.children.any((child) => child.id == block?.id),
+        )
+        .lastOrNull;
+    final unsafeItemConversion =
+        inlineTarget == null &&
+        nativeOwner != null &&
+        WritersideEditingAdapter.nativeListHasMixedMarkers(nativeOwner);
     final immutable =
         readOnly ||
+        unsafeItemConversion ||
         block?.isSourceProtected == true ||
         block?.preserveRaw == true;
     final offered = <String>{};
@@ -278,6 +309,19 @@ class BusyMarkWritersideProperties extends StatelessWidget {
         'expanded' => l.wsExpanded,
         'collapsed' => l.wsCollapsed,
         'inherited' => l.wsInherited,
+        'bullet' => l.unorderedList,
+        'decimal' => l.orderedList,
+        'alpha-lower' => l.wsLetteredList,
+        'checkbox' => l.wsCheckboxList,
+        'none' when attribute == 'type' => l.wsMarkerlessList,
+        'none' when attribute == 'sorted' => l.wsNoSorting,
+        'asc' => l.wsAscending,
+        'desc' => l.wsDescending,
+        'aswritten' => l.wsAsWritten,
+        'sentence' => l.wsSentenceCase,
+        'title' => l.wsTitleCase,
+        'lower' => l.wsLowerCase,
+        'upper' => l.wsUpperCase,
         'true' => l.wsEnabled,
         'false' => l.wsDisabled,
         'full' => l.wsFullLayout,
@@ -291,6 +335,7 @@ class BusyMarkWritersideProperties extends StatelessWidget {
         WritersidePropertyOrigin.element => l.wsOriginElement,
         WritersidePropertyOrigin.ancestor => l.wsOriginAncestor,
         WritersidePropertyOrigin.module => l.wsOriginModule,
+        WritersidePropertyOrigin.markdownMarker => l.wsNativeMarkers,
         WritersidePropertyOrigin.builtIn => l.wsOriginBuiltIn,
         WritersidePropertyOrigin.unresolved => l.wsOriginUnresolved,
       };
@@ -312,10 +357,12 @@ class BusyMarkWritersideProperties extends StatelessWidget {
       );
       final help = [
         provenance,
+        if (property.limitation == 'module-caps-ignored') l.wsModuleCapsIgnored,
         if (attribute == 'ignore-vars') l.wsIgnoreVariablesExplanation,
       ].join('\n');
       final subtitle = [
         if (summary != null) summary,
+        if (property.limitation == 'module-caps-ignored') l.wsModuleCapsIgnored,
         if (!active) l.wsPropertiesInactive,
       ].join('\n');
       return _PropertyContextHelp(
@@ -361,6 +408,11 @@ class BusyMarkWritersideProperties extends StatelessWidget {
           (b) =>
               busyMarkIsWritersideContainer(b) ||
               b.kind == BusyBlockKind.heading ||
+              {
+                BusyBlockKind.unorderedListItem,
+                BusyBlockKind.orderedListItem,
+                BusyBlockKind.taskListItem,
+              }.contains(b.kind) ||
               b.id == block?.id,
         )
         .where(
@@ -542,6 +594,43 @@ class BusyMarkWritersideProperties extends StatelessWidget {
         );
       }
     } else if (block != null) {
+      if (tag == 'list') {
+        rows.add(enumRow('type', l.wsListType));
+        final type = effectiveProperties.resolve(tag, 'type', attrs).value;
+        final numbered = type == 'decimal' || type == 'alpha-lower';
+        final startDefault = effectiveProperties.resolve(tag, 'start', attrs);
+        final startSummary =
+            startDefault.origin == WritersidePropertyOrigin.module
+            ? l.wsDefaultPropertyOrigin(
+                startDefault.value ?? l.wsPropertyUnresolved,
+                l.wsModule,
+              )
+            : attrs['busymark-native-list-start'] == null
+            ? l.wsDefaultProperty(startDefault.value ?? l.wsPropertyUnresolved)
+            : l.wsListMarkerStart(attrs['busymark-native-list-start']!);
+        if (numbered || attrs.containsKey('start')) {
+          rows.add(
+            Row(
+              children: [
+                Expanded(
+                  child: entry(
+                    'start',
+                    l.wsStartingNumber,
+                    enabled: numbered,
+                    supportingText: startSummary,
+                  ),
+                ),
+                if (!numbered && attrs.containsKey('start'))
+                  resetOverride('start'),
+              ],
+            ),
+          );
+        } else {
+          offered.add('start');
+        }
+        rows.add(entry('columns', l.columns));
+        rows.add(enumRow('sorted', l.wsListSorting));
+      }
       if (block.kind == BusyBlockKind.heading) {
         if (!document.isXmlTopic && !block.attributes.containsKey('element')) {
           rows.add(
@@ -684,7 +773,7 @@ class BusyMarkWritersideProperties extends StatelessWidget {
         rows.add(entry('preview-src', l.wsPreviewImage));
       }
       if (WritersideSchema.attributesFor(tag).contains('switcher-key') &&
-          !{'topic', 'chapter', 'p'}.contains(tag)) {
+          !{'topic', 'chapter', 'p', 'list'}.contains(tag)) {
         rows.add(entry('switcher-key', l.wsSwitcherKey));
       }
       if (inlineTarget case final inline?) {
@@ -808,6 +897,8 @@ class BusyMarkWritersideProperties extends StatelessWidget {
       secondary.add(
         _PropertySection(
           key: const ValueKey('writerside-topic-navigation'),
+          storageIdentity:
+              'writerside-navigation-${documentIdentity ?? document.filePath}',
           title: l.wsTopicNavigation,
           session: session,
           children: [
@@ -883,7 +974,7 @@ class BusyMarkWritersideProperties extends StatelessWidget {
                 (a) =>
                     !offered.contains(a) &&
                     !{'title', 'level'}.contains(a) &&
-                    !(tag == 'deflist' &&
+                    !({'deflist', 'list'}.contains(tag) &&
                         a == 'style' &&
                         !attrs.containsKey(a)),
               )
@@ -976,6 +1067,7 @@ class BusyMarkWritersideProperties extends StatelessWidget {
                 },
               ),
             if (readOnly ||
+                unsafeItemConversion ||
                 block?.isSourceProtected == true ||
                 block?.preserveRaw == true)
               Padding(
@@ -1022,17 +1114,24 @@ class BusyMarkWritersideProperties extends StatelessWidget {
                                             context,
                                             b,
                                             document,
+                                            effectiveProperties,
                                           )
                                         : [
                                             writersideElementLabel(
                                               context,
                                               b,
                                               document,
+                                              effectiveProperties,
                                             ),
                                             b.attributes['id'] ??
                                                 b.attributes['title'] ??
                                                 b.attributes['busymark-title-label'] ??
-                                                b.plainText.split('\n').first,
+                                                _elementExcerpt(b),
+                                            if (b.attributes['element'] ==
+                                                'list')
+                                              l.wsListLevel(
+                                                '${path.takeWhile((p) => p.id != b.id).where((p) => p.attributes['element'] == 'list').length + 1}',
+                                              ),
                                           ].where((v) => v.isNotEmpty).join(' · ');
                                   })(),
                             onSelected: (value) {
@@ -1092,6 +1191,8 @@ class BusyMarkWritersideProperties extends StatelessWidget {
                     if (advanced.isNotEmpty)
                       _PropertySection(
                         key: const ValueKey('writerside-advanced'),
+                        storageIdentity:
+                            'writerside-advanced-${documentIdentity ?? document.filePath}',
                         session: session,
                         title: l.advanced,
                         subtitle:
@@ -1142,17 +1243,45 @@ class _PropertySection extends StatefulWidget {
     required this.children,
     this.subtitle,
     this.session,
+    required this.storageIdentity,
   });
   final String title;
   final String? subtitle;
   final List<Widget> children;
   final WritersidePropertySession? session;
+  final String storageIdentity;
   @override
   State<_PropertySection> createState() => _PropertySectionState();
 }
 
 class _PropertySectionState extends State<_PropertySection> {
   bool expanded = false;
+  bool initialized = false;
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!initialized) {
+      initialized = true;
+      expanded =
+          PageStorage.maybeOf(
+            context,
+          )?.readState(context, identifier: widget.storageIdentity) ==
+          true;
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant _PropertySection oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.storageIdentity != widget.storageIdentity) {
+      expanded =
+          PageStorage.maybeOf(
+            context,
+          )?.readState(context, identifier: widget.storageIdentity) ==
+          true;
+    }
+  }
+
   @override
   Widget build(BuildContext context) => Material(
     color: BusyMarkSurfaceColors.of(context).panel,
@@ -1167,6 +1296,11 @@ class _PropertySectionState extends State<_PropertySection> {
           onTap: () {
             if (expanded && !(widget.session?.flush() ?? true)) return;
             setState(() => expanded = !expanded);
+            PageStorage.maybeOf(context)?.writeState(
+              context,
+              expanded,
+              identifier: widget.storageIdentity,
+            );
           },
         ),
         if (expanded) ...widget.children,
@@ -1557,7 +1691,9 @@ class _PropertyTextEntryState extends State<_PropertyTextEntry> {
             padding: const EdgeInsetsDirectional.fromSTEB(16, 0, 16, 8),
             child: SelectableText(
               widget.supportingText!,
-              key: const ValueKey('writerside-generated-anchor'),
+              key: widget.label.endsWith('(id)')
+                  ? const ValueKey('writerside-generated-anchor')
+                  : ValueKey('writerside-property-support-${widget.label}'),
               style: Theme.of(context).textTheme.bodySmall,
             ),
           ),

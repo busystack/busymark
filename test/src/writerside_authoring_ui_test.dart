@@ -19,6 +19,8 @@ import 'package:busymark/src/writerside/writerside_effective_properties.dart';
 import 'package:busymark/src/writerside/writerside_model.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_document_controller.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart';
+import 'package:busymark/src/editor/wysiwyg/wysiwyg_block_widgets.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -402,7 +404,19 @@ void main() {
     await tester.pumpWidget(_app(editor));
     await tester.pumpAndSettle();
     if (openProperties) {
-      await tester.tap(find.byTooltip('Element Properties').first);
+      final pointer = await tester.createGesture(kind: PointerDeviceKind.mouse);
+      await pointer.addPointer(location: const Offset(1, 1));
+      await pointer.moveTo(
+        tester.getCenter(find.byType(BusyMarkWysiwygBlockField).first),
+      );
+      await tester.pumpAndSettle();
+      final icon = find.byTooltip('Element Properties');
+      expect(icon, findsOneWidget);
+      await pointer.moveTo(tester.getCenter(icon));
+      await tester.pumpAndSettle();
+      await pointer.down(tester.getCenter(icon));
+      await pointer.up();
+      await pointer.removePointer();
       await tester.pumpAndSettle();
     }
   }
@@ -1344,13 +1358,25 @@ void main() {
           find.byKey(const ValueKey('wysiwyg-writerside-semantic')),
           findsOneWidget,
         );
-        await tester.ensureVisible(
+        expect(
           find.byKey(const ValueKey('wysiwyg-writerside-properties')),
+          findsNothing,
+        );
+        final pointer = await tester.createGesture(
+          kind: PointerDeviceKind.mouse,
+        );
+        await pointer.addPointer(location: const Offset(1, 1));
+        await pointer.moveTo(
+          tester.getCenter(find.byType(BusyMarkWysiwygBlockField).first),
         );
         await tester.pumpAndSettle();
-        await tester.tap(
-          find.byKey(const ValueKey('wysiwyg-writerside-properties')),
-        );
+        final icon = find.byTooltip('Element Properties');
+        expect(icon, findsOneWidget);
+        await pointer.moveTo(tester.getCenter(icon));
+        await tester.pumpAndSettle();
+        await pointer.down(tester.getCenter(icon));
+        await pointer.up();
+        await pointer.removePointer();
         await tester.pumpAndSettle();
         expect(find.byType(BusyMarkWritersideProperties), findsOneWidget);
         expect(tester.takeException(), isNull);

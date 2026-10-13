@@ -72,6 +72,56 @@ def verify_inspector_presentation(archive):
     print('Native presentation HTML: authored chapter anchor, published collapse and unchanged generated anchor verified')
 
 
+if len(sys.argv) > 2 and sys.argv[2].startswith('list-caps'):
+    mode = sys.argv[2]
+    with zipfile.ZipFile(sys.argv[1]) as archive:
+        if mode == 'list-caps-list-start':
+            page = Elements(archive.read('numbering.html').decode())
+            for identity, start in [('native-seven','7'),('native-one','5'),('native-nine','9')]:
+                assert page.elements[identity][0]['start'] == start, (identity, page.elements[identity])
+        else:
+            xml = Elements(archive.read('lists.html').decode())
+            md = Elements(archive.read('native-lists.html').decode())
+            original = 'a journey through HTTP and APIs'
+            title = 'A Journey Through HTTP And APIs'
+            expected = title if mode in {'list-caps-generic','list-caps-variable'} else original
+            assert xml.texts['absent'] == expected, xml.texts['absent']
+            assert xml.texts['title-case'] == title
+            assert xml.texts['sentence-case'] == 'A journey through HTTP and APIs'
+            assert xml.texts['as-written'] == original
+            assert xml.texts['upper-case'] == 'A JOURNEY THROUGH HTTP AND APIS'
+            assert xml.texts['variable-case'] == title
+            identity = 'a-journey-through-http-and-apis'
+            assert md.texts[identity] == ('A JOURNEY THROUGH HTTP AND APIS' if mode == 'list-caps-native' else expected)
+            assert xml.texts['lists.topic'] == 'XML lists and capitalization'
+            toc = __import__('json').loads(archive.read('HelpTOC.json'))['entities']['pages']
+            assert toc['lists']['title'] == 'XML lists and capitalization'
+            assert toc['native-lists']['title'] == 'Native lists and capitalization'
+            for page, letter_id, check_id, none_id in [(xml,'letters','checkbox','markerless'),(md,'native-letters','native-checkbox','native-markerless')]:
+                letter = page.elements[letter_id][0]
+                assert letter['type'] == 'a' and letter['start'] == '3' and letter['data-columns'] == '2',letter
+                assert page.texts[letter_id] == 'AlphaZebra'
+                assert page.elements[check_id][0]['class'] == 'list _checkbox'
+                check_items = [attrs for tag,attrs in page.descendants[check_id] if tag == 'li']
+                assert len(check_items) == 2
+                if page is xml:
+                    assert check_items[0].get('checked') == 'true'
+                else:
+                    # The pinned builder removes GFM checkbox prefixes but
+                    # does not initialize checked state from them. XML checked
+                    # attributes retain that separately verified capability.
+                    assert all('checked' not in attrs for attrs in check_items)
+                assert page.elements[none_id][0]['class'] == 'list _none'
+                assert page.texts[none_id] == 'ZebraAlpha'
+            if mode == 'list-caps-native':
+                parent = md.elements['reviewed-list'][0]
+                assert parent['start'] == '10' and parent['data-columns'] == '2',parent
+                assert md.elements['reviewed-nested'][0]['start'] == '12'
+                assert md.texts['reviewed-list'].index('Sibling') < md.texts['reviewed-list'].index('Parent caption')
+            assert md.elements['embedded'][0]['start'] == '6'
+    print('List/capitalization HTML: '+mode+' published markers, numbering, columns, sorting, checkbox controls and capitalization verified')
+    sys.exit(0)
+
 if len(sys.argv) > 2 and sys.argv[2] == 'native-defaults':
     with zipfile.ZipFile(sys.argv[1]) as archive:
         actual = Elements(archive.read('properties.html').decode('utf-8'))

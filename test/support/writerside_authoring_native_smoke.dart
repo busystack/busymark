@@ -3,12 +3,14 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:ui' as ui;
+import 'package:busymark/l10n/generated/app_localizations.dart';
 import 'package:busymark/src/app/app_settings.dart';
 import 'package:busymark/src/app/busymark_app.dart';
 import 'package:busymark/src/app/busymark_design.dart';
 import 'package:busymark/src/app/startup_path.dart';
 import 'package:busymark/src/app/system_accent.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_editor.dart';
+import 'package:busymark/src/editor/wysiwyg/wysiwyg_block_widgets.dart';
 import 'package:busymark/src/editor/wysiwyg/writerside_properties.dart';
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_inline_controller.dart';
 import 'package:busymark/src/editor/source/source_editor.dart';
@@ -79,7 +81,7 @@ Future<void> main(List<String> arguments) async {
       '# Inspector Corrections\n\nUse `{id="literal-code"}`\n\nUse [**link**](authoring.topic){id="owned-link"}\n\n'
       'See [`{id="linked-literal"}`](authoring.topic){id="code-reference"}\n\n'
       'Show ![{id="image-literal"}](logo.png){id="alt-reference" width="24"}\n\n'
-      '- First **item**\n- Second item\n\n- [x] Checked task\n- [ ] Unchecked task\n\n> A **note**.\n{style="note"}\n\n'
+      '- First **item**\n- Second item\n\n+ [x] Checked task\n+ [ ] Unchecked task\n\n> A **note**.\n{style="note"}\n\n'
       'Numbered override.\n\n3. Numbered parent\n   4. Nested first\n   5. Nested second\n4. Numbered sibling\n\n'
       '{start="10" id="numbered-list"}\n\nNumbered markers.\n\n'
       '3. Marker parent\n   4. Marker nested first\n   5. Marker nested second\n4. Marker sibling\n',
@@ -174,6 +176,21 @@ Future<void> main(List<String> arguments) async {
   final output = await Directory(
     p.absolute(arguments[1]),
   ).create(recursive: true);
+  final contextualFixture = Directory(
+    p.absolute('test/fixtures/writerside/list_capitalization_conformance'),
+  );
+  final contextualRoot = Directory('${root.path}-contextual');
+  await for (final item in contextualFixture.list(recursive: true)) {
+    final destination = p.join(
+      contextualRoot.path,
+      p.relative(item.path, from: contextualFixture.path),
+    );
+    if (item is Directory) await Directory(destination).create(recursive: true);
+    if (item is File) {
+      await File(destination).parent.create(recursive: true);
+      await item.copy(destination);
+    }
+  }
   await windowManager.ensureInitialized();
   await LinuxHeaderBarService.instance.initialize();
   final settings = AppSettings.defaults().copyWith(
@@ -266,6 +283,51 @@ class _HarnessState extends ConsumerState<_Harness> {
     } else {
       await _tap(_text(label));
     }
+  }
+
+  Future<void> _hoverProperties(Element element) async {
+    final label = AppLocalizations.of(
+      _elements((w) => w is BusyMarkWysiwygEditor).single,
+    ).wsElementProperties;
+    await Scrollable.ensureVisible(
+      element,
+      alignment: 0.25,
+      duration: const Duration(milliseconds: 200),
+    );
+    await _pause();
+    final box = element.findRenderObject()! as RenderBox;
+    final origin = await windowManager.getPosition();
+    final point = box.localToGlobal(box.size.center(Offset.zero)) + origin;
+    await _native('move-pointer', '${point.dx.round()}', '${point.dy.round()}');
+    await _until(
+      () =>
+          _elements(
+            (w) => w is BusyMarkHeaderIconButton && w.tooltip == label,
+          ).length ==
+          1,
+      'One contextual Element Properties icon appears for ${element.widget.runtimeType}',
+    );
+    final icon = _elements(
+      (w) => w is BusyMarkHeaderIconButton && w.tooltip == label,
+    ).single;
+    final margin = icon.findRenderObject()! as RenderBox;
+    final target =
+        margin.localToGlobal(margin.size.center(Offset.zero)) + origin;
+    await _native(
+      'move-pointer',
+      '${target.dx.round()}',
+      '${target.dy.round()}',
+    );
+    await _pause();
+    _check(
+      _elements(
+            (w) => w is BusyMarkHeaderIconButton && w.tooltip == label,
+          ).length ==
+          1,
+      'Contextual Properties remains reachable across the margin',
+    );
+    await _native('click-pointer');
+    await _pause();
   }
 
   @override
@@ -985,9 +1047,6 @@ class _HarnessState extends ConsumerState<_Harness> {
       'Presentation heading opens in Editor',
     );
     final original = _source;
-    Element propertiesButton() => _elements(
-      (w) => w.key == const ValueKey('wysiwyg-writerside-properties'),
-    ).single;
     Future<void> closeInspector() async {
       await _tap(
         _elements(
@@ -1004,7 +1063,7 @@ class _HarnessState extends ConsumerState<_Harness> {
       await closeInspector();
     }
     await _tap(_field(heading));
-    await _tap(propertiesButton());
+    await _hoverProperties(_field(heading));
     await _until(
       () => _elements(
         (w) =>
@@ -1093,7 +1152,7 @@ class _HarnessState extends ConsumerState<_Harness> {
       'Focus, blur, help and Save do not author a generated ID',
     );
     await closeInspector();
-    await _tap(propertiesButton());
+    await _hoverProperties(_field(heading));
     _check(
       _source == original &&
           _inspectorProperty('Element anchor (id)').controller!.text.isEmpty,
@@ -1796,6 +1855,374 @@ class _HarnessState extends ConsumerState<_Harness> {
     }
   }
 
+  Future<void> _runContextualListProperties(
+    Future<void> Function() paletteProperties,
+  ) async {
+    final controller = ref.read(workspaceControllerProvider.notifier);
+    final settings = ref.read(appSettingsControllerProvider.notifier);
+    final root = '${widget.root.path}-contextual';
+    await settings.setLocaleTag('en');
+    await settings.setThemeModePreference(BusyMarkThemeModePreference.light);
+    await settings.setEditorToolbarDirection(EditorToolbarDirection.horizontal);
+    await windowManager.setSize(const Size(1400, 960));
+    await controller.openPath(root);
+    Future<void> open(String name) async {
+      final path = p.join(root, 'topics', name);
+      await controller.openActiveFile(path);
+      await _native('chord', 'ctrl+shift+1');
+      await _until(
+        () =>
+            ref.read(workspaceControllerProvider).activeBuffer?.filePath ==
+                path &&
+            _elements(
+              (w) => w is BusyMarkWysiwygEditor && w.document.filePath == path,
+            ).isNotEmpty &&
+            _elements(
+              (w) => w is TextField && w.controller?.text == 'Caret A',
+            ).isNotEmpty,
+        'Contextual $name opens in Editor',
+      );
+    }
+
+    BusyMarkWritersideProperties pane() =>
+        _elements((w) => w is BusyMarkWritersideProperties).single.widget
+            as BusyMarkWritersideProperties;
+    BusyMarkComboRow<String> combo(String label) =>
+        _singleInspectorControl(
+              label,
+              (w) => w is BusyMarkComboRow<String> && w.title == label,
+            ).widget
+            as BusyMarkComboRow<String>;
+    Future<void> choose(String label, String value) async {
+      await _tap(
+        _singleInspectorControl(
+          label,
+          (w) => w is BusyMarkComboRow<String> && w.title == label,
+        ),
+      );
+      _nativeMenuOpen = true;
+      await _tapLabel(value);
+    }
+
+    Future<void> property(String label, String value) async {
+      final entry = _inspectorProperty(label);
+      await _type(
+        _elements(
+          (w) => w is TextField && w.controller == entry.controller,
+        ).single,
+        value,
+      );
+      await _key(PhysicalKeyboardKey.enter, LogicalKeyboardKey.enter);
+    }
+
+    Future<void> advanced() async {
+      if (_elements(
+        (w) =>
+            w is BusyMarkComboRow<String> && w.title == 'Capitalization (caps)',
+      ).isEmpty) {
+        await _tapLabel('Advanced');
+      }
+      await _until(
+        () =>
+            _elements(
+              (w) =>
+                  w is BusyMarkComboRow<String> &&
+                  w.title == 'Capitalization (caps)',
+            ).length ==
+            1,
+        'Capitalization is accessible in Advanced',
+      );
+    }
+
+    await open('lists.topic');
+    _check(
+      _elements(
+        (w) => w.key == const ValueKey('wysiwyg-writerside-properties'),
+      ).isEmpty,
+      'Formatting toolbar has no duplicate Properties button',
+    );
+    for (final text in [
+      'a journey through HTTP and APIs',
+      'Chapter body.',
+      'Code B',
+      'Image B',
+      'Parent item',
+      'Folded chapter',
+    ]) {
+      await _tap(_field('Caret A'));
+      final caret =
+          (_field('Caret A').widget as TextField).controller!.selection;
+      final before = _source;
+      final undo = ref
+          .read(workspaceControllerProvider)
+          .activeBuffer!
+          .editorState
+          .undoState
+          .undo
+          .length;
+      final field = _elements(
+        (w) =>
+            w is BusyMarkWysiwygBlockField &&
+            (w.block.plainText == text ||
+                w.block.attributes['id'] == 'image' && text == 'Image B'),
+      ).first;
+      await _hoverProperties(field);
+      _check(
+        _source == before &&
+            ref
+                    .read(workspaceControllerProvider)
+                    .activeBuffer!
+                    .editorState
+                    .undoState
+                    .undo
+                    .length ==
+                undo &&
+            (_field('Caret A').widget as TextField).controller!.selection ==
+                caret,
+        'Hover $text inspects independently of caret A without source or history changes',
+      );
+      if (text == 'Parent item') {
+        _check(
+          pane().target!.attributes['element'] == 'li',
+          'Hovering XML item content inspects li',
+        );
+      }
+    }
+    await open('native-lists.md');
+    await _tap(_field('Caret A'));
+    final caret = (_field('Caret A').widget as TextField).controller!.selection;
+    await _hoverProperties(_field('Nested second'));
+    _check(
+      pane().target!.kind == BusyBlockKind.orderedListItem,
+      'Hovering native nested item inspects the item',
+    );
+    final parent = pane().path
+        .where((b) => b.attributes['element'] == 'list')
+        .last;
+    final select = combo('Element');
+    final label = select.labelFor(parent.id);
+    _check(
+      label.contains('Nested first') && label.contains('Level 2'),
+      'Nested list menu identifies content and nesting',
+    );
+    await _capture('contextual-list-ancestry');
+    await choose('Element', label);
+    _check(
+      pane().target!.attributes['element'] == 'list' &&
+          (_field('Caret A').widget as TextField).controller!.selection ==
+              caret,
+      'Selecting parent list preserves the editor caret',
+    );
+    final original = _source;
+    await property('Element anchor (id)', 'reviewed-nested');
+    await property('Starting number (start)', '12');
+    _check(
+      _source.contains('   {id="reviewed-nested" start="12"}') &&
+          _source.contains('3) Parent **caption**'),
+      'Nested list attributes own an indented native declaration',
+    );
+    await _tapLabel('Show in Source');
+    _check(
+      ref
+              .read(workspaceControllerProvider)
+              .activeBuffer!
+              .editorState
+              .selection
+              .baseOffset ==
+          _source.indexOf('4) Nested first'),
+      'Show in Source navigates to the selected nested list boundary',
+    );
+    await _native('chord', 'ctrl+shift+1');
+    await _until(
+      () => _elements((w) => w is BusyMarkWysiwygEditor).isNotEmpty,
+      'Nested list returns to Editor',
+    );
+    await _hoverProperties(_field('Parent caption guide'));
+    final outer = pane().path
+        .where((b) => b.attributes['element'] == 'list')
+        .first;
+    await choose('Element', combo('Element').labelFor(outer.id));
+    await property('Element anchor (id)', 'reviewed-list');
+    await property('Starting number (start)', '10');
+    await property('Columns (columns)', '2');
+    final beforeSorting = _source;
+    await choose('Sorting (sorted)', 'Descending');
+    _check(
+      _source.indexOf('Parent **caption**') < _source.indexOf('1) Sibling'),
+      'Published sorting does not reorder source items',
+    );
+    await _native('chord', 'ctrl+z');
+    await _until(
+      () => _source == beforeSorting,
+      'Sorting Undo restores source',
+    );
+    await _until(
+      () =>
+          _elements(
+            (w) =>
+                w is BusyMarkWritersideProperties &&
+                w.target?.attributes['id'] == 'reviewed-list' &&
+                w.document.source == _source,
+          ).length ==
+          1,
+      'List inspector refreshes immediately after Undo',
+    );
+    _check(
+      combo('Sorting (sorted)').selected == '' &&
+          _inspectorProperty('Starting number (start)').controller!.text ==
+              '10',
+      'Undo keeps whole-list values current without caret movement',
+    );
+    await _native('chord', 'ctrl+shift+z');
+    await _until(
+      () => _source.contains('sorted="desc"'),
+      'Sorting Redo restores declaration',
+    );
+    await _until(
+      () =>
+          _elements(
+            (w) =>
+                w is BusyMarkWritersideProperties &&
+                w.target?.attributes['id'] == 'reviewed-list' &&
+                w.document.source == _source,
+          ).length ==
+          1,
+      'List inspector refreshes immediately after Redo',
+    );
+    _check(
+      combo('Sorting (sorted)').selected == 'desc',
+      'Redo keeps the selected whole list without another pointer action',
+    );
+    _check(
+      _source.contains('4) Nested first') &&
+          _source.contains('start="12"') &&
+          original.contains('1) Sibling'),
+      'Parent changes preserve nested numbering and source markers',
+    );
+    await _capture('contextual-list-container');
+    await _tap(_field('a journey through HTTP and APIs'));
+    await _hoverProperties(_field('a journey through HTTP and APIs'));
+    await advanced();
+    _check(
+      combo('Capitalization (caps)').selected == '' &&
+          combo(
+            'Capitalization (caps)',
+          ).subtitle!.contains('Default: As written'),
+      'Absent capitalization is resolved as written',
+    );
+    _check(
+      combo(
+        'Capitalization (caps)',
+      ).subtitle!.contains('ignores module <caps>'),
+      'Verified module capitalization limitation remains visible',
+    );
+    final beforeCaps = _source;
+    await choose('Capitalization (caps)', 'Uppercase');
+    _check(
+      _source.contains('## a journey through HTTP and APIs {caps="upper"}'),
+      'Capitalization edits its attribute, not heading text',
+    );
+    await _native('chord', 'ctrl+z');
+    await _until(
+      () => _source == beforeCaps,
+      'Capitalization Undo restores source',
+    );
+    await _until(
+      () =>
+          _elements(
+            (w) =>
+                w is BusyMarkWritersideProperties &&
+                w.target?.plainText == 'a journey through HTTP and APIs' &&
+                w.document.source == _source,
+          ).length ==
+          1,
+      'Capitalization inspector refreshes immediately after Undo',
+    );
+    _check(
+      combo('Capitalization (caps)').selected == '' &&
+          combo(
+            'Capitalization (caps)',
+          ).subtitle!.contains('Default: As written'),
+      'Capitalization Undo restores the verified default without moving caret',
+    );
+    await _native('chord', 'ctrl+shift+z');
+    await _until(
+      () => _source.contains('caps="upper"'),
+      'Capitalization Redo restores source',
+    );
+    await _until(
+      () =>
+          _elements(
+            (w) =>
+                w is BusyMarkWritersideProperties &&
+                w.target?.plainText == 'a journey through HTTP and APIs' &&
+                w.document.source == _source,
+          ).length ==
+          1,
+      'Capitalization inspector refreshes immediately after Redo',
+    );
+    _check(
+      combo('Capitalization (caps)').selected == 'upper',
+      'Capitalization Redo restores the explicit value immediately',
+    );
+    await _native('chord', 'ctrl+s');
+    await _until(
+      () => !ref.read(workspaceControllerProvider).activeBuffer!.isDirty,
+      'Contextual document saves',
+    );
+    final saved = _source;
+    await _native('chord', 'ctrl+w');
+    await _until(
+      () => !ref
+          .read(workspaceControllerProvider)
+          .documentBuffers
+          .any((b) => b.filePath == p.join(root, 'topics', 'native-lists.md')),
+      'Contextual saved document closes before reopening',
+    );
+    await open('native-lists.md');
+    _check(
+      _source == saved,
+      'Native list and capitalization source survives save close reopen',
+    );
+    await _tap(_field('Parent caption guide'));
+    if (ref.read(appSettingsControllerProvider).elementPropertiesVisible) {
+      await paletteProperties();
+    }
+    await paletteProperties();
+    _check(
+      pane().target!.plainText == 'Parent caption guide',
+      'Keyboard command still inspects the current selection',
+    );
+    await settings.setThemeModePreference(BusyMarkThemeModePreference.dark);
+    await paletteProperties();
+    await windowManager.setSize(const Size(800, 900));
+    await _pause();
+    await _hoverProperties(_field('Nested first'));
+    await _capture('contextual-native-list-dark-narrow');
+    await _captureScaled('contextual-native-list-dark-scaled');
+    await settings.setThemeModePreference(BusyMarkThemeModePreference.light);
+    await windowManager.setSize(const Size(1400, 960));
+    await _capture('contextual-native-list-light');
+    await paletteProperties();
+    _check(
+      !ref.read(appSettingsControllerProvider).elementPropertiesVisible,
+      'Contextual journey closes its inspector through the guarded command',
+    );
+    await settings.setLocaleTag('ar');
+    await _pause();
+    await _hoverProperties(_field('مرحبا بالمستندات التقنية'));
+    _check(
+      pane().target!.plainText == 'مرحبا بالمستندات التقنية' &&
+          _source == saved,
+      'RTL margin inspection captures its paragraph without authoring source',
+    );
+    await _capture('contextual-rtl-margin');
+    await settings.setLocaleTag('en');
+    await _pause();
+    await paletteProperties();
+    await controller.openPath(widget.root.path);
+  }
+
   Future<void> _run() async {
     Object? failure;
     try {
@@ -1838,6 +2265,7 @@ class _HarnessState extends ConsumerState<_Harness> {
         'BUSYMARK_PROPERTIES_ONLY',
       ].any((flag) => Platform.environment[flag] == '1')) {
         await _runChapterPresentation();
+        await _runContextualListProperties(paletteProperties);
       }
       if (Platform.environment['BUSYMARK_PROPERTY_CONTRACT_ONLY'] == '1') {
         await _runPropertyContract(paletteProperties);
@@ -2292,11 +2720,7 @@ class _HarnessState extends ConsumerState<_Harness> {
           final b = editor.document.blocks.first.children.firstWhere(
             (b) => b.attributes['id'] == 'b',
           );
-          await _tap(
-            _elements(
-              (w) => w.key == ValueKey('writerside-inspect-${b.id}'),
-            ).single,
-          );
+          await _hoverProperties(_field('Block B'));
           final panel =
               _elements((w) => w is BusyMarkWritersideProperties).single.widget
                   as BusyMarkWritersideProperties;
@@ -2758,6 +3182,11 @@ class _HarnessState extends ConsumerState<_Harness> {
       }
 
       void sourceCaret(int offset) {
+        if (offset < 0) {
+          throw StateError(
+            'Missing authored occurrence in ${ref.read(workspaceControllerProvider).activeBuffer?.displayName}',
+          );
+        }
         ((_elements((w) => w is BusyMarkSourceEditor).single as StatefulElement)
                     .state
                 as BusyMarkSourceEditorState)
@@ -3089,7 +3518,7 @@ class _HarnessState extends ConsumerState<_Harness> {
         'Item ID survives save close reopen reinspection',
       );
       await _capture('inspector-native-item-reopened');
-      sourceCaret(_source.indexOf('- [ ] Unchecked task'));
+      sourceCaret(_source.indexOf('+ [ ] Unchecked task'));
       await _pause();
       await propertyText('Element anchor (id)', 'saved-task');
       await reopenSource();

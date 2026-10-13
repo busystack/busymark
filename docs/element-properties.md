@@ -1,19 +1,23 @@
 # Element Properties
 
 In a Writerside workspace, **Element Properties** follows the active editing
-selection in Editor, Source and Split. Open it with the Editor’s existing
-properties button, or open and hide it with the command palette command
-**Element Properties**.
+selection in Editor, Source and Split. Hover a block in Editor to reveal one
+**Element Properties** icon in its leading margin. Move onto the icon and click to inspect that block; hovering alone does
+not open the pane, move the caret, change source, or add history. The formatting
+toolbar has no duplicate Properties button. Keyboard users can open and hide the
+pane with the existing command palette command **Element Properties**, including
+for an inline link, variable or shortcut selected in the editor. Source retains
+that command route.
 Reading shows validated values without allowing changes. Ordinary Markdown and
 Nextcloud Notes retain their own authoring behavior.
 
 The **Element** selector shows the inspected type; ancestor choices retain their
 titles or identifiers. Editable chapters show their heading/title and anchor in
 the corresponding controls, without a repeated identity strip. Paragraphs and
-references keep a concise excerpt. A container's
-properties button lets you inspect that container while leaving the editing
-caret where it was. Choose **Topic Properties** in the same selector for the
-topic title, document identity and navigation. The first top-level Markdown H1
+references keep a concise excerpt. The margin icon captures its hovered block
+independently of the caret. Its target remains revision-bound while pending
+inspector edits are processed. Choose **Topic Properties** in the same selector
+for the topic title, document identity and navigation. The first top-level Markdown H1
 owns the logical topic title; later H1 headings keep their own element identity.
 A missing H1 is reported rather than selecting a paragraph as the title.
 Selections spanning several elements show a selection message instead of
@@ -54,7 +58,7 @@ a valid value. Suggestions and pickers do not replace legal variable expressions
 | Code | Language maps to XML `lang` or a native fence's language. An explicit Markdown `lang` override takes precedence; changing it preserves the original fence language, and resetting it restores that language. **Source file (src)** is one editable field with file selection and removal. Extraction, emphasis, collapse and collapsed title remain separate. The code-language command opens this block’s Language (`lang`) control in the workspace inspector. `include-lines` and `include-symbol` conflict; emphasis counts the displayed snippet after extraction. |
 | Definition lists/items | Schema-supported list layouts, list collapse/state, item title and item state override. Literal `inherited` is an authored item override distinct from an absent attribute. |
 | Tabs | Container `group` synchronizes tab sets; child `group-key` and title identify individual tabs. Topic switchers are separate. Existing code-block tab groups are preserved. |
-| Lists and items | A Markdown attribute line after a blank line belongs to the whole list. An individual item's ID or condition uses semantic `<list>`/`<li>` markup; conversion preserves the other items, checked task states and ordered starts at every nested level and is one undoable edit. An authored list `start` overrides its first Markdown marker. |
+| Lists and items | Every parsed list is inspectable before it has attributes. Hover an item, then select its enclosing list in **Element**; nested ancestors identify their content and level. List controls offer `type`, `start`, `columns`, `sorted`, and the whole-list anchor, with applicable conditions in Advanced. A Markdown attribute line after a blank line belongs to the whole list. An individual item's ID or condition uses semantic `<list>`/`<li>` markup; conversion preserves the other items, checked task states and ordered starts at every nested level and is one undoable edit. An authored list `start` overrides its first Markdown marker. |
 | Images | Source and alternative text use the image model; applicable dimensions, style, thumbnail and **Preview image (preview-src)** are available. The preview can be an image thumbnail or an animated GIF’s initial preview; it is separate from the main `src`. Link wrappers and reference syntax survive scalar property edits. Writerside documents a limitation on sizing external images; authored dimensions do not guarantee external-image builder sizing. |
 | Includes/references | **Topic (from)**, **Included element (element-id)** and **Help module (origin)** identify the reference. **Element ID (id)** identifies the include itself. Topic, element and module selection use the current project index. Include selection publishes the reference tuple together. `use-filter` belongs to the include; `filter` belongs to source content. Unavailable resolution remains a diagnostic. |
 | Links and shortcuts | **Link target (href)** names the destination; **Help module (origin)** selects its originating module. **Action ID (key)** references a keymap action without replacing literal shortcut content. **Keymap help instance (from-keymap-of)** names a help instance, not a file. |
@@ -170,6 +174,48 @@ uses the list's state.
 Opening content locally to edit it does not dirty the document or change its
 published initial state. Publishing properties updates the semantic result
 without rewriting unrelated local folding preferences.
+
+## Whole lists and capitalization
+
+A list and its items own different properties. **List type (type)** offers
+bullets, decimal numbers, lowercase letters, checkboxes and no markers.
+**Starting number (start)** applies to decimal and lettered styles;
+**Columns (columns)** accepts 1–5, and **Sorting (sorted)** selects build-time
+ascending or descending order. Sorting preserves the authored item order.
+Inspecting or editing the whole list retains native Markdown markers, loose
+paragraphs, nested lists, inline formatting and references. **Show in Source**
+goes to the selected container's boundary. Item overrides remain a separate
+operation through the existing semantic conversion. XML requires one marker style
+per list: item-property conversion is protected for a native list mixing tasks
+and ordinary markers. Its whole-list properties remain editable; use Source for
+item markup rather than losing task state or turning ordinary items into tasks.
+Converting the last item to
+ordinary content is blocked while its list still has authored settings; reset
+those settings first so they are not discarded.
+
+The empty starting-number editor is an absent override. Its summary distinguishes
+the native marker from a module default. An explicit `start` takes precedence.
+In builder `2026.08.0328`, a non-one ordered Markdown marker also takes precedence
+over a module start default; a marker of one allows that default. Ordered
+Markdown markers establish decimal style, while untyped bullet lists can inherit
+a module list style. Reset removes only the authored override.
+
+Capitalization remains in Chapter **Advanced** and changes `caps`, leaving the
+heading text intact. With no relevant supported default, the effective style is
+**As written**. A local attribute overrides a chapter `default-property`, including
+variable-valued defaults resolved in the existing lexical scope. The pinned
+builder uses the first capitalization `default-property` when several apply.
+It accepts module `<caps>` rules for chapters, topics and TOC entries but does
+not apply their documented capitalization effect; the inspector shows this
+verified limitation beside the resolved value. Use a local `caps` or a chapter
+`default-property` for a published transformation. This distinction is checked
+against [the configuration reference](https://www.jetbrains.com/help/writerside/writerside-cfg.html)
+and the maintained builder fixtures.
+
+The pinned builder publishes checkbox lists through its checkbox list class.
+Native Markdown task states remain in the authored source, but its generated HTML
+does not initialize checked state from `[x]`; XML `li@checked` is supported and
+verified independently. The existing item conversion preserves that state.
 
 ## Topic navigation
 

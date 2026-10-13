@@ -5379,6 +5379,65 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get wsParent => 'Elemento pai';
+
+  @override
+  String get wsListType => 'Tipo de lista';
+
+  @override
+  String get wsStartingNumber => 'Número inicial';
+
+  @override
+  String get wsListSorting => 'Ordenação';
+
+  @override
+  String get wsLetteredList => 'Lista alfabética';
+
+  @override
+  String get wsCheckboxList => 'Lista de caixas de seleção';
+
+  @override
+  String get wsMarkerlessList => 'Lista sem marcadores';
+
+  @override
+  String get wsAscending => 'Ascendente';
+
+  @override
+  String get wsDescending => 'Descendente';
+
+  @override
+  String get wsNoSorting => 'Sem ordenação';
+
+  @override
+  String get wsAsWritten => 'Como escrito';
+
+  @override
+  String get wsSentenceCase => 'Maiúscula inicial';
+
+  @override
+  String get wsTitleCase => 'Maiúsculas de título';
+
+  @override
+  String get wsLowerCase => 'Minúsculas';
+
+  @override
+  String get wsUpperCase => 'Maiúsculas';
+
+  @override
+  String get wsNativeMarkers => 'Marcadores Markdown';
+
+  @override
+  String wsListMarkerStart(String number) {
+    return 'Marcador inicial: $number';
+  }
+
+  @override
+  String wsListLevel(String level) {
+    return 'Nível $level';
+  }
+
+  @override
+  String get wsModuleCapsIgnored =>
+      'O compilador fixado ignora as regras <caps> do módulo. Use um atributo caps local ou default-property.';
 }
 
 /// The translations for Portuguese, as used in Brazil (`pt_BR`).
@@ -10752,4 +10811,63 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get wsParent => 'Elemento pai';
+
+  @override
+  String get wsListType => 'Tipo de lista';
+
+  @override
+  String get wsStartingNumber => 'Número inicial';
+
+  @override
+  String get wsListSorting => 'Ordenação';
+
+  @override
+  String get wsLetteredList => 'Lista alfabética';
+
+  @override
+  String get wsCheckboxList => 'Lista de caixas de seleção';
+
+  @override
+  String get wsMarkerlessList => 'Lista sem marcadores';
+
+  @override
+  String get wsAscending => 'Crescente';
+
+  @override
+  String get wsDescending => 'Decrescente';
+
+  @override
+  String get wsNoSorting => 'Sem ordenação';
+
+  @override
+  String get wsAsWritten => 'Como escrito';
+
+  @override
+  String get wsSentenceCase => 'Maiúscula inicial';
+
+  @override
+  String get wsTitleCase => 'Maiúsculas de título';
+
+  @override
+  String get wsLowerCase => 'Minúsculas';
+
+  @override
+  String get wsUpperCase => 'Maiúsculas';
+
+  @override
+  String get wsNativeMarkers => 'Marcadores Markdown';
+
+  @override
+  String wsListMarkerStart(String number) {
+    return 'Marcador inicial: $number';
+  }
+
+  @override
+  String wsListLevel(String level) {
+    return 'Nível $level';
+  }
+
+  @override
+  String get wsModuleCapsIgnored =>
+      'O compilador fixado ignora as regras <caps> do módulo. Use um atributo caps local ou default-property.';
 }

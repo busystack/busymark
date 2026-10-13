@@ -78,7 +78,118 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
   void rebaseCommittedSource(String source) {
     if (_document.isXmlTopic) {
       _document = const WritersideEditingAdapter().rebaseXml(_document, source);
+    } else if (_document.isWriterside &&
+        _flattenBlocks(_document.blocks).any((b) => _isListItemKind(b.kind))) {
+      final current = _document;
+      bool needsOwnership(List<BusyBlock> blocks, BusyBlock? owner) {
+        for (final b in blocks) {
+          if (_isListItemKind(b.kind) &&
+              !b.attributes.containsKey('element') &&
+              owner?.attributes['busymark-list-form'] != 'markdown') {
+            return true;
+          }
+          if (b.attributes['busymark-list-form'] == 'markdown' &&
+              (b.children.any((c) => !_isListItemKind(c.kind)) ||
+                  b.attributes['busymark-native-members'] !=
+                      jsonEncode(b.children.map((c) => c.id).toList()))) {
+            return true;
+          }
+          if (b.dirty &&
+              b.attributes.containsKey('element') &&
+              b.attributes['busymark-list-form'] != 'markdown' &&
+              (b.rawSource == null ||
+                  b.rawSource!.trimLeft().startsWith('<'))) {
+            return true;
+          }
+          if (needsOwnership(b.children, b)) return true;
+        }
+        return false;
+      }
+
+      var rebased = needsOwnership(current.blocks, null)
+          ? _reparseNativeListOwnership(source)
+          : const MarkdownParser().rebindSourceMetadata(current, source);
+      BusyBlock commit(BusyBlock block) {
+        final attrs = {...block.attributes}
+          ..remove('busymark-property-edits')
+          ..remove('busymark-property-line-ending');
+        if (block.attributes.containsKey(
+              'busymark-writerside-source-attributes',
+            ) ||
+            WritersideEditingAdapter.sourceAttributes(block).isNotEmpty) {
+          attrs['busymark-writerside-source-attributes'] = jsonEncode(
+            WritersideEditingAdapter.sourceAttributes(block),
+          );
+        }
+        return block.copyWith(
+          attributes: attrs,
+          dirty: false,
+          children: block.children.map(commit).toList(),
+        );
+      }
+
+      rebased = rebased.copyWith(blocks: rebased.blocks.map(commit).toList());
+      _document = busyMarkWysiwygBindMarkdownReferences(rebased);
     }
+  }
+
+  BusyDocument _reparseNativeListOwnership(String source) {
+    final parsed = const MarkdownParser()
+        .parse(
+          filePath: _document.filePath,
+          source: source,
+          mode: _document.mode,
+          validateLocalReferences: false,
+        )
+        .busyDocument;
+    bool member(BusyBlock b) =>
+        !b.isSourceOnly &&
+        b.kind != BusyBlockKind.frontMatter &&
+        b.attributes['busymark-list-form'] != 'markdown';
+    final before = _flattenBlocks(_document.blocks).where(member).toList();
+    final after = _flattenBlocks(parsed.blocks).where(member).toList();
+    // Reparse our own transaction, retaining editing identities only when the
+    // complete authored member sequence agrees. Replacement buffers do not use
+    // this reconciliation and pending property sessions stay revision-bound.
+    if (before.length != after.length ||
+        Iterable.generate(before.length).any(
+          (i) =>
+              (before[i].kind != after[i].kind &&
+                  !(_isListItemKind(before[i].kind) &&
+                      _isListItemKind(after[i].kind))) ||
+              WritersideEditingAdapter.tagForBlock(before[i]) !=
+                  WritersideEditingAdapter.tagForBlock(after[i]) ||
+              before[i].plainText != after[i].plainText,
+        )) {
+      return parsed;
+    }
+    final identities = {
+      for (var i = 0; i < before.length; i++) after[i].id: before[i].id,
+    };
+    final owners = {
+      for (final b in _flattenBlocks(_document.blocks))
+        if (b.attributes['busymark-list-form'] == 'markdown')
+          jsonEncode(b.children.map((c) => c.id).toList()): b.id,
+    };
+    BusyBlock rekey(BusyBlock b) {
+      final children = b.children.map(rekey).toList();
+      final native = b.attributes['busymark-list-form'] == 'markdown';
+      final signature = jsonEncode(children.map((c) => c.id).toList());
+      final id = native
+          ? owners[signature] ?? _nextGeneratedBlockId('list')
+          : identities[b.id] ?? b.id;
+      return b.copyWith(
+        id: id,
+        children: children,
+        attributes: {
+          ...b.attributes,
+          if (b.attributes.containsKey('busymark-native-members'))
+            'busymark-native-members': signature,
+        },
+      );
+    }
+
+    return parsed.copyWith(blocks: parsed.blocks.map(rekey).toList());
   }
 
   @override
@@ -646,21 +757,26 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
 
   bool _materializeNativeList(String blockId) {
     final path = elementPath(blockId);
-    final target = path.last;
     // Markdown chapter ancestry is structural navigation, not child ownership.
     final parent = path
         .where((b) => b.children.any((child) => child.id == blockId))
         .lastOrNull;
     final nativeList = parent?.attributes['busymark-list-form'] == 'markdown';
+    if (nativeList &&
+        WritersideEditingAdapter.nativeListHasMixedMarkers(parent!)) {
+      return false;
+    }
     final siblings = parent?.children ?? _document.blocks;
     final index = siblings.indexWhere((b) => b.id == blockId);
     if (index < 0) return false;
     var start = index, end = index + 1;
-    while (start > 0 && siblings[start - 1].kind == target.kind) {
-      start--;
-    }
-    while (end < siblings.length && siblings[end].kind == target.kind) {
-      end++;
+    if (nativeList) {
+      // The parser's owner includes mixed task/non-task and loose items.
+      start = 0;
+      end = siblings.length;
+    } else {
+      // Adjacency cannot establish an authored list boundary.
+      return false;
     }
     final items = siblings.sublist(start, end);
     bool convertible(BusyBlock b) =>
@@ -670,6 +786,8 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
             b.kind == BusyBlockKind.paragraph ||
             b.kind == BusyBlockKind.codeBlock ||
             busyMarkIsWritersideContainer(b)) &&
+        (b.attributes['busymark-list-form'] == 'markdown' ||
+            !b.children.any((child) => _isListItemKind(child.kind))) &&
         b.children.every(convertible);
     if (!items.every(convertible)) return false;
 
@@ -724,27 +842,7 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
           ),
         );
       }
-      for (var i = 0; i < b.children.length;) {
-        final child = b.children[i];
-        if (_isListItemKind(child.kind)) {
-          var last = i + 1;
-          while (last < b.children.length &&
-              b.children[last].kind == child.kind) {
-            last++;
-          }
-          children.add(
-            _newWritersideElement(
-              'list',
-              attributes: listAttributes(b.children.sublist(i, last)),
-              children: b.children.sublist(i, last).map(convert).toList(),
-            ),
-          );
-          i = last;
-        } else {
-          children.add(convert(child));
-          i++;
-        }
-      }
+      children.addAll(b.children.map(convert));
       return BusyBlock(
         id: b.id,
         kind: b.kind,
@@ -1499,6 +1597,20 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     if (current == null) {
       return null;
     }
+    List<BusyBlock> fieldBlocks(BusyDocument parsed) {
+      final blocks = parsed.blocks
+          .where((b) => b.kind != BusyBlockKind.frontMatter && !b.isSourceOnly)
+          .toList();
+      // The source fragment's first parser-owned list represents the existing
+      // item's owner, which remains in the destination tree. Replace members
+      // of that owner, rather than nesting an artificial copy inside the item.
+      if (_isListItemKind(current.kind) &&
+          blocks.firstOrNull?.attributes['busymark-list-form'] == 'markdown') {
+        return [...blocks.first.children, ...blocks.skip(1)];
+      }
+      return blocks;
+    }
+
     final structuralPrefix = _blockStructurePrefix(current);
     final parsed = const MarkdownParser().parse(
       filePath: _document.filePath,
@@ -1506,12 +1618,7 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
       mode: _document.mode,
       validateLocalReferences: false,
     );
-    final parsedBlocks = parsed.busyDocument.blocks
-        .where(
-          (block) =>
-              block.kind != BusyBlockKind.frontMatter && !block.isSourceOnly,
-        )
-        .toList(growable: false);
+    final parsedBlocks = fieldBlocks(parsed.busyDocument);
     List<int>? descendantOwnerPath;
     if (replacementScope == BusyWysiwygReplacementScope.fieldContent &&
         current.children.isNotEmpty) {
@@ -1525,12 +1632,7 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
         mode: _document.mode,
         validateLocalReferences: false,
       );
-      final anchoredBlocks = anchored.busyDocument.blocks
-          .where(
-            (block) =>
-                block.kind != BusyBlockKind.frontMatter && !block.isSourceOnly,
-          )
-          .toList(growable: false);
+      final anchoredBlocks = fieldBlocks(anchored.busyDocument);
       descendantOwnerPath = _blockPathContainingText(
         anchoredBlocks,
         ownerMarker,
@@ -1591,12 +1693,7 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
         mode: _document.mode,
         validateLocalReferences: false,
       );
-      final markedBlocks = marked.busyDocument.blocks
-          .where(
-            (block) =>
-                block.kind != BusyBlockKind.frontMatter && !block.isSourceOnly,
-          )
-          .toList(growable: false);
+      final markedBlocks = fieldBlocks(marked.busyDocument);
       final located = _blockPathContainingText(markedBlocks, marker);
       if (located != null) {
         destinationPath = located.path;
@@ -2260,6 +2357,7 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     if (allowListExit &&
         _isListItemKind(block.kind) &&
         normalizedText.trim().isEmpty) {
+      if (_wouldDiscardNativeListOwner(blockId)) return null;
       _replaceBlockWithParagraph(blockId);
       return BusyWysiwygTextSplitResult(blockId: blockId, offset: 0);
     }
@@ -2391,6 +2489,15 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
       return;
     }
     final idSet = eligibleIds.toSet();
+    if (!_isListItemKind(blockKindForCommand(command)) &&
+        _flattenBlocks(_document.blocks).any(
+          (b) =>
+              b.attributes['busymark-list-form'] == 'markdown' &&
+              WritersideEditingAdapter.sourceAttributes(b).isNotEmpty &&
+              b.children.every((child) => idSet.contains(child.id)),
+        )) {
+      return;
+    }
     final replaced = _replaceBlocksByIds(_document.blocks, idSet, (block) {
       if (_document.isXmlTopic) return _xmlBlockWithCommand(block, command);
       return _blockWithCommand(
@@ -2409,6 +2516,10 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
 
   bool canApplyBlockCommand(BusyBlock block, BusyWysiwygBlockCommand command) {
     if (!busyMarkWysiwygCanApplyBlockCommand(block, command)) return false;
+    if (!_isListItemKind(blockKindForCommand(command)) &&
+        _wouldDiscardNativeListOwner(block.id)) {
+      return false;
+    }
     if (!_document.isXmlTopic) return true;
     final tag = switch (blockKindForCommand(command)) {
       BusyBlockKind.heading => 'chapter',
@@ -3197,6 +3308,13 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
 
   bool indentListItems(Iterable<String> blockIds) {
     final ids = blockIds.toSet();
+    if (ids.any(
+      (id) => elementPath(
+        id,
+      ).any((b) => b.attributes['busymark-list-form'] == 'markdown'),
+    )) {
+      return _indentNativeListItems(ids);
+    }
     if (ids.isEmpty) {
       return false;
     }
@@ -3246,6 +3364,13 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
 
   bool outdentListItems(Iterable<String> blockIds) {
     final ids = blockIds.toSet();
+    if (ids.any(
+      (id) => elementPath(
+        id,
+      ).any((b) => b.attributes['busymark-list-form'] == 'markdown'),
+    )) {
+      return _outdentNativeListItems(ids);
+    }
     if (ids.isEmpty) {
       return false;
     }
@@ -3296,6 +3421,155 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     );
     notifyListeners();
     return true;
+  }
+
+  bool _indentNativeListItems(Set<String> ids) {
+    var changed = false;
+    List<BusyBlock> visit(List<BusyBlock> blocks) => [
+      for (final block in blocks)
+        (() {
+          if (block.isSourceProtected) return block;
+          var children = visit(block.children);
+          if (block.attributes['busymark-list-form'] == 'markdown') {
+            final members = <BusyBlock>[];
+            for (final item in children) {
+              if (!ids.contains(item.id) ||
+                  item.isSourceProtected ||
+                  members.isEmpty ||
+                  !_isListItemKind(item.kind) ||
+                  members.last.isSourceProtected) {
+                members.add(item);
+                continue;
+              }
+              final parent = members.removeLast();
+              final last = parent.children.lastOrNull;
+              final sameList =
+                  last?.attributes['busymark-list-form'] == 'markdown' &&
+                  last!.children.firstOrNull?.attributes['ordered'] ==
+                      item.attributes['ordered'];
+              if (sameList && last.isSourceProtected) {
+                members.addAll([parent, item]);
+                continue;
+              }
+              final nestedMembers = sameList ? last.children : <BusyBlock>[];
+              final nested = _numberIndentedListItem(
+                item.copyWith(dirty: true),
+                nestedMembers,
+              );
+              final owner = sameList
+                  ? last.copyWith(
+                      children: [...nestedMembers, nested],
+                      dirty: true,
+                    )
+                  : BusyBlock(
+                      id: _nextGeneratedBlockId('list-indent'),
+                      kind: BusyBlockKind.writersideRawXml,
+                      children: [nested],
+                      attributes: {
+                        'element': 'list',
+                        busyMarkWritersideContainerAttribute: 'true',
+                        'busymark-list-form': 'markdown',
+                        'busymark-native-list-type':
+                            item.attributes['ordered'] == 'true'
+                            ? 'decimal'
+                            : 'bullet',
+                        'busymark-native-list-start': '1',
+                      },
+                      dirty: true,
+                    );
+              members.add(
+                parent.copyWith(
+                  children: [
+                    ...parent.children.take(
+                      parent.children.length - (sameList ? 1 : 0),
+                    ),
+                    owner,
+                  ],
+                  dirty: true,
+                ),
+              );
+              changed = true;
+            }
+            children = members;
+          }
+          return listEquals(children, block.children)
+              ? block
+              : block.copyWith(children: children, dirty: true);
+        })(),
+    ];
+    final blocks = visit(_document.blocks);
+    if (!changed) return false;
+    _document = _document.copyWith(
+      blocks: _normalizeOrderedListMarkers(blocks),
+    );
+    notifyListeners();
+    return true;
+  }
+
+  bool _outdentNativeListItems(Set<String> ids) {
+    // Work on a staged tree so any protected owner rejects the entire action.
+    var blocks = _document.blocks;
+    var changed = false;
+    final selected = _flattenBlocks(
+      blocks,
+    ).where((b) => ids.contains(b.id)).toList();
+    for (final id in selected.reversed.map((b) => b.id)) {
+      final path = _actualElementPath(blocks, id);
+      if (path.length < 4) continue;
+      final owner = path[path.length - 2];
+      final parent = path[path.length - 3];
+      final outer = path[path.length - 4];
+      if (owner.attributes['busymark-list-form'] != 'markdown' ||
+          !_isListItemKind(parent.kind) ||
+          outer.attributes['busymark-list-form'] != 'markdown') {
+        continue;
+      }
+      if (path.any((b) => b.isSourceProtected)) return false;
+      final kept = owner.children.where((b) => b.id != id).toList();
+      // An empty owner cannot retain authored list properties in native source.
+      if (kept.isEmpty &&
+          WritersideEditingAdapter.sourceAttributes(owner).isNotEmpty) {
+        return false;
+      }
+      final item = path.last.copyWith(dirty: true);
+      final updatedParent = parent.copyWith(
+        children: [
+          for (final child in parent.children)
+            if (child.id != owner.id)
+              child
+            else if (kept.isNotEmpty)
+              owner.copyWith(children: kept, dirty: true),
+        ],
+        dirty: true,
+      );
+      blocks = _replaceInBlocks(
+        blocks,
+        outer.id,
+        (b) => b.copyWith(
+          children: [
+            for (final child in b.children)
+              if (child.id != parent.id) child else ...[updatedParent, item],
+          ],
+          dirty: true,
+        ),
+      );
+      changed = true;
+    }
+    if (!changed) return false;
+    _document = _document.copyWith(
+      blocks: _normalizeOrderedListMarkers(blocks),
+    );
+    notifyListeners();
+    return true;
+  }
+
+  List<BusyBlock> _actualElementPath(List<BusyBlock> blocks, String id) {
+    for (final b in blocks) {
+      if (b.id == id) return [b];
+      final path = _actualElementPath(b.children, id);
+      if (path.isNotEmpty) return [b, ...path];
+    }
+    return [];
   }
 
   String? splitBlockAt(String blockId, int offset) =>
@@ -3404,6 +3678,7 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
       );
     }
     if (_isListItemKind(block.kind) && block.plainText.trim().isEmpty) {
+      if (_wouldDiscardNativeListOwner(blockId)) return null;
       _replaceBlockWithParagraph(blockId);
       return BusyWysiwygTextSplitResult(blockId: blockId, offset: 0);
     }
@@ -3455,7 +3730,22 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
   }
 
   BusyWysiwygTextSplitResult? applyBackspaceAtStart(String blockId) {
-    final blocks = _document.blocks;
+    final path = elementPath(blockId);
+    final owner = path.length < 2 ? null : path[path.length - 2];
+    final native = owner?.attributes['busymark-list-form'] == 'markdown';
+    final blocks = native ? owner!.children : _document.blocks;
+    void publish(List<BusyBlock> members) {
+      _document = _document.copyWith(
+        blocks: native
+            ? _replaceInBlocks(
+                _document.blocks,
+                owner!.id,
+                (b) => b.copyWith(children: members, dirty: true),
+              )
+            : members,
+      );
+    }
+
     final index = blocks.indexWhere((block) => block.id == blockId);
     if (index <= 0) {
       return null;
@@ -3488,13 +3778,11 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
         previous.copyWith(inlines: mergedInlines, children: mergedChildren),
         dirty: true,
       );
-      _document = _document.copyWith(
-        blocks: [
-          ...blocks.take(index - 1),
-          updatedPrevious,
-          ...blocks.skip(index + 1),
-        ],
-      );
+      publish([
+        ...blocks.take(index - 1),
+        updatedPrevious,
+        ...blocks.skip(index + 1),
+      ]);
       notifyListeners();
       return BusyWysiwygTextSplitResult(
         blockId: previous.id,
@@ -3509,14 +3797,20 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
       attributes: previous.attributes,
       dirty: true,
     );
-    _document = _document.copyWith(
-      blocks: [...blocks.take(index - 1), merged, ...blocks.skip(index + 1)],
-    );
+    publish([...blocks.take(index - 1), merged, ...blocks.skip(index + 1)]);
     notifyListeners();
     return BusyWysiwygTextSplitResult(
       blockId: merged.id,
       offset: previousText.length,
     );
+  }
+
+  bool _wouldDiscardNativeListOwner(String blockId) {
+    final path = elementPath(blockId);
+    final owner = path.length < 2 ? null : path[path.length - 2];
+    return owner?.attributes['busymark-list-form'] == 'markdown' &&
+        owner!.children.length == 1 &&
+        WritersideEditingAdapter.sourceAttributes(owner).isNotEmpty;
   }
 
   BusyWysiwygTextSplitResult? deleteTextSelection({
@@ -4409,7 +4703,8 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
         continue;
       }
       changed = true;
-      if (block.kind == BusyBlockKind.blockquote &&
+      if ((block.kind == BusyBlockKind.blockquote ||
+              block.attributes['busymark-list-form'] == 'markdown') &&
           block.children.isNotEmpty &&
           children.isEmpty &&
           block.inlines.isEmpty) {
@@ -6346,6 +6641,64 @@ BusyDocument busyMarkWysiwygBindMarkdownReferences(BusyDocument document) {
 
 BusyDocument _ensureEditableDocument(BusyDocument document) {
   if (document.isXmlTopic) return document;
+  if (document.isWriterside) {
+    // Split only an existing parser-owned container when an explicit editing
+    // operation promotes a member to ordinary content. Never join neighbors
+    // merely because their kinds happen to agree.
+    List<BusyBlock> owners(List<BusyBlock> blocks) {
+      final result = <BusyBlock>[];
+      for (final block in blocks) {
+        final children = owners(block.children);
+        if (block.attributes['busymark-list-form'] != 'markdown' ||
+            children.every((b) => _isListItemKind(b.kind))) {
+          result.add(
+            listEquals(children, block.children)
+                ? block
+                : block.copyWith(children: children),
+          );
+          continue;
+        }
+        var first = true;
+        final run = <BusyBlock>[];
+        void flush() {
+          if (run.isEmpty) return;
+          result.add(
+            BusyBlock(
+              id: first ? block.id : 'list-part-${run.first.id}',
+              kind: block.kind,
+              children: [...run],
+              attributes: first
+                  ? block.attributes
+                  : const {
+                      'element': 'list',
+                      busyMarkWritersideContainerAttribute: 'true',
+                      'busymark-list-form': 'markdown',
+                    },
+              dirty: true,
+            ),
+          );
+          run.clear();
+          first = false;
+        }
+
+        for (final child in children) {
+          if (_isListItemKind(child.kind)) {
+            run.add(child);
+          } else {
+            flush();
+            result.add(child);
+          }
+        }
+        flush();
+      }
+      return result;
+    }
+
+    final normalized = owners(document.blocks);
+    if (!listEquals(normalized, document.blocks)) {
+      document = document.copyWith(blocks: normalized);
+    }
+  }
   // Commit source-form changes before notifying listeners, within the edit's
   // existing transaction. Include dirty imported fragments as well as newly
   // reconstructed prose; untouched source-backed blocks retain their source.

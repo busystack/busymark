@@ -5163,4 +5163,63 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get wsParent => '부모 요소';
+
+  @override
+  String get wsListType => '목록 유형';
+
+  @override
+  String get wsStartingNumber => '시작 번호';
+
+  @override
+  String get wsListSorting => '정렬';
+
+  @override
+  String get wsLetteredList => '알파벳 목록';
+
+  @override
+  String get wsCheckboxList => '체크박스 목록';
+
+  @override
+  String get wsMarkerlessList => '표시 없는 목록';
+
+  @override
+  String get wsAscending => '오름차순';
+
+  @override
+  String get wsDescending => '내림차순';
+
+  @override
+  String get wsNoSorting => '정렬 안 함';
+
+  @override
+  String get wsAsWritten => '작성된 대로';
+
+  @override
+  String get wsSentenceCase => '문장 형식';
+
+  @override
+  String get wsTitleCase => '제목 형식';
+
+  @override
+  String get wsLowerCase => '소문자';
+
+  @override
+  String get wsUpperCase => '대문자';
+
+  @override
+  String get wsNativeMarkers => 'Markdown 표시';
+
+  @override
+  String wsListMarkerStart(String number) {
+    return '시작 표시: $number';
+  }
+
+  @override
+  String wsListLevel(String level) {
+    return '수준 $level';
+  }
+
+  @override
+  String get wsModuleCapsIgnored =>
+      '고정된 빌더는 모듈의 <caps> 규칙을 무시합니다. 로컬 caps 속성 또는 default-property를 사용하세요.';
 }

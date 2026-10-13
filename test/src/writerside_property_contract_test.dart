@@ -64,6 +64,177 @@ List<String> fields(WidgetTester tester) => tester
 
 void main() {
   testWidgets(
+    'mixed native item properties explain protection and keep parent access',
+    (tester) async {
+      final c = BusyMarkWysiwygDocumentController(
+        document: parse('# Topic\n\n- [x] Done\n- Plain\n', xml: false),
+      );
+      final session = WritersidePropertySession();
+      addTearDown(c.dispose);
+      addTearDown(session.dispose);
+      final original = c.markdown;
+      await tester.pumpWidget(harness(c, session, 'li'));
+      await tester.pumpAndSettle();
+      expect(
+        find.text(
+          'This element is protected. Edit its source to change properties.',
+        ),
+        findsOneWidget,
+      );
+      expect(
+        tester.widget<TextField>(entry('Element anchor (id)')).readOnly,
+        isTrue,
+      );
+      final selector = tester.widget<BusyMarkComboRow<String>>(
+        find.byWidgetPredicate(
+          (w) => w is BusyMarkComboRow<String> && w.title == 'Element',
+        ),
+      );
+      expect(selector.values, contains(c.document.blocks[1].id));
+      expect(c.markdown, original);
+      expect(session.hasPending, isFalse);
+    },
+  );
+  for (final format in ['xml', 'embedded', 'native']) {
+    testWidgets(
+      '$format list form edits the container and retains item ownership',
+      (tester) async {
+        final c = BusyMarkWysiwygDocumentController(
+          document: parse(
+            format == 'xml'
+                ? '<topic id="identity" title="Topic"><list type="decimal" start="7"><li id="item"><p>Item</p></li></list></topic>'
+                : format == 'embedded'
+                ? '# Topic\n\n<list type="decimal" start="7"><li id="item"><p>Item</p></li></list>\n'
+                : '# Topic\n\n7. Item\n8. Sibling\n',
+            xml: format == 'xml',
+          ),
+        );
+        final session = WritersidePropertySession();
+        addTearDown(c.dispose);
+        addTearDown(session.dispose);
+        await tester.pumpWidget(harness(c, session, 'list'));
+        await tester.pumpAndSettle();
+        expect(fields(tester).toSet(), {
+          'Element anchor (id)',
+          'Starting number (start)',
+          'Columns (columns)',
+        });
+        final types = tester.widget<BusyMarkComboRow<String>>(
+          find.byWidgetPredicate(
+            (w) =>
+                w is BusyMarkComboRow<String> && w.title == 'List type (type)',
+          ),
+        );
+        expect(types.values.toSet(), {
+          '',
+          'bullet',
+          'decimal',
+          'alpha-lower',
+          'checkbox',
+          'none',
+        });
+        expect(types.labelFor('alpha-lower'), 'Lettered list');
+        expect(types.labelFor('checkbox'), 'Checkbox list');
+        final original = c.markdown;
+        expect(entry('Filter (filter)'), findsNothing);
+        await section(tester, 'Advanced');
+        expect(entry('Filter (filter)'), findsOneWidget);
+        expect(entry('Help instances (instance)'), findsOneWidget);
+        expect(c.markdown, original);
+        await edit(tester, 'Element anchor (id)', 'list-anchor');
+        await edit(tester, 'Columns (columns)', '2');
+        final owner = walk(
+          c.document.blocks,
+        ).singleWhere((b) => b.attributes['element'] == 'list');
+        expect(owner.attributes['id'], 'list-anchor');
+        expect(owner.attributes['columns'], '2');
+        expect(
+          owner.children.first.attributes['id'],
+          format == 'native' ? isNull : 'item',
+        );
+        final reopened = parse(c.markdown, xml: format == 'xml');
+        final saved = walk(
+          reopened.blocks,
+        ).singleWhere((b) => b.attributes['element'] == 'list');
+        expect(saved.attributes['id'], 'list-anchor');
+        expect(saved.attributes['columns'], '2');
+        expect(
+          saved.children.first.plainText,
+          format == 'native' ? 'Item' : '',
+        );
+        if (format == 'native') expect(c.markdown, isNot(contains('<list')));
+      },
+    );
+  }
+  testWidgets(
+    'Advanced survives a temporary stale-target view and stays bound to its document',
+    (tester) async {
+      final c = BusyMarkWysiwygDocumentController(
+        document: parse('# Topic\n\n## Heading\n', xml: false),
+      );
+      final session = WritersidePropertySession();
+      final bucket = PageStorageBucket();
+      addTearDown(c.dispose);
+      addTearDown(session.dispose);
+      final target = c.document.blocks[1];
+      Future<void> show({
+        bool visible = true,
+        String identity = 'buffer-a',
+      }) async {
+        await tester.pumpWidget(
+          MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: Scaffold(
+              body: PageStorage(
+                bucket: bucket,
+                child: visible
+                    ? BusyMarkWritersideProperties(
+                        documentIdentity: identity,
+                        document: c.document,
+                        path: c.elementPath(target.id),
+                        target: target,
+                        topicSelected: false,
+                        session: session,
+                        onTargetSelected: (_) {},
+                        onClose: () {},
+                        onProperty: (_, _) => true,
+                        onHeadingText: (_) => true,
+                        onTopicProperty: (_, _) => true,
+                        onManageItem: (_, _, _) {},
+                      )
+                    : const Text('Selection unavailable'),
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+      }
+
+      Finder caps() => find.byWidgetPredicate(
+        (w) =>
+            w is BusyMarkComboRow<String> && w.title == 'Capitalization (caps)',
+      );
+      await show();
+      expect(caps(), findsNothing);
+      await section(tester, 'Advanced');
+      expect(caps(), findsOneWidget);
+      expect(
+        tester.widget<BusyMarkComboRow<String>>(caps()).subtitle,
+        'Default: As written',
+      );
+      await show(visible: false);
+      expect(find.text('Selection unavailable'), findsOneWidget);
+      await show();
+      expect(caps(), findsOneWidget);
+      await show(identity: 'buffer-b');
+      expect(caps(), findsNothing);
+      await show();
+      expect(caps(), findsOneWidget);
+      expect(c.markdown, '# Topic\n\n## Heading\n');
+    },
+  );
+  testWidgets(
     'normal H2 presentation keeps generated anchor derived through focus, help, save and overrides',
     (tester) async {
       const heading = '2. Diagnosed cause and source map';
@@ -802,6 +973,8 @@ Widget harness(
             : walk(c.document.blocks).firstWhere(
                 (b) =>
                     b.attributes['element'] == tag ||
+                    tag == 'li' &&
+                        WritersideEditingAdapter.tagForBlock(b) == 'li' ||
                     tag == 'chapter' &&
                         b.kind == BusyBlockKind.heading &&
                         b.attributes['level'] != '1',

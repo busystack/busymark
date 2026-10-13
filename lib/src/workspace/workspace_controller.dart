@@ -5630,7 +5630,10 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       final live = liveBuffers
           .where((candidate) => candidate.id == removedId)
           .firstOrNull;
-      if (before != null && live != null && !identical(before, live)) {
+      if (before != null &&
+          live != null &&
+          !identical(before, live) &&
+          !_sameCleanClosingSource(before, live)) {
         return false;
       }
     }
@@ -5697,6 +5700,30 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     );
     return true;
   }
+
+  // Editor restoration can report a caret/folding session while activation of
+  // the next tab is awaiting parsing. A clean close owns no discarded edits;
+  // allow only that metadata refresh. Dirty discard and all source, filesystem
+  // identity, origin and permission changes still invalidate publication.
+  bool _sameCleanClosingSource(DocumentBuffer before, DocumentBuffer live) =>
+      !before.isDirty &&
+      !live.isDirty &&
+      before.id == live.id &&
+      before.revision == live.revision &&
+      before.text == live.text &&
+      before.lastSavedText == live.lastSavedText &&
+      before.filePath == live.filePath &&
+      before.untitledName == live.untitledName &&
+      identical(before.diskSnapshot, live.diskSnapshot) &&
+      identical(before.diskVersionSnapshot, live.diskVersionSnapshot) &&
+      before.diskState == live.diskState &&
+      before.diskVersionText == live.diskVersionText &&
+      identical(before.format, live.format) &&
+      before.remoteNote == live.remoteNote &&
+      before.remoteTitle == live.remoteTitle &&
+      identical(before.remoteEditBase, live.remoteEditBase) &&
+      before.readonly == live.readonly &&
+      before.recovered == live.recovered;
 
   void updateActiveEditorState(DocumentEditorState editorState) {
     final buffer = state.activeBuffer;

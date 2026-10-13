@@ -5306,4 +5306,63 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get wsParent => 'मूल तत्व';
+
+  @override
+  String get wsListType => 'सूची प्रकार';
+
+  @override
+  String get wsStartingNumber => 'आरंभ संख्या';
+
+  @override
+  String get wsListSorting => 'क्रमबद्ध करना';
+
+  @override
+  String get wsLetteredList => 'अक्षर सूची';
+
+  @override
+  String get wsCheckboxList => 'चेकबॉक्स सूची';
+
+  @override
+  String get wsMarkerlessList => 'बिना चिह्नों की सूची';
+
+  @override
+  String get wsAscending => 'आरोही';
+
+  @override
+  String get wsDescending => 'अवरोही';
+
+  @override
+  String get wsNoSorting => 'क्रमबद्ध नहीं';
+
+  @override
+  String get wsAsWritten => 'जैसा लिखा है';
+
+  @override
+  String get wsSentenceCase => 'वाक्य अक्षर शैली';
+
+  @override
+  String get wsTitleCase => 'शीर्षक अक्षर शैली';
+
+  @override
+  String get wsLowerCase => 'छोटे अक्षर';
+
+  @override
+  String get wsUpperCase => 'बड़े अक्षर';
+
+  @override
+  String get wsNativeMarkers => 'Markdown चिह्न';
+
+  @override
+  String wsListMarkerStart(String number) {
+    return 'आरंभ चिह्न: $number';
+  }
+
+  @override
+  String wsListLevel(String level) {
+    return 'स्तर $level';
+  }
+
+  @override
+  String get wsModuleCapsIgnored =>
+      'निर्धारित बिल्डर मॉड्यूल के <caps> नियमों को अनदेखा करता है। स्थानीय caps विशेषता या default-property का उपयोग करें।';
 }

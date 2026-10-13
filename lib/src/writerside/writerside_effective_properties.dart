@@ -1,12 +1,27 @@
 import 'writerside_model.dart';
 
-enum WritersidePropertyOrigin { element, ancestor, module, builtIn, unresolved }
+enum WritersidePropertyOrigin {
+  element,
+  ancestor,
+  module,
+  markdownMarker,
+  builtIn,
+  unresolved,
+}
 
 class WritersideEffectiveProperty {
-  const WritersideEffectiveProperty(this.authored, this.value, this.origin);
+  const WritersideEffectiveProperty(
+    this.authored,
+    this.value,
+    this.origin, {
+    this.limitation,
+  });
   final String? authored;
   final String? value;
   final WritersidePropertyOrigin origin;
+
+  /// A verified builder limitation, independent of the resolved value.
+  final String? limitation;
   bool get unresolved => value == null;
 }
 
@@ -33,8 +48,33 @@ class WritersideEffectiveProperties {
     Map<String, String>? definitionList,
   }) {
     final authored = attributes[property];
+    // The supported builder accepts module <caps> declarations but leaves
+    // heading/TOC text unchanged. Local caps and default-property are applied.
+    // Keep this distinction explicit instead of calling an omitted caps value
+    // unresolved or promising the documented module rule's ignored effect.
+    final capsLimitation =
+        property == 'caps' &&
+            authored == null &&
+            settings.capsRules.any((r) => r.target == element)
+        ? 'module-caps-ignored'
+        : null;
     String? value = authored;
     var origin = WritersidePropertyOrigin.element;
+    if (value == null &&
+        element == 'list' &&
+        property == 'type' &&
+        attributes['busymark-native-list-type'] == 'decimal') {
+      value = 'decimal';
+      origin = WritersidePropertyOrigin.markdownMarker;
+    }
+    if (value == null &&
+        element == 'list' &&
+        property == 'start' &&
+        attributes['busymark-native-list-start'] != null &&
+        attributes['busymark-native-list-start'] != '1') {
+      value = attributes['busymark-native-list-start'];
+      origin = WritersidePropertyOrigin.markdownMarker;
+    }
     final inherited =
         element == 'def' &&
         property == 'default-state' &&
@@ -56,11 +96,13 @@ class WritersideEffectiveProperties {
                 p.value != null,
           )
           .toList();
-      if (defaults.length == 1) {
-        value = defaults.single.value;
+      if (defaults.length == 1 || defaults.isNotEmpty && property == 'caps') {
+        // Capitalization default-property uses the first declaration in the
+        // pinned builder, independently of ignored module <caps> rules.
+        value = defaults.first.value;
         origin = WritersidePropertyOrigin.module;
       }
-      if (defaults.length > 1) {
+      if (defaults.length > 1 && property != 'caps') {
         return WritersideEffectiveProperty(
           authored,
           null,
@@ -95,6 +137,11 @@ class WritersideEffectiveProperties {
               ? 'true'
               : 'false',
         'type' when element == 'deflist' => 'full',
+        'caps' => 'aswritten',
+        'type' when element == 'list' =>
+          attributes['busymark-native-list-type'] ?? 'bullet',
+        'sorted' when element == 'list' => 'none',
+        'start' when element == 'list' => '1',
         _ => null,
       };
       origin =
@@ -117,6 +164,7 @@ class WritersideEffectiveProperties {
       authored,
       unresolved ? null : value,
       unresolved ? WritersidePropertyOrigin.unresolved : origin,
+      limitation: capsLimitation,
     );
   }
 

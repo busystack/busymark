@@ -5315,4 +5315,63 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get wsParent => 'Üst öğe';
+
+  @override
+  String get wsListType => 'Liste türü';
+
+  @override
+  String get wsStartingNumber => 'Başlangıç numarası';
+
+  @override
+  String get wsListSorting => 'Sıralama';
+
+  @override
+  String get wsLetteredList => 'Harfli liste';
+
+  @override
+  String get wsCheckboxList => 'Onay kutulu liste';
+
+  @override
+  String get wsMarkerlessList => 'İşaretsiz liste';
+
+  @override
+  String get wsAscending => 'Artan';
+
+  @override
+  String get wsDescending => 'Azalan';
+
+  @override
+  String get wsNoSorting => 'Sıralama yok';
+
+  @override
+  String get wsAsWritten => 'Yazıldığı gibi';
+
+  @override
+  String get wsSentenceCase => 'Cümle düzeni';
+
+  @override
+  String get wsTitleCase => 'Başlık düzeni';
+
+  @override
+  String get wsLowerCase => 'Küçük harf';
+
+  @override
+  String get wsUpperCase => 'Büyük harf';
+
+  @override
+  String get wsNativeMarkers => 'Markdown işaretleri';
+
+  @override
+  String wsListMarkerStart(String number) {
+    return 'İlk işaret: $number';
+  }
+
+  @override
+  String wsListLevel(String level) {
+    return 'Düzey $level';
+  }
+
+  @override
+  String get wsModuleCapsIgnored =>
+      'Sabitlenmiş derleyici modülün <caps> kurallarını yok sayar. Yerel caps özniteliği veya default-property kullanın.';
 }

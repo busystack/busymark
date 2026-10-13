@@ -8,6 +8,7 @@ import 'busymark_document.dart';
 import '../editor/wysiwyg/writerside_editing_adapter.dart';
 import 'math_syntax.dart';
 import 'markdown_model.dart';
+import 'markdown_list_source.dart';
 
 class BusyMarkSerializedInlineFragment {
   const BusyMarkSerializedInlineFragment({
@@ -265,7 +266,9 @@ class BusyMarkMarkdownSerializer {
       return block.rawSource!;
     }
     if (block.attributes['busymark-property-edits'] != null &&
-        block.rawSource != null) {
+        block.rawSource != null &&
+        !(block.attributes['busymark-list-form'] == 'markdown' &&
+            block.children.any(_hasDirtyContent))) {
       final preserved = _propertyOnlySource(block);
       if (preserved != null) return preserved;
     }
@@ -278,9 +281,16 @@ class BusyMarkMarkdownSerializer {
     if (busyMarkIsWritersideContainer(block)) {
       if (block.attributes['busymark-list-form'] == 'markdown') {
         final attributes = WritersideEditingAdapter.sourceAttributes(block);
-        final content = block.children.map(serializeBlock).join('\n');
+        final content = StringBuffer();
+        for (final (i, child) in block.children.indexed) {
+          content.write(serializeBlock(child));
+          if (i + 1 < block.children.length) {
+            final gap = child.attributes['busymark-native-trailing-gap'];
+            content.write(gap?.contains('\n') == true ? gap : '\n');
+          }
+        }
         return attributes.isEmpty
-            ? content
+            ? content.toString()
             : '$content\n\n{${attributes.entries.map((a) => '${a.key}="${_attribute(a.value)}"').join(' ')}}';
       }
       if (block.attributes['busymark-definition-form'] == 'markdown') {
@@ -317,7 +327,10 @@ class BusyMarkMarkdownSerializer {
       ),
       BusyBlockKind.math => _mathBlock(block),
       BusyBlockKind.codeBlock => _codeBlock(block),
-      BusyBlockKind.unorderedListItem => _listItem(block, '-'),
+      BusyBlockKind.unorderedListItem => _listItem(
+        block,
+        block.attributes['marker'] ?? '-',
+      ),
       BusyBlockKind.orderedListItem => _listItem(
         block,
         block.attributes['marker'] ?? '1.',
@@ -326,7 +339,7 @@ class BusyMarkMarkdownSerializer {
         block,
         block.attributes['ordered'] == 'true'
             ? block.attributes['marker'] ?? '1.'
-            : '-',
+            : block.attributes['marker'] ?? '-',
         contentPrefix: '[${block.attributes['task'] == 'true' ? 'x' : ' '}]',
       ),
       BusyBlockKind.blockquote => _blockquote(block),
@@ -345,11 +358,116 @@ class BusyMarkMarkdownSerializer {
     };
   }
 
+  /// Publish native list attributes at their authored boundaries. Ancestor
+  /// dirtiness alone must not serialize a loose list or its nested items.
+  String? _nativeListPropertySource(BusyDocument document) {
+    final source = document.source;
+    if (source == null) return null;
+    final roots = document.blocks.where(_isSourceBackedBlock).toList();
+    if (roots.any((b) => b.sourceSpan == null) ||
+        _sourceOutsideSpansHasContent(
+          source,
+          roots.map((b) => b.sourceSpan!).toList(),
+        )) {
+      return null;
+    }
+    final edits = <({int start, int end, String value, int depth})>[];
+    var found = false;
+    int? offset(BusyBlock block, int local) {
+      final encoded = block.attributes['busymark-native-source-map'];
+      if (encoded == null) return null;
+      final lines = jsonDecode(encoded) as List<dynamic>;
+      final segment = lines.where((p) => (p[0] as int) <= local).lastOrNull;
+      return segment == null
+          ? null
+          : (segment[1] as int) + local - (segment[0] as int);
+    }
+
+    bool visit(BusyBlock block, int depth) {
+      if (!_hasDirtyContent(block)) return true;
+      final properties =
+          block.attributes['busymark-list-form'] == 'markdown' &&
+          block.attributes.containsKey('busymark-property-edits');
+      if (block.dirty || properties) {
+        final members = block.attributes['busymark-native-members'];
+        if (members == null ||
+            members != jsonEncode(block.children.map((b) => b.id).toList()) ||
+            block.attributes['busymark-native-inline-state'] !=
+                nativeMarkdownInlineState(block.inlines) ||
+            !properties &&
+                block.attributes['busymark-native-attribute-state'] !=
+                    nativeMarkdownAttributeState(block.attributes)) {
+          return false;
+        }
+      }
+      if (properties) {
+        found = true;
+        final old = block.rawSource;
+        final changed = old == null ? null : _propertyOnlySource(block);
+        if (old == null || changed == null) return false;
+        var start = 0;
+        while (start < old.length &&
+            start < changed.length &&
+            old.codeUnitAt(start) == changed.codeUnitAt(start)) {
+          start++;
+        }
+        var suffix = 0;
+        while (suffix < old.length - start &&
+            suffix < changed.length - start &&
+            old.codeUnitAt(old.length - suffix - 1) ==
+                changed.codeUnitAt(changed.length - suffix - 1)) {
+          suffix++;
+        }
+        final first = offset(block, start);
+        final last = offset(block, old.length - suffix);
+        if (first == null ||
+            last == null ||
+            first > last ||
+            last > source.length) {
+          return false;
+        }
+        final base = block.sourceSpan?.startOffset;
+        if (base == null) return false;
+        final prefix = source.substring(
+          source.lastIndexOf('\n', base == 0 ? 0 : base - 1) + 1,
+          base,
+        );
+        var value = changed.substring(start, changed.length - suffix);
+        if (RegExp(r'^[ \t>]*$').hasMatch(prefix) && prefix.isNotEmpty) {
+          value = value.replaceAllMapped(
+            prefix.contains('>') ? RegExp(r'\n') : RegExp(r'\n(?=[^\r\n])'),
+            (_) => '\n$prefix',
+          );
+        }
+        edits.add((start: first, end: last, value: value, depth: depth));
+      }
+      return block.children.every((b) => visit(b, depth + 1));
+    }
+
+    if (!document.blocks.every((b) => visit(b, 0)) || !found) return null;
+    edits.sort((a, b) {
+      final position = a.start.compareTo(b.start);
+      return position != 0 ? position : b.depth.compareTo(a.depth);
+    });
+    final result = StringBuffer();
+    var cursor = 0;
+    for (final edit in edits) {
+      if (edit.start < cursor) return null;
+      result
+        ..write(source.substring(cursor, edit.start))
+        ..write(edit.value);
+      cursor = edit.end;
+    }
+    return '$result${source.substring(cursor)}';
+  }
+
   String? _serializeByPatchingSource(BusyDocument document) {
     final source = document.source;
     if (source == null) {
       return null;
     }
+    final listProperties = _nativeListPropertySource(document);
+    if (listProperties != null) return listProperties;
     final dirtyBlocks = [
       for (final block in document.blocks)
         if (_isSourceBackedBlock(block) &&
@@ -592,7 +710,8 @@ class BusyMarkMarkdownSerializer {
     }
     final ending = attributes.trim().isEmpty ? '' : '{${attributes.trim()}}';
     if (suffix != null) {
-      if (block.kind == BusyBlockKind.blockquote) {
+      if (block.kind == BusyBlockKind.blockquote ||
+          block.attributes['busymark-list-form'] == 'markdown') {
         final content = source.substring(0, suffix.start).trimRight();
         final newline =
             block.attributes['busymark-property-line-ending'] ?? '\n';
@@ -605,7 +724,7 @@ class BusyMarkMarkdownSerializer {
     if (ending.isEmpty) return source;
     return '$source${block.kind == BusyBlockKind.image
         ? ''
-        : block.kind == BusyBlockKind.blockquote
+        : block.kind == BusyBlockKind.blockquote || block.attributes['busymark-list-form'] == 'markdown'
         ? '${block.attributes['busymark-property-line-ending'] ?? '\n'}${block.attributes['busymark-property-line-ending'] ?? '\n'}'
         : block.kind == BusyBlockKind.heading
         ? ' '

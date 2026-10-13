@@ -29,7 +29,6 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
     this.onAdmonitionCommand,
     this.onWritersideInsert,
     this.isWritersideInsertEnabled,
-    this.onProperties,
     this.onMenuCanceled,
     required this.onInlineCommand,
     required this.onLinkCommand,
@@ -57,7 +56,6 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
   final ValueChanged<BusyAdmonitionStyle>? onAdmonitionCommand;
   final ValueChanged<BusyWritersideInsertCommand>? onWritersideInsert;
   final bool Function(BusyWritersideInsertCommand)? isWritersideInsertEnabled;
-  final VoidCallback? onProperties;
   final VoidCallback? onMenuCanceled;
   final ValueChanged<BusyWysiwygInlineCommand> onInlineCommand;
   final VoidCallback onLinkCommand;
@@ -186,14 +184,6 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
               if (onAdmonitionCommand != null) _admonitionMenu(context),
               if (onWritersideInsert != null) _writersideInsertMenu(context),
               _writersideSemanticMenu(context),
-              if (onProperties != null)
-                _button(
-                  context,
-                  tooltip: context.l10n.wsElementProperties,
-                  key: const ValueKey('wysiwyg-writerside-properties'),
-                  icon: BusyMarkGlyphs.settings,
-                  onPressed: onProperties,
-                ),
             ],
           [
             _button(

@@ -818,6 +818,14 @@ class WritersideEditingAdapter {
 
   static bool hasDirtyContent(BusyBlock block) =>
       block.dirty || block.children.any(hasDirtyContent);
+
+  /// XML has one marker style per list. Materializing a mixed native owner
+  /// would turn ordinary items into tasks or lose task editing semantics.
+  static bool nativeListHasMixedMarkers(BusyBlock block) =>
+      block.attributes['busymark-list-form'] == 'markdown' &&
+          block.children.any((b) => b.kind == BusyBlockKind.taskListItem) &&
+          block.children.any((b) => b.kind != BusyBlockKind.taskListItem) ||
+      block.children.any(nativeListHasMixedMarkers);
   static const _projectionAttributes = {
     'element',
     'htmlTag',

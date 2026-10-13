@@ -5362,4 +5362,63 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get wsParent => 'Übergeordnetes Element';
+
+  @override
+  String get wsListType => 'Listentyp';
+
+  @override
+  String get wsStartingNumber => 'Startnummer';
+
+  @override
+  String get wsListSorting => 'Sortierung';
+
+  @override
+  String get wsLetteredList => 'Buchstabenliste';
+
+  @override
+  String get wsCheckboxList => 'Liste mit Kontrollkästchen';
+
+  @override
+  String get wsMarkerlessList => 'Liste ohne Aufzählungszeichen';
+
+  @override
+  String get wsAscending => 'Aufsteigend';
+
+  @override
+  String get wsDescending => 'Absteigend';
+
+  @override
+  String get wsNoSorting => 'Keine Sortierung';
+
+  @override
+  String get wsAsWritten => 'Wie geschrieben';
+
+  @override
+  String get wsSentenceCase => 'Satzschreibung';
+
+  @override
+  String get wsTitleCase => 'Titelschreibung';
+
+  @override
+  String get wsLowerCase => 'Kleinbuchstaben';
+
+  @override
+  String get wsUpperCase => 'Großbuchstaben';
+
+  @override
+  String get wsNativeMarkers => 'Markdown-Listenzeichen';
+
+  @override
+  String wsListMarkerStart(String number) {
+    return 'Listenbeginn: $number';
+  }
+
+  @override
+  String wsListLevel(String level) {
+    return 'Ebene $level';
+  }
+
+  @override
+  String get wsModuleCapsIgnored =>
+      'Der festgelegte Builder ignoriert <caps>-Regeln des Moduls. Verwenden Sie ein lokales caps-Attribut oder default-property.';
 }

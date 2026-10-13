@@ -100,7 +100,10 @@ class WritersideDocumentResolver {
     WritersideResolveContext context,
     int offset,
   ) {
-    final resolved = resolve(document, context).document;
+    final resolved = resolve(
+      _capitalizationDefaults(document, context),
+      context,
+    ).document;
     for (final node in resolved.walk()) {
       if (node.span.startOffset != offset ||
           node.span.filePath != document.filePath) {
@@ -116,7 +119,10 @@ class WritersideDocumentResolver {
     WritersideDocument document,
     WritersideResolveContext context,
   ) => {
-    for (final node in resolve(document, context).document.walk()) ...{
+    for (final node in resolve(
+      _capitalizationDefaults(document, context),
+      context,
+    ).document.walk()) ...{
       if (node.span.filePath == document.filePath &&
           node is WritersideElementNode)
         node.span.startOffset: node.attributes,
@@ -125,6 +131,46 @@ class WritersideDocumentResolver {
         node.span.startOffset: node.block.attributes,
     },
   };
+
+  // Resolve configured capitalization through the existing lexical-variable
+  // machinery. The authored document remains unchanged, and this projection
+  // does not treat a resolved default as a locally authored attribute.
+  WritersideDocument _capitalizationDefaults(
+    WritersideDocument document,
+    WritersideResolveContext context,
+  ) {
+    Map<String, String> attributes(String tag, Map<String, String> authored) {
+      final configured = context.module.config.settings.defaultProperties
+          .where(
+            (p) =>
+                p.elementName == tag &&
+                p.propertyName == 'caps' &&
+                p.value != null,
+          )
+          .firstOrNull;
+      return {if (configured != null) 'caps': configured.value!, ...authored};
+    }
+
+    WritersideDocumentNode visit(WritersideDocumentNode node) {
+      if (node is WritersideElementNode) {
+        return node.copyWith(
+          attributes: attributes(node.name, node.attributes),
+          children: node.children.map(visit).toList(),
+        );
+      }
+      if (node is WritersideMarkdownBlockNode &&
+          node.block.kind == BusyBlockKind.heading) {
+        return node.copyWith(
+          block: node.block.copyWith(
+            attributes: attributes('chapter', node.block.attributes),
+          ),
+        );
+      }
+      return node;
+    }
+
+    return document.copyWith(nodes: document.nodes.map(visit).toList());
+  }
 
   /// Authored-reference inspection uses exactly the publication link resolver.
   Map<String, String> resolveAuthoredLink({

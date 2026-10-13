@@ -97,6 +97,32 @@ void main() {
     expect(index.safeRenameEdits(local, 'caption'), hasLength(3));
   });
 
+  test(
+    'checkbox list eligibility reaches diagnostics without admitting arbitrary styles',
+    () {
+      final module = project.activeModule!;
+      for (final type in ['checkbox', 'invented']) {
+        final topic = const WritersideTopicParser().parseXml(
+          filePath: p.join(directory.path, 'topics/lists.topic'),
+          topicsRoot: p.join(directory.path, 'topics'),
+          source:
+              '<topic id="lists" title="Lists"><list type="$type"><li checked="true"><p>Done</p></li></list></topic>',
+        );
+        final index = WritersideProjectIndex.build([
+          module.copyWith(topics: [topic]),
+        ]);
+        expect(
+          index.diagnostics.where((d) => d.args['attribute'] == 'type').isEmpty,
+          type == 'checkbox',
+        );
+        expect(
+          index.diagnostics.where((d) => d.args['attribute'] == 'checked'),
+          isEmpty,
+        );
+      }
+    },
+  );
+
   test('completion filters context and target identity before limiting', () {
     List<String> suggest(String text, {int limit = 40}) =>
         const SourceAutocompleteProvider()

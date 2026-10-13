@@ -775,6 +775,14 @@ class WritersideSchema {
   };
 
   static Set<String> valuesFor(String element, String attribute) {
+    // lists.html documents checkbox lists; the list/capitalization fixture
+    // verifies their published checkboxes with builder 2026.08.0328.
+    if (element == 'list' && attribute == 'type') {
+      return {
+        ...?writersideOfficialRules[element]?.values[attribute],
+        'checkbox',
+      };
+    }
     // The generated XSD omits li@checked. Builder 2026.08.0328 renders it as
     // a checkbox state; the property-conformance fixture verifies this overlay.
     if (element == 'li' && attribute == 'checked') {
@@ -817,6 +825,10 @@ class WritersideSchema {
         {'colspan', 'rowspan'}.contains(attribute)) {
       final number = int.tryParse(value);
       if (number == null ||
+          (element == 'list' && attribute == 'start' && number < 1) ||
+          (element == 'list' &&
+              attribute == 'columns' &&
+              (number < 1 || number > 5)) ||
           ((type == 'positiveInteger' ||
                   {'colspan', 'rowspan'}.contains(attribute)) &&
               number < 1) ||

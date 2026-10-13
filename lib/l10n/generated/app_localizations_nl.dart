@@ -5365,4 +5365,63 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get wsParent => 'Bovenliggend element';
+
+  @override
+  String get wsListType => 'Lijsttype';
+
+  @override
+  String get wsStartingNumber => 'Startnummer';
+
+  @override
+  String get wsListSorting => 'Sortering';
+
+  @override
+  String get wsLetteredList => 'Letterlijst';
+
+  @override
+  String get wsCheckboxList => 'Lijst met selectievakjes';
+
+  @override
+  String get wsMarkerlessList => 'Lijst zonder markeringen';
+
+  @override
+  String get wsAscending => 'Oplopend';
+
+  @override
+  String get wsDescending => 'Aflopend';
+
+  @override
+  String get wsNoSorting => 'Geen sortering';
+
+  @override
+  String get wsAsWritten => 'Zoals geschreven';
+
+  @override
+  String get wsSentenceCase => 'Zinskapitalisatie';
+
+  @override
+  String get wsTitleCase => 'Titelkapitalisatie';
+
+  @override
+  String get wsLowerCase => 'Kleine letters';
+
+  @override
+  String get wsUpperCase => 'Hoofdletters';
+
+  @override
+  String get wsNativeMarkers => 'Markdown-markeringen';
+
+  @override
+  String wsListMarkerStart(String number) {
+    return 'Beginmarkering: $number';
+  }
+
+  @override
+  String wsListLevel(String level) {
+    return 'Niveau $level';
+  }
+
+  @override
+  String get wsModuleCapsIgnored =>
+      'De vastgezette builder negeert <caps>-regels van de module. Gebruik een lokaal caps-attribuut of default-property.';
 }

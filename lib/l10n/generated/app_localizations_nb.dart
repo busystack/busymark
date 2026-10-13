@@ -5319,4 +5319,63 @@ class AppLocalizationsNb extends AppLocalizations {
 
   @override
   String get wsParent => 'Overordnet element';
+
+  @override
+  String get wsListType => 'Listetype';
+
+  @override
+  String get wsStartingNumber => 'Startnummer';
+
+  @override
+  String get wsListSorting => 'Sortering';
+
+  @override
+  String get wsLetteredList => 'Bokstavliste';
+
+  @override
+  String get wsCheckboxList => 'Liste med avkrysningsbokser';
+
+  @override
+  String get wsMarkerlessList => 'Liste uten markører';
+
+  @override
+  String get wsAscending => 'Stigende';
+
+  @override
+  String get wsDescending => 'Synkende';
+
+  @override
+  String get wsNoSorting => 'Ingen sortering';
+
+  @override
+  String get wsAsWritten => 'Som skrevet';
+
+  @override
+  String get wsSentenceCase => 'Stor forbokstav i setning';
+
+  @override
+  String get wsTitleCase => 'Store forbokstaver i tittel';
+
+  @override
+  String get wsLowerCase => 'Små bokstaver';
+
+  @override
+  String get wsUpperCase => 'Store bokstaver';
+
+  @override
+  String get wsNativeMarkers => 'Markdown-markører';
+
+  @override
+  String wsListMarkerStart(String number) {
+    return 'Første markør: $number';
+  }
+
+  @override
+  String wsListLevel(String level) {
+    return 'Nivå $level';
+  }
+
+  @override
+  String get wsModuleCapsIgnored =>
+      'Den fastsatte byggeren ignorerer modulens <caps>-regler. Bruk et lokalt caps-attributt eller default-property.';
 }

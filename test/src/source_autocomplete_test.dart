@@ -5,6 +5,24 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   test(
+    'list type completion offers the independently verified checkbox value',
+    () {
+      const source = '<list type="';
+      final suggestions = const SourceAutocompleteProvider().suggestions(
+        document: SourceDocument(fullText: source),
+        fullOffset: source.length,
+        context: const SourceAutocompleteContext(),
+        limit: 100,
+      );
+      expect(suggestions.map((s) => s.insertText), contains('checkbox'));
+      expect(
+        suggestions.map((s) => s.insertText),
+        containsAll(['bullet', 'decimal', 'alpha-lower', 'none']),
+      );
+      expect(suggestions.map((s) => s.insertText), isNot(contains('invented')));
+    },
+  );
+  test(
     'XML root completion uses the formal root set, not common capabilities',
     () {
       for (final tag in ['topic', 'p', 'chapter']) {

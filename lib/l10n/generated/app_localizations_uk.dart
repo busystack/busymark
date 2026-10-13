@@ -5384,4 +5384,63 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get wsParent => 'Батьківський елемент';
+
+  @override
+  String get wsListType => 'Тип списку';
+
+  @override
+  String get wsStartingNumber => 'Початковий номер';
+
+  @override
+  String get wsListSorting => 'Сортування';
+
+  @override
+  String get wsLetteredList => 'Літерний список';
+
+  @override
+  String get wsCheckboxList => 'Список із прапорцями';
+
+  @override
+  String get wsMarkerlessList => 'Список без маркерів';
+
+  @override
+  String get wsAscending => 'За зростанням';
+
+  @override
+  String get wsDescending => 'За спаданням';
+
+  @override
+  String get wsNoSorting => 'Без сортування';
+
+  @override
+  String get wsAsWritten => 'Як написано';
+
+  @override
+  String get wsSentenceCase => 'Регістр речення';
+
+  @override
+  String get wsTitleCase => 'Регістр заголовка';
+
+  @override
+  String get wsLowerCase => 'Малі літери';
+
+  @override
+  String get wsUpperCase => 'Великі літери';
+
+  @override
+  String get wsNativeMarkers => 'Маркери Markdown';
+
+  @override
+  String wsListMarkerStart(String number) {
+    return 'Початковий маркер: $number';
+  }
+
+  @override
+  String wsListLevel(String level) {
+    return 'Рівень $level';
+  }
+
+  @override
+  String get wsModuleCapsIgnored =>
+      'Закріплений збирач ігнорує правила <caps> модуля. Використовуйте локальний атрибут caps або default-property.';
 }

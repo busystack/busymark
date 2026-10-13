@@ -5313,4 +5313,63 @@ class AppLocalizationsEt extends AppLocalizations {
 
   @override
   String get wsParent => 'Ülemelement';
+
+  @override
+  String get wsListType => 'Loendi tüüp';
+
+  @override
+  String get wsStartingNumber => 'Algusnumber';
+
+  @override
+  String get wsListSorting => 'Sortimine';
+
+  @override
+  String get wsLetteredList => 'Tähtedega loend';
+
+  @override
+  String get wsCheckboxList => 'Märkeruutudega loend';
+
+  @override
+  String get wsMarkerlessList => 'Markeriteta loend';
+
+  @override
+  String get wsAscending => 'Kasvav';
+
+  @override
+  String get wsDescending => 'Kahanev';
+
+  @override
+  String get wsNoSorting => 'Sortimata';
+
+  @override
+  String get wsAsWritten => 'Nagu kirjutatud';
+
+  @override
+  String get wsSentenceCase => 'Lause tähesuurus';
+
+  @override
+  String get wsTitleCase => 'Pealkirja tähesuurus';
+
+  @override
+  String get wsLowerCase => 'Väiketähed';
+
+  @override
+  String get wsUpperCase => 'Suurtähed';
+
+  @override
+  String get wsNativeMarkers => 'Markdowni markerid';
+
+  @override
+  String wsListMarkerStart(String number) {
+    return 'Algusmarker: $number';
+  }
+
+  @override
+  String wsListLevel(String level) {
+    return 'Tase $level';
+  }
+
+  @override
+  String get wsModuleCapsIgnored =>
+      'Fikseeritud koostaja eirab mooduli <caps>-reegleid. Kasuta kohalikku caps-atribuuti või default-property sätet.';
 }

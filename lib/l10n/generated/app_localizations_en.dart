@@ -5331,4 +5331,63 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get wsParent => 'Parent';
+
+  @override
+  String get wsListType => 'List type';
+
+  @override
+  String get wsStartingNumber => 'Starting number';
+
+  @override
+  String get wsListSorting => 'Sorting';
+
+  @override
+  String get wsLetteredList => 'Lettered list';
+
+  @override
+  String get wsCheckboxList => 'Checkbox list';
+
+  @override
+  String get wsMarkerlessList => 'List without markers';
+
+  @override
+  String get wsAscending => 'Ascending';
+
+  @override
+  String get wsDescending => 'Descending';
+
+  @override
+  String get wsNoSorting => 'No sorting';
+
+  @override
+  String get wsAsWritten => 'As written';
+
+  @override
+  String get wsSentenceCase => 'Sentence case';
+
+  @override
+  String get wsTitleCase => 'Title case';
+
+  @override
+  String get wsLowerCase => 'Lowercase';
+
+  @override
+  String get wsUpperCase => 'Uppercase';
+
+  @override
+  String get wsNativeMarkers => 'Markdown markers';
+
+  @override
+  String wsListMarkerStart(String number) {
+    return 'Marker start: $number';
+  }
+
+  @override
+  String wsListLevel(String level) {
+    return 'Level $level';
+  }
+
+  @override
+  String get wsModuleCapsIgnored =>
+      'The pinned builder ignores module <caps> rules. Use a local caps override or default-property.';
 }

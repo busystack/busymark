@@ -5374,4 +5374,63 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get wsParent => 'Родительский элемент';
+
+  @override
+  String get wsListType => 'Тип списка';
+
+  @override
+  String get wsStartingNumber => 'Начальный номер';
+
+  @override
+  String get wsListSorting => 'Сортировка';
+
+  @override
+  String get wsLetteredList => 'Буквенный список';
+
+  @override
+  String get wsCheckboxList => 'Список с флажками';
+
+  @override
+  String get wsMarkerlessList => 'Список без маркеров';
+
+  @override
+  String get wsAscending => 'По возрастанию';
+
+  @override
+  String get wsDescending => 'По убыванию';
+
+  @override
+  String get wsNoSorting => 'Без сортировки';
+
+  @override
+  String get wsAsWritten => 'Как написано';
+
+  @override
+  String get wsSentenceCase => 'Регистр предложения';
+
+  @override
+  String get wsTitleCase => 'Регистр заголовка';
+
+  @override
+  String get wsLowerCase => 'Строчные буквы';
+
+  @override
+  String get wsUpperCase => 'Прописные буквы';
+
+  @override
+  String get wsNativeMarkers => 'Маркеры Markdown';
+
+  @override
+  String wsListMarkerStart(String number) {
+    return 'Начальный маркер: $number';
+  }
+
+  @override
+  String wsListLevel(String level) {
+    return 'Уровень $level';
+  }
+
+  @override
+  String get wsModuleCapsIgnored =>
+      'Закреплённый сборщик игнорирует правила <caps> модуля. Используйте локальный атрибут caps или default-property.';
 }

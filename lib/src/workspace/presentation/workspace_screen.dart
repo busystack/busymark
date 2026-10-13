@@ -13026,6 +13026,16 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     if (ref.read(appSettingsControllerProvider).elementPropertiesVisible) {
       _closeProperties();
     } else {
+      if (!_propertyEdits.transition()) return;
+      final editor = _wysiwygEditorKey.currentState;
+      if (editor != null) {
+        editor.inspectCurrentSelection();
+      } else {
+        final buffer = ref.read(workspaceControllerProvider).activeBuffer;
+        if (buffer != null) {
+          _inspectSourceSelection(buffer.editorState.selection);
+        }
+      }
       _showProperties();
     }
   }
@@ -13469,6 +13479,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
         const BusyBlock(id: '@topic', kind: BusyBlockKind.heading);
     return BusyMarkWritersideProperties(
       key: _propertiesPanelKey,
+      documentIdentity: target.bufferId,
       effectiveProperties: _effectiveInspectorProperties(target),
       session: _propertyEdits,
       document: target.document,

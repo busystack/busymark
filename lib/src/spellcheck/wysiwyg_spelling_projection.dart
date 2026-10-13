@@ -172,7 +172,7 @@ final class WysiwygSpellingProjector {
       if (block.isGenerated ||
           block.isSourceProtected ||
           block.isSourceOnly ||
-          !_eligibleBlockKinds.contains(block.kind)) {
+          !_eligibleBlock(block)) {
         return;
       }
       if (block.kind == BusyBlockKind.table) {
@@ -462,7 +462,7 @@ _MergedRichProjection _mergeFieldMappings({
 List<({int start, int end})> _sourceOnlyRegions(List<BusyBlock> blocks) {
   final result = <({int start, int end})>[];
   void visit(BusyBlock block) {
-    if (!_eligibleBlockKinds.contains(block.kind) ||
+    if (!_eligibleBlock(block) ||
         block.isSourceProtected ||
         block.isGenerated ||
         block.isSourceOnly) {
@@ -729,7 +729,7 @@ List<_SourceFieldRegion> _sourceFieldRegions(
     if (block.isGenerated ||
         block.isSourceProtected ||
         block.isSourceOnly ||
-        !_eligibleBlockKinds.contains(block.kind)) {
+        !_eligibleBlock(block)) {
       return;
     }
     if (block.kind == BusyBlockKind.table) {
@@ -788,3 +788,7 @@ const _eligibleBlockKinds = {
   BusyBlockKind.writersideTabs,
   BusyBlockKind.writersideProcedure,
 };
+
+bool _eligibleBlock(BusyBlock block) =>
+    _eligibleBlockKinds.contains(block.kind) ||
+    block.attributes['busymark-list-form'] == 'markdown';

@@ -41,6 +41,50 @@ import 'package:path/path.dart' as p;
 import 'package:xml/xml.dart';
 
 void main() {
+  for (final change in ['session', 'source']) {
+    testWidgets(
+      'clean close validates source identity during $change updates',
+      (tester) async {
+        final service = _ClosingAutosaveWorkspaceService();
+        final creating = _createControllerHarness(service: service);
+        await tester.pump(Duration.zero);
+        final harness = await creating;
+        await harness.settingsController.setValidateOnEdit(false);
+        await harness.settingsController.setAutoSave(false);
+        final controller = harness.controller;
+        await controller.openPath(service.path);
+        final before = controller.state.activeBuffer!;
+        await controller.openActiveFile(service.bPath);
+        await controller.activateDocumentBuffer(before.id);
+        service.pauseActivation = true;
+        final closing = controller.closeDocumentBuffer(before.id);
+        await tester.pump();
+        expect(service.activationStarted.isCompleted, isTrue);
+        if (change == 'session') {
+          controller.updateActiveEditorState(
+            before.editorState.copyWith(
+              selection: const TextSelection.collapsed(offset: 2),
+            ),
+          );
+        } else {
+          controller.updateActiveSourceText('# New unsaved content\n');
+        }
+        service.releaseActivation.complete();
+        await tester.pump();
+        expect(await closing, change == 'session');
+        if (change == 'source') {
+          expect(controller.state.activeBuffer!.id, before.id);
+          expect(controller.state.activeText, '# New unsaved content\n');
+          expect(controller.state.activeBuffer!.isDirty, isTrue);
+        } else {
+          expect(
+            controller.state.documentBuffers.any((b) => b.id == before.id),
+            isFalse,
+          );
+        }
+      },
+    );
+  }
   _registerResponsivenessTests();
   _registerCorrectionBoundaryTests();
   _registerReferenceMoveTests();
@@ -74,9 +118,7 @@ void main() {
           document: parseNumbered(buffer.text),
         );
         addTearDown(visual.dispose);
-        final target = outerOverride
-            ? visual.document.blocks[1].children.first
-            : visual.document.blocks[1];
+        final target = visual.document.blocks[1].children.first;
         expect(
           visual.updateWritersideProperty(target.id, 'id', 'parent-item'),
           isTrue,

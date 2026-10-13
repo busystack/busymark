@@ -93,6 +93,12 @@ def main():
     elif command == "chord":
         subprocess.run(["xdotool", "key", "--clearmodifiers", args[0]], check=True)
         time.sleep(0.3)
+    elif command == "move-pointer":
+        subprocess.run(["xdotool", "mousemove", "--sync", str(int(args[0])), str(int(args[1]))], check=True)
+        time.sleep(0.3)
+    elif command == "click-pointer":
+        subprocess.run(["xdotool", "click", "--clearmodifiers", "1"], check=True)
+        time.sleep(0.3)
     elif command == "type":
         subprocess.run(["xdotool", "type", "--clearmodifiers", "--", args[0]], check=True)
         time.sleep(0.3)

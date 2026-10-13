@@ -1,6 +1,7 @@
 import 'package:busymark/src/core/path_utils.dart';
 import 'package:busymark/src/platform/native_writerside_dialog_service.dart';
 import 'dart:async';
+import 'package:busymark/src/editor/wysiwyg/writerside_properties.dart';
 import 'dart:convert';
 import 'dart:io';
 
@@ -10875,9 +10876,8 @@ After break.
     final editorImage = find.byType(MarkdownImageView);
     expect(editorAdmonition, findsOneWidget);
     expect(editorImage, findsOneWidget);
-    // Compare the shared document surface with the utility pane dismissed.
-    await tester.tap(find.byTooltip('Element Properties'));
-    await tester.pumpAndSettle();
+    // The utility pane starts closed; hover access must not open it.
+    expect(find.byType(BusyMarkWritersideProperties), findsNothing);
     expect(
       find.descendant(
         of: editorAdmonition,

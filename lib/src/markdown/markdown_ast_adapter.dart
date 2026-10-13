@@ -513,6 +513,7 @@ class MarkdownAstAdapter {
       ];
       final attributes = <String, String>{};
       if (mode == MarkdownMode.writersideMarkdown) {
+        blocks = _attachWritersideCodeAttributes(blocks);
         final admonition = _writersideBlockquoteAdmonition(blocks);
         blocks = admonition.blocks;
         attributes.addAll({
@@ -785,7 +786,22 @@ class MarkdownAstAdapter {
       );
       number++;
     }
-    return result;
+    return mode == MarkdownMode.writersideMarkdown && result.isNotEmpty
+        ? [
+            BusyBlock(
+              id: 'list-${result.first.id}',
+              kind: BusyBlockKind.writersideRawXml,
+              children: result,
+              attributes: {
+                'element': 'list',
+                busyMarkWritersideContainerAttribute: 'true',
+                'busymark-list-form': 'markdown',
+                'busymark-native-list-type': ordered ? 'decimal' : 'bullet',
+                'busymark-native-list-start': node.attributes['start'] ?? '1',
+              },
+            ),
+          ]
+        : result;
   }
 
   /// Runs the ordinary semantic converter with optional source annotations.
@@ -1659,36 +1675,28 @@ class MarkdownAstAdapter {
     var index = 0;
     while (index < blocks.length) {
       final block = blocks[index];
-      if (_nativeListKind(block.kind)) {
-        var end = index + 1;
-        while (end < blocks.length && blocks[end].kind == block.kind) {
-          end++;
-        }
-        final attributeBlock = end < blocks.length ? blocks[end] : null;
-        final attributes = attributeBlock?.kind == BusyBlockKind.paragraph
-            ? _standaloneAttributeInline(attributeBlock!.inlines)
+      if (block.attributes['busymark-list-form'] == 'markdown' &&
+          index + 1 < blocks.length) {
+        final attributeBlock = blocks[index + 1];
+        final attributes = attributeBlock.kind == BusyBlockKind.paragraph
+            ? _standaloneAttributeInline(attributeBlock.inlines)
             : const <String, String>{};
         if (attributes.isNotEmpty) {
           result.add(
-            BusyBlock(
-              id: 'list-${block.id}',
-              kind: BusyBlockKind.writersideRawXml,
-              children: blocks.sublist(index, end),
+            block.copyWith(
               attributes: {
-                'element': 'list',
-                busyMarkWritersideContainerAttribute: 'true',
-                'busymark-list-form': 'markdown',
+                ...block.attributes,
                 for (final a in attributes.entries)
                   if (!WritersideEditingAdapter.isProjectionAttribute(
                     a.key,
-                    BusyBlockKind.writersideRawXml,
+                    block.kind,
                   ))
                     a.key: a.value,
                 'busymark-writerside-source-attributes': jsonEncode(attributes),
               },
             ),
           );
-          index = end + 1;
+          index += 2;
           continue;
         }
       }
@@ -1732,12 +1740,6 @@ class MarkdownAstAdapter {
     }
     return result;
   }
-
-  bool _nativeListKind(BusyBlockKind kind) => {
-    BusyBlockKind.unorderedListItem,
-    BusyBlockKind.orderedListItem,
-    BusyBlockKind.taskListItem,
-  }.contains(kind);
 
   Map<String, String> _standaloneAttributeBlock(String value) {
     final trimmed = value.trim();
