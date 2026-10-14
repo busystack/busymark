@@ -72,6 +72,45 @@ def verify_inspector_presentation(archive):
     print('Native presentation HTML: authored chapter anchor, published collapse and unchanged generated anchor verified')
 
 
+def verify_explicit_inspection(archive, native):
+    page = Elements(archive.read('explicit-inspection.html').decode('utf-8'))
+    keys = [(attrs.get('data-key'), page.texts[identity])
+            for identity, (attrs, _) in page.elements.items()
+            if attrs.get('data-key') in {'$Save', '$Copy'}]
+    assert keys == ([('$Save', 'Ctrl+S'), ('$Copy', 'Ctrl+C')] if native else
+                    [('$Copy', 'Ctrl+C'), ('$Copy', 'Ctrl+C')]), keys
+    links = [attrs['href'] for identity, (attrs, _) in page.elements.items()
+             if page.texts.get(identity) == 'Read' and 'href' in attrs]
+    assert links == (['lists.html#title-case', 'lists.html#absent'] if native else
+                     ['lists.html#absent', 'lists.html#absent']), links
+    if native:
+        for name in ['explicit-inspection.html', 'semantic-commands.html']:
+            actual = Elements(archive.read(name).decode('utf-8'))
+            for css, text in [('control', 'Open & Files'),
+                              ('filepath', 'docs/example.txt'),
+                              ('menupath', 'File | Open'),
+                              ('keystroke', 'Ctrl+M')]:
+                matching = [attrs for identity, (attrs, _) in actual.elements.items()
+                            if css in attrs.get('class', '').split() and
+                            actual.texts.get(identity) == text]
+                assert len(matching) == 1, (name, css, matching)
+                if css == 'keystroke':
+                    assert 'data-key' not in matching[0], (name, matching)
+            for style in ['tip', 'note', 'warning']:
+                matching = [identity for identity, (attrs, _) in actual.elements.items()
+                            if attrs.get('data-type') == style and
+                            actual.texts.get(identity, '').strip() ==
+                            style.title() + ' example.']
+                assert len(matching) == 1, (name, style, matching)
+            quotes = [identity for identity, (attrs, _) in actual.elements.items()
+                      if 'quote' in attrs.get('class', '').split() and
+                      actual.texts.get(identity, '').strip() == 'Quote example.']
+            assert len(quotes) == 1, (name, quotes)
+    print('Explicit inspection HTML: exact multiline reference owners' +
+          (', four semantic commands, admonitions and quote saved by the UI verified'
+           if native else ' verified'))
+
+
 if len(sys.argv) > 2 and sys.argv[2].startswith('list-caps'):
     mode = sys.argv[2]
     with zipfile.ZipFile(sys.argv[1]) as archive:
@@ -130,6 +169,7 @@ if len(sys.argv) > 2 and sys.argv[2].startswith('list-caps'):
                 assert source.count('Resolved product') == expected
                 assert source.count('Resolved long product') == (1 if mode == 'list-caps-native' else 0)
                 assert '"$Copy"' in source and 'char-C' in source
+                verify_explicit_inspection(archive, mode == 'list-caps-native')
     print('List/capitalization HTML: '+mode+' published markers, numbering, columns, sorting, checkbox controls and capitalization verified')
     sys.exit(0)
 

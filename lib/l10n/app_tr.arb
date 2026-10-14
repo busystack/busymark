@@ -5145,5 +5145,9 @@
   "wsNativeMarkers": "Markdown işaretleri",
   "wsListMarkerStart": "İlk işaret: {number}",
   "wsListLevel": "Düzey {level}",
-  "wsModuleCapsIgnored": "Sabitlenmiş derleyici modülün <caps> kurallarını yok sayar. Yerel caps özniteliği veya default-property kullanın."
+  "wsModuleCapsIgnored": "Sabitlenmiş derleyici modülün <caps> kurallarını yok sayar. Yerel caps özniteliği veya default-property kullanın.",
+  "wsInsertElements": "Öğe ekle",
+  "wsAdmonitionsAndQuotes": "Uyarılar ve alıntılar",
+  "wsSemanticText": "Anlamsal metin",
+  "wsPropertiesUnavailable": "İncelenen öğe kullanılamıyor. Devam etmek için bir öğeyi inceleyin."
 }

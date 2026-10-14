@@ -2085,7 +2085,15 @@ void main() {
           ),
         ),
       );
-      expect(popups, hasLength(3));
+      expect(popups, hasLength(2));
+      expect(
+        popups.where((popup) => popup.tooltip == 'Writerside'),
+        hasLength(1),
+      );
+      expect(
+        popups.where((popup) => popup.tooltip == 'Semantic formatting'),
+        isEmpty,
+      );
       expect(popups.every((popup) => !popup.transparent), isTrue);
       expect(popups.every((popup) => popup.elevated), isTrue);
       expect(
@@ -2126,8 +2134,7 @@ void main() {
         l10n.inlineMath,
         l10n.hardLineBreak,
         l10n.insertBlankLine,
-        l10n.admonition,
-        l10n.wsSemanticFormats,
+        l10n.writerside,
         l10n.blockquote,
         l10n.codeBlock,
         l10n.displayMath,

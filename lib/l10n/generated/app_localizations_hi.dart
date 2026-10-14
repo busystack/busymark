@@ -5375,4 +5375,17 @@ class AppLocalizationsHi extends AppLocalizations {
   @override
   String get wsModuleCapsIgnored =>
       'निर्धारित बिल्डर मॉड्यूल के <caps> नियमों को अनदेखा करता है। स्थानीय caps विशेषता या default-property का उपयोग करें।';
+
+  @override
+  String get wsInsertElements => 'तत्व जोड़ें';
+
+  @override
+  String get wsAdmonitionsAndQuotes => 'सूचनाएँ और उद्धरण';
+
+  @override
+  String get wsSemanticText => 'अर्थपूर्ण पाठ';
+
+  @override
+  String get wsPropertiesUnavailable =>
+      'जाँचा गया तत्व उपलब्ध नहीं है। जारी रखने के लिए कोई तत्व जाँचें।';
 }

@@ -17,7 +17,16 @@ import '../../writerside/writerside_schema.dart';
 class WritersideEditingAdapter {
   const WritersideEditingAdapter();
 
-  static Iterable<({BusyInlineStyleRange range, int begin, int end})>
+  static Iterable<
+    ({
+      BusyInlineStyleRange range,
+      int begin,
+      int end,
+      int localBegin,
+      int localEnd,
+      bool xmlSource,
+    })
+  >
   authoredInlineRanges(
     BusyDocument document,
     String source,
@@ -72,7 +81,14 @@ class WritersideEditingAdapter {
               inline: true,
             );
             if (begin == null || end == null) continue;
-            yield (range: owner, begin: begin, end: end);
+            yield (
+              range: owner,
+              begin: begin,
+              end: end,
+              localBegin: entry.begin - prefix.length,
+              localEnd: entry.end - prefix.length,
+              xmlSource: entry.xmlSource,
+            );
           }
         }
       }
@@ -124,9 +140,17 @@ class WritersideEditingAdapter {
       final binding = range.attributes['xml-source-binding']?.split(':');
       int? begin;
       int? end;
+      int? localBegin;
+      int? localEnd;
+      var xmlSource = false;
       if (document.isXmlTopic && binding?.length == 2) {
+        xmlSource = true;
         begin = int.tryParse(binding![0]);
         end = int.tryParse(binding[1]);
+        localBegin = begin == null
+            ? null
+            : begin - block.sourceSpan!.startOffset;
+        localEnd = end == null ? null : end - block.sourceSpan!.startOffset;
       } else if (mapped != null) {
         final peers = references.where((r) => r.kind == range.kind).toList();
         final ordinal = peers.indexOf(range);
@@ -140,6 +164,9 @@ class WritersideEditingAdapter {
           final attributes = RegExp(
             r'^\{(?:\s*[\w:.-]+\s*=\s*"[^"]*"\s*)+\}',
           ).firstMatch(raw.substring(positioned.end));
+          xmlSource = positioned.rawHtmlFragment != null;
+          localBegin = positioned.start;
+          localEnd = positioned.end + (attributes?.end ?? 0);
           begin = markdownProjectedSourceOffset(
             block,
             positioned.start,
@@ -159,10 +186,22 @@ class WritersideEditingAdapter {
         if (occurrence != null) {
           begin = occurrence.sourceStart;
           end = occurrence.sourceEnd;
+          localBegin = begin - block.sourceSpan!.startOffset;
+          localEnd = end - block.sourceSpan!.startOffset;
         }
       }
-      if (begin != null && end != null) {
-        yield (range: range, begin: begin, end: end);
+      if (begin != null &&
+          end != null &&
+          localBegin != null &&
+          localEnd != null) {
+        yield (
+          range: range,
+          begin: begin,
+          end: end,
+          localBegin: localBegin,
+          localEnd: localEnd,
+          xmlSource: xmlSource,
+        );
       }
     }
   }

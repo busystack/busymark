@@ -5443,4 +5443,17 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get wsModuleCapsIgnored =>
       'Закреплённый сборщик игнорирует правила <caps> модуля. Используйте локальный атрибут caps или default-property.';
+
+  @override
+  String get wsInsertElements => 'Вставить элементы';
+
+  @override
+  String get wsAdmonitionsAndQuotes => 'Примечания и цитаты';
+
+  @override
+  String get wsSemanticText => 'Семантический текст';
+
+  @override
+  String get wsPropertiesUnavailable =>
+      'Проверяемый элемент недоступен. Выберите элемент для продолжения.';
 }

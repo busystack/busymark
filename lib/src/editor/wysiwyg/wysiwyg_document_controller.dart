@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 
 import '../../core/path_utils.dart';
 import '../../markdown/busymark_document.dart';
+import '../../markdown/document_outline.dart';
 import '../../markdown/busymark_markdown_serializer.dart';
 import '../../markdown/markdown_model.dart';
 import '../../markdown/markdown_source_map.dart';
@@ -81,8 +82,10 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
   void rebaseCommittedSource(String source) {
     if (_document.isXmlTopic) {
       _document = const WritersideEditingAdapter().rebaseXml(_document, source);
-    } else if (_document.isWriterside &&
-        _flattenBlocks(_document.blocks).any((b) => _isListItemKind(b.kind))) {
+    } else if (_document.isWriterside) {
+      // Every Writerside editing projection needs current authored positions,
+      // including a topic containing only headings and paragraphs. List
+      // ownership reparsing remains limited to the structural cases below.
       final current = _document;
       bool needsOwnership(List<BusyBlock> blocks, BusyBlock? owner) {
         for (final b in blocks) {
@@ -109,13 +112,26 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
         return false;
       }
 
-      var rebased = needsOwnership(current.blocks, null)
+      final hasListItems = _flattenBlocks(
+        current.blocks,
+      ).any((b) => _isListItemKind(b.kind));
+      var rebased = hasListItems && needsOwnership(current.blocks, null)
           ? _reparseNativeListOwnership(source)
           : const MarkdownParser().rebindSourceMetadata(current, source);
+      final generatedAnchors = {
+        for (final heading in rebased.outline)
+          if (heading.editorBlockId != null) heading.editorBlockId!: heading.id,
+      };
       BusyBlock commit(BusyBlock block) {
         final attrs = {...block.attributes}
           ..remove('busymark-property-edits')
           ..remove('busymark-property-line-ending');
+        if (block.kind == BusyBlockKind.heading &&
+            !attrs.containsKey('element') &&
+            attrs['generatedId'] == 'true' &&
+            generatedAnchors.containsKey(block.id)) {
+          attrs['id'] = generatedAnchors[block.id]!;
+        }
         if (block.attributes.containsKey(
               'busymark-writerside-source-attributes',
             ) ||
@@ -1507,8 +1523,19 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
     if (range.kind == BusyInlineKind.writersideVariable) {
       replacement = '%$value%';
     } else if (block.attributes.containsKey('element') ||
+        occurrence.xmlSource ||
         range.kind == BusyInlineKind.writersideShortcut) {
-      final raw = source.substring(begin, end);
+      final normalized =
+          block.attributes['busymark-native-inline-source'] ?? block.rawSource;
+      if (normalized == null ||
+          occurrence.localBegin < 0 ||
+          occurrence.localEnd > normalized.length) {
+        return false;
+      }
+      final raw = normalized.substring(
+        occurrence.localBegin,
+        occurrence.localEnd,
+      );
       final parsed = const WritersideDocumentParser().parseXml(
         filePath: '',
         source: raw,
@@ -1523,8 +1550,62 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
       } else {
         attributes[attribute] = value;
       }
-      replacement = const WritersideDocumentSerializer().serialize(
+      final changed = const WritersideDocumentSerializer().serialize(
         parsed.copyWith(nodes: [element.copyWith(attributes: attributes)]),
+      );
+      if (changed == raw) return true;
+      // Adding a physical line inside a transformed fragment would require a
+      // new Markdown prefix with no authored mapping. Reject before staging.
+      if (value.contains('\n') || value.contains('\r')) return false;
+      var first = 0;
+      while (first < raw.length &&
+          first < changed.length &&
+          raw[first] == changed[first]) {
+        first++;
+      }
+      var suffix = 0;
+      while (suffix < raw.length - first &&
+          suffix < changed.length - first &&
+          raw[raw.length - suffix - 1] ==
+              changed[changed.length - suffix - 1]) {
+        suffix++;
+      }
+      // Removing an attribute must retain its separating newlines (and their
+      // Markdown prefixes). Narrow deletion to the authored name/value tokens.
+      if (value.isEmpty &&
+          attribute != 'alt' &&
+          raw.substring(first, raw.length - suffix).contains('\n')) {
+        while (first < raw.length - suffix &&
+            RegExp(r'\s').hasMatch(raw[first])) {
+          first++;
+        }
+      }
+      final localStart = occurrence.localBegin + first;
+      final localStop = occurrence.localBegin + raw.length - suffix;
+      final mappedStart = markdownProjectedSourceOffset(
+        block,
+        localStart,
+        inline: true,
+      );
+      final mappedStop = markdownProjectedSourceOffset(
+        block,
+        localStop,
+        inline: true,
+      );
+      if (mappedStart == null || mappedStop == null) return false;
+      // A lexical replacement cannot consume removed Markdown prefixes. Check
+      // every interior boundary as well as both ends before publication.
+      for (var i = localStart; i <= localStop; i++) {
+        if (markdownProjectedSourceOffset(block, i, inline: true) !=
+            mappedStart + i - localStart) {
+          return false;
+        }
+      }
+      begin = mappedStart;
+      end = mappedStop;
+      replacement = changed.substring(
+        first.clamp(0, changed.length - suffix),
+        changed.length - suffix,
       );
     } else {
       final raw =

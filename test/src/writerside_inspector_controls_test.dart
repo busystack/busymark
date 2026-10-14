@@ -1,3 +1,5 @@
+import 'package:flutter/services.dart';
+import 'package:busymark/src/app/busymark_glyphs.dart';
 import 'dart:async';
 import 'dart:io';
 import 'package:busymark/l10n/generated/app_localizations.dart';
@@ -57,6 +59,62 @@ Future<void> edit(WidgetTester tester, String label, String value) async {
 }
 
 void main() {
+  testWidgets(
+    'focused property Undo and Redo use document commands and reject invalid drafts',
+    (tester) async {
+      final doc = parse(
+        '<topic id="a" title="Title"><p>Text</p></topic>',
+        true,
+      );
+      final session = WritersidePropertySession();
+      addTearDown(session.dispose);
+      var undo = 0, redo = 0;
+      await tester.pumpWidget(
+        app(
+          BusyMarkWritersideProperties(
+            document: doc,
+            path: [doc.blocks.first, doc.blocks.first.children.single],
+            target: doc.blocks.first.children.single,
+            topicSelected: false,
+            session: session,
+            onClose: () {},
+            onTargetSelected: (_) {},
+            onHeadingText: (_) => false,
+            onTopicProperty: (_, _) => false,
+            onManageItem: (_, _, _) {},
+            onProperty: (_, _) => false,
+            onUndo: () => undo++,
+            onRedo: () => redo++,
+          ),
+        ),
+      );
+      await tester.tap(field('Element anchor (id)'));
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyZ);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.pumpAndSettle();
+      expect(undo, 1);
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyZ);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.pumpAndSettle();
+      expect(redo, 1);
+      await tester.enterText(field('Element anchor (id)'), 'invalid id');
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyZ);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.pumpAndSettle();
+      expect(undo, 1);
+      expect(session.hasPending, isTrue);
+      expect(
+        tester.widget<TextField>(field('Element anchor (id)')).controller!.text,
+        'invalid id',
+      );
+    },
+  );
+
   for (final xml in [true, false]) {
     testWidgets(
       '${xml ? "XML" : "Markdown"} inspector edits the named reference attributes and reopens them',
@@ -384,6 +442,24 @@ void main() {
             onTopicProperty: (_, _) => false,
             onManageItem: (_, _, _) {},
           ),
+        ),
+      );
+      final button = find.byWidgetPredicate(
+        (w) => w is BusyMarkDialogButton && w.label == 'Show in Source',
+      );
+      expect(button, findsOneWidget);
+      expect(
+        tester.widget<BusyMarkDialogButton>(button).icon,
+        BusyMarkGlyphs.sourceView,
+      );
+      expect(
+        find.ancestor(of: button, matching: find.byType(BusyMarkGroupedList)),
+        findsNothing,
+      );
+      expect(
+        tester.getSize(button).width,
+        lessThan(
+          tester.getSize(find.byType(BusyMarkWritersideProperties)).width,
         ),
       );
       await tester.enterText(field('Default title (title)'), 'rejected draft');

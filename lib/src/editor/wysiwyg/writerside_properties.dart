@@ -8,6 +8,7 @@ import 'writerside_property_session.dart';
 import '../../app/busymark_design.dart';
 import '../../app/busymark_glyphs.dart';
 import '../../app/localization.dart';
+import '../../app/command_registry.dart';
 import '../../markdown/busymark_document.dart';
 import '../../writerside/writerside_schema.dart';
 import '../../writerside/writerside_effective_properties.dart';
@@ -104,6 +105,8 @@ class BusyMarkWritersideProperties extends StatelessWidget {
     this.onNavigation,
     this.onRenameTopic,
     this.onEditTitles,
+    this.onUndo,
+    this.onRedo,
     this.hasFileIdentity = true,
     this.navigationEditable = true,
   });
@@ -132,6 +135,8 @@ class BusyMarkWritersideProperties extends StatelessWidget {
   onNavigation;
   final VoidCallback? onRenameTopic;
   final VoidCallback? onEditTitles;
+  final VoidCallback? onUndo;
+  final VoidCallback? onRedo;
   final bool hasFileIdentity;
   final bool navigationEditable;
 
@@ -1073,246 +1078,297 @@ class BusyMarkWritersideProperties extends StatelessWidget {
         );
     final hasAdvancedSettings =
         authoredAdvanced || authoredDocument || advancedNotices.isNotEmpty;
-    return DecoratedBox(
-      decoration: BoxDecoration(color: BusyMarkSurfaceColors.of(context).panel),
-      child: FocusTraversalGroup(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Padding(
-              padding: const EdgeInsetsDirectional.only(start: 12, end: 4),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      l.wsElementProperties,
-                      style: busyMarkSectionHeaderStyle(context),
-                      overflow: TextOverflow.ellipsis,
-                    ),
+    final commands =
+        BusyMarkCommandRegistryScope.maybeOf(context) ??
+        BusyMarkCommandCatalog.metadata;
+    return Shortcuts(
+      shortcuts: {
+        if (!readOnly && onUndo != null)
+          commands['text.undo']!.shortcut!.activator:
+              const _PropertyHistoryIntent(false),
+        if (!readOnly && onRedo != null)
+          commands['text.redo']!.shortcut!.activator:
+              const _PropertyHistoryIntent(true),
+      },
+      child: Actions(
+        actions: {
+          _PropertyHistoryIntent: CallbackAction<_PropertyHistoryIntent>(
+            onInvoke: (intent) {
+              if (session?.flush() ?? true) {
+                (intent.redo ? onRedo : onUndo)?.call();
+              }
+              return null;
+            },
+          ),
+        },
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: BusyMarkSurfaceColors.of(context).panel,
+          ),
+          child: FocusTraversalGroup(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Padding(
+                  padding: const EdgeInsetsDirectional.only(start: 12, end: 4),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          l.wsElementProperties,
+                          style: busyMarkSectionHeaderStyle(context),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      BusyMarkHeaderIconButton(
+                        icon: BusyMarkGlyphs.windowClose,
+                        tooltip: l.close,
+                        onPressed: () {
+                          if (videoDraft) session?.revertAll();
+                          if (session?.transition() ?? true) onClose();
+                        },
+                      ),
+                    ],
                   ),
-                  BusyMarkHeaderIconButton(
-                    icon: BusyMarkGlyphs.windowClose,
-                    tooltip: l.close,
-                    onPressed: () {
-                      if (videoDraft) session?.revertAll();
-                      if (session?.transition() ?? true) onClose();
+                ),
+                if (session != null)
+                  ListenableBuilder(
+                    listenable: session!,
+                    builder: (context, _) {
+                      final reason = session!.feedback;
+                      if (reason == null || session!.hasPending) {
+                        return const SizedBox.shrink();
+                      }
+                      final message = switch (reason) {
+                        WritersidePropertyRejection.stale =>
+                          l.wsPropertiesConflict,
+                        WritersidePropertyRejection.readOnly =>
+                          l.wsPropertiesReadOnly,
+                        WritersidePropertyRejection.unresolved =>
+                          l.wsPropertiesUnresolved,
+                        _ => l.wsPropertyInvalid,
+                      };
+                      return Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: Text(
+                          session!.detail ?? message,
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.error,
+                          ),
+                        ),
+                      );
                     },
                   ),
-                ],
-              ),
-            ),
-            if (session != null)
-              ListenableBuilder(
-                listenable: session!,
-                builder: (context, _) {
-                  final reason = session!.feedback;
-                  if (reason == null || session!.hasPending) {
-                    return const SizedBox.shrink();
-                  }
-                  final message = switch (reason) {
-                    WritersidePropertyRejection.stale => l.wsPropertiesConflict,
-                    WritersidePropertyRejection.readOnly =>
-                      l.wsPropertiesReadOnly,
-                    WritersidePropertyRejection.unresolved =>
-                      l.wsPropertiesUnresolved,
-                    _ => l.wsPropertyInvalid,
-                  };
-                  return Padding(
+                if (readOnly ||
+                    unsafeItemConversion ||
+                    block?.isSourceProtected == true ||
+                    block?.preserveRaw == true)
+                  Padding(
                     padding: const EdgeInsets.all(12),
                     child: Text(
-                      session!.detail ?? message,
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.error,
-                      ),
+                      readOnly
+                          ? l.wsPropertiesReadOnly
+                          : l.wsPropertiesProtected,
                     ),
-                  );
-                },
-              ),
-            if (readOnly ||
-                unsafeItemConversion ||
-                block?.isSourceProtected == true ||
-                block?.preserveRaw == true)
-              Padding(
-                padding: const EdgeInsets.all(12),
-                child: Text(
-                  readOnly ? l.wsPropertiesReadOnly : l.wsPropertiesProtected,
-                ),
-              ),
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(8),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Tooltip(
-                      message: block == null
-                          ? l.wsElementSelector
-                          : '${writersideElementLabel(context, block, document)} · ${block.attributes['id'] ?? ''} · ${block.attributes['title'] ?? block.attributes['busymark-title-label'] ?? block.plainText}',
-                      child: BusyMarkGroupedList(
-                        filled: true,
-                        children: [
-                          BusyMarkComboRow<String>(
-                            title: l.wsElementSelector,
-                            values: values,
-                            selected: selected,
-                            labelFor: (id) => id == '@topic'
-                                ? l.wsTopicProperties
-                                : (() {
-                                    final b = path
-                                        .where((b) => b.id == id)
-                                        .firstOrNull;
-                                    return inlineTarget != null &&
-                                            id == block?.id
-                                        ? switch (inlineTarget!.kind) {
-                                            BusyInlineKind.image => l.image,
-                                            BusyInlineKind.link => l.link,
-                                            BusyInlineKind.writersideVariable =>
-                                              l.wsVariableReference,
-                                            _ => l.keyboardShortcuts,
-                                          }
-                                        : b == null
-                                        ? l.wsElementProperties
-                                        : b.id == block?.id
-                                        ? writersideElementLabel(
-                                            context,
-                                            b,
-                                            document,
-                                            effectiveProperties,
-                                          )
-                                        : [
-                                            writersideElementLabel(
-                                              context,
-                                              b,
-                                              document,
-                                              effectiveProperties,
-                                            ),
-                                            b.attributes['id'] ??
-                                                b.attributes['title'] ??
-                                                b.attributes['busymark-title-label'] ??
-                                                _elementExcerpt(b),
-                                            if (b.attributes['element'] ==
-                                                'list')
-                                              l.wsListLevel(
-                                                '${path.takeWhile((p) => p.id != b.id).where((p) => p.attributes['element'] == 'list').length + 1}',
-                                              ),
-                                          ].where((v) => v.isNotEmpty).join(' · ');
-                                  })(),
-                            onSelected: (value) {
-                              if (session?.transition() ?? true) {
-                                onTargetSelected(value);
-                              }
-                            },
-                            width: 160,
+                  ),
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(8),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Tooltip(
+                          message: block == null
+                              ? l.wsElementSelector
+                              : '${writersideElementLabel(context, block, document)} · ${block.attributes['id'] ?? ''} · ${block.attributes['title'] ?? block.attributes['busymark-title-label'] ?? block.plainText}',
+                          child: BusyMarkGroupedList(
+                            filled: true,
+                            children: [
+                              BusyMarkComboRow<String>(
+                                title: l.wsElementSelector,
+                                values: values,
+                                selected: selected,
+                                labelFor: (id) => id == '@topic'
+                                    ? l.wsTopicProperties
+                                    : (() {
+                                        final b = path
+                                            .where((b) => b.id == id)
+                                            .firstOrNull;
+                                        return inlineTarget != null &&
+                                                id == block?.id
+                                            ? switch (inlineTarget!.kind) {
+                                                BusyInlineKind.image => l.image,
+                                                BusyInlineKind.link => l.link,
+                                                BusyInlineKind
+                                                    .writersideVariable =>
+                                                  l.wsVariableReference,
+                                                _ => l.keyboardShortcuts,
+                                              }
+                                            : b == null
+                                            ? l.wsElementProperties
+                                            : b.id == block?.id
+                                            ? writersideElementLabel(
+                                                context,
+                                                b,
+                                                document,
+                                                effectiveProperties,
+                                              )
+                                            : [
+                                                writersideElementLabel(
+                                                  context,
+                                                  b,
+                                                  document,
+                                                  effectiveProperties,
+                                                ),
+                                                b.attributes['id'] ??
+                                                    b.attributes['title'] ??
+                                                    b.attributes['busymark-title-label'] ??
+                                                    _elementExcerpt(b),
+                                                if (b.attributes['element'] ==
+                                                    'list')
+                                                  l.wsListLevel(
+                                                    '${path.takeWhile((p) => p.id != b.id).where((p) => p.attributes['element'] == 'list').length + 1}',
+                                                  ),
+                                              ].where((v) => v.isNotEmpty).join(' · ');
+                                      })(),
+                                onSelected: (value) {
+                                  if (session?.transition() ?? true) {
+                                    onTargetSelected(value);
+                                  }
+                                },
+                                width: 160,
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
-                    ),
-                    if (identity.isNotEmpty &&
-                        !topicSelected &&
-                        !hasEditableTitle)
-                      Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
                         ),
-                        child: Align(
-                          alignment: AlignmentDirectional.centerStart,
-                          child: ConstrainedBox(
-                            constraints: const BoxConstraints(maxHeight: 72),
-                            child: Semantics(
-                              excludeSemantics: true,
-                              label:
-                                  inlineTarget == null &&
-                                      tag == 'p' &&
-                                      block != null
-                                  ? '${attrs['id'] ?? ''} ${block.plainText}'
-                                  : identity,
-                              child: Text(
-                                identity,
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                key: const ValueKey(
-                                  'writerside-properties-identity',
+                        if (identity.isNotEmpty &&
+                            !topicSelected &&
+                            !hasEditableTitle)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
+                            ),
+                            child: Align(
+                              alignment: AlignmentDirectional.centerStart,
+                              child: ConstrainedBox(
+                                constraints: const BoxConstraints(
+                                  maxHeight: 72,
+                                ),
+                                child: Semantics(
+                                  excludeSemantics: true,
+                                  label:
+                                      inlineTarget == null &&
+                                          tag == 'p' &&
+                                          block != null
+                                      ? '${attrs['id'] ?? ''} ${block.plainText}'
+                                      : identity,
+                                  child: Text(
+                                    identity,
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    key: const ValueKey(
+                                      'writerside-properties-identity',
+                                    ),
+                                  ),
                                 ),
                               ),
                             ),
                           ),
-                        ),
-                      ),
-                    if (rows.isNotEmpty)
-                      AbsorbPointer(
-                        absorbing:
-                            readOnly ||
-                            block?.isSourceProtected == true ||
-                            block?.preserveRaw == true,
-                        child: BusyMarkGroupedList(
-                          filled: true,
-                          children: propertyUnits(rows).toList(),
-                        ),
-                      ),
-                    ...notices,
-                    if (actions.isNotEmpty)
-                      BusyMarkGroupedList(filled: true, children: actions),
-                    ...secondary,
-                    if (advanced.isNotEmpty ||
-                        documentSettings.isNotEmpty ||
-                        advancedNotices.isNotEmpty)
-                      _PropertySection(
-                        key: const ValueKey('writerside-advanced'),
-                        storageIdentity:
-                            'writerside-advanced-${documentIdentity ?? document.filePath}',
-                        session: session,
-                        title: l.advanced,
-                        subtitle: hasAdvancedSettings
-                            ? l.wsSettingsPresent
-                            : null,
-                        children: [
-                          if (documentSettings.isNotEmpty)
-                            BusyMarkGroupedList(
-                              title: topicSelected ? l.wsDocumentOptions : null,
-                              padding: const EdgeInsetsDirectional.symmetric(
-                                horizontal: 16,
-                              ),
+                        if (rows.isNotEmpty)
+                          AbsorbPointer(
+                            absorbing:
+                                readOnly ||
+                                block?.isSourceProtected == true ||
+                                block?.preserveRaw == true,
+                            child: BusyMarkGroupedList(
                               filled: true,
-                              children: propertyUnits(
-                                documentSettings,
-                              ).toList(),
+                              children: propertyUnits(rows).toList(),
                             ),
-                          if (advanced.isNotEmpty)
-                            BusyMarkGroupedList(
-                              title: topicSelected && nativeHeading
-                                  ? l.wsHeadingOptions
-                                  : null,
-                              padding: const EdgeInsetsDirectional.symmetric(
-                                horizontal: 16,
-                              ),
-                              filled: true,
-                              children: propertyUnits(advanced).toList(),
-                            ),
-                          ...advancedNotices,
-                        ],
-                      ),
-                    if (onSourceLocation != null)
-                      BusyMarkGroupedList(
-                        filled: true,
-                        children: [
-                          BusyMarkActionRow(
-                            title: l.wsShowInSource,
-                            onTap: () {
-                              if (session?.flush() ?? true) onSourceLocation!();
-                            },
                           ),
-                        ],
-                      ),
-                  ],
+                        ...notices,
+                        if (actions.isNotEmpty)
+                          BusyMarkGroupedList(filled: true, children: actions),
+                        ...secondary,
+                        if (advanced.isNotEmpty ||
+                            documentSettings.isNotEmpty ||
+                            advancedNotices.isNotEmpty)
+                          _PropertySection(
+                            key: const ValueKey('writerside-advanced'),
+                            storageIdentity:
+                                'writerside-advanced-${documentIdentity ?? document.filePath}',
+                            session: session,
+                            title: l.advanced,
+                            subtitle: hasAdvancedSettings
+                                ? l.wsSettingsPresent
+                                : null,
+                            children: [
+                              if (documentSettings.isNotEmpty)
+                                BusyMarkGroupedList(
+                                  title: topicSelected
+                                      ? l.wsDocumentOptions
+                                      : null,
+                                  padding:
+                                      const EdgeInsetsDirectional.symmetric(
+                                        horizontal: 16,
+                                      ),
+                                  filled: true,
+                                  children: propertyUnits(
+                                    documentSettings,
+                                  ).toList(),
+                                ),
+                              if (advanced.isNotEmpty)
+                                BusyMarkGroupedList(
+                                  title: topicSelected && nativeHeading
+                                      ? l.wsHeadingOptions
+                                      : null,
+                                  padding:
+                                      const EdgeInsetsDirectional.symmetric(
+                                        horizontal: 16,
+                                      ),
+                                  filled: true,
+                                  children: propertyUnits(advanced).toList(),
+                                ),
+                              ...advancedNotices,
+                            ],
+                          ),
+                        if (onSourceLocation != null)
+                          Padding(
+                            padding: const EdgeInsetsDirectional.fromSTEB(
+                              16,
+                              12,
+                              16,
+                              12,
+                            ),
+                            child: Align(
+                              alignment: AlignmentDirectional.centerStart,
+                              child: BusyMarkDialogButton(
+                                label: l.wsShowInSource,
+                                icon: BusyMarkGlyphs.sourceView,
+                                onPressed: () {
+                                  if (session?.flush() ?? true) {
+                                    onSourceLocation!();
+                                  }
+                                },
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
                 ),
-              ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
   }
+}
+
+class _PropertyHistoryIntent extends Intent {
+  const _PropertyHistoryIntent(this.redo);
+  final bool redo;
 }
 
 /// Disclosure state is presentation only. Hiding a pending field is a guarded
@@ -1370,13 +1426,10 @@ class _PropertySectionState extends State<_PropertySection> {
       const SizedBox(height: BusyMarkSpacing.sm),
       Semantics(
         expanded: expanded,
-        child: BusyMarkActionRow(
-          title: widget.title,
-          subtitle: widget.subtitle,
-          trailing: Icon(
-            expanded ? BusyMarkGlyphs.upArrow : BusyMarkGlyphs.downArrow,
-          ),
-          onTap: () {
+        button: true,
+        child: TextButton(
+          key: ValueKey('writerside-disclosure-${widget.title}'),
+          onPressed: () {
             if (expanded && !(widget.session?.flush() ?? true)) return;
             setState(() => expanded = !expanded);
             PageStorage.maybeOf(context)?.writeState(
@@ -1385,6 +1438,29 @@ class _PropertySectionState extends State<_PropertySection> {
               identifier: widget.storageIdentity,
             );
           },
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      widget.title,
+                      style: Theme.of(context).textTheme.titleSmall,
+                    ),
+                    if (widget.subtitle != null)
+                      Text(
+                        widget.subtitle!,
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                  ],
+                ),
+              ),
+              Icon(
+                expanded ? BusyMarkGlyphs.upArrow : BusyMarkGlyphs.downArrow,
+              ),
+            ],
+          ),
         ),
       ),
       if (expanded) ...widget.children,
@@ -1533,6 +1609,8 @@ class _TopicNavigationState extends State<_TopicNavigation> {
   final elements = TextEditingController();
   final depth = TextEditingController();
   final focus = FocusNode();
+  final elementsFocus = FocusNode();
+  final depthFocus = FocusNode();
   bool custom = false;
   bool get protected =>
       widget.declarations.length > 1 ||
@@ -1599,6 +1677,8 @@ class _TopicNavigationState extends State<_TopicNavigation> {
     elements.dispose();
     depth.dispose();
     focus.dispose();
+    elementsFocus.dispose();
+    depthFocus.dispose();
     _local.dispose();
     super.dispose();
   }
@@ -1680,9 +1760,13 @@ class _TopicNavigationState extends State<_TopicNavigation> {
                     BusyMarkGroupedTextEntry(
                       label: '${l.wsNavigationElements} (for)',
                       controller: elements,
+                      focusNode: elementsFocus,
                       readOnly: widget.readOnly || protected,
                       onChanged: (_) => edit(),
-                      onSubmitted: (_) => session.commit(draft),
+                      onSubmitted: (_) {
+                        session.commit(draft);
+                        if (mounted) elementsFocus.requestFocus();
+                      },
                       errorText: draft.error == null
                           ? null
                           : draft.detail ?? l.wsPropertyInvalid,
@@ -1690,9 +1774,13 @@ class _TopicNavigationState extends State<_TopicNavigation> {
                     BusyMarkGroupedTextEntry(
                       label: '${l.wsNavigationDepth} (depth)',
                       controller: depth,
+                      focusNode: depthFocus,
                       readOnly: widget.readOnly || protected,
                       onChanged: (_) => edit(),
-                      onSubmitted: (_) => session.commit(draft),
+                      onSubmitted: (_) {
+                        session.commit(draft);
+                        if (mounted) depthFocus.requestFocus();
+                      },
                     ),
                   ],
                 ],
@@ -1873,7 +1961,10 @@ class _PropertyTextEntryState extends State<_PropertyTextEntry> {
                       ),
                   ],
                 ),
-          onSubmitted: (_) => _session.commit(_draft),
+          onSubmitted: (_) {
+            _session.commit(_draft);
+            if (mounted) _focus.requestFocus();
+          },
           onChanged: (text) {
             _session.edit(_draft, text);
             if (mounted) setState(() {});

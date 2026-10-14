@@ -5383,4 +5383,17 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get wsModuleCapsIgnored =>
       'Sabitlenmiş derleyici modülün <caps> kurallarını yok sayar. Yerel caps özniteliği veya default-property kullanın.';
+
+  @override
+  String get wsInsertElements => 'Öğe ekle';
+
+  @override
+  String get wsAdmonitionsAndQuotes => 'Uyarılar ve alıntılar';
+
+  @override
+  String get wsSemanticText => 'Anlamsal metin';
+
+  @override
+  String get wsPropertiesUnavailable =>
+      'İncelenen öğe kullanılamıyor. Devam etmek için bir öğeyi inceleyin.';
 }

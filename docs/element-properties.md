@@ -1,13 +1,23 @@
 # Element Properties
 
-In a Writerside workspace, **Element Properties** follows the active editing
-selection in Editor, Source and Split. Hover a block in Editor to reveal one
-**Element Properties** icon in its leading margin. Move onto the icon and click to inspect that block; hovering alone does
-not open the pane, move the caret, change source, or add history. The formatting
-toolbar has no duplicate Properties button. Keyboard users can open and hide the
-pane with the existing command palette command **Element Properties**, including
-for an inline link, variable or shortcut selected in the editor. Source retains
-that command route.
+In a Writerside workspace, **Element Properties** stays on the element you
+explicitly inspect. Hover a block in Editor to reveal one **Element Properties**
+icon in its leading margin, then click it to inspect that block. Hovering alone
+does not open the pane, move the caret, change source, or add history. The
+formatting toolbar has no duplicate Properties button. The existing command
+palette command **Element Properties** opens the pane or inspects the current
+selection again when it is already open, including inline links, variables and
+shortcuts. In Source and Split, the command uses the Source selection. Use the
+pane’s Close control to hide it.
+
+Ordinary clicks, caret movement, text selection, focus changes and scrolling do
+not switch the inspected owner. Switching between Editor, Source and Split for
+the same document preserves the pane and its target. Changes to that owner,
+including Undo/Redo, refresh its values when its authored identity can be
+verified. A deleted or ambiguous target becomes unavailable; the inspector does
+not select a neighbor. Opening another document leaves the pane open without an
+editable target until you explicitly inspect an element there.
+
 Reading shows validated values without allowing changes. Ordinary Markdown and
 Nextcloud Notes retain their own authoring behavior.
 
@@ -34,7 +44,8 @@ and save history.
 Drag the separator to resize the panel. A focused separator also accepts Left
 and Right arrows. The inspector starts closed on each launch, including with an
 older saved visible preference. BusyMark remembers its preferred width separately
-from the navigation sidebar. Once opened, it follows ordinary selection changes.
+from the navigation sidebar. Once opened, it retains the explicitly inspected
+element.
 In a narrow window the panel becomes a dismissible
 right-edge overlay. Closing it returns focus to the active editing surface.
 
@@ -43,8 +54,8 @@ right-edge overlay. Closing it returns focus to the active editing surface.
 Frequent properties appear first; **Advanced** starts closed and contains other
 applicable scalar attributes from the supported schema. An authored-settings
 indication makes existing overrides discoverable while the section is closed.
-Its explicit expansion is retained while editing. Collapsing a section processes
-its drafts first. Empty optional text
+The compact disclosure header retains its explicit expansion while editing.
+Collapsing a section processes its drafts first. Empty optional text
 fields remove their local attribute when committed. Enum controls offer
 **Use default**, which removes the local override. Required attributes must keep
 a valid value. Suggestions and pickers do not replace legal variable expressions.
@@ -73,7 +84,9 @@ for Markdown topics. **Authored settings present** counts only explicit settings
 shown for that owner, including relevant unsupported markup; generated anchors,
 effective defaults and another element’s settings do not count. Read-only Topic
 ID keeps its rename action in the same row. Notices and navigation actions are
-separate from editable property groups.
+separate from editable property groups. **Show in Source** is a compact secondary
+button that processes pending edits, validates the inspected owner and navigates
+to its exact authored occurrence without retargeting the pane.
 At narrow widths or increased text sizes, enum rows place the selected value
 below the label. They keep the same native menu and keyboard operation.
 
@@ -86,7 +99,9 @@ and preserved.
 A generated chapter anchor appears as **Generated: …** within the anchor row,
 with an empty override editor. It remains selectable and wraps when necessary.
 Entering an explicit `id` replaces the generated value; clearing it restores the
-heading-derived anchor. Focus, inspection and Save do not author that value.
+heading-derived anchor. Editing the heading updates its generated anchor;
+an explicit override stays unchanged. Focus, inspection and Save do not author
+that value.
 Attribute explanations and full provenance are available in contextual help:
 focus the control and press **F1**, or hover over its property row.
 
@@ -240,3 +255,27 @@ configuration is validated and published as one undoable change. Invalid drafts
 block closing or hiding the section. Resetting removes the declaration instead
 of serializing an effective default. Multiple or conditional/scoped declarations
 remain protected from this single-declaration editor; use Source to edit them.
+
+## Writerside commands
+
+The Editor toolbar has one **Writerside** menu with three groups:
+
+- **Insert elements**: Procedure, Tabs, Definition List, Include Reusable Content,
+  Variable Reference, Video, TLDR and Convert List to Procedure.
+- **Admonitions and quotes**: Tip, Note, Warning and Quote. These retain their
+  existing block transformations.
+- **Semantic text**: UI Control, File / Path, UI Path and Keyboard Shortcuts. With
+  selected text, the command wraps it in the corresponding Writerside element.
+  At a caret, it opens text entry and inserts a nonempty element at that captured
+  location. Cancel leaves the source unchanged; insertion uses ordinary Undo/Redo.
+
+Block transformations retain editing focus in their content through
+Undo/Redo. Caret restoration uses the exact saved source representation when
+editing-model IDs change during reparsing; it does not retarget Element Properties.
+
+Unavailable commands are disabled for the current document and structure. A
+literal shortcut inserts its entered combination; an Action ID in Element
+Properties remains a separate keymap reference. Semantic content is escaped for
+XML, including XML embedded in Markdown. Multiline reference-property changes
+in quoted and nested lists preserve their Markdown prefixes and neighboring
+occurrences; ambiguous mappings are rejected before changing source.

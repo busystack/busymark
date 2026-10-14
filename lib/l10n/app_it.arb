@@ -3606,5 +3606,9 @@
   "wsNativeMarkers": "Indicatori Markdown",
   "wsListMarkerStart": "Indicatore iniziale: {number}",
   "wsListLevel": "Livello {level}",
-  "wsModuleCapsIgnored": "Il builder fissato ignora le regole <caps> del modulo. Usare un attributo caps locale o default-property."
+  "wsModuleCapsIgnored": "Il builder fissato ignora le regole <caps> del modulo. Usare un attributo caps locale o default-property.",
+  "wsInsertElements": "Inserisci elementi",
+  "wsAdmonitionsAndQuotes": "Avvisi e citazioni",
+  "wsSemanticText": "Testo semantico",
+  "wsPropertiesUnavailable": "L’elemento esaminato non è disponibile. Esamina un elemento per continuare."
 }

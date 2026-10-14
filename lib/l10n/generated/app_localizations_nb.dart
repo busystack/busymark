@@ -5389,4 +5389,17 @@ class AppLocalizationsNb extends AppLocalizations {
   @override
   String get wsModuleCapsIgnored =>
       'Den fastsatte byggeren ignorerer modulens <caps>-regler. Bruk et lokalt caps-attributt eller default-property.';
+
+  @override
+  String get wsInsertElements => 'Sett inn elementer';
+
+  @override
+  String get wsAdmonitionsAndQuotes => 'Merknader og sitater';
+
+  @override
+  String get wsSemanticText => 'Semantisk tekst';
+
+  @override
+  String get wsPropertiesUnavailable =>
+      'Det inspiserte elementet er utilgjengelig. Inspiser et element for å fortsette.';
 }

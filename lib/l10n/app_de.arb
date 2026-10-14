@@ -3606,5 +3606,9 @@
   "wsNativeMarkers": "Markdown-Listenzeichen",
   "wsListMarkerStart": "Listenbeginn: {number}",
   "wsListLevel": "Ebene {level}",
-  "wsModuleCapsIgnored": "Der festgelegte Builder ignoriert <caps>-Regeln des Moduls. Verwenden Sie ein lokales caps-Attribut oder default-property."
+  "wsModuleCapsIgnored": "Der festgelegte Builder ignoriert <caps>-Regeln des Moduls. Verwenden Sie ein lokales caps-Attribut oder default-property.",
+  "wsInsertElements": "Elemente einfügen",
+  "wsAdmonitionsAndQuotes": "Hinweise und Zitate",
+  "wsSemanticText": "Semantischer Text",
+  "wsPropertiesUnavailable": "Das betrachtete Element ist nicht verfügbar. Wählen Sie ein Element zum Fortfahren."
 }

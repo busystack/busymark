@@ -5453,4 +5453,17 @@ class AppLocalizationsUk extends AppLocalizations {
   @override
   String get wsModuleCapsIgnored =>
       'Закріплений збирач ігнорує правила <caps> модуля. Використовуйте локальний атрибут caps або default-property.';
+
+  @override
+  String get wsInsertElements => 'Вставити елементи';
+
+  @override
+  String get wsAdmonitionsAndQuotes => 'Примітки та цитати';
+
+  @override
+  String get wsSemanticText => 'Семантичний текст';
+
+  @override
+  String get wsPropertiesUnavailable =>
+      'Елемент, що перевіряється, недоступний. Виберіть елемент для продовження.';
 }

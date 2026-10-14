@@ -581,7 +581,9 @@ class _HarnessState extends ConsumerState<_Harness> {
     await _tap(
       _singleInspectorControl(
         '$title section',
-        (w) => w is BusyMarkActionRow && w.title == title,
+        (w) =>
+            w is TextButton &&
+            w.key == ValueKey('writerside-disclosure-$title'),
       ),
     );
     await _until(
@@ -589,6 +591,44 @@ class _HarnessState extends ConsumerState<_Harness> {
       _inspectorLookupContext(expectedControl, 0),
     );
     _singleInspectorControl(expectedControl, hasControl);
+  }
+
+  Future<void> _requestProperties() async {
+    await _native('chord', 'ctrl+shift+p');
+    await _until(
+      () => _elements(
+        (w) => w is BusyMarkGroupedTextEntry && w.label == 'Type a command',
+      ).isNotEmpty,
+      'Element Properties command palette opens',
+    );
+    await _type(
+      _elements(
+        (w) => w is TextField && w.decoration?.labelText == 'Type a command',
+      ).single,
+      'Element Properties',
+    );
+    await _native('chord', 'Return');
+    await _pause();
+  }
+
+  Future<void> _closeInspector() async {
+    await _tap(
+      _elements(
+        (w) => w is BusyMarkHeaderIconButton && w.tooltip == 'Close',
+      ).single,
+    );
+    await _pause();
+  }
+
+  Future<void> _topicProperties() async {
+    await _tap(
+      _singleInspectorControl(
+        'Element',
+        (w) => w is BusyMarkComboRow<String> && w.title == 'Element',
+      ),
+    );
+    _nativeMenuOpen = true;
+    await _tapLabel('Topic Properties');
   }
 
   Future<void> _choose(String key, List<String> labels) async {
@@ -675,6 +715,7 @@ class _HarnessState extends ConsumerState<_Harness> {
       (_field(text).widget as TextField).controller!.selection =
           TextSelection.collapsed(offset: offset);
       await _pause();
+      await _requestProperties();
     }
 
     Future<void> sourceCaret(int offset) async {
@@ -683,6 +724,7 @@ class _HarnessState extends ConsumerState<_Harness> {
               as BusyMarkSourceEditorState)
           .scrollToOffset(offset);
       await _pause();
+      await _requestProperties();
     }
 
     Future<void> property(String label, String value) async {
@@ -1189,6 +1231,46 @@ class _HarnessState extends ConsumerState<_Harness> {
       _source == original && await File(path).readAsString() == original,
       'Focus, blur, help and Save do not author a generated ID',
     );
+    await _type(
+      _field('Body for presentation checks.'),
+      'Body for presentation checks. edited.',
+    );
+    _check(
+      inspector().target?.plainText == heading &&
+          inspector().document.source == _source &&
+          _inspectorProperty('Heading text').controller!.text == heading,
+      'Non-list Markdown body edit refreshes the same pinned chapter owner',
+    );
+    await _native('chord', 'ctrl+z');
+    await _pause();
+    _check(
+      _source == original &&
+          _inspectorProperty('Heading text').controller!.text == heading,
+      'Non-list body Undo retains the pinned chapter immediately',
+    );
+    await _type(_field(heading), '$heading edited');
+    _check(
+      inspector().target?.plainText == '$heading edited' &&
+          inspector().document.source == _source &&
+          _inspectorProperty('Heading text').controller!.text ==
+              '$heading edited' &&
+          _inspectorProperty('Element anchor (id)').controller!.text.isEmpty &&
+          _elements(
+                (w) => w is SelectableText && w.data == '$generated-edited',
+              ).length ==
+              1 &&
+          !_source.contains('{id='),
+      'Direct non-list heading edit refreshes its generated anchor without authoring an override',
+    );
+    await _native('chord', 'ctrl+z');
+    await _pause();
+    _check(
+      _source == original &&
+          _inspectorProperty('Heading text').controller!.text == heading &&
+          _elements((w) => w is SelectableText && w.data == generated).length ==
+              1,
+      'Direct heading Undo immediately restores the pinned title and generated anchor',
+    );
     await closeInspector();
     await _hoverProperties(_field(heading));
     _check(
@@ -1381,6 +1463,7 @@ class _HarnessState extends ConsumerState<_Harness> {
       'Presentation document reopens in Editor',
     );
     await _tap(_field(heading));
+    await _hoverProperties(_field(heading));
     _check(
       _source == saved &&
           _inspectorProperty('Element anchor (id)').controller!.text ==
@@ -1397,6 +1480,11 @@ class _HarnessState extends ConsumerState<_Harness> {
         .plainText;
     await _tap(_field(longHeading));
     await _pause();
+    _check(
+      inspector().target?.plainText == heading,
+      'Ordinary heading selection keeps the explicitly inspected owner',
+    );
+    await _hoverProperties(_field(longHeading));
     _check(
       _inspectorProperty('Element anchor (id)').controller!.text.isEmpty &&
           inspector().target?.attributes['generatedId'] == 'true',
@@ -1431,6 +1519,7 @@ class _HarnessState extends ConsumerState<_Harness> {
     await _native('chord', 'ctrl+a');
     await _native('chord', 'ctrl+a');
     await _pause();
+    await _requestProperties();
     _check(
       _elements(
             (w) =>
@@ -1501,12 +1590,17 @@ class _HarnessState extends ConsumerState<_Harness> {
               as BusyMarkSourceEditorState)
           .scrollToOffset(offset);
       await _pause();
+      await _requestProperties();
     }
 
     Future<void> section(String title, {String? field}) async {
       if (field != null && fields().contains(field)) return;
       await _tap(
-        _elements((w) => w is BusyMarkActionRow && w.title == title).single,
+        _elements(
+          (w) =>
+              w is TextButton &&
+              w.key == ValueKey('writerside-disclosure-$title'),
+        ).single,
       );
     }
 
@@ -2233,7 +2327,7 @@ class _HarnessState extends ConsumerState<_Harness> {
     );
     await _tap(_field('Parent caption guide'));
     if (ref.read(appSettingsControllerProvider).elementPropertiesVisible) {
-      await paletteProperties();
+      await _closeInspector();
     }
     await paletteProperties();
     _check(
@@ -2241,7 +2335,7 @@ class _HarnessState extends ConsumerState<_Harness> {
       'Keyboard command still inspects the current selection',
     );
     await settings.setThemeModePreference(BusyMarkThemeModePreference.dark);
-    await paletteProperties();
+    await _closeInspector();
     await windowManager.setSize(const Size(800, 900));
     await _pause();
     await _hoverProperties(_field('Nested first'));
@@ -2250,10 +2344,10 @@ class _HarnessState extends ConsumerState<_Harness> {
     await settings.setThemeModePreference(BusyMarkThemeModePreference.light);
     await windowManager.setSize(const Size(1400, 960));
     await _capture('contextual-native-list-light');
-    await paletteProperties();
+    await _closeInspector();
     _check(
       !ref.read(appSettingsControllerProvider).elementPropertiesVisible,
-      'Contextual journey closes its inspector through the guarded command',
+      'Contextual journey closes its inspector through the guarded close control',
     );
     await settings.setLocaleTag('ar');
     await _pause();
@@ -2266,7 +2360,7 @@ class _HarnessState extends ConsumerState<_Harness> {
     await _capture('contextual-rtl-margin');
     await settings.setLocaleTag('en');
     await _pause();
-    await paletteProperties();
+    await _closeInspector();
     await controller.openPath(widget.root.path);
   }
 
@@ -2279,7 +2373,9 @@ class _HarnessState extends ConsumerState<_Harness> {
     final target = panel.target?.id;
     final reference = panel.inlineTarget?.referenceIndex;
     final section = _inspectorControls(
-      (w) => w is BusyMarkActionRow && w.title == 'Advanced',
+      (w) =>
+          w is TextButton &&
+          w.key == const ValueKey('writerside-disclosure-Advanced'),
     ).singleOrNull;
     var wasExpanded = false;
     if (section != null) {
@@ -2323,7 +2419,7 @@ class _HarnessState extends ConsumerState<_Harness> {
         await Scrollable.ensureVisible(
           _singleInspectorControl(
             'Show in Source',
-            (w) => w is BusyMarkActionRow && w.title == 'Show in Source',
+            (w) => w is BusyMarkDialogButton && w.label == 'Show in Source',
           ),
           alignment: 1,
         );
@@ -2344,7 +2440,9 @@ class _HarnessState extends ConsumerState<_Harness> {
       await _tap(
         _singleInspectorControl(
           'Advanced',
-          (w) => w is BusyMarkActionRow && w.title == 'Advanced',
+          (w) =>
+              w is TextButton &&
+              w.key == const ValueKey('writerside-disclosure-Advanced'),
         ),
       );
     }
@@ -2357,6 +2455,549 @@ class _HarnessState extends ConsumerState<_Harness> {
           current.inlineTarget?.referenceIndex == reference,
       '$name whole-panel width/theme/RTL/scaling inspection preserves source and target',
     );
+  }
+
+  Future<void> _runSemanticMenuCommands(bool xml) async {
+    BusyMarkWritersideProperties pane() =>
+        _elements((w) => w is BusyMarkWritersideProperties).single.widget
+            as BusyMarkWritersideProperties;
+    _check(
+      pane().document.isXmlTopic == xml,
+      '${xml ? "XML" : "Markdown"} semantic menu runs in the intended production document',
+    );
+    for (final semantic in const [
+      ('UI Control', 'control', 'Open & Files'),
+      ('File / Path', 'path', 'docs/example.txt'),
+      ('UI Path', 'ui-path', 'File | Open'),
+      ('Keyboard Shortcuts', 'shortcut', 'Ctrl+M'),
+    ]) {
+      await _tap(_field('Semantic insertion.'));
+      (_field('Semantic insertion.').widget as TextField)
+          .controller!
+          .selection = const TextSelection(
+        baseOffset: 0,
+        extentOffset: 8,
+      );
+      await _pause();
+      final before = _source;
+      final pinned = pane().target!.id;
+      await _choose('wysiwyg-writerside', ['Semantic text', semantic.$1]);
+      _check(
+        _source.contains('<${semantic.$2}>Semantic</${semantic.$2}>') &&
+            pane().target!.id == pinned,
+        '${semantic.$1} wraps selected text from the consolidated native menu without retargeting inspection',
+      );
+      await _native('chord', 'ctrl+z');
+      await _pause();
+      _check(
+        _source == before && pane().target!.id == pinned,
+        '${semantic.$1} selected wrapping has one Undo',
+      );
+      await _tap(_field('Semantic insertion.'));
+      (_field('Semantic insertion.').widget as TextField)
+          .controller!
+          .selection = const TextSelection.collapsed(
+        offset: 19,
+      );
+      await _pause();
+      await _choose('wysiwyg-writerside', ['Semantic text', semantic.$1]);
+      _check(
+        _source == before,
+        '${semantic.$1} collapsed insertion is source-neutral while input is open',
+      );
+      await _tapLabel('Cancel');
+      await _pause();
+      _check(
+        _source == before &&
+            (_field('Semantic insertion.').widget as TextField)
+                    .controller!
+                    .selection
+                    .extentOffset ==
+                19,
+        '${semantic.$1} cancellation preserves source and original caret',
+      );
+      await _choose('wysiwyg-writerside', ['Semantic text', semantic.$1]);
+      final input =
+          _elements(
+                (w) =>
+                    w is BusyMarkGroupedTextEntry &&
+                    w.key == const ValueKey('wysiwyg-semantic-text'),
+              ).single.widget
+              as BusyMarkGroupedTextEntry;
+      await _type(
+        _elements(
+          (w) => w is TextField && w.decoration?.labelText == input.label,
+        ).single,
+        semantic.$3,
+      );
+      await _native('chord', 'Return');
+      await _pause();
+      final changed = _source;
+      _check(
+        changed.contains('<${semantic.$2}>') &&
+            changed != before &&
+            pane().target!.id == pinned,
+        '${semantic.$1} collapsed input authors a semantic element without retargeting inspection',
+      );
+      await _native('chord', 'ctrl+z');
+      await _pause();
+      _check(_source == before, '${semantic.$1} input insertion has one Undo');
+      await _native('chord', 'ctrl+shift+z');
+      await _pause();
+      _check(
+        _source == changed,
+        '${semantic.$1} input Redo restores escaped markup',
+      );
+      // Retain each semantic element for saved-document and published checks,
+      // while keeping the next command's input paragraph independently editable.
+      await _native('chord', 'End');
+      await _native('chord', 'Return');
+      await _native('type', 'Semantic insertion.');
+      await _pause();
+    }
+    for (final style in ['Tip', 'Note', 'Warning', 'Quote']) {
+      await _tap(_field('$style example.'));
+      final before = _source;
+      final target = pane().target!.id;
+      await _choose('wysiwyg-writerside', ['Admonitions and quotes', style]);
+      final changed = _source;
+      _check(
+        changed != before &&
+            changed.contains(xml ? '<${style.toLowerCase()}>' : '> $style '),
+        '${xml ? "XML" : "Markdown"} $style menu transforms the selected block',
+      );
+      _check(
+        changed.contains(xml ? '<b>example</b>' : '**example**') &&
+            pane().target!.id == target,
+        '$style preserves existing inline formatting and the pinned inspector',
+      );
+      await _native('chord', 'ctrl+z');
+      await _pause();
+      _check(
+        _source == before &&
+            (_field('$style example.').widget as TextField).focusNode!.hasFocus,
+        '$style transformation has one Undo and retains content focus',
+      );
+      await _native('chord', 'ctrl+shift+z');
+      await _pause();
+      _check(
+        _source == changed &&
+            (_field('$style example.').widget as TextField).focusNode!.hasFocus,
+        '$style transformation Redo preserves source and content focus',
+      );
+    }
+  }
+
+  Future<void> _runExplicitInspection() async {
+    final controller = ref.read(workspaceControllerProvider.notifier);
+    await controller.openPath('${widget.root.path}-contextual');
+    final path = p.join(
+      '${widget.root.path}-contextual',
+      'topics/explicit-inspection.md',
+    );
+    await controller.openActiveFile(path);
+    await _native('chord', 'ctrl+shift+1');
+    await _pause();
+    BusyMarkWritersideProperties pane() =>
+        _elements((w) => w is BusyMarkWritersideProperties).single.widget
+            as BusyMarkWritersideProperties;
+    Future<void> sourceCaret(int offset) async {
+      ((_elements((w) => w is BusyMarkSourceEditor).single as StatefulElement)
+                  .state
+              as BusyMarkSourceEditorState)
+          .scrollToOffset(offset);
+      await _pause();
+    }
+
+    Future<void> property(String label, String value) async {
+      final entry = _inspectorProperty(label);
+      await _type(
+        _singleInspectorControl(
+          label,
+          (w) => w is TextField && w.controller == entry.controller,
+        ),
+        value,
+      );
+      await _key(PhysicalKeyboardKey.enter, LogicalKeyboardKey.enter);
+    }
+
+    await _tap(_field('Paragraph B.'));
+    final caret =
+        (_field('Paragraph B.').widget as TextField).controller!.selection;
+    final original = _source;
+    await _hoverProperties(_field('Chapter A'));
+    _check(
+      pane().target!.plainText == 'Chapter A' &&
+          (_field('Paragraph B.').widget as TextField).controller!.selection ==
+              caret &&
+          _source == original,
+      'Explicit chapter inspection is independent of the caret and source',
+    );
+    await _tap(_field('Paragraph B.'));
+    await _native('chord', 'End');
+    await _native('type', ' edited');
+    await _pause();
+    _check(
+      pane().target!.plainText == 'Chapter A' &&
+          pane().document.source == _source,
+      'Ordinary click and typing in B refresh the revision without retargeting A',
+    );
+    await _tap(_field('Chapter A'));
+    await _native('chord', 'End');
+    await _native('type', ' edited');
+    await _pause();
+    _check(
+      _inspectorProperty('Heading text').controller!.text == 'Chapter A edited',
+      'Direct editing refreshes the pinned chapter title',
+    );
+    await _native('chord', 'ctrl+z');
+    await _pause();
+    _check(
+      _inspectorProperty('Heading text').controller!.text == 'Chapter A',
+      'Direct-edit Undo refreshes the pinned chapter before caret movement',
+    );
+    final invalidAnchor = _inspectorProperty('Element anchor (id)');
+    await _type(
+      _singleInspectorControl(
+        'Element anchor (id)',
+        (w) => w is TextField && w.controller == invalidAnchor.controller,
+      ),
+      'invalid id',
+    );
+    await _tap(_field('Paragraph B. edited'));
+    await _native('chord', 'End');
+    await _native('type', ' again');
+    await _pause();
+    _check(
+      pane().target!.plainText == 'Chapter A' &&
+          invalidAnchor.controller!.text == 'invalid id' &&
+          controller.propertyEdits.hasPending,
+      'Ordinary Editor selection and typing retain the original invalid property draft',
+    );
+    await _hoverProperties(_field('Paragraph B. edited again'));
+    _check(
+      pane().target!.plainText == 'Chapter A' &&
+          invalidAnchor.controller!.text == 'invalid id',
+      'Explicit Editor retargeting cannot transfer an invalid draft to B',
+    );
+    invalidAnchor.focusNode!.requestFocus();
+    await _native('chord', 'Escape');
+    await _pause();
+    _check(
+      pane().target!.plainText == 'Chapter A' &&
+          pane().document.source == _source &&
+          _inspectorProperty('Element anchor (id)').controller!.text.isEmpty,
+      'Reverting a conflicting draft refreshes its original owner without caret movement',
+    );
+    await _native('chord', 'ctrl+z');
+    await _pause();
+    _check(
+      _source.contains('Paragraph B. edited\n') &&
+          pane().target!.plainText == 'Chapter A',
+      'Undo of ordinary B typing preserves the pinned A owner',
+    );
+    await _native('chord', 'ctrl+shift+4');
+    await _pause();
+    _check(
+      pane().target!.plainText == 'Chapter A',
+      'Editor to Split retains the inspected chapter',
+    );
+    await sourceCaret(_source.indexOf('Paragraph B.'));
+    _check(
+      pane().target!.plainText == 'Chapter A',
+      'Split Source caret does not retarget inspection',
+    );
+    await _requestProperties();
+    _check(
+      pane().target!.plainText == 'Paragraph B. edited',
+      'Explicit Split command inspects the current Source element',
+    );
+    await _native('chord', 'ctrl+shift+1');
+    await _pause();
+    _check(
+      pane().target!.plainText == 'Paragraph B. edited',
+      'Split to Editor retains the inspected paragraph',
+    );
+    await _tapLabel('Show in Source');
+    await _pause();
+    _check(
+      pane().target!.plainText == 'Paragraph B. edited' &&
+          ref
+                  .read(workspaceControllerProvider)
+                  .activeBuffer!
+                  .editorState
+                  .selection
+                  .extentOffset ==
+              _source.indexOf('Paragraph B.'),
+      'Compact Show in Source navigates exactly without retargeting',
+    );
+    await sourceCaret(_source.indexOf('Other paragraph.'));
+    _check(
+      pane().target!.plainText == 'Paragraph B. edited',
+      'Source caret and focus do not change the inspected paragraph',
+    );
+    await _requestProperties();
+    _check(
+      pane().target!.plainText == 'Other paragraph.',
+      'Open inspector command explicitly retargets Source selection',
+    );
+    final beforeAnchor = _source;
+    await property('Element anchor (id)', 'other-anchor');
+    final afterAnchor = _source;
+    await _native('chord', 'ctrl+z');
+    await _pause();
+    _check(
+      _source == beforeAnchor &&
+          _inspectorProperty('Element anchor (id)').controller!.text.isEmpty &&
+          _inspectorProperty('Element anchor (id)').focusNode!.hasFocus &&
+          pane().target!.plainText == 'Other paragraph.',
+      'Pinned paragraph anchor Undo restores target and value immediately',
+    );
+    await _native('chord', 'ctrl+shift+z');
+    await _pause();
+    _check(
+      _source == afterAnchor &&
+          _inspectorProperty('Element anchor (id)').controller!.text ==
+              'other-anchor',
+      'Pinned paragraph anchor Redo restores target and value immediately',
+    );
+    final draft = _inspectorProperty('Element anchor (id)');
+    await _type(
+      _singleInspectorControl(
+        'Element anchor (id)',
+        (w) => w is TextField && w.controller == draft.controller,
+      ),
+      'invalid id',
+    );
+    await _native('chord', 'ctrl+shift+1');
+    await _pause();
+    _check(
+      _elements((w) => w is BusyMarkSourceEditor).isNotEmpty &&
+          controller.propertyEdits.hasPending,
+      'Invalid draft still blocks a view transition',
+    );
+    await sourceCaret(_source.indexOf('Chapter B'));
+    await _requestProperties();
+    _check(
+      pane().target!.plainText == 'Other paragraph.' &&
+          draft.controller!.text == 'invalid id' &&
+          _source == afterAnchor,
+      'Explicit Source retarget rejects rather than transfers an invalid draft',
+    );
+    draft.focusNode!.requestFocus();
+    await _native('chord', 'Escape');
+    await _pause();
+    await property('Element anchor (id)', '');
+    final beforeDelete = _source;
+    await sourceCaret(_source.indexOf('Other paragraph.'));
+    await _native('chord', 'Home');
+    await _native('chord', 'shift+End');
+    await _native('key', 'Delete');
+    await _pause();
+    _check(
+      _elements((w) => w is BusyMarkWritersideProperties).isEmpty &&
+          _elements(
+            (w) =>
+                w is Text &&
+                w.data ==
+                    'The inspected element is unavailable. Inspect an element to continue.',
+          ).isNotEmpty,
+      'Deleting the inspected paragraph invalidates it instead of selecting a neighbor',
+    );
+    await _native('chord', 'ctrl+z');
+    await _pause();
+    _check(
+      _source == beforeDelete && pane().target!.plainText == 'Other paragraph.',
+      'Undo restores the verified inspected paragraph without a caret event',
+    );
+    await _native('chord', 'ctrl+shift+1');
+    await _pause();
+    await _hoverProperties(_field('Child item'));
+    await _tap(
+      _singleInspectorControl(
+        'Element',
+        (w) => w is BusyMarkComboRow<String> && w.title == 'Element',
+      ),
+    );
+    _nativeMenuOpen = true;
+    final parentList = pane().path.lastWhere(
+      (b) => b.attributes['element'] == 'list',
+    );
+    final selector =
+        _singleInspectorControl(
+              'Element',
+              (w) => w is BusyMarkComboRow<String> && w.title == 'Element',
+            ).widget
+            as BusyMarkComboRow<String>;
+    await _tapLabel(selector.labelFor(parentList.id));
+    final listId = pane().target!.id;
+    await _tap(_field('Parent item'));
+    _check(
+      pane().target!.id == listId &&
+          pane().target!.attributes['element'] == 'list',
+      'Ordinary item selection retains the explicitly inspected parent list',
+    );
+    await _captureInspectorLayouts('explicit-list');
+    for (final reference in [
+      (
+        'Multiline Copy and Copy.',
+        11,
+        '<shortcut',
+        'Action ID (key)',
+        r'$Save',
+        r'key="$Copy"',
+        r'key="$Save"',
+      ),
+      (
+        'Nested Read and Read.',
+        8,
+        '<a\n',
+        'Link target (href)',
+        'lists.topic#title-case',
+        'href="lists.topic#absent"',
+        'href="lists.topic#title-case"',
+      ),
+    ]) {
+      await _tap(_field(reference.$1));
+      (_field(reference.$1).widget as TextField).controller!.selection =
+          TextSelection.collapsed(offset: reference.$2);
+      await _pause();
+      await _requestProperties();
+      final before = _source;
+      await _tapLabel('Show in Source');
+      await _pause();
+      _check(
+        ref
+                .read(workspaceControllerProvider)
+                .activeBuffer!
+                .editorState
+                .selection
+                .extentOffset ==
+            before.indexOf(reference.$3),
+        'Multiline ${reference.$4} Show in Source maps exact authored occurrence',
+      );
+      await property(reference.$4, reference.$5);
+      final changed = _source;
+      _check(
+        changed == before.replaceFirst(reference.$6, reference.$7),
+        'Multiline ${reference.$4} edits only the mapped attribute and preserves Markdown prefixes',
+      );
+      await _native('chord', 'ctrl+z');
+      await _pause();
+      _check(
+        _source == before &&
+            _inspectorProperty(reference.$4).controller!.text != reference.$5,
+        'Multiline ${reference.$4} Undo retains owner and restored value',
+      );
+      await _native('chord', 'ctrl+shift+z');
+      await _pause();
+      _check(
+        _source == changed &&
+            _inspectorProperty(reference.$4).controller!.text == reference.$5,
+        'Multiline ${reference.$4} Redo retains owner and changed value',
+      );
+      await _native('chord', 'ctrl+shift+1');
+      await _pause();
+    }
+    await _native('chord', 'ctrl+shift+2');
+    await _pause();
+    await sourceCaret(_source.indexOf('<shortcut') + 2);
+    await _requestProperties();
+    final beforeKeymap = _source;
+    await property('Keymap help instance (from-keymap-of)', 'conformance');
+    final withKeymap = _source;
+    _check(
+      withKeymap ==
+          beforeKeymap.replaceFirst(
+            r'key="$Save">',
+            r'key="$Save" from-keymap-of="conformance">',
+          ),
+      'Adding a mapped multiline reference attribute preserves quote/list prefixes',
+    );
+    await property('Keymap help instance (from-keymap-of)', '');
+    _check(
+      _source == beforeKeymap,
+      'Removing a mapped multiline reference attribute restores exact source',
+    );
+    await _native('chord', 'ctrl+z');
+    await _pause();
+    _check(
+      _source == withKeymap &&
+          _inspectorProperty(
+                'Keymap help instance (from-keymap-of)',
+              ).controller!.text ==
+              'conformance',
+      'Multiline attribute removal Undo restores the same owner and authored value',
+    );
+    await _native('chord', 'ctrl+shift+z');
+    await _pause();
+    _check(
+      _source == beforeKeymap &&
+          _inspectorProperty(
+            'Keymap help instance (from-keymap-of)',
+          ).controller!.text.isEmpty,
+      'Multiline attribute removal Redo restores absence on the same owner',
+    );
+    await _native('chord', 'ctrl+shift+1');
+    await _pause();
+    await _runSemanticMenuCommands(false);
+    await _native('chord', 'ctrl+s');
+    await _until(
+      () => !ref.read(workspaceControllerProvider).activeBuffer!.isDirty,
+      'Explicit inspection source saved',
+    );
+    final saved = _source;
+    await _native('chord', 'ctrl+w');
+    await _pause();
+    await controller.openActiveFile(path);
+    await _pause();
+    _check(
+      _source == saved &&
+          _elements((w) => w is BusyMarkWritersideProperties).isEmpty,
+      'Save and reopen preserve source and require explicit inspection in a new buffer',
+    );
+    await _native('chord', 'ctrl+shift+2');
+    await _pause();
+    await sourceCaret(_source.indexOf('<shortcut') + 2);
+    await _requestProperties();
+    _check(
+      _inspectorProperty('Action ID (key)').controller!.text == r'$Save',
+      'Multiline shortcut survives save and reopen',
+    );
+    await _captureInspectorLayouts('explicit-shortcut');
+    final xmlPath = p.join(
+      '${widget.root.path}-contextual',
+      'topics/semantic-commands.topic',
+    );
+    await controller.openActiveFile(xmlPath);
+    await _native('chord', 'ctrl+shift+1');
+    await _pause();
+    _check(
+      _elements((w) => w is BusyMarkWritersideProperties).isEmpty,
+      'Changing to XML clears the previous editable target',
+    );
+    await _hoverProperties(_field('Semantic insertion.'));
+    await _runSemanticMenuCommands(true);
+    await _native('chord', 'ctrl+s');
+    await _until(
+      () => !ref.read(workspaceControllerProvider).activeBuffer!.isDirty,
+      'XML semantic commands save through the production UI',
+    );
+    final savedXml = _source;
+    await _native('chord', 'ctrl+w');
+    await _pause();
+    await controller.openActiveFile(xmlPath);
+    await _pause();
+    _check(
+      _source == savedXml &&
+          savedXml.contains('<control>Open &amp; Files</control>') &&
+          savedXml.contains('<path>docs/example.txt</path>') &&
+          savedXml.contains('<ui-path>File | Open</ui-path>') &&
+          savedXml.contains('<shortcut>Ctrl+M</shortcut>'),
+      'Every XML semantic command survives save close reopen with literal shortcut content',
+    );
+    await _closeInspector();
+    await controller.openPath(widget.root.path);
   }
 
   Future<void> _runNestedListReferences() async {
@@ -2385,6 +3026,7 @@ class _HarnessState extends ConsumerState<_Harness> {
               as BusyMarkSourceEditorState)
           .scrollToOffset(at);
       await _pause();
+      await _requestProperties();
     }
 
     Future<void> occurrence(
@@ -2400,6 +3042,7 @@ class _HarnessState extends ConsumerState<_Harness> {
       (_field(text).widget as TextField).controller!.selection =
           TextSelection.collapsed(offset: position + 1);
       await _pause();
+      await _requestProperties();
       _check(
         pane().inlineTarget?.kind == kind &&
             pane().inlineTarget?.start == position,
@@ -2644,21 +3287,7 @@ class _HarnessState extends ConsumerState<_Harness> {
         'Startup ignores old visible preference and preserves width',
       );
       await _capture('inspector-startup-closed');
-      Future<void> paletteProperties() async {
-        await _native('chord', 'ctrl+shift+p');
-        await _until(
-          () => _elements(
-            (w) => w is BusyMarkGroupedTextEntry && w.label == 'Type a command',
-          ).isNotEmpty,
-          'Command palette opens',
-        );
-        final entry = _elements(
-          (w) => w is TextField && w.decoration?.labelText == 'Type a command',
-        ).single;
-        await _type(entry, 'Element Properties');
-        await _native('chord', 'Return');
-        await _pause();
-      }
+      Future<void> paletteProperties() => _requestProperties();
 
       if (![
         'BUSYMARK_INLINE_REFERENCES_ONLY',
@@ -2669,6 +3298,7 @@ class _HarnessState extends ConsumerState<_Harness> {
         await _runChapterPresentation();
         await _runContextualListProperties(paletteProperties);
         await _runNestedListReferences();
+        await _runExplicitInspection();
       }
       if (Platform.environment['BUSYMARK_PROPERTY_CONTRACT_ONLY'] == '1') {
         await _runPropertyContract(paletteProperties);
@@ -2685,6 +3315,8 @@ class _HarnessState extends ConsumerState<_Harness> {
       await controller.openActiveFile(
         p.join(widget.root.path, 'topics/authoring.topic'),
       );
+      await _native('chord', 'ctrl+shift+1');
+      await _pause();
       await _until(
         () => _elements(
           (w) => w is TextField && w.controller?.text == 'print(1);',
@@ -2765,7 +3397,7 @@ class _HarnessState extends ConsumerState<_Harness> {
         await _finish(null);
         return;
       }
-      await paletteProperties();
+      await _closeInspector();
       for (final suffix
           in Platform.environment['BUSYMARK_PROPERTIES_ONLY'] == '1'
               ? <String>[]
@@ -2796,7 +3428,7 @@ class _HarnessState extends ConsumerState<_Harness> {
         final selected = (body.widget as TextField).controller!.selection;
         await _tap(
           _elements(
-            (w) => w.key == const ValueKey('wysiwyg-writerside-insert'),
+            (w) => w.key == const ValueKey('wysiwyg-writerside'),
           ).single,
         );
         _nativeMenuOpen = true;
@@ -2817,7 +3449,7 @@ class _HarnessState extends ConsumerState<_Harness> {
               (body.widget as TextField).focusNode!.hasFocus,
           '$suffix GTK keyboard dismissal preserves source, selection and focus',
         );
-        await _choose('wysiwyg-writerside-semantic', ['UI Control']);
+        await _choose('wysiwyg-writerside', ['Semantic text', 'UI Control']);
         _check(
           _source.contains('<control>Text</control>'),
           '$suffix semantic formatting authors control',
@@ -2862,28 +3494,31 @@ class _HarnessState extends ConsumerState<_Harness> {
           _source.contains('<control>Text</control>'),
           '$suffix semantic redo preserves type',
         );
-        await _choose('wysiwyg-writerside-insert', ['Procedure']);
+        await _choose('wysiwyg-writerside', ['Insert elements', 'Procedure']);
         await _type(_field(''), 'Step content');
         _check(
           _source.contains('<procedure') && _source.contains('Step content'),
           '$suffix inserted procedure is visually editable',
         );
         await _tap(_field('Text'));
-        await _choose('wysiwyg-writerside-insert', ['Tabs']);
+        await _choose('wysiwyg-writerside', ['Insert elements', 'Tabs']);
         await _type(_field(''), 'Tab content');
         _check(
           _source.contains('Tab content'),
           '$suffix inserted tab is visually editable',
         );
         await _tap(_field('Text'));
-        await _choose('wysiwyg-writerside-insert', ['Definition List']);
+        await _choose('wysiwyg-writerside', [
+          'Insert elements',
+          'Definition List',
+        ]);
         await _type(_field(''), 'Definition content');
         await _tap(_field('Text'));
-        await _choose('wysiwyg-writerside-insert', ['TLDR']);
+        await _choose('wysiwyg-writerside', ['Insert elements', 'TLDR']);
         await _type(_field(''), 'Summary content');
         await _tap(_field('Text'));
         final beforeVideo = _source;
-        await _choose('wysiwyg-writerside-insert', ['Video']);
+        await _choose('wysiwyg-writerside', ['Insert elements', 'Video']);
         _check(_source == beforeVideo, '$suffix video draft is source-neutral');
         final videoEntry = _elements(
           (w) => w is BusyMarkGroupedTextEntry && w.label == 'Source (src)',
@@ -2899,7 +3534,8 @@ class _HarnessState extends ConsumerState<_Harness> {
           '$suffix video source is authored',
         );
         await _tap(_field('Text'));
-        await _choose('wysiwyg-writerside-insert', [
+        await _choose('wysiwyg-writerside', [
+          'Insert elements',
           'Include Reusable Content',
           'features.topic',
           'shared-conformance',
@@ -2912,7 +3548,8 @@ class _HarnessState extends ConsumerState<_Harness> {
         (_field('Text').widget as TextField).controller!.selection =
             const TextSelection.collapsed(offset: 4);
         await _pause();
-        await _choose('wysiwyg-writerside-insert', [
+        await _choose('wysiwyg-writerside', [
+          'Insert elements',
           'Variable Reference',
           'product',
         ]);
@@ -2970,6 +3607,7 @@ class _HarnessState extends ConsumerState<_Harness> {
           '$suffix switcher label property is authored',
         );
         await _tap(_field('Section'));
+        await _requestProperties();
         final before = _source;
         await _capture('authoring-$suffix-light');
         await _tap(
@@ -3013,6 +3651,10 @@ class _HarnessState extends ConsumerState<_Harness> {
         controller.updateActiveEditorMode(DocumentViewModePreference.editor);
         await settings.setDocumentViewMode(DocumentViewModePreference.editor);
         await _pause();
+        await _until(
+          () => _elements((w) => w is BusyMarkWysiwygEditor).isNotEmpty,
+          '$suffix Source to Editor restores the editing surface',
+        );
         _check(
           _source == authored,
           '$suffix Source to Editor preserves source',
@@ -3039,6 +3681,9 @@ class _HarnessState extends ConsumerState<_Harness> {
             'topics/${suffix == 'md' ? 'authoring-markdown.md' : 'authoring.topic'}',
           ),
         );
+        // Closing activates another tab with its own view preference. Choose
+        // the intended editing surface explicitly before exercising its fields.
+        await _native('chord', 'ctrl+shift+1');
         await _until(
           () =>
               _elements((w) => w is BusyMarkWysiwygEditor).isNotEmpty &&
@@ -3054,6 +3699,7 @@ class _HarnessState extends ConsumerState<_Harness> {
         (variableField.widget as TextField).controller!.selection =
             const TextSelection.collapsed(offset: 6);
         await _pause();
+        await _requestProperties();
         _check(
           _elements(
             (w) =>
@@ -3075,11 +3721,12 @@ class _HarnessState extends ConsumerState<_Harness> {
           '$suffix switcher label survives save and Source to Editor',
         );
         await _tap(_field('Section'));
+        await _requestProperties();
         _check(
           !(_elements((w) => w is BusyMarkWritersideProperties).single.widget
                   as BusyMarkWritersideProperties)
               .topicSelected,
-          '$suffix returning to the same content retargets properties',
+          '$suffix explicit inspection retargets properties to the same content',
         );
         await settings.setThemeModePreference(BusyMarkThemeModePreference.dark);
         await settings.setEditorToolbarDirection(
@@ -3100,7 +3747,6 @@ class _HarnessState extends ConsumerState<_Harness> {
         await windowManager.setSize(const Size(1400, 960));
       }
       for (final suffix in ['topic', 'md']) {
-        await _native('chord', 'ctrl+shift+1');
         await settings.setElementPropertiesVisible(true);
         await settings.setElementPropertiesWidth(390);
         await controller.openActiveFile(
@@ -3109,6 +3755,7 @@ class _HarnessState extends ConsumerState<_Harness> {
             'topics/${suffix == 'md' ? 'inspector-markdown.md' : 'inspector.topic'}',
           ),
         );
+        await _native('chord', 'ctrl+shift+1');
         await _until(
           () => _elements((w) => w is BusyMarkWysiwygEditor).isNotEmpty,
           'Inspector editor loaded',
@@ -3220,6 +3867,7 @@ class _HarnessState extends ConsumerState<_Harness> {
             : _source.indexOf('```text');
         sourceState.scrollToOffset(codeOffset);
         await _pause();
+        await _requestProperties();
         final properties =
             _elements((w) => w is BusyMarkWritersideProperties).single.widget
                 as BusyMarkWritersideProperties;
@@ -3285,10 +3933,10 @@ class _HarnessState extends ConsumerState<_Harness> {
           'Source field displays chosen topic-relative reference',
         );
         await _capture('inspector-source-file-selected');
-        await paletteProperties();
+        await _closeInspector();
         _check(
           !ref.read(appSettingsControllerProvider).elementPropertiesVisible,
-          'Palette closes through workspace handler',
+          'Close control uses the workspace draft handler',
         );
         await paletteProperties();
         _check(
@@ -3421,6 +4069,8 @@ class _HarnessState extends ConsumerState<_Harness> {
         reopened.scrollToOffset(
           _source.indexOf(suffix == 'topic' ? '<code-block' : '```text'),
         );
+        await _pause();
+        await _requestProperties();
         await _until(
           () => _elements(
             (w) =>
@@ -3457,6 +4107,8 @@ class _HarnessState extends ConsumerState<_Harness> {
         liveSourceState.scrollToOffset(
           _source.indexOf(suffix == 'topic' ? '<chapter id="b"' : '## Block B'),
         );
+        await _pause();
+        await _requestProperties();
         await _until(
           () => _elements(
             (w) =>
@@ -3474,6 +4126,8 @@ class _HarnessState extends ConsumerState<_Harness> {
         liveSourceState.scrollToOffset(
           _source.indexOf(suffix == 'topic' ? '<code-block' : '```text'),
         );
+        await _pause();
+        await _requestProperties();
         await _until(
           () => _elements(
             (w) =>
@@ -3584,7 +4238,7 @@ class _HarnessState extends ConsumerState<_Harness> {
         );
       }
 
-      void sourceCaret(int offset) {
+      Future<void> sourceCaret(int offset) async {
         if (offset < 0) {
           throw StateError(
             'Missing authored occurrence in ${ref.read(workspaceControllerProvider).activeBuffer?.displayName}',
@@ -3594,6 +4248,8 @@ class _HarnessState extends ConsumerState<_Harness> {
                     .state
                 as BusyMarkSourceEditorState)
             .scrollToOffset(offset);
+        await _pause();
+        await _requestProperties();
       }
 
       Future<void> showTopicNavigation() => _expandInspectorSection(
@@ -3608,7 +4264,8 @@ class _HarnessState extends ConsumerState<_Harness> {
       );
       await _native('chord', 'ctrl+shift+2');
       await _pause();
-      inspector().onTargetSelected('@topic');
+      await _requestProperties();
+      await _topicProperties();
       await _pause();
       await showTopicNavigation();
       for (final choice in [
@@ -3622,9 +4279,10 @@ class _HarnessState extends ConsumerState<_Harness> {
           'Navigation ${choice.$1} selected after native choice',
         );
         await reopenSource();
-        sourceCaret(0);
+        await sourceCaret(0);
         await _pause();
-        inspector().onTargetSelected('@topic');
+        await _requestProperties();
+        await _topicProperties();
         await _pause();
         await showTopicNavigation();
         _check(
@@ -3635,9 +4293,10 @@ class _HarnessState extends ConsumerState<_Harness> {
       await chooseCombo('Navigation elements', 'Custom navigation');
       await propertyText('Navigation elements (for)', 'chapter,def');
       await reopenSource();
-      sourceCaret(0);
+      await sourceCaret(0);
       await _pause();
-      inspector().onTargetSelected('@topic');
+      await _requestProperties();
+      await _topicProperties();
       await _pause();
       await showTopicNavigation();
       _check(
@@ -3657,13 +4316,15 @@ class _HarnessState extends ConsumerState<_Harness> {
           .read(workspaceControllerProvider)
           .activeBuffer!
           .filePath!;
-      void mappingCaret(String markup) {
+      Future<void> mappingCaret(String markup) async {
         final state =
             (_elements((w) => w is BusyMarkSourceEditor).single
                         as StatefulElement)
                     .state
                 as BusyMarkSourceEditorState;
         state.scrollToOffset(_source.indexOf(markup) + 2);
+        await _pause();
+        await _requestProperties();
       }
 
       Future<void> reopenMapping(String markup) async {
@@ -3679,12 +4340,13 @@ class _HarnessState extends ConsumerState<_Harness> {
           'Mapping buffer closes',
         );
         await controller.openActiveFile(mappingsPath);
+        await _native('chord', 'ctrl+shift+2');
         await _pause();
-        mappingCaret(markup);
+        await mappingCaret(markup);
         await _pause();
       }
 
-      mappingCaret('<include');
+      await mappingCaret('<include');
       await _pause();
       _check(
         inspector().target!.attributes['id'] == 'own-include',
@@ -3711,7 +4373,7 @@ class _HarnessState extends ConsumerState<_Harness> {
         inspector().target!.attributes['id'] == 'own-include',
         'Source inspector refreshes unchanged caret after undo',
       );
-      mappingCaret('<include');
+      await mappingCaret('<include');
       await _pause();
       final beforeInclude = _source;
       await propertyText('Included element (element-id)', 'nested');
@@ -3743,7 +4405,7 @@ class _HarnessState extends ConsumerState<_Harness> {
         'Include reference and own identity survive save close reopen',
       );
       await _capture('inspector-include-mapping');
-      mappingCaret('<img');
+      await mappingCaret('<img');
       await _pause();
       await propertyText('Preview image (preview-src)', 'logo_dark.png');
       await reopenMapping('<img');
@@ -3753,7 +4415,7 @@ class _HarnessState extends ConsumerState<_Harness> {
         'Preview image edits preview-src and keeps main src through reopen',
       );
       await _capture('inspector-image-preview-mapping');
-      mappingCaret('<shortcut');
+      await mappingCaret('<shortcut');
       await _pause();
       await propertyText('Action ID (key)', '\$Save');
       await propertyText(
@@ -3769,7 +4431,7 @@ class _HarnessState extends ConsumerState<_Harness> {
         'Shortcut action and help instance survive reopen without replacing literal content',
       );
       await _capture('inspector-shortcut-mapping');
-      mappingCaret('<a href');
+      await mappingCaret('<a href');
       await _pause();
       await propertyText('Link target (href)', 'inspector.topic#nested');
       await reopenMapping('<a href');
@@ -3787,6 +4449,11 @@ class _HarnessState extends ConsumerState<_Harness> {
         offset: 8,
       );
       await _pause();
+      _check(
+        inspector().inlineTarget?.kind == BusyInlineKind.link,
+        'Ordinary shortcut selection preserves the explicitly inspected link',
+      );
+      await _requestProperties();
       _check(
         inspector().inlineTarget?.kind == BusyInlineKind.writersideShortcut &&
             _elements(
@@ -3820,7 +4487,7 @@ class _HarnessState extends ConsumerState<_Harness> {
         _source.contains('Try `{id="literal-code"}`'),
         'Ordinary content edit save reopen preserves inline code',
       );
-      sourceCaret(_source.indexOf('Try'));
+      await sourceCaret(_source.indexOf('Try'));
       await _pause();
       _check(
         inspector().target!.attributes['id'] == null,
@@ -3839,7 +4506,7 @@ class _HarnessState extends ConsumerState<_Harness> {
           literal: 'image-literal',
         ),
       ]) {
-        sourceCaret(
+        await sourceCaret(
           _source.indexOf(
             'Read ${reference.kind == BusyInlineKind.link ? '[' : '!['}',
           ),
@@ -3864,7 +4531,7 @@ class _HarnessState extends ConsumerState<_Harness> {
         );
       }
       await _capture('inspector-linked-code-reopened');
-      sourceCaret(_source.indexOf('Use [') + 1);
+      await sourceCaret(_source.indexOf('Use [') + 1);
       await _pause();
       _check(
         inspector().target!.attributes['id'] == null &&
@@ -3873,7 +4540,7 @@ class _HarnessState extends ConsumerState<_Harness> {
             ),
         'Trailing link attributes belong only to the link',
       );
-      sourceCaret(_source.indexOf('- Second'));
+      await sourceCaret(_source.indexOf('- Second'));
       await _pause();
       final beforeItemUndo = ref
           .read(workspaceControllerProvider)
@@ -3914,18 +4581,18 @@ class _HarnessState extends ConsumerState<_Harness> {
       );
       await _pause();
       await reopenSource();
-      sourceCaret(_source.indexOf('<li id="saved-item"'));
+      await sourceCaret(_source.indexOf('<li id="saved-item"'));
       await _pause();
       _check(
         inspector().target!.attributes['id'] == 'saved-item',
         'Item ID survives save close reopen reinspection',
       );
       await _capture('inspector-native-item-reopened');
-      sourceCaret(_source.indexOf('+ [ ] Unchecked task'));
+      await sourceCaret(_source.indexOf('+ [ ] Unchecked task'));
       await _pause();
       await propertyText('Element anchor (id)', 'saved-task');
       await reopenSource();
-      sourceCaret(_source.indexOf('<li id="saved-task"'));
+      await sourceCaret(_source.indexOf('<li id="saved-task"'));
       await _pause();
       _check(
         inspector().target!.kind == BusyBlockKind.taskListItem &&
@@ -3938,11 +4605,11 @@ class _HarnessState extends ConsumerState<_Harness> {
         'Checked sibling survives without projection metadata in source',
       );
       await _capture('inspector-task-item-reopened');
-      sourceCaret(_source.indexOf('> A'));
+      await sourceCaret(_source.indexOf('> A'));
       await _pause();
       await propertyText('Element anchor (id)', 'saved-note');
       await reopenSource();
-      sourceCaret(_source.indexOf('> A'));
+      await sourceCaret(_source.indexOf('> A'));
       await _pause();
       _check(
         inspector().target!.attributes['id'] == 'saved-note' &&
@@ -3958,7 +4625,7 @@ class _HarnessState extends ConsumerState<_Harness> {
         (text: 'Numbered parent', identity: 'saved-numbered-item', start: '10'),
         (text: 'Marker parent', identity: 'saved-marker-item', start: '3'),
       ]) {
-        sourceCaret(_source.indexOf('3. ${numbered.text}'));
+        await sourceCaret(_source.indexOf('3. ${numbered.text}'));
         await _pause();
         final original = _source;
         final undoCount = ref
@@ -4000,7 +4667,7 @@ class _HarnessState extends ConsumerState<_Harness> {
           '${numbered.identity} redo restores converted source',
         );
         await reopenSource();
-        sourceCaret(_source.indexOf('<li id="${numbered.identity}"'));
+        await sourceCaret(_source.indexOf('<li id="${numbered.identity}"'));
         await _pause();
         final target = inspector().target!;
         final list = inspector().path.lastWhere(
@@ -4038,6 +4705,8 @@ class _HarnessState extends ConsumerState<_Harness> {
       defaultsSourceState.scrollToOffset(
         _source.indexOf('<code-block id="code-block-absent"'),
       );
+      await _pause();
+      await _requestProperties();
       await _pause();
       BusyMarkComboRow<String> defaultCombo(String title) =>
           _elements(
@@ -4112,7 +4781,7 @@ class _HarnessState extends ConsumerState<_Harness> {
         _source == defaultsSource,
         'Reset removes local override and restores the module default',
       );
-      sourceCaret(_source.indexOf('<deflist id="layout-default"'));
+      await sourceCaret(_source.indexOf('<deflist id="layout-default"'));
       await _pause();
       _check(
         combo('List layout (type)').selected == '' &&
@@ -4122,7 +4791,7 @@ class _HarnessState extends ConsumerState<_Harness> {
       await _capture('inspector-module-layout-default');
       await chooseCombo('List layout (type)', 'Wide');
       await reopenSource();
-      sourceCaret(_source.indexOf('<deflist id="layout-default"'));
+      await sourceCaret(_source.indexOf('<deflist id="layout-default"'));
       await _pause();
       _check(
         combo('List layout (type)').selected == 'wide' &&
@@ -4132,7 +4801,7 @@ class _HarnessState extends ConsumerState<_Harness> {
       await _capture('inspector-module-layout-override');
       await chooseCombo('List layout (type)', 'Use default');
       await reopenSource();
-      sourceCaret(_source.indexOf('<deflist id="layout-default"'));
+      await sourceCaret(_source.indexOf('<deflist id="layout-default"'));
       await _pause();
       _check(
         combo('List layout (type)').selected == '' &&
@@ -4175,7 +4844,7 @@ class _HarnessState extends ConsumerState<_Harness> {
             preferredWidth,
         'Native keyboard restores preferred inspector width',
       );
-      sourceCaret(_source.indexOf('<code-block id="code-block-absent"'));
+      await sourceCaret(_source.indexOf('<code-block id="code-block-absent"'));
       await _pause();
       await _tap(
         _elements(
@@ -4214,8 +4883,8 @@ class _HarnessState extends ConsumerState<_Harness> {
           .read(appSettingsControllerProvider.notifier)
           .setElementPropertiesVisible(true);
       await controller.openPath(widget.root.path);
-      await _native('chord', 'ctrl+shift+1');
       await controller.openActiveFile(p.join(widget.root.path, 'README.md'));
+      await _native('chord', 'ctrl+shift+1');
       await _until(
         () =>
             _elements((w) => w is BusyMarkWysiwygEditor).isNotEmpty &&
@@ -4226,7 +4895,7 @@ class _HarnessState extends ConsumerState<_Harness> {
       );
       _check(
         _elements(
-              (w) => w.key == const ValueKey('wysiwyg-writerside-insert'),
+              (w) => w.key == const ValueKey('wysiwyg-writerside'),
             ).isEmpty &&
             _elements((w) => w is BusyMarkWritersideProperties).isEmpty,
         'Ordinary Markdown has no Writerside controls or properties',

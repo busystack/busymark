@@ -1404,7 +1404,11 @@ class BusyMarkMarkdownSerializer {
       BusyInlineKind.writersidePath ||
       BusyInlineKind.writersideUiPath ||
       BusyInlineKind.writersideShortcut =>
-        '${_semanticInlineOpening(inline)}$children</${busyMarkSemanticInlineTag(inline.kind)}>',
+        tableCell
+            ? WritersideEditingAdapter.serializeInlineElement(
+                inline,
+              ).replaceAll('|', '&#124;')
+            : WritersideEditingAdapter.serializeInlineElement(inline),
       BusyInlineKind.html || BusyInlineKind.unknown => inline.text,
     };
     final source =
@@ -1437,6 +1441,30 @@ class BusyMarkMarkdownSerializer {
           ).length,
           _ => 0,
         };
+    // Semantic children are serialized as XML, including their formatting.
+    // Use the existing XML text/source mapping for offsets inside that markup.
+    const semanticPrefix = '<topic id="offset" title="Offset"><p>';
+    final semanticDocument =
+        targets.any((t) => t > 0 && t < length) &&
+            busyMarkIsSemanticInline(inline.kind) &&
+            inline.children.any((child) => child.kind != BusyInlineKind.text)
+        ? const WritersideEditingAdapter().parseXml(
+            filePath: '',
+            source: '$semanticPrefix$source</p></topic>',
+          )
+        : null;
+    int semanticOffset(int target) => semanticDocument == null
+        ? openingLength +
+              WritersideEditingAdapter.escape(
+                inline.plainText.substring(0, target),
+              ).replaceAll('|', tableCell ? '&#124;' : '|').length
+        : const WritersideEditingAdapter().xmlTextSourceOffset(
+                semanticDocument,
+                semanticDocument.blocks.first.children.single,
+                target,
+                endBoundary: false,
+              )! -
+              semanticPrefix.length;
     final sourceOffsets = <int, int>{};
     for (final target in targets) {
       sourceOffsets[target] = target == 0
@@ -1453,8 +1481,7 @@ class BusyMarkMarkdownSerializer {
               BusyInlineKind.writersideControl ||
               BusyInlineKind.writersidePath ||
               BusyInlineKind.writersideUiPath ||
-              BusyInlineKind.writersideShortcut =>
-                openingLength + (childResult?.sourceOffsets[target] ?? target),
+              BusyInlineKind.writersideShortcut => semanticOffset(target),
               BusyInlineKind.link =>
                 linkOpeningLength +
                     (childResult?.sourceOffsets[target] ??

@@ -5410,4 +5410,17 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get wsModuleCapsIgnored =>
       'يتجاهل الباني المثبّت قواعد <caps> للوحدة. استخدم سمة caps محلية أو default-property.';
+
+  @override
+  String get wsInsertElements => 'إدراج عناصر';
+
+  @override
+  String get wsAdmonitionsAndQuotes => 'تنبيهات واقتباسات';
+
+  @override
+  String get wsSemanticText => 'نص دلالي';
+
+  @override
+  String get wsPropertiesUnavailable =>
+      'العنصر الذي يتم فحصه غير متاح. افحص عنصرًا للمتابعة.';
 }

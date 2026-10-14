@@ -3606,5 +3606,9 @@
   "wsNativeMarkers": "Markdown चिह्न",
   "wsListMarkerStart": "आरंभ चिह्न: {number}",
   "wsListLevel": "स्तर {level}",
-  "wsModuleCapsIgnored": "निर्धारित बिल्डर मॉड्यूल के <caps> नियमों को अनदेखा करता है। स्थानीय caps विशेषता या default-property का उपयोग करें।"
+  "wsModuleCapsIgnored": "निर्धारित बिल्डर मॉड्यूल के <caps> नियमों को अनदेखा करता है। स्थानीय caps विशेषता या default-property का उपयोग करें।",
+  "wsInsertElements": "तत्व जोड़ें",
+  "wsAdmonitionsAndQuotes": "सूचनाएँ और उद्धरण",
+  "wsSemanticText": "अर्थपूर्ण पाठ",
+  "wsPropertiesUnavailable": "जाँचा गया तत्व उपलब्ध नहीं है। जारी रखने के लिए कोई तत्व जाँचें।"
 }

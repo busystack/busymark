@@ -9227,6 +9227,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The pinned builder ignores module <caps> rules. Use a local caps override or default-property.'**
   String get wsModuleCapsIgnored;
+
+  /// No description provided for @wsInsertElements.
+  ///
+  /// In en, this message translates to:
+  /// **'Insert elements'**
+  String get wsInsertElements;
+
+  /// No description provided for @wsAdmonitionsAndQuotes.
+  ///
+  /// In en, this message translates to:
+  /// **'Admonitions and quotes'**
+  String get wsAdmonitionsAndQuotes;
+
+  /// No description provided for @wsSemanticText.
+  ///
+  /// In en, this message translates to:
+  /// **'Semantic text'**
+  String get wsSemanticText;
+
+  /// No description provided for @wsPropertiesUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'The inspected element is unavailable. Inspect an element to continue.'**
+  String get wsPropertiesUnavailable;
 }
 
 class _AppLocalizationsDelegate

@@ -5145,5 +5145,9 @@
   "wsNativeMarkers": "Markdown 표시",
   "wsListMarkerStart": "시작 표시: {number}",
   "wsListLevel": "수준 {level}",
-  "wsModuleCapsIgnored": "고정된 빌더는 모듈의 <caps> 규칙을 무시합니다. 로컬 caps 속성 또는 default-property를 사용하세요."
+  "wsModuleCapsIgnored": "고정된 빌더는 모듈의 <caps> 규칙을 무시합니다. 로컬 caps 속성 또는 default-property를 사용하세요.",
+  "wsInsertElements": "요소 삽입",
+  "wsAdmonitionsAndQuotes": "안내 및 인용",
+  "wsSemanticText": "의미 텍스트",
+  "wsPropertiesUnavailable": "검사 중인 요소를 사용할 수 없습니다. 계속하려면 요소를 검사하세요."
 }

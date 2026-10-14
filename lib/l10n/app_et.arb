@@ -4066,5 +4066,9 @@
   "wsNativeMarkers": "Markdowni markerid",
   "wsListMarkerStart": "Algusmarker: {number}",
   "wsListLevel": "Tase {level}",
-  "wsModuleCapsIgnored": "Fikseeritud koostaja eirab mooduli <caps>-reegleid. Kasuta kohalikku caps-atribuuti või default-property sätet."
+  "wsModuleCapsIgnored": "Fikseeritud koostaja eirab mooduli <caps>-reegleid. Kasuta kohalikku caps-atribuuti või default-property sätet.",
+  "wsInsertElements": "Lisa elemendid",
+  "wsAdmonitionsAndQuotes": "Märkused ja tsitaadid",
+  "wsSemanticText": "Semantiline tekst",
+  "wsPropertiesUnavailable": "Vaadeldav element pole saadaval. Jätkamiseks vali element."
 }

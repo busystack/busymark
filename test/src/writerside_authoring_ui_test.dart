@@ -65,6 +65,13 @@ Finder _textField(String text) => _contentFields()
     .map((e) => find.byWidget(e.widget))
     .first;
 
+Future<void> inspectSelection(WidgetTester tester) async {
+  tester
+      .state<BusyMarkWysiwygEditorState>(find.byType(BusyMarkWysiwygEditor))
+      .inspectCurrentSelection();
+  await tester.pumpAndSettle();
+}
+
 void main() {
   testWidgets(
     'navigation selection represents authored declarations after reopening',
@@ -97,7 +104,9 @@ void main() {
           ),
         );
         final section = find.byWidgetPredicate(
-          (w) => w is BusyMarkActionRow && w.title == 'Topic navigation',
+          (w) =>
+              w is TextButton &&
+              w.key == const ValueKey('writerside-disclosure-Topic navigation'),
         );
         if (find
             .byWidgetPredicate(
@@ -380,13 +389,32 @@ void main() {
       presentations.add(entries);
       if (labels.isEmpty) return null;
       final label = labels.removeAt(0);
-      final selected = entries.indexWhere((e) => e['label'] == label);
+      var ordinal = 0;
+      int selected = -1;
+      void visit(List<dynamic> nodes) {
+        for (final node in nodes) {
+          final index = ordinal++;
+          if (node['label'] == label) {
+            expect(node['enabled'], isTrue);
+            expect(
+              node['children'],
+              isNull,
+              reason: 'Dispatch a leaf, not a group',
+            );
+            selected = index;
+          }
+          if (node['children'] case final List<dynamic> children) {
+            visit(children);
+          }
+        }
+      }
+
+      visit(entries);
       expect(
         selected,
         greaterThanOrEqualTo(0),
         reason: 'Native menu must offer $label',
       );
-      expect(entries[selected]['enabled'], isTrue);
       return selected;
     });
   });
@@ -482,6 +510,10 @@ void main() {
       tester.widget<TextField>(body).controller!.selection =
           const TextSelection.collapsed(offset: 8);
       await tester.pumpAndSettle();
+      tester
+          .state<BusyMarkWysiwygEditorState>(find.byType(BusyMarkWysiwygEditor))
+          .inspectCurrentSelection();
+      await tester.pumpAndSettle();
       final entry = find.descendant(
         of: find.byWidgetPredicate(
           (w) => w is BusyMarkGroupedTextEntry && w.label == 'Action ID (key)',
@@ -492,6 +524,7 @@ void main() {
       await tester.testTextInput.receiveAction(TextInputAction.done);
       await tester.pumpAndSettle();
       expect(saved, contains('key="\$Copy"'));
+      expect(tester.widget<TextField>(entry).controller!.text, r'$Copy');
       expect(saved, contains('>Ctrl+S</shortcut>'));
       expect(saved, contains('<b>now</b>'));
       final changed = saved;
@@ -548,6 +581,7 @@ void main() {
             offset: caret,
           );
           await tester.pumpAndSettle();
+          await inspectSelection(tester);
           expect(
             find.byWidgetPredicate(
               (w) =>
@@ -654,7 +688,7 @@ void main() {
   Future<void> insert(WidgetTester tester, String label) async {
     await tester.pumpAndSettle();
     labels.add(label);
-    await tester.tap(find.byKey(const ValueKey('wysiwyg-writerside-insert')));
+    await tester.tap(find.byKey(const ValueKey('wysiwyg-writerside')));
     await tester.pumpAndSettle();
   }
 
@@ -686,9 +720,7 @@ void main() {
           }
           return true;
         });
-        await tester.tap(
-          find.byKey(const ValueKey('wysiwyg-writerside-insert')),
-        );
+        await tester.tap(find.byKey(const ValueKey('wysiwyg-writerside')));
         await tester.pumpAndSettle();
         expect(field.focusNode!.hasFocus, isTrue);
         expect(field.controller!.selection, selection);
@@ -747,8 +779,9 @@ void main() {
           tester.widget<TextField>(field).controller!.selection =
               const TextSelection(baseOffset: 0, extentOffset: 4);
           await tester.pumpAndSettle();
+          await inspectSelection(tester);
           labels.add(label);
-          await tester.tap(find.byTooltip('Semantic formatting'));
+          await tester.tap(find.byTooltip('Writerside'));
           await tester.pumpAndSettle();
           final tag = {
             'UI Control': 'control',
@@ -773,6 +806,192 @@ void main() {
       );
     }
   }
+  for (final xml in [true, false]) {
+    for (final pair in const [
+      ('UI Control', 'control'),
+      ('File / Path', 'path'),
+      ('UI Path', 'ui-path'),
+      ('Keyboard Shortcuts', 'shortcut'),
+    ]) {
+      testWidgets(
+        '${xml ? "XML" : "Markdown"} collapsed ${pair.$1} enters text and cancels neutrally',
+        (tester) async {
+          final original = _document(xml).source!;
+          var saved = original;
+          await mount(
+            tester,
+            BusyMarkWysiwygEditor(
+              document: _document(xml),
+              onSourceChanged: (_, s) => saved = s,
+            ),
+            openProperties: false,
+          );
+          await tester.tap(_textField('Text'));
+          final body = tester.widget<TextField>(_textField('Text'));
+          body.controller!.selection = const TextSelection.collapsed(offset: 2);
+          await tester.pumpAndSettle();
+          labels.add(pair.$1);
+          await tester.tap(find.byTooltip('Writerside'));
+          await tester.pumpAndSettle();
+          expect(presentations.single.map((e) => e['label']), [
+            'Insert elements',
+            'Admonitions and quotes',
+            'Semantic text',
+          ]);
+          expect(find.byTooltip('Semantic formatting'), findsNothing);
+          expect(saved, original);
+          final input = find.descendant(
+            of: find.byKey(const ValueKey('wysiwyg-semantic-text')),
+            matching: find.byType(TextField),
+          );
+          expect(input, findsOneWidget);
+          await tester.tap(find.text('Cancel'));
+          await tester.pumpAndSettle();
+          expect(saved, original);
+          expect(
+            body.controller!.selection,
+            const TextSelection.collapsed(offset: 2),
+          );
+          labels.add(pair.$1);
+          await tester.tap(find.byTooltip('Writerside'));
+          await tester.pumpAndSettle();
+          await tester.enterText(input, 'Open & <Files>');
+          await tester.testTextInput.receiveAction(TextInputAction.done);
+          await tester.pumpAndSettle();
+          expect(
+            saved,
+            contains('<${pair.$2}>Open &amp; &lt;Files&gt;</${pair.$2}>'),
+          );
+          expect(_document(xml, source: saved).isXmlTopic, xml);
+          final authored = saved;
+          expect(
+            _document(xml, source: saved).blocks
+                .expand((b) => xml ? b.children : [b])
+                .any((b) => b.plainText == 'TeOpen & <Files>xt'),
+            isTrue,
+          );
+          await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+          await tester.sendKeyEvent(LogicalKeyboardKey.keyZ);
+          await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+          await tester.pumpAndSettle();
+          expect(saved, original);
+          await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+          await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+          await tester.sendKeyEvent(LogicalKeyboardKey.keyZ);
+          await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+          await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+          await tester.pumpAndSettle();
+          expect(saved, authored);
+          expect(
+            saved,
+            isNot(contains('key=')),
+            reason: 'Literal shortcuts do not invent keymap action IDs',
+          );
+        },
+      );
+    }
+  }
+  for (final xml in [false, true]) {
+    for (final style in ['Tip', 'Note', 'Warning', 'Quote']) {
+      testWidgets(
+        '${xml ? "XML" : "Markdown"} $style keeps editing focus and one-step Undo/Redo',
+        (tester) async {
+          final original = xml
+              ? '<topic id="a" title="Title"><p>Before.</p><p>$style <b>example</b>.</p><p>After.</p></topic>'
+              : '# Title\n\nBefore.\n\n$style **example**.\n\nAfter.\n';
+          var source = original;
+          await mount(
+            tester,
+            BusyMarkWysiwygEditor(
+              document: _document(xml, source: original),
+              onSourceChanged: (_, value) => source = value,
+            ),
+            openProperties: false,
+          );
+          await tester.tap(_textField('$style example.'));
+          await tester.pumpAndSettle();
+          labels.add(style);
+          await tester.tap(find.byTooltip('Writerside'));
+          await tester.pumpAndSettle();
+          final changed = source;
+          expect(
+            changed,
+            contains(
+              xml
+                  ? '<${style.toLowerCase()}>'
+                  : style == 'Tip'
+                  ? '> Tip **example**.'
+                  : 'style="${style.toLowerCase()}"',
+            ),
+          );
+          expect(changed, contains(xml ? '<b>example</b>' : '**example**'));
+          expect(
+            tester
+                .widget<TextField>(_textField('$style example.'))
+                .focusNode!
+                .hasFocus,
+            isTrue,
+          );
+          await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+          await tester.sendKeyEvent(LogicalKeyboardKey.keyZ);
+          await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+          await tester.pumpAndSettle();
+          expect(source, original);
+          expect(
+            tester
+                .widget<TextField>(_textField('$style example.'))
+                .focusNode!
+                .hasFocus,
+            isTrue,
+          );
+          await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+          await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+          await tester.sendKeyEvent(LogicalKeyboardKey.keyZ);
+          await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+          await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+          await tester.pumpAndSettle();
+          expect(source, changed);
+          expect(
+            tester
+                .widget<TextField>(_textField('$style example.'))
+                .focusNode!
+                .hasFocus,
+            isTrue,
+          );
+        },
+      );
+    }
+  }
+  testWidgets('Writerside semantic commands are disabled in literal code', (
+    tester,
+  ) async {
+    var edits = 0;
+    await mount(
+      tester,
+      BusyMarkWysiwygEditor(
+        document: _document(
+          false,
+          source: '# Topic\n\n```text\nLiteral code\n```\n',
+        ),
+        onSourceChanged: (_, _) => edits++,
+      ),
+      openProperties: false,
+    );
+    await tester.tap(_textField('Literal code'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Writerside'));
+    await tester.pumpAndSettle();
+    final semantic = presentations.single.singleWhere(
+      (e) => e['label'] == 'Semantic text',
+    );
+    expect((semantic['children'] as List).map((e) => e['enabled']), [
+      false,
+      false,
+      false,
+      false,
+    ]);
+    expect(edits, 0);
+  });
   testWidgets('video insertion draft and cancellation do not modify source', (
     tester,
   ) async {
@@ -848,7 +1067,7 @@ void main() {
       );
       await tester.tap(_textField('Text'));
       labels.addAll(['Include Reusable Content', 'library.topic', 'shared']);
-      await tester.tap(find.byKey(const ValueKey('wysiwyg-writerside-insert')));
+      await tester.tap(find.byKey(const ValueKey('wysiwyg-writerside')));
       await tester.pumpAndSettle();
       expect(presentations[1].map((e) => e['label']), ['library.topic']);
       expect(presentations[2].map((e) => e['label']), ['shared']);
@@ -895,7 +1114,7 @@ void main() {
       await tester.tap(_textField('Text'));
       await tester.pumpAndSettle();
       labels.addAll(['Variable Reference', 'product']);
-      await tester.tap(find.byKey(const ValueKey('wysiwyg-writerside-insert')));
+      await tester.tap(find.byKey(const ValueKey('wysiwyg-writerside')));
       await tester.pumpAndSettle();
       expect(presentations.last.map((e) => e['label']), ['product']);
       expect(source, contains('%product%'));
@@ -922,6 +1141,7 @@ void main() {
             const TextSelection.collapsed(offset: 2);
         await tester.pumpAndSettle();
         Future<void> selectTopic() async {
+          await inspectSelection(tester);
           labels.add('Topic Properties');
           await tester.tap(
             find.byWidgetPredicate(
@@ -943,22 +1163,48 @@ void main() {
         );
         expect(saved, isEmpty);
         Finder entry() => find.descendant(
-          of: find.byKey(
-            ValueKey(
-              'writerside-property-a.${xml ? 'topic' : 'md'}-document-switcher-label',
-            ),
+          of: find.byWidgetPredicate(
+            (w) =>
+                w is BusyMarkGroupedTextEntry &&
+                w.label == 'Switcher label (switcher-label)',
           ),
           matching: find.byType(TextField),
         );
         if (entry().evaluate().isEmpty) {
+          expect(
+            tester
+                .widget<BusyMarkWritersideProperties>(
+                  find.byType(BusyMarkWritersideProperties),
+                )
+                .topicSelected,
+            isTrue,
+            reason: tester
+                .widgetList<Text>(find.byType(Text))
+                .map((e) => e.data)
+                .join(' | '),
+          );
+          expect(
+            find.byKey(const ValueKey('writerside-disclosure-Advanced')),
+            findsOneWidget,
+            reason: tester
+                .widgetList<BusyMarkGroupedTextEntry>(
+                  find.byType(BusyMarkGroupedTextEntry),
+                )
+                .map((e) => e.label)
+                .join(', '),
+          );
           await tester.ensureVisible(
             find.byWidgetPredicate(
-              (w) => w is BusyMarkActionRow && w.title == 'Advanced',
+              (w) =>
+                  w is TextButton &&
+                  w.key == const ValueKey('writerside-disclosure-Advanced'),
             ),
           );
           await tester.tap(
             find.byWidgetPredicate(
-              (w) => w is BusyMarkActionRow && w.title == 'Advanced',
+              (w) =>
+                  w is TextButton &&
+                  w.key == const ValueKey('writerside-disclosure-Advanced'),
             ),
           );
           await tester.pumpAndSettle();
@@ -978,6 +1224,15 @@ void main() {
         final authored = saved;
         await tester.tap(_textField('Text'));
         await tester.pumpAndSettle();
+        expect(
+          tester
+              .widget<BusyMarkWritersideProperties>(
+                find.byType(BusyMarkWritersideProperties),
+              )
+              .topicSelected,
+          isTrue,
+        );
+        await inspectSelection(tester);
         expect(
           tester
               .widget<BusyMarkWritersideProperties>(
@@ -1006,9 +1261,36 @@ void main() {
         await tester.pumpAndSettle();
         await selectTopic();
         if (entry().evaluate().isEmpty) {
+          expect(
+            tester
+                .widget<BusyMarkWritersideProperties>(
+                  find.byType(BusyMarkWritersideProperties),
+                )
+                .topicSelected,
+            isTrue,
+            reason: tester
+                .widgetList<Text>(find.byType(Text))
+                .map((e) => e.data)
+                .join(' | '),
+          );
+          expect(
+            find.byKey(const ValueKey('writerside-disclosure-Advanced')),
+            findsOneWidget,
+            reason: tester
+                .widgetList<BusyMarkGroupedTextEntry>(
+                  find.byType(BusyMarkGroupedTextEntry),
+                )
+                .map((e) => e.label)
+                .join(', '),
+          );
+          await tester.ensureVisible(
+            find.byKey(const ValueKey('writerside-disclosure-Advanced')),
+          );
           await tester.tap(
             find.byWidgetPredicate(
-              (w) => w is BusyMarkActionRow && w.title == 'Advanced',
+              (w) =>
+                  w is TextButton &&
+                  w.key == const ValueKey('writerside-disclosure-Advanced'),
             ),
           );
           await tester.pumpAndSettle();
@@ -1017,7 +1299,7 @@ void main() {
       },
     );
   }
-  testWidgets('returning to a table cell retargets Topic Properties', (
+  testWidgets('explicit table inspection retargets Topic Properties', (
     tester,
   ) async {
     var edits = 0;
@@ -1042,6 +1324,15 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(_textField('Cell'));
     await tester.pumpAndSettle();
+    expect(
+      tester
+          .widget<BusyMarkWritersideProperties>(
+            find.byType(BusyMarkWritersideProperties),
+          )
+          .topicSelected,
+      isTrue,
+    );
+    await inspectSelection(tester);
     final properties = tester.widget<BusyMarkWritersideProperties>(
       find.byType(BusyMarkWritersideProperties),
     );
@@ -1068,6 +1359,7 @@ void main() {
     tester.widget<TextField>(field).controller!.selection =
         const TextSelection.collapsed(offset: 2);
     await tester.pumpAndSettle();
+    await inspectSelection(tester);
     expect(find.text('Keyboard layout (force-layout)'), findsOneWidget);
     expect(find.text('List layout (type)'), findsNothing);
   });
@@ -1088,6 +1380,7 @@ void main() {
       );
       await tester.tap(_textField('Chapter'));
       await tester.pumpAndSettle();
+      await inspectSelection(tester);
       expect(find.text('Collapsible (collapsible)'), findsOneWidget);
       expect(source, isEmpty);
       labels.add('Enabled');
@@ -1100,6 +1393,7 @@ void main() {
       expect(source, before);
       await tester.tap(_textField('Nested'));
       await tester.pumpAndSettle();
+      await inspectSelection(tester);
       final props = tester.widget<BusyMarkWritersideProperties>(
         find.byType(BusyMarkWritersideProperties),
       );
@@ -1130,7 +1424,7 @@ void main() {
     await tester.pumpWidget(editor('first'));
     await tester.pumpAndSettle();
     await tester.tap(_textField('Text'));
-    await tester.tap(find.byKey(const ValueKey('wysiwyg-writerside-insert')));
+    await tester.tap(find.byKey(const ValueKey('wysiwyg-writerside')));
     await tester.pump();
     await tester.pumpWidget(editor('second'));
     await tester.pumpAndSettle();
@@ -1157,7 +1451,7 @@ void main() {
     await tester.pumpWidget(editor('first'));
     await tester.pumpAndSettle();
     await tester.tap(_textField('Text'));
-    await tester.tap(find.byKey(const ValueKey('wysiwyg-writerside-insert')));
+    await tester.tap(find.byKey(const ValueKey('wysiwyg-writerside')));
     await tester.pump();
     await tester.pumpWidget(editor('second'));
     await tester.pumpAndSettle();
@@ -1257,6 +1551,7 @@ void main() {
       );
       await tester.tap(field);
       await tester.pumpAndSettle();
+      await inspectSelection(tester);
       final props = tester.widget<BusyMarkWritersideProperties>(
         find.byType(BusyMarkWritersideProperties),
       );
@@ -1314,6 +1609,7 @@ void main() {
       await mount(tester, editor(first));
       await tester.tap(_textField('print(1);'));
       await tester.pumpAndSettle();
+      await inspectSelection(tester);
       final property = find.byKey(
         const ValueKey('writerside-property-a.topic-element-xml-1-language'),
       );
@@ -1359,11 +1655,11 @@ void main() {
         await tester.pumpAndSettle();
         expect(find.text('Writerside'), findsNothing);
         expect(
-          find.byKey(const ValueKey('wysiwyg-writerside-insert')),
+          find.byKey(const ValueKey('wysiwyg-writerside')),
           findsOneWidget,
         );
         expect(
-          find.byKey(const ValueKey('wysiwyg-writerside-semantic')),
+          find.byKey(const ValueKey('wysiwyg-writerside')),
           findsOneWidget,
         );
         expect(

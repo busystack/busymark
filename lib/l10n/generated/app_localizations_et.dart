@@ -5381,4 +5381,17 @@ class AppLocalizationsEt extends AppLocalizations {
   @override
   String get wsModuleCapsIgnored =>
       'Fikseeritud koostaja eirab mooduli <caps>-reegleid. Kasuta kohalikku caps-atribuuti või default-property sätet.';
+
+  @override
+  String get wsInsertElements => 'Lisa elemendid';
+
+  @override
+  String get wsAdmonitionsAndQuotes => 'Märkused ja tsitaadid';
+
+  @override
+  String get wsSemanticText => 'Semantiline tekst';
+
+  @override
+  String get wsPropertiesUnavailable =>
+      'Vaadeldav element pole saadaval. Jätkamiseks vali element.';
 }

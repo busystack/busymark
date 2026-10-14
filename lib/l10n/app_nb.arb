@@ -3606,5 +3606,9 @@
   "wsNativeMarkers": "Markdown-markører",
   "wsListMarkerStart": "Første markør: {number}",
   "wsListLevel": "Nivå {level}",
-  "wsModuleCapsIgnored": "Den fastsatte byggeren ignorerer modulens <caps>-regler. Bruk et lokalt caps-attributt eller default-property."
+  "wsModuleCapsIgnored": "Den fastsatte byggeren ignorerer modulens <caps>-regler. Bruk et lokalt caps-attributt eller default-property.",
+  "wsInsertElements": "Sett inn elementer",
+  "wsAdmonitionsAndQuotes": "Merknader og sitater",
+  "wsSemanticText": "Semantisk tekst",
+  "wsPropertiesUnavailable": "Det inspiserte elementet er utilgjengelig. Inspiser et element for å fortsette."
 }

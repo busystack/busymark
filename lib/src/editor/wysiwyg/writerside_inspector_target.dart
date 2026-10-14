@@ -1,6 +1,8 @@
 import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart';
 import '../../markdown/busymark_document.dart';
+import '../../markdown/markdown_source_map.dart';
+import '../../markdown/writerside_authoring_syntax.dart';
 import 'wysiwyg_document_controller.dart';
 import 'wysiwyg_inline_controller.dart';
 import 'writerside_editing_adapter.dart';
@@ -65,7 +67,13 @@ class WritersideInspectorTarget {
       inline.destination,
       {
         for (final a in inline.attributes.entries)
-          if (!a.key.startsWith('busymark-')) a.key: a.value,
+          if (!a.key.startsWith('busymark-') &&
+              !{
+                'xml-source-binding',
+                'xml-original-source',
+                'xml-original-signature',
+              }.contains(a.key))
+            a.key: a.value,
       },
       inline.children.map(inlineState).toList(),
     ];
@@ -146,55 +154,217 @@ class WritersideInspectorTarget {
       return refreshed.matches(bufferId, revision, source) ? refreshed : null;
     }
     final before = block;
-    if (before == null || inline != null) return null;
-    List<BusyBlock> authored(List<BusyBlock> blocks) =>
-        blocks.where((b) => !b.isSourceOnly).toList();
-    bool sameContent(BusyBlock a, BusyBlock b) {
-      final scalarTitle =
-          a.kind == BusyBlockKind.heading &&
-          a.attributes.containsKey('element') &&
-          a.attributes['id']?.isNotEmpty == true &&
-          a.attributes['id'] == b.attributes['id'];
-      if (a.kind != b.kind ||
-          WritersideEditingAdapter.tagForBlock(a) !=
-              WritersideEditingAdapter.tagForBlock(b) ||
-          (a.plainText != b.plainText && !scalarTitle) ||
-          ((a.isSourceProtected || a.preserveRaw) &&
-              a.rawSource != b.rawSource)) {
-        return false;
-      }
-      final left = authored(a.children);
-      final right = authored(b.children);
-      return left.length == right.length &&
-          Iterable.generate(
-            left.length,
-          ).every((i) => sameContent(left[i], right[i]));
+    if (before == null || document.source != source && !document.isXmlTopic) {
+      return null;
+    }
+    final span = before.sourceSpan;
+    if (span == null ||
+        span.startOffset < 0 ||
+        span.endOffset > this.source.length) {
+      return null;
     }
 
-    var previous = authored(this.document.blocks);
-    var current = authored(document.blocks);
-    BusyBlock? candidate;
-    for (final ordinal in semanticAddress) {
-      if (previous.length != current.length || ordinal >= current.length) {
-        return null;
-      }
-      final owner = previous[ordinal];
-      candidate = current[ordinal];
-      if (owner.kind != candidate.kind ||
-          WritersideEditingAdapter.tagForBlock(owner) !=
-              WritersideEditingAdapter.tagForBlock(candidate)) {
-        return null;
-      }
-      previous = authored(owner.children);
-      current = authored(candidate.children);
+    // Locate the retained authored interval through the actual source change.
+    // Neither parser IDs nor sibling ordinals establish cross-revision identity.
+    var prefix = 0;
+    while (prefix < this.source.length &&
+        prefix < source.length &&
+        this.source[prefix] == source[prefix]) {
+      prefix++;
     }
-    if (candidate == null || !sameContent(before, candidate)) return null;
+    var suffix = 0;
+    while (suffix < this.source.length - prefix &&
+        suffix < source.length - prefix &&
+        this.source[this.source.length - suffix - 1] ==
+            source[source.length - suffix - 1]) {
+      suffix++;
+    }
+    final oldEnd = this.source.length - suffix;
+    final delta = source.length - this.source.length;
+    int? boundary(int offset, {bool end = false}) {
+      if (end && offset == prefix && prefix == oldEnd) return offset + delta;
+      if (offset <= prefix) return offset;
+      if (offset >= oldEnd) return offset + delta;
+      return null;
+    }
+
+    final changedInside =
+        prefix >= span.startOffset && oldEnd <= span.endOffset;
+    final start = boundary(span.startOffset);
+    final stop = boundary(span.endOffset, end: true);
+    if (start == null) return null;
+    // Complete replacement is ambiguous even when a new node has the same tag.
+    if (prefix <= span.startOffset &&
+        oldEnd >= span.endOffset &&
+        this.source != source) {
+      return null;
+    }
+    Iterable<BusyBlock> walk(List<BusyBlock> blocks) sync* {
+      for (final b in blocks) {
+        yield b;
+        yield* walk(b.children);
+      }
+    }
+
+    if (before.rawSource != null) {
+      bool sameOccurrence(BusyBlock b) =>
+          b.kind == before.kind && b.rawSource == before.rawSource;
+      final oldCopies = walk(this.document.blocks).where(sameOccurrence).length;
+      final newCopies = walk(document.blocks).where(sameOccurrence).length;
+      if (oldCopies != newCopies &&
+          (oldCopies > 1 || newCopies > 1) &&
+          (this.source.substring(prefix, oldEnd).trim().isEmpty ||
+              source
+                  .substring(prefix, source.length - suffix)
+                  .trim()
+                  .isEmpty)) {
+        return null;
+      }
+    }
+    bool metadataTail(BusyBlock candidate) {
+      if (document.isXmlTopic ||
+          before.plainText != candidate.plainText ||
+          !(before.attributes.containsKey(
+                'busymark-writerside-source-attributes',
+              ) ||
+              candidate.attributes.containsKey(
+                'busymark-writerside-source-attributes',
+              ))) {
+        return false;
+      }
+      int? coreEnd(BusyBlock owner) {
+        if (!owner.attributes.containsKey(
+          'busymark-writerside-source-attributes',
+        )) {
+          return owner.sourceSpan?.endOffset;
+        }
+        final raw = owner.rawSource;
+        if (raw == null) return null;
+        final token = WritersideAttributeSyntax().pattern
+            .allMatches(raw)
+            .where((m) => raw.substring(m.end).trim().isEmpty)
+            .lastOrNull;
+        return token == null
+            ? null
+            : markdownProjectedSourceOffset(owner, token.start);
+      }
+
+      final oldCoreEnd = coreEnd(before);
+      final newCoreEnd = coreEnd(candidate);
+      if (oldCoreEnd == null ||
+          newCoreEnd == null ||
+          prefix < oldCoreEnd ||
+          prefix < newCoreEnd ||
+          this.source.substring(span.startOffset, oldCoreEnd).trimRight() !=
+              source
+                  .substring(candidate.sourceSpan!.startOffset, newCoreEnd)
+                  .trimRight()) {
+        return false;
+      }
+      final end = candidate.sourceSpan!.endOffset;
+      // Attribute-line attachment can change whether a trailing newline belongs
+      // to the block span. The retained body and all changed bytes must still
+      // belong to this parser-confirmed owner's tail, with only whitespace past it.
+      final newEnd = source.length - suffix;
+      return (oldEnd <= span.endOffset ||
+              this.source.substring(span.endOffset, oldEnd).trim().isEmpty) &&
+          (newEnd <= end || source.substring(end, newEnd).trim().isEmpty);
+    }
+
+    final candidates = walk(document.blocks)
+        .where(
+          (b) =>
+              (b.sourceSpan?.startOffset == start ||
+                  prefix == oldEnd &&
+                      prefix == span.startOffset &&
+                      b.sourceSpan?.startOffset == start + delta &&
+                      stop != null &&
+                      source.substring(start + delta, stop) ==
+                          this.source.substring(
+                            span.startOffset,
+                            span.endOffset,
+                          )) &&
+              (b.sourceSpan?.endOffset == stop ||
+                  metadataTail(b) ||
+                  // An inserted sibling can start exactly after a closed XML
+                  // element. Its original interval is still intact; do not
+                  // extend that owner's boundary into the new sibling.
+                  prefix == oldEnd &&
+                      prefix == span.endOffset &&
+                      b.sourceSpan?.endOffset == span.endOffset &&
+                      source.substring(start, span.endOffset) ==
+                          this.source.substring(
+                            span.startOffset,
+                            span.endOffset,
+                          )) &&
+              b.kind == before.kind &&
+              WritersideEditingAdapter.tagForBlock(b) ==
+                  WritersideEditingAdapter.tagForBlock(before),
+        )
+        .toList();
+    if (candidates.length != 1) return null;
+    final candidate = candidates.single;
+    if (!changedInside &&
+        !metadataTail(candidate) &&
+        this.source != source &&
+        this.source.substring(span.startOffset, span.endOffset) !=
+            source.substring(start, stop ?? candidate.sourceSpan!.endOffset)) {
+      return null;
+    }
+    // Protected fragments are never rebound through a content change.
+    if ((before.isSourceProtected || before.preserveRaw) &&
+        before.rawSource != candidate.rawSource) {
+      return null;
+    }
+    BusyInlineStyleRange? refreshedInline;
+    if (inline != null) {
+      final occurrence =
+          WritersideEditingAdapter.authoredInlineRanges(
+                this.document,
+                this.source,
+                before,
+              )
+              .where(
+                (e) =>
+                    e.range.kind == inline!.kind &&
+                    e.range.start == inline!.start &&
+                    e.range.end == inline!.end &&
+                    e.range.referenceIndex == inline!.referenceIndex,
+              )
+              .singleOrNull;
+      if (occurrence == null) return null;
+      final begin = boundary(occurrence.begin);
+      final end = boundary(occurrence.end, end: true);
+      if (begin == null ||
+          end == null ||
+          prefix <= occurrence.begin &&
+              oldEnd >= occurrence.end &&
+              this.source != source) {
+        return null;
+      }
+      refreshedInline =
+          WritersideEditingAdapter.authoredInlineRanges(
+                document,
+                source,
+                candidate,
+              )
+              .where(
+                (e) =>
+                    e.begin == begin &&
+                    e.end == end &&
+                    e.range.kind == inline!.kind,
+              )
+              .singleOrNull
+              ?.range;
+      if (refreshedInline == null) return null;
+    }
     final refreshed = fromSelection(
       bufferId: bufferId,
       revision: revision,
       source: source,
       document: document,
       blockId: candidate.id,
+      inline: refreshedInline,
       multiple: multiple,
     );
     return refreshed.matches(bufferId, revision, source) ? refreshed : null;

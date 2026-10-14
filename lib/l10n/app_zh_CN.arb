@@ -5145,5 +5145,9 @@
   "wsNativeMarkers": "Markdown 标记",
   "wsListMarkerStart": "起始标记：{number}",
   "wsListLevel": "层级 {level}",
-  "wsModuleCapsIgnored": "固定版本的构建器会忽略模块的 <caps> 规则。请使用本地 caps 属性或 default-property。"
+  "wsModuleCapsIgnored": "固定版本的构建器会忽略模块的 <caps> 规则。请使用本地 caps 属性或 default-property。",
+  "wsInsertElements": "插入元素",
+  "wsAdmonitionsAndQuotes": "提示和引用",
+  "wsSemanticText": "语义文本",
+  "wsPropertiesUnavailable": "所检查的元素不可用。请检查一个元素以继续。"
 }

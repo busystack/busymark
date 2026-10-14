@@ -5145,5 +5145,9 @@
   "wsNativeMarkers": "Dấu Markdown",
   "wsListMarkerStart": "Dấu bắt đầu: {number}",
   "wsListLevel": "Cấp {level}",
-  "wsModuleCapsIgnored": "Trình dựng cố định bỏ qua quy tắc <caps> của mô-đun. Dùng thuộc tính caps cục bộ hoặc default-property."
+  "wsModuleCapsIgnored": "Trình dựng cố định bỏ qua quy tắc <caps> của mô-đun. Dùng thuộc tính caps cục bộ hoặc default-property.",
+  "wsInsertElements": "Chèn phần tử",
+  "wsAdmonitionsAndQuotes": "Lưu ý và trích dẫn",
+  "wsSemanticText": "Văn bản ngữ nghĩa",
+  "wsPropertiesUnavailable": "Phần tử đang kiểm tra không khả dụng. Kiểm tra một phần tử để tiếp tục."
 }

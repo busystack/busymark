@@ -3648,5 +3648,9 @@
   "wsNativeMarkers": "نشانگرهای Markdown",
   "wsListMarkerStart": "نشانگر آغاز: {number}",
   "wsListLevel": "سطح {level}",
-  "wsModuleCapsIgnored": "سازندهٔ ثابت قواعد <caps> ماژول را نادیده می‌گیرد. از ویژگی caps محلی یا default-property استفاده کنید."
+  "wsModuleCapsIgnored": "سازندهٔ ثابت قواعد <caps> ماژول را نادیده می‌گیرد. از ویژگی caps محلی یا default-property استفاده کنید.",
+  "wsInsertElements": "درج عناصر",
+  "wsAdmonitionsAndQuotes": "یادآوری‌ها و نقل‌قول‌ها",
+  "wsSemanticText": "متن معنایی",
+  "wsPropertiesUnavailable": "عنصر بررسی‌شده در دسترس نیست. برای ادامه عنصری را بررسی کنید."
 }

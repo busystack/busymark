@@ -153,11 +153,16 @@ list/capitalization Undo/Redo and save/close/reopen. The copied
 saved bytes with the pinned builder, then run the existing property verifier
 with mode `list-caps-native`. Review the contextual light/dark captures as well
 as the original inspector captures. A narrow-window journey closes the pane
-through its guarded command before hovering exposed content to reopen it.
+through its guarded Close control before hovering exposed content to reopen it.
 
 The shared journeys also open `nested-references.md` in the contextual project
 and target repeated parent, child, quoted and embedded-XML references through
-Editor and Source. Their saved output is checked by `list-caps-native`. Review
+Editor and Source, using the explicit Element Properties command after selecting
+an occurrence. The shared explicit-inspection journey also checks pinned owners
+across Editor/Source/Split, ordinary editing and caret motion, deletion/Undo,
+invalid-draft rejection, multiline XML attributes, and semantic-text wrapping and
+insertion through the consolidated Writerside menu. Their saved output is checked
+by `list-caps-native`. Review
 the `form-*` and `*-form-topic-*` top/bottom captures: these retain the complete
 forms at normal/minimum pane widths, light/dark themes, text scaling and RTL,
 including expanded optional fields. Opening disclosures and changing display
@@ -186,6 +191,14 @@ Ownership cases retain literal code/image labels and selected inline attributes;
 ordered-item conversions retain outer and nested list starts. Screenshots alone
 do not establish persistence or correct mutation. Keep output and copied projects
 outside the repository and remove them after inspection.
+
+`WRITERSIDE_CONFORMANCE_OUTPUT` retains builder artifacts before report assertions,
+including failed reports. The strict fixture checks still require zero errors and
+warnings. The native semantic-text journey intentionally inserts a literal
+shortcut; when a keymap is configured, the pinned builder reports `SCT001` for
+that literal. Inspect and report that advisory instead of replacing the literal
+with an invented action ID. The HTML verifier checks its literal keystroke output
+separately from action-reference output.
 
 The checked-in `list_capitalization_conformance` fixture and its config variants
 assert marker styles, checkbox eligibility, columns, sorted publication, native

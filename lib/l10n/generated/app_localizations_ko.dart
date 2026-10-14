@@ -5231,4 +5231,17 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get wsModuleCapsIgnored =>
       '고정된 빌더는 모듈의 <caps> 규칙을 무시합니다. 로컬 caps 속성 또는 default-property를 사용하세요.';
+
+  @override
+  String get wsInsertElements => '요소 삽입';
+
+  @override
+  String get wsAdmonitionsAndQuotes => '안내 및 인용';
+
+  @override
+  String get wsSemanticText => '의미 텍스트';
+
+  @override
+  String get wsPropertiesUnavailable =>
+      '검사 중인 요소를 사용할 수 없습니다. 계속하려면 요소를 검사하세요.';
 }

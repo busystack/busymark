@@ -5383,4 +5383,17 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get wsModuleCapsIgnored =>
       'Builder yang dipatok mengabaikan aturan <caps> modul. Gunakan atribut caps lokal atau default-property.';
+
+  @override
+  String get wsInsertElements => 'Sisipkan elemen';
+
+  @override
+  String get wsAdmonitionsAndQuotes => 'Pemberitahuan dan kutipan';
+
+  @override
+  String get wsSemanticText => 'Teks semantik';
+
+  @override
+  String get wsPropertiesUnavailable =>
+      'Elemen yang diperiksa tidak tersedia. Periksa elemen untuk melanjutkan.';
 }

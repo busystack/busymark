@@ -159,6 +159,361 @@ void main() {
       verify(c.markdown);
     });
   }
+  test(
+    'multiline HTML links in quoted native items edit their XML destination',
+    () {
+      const original =
+          '# Topic\n\n> - Parent\n>   - Nested <a\n>       href="old.topic">Read</a> and <a href="old.topic">Read</a>.\n';
+      final document = const MarkdownParser()
+          .parse(
+            filePath: 't.md',
+            source: original,
+            mode: MarkdownMode.writersideMarkdown,
+            validateLocalReferences: false,
+          )
+          .busyDocument;
+      final c = BusyMarkWysiwygDocumentController(document: document);
+      addTearDown(c.dispose);
+      Iterable<BusyBlock> walk(List<BusyBlock> blocks) sync* {
+        for (final b in blocks) {
+          yield b;
+          yield* walk(b.children);
+        }
+      }
+
+      final block = walk(
+        c.document.blocks,
+      ).singleWhere((b) => b.plainText == 'Nested Read and Read.');
+      final range = busyInlineReferenceRanges(block.inlines).first;
+      expect(
+        c.updateInlineReference(block.id, range, 'href', 'new.topic#target'),
+        isTrue,
+      );
+      expect(
+        c.markdown,
+        original.replaceFirst('href="old.topic"', 'href="new.topic#target"'),
+      );
+    },
+  );
+  for (final prefix in [
+    '> - ',
+    '> - Parent\n>   - ',
+    '- Parent\n  - ',
+    '- Parent\n\n  ',
+  ]) {
+    for (final lineEnding in ['\n', '\r\n']) {
+      test(
+        'multiline mapped XML attributes retain prefixes: $prefix / ${lineEnding.length}',
+        () {
+          final continuation = prefix.startsWith('>') ? '>     ' : '    ';
+          final original =
+              '# Topic\n\n${prefix}Keys <shortcut\n${continuation}key="\$Copy" from-keymap-of="main">Copy</shortcut> and <shortcut key="\$Copy">Copy</shortcut>.\n'
+                  .replaceAll('\n', lineEnding);
+          BusyDocument parse(String source) => const MarkdownParser()
+              .parse(
+                filePath: 't.md',
+                source: source,
+                mode: MarkdownMode.writersideMarkdown,
+                validateLocalReferences: false,
+              )
+              .busyDocument;
+          final c = BusyMarkWysiwygDocumentController(
+            document: parse(original),
+          );
+          addTearDown(c.dispose);
+          Iterable<BusyBlock> walk(List<BusyBlock> blocks) sync* {
+            for (final b in blocks) {
+              yield b;
+              yield* walk(b.children);
+            }
+          }
+
+          BusyBlock owner() => walk(
+            c.document.blocks,
+          ).singleWhere((b) => b.plainText == 'Keys Copy and Copy.');
+          BusyInlineStyleRange reference() =>
+              busyInlineReferenceRanges(owner().inlines).first;
+          var expected = original;
+          void check() {
+            expect(c.markdown, expected);
+            final target = WritersideInspectorTarget.fromSource(
+              bufferId: 'b',
+              revision: 1,
+              source: expected,
+              document: c.document,
+              selection: TextSelection.collapsed(
+                offset: expected.indexOf('<shortcut') + 2,
+              ),
+            );
+            expect(target.block?.id, owner().id);
+            expect(target.inline?.start, 5);
+            expect(target.sourceLocation, expected.indexOf('<shortcut'));
+            expect(
+              busyInlineReferenceRanges(owner().inlines).last.attributes['key'],
+              r'$Copy',
+            );
+          }
+
+          check();
+          expect(
+            c.updateInlineReference(
+              owner().id,
+              reference(),
+              'key',
+              r'$Other&"Action',
+            ),
+            isTrue,
+          );
+          expected = expected.replaceFirst(
+            r'key="$Copy"',
+            'key="\$Other&amp;&quot;Action"',
+          );
+          check();
+          expect(
+            c.updateInlineReference(
+              owner().id,
+              reference(),
+              'from-keymap-of',
+              '',
+            ),
+            isTrue,
+          );
+          expected = expected.replaceFirst(' from-keymap-of="main"', '');
+          check();
+          expect(
+            c.updateInlineReference(
+              owner().id,
+              reference(),
+              'from-keymap-of',
+              'other',
+            ),
+            isTrue,
+          );
+          expected = expected.replaceFirst(
+            '>Copy</shortcut>',
+            ' from-keymap-of="other">Copy</shortcut>',
+          );
+          check();
+          expect(
+            c.updateInlineReference(
+              owner().id,
+              reference(),
+              'not-supported',
+              'x',
+            ),
+            isFalse,
+          );
+          expect(
+            c.updateInlineReference(
+              owner().id,
+              reference(),
+              'key',
+              'Unmapped\nline',
+            ),
+            isFalse,
+          );
+          check();
+          c.replaceDocument(parse(original));
+          expect(c.markdown, original);
+          c.replaceDocument(parse(expected));
+          check();
+        },
+      );
+    }
+  }
+  test(
+    'insertion before a pinned heading retains its exact authored source interval',
+    () {
+      BusyDocument parse(String text) => const MarkdownParser()
+          .parse(
+            filePath: 't.md',
+            source: text,
+            mode: MarkdownMode.writersideMarkdown,
+          )
+          .busyDocument;
+      const source = '# Topic\n\nBody.\n';
+      final document = parse(source);
+      final target = WritersideInspectorTarget.fromSelection(
+        bufferId: 'b',
+        revision: 1,
+        source: source,
+        document: document,
+        blockId: document.blocks.first.id,
+      );
+      const prefix = '<show-structure/>\n\n';
+      final refreshed = target.refreshUnchangedElement(
+        revision: 2,
+        source: prefix + source,
+        document: parse(prefix + source),
+      );
+      expect(refreshed?.block?.plainText, 'Topic');
+      expect(refreshed?.sourceLocation, prefix.length);
+    },
+  );
+  test(
+    'splitting an attributed list cannot refresh to the shorter neighboring owner',
+    () {
+      BusyDocument parse(String text) => const MarkdownParser()
+          .parse(
+            filePath: 't.md',
+            source: text,
+            mode: MarkdownMode.writersideMarkdown,
+          )
+          .busyDocument;
+      const source = '- First\n- Second\n\n{id="owner"}\n';
+      final document = parse(source);
+      final target = WritersideInspectorTarget.fromSelection(
+        bufferId: 'b',
+        revision: 1,
+        source: source,
+        document: document,
+        blockId: document.blocks.first.id,
+      );
+      final changed = source.replaceFirst(
+        '- Second',
+        '\nA separator.\n\n- Second',
+      );
+      expect(
+        target.refreshUnchangedElement(
+          revision: 2,
+          source: changed,
+          document: parse(changed),
+        ),
+        isNull,
+      );
+    },
+  );
+  test(
+    'paragraph attribute reset and Undo retain the pinned authored owner',
+    () {
+      BusyDocument parse(String text) => const MarkdownParser()
+          .parse(
+            filePath: 't.md',
+            source: text,
+            mode: MarkdownMode.writersideMarkdown,
+          )
+          .busyDocument;
+      const source = '# Topic\n\nOther paragraph.\n\nAfter.\n';
+      final c = BusyMarkWysiwygDocumentController(document: parse(source));
+      addTearDown(c.dispose);
+      expect(
+        c.updateWritersideProperty(c.document.blocks[1].id, 'id', 'anchor'),
+        isTrue,
+      );
+      final authored = c.markdown;
+      final document = parse(authored);
+      final target = WritersideInspectorTarget.fromSelection(
+        bufferId: 'b',
+        revision: 1,
+        source: authored,
+        document: document,
+        blockId: document.blocks[1].id,
+      );
+      final refreshed = target.refreshUnchangedElement(
+        revision: 2,
+        source: source,
+        document: parse(source),
+      );
+      expect(refreshed?.block?.plainText, 'Other paragraph.');
+      expect(refreshed?.matches('b', 2, source), isTrue);
+      final redone = refreshed!.refreshUnchangedElement(
+        revision: 3,
+        source: authored,
+        document: document,
+      );
+      expect(redone?.block?.plainText, 'Other paragraph.');
+      expect(redone?.block?.attributes['id'], 'anchor');
+      expect(redone?.matches('b', 3, authored), isTrue);
+    },
+  );
+  test(
+    'inserting a sibling after an XML paragraph retains its closed owner',
+    () {
+      const source =
+          '<topic id="t" title="Topic"><p>Before</p><p>After</p></topic>';
+      BusyDocument parse(String text) => const WritersideEditingAdapter()
+          .parseXml(filePath: 't.topic', source: text)!;
+      final document = parse(source);
+      final owner = document.blocks.first.children.first;
+      final target = WritersideInspectorTarget.fromSelection(
+        bufferId: 'b',
+        revision: 1,
+        source: source,
+        document: document,
+        blockId: owner.id,
+      );
+      final changed = source.replaceFirst('</p>', '</p>\n<p>Inserted</p>');
+      final refreshed = target.refreshUnchangedElement(
+        revision: 2,
+        source: changed,
+        document: parse(changed),
+      );
+      expect(refreshed?.block?.plainText, 'Before');
+      expect(refreshed?.sourceLocation, source.indexOf('<p>Before'));
+      expect(refreshed?.matches('b', 2, changed), isTrue);
+    },
+  );
+
+  test('a pinned native heading refreshes an edit at its final character', () {
+    BusyDocument parse(String text) => const MarkdownParser()
+        .parse(
+          filePath: 't.md',
+          source: text,
+          mode: MarkdownMode.writersideMarkdown,
+        )
+        .busyDocument;
+    const source = '# Topic\n\n## Chapter A\n\nParagraph.\n';
+    final document = parse(source);
+    final target = WritersideInspectorTarget.fromSelection(
+      bufferId: 'b',
+      revision: 1,
+      source: source,
+      document: document,
+      blockId: document.blocks[1].id,
+    );
+    final changed = source.replaceFirst('Chapter A', 'Chapter A edited');
+    expect(
+      target
+          .refreshUnchangedElement(
+            revision: 2,
+            source: changed,
+            document: parse(changed),
+          )
+          ?.block
+          ?.plainText,
+      'Chapter A edited',
+    );
+  });
+  test(
+    'duplicate paragraph removal cannot rebind a pinned occurrence to its neighbor',
+    () {
+      BusyDocument parse(String text) => const MarkdownParser()
+          .parse(
+            filePath: 't.md',
+            source: text,
+            mode: MarkdownMode.writersideMarkdown,
+          )
+          .busyDocument;
+      const source = '# Topic\n\nSame paragraph.\n\nSame paragraph.\n';
+      final document = parse(source);
+      final target = WritersideInspectorTarget.fromSelection(
+        bufferId: 'b',
+        revision: 1,
+        source: source,
+        document: document,
+        blockId: document.blocks[1].id,
+      );
+      final changed = source.replaceFirst('Same paragraph.\n\n', '');
+      expect(
+        target.refreshUnchangedElement(
+          revision: 2,
+          source: changed,
+          document: parse(changed),
+        ),
+        isNull,
+      );
+    },
+  );
   for (final xml in [true, false]) {
     test(
       '${xml ? "XML" : "Markdown"} off-caret refresh preserves property ownership and rejects replacement',
@@ -200,6 +555,16 @@ void main() {
         expect(refreshed.matches('b', 2, changed), isTrue);
         expect(target.matches('b', 2, changed), isFalse);
         expect(target.sameElement(refreshed), isFalse);
+        final headingEdit = changed.replaceFirst(
+          xml ? 'title="Chapter"' : '## Chapter',
+          xml ? 'title="Chapter edited"' : '## Chapter edited',
+        );
+        final updated = refreshed.refreshUnchangedElement(
+          revision: 3,
+          source: headingEdit,
+          document: parse(headingEdit),
+        );
+        expect(updated?.block?.plainText, 'Chapter edited');
         final restored = refreshed.refreshUnchangedElement(
           revision: 3,
           source: original,
@@ -210,8 +575,14 @@ void main() {
             ? '<topic id="t" title="Topic"><p>Caret A</p></topic>'
             : '# Topic\n\nCaret A\n';
         final replaced = xml
-            ? changed.replaceFirst('Body', 'Different body')
-            : changed.replaceFirst('## Chapter', '## Other Chapter');
+            ? changed.replaceFirst(
+                '<chapter title="Chapter" id="changed"><p>Body</p></chapter>',
+                '<p>Different body</p>',
+              )
+            : changed.replaceFirst(
+                '## Chapter {id="changed"}',
+                'Other paragraph',
+              );
         for (final text in [removed, replaced]) {
           expect(
             target.refreshUnchangedElement(

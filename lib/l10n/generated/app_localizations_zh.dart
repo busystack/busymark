@@ -5153,6 +5153,18 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get wsModuleCapsIgnored =>
       '固定版本的构建器会忽略模块的 <caps> 规则。请使用本地 caps 属性或 default-property。';
+
+  @override
+  String get wsInsertElements => '插入元素';
+
+  @override
+  String get wsAdmonitionsAndQuotes => '提示和引用';
+
+  @override
+  String get wsSemanticText => '语义文本';
+
+  @override
+  String get wsPropertiesUnavailable => '所检查的元素不可用。请检查一个元素以继续。';
 }
 
 /// The translations for Chinese, as used in China (`zh_CN`).
@@ -10302,4 +10314,16 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   @override
   String get wsModuleCapsIgnored =>
       '固定版本的构建器会忽略模块的 <caps> 规则。请使用本地 caps 属性或 default-property。';
+
+  @override
+  String get wsInsertElements => '插入元素';
+
+  @override
+  String get wsAdmonitionsAndQuotes => '提示和引用';
+
+  @override
+  String get wsSemanticText => '语义文本';
+
+  @override
+  String get wsPropertiesUnavailable => '所检查的元素不可用。请检查一个元素以继续。';
 }

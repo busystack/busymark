@@ -3606,5 +3606,9 @@
   "wsNativeMarkers": "علامات Markdown",
   "wsListMarkerStart": "علامة البداية: {number}",
   "wsListLevel": "المستوى {level}",
-  "wsModuleCapsIgnored": "يتجاهل الباني المثبّت قواعد <caps> للوحدة. استخدم سمة caps محلية أو default-property."
+  "wsModuleCapsIgnored": "يتجاهل الباني المثبّت قواعد <caps> للوحدة. استخدم سمة caps محلية أو default-property.",
+  "wsInsertElements": "إدراج عناصر",
+  "wsAdmonitionsAndQuotes": "تنبيهات واقتباسات",
+  "wsSemanticText": "نص دلالي",
+  "wsPropertiesUnavailable": "العنصر الذي يتم فحصه غير متاح. افحص عنصرًا للمتابعة."
 }

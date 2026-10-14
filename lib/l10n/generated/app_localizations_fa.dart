@@ -5421,4 +5421,17 @@ class AppLocalizationsFa extends AppLocalizations {
   @override
   String get wsModuleCapsIgnored =>
       'سازندهٔ ثابت قواعد <caps> ماژول را نادیده می‌گیرد. از ویژگی caps محلی یا default-property استفاده کنید.';
+
+  @override
+  String get wsInsertElements => 'درج عناصر';
+
+  @override
+  String get wsAdmonitionsAndQuotes => 'یادآوری‌ها و نقل‌قول‌ها';
+
+  @override
+  String get wsSemanticText => 'متن معنایی';
+
+  @override
+  String get wsPropertiesUnavailable =>
+      'عنصر بررسی‌شده در دسترس نیست. برای ادامه عنصری را بررسی کنید.';
 }

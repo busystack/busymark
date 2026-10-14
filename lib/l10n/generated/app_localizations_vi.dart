@@ -5374,4 +5374,17 @@ class AppLocalizationsVi extends AppLocalizations {
   @override
   String get wsModuleCapsIgnored =>
       'Trình dựng cố định bỏ qua quy tắc <caps> của mô-đun. Dùng thuộc tính caps cục bộ hoặc default-property.';
+
+  @override
+  String get wsInsertElements => 'Chèn phần tử';
+
+  @override
+  String get wsAdmonitionsAndQuotes => 'Lưu ý và trích dẫn';
+
+  @override
+  String get wsSemanticText => 'Văn bản ngữ nghĩa';
+
+  @override
+  String get wsPropertiesUnavailable =>
+      'Phần tử đang kiểm tra không khả dụng. Kiểm tra một phần tử để tiếp tục.';
 }

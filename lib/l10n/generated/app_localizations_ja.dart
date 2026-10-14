@@ -5234,4 +5234,16 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String get wsModuleCapsIgnored =>
       '固定されたビルダーはモジュールの <caps> ルールを無視します。ローカルの caps 属性または default-property を使用してください。';
+
+  @override
+  String get wsInsertElements => '要素を挿入';
+
+  @override
+  String get wsAdmonitionsAndQuotes => '注意書きと引用';
+
+  @override
+  String get wsSemanticText => 'セマンティックテキスト';
+
+  @override
+  String get wsPropertiesUnavailable => '確認中の要素は利用できません。続行するには要素を確認してください。';
 }

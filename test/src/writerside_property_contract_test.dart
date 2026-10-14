@@ -52,7 +52,7 @@ Future<void> edit(WidgetTester tester, String label, String value) async {
 
 Future<void> section(WidgetTester tester, String title) async {
   final tile = find.byWidgetPredicate(
-    (w) => w is BusyMarkActionRow && w.title == title,
+    (w) => w is TextButton && w.key == ValueKey('writerside-disclosure-$title'),
   );
   await tester.ensureVisible(tile);
   await tester.tap(tile);

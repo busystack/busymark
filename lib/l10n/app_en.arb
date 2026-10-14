@@ -3153,5 +3153,9 @@
   "wsListLevel": "Level {level}",
   "@wsListLevel": {"description": "Writerside list ownership or verified capitalization presentation.", "placeholders": {"level": {"type": "String"}}},
   "wsModuleCapsIgnored": "The pinned builder ignores module <caps> rules. Use a local caps override or default-property.",
-  "@wsModuleCapsIgnored": {"description": "Writerside list ownership or verified capitalization presentation."}
+  "@wsModuleCapsIgnored": {"description": "Writerside list ownership or verified capitalization presentation."},
+  "wsInsertElements": "Insert elements",
+  "wsAdmonitionsAndQuotes": "Admonitions and quotes",
+  "wsSemanticText": "Semantic text",
+  "wsPropertiesUnavailable": "The inspected element is unavailable. Inspect an element to continue."
 }

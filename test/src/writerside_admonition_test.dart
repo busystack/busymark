@@ -236,8 +236,11 @@ Helpful advice.
     );
     await tester.pump();
 
-    expect(find.byTooltip('Admonition'), findsOneWidget);
-    await tester.tap(find.byTooltip('Admonition'));
+    expect(find.byTooltip('Writerside'), findsOneWidget);
+    expect(find.byTooltip('Admonition'), findsNothing);
+    await tester.tap(find.byTooltip('Writerside'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Admonitions and quotes'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Warning'));
     await tester.pumpAndSettle();

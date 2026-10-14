@@ -5400,4 +5400,17 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get wsModuleCapsIgnored =>
       'The pinned builder ignores module <caps> rules. Use a local caps override or default-property.';
+
+  @override
+  String get wsInsertElements => 'Insert elements';
+
+  @override
+  String get wsAdmonitionsAndQuotes => 'Admonitions and quotes';
+
+  @override
+  String get wsSemanticText => 'Semantic text';
+
+  @override
+  String get wsPropertiesUnavailable =>
+      'The inspected element is unavailable. Inspect an element to continue.';
 }

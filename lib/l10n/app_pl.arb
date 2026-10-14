@@ -3632,5 +3632,9 @@
   "wsNativeMarkers": "Znaczniki Markdown",
   "wsListMarkerStart": "Znacznik początkowy: {number}",
   "wsListLevel": "Poziom {level}",
-  "wsModuleCapsIgnored": "Przypięty kompilator ignoruje reguły <caps> modułu. Użyj lokalnego atrybutu caps lub default-property."
+  "wsModuleCapsIgnored": "Przypięty kompilator ignoruje reguły <caps> modułu. Użyj lokalnego atrybutu caps lub default-property.",
+  "wsInsertElements": "Wstaw elementy",
+  "wsAdmonitionsAndQuotes": "Uwagi i cytaty",
+  "wsSemanticText": "Tekst semantyczny",
+  "wsPropertiesUnavailable": "Sprawdzany element jest niedostępny. Sprawdź element, aby kontynuować."
 }

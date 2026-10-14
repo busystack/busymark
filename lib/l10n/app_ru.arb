@@ -3632,5 +3632,9 @@
   "wsNativeMarkers": "Маркеры Markdown",
   "wsListMarkerStart": "Начальный маркер: {number}",
   "wsListLevel": "Уровень {level}",
-  "wsModuleCapsIgnored": "Закреплённый сборщик игнорирует правила <caps> модуля. Используйте локальный атрибут caps или default-property."
+  "wsModuleCapsIgnored": "Закреплённый сборщик игнорирует правила <caps> модуля. Используйте локальный атрибут caps или default-property.",
+  "wsInsertElements": "Вставить элементы",
+  "wsAdmonitionsAndQuotes": "Примечания и цитаты",
+  "wsSemanticText": "Семантический текст",
+  "wsPropertiesUnavailable": "Проверяемый элемент недоступен. Выберите элемент для продолжения."
 }

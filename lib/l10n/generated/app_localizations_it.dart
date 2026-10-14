@@ -5430,4 +5430,17 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get wsModuleCapsIgnored =>
       'Il builder fissato ignora le regole <caps> del modulo. Usare un attributo caps locale o default-property.';
+
+  @override
+  String get wsInsertElements => 'Inserisci elementi';
+
+  @override
+  String get wsAdmonitionsAndQuotes => 'Avvisi e citazioni';
+
+  @override
+  String get wsSemanticText => 'Testo semantico';
+
+  @override
+  String get wsPropertiesUnavailable =>
+      'L’elemento esaminato non è disponibile. Esamina un elemento per continuare.';
 }

@@ -27,6 +27,11 @@ if ! docker run --rm \
   exit 1
 fi
 
+if [[ -n "${WRITERSIDE_CONFORMANCE_OUTPUT:-}" ]]; then
+  mkdir -p -- "$WRITERSIDE_CONFORMANCE_OUTPUT"
+  cp -a -- "$output_root/artifacts/." "$WRITERSIDE_CONFORMANCE_OUTPUT/"
+fi
+
 python3 - "$output_root/artifacts/report.json" <<'PYREPORT'
 import json, sys
 report = json.load(open(sys.argv[1]))
@@ -40,10 +45,6 @@ if [[ "$source_root" == "test/fixtures/writerside/conformance_project" ]]; then
     test/fixtures/writerside/conformance_semantics.json --check
 fi
 
-if [[ -n "${WRITERSIDE_CONFORMANCE_OUTPUT:-}" ]]; then
-  mkdir -p -- "$WRITERSIDE_CONFORMANCE_OUTPUT"
-  cp -a -- "$output_root/artifacts/." "$WRITERSIDE_CONFORMANCE_OUTPUT/"
-fi
 
 if [[ "$source_root" == "test/fixtures/writerside/reference_conformance" ]]; then
   python3 tools/verify_writerside_reference_fixture.py \

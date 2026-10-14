@@ -1,3 +1,4 @@
+import 'package:busymark/src/markdown/busymark_markdown_serializer.dart';
 import 'dart:io';
 
 import 'package:busymark/src/editor/wysiwyg/wysiwyg_document_controller.dart';
@@ -17,6 +18,43 @@ BusyDocument parse(String source) => const MarkdownParser()
     .busyDocument;
 
 void main() {
+  test(
+    'semantic text in a Markdown table preserves the pipe delimiter and offsets',
+    () {
+      const inline = BusyInline(
+        kind: BusyInlineKind.writersideUiPath,
+        text: 'File | Open',
+      );
+      final result = const BusyMarkMarkdownSerializer()
+          .serializeInlineFragmentAtTextOffset(
+            [inline],
+            tableCell: true,
+            textOffset: 6,
+          );
+      expect(result.source, '<ui-path>File &#124; Open</ui-path>');
+      expect(result.sourceOffset, result.source.indexOf(' Open'));
+    },
+  );
+
+  test('semantic XML escaping and mixed formatting retain source offsets', () {
+    final inline = BusyInline(
+      kind: BusyInlineKind.writersideControl,
+      text: '',
+      children: const [
+        BusyInline(kind: BusyInlineKind.text, text: 'A & '),
+        BusyInline(
+          kind: BusyInlineKind.strong,
+          text: '',
+          children: [BusyInline(kind: BusyInlineKind.text, text: '<File>')],
+        ),
+      ],
+    );
+    final result = const BusyMarkMarkdownSerializer()
+        .serializeInlineFragmentAtTextOffset([inline], textOffset: 5);
+    expect(result.source, '<control>A &amp; <b>&lt;File&gt;</b></control>');
+    expect(result.sourceOffset, result.source.indexOf('File'));
+  });
+
   for (final image in [false, true]) {
     test(
       '${image ? 'Image attribute-like alt text' : 'Linked code example'} survives content edit save reopen',

@@ -5145,5 +5145,9 @@
   "wsNativeMarkers": "Penanda Markdown",
   "wsListMarkerStart": "Penanda awal: {number}",
   "wsListLevel": "Tingkat {level}",
-  "wsModuleCapsIgnored": "Builder yang dipatok mengabaikan aturan <caps> modul. Gunakan atribut caps lokal atau default-property."
+  "wsModuleCapsIgnored": "Builder yang dipatok mengabaikan aturan <caps> modul. Gunakan atribut caps lokal atau default-property.",
+  "wsInsertElements": "Sisipkan elemen",
+  "wsAdmonitionsAndQuotes": "Pemberitahuan dan kutipan",
+  "wsSemanticText": "Teks semantik",
+  "wsPropertiesUnavailable": "Elemen yang diperiksa tidak tersedia. Periksa elemen untuk melanjutkan."
 }

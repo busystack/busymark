@@ -3632,5 +3632,9 @@
   "wsNativeMarkers": "Маркери Markdown",
   "wsListMarkerStart": "Початковий маркер: {number}",
   "wsListLevel": "Рівень {level}",
-  "wsModuleCapsIgnored": "Закріплений збирач ігнорує правила <caps> модуля. Використовуйте локальний атрибут caps або default-property."
+  "wsModuleCapsIgnored": "Закріплений збирач ігнорує правила <caps> модуля. Використовуйте локальний атрибут caps або default-property.",
+  "wsInsertElements": "Вставити елементи",
+  "wsAdmonitionsAndQuotes": "Примітки та цитати",
+  "wsSemanticText": "Семантичний текст",
+  "wsPropertiesUnavailable": "Елемент, що перевіряється, недоступний. Виберіть елемент для продовження."
 }

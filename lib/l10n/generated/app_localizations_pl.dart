@@ -5440,4 +5440,17 @@ class AppLocalizationsPl extends AppLocalizations {
   @override
   String get wsModuleCapsIgnored =>
       'Przypięty kompilator ignoruje reguły <caps> modułu. Użyj lokalnego atrybutu caps lub default-property.';
+
+  @override
+  String get wsInsertElements => 'Wstaw elementy';
+
+  @override
+  String get wsAdmonitionsAndQuotes => 'Uwagi i cytaty';
+
+  @override
+  String get wsSemanticText => 'Tekst semantyczny';
+
+  @override
+  String get wsPropertiesUnavailable =>
+      'Sprawdzany element jest niedostępny. Sprawdź element, aby kontynuować.';
 }

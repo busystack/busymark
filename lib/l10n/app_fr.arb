@@ -3606,5 +3606,9 @@
   "wsNativeMarkers": "Marqueurs Markdown",
   "wsListMarkerStart": "Premier marqueur : {number}",
   "wsListLevel": "Niveau {level}",
-  "wsModuleCapsIgnored": "Le compilateur fixé ignore les règles <caps> du module. Utilisez un attribut caps local ou default-property."
+  "wsModuleCapsIgnored": "Le compilateur fixé ignore les règles <caps> du module. Utilisez un attribut caps local ou default-property.",
+  "wsInsertElements": "Insérer des éléments",
+  "wsAdmonitionsAndQuotes": "Avertissements et citations",
+  "wsSemanticText": "Texte sémantique",
+  "wsPropertiesUnavailable": "L’élément inspecté est indisponible. Inspectez un élément pour continuer."
 }

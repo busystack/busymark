@@ -5435,4 +5435,17 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get wsModuleCapsIgnored =>
       'De vastgezette builder negeert <caps>-regels van de module. Gebruik een lokaal caps-attribuut of default-property.';
+
+  @override
+  String get wsInsertElements => 'Elementen invoegen';
+
+  @override
+  String get wsAdmonitionsAndQuotes => 'Opmerkingen en citaten';
+
+  @override
+  String get wsSemanticText => 'Semantische tekst';
+
+  @override
+  String get wsPropertiesUnavailable =>
+      'Het geïnspecteerde element is niet beschikbaar. Inspecteer een element om door te gaan.';
 }

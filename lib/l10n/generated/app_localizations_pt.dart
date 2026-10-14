@@ -5448,6 +5448,19 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get wsModuleCapsIgnored =>
       'O compilador fixado ignora as regras <caps> do módulo. Use um atributo caps local ou default-property.';
+
+  @override
+  String get wsInsertElements => 'Inserir elementos';
+
+  @override
+  String get wsAdmonitionsAndQuotes => 'Avisos e citações';
+
+  @override
+  String get wsSemanticText => 'Texto semântico';
+
+  @override
+  String get wsPropertiesUnavailable =>
+      'O elemento inspecionado está indisponível. Inspecione um elemento para continuar.';
 }
 
 /// The translations for Portuguese, as used in Brazil (`pt_BR`).
@@ -10890,4 +10903,17 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   @override
   String get wsModuleCapsIgnored =>
       'O compilador fixado ignora as regras <caps> do módulo. Use um atributo caps local ou default-property.';
+
+  @override
+  String get wsInsertElements => 'Inserir elementos';
+
+  @override
+  String get wsAdmonitionsAndQuotes => 'Avisos e citações';
+
+  @override
+  String get wsSemanticText => 'Texto semântico';
+
+  @override
+  String get wsPropertiesUnavailable =>
+      'O elemento inspecionado está indisponível. Inspecione um elemento para continuar.';
 }

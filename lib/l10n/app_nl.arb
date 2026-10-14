@@ -5145,5 +5145,9 @@
   "wsNativeMarkers": "Markdown-markeringen",
   "wsListMarkerStart": "Beginmarkering: {number}",
   "wsListLevel": "Niveau {level}",
-  "wsModuleCapsIgnored": "De vastgezette builder negeert <caps>-regels van de module. Gebruik een lokaal caps-attribuut of default-property."
+  "wsModuleCapsIgnored": "De vastgezette builder negeert <caps>-regels van de module. Gebruik een lokaal caps-attribuut of default-property.",
+  "wsInsertElements": "Elementen invoegen",
+  "wsAdmonitionsAndQuotes": "Opmerkingen en citaten",
+  "wsSemanticText": "Semantische tekst",
+  "wsPropertiesUnavailable": "Het geïnspecteerde element is niet beschikbaar. Inspecteer een element om door te gaan."
 }

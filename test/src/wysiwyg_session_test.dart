@@ -26,6 +26,239 @@ class _SessionReportNotifier extends Notifier<int> {
 void main() {
   const parser = MarkdownParser();
 
+  testWidgets(
+    'pinned non-list Markdown owner refreshes direct edits with authored positions',
+    (tester) async {
+      const original = '# Topic\n\n## Chapter A\n\nParagraph B.\n';
+      var source = original;
+      WritersideInspectorTarget? pinned;
+      var revision = 0;
+      await tester.pumpWidget(
+        _app(
+          BusyMarkWysiwygEditor(
+            document: parser
+                .parse(
+                  filePath: 'one.md',
+                  source: original,
+                  mode: MarkdownMode.writersideMarkdown,
+                )
+                .busyDocument,
+            documentId: 'same',
+            onSourceChanged: (_, value) {
+              source = value;
+              revision++;
+            },
+            onInspectElement:
+                (
+                  document,
+                  id,
+                  inline,
+                  explicit,
+                  multiple, {
+                  bool revisionRefresh = false,
+                }) {
+                  if (explicit) {
+                    pinned = WritersideInspectorTarget.fromSelection(
+                      bufferId: 'same',
+                      revision: revision,
+                      source: source,
+                      document: document,
+                      blockId: id,
+                      inline: inline,
+                    );
+                  } else if (pinned != null) {
+                    pinned =
+                        pinned!.refreshUnchangedElement(
+                          revision: revision,
+                          source: source,
+                          document: document,
+                        ) ??
+                        pinned;
+                  }
+                },
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      Finder field(String text) => find.byWidgetPredicate(
+        (w) =>
+            w is TextField &&
+            w.controller is BusyMarkWysiwygTextController &&
+            w.controller!.text == text,
+      );
+      await tester.tap(field('Chapter A'));
+      tester
+          .state<BusyMarkWysiwygEditorState>(find.byType(BusyMarkWysiwygEditor))
+          .inspectCurrentSelection();
+      await tester.pumpAndSettle();
+      await tester.enterText(field('Paragraph B.'), 'Paragraph B. edited');
+      await tester.pumpAndSettle();
+      expect(pinned!.block!.plainText, 'Chapter A');
+      expect(pinned!.matches('same', revision, source), isTrue);
+      await tester.enterText(field('Chapter A'), 'Chapter A edited');
+      await tester.pumpAndSettle();
+      expect(pinned!.matches('same', revision, source), isTrue);
+      expect(pinned!.block!.plainText, 'Chapter A edited');
+      expect(pinned!.block!.attributes['id'], 'chapter-a-edited');
+      expect(pinned!.sourceLocation, source.indexOf('## Chapter A edited'));
+    },
+  );
+
+  for (final withList in [false, true]) {
+    for (final style in ['Tip', 'Note', 'Warning', 'Quote']) {
+      testWidgets(
+        '$style Markdown caret survives workspace source reparse (list=$withList)',
+        (tester) async {
+          final original =
+              '# Topic\n\n${withList ? "- Item\n\n" : ""}$style **example**.\n\nAfter.\n';
+          BusyDocument parse(String source) => parser
+              .parse(
+                filePath: 'one.md',
+                source: source,
+                mode: MarkdownMode.writersideMarkdown,
+              )
+              .busyDocument;
+          var session = const WysiwygEditorSessionState();
+          var input = const WysiwygEditorSessionState();
+          var revision = 0;
+          var source = original;
+          Widget editor(BusyDocument document) => _app(
+            BusyMarkWysiwygEditor(
+              document: document,
+              documentId: 'same',
+              contentRevision: revision,
+              initialSessionState: input,
+              useExternalUndoHistory: true,
+              onSessionChanged: (_, value) => session = value,
+              onSourceChanged: (_, value) => source = value,
+            ),
+          );
+          Finder field() => find.byWidgetPredicate(
+            (w) =>
+                w is TextField &&
+                w.controller is BusyMarkWysiwygTextController &&
+                w.controller!.text == '$style example.',
+          );
+          await tester.pumpWidget(editor(parse(original)));
+          await tester.pumpAndSettle();
+          await tester.tap(field());
+          tester.widget<TextField>(field()).controller!.selection =
+              const TextSelection.collapsed(offset: 4);
+          await tester.pumpAndSettle();
+          final before = session;
+          await tester.tap(find.byTooltip('Writerside'));
+          await tester.pumpAndSettle();
+          await tester.tap(find.text('Admonitions and quotes'));
+          await tester.pumpAndSettle();
+          await tester.tap(find.text(style));
+          await tester.pumpAndSettle();
+          final changed = source;
+          final after = session;
+          expect(changed, contains('> $style **example**.'));
+          input = before;
+          revision++;
+          await tester.pumpWidget(editor(parse(original)));
+          await tester.pumpAndSettle();
+          expect(tester.widget<TextField>(field()).focusNode!.hasFocus, isTrue);
+          input = after;
+          revision++;
+          await tester.pumpWidget(editor(parse(changed)));
+          await tester.pumpAndSettle();
+          expect(
+            tester.widget<TextField>(field()).focusNode!.hasFocus,
+            isTrue,
+            reason: '${after.toJson()}',
+          );
+          expect(
+            tester.widget<TextField>(field()).controller!.selection,
+            const TextSelection.collapsed(offset: 4),
+          );
+        },
+      );
+    }
+  }
+
+  for (final xml in [false, true]) {
+    testWidgets(
+      '${xml ? "XML" : "Markdown"} caret session survives an exact reparse with new model IDs',
+      (tester) async {
+        final source = xml
+            ? '<topic id="one" title="Topic"><p>First</p><p>Target</p><p>Third</p></topic>'
+            : '# Topic\n\nFirst\n\nTarget\n\nThird\n';
+        final parsed = xml
+            ? const WritersideEditingAdapter().parseXml(
+                filePath: 'one.topic',
+                source: source,
+              )!
+            : parser
+                  .parse(
+                    filePath: 'one.md',
+                    source: source,
+                    mode: MarkdownMode.writersideMarkdown,
+                  )
+                  .busyDocument;
+        Iterable<BusyBlock> walk(List<BusyBlock> blocks) sync* {
+          for (final b in blocks) {
+            yield b;
+            yield* walk(b.children);
+          }
+        }
+
+        final authored = walk(
+          parsed.blocks,
+        ).singleWhere((b) => b.plainText == 'Target');
+        List<BusyBlock> remap(List<BusyBlock> blocks) => [
+          for (final b in blocks)
+            b.plainText == 'Target'
+                ? b.copyWith(id: 'editing-child')
+                : b.copyWith(children: remap(b.children)),
+        ];
+        final original = parsed.copyWith(blocks: remap(parsed.blocks));
+        var session = const WysiwygEditorSessionState();
+        Widget editor(BusyDocument document) => _app(
+          BusyMarkWysiwygEditor(
+            document: document,
+            documentId: 'same-buffer',
+            initialSessionState: session,
+            onSessionChanged: (_, value) => session = value,
+            onSourceChanged: (_, _) =>
+                fail('Caret restoration must not edit source'),
+          ),
+        );
+        await tester.pumpWidget(editor(original));
+        await tester.pumpAndSettle();
+        Finder target() => find.byWidgetPredicate(
+          (w) => w is TextField && w.controller?.text == 'Target',
+        );
+        await tester.tap(target());
+        tester.widget<TextField>(target()).controller!.selection =
+            const TextSelection.collapsed(offset: 3);
+        await tester.pumpAndSettle();
+        expect(session.activeBlockId, 'editing-child');
+        expect(session.sourceBindings['editing-child'], (
+          start: authored.sourceSpan!.startOffset,
+          end: authored.sourceSpan!.endOffset,
+          kind: 'paragraph',
+          tag: 'p',
+        ));
+        final restored = WysiwygEditorSessionState.fromJson(session.toJson());
+        expect(restored.sourceSignature, session.sourceSignature);
+        expect(restored.sourceBindings, session.sourceBindings);
+        await tester.pumpWidget(const SizedBox.shrink());
+        session = restored;
+        await tester.pumpWidget(editor(parsed));
+        await tester.pumpAndSettle();
+        final field = tester.widget<TextField>(target());
+        expect(field.focusNode!.hasFocus, isTrue);
+        expect(
+          field.controller!.selection,
+          const TextSelection.collapsed(offset: 3),
+        );
+        expect(session.activeBlockId, authored.id);
+      },
+    );
+  }
+
   for (final xml in [false, true]) {
     testWidgets(
       '${xml ? "XML" : "Markdown"} revision refresh publishes restored anchor and enum state at the unchanged caret',

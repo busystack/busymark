@@ -25,7 +25,7 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:math' as math;
 
-import 'package:flutter/foundation.dart' show setEquals;
+import 'package:flutter/foundation.dart' show setEquals, mapEquals;
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -12071,9 +12071,6 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
   final _wysiwygEditorKey = GlobalKey<BusyMarkWysiwygEditorState>();
   WritersideInspectorTarget? _inspected;
   bool _videoPropertyDraft = false;
-  TextSelection? _lastPropertiesSourceSelection;
-  String? _lastPropertiesSourceBuffer;
-  String? _propertiesSourceOwner;
   final _propertiesPanelKey = GlobalKey();
   late final WorkspaceController _inspectorWorkspaceController;
   late final SpellingSessionController _spelling;
@@ -12103,6 +12100,9 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
       workspaceControllerProvider.notifier,
     );
     _inspectorWorkspaceController.toggleElementProperties = _toggleProperties;
+    _inspectorWorkspaceController.propertyEdits.addListener(
+      _handlePropertyDraftChange,
+    );
     _spelling = ref.read(spellingSessionControllerProvider)
       ..addListener(_handleSpellingChanged);
     _spelling.synchronizeOpenBuffers(
@@ -12116,6 +12116,9 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
 
   @override
   void dispose() {
+    _inspectorWorkspaceController.propertyEdits.removeListener(
+      _handlePropertyDraftChange,
+    );
     if (_inspectorWorkspaceController.toggleElementProperties ==
         _toggleProperties) {
       _inspectorWorkspaceController.toggleElementProperties = null;
@@ -12152,28 +12155,16 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
           bufferId: nextBuffer.id,
         );
       }
-      // Undo and external edits can leave the Source caret at the same offset.
-      // Its occurrence still needs a new revision-bound inspector snapshot.
-      if (!_propertyEdits.hasPending &&
-          ref.read(appSettingsControllerProvider).elementPropertiesVisible &&
-          (widget.viewMode == DocumentViewModePreference.source ||
-              widget.viewMode == DocumentViewModePreference.split)) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (!mounted || _propertyEdits.hasPending) return;
-          final live = ref.read(workspaceControllerProvider).activeBuffer;
-          if (live?.id != nextBuffer.id ||
-              live?.revision != nextBuffer.revision ||
-              (widget.viewMode != DocumentViewModePreference.source &&
-                  widget.viewMode != DocumentViewModePreference.split)) {
-            return;
-          }
-          _inspectSourceSelection(live!.editorState.selection);
-        });
-      }
+      // Refresh the pinned source owner before building this revision. A
+      // temporary unavailable pane would dispose the focused property field
+      // between Undo and Redo. Editor selection restoration remains independent.
+      final document = _wysiwygDocument();
+      if (document != null) _refreshInspectedElement(document);
     }
     _spelling.synchronizeOpenBuffers(
       widget.state.documentBuffers.map((buffer) => buffer.id),
     );
+    if (previousBuffer?.id != nextBuffer?.id) _inspected = null;
     final path = widget.state.activeBuffer?.filePath ?? '';
     if (path != _lastPath || previousBuffer?.id != nextBuffer?.id) {
       _lastPath = path;
@@ -12349,21 +12340,6 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
               _wysiwygEditorKey.currentState?.spellingDocumentGeneration ?? 0,
         ),
       );
-    }
-    if (sourceVisible && activeBuffer != null) {
-      final owner = '${activeBuffer.id}:${widget.viewMode.name}';
-      if (_propertiesSourceOwner != owner) {
-        _propertiesSourceOwner = owner;
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (!mounted || _propertiesSourceOwner != owner) return;
-          final live = ref.read(workspaceControllerProvider).activeBuffer;
-          if (live == null || live.id != activeBuffer.id) return;
-          _lastPropertiesSourceSelection = null;
-          _inspectSourceSelection(live.editorState.selection);
-        });
-      }
-    } else {
-      _propertiesSourceOwner = null;
     }
     final sourceTarget = ref.watch(_sourceNavigationTargetProvider);
     if (sourceVisible &&
@@ -12830,7 +12806,6 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
                                       scrollOffset,
                                       foldedRegionKeys,
                                     ) {
-                                      _inspectSourceSelection(selection);
                                       final latest = ref
                                           .read(workspaceControllerProvider)
                                           .documentBuffers
@@ -13022,22 +12997,44 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     );
   }
 
+  // The command inspects the current selection even when the pane is open.
+  // Closing is a separate guarded action on the pane itself.
   void _toggleProperties() {
-    if (ref.read(appSettingsControllerProvider).elementPropertiesVisible) {
-      _closeProperties();
+    final editor = _wysiwygEditorKey.currentState;
+    if (editor != null) {
+      editor.inspectCurrentSelection();
     } else {
-      if (!_propertyEdits.transition()) return;
-      final editor = _wysiwygEditorKey.currentState;
-      if (editor != null) {
-        editor.inspectCurrentSelection();
-      } else {
-        final buffer = ref.read(workspaceControllerProvider).activeBuffer;
-        if (buffer != null) {
-          _inspectSourceSelection(buffer.editorState.selection);
-        }
-      }
-      _showProperties();
+      final buffer = ref.read(workspaceControllerProvider).activeBuffer;
+      if (buffer != null) _inspectSourceSelection(buffer.editorState.selection);
     }
+    _showProperties();
+  }
+
+  void _handlePropertyDraftChange() {
+    if (_propertyEdits.hasPending) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || _propertyEdits.hasPending) return;
+      final document = _wysiwygDocument();
+      if (document != null) _refreshInspectedElement(document);
+    });
+  }
+
+  void _refreshInspectedElement(BusyDocument document) {
+    final live = ref.read(workspaceControllerProvider).activeBuffer;
+    final captured = _inspected;
+    if (live == null ||
+        captured == null ||
+        captured.bufferId != live.id ||
+        captured.matches(live.id, live.revision, live.text) ||
+        _propertyEdits.hasPending) {
+      return;
+    }
+    final refreshed = captured.refreshUnchangedElement(
+      revision: live.revision,
+      source: live.text,
+      document: document,
+    );
+    if (mounted) setState(() => _inspected = refreshed ?? captured);
   }
 
   void _inspectEditorElement(
@@ -13050,11 +13047,8 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
   }) {
     final buffer = ref.read(workspaceControllerProvider).activeBuffer;
     if (buffer == null || !document.isWriterside) return;
-    if (!explicit &&
-        _inspected?.block?.id == id &&
-        _inspected?.inline == inline &&
-        _inspected?.multiple == multiple &&
-        _inspected?.matches(buffer.id, buffer.revision, buffer.text) == true) {
+    if (!explicit) {
+      _refreshInspectedElement(document);
       return;
     }
     final incoming = WritersideInspectorTarget.fromSelection(
@@ -13070,23 +13064,38 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
       if (explicit) _propertyEdits.reject(WritersidePropertyRejection.stale);
       return;
     }
-    if (revisionRefresh && _inspected?.bufferId == buffer.id) {
-      // A model refresh is not a new selection. Preserve an explicitly
-      // inspected ancestor, and never rebind drafts to the new revision.
-      if (_propertyEdits.hasPending) return;
-      final captured = _inspected!;
-      if (captured.matches(buffer.id, buffer.revision, buffer.text)) return;
-      if (captured.block?.id != id || captured.logicalTopic) {
-        final refreshed = captured.refreshUnchangedElement(
-          revision: buffer.revision,
-          source: buffer.text,
-          document: document,
-        );
-        if (refreshed != null && mounted) {
-          setState(() => _inspected = refreshed);
-        }
-        return;
-      }
+    // The live editing model can retain IDs across structural edits. Bind its
+    // explicit address to freshly parsed source only after the complete authored
+    // projection and emitted bytes agree; an ordinal alone is not identity.
+    final authored = _wysiwygDocument();
+    final parsed = authored == null
+        ? null
+        : busyMarkWysiwygBindMarkdownReferences(authored);
+    if (parsed == null || !incoming.hasSameAuthoredState(parsed)) {
+      _propertyEdits.reject(WritersidePropertyRejection.stale);
+      return;
+    }
+    var siblings = parsed.blocks.where((b) => !b.isSourceOnly).toList();
+    BusyBlock? selected;
+    for (final ordinal in incoming.semanticAddress) {
+      if (ordinal >= siblings.length) return;
+      selected = siblings[ordinal];
+      siblings = selected.children.where((b) => !b.isSourceOnly).toList();
+    }
+    document = parsed;
+    id = selected?.id;
+    if (inline != null && selected != null) {
+      final beforeInline = inline;
+      inline = busyInlineReferenceRanges(selected.inlines)
+          .where(
+            (r) =>
+                r.kind == beforeInline.kind &&
+                r.start == beforeInline.start &&
+                r.end == beforeInline.end &&
+                r.referenceIndex == beforeInline.referenceIndex,
+          )
+          .singleOrNull;
+      if (inline == null) return;
     }
     if (!_propertyEdits.transition()) return;
     final current = ref.read(workspaceControllerProvider).activeBuffer;
@@ -13094,20 +13103,15 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     if (current.revision != buffer.revision || current.text != buffer.text) {
       final fresh = _wysiwygDocument();
       if (fresh == null) return;
-      var siblings = fresh.blocks;
-      BusyBlock? reconciled;
-      for (final ordinal in incoming.address) {
-        if (ordinal >= siblings.length) return;
-        reconciled = siblings[ordinal];
-        siblings = reconciled.children;
-      }
-      if (reconciled?.plainText != incoming.block?.plainText ||
-          reconciled?.kind != incoming.block?.kind) {
-        return;
-      }
+      final reconciled = incoming.refreshUnchangedElement(
+        revision: current.revision,
+        source: current.text,
+        document: fresh,
+      );
+      if (reconciled == null) return;
       document = fresh;
-      id = reconciled?.id;
-      inline = null;
+      id = reconciled.block?.id;
+      inline = reconciled.inline;
     }
     final target = WritersideInspectorTarget.fromSelection(
       bufferId: current.id,
@@ -13127,36 +13131,47 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
   }
 
   void _inspectSourceSelection(TextSelection selection) {
-    var buffer = ref.read(workspaceControllerProvider).activeBuffer;
-    var document = _wysiwygDocument();
+    final buffer = ref.read(workspaceControllerProvider).activeBuffer;
+    final document = _wysiwygDocument();
     if (buffer == null || document == null || !document.isWriterside) return;
-    if (_lastPropertiesSourceBuffer == buffer.id &&
-        _lastPropertiesSourceSelection == selection &&
-        _inspected?.matches(buffer.id, buffer.revision, buffer.text) == true) {
-      return;
-    }
-    if (!_propertyEdits.transition()) return;
-    buffer = ref.read(workspaceControllerProvider).activeBuffer;
-    document = _wysiwygDocument();
-    if (buffer == null || document == null) return;
-    _lastPropertiesSourceBuffer = buffer.id;
-    _lastPropertiesSourceSelection = selection;
-    final target = WritersideInspectorTarget.fromSource(
+    final requested = WritersideInspectorTarget.fromSource(
       bufferId: buffer.id,
       revision: buffer.revision,
       source: buffer.text,
       document: document,
       selection: selection,
     );
+    if (!requested.matches(buffer.id, buffer.revision, buffer.text)) {
+      _propertyEdits.reject(WritersidePropertyRejection.stale);
+      return;
+    }
+    if (!_propertyEdits.transition()) return;
+    final live = ref.read(workspaceControllerProvider).activeBuffer;
+    if (live?.id != buffer.id) return;
+    final fresh = _wysiwygDocument();
+    if (fresh == null) return;
+    final target = requested.matches(live!.id, live.revision, live.text)
+        ? requested
+        : requested.refreshUnchangedElement(
+            revision: live.revision,
+            source: live.text,
+            document: fresh,
+          );
+    if (target == null) {
+      _propertyEdits.reject(WritersidePropertyRejection.stale);
+      return;
+    }
     if (mounted) setState(() => _inspected = target);
   }
 
   Widget _withProperties(Widget editor) {
     final settings = ref.watch(appSettingsControllerProvider);
     final document = _wysiwygDocument();
-    if (document?.isWriterside != true || !settings.elementPropertiesVisible) {
-      return editor;
-    }
+    final writerside =
+        document?.isWriterside == true ||
+        _activeDocumentKind(widget.state.workspace) ==
+            DocumentKind.writersideXmlTopic;
+    if (!writerside || !settings.elementPropertiesVisible) return editor;
     final buffer = ref.read(workspaceControllerProvider).activeBuffer;
     final captured = _inspected;
     final valid =
@@ -13166,6 +13181,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     final target =
         valid ||
             _propertyEdits.hasPending &&
+                captured?.bufferId == buffer?.id &&
                 widget.viewMode != DocumentViewModePreference.preview
         ? captured
         : null;
@@ -13197,11 +13213,20 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
                 ),
                 Padding(
                   padding: const EdgeInsets.all(12),
-                  child: Text(context.l10n.wsPropertiesSelection),
+                  child: Text(
+                    document == null ||
+                            captured != null &&
+                                !valid &&
+                                captured.bufferId == buffer?.id
+                        ? context.l10n.wsPropertiesUnavailable
+                        : context.l10n.wsPropertiesSelection,
+                  ),
                 ),
                 BusyMarkDialogButton(
                   label: context.l10n.wsTopicProperties,
-                  onPressed: _inspectTopic,
+                  onPressed: document?.isWriterside == true
+                      ? _inspectTopic
+                      : null,
                 ),
               ],
             ),
@@ -13482,6 +13507,10 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
       documentIdentity: target.bufferId,
       effectiveProperties: _effectiveInspectorProperties(target),
       session: _propertyEdits,
+      onUndo: () =>
+          ref.read(workspaceControllerProvider.notifier).undoActiveBuffer(),
+      onRedo: () =>
+          ref.read(workspaceControllerProvider.notifier).redoActiveBuffer(),
       document: target.document,
       path: target.path,
       target: target.block,
@@ -13510,10 +13539,42 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
         return resultingId != null;
       }),
       onTargetSelected: (id) {
+        final live = ref.read(workspaceControllerProvider).activeBuffer;
+        if (live?.id != target.bufferId) {
+          _propertyEdits.reject(WritersidePropertyRejection.stale);
+          return;
+        }
         if (id == '@topic') {
           _inspectTopic();
         } else {
-          _inspectEditorElement(target.document, id, null, true, false);
+          final requested = WritersideInspectorTarget.fromSelection(
+            bufferId: target.bufferId,
+            revision: target.revision,
+            source: target.source,
+            document: target.document,
+            blockId: id,
+          );
+          final fresh = _wysiwygDocument();
+          final selected = fresh == null
+              ? null
+              : requested.matches(live!.id, live.revision, live.text)
+              ? requested
+              : requested.refreshUnchangedElement(
+                  revision: live.revision,
+                  source: live.text,
+                  document: fresh,
+                );
+          if (selected == null) {
+            _propertyEdits.reject(WritersidePropertyRejection.stale);
+            return;
+          }
+          _inspectEditorElement(
+            selected.document,
+            selected.block?.id,
+            null,
+            true,
+            false,
+          );
         }
       },
       onProperty: (name, value) {
@@ -13638,6 +13699,17 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
         if (current == null ||
             current.bufferId != target.bufferId ||
             !current.matches(live?.id, live?.revision, live?.text)) {
+          _propertyEdits.reject(WritersidePropertyRejection.stale);
+          return;
+        }
+        final requested = target.matches(live?.id, live?.revision, live?.text)
+            ? target
+            : target.refreshUnchangedElement(
+                revision: live!.revision,
+                source: live.text,
+                document: current.document,
+              );
+        if (!current.sameElement(requested)) {
           _propertyEdits.reject(WritersidePropertyRejection.stale);
           return;
         }
@@ -15456,7 +15528,9 @@ bool _sameWysiwygSession(
   WysiwygEditorSessionState left,
   WysiwygEditorSessionState right,
 ) {
-  return left.activeBlockId == right.activeBlockId &&
+  return left.sourceSignature == right.sourceSignature &&
+      mapEquals(left.sourceBindings, right.sourceBindings) &&
+      left.activeBlockId == right.activeBlockId &&
       left.activeCellId == right.activeCellId &&
       left.anchorBlockId == right.anchorBlockId &&
       left.anchorOffset == right.anchorOffset &&

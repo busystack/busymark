@@ -5145,5 +5145,9 @@
   "wsNativeMarkers": "Markdown マーカー",
   "wsListMarkerStart": "開始マーカー: {number}",
   "wsListLevel": "階層 {level}",
-  "wsModuleCapsIgnored": "固定されたビルダーはモジュールの <caps> ルールを無視します。ローカルの caps 属性または default-property を使用してください。"
+  "wsModuleCapsIgnored": "固定されたビルダーはモジュールの <caps> ルールを無視します。ローカルの caps 属性または default-property を使用してください。",
+  "wsInsertElements": "要素を挿入",
+  "wsAdmonitionsAndQuotes": "注意書きと引用",
+  "wsSemanticText": "セマンティックテキスト",
+  "wsPropertiesUnavailable": "確認中の要素は利用できません。続行するには要素を確認してください。"
 }

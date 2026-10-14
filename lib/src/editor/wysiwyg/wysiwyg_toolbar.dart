@@ -22,6 +22,17 @@ String busyMarkWritersideInsertLabel(
     context.l10n.wsConvertList,
 };
 
+String busyMarkSemanticInlineLabel(
+  BuildContext context,
+  BusyWysiwygInlineCommand command,
+) => switch (command) {
+  BusyWysiwygInlineCommand.uiControl => context.l10n.wsUiControl,
+  BusyWysiwygInlineCommand.filePath => context.l10n.wsFilePath,
+  BusyWysiwygInlineCommand.uiPath => context.l10n.wsUiPath,
+  BusyWysiwygInlineCommand.shortcut => context.l10n.keyboardShortcuts,
+  _ => throw ArgumentError.value(command),
+};
+
 class BusyMarkWysiwygToolbar extends StatelessWidget {
   const BusyMarkWysiwygToolbar({
     super.key,
@@ -46,6 +57,7 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
     this.isBlockCommandEnabled,
     this.admonitionCommandsEnabled = true,
     this.inlineCommandsEnabled = true,
+    this.semanticCommandsEnabled = true,
     this.lineBreakCommandsEnabled = true,
     this.admonitionsEnabled = false,
     this.alignEnd = false,
@@ -73,6 +85,7 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
   final bool Function(BusyWysiwygBlockCommand command)? isBlockCommandEnabled;
   final bool admonitionCommandsEnabled;
   final bool inlineCommandsEnabled;
+  final bool semanticCommandsEnabled;
   final bool lineBreakCommandsEnabled;
   final bool admonitionsEnabled;
   final bool alignEnd;
@@ -179,12 +192,7 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
                   : null,
             ),
           ],
-          if (admonitionsEnabled)
-            [
-              if (onAdmonitionCommand != null) _admonitionMenu(context),
-              if (onWritersideInsert != null) _writersideInsertMenu(context),
-              _writersideSemanticMenu(context),
-            ],
+          if (admonitionsEnabled) [_writersideMenu(context)],
           [
             _button(
               context,
@@ -311,58 +319,73 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
     return isBlockCommandEnabled?.call(command) ?? true;
   }
 
-  Widget _writersideInsertMenu(BuildContext context) =>
-      BusyMarkHeaderPopupMenuButton<BusyWritersideInsertCommand>(
+  Widget _writersideMenu(BuildContext context) =>
+      BusyMarkHeaderPopupMenuButton<BusyWritersideToolbarCommand>(
         onCanceled: onMenuCanceled,
-        key: const ValueKey('wysiwyg-writerside-insert'),
-        tooltip: '${context.l10n.writerside} · ${context.l10n.insert}',
+        key: const ValueKey('wysiwyg-writerside'),
+        tooltip: context.l10n.writerside,
         icon: BusyMarkGlyphs.insertObject,
         transparent: false,
         elevated: true,
         foregroundColor: BusyMarkLinuxPalette.white,
         backgroundColor: _editorToolbarButtonBackground(context),
         itemBuilder: (context) => [
-          for (final command in BusyWritersideInsertCommand.values)
-            if (command != BusyWritersideInsertCommand.convertListToProcedure ||
-                (isWritersideInsertEnabled?.call(command) ?? false))
-              BusyMarkPopupMenuItem(
-                value: command,
-                label: busyMarkWritersideInsertLabel(context, command),
-                enabled: isWritersideInsertEnabled?.call(command) ?? true,
-              ),
-        ],
-        onSelected: onWritersideInsert!,
-      );
-
-  Widget _writersideSemanticMenu(BuildContext context) =>
-      BusyMarkHeaderPopupMenuButton<BusyWysiwygInlineCommand>(
-        onCanceled: onMenuCanceled,
-        key: const ValueKey('wysiwyg-writerside-semantic'),
-        tooltip: context.l10n.wsSemanticFormats,
-        icon: BusyMarkGlyphs.code,
-        transparent: false,
-        elevated: true,
-        foregroundColor: BusyMarkLinuxPalette.white,
-        backgroundColor: _editorToolbarButtonBackground(context),
-        itemBuilder: (context) => [
-          for (final command in const [
-            BusyWysiwygInlineCommand.uiControl,
-            BusyWysiwygInlineCommand.filePath,
-            BusyWysiwygInlineCommand.uiPath,
-            BusyWysiwygInlineCommand.shortcut,
-          ])
-            BusyMarkPopupMenuItem(
-              value: command,
-              enabled: inlineCommandsEnabled,
-              label: switch (command) {
-                BusyWysiwygInlineCommand.uiControl => context.l10n.wsUiControl,
-                BusyWysiwygInlineCommand.filePath => context.l10n.wsFilePath,
-                BusyWysiwygInlineCommand.uiPath => context.l10n.wsUiPath,
-                _ => context.l10n.keyboardShortcuts,
-              },
+          if (onWritersideInsert != null)
+            BusyMarkSubmenuItem(
+              label: context.l10n.wsInsertElements,
+              items: [
+                for (final command in BusyWritersideInsertCommand.values)
+                  BusyMarkPopupMenuItem(
+                    value: BusyWritersideToolbarInsert(command),
+                    label: busyMarkWritersideInsertLabel(context, command),
+                    enabled: isWritersideInsertEnabled?.call(command) ?? true,
+                  ),
+              ],
             ),
+          if (onAdmonitionCommand != null)
+            BusyMarkSubmenuItem(
+              label: context.l10n.wsAdmonitionsAndQuotes,
+              items: [
+                for (final style in BusyAdmonitionStyle.values)
+                  BusyMarkPopupMenuItem(
+                    value: BusyWritersideToolbarAdmonition(style),
+                    label: switch (style) {
+                      BusyAdmonitionStyle.tip => context.l10n.tip,
+                      BusyAdmonitionStyle.note => context.l10n.note,
+                      BusyAdmonitionStyle.warning => context.l10n.warning,
+                      BusyAdmonitionStyle.quote => context.l10n.quote,
+                    },
+                    enabled: admonitionCommandsEnabled,
+                  ),
+              ],
+            ),
+          BusyMarkSubmenuItem(
+            label: context.l10n.wsSemanticText,
+            items: [
+              for (final command in const [
+                BusyWysiwygInlineCommand.uiControl,
+                BusyWysiwygInlineCommand.filePath,
+                BusyWysiwygInlineCommand.uiPath,
+                BusyWysiwygInlineCommand.shortcut,
+              ])
+                BusyMarkPopupMenuItem(
+                  value: BusyWritersideToolbarSemantic(command),
+                  enabled: inlineCommandsEnabled && semanticCommandsEnabled,
+                  label: busyMarkSemanticInlineLabel(context, command),
+                ),
+            ],
+          ),
         ],
-        onSelected: onInlineCommand,
+        onSelected: (selection) {
+          switch (selection) {
+            case BusyWritersideToolbarInsert(:final command):
+              onWritersideInsert!(command);
+            case BusyWritersideToolbarAdmonition(:final style):
+              onAdmonitionCommand!(style);
+            case BusyWritersideToolbarSemantic(:final command):
+              onInlineCommand(command);
+          }
+        },
       );
 
   List<Widget> _groups(Axis axis, List<List<Widget>> groups) {
@@ -445,45 +468,6 @@ class BusyMarkWysiwygToolbar extends StatelessWidget {
         ),
       ],
       onSelected: onBlockCommand,
-    );
-  }
-
-  Widget _admonitionMenu(BuildContext context) {
-    return BusyMarkHeaderPopupMenuButton<BusyAdmonitionStyle>(
-      onCanceled: onMenuCanceled,
-      tooltip: context.l10n.admonition,
-      icon: BusyMarkGlyphs.info,
-      transparent: false,
-      elevated: true,
-      foregroundColor: BusyMarkLinuxPalette.white,
-      backgroundColor: _editorToolbarButtonBackground(context),
-      itemBuilder: (context) => [
-        BusyMarkPopupMenuItem(
-          value: BusyAdmonitionStyle.tip,
-          label: context.l10n.tip,
-          icon: BusyMarkGlyphs.tip,
-          enabled: admonitionCommandsEnabled,
-        ),
-        BusyMarkPopupMenuItem(
-          value: BusyAdmonitionStyle.note,
-          label: context.l10n.note,
-          icon: BusyMarkGlyphs.info,
-          enabled: admonitionCommandsEnabled,
-        ),
-        BusyMarkPopupMenuItem(
-          value: BusyAdmonitionStyle.warning,
-          label: context.l10n.warning,
-          icon: BusyMarkGlyphs.warning,
-          enabled: admonitionCommandsEnabled,
-        ),
-        BusyMarkPopupMenuItem(
-          value: BusyAdmonitionStyle.quote,
-          label: context.l10n.quote,
-          icon: BusyMarkGlyphs.blockquote,
-          enabled: admonitionCommandsEnabled,
-        ),
-      ],
-      onSelected: onAdmonitionCommand!,
     );
   }
 
