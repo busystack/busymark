@@ -30,6 +30,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 import 'package:window_manager/window_manager.dart';
 
+const _invalidationCases = [
+  (true, false, false),
+  (false, false, false),
+  (true, true, false),
+  (true, false, true),
+  (false, false, true),
+];
+String _invalidationStem(bool xml, bool malformed, bool draft) =>
+    'invalidation-${xml ? 'xml' : 'markdown'}${malformed ? '-invalid' : ''}${draft ? '-draft' : ''}';
+String _invalidationSource(bool xml, bool malformed, bool draft) => xml
+    ? '<topic id="${_invalidationStem(xml, malformed, draft)}" title="Invalidation">\n<p>Original owner</p>\n<p>Other owner</p>\n</topic>\n'
+    : '# Invalidation\n\nOriginal owner\n\nOther owner\n';
+
 Future<void> main(List<String> arguments) async {
   WidgetsFlutterBinding.ensureInitialized();
   if (arguments.length != 2) throw ArgumentError('FIXTURE OUTPUT_DIRECTORY');
@@ -192,6 +205,14 @@ Future<void> main(List<String> arguments) async {
     }
   }
   await windowManager.ensureInitialized();
+  for (final (xml, malformed, draft) in _invalidationCases) {
+    await File(
+      p.join(
+        contextualRoot.path,
+        'topics/${_invalidationStem(xml, malformed, draft)}.${xml ? 'topic' : 'md'}',
+      ),
+    ).writeAsString(_invalidationSource(xml, malformed, draft));
+  }
   await LinuxHeaderBarService.instance.initialize();
   final settings = AppSettings.defaults().copyWith(
     localeTag: 'en',
@@ -3000,6 +3021,211 @@ class _HarnessState extends ConsumerState<_Harness> {
     await controller.openPath(widget.root.path);
   }
 
+  Future<void> _runSourceInvalidation() async {
+    final controller = ref.read(workspaceControllerProvider.notifier);
+    await controller.openPath('${widget.root.path}-contextual');
+    for (final (xml, malformed, draft) in _invalidationCases) {
+      final kind = draft
+          ? '${xml ? "XML" : "Markdown"} pending draft'
+          : malformed
+          ? 'XML parse failure'
+          : xml
+          ? 'XML'
+          : 'Markdown';
+      final path = p.join(
+        '${widget.root.path}-contextual',
+        'topics/${_invalidationStem(xml, malformed, draft)}.${xml ? 'topic' : 'md'}',
+      );
+      final original = _invalidationSource(xml, malformed, draft);
+      _check(
+        await controller.openActiveFile(path) && _source == original,
+        '$kind Source invalidation fixture opens with its original source',
+      );
+      await _native('chord', 'ctrl+shift+2');
+      await _pause();
+      Future<void> caret(int offset) async {
+        ((_elements((w) => w is BusyMarkSourceEditor).single as StatefulElement)
+                    .state
+                as BusyMarkSourceEditorState)
+            .scrollToOffset(offset);
+        await _pause();
+      }
+
+      BusyMarkWritersideProperties pane() =>
+          _elements((w) => w is BusyMarkWritersideProperties).single.widget
+              as BusyMarkWritersideProperties;
+      void unavailable(String stage) {
+        if (controller.propertyEdits.hasPending) {
+          _check(
+            pane().target!.plainText == 'Original owner' &&
+                _inspectorProperty('Element anchor (id)').controller!.text ==
+                    'invalid id',
+            '$kind Source invalidation: $stage preserves the original draft owner',
+          );
+          return;
+        }
+        _check(
+          _elements((w) => w is BusyMarkWritersideProperties).isEmpty &&
+              _elements(
+                (w) =>
+                    w is Text &&
+                    w.data ==
+                        'The inspected element is unavailable. Inspect an element to continue.',
+              ).isNotEmpty,
+          '$kind Source invalidation: $stage leaves the original owner unavailable',
+        );
+      }
+
+      await caret(_source.indexOf('Original owner') + 3);
+      await _requestProperties();
+      _check(
+        pane().target!.plainText == 'Original owner',
+        '$kind Source invalidation: explicit command selects the original owner',
+      );
+      await caret(_source.indexOf('Original owner') + 'Original owner'.length);
+      await Clipboard.setData(const ClipboardData(text: ' edited'));
+      await _native('chord', 'ctrl+v');
+      await _pause();
+      _check(
+        pane().target!.plainText == 'Original owner edited',
+        '$kind Source invalidation: editing a surviving owner still refreshes it',
+      );
+      await _native('chord', 'ctrl+z');
+      await _pause();
+      _check(
+        _source == original && pane().target!.plainText == 'Original owner',
+        '$kind Source invalidation: surviving-owner Undo refreshes immediately',
+      );
+      if (draft) {
+        final anchor = _inspectorProperty('Element anchor (id)');
+        await _type(
+          _singleInspectorControl(
+            'Element anchor (id)',
+            (w) => w is TextField && w.controller == anchor.controller,
+          ),
+          'invalid id',
+        );
+      }
+      await caret(_source.indexOf('Original owner'));
+      await _native('chord', 'Home');
+      await _native('chord', 'shift+End');
+      if (malformed) {
+        await Clipboard.setData(
+          const ClipboardData(text: '<p>Replacement owner'),
+        );
+        await _native('chord', 'ctrl+v');
+      } else {
+        await _native('key', 'Delete');
+      }
+      await _pause();
+      final deleted = _source;
+      unavailable(malformed ? 'unparseable replacement' : 'deletion');
+      await Clipboard.setData(
+        ClipboardData(
+          text: malformed
+              ? '</p>'
+              : xml
+              ? '<p>Replacement owner</p>'
+              : 'Replacement owner',
+        ),
+      );
+      await _native('chord', 'ctrl+v');
+      await _pause();
+      final replacement = _source;
+      _check(
+        replacement ==
+            original.replaceFirst('Original owner', 'Replacement owner'),
+        '$kind Source replacement paste is one exact native insertion',
+      );
+      unavailable('same-kind replacement insertion');
+      await caret(_source.indexOf('Other owner'));
+      unavailable('ordinary Source caret movement');
+      if (draft) {
+        _inspectorProperty('Element anchor (id)').focusNode!.requestFocus();
+        await _native('chord', 'Escape');
+        await _pause();
+        _check(
+          !controller.propertyEdits.hasPending,
+          '$kind Source draft reverts without publication',
+        );
+        unavailable('discarding the original draft after replacement');
+        await caret(_source.indexOf('Other owner'));
+      }
+      await _native('chord', 'ctrl+z');
+      await _pause();
+      _check(_source == deleted, '$kind Source replacement insertion Undo');
+      unavailable('Undo to the deleted representation');
+      await _native('chord', 'ctrl+z');
+      await _pause();
+      _check(
+        _source == original && pane().target!.plainText == 'Original owner',
+        '$kind Source invalidation: genuine history Undo restores the original owner immediately',
+      );
+      await _native('chord', 'ctrl+shift+z');
+      await _pause();
+      _check(_source == deleted, '$kind Source original deletion Redo');
+      unavailable('Redo of deletion');
+      await _native('chord', 'ctrl+shift+z');
+      await _pause();
+      _check(_source == replacement, '$kind Source replacement insertion Redo');
+      unavailable('Redo to a replacement that never owned inspection');
+      await caret(_source.indexOf('Replacement owner') + 3);
+      await _requestProperties();
+      _check(
+        pane().target!.plainText == 'Replacement owner',
+        '$kind Source invalidation: explicit Properties selects the replacement',
+      );
+      await _native('chord', 'ctrl+s');
+      await _until(
+        () => !ref.read(workspaceControllerProvider).activeBuffer!.isDirty,
+        '$kind Source replacement saved',
+      );
+      _check(
+        await File(path).readAsString() == replacement,
+        '$kind Source replacement save preserves exact authored source',
+      );
+      await _native('chord', 'ctrl+w');
+      await _until(
+        () => !ref
+            .read(workspaceControllerProvider)
+            .documentBuffers
+            .any((buffer) => buffer.filePath == path),
+        '$kind Source replacement closes before reopen',
+      );
+      _check(
+        await controller.openActiveFile(path),
+        '$kind saved replacement opens successfully',
+      );
+      await _pause();
+      _check(
+        _source == replacement &&
+            _elements((w) => w is BusyMarkWritersideProperties).isEmpty,
+        '$kind Source replacement reopen has no carried inspector owner',
+      );
+      await _native('chord', 'ctrl+shift+2');
+      await _until(
+        () => _elements((w) => w is BusyMarkSourceEditor).length == 1,
+        '$kind reopened replacement is ready in Source',
+      );
+      await caret(_source.indexOf('Replacement owner') + 3);
+      await _requestProperties();
+      _check(
+        pane().target!.plainText == 'Replacement owner',
+        '$kind Source replacement can be explicitly inspected after reopen',
+      );
+      await _native('chord', 'ctrl+w');
+      await _until(
+        () => !ref
+            .read(workspaceControllerProvider)
+            .documentBuffers
+            .any((buffer) => buffer.filePath == path),
+        '$kind reopened replacement closes before the next scenario',
+      );
+    }
+    await _closeInspector();
+    await controller.openPath(widget.root.path);
+  }
+
   Future<void> _runNestedListReferences() async {
     final controller = ref.read(workspaceControllerProvider.notifier);
     await controller.openPath('${widget.root.path}-contextual');
@@ -3295,6 +3521,7 @@ class _HarnessState extends ConsumerState<_Harness> {
         'BUSYMARK_NAVIGATION_ONLY',
         'BUSYMARK_PROPERTIES_ONLY',
       ].any((flag) => Platform.environment[flag] == '1')) {
+        await _runSourceInvalidation();
         await _runChapterPresentation();
         await _runContextualListProperties(paletteProperties);
         await _runNestedListReferences();
@@ -3562,14 +3789,24 @@ class _HarnessState extends ConsumerState<_Harness> {
         final selectedField = _field('Textproduct').widget as TextField;
         final selection = selectedField.controller!.selection;
         Future<void> topicProperties() async {
-          await _tap(
-            _elements(
-              (w) =>
-                  w is BusyMarkComboRow<String> && w.values.contains('@topic'),
-            ).single,
-          );
-          _nativeMenuOpen = true;
-          await _tapLabel('Topic Properties');
+          if (_elements((w) => w is BusyMarkWritersideProperties).isEmpty) {
+            await _tap(
+              _elements(
+                (w) =>
+                    w is BusyMarkDialogButton && w.label == 'Topic Properties',
+              ).single,
+            );
+          } else {
+            await _tap(
+              _elements(
+                (w) =>
+                    w is BusyMarkComboRow<String> &&
+                    w.values.contains('@topic'),
+              ).single,
+            );
+            _nativeMenuOpen = true;
+            await _tapLabel('Topic Properties');
+          }
           _check(!_nativeMenuOpen, '$suffix GTK Topic Properties selected');
         }
 

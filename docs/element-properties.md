@@ -14,8 +14,11 @@ Ordinary clicks, caret movement, text selection, focus changes and scrolling do
 not switch the inspected owner. Switching between Editor, Source and Split for
 the same document preserves the pane and its target. Changes to that owner,
 including Undo/Redo, refresh its values when its authored identity can be
-verified. A deleted or ambiguous target becomes unavailable; the inspector does
-not select a neighbor. Opening another document leaves the pane open without an
+verified. A deleted or ambiguous target becomes unavailable; later edits cannot
+reactivate it by inserting a replacement. Explicitly inspect the replacement to
+select it. Undo/Redo can restore the original owner when its captured editing
+history establishes that restoration. The inspector never selects a neighbor.
+Opening another document leaves the pane open without an
 editable target until you explicitly inspect an element there.
 
 Reading shows validated values without allowing changes. Ordinary Markdown and

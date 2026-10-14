@@ -12070,6 +12070,9 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
   final _sourceEditorKey = GlobalKey<BusyMarkSourceEditorState>();
   final _wysiwygEditorKey = GlobalKey<BusyMarkWysiwygEditorState>();
   WritersideInspectorTarget? _inspected;
+  WritersideInspectorTarget? _pendingInspectorHistoryRestore;
+  final _inspectedHistory =
+      Map<DocumentHistoryState, WritersideInspectorTarget>.identity();
   bool _videoPropertyDraft = false;
   final _propertiesPanelKey = GlobalKey();
   late final WorkspaceController _inspectorWorkspaceController;
@@ -12158,13 +12161,19 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
       // Refresh the pinned source owner before building this revision. A
       // temporary unavailable pane would dispose the focused property field
       // between Undo and Redo. Editor selection restoration remains independent.
+      _pendingInspectorHistoryRestore = null;
+      _trackInspectedHistory(previousBuffer, nextBuffer);
       final document = _wysiwygDocument();
-      if (document != null) _refreshInspectedElement(document);
+      _refreshInspectedElement(document);
     }
     _spelling.synchronizeOpenBuffers(
       widget.state.documentBuffers.map((buffer) => buffer.id),
     );
-    if (previousBuffer?.id != nextBuffer?.id) _inspected = null;
+    if (previousBuffer?.id != nextBuffer?.id) {
+      _inspected = null;
+      _pendingInspectorHistoryRestore = null;
+      _inspectedHistory.clear();
+    }
     final path = widget.state.activeBuffer?.filePath ?? '';
     if (path != _lastPath || previousBuffer?.id != nextBuffer?.id) {
       _lastPath = path;
@@ -13014,27 +13023,80 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     if (_propertyEdits.hasPending) return;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted || _propertyEdits.hasPending) return;
+      final live = ref.read(workspaceControllerProvider).activeBuffer;
+      final restored = _pendingInspectorHistoryRestore;
+      _pendingInspectorHistoryRestore = null;
+      setState(() {
+        if (restored?.matches(live?.id, live?.revision, live?.text) == true) {
+          _inspected = restored;
+        }
+      });
       final document = _wysiwygDocument();
-      if (document != null) _refreshInspectedElement(document);
+      _refreshInspectedElement(document);
     });
   }
 
-  void _refreshInspectedElement(BusyDocument document) {
+  void _refreshInspectedElement(BusyDocument? document) {
     final live = ref.read(workspaceControllerProvider).activeBuffer;
     final captured = _inspected;
     if (live == null ||
         captured == null ||
+        captured.unavailable ||
         captured.bufferId != live.id ||
-        captured.matches(live.id, live.revision, live.text) ||
-        _propertyEdits.hasPending) {
+        captured.matches(live.id, live.revision, live.text)) {
       return;
     }
-    final refreshed = captured.refreshUnchangedElement(
-      revision: live.revision,
-      source: live.text,
-      document: document,
-    );
-    if (mounted) setState(() => _inspected = refreshed ?? captured);
+    final refreshed = document == null
+        ? null
+        : captured.refreshUnchangedElement(
+            revision: live.revision,
+            source: live.text,
+            document: document,
+          );
+    if (mounted) {
+      if (refreshed == null) {
+        setState(() => _inspected = captured.markUnavailable());
+      } else if (!_propertyEdits.hasPending) {
+        setState(() => _inspected = refreshed);
+      }
+    }
+  }
+
+  void _trackInspectedHistory(DocumentBuffer before, DocumentBuffer after) {
+    final captured = _inspected;
+    if (captured == null) return;
+    final previous = before.editorState.undoState;
+    final next = after.editorState.undoState;
+    final existing = {...previous.undo, ...previous.redo};
+    if (captured.matches(before.id, before.revision, before.text)) {
+      for (final entry in [...next.undo, ...next.redo]) {
+        if (!existing.contains(entry) && entry.text == before.text) {
+          _inspectedHistory[entry] = captured;
+        }
+      }
+    }
+    final restored = next.restoredEntryFrom(previous);
+    final owner = _inspectedHistory[restored];
+    if (owner != null &&
+        restored!.text == after.text &&
+        owner.source == after.text &&
+        owner.bufferId == after.id) {
+      final document = _wysiwygDocument();
+      if (document != null) {
+        final refreshed = owner.refreshUnchangedElement(
+          revision: after.revision,
+          source: after.text,
+          document: document,
+        );
+        if (_propertyEdits.hasPending) {
+          _pendingInspectorHistoryRestore = refreshed;
+        } else {
+          _inspected = refreshed ?? captured;
+        }
+      }
+    }
+    final retained = {...next.undo, ...next.redo};
+    _inspectedHistory.removeWhere((entry, _) => !retained.contains(entry));
   }
 
   void _inspectEditorElement(
@@ -13125,6 +13187,8 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     if (mounted) {
       setState(() {
         _inspected = target;
+        _inspectedHistory.clear();
+        _pendingInspectorHistoryRestore = null;
         _videoPropertyDraft = false;
       });
     }
@@ -13161,7 +13225,13 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
       _propertyEdits.reject(WritersidePropertyRejection.stale);
       return;
     }
-    if (mounted) setState(() => _inspected = target);
+    if (mounted) {
+      setState(() {
+        _inspected = target;
+        _inspectedHistory.clear();
+        _pendingInspectorHistoryRestore = null;
+      });
+    }
   }
 
   Widget _withProperties(Widget editor) {
@@ -13274,6 +13344,8 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     final buffer = ref.read(workspaceControllerProvider).activeBuffer;
     final document = _wysiwygDocument();
     if (buffer == null || document?.isWriterside != true) return;
+    _inspectedHistory.clear();
+    _pendingInspectorHistoryRestore = null;
     setState(
       () => _inspected = WritersideInspectorTarget.fromTopic(
         bufferId: buffer.id,
@@ -13434,6 +13506,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
           _clearWysiwygCache();
           final document = _wysiwygDocument();
           final next = ref.read(workspaceControllerProvider).activeBuffer!;
+          _trackInspectedHistory(live, next);
           if (document != null) {
             final ordinal = editedAddress;
             var siblings = document.blocks

@@ -9,10 +9,104 @@ import 'package:busymark/src/markdown/markdown_parser.dart';
 import 'package:busymark/src/writerside/writerside_effective_properties.dart';
 import 'package:busymark/src/writerside/writerside_model.dart';
 import 'package:busymark/src/writerside/writerside_property_validation.dart';
+import 'package:busymark/src/workspace/document_buffer.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  test('only an established history traversal identifies a restored owner', () {
+    const original = DocumentHistoryState(
+      text: 'Original owner',
+      selection: TextSelection.collapsed(offset: 0),
+    );
+    const deleted = DocumentHistoryState(
+      text: '',
+      selection: TextSelection.collapsed(offset: 0),
+    );
+    final history = const DocumentUndoState().push(original);
+    final undone = history.afterUndo(deleted);
+    expect(undone.restoredEntryFrom(history), same(original));
+    final redone = undone.afterRedo(original);
+    expect(redone.restoredEntryFrom(undone), same(deleted));
+    // A normal edit can clear a single redo entry and append the current state,
+    // producing the same stack sizes as Redo. It is still a new authored owner.
+    final typedReplacement = undone.push(original);
+    expect(typedReplacement.restoredEntryFrom(undone), isNull);
+    final grouped = history.push(deleted, group: 'typing');
+    expect(grouped.restoredEntryFrom(history), isNull);
+    expect(
+      grouped.push(original, group: 'typing').restoredEntryFrom(grouped),
+      isNull,
+    );
+  });
+  for (final xml in [true, false]) {
+    test(
+      '${xml ? "XML" : "Markdown"} invalidation survives compatible replacement',
+      () {
+        BusyDocument parse(String source) => const MarkdownParser()
+            .parse(
+              filePath: xml ? 't.topic' : 't.md',
+              source: source,
+              mode: MarkdownMode.writersideMarkdown,
+              validateLocalReferences: false,
+            )
+            .busyDocument;
+        final original = xml
+            ? '<topic id="t" title="Topic"><p>Original owner</p></topic>'
+            : '# Topic\n\nOriginal owner\n';
+        final document = parse(original);
+        final target = WritersideInspectorTarget.fromSource(
+          bufferId: 'b',
+          revision: 1,
+          source: original,
+          document: document,
+          selection: TextSelection.collapsed(
+            offset: original.indexOf('Original owner'),
+          ),
+        );
+        final unavailable = target.markUnavailable();
+        final replacement = original.replaceFirst(
+          'Original owner',
+          'Replacement owner',
+        );
+        expect(unavailable.matches('b', 1, original), isFalse);
+        for (final source in [replacement, original]) {
+          expect(
+            unavailable.refreshUnchangedElement(
+              revision: 2,
+              source: source,
+              document: parse(source),
+            ),
+            isNull,
+          );
+        }
+        expect(
+          WritersideInspectorTarget.fromSource(
+            bufferId: 'b',
+            revision: 2,
+            source: replacement,
+            document: parse(replacement),
+            selection: TextSelection.collapsed(
+              offset: replacement.indexOf('Replacement owner'),
+            ),
+          ).block?.plainText,
+          'Replacement owner',
+        );
+        // The retained history snapshot remains valid for genuine restoration.
+        expect(
+          target
+              .refreshUnchangedElement(
+                revision: 3,
+                source: original,
+                document: parse(original),
+              )
+              ?.block
+              ?.plainText,
+          'Original owner',
+        );
+      },
+    );
+  }
   for (final body in [
     '- Parent %product%\n  - Child %product% and %product%\n',
     '- Parent\n\n  continuation %product% and %product%\n\n  - Child %product%\n',

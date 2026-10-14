@@ -22,6 +22,7 @@ class WritersideInspectorTarget {
     this.multiple = false,
     this.logicalTopic = false,
     this.navigationEditable = true,
+    this.unavailable = false,
   });
   final String bufferId;
   final int revision;
@@ -34,6 +35,25 @@ class WritersideInspectorTarget {
   final bool multiple;
   final bool logicalTopic;
   final bool navigationEditable;
+
+  /// Once identity has been lost, ordinary revisions cannot revive this owner.
+  /// Explicit inspection or a previously captured history owner must replace it.
+  final bool unavailable;
+
+  WritersideInspectorTarget markUnavailable() => WritersideInspectorTarget(
+    bufferId: bufferId,
+    revision: revision,
+    source: source,
+    authoredSource: authoredSource,
+    document: document,
+    block: block,
+    path: path,
+    inline: inline,
+    multiple: multiple,
+    logicalTopic: logicalTopic,
+    navigationEditable: navigationEditable,
+    unavailable: true,
+  );
   List<int> get address => _address(includeSourceOnly: true);
 
   /// Serialization can add XML whitespace nodes. They are not authored
@@ -113,6 +133,7 @@ class WritersideInspectorTarget {
       block != null &&
           WritersideEditingAdapter.topicHeading(document)?.id == block!.id;
   bool matches(String? id, int? generation, String? text) =>
+      !unavailable &&
       id == bufferId &&
       generation == revision &&
       source == text &&
@@ -123,6 +144,7 @@ class WritersideInspectorTarget {
       bufferId == current.bufferId &&
       revision == current.revision &&
       source == current.source &&
+      unavailable == current.unavailable &&
       topic == current.topic &&
       multiple == current.multiple &&
       listEquals(address, current.address) &&
@@ -139,7 +161,8 @@ class WritersideInspectorTarget {
     required String source,
     required BusyDocument document,
   }) {
-    if (document.filePath != this.document.filePath ||
+    if (unavailable ||
+        document.filePath != this.document.filePath ||
         document.isXmlTopic != this.document.isXmlTopic ||
         document.mode != this.document.mode) {
       return null;
