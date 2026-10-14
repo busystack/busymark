@@ -1,4 +1,7 @@
 {
+  "wsModuleCapsNotPublished": "Правило регістру модуля не публікується.",
+  "wsTitleOverridesAction": "Заголовки екземпляра та змісту…",
+  "wsHeadingNotPublished": "Не публікується цим збирачем.",
   "wsMarkdownInstanceTitleLimitation": "Закріплений builder не публікує заголовки примірників у темах Markdown. Розмітку збережено; перевірте джерело.",
   "wsTopicIdentity": "ID теми",
   "wsElementAnchor": "Якір елемента",

@@ -1,4 +1,7 @@
 {
+  "wsModuleCapsNotPublished": "模块的大小写规则不会发布。",
+  "wsTitleOverridesAction": "实例与目录标题…",
+  "wsHeadingNotPublished": "此构建器不会发布此属性。",
   "wsMarkdownInstanceTitleLimitation": "固定版本构建器不发布 Markdown 主题的实例标题覆盖。保留现有标记，请在源码中查看。",
   "wsTopicIdentity": "主题 ID",
   "wsElementAnchor": "元素锚点",

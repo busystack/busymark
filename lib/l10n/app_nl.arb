@@ -1,4 +1,7 @@
 {
+  "wsModuleCapsNotPublished": "Hoofdlettergebruik van de module wordt niet gepubliceerd.",
+  "wsTitleOverridesAction": "Instantie- en inhoudsopgavetitels…",
+  "wsHeadingNotPublished": "Wordt niet gepubliceerd door deze bouwer.",
   "wsMarkdownInstanceTitleLimitation": "De vastgelegde builder publiceert geen instantietitels in Markdown-onderwerpen. Bestaande opmaak blijft behouden; bekijk de bron.",
   "wsTopicIdentity": "Onderwerp-ID",
   "wsElementAnchor": "Elementanker",

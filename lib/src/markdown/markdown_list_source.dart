@@ -134,7 +134,12 @@ BusyBlock bindNativeMarkdownListSource({
             ),
         ];
       }
-    } else if (children.isNotEmpty && marker.hasMatch(text)) {
+    } else if (marker.hasMatch(text) &&
+        {
+          BusyBlockKind.unorderedListItem,
+          BusyBlockKind.orderedListItem,
+          BusyBlockKind.taskListItem,
+        }.contains(block.kind)) {
       final opening = marker.firstMatch(text)!;
       final indent =
           columns(opening[1]!) +
@@ -171,6 +176,18 @@ BusyBlock bindNativeMarkdownListSource({
       final chunks = scan(bodyText).where((c) => !c.sourceOnly).toList();
       final primary = block.inlines.isEmpty ? 0 : 1;
       if (chunks.length == primary + children.length) {
+        if (primary == 1) {
+          final chunk = chunks.first;
+          attributes['busymark-native-inline-source'] = bodyText.substring(
+            chunk.start,
+            chunk.end,
+          );
+          attributes['busymark-native-inline-source-map'] = jsonEncode([
+            for (var i = chunk.start; i <= chunk.end; i++)
+              if (i == chunk.start || bodyOffsets[i] != bodyOffsets[i - 1] + 1)
+                [i - chunk.start, bodyOffsets[i]],
+          ]);
+        }
         children = [
           for (var i = 0; i < children.length; i++)
             bind(
@@ -186,6 +203,34 @@ BusyBlock bindNativeMarkdownListSource({
             ),
         ];
       }
+    } else if (block.attributes.containsKey('element') &&
+        block.sourceSpan != null &&
+        children.isNotEmpty) {
+      // XML islands were parsed in the de-indented fragment. Bind each child
+      // through that fragment's map before exposing it to document navigation.
+      final leading = text.length - text.trimLeft().length;
+      final rootStart = block.sourceSpan!.startOffset - leading;
+      children = [
+        for (final child in children)
+          if (child.sourceSpan case final childSpan?)
+            if (childSpan.startOffset - rootStart >= 0 &&
+                childSpan.endOffset - rootStart <= text.length)
+              bind(
+                child,
+                text.substring(
+                  childSpan.startOffset - rootStart,
+                  childSpan.endOffset - rootStart,
+                ),
+                offsets.sublist(
+                  childSpan.startOffset - rootStart,
+                  childSpan.endOffset - rootStart + 1,
+                ),
+              )
+            else
+              child
+          else
+            child,
+      ];
     }
     return block.copyWith(
       rawSource: trimmed,

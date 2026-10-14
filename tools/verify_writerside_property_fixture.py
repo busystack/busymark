@@ -119,6 +119,17 @@ if len(sys.argv) > 2 and sys.argv[2].startswith('list-caps'):
                 assert md.elements['reviewed-nested'][0]['start'] == '12'
                 assert md.texts['reviewed-list'].index('Sibling') < md.texts['reviewed-list'].index('Parent caption')
             assert md.elements['embedded'][0]['start'] == '6'
+            if mode in {'list-caps', 'list-caps-native'}:
+                source = archive.read('nested-references.html').decode()
+                references = Elements(source)
+                for identity in ['link-one', 'link-two']:
+                    assert references.elements[identity][0]['href'] == 'lists.html'
+                    assert references.texts[identity] == 'Same'
+                # All parent, nested, quoted and XML variables remain distinct.
+                expected = 12 if mode == 'list-caps-native' else 13
+                assert source.count('Resolved product') == expected
+                assert source.count('Resolved long product') == (1 if mode == 'list-caps-native' else 0)
+                assert '"$Copy"' in source and 'char-C' in source
     print('List/capitalization HTML: '+mode+' published markers, numbering, columns, sorting, checkbox controls and capitalization verified')
     sys.exit(0)
 

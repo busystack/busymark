@@ -1,4 +1,7 @@
 {
+  "wsModuleCapsNotPublished": "मॉड्यूल का अक्षर-शैली नियम प्रकाशित नहीं होता।",
+  "wsTitleOverridesAction": "इंस्टेंस और विषय-सूची के शीर्षक…",
+  "wsHeadingNotPublished": "यह बिल्डर इसे प्रकाशित नहीं करता।",
   "wsMarkdownInstanceTitleLimitation": "निश्चित बिल्डर Markdown विषयों में इंस्टेंस शीर्षक प्रकाशित नहीं करता। मौजूदा मार्कअप सुरक्षित है; स्रोत में देखें।",
   "wsTopicIdentity": "विषय ID",
   "wsElementAnchor": "तत्व एंकर",

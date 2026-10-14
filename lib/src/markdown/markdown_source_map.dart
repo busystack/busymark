@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'dart:convert';
 
 import 'package:markdown/markdown.dart' as md;
 
@@ -11,6 +12,49 @@ import 'writerside_authoring_syntax.dart';
 import 'writerside_variable_syntax.dart';
 
 export 'markdown_source_annotation.dart';
+
+/// Translate a boundary in a projected fragment back to authored source.
+/// Native list and quote projections remove prefixes independently per line.
+int? markdownProjectedSourceOffset(
+  BusyBlock block,
+  int local, {
+  bool inline = false,
+}) {
+  final raw = inline
+      ? block.attributes['busymark-native-inline-source'] ?? block.rawSource
+      : block.rawSource;
+  if (raw == null || local < 0 || local > raw.length) return null;
+  final encoded = inline
+      ? block.attributes['busymark-native-inline-source-map'] ??
+            block.attributes['busymark-native-source-map']
+      : block.attributes['busymark-native-source-map'];
+  if (encoded == null) {
+    final start = block.sourceSpan?.startOffset;
+    return start == null ? null : start + local;
+  }
+  try {
+    final segments = jsonDecode(encoded) as List<dynamic>;
+    int? result;
+    var previous = -1;
+    for (final segment in segments) {
+      if (segment is! List ||
+          segment.length != 2 ||
+          segment[0] is! int ||
+          segment[1] is! int) {
+        return null;
+      }
+      final start = segment[0] as int;
+      if (start <= previous || start < 0 || segment[1] < 0) return null;
+      previous = start;
+      if (start <= local) result = (segment[1] as int) + local - start;
+    }
+    return result;
+  } on FormatException {
+    return null;
+  } on TypeError {
+    return null;
+  }
+}
 
 void _setSourceMappingAttributes(
   md.Element element, {

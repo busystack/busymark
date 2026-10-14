@@ -11,6 +11,15 @@ class AppLocalizationsTr extends AppLocalizations {
   AppLocalizationsTr([String locale = 'tr']) : super(locale);
 
   @override
+  String get wsModuleCapsNotPublished => 'Modülün harf biçimi yayımlanmaz.';
+
+  @override
+  String get wsTitleOverridesAction => 'Örnek ve içindekiler başlıkları…';
+
+  @override
+  String get wsHeadingNotPublished => 'Bu oluşturucu tarafından yayımlanmaz.';
+
+  @override
   String get wsMarkdownInstanceTitleLimitation =>
       'Sabitlenmiş derleyici Markdown konularında örnek başlıklarını yayımlamaz. Mevcut işaretleme korunur; Kaynakta inceleyin.';
 

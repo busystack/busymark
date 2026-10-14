@@ -740,6 +740,17 @@ class MarkdownAstAdapter {
       final inlineNodes = <md.Node>[];
       var hasPrimaryContent = false;
       for (final child in contentChildren) {
+        if (mode == MarkdownMode.writersideMarkdown && child is md.Text) {
+          final semantic = _writersideBlockFromText(
+            child.text,
+            nextId: nextId,
+            allowVideo: true,
+          );
+          if (semantic != null) {
+            nestedBlocks.add(semantic);
+            continue;
+          }
+        }
         final blockChild =
             child is md.Element &&
             (child.tag == 'ul' ||
@@ -2076,6 +2087,39 @@ class MarkdownAstAdapter {
       if (fence != null) {
         index += 1;
         continue;
+      }
+
+      if (mode == MarkdownMode.writersideMarkdown &&
+          RegExp(
+            r'^ {0,3}(?:[-+*](?:\s|$)|\d+[.)](?:\s|$)|>)',
+          ).hasMatch(line)) {
+        // Keep parser-owned list/quote fragments together. Extracting an XML
+        // island here would promote its children out of the containing item
+        // and discard the de-indentation mapping before semantic adaptation.
+        final remaining = [
+          for (final line in lines.skip(index)) md.Line(line.line),
+        ];
+        final parser = md.BlockParser(
+          remaining,
+          busyMarkMarkdownDocument(mode),
+        );
+        final syntax = parser.blockSyntaxes
+            .where(
+              (syntax) =>
+                  (syntax is md.ListSyntax || syntax is md.BlockquoteSyntax) &&
+                  syntax.canParse(parser),
+            )
+            .firstOrNull;
+        if (syntax != null) {
+          syntax.parse(parser);
+          final consumed = parser.isDone
+              ? remaining.length
+              : remaining.indexWhere((line) => identical(line, parser.current));
+          if (consumed > 0) {
+            index += consumed;
+            continue;
+          }
+        }
       }
 
       if (mode == MarkdownMode.writersideMarkdown &&

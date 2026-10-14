@@ -11,6 +11,16 @@ class AppLocalizationsUk extends AppLocalizations {
   AppLocalizationsUk([String locale = 'uk']) : super(locale);
 
   @override
+  String get wsModuleCapsNotPublished =>
+      'Правило регістру модуля не публікується.';
+
+  @override
+  String get wsTitleOverridesAction => 'Заголовки екземпляра та змісту…';
+
+  @override
+  String get wsHeadingNotPublished => 'Не публікується цим збирачем.';
+
+  @override
   String get wsMarkdownInstanceTitleLimitation =>
       'Закріплений builder не публікує заголовки примірників у темах Markdown. Розмітку збережено; перевірте джерело.';
 

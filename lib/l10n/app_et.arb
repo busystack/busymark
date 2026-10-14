@@ -1,4 +1,7 @@
 {
+  "wsModuleCapsNotPublished": "Mooduli suurtähereeglit ei avaldata.",
+  "wsTitleOverridesAction": "Eksemplari ja sisukorra pealkirjad…",
+  "wsHeadingNotPublished": "See koostaja ei avalda seda.",
   "wsMarkdownInstanceTitleLimitation": "Kinnitatud koostaja ei avalda Markdowni teemade instantsipealkirju. Olemasolev märgistus säilitatakse; vaata lähteteksti.",
   "wsTopicIdentity": "Teema ID",
   "wsElementAnchor": "Elemendi ankur",

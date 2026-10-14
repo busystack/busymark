@@ -1,4 +1,7 @@
 {
+  "wsModuleCapsNotPublished": "Reguła wielkości liter modułu nie jest publikowana.",
+  "wsTitleOverridesAction": "Tytuły instancji i spisu treści…",
+  "wsHeadingNotPublished": "Ten generator tego nie publikuje.",
   "wsMarkdownInstanceTitleLimitation": "Przypięty builder nie publikuje tytułów instancji w tematach Markdown. Istniejące znaczniki są zachowane; sprawdź źródło.",
   "wsTopicIdentity": "ID tematu",
   "wsElementAnchor": "Kotwica elementu",

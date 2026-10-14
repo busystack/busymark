@@ -11,6 +11,16 @@ class AppLocalizationsPt extends AppLocalizations {
   AppLocalizationsPt([String locale = 'pt']) : super(locale);
 
   @override
+  String get wsModuleCapsNotPublished =>
+      'A capitalização do módulo não é publicada.';
+
+  @override
+  String get wsTitleOverridesAction => 'Títulos da instância e do índice…';
+
+  @override
+  String get wsHeadingNotPublished => 'Não é publicado por este gerador.';
+
+  @override
   String get wsMarkdownInstanceTitleLimitation =>
       'O builder fixado não publica títulos por instância em tópicos Markdown. A marcação existente é preservada; consulte o código-fonte.';
 
@@ -5443,6 +5453,16 @@ class AppLocalizationsPt extends AppLocalizations {
 /// The translations for Portuguese, as used in Brazil (`pt_BR`).
 class AppLocalizationsPtBr extends AppLocalizationsPt {
   AppLocalizationsPtBr() : super('pt_BR');
+
+  @override
+  String get wsModuleCapsNotPublished =>
+      'A capitalização do módulo não é publicada.';
+
+  @override
+  String get wsTitleOverridesAction => 'Títulos da instância e do índice…';
+
+  @override
+  String get wsHeadingNotPublished => 'Não é publicado por este gerador.';
 
   @override
   String get wsMarkdownInstanceTitleLimitation =>

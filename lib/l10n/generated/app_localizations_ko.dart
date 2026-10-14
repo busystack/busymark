@@ -11,6 +11,15 @@ class AppLocalizationsKo extends AppLocalizations {
   AppLocalizationsKo([String locale = 'ko']) : super(locale);
 
   @override
+  String get wsModuleCapsNotPublished => '모듈의 대소문자 설정은 게시되지 않습니다.';
+
+  @override
+  String get wsTitleOverridesAction => '인스턴스 및 목차 제목…';
+
+  @override
+  String get wsHeadingNotPublished => '이 빌더에서는 게시되지 않습니다.';
+
+  @override
   String get wsMarkdownInstanceTitleLimitation =>
       '고정된 빌더는 Markdown 주제의 인스턴스 제목을 게시하지 않습니다. 기존 마크업은 보존됩니다. 소스에서 확인하세요.';
 

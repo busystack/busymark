@@ -1,4 +1,7 @@
 {
+  "wsModuleCapsNotPublished": "La casse du module n’est pas publiée.",
+  "wsTitleOverridesAction": "Titres de l’instance et du sommaire…",
+  "wsHeadingNotPublished": "Non publié par ce générateur.",
   "wsMarkdownInstanceTitleLimitation": "Le constructeur fixé ne publie pas les titres par instance des sujets Markdown. Le balisage existant est conservé ; consultez la source.",
   "wsTopicIdentity": "ID du sujet",
   "wsElementAnchor": "Ancre de l’élément",

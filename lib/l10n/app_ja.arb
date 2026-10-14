@@ -1,4 +1,7 @@
 {
+  "wsModuleCapsNotPublished": "モジュールの大文字・小文字設定は公開されません。",
+  "wsTitleOverridesAction": "インスタンスと目次のタイトル…",
+  "wsHeadingNotPublished": "このビルダーでは公開されません。",
   "wsMarkdownInstanceTitleLimitation": "固定バージョンのビルダーは Markdown トピックのインスタンス別タイトルを公開しません。既存のマークアップは保持されます。ソースで確認してください。",
   "wsTopicIdentity": "トピック ID",
   "wsElementAnchor": "要素アンカー",

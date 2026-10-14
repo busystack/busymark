@@ -1,4 +1,7 @@
 {
+  "wsModuleCapsNotPublished": "لا يُنشر تنسيق أحرف الوحدة.",
+  "wsTitleOverridesAction": "عناوين المثيل وجدول المحتويات…",
+  "wsHeadingNotPublished": "لا ينشرها هذا المنشئ.",
   "wsMarkdownInstanceTitleLimitation": "لا ينشر الباني المثبّت عناوين النسخ في مواضيع Markdown. تُحفظ العلامات الحالية؛ افحصها في المصدر.",
   "wsTopicIdentity": "معرّف الموضوع",
   "wsElementAnchor": "مرساة العنصر",

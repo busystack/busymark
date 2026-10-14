@@ -1,4 +1,7 @@
 {
+  "wsModuleCapsNotPublished": "Modülün harf biçimi yayımlanmaz.",
+  "wsTitleOverridesAction": "Örnek ve içindekiler başlıkları…",
+  "wsHeadingNotPublished": "Bu oluşturucu tarafından yayımlanmaz.",
   "wsMarkdownInstanceTitleLimitation": "Sabitlenmiş derleyici Markdown konularında örnek başlıklarını yayımlamaz. Mevcut işaretleme korunur; Kaynakta inceleyin.",
   "wsTopicIdentity": "Konu kimliği",
   "wsElementAnchor": "Öğe çapası",

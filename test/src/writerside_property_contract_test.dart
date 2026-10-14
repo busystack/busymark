@@ -51,7 +51,9 @@ Future<void> edit(WidgetTester tester, String label, String value) async {
 }
 
 Future<void> section(WidgetTester tester, String title) async {
-  final tile = find.widgetWithText(ListTile, title);
+  final tile = find.byWidgetPredicate(
+    (w) => w is BusyMarkActionRow && w.title == title,
+  );
   await tester.ensureVisible(tile);
   await tester.tap(tile);
   await tester.pumpAndSettle();
@@ -63,6 +65,155 @@ List<String> fields(WidgetTester tester) => tester
     .toList();
 
 void main() {
+  for (final rtl in [false, true]) {
+    testWidgets(
+      'minimum-width scaled enum units retain values, help and native editing (RTL=$rtl)',
+      (tester) async {
+        tester.platformDispatcher.textScaleFactorTestValue = 1.5;
+        addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+        final c = BusyMarkWysiwygDocumentController(
+          document: parse('# Topic\n\n## Chapter\n', xml: false),
+        );
+        final session = WritersidePropertySession();
+        addTearDown(c.dispose);
+        addTearDown(session.dispose);
+        final original = c.markdown;
+        await tester.pumpWidget(
+          harness(
+            c,
+            session,
+            'chapter',
+            width: 260,
+            direction: rtl ? TextDirection.rtl : TextDirection.ltr,
+          ),
+        );
+        await tester.pumpAndSettle();
+        expect(find.text('Collapsible (collapsible)'), findsOneWidget);
+        expect(find.text('Use default'), findsOneWidget);
+        expect(find.text('Default: Disabled'), findsOneWidget);
+        final caption = tester.getRect(find.text('Collapsible (collapsible)'));
+        final value = tester.getRect(find.text('Use default'));
+        expect(value.top, greaterThanOrEqualTo(caption.bottom));
+        expect(value.width, lessThanOrEqualTo(228));
+        expect(tester.takeException(), isNull);
+        final hints = tester
+            .widgetList<Semantics>(find.byType(Semantics))
+            .map((w) => w.properties.hint ?? '')
+            .join('\n');
+        expect(hints, contains('Effective: Disabled — built-in default'));
+        expect(c.markdown, original);
+        await tester.tap(find.text('Collapsible (collapsible)'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Enabled'));
+        await tester.pumpAndSettle();
+        expect(c.markdown, contains('collapsible="true"'));
+        expect(c.document.blocks.last.attributes['collapsible'], 'true');
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
+  for (final sample in [
+    (true, 'topic', '<topic id="identity" title="Default"/>', false),
+    (
+      true,
+      'topic',
+      '<topic id="identity" title="Default" help-id="help"/>',
+      true,
+    ),
+    (
+      true,
+      'chapter',
+      '<topic id="identity" title="Default"><chapter id="chapter" title="Chapter"/></topic>',
+      false,
+    ),
+    (
+      true,
+      'p',
+      '<topic id="identity" title="Default" switcher-label="Other"><p id="p">Body</p></topic>',
+      false,
+    ),
+    (false, 'topic', '# Topic\n\nBody\n', false),
+    (false, 'topic', '---\nswitcher-label: Output\n---\n# Topic\n', true),
+    (
+      false,
+      'chapter',
+      '---\nswitcher-label: Other\n---\n# Topic\n\n## Chapter\n',
+      false,
+    ),
+    (false, 'topic', '# Topic {id="explicit"}\n', true),
+    (false, 'chapter', '# Topic\n\n## Chapter {title="Override"}\n', true),
+    (
+      true,
+      'topic',
+      '<topic id="identity" title="Default" unknown="preserved"/>',
+      true,
+    ),
+  ]) {
+    testWidgets('Advanced status follows authored owner: $sample', (
+      tester,
+    ) async {
+      final c = BusyMarkWysiwygDocumentController(
+        document: parse(sample.$3, xml: sample.$1),
+      );
+      final session = WritersidePropertySession();
+      addTearDown(c.dispose);
+      addTearDown(session.dispose);
+      final original = c.markdown;
+      await tester.pumpWidget(harness(c, session, sample.$2));
+      await tester.pumpAndSettle();
+      expect(
+        find.text('Authored settings present'),
+        sample.$4 ? findsOneWidget : findsNothing,
+      );
+      await section(tester, 'Advanced');
+      expect(c.markdown, original);
+      expect(session.hasPending, isFalse);
+      // Dividers separate property units, never plain captions or notices.
+      for (final group in tester.widgetList<BusyMarkGroupedList>(
+        find.byType(BusyMarkGroupedList),
+      )) {
+        expect(
+          group.children.any((w) => w is Text || w is TextButton),
+          isFalse,
+        );
+      }
+      if (sample.$2 == 'topic') {
+        final groups = tester.widgetList<BusyMarkGroupedList>(
+          find.byType(BusyMarkGroupedList),
+        );
+        expect(
+          groups.where((g) => g.title == 'Document settings'),
+          hasLength(1),
+        );
+        expect(
+          groups.where((g) => g.title == 'Heading attributes'),
+          sample.$1 ? isEmpty : hasLength(1),
+        );
+        final identity = tester.widget<BusyMarkActionRow>(
+          find.byWidgetPredicate(
+            (w) => w is BusyMarkActionRow && w.title == 'Topic ID',
+          ),
+        );
+        expect(identity.onTap, isNull);
+        expect(identity.subtitleWidget, isA<SelectableText>());
+        final details = find.text(
+          'The pinned builder does not publish topic H1 attributes: inline attributes render literally and separate-line attributes are ignored. These belong to the heading, not the XML root.',
+        );
+        expect(details, findsNothing);
+        if (!sample.$1) {
+          expect(find.text('Not published by this builder.'), findsWidgets);
+          final hints = tester
+              .widgetList<Semantics>(find.byType(Semantics))
+              .map((w) => w.properties.hint ?? '')
+              .join('\n');
+          expect(
+            hints,
+            contains('These belong to the heading, not the XML root.'),
+          );
+        }
+      }
+    });
+  }
   testWidgets(
     'mixed native item properties explain protection and keep parent access',
     (tester) async {
@@ -958,6 +1109,8 @@ Widget harness(
   WritersidePropertySession session,
   String tag, {
   VoidCallback? onPublished,
+  double? width,
+  TextDirection? direction,
   WritersideEffectiveProperties effective =
       const WritersideEffectiveProperties(),
 }) => MaterialApp(
@@ -988,29 +1141,36 @@ Widget harness(
           return ok;
         }
 
-        return BusyMarkWritersideProperties(
-          effectiveProperties: effective,
-          document: c.document,
-          target: block,
-          path: block == null ? [] : c.elementPath(block.id),
-          topicSelected: tag == 'topic',
-          session: session,
-          onClose: () {},
-          onTargetSelected: (_) {},
-          onManageItem: (_, _, _) {},
-          onProperty: (name, value) =>
-              apply(() => c.updateWritersideProperty(block!.id, name, value)),
-          onHeadingText: (text) => apply(() {
-            c.updateBlockText(block!.id, text);
-            return true;
-          }),
-          onTopicProperty: (name, value) =>
-              apply(() => c.updateTopicSwitcherLabel(value)),
-          onNavigation: (present, elements, depth) => apply(
-            () => c.setTopicNavigation(
-              present: present,
-              forElements: elements,
-              depth: depth,
+        return SizedBox(
+          width: width,
+          child: Directionality(
+            textDirection: direction ?? Directionality.of(context),
+            child: BusyMarkWritersideProperties(
+              effectiveProperties: effective,
+              document: c.document,
+              target: block,
+              path: block == null ? [] : c.elementPath(block.id),
+              topicSelected: tag == 'topic',
+              session: session,
+              onClose: () {},
+              onTargetSelected: (_) {},
+              onManageItem: (_, _, _) {},
+              onProperty: (name, value) => apply(
+                () => c.updateWritersideProperty(block!.id, name, value),
+              ),
+              onHeadingText: (text) => apply(() {
+                c.updateBlockText(block!.id, text);
+                return true;
+              }),
+              onTopicProperty: (name, value) =>
+                  apply(() => c.updateTopicSwitcherLabel(value)),
+              onNavigation: (present, elements, depth) => apply(
+                () => c.setTopicNavigation(
+                  present: present,
+                  forElements: elements,
+                  depth: depth,
+                ),
+              ),
             ),
           ),
         );

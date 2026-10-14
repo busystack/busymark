@@ -11,6 +11,17 @@ class AppLocalizationsNl extends AppLocalizations {
   AppLocalizationsNl([String locale = 'nl']) : super(locale);
 
   @override
+  String get wsModuleCapsNotPublished =>
+      'Hoofdlettergebruik van de module wordt niet gepubliceerd.';
+
+  @override
+  String get wsTitleOverridesAction => 'Instantie- en inhoudsopgavetitels…';
+
+  @override
+  String get wsHeadingNotPublished =>
+      'Wordt niet gepubliceerd door deze bouwer.';
+
+  @override
   String get wsMarkdownInstanceTitleLimitation =>
       'De vastgelegde builder publiceert geen instantietitels in Markdown-onderwerpen. Bestaande opmaak blijft behouden; bekijk de bron.';
 

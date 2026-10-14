@@ -11,6 +11,15 @@ class AppLocalizationsEt extends AppLocalizations {
   AppLocalizationsEt([String locale = 'et']) : super(locale);
 
   @override
+  String get wsModuleCapsNotPublished => 'Mooduli suurtähereeglit ei avaldata.';
+
+  @override
+  String get wsTitleOverridesAction => 'Eksemplari ja sisukorra pealkirjad…';
+
+  @override
+  String get wsHeadingNotPublished => 'See koostaja ei avalda seda.';
+
+  @override
   String get wsMarkdownInstanceTitleLimitation =>
       'Kinnitatud koostaja ei avalda Markdowni teemade instantsipealkirju. Olemasolev märgistus säilitatakse; vaata lähteteksti.';
 

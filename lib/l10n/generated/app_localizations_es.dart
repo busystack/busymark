@@ -11,6 +11,16 @@ class AppLocalizationsEs extends AppLocalizations {
   AppLocalizationsEs([String locale = 'es']) : super(locale);
 
   @override
+  String get wsModuleCapsNotPublished =>
+      'No se publica la capitalización del módulo.';
+
+  @override
+  String get wsTitleOverridesAction => 'Títulos de instancia e índice…';
+
+  @override
+  String get wsHeadingNotPublished => 'Este generador no lo publica.';
+
+  @override
   String get wsMarkdownInstanceTitleLimitation =>
       'El constructor fijado no publica títulos por instancia en temas Markdown. Se conserva el marcado existente; examínelo en el código fuente.';
 

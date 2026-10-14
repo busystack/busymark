@@ -11,6 +11,15 @@ class AppLocalizationsZh extends AppLocalizations {
   AppLocalizationsZh([String locale = 'zh']) : super(locale);
 
   @override
+  String get wsModuleCapsNotPublished => '模块的大小写规则不会发布。';
+
+  @override
+  String get wsTitleOverridesAction => '实例与目录标题…';
+
+  @override
+  String get wsHeadingNotPublished => '此构建器不会发布此属性。';
+
+  @override
   String get wsMarkdownInstanceTitleLimitation =>
       '固定版本构建器不发布 Markdown 主题的实例标题覆盖。保留现有标记，请在源码中查看。';
 
@@ -5149,6 +5158,15 @@ class AppLocalizationsZh extends AppLocalizations {
 /// The translations for Chinese, as used in China (`zh_CN`).
 class AppLocalizationsZhCn extends AppLocalizationsZh {
   AppLocalizationsZhCn() : super('zh_CN');
+
+  @override
+  String get wsModuleCapsNotPublished => '模块的大小写规则不会发布。';
+
+  @override
+  String get wsTitleOverridesAction => '实例与目录标题…';
+
+  @override
+  String get wsHeadingNotPublished => '此构建器不会发布此属性。';
 
   @override
   String get wsMarkdownInstanceTitleLimitation =>

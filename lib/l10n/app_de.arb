@@ -1,4 +1,7 @@
 {
+  "wsModuleCapsNotPublished": "Modul-Großschreibung wird nicht veröffentlicht.",
+  "wsTitleOverridesAction": "Instanz- und Inhaltsverzeichnistitel…",
+  "wsHeadingNotPublished": "Wird von diesem Builder nicht veröffentlicht.",
   "wsMarkdownInstanceTitleLimitation": "Der festgelegte Builder veröffentlicht keine instanzspezifischen Titel in Markdown-Themen. Bestehendes Markup bleibt erhalten; prüfen Sie es im Quelltext.",
   "wsTopicIdentity": "Themen-ID",
   "wsElementAnchor": "Elementanker",

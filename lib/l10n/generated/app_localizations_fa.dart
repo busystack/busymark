@@ -11,6 +11,15 @@ class AppLocalizationsFa extends AppLocalizations {
   AppLocalizationsFa([String locale = 'fa']) : super(locale);
 
   @override
+  String get wsModuleCapsNotPublished => 'سبک حروف ماژول منتشر نمی‌شود.';
+
+  @override
+  String get wsTitleOverridesAction => 'عنوان‌های نمونه و فهرست…';
+
+  @override
+  String get wsHeadingNotPublished => 'این سازنده آن را منتشر نمی‌کند.';
+
+  @override
   String get wsMarkdownInstanceTitleLimitation =>
       'سازنده تثبیت‌شده عنوان نمونه را در موضوع‌های Markdown منتشر نمی‌کند. نشانه‌گذاری موجود حفظ می‌شود؛ منبع را بررسی کنید.';
 

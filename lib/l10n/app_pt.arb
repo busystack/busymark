@@ -1,4 +1,7 @@
 {
+  "wsModuleCapsNotPublished": "A capitalização do módulo não é publicada.",
+  "wsTitleOverridesAction": "Títulos da instância e do índice…",
+  "wsHeadingNotPublished": "Não é publicado por este gerador.",
   "wsMarkdownInstanceTitleLimitation": "O builder fixado não publica títulos por instância em tópicos Markdown. A marcação existente é preservada; consulte o código-fonte.",
   "wsTopicIdentity": "ID do tópico",
   "wsElementAnchor": "Âncora do elemento",

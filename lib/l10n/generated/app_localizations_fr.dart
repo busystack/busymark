@@ -11,6 +11,16 @@ class AppLocalizationsFr extends AppLocalizations {
   AppLocalizationsFr([String locale = 'fr']) : super(locale);
 
   @override
+  String get wsModuleCapsNotPublished =>
+      'La casse du module n’est pas publiée.';
+
+  @override
+  String get wsTitleOverridesAction => 'Titres de l’instance et du sommaire…';
+
+  @override
+  String get wsHeadingNotPublished => 'Non publié par ce générateur.';
+
+  @override
   String get wsMarkdownInstanceTitleLimitation =>
       'Le constructeur fixé ne publie pas les titres par instance des sujets Markdown. Le balisage existant est conservé ; consultez la source.';
 

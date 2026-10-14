@@ -1,4 +1,7 @@
 {
+  "wsModuleCapsNotPublished": "Kapitalisasi modul tidak diterbitkan.",
+  "wsTitleOverridesAction": "Judul instans dan daftar isi…",
+  "wsHeadingNotPublished": "Tidak diterbitkan oleh pembuat ini.",
   "wsMarkdownInstanceTitleLimitation": "Builder yang dipatok tidak menerbitkan judul instans pada topik Markdown. Markup yang ada tetap disimpan; periksa di Sumber.",
   "wsTopicIdentity": "ID topik",
   "wsElementAnchor": "Jangkar elemen",

@@ -96,7 +96,9 @@ void main() {
             ),
           ),
         );
-        final section = find.widgetWithText(ListTile, 'Topic navigation');
+        final section = find.byWidgetPredicate(
+          (w) => w is BusyMarkActionRow && w.title == 'Topic navigation',
+        );
         if (find
             .byWidgetPredicate(
               (w) => w is BusyMarkComboRow<String> && w.values.contains('all'),
@@ -949,8 +951,16 @@ void main() {
           matching: find.byType(TextField),
         );
         if (entry().evaluate().isEmpty) {
-          await tester.ensureVisible(find.widgetWithText(ListTile, 'Advanced'));
-          await tester.tap(find.widgetWithText(ListTile, 'Advanced'));
+          await tester.ensureVisible(
+            find.byWidgetPredicate(
+              (w) => w is BusyMarkActionRow && w.title == 'Advanced',
+            ),
+          );
+          await tester.tap(
+            find.byWidgetPredicate(
+              (w) => w is BusyMarkActionRow && w.title == 'Advanced',
+            ),
+          );
           await tester.pumpAndSettle();
         }
         await tester.enterText(entry(), label);
@@ -996,7 +1006,11 @@ void main() {
         await tester.pumpAndSettle();
         await selectTopic();
         if (entry().evaluate().isEmpty) {
-          await tester.tap(find.widgetWithText(ListTile, 'Advanced'));
+          await tester.tap(
+            find.byWidgetPredicate(
+              (w) => w is BusyMarkActionRow && w.title == 'Advanced',
+            ),
+          );
           await tester.pumpAndSettle();
         }
         expect(tester.widget<TextField>(entry()).controller!.text, label);
@@ -1076,14 +1090,8 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Collapsible (collapsible)'), findsOneWidget);
       expect(source, isEmpty);
-      final collapseRow = tester.widget<BusyMarkComboRow<String>>(
-        find.byWidgetPredicate(
-          (w) =>
-              w is BusyMarkComboRow<String> &&
-              w.title == 'Collapsible (collapsible)',
-        ),
-      );
-      collapseRow.onSelected('true');
+      labels.add('Enabled');
+      await tester.tap(find.text('Collapsible (collapsible)'));
       await tester.pumpAndSettle();
       expect(source, contains('collapsible="true"'));
       final before = source;

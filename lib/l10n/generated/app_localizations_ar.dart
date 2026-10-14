@@ -11,6 +11,15 @@ class AppLocalizationsAr extends AppLocalizations {
   AppLocalizationsAr([String locale = 'ar']) : super(locale);
 
   @override
+  String get wsModuleCapsNotPublished => 'لا يُنشر تنسيق أحرف الوحدة.';
+
+  @override
+  String get wsTitleOverridesAction => 'عناوين المثيل وجدول المحتويات…';
+
+  @override
+  String get wsHeadingNotPublished => 'لا ينشرها هذا المنشئ.';
+
+  @override
   String get wsMarkdownInstanceTitleLimitation =>
       'لا ينشر الباني المثبّت عناوين النسخ في مواضيع Markdown. تُحفظ العلامات الحالية؛ افحصها في المصدر.';
 

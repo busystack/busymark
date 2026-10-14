@@ -11,6 +11,16 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
+  String get wsModuleCapsNotPublished =>
+      'Module capitalization is not published.';
+
+  @override
+  String get wsTitleOverridesAction => 'Instance and TOC titles…';
+
+  @override
+  String get wsHeadingNotPublished => 'Not published by this builder.';
+
+  @override
   String get wsMarkdownInstanceTitleLimitation =>
       'The pinned builder does not publish instance title overrides in Markdown topics. Existing markup is preserved; inspect it in Source.';
 

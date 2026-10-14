@@ -1,4 +1,7 @@
 {
+  "wsModuleCapsNotPublished": "سبک حروف ماژول منتشر نمی‌شود.",
+  "wsTitleOverridesAction": "عنوان‌های نمونه و فهرست…",
+  "wsHeadingNotPublished": "این سازنده آن را منتشر نمی‌کند.",
   "wsMarkdownInstanceTitleLimitation": "سازنده تثبیت‌شده عنوان نمونه را در موضوع‌های Markdown منتشر نمی‌کند. نشانه‌گذاری موجود حفظ می‌شود؛ منبع را بررسی کنید.",
   "wsTopicIdentity": "شناسه موضوع",
   "wsElementAnchor": "لنگر عنصر",

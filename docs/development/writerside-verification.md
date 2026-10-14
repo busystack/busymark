@@ -105,6 +105,12 @@ Use the pinned Flutter SDK and the Linux build dependencies listed in the README
 plus Python GTK/AT-SPI introspection, XTest, xdotool, Xvfb and a D-Bus session.
 Run from the repository root with an isolated display and software rendering:
 
+The harness keeps an AT-SPI probe connection alive until its application exits.
+This avoids GTK's [key-listener lifetime bug](https://gitlab.gnome.org/GNOME/gtk/-/merge_requests/10391)
+when the last short-lived automation client disconnects during key dispatch.
+Accessibility remains enabled; every command still queries real native controls,
+and premature probe termination fails the workflow.
+
 Finish the debug build and retain its complete bundle before starting a release
 build. Flutter shares generated asset outputs between configurations; concurrent
 builds can remove the debug harness's `data/flutter_assets/kernel_blob.bin`.
@@ -148,6 +154,14 @@ saved bytes with the pinned builder, then run the existing property verifier
 with mode `list-caps-native`. Review the contextual light/dark captures as well
 as the original inspector captures. A narrow-window journey closes the pane
 through its guarded command before hovering exposed content to reopen it.
+
+The shared journeys also open `nested-references.md` in the contextual project
+and target repeated parent, child, quoted and embedded-XML references through
+Editor and Source. Their saved output is checked by `list-caps-native`. Review
+the `form-*` and `*-form-topic-*` top/bottom captures: these retain the complete
+forms at normal/minimum pane widths, light/dark themes, text scaling and RTL,
+including expanded optional fields. Opening disclosures and changing display
+settings must leave the source and inspected owner unchanged.
 
 Use `test/fixtures/writerside/property_contract_conformance` as the fixture argument
 and set `BUSYMARK_PROPERTY_CONTRACT_ONLY=1` for the reusable Topic, Chapter and

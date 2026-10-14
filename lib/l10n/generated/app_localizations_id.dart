@@ -11,6 +11,16 @@ class AppLocalizationsId extends AppLocalizations {
   AppLocalizationsId([String locale = 'id']) : super(locale);
 
   @override
+  String get wsModuleCapsNotPublished =>
+      'Kapitalisasi modul tidak diterbitkan.';
+
+  @override
+  String get wsTitleOverridesAction => 'Judul instans dan daftar isi…';
+
+  @override
+  String get wsHeadingNotPublished => 'Tidak diterbitkan oleh pembuat ini.';
+
+  @override
   String get wsMarkdownInstanceTitleLimitation =>
       'Builder yang dipatok tidak menerbitkan judul instans pada topik Markdown. Markup yang ada tetap disimpan; periksa di Sumber.';
 

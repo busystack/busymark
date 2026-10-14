@@ -11,6 +11,15 @@ class AppLocalizationsJa extends AppLocalizations {
   AppLocalizationsJa([String locale = 'ja']) : super(locale);
 
   @override
+  String get wsModuleCapsNotPublished => 'モジュールの大文字・小文字設定は公開されません。';
+
+  @override
+  String get wsTitleOverridesAction => 'インスタンスと目次のタイトル…';
+
+  @override
+  String get wsHeadingNotPublished => 'このビルダーでは公開されません。';
+
+  @override
   String get wsMarkdownInstanceTitleLimitation =>
       '固定バージョンのビルダーは Markdown トピックのインスタンス別タイトルを公開しません。既存のマークアップは保持されます。ソースで確認してください。';
 

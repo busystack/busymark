@@ -8,5 +8,9 @@
       <description>Save</description>
       <shortcut layout="Linux">Ctrl+S</shortcut>
     </action>
+    <action id="$Copy">
+      <description>Copy</description>
+      <shortcut layout="Linux">Ctrl+C</shortcut>
+    </action>
   </actions>
 </keymap>

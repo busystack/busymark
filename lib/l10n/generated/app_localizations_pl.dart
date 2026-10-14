@@ -11,6 +11,16 @@ class AppLocalizationsPl extends AppLocalizations {
   AppLocalizationsPl([String locale = 'pl']) : super(locale);
 
   @override
+  String get wsModuleCapsNotPublished =>
+      'Reguła wielkości liter modułu nie jest publikowana.';
+
+  @override
+  String get wsTitleOverridesAction => 'Tytuły instancji i spisu treści…';
+
+  @override
+  String get wsHeadingNotPublished => 'Ten generator tego nie publikuje.';
+
+  @override
   String get wsMarkdownInstanceTitleLimitation =>
       'Przypięty builder nie publikuje tytułów instancji w tematach Markdown. Istniejące znaczniki są zachowane; sprawdź źródło.';
 

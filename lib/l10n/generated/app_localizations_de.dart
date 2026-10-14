@@ -11,6 +11,17 @@ class AppLocalizationsDe extends AppLocalizations {
   AppLocalizationsDe([String locale = 'de']) : super(locale);
 
   @override
+  String get wsModuleCapsNotPublished =>
+      'Modul-Großschreibung wird nicht veröffentlicht.';
+
+  @override
+  String get wsTitleOverridesAction => 'Instanz- und Inhaltsverzeichnistitel…';
+
+  @override
+  String get wsHeadingNotPublished =>
+      'Wird von diesem Builder nicht veröffentlicht.';
+
+  @override
   String get wsMarkdownInstanceTitleLimitation =>
       'Der festgelegte Builder veröffentlicht keine instanzspezifischen Titel in Markdown-Themen. Bestehendes Markup bleibt erhalten; prüfen Sie es im Quelltext.';
 

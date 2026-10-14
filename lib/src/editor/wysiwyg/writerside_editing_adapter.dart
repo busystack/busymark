@@ -1,4 +1,6 @@
 import 'dart:convert';
+import '../../markdown/markdown_source_map.dart';
+import 'wysiwyg_inline_controller.dart';
 import 'package:xml/xml.dart';
 import '../../core/source_span.dart';
 import '../../markdown/busymark_document.dart';
@@ -14,6 +16,156 @@ import '../../writerside/writerside_schema.dart';
 /// titles. Unsupported nodes stay atomic and keep their original source.
 class WritersideEditingAdapter {
   const WritersideEditingAdapter();
+
+  static Iterable<({BusyInlineStyleRange range, int begin, int end})>
+  authoredInlineRanges(
+    BusyDocument document,
+    String source,
+    BusyBlock block,
+  ) sync* {
+    if (block.sourceSpan == null) return;
+    if (document.isXmlTopic && document.authoredXml?.source != source) return;
+    final raw =
+        block.attributes['busymark-native-inline-source'] ??
+        block.rawSource ??
+        '';
+    if (block.children.isNotEmpty &&
+        !block.attributes.containsKey('element') &&
+        block.attributes.containsKey('busymark-native-source-map') &&
+        !block.attributes.containsKey('busymark-native-inline-source')) {
+      return;
+    }
+    if (!document.isXmlTopic && block.attributes.containsKey('element')) {
+      // Semantic XML islands retain bindings relative to their own authored
+      // fragment. Use that same adapter to map text occurrences, including
+      // variables, then translate back into the containing Markdown source.
+      const prefix = '<topic id="inspector" title="Inspector">';
+      final wrapped = '$prefix$raw</topic>';
+      final xml = const WritersideEditingAdapter().parseXml(
+        filePath: document.filePath,
+        source: wrapped,
+      );
+      final element = xml?.blocks.first.children
+          .where((b) => !b.isSourceOnly)
+          .singleOrNull;
+      if (xml != null && element?.plainText == block.plainText) {
+        final references = busyInlineReferenceRanges(block.inlines);
+        for (final entry in authoredInlineRanges(xml, wrapped, element!)) {
+          final owner = references
+              .where(
+                (r) =>
+                    r.kind == entry.range.kind &&
+                    r.start == entry.range.start &&
+                    r.end == entry.range.end &&
+                    r.referenceIndex == entry.range.referenceIndex,
+              )
+              .firstOrNull;
+          if (owner != null) {
+            final begin = markdownProjectedSourceOffset(
+              block,
+              entry.begin - prefix.length,
+              inline: true,
+            );
+            final end = markdownProjectedSourceOffset(
+              block,
+              entry.end - prefix.length,
+              inline: true,
+            );
+            if (begin == null || end == null) continue;
+            yield (range: owner, begin: begin, end: end);
+          }
+        }
+      }
+      return;
+    }
+    final mapped =
+        !document.isXmlTopic && !block.attributes.containsKey('element')
+        ? const MarkdownSourceMapper()
+              .createInlineParserContext(
+                documentSource: source,
+                mode: document.mode,
+                mapWritersideReferences: true,
+              )
+              .parseMapped(raw)
+        : null;
+    final mappedReferences = <BusyInline>[];
+    void collect(List<BusyInline> inlines, bool inheritedIgnore) {
+      for (final inline in inlines) {
+        final ignore = switch (inline.attributes['ignore-vars']) {
+          'true' => true,
+          'false' => false,
+          _ => inheritedIgnore,
+        };
+        if (inline.kind != BusyInlineKind.writersideVariable || !ignore) {
+          if (mapped!.ranges.containsKey(inline)) mappedReferences.add(inline);
+        }
+        collect(inline.children, ignore);
+      }
+    }
+
+    if (mapped != null) {
+      collect(mapped.inlines, block.attributes['ignore-vars'] == 'true');
+    }
+    final references = busyInlineReferenceRanges(block.inlines);
+    final xmlVariables = document.isXmlTopic
+        ? const WritersideEditingAdapter()
+              .xmlVariableSourceRanges(document, block)
+              .toList()
+        : const <({int start, int end, int sourceStart, int sourceEnd})>[];
+    for (final range in references) {
+      if (!{
+        BusyInlineKind.link,
+        BusyInlineKind.image,
+        BusyInlineKind.writersideVariable,
+        BusyInlineKind.writersideShortcut,
+      }.contains(range.kind)) {
+        continue;
+      }
+      final binding = range.attributes['xml-source-binding']?.split(':');
+      int? begin;
+      int? end;
+      if (document.isXmlTopic && binding?.length == 2) {
+        begin = int.tryParse(binding![0]);
+        end = int.tryParse(binding[1]);
+      } else if (mapped != null) {
+        final peers = references.where((r) => r.kind == range.kind).toList();
+        final ordinal = peers.indexOf(range);
+        final candidates =
+            mappedReferences.where((e) => e.kind == range.kind).toList()..sort(
+              (a, b) =>
+                  mapped.ranges[a]!.start.compareTo(mapped.ranges[b]!.start),
+            );
+        if (ordinal >= 0 && candidates.length == peers.length) {
+          final positioned = mapped.ranges[candidates[ordinal]]!;
+          final attributes = RegExp(
+            r'^\{(?:\s*[\w:.-]+\s*=\s*"[^"]*"\s*)+\}',
+          ).firstMatch(raw.substring(positioned.end));
+          begin = markdownProjectedSourceOffset(
+            block,
+            positioned.start,
+            inline: true,
+          );
+          end = markdownProjectedSourceOffset(
+            block,
+            positioned.end + (attributes?.end ?? 0),
+            inline: true,
+          );
+        }
+      } else if (document.isXmlTopic &&
+          range.kind == BusyInlineKind.writersideVariable) {
+        final occurrence = xmlVariables
+            .where((v) => v.start == range.start && v.end == range.end)
+            .singleOrNull;
+        if (occurrence != null) {
+          begin = occurrence.sourceStart;
+          end = occurrence.sourceEnd;
+        }
+      }
+      if (begin != null && end != null) {
+        yield (range: range, begin: begin, end: end);
+      }
+    }
+  }
 
   static bool isNativeHeading(BusyDocument document, BusyBlock block) =>
       !document.isXmlTopic &&

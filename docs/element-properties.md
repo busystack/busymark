@@ -68,6 +68,15 @@ The inspector pairs descriptive localized labels with exact Writerside attribute
 names. Less-used schema attributes remain under **Advanced**. Empty inactive
 controls are hidden; existing authored values remain inspectable and removable.
 
+Advanced uses separate **Document settings** and **Heading attributes** groups
+for Markdown topics. **Authored settings present** counts only explicit settings
+shown for that owner, including relevant unsupported markup; generated anchors,
+effective defaults and another element’s settings do not count. Read-only Topic
+ID keeps its rename action in the same row. Notices and navigation actions are
+separate from editable property groups.
+At narrow widths or increased text sizes, enum rows place the selected value
+below the label. They keep the same native menu and keyboard operation.
+
 Topic identity is independent of titles and anchors. Renaming a topic updates its
 filename, XML root ID and references through the existing review. Editing a
 heading or explicit anchor does not rename a file. Unsaved documents have no
@@ -85,7 +94,7 @@ Default XML titles edit only the scalar `title` attribute; formatted and conditi
 `<title>` children remain intact. Markdown heading text edits its inline content,
 while **Title override (title)** under Advanced edits the separate heading
 attribute. The override changes the published chapter title without changing the
-heading text. **Edit Title...** reuses the established instance/TOC title workflow
+heading text. **Instance and TOC titles…** reuses the established instance/TOC title workflow
 for a uniquely identified entry in the selected instance. When a topic has
 multiple entries, use the desired entry's existing TOC action rather than
 choosing an arbitrary owner.
@@ -93,7 +102,8 @@ choosing an arbitrary owner.
 The pinned builder does not publish attributes on the topic H1. Inline H1
 attribute syntax becomes literal title text; the separate-line form is ignored.
 Existing authored H1 attributes and the independently editable heading anchor
-remain distinct from Topic ID, with this limitation shown in Advanced. BusyMark
+remain distinct from Topic ID. The affected fields show **Not published by this
+builder**; F1 explains the limitation and source ownership. BusyMark
 does not offer other unverified H1 or YAML properties as XML-root settings.
 The same builder ignores instance-specific `<title>` children in Markdown
 topics. The existing Edit Title workflow keeps TOC overrides available and
@@ -206,8 +216,9 @@ heading text intact. With no relevant supported default, the effective style is
 variable-valued defaults resolved in the existing lexical scope. The pinned
 builder uses the first capitalization `default-property` when several apply.
 It accepts module `<caps>` rules for chapters, topics and TOC entries but does
-not apply their documented capitalization effect; the inspector shows this
-verified limitation beside the resolved value. Use a local `caps` or a chapter
+not apply their documented capitalization effect; the inspector shows
+**Module capitalization is not published** beside the resolved value, with the
+full explanation in F1 help. Use a local `caps` or a chapter
 `default-property` for a published transformation. This distinction is checked
 against [the configuration reference](https://www.jetbrains.com/help/writerside/writerside-cfg.html)
 and the maintained builder fixtures.

@@ -139,6 +139,24 @@ abstract class AppLocalizations {
     Locale('zh', 'CN'),
   ];
 
+  /// No description provided for @wsModuleCapsNotPublished.
+  ///
+  /// In en, this message translates to:
+  /// **'Module capitalization is not published.'**
+  String get wsModuleCapsNotPublished;
+
+  /// Opens the existing instance-specific and TOC title workflow, separate from the default title.
+  ///
+  /// In en, this message translates to:
+  /// **'Instance and TOC titles…'**
+  String get wsTitleOverridesAction;
+
+  /// Compact property-specific publishing limitation; full explanation remains in contextual help.
+  ///
+  /// In en, this message translates to:
+  /// **'Not published by this builder.'**
+  String get wsHeadingNotPublished;
+
   /// Pinned-builder limitation shown in the existing instance/TOC title workflow.
   ///
   /// In en, this message translates to:

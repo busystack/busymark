@@ -11,6 +11,17 @@ class AppLocalizationsNb extends AppLocalizations {
   AppLocalizationsNb([String locale = 'nb']) : super(locale);
 
   @override
+  String get wsModuleCapsNotPublished =>
+      'Modulens bokstavstil publiseres ikke.';
+
+  @override
+  String get wsTitleOverridesAction =>
+      'Titler for instans og innholdsfortegnelse…';
+
+  @override
+  String get wsHeadingNotPublished => 'Publiseres ikke av denne byggeren.';
+
+  @override
   String get wsMarkdownInstanceTitleLimitation =>
       'Den fastlåste byggeren publiserer ikke instanstitler i Markdown-emner. Eksisterende markering bevares; se kilden.';
 

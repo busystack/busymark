@@ -256,12 +256,40 @@ class _HarnessState extends ConsumerState<_Harness> {
   final _checks = <String>[];
   var _pointer = 0;
   var _nativeMenuOpen = false;
+  int? _accessibilitySessionExit;
+
+  Future<void> _startAccessibilitySession() async {
+    if (Platform.environment['BUSYMARK_NATIVE_PROBE'] != '1') return;
+    await _pause();
+    final process = await Process.start('/usr/bin/python3', [
+      p.absolute('tools/linux_native_menu_probe.py'),
+      '$pid',
+      'hold',
+    ]);
+    process.stderr.transform(utf8.decoder).listen(stderr.write);
+    unawaited(
+      process.exitCode.then((code) {
+        _accessibilitySessionExit = code;
+      }),
+    );
+    final ready = await process.stdout
+        .transform(utf8.decoder)
+        .transform(const LineSplitter())
+        .first
+        .timeout(const Duration(seconds: 30));
+    _check(ready == 'ready', 'Native accessibility session connects');
+  }
 
   Future<String> _native(
     String command, [
     String? argument,
     String? secondArgument,
   ]) async {
+    if (_accessibilitySessionExit != null) {
+      throw StateError(
+        'Native accessibility session exited: $_accessibilitySessionExit',
+      );
+    }
     final result = await Process.run('/usr/bin/python3', [
       p.absolute('tools/linux_native_menu_probe.py'),
       '$pid',
@@ -463,7 +491,9 @@ class _HarnessState extends ConsumerState<_Harness> {
   }
 
   Future<void> _capture(String name) async {
-    await windowManager.setPosition(Offset.zero);
+    if (await windowManager.getPosition() != Offset.zero) {
+      await windowManager.setPosition(Offset.zero);
+    }
     await _pause();
     if (Platform.environment['BUSYMARK_NATIVE_PROBE'] == '1') {
       await _native('capture', p.join(widget.output.path, '$name.png'));
@@ -551,8 +581,7 @@ class _HarnessState extends ConsumerState<_Harness> {
     await _tap(
       _singleInspectorControl(
         '$title section',
-        (w) =>
-            w is ListTile && w.title is Text && (w.title as Text).data == title,
+        (w) => w is BusyMarkActionRow && w.title == title,
       ),
     );
     await _until(
@@ -588,17 +617,19 @@ class _HarnessState extends ConsumerState<_Harness> {
     // Exercise the actual Linux window at accessibility text scaling. GTK's
     // DPI setting does not change Flutter's text scaler on this embedding.
     Element? media;
-    _elements((w) => w is BusyMarkWysiwygEditor).single.visitAncestorElements((
-      e,
-    ) {
+    _elements(
+      (w) => w is BusyMarkWritersideProperties,
+    ).single.visitAncestorElements((e) {
       if (e.widget is MediaQuery) {
         media = e;
-        return false;
       }
       return true;
     });
     final element = media!;
     final original = element.widget as MediaQuery;
+    // Scale the outer view data. BusyMark derives another MediaQuery for GTK
+    // animation settings, which can rebuild during a capture; overriding that
+    // inner copy would be lost instead of propagating through the real app.
     // Inherited-widget updates must notify their dependants during a build
     // scope. Updating the element directly from this async probe asserts in
     // the debug application and prevents the scaling acceptance check.
@@ -610,15 +641,22 @@ class _HarnessState extends ConsumerState<_Harness> {
         ),
       );
     });
-    await _pause();
+    await WidgetsBinding.instance.endOfFrame;
     _check(
       MediaQuery.textScalerOf(
-            _elements((w) => w is BusyMarkWysiwygEditor).single,
+            _elements((w) => w is BusyMarkWritersideProperties).single,
           ).scale(14) ==
           21,
       'Linux text scaling applied',
     );
     await _capture(name);
+    _check(
+      MediaQuery.textScalerOf(
+            _elements((w) => w is BusyMarkWritersideProperties).single,
+          ).scale(14) ==
+          21,
+      'Linux text scaling remains applied through capture',
+    );
     element.owner!.buildScope(element, () => element.update(original));
     await _pause();
   }
@@ -1468,12 +1506,7 @@ class _HarnessState extends ConsumerState<_Harness> {
     Future<void> section(String title, {String? field}) async {
       if (field != null && fields().contains(field)) return;
       await _tap(
-        _elements(
-          (w) =>
-              w is ListTile &&
-              w.title is Text &&
-              (w.title as Text).data == title,
-        ).single,
+        _elements((w) => w is BusyMarkActionRow && w.title == title).single,
       );
     }
 
@@ -1543,7 +1576,13 @@ class _HarnessState extends ConsumerState<_Harness> {
       );
       final initial = _source;
       await _capture('$stem-topic-main');
-      await _tapLabel('Rename Topic File');
+      await _tap(
+        _singleInspectorControl(
+          'Rename Topic File',
+          (w) =>
+              w is BusyMarkHeaderIconButton && w.tooltip == 'Rename Topic File',
+        ),
+      );
       await _pause();
       await _tapLabel('Cancel');
       _check(
@@ -1579,6 +1618,7 @@ class _HarnessState extends ConsumerState<_Harness> {
       await sourceCaret(_source.indexOf(xml ? '<topic' : '# Edited'));
       await section('Advanced', field: 'Switcher label (switcher-label)');
       await _capture('$stem-topic-advanced');
+      await _captureInspectorLayouts('$stem-form-topic');
       _check(
         !fields().contains('Filter (filter)') &&
             !fields().contains('Help instances (instance)'),
@@ -1800,7 +1840,7 @@ class _HarnessState extends ConsumerState<_Harness> {
       );
       await _capture('$stem-reopened');
       final titleSource = _source;
-      await _tapLabel('Edit Title...');
+      await _tapLabel('Instance and TOC titles…');
       await _pause();
       await _native('activate', 'Advanced Settings');
       if (xml) {
@@ -1981,6 +2021,9 @@ class _HarnessState extends ConsumerState<_Harness> {
                 caret,
         'Hover $text inspects independently of caret A without source or history changes',
       );
+      await _captureInspectorLayouts(
+        'form-${text.replaceAll(RegExp(r'[^a-zA-Z]+'), '-')}',
+      );
       if (text == 'Parent item') {
         _check(
           pane().target!.attributes['element'] == 'li',
@@ -2100,6 +2143,7 @@ class _HarnessState extends ConsumerState<_Harness> {
       'Parent changes preserve nested numbering and source markers',
     );
     await _capture('contextual-list-container');
+    await _captureInspectorLayouts('form-list');
     await _tap(_field('a journey through HTTP and APIs'));
     await _hoverProperties(_field('a journey through HTTP and APIs'));
     await advanced();
@@ -2112,9 +2156,12 @@ class _HarnessState extends ConsumerState<_Harness> {
     );
     _check(
       combo(
-        'Capitalization (caps)',
-      ).subtitle!.contains('ignores module <caps>'),
-      'Verified module capitalization limitation remains visible',
+            'Capitalization (caps)',
+          ).subtitle!.contains('Module capitalization is not published.') &&
+          combo(
+            'Capitalization (caps)',
+          ).tooltip!.contains('ignores module <caps>'),
+      'Verified module capitalization limitation stays concise and retains full help',
     );
     final beforeCaps = _source;
     await choose('Capitalization (caps)', 'Uppercase');
@@ -2223,6 +2270,360 @@ class _HarnessState extends ConsumerState<_Harness> {
     await controller.openPath(widget.root.path);
   }
 
+  Future<void> _captureInspectorLayouts(String name) async {
+    final settings = ref.read(appSettingsControllerProvider.notifier);
+    final before = _source;
+    final panel =
+        _elements((w) => w is BusyMarkWritersideProperties).single.widget
+            as BusyMarkWritersideProperties;
+    final target = panel.target?.id;
+    final reference = panel.inlineTarget?.referenceIndex;
+    final section = _inspectorControls(
+      (w) => w is BusyMarkActionRow && w.title == 'Advanced',
+    ).singleOrNull;
+    var wasExpanded = false;
+    if (section != null) {
+      section.visitAncestorElements((e) {
+        if (e.widget case Semantics(
+          properties: final properties,
+        ) when properties.expanded != null) {
+          wasExpanded = properties.expanded!;
+          return false;
+        }
+        return true;
+      });
+      if (!wasExpanded) await _tap(section);
+    }
+    for (final width in [390.0, 260.0]) {
+      await settings.setElementPropertiesWidth(width);
+      for (final dark in [false, true]) {
+        await settings.setThemeModePreference(
+          dark
+              ? BusyMarkThemeModePreference.dark
+              : BusyMarkThemeModePreference.light,
+        );
+        await _pause();
+        final suffix = '$name-${width.toInt()}-${dark ? "dark" : "light"}';
+        final origin = await windowManager.getPosition();
+        await _native(
+          'move-pointer',
+          '${(origin.dx + 160).round()}',
+          '${(origin.dy + 24).round()}',
+        );
+        await Scrollable.ensureVisible(
+          _singleInspectorControl(
+            'Element',
+            (w) => w is BusyMarkComboRow<String> && w.title == 'Element',
+          ),
+          alignment: 0,
+        );
+        await _pause();
+        await _capture('$suffix-top');
+        await _captureScaled('$suffix-top-scaled');
+        await Scrollable.ensureVisible(
+          _singleInspectorControl(
+            'Show in Source',
+            (w) => w is BusyMarkActionRow && w.title == 'Show in Source',
+          ),
+          alignment: 1,
+        );
+        await _pause();
+        await _capture('$suffix-bottom');
+        await _captureScaled('$suffix-bottom-scaled');
+      }
+    }
+    await settings.setLocaleTag('ar');
+    await _pause();
+    await _capture('$name-rtl');
+    await _captureScaled('$name-rtl-scaled');
+    await settings.setLocaleTag('en');
+    await settings.setElementPropertiesWidth(390);
+    await settings.setThemeModePreference(BusyMarkThemeModePreference.light);
+    await _pause();
+    if (section != null && !wasExpanded) {
+      await _tap(
+        _singleInspectorControl(
+          'Advanced',
+          (w) => w is BusyMarkActionRow && w.title == 'Advanced',
+        ),
+      );
+    }
+    final current =
+        _elements((w) => w is BusyMarkWritersideProperties).single.widget
+            as BusyMarkWritersideProperties;
+    _check(
+      _source == before &&
+          current.target?.id == target &&
+          current.inlineTarget?.referenceIndex == reference,
+      '$name whole-panel width/theme/RTL/scaling inspection preserves source and target',
+    );
+  }
+
+  Future<void> _runNestedListReferences() async {
+    final controller = ref.read(workspaceControllerProvider.notifier);
+    await controller.openPath('${widget.root.path}-contextual');
+    final path = p.join(
+      '${widget.root.path}-contextual',
+      'topics/nested-references.md',
+    );
+    await controller.openActiveFile(path);
+    await _native('chord', 'ctrl+shift+1');
+    await _until(
+      () => _elements(
+        (w) => w is BusyMarkWysiwygEditor && w.document.filePath == path,
+      ).isNotEmpty,
+      'Nested reference fixture opens in the production Editor',
+    );
+    BusyMarkWritersideProperties pane() =>
+        _elements((w) => w is BusyMarkWritersideProperties).single.widget
+            as BusyMarkWritersideProperties;
+    Future<void> sourceAt(int at) async {
+      await _native('chord', 'ctrl+shift+2');
+      await _pause();
+      ((_elements((w) => w is BusyMarkSourceEditor).single as StatefulElement)
+                  .state
+              as BusyMarkSourceEditorState)
+          .scrollToOffset(at);
+      await _pause();
+    }
+
+    Future<void> occurrence(
+      String text,
+      int position,
+      int authored,
+      BusyInlineKind kind,
+      String label,
+    ) async {
+      await _native('chord', 'ctrl+shift+1');
+      await _pause();
+      await _tap(_field(text));
+      (_field(text).widget as TextField).controller!.selection =
+          TextSelection.collapsed(offset: position + 1);
+      await _pause();
+      _check(
+        pane().inlineTarget?.kind == kind &&
+            pane().inlineTarget?.start == position,
+        '$label Editor identifies its own reference occurrence',
+      );
+      if (label == 'Links  occurrence 0' ||
+          label == 'images  occurrence 0' ||
+          label == 'keys  occurrence 0') {
+        await _captureInspectorLayouts('form-inline-${kind.name}');
+      }
+      await _tapLabel('Show in Source');
+      await _pause();
+      _check(
+        ref
+                .read(workspaceControllerProvider)
+                .activeBuffer!
+                .editorState
+                .selection
+                .extentOffset ==
+            authored,
+        '$label Show in Source reaches exact authored markup',
+      );
+      await sourceAt(authored + 2);
+      _check(
+        pane().inlineTarget?.kind == kind &&
+            pane().inlineTarget?.start == position,
+        '$label Source selects the same reference owner',
+      );
+    }
+
+    var original = _source;
+    await _hoverProperties(_field('Child product and product'));
+    final cases = [
+      (
+        'Parent product in parent',
+        'Parent ',
+        [7],
+        BusyInlineKind.writersideVariable,
+        '%product%',
+      ),
+      (
+        'Child product and product',
+        'Child ',
+        [6, 18],
+        BusyInlineKind.writersideVariable,
+        '%product%',
+      ),
+      (
+        'continuation product and product',
+        'continuation ',
+        [13, 25],
+        BusyInlineKind.writersideVariable,
+        '%product%',
+      ),
+      (
+        'Descendant product',
+        'Descendant ',
+        [11],
+        BusyInlineKind.writersideVariable,
+        '%product%',
+      ),
+      (
+        'Quote parent product',
+        'Quote parent ',
+        [13],
+        BusyInlineKind.writersideVariable,
+        '%product%',
+      ),
+      (
+        'Quote child product and product',
+        'Quote child ',
+        [12, 24],
+        BusyInlineKind.writersideVariable,
+        '%product%',
+      ),
+      (
+        'Links Same Same, images Icon Icon, keys Copy Copy.',
+        'Links ',
+        [6, 11],
+        BusyInlineKind.link,
+        '[Same]',
+      ),
+      (
+        'Links Same Same, images Icon Icon, keys Copy Copy.',
+        'images ',
+        [24, 29],
+        BusyInlineKind.image,
+        '![Icon]',
+      ),
+      (
+        'Links Same Same, images Icon Icon, keys Copy Copy.',
+        'keys ',
+        [40, 45],
+        BusyInlineKind.writersideShortcut,
+        '<shortcut',
+      ),
+      (
+        'XML productIconproductproduct\nproduct',
+        '<p>XML ',
+        [4, 15, 22, 30],
+        BusyInlineKind.writersideVariable,
+        '%product%',
+      ),
+    ];
+    for (final item in cases) {
+      var cursor = _source.indexOf(item.$2);
+      for (var i = 0; i < item.$3.length; i++) {
+        final at = _source.indexOf(item.$5, cursor);
+        cursor = at + item.$5.length;
+        _check(at >= 0, '${item.$2} authored occurrence $i exists');
+        await occurrence(
+          item.$1,
+          item.$3[i],
+          at,
+          item.$4,
+          '${item.$2} occurrence $i',
+        );
+      }
+    }
+    await _capture('nested-references-source');
+    final paragraph = original.indexOf('<p>XML ');
+    final first = original.indexOf('%product%', paragraph);
+    final second = original.indexOf('%product%', first + 1);
+    final third = original.indexOf('%product%', second + 1);
+    await sourceAt(third + 2);
+    final entry = _inspectorProperty('Variable Reference');
+    await _type(
+      _elements(
+        (w) => w is TextField && w.controller == entry.controller,
+      ).single,
+      'long_product_name',
+    );
+    await _key(PhysicalKeyboardKey.enter, LogicalKeyboardKey.enter);
+    final changed = original.replaceRange(
+      third,
+      third + '%product%'.length,
+      '%long_product_name%',
+    );
+    _check(
+      _source == changed,
+      'Nested XML third variable changes while all other references remain byte-identical',
+    );
+    // Ctrl+Z in a property text entry belongs to that entry's draft. Use the
+    // existing navigation action to focus the document before document Undo;
+    // after Undo/Redo, inspect the restored target before any further input.
+    await _tapLabel('Show in Source');
+    await _pause();
+    _check(
+      _source == changed &&
+          ref
+                  .read(workspaceControllerProvider)
+                  .activeBuffer!
+                  .editorState
+                  .selection
+                  .extentOffset ==
+              third &&
+          FocusManager.instance.primaryFocus?.context
+                  ?.findAncestorWidgetOfExactType<BusyMarkSourceEditor>() !=
+              null,
+      'Nested reference document Undo starts in Source at the inspected occurrence without another edit',
+    );
+    await _native('chord', 'ctrl+z');
+    await _pause();
+    _check(
+      _source == original &&
+          _inspectorProperty('Variable Reference').controller!.text ==
+              'product',
+      'Nested reference Undo immediately restores source and inspector without caret movement',
+    );
+    await _native('chord', 'ctrl+shift+z');
+    await _pause();
+    _check(
+      _source == changed &&
+          _inspectorProperty('Variable Reference').controller!.text ==
+              'long_product_name',
+      'Nested reference Redo immediately restores source and inspector',
+    );
+    await _native('chord', 'ctrl+s');
+    await _until(
+      () => !ref.read(workspaceControllerProvider).activeBuffer!.isDirty,
+      'Nested reference source saves',
+    );
+    final buffer = ref.read(workspaceControllerProvider).activeBuffer!;
+    _check(
+      await File(path).readAsString() == changed,
+      'Nested references persist exactly',
+    );
+    _check(
+      await controller.closeDocumentBuffer(buffer.id),
+      'Nested reference document closes',
+    );
+    await controller.openActiveFile(path);
+    await _pause();
+    await occurrence(
+      'XML productIconproductlong_product_name\nproduct',
+      22,
+      third,
+      BusyInlineKind.writersideVariable,
+      'Reopened nested third variable',
+    );
+    _check(
+      _source == changed,
+      'Nested reference save/reopen remains source-neutral',
+    );
+    await _native('chord', 'ctrl+shift+1');
+    await _pause();
+    await _hoverProperties(
+      _field('Links Same Same, images Icon Icon, keys Copy Copy.'),
+    );
+    await _capture('nested-references-item-editor');
+    await _tap(
+      _singleInspectorControl(
+        'Close',
+        (w) => w is BusyMarkHeaderIconButton && w.tooltip == 'Close',
+      ),
+    );
+    await _until(
+      () => !ref.read(appSettingsControllerProvider).elementPropertiesVisible,
+      'Nested reference journey closes the inspector through its guarded header',
+    );
+    await controller.openPath(widget.root.path);
+    await _pause();
+  }
+
   Future<void> _run() async {
     Object? failure;
     try {
@@ -2234,6 +2635,7 @@ class _HarnessState extends ConsumerState<_Harness> {
       );
       final controller = ref.read(workspaceControllerProvider.notifier);
       final settings = ref.read(appSettingsControllerProvider.notifier);
+      await _startAccessibilitySession();
       await settings.waitUntilLoaded();
       _check(
         !ref.read(appSettingsControllerProvider).elementPropertiesVisible &&
@@ -2266,6 +2668,7 @@ class _HarnessState extends ConsumerState<_Harness> {
       ].any((flag) => Platform.environment[flag] == '1')) {
         await _runChapterPresentation();
         await _runContextualListProperties(paletteProperties);
+        await _runNestedListReferences();
       }
       if (Platform.environment['BUSYMARK_PROPERTY_CONTRACT_ONLY'] == '1') {
         await _runPropertyContract(paletteProperties);
@@ -3859,6 +4262,15 @@ class _HarnessState extends ConsumerState<_Harness> {
   }
 
   Future<void> _finish(Object? failure) async {
+    if (Platform.environment['BUSYMARK_NATIVE_PROBE'] == '1') {
+      if (_accessibilitySessionExit != null) {
+        failure ??= StateError('Native accessibility session exited early');
+      } else if (failure == null) {
+        _checks.add(
+          'Native accessibility session remains connected through all input',
+        );
+      }
+    }
     await File(p.join(widget.output.path, 'result.json')).writeAsString(
       const JsonEncoder.withIndent('  ').convert({
         'fixture': widget.root.path,

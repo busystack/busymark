@@ -1,4 +1,7 @@
 {
+  "wsModuleCapsNotPublished": "Modulens bokstavstil publiseres ikke.",
+  "wsTitleOverridesAction": "Titler for instans og innholdsfortegnelse…",
+  "wsHeadingNotPublished": "Publiseres ikke av denne byggeren.",
   "wsMarkdownInstanceTitleLimitation": "Den fastlåste byggeren publiserer ikke instanstitler i Markdown-emner. Eksisterende markering bevares; se kilden.",
   "wsTopicIdentity": "Emne-ID",
   "wsElementAnchor": "Elementanker",

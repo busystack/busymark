@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:path/path.dart' as p;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:yaru/yaru.dart';
 import 'writerside_property_session.dart';
 
 import '../../app/busymark_design.dart';
@@ -137,6 +138,15 @@ class BusyMarkWritersideProperties extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = context.l10n;
+    Iterable<Widget> propertyUnits(Iterable<Widget> fields) sync* {
+      for (final field in fields) {
+        if (field is SizedBox && field.width == 0 && field.height == 0) {
+          continue;
+        }
+        yield SizedBox(width: double.infinity, child: field);
+      }
+    }
+
     final block = target;
     final inlineTag = switch (inlineTarget?.kind) {
       BusyInlineKind.image => 'img',
@@ -222,7 +232,7 @@ class BusyMarkWritersideProperties extends StatelessWidget {
                   block,
                 ).contains(name);
       if (!eligible) return const SizedBox.shrink();
-      return _PropertyTextEntry(
+      final field = _PropertyTextEntry(
         key: ValueKey(
           'writerside-property-${document.filePath}-${topic
               ? 'document'
@@ -235,14 +245,20 @@ class BusyMarkWritersideProperties extends StatelessWidget {
         label: attributeLabel(attribute, label),
         chooseFile: chooseFile,
         supportingText: supportingText,
-        help: switch (name) {
-          'id' when nativeHeading => l.wsGeneratedAnchor,
-          'title' when nativeHeading => l.wsTitleOverrideExplanation,
-          'filter' => l.wsFilterExplanation,
-          'instance' => l.wsInstanceExplanation,
-          'ignore-vars' => l.wsIgnoreVariablesExplanation,
-          _ => null,
-        },
+        help: [
+          if (topicSelected && nativeHeading && !topic)
+            l.wsHeadingBuilderLimitation,
+          if (switch (name) {
+                'id' when nativeHeading => l.wsGeneratedAnchor,
+                'title' when nativeHeading => l.wsTitleOverrideExplanation,
+                'filter' => l.wsFilterExplanation,
+                'instance' => l.wsInstanceExplanation,
+                'ignore-vars' => l.wsIgnoreVariablesExplanation,
+                _ => null,
+              }
+              case final explanation?)
+            explanation,
+        ].join('\n'),
         value: value ?? attrs[attribute] ?? '',
         apply: (value) => inline || inlineTarget != null
             ? onInlineProperty?.call(attribute, value) ?? false
@@ -253,6 +269,9 @@ class BusyMarkWritersideProperties extends StatelessWidget {
                 value.isEmpty && attribute != 'alt' ? null : value,
               ),
       );
+      return topicSelected && nativeHeading && !topic
+          ? _PropertyUnitNotice(message: l.wsHeadingNotPublished, child: field)
+          : field;
     }
 
     final externalImage =
@@ -359,42 +378,49 @@ class BusyMarkWritersideProperties extends StatelessWidget {
         provenance,
         if (property.limitation == 'module-caps-ignored') l.wsModuleCapsIgnored,
         if (attribute == 'ignore-vars') l.wsIgnoreVariablesExplanation,
+        if (topicSelected && nativeHeading) l.wsHeadingBuilderLimitation,
       ].join('\n');
       final subtitle = [
         if (summary != null) summary,
-        if (property.limitation == 'module-caps-ignored') l.wsModuleCapsIgnored,
+        if (property.limitation == 'module-caps-ignored')
+          l.wsModuleCapsNotPublished,
         if (!active) l.wsPropertiesInactive,
       ].join('\n');
-      return _PropertyContextHelp(
+      final field = _PropertyContextHelp(
         help: help,
         mergeSemantics: active,
         child: Row(
           children: [
             Expanded(
-              child: BusyMarkComboRow<String>(
-                enabled: !immutable && active,
-                subtitle: subtitle.isEmpty ? null : subtitle,
-                tooltip: help,
-                title: attributeLabel(attribute, label),
-                values: values,
-                selected: value,
-                labelFor: (v) => v.isEmpty ? l.wsUseDefault : valueLabel(v),
-                onSelected: (v) {
-                  if (!immutable && (active || v.isEmpty)) {
-                    if (inlineTarget != null) {
-                      onInlineProperty?.call(attribute, v);
-                    } else {
-                      onProperty(attribute, v.isEmpty ? null : v);
+              child: _ResponsivePropertyCombo(
+                row: BusyMarkComboRow<String>(
+                  enabled: !immutable && active,
+                  subtitle: subtitle.isEmpty ? null : subtitle,
+                  tooltip: help,
+                  title: attributeLabel(attribute, label),
+                  values: values,
+                  selected: value,
+                  labelFor: (v) => v.isEmpty ? l.wsUseDefault : valueLabel(v),
+                  onSelected: (v) {
+                    if (!immutable && (active || v.isEmpty)) {
+                      if (inlineTarget != null) {
+                        onInlineProperty?.call(attribute, v);
+                      } else {
+                        onProperty(attribute, v.isEmpty ? null : v);
+                      }
                     }
-                  }
-                },
-                width: 125,
+                  },
+                  width: 125,
+                ),
               ),
             ),
             if (!active && value.isNotEmpty) resetOverride(attribute),
           ],
         ),
       );
+      return topicSelected && nativeHeading
+          ? _PropertyUnitNotice(message: l.wsHeadingNotPublished, child: field)
+          : field;
     }
 
     Widget stateRow() => enumRow(
@@ -445,6 +471,8 @@ class BusyMarkWritersideProperties extends StatelessWidget {
         (block.kind == BusyBlockKind.heading ||
             WritersideEditingAdapter.titleElements.contains(tag));
     final rows = <Widget>[];
+    final notices = <Widget>[];
+    final actions = <Widget>[];
     if (videoDraft) {
       rows.add(
         _PropertyTextEntry(
@@ -473,7 +501,7 @@ class BusyMarkWritersideProperties extends StatelessWidget {
                 enabled: false,
               ),
             );
-            rows.add(Text(l.wsPropertiesProtected));
+            notices.add(_PropertyNotice(l.wsPropertiesProtected));
           }
           rows.add(entry('origin', l.wsHelpModule));
         case BusyInlineKind.image:
@@ -490,7 +518,9 @@ class BusyMarkWritersideProperties extends StatelessWidget {
                   ),
             ),
           );
-          if (externalImage) rows.add(Text(l.wsExternalImageSize));
+          if (externalImage) {
+            notices.add(_PropertyNotice(l.wsExternalImageSize));
+          }
           rows.add(dimension('width', l.wsWidth));
           rows.add(dimension('height', l.wsHeight));
           rows.add(enumRow('style', l.wsImageDisplay));
@@ -534,38 +564,34 @@ class BusyMarkWritersideProperties extends StatelessWidget {
               : entry('title', l.wsDefaultTitle),
         );
       } else if (!document.isXmlTopic) {
-        rows.add(Text(l.wsMissingTopicHeading));
+        notices.add(_PropertyNotice(l.wsMissingTopicHeading));
       }
       final identity = hasFileIdentity && document.filePath.isNotEmpty
           ? p.basenameWithoutExtension(document.filePath)
           : null;
       rows.add(
-        Padding(
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(l.wsTopicIdentity),
-              SelectableText(
-                identity ?? l.wsPropertiesUnresolved,
-                key: const ValueKey('writerside-topic-id'),
-              ),
-              if (onRenameTopic != null && identity != null)
-                TextButton(
+        BusyMarkActionRow(
+          title: l.wsTopicIdentity,
+          subtitleWidget: SelectableText(
+            identity ?? l.wsPropertiesUnresolved,
+            key: const ValueKey('writerside-topic-id'),
+          ),
+          trailing: onRenameTopic != null && identity != null
+              ? BusyMarkHeaderIconButton(
+                  icon: BusyMarkGlyphs.edit,
+                  tooltip: l.renameTopicFile,
                   onPressed: immutable
                       ? null
                       : () {
                           if (session?.transition() ?? true) onRenameTopic!();
                         },
-                  child: Text(l.renameTopicFile),
-                ),
-            ],
-          ),
+                )
+              : null,
         ),
       );
       if (document.isXmlTopic && identity != null && attrs['id'] != identity) {
-        rows.add(
-          Text(
+        notices.add(
+          _PropertyNotice(
             '${l.wsTopicIdentityMismatch} id="${attrs["id"] ?? ""}" → $identity',
           ),
         );
@@ -579,17 +605,17 @@ class BusyMarkWritersideProperties extends StatelessWidget {
                   )
                   .length >
               1) {
-        rows.add(Text(l.wsMultipleTopicHeadings));
+        notices.add(_PropertyNotice(l.wsMultipleTopicHeadings));
       }
       if (onEditTitles != null) {
-        rows.add(
-          TextButton(
-            onPressed: immutable
+        actions.add(
+          BusyMarkActionRow(
+            title: l.wsTitleOverridesAction,
+            onTap: immutable
                 ? null
                 : () {
                     if (session?.transition() ?? true) onEditTitles!();
                   },
-            child: Text(l.tocEditTitleAction),
           ),
         );
       }
@@ -720,7 +746,7 @@ class BusyMarkWritersideProperties extends StatelessWidget {
       if (tag == 'img') {
         rows.add(entry('src', l.source));
         rows.add(entry('alt', l.altText));
-        if (externalImage) rows.add(Text(l.wsExternalImageSize));
+        if (externalImage) notices.add(_PropertyNotice(l.wsExternalImageSize));
         rows.add(dimension('width', l.wsWidth));
         rows.add(dimension('height', l.wsHeight));
         rows.add(enumRow('style', l.wsImageDisplay));
@@ -756,10 +782,14 @@ class BusyMarkWritersideProperties extends StatelessWidget {
       }
       if (tag == 'include') {
         if (onChooseInclude != null) {
-          rows.add(
-            TextButton(
-              onPressed: readOnly ? null : onChooseInclude,
-              child: Text(l.wsIncludeContent),
+          actions.add(
+            BusyMarkActionRow(
+              title: l.wsIncludeContent,
+              onTap: immutable
+                  ? null
+                  : () {
+                      if (session?.transition() ?? true) onChooseInclude!();
+                    },
             ),
           );
         }
@@ -820,15 +850,10 @@ class BusyMarkWritersideProperties extends StatelessWidget {
               block.children.any((b) => b.kind == BusyBlockKind.codeBlock) &&
               !block.children.any((b) => b.attributes['element'] == 'tab'))) {
         rows.add(
-          Align(
-            alignment: AlignmentDirectional.centerStart,
-            child: BusyMarkHeaderIconButton(
-              icon: BusyMarkGlyphs.add,
-              tooltip: l.wsAddItem,
-              onPressed: immutable
-                  ? null
-                  : () => onManageItem(null, null, false),
-            ),
+          BusyMarkActionRow(
+            title: l.wsAddItem,
+            leading: const Icon(BusyMarkGlyphs.add),
+            onTap: immutable ? null : () => onManageItem(null, null, false),
           ),
         );
         final itemTag = switch (tag) {
@@ -840,52 +865,53 @@ class BusyMarkWritersideProperties extends StatelessWidget {
           (b) => b.attributes['element'] == itemTag,
         )) {
           rows.add(
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    item.plainText.isEmpty
-                        ? writersideElementLabel(context, item)
-                        : item.plainText,
-                    overflow: TextOverflow.ellipsis,
+            BusyMarkActionRow(
+              title: item.plainText.isEmpty
+                  ? writersideElementLabel(context, item)
+                  : item.plainText,
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  BusyMarkHeaderIconButton(
+                    icon: BusyMarkGlyphs.upArrow,
+                    tooltip: l.moveSectionUp,
+                    onPressed: immutable
+                        ? null
+                        : () => onManageItem(item.id, -1, false),
                   ),
-                ),
-                BusyMarkHeaderIconButton(
-                  icon: BusyMarkGlyphs.upArrow,
-                  tooltip: l.moveSectionUp,
-                  onPressed: immutable
-                      ? null
-                      : () => onManageItem(item.id, -1, false),
-                ),
-                BusyMarkHeaderIconButton(
-                  icon: BusyMarkGlyphs.downArrow,
-                  tooltip: l.moveSectionDown,
-                  onPressed: immutable
-                      ? null
-                      : () => onManageItem(item.id, 1, false),
-                ),
-                BusyMarkHeaderIconButton(
-                  icon: BusyMarkGlyphs.delete,
-                  tooltip: l.removeAction,
-                  onPressed:
-                      !immutable &&
-                          block.children
-                                  .where(
-                                    (b) => b.attributes['element'] == itemTag,
-                                  )
-                                  .length >
-                              1
-                      ? () => onManageItem(item.id, null, true)
-                      : null,
-                ),
-              ],
+                  BusyMarkHeaderIconButton(
+                    icon: BusyMarkGlyphs.downArrow,
+                    tooltip: l.moveSectionDown,
+                    onPressed: immutable
+                        ? null
+                        : () => onManageItem(item.id, 1, false),
+                  ),
+                  BusyMarkHeaderIconButton(
+                    icon: BusyMarkGlyphs.delete,
+                    tooltip: l.removeAction,
+                    onPressed:
+                        !immutable &&
+                            block.children
+                                    .where(
+                                      (b) => b.attributes['element'] == itemTag,
+                                    )
+                                    .length >
+                                1
+                        ? () => onManageItem(item.id, null, true)
+                        : null,
+                  ),
+                ],
+              ),
             ),
           );
         }
       }
     }
-    final primaryAttributes = offered.toSet();
     final advanced = <Widget>[];
+    final documentSettings = <Widget>[];
+    final advancedNotices = <Widget>[];
+    final advancedAttributes = <String>{};
+    final documentAdvancedAttributes = <String>{};
     final secondary = <Widget>[];
     if (topicSelected && inlineTarget == null) {
       final root = document.blocks
@@ -902,7 +928,7 @@ class BusyMarkWritersideProperties extends StatelessWidget {
           title: l.wsTopicNavigation,
           session: session,
           children: [
-            if (!navigationEditable) Text(l.wsPropertiesProtected),
+            if (!navigationEditable) _PropertyNotice(l.wsPropertiesProtected),
             _TopicNavigation(
               key: ValueKey('navigation-${document.filePath}'),
               session: session,
@@ -922,8 +948,8 @@ class BusyMarkWritersideProperties extends StatelessWidget {
           ],
         ),
       );
-      advanced.add(Text(l.wsDocumentOptions));
-      advanced.add(
+      documentAdvancedAttributes.add('switcher-label');
+      documentSettings.add(
         entry(
           'switcher-label',
           l.wsSwitcherLabel,
@@ -935,8 +961,7 @@ class BusyMarkWritersideProperties extends StatelessWidget {
         ),
       );
       if (nativeHeading) {
-        advanced.add(Text(l.wsHeadingOptions));
-        advanced.add(Text(l.wsHeadingBuilderLimitation));
+        advancedAttributes.add('id');
         advanced.add(
           entry(
             'id',
@@ -964,6 +989,7 @@ class BusyMarkWritersideProperties extends StatelessWidget {
         !videoDraft &&
         (inlineTarget == null || inlineTag != null)) {
       if (nativeHeading && (!topicSelected || attrs.containsKey('title'))) {
+        advancedAttributes.add('title');
         advanced.add(entry('title', l.wsTitleOverride));
       }
       final properties =
@@ -982,7 +1008,14 @@ class BusyMarkWritersideProperties extends StatelessWidget {
             ..sort();
       for (final name in properties) {
         final allowed = WritersideSchema.valuesFor(tag, name);
-        advanced.add(
+        final targetRows = topicSelected && document.isXmlTopic
+            ? documentSettings
+            : advanced;
+        (topicSelected && document.isXmlTopic
+                ? documentAdvancedAttributes
+                : advancedAttributes)
+            .add(name);
+        targetRows.add(
           allowed.isEmpty
               ? entry(name, fieldLabel(name))
               : enumRow(
@@ -992,7 +1025,15 @@ class BusyMarkWritersideProperties extends StatelessWidget {
                 ),
         );
       }
-      final unsupported = WritersideEditingAdapter.sourceAttributes(block).keys
+      final sourceAttributes = inlineTarget == null
+          ? WritersideEditingAdapter.sourceAttributes(block)
+          : {
+              for (final entry in inlineTarget!.attributes.entries)
+                if (!entry.key.startsWith('xml-') &&
+                    !entry.key.startsWith('busymark-'))
+                  entry.key: entry.value,
+            };
+      final unsupported = sourceAttributes.keys
           .where(
             (a) =>
                 !a.startsWith('xmlns') &&
@@ -1006,11 +1047,32 @@ class BusyMarkWritersideProperties extends StatelessWidget {
           )
           .toList();
       if (unsupported.isNotEmpty) {
-        advanced.add(
-          Text('${l.wsUnsupportedProperties} ${unsupported.join(', ')}'),
+        advancedNotices.add(
+          _PropertyNotice(
+            '${l.wsUnsupportedProperties} ${unsupported.join(', ')}',
+          ),
         );
       }
     }
+    final authored =
+        inlineTarget?.attributes ??
+        (block == null
+            ? const <String, String>{}
+            : WritersideEditingAdapter.sourceAttributes(block));
+    final authoredAdvanced = advancedAttributes.any(
+      (name) =>
+          authored.containsKey(name) &&
+          !(nativeHeading && name == 'id' && attrs['generatedId'] == 'true'),
+    );
+    final authoredDocument =
+        topicSelected &&
+        documentAdvancedAttributes.any(
+          (name) => document.isXmlTopic
+              ? authored.containsKey(name)
+              : document.frontMatter.containsKey(name),
+        );
+    final hasAdvancedSettings =
+        authoredAdvanced || authoredDocument || advancedNotices.isNotEmpty;
     return DecoratedBox(
       decoration: BoxDecoration(color: BusyMarkSurfaceColors.of(context).panel),
       child: FocusTraversalGroup(
@@ -1080,6 +1142,7 @@ class BusyMarkWritersideProperties extends StatelessWidget {
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(8),
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Tooltip(
                       message: block == null
@@ -1149,7 +1212,7 @@ class BusyMarkWritersideProperties extends StatelessWidget {
                         !hasEditableTitle)
                       Padding(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
+                          horizontal: 16,
                           vertical: 8,
                         ),
                         child: Align(
@@ -1184,44 +1247,62 @@ class BusyMarkWritersideProperties extends StatelessWidget {
                             block?.preserveRaw == true,
                         child: BusyMarkGroupedList(
                           filled: true,
-                          children: rows,
+                          children: propertyUnits(rows).toList(),
                         ),
                       ),
+                    ...notices,
+                    if (actions.isNotEmpty)
+                      BusyMarkGroupedList(filled: true, children: actions),
                     ...secondary,
-                    if (advanced.isNotEmpty)
+                    if (advanced.isNotEmpty ||
+                        documentSettings.isNotEmpty ||
+                        advancedNotices.isNotEmpty)
                       _PropertySection(
                         key: const ValueKey('writerside-advanced'),
                         storageIdentity:
                             'writerside-advanced-${documentIdentity ?? document.filePath}',
                         session: session,
                         title: l.advanced,
-                        subtitle:
-                            WritersideEditingAdapter.sourceAttributes(
-                                  block ??
-                                      const BusyBlock(
-                                        id: '',
-                                        kind: BusyBlockKind.paragraph,
-                                      ),
-                                ).keys.any(
-                                  (a) =>
-                                      !primaryAttributes.contains(a) ||
-                                      nativeHeading && a == 'title',
-                                ) ||
-                                document.frontMatter.containsKey(
-                                  'switcher-label',
-                                )
+                        subtitle: hasAdvancedSettings
                             ? l.wsSettingsPresent
                             : null,
                         children: [
-                          BusyMarkGroupedList(filled: true, children: advanced),
+                          if (documentSettings.isNotEmpty)
+                            BusyMarkGroupedList(
+                              title: topicSelected ? l.wsDocumentOptions : null,
+                              padding: const EdgeInsetsDirectional.symmetric(
+                                horizontal: 16,
+                              ),
+                              filled: true,
+                              children: propertyUnits(
+                                documentSettings,
+                              ).toList(),
+                            ),
+                          if (advanced.isNotEmpty)
+                            BusyMarkGroupedList(
+                              title: topicSelected && nativeHeading
+                                  ? l.wsHeadingOptions
+                                  : null,
+                              padding: const EdgeInsetsDirectional.symmetric(
+                                horizontal: 16,
+                              ),
+                              filled: true,
+                              children: propertyUnits(advanced).toList(),
+                            ),
+                          ...advancedNotices,
                         ],
                       ),
                     if (onSourceLocation != null)
-                      TextButton(
-                        onPressed: () {
-                          if (session?.flush() ?? true) onSourceLocation!();
-                        },
-                        child: Text(l.wsShowInSource),
+                      BusyMarkGroupedList(
+                        filled: true,
+                        children: [
+                          BusyMarkActionRow(
+                            title: l.wsShowInSource,
+                            onTap: () {
+                              if (session?.flush() ?? true) onSourceLocation!();
+                            },
+                          ),
+                        ],
                       ),
                   ],
                 ),
@@ -1283,13 +1364,15 @@ class _PropertySectionState extends State<_PropertySection> {
   }
 
   @override
-  Widget build(BuildContext context) => Material(
-    color: BusyMarkSurfaceColors.of(context).panel,
-    child: Column(
-      children: [
-        ListTile(
-          title: Text(widget.title),
-          subtitle: widget.subtitle == null ? null : Text(widget.subtitle!),
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      const SizedBox(height: BusyMarkSpacing.sm),
+      Semantics(
+        expanded: expanded,
+        child: BusyMarkActionRow(
+          title: widget.title,
+          subtitle: widget.subtitle,
           trailing: Icon(
             expanded ? BusyMarkGlyphs.upArrow : BusyMarkGlyphs.downArrow,
           ),
@@ -1303,9 +1386,127 @@ class _PropertySectionState extends State<_PropertySection> {
             );
           },
         ),
-        if (expanded) ...widget.children,
-      ],
-    ),
+      ),
+      if (expanded) ...widget.children,
+    ],
+  );
+}
+
+/// Notices are outside divided field groups. Field-specific information stays
+/// with its control, so separators describe properties rather than prose.
+class _PropertyNotice extends StatelessWidget {
+  const _PropertyNotice(this.message);
+  final String message;
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsetsDirectional.fromSTEB(16, 8, 16, 8),
+    child: Text(message, style: Theme.of(context).textTheme.bodySmall),
+  );
+}
+
+class _PropertyUnitNotice extends StatelessWidget {
+  const _PropertyUnitNotice({required this.message, required this.child});
+  final String message;
+  final Widget child;
+  @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [child, _PropertyNotice(message)],
+  );
+}
+
+/// Keep native menu behavior while letting a constrained property unit place
+/// its selected value below the label. This affects only inspector composition.
+class _ResponsivePropertyCombo extends StatelessWidget {
+  const _ResponsivePropertyCombo({required this.row});
+  final BusyMarkComboRow<String> row;
+  @override
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, constraints) {
+      final style = Theme.of(context).textTheme.bodyMedium;
+      if (constraints.hasBoundedWidth &&
+          constraints.maxWidth >= 320 &&
+          MediaQuery.textScalerOf(context).scale(14) <= 15.4) {
+        return row;
+      }
+      double width(String text) {
+        final painter = TextPainter(
+          text: TextSpan(text: text, style: style),
+          textDirection: Directionality.of(context),
+          textScaler: MediaQuery.textScalerOf(context),
+        )..layout();
+        final result = painter.width;
+        painter.dispose();
+        return result;
+      }
+
+      if (!constraints.hasBoundedWidth ||
+          width(row.title) + width(row.labelFor(row.selected)) + 64 <=
+              constraints.maxWidth) {
+        return row;
+      }
+      return BusyMarkMenuButton<int>(
+        tooltip: row.tooltip ?? row.title,
+        enabled: row.enabled,
+        items: [
+          for (var i = 0; i < row.values.length; i++)
+            BusyMarkPopupMenuItem<int>(
+              value: i,
+              label: row.labelFor(row.values[i]),
+              checked: row.values[i] == row.selected,
+              trailingCheck: true,
+            ),
+        ],
+        onSelected: (i) {
+          if (row.values[i] != row.selected) row.onSelected(row.values[i]);
+        },
+        triggerBuilder: (context, trigger) => Semantics(
+          container: true,
+          button: true,
+          enabled: row.enabled,
+          expanded: trigger.isOpen,
+          label: row.title,
+          value: row.labelFor(row.selected),
+          hint: row.tooltip,
+          child: YaruListTile.square(
+            title: Text(row.title),
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const SizedBox(height: BusyMarkSpacing.xs),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(row.labelFor(row.selected), style: style),
+                    ),
+                    trigger.anchor(
+                      child: const Icon(
+                        BusyMarkGlyphs.downArrow,
+                        size: BusyMarkSizes.iconSm,
+                      ),
+                    ),
+                  ],
+                ),
+                if (row.subtitle != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: BusyMarkSpacing.xs),
+                    child: Text(
+                      row.subtitle!,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            focusNode: trigger.focusNode,
+            enabled: row.enabled,
+            onTap: trigger.onPressed,
+            hoverColor: busyMarkRowHoverColor(context),
+          ),
+        ),
+      );
+    },
   );
 }
 
@@ -1436,68 +1637,66 @@ class _TopicNavigationState extends State<_TopicNavigation> {
             ),
           },
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              if (protected) Text(l.wsPropertiesProtected),
-              BusyMarkComboRow<String>(
-                title: l.wsNavigationElements,
-                values: const ['default', 'all', 'none', 'custom'],
-                selected: selected,
-                enabled: !widget.readOnly && !protected,
-                labelFor: (v) => switch (v) {
-                  'default' => l.wsUseDefault,
-                  'all' => l.wsNavigationAll,
-                  'none' => l.wsNavigationNone,
-                  _ => l.wsNavigationCustom,
-                },
-                onSelected: (v) {
-                  if (!session.flush()) return;
-                  if (v == 'custom') {
-                    // Enter editing without inventing a published depth or element list.
-                    setState(() => custom = true);
-                  } else {
-                    session.edit(
-                      draft,
-                      jsonEncode({
-                        'present': v != 'default',
-                        'for': v == 'none' ? 'none' : '',
-                        'depth': '',
-                      }),
-                    );
-                    if (session.commit(draft)) setState(() => custom = false);
-                  }
-                },
-                width: 155,
-              ),
-              if (draft.error != null)
-                Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Text(
-                    draft.detail ?? l.wsPropertyInvalid,
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.error,
-                    ),
+              if (protected) _PropertyNotice(l.wsPropertiesProtected),
+              BusyMarkGroupedList(
+                filled: true,
+                children: [
+                  BusyMarkComboRow<String>(
+                    title: l.wsNavigationElements,
+                    tooltip: l.wsNavigationElements,
+                    values: const ['default', 'all', 'none', 'custom'],
+                    selected: selected,
+                    enabled: !widget.readOnly && !protected,
+                    labelFor: (v) => switch (v) {
+                      'default' => l.wsUseDefault,
+                      'all' => l.wsNavigationAll,
+                      'none' => l.wsNavigationNone,
+                      _ => l.wsNavigationCustom,
+                    },
+                    onSelected: (v) {
+                      if (!session.flush()) return;
+                      if (v == 'custom') {
+                        // Enter editing without inventing a published depth or element list.
+                        setState(() => custom = true);
+                      } else {
+                        session.edit(
+                          draft,
+                          jsonEncode({
+                            'present': v != 'default',
+                            'for': v == 'none' ? 'none' : '',
+                            'depth': '',
+                          }),
+                        );
+                        if (session.commit(draft)) {
+                          setState(() => custom = false);
+                        }
+                      }
+                    },
+                    width: 155,
                   ),
-                ),
-              if (selected == 'custom') ...[
-                BusyMarkGroupedTextEntry(
-                  label: '${l.wsNavigationElements} (for)',
-                  controller: elements,
-                  readOnly: widget.readOnly || protected,
-                  onChanged: (_) => edit(),
-                  onSubmitted: (_) => session.commit(draft),
-                  errorText: draft.error == null
-                      ? null
-                      : draft.detail ?? l.wsPropertyInvalid,
-                ),
-                BusyMarkGroupedTextEntry(
-                  label: '${l.wsNavigationDepth} (depth)',
-                  controller: depth,
-                  readOnly: widget.readOnly || protected,
-                  onChanged: (_) => edit(),
-                  onSubmitted: (_) => session.commit(draft),
-                ),
-                Text('chapter, procedure, tab, def'),
-              ],
+                  if (selected == 'custom') ...[
+                    BusyMarkGroupedTextEntry(
+                      label: '${l.wsNavigationElements} (for)',
+                      controller: elements,
+                      readOnly: widget.readOnly || protected,
+                      onChanged: (_) => edit(),
+                      onSubmitted: (_) => session.commit(draft),
+                      errorText: draft.error == null
+                          ? null
+                          : draft.detail ?? l.wsPropertyInvalid,
+                    ),
+                    BusyMarkGroupedTextEntry(
+                      label: '${l.wsNavigationDepth} (depth)',
+                      controller: depth,
+                      readOnly: widget.readOnly || protected,
+                      onChanged: (_) => edit(),
+                      onSubmitted: (_) => session.commit(draft),
+                    ),
+                  ],
+                ],
+              ),
             ],
           ),
         ),

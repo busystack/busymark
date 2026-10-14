@@ -1,4 +1,9 @@
 {
+  "wsModuleCapsNotPublished": "Module capitalization is not published.",
+  "wsTitleOverridesAction": "Instance and TOC titles…",
+  "wsHeadingNotPublished": "Not published by this builder.",
+  "@wsTitleOverridesAction": {"description": "Opens the existing instance-specific and TOC title workflow, separate from the default title."},
+  "@wsHeadingNotPublished": {"description": "Compact property-specific publishing limitation; full explanation remains in contextual help."},
   "wsMarkdownInstanceTitleLimitation": "The pinned builder does not publish instance title overrides in Markdown topics. Existing markup is preserved; inspect it in Source.",
   "@wsMarkdownInstanceTitleLimitation": {"description": "Pinned-builder limitation shown in the existing instance/TOC title workflow."},
   "wsTopicIdentity": "Topic ID",

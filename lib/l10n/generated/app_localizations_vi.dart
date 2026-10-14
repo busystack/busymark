@@ -11,6 +11,16 @@ class AppLocalizationsVi extends AppLocalizations {
   AppLocalizationsVi([String locale = 'vi']) : super(locale);
 
   @override
+  String get wsModuleCapsNotPublished =>
+      'Quy tắc viết hoa của mô-đun không được xuất bản.';
+
+  @override
+  String get wsTitleOverridesAction => 'Tiêu đề phiên bản và mục lục…';
+
+  @override
+  String get wsHeadingNotPublished => 'Trình dựng này không xuất bản.';
+
+  @override
   String get wsMarkdownInstanceTitleLimitation =>
       'Builder cố định không xuất bản tiêu đề phiên bản trong chủ đề Markdown. Giữ nguyên đánh dấu hiện có; kiểm tra trong Nguồn.';
 

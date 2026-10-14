@@ -13,6 +13,152 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  for (final body in [
+    '- Parent %product%\n  - Child %product% and %product%\n',
+    '- Parent\n\n  continuation %product% and %product%\n\n  - Child %product%\n',
+    '> - Parent %product%\n>   - Child %product% and %product%\n',
+    '- Parent\n  - [Same](t.topic){id="one"} [Same](t.topic){id="two"}\n',
+    '- Parent\n  - ![Same](one.svg) ![Same](one.svg)\n',
+    '- Parent\n  - <shortcut key="\$Copy">Copy</shortcut> <shortcut key="\$Copy">Copy</shortcut>\n',
+    '- Parent\n\n  <chapter title="XML"><p>%product%<img src="one.svg" alt="Image"/>%product%%product%<br/>%product%</p></chapter>\n',
+  ]) {
+    test('native-list reference owners and projected boundaries: $body', () {
+      BusyDocument parse(String source) => const MarkdownParser()
+          .parse(
+            filePath: 't.md',
+            source: source,
+            mode: MarkdownMode.writersideMarkdown,
+            validateLocalReferences: false,
+          )
+          .busyDocument;
+      Iterable<BusyBlock> walk(List<BusyBlock> blocks) sync* {
+        for (final b in blocks) {
+          yield b;
+          yield* walk(b.children);
+        }
+      }
+
+      void verify(String source) {
+        final c = BusyMarkWysiwygDocumentController(document: parse(source));
+        try {
+          var count = 0;
+          for (final block in walk(c.document.blocks)) {
+            for (final range in busyInlineReferenceRanges(block.inlines)) {
+              if (!{
+                BusyInlineKind.link,
+                BusyInlineKind.image,
+                BusyInlineKind.writersideVariable,
+                BusyInlineKind.writersideShortcut,
+              }.contains(range.kind)) {
+                continue;
+              }
+              count++;
+              final editor = WritersideInspectorTarget.fromSelection(
+                bufferId: 'b',
+                revision: 1,
+                source: source,
+                document: c.document,
+                blockId: block.id,
+                inline: range,
+              );
+              final offset = editor.sourceLocation;
+              expect(
+                offset,
+                isNotNull,
+                reason: '${block.plainText}: ${range.kind} ${range.start}',
+              );
+              final fromSource = WritersideInspectorTarget.fromSource(
+                bufferId: 'b',
+                revision: 1,
+                source: source,
+                document: c.document,
+                selection: TextSelection.collapsed(offset: offset! + 1),
+              );
+              expect(fromSource.block?.id, block.id);
+              expect(fromSource.inline?.kind, range.kind);
+              expect(fromSource.inline?.start, range.start);
+              expect(fromSource.inline?.referenceIndex, range.referenceIndex);
+              expect(fromSource.sourceLocation, offset);
+              if (range.attributes['id'] case final attribute?) {
+                final inside = source.indexOf('id="$attribute"', offset);
+                final target = WritersideInspectorTarget.fromSource(
+                  bufferId: 'b',
+                  revision: 1,
+                  source: source,
+                  document: c.document,
+                  selection: TextSelection.collapsed(offset: inside + 4),
+                );
+                expect(target.inline?.start, range.start);
+              }
+            }
+          }
+          expect(count, greaterThanOrEqualTo(2));
+        } finally {
+          c.dispose();
+        }
+      }
+
+      final original = '# Topic\n\n$body';
+      verify(original);
+      verify(original.replaceAll('  ', '    '));
+      verify(
+        original.replaceAll(
+          'alt="Image"',
+          'alt="Much longer alternative text"',
+        ),
+      );
+      if (original.contains('%product%')) {
+        verify(
+          original.replaceFirst('%product%', '%a_much_longer_product_name%'),
+        );
+      }
+      final c = BusyMarkWysiwygDocumentController(document: parse(original));
+      addTearDown(c.dispose);
+      final block = walk(
+        c.document.blocks,
+      ).lastWhere((b) => busyInlineReferenceRanges(b.inlines).isNotEmpty);
+      final reference = busyInlineReferenceRanges(block.inlines).last;
+      final (attribute, value) = switch (reference.kind) {
+        BusyInlineKind.writersideVariable => ('reference', 'long_product_name'),
+        BusyInlineKind.writersideShortcut => ('key', r'$VeryLongAction'),
+        BusyInlineKind.link => ('href', 'other.topic'),
+        _ => ('src', 'other.svg'),
+      };
+      final originalTarget = WritersideInspectorTarget.fromSelection(
+        bufferId: 'b',
+        revision: 1,
+        source: original,
+        document: c.document,
+        blockId: block.id,
+        inline: reference,
+      );
+      final authoredBegin = originalTarget.sourceLocation!;
+      expect(
+        c.updateInlineReference(block.id, reference, attribute, value),
+        isTrue,
+      );
+      final changed = c.markdown;
+      expect(changed, contains(value));
+      if (reference.kind == BusyInlineKind.writersideVariable) {
+        expect(
+          changed,
+          original.replaceRange(
+            authoredBegin,
+            authoredBegin + '%product%'.length,
+            '%$value%',
+          ),
+        );
+      }
+      verify(changed);
+      // Restored document snapshots must rebind positions to their own source.
+      c.replaceDocument(parse(original));
+      expect(c.markdown, original);
+      verify(c.markdown);
+      c.replaceDocument(parse(changed));
+      expect(c.markdown, changed);
+      verify(c.markdown);
+    });
+  }
   for (final xml in [true, false]) {
     test(
       '${xml ? "XML" : "Markdown"} off-caret refresh preserves property ownership and rejects replacement',

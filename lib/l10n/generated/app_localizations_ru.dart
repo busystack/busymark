@@ -11,6 +11,16 @@ class AppLocalizationsRu extends AppLocalizations {
   AppLocalizationsRu([String locale = 'ru']) : super(locale);
 
   @override
+  String get wsModuleCapsNotPublished =>
+      'Правило регистра модуля не публикуется.';
+
+  @override
+  String get wsTitleOverridesAction => 'Заголовки экземпляра и оглавления…';
+
+  @override
+  String get wsHeadingNotPublished => 'Не публикуется этим сборщиком.';
+
+  @override
   String get wsMarkdownInstanceTitleLimitation =>
       'Закреплённый builder не публикует заголовки экземпляров в темах Markdown. Разметка сохраняется; проверьте исходник.';
 

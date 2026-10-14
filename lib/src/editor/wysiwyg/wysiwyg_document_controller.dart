@@ -19,6 +19,9 @@ import 'wysiwyg_inline_controller.dart';
 import 'writerside_editing_adapter.dart';
 import '../../writerside/writerside_schema.dart';
 import '../../writerside/writerside_project.dart';
+import '../../writerside/writerside_document_parser.dart';
+import '../../writerside/writerside_document_serializer.dart';
+import '../../writerside/writerside_document.dart';
 
 BusyBlock busyMarkWysiwygImmutableBlockSnapshot(BusyBlock block) {
   BusyInline snapshotInline(BusyInline inline) {
@@ -134,14 +137,16 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
   }
 
   BusyDocument _reparseNativeListOwnership(String source) {
-    final parsed = const MarkdownParser()
-        .parse(
-          filePath: _document.filePath,
-          source: source,
-          mode: _document.mode,
-          validateLocalReferences: false,
-        )
-        .busyDocument;
+    final parsed = busyMarkWysiwygBindMarkdownReferences(
+      const MarkdownParser()
+          .parse(
+            filePath: _document.filePath,
+            source: source,
+            mode: _document.mode,
+            validateLocalReferences: false,
+          )
+          .busyDocument,
+    );
     bool member(BusyBlock b) =>
         !b.isSourceOnly &&
         b.kind != BusyBlockKind.frontMatter &&
@@ -1347,21 +1352,25 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
         range.end,
         block.plainText.length,
       );
-      _replaceBlock(
-        blockId,
-        (b) => b.copyWith(
-          inlines: [
-            ...before,
-            BusyInline(
-              kind: range.kind,
-              text: value,
-              attributes: {...range.attributes, 'reference': value},
-            ),
-            ...after,
-          ],
-          dirty: true,
+      final inlines = [
+        ...before,
+        BusyInline(
+          kind: range.kind,
+          text: value,
+          attributes: {...range.attributes, 'reference': value},
         ),
-      );
+        ...after,
+      ];
+      if (block.attributes.containsKey('busymark-native-source-map')) {
+        return _publishMappedNativeReference(
+          block,
+          range,
+          attribute,
+          value,
+          inlines,
+        );
+      }
+      _replaceBlock(blockId, (b) => b.copyWith(inlines: inlines, dirty: true));
       return true;
     }
     final tag = switch (range.kind) {
@@ -1390,12 +1399,10 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
             !range.attributes.containsKey(attribute)) {
       return true;
     }
-    final patchedSource = _patchNativeReferenceProperty(
-      block,
-      range,
-      attribute,
-      value,
-    );
+    final patchedSource =
+        block.attributes.containsKey('busymark-native-source-map')
+        ? null
+        : _patchNativeReferenceProperty(block, range, attribute, value);
     var offset = 0;
     var replaced = false;
     var referenceIndex = 0;
@@ -1445,6 +1452,15 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
 
     final inlines = block.inlines.map(replace).toList();
     if (!replaced) return false;
+    if (block.attributes.containsKey('busymark-native-source-map')) {
+      return _publishMappedNativeReference(
+        block,
+        range,
+        attribute,
+        value,
+        inlines,
+      );
+    }
     _replaceBlock(
       blockId,
       (b) => b.copyWith(
@@ -1459,6 +1475,113 @@ class BusyMarkWysiwygDocumentController extends ChangeNotifier {
         },
       ),
     );
+    return true;
+  }
+
+  /// A property edit in transformed list content must publish its mapped span,
+  /// not serialize the containing loose list or XML island. Reuse the parser
+  /// and our existing transaction rebind to retain the actual member identities.
+  bool _publishMappedNativeReference(
+    BusyBlock block,
+    BusyInlineStyleRange range,
+    String attribute,
+    String value,
+    List<BusyInline> inlines,
+  ) {
+    final source = _document.source;
+    if (source == null || source != markdown) return false;
+    final occurrence =
+        WritersideEditingAdapter.authoredInlineRanges(_document, source, block)
+            .where(
+              (e) =>
+                  e.range.kind == range.kind &&
+                  e.range.start == range.start &&
+                  e.range.end == range.end &&
+                  e.range.referenceIndex == range.referenceIndex,
+            )
+            .singleOrNull;
+    if (occurrence == null) return false;
+    var begin = occurrence.begin;
+    var end = occurrence.end;
+    String replacement;
+    if (range.kind == BusyInlineKind.writersideVariable) {
+      replacement = '%$value%';
+    } else if (block.attributes.containsKey('element') ||
+        range.kind == BusyInlineKind.writersideShortcut) {
+      final raw = source.substring(begin, end);
+      final parsed = const WritersideDocumentParser().parseXml(
+        filePath: '',
+        source: raw,
+      );
+      final element = parsed.nodes.singleOrNull;
+      if (!parsed.isWellFormed || element is! WritersideElementNode) {
+        return false;
+      }
+      final attributes = {...element.attributes};
+      if (value.isEmpty && attribute != 'alt') {
+        attributes.remove(attribute);
+      } else {
+        attributes[attribute] = value;
+      }
+      replacement = const WritersideDocumentSerializer().serialize(
+        parsed.copyWith(nodes: [element.copyWith(attributes: attributes)]),
+      );
+    } else {
+      final raw =
+          block.attributes['busymark-native-inline-source'] ?? block.rawSource;
+      if (raw == null) return false;
+      final changed = _patchNativeReferenceProperty(
+        block.copyWith(rawSource: raw),
+        range,
+        attribute,
+        value,
+      );
+      if (changed == null) return false;
+      var first = 0;
+      while (first < raw.length &&
+          first < changed.length &&
+          raw[first] == changed[first]) {
+        first++;
+      }
+      var suffix = 0;
+      while (suffix < raw.length - first &&
+          suffix < changed.length - first &&
+          raw[raw.length - suffix - 1] ==
+              changed[changed.length - suffix - 1]) {
+        suffix++;
+      }
+      final start = markdownProjectedSourceOffset(block, first, inline: true);
+      final stop = markdownProjectedSourceOffset(
+        block,
+        raw.length - suffix,
+        inline: true,
+      );
+      if (start == null || stop == null) return false;
+      begin = start;
+      end = stop;
+      replacement = changed.substring(first, changed.length - suffix);
+    }
+    if (begin < 0 || end < begin || end > source.length) return false;
+    final nextSource = source.replaceRange(begin, end, replacement);
+    final previous = _document;
+    _document = _document.copyWith(
+      blocks: _replaceInBlocks(
+        _document.blocks,
+        block.id,
+        (b) => b.copyWith(inlines: inlines),
+      ),
+    );
+    final rebound = _reparseNativeListOwnership(nextSource);
+    final retained = _flattenBlocks(
+      rebound.blocks,
+    ).where((b) => b.id == block.id).singleOrNull;
+    if (retained == null ||
+        retained.plainText != inlines.map((i) => i.plainText).join()) {
+      _document = previous;
+      return false;
+    }
+    _document = busyMarkWysiwygBindMarkdownReferences(rebound);
+    notifyListeners();
     return true;
   }
 
