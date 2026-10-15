@@ -128,6 +128,35 @@ class _Fixture {
   }
 }
 
+class _HeldInspectionOfflineController extends NotesOfflineController {
+  _HeldInspectionOfflineController(super.repository, super.accountId);
+
+  final inspectionStarted = Completer<void>();
+  final releaseInspection = Completer<void>();
+  Completer<void>? reconciliationRequested;
+
+  @override
+  Future<void> reconcile() {
+    final result = super.reconcile();
+    reconciliationRequested?.complete();
+    reconciliationRequested = null;
+    return result;
+  }
+
+  @override
+  Future<NotesOfflineStatus> inspect(
+    NextcloudNote note, {
+    String? source,
+  }) async {
+    final status = await super.inspect(note, source: source);
+    if (!inspectionStarted.isCompleted) {
+      inspectionStarted.complete();
+      await releaseInspection.future;
+    }
+    return status;
+  }
+}
+
 void main() {
   late _Fixture f;
   setUp(() async {
@@ -1538,6 +1567,7 @@ void main() {
       await f.repository.synchronize(testAccount().id, allowWrites: false);
       final note = f.repository.notes.single;
       var offline = NotesOfflineController(f.repository, testAccount().id);
+      addTearDown(() => offline.dispose());
       await offline.initialize();
       await offline.cancelNote(note.localId);
       await offline.setRequirement('category', 'Work');
@@ -1556,6 +1586,91 @@ void main() {
       await offline.dispose();
     },
   );
+  for (final resumeWithRetry in [true, false]) {
+    test(
+      '${resumeWithRetry ? 'retry' : 'requirement change'} waits for an active offline reconciliation',
+      () async {
+        f.remote[1] = {
+          ...serverNote(1),
+          'category': 'Work/Sub',
+          'content': '![image](.attachments.1/a.png)',
+        };
+        await f.repository.synchronize(testAccount().id, allowWrites: false);
+        final note = f.repository.notes.single;
+        await f.repository.setOfflineRequirement(
+          testAccount().id,
+          'category',
+          'Work',
+        );
+        await f.repository.setOfflineRequirement(
+          testAccount().id,
+          'pause',
+          note.localId,
+          paused: true,
+        );
+        final offline = _HeldInspectionOfflineController(
+          f.repository,
+          testAccount().id,
+        );
+        addTearDown(() async {
+          if (!offline.releaseInspection.isCompleted) {
+            offline.releaseInspection.complete();
+          }
+          await offline.dispose();
+        });
+        await offline.initialize();
+        await offline.inspectionStarted.future;
+        final requested = Completer<void>();
+        offline.reconciliationRequested = requested;
+        var completed = false;
+        final resumed =
+            (resumeWithRetry
+                    ? offline.retry(note.localId)
+                    : offline.setRequirement(
+                        'pause',
+                        note.localId,
+                        required: false,
+                      ))
+                .then((_) => completed = true);
+        await requested.future;
+        // Flush completion callbacks while the first inspection is held.
+        await Future<void>.delayed(Duration.zero);
+        expect(completed, false);
+        expect(f.downloads, 0);
+        offline.releaseInspection.complete();
+        await resumed;
+        expect((await offline.inspect(note)).available, true);
+        expect(f.downloads, 1);
+      },
+    );
+  }
+  test('offline disposal waits for an active inspection', () async {
+    await f.seed();
+    await f.repository.setOfflineRequirement(
+      testAccount().id,
+      'category',
+      'Work',
+    );
+    final offline = _HeldInspectionOfflineController(
+      f.repository,
+      testAccount().id,
+    );
+    addTearDown(() async {
+      if (!offline.releaseInspection.isCompleted) {
+        offline.releaseInspection.complete();
+      }
+      await offline.dispose();
+    });
+    await offline.initialize();
+    await offline.inspectionStarted.future;
+    var disposed = false;
+    final disposal = offline.dispose().then((_) => disposed = true);
+    await Future<void>.delayed(Duration.zero);
+    expect(disposed, false);
+    offline.releaseInspection.complete();
+    await disposal;
+    await f.restart();
+  });
   test(
     'captured export rejects refreshed media but preserves captured text during later edits',
     () async {

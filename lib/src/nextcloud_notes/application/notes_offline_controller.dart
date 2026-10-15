@@ -38,6 +38,7 @@ class NotesOfflineController {
   final _attempted = <String>{};
   final failures = <String, String>{};
   Timer? _debounce;
+  Future<void>? _reconciliation, _disposing;
   bool _disposed = false, _running = false, _again = false;
   int _generation = 0;
   Future<void> initialize() async {
@@ -157,48 +158,64 @@ class NotesOfflineController {
     );
   }
 
-  Future<void> reconcile() async {
-    if (_disposed) return;
-    if (_running) {
+  Future<void> reconcile() {
+    if (_disposed) return Future.value();
+    _debounce?.cancel();
+    if (_reconciliation case final pending?) {
       _again = true;
-      return;
+      return pending;
     }
+    return _reconciliation = _reconcile().whenComplete(
+      () => _reconciliation = null,
+    );
+  }
+
+  Future<void> _reconcile() async {
     _running = true;
-    final generation = _generation;
     try {
-      for (final note in repository.notes.where(
-        (n) => n.accountId == accountId && retained(n) && !isNotesRecovery(n),
-      )) {
-        if (_disposed || repository.accountById(accountId) == null) return;
-        var status = await inspect(note);
-        statuses[note.localId] = status;
-        _emit();
-        if (_active(note)) {
-          for (final reference in status.missing) {
-            if (_disposed || generation != _generation || !_active(note)) break;
-            final key = '${note.localId}:${note.revision}:$reference';
-            if (!_attempted.add(key)) continue;
-            try {
-              final path = await repository.resolveMedia(
-                accountId,
-                note.localId,
-                reference,
-              );
-              if (path == null) failures[key] = 'Attachment unavailable';
-            } on Object catch (error) {
-              failures[key] = error.toString();
-            }
-            if (repository.accountById(accountId) == null) return;
-            final current = repository.noteById(note.localId);
-            if (current != null) {
-              status = await inspect(current);
-              statuses[note.localId] = status;
-              _emit();
+      // Coalesced callers await both the active pass and their requested pass.
+      do {
+        _again = false;
+        final generation = _generation;
+        for (final note in repository.notes.where(
+          (n) => n.accountId == accountId && retained(n) && !isNotesRecovery(n),
+        )) {
+          if (_disposed || repository.accountById(accountId) == null) return;
+          var status = await inspect(note);
+          if (_disposed) return;
+          statuses[note.localId] = status;
+          _emit();
+          if (_active(note)) {
+            for (final reference in status.missing) {
+              if (_disposed || generation != _generation || !_active(note)) {
+                break;
+              }
+              final key = '${note.localId}:${note.revision}:$reference';
+              if (!_attempted.add(key)) continue;
+              try {
+                final path = await repository.resolveMedia(
+                  accountId,
+                  note.localId,
+                  reference,
+                );
+                if (path == null) failures[key] = 'Attachment unavailable';
+              } on Object catch (error) {
+                failures[key] = error.toString();
+              }
+              if (_disposed || repository.accountById(accountId) == null) {
+                return;
+              }
+              final current = repository.noteById(note.localId);
+              if (current != null) {
+                status = await inspect(current);
+                statuses[note.localId] = status;
+                _emit();
+              }
             }
           }
         }
-      }
-      statuses.removeWhere((id, _) => repository.noteById(id) == null);
+        statuses.removeWhere((id, _) => repository.noteById(id) == null);
+      } while (_again && !_disposed);
     } finally {
       _running = false;
       for (final entry in statuses.entries.toList()) {
@@ -214,10 +231,6 @@ class NotesOfflineController {
         );
       }
       _emit();
-      if (_again && !_disposed) {
-        _again = false;
-        _schedule();
-      }
     }
   }
 
@@ -225,7 +238,9 @@ class NotesOfflineController {
     if (!_disposed) _changes.add(null);
   }
 
-  Future<void> dispose() async {
+  Future<void> dispose() => _disposing ??= _dispose();
+
+  Future<void> _dispose() async {
     _disposed = true;
     _generation++;
     _debounce?.cancel();
@@ -235,6 +250,10 @@ class NotesOfflineController {
       repository.cancelMediaDownloads(note.localId);
     }
     await _subscription.cancel();
-    await _changes.close();
+    try {
+      await _reconciliation;
+    } finally {
+      await _changes.close();
+    }
   }
 }
