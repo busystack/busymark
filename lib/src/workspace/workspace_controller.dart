@@ -286,6 +286,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
 
   late Future<RecoverySnapshot> _recoveryStart;
   Future<void> _persistenceWrites = Future.value();
+  var _persistenceTraceSequence = 0;
 
   int get editRevision => state.activeBuffer?.revision ?? _editRevision;
 
@@ -349,7 +350,10 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     _fileMonitorSubscription = _fileMonitor.events.listen(
       _queueFileMonitorEvent,
     );
-    _recoveryStart = _recoveryStore.beginRun();
+    _recoveryStart = PerformanceTrace.async(
+      'recovery-begin-run',
+      _recoveryStore.beginRun,
+    );
     ref.listen<AppSettings>(appSettingsControllerProvider, (previous, next) {
       if (!next.autoSave) {
         _cancelAllAutoSaves();
@@ -1234,12 +1238,21 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     await flushPersistence();
   }
 
-  Future<bool> restorePreviousSession() async {
+  Future<bool> restorePreviousSession() =>
+      PerformanceTrace.async('restore-session', _restorePreviousSession);
+
+  Future<bool> _restorePreviousSession() async {
     if (state.workspace != null) {
       return state.documentBuffers.isNotEmpty;
     }
-    final recovery = await _recoveryStart;
-    final session = await _sessionStore.load();
+    final recovery = await PerformanceTrace.async(
+      'restore-recovery-ready',
+      () => _recoveryStart,
+    );
+    final session = await PerformanceTrace.async(
+      'restore-session-load',
+      _sessionStore.load,
+    );
     late final List<LocalHistoryPathReconciliation> restoredPathReconciliations;
     late List<LocalHistoryPendingSaveAs> restoredSaveAsOperations;
     late List<DocumentSessionEntry> sessionEntries;
@@ -1250,7 +1263,12 @@ class WorkspaceController extends Notifier<WorkspaceState> {
       // an authoritative snapshot before consuming any durable journal: an
       // early failure must leave the persisted workspace and its obligations
       // untouched for the next startup.
-      if (!await _localHistory.refresh()) return false;
+      if (!await PerformanceTrace.async(
+        'restore-history-authority',
+        _localHistory.refresh,
+      )) {
+        return false;
+      }
       if (session?.pendingLocalHistoryReconciliations.any(
             (operation) => _localHistoryOperationOwnerIsLiveOtherProcess(
               operation.operationId,
@@ -1381,8 +1399,9 @@ class WorkspaceController extends Notifier<WorkspaceState> {
               return (hasSessionOwner(right) ? 1 : 0) -
                   (hasSessionOwner(left) ? 1 : 0);
             });
-      final recoveryAdoptions = await _recoveryStore.adoptEntries(
-        adoptableRecoveryEntries,
+      final recoveryAdoptions = await PerformanceTrace.async(
+        'restore-adopt-recovery',
+        () => _recoveryStore.adoptEntries(adoptableRecoveryEntries),
       );
       var recoveryAdoptionsCommitted = false;
       sessionEntries = _adoptSessionRecoveryOwnership(
@@ -1475,7 +1494,10 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         if (workspacePath == null) {
           workspace = _service.createUntitledMarkdown();
         } else if (await _service.pathExists(workspacePath)) {
-          workspace = await _service.openPath(workspacePath);
+          workspace = await PerformanceTrace.async(
+            'restore-open-workspace',
+            () => _service.openPath(workspacePath),
+          );
         } else {
           final activeEntry = sessionEntries
               .where((entry) => entry.id == session?.activeBufferId)
@@ -1542,7 +1564,10 @@ class WorkspaceController extends Notifier<WorkspaceState> {
               : ownedById.isEmpty && ownedByPath.length == 1
               ? ownedByPath.single
               : null;
-          final buffer = await _restoreSessionBuffer(entry, recovered);
+          final buffer = await PerformanceTrace.async(
+            'restore-buffer',
+            () => _restoreSessionBuffer(entry, recovered),
+          );
           if (buffer != null) {
             buffers.add(buffer);
             if (recovered != null) {
@@ -1592,14 +1617,18 @@ class WorkspaceController extends Notifier<WorkspaceState> {
           activeFileSnapshot: active.diskSnapshot,
           openFilePaths: openPaths,
         );
-        final reparsed = await _reparseWithDocumentBuffers(
-          nextWorkspace,
-          active,
-          buffers: buffers,
+        final reparsed = await PerformanceTrace.async(
+          'restore-prepare-active',
+          () => _reparseWithDocumentBuffers(
+            nextWorkspace,
+            active,
+            buffers: buffers,
+          ),
         );
         if (!ref.mounted || !_preparedInputsCurrent(reparsed, buffers)) {
           return false;
         }
+        PerformanceTrace.event('restore-editor-publish');
         state = WorkspaceState(
           workspace: reparsed,
           preview: _safePreview(reparsed, active),
@@ -1629,9 +1658,16 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         }
         _recordActivePreviewRevision();
         _editRevision = active.revision;
-        await _startMonitoring(reparsed);
-        await _settingsController.setDocumentViewMode(active.editorState.mode);
-        await flushPersistence();
+        await PerformanceTrace.async(
+          'restore-monitor',
+          () => _startMonitoring(reparsed),
+        );
+        await PerformanceTrace.async(
+          'restore-view-mode',
+          () =>
+              _settingsController.setDocumentViewMode(active.editorState.mode),
+        );
+        await PerformanceTrace.async('restore-flush', flushPersistence);
         recoveryAdoptionsCommitted = true;
         return true;
       } on Object catch (error, stackTrace) {
@@ -2189,36 +2225,42 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     // them authoritative. A crash can replay an old journal over new paths;
     // it cannot reconstruct new paths after the only journal is retired.
     if (persistRecovery) {
-      await _recoveryStore.writeEntries(recoveryEntries);
+      await PerformanceTrace.async(
+        'restore-journal-recovery',
+        () => _recoveryStore.writeEntries(recoveryEntries),
+      );
     }
-    await _sessionStore.save(
-      WorkspaceSessionSnapshot(
-        workspacePath: workspacePath,
-        nextcloudAccountId: original.nextcloudAccountId,
-        tabs: tabs,
-        activeBufferId: original.activeBufferId,
-        workspaceLocalHistoryReconciliationIds:
-            original.workspaceLocalHistoryReconciliationIds,
-        pendingLocalHistoryAssociations: [
-          for (final promotion in _localHistory.pendingIdentityPromotions)
-            PendingLocalHistoryAssociation(
-              bufferId: promotion.bufferId,
-              documentId: promotion.documentId,
-              destinationPath: promotion.destinationPath,
-              displayName: promotion.displayName,
-              acceptedClearEpoch: promotion.acceptedClearEpoch,
-              operationOwnerId: promotion.operationOwnerId,
-            ),
-        ],
-        pendingLocalHistoryReconciliations:
-            _localHistory.pendingPathReconciliations,
-        retiredLocalHistoryReconciliationIds:
-            _localHistory.retiredPathReconciliationIds,
-        retiredLocalHistoryWorkOwnerIds:
-            _localHistory.retiredDurableWorkOwnerIds,
-        pendingLocalHistoryClears: _localHistory.pendingClearOperations,
-        pendingLocalHistorySaveAs: _localHistory.pendingSaveAsOperations,
-        retainedLocalHistoryCaptures: _localHistory.retainedDetachedCaptures,
+    await PerformanceTrace.async(
+      'restore-journal-session',
+      () => _sessionStore.save(
+        WorkspaceSessionSnapshot(
+          workspacePath: workspacePath,
+          nextcloudAccountId: original.nextcloudAccountId,
+          tabs: tabs,
+          activeBufferId: original.activeBufferId,
+          workspaceLocalHistoryReconciliationIds:
+              original.workspaceLocalHistoryReconciliationIds,
+          pendingLocalHistoryAssociations: [
+            for (final promotion in _localHistory.pendingIdentityPromotions)
+              PendingLocalHistoryAssociation(
+                bufferId: promotion.bufferId,
+                documentId: promotion.documentId,
+                destinationPath: promotion.destinationPath,
+                displayName: promotion.displayName,
+                acceptedClearEpoch: promotion.acceptedClearEpoch,
+                operationOwnerId: promotion.operationOwnerId,
+              ),
+          ],
+          pendingLocalHistoryReconciliations:
+              _localHistory.pendingPathReconciliations,
+          retiredLocalHistoryReconciliationIds:
+              _localHistory.retiredPathReconciliationIds,
+          retiredLocalHistoryWorkOwnerIds:
+              _localHistory.retiredDurableWorkOwnerIds,
+          pendingLocalHistoryClears: _localHistory.pendingClearOperations,
+          pendingLocalHistorySaveAs: _localHistory.pendingSaveAsOperations,
+          retainedLocalHistoryCaptures: _localHistory.retainedDetachedCaptures,
+        ),
       ),
     );
   }
@@ -2357,16 +2399,23 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     final pendingHistorySaveAs = _localHistory.pendingSaveAsOperations;
     final retainedHistoryCaptures = _localHistory.retainedDetachedCaptures;
     final prior = _persistenceWrites.then<void>((_) {}, onError: (_, _) {});
+    final traceName = PerformanceTrace.enabled
+        ? 'persistence-${++_persistenceTraceSequence}'
+        : '';
+    PerformanceTrace.event(traceName, 'queued');
     final write = prior.then(
-      (_) => _persistSnapshot(
-        snapshot,
-        pendingHistoryAssociations: pendingHistoryAssociations,
-        pendingHistoryReconciliations: pendingHistoryReconciliations,
-        retiredHistoryReconciliationIds: retiredHistoryReconciliationIds,
-        retiredHistoryWorkOwnerIds: retiredHistoryWorkOwnerIds,
-        pendingHistoryClears: pendingHistoryClears,
-        pendingHistorySaveAs: pendingHistorySaveAs,
-        retainedHistoryCaptures: retainedHistoryCaptures,
+      (_) => PerformanceTrace.async(
+        traceName,
+        () => _persistSnapshot(
+          snapshot,
+          pendingHistoryAssociations: pendingHistoryAssociations,
+          pendingHistoryReconciliations: pendingHistoryReconciliations,
+          retiredHistoryReconciliationIds: retiredHistoryReconciliationIds,
+          retiredHistoryWorkOwnerIds: retiredHistoryWorkOwnerIds,
+          pendingHistoryClears: pendingHistoryClears,
+          pendingHistorySaveAs: pendingHistorySaveAs,
+          retainedHistoryCaptures: retainedHistoryCaptures,
+        ),
       ),
     );
     _persistenceWrites = write;

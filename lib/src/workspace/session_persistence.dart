@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import '../core/linux_private_permissions.dart';
+import '../core/performance_trace.dart';
 
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
@@ -673,11 +674,15 @@ Future<T> _withSessionLock<T>(
     final elapsed = Stopwatch()..start();
     while (true) {
       try {
-        await handle.lock(FileLock.exclusive);
+        await PerformanceTrace.async(
+          'session-lock',
+          () => handle.lock(FileLock.exclusive),
+        );
         acquired = true;
         break;
       } on FileSystemException catch (error) {
         if (!_isSessionLockContention(error)) rethrow;
+        PerformanceTrace.event('session-lock-contention');
         final remaining = budget - elapsed.elapsed;
         if (remaining <= Duration.zero) {
           throw FileSystemException(

@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
+import '../core/performance_trace.dart';
 import 'document_buffer.dart';
 import 'session_persistence.dart';
 import 'text_format_metadata.dart';
@@ -266,6 +267,7 @@ class JsonDocumentRecoveryStore implements DocumentRecoveryStore {
   final Directory _fallbackDirectory;
   final _ownedEntryKeys = <String>{};
   Future<void> _queue = Future<void>.value();
+  var _traceTransaction = 0;
 
   @override
   bool ownerIsLiveOtherProcess(String? candidateOwnerId) {
@@ -538,9 +540,13 @@ class JsonDocumentRecoveryStore implements DocumentRecoveryStore {
 
   Future<T> _serialized<T>(Future<T> Function() operation) {
     final completer = Completer<T>();
+    final traceName = PerformanceTrace.enabled
+        ? 'recovery-transaction-${++_traceTransaction}'
+        : '';
+    PerformanceTrace.event(traceName, 'queued');
     _queue = _queue.then((_) async {
       try {
-        completer.complete(await operation());
+        completer.complete(await PerformanceTrace.async(traceName, operation));
       } on Object catch (error, stackTrace) {
         completer.completeError(error, stackTrace);
       }
@@ -583,7 +589,10 @@ Future<T> _withRecoveryLock<T>(File recovery, Future<T> Function() body) async {
   try {
     while (!acquired) {
       try {
-        await lock.lock(FileLock.exclusive);
+        await PerformanceTrace.async(
+          'recovery-lock',
+          () => lock.lock(FileLock.exclusive),
+        );
         acquired = true;
       } on FileSystemException catch (error) {
         final code = error.osError?.errorCode;
@@ -593,6 +602,7 @@ Future<T> _withRecoveryLock<T>(File recovery, Future<T> Function() body) async {
             ? code == 33
             : false;
         if (!contention || !DateTime.now().isBefore(deadline)) rethrow;
+        PerformanceTrace.event('recovery-lock-contention');
         await Future<void>.delayed(const Duration(milliseconds: 25));
       }
     }

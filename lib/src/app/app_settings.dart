@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
+import '../core/performance_trace.dart';
 import '../export/export_options.dart';
 import '../spellcheck/spelling_language.dart';
 import 'app_locale.dart';
@@ -612,6 +613,7 @@ class AppSettingsController extends Notifier<AppSettings> {
       _mutate((s) => s.copyWith(elementPropertiesWidth: value.clamp(260, 600)));
   late LocalSettingsStore _store;
   Future<void>? _lastSave;
+  var _saveTraceSequence = 0;
   final _pendingInitialMutations = <AppSettings Function(AppSettings)>[];
   final _pendingInitialPersistence = <Completer<void>>[];
   var _loaded = false;
@@ -1033,12 +1035,16 @@ class AppSettingsController extends Notifier<AppSettings> {
     state = next;
     final json = next.toJson();
     final previousSave = _lastSave;
+    final traceName = PerformanceTrace.enabled
+        ? 'settings-${++_saveTraceSequence}'
+        : '';
+    PerformanceTrace.event(traceName, 'queued');
     Object? failure;
     StackTrace? failureStack;
     final save = () async {
       await previousSave;
       try {
-        await _store.save(json);
+        await PerformanceTrace.async(traceName, () => _store.save(json));
       } on Object catch (error, stack) {
         failure = error;
         failureStack = stack;

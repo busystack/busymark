@@ -170,6 +170,10 @@ pipeline; GStreamer's direct `file:` reader cannot see arbitrary local paths
 inside the WebProcess sandbox. The fixed local-player shell alone can select
 that file. No chooser is shown, no video copy is staged, and the sandbox, CSP,
 network restrictions, and separate visualization/video contexts are retained.
+Each video player owns its WebKit widget until host cleanup. Closing the parent
+window can destroy the overlay first; host cleanup must still disconnect player
+callbacks and release that widget safely. The native `video-parent-destroy`
+regression exercises this order and observes ownership through shutdown.
 
 The native regression script accepts individual operations and an optional
 repeat count, with a fresh isolated profile for each process:
@@ -188,6 +192,29 @@ process/thread wait evidence while GTK is blocked:
 python3 tools/capture_native_slow_operation.py \
   --output /absolute/new/evidence-directory --threshold-ms 500 --duration 20 \
   -- build/linux/x64/release/bundle/busymark /absolute/disposable/document.md
+```
+
+For targeted tail capture with less debugger perturbation before the event, add
+`--detach-until-slow`. GDB stops at native `main`, detaches, and remains the
+inferior's ancestor so it can attach after the selected operation exceeds the
+threshold. This requires no ptrace-policy change. Entry under GDB is still
+diagnostic, and attaching perturbs the remainder of a captured operation.
+`detached.json` identifies the owned application for a separate interaction
+probe. Cleanup checks process identities before signalling it or its children.
+Detached runs do not establish a successful natural-exit status.
+
+`--operation` also accepts compiled-in Dart spans, such as
+`restore-journal-session`. An active Future can be waiting on worker I/O while
+GTK remains responsive; inspect the captured threads instead of treating its
+whole duration as main-thread blocking. `--profile-template` copies a disposable
+fixture into the isolated profile without modifying the template. Keep graphics
+caches out of restoration templates when testing fresh-cache behavior.
+
+The watchdog's blocked-operation and already-completed-operation regressions use
+owned synthetic programs, not a reproduction of a historical WebKit stall:
+
+```bash
+python3 tools/test_capture_native_slow_operation.py -v
 ```
 
 The watchdog creates an isolated HOME/XDG profile while retaining the desktop
@@ -211,3 +238,24 @@ durations without treating callback delivery as presentation. Ordinary release
 builds compile out these diagnostics. For CPU sampling when launching a profile
 bundle directly, the pinned Linux embedder accepts `FLUTTER_ENGINE_SWITCHES=1`
 and `FLUTTER_ENGINE_SWITCH_1=enable-dart-profiling` (the embedder adds `--`).
+
+Restoration spans distinguish recovery readiness, authoritative history,
+journal publication, workspace/file loading, active-document preparation,
+editor publication and required final persistence. Numbered settings, recovery,
+history and controller transactions log queue admission separately from
+execution; history also logs instance dispatch and root-queue admission.
+Lock spans include the asynchronous lock request; explicit contention events
+distinguish retries from I/O-service or event-loop scheduling delays.
+
+Render results are delivered before optional disk-cache publication completes.
+Cache publication still occupies a bounded rendering slot, including the awaited
+write, atomic rename and LRU maintenance. Derived images do not request `fsync`:
+their disk cache is disposable, and invalid or incomplete entries are rejected
+and recomputed after interruption. Document, session, recovery and Local History
+durability use their separate stores. Full-directory metadata scans run in one short-lived
+maintenance isolate at a time per cache, using only its path and numeric limits.
+This avoids one main-isolate asynchronous round trip per cached file. The caller
+still awaits maintenance: no unlimited background writes or maintenance queue
+are introduced. `cache-maintenance-N` separates admission, execution and worker
+completion; `cache-maintenance-worker` measures the scan itself. These spans
+overlap and must not be summed.
