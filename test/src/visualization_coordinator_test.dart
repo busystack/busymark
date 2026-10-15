@@ -156,7 +156,9 @@ void main() {
       );
       addTearDown(() async {
         coordinator.dispose();
-        if (!cache.release.isCompleted) cache.release.complete();
+        if (!cache.release.isCompleted) {
+          cache.release.complete();
+        }
         await cache.finished.future;
       });
       final first = coordinator.render(_request(revision: 1));
@@ -176,7 +178,9 @@ void main() {
       );
       await Future<void>.delayed(Duration.zero);
       expect(renderer.startedBlockKeys, hasLength(1));
-      if (!cache.release.isCompleted) cache.release.complete();
+      if (!cache.release.isCompleted) {
+        cache.release.complete();
+      }
       await renderer.waitForStarts(2);
       renderer.complete(
         3,
