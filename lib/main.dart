@@ -9,6 +9,7 @@ import 'package:yaru/yaru.dart';
 import 'src/app/busymark_app.dart';
 import 'src/app/startup_path.dart';
 import 'src/app/system_accent.dart';
+import 'src/core/performance_trace.dart';
 import 'src/git/application/git_controller.dart';
 import 'src/git/data/git_cli_gateway.dart';
 import 'src/platform/gtk_animation_settings_service.dart';
@@ -19,9 +20,15 @@ import 'src/spellcheck/spelling_release_smoke.dart';
 import 'src/visualization/visualization_release_smoke.dart';
 
 Future<void> main(List<String> args) async {
+  PerformanceTrace.event('dart-entry');
   WidgetsFlutterBinding.ensureInitialized();
-  await windowManager.ensureInitialized();
-  if (Platform.isLinux) await YaruWindow.ensureInitialized();
+  await PerformanceTrace.async(
+    'window-manager',
+    windowManager.ensureInitialized,
+  );
+  if (Platform.isLinux) {
+    await PerformanceTrace.async('yaru-window', YaruWindow.ensureInitialized);
+  }
   if (visualizationReleaseSmokeReportPath(args) case final reportPath?) {
     exit(await runVisualizationReleaseSmoke(reportPath));
   }
@@ -33,13 +40,29 @@ Future<void> main(List<String> args) async {
         ? [const LinuxGtkAccentService(), const LinuxPortalAppearance()]
         : [],
   );
-  await accentCoordinator.initialize();
-  final chrome = await Future.wait<Object?>([
-    const GtkAnimationSettingsService().getAnimationsEnabled(),
-    const GtkWindowPreferencesService().load(),
-  ]);
+  await PerformanceTrace.async('accent-ready', accentCoordinator.initialize);
+  final chrome = await PerformanceTrace.async(
+    'gtk-settings',
+    () => Future.wait<Object?>([
+      const GtkAnimationSettingsService().getAnimationsEnabled(),
+      const GtkWindowPreferencesService().load(),
+    ]),
+  );
   final headerIcons = GtkHeaderIconService();
-  await headerIcons.initialize();
+  await PerformanceTrace.async('header-icons', headerIcons.initialize);
+  if (PerformanceTrace.enabled) {
+    var remaining = 120;
+    WidgetsBinding.instance.addTimingsCallback((timings) {
+      for (final timing in timings) {
+        if (remaining-- <= 0) return;
+        PerformanceTrace.event(
+          'frame-build-${timing.buildDuration.inMicroseconds}'
+          '-raster-${timing.rasterDuration.inMicroseconds}',
+        );
+      }
+    });
+  }
+  PerformanceTrace.event('runApp');
   runApp(
     ProviderScope(
       overrides: [

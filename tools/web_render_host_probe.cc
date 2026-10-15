@@ -6,8 +6,23 @@
 #include <string>
 
 #include "../linux/runner/web_render_host.cc"
+#include "../linux/runner/video_player_host.h"
 
 constexpr char kMethods[] = "io.busystack.busymark/visualization";
+// Synthetic 16x16 red VP8/WebM: ffmpeg lavfi color, 1 fps, two seconds.
+// Embedded so the decoder regression needs no ffmpeg executable or download.
+constexpr char kLocalVideoBase64[] =
+    "GkXfo59ChoEBQveBAULygQRC84EIQoKEd2VibUKHgQJChYECGFOAZwEAAAAAAAITEU2bdLpNu4tT"
+    "q4QVSalmU6yBoU27i1OrhBZUrmtTrIHYTbuMU6uEElTDZ1OsggEeTbuMU6uEHFO7a1OsggH97AEA"
+    "AAAAAABZAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+    "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAVSalmsirXsYMPQkBNgI1MYXZm"
+    "NjAuMTYuMTAwV0GNTGF2ZjYwLjE2LjEwMESJiECfQAAAAAAAFlSua8GuAQAAAAAAADjXgQFzxYg2"
+    "ixILCHEv6pyBACK1nIN1bmSIgQCGhVZfVlA4g4EBI+ODhDuaygDgibCBELqBEJqBAhJUw2f8c3Og"
+    "Y8CAZ8iaRaOHRU5DT0RFUkSHjUxhdmY2MC4xNi4xMDBzc9ZjwItjxYg2ixILCHEv6mfIoUWjh0VO"
+    "Q09ERVJEh5RMYXZjNjAuMzEuMTAyIGxpYnZweGfIoUWjiERVUkFUSU9ORIeTMDA6MDA6MDIuMDAw"
+    "MDAwMDAwAB9DtnXZ54EAo72BAACA8AIAnQEqEAAQAABHCIWFiIWEiAICAnWqA/gD+gINTRgA/v1u"
+    "8//jmTcwxP+Obf/xYTwOKMj/8VEAo5WBA+gAsQEAARAQABgAGFgv9AAIAAAcU7trkbuPs4EAt4r3"
+    "gQHxggGf8IED";
 struct Handler {
   FlBinaryMessengerMessageHandler callback;
   gpointer data;
@@ -133,11 +148,16 @@ extern "C" WebKitWebContext* __real_webkit_web_context_new_ephemeral();
 static unsigned contexts = 0;
 static unsigned views = 0;
 static unsigned harness_loads = 0;
+static bool fail_view = false;
 extern "C" GtkWidget* __real_webkit_web_view_new_with_context(
     WebKitWebContext*);
 extern "C" GtkWidget* __wrap_webkit_web_view_new_with_context(
     WebKitWebContext* context) {
   ++views;
+  if (fail_view) {
+    fail_view = false;
+    return nullptr;
+  }
   return __real_webkit_web_view_new_with_context(context);
 }
 extern "C" void __real_webkit_web_view_load_uri(WebKitWebView*, const gchar*);
@@ -147,8 +167,13 @@ extern "C" void __wrap_webkit_web_view_load_uri(WebKitWebView* view,
   __real_webkit_web_view_load_uri(view, uri);
 }
 static bool fail_context = false;
+static bool delay_context_for_watchdog = false;
 extern "C" WebKitWebContext* __wrap_webkit_web_context_new_ephemeral() {
   ++contexts;
+  if (delay_context_for_watchdog) {
+    delay_context_for_watchdog = false;
+    g_usleep(1500000);
+  }
   if (fail_context) {
     fail_context = false;
     return nullptr;
@@ -257,9 +282,10 @@ struct Harness {
     active_messenger = nullptr;
     drain();
   }
-  TestResponse* call(const char* method, FlValue* args) {
+  TestResponse* call(const char* method, FlValue* args,
+                     const char* channel = kMethods) {
     auto* handler = static_cast<Handler*>(
-        g_hash_table_lookup(messenger->handlers, kMethods));
+        g_hash_table_lookup(messenger->handlers, channel));
     g_assert_nonnull(handler);
     g_autoptr(GError) error = nullptr;
     auto* method_codec = FL_METHOD_CODEC(codec);
@@ -269,7 +295,7 @@ struct Harness {
     g_assert_no_error(error);
     auto* response = static_cast<TestResponse*>(
         g_object_new(test_response_get_type(), nullptr));
-    handler->callback(FL_BINARY_MESSENGER(messenger), kMethods, bytes,
+    handler->callback(FL_BINARY_MESSENGER(messenger), channel, bytes,
                       FL_BINARY_MESSENGER_RESPONSE_HANDLE(response),
                       handler->data);
     return response;
@@ -372,12 +398,167 @@ static void verify(const char* operation, FlValue* result) {
   }
 }
 
+static void assert_local_video_playback(WebKitWebView* view, bool mini,
+                                        bool expect_error = false) {
+  until([&] {
+    return webkit_web_view_get_uri(view) != nullptr &&
+           !webkit_web_view_is_loading(view);
+  });
+  const std::string script = expect_error ?
+      "return await new Promise(resolve => { const poll = () => { "
+      "if (document.querySelector('video')?.error) resolve(true); "
+      "else setTimeout(poll, 20); }; poll(); });" :
+      "const mini = " + std::string(mini ? "true" : "false") + "; "
+      "await new Promise((resolve, reject) => { const poll = () => { "
+      "const v = document.querySelector('video'); "
+      "if (v?.error) { reject(new Error('Video error ' + v.error.code)); return; } "
+      "if (v?.readyState >= 2) resolve(); else setTimeout(poll, 20); "
+      "}; poll(); }); "
+      "const v = document.querySelector('video'); "
+      "const input = document.getElementById('busymark-local-media'); "
+      "const correct = v.videoWidth === 16 && v.videoHeight === 16 && "
+      "v.currentSrc.startsWith('blob:') && input.files.length === 1 && "
+      "input.files[0].name === 'video.webm' && v.controls === !mini && "
+      "!!document.getElementById('p') === mini; "
+      "v.pause(); const paused = v.paused; await v.play(); "
+      "return correct && paused && !v.paused;";
+  bool finished = false;
+  webkit_web_view_call_async_javascript_function(
+      view, script.c_str(), script.size(), nullptr, nullptr, nullptr, nullptr,
+      [](GObject* object, GAsyncResult* result, gpointer data) {
+        g_autoptr(GError) error = nullptr;
+        g_autoptr(JSCValue) value =
+            webkit_web_view_call_async_javascript_function_finish(
+                WEBKIT_WEB_VIEW(object), result, &error);
+        g_assert_no_error(error);
+        g_assert_nonnull(value);
+        g_assert_true(jsc_value_to_boolean(value));
+        *static_cast<bool*>(data) = true;
+      },
+      &finished);
+  until([&] { return finished; });
+}
+
 int main(int argc, char** argv) {
   gtk_init(&argc, &argv);
   g_assert_cmpint(argc, ==, 2);
   const char* mode = argv[1];
+  if (strcmp(mode, "watchdog-delay") == 0) {
+    // Deterministic watchdog validation only; not a reproduction of a library
+    // stall. The sleep blocks GTK after the production context begin event.
+    std::fprintf(stderr, "Injected 1500ms context delay for watchdog validation\n");
+    delay_context_for_watchdog = true;
+    mode = "renderMermaid";
+  }
   Harness h;
-  if (strcmp(mode, "no-init") == 0) {
+  if (g_str_has_prefix(mode, "video-")) {
+    constexpr char video_channel[] = "com.busymark.app/video_player";
+    const bool source_failure = strcmp(mode, "video-source-failure") == 0;
+    const bool playback = strcmp(mode, "video-playback") == 0 ||
+                          strcmp(mode, "video-mini-playback") == 0 || source_failure;
+    const bool mini = strcmp(mode, "video-mini-playback") == 0;
+    g_autoptr(GtkWidget) overlay = gtk_overlay_new();
+    g_object_ref_sink(overlay);
+    g_autoptr(GtkWidget) video_window = nullptr;
+    if (playback) {
+      video_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+      g_object_ref_sink(video_window);
+      gtk_window_set_default_size(GTK_WINDOW(video_window), 320, 240);
+      gtk_container_add(GTK_CONTAINER(video_window), overlay);
+      gtk_widget_show_all(video_window);
+    }
+    g_autoptr(BusyMarkVideoPlayerHost) video =
+        busymark_video_player_host_new(overlay);
+    busymark_video_player_host_register_channel(video, h.view);
+    h.dormant();
+    g_autoptr(FlValue) request = fl_value_new_map();
+    fl_value_set_string_take(request, "playerId", fl_value_new_string("first"));
+    for (const char* operation : {"hide", "update", "unknown"}) {
+      g_autoptr(TestResponse) response = h.call(operation, request, video_channel);
+      g_assert_true(response->responded);
+      h.dormant();
+    }
+    g_autoptr(TestResponse) invalid = h.call("show", request, video_channel);
+    h.error(invalid, "video.invalidRequest");
+    h.dormant();
+    if (strcmp(mode, "video-no-init") != 0) {
+      g_autofree gchar* fixture = g_build_filename(g_get_tmp_dir(), "video.webm", nullptr);
+      if (playback) {
+        gsize length = 0;
+        g_autofree guchar* data = g_base64_decode(kLocalVideoBase64, &length);
+        g_assert_true(g_file_set_contents(
+            fixture, reinterpret_cast<const gchar*>(data), length, nullptr));
+      } else {
+        g_assert_true(g_file_set_contents(fixture, "invalid-media-for-lifecycle-test", -1, nullptr));
+      }
+      fl_value_set_string_take(request, "kind", fl_value_new_string("localFile"));
+      fl_value_set_string_take(request, "value", fl_value_new_string(fixture));
+      fl_value_set_string_take(request, "playLabel", fl_value_new_string("Play"));
+      fl_value_set_string_take(request, "pauseLabel", fl_value_new_string("Pause"));
+      fl_value_set_string_take(request, "borderEffect", fl_value_new_string("rounded"));
+      fl_value_set_string_take(request, "miniPlayer", fl_value_new_bool(mini));
+      for (const char* key : {"x", "y", "width", "height"}) {
+        fl_value_set_string_take(request, key, fl_value_new_float(100));
+      }
+      if (strcmp(mode, "video-failure") == 0) {
+        fail_context = true;
+        g_autoptr(TestResponse) failed = h.call("show", request, video_channel);
+        h.error(failed, "video.invalidRequest");
+        g_assert_cmpuint(views, ==, 0);
+      }
+      g_autoptr(TestResponse) first = h.call("show", request, video_channel);
+      g_autoptr(FlValue) shown = h.success(first);
+      g_assert_true(fl_value_get_bool(shown));
+      const unsigned expected_contexts = strcmp(mode, "video-failure") == 0 ? 2 : 1;
+      g_assert_cmpuint(contexts, ==, expected_contexts);
+      g_assert_cmpuint(views, ==, 1);
+      if (source_failure) g_assert_cmpint(std::remove(fixture), ==, 0);
+      GList* children = gtk_container_get_children(GTK_CONTAINER(overlay));
+      auto* first_view = WEBKIT_WEB_VIEW(children->data);
+      auto* context = webkit_web_view_get_context(first_view);
+      g_assert_true(webkit_web_context_is_ephemeral(context));
+      g_assert_true(webkit_web_context_get_sandbox_enabled(context));
+      g_list_free(children);
+      if (playback) assert_local_video_playback(first_view, mini, source_failure);
+      if (source_failure) {
+        gsize length = 0;
+        g_autofree guchar* data = g_base64_decode(kLocalVideoBase64, &length);
+        g_assert_true(g_file_set_contents(
+            fixture, reinterpret_cast<const gchar*>(data), length, nullptr));
+      }
+      const unsigned failed_views =
+          strcmp(mode, "video-view-failure") == 0 ? 1 : 0;
+      if (failed_views != 0) {
+        fail_view = true;
+        g_autoptr(TestResponse) failed = h.call("show", request, video_channel);
+        h.error(failed, "video.invalidRequest");
+        children = gtk_container_get_children(GTK_CONTAINER(overlay));
+        g_assert_cmpuint(g_list_length(children), ==, 1);
+        g_assert_true(children->data == first_view);
+        g_list_free(children);
+      }
+      fl_value_set_string_take(request, "playerId", fl_value_new_string("second"));
+      g_autoptr(TestResponse) second = h.call("show", request, video_channel);
+      g_autoptr(FlValue) shown_second = h.success(second);
+      g_assert_true(fl_value_get_bool(shown_second));
+      g_assert_cmpuint(contexts, ==, expected_contexts);
+      g_assert_cmpuint(views, ==, 2 + failed_views);
+      g_autoptr(TestResponse) update = h.call("update", request, video_channel);
+      g_autoptr(FlValue) updated = h.success(update);
+      g_assert_true(fl_value_get_bool(updated));
+      g_autoptr(TestResponse) hide = h.call("hide", request, video_channel);
+      g_autoptr(FlValue) hidden = h.success(hide);
+      g_assert_true(fl_value_get_bool(hidden));
+    }
+    busymark_video_player_host_shutdown(video);
+    g_autoptr(TestResponse) stopped = h.call("show", request, video_channel);
+    g_autoptr(FlValue) unavailable = h.success(stopped);
+    g_assert_false(fl_value_get_bool(unavailable));
+    g_assert_cmpuint(harness_loads, ==, 0);
+    only_engine(nullptr);
+    gtk_widget_destroy(overlay);
+    if (video_window != nullptr) gtk_widget_destroy(video_window);
+  } else if (strcmp(mode, "no-init") == 0) {
     for (const char* name : {"/mermaid-engine.js", "/plantuml-engine.js",
                              "/math-engine.js", "/openapi-engine.js"}) {
       g_assert_true(is_allowed_resource_name(name));

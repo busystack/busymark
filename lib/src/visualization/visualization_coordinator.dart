@@ -216,11 +216,16 @@ class VisualizationCoordinator {
       _throwIfSuperseded(queued.request, queued.token);
       if (result.isSuccessful) {
         _rememberLastSuccessful(queued.request.blockKey, result);
-        await cache.put(queued.request.cacheKey, result);
       }
       _throwIfSuperseded(queued.request, queued.token);
       if (!queued.completer.isCompleted) {
         queued.completer.complete(result);
+      }
+      if (result.isSuccessful) {
+        // Publishing a rendered result does not require best-effort disk I/O.
+        // put warms the memory cache before its first await. Keep awaiting the
+        // write here so pending cache work still occupies a bounded queue slot.
+        await cache.put(queued.request.cacheKey, result);
       }
     } on VisualizationCancelledException {
       if (!queued.completer.isCompleted) {

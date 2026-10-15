@@ -26,9 +26,16 @@ class InitializationProbe {
   explicit InitializationProbe(const char* operation)
       : operation_(operation),
         enabled_(g_strcmp0(g_getenv("BUSYMARK_VISUALIZATION_TRACE"), "1") == 0),
-        start_(enabled_ ? g_get_monotonic_time() : 0) {}
+        start_(enabled_ ? g_get_monotonic_time() : 0) {
+    if (enabled_) {
+      g_printerr("visualization-init %s begin time_us=%" G_GINT64_FORMAT "\n",
+                 operation_, start_);
+    }
+  }
   ~InitializationProbe() {
     if (enabled_) {
+      g_printerr("visualization-init %s end time_us=%" G_GINT64_FORMAT "\n",
+                 operation_, g_get_monotonic_time());
       g_printerr("visualization-init %s start_us=%" G_GINT64_FORMAT
                  " duration_us=%" G_GINT64_FORMAT "\n",
                  operation_, start_, g_get_monotonic_time() - start_);
@@ -759,6 +766,10 @@ void recreate_render_view(BusyMarkWebRenderHost* self) {
 }
 
 gboolean recreate_render_view_cb(gpointer user_data) {
+  if (g_strcmp0(g_getenv("BUSYMARK_VISUALIZATION_TRACE"), "1") == 0) {
+    g_printerr("visualization-init dispatched time_us=%" G_GINT64_FORMAT "\n",
+               g_get_monotonic_time());
+  }
   auto* self = BUSYMARK_WEB_RENDER_HOST(user_data);
   self->recreate_source_id = 0;
   if (!self->shutting_down && self->recreate_requested) {
@@ -786,6 +797,10 @@ void schedule_render_view_recreation(BusyMarkWebRenderHost* self) {
   }
   if (self->state != RenderState::failed) {
     self->state = RenderState::scheduled;
+  }
+  if (g_strcmp0(g_getenv("BUSYMARK_VISUALIZATION_TRACE"), "1") == 0) {
+    g_printerr("visualization-init scheduled time_us=%" G_GINT64_FORMAT "\n",
+               g_get_monotonic_time());
   }
   self->recreate_source_id = g_idle_add_full(
       G_PRIORITY_DEFAULT_IDLE, recreate_render_view_cb, g_object_ref(self),

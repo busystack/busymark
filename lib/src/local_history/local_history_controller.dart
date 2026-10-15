@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import '../core/performance_trace.dart';
 
 import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -606,8 +607,14 @@ class LocalHistoryController extends Notifier<LocalHistoryState> {
     final generation = ++_loadGeneration;
     if (ref.mounted) state = state.copyWith(loading: true);
     try {
-      await _store.prune(policy, _clock());
-      final snapshot = await _store.load();
+      await PerformanceTrace.async(
+        'history-prune',
+        () => _store.prune(policy, _clock()),
+      );
+      final snapshot = await PerformanceTrace.async(
+        'history-load',
+        _store.load,
+      );
       if (!ref.mounted || generation != _loadGeneration) return false;
       await _publishSnapshot(
         snapshot,

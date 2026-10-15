@@ -12,6 +12,7 @@
 #include "flutter/generated_plugin_registrant.h"
 #include "gtk_accent_host.h"
 #include "linux_chrome_host.h"
+#include "performance_trace.h"
 #include "rich_clipboard_host.h"
 #include "secure_credential_host.h"
 #include "video_player_host.h"
@@ -1163,6 +1164,7 @@ static void register_asset_input_channel(MyApplication* self, FlView* view) {
 
 // Called when first Flutter frame received.
 static void first_frame_cb(MyApplication*, FlView* view) {
+  BusyMarkPerformanceSpan span("first-frame-window-show");
   gtk_widget_show(gtk_widget_get_toplevel(GTK_WIDGET(view)));
 }
 
@@ -1199,7 +1201,11 @@ static void my_application_activate(GApplication* application) {
   fl_dart_project_set_dart_entrypoint_arguments(
       project, self->dart_entrypoint_arguments);
 
-  FlView* view = fl_view_new(project);
+  FlView* view;
+  {
+    BusyMarkPerformanceSpan span("flutter-view-construction");
+    view = fl_view_new(project);
+  }
   self->flutter_view = GTK_WIDGET(view);
   GdkRGBA background_color;
   gdk_rgba_parse(&background_color, "#00000000");
@@ -1217,8 +1223,12 @@ static void my_application_activate(GApplication* application) {
                            self);
   // Register before realizing the view starts Dart execution.
   self->gtk_accent_host = busymark_gtk_accent_host_new(view, GTK_WIDGET(window));
-  gtk_widget_realize(GTK_WIDGET(view));
+  {
+    BusyMarkPerformanceSpan span("flutter-view-realization");
+    gtk_widget_realize(GTK_WIDGET(view));
+  }
 
+  BusyMarkPerformanceSpan integrations_span("native-integrations");
   fl_register_plugins(FL_PLUGIN_REGISTRY(view));
   self->chrome_host = busymark_linux_chrome_host_new(view, window, set_gtk_theme_preference);
   register_native_menu_channel(self, view);

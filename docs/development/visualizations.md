@@ -11,6 +11,11 @@ dependency resolution, and bounded memory and disk caches. Cache keys include
 the engine and sanitizer versions, source, theme, render profile, options, and
 hashes of local dependencies.
 
+Successful renders are published before optional disk-cache persistence finishes.
+The cache warms memory before its first I/O await; the coordinator retains the
+render's concurrency slot until persistence settles, bounding pending writes
+without putting disk flushes on the visible-result path.
+
 The Linux runner exposes a first-party platform channel backed by WebKitGTK 4.1.
 One reusable hidden render view handles Mermaid, PlantUML, OpenAPI parsing, SVG
 rasterization, and MathJax. BusyMark-owned windows are created only for the full
@@ -151,3 +156,58 @@ requires. Normal startup does not require a WebKit environment override, and
 Flutter and visible API-reference windows retain their normal rendering settings.
 Smoke tests must not globally disable WebKit compositing; `LIBGL_ALWAYS_SOFTWARE`
 is only used to provide Mesa rendering on headless CI displays.
+
+For native startup/first-use diagnosis, `BUSYMARK_NATIVE_TRACE=1` records
+view realization, host registration, and first-video context/view construction.
+`BUSYMARK_VISUALIZATION_TRACE=1` additionally separates scheduled initialization
+from callback dispatch, synchronous constructors, harness dispatch, and request
+completion. These use GLib's monotonic clock. Registration of either host must
+remain lightweight; only a validated video `show` request creates video resources.
+
+Local video passes its single validated file through WebKit's File API and an
+allowed `blob:` URL. This lets WebKit broker the file into the existing media
+pipeline; GStreamer's direct `file:` reader cannot see arbitrary local paths
+inside the WebProcess sandbox. The fixed local-player shell alone can select
+that file. No chooser is shown, no video copy is staged, and the sandbox, CSP,
+network restrictions, and separate visualization/video contexts are retained.
+
+The native regression script accepts individual operations and an optional
+repeat count, with a fresh isolated profile for each process:
+
+```bash
+BUSYMARK_NATIVE_PROBE_REPETITIONS=100 \
+  bash tools/test_web_render_host.sh renderMermaid
+bash tools/test_web_render_host.sh video-no-init video-first video-failure video-view-failure
+bash tools/test_web_render_host.sh video-playback video-mini-playback
+```
+
+An external watchdog can stop GDB's inferior and collect native stacks and
+process/thread wait evidence while GTK is blocked:
+
+```bash
+python3 tools/capture_native_slow_operation.py \
+  --output /absolute/new/evidence-directory --threshold-ms 500 --duration 20 \
+  -- build/linux/x64/release/bundle/busymark /absolute/disposable/document.md
+```
+
+The watchdog creates an isolated HOME/XDG profile while retaining the desktop
+connection and graphics environment. It inspects only its inferior and children.
+`BUSYMARK_NATIVE_SLOW_CAPTURE_DIR=/absolute/new/capture-root` enables the same
+watchdog for `test_web_render_host.sh`. The optional `watchdog-delay` operation
+injects a 1,500 ms GTK-thread delay to validate capture; it does **not** reproduce
+an unexplained WebKit stall. Debugger and syscall-traced runs are diagnostic
+cohorts, never headline latency measurements.
+
+`BUSYMARK_NATIVE_SYSCALL_TRACE_DIR=/absolute/evidence-directory` records each
+native case with `strace -f -ttt -T`, including file discovery, child creation,
+futex/poll waits, and flush durations. Correlate its wall-clock timestamps with
+the monotonic application events using a clock calibration captured for that
+run; keep these traces separate from the uninstrumented cohort.
+
+For Dart timelines, build with
+`--profile --dart-define=BUSYMARK_PERFORMANCE_TRACE=true`. The opt-in spans await
+future completion, use CLOCK_MONOTONIC on Linux, and log FrameTiming build/raster
+durations without treating callback delivery as presentation. Ordinary release
+builds compile out these diagnostics. For CPU sampling when launching a profile
+bundle directly, the pinned Linux embedder accepts `FLUTTER_ENGINE_SWITCHES=1`
+and `FLUTTER_ENGINE_SWITCH_1=enable-dart-profiling` (the embedder adds `--`).

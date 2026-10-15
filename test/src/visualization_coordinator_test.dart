@@ -145,6 +145,48 @@ void main() {
   });
 
   test(
+    'publishes before disk persistence while bounding pending writes',
+    () async {
+      final renderer = _ControlledRenderer();
+      final cache = _HeldCache(cacheDirectory);
+      final coordinator = VisualizationCoordinator(
+        renderers: [renderer],
+        cache: cache,
+        maximumConcurrentRenders: 1,
+      );
+      addTearDown(() async {
+        coordinator.dispose();
+        if (!cache.release.isCompleted) cache.release.complete();
+        await cache.finished.future;
+      });
+      final first = coordinator.render(_request(revision: 1));
+      await renderer.waitForStarts(1);
+      renderer.complete(1, _svg('ready'));
+      expect(await first, isA<SvgVisualizationResult>());
+      await cache.persisted.future;
+      expect(cache.finished.isCompleted, isFalse);
+      expect(
+        await coordinator.render(_request(revision: 2)),
+        isA<SvgVisualizationResult>(),
+      );
+      expect(renderer.startedBlockKeys, hasLength(1));
+
+      final next = coordinator.render(
+        _request(blockKey: 'next', source: 'different', revision: 3),
+      );
+      await Future<void>.delayed(Duration.zero);
+      expect(renderer.startedBlockKeys, hasLength(1));
+      if (!cache.release.isCompleted) cache.release.complete();
+      await renderer.waitForStarts(2);
+      renderer.complete(
+        3,
+        const FailedVisualizationResult(code: 'test', message: 'test'),
+      );
+      expect(await next, isA<FailedVisualizationResult>());
+    },
+  );
+
+  test(
     'validates concurrency and returns a typed unavailable result',
     () async {
       expect(
@@ -203,12 +245,43 @@ VisualizationCoordinator _coordinator(
   int maximumConcurrentRenders = 2,
   int maximumLastSuccessfulEntries = 128,
 }) {
+  final cache = _TrackedCache(cacheDirectory);
+  addTearDown(() async {
+    await Future.wait(cache.writes);
+  });
   return VisualizationCoordinator(
     renderers: [renderer],
     maximumConcurrentRenders: maximumConcurrentRenders,
     maximumLastSuccessfulEntries: maximumLastSuccessfulEntries,
-    cache: VisualizationCache(diskRoot: cacheDirectory),
+    cache: cache,
   );
+}
+
+class _TrackedCache extends VisualizationCache {
+  _TrackedCache(Directory directory) : super(diskRoot: directory);
+  final writes = <Future<void>>[];
+
+  @override
+  Future<void> put(String key, VisualizationRenderResult result) {
+    final write = super.put(key, result);
+    writes.add(write);
+    return write;
+  }
+}
+
+class _HeldCache extends VisualizationCache {
+  _HeldCache(Directory directory) : super(diskRoot: directory);
+  final persisted = Completer<void>();
+  final release = Completer<void>();
+  final finished = Completer<void>();
+
+  @override
+  Future<void> put(String key, VisualizationRenderResult result) async {
+    await super.put(key, result);
+    persisted.complete();
+    await release.future;
+    finished.complete();
+  }
 }
 
 VisualizationRenderRequest _request({

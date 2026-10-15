@@ -1,4 +1,5 @@
 #include "video_player_host.h"
+#include "performance_trace.h"
 
 #include <webkit2/webkit2.h>
 
@@ -45,6 +46,7 @@ void video_player_free(gpointer data) {
     return;
   }
   if (player->web_view != nullptr && GTK_IS_WIDGET(player->web_view)) {
+    g_signal_handlers_disconnect_by_data(player->web_view, player);
     gtk_widget_destroy(player->web_view);
   }
   g_free(player->allowed_local_uri);
@@ -354,6 +356,79 @@ gboolean context_menu_cb(WebKitWebView*,
   return TRUE;
 }
 
+gboolean local_file_chooser_cb(WebKitWebView* view,
+                                WebKitFileChooserRequest* request,
+                                gpointer user_data) {
+  auto* player = static_cast<VideoPlayer*>(user_data);
+  // Only BusyMark's fixed local-player shell may obtain the one file that
+  // the user already authorized with Play. Never open a chooser or grant a
+  // hosted document access to this path.
+  if (player->kind != PlayerKind::kLocalFile ||
+      g_strcmp0(webkit_web_view_get_uri(view), "file:///") != 0 ||
+      webkit_file_chooser_request_get_select_multiple(request)) {
+    webkit_file_chooser_request_cancel(request);
+    return TRUE;
+  }
+  g_autofree gchar* path =
+      g_filename_from_uri(player->allowed_local_uri, nullptr, nullptr);
+  if (path == nullptr || !g_file_test(path, G_FILE_TEST_IS_REGULAR)) {
+    webkit_file_chooser_request_cancel(request);
+    return TRUE;
+  }
+  const gchar* files[] = {path, nullptr};
+  webkit_file_chooser_request_select_files(request, files);
+  return TRUE;
+}
+
+void local_source_script_finished_cb(GObject* object,
+                                     GAsyncResult* result,
+                                     gpointer) {
+  g_autoptr(GError) error = nullptr;
+  g_autoptr(JSCValue) value = webkit_web_view_evaluate_javascript_finish(
+      WEBKIT_WEB_VIEW(object), result, &error);
+  if (error != nullptr && !g_error_matches(error, G_IO_ERROR, G_IO_ERROR_CANCELLED)) {
+    g_warning("The local video source could not be initialized: %s", error->message);
+  }
+}
+
+void local_source_load_changed_cb(WebKitWebView* view,
+                                  WebKitLoadEvent event,
+                                  gpointer) {
+  if (event != WEBKIT_LOAD_FINISHED ||
+      g_strcmp0(webkit_web_view_get_uri(view), "file:///") != 0) {
+    return;
+  }
+  // A direct file: URI makes GStreamer's filesrc open the path inside the
+  // WebProcess sandbox, where it is deliberately unavailable. WebKit's File
+  // API instead brokers the selected file and streams an existing allowed
+  // blob: URL. This neither copies the video nor widens filesystem access.
+  // Native evaluation carries the already-authorized Play gesture.
+  constexpr char script[] = R"JS((() => {
+    if (document.getElementById('busymark-local-media')) return;
+    const video = document.querySelector('video');
+    const input = document.createElement('input');
+    input.id = 'busymark-local-media';
+    input.type = 'file';
+    input.accept = 'video/*';
+    input.hidden = true;
+    const playFile = file => {
+      const url = URL.createObjectURL(file);
+      video.src = url;
+      window.addEventListener('pagehide', () => URL.revokeObjectURL(url), {once: true});
+      void video.play();
+    };
+    // Cancellation (for example, a file removed during opening) must produce
+    // the normal media error rather than leave a source-less player pending.
+    input.onchange = () => playFile(input.files[0] || new Blob());
+    input.oncancel = () => playFile(new Blob());
+    document.body.append(input);
+    input.click();
+  })())JS";
+  webkit_web_view_evaluate_javascript(view, script, -1, nullptr, nullptr,
+                                     nullptr, local_source_script_finished_cb,
+                                     nullptr);
+}
+
 WebKitSettings* create_player_settings() {
   WebKitSettings* settings = webkit_settings_new();
   webkit_settings_set_enable_javascript(settings, TRUE);
@@ -379,7 +454,6 @@ WebKitSettings* create_player_settings() {
 
 gchar* player_html(PlayerKind kind,
                    const gchar* value,
-                   const gchar* local_uri,
                    gboolean mini_player,
                    const gchar* play_label,
                    const gchar* pause_label,
@@ -401,14 +475,13 @@ gchar* player_html(PlayerKind kind,
   constexpr char kTail[] = "</body></html>";
   g_autofree gchar* head = g_strdup_printf(kHeadTemplate, border_effect);
   if (kind == PlayerKind::kLocalFile) {
-    g_autofree gchar* escaped_uri = g_markup_escape_text(local_uri, -1);
     if (mini_player) {
       g_autofree gchar* escaped_play_label =
           g_markup_escape_text(play_label, -1);
       g_autofree gchar* escaped_pause_label =
           g_markup_escape_text(pause_label, -1);
       return g_strdup_printf(
-          "%s<video id=\"v\" autoplay playsinline preload=\"metadata\" src=\"%s\">"
+          "%s<video id=\"v\" autoplay playsinline preload=\"metadata\">"
           "</video><button id=\"p\" aria-label=\"%s\" data-play=\"%s\" "
           "data-pause=\"%s\">&#9654;</button>"
           "<script>const v=document.getElementById('v'),p=document.getElementById('p');"
@@ -416,13 +489,13 @@ gchar* player_html(PlayerKind kind,
           "v.onplay=()=>{p.textContent='❚❚';p.setAttribute('aria-label',p.dataset.pause)};"
           "v.onpause=()=>{p.textContent='▶';p.setAttribute('aria-label',p.dataset.play)};"
           "</script>%s",
-          head, escaped_uri, escaped_play_label, escaped_play_label,
+          head, escaped_play_label, escaped_play_label,
           escaped_pause_label, kTail);
     }
     return g_strdup_printf(
-        "%s<video autoplay controls playsinline preload=\"metadata\" src=\"%s\">"
+        "%s<video autoplay controls playsinline preload=\"metadata\">"
         "</video>%s",
-        head, escaped_uri, kTail);
+        head, kTail);
   }
   if (kind == PlayerKind::kYoutube) {
     return g_strdup_printf(
@@ -464,10 +537,31 @@ VideoPlayer* create_player(BusyMarkVideoPlayerHost* self,
                            const gchar* play_label,
                            const gchar* pause_label,
                            const gchar* border_effect) {
+  if (self->context == nullptr) {
+    BusyMarkPerformanceSpan span("video-context");
+    self->context = webkit_web_context_new_ephemeral();
+    if (self->context == nullptr) {
+      g_free(local_uri);
+      return nullptr;
+    }
+    webkit_web_context_set_cache_model(self->context,
+                                       WEBKIT_CACHE_MODEL_DOCUMENT_VIEWER);
+    webkit_web_context_set_spell_checking_enabled(self->context, FALSE);
+    webkit_web_context_set_sandbox_enabled(self->context, TRUE);
+    WebKitCookieManager* cookie_manager =
+        webkit_web_context_get_cookie_manager(self->context);
+    webkit_cookie_manager_set_accept_policy(cookie_manager,
+                                            WEBKIT_COOKIE_POLICY_ACCEPT_NEVER);
+  }
+  BusyMarkPerformanceSpan span("video-view");
   auto* player = g_new0(VideoPlayer, 1);
   player->kind = kind;
   player->allowed_local_uri = local_uri;
   player->web_view = webkit_web_view_new_with_context(self->context);
+  if (player->web_view == nullptr) {
+    video_player_free(player);
+    return nullptr;
+  }
   g_autoptr(WebKitSettings) settings = create_player_settings();
   webkit_web_view_set_settings(WEBKIT_WEB_VIEW(player->web_view), settings);
   GdkRGBA black = {};
@@ -484,8 +578,14 @@ VideoPlayer* create_player(BusyMarkVideoPlayerHost* self,
                    G_CALLBACK(context_menu_cb), player);
   g_signal_connect(player->web_view, "resource-load-started",
                    G_CALLBACK(resource_load_started_cb), player);
+  if (kind == PlayerKind::kLocalFile) {
+    g_signal_connect(player->web_view, "run-file-chooser",
+                     G_CALLBACK(local_file_chooser_cb), player);
+    g_signal_connect(player->web_view, "load-changed",
+                     G_CALLBACK(local_source_load_changed_cb), player);
+  }
   g_autofree gchar* html =
-      player_html(kind, value, local_uri, mini_player, play_label, pause_label,
+      player_html(kind, value, mini_player, play_label, pause_label,
                   border_effect);
   webkit_web_view_load_html(WEBKIT_WEB_VIEW(player->web_view), html,
                             kind == PlayerKind::kLocalFile ? "file:///"
@@ -541,10 +641,14 @@ gboolean show_player(BusyMarkVideoPlayerHost* self,
     return FALSE;
   }
 
-  g_hash_table_remove(self->players, player_id);
   VideoPlayer* player =
       create_player(self, kind, value, local_uri, mini_player, play_label,
                     pause_label, border_effect);
+  if (player == nullptr) {
+    *error_message = "The video player could not be created.";
+    return FALSE;
+  }
+  g_hash_table_remove(self->players, player_id);
   apply_geometry(player->web_view, geometry);
   gtk_overlay_add_overlay(GTK_OVERLAY(self->overlay), player->web_view);
   gtk_overlay_set_overlay_pass_through(GTK_OVERLAY(self->overlay),
@@ -606,15 +710,6 @@ BusyMarkVideoPlayerHost* busymark_video_player_host_new(GtkWidget* overlay) {
   auto* self = BUSYMARK_VIDEO_PLAYER_HOST(
       g_object_new(busymark_video_player_host_get_type(), nullptr));
   self->overlay = overlay;
-  self->context = webkit_web_context_new_ephemeral();
-  webkit_web_context_set_cache_model(self->context,
-                                     WEBKIT_CACHE_MODEL_DOCUMENT_VIEWER);
-  webkit_web_context_set_spell_checking_enabled(self->context, FALSE);
-  webkit_web_context_set_sandbox_enabled(self->context, TRUE);
-  WebKitCookieManager* cookie_manager =
-      webkit_web_context_get_cookie_manager(self->context);
-  webkit_cookie_manager_set_accept_policy(cookie_manager,
-                                          WEBKIT_COOKIE_POLICY_ACCEPT_NEVER);
   return self;
 }
 
