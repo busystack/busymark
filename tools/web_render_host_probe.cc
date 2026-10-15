@@ -550,7 +550,33 @@ int main(int argc, char** argv) {
       g_autoptr(FlValue) hidden = h.success(hide);
       g_assert_true(fl_value_get_bool(hidden));
     }
+    GtkWidget* remaining_video_view = nullptr;
+    gboolean only_toggle_reference = FALSE;
+    const auto player_reference_changed =
+        +[](gpointer data, GObject*, gboolean is_last_reference) {
+          *static_cast<gboolean*>(data) = is_last_reference;
+        };
+    if (strcmp(mode, "video-parent-destroy") == 0) {
+      // A real top-level close destroys the overlay before application disposal
+      // shuts down its video host. Exercise that order with an active player.
+      GList* children = gtk_container_get_children(GTK_CONTAINER(overlay));
+      g_assert_nonnull(children);
+      remaining_video_view = GTK_WIDGET(children->data);
+      // Observe actual ownership without dereferencing freed memory in the
+      // failing implementation. The observer's toggle reference is removed
+      // after shutdown; it must never be the player's only reference earlier.
+      g_object_add_toggle_ref(G_OBJECT(remaining_video_view),
+                              player_reference_changed, &only_toggle_reference);
+      g_list_free(children);
+      gtk_widget_destroy(overlay);
+      g_assert_false(only_toggle_reference);
+    }
     busymark_video_player_host_shutdown(video);
+    if (remaining_video_view != nullptr) {
+      g_assert_true(only_toggle_reference);
+      g_object_remove_toggle_ref(G_OBJECT(remaining_video_view),
+                                 player_reference_changed, &only_toggle_reference);
+    }
     g_autoptr(TestResponse) stopped = h.call("show", request, video_channel);
     g_autoptr(FlValue) unavailable = h.success(stopped);
     g_assert_false(fl_value_get_bool(unavailable));

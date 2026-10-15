@@ -48,6 +48,7 @@ void video_player_free(gpointer data) {
   if (player->web_view != nullptr && GTK_IS_WIDGET(player->web_view)) {
     g_signal_handlers_disconnect_by_data(player->web_view, player);
     gtk_widget_destroy(player->web_view);
+    g_clear_object(&player->web_view);
   }
   g_free(player->allowed_local_uri);
   g_free(player);
@@ -562,6 +563,10 @@ VideoPlayer* create_player(BusyMarkVideoPlayerHost* self,
     video_player_free(player);
     return nullptr;
   }
+  // The overlay may be destroyed before the application disposes this host.
+  // Keep the player record's widget alive until its callbacks are disconnected
+  // and the record is released, including when GTK already destroyed it.
+  g_object_ref_sink(player->web_view);
   g_autoptr(WebKitSettings) settings = create_player_settings();
   webkit_web_view_set_settings(WEBKIT_WEB_VIEW(player->web_view), settings);
   GdkRGBA black = {};

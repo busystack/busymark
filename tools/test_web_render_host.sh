@@ -24,7 +24,7 @@ export GSETTINGS_BACKEND=memory
 export NO_AT_BRIDGE=1
 unset BUSYMARK_RELEASE_SMOKE
 # Each case gets a fresh process and profile. Keep WebKit's sandbox enabled.
-operations=(video-no-init video-first video-failure video-view-failure video-playback video-mini-playback video-source-failure no-init pre-cancel renderMermaid renderPlantUml renderMathBatch \
+operations=(video-no-init video-first video-failure video-view-failure video-playback video-mini-playback video-source-failure video-parent-destroy no-init pre-cancel renderMermaid renderPlantUml renderMathBatch \
   inspectOpenApi parseOpenApi rasterizeSvg openOpenApiReference concurrent-cancel \
   active-cancel engine-cancel snapshot-cancel engine-failure graphviz-failure failure load-failure harness-failure \
   shutdown-scheduled shutdown-loading shutdown-readiness shutdown-active \
