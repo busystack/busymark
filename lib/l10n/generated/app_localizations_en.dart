@@ -1058,7 +1058,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get validateOnEdit => 'Validate on edit';
 
   @override
-  String get clearRecentWorkspaces => 'Clear recent workspaces';
+  String get clearRecentWorkspaces => 'Clear recent history';
 
   @override
   String get editingButtonsPosition => 'Editing buttons position';
@@ -5413,4 +5413,54 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get wsPropertiesUnavailable =>
       'The inspected element is unavailable. Inspect an element to continue.';
+
+  @override
+  String get searchTextCategory => 'Text';
+
+  @override
+  String get searchDocumentsCategory => 'Documents';
+
+  @override
+  String get searchTopicsCategory => 'Topics';
+
+  @override
+  String get searchCurrentDocument => 'Current document';
+
+  @override
+  String get searchCurrentWorkspace => 'Current workspace';
+
+  @override
+  String get recentDocuments => 'Recent documents';
+
+  @override
+  String get recentWorkspaces => 'Recent workspaces';
+
+  @override
+  String get browseNotes => 'Browse Notes';
+
+  @override
+  String get searchActionsCommand => 'Search Actions';
+
+  @override
+  String get searchDocumentsCommand => 'Search Documents';
+
+  @override
+  String get searchWorkspaceCommand => 'Search workspace text';
+
+  @override
+  String get searchTopicsCommand => 'Search Topics';
+
+  @override
+  String get searchRecentCommand => 'Search Recent';
+
+  @override
+  String searchQueryHint(String category) {
+    return 'Search $category…';
+  }
+
+  @override
+  String get searchResourceUnavailable => 'This resource is unavailable.';
+
+  @override
+  String get notesSync => 'Sync notes';
 }

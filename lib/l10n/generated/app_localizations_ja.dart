@@ -1014,7 +1014,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get validateOnEdit => '編集時に検証';
 
   @override
-  String get clearRecentWorkspaces => '最近使ったワークスペースを消去';
+  String get clearRecentWorkspaces => '最近の履歴を消去';
 
   @override
   String get editingButtonsPosition => '編集ボタンの位置';
@@ -5246,4 +5246,54 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get wsPropertiesUnavailable => '確認中の要素は利用できません。続行するには要素を確認してください。';
+
+  @override
+  String get searchTextCategory => 'テキスト';
+
+  @override
+  String get searchDocumentsCategory => 'ドキュメント';
+
+  @override
+  String get searchTopicsCategory => 'トピック';
+
+  @override
+  String get searchCurrentDocument => '現在のドキュメント';
+
+  @override
+  String get searchCurrentWorkspace => '現在のワークスペース';
+
+  @override
+  String get recentDocuments => '最近のドキュメント';
+
+  @override
+  String get recentWorkspaces => '最近のワークスペース';
+
+  @override
+  String get browseNotes => 'ノートを参照';
+
+  @override
+  String get searchActionsCommand => 'アクションを検索';
+
+  @override
+  String get searchDocumentsCommand => 'ドキュメントを検索';
+
+  @override
+  String get searchWorkspaceCommand => 'ワークスペースのテキストを検索';
+
+  @override
+  String get searchTopicsCommand => 'トピックを検索';
+
+  @override
+  String get searchRecentCommand => '最近の項目を検索';
+
+  @override
+  String searchQueryHint(String category) {
+    return '$categoryを検索…';
+  }
+
+  @override
+  String get searchResourceUnavailable => 'このリソースは利用できません。';
+
+  @override
+  String get notesSync => 'ノートを同期';
 }

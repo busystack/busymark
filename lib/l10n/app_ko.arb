@@ -1012,7 +1012,7 @@
   "@validateOnEdit": {
     "description": "Validation setting label."
   },
-  "clearRecentWorkspaces": "최근 작업공간 지우기",
+  "clearRecentWorkspaces": "최근 기록 지우기",
   "@clearRecentWorkspaces": {
     "description": "Settings action label for clearing recent workspaces."
   },
@@ -5149,5 +5149,21 @@
   "wsInsertElements": "요소 삽입",
   "wsAdmonitionsAndQuotes": "안내 및 인용",
   "wsSemanticText": "의미 텍스트",
-  "wsPropertiesUnavailable": "검사 중인 요소를 사용할 수 없습니다. 계속하려면 요소를 검사하세요."
+  "wsPropertiesUnavailable": "검사 중인 요소를 사용할 수 없습니다. 계속하려면 요소를 검사하세요.",
+  "searchTextCategory": "텍스트",
+  "searchDocumentsCategory": "문서",
+  "searchTopicsCategory": "주제",
+  "searchCurrentDocument": "현재 문서",
+  "searchCurrentWorkspace": "현재 작업 공간",
+  "recentDocuments": "최근 문서",
+  "recentWorkspaces": "최근 작업 공간",
+  "browseNotes": "노트 찾아보기",
+  "searchActionsCommand": "작업 검색",
+  "searchDocumentsCommand": "문서 검색",
+  "searchWorkspaceCommand": "작업 공간 텍스트 검색",
+  "searchTopicsCommand": "주제 검색",
+  "searchRecentCommand": "최근 항목 검색",
+  "searchQueryHint": "{category} 검색…",
+  "searchResourceUnavailable": "이 리소스를 사용할 수 없습니다.",
+  "notesSync": "노트 동기화"
 }

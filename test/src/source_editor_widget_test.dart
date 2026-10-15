@@ -1,4 +1,5 @@
 import 'package:busymark/src/editor/link_destination.dart';
+import 'package:busymark/src/assets/document_media_context.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
@@ -52,6 +53,74 @@ import 'package:markdown/markdown.dart' as md;
 import 'package:yaru/yaru.dart';
 
 void main() {
+  for (final readOnly in [false, true]) {
+    testWidgets(
+      'Source projects shared matches and preserves read-only replacement ($readOnly)',
+      (tester) async {
+        const source = 'cat cat';
+        await tester.pumpWidget(
+          MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: Scaffold(
+              body: DocumentReadOnlyScope(
+                readOnly: readOnly,
+                child: BusyMarkSourceEditor(
+                  text: source,
+                  language: SourceSyntaxLanguage.markdown,
+                  filePath: '/project/shared.md',
+                  diagnostics: const [],
+                  editorFontSize: 14,
+                  wordWrap: true,
+                  searchActive: true,
+                  searchOptions: const SourceSearchOptions(query: 'cat'),
+                  searchSnapshot: SourceSearchSnapshot(
+                    source: source,
+                    result: SourceSearchResult(
+                      options: const SourceSearchOptions(query: 'cat'),
+                      matches: const [
+                        SourceSearchMatch(
+                          fullStart: 4,
+                          fullEnd: 7,
+                          visibleStart: 4,
+                          visibleEnd: 7,
+                          hidden: false,
+                        ),
+                      ],
+                    ),
+                  ),
+                  onSearchOptionsChanged: (_) {},
+                  onChanged: (_, _) {},
+                  onOpenSearch: () {},
+                  onCloseSearch: () {},
+                ),
+              ),
+            ),
+          ),
+        );
+        await tester.pump(const Duration(milliseconds: 400));
+        final controller = tester
+            .widgetList<TextField>(find.byType(TextField))
+            .map((field) => field.controller)
+            .whereType<BusyMarkSourceEditingController>()
+            .single;
+        expect(controller.searchResult.totalMatchCount, 1);
+        expect(controller.searchResult.matches.single.fullStart, 4);
+        expect(controller.searchResult.matches.single.fullEnd, 7);
+        final l10n = AppLocalizationsEn();
+        for (final tooltip in [
+          l10n.sourceSearchReplaceCurrent,
+          l10n.sourceSearchReplaceAndFindNext,
+          l10n.sourceSearchReplaceAll,
+        ]) {
+          final button = tester
+              .widgetList<YaruIconButton>(find.byType(YaruIconButton))
+              .singleWhere((b) => b.tooltip == tooltip);
+          expect(button.onPressed, readOnly ? isNull : isNotNull);
+        }
+      },
+    );
+  }
   for (final stale in [false, true]) {
     testWidgets(
       'Source target chooser ${stale ? 'rejects changed selection' : 'preserves selected text and formatting'}',

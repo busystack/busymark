@@ -1,3 +1,5 @@
+import '../editor/wysiwyg/wysiwyg_commands.dart';
+import '../markdown/busymark_document.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -28,10 +30,12 @@ class BusyMarkContextCommandAction
   BusyMarkContextCommandAction({
     required this.isCommandEnabled,
     required this.onCommand,
+    this.captureTarget,
   });
 
   final bool Function(String commandId) isCommandEnabled;
   final void Function(String commandId) onCommand;
+  final BusyMarkContextCommandSnapshot Function()? captureTarget;
 
   @override
   bool isEnabled(BusyMarkContextCommandIntent intent) {
@@ -43,6 +47,14 @@ class BusyMarkContextCommandAction
     onCommand(intent.commandId);
     return null;
   }
+}
+
+/// Editors capture their actual selection before the query receives focus.
+/// Validation reads that editor again; it never restores a different selection.
+class BusyMarkContextCommandSnapshot {
+  const BusyMarkContextCommandSnapshot(this._validate);
+  final bool Function() _validate;
+  bool get isCurrent => _validate();
 }
 
 enum BusyMarkCommandScope {
@@ -153,7 +165,7 @@ class BusyMarkCommandRegistry {
     if (command == null || command.execute == null) {
       return false;
     }
-    if (!_isContextual(command) || contextTarget == null) {
+    if (!isContextual(command) || contextTarget == null) {
       return command.enabled();
     }
     final action = Actions.maybeFind<BusyMarkContextCommandIntent>(
@@ -167,7 +179,7 @@ class BusyMarkCommandRegistry {
     if (command == null || !canExecuteInContext(id, contextTarget)) {
       return false;
     }
-    if (_isContextual(command) && contextTarget != null) {
+    if (isContextual(command) && contextTarget != null) {
       Actions.maybeInvoke(contextTarget, BusyMarkContextCommandIntent(id));
       return true;
     }
@@ -175,12 +187,39 @@ class BusyMarkCommandRegistry {
     return true;
   }
 
-  bool _isContextual(BusyMarkCommand command) {
+  bool isContextual(BusyMarkCommand command) {
     return command.scope == BusyMarkCommandScope.editor ||
         command.scope == BusyMarkCommandScope.textEditing ||
         command.id == BusyMarkCommandIds.treeMoveLineUp ||
         command.id == BusyMarkCommandIds.treeMoveLineDown;
   }
+
+  bool requiresDocumentTarget(BusyMarkCommand command) =>
+      isContextual(command) ||
+      command.scope == BusyMarkCommandScope.documentView ||
+      const {
+        BusyMarkCommandIds.search,
+        BusyMarkCommandIds.save,
+        BusyMarkCommandIds.export,
+        BusyMarkCommandIds.closeTab,
+        BusyMarkCommandIds.elementProperties,
+        BusyMarkCommandIds.references,
+        BusyMarkCommandIds.sidebarOutline,
+        BusyMarkCommandIds.localHistory,
+        BusyMarkCommandIds.findLocalHistory,
+      }.contains(command.id);
+
+  bool requiresWorkspaceTarget(BusyMarkCommand command) =>
+      command.scope == BusyMarkCommandScope.sidebar ||
+      const {
+        BusyMarkCommandIds.syncNotes,
+        BusyMarkCommandIds.exportNotes,
+        BusyMarkCommandIds.importNotesFolder,
+        BusyMarkCommandIds.importNotesFile,
+        BusyMarkCommandIds.nextTab,
+        BusyMarkCommandIds.previousTab,
+        BusyMarkCommandIds.closeAllTabs,
+      }.contains(command.id);
 
   bool shortcutAccepts(String id, KeyEvent event, HardwareKeyboard keyboard) {
     return _byId[id]?.shortcut?.activator.accepts(event, keyboard) ?? false;
@@ -203,10 +242,13 @@ class BusyMarkCommandRegistry {
   Map<ShortcutActivator, Intent> shortcutIntents({
     required Set<BusyMarkCommandScope> scopes,
     required Intent Function(String commandId) intentFor,
+    Set<String> excludedIds = const {},
   }) {
     return {
       for (final command in commands)
-        if (scopes.contains(command.scope) && command.shortcut != null)
+        if (scopes.contains(command.scope) &&
+            command.shortcut != null &&
+            !excludedIds.contains(command.id))
           command.shortcut!.activator: intentFor(command.id),
     };
   }
@@ -250,6 +292,15 @@ abstract final class BusyMarkCommandIds {
   static const fullScreen = 'view.fullScreen';
   static const back = 'navigation.back';
   static const search = 'search.find';
+  static const searchWorkspace = 'search.workspace';
+  static const searchTopics = 'search.topics';
+  static const searchRecent = 'search.recent';
+  static const newNote = 'notes.create';
+  static const browseNotes = 'notes.browse';
+  static const syncNotes = 'notes.sync';
+  static const exportNotes = 'notes.export';
+  static const importNotesFolder = 'notes.importFolder';
+  static const importNotesFile = 'notes.importFile';
   static const keyboardShortcuts = 'help.keyboardShortcuts';
   static const quickOpen = 'workspace.quickOpen';
   static const commandPalette = 'view.commandPalette';
@@ -333,6 +384,94 @@ abstract final class BusyMarkCommandCatalog {
     }
 
     final commands = <BusyMarkCommand>[
+      command(
+        id: BusyMarkCommandIds.newNote,
+        label: (c) => c.l10n.nextcloudNewNote,
+        category: (c) => c.l10n.nextcloudNotes,
+        scope: BusyMarkCommandScope.application,
+      ),
+      command(
+        id: BusyMarkCommandIds.browseNotes,
+        label: (c) => c.l10n.browseNotes,
+        category: (c) => c.l10n.nextcloudNotes,
+        scope: BusyMarkCommandScope.application,
+      ),
+      command(
+        id: BusyMarkCommandIds.syncNotes,
+        label: (c) => c.l10n.notesSync,
+        category: (c) => c.l10n.nextcloudNotes,
+        scope: BusyMarkCommandScope.application,
+      ),
+      command(
+        id: BusyMarkCommandIds.exportNotes,
+        label: (c) => c.l10n.notesExport,
+        category: (c) => c.l10n.nextcloudNotes,
+        scope: BusyMarkCommandScope.application,
+      ),
+      command(
+        id: BusyMarkCommandIds.importNotesFolder,
+        label: (c) => '${c.l10n.notesImport} · ${c.l10n.folder}',
+        category: (c) => c.l10n.nextcloudNotes,
+        scope: BusyMarkCommandScope.application,
+      ),
+      command(
+        id: BusyMarkCommandIds.importNotesFile,
+        label: (c) => '${c.l10n.notesImport} · ${c.l10n.fileTypeMarkdown}',
+        category: (c) => c.l10n.nextcloudNotes,
+        scope: BusyMarkCommandScope.application,
+      ),
+      for (final entry in writersideCommands.entries)
+        command(
+          id: entry.key,
+          label: (context) => writersideCommandLabel(context, entry.value),
+          category: (context) => 'Writerside',
+          scope: BusyMarkCommandScope.editor,
+        ),
+      command(
+        id: BusyMarkCommandIds.searchWorkspace,
+        label: (context) => context.l10n.searchWorkspaceCommand,
+        category: (c) => c.l10n.search,
+        scope: BusyMarkCommandScope.application,
+        shortcut: const BusyMarkShortcutDefinition(
+          label: 'Ctrl+Shift+F',
+          activator: SingleActivator(
+            LogicalKeyboardKey.keyF,
+            control: true,
+            shift: true,
+          ),
+          gtkAccelerator: '<Primary><Shift>f',
+        ),
+      ),
+      command(
+        id: BusyMarkCommandIds.searchTopics,
+        label: (context) => context.l10n.searchTopicsCommand,
+        category: (c) => c.l10n.search,
+        scope: BusyMarkCommandScope.application,
+        shortcut: const BusyMarkShortcutDefinition(
+          label: 'Ctrl+Shift+T',
+          activator: SingleActivator(
+            LogicalKeyboardKey.keyT,
+            control: true,
+            shift: true,
+          ),
+          gtkAccelerator: '<Primary><Shift>t',
+        ),
+      ),
+      command(
+        id: BusyMarkCommandIds.searchRecent,
+        label: (context) => context.l10n.searchRecentCommand,
+        category: (c) => c.l10n.search,
+        scope: BusyMarkCommandScope.application,
+        shortcut: const BusyMarkShortcutDefinition(
+          label: 'Ctrl+Alt+O',
+          activator: SingleActivator(
+            LogicalKeyboardKey.keyO,
+            control: true,
+            alt: true,
+          ),
+          gtkAccelerator: '<Primary><Alt>o',
+        ),
+      ),
       command(
         id: BusyMarkCommandIds.elementProperties,
         label: (context) => context.l10n.wsElementProperties,
@@ -500,10 +639,11 @@ abstract final class BusyMarkCommandCatalog {
     BusyMarkAppShortcutAction.fullScreen => context.l10n.fullScreen,
     BusyMarkAppShortcutAction.back => context.l10n.back,
     BusyMarkAppShortcutAction.search => context.l10n.search,
-    BusyMarkAppShortcutAction.quickOpen => context.l10n.quickOpen,
+    BusyMarkAppShortcutAction.quickOpen => context.l10n.searchDocumentsCommand,
     BusyMarkAppShortcutAction.keyboardShortcuts =>
       context.l10n.keyboardShortcuts,
-    BusyMarkAppShortcutAction.commandPalette => context.l10n.commandPalette,
+    BusyMarkAppShortcutAction.commandPalette =>
+      context.l10n.searchActionsCommand,
     BusyMarkAppShortcutAction.syntaxReference => context.l10n.syntaxReference,
     BusyMarkAppShortcutAction.settings => context.l10n.settings,
     BusyMarkAppShortcutAction.nextTab => context.l10n.shortcutNextTab,
@@ -764,3 +904,47 @@ abstract final class BusyMarkCommandCatalog {
     }
   }
 }
+
+/// The same typed commands used by the consolidated Writerside toolbar.
+final writersideCommands = <String, BusyWritersideToolbarCommand>{
+  for (final command in BusyWritersideInsertCommand.values)
+    'writerside.insert${command.name[0].toUpperCase()}${command.name.substring(1)}':
+        BusyWritersideToolbarInsert(command),
+  for (final style in BusyAdmonitionStyle.values)
+    'writerside.${style.name}': BusyWritersideToolbarAdmonition(style),
+  for (final command in [
+    BusyWysiwygInlineCommand.uiControl,
+    BusyWysiwygInlineCommand.filePath,
+    BusyWysiwygInlineCommand.uiPath,
+    BusyWysiwygInlineCommand.shortcut,
+  ])
+    'writerside.${command.name}': BusyWritersideToolbarSemantic(command),
+};
+String writersideCommandLabel(
+  BuildContext context,
+  BusyWritersideToolbarCommand command,
+) => switch (command) {
+  BusyWritersideToolbarInsert(:final command) => switch (command) {
+    BusyWritersideInsertCommand.procedure => context.l10n.procedure,
+    BusyWritersideInsertCommand.tabs => context.l10n.tabs,
+    BusyWritersideInsertCommand.definitionList => context.l10n.wsDefinitionList,
+    BusyWritersideInsertCommand.include => context.l10n.wsIncludeContent,
+    BusyWritersideInsertCommand.variable => context.l10n.wsVariableReference,
+    BusyWritersideInsertCommand.video => context.l10n.video,
+    BusyWritersideInsertCommand.tldr => context.l10n.wsTldr,
+    BusyWritersideInsertCommand.convertListToProcedure =>
+      context.l10n.wsConvertList,
+  },
+  BusyWritersideToolbarAdmonition(:final style) => switch (style) {
+    BusyAdmonitionStyle.tip => context.l10n.tip,
+    BusyAdmonitionStyle.note => context.l10n.note,
+    BusyAdmonitionStyle.warning => context.l10n.warning,
+    BusyAdmonitionStyle.quote => context.l10n.quote,
+  },
+  BusyWritersideToolbarSemantic(:final command) => switch (command) {
+    BusyWysiwygInlineCommand.uiControl => context.l10n.wsUiControl,
+    BusyWysiwygInlineCommand.filePath => context.l10n.wsFilePath,
+    BusyWysiwygInlineCommand.uiPath => context.l10n.wsUiPath,
+    _ => context.l10n.keyboardShortcuts,
+  },
+};

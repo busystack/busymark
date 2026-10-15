@@ -1311,6 +1311,7 @@ const _sharedEnglishMatches = <String>{
 
 const _localeSpecificEnglishMatches = <String, Set<String>>{
   'de': {
+    'searchTextCategory', // Text is the German noun as well.
     'wsElementSelector', // Element is also the German noun.
     'tocTemplateName', // Name and Format are also German words.
     'tocTemplateFormat',
@@ -1337,6 +1338,7 @@ const _localeSpecificEnglishMatches = <String, Set<String>>{
     'shortcutGroupGeneral',
   },
   'fr': {
+    'searchDocumentsCategory', // Documents is also the French plural.
     'wsModule', // Module is also the French noun.
     'htmlInstance', // Instance is also the French technical term.
     'actions',

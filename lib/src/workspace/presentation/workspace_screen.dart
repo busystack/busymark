@@ -1,3 +1,6 @@
+import '../../search/search_result_preview.dart';
+import '../../search/search_session.dart';
+import '../../search/search_sidebar.dart';
 import '../../editor/wysiwyg/wysiwyg_commands.dart';
 import '../../writerside/writerside_property_validation.dart';
 import '../../writerside/writerside_effective_properties.dart';
@@ -51,7 +54,6 @@ import '../../app/linux/linux_page_frame.dart';
 import '../../app/linux/linux_header_style.dart';
 import '../../app/busymark_glyphs.dart';
 import '../../app/busymark_main_menu.dart';
-import '../../app/busymark_search_field.dart';
 import '../../app/busymark_toast.dart';
 import '../../app/command_registry.dart';
 import '../../app/localization.dart';
@@ -80,7 +82,6 @@ import '../../editor/source/source_controller.dart';
 import '../../editor/source/source_autocomplete.dart';
 import '../../editor/source/source_document.dart';
 import '../../editor/source/source_editor.dart';
-import '../../editor/source/source_search.dart';
 import '../../editor/wysiwyg/wysiwyg_editor.dart';
 import '../../editor/wysiwyg/writerside_editing_adapter.dart';
 import '../../editor/wysiwyg/wysiwyg_session_state.dart';
@@ -177,10 +178,6 @@ final _sourceNavigationTargetProvider =
       _SourceNavigationTargetController,
       _SourceNavigationTarget?
     >(_SourceNavigationTargetController.new);
-final _workspaceSearchProvider =
-    NotifierProvider<_WorkspaceSearchController, _WorkspaceSearchState>(
-      _WorkspaceSearchController.new,
-    );
 final _searchNavigationTargetProvider =
     NotifierProvider<
       _SearchNavigationTargetController,
@@ -221,189 +218,6 @@ class _SourceNavigationTargetController
 
   void set(_SourceNavigationTarget? target) {
     state = target;
-  }
-}
-
-class _WorkspaceSearchController extends Notifier<_WorkspaceSearchState> {
-  static const _debounceDelay = Duration(milliseconds: 120);
-
-  Timer? _debounce;
-  final _worker = SourceSearchWorker();
-  int _resultLimit = _maxWorkspaceSearchResults;
-  late Future<String> Function(String path) _loadText;
-  var _request = 0;
-  var _disposed = false;
-
-  @override
-  _WorkspaceSearchState build() {
-    _loadText = ref.read(workspaceServiceProvider).loadText;
-    ref.listen<WorkspaceState>(workspaceControllerProvider, (previous, next) {
-      final activeBufferChanged =
-          previous?.activeBufferId != next.activeBufferId;
-      var shouldRefresh = _workspaceSearchInputsChanged(previous, next);
-      if (activeBufferChanged && !state.active) {
-        final options = next.activeBuffer?.editorState.searchOptions;
-        if (options != null) {
-          state = state
-              .withOptions(options)
-              .copyWith(matches: const [], searching: false);
-        }
-      } else if (!activeBufferChanged) {
-        final previousOptions =
-            previous?.activeBuffer?.editorState.searchOptions;
-        final nextOptions = next.activeBuffer?.editorState.searchOptions;
-        if (nextOptions != null &&
-            previousOptions != nextOptions &&
-            !_sameSourceSearchOptions(state.options, nextOptions)) {
-          state = state
-              .withOptions(nextOptions)
-              .copyWith(matches: const [], searching: false);
-          shouldRefresh = true;
-        }
-      }
-      if (shouldRefresh) {
-        refresh(next);
-      }
-    });
-    ref.onDispose(() {
-      _disposed = true;
-      _request += 1;
-      _debounce?.cancel();
-      _worker.dispose();
-    });
-    return const _WorkspaceSearchState();
-  }
-
-  void set(_WorkspaceSearchState searchState) {
-    final inputChanged =
-        state.query != searchState.query ||
-        state.caseSensitive != searchState.caseSensitive ||
-        state.wholeWord != searchState.wholeWord ||
-        state.regex != searchState.regex ||
-        state.active != searchState.active;
-    if (inputChanged) _resultLimit = _maxWorkspaceSearchResults;
-    state = searchState.copyWith(
-      matches: inputChanged ? const [] : state.matches,
-      searching: false,
-    );
-    final buffer = ref.read(workspaceControllerProvider).activeBuffer;
-    if (buffer != null &&
-        !_sameSourceSearchOptions(
-          buffer.editorState.searchOptions,
-          state.options,
-        )) {
-      ref
-          .read(workspaceControllerProvider.notifier)
-          .updateActiveEditorState(
-            buffer.editorState.copyWith(searchOptions: state.options),
-          );
-    }
-    _schedule(ref.read(workspaceControllerProvider));
-  }
-
-  void refresh(WorkspaceState workspaceState) {
-    if (!state.active || state.options.query.isEmpty) {
-      return;
-    }
-    _schedule(workspaceState);
-  }
-
-  Future<bool> submit() async {
-    _debounce?.cancel();
-    _worker.cancel();
-    final request = ++_request;
-    final workspaceState = ref.read(workspaceControllerProvider);
-    final options = state.options;
-    if (!state.active ||
-        options.query.isEmpty ||
-        workspaceState.workspace == null) {
-      return false;
-    }
-    state = state.copyWith(matches: const [], searching: true);
-    await _runSearch(
-      request: request,
-      workspaceState: workspaceState,
-      options: options,
-    );
-    return !_disposed && request == _request;
-  }
-
-  void _schedule(WorkspaceState workspaceState) {
-    _debounce?.cancel();
-    _worker.cancel();
-    final request = ++_request;
-    final workspace = workspaceState.workspace;
-    final options = state.options;
-    if (!state.active || options.query.isEmpty || workspace == null) {
-      final clearMatches = options.query.isEmpty || workspace == null;
-      if (state.searching || (clearMatches && state.matches.isNotEmpty)) {
-        state = state.copyWith(
-          matches: clearMatches ? const [] : state.matches,
-          searching: false,
-        );
-      }
-      return;
-    }
-    state = state.copyWith(
-      matches: const [],
-      searching: true,
-      truncated: false,
-      skippedFiles: const [],
-      invalidRegex: false,
-      hasZeroLengthMatches: false,
-    );
-    _debounce = Timer(_debounceDelay, () {
-      _debounce = null;
-      unawaited(
-        _runSearch(
-          request: request,
-          workspaceState: workspaceState,
-          options: options,
-        ),
-      );
-    });
-  }
-
-  Future<void> _runSearch({
-    required int request,
-    required WorkspaceState workspaceState,
-    required SourceSearchOptions options,
-  }) async {
-    try {
-      final result = await _loadWorkspaceSearchMatches(
-        workspaceState,
-        options,
-        loadText: _loadText,
-        isCancelled: () => _disposed || request != _request,
-        worker: _worker,
-        maximumResults: _resultLimit,
-      );
-      if (_disposed || request != _request) {
-        return;
-      }
-      state = state.copyWith(
-        matches: result.matches,
-        searching: false,
-        truncated: result.truncated,
-        skippedFiles: result.skippedFiles,
-        invalidRegex: result.invalidRegex,
-        hasZeroLengthMatches: result.hasZeroLengthMatches,
-      );
-    } on Object {
-      if (_disposed || request != _request) {
-        return;
-      }
-      state = state.copyWith(
-        matches: const [],
-        searching: false,
-        skippedFiles: [workspaceState.workspace?.filesystemRootPath ?? ''],
-      );
-    }
-  }
-
-  void showMore() {
-    _resultLimit += _maxWorkspaceSearchResults;
-    _schedule(ref.read(workspaceControllerProvider));
   }
 }
 
@@ -493,149 +307,6 @@ class _SourceNavigationTarget {
   final bool xmlChildren;
 }
 
-class _WorkspaceSearchState {
-  const _WorkspaceSearchState({
-    this.active = false,
-    this.query = '',
-    this.caseSensitive = false,
-    this.wholeWord = false,
-    this.regex = false,
-    this.matches = const [],
-    this.searching = false,
-    this.truncated = false,
-    this.skippedFiles = const [],
-    this.invalidRegex = false,
-    this.hasZeroLengthMatches = false,
-  });
-
-  final bool active;
-  final String query;
-  final bool caseSensitive;
-  final bool wholeWord;
-  final bool regex;
-  final List<_WorkspaceSearchMatch> matches;
-  final bool searching;
-  final bool truncated;
-  final List<String> skippedFiles;
-  final bool invalidRegex;
-  final bool hasZeroLengthMatches;
-
-  SourceSearchOptions get options => SourceSearchOptions(
-    query: query,
-    caseSensitive: caseSensitive,
-    wholeWord: wholeWord,
-    regex: regex,
-  );
-
-  _WorkspaceSearchState copyWith({
-    bool? active,
-    String? query,
-    bool? caseSensitive,
-    bool? wholeWord,
-    bool? regex,
-    List<_WorkspaceSearchMatch>? matches,
-    bool? searching,
-    bool? truncated,
-    List<String>? skippedFiles,
-    bool? invalidRegex,
-    bool? hasZeroLengthMatches,
-  }) {
-    return _WorkspaceSearchState(
-      active: active ?? this.active,
-      query: query ?? this.query,
-      caseSensitive: caseSensitive ?? this.caseSensitive,
-      wholeWord: wholeWord ?? this.wholeWord,
-      regex: regex ?? this.regex,
-      matches: matches ?? this.matches,
-      searching: searching ?? this.searching,
-      truncated: truncated ?? this.truncated,
-      skippedFiles: skippedFiles ?? this.skippedFiles,
-      invalidRegex: invalidRegex ?? this.invalidRegex,
-      hasZeroLengthMatches: hasZeroLengthMatches ?? this.hasZeroLengthMatches,
-    );
-  }
-
-  _WorkspaceSearchState withOptions(SourceSearchOptions options) {
-    return copyWith(
-      query: options.query,
-      caseSensitive: options.caseSensitive,
-      wholeWord: options.wholeWord,
-      regex: options.regex,
-    );
-  }
-}
-
-bool _sameSourceSearchOptions(
-  SourceSearchOptions first,
-  SourceSearchOptions second,
-) {
-  return first.query == second.query &&
-      first.caseSensitive == second.caseSensitive &&
-      first.wholeWord == second.wholeWord &&
-      first.regex == second.regex;
-}
-
-bool _workspaceSearchInputsChanged(
-  WorkspaceState? previous,
-  WorkspaceState next,
-) {
-  if (previous == null ||
-      previous.activeBufferId != next.activeBufferId ||
-      previous.activeText != next.activeText) {
-    return true;
-  }
-  if (previous.documentBuffers.length != next.documentBuffers.length) {
-    return true;
-  }
-  for (var index = 0; index < next.documentBuffers.length; index++) {
-    final before = previous.documentBuffers[index];
-    final after = next.documentBuffers[index];
-    if (before.id != after.id ||
-        before.filePath != after.filePath ||
-        before.revision != after.revision ||
-        before.text != after.text) {
-      return true;
-    }
-  }
-  final previousWorkspace = previous.workspace;
-  final nextWorkspace = next.workspace;
-  if (identical(previousWorkspace, nextWorkspace)) {
-    return false;
-  }
-  if (previousWorkspace == null || nextWorkspace == null) {
-    return previousWorkspace != nextWorkspace;
-  }
-  final previousActivePath = previous.activeBuffer?.filePath;
-  final nextActivePath = next.activeBuffer?.filePath;
-  return previousActivePath != nextActivePath ||
-      !_sameWorkspaceSearchFiles(previousWorkspace.files, nextWorkspace.files);
-}
-
-bool _sameWorkspaceSearchFiles(
-  List<DocumentFile> first,
-  List<DocumentFile> second,
-) {
-  final firstSearchable = first.where(_isOpenableTextDocument).toList()
-    ..sort((left, right) => left.absolutePath.compareTo(right.absolutePath));
-  final secondSearchable = second.where(_isOpenableTextDocument).toList()
-    ..sort((left, right) => left.absolutePath.compareTo(right.absolutePath));
-  if (firstSearchable.length != secondSearchable.length) {
-    return false;
-  }
-  for (var index = 0; index < firstSearchable.length; index++) {
-    final left = firstSearchable[index];
-    final right = secondSearchable[index];
-    if (left.absolutePath != right.absolutePath ||
-        left.relativePath != right.relativePath ||
-        left.kind != right.kind ||
-        left.size != right.size ||
-        left.lastModified != right.lastModified) {
-      return false;
-    }
-  }
-  return true;
-}
-
 class _SearchNavigationTarget {
   const _SearchNavigationTarget({
     required this.filePath,
@@ -658,44 +329,10 @@ class _SearchNavigationTarget {
   final int request;
 }
 
-class _ToggleSearchIntent extends Intent {
-  const _ToggleSearchIntent();
-}
-
-class _OpenSearchIntent extends Intent {
-  const _OpenSearchIntent();
-}
-
 class _SelectSidebarTabIntent extends Intent {
   const _SelectSidebarTabIntent(this.tab);
 
   final _SidebarTab tab;
-}
-
-final _headerSearchFocusRequestProvider =
-    NotifierProvider<_HeaderSearchFocusRequest, int>(
-      _HeaderSearchFocusRequest.new,
-    );
-
-class _HeaderSearchFocusRequest extends Notifier<int> {
-  @override
-  int build() => 0;
-  void request() => state++;
-}
-
-final _searchReturnFocusProvider = Provider<_SearchReturnFocus>(
-  (ref) => _SearchReturnFocus(),
-);
-
-class _SearchReturnFocus {
-  FocusNode? node;
-  void restore() {
-    final target = node;
-    node = null;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (target?.context?.mounted == true) target!.requestFocus();
-    });
-  }
 }
 
 Future<void> _publishWritersideTitleDialog(
@@ -900,18 +537,18 @@ class WorkspaceScreen extends ConsumerWidget {
     if (workspace == null) {
       return const WelcomeScreen();
     }
-    final searchState = ref.watch(_workspaceSearchProvider);
+    final searchState = ref.watch(searchSessionProvider);
     final documentViewMode =
         state.activeBuffer?.editorState.mode ?? settings.documentViewMode;
     final gitState = ref.watch(gitControllerProvider);
     final localHistoryState = ref.watch(localHistoryControllerProvider);
-    final searchResults = _workspaceSearchResults(context, searchState.matches);
 
     final colors = BusyMarkSurfaceColors.of(context);
     final headerBar = ref.watch(linuxHeaderBarServiceProvider);
     final settingsController = ref.read(appSettingsControllerProvider.notifier);
     final sidebarVisible =
-        settings.sidebarVisible && _hasWorkspaceSidebar(workspace);
+        searchState.active ||
+        (settings.sidebarVisible && _hasWorkspaceSidebar(workspace));
     final documentOutline = _activeDocumentOutline(state);
     final canExportPdf = canExportWorkspacePdf(state);
     final canExportHtml = canExportWorkspaceHtml(state);
@@ -922,8 +559,6 @@ class WorkspaceScreen extends ConsumerWidget {
         workspace: workspace,
         outline: documentOutline,
         searchState: searchState,
-        searchResults: searchResults,
-        onOpenSearchResult: (result) => _openSearchResult(context, ref, result),
       ),
     );
     final workspaceContent = Column(
@@ -981,44 +616,15 @@ class WorkspaceScreen extends ConsumerWidget {
         _handleHeaderBarAction(context, ref, event.action);
       });
     });
-    ref.listen(headerBarSearchEventsProvider, (previous, next) {
-      next.whenData((event) {
-        switch (event) {
-          case HeaderBarSearchQueryChanged(:final query):
-            final current = ref.read(_workspaceSearchProvider);
-            if (current.query == query && current.active) {
-              return;
-            }
-            _clearGitDetailSelection(ref);
-            ref
-                .read(_workspaceSearchProvider.notifier)
-                .set(current.copyWith(active: true, query: query));
-            unawaited(settingsController.setSidebarVisible(true));
-          case HeaderBarSearchSubmitted(:final query):
-            final current = ref.read(_workspaceSearchProvider);
-            ref
-                .read(_workspaceSearchProvider.notifier)
-                .set(current.copyWith(active: true, query: query));
-            unawaited(settingsController.setSidebarVisible(true));
-            unawaited(_submitSearch(context, ref));
-          case HeaderBarSearchCleared():
-            _clearSearchQuery(ref);
-          case HeaderBarSearchEscapePressed():
-            _closeSearch(ref);
-          case HeaderBarSearchFocusChanged():
-            break;
-        }
-      });
-    });
-    ref.listen<int>(workspaceSearchOpenRequestProvider, (previous, next) {
-      if (next != previous) {
-        _openSearch(ref);
-      }
-    });
-    ref.listen<int>(workspaceSearchCloseRequestProvider, (previous, next) {
-      if (next != previous) {
-        _closeSearch(ref);
-      }
+    ref.listen(workspaceNavigationCommandProvider, (_, request) {
+      if (request == null) return;
+      final tab = switch (request.$1) {
+        BusyMarkCommandIds.sidebarFiles => _SidebarTab.files,
+        BusyMarkCommandIds.sidebarToc => _SidebarTab.toc,
+        BusyMarkCommandIds.sidebarGit => _SidebarTab.git,
+        _ => null,
+      };
+      if (tab != null) _selectSidebarShortcut(ref, tab);
     });
     ref.listen<int>(clipboardHistoryOpenRequestProvider, (previous, next) {
       if (next == previous) return;
@@ -1087,8 +693,6 @@ class WorkspaceScreen extends ConsumerWidget {
       enabled: headerBar.isAvailable,
       child: Shortcuts(
         shortcuts: {
-          commandRegistry[BusyMarkCommandIds.search]!.shortcut!.activator:
-              const _OpenSearchIntent(),
           commandRegistry[BusyMarkCommandIds.sidebarFiles]!.shortcut!.activator:
               const _SelectSidebarTabIntent(_SidebarTab.files),
           const SingleActivator(LogicalKeyboardKey.numpad1, control: true):
@@ -1097,13 +701,6 @@ class WorkspaceScreen extends ConsumerWidget {
               const _SelectSidebarTabIntent(_SidebarTab.toc),
           const SingleActivator(LogicalKeyboardKey.numpad2, control: true):
               const _SelectSidebarTabIntent(_SidebarTab.toc),
-          commandRegistry[BusyMarkCommandIds.sidebarOutline]!
-              .shortcut!
-              .activator: const _SelectSidebarTabIntent(
-            _SidebarTab.outline,
-          ),
-          const SingleActivator(LogicalKeyboardKey.numpad3, control: true):
-              const _SelectSidebarTabIntent(_SidebarTab.outline),
           commandRegistry[BusyMarkCommandIds.sidebarGit]!.shortcut!.activator:
               const _SelectSidebarTabIntent(_SidebarTab.git),
           const SingleActivator(LogicalKeyboardKey.numpad4, control: true):
@@ -1122,18 +719,6 @@ class WorkspaceScreen extends ConsumerWidget {
         },
         child: Actions(
           actions: {
-            _OpenSearchIntent: CallbackAction<_OpenSearchIntent>(
-              onInvoke: (intent) {
-                _openSearch(ref);
-                return null;
-              },
-            ),
-            _ToggleSearchIntent: CallbackAction<_ToggleSearchIntent>(
-              onInvoke: (intent) {
-                _toggleSearch(ref);
-                return null;
-              },
-            ),
             _SelectSidebarTabIntent: CallbackAction<_SelectSidebarTabIntent>(
               onInvoke: (intent) {
                 _selectSidebarShortcut(ref, intent.tab);
@@ -1154,7 +739,8 @@ class WorkspaceScreen extends ConsumerWidget {
                     key: const ValueKey('workspace-page-frame'),
                     sidebarHeader: const BusyMarkLinuxBrandHeader(),
                     sidebarBody: sidebar,
-                    sidebarAvailable: sidebarAvailable,
+                    sidebarAvailable: sidebarAvailable || searchState.active,
+                    sidebarOverlay: searchState.active && !sidebarAvailable,
                     sidebarExpanded: sidebarVisible,
                     sidebarTransitionGeneration: ref.watch(
                       sidebarTransitionGenerationProvider,
@@ -1215,18 +801,7 @@ class WorkspaceScreen extends ConsumerWidget {
                         duration: BusyMarkMotion.search,
                         children: [
                           BusyMarkLinuxHeaderTitle(title),
-                          _HeaderSearchField(
-                            active: searchState.active,
-                            focusRequest: ref.watch(
-                              _headerSearchFocusRequestProvider,
-                            ),
-                            query: searchState.query,
-                            onChanged: (query) => _setSearchQuery(ref, query),
-                            onClear: () => _clearSearchQuery(ref),
-                            onSubmitted: () =>
-                                unawaited(_submitSearch(context, ref)),
-                            onEscape: () => _closeSearch(ref),
-                          ),
+                          const SearchHeaderField(),
                         ],
                       ),
                       trailing: BusyMarkLinuxHeaderControlGroup(
@@ -1276,9 +851,6 @@ class WorkspaceScreen extends ConsumerWidget {
                             tooltip: context.l10n.search,
                             icon: BusyMarkGlyphs.search,
                             selected: searchState.active,
-                            shortcut: commandRegistry[BusyMarkCommandIds.search]
-                                ?.shortcut
-                                ?.label,
                             onPressed: () => _toggleSearch(ref),
                           ),
                           BusyMarkMainMenuButton(
@@ -1330,56 +902,18 @@ class WorkspaceScreen extends ConsumerWidget {
     );
   }
 
-  void _toggleSearch(WidgetRef ref) {
-    final search = ref.read(_workspaceSearchProvider);
-    if (search.active) {
-      _closeSearch(ref);
-    } else {
-      _openSearch(ref);
-    }
-  }
-
-  void _openSearch(WidgetRef ref) {
-    if (ref.read(workspaceControllerProvider).workspace?.isRemote == true) {
-      final target = ref.context;
-      unawaited(showNotesSearch(target, ref));
-      return;
-    }
-    final search = ref.read(_workspaceSearchProvider);
-    ref.read(_headerSearchFocusRequestProvider.notifier).request();
-    if (!search.active) {
-      ref.read(_searchReturnFocusProvider).node =
-          FocusManager.instance.primaryFocus;
-    }
-    if (search.active) {
-      unawaited(
-        ref
-            .read(appSettingsControllerProvider.notifier)
-            .setSidebarVisible(true),
-      );
-      return;
-    }
-    _clearGitDetailSelection(ref);
-    ref
-        .read(_workspaceSearchProvider.notifier)
-        .set(search.copyWith(active: true));
-    unawaited(
-      ref.read(appSettingsControllerProvider.notifier).setSidebarVisible(true),
-    );
-  }
-
-  void _closeSearch(WidgetRef ref) {
-    final search = ref.read(_workspaceSearchProvider);
-    if (!search.active) {
-      return;
-    }
-    ref
-        .read(_workspaceSearchProvider.notifier)
-        .set(search.copyWith(active: false));
-    ref.read(_searchReturnFocusProvider).restore();
-  }
+  void _toggleSearch(WidgetRef ref) =>
+      ref.read(searchSessionProvider.notifier).toggle();
+  void _closeSearch(WidgetRef ref) =>
+      ref.read(searchSessionProvider.notifier).close();
 
   void _selectSidebarShortcut(WidgetRef ref, _SidebarTab tab) {
+    if (tab == _SidebarTab.outline) {
+      ref
+          .read(searchSessionProvider.notifier)
+          .open(category: SearchCategory.outline);
+      return;
+    }
     final state = ref.read(workspaceControllerProvider);
     final workspace = state.workspace;
     if (workspace?.isRemote == true && tab == _SidebarTab.files) {
@@ -1393,33 +927,6 @@ class WorkspaceScreen extends ConsumerWidget {
       ref.read(appSettingsControllerProvider.notifier).setSidebarVisible(true),
     );
     ref.read(_sidebarShortcutRequestProvider.notifier).select(tab);
-  }
-
-  void _setSearchQuery(WidgetRef ref, String query) {
-    final current = ref.read(_workspaceSearchProvider);
-    ref
-        .read(_workspaceSearchProvider.notifier)
-        .set(current.copyWith(active: true, query: query));
-  }
-
-  void _clearSearchQuery(WidgetRef ref) {
-    final current = ref.read(_workspaceSearchProvider);
-    ref
-        .read(_workspaceSearchProvider.notifier)
-        .set(current.copyWith(query: ''));
-  }
-
-  Future<void> _submitSearch(BuildContext context, WidgetRef ref) async {
-    final current = await ref.read(_workspaceSearchProvider.notifier).submit();
-    if (!current || !context.mounted) {
-      return;
-    }
-    final matches = ref.read(_workspaceSearchProvider).matches;
-    if (matches.isEmpty) {
-      return;
-    }
-    final result = _workspaceSearchResults(context, matches).first;
-    await _openSearchResult(context, ref, result);
   }
 
   void _handleHeaderBarAction(
@@ -1571,45 +1078,6 @@ class WorkspaceScreen extends ConsumerWidget {
       DocumentViewModePreference.split => BusyMarkCommandIds.viewSplit,
     };
     return commands[id]!.shortcut!.label;
-  }
-
-  Future<void> _openSearchResult(
-    BuildContext context,
-    WidgetRef ref,
-    _WorkspaceSearchResult result,
-  ) async {
-    final state = ref.read(workspaceControllerProvider);
-    final workspace = state.workspace;
-    final searchOptions = ref.read(_workspaceSearchProvider).options;
-    if (workspace == null) {
-      return;
-    }
-    final activePath = state.activeBuffer?.filePath;
-    if (activePath != result.filePath) {
-      final opened = await ref
-          .read(workspaceControllerProvider.notifier)
-          .openActiveFile(result.filePath);
-      if (!opened) return;
-    }
-    if (!context.mounted ||
-        ref.read(workspaceControllerProvider).workspace?.id != workspace.id ||
-        ref.read(_workspaceSearchProvider).options != searchOptions) {
-      return;
-    }
-    _clearGitDetailSelection(ref);
-    final previous = ref.read(_searchNavigationTargetProvider);
-    ref
-        .read(_searchNavigationTargetProvider.notifier)
-        .set(
-          _SearchNavigationTarget(
-            filePath: result.filePath,
-            line: result.line,
-            startOffset: result.startOffset,
-            endOffset: result.endOffset,
-            query: result.query,
-            request: (previous?.request ?? 0) + 1,
-          ),
-        );
   }
 
   Future<void> _showProblemsDialog(BuildContext context, WidgetRef ref) async {
@@ -2268,97 +1736,24 @@ class _GitFileList extends StatelessWidget {
   }
 }
 
-class _HeaderSearchField extends StatefulWidget {
-  const _HeaderSearchField({
-    required this.query,
-    required this.onChanged,
-    required this.onClear,
-    required this.onSubmitted,
-    required this.onEscape,
-    this.active = true,
-    this.focusRequest = 0,
-  });
-
-  final bool active;
-  final int focusRequest;
-  final String query;
-  final ValueChanged<String> onChanged;
-  final VoidCallback onClear;
-  final VoidCallback onSubmitted;
-  final VoidCallback onEscape;
-
-  @override
-  State<_HeaderSearchField> createState() => _HeaderSearchFieldState();
-}
-
-class _HeaderSearchFieldState extends State<_HeaderSearchField> {
-  late final TextEditingController _controller;
-  var _focusRequest = 0;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = TextEditingController(text: widget.query);
-  }
-
-  @override
-  void didUpdateWidget(covariant _HeaderSearchField oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.active &&
-        (!oldWidget.active || widget.focusRequest != oldWidget.focusRequest)) {
-      _focusRequest++;
-    }
-    if (widget.query != _controller.text) {
-      _controller.value = TextEditingValue(
-        text: widget.query,
-        selection: TextSelection.collapsed(offset: widget.query.length),
-      );
-    }
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return BusyMarkSearchField(
-      controller: _controller,
-      hintText: context.l10n.search,
-      autofocus: widget.active,
-      clearOnEscape: false,
-      focusRequest: _focusRequest,
-      onChanged: widget.onChanged,
-      onSubmitted: (_) => widget.onSubmitted(),
-      onClear: widget.onClear,
-      onEscape: widget.onEscape,
-    );
-  }
-}
-
 class _Sidebar extends ConsumerStatefulWidget {
   const _Sidebar({
     super.key,
     required this.workspace,
     required this.outline,
     required this.searchState,
-    required this.searchResults,
-    required this.onOpenSearchResult,
   });
 
   final Workspace workspace;
   final List<DocumentOutlineHeading> outline;
-  final _WorkspaceSearchState searchState;
-  final List<_WorkspaceSearchResult> searchResults;
-  final Future<void> Function(_WorkspaceSearchResult result) onOpenSearchResult;
+  final SearchSessionState searchState;
 
   @override
   ConsumerState<_Sidebar> createState() => _SidebarState();
 }
 
 class _SidebarState extends ConsumerState<_Sidebar> {
+  final _outlineKey = GlobalKey();
   late final WorkspaceController _topicActionController;
   late int _tab;
   late String _workspaceId;
@@ -2395,9 +1790,6 @@ class _SidebarState extends ConsumerState<_Sidebar> {
   @override
   void didUpdateWidget(covariant _Sidebar oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.searchState.active && !oldWidget.searchState.active) {
-      _clearGitDetailSelection(ref);
-    }
     if (widget.workspace.id != _workspaceId) {
       _workspaceId = widget.workspace.id;
       _activeFilePath = widget.workspace.activeFilePath;
@@ -2415,12 +1807,14 @@ class _SidebarState extends ConsumerState<_Sidebar> {
   Widget build(BuildContext context) {
     final tabs = _sidebarTabsFor(widget.workspace.kind);
     ref.listen<WorkspaceState>(workspaceControllerProvider, (previous, next) {
-      if (_workspaceSearchInputsChanged(previous, next)) {
+      if (workspaceSearchInputsChanged(previous, next)) {
         _replacementCancellation?.cancel();
       }
     });
-    ref.listen(_workspaceSearchProvider, (previous, next) {
+    ref.listen(searchSessionProvider, (previous, next) {
       if (previous?.options != next.options ||
+          previous?.category != next.category ||
+          previous?.location != next.location ||
           previous?.active != next.active) {
         _replacementCancellation?.cancel();
       }
@@ -2451,7 +1845,11 @@ class _SidebarState extends ConsumerState<_Sidebar> {
           _SidebarHeader(
             workspace: widget.workspace,
             tabs: tabs,
-            selectedTab: widget.searchState.active ? null : selectedTab,
+            selectedTab: widget.searchState.active
+                ? (widget.searchState.category == SearchCategory.outline
+                      ? _SidebarTab.outline
+                      : null)
+                : selectedTab,
             repositoryInfo: repositoryInfo,
             showTabMenu: !widget.searchState.active && tabs.length > 1,
             onSelectTab: (tab) => _selectTab(tab, tabs),
@@ -2464,23 +1862,39 @@ class _SidebarState extends ConsumerState<_Sidebar> {
           ),
           Expanded(
             child: BusyMarkKeyedCrossfade(
-              transitionKey: widget.searchState.active
+              transitionKey:
+                  (widget.searchState.active &&
+                          widget.searchState.category ==
+                              SearchCategory.outline) ||
+                      (!widget.searchState.active &&
+                          selectedTab == _SidebarTab.outline)
+                  ? 'outline'
+                  : widget.searchState.active
                   ? 'search'
                   : _topicRenameReview != null
                   ? 'rename'
                   : _topicUsageReview != null
                   ? 'usages'
                   : selectedTab ?? 'empty',
-              child: widget.searchState.active
-                  ? _SearchSidebar(
-                      query: widget.searchState.query,
-                      results: widget.searchResults,
-                      searching: widget.searchState.searching,
-                      state: widget.searchState,
-                      onShowMore: () => ref
-                          .read(_workspaceSearchProvider.notifier)
-                          .showMore(),
-                      onOpenResult: widget.onOpenSearchResult,
+              child:
+                  (widget.searchState.active &&
+                          widget.searchState.category ==
+                              SearchCategory.outline) ||
+                      (!widget.searchState.active &&
+                          selectedTab == _SidebarTab.outline)
+                  ? SearchSidebar(
+                      outlineOnly: !widget.searchState.active,
+                      outline: _OutlineTab(
+                        key: _outlineKey,
+                        workspace: widget.workspace,
+                        bufferId: ref
+                            .watch(workspaceControllerProvider)
+                            .activeBufferId,
+                        headings: widget.outline,
+                      ),
+                    )
+                  : widget.searchState.active
+                  ? SearchSidebar(
                       onReviewReplacement: _reviewWorkspaceReplacement,
                     )
                   : _topicRenameReview != null
@@ -2518,13 +1932,7 @@ class _SidebarState extends ConsumerState<_Sidebar> {
                         onRequestTopicRemoval: (target) =>
                             _runWritersideTopicRemoval(context, target),
                       ),
-                      _SidebarTab.outline => _OutlineTab(
-                        workspace: widget.workspace,
-                        bufferId: ref
-                            .watch(workspaceControllerProvider)
-                            .activeBufferId,
-                        headings: widget.outline,
-                      ),
+                      _SidebarTab.outline => const SizedBox.shrink(),
                       _SidebarTab.git => GitSidebarTab(
                         workspace: widget.workspace,
                         onOpenFile: (relativePath) =>
@@ -2564,6 +1972,12 @@ class _SidebarState extends ConsumerState<_Sidebar> {
     List<_SidebarTab> tabs, {
     bool showGitChanges = true,
   }) {
+    if (tab == _SidebarTab.outline) {
+      ref
+          .read(searchSessionProvider.notifier)
+          .open(category: SearchCategory.outline);
+      return;
+    }
     final index = tabs.indexOf(tab);
     if (index < 0) {
       return;
@@ -2979,6 +2393,18 @@ class _SidebarState extends ConsumerState<_Sidebar> {
   }
 
   Future<void> _reviewWorkspaceReplacement() async {
+    final request = ref.read(searchSessionProvider);
+    final workspaceId = ref.read(workspaceControllerProvider).workspace?.id;
+    bool currentRequest() {
+      if (!mounted) return false;
+      final current = ref.read(searchSessionProvider);
+      return current.textActive &&
+          current.location == SearchLocation.workspace &&
+          current.generation == request.generation &&
+          ref.read(workspaceControllerProvider).workspace?.id == workspaceId;
+    }
+
+    if (!currentRequest() || widget.workspace.isRemote) return;
     var replacement = '';
     final headerBar = ref.read(linuxHeaderBarServiceProvider);
     final requested = await showBusyMarkModalEditorDialog<String>(
@@ -3007,7 +2433,7 @@ class _SidebarState extends ConsumerState<_Sidebar> {
         ],
       ),
     );
-    if (requested == null || !mounted) {
+    if (requested == null || !mounted || !currentRequest()) {
       return;
     }
     final service = const SearchReplacementService();
@@ -3036,6 +2462,7 @@ class _SidebarState extends ConsumerState<_Sidebar> {
       _replacementCancellation = null;
     }
     if (!mounted ||
+        !currentRequest() ||
         preview == null ||
         preview.issues.any(
           (issue) => issue.kind == WorkspaceReplacementIssueKind.cancelled,
@@ -3054,7 +2481,7 @@ class _SidebarState extends ConsumerState<_Sidebar> {
       builder: (dialogContext) =>
           _WorkspaceReplacementReviewDialog(preview: preview),
     );
-    if (selected == null || selected.isEmpty || !mounted) {
+    if (selected == null || selected.isEmpty || !mounted || !currentRequest()) {
       return;
     }
     final normalizations = <String, LineEndingNormalization>{};
@@ -3069,7 +2496,7 @@ class _SidebarState extends ConsumerState<_Sidebar> {
         context,
         file.relativePath,
       );
-      if (normalization == null || !mounted) {
+      if (normalization == null || !mounted || !currentRequest()) {
         return;
       }
       normalizations[file.filePath] = normalization;
@@ -3087,7 +2514,7 @@ class _SidebarState extends ConsumerState<_Sidebar> {
     await controller.validateActive();
     await ref.read(gitControllerProvider.notifier).refresh();
     ref
-        .read(_workspaceSearchProvider.notifier)
+        .read(searchSessionProvider.notifier)
         .refresh(ref.read(workspaceControllerProvider));
     if (!mounted) {
       return;
@@ -3166,7 +2593,9 @@ class _SidebarState extends ConsumerState<_Sidebar> {
     final requestedIndex = request == null ? -1 : tabs.indexOf(request);
     return requestedIndex >= 0
         ? requestedIndex
-        : _preferredSidebarTabIndex(workspace);
+        : (tabs.contains(_SidebarTab.files)
+              ? tabs.indexOf(_SidebarTab.files)
+              : _preferredSidebarTabIndex(workspace));
   }
 }
 
@@ -9705,6 +9134,7 @@ Future<bool> _refineActiveSourceRangesWithAi(
 
 class _OutlineTab extends ConsumerStatefulWidget {
   const _OutlineTab({
+    super.key,
     required this.workspace,
     required this.bufferId,
     required this.headings,
@@ -9728,10 +9158,70 @@ class _OutlineTabState extends ConsumerState<_OutlineTab> {
   String? _revealedActiveNodeKey;
   Set<String> _selectedNodeKeys = {};
   String? _selectionAnchorKey;
+  List<_OutlineTreeEntry> _searchEntries = const [];
+  int _keyboardIndex = -1;
+  String _filter = '';
+  String? _sourceAtBuild;
+  late final SearchSessionController _searchSession;
+
+  void _moveSearchSelection(int delta) {
+    if (_searchEntries.isEmpty) return;
+    setState(
+      () => _keyboardIndex = (_keyboardIndex + delta).clamp(
+        0,
+        _searchEntries.length - 1,
+      ),
+    );
+    if (_treeScrollController.hasClients) {
+      _treeScrollController.jumpTo(
+        (_keyboardIndex * _treeRowExtent).clamp(
+          0,
+          _treeScrollController.position.maxScrollExtent,
+        ),
+      );
+    }
+  }
+
+  void _activateSearchSelection() {
+    if (_searchEntries.isEmpty) return;
+    final heading =
+        _searchEntries[_keyboardIndex.clamp(0, _searchEntries.length - 1)]
+            .node
+            .heading;
+    _navigateHeading(heading);
+  }
+
+  void _navigateHeading(DocumentOutlineHeading heading) {
+    final current = ref.read(workspaceControllerProvider);
+    if (current.workspace?.id != widget.workspace.id ||
+        current.activeBufferId != widget.bufferId ||
+        current.activeText != _sourceAtBuild) {
+      return;
+    }
+    _setOutlineViewportTarget(
+      ref,
+      workspace: widget.workspace,
+      bufferId: widget.bufferId,
+      heading: heading,
+    );
+    ref
+        .read(_outlineNavigationTargetProvider.notifier)
+        .set(
+          _OutlineNavigationTarget(
+            workspaceId: widget.workspace.id,
+            bufferId: widget.bufferId ?? '',
+            filePath: widget.workspace.activeFilePath,
+            headingId: heading.id,
+            line: heading.sourceStartLine,
+            editorBlockId: heading.editorBlockId,
+          ),
+        );
+  }
 
   @override
   void initState() {
     super.initState();
+    _searchSession = ref.read(searchSessionProvider.notifier);
     _outlineStateKey = _outlineStateSignature(
       widget.workspace,
       widget.bufferId,
@@ -9759,6 +9249,11 @@ class _OutlineTabState extends ConsumerState<_OutlineTab> {
 
   @override
   void dispose() {
+    final session = _searchSession;
+    if (session.moveOutline == _moveSearchSelection) session.moveOutline = null;
+    if (session.activateOutline == _activateSearchSelection) {
+      session.activateOutline = null;
+    }
     _treeScrollController.dispose();
     super.dispose();
   }
@@ -9968,8 +9463,27 @@ class _OutlineTabState extends ConsumerState<_OutlineTab> {
         title: context.l10n.noOutline,
       );
     }
+    final search = ref.watch(searchSessionProvider);
+    final query = search.active && search.category == SearchCategory.outline
+        ? search.query
+        : '';
+    if (_filter != query) {
+      _filter = query;
+      _keyboardIndex = -1;
+    }
+    final filtered = filterDocumentOutline(headings, query).toSet();
     final tree = _buildOutlineTree(headings);
-    final entries = _visibleOutlineTreeEntries(tree, _expandedNodeKeys);
+    final entries = _visibleOutlineTreeEntries(
+      tree,
+      query.trim().isEmpty
+          ? _expandedNodeKeys
+          : _initialExpandedOutlineNodeKeys(headings),
+    ).where((entry) => filtered.contains(entry.node.heading)).toList();
+    _searchEntries = entries;
+    _sourceAtBuild = ref.read(workspaceControllerProvider).activeText;
+    final session = ref.read(searchSessionProvider.notifier);
+    session.moveOutline = _moveSearchSelection;
+    session.activateOutline = _activateSearchSelection;
     final viewportTarget = ref.watch(_outlineViewportTargetProvider);
     final activeNodeKey = _activeVisibleOutlineNodeKey(
       workspace: widget.workspace,
@@ -9997,7 +9511,9 @@ class _OutlineTabState extends ConsumerState<_OutlineTab> {
         final headingIndex = headingIndexes[key]!;
         final expanded = _expandedNodeKeys.contains(key);
         final hasChildren = node.children.isNotEmpty;
-        final selected = _selectedNodeKeys.isEmpty
+        final selected = _keyboardIndex >= 0
+            ? index == _keyboardIndex
+            : _selectedNodeKeys.isEmpty
             ? key == activeNodeKey
             : _selectedNodeKeys.contains(key);
         void toggle() {
@@ -10028,24 +9544,8 @@ class _OutlineTabState extends ConsumerState<_OutlineTab> {
               if (modifiers.control || modifiers.shift) {
                 return;
               }
-              _setOutlineViewportTarget(
-                ref,
-                workspace: widget.workspace,
-                bufferId: widget.bufferId,
-                heading: heading,
-              );
-              ref
-                  .read(_outlineNavigationTargetProvider.notifier)
-                  .set(
-                    _OutlineNavigationTarget(
-                      workspaceId: widget.workspace.id,
-                      bufferId: widget.bufferId ?? '',
-                      filePath: widget.workspace.activeFilePath,
-                      headingId: heading.id,
-                      line: heading.sourceStartLine,
-                      editorBlockId: heading.editorBlockId,
-                    ),
-                  );
+              _keyboardIndex = index;
+              _navigateHeading(heading);
             },
             onMenuRequested: (anchorContext, position) => unawaited(
               _showSectionMenu(entries, headingIndexes, index, position),
@@ -12117,8 +11617,17 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
     );
   }
 
+  final _previewSearchTimers = <Timer>[];
+  void _cancelPreviewSearchTimers() {
+    for (final timer in _previewSearchTimers) {
+      timer.cancel();
+    }
+    _previewSearchTimers.clear();
+  }
+
   @override
   void dispose() {
+    _cancelPreviewSearchTimers();
     _inspectorWorkspaceController.propertyEdits.removeListener(
       _handlePropertyDraftChange,
     );
@@ -12263,19 +11772,22 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
       _scrollToOutlineTarget(next);
     });
     ref.listen(notesMatchNavigationProvider, (previous, next) {
+      final currentDocument = ref.read(workspaceControllerProvider);
       if (next == null ||
+          next.accountId != null &&
+              next.accountId != currentDocument.workspace?.nextcloudAccountId ||
           next.request == previous?.request ||
-          (widget.state.activeBuffer?.remoteNote?.localId ??
-                  widget.state.activeBuffer?.filePath) !=
+          (currentDocument.activeBuffer?.remoteNote?.localId ??
+                  currentDocument.activeBuffer?.filePath ??
+                  currentDocument.activeBuffer?.id) !=
               next.localId) {
         return;
       }
-      final source = widget.state.activeBuffer!.text;
+      final source = currentDocument.activeBuffer!.text;
       if (notesSearchDigest(source) != next.digest) return;
       final line = SourceDocument(
         fullText: source,
       ).lineIndex.lineNumberAtOffset(next.start);
-      final old = ref.read(_searchNavigationTargetProvider);
       ref
           .read(_searchNavigationTargetProvider.notifier)
           .set(
@@ -12287,16 +11799,23 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
               startOffset: next.start,
               endOffset: next.end,
               query: '',
-              request: (old?.request ?? 0) + 1,
+              request: next.request,
             ),
           );
+    });
+    ref.listen(searchSessionProvider, (previous, next) {
+      if (previous?.textActive == true &&
+          previous?.requestRevision != next.requestRevision) {
+        _cancelPreviewSearchTimers();
+        _previewSearchScrollRequest = -1;
+        ref.read(_searchNavigationTargetProvider.notifier).set(null);
+      }
     });
     final searchTarget = ref.watch(_searchNavigationTargetProvider);
     if (searchTarget != null &&
         (searchTarget.localId != null ||
-            (ref.read(_workspaceSearchProvider).active &&
-                ref.read(_workspaceSearchProvider).query ==
-                    searchTarget.query)) &&
+            (ref.read(searchSessionProvider).textActive &&
+                ref.read(searchSessionProvider).query == searchTarget.query)) &&
         searchTarget.request != _lastSearchNavigationRequest) {
       _scrollToSearchTarget(searchTarget);
     }
@@ -12390,7 +11909,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
           direction: widget.editorToolbarDirection,
         );
     final activeEditorPath = _activeEditorPath();
-    final searchState = ref.watch(_workspaceSearchProvider);
+    final searchState = ref.watch(searchSessionProvider);
     final spellingBannerPresentation =
         activeBuffer != null &&
             spellingSupported &&
@@ -12640,17 +12159,9 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
                               visualizationRevision: ref
                                   .read(workspaceControllerProvider.notifier)
                                   .editRevision,
-                              onOpenSearch: () => ref
-                                  .read(
-                                    workspaceSearchOpenRequestProvider.notifier,
-                                  )
-                                  .request(),
                               onCloseSearch: () => ref
-                                  .read(
-                                    workspaceSearchCloseRequestProvider
-                                        .notifier,
-                                  )
-                                  .request(),
+                                  .read(searchSessionProvider.notifier)
+                                  .close(),
                               onUndo: () => ref
                                   .read(workspaceControllerProvider.notifier)
                                   .undoActiveBuffer(),
@@ -12763,8 +12274,14 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
                               ),
                               editorFontSize: widget.editorFontSize,
                               wordWrap: widget.wordWrap,
-                              searchActive: searchState.active,
+                              searchActive: searchState.textActive,
+                              searchControlsVisible:
+                                  searchState.location ==
+                                  SearchLocation.document,
                               searchOptions: searchState.options,
+                              searchSnapshot: searchState.sourceSnapshot(
+                                activeBuffer,
+                              ),
                               searchReplacement:
                                   activeBuffer?.editorState.searchReplacement ??
                                   '',
@@ -12794,11 +12311,9 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
                                       }
                                     },
                               onSearchOptionsChanged: (options) {
-                                final current = ref.read(
-                                  _workspaceSearchProvider,
-                                );
+                                final current = ref.read(searchSessionProvider);
                                 ref
-                                    .read(_workspaceSearchProvider.notifier)
+                                    .read(searchSessionProvider.notifier)
                                     .set(current.withOptions(options));
                               },
                               initialSelection:
@@ -12847,17 +12362,9 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
                                             ),
                                           );
                                     },
-                              onOpenSearch: () => ref
-                                  .read(
-                                    workspaceSearchOpenRequestProvider.notifier,
-                                  )
-                                  .request(),
                               onCloseSearch: () => ref
-                                  .read(
-                                    workspaceSearchCloseRequestProvider
-                                        .notifier,
-                                  )
-                                  .request(),
+                                  .read(searchSessionProvider.notifier)
+                                  .close(),
                               onVisibleLineChanged:
                                   _handleSourceVisibleLineChanged,
                               onChanged: (value, sourceFilePath) =>
@@ -15161,7 +14668,8 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
           (target.localId != null
               ? target.localId !=
                         (widget.state.activeBuffer?.remoteNote?.localId ??
-                            widget.state.activeBuffer?.filePath) ||
+                            widget.state.activeBuffer?.filePath ??
+                            widget.state.activeBuffer?.id) ||
                     notesSearchDigest(widget.state.activeBuffer?.text ?? '') !=
                         target.digest
               : target.filePath != widget.state.activeBuffer?.filePath)) {
@@ -15379,6 +14887,7 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
   }
 
   void _schedulePreviewSearchScroll(_SearchNavigationTarget target) {
+    _cancelPreviewSearchTimers();
     _previewSearchScrollRequest = target.request;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!_isCurrentPreviewSearchScroll(target) ||
@@ -15390,15 +14899,15 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
           _scrollPreviewToSearchTarget(target);
         }
       });
-      unawaited(
-        Future<void>.delayed(BusyMarkMotion.previewSearchDelay, () {
+      _previewSearchTimers.add(
+        Timer(BusyMarkMotion.previewSearchDelay, () {
           if (_isCurrentPreviewSearchScroll(target)) {
             _scrollPreviewToSearchTarget(target);
           }
         }),
       );
-      unawaited(
-        Future<void>.delayed(BusyMarkMotion.scroll, () {
+      _previewSearchTimers.add(
+        Timer(BusyMarkMotion.scroll, () {
           if (_isCurrentPreviewSearchScroll(target)) {
             _scrollPreviewToSearchTarget(target);
           }
@@ -15408,7 +14917,9 @@ class _EditorPreviewSplitState extends ConsumerState<_EditorPreviewSplit> {
   }
 
   bool _isCurrentPreviewSearchScroll(_SearchNavigationTarget target) {
-    return mounted && target.request == _previewSearchScrollRequest;
+    return mounted &&
+        target.request == _previewSearchScrollRequest &&
+        ref.read(searchSessionProvider).textActive;
   }
 
   bool _canUseWysiwyg(Workspace? workspace) {
@@ -16604,13 +16115,13 @@ class _PreviewInlineText extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final baseStyle = style ?? busyMarkDocumentBodyTextStyle(context);
-    final searchState = ref.watch(_workspaceSearchProvider);
+    final searchState = ref.watch(searchSessionProvider);
     final workspace = ref.watch(workspaceControllerProvider).workspace;
     final settings = ref.watch(appSettingsControllerProvider);
     final allowRemoteImages = settings.allowsRemoteImagesForWorkspace(
       _remoteImageWorkspacePath(workspace),
     );
-    final highlightQuery = searchState.active ? searchState.query : '';
+    final highlightQuery = searchState.textActive ? searchState.query : '';
     final inlines = block.inlines.isEmpty
         ? [PreviewInline(kind: PreviewInlineKind.text, text: block.text)]
         : block.inlines;
@@ -16713,7 +16224,7 @@ int? _previewSearchBlockIndexForSourceLine(
   if (rawLine.isEmpty) {
     return null;
   }
-  final strippedLine = _stripMarkdownForSearchResult(rawLine).toLowerCase();
+  final strippedLine = stripMarkdownForSearchResult(rawLine).toLowerCase();
   final rawNeedle = rawLine.toLowerCase();
   if (strippedLine.isEmpty && rawNeedle.isEmpty) {
     return null;
@@ -16850,7 +16361,7 @@ double _previewBlockTargetFraction(
   if (sourceLine.isNotEmpty && block.text.contains('\n')) {
     final sourceNeedles = {
       sourceLine,
-      _stripMarkdownForSearchResult(sourceLine),
+      stripMarkdownForSearchResult(sourceLine),
     }.where((value) => value.isNotEmpty).map((value) => value.toLowerCase());
     final blockLines = block.text.split('\n');
     for (final (index, blockLine) in blockLines.indexed) {
@@ -17976,143 +17487,6 @@ class _ProblemsList extends StatelessWidget {
   }
 }
 
-class _SearchSidebar extends StatelessWidget {
-  const _SearchSidebar({
-    required this.query,
-    required this.results,
-    required this.searching,
-    required this.onOpenResult,
-    required this.onReviewReplacement,
-    required this.state,
-    required this.onShowMore,
-  });
-
-  final String query;
-  final List<_WorkspaceSearchResult> results;
-  final bool searching;
-  final Future<void> Function(_WorkspaceSearchResult result) onOpenResult;
-  final Future<void> Function() onReviewReplacement;
-  final _WorkspaceSearchState state;
-  final VoidCallback onShowMore;
-
-  @override
-  Widget build(BuildContext context) {
-    final normalizedQuery = query;
-    if (normalizedQuery.isEmpty) {
-      return _SidebarEmptyState(
-        icon: BusyMarkGlyphs.search,
-        title: context.l10n.search,
-      );
-    }
-    if (searching && results.isEmpty) {
-      return const Center(
-        child: CircularProgressIndicator(
-          key: ValueKey('workspace-search-progress'),
-        ),
-      );
-    }
-    final colors = BusyMarkSurfaceColors.of(context);
-    if (state.invalidRegex) {
-      return _SidebarEmptyState(
-        icon: BusyMarkGlyphs.searchUnavailable,
-        title: context.l10n.sourceSearchInvalidRegex,
-      );
-    }
-    if (results.isEmpty &&
-        state.skippedFiles.isEmpty &&
-        !state.hasZeroLengthMatches) {
-      return _SidebarEmptyState(
-        icon: BusyMarkGlyphs.searchUnavailable,
-        title: context.l10n.noResults,
-      );
-    }
-    final groups = _workspaceSearchFileGroups(results);
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(
-            BusyMarkSpacing.sm,
-            BusyMarkSpacing.sm,
-            BusyMarkSpacing.sm,
-            0,
-          ),
-          child: SizedBox(
-            width: double.infinity,
-            child: BusyMarkPushButton.standard(
-              onPressed: () => unawaited(onReviewReplacement()),
-              child: Text(context.l10n.workspaceReplace),
-            ),
-          ),
-        ),
-        Expanded(
-          child: ListView(
-            key: const ValueKey('workspace-search-results'),
-            padding: BusyMarkInsets.sidebarList,
-            children: [
-              if (state.hasZeroLengthMatches)
-                Padding(
-                  padding: BusyMarkInsets.searchResultRow,
-                  child: Text(context.l10n.sourceSearchZeroLengthUnsupported),
-                ),
-              if (state.truncated)
-                Padding(
-                  padding: BusyMarkInsets.searchResultRow,
-                  child: Column(
-                    children: [
-                      Text(context.l10n.workspaceSearchIncomplete),
-                      TextButton(
-                        onPressed: onShowMore,
-                        child: Text(context.l10n.workspaceSearchShowMore),
-                      ),
-                    ],
-                  ),
-                ),
-              if (state.skippedFiles.isNotEmpty)
-                Padding(
-                  padding: BusyMarkInsets.searchResultRow,
-                  child: Text(
-                    '${context.l10n.workspaceSearchSkippedFiles}\n'
-                    '${state.skippedFiles.join('\n')}',
-                  ),
-                ),
-              for (final group in groups) ...[
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(
-                    BusyMarkSpacing.sm,
-                    BusyMarkSpacing.sm,
-                    BusyMarkSpacing.sm,
-                    BusyMarkSpacing.xxs,
-                  ),
-                  child: Text(
-                    busyMarkLtrIsolateFor(context, group.relativePath),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: colors.mutedForeground,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0,
-                    ),
-                  ),
-                ),
-                for (final result in group.results) ...[
-                  _SearchResultRow(
-                    result: result,
-                    onOpen: () => onOpenResult(result),
-                  ),
-                  Divider(
-                    height: BusyMarkStroke.hairline,
-                    color: colors.subtleBorder,
-                  ),
-                ],
-              ],
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
-
 @visibleForTesting
 final class SpellingReviewCorrection {
   const SpellingReviewCorrection({
@@ -18949,23 +18323,6 @@ String _workspaceReplacementIssueLabel(
   };
 }
 
-class _SearchResultRow extends StatelessWidget {
-  const _SearchResultRow({required this.result, required this.onOpen});
-
-  final _WorkspaceSearchResult result;
-  final Future<void> Function() onOpen;
-
-  @override
-  Widget build(BuildContext context) {
-    return _SidebarNavigationResultRow(
-      title: result.title,
-      subtitle: result.subtitle,
-      icon: result.icon,
-      onOpen: onOpen,
-    );
-  }
-}
-
 class _SidebarNavigationResultRow extends StatelessWidget {
   const _SidebarNavigationResultRow({
     required this.title,
@@ -19029,325 +18386,9 @@ class _SidebarNavigationResultRow extends StatelessWidget {
   }
 }
 
-class _WorkspaceSearchResult {
-  const _WorkspaceSearchResult({
-    required this.filePath,
-    required this.relativePath,
-    required this.line,
-    required this.startOffset,
-    required this.endOffset,
-    required this.query,
-    required this.title,
-    required this.subtitle,
-    required this.icon,
-  });
-
-  final String filePath;
-  final String relativePath;
-  final int line;
-  final int startOffset;
-  final int endOffset;
-  final String query;
-  final String title;
-  final String subtitle;
-  final IconData icon;
-}
-
-enum _WorkspaceSearchMatchKind { text, fileName }
-
-class _WorkspaceSearchMatch {
-  const _WorkspaceSearchMatch({
-    required this.kind,
-    required this.filePath,
-    required this.relativePath,
-    required this.fileKind,
-    required this.line,
-    required this.startOffset,
-    required this.endOffset,
-    required this.query,
-    this.lineText,
-  });
-
-  final _WorkspaceSearchMatchKind kind;
-  final String filePath;
-  final String relativePath;
-  final DocumentKind fileKind;
-  final int line;
-  final int startOffset;
-  final int endOffset;
-  final String query;
-  final String? lineText;
-}
-
-class _WorkspaceSearchFileGroup {
-  const _WorkspaceSearchFileGroup({
-    required this.relativePath,
-    required this.results,
-  });
-
-  final String relativePath;
-  final List<_WorkspaceSearchResult> results;
-}
-
-List<_WorkspaceSearchFileGroup> _workspaceSearchFileGroups(
-  List<_WorkspaceSearchResult> results,
-) {
-  final groups = <String, List<_WorkspaceSearchResult>>{};
-  for (final result in results) {
-    groups.putIfAbsent(result.relativePath, () => []).add(result);
-  }
-  return [
-    for (final entry in groups.entries)
-      _WorkspaceSearchFileGroup(
-        relativePath: entry.key,
-        results: List.unmodifiable(entry.value),
-      ),
-  ];
-}
-
-List<_WorkspaceSearchResult> _workspaceSearchResults(
-  BuildContext context,
-  List<_WorkspaceSearchMatch> matches,
-) {
-  return [
-    for (final match in matches)
-      _WorkspaceSearchResult(
-        filePath: match.filePath,
-        relativePath: match.relativePath,
-        line: match.line,
-        startOffset: match.startOffset,
-        endOffset: match.endOffset,
-        query: match.query,
-        title: switch (match.kind) {
-          _WorkspaceSearchMatchKind.text => _searchResultTitle(
-            context,
-            match.lineText ?? '',
-          ),
-          _WorkspaceSearchMatchKind.fileName => busyMarkLtrIsolateFor(
-            context,
-            match.relativePath,
-          ),
-        },
-        subtitle: switch (match.kind) {
-          _WorkspaceSearchMatchKind.text => context.l10n.searchResultLine(
-            match.relativePath,
-            match.line,
-          ),
-          _WorkspaceSearchMatchKind.fileName => _documentKindLabel(
-            context,
-            match.fileKind,
-          ),
-        },
-        icon: switch (match.kind) {
-          _WorkspaceSearchMatchKind.text => BusyMarkGlyphs.paragraph,
-          _WorkspaceSearchMatchKind.fileName => _documentKindIcon(
-            match.fileKind,
-          ),
-        },
-      ),
-  ];
-}
-
-const int _maxWorkspaceSearchResults = 80;
-const int _maxWorkspaceSearchFileBytes = 1024 * 1024;
-
-class _WorkspaceSearchOutcome {
-  const _WorkspaceSearchOutcome({
-    this.matches = const [],
-    this.truncated = false,
-    this.skippedFiles = const [],
-    this.invalidRegex = false,
-    this.hasZeroLengthMatches = false,
-  });
-
-  final List<_WorkspaceSearchMatch> matches;
-  final bool truncated;
-  final List<String> skippedFiles;
-  final bool invalidRegex;
-  final bool hasZeroLengthMatches;
-}
-
-Future<_WorkspaceSearchOutcome> _loadWorkspaceSearchMatches(
-  WorkspaceState state,
-  SourceSearchOptions options, {
-  required Future<String> Function(String path) loadText,
-  required bool Function() isCancelled,
-  required SourceSearchWorker worker,
-  required int maximumResults,
-}) async {
-  final workspace = state.workspace;
-  if (workspace == null || options.query.isEmpty || isCancelled()) {
-    return const _WorkspaceSearchOutcome();
-  }
-  if (sourceSearchOptionsHaveInvalidRegex(options)) {
-    return const _WorkspaceSearchOutcome(invalidRegex: true);
-  }
-  final results = <_WorkspaceSearchMatch>[];
-  final skippedFiles = <String>[];
-  var hasZeroLengthMatches = false;
-  final sortedFiles =
-      workspace.files.where(isSearchableWorkspaceDocument).toList()
-        ..sort((a, b) => a.relativePath.compareTo(b.relativePath));
-  for (final file in sortedFiles) {
-    if (isCancelled()) return const _WorkspaceSearchOutcome();
-    final buffer = state.bufferForPath(file.absolutePath);
-    String? text;
-    if (buffer != null) {
-      text = buffer.text;
-    } else if (file.absolutePath == state.activeBuffer?.filePath) {
-      text = state.activeText;
-    } else if (file.size > _maxWorkspaceSearchFileBytes) {
-      skippedFiles.add(file.relativePath);
-    } else {
-      try {
-        text = await loadText(file.absolutePath);
-      } on Object {
-        skippedFiles.add(file.relativePath);
-      }
-    }
-    if (isCancelled()) return const _WorkspaceSearchOutcome();
-    if (text != null) {
-      final document = SourceDocument(fullText: text);
-      final search = await worker.search(
-        document,
-        options,
-        maximumMatches: maximumResults + 1 - results.length,
-        stopAfterMaximumMatches: true,
-      );
-      if (isCancelled()) return const _WorkspaceSearchOutcome();
-      if (search == null) {
-        skippedFiles.add(file.relativePath);
-      } else {
-        hasZeroLengthMatches |= search.hasZeroLengthMatches;
-        for (final match in search.matches) {
-          final line = document.lineIndex.lineNumberAtOffset(match.fullStart);
-          final sourceLine = document.lineIndex.lineAt(line);
-          results.add(
-            _WorkspaceSearchMatch(
-              kind: _WorkspaceSearchMatchKind.text,
-              filePath: file.absolutePath,
-              relativePath: file.relativePath,
-              fileKind: file.kind,
-              line: line,
-              startOffset: match.fullStart,
-              endOffset: match.fullEnd,
-              query: options.query,
-              lineText: _boundedSearchSnippet(
-                sourceLine.text,
-                matchStart: match.fullStart - sourceLine.startOffset,
-              ),
-            ),
-          );
-        }
-      }
-    }
-    if (results.length <= maximumResults &&
-        _fileNameMatchesSearch(file.relativePath, options)) {
-      results.add(
-        _WorkspaceSearchMatch(
-          kind: _WorkspaceSearchMatchKind.fileName,
-          filePath: file.absolutePath,
-          relativePath: file.relativePath,
-          fileKind: file.kind,
-          line: 1,
-          startOffset: 0,
-          endOffset: 0,
-          query: options.query,
-        ),
-      );
-    }
-    // Only report truncation once an additional result was actually found.
-    if (results.length > maximumResults) {
-      return _WorkspaceSearchOutcome(
-        matches: List.unmodifiable(results.take(maximumResults)),
-        truncated: true,
-        skippedFiles: List.unmodifiable(skippedFiles),
-        hasZeroLengthMatches: hasZeroLengthMatches,
-      );
-    }
-  }
-  return _WorkspaceSearchOutcome(
-    matches: List.unmodifiable(results),
-    skippedFiles: List.unmodifiable(skippedFiles),
-    hasZeroLengthMatches: hasZeroLengthMatches,
-  );
-}
-
-bool _fileNameMatchesSearch(String relativePath, SourceSearchOptions options) {
-  if (options.regex || options.wholeWord) {
-    return false;
-  }
-  return RegExp(
-    RegExp.escape(options.query),
-    caseSensitive: options.caseSensitive,
-    unicode: true,
-  ).hasMatch(relativePath);
-}
-
-String _searchResultTitle(BuildContext context, String line) {
-  final trimmed = _stripMarkdownForSearchResult(line, context: context);
-  if (trimmed.length <= 120) {
-    return trimmed;
-  }
-  var end = 117;
-  if (!sourceSearchRangeHasSafeBoundaries(trimmed, end, end)) end--;
-  return '${trimmed.substring(0, end)}...';
-}
-
 // Limit the input to Markdown cleanup, whose regexes can backtrack on malformed
 // markup. Keep the match near the beginning so it survives the title's shorter
 // display limit. The two ellipses are included in the 512-code-unit budget.
-String _boundedSearchSnippet(String line, {int matchStart = 0}) {
-  const maximumLength = 512;
-  if (line.length <= 120) return line;
-  var start = math.max(0, matchStart.clamp(0, line.length) - 40);
-  if (!sourceSearchRangeHasSafeBoundaries(line, start, start)) start--;
-  var end = math.min(line.length, start + maximumLength - 2);
-  if (!sourceSearchRangeHasSafeBoundaries(line, end, end)) end--;
-  return '${start > 0 ? '…' : ''}${line.substring(start, end)}'
-      '${end < line.length ? '…' : ''}';
-}
-
-String _stripMarkdownForSearchResult(String line, {BuildContext? context}) {
-  // Preview navigation also calls this helper directly with source lines.
-  var value = _boundedSearchSnippet(line).trim();
-  final fence = RegExp(
-    r'^(```+|~~~+)\s*([A-Za-z0-9_+\-#.]*)',
-  ).firstMatch(value);
-  if (fence != null) {
-    final language = fence.group(2)?.trim() ?? '';
-    return language.isEmpty
-        ? context?.l10n.codeBlock ?? 'code block'
-        : language;
-  }
-
-  value = value
-      .replaceFirst(RegExp(r'^\s{0,3}#{1,6}\s+'), '')
-      .replaceFirst(RegExp(r'^\s{0,3}>\s?'), '')
-      .replaceFirst(RegExp(r'^\s{0,3}[-+*]\s+\[[ xX]\]\s+'), '')
-      .replaceFirst(RegExp(r'^\s{0,3}[-+*]\s+'), '')
-      .replaceFirst(RegExp(r'^\s{0,3}\d+[.)]\s+'), '')
-      .trim();
-  final replacements = <RegExp, String Function(Match)>{
-    RegExp(r'!\[([^\]]*)\]\([^)]+\)'): (match) => match.group(1) ?? '',
-    RegExp(r'\[([^\]]+)\]\([^)]+\)'): (match) => match.group(1) ?? '',
-    RegExp(r'\[([^\]]+)\]\[[^\]]*\]'): (match) => match.group(1) ?? '',
-    RegExp(r'`([^`]*)`'): (match) => match.group(1) ?? '',
-    RegExp(r'\*\*([^*]+)\*\*'): (match) => match.group(1) ?? '',
-    RegExp(r'__([^_]+)__'): (match) => match.group(1) ?? '',
-    RegExp(r'\*([^*]+)\*'): (match) => match.group(1) ?? '',
-    RegExp(r'_([^_]+)_'): (match) => match.group(1) ?? '',
-    RegExp(r'~~([^~]+)~~'): (match) => match.group(1) ?? '',
-    RegExp(r'<[^>]+>'): (_) => '',
-  };
-  for (final entry in replacements.entries) {
-    value = value.replaceAllMapped(entry.key, entry.value);
-  }
-  value = value.replaceAll(RegExp(r'\s+'), ' ').trim();
-  return value.isEmpty
-      ? context?.l10n.untitledResult ?? 'untitled result'
-      : value;
-}
 
 String _relativeDocumentPath(Workspace workspace, String path) {
   for (final file in workspace.files) {
@@ -19379,24 +18420,6 @@ IconData _documentKindIcon(DocumentKind kind) {
     DocumentKind.gitIgnore => YaruIcons.gear,
     DocumentKind.image => BusyMarkGlyphs.image,
     DocumentKind.resource || DocumentKind.unknown => YaruIcons.document,
-  };
-}
-
-String _documentKindLabel(BuildContext context, DocumentKind kind) {
-  return switch (kind) {
-    DocumentKind.markdown => context.l10n.documentKindMarkdownFile,
-    DocumentKind.writersideMarkdownTopic =>
-      context.l10n.documentKindWritersideMarkdownTopic,
-    DocumentKind.writersideXmlTopic =>
-      context.l10n.documentKindWritersideXmlTopic,
-    DocumentKind.tree => context.l10n.documentKindWritersideTree,
-    DocumentKind.config => context.l10n.documentKindConfigurationFile,
-    DocumentKind.variables => context.l10n.documentKindVariablesFile,
-    DocumentKind.categories => context.l10n.documentKindCategoriesFile,
-    DocumentKind.gitIgnore => context.l10n.documentKindConfigurationFile,
-    DocumentKind.image => context.l10n.image,
-    DocumentKind.resource => context.l10n.documentKindResourceFile,
-    DocumentKind.unknown => context.l10n.file,
   };
 }
 

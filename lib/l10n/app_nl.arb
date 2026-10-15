@@ -1012,7 +1012,7 @@
   "@validateOnEdit": {
     "description": "Validation setting label."
   },
-  "clearRecentWorkspaces": "Wis recente werkruimten",
+  "clearRecentWorkspaces": "Recente geschiedenis wissen",
   "@clearRecentWorkspaces": {
     "description": "Settings action label for clearing recent workspaces."
   },
@@ -5149,5 +5149,21 @@
   "wsInsertElements": "Elementen invoegen",
   "wsAdmonitionsAndQuotes": "Opmerkingen en citaten",
   "wsSemanticText": "Semantische tekst",
-  "wsPropertiesUnavailable": "Het geïnspecteerde element is niet beschikbaar. Inspecteer een element om door te gaan."
+  "wsPropertiesUnavailable": "Het geïnspecteerde element is niet beschikbaar. Inspecteer een element om door te gaan.",
+  "searchTextCategory": "Tekst",
+  "searchDocumentsCategory": "Documenten",
+  "searchTopicsCategory": "Onderwerpen",
+  "searchCurrentDocument": "Huidig document",
+  "searchCurrentWorkspace": "Huidige werkruimte",
+  "recentDocuments": "Recente documenten",
+  "recentWorkspaces": "Recente werkruimten",
+  "browseNotes": "Notities bekijken",
+  "searchActionsCommand": "Acties zoeken",
+  "searchDocumentsCommand": "Documenten zoeken",
+  "searchWorkspaceCommand": "Werkruimtetekst zoeken",
+  "searchTopicsCommand": "Onderwerpen zoeken",
+  "searchRecentCommand": "Recente items zoeken",
+  "searchQueryHint": "Zoeken in {category}…",
+  "searchResourceUnavailable": "Deze bron is niet beschikbaar.",
+  "notesSync": "Notities synchroniseren"
 }

@@ -1060,7 +1060,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get validateOnEdit => 'Düzenlemede doğrula';
 
   @override
-  String get clearRecentWorkspaces => 'Son çalışma alanlarını temizle';
+  String get clearRecentWorkspaces => 'Son geçmişi temizle';
 
   @override
   String get editingButtonsPosition => 'Düzenleme düğmelerinin konumu';
@@ -5396,4 +5396,54 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get wsPropertiesUnavailable =>
       'İncelenen öğe kullanılamıyor. Devam etmek için bir öğeyi inceleyin.';
+
+  @override
+  String get searchTextCategory => 'Metin';
+
+  @override
+  String get searchDocumentsCategory => 'Belgeler';
+
+  @override
+  String get searchTopicsCategory => 'Konular';
+
+  @override
+  String get searchCurrentDocument => 'Geçerli belge';
+
+  @override
+  String get searchCurrentWorkspace => 'Geçerli çalışma alanı';
+
+  @override
+  String get recentDocuments => 'Son belgeler';
+
+  @override
+  String get recentWorkspaces => 'Son çalışma alanları';
+
+  @override
+  String get browseNotes => 'Notlara göz at';
+
+  @override
+  String get searchActionsCommand => 'Eylemleri ara';
+
+  @override
+  String get searchDocumentsCommand => 'Belgeleri ara';
+
+  @override
+  String get searchWorkspaceCommand => 'Çalışma alanında metin ara';
+
+  @override
+  String get searchTopicsCommand => 'Konuları ara';
+
+  @override
+  String get searchRecentCommand => 'Son kullanılanları ara';
+
+  @override
+  String searchQueryHint(String category) {
+    return '$category içinde ara…';
+  }
+
+  @override
+  String get searchResourceUnavailable => 'Bu kaynak kullanılamıyor.';
+
+  @override
+  String get notesSync => 'Notları eşitle';
 }

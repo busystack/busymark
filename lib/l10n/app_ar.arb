@@ -882,7 +882,7 @@
   "@validateOnEdit": {
     "description": "Validation setting label."
   },
-  "clearRecentWorkspaces": "مسح مساحات العمل الأخيرة",
+  "clearRecentWorkspaces": "مسح السجل الأخير",
   "@clearRecentWorkspaces": {
     "description": "Settings action label for clearing recent workspaces."
   },
@@ -3610,5 +3610,21 @@
   "wsInsertElements": "إدراج عناصر",
   "wsAdmonitionsAndQuotes": "تنبيهات واقتباسات",
   "wsSemanticText": "نص دلالي",
-  "wsPropertiesUnavailable": "العنصر الذي يتم فحصه غير متاح. افحص عنصرًا للمتابعة."
+  "wsPropertiesUnavailable": "العنصر الذي يتم فحصه غير متاح. افحص عنصرًا للمتابعة.",
+  "searchTextCategory": "النص",
+  "searchDocumentsCategory": "المستندات",
+  "searchTopicsCategory": "المواضيع",
+  "searchCurrentDocument": "المستند الحالي",
+  "searchCurrentWorkspace": "مساحة العمل الحالية",
+  "recentDocuments": "المستندات الأخيرة",
+  "recentWorkspaces": "مساحات العمل الأخيرة",
+  "browseNotes": "تصفح الملاحظات",
+  "searchActionsCommand": "البحث عن إجراءات",
+  "searchDocumentsCommand": "البحث عن مستندات",
+  "searchWorkspaceCommand": "البحث في نص مساحة العمل",
+  "searchTopicsCommand": "البحث عن مواضيع",
+  "searchRecentCommand": "البحث في الأخيرة",
+  "searchQueryHint": "البحث في {category}…",
+  "searchResourceUnavailable": "هذا المورد غير متاح.",
+  "notesSync": "مزامنة الملاحظات"
 }

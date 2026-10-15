@@ -2,13 +2,10 @@ import 'dart:async';
 
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../app/app_settings.dart';
 import '../../app/busymark_design.dart';
 import '../../app/busymark_dialogs.dart';
-import '../../app/busymark_glyphs.dart';
 import '../../app/localization.dart';
 import '../../local_history/local_history_controller.dart';
 import '../../local_history/local_history_models.dart';
@@ -17,10 +14,8 @@ import '../application/nextcloud_connection.dart';
 import '../application/notes_navigation.dart';
 import '../application/notes_repository.dart';
 import '../application/notes_offline_controller.dart';
-import '../application/notes_search_controller.dart';
 import '../application/notes_transfer_service.dart';
 import '../domain/notes_models.dart';
-import '../domain/notes_search.dart';
 
 final notesOfflineProvider = FutureProvider.autoDispose
     .family<NotesOfflineController, String>((ref, accountId) async {
@@ -49,9 +44,11 @@ class NotesMatchNavigation {
     this.start,
     this.end,
     this.digest,
-    this.request,
-  );
+    this.request, {
+    this.accountId,
+  });
   final String localId, digest;
+  final String? accountId;
   final int start, end, request;
 }
 
@@ -63,392 +60,20 @@ final notesMatchNavigationProvider =
 class NotesMatchNavigationController extends Notifier<NotesMatchNavigation?> {
   @override
   NotesMatchNavigation? build() => null;
-  void navigate(String id, int start, int end, String digest) {
+  void navigate(
+    String id,
+    int start,
+    int end,
+    String digest, {
+    String? accountId,
+  }) {
     state = NotesMatchNavigation(
       id,
       start,
       end,
       digest,
       (state?.request ?? 0) + 1,
-    );
-  }
-}
-
-Future<void> showNotesSearch(
-  BuildContext context,
-  WidgetRef ref, {
-  String query = '',
-  String? account,
-  bool recovery = false,
-}) async {
-  final accountId =
-      account ??
-      ref.read(workspaceControllerProvider).workspace?.nextcloudAccountId;
-  if (accountId == null) return;
-  final focus = FocusManager.instance.primaryFocus;
-  final choice =
-      await showBusyMarkModalDialog<
-        ({NotesSearchHit hit, String query, bool wholeWord, bool source})
-      >(
-        context,
-        builder: (_) => NotesSearchDialog(
-          accountId: accountId,
-          initialQuery: query,
-          recovery: recovery,
-        ),
-      );
-  if (!context.mounted) return;
-  if (choice == null) {
-    if (focus?.context?.mounted == true) focus!.requestFocus();
-    return;
-  }
-  if (ref.read(workspaceControllerProvider).workspace?.nextcloudAccountId !=
-      accountId) {
-    return;
-  }
-  if (recovery) {
-    final repository = await ref.read(nextcloudNotesRepositoryProvider.future);
-    final note = repository.noteById(choice.hit.localId);
-    if (context.mounted &&
-        note != null &&
-        note.accountId == accountId &&
-        isNotesRecovery(note)) {
-      await showNotesRecovery(context, ref, note);
-    }
-    return;
-  }
-  final controller = ref.read(workspaceControllerProvider.notifier);
-  if (!await controller.openNextcloudNote(choice.hit.localId) ||
-      !context.mounted) {
-    return;
-  }
-  final buffer = ref.read(workspaceControllerProvider).activeBuffer;
-  if (buffer?.remoteNote?.localId != choice.hit.localId) return;
-  final repository = await ref.read(nextcloudNotesRepositoryProvider.future);
-  final note = repository.noteById(choice.hit.localId);
-  if (note == null) return;
-  var hit = choice.hit;
-  // Even a revision collision cannot apply offsets to a different document.
-  if (buffer!.revision != hit.revision ||
-      notesSearchDigest(buffer.text) != hit.digest) {
-    final refreshed = await relocateNotesSearchHit(
-      NotesSearchQuery(choice.query, wholeWord: choice.wholeWord),
-      NotesSearchOverlay(
-        note.localId,
-        buffer.revision,
-        note.title,
-        note.category,
-        buffer.text,
-      ),
-      hit.start ?? 0,
-    );
-    if (refreshed == null || !context.mounted) return;
-    final current = ref.read(workspaceControllerProvider).activeBuffer;
-    if (current?.remoteNote?.localId != note.localId ||
-        current!.revision != refreshed.revision ||
-        notesSearchDigest(current.text) != refreshed.digest) {
-      return;
-    }
-    hit = refreshed;
-  }
-  if (hit.start == null || hit.end == null) return;
-  if (choice.source) {
-    await ref
-        .read(appSettingsControllerProvider.notifier)
-        .setDocumentViewMode(DocumentViewModePreference.source);
-  }
-  ref
-      .read(notesMatchNavigationProvider.notifier)
-      .navigate(hit.localId, hit.start!, hit.end!, hit.digest);
-}
-
-class NotesSearchDialog extends ConsumerStatefulWidget {
-  const NotesSearchDialog({
-    super.key,
-    required this.accountId,
-    this.initialQuery = '',
-    this.recovery = false,
-  });
-  final String accountId, initialQuery;
-  final bool recovery;
-  @override
-  ConsumerState<NotesSearchDialog> createState() => _NotesSearchDialogState();
-}
-
-class _NotesSearchDialogState extends ConsumerState<NotesSearchDialog> {
-  NotesSearchController? _controller;
-  StreamSubscription<NotesSearchState>? _results;
-  StreamSubscription<void>? _repositoryChanges;
-  Timer? _debounce;
-  late final _text = TextEditingController(text: widget.initialQuery);
-  late final _focus = FocusNode(onKeyEvent: _key);
-  final _scroll = ScrollController();
-  NotesSearchState _state = const NotesSearchState(loading: true);
-  bool _wholeWord = false;
-  int _selected = 0, _limit = 80;
-  @override
-  void initState() {
-    super.initState();
-    unawaited(_initialize());
-  }
-
-  Future<void> _initialize() async {
-    final repository = await ref.read(nextcloudNotesRepositoryProvider.future);
-    if (!mounted) return;
-    _controller = NotesSearchController(
-      repository.store,
-      widget.accountId,
-      recovery: widget.recovery,
-    );
-    _results = _controller!.changes.listen((state) {
-      if (mounted) {
-        setState(() {
-          _state = state;
-          _selected = 0;
-        });
-      }
-    });
-    _repositoryChanges = repository.changes.listen((_) => _schedule());
-    _search();
-  }
-
-  void _schedule() {
-    _controller?.cancel();
-    _debounce?.cancel();
-    _debounce = Timer(const Duration(milliseconds: 150), _search);
-  }
-
-  void _search() {
-    final repository = ref.read(nextcloudNotesRepositoryProvider).value;
-    if (repository == null || _controller == null) return;
-    final overlays = [
-      for (final buffer
-          in ref.read(workspaceControllerProvider).documentBuffers)
-        if (!widget.recovery &&
-            buffer.isDirty &&
-            buffer.remoteNote?.accountId == widget.accountId &&
-            repository.noteById(buffer.remoteNote!.localId) != null)
-          NotesSearchOverlay(
-            buffer.remoteNote!.localId,
-            buffer.revision,
-            repository.noteById(buffer.remoteNote!.localId)!.title,
-            repository.noteById(buffer.remoteNote!.localId)!.category,
-            buffer.text,
-          ),
-    ];
-    unawaited(
-      _controller!.search(
-        _text.text,
-        wholeWord: _wholeWord,
-        limit: _limit,
-        overlays: overlays,
-      ),
-    );
-  }
-
-  KeyEventResult _key(FocusNode node, KeyEvent event) {
-    if (event is! KeyDownEvent) return KeyEventResult.ignored;
-    if (event.logicalKey == LogicalKeyboardKey.escape) {
-      Navigator.pop(context);
-      return KeyEventResult.handled;
-    }
-    if (event.logicalKey == LogicalKeyboardKey.enter) {
-      _open();
-      return KeyEventResult.handled;
-    }
-    if (event.logicalKey == LogicalKeyboardKey.arrowUp ||
-        event.logicalKey == LogicalKeyboardKey.arrowDown) {
-      if (_state.hits.isNotEmpty) {
-        setState(
-          () => _selected =
-              (_selected +
-                      (event.logicalKey == LogicalKeyboardKey.arrowDown
-                          ? 1
-                          : -1))
-                  .clamp(0, _state.hits.length - 1),
-        );
-        if (_scroll.hasClients) {
-          _scroll.animateTo(
-            (_selected * 90.0).clamp(0, _scroll.position.maxScrollExtent),
-            duration: const Duration(milliseconds: 100),
-            curve: Curves.easeOut,
-          );
-        }
-      }
-      return KeyEventResult.handled;
-    }
-    return KeyEventResult.ignored;
-  }
-
-  void _open({bool source = false, int? index}) {
-    if (_state.loading || _state.hits.isEmpty) return;
-    Navigator.pop(context, (
-      hit: _state.hits[index ?? _selected],
-      query: _text.text,
-      wholeWord: _wholeWord,
-      source: source,
-    ));
-  }
-
-  @override
-  void dispose() {
-    _debounce?.cancel();
-    unawaited(_results?.cancel());
-    unawaited(_repositoryChanges?.cancel());
-    unawaited(_controller?.dispose());
-    _text.dispose();
-    _focus.dispose();
-    _scroll.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    ref.listen(
-      workspaceControllerProvider.select((s) => s.documentBuffers),
-      (a, b) => _schedule(),
-    );
-    return BusyMarkDialogShell(
-      title: widget.recovery
-          ? '${context.l10n.notesRecovery} · ${context.l10n.search}'
-          : context.l10n.search,
-      maxWidth: 760,
-      children: [
-        TextField(
-          autofocus: true,
-          focusNode: _focus,
-          controller: _text,
-          decoration: InputDecoration(labelText: context.l10n.search),
-          onChanged: (_) {
-            _limit = 80;
-            _schedule();
-          },
-        ),
-        if (widget.recovery) Text(context.l10n.notesRecoveryHelp),
-        Text(
-          context.l10n.notesSearchHelp,
-          style: Theme.of(context).textTheme.bodySmall,
-        ),
-        CheckboxListTile(
-          dense: true,
-          title: Text(context.l10n.sourceSearchWholeWord),
-          value: _wholeWord,
-          onChanged: (v) => setState(() {
-            _wholeWord = v ?? false;
-            _schedule();
-          }),
-        ),
-        if (_state.loading) const LinearProgressIndicator(),
-        if (_state.indexing) Text(context.l10n.notesIndexing),
-        if (_state.error != null)
-          Text('${context.l10n.warning}: ${_state.error}'),
-        SizedBox(
-          height: 360,
-          child: _state.hits.isEmpty
-              ? Center(
-                  child: Text(
-                    _state.loading
-                        ? context.l10n.notesIndexing
-                        : context.l10n.noResults,
-                  ),
-                )
-              : ListView.builder(
-                  key: const ValueKey('notes-search-results'),
-                  controller: _scroll,
-                  itemCount: _state.hits.length,
-                  itemBuilder: (context, index) {
-                    final hit = _state.hits[index];
-                    final from =
-                        hit.snippetMatchStart ??
-                        (hit.start == null
-                            ? 0
-                            : (hit.start! - hit.snippetStart).clamp(
-                                0,
-                                hit.snippet.length,
-                              ));
-                    final to =
-                        hit.snippetMatchEnd ??
-                        (hit.end == null
-                            ? 0
-                            : (hit.end! - hit.snippetStart).clamp(
-                                from,
-                                hit.snippet.length,
-                              ));
-                    return ListTile(
-                      key: ValueKey((
-                        'notes-search-hit',
-                        hit.localId,
-                        hit.start,
-                        hit.end,
-                      )),
-                      selected: index == _selected,
-                      title: Text(
-                        hit.title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      subtitle: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          if (hit.category.isNotEmpty)
-                            Text(
-                              hit.category,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          Text.rich(
-                            TextSpan(
-                              children: [
-                                TextSpan(
-                                  text: hit.snippet
-                                      .substring(0, from)
-                                      .replaceAll(RegExp(r'[\r\n\t]'), ' '),
-                                ),
-                                TextSpan(
-                                  text: hit.snippet
-                                      .substring(from, to)
-                                      .replaceAll(RegExp(r'[\r\n\t]'), ' '),
-                                  style: TextStyle(
-                                    backgroundColor: Theme.of(
-                                      context,
-                                    ).colorScheme.primaryContainer,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                TextSpan(
-                                  text: hit.snippet
-                                      .substring(to)
-                                      .replaceAll(RegExp(r'[\r\n\t]'), ' '),
-                                ),
-                              ],
-                            ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
-                      ),
-                      trailing: widget.recovery || hit.start == null
-                          ? null
-                          : IconButton(
-                              tooltip: context.l10n.notesSourceLocation,
-                              icon: const Icon(BusyMarkGlyphs.code),
-                              onPressed: () =>
-                                  _open(source: true, index: index),
-                            ),
-                      onTap: () => _open(index: index),
-                    );
-                  },
-                ),
-        ),
-        if (_state.truncated)
-          TextButton(
-            onPressed: () {
-              _limit += 80;
-              _search();
-            },
-            child: Text(context.l10n.workspaceSearchShowMore),
-          ),
-      ],
+      accountId: accountId,
     );
   }
 }

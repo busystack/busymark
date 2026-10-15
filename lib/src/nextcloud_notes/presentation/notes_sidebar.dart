@@ -1,3 +1,4 @@
+import '../../search/search_session.dart';
 import 'dart:async';
 
 import 'package:file_selector/file_selector.dart';
@@ -365,20 +366,17 @@ class _NextcloudNotesSidebarState extends ConsumerState<NextcloudNotesSidebar> {
         ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: BusyMarkSpacing.sm),
-          child: TextField(
-            readOnly: true,
-            decoration: InputDecoration(
-              hintText: context.l10n.search,
-              prefixIcon: const Icon(BusyMarkGlyphs.search),
-            ),
-            onTap: () => unawaited(
-              showNotesSearch(
-                context,
-                ref,
-                account: widget.accountId,
-                recovery: _navigation.destination == NotesDestination.recovery,
-              ),
-            ),
+          child: BusyMarkPushButton.standard(
+            key: const ValueKey('notes-search-entry'),
+            child: Text(context.l10n.search),
+            onPressed: () => ref
+                .read(searchSessionProvider.notifier)
+                .open(
+                  category: SearchCategory.text,
+                  location: _navigation.destination == NotesDestination.recovery
+                      ? SearchLocation.recovery
+                      : SearchLocation.workspace,
+                ),
           ),
         ),
         SizedBox(

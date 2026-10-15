@@ -1055,7 +1055,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get validateOnEdit => 'Kiểm tra khi chỉnh sửa';
 
   @override
-  String get clearRecentWorkspaces => 'Xóa không gian làm việc gần đây';
+  String get clearRecentWorkspaces => 'Xóa lịch sử gần đây';
 
   @override
   String get editingButtonsPosition => 'Vị trí các nút chỉnh sửa';
@@ -5387,4 +5387,54 @@ class AppLocalizationsVi extends AppLocalizations {
   @override
   String get wsPropertiesUnavailable =>
       'Phần tử đang kiểm tra không khả dụng. Kiểm tra một phần tử để tiếp tục.';
+
+  @override
+  String get searchTextCategory => 'Văn bản';
+
+  @override
+  String get searchDocumentsCategory => 'Tài liệu';
+
+  @override
+  String get searchTopicsCategory => 'Chủ đề';
+
+  @override
+  String get searchCurrentDocument => 'Tài liệu hiện tại';
+
+  @override
+  String get searchCurrentWorkspace => 'Không gian làm việc hiện tại';
+
+  @override
+  String get recentDocuments => 'Tài liệu gần đây';
+
+  @override
+  String get recentWorkspaces => 'Không gian làm việc gần đây';
+
+  @override
+  String get browseNotes => 'Duyệt ghi chú';
+
+  @override
+  String get searchActionsCommand => 'Tìm thao tác';
+
+  @override
+  String get searchDocumentsCommand => 'Tìm tài liệu';
+
+  @override
+  String get searchWorkspaceCommand => 'Tìm văn bản trong không gian làm việc';
+
+  @override
+  String get searchTopicsCommand => 'Tìm chủ đề';
+
+  @override
+  String get searchRecentCommand => 'Tìm mục gần đây';
+
+  @override
+  String searchQueryHint(String category) {
+    return 'Tìm trong $category…';
+  }
+
+  @override
+  String get searchResourceUnavailable => 'Tài nguyên này không khả dụng.';
+
+  @override
+  String get notesSync => 'Đồng bộ ghi chú';
 }

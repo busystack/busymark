@@ -4,6 +4,38 @@ import 'package:busymark/src/editor/source/source_search.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  test(
+    'workspace worker reuses sequential requests and cancels an active regex',
+    () async {
+      final worker = SourceSearchWorker();
+      addTearDown(worker.dispose);
+      for (final source in ['first needle', 'needle second']) {
+        final result = await worker.search(
+          SourceDocument(fullText: source),
+          const SourceSearchOptions(query: 'needle'),
+          reuseWorker: true,
+        );
+        expect(
+          result!.matches.single.fullStart,
+          source.startsWith('needle') ? 0 : 6,
+        );
+      }
+      final slow = worker.search(
+        SourceDocument(fullText: '${'a' * 100}b'),
+        const SourceSearchOptions(query: r'^(a+)+$', regex: true),
+        reuseWorker: true,
+      );
+      await Future<void>.delayed(const Duration(milliseconds: 80));
+      worker.cancel();
+      expect(await slow.timeout(const Duration(seconds: 5)), isNull);
+      final next = await worker.search(
+        SourceDocument(fullText: 'new needle'),
+        const SourceSearchOptions(query: 'needle'),
+        reuseWorker: true,
+      );
+      expect(next!.matches.single.fullStart, 4);
+    },
+  );
   test('regex uses Unicode code points and diagnoses zero-length matches', () {
     final document = SourceDocument(fullText: '😀');
     final result = searchSourceDocument(

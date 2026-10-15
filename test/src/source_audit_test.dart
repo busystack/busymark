@@ -412,7 +412,7 @@ void main() {
     expect(sidebarSurface, contains('end: BorderSide('));
     expect(sidebarSurface, contains('color: colors.sidebarBorder'));
     expect(workspace, contains('return BusyMarkSidebarSurface('));
-    expect(welcome, contains('return BusyMarkSidebarSurface('));
+    expect(welcome, contains('BusyMarkSidebarSurface('));
     expect(
       workspace,
       isNot(contains('decoration: BoxDecoration(color: colors.sidebar)')),
@@ -481,19 +481,24 @@ void main() {
       contains('case HeaderBarAction.search:\n        _toggleSearch(ref);'),
     );
     expect(workspace, contains('backVisible: !searchState.active'));
-    expect(workspace, contains('_workspaceSearchProvider'));
-    expect(workspace, contains('class _HeaderSearchField'));
-    expect(workspace, contains('return BusyMarkSearchField('));
-    final searchField = RegExp(
-      r'class _HeaderSearchField[\s\S]*?class _Sidebar ',
-    ).firstMatch(workspace)!.group(0)!;
-    expect(searchField, isNot(contains('TextField(')));
-    expect(searchField, isNot(contains('OutlineInputBorder(')));
-    expect(searchField, contains('onEscape: widget.onEscape'));
-    expect(workspace, contains('class _SearchSidebar'));
-    expect(workspace, contains('_workspaceSearchResults'));
-    expect(workspace, contains('_loadWorkspaceSearchMatches'));
-    expect(workspace, contains('await loadText(file.absolutePath)'));
+    final sidebar = File(
+      'lib/src/search/search_sidebar.dart',
+    ).readAsStringSync();
+    final session = File(
+      'lib/src/search/search_session.dart',
+    ).readAsStringSync();
+    final matcher = File(
+      'lib/src/search/workspace_text_search.dart',
+    ).readAsStringSync();
+    expect(workspace, contains('searchSessionProvider'));
+    expect(sidebar, contains('class SearchHeaderField'));
+    expect(sidebar, contains('child: BusyMarkSearchField('));
+    expect(sidebar, isNot(contains('TextField(')));
+    expect(sidebar, isNot(contains('OutlineInputBorder(')));
+    expect(sidebar, contains('onEscape: controller.close'));
+    expect(sidebar, contains('class SearchSidebar'));
+    expect(session, contains('loadWorkspaceTextMatches'));
+    expect(matcher, contains('await loadText(file.absolutePath)'));
     expect(workspace, isNot(contains('readAsStringSync()')));
     expect(workspace, contains('_searchNavigationTargetProvider'));
   });
@@ -1031,7 +1036,7 @@ void main() {
     expect(workspace, isNot(contains('_outlineTreeHeadings')));
     expect(
       workspace,
-      contains('widget.searchState.active ? null : selectedTab'),
+      contains('widget.searchState.category == SearchCategory.outline'),
     );
     expect(workspace, contains('selectedTab == _SidebarTab.git'));
     expect(
@@ -1559,20 +1564,24 @@ void main() {
     final design = File('lib/src/app/busymark_design.dart').readAsStringSync();
     final settings = File('lib/src/app/app_settings.dart').readAsStringSync();
 
-    expect(welcome, contains('enum _RecentWorkspaceAction'));
-    expect(welcome, contains('_recentWorkspaceMenuItems'));
+    final sidebar = File(
+      'lib/src/search/search_sidebar.dart',
+    ).readAsStringSync();
+    expect(welcome, contains('SearchResultList('));
+    expect(sidebar, contains('enum _RecentNavigationAction'));
+    expect(sidebar, contains('_recentMenuItems'));
     expect(
-      welcome,
-      contains('BusyMarkSidebarRecordRow<_RecentWorkspaceAction>'),
+      sidebar,
+      contains('BusyMarkSidebarRecordRow<_RecentNavigationAction>'),
     );
-    expect(welcome, contains('menuItemsBuilder: _recentWorkspaceMenuItems'));
+    expect(sidebar, contains('menuItemsBuilder:'));
     expect(design, contains('class BusyMarkSidebarRecordRow<T>'));
     expect(design, contains('BusyMarkMenuButton<T>'));
     expect(design, contains('showBusyMarkContextMenu<T>'));
     expect(design, contains('isBusyMarkContextMenuKeyEvent(event)'));
-    expect(welcome, contains('label: context.l10n.openInFiles'));
-    expect(welcome, contains('label: context.l10n.copyPath'));
-    expect(welcome, contains('label: context.l10n.removeFromRecent'));
+    expect(sidebar, contains('label: context.l10n.openInFiles'));
+    expect(sidebar, contains('label: context.l10n.copyPath'));
+    expect(sidebar, contains('label: context.l10n.removeFromRecent'));
     expect(settings, contains('removeRecentWorkspace(String path)'));
   });
 
@@ -1710,10 +1719,7 @@ void main() {
     expect(workspace, contains('_scrollPreviewToApproximateLine'));
     expect(workspace, contains('nearestBeforeIndex'));
     expect(workspace, isNot(contains('return fallbackIndex')));
-    expect(
-      workspace,
-      contains('Future<void>.delayed(BusyMarkMotion.previewSearchDelay'),
-    );
+    expect(workspace, contains('Timer(BusyMarkMotion.previewSearchDelay'));
     expect(preview, contains('sourceStartLine'));
     expect(preview, contains('sourceStartOffset'));
     expect(preview, contains('span.startLine'));

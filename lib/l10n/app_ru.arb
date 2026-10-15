@@ -882,7 +882,7 @@
   "@validateOnEdit": {
     "description": "Validation setting label."
   },
-  "clearRecentWorkspaces": "Очистить список недавних рабочих областей",
+  "clearRecentWorkspaces": "Очистить недавнюю историю",
   "@clearRecentWorkspaces": {
     "description": "Settings action label for clearing recent workspaces."
   },
@@ -3636,5 +3636,21 @@
   "wsInsertElements": "Вставить элементы",
   "wsAdmonitionsAndQuotes": "Примечания и цитаты",
   "wsSemanticText": "Семантический текст",
-  "wsPropertiesUnavailable": "Проверяемый элемент недоступен. Выберите элемент для продолжения."
+  "wsPropertiesUnavailable": "Проверяемый элемент недоступен. Выберите элемент для продолжения.",
+  "searchTextCategory": "Текст",
+  "searchDocumentsCategory": "Документы",
+  "searchTopicsCategory": "Темы",
+  "searchCurrentDocument": "Текущий документ",
+  "searchCurrentWorkspace": "Текущая рабочая область",
+  "recentDocuments": "Недавние документы",
+  "recentWorkspaces": "Недавние рабочие области",
+  "browseNotes": "Обзор заметок",
+  "searchActionsCommand": "Поиск действий",
+  "searchDocumentsCommand": "Поиск документов",
+  "searchWorkspaceCommand": "Поиск текста в рабочей области",
+  "searchTopicsCommand": "Поиск тем",
+  "searchRecentCommand": "Поиск недавних",
+  "searchQueryHint": "Поиск: {category}…",
+  "searchResourceUnavailable": "Этот ресурс недоступен.",
+  "notesSync": "Синхронизировать заметки"
 }

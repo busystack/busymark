@@ -882,7 +882,7 @@
   "@validateOnEdit": {
     "description": "Validation setting label."
   },
-  "clearRecentWorkspaces": "हालिया कार्यस्थान साफ़ करें",
+  "clearRecentWorkspaces": "हाल का इतिहास साफ़ करें",
   "@clearRecentWorkspaces": {
     "description": "Settings action label for clearing recent workspaces."
   },
@@ -3610,5 +3610,21 @@
   "wsInsertElements": "तत्व जोड़ें",
   "wsAdmonitionsAndQuotes": "सूचनाएँ और उद्धरण",
   "wsSemanticText": "अर्थपूर्ण पाठ",
-  "wsPropertiesUnavailable": "जाँचा गया तत्व उपलब्ध नहीं है। जारी रखने के लिए कोई तत्व जाँचें।"
+  "wsPropertiesUnavailable": "जाँचा गया तत्व उपलब्ध नहीं है। जारी रखने के लिए कोई तत्व जाँचें।",
+  "searchTextCategory": "पाठ",
+  "searchDocumentsCategory": "दस्तावेज़",
+  "searchTopicsCategory": "विषय",
+  "searchCurrentDocument": "वर्तमान दस्तावेज़",
+  "searchCurrentWorkspace": "वर्तमान कार्यक्षेत्र",
+  "recentDocuments": "हाल के दस्तावेज़",
+  "recentWorkspaces": "हाल के कार्यक्षेत्र",
+  "browseNotes": "नोट ब्राउज़ करें",
+  "searchActionsCommand": "क्रियाएँ खोजें",
+  "searchDocumentsCommand": "दस्तावेज़ खोजें",
+  "searchWorkspaceCommand": "कार्यक्षेत्र में पाठ खोजें",
+  "searchTopicsCommand": "विषय खोजें",
+  "searchRecentCommand": "हाल के आइटम खोजें",
+  "searchQueryHint": "{category} में खोजें…",
+  "searchResourceUnavailable": "यह संसाधन उपलब्ध नहीं है।",
+  "notesSync": "नोट सिंक करें"
 }

@@ -19,6 +19,8 @@ abstract final class WorkspaceGlyphs {
   }
 
   static IconData forRecent(RecentWorkspace recent) {
+    if (recent.accountId != null) return BusyMarkGlyphs.documentHistory;
+    if (recent.ownerRoot != null) return BusyMarkGlyphs.document;
     return forKindName(recent.kind, fallbackPath: recent.path);
   }
 

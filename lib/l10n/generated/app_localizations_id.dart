@@ -1062,7 +1062,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get validateOnEdit => 'Validasi saat mengedit';
 
   @override
-  String get clearRecentWorkspaces => 'Hapus ruang kerja terbaru';
+  String get clearRecentWorkspaces => 'Hapus riwayat terbaru';
 
   @override
   String get editingButtonsPosition => 'Posisi tombol pengeditan';
@@ -5396,4 +5396,54 @@ class AppLocalizationsId extends AppLocalizations {
   @override
   String get wsPropertiesUnavailable =>
       'Elemen yang diperiksa tidak tersedia. Periksa elemen untuk melanjutkan.';
+
+  @override
+  String get searchTextCategory => 'Teks';
+
+  @override
+  String get searchDocumentsCategory => 'Dokumen';
+
+  @override
+  String get searchTopicsCategory => 'Topik';
+
+  @override
+  String get searchCurrentDocument => 'Dokumen saat ini';
+
+  @override
+  String get searchCurrentWorkspace => 'Ruang kerja saat ini';
+
+  @override
+  String get recentDocuments => 'Dokumen terbaru';
+
+  @override
+  String get recentWorkspaces => 'Ruang kerja terbaru';
+
+  @override
+  String get browseNotes => 'Jelajahi catatan';
+
+  @override
+  String get searchActionsCommand => 'Cari tindakan';
+
+  @override
+  String get searchDocumentsCommand => 'Cari dokumen';
+
+  @override
+  String get searchWorkspaceCommand => 'Cari teks ruang kerja';
+
+  @override
+  String get searchTopicsCommand => 'Cari topik';
+
+  @override
+  String get searchRecentCommand => 'Cari terbaru';
+
+  @override
+  String searchQueryHint(String category) {
+    return 'Cari di $category…';
+  }
+
+  @override
+  String get searchResourceUnavailable => 'Sumber daya ini tidak tersedia.';
+
+  @override
+  String get notesSync => 'Sinkronkan catatan';
 }

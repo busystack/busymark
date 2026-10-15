@@ -1056,7 +1056,7 @@ class AppLocalizationsEt extends AppLocalizations {
   String get validateOnEdit => 'Valideeri muutmisel';
 
   @override
-  String get clearRecentWorkspaces => 'Tühjenda hiljutiste tööruumide loend';
+  String get clearRecentWorkspaces => 'Tühjenda hiljutiste kirjete loend';
 
   @override
   String get editingButtonsPosition => 'Redigeerimisnuppude asukoht';
@@ -5394,4 +5394,54 @@ class AppLocalizationsEt extends AppLocalizations {
   @override
   String get wsPropertiesUnavailable =>
       'Vaadeldav element pole saadaval. Jätkamiseks vali element.';
+
+  @override
+  String get searchTextCategory => 'Tekst';
+
+  @override
+  String get searchDocumentsCategory => 'Dokumendid';
+
+  @override
+  String get searchTopicsCategory => 'Teemad';
+
+  @override
+  String get searchCurrentDocument => 'Praegune dokument';
+
+  @override
+  String get searchCurrentWorkspace => 'Praegune tööruum';
+
+  @override
+  String get recentDocuments => 'Hiljutised dokumendid';
+
+  @override
+  String get recentWorkspaces => 'Hiljutised tööruumid';
+
+  @override
+  String get browseNotes => 'Sirvi märkmeid';
+
+  @override
+  String get searchActionsCommand => 'Otsi toiminguid';
+
+  @override
+  String get searchDocumentsCommand => 'Otsi dokumente';
+
+  @override
+  String get searchWorkspaceCommand => 'Otsi tööruumi tekstist';
+
+  @override
+  String get searchTopicsCommand => 'Otsi teemasid';
+
+  @override
+  String get searchRecentCommand => 'Otsi hiljutisi';
+
+  @override
+  String searchQueryHint(String category) {
+    return 'Otsi: $category…';
+  }
+
+  @override
+  String get searchResourceUnavailable => 'See ressurss pole saadaval.';
+
+  @override
+  String get notesSync => 'Sünkrooni märkmed';
 }

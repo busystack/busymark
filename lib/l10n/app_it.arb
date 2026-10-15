@@ -882,7 +882,7 @@
   "@validateOnEdit": {
     "description": "Validation setting label."
   },
-  "clearRecentWorkspaces": "Cancella le aree di lavoro recenti",
+  "clearRecentWorkspaces": "Cancella la cronologia recente",
   "@clearRecentWorkspaces": {
     "description": "Settings action label for clearing recent workspaces."
   },
@@ -3610,5 +3610,21 @@
   "wsInsertElements": "Inserisci elementi",
   "wsAdmonitionsAndQuotes": "Avvisi e citazioni",
   "wsSemanticText": "Testo semantico",
-  "wsPropertiesUnavailable": "L’elemento esaminato non è disponibile. Esamina un elemento per continuare."
+  "wsPropertiesUnavailable": "L’elemento esaminato non è disponibile. Esamina un elemento per continuare.",
+  "searchTextCategory": "Testo",
+  "searchDocumentsCategory": "Documenti",
+  "searchTopicsCategory": "Argomenti",
+  "searchCurrentDocument": "Documento corrente",
+  "searchCurrentWorkspace": "Area di lavoro corrente",
+  "recentDocuments": "Documenti recenti",
+  "recentWorkspaces": "Aree di lavoro recenti",
+  "browseNotes": "Sfoglia note",
+  "searchActionsCommand": "Cerca azioni",
+  "searchDocumentsCommand": "Cerca documenti",
+  "searchWorkspaceCommand": "Cerca testo nell’area di lavoro",
+  "searchTopicsCommand": "Cerca argomenti",
+  "searchRecentCommand": "Cerca recenti",
+  "searchQueryHint": "Cerca in {category}…",
+  "searchResourceUnavailable": "Questa risorsa non è disponibile.",
+  "notesSync": "Sincronizza note"
 }

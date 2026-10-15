@@ -83,3 +83,31 @@ extension BusyDocumentOutline on BusyDocument {
     return List.unmodifiable(headings);
   }
 }
+
+/// Filters the existing ordered outline while retaining each matching heading's
+/// ancestors. The returned objects keep their original source/editor identities.
+List<DocumentOutlineHeading> filterDocumentOutline(
+  List<DocumentOutlineHeading> headings,
+  String query,
+) {
+  final normalized = query.trim().toLowerCase();
+  if (normalized.isEmpty) return headings;
+  final keep = <int>{};
+  final ancestors = <int>[];
+  for (var index = 0; index < headings.length; index++) {
+    final heading = headings[index];
+    while (ancestors.isNotEmpty &&
+        headings[ancestors.last].level >= heading.level) {
+      ancestors.removeLast();
+    }
+    if (heading.text.toLowerCase().contains(normalized)) {
+      keep.addAll(ancestors);
+      keep.add(index);
+    }
+    ancestors.add(index);
+  }
+  return [
+    for (var index = 0; index < headings.length; index++)
+      if (keep.contains(index)) headings[index],
+  ];
+}

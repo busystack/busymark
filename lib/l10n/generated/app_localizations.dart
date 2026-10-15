@@ -2077,10 +2077,10 @@ abstract class AppLocalizations {
   /// **'Validate on edit'**
   String get validateOnEdit;
 
-  /// Settings action label for clearing recent workspaces.
+  /// Settings action for clearing Recent navigation metadata in both document and workspace sections.
   ///
   /// In en, this message translates to:
-  /// **'Clear recent workspaces'**
+  /// **'Clear recent history'**
   String get clearRecentWorkspaces;
 
   /// Settings label for WYSIWYG editing button position.
@@ -9251,6 +9251,102 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The inspected element is unavailable. Inspect an element to continue.'**
   String get wsPropertiesUnavailable;
+
+  /// No description provided for @searchTextCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Text'**
+  String get searchTextCategory;
+
+  /// No description provided for @searchDocumentsCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Documents'**
+  String get searchDocumentsCategory;
+
+  /// No description provided for @searchTopicsCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Topics'**
+  String get searchTopicsCategory;
+
+  /// No description provided for @searchCurrentDocument.
+  ///
+  /// In en, this message translates to:
+  /// **'Current document'**
+  String get searchCurrentDocument;
+
+  /// No description provided for @searchCurrentWorkspace.
+  ///
+  /// In en, this message translates to:
+  /// **'Current workspace'**
+  String get searchCurrentWorkspace;
+
+  /// No description provided for @recentDocuments.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent documents'**
+  String get recentDocuments;
+
+  /// No description provided for @recentWorkspaces.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent workspaces'**
+  String get recentWorkspaces;
+
+  /// No description provided for @browseNotes.
+  ///
+  /// In en, this message translates to:
+  /// **'Browse Notes'**
+  String get browseNotes;
+
+  /// No description provided for @searchActionsCommand.
+  ///
+  /// In en, this message translates to:
+  /// **'Search Actions'**
+  String get searchActionsCommand;
+
+  /// No description provided for @searchDocumentsCommand.
+  ///
+  /// In en, this message translates to:
+  /// **'Search Documents'**
+  String get searchDocumentsCommand;
+
+  /// No description provided for @searchWorkspaceCommand.
+  ///
+  /// In en, this message translates to:
+  /// **'Search workspace text'**
+  String get searchWorkspaceCommand;
+
+  /// No description provided for @searchTopicsCommand.
+  ///
+  /// In en, this message translates to:
+  /// **'Search Topics'**
+  String get searchTopicsCommand;
+
+  /// No description provided for @searchRecentCommand.
+  ///
+  /// In en, this message translates to:
+  /// **'Search Recent'**
+  String get searchRecentCommand;
+
+  /// No description provided for @searchQueryHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search {category}…'**
+  String searchQueryHint(String category);
+
+  /// No description provided for @searchResourceUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'This resource is unavailable.'**
+  String get searchResourceUnavailable;
+
+  /// Command to synchronize the active Nextcloud Notes account.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync notes'**
+  String get notesSync;
 }
 
 class _AppLocalizationsDelegate

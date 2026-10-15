@@ -1012,7 +1012,7 @@
   "@validateOnEdit": {
     "description": "Validation setting label."
   },
-  "clearRecentWorkspaces": "Xóa không gian làm việc gần đây",
+  "clearRecentWorkspaces": "Xóa lịch sử gần đây",
   "@clearRecentWorkspaces": {
     "description": "Settings action label for clearing recent workspaces."
   },
@@ -5149,5 +5149,21 @@
   "wsInsertElements": "Chèn phần tử",
   "wsAdmonitionsAndQuotes": "Lưu ý và trích dẫn",
   "wsSemanticText": "Văn bản ngữ nghĩa",
-  "wsPropertiesUnavailable": "Phần tử đang kiểm tra không khả dụng. Kiểm tra một phần tử để tiếp tục."
+  "wsPropertiesUnavailable": "Phần tử đang kiểm tra không khả dụng. Kiểm tra một phần tử để tiếp tục.",
+  "searchTextCategory": "Văn bản",
+  "searchDocumentsCategory": "Tài liệu",
+  "searchTopicsCategory": "Chủ đề",
+  "searchCurrentDocument": "Tài liệu hiện tại",
+  "searchCurrentWorkspace": "Không gian làm việc hiện tại",
+  "recentDocuments": "Tài liệu gần đây",
+  "recentWorkspaces": "Không gian làm việc gần đây",
+  "browseNotes": "Duyệt ghi chú",
+  "searchActionsCommand": "Tìm thao tác",
+  "searchDocumentsCommand": "Tìm tài liệu",
+  "searchWorkspaceCommand": "Tìm văn bản trong không gian làm việc",
+  "searchTopicsCommand": "Tìm chủ đề",
+  "searchRecentCommand": "Tìm mục gần đây",
+  "searchQueryHint": "Tìm trong {category}…",
+  "searchResourceUnavailable": "Tài nguyên này không khả dụng.",
+  "notesSync": "Đồng bộ ghi chú"
 }

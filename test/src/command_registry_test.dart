@@ -5,6 +5,103 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/widgets.dart';
 
 void main() {
+  test('document and workspace command targets are explicit', () {
+    final registry = BusyMarkCommandCatalog.metadata;
+    for (final id in [
+      'search.find',
+      'file.save',
+      'file.export',
+      'tabs.close',
+      'sidebar.outline',
+      'editor.bold',
+    ]) {
+      expect(
+        registry.requiresDocumentTarget(registry[id]!),
+        isTrue,
+        reason: id,
+      );
+    }
+    for (final id in [
+      'sidebar.files',
+      'sidebar.git',
+      'tabs.next',
+      'tabs.closeAll',
+      'notes.sync',
+      'notes.export',
+      'notes.importFolder',
+      'notes.importFile',
+    ]) {
+      expect(
+        registry.requiresWorkspaceTarget(registry[id]!),
+        isTrue,
+        reason: id,
+      );
+    }
+    for (final id in [
+      'notes.sync',
+      'notes.export',
+      'notes.importFolder',
+      'notes.importFile',
+    ]) {
+      expect(registry[id], isNotNull);
+      expect(registry[id]!.shortcut, isNull);
+    }
+    for (final id in [
+      'file.open',
+      'file.newDocument',
+      'notes.create',
+      'help.keyboardShortcuts',
+    ]) {
+      expect(
+        registry.requiresDocumentTarget(registry[id]!),
+        isFalse,
+        reason: id,
+      );
+    }
+  });
+  test('all agreed search shortcuts have no cross-scope collision', () {
+    final registry = BusyMarkCommandCatalog.metadata;
+    const expected = {
+      'search.find': 'Ctrl+F',
+      'search.workspace': 'Ctrl+Shift+F',
+      'sidebar.outline': 'Ctrl+3',
+      'workspace.quickOpen': 'Ctrl+P',
+      'search.topics': 'Ctrl+Shift+T',
+      'search.recent': 'Ctrl+Alt+O',
+      'view.commandPalette': 'Ctrl+Shift+P',
+      'help.keyboardShortcuts': 'Ctrl+Alt+K',
+    };
+    for (final entry in expected.entries) {
+      expect(registry[entry.key]?.shortcut?.label, entry.value);
+      final activator = registry[entry.key]!.shortcut!.activator;
+      expect(
+        registry.commands
+            .where((c) => c.shortcut?.activator == activator)
+            .map((c) => c.id),
+        [entry.key],
+      );
+    }
+    for (final id in [
+      'writerside.insertProcedure',
+      'writerside.insertTabs',
+      'writerside.insertDefinitionList',
+      'writerside.insertInclude',
+      'writerside.insertVariable',
+      'writerside.insertVideo',
+      'writerside.insertTldr',
+      'writerside.insertConvertListToProcedure',
+      'writerside.tip',
+      'writerside.note',
+      'writerside.warning',
+      'writerside.quote',
+      'writerside.uiControl',
+      'writerside.filePath',
+      'writerside.uiPath',
+      'writerside.shortcut',
+    ]) {
+      expect(registry[id]?.execute, isNotNull, reason: id);
+    }
+  });
   test('catalog includes every editor command with an executable callback', () {
     final registry = BusyMarkCommandCatalog.create();
 

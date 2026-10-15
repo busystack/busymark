@@ -1055,7 +1055,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get validateOnEdit => 'संपादन के समय सत्यापित करें';
 
   @override
-  String get clearRecentWorkspaces => 'हालिया कार्यस्थान साफ़ करें';
+  String get clearRecentWorkspaces => 'हाल का इतिहास साफ़ करें';
 
   @override
   String get editingButtonsPosition => 'संपादन बटनों की स्थिति';
@@ -5388,4 +5388,54 @@ class AppLocalizationsHi extends AppLocalizations {
   @override
   String get wsPropertiesUnavailable =>
       'जाँचा गया तत्व उपलब्ध नहीं है। जारी रखने के लिए कोई तत्व जाँचें।';
+
+  @override
+  String get searchTextCategory => 'पाठ';
+
+  @override
+  String get searchDocumentsCategory => 'दस्तावेज़';
+
+  @override
+  String get searchTopicsCategory => 'विषय';
+
+  @override
+  String get searchCurrentDocument => 'वर्तमान दस्तावेज़';
+
+  @override
+  String get searchCurrentWorkspace => 'वर्तमान कार्यक्षेत्र';
+
+  @override
+  String get recentDocuments => 'हाल के दस्तावेज़';
+
+  @override
+  String get recentWorkspaces => 'हाल के कार्यक्षेत्र';
+
+  @override
+  String get browseNotes => 'नोट ब्राउज़ करें';
+
+  @override
+  String get searchActionsCommand => 'क्रियाएँ खोजें';
+
+  @override
+  String get searchDocumentsCommand => 'दस्तावेज़ खोजें';
+
+  @override
+  String get searchWorkspaceCommand => 'कार्यक्षेत्र में पाठ खोजें';
+
+  @override
+  String get searchTopicsCommand => 'विषय खोजें';
+
+  @override
+  String get searchRecentCommand => 'हाल के आइटम खोजें';
+
+  @override
+  String searchQueryHint(String category) {
+    return '$category में खोजें…';
+  }
+
+  @override
+  String get searchResourceUnavailable => 'यह संसाधन उपलब्ध नहीं है।';
+
+  @override
+  String get notesSync => 'नोट सिंक करें';
 }

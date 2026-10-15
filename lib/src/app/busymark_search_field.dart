@@ -17,6 +17,7 @@ class BusyMarkSearchField extends StatefulWidget {
     this.focusRequest = 0,
     this.onChanged,
     this.onSubmitted,
+    this.onMoveSelection,
     this.onClear,
     this.onEscape,
     this.clearButtonSemanticLabel,
@@ -32,6 +33,7 @@ class BusyMarkSearchField extends StatefulWidget {
 
   final ValueChanged<String>? onChanged;
   final ValueChanged<String?>? onSubmitted;
+  final ValueChanged<int>? onMoveSelection;
   final VoidCallback? onClear;
   final VoidCallback? onEscape;
   final String? clearButtonSemanticLabel;
@@ -114,6 +116,25 @@ class _BusyMarkSearchFieldState extends State<BusyMarkSearchField> {
 
   @override
   Widget build(BuildContext context) {
+    _focusNode.onKeyEvent = (_, event) {
+      if (event is! KeyDownEvent || _controller.value.composing.isValid) {
+        return KeyEventResult.ignored;
+      }
+      if (event.logicalKey == LogicalKeyboardKey.enter &&
+          widget.onSubmitted != null) {
+        widget.onSubmitted!(_controller.text);
+        return KeyEventResult.handled;
+      }
+      if ((event.logicalKey == LogicalKeyboardKey.arrowDown ||
+              event.logicalKey == LogicalKeyboardKey.arrowUp) &&
+          widget.onMoveSelection != null) {
+        widget.onMoveSelection!(
+          event.logicalKey == LogicalKeyboardKey.arrowDown ? 1 : -1,
+        );
+        return KeyEventResult.handled;
+      }
+      return KeyEventResult.ignored;
+    };
     final theme = Theme.of(context);
     final clearLabel =
         widget.clearButtonSemanticLabel ??
@@ -121,7 +142,8 @@ class _BusyMarkSearchFieldState extends State<BusyMarkSearchField> {
     return Focus(
       onKeyEvent: (_, event) {
         if (event is KeyDownEvent &&
-            event.logicalKey == LogicalKeyboardKey.escape) {
+            event.logicalKey == LogicalKeyboardKey.escape &&
+            !_controller.value.composing.isValid) {
           if (widget.clearOnEscape) _clear();
           widget.onEscape?.call();
           return KeyEventResult.handled;

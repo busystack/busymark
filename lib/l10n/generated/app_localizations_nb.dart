@@ -1063,7 +1063,7 @@ class AppLocalizationsNb extends AppLocalizations {
   String get validateOnEdit => 'Valider under redigering';
 
   @override
-  String get clearRecentWorkspaces => 'Tøm nylige arbeidsområder';
+  String get clearRecentWorkspaces => 'Tøm nylig historikk';
 
   @override
   String get editingButtonsPosition => 'Plassering av redigeringsknapper';
@@ -5402,4 +5402,54 @@ class AppLocalizationsNb extends AppLocalizations {
   @override
   String get wsPropertiesUnavailable =>
       'Det inspiserte elementet er utilgjengelig. Inspiser et element for å fortsette.';
+
+  @override
+  String get searchTextCategory => 'Tekst';
+
+  @override
+  String get searchDocumentsCategory => 'Dokumenter';
+
+  @override
+  String get searchTopicsCategory => 'Emner';
+
+  @override
+  String get searchCurrentDocument => 'Gjeldende dokument';
+
+  @override
+  String get searchCurrentWorkspace => 'Gjeldende arbeidsområde';
+
+  @override
+  String get recentDocuments => 'Nylige dokumenter';
+
+  @override
+  String get recentWorkspaces => 'Nylige arbeidsområder';
+
+  @override
+  String get browseNotes => 'Bla gjennom notater';
+
+  @override
+  String get searchActionsCommand => 'Søk etter handlinger';
+
+  @override
+  String get searchDocumentsCommand => 'Søk etter dokumenter';
+
+  @override
+  String get searchWorkspaceCommand => 'Søk i arbeidsområdets tekst';
+
+  @override
+  String get searchTopicsCommand => 'Søk etter emner';
+
+  @override
+  String get searchRecentCommand => 'Søk i nylige';
+
+  @override
+  String searchQueryHint(String category) {
+    return 'Søk i $category…';
+  }
+
+  @override
+  String get searchResourceUnavailable => 'Denne ressursen er utilgjengelig.';
+
+  @override
+  String get notesSync => 'Synkroniser notater';
 }

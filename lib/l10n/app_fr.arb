@@ -882,7 +882,7 @@
   "@validateOnEdit": {
     "description": "Validation setting label."
   },
-  "clearRecentWorkspaces": "Effacer les espaces de travail récents",
+  "clearRecentWorkspaces": "Effacer l’historique récent",
   "@clearRecentWorkspaces": {
     "description": "Settings action label for clearing recent workspaces."
   },
@@ -3610,5 +3610,21 @@
   "wsInsertElements": "Insérer des éléments",
   "wsAdmonitionsAndQuotes": "Avertissements et citations",
   "wsSemanticText": "Texte sémantique",
-  "wsPropertiesUnavailable": "L’élément inspecté est indisponible. Inspectez un élément pour continuer."
+  "wsPropertiesUnavailable": "L’élément inspecté est indisponible. Inspectez un élément pour continuer.",
+  "searchTextCategory": "Texte",
+  "searchDocumentsCategory": "Documents",
+  "searchTopicsCategory": "Rubriques",
+  "searchCurrentDocument": "Document actuel",
+  "searchCurrentWorkspace": "Espace de travail actuel",
+  "recentDocuments": "Documents récents",
+  "recentWorkspaces": "Espaces de travail récents",
+  "browseNotes": "Parcourir les notes",
+  "searchActionsCommand": "Rechercher des actions",
+  "searchDocumentsCommand": "Rechercher des documents",
+  "searchWorkspaceCommand": "Rechercher dans le texte de l’espace de travail",
+  "searchTopicsCommand": "Rechercher des rubriques",
+  "searchRecentCommand": "Rechercher les éléments récents",
+  "searchQueryHint": "Rechercher dans {category}…",
+  "searchResourceUnavailable": "Cette ressource est indisponible.",
+  "notesSync": "Synchroniser les notes"
 }

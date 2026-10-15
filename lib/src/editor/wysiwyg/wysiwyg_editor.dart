@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show listEquals;
 import '../../writerside/writerside_effective_properties.dart';
 import '../../writerside/writerside_model.dart';
 import '../link_destination.dart';
@@ -867,6 +868,27 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       child: Actions(
         actions: {
           BusyMarkContextCommandIntent: BusyMarkContextCommandAction(
+            captureTarget: () {
+              final guard = _captureDialogTarget();
+              final blockId = _activeBlockId, cellId = _activeCellId;
+              final target = _activeTextTarget();
+              final selection = target?.controller.selection;
+              final ranges = [
+                for (final r in _selectedTextRanges())
+                  (r.block.id, r.start, r.end),
+              ];
+              return BusyMarkContextCommandSnapshot(
+                () =>
+                    _isDialogTargetCurrent(guard) &&
+                    blockId == _activeBlockId &&
+                    cellId == _activeCellId &&
+                    selection == _activeTextTarget()?.controller.selection &&
+                    listEquals(ranges, [
+                      for (final r in _selectedTextRanges())
+                        (r.block.id, r.start, r.end),
+                    ]),
+              );
+            },
             isCommandEnabled: _canApplyContextCommand,
             onCommand: _applyContextCommand,
           ),
@@ -4171,7 +4193,8 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       }
       return KeyEventResult.handled;
     }
-    if (commands.shortcutAccepts(BusyMarkCommandIds.search, event, keyboard)) {
+    if (widget.onOpenSearch != null &&
+        commands.shortcutAccepts(BusyMarkCommandIds.search, event, keyboard)) {
       widget.onOpenSearch?.call();
       return KeyEventResult.handled;
     }
@@ -4442,7 +4465,8 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
       }
       return KeyEventResult.handled;
     }
-    if (commands.shortcutAccepts(BusyMarkCommandIds.search, event, keyboard)) {
+    if (widget.onOpenSearch != null &&
+        commands.shortcutAccepts(BusyMarkCommandIds.search, event, keyboard)) {
       widget.onOpenSearch?.call();
       return KeyEventResult.handled;
     }
@@ -5649,6 +5673,33 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   }
 
   bool _canApplyContextCommand(String commandId) {
+    if (DocumentReadOnlyScope.of(context) &&
+        !{
+          BusyMarkCommandIds.textSelectAll,
+          BusyMarkCommandIds.textCopy,
+          BusyMarkCommandIds.editorCopyPlainText,
+          BusyMarkCommandIds.checkSpelling,
+        }.contains(commandId)) {
+      return false;
+    }
+    final writerside = writersideCommands[commandId];
+    if (writerside != null) {
+      if (DocumentReadOnlyScope.of(context) ||
+          !_documentController.document.isWriterside) {
+        return false;
+      }
+      return switch (writerside) {
+        BusyWritersideToolbarInsert(:final command) =>
+          _documentController.canInsertWriterside(command, _activeBlockId) &&
+              (!{
+                    BusyWritersideInsertCommand.include,
+                    BusyWritersideInsertCommand.variable,
+                  }.contains(command) ||
+                  widget.writersideProjectIndex != null),
+        BusyWritersideToolbarAdmonition() => _canApplyAdmonitionCommand(),
+        BusyWritersideToolbarSemantic() => _hasSemanticCommandTarget,
+      };
+    }
     if ((commandId == BusyMarkCommandIds.textPaste ||
             commandId == BusyMarkCommandIds.textPastePlainText) &&
         _hasActiveClipboardComposition) {
@@ -5656,9 +5707,49 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
     }
     if (commandId.startsWith('editor.')) {
       final name = commandId.substring('editor.'.length);
-      return BusyMarkEditorShortcutAction.values.any(
-        (action) => action.name == name,
-      );
+      final action = BusyMarkEditorShortcutAction.values
+          .where((a) => a.name == name)
+          .firstOrNull;
+      if (action == null) return false;
+      return switch (action) {
+        BusyMarkEditorShortcutAction.bold ||
+        BusyMarkEditorShortcutAction.italic ||
+        BusyMarkEditorShortcutAction.underline ||
+        BusyMarkEditorShortcutAction.strikethrough ||
+        BusyMarkEditorShortcutAction.inlineCode ||
+        BusyMarkEditorShortcutAction.link => _hasInlineCommandTarget,
+        BusyMarkEditorShortcutAction.paragraph => _canApplyBlockCommand(
+          BusyWysiwygBlockCommand.paragraph,
+        ),
+        BusyMarkEditorShortcutAction.heading1 => _canApplyBlockCommand(
+          BusyWysiwygBlockCommand.heading1,
+        ),
+        BusyMarkEditorShortcutAction.heading2 => _canApplyBlockCommand(
+          BusyWysiwygBlockCommand.heading2,
+        ),
+        BusyMarkEditorShortcutAction.heading3 => _canApplyBlockCommand(
+          BusyWysiwygBlockCommand.heading3,
+        ),
+        BusyMarkEditorShortcutAction.heading4 => _canApplyBlockCommand(
+          BusyWysiwygBlockCommand.heading4,
+        ),
+        BusyMarkEditorShortcutAction.heading5 => _canApplyBlockCommand(
+          BusyWysiwygBlockCommand.heading5,
+        ),
+        BusyMarkEditorShortcutAction.heading6 => _canApplyBlockCommand(
+          BusyWysiwygBlockCommand.heading6,
+        ),
+        BusyMarkEditorShortcutAction.orderedList => _canApplyBlockCommand(
+          BusyWysiwygBlockCommand.orderedList,
+        ),
+        BusyMarkEditorShortcutAction.unorderedList => _canApplyBlockCommand(
+          BusyWysiwygBlockCommand.unorderedList,
+        ),
+        BusyMarkEditorShortcutAction.blockquote => _canApplyBlockCommand(
+          BusyWysiwygBlockCommand.blockquote,
+        ),
+        _ => true,
+      };
     }
     if (commandId == BusyMarkCommandIds.checkSpelling) {
       return widget.onCheckSpelling != null;
@@ -5676,6 +5767,30 @@ class BusyMarkWysiwygEditorState extends State<BusyMarkWysiwygEditor> {
   }
 
   void _applyContextCommand(String commandId) {
+    final writerside = writersideCommands[commandId];
+    if (writerside != null) {
+      if (!_canApplyContextCommand(commandId)) return;
+      switch (writerside) {
+        case BusyWritersideToolbarInsert(:final command):
+          unawaited(
+            _applyWritersideInsert(
+              command,
+              _captureDialogTarget(),
+              _activeBlockId,
+            ),
+          );
+        case BusyWritersideToolbarAdmonition(:final style):
+          _applyToolbarCommand(() => _applyAdmonitionCommand(style));
+        case BusyWritersideToolbarSemantic(:final command):
+          if (_selectedTextRanges().isEmpty &&
+              _activeTextTarget()?.controller.selection.isCollapsed == true) {
+            unawaited(_insertSemanticText(command));
+          } else {
+            _applyToolbarCommand(() => _applyInlineCommand(command));
+          }
+      }
+      return;
+    }
     if (commandId == BusyMarkCommandIds.checkSpelling) {
       widget.onCheckSpelling?.call();
       return;

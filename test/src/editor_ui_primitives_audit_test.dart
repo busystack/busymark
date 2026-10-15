@@ -76,7 +76,7 @@ void main() {
       'lib/src/workspace/presentation/workspace_screen.dart',
     ).readAsStringSync();
     final problemsList = RegExp(
-      r'class _ProblemsList[\s\S]*?class _SearchSidebar',
+      r'class _ProblemsList[\s\S]*?@visibleForTesting',
     ).firstMatch(workspace)!.group(0)!;
 
     expect(problemsList, contains('return BusyMarkGroupedSurface('));

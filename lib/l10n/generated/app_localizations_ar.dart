@@ -1045,7 +1045,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get validateOnEdit => 'التحقق أثناء التحرير';
 
   @override
-  String get clearRecentWorkspaces => 'مسح مساحات العمل الأخيرة';
+  String get clearRecentWorkspaces => 'مسح السجل الأخير';
 
   @override
   String get editingButtonsPosition => 'موضع أزرار التحرير';
@@ -5423,4 +5423,54 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get wsPropertiesUnavailable =>
       'العنصر الذي يتم فحصه غير متاح. افحص عنصرًا للمتابعة.';
+
+  @override
+  String get searchTextCategory => 'النص';
+
+  @override
+  String get searchDocumentsCategory => 'المستندات';
+
+  @override
+  String get searchTopicsCategory => 'المواضيع';
+
+  @override
+  String get searchCurrentDocument => 'المستند الحالي';
+
+  @override
+  String get searchCurrentWorkspace => 'مساحة العمل الحالية';
+
+  @override
+  String get recentDocuments => 'المستندات الأخيرة';
+
+  @override
+  String get recentWorkspaces => 'مساحات العمل الأخيرة';
+
+  @override
+  String get browseNotes => 'تصفح الملاحظات';
+
+  @override
+  String get searchActionsCommand => 'البحث عن إجراءات';
+
+  @override
+  String get searchDocumentsCommand => 'البحث عن مستندات';
+
+  @override
+  String get searchWorkspaceCommand => 'البحث في نص مساحة العمل';
+
+  @override
+  String get searchTopicsCommand => 'البحث عن مواضيع';
+
+  @override
+  String get searchRecentCommand => 'البحث في الأخيرة';
+
+  @override
+  String searchQueryHint(String category) {
+    return 'البحث في $category…';
+  }
+
+  @override
+  String get searchResourceUnavailable => 'هذا المورد غير متاح.';
+
+  @override
+  String get notesSync => 'مزامنة الملاحظات';
 }

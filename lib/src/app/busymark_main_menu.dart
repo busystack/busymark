@@ -34,9 +34,8 @@ class BusyMarkMainMenuButton extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
-    final commands =
-        BusyMarkCommandRegistryScope.maybeOf(context) ??
-        BusyMarkCommandCatalog.metadata;
+    final boundCommands = BusyMarkCommandRegistryScope.maybeOf(context);
+    final commands = boundCommands ?? BusyMarkCommandCatalog.metadata;
     BusyMarkCommand command(String id) => commands[id]!;
     final fullScreen = ref.watch(
       windowControlServiceProvider.select((service) => service.isFullScreen),
@@ -77,12 +76,17 @@ class BusyMarkMainMenuButton extends ConsumerWidget {
         ),
         BusyMarkPopupMenuItem(
           value: BusyMarkMainMenuAction.quickOpen,
+          enabled:
+              boundCommands?[BusyMarkCommandIds.quickOpen]?.canExecute ?? true,
           label: command(BusyMarkCommandIds.quickOpen).label(context),
           icon: BusyMarkGlyphs.search,
           shortcut: command(BusyMarkCommandIds.quickOpen).shortcut?.label,
         ),
         BusyMarkPopupMenuItem(
           value: BusyMarkMainMenuAction.commandPalette,
+          enabled:
+              boundCommands?[BusyMarkCommandIds.commandPalette]?.canExecute ??
+              true,
           label: command(BusyMarkCommandIds.commandPalette).label(context),
           icon: BusyMarkGlyphs.search,
           shortcut: command(BusyMarkCommandIds.commandPalette).shortcut?.label,

@@ -1064,7 +1064,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get validateOnEdit => 'Valideren bij bewerken';
 
   @override
-  String get clearRecentWorkspaces => 'Wis recente werkruimten';
+  String get clearRecentWorkspaces => 'Recente geschiedenis wissen';
 
   @override
   String get editingButtonsPosition => 'Positie van knoppen bewerken';
@@ -5448,4 +5448,54 @@ class AppLocalizationsNl extends AppLocalizations {
   @override
   String get wsPropertiesUnavailable =>
       'Het geïnspecteerde element is niet beschikbaar. Inspecteer een element om door te gaan.';
+
+  @override
+  String get searchTextCategory => 'Tekst';
+
+  @override
+  String get searchDocumentsCategory => 'Documenten';
+
+  @override
+  String get searchTopicsCategory => 'Onderwerpen';
+
+  @override
+  String get searchCurrentDocument => 'Huidig document';
+
+  @override
+  String get searchCurrentWorkspace => 'Huidige werkruimte';
+
+  @override
+  String get recentDocuments => 'Recente documenten';
+
+  @override
+  String get recentWorkspaces => 'Recente werkruimten';
+
+  @override
+  String get browseNotes => 'Notities bekijken';
+
+  @override
+  String get searchActionsCommand => 'Acties zoeken';
+
+  @override
+  String get searchDocumentsCommand => 'Documenten zoeken';
+
+  @override
+  String get searchWorkspaceCommand => 'Werkruimtetekst zoeken';
+
+  @override
+  String get searchTopicsCommand => 'Onderwerpen zoeken';
+
+  @override
+  String get searchRecentCommand => 'Recente items zoeken';
+
+  @override
+  String searchQueryHint(String category) {
+    return 'Zoeken in $category…';
+  }
+
+  @override
+  String get searchResourceUnavailable => 'Deze bron is niet beschikbaar.';
+
+  @override
+  String get notesSync => 'Notities synchroniseren';
 }

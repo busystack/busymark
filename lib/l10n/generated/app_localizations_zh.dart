@@ -1001,7 +1001,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get validateOnEdit => '编辑时验证';
 
   @override
-  String get clearRecentWorkspaces => '清除最近使用的工作区';
+  String get clearRecentWorkspaces => '清除最近记录';
 
   @override
   String get editingButtonsPosition => '编辑按钮位置';
@@ -5165,6 +5165,56 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get wsPropertiesUnavailable => '所检查的元素不可用。请检查一个元素以继续。';
+
+  @override
+  String get searchTextCategory => '文本';
+
+  @override
+  String get searchDocumentsCategory => '文档';
+
+  @override
+  String get searchTopicsCategory => '主题';
+
+  @override
+  String get searchCurrentDocument => '当前文档';
+
+  @override
+  String get searchCurrentWorkspace => '当前工作区';
+
+  @override
+  String get recentDocuments => '最近的文档';
+
+  @override
+  String get recentWorkspaces => '最近的工作区';
+
+  @override
+  String get browseNotes => '浏览笔记';
+
+  @override
+  String get searchActionsCommand => '搜索操作';
+
+  @override
+  String get searchDocumentsCommand => '搜索文档';
+
+  @override
+  String get searchWorkspaceCommand => '搜索工作区文本';
+
+  @override
+  String get searchTopicsCommand => '搜索主题';
+
+  @override
+  String get searchRecentCommand => '搜索最近项目';
+
+  @override
+  String searchQueryHint(String category) {
+    return '搜索$category…';
+  }
+
+  @override
+  String get searchResourceUnavailable => '此资源不可用。';
+
+  @override
+  String get notesSync => '同步笔记';
 }
 
 /// The translations for Chinese, as used in China (`zh_CN`).
@@ -6162,7 +6212,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get validateOnEdit => '编辑时验证';
 
   @override
-  String get clearRecentWorkspaces => '清除最近使用的工作区';
+  String get clearRecentWorkspaces => '清除最近记录';
 
   @override
   String get editingButtonsPosition => '编辑按钮位置';
@@ -10326,4 +10376,54 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get wsPropertiesUnavailable => '所检查的元素不可用。请检查一个元素以继续。';
+
+  @override
+  String get searchTextCategory => '文本';
+
+  @override
+  String get searchDocumentsCategory => '文档';
+
+  @override
+  String get searchTopicsCategory => '主题';
+
+  @override
+  String get searchCurrentDocument => '当前文档';
+
+  @override
+  String get searchCurrentWorkspace => '当前工作区';
+
+  @override
+  String get recentDocuments => '最近的文档';
+
+  @override
+  String get recentWorkspaces => '最近的工作区';
+
+  @override
+  String get browseNotes => '浏览笔记';
+
+  @override
+  String get searchActionsCommand => '搜索操作';
+
+  @override
+  String get searchDocumentsCommand => '搜索文档';
+
+  @override
+  String get searchWorkspaceCommand => '搜索工作区文本';
+
+  @override
+  String get searchTopicsCommand => '搜索主题';
+
+  @override
+  String get searchRecentCommand => '搜索最近项目';
+
+  @override
+  String searchQueryHint(String category) {
+    return '搜索$category…';
+  }
+
+  @override
+  String get searchResourceUnavailable => '此资源不可用。';
+
+  @override
+  String get notesSync => '同步笔记';
 }

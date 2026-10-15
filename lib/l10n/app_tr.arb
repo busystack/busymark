@@ -1012,7 +1012,7 @@
   "@validateOnEdit": {
     "description": "Validation setting label."
   },
-  "clearRecentWorkspaces": "Son çalışma alanlarını temizle",
+  "clearRecentWorkspaces": "Son geçmişi temizle",
   "@clearRecentWorkspaces": {
     "description": "Settings action label for clearing recent workspaces."
   },
@@ -5149,5 +5149,21 @@
   "wsInsertElements": "Öğe ekle",
   "wsAdmonitionsAndQuotes": "Uyarılar ve alıntılar",
   "wsSemanticText": "Anlamsal metin",
-  "wsPropertiesUnavailable": "İncelenen öğe kullanılamıyor. Devam etmek için bir öğeyi inceleyin."
+  "wsPropertiesUnavailable": "İncelenen öğe kullanılamıyor. Devam etmek için bir öğeyi inceleyin.",
+  "searchTextCategory": "Metin",
+  "searchDocumentsCategory": "Belgeler",
+  "searchTopicsCategory": "Konular",
+  "searchCurrentDocument": "Geçerli belge",
+  "searchCurrentWorkspace": "Geçerli çalışma alanı",
+  "recentDocuments": "Son belgeler",
+  "recentWorkspaces": "Son çalışma alanları",
+  "browseNotes": "Notlara göz at",
+  "searchActionsCommand": "Eylemleri ara",
+  "searchDocumentsCommand": "Belgeleri ara",
+  "searchWorkspaceCommand": "Çalışma alanında metin ara",
+  "searchTopicsCommand": "Konuları ara",
+  "searchRecentCommand": "Son kullanılanları ara",
+  "searchQueryHint": "{category} içinde ara…",
+  "searchResourceUnavailable": "Bu kaynak kullanılamıyor.",
+  "notesSync": "Notları eşitle"
 }

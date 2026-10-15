@@ -1,3 +1,6 @@
+import '../../search/search_session.dart';
+import '../../search/search_sidebar.dart';
+import '../../search/welcome_notes_action.dart';
 import '../../nextcloud_notes/application/nextcloud_connection.dart';
 import 'dart:async';
 import 'dart:io';
@@ -6,10 +9,8 @@ import 'package:file_selector/file_selector.dart';
 import 'package:busymark/src/app/startup_path.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:path/path.dart' as p;
-import 'package:url_launcher/url_launcher.dart';
 import 'package:yaru/yaru.dart';
 
 import '../../app/app_settings.dart';
@@ -21,7 +22,6 @@ import '../../app/linux/linux_header_style.dart';
 import '../../app/busymark_glyphs.dart';
 import '../../app/busymark_main_menu.dart';
 import '../../app/busymark_shortcuts.dart';
-import '../../app/busymark_toast.dart';
 import '../../app/localization.dart';
 import '../../app/window_control_service.dart';
 import '../../core/debug_log.dart';
@@ -31,7 +31,6 @@ import '../../platform/gtk_header_icon_service.dart';
 import '../../platform/linux_header_bar_service.dart';
 import '../../writerside/writerside_project_creator.dart';
 import '../workspace_controller.dart';
-import '../workspace_glyphs.dart';
 import '../workspace_message.dart';
 import '../workspace_safety.dart';
 
@@ -54,7 +53,31 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
     final settings = ref.watch(appSettingsControllerProvider);
     final headerBar = ref.watch(linuxHeaderBarServiceProvider);
     final colors = BusyMarkSurfaceColors.of(context);
-    final sidebarVisible = settings.sidebarVisible;
+    final search = ref.watch(searchSessionProvider);
+    final sidebarVisible = settings.sidebarVisible || search.active;
+    final connection =
+        ProviderScope.containerOf(
+          context,
+          listen: false,
+        ).exists(nextcloudConnectionProvider)
+        ? ref.watch(nextcloudConnectionProvider)
+        : const NextcloudConnectionState();
+    final pending = ref.watch(welcomeNotesActionProvider);
+    if (pending != null && connection.account != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted &&
+            ref.read(welcomeNotesActionProvider) == pending &&
+            ref
+                    .read(appRouterProvider)
+                    .routeInformationProvider
+                    .value
+                    .uri
+                    .path ==
+                '/') {
+          unawaited(performWelcomeNotesAction(context, ref, pending));
+        }
+      });
+    }
     ref.listen(headerBarActionsProvider, (previous, next) {
       next.whenData((event) {
         _handleHeaderBarAction(context, event.action);
@@ -95,10 +118,27 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
     final welcomeMainColor = colors.view;
     final welcomeSidebar = SizedBox(
       width: BusyMarkSizes.sidebarWidth,
-      child: _WelcomeSidebar(
-        recentWorkspaces: settings.recentWorkspaces,
-        onOpenRecent: _openPath,
-        onRecentAction: _performRecentAction,
+      child: BusyMarkSidebarSurface(
+        showEndBorder: false,
+        child: IndexedStack(
+          index: search.active ? 1 : 0,
+          children: [
+            SearchResultList(
+              results: [
+                for (final r in settings.recentWorkspaces)
+                  if (r.isDocument) RecentSearchResult(r),
+                for (final r in settings.recentWorkspaces)
+                  if (!r.isDocument) RecentSearchResult(r),
+              ],
+              onActivate: (r) => openRecentResource(
+                context,
+                ref,
+                (r as RecentSearchResult).resource,
+              ),
+            ),
+            const SearchSidebar(),
+          ],
+        ),
       ),
     );
     final welcomeContent = ColoredBox(
@@ -122,6 +162,21 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                     BusyMarkGlyphs.forwardFor(Directionality.of(context)),
                   ),
                   onTap: _createMarkdownFile,
+                ),
+                BusyMarkActionRow(
+                  key: const ValueKey('welcome-new-nextcloud-note'),
+                  title: context.l10n.nextcloudNewNote,
+                  subtitle: connection.account == null
+                      ? context.l10n.nextcloudNotes
+                      : 'Nextcloud · ${connection.account!.server}',
+                  leading: const Icon(BusyMarkGlyphs.newDocument),
+                  onTap: () => unawaited(
+                    performWelcomeNotesAction(
+                      context,
+                      ref,
+                      WelcomeNotesAction.create,
+                    ),
+                  ),
                 ),
                 BusyMarkActionRow(
                   title: context.l10n.createWritersideProject,
@@ -158,30 +213,21 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                 ),
                 BusyMarkActionRow(
                   key: const ValueKey('welcome-nextcloud-notes'),
-                  title: context.l10n.nextcloudNotes,
+                  title: context.l10n.browseNotes,
+                  subtitle: connection.account == null
+                      ? context.l10n.nextcloudNotes
+                      : 'Nextcloud · ${connection.account!.server}',
                   leading: const Icon(BusyMarkGlyphs.documentHistory),
                   trailing: Icon(
                     BusyMarkGlyphs.forwardFor(Directionality.of(context)),
                   ),
-                  onTap: () async {
-                    final account = ref
-                        .read(nextcloudConnectionProvider)
-                        .account;
-                    if (account == null) {
-                      context.go(
-                        '${settingsLocation(SettingsReturnTarget.welcome)}&page=nextcloudNotes',
-                      );
-                    } else {
-                      if (!await confirmSafeToContinue(context, ref) ||
-                          !context.mounted) {
-                        return;
-                      }
-                      final opened = await ref
-                          .read(workspaceControllerProvider.notifier)
-                          .openNextcloudWorkspace(account.id);
-                      if (opened && context.mounted) context.go('/workspace');
-                    }
-                  },
+                  onTap: () => unawaited(
+                    performWelcomeNotesAction(
+                      context,
+                      ref,
+                      WelcomeNotesAction.browse,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -205,11 +251,11 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
         .copyWith(
           title: context.l10n.appTitle,
           viewMode: AppViewMode.editor,
-          searchQuery: '',
+          searchQuery: search.query,
           canRefresh: false,
           documentControlsVisible: false,
-          searchActive: false,
-          searchVisible: false,
+          searchActive: search.active,
+          searchVisible: true,
           sidebarVisible: sidebarVisible,
           sidebarToggleVisible: true,
           backVisible: false,
@@ -226,8 +272,13 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
             sidebarHeader: const BusyMarkLinuxBrandHeader(),
             sidebarBody: welcomeSidebar,
             sidebarAvailable:
+                search.active ||
                 constraints.maxWidth >=
-                BusyMarkSizes.sidebarWidth + BusyMarkSizes.previewMinWidth,
+                    BusyMarkSizes.sidebarWidth + BusyMarkSizes.previewMinWidth,
+            sidebarOverlay:
+                search.active &&
+                constraints.maxWidth <
+                    BusyMarkSizes.sidebarWidth + BusyMarkSizes.previewMinWidth,
             sidebarExpanded: sidebarVisible,
             sidebarTransitionGeneration: ref.watch(
               sidebarTransitionGenerationProvider,
@@ -247,9 +298,21 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                   ),
                 ],
               ),
-              title: BusyMarkLinuxHeaderTitle(context.l10n.appTitle),
+              centerAllocation: search.active
+                  ? BusyMarkLinuxHeaderCenterAllocation.fillBetweenControls
+                  : BusyMarkLinuxHeaderCenterAllocation.centeredBetweenControls,
+              title: search.active
+                  ? const SearchHeaderField()
+                  : BusyMarkLinuxHeaderTitle(context.l10n.appTitle),
               trailing: BusyMarkLinuxHeaderControlGroup(
                 children: [
+                  BusyMarkHeaderIconButton(
+                    tooltip: context.l10n.search,
+                    icon: BusyMarkGlyphs.search,
+                    selected: search.active,
+                    onPressed: () =>
+                        ref.read(searchSessionProvider.notifier).toggle(),
+                  ),
                   BusyMarkMainMenuButton(
                     onSelected: (action) =>
                         _handleMainMenuAction(context, headerBar, action),
@@ -281,8 +344,9 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
         );
       case HeaderBarAction.sidebarToggle:
         _toggleSidebar();
-      case HeaderBarAction.back:
       case HeaderBarAction.search:
+        ref.read(searchSessionProvider.notifier).toggle();
+      case HeaderBarAction.back:
       case HeaderBarAction.refresh:
       case HeaderBarAction.save:
       case HeaderBarAction.export:
@@ -326,8 +390,13 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
       case BusyMarkMainMenuAction.keyboardShortcuts:
         showBusyMarkKeyboardShortcutsDialog(context);
       case BusyMarkMainMenuAction.quickOpen:
+        ref
+            .read(searchSessionProvider.notifier)
+            .open(category: SearchCategory.documents);
       case BusyMarkMainMenuAction.commandPalette:
-        return;
+        ref
+            .read(searchSessionProvider.notifier)
+            .open(category: SearchCategory.actions);
       case BusyMarkMainMenuAction.syntaxReference:
         showBusyMarkSyntaxReferenceDialog(context);
       case BusyMarkMainMenuAction.reportIssue:
@@ -482,152 +551,6 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
       context.go('/workspace');
     }
   }
-
-  Future<void> _performRecentAction(
-    RecentWorkspace recent,
-    _RecentWorkspaceAction action,
-  ) async {
-    switch (action) {
-      case _RecentWorkspaceAction.openInFiles:
-        final rawPath = recent.path.trim();
-        if (rawPath.isEmpty) {
-          return;
-        }
-        final normalized = p.normalize(rawPath);
-        final target =
-            FileSystemEntity.typeSync(normalized) ==
-                FileSystemEntityType.directory
-            ? normalized
-            : p.dirname(normalized);
-        final launched = await launchUrl(
-          Uri.file(target),
-          mode: LaunchMode.externalApplication,
-        );
-        if (!launched && mounted) {
-          BusyMarkToastOverlay.show(
-            context,
-            message: context.l10n.couldNotOpenTarget(target),
-            priority: BusyMarkToastPriority.high,
-          );
-        }
-      case _RecentWorkspaceAction.copyPath:
-        await Clipboard.setData(ClipboardData(text: recent.path));
-      case _RecentWorkspaceAction.removeFromRecent:
-        await ref
-            .read(appSettingsControllerProvider.notifier)
-            .removeRecentWorkspace(recent.path);
-    }
-  }
-}
-
-class _WelcomeSidebar extends StatelessWidget {
-  const _WelcomeSidebar({
-    required this.recentWorkspaces,
-    required this.onOpenRecent,
-    required this.onRecentAction,
-  });
-
-  final List<RecentWorkspace> recentWorkspaces;
-  final Future<void> Function(String path) onOpenRecent;
-  final Future<void> Function(
-    RecentWorkspace recent,
-    _RecentWorkspaceAction action,
-  )
-  onRecentAction;
-
-  @override
-  Widget build(BuildContext context) {
-    return BusyMarkSidebarSurface(
-      showEndBorder: false,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Expanded(
-            child: ListView(
-              padding: BusyMarkInsets.sidebarList,
-              children: [
-                if (recentWorkspaces.isNotEmpty)
-                  _WelcomeSidebarSection(
-                    title: context.l10n.recent,
-                    children: <Widget>[
-                      for (final recent in recentWorkspaces)
-                        BusyMarkSidebarRecordRow<_RecentWorkspaceAction>(
-                          icon: WorkspaceGlyphs.forRecent(recent),
-                          title: busyMarkLtrIsolateFor(
-                            context,
-                            _displayPath(recent.path),
-                          ),
-                          subtitle: busyMarkLtrIsolateFor(context, recent.path),
-                          onTap: () => unawaited(onOpenRecent(recent.path)),
-                          menuTooltip: context.l10n.actions,
-                          menuItemsBuilder: _recentWorkspaceMenuItems,
-                          onMenuSelected: (action) =>
-                              unawaited(onRecentAction(recent, action)),
-                        ),
-                    ],
-                  ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _WelcomeSidebarSection extends StatelessWidget {
-  const _WelcomeSidebarSection({required this.title, required this.children});
-
-  final String title;
-  final List<Widget> children;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(top: BusyMarkSpacing.lg),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: BusyMarkSpacing.xs),
-            child: Text(title, style: busyMarkSectionHeaderStyle(context)),
-          ),
-          const SizedBox(height: BusyMarkSpacing.sm),
-          ...children,
-        ],
-      ),
-    );
-  }
-}
-
-enum _RecentWorkspaceAction { openInFiles, copyPath, removeFromRecent }
-
-List<PopupMenuEntry<_RecentWorkspaceAction>> _recentWorkspaceMenuItems(
-  BuildContext context,
-) {
-  return [
-    BusyMarkPopupMenuItem(
-      value: _RecentWorkspaceAction.openInFiles,
-      label: context.l10n.openInFiles,
-      icon: BusyMarkGlyphs.folderOpen,
-    ),
-    BusyMarkPopupMenuItem(
-      value: _RecentWorkspaceAction.copyPath,
-      label: context.l10n.copyPath,
-      icon: BusyMarkGlyphs.copy,
-    ),
-    const PopupMenuDivider(height: BusyMarkSpacing.sm),
-    BusyMarkPopupMenuItem(
-      value: _RecentWorkspaceAction.removeFromRecent,
-      label: context.l10n.removeFromRecent,
-      icon: BusyMarkGlyphs.clear,
-    ),
-  ];
-}
-
-String _displayPath(String path) {
-  final name = p.basename(path);
-  return name.isEmpty ? path : name;
 }
 
 class BusyMarkCreateWritersideProjectDialog extends StatefulWidget {

@@ -1,3 +1,4 @@
+import 'package:busymark/src/markdown/document_outline.dart';
 import 'package:busymark/src/markdown/markdown_model.dart';
 import 'package:busymark/src/workspace/document_buffer.dart';
 import 'package:busymark/src/workspace/workspace_model.dart';
@@ -6,6 +7,40 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 
 void main() {
+  test(
+    'Outline filtering retains ancestors, document order and duplicate title identities',
+    () {
+      const headings = [
+        DocumentOutlineHeading(level: 1, text: 'Root', id: 'root'),
+        DocumentOutlineHeading(level: 2, text: 'First branch', id: 'first'),
+        DocumentOutlineHeading(
+          level: 3,
+          text: 'Target',
+          id: 'target',
+          editorBlockId: 'live-a',
+        ),
+        DocumentOutlineHeading(level: 2, text: 'Unrelated', id: 'unrelated'),
+        DocumentOutlineHeading(
+          level: 2,
+          text: 'Target',
+          id: 'target-1',
+          editorBlockId: 'live-b',
+        ),
+      ];
+      expect(filterDocumentOutline(headings, ''), same(headings));
+      final filtered = filterDocumentOutline(headings, 'TARGET');
+      expect(filtered.map((h) => h.id), [
+        'root',
+        'first',
+        'target',
+        'target-1',
+      ]);
+      expect(filtered.map((h) => h.level), [1, 2, 3, 2]);
+      expect(filtered[2], same(headings[2]));
+      expect(filtered.last.editorBlockId, 'live-b');
+      expect(filterDocumentOutline(headings, 'missing'), isEmpty);
+    },
+  );
   DocumentBuffer untitled(String id) =>
       DocumentBuffer.untitled(id: id, name: id);
 

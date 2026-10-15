@@ -1012,7 +1012,7 @@
   "@validateOnEdit": {
     "description": "Validation setting label."
   },
-  "clearRecentWorkspaces": "最近使ったワークスペースを消去",
+  "clearRecentWorkspaces": "最近の履歴を消去",
   "@clearRecentWorkspaces": {
     "description": "Settings action label for clearing recent workspaces."
   },
@@ -5149,5 +5149,21 @@
   "wsInsertElements": "要素を挿入",
   "wsAdmonitionsAndQuotes": "注意書きと引用",
   "wsSemanticText": "セマンティックテキスト",
-  "wsPropertiesUnavailable": "確認中の要素は利用できません。続行するには要素を確認してください。"
+  "wsPropertiesUnavailable": "確認中の要素は利用できません。続行するには要素を確認してください。",
+  "searchTextCategory": "テキスト",
+  "searchDocumentsCategory": "ドキュメント",
+  "searchTopicsCategory": "トピック",
+  "searchCurrentDocument": "現在のドキュメント",
+  "searchCurrentWorkspace": "現在のワークスペース",
+  "recentDocuments": "最近のドキュメント",
+  "recentWorkspaces": "最近のワークスペース",
+  "browseNotes": "ノートを参照",
+  "searchActionsCommand": "アクションを検索",
+  "searchDocumentsCommand": "ドキュメントを検索",
+  "searchWorkspaceCommand": "ワークスペースのテキストを検索",
+  "searchTopicsCommand": "トピックを検索",
+  "searchRecentCommand": "最近の項目を検索",
+  "searchQueryHint": "{category}を検索…",
+  "searchResourceUnavailable": "このリソースは利用できません。",
+  "notesSync": "ノートを同期"
 }

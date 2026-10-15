@@ -1073,7 +1073,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get validateOnEdit => 'Validar al editar';
 
   @override
-  String get clearRecentWorkspaces => 'Borrar espacios de trabajo recientes';
+  String get clearRecentWorkspaces => 'Borrar el historial reciente';
 
   @override
   String get editingButtonsPosition => 'Posición de los botones de edición';
@@ -5448,4 +5448,54 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get wsPropertiesUnavailable =>
       'El elemento inspeccionado no está disponible. Inspeccione otro elemento para continuar.';
+
+  @override
+  String get searchTextCategory => 'Texto';
+
+  @override
+  String get searchDocumentsCategory => 'Documentos';
+
+  @override
+  String get searchTopicsCategory => 'Temas';
+
+  @override
+  String get searchCurrentDocument => 'Documento actual';
+
+  @override
+  String get searchCurrentWorkspace => 'Espacio de trabajo actual';
+
+  @override
+  String get recentDocuments => 'Documentos recientes';
+
+  @override
+  String get recentWorkspaces => 'Espacios de trabajo recientes';
+
+  @override
+  String get browseNotes => 'Explorar notas';
+
+  @override
+  String get searchActionsCommand => 'Buscar acciones';
+
+  @override
+  String get searchDocumentsCommand => 'Buscar documentos';
+
+  @override
+  String get searchWorkspaceCommand => 'Buscar texto en el espacio de trabajo';
+
+  @override
+  String get searchTopicsCommand => 'Buscar temas';
+
+  @override
+  String get searchRecentCommand => 'Buscar recientes';
+
+  @override
+  String searchQueryHint(String category) {
+    return 'Buscar en $category…';
+  }
+
+  @override
+  String get searchResourceUnavailable => 'Este recurso no está disponible.';
+
+  @override
+  String get notesSync => 'Sincronizar notas';
 }

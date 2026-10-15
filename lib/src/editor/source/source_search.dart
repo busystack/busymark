@@ -144,6 +144,19 @@ class SourceSearchResult {
   );
 }
 
+/// A source editor projects the window's matches through its folding map.
+/// It does not start another search while this snapshot is supplied.
+class SourceSearchSnapshot {
+  const SourceSearchSnapshot({
+    required this.source,
+    required this.result,
+    this.truncated = false,
+  });
+  final String source;
+  final SourceSearchResult result;
+  final bool truncated;
+}
+
 class SourceSearchController {
   SourceSearchController({
     SourceSearchOptions options = const SourceSearchOptions(),
@@ -257,6 +270,7 @@ class SourceSearchController {
 /// isolate. Starting a newer request kills the preceding worker immediately.
 class SourceSearchWorker {
   Isolate? _isolate;
+  SendPort? _sessionPort;
   ReceivePort? _receivePort;
   Completer<SourceSearchResult?>? _completer;
   var _generation = 0;
@@ -269,15 +283,23 @@ class SourceSearchWorker {
     int? minimumFullOffset,
     int maximumMatches = sourceInteractiveSearchMatchLimit,
     bool stopAfterMaximumMatches = false,
+    bool reuseWorker = false,
   }) {
-    cancel();
+    final reuse = reuseWorker && _sessionPort != null && _completer == null;
+    if (!reuse) cancel();
     final generation = ++_generation;
     final receivePort = ReceivePort();
     final completer = Completer<SourceSearchResult?>();
     _receivePort = receivePort;
     _completer = completer;
+    late final Map<String, Object?> request;
     receivePort.listen((message) {
       if (generation != _generation || completer.isCompleted) {
+        return;
+      }
+      if (message is SendPort && reuseWorker) {
+        _sessionPort = message;
+        message.send(<Object?>[receivePort.sendPort, request]);
         return;
       }
       if (message is Map<Object?, Object?>) {
@@ -285,9 +307,15 @@ class SourceSearchWorker {
       } else {
         completer.complete(null);
       }
-      _releaseWorker(kill: true);
+      if (reuseWorker) {
+        _receivePort?.close();
+        _receivePort = null;
+        _completer = null;
+      } else {
+        _releaseWorker(kill: true);
+      }
     });
-    final request = <String, Object?>{
+    request = <String, Object?>{
       'text': document.fullText,
       'hidden': [
         for (final range in document.hiddenRanges.ranges)
@@ -303,15 +331,20 @@ class SourceSearchWorker {
       'maximumMatches': maximumMatches,
       'stopAfterMaximumMatches': stopAfterMaximumMatches,
     };
+    if (reuse) {
+      _sessionPort!.send(<Object?>[receivePort.sendPort, request]);
+      return completer.future;
+    }
     Isolate.spawn<List<Object?>>(
-          _sourceSearchWorkerMain,
+          reuseWorker ? _sourceSearchSessionMain : _sourceSearchWorkerMain,
           <Object?>[receivePort.sendPort, request],
           debugName: 'BusyMark source search',
           onError: receivePort.sendPort,
           onExit: receivePort.sendPort,
         )
         .then((isolate) {
-          if (generation != _generation || completer.isCompleted) {
+          if (generation != _generation ||
+              completer.isCompleted && !reuseWorker) {
             isolate.kill(priority: Isolate.immediate);
           } else {
             _isolate = isolate;
@@ -342,10 +375,26 @@ class SourceSearchWorker {
       _isolate?.kill(priority: Isolate.immediate);
     }
     _isolate = null;
+    _sessionPort = null;
     _receivePort?.close();
     _receivePort = null;
     _completer = null;
   }
+}
+
+// One explicitly scoped workspace query can reuse its worker for sequential
+// files. Cancelling or changing the query still kills the isolate immediately.
+void _sourceSearchSessionMain(List<Object?> payload) {
+  final requests = ReceivePort();
+  (payload[0] as SendPort).send(requests.sendPort);
+  requests.listen((request) {
+    final message = (request as List<Object?>);
+    try {
+      _sourceSearchWorkerMain(message);
+    } on Object {
+      (message[0] as SendPort).send(null);
+    }
+  });
 }
 
 void _sourceSearchWorkerMain(List<Object?> payload) {

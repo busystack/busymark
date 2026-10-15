@@ -1012,7 +1012,7 @@
   "@validateOnEdit": {
     "description": "Validation setting label."
   },
-  "clearRecentWorkspaces": "Hapus ruang kerja terbaru",
+  "clearRecentWorkspaces": "Hapus riwayat terbaru",
   "@clearRecentWorkspaces": {
     "description": "Settings action label for clearing recent workspaces."
   },
@@ -5149,5 +5149,21 @@
   "wsInsertElements": "Sisipkan elemen",
   "wsAdmonitionsAndQuotes": "Pemberitahuan dan kutipan",
   "wsSemanticText": "Teks semantik",
-  "wsPropertiesUnavailable": "Elemen yang diperiksa tidak tersedia. Periksa elemen untuk melanjutkan."
+  "wsPropertiesUnavailable": "Elemen yang diperiksa tidak tersedia. Periksa elemen untuk melanjutkan.",
+  "searchTextCategory": "Teks",
+  "searchDocumentsCategory": "Dokumen",
+  "searchTopicsCategory": "Topik",
+  "searchCurrentDocument": "Dokumen saat ini",
+  "searchCurrentWorkspace": "Ruang kerja saat ini",
+  "recentDocuments": "Dokumen terbaru",
+  "recentWorkspaces": "Ruang kerja terbaru",
+  "browseNotes": "Jelajahi catatan",
+  "searchActionsCommand": "Cari tindakan",
+  "searchDocumentsCommand": "Cari dokumen",
+  "searchWorkspaceCommand": "Cari teks ruang kerja",
+  "searchTopicsCommand": "Cari topik",
+  "searchRecentCommand": "Cari terbaru",
+  "searchQueryHint": "Cari di {category}…",
+  "searchResourceUnavailable": "Sumber daya ini tidak tersedia.",
+  "notesSync": "Sinkronkan catatan"
 }

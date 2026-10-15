@@ -1063,8 +1063,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get validateOnEdit => 'Проверять при редактировании';
 
   @override
-  String get clearRecentWorkspaces =>
-      'Очистить список недавних рабочих областей';
+  String get clearRecentWorkspaces => 'Очистить недавнюю историю';
 
   @override
   String get editingButtonsPosition => 'Положение кнопок редактирования';
@@ -5456,4 +5455,54 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get wsPropertiesUnavailable =>
       'Проверяемый элемент недоступен. Выберите элемент для продолжения.';
+
+  @override
+  String get searchTextCategory => 'Текст';
+
+  @override
+  String get searchDocumentsCategory => 'Документы';
+
+  @override
+  String get searchTopicsCategory => 'Темы';
+
+  @override
+  String get searchCurrentDocument => 'Текущий документ';
+
+  @override
+  String get searchCurrentWorkspace => 'Текущая рабочая область';
+
+  @override
+  String get recentDocuments => 'Недавние документы';
+
+  @override
+  String get recentWorkspaces => 'Недавние рабочие области';
+
+  @override
+  String get browseNotes => 'Обзор заметок';
+
+  @override
+  String get searchActionsCommand => 'Поиск действий';
+
+  @override
+  String get searchDocumentsCommand => 'Поиск документов';
+
+  @override
+  String get searchWorkspaceCommand => 'Поиск текста в рабочей области';
+
+  @override
+  String get searchTopicsCommand => 'Поиск тем';
+
+  @override
+  String get searchRecentCommand => 'Поиск недавних';
+
+  @override
+  String searchQueryHint(String category) {
+    return 'Поиск: $category…';
+  }
+
+  @override
+  String get searchResourceUnavailable => 'Этот ресурс недоступен.';
+
+  @override
+  String get notesSync => 'Синхронизировать заметки';
 }

@@ -882,7 +882,7 @@
   "@validateOnEdit": {
     "description": "Validation setting label."
   },
-  "clearRecentWorkspaces": "Tøm nylige arbeidsområder",
+  "clearRecentWorkspaces": "Tøm nylig historikk",
   "@clearRecentWorkspaces": {
     "description": "Settings action label for clearing recent workspaces."
   },
@@ -3610,5 +3610,21 @@
   "wsInsertElements": "Sett inn elementer",
   "wsAdmonitionsAndQuotes": "Merknader og sitater",
   "wsSemanticText": "Semantisk tekst",
-  "wsPropertiesUnavailable": "Det inspiserte elementet er utilgjengelig. Inspiser et element for å fortsette."
+  "wsPropertiesUnavailable": "Det inspiserte elementet er utilgjengelig. Inspiser et element for å fortsette.",
+  "searchTextCategory": "Tekst",
+  "searchDocumentsCategory": "Dokumenter",
+  "searchTopicsCategory": "Emner",
+  "searchCurrentDocument": "Gjeldende dokument",
+  "searchCurrentWorkspace": "Gjeldende arbeidsområde",
+  "recentDocuments": "Nylige dokumenter",
+  "recentWorkspaces": "Nylige arbeidsområder",
+  "browseNotes": "Bla gjennom notater",
+  "searchActionsCommand": "Søk etter handlinger",
+  "searchDocumentsCommand": "Søk etter dokumenter",
+  "searchWorkspaceCommand": "Søk i arbeidsområdets tekst",
+  "searchTopicsCommand": "Søk etter emner",
+  "searchRecentCommand": "Søk i nylige",
+  "searchQueryHint": "Søk i {category}…",
+  "searchResourceUnavailable": "Denne ressursen er utilgjengelig.",
+  "notesSync": "Synkroniser notater"
 }

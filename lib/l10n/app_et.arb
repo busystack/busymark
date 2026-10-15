@@ -970,7 +970,7 @@
   "@validateOnEdit": {
     "description": "Validation setting label."
   },
-  "clearRecentWorkspaces": "Tühjenda hiljutiste tööruumide loend",
+  "clearRecentWorkspaces": "Tühjenda hiljutiste kirjete loend",
   "@clearRecentWorkspaces": {
     "description": "Settings action label for clearing recent workspaces."
   },
@@ -4070,5 +4070,21 @@
   "wsInsertElements": "Lisa elemendid",
   "wsAdmonitionsAndQuotes": "Märkused ja tsitaadid",
   "wsSemanticText": "Semantiline tekst",
-  "wsPropertiesUnavailable": "Vaadeldav element pole saadaval. Jätkamiseks vali element."
+  "wsPropertiesUnavailable": "Vaadeldav element pole saadaval. Jätkamiseks vali element.",
+  "searchTextCategory": "Tekst",
+  "searchDocumentsCategory": "Dokumendid",
+  "searchTopicsCategory": "Teemad",
+  "searchCurrentDocument": "Praegune dokument",
+  "searchCurrentWorkspace": "Praegune tööruum",
+  "recentDocuments": "Hiljutised dokumendid",
+  "recentWorkspaces": "Hiljutised tööruumid",
+  "browseNotes": "Sirvi märkmeid",
+  "searchActionsCommand": "Otsi toiminguid",
+  "searchDocumentsCommand": "Otsi dokumente",
+  "searchWorkspaceCommand": "Otsi tööruumi tekstist",
+  "searchTopicsCommand": "Otsi teemasid",
+  "searchRecentCommand": "Otsi hiljutisi",
+  "searchQueryHint": "Otsi: {category}…",
+  "searchResourceUnavailable": "See ressurss pole saadaval.",
+  "notesSync": "Sünkrooni märkmed"
 }

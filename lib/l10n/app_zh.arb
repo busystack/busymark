@@ -1014,7 +1014,7 @@
   "@validateOnEdit": {
     "description": "Validation setting label."
   },
-  "clearRecentWorkspaces": "清除最近使用的工作区",
+  "clearRecentWorkspaces": "清除最近记录",
   "@clearRecentWorkspaces": {
     "description": "Settings action label for clearing recent workspaces."
   },
@@ -5161,5 +5161,21 @@
   "wsInsertElements": "插入元素",
   "wsAdmonitionsAndQuotes": "提示和引用",
   "wsSemanticText": "语义文本",
-  "wsPropertiesUnavailable": "所检查的元素不可用。请检查一个元素以继续。"
+  "wsPropertiesUnavailable": "所检查的元素不可用。请检查一个元素以继续。",
+  "searchTextCategory": "文本",
+  "searchDocumentsCategory": "文档",
+  "searchTopicsCategory": "主题",
+  "searchCurrentDocument": "当前文档",
+  "searchCurrentWorkspace": "当前工作区",
+  "recentDocuments": "最近的文档",
+  "recentWorkspaces": "最近的工作区",
+  "browseNotes": "浏览笔记",
+  "searchActionsCommand": "搜索操作",
+  "searchDocumentsCommand": "搜索文档",
+  "searchWorkspaceCommand": "搜索工作区文本",
+  "searchTopicsCommand": "搜索主题",
+  "searchRecentCommand": "搜索最近项目",
+  "searchQueryHint": "搜索{category}…",
+  "searchResourceUnavailable": "此资源不可用。",
+  "notesSync": "同步笔记"
 }

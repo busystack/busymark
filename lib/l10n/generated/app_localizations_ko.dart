@@ -1010,7 +1010,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get validateOnEdit => '편집할 때 검증';
 
   @override
-  String get clearRecentWorkspaces => '최근 작업공간 지우기';
+  String get clearRecentWorkspaces => '최근 기록 지우기';
 
   @override
   String get editingButtonsPosition => '편집 버튼 위치';
@@ -5244,4 +5244,54 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get wsPropertiesUnavailable =>
       '검사 중인 요소를 사용할 수 없습니다. 계속하려면 요소를 검사하세요.';
+
+  @override
+  String get searchTextCategory => '텍스트';
+
+  @override
+  String get searchDocumentsCategory => '문서';
+
+  @override
+  String get searchTopicsCategory => '주제';
+
+  @override
+  String get searchCurrentDocument => '현재 문서';
+
+  @override
+  String get searchCurrentWorkspace => '현재 작업 공간';
+
+  @override
+  String get recentDocuments => '최근 문서';
+
+  @override
+  String get recentWorkspaces => '최근 작업 공간';
+
+  @override
+  String get browseNotes => '노트 찾아보기';
+
+  @override
+  String get searchActionsCommand => '작업 검색';
+
+  @override
+  String get searchDocumentsCommand => '문서 검색';
+
+  @override
+  String get searchWorkspaceCommand => '작업 공간 텍스트 검색';
+
+  @override
+  String get searchTopicsCommand => '주제 검색';
+
+  @override
+  String get searchRecentCommand => '최근 항목 검색';
+
+  @override
+  String searchQueryHint(String category) {
+    return '$category 검색…';
+  }
+
+  @override
+  String get searchResourceUnavailable => '이 리소스를 사용할 수 없습니다.';
+
+  @override
+  String get notesSync => '노트 동기화';
 }

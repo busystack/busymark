@@ -882,7 +882,7 @@
   "@validateOnEdit": {
     "description": "Validation setting label."
   },
-  "clearRecentWorkspaces": "پاک کردن فضاهای کاری اخیر",
+  "clearRecentWorkspaces": "پاک کردن تاریخچهٔ اخیر",
   "@clearRecentWorkspaces": {
     "description": "Settings action label for clearing recent workspaces."
   },
@@ -3652,5 +3652,21 @@
   "wsInsertElements": "درج عناصر",
   "wsAdmonitionsAndQuotes": "یادآوری‌ها و نقل‌قول‌ها",
   "wsSemanticText": "متن معنایی",
-  "wsPropertiesUnavailable": "عنصر بررسی‌شده در دسترس نیست. برای ادامه عنصری را بررسی کنید."
+  "wsPropertiesUnavailable": "عنصر بررسی‌شده در دسترس نیست. برای ادامه عنصری را بررسی کنید.",
+  "searchTextCategory": "متن",
+  "searchDocumentsCategory": "سندها",
+  "searchTopicsCategory": "موضوع‌ها",
+  "searchCurrentDocument": "سند کنونی",
+  "searchCurrentWorkspace": "فضای کاری کنونی",
+  "recentDocuments": "سندهای اخیر",
+  "recentWorkspaces": "فضاهای کاری اخیر",
+  "browseNotes": "مرور یادداشت‌ها",
+  "searchActionsCommand": "جستجوی کنش‌ها",
+  "searchDocumentsCommand": "جستجوی سندها",
+  "searchWorkspaceCommand": "جستجوی متن فضای کاری",
+  "searchTopicsCommand": "جستجوی موضوع‌ها",
+  "searchRecentCommand": "جستجوی موارد اخیر",
+  "searchQueryHint": "جستجو در {category}…",
+  "searchResourceUnavailable": "این منبع در دسترس نیست.",
+  "notesSync": "همگام‌سازی یادداشت‌ها"
 }

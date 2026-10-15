@@ -882,7 +882,7 @@
   "@validateOnEdit": {
     "description": "Validation setting label."
   },
-  "clearRecentWorkspaces": "Очистити список останніх робочих областей",
+  "clearRecentWorkspaces": "Очистити недавню історію",
   "@clearRecentWorkspaces": {
     "description": "Settings action label for clearing recent workspaces."
   },
@@ -3636,5 +3636,21 @@
   "wsInsertElements": "Вставити елементи",
   "wsAdmonitionsAndQuotes": "Примітки та цитати",
   "wsSemanticText": "Семантичний текст",
-  "wsPropertiesUnavailable": "Елемент, що перевіряється, недоступний. Виберіть елемент для продовження."
+  "wsPropertiesUnavailable": "Елемент, що перевіряється, недоступний. Виберіть елемент для продовження.",
+  "searchTextCategory": "Текст",
+  "searchDocumentsCategory": "Документи",
+  "searchTopicsCategory": "Теми",
+  "searchCurrentDocument": "Поточний документ",
+  "searchCurrentWorkspace": "Поточна робоча область",
+  "recentDocuments": "Нещодавні документи",
+  "recentWorkspaces": "Нещодавні робочі області",
+  "browseNotes": "Переглянути нотатки",
+  "searchActionsCommand": "Пошук дій",
+  "searchDocumentsCommand": "Пошук документів",
+  "searchWorkspaceCommand": "Пошук тексту в робочій області",
+  "searchTopicsCommand": "Пошук тем",
+  "searchRecentCommand": "Пошук нещодавніх",
+  "searchQueryHint": "Пошук: {category}…",
+  "searchResourceUnavailable": "Цей ресурс недоступний.",
+  "notesSync": "Синхронізувати нотатки"
 }

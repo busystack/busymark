@@ -1070,7 +1070,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get validateOnEdit => 'Convalida durante la modifica';
 
   @override
-  String get clearRecentWorkspaces => 'Cancella le aree di lavoro recenti';
+  String get clearRecentWorkspaces => 'Cancella la cronologia recente';
 
   @override
   String get editingButtonsPosition => 'Posizione dei pulsanti di modifica';
@@ -5443,4 +5443,54 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get wsPropertiesUnavailable =>
       'L’elemento esaminato non è disponibile. Esamina un elemento per continuare.';
+
+  @override
+  String get searchTextCategory => 'Testo';
+
+  @override
+  String get searchDocumentsCategory => 'Documenti';
+
+  @override
+  String get searchTopicsCategory => 'Argomenti';
+
+  @override
+  String get searchCurrentDocument => 'Documento corrente';
+
+  @override
+  String get searchCurrentWorkspace => 'Area di lavoro corrente';
+
+  @override
+  String get recentDocuments => 'Documenti recenti';
+
+  @override
+  String get recentWorkspaces => 'Aree di lavoro recenti';
+
+  @override
+  String get browseNotes => 'Sfoglia note';
+
+  @override
+  String get searchActionsCommand => 'Cerca azioni';
+
+  @override
+  String get searchDocumentsCommand => 'Cerca documenti';
+
+  @override
+  String get searchWorkspaceCommand => 'Cerca testo nell’area di lavoro';
+
+  @override
+  String get searchTopicsCommand => 'Cerca argomenti';
+
+  @override
+  String get searchRecentCommand => 'Cerca recenti';
+
+  @override
+  String searchQueryHint(String category) {
+    return 'Cerca in $category…';
+  }
+
+  @override
+  String get searchResourceUnavailable => 'Questa risorsa non è disponibile.';
+
+  @override
+  String get notesSync => 'Sincronizza note';
 }

@@ -1053,7 +1053,7 @@ class AppLocalizationsFa extends AppLocalizations {
   String get validateOnEdit => 'اعتبارسنجی هنگام ویرایش';
 
   @override
-  String get clearRecentWorkspaces => 'پاک کردن فضاهای کاری اخیر';
+  String get clearRecentWorkspaces => 'پاک کردن تاریخچهٔ اخیر';
 
   @override
   String get editingButtonsPosition => 'موقعیت دکمه‌های ویرایش';
@@ -5434,4 +5434,54 @@ class AppLocalizationsFa extends AppLocalizations {
   @override
   String get wsPropertiesUnavailable =>
       'عنصر بررسی‌شده در دسترس نیست. برای ادامه عنصری را بررسی کنید.';
+
+  @override
+  String get searchTextCategory => 'متن';
+
+  @override
+  String get searchDocumentsCategory => 'سندها';
+
+  @override
+  String get searchTopicsCategory => 'موضوع‌ها';
+
+  @override
+  String get searchCurrentDocument => 'سند کنونی';
+
+  @override
+  String get searchCurrentWorkspace => 'فضای کاری کنونی';
+
+  @override
+  String get recentDocuments => 'سندهای اخیر';
+
+  @override
+  String get recentWorkspaces => 'فضاهای کاری اخیر';
+
+  @override
+  String get browseNotes => 'مرور یادداشت‌ها';
+
+  @override
+  String get searchActionsCommand => 'جستجوی کنش‌ها';
+
+  @override
+  String get searchDocumentsCommand => 'جستجوی سندها';
+
+  @override
+  String get searchWorkspaceCommand => 'جستجوی متن فضای کاری';
+
+  @override
+  String get searchTopicsCommand => 'جستجوی موضوع‌ها';
+
+  @override
+  String get searchRecentCommand => 'جستجوی موارد اخیر';
+
+  @override
+  String searchQueryHint(String category) {
+    return 'جستجو در $category…';
+  }
+
+  @override
+  String get searchResourceUnavailable => 'این منبع در دسترس نیست.';
+
+  @override
+  String get notesSync => 'همگام‌سازی یادداشت‌ها';
 }

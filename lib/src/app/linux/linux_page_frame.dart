@@ -18,6 +18,7 @@ class LinuxPageFrame extends StatefulWidget {
     this.sidebarBody,
     this.sidebarAvailable = false,
     this.sidebarExpanded = false,
+    this.sidebarOverlay = false,
     this.sidebarTransitionGeneration = 0,
   });
 
@@ -27,6 +28,7 @@ class LinuxPageFrame extends StatefulWidget {
   final Widget? sidebarBody;
   final bool sidebarAvailable;
   final bool sidebarExpanded;
+  final bool sidebarOverlay;
   final int sidebarTransitionGeneration;
 
   @override
@@ -40,6 +42,9 @@ class _LinuxPageFrameState extends State<LinuxPageFrame>
     animationBehavior: AnimationBehavior.preserve,
     value: _targetVisible ? 1 : 0,
   );
+  final _bodyKey = GlobalKey();
+  final _headerKey = GlobalKey();
+  final _sidebarBodyKey = GlobalKey();
   late int _generation;
   bool _disableAnimations = false;
 
@@ -120,6 +125,10 @@ class _LinuxPageFrameState extends State<LinuxPageFrame>
     final oppositeControlInset = sidebarAtLeft
         ? metrics.rightControlInset
         : metrics.leftControlInset;
+    final retainedSidebar = KeyedSubtree(
+      key: _sidebarBodyKey,
+      child: widget.sidebarBody ?? const SizedBox.shrink(),
+    );
     final sidebar = _hasSidebar
         ? SizedBox(
             width: BusyMarkSizes.sidebarWidth,
@@ -136,15 +145,18 @@ class _LinuxPageFrameState extends State<LinuxPageFrame>
                       child: widget.sidebarHeader!,
                     ),
                   ),
-                  Expanded(child: widget.sidebarBody!),
+                  Expanded(child: retainedSidebar),
                 ],
               ),
             ),
           )
         : null;
     final main = _LinuxFrameMain(
-      header: ColoredBox(color: colors.headerbarFlat, child: widget.header),
-      body: widget.body,
+      header: KeyedSubtree(
+        key: _headerKey,
+        child: ColoredBox(color: colors.headerbarFlat, child: widget.header),
+      ),
+      body: KeyedSubtree(key: _bodyKey, child: widget.body),
     );
     return AnimatedBuilder(
       animation: _controller,
@@ -165,6 +177,48 @@ class _LinuxPageFrameState extends State<LinuxPageFrame>
             ? oppositeControlInset
             : sidebarSideOverlap;
         final sidebarInteractive = _targetVisible && _controller.value == 1;
+        final sidebarViewport = sidebar == null
+            ? null
+            : DecoratedBox(
+                decoration: BoxDecoration(
+                  border: BorderDirectional(
+                    end: BorderSide(color: colors.sidebarBorder),
+                  ),
+                ),
+                child: sidebar,
+              );
+        if (widget.sidebarOverlay) {
+          return Stack(
+            children: [
+              Positioned.fill(
+                child: Column(
+                  children: [
+                    SizedBox(
+                      height: BusyMarkLinuxWindowMetrics.headerHeight,
+                      child: LinuxPageHeaderInsetsScope(
+                        leftObstruction: metrics.leftControlInset,
+                        rightObstruction: metrics.rightControlInset,
+                        child: (mainChild! as _LinuxFrameMain).header,
+                      ),
+                    ),
+                    Expanded(child: (mainChild as _LinuxFrameMain).body),
+                  ],
+                ),
+              ),
+              if (_targetVisible && sidebarViewport != null)
+                PositionedDirectional(
+                  start: 0,
+                  top: BusyMarkLinuxWindowMetrics.headerHeight,
+                  bottom: 0,
+                  width: BusyMarkSizes.sidebarWidth,
+                  child: ColoredBox(
+                    color: colors.sidebar,
+                    child: retainedSidebar,
+                  ),
+                ),
+            ],
+          );
+        }
         return Row(
           children: [
             if (sidebar != null)

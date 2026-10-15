@@ -1068,7 +1068,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get validateOnEdit => 'Validar ao editar';
 
   @override
-  String get clearRecentWorkspaces => 'Limpar espaços de trabalho recentes';
+  String get clearRecentWorkspaces => 'Limpar histórico recente';
 
   @override
   String get editingButtonsPosition => 'Posição dos botões de edição';
@@ -5461,6 +5461,56 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get wsPropertiesUnavailable =>
       'O elemento inspecionado está indisponível. Inspecione um elemento para continuar.';
+
+  @override
+  String get searchTextCategory => 'Texto';
+
+  @override
+  String get searchDocumentsCategory => 'Documentos';
+
+  @override
+  String get searchTopicsCategory => 'Tópicos';
+
+  @override
+  String get searchCurrentDocument => 'Documento atual';
+
+  @override
+  String get searchCurrentWorkspace => 'Área de trabalho atual';
+
+  @override
+  String get recentDocuments => 'Documentos recentes';
+
+  @override
+  String get recentWorkspaces => 'Áreas de trabalho recentes';
+
+  @override
+  String get browseNotes => 'Explorar notas';
+
+  @override
+  String get searchActionsCommand => 'Pesquisar ações';
+
+  @override
+  String get searchDocumentsCommand => 'Pesquisar documentos';
+
+  @override
+  String get searchWorkspaceCommand => 'Pesquisar texto na área de trabalho';
+
+  @override
+  String get searchTopicsCommand => 'Pesquisar tópicos';
+
+  @override
+  String get searchRecentCommand => 'Pesquisar recentes';
+
+  @override
+  String searchQueryHint(String category) {
+    return 'Pesquisar em $category…';
+  }
+
+  @override
+  String get searchResourceUnavailable => 'Este recurso não está disponível.';
+
+  @override
+  String get notesSync => 'Sincronizar notas';
 }
 
 /// The translations for Portuguese, as used in Brazil (`pt_BR`).
@@ -6526,7 +6576,7 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   String get validateOnEdit => 'Validar ao editar';
 
   @override
-  String get clearRecentWorkspaces => 'Limpar espaços de trabalho recentes';
+  String get clearRecentWorkspaces => 'Limpar histórico recente';
 
   @override
   String get editingButtonsPosition => 'Posição dos botões de edição';
@@ -10916,4 +10966,54 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
   @override
   String get wsPropertiesUnavailable =>
       'O elemento inspecionado está indisponível. Inspecione um elemento para continuar.';
+
+  @override
+  String get searchTextCategory => 'Texto';
+
+  @override
+  String get searchDocumentsCategory => 'Documentos';
+
+  @override
+  String get searchTopicsCategory => 'Tópicos';
+
+  @override
+  String get searchCurrentDocument => 'Documento atual';
+
+  @override
+  String get searchCurrentWorkspace => 'Área de trabalho atual';
+
+  @override
+  String get recentDocuments => 'Documentos recentes';
+
+  @override
+  String get recentWorkspaces => 'Áreas de trabalho recentes';
+
+  @override
+  String get browseNotes => 'Explorar notas';
+
+  @override
+  String get searchActionsCommand => 'Pesquisar ações';
+
+  @override
+  String get searchDocumentsCommand => 'Pesquisar documentos';
+
+  @override
+  String get searchWorkspaceCommand => 'Pesquisar texto na área de trabalho';
+
+  @override
+  String get searchTopicsCommand => 'Pesquisar tópicos';
+
+  @override
+  String get searchRecentCommand => 'Pesquisar recentes';
+
+  @override
+  String searchQueryHint(String category) {
+    return 'Pesquisar em $category…';
+  }
+
+  @override
+  String get searchResourceUnavailable => 'Este recurso não está disponível.';
+
+  @override
+  String get notesSync => 'Sincronizar notas';
 }

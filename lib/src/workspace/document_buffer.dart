@@ -164,11 +164,6 @@ class DocumentEditorState {
     'selectionExtent': selection.extentOffset,
     'scrollOffset': scrollOffset,
     'foldedRegionKeys': foldedRegionKeys.toList(),
-    'searchQuery': searchOptions.query,
-    'searchCaseSensitive': searchOptions.caseSensitive,
-    'searchWholeWord': searchOptions.wholeWord,
-    'searchRegex': searchOptions.regex,
-    'searchReplacement': searchReplacement,
     'wysiwygState': wysiwygState.toJson(),
     'spellingLanguage': spellingLanguage.toJson(),
   };
