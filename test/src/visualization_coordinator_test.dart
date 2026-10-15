@@ -191,6 +191,44 @@ void main() {
   );
 
   test(
+    'disposal cancels queued renders while a bounded cache write is pending',
+    () async {
+      final renderer = _ControlledRenderer();
+      final cache = _HeldCache(cacheDirectory);
+      final coordinator = VisualizationCoordinator(
+        renderers: [renderer],
+        cache: cache,
+        maximumConcurrentRenders: 1,
+      );
+      addTearDown(() async {
+        coordinator.dispose();
+        if (!cache.release.isCompleted) cache.release.complete();
+        await cache.finished.future;
+      });
+      final first = coordinator.render(_request(revision: 1));
+      await renderer.waitForStarts(1);
+      renderer.complete(1, _svg('ready'));
+      expect(await first, isA<SvgVisualizationResult>());
+      await cache.persisted.future;
+      final queued = coordinator.render(
+        _request(blockKey: 'queued', source: 'different', revision: 2),
+      );
+      final cancelled = expectLater(
+        queued,
+        throwsA(isA<VisualizationSupersededException>()),
+      );
+      await cache.secondLookup.future;
+      await Future<void>.delayed(Duration.zero);
+      coordinator.dispose();
+      await cancelled;
+      expect(cache.finished.isCompleted, isFalse);
+      cache.release.complete();
+      await cache.finished.future;
+      expect(renderer.startedBlockKeys, ['block']);
+    },
+  );
+
+  test(
     'validates concurrency and returns a typed unavailable result',
     () async {
       expect(
@@ -278,6 +316,15 @@ class _HeldCache extends VisualizationCache {
   final persisted = Completer<void>();
   final release = Completer<void>();
   final finished = Completer<void>();
+  final secondLookup = Completer<void>();
+  var _lookups = 0;
+
+  @override
+  Future<VisualizationRenderResult?> get(String key) async {
+    final result = await super.get(key);
+    if (++_lookups == 2) secondLookup.complete();
+    return result;
+  }
 
   @override
   Future<void> put(String key, VisualizationRenderResult result) async {
